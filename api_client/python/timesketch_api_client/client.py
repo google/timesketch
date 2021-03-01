@@ -35,13 +35,15 @@ from . import definitions
 from . import error
 from . import index
 from . import sketch
+from . import user
 from . import version
+from . import sigma
 
 
 logger = logging.getLogger('timesketch_api.client')
 
 
-class TimesketchApi(object):
+class TimesketchApi:
     """Timesketch API object
 
     Attributes:
@@ -68,7 +70,7 @@ class TimesketchApi(object):
                  verify=True,
                  client_id='',
                  client_secret='',
-                 auth_mode='timesketch',
+                 auth_mode='userpass',
                  create_session=True):
         """Initializes the TimesketchApi object.
 
@@ -79,8 +81,8 @@ class TimesketchApi(object):
             verify: Verify server SSL certificate.
             client_id: The client ID if OAUTH auth is used.
             client_secret: The OAUTH client secret if OAUTH is used.
-            auth_mode: The authentication mode to use. Defaults to 'timesketch'
-                Supported values are 'timesketch' (Timesketch login form),
+            auth_mode: The authentication mode to use. Defaults to 'userpass'
+                Supported values are 'userpass' (username/password combo),
                 'http-basic' (HTTP Basic authentication) and oauth.
             create_session: Boolean indicating whether the client object
                 should create a session object. If set to False the
@@ -104,11 +106,16 @@ class TimesketchApi(object):
             self.session = self._create_session(
                 username, password, verify=verify, client_id=client_id,
                 client_secret=client_secret, auth_mode=auth_mode)
-        except ConnectionError:
-            raise ConnectionError('Timesketch server unreachable')
+        except ConnectionError as exc:
+            raise ConnectionError('Timesketch server unreachable') from exc
         except RuntimeError as e:
             raise RuntimeError(
-                'Unable to connect to server, with error: {0!s}'.format(e))
+                'Unable to connect to server, error: {0!s}'.format(e)) from e
+
+    @property
+    def current_user(self):
+        """Property that returns the user object of the logged in user."""
+        return user.User(self)
 
     @property
     def version(self):
@@ -133,7 +140,7 @@ class TimesketchApi(object):
         self.session = session_object
 
     def _authenticate_session(self, session, username, password):
-        """Post username/password to authenticate the HTTP seesion.
+        """Post username/password to authenticate the HTTP session.
 
         Args:
             session: Instance of requests.Session.
@@ -277,7 +284,7 @@ class TimesketchApi(object):
             client_id: The client ID if OAUTH auth is used.
             client_secret: The OAUTH client secret if OAUTH is used.
             auth_mode: The authentication mode to use. Supported values are
-                'timesketch' (Timesketch login form), 'http-basic'
+                'userpass' (username/password combo), 'http-basic'
                 (HTTP Basic authentication) and oauth.
 
         Returns:
@@ -297,26 +304,29 @@ class TimesketchApi(object):
         if auth_mode == 'http-basic':
             session.auth = (username, password)
 
-        session.verify = verify  # Depending if SSL cert is verifiable
+        # SSL Cert verification is turned on by default.
+        if not verify:
+            session.verify = False
 
         # Get and set CSRF token and authenticate the session if appropriate.
         self._set_csrf_token(session)
-        if auth_mode == 'timesketch':
+        if auth_mode == 'userpass':
             self._authenticate_session(session, username, password)
 
         return session
 
-    def fetch_resource_data(self, resource_uri):
+    def fetch_resource_data(self, resource_uri, params=None):
         """Make a HTTP GET request.
 
         Args:
             resource_uri: The URI to the resource to be fetched.
+            params: Dict of URL parameters to send in the GET request.
 
         Returns:
             Dictionary with the response data.
         """
         resource_url = '{0:s}/{1:s}'.format(self.api_root, resource_uri)
-        response = self.session.get(resource_url)
+        response = self.session.get(resource_url, params=params)
         return error.get_response_json(response, logger)
 
     def create_sketch(self, name, description=None):
@@ -405,21 +415,41 @@ class TimesketchApi(object):
 
         return pandas.DataFrame(lines)
 
-    def list_sketches(self):
+    def list_sketches(self, per_page=50, scope='user', include_archived=True):
         """Get a list of all open sketches that the user has access to.
 
-        Returns:
-            List of Sketch objects instances.
+        Args:
+            per_page: Number of items per page when paginating. Default is 50.
+            scope: What scope to get sketches as. Default to user.
+            include_archived: If archived sketches should be returned.
+
+        Yields:
+            Sketch objects instances.
         """
-        sketches = []
-        response = self.fetch_resource_data('sketches/')
-        for sketch_dict in response['objects']:
-            sketch_id = sketch_dict['id']
-            sketch_name = sketch_dict['name']
-            sketch_obj = sketch.Sketch(
-                sketch_id=sketch_id, api=self, sketch_name=sketch_name)
-            sketches.append(sketch_obj)
-        return sketches
+        url_params = {
+            'per_page': per_page,
+            'scope': scope,
+            'include_archived': include_archived
+        }
+        # Start with the first page
+        page = 1
+        has_next_page = True
+
+        while has_next_page:
+            url_params['page'] = page
+            response = self.fetch_resource_data('sketches/', params=url_params)
+            meta = response.get('meta', {})
+
+            page = meta.get('next_page')
+            if not page:
+                has_next_page = False
+
+            for sketch_dict in response.get('objects', []):
+                sketch_id = sketch_dict['id']
+                sketch_name = sketch_dict['name']
+                sketch_obj = sketch.Sketch(
+                    sketch_id=sketch_id, api=self, sketch_name=sketch_name)
+                yield sketch_obj
 
     def get_searchindex(self, searchindex_id):
         """Get a searchindex.
@@ -502,7 +532,11 @@ class TimesketchApi(object):
         """
         indices = []
         response = self.fetch_resource_data('searchindices/')
-        for index_dict in response['objects'][0]:
+        response_objects = response.get('objects')
+        if not response_objects:
+            return indices
+
+        for index_dict in response_objects[0]:
             index_id = index_dict['id']
             index_name = index_dict['name']
             index_obj = index.SearchIndex(
@@ -516,3 +550,75 @@ class TimesketchApi(object):
             return
         request = google.auth.transport.requests.Request()
         self.credentials.credential.refresh(request)
+
+    def list_sigma_rules(self, as_pandas=False):
+        """Get a list of sigma objects.
+
+        Args:
+            as_pandas: Boolean indicating that the results will be returned
+                as a Pandas DataFrame instead of a list of dicts.
+
+        Returns:
+            List of Sigme rule object instances or a pandas Dataframe with all
+            rules if as_pandas is True.
+
+        Raises:
+            ValueError: If no rules are found.
+        """
+        rules = []
+        response = self.fetch_resource_data('sigma/')
+
+        if not response:
+            raise ValueError('No rules found.')
+
+        if as_pandas:
+            return pandas.DataFrame.from_records(response.get('objects'))
+
+        for rule_dict in response['objects']:
+            if not rule_dict:
+                raise ValueError('No rules found.')
+
+            index_obj = sigma.Sigma(api=self)
+            for key, value in rule_dict.items():
+                index_obj.set_value(key, value)
+            rules.append(index_obj)
+        return rules
+
+
+    def get_sigma_rule(self, rule_uuid):
+        """Get a sigma rule.
+
+        Args:
+            rule_uuid: UUID of the Sigma rule.
+
+        Returns:
+            Instance of a Sigma object.
+        """
+        sigma_obj = sigma.Sigma(api=self)
+        sigma_obj.from_rule_uuid(rule_uuid)
+
+        return sigma_obj
+
+    def get_sigma_rule_by_text(self, rule_text):
+        """Returns a Sigma Object based on a sigma rule text.
+
+        Args:
+            rule_text: Full Sigma rule text.
+
+        Returns:
+            Instance of a Sigma object.
+
+        Raises:
+            ValueError: No Rule text given or issues parsing it.
+        """
+        if not rule_text:
+            raise ValueError('No rule text given.')
+
+        try:
+            sigma_obj = sigma.Sigma(api=self)
+            sigma_obj.from_text(rule_text)
+        except ValueError:
+            logger.error(
+                'Parsing Error, unable to parse the Sigma rule',exc_info=True)
+
+        return sigma_obj

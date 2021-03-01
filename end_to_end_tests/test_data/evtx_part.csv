@@ -1,0 +1,316 @@
+__ts_timeline_id,computer_name,data_type,datetime,display_name,event_identifier,event_level,label,message,message_identifier,offset,parser,path_spec,record_number,recovered,sha256_hash,source_long,source_name,source_short,strings,tag,timestamp,timestamp_desc,xml_string,user_sid
+35,WKS-WIN764BITB.shieldbase.local,windows:evtx:record,2012-03-14 04:17:38.276340+00:00,OS:/root/System.evtx,7036,4,[],"[7036 / 0x1b7c] Source Name: Service Control Manager Message string: The Windows Modules Installer service entered the stopped state. Strings: ['Windows Modules Installer', 'stopped', '540072007500730074006500640049006E007300740061006C006C00650072002F0031000000'] Computer Name: WKS-WIN764BITB.shieldbase.local Record Number: 12050 Event Level: 4",1073748860.0,0,winevtx,"{""__type__"": ""PathSpec"", ""location"": ""/root/System.evtx"", ""type_indicator"": ""OS""}",12050,False,ccb83cfefc9038017224cd97b800b66e248fe14529649ddf47907e5a2021449e,WinEVTX,Service Control Manager,EVT,"['Windows Modules Installer', 'stopped', '540072007500730074006500640049006E007300740061006C006C00650072002F0031000000']",[],1331698658276340,Content Modification Time,"<Event xmlns=""http://schemas.microsoft.com/win/2004/08/events/event"">
+  <System>
+    <Provider Name=""Service Control Manager"" Guid=""{555908d1-a6d7-4695-8e1e-26931d2012f4}"" EventSourceName=""Service Control Manager""/>
+    <EventID Qualifiers=""16384"">7036</EventID>
+    <Version>0</Version>
+    <Level>4</Level>
+    <Task>0</Task>
+    <Opcode>0</Opcode>
+    <Keywords>0x8080000000000000</Keywords>
+    <TimeCreated SystemTime=""2012-03-14T04:17:38.276340200Z""/>
+    <EventRecordID>12050</EventRecordID>
+    <Correlation/>
+    <Execution ProcessID=""548"" ThreadID=""1340""/>
+    <Channel>System</Channel>
+    <Computer>WKS-WIN764BITB.shieldbase.local</Computer>
+    <Security/>
+  </System>
+  <EventData>
+    <Data Name=""param1"">Windows Modules Installer</Data>
+    <Data Name=""param2"">stopped</Data>
+    <Binary>540072007500730074006500640049006E007300740061006C006C00650072002F0031000000</Binary>
+  </EventData>
+</Event>
+",
+35,WKS-WIN764BITB.shieldbase.local,windows:evtx:record,2012-03-14 04:17:38.276340+00:00,OS:/root/System.evtx,7036,4,[],"[7036 / 0x1b7c] Source Name: Service Control Manager Message string: The Windows Modules Installer service entered the stopped state. Strings: ['Windows Modules Installer', 'stopped', '540072007500730074006500640049006E007300740061006C006C00650072002F0031000000'] Computer Name: WKS-WIN764BITB.shieldbase.local Record Number: 12050 Event Level: 4",1073748860.0,0,winevtx,"{""__type__"": ""PathSpec"", ""location"": ""/root/System.evtx"", ""type_indicator"": ""OS""}",12050,False,ccb83cfefc9038017224cd97b800b66e248fe14529649ddf47907e5a2021449e,WinEVTX,Service Control Manager,EVT,"['Windows Modules Installer', 'stopped', '540072007500730074006500640049006E007300740061006C006C00650072002F0031000000']",[],1331698658276340,Creation Time,"<Event xmlns=""http://schemas.microsoft.com/win/2004/08/events/event"">
+  <System>
+    <Provider Name=""Service Control Manager"" Guid=""{555908d1-a6d7-4695-8e1e-26931d2012f4}"" EventSourceName=""Service Control Manager""/>
+    <EventID Qualifiers=""16384"">7036</EventID>
+    <Version>0</Version>
+    <Level>4</Level>
+    <Task>0</Task>
+    <Opcode>0</Opcode>
+    <Keywords>0x8080000000000000</Keywords>
+    <TimeCreated SystemTime=""2012-03-14T04:17:38.276340200Z""/>
+    <EventRecordID>12050</EventRecordID>
+    <Correlation/>
+    <Execution ProcessID=""548"" ThreadID=""1340""/>
+    <Channel>System</Channel>
+    <Computer>WKS-WIN764BITB.shieldbase.local</Computer>
+    <Security/>
+  </System>
+  <EventData>
+    <Data Name=""param1"">Windows Modules Installer</Data>
+    <Data Name=""param2"">stopped</Data>
+    <Binary>540072007500730074006500640049006E007300740061006C006C00650072002F0031000000</Binary>
+  </EventData>
+</Event>
+",
+37,WKS-WIN764BITB.shieldbase.local,windows:evtx:record,2012-03-14 04:17:38.276340+00:00,OS:/root/System.evtx,7036,4,[],"[7036 / 0x1b7c] Source Name: Service Control Manager Message string: The Windows Modules Installer service entered the stopped state. Strings: ['Windows Modules Installer', 'stopped', '540072007500730074006500640049006E007300740061006C006C00650072002F0031000000'] Computer Name: WKS-WIN764BITB.shieldbase.local Record Number: 12050 Event Level: 4",1073748860.0,0,winevtx,"{""__type__"": ""PathSpec"", ""location"": ""/root/System.evtx"", ""type_indicator"": ""OS""}",12050,False,ccb83cfefc9038017224cd97b800b66e248fe14529649ddf47907e5a2021449e,WinEVTX,Service Control Manager,EVT,"['Windows Modules Installer', 'stopped', '540072007500730074006500640049006E007300740061006C006C00650072002F0031000000']",[],1331698658276340,Content Modification Time,"<Event xmlns=""http://schemas.microsoft.com/win/2004/08/events/event"">
+  <System>
+    <Provider Name=""Service Control Manager"" Guid=""{555908d1-a6d7-4695-8e1e-26931d2012f4}"" EventSourceName=""Service Control Manager""/>
+    <EventID Qualifiers=""16384"">7036</EventID>
+    <Version>0</Version>
+    <Level>4</Level>
+    <Task>0</Task>
+    <Opcode>0</Opcode>
+    <Keywords>0x8080000000000000</Keywords>
+    <TimeCreated SystemTime=""2012-03-14T04:17:38.276340200Z""/>
+    <EventRecordID>12050</EventRecordID>
+    <Correlation/>
+    <Execution ProcessID=""548"" ThreadID=""1340""/>
+    <Channel>System</Channel>
+    <Computer>WKS-WIN764BITB.shieldbase.local</Computer>
+    <Security/>
+  </System>
+  <EventData>
+    <Data Name=""param1"">Windows Modules Installer</Data>
+    <Data Name=""param2"">stopped</Data>
+    <Binary>540072007500730074006500640049006E007300740061006C006C00650072002F0031000000</Binary>
+  </EventData>
+</Event>
+",
+37,WKS-WIN764BITB.shieldbase.local,windows:evtx:record,2012-03-14 04:17:38.276340+00:00,OS:/root/System.evtx,7036,4,[],"[7036 / 0x1b7c] Source Name: Service Control Manager Message string: The Windows Modules Installer service entered the stopped state. Strings: ['Windows Modules Installer', 'stopped', '540072007500730074006500640049006E007300740061006C006C00650072002F0031000000'] Computer Name: WKS-WIN764BITB.shieldbase.local Record Number: 12050 Event Level: 4",1073748860.0,0,winevtx,"{""__type__"": ""PathSpec"", ""location"": ""/root/System.evtx"", ""type_indicator"": ""OS""}",12050,False,ccb83cfefc9038017224cd97b800b66e248fe14529649ddf47907e5a2021449e,WinEVTX,Service Control Manager,EVT,"['Windows Modules Installer', 'stopped', '540072007500730074006500640049006E007300740061006C006C00650072002F0031000000']",[],1331698658276340,Creation Time,"<Event xmlns=""http://schemas.microsoft.com/win/2004/08/events/event"">
+  <System>
+    <Provider Name=""Service Control Manager"" Guid=""{555908d1-a6d7-4695-8e1e-26931d2012f4}"" EventSourceName=""Service Control Manager""/>
+    <EventID Qualifiers=""16384"">7036</EventID>
+    <Version>0</Version>
+    <Level>4</Level>
+    <Task>0</Task>
+    <Opcode>0</Opcode>
+    <Keywords>0x8080000000000000</Keywords>
+    <TimeCreated SystemTime=""2012-03-14T04:17:38.276340200Z""/>
+    <EventRecordID>12050</EventRecordID>
+    <Correlation/>
+    <Execution ProcessID=""548"" ThreadID=""1340""/>
+    <Channel>System</Channel>
+    <Computer>WKS-WIN764BITB.shieldbase.local</Computer>
+    <Security/>
+  </System>
+  <EventData>
+    <Data Name=""param1"">Windows Modules Installer</Data>
+    <Data Name=""param2"">stopped</Data>
+    <Binary>540072007500730074006500640049006E007300740061006C006C00650072002F0031000000</Binary>
+  </EventData>
+</Event>
+",
+40,WKS-WIN764BITB.shieldbase.local,windows:evtx:record,2012-03-14 04:17:38.276340+00:00,OS:/root/System.evtx,7036,4,[],"[7036 / 0x1b7c] Source Name: Service Control Manager Message string: The Windows Modules Installer service entered the stopped state. Strings: ['Windows Modules Installer', 'stopped', '540072007500730074006500640049006E007300740061006C006C00650072002F0031000000'] Computer Name: WKS-WIN764BITB.shieldbase.local Record Number: 12050 Event Level: 4",1073748860.0,0,winevtx,"{""__type__"": ""PathSpec"", ""location"": ""/root/System.evtx"", ""type_indicator"": ""OS""}",12050,False,ccb83cfefc9038017224cd97b800b66e248fe14529649ddf47907e5a2021449e,WinEVTX,Service Control Manager,EVT,"['Windows Modules Installer', 'stopped', '540072007500730074006500640049006E007300740061006C006C00650072002F0031000000']",[],1331698658276340,Content Modification Time,"<Event xmlns=""http://schemas.microsoft.com/win/2004/08/events/event"">
+  <System>
+    <Provider Name=""Service Control Manager"" Guid=""{555908d1-a6d7-4695-8e1e-26931d2012f4}"" EventSourceName=""Service Control Manager""/>
+    <EventID Qualifiers=""16384"">7036</EventID>
+    <Version>0</Version>
+    <Level>4</Level>
+    <Task>0</Task>
+    <Opcode>0</Opcode>
+    <Keywords>0x8080000000000000</Keywords>
+    <TimeCreated SystemTime=""2012-03-14T04:17:38.276340200Z""/>
+    <EventRecordID>12050</EventRecordID>
+    <Correlation/>
+    <Execution ProcessID=""548"" ThreadID=""1340""/>
+    <Channel>System</Channel>
+    <Computer>WKS-WIN764BITB.shieldbase.local</Computer>
+    <Security/>
+  </System>
+  <EventData>
+    <Data Name=""param1"">Windows Modules Installer</Data>
+    <Data Name=""param2"">stopped</Data>
+    <Binary>540072007500730074006500640049006E007300740061006C006C00650072002F0031000000</Binary>
+  </EventData>
+</Event>
+",
+40,WKS-WIN764BITB.shieldbase.local,windows:evtx:record,2012-03-14 04:17:38.276340+00:00,OS:/root/System.evtx,7036,4,[],"[7036 / 0x1b7c] Source Name: Service Control Manager Message string: The Windows Modules Installer service entered the stopped state. Strings: ['Windows Modules Installer', 'stopped', '540072007500730074006500640049006E007300740061006C006C00650072002F0031000000'] Computer Name: WKS-WIN764BITB.shieldbase.local Record Number: 12050 Event Level: 4",1073748860.0,0,winevtx,"{""__type__"": ""PathSpec"", ""location"": ""/root/System.evtx"", ""type_indicator"": ""OS""}",12050,False,ccb83cfefc9038017224cd97b800b66e248fe14529649ddf47907e5a2021449e,WinEVTX,Service Control Manager,EVT,"['Windows Modules Installer', 'stopped', '540072007500730074006500640049006E007300740061006C006C00650072002F0031000000']",[],1331698658276340,Creation Time,"<Event xmlns=""http://schemas.microsoft.com/win/2004/08/events/event"">
+  <System>
+    <Provider Name=""Service Control Manager"" Guid=""{555908d1-a6d7-4695-8e1e-26931d2012f4}"" EventSourceName=""Service Control Manager""/>
+    <EventID Qualifiers=""16384"">7036</EventID>
+    <Version>0</Version>
+    <Level>4</Level>
+    <Task>0</Task>
+    <Opcode>0</Opcode>
+    <Keywords>0x8080000000000000</Keywords>
+    <TimeCreated SystemTime=""2012-03-14T04:17:38.276340200Z""/>
+    <EventRecordID>12050</EventRecordID>
+    <Correlation/>
+    <Execution ProcessID=""548"" ThreadID=""1340""/>
+    <Channel>System</Channel>
+    <Computer>WKS-WIN764BITB.shieldbase.local</Computer>
+    <Security/>
+  </System>
+  <EventData>
+    <Data Name=""param1"">Windows Modules Installer</Data>
+    <Data Name=""param2"">stopped</Data>
+    <Binary>540072007500730074006500640049006E007300740061006C006C00650072002F0031000000</Binary>
+  </EventData>
+</Event>
+",
+48,WKS-WIN764BITB.shieldbase.local,windows:evtx:record,2012-03-14 04:17:38.276340+00:00,OS:/root/System.evtx,7036,4,[],"[7036 / 0x1b7c] Source Name: Service Control Manager Message string: The Windows Modules Installer service entered the stopped state. Strings: ['Windows Modules Installer', 'stopped', '540072007500730074006500640049006E007300740061006C006C00650072002F0031000000'] Computer Name: WKS-WIN764BITB.shieldbase.local Record Number: 12050 Event Level: 4",1073748860.0,0,winevtx,"{""__type__"": ""PathSpec"", ""location"": ""/root/System.evtx"", ""type_indicator"": ""OS""}",12050,False,ccb83cfefc9038017224cd97b800b66e248fe14529649ddf47907e5a2021449e,WinEVTX,Service Control Manager,EVT,"['Windows Modules Installer', 'stopped', '540072007500730074006500640049006E007300740061006C006C00650072002F0031000000']",[],1331698658276340,Content Modification Time,"<Event xmlns=""http://schemas.microsoft.com/win/2004/08/events/event"">
+  <System>
+    <Provider Name=""Service Control Manager"" Guid=""{555908d1-a6d7-4695-8e1e-26931d2012f4}"" EventSourceName=""Service Control Manager""/>
+    <EventID Qualifiers=""16384"">7036</EventID>
+    <Version>0</Version>
+    <Level>4</Level>
+    <Task>0</Task>
+    <Opcode>0</Opcode>
+    <Keywords>0x8080000000000000</Keywords>
+    <TimeCreated SystemTime=""2012-03-14T04:17:38.276340200Z""/>
+    <EventRecordID>12050</EventRecordID>
+    <Correlation/>
+    <Execution ProcessID=""548"" ThreadID=""1340""/>
+    <Channel>System</Channel>
+    <Computer>WKS-WIN764BITB.shieldbase.local</Computer>
+    <Security/>
+  </System>
+  <EventData>
+    <Data Name=""param1"">Windows Modules Installer</Data>
+    <Data Name=""param2"">stopped</Data>
+    <Binary>540072007500730074006500640049006E007300740061006C006C00650072002F0031000000</Binary>
+  </EventData>
+</Event>
+",
+48,WKS-WIN764BITB.shieldbase.local,windows:evtx:record,2012-03-14 04:17:38.276340+00:00,OS:/root/System.evtx,7036,4,[],"[7036 / 0x1b7c] Source Name: Service Control Manager Message string: The Windows Modules Installer service entered the stopped state. Strings: ['Windows Modules Installer', 'stopped', '540072007500730074006500640049006E007300740061006C006C00650072002F0031000000'] Computer Name: WKS-WIN764BITB.shieldbase.local Record Number: 12050 Event Level: 4",1073748860.0,0,winevtx,"{""__type__"": ""PathSpec"", ""location"": ""/root/System.evtx"", ""type_indicator"": ""OS""}",12050,False,ccb83cfefc9038017224cd97b800b66e248fe14529649ddf47907e5a2021449e,WinEVTX,Service Control Manager,EVT,"['Windows Modules Installer', 'stopped', '540072007500730074006500640049006E007300740061006C006C00650072002F0031000000']",[],1331698658276340,Creation Time,"<Event xmlns=""http://schemas.microsoft.com/win/2004/08/events/event"">
+  <System>
+    <Provider Name=""Service Control Manager"" Guid=""{555908d1-a6d7-4695-8e1e-26931d2012f4}"" EventSourceName=""Service Control Manager""/>
+    <EventID Qualifiers=""16384"">7036</EventID>
+    <Version>0</Version>
+    <Level>4</Level>
+    <Task>0</Task>
+    <Opcode>0</Opcode>
+    <Keywords>0x8080000000000000</Keywords>
+    <TimeCreated SystemTime=""2012-03-14T04:17:38.276340200Z""/>
+    <EventRecordID>12050</EventRecordID>
+    <Correlation/>
+    <Execution ProcessID=""548"" ThreadID=""1340""/>
+    <Channel>System</Channel>
+    <Computer>WKS-WIN764BITB.shieldbase.local</Computer>
+    <Security/>
+  </System>
+  <EventData>
+    <Data Name=""param1"">Windows Modules Installer</Data>
+    <Data Name=""param2"">stopped</Data>
+    <Binary>540072007500730074006500640049006E007300740061006C006C00650072002F0031000000</Binary>
+  </EventData>
+</Event>
+",
+49,WKS-WIN764BITB.shieldbase.local,windows:evtx:record,2012-03-14 04:17:38.276340+00:00,OS:/root/System.evtx,7036,4,['__ts_star'],"[7036 / 0x1b7c] Source Name: Service Control Manager Message string: The Windows Modules Installer service entered the stopped state. Strings: ['Windows Modules Installer', 'stopped', '540072007500730074006500640049006E007300740061006C006C00650072002F0031000000'] Computer Name: WKS-WIN764BITB.shieldbase.local Record Number: 12050 Event Level: 4",1073748860.0,0,winevtx,"{""__type__"": ""PathSpec"", ""location"": ""/root/System.evtx"", ""type_indicator"": ""OS""}",12050,False,ccb83cfefc9038017224cd97b800b66e248fe14529649ddf47907e5a2021449e,WinEVTX,Service Control Manager,EVT,"['Windows Modules Installer', 'stopped', '540072007500730074006500640049006E007300740061006C006C00650072002F0031000000']",[],1331698658276340,Content Modification Time,"<Event xmlns=""http://schemas.microsoft.com/win/2004/08/events/event"">
+  <System>
+    <Provider Name=""Service Control Manager"" Guid=""{555908d1-a6d7-4695-8e1e-26931d2012f4}"" EventSourceName=""Service Control Manager""/>
+    <EventID Qualifiers=""16384"">7036</EventID>
+    <Version>0</Version>
+    <Level>4</Level>
+    <Task>0</Task>
+    <Opcode>0</Opcode>
+    <Keywords>0x8080000000000000</Keywords>
+    <TimeCreated SystemTime=""2012-03-14T04:17:38.276340200Z""/>
+    <EventRecordID>12050</EventRecordID>
+    <Correlation/>
+    <Execution ProcessID=""548"" ThreadID=""1340""/>
+    <Channel>System</Channel>
+    <Computer>WKS-WIN764BITB.shieldbase.local</Computer>
+    <Security/>
+  </System>
+  <EventData>
+    <Data Name=""param1"">Windows Modules Installer</Data>
+    <Data Name=""param2"">stopped</Data>
+    <Binary>540072007500730074006500640049006E007300740061006C006C00650072002F0031000000</Binary>
+  </EventData>
+</Event>
+",
+49,WKS-WIN764BITB.shieldbase.local,windows:evtx:record,2012-03-14 04:17:38.276340+00:00,OS:/root/System.evtx,7036,4,['__ts_star'],"[7036 / 0x1b7c] Source Name: Service Control Manager Message string: The Windows Modules Installer service entered the stopped state. Strings: ['Windows Modules Installer', 'stopped', '540072007500730074006500640049006E007300740061006C006C00650072002F0031000000'] Computer Name: WKS-WIN764BITB.shieldbase.local Record Number: 12050 Event Level: 4",1073748860.0,0,winevtx,"{""__type__"": ""PathSpec"", ""location"": ""/root/System.evtx"", ""type_indicator"": ""OS""}",12050,False,ccb83cfefc9038017224cd97b800b66e248fe14529649ddf47907e5a2021449e,WinEVTX,Service Control Manager,EVT,"['Windows Modules Installer', 'stopped', '540072007500730074006500640049006E007300740061006C006C00650072002F0031000000']",[],1331698658276340,Creation Time,"<Event xmlns=""http://schemas.microsoft.com/win/2004/08/events/event"">
+  <System>
+    <Provider Name=""Service Control Manager"" Guid=""{555908d1-a6d7-4695-8e1e-26931d2012f4}"" EventSourceName=""Service Control Manager""/>
+    <EventID Qualifiers=""16384"">7036</EventID>
+    <Version>0</Version>
+    <Level>4</Level>
+    <Task>0</Task>
+    <Opcode>0</Opcode>
+    <Keywords>0x8080000000000000</Keywords>
+    <TimeCreated SystemTime=""2012-03-14T04:17:38.276340200Z""/>
+    <EventRecordID>12050</EventRecordID>
+    <Correlation/>
+    <Execution ProcessID=""548"" ThreadID=""1340""/>
+    <Channel>System</Channel>
+    <Computer>WKS-WIN764BITB.shieldbase.local</Computer>
+    <Security/>
+  </System>
+  <EventData>
+    <Data Name=""param1"">Windows Modules Installer</Data>
+    <Data Name=""param2"">stopped</Data>
+    <Binary>540072007500730074006500640049006E007300740061006C006C00650072002F0031000000</Binary>
+  </EventData>
+</Event>
+",
+35,WKS-WIN764BITB.shieldbase.local,windows:evtx:record,2012-03-14 04:17:43.354562+00:00,OS:/root/System.evtx,105,4,[],"[105 / 0x0069] Source Name: Microsoft-Windows-Eventlog Strings: ['System', 'C:\\Windows\\System32\\Winevt\\Logs\\Archive-System-2012-03-14-04-17-39-932.evtx'] Computer Name: WKS-WIN764BITB.shieldbase.local Record Number: 12049 Event Level: 4",,0,winevtx,"{""__type__"": ""PathSpec"", ""location"": ""/root/System.evtx"", ""type_indicator"": ""OS""}",12049,False,ccb83cfefc9038017224cd97b800b66e248fe14529649ddf47907e5a2021449e,WinEVTX,Microsoft-Windows-Eventlog,EVT,"['System', 'C:\\Windows\\System32\\Winevt\\Logs\\Archive-System-2012-03-14-04-17-39-932.evtx']",[],1331698663354562,Creation Time,"<Event xmlns=""http://schemas.microsoft.com/win/2004/08/events/event"">
+  <System>
+    <Provider Name=""Microsoft-Windows-Eventlog"" Guid=""{fc65ddd8-d6ef-4962-83d5-6e5cfe9ce148}""/>
+    <EventID>105</EventID>
+    <Version>0</Version>
+    <Level>4</Level>
+    <Task>105</Task>
+    <Opcode>0</Opcode>
+    <Keywords>0x8000000000000000</Keywords>
+    <TimeCreated SystemTime=""2012-03-14T04:17:43.354562700Z""/>
+    <EventRecordID>12049</EventRecordID>
+    <Correlation/>
+    <Execution ProcessID=""820"" ThreadID=""2868""/>
+    <Channel>System</Channel>
+    <Computer>WKS-WIN764BITB.shieldbase.local</Computer>
+    <Security/>
+  </System>
+  <UserData>
+    <AutoBackup xmlns:auto-ns3=""http://schemas.microsoft.com/win/2004/08/events"" xmlns=""http://manifests.microsoft.com/win/2004/08/windows/eventlog"">
+      <Channel>System</Channel>
+      <BackupPath>C:\Windows\System32\Winevt\Logs\Archive-System-2012-03-14-04-17-39-932.evtx</BackupPath>
+    </AutoBackup>
+  </UserData>
+</Event>
+",
+35,WKS-WIN764BITB.shieldbase.local,windows:evtx:record,2012-03-14 04:17:43.354563+00:00,OS:/root/System.evtx,105,4,[],"[105 / 0x0069] Source Name: Microsoft-Windows-Eventlog Strings: ['System', 'C:\\Windows\\System32\\Winevt\\Logs\\Archive-System-2012-03-14-04-17-39-932.evtx'] Computer Name: WKS-WIN764BITB.shieldbase.local Record Number: 12049 Event Level: 4",,0,winevtx,"{""__type__"": ""PathSpec"", ""location"": ""/root/System.evtx"", ""type_indicator"": ""OS""}",12049,False,ccb83cfefc9038017224cd97b800b66e248fe14529649ddf47907e5a2021449e,WinEVTX,Microsoft-Windows-Eventlog,EVT,"['System', 'C:\\Windows\\System32\\Winevt\\Logs\\Archive-System-2012-03-14-04-17-39-932.evtx']",[],1331698663354563,Content Modification Time,"<Event xmlns=""http://schemas.microsoft.com/win/2004/08/events/event"">
+  <System>
+    <Provider Name=""Microsoft-Windows-Eventlog"" Guid=""{fc65ddd8-d6ef-4962-83d5-6e5cfe9ce148}""/>
+    <EventID>105</EventID>
+    <Version>0</Version>
+    <Level>4</Level>
+    <Task>105</Task>
+    <Opcode>0</Opcode>
+    <Keywords>0x8000000000000000</Keywords>
+    <TimeCreated SystemTime=""2012-03-14T04:17:43.354562700Z""/>
+    <EventRecordID>12049</EventRecordID>
+    <Correlation/>
+    <Execution ProcessID=""820"" ThreadID=""2868""/>
+    <Channel>System</Channel>
+    <Computer>WKS-WIN764BITB.shieldbase.local</Computer>
+    <Security/>
+  </System>
+  <UserData>
+    <AutoBackup xmlns:auto-ns3=""http://schemas.microsoft.com/win/2004/08/events"" xmlns=""http://manifests.microsoft.com/win/2004/08/windows/eventlog"">
+      <Channel>System</Channel>
+      <BackupPath>C:\Windows\System32\Winevt\Logs\Archive-System-2012-03-14-04-17-39-932.evtx</BackupPath>
+    </AutoBackup>
+  </UserData>
+</Event>
+",
+37,WKS-WIN764BITB.shieldbase.local,windows:evtx:record,2012-03-14 04:17:43.354562+00:00,OS:/root/System.evtx,105,4,[],"[105 / 0x0069] Source Name: Microsoft-Windows-Eventlog Strings: ['System', 'C:\\Windows\\System32\\Winevt\\Logs\\Archive-System-2012-03-14-04-17-39-932.evtx'] Computer Name: WKS-WIN764BITB.shieldbase.local Record Number: 12049 Event Level: 4",,0,winevtx,"{""__type__"": ""PathSpec"", ""location"": ""/root/System.evtx"", ""type_indicator"": ""OS""}",12049,False,ccb83cfefc9038017224cd97b800b66e248fe14529649ddf47907e5a2021449e,WinEVTX,Microsoft-Windows-Eventlog,EVT,"['System', 'C:\\Windows\\System32\\Winevt\\Logs\\Archive-System-2012-03-14-04-17-39-932.evtx']",[],1331698663354562,Creation Time,"<Event xmlns=""http://schemas.microsoft.com/win/2004/08/events/event"">
+  <System>
+    <Provider Name=""Microsoft-Windows-Eventlog"" Guid=""{fc65ddd8-d6ef-4962-83d5-6e5cfe9ce148}""/>
+    <EventID>105</EventID>
+    <Version>0</Version>
+    <Level>4</Level>
+    <Task>105</Task>
+    <Opcode>0</Opcode>
+    <Keywords>0x8000000000000000</Keywords>
+    <TimeCreated SystemTime=""2012-03-14T04:17:43.354562700Z""/>
+    <EventRecordID>12049</EventRecordID>
+    <Correlation/>
+    <Execution ProcessID=""820"" ThreadID=""2868""/>
+    <Channel>System</Channel>
+    <Computer>WKS-WIN764BITB.shieldbase.local</Computer>
+    <Security/>
+  </System>
+  <UserData>
+    <AutoBackup xmlns:auto-ns3=""http://schemas.microsoft.com/win/2004/08/events"" xmlns=""http://manifests.microsoft.com/win/2004/08/windows/eventlog"">
+      <Channel>System</Channel>
+      <BackupPath>C:\Windows\System32\Winevt\Logs\Archive-System-2012-03-14-04-17-39-932.evtx</BackupPath>
+    </AutoBackup>
+  </UserData>
+</Event>
+",

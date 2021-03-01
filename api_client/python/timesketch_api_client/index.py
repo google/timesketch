@@ -43,7 +43,7 @@ class SearchIndex(resource.BaseResource):
         self._labels = []
         self._searchindex_name = searchindex_name
         self._resource_uri = 'searchindices/{0:d}'.format(self.id)
-        super(SearchIndex, self).__init__(
+        super().__init__(
             api=api, resource_uri=self._resource_uri)
 
     def _get_object_dict(self):
@@ -54,6 +54,19 @@ class SearchIndex(resource.BaseResource):
             return {}
 
         return objects[0]
+
+    @property
+    def has_timeline_id(self):
+        """Property that returns back whether a __timeline_id field is present.
+
+        Returns:
+            bool: True if the data uses __timeline_id field to distinguish
+                different data sets in an index, False if the entire index
+                is the data set.
+        """
+        index_data = self.data
+        meta = index_data.get('meta', {})
+        return meta.get('contains_timeline_id', False)
 
     @property
     def labels(self):

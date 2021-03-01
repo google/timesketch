@@ -12,19 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """This module holds utility functions for the version 1 of the API."""
-
-from __future__ import unicode_literals
-
+import logging
 import json
 import time
 
 from flask import abort
 from flask import jsonify
+from flask_login import current_user
 
 import altair as alt
 
+from timesketch.lib import ontology
 from timesketch.lib.aggregators import manager as aggregator_manager
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
+from timesketch.models import db_session
+from timesketch.models.sketch import View
+
+
+logger = logging.getLogger('timesketch.api_utils')
 
 
 def bad_request(message):
@@ -39,6 +44,57 @@ def bad_request(message):
     response = jsonify({'message': message})
     response.status_code = HTTP_STATUS_CODE_BAD_REQUEST
     return response
+
+
+def get_sketch_attributes(sketch):
+    """Returns a list of attributes of a sketch."""
+    attributes = []
+    ontology_def = ontology.ONTOLOGY
+    for attribute in sketch.attributes:
+        if attribute.sketch_id != sketch.id:
+            continue
+        name = attribute.name
+        attribute_values = []
+        ontology_string = attribute.ontology
+        ontology_dict = ontology_def.get(ontology_string, {})
+        cast_as_str = ontology_dict.get('cast_as', 'str')
+
+        for attr_value in attribute.values:
+            try:
+                value = ontology.cast_variable(attr_value.value, cast_as_str)
+            except TypeError:
+                value = 'Unable to cast'
+
+            attribute_values.append(value)
+
+        if len(attribute_values) == 1:
+            attributes.append(
+                (name, attribute_values[0], ontology_string))
+        else:
+            attributes.append(
+                (name, attribute_values, ontology_string))
+    return attributes
+
+
+def get_sketch_last_activity(sketch):
+    """Returns a date string with the last activity from a sketch."""
+    try:
+        last_activity = View.query.filter_by(
+            sketch=sketch, name='').order_by(
+            View.updated_at.desc()).first().updated_at
+    except AttributeError:
+        return ''
+    return last_activity.isoformat()
+
+
+def update_sketch_last_activity(sketch):
+    """Update the last activity date of a sketch."""
+    view = View.get_or_create(
+        user=current_user, sketch=sketch, name='')
+    view.update_modification_time()
+
+    db_session.add(view)
+    db_session.commit()
 
 
 def run_aggregator(sketch_id, aggregator_name, aggregator_parameters=None,

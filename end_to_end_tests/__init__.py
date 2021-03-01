@@ -14,4 +14,8 @@
 """End to end test module."""
 
 # Register all tests by importing them.
+# TODO: Re-enable this test. Temporarily disabled while debugging issues.
+# from . import agg_test
+from . import client_test
+from . import graph_test
 from . import query_test

@@ -1,0 +1,34 @@
+# Define the ontology that is available for Timesketch.
+# An ontology needs to define the name, which is what will
+# be used to identify the ontology.
+# + cast_as is used to define how the value should be
+#       interpreted in code.
+# + description is a short text describing the ontology.
+
+text:
+        cast_as: str
+        description: "Free form text."
+
+int:
+        case_as: int
+        description: "Integer"
+
+url.safe:
+        cast_as: str
+        description: "Safe URL that can be visited."
+
+url.bad:
+        cast_as: str
+        description: "URL related to a sketch, can morph into a search."
+
+domain:
+        cast_as: str
+        description: "Domain related to a sketch, can morp into a search."
+
+float:
+        cast_as: float
+        description: "Float."
+
+bool:
+        case_as: bool
+        description: "Boolean, True or False values."

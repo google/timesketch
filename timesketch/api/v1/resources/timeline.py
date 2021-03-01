@@ -14,9 +14,12 @@
 """Timeline resources for version 1 of the Timesketch API."""
 
 import codecs
+import json
+import logging
 import uuid
 import six
 
+import elasticsearch
 from flask import request
 from flask import abort
 from flask import current_app
@@ -25,6 +28,7 @@ from flask_login import login_required
 from flask_login import current_user
 
 from timesketch.api.v1 import resources
+from timesketch.api.v1 import utils
 from timesketch.lib import forms
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
@@ -35,6 +39,9 @@ from timesketch.models import db_session
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
+
+
+logger = logging.getLogger('timesketch.timeline_api')
 
 
 class TimelineListResource(resources.ResourceMixin, Resource):
@@ -130,11 +137,15 @@ class TimelineListResource(resources.ResourceMixin, Resource):
             # pylint: disable=import-outside-toplevel
             from timesketch.lib import tasks
             sketch_analyzer_group, _ = tasks.build_sketch_analysis_pipeline(
-                sketch_id, searchindex_id, current_user.id)
+                sketch_id, searchindex_id, current_user.id,
+                timeline_id=timeline_id)
             if sketch_analyzer_group:
                 pipeline = (tasks.run_sketch_init.s(
                     [searchindex.index_name]) | sketch_analyzer_group)
                 pipeline.apply_async()
+
+        # Update the last activity of a sketch.
+        utils.update_sketch_last_activity(sketch)
 
         return self.to_json(
             timeline, meta=metadata, status_code=return_code)
@@ -142,6 +153,26 @@ class TimelineListResource(resources.ResourceMixin, Resource):
 
 class TimelineResource(resources.ResourceMixin, Resource):
     """Resource to get timeline."""
+
+    def _add_label(self, timeline, label):
+        """Add a label to the timeline."""
+        if timeline.has_label(label):
+            logger.warning(
+                'Unable to apply the label [{0:s}] to timeline {1:s}, '
+                'already exists.'.format(label, timeline.name))
+            return False
+        timeline.add_label(label, user=current_user)
+        return True
+
+    def _remove_label(self, timeline, label):
+        """Removes a label from a timeline."""
+        if not timeline.has_label(label):
+            logger.warning(
+                'Unable to remove the label [{0:s}] from timeline {1:s}, '
+                'label does not exist.'.format(label, timeline.name))
+            return False
+        timeline.remove_label(label)
+        return True
 
     @login_required
     def get(self, sketch_id, timeline_id):
@@ -155,7 +186,17 @@ class TimelineResource(resources.ResourceMixin, Resource):
         if not sketch:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+
         timeline = Timeline.query.get(timeline_id)
+        if not timeline:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No Timeline found with this ID.')
+
+        if not timeline.sketch_id:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                f'The timeline {timeline_id} does not have an associated '
+                'sketch, does it belong to a sketch?')
 
         # Check that this timeline belongs to the sketch
         if timeline.sketch_id != sketch.id:
@@ -184,7 +225,10 @@ class TimelineResource(resources.ResourceMixin, Resource):
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
         timeline = Timeline.query.get(timeline_id)
-        form = forms.TimelineForm.build(request)
+        if not timeline:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                'No timeline found with this ID.')
 
         # Check that this timeline belongs to the sketch
         if timeline.sketch_id != sketch.id:
@@ -198,15 +242,63 @@ class TimelineResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_FORBIDDEN,
                 'The user does not have write permission on the sketch.')
 
+        form = forms.TimelineForm.build(request)
         if not form.validate_on_submit():
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
+
+        if form.labels.data:
+            label_string = form.labels.data
+            labels = json.loads(label_string)
+            if not isinstance(labels, (list, tuple)):
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST, (
+                        'Label needs to be a JSON string that '
+                        'converts to a list of strings.'))
+            if not all([isinstance(x, str) for x in labels]):
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST, (
+                        'Label needs to be a JSON string that '
+                        'converts to a list of strings (not all strings)'))
+
+            label_action = form.label_action.data
+            if label_action not in ('add', 'remove'):
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    'Label action needs to be either add or remove.')
+
+            changed = False
+            if label_action == 'add':
+                changes = []
+                for label in labels:
+                    changes.append(
+                        self._add_label(timeline=timeline, label=label))
+                changed = any(changes)
+            elif label_action == 'remove':
+                changes = []
+                for label in labels:
+                    changes.append(
+                        self._remove_label(timeline=timeline, label=label))
+                changed = any(changes)
+
+            if not changed:
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    'Label [{0:s}] not {1:s}'.format(
+                        ', '.join(labels), label_action))
+
+            db_session.add(timeline)
+            db_session.commit()
+            return HTTP_STATUS_CODE_OK
 
         timeline.name = form.name.data
         timeline.description = form.description.data
         timeline.color = form.color.data
         db_session.add(timeline)
         db_session.commit()
+
+        # Update the last activity of a sketch.
+        utils.update_sketch_last_activity(sketch)
 
         return HTTP_STATUS_CODE_OK
 
@@ -250,8 +342,39 @@ class TimelineResource(resources.ResourceMixin, Resource):
                     'Timelines with label [{0:s}] cannot be deleted.'.format(
                         label))
 
+        # Check if this searchindex is used in other sketches.
+        close_index = True
+        searchindex = timeline.searchindex
+        for timeline_ in searchindex.timelines:
+            if timeline_.sketch.id != sketch.id:
+                close_index = False
+                break
+
+            if timeline_.id != timeline_id:
+                # There are more than a single timeline using this index_name,
+                # we can't close it (unless this timeline is archived).
+                if timeline_.get_status.status != 'archived':
+                    close_index = False
+                    break
+
+        if close_index:
+            try:
+                self.datastore.client.indices.close(
+                    index=searchindex.index_name)
+            except elasticsearch.NotFoundError:
+                logger.error(
+                    'Unable to close index: {0:s} - index not '
+                    'found'.format(searchindex.index_name))
+
+            searchindex.set_status(status='archived')
+            timeline.set_status(status='archived')
+
         sketch.timelines.remove(timeline)
         db_session.commit()
+
+        # Update the last activity of a sketch.
+        utils.update_sketch_last_activity(sketch)
+
         return HTTP_STATUS_CODE_OK
 
 
@@ -325,6 +448,9 @@ class TimelineCreateResource(resources.ResourceMixin, Resource):
         if timeline:
             return self.to_json(
                 timeline, status_code=HTTP_STATUS_CODE_CREATED)
+
+        # Update the last activity of a sketch.
+        utils.update_sketch_last_activity(sketch)
 
         return self.to_json(
             searchindex, status_code=HTTP_STATUS_CODE_CREATED)

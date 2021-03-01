@@ -41,15 +41,15 @@ limitations under the License.
               <input type="checkbox" :checked="isSelected" v-on:click="toggleSelect">
             </span>
             <span class="icon control" v-on:click="toggleStar" style="margin-right: 3px; cursor: pointer;">
-              <i class="fas fa-star" v-if="isStarred" style="color: #ffe300; -webkit-text-stroke-width: 1px; -webkit-text-stroke-color: #d1d1d1;"></i>
-              <i class="fas fa-star" v-if="!isStarred" style="color: #d3d3d3;"></i>
+              <i class="fas fa-star" v-if="isStarred" title="Unstar the event" style="color: #ffe300; -webkit-text-stroke-width: 1px; -webkit-text-stroke-color: #d1d1d1;"></i>
+              <i class="fas fa-star" v-if="!isStarred" title="Star the event" style="color: #d3d3d3;"></i>
             </span>
             <span v-if="displayControls" class="icon control" style="margin-right: 3px; cursor: pointer;" v-on:click="searchContext">
-              <i class="fas fa-search" style="color: #d3d3d3;"></i>
+              <i class="fas fa-search" title="Search +/- 5min" style="color: #d3d3d3;"></i>
             </span>
             <span class="icon control">
-                <b-dropdown ref="labelDropdown" aria-role="list">
-                  <i class="fas fa-tag" style="color: #d3d3d3;" slot="trigger"></i>
+                <b-dropdown ref="labelDropdown" aria-role="list" append-to-body>
+                  <i class="fas fa-tag" title="Labels" style="color: #d3d3d3;" slot="trigger"></i>
                   <div class="modal-card" style="width:300px;color: var(--font-color-dark);">
                     <section class="modal-card-body">
                       <b-dropdown-item custom :focusable="false">
@@ -85,7 +85,7 @@ limitations under the License.
                         </span>
                         <div class="field is-grouped">
                           <p class="control is-expanded">
-                            <input class="input" v-model="labelToAdd" placeholder="Create new"></input>
+                            <input class="input" v-model="labelToAdd" placeholder="Create new">
                           </p>
                           <p class="control">
                             <button v-on:click="addLabels(labelToAdd)" class="button">Save</button>
@@ -109,9 +109,12 @@ limitations under the License.
           <span v-bind:class="{ 'ts-event-field-container': selectedFields.length === 1 }">
             <span v-bind:class="{ 'ts-event-field-ellipsis': selectedFields.length === 1 }">
               <span v-if="index === 0">
+                <!--eslint-disable-next-line vue/no-use-v-if-with-v-for-->
                 <span v-if="displayOptions.showEmojis" v-for="emoji in event._source.__ts_emojis" :key="emoji" v-html="emoji" :title="meta.emojis[emoji]">{{ emoji }}</span>
                 <span style="margin-left:10px;"></span>
+                <!--eslint-disable-next-line vue/no-use-v-if-with-v-for-->
                 <span v-if="displayOptions.showTags" v-for="tag in event._source.tag" :key="tag" class="tag is-small is-light" style="margin-right:5px; border:1px solid #d1d1d1;">{{ tag }}</span>
+                <!--eslint-disable-next-line vue/no-use-v-if-with-v-for-->
                 <span v-if="displayOptions.showTags" v-for="label in filteredLabels" :key="label" class="tag is-small is-light" style="margin-right:5px; border:1px solid #d1d1d1;">{{ label }}</span>
               </span>
               <span style="word-break: break-word;" :title="event._source[field.field]">
@@ -172,12 +175,12 @@ limitations under the License.
 </template>
 
 <script>
-  import ApiClient from '../../utils/RestApiClient'
-  import TsSketchExploreEventListRowDetail from './EventListRowDetail'
-  import EventBus from "../../main"
-  import { ToastProgrammatic as Toast } from 'buefy'
+import ApiClient from '../../utils/RestApiClient'
+import TsSketchExploreEventListRowDetail from './EventListRowDetail'
+import EventBus from '../../main'
+import { ToastProgrammatic as Toast } from 'buefy'
 
-  export default {
+export default {
   components: {
     TsSketchExploreEventListRowDetail
   },
@@ -203,7 +206,7 @@ limitations under the License.
       return this.$store.state.meta
     },
     timelineColor () {
-      let backgroundColor = this.timeline(this.event._index).color
+      let backgroundColor = this.timeline.color
       if (!backgroundColor.startsWith('#')) {
         backgroundColor = '#' + backgroundColor
       }
@@ -240,12 +243,12 @@ limitations under the License.
       if (this.isDarkTheme) {
         return {
           'background-color': backgroundColor,
-          'color': fontColor,
+          'color': fontColor
         }
       }
       return {
         'background-color': backgroundColor,
-        'color': fontColor,
+        'color': fontColor
       }
     },
     datetimeFormat () {
@@ -256,7 +259,7 @@ limitations under the License.
       }
     },
     timelineName () {
-      return this.timeline(this.event._index).name
+      return this.timeline.name
     },
     deltaDays () {
       if (!this.prevEvent) {
@@ -292,13 +295,8 @@ limitations under the License.
     }
   },
   methods: {
-    timeline (indexName) {
-      return this.sketch.timelines.find(function (timeline) {
-        return timeline.searchindex.index_name === indexName
-      })
-    },
     toggleStar () {
-      this.isStarred =! this.isStarred
+      this.isStarred = !this.isStarred
       ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', this.event).then((response) => {
       }).catch((e) => {
         console.error(e)
@@ -306,7 +304,7 @@ limitations under the License.
     },
     toggleStarOnSelect () {
       if (this.isSelected) {
-        this.isStarred =! this.isStarred
+        this.isStarred = !this.isStarred
       }
     },
     postComment: function (comment) {
@@ -367,7 +365,7 @@ limitations under the License.
       }
     },
     toggleTheme: function () {
-      this.isDarkTheme =! this.isDarkTheme
+      this.isDarkTheme = !this.isDarkTheme
     }
   },
   beforeDestroy () {
@@ -381,17 +379,24 @@ limitations under the License.
     EventBus.$on('toggleStar', this.toggleStarOnSelect)
     EventBus.$on('isDarkTheme', this.toggleTheme)
 
-    this.isDarkTheme = localStorage.theme === 'dark';
+    let isLegacy = this.meta.indices_metadata[this.event._index].is_legacy
+    if (isLegacy) {
+      this.timeline = this.sketch.active_timelines.filter(timeline => timeline.searchindex.index_name === this.event._index)[0]
+    } else {
+      this.timeline = this.sketch.active_timelines.filter(timeline => timeline.id === this.event._source.__ts_timeline_id)[0]
+    }
+
+    this.isDarkTheme = localStorage.theme === 'dark'
 
     if (this.event._source.label.indexOf('__ts_star') > -1) {
-        this.isStarred = true
+      this.isStarred = true
     }
     if (this.event._source.label.indexOf('__ts_comment') > -1) {
-        let searchindexId = this.event._index
-        let eventId = this.event._id
-        ApiClient.getEvent(this.sketch.id, searchindexId, eventId).then((response) => {
-          this.comments = response.data.meta.comments
-        }).catch((e) => {})
+      let searchindexId = this.event._index
+      let eventId = this.event._id
+      ApiClient.getEvent(this.sketch.id, searchindexId, eventId).then((response) => {
+        this.comments = response.data.meta.comments
+      }).catch((e) => {})
     }
   }
 }

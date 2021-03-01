@@ -17,7 +17,7 @@ limitations under the License.
   <div class="card card-accent-background" style="margin-top:15px;">
     <header class="card-header">
       <p class="card-header-title">
-        {{ messageTitle }}
+        {{ messageTitle }} [<span v-for="timeline in timelines" :key="timeline">{{ timeline }}</span>]
       </p>
       <span class="card-header-icon" aria-label="close">
         <span class="delete" v-on:click="$emit('closeDetail')"></span>
@@ -25,16 +25,18 @@ limitations under the License.
     </header>
     <div class="card-content">
       <table class="table is-fullwidth">
-        <colgroup>
-          <col span="1" style="width: 5%;">
-          <col span="1" style="width: 15%;">
-          <col span="1" style="width: 80%;">
-        </colgroup>
+        <thead>
+          <th></th>
+          <th>Analyzer</th>
+          <th>Result</th>
+          <th>Timeline</th>
+        </thead>
         <tbody>
-        <tr v-for="row in tableData">
+        <tr v-for="(row, index) in tableData" :key="index">
           <td><div style="width:10px; height: 10px; border-radius: 100%; margin-top:6px; margin-left:3px;" v-bind:class="{ pending: row.status === 'PENDING',  done: row.status === 'DONE', started: row.status === 'STARTED', error: row.status === 'ERROR'}"></div></td>
           <td>{{row.analyzer}}</td>
           <td>{{row.result}}</td>
+          <td>{{row.timeline.name}}</td>
         </tr>
         </tbody>
       </table>
@@ -46,19 +48,19 @@ limitations under the License.
 import ApiClient from '../../utils/RestApiClient'
 
 export default {
-  props: ['timeline', 'sessionId'],
+  props: ['session'],
   data () {
     return {
       analysisSession: {},
       analyses: [],
-      autoRefresh: false,
+      autoRefresh: false
     }
   },
   computed: {
     sketch () {
       return this.$store.state.sketch
     },
-    meta() {
+    meta () {
       return this.$store.state.meta
     },
     totalAnalyzers () {
@@ -73,14 +75,12 @@ export default {
       })
       return count
     },
-    runningAnalyzer () {
-      let running = false
+    timelines () {
+      let timelineSet = new Set()
       this.analyses.forEach(function (analyzer) {
-        if (analyzer.status[0].status === 'STARTED') {
-          running = analyzer.analyzer_name
-        }
+        timelineSet.add(analyzer.timeline.name)
       })
-      return running
+      return timelineSet
     },
     tableData () {
       let tableArray = []
@@ -89,6 +89,7 @@ export default {
         row.status = analyzer.status[0].status
         row.analyzer = analyzer.analyzer_name
         row.result = analyzer.result
+        row.timeline = analyzer.timeline
         tableArray.push(row)
       })
       return tableArray
@@ -99,33 +100,34 @@ export default {
   },
   methods: {
     fetchData () {
-      if (!this.sessionId) {
-        return
-      }
-      ApiClient.getAnalyzerSession(this.sketch.id, this.sessionId).then((response) => {
+      ApiClient.getAnalyzerSession(this.sketch.id, this.session.id).then((response) => {
         this.analysisSession = response.data.objects[0]
         this.analyses = response.data.objects[0].analyses
         this.autoRefresh = true
       }).catch((e) => {})
     }
   },
+  beforeDestroy () {
+    clearInterval(this.t)
+    this.t = false
+  },
+  created () {
+    this.analysisSession = this.session
+    this.analyses = this.session.analyses
+    this.autoRefresh = true
+  },
   watch: {
-    autoRefresh(val) {
+    autoRefresh (val) {
       if (val && !this.t) {
         this.t = setInterval(function () {
           this.fetchData()
           if (this.finishedAnalyzers === this.totalAnalyzers) {
             this.autoRefresh = false
           }
-        }.bind(this), 5000)}
-      else {
+        }.bind(this), 5000)
+      } else {
         clearInterval(this.t)
         this.t = false
-      }
-    },
-    sessionId(val) {
-      if (val) {
-        this.fetchData()
       }
     }
   }

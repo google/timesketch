@@ -29,7 +29,7 @@ limitations under the License.
           </div>
         </b-modal>
 
-        <b-dropdown ref="dropdown" animation="none" aria-role="menu">
+        <b-dropdown ref="dropdown" animation="none" aria-role="menu" :position="position" :append-to-body="!isSimple">
 
           <a class="button" v-bind:class="{ 'is-rounded': isSimple, 'ts-search-dropdown': !isSimple}" slot="trigger" slot-scope="{ active }">
             <b-icon v-if="!isSimple" icon="save" style="margin-right: 7px; font-size: 0.6em;"></b-icon>
@@ -79,28 +79,28 @@ limitations under the License.
 </template>
 
 <script>
-import ApiClient from "../../utils/RestApiClient"
+import ApiClient from '../../utils/RestApiClient'
 import TsCreateViewForm from './CreateViewForm'
 
 export default {
   components: {
     TsCreateViewForm
   },
-  props: ['currentQueryString', 'currentQueryFilter', 'isSimple', 'sketchId'],
+  props: ['currentQueryString', 'currentQueryFilter', 'isSimple', 'isLast', 'sketchId'],
   data () {
     return {
       activeView: null,
-      showCreateViewModal: false
+      showCreateViewModal: false,
+      position: 'is-bottom-right'
     }
   },
   methods: {
-    setActiveView: function (view, doSearch=true) {
+    setActiveView: function (view, doSearch = true) {
       this.showCreateViewModal = false
       this.activeView = view
       if (doSearch) {
         this.$emit('setActiveView', view)
       }
-
     },
     clearSearch: function () {
       this.$emit('clearSearch')
@@ -119,10 +119,10 @@ export default {
       this.activeView.query = this.currentQueryString
       this.activeView.filter = JSON.stringify(this.currentQueryFilter)
       ApiClient.updateView(this.sketchId, this.activeView.id, this.currentQueryString, this.currentQueryFilter)
-       .then((response) => {
-         this.$buefy.toast.open('Saved search has been updated')
-       })
-       .catch((e) => {})
+        .then((response) => {
+          this.$buefy.toast.open('Saved search has been updated')
+        })
+        .catch((e) => {})
     }
   },
   computed: {
@@ -131,10 +131,13 @@ export default {
     }
   },
   created: function () {
+    if (this.isLast) {
+      this.position = 'is-top-right'
+    }
     let queryViewId = this.$route.query.view
     if (queryViewId) {
-      let view =  this.meta.views.filter(function(view) {
-        return view.id === parseInt(queryViewId);
+      let view = this.meta.views.filter(function (view) {
+        return view.id === parseInt(queryViewId)
       })
       this.setActiveView(view[0], false)
     }

@@ -15,31 +15,31 @@ limitations under the License.
 -->
 <template>
   <div>
-    <span v-for="timeline in activeTimelines" :key="timeline.id" class="tag is-medium has-text-left" style="cursor: pointer; margin-right: 7px;margin-bottom:7px;" v-bind:style="timelineColor(timeline)" v-on:click="toggleIndex(timeline.searchindex.index_name)">
-      {{ timeline.name }} <span class="tag is-small" style="margin-left:10px;margin-right:-7px;background-color: rgba(255,255,255,0.5);min-width:50px;"><span v-if="indexIsEnabled(timeline.searchindex.index_name) && countPerIndex">{{ countPerIndex[timeline.searchindex.index_name] | compactNumber }}</span></span>
+    <span v-for="timeline in activeTimelines" :key="timeline.id" class="tag is-medium has-text-left" style="cursor: pointer; margin-right: 7px;margin-bottom:7px;" v-bind:style="timelineColor(timeline)" v-on:click="toggleTimeline(timeline)">
+      {{ timeline.name }} <span class="tag is-small" style="margin-left:10px;margin-right:-7px;background-color: rgba(255,255,255,0.5);min-width:50px;"><span v-if="timelineIsEnabled(timeline) && countPerTimeline">{{ getCount(timeline) | compactNumber }}</span></span>
     </span>
     <div v-if="activeTimelines.length > 3" style="margin-top:7px;">
-      <span style="text-decoration: underline; cursor: pointer; margin-right: 10px;" v-on:click="enableAllIndices">Enable all</span>
-      <span style="text-decoration: underline; cursor: pointer;" v-on:click="disableAllIndices">Disable all</span>
+      <span style="text-decoration: underline; cursor: pointer; margin-right: 10px;" v-on:click="enableAllTimelines">Enable all</span>
+      <span style="text-decoration: underline; cursor: pointer;" v-on:click="disableAllTimelines">Disable all</span>
     </div>
   </div>
 </template>
 
 <script>
-import EventBus from "../../main"
+import EventBus from '../../main'
 
 export default {
-  props: ['activeTimelines', 'currentQueryFilter', 'countPerIndex'],
+  props: ['activeTimelines', 'currentQueryFilter', 'countPerIndex', 'countPerTimeline'],
   data () {
     return {
       isDarkTheme: false,
-      selectedTimelines: []
+      selectedTimelines: [],
+      timelineCount: {}
     }
   },
   methods: {
     timelineColor (timeline) {
       this.isDarkTheme = localStorage.theme === 'dark'
-      let indexName = timeline.searchindex.index_name
       let backgroundColor = timeline.color
       let textDecoration = 'none'
       let opacity = '100%'
@@ -47,7 +47,7 @@ export default {
         backgroundColor = '#' + backgroundColor
       }
       // Grey out the index if it is not selected.
-      if (!this.selectedTimelines.includes(indexName)) {
+      if (!this.selectedTimelines.includes(timeline)) {
         backgroundColor = '#d2d2d2'
         textDecoration = 'line-through'
         opacity = '50%'
@@ -65,56 +65,75 @@ export default {
       return {
         'background-color': backgroundColor,
         'text-decoration': textDecoration,
-        'opacity': opacity,
+        'opacity': opacity
       }
     },
-    toggleIndex: function (indexName) {
+    toggleTimeline: function (timeline) {
       let newArray = this.selectedTimelines.slice()
-      let index = newArray.indexOf(indexName)
-      if (index === -1) {
-        newArray.push(indexName)
+      let timelineIdx = newArray.indexOf(timeline)
+      if (timelineIdx === -1) {
+        newArray.push(timeline)
       } else {
-        newArray.splice(index, 1)
+        newArray.splice(timelineIdx, 1)
       }
       this.selectedTimelines = newArray
-      this.$emit('updateSelectedIndices', this.selectedTimelines)
+      this.$emit('updateSelectedTimelines', this.selectedTimelines)
     },
-    setAllIndices: function () {
-      let allIndices = []
-      this.activeTimelines.forEach(function (timeline) {
-        allIndices.push(timeline.searchindex.index_name)
-      })
-      this.selectedTimelines = allIndices
+    enableAllTimelines: function () {
+      this.selectedTimelines = this.activeTimelines
+      this.$emit('updateSelectedTimelines', this.selectedTimelines)
     },
-    enableAllIndices: function () {
-      this.setAllIndices()
-      this.$emit('updateSelectedIndices', this.selectedTimelines)
-    },
-    disableAllIndices: function () {
+    disableAllTimelines: function () {
       this.selectedTimelines = []
-      this.$emit('updateSelectedIndices', this.selectedTimelines)
+      this.$emit('updateSelectedTimelines', this.selectedTimelines)
     },
-    indexIsEnabled: function (index) {
-      return this.selectedTimelines.includes(index)
+    timelineIsEnabled: function (timeline) {
+      return this.selectedTimelines.includes(timeline)
     },
     toggleTheme: function () {
-      this.isDarkTheme =! this.isDarkTheme
+      this.isDarkTheme = !this.isDarkTheme
+    },
+    getCount: function (timeline) {
+      let count = this.countPerTimeline[timeline.id]
+      // Support for old style indices
+      if (count === undefined) {
+        count = this.countPerIndex[timeline.searchindex.index_name]
+      }
+      return count
+    },
+    syncSelectedTimelines: function () {
+      let timelines = []
+      this.currentQueryFilter.indices.forEach((index) => {
+        if (typeof (index) === 'string') {
+          let timeline = this.activeTimelines.find((timeline) => {
+            return timeline.searchindex.index_name === index
+          })
+          timelines.push(timeline)
+        } else if (typeof (index) === 'number') {
+          let timeline = this.activeTimelines.find((timeline) => {
+            return timeline.id === index
+          })
+          timelines.push(timeline)
+        }
+      })
+      this.selectedTimelines = timelines
     }
   },
   created: function () {
     EventBus.$on('isDarkTheme', this.toggleTheme)
-    EventBus.$on('clearSearch', this.enableAllIndices)
-
-    let timelines = []
-    this.activeTimelines.forEach(function (timeline) {
-      timelines.push(timeline.searchindex.index_name)
-    })
+    EventBus.$on('clearSearch', this.enableAllTimelines)
 
     if (this.currentQueryFilter.indices.includes('_all')) {
-      this.selectedTimelines = timelines
+      this.selectedTimelines = this.activeTimelines
     } else {
-      this.selectedTimelines = this.currentQueryFilter.indices
+      this.syncSelectedTimelines()
     }
+  },
+  watch: {
+    'currentQueryFilter.indices' (val) {
+      this.syncSelectedTimelines()
+    },
+    deep: true
   }
 }
 </script>

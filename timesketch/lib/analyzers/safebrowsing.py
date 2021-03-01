@@ -20,6 +20,8 @@ class SafeBrowsingSketchPlugin(interface.BaseSketchAnalyzer):
     """Sketch analyzer for Safe Browsing."""
 
     NAME = 'safebrowsing'
+    DISPLAY_NAME = 'Google Safe Browsing'
+    DESCRIPTION = 'Examine if a URL has a match in the Safe Browsing service'
 
     # Safe Browsing API v4, threatMatches.find endpoint.
     _SAFE_BROWSING_THREATMATCHING_ENDPOINT = (
@@ -43,14 +45,15 @@ class SafeBrowsingSketchPlugin(interface.BaseSketchAnalyzer):
     # Used to find proper URLs in the 'url' entries of TS events.
     _URL_BEGINNING_RE = re.compile(r'(http(s|):\/\/\S*)')
 
-    def __init__(self, index_name, sketch_id):
+    def __init__(self, index_name, sketch_id, timeline_id=None):
         """Initialize The Sketch Analyzer.
 
         Args:
             index_name: Elasticsearch index name
             sketch_id: Sketch ID
+            timeline_id: The ID of the timeline.
         """
-        super(SafeBrowsingSketchPlugin, self).__init__(index_name, sketch_id)
+        super().__init__(index_name, sketch_id, timeline_id=timeline_id)
 
         self._safebrowsing_api_key = current_app.config.get(
             'SAFEBROWSING_API_KEY')

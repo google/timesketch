@@ -15,6 +15,13 @@ limitations under the License.
 -->
 <template>
   <div>
+
+    <ts-navbar-main>
+      <template v-slot:left>
+        {{ sketch.name }}
+      </template>
+    </ts-navbar-main>
+
     <section class="section">
         <div class="container is-fluid">
           <ts-navbar-secondary currentAppContext="sketch" currentPage="explore"></ts-navbar-secondary>
@@ -52,12 +59,12 @@ limitations under the License.
             <div class="field is-grouped">
 
               <p class="control">
-                <b-dropdown trap-focus aria-role="menu" ref="NewTimeFilter">
+                <b-dropdown trap-focus append-to-body aria-role="menu" ref="NewTimeFilter">
                   <a class="button is-text" style="text-decoration: none;" slot="trigger" role="button">
-                    <span>+ Add time range</span>
+                    <span>+ Time filter</span>
                   </a>
                   <b-dropdown-item custom :focusable="false" style="min-width: 500px; padding: 30px;">
-                    <strong>Add time range</strong>
+                    <strong>Create time filter</strong>
                     <br>
                     <br>
                     <ts-explore-filter-time @addChip="addChip" @hideDropdown="hideDropdown"></ts-explore-filter-time>
@@ -66,7 +73,7 @@ limitations under the License.
               </p>
 
               <p class="control">
-                <b-dropdown trap-focus aria-role="menu">
+                <b-dropdown trap-focus append-to-body aria-role="menu">
 
                   <a class="button is-text" style="text-decoration: none;" slot="trigger" role="button">
                     <span>+ Add label filter</span>
@@ -108,10 +115,10 @@ limitations under the License.
               </p>
             </div>
 
-            <!-- Time range filters -->
+            <!-- Time filters -->
             <div class="tags" style="margin-bottom:-5px;">
               <span v-for="(chip, index) in timeFilterChips" :key="index + chip.value">
-                <b-dropdown trap-focus aria-role="menu" ref="TimeFilters">
+                <b-dropdown trap-focus append-to-body aria-role="menu" ref="TimeFilters">
                   <span slot="trigger" role="button" class="is-small is-outlined">
                     <div class="tags" style="margin-bottom: 5px; margin-right:7px;">
                       <span class="tag" style="cursor: pointer;" v-bind:class="{ 'chip-disabled': chip.active === false}">
@@ -119,18 +126,21 @@ limitations under the License.
                           <span v-if="index > 0" class="chip-operator-label">OR</span>
                           <span class="icon" style="margin-right:7px;"><i class="fas fa-clock"></i></span>
                           <span>{{ chip.value.split(',')[0] }}</span>
-                          <span v-if="chip.value.split(',')[0] !== chip.value.split(',')[1]"> &rarr; {{ chip.value.split(',')[1] }}</span>
+                          <span v-if="chip.type === 'datetime_range' && chip.value.split(',')[0] !== chip.value.split(',')[1]"> &rarr; {{ chip.value.split(',')[1] }}</span>
                         </span>
-                        <span class="fas fa-edit" style="margin-left:7px;"></span>
-                        <button style="margin-left:7px" class="delete is-small" v-on:click="removeChip(chip)"></button>
+                        <span class="fa-stack fa-lg" style="margin-left:5px; width:20px;">
+                          <i class="fas fa-circle fa-stack-1x can-change-background" style="transform:scale(1.1);"></i>
+                          <i class="fas fa-edit fa-stack-1x fa-inverse" style="transform:scale(0.7);"></i>
+                        </span>
+                        <button class="delete is-small" style="margin-left:5px" v-on:click="removeChip(index)"></button>
                       </span>
                     </div>
                   </span>
                   <b-dropdown-item custom :focusable="false" style="min-width: 500px; padding: 30px;">
-                    <strong>Update time range</strong>
+                    <strong>Update time filter</strong>
                     <br>
                     <br>
-                    <ts-explore-filter-time @updateChip="updateChip($event, chip)" :selectedChip="chip" :start="chip.value.split(',')[0]" :end="chip.value.split(',')[1]"></ts-explore-filter-time>
+                    <ts-explore-filter-time :selectedChip="chip" @updateChip="updateChip($event, chip)" @hideDropdown="hideDropdown"></ts-explore-filter-time>
                   </b-dropdown-item>
                 </b-dropdown>
               </span>
@@ -157,18 +167,13 @@ limitations under the License.
               </span>
             </div>
 
-            <ts-explore-timeline-picker v-if="sketch.active_timelines" @updateSelectedIndices="updateSelectedIndices($event)" :active-timelines="sketch.active_timelines" :current-query-filter="currentQueryFilter" :count-per-index="eventList.meta.count_per_index"></ts-explore-timeline-picker>
+            <ts-explore-timeline-picker v-if="sketch.active_timelines" @updateSelectedTimelines="updateSelectedTimelines($event)" :active-timelines="sketch.active_timelines" :current-query-filter="currentQueryFilter" :count-per-index="eventList.meta.count_per_index" :count-per-timeline="eventList.meta.count_per_timeline"></ts-explore-timeline-picker>
 
           </div>
 
         </div>
       </div>
     </section>
-
-
-    <!-- Aggregations -->
-    <ts-sketch-explore-aggregation></ts-sketch-explore-aggregation>
-    <!-- End Aggregations -->
 
     <section class="section" id="context" v-show="contextEvent">
       <div class="container is-fluid">
@@ -196,6 +201,7 @@ limitations under the License.
                 </div>
                 <div class="level-item">
                   <span v-if="!toEvent && !searchInProgress">{{ totalHits }} events ({{ totalTime }}s)</span>
+                  <div v-if="searchInProgress"><span class="icon"><i class="fas fa-circle-notch fa-pulse"></i></span> Searching..</div>
                 </div>
                 <div class="level-item" v-if="numSelectedEvents" style="margin-right:50px;">
                   <button class="button is-small is-outlined" style="border-radius: 4px;" v-on:click="toggleStar">
@@ -226,7 +232,7 @@ limitations under the License.
                 </div>
                 <div class="level-item">
                   <div v-if="eventList.objects.length" class="select is-small">
-                    <select v-model="currentQueryFilter.size" @change="resetPagination">
+                    <select v-model="currentQueryFilter.size" @change="search">
                       <option v-bind:value="currentQueryFilter.size">{{ currentQueryFilter.size }}</option>
                       <option value="10">10</option>
                       <option value="20">20</option>
@@ -245,7 +251,7 @@ limitations under the License.
                 </div>
                 <div class="level-item">
                   <div v-if="eventList.objects.length">
-                    <b-dropdown position="is-bottom-left" aria-role="menu" trap-focus :can-close="true">
+                    <b-dropdown position="is-bottom-left" aria-role="menu" trap-focus append-to-body :can-close="true">
                       <button class="button is-outlined is-small" style="border-radius: 4px;" slot="trigger">
                     <span class="icon is-small">
                       <i class="fas fa-table"></i>
@@ -300,7 +306,6 @@ limitations under the License.
               </div>
             </nav>
 
-            <div v-if="searchInProgress"><span class="icon"><i class="fas fa-circle-notch fa-pulse"></i></span> Searching..</div>
             <div v-if="totalHits > 0" style="margin-top:20px;"></div>
 
             <ts-sketch-explore-event-list v-if="eventList.objects.length"
@@ -340,20 +345,16 @@ import TsViewListDropdown from '../components/Sketch/ViewListDropdown'
 import TsSketchExploreEventList from '../components/Sketch/EventList'
 import TsExploreTimelinePicker from '../components/Sketch/TimelinePicker'
 import TsExploreFilterTime from '../components/Sketch/TimeFilter'
-import TsExploreSessionChart from '../components/Sketch/SessionChart'
-import TsSketchExploreAggregation from "../components/Sketch/Aggregation"
-import EventBus from "../main"
+import EventBus from '../main'
 
 const defaultQueryFilter = () => {
   return {
     'from': 0,
-    'time_start': null,
-    'time_end': null,
     'terminate_after': 40,
     'size': 40,
-    'indices': ['_all'],
+    'indices': [],
     'order': 'asc',
-    'chips': [],
+    'chips': []
   }
 }
 
@@ -368,12 +369,10 @@ const emptyEventList = () => {
 
 export default {
   components: {
-    TsSketchExploreAggregation,
     TsViewListDropdown,
     TsSketchExploreEventList,
     TsExploreTimelinePicker,
-    TsExploreFilterTime,
-    TsExploreSessionChart
+    TsExploreFilterTime
   },
   props: ['sketchId'],
   data () {
@@ -392,10 +391,9 @@ export default {
         meta: {},
         objects: []
       },
-      currentQueryString: "",
-      previousQueryString: "",
+      currentQueryString: '',
       currentQueryFilter: defaultQueryFilter(),
-      selectedFields: [{field: 'message', type: 'text'}],
+      selectedFields: [{ field: 'message', type: 'text' }],
       selectedFieldsProxy: [],
       expandFieldDropdown: false,
       selectedEvents: {},
@@ -444,21 +442,22 @@ export default {
       return this.currentQueryFilter.chips.filter(chip => chip.type === 'label' || chip.type === 'term')
     },
     timeFilterChips: function () {
-      return this.currentQueryFilter.chips.filter(chip => chip.type === 'datetime_range')
+      return this.currentQueryFilter.chips.filter(chip => chip.type.startsWith('datetime'))
     }
   },
   methods: {
-    hideDropdown: function() {
+    hideDropdown: function () {
       this.$refs['NewTimeFilter'].isActive = false
     },
-    search: function (emitEvent=true) {
+    search: function (emitEvent = true, resetPagination = true) {
+      this.searchInProgress = true
       if (!this.currentQueryString) {
         return
       }
 
       if (this.contextEvent) {
         // Scroll to the context box in the UI
-        this.$scrollTo('#context', 200, {offset: -300})
+        this.$scrollTo('#context', 200, { offset: -300 })
       }
 
       // Reset selected events.
@@ -466,13 +465,13 @@ export default {
 
       this.eventList = emptyEventList()
 
-      // Reset pagination when a new query string is entered.
-      if (this.previousQueryString !== this.currentQueryString) {
+      if (resetPagination) {
+        // TODO: Can we keep position of the pagination when changing page size?
+        // We need to calculate the new position in the page range and it is not
+        // trivial with the current pagination UI component we use.
         this.currentQueryFilter.from = 0
+        this.currentPage = 1
       }
-
-      // Save the query string for later check if pagination should be reset.
-      this.previousQueryString = this.currentQueryString
 
       // Update with selected fields
       this.currentQueryFilter.fields = this.selectedFields
@@ -489,6 +488,7 @@ export default {
       ApiClient.search(this.sketchId, formData).then((response) => {
         this.eventList.objects = response.data.objects
         this.eventList.meta = response.data.meta
+        this.searchInProgress = false
       }).catch((e) => {})
     },
     exportSearchResult: function () {
@@ -496,22 +496,21 @@ export default {
       let formData = {
         'query': this.currentQueryString,
         'filter': this.currentQueryFilter,
-        'file_name': "export.zip"
+        'file_name': 'export.zip'
       }
       ApiClient.exportSearchResult(this.sketchId, formData).then((response) => {
-        let fileURL = window.URL.createObjectURL(new Blob([response.data]));
-        let fileLink = document.createElement('a');
+        let fileURL = window.URL.createObjectURL(new Blob([response.data]))
+        let fileLink = document.createElement('a')
         let fileName = 'export.zip'
-        fileLink.href = fileURL;
-        fileLink.setAttribute('download', fileName);
-        document.body.appendChild(fileLink);
-        fileLink.click();
+        fileLink.href = fileURL
+        fileLink.setAttribute('download', fileName)
+        document.body.appendChild(fileLink)
+        fileLink.click()
         this.loadingClose()
       }).catch((e) => {
         console.error(e)
         this.loadingClose()
       })
-
     },
     searchView: function (viewId) {
       // Reset selected events.
@@ -526,13 +525,18 @@ export default {
         this.currentQueryString = view.query_string
         this.currentQueryFilter = JSON.parse(view.query_filter)
         if (!this.currentQueryFilter.fields || !this.currentQueryFilter.fields.length) {
-          this.currentQueryFilter.fields = [{field: 'message', type: 'text'}]
+          this.currentQueryFilter.fields = [{ field: 'message', type: 'text' }]
         }
         this.selectedFields = this.currentQueryFilter.fields
-        if (this.currentQueryFilter.indices === '_all') {
+        if (this.currentQueryFilter.indices[0] === '_all' || this.currentQueryFilter.indices === '_all') {
           let allIndices = []
-          this.sketch.active_timelines.forEach(function (timeline) {
-            allIndices.push(timeline.searchindex.index_name)
+          this.sketch.active_timelines.forEach((timeline) => {
+            let isLegacy = this.meta.indices_metadata[timeline.searchindex.index_name].is_legacy
+            if (isLegacy) {
+              allIndices.push(timeline.searchindex.index_name)
+            } else {
+              allIndices.push(timeline.id)
+            }
           })
           this.currentQueryFilter.indices = allIndices
         }
@@ -554,10 +558,10 @@ export default {
       const numContextEvents = 500
 
       this.contextEvent = event
-      if (!this.originalContext){
+      if (!this.originalContext) {
         let currentQueryStringCopy = JSON.parse(JSON.stringify(this.currentQueryString))
         let currentQueryFilterCopy = JSON.parse(JSON.stringify(this.currentQueryFilter))
-        this.originalContext = {'queryString': currentQueryStringCopy, 'queryFilter': currentQueryFilterCopy}
+        this.originalContext = { 'queryString': currentQueryStringCopy, 'queryFilter': currentQueryFilterCopy }
       }
 
       const dateTimeTemplate = 'YYYY-MM-DDTHH:mm:ss'
@@ -569,20 +573,26 @@ export default {
         'value': newStartDate + ',' + startDateTimeMoment.format(dateTimeTemplate),
         'type': 'datetime_range',
         'operator': 'must',
-        'active' : true
+        'active': true
       }
       let endChip = {
         'field': '',
         'value': startDateTimeMoment.format(dateTimeTemplate) + ',' + newEndDate,
         'type': 'datetime_range',
         'operator': 'must',
-        'active' : true
+        'active': true
       }
       // TODO: Use chips instead
       this.currentQueryString = '* OR ' + '_id:' + this.contextEvent._id
 
       this.currentQueryFilter.chips = [startChip, endChip]
-      this.currentQueryFilter.indices = [this.contextEvent._index]
+
+      let isLegacy = this.meta.indices_metadata[this.contextEvent._index].is_legacy
+      if (isLegacy) {
+        this.currentQueryFilter.indices = [this.contextEvent._index]
+      } else {
+        this.currentQueryFilter.indices = [this.contextEvent._source.__ts_timeline_id]
+      }
       this.currentQueryFilter.size = numContextEvents
 
       this.search()
@@ -594,21 +604,27 @@ export default {
       this.search()
     },
     scrollToContextEvent: function () {
-      this.$scrollTo('#' + this.contextEvent._id, 200, {offset: -300})
+      this.$scrollTo('#' + this.contextEvent._id, 200, { offset: -300 })
     },
-    updateQueryFilter: function (filter) {
-      this.currentQueryFilter = filter
-      this.search()
-    },
-    updateSelectedIndices: function (indices) {
-      this.currentQueryFilter.indices = indices
+    updateSelectedTimelines: function (timelines) {
+      let selected = []
+      timelines.forEach(timeline => {
+        let isLegacy = this.meta.indices_metadata[timeline.searchindex.index_name].is_legacy
+        if (isLegacy) {
+          selected.push(timeline.searchindex.index_name)
+        } else {
+          selected.push(timeline.id)
+        }
+      })
+      this.currentQueryFilter.indices = selected
       this.search()
     },
     clearSearch: function () {
       this.currentQueryString = ''
       this.currentQueryFilter = defaultQueryFilter()
+      this.currentQueryFilter.indices = '_all'
       this.eventList = emptyEventList()
-      this.$router.replace({'query': null})
+      this.$router.replace({ 'query': null })
     },
     toggleChip: function (chip) {
       // Treat undefined as active to support old chip formats.
@@ -619,16 +635,16 @@ export default {
       this.search()
     },
     removeChip: function (chip) {
-      let chipIndex = this.currentQueryFilter.chips.findIndex(c => c.value === chip.value);
+      let chipIndex = this.currentQueryFilter.chips.findIndex(c => c.value === chip.value)
       this.currentQueryFilter.chips.splice(chipIndex, 1)
       if (chip.type === 'label') {
         this.selectedLabels = this.selectedLabels.filter(label => label !== chip.value)
       }
       this.search()
     },
-    updateChip: function(newChip, oldChip) {
+    updateChip: function (newChip, oldChip) {
       // Replace the chip at the given index
-      let chipIndex = this.currentQueryFilter.chips.findIndex(c => c.value === oldChip.value);
+      let chipIndex = this.currentQueryFilter.chips.findIndex(c => c.value === oldChip.value && c.type === oldChip.type)
       this.currentQueryFilter.chips.splice(chipIndex, 1, newChip)
       this.search()
     },
@@ -647,7 +663,7 @@ export default {
         'value': labelName,
         'type': 'label',
         'operator': 'must',
-        'active' : true
+        'active': true
       }
       let chips = this.currentQueryFilter.chips
       if (chips) {
@@ -669,7 +685,7 @@ export default {
           'value': label,
           'type': 'label',
           'operator': 'must',
-          'active' : true
+          'active': true
         }
         this.addChip(chip)
       })
@@ -680,16 +696,8 @@ export default {
       }
     },
     paginate: function (pageNum) {
-      this.currentQueryFilter.from  = ((pageNum * this.currentQueryFilter.size) - this.currentQueryFilter.size)
-      this.search()
-    },
-    resetPagination: function () {
-      // TODO: Can we keep position of the pagination when changing page size?
-      // We need to calculate the new position in the page range and it is not
-      // trivial with the current pagination UI component we use.
-      this.currentQueryFilter.from = 0
-      this.currentPage = 1
-      this.search()
+      this.currentQueryFilter.from = ((pageNum * this.currentQueryFilter.size) - this.currentQueryFilter.size)
+      this.search(true, false)
     },
     updateSelectedFields: function (value) {
       // If we haven't fetched the field before, do an new search.
@@ -701,8 +709,8 @@ export default {
       value.forEach((field) => {
         this.selectedFields.push(field)
       })
-    // Prevents tags from being displayed
-    this.selectedFieldsProxy = []
+      // Prevents tags from being displayed
+      this.selectedFieldsProxy = []
     },
     removeField: function (index) {
       this.selectedFields.splice(index, 1)
@@ -724,7 +732,6 @@ export default {
       }).catch((e) => {})
 
       EventBus.$emit('toggleStar', this.selectedEvents)
-
     },
     changeSortOrder: function () {
       if (this.currentQueryFilter.order === 'asc') {
@@ -763,7 +770,7 @@ export default {
 
     this.params = {
       viewId: this.$route.query.view,
-      indexName: this.$route.query.index,
+      indexName: this.$route.query.timeline,
       resultLimit: this.$route.query.limit,
       queryString: this.$route.query.q
     }
@@ -782,7 +789,17 @@ export default {
       if (!this.params.queryString) {
         this.currentQueryString = '*'
       }
-      this.currentQueryFilter.indices = [this.params.indexName]
+
+      let timeline = this.sketch.active_timelines.find((timeline) => {
+        return timeline.id === parseInt(this.params.indexName, 10)
+      })
+
+      let isLegacy = this.meta.indices_metadata[timeline.searchindex.index_name].is_legacy
+      if (isLegacy) {
+        this.currentQueryFilter.indices = [timeline.searchindex.index_name]
+      } else {
+        this.currentQueryFilter.indices = [timeline.id]
+      }
       doSearch = true
     }
 
@@ -792,17 +809,19 @@ export default {
     }
 
     if (doSearch) {
+      if (!this.currentQueryFilter.indices.length) {
+        this.currentQueryFilter.indices = ['_all']
+      }
       this.search()
     }
-
   }
 }
 </script>
 
 <style lang="scss">
-  .dropdown-menu {
-    box-shadow: 0 30px 30px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
-  }
+.dropdown-menu {
+  box-shadow: 0 30px 30px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+}
 
 .multiselect,
 .multiselect__input,
@@ -833,5 +852,13 @@ export default {
   margin-right: 7px;
   font-size: 0.7em;
   cursor: default;
+}
+
+.can-change-background {
+  color: rgba(10, 10, 10, 0.2);
+}
+
+.can-change-background:hover {
+  color: rgba(10, 10, 10, 0.3);
 }
 </style>

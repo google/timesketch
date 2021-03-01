@@ -1,4 +1,4 @@
-"""empty message
+"""Add searchtemplate relationship to View model
 
 Revision ID: ecf00882f546
 Revises: 36e85b266dba
