@@ -28,6 +28,7 @@ from . import error
 from . import graph
 from . import resource
 from . import search
+from . import searchtemplate
 from . import story
 from . import timeline
 
@@ -929,7 +930,7 @@ class Sketch(resource.BaseResource):
         """Get a list of all search templates that are available.
 
         Returns:
-            List of search.Search object instances.
+            List of searchtemplate.SearchTemplate object instances.
         """
         response = self.api.fetch_resource_data('searchtemplate/')
         objects = response.get('objects', [])
@@ -938,19 +939,14 @@ class Sketch(resource.BaseResource):
 
         template_dicts = objects[0]
 
-        search_objects = []
+        template_list = []
         for template_dict in template_dicts:
-            search_obj = search.Search(sketch=self)
-            search_obj.from_manual(
-                query_string=template_dict.get('query_string'),
-                query_dsl=template_dict.get('query_dsl'),
-                query_filter=template_dict.get('query_filter'))
-            search_obj.name = template_dict.get('name', 'No Name')
-            search_obj.description = template_dict.get(
-                'description', 'No Description')
-            search_objects.append(search_obj)
+            template_obj = searchtemplate.SearchTemplate(api=self.api)
+            template_obj.from_saved(template_dict.get('id', sketch_id=self.id))
 
-        return search_objects
+            template_list.append(template_obj)
+
+        return template_list
 
     def list_timelines(self):
         """List all timelines for this sketch.

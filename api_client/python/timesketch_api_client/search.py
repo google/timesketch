@@ -20,6 +20,7 @@ import pandas
 
 from . import error
 from . import resource
+from . import searchtemplate
 
 
 logger = logging.getLogger('timesketch_api.search')
@@ -572,35 +573,6 @@ class Search(resource.SketchResource):
         response = self.api.session.delete(resource_url)
         return error.check_return_status(response, logger)
 
-    def delete_as_template(self):
-        """Delete this search as a search template."""
-        if not self._resource_id:
-            raise ValueError(
-                'Unable to delete the search template, since the search '
-                'does not seem to be saved, which is required.')
-
-        template_id = 0
-        if self._searchtemplate:
-            template_id = self._searchtemplate
-        else:
-            response = self.api.fetch_resource_data('searchtemplate/')
-            meta = response.get('meta', {})
-            collections = meta.get('collection', [])
-            for collection in collections:
-                if collection.get('search_id', 0) == self._resource_id:
-                    template_id = collection.get('template_id')
-                    break
-
-        if not template_id:
-            raise ValueError(
-                'Unable to find this search as a template, are you sure '
-                'it saved as one?')
-
-        resource_url = (
-            f'{self.api.api_root}/searchtemplate/{template_id}/')
-        response = self.api.session.delete(resource_url)
-        return error.check_return_status(response, logger)
-
     @property
     def description(self):
         """Property that returns back the description of the saved search."""
@@ -981,7 +953,7 @@ class Search(resource.SketchResource):
         """Save the search as a search template.
 
         Returns:
-            A string indicating the search template ID.
+            A search template object (searchtemplate.SearchTemplate).
 
         Raises:
             ValueError: if the search hasn't been saved first.
@@ -992,24 +964,12 @@ class Search(resource.SketchResource):
                 'The search needs to be first saved, then it can be saved '
                 'as a template. Use .save() and then try again.')
 
-        data = {
-            'search_id': self._resource_id,
-            'sketch_id': self._sketch.id,
-        }
-        resource_url = f'{self.api.api_root}/searchtemplate/'
-        response = self.api.session.post(resource_url, json=data)
-        status = error.check_return_status(response, logger)
-        if not status:
-            error.error_message(
-                response, 'Unable to save search as a template',
-                error=RuntimeError)
+        template = searchtemplate.SearchTemplate(self.api)
+        template.from_search_object(self)
 
-        response_json = error.get_response_json(response, logger)
-        template_dict = response_json.get('objects', [{}])[0]
-
-        template_id = template_dict.get('id', 0)
-        self._searchtemplate = template_id
-        return f'Saved search as a template to ID: {template_id}'
+        print(template.save())
+        self._searchtemplate = template.id
+        return template
 
     @property
     def scrolling(self):
