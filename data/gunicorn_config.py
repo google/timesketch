@@ -14,7 +14,7 @@
 """Gunicorn configuration for metrics endpoint."""
 import os
 import glob
-from pathlib import Path
+import pathlib
 
 from prometheus_flask_exporter.multiprocess import GunicornPrometheusMetrics
 
@@ -37,7 +37,7 @@ def when_ready(server):
         for file in files:
             os.remove(file)
     else:
-        Path(METRICS_DB_DIR).mkdir(parents=True, exist_ok=True)
+        pathlib.Path(METRICS_DB_DIR).mkdir(parents=True, exist_ok=True)
 
     GunicornPrometheusMetrics.start_http_server_when_ready(
         int(METRICS_HTTP_PORT), METRICS_HTTP_HOST)
