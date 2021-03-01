@@ -124,8 +124,8 @@ class SearchTemplateListResource(resources.ResourceMixin, Resource):
         if not search_id:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'Unable to save the searchtemplate, the search has not '
-                'been saved first')
+                'Unable to save the searchtemplate, the saved search ID is '
+                'missing.')
 
         search_obj = View.query.get(search_id)
         if not search_obj:
