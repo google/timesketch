@@ -954,15 +954,11 @@ class Search(resource.SketchResource):
 
         Returns:
             A search template object (searchtemplate.SearchTemplate).
-
-        Raises:
-            ValueError: if the search hasn't been saved first.
-            RuntimeError: If the search could not be saved as a template.
         """
         if not self._resource_id:
-            raise ValueError(
-                'The search needs to be first saved, then it can be saved '
-                'as a template. Use .save() and then try again.')
+            logger.warning('Search has not been saved first, saving now.')
+            return_string = self.save()
+            logger.info(return_string)
 
         template = searchtemplate.SearchTemplate(self.api)
         template.from_search_object(self)
