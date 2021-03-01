@@ -55,6 +55,7 @@ class TestConfig(object):
     AUTO_INDEX_ANALYZERS = []
     AUTO_SKETCH_ANALYZERS = []
     SIMILARITY_DATA_TYPES = []
+    SIGMA_RULES_FOLDERS = ['./data/sigma/rules/']
 
 
 class MockElasticClient(object):

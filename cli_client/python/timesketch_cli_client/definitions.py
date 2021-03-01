@@ -1,4 +1,4 @@
-# Copyright 2020 Google Inc. All rights reserved.
+# Copyright 2021 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,12 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Version information for Timesketch API Client."""
+"""Definitions for the Timesketch CLI client."""
 
-
-__version__ = '20210226'
-
-
-def get_version():
-    """Returns the version information."""
-    return __version__
+SUPPORTED_OUTPUT_FORMATS = ['text', 'csv', 'tabular']
+DEFAULT_OUTPUT_FORMAT = 'tabular'
