@@ -18,21 +18,28 @@ Note: Exclamation mark `!` denotes commands that should run in the docker contai
 #### Frontend development
 
 First we need to get an interactive shell to the container to install the frontend modules:
-```
+
+```bash
 $ docker exec -it $CONTAINER_ID bash
 ```
+
 Then inside the container shell go to the Timesketch frontend directory. 
-```
+
+```bash
 ! cd /usr/local/src/timesketch/timesketch/frontend
 ```
+
 Note that this directory in the container is mounted as volume from your local repo and mirrors changes to your local repo.
 
 Install node dependencies
-```
+
+```bash
 ! npm install
 ```
+
 This will create `node_modules/` folder from `package.json` in the frontend directory.
-```
+
+```bash
 ! yarn install
 ```
 
@@ -43,32 +50,49 @@ and linting python/frontend code in your local environment you need respectively
 frontend dependencies installed.
 
 For more information:
-```
+
+```python
 ! run_tests.py --help
 ```
+
 To run frontend tests in watch mode, cd to `frontend` directory and use
-```
+
+```bash
 ! yarn run test --watch
 ```
+
 To run TSLint in watch mode, use
-```
+
+```bash
 ! yarn run lint --watch
 ```
 
 To run a single test (there are multiple ways to do it), open a shell in the docker container:
-```
-docker exec -it $CONTAINER_ID /bin/bash
-```
-Switch to:
-```
-cd /usr/local/src/timesketch
-```
-And execute the single test
-```
-nosetests timesketch/lib/emojis_test.py -v
+
+```shell
+$ docker exec -it $CONTAINER_ID /bin/bash
 ```
 
-##### Writing tests
+Switch to:
+
+```shell
+! cd /usr/local/src/timesketch
+```
+
+And execute the single test
+
+```shell
+! nosetests timesketch/lib/emojis_test.py -v
+```
+
+Or all in one:
+
+```bash
+$ sudo docker exec -it $CONTAINER_ID nosetests /usr/local/src/timesketch/timesketch/lib/emojis_test.py -v
+```
+
+##### Writing unittests
+
 It is recommended to write unittests as much as possible.
 
 Test files in Timesketch have the naming convention ```_test.py``` and are stored next to the files they test. E.g. a test file for ```/timesketch/lib/emojis.py``` is stored as ```/timesketch/lib/emojis_test.py```
@@ -77,16 +101,64 @@ The unittests for the api client can use ```mock``` to emulate responses from th
 
 To introduce a new API endpoint to be tested, the endpoint needs to be registered in the ```url_router``` section in ```/api_client/python/timesketch_api_client/test_lib.py``` and the response needs to be defined in the same file.
 
+#### end2end tests
+
+End2end (e2e) tests are run on Github with every commit. Those tests will setup and run a full Timesketch instance, with the ability to import data and perform actions with it.
+To run the e2e-tests locally execute to setup the e2e docker images and run them:
+
+```bash
+sh end_to_end_tests/tools/run_in_container.py
+```
+
+The tests are stored in:
+
+```shell
+end_to_end_tests/*.py
+```
+
+And the sample data (currently a plaso file and a csv) is stored in:
+
+```shell
+end_to_end_tests/test_data/
+```
+
+#### Writing end2end tests
+
+While writing end2end tests one approach to make it easier to develop these e2e tests is to create a simlink to the source files, in order for the changes to the files being reflected in the container. Another way is to mount the Timesketch source code from ```/usr/local/src/timesketch/``` to ```/usr/local/lib/python3.8/dist-packages/```
+
+The following example is for changing / adding tests to ```client_test.py```
+```shell
+$ export CONTAINER_ID="$(sudo -E docker container list -f name=e2e_timesketch -q)"
+$ docker exec -it $CONTAINER_ID /bin/bash
+! rm /usr/local/lib/python3.8/dist-packages/end_to_end_tests/client_test.py
+! ln -s /usr/local/src/timesketch/end_to_end_tests/client_test.py /usr/local/lib/python3.8/dist-packages/end_to_end_tests/client_test.py
+```
+
+From now on you can edit the ```client_test.py``` file outside of the docker instance and run it again with
+
+```shell
+! python3 /usr/local/src/timesketch/end_to_end_tests/tools/run_in_container.py
+```
+
+or run the following outside of the container:
+```bash
+$ sudo docker exec -it $CONTAINER_ID python3 /usr/local/src/timesketch/end_to_end_tests/tools/run_in_container.py
+```
+
 #### Building Timesketch frontend
 
 To build frontend files and put bundles in `timesketch/static/dist/`, use
-```
+
+```bash
 ! yarn run build
 ```
+
 To watch for changes in code and rebuild automatically, use
-```
+
+```bash
 ! yarn run build --watch
 ```
+
 This is what you would normally use when making changes to the frontend.
 Changes are not instantaneous, it takes a couple of seconds to rebuild. It's best to
 keep this interactive shell to your container running so you can monitor the re-build.
@@ -102,22 +174,27 @@ Before pushing package to PyPI, make sure you build the frontend before.
 You may work on the frontend for your local environment for integration with your IDE or other reasons. This is not recommended however as it may cause clashes with your installed NodeJS.
 
 Add Node.js 8.x repo
-```
+
+```bash
 $ curl -sS https://deb.nodesource.com/gpgkey/nodesource.gpg.key | sudo apt-key add -
 $ echo "deb https://deb.nodesource.com/node_8.x $(lsb_release -s -c) main"  | sudo tee /etc/apt/sources.list.d/nodesource.list
 ```
+
 Add Yarn repo
-```
+
+```bash
 $ curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
 $ echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
-```
+
+```bash
 Install Node.js and Yarn
-```
+
+```bash
 $ apt-get update && apt-get install nodejs yarn
 ```
+
 After that you would run the same steps as with docker container to install frontend 
 dependencies and build/test.
-
 
 #### Using Notebook
 
@@ -198,9 +275,10 @@ For example the following will give a human readable information as well as a HT
 if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
 ```
+
 On the opposite side the following is not recommended:
+
 ```python
 if not sketch:
             abort(HTTP_STATUS_CODE_BAD_REQUEST, 'Error')
 ```
-

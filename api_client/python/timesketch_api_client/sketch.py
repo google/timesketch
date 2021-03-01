@@ -388,7 +388,7 @@ class Sketch(resource.BaseResource):
 
         status = error.check_return_status(response, logger)
         if not status:
-            logger.error('Unable to remove the attriubute from the sketch.')
+            logger.error('Unable to remove the attribute from the sketch.')
 
         return status
 
@@ -772,7 +772,7 @@ class Sketch(resource.BaseResource):
 
         Returns:
             A story object (instance of Story) if one is found. Returns
-            a None if neiter story_id or story_title is defined or if
+            a None if neither story_id or story_title is defined or if
             the view does not exist. If a story title is defined and
             not a story id, the first story that is found with the same
             title will be returned.
@@ -802,7 +802,7 @@ class Sketch(resource.BaseResource):
 
         Returns:
             A search object (instance of search.Search) if one is found.
-            Returns a None if neiter view_id or view_name is defined or if
+            Returns a None if neither view_id or view_name is defined or if
             the search does not exist.
         """
         return self.get_saved_search(search_id=view_id, search_name=view_name)
@@ -818,7 +818,7 @@ class Sketch(resource.BaseResource):
 
         Returns:
             A search object (instance of search.Search) if one is found.
-            Returns a None if neiter search_id or search_name is defined or if
+            Returns a None if neither search_id or search_name is defined or if
             the search does not exist.
         """
         if self.is_archived():
@@ -833,6 +833,35 @@ class Sketch(resource.BaseResource):
                 return search_obj
             if search_name and search_name.lower() == search_obj.name.lower():
                 return search_obj
+        return None
+
+    def get_timeline(self, timeline_id=None, timeline_name=None):
+        """Returns a timeline object that is stored in the sketch.
+
+        Args:
+            timeline_id: an integer indicating the ID of the timeline to
+                be fetched. Defaults to None.
+            timeline_name: a string with the name of the timeline. Optional
+                and defaults to None.
+
+        Returns:
+            A timeline object (instance of Timeline) if one is found. Returns
+            a None if neither timeline_id or timeline_name is defined or if
+            the timeline does not exist.
+        """
+        if self.is_archived():
+            raise RuntimeError(
+                'Unable to get timelines on an archived sketch.')
+
+        if timeline_id is None and timeline_name is None:
+            return None
+
+        for timeline_ in self.list_timelines():
+            if timeline_id and timeline_id == timeline_.id:
+                return timeline_
+            if timeline_name:
+                if timeline_name.lower() == timeline_.name.lower():
+                    return timeline_
         return None
 
     def list_stories(self):
@@ -1537,7 +1566,7 @@ class Sketch(resource.BaseResource):
         return self._archived
 
     def archive(self):
-        """Archive a sketch and return a boolean whether it was succesful."""
+        """Archive a sketch and return a boolean whether it was successful."""
         if self.is_archived():
             logger.error('Sketch already archived.')
             return False
@@ -1554,7 +1583,7 @@ class Sketch(resource.BaseResource):
         return return_status
 
     def unarchive(self):
-        """Unarchives a sketch and return boolean whether it was succesful."""
+        """Unarchives a sketch and return boolean whether it was successful."""
         if not self.is_archived():
             logger.error('Sketch wasn\'t archived.')
             return False

@@ -89,10 +89,15 @@ class ElasticsearchDataStore(object):
         self.verify = current_app.config.get('ELASTIC_VERIFY_CERTS', True)
 
         if self.ssl:
-            self.client = Elasticsearch([{'host': host, 'port': port}],
-                                        http_auth=(self.user, self.password),
-                                        use_ssl=self.ssl,
-                                        verify_certs=self.verify)
+            if self.user and self.password:
+                self.client = Elasticsearch(
+                    [{'host': host, 'port': port}],
+                    http_auth=(self.user, self.password),
+                    use_ssl=self.ssl, verify_certs=self.verify)
+            else:
+                self.client = Elasticsearch(
+                    [{'host': host, 'port': port}],
+                    use_ssl=self.ssl, verify_certs=self.verify)
         else:
             self.client = Elasticsearch([{'host': host, 'port': port}])
 
@@ -560,7 +565,7 @@ class ElasticsearchDataStore(object):
             query_dsl: Dictionary containing Elasticsearch DSL query
             indices: List of indices to query
             return_fields: List of fields to return
-            enable_scroll: Boolean determing whether scrolling is enabled.
+            enable_scroll: Boolean determining whether scrolling is enabled.
             timeline_ids: Optional list of IDs of Timeline objects that should
                 be queried as part of the search.
 
