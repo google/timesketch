@@ -74,7 +74,7 @@ class SearchTemplateResource(resources.ResourceMixin, Resource):
 
         saved_searches = View.query.filter_by(searchtemplate=searchtemplate)
         for saved_search in saved_searches:
-            saved_search.searchtemplate.remove(searchtemplate)
+            saved_search.searchtemplate = None
 
         db_session.delete(searchtemplate)
         db_session.commit()

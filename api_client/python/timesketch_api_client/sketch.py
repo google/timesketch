@@ -942,7 +942,7 @@ class Sketch(resource.BaseResource):
         template_list = []
         for template_dict in template_dicts:
             template_obj = searchtemplate.SearchTemplate(api=self.api)
-            template_obj.from_saved(template_dict.get('id', sketch_id=self.id))
+            template_obj.from_saved(template_dict.get('id'), sketch_id=self.id)
 
             template_list.append(template_obj)
 
