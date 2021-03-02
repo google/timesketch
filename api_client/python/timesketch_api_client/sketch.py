@@ -23,7 +23,6 @@ import pandas
 
 from . import analyzer
 from . import aggregation
-from . import definitions
 from . import error
 from . import graph
 from . import resource
