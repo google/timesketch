@@ -91,7 +91,7 @@ class SearchIndexListResource(resources.ResourceMixin, Resource):
 
             datastore = self.datastore
 
-            if not datastore.client.indices.exist(index=es_index_name):
+            if not datastore.client.indices.exists(index=es_index_name):
                 # Create the index in Elasticsearch
                 self.datastore.create_index(
                     index_name=es_index_name, doc_type='generic_event')
