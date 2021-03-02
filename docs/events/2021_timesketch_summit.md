@@ -22,19 +22,20 @@ before the end of February.
 All times are in **UTC**
 
 >- 16:00 - 16:10	Welcome & Logistics
->- 16:10 - 16:30	Timesketch history & roadmap by [Johan Berggren](https://twitter.com/jberggren)
->- 16:30 - 16:40	Q&A Timesketch history & roadmap
->- 16:45 - 17:05	External talk (TBA)
+>- 16:10 - 16:20	Timesketch history [Johan Berggren](https://twitter.com/jberggren)
+>- 16:20 - 16:30	Q&A Timesketch history
+>- 16:35 - 17:05	Timesketch Basics introduction Session ([Bart Inglot](https://twitter.com/BartInglot))
 >- 17:05 - 17:15	Q&A Slot 1
->- 17:15 - 17:35	Timesketch Basics introduction Session ([Bart Inglot](https://twitter.com/BartInglot))
->- 17:35 - 17:45	Q&A Slot 2 
->- 17:50 - 18:20	Lightning talk(s): 
+>- 17:15 - 17:35	External talk (TBA)
+>- 17:35 - 17:45	Q&A Slot 2
+>- 17:45 - 18:20 Lightning talk(s): 
 
 ```- DFTimewolf by [Thomas Chopitea](https://twitter.com/tomchop_)
 - Jupyter Notebooks by [Kristinn Guðjónsson](https://twitter.com/el_killerdwarf)
 - Sigma in Timesketch by [Alexander Jäger](https://twitter.com/alexanderjaeger)
 - Workshop description / Networking
 ```
+>- 18:20 - 18:30 Timesketch Roadmap & the future [Johan Berggren](https://twitter.com/jberggren)
 
 **Break**
 
