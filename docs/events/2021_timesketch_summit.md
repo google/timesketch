@@ -1,6 +1,6 @@
 # Timesketch Summit 2021
 
-On **March 10th 2021 16:00 - 22:00 UTC** the first Timesketch summit will
+On **March 10th 2021 16:00 - 21:00 UTC** the first Timesketch summit will
 take place.
 
 ## About Timesketch
@@ -16,8 +16,35 @@ The agenda will be posted on
 [Github](https://github.com/google/timesketch/tree/master/docs/events/2021_timesketch_summit.md)
 before the end of February.
 
-- Presentations: 16:00 - 19:00 UTC
-- Workshops: 19:00 - 22:00 UTC
+- Presentations: 16:00 - 18:15 UTC
+- Workshops: 19:00 - 21:00 UTC
+
+All times are in **UTC**
+
+>- 16:00 - 16:10	Welcome & Logistics
+>- 16:10 - 16:30	Timesketch history & roadmap by [Johan Berggren](https://twitter.com/jberggren)
+>- 16:30 - 16:40	Q&A Timesketch history & roadmap
+>- 16:45 - 17:05	External talk (TBA)
+>- 17:05 - 17:15	Q&A Slot 1
+>- 17:15 - 17:35	Timesketch Basics introduction Session ([Bart Inglot](https://twitter.com/BartInglot))
+>- 17:35 - 17:45	Q&A Slot 2 
+>- 17:50 - 18:20	Lightning talk(s): 
+
+```- DFTimewolf by [Thomas Chopitea](https://twitter.com/tomchop_)
+- Jupyter Notebooks by [Kristinn Guðjónsson](https://twitter.com/el_killerdwarf)
+- Sigma in Timesketch by [Alexander Jäger](https://twitter.com/alexanderjaeger)
+- Workshop description / Networking
+```
+
+**Break**
+
+>- 19:00 - 19:05	Workshop explanation / group forming [Alexander Jäger](https://twitter.com/alexanderjaeger)
+>- 19:05 - 21:00	Workshops (might be shorter depending on engagement, questions etc): 
+
+```
+- Colab / API usage (Szechuan sauce) by [Kristinn Guðjónsson](https://twitter.com/el_killerdwarf)
+- Timesketch entry UX with Szechuan sauce by [Alexander Jäger](https://twitter.com/alexanderjaeger)
+```
 
 ## Where
 
@@ -33,18 +60,20 @@ Please use the [Google form](https://forms.gle/1D23n4SkoCPay1eDA) to sign up.
 
 ## Call for Presentations & Workshops
 
-We invite Timesketch users and developers to submit a presentation or a workshop
+**Closed**
+
+~~We invite Timesketch users and developers to submit a presentation or a workshop
 topic. Anything related to Timesketch is welcome, such as analysis techniques,
-deployment and development to name a few.
+deployment and development to name a few.~~
 
-We are looking for short format talks 20 min + 10 min Q&A. Workshops will have
-a 3 hour time slot.
+~~We are looking for short format talks 20 min + 10 min Q&A. Workshops will have
+a 3 hour time slot.~~
 
-Please use the [Google form](https://forms.gle/1D23n4SkoCPay1eDA) to suggest
+~~Please use the [Google form](https://forms.gle/1D23n4SkoCPay1eDA) to suggest
 your contribution to the summit. The call for presentations and workshops will
-run till **Feb 25th**.
+run till **Feb 25th**.~~
 
-If you have ideas outside of the suggested formats, feel free to reach out.
+~~If you have ideas outside of the suggested formats, feel free to reach out.~~
 
 ## Questions
 
