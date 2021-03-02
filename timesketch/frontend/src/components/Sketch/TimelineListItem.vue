@@ -30,10 +30,31 @@ limitations under the License.
               <ul>
                 <li>Elasticsearch index: {{ timeline.searchindex.index_name }}</li>
                 <li v-if="meta.stats_per_timeline[timeline.id]">Number of events: {{ meta.stats_per_timeline[timeline.id]['count'] | compactNumber }} ({{ meta.stats_per_timeline[timeline.id]['count']}})</li>
-                <li>Added by: {{ timeline.user.username }}</li>
-                <li>Added: {{ timeline.created_at | moment("YYYY-MM-DD HH:mm") }}</li>
+                <li>Created by: {{ timeline.user.username }}</li>
+                <li>Created at: {{ timeline.created_at | moment("YYYY-MM-DD HH:mm") }}</li>
                 <li v-if="timelineStatus === 'ready' && (timeline.searchindex.description !== '' && timeline.searchindex.description !== timeline.name)">Import errors: <b>{{ timeline.searchindex.description }}</b></li>
               </ul>
+              <br>
+              <table class="table">
+                <th style="width:200px;">Imported</th>
+                <th>Provider</th>
+                <th>Context</th>
+                <th>User</th>
+                <th>File on disk</th>
+                <th>File size</th>
+                <th>Original filename</th>
+                <th>Data label</th>
+                <tr v-for="datasource in timeline.datasources" :key="datasource.id">
+                  <td>{{ datasource.created_at | moment("YYYY-MM-DD HH:mm:ss") }}</td>
+                  <td>{{ datasource.provider }}</td>
+                  <td>{{ datasource.context }}</td>
+                  <td>{{ datasource.user.username }}</td>
+                  <td>{{ datasource.file_on_disk }}</td>
+                  <td>{{ datasource.file_size | compactBytes }}</td>
+                  <td>{{ datasource.original_filename }}</td>
+                  <td>{{ datasource.data_label }}</td>
+                </tr>
+              </table>
 
               <span v-if="timelineStatus === 'fail'">
                 <h5 style="color:red;">Error detail</h5>

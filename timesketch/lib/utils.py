@@ -23,23 +23,31 @@ import json
 import logging
 import random
 import smtplib
-import sys
 import time
 import codecs
+
+import pandas
 import six
 
 from dateutil import parser
 from flask import current_app
+from pandas import Timestamp
 
 from timesketch.lib import errors
 
 logger = logging.getLogger('timesketch.utils')
 
-# Set CSV field size limit to systems max value.
-csv.field_size_limit(sys.maxsize)
-
 # Fields to scrub from timelines.
 FIELDS_TO_REMOVE = ['_id', '_type', '_index', '_source', '__ts_timeline_id']
+
+# Number of rows processed at once when ingesting a CSV file.
+DEFAULT_CHUNK_SIZE = 10000
+
+# Columns that must be present in ingested timesketch files.
+TIMESKETCH_FIELDS = frozenset({'message', 'datetime', 'timestamp_desc'})
+
+# Columns that must be present in ingested redline files.
+REDLINE_FIELDS = frozenset({'Alert', 'Tag', 'Timestamp', 'Field', 'Summary'})
 
 
 def random_color():
@@ -49,7 +57,7 @@ def random_color():
         Color as string in HEX
     """
     hue = random.random()
-    golden_ratio_conjugate = (1 + 5**0.5) / 2
+    golden_ratio_conjugate = (1 + 5 ** 0.5) / 2
     hue += golden_ratio_conjugate
     hue %= 1
     rgb = tuple(int(i * 256) for i in colorsys.hsv_to_rgb(hue, 0.5, 0.95))
@@ -83,97 +91,118 @@ def _scrub_special_tags(dict_obj):
             _ = dict_obj.pop(field)
 
 
-def read_and_validate_csv(file_handle, delimiter=','):
+def _validate_csv_fields(mandatory_fields, data):
+    """Validate parsed CSV fields against mandatory fields.
+
+    Args:
+        mandatory_fields: a list of fields that must be present.
+        data: a DataFrame built from the ingested file.
+
+    Raises:
+        RuntimeError: if there are missing fields.
+    """
+    mandatory_set = set(mandatory_fields)
+    parsed_set = set(data.columns)
+
+    if mandatory_set.issubset(parsed_set):
+        return
+
+    raise RuntimeError('Missing fields in CSV header: {0:s}'.format(
+        ','.join(list(mandatory_set.difference(parsed_set)))))
+
+
+def validate_indices(indices, datastore):
+    """Returns a list of valid indices.
+
+    This function takes a list of indices, checks to see if they exist
+    and then returns the list of indices that exist within the datastore.
+
+    Args:
+        indices (list): List of indices.
+        datastore (ElasticsearchDataStore): a data store object.
+
+    Returns:
+        list of indices that exist within the datastore.
+    """
+    return [
+        i for i in indices if datastore.client.indices.exists(index=i)]
+
+
+def read_and_validate_csv(
+        file_handle, delimiter=',', mandatory_fields=None):
     """Generator for reading a CSV file.
 
     Args:
         file_handle: a file-like object containing the CSV content.
         delimiter: character used as a field separator, default: ','
+        mandatory_fields: list of fields that must be present in the CSV header.
 
     Raises:
         RuntimeError: when there are missing fields.
         DataIngestionError: when there are issues with the data ingestion.
     """
-    # Columns that must be present in the CSV file.
-    mandatory_fields = ['message', 'datetime', 'timestamp_desc']
-
+    if not mandatory_fields:
+        mandatory_fields = TIMESKETCH_FIELDS
     # Ensures delimiter is a string.
     if not isinstance(delimiter, six.text_type):
         delimiter = codecs.decode(delimiter, 'utf8')
 
-    # Due to issues with python2.
-    if six.PY2:
-        delimiter = str(delimiter)
+    header_reader = pandas.read_csv(file_handle, sep=delimiter, nrows=0)
+    _validate_csv_fields(mandatory_fields, header_reader)
 
-    reader = csv.DictReader(file_handle, delimiter=delimiter)
-    csv_header = reader.fieldnames
-    missing_fields = []
-    # Validate the CSV header
-    for field in mandatory_fields:
-        if field not in csv_header:
-            missing_fields.append(field)
-    if missing_fields:
-        raise RuntimeError(
-            'Missing fields in CSV header: {0:s}'.format(
-                ','.join(missing_fields)))
     try:
-        for row in reader:
-            # There is a condition in which the CSV reader can read a
-            # single lines as multiple, causing issues with importing.
-            # TODO: Swap the CSV library for the user of pandas.
-            if not row:
-                continue
-            if not row['datetime']:
+        reader = pandas.read_csv(
+            file_handle, sep=delimiter, chunksize=DEFAULT_CHUNK_SIZE)
+        for idx, chunk in enumerate(reader):
+            skipped_rows = chunk[chunk['datetime'].isnull()]
+            if not skipped_rows.empty:
                 logger.warning(
-                    'Row missing a datetime object, skipping [{0:s}]'.format(
-                        ','.join([str(x).replace(
-                            '\n', '').strip() for x in row.values()])))
-                continue
+                    '{0} rows skipped since they were missing a datetime field '
+                    'or it was empty '.format(len(skipped_rows)))
+
+            # Normalize datetime to ISO 8601 format if it's not the case.
             try:
-                # normalize datetime to ISO 8601 format if it's not the case.
-                parsed_datetime = parser.parse(row['datetime'])
-                row['datetime'] = parsed_datetime.isoformat()
+                chunk['datetime'] = pandas.to_datetime(chunk['datetime'])
 
-                normalized_timestamp = int(
-                    time.mktime(parsed_datetime.utctimetuple()) * 1000000)
-                normalized_timestamp += parsed_datetime.microsecond
-                row['timestamp'] = str(normalized_timestamp)
-                if 'tag' in row:
-                    row['tag'] = [x for x in _parse_tag_field(row['tag']) if x]
-
-                _scrub_special_tags(row)
+                chunk['timestamp'] = chunk['datetime'].dt.strftime(
+                    '%s%f').astype(int)
+                chunk['datetime'] = chunk['datetime'].apply(
+                    Timestamp.isoformat).astype(str)
             except ValueError:
+                warning_string = (
+                    'Rows {0} to {1} skipped due to malformed '
+                    'datetime values ')
+                logger.warning(warning_string.format(
+                    idx * reader.chunksize, chunk.shape[0]))
                 continue
-
-            yield row
-    except csv.Error as e:
+            if 'tag' in chunk:
+                chunk['tag'] = chunk['tag'].apply(_parse_tag_field)
+            for _, row in chunk.iterrows():
+                _scrub_special_tags(row)
+                yield row
+    except pandas.errors.ParserError as e:
         error_string = 'Unable to read file, with error: {0!s}'.format(e)
         logger.error(error_string)
-        raise errors.DataIngestionError(error_string)
+        raise errors.DataIngestionError(error_string) from e
 
 
 def read_and_validate_redline(file_handle):
     """Generator for reading a Redline CSV file.
+
     Args:
         file_handle: a file-like object containing the CSV content.
+
+    Raises:
+        RuntimeError: if there are missing fields.
     """
-    # Columns that must be present in the CSV file
-    mandatory_fields = ['Alert', 'Tag', 'Timestamp', 'Field', 'Summary']
 
     csv.register_dialect(
-        'myDialect', delimiter=',', quoting=csv.QUOTE_ALL,
+        'redlineDialect', delimiter=',', quoting=csv.QUOTE_ALL,
         skipinitialspace=True)
-    reader = csv.DictReader(file_handle, delimiter=',', dialect='myDialect')
+    reader = pandas.read_csv(file_handle, delimiter=',',
+                             dialect='redlineDialect')
 
-    csv_header = reader.fieldnames
-    missing_fields = []
-    # Validate the CSV header
-    for field in mandatory_fields:
-        if field not in csv_header:
-            missing_fields.append(field)
-    if missing_fields:
-        raise RuntimeError(
-            'Missing fields in CSV header: {0:s}'.format(missing_fields))
+    _validate_csv_fields(REDLINE_FIELDS, reader)
     for row in reader:
         dt = parser.parse(row['Timestamp'])
         timestamp = int(time.mktime(dt.timetuple())) * 1000
@@ -185,13 +214,13 @@ def read_and_validate_redline(file_handle):
         tag = row['Tag']
 
         row_to_yield = {}
-        row_to_yield["message"] = summary
-        row_to_yield["timestamp"] = timestamp
-        row_to_yield["datetime"] = dt_iso_format
-        row_to_yield["timestamp_desc"] = timestamp_desc
-        row_to_yield["alert"] = alert #extra field
+        row_to_yield['message'] = summary
+        row_to_yield['timestamp'] = timestamp
+        row_to_yield['datetime'] = dt_iso_format
+        row_to_yield['timestamp_desc'] = timestamp_desc
         tags = [tag]
-        row_to_yield["tag"] = tags # extra field
+        row_to_yield['alert'] = alert  # Extra field
+        row_to_yield['tag'] = tags  # Extra field
 
         yield row_to_yield
 

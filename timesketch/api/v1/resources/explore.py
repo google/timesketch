@@ -29,6 +29,7 @@ from flask_login import current_user
 from timesketch.api.v1 import export
 from timesketch.api.v1 import resources
 from timesketch.lib import forms
+from timesketch.lib import utils
 from timesketch.lib.utils import get_validated_indices
 from timesketch.lib.definitions import DEFAULT_SOURCE_FIELDS
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
@@ -106,6 +107,14 @@ class ExploreResource(resources.ResourceMixin, Resource):
         # Make sure that the indices in the filter are part of the sketch.
         # This will also remove any deleted timeline from the search result.
         indices, timeline_ids = get_validated_indices(indices, sketch)
+
+        # Remove indices that don't exist from search.
+        indices = utils.validate_indices(indices, self.datastore)
+
+        if not indices:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'No valid search indices were found to perform the search on.')
 
         # Make sure we have a query string or star filter
         if not (form.query.data, query_filter.get('star'),

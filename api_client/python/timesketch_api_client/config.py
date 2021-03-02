@@ -206,7 +206,8 @@ class ConfigAssistant:
 
     def load_config_file(
             self, config_file_path: Optional[Text] = '',
-            section: Optional[Text] = 'timesketch'):
+            section: Optional[Text] = 'timesketch',
+            load_cli_config: Optional[bool] = False):
         """Load the config from file.
 
         Args:
@@ -215,9 +216,11 @@ class ConfigAssistant:
                 the file RC_FILENAME inside the user's home directory.
             section (str): The configuration section to read from. This
                 is optional and defaults to timesketch. This can be
-                useful if you have mutiple Timesketch servers to connect to,
+                useful if you have multiple Timesketch servers to connect to,
                 with each one of them having a separate section in the config
                 file.
+            load_cli_config (bool): Determine if the CLI config section should
+                be loaded. This is optional and defaults to False.
 
         Raises:
           IOError if the file does not exist or config does not load.
@@ -259,6 +262,18 @@ class ConfigAssistant:
         for name, value in timesketch_config.items():
             self.set_config(name, value)
 
+        if load_cli_config:
+            if 'cli' not in config.sections():
+                # Set default CLI config section
+                config['cli'] = {
+                    'sketch': '',
+                    'output_format': 'tabular'
+                }
+
+            cli_config = config['cli']
+            for name, value in cli_config.items():
+                self.set_config(name, value)
+
     def load_config_dict(self, config_dict: Dict[Text, Text]):
         """Loads configuration from a dictionary.
 
@@ -293,7 +308,7 @@ class ConfigAssistant:
                 default location will be used.
             section (str): The configuration section to write to. This
                 is optional and defaults to timesketch. This can be
-                useful if you have mutiple Timesketch servers to connect to,
+                useful if you have multiple Timesketch servers to connect to,
                 with each one of them having a separate section in the config
                 file.
             token_file_path (str): Optional path to the location of the token
@@ -332,6 +347,10 @@ class ConfigAssistant:
             'client_secret': self._config.get('client_secret', ''),
             'auth_mode': auth_mode,
         }
+        config['cli'] = {
+            'sketch': self._config.get('sketch', ''),
+            'output_format': self._config.get('output_format', 'tabular')
+        }
         if token_file_path:
             config[section]['token_file_path'] = token_file_path
 
@@ -359,7 +378,8 @@ def get_client(
         config_path: Optional[Text] = '',
         config_section: Optional[Text] = 'timesketch',
         token_password: Optional[Text] = '',
-        confirm_choices: Optional[bool] = False
+        confirm_choices: Optional[bool] = False,
+        load_cli_config: Optional[bool] = False
         ) -> Optional[client.TimesketchApi]:
     """Returns a Timesketch API client using the configuration assistant.
 
@@ -370,7 +390,7 @@ def get_client(
             not supplied a default path will be used.
         config_section (str): The configuration section to read from. This
             is optional and defaults to timesketch. This can be
-            useful if you have mutiple Timesketch servers to connect to,
+            useful if you have multiple Timesketch servers to connect to,
             with each one of them having a separate section in the config
             file.
         token_password (str): an optional password to decrypt
@@ -378,13 +398,17 @@ def get_client(
         confirm_choices (bool): an optional bool. if set to the user is given
             a choice to change the value for all already configured parameters.
             This defaults to False.
+        load_cli_config (bool): Determine if the CLI config section should
+            be loaded. This is optional and defaults to False.
 
     Returns:
         A timesketch client (TimesketchApi) or None if not possible.
     """
     assistant = ConfigAssistant()
     try:
-        assistant.load_config_file(config_path, section=config_section)
+        assistant.load_config_file(
+            config_path, section=config_section,
+            load_cli_config=load_cli_config)
         if config_dict:
             assistant.load_config_dict(config_dict)
     except IOError as e:
@@ -438,7 +462,7 @@ def configure_missing_parameters(
             This defaults to False.
         config_section (str): The configuration section to read from. This
             is optional and defaults to timesketch. This can be
-            useful if you have mutiple Timesketch servers to connect to,
+            useful if you have multiple Timesketch servers to connect to,
             with each one of them having a separate section in the config
             file.
     """

@@ -80,6 +80,9 @@ export default {
       let formData = new FormData()
       formData.append('file', this.form.file)
       formData.append('name', this.form.name)
+      formData.append('provider', 'WebUpload')
+      formData.append('context', this.fileName)
+      formData.append('total_file_size', this.form.file.size)
       formData.append('sketch_id', this.$store.state.sketch.id)
       let config = {
         headers: {
