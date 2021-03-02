@@ -61,58 +61,6 @@ class Sketch(resource.BaseResource):
         self._sketch_name = sketch_name
         super().__init__(api=api, resource_uri=f'sketches/{self.id}')
 
-    def _build_pandas_dataframe(self, search_response, return_fields=None):
-        """Return a Pandas DataFrame from a query result dict.
-
-        Args:
-            search_response: dictionary with query results.
-            return_fields: List of fields that should be included in the
-                response. Optional and defaults to None.
-
-        Returns:
-            pandas DataFrame with the results.
-        """
-        return_list = []
-        timelines = {}
-        for timeline_obj in self.list_timelines():
-            timelines[timeline_obj.index] = timeline_obj.name
-
-        return_field_list = []
-        if return_fields:
-            if return_fields.startswith('\''):
-                return_fields = return_fields[1:]
-            if return_fields.endswith('\''):
-                return_fields = return_fields[:-1]
-            return_field_list = return_fields.split(',')
-
-        for result in search_response.get('objects', []):
-            source = result.get('_source', {})
-            if not return_fields or '_id' in return_field_list:
-                source['_id'] = result.get('_id')
-            if not return_fields or '_type' in return_field_list:
-                source['_type'] = result.get('_type')
-            if not return_fields or '_index' in return_field_list:
-                source['_index'] = result.get('_index')
-            if not return_fields or '_source' in return_field_list:
-                source['_source'] = timelines.get(result.get('_index'))
-
-            return_list.append(source)
-
-        data_frame = pandas.DataFrame(return_list)
-        if 'datetime' in data_frame:
-            try:
-                data_frame['datetime'] = pandas.to_datetime(data_frame.datetime)
-            except pandas.errors.OutOfBoundsDatetime:
-                pass
-        elif 'timestamp' in data_frame:
-            try:
-                data_frame['datetime'] = pandas.to_datetime(
-                    data_frame.timestamp / 1e6, utc=True, unit='s')
-            except pandas.errors.OutOfBoundsDatetime:
-                pass
-
-        return data_frame
-
     @property
     def acl(self):
         """Property that returns back a ACL dict."""
