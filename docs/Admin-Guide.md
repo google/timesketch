@@ -258,10 +258,12 @@ tsctl similarity_score
 ### Upgrade DB After Schema Change
 
 
-After changin the schema for the database a revision file needs to be generated.
-To generate the file use the command:
+After changing the schema for the database a revision file needs to be generated.
+
+Inside the timesketch container, to generate the file use the command:
 
 ```shell
+cd /usr/local/src/timesketch/timesketch
 tsctl db stamp head
 tsctl db upgrade
 ```
@@ -271,3 +273,12 @@ This makes sure that the database is current. Then create a revision file:
 ```shell
 tsctl db migrate -m "<message>"
 ```
+
+If the migration file is not created, which could be an indication that the schema change
+is not detected by the automation one can create an empty revision file:
+
+```shell
+tsctl db revision
+```
+
+And then fill in the blanks, see examples of changes in `timesketch/migrations/versions/*_.py`.
