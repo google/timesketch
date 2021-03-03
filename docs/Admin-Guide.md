@@ -273,3 +273,12 @@ This makes sure that the database is current. Then create a revision file:
 ```shell
 tsctl db migrate -m "<message>"
 ```
+
+If the migration file is not created, which could be an indication that the schema change
+is not detected by the automation one can create an empty revision file:
+
+```shell
+tsctl db revision
+```
+
+And then fill in the blanks, see examples of changes in `timesketch/migrations/versions/*_.py`.
