@@ -20,6 +20,7 @@ import json
 from flask import current_app
 from flask import url_for
 
+from sqlalchemy import BigInteger
 from sqlalchemy import Column
 from sqlalchemy import ForeignKey
 from sqlalchemy import Integer
@@ -700,7 +701,7 @@ class DataSource(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     provider = Column(UnicodeText())
     context = Column(UnicodeText())
     file_on_disk = Column(UnicodeText())
-    file_size = Column(Integer)
+    file_size = Column(BigInteger())
     original_filename = Column(UnicodeText())
     data_label = Column(UnicodeText())
 
