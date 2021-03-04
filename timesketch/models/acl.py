@@ -259,6 +259,8 @@ class AccessControlMixin(object):
             return_dict.setdefault(name, [])
             return_dict[name].append(ace.permission)
 
+        return_dict['is_public'] = bool(self.is_public)
+
         return return_dict
 
     def get_permissions(self, permission):
