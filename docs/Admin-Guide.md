@@ -260,7 +260,26 @@ tsctl similarity_score
 
 After changing the schema for the database a revision file needs to be generated.
 
-Inside the timesketch container, to generate the file use the command:
+(temporary solution)
+Before doing the database migration you'll need to modify the file `timesketch/models/__init__.py`:
+
+```python
+
+def init_db():
+...
+        BaseModel.metadata.create_all(bind=engine)
+```
+
+This line needs to be commented out, eg:
+
+```python
+
+def init_db():
+...
+        #BaseModel.metadata.create_all(bind=engine)
+```
+
+Then inside the timesketch container, to generate the file use the command:
 
 ```shell
 cd /usr/local/src/timesketch/timesketch
@@ -273,6 +292,10 @@ This makes sure that the database is current. Then create a revision file:
 ```shell
 tsctl db migrate -m "<message>"
 ```
+
+Once the migration is done, remove the comment to re-enable the line in `timesketch/models/__init.py`.
+
+#### Troubleshooting Database Schema Changes
 
 If the migration file is not created, which could be an indication that the schema change
 is not detected by the automation one can create an empty revision file:
