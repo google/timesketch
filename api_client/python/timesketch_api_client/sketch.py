@@ -63,7 +63,7 @@ class Sketch(resource.BaseResource):
     @property
     def acl(self):
         """Property that returns back a ACL dict."""
-        data = self.lazyload_data()
+        data = self.lazyload_data(refresh_cache=True)
         objects = data.get('objects')
         if not objects:
             return {}
