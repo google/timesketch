@@ -48,6 +48,9 @@ class ImportStreamer(object):
     DEFAULT_TEXT_ENCODING = 'utf-8'
     DEFAULT_TIMESTAMP_DESC = 'Time Logged'
 
+    # Define the maximum amount of retries for a file/chunk upload.
+    DEFAULT_RETRY_LIMIT = 3
+
     def __init__(self):
         """Initialize the upload streamer."""
         self._count = 0
@@ -218,15 +221,20 @@ class ImportStreamer(object):
         self._count = 0
         self._data_lines = []
 
-    def _upload_data_buffer(self, end_stream):
+    def _upload_data_buffer(self, end_stream, retry_count=0):
         """Upload data to Timesketch.
 
         Args:
             end_stream: boolean indicating whether this is the last chunk of
                 the stream.
+            retry_count: optional int that is only set if this is a retry
+                of the upload.
+
+        Raises:
+            RuntimeError: If the data buffer is not successfully uploaded.
         """
         if not self._data_lines:
-            return
+            return None
 
         start_time = time.time()
         data = {
@@ -255,13 +263,21 @@ class ImportStreamer(object):
         # sleep.
         time.sleep(2)
 
-        # TODO: Add in the ability to re-upload failed file.
         if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
-            raise RuntimeError(
-                'Error uploading data: [{0:d}] {1!s} {2!s}, '
-                'index {3:s}'.format(
-                    response.status_code, response.reason, response.text,
-                    self._index))
+            if retry_count >= self.DEFAULT_RETRY_LIMIT:
+                raise RuntimeError(
+                    'Error uploading data: [{0:d}] {1!s} {2!s}, '
+                    'index {3:s}'.format(
+                        response.status_code, response.reason, response.text,
+                        self._index))
+
+            logger.warning(
+                'Unable to upload data buffer: {0:d}, retrying (attempt '
+                '{1:d}/{2:d})'.format(
+                    self._chunk, retry_count + 1, self.DEFAULT_RETRY_LIMIT))
+
+            return self._upload_data_buffer(
+                end_stream=end_stream, retry_count=retry_count + 1)
 
         logger.debug(
             'Data buffer nr. {0:d} uploaded, total time: {1:.2f}s'.format(
@@ -274,13 +290,20 @@ class ImportStreamer(object):
         self._index = object_dict.get('searchindex', {}).get('index_name')
         self._last_response = response_dict
 
-    def _upload_data_frame(self, data_frame, end_stream):
+        return None
+
+    def _upload_data_frame(self, data_frame, end_stream, retry_count=0):
         """Upload data to Timesketch.
 
         Args:
             data_frame: a pandas DataFrame with the content to upload.
             end_stream: boolean indicating whether this is the last chunk of
                 the stream.
+            retry_count: optional int that is only set if this is a retry
+                of the upload.
+
+        Raises:
+            RuntimeError: If the dataframe is not successfully uploaded.
         """
         data = {
             'name': self._timeline_name,
@@ -297,21 +320,31 @@ class ImportStreamer(object):
             data['context'] = self._upload_context
 
         response = self._sketch.api.session.post(self._resource_url, data=data)
-        self._chunk += 1
-        # TODO: Add in the ability to re-upload failed file.
         if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
-            raise RuntimeError(
-                'Error uploading data: [{0:d}] {1!s} {2!s}, '
-                'index {3:s}'.format(
-                    response.status_code, response.reason, response.text,
-                    self._index))
+            if retry_count >= self.DEFAULT_RETRY_LIMIT:
+                raise RuntimeError(
+                    'Error uploading data: [{0:d}] {1!s} {2!s}, '
+                    'index {3:s}'.format(
+                        response.status_code, response.reason, response.text,
+                        self._index))
 
+            logger.warning(
+                'Unable to upload dataframe, retrying (attempt '
+                '{0:d}/{1:d})'.format(
+                    retry_count + 1, self.DEFAULT_RETRY_LIMIT))
+
+            return self._upload_data_frame(
+                data_frame=data_frame, end_stream=end_stream,
+                retry_count=retry_count + 1)
+
+        self._chunk += 1
         response_dict = response.json()
         object_dict = response_dict.get('objects', [{}])[0]
 
         self._timeline_id = object_dict.get('id')
         self._index = object_dict.get('searchindex', {}).get('index_name')
         self._last_response = response_dict
+        return None
 
     def _upload_binary_file(self, file_path):
         """Upload binary data to Timesketch, potentially chunking it up.
@@ -362,16 +395,28 @@ class ImportStreamer(object):
                 file_stream = io.BytesIO(binary_data)
                 file_stream.name = file_path
                 file_dict = {'file': file_stream}
-                response = self._sketch.api.session.post(
-                    self._resource_url, files=file_dict, data=data)
 
-                if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
-                    # TODO (kiddi): Re-do this chunk.
-                    raise RuntimeError(
-                        'Error uploading data chunk: {0:d}/{1:d}. Status code: '
-                        '{2:d} - {3!s} {4!s}'.format(
-                            index, chunks, response.status_code,
-                            response.reason, response.text))
+                retry_count = 0
+                while True:
+                    if retry_count >= self.DEFAULT_RETRY_LIMIT:
+                        raise RuntimeError(
+                            'Error uploading data chunk: {0:d}/{1:d}. Status '
+                            'code: {2:d} - {3!s} {4!s}'.format(
+                                index, chunks, response.status_code,
+                                response.reason, response.text))
+
+                    response = self._sketch.api.session.post(
+                        self._resource_url, files=file_dict, data=data)
+
+                    if response.status_code in definitions.HTTP_STATUS_CODE_20X:
+                        break
+
+                    retry_count += 1
+                    logger.warning(
+                        'Error uploading data chunk {0:d}/{1:d}, retry '
+                        'attempt {2:d}/{3:d}'.format(
+                            index, chunks, retry_count,
+                            self.DEFAULT_RETRY_LIMIT))
 
         if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
             raise RuntimeError(
