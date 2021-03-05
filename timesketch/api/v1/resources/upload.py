@@ -79,6 +79,10 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         if not data_label:
             data_label = 'generic'
 
+        # Since CSV and JSON are basically the same label, we combine it here.
+        if data_label in ('csv', 'json', 'jsonl'):
+            data_label = 'csv_jsonl'
+
         indices = [t.searchindex for t in sketch.active_timelines]
         for index in indices:
             if index.has_label(data_label) and sketch.has_permission(

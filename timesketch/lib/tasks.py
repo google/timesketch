@@ -25,6 +25,7 @@ import io
 import json
 import six
 
+from elasticsearch.exceptions import NotFoundError
 from elasticsearch.exceptions import RequestError
 from flask import current_app
 
@@ -125,6 +126,31 @@ def init_worker(**kwargs):
     url = celery.conf.get('SQLALCHEMY_DATABASE_URI')
     engine = create_engine(url)
     db_session.configure(bind=engine)
+
+
+def _close_index(index_name, data_store, timeline_id):
+    """Helper function to close an index if it is not used somewhere else.
+
+    Args:
+        index_name: String with the Elastic index name.
+        data_store: Instance of elastic.ElasticsearchDataStore.
+        timeline_id: ID of the timeline the index belongs to.
+    """
+    indices = SearchIndex.query.filter_by(index_name=index_name).all()
+    for index in indices:
+        for timeline in index.timelines:
+            if timeline.get_status.status in ('closed', 'deleted', 'archived'):
+                continue
+
+            if timeline.id != timeline_id:
+                return
+
+    try:
+        data_store.client.indices.close(index=index_name)
+    except NotFoundError:
+        logger.error(
+            'Unable to close index: {0:s} - index not '
+            'found'.format(index_name))
 
 
 def _set_timeline_status(timeline_id, status, error_msg=None):
@@ -549,11 +575,15 @@ def run_plaso(
             index_name=index_name, doc_type=event_type, mappings=mappings)
     except errors.DataIngestionError as e:
         _set_timeline_status(timeline_id, status='fail', error_msg=str(e))
+        _close_index(
+            index_name=index_name, data_store=es, timeline_id=timeline_id)
         raise
 
     except (RuntimeError, ImportError, NameError, UnboundLocalError,
             RequestError) as e:
         _set_timeline_status(timeline_id, status='fail', error_msg=str(e))
+        _close_index(
+            index_name=index_name, data_store=es, timeline_id=timeline_id)
         raise
 
     except Exception as e:  # pylint: disable=broad-except
@@ -561,6 +591,8 @@ def run_plaso(
         error_msg = traceback.format_exc()
         _set_timeline_status(timeline_id, status='fail', error_msg=error_msg)
         logger.error('Error: {0!s}\n{1:s}'.format(e, error_msg))
+        _close_index(
+            index_name=index_name, data_store=es, timeline_id=timeline_id)
         return None
 
     message = 'Index timeline [{0:s}] to index [{1:s}] (source: {2:s})'
@@ -660,17 +692,23 @@ def run_csv_jsonl(
 
     except errors.DataIngestionError as e:
         _set_timeline_status(timeline_id, status='fail', error_msg=str(e))
+        _close_index(
+            index_name=index_name, data_store=es, timeline_id=timeline_id)
         raise
 
     except (RuntimeError, ImportError, NameError, UnboundLocalError,
             RequestError) as e:
         _set_timeline_status(timeline_id, status='fail', error_msg=str(e))
+        _close_index(
+            index_name=index_name, data_store=es, timeline_id=timeline_id)
         raise
 
     except Exception as e:  # pylint: disable=broad-except
         # Mark the searchindex and timelines as failed and exit the task
         error_msg = traceback.format_exc()
         _set_timeline_status(timeline_id, status='fail', error_msg=error_msg)
+        _close_index(
+            index_name=index_name, data_store=es, timeline_id=timeline_id)
         logger.error('Error: {0!s}\n{1:s}'.format(e, error_msg))
         return None
 

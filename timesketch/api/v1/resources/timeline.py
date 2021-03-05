@@ -345,7 +345,14 @@ class TimelineResource(resources.ResourceMixin, Resource):
         # Check if this searchindex is used in other sketches.
         close_index = True
         searchindex = timeline.searchindex
-        for timeline_ in searchindex.timelines:
+        index_name = searchindex.index_name
+        search_indices = SearchIndex.query.filter_by(
+            index_name=index_name).all()
+        timelines = []
+        for index in search_indices:
+            timelines.extend(index.timelines)
+
+        for timeline_ in timelines:
             if timeline_.sketch.id != sketch.id:
                 close_index = False
                 break
