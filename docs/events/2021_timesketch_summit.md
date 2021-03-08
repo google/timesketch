@@ -29,7 +29,6 @@ All times are in **UTC**
     * Timesketch analyzers by [Johan Berggren](https://twitter.com/jberggren)
     * DFTimewolf by [Thomas Chopitea](https://twitter.com/tomchop_)
     * Sigma in Timesketch by [Alexander Jäger](https://twitter.com/alexanderjaeger)
-    * Workshop description / Networking
 * 18:30 - 18:40 Timesketch Roadmap & the future [Johan Berggren](https://twitter.com/jberggren)
 
 **Break**
