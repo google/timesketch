@@ -31,7 +31,7 @@ class TaskResource(resources.ResourceMixin, Resource):
 
     # pylint: disable=import-outside-toplevel
     def __init__(self):
-        super(TaskResource, self).__init__()
+        super().__init__()
         # pylint: disable=import-outside-toplevel
         from timesketch.app import create_celery_app
         self.celery = create_celery_app()
