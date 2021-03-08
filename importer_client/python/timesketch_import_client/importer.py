@@ -53,6 +53,7 @@ class ImportStreamer(object):
 
     def __init__(self):
         """Initialize the upload streamer."""
+        self._celery_task_id = ''
         self._count = 0
         self._config_helper = None
         self._data_label = ''
@@ -285,6 +286,8 @@ class ImportStreamer(object):
         self._chunk += 1
         response_dict = response.json()
         object_dict = response_dict.get('objects', [{}])[0]
+        meta_dict = response_dict.get('meta', {})
+        self._celery_task_id = meta_dict.get('task_id', '')
 
         self._timeline_id = object_dict.get('id')
         self._index = object_dict.get('searchindex', {}).get('index_name')
@@ -340,6 +343,8 @@ class ImportStreamer(object):
         self._chunk += 1
         response_dict = response.json()
         object_dict = response_dict.get('objects', [{}])[0]
+        meta_dict = response_dict.get('meta', {})
+        self._celery_task_id = meta_dict.get('task_id', '')
 
         self._timeline_id = object_dict.get('id')
         self._index = object_dict.get('searchindex', {}).get('index_name')
@@ -427,6 +432,8 @@ class ImportStreamer(object):
 
         response_dict = response.json()
         object_dict = response_dict.get('objects', [{}])[0]
+        meta_dict = response_dict.get('meta', {})
+        self._celery_task_id = meta_dict.get('task_id', '')
 
         self._timeline_id = object_dict.get('id')
         self._index = object_dict.get('searchindex', {}).get('index_name')
@@ -661,6 +668,11 @@ class ImportStreamer(object):
 
         self.add_dict(json_dict)
 
+    @property
+    def celery_task_id(self):
+        """Return the celery task identification for the upload."""
+        return self._celery_task_id
+
     def close(self):
         """Close the streamer."""
         try:
@@ -770,6 +782,23 @@ class ImportStreamer(object):
     def set_timestamp_description(self, description):
         """Set the timestamp description field."""
         self._timestamp_desc = description
+
+    @property
+    def state(self):
+        """Returns a state string for the indexing process."""
+        if not self._celery_task_id:
+            return 'Unknown'
+
+        tasks = self._sketch.api.check_celery_status(
+            job_id=self._celery_task_id)
+
+        if len(tasks) > 1:
+            for task in tasks:
+                if task.get('task_id', '') ==  self._celery_task_id:
+                    return task.get('state', 'Unknown')
+
+        task = tasks[0]
+        return task.get('state', 'Unknown')
 
     @property
     def timeline(self):

@@ -150,7 +150,8 @@ def read_and_validate_csv(
     header_reader = pandas.read_csv(file_handle, sep=delimiter, nrows=0)
     _validate_csv_fields(mandatory_fields, header_reader)
 
-    file_handle.seek(0)
+    if hasattr(file_handle, 'seek'):
+        file_handle.seek(0)
 
     try:
         reader = pandas.read_csv(

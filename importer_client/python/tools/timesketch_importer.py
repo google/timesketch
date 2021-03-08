@@ -68,8 +68,9 @@ def upload_file(
         file_path (str): the path to the file to upload.
 
     Returns:
-        A timeline object (timeline.Timeline) or None if not able to
-        upload the timeline.
+        A tuple with the timeline object (timeline.Timeline) or None if not
+        able to upload the timeline as well as the celery task identification
+        for the indexing.
     """
     if not my_sketch or not hasattr(my_sketch, 'id'):
         return 'Sketch needs to be set'
@@ -89,6 +90,8 @@ def upload_file(
         import_helper.add_config(log_config_file)
 
     timeline = None
+    task_id = ''
+    logger.info('About to upload file.')
     with importer.ImportStreamer() as streamer:
         streamer.set_sketch(my_sketch)
         streamer.set_config_helper(import_helper)
@@ -130,8 +133,10 @@ def upload_file(
 
         streamer.add_file(file_path)
         timeline = streamer.timeline
+        task_id = streamer.celery_task_id
 
-    return timeline
+    logger.info('File upload completed.')
+    return timeline, task_id
 
 
 def main(args=None):
@@ -187,7 +192,7 @@ def main(args=None):
 
     config_group.add_argument(
         '--quick', '-q', '--no-wait', '--no_wait', action='store_false',
-        default=True, type=bool, dest='wait_timeline', help=(
+        default=True, dest='wait_timeline', help=(
             'By default the tool will wait until the timeline has been '
             'indexed and print out some details of the import. This option '
             'makes the tool exit as soon as the data has been imported and '
@@ -420,7 +425,7 @@ def main(args=None):
     }
 
     logger.info('Uploading file.')
-    timeline = upload_file(
+    timeline, task_id = upload_file(
         my_sketch=my_sketch, config_dict=config_dict, file_path=options.path)
 
     if not options.wait_timeline:
@@ -434,6 +439,7 @@ def main(args=None):
             'the data got uploaded.')
         return
 
+    print('Checking file upload status: ', end='')
     while True:
         status = timeline.status
         if status in ('archived', 'failed', 'fail'):
@@ -442,13 +448,20 @@ def main(args=None):
                 timeline.description))
             return
 
-        if status != 'success':
+        if status not in ('ready', 'success'):
             print('.', end='')
             time.sleep(3)
             continue
 
         print('[DONE]')
-        print('Timeline uploaded and ready to use')
+        print(f'Timeline uploaded to ID: {timeline.id}.')
+
+        task_state = 'Unknown'
+        task_list = ts_client.check_celery_status(task_id)
+        for task in task_list:
+            if task.get('task_id', '') == task_id:
+                task_state = task.get('state', 'Unknown')
+        print(f'Status of the index is: {task_state}')
         break
 
 
