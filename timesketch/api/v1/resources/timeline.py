@@ -314,7 +314,11 @@ class TimelineResource(resources.ResourceMixin, Resource):
         if not sketch:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+
         timeline = Timeline.query.get(timeline_id)
+        if not timeline:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No timeline found with this ID.')
 
         # Check that this timeline belongs to the sketch
         if timeline.sketch_id != sketch.id:
@@ -323,9 +327,16 @@ class TimelineResource(resources.ResourceMixin, Resource):
             elif not sketch:
                 msg = 'No sketch found with this ID.'
             else:
+                sketch_use = sketch.id or 'No sketch ID'
+                sketch_string = str(sketch_use)
+
+                timeline_use = timeline.sketch_id or (
+                    'No sketch associated with the timeline.')
+                timeline_string = str(timeline_use)
+
                 msg = (
-                    'The sketch ID ({0:d}) does not match with the timeline '
-                    'sketch ID ({1:d})'.format(sketch.id, timeline.sketch_id))
+                    'The sketch ID ({0:s}) does not match with the timeline '
+                    'sketch ID ({1:s})'.format(sketch_string, timeline_string))
             abort(HTTP_STATUS_CODE_NOT_FOUND, msg)
 
         if not sketch.has_permission(user=current_user, permission='write'):
