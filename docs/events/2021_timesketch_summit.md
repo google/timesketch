@@ -24,7 +24,7 @@ Please use the [Google form](https://forms.gle/1D23n4SkoCPay1eDA) to sign up.
 
 ## Agenda and talks
 
-- Presentations: 16:00 - 18:15 UTC
+- Presentations: 16:00 - 18:40 UTC
 - Workshops: 19:00 - 21:00 UTC
 
 All times are in **UTC**
