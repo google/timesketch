@@ -10,44 +10,6 @@ Using sketches you and your collaborators can easily organize your timelines and
 analyze them all at the same time. Add meaning to your raw data with rich
 annotations, comments, tags and stars.
 
-## Agenda and talks
-
-The agenda will be posted on
-[Github](https://github.com/google/timesketch/tree/master/docs/events/2021_timesketch_summit.md)
-before the end of February.
-
-- Presentations: 16:00 - 18:15 UTC
-- Workshops: 19:00 - 21:00 UTC
-
-All times are in **UTC**
-
->- 16:00 - 16:10	Welcome & Logistics
->- 16:10 - 16:20	Timesketch history [Johan Berggren](https://twitter.com/jberggren)
->- 16:20 - 16:30	Q&A Timesketch history
->- 16:35 - 17:05	Timesketch Basics introduction Session ([Bart Inglot](https://twitter.com/BartInglot))
->- 17:05 - 17:15	Q&A Slot 1
->- 17:15 - 17:45	Using Timesketch in real life. ([CSIS Security Group
-](https://twitter.com/csis_cyber?lang=en))
->- 17:45 - 17:55	Q&A Slot 2
->- 17:55 - 18:30 Lightning talk(s): 
-
-```- DFTimewolf by [Thomas Chopitea](https://twitter.com/tomchop_)
-- Jupyter Notebooks by [Kristinn Guðjónsson](https://twitter.com/el_killerdwarf)
-- Sigma in Timesketch by [Alexander Jäger](https://twitter.com/alexanderjaeger)
-- Workshop description / Networking
-```
->- 18:30 - 18:40 Timesketch Roadmap & the future [Johan Berggren](https://twitter.com/jberggren)
-
-**Break**
-
->- 19:00 - 19:05	Workshop explanation / group forming [Alexander Jäger](https://twitter.com/alexanderjaeger)
->- 19:05 - 21:00	Workshops (might be shorter depending on engagement, questions etc): 
-
-```
-- Colab / API usage (Szechuan sauce) by [Kristinn Guðjónsson](https://twitter.com/el_killerdwarf)
-- Timesketch entry UX with Szechuan sauce by [Alexander Jäger](https://twitter.com/alexanderjaeger)
-```
-
 ## Where
 
 The Timesketch summit will take place virtually.
@@ -59,6 +21,34 @@ Everyone who is interested in Timesketch is welcome. **The event is free**.
 ## Registration
 
 Please use the [Google form](https://forms.gle/1D23n4SkoCPay1eDA) to sign up.
+
+## Agenda and talks
+
+- Presentations: 16:00 - 18:40 UTC
+- Workshops: 19:00 - 21:00 UTC
+
+All times are in **UTC**
+
+* 16:00 - 16:10	Welcome & Logistics
+* 16:10 - 16:20	Timesketch history [Johan Berggren](https://twitter.com/jberggren)
+* 16:20 - 16:30	Q&A Timesketch history
+* 16:35 - 17:05	Timesketch Basics introduction Session ([Bart Inglot](https://twitter.com/BartInglot))
+* 17:05 - 17:15	Q&A Slot 1
+* 17:15 - 17:45	Using Timesketch in real life. ([CSIS Security Group](https://twitter.com/csis_cyber?lang=en))
+* 17:45 - 17:55	Q&A Slot 2
+* 17:55 - 18:30 Lightning talk(s): 
+    * Jupyter Notebooks by [Kristinn Guðjónsson](https://twitter.com/el_killerdwarf)
+    * Timesketch analyzers by [Johan Berggren](https://twitter.com/jberggren)
+    * DFTimewolf by [Thomas Chopitea](https://twitter.com/tomchop_)
+    * Sigma in Timesketch by [Alexander Jäger](https://twitter.com/alexanderjaeger)
+* 18:30 - 18:40 Timesketch Roadmap & the future [Johan Berggren](https://twitter.com/jberggren)
+
+**Break**
+
+* 19:00 - 19:05	Workshop explanation / group forming [Alexander Jäger](https://twitter.com/alexanderjaeger)
+* 19:05 - 21:00	Workshops (might be shorter depending on engagement, questions etc): 
+    * Colab / API usage (Szechuan sauce) by [Kristinn Guðjónsson](https://twitter.com/el_killerdwarf)
+    * Timesketch entry UX with Szechuan sauce by [Alexander Jäger](https://twitter.com/alexanderjaeger)
 
 ## Call for Presentations & Workshops
 
