@@ -41,6 +41,7 @@ All times are in **UTC**
     * Timesketch analyzers by [Johan Berggren](https://twitter.com/jberggren)
     * DFTimewolf by [Thomas Chopitea](https://twitter.com/tomchop_)
     * Sigma in Timesketch by [Alexander Jäger](https://twitter.com/alexanderjaeger)
+    * Timesketch used with Velocer [Eric Capuano](https://twitter.com/eric_capuano) [Whitney Champion](https://twitter.com/shortxstack) 
 * 18:15 - 18:30 Timesketch Roadmap & the future [Johan Berggren](https://twitter.com/jberggren)
 * 18:30 - 18:35 Wrap up first block and outline Workshops (Alexander Jäger)
 
