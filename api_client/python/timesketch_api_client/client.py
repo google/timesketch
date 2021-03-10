@@ -499,6 +499,26 @@ class TimesketchApi:
         searchindex_id = response_dict['objects'][0]['id']
         return self.get_searchindex(searchindex_id), created
 
+    def check_celery_status(self, job_id=''):
+        """Return information about outstanding celery tasks or a specific one.
+
+        Args:
+            job_id (str): Optional Celery job identification string. If
+                provided that specific job ID is queried, otherwise
+                a check for all outstanding jobs is checked.
+
+        Returns:
+            A list of dict objects with the status of the celery task/tasks
+            that were outstanding.
+        """
+        if job_id:
+            response = self.fetch_resource_data(
+                'tasks/?job_id={0:s}'.format(job_id))
+        else:
+            response = self.fetch_resource_data('tasks/')
+
+        return response.get('objects', [])
+
     def list_searchindices(self):
         """Get list of all searchindices that the user has access to.
 

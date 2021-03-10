@@ -622,6 +622,8 @@ def run_plaso(
     except subprocess.CalledProcessError as e:
         # Mark the searchindex and timelines as failed and exit the task
         _set_timeline_status(timeline_id, status='fail', error_msg=e.output)
+        _close_index(
+            index_name=index_name, data_store=es, timeline_id=timeline_id)
         return e.output
 
     # Mark the searchindex and timelines as ready
