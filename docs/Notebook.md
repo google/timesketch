@@ -90,8 +90,7 @@ values as questions come up.
 ```python
 ts_client = config.get_client(config_section='myserver')
 ```
-
-The other option is to connect to the docker container:
+4. The other option is to connect to the docker container:
 ```shell
 $ sudo docker exec -it notebook /bin/bash
 ```
