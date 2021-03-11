@@ -132,6 +132,7 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
 
             if not group:
                 logger.error('Group: {0:s} not found'.format(group_name))
+                continue
 
             # Only add groups publicly visible or owned by the current user
             if not group.user or group.user == current_user:

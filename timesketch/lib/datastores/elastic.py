@@ -32,6 +32,7 @@ from elasticsearch.exceptions import RequestError
 from elasticsearch.exceptions import ConnectionError
 from flask import abort
 from flask import current_app
+import numpy as np
 import prometheus_client
 
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
@@ -923,6 +924,9 @@ class ElasticsearchDataStore(object):
             for k, v in event.items():
                 if not isinstance(k, six.text_type):
                     k = codecs.decode(k, 'utf8')
+
+                if isinstance(v, float) and np.isnan(v):
+                    v = ''
 
                 # Make sure we have decoded strings in the event dict.
                 if isinstance(v, six.binary_type):
