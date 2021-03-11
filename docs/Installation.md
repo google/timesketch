@@ -134,6 +134,13 @@ Make the certificate and key available to the Nginx Docker container. Edit times
         - /etc/letsencrypt:/etc/letsencrypt/
 ```
 
+#### 9. Start a notebook container
+
+Optional it is possible to start a Timesketch notebook container to connect to the Timesketch
+instance using a Jupyter notebook.
+
+The container should be installed on the analyst workstation, and not on the server side.
+Each analyst should have their own container. See [installation instructions](docs/Notebook.md).
 Restart the system:
 
 ```shell
