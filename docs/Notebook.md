@@ -29,7 +29,6 @@ services:
       - 127.0.0.1:8844:8844
     restart: on-failure
     volumes:
-      - ../../:/usr/local/src/timesketch/:ro
       - FOLDER_PATH:/usr/local/src/picadata/
 ```
 
