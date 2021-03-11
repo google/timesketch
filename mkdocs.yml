@@ -1,0 +1,8 @@
+site_name: Timesketch Documentation
+extra_css:
+  - css/extra.css
+nav:
+    - Install: Installation.md
+theme:
+  name: material
+  logo: assets/timesketch-white.svg 
