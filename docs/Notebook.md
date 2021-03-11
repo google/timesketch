@@ -56,6 +56,16 @@ To be able to connect to the notebook connect to
 [http://localhost:8844](http://localhost:8844), the password to access
 the notebook is `timesketch`.
 
+### Troubleshoot.
+
+In case there are any issues with the container it can be useful to take
+a look at the container logs, which may give you hints into what may
+be the issue.
+
+```shell
+$ sudo docker container logs notebook
+```
+
 ## Upgrade Container
 
 To update the container, use:
