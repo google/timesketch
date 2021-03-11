@@ -1,6 +1,8 @@
 name: Publish docs to GitHub Pages
 
-on: workflow_dispatch
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 jobs:
   build:
