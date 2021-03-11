@@ -1,7 +1,8 @@
 # Install Timesketch with Docker
 
+The preffered way to install Timesketch is to use the provided Docker images. These docker images are automatically built whenever the main branch is updated or a new release is tagged.
 
-Guide on how to install Timesketch using Docker. Docker images are automatically built whenever the main branch is updated or a new release is tagged.
+It is possible to install Timesketch without docker but we strongly enocurage using docker. This is the only tested and actively maintained installation method.
 
 You will need:
 * Machine with Ubuntu 20.04 installed.
