@@ -104,3 +104,6 @@ next to the `Connect` button, select `Connect to local runtime` and type
 in the URL `http://localhost:8844/?token=timesketch` into the `Backend URL`
 field and hit `CONNECT`.
 
+## Usage
+
+TODO: This section needs to be filled in.
