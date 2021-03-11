@@ -19,7 +19,7 @@
     "cytoscape-dagre": "^2.3.1",
     "cytoscape-spread": "^3.0.0",
     "lodash": "^4.17.11",
-    "marked": "^1.1.1",
+    "marked": ">=2.0.0",
     "moment": "^2.24.0",
     "vega": "^5.4.0",
     "vega-embed": "^4.2.2",

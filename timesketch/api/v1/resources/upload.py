@@ -79,6 +79,10 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         if not data_label:
             data_label = 'generic'
 
+        # Since CSV and JSON are basically the same label, we combine it here.
+        if data_label in ('csv', 'json', 'jsonl'):
+            data_label = 'csv_jsonl'
+
         indices = [t.searchindex for t in sketch.active_timelines]
         for index in indices:
             if index.has_label(data_label) and sketch.has_permission(
@@ -215,8 +219,13 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             index_name=searchindex.index_name, file_extension=file_extension,
             sketch_id=sketch_id, only_index=enable_stream,
             timeline_id=timeline.id)
-        pipeline.apply_async()
+        task_id = uuid.uuid4().hex
+        pipeline.apply_async(task_id=task_id)
 
+        if meta is None:
+            meta = {}
+
+        meta['task_id'] = task_id
         return self.to_json(
             timeline, status_code=HTTP_STATUS_CODE_CREATED, meta=meta)
 
