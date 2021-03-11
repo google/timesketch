@@ -1,8 +1,6 @@
 name: Publish docs to GitHub Pages
-on:
-  push:
-    branches:
-      - master
+
+on: workflow_dispatch
 
 jobs:
   build:
