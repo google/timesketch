@@ -180,6 +180,10 @@ def read_and_validate_csv(
                 continue
             if 'tag' in chunk:
                 chunk['tag'] = chunk['tag'].apply(_parse_tag_field)
+
+            # Fill all NaN values with an empty string, otherwise JSON decoding
+            # in Elastic will fail.
+            chunk.fillna('', inplace=True)
             for _, row in chunk.iterrows():
                 _scrub_special_tags(row)
                 yield row.to_dict()
