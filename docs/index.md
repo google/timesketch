@@ -5,7 +5,7 @@ Timesketch is an open-source tool for collaborative forensic timeline analysis. 
 <img width="1819" alt="Screenshot 2021-03-05 at 14 28 40" src="https://user-images.githubusercontent.com/316362/110122005-5e584200-7dbf-11eb-8e3c-d73408ef2850.png">
 
 ## Getting started
-* [Install Timesketch](installation.md)
+* [Install Timesketch](install.md)
 
 ---
 
