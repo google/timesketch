@@ -6,4 +6,4 @@ nav:
     - Install: Installation.md
 theme:
   name: material
-  logo: assets/timesketch-white.svg 
+  logo: img/timesketch-white.svg 
