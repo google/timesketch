@@ -322,9 +322,9 @@ class AggregationBlock(BaseBlock):
             description = aggregation_obj.description
             agg_id = aggregation_obj.id
             meta = aggregation_obj.data.get('meta', {})
-            agg_type = meta.get('name', '')
-            created_at = ''
-            updated_at = ''
+            agg_type = meta.get('chart_type', '')
+            created_at = aggregation_obj.created_at
+            updated_at = aggregation_obj.updated_at
             parameters = json.dumps(aggregation_obj.parameters)
             user = aggregation_obj.user
         else:
