@@ -3,6 +3,7 @@
 You can ingest timeline data from a JSONL or CSV file. You can have any number of attributes/columns as you wish but there are some mandatory fields that Timeksketch needs in order to render the events in the UI.
 
 **Mandatory fields:**
+
 * message
    * String with an informative message of the event
 * datetime
@@ -30,4 +31,4 @@ Unlike JSON files, imports in JSONL format can be streamed from disk, making the
 ## Upload the file to Timesketch
 To create a new timeline in Timesketch you need to upload it to the server.
 
-[See here for instructions to do so](/docs/UploadDataViaAPI.md)
+[See here for instructions to do so](upload-data.md)

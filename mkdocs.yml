@@ -4,9 +4,26 @@ extra_css:
   - assets/css/extra.css
 nav:
   - Home: index.md
-  - Getting started:
-    - Installation: install.md
-    - Upload data: upload-data.md
+  - User guide:
+    - Basics: user-guide/basic-concepts.md
+    - Upload data: user-guide/upload-data.md
+    - Sketch overview: user-guide/sketch-overview.md
+    - Search query guide: user-guide/search-query-guide.md
+    - Create timeline from JSON or CSV: user-guide/create-timeline-from-json-csv.md
+    - Create timeline from other data: user-guide/create-timeline-from-other-data.md
+    - Sigma: user-guide/sigma.md
+  - Admin guide:
+    - Installation: admin-guide/install.md
+    - Upgrade: admin-guide/upgrade.md
+    - Server administration: admin-guide/server-admin.md
+  - Developers:
+    - Get started: developers/developer-guide.md
+    - API client: developers/api-client.md
+    - Upload data via API: developers/api-upload-data.md
+    - Create an analyzer: developers/analyzer-development.md
+  - Community: community.md
+  - Events:
+    - 2021 Summit: events/2021_timesketch_summit.md
 theme:
   name: material
   logo: assets/images/timesketch-white.svg 

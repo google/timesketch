@@ -1,15 +1,17 @@
-# Install Timesketch with Docker
+# Install Timesketch
 
 The preferred way to install Timesketch is to use the provided Docker images. These docker images are automatically built whenever the main branch is updated or a new release is tagged.
 
 It is possible to install Timesketch without docker but we strongly enocurage using docker. This is the only tested and actively maintained installation method.
 
-You will need:
+**You will need**
+
 * Machine with Ubuntu 20.04 installed.
 * At least 8GB RAM, but more the better.
 * Optional: Domain name registered and configure for the machine if you want to setup SSL for the webserver.
 
-This guide setup the following services:
+**This guide setup the following services**
+
 * Timesketch web/api server
 * Timesketch importer/analysis worker
 * PostgreSQL database
@@ -17,57 +19,56 @@ This guide setup the following services:
 * Redis key-value database (for worker processes)
 * Nginx webserver
 
-NOTE: This guide sets up  single node Elasticsearch cluster. This is OK for smaller installations but in order to scale and have better performance you need to setup a multi node Elasticsearch cluster. This is out of scope for this guide but the official documentation will get you started:
-https://www.elastic.co/guide/en/elasticsearch/reference/current/docker.html
+**NOTE**: This guide sets up  single node Elasticsearch cluster. This is OK for smaller installations but in order to scale and have better performance you need to setup a multi node Elasticsearch cluster. This is out of scope for this guide but the official documentation on [installing Elasticsearch with Docker](https://www.elastic.co/guide/en/elasticsearch/reference/current/docker.html) will get you started.
 
 ## 1. Install Docker
 
-Follow the official installation instructions for Docker on Ubuntu:
-https://docs.docker.com/engine/install/ubuntu/
+Follow the official installation instructions to [install Docker Engine on Ubuntu](https://docs.docker.com/engine/install/ubuntu/).
 
 Make sure you install docker-compose as well
 ```shell
-    $ sudo apt-get install docker-compose
+sudo apt install docker-compose
 ```
 
-## 3. Download deployment helper script
+## 2. Start the installation
+### Download helper script
 We have created a helper script to get you started with all necessary configuration.
 Download the script here:
 
 ```shell
-    $ curl -s -O https://raw.githubusercontent.com/google/timesketch/master/contrib/deploy_timesketch.sh
-    $ chmod 755 deploy_timesketch.sh
+curl -s -O https://raw.githubusercontent.com/google/timesketch/master/contrib/deploy_timesketch.sh
+chmod 755 deploy_timesketch.sh
 ```
 
-## 4. Choose location for the installation
+### Choose location for the installation
 You can choose to host the Timeksetch data directory anywhere but note that by default it will host Elasticsearch and PostgreSQL data in this directory so make sure you have enough disk space available.
 
 Example:
 
 ```shell
-    $ cd /opt
+cd /opt
 ```
 
-## 5. Run deployment script
+### Run deployment script
 
 ```shell
-    $ sudo ~/deploy_timesketch.sh
+sudo ~/deploy_timesketch.sh
 ```
 
-## 6. Start the system
+## 3. Start the system
 
 ```shell
-    $ cd timesketch
-    $ sudo docker-compose up -d
+cd timesketch
+sudo docker-compose up -d
 ```
 
-## 7. Create the first user
+### Create the first user
 
 ```shell
-    $ sudo docker-compose exec timesketch-web tsctl add_user --username <USERNAME>
+sudo docker-compose exec timesketch-web tsctl add_user --username <USERNAME>
 ```
 
-## 8. Optional: Enable TLS
+## 4. Enable TLS (optional)
 It is out of scope for the deployment script to setup certificates but here are pointers on how to use Let's Encrypt.
 
 1. You need to configure a DNS name for the server. Use your DNS provider instructions.
@@ -128,10 +129,9 @@ Make the certificate and key available to the Nginx Docker container. Edit times
 Restart the system:
 
 ```shell
-    # docker-compose down
-    # docker-compose up -d
- ```
+docker-compose down
+docker-compose up -d
+```
 
 Congratulations, your Timesketch system is operational and ready to use.
 
-    https://<HOSTNAME>
