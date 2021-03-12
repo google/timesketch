@@ -2,9 +2,11 @@ site_name: timesketch
 docs_dir: src
 use_directory_urls: true
 extra_css:
-  - css/extra.css
+  - assets/css/extra.css
 nav:
-    - Install: Installation.md
+    - Home: index.md
+    - Get started:
+        - Install Timesketch: docs/installation.md
 theme:
   name: material
-  logo: img/timesketch-white.svg 
+  logo: assets/images/timesketch-white.svg 
