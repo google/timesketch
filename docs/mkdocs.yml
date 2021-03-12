@@ -1,5 +1,5 @@
 site_name: Timesketch Documentation
-docs_dir: ./
+docs_dir: src
 extra_css:
   - css/extra.css
 nav:
