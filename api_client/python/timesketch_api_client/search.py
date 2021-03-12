@@ -719,17 +719,26 @@ class Search(resource.SketchResource):
         # Indices here can be either a list of timeline names, IDs or a list
         # of search indices. We need to verify that these exist before saving
         # them.
-        timelines = {
-            t.index_name: t.name for t in self._sketch.list_timelines()}
+        valid_ids = set()
+        timeline_indices = {}  # Dict[index] = List[name]
+        timeline_names = {}  # Dict[name] = id
 
-        valid_ids = [t.id for t in self._sketch.list_timelines()]
+        for timeline_object in self._sketch.list_timelines():
+            timeline_indices.setdefault(timeline_object.index_name, [])
+            timeline_indices[timeline_object.index_name].append(
+                timeline_object.name)
+            valid_ids.add(timeline_object.id)
+
+            timeline_names[timeline_object.name] = timeline_object.id
 
         new_indices = []
         for index in indices:
-            if index in timelines:
-                new_indices.append(index)
+            # Is this an index name, include all timeline IDs.
+            if index in timeline_indices:
+                new_indices.extend(timeline_indices[index])
                 continue
 
+            # Is this a timeline ID?
             if isinstance(index, int):
                 if index in valid_ids:
                     new_indices.append(str(index))
@@ -740,11 +749,12 @@ class Search(resource.SketchResource):
                     new_indices.append(index)
                     continue
 
-            if index in timelines.values():
-                new_indices.append(index)
+            # Is this a timeline name?
+            if index in timeline_names:
+                new_indices.append(timeline_names[index])
 
         if not new_indices:
-            logger.warning('No valid indices found, not changin the value.')
+            logger.warning('No valid indices found, not changing the value.')
             return
 
         self._indices = new_indices
@@ -1011,7 +1021,7 @@ class Search(resource.SketchResource):
 
         return_list = []
         timelines = {
-            t.index_name: t.name for t in self._sketch.list_timelines()}
+            t.id: t.name for t in self._sketch.list_timelines()}
 
         return_field_list = []
         return_fields = self._return_fields
@@ -1031,7 +1041,11 @@ class Search(resource.SketchResource):
             if not return_fields or '_index' in return_field_list:
                 source['_index'] = result.get('_index')
             if not return_fields or '_source' in return_field_list:
-                source['_source'] = timelines.get(result.get('_index'))
+                source['_source'] = timelines.get(
+                    result.get('__ts_timeline_id'))
+            if not return_fields or '__ts_timeline_id' in return_field_list:
+                source['_source'] = timelines.get(
+                    result.get('__ts_timeline_id'))
 
             return_list.append(source)
 
