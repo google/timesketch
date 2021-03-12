@@ -5,7 +5,7 @@ extra_css:
 nav:
     - Home: index.md
     - Get started:
-        - Install Timesketch: docs/installation.md
+        - Install Timesketch: installation.md
 theme:
   name: material
   logo: assets/images/timesketch-white.svg 
