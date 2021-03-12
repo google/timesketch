@@ -4,10 +4,7 @@ Timesketch is an open-source tool for collaborative forensic timeline analysis. 
 
 <img width="1819" alt="Screenshot 2021-03-05 at 14 28 40" src="https://user-images.githubusercontent.com/316362/110122005-5e584200-7dbf-11eb-8e3c-d73408ef2850.png">
 
-## Getting started
-* [Install Timesketch](install.md)
-
----
+<br><br>
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/google/timesketch/blob/master/notebooks/colab-timesketch-demo.ipynb)
 [![Open In Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/google/timesketch/master?urlpath=%2Flab)
@@ -21,5 +18,4 @@ Timesketch is an open-source tool for collaborative forensic timeline analysis. 
 ![](https://github.com/google/timesketch/workflows/ppa%20unittests/badge.svg)
 
 ---
-##### Obligatory Fine Print
-This is not an official Google product (experimental or otherwise), it is just code that happens to be owned by Google.
+**Obligatory Fine Print**: This is not an official Google product (experimental or otherwise), it is just code that happens to be owned by Google.

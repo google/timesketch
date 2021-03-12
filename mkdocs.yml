@@ -3,9 +3,14 @@ use_directory_urls: true
 extra_css:
   - assets/css/extra.css
 nav:
-    - Home: index.md
-    - Get started:
-        - Install Timesketch: install.md
+  - Home: index.md
+  - Getting started:
+    - Installation: install.md
+    - Upload data: upload-data.md
 theme:
   name: material
   logo: assets/images/timesketch-white.svg 
+  language: en
+  features:
+    - navigation.sections
+    - navigation.tabs
