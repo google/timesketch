@@ -115,6 +115,12 @@ field and hit `CONNECT`.
 
 ## Usage
 
-TODO: This section needs to be filled in, however in the meantime this
-[discussion thread](https://github.com/google/timesketch/discussions/1515) can
+TODO: This section needs to be filled in.
+
+However in the meantime these sites can be of an assistance:
+
++ [Discussion thread about the container](https://github.com/google/timesketch/discussions/1515)
++ [Beginners guide of Jupyter](https://www.dataquest.io/blog/jupyter-notebook-tutorial/)
++ [Test notebook](https://colab.research.google.com/github/google/timesketch/blob/master/notebooks/colab-timesketch-demo.ipynb)
++ [Jupyter tutorial](https://www.datacamp.com/community/tutorials/tutorial-jupyter-notebook)
 be of some assistance.
