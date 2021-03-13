@@ -702,6 +702,12 @@ class Search(resource.SketchResource):
     @indices.setter
     def indices(self, indices):
         """Make changes to the current set of indices."""
+
+        if indices == '_all':
+            self._indices = '_all'
+            self.commit()
+            return
+
         def _is_string_or_int(item):
             return isinstance(item, (str, int))
 
@@ -714,6 +720,11 @@ class Search(resource.SketchResource):
             logger.warning(
                 'Indices needs to be a list of strings or ints, not all '
                 'entries in the indices list are valid string/int.')
+            return
+
+        if len(indices) == 1 and indices[0] == '_all':
+            self._indices = '_all'
+            self.commit()
             return
 
         # Indices here can be either a list of timeline names, IDs or a list
@@ -758,6 +769,7 @@ class Search(resource.SketchResource):
             return
 
         self._indices = new_indices
+        self.commit()
 
     @property
     def max_entries(self):
@@ -790,12 +802,14 @@ class Search(resource.SketchResource):
         # Trigger a creation of a query filter if it does not exist.
         _ = self.query_filter
         self._query_filter['order'] = 'asc'
+        self.commit()
 
     def order_descending(self):
         """Set the order of objects returned back descending."""
         # Trigger a creation of a query filter if it does not exist.
         _ = self.query_filter
         self._query_filter['order'] = 'desc'
+        self.commit()
 
     @property
     def query_dsl(self):
@@ -894,6 +908,7 @@ class Search(resource.SketchResource):
     def return_size(self, return_size):
         """Make changes to the maximum number of entries in the return."""
         self._max_entries = return_size
+        self.commit()
 
     def save(self):
         """Save the search in the database.
