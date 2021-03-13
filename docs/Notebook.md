@@ -115,4 +115,6 @@ field and hit `CONNECT`.
 
 ## Usage
 
-TODO: This section needs to be filled in.
+TODO: This section needs to be filled in, however in the meantime this
+[discussion thread](https://github.com/google/timesketch/discussions/1515) can
+be of some assistance.
