@@ -56,7 +56,7 @@ To be able to connect to the notebook connect to
 [http://localhost:8844](http://localhost:8844), the password to access
 the notebook is `timesketch`.
 
-### Troubleshoot.
+### Troubleshooting Container
 
 In case there are any issues with the container it can be useful to take
 a look at the container logs, which may give you hints into what may
@@ -65,6 +65,8 @@ be the issue.
 ```shell
 $ sudo docker container logs notebook
 ```
+
+**TODO**: Complete this section.
 
 ## Upgrade Container
 
@@ -115,7 +117,7 @@ field and hit `CONNECT`.
 
 ## Usage
 
-TODO: This section needs to be filled in.
+**TODO**: This section needs to be filled in.
 
 However in the meantime these sites can be of an assistance:
 
@@ -123,4 +125,3 @@ However in the meantime these sites can be of an assistance:
 + [Beginners guide of Jupyter](https://www.dataquest.io/blog/jupyter-notebook-tutorial/)
 + [Test notebook](https://colab.research.google.com/github/google/timesketch/blob/master/notebooks/colab-timesketch-demo.ipynb)
 + [Jupyter tutorial](https://www.datacamp.com/community/tutorials/tutorial-jupyter-notebook)
-be of some assistance.
