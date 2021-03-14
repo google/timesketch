@@ -1,13 +1,9 @@
 name: Publish docs to GitHub Pages
 
-#on:
-#  push:
-#    branches:
-#      - master
-
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
+  push:
+    branches:
+      - master
 
 jobs:
   deploy:
