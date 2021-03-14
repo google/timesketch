@@ -81,49 +81,49 @@ When Let's Encrypt has been installed and you have generated certificates (locat
 Edit timesketch/etc/nginx.conf (HOSTNAME is the DNS name of your server):
 
 ```
-    events {
-            worker_connections 768;
-    }
+events {
+    worker_connections 768;
+}
 
-    http {
-        server {
-          listen 80;
-          listen [::]:80;
-          listen 443 ssl;
-          ssl_certificate /etc/letsencrypt/live/<HOSTNAME>>/fullchain.pem;
-          ssl_certificate_key /etc/letsencrypt/live/<HOSTNAME>>/privkey.pem;
-          client_max_body_size 0m;
+http {
+    server {
+      listen 80;
+      listen [::]:80;
+      listen 443 ssl;
+      ssl_certificate /etc/letsencrypt/live/<HOSTNAME>>/fullchain.pem;
+      ssl_certificate_key /etc/letsencrypt/live/<HOSTNAME>>/privkey.pem;
+      client_max_body_size 0m;
 
-          location / {
-            proxy_buffer_size       128k;
-            proxy_buffers           4 256k;
-            proxy_busy_buffers_size 256k;
-            proxy_pass http://timesketch-web:5000;
-            proxy_set_header Host $host;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-          }
-          if ($scheme != "https") {
-            return 301 https://$host$request_uri;
-          }
-        }
+      location / {
+        proxy_buffer_size       128k;
+        proxy_buffers           4 256k;
+        proxy_busy_buffers_size 256k;
+        proxy_pass http://timesketch-web:5000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+      }
+      if ($scheme != "https") {
+        return 301 https://$host$request_uri;
+      }
     }
+}
 ```
 
 Make the certificate and key available to the Nginx Docker container. Edit timesketch/docker-compose.yml and mount /etc/letsencrypt:
 
 ```
-    ...
+...
 
-    nginx:
-      image: nginx:${NGINX_VERSION}
-      restart: always
-      ports:
-        - "80:80"
-        - "443:443"
-      volumes:
-        - ./etc/nginx.conf:/etc/nginx/nginx.conf
-        - /etc/letsencrypt:/etc/letsencrypt/
+nginx:
+  image: nginx:${NGINX_VERSION}
+  restart: always
+  ports:
+    - "80:80"
+    - "443:443"
+  volumes:
+    - ./etc/nginx.conf:/etc/nginx/nginx.conf
+    - /etc/letsencrypt:/etc/letsencrypt/
 ```
 
 Restart the system:
