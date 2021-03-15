@@ -27,7 +27,7 @@ analyzer_run.py: error: the following arguments are required: PATH_TO_ANALYZER, 
 
 You can create your sample data either in CSV or JSONL with the same format
 that Timesketch can ingest. To learn more about that visit 
-[CreateTimelineFromJSONorCSV](CreateTimelineFromJSONorCSV.md) 
+[CreateTimelineFromJSONorCSV](/user-guide/create-timeline-from-json-csv/) 
 
 ### use existing sample data
 

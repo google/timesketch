@@ -1,35 +1,3 @@
-## Table of Contents
-
-- [Table of Contents](#table-of-contents)
-- [Installation](#installation)
-- [Upgrading](#upgrading)
-- [tsctl](#tsctl)
-  - [User management](#user-management)
-    - [Adding users](#adding-users)
-    - [Change user password](#change-user-password)
-    - [Removing users](#removing-users)
-  - [Group management](#group-management)
-    - [Adding groups](#adding-groups)
-    - [Removing groups](#removing-groups)
-    - [Managing group membership](#managing-group-membership)
-  - [add_index](#add_index)
-  - [Migrate db](#migrate-db)
-  - [Drop database](#drop-database)
-  - [Import json to Timesketch](#import-json-to-timesketch)
-  - [Purge](#purge)
-  - [search_template](#search_template)
-  - [import](#import)
-  - [similarity_score](#similarity_score)
-  - [Upgrade DB After Schema Change](#upgrade-db-after-schema-change)
-
-## Installation
-
-To install Timesketch, please see [Installation documentation](/docs/Installation.md)
-
-## Upgrading
-
-To upgrade Timesketch, please see [Upgrade documentation](/docs/Upgrade.md)
-
 ## tsctl
 
 tsctl is a command line tool to control timesketch.

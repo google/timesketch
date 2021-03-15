@@ -20,8 +20,7 @@ Everyone who is interested in Timesketch is welcome. **The event is free**.
 
 ## Registration
 
-~~Please use the [Google form](https://forms.gle/) to sign up.~~
-Registration for Timesketch Summit 2021 is closed
+**Closed**
 
 ## Agenda and talks
 
@@ -55,20 +54,6 @@ All times are in **UTC**
 ## Call for Presentations & Workshops
 
 **Closed**
-
-~~We invite Timesketch users and developers to submit a presentation or a workshop
-topic. Anything related to Timesketch is welcome, such as analysis techniques,
-deployment and development to name a few.~~
-
-~~We are looking for short format talks 20 min + 10 min Q&A. Workshops will have
-a 3 hour time slot.~~
-
-~~Please use the [Google form](https://forms.gle/1D23n4SkoCPay1eDA) to suggest
-your contribution to the summit. The call for presentations and workshops will
-run till **Feb 25th**.~~
-
-~~If you have ideas outside of the suggested formats, feel free to reach out.~~
-
 ## Questions
 
 If you have any questions, please reach out to the team via 

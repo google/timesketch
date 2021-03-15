@@ -4,7 +4,3 @@
 
 ### Slack community
 Join the [DFIR Timesketch Slack community](https://github.com/open-source-dfir/slack).
-
-
-
-
