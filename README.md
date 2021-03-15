@@ -35,6 +35,9 @@ Timesketch is an open-source tool for collaborative forensic timeline analysis. 
 #### Using Timesketch
 * [Users guide](docs/user-guide/basic-concepts)
 
+#### Adding a Notebook Container
+* [Installation](docs/Notebook.md)
+
 ## Community
 * [Community guide](docs/community.md)
 

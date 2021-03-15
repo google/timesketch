@@ -10,6 +10,12 @@ Use the credentials provided by your Timesketch admin to log on to Timesketch or
 ## Sketches
 
 There is a dedicated document to walk you through [Sketches](sketch-overview.md)
+## Adding Timelines
+
+- [Create timeline from JSON/JSONL/CSV file](/docs/CreateTimelineFromJSONorCSV.md)
+- [Upload data via the importer/API](/docs/UploadDataViaAPI.md)
+- [Enable Plaso upload via HTTP](/docs/EnablePlasoUpload.md)
+>>>>>>> master:docs/Users-Guide.md
 
 ## Adding event
 
