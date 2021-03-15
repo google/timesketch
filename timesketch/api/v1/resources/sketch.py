@@ -416,6 +416,8 @@ class SketchResource(resources.ResourceMixin, Resource):
             }
             views.append(view)
 
+        views.sort(key=lambda x: x.get('name', 'Z').lower())
+
         stories = []
         for story in sketch.stories:
             if not story.user:
