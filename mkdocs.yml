@@ -4,30 +4,39 @@ extra_css:
   - assets/css/extra.css
 nav:
   - Home: index.md
-  - User guide:
-    - Basics: user-guide/basic-concepts.md
-    - Upload data: user-guide/upload-data.md
-    - Sketch overview: user-guide/sketch-overview.md
-    - Search query guide: user-guide/search-query-guide.md
-    - Create timeline from JSON or CSV: user-guide/create-timeline-from-json-csv.md
-    - Create timeline from other data: user-guide/create-timeline-from-other-data.md
-    - Sigma: user-guide/sigma.md
-  - Admin guide:
-    - Installation: admin-guide/install.md
-    - Upgrade: admin-guide/upgrade.md
-    - Server administration: admin-guide/server-admin.md
+  - Getting started:
+    - Installation: getting-started/install.md
+    - Upload data: getting-started/upload-data.md
+  - Learn:
+      - Basics: learn/basic-concepts.md
+      - Sketch overview: learn/sketch-overview.md
+      - Search query guide: learn/search-query-guide.md
+      - Howto:
+        - Create timeline from JSON or CSV: learn/create-timeline-from-json-csv.md
+        - Create timeline from other data: learn/create-timeline-from-other-data.md
+        - Use Sigma: learn/sigma.md
+      - Deployment:
+        - Upgrade: learn/upgrade.md
+        - Server administration: learn/server-admin.md
   - Developers:
-    - Get started: developers/developer-guide.md
-    - API client: developers/api-client.md
-    - Upload data via API: developers/api-upload-data.md
-    - Create an analyzer: developers/analyzer-development.md
-  - Community: community.md
-  - Events:
-    - 2021 Summit: events/2021_timesketch_summit.md
+    - Getting started: developers/developer-guide.md
+    - API client:
+      - Inbtroduction: developers/api-client.md
+      - Upload data via API: developers/api-upload-data.md
+    - Analyzers:
+      - Create an analyzer: developers/analyzer-development.md
+  - Community:
+    - Resources: community/resources.md
+    - 2021 Summit: community/2021_timesketch_summit.md
+    
 theme:
   name: material
-  logo: assets/images/timesketch-white.svg 
+  logo: assets/images/timesketch-color.svg 
   language: en
   features:
     - navigation.sections
     - navigation.tabs
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/google/timesketch
