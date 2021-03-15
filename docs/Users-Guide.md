@@ -45,7 +45,7 @@ There is a dedicated document to walk you through [Sketches](/docs/SketchOvervie
 ## Adding Timelines
 
 - [Create timeline from JSON/JSONL/CSV file](/docs/CreateTimelineFromJSONorCSV.md)
-- [Create timeline from Plaso file](/docs/CreateTimelineFromPlaso.md)
+- [Upload data via the importer/API](/docs/UploadDataViaAPI.md)
 - [Enable Plaso upload via HTTP](/docs/EnablePlasoUpload.md)
 
 ## Adding event
