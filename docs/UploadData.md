@@ -21,7 +21,7 @@ with the installation of the timesketch importer client.
 ### Install the tool
 
 ```shell
-$ pip3 install timesketch-importer-client
+$ pip3 install timesketch-import-client
 ```
 
 There are two methods to use the tool:

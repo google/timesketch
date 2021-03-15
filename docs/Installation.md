@@ -67,7 +67,7 @@ Example:
     $ sudo docker-compose exec timesketch-web tsctl add_user --username <USERNAME>
 ```
 
-## 8. Optional: Enable TLS
+## 8. (optional) Enable TLS
 It is out of scope for the deployment script to setup certificates but here are pointers on how to use Let's Encrypt.
 
 1. You need to configure a DNS name for the server. Use your DNS provider instructions.
@@ -135,3 +135,11 @@ Restart the system:
 Congratulations, your Timesketch system is operational and ready to use.
 
     https://<HOSTNAME>
+
+## 9. (optional) Start a Notebook Container
+
+Optional it is possible to start a Timesketch notebook container to connect to the Timesketch
+instance using a Jupyter notebook.
+
+The container should be installed on the analyst workstation, and not on the server side.
+Each analyst should have their own container. See [installation instructions](./Notebook.md).
