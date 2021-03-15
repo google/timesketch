@@ -8,7 +8,7 @@ nav:
     - Installation: getting-started/install.md
     - Upload data: getting-started/upload-data.md
   - Learn:
-      - Basics: learn/basic-concepts.md
+      - Basic concepts: learn/basic-concepts.md
       - Sketch overview: learn/sketch-overview.md
       - Search query guide: learn/search-query-guide.md
       - Howto:
@@ -21,7 +21,7 @@ nav:
   - Developers:
     - Getting started: developers/developer-guide.md
     - API client:
-      - Inbtroduction: developers/api-client.md
+      - Introduction: developers/api-client.md
       - Upload data via API: developers/api-upload-data.md
     - Analyzers:
       - Create an analyzer: developers/analyzer-development.md
