@@ -14,7 +14,6 @@ nav:
       - Interactive notebook: learn/notebook.md
       - Howto:
         - Create timeline from JSON or CSV: learn/create-timeline-from-json-csv.md
-        - Create timeline from other data: learn/create-timeline-from-other-data.md
         - Use Sigma: learn/sigma.md
       - Deployment:
         - Upgrade: learn/upgrade.md
