@@ -11,6 +11,7 @@ nav:
       - Basic concepts: learn/basic-concepts.md
       - Sketch overview: learn/sketch-overview.md
       - Search query guide: learn/search-query-guide.md
+      - Interactive notebook: learn/notebook.md
       - Howto:
         - Create timeline from JSON or CSV: learn/create-timeline-from-json-csv.md
         - Create timeline from other data: learn/create-timeline-from-other-data.md

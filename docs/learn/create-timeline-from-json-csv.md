@@ -31,4 +31,4 @@ Unlike JSON files, imports in JSONL format can be streamed from disk, making the
 ## Upload the file to Timesketch
 To create a new timeline in Timesketch you need to upload it to the server.
 
-[See here for instructions to do so](upload-data.md)
+[See here for instructions to do so](../getting-started/upload-data.md)
