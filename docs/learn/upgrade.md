@@ -1,4 +1,4 @@
-# Upgrade an existing Timesketch installation
+# Upgrade an existing installation
 
 When upgrading Timesketch you might need to migrate the database to use the latest database schema. This is how you do that.
 

@@ -1,6 +1,6 @@
-### Developers guide
+# Developers guide
 
-It is recommended to develop Timesketch using a docker container. Refer to [Docker Readme](../docker/dev/README.md) for details on how to bring up the development container.
+It is recommended to develop Timesketch using a docker container.
 
 Note: Exclamation mark `!` denotes commands that should run in the docker container shell, dollar sign `$` denotes commands to run in your local shell.
 
@@ -215,16 +215,16 @@ To be able to use the notebook container using
 click the little triangle/arrow button in the upper right corner to connect to a
 local runtime, see:
 
-![Connect to Local Runtime](images/colab_local_runtime.png)
+![Connect to Local Runtime](/assets/images/colab_local_runtime.png)
 
 This will create a pop-up that you need to enter the URL for the local runtime.
 Use: http://localhost:8844/?token=timesketch as the URL.
 
-![Enter Local Runtime Information](images/notebook_connect.png)
+![Enter Local Runtime Information](/assets/images/notebook_connect.png)
 
 This will connect to the notebook container, where you can start executing code.
 
-![Running In Colab](images/colab_connected.png)
+![Running In Colab](/assets/images/colab_connected.png)
 
 *There are some things that work better in the Jupyter container though.*
 
@@ -255,7 +255,7 @@ After the code is installed the kernel needs to restarted to make the changes ta
 effect. In the menu select `Kernel | Restart`, now you should be able to go back
 into the notebook and make use of the latest changes in the API client.
 
-![Restarting Kernel](images/kernel_restart.png)
+![Restarting Kernel](/assets/images/kernel_restart.png)
 
 #### API development
 

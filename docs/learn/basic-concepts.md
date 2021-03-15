@@ -1,34 +1,3 @@
-## Table of Contents
-
-- [Table of Contents](#table-of-contents)
-- [Concepts](#concepts)
-- [Login](#login)
-- [Sketches](#sketches)
-- [Adding Timelines](#adding-timelines)
-- [Adding event](#adding-event)
-- [Add a comment](#add-a-comment)
-- [Star an event](#star-an-event)
-- [Views](#views)
-- [Insights / Aggegations](#insights--aggegations)
-  - [Terms aggregation](#terms-aggregation)
-  - [Filtered terms aggregation](#filtered-terms-aggregation)
-- [Customize columns](#customize-columns)
-- [Stories](#stories)
-- [Demo](#demo)
-- [Searching](#searching)
-- [Analyzers](#analyzers)
-  - [Develop Analyzers](#develop-analyzers)
-  - [Analyzer description](#analyzer-description)
-    - [Browser Search Analyzer](#browser-search-analyzer)
-    - [Browser Timeframe Analyzer](#browser-timeframe-analyzer)
-    - [Chain analyzer](#chain-analyzer)
-    - [Domain Analyzer](#domain-analyzer)
-    - [Windows EVTX Sessionizer](#windows-evtx-sessionizer)
-    - [Windows EVTX Gap analyzer](#windows-evtx-gap-analyzer)
-    - [Safebrowsing Analyzer](#safebrowsing-analyzer)
-    - [Sigma Analyzer](#sigma-analyzer)
-    - [YetiIndicators Analyzer](#yetiindicators-analyzer)
-
 ## Concepts
 
 Timesketch is built on multiple sketches, where one sketch is usually one case.
@@ -40,17 +9,17 @@ Use the credentials provided by your Timesketch admin to log on to Timesketch or
 
 ## Sketches
 
-There is a dedicated document to walk you through [Sketches](/docs/SketchOverview.md)
-
+There is a dedicated document to walk you through [Sketches](sketch-overview.md)
 ## Adding Timelines
 
 - [Create timeline from JSON/JSONL/CSV file](/docs/CreateTimelineFromJSONorCSV.md)
 - [Upload data via the importer/API](/docs/UploadDataViaAPI.md)
 - [Enable Plaso upload via HTTP](/docs/EnablePlasoUpload.md)
+>>>>>>> master:docs/Users-Guide.md
 
 ## Adding event
 
-This feature is currently not implemented in the Web UI. But you can add events using the [API client](/docs/APIClient.md).
+This feature is currently not implemented in the Web UI. But you can add events using the [API client](/developers/api-client/).
 
 ## Add a comment
 
@@ -116,7 +85,7 @@ You can add saved views, aggregations and text in markdown format to a story.
 
 Some analyzers automatically generate stories to either highlight possible events of interest or to document their runtime.
 
-If you want to export a story, export the whole Sketch. The zip file will contain each story. A story can also be exported using the [API Client](/docs/APIClient.md).
+If you want to export a story, export the whole Sketch. The zip file will contain each story. A story can also be exported using the [API Client](/developers/api-client/).
 
 ## Demo
 
@@ -124,7 +93,7 @@ To play with timesketch without any installation visit [demo.timesketch.org](htt
 
 ## Searching
 
-There is a dedicated document called [SearchQueryGuide](/docs/SearchQueryGuide.md) to help you create custom searches.
+There is a dedicated document called [SearchQueryGuide](search-query-guide.md) to help you create custom searches.
 
 All data within Timesketch is stored in elasticsearch. So the search works similar to ES.
 
@@ -160,10 +129,6 @@ The code for Analyzers is located at
 ```shell
 /timesketch/lib/analyzers
 ```
-
-### Develop Analyzers
-
-There is a dedicated document to walk you through the process of developing [Analyzers](/docs/WriteAnalyzers.md)
 
 ### Analyzer description
 
@@ -249,7 +214,7 @@ The Sigma Analyzer translates Sigma rules in Elastic Search Queries and adds a t
 
 It will also create a story with the Top 10 matched Sigma rules.
 
-There is a dedicated document to walk you through the process of using the [Sigma Analyzer](/docs/UseSigmaAnalyzer.md).
+There is a dedicated document to walk you through the process of using the [Sigma Analyzer](sigma.md).
 
 #### YetiIndicators Analyzer
 
