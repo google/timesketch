@@ -766,10 +766,16 @@ class ElasticsearchDataStore(object):
         try:
             es_stats = self.client.indices.stats(
                 index=indices, metric='docs, store')
+
         except NotFoundError:
             es_logger.error(
-                'Unable to count indexes (index not found)')
-            es_stats = {}
+                'Unable to count indices (index not found)')
+            return 0, 0
+
+        except RequestError:
+            es_logger.error(
+                'Unable to count indices (request error)', exc_info=True)
+            return 0, 0
 
         doc_count_total = es_stats.get(
             '_all', {}).get('primaries', {}).get('docs', {}).get('count', 0)
