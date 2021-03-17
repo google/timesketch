@@ -102,6 +102,14 @@ def get_import_errors(error_container, index_name, total_count):
     else:
         top_details = 'Unknown Reasons'
 
+    if total_count is None:
+        total_count = 0
+
+    if not top_type:
+        top_type = 'Unknown Reasons'
+    if not top_details:
+        top_details = 'Unknown Reasons'
+
     return (
         '{0:d} out of {1:d} events imported. Most common error type '
         'is "{2:s}" with the detail of "{3:s}"').format(
