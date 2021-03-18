@@ -25,10 +25,6 @@ then
   exit 1
 fi
 
-# Delete the existing RC file.
-sudo docker exec notebook rm ~/.timesketch/timesketch.rc
-echo " - [DONE] Deleted the older RC file on the container."
-
 # Create a symbolic link to the user's home directory (for token access).
 HOME_PATH=`dirname "${HOME}"`
 HOME_DIR=`basename "${HOME}"`
@@ -48,15 +44,6 @@ else
   sudo docker exec -u root notebook chown -R picatrix:picatrix /home/picatrix
 
   echo " - [DONE] UID for the container user has been changed to '${USER_ID}'"
-fi
-
-HOST_RECORD=`grep localhost:5000 ~/.timesketch/timesketch.rc`
-if [ "x${HOST_RECORD}" != "x" ]
-then
-  echo "127.0.0.1       timesketch-dev" | sudo tee -a /etc/hosts
-  echo " - [DONE] Adding timesketch-dev to the hosts file."
-  sed -i -e 's/localhost:5000/timesketch-dev:5000/g' "$HOME/.timesketch/timesketch.rc"
-  echo " - [DONE] Replacing localhost with timesketch-dev in RC file (so it works both in container and outside of it)"
 fi
 
 echo ""

@@ -140,15 +140,22 @@ What this script will do is the following:
 in the conainer. This is done so that configuration elements that point to your
 home directory still work inside the container.
 2. Change the UID/GID of the picatrix container to match that of your own UID/GID
-3. Add a record to your /etc/hosts file to point to localhost in case you run a
-timesketch-dev server. This is because pointing to localhost does not work inside
-the container, it needs to point to the container name. The /etc/hosts record
-will point timesketch-dev to localhost, and then change the RC file to point
-to that hostname instead of localhost. This is only done if timesketch dev
-server is in the RC file.
 
 For all these changes to take effect, it is better to stop and start the
 notebook container again.
+
+### Caveats
+
+One of the caveats here is that if you are running this notebook to connect to
+a locally hosted dev instance of Timesketch you will have issues connecting to
+it. The reason is that on the host, you'll need to connect to
+`http://localhost:5000`, however that does not exist on the container itself.
+The container needs that host to be `http://timesketch-dev:5000`, which your
+host does not read.
+
+The solution here is to have two sections for the dev container, one for the
+host and the second for the container (just copy/paste the section in the RC
+file for the dev container and pick a new name for it).
 
 ## Connect To Colab
 

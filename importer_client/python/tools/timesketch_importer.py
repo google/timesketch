@@ -73,11 +73,11 @@ def upload_file(
         for the indexing.
     """
     if not my_sketch or not hasattr(my_sketch, 'id'):
-        return 'Sketch needs to be set'
+        return None, 'Sketch needs to be set'
 
     _, _, file_extension = file_path.rpartition('.')
     if file_extension.lower() not in ('plaso', 'csv', 'jsonl'):
-        return (
+        return None, (
             'File needs to have one of the following extensions: '
             '.plaso, .csv, '
             '.jsonl (not {0:s})').format(file_extension.lower())
@@ -132,6 +132,10 @@ def upload_file(
             streamer.set_upload_context(' '.join(sys.argv))
 
         streamer.add_file(file_path)
+
+        # Force the buffer to be emptied.
+        streamer.flush()
+
         timeline = streamer.timeline
         task_id = streamer.celery_task_id
 
