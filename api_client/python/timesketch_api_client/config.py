@@ -22,6 +22,7 @@ import configparser
 import logging
 import os
 import requests
+import shutil
 
 from google.auth.transport import requests as auth_requests
 
@@ -90,6 +91,26 @@ class ConfigAssistant:
     def __init__(self):
         """Initialize the configuration assistant."""
         self._config = {}
+
+    def _get_default_config_path(self):
+        """Returns the default file path for the config file."""
+        home_path = os.path.expanduser('~')
+        config_dir_path = os.path.join(home_path, self.RC_FOLDER_PATH)
+
+        # TODO: Remove this, temporary here for RC file migration.
+        old_path = os.path.join(home_path, self._OLD_RC_FILENAME)
+        config_file_path = os.path.join(config_dir_path, self.RC_FILENAME)
+
+        if os.path.isfile(old_path):
+            shutil.move(old_path, config_file_path)
+
+        if not os.path.isdir(config_dir_path):
+            os.mkdir(config_dir_path, mode=0o700)
+
+        if not os.path.isfile(config_file_path):
+            fw = open(config_file_path, 'a')
+            fw.close()
+        return config_file_path
 
     @property
     def parameters(self) -> List[Text]:
@@ -209,6 +230,22 @@ class ConfigAssistant:
         """
         return name.lower() in self._config
 
+    def list_config_sections(self, config_file_path: Optional[Text] = ''):
+        """Returns a list with all the sections in the config file."""
+        if not config_file_path:
+            config_file_path = self._get_default_config_path()
+
+        if not os.path.isfile(config_file_path):
+            return []
+
+        config = configparser.ConfigParser()
+        try:
+            _ = config.read([config_file_path])
+        except configparser.MissingSectionHeaderError as exc:
+            return []
+
+        return config.sections()
+
     def load_config_file(
             self, config_file_path: Optional[Text] = '',
             section: Optional[Text] = 'timesketch',
@@ -230,33 +267,15 @@ class ConfigAssistant:
         Raises:
           IOError if the file does not exist or config does not load.
         """
-        home_path = os.path.expanduser('~')
-        config_dir_path = os.path.join(home_path, self.RC_FOLDER_PATH)
-
-        # TODO: Remove this once we've deprecated the old config file.
-        remove_old_config = False
-
-        if config_file_path:
-            if not os.path.isfile(config_file_path):
-                error_msg = (
-                    'Unable to load config file, file {0:s} does not '
-                    'exist.').format(config_file_path)
-                logger.error(error_msg)
-                raise IOError(error_msg)
-        elif os.path.isfile(os.path.join(home_path, self._OLD_RC_FILENAME)):
-            # TODO: Deprecate this option.
-            config_file_path = os.path.join(home_path, self._OLD_RC_FILENAME)
-            print('we got the old one...')
-            remove_old_config = True
-        else:
-            config_file_path = os.path.join(config_dir_path, self.RC_FILENAME)
-
-        if not os.path.isdir(config_dir_path):
-            os.mkdir(config_dir_path, mode=0o700)
+        if not config_file_path:
+            config_file_path = self._get_default_config_path()
 
         if not os.path.isfile(config_file_path):
-            fw = open(config_file_path, 'a')
-            fw.close()
+            error_msg = (
+                'Unable to load config file, file {0:s} does not '
+                'exist.').format(config_file_path)
+            logger.error(error_msg)
+            raise IOError(error_msg)
 
         config = configparser.ConfigParser()
         try:
@@ -291,10 +310,6 @@ class ConfigAssistant:
             cli_config = config['cli']
             for name, value in cli_config.items():
                 self.set_config(name, value)
-
-        # TODO: Remove once old path is deprecated.
-        if remove_old_config:
-            os.remove(config_file_path)
 
     def load_config_dict(self, config_dict: Dict[Text, Text]):
         """Loads configuration from a dictionary.
@@ -337,11 +352,7 @@ class ConfigAssistant:
                 file.
         """
         if not file_path:
-            home_path = os.path.expanduser('~')
-            dir_path = os.path.join(home_path, self.RC_FOLDER_PATH)
-            if not os.path.isdir(dir_path):
-                os.mkdir(dir_path, mode=0o700)
-            file_path = os.path.join(dir_path, self.RC_FILENAME)
+            file_path = self._get_default_config_path()
 
         config = configparser.ConfigParser()
 

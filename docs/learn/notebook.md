@@ -155,7 +155,39 @@ host does not read.
 
 The solution here is to have two sections for the dev container, one for the
 host and the second for the container (just copy/paste the section in the RC
-file for the dev container and pick a new name for it).
+file for the dev container and pick a new name for it). For example:
+
+```
+[timesketch]
+host_uri = http://timesketch-dev:5000
+username = dev
+verify = True
+client_id = 
+client_secret = 
+auth_mode = userpass
+token_file_path = <SOME_PATH_TO_TOKEN>
+cred_key = <SOME_KEY>
+
+[host]
+host_uri = http://localhost:5000
+username = dev
+verify = True
+client_id = 
+client_secret = 
+auth_mode = userpass
+token_file_path = <SOME_PATH_TO_TOKEN>
+cred_key = <SOME_CRED_KEY>
+
+[demo]
+host_uri = https://demo.timesketch.org
+username = demo
+verify = True
+client_id = 
+client_secret = 
+auth_mode = userpass
+token_file_path = <SOME_PATH_TO_TOKEN>
+cred_key = <SOME_KEY>
+```
 
 ## Connect To Colab
 
