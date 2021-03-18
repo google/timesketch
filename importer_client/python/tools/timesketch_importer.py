@@ -19,6 +19,7 @@ import getpass
 import logging
 import os
 import sys
+import time
 
 from typing import Dict
 
@@ -67,7 +68,9 @@ def upload_file(
         file_path (str): the path to the file to upload.
 
     Returns:
-        A string with results (whether successful or not).
+        A tuple with the timeline object (timeline.Timeline) or None if not
+        able to upload the timeline as well as the celery task identification
+        for the indexing.
     """
     if not my_sketch or not hasattr(my_sketch, 'id'):
         return 'Sketch needs to be set'
@@ -86,6 +89,9 @@ def upload_file(
     if log_config_file:
         import_helper.add_config(log_config_file)
 
+    timeline = None
+    task_id = ''
+    logger.info('About to upload file.')
     with importer.ImportStreamer() as streamer:
         streamer.set_sketch(my_sketch)
         streamer.set_config_helper(import_helper)
@@ -126,9 +132,11 @@ def upload_file(
             streamer.set_upload_context(' '.join(sys.argv))
 
         streamer.add_file(file_path)
+        timeline = streamer.timeline
+        task_id = streamer.celery_task_id
 
-    return 'File got successfully uploaded to sketch: {0:d}'.format(
-        my_sketch.id)
+    logger.info('File upload completed.')
+    return timeline, task_id
 
 
 def main(args=None):
@@ -181,6 +189,14 @@ def main(args=None):
 
     config_group = argument_parser.add_argument_group(
         'Configuration Arguments')
+
+    config_group.add_argument(
+        '--quick', '-q', '--no-wait', '--no_wait', action='store_false',
+        default=True, dest='wait_timeline', help=(
+            'By default the tool will wait until the timeline has been '
+            'indexed and print out some details of the import. This option '
+            'makes the tool exit as soon as the data has been imported and '
+            'does not wait until it\'s been indexed.'))
 
     config_group.add_argument(
         '--log-config-file', '--log_config_file', '--lc', action='store',
@@ -409,9 +425,44 @@ def main(args=None):
     }
 
     logger.info('Uploading file.')
-    result = upload_file(
+    timeline, task_id = upload_file(
         my_sketch=my_sketch, config_dict=config_dict, file_path=options.path)
-    logger.info(result)
+
+    if not options.wait_timeline:
+        logger.info('File got successfully uploaded to sketch: {0:d}'.format(
+            my_sketch.id))
+        return
+
+    if not timeline:
+        logger.warning(
+            'There does not seem to be any timeline returned, check whether '
+            'the data got uploaded.')
+        return
+
+    print('Checking file upload status: ', end='')
+    while True:
+        status = timeline.status
+        if status in ('archived', 'failed', 'fail'):
+            print('[FAIL]')
+            print('Unable to index timeline, reason: {0:s}'.format(
+                timeline.description))
+            return
+
+        if status not in ('ready', 'success'):
+            print('.', end='')
+            time.sleep(3)
+            continue
+
+        print('[DONE]')
+        print(f'Timeline uploaded to ID: {timeline.id}.')
+
+        task_state = 'Unknown'
+        task_list = ts_client.check_celery_status(task_id)
+        for task in task_list:
+            if task.get('task_id', '') == task_id:
+                task_state = task.get('state', 'Unknown')
+        print(f'Status of the index is: {task_state}')
+        break
 
 
 if __name__ == '__main__':

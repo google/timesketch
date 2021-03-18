@@ -20,26 +20,30 @@
 ## About Timesketch
 Timesketch is an open-source tool for collaborative forensic timeline analysis. Using sketches you and your collaborators can easily organize your timelines and analyze them all at the same time.  Add meaning to your raw data with rich annotations, comments, tags and stars.
 
-<img src="https://01dd8b4c-a-62cb3a1a-s-sites.googlegroups.com/site/timesketchforensics/about/timesketch-201708.png" alt="Timesketch" width="1000"/>
+<img width="1819" alt="Screenshot 2021-03-05 at 14 28 40" src="https://user-images.githubusercontent.com/316362/110122005-5e584200-7dbf-11eb-8e3c-d73408ef2850.png">
+
+<img width="1801" alt="Screenshot 2021-03-05 at 14 29 46" src="https://user-images.githubusercontent.com/316362/110122085-75972f80-7dbf-11eb-87aa-5dc64628392b.png">
 
 ## Getting started
 
 #### Installation
-* [Install Timesketch](docs/Installation.md)
+* [Install Timesketch](docs/admin-guide/install.md)
 
 #### Adding timelines
-* [Use the API client to upload data](docs/UploadDataViaAPI.md)
+* [Upload data](docs/admin-guide/upload-data.md)
 
 #### Using Timesketch
-* [Users guide](docs/Users-Guide.md)
-* [Using Sigma](docs/UseSigma.md)
+* [Users guide](docs/user-guide/basic-concepts)
+
+#### Adding a Notebook Container
+* [Installation](docs/Notebook.md)
 
 ## Community
-* [Community guide](docs/Community-Guide.md)
+* [Community guide](docs/community.md)
 
 ## Contributing
 * [Prerequisites](CONTRIBUTING.md)
-* [Developers guide](docs/Developers-Guide.md)
+* [Developers guide](developers/developer-guide.md)
 
 ---
 

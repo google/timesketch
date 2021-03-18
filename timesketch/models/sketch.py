@@ -20,6 +20,7 @@ import json
 from flask import current_app
 from flask import url_for
 
+from sqlalchemy import BigInteger
 from sqlalchemy import Column
 from sqlalchemy import ForeignKey
 from sqlalchemy import Integer
@@ -379,7 +380,6 @@ class SearchTemplate(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
                 'exclude': [],
                 'indices': '_all',
                 'terminate_after': 40,
-                'from': 0,
                 'order': 'asc',
                 'size': '40'
             }
@@ -701,7 +701,7 @@ class DataSource(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     provider = Column(UnicodeText())
     context = Column(UnicodeText())
     file_on_disk = Column(UnicodeText())
-    file_size = Column(Integer)
+    file_size = Column(BigInteger())
     original_filename = Column(UnicodeText())
     data_label = Column(UnicodeText())
 

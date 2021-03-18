@@ -154,11 +154,14 @@ class Sigma(resource.BaseResource):
 
         """
         self.resource_uri = f'sigma/rule/{rule_uuid}'
-        super().__init__(
-            api=self.api, resource_uri=self.resource_uri)
 
         self.lazyload_data(refresh_cache=True)
-        for key, value in self.resource_data.items():
+        objects = self.data.get('objects')
+        if not objects:
+            logger.error('Unable to parse rule with given text')
+            raise ValueError('No rules found.')
+        rule_dict = objects[0]
+        for key, value in rule_dict.items():
             self.set_value(key, value)
 
     def from_text(self, rule_text):

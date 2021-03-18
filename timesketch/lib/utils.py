@@ -150,6 +150,9 @@ def read_and_validate_csv(
     header_reader = pandas.read_csv(file_handle, sep=delimiter, nrows=0)
     _validate_csv_fields(mandatory_fields, header_reader)
 
+    if hasattr(file_handle, 'seek'):
+        file_handle.seek(0)
+
     try:
         reader = pandas.read_csv(
             file_handle, sep=delimiter, chunksize=DEFAULT_CHUNK_SIZE)
@@ -177,10 +180,13 @@ def read_and_validate_csv(
                 continue
             if 'tag' in chunk:
                 chunk['tag'] = chunk['tag'].apply(_parse_tag_field)
+
             for _, row in chunk.iterrows():
                 _scrub_special_tags(row)
-                yield row
-    except pandas.errors.ParserError as e:
+                # Remove all NAN values from the pandas.Series.
+                row.dropna(inplace=True)
+                yield row.to_dict()
+    except (pandas.errors.EmptyDataError, pandas.errors.ParserError) as e:
         error_string = 'Unable to read file, with error: {0!s}'.format(e)
         logger.error(error_string)
         raise errors.DataIngestionError(error_string) from e
