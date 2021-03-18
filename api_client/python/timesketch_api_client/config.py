@@ -43,8 +43,13 @@ class ConfigAssistant:
     client.
     """
 
+    # The path, relative to user home directory where configs are stored.
+    RC_FOLDER_PATH = '.timesketch'
     # The name of the default config file.
-    RC_FILENAME = '.timesketchrc'
+    RC_FILENAME = 'timesketch.rc'
+
+    # For legacy reasons, until deprecated, the old path to the config file.
+    _OLD_RC_FILENAME = '.timesketchrc'
 
     # The needed items to configure a client.
     CLIENT_NEEDED = frozenset([
@@ -213,7 +218,7 @@ class ConfigAssistant:
         Args:
             config_file_path (str): Full path to the configuration file,
                 if not supplied the default path will be used, which is
-                the file RC_FILENAME inside the user's home directory.
+                the timesketch.rc file inside the ~/.timesketch folder.
             section (str): The configuration section to read from. This
                 is optional and defaults to timesketch. This can be
                 useful if you have multiple Timesketch servers to connect to,
@@ -225,6 +230,12 @@ class ConfigAssistant:
         Raises:
           IOError if the file does not exist or config does not load.
         """
+        home_path = os.path.expanduser('~')
+        config_dir_path = os.path.join(home_path, self.RC_FOLDER_PATH)
+
+        # TODO: Remove this once we've deprecated the old config file.
+        remove_old_config = False
+
         if config_file_path:
             if not os.path.isfile(config_file_path):
                 error_msg = (
@@ -232,9 +243,16 @@ class ConfigAssistant:
                     'exist.').format(config_file_path)
                 logger.error(error_msg)
                 raise IOError(error_msg)
+        elif os.path.isfile(os.path.join(home_path, self._OLD_RC_FILENAME)):
+            # TODO: Deprecate this option.
+            config_file_path = os.path.join(home_path, self._OLD_RC_FILENAME)
+            print('we got the old one...')
+            remove_old_config = True
         else:
-            home_path = os.path.expanduser('~')
-            config_file_path = os.path.join(home_path, self.RC_FILENAME)
+            config_file_path = os.path.join(config_dir_path, self.RC_FILENAME)
+
+        if not os.path.isdir(config_dir_path):
+            os.mkdir(config_dir_path, mode=0o700)
 
         if not os.path.isfile(config_file_path):
             fw = open(config_file_path, 'a')
@@ -273,6 +291,10 @@ class ConfigAssistant:
             cli_config = config['cli']
             for name, value in cli_config.items():
                 self.set_config(name, value)
+
+        # TODO: Remove once old path is deprecated.
+        if remove_old_config:
+            os.remove(config_file_path)
 
     def load_config_dict(self, config_dict: Dict[Text, Text]):
         """Loads configuration from a dictionary.
@@ -316,7 +338,10 @@ class ConfigAssistant:
         """
         if not file_path:
             home_path = os.path.expanduser('~')
-            file_path = os.path.join(home_path, self.RC_FILENAME)
+            dir_path = os.path.join(home_path, self.RC_FOLDER_PATH)
+            if not os.path.isdir(dir_path):
+                os.mkdir(dir_path, mode=0o700)
+            file_path = os.path.join(dir_path, self.RC_FILENAME)
 
         config = configparser.ConfigParser()
 
@@ -432,8 +457,8 @@ def get_client(
         logger.error('Unable to get a client, with error: %s', e)
         logger.error(
             'If the issue is in the credentials then one solution '
-            'is to remove the ~/.timesketch.token file and the '
-            'credential section in ~/.timesketchrc or to remove '
+            'is to remove the ~/.timesketch/.timesketch.token file and the '
+            'credential section in ~/.timesketch/timesketch.rc or to remove '
             'both files. Or you could have supplied a wrong '
             'password to undecrypt the token file.')
 

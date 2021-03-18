@@ -44,7 +44,8 @@ $ timesketch_importer.py path_to_my_file.csv
 
 If the information to connect to Timesketch are not present (host information,
 auth method and auth information) then the tool will ask the user for the missing
-information and store it in the configuration file `~/.timesketchrc` for future use.
+information and store it in the configuration file `~/.timesketch/timesketch.rc`
+for future use.
 
 Remember for OAUTH authentication both `client_id` and `client_secret` need to
 provided to the tool.

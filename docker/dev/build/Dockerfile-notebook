@@ -9,8 +9,8 @@ ENV JUPYTER_PORT=8844
 RUN mkdir -p /home/picatrix/.local/share/jupyter/nbextensions/snippets/ && \
     mkdir -p /home/picatrix/.jupyter/custom
 
-COPY --chown=1000:1000 docker/dev/build/timesketchrc /home/picatrix/.timesketchrc
-COPY --chown=1000:1000 docker/dev/build/timesketch_token /home/picatrix/.timesketch.token
+COPY --chown=1000:1000 docker/dev/build/timesketchrc /home/picatrix/.timesketch/timesketch.rc
+COPY --chown=1000:1000 docker/dev/build/timesketch_token /home/picatrix/.timesketch/.timesketch.token
 COPY --chown=1000:1000 . /home/picatrix/code
 COPY --chown=1000:1000 docker/dev/build/snippets.json /home/picatrix/.local/share/jupyter/nbextensions/snippets/snippets.json
 COPY --chown=1000:1000 docker/dev/build/10-widgets.py /home/picatrix/.ipython/profile_default/startup/10-widgets.py

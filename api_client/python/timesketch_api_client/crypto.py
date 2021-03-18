@@ -36,19 +36,30 @@ class CredentialStorage:
 
     # The default filename of the token file.
     DEFAULT_CREDENTIAL_FILENAME = '.timesketch.token'
+    DEFAULT_FOLDER_PATH = '.timesketch'
 
     # Length of the salt.
     SALT_LENGTH = 16
 
     def __init__(self, file_path=''):
         """Initialize the class."""
+        # TODO: Deprecate once old filepaths are removed.
+        self._delete_old_token_file = False
+
         self._user = getpass.getuser()
         if file_path:
             self._filepath = file_path
         else:
             home_path = os.path.expanduser('~')
-            self._filepath = os.path.join(
-                home_path, self.DEFAULT_CREDENTIAL_FILENAME)
+            if os.path.isfile(os.path.join(
+                    home_path, self.DEFAULT_CREDENTIAL_FILENAME)):
+                self._delete_old_token_file = True
+                self._filepath = os.path.join(
+                    home_path, self.DEFAULT_CREDENTIAL_FILENAME)
+            else:
+                self._filepath = os.path.join(
+                    home_path, self.DEFAULT_FOLDER_PATH,
+                    self.DEFAULT_CREDENTIAL_FILENAME)
 
     def _get_key(self, salt, password):
         """Returns an encryption key.
@@ -97,7 +108,15 @@ class CredentialStorage:
                 credential file.
         """
         if not file_path:
-            file_path = self._filepath
+            # TODO: Remove once old filepath is deprecated.
+            if self._delete_old_token_file:
+                home_path = os.path.expanduser('~')
+                file_path = os.path.join(
+                    home_path, self.DEFAULT_FOLDER_PATH,
+                    self.DEFAULT_CREDENTIAL_FILENAME)
+                os.remove(self._filepath)
+            else:
+                file_path = self._filepath
 
         if password:
             password = bytes(password, 'utf-8')

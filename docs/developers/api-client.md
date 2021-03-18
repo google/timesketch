@@ -9,7 +9,7 @@ whereas others will be documented further in a notebook (e.g. [colab-timesketch-
 ## Basic Connections
 
 The API client defines a config library specifically intended to help with setting up all configuration for connecting to Timesketch, including
-authentication and server information. The config client will read stored connection information from `~/.timesketchrc`, asking the user questions
+authentication and server information. The config client will read stored connection information from `~/.timesketch/timesketch.rc`, asking the user questions
 if information is missing (and subsequently storing the results of those questions in the RC file for future lookups).
 
 An example use of the config client:
@@ -48,7 +48,7 @@ In order to make it simpler to connect to the API client a config file
 can be generated or created to store information needed to connect.
 
 The file is stored in the user's home directory, in a file called
-`$HOME/.timesketchrc`.
+`$HOME/.timesketch/timesketch.rc`.
 
 The content of the file is:
 
@@ -94,7 +94,7 @@ client_id =
 client_secret = 
 auth_mode = userpass
 cred_key = <redacted>
-token_file_path = /home/myselfandirene/.timesketch.dev.token
+token_file_path = /home/myselfandirene/.timesketch/dev.token
 ```
 
 Each of the additional sections needs to define a separate token file using the

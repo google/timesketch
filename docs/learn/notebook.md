@@ -30,13 +30,21 @@ services:
     restart: on-failure
     volumes:
       - FOLDER_PATH:/usr/local/src/picadata/
+      - HOME/.timesketch:/home/picatrix/.timesketch
 ```
 
-Replace the text `FOLDER_PATH` with a folder that can survive reboots. This is
-the path to the folder where all notebooks will be saved to. The folder needs
-to be readable and writeable by a user with uid/gid 1000:1000 (if this is run
-on a Windows system the `FOLDER_PATH` can be set to something like
-`C:\My Folder\`)
+Replace:
+
++ The text `FOLDER_PATH` with a folder that can survive reboots. This is
+the path to the folder where all notebooks will be saved to (1)
++ `HOME` will need to be replaced by your home directory, this is where
+you're timesketch RC and token files are stored.
+
+  *(1) There are two ways to define this folder, either as a regular folder 
+  accessible by the user if you use the script `contrib/fix_notebook_permissions.sh`
+  to fix permissions inside the container, OR create the folder to be readable
+  and writeable by a user with uid/gid 1000:1000 (if this is run on a Windows
+  system the `FOLDER_PATH` can be set to something like `C:\My Folder\`)*
 
 Once the file has been saved, docker-compose can be used to pull and start
 the container:
@@ -94,7 +102,16 @@ user/pass combination of dev/dev.
 
 To connect to a different server, few options are available:
 
-1. Copy ~/.timesketchrc and ~/.timesketch.token to the docker using `docker cp`.
+1. Copy credentials manually over to the container.
+2. Run a script to do the work for you.
+
+### Manual Copy of Credentials.
+
+To manually copy the credentials over, you'll have to do one of the following
+steps:
+
+1. Copy ~/.timesketch/timesketch.rc and ~/.timesketch/.timesketch.token to
+the docker using `docker cp`.
 2. Run `ts_client = config.get_client(confirm_choices=True) and change all
 values as questions come up.
 3. Create a separate session using 
@@ -106,7 +123,32 @@ ts_client = config.get_client(config_section='myserver')
 $ sudo docker exec -it notebook /bin/bash
 ```
 
-And manually craft the ~/.timesketchrc file.
+And manually craft the ~/.timesketch/timesketch.rc file.
+
+
+### Run The Script.
+
+There is a script in the contrib folder:
+
+```shell
+$ sh contrib/fix_notebook_permissions.sh
+```
+
+What this script will do is the following:
+
+1. Create a symbolic link to your user directory to point to the /home/picatrix
+in the conainer. This is done so that configuration elements that point to your
+home directory still work inside the container.
+2. Change the UID/GID of the picatrix container to match that of your own UID/GID
+3. Add a record to your /etc/hosts file to point to localhost in case you run a
+timesketch-dev server. This is because pointing to localhost does not work inside
+the container, it needs to point to the container name. The /etc/hosts record
+will point timesketch-dev to localhost, and then change the RC file to point
+to that hostname instead of localhost. This is only done if timesketch dev
+server is in the RC file.
+
+For all these changes to take effect, it is better to stop and start the
+notebook container again.
 
 ## Connect To Colab
 
