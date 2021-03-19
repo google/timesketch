@@ -183,7 +183,6 @@ def _set_timeline_status(timeline_id, status, error_msg=None):
     if error_msg:
         data_source = DataSource.query.filter_by(
             timeline_id=timeline.id).first()
-        print(data_source)
         if data_source:
             data_source.error_message = error_msg
 
