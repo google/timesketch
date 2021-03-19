@@ -22,7 +22,6 @@ While connected to the container:
     
     $ root@<CONTAINER_ID>$ git clone https://github.com/google/timesketch.git
     root@<CONTAINER_ID>$ cd timesketch/timesketch
-    root@<CONTAINER_ID>$ tsctl db stamp head
     root@<CONTAINER_ID>$ tsctl db upgrade 
 
 ## Upgrade timesketch
