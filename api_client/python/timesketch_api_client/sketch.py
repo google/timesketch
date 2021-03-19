@@ -928,7 +928,7 @@ class Sketch(resource.BaseResource):
         timelines = []
 
         data = self.lazyload_data()
-        objects = sketch.get('objects')
+        objects = data.get('objects')
         if not objects:
             return timelines
 
