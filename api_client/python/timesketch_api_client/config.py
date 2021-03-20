@@ -21,8 +21,9 @@ from typing import Text
 import configparser
 import logging
 import os
-import requests
 import shutil
+
+import requests
 
 from google.auth.transport import requests as auth_requests
 
@@ -241,7 +242,7 @@ class ConfigAssistant:
         config = configparser.ConfigParser()
         try:
             _ = config.read([config_file_path])
-        except configparser.MissingSectionHeaderError as exc:
+        except configparser.MissingSectionHeaderError:
             return []
 
         return config.sections()
