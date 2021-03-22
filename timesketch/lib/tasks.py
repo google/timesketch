@@ -634,6 +634,10 @@ def run_plaso(
     if elastic_password:
         cmd.extend(['--elastic_password', elastic_password])
 
+    elastic_ssl = current_app.config.get('ELASTIC_SSL', False)
+    if elastic_ssl:
+        cmd.extend(['--use_ssl'])
+
     # Run psort.py
     try:
         subprocess.check_output(
