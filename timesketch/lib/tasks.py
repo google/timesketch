@@ -626,6 +626,14 @@ def run_plaso(
     if timeline_id:
         cmd.extend(['--timeline_identifier', str(timeline_id)])
 
+    elastic_username = current_app.config.get('ELASTIC_USER', '')
+    if elastic_username:
+        cmd.extend(['--elastic_user', elastic_username])
+
+    elastic_password = current_app.config.get('ELASTIC_PASSWORD', '')
+    if elastic_password:
+        cmd.extend(['--elastic_password', elastic_password])
+
     # Run psort.py
     try:
         subprocess.check_output(
