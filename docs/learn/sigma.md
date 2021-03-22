@@ -15,6 +15,8 @@ Timesketch deliberately does not provide a set of Sigma rules, as those would ad
 To use the official community rules you can clone [github.com/Neo23x0/sigma](https://github.com/Neo23x0/sigma) to /data/sigma.
 This directory will not be caught by git.
 
+>Warning: Currently it is not recommended to just clone the directory. See https://github.com/google/timesketch/issues/1532 for more info.
+
 ```shell
 cd data
 git clone https://github.com/Neo23x0/sigma
