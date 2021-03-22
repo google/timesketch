@@ -14,6 +14,7 @@
 """Upload resources for version 1 of the Timesketch API."""
 
 import codecs
+import logging
 import os
 import uuid
 
@@ -36,6 +37,8 @@ from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import DataSource
+
+logger = logging.getLogger('timesketch.api_upload')
 
 
 class UploadFileResource(resources.ResourceMixin, Resource):
@@ -168,13 +171,14 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                     timeline_name, searchindex.index_name,
                     timeline_.searchindex.index_name))
 
-            timeline_name = '{0:s}_{1:s}'.format(timeline_name, uuid.uuid4().hex)
+            timeline_name = '{0:s}_{1:s}'.format(
+                timeline_name, uuid.uuid4().hex)
             return self._upload_and_index(
                 file_extension=file_extension, timeline_name=timeline_name,
                 index_name=searchindex.index_name, sketch=sketch, form=form,
-                enable_stream=enable_stream, original_filename=original_filename,
-                data_label=data_label, file_path=file_path, events=events,
-                meta=meta)
+                enable_stream=enable_stream,
+                original_filename=original_filename, data_label=data_label,
+                file_path=file_path, events=events, meta=meta)
 
         searchindex.set_status('processing')
 
