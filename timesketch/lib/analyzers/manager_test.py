@@ -80,7 +80,7 @@ class TestAnalysisManager(BaseTest):
 
     def setUp(self):
         """Set up the tests."""
-        super(TestAnalysisManager, self).setUp()
+        super().setUp()
         manager.AnalysisManager.clear_registration()
         manager.AnalysisManager.register_analyzer(MockAnalyzer)
 
