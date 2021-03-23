@@ -925,9 +925,14 @@ class Sketch(resource.BaseResource):
             raise RuntimeError(
                 'Unable to list timelines on an archived sketch.')
 
-        sketch = self.lazyload_data()
         timelines = []
-        for timeline_dict in sketch['objects'][0]['timelines']:
+
+        data = self.lazyload_data()
+        objects = data.get('objects')
+        if not objects:
+            return timelines
+
+        for timeline_dict in objects[0].get('timelines', []):
             timeline_obj = timeline.Timeline(
                 timeline_id=timeline_dict['id'],
                 sketch_id=self.id,
