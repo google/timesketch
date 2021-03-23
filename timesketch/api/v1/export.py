@@ -115,7 +115,7 @@ def export_story(story, sketch, story_exporter, zip_file):
 
 def query_to_filehandle(
         query_string='', query_dsl='', query_filter=None, sketch=None,
-        datastore=None, indices=None):
+        datastore=None, indices=None, timeline_ids=None, return_fields=None):
     """Query the datastore and return back a file object with the results.
 
     This function takes a query string or DSL, queries the datastore
@@ -129,6 +129,9 @@ def query_to_filehandle(
         sketch (timesketch.models.sketch.Sketch): a sketch object.
         datastore (elastic.ElasticsearchDataStore): the datastore object.
         indices (list): List of indices to query
+        timeline_ids (list): Optional list of IDs of Timeline objects that
+            should be queried as part of the search.
+        return_fields (list): List of fields to return
 
     Returns:
         file-like object in a CSV format with the results.
@@ -147,6 +150,8 @@ def query_to_filehandle(
         query_filter=query_filter,
         query_dsl=query_dsl,
         enable_scroll=True,
+        timeline_ids=timeline_ids,
+        return_fields=return_fields,
         indices=indices)
 
     scroll_id = result.get('_scroll_id', '')

@@ -14,6 +14,7 @@
 """Upload resources for version 1 of the Timesketch API."""
 
 import codecs
+import logging
 import os
 import uuid
 
@@ -36,6 +37,8 @@ from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import DataSource
+
+logger = logging.getLogger('timesketch.api_upload')
 
 
 class UploadFileResource(resources.ResourceMixin, Resource):
@@ -151,8 +154,6 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 'please create an issue on Github: https://github.com/'
                 'google/timesketch/issues/new/choose')
 
-        searchindex.set_status('processing')
-
         timelines = Timeline.query.filter_by(
             name=timeline_name, sketch=sketch).all()
 
@@ -162,11 +163,24 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 timeline = timeline_
                 break
 
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
+            logger.error(
                 'There is a timeline in the sketch that has the same name '
-                'but is stored in a different index, check the data_label '
-                'on the uploaded data')
+                'but is stored in a different index: name {0:s} attempting '
+                'index: {1:s} but found index {2:s} - retrying with a '
+                'different timeline name.'.format(
+                    timeline_name, searchindex.index_name,
+                    timeline_.searchindex.index_name))
+
+            timeline_name = '{0:s}_{1:s}'.format(
+                timeline_name, uuid.uuid4().hex[-5:])
+            return self._upload_and_index(
+                file_extension=file_extension, timeline_name=timeline_name,
+                index_name=searchindex.index_name, sketch=sketch, form=form,
+                enable_stream=enable_stream,
+                original_filename=original_filename, data_label=data_label,
+                file_path=file_path, events=events, meta=meta)
+
+        searchindex.set_status('processing')
 
         if not timeline:
             timeline = Timeline.get_or_create(
