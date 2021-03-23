@@ -20,6 +20,7 @@ import pandas
 
 from . import error
 from . import resource
+from . import searchtemplate
 
 
 logger = logging.getLogger('timesketch_api.search')
@@ -28,7 +29,7 @@ logger = logging.getLogger('timesketch_api.search')
 class Chip:
     """Class definition for a query filter chip."""
 
-    # The type of a chip that is defiend.
+    # The type of a chip that is defined.
     CHIP_TYPE = ''
 
     # The chip value defines what property or attribute of the
@@ -634,7 +635,7 @@ class Search(resource.SketchResource):
             self.query_filter = query_filter
 
         self._query_string = query_string
-        self._query_dsl = query_dsl
+        self.query_dsl = query_dsl
         self._return_fields = return_fields
 
         if max_entries:
@@ -701,31 +702,54 @@ class Search(resource.SketchResource):
     @indices.setter
     def indices(self, indices):
         """Make changes to the current set of indices."""
+
+        if indices == '_all':
+            self._indices = '_all'
+            self.commit()
+            return
+
+        def _is_string_or_int(item):
+            return isinstance(item, (str, int))
+
         if not isinstance(indices, list):
             logger.warning(
                 'Indices needs to be a list of strings (indices that were '
                 'passed in were not a list).')
             return
-        if not all([isinstance(x, (str, int)) for x in indices]):
+        if not all(map(_is_string_or_int, indices)):
             logger.warning(
                 'Indices needs to be a list of strings or ints, not all '
                 'entries in the indices list are valid string/int.')
             return
 
+        if len(indices) == 1 and indices[0] == '_all':
+            self._indices = '_all'
+            self.commit()
+            return
+
         # Indices here can be either a list of timeline names, IDs or a list
         # of search indices. We need to verify that these exist before saving
         # them.
-        timelines = {
-            t.index_name: t.name for t in self._sketch.list_timelines()}
+        valid_ids = set()
+        timeline_indices = {}  # Dict[index] = List[name]
+        timeline_names = {}  # Dict[name] = id
 
-        valid_ids = [t.id for t in self._sketch.list_timelines()]
+        for timeline_object in self._sketch.list_timelines():
+            timeline_indices.setdefault(timeline_object.index_name, [])
+            timeline_indices[timeline_object.index_name].append(
+                timeline_object.name)
+            valid_ids.add(timeline_object.id)
+
+            timeline_names[timeline_object.name] = timeline_object.id
 
         new_indices = []
         for index in indices:
-            if index in timelines:
-                new_indices.append(index)
+            # Is this an index name, include all timeline IDs.
+            if index in timeline_indices:
+                new_indices.extend(timeline_indices[index])
                 continue
 
+            # Is this a timeline ID?
             if isinstance(index, int):
                 if index in valid_ids:
                     new_indices.append(str(index))
@@ -736,14 +760,16 @@ class Search(resource.SketchResource):
                     new_indices.append(index)
                     continue
 
-            if index in timelines.values():
-                new_indices.append(index)
+            # Is this a timeline name?
+            if index in timeline_names:
+                new_indices.append(timeline_names[index])
 
         if not new_indices:
-            logger.warning('No valid indices found, not changin the value.')
+            logger.warning('No valid indices found, not changing the value.')
             return
 
         self._indices = new_indices
+        self.commit()
 
     @property
     def max_entries(self):
@@ -776,12 +802,14 @@ class Search(resource.SketchResource):
         # Trigger a creation of a query filter if it does not exist.
         _ = self.query_filter
         self._query_filter['order'] = 'asc'
+        self.commit()
 
     def order_descending(self):
         """Set the order of objects returned back descending."""
         # Trigger a creation of a query filter if it does not exist.
         _ = self.query_filter
         self._query_filter['order'] = 'desc'
+        self.commit()
 
     @property
     def query_dsl(self):
@@ -880,12 +908,17 @@ class Search(resource.SketchResource):
     def return_size(self, return_size):
         """Make changes to the maximum number of entries in the return."""
         self._max_entries = return_size
+        self.commit()
 
     def save(self):
         """Save the search in the database.
 
+        Returns:
+            String with the identification of the saved search.
+
         Raises:
             ValueError: if there are values missing in order to save the query.
+            RuntimeError: if the search could not be saved.
         """
         if not self.name:
             raise ValueError(
@@ -941,6 +974,24 @@ class Search(resource.SketchResource):
         self._resource_id = search_dict.get('id', 0)
         return f'Saved search to ID: {self._resource_id}'
 
+    def save_as_template(self):
+        """Save the search as a search template.
+
+        Returns:
+            A search template object (searchtemplate.SearchTemplate).
+        """
+        if not self._resource_id:
+            logger.warning('Search has not been saved first, saving now.')
+            return_string = self.save()
+            logger.info(return_string)
+
+        template = searchtemplate.SearchTemplate(self.api)
+        template.from_search_object(self)
+
+        print(template.save())
+        self._searchtemplate = template.id
+        return template
+
     @property
     def scrolling(self):
         """Returns whether scrolling is enabled or not."""
@@ -985,7 +1036,7 @@ class Search(resource.SketchResource):
 
         return_list = []
         timelines = {
-            t.index_name: t.name for t in self._sketch.list_timelines()}
+            t.id: t.name for t in self._sketch.list_timelines()}
 
         return_field_list = []
         return_fields = self._return_fields
@@ -1005,7 +1056,11 @@ class Search(resource.SketchResource):
             if not return_fields or '_index' in return_field_list:
                 source['_index'] = result.get('_index')
             if not return_fields or '_source' in return_field_list:
-                source['_source'] = timelines.get(result.get('_index'))
+                source['_source'] = timelines.get(
+                    result.get('__ts_timeline_id'))
+            if not return_fields or '__ts_timeline_id' in return_field_list:
+                source['_source'] = timelines.get(
+                    result.get('__ts_timeline_id'))
 
             return_list.append(source)
 

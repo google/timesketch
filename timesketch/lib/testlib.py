@@ -55,6 +55,7 @@ class TestConfig(object):
     AUTO_INDEX_ANALYZERS = []
     AUTO_SKETCH_ANALYZERS = []
     SIMILARITY_DATA_TYPES = []
+    SIGMA_RULES_FOLDERS = ['./data/sigma/rules/']
 
 
 class MockElasticClient(object):
@@ -94,6 +95,12 @@ class MockElasticIndices(object):
 
     def stats(self, *args, **kwargs):
         return {'indices': {}}
+
+    def refresh(self, *args, **kwargs):
+        return
+
+    def exists(self, *args, **kwargs):
+        return True
 
 
 class MockDataStore(object):

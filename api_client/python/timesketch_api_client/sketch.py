@@ -23,16 +23,15 @@ import pandas
 
 from . import analyzer
 from . import aggregation
-from . import definitions
 from . import error
 from . import graph
 from . import resource
 from . import search
+from . import searchtemplate
 from . import story
 from . import timeline
 
 
-logging.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO'))
 logger = logging.getLogger('timesketch_api.sketch')
 
 
@@ -47,8 +46,6 @@ class Sketch(resource.BaseResource):
         api: An instance of TimesketchApi object.
     """
 
-    DEFAULT_SIZE_LIMIT = 10000
-
     def __init__(self, sketch_id, api, sketch_name=None):
         """Initializes the Sketch object.
 
@@ -61,65 +58,12 @@ class Sketch(resource.BaseResource):
         self.api = api
         self._archived = None
         self._sketch_name = sketch_name
-        self._resource_uri = 'sketches/{0:d}'.format(self.id)
-        super().__init__(api=api, resource_uri=self._resource_uri)
-
-    def _build_pandas_dataframe(self, search_response, return_fields=None):
-        """Return a Pandas DataFrame from a query result dict.
-
-        Args:
-            search_response: dictionary with query results.
-            return_fields: List of fields that should be included in the
-                response. Optional and defaults to None.
-
-        Returns:
-            pandas DataFrame with the results.
-        """
-        return_list = []
-        timelines = {}
-        for timeline_obj in self.list_timelines():
-            timelines[timeline_obj.index] = timeline_obj.name
-
-        return_field_list = []
-        if return_fields:
-            if return_fields.startswith('\''):
-                return_fields = return_fields[1:]
-            if return_fields.endswith('\''):
-                return_fields = return_fields[:-1]
-            return_field_list = return_fields.split(',')
-
-        for result in search_response.get('objects', []):
-            source = result.get('_source', {})
-            if not return_fields or '_id' in return_field_list:
-                source['_id'] = result.get('_id')
-            if not return_fields or '_type' in return_field_list:
-                source['_type'] = result.get('_type')
-            if not return_fields or '_index' in return_field_list:
-                source['_index'] = result.get('_index')
-            if not return_fields or '_source' in return_field_list:
-                source['_source'] = timelines.get(result.get('_index'))
-
-            return_list.append(source)
-
-        data_frame = pandas.DataFrame(return_list)
-        if 'datetime' in data_frame:
-            try:
-                data_frame['datetime'] = pandas.to_datetime(data_frame.datetime)
-            except pandas.errors.OutOfBoundsDatetime:
-                pass
-        elif 'timestamp' in data_frame:
-            try:
-                data_frame['datetime'] = pandas.to_datetime(
-                    data_frame.timestamp / 1e6, utc=True, unit='s')
-            except pandas.errors.OutOfBoundsDatetime:
-                pass
-
-        return data_frame
+        super().__init__(api=api, resource_uri=f'sketches/{self.id}')
 
     @property
     def acl(self):
         """Property that returns back a ACL dict."""
-        data = self.lazyload_data()
+        data = self.lazyload_data(refresh_cache=True)
         objects = data.get('objects')
         if not objects:
             return {}
@@ -211,7 +155,7 @@ class Sketch(resource.BaseResource):
     @property
     def my_acl(self):
         """Property that returns back the ACL for the current user."""
-        data = self.lazyload_data()
+        data = self.lazyload_data(refresh_cache=True)
         objects = data.get('objects')
         if not objects:
             return []
@@ -260,8 +204,24 @@ class Sketch(resource.BaseResource):
         Returns:
             Sketch status as string.
         """
-        sketch = self.lazyload_data()
-        return sketch['objects'][0]['status'][0]['status']
+        data = self.lazyload_data(refresh_cache=True)
+        objects = data.get('objects')
+        if not objects:
+            return 'Unknown'
+
+        if not isinstance(objects, (list, tuple)):
+            return 'Unknown'
+
+        first_object = objects[0]
+        status_list = first_object.get('status')
+
+        if not status_list:
+            return 'Unknown'
+
+        if len(status_list) < 1:
+            return 'Unknown'
+
+        return status_list[0].get('status', 'Unknown')
 
     def add_attribute_list(self, name, values, ontology='text'):
         """Add an attribute to the sketch.
@@ -356,7 +316,8 @@ class Sketch(resource.BaseResource):
 
         status = error.check_return_status(response, logger)
         if not status:
-            logger.error('Unable to add the label to the sketch.')
+            logger.error(
+                'Unable to add the label [{0:s}] to the sketch.'.format(label))
 
         return status
 
@@ -388,7 +349,7 @@ class Sketch(resource.BaseResource):
 
         status = error.check_return_status(response, logger)
         if not status:
-            logger.error('Unable to remove the attriubute from the sketch.')
+            logger.error('Unable to remove the attribute from the sketch.')
 
         return status
 
@@ -772,7 +733,7 @@ class Sketch(resource.BaseResource):
 
         Returns:
             A story object (instance of Story) if one is found. Returns
-            a None if neiter story_id or story_title is defined or if
+            a None if neither story_id or story_title is defined or if
             the view does not exist. If a story title is defined and
             not a story id, the first story that is found with the same
             title will be returned.
@@ -802,9 +763,13 @@ class Sketch(resource.BaseResource):
 
         Returns:
             A search object (instance of search.Search) if one is found.
-            Returns a None if neiter view_id or view_name is defined or if
+            Returns a None if neither view_id or view_name is defined or if
             the search does not exist.
         """
+        logger.warning(
+            'This function is about to be deprecated, use '
+            'get_saved_search() instead.')
+
         return self.get_saved_search(search_id=view_id, search_name=view_name)
 
     def get_saved_search(self, search_id=None, search_name=None):
@@ -818,7 +783,7 @@ class Sketch(resource.BaseResource):
 
         Returns:
             A search object (instance of search.Search) if one is found.
-            Returns a None if neiter search_id or search_name is defined or if
+            Returns a None if neither search_id or search_name is defined or if
             the search does not exist.
         """
         if self.is_archived():
@@ -833,6 +798,35 @@ class Sketch(resource.BaseResource):
                 return search_obj
             if search_name and search_name.lower() == search_obj.name.lower():
                 return search_obj
+        return None
+
+    def get_timeline(self, timeline_id=None, timeline_name=None):
+        """Returns a timeline object that is stored in the sketch.
+
+        Args:
+            timeline_id: an integer indicating the ID of the timeline to
+                be fetched. Defaults to None.
+            timeline_name: a string with the name of the timeline. Optional
+                and defaults to None.
+
+        Returns:
+            A timeline object (instance of Timeline) if one is found. Returns
+            a None if neither timeline_id or timeline_name is defined or if
+            the timeline does not exist.
+        """
+        if self.is_archived():
+            raise RuntimeError(
+                'Unable to get timelines on an archived sketch.')
+
+        if timeline_id is None and timeline_name is None:
+            return None
+
+        for timeline_ in self.list_timelines():
+            if timeline_id and timeline_id == timeline_.id:
+                return timeline_
+            if timeline_name:
+                if timeline_name.lower() == timeline_.name.lower():
+                    return timeline_
         return None
 
     def list_stories(self):
@@ -870,6 +864,9 @@ class Sketch(resource.BaseResource):
         Returns:
             List of search object (instance of search.Search).
         """
+        logger.warning(
+            'This function will soon be deprecated, use list_saved_searches() '
+            'instead.')
         return self.list_saved_searches()
 
     def list_saved_searches(self):
@@ -896,6 +893,28 @@ class Sketch(resource.BaseResource):
 
         return searches
 
+    def list_search_templates(self):
+        """Get a list of all search templates that are available.
+
+        Returns:
+            List of searchtemplate.SearchTemplate object instances.
+        """
+        response = self.api.fetch_resource_data('searchtemplate/')
+        objects = response.get('objects', [])
+        if not objects:
+            return []
+
+        template_dicts = objects[0]
+
+        template_list = []
+        for template_dict in template_dicts:
+            template_obj = searchtemplate.SearchTemplate(api=self.api)
+            template_obj.from_saved(template_dict.get('id'), sketch_id=self.id)
+
+            template_list.append(template_obj)
+
+        return template_list
+
     def list_timelines(self):
         """List all timelines for this sketch.
 
@@ -906,9 +925,14 @@ class Sketch(resource.BaseResource):
             raise RuntimeError(
                 'Unable to list timelines on an archived sketch.')
 
-        sketch = self.lazyload_data()
         timelines = []
-        for timeline_dict in sketch['objects'][0]['timelines']:
+
+        data = self.lazyload_data()
+        objects = data.get('objects')
+        if not objects:
+            return timelines
+
+        for timeline_dict in objects[0].get('timelines', []):
             timeline_obj = timeline.Timeline(
                 timeline_id=timeline_dict['id'],
                 sketch_id=self.id,
@@ -918,80 +942,44 @@ class Sketch(resource.BaseResource):
             timelines.append(timeline_obj)
         return timelines
 
+    # pylint: disable=unused-argument
     def upload(self, timeline_name, file_path, index=None):
-        """Upload a CSV, JSONL or Plaso file to the server for indexing.
+        """Deprecated function to upload data, does nothing.
 
         Args:
             timeline_name: Name of the resulting timeline.
             file_path: Path to the file to be uploaded.
             index: Index name for the ES database
 
-        Returns:
-            Timeline object instance.
+        Raises:
+            RuntimeError: If this function is used, since it has been
+                deprecated in favor of the importer client.
         """
-        if self.is_archived():
-            raise RuntimeError(
-                'Unable to upload files to an archived sketch.')
+        message = (
+            'This function has been deprecated, use the CLI tool: '
+            'timesketch_importer: https://github.com/google/timesketch/blob/'
+            'master/docs/UploadData.md#using-the-importer-clie-tool or the '
+            'importer library: https://github.com/google/timesketch/blob/'
+            'master/docs/UploadDataViaAPI.md')
+        logger.error(message)
+        raise RuntimeError(message)
 
-        # TODO: Deprecate this function.
-        logger.warning(
-            'This function is about to be deprecated, please use the '
-            'timesketch_import_client instead (this function is not '
-            'guaranteed to work)')
-
-        resource_url = f'{self.api.api_root}/upload/'
-        files = {'file': open(file_path, 'rb')}
-        _, _, file_ending = file_path.rpartition('.')
-        data = {
-            'name': timeline_name,
-            'sketch_id': self.id,
-            'label': file_ending,
-            'index_name': index}
-
-        response = self.api.session.post(resource_url, files=files, data=data)
-        response_dict = error.get_response_json(response, logger)
-        timeline_dict = response_dict['objects'][0]
-        timeline_obj = timeline.Timeline(
-            timeline_id=timeline_dict['id'],
-            sketch_id=self.id,
-            api=self.api,
-            name=timeline_dict['name'],
-            searchindex=timeline_dict['searchindex']['index_name'])
-
-        return timeline_obj
-
+    # pylint: disable=unused-argument
     def add_timeline(self, searchindex):
-        """Add timeline to sketch.
+        """Deprecated function to add timeline to sketch.
 
         Args:
             searchindex: SearchIndex object instance.
 
-        Returns:
-            Timeline object instance.
+        Raises:
+            RuntimeError: If this function is called.
         """
-        if self.is_archived():
-            raise RuntimeError(
-                'Unable to add a timeline to an archived sketch.')
+        message = (
+            'This function has been deprecated, since adding already existing '
+            'indices to a sketch is no longer supported.')
 
-        resource_url = '{0:s}/sketches/{1:d}/timelines/'.format(
-            self.api.api_root, self.id)
-        form_data = {'timeline': searchindex.id}
-        response = self.api.session.post(resource_url, json=form_data)
-
-        if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
-            error.error_message(
-                response, message='Failed adding timeline',
-                error=RuntimeError)
-
-        response_dict = error.get_response_json(response, logger)
-        timeline_dict = response_dict['objects'][0]
-        timeline_obj = timeline.Timeline(
-            timeline_id=timeline_dict['id'],
-            sketch_id=self.id,
-            api=self.api,
-            name=timeline_dict['name'],
-            searchindex=timeline_dict['searchindex']['index_name'])
-        return timeline_obj
+        logger.error(message)
+        raise RuntimeError(message)
 
     def explore(self,
                 query_string=None,
@@ -1039,6 +1027,10 @@ class Sketch(resource.BaseResource):
             RuntimeError: if the query is missing needed values, or if the
                 sketch is archived.
         """
+        logger.warning(
+            'Using this function is discouraged, please consider using '
+            'the search.Search object instead, which is more flexible.')
+
         if not (query_string or query_filter or query_dsl or view):
             raise RuntimeError('You need to supply a query or view')
 
@@ -1106,6 +1098,13 @@ class Sketch(resource.BaseResource):
             If the analyzer runs successfully return back an AnalyzerResult
             object.
         """
+        # TODO: Deprecate this function.
+        logger.warning(
+            'This function is about to be deprecated, please use the '
+            '`.run_analyzer()` function of a timeline object instead. '
+            'This function does not support all functionality of the newer '
+            'implementation in the timeline object.')
+
         if self.is_archived():
             raise error.UnableToRunAnalyzer(
                 'Unable to run an analyzer on an archived sketch.')
@@ -1321,8 +1320,7 @@ class Sketch(resource.BaseResource):
         return None
 
     def comment_event(self, event_id, index, comment_text):
-        """
-        Adds a comment to a single event.
+        """Adds a comment to a single event.
 
         Args:
             event_id: id of the event
@@ -1443,6 +1441,10 @@ class Sketch(resource.BaseResource):
             raise RuntimeError(
                 'Unable to search for labels in an archived sketch.')
 
+        logger.warning(
+            'This function will be deprecated soon. Use the search.Search '
+            'object instead and add a search.LabelChip to search for labels.')
+
         query = {
             'nested': {
                 'path': 'timesketch_label',
@@ -1537,7 +1539,7 @@ class Sketch(resource.BaseResource):
         return self._archived
 
     def archive(self):
-        """Archive a sketch and return a boolean whether it was succesful."""
+        """Archive a sketch and return a boolean whether it was successful."""
         if self.is_archived():
             logger.error('Sketch already archived.')
             return False
@@ -1554,7 +1556,7 @@ class Sketch(resource.BaseResource):
         return return_status
 
     def unarchive(self):
-        """Unarchives a sketch and return boolean whether it was succesful."""
+        """Unarchives a sketch and return boolean whether it was successful."""
         if not self.is_archived():
             logger.error('Sketch wasn\'t archived.')
             return False
@@ -1573,7 +1575,7 @@ class Sketch(resource.BaseResource):
         return return_status
 
     def export(self, file_path):
-        """Exports the content of the story to a ZIP file.
+        """Exports the content of the sketch to a ZIP file.
 
         Args:
             file_path (str): a file path where the ZIP file will be saved.

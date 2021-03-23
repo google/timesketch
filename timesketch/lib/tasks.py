@@ -25,6 +25,7 @@ import io
 import json
 import six
 
+from elasticsearch.exceptions import NotFoundError
 from elasticsearch.exceptions import RequestError
 from flask import current_app
 
@@ -47,11 +48,12 @@ from timesketch.lib.utils import read_and_validate_csv
 from timesketch.lib.utils import read_and_validate_jsonl
 from timesketch.lib.utils import send_email
 from timesketch.models import db_session
+from timesketch.models.sketch import Analysis
+from timesketch.models.sketch import AnalysisSession
+from timesketch.models.sketch import DataSource
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
-from timesketch.models.sketch import Analysis
-from timesketch.models.sketch import AnalysisSession
 from timesketch.models.user import User
 
 
@@ -101,6 +103,14 @@ def get_import_errors(error_container, index_name, total_count):
     else:
         top_details = 'Unknown Reasons'
 
+    if total_count is None:
+        total_count = 0
+
+    if not top_type:
+        top_type = 'Unknown Reasons'
+    if not top_details:
+        top_details = 'Unknown Reasons'
+
     return (
         '{0:d} out of {1:d} events imported. Most common error type '
         'is "{2:s}" with the detail of "{3:s}"').format(
@@ -127,6 +137,31 @@ def init_worker(**kwargs):
     db_session.configure(bind=engine)
 
 
+def _close_index(index_name, data_store, timeline_id):
+    """Helper function to close an index if it is not used somewhere else.
+
+    Args:
+        index_name: String with the Elastic index name.
+        data_store: Instance of elastic.ElasticsearchDataStore.
+        timeline_id: ID of the timeline the index belongs to.
+    """
+    indices = SearchIndex.query.filter_by(index_name=index_name).all()
+    for index in indices:
+        for timeline in index.timelines:
+            if timeline.get_status.status in ('closed', 'deleted', 'archived'):
+                continue
+
+            if timeline.id != timeline_id:
+                return
+
+    try:
+        data_store.client.indices.close(index=index_name)
+    except NotFoundError:
+        logger.error(
+            'Unable to close index: {0:s} - index not '
+            'found'.format(index_name))
+
+
 def _set_timeline_status(timeline_id, status, error_msg=None):
     """Helper function to set status for searchindex and all related timelines.
 
@@ -146,8 +181,10 @@ def _set_timeline_status(timeline_id, status, error_msg=None):
 
     # Update description if there was a failure in ingestion.
     if error_msg:
-        # TODO: Don't overload the description field.
-        timeline.description = error_msg
+        data_source = DataSource.query.filter_by(
+            timeline_id=timeline.id).first()
+        if data_source:
+            data_source.error_message = error_msg
 
     # Commit changes to database
     db_session.add(timeline)
@@ -313,8 +350,14 @@ def build_sketch_analysis_pipeline(
 
         kwargs = analyzer_kwargs.get(analyzer_name, {})
         searchindex = SearchIndex.query.get(searchindex_id)
-        timeline = Timeline.query.filter_by(
-            sketch=sketch, searchindex=searchindex).first()
+
+        timeline = None
+        if timeline_id:
+            timeline = Timeline.query.get(timeline_id)
+
+        if not timeline:
+            timeline = Timeline.query.filter_by(
+                sketch=sketch, searchindex=searchindex).first()
 
         analysis = Analysis(
             name=analyzer_name,
@@ -498,9 +541,7 @@ def run_plaso(
             'files.')
 
     plaso_version = int(plaso.__version__)
-    # Uncomment once a new version is released.
-    #if plaso_version <= PLASO_MINIMUM_VERSION:
-    if plaso_version < PLASO_MINIMUM_VERSION:
+    if plaso_version <= PLASO_MINIMUM_VERSION:
         raise RuntimeError(
             'Plaso version is out of date (version {0:d}, please upgrade to a '
             'version that is later than {1:d}'.format(
@@ -545,11 +586,15 @@ def run_plaso(
             index_name=index_name, doc_type=event_type, mappings=mappings)
     except errors.DataIngestionError as e:
         _set_timeline_status(timeline_id, status='fail', error_msg=str(e))
+        _close_index(
+            index_name=index_name, data_store=es, timeline_id=timeline_id)
         raise
 
     except (RuntimeError, ImportError, NameError, UnboundLocalError,
             RequestError) as e:
         _set_timeline_status(timeline_id, status='fail', error_msg=str(e))
+        _close_index(
+            index_name=index_name, data_store=es, timeline_id=timeline_id)
         raise
 
     except Exception as e:  # pylint: disable=broad-except
@@ -557,6 +602,8 @@ def run_plaso(
         error_msg = traceback.format_exc()
         _set_timeline_status(timeline_id, status='fail', error_msg=error_msg)
         logger.error('Error: {0!s}\n{1:s}'.format(e, error_msg))
+        _close_index(
+            index_name=index_name, data_store=es, timeline_id=timeline_id)
         return None
 
     message = 'Index timeline [{0:s}] to index [{1:s}] (source: {2:s})'
@@ -579,6 +626,18 @@ def run_plaso(
     if timeline_id:
         cmd.extend(['--timeline_identifier', str(timeline_id)])
 
+    elastic_username = current_app.config.get('ELASTIC_USER', '')
+    if elastic_username:
+        cmd.extend(['--elastic_user', elastic_username])
+
+    elastic_password = current_app.config.get('ELASTIC_PASSWORD', '')
+    if elastic_password:
+        cmd.extend(['--elastic_password', elastic_password])
+
+    elastic_ssl = current_app.config.get('ELASTIC_SSL', False)
+    if elastic_ssl:
+        cmd.extend(['--use_ssl'])
+
     # Run psort.py
     try:
         subprocess.check_output(
@@ -586,6 +645,8 @@ def run_plaso(
     except subprocess.CalledProcessError as e:
         # Mark the searchindex and timelines as failed and exit the task
         _set_timeline_status(timeline_id, status='fail', error_msg=e.output)
+        _close_index(
+            index_name=index_name, data_store=es, timeline_id=timeline_id)
         return e.output
 
     # Mark the searchindex and timelines as ready
@@ -656,17 +717,23 @@ def run_csv_jsonl(
 
     except errors.DataIngestionError as e:
         _set_timeline_status(timeline_id, status='fail', error_msg=str(e))
+        _close_index(
+            index_name=index_name, data_store=es, timeline_id=timeline_id)
         raise
 
     except (RuntimeError, ImportError, NameError, UnboundLocalError,
             RequestError) as e:
         _set_timeline_status(timeline_id, status='fail', error_msg=str(e))
+        _close_index(
+            index_name=index_name, data_store=es, timeline_id=timeline_id)
         raise
 
     except Exception as e:  # pylint: disable=broad-except
         # Mark the searchindex and timelines as failed and exit the task
         error_msg = traceback.format_exc()
         _set_timeline_status(timeline_id, status='fail', error_msg=error_msg)
+        _close_index(
+            index_name=index_name, data_store=es, timeline_id=timeline_id)
         logger.error('Error: {0!s}\n{1:s}'.format(e, error_msg))
         return None
 

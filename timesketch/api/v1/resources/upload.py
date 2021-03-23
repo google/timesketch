@@ -14,6 +14,7 @@
 """Upload resources for version 1 of the Timesketch API."""
 
 import codecs
+import logging
 import os
 import uuid
 
@@ -35,6 +36,9 @@ from timesketch.models import db_session
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
+from timesketch.models.sketch import DataSource
+
+logger = logging.getLogger('timesketch.api_upload')
 
 
 class UploadFileResource(resources.ResourceMixin, Resource):
@@ -78,13 +82,17 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         if not data_label:
             data_label = 'generic'
 
+        # Since CSV and JSON are basically the same label, we combine it here.
+        if data_label in ('csv', 'json', 'jsonl'):
+            data_label = 'csv_jsonl'
+
         indices = [t.searchindex for t in sketch.active_timelines]
         for index in indices:
             if index.has_label(data_label) and sketch.has_permission(
                     permission='write', user=current_user):
                 return index
 
-        index_name = uuid.uuid4().hex
+        index_name = index_name or uuid.uuid4().hex
         searchindex = SearchIndex.get_or_create(
             name=name,
             index_name=index_name,
@@ -103,9 +111,11 @@ class UploadFileResource(resources.ResourceMixin, Resource):
 
         return searchindex
 
+    # pylint: disable=too-many-arguments
     def _upload_and_index(
-            self, file_extension, timeline_name, index_name, sketch,
-            enable_stream, data_label='', file_path='', events='', meta=None):
+            self, file_extension, timeline_name, index_name, sketch, form,
+            enable_stream, original_filename='', data_label='', file_path='',
+            events='', meta=None):
         """Creates a full pipeline for an uploaded file and returns the results.
 
         Args:
@@ -114,8 +124,10 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                            datastore.
             index_name: the Elastic index name for the timeline.
             sketch: Instance of timesketch.models.sketch.Sketch
+            form: a dict with the configuration for the upload.
             enable_stream: boolean indicating whether this is file is part of a
                            stream or not.
+            original_filename: Original filename from the upload.
             data_label: Optional string with a data label for the search index.
             file_path: the path to the file to be uploaded (optional).
             events: a string with events to upload (optional).
@@ -133,7 +145,14 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             index_name=index_name,
             data_label=data_label,
             extension=file_extension)
-        searchindex.set_status('processing')
+
+        if not searchindex:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'We were unable to acquire a searchindex and therefore not '
+                'able to upload data, please try again. If this error persist '
+                'please create an issue on Github: https://github.com/'
+                'google/timesketch/issues/new/choose')
 
         timelines = Timeline.query.filter_by(
             name=timeline_name, sketch=sketch).all()
@@ -144,11 +163,24 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 timeline = timeline_
                 break
 
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
+            logger.error(
                 'There is a timeline in the sketch that has the same name '
-                'but is stored in a different index, check the data_label '
-                'on the uploaded data')
+                'but is stored in a different index: name {0:s} attempting '
+                'index: {1:s} but found index {2:s} - retrying with a '
+                'different timeline name.'.format(
+                    timeline_name, searchindex.index_name,
+                    timeline_.searchindex.index_name))
+
+            timeline_name = '{0:s}_{1:s}'.format(
+                timeline_name, uuid.uuid4().hex[-5:])
+            return self._upload_and_index(
+                file_extension=file_extension, timeline_name=timeline_name,
+                index_name=searchindex.index_name, sketch=sketch, form=form,
+                enable_stream=enable_stream,
+                original_filename=original_filename, data_label=data_label,
+                file_path=file_path, events=events, meta=meta)
+
+        searchindex.set_status('processing')
 
         if not timeline:
             timeline = Timeline.get_or_create(
@@ -174,6 +206,20 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             timeline.add_label(sketch_label)
             searchindex.add_label(sketch_label)
 
+        file_size = form.get('total_file_size', 0)
+        datasource = DataSource(
+            timeline=timeline,
+            user=current_user,
+            provider=form.get('provider', 'N/A'),
+            context=form.get('context', 'N/A'),
+            file_on_disk=file_path,
+            file_size=int(file_size),
+            original_filename=original_filename,
+            data_label=data_label
+        )
+
+        timeline.datasources.append(datasource)
+        db_session.add(datasource)
         db_session.add(timeline)
         db_session.commit()
 
@@ -187,8 +233,13 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             index_name=searchindex.index_name, file_extension=file_extension,
             sketch_id=sketch_id, only_index=enable_stream,
             timeline_id=timeline.id)
-        pipeline.apply_async()
+        task_id = uuid.uuid4().hex
+        pipeline.apply_async(task_id=task_id)
 
+        if meta is None:
+            meta = {}
+
+        meta['task_id'] = task_id
         return self.to_json(
             timeline, status_code=HTTP_STATUS_CODE_CREATED, meta=meta)
 
@@ -215,10 +266,12 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             timeline_name=timeline_name,
             index_name=index_name,
             sketch=sketch,
+            form=form,
             data_label=data_label,
             enable_stream=form.get('enable_stream', False))
 
-    def _upload_file(self, file_storage, form, sketch, index_name):
+    def _upload_file(
+            self, file_storage, form, sketch, index_name, chunk_index_name=''):
         """Upload a file.
 
         Args:
@@ -226,6 +279,8 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             form: a dict with the configuration for the upload.
             sketch: Instance of timesketch.models.sketch.Sketch
             index_name: the Elastic index name for the timeline.
+            chunk_index_name: A unique identifier for a file if
+                chunks are used.
 
         Returns:
             A timeline if created otherwise a search index in JSON (instance
@@ -267,15 +322,23 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             return self._upload_and_index(
                 file_path=file_path,
                 file_extension=file_extension,
+                original_filename=file_storage.filename,
                 timeline_name=timeline_name,
                 index_name=index_name,
                 sketch=sketch,
+                form=form,
                 data_label=data_label,
                 enable_stream=enable_stream)
 
         # For file chunks we need the correct filepath, otherwise each chunk
         # will get their own UUID as a filename.
-        file_path = os.path.join(upload_folder, index_name)
+        if index_name:
+            file_path = os.path.join(upload_folder, index_name)
+        elif chunk_index_name:
+            file_path = os.path.join(upload_folder, chunk_index_name)
+        else:
+            file_path = os.path.join(upload_folder, uuid.uuid4().hex)
+
         try:
             with open(file_path, 'ab') as fh:
                 fh.seek(chunk_byte_offset)
@@ -315,9 +378,11 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         return self._upload_and_index(
             file_path=file_path,
             file_extension=file_extension,
+            original_filename=_filename,
             timeline_name=timeline_name,
             index_name=index_name,
             sketch=sketch,
+            form=form,
             data_label=data_label,
             enable_stream=enable_stream,
             meta=meta)
@@ -369,8 +434,9 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         index_name = form.get('index_name', '')
         file_storage = request.files.get('file')
         if file_storage:
+            chunk_index_name = form.get('chunk_index_name', uuid.uuid4().hex)
             return self._upload_file(
-                file_storage=file_storage,
+                file_storage=file_storage, chunk_index_name=chunk_index_name,
                 form=form, sketch=sketch, index_name=index_name)
 
         events = form.get('events')

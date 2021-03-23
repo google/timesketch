@@ -140,7 +140,7 @@ class TimesketchApi:
         self.session = session_object
 
     def _authenticate_session(self, session, username, password):
-        """Post username/password to authenticate the HTTP seesion.
+        """Post username/password to authenticate the HTTP session.
 
         Args:
             session: Instance of requests.Session.
@@ -499,6 +499,26 @@ class TimesketchApi:
         searchindex_id = response_dict['objects'][0]['id']
         return self.get_searchindex(searchindex_id), created
 
+    def check_celery_status(self, job_id=''):
+        """Return information about outstanding celery tasks or a specific one.
+
+        Args:
+            job_id (str): Optional Celery job identification string. If
+                provided that specific job ID is queried, otherwise
+                a check for all outstanding jobs is checked.
+
+        Returns:
+            A list of dict objects with the status of the celery task/tasks
+            that were outstanding.
+        """
+        if job_id:
+            response = self.fetch_resource_data(
+                'tasks/?job_id={0:s}'.format(job_id))
+        else:
+            response = self.fetch_resource_data('tasks/')
+
+        return response.get('objects', [])
+
     def list_searchindices(self):
         """Get list of all searchindices that the user has access to.
 
@@ -550,16 +570,12 @@ class TimesketchApi:
             return pandas.DataFrame.from_records(response.get('objects'))
 
         for rule_dict in response['objects']:
-            rule_uuid = rule_dict.get('id')
-            title = rule_dict.get('title')
-            es_query = rule_dict.get('es_query')
-            file_name = rule_dict.get('file_name')
-            description = rule_dict.get('description')
-            file_relpath = rule_dict.get('file_relpath')
-            index_obj = sigma.Sigma(
-                rule_uuid, api=self, es_query=es_query, file_name=file_name,
-                title=title, description=description,
-                file_relpath=file_relpath)
+            if not rule_dict:
+                raise ValueError('No rules found.')
+
+            index_obj = sigma.Sigma(api=self)
+            for key, value in rule_dict.items():
+                index_obj.set_value(key, value)
             rules.append(index_obj)
         return rules
 
@@ -573,4 +589,31 @@ class TimesketchApi:
         Returns:
             Instance of a Sigma object.
         """
-        return sigma.Sigma(rule_uuid, api=self)
+        sigma_obj = sigma.Sigma(api=self)
+        sigma_obj.from_rule_uuid(rule_uuid)
+
+        return sigma_obj
+
+    def get_sigma_rule_by_text(self, rule_text):
+        """Returns a Sigma Object based on a sigma rule text.
+
+        Args:
+            rule_text: Full Sigma rule text.
+
+        Returns:
+            Instance of a Sigma object.
+
+        Raises:
+            ValueError: No Rule text given or issues parsing it.
+        """
+        if not rule_text:
+            raise ValueError('No rule text given.')
+
+        try:
+            sigma_obj = sigma.Sigma(api=self)
+            sigma_obj.from_text(rule_text)
+        except ValueError:
+            logger.error(
+                'Parsing Error, unable to parse the Sigma rule',exc_info=True)
+
+        return sigma_obj

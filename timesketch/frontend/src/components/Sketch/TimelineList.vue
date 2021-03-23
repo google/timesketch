@@ -36,10 +36,11 @@ export default {
       return this.$store.state.meta
     },
     timelineList () {
+      let timelines = [...this.timelines]
       if (this.isCompact && this.timelines.length > 9) {
-        return this.timelines.reverse().slice(0, 10)
+        return timelines.reverse().slice(0, 10)
       } else {
-        return this.timelines.reverse()
+        return timelines.reverse()
       }
     }
   },

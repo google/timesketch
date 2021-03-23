@@ -14,11 +14,12 @@ def run_python_tests(coverage=False):
                 'nosetests --with-coverage'
                 ' --cover-package=timesketch_api_client,'
                 'timesketch_import_client,timesketch'
-                ' api_client/python/ timesketch/'), shell=True)
+                ' api_client/python/ timesketch/'
+                ' cli_client/python/'), shell=True)
         else:
             subprocess.check_call(
                 ['nosetests', '-x', 'timesketch/', 'api_client/python/',
-                 'importer_client/python'])
+                 'importer_client/python', 'cli_client/python/'])
     finally:
         subprocess.check_call(['rm', '-f', '.coverage'])
 

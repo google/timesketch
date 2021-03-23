@@ -35,7 +35,7 @@ export default {
   props: ['isRounded', 'aggregations', 'isLast'],
   data () {
     return {
-      position: "is-bottom-right"
+      position: 'is-bottom-right'
     }
   },
   methods: {
@@ -50,7 +50,6 @@ export default {
   }
 }
 </script>
-
 
 <!-- CSS scoped to this component only -->
 <style scoped lang="scss"></style>

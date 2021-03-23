@@ -17,15 +17,15 @@ limitations under the License.
           <table class="table is-bordered" style="width:100%;table-layout: fixed;">
             <tbody>
               <tr v-for="(item, key) in fullEventFiltered" :key="key">
+                <td style="width:40px;">
+                  <span class="icon is-small" style="cursor:pointer;" title="Apply 'Include' filter" v-on:click="addFilter(key, item, 'must')"><i class="fas fa-search-plus"></i></span>
+                </td>
+                <td style="width:40px;">
+                  <span class="icon is-small" style="cursor:pointer;" title="Apply 'Exclude' filter" v-on:click="addFilter(key, item, 'must_not')"><i class="fas fa-search-minus"></i></span>
+                </td>
                 <td style="white-space:pre-wrap;word-wrap: break-word; width: 150px;">{{ key }}</td>
                 <td>
                   <span style="white-space:pre-wrap;word-wrap: break-word">{{ item }}</span>
-                </td>
-                <td style="width:40px;">
-                  <span class="icon is-small" style="cursor:pointer;" v-on:click="addFilter(key, item, 'must')"><i class="fas fa-search-plus"></i></span>
-                </td>
-                <td style="width:40px;">
-                  <span class="icon is-small" style="cursor:pointer;" v-on:click="addFilter(key, item, 'must_not')"><i class="fas fa-search-minus"></i></span>
                 </td>
               </tr>
             </tbody>
@@ -66,12 +66,12 @@ export default {
     },
     addFilter: function (field, value, operator) {
       let chip = {
-          'field': field,
-          'value': value,
-          'type': 'term',
-          'operator': operator,
-          'active': true
-        }
+        'field': field,
+        'value': value,
+        'type': 'term',
+        'operator': operator,
+        'active': true
+      }
       this.$emit('addChip', chip)
     }
   },

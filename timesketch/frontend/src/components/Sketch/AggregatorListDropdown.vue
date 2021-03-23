@@ -49,6 +49,6 @@ export default {
       aggregatorClone.name = this.selected
       this.$emit('setActiveAggregator', aggregatorClone)
     }
-  },
+  }
 }
 </script>

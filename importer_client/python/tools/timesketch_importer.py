@@ -19,6 +19,7 @@ import getpass
 import logging
 import os
 import sys
+import time
 
 from typing import Dict
 
@@ -67,7 +68,9 @@ def upload_file(
         file_path (str): the path to the file to upload.
 
     Returns:
-        A string with results (whether successful or not).
+        A tuple with the timeline object (timeline.Timeline) or None if not
+        able to upload the timeline as well as the celery task identification
+        for the indexing.
     """
     if not my_sketch or not hasattr(my_sketch, 'id'):
         return 'Sketch needs to be set'
@@ -86,9 +89,13 @@ def upload_file(
     if log_config_file:
         import_helper.add_config(log_config_file)
 
+    timeline = None
+    task_id = ''
+    logger.info('About to upload file.')
     with importer.ImportStreamer() as streamer:
         streamer.set_sketch(my_sketch)
         streamer.set_config_helper(import_helper)
+        streamer.set_provider('CLI importer tool')
 
         format_string = config_dict.get('message_format_string')
         if format_string:
@@ -118,10 +125,18 @@ def upload_file(
         if data_label:
             streamer.set_data_label(data_label)
 
-        streamer.add_file(file_path)
+        context = config_dict.get('context')
+        if context:
+            streamer.set_upload_context(context)
+        else:
+            streamer.set_upload_context(' '.join(sys.argv))
 
-    return 'File got successfully uploaded to sketch: {0:d}'.format(
-        my_sketch.id)
+        streamer.add_file(file_path)
+        timeline = streamer.timeline
+        task_id = streamer.celery_task_id
+
+    logger.info('File upload completed.')
+    return timeline, task_id
 
 
 def main(args=None):
@@ -174,6 +189,15 @@ def main(args=None):
 
     config_group = argument_parser.add_argument_group(
         'Configuration Arguments')
+
+    config_group.add_argument(
+        '--quick', '-q', '--no-wait', '--no_wait', action='store_false',
+        default=True, dest='wait_timeline', help=(
+            'By default the tool will wait until the timeline has been '
+            'indexed and print out some details of the import. This option '
+            'makes the tool exit as soon as the data has been imported and '
+            'does not wait until it\'s been indexed.'))
+
     config_group.add_argument(
         '--log-config-file', '--log_config_file', '--lc', action='store',
         type=str, default='', metavar='FILEPATH', dest='log_config_file',
@@ -181,20 +205,24 @@ def main(args=None):
             'Path to a YAML config file that defines the config for parsing '
             'and setting up file parsing. By default formatter.yaml that '
             'comes with the importer will be used.'))
+
     config_group.add_argument(
         '--host', '--hostname', '--host-uri', '--host_uri', dest='host_uri',
         type=str, default='', action='store',
         help='The URI to the Timesketch instance')
+
     config_group.add_argument(
         '--format_string', '--format-string', type=str, action='store',
         dest='format_string', default='', help=(
             'Formatting string for the message field. If there is no message '
             'field in the input data a message string can be composed using '
             'a format string.'))
+
     config_group.add_argument(
         '--timeline_name', '--timeline-name', action='store', type=str,
         dest='timeline_name', default='', help=(
             'String that will be used as the timeline name.'))
+
     config_group.add_argument(
         '--data_label', '--data-label', action='store', type=str,
         dest='data_label', default='', help=(
@@ -203,11 +231,13 @@ def main(args=None):
             'to an already existing index. If a file is added this defaults '
             'to the file extension, otherwise a default value of generic is '
             'applied.'))
+
     config_group.add_argument(
         '--config_section', '--config-section', action='store', type=str,
         dest='config_section', default='', help=(
             'The config section in the RC file that will be used to '
             'define server information.'))
+
     config_group.add_argument(
         '--index-name', '--index_name', action='store', type=str, default='',
         dest='index_name', help=(
@@ -218,23 +248,33 @@ def main(args=None):
         '--timestamp_description', '--timestamp-description', '--time-desc',
         '--time_desc', action='store', type=str, default='', dest='time_desc',
         help='Value for the timestamp_description field.')
+
     config_group.add_argument(
         '--threshold_entry', '--threshold-entry', '--entries', action='store',
         type=int, default=0, dest='entry_threshold',
         help=(
             'How many entries should be buffered up before being '
             'sent to server.'))
+
     config_group.add_argument(
         '--threshold_size', '--threshold-size', '--filesize', action='store',
         type=int, default=0, dest='size_threshold',
         help=(
             'For binary file transfer, how many bytes should be transferred '
             'per chunk.'))
+
     config_group.add_argument(
         '--sketch_id', '--sketch-id', type=int, default=0, dest='sketch_id',
         action='store', help=(
             'The sketch ID to store the timeline in, if no sketch ID is '
             'provided a new sketch will be created.'))
+
+    config_group.add_argument(
+        '--context', action='store', type=str, default='', dest='context',
+        help=(
+            'Set a context for the file upload. This could be a text '
+            'describing how the data got collected or parameters to '
+            'the tool. Defaults to how the CLI tool got run.'))
 
     argument_parser.add_argument(
         'path', action='store', nargs='?', type=str, help=(
@@ -381,12 +421,48 @@ def main(args=None):
         'size_threshold': options.size_threshold,
         'log_config_file': options.log_config_file,
         'data_label': options.data_label,
+        'context': options.context,
     }
 
     logger.info('Uploading file.')
-    result = upload_file(
+    timeline, task_id = upload_file(
         my_sketch=my_sketch, config_dict=config_dict, file_path=options.path)
-    logger.info(result)
+
+    if not options.wait_timeline:
+        logger.info('File got successfully uploaded to sketch: {0:d}'.format(
+            my_sketch.id))
+        return
+
+    if not timeline:
+        logger.warning(
+            'There does not seem to be any timeline returned, check whether '
+            'the data got uploaded.')
+        return
+
+    print('Checking file upload status: ', end='')
+    while True:
+        status = timeline.status
+        if status in ('archived', 'failed', 'fail'):
+            print('[FAIL]')
+            print('Unable to index timeline, reason: {0:s}'.format(
+                timeline.description))
+            return
+
+        if status not in ('ready', 'success'):
+            print('.', end='')
+            time.sleep(3)
+            continue
+
+        print('[DONE]')
+        print(f'Timeline uploaded to ID: {timeline.id}.')
+
+        task_state = 'Unknown'
+        task_list = ts_client.check_celery_status(task_id)
+        for task in task_list:
+            if task.get('task_id', '') == task_id:
+                task_state = task.get('state', 'Unknown')
+        print(f'Status of the index is: {task_state}')
+        break
 
 
 if __name__ == '__main__':

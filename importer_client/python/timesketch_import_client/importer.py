@@ -48,8 +48,12 @@ class ImportStreamer(object):
     DEFAULT_TEXT_ENCODING = 'utf-8'
     DEFAULT_TIMESTAMP_DESC = 'Time Logged'
 
+    # Define the maximum amount of retries for a file/chunk upload.
+    DEFAULT_RETRY_LIMIT = 3
+
     def __init__(self):
         """Initialize the upload streamer."""
+        self._celery_task_id = ''
         self._count = 0
         self._config_helper = None
         self._data_label = ''
@@ -59,12 +63,14 @@ class ImportStreamer(object):
         self._data_type = None
         self._datetime_field = None
         self._format_string = None
-        self._index = uuid.uuid4().hex
+        self._index = ''
         self._last_response = None
+        self._provider = 'Imported via the importer library.'
         self._resource_url = ''
         self._sketch = None
         self._timeline_id = None
         self._timeline_name = None
+        self._upload_context = ''
 
         self._chunk = 1
 
@@ -216,81 +222,134 @@ class ImportStreamer(object):
         self._count = 0
         self._data_lines = []
 
-    def _upload_data_buffer(self, end_stream):
+    def _upload_data_buffer(self, end_stream, retry_count=0):
         """Upload data to Timesketch.
 
         Args:
             end_stream: boolean indicating whether this is the last chunk of
                 the stream.
+            retry_count: optional int that is only set if this is a retry
+                of the upload.
+
+        Raises:
+            RuntimeError: If the data buffer is not successfully uploaded.
         """
         if not self._data_lines:
-            return
+            return None
 
         start_time = time.time()
         data = {
             'name': self._timeline_name,
             'sketch_id': self._sketch.id,
             'enable_stream': not end_stream,
-            'index_name': self._index,
             'data_label': self._data_label,
+            'provider': self._provider,
             'events': '\n'.join([json.dumps(x) for x in self._data_lines]),
         }
+        if self._index:
+            data['index_name'] = self._index
+
+        if self._upload_context:
+            data['context'] = self._upload_context
+
         logger.debug(
             'Data buffer ready for upload, took {0:.2f} seconds to '
             'prepare.'.format(time.time() - start_time))
 
         response = self._sketch.api.session.post(self._resource_url, data=data)
+
         # TODO: Investigate why the sleep is needed, fix the underlying issue
         # and get rid of it here.
         # To prevent unexpected errors with connection refusal adding a quick
         # sleep.
         time.sleep(2)
-        # TODO: Add in the ability to re-upload failed file.
+
         if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
-            raise RuntimeError(
-                'Error uploading data: [{0:d}] {1!s} {2!s}, '
-                'index {3:s}'.format(
-                    response.status_code, response.reason, response.text,
-                    self._index))
+            if retry_count >= self.DEFAULT_RETRY_LIMIT:
+                raise RuntimeError(
+                    'Error uploading data: [{0:d}] {1!s} {2!s}, '
+                    'index {3:s}'.format(
+                        response.status_code, response.reason, response.text,
+                        self._index))
+
+            logger.warning(
+                'Unable to upload data buffer: {0:d}, retrying (attempt '
+                '{1:d}/{2:d})'.format(
+                    self._chunk, retry_count + 1, self.DEFAULT_RETRY_LIMIT))
+
+            return self._upload_data_buffer(
+                end_stream=end_stream, retry_count=retry_count + 1)
 
         logger.debug(
             'Data buffer nr. {0:d} uploaded, total time: {1:.2f}s'.format(
                 self._chunk, time.time() - start_time))
         self._chunk += 1
         response_dict = response.json()
-        self._timeline_id = response_dict.get('objects', [{}])[0].get('id')
+        object_dict = response_dict.get('objects', [{}])[0]
+        meta_dict = response_dict.get('meta', {})
+        self._celery_task_id = meta_dict.get('task_id', '')
+
+        self._timeline_id = object_dict.get('id')
+        self._index = object_dict.get('searchindex', {}).get('index_name')
         self._last_response = response_dict
 
-    def _upload_data_frame(self, data_frame, end_stream):
+        return None
+
+    def _upload_data_frame(self, data_frame, end_stream, retry_count=0):
         """Upload data to Timesketch.
 
         Args:
             data_frame: a pandas DataFrame with the content to upload.
             end_stream: boolean indicating whether this is the last chunk of
                 the stream.
+            retry_count: optional int that is only set if this is a retry
+                of the upload.
+
+        Raises:
+            RuntimeError: If the dataframe is not successfully uploaded.
         """
         data = {
             'name': self._timeline_name,
             'sketch_id': self._sketch.id,
             'enable_stream': not end_stream,
-            'index_name': self._index,
             'data_label': self._data_label,
+            'provider': self._provider,
             'events': data_frame.to_json(orient='records', lines=True),
         }
+        if self._index:
+            data['index_name'] = self._index
+
+        if self._upload_context:
+            data['context'] = self._upload_context
 
         response = self._sketch.api.session.post(self._resource_url, data=data)
-        self._chunk += 1
-        # TODO: Add in the ability to re-upload failed file.
         if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
-            raise RuntimeError(
-                'Error uploading data: [{0:d}] {1!s} {2!s}, '
-                'index {3:s}'.format(
-                    response.status_code, response.reason, response.text,
-                    self._index))
+            if retry_count >= self.DEFAULT_RETRY_LIMIT:
+                raise RuntimeError(
+                    'Error uploading data: [{0:d}] {1!s} {2!s}, '
+                    'index {3:s}'.format(
+                        response.status_code, response.reason, response.text,
+                        self._index))
 
+            logger.warning(
+                'Unable to upload dataframe, retrying (attempt '
+                '{0:d}/{1:d})'.format(
+                    retry_count + 1, self.DEFAULT_RETRY_LIMIT))
+
+            return self._upload_data_frame(
+                data_frame=data_frame, end_stream=end_stream,
+                retry_count=retry_count + 1)
+
+        self._chunk += 1
         response_dict = response.json()
-        self._timeline_id = response_dict.get('objects', [{}])[0].get('id')
+        object_dict = response_dict.get('objects', [{}])[0]
+        meta_dict = response_dict.get('meta', {})
+        self._celery_task_id = meta_dict.get('task_id', '')
+
+        self._timeline_id = object_dict.get('id')
+        self._index = object_dict.get('searchindex', {}).get('index_name')
         self._last_response = response_dict
+        return None
 
     def _upload_binary_file(self, file_path):
         """Upload binary data to Timesketch, potentially chunking it up.
@@ -311,9 +370,15 @@ class ImportStreamer(object):
             'name': timeline_name,
             'sketch_id': self._sketch.id,
             'total_file_size': file_size,
+            'provider': self._provider,
             'data_label': self._data_label,
-            'index_name': self._index,
         }
+        if self._index:
+            data['index_name'] = self._index
+
+        if self._upload_context:
+            data['context'] = self._upload_context
+
         if file_size <= self._threshold_filesize:
             file_dict = {
                 'file': open(file_path, 'rb')}
@@ -323,6 +388,8 @@ class ImportStreamer(object):
             chunks = int(
                 math.ceil(float(file_size) / self._threshold_filesize))
             data['chunk_total_chunks'] = chunks
+            data['chunk_index_name'] = uuid.uuid4().hex
+
             for index in range(0, chunks):
                 data['chunk_index'] = index
                 start = self._threshold_filesize * index
@@ -333,16 +400,28 @@ class ImportStreamer(object):
                 file_stream = io.BytesIO(binary_data)
                 file_stream.name = file_path
                 file_dict = {'file': file_stream}
-                response = self._sketch.api.session.post(
-                    self._resource_url, files=file_dict, data=data)
 
-                if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
-                    # TODO (kiddi): Re-do this chunk.
-                    raise RuntimeError(
-                        'Error uploading data chunk: {0:d}/{1:d}. Status code: '
-                        '{2:d} - {3!s} {4!s}'.format(
-                            index, chunks, response.status_code,
-                            response.reason, response.text))
+                retry_count = 0
+                while True:
+                    if retry_count >= self.DEFAULT_RETRY_LIMIT:
+                        raise RuntimeError(
+                            'Error uploading data chunk: {0:d}/{1:d}. Status '
+                            'code: {2:d} - {3!s} {4!s}'.format(
+                                index, chunks, response.status_code,
+                                response.reason, response.text))
+
+                    response = self._sketch.api.session.post(
+                        self._resource_url, files=file_dict, data=data)
+
+                    if response.status_code in definitions.HTTP_STATUS_CODE_20X:
+                        break
+
+                    retry_count += 1
+                    logger.warning(
+                        'Error uploading data chunk {0:d}/{1:d}, retry '
+                        'attempt {2:d}/{3:d}'.format(
+                            index, chunks, retry_count,
+                            self.DEFAULT_RETRY_LIMIT))
 
         if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
             raise RuntimeError(
@@ -352,8 +431,13 @@ class ImportStreamer(object):
                     file_path, self._index))
 
         response_dict = response.json()
+        object_dict = response_dict.get('objects', [{}])[0]
+        meta_dict = response_dict.get('meta', {})
+        self._celery_task_id = meta_dict.get('task_id', '')
+
+        self._timeline_id = object_dict.get('id')
+        self._index = object_dict.get('searchindex', {}).get('index_name')
         self._last_response = response_dict
-        self._timeline_id = response_dict.get('objects', [{}])[0].get('id')
 
     def add_data_frame(self, data_frame, part_of_iter=False):
         """Add a data frame into the buffer.
@@ -394,7 +478,7 @@ class ImportStreamer(object):
                 'formatted according using this format string: '
                 '%Y-%m-%dT%H:%M:%S%z. If that is not provided the data frame '
                 'needs to have a column that has the word "time" in it, '
-                'that can be used to conver to a datetime field.')
+                'that can be used to convert to a datetime field.')
 
         if 'message' not in data_frame_use:
             raise ValueError(
@@ -465,7 +549,7 @@ class ImportStreamer(object):
                 header : int, list of int, default 0
                     Row (0-indexed) to use for the column labels of the
                     parsed DataFrame. If a list of integers is passed those
-                    row positions wil be combined into a ``MultiIndex``. Use
+                    row positions will be combined into a ``MultiIndex``. Use
                     None if there is no header.
                 names : array-like, default None
                     List of column names to use. If file contains no header
@@ -584,6 +668,11 @@ class ImportStreamer(object):
 
         self.add_dict(json_dict)
 
+    @property
+    def celery_task_id(self):
+        """Return the celery task identification for the upload."""
+        return self._celery_task_id
+
     def close(self):
         """Close the streamer."""
         try:
@@ -656,6 +745,18 @@ class ImportStreamer(object):
         """Set the index name."""
         self._index = index
 
+    def set_provider(self, provider):
+        """Set the data provider."""
+        self._provider = provider
+
+    def set_upload_context(self, upload_context):
+        """Set the upload context for the data import."""
+        self._upload_context = upload_context
+
+    def generate_index_name(self):
+        """Generates a new index name."""
+        self._index = uuid.uuid4().hex
+
     def set_message_format_string(self, format_string):
         """Set the message format string."""
         self._format_string = format_string
@@ -681,6 +782,23 @@ class ImportStreamer(object):
     def set_timestamp_description(self, description):
         """Set the timestamp description field."""
         self._timestamp_desc = description
+
+    @property
+    def state(self):
+        """Returns a state string for the indexing process."""
+        if not self._celery_task_id:
+            return 'Unknown'
+
+        tasks = self._sketch.api.check_celery_status(
+            job_id=self._celery_task_id)
+
+        if len(tasks) > 1:
+            for task in tasks:
+                if task.get('task_id', '') ==  self._celery_task_id:
+                    return task.get('state', 'Unknown')
+
+        task = tasks[0]
+        return task.get('state', 'Unknown')
 
     @property
     def timeline(self):
