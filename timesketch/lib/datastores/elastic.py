@@ -117,18 +117,16 @@ class ElasticsearchDataStore(object):
         self.ssl = current_app.config.get('ELASTIC_SSL', False)
         self.verify = current_app.config.get('ELASTIC_VERIFY_CERTS', True)
 
+        parameters = {}
         if self.ssl:
-            if self.user and self.password:
-                self.client = Elasticsearch(
-                    [{'host': host, 'port': port}],
-                    http_auth=(self.user, self.password),
-                    use_ssl=self.ssl, verify_certs=self.verify)
-            else:
-                self.client = Elasticsearch(
-                    [{'host': host, 'port': port}],
-                    use_ssl=self.ssl, verify_certs=self.verify)
-        else:
-            self.client = Elasticsearch([{'host': host, 'port': port}])
+            parameters['use_ssl'] = self.ssl
+            parameters['verify_certs'] = self.verify
+
+        if self.user and self.password:
+            parameters['http_auth'] = (self.user, self.password)
+
+        self.client = Elasticsearch(
+            [{'host': host, 'port': port}], **parameters)
 
         self.import_counter = Counter()
         self.import_events = []
