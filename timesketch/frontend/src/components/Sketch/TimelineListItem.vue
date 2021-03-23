@@ -176,8 +176,8 @@ limitations under the License.
       </p>
     </div>
 
-    <router-link v-if="timelineStatus === 'ready'" :to="{ name: 'SketchExplore', query: {timeline: timeline.id}}"><strong>{{ timeline.name }}</strong></router-link>
-    <strong v-if="timelineStatus !== 'ready'">{{ timeline.name }}</strong>
+    <router-link v-if="timelineStatus === 'ready'" :to="{ name: 'SketchExplore', query: {timeline: timeline.id}}">{{ timeline.name }}</router-link>
+    <span v-if="timelineStatus !== 'ready'">{{ timeline.name }}</span>
     <br>
 
     <span v-if="timelineStatus === 'ready'" class="is-size-7">

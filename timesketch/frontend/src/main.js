@@ -26,6 +26,8 @@ import store from './store'
 
 import VueCytoscape from 'vue-cytoscape'
 
+import '@fontsource/roboto/latin-ext.css'
+
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import {
@@ -50,6 +52,7 @@ library.add(
   faArrowDown,
   faTag
 )
+
 Vue.component('font-awesome-icon', FontAwesomeIcon)
 
 require('./assets/main.scss')

@@ -22,11 +22,7 @@ limitations under the License.
       </template>
     </ts-navbar-main>
 
-    <section class="section" v-if="!hideNavigation">
-      <div class="container is-fluid">
-        <ts-navbar-secondary currentAppContext="sketch" currentPage="timelines"></ts-navbar-secondary>
-      </div>
-    </section>
+    <ts-navbar-secondary currentAppContext="sketch" currentPage="timelines"></ts-navbar-secondary>
 
     <!-- Timelines to add -->
     <section v-if="meta.permissions.write" class="section">

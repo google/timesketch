@@ -17,7 +17,7 @@ limitations under the License.
   <div>
     <b-dropdown aria-role="list">
       <template #trigger="{ active }">
-        <b-button
+        <b-button style="width:215.5px;"
           :label="label"
           :icon-right="active ? 'chevron-up' : 'chevron-down'" />
       </template>

@@ -152,10 +152,10 @@ limitations under the License.
         </td>
       </tr>
 
-      <!-- Event details that gets activated when the event row ic clicked -->
+      <!-- Event details that gets activated when the event row is clicked -->
       <tr>
         <td colspan="5" style="padding: 0">
-          <div v-if="showDetail" style="padding-top:20px; padding-bottom: 20px;">
+          <div v-if="showDetail" style="padding-top:20px; padding-bottom: 20px;padding-left:10px;">
             <div  class="field" style="max-width: 50%;">
               <p class="control">
                 <textarea v-model="comment" required autofocus class="textarea" rows="1" placeholder="Add a comment ..."></textarea>
@@ -437,8 +437,6 @@ export default {
 }
 
 .ts-timeline-name-column {
-  font-size: 0.8em;
-  font-weight: bold;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -454,6 +452,7 @@ export default {
   position: relative;
   margin: 0 0 0 45px;
   text-align: center;
+  font-size: var(--font-size-small);
 }
 
 .ts-time-bubble h5 {

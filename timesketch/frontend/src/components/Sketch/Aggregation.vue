@@ -51,7 +51,7 @@ limitations under the License.
             </span>
           </header>
           <div class="card-content">
-            <label class="label">Optional: Select timelines</label>
+            <label class="label">Select timelines (optional)</label>
             <ts-timeline-list-dropdown @selectedTimelines="selectedTimelines = $event"></ts-timeline-list-dropdown>
             <br>
             <ts-sketch-explore-aggregator-list-dropdown @setActiveAggregator="updateAggregatorFormFields"></ts-sketch-explore-aggregator-list-dropdown>
