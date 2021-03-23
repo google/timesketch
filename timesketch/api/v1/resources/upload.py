@@ -172,7 +172,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                     timeline_.searchindex.index_name))
 
             timeline_name = '{0:s}_{1:s}'.format(
-                timeline_name, uuid.uuid4().hex)
+                timeline_name, uuid.uuid4().hex[-5:])
             return self._upload_and_index(
                 file_extension=file_extension, timeline_name=timeline_name,
                 index_name=searchindex.index_name, sketch=sketch, form=form,

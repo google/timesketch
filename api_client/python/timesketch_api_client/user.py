@@ -14,7 +14,6 @@
 """Timesketch API client library."""
 import logging
 
-from . import cli_input
 from . import error
 from . import resource
 
@@ -45,12 +44,11 @@ class User(resource.BaseResource):
 
         return self._object_data
 
-    def change_password(self, new_password=''):
+    def change_password(self, new_password):
         """Change the password for the user.
 
         Args:
-            new_password (str): String with the password, if not
-                supplied a password prompt is used to gather it.
+            new_password (str): String with the password.
 
         Raises:
             ValueError: If there was an error.
@@ -58,14 +56,6 @@ class User(resource.BaseResource):
         Returns:
             Boolean: Whether the password was sucessfully modified.
         """
-        if not new_password:
-            new_password = cli_input.ask_question(
-                question='New password', hide_input=True, input_type=str)
-            confirm_password = cli_input.ask_question(
-                question='Confirm Password', hide_input=True, input_type=str)
-            if new_password != confirm_password:
-                raise ValueError('Passwords don\'t match.')
-
         if not new_password:
             raise ValueError('No new password supplied.')
 
