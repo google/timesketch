@@ -220,13 +220,13 @@ def _get_index_analyzers():
         None if index analyzers are disabled in config.
     """
     tasks = []
-    index_analyzers = current_app.config.get('AUTO_INDEX_ANALYZERS')
+    index_analyzers = current_app.config.get('AUTO_INDEX_ANALYZERS', [])
 
     if not index_analyzers:
         return None
 
     for analyzer_name, _ in manager.AnalysisManager.get_analyzers(
-            index_analyzers):
+            index_analyzers, sketch_analyzers=False):
         tasks.append(run_index_analyzer.s(analyzer_name))
 
     return chain(tasks)
