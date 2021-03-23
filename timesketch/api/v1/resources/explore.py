@@ -182,7 +182,9 @@ class ExploreResource(resources.ResourceMixin, Resource):
                     query_filter=query_filter,
                     indices=indices,
                     sketch=sketch,
-                    datastore=self.datastore)
+                    datastore=self.datastore,
+                    return_fields=return_fields,
+                    timeline_ids=timeline_ids)
                 fh.seek(0)
                 zip_file.writestr('query_results.csv', fh.read())
             file_object.seek(0)
