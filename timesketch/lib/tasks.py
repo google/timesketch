@@ -50,7 +50,6 @@ from timesketch.lib.utils import send_email
 from timesketch.models import db_session
 from timesketch.models.sketch import Analysis
 from timesketch.models.sketch import AnalysisSession
-from timesketch.models.sketch import DataSource
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
@@ -178,7 +177,6 @@ def _set_timeline_status(timeline_id, status, error_msg=None):
 
     # Check if there is at least one data source that hasn't failed.
     multiple_sources = any([not x.error_message for x in timeline.datasources])
-    print('Multiple sources: {}'.format(multiple_sources))
 
     if multiple_sources:
         if status != 'fail':
