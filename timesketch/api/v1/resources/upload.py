@@ -195,7 +195,11 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 'Unable to get or create a new Timeline object.')
 
-        timeline.set_status('processing')
+        # If the timeline already existed and has associated data sources
+        # then we don't want to set the status to processing.
+        if not timeline.datasources:
+            timeline.set_status('processing')
+
         sketch.timelines.append(timeline)
 
         labels_to_prevent_deletion = current_app.config.get(

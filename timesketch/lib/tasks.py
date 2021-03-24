@@ -176,14 +176,21 @@ def _set_timeline_status(timeline_id, status, error_msg=None):
         logger.warning('Cannot set status: No such timeline')
         return
 
-    timeline.set_status(status)
-    timeline.searchindex.set_status(status)
+    multiple_sources = any([not x.error_message for x in timeline.datasources])
+    print('Multiple sources: {}'.format(multiple_sources))
+
+    if multiple_sources:
+        if status != 'fail':
+            timeline.set_status(status)
+            timeline.searchindex.set_status(status)
+    else:
+        timeline.set_status(status)
+        timeline.searchindex.set_status(status)
 
     # Update description if there was a failure in ingestion.
     if error_msg:
-        data_source = DataSource.query.filter_by(
-            timeline_id=timeline.id).first()
-        if data_source:
+        if timeline.datasources:
+            data_source = timeline.datasources[-1]
             data_source.error_message = error_msg
 
     # Commit changes to database
