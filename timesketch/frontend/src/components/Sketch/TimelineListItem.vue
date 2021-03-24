@@ -31,7 +31,6 @@ limitations under the License.
                 <li v-if="meta.stats_per_timeline[timeline.id]">Number of events: {{ meta.stats_per_timeline[timeline.id]['count'] | compactNumber }} ({{ meta.stats_per_timeline[timeline.id]['count']}})</li>
                 <li>Created by: {{ timeline.user.username }}</li>
                 <li>Created at: {{ timeline.created_at | moment("YYYY-MM-DD HH:mm") }}</li>
-                <li v-if="timelineStatus === 'ready' && (timeline.searchindex.description !== '' && timeline.searchindex.description !== timeline.name)">Import errors: <b>{{ timeline.searchindex.description }}</b></li>
               </ul>
               <br>
 
