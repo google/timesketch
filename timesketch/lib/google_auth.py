@@ -40,9 +40,9 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 
 
 CSRF_KEY = 'google_oauth2_csrf_token'
-AUTH_URI = current_app.config.get('AUTH_URI')
-DISCOVERY_URL = current_app.config.get('DISCOVERY_URL')
-ALGORITHM = current_app.config.get('GOOGLE_OIDC_ALGORITHM')
+AUTH_URI = 'https://accounts.google.com/o/oauth2/v2/auth'
+DISCOVERY_URL = 'https://accounts.google.com/.well-known/openid-configuration'
+
 
 class JwtValidationError(Exception):
     """Raised when a JSON Web Token cannot be validated."""
@@ -193,7 +193,7 @@ def get_encoded_jwt_over_https(code):
     return encoded_jwt
 
 
-def decode_jwt(encoded_jwt, public_key, expected_audience):
+def decode_jwt(encoded_jwt, public_key, algorithm, expected_audience):
     """Decode a JSON Web Token (JWT).
 
     Args:
@@ -210,7 +210,7 @@ def decode_jwt(encoded_jwt, public_key, expected_audience):
     """
     try:
         decoded_jwt = jwt.decode(
-            jwt=encoded_jwt, key=public_key, algorithms=[ALGORITHM],
+            jwt=encoded_jwt, key=public_key, algorithms=[algorithm],
             audience=expected_audience)
         return decoded_jwt
     except (jwt.exceptions.InvalidTokenError,
