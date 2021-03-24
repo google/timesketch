@@ -65,7 +65,7 @@ class ImportStreamer(object):
         self._format_string = None
         self._index = ''
         self._last_response = None
-        self._provider = 'Imported via the importer library.'
+        self._provider = 'Importer library'
         self._resource_url = ''
         self._sketch = None
         self._timeline_id = None
