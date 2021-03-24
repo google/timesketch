@@ -42,7 +42,7 @@ limitations under the License.
                   <li><strong>User:</strong> {{ datasource.user.username }}</li>
                   <li><strong>File on disk:</strong> {{ datasource.file_on_disk }}</li>
                   <li><strong>File size:</strong> {{ datasource.file_size | compactBytes }}</li>
-                  <li><strong>Origianl filename:</strong> {{ datasource.original_filename }}</li>
+                  <li><strong>Original filename:</strong> {{ datasource.original_filename }}</li>
                   <li><strong>Data label:</strong> {{ datasource.data_label }}</li>
                 </ul>
                 <br>
