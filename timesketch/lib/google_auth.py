@@ -193,7 +193,7 @@ def get_encoded_jwt_over_https(code):
     return encoded_jwt
 
 
-def decode_jwt(encoded_jwt, public_key, expected_audience):
+def decode_jwt(encoded_jwt, public_key, algorithm, expected_audience):
     """Decode a JSON Web Token (JWT).
 
     Args:
