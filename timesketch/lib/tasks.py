@@ -50,7 +50,6 @@ from timesketch.lib.utils import send_email
 from timesketch.models import db_session
 from timesketch.models.sketch import Analysis
 from timesketch.models.sketch import AnalysisSession
-from timesketch.models.sketch import DataSource
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
@@ -176,14 +175,21 @@ def _set_timeline_status(timeline_id, status, error_msg=None):
         logger.warning('Cannot set status: No such timeline')
         return
 
-    timeline.set_status(status)
-    timeline.searchindex.set_status(status)
+    # Check if there is at least one data source that hasn't failed.
+    multiple_sources = any([not x.error_message for x in timeline.datasources])
+
+    if multiple_sources:
+        if status != 'fail':
+            timeline.set_status(status)
+            timeline.searchindex.set_status(status)
+    else:
+        timeline.set_status(status)
+        timeline.searchindex.set_status(status)
 
     # Update description if there was a failure in ingestion.
     if error_msg:
-        data_source = DataSource.query.filter_by(
-            timeline_id=timeline.id).first()
-        if data_source:
+        if timeline.datasources:
+            data_source = timeline.datasources[-1]
             data_source.error_message = error_msg
 
     # Commit changes to database
@@ -220,13 +226,13 @@ def _get_index_analyzers():
         None if index analyzers are disabled in config.
     """
     tasks = []
-    index_analyzers = current_app.config.get('AUTO_INDEX_ANALYZERS')
+    index_analyzers = current_app.config.get('AUTO_INDEX_ANALYZERS', [])
 
     if not index_analyzers:
         return None
 
     for analyzer_name, _ in manager.AnalysisManager.get_analyzers(
-            index_analyzers):
+            index_analyzers, sketch_analyzers=False):
         tasks.append(run_index_analyzer.s(analyzer_name))
 
     return chain(tasks)
