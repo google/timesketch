@@ -24,6 +24,7 @@ class MockAnalyzer(object):
     NAME = 'MockAnalyzer'
 
     DEPENDENCIES = frozenset()
+    IS_SKETCH_ANALYZER = True
 
 
 class MockAnalyzer2(object):
@@ -31,6 +32,15 @@ class MockAnalyzer2(object):
     NAME = 'MockAnalyzer2'
 
     DEPENDENCIES = frozenset(['MockAnalyzer'])
+    IS_SKETCH_ANALYZER = True
+
+
+class MockIndexAnalyzer(object):
+    """Mock analyzer class,"""
+    NAME = 'MockIndexAnalyzer'
+
+    DEPENDENCIES = frozenset()
+    IS_SKETCH_ANALYZER = False
 
 
 class MockAnalyzer3(object):
@@ -38,6 +48,7 @@ class MockAnalyzer3(object):
     NAME = 'MockAnalyzer3'
 
     DEPENDENCIES = frozenset()
+    IS_SKETCH_ANALYZER = True
 
 
 class MockAnalyzer4(object):
@@ -45,6 +56,7 @@ class MockAnalyzer4(object):
     NAME = 'MockAnalyzer4'
 
     DEPENDENCIES = frozenset(['MockAnalyzer2', 'MockAnalyzer3'])
+    IS_SKETCH_ANALYZER = True
 
 
 class MockAnalyzerFail1(object):
@@ -52,6 +64,7 @@ class MockAnalyzerFail1(object):
     NAME = 'MockAnalyzerFail1'
 
     DEPENDENCIES = frozenset(['MockAnalyzerFail2'])
+    IS_SKETCH_ANALYZER = True
 
 
 class MockAnalyzerFail2(object):
@@ -59,6 +72,7 @@ class MockAnalyzerFail2(object):
     NAME = 'MockAnalyzerFail2'
 
     DEPENDENCIES = frozenset(['MockAnalyzerFail1'])
+    IS_SKETCH_ANALYZER = True
 
 
 class TestAnalysisManager(BaseTest):
@@ -66,7 +80,7 @@ class TestAnalysisManager(BaseTest):
 
     def setUp(self):
         """Set up the tests."""
-        super(TestAnalysisManager, self).setUp()
+        super().setUp()
         manager.AnalysisManager.clear_registration()
         manager.AnalysisManager.register_analyzer(MockAnalyzer)
 
@@ -91,6 +105,7 @@ class TestAnalysisManager(BaseTest):
         manager.AnalysisManager.register_analyzer(MockAnalyzer2)
         manager.AnalysisManager.register_analyzer(MockAnalyzer3)
         manager.AnalysisManager.register_analyzer(MockAnalyzer4)
+        manager.AnalysisManager.register_analyzer(MockIndexAnalyzer)
 
         analyzers = manager.AnalysisManager.get_analyzers()
         analyzer_names_list = [x for x, _ in analyzers]
@@ -111,6 +126,11 @@ class TestAnalysisManager(BaseTest):
         self.assertIn('mockanalyzer3', dependency_tree[0])
         self.assertIn('mockanalyzer2', dependency_tree[1])
         self.assertIn('mockanalyzer4', dependency_tree[2])
+
+        analyzers = [x for x, _ in manager.AnalysisManager.get_analyzers(
+            sketch_analyzers=False)]
+        self.assertEqual(len(analyzers), 1)
+        self.assertEqual(analyzers[0], 'mockindexanalyzer')
 
         manager.AnalysisManager.clear_registration()
         manager.AnalysisManager.register_analyzer(MockAnalyzerFail1)
