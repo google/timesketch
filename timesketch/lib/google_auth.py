@@ -38,11 +38,9 @@ from flask import session
 
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 
-
 CSRF_KEY = 'google_oauth2_csrf_token'
 AUTH_URI = current_app.config.get('GOOGLE_OIDC_AUTH_URI')
 DISCOVERY_URL = current_app.config.get('GOOGLE_OIDC_DISCOVERY_URL')
-ALGORITHM = current_app.config.get('GOOGLE_OIDC_ALGORITHM')
 
 class JwtValidationError(Exception):
     """Raised when a JSON Web Token cannot be validated."""
@@ -210,7 +208,7 @@ def decode_jwt(encoded_jwt, public_key, algorithm, expected_audience):
     """
     try:
         decoded_jwt = jwt.decode(
-            jwt=encoded_jwt, key=public_key, algorithms=[ALGORITHM],
+            jwt=encoded_jwt, key=public_key, algorithms=[algorithm],
             audience=expected_audience)
         return decoded_jwt
     except (jwt.exceptions.InvalidTokenError,
