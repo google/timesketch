@@ -364,14 +364,14 @@ class SketchResource(resources.ResourceMixin, Resource):
                 mapping_dict['type'] = value_dict.get('type', 'n/a')
                 mappings.append(mapping_dict)
 
-        # Number of events per timeline
+        # Get number of events per timeline
         if sketch_indices:
             for index_name in sketch_indices:
                 if indices_metadata[index_name].get('is_legacy', False):
                     doc_count, _ = self.datastore.count(indices=index_name)
                     stats_per_timeline[timeline.id] = {'count': doc_count}
 
-            spec = {
+            count_agg_spec = {
                 'aggs': {
                     'per_timeline': {
                         'terms': {
@@ -381,10 +381,13 @@ class SketchResource(resources.ResourceMixin, Resource):
                     }
                 }
             }
-            agg = self.datastore.client.search(
-                index=sketch_indices, body=spec, size=0)
+            count_agg = self.datastore.client.search(
+                index=sketch_indices, body=count_agg_spec, size=0)
 
-            count_per_timeline = agg['aggregations']['per_timeline']['buckets']
+            count_per_timeline = count_agg.get(
+                'aggregations', {}).get(
+                    'per_timeline', {}).get(
+                        'buckets', [])
             for count_stat in count_per_timeline:
                 stats_per_timeline[count_stat['key']] = {
                     'count': count_stat['doc_count']
