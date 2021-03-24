@@ -173,20 +173,20 @@ limitations under the License.
 
     <span v-if="timelineStatus === 'ready'" class="is-size-7">
       <span class="is-small" :title="meta.stats_per_timeline[timeline.id]['count'] + ' events in index'">{{ meta.stats_per_timeline[timeline.id]['count'] | compactNumber }} events</span>
-      <span v-if="timeline.datasources.length > 1"> ({{ timeline.datasources.length }} imports)</span>
-      <!--<span v-if="timeline.datasources.length === 1"> (imported with {{ timeline.datasources[0].provider }})</span>-->
-      <span v-if="!datasourceErrors.length" style="margin-left:10px;">
+      <span v-if="timeline.datasources.length > 1"> ({{ timeline.datasources.length }} imports: <span v-on:click="showInfoModal =! showInfoModal" style="cursor:pointer;text-decoration: underline;">details</span>)</span>
+      <span v-if="timeline.datasources.length === 1"> (imported with {{ timeline.datasources[0].provider }})</span>
+      <span v-if="datasourceErrors.length" style="margin-left:10px;">
         <span class="icon is-small" style="color:orange;">
           <i class="fas fa-exclamation-triangle"></i>
         </span>
-        <span v-on:click="showInfoModal =! showInfoModal" style="cursor:pointer;text-decoration: underline">{{ datasourceErrors.lentgh }} 1 failed imports</span>
+        <span v-on:click="showInfoModal =! showInfoModal" style="cursor:pointer;text-decoration: underline; margin-left:5px;">{{ datasourceErrors.length }} failed imports</span>
       </span>
     </span>
 
     <span v-else-if="timelineStatus === 'fail'" class="is-size-7">
-      <!--<span class="icon is-small" style="color:orange;">
+      <span class="icon is-small" style="color:var(--font-color-red);">
         <i class="fas fa-exclamation-triangle"></i>
-      </span>-->
+      </span>
       ERROR: <span v-on:click="showInfoModal =! showInfoModal" style="cursor:pointer;text-decoration: underline">Click here for details</span>
     </span>
     <span v-else-if="timelineStatus === 'processing'" class="is-size-7">
