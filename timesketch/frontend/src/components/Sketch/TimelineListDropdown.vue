@@ -59,7 +59,7 @@ export default {
     },
     timelines () {
       let timelines = []
-      this.sketch.timelines.forEach(timeline => {
+      this.sketch.active_timelines.forEach(timeline => {
         let timelineId = timeline.id
         // Support for legacy timelines with 1:1 mapping to index_name
         let isLegacy = this.meta.indices_metadata[timeline.searchindex.index_name].is_legacy
