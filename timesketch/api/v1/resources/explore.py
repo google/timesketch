@@ -128,13 +128,15 @@ class ExploreResource(resources.ResourceMixin, Resource):
             'indices': {
                 'terms': {
                     'field': '_index',
-                    'min_doc_count': 0
+                    'min_doc_count': 0,
+                    'size': len(sketch.timelines)
                 }
             },
             'timelines': {
                 'terms': {
                     'field': '__ts_timeline_id',
-                    'min_doc_count': 0
+                    'min_doc_count': 0,
+                    'size': len(sketch.timelines)
                 }
             }
         }
