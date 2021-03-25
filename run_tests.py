@@ -7,7 +7,7 @@ import subprocess
 import argparse
 
 
-def run_python_tests(coverage=False):
+def run_python_tests(coverage=True):
     try:
         if coverage:
             subprocess.check_call((
