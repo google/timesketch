@@ -311,10 +311,9 @@ class SketchResource(resources.ResourceMixin, Resource):
         sketch_indices = [
             t.searchindex.index_name
             for t in sketch.active_timelines
-            if t.get_status.status != 'archived'
         ]
 
-        # Make sure the list of index names is uniq.
+        # Make sure the list of index names is uniq
         sketch_indices = list(set(sketch_indices))
 
         # Get event count and size on disk for each index in the sketch.
@@ -366,11 +365,12 @@ class SketchResource(resources.ResourceMixin, Resource):
 
         # Get number of events per timeline
         if sketch_indices:
-            for index_name in sketch_indices:
+            # Support legacy indices.
+            for timeline in sketch.active_timelines:
+                index_name = timeline.searchindex.index_name
                 if indices_metadata[index_name].get('is_legacy', False):
                     doc_count, _ = self.datastore.count(indices=index_name)
                     stats_per_timeline[timeline.id] = {'count': doc_count}
-
             count_agg_spec = {
                 'aggs': {
                     'per_timeline': {
@@ -381,6 +381,7 @@ class SketchResource(resources.ResourceMixin, Resource):
                     }
                 }
             }
+            # pylint: disable=unexpected-keyword-arg, no-value-for-parameter
             count_agg = self.datastore.client.search(
                 index=sketch_indices, body=count_agg_spec, size=0)
 
