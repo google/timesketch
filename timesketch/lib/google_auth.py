@@ -200,7 +200,9 @@ def decode_jwt(encoded_jwt, public_key, algorithm, expected_audience):
     Args:
         encoded_jwt: The contents of the X-Goog-IAP-JWT-Assertion header.
         public_key: Key to verify signature of the JWT.
-        algorithm: Algorithm used for the key. E.g. ES256, RS256
+        algorithm: Algorithm used for the key. E.g. ES256, RS256. If the
+            GOOGLE_OIDC_ALGORITHM is set in the config, it will overwrite
+            the algorithm used here.
         expected_audience: Expected audience in the JWT.
 
     Returns:
@@ -209,10 +211,12 @@ def decode_jwt(encoded_jwt, public_key, algorithm, expected_audience):
     Raises:
         JwtValidationError: if the JWT token cannot be decoded.
     """
-    ALGORITHM = current_app.config.get('GOOGLE_OIDC_ALGORITHM', algorithm)
+    chosen_algorithm = current_app.config.get(
+        'GOOGLE_OIDC_ALGORITHM', algorithm)
     try:
         decoded_jwt = jwt.decode(
-            jwt=encoded_jwt, key=public_key, algorithms=[ALGORITHM],
+            jwt=encoded_jwt, key=public_key,
+            algorithms=[chosen_algorithm],
             audience=expected_audience)
         return decoded_jwt
     except (jwt.exceptions.InvalidTokenError,
