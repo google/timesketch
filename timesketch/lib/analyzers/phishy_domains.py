@@ -19,8 +19,8 @@ from timesketch.lib.analyzers import utils
 logger = logging.getLogger('timesketch.analyzers.phishy_domains')
 
 
-class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
-    """Sketch analyzer for phishy domains."""
+class PhishyDomainsSketchPlugin(interface.BaseAnalyzer):
+    """Analyzer for phishy domains."""
 
     NAME = 'phishy_domains'
     DISPLAY_NAME = 'Phishy domains'

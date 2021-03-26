@@ -11,8 +11,8 @@ from timesketch.lib.analyzers import chain_plugins  # pylint: disable=unused-imp
 from timesketch.lib.analyzers.chain_plugins import manager as chain_manager
 
 
-class ChainSketchPlugin(interface.BaseSketchAnalyzer):
-    """Sketch analyzer for chained events.
+class ChainSketchPlugin(interface.BaseAnalyzer):
+    """Analyzer for chained events.
 
     The purpose of the chain analyzer is to chain together events that can
     be described as linked, either by sharing some common entities, or

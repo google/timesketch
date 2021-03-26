@@ -5,7 +5,7 @@ from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 
 
-class AccountFinderSketchPlugin(interface.BaseSketchAnalyzer):
+class AccountFinderSketchPlugin(interface.BaseAnalyzer):
     """Sketch analyzer for AccountFinder."""
 
     NAME = 'account_finder'

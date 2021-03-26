@@ -7,8 +7,8 @@ from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 
 
-class WinCrashSketchPlugin(interface.BaseSketchAnalyzer):
-    """Sketch analyzer for Windows application crashes."""
+class WinCrashSketchPlugin(interface.BaseAnalyzer):
+    """Analyzer for Windows application crashes."""
 
     NAME = 'win_crash'
     DISPLAY_NAME = 'Windows application crashes'

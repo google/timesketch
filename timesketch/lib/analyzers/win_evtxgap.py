@@ -46,8 +46,8 @@ def get_range(my_list, complete_list):
             cur_first = my_list[index + 1]
 
 
-class EvtxGapPlugin(interface.BaseSketchAnalyzer):
-    """Sketch analyzer for detecting gaps in EVTX records."""
+class EvtxGapPlugin(interface.BaseAnalyzer):
+    """Analyzer for detecting gaps in EVTX records."""
 
     NAME = 'evtx_gap'
     DISPLAY_NAME = 'EVTX gap'
