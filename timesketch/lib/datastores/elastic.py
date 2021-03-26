@@ -503,6 +503,9 @@ class ElasticsearchDataStore(object):
         if not indices:
             return {'hits': {'hits': [], 'total': 0}, 'took': 0}
 
+        # Make sure that the list of index names is uniq.
+        indices = list(set(indices))
+
         # Check if we have specific events to fetch and get indices.
         if query_filter.get('events', None):
             indices = {
@@ -605,6 +608,9 @@ class ElasticsearchDataStore(object):
         Returns:
             Generator of event documents in JSON format
         """
+        # Make sure that the list of index names is uniq.
+        indices = list(set(indices))
+
         METRICS['search_requests'].labels(type='streaming').inc()
 
         if not query_filter.get('size'):
@@ -694,6 +700,9 @@ class ElasticsearchDataStore(object):
             }
         }
 
+        # Make sure that the list of index names is uniq.
+        indices = list(set(indices))
+
         labels = []
         # pylint: disable=unexpected-keyword-arg
         try:
@@ -760,6 +769,9 @@ class ElasticsearchDataStore(object):
         """
         if not indices:
             return 0, 0
+
+        # Make sure that the list of index names is uniq.
+        indices = list(set(indices))
 
         try:
             es_stats = self.client.indices.stats(

@@ -176,10 +176,11 @@ def _set_timeline_status(timeline_id, status, error_msg=None):
         return
 
     # Check if there is at least one data source that hasn't failed.
-    multiple_sources = any([not x.error_message for x in timeline.datasources])
+    multiple_sources = any(not x.error_message for x in timeline.datasources)
 
     if multiple_sources:
-        if status != 'fail':
+        timeline_status = timeline.get_status.status.lower()
+        if timeline_status != 'process' and status != 'fail':
             timeline.set_status(status)
             timeline.searchindex.set_status(status)
     else:
@@ -593,6 +594,11 @@ def run_plaso(
     elastic_ssl = current_app.config.get('ELASTIC_SSL', False)
     if elastic_ssl:
         cmd.extend(['--use_ssl'])
+
+
+    psort_memory = current_app.config.get('PLASO_UPPER_MEMORY_LIMIT', '')
+    if psort_memory:
+        cmd.extend(['--process_memory_limit', str(psort_memory)])
 
     # Run psort.py
     try:
