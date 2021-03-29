@@ -181,11 +181,10 @@ def read_and_validate_csv(
             if 'tag' in chunk:
                 chunk['tag'] = chunk['tag'].apply(_parse_tag_field)
 
-            # Fill all NaN values with an empty string, otherwise JSON decoding
-            # in Elastic will fail.
-            chunk.fillna('', inplace=True)
             for _, row in chunk.iterrows():
                 _scrub_special_tags(row)
+                # Remove all NAN values from the pandas.Series.
+                row.dropna(inplace=True)
                 yield row.to_dict()
     except (pandas.errors.EmptyDataError, pandas.errors.ParserError) as e:
         error_string = 'Unable to read file, with error: {0!s}'.format(e)

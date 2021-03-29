@@ -707,9 +707,10 @@ class DataSource(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     file_size = Column(BigInteger())
     original_filename = Column(UnicodeText())
     data_label = Column(UnicodeText())
+    error_message = Column(UnicodeText())
 
     def __init__(self, timeline, user, provider, context, file_on_disk,
-                 file_size, original_filename, data_label):
+                 file_size, original_filename, data_label, error_message=''):
         """Initialize the DataSource object.
 
         Args:
@@ -721,6 +722,8 @@ class DataSource(LabelMixin, StatusMixin, CommentMixin, BaseModel):
             file_size (int): Size on disk for uploaded file.
             original_filename (str): Original filename for uploaded file.
             data_label (str): Data label for the uploaded data.
+            error_message (str): Optional error message in case the data source
+                did not successfully import.
         """
         super().__init__()
         self.timeline = timeline
@@ -731,6 +734,7 @@ class DataSource(LabelMixin, StatusMixin, CommentMixin, BaseModel):
         self.file_size = file_size
         self.original_filename = original_filename
         self.data_label = data_label
+        self.error_message = error_message
 
 # TODO: This is WIP
 class AggregationTemplate(LabelMixin, StatusMixin, BaseModel):

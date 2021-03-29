@@ -48,11 +48,11 @@ from timesketch.lib.utils import read_and_validate_csv
 from timesketch.lib.utils import read_and_validate_jsonl
 from timesketch.lib.utils import send_email
 from timesketch.models import db_session
+from timesketch.models.sketch import Analysis
+from timesketch.models.sketch import AnalysisSession
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
-from timesketch.models.sketch import Analysis
-from timesketch.models.sketch import AnalysisSession
 from timesketch.models.user import User
 
 
@@ -100,6 +100,14 @@ def get_import_errors(error_container, index_name, total_count):
     if error_details:
         top_details = error_details.most_common()[0][0]
     else:
+        top_details = 'Unknown Reasons'
+
+    if total_count is None:
+        total_count = 0
+
+    if not top_type:
+        top_type = 'Unknown Reasons'
+    if not top_details:
         top_details = 'Unknown Reasons'
 
     return (
@@ -167,13 +175,23 @@ def _set_timeline_status(timeline_id, status, error_msg=None):
         logger.warning('Cannot set status: No such timeline')
         return
 
-    timeline.set_status(status)
-    timeline.searchindex.set_status(status)
+    # Check if there is at least one data source that hasn't failed.
+    multiple_sources = any(not x.error_message for x in timeline.datasources)
+
+    if multiple_sources:
+        timeline_status = timeline.get_status.status.lower()
+        if timeline_status != 'process' and status != 'fail':
+            timeline.set_status(status)
+            timeline.searchindex.set_status(status)
+    else:
+        timeline.set_status(status)
+        timeline.searchindex.set_status(status)
 
     # Update description if there was a failure in ingestion.
     if error_msg:
-        # TODO: Don't overload the description field.
-        timeline.description = error_msg
+        if timeline.datasources:
+            data_source = timeline.datasources[-1]
+            data_source.error_message = error_msg
 
     # Commit changes to database
     db_session.add(timeline)
@@ -209,13 +227,13 @@ def _get_index_analyzers():
         None if index analyzers are disabled in config.
     """
     tasks = []
-    index_analyzers = current_app.config.get('AUTO_INDEX_ANALYZERS')
+    index_analyzers = current_app.config.get('AUTO_INDEX_ANALYZERS', [])
 
     if not index_analyzers:
         return None
 
     for analyzer_name, _ in manager.AnalysisManager.get_analyzers(
-            index_analyzers):
+            index_analyzers, sketch_analyzers=False):
         tasks.append(run_index_analyzer.s(analyzer_name))
 
     return chain(tasks)
@@ -614,6 +632,23 @@ def run_plaso(
 
     if timeline_id:
         cmd.extend(['--timeline_identifier', str(timeline_id)])
+
+    elastic_username = current_app.config.get('ELASTIC_USER', '')
+    if elastic_username:
+        cmd.extend(['--elastic_user', elastic_username])
+
+    elastic_password = current_app.config.get('ELASTIC_PASSWORD', '')
+    if elastic_password:
+        cmd.extend(['--elastic_password', elastic_password])
+
+    elastic_ssl = current_app.config.get('ELASTIC_SSL', False)
+    if elastic_ssl:
+        cmd.extend(['--use_ssl'])
+
+
+    psort_memory = current_app.config.get('PLASO_UPPER_MEMORY_LIMIT', '')
+    if psort_memory:
+        cmd.extend(['--process_memory_limit', str(psort_memory)])
 
     # Run psort.py
     try:
