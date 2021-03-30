@@ -325,7 +325,7 @@ def build_sketch_analysis_pipeline(
     analysis_session = AnalysisSession(user, sketch)
 
     analyzers = manager.AnalysisManager.get_analyzers(analyzer_names)
-    for analyzer_name, analyzer_cls in analyzers:
+    for analyzer_name, _ in analyzers:
         kwargs = analyzer_kwargs.get(analyzer_name, {})
         searchindex = SearchIndex.query.get(searchindex_id)
 
