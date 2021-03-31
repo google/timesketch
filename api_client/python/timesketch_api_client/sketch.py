@@ -244,7 +244,7 @@ class Sketch(resource.BaseResource):
             raise ValueError('Name needs to be a string.')
 
         if not isinstance(values, (list, tuple)):
-            if any([not isinstance(x, str) for x in values]):
+            if any(not isinstance(x, str) for x in values):
                 raise ValueError('All values need to be a string.')
 
         if not isinstance(ontology, str):
@@ -879,9 +879,10 @@ class Sketch(resource.BaseResource):
             raise RuntimeError(
                 'Unable to list saved searches on an archived sketch.')
 
-        sketch = self.lazyload_data()
+        data = self.lazyload_data()
         searches = []
-        for saved_search in sketch['meta'].get('views', []):
+        meta = data.get('meta', {})
+        for saved_search in meta.get('views', []):
             search_obj = search.Search(sketch=self)
             try:
                 search_obj.from_saved(saved_search.get('id'))
@@ -1393,7 +1394,7 @@ class Sketch(resource.BaseResource):
         if not isinstance(tags, list):
             raise ValueError('Tags need to be a list.')
 
-        if not all([isinstance(x, str) for x in tags]):
+        if not all(isinstance(x, str) for x in tags):
             raise ValueError('Tags need to be a list of strings.')
 
         form_data = {
@@ -1500,7 +1501,7 @@ class Sketch(resource.BaseResource):
         if not isinstance(tags, list):
             raise ValueError('Tags needs to be a list.')
 
-        if any([not isinstance(tag, str) for tag in tags]):
+        if any(not isinstance(tag, str) for tag in tags):
             raise ValueError('Tags needs to be a list of strings.')
 
         if attributes is None:
@@ -1515,7 +1516,7 @@ class Sketch(resource.BaseResource):
             'message': message,
             'tag': tags
         }
-        if any([x in attributes for x in form_data]):
+        if any(x in attributes for x in form_data):
             raise ValueError('Attributes cannot overwrite values already set.')
 
         form_data['attributes'] = attributes
