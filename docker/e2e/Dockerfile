@@ -40,6 +40,7 @@ RUN cp /tmp/timesketch/data/tags.yaml /etc/timesketch/
 RUN cp /tmp/timesketch/data/features.yaml /etc/timesketch/
 RUN cp /tmp/timesketch/data/plaso.mappings /etc/timesketch/
 RUN cp /tmp/timesketch/data/sigma_config.yaml /etc/timesketch/
+RUN cp -r /tmp/timesketch/data/sigma /etc/timesketch/sigma
 
 # Copy the entrypoint script into the container
 COPY docker/e2e/docker-entrypoint.sh /
