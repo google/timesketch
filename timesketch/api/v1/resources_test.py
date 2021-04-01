@@ -408,7 +408,7 @@ class SigmaListResourceTest(BaseTest):
             'es_query': '*apt\\-get\\ install\\ zmap*',
             'falsepositives': ['Unknown'],
             'file_name': 'lnx_susp_zenmap.yml',
-            'file_relpath': 'lnx_susp_zenmap.yml',
+            'file_relpath': '/linux/syslog/foobar/',
             'id': '5266a592-b793-11ea-b3de-0242ac130004',
             'level': 'high',
             'logsource': {
