@@ -53,7 +53,7 @@ class ClientTest(interface.BaseEndToEndTest):
 
     def test_sigma_list(self):
         """Client Sigma list tests."""
-        
+
         rules = self.api.list_sigma_rules()
         self.assertions.assertGreaterEqual(len(rules), 1)
         rule = rules[0]
