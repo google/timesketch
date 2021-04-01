@@ -35,14 +35,13 @@ limitations under the License.
     </div>
 
     <div v-if="!isArchived">
-      <section class="section">
-        <div class="container is-fluid">
+
           <ts-navbar-secondary currentAppContext="sketch" currentPage="overview">
 
-            <span v-for="label in meta.sketch_labels" :key="label" style="margin-right:10px; color: var(--default-font-color);font-size: 0.7em">{{  label }}</span>
+            <span v-for="label in meta.sketch_labels" :key="label" style="margin-right:10px; color: var(--default-font-color);font-size: 0.7em">{{ label }}</span>
 
             <b-tooltip v-if="meta.collaborators" :label="shareTooltip" position="is-bottom" type="is-white">
-              <a v-if="meta.permissions.write" class="button is-info" style="margin-right:10px;" v-on:click="showShareModal = !showShareModal">
+              <a v-if="meta.permissions.write" class="button is-info is-small" style="margin-right:10px;border-radius:4px;" v-on:click="showShareModal = !showShareModal">
                     <span class="icon is-small">
                       <i v-if="meta.permissions.public" class="fas fa-globe"></i>
                       <i v-else-if="meta.collaborators.users.length ||  meta.collaborators.groups.length" class="fas fa-users"></i>
@@ -80,8 +79,6 @@ limitations under the License.
             </b-dropdown>
 
           </ts-navbar-secondary>
-        </div>
-      </section>
 
       <b-modal :active.sync="showShareModal" :width="640" scroll="keep">
         <div class="card">
@@ -148,40 +145,47 @@ limitations under the License.
               <div class="tile is-child tile-box">
                 <div class="card-content">
                   <ts-sketch-summary :sketch="sketch"></ts-sketch-summary>
-                  <br>
-                  <b-field grouped group-multiline>
-                    <div class="control" v-for="user in sortedUserList()" :key="user.name">
-                      <b-tag attached size="is-medium">{{ user }}</b-tag>
-                    </div>
-                    <div class="control" v-for="group in sortedGroupList()" :key="group.name">
-                      <b-tag attached size="is-medium">{{ group }}</b-tag>
-                    </div>
-                  </b-field>
                 </div>
               </div>
             </div>
+
             <div class="tile is-parent">
               <div class="tile is-child tile-box">
                 <header class="card-header">
                   <p class="card-header-title">Metadata</p>
                 </header>
-                <div style="padding:1.25em;">
-                  Creator: {{ sketch.user.username }}
+                <div class="card-content">
+
+                  <div class="block-condensed">
+                    <span style="font-weight: bold;">Creator:</span> {{ sketch.user.username }}
+                  </div>
+
+                  <div class="block-condensed" v-if="sortedUserList().length">
+                    <span style="font-weight: bold;">Shared with user:</span>
+                    <span v-for="user in sortedUserList()" :key="user.name">
+                      {{ user }}
+                    </span>
+                  </div>
+
+                  <div class="block-condensed" v-if="sortedGroupList().length">
+                    <span style="font-weight: bold;">Shared with group:</span>
+                    <span v-for="group in sortedGroupList()" :key="group.name">
+                      {{ group }}
+                    </span>
+                  </div>
+
                 </div>
+
+                <div v-if="sketch.active_timelines.length" class="card-header"></div>
+                <div class="card-content" v-if="sketch.active_timelines.length">
+                  <ts-sketch-metrics :timelines="sketch.active_timelines" :views="meta.views" :stories="meta.stories" :count="count"></ts-sketch-metrics>
+                </div>
+
               </div>
             </div>
+
           </div>
 
-        </div>
-      </section>
-
-      <section class="section" v-if="sketch.active_timelines.length">
-        <div class="container is-fluid">
-          <div class="tile-box">
-            <div style="padding:1.25em;">
-              <ts-sketch-metrics :timelines="sketch.active_timelines" :views="meta.views" :stories="meta.stories" :count="count"></ts-sketch-metrics>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -492,4 +496,7 @@ export default {
     color: var(--default-font-color);
   }
 
+  .block-condensed:not(:last-child) {
+    margin-bottom: 0.5rem;
+  }
 </style>
