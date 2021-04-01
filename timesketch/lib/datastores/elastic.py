@@ -20,9 +20,7 @@ import codecs
 import json
 import logging
 import socket
-
 from uuid import uuid4
-
 import six
 
 from dateutil import parser, relativedelta
@@ -34,13 +32,44 @@ from elasticsearch.exceptions import RequestError
 from elasticsearch.exceptions import ConnectionError
 from flask import abort
 from flask import current_app
+import prometheus_client
 
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
+from timesketch.lib.definitions import METRICS_NAMESPACE
+
 
 # Setup logging
 es_logger = logging.getLogger('timesketch.elasticsearch')
 es_logger.setLevel(logging.WARNING)
 
+# Metrics definitions
+METRICS = {
+    'search_requests': prometheus_client.Counter(
+        'search_requests',
+        'Number of search requests per type (e.g all, stream etc)',
+        ['type'],
+        namespace=METRICS_NAMESPACE
+    ),
+    'search_filter_type': prometheus_client.Counter(
+        'search_filter_type',
+        'Number of filters per type (e.g term, label etc)',
+        ['type'],
+        namespace=METRICS_NAMESPACE
+    ),
+    'search_filter_label': prometheus_client.Counter(
+        'search_filter_label',
+        'Number of filters per label (e.g __ts_star etc)',
+        ['label'],
+        namespace=METRICS_NAMESPACE
+    ),
+    'search_get_event': prometheus_client.Counter(
+        'search_get_event',
+        'Number of times a single event is requested',
+        namespace=METRICS_NAMESPACE
+    )
+}
+
+# Elasticsearch scripts
 UPDATE_LABEL_SCRIPT = """
 if (ctx._source.timesketch_label == null) {
     ctx._source.timesketch_label = new ArrayList()
@@ -88,13 +117,16 @@ class ElasticsearchDataStore(object):
         self.ssl = current_app.config.get('ELASTIC_SSL', False)
         self.verify = current_app.config.get('ELASTIC_VERIFY_CERTS', True)
 
+        parameters = {}
         if self.ssl:
-            self.client = Elasticsearch([{'host': host, 'port': port}],
-                                        http_auth=(self.user, self.password),
-                                        use_ssl=self.ssl,
-                                        verify_certs=self.verify)
-        else:
-            self.client = Elasticsearch([{'host': host, 'port': port}])
+            parameters['use_ssl'] = self.ssl
+            parameters['verify_certs'] = self.verify
+
+        if self.user and self.password:
+            parameters['http_auth'] = (self.user, self.password)
+
+        self.client = Elasticsearch(
+            [{'host': host, 'port': port}], **parameters)
 
         self.import_counter = Counter()
         self.import_events = []
@@ -119,6 +151,8 @@ class ElasticsearchDataStore(object):
         }
 
         for label in labels:
+            # Increase metrics counter per label
+            METRICS['search_filter_label'].labels(label=label).inc()
             nested_query = {
                 'nested': {
                     'query': {
@@ -323,6 +357,8 @@ class ElasticsearchDataStore(object):
                 if not chip.get('active', True):
                     continue
 
+                # Increase metrics per chip type
+                METRICS['search_filter_type'].labels(type=chip['type']).inc()
                 if chip['type'] == 'label':
                     labels.append(chip['value'])
 
@@ -467,6 +503,9 @@ class ElasticsearchDataStore(object):
         if not indices:
             return {'hits': {'hits': [], 'total': 0}, 'took': 0}
 
+        # Make sure that the list of index names is uniq.
+        indices = list(set(indices))
+
         # Check if we have specific events to fetch and get indices.
         if query_filter.get('events', None):
             indices = {
@@ -495,6 +534,7 @@ class ElasticsearchDataStore(object):
                     'Unable to count due to an index not found: {0:s}'.format(
                         ','.join(indices)))
                 return 0
+            METRICS['search_requests'].labels(type='count').inc()
             return count_result.get('count', 0)
 
         if not return_fields:
@@ -542,6 +582,7 @@ class ElasticsearchDataStore(object):
                 exc_info=True)
             raise ValueError(cause) from e
 
+        METRICS['search_requests'].labels(type='all').inc()
         return _search_result
 
     # pylint: disable=too-many-arguments
@@ -567,6 +608,10 @@ class ElasticsearchDataStore(object):
         Returns:
             Generator of event documents in JSON format
         """
+        # Make sure that the list of index names is uniq.
+        indices = list(set(indices))
+
+        METRICS['search_requests'].labels(type='streaming').inc()
 
         if not query_filter.get('size'):
             query_filter['size'] = self.DEFAULT_STREAM_LIMIT
@@ -655,6 +700,9 @@ class ElasticsearchDataStore(object):
             }
         }
 
+        # Make sure that the list of index names is uniq.
+        indices = list(set(indices))
+
         labels = []
         # pylint: disable=unexpected-keyword-arg
         try:
@@ -675,6 +723,7 @@ class ElasticsearchDataStore(object):
             labels.append(bucket['key'])
         return labels
 
+    # pylint: disable=inconsistent-return-statements
     def get_event(self, searchindex_id, event_id):
         """Get one event from the datastore.
 
@@ -685,6 +734,7 @@ class ElasticsearchDataStore(object):
         Returns:
             Event document in JSON format
         """
+        METRICS['search_get_event'].inc()
         try:
             # Suppress the lint error because elasticsearch-py adds parameters
             # to the function with a decorator and this makes pylint sad.
@@ -707,6 +757,7 @@ class ElasticsearchDataStore(object):
         except NotFoundError:
             abort(HTTP_STATUS_CODE_NOT_FOUND)
 
+
     def count(self, indices):
         """Count number of documents.
 
@@ -719,13 +770,22 @@ class ElasticsearchDataStore(object):
         if not indices:
             return 0, 0
 
+        # Make sure that the list of index names is uniq.
+        indices = list(set(indices))
+
         try:
             es_stats = self.client.indices.stats(
                 index=indices, metric='docs, store')
+
         except NotFoundError:
             es_logger.error(
-                'Unable to count indexes (index not found)')
-            es_stats = {}
+                'Unable to count indices (index not found)')
+            return 0, 0
+
+        except RequestError:
+            es_logger.error(
+                'Unable to count indices (request error)', exc_info=True)
+            return 0, 0
 
         doc_count_total = es_stats.get(
             '_all', {}).get('primaries', {}).get('docs', {}).get('count', 0)

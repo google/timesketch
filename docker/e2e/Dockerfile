@@ -24,11 +24,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   && rm -rf /var/lib/apt/lists/*
 
 # Install Timesketch from master to get the latest code
-RUN wget https://raw.githubusercontent.com/google/timesketch/master/requirements.txt
-RUN pip3 install -r requirements.txt
+#RUN wget https://raw.githubusercontent.com/google/timesketch/master/requirements.txt
+#RUN pip3 install -r requirements.txt
 
 # Install timesketch from the current branch (In the context of CI platform)
 ADD . /tmp/timesketch
+RUN pip3 install -r /tmp/timesketch/requirements.txt
 RUN pip3 install /tmp/timesketch && pip3 install /tmp/timesketch/api_client/python && \
     pip3 install /tmp/timesketch/importer_client/python
 
@@ -41,6 +42,7 @@ RUN cp /tmp/timesketch/data/features.yaml /etc/timesketch/
 RUN cp /tmp/timesketch/data/plaso.mappings /etc/timesketch/
 RUN cp /tmp/timesketch/data/sigma_config.yaml /etc/timesketch/
 RUN cp -r /tmp/timesketch/data/sigma /etc/timesketch/sigma
+
 
 # Copy the entrypoint script into the container
 COPY docker/e2e/docker-entrypoint.sh /

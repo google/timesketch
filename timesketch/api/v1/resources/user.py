@@ -25,6 +25,7 @@ from timesketch.api.v1 import resources
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
+from timesketch.models import db_session
 from timesketch.models.sketch import Sketch
 from timesketch.models.user import User
 from timesketch.models.user import Group
@@ -70,6 +71,34 @@ class LoggedInUserResource(resources.ResourceMixin, Resource):
             User object
         """
         return self.to_json(current_user)
+
+    @login_required
+    def post(self):
+        """Handles POST request to the resource.
+
+        Returns:
+            HTTP status code indicating whether operation was sucessful.
+        """
+        form = request.json
+        if not form:
+            form = request.data
+
+        password = form.get('password', '')
+
+        if not password:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                'No password supplied, unable to change the password.')
+
+        if not isinstance(password, str):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                'Password needs to be a string.')
+
+        current_user.set_password(plaintext=password)
+        db_session.add(current_user)
+        db_session.commit()
+        return HTTP_STATUS_CODE_OK
 
 
 class CollaboratorResource(resources.ResourceMixin, Resource):
@@ -132,6 +161,7 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
 
             if not group:
                 logger.error('Group: {0:s} not found'.format(group_name))
+                continue
 
             # Only add groups publicly visible or owned by the current user
             if not group.user or group.user == current_user:

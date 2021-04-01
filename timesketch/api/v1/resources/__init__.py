@@ -101,6 +101,7 @@ class ResourceMixin(object):
         'file_size': fields.Integer,
         'original_filename': fields.String,
         'data_label': fields.String,
+        'error_message': fields.String,
         'created_at': fields.DateTime('iso8601'),
         'updated_at': fields.DateTime('iso8601')
     }

@@ -17,7 +17,7 @@ limitations under the License.
   <div>
     <ul class="content-list">
       <li style="padding:10px;border-bottom:none;" v-for="(view, index) in views" :key="view.id">
-        <router-link :to="{ name: 'SketchExplore', query: {view: view.id}}"><strong>{{ view.name }}</strong></router-link>
+        <router-link :to="{ name: 'SketchExplore', query: {view: view.id}}">{{ view.name }}</router-link>
         <br>
         <span v-if="!controls" class="is-size-7">
           Created {{ view.created_at | moment("YYYY-MM-DD HH:mm") }} <span v-if="view.user"> by {{ view.user }}</span> <span v-if="view.description"> ({{ view.description }})</span>

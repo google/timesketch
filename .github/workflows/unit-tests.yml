@@ -40,6 +40,8 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
+        # TODO: Remove when PPA packages for prometheus has been build.
+        sudo pip3 install prometheus-flask-exporter==0.18.1
         sudo add-apt-repository ppa:gift/dev
         sudo apt-get update
         sudo apt-get -y install python3-distutils pylint
