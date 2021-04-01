@@ -79,6 +79,7 @@ class ClientTest(interface.BaseEndToEndTest):
         self.assertions.assertIn('rmusser.net', rule.references[0])
 
     def test_get_sigma_rule(self):
+        """Client Sigma rule tests."""
         rule = self.api.get_sigma_rule(
             rule_uuid='5266a592-b793-11ea-b3de-0242ac130004')
         rule.from_rule_uuid('5266a592-b793-11ea-b3de-0242ac130004')
