@@ -22,11 +22,8 @@ limitations under the License.
       </template>
     </ts-navbar-main>
 
-    <section class="section">
-        <div class="container is-fluid">
-          <ts-navbar-secondary currentAppContext="sketch" currentPage="graph"></ts-navbar-secondary>
-        </div>
-    </section>
+    <ts-navbar-secondary currentAppContext="sketch" currentPage="graph"></ts-navbar-secondary>
+
     <ts-graph></ts-graph>
   </div>
 </template>

@@ -321,10 +321,9 @@ class AggregationBlock(BaseBlock):
             name = aggregation_obj.name
             description = aggregation_obj.description
             agg_id = aggregation_obj.id
-            meta = aggregation_obj.data.get('meta', {})
-            agg_type = meta.get('name', '')
-            created_at = ''
-            updated_at = ''
+            agg_type = aggregation_obj.aggregator_name
+            created_at = aggregation_obj.created_at
+            updated_at = aggregation_obj.updated_at
             parameters = json.dumps(aggregation_obj.parameters)
             user = aggregation_obj.user
         else:

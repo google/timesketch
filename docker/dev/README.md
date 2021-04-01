@@ -39,14 +39,17 @@ echo $CONTAINER_ID
 docker exec -it $CONTAINER_ID celery -A timesketch.lib.tasks worker --loglevel info
 ```
 
-### Start development webserver
+### Start development webserver (and metrics server)
 
 ```
-docker exec -it $CONTAINER_ID gunicorn --reload -b 0.0.0.0:5000 --log-file - --timeout 120 timesketch.wsgi:application
+docker exec -it $CONTAINER_ID gunicorn --reload -b 0.0.0.0:5000 --log-file - --timeout 600 -c /usr/local/src/timesketch/data/gunicorn_config.py timesketch.wsgi:application
 ```
 
 You now can access your development version at http://127.0.0.1:5000/
+
 Log in with user: dev password: dev
+
+You can also access a metrics dashboard at http://127.0.0.1:3000/
 
 ### Non-interactive
 

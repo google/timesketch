@@ -161,6 +161,11 @@ class SketchResource(BaseResource):
         return self._labels
 
     @property
+    def sketch(self):
+        """Property that returns the sketch object."""
+        return self._sketch
+
+    @property
     def table(self):
         """Property that returns a pandas DataFrame."""
         return self.to_pandas()

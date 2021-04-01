@@ -128,13 +128,15 @@ class ExploreResource(resources.ResourceMixin, Resource):
             'indices': {
                 'terms': {
                     'field': '_index',
-                    'min_doc_count': 0
+                    'min_doc_count': 0,
+                    'size': len(sketch.timelines)
                 }
             },
             'timelines': {
                 'terms': {
                     'field': '__ts_timeline_id',
-                    'min_doc_count': 0
+                    'min_doc_count': 0,
+                    'size': len(sketch.timelines)
                 }
             }
         }
@@ -182,7 +184,9 @@ class ExploreResource(resources.ResourceMixin, Resource):
                     query_filter=query_filter,
                     indices=indices,
                     sketch=sketch,
-                    datastore=self.datastore)
+                    datastore=self.datastore,
+                    return_fields=return_fields,
+                    timeline_ids=timeline_ids)
                 fh.seek(0)
                 zip_file.writestr('query_results.csv', fh.read())
             file_object.seek(0)

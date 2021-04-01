@@ -31,14 +31,24 @@ Example configuration for Apache with mod_wsgi (a2enmod mod_wsgi):
 # This needs to be before any imports in order to import from the virtualenv.
 #activate_virtualenv = '/path/to/your/virtualenv/bin/activate_this.py'
 #execfile(activate_virtualenv, dict(__file__=activate_virtualenv))
+import os
+import logging
+
+from prometheus_flask_exporter.multiprocess import GunicornPrometheusMetrics
 
 from timesketch.app import configure_logger
 from timesketch.app import create_app
 from timesketch.models import db_session
 
+logger = logging.getLogger('timesketch.wsgi_server')
+
 configure_logger()
 application = create_app()
 
+# Setup metrics endpoint.
+if os.environ.get('prometheus_multiproc_dir'):
+    logger.info('Metrics server enabled')
+    GunicornPrometheusMetrics(application, group_by='endpoint')
 
 # pylint: disable=unused-argument
 @application.teardown_appcontext

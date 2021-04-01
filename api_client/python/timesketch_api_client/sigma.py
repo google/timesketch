@@ -154,8 +154,6 @@ class Sigma(resource.BaseResource):
 
         """
         self.resource_uri = f'sigma/rule/{rule_uuid}'
-        super().__init__(
-            api=self.api, resource_uri=self.resource_uri)
 
         self.lazyload_data(refresh_cache=True)
         objects = self.data.get('objects')

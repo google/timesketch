@@ -16,6 +16,7 @@ if [ "$1" = 'timesketch' ]; then
   ln -s /usr/local/src/timesketch/data/sigma_config.yaml /etc/timesketch/sigma_config.yaml
   ln -s /usr/local/src/timesketch/data/sigma /etc/timesketch/
 
+
   # Set SECRET_KEY in /etc/timesketch/timesketch.conf if it isn't already set
   if grep -q "SECRET_KEY = '<KEY_GOES_HERE>'" /etc/timesketch/timesketch.conf; then
     OPENSSL_RAND=$( openssl rand -base64 32 )
