@@ -762,8 +762,6 @@ class BaseAnalyzer:
         timeline_id: The ID of the timeline the analyzer runs on.
         tagged_events: Dict with all events to add tags and those tags.
         emoji_events: Dict with all events to add emojis and those emojis.
-        sketch: A Sketch instance.
-        timeline_id: The ID of the timeline the analyzer runs on.
     """
 
     NAME = 'name'
