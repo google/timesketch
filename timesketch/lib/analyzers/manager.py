@@ -78,14 +78,11 @@ class AnalysisManager(object):
         cls._class_registry = {}
 
     @classmethod
-    def get_analyzers(cls, analyzer_names=None, sketch_analyzers=True):
+    def get_analyzers(cls, analyzer_names=None):
         """Retrieves the registered analyzers.
 
         Args:
             analyzer_names (list): List of analyzer names.
-            sketch_analyzers (bool): If True (default) then only sketch
-                analyzers are return, otherwise it will return Index
-                analyzers.
 
         Yields:
             tuple: containing:
@@ -102,13 +99,7 @@ class AnalysisManager(object):
                 if analyzer_name in completed_analyzers:
                     continue
                 analyzer_class = cls.get_analyzer(analyzer_name)
-                if sketch_analyzers:
-                    if analyzer_class.IS_SKETCH_ANALYZER:
-                        yield analyzer_name, analyzer_class
-                else:
-                    if not analyzer_class.IS_SKETCH_ANALYZER:
-                        yield analyzer_name, analyzer_class
-
+                yield analyzer_name, analyzer_class
                 completed_analyzers.add(analyzer_name)
 
     @classmethod

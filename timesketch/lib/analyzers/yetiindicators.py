@@ -11,8 +11,8 @@ from timesketch.lib.analyzers import manager
 from timesketch.lib import emojis
 
 
-class YetiIndicators(interface.BaseSketchAnalyzer):
-    """Index analyzer for Yeti threat intel indicators."""
+class YetiIndicators(interface.BaseAnalyzer):
+    """Analyzer for Yeti threat intel indicators."""
 
     NAME = 'yetiindicators'
     DISPLAY_NAME = 'Yeti threat intel indicators'
@@ -21,7 +21,7 @@ class YetiIndicators(interface.BaseSketchAnalyzer):
     DEPENDENCIES = frozenset(['domain'])
 
     def __init__(self, index_name, sketch_id, timeline_id=None):
-        """Initialize the Index Analyzer.
+        """Initialize the Analyzer.
 
         Args:
             index_name: Elasticsearch index name
