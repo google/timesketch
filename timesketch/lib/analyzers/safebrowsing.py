@@ -16,8 +16,8 @@ from timesketch.lib.analyzers import manager
 logger = logging.getLogger('timesketch.tasks')
 
 
-class SafeBrowsingSketchPlugin(interface.BaseSketchAnalyzer):
-    """Sketch analyzer for Safe Browsing."""
+class SafeBrowsingSketchPlugin(interface.BaseAnalyzer):
+    """Analyzer for Safe Browsing."""
 
     NAME = 'safebrowsing'
     DISPLAY_NAME = 'Google Safe Browsing'

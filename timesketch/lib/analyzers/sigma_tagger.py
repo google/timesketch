@@ -15,8 +15,8 @@ import timesketch.lib.sigma_util as ts_sigma_lib
 logger = logging.getLogger('timesketch.analyzers.sigma_tagger')
 
 
-class SigmaPlugin(interface.BaseSketchAnalyzer):
-    """Index analyzer for Sigma."""
+class SigmaPlugin(interface.BaseAnalyzer):
+    """Analyzer for Sigma."""
 
     NAME = 'sigma'
     DISPLAY_NAME = 'Sigma'
