@@ -15,7 +15,6 @@ There is a dedicated document to walk you through [Sketches](sketch-overview.md)
 - [Create timeline from JSON/JSONL/CSV file](/docs/CreateTimelineFromJSONorCSV.md)
 - [Upload data via the importer/API](/docs/UploadDataViaAPI.md)
 - [Enable Plaso upload via HTTP](/docs/EnablePlasoUpload.md)
->>>>>>> master:docs/Users-Guide.md
 
 ## Adding event
 
