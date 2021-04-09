@@ -25,6 +25,7 @@ import io
 import json
 import six
 
+from elasticsearch.exceptions import NotFoundError
 from elasticsearch.exceptions import RequestError
 from flask import current_app
 
@@ -47,11 +48,11 @@ from timesketch.lib.utils import read_and_validate_csv
 from timesketch.lib.utils import read_and_validate_jsonl
 from timesketch.lib.utils import send_email
 from timesketch.models import db_session
+from timesketch.models.sketch import Analysis
+from timesketch.models.sketch import AnalysisSession
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
-from timesketch.models.sketch import Analysis
-from timesketch.models.sketch import AnalysisSession
 from timesketch.models.user import User
 
 
@@ -101,6 +102,14 @@ def get_import_errors(error_container, index_name, total_count):
     else:
         top_details = 'Unknown Reasons'
 
+    if total_count is None:
+        total_count = 0
+
+    if not top_type:
+        top_type = 'Unknown Reasons'
+    if not top_details:
+        top_details = 'Unknown Reasons'
+
     return (
         '{0:d} out of {1:d} events imported. Most common error type '
         'is "{2:s}" with the detail of "{3:s}"').format(
@@ -127,6 +136,31 @@ def init_worker(**kwargs):
     db_session.configure(bind=engine)
 
 
+def _close_index(index_name, data_store, timeline_id):
+    """Helper function to close an index if it is not used somewhere else.
+
+    Args:
+        index_name: String with the Elastic index name.
+        data_store: Instance of elastic.ElasticsearchDataStore.
+        timeline_id: ID of the timeline the index belongs to.
+    """
+    indices = SearchIndex.query.filter_by(index_name=index_name).all()
+    for index in indices:
+        for timeline in index.timelines:
+            if timeline.get_status.status in ('closed', 'deleted', 'archived'):
+                continue
+
+            if timeline.id != timeline_id:
+                return
+
+    try:
+        data_store.client.indices.close(index=index_name)
+    except NotFoundError:
+        logger.error(
+            'Unable to close index: {0:s} - index not '
+            'found'.format(index_name))
+
+
 def _set_timeline_status(timeline_id, status, error_msg=None):
     """Helper function to set status for searchindex and all related timelines.
 
@@ -141,13 +175,23 @@ def _set_timeline_status(timeline_id, status, error_msg=None):
         logger.warning('Cannot set status: No such timeline')
         return
 
-    timeline.set_status(status)
-    timeline.searchindex.set_status(status)
+    # Check if there is at least one data source that hasn't failed.
+    multiple_sources = any(not x.error_message for x in timeline.datasources)
+
+    if multiple_sources:
+        timeline_status = timeline.get_status.status.lower()
+        if timeline_status != 'process' and status != 'fail':
+            timeline.set_status(status)
+            timeline.searchindex.set_status(status)
+    else:
+        timeline.set_status(status)
+        timeline.searchindex.set_status(status)
 
     # Update description if there was a failure in ingestion.
     if error_msg:
-        # TODO: Don't overload the description field.
-        timeline.description = error_msg
+        if timeline.datasources:
+            data_source = timeline.datasources[-1]
+            data_source.error_message = error_msg
 
     # Commit changes to database
     db_session.add(timeline)
@@ -173,26 +217,6 @@ def _get_index_task_class(file_extension):
     else:
         raise KeyError('No task that supports {0:s}'.format(file_extension))
     return index_class
-
-
-def _get_index_analyzers():
-    """Get list of index analysis tasks to run.
-
-    Returns:
-        Celery chain of index analysis tasks as Celery subtask signatures or
-        None if index analyzers are disabled in config.
-    """
-    tasks = []
-    index_analyzers = current_app.config.get('AUTO_INDEX_ANALYZERS')
-
-    if not index_analyzers:
-        return None
-
-    for analyzer_name, _ in manager.AnalysisManager.get_analyzers(
-            index_analyzers):
-        tasks.append(run_index_analyzer.s(analyzer_name))
-
-    return chain(tasks)
 
 
 def build_index_pipeline(
@@ -223,7 +247,6 @@ def build_index_pipeline(
         raise RuntimeError(
             'Unable to upload data, missing either a file or events.')
     index_task_class = _get_index_task_class(file_extension)
-    index_analyzer_chain = _get_index_analyzers()
     sketch_analyzer_chain = None
     searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
 
@@ -239,25 +262,20 @@ def build_index_pipeline(
             sketch_id, searchindex.id, user_id=None)
 
     # If there are no analyzers just run the indexer.
-    if not index_analyzer_chain and not sketch_analyzer_chain:
+    if not sketch_analyzer_chain:
         return index_task
 
     if sketch_analyzer_chain:
-        if not index_analyzer_chain:
-            return chain(
-                index_task, run_sketch_init.s(), sketch_analyzer_chain)
         return chain(
-            index_task, index_analyzer_chain, run_sketch_init.s(),
-            sketch_analyzer_chain)
+            index_task, run_sketch_init.s(), sketch_analyzer_chain)
 
     if current_app.config.get('ENABLE_EMAIL_NOTIFICATIONS'):
         return chain(
             index_task,
-            index_analyzer_chain,
             run_email_result_task.s()
         )
 
-    return chain(index_task, index_analyzer_chain)
+    return chain(index_task)
 
 
 def build_sketch_analysis_pipeline(
@@ -307,10 +325,7 @@ def build_sketch_analysis_pipeline(
     analysis_session = AnalysisSession(user, sketch)
 
     analyzers = manager.AnalysisManager.get_analyzers(analyzer_names)
-    for analyzer_name, analyzer_cls in analyzers:
-        if not analyzer_cls.IS_SKETCH_ANALYZER:
-            continue
-
+    for analyzer_name, _ in analyzers:
         kwargs = analyzer_kwargs.get(analyzer_name, {})
         searchindex = SearchIndex.query.get(searchindex_id)
 
@@ -433,27 +448,6 @@ def run_email_result_task(index_name, sketch_id=None):
 
 
 @celery.task(track_started=True)
-def run_index_analyzer(index_name, analyzer_name, **kwargs):
-    """Create a Celery task for an index analyzer.
-
-    Args:
-      index_name: Name of the datastore index.
-      analyzer_name: Name of the analyzer.
-
-    Returns:
-      Name (str) of the index.
-    """
-    analyzer_class = manager.AnalysisManager.get_analyzer(analyzer_name)
-    analyzer = analyzer_class(index_name=index_name, **kwargs)
-    result = analyzer.run_wrapper()
-    if result:
-        logger.info('[{0:s}] result: {1:s}'.format(analyzer_name, result))
-    else:
-        logger.info('[{0:s}] return with no results.'.format(analyzer_name))
-    return index_name
-
-
-@celery.task(track_started=True)
 def run_sketch_analyzer(
         index_name, sketch_id, analysis_id, analyzer_name,
         timeline_id=None, **kwargs):
@@ -549,11 +543,15 @@ def run_plaso(
             index_name=index_name, doc_type=event_type, mappings=mappings)
     except errors.DataIngestionError as e:
         _set_timeline_status(timeline_id, status='fail', error_msg=str(e))
+        _close_index(
+            index_name=index_name, data_store=es, timeline_id=timeline_id)
         raise
 
     except (RuntimeError, ImportError, NameError, UnboundLocalError,
             RequestError) as e:
         _set_timeline_status(timeline_id, status='fail', error_msg=str(e))
+        _close_index(
+            index_name=index_name, data_store=es, timeline_id=timeline_id)
         raise
 
     except Exception as e:  # pylint: disable=broad-except
@@ -561,6 +559,8 @@ def run_plaso(
         error_msg = traceback.format_exc()
         _set_timeline_status(timeline_id, status='fail', error_msg=error_msg)
         logger.error('Error: {0!s}\n{1:s}'.format(e, error_msg))
+        _close_index(
+            index_name=index_name, data_store=es, timeline_id=timeline_id)
         return None
 
     message = 'Index timeline [{0:s}] to index [{1:s}] (source: {2:s})'
@@ -583,6 +583,23 @@ def run_plaso(
     if timeline_id:
         cmd.extend(['--timeline_identifier', str(timeline_id)])
 
+    elastic_username = current_app.config.get('ELASTIC_USER', '')
+    if elastic_username:
+        cmd.extend(['--elastic_user', elastic_username])
+
+    elastic_password = current_app.config.get('ELASTIC_PASSWORD', '')
+    if elastic_password:
+        cmd.extend(['--elastic_password', elastic_password])
+
+    elastic_ssl = current_app.config.get('ELASTIC_SSL', False)
+    if elastic_ssl:
+        cmd.extend(['--use_ssl'])
+
+
+    psort_memory = current_app.config.get('PLASO_UPPER_MEMORY_LIMIT', '')
+    if psort_memory:
+        cmd.extend(['--process_memory_limit', str(psort_memory)])
+
     # Run psort.py
     try:
         subprocess.check_output(
@@ -590,6 +607,8 @@ def run_plaso(
     except subprocess.CalledProcessError as e:
         # Mark the searchindex and timelines as failed and exit the task
         _set_timeline_status(timeline_id, status='fail', error_msg=e.output)
+        _close_index(
+            index_name=index_name, data_store=es, timeline_id=timeline_id)
         return e.output
 
     # Mark the searchindex and timelines as ready
@@ -660,17 +679,23 @@ def run_csv_jsonl(
 
     except errors.DataIngestionError as e:
         _set_timeline_status(timeline_id, status='fail', error_msg=str(e))
+        _close_index(
+            index_name=index_name, data_store=es, timeline_id=timeline_id)
         raise
 
     except (RuntimeError, ImportError, NameError, UnboundLocalError,
             RequestError) as e:
         _set_timeline_status(timeline_id, status='fail', error_msg=str(e))
+        _close_index(
+            index_name=index_name, data_store=es, timeline_id=timeline_id)
         raise
 
     except Exception as e:  # pylint: disable=broad-except
         # Mark the searchindex and timelines as failed and exit the task
         error_msg = traceback.format_exc()
         _set_timeline_status(timeline_id, status='fail', error_msg=error_msg)
+        _close_index(
+            index_name=index_name, data_store=es, timeline_id=timeline_id)
         logger.error('Error: {0!s}\n{1:s}'.format(e, error_msg))
         return None
 

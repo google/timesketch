@@ -22,28 +22,11 @@ limitations under the License.
       </template>
     </ts-navbar-main>
 
-    <section class="section">
-        <div class="container is-fluid">
-          <ts-navbar-secondary currentAppContext="sketch" currentPage="explore"></ts-navbar-secondary>
-        </div>
-    </section>
+    <ts-navbar-secondary currentAppContext="sketch" currentPage="explore"></ts-navbar-secondary>
 
     <section class="section">
       <div class="container is-fluid">
         <div class="card">
-          <header class="card-header" v-on:click="showSearch = !showSearch" style="cursor: pointer">
-            <span class="card-header-title">
-              <span class="icon is-small"><i class="fas fa-search"></i></span>
-              <span style="margin-left:10px;">Search</span>
-            </span>
-
-            <span class="card-header-icon">
-              <span class="icon">
-                <i class="fas fa-angle-down" v-if="!showSearch" aria-hidden="true"></i>
-                <i class="fas fa-angle-up" v-if="showSearch" aria-hidden="true"></i>
-              </span>
-            </span>
-          </header>
 
           <div class="card-content" v-if="showSearch">
 

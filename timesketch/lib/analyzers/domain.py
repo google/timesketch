@@ -13,8 +13,8 @@ from timesketch.lib.analyzers import utils
 logger = logging.getLogger('timesketch.analyzers.domain')
 
 
-class DomainSketchPlugin(interface.BaseSketchAnalyzer):
-    """Sketch analyzer for Domain."""
+class DomainSketchPlugin(interface.BaseAnalyzer):
+    """Analyzer for Domain."""
 
     NAME = 'domain'
     DISPLAY_NAME = 'Domain'

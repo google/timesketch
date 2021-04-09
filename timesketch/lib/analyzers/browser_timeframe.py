@@ -150,8 +150,8 @@ def get_active_hours(frame):
     return fix_gap_in_list(hours), threshold, frame_count
 
 
-class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
-    """Sketch analyzer for BrowserTimeframe."""
+class BrowserTimeframeSketchPlugin(interface.BaseAnalyzer):
+    """Analyzer for BrowserTimeframe."""
 
     NAME = 'browser_timeframe'
     DISPLAY_NAME = 'Browser timeframe'

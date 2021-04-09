@@ -13,7 +13,7 @@
 # limitations under the License.
 """Version information for Timesketch Import Client."""
 
-__version__ = '20210225'
+__version__ = '20210402'
 
 
 def get_version():

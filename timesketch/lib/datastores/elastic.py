@@ -117,18 +117,16 @@ class ElasticsearchDataStore(object):
         self.ssl = current_app.config.get('ELASTIC_SSL', False)
         self.verify = current_app.config.get('ELASTIC_VERIFY_CERTS', True)
 
+        parameters = {}
         if self.ssl:
-            if self.user and self.password:
-                self.client = Elasticsearch(
-                    [{'host': host, 'port': port}],
-                    http_auth=(self.user, self.password),
-                    use_ssl=self.ssl, verify_certs=self.verify)
-            else:
-                self.client = Elasticsearch(
-                    [{'host': host, 'port': port}],
-                    use_ssl=self.ssl, verify_certs=self.verify)
-        else:
-            self.client = Elasticsearch([{'host': host, 'port': port}])
+            parameters['use_ssl'] = self.ssl
+            parameters['verify_certs'] = self.verify
+
+        if self.user and self.password:
+            parameters['http_auth'] = (self.user, self.password)
+
+        self.client = Elasticsearch(
+            [{'host': host, 'port': port}], **parameters)
 
         self.import_counter = Counter()
         self.import_events = []
@@ -505,6 +503,9 @@ class ElasticsearchDataStore(object):
         if not indices:
             return {'hits': {'hits': [], 'total': 0}, 'took': 0}
 
+        # Make sure that the list of index names is uniq.
+        indices = list(set(indices))
+
         # Check if we have specific events to fetch and get indices.
         if query_filter.get('events', None):
             indices = {
@@ -607,6 +608,9 @@ class ElasticsearchDataStore(object):
         Returns:
             Generator of event documents in JSON format
         """
+        # Make sure that the list of index names is uniq.
+        indices = list(set(indices))
+
         METRICS['search_requests'].labels(type='streaming').inc()
 
         if not query_filter.get('size'):
@@ -696,6 +700,9 @@ class ElasticsearchDataStore(object):
             }
         }
 
+        # Make sure that the list of index names is uniq.
+        indices = list(set(indices))
+
         labels = []
         # pylint: disable=unexpected-keyword-arg
         try:
@@ -763,13 +770,22 @@ class ElasticsearchDataStore(object):
         if not indices:
             return 0, 0
 
+        # Make sure that the list of index names is uniq.
+        indices = list(set(indices))
+
         try:
             es_stats = self.client.indices.stats(
                 index=indices, metric='docs, store')
+
         except NotFoundError:
             es_logger.error(
-                'Unable to count indexes (index not found)')
-            es_stats = {}
+                'Unable to count indices (index not found)')
+            return 0, 0
+
+        except RequestError:
+            es_logger.error(
+                'Unable to count indices (request error)', exc_info=True)
+            return 0, 0
 
         doc_count_total = es_stats.get(
             '_all', {}).get('primaries', {}).get('docs', {}).get('count', 0)

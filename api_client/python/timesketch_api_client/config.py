@@ -478,7 +478,11 @@ def configure_missing_parameters(
 
     if config_assistant.missing:
         # We still have unanswered questions.
-        return configure_missing_parameters(config_assistant, token_password)
+        return configure_missing_parameters(
+            config_assistant=config_assistant,
+            token_password=token_password,
+            confirm_choices=confirm_choices,
+            config_section=config_section)
 
     if confirm_choices:
         # Go through prior answered parameters.

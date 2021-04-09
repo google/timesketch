@@ -311,8 +311,10 @@ class SketchResource(resources.ResourceMixin, Resource):
         sketch_indices = [
             t.searchindex.index_name
             for t in sketch.active_timelines
-            if t.get_status.status != 'archived'
         ]
+
+        # Make sure the list of index names is uniq
+        sketch_indices = list(set(sketch_indices))
 
         # Get event count and size on disk for each index in the sketch.
         indices_metadata = {}
@@ -361,39 +363,36 @@ class SketchResource(resources.ResourceMixin, Resource):
                 mapping_dict['type'] = value_dict.get('type', 'n/a')
                 mappings.append(mapping_dict)
 
+        # Get number of events per timeline
         if sketch_indices:
-            # Stats for index. Num docs per shard.
+            # Support legacy indices.
             for timeline in sketch.active_timelines:
                 index_name = timeline.searchindex.index_name
                 if indices_metadata[index_name].get('is_legacy', False):
                     doc_count, _ = self.datastore.count(indices=index_name)
                     stats_per_timeline[timeline.id] = {'count': doc_count}
-                else:
-                    # TODO: Consider using an aggregation here instead?
-                    query_dsl = {
-                        'query': {
-                            'term': {
-                                '__ts_timeline_id': {
-                                    'value': timeline.id
-                                }
-                            }
+            count_agg_spec = {
+                'aggs': {
+                    'per_timeline': {
+                        'terms': {
+                            'field': '__ts_timeline_id',
+                            'size': len(sketch.timelines),
                         }
                     }
-                    try:
-                        searchindex_name = timeline.searchindex.index_name
-                    except elasticsearch.NotFoundError:
-                        searchindex_name = ''
+                }
+            }
+            # pylint: disable=unexpected-keyword-arg, no-value-for-parameter
+            count_agg = self.datastore.client.search(
+                index=sketch_indices, body=count_agg_spec, size=0)
 
-                    count = self.datastore.search(
-                        sketch_id=sketch.id,
-                        query_string=None,
-                        query_filter={},
-                        query_dsl=query_dsl,
-                        indices=[searchindex_name],
-                        count=True)
-                    stats_per_timeline[timeline.id] = {
-                        'count': count
-                    }
+            count_per_timeline = count_agg.get(
+                'aggregations', {}).get(
+                    'per_timeline', {}).get(
+                        'buckets', [])
+            for count_stat in count_per_timeline:
+                stats_per_timeline[count_stat['key']] = {
+                    'count': count_stat['doc_count']
+                }
 
         # Make the list of dicts unique
         mappings = {v['field']: v for v in mappings}.values()
@@ -415,6 +414,8 @@ class SketchResource(resources.ResourceMixin, Resource):
                 'updated_at': view.updated_at
             }
             views.append(view)
+
+        views.sort(key=lambda x: x.get('name', 'Z').lower())
 
         stories = []
         for story in sketch.stories:

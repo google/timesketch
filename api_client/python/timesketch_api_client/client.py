@@ -63,6 +63,9 @@ class TimesketchApi:
     DEFAULT_OAUTH_OOB_URL = 'urn:ietf:wg:oauth:2.0:oob'
     DEFAULT_OAUTH_API_CALLBACK = '/login/api_callback/'
 
+    # Default retry count for operations that attempt a retry.
+    DEFAULT_RETRY_COUNT = 5
+
     def __init__(self,
                  host_uri,
                  username,
@@ -342,11 +345,22 @@ class TimesketchApi:
         if not description:
             description = name
 
-        resource_url = '{0:s}/sketches/'.format(self.api_root)
-        form_data = {'name': name, 'description': description}
-        response = self.session.post(resource_url, json=form_data)
-        response_dict = error.get_response_json(response, logger)
-        sketch_id = response_dict['objects'][0]['id']
+        retry_count = 0
+        objects = None
+        while True:
+            resource_url = '{0:s}/sketches/'.format(self.api_root)
+            form_data = {'name': name, 'description': description}
+            response = self.session.post(resource_url, json=form_data)
+            response_dict = error.get_response_json(response, logger)
+            objects = response_dict.get('objects')
+            if objects:
+                break
+            retry_count += 1
+
+            if retry_count >= self.DEFAULT_RETRY_COUNT:
+                raise RuntimeError('Unable to create a new sketch.')
+
+        sketch_id = objects[0]['id']
         return self.get_sketch(sketch_id)
 
     def get_oauth_token_status(self):
@@ -523,6 +537,26 @@ class TimesketchApi:
             _ = error.check_return_status(response, logger)
 
         return self.get_searchindex(searchindex_id), created
+
+    def check_celery_status(self, job_id=''):
+        """Return information about outstanding celery tasks or a specific one.
+
+        Args:
+            job_id (str): Optional Celery job identification string. If
+                provided that specific job ID is queried, otherwise
+                a check for all outstanding jobs is checked.
+
+        Returns:
+            A list of dict objects with the status of the celery task/tasks
+            that were outstanding.
+        """
+        if job_id:
+            response = self.fetch_resource_data(
+                'tasks/?job_id={0:s}'.format(job_id))
+        else:
+            response = self.fetch_resource_data('tasks/')
+
+        return response.get('objects', [])
 
     def list_searchindices(self):
         """Get list of all searchindices that the user has access to.
