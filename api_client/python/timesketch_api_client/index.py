@@ -56,6 +56,13 @@ class SearchIndex(resource.BaseResource):
         return objects[0]
 
     @property
+    def fields(self):
+        """Propery that returns the fields in the index, from index mappings."""
+        index_data = self.data
+        meta = index_data.get('meta', {})
+        return meta.get('fields', [])
+
+    @property
     def has_timeline_id(self):
         """Property that returns back whether a __timeline_id field is present.
 
@@ -122,6 +129,15 @@ class SearchIndex(resource.BaseResource):
 
         status = status_list[0]
         return status.get('status')
+
+    @status.setter
+    def status(self, status):
+        """Set the SearchIndex status."""
+        resource_url = f'{self.api_root}/searchindices/{self.id}/'
+        data = {'status': status}
+        response = self.api.session.post(resource_url, json=data)
+
+        _ = error.check_return_status(response, logger)
 
     @property
     def description(self):

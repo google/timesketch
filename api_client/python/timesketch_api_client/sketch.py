@@ -26,6 +26,7 @@ from . import aggregation
 from . import definitions
 from . import error
 from . import graph
+from . import index as api_index
 from . import resource
 from . import search
 from . import searchtemplate
@@ -46,6 +47,10 @@ class Sketch(resource.BaseResource):
         id: The ID of the sketch.
         api: An instance of TimesketchApi object.
     """
+
+    # Add in necessary fields in data ingested via a different mechanism.
+    _NECESSARY_DATA_FIELDS = frozenset([
+        'timestamp', 'message'])
 
     def __init__(self, sketch_id, api, sketch_name=None):
         """Initializes the Sketch object.
@@ -1617,7 +1622,8 @@ class Sketch(resource.BaseResource):
     def generate_timeline_from_es_index(
             self, es_index_name, name, index_name='', description='',
             provider='Manually added to Elastic',
-            context='Added via API client', data_label='elastic', status=''):
+            context='Added via API client', data_label='elastic',
+            status='ready'):
         """Creates and returns a Timeline from Elastic data.
 
         This function can be used to import data into a sketch that was
@@ -1640,8 +1646,8 @@ class Sketch(resource.BaseResource):
             data_label: optional string with the data label of the Elastic
                 data, defaults to "elastic".
             status: Optional string, if provided will be used as a status
-                for the searchindex, valid options are: 'ready', 'fail',
-                'processing', 'timeout'.
+                for the searchindex, valid options are: "ready", "fail",
+                "processing", "timeout". Defaults to "ready".
 
         Raises:
             ValueError: If there are errors in the generation of the
@@ -1656,6 +1662,13 @@ class Sketch(resource.BaseResource):
         if not name:
             raise ValueError('Timeline name needs to be provided.')
 
+        # Step 1: Make sure the index doesn't exist already.
+        for index_obj in self.api.list_searchindices():
+            if index_obj.index_name == es_index_name:
+                raise ValueError(
+                    'Unable to add the ES index, since it already exists.')
+
+        # Step 2: Create a SearchIndex.
         resource_url = f'{self.api_root}/searchindices/'
         form_data = {
             'searchindex_name': index_name or es_index_name,
@@ -1676,12 +1689,22 @@ class Sketch(resource.BaseResource):
                 'issue in GitHub.')
 
         searchindex_id = objects[0].get('id')
-        if status:
-            resource_url = f'{self.api_root}/searchindices/{searchindex_id}/'
-            data = {'status': status}
-            response = self.session.post(resource_url, json=data)
-            _ = error.check_return_status(response, logger)
 
+        # Step 3: Verify mappings to make sure data conforms.
+        index_obj = api_index.SearchIndex(searchindex_id, api=self.api)
+        index_fields = set(index_obj.fields)
+
+        if not self._NECESSARY_DATA_FIELDS.issubset(index_fields):
+            index_obj.status = 'fail'
+            raise ValueError(
+                'Unable to ingest data since it is missing required '
+                'fields: {0:s}'.format(', '.join(
+                    self._NECESSARY_DATA_FIELDS.difference(index_fields))))
+
+        if status:
+            index_obj.status = status
+
+        # Step 4: Create the Timeline.
         resource_url = f'{self.api_root}/sketches/{self.id}/timelines/'
         form_data = {'timeline': searchindex_id}
         response = self.api.session.post(resource_url, json=form_data)
@@ -1706,4 +1729,12 @@ class Sketch(resource.BaseResource):
             api=self.api,
             name=timeline_dict['name'],
             searchindex=timeline_dict['searchindex']['index_name'])
+
+        # Step 5: Add the timeline ID into the dataset.
+        form = {
+            'searchindex_id': searchindex_id,
+            'timeline_id': timeline_dict['id'],
+        }
+        # Step 6: Add a DataSource object.
+
         return timeline_obj

@@ -496,24 +496,23 @@ class TimesketchApi:
         return response.get('objects', [])
 
     def list_searchindices(self):
-        """Get list of all searchindices that the user has access to.
+        """Yields all searchindices that the user has access to.
 
-        Returns:
-            List of SearchIndex object instances.
+        Yields:
+            A SearchIndex object instances.
         """
-        indices = []
         response = self.fetch_resource_data('searchindices/')
         response_objects = response.get('objects')
         if not response_objects:
-            return indices
+            yield None
+            return
 
         for index_dict in response_objects[0]:
             index_id = index_dict['id']
             index_name = index_dict['name']
             index_obj = index.SearchIndex(
                 searchindex_id=index_id, api=self, searchindex_name=index_name)
-            indices.append(index_obj)
-        return indices
+            yield index_obj
 
     def refresh_oauth_token(self):
         """Refresh an OAUTH token if one is defined."""
