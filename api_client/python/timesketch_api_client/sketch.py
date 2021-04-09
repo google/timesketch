@@ -23,6 +23,7 @@ import pandas
 
 from . import analyzer
 from . import aggregation
+from . import definitions
 from . import error
 from . import graph
 from . import resource
@@ -944,13 +945,13 @@ class Sketch(resource.BaseResource):
         return timelines
 
     # pylint: disable=unused-argument
-    def upload(self, timeline_name, file_path, index=None):
+    def upload(self, timeline_name, file_path, es_index=None):
         """Deprecated function to upload data, does nothing.
 
         Args:
             timeline_name: Name of the resulting timeline.
             file_path: Path to the file to be uploaded.
-            index: Index name for the ES database
+            es_index: Index name for the ES database
 
         Raises:
             RuntimeError: If this function is used, since it has been
@@ -1612,3 +1613,97 @@ class Sketch(resource.BaseResource):
 
         with open(file_path, 'wb') as fw:
             fw.write(response.content)
+
+    def generate_timeline_from_es_index(
+            self, es_index_name, name, index_name='', description='',
+            provider='Manually added to Elastic',
+            context='Added via API client', data_label='elastic', status=''):
+        """Creates and returns a Timeline from Elastic data.
+
+        This function can be used to import data into a sketch that was
+        ingested via different mechanism, such as ELK, etc.
+
+        The function creates the necessary structures (SearchIndex and a
+        Timeline) for Timesketch to be able to properly support it.
+
+        Args:
+            es_index_name: name of the index in Elasticsearch.
+            name: string with the name of the timeline.
+            index_name: optional string for the SearchIndex name, defaults
+                to the same as the es_index_name.
+            description: optional string with a description of the timeline.
+            provider: optional string with the provider name for the data
+                source of the imported data. Defaults to "Manually added
+                to Elastic".
+            context: optional string with the context for the data upload,
+                defaults to "Added via API client".
+            data_label: optional string with the data label of the Elastic
+                data, defaults to "elastic".
+            status: Optional string, if provided will be used as a status
+                for the searchindex, valid options are: 'ready', 'fail',
+                'processing', 'timeout'.
+
+        Raises:
+            ValueError: If there are errors in the generation of the
+            timeline.
+
+        Returns:
+            Instance of a Timeline object.
+        """
+        if not es_index_name:
+            raise ValueError('ES index needs to be provided.')
+
+        if not name:
+            raise ValueError('Timeline name needs to be provided.')
+
+        resource_url = f'{self.api_root}/searchindices/'
+        form_data = {
+            'searchindex_name': index_name or es_index_name,
+            'es_index_name': es_index_name,
+        }
+        response = self.api.session.post(resource_url, json=form_data)
+
+        if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
+            error.error_message(
+                response, message='Error creating searchindex',
+                error=ValueError)
+
+        response_dict = error.get_response_json(response, logger)
+        objects = response_dict.get('objects')
+        if not objects:
+            raise ValueError(
+                'Unable to create a SearchIndex, try again or file an '
+                'issue in GitHub.')
+
+        searchindex_id = objects[0].get('id')
+        if status:
+            resource_url = f'{self.api_root}/searchindices/{searchindex_id}/'
+            data = {'status': status}
+            response = self.session.post(resource_url, json=data)
+            _ = error.check_return_status(response, logger)
+
+        resource_url = f'{self.api_root}/sketches/{self.id}/timelines/'
+        form_data = {'timeline': searchindex_id}
+        response = self.api.session.post(resource_url, json=form_data)
+
+        if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
+            error.error_message(
+                response, message='Error creating a timeline object',
+                error=ValueError)
+
+        response_dict = error.get_response_json(response, logger)
+        objects = response_dict.get('objects')
+        if not objects:
+            raise ValueError(
+                'Unable to create a Timeline, try again or file an '
+                'issue in GitHub.')
+
+        timeline_dict = objects[0]
+
+        timeline_obj = timeline.Timeline(
+            timeline_id=timeline_dict['id'],
+            sketch_id=self.id,
+            api=self.api,
+            name=timeline_dict['name'],
+            searchindex=timeline_dict['searchindex']['index_name'])
+        return timeline_obj

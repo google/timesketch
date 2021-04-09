@@ -16,7 +16,6 @@ from __future__ import unicode_literals
 
 import os
 import logging
-import uuid
 
 # pylint: disable=wrong-import-order
 import bs4
@@ -475,68 +474,6 @@ class TimesketchApi:
             Instance of a SearchIndex object.
         """
         return index.SearchIndex(searchindex_id, api=self)
-
-    def get_or_create_searchindex(self,
-                                  searchindex_name=None,
-                                  es_index_name=None,
-                                  public=False,
-                                  status=''):
-        """Create a new searchindex.
-
-        Args:
-            searchindex_name: Name of the searchindex in Timesketch.
-                If not provided a random one will be generated.
-            es_index_name: Name of the index in Elasticsearch.
-                If not provided a random one will be generated.
-            public: Boolean indicating if the searchindex should be public.
-            status: Optional string, if provided will be used as a status
-                for the searchindex, valid options are: 'ready', 'fail',
-                'processing', 'timeout'.
-
-        Returns:
-            Instance of a SearchIndex object and a boolean indicating if the
-            object was created.
-        """
-        if not es_index_name and not searchindex_name:
-            logger.error(
-                'Either the ES index name or the search index name need to be'
-                'provided.')
-            return None, False
-
-        if not es_index_name:
-            es_index_name = uuid.uuid4().hex
-
-        if not searchindex_name:
-            searchindex_name = uuid.uuid4().hex
-
-        resource_url = '{0:s}/searchindices/'.format(self.api_root)
-        form_data = {
-            'searchindex_name': searchindex_name,
-            'es_index_name': es_index_name,
-            'public': public
-        }
-        response = self.session.post(resource_url, json=form_data)
-
-        if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
-            error.error_message(
-                response, message='Error creating searchindex',
-                error=RuntimeError)
-
-        response_dict = error.get_response_json(response, logger)
-        metadata_dict = response_dict['meta']
-        created = metadata_dict.get('created', False)
-        searchindex_id = response_dict['objects'][0]['id']
-
-        if status:
-            resource_url = '{0:s}/searchindices/{1:d}/'.format(
-                self.api_root, searchindex_id)
-            data = {
-                'status': status,
-            }
-            response = self.session.post(resource_url, json=data)
-            _ = error.check_return_status(response, logger)
-
-        return self.get_searchindex(searchindex_id), created
 
     def check_celery_status(self, job_id=''):
         """Return information about outstanding celery tasks or a specific one.
