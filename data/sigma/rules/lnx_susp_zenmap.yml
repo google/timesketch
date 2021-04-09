@@ -6,6 +6,9 @@ references:
 author: Alexander Jaeger
 date: 2020/06/26
 modified: 2020/06/26
+tags:
+    - attack.discovery
+    - attack.t1046
 logsource:
     product: linux
     service: shell
