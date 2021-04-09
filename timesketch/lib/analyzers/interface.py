@@ -135,7 +135,7 @@ class Event(object):
             event: Dictionary of event from Elasticsearch.
             datastore: Instance of ElasticsearchDatastore.
             sketch: Optional instance of a Sketch object.
-            analyzer: Optional instance of a BaseIndexAnalyzer object.
+            analyzer: Optional instance of a BaseAnalyzer object.
 
         Raises:
             KeyError if event dictionary is missing mandatory fields.
@@ -751,7 +751,7 @@ class Story(object):
         self._commit(block)
 
 
-class BaseIndexAnalyzer(object):
+class BaseAnalyzer:
     """Base class for analyzers.
 
     Attributes:
@@ -768,8 +768,6 @@ class BaseIndexAnalyzer(object):
     DISPLAY_NAME = None
     DESCRIPTION = None
 
-    IS_SKETCH_ANALYZER = False
-
     # If this analyzer depends on another analyzer
     # it needs to be included in this frozenset by using
     # the indexer names.
@@ -783,15 +781,18 @@ class BaseIndexAnalyzer(object):
     SECONDS_PER_WAIT = 10
     MAXIMUM_WAITS = 360
 
-    def __init__(self, index_name, timeline_id=None):
+
+    def __init__(self, index_name, sketch_id, timeline_id=None):
         """Initialize the analyzer object.
 
         Args:
             index_name: Elasticsearch index name.
+            sketch_id: Sketch ID.
             timeline_id: The timeline ID.
         """
         self.name = self.NAME
         self.index_name = index_name
+        self.sketch = Sketch(sketch_id=sketch_id)
         self.timeline_id = timeline_id
         self.timeline_name = ''
 
@@ -804,6 +805,79 @@ class BaseIndexAnalyzer(object):
 
         if not hasattr(self, 'sketch'):
             self.sketch = None
+
+    def event_pandas(
+            self, query_string=None, query_filter=None, query_dsl=None,
+            indices=None, return_fields=None):
+        """Search ElasticSearch.
+
+        Args:
+            query_string: Query string.
+            query_filter: Dictionary containing filters to apply.
+            query_dsl: Dictionary containing Elasticsearch DSL query.
+            indices: List of indices to query.
+            return_fields: List of fields to be included in the search results,
+                if not included all fields will be included in the results.
+
+        Returns:
+            A python pandas object with all the events.
+
+        Raises:
+            ValueError: if neither query_string or query_dsl is provided.
+        """
+        if not (query_string or query_dsl):
+            raise ValueError('Both query_string and query_dsl are missing')
+
+        if not query_filter:
+            query_filter = {'indices': self.index_name, 'size': 10000}
+
+        if not indices:
+            indices = [self.index_name]
+
+        if self.timeline_id:
+            timeline_ids = [self.timeline_id]
+        else:
+            timeline_ids = None
+
+        # Refresh the index to make sure it is searchable.
+        for index in indices:
+            try:
+                self.datastore.client.indices.refresh(index=index)
+            except elasticsearch.NotFoundError:
+                logger.error(
+                    'Unable to refresh index: {0:s}, not found, '
+                    'removing from list.'.format(index))
+                broken_index = indices.index(index)
+                _ = indices.pop(broken_index)
+
+        if not indices:
+            raise ValueError('Unable to get events, no indices to query.')
+
+        if return_fields:
+            default_fields = definitions.DEFAULT_SOURCE_FIELDS
+            return_fields.extend(default_fields)
+            return_fields = list(set(return_fields))
+            return_fields = ','.join(return_fields)
+
+        results = self.datastore.search_stream(
+            sketch_id=self.sketch.id,
+            query_string=query_string,
+            query_filter=query_filter,
+            query_dsl=query_dsl,
+            indices=indices,
+            timeline_ids=timeline_ids,
+            return_fields=return_fields,
+        )
+
+        events = []
+        for event in results:
+            source = event.get('_source')
+            source['_id'] = event.get('_id')
+            source['_type'] = event.get('_type')
+            source['_index'] = event.get('_index')
+            events.append(source)
+
+        return pandas.DataFrame(events)
 
     def event_stream(
             self, query_string=None, query_filter=None, query_dsl=None,
@@ -930,105 +1004,6 @@ class BaseIndexAnalyzer(object):
         db_session.commit()
 
         return result
-
-    def run(self):
-        """Entry point for the analyzer."""
-        raise NotImplementedError
-
-
-class BaseSketchAnalyzer(BaseIndexAnalyzer):
-    """Base class for sketch analyzers.
-
-    Attributes:
-        sketch: A Sketch instance.
-        timeline_id: The ID of the timeline the analyzer runs on.
-    """
-
-    NAME = 'name'
-    IS_SKETCH_ANALYZER = True
-
-    def __init__(self, index_name, sketch_id, timeline_id=None):
-        """Initialize the analyzer object.
-
-        Args:
-            index_name: Elasticsearch index name.
-            sketch_id: Sketch ID.
-        """
-        self.sketch = Sketch(sketch_id=sketch_id)
-        super().__init__(index_name, timeline_id=timeline_id)
-
-    def event_pandas(
-            self, query_string=None, query_filter=None, query_dsl=None,
-            indices=None, return_fields=None):
-        """Search ElasticSearch.
-
-        Args:
-            query_string: Query string.
-            query_filter: Dictionary containing filters to apply.
-            query_dsl: Dictionary containing Elasticsearch DSL query.
-            indices: List of indices to query.
-            return_fields: List of fields to be included in the search results,
-                if not included all fields will be included in the results.
-
-        Returns:
-            A python pandas object with all the events.
-
-        Raises:
-            ValueError: if neither query_string or query_dsl is provided.
-        """
-        if not (query_string or query_dsl):
-            raise ValueError('Both query_string and query_dsl are missing')
-
-        if not query_filter:
-            query_filter = {'indices': self.index_name, 'size': 10000}
-
-        if not indices:
-            indices = [self.index_name]
-
-        if self.timeline_id:
-            timeline_ids = [self.timeline_id]
-        else:
-            timeline_ids = None
-
-        # Refresh the index to make sure it is searchable.
-        for index in indices:
-            try:
-                self.datastore.client.indices.refresh(index=index)
-            except elasticsearch.NotFoundError:
-                logger.error(
-                    'Unable to refresh index: {0:s}, not found, '
-                    'removing from list.'.format(index))
-                broken_index = indices.index(index)
-                _ = indices.pop(broken_index)
-
-        if not indices:
-            raise ValueError('Unable to get events, no indices to query.')
-
-        if return_fields:
-            default_fields = definitions.DEFAULT_SOURCE_FIELDS
-            return_fields.extend(default_fields)
-            return_fields = list(set(return_fields))
-            return_fields = ','.join(return_fields)
-
-        results = self.datastore.search_stream(
-            sketch_id=self.sketch.id,
-            query_string=query_string,
-            query_filter=query_filter,
-            query_dsl=query_dsl,
-            indices=indices,
-            timeline_ids=timeline_ids,
-            return_fields=return_fields,
-        )
-
-        events = []
-        for event in results:
-            source = event.get('_source')
-            source['_id'] = event.get('_id')
-            source['_type'] = event.get('_type')
-            source['_index'] = event.get('_index')
-            events.append(source)
-
-        return pandas.DataFrame(events)
 
     def run(self):
         """Entry point for the analyzer."""

@@ -4,8 +4,8 @@ from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 
 
-class TaggerSketchPlugin(interface.BaseSketchAnalyzer):
-    """Sketch analyzer for tagging events."""
+class TaggerSketchPlugin(interface.BaseAnalyzer):
+    """Analyzer for tagging events."""
 
     NAME = 'tagger'
     DISPLAY_NAME = 'Tagger'
