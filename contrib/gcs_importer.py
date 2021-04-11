@@ -77,7 +77,7 @@ def setup_sketch(timeline_name, index_name, username, sketch_id=None):
         sketch_id: (str) Optional sketch_id to add timeline to
 
     Returns:
-        (str) Sketch ID and Timeline ID
+        (tuple) sketch ID and timeline ID as integers
     """
     with app.app_context():
         user = User.get_or_create(username=username)
