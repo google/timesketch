@@ -69,6 +69,13 @@
         "# agg.title = 'Top 10 Domains'",
         "# agg.save()"
       ]
-    }
+    },
+    {
+      "name" : "Get Timesketch client object",
+      "code" : [
+        "# Execute cell in order to get a Timesketch API client instance.",
+        "client = state.get_from_cache('timesketch_client')"
+      ]
+    },
   ]
 }
