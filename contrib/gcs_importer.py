@@ -77,7 +77,7 @@ def setup_sketch(timeline_name, index_name, username, sketch_id=None):
         sketch_id: (str) Optional sketch_id to add timeline to
 
     Returns:
-        (str) Sketch ID
+        (tuple) sketch ID and timeline ID as integers
     """
     with app.app_context():
         user = User.get_or_create(username=username)
@@ -133,7 +133,7 @@ def setup_sketch(timeline_name, index_name, username, sketch_id=None):
         db_session.commit()
         timeline.set_status('processing')
 
-        return sketch.id
+        return sketch.id, timeline.id
 
 
 def callback(message):
@@ -172,14 +172,15 @@ def callback(message):
 
     timeline_name = os.path.splitext(gcs_plaso_filename)[0]
     index_name = uuid.uuid4().hex
-    sketch_id = setup_sketch(timeline_name, index_name, 'admin',
-                             sketch_id_from_metadata)
+    sketch_id, timeline_id = setup_sketch(
+        timeline_name, index_name, 'admin', sketch_id_from_metadata)
 
     # Start indexing
     with app.app_context():
         pipeline = tasks.build_index_pipeline(
             file_path=local_plaso_file, timeline_name=gcs_base_filename,
-            index_name=index_name, file_extension='plaso', sketch_id=sketch_id)
+            index_name=index_name, file_extension='plaso', sketch_id=sketch_id,
+            timeline_id=timeline_id)
         pipeline.apply_async()
         logger.info('File sent for indexing: {}'. format(gcs_base_filename))
 
