@@ -170,8 +170,10 @@ def get_sigma_rule(filepath, sigma_config=None):
         IsADirectoryError: If a directory is passed as filepath
     """
     try:
-        if sigma_config:
+        if isinstance(sigma_config, sigma_configuration.SigmaConfiguration):
             sigma_conf_obj = sigma_config
+        elif isinstance(sigma_config, str):
+            sigma_conf_obj = get_sigma_config_file(sigma_config)
         else:
             sigma_conf_obj = get_sigma_config_file()
     except ValueError as e:
@@ -204,7 +206,7 @@ def get_sigma_rule(filepath, sigma_config=None):
             for doc in rule_yaml_data:
                 rule_return.update(doc)
                 parser = sigma_collection.SigmaCollectionParser(
-                    str(doc), sigma_config, None)
+                    str(doc), sigma_conf_obj, None)
                 parsed_sigma_rules = parser.generate(sigma_backend)
 
         except NotImplementedError as exception:
@@ -262,17 +264,26 @@ def get_sigma_rule_by_text(rule_text, sigma_config=None):
         NotImplementedError: A feature in the provided Sigma rule is not
             implemented in Sigma for Timesketch
     """
-    if sigma_config is None:
-        sigma_config = get_sigma_config_file()
+    try:
+        if isinstance(sigma_config, sigma_configuration.SigmaConfiguration):
+            sigma_conf_obj = sigma_config
+        elif isinstance(sigma_config, str):
+            sigma_conf_obj = get_sigma_config_file(sigma_config)
+        else:
+            sigma_conf_obj = get_sigma_config_file()
+    except ValueError as e:
+        logger.error(
+            'Problem reading the Sigma config', exc_info=True)
+        raise ValueError('Problem reading the Sigma config') from e
 
-    sigma_backend = sigma_es.ElasticsearchQuerystringBackend(sigma_config, {})
+    sigma_backend = sigma_es.ElasticsearchQuerystringBackend(sigma_conf_obj, {})
 
     rule_return = {}
 
     # TODO check if input validation is needed / useful.
     try:
         parser = sigma_collection.SigmaCollectionParser(
-            rule_text, sigma_config, None)
+            rule_text, sigma_conf_obj, None)
         parsed_sigma_rules = parser.generate(sigma_backend)
         rule_yaml_data = yaml.safe_load_all(rule_text)
         for doc in rule_yaml_data:
