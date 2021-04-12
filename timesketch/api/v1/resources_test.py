@@ -406,11 +406,11 @@ class SigmaListResourceTest(BaseTest):
                     ]
                 },
             'es_query': 
-                '(data_type:("shell\\:zsh\\:history" OR 
-                "bash\\:history\\:command" OR 
-                "apt\\:history\\:line" OR 
-                "selinux\\:line") AND 
-                "*apt\\-get\\ install\\ zmap*")',
+                '(data_type:("shell\\:zsh\\:history" OR '\
+                '"bash\\:history\\:command" OR '\
+                '"apt\\:history\\:line" OR '\
+                '"selinux\\:line") AND '\
+                '"*apt\\-get\\ install\\ zmap*")',
             'falsepositives': ['Unknown'],
             'file_name': 'lnx_susp_zenmap.yml',
             'file_relpath': 'lnx_susp_zenmap.yml',
