@@ -54,10 +54,9 @@ class SigmaPlugin(interface.BaseAnalyzer):
         tags_applied = {}
         sigma_rule_counter = 0
         sigma_rules = ts_sigma_lib.get_all_sigma_rules()
-
         if sigma_rules is None:
             logger.error('No  Sigma rules found. Check SIGMA_RULES_FOLDERS')
-
+        logger.debug('{0:d} rules found.'.format(len(sigma_rules)))
         problem_strings = []
         output_strings = []
 
@@ -69,6 +68,7 @@ class SigmaPlugin(interface.BaseAnalyzer):
                     rule.get('es_query'), rule.get('file_name'),
                     tag_list=rule.get('tags'))
                 tags_applied[rule.get('file_name')] += tagged_events_counter
+                time.sleep(2)
             except elasticsearch.TransportError as e:
                 logger.error(
                     'Timeout executing search for {0:s}: '
@@ -95,40 +95,49 @@ class SigmaPlugin(interface.BaseAnalyzer):
                 tag_name, tagged_events_counter))
 
         if sigma_rule_counter > 0:
-            view = self.sketch.add_view(
-                view_name='Sigma Rule matches', analyzer_name=self.NAME,
-                query_string='tag:"sigma*"')
-            agg_params = {
-                'field': 'tag',
-                'limit': 20,
-                'index': [self.timeline_id],
-            }
-            agg_obj = self.sketch.add_aggregation(
-                name='Top 20 Sigma tags', agg_name='field_bucket',
-                agg_params=agg_params, view_id=view.id, chart_type='hbarchart',
-                description='Created by the Sigma analyzer')
-
-            story = self.sketch.add_story('Sigma Rule hits')
-            story.add_text(
-                utils.SIGMA_STORY_HEADER, skip_if_exists=True)
-
-            story.add_text(
-                '## Sigma Analyzer.\n\nThe Sigma '
-                'analyzer takes Events and matches them with Sigma rules.'
-                'In this timeline the analyzer discovered {0:d} '
-                'Sigma tags.\n\nThis is a summary of '
-                'it\'s findings.'.format(sigma_rule_counter))
-            story.add_text(
-                'The top 20 most commonly discovered tags were:')
-            story.add_aggregation(agg_obj)
-            story.add_text(
-                'And an overview of all the discovered search terms:')
-            story.add_view(view)
+            self.add_sigma_match_view(sigma_rule_counter)
 
         output_strings.append('Problematic rules:')
         output_strings.extend(problem_strings)
 
         return '\n'.join(output_strings)
+
+    def add_sigma_match_view(self, sigma_rule_counter):
+        """Adds a view with the top 20 matching rules.
+
+        Args:
+            sigma_rule_counter number of matching rules
+
+        """
+        view = self.sketch.add_view(
+            view_name='Sigma Rule matches', analyzer_name=self.NAME,
+            query_string='tag:"sigma*"')
+        agg_params = {
+            'field': 'tag',
+            'limit': 20,
+            'index': [self.timeline_id],
+        }
+        agg_obj = self.sketch.add_aggregation(
+            name='Top 20 Sigma tags', agg_name='field_bucket',
+            agg_params=agg_params, view_id=view.id, chart_type='hbarchart',
+            description='Created by the Sigma analyzer')
+
+        story = self.sketch.add_story('Sigma Rule hits')
+        story.add_text(
+            utils.SIGMA_STORY_HEADER, skip_if_exists=True)
+
+        story.add_text(
+            '## Sigma Analyzer.\n\nThe Sigma '
+            'analyzer takes Events and matches them with Sigma rules.'
+            'In this timeline the analyzer discovered {0:d} '
+            'Sigma tags.\n\nThis is a summary of '
+            'it\'s findings.'.format(sigma_rule_counter))
+        story.add_text(
+            'The top 20 most commonly discovered tags were:')
+        story.add_aggregation(agg_obj)
+        story.add_text(
+            'And an overview of all the discovered search terms:')
+        story.add_view(view)
 
 
 class RulesSigmaPlugin(SigmaPlugin):
