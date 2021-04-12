@@ -666,3 +666,97 @@ class CountEventsResource(resources.ResourceMixin, Resource):
         meta = dict(count=count, bytes=bytes_on_disk)
         schema = dict(meta=meta, objects=[])
         return jsonify(schema)
+
+
+class MarkEventsWithTimelineIdentifier(resources.ResourceMixin, Resource):
+    """Resource to add a Timeline identifier to events within an index."""
+
+    @login_required
+    def post(self, sketch_id):
+        """Handles POST request to the resource.
+        Handler for /api/v1/sketches/:sketch_id/event/create/
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+
+        Returns:
+            An annotation in JSON (instance of flask.wrappers.Response)
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+
+        if not sketch.has_permission(current_user, 'write'):
+            abort(HTTP_STATUS_CODE_FORBIDDEN,
+                  'User does not have write access controls on sketch.')
+
+        form = request.json
+        if not form:
+            form = request.data
+
+        searchindex_id = form.get('searchindex_id')
+        searchindex_name = form.get('searchindex_name')
+
+        if not (searchindex_id or searchindex_name):
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                'No search index information supplied.')
+
+        searchindex = None
+        if searchindex_name:
+            searchindex = SearchIndex.query.filter_by(
+                index_name=searchindex_name).first()
+        elif searchindex_id:
+            searchindex = SearchIndex.query.get(searchindex_id)
+
+        if not searchindex:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Unable to find the Search index.')
+
+        if searchindex.get_status.status == 'deleted':
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Unable to query event on a closed search index.')
+
+        timeline_id = form.get('timeline_id')
+        if not timeline_id:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No timeline identifier supplied.')
+
+        timeline = Timeline.query.get(timeline_id)
+        if not timeline:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No Timeline found with this ID.')
+
+        if timeline.sketch is None:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                f'The timeline {timeline_id} does not have an associated '
+                'sketch, does it belong to a sketch?')
+
+        if timeline.sketch.id != sketch.id:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                'The sketch ID ({0:d}) does not match with the timeline '
+                'sketch ID ({1:d})'.format(sketch.id, timeline.sketch.id))
+
+        query_dsl = {
+            'stript': {
+                'inline': f'ctx._source.__ts_timeline_id="{timeline_id}";',
+                'lang': 'painless'
+            },
+            'query': {
+                'bool': {
+                    'must_not': {
+                        'exists': {
+                            'field': '__ts_timeline_id',
+                        }
+                    }
+                }
+            }
+        }
+        self.datastore.update_by_query(
+            body=query_dsl, index=searchindex.index_name, conflicts='proceed')
+

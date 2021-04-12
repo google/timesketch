@@ -32,6 +32,7 @@ from .resources.event import EventAnnotationResource
 from .resources.event import EventCreateResource
 from .resources.event import EventTaggingResource
 from .resources.event import CountEventsResource
+from .resources.event import MarkEventsWithTimelineIdentifier
 from .resources.sketch import SketchResource
 from .resources.sketch import SketchListResource
 from .resources.archive import SketchArchiveResource
@@ -85,6 +86,9 @@ API_ROUTES = [
     (EventTaggingResource, '/sketches/<int:sketch_id>/event/tagging/'),
     (EventAnnotationResource, '/sketches/<int:sketch_id>/event/annotate/'),
     (EventCreateResource, '/sketches/<int:sketch_id>/event/create/'),
+    (
+        MarkEventsWithTimelineIdentifier,
+        '/sketches/<int:sketch_id>/event/add_timeline_id/'),
     (ViewListResource, '/sketches/<int:sketch_id>/views/'),
     (AttributeResource, '/sketches/<int:sketch_id>/attribute/'),
     (ViewResource, '/sketches/<int:sketch_id>/views/<int:view_id>/'),

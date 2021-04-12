@@ -1731,10 +1731,28 @@ class Sketch(resource.BaseResource):
             searchindex=timeline_dict['searchindex']['index_name'])
 
         # Step 5: Add the timeline ID into the dataset.
-        form = {
+        resource_url = (
+            f'{self.api_root}/sketches/{self.id}/event/add_timeline_id/')
+        form_data = {
             'searchindex_id': searchindex_id,
             'timeline_id': timeline_dict['id'],
         }
+        response = self.api.session.post(resource_url, json=form_data)
+
+        if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
+            error.error_message(
+                response, message='Unable to add timeline identifier to data',
+                error=ValueError)
+
+        response_dict = error.get_response_json(response, logger)
+        objects = response_dict.get('objects')
+        if not objects:
+            raise ValueError(
+                'Unable to add the timeline identifier o the data in the '
+                'index, try again or file an issue in GitHub.')
+
+        # HERNA
+
         # Step 6: Add a DataSource object.
 
         return timeline_obj
