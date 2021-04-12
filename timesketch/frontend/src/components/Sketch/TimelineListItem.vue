@@ -26,44 +26,34 @@ limitations under the License.
             <p class="card-header-title">Detailed information for {{ timeline.name }}</p>
           </header>
           <div class="card-content">
-            <div class="content">
               <ul>
                 <li>Elasticsearch index: {{ timeline.searchindex.index_name }}</li>
                 <li v-if="meta.stats_per_timeline[timeline.id]">Number of events: {{ meta.stats_per_timeline[timeline.id]['count'] | compactNumber }} ({{ meta.stats_per_timeline[timeline.id]['count']}})</li>
                 <li>Created by: {{ timeline.user.username }}</li>
                 <li>Created at: {{ timeline.created_at | moment("YYYY-MM-DD HH:mm") }}</li>
-                <li v-if="timelineStatus === 'ready' && (timeline.searchindex.description !== '' && timeline.searchindex.description !== timeline.name)">Import errors: <b>{{ timeline.searchindex.description }}</b></li>
               </ul>
               <br>
-              <table class="table">
-                <th style="width:200px;">Imported</th>
-                <th>Provider</th>
-                <th>Context</th>
-                <th>User</th>
-                <th>File on disk</th>
-                <th>File size</th>
-                <th>Original filename</th>
-                <th>Data label</th>
-                <tr v-for="datasource in timeline.datasources" :key="datasource.id">
-                  <td>{{ datasource.created_at | moment("YYYY-MM-DD HH:mm:ss") }}</td>
-                  <td>{{ datasource.provider }}</td>
-                  <td>{{ datasource.context }}</td>
-                  <td>{{ datasource.user.username }}</td>
-                  <td>{{ datasource.file_on_disk }}</td>
-                  <td>{{ datasource.file_size | compactBytes }}</td>
-                  <td>{{ datasource.original_filename }}</td>
-                  <td>{{ datasource.data_label }}</td>
-                </tr>
-              </table>
 
-              <span v-if="timelineStatus === 'fail'">
-                <h5 style="color:red;">Error detail</h5>
-                <pre>{{ timeline.description }}</pre>
-              </span>
+              <b-message :type="{ 'is-success': !datasource.error_message, 'is-danger': datasource.error_message }" :title="datasource.created_at" :closable="false" v-for="datasource in timeline.datasources" :key="datasource.id">
+                <ul>
+                  <li><strong>Provider:</strong> {{ datasource.provider }}</li>
+                  <li><strong>Context:</strong> {{ datasource.context }}</li>
+                  <li><strong>User:</strong> {{ datasource.user.username }}</li>
+                  <li><strong>File on disk:</strong> {{ datasource.file_on_disk }}</li>
+                  <li><strong>File size:</strong> {{ datasource.file_size | compactBytes }}</li>
+                  <li><strong>Original filename:</strong> {{ datasource.original_filename }}</li>
+                  <li><strong>Data label:</strong> {{ datasource.data_label }}</li>
+                </ul>
+                <br>
+                <div v-if="datasource.error_message">
+                  <strong style="font-size:1.2rem; margin-bottom:10px;">Error detail</strong>
+                  <pre style="margin-top:10px;">{{ datasource.error_message }}</pre>
+                </div>
+              </b-message>
 
             </div>
           </div>
-        </div>
+
       </div>
       <button class="modal-close is-large" aria-label="close" v-on:click="showInfoModal = !showInfoModal"></button>
     </b-modal>
@@ -176,15 +166,26 @@ limitations under the License.
       </p>
     </div>
 
-    <router-link v-if="timelineStatus === 'ready'" :to="{ name: 'SketchExplore', query: {timeline: timeline.id}}"><strong>{{ timeline.name }}</strong></router-link>
-    <strong v-if="timelineStatus !== 'ready'">{{ timeline.name }}</strong>
+    <router-link v-if="timelineStatus === 'ready'" :to="{ name: 'SketchExplore', query: {timeline: timeline.id}}">{{ timeline.name }}</router-link>
+    <span v-if="timelineStatus !== 'ready'">{{ timeline.name }}</span>
     <br>
 
     <span v-if="timelineStatus === 'ready'" class="is-size-7">
       <span class="is-small" :title="meta.stats_per_timeline[timeline.id]['count'] + ' events in index'">{{ meta.stats_per_timeline[timeline.id]['count'] | compactNumber }} events</span>
+      <span v-if="timeline.datasources.length > 1"> ({{ timeline.datasources.length }} imports: <span v-on:click="showInfoModal =! showInfoModal" style="cursor:pointer;text-decoration: underline;">details</span>)</span>
+      <span v-if="timeline.datasources.length === 1"> (imported with {{ timeline.datasources[0].provider }})</span>
+      <span v-if="datasourceErrors.length" style="margin-left:10px;">
+        <span class="icon is-small" style="color:orange;">
+          <i class="fas fa-exclamation-triangle"></i>
+        </span>
+        <span v-on:click="showInfoModal =! showInfoModal" style="cursor:pointer;text-decoration: underline; margin-left:5px;">{{ datasourceErrors.length }} failed imports</span>
+      </span>
     </span>
 
     <span v-else-if="timelineStatus === 'fail'" class="is-size-7">
+      <span class="icon is-small" style="color:var(--font-color-red);">
+        <i class="fas fa-exclamation-triangle"></i>
+      </span>
       ERROR: <span v-on:click="showInfoModal =! showInfoModal" style="cursor:pointer;text-decoration: underline">Click here for details</span>
     </span>
     <span v-else-if="timelineStatus === 'processing'" class="is-size-7">
@@ -258,6 +259,9 @@ export default {
       return {
         'background-color': backgroundColor
       }
+    },
+    datasourceErrors () {
+      return this.timeline.datasources.filter(datasource => datasource.error_message)
     }
   },
   methods: {
@@ -377,5 +381,9 @@ export default {
   50% {
     opacity: 40%;
   }
+}
+
+.table th {
+  color: var(--default-font-color);
 }
 </style>

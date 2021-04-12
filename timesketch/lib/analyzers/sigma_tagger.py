@@ -15,19 +15,20 @@ import timesketch.lib.sigma_util as ts_sigma_lib
 logger = logging.getLogger('timesketch.analyzers.sigma_tagger')
 
 
-class SigmaPlugin(interface.BaseSketchAnalyzer):
-    """Index analyzer for Sigma."""
+class SigmaPlugin(interface.BaseAnalyzer):
+    """Analyzer for Sigma."""
 
     NAME = 'sigma'
     DISPLAY_NAME = 'Sigma'
     DESCRIPTION = 'Run pre-defined Sigma rules and tag matching events'
 
-    def run_sigma_rule(self, query, tag_name):
+    def run_sigma_rule(self, query, rule_name, tag_list = None):
         """Runs a sigma rule and applies the appropriate tags.
 
         Args:
             query: elastic search query for events to tag.
-            tag_name: tag to apply to matching events.
+            rule_name: rule_name to apply to matching events.
+            tag_list: a list of additional tags to be added to the event(s)
 
         Returns:
             int: number of events tagged.
@@ -37,7 +38,8 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
         events = self.event_stream(
             query_string=query, return_fields=return_fields)
         for event in events:
-            event.add_tags(['sigma_{0:s}'.format(tag_name)])
+            event.add_tags(['sigma_{0:s}'.format(rule_name)])
+            event.add_tags(tag_list)
             event.commit()
             tagged_events_counter += 1
         return tagged_events_counter
@@ -64,7 +66,8 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
             try:
                 sigma_rule_counter += 1
                 tagged_events_counter = self.run_sigma_rule(
-                    rule.get('es_query'), rule.get('file_name'))
+                    rule.get('es_query'), rule.get('file_name'),
+                    tag_list=rule.get('tags'))
                 tags_applied[rule.get('file_name')] += tagged_events_counter
             except elasticsearch.TransportError as e:
                 logger.error(

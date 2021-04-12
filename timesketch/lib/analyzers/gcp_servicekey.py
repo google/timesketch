@@ -5,8 +5,8 @@ from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 
 
-class GcpServiceKeySketchPlugin(interface.BaseSketchAnalyzer):
-    """Sketch analyzer for GCP Service Key usage."""
+class GcpServiceKeySketchPlugin(interface.BaseAnalyzer):
+    """Analyzer for GCP Service Key usage."""
 
     NAME = 'gcp_servicekey'
     DISPLAY_NAME = 'Google Compute Engine actions'
