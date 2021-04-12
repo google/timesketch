@@ -405,7 +405,7 @@ class SigmaListResourceTest(BaseTest):
                     '*apt-get install zmap*'
                     ]
                 },
-            'es_query': 
+            'es_query':
                 '(data_type:("shell\\:zsh\\:history" OR '\
                 '"bash\\:history\\:command" OR '\
                 '"apt\\:history\\:line" OR '\
