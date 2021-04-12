@@ -76,8 +76,12 @@ def run_verifier(rules_path, config_file_path):
                     continue
 
                 rule_file_path = os.path.join(dirpath, rule_filename)
-                parsed_rule = sigma_util.get_sigma_rule(
-                    rule_file_path, sigma_config)
+                try:
+                    parsed_rule = sigma_util.get_sigma_rule(
+                        rule_file_path, sigma_config)
+                except:
+                    return_rules_with_problems.append(rule_file_path)
+
                 if parsed_rule:
                     return_verified_rules.append(rule_file_path)
                 else:
@@ -104,9 +108,12 @@ def move_problematic_rule(filepath, move_to_path, reason=None):
             file_objec.write(f'{filepath}\n{reason}\n\n')
 
         base_path = os.path.basename(filepath)
+        logging.info('Moving the rule: {0:s} to {1:s}'.format(
+        filepath, f'{move_to_path}{base_path}'))
         os.rename(filepath, f'{move_to_path}{base_path}')
-    except OSError:
-        logger.error('OS Error - no rules moved')
+    except OSError as e:
+        logger.error('OS Error - rule not moved')
+        logger.exception(e)
 
 
 if __name__ == '__main__':
@@ -136,7 +143,7 @@ if __name__ == '__main__':
     arguments.add_argument(
         '--move', dest='move_to_path', action='store',
         default='', type=str, help=(
-            'Path to the file containing the config data to feed sigma '
+            'Move problematic rules to this path'
         ))
     try:
         options = arguments.parse_args()
