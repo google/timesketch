@@ -1700,8 +1700,9 @@ class Sketch(resource.BaseResource):
             index_obj.status = 'fail'
             raise ValueError(
                 'Unable to ingest data since it is missing required '
-                'fields: {0:s}'.format(', '.join(
-                    self._NECESSARY_DATA_FIELDS.difference(index_fields))))
+                'fields: {0:s} [data contains: {1:s}]'.format(
+                    ', '.join(self._NECESSARY_DATA_FIELDS.difference(
+                        index_fields)), '|'.join(index_fields)))
 
         if status:
             index_obj.status = status
