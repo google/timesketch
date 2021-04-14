@@ -1671,7 +1671,7 @@ class Sketch(resource.BaseResource):
                     'Unable to add the ES index, since it already exists.')
 
         # Step 2: Create a SearchIndex.
-        resource_url = f'{self.api_root}/searchindices/'
+        resource_url = f'{self.api.api_root}/searchindices/'
         form_data = {
             'searchindex_name': index_name or es_index_name,
             'es_index_name': es_index_name,
@@ -1707,7 +1707,7 @@ class Sketch(resource.BaseResource):
             index_obj.status = status
 
         # Step 4: Create the Timeline.
-        resource_url = f'{self.api_root}/sketches/{self.id}/timelines/'
+        resource_url = f'{self.api.api_root}/sketches/{self.id}/timelines/'
         form_data = {'timeline': searchindex_id}
         response = self.api.session.post(resource_url, json=form_data)
 
@@ -1734,7 +1734,7 @@ class Sketch(resource.BaseResource):
 
         # Step 5: Add the timeline ID into the dataset.
         resource_url = (
-            f'{self.api_root}/sketches/{self.id}/event/add_timeline_id/')
+            f'{self.api.api_root}/sketches/{self.id}/event/add_timeline_id/')
         form_data = {
             'searchindex_id': searchindex_id,
             'timeline_id': timeline_dict['id'],
@@ -1754,7 +1754,7 @@ class Sketch(resource.BaseResource):
                 'index, try again or file an issue in GitHub.')
 
         # Step 6: Add a DataSource object.
-        resource_url = f'{self.api_root}/sketches/{self.id}/datasource/'
+        resource_url = f'{self.api.api_root}/sketches/{self.id}/datasource/'
         form_data = {
             'timeline_id': timeline_dict['id'],
             'provider': provider,
