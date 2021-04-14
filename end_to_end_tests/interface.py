@@ -109,7 +109,10 @@ class BaseEndToEndTest(object):
           ValueError: In case the file cannot be ingested, does not exist or
               is faulty.
         """
+        if filename in self._imported_files:
+            return
         file_path = os.path.join(TEST_DATA_DIR, filename)
+        print('Importing: {0:s}'.format(file_path))
 
         if not os.path.isfile(file_path):
             raise ValueError('File [{0:s}] does not exist.'.format(file_path))
@@ -117,7 +120,7 @@ class BaseEndToEndTest(object):
         es = elasticsearch.Elasticsearch(
             [{'host': ELASTIC_HOST, 'port': ELASTIC_PORT}], http_compress=True)
 
-        df = pd.read_csv(filename, error_bad_lines=False)
+        df = pd.read_csv(file_path, error_bad_lines=False)
 
         def _pandas_to_elastic(data_frame):
             for _, row in data_frame.iterrows():
@@ -128,6 +131,7 @@ class BaseEndToEndTest(object):
                 }
 
         elasticsearch.helpers.bulk(es, _pandas_to_elastic(df))
+        self._imported_files.append(filename)
 
     def _get_test_methods(self):
         """Inspect class and list all methods that matches the criteria.
