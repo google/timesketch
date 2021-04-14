@@ -757,6 +757,5 @@ class MarkEventsWithTimelineIdentifier(resources.ResourceMixin, Resource):
                 }
             }
         }
-        self.datastore.update_by_query(
+        self.datastore.client.update_by_query(
             body=query_dsl, index=searchindex.index_name, conflicts='proceed')
-

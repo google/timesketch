@@ -46,7 +46,25 @@ class ClientTest(interface.BaseEndToEndTest):
         self.assertions.assertEqual(len(sketches), number_of_sketches + 1)
 
         for index in self.api.list_searchindices():
-            self.assertions.assertTrue(bool(index.name))
+            self.assertions.assertTrue(bool(index.index_name))
+
+    def test_direct_es(self):
+        """Test injecting data into Elastic and make it acccessible in TS."""
+        index_name = 'direct_testing'
+
+        self.import_directly_to_elastic(
+            filename='evtx_direct.csv', index_name=index_name)
+
+        new_sketch = self.api.create_sketch(
+            name='Testing Direct', description='Adding data directly from ES')
+
+        timline = new_sketch.generate_timeline_from_es_index(
+            es_index_name=index_name, name='Ingested Via Mechanism',
+            provider='end_to_end_testing_platform',
+            context='e2e - > test_direct_es')
+
+        _ = new_sketch.lazyload_data(refresh_cache=True)
+        self.assertions.assertEqual(len(new_sketch.list_timelines()), 1)
 
 
 manager.EndToEndTestManager.register_test(ClientTest)

@@ -1751,8 +1751,20 @@ class Sketch(resource.BaseResource):
                 'Unable to add the timeline identifier o the data in the '
                 'index, try again or file an issue in GitHub.')
 
-        # HERNA
-
         # Step 6: Add a DataSource object.
+        resource_url = f'{self.api_root}/sketches/{self.id}/datasource/'
+        form_data = {
+            'timeline_id': timeline_dict['id'],
+            'provider': provider,
+            'context': context,
+            'data_label': data_label,
+        }
+        response = self.api.session.post(resource_url, json=form_data)
+        if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
+            error.error_message(
+                response, message='Error creating a datasource object',
+                error=ValueError)
+
+        _ = error.get_response_json(response, logger)
 
         return timeline_obj

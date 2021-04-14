@@ -20,12 +20,17 @@ import inspect
 import traceback
 import collections
 
+import elasticsearch
+import pandas as pd
+
 from timesketch_api_client import client as api_client
 from timesketch_import_client import importer
 
 # Default values based on Docker config.
 TEST_DATA_DIR = '/usr/local/src/timesketch/end_to_end_tests/test_data'
 HOST_URI = 'http://127.0.0.1'
+ELASTIC_HOST = 'http://elasticsearch'
+ELASTIC_PORT = 9200
 USERNAME = 'test'
 PASSWORD = 'test'
 
@@ -92,6 +97,38 @@ class BaseEndToEndTest(object):
         time.sleep(sleep_time_seconds)
 
         self._imported_files.append(filename)
+
+    def import_directly_to_elastic(self, filename, index_name):
+        """Import a CSV file directly into Elastic.
+
+        Args:
+          filename (str): Filename of the file to be imported.
+          index_name (str): The Elastic index to store the documents in.
+
+        Raises:
+          ValueError: In case the file cannot be ingested, does not exist or
+              is faulty.
+        """
+        file_path = os.path.join(TEST_DATA_DIR, filename)
+
+        if not os.path.isfile(file_path):
+            raise ValueError('File [{0:s}] does not exist.'.format(file_path))
+
+        es = elasticsearch.Elasticsearch(
+            [{'host': ELASTIC_HOST, 'port': ELASTIC_PORT}], http_compress=True)
+
+        df = pd.read_csv(filename, error_bad_lines=False)
+
+        def _pandas_to_elastic(data_frame):
+            for index, row in data_frame.iterrows():
+                yield {
+                    '_index': index_name,
+                    '_type': '_doc',
+                    '_source': row.to_dict()
+                }
+            raise StopIteration
+
+        elasticsearch.helpers.bulk(es, _pandas_to_elastic(df))
 
     def _get_test_methods(self):
         """Inspect class and list all methods that matches the criteria.
