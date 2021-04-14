@@ -133,7 +133,7 @@ class SearchIndex(resource.BaseResource):
     @status.setter
     def status(self, status):
         """Set the SearchIndex status."""
-        resource_url = f'{self.api_root}/searchindices/{self.id}/'
+        resource_url = f'{self.api.api_root}/searchindices/{self.id}/'
         data = {'status': status}
         response = self.api.session.post(resource_url, json=data)
 
