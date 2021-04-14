@@ -46,7 +46,8 @@ class ClientTest(interface.BaseEndToEndTest):
         self.assertions.assertEqual(len(sketches), number_of_sketches + 1)
 
         for index in self.api.list_searchindices():
-            self.assertions.assertFalse(index is None)
+            if index is None:
+                continue
             self.assertions.assertTrue(bool(index.index_name))
 
     def test_direct_es(self):

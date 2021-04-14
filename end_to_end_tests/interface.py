@@ -125,6 +125,7 @@ class BaseEndToEndTest(object):
 
         def _pandas_to_elastic(data_frame):
             for _, row in data_frame.iterrows():
+                row.dropna(inplace=True)
                 yield {
                     '_index': index_name,
                     '_type': '_doc',
