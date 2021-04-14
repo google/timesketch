@@ -21,6 +21,7 @@ import traceback
 import collections
 
 import elasticsearch
+import elasticsearch.helpers
 import pandas as pd
 
 from timesketch_api_client import client as api_client
