@@ -58,13 +58,14 @@ class ClientTest(interface.BaseEndToEndTest):
         new_sketch = self.api.create_sketch(
             name='Testing Direct', description='Adding data directly from ES')
 
-        timline = new_sketch.generate_timeline_from_es_index(
+        timeline = new_sketch.generate_timeline_from_es_index(
             es_index_name=index_name, name='Ingested Via Mechanism',
             provider='end_to_end_testing_platform',
             context='e2e - > test_direct_es')
 
         _ = new_sketch.lazyload_data(refresh_cache=True)
         self.assertions.assertEqual(len(new_sketch.list_timelines()), 1)
+        self.assertions.assertEqual(timeline.name, 'Ingested Via Mechanism')
 
 
 manager.EndToEndTestManager.register_test(ClientTest)
