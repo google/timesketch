@@ -1664,6 +1664,8 @@ class Sketch(resource.BaseResource):
 
         # Step 1: Make sure the index doesn't exist already.
         for index_obj in self.api.list_searchindices():
+            if index_obj is None:
+                continue
             if index_obj.index_name == es_index_name:
                 raise ValueError(
                     'Unable to add the ES index, since it already exists.')
