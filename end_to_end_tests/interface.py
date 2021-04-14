@@ -119,7 +119,8 @@ class BaseEndToEndTest(object):
             raise ValueError('File [{0:s}] does not exist.'.format(file_path))
 
         es = elasticsearch.Elasticsearch(
-            [{'host': ELASTIC_HOST, 'port': ELASTIC_PORT}], http_compress=True)
+            [{'host': HOST_URI, 'port': ELASTIC_PORT}], http_compress=True)
+            #[{'host': ELASTIC_HOST, 'port': ELASTIC_PORT}], http_compress=True)
 
         df = pd.read_csv(file_path, error_bad_lines=False)
 
