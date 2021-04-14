@@ -120,13 +120,12 @@ class BaseEndToEndTest(object):
         df = pd.read_csv(filename, error_bad_lines=False)
 
         def _pandas_to_elastic(data_frame):
-            for index, row in data_frame.iterrows():
+            for _, row in data_frame.iterrows():
                 yield {
                     '_index': index_name,
                     '_type': '_doc',
                     '_source': row.to_dict()
                 }
-            raise StopIteration
 
         elasticsearch.helpers.bulk(es, _pandas_to_elastic(df))
 
