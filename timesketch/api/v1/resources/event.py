@@ -744,28 +744,10 @@ class MarkEventsWithTimelineIdentifier(resources.ResourceMixin, Resource):
                 'The sketch ID ({0:d}) does not match with the timeline '
                 'sketch ID ({1:d})'.format(sketch.id, timeline.sketch.id))
 
-        # TODO REMOVE THIS ONCE FIXED
-        """
-        query_dsl = {
-            'stript': {
-                'inline': f'ctx._source.__ts_timeline_id={timeline_id};',
-                'lang': 'painless'
-            },
-            'query': {
-                'bool': {
-                    'must_not': {
-                        'exists': {
-                            'field': '__ts_timeline_id',
-                        }
-                    }
-                }
-            }
-        }
-        """
 
         query_dsl = {
-            'stript': {
-                'source': f'ctx._source.__ts_timeline_id={timeline_id};',
+            'script': {
+                'inline': f'ctx._source.__ts_timeline_id={timeline_id};',
                 'lang': 'painless'
             },
             'query': {
