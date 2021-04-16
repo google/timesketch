@@ -57,7 +57,7 @@ class SearchIndex(resource.BaseResource):
 
     @property
     def fields(self):
-        """Property that returns the fields in the index, from index mappings."""
+        """Property that returns the fields in the index mappings."""
         index_data = self.lazyload_data(refresh_cache=True)
         meta = index_data.get('meta', {})
         return meta.get('fields', [])
