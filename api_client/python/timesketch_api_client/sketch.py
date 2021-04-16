@@ -1700,7 +1700,8 @@ class Sketch(resource.BaseResource):
             index_obj.status = 'fail'
             raise ValueError(
                 'Unable to ingest data since it is missing required '
-                'fields: {0:s} [data contains: {1:s}]'.format(
+                'fields: {0:s} [ingested data contains these fields: '
+                '{1:s}]'.format(
                     ', '.join(self._NECESSARY_DATA_FIELDS.difference(
                         index_fields)), '|'.join(index_fields)))
 
@@ -1748,6 +1749,11 @@ class Sketch(resource.BaseResource):
                 error=ValueError)
 
         response_dict = error.get_response_json(response, logger)
+        if not response_dict:
+            raise ValueError(
+                'Unable to add the timeline identifier o the data in the '
+                'index, try again or file an issue in GitHub.')
+
         objects = response_dict.get('objects')
         if not objects:
             raise ValueError(

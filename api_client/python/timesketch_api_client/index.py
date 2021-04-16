@@ -42,7 +42,7 @@ class SearchIndex(resource.BaseResource):
         self.id = searchindex_id
         self._labels = []
         self._searchindex_name = searchindex_name
-        resource_uri = f'searchindices/{self.id}'
+        resource_uri = f'searchindices/{self.id}/'
         super().__init__(
             api=api, resource_uri=resource_uri)
 
@@ -57,14 +57,14 @@ class SearchIndex(resource.BaseResource):
 
     @property
     def fields(self):
-        """Propery that returns the fields in the index, from index mappings."""
-        index_data = self.data
+        """Property that returns the fields in the index, from index mappings."""
+        index_data = self.lazyload_data(refresh_cache=True)
         meta = index_data.get('meta', {})
         return meta.get('fields', [])
 
     @property
     def has_timeline_id(self):
-        """Property that returns back whether a __timeline_id field is present.
+        """Property that returns back whether a __ts_timeline_id field is set.
 
         Returns:
             bool: True if the data uses __timeline_id field to distinguish
