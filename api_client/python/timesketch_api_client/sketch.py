@@ -1748,20 +1748,6 @@ class Sketch(resource.BaseResource):
                 response, message='Unable to add timeline identifier to data',
                 error=ValueError)
 
-        response_dict = error.get_response_json(response, logger)
-        if not response_dict:
-            raise ValueError(
-                'Unable to add the timeline identifier to the data in the '
-                'index, try again or file an issue on GitHub [timeline '
-                'ID: {0:d} - searchindex ID: {1:d}].'.format(
-                    timeline_dict.get('id', -1), searchindex_id))
-
-        objects = response_dict.get('objects')
-        if not objects:
-            raise ValueError(
-                'Unable to add the timeline identifier to the data in the '
-                'index, try again or file an issue on GitHub [no response].')
-
         # Step 6: Add a DataSource object.
         resource_url = f'{self.api.api_root}/sketches/{self.id}/datasource/'
         form_data = {

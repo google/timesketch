@@ -763,3 +763,5 @@ class MarkEventsWithTimelineIdentifier(resources.ResourceMixin, Resource):
         # pylint: disable=unexpected-keyword-arg
         self.datastore.client.update_by_query(
             body=query_dsl, index=searchindex.index_name, conflicts='proceed')
+
+        return HTTP_STATUS_CODE_OK
