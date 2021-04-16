@@ -120,7 +120,7 @@ class DataSourceListResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_NOT_FOUND,
                 'No timeline found with this ID.')
 
-        if timeline not in sketch.active_timeines:
+        if timeline not in sketch.active_timelines:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
                 'The timeline is not part of the active timelines in '
