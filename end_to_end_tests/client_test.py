@@ -13,6 +13,8 @@
 # limitations under the License.
 """End to end tests of Timesketch client functionality."""
 
+from timesketch_api_client import search
+
 from . import interface
 from . import manager
 
@@ -73,6 +75,68 @@ class ClientTest(interface.BaseEndToEndTest):
         self.assertions.assertEqual(len(data_sources), 1)
         data_source = data_sources[0]
         self.assertions.assertEqual(data_source.get('context', ''), context)
+
+
+    def test_sigma_list(self):
+        """Client Sigma list tests."""
+
+        rules = self.api.list_sigma_rules()
+        self.assertions.assertGreaterEqual(len(rules), 1)
+        rule = rules[0]
+        self.assertions.assertIn('b793-11ea-b3de-0242ac130004', rule.id)
+        self.assertions.assertIn('b793-11ea-b3de-0242ac130004', rule.rule_uuid)
+        self.assertions.assertIn('Installation of Zenmap', rule.title)
+        self.assertions.assertIn('zmap', rule.es_query)
+        self.assertions.assertIn('Alexander', rule.author)
+        self.assertions.assertIn('2020/06/26',rule.date)
+        self.assertions.assertIn('installation of Zenmap', rule.description)
+        self.assertions.assertEqual(len(rule.detection), 2)
+        self.assertions.assertIn('zmap*', rule.es_query)
+        self.assertions.assertIn('shell\\:zsh\\:history', rule.es_query)
+        self.assertions.assertIn('Unknown', rule.falsepositives[0])
+        self.assertions.assertEqual(len(rule.logsource), 2)
+        self.assertions.assertIn('2020/06/26', rule.modified)
+        self.assertions.assertIn('lnx_susp_zenmap.yml', rule.file_relpath)
+        self.assertions.assertIn('lnx_susp_zenmap', rule.file_name)
+        self.assertions.assertIn('high', rule.level)
+        self.assertions.assertIn('rmusser.net', rule.references[0])
+
+    def test_get_sigma_rule(self):
+        """Client Sigma object tests."""
+
+        rule = self.api.get_sigma_rule(
+            rule_uuid='5266a592-b793-11ea-b3de-0242ac130004')
+        rule.from_rule_uuid('5266a592-b793-11ea-b3de-0242ac130004')
+        self.assertions.assertGreater(len(rule.attributes),5)
+        self.assertions.assertIsNotNone(rule)
+        self.assertions.assertIn('Alexander', rule.author)
+        self.assertions.assertIn('Alexander', rule.get_attribute('author'))
+        self.assertions.assertIn('b793-11ea-b3de-0242ac130004', rule.id)
+        self.assertions.assertIn('Installation of Zenmap', rule.title)
+        self.assertions.assertIn('zmap', rule.es_query)
+        self.assertions.assertIn('shell\\:zsh\\:history', rule.es_query)
+        self.assertions.assertIn('lnx_susp_zenmap.yml', rule.file_relpath)
+        self.assertions.assertIn('sigma/rule/5266a592', rule.resource_uri)
+        self.assertions.assertIn('installation of Zenmap', rule.description)
+        self.assertions.assertIn('high', rule.level)
+        self.assertions.assertEqual(len(rule.falsepositives), 1)
+        self.assertions.assertIn('Unknown', rule.falsepositives[0])
+        self.assertions.assertIn('susp_zenmap', rule.file_name)
+        self.assertions.assertIn('2020/06/26', rule.date)
+        self.assertions.assertIn('2020/06/26', rule.modified)
+        self.assertions.assertIn('high', rule.level)
+        self.assertions.assertIn('rmusser.net', rule.references[0])
+        self.assertions.assertEqual(len(rule.detection), 2)
+        self.assertions.assertEqual(len(rule.logsource), 2)
+
+        # Test an actual query
+
+        self.import_timeline('sigma_events.csv')
+        search_obj = search.Search(self.sketch)
+        search_obj.query_string = rule.es_query
+        data_frame = search_obj.table
+        count = len(data_frame)
+        self.assertions.assertEqual(count, 1)
 
 
 manager.EndToEndTestManager.register_test(ClientTest)

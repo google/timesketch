@@ -78,7 +78,7 @@ class Sigma(resource.BaseResource):
     @property
     def rule_uuid(self):
         """Returns the rule id."""
-        return self.get_attribute('rule_uuid')
+        return self.get_attribute('id')
 
     @property
     def file_name(self):
