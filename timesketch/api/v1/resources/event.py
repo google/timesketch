@@ -747,7 +747,9 @@ class MarkEventsWithTimelineIdentifier(resources.ResourceMixin, Resource):
 
         query_dsl = {
             'script': {
-                'inline': f'ctx._source.__ts_timeline_id={timeline_id};',
+                'inline': (
+                    f'ctx._source.__ts_timeline_id={timeline_id};'
+                    f'ctx._source.timesketch_label=[];'),
                 'lang': 'painless'
             },
             'query': {
