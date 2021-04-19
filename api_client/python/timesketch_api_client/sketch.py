@@ -1710,7 +1710,7 @@ class Sketch(resource.BaseResource):
 
         # Step 4: Create the Timeline.
         resource_url = f'{self.api.api_root}/sketches/{self.id}/timelines/'
-        form_data = {'timeline': searchindex_id}
+        form_data = {'timeline': searchindex_id, 'timeline_name': name}
         response = self.api.session.post(resource_url, json=form_data)
 
         if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
