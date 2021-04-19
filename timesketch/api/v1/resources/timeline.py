@@ -78,9 +78,11 @@ class TimelineListResource(resources.ResourceMixin, Resource):
         if not sketch.has_permission(current_user, 'write'):
             abort(HTTP_STATUS_CODE_FORBIDDEN,
                   'User does not have write access controls on sketch.')
+
         form = request.json
         if not form:
             form = request.data
+
         metadata = {'created': True}
 
         searchindex_id = form.get('timeline', 0)
@@ -102,15 +104,6 @@ class TimelineListResource(resources.ResourceMixin, Resource):
             t.searchindex.id for t in sketch.timelines
             if t.searchindex.id == searchindex_id
         ]
-
-        if not form.validate_on_submit():
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
-
-        if not sketch.has_permission(current_user, 'write'):
-            abort(
-                HTTP_STATUS_CODE_FORBIDDEN,
-                'User does not have write access to the sketch.')
 
         if not timeline_id:
             return_code = HTTP_STATUS_CODE_CREATED
