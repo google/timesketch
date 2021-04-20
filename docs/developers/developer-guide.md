@@ -107,7 +107,7 @@ End2end (e2e) tests are run on Github with every commit. Those tests will setup 
 To run the e2e-tests locally execute to setup the e2e docker images and run them:
 
 ```bash
-sh end_to_end_tests/tools/run_in_container.py
+$ sh end_to_end_tests/tools/run_end_to_end_tests.sh
 ```
 
 The tests are stored in:

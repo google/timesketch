@@ -70,6 +70,11 @@ logsources:
     conditions:
       source_name:
         - "Microsoft-Windows-Security-Auditing"
+  os:
+    service: filesystem
+    conditions:
+      data_type:
+        - "fs:stat"
 fieldmappings:
     EventID: event_identifier
     ComputerName: computer_name

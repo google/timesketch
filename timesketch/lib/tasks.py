@@ -219,26 +219,6 @@ def _get_index_task_class(file_extension):
     return index_class
 
 
-def _get_index_analyzers():
-    """Get list of index analysis tasks to run.
-
-    Returns:
-        Celery chain of index analysis tasks as Celery subtask signatures or
-        None if index analyzers are disabled in config.
-    """
-    tasks = []
-    index_analyzers = current_app.config.get('AUTO_INDEX_ANALYZERS', [])
-
-    if not index_analyzers:
-        return None
-
-    for analyzer_name, _ in manager.AnalysisManager.get_analyzers(
-            index_analyzers, sketch_analyzers=False):
-        tasks.append(run_index_analyzer.s(analyzer_name))
-
-    return chain(tasks)
-
-
 def build_index_pipeline(
         file_path='', events='', timeline_name='', index_name='',
         file_extension='', sketch_id=None, only_index=False, timeline_id=None):
@@ -267,7 +247,6 @@ def build_index_pipeline(
         raise RuntimeError(
             'Unable to upload data, missing either a file or events.')
     index_task_class = _get_index_task_class(file_extension)
-    index_analyzer_chain = _get_index_analyzers()
     sketch_analyzer_chain = None
     searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
 
@@ -283,25 +262,20 @@ def build_index_pipeline(
             sketch_id, searchindex.id, user_id=None)
 
     # If there are no analyzers just run the indexer.
-    if not index_analyzer_chain and not sketch_analyzer_chain:
+    if not sketch_analyzer_chain:
         return index_task
 
     if sketch_analyzer_chain:
-        if not index_analyzer_chain:
-            return chain(
-                index_task, run_sketch_init.s(), sketch_analyzer_chain)
         return chain(
-            index_task, index_analyzer_chain, run_sketch_init.s(),
-            sketch_analyzer_chain)
+            index_task, run_sketch_init.s(), sketch_analyzer_chain)
 
     if current_app.config.get('ENABLE_EMAIL_NOTIFICATIONS'):
         return chain(
             index_task,
-            index_analyzer_chain,
             run_email_result_task.s()
         )
 
-    return chain(index_task, index_analyzer_chain)
+    return chain(index_task)
 
 
 def build_sketch_analysis_pipeline(
@@ -351,10 +325,7 @@ def build_sketch_analysis_pipeline(
     analysis_session = AnalysisSession(user, sketch)
 
     analyzers = manager.AnalysisManager.get_analyzers(analyzer_names)
-    for analyzer_name, analyzer_cls in analyzers:
-        if not analyzer_cls.IS_SKETCH_ANALYZER:
-            continue
-
+    for analyzer_name, _ in analyzers:
         kwargs = analyzer_kwargs.get(analyzer_name, {})
         searchindex = SearchIndex.query.get(searchindex_id)
 
@@ -474,27 +445,6 @@ def run_email_result_task(index_name, sketch_id=None):
             return repr(e)
 
     return 'Sent email to {0:s}'.format(to_username)
-
-
-@celery.task(track_started=True)
-def run_index_analyzer(index_name, analyzer_name, **kwargs):
-    """Create a Celery task for an index analyzer.
-
-    Args:
-      index_name: Name of the datastore index.
-      analyzer_name: Name of the analyzer.
-
-    Returns:
-      Name (str) of the index.
-    """
-    analyzer_class = manager.AnalysisManager.get_analyzer(analyzer_name)
-    analyzer = analyzer_class(index_name=index_name, **kwargs)
-    result = analyzer.run_wrapper()
-    if result:
-        logger.info('[{0:s}] result: {1:s}'.format(analyzer_name, result))
-    else:
-        logger.info('[{0:s}] return with no results.'.format(analyzer_name))
-    return index_name
 
 
 @celery.task(track_started=True)

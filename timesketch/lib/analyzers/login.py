@@ -115,8 +115,8 @@ def parse_evtx_logon_event(string_list, string_parsed):
     return attributes
 
 
-class LoginSketchPlugin(interface.BaseSketchAnalyzer):
-    """Sketch analyzer for Login and Logoff related activity."""
+class LoginSketchPlugin(interface.BaseAnalyzer):
+    """Analyzer for Login and Logoff related activity."""
 
     NAME = 'login'
     DISPLAY_NAME = 'Windows logon/logoff events'

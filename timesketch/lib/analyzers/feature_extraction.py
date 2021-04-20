@@ -22,8 +22,8 @@ RE_FLAGS = [
 ]
 
 
-class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
-    """Sketch analyzer for FeatureExtraction."""
+class FeatureExtractionSketchPlugin(interface.BaseAnalyzer):
+    """Analyzer for FeatureExtraction."""
 
     NAME = 'feature_extraction'
     DISPLAY_NAME = 'Feature extractor'

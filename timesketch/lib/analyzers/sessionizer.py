@@ -6,8 +6,10 @@ from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 
 
-class SessionizerSketchPlugin(interface.BaseSketchAnalyzer):
-    """Sessionizing sketch analyzer. All events in sketch with id sketch_id
+class SessionizerSketchPlugin(interface.BaseAnalyzer):
+    """Sessionizing analyzer.
+
+    All events in sketch with id sketch_id
     are grouped in sessions based on the time difference between them. Two
     consecutive events are in the same session if the time difference between
     them is less or equal then max_time_diff_micros.
