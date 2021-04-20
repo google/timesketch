@@ -766,4 +766,29 @@ class MarkEventsWithTimelineIdentifier(resources.ResourceMixin, Resource):
         self.datastore.client.update_by_query(
             body=query_dsl, index=searchindex.index_name, conflicts='proceed')
 
+        # Update mappings - to make sure that we can label events.
+        mapping_update = {
+            'type': 'nested',
+            'properties': {
+                'name': {
+                    'type': 'text',
+                    'fields': {
+                        'keyword': {
+                            'type': 'keyword',
+                            'ignore_above': 256
+                        }
+                    }
+                },
+                'sketch_id': {
+                    'type': 'long'
+                },
+                'user_id': {
+                    'type': 'long'
+                }
+            }
+        }
+        self.datastore.client.indices.put_mapping(
+            body={'properties': {'timesketch_label': mapping_update}},
+            index=searchindex.index_name)
+
         return HTTP_STATUS_CODE_OK
