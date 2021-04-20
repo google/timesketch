@@ -405,7 +405,12 @@ class SigmaListResourceTest(BaseTest):
                     '*apt-get install zmap*'
                     ]
                 },
-            'es_query': '*apt\\-get\\ install\\ zmap*',
+            'es_query':
+                '(data_type:("shell\\:zsh\\:history" OR '\
+                '"bash\\:history\\:command" OR '\
+                '"apt\\:history\\:line" OR '\
+                '"selinux\\:line") AND '\
+                '"*apt\\-get\\ install\\ zmap*")',
             'falsepositives': ['Unknown'],
             'file_name': 'lnx_susp_zenmap.yml',
             'file_relpath': 'lnx_susp_zenmap.yml',
@@ -416,6 +421,7 @@ class SigmaListResourceTest(BaseTest):
                 'service': 'shell'
             },
             'modified': '2020/06/26',
+            'tags': ['attack.discovery', 'attack.t1046'],
             'references': [
                 'https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html'
             ],
@@ -442,6 +448,9 @@ class SigmaByTextResourceTest(BaseTest):
         author: Alexander Jaeger
         date: 2020/12/10
         modified: 2020/12/10
+        tags:
+            - attack.discovery
+            - attack.t1046
         logsource:
             product: linux
             service: shell
@@ -467,6 +476,7 @@ class SigmaByTextResourceTest(BaseTest):
                 'author': 'Alexander Jaeger',
                 'date': '2020/12/10',
                 'modified': '2020/12/10',
+                'tags': ['attack.discovery', 'attack.t1046'],
                 'logsource': {
                     'product': 'linux',
                     'service': 'shell'

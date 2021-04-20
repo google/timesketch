@@ -128,11 +128,11 @@ export default {
       this.endDateTime = range[1]
     } else {
       this.radio = 'interval'
-      let offset = this.chip.value.split(' ')
-      this.offsetStart = offset[0]
-      this.offsetMinus = offset[1].match(/\d+/)[0]
-      this.offsetPlus = offset[2].match(/\d+/)[0]
-      this.selectedInterval = offset[1].match(/[a-zA-Z]+/)[0]
+      let offset = this.chip.value
+      this.offsetStart = offset.match(/^\s*(([0-9/:-]{4,10})(:?[ T]([0-9]{2}:){2}([0-9]{2}))?)/)[1]
+      this.offsetPlus = offset.match(/\s[+]([0-9]+)/)[1]
+      this.offsetMinus = offset.match(/\s[-]([0-9]+)/)[1]
+      this.selectedInterval = offset.match(/\s\+[0-9]+([a-zA-Z])/)[1] // interval type (day, minute, etc.)
       this.formatDateTime()
     }
   },

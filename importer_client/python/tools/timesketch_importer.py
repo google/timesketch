@@ -39,6 +39,7 @@ logger = logging.getLogger('timesketch_importer.importer_frontend')
 
 def configure_logger_debug():
     """Configure the logger to log debug logs."""
+    logging.basicConfig()
     logger.setLevel(logging.DEBUG)
     logger_formatter = logging.Formatter(
         '[%(asctime)s] %(name)s/%(levelname)s %(message)s '
@@ -49,6 +50,7 @@ def configure_logger_debug():
 
 def configure_logger_default():
     """Configure the logger to only log information and above logs."""
+    logging.basicConfig()
     logger.setLevel(logging.INFO)
     logger_formatter = logging.Formatter(
         '[%(asctime)s] %(name)s/%(levelname)s %(message)s')
@@ -132,6 +134,10 @@ def upload_file(
             streamer.set_upload_context(' '.join(sys.argv))
 
         streamer.add_file(file_path)
+
+        # Force a flush.
+        streamer.flush()
+
         timeline = streamer.timeline
         task_id = streamer.celery_task_id
 
@@ -155,7 +161,14 @@ def main(args=None):
         '--debug', '--verbose', '-d', action='store_true', dest='show_debug',
         help='Make the logging more verbose to include debug logs.')
 
-    auth_group = argument_parser.add_argument_group('Authentication Arguments')
+    auth_group = argument_parser.add_argument_group(
+        title='Authentication Arguments', description=(
+            'If no authentication parameters are supplied the default '
+            'timesketch RC and token files will be used to provide the '
+            'authentication information. If those files are not present '
+            'the tool will ask you questions and store the results in those '
+            'files for future authentication.'))
+
     auth_group.add_argument(
         '-u', '--user', '--username', action='store', dest='username',
         type=str, help='The username of the Timesketch user.')
@@ -222,6 +235,12 @@ def main(args=None):
         '--timeline_name', '--timeline-name', action='store', type=str,
         dest='timeline_name', default='', help=(
             'String that will be used as the timeline name.'))
+
+    config_group.add_argument(
+        '--sketch_name', '--sketch-name', action='store', type=str,
+        dest='sketch_name', default='', help=(
+            'String that will be used as the sketch name in case a new '
+            'sketch is created.'))
 
     config_group.add_argument(
         '--data_label', '--data-label', action='store', type=str,
@@ -396,7 +415,10 @@ def main(args=None):
     if sketch_id:
         my_sketch = ts_client.get_sketch(sketch_id)
     else:
-        my_sketch = ts_client.create_sketch('New Sketch From Importer CLI')
+        sketch_name = options.sketch_name or 'New Sketch From Importer CLI'
+        my_sketch = ts_client.create_sketch(sketch_name)
+        logger.info('New sketch created: [{0:d}] {1:s}'.format(
+            my_sketch.id, my_sketch.name))
 
     if not my_sketch:
         logger.error('Unable to get sketch ID: {0:d}'.format(sketch_id))
