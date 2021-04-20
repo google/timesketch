@@ -15,12 +15,12 @@ limitations under the License.
 -->
 <template>
   <div>
-    <router-link :to="{ name: 'SketchGraphExplore', query: {plugin: graph.name}}" v-for="graph in graphs" :key="graph.name">
+    <router-link :to="{ name: 'GraphExplore', query: {graph: graph.id}}" v-for="graph in graphs" :key="graph.id">
       <ul class="content-list">
         <li style="padding:10px;border-bottom:none;cursor:pointer;">
-          <strong style="color: var(--default-font-color)">{{ graph.display_name }}</strong>
+          <strong style="color: var(--default-font-color)">{{ graph.name }}</strong>
           <br>
-          <span>{{ graph.description }}</span>
+          <span>Created: {{ graph.created_at | moment("YYYY-MM-DD HH:mm") }}</span>
         </li>
       </ul>
     </router-link>
@@ -45,8 +45,11 @@ export default {
     }
   },
   created () {
-    ApiClient.getGraphPluginList().then((response) => {
-      this.graphs = response.data
+    ApiClient.getSavedGraphList(this.sketch.id).then((response) => {
+      let graphs = response.data['objects'][0]
+      if (graphs !== undefined) {
+        this.graphs = response.data['objects'][0]
+      }
     }).catch((e) => {
       console.error(e)
     })

@@ -66,7 +66,7 @@ limitations under the License.
                 <article class="message">
                   <div class="message-header">
                     <p v-if="obj.componentName === 'TsViewEventList'">
-                      <router-link :to="{ name: 'SketchExplore', query: {view: obj.componentProps.view.id}}"><strong>{{ obj.componentProps.view.name }}</strong></router-link>
+                      <router-link :to="{ name: 'Explore', query: {view: obj.componentProps.view.id}}"><strong>{{ obj.componentProps.view.name }}</strong></router-link>
                     </p>
                     <p v-if="obj.componentName === 'TsAggregationCompact'">
                       {{ obj.componentProps.aggregation.name }}
@@ -112,11 +112,11 @@ limitations under the License.
 import ApiClient from '../utils/RestApiClient'
 import marked from 'marked'
 import _ from 'lodash'
-import TsAggregationListDropdown from '../components/Sketch/AggregationListDropdown'
-import TsAggregationCompact from '../components/Sketch/AggregationCompact'
-import TsAggregationGroupCompact from '../components/Sketch/AggregationGroupCompact'
-import TsViewListDropdown from '../components/Sketch/ViewListDropdown'
-import TsViewEventList from '../components/Sketch/EventListCompact'
+import TsAggregationListDropdown from '../components/Aggregation/AggregationListDropdown'
+import TsAggregationCompact from '../components/Aggregation/AggregationCompact'
+import TsAggregationGroupCompact from '../components/Aggregation/AggregationGroupCompact'
+import TsViewListDropdown from '../components/Common/ViewListDropdown'
+import TsViewEventList from '../components/Explore/EventListCompact'
 
 const defaultBlock = () => {
   return {
