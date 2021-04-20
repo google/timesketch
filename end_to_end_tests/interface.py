@@ -13,12 +13,13 @@
 # limitations under the License.
 """Interface for end-to-end tests."""
 
-import time
-import unittest
-import os
-import inspect
-import traceback
 import collections
+import inspect
+import os
+import json
+import time
+import traceback
+import unittest
 
 import elasticsearch
 import elasticsearch.helpers
@@ -32,6 +33,7 @@ TEST_DATA_DIR = '/usr/local/src/timesketch/end_to_end_tests/test_data'
 HOST_URI = 'http://127.0.0.1'
 ELASTIC_HOST = 'elasticsearch'
 ELASTIC_PORT = 9200
+ELASTIC_MAPPINGS_FILE = '/etc/timesketch/plaso.mappings'
 USERNAME = 'test'
 PASSWORD = 'test'
 
@@ -122,6 +124,8 @@ class BaseEndToEndTest(object):
             [{'host': ELASTIC_HOST, 'port': ELASTIC_PORT}], http_compress=True)
 
         df = pd.read_csv(file_path, error_bad_lines=False)
+        if 'datetime' in df:
+            df['datetime'] = pd.to_datetime(df['datetime'])
 
         def _pandas_to_elastic(data_frame):
             for _, row in data_frame.iterrows():
@@ -132,7 +136,19 @@ class BaseEndToEndTest(object):
                     '_source': row.to_dict()
                 }
 
+        if os.path.isfile(ELASTIC_MAPPINGS_FILE):
+            mappings = {}
+            with open(ELASTIC_MAPPINGS_FILE, 'r') as file_object:
+                mappings = json.load(file_object)
+
+            if not es.indices.exists(index_name):
+                es.indices.create(
+                    body={'mappings': mappings}, index=index_name)
+
         elasticsearch.helpers.bulk(es, _pandas_to_elastic(df))
+        # Introduce a short break to allow data to be indexed.
+        time.sleep(3)
+
         self._imported_files.append(filename)
 
     def _get_test_methods(self):
