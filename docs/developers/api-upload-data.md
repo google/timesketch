@@ -98,7 +98,7 @@ What is missing here are few of the necessary columns, see
 add them here, we can do that all in our upload stream. Let's start by
 connecting to a Timesketch instance.
 
-```
+```python
 import pandas as pd
 
 from timesketch_api_client import config
@@ -129,7 +129,7 @@ dictionary approach.
 Here we use an external library, scapy, to read a PCAP file and import the data
 from the network traffic to Timesketch.
 
-```
+```python
 ...
 from scapy import all as scapy_all
 ...
@@ -187,7 +187,7 @@ The function `add_file` in the importer is used to add a file.
 
 Here is an example of how the importer can be used:
 
-```
+```python
 from timesketch_api_client import config
 from timesketch_import_client import importer
 
@@ -211,7 +211,7 @@ and the final plaso storage file reassambled.
 
 ## Excel Sheet
 
-```
+```python
 from timesketch_api_client import config
 from timesketch_import_client import importer
 
@@ -238,10 +238,10 @@ some manual scripts that ingest the data. Since the data is already in Elastic
 it doesn't need to be re-ingested. In order to make it accessible in Timesketch
 the API client can be used.
 
-**disclaimer: the data ingested needs to be in a certain format in order to
+**disclaimer:** *the data ingested needs to be in a certain format in order to
 work with Timesketch. This function does limited checking before making it
 available. The timeline may or may not work in Timesketch, depending on
-multiple factors.**
+multiple factors.*
 
 ```python
 from timesketch_api_client import config
