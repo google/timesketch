@@ -243,6 +243,17 @@ work with Timesketch. This function does limited checking before making it
 available. The timeline may or may not work in Timesketch, depending on
 multiple factors.*
 
+The data that is ingested needs to have few fields already set before it can be
+ingested into Timesketch:
+
++ message
++ timestamp
++ datetime
+
+The datetime field also needs to be mapped as a date, not a text string.
+
+A sample code on how to ingest data into Timesketch that is already in Elastic:
+
 ```python
 from timesketch_api_client import config
 
@@ -257,11 +268,3 @@ sketch.generate_timeline_from_es_index(
 )
 ```
 
-The data that is ingested needs to have few fields already set before it can be
-ingested into Timesketch:
-
-+ message
-+ timestamp
-+ datetime
-
-The datetime field also needs to be mapped as a date, not a text string.
