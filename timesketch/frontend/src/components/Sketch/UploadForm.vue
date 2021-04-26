@@ -39,7 +39,7 @@ limitations under the License.
     <div class="field" v-if="fileName">
       <label class="label">Name</label>
       <div class="control">
-        <input v-model="form.name" class="input" type="text" required placeholder="Name your timeline (optional)">
+        <input v-model="form.name" class="input" type="text" required placeholder="Name your timeline">
       </div>
     </div>
 
