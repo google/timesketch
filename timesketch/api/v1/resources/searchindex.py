@@ -169,19 +169,19 @@ class SearchIndexResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 'Search index is marked deleted, unable to continue.')
 
-        change_db = False
+        commit_to_db = False
         new_status = form.get('status', '')
         valid_status = ('ready', 'fail', 'processing', 'timeout')
         if new_status and new_status in valid_status:
             searchindex.set_status(status=new_status)
-            change_db = True
+            commit_to_db = True
 
         description = form.get('description', '')
         if description:
             searchindex.description = description
-            change_db = True
+            commit_to_db = True
 
-        if change_db:
+        if commit_to_db:
             db_session.add(searchindex)
             db_session.commit()
 

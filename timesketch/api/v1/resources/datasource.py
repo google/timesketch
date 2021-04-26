@@ -100,8 +100,8 @@ class DataSourceListResource(resources.ResourceMixin, Resource):
         if not sketch.has_permission(current_user, 'write'):
             abort(
                 HTTP_STATUS_CODE_FORBIDDEN, (
-                    'User does not have sufficient access rights to '
-                    'delete a sketch.'))
+                    'User does not have sufficient write access to '
+                    'to the sketch.'))
 
         form = request.json
         if not form:
