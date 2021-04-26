@@ -27,8 +27,8 @@ from .resources.analysis import AnalyzerSessionActiveListResource
 from .resources.analysis import AnalyzerSessionResource
 from .resources.attribute import AttributeResource
 from .resources.explore import ExploreResource
-from .resources.data import DataSourceResource
-from .resources.data import DataSourceListResource
+from .resources.datasource import DataSourceResource
+from .resources.datasource import DataSourceListResource
 from .resources.event import EventResource
 from .resources.event import EventAnnotationResource
 from .resources.event import EventCreateResource
