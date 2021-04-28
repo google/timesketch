@@ -18,8 +18,8 @@ class FileInfo(object):
         self.file_names = file_names or []
 
 
-class NtfsTimestompSketchPlugin(interface.BaseSketchAnalyzer):
-    """Sketch analyzer for Timestomp."""
+class NtfsTimestompSketchPlugin(interface.BaseAnalyzer):
+    """Analyzer for Timestomp."""
 
     NAME = 'ntfs_timestomp'
     DISPLAY_NAME = 'NTFS timestomp detection'

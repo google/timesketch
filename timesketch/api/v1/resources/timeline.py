@@ -19,6 +19,7 @@ import logging
 import uuid
 import six
 
+import elasticsearch
 from flask import request
 from flask import abort
 from flask import current_app
@@ -77,10 +78,22 @@ class TimelineListResource(resources.ResourceMixin, Resource):
         if not sketch.has_permission(current_user, 'write'):
             abort(HTTP_STATUS_CODE_FORBIDDEN,
                   'User does not have write access controls on sketch.')
-        form = forms.AddTimelineSimpleForm.build(request)
+
+        form = request.json
+        if not form:
+            form = request.data
+
         metadata = {'created': True}
 
-        searchindex_id = form.timeline.data
+        searchindex_id = form.get('timeline', 0)
+        if isinstance(searchindex_id, str) and searchindex_id.isdigit():
+            searchindex_id = int(searchindex_id)
+
+        if not isinstance(searchindex_id, int):
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'The timeline (searchindex id) needs to be an integer.')
+
         searchindex = SearchIndex.query.get_with_acl(searchindex_id)
         if searchindex.get_status.status == 'deleted':
             abort(
@@ -92,19 +105,11 @@ class TimelineListResource(resources.ResourceMixin, Resource):
             if t.searchindex.id == searchindex_id
         ]
 
-        if not form.validate_on_submit():
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
-
-        if not sketch.has_permission(current_user, 'write'):
-            abort(
-                HTTP_STATUS_CODE_FORBIDDEN,
-                'User does not have write access to the sketch.')
-
         if not timeline_id:
             return_code = HTTP_STATUS_CODE_CREATED
+            timeline_name = form.get('timeline_name', searchindex.name)
             timeline = Timeline(
-                name=searchindex.name,
+                name=timeline_name,
                 description=searchindex.description,
                 sketch=sketch,
                 user=current_user,
@@ -191,18 +196,18 @@ class TimelineResource(resources.ResourceMixin, Resource):
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND, 'No Timeline found with this ID.')
 
-        if not timeline.sketch_id:
+        if timeline.sketch is None:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
                 f'The timeline {timeline_id} does not have an associated '
                 'sketch, does it belong to a sketch?')
 
         # Check that this timeline belongs to the sketch
-        if timeline.sketch_id != sketch.id:
+        if timeline.sketch.id != sketch.id:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
                 'The sketch ID ({0:d}) does not match with the timeline '
-                'sketch ID ({1:d})'.format(sketch.id, timeline.sketch_id))
+                'sketch ID ({1:d})'.format(sketch.id, timeline.sketch.id))
 
         if not sketch.has_permission(user=current_user, permission='read'):
             abort(
@@ -229,12 +234,17 @@ class TimelineResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_NOT_FOUND,
                 'No timeline found with this ID.')
 
+        if timeline.sketch is None:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                'No sketch associated with this timeline.')
+
         # Check that this timeline belongs to the sketch
-        if timeline.sketch_id != sketch.id:
+        if timeline.sketch.id != sketch.id:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
                 'The sketch ID ({0:d}) does not match with the timeline '
-                'sketch ID ({1:d})'.format(sketch.id, timeline.sketch_id))
+                'sketch ID ({1:d})'.format(sketch.id, timeline.sketch.id))
 
         if not sketch.has_permission(user=current_user, permission='write'):
             abort(
@@ -313,18 +323,34 @@ class TimelineResource(resources.ResourceMixin, Resource):
         if not sketch:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+
         timeline = Timeline.query.get(timeline_id)
+        if not timeline:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No timeline found with this ID.')
+
+        if timeline.sketch is None:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                'No sketch associated with this timeline.')
 
         # Check that this timeline belongs to the sketch
-        if timeline.sketch_id != sketch.id:
+        if timeline.sketch.id != sketch.id:
             if not timeline:
                 msg = 'No timeline found with this ID.'
             elif not sketch:
                 msg = 'No sketch found with this ID.'
             else:
+                sketch_use = sketch.id or 'No sketch ID'
+                sketch_string = str(sketch_use)
+
+                timeline_use = timeline.sketch.id or (
+                    'No sketch associated with the timeline.')
+                timeline_string = str(timeline_use)
+
                 msg = (
-                    'The sketch ID ({0:d}) does not match with the timeline '
-                    'sketch ID ({1:d})'.format(sketch.id, timeline.sketch_id))
+                    'The sketch ID ({0:s}) does not match with the timeline '
+                    'sketch ID ({1:s})'.format(sketch_string, timeline_string))
             abort(HTTP_STATUS_CODE_NOT_FOUND, msg)
 
         if not sketch.has_permission(user=current_user, permission='write'):
@@ -340,6 +366,43 @@ class TimelineResource(resources.ResourceMixin, Resource):
                     HTTP_STATUS_CODE_FORBIDDEN,
                     'Timelines with label [{0:s}] cannot be deleted.'.format(
                         label))
+
+        # Check if this searchindex is used in other sketches.
+        close_index = True
+        searchindex = timeline.searchindex
+        index_name = searchindex.index_name
+        search_indices = SearchIndex.query.filter_by(
+            index_name=index_name).all()
+        timelines = []
+        for index in search_indices:
+            timelines.extend(index.timelines)
+
+        for timeline_ in timelines:
+            if timeline_.sketch is None:
+                continue
+
+            if timeline_.sketch.id != sketch.id:
+                close_index = False
+                break
+
+            if timeline_.id != timeline_id:
+                # There are more than a single timeline using this index_name,
+                # we can't close it (unless this timeline is archived).
+                if timeline_.get_status.status != 'archived':
+                    close_index = False
+                    break
+
+        if close_index:
+            try:
+                self.datastore.client.indices.close(
+                    index=searchindex.index_name)
+            except elasticsearch.NotFoundError:
+                logger.error(
+                    'Unable to close index: {0:s} - index not '
+                    'found'.format(searchindex.index_name))
+
+            searchindex.set_status(status='archived')
+            timeline.set_status(status='archived')
 
         sketch.timelines.remove(timeline)
         db_session.commit()

@@ -60,6 +60,7 @@ class User(UserMixin, BaseModel):
     views = relationship('View', backref='user', lazy='dynamic')
     stories = relationship('Story', backref='user', lazy='dynamic')
     aggregations = relationship('Aggregation', backref='user', lazy='dynamic')
+    datasources = relationship('DataSource', backref='user', lazy='dynamic')
     aggregationgroups = relationship(
         'AggregationGroup', backref='user', lazy='dynamic')
     my_groups = relationship('Group', backref='user', lazy='dynamic')
@@ -75,7 +76,7 @@ class User(UserMixin, BaseModel):
             username: Username for the user
             name: Name of the user
         """
-        super(User, self).__init__()
+        super().__init__()
         self.username = username
         self.name = name
         if not name:
@@ -124,7 +125,7 @@ class Group(LabelMixin, StatusMixin, BaseModel):
             description: Description of the group
             user: Creator (instance of timesketch.models.user.User)
         """
-        super(Group, self).__init__()
+        super().__init__()
         self.name = name
         self.display_name = display_name or name
         self.description = description or name

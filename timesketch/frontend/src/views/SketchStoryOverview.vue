@@ -22,11 +22,7 @@ limitations under the License.
       </template>
     </ts-navbar-main>
 
-    <section class="section">
-      <div class="container is-fluid">
-        <ts-navbar-secondary currentAppContext="sketch" currentPage="stories"></ts-navbar-secondary>
-      </div>
-    </section>
+    <ts-navbar-secondary currentAppContext="sketch" currentPage="stories"></ts-navbar-secondary>
 
     <b-modal :active.sync="showCreateStoryModal" :width="640" scroll="keep">
       <div class="card">
@@ -67,7 +63,7 @@ limitations under the License.
 <script>
 import TsStoryList from '../components/Sketch/StoryList'
 import TsStoryCreateForm from '../components/Sketch/CreateStoryForm'
-import TsNavbarMain from "../components/AppNavbarMain"
+import TsNavbarMain from '../components/AppNavbarMain'
 
 export default {
   components: {

@@ -16,7 +16,6 @@ from __future__ import unicode_literals
 
 import os
 import logging
-import uuid
 
 # pylint: disable=wrong-import-order
 import bs4
@@ -62,6 +61,9 @@ class TimesketchApi:
     DEFAULT_OAUTH_PROVIDER_URL = 'https://www.googleapis.com/oauth2/v1/certs'
     DEFAULT_OAUTH_OOB_URL = 'urn:ietf:wg:oauth:2.0:oob'
     DEFAULT_OAUTH_API_CALLBACK = '/login/api_callback/'
+
+    # Default retry count for operations that attempt a retry.
+    DEFAULT_RETRY_COUNT = 5
 
     def __init__(self,
                  host_uri,
@@ -140,7 +142,7 @@ class TimesketchApi:
         self.session = session_object
 
     def _authenticate_session(self, session, username, password):
-        """Post username/password to authenticate the HTTP seesion.
+        """Post username/password to authenticate the HTTP session.
 
         Args:
             session: Instance of requests.Session.
@@ -342,11 +344,22 @@ class TimesketchApi:
         if not description:
             description = name
 
-        resource_url = '{0:s}/sketches/'.format(self.api_root)
-        form_data = {'name': name, 'description': description}
-        response = self.session.post(resource_url, json=form_data)
-        response_dict = error.get_response_json(response, logger)
-        sketch_id = response_dict['objects'][0]['id']
+        retry_count = 0
+        objects = None
+        while True:
+            resource_url = '{0:s}/sketches/'.format(self.api_root)
+            form_data = {'name': name, 'description': description}
+            response = self.session.post(resource_url, json=form_data)
+            response_dict = error.get_response_json(response, logger)
+            objects = response_dict.get('objects')
+            if objects:
+                break
+            retry_count += 1
+
+            if retry_count >= self.DEFAULT_RETRY_COUNT:
+                raise RuntimeError('Unable to create a new sketch.')
+
+        sketch_id = objects[0]['id']
         return self.get_sketch(sketch_id)
 
     def get_oauth_token_status(self):
@@ -462,62 +475,44 @@ class TimesketchApi:
         """
         return index.SearchIndex(searchindex_id, api=self)
 
-    def get_or_create_searchindex(self,
-                                  searchindex_name,
-                                  es_index_name=None,
-                                  public=False):
-        """Create a new searchindex.
+    def check_celery_status(self, job_id=''):
+        """Return information about outstanding celery tasks or a specific one.
 
         Args:
-            searchindex_name: Name of the searchindex in Timesketch.
-            es_index_name: Name of the index in Elasticsearch.
-            public: Boolean indicating if the searchindex should be public.
+            job_id (str): Optional Celery job identification string. If
+                provided that specific job ID is queried, otherwise
+                a check for all outstanding jobs is checked.
 
         Returns:
-            Instance of a SearchIndex object and a boolean indicating if the
-            object was created.
+            A list of dict objects with the status of the celery task/tasks
+            that were outstanding.
         """
-        if not es_index_name:
-            es_index_name = uuid.uuid4().hex
+        if job_id:
+            response = self.fetch_resource_data(
+                'tasks/?job_id={0:s}'.format(job_id))
+        else:
+            response = self.fetch_resource_data('tasks/')
 
-        resource_url = '{0:s}/searchindices/'.format(self.api_root)
-        form_data = {
-            'searchindex_name': searchindex_name,
-            'es_index_name': es_index_name,
-            'public': public
-        }
-        response = self.session.post(resource_url, json=form_data)
-
-        if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
-            error.error_message(
-                response, message='Error creating searchindex',
-                error=RuntimeError)
-
-        response_dict = error.get_response_json(response, logger)
-        metadata_dict = response_dict['meta']
-        created = metadata_dict.get('created', False)
-        searchindex_id = response_dict['objects'][0]['id']
-        return self.get_searchindex(searchindex_id), created
+        return response.get('objects', [])
 
     def list_searchindices(self):
-        """Get list of all searchindices that the user has access to.
+        """Yields all searchindices that the user has access to.
 
-        Returns:
-            List of SearchIndex object instances.
+        Yields:
+            A SearchIndex object instances.
         """
-        indices = []
         response = self.fetch_resource_data('searchindices/')
         response_objects = response.get('objects')
         if not response_objects:
-            return indices
+            yield None
+            return
 
         for index_dict in response_objects[0]:
             index_id = index_dict['id']
             index_name = index_dict['name']
             index_obj = index.SearchIndex(
                 searchindex_id=index_id, api=self, searchindex_name=index_name)
-            indices.append(index_obj)
-        return indices
+            yield index_obj
 
     def refresh_oauth_token(self):
         """Refresh an OAUTH token if one is defined."""
@@ -550,16 +545,12 @@ class TimesketchApi:
             return pandas.DataFrame.from_records(response.get('objects'))
 
         for rule_dict in response['objects']:
-            rule_uuid = rule_dict.get('id')
-            title = rule_dict.get('title')
-            es_query = rule_dict.get('es_query')
-            file_name = rule_dict.get('file_name')
-            description = rule_dict.get('description')
-            file_relpath = rule_dict.get('file_relpath')
-            index_obj = sigma.Sigma(
-                rule_uuid, api=self, es_query=es_query, file_name=file_name,
-                title=title, description=description,
-                file_relpath=file_relpath)
+            if not rule_dict:
+                raise ValueError('No rules found.')
+
+            index_obj = sigma.Sigma(api=self)
+            for key, value in rule_dict.items():
+                index_obj.set_value(key, value)
             rules.append(index_obj)
         return rules
 
@@ -573,4 +564,31 @@ class TimesketchApi:
         Returns:
             Instance of a Sigma object.
         """
-        return sigma.Sigma(rule_uuid, api=self)
+        sigma_obj = sigma.Sigma(api=self)
+        sigma_obj.from_rule_uuid(rule_uuid)
+
+        return sigma_obj
+
+    def get_sigma_rule_by_text(self, rule_text):
+        """Returns a Sigma Object based on a sigma rule text.
+
+        Args:
+            rule_text: Full Sigma rule text.
+
+        Returns:
+            Instance of a Sigma object.
+
+        Raises:
+            ValueError: No Rule text given or issues parsing it.
+        """
+        if not rule_text:
+            raise ValueError('No rule text given.')
+
+        try:
+            sigma_obj = sigma.Sigma(api=self)
+            sigma_obj.from_text(rule_text)
+        except ValueError:
+            logger.error(
+                'Parsing Error, unable to parse the Sigma rule',exc_info=True)
+
+        return sigma_obj

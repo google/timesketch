@@ -27,11 +27,14 @@ from .resources.analysis import AnalyzerSessionActiveListResource
 from .resources.analysis import AnalyzerSessionResource
 from .resources.attribute import AttributeResource
 from .resources.explore import ExploreResource
+from .resources.datasource import DataSourceResource
+from .resources.datasource import DataSourceListResource
 from .resources.event import EventResource
 from .resources.event import EventAnnotationResource
 from .resources.event import EventCreateResource
 from .resources.event import EventTaggingResource
 from .resources.event import CountEventsResource
+from .resources.event import MarkEventsWithTimelineIdentifier
 from .resources.sketch import SketchResource
 from .resources.sketch import SketchListResource
 from .resources.archive import SketchArchiveResource
@@ -56,6 +59,7 @@ from .resources.user import CollaboratorResource
 from .resources.user import LoggedInUserResource
 from .resources.sigma import SigmaResource
 from .resources.sigma import SigmaListResource
+from .resources.sigma import SigmaByTextResource
 from .resources.graph import GraphListResource
 from .resources.graph import GraphResource
 from .resources.graph import GraphPluginListResource
@@ -84,6 +88,7 @@ API_ROUTES = [
     (EventTaggingResource, '/sketches/<int:sketch_id>/event/tagging/'),
     (EventAnnotationResource, '/sketches/<int:sketch_id>/event/annotate/'),
     (EventCreateResource, '/sketches/<int:sketch_id>/event/create/'),
+    (MarkEventsWithTimelineIdentifier, '/sketches/<int:sketch_id>/event/add_timeline_id/'),
     (ViewListResource, '/sketches/<int:sketch_id>/views/'),
     (AttributeResource, '/sketches/<int:sketch_id>/attribute/'),
     (ViewResource, '/sketches/<int:sketch_id>/views/<int:view_id>/'),
@@ -105,10 +110,13 @@ API_ROUTES = [
     (CollaboratorResource, '/sketches/<int:sketch_id>/collaborators/'),
     (VersionResource, '/version/'),
     (SigmaListResource, '/sigma/'),
-    (SigmaResource, '/sigma/<string:rule_uuid>/'),
+    (SigmaResource, '/sigma/rule/<string:rule_uuid>/'),
+    (SigmaByTextResource, '/sigma/text/'),
     (LoggedInUserResource, '/users/me/'),
     (GraphListResource, '/sketches/<int:sketch_id>/graphs/'),
     (GraphResource, '/sketches/<int:sketch_id>/graphs/<int:graph_id>/'),
     (GraphPluginListResource, '/graphs/'),
-    (GraphCacheResource, '/sketches/<int:sketch_id>/graph/')
+    (GraphCacheResource, '/sketches/<int:sketch_id>/graph/'),
+    (DataSourceListResource, '/sketches/<int:sketch_id>/datasource/'),
+    (DataSourceResource, '/sketches/<int:sketch_id>/datasource/<int:datasource_id>/'),
 ]

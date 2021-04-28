@@ -26,23 +26,34 @@ limitations under the License.
             <p class="card-header-title">Detailed information for {{ timeline.name }}</p>
           </header>
           <div class="card-content">
-            <div class="content">
               <ul>
                 <li>Elasticsearch index: {{ timeline.searchindex.index_name }}</li>
                 <li v-if="meta.stats_per_timeline[timeline.id]">Number of events: {{ meta.stats_per_timeline[timeline.id]['count'] | compactNumber }} ({{ meta.stats_per_timeline[timeline.id]['count']}})</li>
-                <li>Added by: {{ timeline.user.username }}</li>
-                <li>Added: {{ timeline.created_at | moment("YYYY-MM-DD HH:mm") }}</li>
-                <li v-if="timelineStatus === 'ready' && (timeline.searchindex.description !== '' && timeline.searchindex.description !== timeline.name)">Import errors: <b>{{ timeline.searchindex.description }}</b></li>
+                <li>Created by: {{ timeline.user.username }}</li>
+                <li>Created at: {{ timeline.created_at | moment("YYYY-MM-DD HH:mm") }}</li>
               </ul>
+              <br>
 
-              <span v-if="timelineStatus === 'fail'">
-                <h5 style="color:red;">Error detail</h5>
-                <pre>{{ timeline.description }}</pre>
-              </span>
+              <b-message :type="{ 'is-success': !datasource.error_message, 'is-danger': datasource.error_message }" :title="datasource.created_at" :closable="false" v-for="datasource in timeline.datasources" :key="datasource.id">
+                <ul>
+                  <li><strong>Provider:</strong> {{ datasource.provider }}</li>
+                  <li><strong>Context:</strong> {{ datasource.context }}</li>
+                  <li><strong>User:</strong> {{ datasource.user.username }}</li>
+                  <li><strong>File on disk:</strong> {{ datasource.file_on_disk }}</li>
+                  <li><strong>File size:</strong> {{ datasource.file_size | compactBytes }}</li>
+                  <li><strong>Original filename:</strong> {{ datasource.original_filename }}</li>
+                  <li><strong>Data label:</strong> {{ datasource.data_label }}</li>
+                </ul>
+                <br>
+                <div v-if="datasource.error_message">
+                  <strong style="font-size:1.2rem; margin-bottom:10px;">Error detail</strong>
+                  <pre style="margin-top:10px;">{{ datasource.error_message }}</pre>
+                </div>
+              </b-message>
 
             </div>
           </div>
-        </div>
+
       </div>
       <button class="modal-close is-large" aria-label="close" v-on:click="showInfoModal = !showInfoModal"></button>
     </b-modal>
@@ -155,15 +166,26 @@ limitations under the License.
       </p>
     </div>
 
-    <router-link v-if="timelineStatus === 'ready'" :to="{ name: 'SketchExplore', query: {timeline: timeline.id}}"><strong>{{ timeline.name }}</strong></router-link>
-    <strong v-if="timelineStatus !== 'ready'">{{ timeline.name }}</strong>
+    <router-link v-if="timelineStatus === 'ready'" :to="{ name: 'SketchExplore', query: {timeline: timeline.id}}">{{ timeline.name }}</router-link>
+    <span v-if="timelineStatus !== 'ready'">{{ timeline.name }}</span>
     <br>
 
     <span v-if="timelineStatus === 'ready'" class="is-size-7">
       <span class="is-small" :title="meta.stats_per_timeline[timeline.id]['count'] + ' events in index'">{{ meta.stats_per_timeline[timeline.id]['count'] | compactNumber }} events</span>
+      <span v-if="timeline.datasources.length > 1"> ({{ timeline.datasources.length }} imports: <span v-on:click="showInfoModal =! showInfoModal" style="cursor:pointer;text-decoration: underline;">details</span>)</span>
+      <span v-if="timeline.datasources.length === 1"> (imported with {{ timeline.datasources[0].provider }})</span>
+      <span v-if="datasourceErrors.length" style="margin-left:10px;">
+        <span class="icon is-small" style="color:orange;">
+          <i class="fas fa-exclamation-triangle"></i>
+        </span>
+        <span v-on:click="showInfoModal =! showInfoModal" style="cursor:pointer;text-decoration: underline; margin-left:5px;">{{ datasourceErrors.length }} failed imports</span>
+      </span>
     </span>
 
     <span v-else-if="timelineStatus === 'fail'" class="is-size-7">
+      <span class="icon is-small" style="color:var(--font-color-red);">
+        <i class="fas fa-exclamation-triangle"></i>
+      </span>
       ERROR: <span v-on:click="showInfoModal =! showInfoModal" style="cursor:pointer;text-decoration: underline">Click here for details</span>
     </span>
     <span v-else-if="timelineStatus === 'processing'" class="is-size-7">
@@ -187,15 +209,13 @@ import _ from 'lodash'
 
 import ApiClient from '../../utils/RestApiClient'
 
-import TsAnalyzerSessionDetail from './AnalyzerSessionDetail'
 import TsAnalyzerHistory from './AnalyzerHistory'
 
-import EventBus from "../../main"
+import EventBus from '../../main'
 
 export default {
   components: {
     'color-picker': Chrome,
-    TsAnalyzerSessionDetail,
     TsAnalyzerHistory
   },
   props: ['timeline', 'controls', 'isCompact'],
@@ -239,6 +259,9 @@ export default {
       return {
         'background-color': backgroundColor
       }
+    },
+    datasourceErrors () {
+      return this.timeline.datasources.filter(datasource => datasource.error_message)
     }
   },
   methods: {
@@ -268,20 +291,20 @@ export default {
     },
     openFilteredTimeline: function (index, dataTypes) {
       if (dataTypes.length === 0) {
-        return false;
+        return false
       }
       let searchQuery = ''
       for (let i = 0; i < dataTypes.length; i++) {
-        const dt = dataTypes[i];
-        if (i != 0) {
+        const dt = dataTypes[i]
+        if (i !== 0) {
           searchQuery += ' OR '
         }
         searchQuery += 'data_type:"' + dt + '"'
       }
-      this.$router.push({name: 'SketchExplore', query: { index: index, q: searchQuery }})
+      this.$router.push({ name: 'SketchExplore', query: { index: index, q: searchQuery } })
     },
     toggleTheme: function () {
-      this.isDarkTheme =! this.isDarkTheme
+      this.isDarkTheme = !this.isDarkTheme
     }
   },
   mounted () {
@@ -294,7 +317,7 @@ export default {
     })
   },
   created () {
-    this.isDarkTheme = localStorage.theme === 'dark';
+    this.isDarkTheme = localStorage.theme === 'dark'
     EventBus.$on('isDarkTheme', this.toggleTheme)
 
     this.initialColor = {
@@ -305,7 +328,7 @@ export default {
       this.autoRefresh = true
     }
   },
-  beforeDestroy() {
+  beforeDestroy () {
     clearInterval(this.t)
     this.t = false
   },
@@ -317,8 +340,8 @@ export default {
           if (this.timelineStatus === 'ready') {
             this.autoRefresh = false
           }
-        }.bind(this), 5000)}
-      else {
+        }.bind(this), 5000)
+      } else {
         clearInterval(this.t)
         this.t = false
       }
@@ -354,10 +377,13 @@ export default {
   margin-top: 4px;
 }
 
-
 @keyframes blinker {
   50% {
     opacity: 40%;
   }
+}
+
+.table th {
+  color: var(--default-font-color);
 }
 </style>

@@ -24,15 +24,14 @@ limitations under the License.
 <script>
 import ApiClient from '../../utils/RestApiClient'
 import TsVegaLiteChart from './VegaLiteChart'
-import TsTableChart from './TableChart'
 
 export default {
   props: ['aggregation_group'],
-  components: {TsVegaLiteChart},
+  components: { TsVegaLiteChart },
   data () {
     return {
       vegaSpec: {},
-      title: '',
+      title: ''
     }
   },
   computed: {

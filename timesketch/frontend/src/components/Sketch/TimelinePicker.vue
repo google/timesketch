@@ -26,7 +26,7 @@ limitations under the License.
 </template>
 
 <script>
-import EventBus from "../../main"
+import EventBus from '../../main'
 
 export default {
   props: ['activeTimelines', 'currentQueryFilter', 'countPerIndex', 'countPerTimeline'],
@@ -65,16 +65,16 @@ export default {
       return {
         'background-color': backgroundColor,
         'text-decoration': textDecoration,
-        'opacity': opacity,
+        'opacity': opacity
       }
     },
     toggleTimeline: function (timeline) {
       let newArray = this.selectedTimelines.slice()
-      let timeline_idx = newArray.indexOf(timeline)
-      if (timeline_idx === -1) {
+      let timelineIdx = newArray.indexOf(timeline)
+      if (timelineIdx === -1) {
         newArray.push(timeline)
       } else {
-        newArray.splice(timeline_idx, 1)
+        newArray.splice(timelineIdx, 1)
       }
       this.selectedTimelines = newArray
       this.$emit('updateSelectedTimelines', this.selectedTimelines)
@@ -91,7 +91,7 @@ export default {
       return this.selectedTimelines.includes(timeline)
     },
     toggleTheme: function () {
-      this.isDarkTheme =! this.isDarkTheme
+      this.isDarkTheme = !this.isDarkTheme
     },
     getCount: function (timeline) {
       let count = this.countPerTimeline[timeline.id]
@@ -104,12 +104,12 @@ export default {
     syncSelectedTimelines: function () {
       let timelines = []
       this.currentQueryFilter.indices.forEach((index) => {
-        if (typeof(index) === 'string') {
+        if (typeof (index) === 'string') {
           let timeline = this.activeTimelines.find((timeline) => {
             return timeline.searchindex.index_name === index
           })
           timelines.push(timeline)
-        } else if (typeof(index) === 'number') {
+        } else if (typeof (index) === 'number') {
           let timeline = this.activeTimelines.find((timeline) => {
             return timeline.id === index
           })
@@ -130,9 +130,10 @@ export default {
     }
   },
   watch: {
-    "currentQueryFilter.indices" (val) {
+    'currentQueryFilter.indices' (val) {
       this.syncSelectedTimelines()
-    }, deep: true
+    },
+    deep: true
   }
 }
 </script>

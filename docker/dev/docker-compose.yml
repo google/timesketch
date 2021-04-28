@@ -1,10 +1,11 @@
 version: '3'
 services:
   timesketch:
+    container_name: timesketch-dev
     image: us-docker.pkg.dev/osdfir-registry/timesketch/dev:latest
     command: timesketch
     ports:
-      - "127.0.0.1:5000:5000"
+      - 127.0.0.1:5000:5000
     links:
       - elasticsearch
       - postgres
@@ -22,12 +23,15 @@ services:
       - TIMESKETCH_USER=dev
       - TIMESKETCH_PASSWORD=dev
       - CHOKIDAR_USEPOLLING=true
+      - prometheus_multiproc_dir=/tmp/
+
     restart: always
     volumes:
       - ../../:/usr/local/src/timesketch/
 
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.9.2
+  elasticsearch:    
+    container_name: elasticsearch
+    image: docker.elastic.co/elasticsearch/elasticsearch-oss:7.10.2
     restart: always
     environment:
       - discovery.type=single-node
@@ -40,21 +44,62 @@ services:
         hard: -1
 
   postgres:
-    image: postgres
+    container_name: postgres
+    image: postgres:13.1-alpine
     environment:
       - POSTGRES_USER=timesketch
       - POSTGRES_PASSWORD=password
     restart: always
 
   redis:
-    image: redis
+    container_name: redis
+    image: redis:6.0.10-alpine
     restart: always
 
   notebook:
+    container_name: notebook
     image: us-docker.pkg.dev/osdfir-registry/timesketch/notebook:latest
     ports:
-      - "127.0.0.1:8844:8844"
+      - 127.0.0.1:8844:8844
     restart: on-failure
+    links:
+      - elasticsearch
     volumes:
       - ../../:/usr/local/src/timesketch/:ro
       - /tmp/:/usr/local/src/picadata/
+
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus:v2.24.1
+    volumes:
+      - ./prometheus:/etc/prometheus
+    ports:
+      - 127.0.0.1:9090:9090
+    command: --config.file=/etc/prometheus/prometheus.yml
+
+  es-metrics-exporter:
+    container_name: es-metrics-exporter
+    image: justwatch/elasticsearch_exporter:1.1.0
+    command: --es.uri=http://elasticsearch:9200 --es.all
+    restart: always
+    links:
+      - elasticsearch
+
+  grafana:
+    container_name: grafana
+    image: "grafana/grafana:latest"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/etc/grafana/dashboards
+    environment:
+      - GF_SECURITY_ADMIN_USER=dev
+      - GF_SECURITY_ADMIN_PASSWORD=dev
+      - GF_SECURITY_DISABLE_GRAVATAR=true
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_USERS_AUTO_ASSIGN_ORG_ROLE=Viewer
+      - GF_ANALYTICS_REPORTING_ENABLED=false
+      - GF_ANALYTICS_CHECK_FOR_UPDATES=false
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/dashboards/timesketch.json
+    restart: always
+    ports:
+      - 127.0.0.1:3000:3000

@@ -28,11 +28,11 @@ limitations under the License.
 
 <script>
 import ApiClient from '../../utils/RestApiClient'
-import TsAnalysisSessionDetail from "./AnalyzerSessionDetail"
-import EventBus from "../../main"
+import TsAnalysisSessionDetail from './AnalyzerSessionDetail'
+import EventBus from '../../main'
 
 export default {
-  components: {TsAnalysisSessionDetail},
+  components: { TsAnalysisSessionDetail },
   data () {
     return {
       taskCounters: {
@@ -46,15 +46,15 @@ export default {
     }
   },
   computed: {
-    sketch() {
+    sketch () {
       return this.$store.state.sketch
     },
-    meta() {
+    meta () {
       return this.$store.state.meta
-    },
+    }
   },
   methods: {
-    fetchData() {
+    fetchData () {
       ApiClient.getActiveAnalyzerSessions(this.sketch.id).then((response) => {
         let taskCounters = response.data['objects'][0]
         this.taskCounters = taskCounters
@@ -66,17 +66,17 @@ export default {
         console.error(e)
       })
     },
-    triggerAnalysis() {
+    triggerAnalysis () {
       this.manualTrigger = true
       this.fetchData()
     }
   },
-  created() {
+  created () {
     EventBus.$on('triggerAnalysis', this.triggerAnalysis)
     this.fetchData()
     this.autoRefresh = true
   },
-  beforeDestroy() {
+  beforeDestroy () {
     EventBus.$off('triggerAnalysis', this.triggerAnalysis)
     clearInterval(this.t)
     this.t = false
@@ -86,8 +86,8 @@ export default {
       if (val && !this.t) {
         this.t = setInterval(function () {
           this.fetchData()
-        }.bind(this), 5000)}
-      else {
+        }.bind(this), 5000)
+      } else {
         clearInterval(this.t)
         this.t = false
       }

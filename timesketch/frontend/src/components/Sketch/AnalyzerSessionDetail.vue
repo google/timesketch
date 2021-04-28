@@ -32,7 +32,7 @@ limitations under the License.
           <th>Timeline</th>
         </thead>
         <tbody>
-        <tr v-for="row in tableData">
+        <tr v-for="(row, index) in tableData" :key="index">
           <td><div style="width:10px; height: 10px; border-radius: 100%; margin-top:6px; margin-left:3px;" v-bind:class="{ pending: row.status === 'PENDING',  done: row.status === 'DONE', started: row.status === 'STARTED', error: row.status === 'ERROR'}"></div></td>
           <td>{{row.analyzer}}</td>
           <td>{{row.result}}</td>
@@ -53,14 +53,14 @@ export default {
     return {
       analysisSession: {},
       analyses: [],
-      autoRefresh: false,
+      autoRefresh: false
     }
   },
   computed: {
     sketch () {
       return this.$store.state.sketch
     },
-    meta() {
+    meta () {
       return this.$store.state.meta
     },
     totalAnalyzers () {
@@ -81,7 +81,6 @@ export default {
         timelineSet.add(analyzer.timeline.name)
       })
       return timelineSet
-
     },
     tableData () {
       let tableArray = []
@@ -108,7 +107,7 @@ export default {
       }).catch((e) => {})
     }
   },
-  beforeDestroy() {
+  beforeDestroy () {
     clearInterval(this.t)
     this.t = false
   },
@@ -118,15 +117,15 @@ export default {
     this.autoRefresh = true
   },
   watch: {
-    autoRefresh(val) {
+    autoRefresh (val) {
       if (val && !this.t) {
         this.t = setInterval(function () {
           this.fetchData()
           if (this.finishedAnalyzers === this.totalAnalyzers) {
             this.autoRefresh = false
           }
-        }.bind(this), 5000)}
-      else {
+        }.bind(this), 5000)
+      } else {
         clearInterval(this.t)
         this.t = false
       }

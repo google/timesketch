@@ -22,11 +22,7 @@ limitations under the License.
       </template>
     </ts-navbar-main>
 
-    <section class="section">
-      <div class="container is-fluid">
-        <ts-navbar-secondary currentAppContext="sketch" currentPage="graph"></ts-navbar-secondary>
-      </div>
-    </section>
+    <ts-navbar-secondary currentAppContext="sketch" currentPage="graph"></ts-navbar-secondary>
 
     <section class="section">
       <div class="container is-fluid">
@@ -48,13 +44,12 @@ limitations under the License.
 </template>
 
 <script>
-import TsGraphList from "../components/Sketch/GraphList"
-import TsGraphPluginList from "../components/Sketch/GraphPluginList"
-
+import TsGraphList from '../components/Sketch/GraphList'
+import TsGraphPluginList from '../components/Sketch/GraphPluginList'
 
 export default {
   props: ['sketchId'],
-  components: {TsGraphList, TsGraphPluginList},
+  components: { TsGraphList, TsGraphPluginList },
   computed: {
     sketch () {
       return this.$store.state.sketch

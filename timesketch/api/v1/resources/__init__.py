@@ -92,6 +92,20 @@ class ResourceMixin(object):
         'updated_at': fields.DateTime('iso8601')
     }
 
+    datasource_fields = {
+        'id': fields.Integer,
+        'user': fields.Nested(user_fields),
+        'provider': fields.String,
+        'context': fields.String,
+        'file_on_disk': fields.String,
+        'file_size': fields.Integer,
+        'original_filename': fields.String,
+        'data_label': fields.String,
+        'error_message': fields.String,
+        'created_at': fields.DateTime('iso8601'),
+        'updated_at': fields.DateTime('iso8601')
+    }
+
     timeline_fields = {
         'id': fields.Integer,
         'name': fields.String,
@@ -101,6 +115,7 @@ class ResourceMixin(object):
         'color': fields.String,
         'label_string': fields.String,
         'searchindex': fields.Nested(searchindex_fields),
+        'datasources': fields.Nested(datasource_fields),
         'deleted': fields.Boolean,
         'created_at': fields.DateTime('iso8601'),
         'updated_at': fields.DateTime('iso8601')
@@ -216,6 +231,7 @@ class ResourceMixin(object):
         'searchindex': searchindex_fields,
         'analysis': analysis_fields,
         'analysissession': analysis_session_fields,
+        'datasource': datasource_fields,
         'timeline': timeline_fields,
         'searchtemplate': searchtemplate_fields,
         'view': view_fields,

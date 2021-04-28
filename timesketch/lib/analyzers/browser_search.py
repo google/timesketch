@@ -17,7 +17,7 @@ from timesketch.lib import emojis
 logger = logging.getLogger('timesketch.analyzers.browser_search')
 
 
-class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
+class BrowserSearchSketchPlugin(interface.BaseAnalyzer):
     """Sketch analyzer for BrowserSearch."""
 
     NAME = 'browser_search'

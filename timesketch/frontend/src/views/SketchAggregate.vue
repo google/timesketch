@@ -22,11 +22,7 @@ limitations under the License.
       </template>
     </ts-navbar-main>
 
-    <section class="section">
-      <div class="container is-fluid">
-        <ts-navbar-secondary currentAppContext="sketch" currentPage="aggregate"></ts-navbar-secondary>
-      </div>
-    </section>
+    <ts-navbar-secondary currentAppContext="sketch" currentPage="aggregate"></ts-navbar-secondary>
 
     <ts-sketch-explore-aggregation @newAggregation="addAggregation($event)"></ts-sketch-explore-aggregation>
 
@@ -48,9 +44,9 @@ limitations under the License.
 </template>
 
 <script>
-import TsSketchExploreAggregation from "../components/Sketch/Aggregation"
-import ApiClient from "../utils/RestApiClient"
-import TsAggregationCompact from "../components/Sketch/AggregationCompact"
+import TsSketchExploreAggregation from '../components/Sketch/Aggregation'
+import ApiClient from '../utils/RestApiClient'
+import TsAggregationCompact from '../components/Sketch/AggregationCompact'
 
 export default {
   components: { TsSketchExploreAggregation, TsAggregationCompact },
@@ -68,7 +64,7 @@ export default {
       return this.$store.state.meta
     },
     allAggregations () {
-      const concat = (...arrays) => [].concat(...arrays.filter(Array.isArray));
+      const concat = (...arrays) => [].concat(...arrays.filter(Array.isArray))
       return concat(this.aggregations, this.aggregationGroups).slice().reverse()
     }
   },

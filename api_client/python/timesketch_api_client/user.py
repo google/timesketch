@@ -14,6 +14,7 @@
 """Timesketch API client library."""
 import logging
 
+from . import error
 from . import resource
 
 
@@ -42,6 +43,29 @@ class User(resource.BaseResource):
             self._object_data = {}
 
         return self._object_data
+
+    def change_password(self, new_password):
+        """Change the password for the user.
+
+        Args:
+            new_password (str): String with the password.
+
+        Raises:
+            ValueError: If there was an error.
+
+        Returns:
+            Boolean: Whether the password was sucessfully modified.
+        """
+        if not new_password:
+            raise ValueError('No new password supplied.')
+
+        if not isinstance(new_password, str):
+            raise ValueError('Password needs to be a string value.')
+
+        data = {'password': new_password}
+        resource_url = f'{self.api.api_root}/{self.resource_uri}'
+        response = self.api.session.post(resource_url, json=data)
+        return error.check_return_status(response, logger)
 
     @property
     def groups(self):

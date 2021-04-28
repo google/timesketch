@@ -22,11 +22,7 @@ limitations under the License.
       </template>
     </ts-navbar-main>
 
-    <section class="section">
-      <div class="container is-fluid">
-        <ts-navbar-secondary currentAppContext="sketch" currentPage="stories"></ts-navbar-secondary>
-      </div>
-    </section>
+    <ts-navbar-secondary currentAppContext="sketch" currentPage="stories"></ts-navbar-secondary>
 
     <section class="section" v-if="blocks">
       <div class="container is-fluid">
@@ -117,8 +113,8 @@ import ApiClient from '../utils/RestApiClient'
 import marked from 'marked'
 import _ from 'lodash'
 import TsAggregationListDropdown from '../components/Sketch/AggregationListDropdown'
-import TsAggregationCompact from "../components/Sketch/AggregationCompact"
-import TsAggregationGroupCompact from "../components/Sketch/AggregationGroupCompact"
+import TsAggregationCompact from '../components/Sketch/AggregationCompact'
+import TsAggregationGroupCompact from '../components/Sketch/AggregationGroupCompact'
 import TsViewListDropdown from '../components/Sketch/ViewListDropdown'
 import TsViewEventList from '../components/Sketch/EventListCompact'
 
@@ -213,7 +209,7 @@ export default {
       return this.$store.state.meta
     },
     allAggregations () {
-      const concat = (...arrays) => [].concat(...arrays.filter(Array.isArray));
+      const concat = (...arrays) => [].concat(...arrays.filter(Array.isArray))
       return concat(this.aggregations, this.aggregationGroups)
     }
   },

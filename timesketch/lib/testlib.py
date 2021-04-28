@@ -52,9 +52,9 @@ class TestConfig(object):
     LABELS_TO_PREVENT_DELETION = ['protected', 'magic']
     UPLOAD_ENABLED = False
     GRAPH_BACKEND_ENABLED = False
-    AUTO_INDEX_ANALYZERS = []
     AUTO_SKETCH_ANALYZERS = []
     SIMILARITY_DATA_TYPES = []
+    SIGMA_RULES_FOLDERS = ['./data/sigma/rules/']
 
 
 class MockElasticClient(object):
@@ -94,6 +94,12 @@ class MockElasticIndices(object):
 
     def stats(self, *args, **kwargs):
         return {'indices': {}}
+
+    def refresh(self, *args, **kwargs):
+        return
+
+    def exists(self, *args, **kwargs):
+        return True
 
 
 class MockDataStore(object):

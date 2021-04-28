@@ -22,28 +22,11 @@ limitations under the License.
       </template>
     </ts-navbar-main>
 
-    <section class="section">
-        <div class="container is-fluid">
-          <ts-navbar-secondary currentAppContext="sketch" currentPage="explore"></ts-navbar-secondary>
-        </div>
-    </section>
+    <ts-navbar-secondary currentAppContext="sketch" currentPage="explore"></ts-navbar-secondary>
 
     <section class="section">
       <div class="container is-fluid">
         <div class="card">
-          <header class="card-header" v-on:click="showSearch = !showSearch" style="cursor: pointer">
-            <span class="card-header-title">
-              <span class="icon is-small"><i class="fas fa-search"></i></span>
-              <span style="margin-left:10px;">Search</span>
-            </span>
-
-            <span class="card-header-icon">
-              <span class="icon">
-                <i class="fas fa-angle-down" v-if="!showSearch" aria-hidden="true"></i>
-                <i class="fas fa-angle-up" v-if="showSearch" aria-hidden="true"></i>
-              </span>
-            </span>
-          </header>
 
           <div class="card-content" v-if="showSearch">
 
@@ -345,9 +328,7 @@ import TsViewListDropdown from '../components/Sketch/ViewListDropdown'
 import TsSketchExploreEventList from '../components/Sketch/EventList'
 import TsExploreTimelinePicker from '../components/Sketch/TimelinePicker'
 import TsExploreFilterTime from '../components/Sketch/TimeFilter'
-import TsExploreSessionChart from '../components/Sketch/SessionChart'
-import TsSketchExploreAggregation from "../components/Sketch/Aggregation"
-import EventBus from "../main"
+import EventBus from '../main'
 
 const defaultQueryFilter = () => {
   return {
@@ -356,7 +337,7 @@ const defaultQueryFilter = () => {
     'size': 40,
     'indices': [],
     'order': 'asc',
-    'chips': [],
+    'chips': []
   }
 }
 
@@ -371,12 +352,10 @@ const emptyEventList = () => {
 
 export default {
   components: {
-    TsSketchExploreAggregation,
     TsViewListDropdown,
     TsSketchExploreEventList,
     TsExploreTimelinePicker,
-    TsExploreFilterTime,
-    TsExploreSessionChart
+    TsExploreFilterTime
   },
   props: ['sketchId'],
   data () {
@@ -395,9 +374,9 @@ export default {
         meta: {},
         objects: []
       },
-      currentQueryString: "",
+      currentQueryString: '',
       currentQueryFilter: defaultQueryFilter(),
-      selectedFields: [{field: 'message', type: 'text'}],
+      selectedFields: [{ field: 'message', type: 'text' }],
       selectedFieldsProxy: [],
       expandFieldDropdown: false,
       selectedEvents: {},
@@ -450,10 +429,10 @@ export default {
     }
   },
   methods: {
-    hideDropdown: function() {
+    hideDropdown: function () {
       this.$refs['NewTimeFilter'].isActive = false
     },
-    search: function (emitEvent=true, resetPagination=true) {
+    search: function (emitEvent = true, resetPagination = true) {
       this.searchInProgress = true
       if (!this.currentQueryString) {
         return
@@ -461,14 +440,13 @@ export default {
 
       if (this.contextEvent) {
         // Scroll to the context box in the UI
-        this.$scrollTo('#context', 200, {offset: -300})
+        this.$scrollTo('#context', 200, { offset: -300 })
       }
 
       // Reset selected events.
       this.selectedEvents = {}
 
       this.eventList = emptyEventList()
-
 
       if (resetPagination) {
         // TODO: Can we keep position of the pagination when changing page size?
@@ -501,22 +479,21 @@ export default {
       let formData = {
         'query': this.currentQueryString,
         'filter': this.currentQueryFilter,
-        'file_name': "export.zip"
+        'file_name': 'export.zip'
       }
       ApiClient.exportSearchResult(this.sketchId, formData).then((response) => {
-        let fileURL = window.URL.createObjectURL(new Blob([response.data]));
-        let fileLink = document.createElement('a');
+        let fileURL = window.URL.createObjectURL(new Blob([response.data]))
+        let fileLink = document.createElement('a')
         let fileName = 'export.zip'
-        fileLink.href = fileURL;
-        fileLink.setAttribute('download', fileName);
-        document.body.appendChild(fileLink);
-        fileLink.click();
+        fileLink.href = fileURL
+        fileLink.setAttribute('download', fileName)
+        document.body.appendChild(fileLink)
+        fileLink.click()
         this.loadingClose()
       }).catch((e) => {
         console.error(e)
         this.loadingClose()
       })
-
     },
     searchView: function (viewId) {
       // Reset selected events.
@@ -531,10 +508,10 @@ export default {
         this.currentQueryString = view.query_string
         this.currentQueryFilter = JSON.parse(view.query_filter)
         if (!this.currentQueryFilter.fields || !this.currentQueryFilter.fields.length) {
-          this.currentQueryFilter.fields = [{field: 'message', type: 'text'}]
+          this.currentQueryFilter.fields = [{ field: 'message', type: 'text' }]
         }
         this.selectedFields = this.currentQueryFilter.fields
-        if (this.currentQueryFilter.indices[0] === '_all') {
+        if (this.currentQueryFilter.indices[0] === '_all' || this.currentQueryFilter.indices === '_all') {
           let allIndices = []
           this.sketch.active_timelines.forEach((timeline) => {
             let isLegacy = this.meta.indices_metadata[timeline.searchindex.index_name].is_legacy
@@ -564,10 +541,10 @@ export default {
       const numContextEvents = 500
 
       this.contextEvent = event
-      if (!this.originalContext){
+      if (!this.originalContext) {
         let currentQueryStringCopy = JSON.parse(JSON.stringify(this.currentQueryString))
         let currentQueryFilterCopy = JSON.parse(JSON.stringify(this.currentQueryFilter))
-        this.originalContext = {'queryString': currentQueryStringCopy, 'queryFilter': currentQueryFilterCopy}
+        this.originalContext = { 'queryString': currentQueryStringCopy, 'queryFilter': currentQueryFilterCopy }
       }
 
       const dateTimeTemplate = 'YYYY-MM-DDTHH:mm:ss'
@@ -579,14 +556,14 @@ export default {
         'value': newStartDate + ',' + startDateTimeMoment.format(dateTimeTemplate),
         'type': 'datetime_range',
         'operator': 'must',
-        'active' : true
+        'active': true
       }
       let endChip = {
         'field': '',
         'value': startDateTimeMoment.format(dateTimeTemplate) + ',' + newEndDate,
         'type': 'datetime_range',
         'operator': 'must',
-        'active' : true
+        'active': true
       }
       // TODO: Use chips instead
       this.currentQueryString = '* OR ' + '_id:' + this.contextEvent._id
@@ -610,7 +587,7 @@ export default {
       this.search()
     },
     scrollToContextEvent: function () {
-      this.$scrollTo('#' + this.contextEvent._id, 200, {offset: -300})
+      this.$scrollTo('#' + this.contextEvent._id, 200, { offset: -300 })
     },
     updateSelectedTimelines: function (timelines) {
       let selected = []
@@ -630,7 +607,7 @@ export default {
       this.currentQueryFilter = defaultQueryFilter()
       this.currentQueryFilter.indices = '_all'
       this.eventList = emptyEventList()
-      this.$router.replace({'query': null})
+      this.$router.replace({ 'query': null })
     },
     toggleChip: function (chip) {
       // Treat undefined as active to support old chip formats.
@@ -641,16 +618,16 @@ export default {
       this.search()
     },
     removeChip: function (chip) {
-      let chipIndex = this.currentQueryFilter.chips.findIndex(c => c.value === chip.value);
+      let chipIndex = this.currentQueryFilter.chips.findIndex(c => c.value === chip.value)
       this.currentQueryFilter.chips.splice(chipIndex, 1)
       if (chip.type === 'label') {
         this.selectedLabels = this.selectedLabels.filter(label => label !== chip.value)
       }
       this.search()
     },
-    updateChip: function(newChip, oldChip) {
+    updateChip: function (newChip, oldChip) {
       // Replace the chip at the given index
-      let chipIndex = this.currentQueryFilter.chips.findIndex(c => c.value === oldChip.value && c.type == oldChip.type);
+      let chipIndex = this.currentQueryFilter.chips.findIndex(c => c.value === oldChip.value && c.type === oldChip.type)
       this.currentQueryFilter.chips.splice(chipIndex, 1, newChip)
       this.search()
     },
@@ -669,7 +646,7 @@ export default {
         'value': labelName,
         'type': 'label',
         'operator': 'must',
-        'active' : true
+        'active': true
       }
       let chips = this.currentQueryFilter.chips
       if (chips) {
@@ -691,7 +668,7 @@ export default {
           'value': label,
           'type': 'label',
           'operator': 'must',
-          'active' : true
+          'active': true
         }
         this.addChip(chip)
       })
@@ -702,7 +679,7 @@ export default {
       }
     },
     paginate: function (pageNum) {
-      this.currentQueryFilter.from  = ((pageNum * this.currentQueryFilter.size) - this.currentQueryFilter.size)
+      this.currentQueryFilter.from = ((pageNum * this.currentQueryFilter.size) - this.currentQueryFilter.size)
       this.search(true, false)
     },
     updateSelectedFields: function (value) {
@@ -715,8 +692,8 @@ export default {
       value.forEach((field) => {
         this.selectedFields.push(field)
       })
-    // Prevents tags from being displayed
-    this.selectedFieldsProxy = []
+      // Prevents tags from being displayed
+      this.selectedFieldsProxy = []
     },
     removeField: function (index) {
       this.selectedFields.splice(index, 1)
@@ -738,7 +715,6 @@ export default {
       }).catch((e) => {})
 
       EventBus.$emit('toggleStar', this.selectedEvents)
-
     },
     changeSortOrder: function () {
       if (this.currentQueryFilter.order === 'asc') {
@@ -821,7 +797,6 @@ export default {
       }
       this.search()
     }
-
   }
 }
 </script>

@@ -38,11 +38,9 @@ from flask import session
 
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 
-
 CSRF_KEY = 'google_oauth2_csrf_token'
 AUTH_URI = 'https://accounts.google.com/o/oauth2/v2/auth'
 DISCOVERY_URL = 'https://accounts.google.com/.well-known/openid-configuration'
-
 
 class JwtValidationError(Exception):
     """Raised when a JSON Web Token cannot be validated."""
@@ -91,8 +89,10 @@ def _fetch_oauth2_discovery_document():
     Returns:
         HTTP response.
     """
+    discovery_url = current_app.config.get(
+        'GOOGLE_OIDC_DISCOVERY_URL', DISCOVERY_URL)
     try:
-        resp = requests.get(DISCOVERY_URL)
+        resp = requests.get(discovery_url)
     except requests.exceptions.RequestException as e:
         raise DiscoveryDocumentError(
             'Cannot fetch discovery document: {}'.format(e)) from e
@@ -120,6 +120,7 @@ def get_oauth2_authorize_url(hosted_domain=None):
     Returns:
         Authorization URL.
     """
+    auth_uri = current_app.config.get('GOOGLE_OIDC_AUTH_URL', AUTH_URI)
     csrf_token = _generate_random_token()
     nonce = _generate_random_token()
     redirect_uri = url_for(
@@ -146,7 +147,7 @@ def get_oauth2_authorize_url(hosted_domain=None):
         params['hd'] = hosted_domain
 
     urlencoded_params = urlparse.urlencode(params)
-    google_authorization_url = '{}?{}'.format(AUTH_URI, urlencoded_params)
+    google_authorization_url = '{}?{}'.format(auth_uri, urlencoded_params)
     return google_authorization_url
 
 
@@ -199,7 +200,9 @@ def decode_jwt(encoded_jwt, public_key, algorithm, expected_audience):
     Args:
         encoded_jwt: The contents of the X-Goog-IAP-JWT-Assertion header.
         public_key: Key to verify signature of the JWT.
-        algorithm: Algorithm used for the key. E.g. ES256, RS256
+        algorithm: Algorithm used for the key. E.g. ES256, RS256. If the
+            GOOGLE_OIDC_ALGORITHM is set in the config, it will overwrite
+            the algorithm used here.
         expected_audience: Expected audience in the JWT.
 
     Returns:
@@ -208,9 +211,12 @@ def decode_jwt(encoded_jwt, public_key, algorithm, expected_audience):
     Raises:
         JwtValidationError: if the JWT token cannot be decoded.
     """
+    chosen_algorithm = current_app.config.get(
+        'GOOGLE_OIDC_ALGORITHM', algorithm)
     try:
         decoded_jwt = jwt.decode(
-            jwt=encoded_jwt, key=public_key, algorithms=[algorithm],
+            jwt=encoded_jwt, key=public_key,
+            algorithms=[chosen_algorithm],
             audience=expected_audience)
         return decoded_jwt
     except (jwt.exceptions.InvalidTokenError,

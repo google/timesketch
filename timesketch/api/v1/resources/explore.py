@@ -29,6 +29,7 @@ from flask_login import current_user
 from timesketch.api.v1 import export
 from timesketch.api.v1 import resources
 from timesketch.lib import forms
+from timesketch.lib import utils
 from timesketch.lib.utils import get_validated_indices
 from timesketch.lib.definitions import DEFAULT_SOURCE_FIELDS
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
@@ -107,6 +108,14 @@ class ExploreResource(resources.ResourceMixin, Resource):
         # This will also remove any deleted timeline from the search result.
         indices, timeline_ids = get_validated_indices(indices, sketch)
 
+        # Remove indices that don't exist from search.
+        indices = utils.validate_indices(indices, self.datastore)
+
+        if not indices:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'No valid search indices were found to perform the search on.')
+
         # Make sure we have a query string or star filter
         if not (form.query.data, query_filter.get('star'),
                 query_filter.get('events'), query_dsl):
@@ -119,13 +128,15 @@ class ExploreResource(resources.ResourceMixin, Resource):
             'indices': {
                 'terms': {
                     'field': '_index',
-                    'min_doc_count': 0
+                    'min_doc_count': 0,
+                    'size': len(sketch.timelines)
                 }
             },
             'timelines': {
                 'terms': {
                     'field': '__ts_timeline_id',
-                    'min_doc_count': 0
+                    'min_doc_count': 0,
+                    'size': len(sketch.timelines)
                 }
             }
         }
@@ -173,7 +184,9 @@ class ExploreResource(resources.ResourceMixin, Resource):
                     query_filter=query_filter,
                     indices=indices,
                     sketch=sketch,
-                    datastore=self.datastore)
+                    datastore=self.datastore,
+                    return_fields=return_fields,
+                    timeline_ids=timeline_ids)
                 fh.seek(0)
                 zip_file.writestr('query_results.csv', fh.read())
             file_object.seek(0)

@@ -35,11 +35,11 @@ export default {
     getColumns: function () {
       let columns = []
       let firstRow = this.tableData[0]
-      Object.keys(firstRow).forEach(function(key) {
+      Object.keys(firstRow).forEach(function (key) {
         columns.push({
           field: key,
           label: key,
-          sortable: true,
+          sortable: true
         })
       })
       return columns
