@@ -677,7 +677,8 @@ def run_csv_jsonl(
     error_msg = ''
     error_count = 0
     try:
-        es.create_index(index_name=index_name, doc_type=event_type, mappings=mappings)
+        es.create_index(
+            index_name=index_name, doc_type=event_type, mappings=mappings)
         for event in read_and_validate(file_handle):
             es.import_event(
                 index_name, event_type, event, timeline_id=timeline_id)
