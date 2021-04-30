@@ -29,23 +29,34 @@ limitations under the License.
             </span>
           </span>
           <span class="file-name" v-if="fileName">
-            <span v-if="!fileName">No file selected</span>
+            <span v-if="!fileName">Please select a file</span>
             {{ fileName }}
           </span>
         </label>
       </div>
     </div>
-
+    <div class="field">
+      <span v-if="error">
+        {{ error }}
+      </span>
     <div class="field" v-if="fileName">
       <label class="label">Name</label>
       <div class="control">
         <input v-model="form.name" class="input" type="text" required placeholder="Name your timeline">
       </div>
     </div>
+    <div class="error" v-if="!error">
+      <div class="field" v-if="fileName">
+        <label class="label">Name</label>
+        <div class="control">
+          <input v-model="form.name" class="input" type="text" required placeholder="Name your timeline">
+        </div>
+      </div>
 
-    <div class="field" v-if="fileName && percentCompleted === 0">
-      <div class="control">
-        <input class="button is-success" type="submit" value="Upload">
+      <div class="field" v-if="fileName && percentCompleted === 0">
+        <div class="control">
+          <input class="button is-success" type="submit" value="Upload">
+        </div>
       </div>
     </div>
   </form>
@@ -67,6 +78,7 @@ export default {
         file: ''
       },
       fileName: '',
+      error: '',
       percentCompleted: 0
     }
   },
@@ -101,9 +113,16 @@ export default {
     },
     setFileName: function (fileList) {
       let fileName = fileList[0].name
+      let fileExtension = fileName.split('.')[1]
       this.form.file = fileList[0]
       this.form.name = fileName.split('.').slice(0, -1).join('.')
       this.fileName = fileName
+
+      this.error = ''
+      let allowedExtensions = ['csv', 'json', 'jsonl', 'plaso']
+      if (!allowedExtensions.includes(fileExtension)) {
+        this.error = 'Please select a file with a valid extension'
+      }
     }
   }
 }
