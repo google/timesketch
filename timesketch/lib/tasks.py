@@ -652,6 +652,21 @@ def run_csv_jsonl(
         'Index timeline [{0:s}] to index [{1:s}] (source: {2:s})'.format(
             timeline_name, index_name, source_type))
 
+    mappings = None
+    mappings_file_path = current_app.config.get('GENERIC_MAPPING_FILE', '')
+    if os.path.isfile(mappings_file_path):
+        try:
+            with open(mappings_file_path, 'r') as mfh:
+                mappings = json.load(mfh)
+
+                if not isinstance(mappings, dict):
+                    raise RuntimeError(
+                        'Unable to create mappings, the mappings are not a '
+                        'dict, please look at the file: {0:s}'.format(
+                            mappings_file_path))
+        except (json.JSONDecodeError, IOError):
+            logger.error('Unable to read in mapping', exc_info=True)
+
     es = ElasticsearchDataStore(
         host=current_app.config['ELASTIC_HOST'],
         port=current_app.config['ELASTIC_PORT'])
@@ -662,7 +677,8 @@ def run_csv_jsonl(
     error_msg = ''
     error_count = 0
     try:
-        es.create_index(index_name=index_name, doc_type=event_type)
+        es.create_index(
+            index_name=index_name, doc_type=event_type, mappings=mappings)
         for event in read_and_validate(file_handle):
             es.import_event(
                 index_name, event_type, event, timeline_id=timeline_id)
