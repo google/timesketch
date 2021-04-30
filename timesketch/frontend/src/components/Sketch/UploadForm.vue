@@ -39,6 +39,11 @@ limitations under the License.
       <span v-if="error">
         {{ error }}
       </span>
+    <div class="field" v-if="fileName">
+      <label class="label">Name</label>
+      <div class="control">
+        <input v-model="form.name" class="input" type="text" required placeholder="Name your timeline">
+      </div>
     </div>
     <div class="error" v-if="!error">
       <div class="field" v-if="fileName">

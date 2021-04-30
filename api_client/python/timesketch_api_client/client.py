@@ -16,7 +16,6 @@ from __future__ import unicode_literals
 
 import os
 import logging
-import uuid
 
 # pylint: disable=wrong-import-order
 import bs4
@@ -476,43 +475,6 @@ class TimesketchApi:
         """
         return index.SearchIndex(searchindex_id, api=self)
 
-    def get_or_create_searchindex(self,
-                                  searchindex_name,
-                                  es_index_name=None,
-                                  public=False):
-        """Create a new searchindex.
-
-        Args:
-            searchindex_name: Name of the searchindex in Timesketch.
-            es_index_name: Name of the index in Elasticsearch.
-            public: Boolean indicating if the searchindex should be public.
-
-        Returns:
-            Instance of a SearchIndex object and a boolean indicating if the
-            object was created.
-        """
-        if not es_index_name:
-            es_index_name = uuid.uuid4().hex
-
-        resource_url = '{0:s}/searchindices/'.format(self.api_root)
-        form_data = {
-            'searchindex_name': searchindex_name,
-            'es_index_name': es_index_name,
-            'public': public
-        }
-        response = self.session.post(resource_url, json=form_data)
-
-        if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
-            error.error_message(
-                response, message='Error creating searchindex',
-                error=RuntimeError)
-
-        response_dict = error.get_response_json(response, logger)
-        metadata_dict = response_dict['meta']
-        created = metadata_dict.get('created', False)
-        searchindex_id = response_dict['objects'][0]['id']
-        return self.get_searchindex(searchindex_id), created
-
     def check_celery_status(self, job_id=''):
         """Return information about outstanding celery tasks or a specific one.
 
@@ -534,24 +496,23 @@ class TimesketchApi:
         return response.get('objects', [])
 
     def list_searchindices(self):
-        """Get list of all searchindices that the user has access to.
+        """Yields all searchindices that the user has access to.
 
-        Returns:
-            List of SearchIndex object instances.
+        Yields:
+            A SearchIndex object instances.
         """
-        indices = []
         response = self.fetch_resource_data('searchindices/')
         response_objects = response.get('objects')
         if not response_objects:
-            return indices
+            yield None
+            return
 
         for index_dict in response_objects[0]:
             index_id = index_dict['id']
             index_name = index_dict['name']
             index_obj = index.SearchIndex(
                 searchindex_id=index_id, api=self, searchindex_name=index_name)
-            indices.append(index_obj)
-        return indices
+            yield index_obj
 
     def refresh_oauth_token(self):
         """Refresh an OAUTH token if one is defined."""
