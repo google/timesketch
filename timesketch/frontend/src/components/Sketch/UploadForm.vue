@@ -73,7 +73,6 @@ export default {
         file: ''
       },
       fileName: '',
-      error: '',
       percentCompleted: 0
     }
   },
