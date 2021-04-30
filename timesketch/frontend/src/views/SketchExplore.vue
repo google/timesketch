@@ -29,7 +29,6 @@ limitations under the License.
         <div class="card">
 
           <div class="card-content" v-if="showSearch">
-
               <div class="field has-addons">
                 <div class="control">
                   <ts-view-list-dropdown @setActiveView="searchView" @clearSearch="clearSearch" :current-query-string="currentQueryString" :current-query-filter="currentQueryFilter" :view-from-url="params.viewId" :sketch-id="sketchId"></ts-view-list-dropdown>
@@ -94,9 +93,13 @@ limitations under the License.
                     </section>
                   </div>
                 </b-dropdown>
-
               </p>
             </div>
+
+            <p class="control" style="top:-38px; float:right;">
+              <span style="margin-right:10px; margin-left:15px;">Search history</span>
+              <b-switch v-model="showSearchHistory" size="is-small" type='is-info' style="top:2px;"></b-switch>
+            </p>
 
             <!-- Time filters -->
             <div class="tags" style="margin-bottom:-5px;">
@@ -154,6 +157,25 @@ limitations under the License.
 
           </div>
 
+        </div>
+      </div>
+    </section>
+
+    <section class="section" v-if="showSearchHistory">
+      <div class="container is-fluid">
+        <div class="card">
+          <header class="card-header">
+            <p class="card-header-title">
+              My searches
+            </p>
+            <div class="card-header-icon" style="width:20%;">
+              <span style="margin-right:10px;">Zoom</span>
+              <b-slider style="margin-right:10px;" v-model="zoomLevel" :min="0.1" :max="1" :step="0.01"></b-slider>
+            </div>
+          </header>
+          <div class="card-content no-scrollbars" v-dragscroll style="overflow: scroll; white-space: nowrap; max-height:700px;min-height:500px">
+            <ts-search-history-tree @node-click="jumpInHistory" v-bind:style="{ transform: 'scale(' + zoomLevel + ')' }" style="transform-origin: top left;"></ts-search-history-tree>
+          </div>
         </div>
       </div>
     </section>
@@ -328,7 +350,11 @@ import TsViewListDropdown from '../components/Sketch/ViewListDropdown'
 import TsSketchExploreEventList from '../components/Sketch/EventList'
 import TsExploreTimelinePicker from '../components/Sketch/TimelinePicker'
 import TsExploreFilterTime from '../components/Sketch/TimeFilter'
+import TsSearchHistoryTree from '../components/Tree'
 import EventBus from '../main'
+import { None } from 'vega'
+
+import { dragscroll } from 'vue-dragscroll'
 
 const defaultQueryFilter = () => {
   return {
@@ -351,11 +377,15 @@ const emptyEventList = () => {
 }
 
 export default {
+  directives: {
+    dragscroll
+  },
   components: {
     TsViewListDropdown,
     TsSketchExploreEventList,
     TsExploreTimelinePicker,
-    TsExploreFilterTime
+    TsExploreFilterTime,
+    TsSearchHistoryTree
   },
   props: ['sketchId'],
   data () {
@@ -385,7 +415,14 @@ export default {
         showEmojis: true,
         showMillis: false
       },
-      selectedLabels: []
+      selectedLabels: [],
+      showSearchHistory: false,
+      branchParent: None,
+      zoomLevel: 1,
+      zoomOrigin: {
+        x: 0,
+        y: 0
+      }
     }
   },
   computed: {
@@ -396,10 +433,10 @@ export default {
       return this.$store.state.meta
     },
     totalHits () {
-      return this.eventList.meta.es_total_count || 0
+      return this.eventList.meta.es_total_count_complete || 0
     },
     totalHitsForPagination () {
-      let total = this.eventList.meta.es_total_count || 0
+      let total = this.eventList.meta.es_total_count_complete || 0
       // Elasticsearch only support pagination for the first 10k events.
       if (total > 9999) {
         total = 10000
@@ -432,7 +469,7 @@ export default {
     hideDropdown: function () {
       this.$refs['NewTimeFilter'].isActive = false
     },
-    search: function (emitEvent = true, resetPagination = true) {
+    search: function (emitEvent = true, resetPagination = true, incognito = false, parent = false) {
       this.searchInProgress = true
       if (!this.currentQueryString) {
         return
@@ -464,6 +501,23 @@ export default {
         'filter': this.currentQueryFilter
       }
 
+      // Search history
+      if (incognito) {
+        formData['incognito'] = true
+      }
+
+      if (parent) {
+        formData['parent'] = parent
+      }
+
+      if (parent && incognito) {
+        this.branchParent = parent
+      }
+
+      if (this.branchParent) {
+        formData['parent'] = this.branchParent
+      }
+
       if (emitEvent) {
         EventBus.$emit('newSearch')
       }
@@ -472,6 +526,12 @@ export default {
         this.eventList.objects = response.data.objects
         this.eventList.meta = response.data.meta
         this.searchInProgress = false
+
+        if (!incognito) {
+          EventBus.$emit('createBranch', this.eventList.meta.search_node)
+          this.branchParent = this.eventList.meta.search_node.id
+          // this.branchParent = null
+        }
       }).catch((e) => {})
     },
     exportSearchResult: function () {
@@ -731,13 +791,53 @@ export default {
     },
     loadingClose: function () {
       this.loadingComponent.close()
+    },
+    jumpInHistory: function (node) {
+      this.currentQueryString = node.query_string
+      this.currentQueryFilter = JSON.parse(node.query_filter)
+      if (!this.currentQueryFilter.fields || !this.currentQueryFilter.fields.length) {
+        this.currentQueryFilter.fields = [{ field: 'message', type: 'text' }]
+      }
+      this.selectedFields = this.currentQueryFilter.fields
+      if (this.currentQueryFilter.indices[0] === '_all' || this.currentQueryFilter.indices === '_all') {
+        let allIndices = []
+        this.sketch.active_timelines.forEach((timeline) => {
+          let isLegacy = this.meta.indices_metadata[timeline.searchindex.index_name].is_legacy
+          if (isLegacy) {
+            allIndices.push(timeline.searchindex.index_name)
+          } else {
+            allIndices.push(timeline.id)
+          }
+        })
+        this.currentQueryFilter.indices = allIndices
+      }
+      let chips = this.currentQueryFilter.chips
+      if (chips) {
+        for (let i = 0; i < chips.length; i++) {
+          if (chips[i].type === 'label') {
+            this.selectedLabels.push(chips[i].value)
+          }
+        }
+      }
+      this.contextEvent = false
+      this.search(false, true, true, node.id)
+    },
+    zoomWithMouse: function (event) {
+      // Add @wheel="zoomWithMouse" on element to activate.
+      this.zoomOrigin.x = event.pageX
+      this.zoomOrigin.y = event.pageY
+      if (event.deltaY < 0) {
+        this.zoomLevel += 0.07
+      } else if (event.deltaY > 0) {
+        this.zoomLevel -= 0.07
+      }
     }
   },
 
   watch: {
     numEvents: function (newVal) {
       this.currentQueryFilter.size = newVal
-      this.search()
+      this.search(false)
     }
   },
   mounted () {
@@ -844,4 +944,14 @@ export default {
 .can-change-background:hover {
   color: rgba(10, 10, 10, 0.3);
 }
+
+.no-scrollbars::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbars {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 </style>

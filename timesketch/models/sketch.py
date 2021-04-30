@@ -20,6 +20,7 @@ import json
 from flask import current_app
 from flask import url_for
 
+from sqlalchemy import Table
 from sqlalchemy import BigInteger
 from sqlalchemy import Column
 from sqlalchemy import ForeignKey
@@ -62,6 +63,8 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
     analysis = relationship('Analysis', backref='sketch', lazy='select')
     analysissessions = relationship(
         'AnalysisSession', backref='sketch', lazy='select')
+    searchhistories = relationship(
+        'SearchHistory', backref='sketch', lazy='dynamic')
 
     def __init__(self, name, description, user):
         """Initialize the Sketch object.
@@ -736,77 +739,37 @@ class DataSource(LabelMixin, StatusMixin, CommentMixin, BaseModel):
         self.data_label = data_label
         self.error_message = error_message
 
-# TODO: This is WIP
-class AggregationTemplate(LabelMixin, StatusMixin, BaseModel):
-    """Implements the Aggregation Template model."""
-    name = Column(Unicode(255))
-    description = Column(UnicodeText())
-    agg_type = Column(Unicode(255))
-    parameters = Column(UnicodeText())
-    chart_type = Column(Unicode(255))
+# Association table for the many-to-many relationship between SearchHistory
+# and Event.
+association_table = Table('searchhistory_event', BaseModel.metadata,
+    Column('searchhistory_id', Integer, ForeignKey('searchhistory.id')),
+    Column('event_id', Integer, ForeignKey('event.id'))
+)
 
-    def __init__(self, name, description, agg_type, parameters, chart_type):
-        """Initialize the Aggregation Template object.
-
-        Args:
-            name (str): Name of the aggregation
-            description (str): Description of the aggregation
-            agg_type (str): Aggregation plugin type
-            parameters (str): JSON serialized dict with aggregation parameters
-            chart_type (str): Chart plugin type
-        """
-        super().__init__()
-        self.name = name
-        self.description = description
-        self.agg_type = agg_type
-        self.aggregationgroup = aggregationgroup
-        self.parameters = parameters
-        self.chart_type = chart_type
-
-
-class InvestigativeQuestion(BaseModel):
-    question = Column(UnicodeText())
-    description = Column(UnicodeText())
-    analyzers = Column(UnicodeText())
-    graphs = Column(UnicodeText())
-    datasources = 
-    aggregationtemplates = Column(
-        Integer, ForeignKey('aggregationtemplate.id'))
-    searchtemplates = Column(
-        Integer, ForeignKey('searchtemplate.id'))
-
-
-class SearchHistory(BaseModel):
+class SearchHistory(LabelMixin, BaseModel):
+    """Implements the SearchHistory model."""
     id = Column(Integer, primary_key=True)
+    events = relationship('Event', secondary=association_table)
+    description = Column(UnicodeText())
     parent_id = Column(Integer, ForeignKey(id))
     user_id = Column(Integer, ForeignKey('user.id'))
     sketch_id = Column(Integer, ForeignKey('sketch.id'))
     query_string = Column(UnicodeText())
     query_filter = Column(UnicodeText())
     query_dsl = Column(UnicodeText())
-    
-    events = relationship(
-        'Event',
-        backref='sketch',
-        lazy='select'
-    )
-
+    query_result_count = Column(BigInteger())
+    query_time = Column(BigInteger())
     children = relationship(
         'SearchHistory',
-        # cascade deletions
-        cascade="all, delete-orphan",
-        # many to one + adjacency list - remote_side
-        # is required to reference the 'remote'
-        # column in the join condition.
+        # Cascade deletions
+        cascade='all, delete-orphan',
         backref=backref("parent", remote_side=id),
-        # children will be represented as a dictionary
-        # on the "id" attribute.
         collection_class=attribute_mapped_collection('id'),
     )
 
     def __init__(
-        self, user, sketch, query_string, query_filter=None, query_dsl=None,
-        parent=None):
+        self, user, sketch, query_string=None, query_filter=None,
+        query_dsl=None, parent=None):
         self.user = user
         self.sketch = sketch
         self.query_string = query_string
@@ -814,17 +777,35 @@ class SearchHistory(BaseModel):
         self.query_dsl = query_dsl
         self.parent = parent
 
-    def __repr__(self):
-        return "SearchHistory(query_string=%r, id=%r, parent_id=%r)" % (
-            self.query_string,
-            self.id,
-            self.parent_id,
-        )
+    def dump_tree(self, node, node_dict, recurse=True):    
+        """Recursive function to generate full search history tree.
+        Args:
+            node: SearchHistory object as root node.
+            node_dict: Dictionary to use for recursion.
+            recurse: Boolean indicating if the function whould recurse.
 
-    def dump(self, _indent=0):
-        return (
-            "   " * _indent
-            + repr(self)
-            + "\n"
-            + "".join([c.dump(_indent + 1) for c in self.children.values()])
-        )
+        Returns:
+            Dictionary with a Search History tree.
+        """
+        node_dict["id"] = node.id
+        node_dict["description"] = node.description
+        node_dict["query_result_count"] = node.query_result_count
+        node_dict["query_time"] = node.query_time
+        node_dict["labels"] = node.get_labels
+        node_dict["created_at"] = node.created_at
+        node_dict["parent"] = node.parent_id
+        node_dict["query_string"] = node.query_string
+        node_dict["query_filter"] = node.query_filter
+        node_dict["query_dsl"] = node.query_dsl
+        node_dict["children"] = []
+
+        children = node.children.values()
+        if children and recurse:
+            for idx, child in enumerate(children):
+                child_dict = {}
+                child.dump_tree(child, child_dict)
+                node_dict["children"].append(child_dict)
+        else:
+            return node_dict
+
+        return node_dict

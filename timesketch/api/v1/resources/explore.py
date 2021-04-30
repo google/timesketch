@@ -39,6 +39,7 @@ from timesketch.models import db_session
 from timesketch.models.sketch import Event
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import View
+from timesketch.models.sketch import SearchHistory
 
 
 class ExploreResource(resources.ResourceMixin, Resource):
@@ -84,6 +85,8 @@ class ExploreResource(resources.ResourceMixin, Resource):
         count = bool(form.count.data)
 
         query_filter = request.json.get('filter', {})
+        parent = request.json.get('parent', None)
+        incognito = request.json.get('incognito', False)
 
         return_field_string = form.fields.data
         if return_field_string:
@@ -234,6 +237,9 @@ class ExploreResource(resources.ResourceMixin, Resource):
         except KeyError:
             pass
 
+        # Total count for query regardless of returned results.
+        count_total_complete = sum(count_per_index.values())
+
         comments = {}
         if 'comment' in return_fields:
             events = Event.query.filter_by(
@@ -262,8 +268,8 @@ class ExploreResource(resources.ResourceMixin, Resource):
 
         # Update or create user state view. This is used in the UI to let
         # the user get back to the last state in the explore view.
-        # TODO: Add a call to utils.update_sketch_last_activity once new
-        # mechanism has been added, instead of relying on user views.
+        # TODO: Deprecate this and change how last activity is determined, e.g
+        # use the new Search History feature instead.
         view = View.get_or_create(
             user=current_user, sketch=sketch, name='')
         view.update_modification_time()
@@ -272,6 +278,46 @@ class ExploreResource(resources.ResourceMixin, Resource):
         view.query_dsl = json.dumps(query_dsl, ensure_ascii=False)
         db_session.add(view)
         db_session.commit()
+
+        # Search History
+        search_node = None
+        new_search_node = SearchHistory(user=current_user, sketch=sketch)
+
+        if parent:
+            previous_search = SearchHistory.query.get(parent)
+        else:
+            previous_search = SearchHistory.query.filter_by(
+                user=current_user, sketch=sketch).order_by(
+                    SearchHistory.id.desc()).first()
+        
+        if not incognito:
+            is_same_query = False
+            is_same_filter = False
+
+            new_search_node.query_string = form.query.data
+            new_search_node.query_filter = json.dumps(
+                query_filter, ensure_ascii=False)
+
+            new_search_node.query_result_count = count_total_complete
+            new_search_node.query_time = result['took']
+            
+            if previous_search:
+                new_search_node.parent = previous_search
+
+                new_query = new_search_node.query_string
+                new_filter = new_search_node.query_filter
+                previous_query = previous_search.query_string
+                previous_filter = previous_search.query_filter
+                
+                is_same_query = previous_query == new_query
+                is_same_filter = previous_filter == new_filter
+            
+            if not all([is_same_query, is_same_filter]):
+                db_session.add(new_search_node)
+                db_session.commit()
+        
+        search_node = new_search_node if new_search_node.id else previous_search
+        search_node = search_node.dump_tree(search_node, {}, recurse=False)
 
         # Add metadata for the query result. This is used by the UI to
         # render the event correctly and to display timing and hit count
@@ -285,11 +331,13 @@ class ExploreResource(resources.ResourceMixin, Resource):
         meta = {
             'es_time': result['took'],
             'es_total_count': result['hits']['total'],
+            'es_total_count_complete': count_total_complete,
             'timeline_colors': tl_colors,
             'timeline_names': tl_names,
             'count_per_index': count_per_index,
             'count_per_timeline': count_per_timeline,
             'scroll_id': result.get('_scroll_id', ''),
+            'search_node': search_node
         }
 
         # Elasticsearch version 7.x returns total hits as a dictionary.
@@ -334,4 +382,36 @@ class QueryResource(resources.ResourceMixin, Resource):
         query = self.datastore.build_query(
             sketch.id, query_string, query_filter, query_dsl)
         schema['objects'].append(query)
+        return jsonify(schema)
+
+
+class SearchHistoryResource(resources.ResourceMixin, Resource):
+    """Resource to get search history for a user."""
+
+    @login_required
+    def get(self, sketch_id):
+        """Handles GET request to the resource.
+
+        Returns:
+            Search history in JSON (instance of flask.wrappers.Response)
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+
+        tree = {}
+        root_node = SearchHistory.query.filter_by(
+            user=current_user, sketch=sketch).first()
+        last_node = SearchHistory.query.filter_by(
+            user=current_user, sketch=sketch).order_by(
+                SearchHistory.id.desc()).first()
+        
+        if root_node:
+            tree = root_node.dump_tree(root_node, {})
+
+        schema = {
+            'objects': [tree],
+            'meta': {'last_node_id': last_node.id if last_node else None}
+        }
+   
         return jsonify(schema)

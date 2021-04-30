@@ -129,11 +129,12 @@ export default {
     }
     return RestApiClient.get('/sketches/' + sketchId + '/event/', params)
   },
-  saveEventAnnotation (sketchId, annotationType, annotation, events, remove = false) {
+  saveEventAnnotation (sketchId, annotationType, annotation, events, currentSearchNode, remove = false) {
     let formData = {
       annotation: annotation,
       annotation_type: annotationType,
       events: events,
+      current_search_node_id: currentSearchNode.id,
       remove: remove
     }
     return RestApiClient.post('/sketches/' + sketchId + '/event/annotate/', formData)
@@ -291,5 +292,8 @@ export default {
       }
     }
     return RestApiClient.get('/sketches/' + sketchId + /graphs/ + graphId + '/', params)
+  },
+  getSearchHistory (sketchId) {
+    return RestApiClient.get('/sketches/' + sketchId + /searchhistory/)
   }
 }
