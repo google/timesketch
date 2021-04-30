@@ -38,7 +38,7 @@ limitations under the License.
     <div class="field">
       <span v-if="error">
         {{ error }}
-        </span>
+      </span>
     </div>
     <div class="error" v-if="!error">
       <div class="field" v-if="fileName">
@@ -73,6 +73,7 @@ export default {
         file: ''
       },
       fileName: '',
+      error: '',
       percentCompleted: 0
     }
   },
@@ -104,16 +105,6 @@ export default {
         this.clearFormData()
         this.percentCompleted = 0
       }).catch((e) => {})
-    },
-    checkFileName: function (fileList) {
-      let fileName = fileList[0].name
-      let fileExtension = fileName.split('.')[1]
-
-      this.error = ''
-      let allowedExtensions = ['csv','json','jsonl','plaso']
-      if(!allowedExtensions.includes(fileExtension)){
-        this.error = 'Please select a file with a valid extension'
-      }
     },
     setFileName: function (fileList) {
       let fileName = fileList[0].name
