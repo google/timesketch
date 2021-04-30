@@ -247,9 +247,16 @@ def read_and_validate_jsonl(file_handle):
     # Fields that must be present in each entry of the JSONL file.
     mandatory_fields = ['message', 'datetime', 'timestamp_desc']
     lineno = 0
+    max_length_line_jsonl = current_app.config.get('MAX_LENGTH_LINE_JSONL')
     for line in file_handle:
         lineno += 1
         try:
+            current_len = len(line)
+            if current_len > max_length_line_jsonl:
+                raise RuntimeError(
+                    'Line too long at line {0:n}: {1:s}'.format(
+                        lineno, ','.join(current_len)))
+
             linedict = json.loads(line)
             ld_keys = linedict.keys()
             if 'datetime' not in ld_keys and 'timestamp' in ld_keys:
