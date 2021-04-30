@@ -119,8 +119,8 @@ export default {
       this.fileName = fileName
 
       this.error = ''
-      let allowedExtensions = ['csv','json','jsonl','plaso']
-      if(!allowedExtensions.includes(fileExtension)){
+      let allowedExtensions = ['csv', 'json', 'jsonl', 'plaso']
+      if (!allowedExtensions.includes(fileExtension)) {
         this.error = 'Please select a file with a valid extension'
       }
     }
