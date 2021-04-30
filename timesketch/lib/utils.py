@@ -253,9 +253,11 @@ def read_and_validate_jsonl(file_handle):
         try:
             current_len = len(line)
             if current_len > max_length_line_jsonl:
-                raise RuntimeError(
-                    'Line too long at line {0:n}: {1:s}'.format(
-                        lineno, ','.join(current_len)))
+                warning_string = (
+                    'Line too long at line {0}: {1}')
+                logger.warning(warning_string.format(
+                    lineno, current_len))
+                continue
 
             linedict = json.loads(line)
             ld_keys = linedict.keys()
