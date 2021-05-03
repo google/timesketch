@@ -266,10 +266,11 @@ def read_and_validate_jsonl(file_handle):
                 for x in ld_keys:
                     if field_len[x] > max_len_line_jsonl:
                         if (total_len-field_len[x]) > max_len_line_jsonl:
-                            #TODO: improve capacity to manage multi fields too long
+                            #TODO: manage multi fields too long
                             break
                         current_max = int(
-                            max_len_line_jsonl - (max_len_line_jsonl / 100 * 10))
+                            max_len_line_jsonl - (
+                                max_len_line_jsonl / 100 * 10))
                         current_reduc = current_max - (total_len - field_len[x])
                         linedict[x] = linedict[x][0:current_reduc]
                         if 'tag' in linedict:
@@ -306,7 +307,8 @@ def read_and_validate_jsonl(file_handle):
 
         except ValueError as e:
             raise errors.DataIngestionError(
-                'Error parsing JSON at line {0:n}: {1:s}'.format(line_number, e))
+                'Error parsing JSON'
+                ' at line {0:n}: {1:s}'.format(line_number, e))
 
 
 def get_validated_indices(indices, sketch):
