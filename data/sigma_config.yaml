@@ -1,10 +1,7 @@
 title: Timesketch Sigma config
 order: 20
 backends:
-  - es-dsl
   - es-qs
-  - es-qr
-  - es-rule
 logsources:
   sshd:
     service: sshd
@@ -75,6 +72,11 @@ logsources:
     conditions:
       data_type:
         - "fs:stat"
+  sysmon:
+    service: sysmon
+    conditions:
+      source_name:
+        - "Microsoft-Windows-Sysmon"
 fieldmappings:
     EventID: event_identifier
     ComputerName: computer_name
