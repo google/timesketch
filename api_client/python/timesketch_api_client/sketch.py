@@ -1522,7 +1522,7 @@ class Sketch(resource.BaseResource):
             'message': message,
             'tag': tags
         }
-        
+
         duplicate_attributes = [key for key in attributes if key in form_data]
 
         if duplicate_attributes:
