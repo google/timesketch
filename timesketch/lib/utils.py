@@ -246,21 +246,45 @@ def read_and_validate_jsonl(file_handle):
     """
     # Fields that must be present in each entry of the JSONL file.
     mandatory_fields = ['message', 'datetime', 'timestamp_desc']
-    lineno = 0
-    max_length_line_jsonl = current_app.config.get('MAX_LENGTH_LINE_JSONL')
+    line_number = 0
+    max_len_line_jsonl = current_app.config.get('MAX_LENGTH_LINE_JSONL')
+    tag_reducted = current_app.config.get('TAG_REDUCTED_JSONL')
     for line in file_handle:
-        lineno += 1
+        line_number += 1
         try:
-            current_len = len(line)
-            if current_len > max_length_line_jsonl:
-                warning_string = (
-                    'Line too long at line {0}: {1}')
-                logger.warning(warning_string.format(
-                    lineno, current_len))
-                continue
-
             linedict = json.loads(line)
             ld_keys = linedict.keys()
+
+            current_len = len(line)
+            if current_len > max_len_line_jsonl:
+                field_len={}
+                total_len=0
+                for x in ld_keys:
+                    if isinstance(linedict[x], str):
+                        field_len[x]=len(linedict[x])
+                        total_len+=field_len[x]
+                for x in ld_keys:
+                    if field_len[x] > max_len_line_jsonl:
+                        if (total_len-field_len[x]) > max_len_line_jsonl:
+                            #TODO: improve capacity to manage multi fields too long
+                            break
+                        current_max = int(
+                            max_len_line_jsonl - (max_len_line_jsonl / 100 * 10))
+                        current_reduc = current_max - (total_len - field_len[x])
+                        linedict[x] = linedict[x][0:current_reduc]
+                        if 'tag' in linedict:
+                            linedict['tag'] += tag_reducted
+                            break
+                        linedict['tag'] = [tag_reducted]
+                        break
+                current_len = len(str(linedict))
+                if current_len > max_len_line_jsonl:
+                    logger.warning(
+                        'Line {0:d} too long ({1:d} chars which is over '
+                        'the maximum supported value of {2:d}'.format(
+                        line_number, current_len, max_len_line_jsonl))
+                    continue
+
             if 'datetime' not in ld_keys and 'timestamp' in ld_keys:
                 epoch = int(str(linedict['timestamp'])[:10])
                 dt = datetime.datetime.fromtimestamp(epoch)
@@ -272,7 +296,7 @@ def read_and_validate_jsonl(file_handle):
             if missing_fields:
                 raise RuntimeError(
                     'Missing field(s) at line {0:n}: {1:s}'.format(
-                        lineno, ','.join(missing_fields)))
+                        line_number, ','.join(missing_fields)))
 
             if 'tag' in linedict:
                 linedict['tag'] = [
@@ -282,7 +306,7 @@ def read_and_validate_jsonl(file_handle):
 
         except ValueError as e:
             raise errors.DataIngestionError(
-                'Error parsing JSON at line {0:n}: {1:s}'.format(lineno, e))
+                'Error parsing JSON at line {0:n}: {1:s}'.format(line_number, e))
 
 
 def get_validated_indices(indices, sketch):
