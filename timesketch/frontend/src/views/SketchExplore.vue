@@ -459,6 +459,11 @@ export default {
       // Update with selected fields
       this.currentQueryFilter.fields = this.selectedFields
 
+      // Escape defanged indicators (such as timesketch(.)org or 8.8.8[.]8)
+      this.currentQueryString = this.currentQueryString.replace(/\((?:\.|dot)\)/g, '.')
+      this.currentQueryString = this.currentQueryString.replace(/\[(?:\.|dot)\]/g, '.')
+      this.currentQueryString = this.currentQueryString.replace(/hxxp(s?):\/\//g, 'http$1://')
+
       let formData = {
         'query': this.currentQueryString,
         'filter': this.currentQueryFilter
