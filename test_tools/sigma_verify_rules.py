@@ -18,20 +18,56 @@ It also does not require you to have a full blown Timesketch instance.
 Default this tool will show only the rules that cause problems.
 Example way of running the tool:
 $ PYTHONPATH=. python3 test_tools/sigma_verify_rules.py --config_file
-../data/sigma_config.yaml  --config_file data/sigma_config.yaml
---debug data/sigma/rules/windows/ --move data/sigma/rules/problematic/
+data/sigma_config.yaml --debug data/sigma/rules/windows/ --move data/sigma/rules/problematic/
 """
 
 import logging
 import os
 import argparse
 import sys
+import pandas as pd
+
 
 from timesketch.lib import sigma_util# pylint: disable=no-name-in-module
 
 logger = logging.getLogger('timesketch.test_tool.sigma-verify')
 logging.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO'))
 
+
+
+def get_sigma_blocklist(blocklist_path=None):
+    """Get a List of paths to ignore.
+
+    Args:
+        blocklist_path: Optional path to a blocklist file
+    Returns:
+        Pandas dataframe with blocklist
+    Raises:
+        ValueError: If SIGMA_BLOCKLIST is not found in the config file.
+            or the Sigma config file is not readabale.
+        SigmaConfigParseError: If config file could not be parsed.
+    """
+    if blocklist_path:
+        config_file_path = blocklist_path
+    else:
+        config_file_path = './data/sigma_blocklist.csv'
+
+    if not config_file_path:
+        raise ValueError('No blocklist_file_path set via param or config file')
+
+    if not os.path.isfile(config_file_path):
+        raise ValueError(
+            'Unable to open file: [{0:s}], it does not exist.'.format(
+                config_file_path))
+
+    if not os.access(config_file_path, os.R_OK):
+        raise ValueError(
+            'Unable to open file: [{0:s}], cannot open it for '
+            'read, please check permissions.'.format(config_file_path))
+
+    ignore = pd.read_csv(config_file_path)
+
+    return ignore
 
 def run_verifier(rules_path, config_file_path):
     """Run an sigma parsing test on a dir and returns results from the run.
@@ -65,6 +101,8 @@ def run_verifier(rules_path, config_file_path):
     return_verified_rules = []
     return_rules_with_problems = []
 
+    ignore = get_sigma_blocklist()
+
     for dirpath, dirnames, files in os.walk(rules_path):
         if 'deprecated' in [x.lower() for x in dirnames]:
             dirnames.remove('deprecated')
@@ -76,6 +114,17 @@ def run_verifier(rules_path, config_file_path):
                     continue
 
                 rule_file_path = os.path.join(dirpath, rule_filename)
+
+                block_because_csv = False
+                for item in ignore['path']:
+                    if item in rule_file_path:
+                        return_rules_with_problems.append(rule_file_path)
+                        block_because_csv = True
+                        logging.info("{0:s} found in ignore csv because of {1:s}".format(rule_file_path,item))
+
+                if block_because_csv:
+                    continue
+                
                 try:
                     parsed_rule = sigma_util.get_sigma_rule(
                         rule_file_path, sigma_config)
@@ -171,8 +220,7 @@ if __name__ == '__main__':
         config_file_path=options.config_file_path)
 
     if len(sigma_rules_with_problems) > 0:
-        print('### You should NOT import the following rules ###')
-        print('### To get the reason per rule, re-run with --info###')
+        print('### You should NOT import the following rules ||| To get the reason per rule, re-run with --info###')
         for badrule in sigma_rules_with_problems:
             if options.move_to_path:
                 move_problematic_rule(

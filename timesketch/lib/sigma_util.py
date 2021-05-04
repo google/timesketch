@@ -17,7 +17,6 @@ import os
 import codecs
 import logging
 import yaml
-import pandas as pd
 
 from flask import current_app
 
@@ -73,40 +72,6 @@ def get_sigma_config_file(config_file=None):
 
     return sigma_config
 
-def get_sigma_blocklist(blocklist_path=None):
-    """Get a List of paths to ignore.
-
-    Args:
-        blocklist_path: Optional path to a blocklist file
-    Returns:
-        Pandas dataframe with blocklist
-    Raises:
-        ValueError: If SIGMA_BLOCKLIST is not found in the config file.
-            or the Sigma config file is not readabale.
-        SigmaConfigParseError: If config file could not be parsed.
-    """
-    if blocklist_path:
-        config_file_path = blocklist_path
-    else:
-        config_file_path = current_app.config.get(
-            'SIGMA_BLOCKLIST', './data/sigma_blocklist.csv')
-
-    if not config_file_path:
-        raise ValueError('No blocklist_file_path set via param or config file')
-
-    if not os.path.isfile(config_file_path):
-        raise ValueError(
-            'Unable to open file: [{0:s}], it does not exist.'.format(
-                config_file_path))
-
-    if not os.access(config_file_path, os.R_OK):
-        raise ValueError(
-            'Unable to open file: [{0:s}], cannot open it for '
-            'read, please check permissions.'.format(config_file_path))
-
-    ignore = pd.read_csv(config_file_path)
-
-    return ignore
 
 def get_sigma_rules_path():
     """Get Sigma rules paths.
