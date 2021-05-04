@@ -294,3 +294,4 @@ fieldmappings:
     TargetProcessAddress: xml_string
     StartModule: xml_string
     StartFunction: xml_string
+    IntegrityLevel: xml_string
