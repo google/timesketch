@@ -283,14 +283,13 @@ def get_sigma_rule_by_text(rule_text, sigma_config=None):
     sigma_backend = sigma_es.ElasticsearchQuerystringBackend(sigma_conf_obj, {})
 
     rule_return = {}
-
     # TODO check if input validation is needed / useful.
     try:
-        parser = sigma_collection.SigmaCollectionParser(
-            rule_text, sigma_conf_obj, None)
-        parsed_sigma_rules = parser.generate(sigma_backend)
         rule_yaml_data = yaml.safe_load_all(rule_text)
         for doc in rule_yaml_data:
+            parser = sigma_collection.SigmaCollectionParser(
+                str(doc), sigma_conf_obj, None)
+            parsed_sigma_rules = parser.generate(sigma_backend)
             rule_return.update(doc)
 
     except NotImplementedError as exception:
