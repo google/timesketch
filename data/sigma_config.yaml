@@ -145,3 +145,5 @@ fieldmappings:
     Keywords: xml_string
     LDAPDisplayName: xml_string
     AuditPolicyChanges: xml_string
+    SourceImage: xml_string
+    TargetImage: xml_string
