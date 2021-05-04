@@ -25,7 +25,6 @@ windows/process_access/sysmon_,bad,no test data available,2021-05-04
 windows/process_creation/,bad,no test data available,2021-05-04
 windows/raw_access_thread/,bad,no test data available,2021-05-04
 windows/registry_event/,bad,no test data available,2021-05-04
-windows/sysmon/sysmon,bad,no test data available,2021-05-04
 windows/wmi_event/,bad,no test data available,2021-05-04
 windows/builtin/win_global_catalog_enumeration.yml,bad, Aggregations not implemented for this backend
 windows/builtin/win_invoke_obfuscation_clip+_services.yml, bad, No condition found

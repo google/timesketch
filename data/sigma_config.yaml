@@ -147,3 +147,7 @@ fieldmappings:
     AuditPolicyChanges: xml_string
     SourceImage: xml_string
     TargetImage: xml_string
+    TargetFilename: xml_string
+    Image: xml_string # that is a value name that might be used in other queries as well. Ideally it would be something _all
+    ImageLoaded: xml_string
+    QueryName: xml_string
