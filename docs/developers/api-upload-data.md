@@ -98,17 +98,17 @@ What is missing here are few of the necessary columns, see
 add them here, we can do that all in our upload stream. Let's start by
 connecting to a Timesketch instance.
 
-```
+```python
 import pandas as pd
 
-from timesketch_api_client import client
+from timesketch_api_client import config
 from timesketch_import_client import importer
 
 ...
 def action():
   frame = pd.read_excel('~/Downloads/SomeRandomDocument.xlsx')
 
-  ts = client.TimesketchApi(SERVER_LOCATION, USERNAME, PASSWORD)
+  ts = config.get_client()
   my_sketch = ts.get_sketch(SKETCH_ID)
 
   with importer.ImportStreamer() as streamer:
@@ -129,7 +129,7 @@ dictionary approach.
 Here we use an external library, scapy, to read a PCAP file and import the data
 from the network traffic to Timesketch.
 
-```
+```python
 ...
 from scapy import all as scapy_all
 ...
@@ -187,8 +187,8 @@ The function `add_file` in the importer is used to add a file.
 
 Here is an example of how the importer can be used:
 
-```
-from timesketch_api_client import client
+```python
+from timesketch_api_client import config
 from timesketch_import_client import importer
 
 ...
@@ -211,14 +211,14 @@ and the final plaso storage file reassambled.
 
 ## Excel Sheet
 
-```
-from timesketch_api_client import client
+```python
+from timesketch_api_client import config
 from timesketch_import_client import importer
 
 ...
 def action():
 
-  ts = client.TimesketchApi(SERVER_LOCATION, USERNAME, PASSWORD)
+  ts = config.get_client()
   my_sketch = ts.get_sketch(SKETCH_ID)
 
   with importer.ImportStreamer() as streamer:
@@ -230,3 +230,41 @@ def action():
 
     streamer.add_excel_file('~/Downloads/SomeRandomDocument.xlsx')
 ```
+
+## Import Data Already Ingested into Elastic.
+
+You may have other mechanism to ingest data into Elastic, like an ELK stack or
+some manual scripts that ingest the data. Since the data is already in Elastic
+it doesn't need to be re-ingested. In order to make it accessible in Timesketch
+the API client can be used.
+
+**disclaimer:** *the data ingested needs to be in a certain format in order to
+work with Timesketch. This function does limited checking before making it
+available. The timeline may or may not work in Timesketch, depending on
+multiple factors.*
+
+The data that is ingested needs to have few fields already set before it can be
+ingested into Timesketch:
+
++ message
++ timestamp
++ datetime
+
+The datetime field also needs to be mapped as a date, not a text string.
+
+A sample code on how to ingest data into Timesketch that is already in Elastic:
+
+```python
+from timesketch_api_client import config
+
+ts_client = config.get_client()
+sketch = ts_client.get_sketch(SKETCH_ID)
+
+sketch.generate_timeline_from_es_index(
+    es_index_name=ELASTIC_INDEX_NAME,
+    name=TIMELINE_NAME,
+    provider='My Custom Ingestion Script',
+    context='python my_custom_script.py --ingest',
+)
+```
+

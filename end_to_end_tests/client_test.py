@@ -48,12 +48,37 @@ class ClientTest(interface.BaseEndToEndTest):
         self.assertions.assertEqual(len(sketches), number_of_sketches + 1)
 
         for index in self.api.list_searchindices():
-            self.assertions.assertTrue(bool(index.name))
+            if index is None:
+                continue
+            self.assertions.assertTrue(bool(index.index_name))
 
+    def test_direct_es(self):
+        """Test injecting data into Elastic and make it acccessible in TS."""
+        index_name = 'direct_testing'
+
+        self.import_directly_to_elastic(
+            filename='evtx_direct.csv', index_name=index_name)
+
+        new_sketch = self.api.create_sketch(
+            name='Testing Direct', description='Adding data directly from ES')
+
+        context = 'e2e - > test_direct_es'
+        timeline_name = 'Ingested Via Mechanism'
+        timeline = new_sketch.generate_timeline_from_es_index(
+            es_index_name=index_name, name=timeline_name,
+            provider='end_to_end_testing_platform', context=context)
+
+        _ = new_sketch.lazyload_data(refresh_cache=True)
+        self.assertions.assertEqual(len(new_sketch.list_timelines()), 1)
+        self.assertions.assertEqual(timeline.name, timeline_name)
+
+        data_sources = timeline.data_sources
+        self.assertions.assertEqual(len(data_sources), 1)
+        data_source = data_sources[0]
+        self.assertions.assertEqual(data_source.get('context', ''), context)
 
     def test_sigma_list(self):
         """Client Sigma list tests."""
-
         rules = self.api.list_sigma_rules()
         self.assertions.assertGreaterEqual(len(rules), 1)
         rule = rules[0]
@@ -77,7 +102,6 @@ class ClientTest(interface.BaseEndToEndTest):
 
     def test_get_sigma_rule(self):
         """Client Sigma object tests."""
-
         rule = self.api.get_sigma_rule(
             rule_uuid='5266a592-b793-11ea-b3de-0242ac130004')
         rule.from_rule_uuid('5266a592-b793-11ea-b3de-0242ac130004')
@@ -104,7 +128,6 @@ class ClientTest(interface.BaseEndToEndTest):
         self.assertions.assertEqual(len(rule.logsource), 2)
 
         # Test an actual query
-
         self.import_timeline('sigma_events.csv')
         search_obj = search.Search(self.sketch)
         search_obj.query_string = rule.es_query
