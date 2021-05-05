@@ -44,11 +44,10 @@ class SigmaPlugin(interface.BaseAnalyzer):
             event.add_attributes({'ts_sigma_rule': list(set(ts_sigma_rule))})
             ts_ttp = event.source.get('ts_ttp',[])
             for tag in tag_list:
-                print(tag)
                 if tag.startswith(('attack.','car.')):
                     ts_ttp.append(tag)
-                else:
-                    event.add_tags([tag])
+                    tag_list.remove(tag)
+            event.add_tags(tag_list)
             if len(ts_ttp) > 0:
                 event.add_attributes({'ts_ttp': list(set(ts_ttp))})
             event.commit()
