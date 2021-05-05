@@ -120,15 +120,16 @@ def run_verifier(rules_path, config_file_path):
                     if item in rule_file_path:
                         return_rules_with_problems.append(rule_file_path)
                         block_because_csv = True
-                        logging.info("{0:s} found in ignore csv because of {1:s}".format(rule_file_path,item))
+                        logging.info('{0:s} Ignoring because {1:s}'.format(
+                            rule_file_path,item))
 
                 if block_because_csv:
                     continue
-                
+
                 try:
                     parsed_rule = sigma_util.get_sigma_rule(
                         rule_file_path, sigma_config)
-                except:
+                except Exception:# pylint: disable=broad-except
                     return_rules_with_problems.append(rule_file_path)
 
                 if parsed_rule:
@@ -220,7 +221,7 @@ if __name__ == '__main__':
         config_file_path=options.config_file_path)
 
     if len(sigma_rules_with_problems) > 0:
-        print('### You should NOT import the following rules ||| To get the reason per rule, re-run with --info###')
+        print('### Do NOT import below.###')
         for badrule in sigma_rules_with_problems:
             if options.move_to_path:
                 move_problematic_rule(
