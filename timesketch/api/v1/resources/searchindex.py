@@ -89,9 +89,12 @@ class SearchIndexListResource(resources.ResourceMixin, Resource):
             if public:
                 searchindex.grant_permission(permission='read', user=None)
 
-            # Create the index in Elasticsearch
-            self.datastore.create_index(
-                index_name=es_index_name, doc_type='generic_event')
+            datastore = self.datastore
+
+            if not datastore.client.indices.exists(index=es_index_name):
+                # Create the index in Elasticsearch
+                self.datastore.create_index(
+                    index_name=es_index_name, doc_type='generic_event')
 
             db_session.add(searchindex)
             db_session.commit()
@@ -129,8 +132,60 @@ class SearchIndexResource(resources.ResourceMixin, Resource):
 
         meta = {
             'contains_timeline_id': bool('__ts_timeline_id' in fields),
+            'fields': fields,
         }
         return self.to_json(searchindex, meta=meta)
+
+    @login_required
+    def post(self, searchindex_id):
+        """Handles POST request to the resource.
+
+        Returns:
+            A search index in JSON (instance of flask.wrappers.Response)
+        """
+        form = request.json
+        if not form:
+            form = request.data
+
+        if not searchindex_id:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Need to define a search index ID')
+
+        searchindex = SearchIndex.query.get_with_acl(searchindex_id)
+        if not searchindex:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                'No searchindex found with this ID.')
+
+        if not searchindex.has_permission(current_user, 'write'):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN, (
+                    'User does not have sufficient access rights to '
+                    'edit the search index.'))
+
+        if searchindex.get_status.status == 'deleted':
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Search index is marked deleted, unable to continue.')
+
+        commit_to_db = False
+        new_status = form.get('status', '')
+        valid_status = ('ready', 'fail', 'processing', 'timeout')
+        if new_status and new_status in valid_status:
+            searchindex.set_status(status=new_status)
+            commit_to_db = True
+
+        description = form.get('description', '')
+        if description:
+            searchindex.description = description
+            commit_to_db = True
+
+        if commit_to_db:
+            db_session.add(searchindex)
+            db_session.commit()
+
+        return self.to_json(searchindex)
 
     @login_required
     def delete(self, searchindex_id):

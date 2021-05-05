@@ -78,10 +78,22 @@ class TimelineListResource(resources.ResourceMixin, Resource):
         if not sketch.has_permission(current_user, 'write'):
             abort(HTTP_STATUS_CODE_FORBIDDEN,
                   'User does not have write access controls on sketch.')
-        form = forms.AddTimelineSimpleForm.build(request)
+
+        form = request.json
+        if not form:
+            form = request.data
+
         metadata = {'created': True}
 
-        searchindex_id = form.timeline.data
+        searchindex_id = form.get('timeline', 0)
+        if isinstance(searchindex_id, str) and searchindex_id.isdigit():
+            searchindex_id = int(searchindex_id)
+
+        if not isinstance(searchindex_id, int):
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'The timeline (searchindex id) needs to be an integer.')
+
         searchindex = SearchIndex.query.get_with_acl(searchindex_id)
         if searchindex.get_status.status == 'deleted':
             abort(
@@ -93,19 +105,11 @@ class TimelineListResource(resources.ResourceMixin, Resource):
             if t.searchindex.id == searchindex_id
         ]
 
-        if not form.validate_on_submit():
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
-
-        if not sketch.has_permission(current_user, 'write'):
-            abort(
-                HTTP_STATUS_CODE_FORBIDDEN,
-                'User does not have write access to the sketch.')
-
         if not timeline_id:
             return_code = HTTP_STATUS_CODE_CREATED
+            timeline_name = form.get('timeline_name', searchindex.name)
             timeline = Timeline(
-                name=searchindex.name,
+                name=timeline_name,
                 description=searchindex.description,
                 sketch=sketch,
                 user=current_user,
