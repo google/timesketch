@@ -45,7 +45,7 @@ class SigmaPlugin(interface.BaseAnalyzer):
             ts_ttp = event.source.get('ts_ttp',[])
             for tag in tag_list:
                 print(tag)
-                if tag.startswith(('attack.','car.')): # extend if needed e.g. misp
+                if tag.startswith(('attack.','car.')):
                     ts_ttp.append(tag)
                 else:
                     event.add_tags([tag])
