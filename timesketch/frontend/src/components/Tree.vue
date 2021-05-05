@@ -1,11 +1,11 @@
 <template>
   <ul class="tree" v-if="Object.keys(treeData).length > 0">
-    <node-tree :node="treeData" :handle-click="handleClick" :selected-node="selectedNode"></node-tree>
+    <tree-node :node="treeData" :handle-click="handleClick" :selected-node="selectedNode"></tree-node>
   </ul>
 </template>
 
 <script>
-import NodeTree from './NodeTree'
+import TreeNode from './TreeNode'
 import ApiClient from '../utils/RestApiClient'
 import EventBus from '../main'
 
@@ -23,7 +23,7 @@ function findSearchNode (object, key, predicate) {
 }
 
 export default {
-  components: { NodeTree },
+  components: { TreeNode },
   data () {
     return {
       treeData: {},
@@ -70,6 +70,11 @@ export default {
         this.selectedNode = node
       }
     },
+    annotateNode (annotation) {
+      if (!annotation.searchNode.labels.includes(annotation.type)) {
+        annotation.searchNode.labels.push(annotation.type)
+      }
+    },
     scrollTo () {
       document.getElementById(this.selectedNode.id.toString()).scrollIntoView({
         behavior: 'smooth',
@@ -88,9 +93,11 @@ export default {
   },
   beforeDestroy () {
     EventBus.$off('createBranch')
+    EventBus.$off('eventAnnotated')
   },
   created: function () {
     EventBus.$on('createBranch', this.createBranch)
+    EventBus.$on('eventAnnotated', this.annotateNode)
     this.fetchHistory()
   },
   watch: {

@@ -1,7 +1,9 @@
 <template>
   <li>
     <span @click="handleClick(node)" :class="[{active: isSelected}, {star: hasStar && !isSelected}, {dimmed: count === 0 && !isSelected}]" :id="node.id">
-      <i class="fas fa-star" v-if="hasStar" style="float:left; color: #FFD700; -webkit-text-stroke-width: 1px; -webkit-text-stroke-color: #777777; margin-right:10px; margin-top:3px;"></i>
+      <i v-if="hasStar" class="fas fa-star" style="float:left; color: #FFD700; -webkit-text-stroke-width: 1px; -webkit-text-stroke-color: #777777; margin-right:10px; margin-top:3px;"></i>
+      <i v-if="hasComment" class="fas fa-comment" style="float:left; margin-right:10px; margin-top:3px;"></i>
+      <i v-if="hasLabel" class="fas fa-tag" style="float:left; margin-right:10px; margin-top:3px;"></i>
       <div class="query-string" :class="[{'query-string-active': isSelected}]" style="float:left;">{{ node.query_string }}</div> <div class="tag is-light" style="margin-left:10px; margin-right: -5px; float:right;">{{ count | compactNumber }}</div>
     </span>
 
@@ -22,6 +24,12 @@ export default {
   computed: {
     hasStar () {
       return this.node.labels.includes('__ts_star')
+    },
+    hasLabel () {
+      return this.node.labels.includes('__ts_label')
+    },
+    hasComment () {
+      return this.node.labels.includes('__ts_comment')
     },
     isSelected () {
       return this.selectedNode.id === this.node.id

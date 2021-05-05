@@ -300,7 +300,7 @@ export default {
   methods: {
     toggleStar () {
       if (!this.isStarred) {
-        EventBus.$emit('eventAnnotated', { 'type': 'star', 'event': this.event })
+        EventBus.$emit('eventAnnotated', { 'type': '__ts_star', 'event': this.event, 'searchNode': this.currentSearchNode })
       }
       this.isStarred = !this.isStarred
       ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', this.event, this.currentSearchNode).then((response) => {
@@ -314,6 +314,7 @@ export default {
       }
     },
     postComment: function (comment) {
+      EventBus.$emit('eventAnnotated', { 'type': '__ts_comment', 'event': this.event, 'searchNode': this.currentSearchNode })
       ApiClient.saveEventAnnotation(this.sketch.id, 'comment', comment, [this.event], this.currentSearchNode).then((response) => {
         this.comments.push(response.data.objects[0][0])
         this.comment = ''
@@ -325,6 +326,10 @@ export default {
       }
       if (!Array.isArray(labels)) {
         labels = [labels]
+      }
+
+      if (labels.length) {
+        EventBus.$emit('eventAnnotated', { 'type': '__ts_label', 'event': this.event, 'searchNode': this.currentSearchNode })
       }
 
       labels.forEach((label) => {

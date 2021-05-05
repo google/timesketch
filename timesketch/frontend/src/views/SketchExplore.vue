@@ -161,7 +161,7 @@ limitations under the License.
       </div>
     </section>
 
-    <section class="section" v-if="showSearchHistory">
+    <section class="section" v-show="showSearchHistory">
       <div class="container is-fluid">
         <div class="card">
           <header class="card-header">
@@ -530,7 +530,6 @@ export default {
         if (!incognito) {
           EventBus.$emit('createBranch', this.eventList.meta.search_node)
           this.branchParent = this.eventList.meta.search_node.id
-          // this.branchParent = null
         }
       }).catch((e) => {})
     },
