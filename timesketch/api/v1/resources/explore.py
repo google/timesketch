@@ -282,7 +282,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
 
         # Search History
         search_node = None
-        new_search_node = SearchHistory(user=current_user, sketch=sketch)
+        new_search = SearchHistory(user=current_user, sketch=sketch)
 
         if parent:
             previous_search = SearchHistory.query.get(parent)
@@ -290,25 +290,23 @@ class ExploreResource(resources.ResourceMixin, Resource):
             previous_search = SearchHistory.query.filter_by(
                 user=current_user, sketch=sketch).order_by(
                     SearchHistory.id.desc()).first()
-        
-        print('previous: ', previous_search)
 
         if not incognito:
             is_same_query = False
             is_same_filter = False
 
-            new_search_node.query_string = form.query.data
-            new_search_node.query_filter = json.dumps(
+            new_search.query_string = form.query.data
+            new_search.query_filter = json.dumps(
                 query_filter, ensure_ascii=False)
 
-            new_search_node.query_result_count = count_total_complete
-            new_search_node.query_time = result['took']
+            new_search.query_result_count = count_total_complete
+            new_search.query_time = result['took']
             
             if previous_search:
-                new_search_node.parent = previous_search
+                new_search.parent = previous_search
 
-                new_query = new_search_node.query_string
-                new_filter = new_search_node.query_filter
+                new_query = new_search.query_string
+                new_filter = new_search.query_filter
                 previous_query = previous_search.query_string
                 previous_filter = previous_search.query_filter
                 
@@ -316,13 +314,14 @@ class ExploreResource(resources.ResourceMixin, Resource):
                 is_same_filter = previous_filter == new_filter
             
             if not all([is_same_query, is_same_filter]):
-                db_session.add(new_search_node)
+                db_session.add(new_search)
                 db_session.commit()
         
-        search_node = new_search_node if new_search_node.id else previous_search
-
-        print('search node: ', search_node)
-
+        search_node = new_search if new_search.id else previous_search
+        
+        if not search_node:
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to save search')
+        
         search_node = search_node.dump_tree(search_node, {}, recurse=False)
 
         # Add metadata for the query result. This is used by the UI to

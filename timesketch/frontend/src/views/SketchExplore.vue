@@ -237,7 +237,7 @@ limitations under the License.
                 </div>
                 <div class="level-item">
                   <div v-if="eventList.objects.length" class="select is-small">
-                    <select v-model="currentQueryFilter.size" @change="search">
+                    <select v-model="currentQueryFilter.size" @change="search(true, true, true)">
                       <option v-bind:value="currentQueryFilter.size">{{ currentQueryFilter.size }}</option>
                       <option value="10">10</option>
                       <option value="20">20</option>
@@ -740,13 +740,13 @@ export default {
     },
     paginate: function (pageNum) {
       this.currentQueryFilter.from = ((pageNum * this.currentQueryFilter.size) - this.currentQueryFilter.size)
-      this.search(true, false)
+      this.search(true, false, true)
     },
     updateSelectedFields: function (value) {
       // If we haven't fetched the field before, do an new search.
       value.forEach((field) => {
         if (!this.selectedFields.filter(e => e.field === field.field).length > 0) {
-          this.search()
+          this.search(true, true, true)
         }
       })
       value.forEach((field) => {
@@ -782,7 +782,7 @@ export default {
       } else {
         this.currentQueryFilter.order = 'asc'
       }
-      this.search()
+      this.search(true, true, true)
     },
     loadingOpen: function () {
       this.loadingComponent = this.$buefy.loading.open({
@@ -837,7 +837,7 @@ export default {
   watch: {
     numEvents: function (newVal) {
       this.currentQueryFilter.size = newVal
-      this.search(false)
+      this.search(false, true, true)
     }
   },
   mounted () {
