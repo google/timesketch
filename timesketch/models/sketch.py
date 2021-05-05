@@ -739,6 +739,7 @@ class DataSource(LabelMixin, StatusMixin, CommentMixin, BaseModel):
         self.data_label = data_label
         self.error_message = error_message
 
+
 # Association table for the many-to-many relationship between SearchHistory
 # and Event.
 association_table = Table('searchhistory_event', BaseModel.metadata,
@@ -763,7 +764,7 @@ class SearchHistory(LabelMixin, BaseModel):
         'SearchHistory',
         # Cascade deletions
         cascade='all, delete-orphan',
-        backref=backref("parent", remote_side=id),
+        backref=backref('parent', remote_side=id),
         collection_class=attribute_mapped_collection('id'),
     )
 
@@ -782,29 +783,32 @@ class SearchHistory(LabelMixin, BaseModel):
         Args:
             node: SearchHistory object as root node.
             node_dict: Dictionary to use for recursion.
-            recurse: Boolean indicating if the function whould recurse.
+            recurse: Boolean indicating if the function should recurse.
 
         Returns:
             Dictionary with a Search History tree.
         """
-        node_dict["id"] = node.id
-        node_dict["description"] = node.description
-        node_dict["query_result_count"] = node.query_result_count
-        node_dict["query_time"] = node.query_time
-        node_dict["labels"] = node.get_labels
-        node_dict["created_at"] = node.created_at
-        node_dict["parent"] = node.parent_id
-        node_dict["query_string"] = node.query_string
-        node_dict["query_filter"] = node.query_filter
-        node_dict["query_dsl"] = node.query_dsl
-        node_dict["children"] = []
+        if not isinstance(node_dict, dict):
+            raise ValueError('node_dict must be a dictionary')
+        
+        node_dict['id'] = node.id
+        node_dict['description'] = node.description
+        node_dict['query_result_count'] = node.query_result_count
+        node_dict['query_time'] = node.query_time
+        node_dict['labels'] = node.get_labels
+        node_dict['created_at'] = node.created_at
+        node_dict['parent'] = node.parent_id
+        node_dict['query_string'] = node.query_string
+        node_dict['query_filter'] = node.query_filter
+        node_dict['query_dsl'] = node.query_dsl
+        node_dict['children'] = []
 
         children = node.children.values()
         if children and recurse:
             for idx, child in enumerate(children):
                 child_dict = {}
                 child.dump_tree(child, child_dict)
-                node_dict["children"].append(child_dict)
+                node_dict['children'].append(child_dict)
         else:
             return node_dict
 

@@ -41,6 +41,7 @@ from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import View
 from timesketch.models.sketch import SearchHistory
 
+from elasticsearch import exceptions as es_exceptions
 
 class ExploreResource(resources.ResourceMixin, Resource):
     """Resource to search the datastore based on a query and a filter."""
@@ -290,6 +291,8 @@ class ExploreResource(resources.ResourceMixin, Resource):
                 user=current_user, sketch=sketch).order_by(
                     SearchHistory.id.desc()).first()
         
+        print('previous: ', previous_search)
+
         if not incognito:
             is_same_query = False
             is_same_filter = False
@@ -317,6 +320,9 @@ class ExploreResource(resources.ResourceMixin, Resource):
                 db_session.commit()
         
         search_node = new_search_node if new_search_node.id else previous_search
+
+        print('search node: ', search_node)
+
         search_node = search_node.dump_tree(search_node, {}, recurse=False)
 
         # Add metadata for the query result. This is used by the UI to
