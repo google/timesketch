@@ -652,7 +652,7 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                     form.annotation.data,
                     toggle=toggle
                 )
-                
+
                 if current_search_node:
                     current_search_node.add_label(form.annotation.data)
             else:
