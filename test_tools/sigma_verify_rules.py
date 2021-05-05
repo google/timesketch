@@ -18,7 +18,8 @@ It also does not require you to have a full blown Timesketch instance.
 Default this tool will show only the rules that cause problems.
 Example way of running the tool:
 $ PYTHONPATH=. python3 test_tools/sigma_verify_rules.py --config_file
-data/sigma_config.yaml --debug data/sigma/rules/windows/ --move data/sigma/rules/problematic/
+data/sigma_config.yaml --debug data/sigma/rules/windows/
+--move data/sigma/rules/problematic/
 """
 
 import logging
