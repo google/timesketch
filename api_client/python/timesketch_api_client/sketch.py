@@ -1522,8 +1522,14 @@ class Sketch(resource.BaseResource):
             'message': message,
             'tag': tags
         }
-        if any(x in attributes for x in form_data):
-            raise ValueError('Attributes cannot overwrite values already set.')
+
+        duplicate_attributes = [key for key in attributes if key in form_data]
+
+        if duplicate_attributes:
+            duplicates = ', '.join(duplicate_attributes)
+            raise ValueError(
+                f'Following attributes cannot overwrite values '
+                f'already set: {duplicates}')
 
         form_data['attributes'] = attributes
 
