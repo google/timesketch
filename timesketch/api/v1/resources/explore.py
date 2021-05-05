@@ -41,7 +41,6 @@ from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import View
 from timesketch.models.sketch import SearchHistory
 
-from elasticsearch import exceptions as es_exceptions
 
 class ExploreResource(resources.ResourceMixin, Resource):
     """Resource to search the datastore based on a query and a filter."""
