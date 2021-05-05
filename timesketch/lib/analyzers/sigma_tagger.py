@@ -79,8 +79,9 @@ class SigmaPlugin(interface.BaseAnalyzer):
                     tag_list=rule.get('tags'))
                 tags_applied[rule.get('file_name')] += tagged_events_counter
                 time.sleep(0.5)
-                if (sigma_rule_counter % 10 == 0):
-                    logger.debug('Rule {0:d}/{1:d}'.format(sigma_rule_counter,len(sigma_rules)))
+                if sigma_rule_counter % 10 == 0:
+                    logger.debug('Rule {0:d}/{1:d}'.format(
+                        sigma_rule_counter,len(sigma_rules)))
             except elasticsearch.TransportError as e:
                 logger.error(
                     'Timeout executing search for {0:s}: '
