@@ -35,11 +35,22 @@ class SigmaPlugin(interface.BaseAnalyzer):
         """
         return_fields = []
         tagged_events_counter = 0
+        # TODO: tune the below line to be more effective
         events = self.event_stream(
             query_string=query, return_fields=return_fields)
         for event in events:
-            event.add_tags(['sigma_{0:s}'.format(rule_name)])
-            event.add_tags(tag_list)
+            ts_sigma_rule = event.source.get('ts_sigma_rule',[])
+            ts_sigma_rule.append(rule_name)
+            event.add_attributes({'ts_sigma_rule': list(set(ts_sigma_rule))})
+            ts_ttp = event.source.get('ts_ttp',[])
+            for tag in tag_list:
+                print(tag)
+                if tag.startswith(('attack.','car.')): # extend if needed e.g. misp
+                    ts_ttp.append(tag)
+                else:
+                    event.add_tags([tag])
+            if len(ts_ttp) > 0:
+                event.add_attributes({'ts_ttp': list(set(ts_ttp))})
             event.commit()
             tagged_events_counter += 1
         return tagged_events_counter
@@ -56,7 +67,6 @@ class SigmaPlugin(interface.BaseAnalyzer):
         sigma_rules = ts_sigma_lib.get_all_sigma_rules()
         if sigma_rules is None:
             logger.error('No  Sigma rules found. Check SIGMA_RULES_FOLDERS')
-        logger.debug('{0:d} rules found.'.format(len(sigma_rules)))
         problem_strings = []
         output_strings = []
 
@@ -68,7 +78,9 @@ class SigmaPlugin(interface.BaseAnalyzer):
                     rule.get('es_query'), rule.get('file_name'),
                     tag_list=rule.get('tags'))
                 tags_applied[rule.get('file_name')] += tagged_events_counter
-                time.sleep(2)
+                time.sleep(0.5)
+                if (sigma_rule_counter % 10 == 0):
+                    logger.debug('Rule {0:d}/{1:d}'.format(sigma_rule_counter,len(sigma_rules)))
             except elasticsearch.TransportError as e:
                 logger.error(
                     'Timeout executing search for {0:s}: '
@@ -76,7 +88,11 @@ class SigmaPlugin(interface.BaseAnalyzer):
                         rule.get('file_name'), e), exc_info=True)
                 # this is caused by to many ES queries in short time range
                 # thus waiting for 10 seconds before sending the next one.
-                time.sleep(10)
+                time.sleep(15)
+                tagged_events_counter = self.run_sigma_rule(
+                    rule.get('es_query'), rule.get('file_name'),
+                    tag_list=rule.get('tags'))
+                tags_applied[rule.get('file_name')] += tagged_events_counter
             # This except block is by purpose very broad as one bad rule could
             # otherwise stop the whole analyzer run
             # it might be an option to write the problematic rules to the output
@@ -90,15 +106,13 @@ class SigmaPlugin(interface.BaseAnalyzer):
 
         total_tagged_events = sum(tags_applied.values())
         output_strings.append('Applied {0:d} tags'.format(total_tagged_events))
-        for tag_name, tagged_events_counter in tags_applied.items():
-            output_strings.append('* {0:s}: {1:d}'.format(
-                tag_name, tagged_events_counter))
 
         if sigma_rule_counter > 0:
             self.add_sigma_match_view(sigma_rule_counter)
 
-        output_strings.append('Problematic rules:')
-        output_strings.extend(problem_strings)
+        if len(problem_strings) > 0:
+            output_strings.append('Problematic rules:')
+            output_strings.extend(problem_strings)
 
         return '\n'.join(output_strings)
 
