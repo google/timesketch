@@ -300,7 +300,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
 
             new_search.query_result_count = count_total_complete
             new_search.query_time = result['took']
-            
+
             if previous_search:
                 new_search.parent = previous_search
 
@@ -308,19 +308,19 @@ class ExploreResource(resources.ResourceMixin, Resource):
                 new_filter = new_search.query_filter
                 previous_query = previous_search.query_string
                 previous_filter = previous_search.query_filter
-                
+
                 is_same_query = previous_query == new_query
                 is_same_filter = previous_filter == new_filter
-            
+
             if not all([is_same_query, is_same_filter]):
                 db_session.add(new_search)
                 db_session.commit()
-        
+
         search_node = new_search if new_search.id else previous_search
-        
+
         if not search_node:
             abort(HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to save search')
-        
+
         search_node = search_node.dump_tree(search_node, {}, recurse=False)
 
         # Add metadata for the query result. This is used by the UI to
@@ -409,7 +409,7 @@ class SearchHistoryResource(resources.ResourceMixin, Resource):
         last_node = SearchHistory.query.filter_by(
             user=current_user, sketch=sketch).order_by(
                 SearchHistory.id.desc()).first()
-        
+
         if root_node:
             tree = root_node.dump_tree(root_node, {})
 
@@ -417,5 +417,5 @@ class SearchHistoryResource(resources.ResourceMixin, Resource):
             'objects': [tree],
             'meta': {'last_node_id': last_node.id if last_node else None}
         }
-   
+
         return jsonify(schema)
