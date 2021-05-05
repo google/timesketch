@@ -161,7 +161,7 @@ def move_problematic_rule(filepath, move_to_path, reason=None):
         base_path = os.path.basename(filepath)
         logging.info('Moving the rule: {0:s} to {1:s}'.format(
         filepath, f'{move_to_path}{base_path}'))
-        os.rename(filepath, f'{move_to_path}{base_path}')
+        os.rename(filepath, os.path.join(move_to_path,base_path))
     except OSError:
         logger.error('OS Error - rule not moved', exc_info=True)
 
