@@ -778,7 +778,7 @@ class SearchHistory(LabelMixin, BaseModel):
         self.query_dsl = query_dsl
         self.parent = parent
 
-    def dump_tree(self, node, node_dict, recurse=True):    
+    def dump_tree(self, node, node_dict, recurse=True):
         """Recursive function to generate full search history tree.
         Args:
             node: SearchHistory object as root node.
@@ -790,7 +790,7 @@ class SearchHistory(LabelMixin, BaseModel):
         """
         if not isinstance(node_dict, dict):
             raise ValueError('node_dict must be a dictionary')
-        
+
         node_dict['id'] = node.id
         node_dict['description'] = node.description
         node_dict['query_result_count'] = node.query_result_count
@@ -805,7 +805,7 @@ class SearchHistory(LabelMixin, BaseModel):
 
         children = node.children.values()
         if children and recurse:
-            for idx, child in enumerate(children):
+            for _, child in enumerate(children):
                 child_dict = {}
                 child.dump_tree(child, child_dict)
                 node_dict['children'].append(child_dict)
