@@ -55,7 +55,8 @@ RestApiClient.interceptors.response.use(function (response) {
       message: error.response.data.message,
       type: 'is-white',
       position: 'is-top',
-      duration: 5000
+      actionText: 'Close',
+      duration: 7000
     })
   }
   return Promise.reject(error)
