@@ -750,16 +750,16 @@ association_table = Table('searchhistory_event', BaseModel.metadata,
 class SearchHistory(LabelMixin, BaseModel):
     """Implements the SearchHistory model."""
     id = Column(Integer, primary_key=True)
-    events = relationship('Event', secondary=association_table)
-    description = Column(UnicodeText())
     parent_id = Column(Integer, ForeignKey(id))
-    user_id = Column(Integer, ForeignKey('user.id'))
     sketch_id = Column(Integer, ForeignKey('sketch.id'))
+    user_id = Column(Integer, ForeignKey('user.id'))
+    description = Column(UnicodeText())
     query_string = Column(UnicodeText())
     query_filter = Column(UnicodeText())
     query_dsl = Column(UnicodeText())
     query_result_count = Column(BigInteger())
     query_time = Column(BigInteger())
+    events = relationship('Event', secondary=association_table)
     children = relationship(
         'SearchHistory',
         # Cascade deletions
@@ -769,10 +769,22 @@ class SearchHistory(LabelMixin, BaseModel):
     )
 
     def __init__(
-        self, user, sketch, query_string=None, query_filter=None,
-        query_dsl=None, parent=None):
+        self, user, sketch, description=None, query_string=None,
+        query_filter=None, query_dsl=None, parent=None):
+        """"Initialize the SearchHistory object
+
+        Args:
+            user (User): The user who owns the search history.
+            sketch (Sketch): The sketch for the search history.
+            description (str): Description for the search history entry.
+            query_string (str): The query string.
+            query_filter (str): The filter to apply (JSON format as string).
+            query_dsl (str): A query DSL document (JSON format as string).
+            parent (SearchHistory): Reference to parent search history entry.
+        """
         self.user = user
         self.sketch = sketch
+        self.description = description
         self.query_string = query_string
         self.query_filter = query_filter
         self.query_dsl = query_dsl
