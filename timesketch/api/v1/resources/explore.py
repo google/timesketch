@@ -160,8 +160,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
                     timeline_ids=timeline_ids,
                     count=True)
             except ValueError as e:
-                abort(
-                    HTTP_STATUS_CODE_BAD_REQUEST, e)
+                abort(HTTP_STATUS_CODE_BAD_REQUEST, str(e))
 
             # Get number of matching documents per index.
             schema = {'meta': {'total_count': result}, 'objects': []}
@@ -214,8 +213,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
                     enable_scroll=enable_scroll,
                     timeline_ids=timeline_ids)
             except ValueError as e:
-                abort(
-                    HTTP_STATUS_CODE_BAD_REQUEST, e)
+                abort(HTTP_STATUS_CODE_BAD_REQUEST, str(e))
 
         # Get number of matching documents per index.
         count_per_index = {}
