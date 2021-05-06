@@ -319,7 +319,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
         if not search_node:
             abort(HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to save search')
 
-        search_node = search_node.dump_tree(search_node, {}, recurse=False)
+        search_node = search_node.build_tree(search_node, {}, recurse=False)
 
         # Add metadata for the query result. This is used by the UI to
         # render the event correctly and to display timing and hit count
@@ -409,7 +409,7 @@ class SearchHistoryResource(resources.ResourceMixin, Resource):
                 SearchHistory.id.desc()).first()
 
         if root_node:
-            tree = root_node.dump_tree(root_node, {})
+            tree = root_node.build_tree(root_node, {})
 
         schema = {
             'objects': [tree],
