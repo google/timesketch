@@ -65,7 +65,8 @@ class TaggerSketchPlugin(interface.BaseAnalyzer):
         query = config.get('query_string')
         query_dsl = config.get('query_dsl')
         save_search = config.get('save_search', False)
-        # For legacy reasons to support both save_search and create_view parameters.
+        # For legacy reasons to support both save_search and
+        # create_view parameters.
         if not save_search:
             save_search = config.get('create_view', False)
 
