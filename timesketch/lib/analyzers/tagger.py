@@ -1,9 +1,13 @@
 """Analyzer plugin for tagging."""
+import logging
 import re
 
 from timesketch.lib import emojis
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
+
+
+logger = logging.getLogger('timesketch.analyzers.tagger')
 
 
 class TaggerSketchPlugin(interface.BaseAnalyzer):
