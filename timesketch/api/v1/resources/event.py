@@ -663,7 +663,6 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                     HTTP_STATUS_CODE_BAD_REQUEST,
                     'Annotation type needs to be either label or comment, '
                     'not {0!s}'.format(annotation_type))
-                    
 
             annotations.append(annotation)
             # Save the event to the database
