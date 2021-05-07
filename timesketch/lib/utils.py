@@ -266,11 +266,11 @@ def read_and_validate_jsonl(file_handle):
                     elif isinstance(linedict[key], list):
                         field_len[key]=len(str(linedict[key]))
                         total_len+=field_len[key]
-                field_len = {k: v for k, v in sorted(
+                field_len = dict(sorted(
                         field_len.items(),
                         key=lambda item: item[1],
                         reverse=True)
-                    }
+                    )
                 cur_len_fields = 0
                 reduc_field = []
                 for key, key_length in field_len.items():
