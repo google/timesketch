@@ -259,25 +259,54 @@ def read_and_validate_jsonl(file_handle):
             if current_len > max_len_line_jsonl:
                 field_len={}
                 total_len=0
-                for x in ld_keys:
-                    if isinstance(linedict[x], str):
-                        field_len[x]=len(linedict[x])
-                        total_len+=field_len[x]
-                for x in ld_keys:
-                    if field_len[x] > max_len_line_jsonl:
-                        if (total_len-field_len[x]) > max_len_line_jsonl:
-                            #TODO: manage multi fields too long
-                            break
-                        current_max = int(
-                            max_len_line_jsonl - (
-                                max_len_line_jsonl / 100 * 10))
-                        current_reduc = current_max - (total_len - field_len[x])
-                        linedict[x] = linedict[x][0:current_reduc]
-                        if 'tag' in linedict:
-                            linedict['tag'] += tag_reducted
-                            break
-                        linedict['tag'] = [tag_reducted]
+                for key in ld_keys:
+                    if isinstance(linedict[key], str):
+                        field_len[key]=len(linedict[key])
+                        total_len+=field_len[key]
+                    elif isinstance(linedict[key], list):
+                        field_len[key]=len(str(linedict[key]))
+                        total_len+=field_len[key]
+                field_len = {k: v for k, v in sorted(
+                        field_len.items(),
+                        key=lambda item: item[1],
+                        reverse=True)
+                    }
+                cur_len_fields = 0
+                reduc_field = []
+                for key, key_length in field_len.items():
+                    cur_len_fields += key_length
+                    reduc_field.append(key)
+                    if max_len_line_jsonl > (total_len-cur_len_fields):
                         break
+                current_max = int(
+                    max_len_line_jsonl - (
+                        max_len_line_jsonl / 100 * 10))
+                current_reduc = current_max - (total_len - cur_len_fields)
+                len_by_field = int(current_reduc / len(reduc_field))
+                for key in reduc_field:
+                    if isinstance(linedict[key], list):
+                        cur_len_val = 0
+                        new_value = []
+                        for val in linedict[key]:
+                            cur_len_val += len(val)
+                            if cur_len_val > len_by_field:
+                                cur_reduc = len_by_field - (
+                                    cur_len_val - len(val))
+                                new_value.append(val[0:cur_reduc])
+                                break
+                            new_value.append(val)
+                        linedict[key] = new_value
+                        if 'tag' in linedict:
+                            linedict['tag'] += tag_reducted + "_" + key
+                            continue
+                        linedict['tag'] = [tag_reducted + "_" + key]
+                        continue
+                    if len(linedict[key]) > len_by_field:
+                        linedict[key] = linedict[key][0:len_by_field]
+                        if 'tag' in linedict:
+                            linedict['tag'] += tag_reducted + "_" + key
+                            continue
+                        linedict['tag'] = [tag_reducted + "_" + key]
                 current_len = len(str(linedict))
                 if current_len > max_len_line_jsonl:
                     logger.warning(
