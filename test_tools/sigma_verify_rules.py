@@ -37,7 +37,8 @@ logging.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO'))
 
 
 def get_sigma_blocklist(blocklist_path=None):
-    """Get a dataframe of sigma rules to ignore. This includes filenames, paths, ids.
+    """Get a dataframe of sigma rules to ignore. 
+    This includes filenames, paths, ids.
 
     Args:
         blocklist_path: Optional path to a blocklist file
@@ -132,7 +133,8 @@ def run_verifier(rules_path, config_file_path, blocklist_path=None):
                     parsed_rule = sigma_util.get_sigma_rule(
                         rule_file_path, sigma_config)
                 # This except is to keep the unknown exceptions
-                # this function is made to catch them and document them the broad exception is needed
+                # this function is made to catch them and document 
+                # them the broad exception is needed
                 except Exception:# pylint: disable=broad-except
                     return_rules_with_problems.append(rule_file_path)
 
@@ -231,7 +233,7 @@ if __name__ == '__main__':
 
     sigma_verified_rules, sigma_rules_with_problems = run_verifier(
         rules_path=options.rules_path,
-        config_file_path=options.config_file_path, 
+        config_file_path=options.config_file_path,
         blocklist_path=options.config_file_path)
 
     if len(sigma_rules_with_problems) > 0:
