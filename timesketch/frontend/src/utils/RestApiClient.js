@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 import axios from 'axios'
-import { ToastProgrammatic as Toast, SnackbarProgrammatic as Snackbar } from 'buefy'
+import { SnackbarProgrammatic as Snackbar } from 'buefy'
 
 const RestApiClient = axios.create({
   baseURL: '/api/v1',
@@ -39,7 +39,7 @@ const RestApiBlobClient = axios.create({
 RestApiClient.interceptors.response.use(function (response) {
   return response
 }, function (error) {
-  if (error.response.data.message === 'The CSRF token has expired') {
+  if (error.response.data.message === 'The CSRF token has expired.') {
     Snackbar.open({
       message: error.response.data.message,
       type: 'is-white',
@@ -51,7 +51,13 @@ RestApiClient.interceptors.response.use(function (response) {
       } }
     )
   } else {
-    Toast.open(error.response.data.message)
+    Snackbar.open({
+      message: error.response.data.message,
+      type: 'is-white',
+      position: 'is-top',
+      actionText: 'Close',
+      duration: 7000
+    })
   }
   return Promise.reject(error)
 })
@@ -129,11 +135,12 @@ export default {
     }
     return RestApiClient.get('/sketches/' + sketchId + '/event/', params)
   },
-  saveEventAnnotation (sketchId, annotationType, annotation, events, remove = false) {
+  saveEventAnnotation (sketchId, annotationType, annotation, events, currentSearchNode, remove = false) {
     let formData = {
       annotation: annotation,
       annotation_type: annotationType,
       events: events,
+      current_search_node_id: currentSearchNode.id,
       remove: remove
     }
     return RestApiClient.post('/sketches/' + sketchId + '/event/annotate/', formData)
@@ -291,5 +298,8 @@ export default {
       }
     }
     return RestApiClient.get('/sketches/' + sketchId + /graphs/ + graphId + '/', params)
+  },
+  getSearchHistory (sketchId) {
+    return RestApiClient.get('/sketches/' + sketchId + /searchhistory/)
   }
 }

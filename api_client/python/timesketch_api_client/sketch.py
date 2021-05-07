@@ -23,8 +23,10 @@ import pandas
 
 from . import analyzer
 from . import aggregation
+from . import definitions
 from . import error
 from . import graph
+from . import index as api_index
 from . import resource
 from . import search
 from . import searchtemplate
@@ -45,6 +47,10 @@ class Sketch(resource.BaseResource):
         id: The ID of the sketch.
         api: An instance of TimesketchApi object.
     """
+
+    # Add in necessary fields in data ingested via a different mechanism.
+    _NECESSARY_DATA_FIELDS = frozenset([
+        'timestamp', 'datetime', 'message'])
 
     def __init__(self, sketch_id, api, sketch_name=None):
         """Initializes the Sketch object.
@@ -944,13 +950,13 @@ class Sketch(resource.BaseResource):
         return timelines
 
     # pylint: disable=unused-argument
-    def upload(self, timeline_name, file_path, index=None):
+    def upload(self, timeline_name, file_path, es_index=None):
         """Deprecated function to upload data, does nothing.
 
         Args:
             timeline_name: Name of the resulting timeline.
             file_path: Path to the file to be uploaded.
-            index: Index name for the ES database
+            es_index: Index name for the ES database
 
         Raises:
             RuntimeError: If this function is used, since it has been
@@ -1516,8 +1522,14 @@ class Sketch(resource.BaseResource):
             'message': message,
             'tag': tags
         }
-        if any(x in attributes for x in form_data):
-            raise ValueError('Attributes cannot overwrite values already set.')
+
+        duplicate_attributes = [key for key in attributes if key in form_data]
+
+        if duplicate_attributes:
+            duplicates = ', '.join(duplicate_attributes)
+            raise ValueError(
+                f'Following attributes cannot overwrite values '
+                f'already set: {duplicates}')
 
         form_data['attributes'] = attributes
 
@@ -1612,3 +1624,150 @@ class Sketch(resource.BaseResource):
 
         with open(file_path, 'wb') as fw:
             fw.write(response.content)
+
+    def generate_timeline_from_es_index(
+            self, es_index_name, name, index_name='', description='',
+            provider='Manually added to Elastic',
+            context='Added via API client', data_label='elastic',
+            status='ready'):
+        """Creates and returns a Timeline from Elastic data.
+
+        This function can be used to import data into a sketch that was
+        ingested via different mechanism, such as ELK, etc.
+
+        The function creates the necessary structures (SearchIndex and a
+        Timeline) for Timesketch to be able to properly support it.
+
+        Args:
+            es_index_name: name of the index in Elasticsearch.
+            name: string with the name of the timeline.
+            index_name: optional string for the SearchIndex name, defaults
+                to the same as the es_index_name.
+            description: optional string with a description of the timeline.
+            provider: optional string with the provider name for the data
+                source of the imported data. Defaults to "Manually added
+                to Elastic".
+            context: optional string with the context for the data upload,
+                defaults to "Added via API client".
+            data_label: optional string with the data label of the Elastic
+                data, defaults to "elastic".
+            status: Optional string, if provided will be used as a status
+                for the searchindex, valid options are: "ready", "fail",
+                "processing", "timeout". Defaults to "ready".
+
+        Raises:
+            ValueError: If there are errors in the generation of the
+            timeline.
+
+        Returns:
+            Instance of a Timeline object.
+        """
+        if not es_index_name:
+            raise ValueError('ES index needs to be provided.')
+
+        if not name:
+            raise ValueError('Timeline name needs to be provided.')
+
+        # Step 1: Make sure the index doesn't exist already.
+        for index_obj in self.api.list_searchindices():
+            if index_obj is None:
+                continue
+            if index_obj.index_name == es_index_name:
+                raise ValueError(
+                    'Unable to add the ES index, since it already exists.')
+
+        # Step 2: Create a SearchIndex.
+        resource_url = f'{self.api.api_root}/searchindices/'
+        form_data = {
+            'searchindex_name': index_name or es_index_name,
+            'es_index_name': es_index_name,
+        }
+        response = self.api.session.post(resource_url, json=form_data)
+
+        if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
+            error.error_message(
+                response, message='Error creating searchindex',
+                error=ValueError)
+
+        response_dict = error.get_response_json(response, logger)
+        objects = response_dict.get('objects')
+        if not objects:
+            raise ValueError(
+                'Unable to create a SearchIndex, try again or file an '
+                'issue on GitHub.')
+
+        searchindex_id = objects[0].get('id')
+
+        # Step 3: Verify mappings to make sure data conforms.
+        index_obj = api_index.SearchIndex(searchindex_id, api=self.api)
+        index_fields = set(index_obj.fields)
+
+        if not self._NECESSARY_DATA_FIELDS.issubset(index_fields):
+            index_obj.status = 'fail'
+            raise ValueError(
+                'Unable to ingest data since it is missing required '
+                'fields: {0:s} [ingested data contains these fields: '
+                '{1:s}]'.format(
+                    ', '.join(self._NECESSARY_DATA_FIELDS.difference(
+                        index_fields)), '|'.join(index_fields)))
+
+        if status:
+            index_obj.status = status
+
+        # Step 4: Create the Timeline.
+        resource_url = f'{self.api.api_root}/sketches/{self.id}/timelines/'
+        form_data = {'timeline': searchindex_id, 'timeline_name': name}
+        response = self.api.session.post(resource_url, json=form_data)
+
+        if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
+            error.error_message(
+                response, message='Error creating a timeline object',
+                error=ValueError)
+
+        response_dict = error.get_response_json(response, logger)
+        objects = response_dict.get('objects')
+        if not objects:
+            raise ValueError(
+                'Unable to create a Timeline, try again or file an '
+                'issue on GitHub.')
+
+        timeline_dict = objects[0]
+
+        timeline_obj = timeline.Timeline(
+            timeline_id=timeline_dict['id'],
+            sketch_id=self.id,
+            api=self.api,
+            name=timeline_dict['name'],
+            searchindex=timeline_dict['searchindex']['index_name'])
+
+        # Step 5: Add the timeline ID into the dataset.
+        resource_url = (
+            f'{self.api.api_root}/sketches/{self.id}/event/add_timeline_id/')
+        form_data = {
+            'searchindex_id': searchindex_id,
+            'timeline_id': timeline_dict['id'],
+        }
+        response = self.api.session.post(resource_url, json=form_data)
+
+        if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
+            error.error_message(
+                response, message='Unable to add timeline identifier to data',
+                error=ValueError)
+
+        # Step 6: Add a DataSource object.
+        resource_url = f'{self.api.api_root}/sketches/{self.id}/datasource/'
+        form_data = {
+            'timeline_id': timeline_dict['id'],
+            'provider': provider,
+            'context': context,
+            'data_label': data_label,
+        }
+        response = self.api.session.post(resource_url, json=form_data)
+        if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
+            error.error_message(
+                response, message='Error creating a datasource object',
+                error=ValueError)
+
+        _ = error.get_response_json(response, logger)
+
+        return timeline_obj
