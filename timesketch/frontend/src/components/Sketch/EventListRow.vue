@@ -205,6 +205,9 @@ export default {
     meta () {
       return this.$store.state.meta
     },
+    currentSearchNode () {
+      return this.$store.state.currentSearchNode
+    },
     timelineColor () {
       let backgroundColor = this.timeline.color
       if (!backgroundColor.startsWith('#')) {
@@ -296,8 +299,11 @@ export default {
   },
   methods: {
     toggleStar () {
+      if (!this.isStarred) {
+        EventBus.$emit('eventAnnotated', { 'type': '__ts_star', 'event': this.event, 'searchNode': this.currentSearchNode })
+      }
       this.isStarred = !this.isStarred
-      ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', this.event).then((response) => {
+      ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', this.event, this.currentSearchNode).then((response) => {
       }).catch((e) => {
         console.error(e)
       })
@@ -308,7 +314,8 @@ export default {
       }
     },
     postComment: function (comment) {
-      ApiClient.saveEventAnnotation(this.sketch.id, 'comment', comment, [this.event]).then((response) => {
+      EventBus.$emit('eventAnnotated', { 'type': '__ts_comment', 'event': this.event, 'searchNode': this.currentSearchNode })
+      ApiClient.saveEventAnnotation(this.sketch.id, 'comment', comment, [this.event], this.currentSearchNode).then((response) => {
         this.comments.push(response.data.objects[0][0])
         this.comment = ''
       }).catch((e) => {})
@@ -321,10 +328,14 @@ export default {
         labels = [labels]
       }
 
+      if (labels.length) {
+        EventBus.$emit('eventAnnotated', { 'type': '__ts_label', 'event': this.event, 'searchNode': this.currentSearchNode })
+      }
+
       labels.forEach((label) => {
         if (this.event._source.label.indexOf(label) === -1) {
           this.event._source.label.push(label)
-          ApiClient.saveEventAnnotation(this.sketch.id, 'label', label, [this.event]).then((response) => {
+          ApiClient.saveEventAnnotation(this.sketch.id, 'label', label, [this.event], this.currentSearchNode).then((response) => {
             this.$emit('addLabel', label)
           }).catch((e) => {
             Toast.open('Error adding label')
@@ -335,7 +346,7 @@ export default {
 
       if (this.labelsToRemove.length) {
         this.labelsToRemove.forEach((label) => {
-          ApiClient.saveEventAnnotation(this.sketch.id, 'label', label, [this.event], true).then((response) => {
+          ApiClient.saveEventAnnotation(this.sketch.id, 'label', label, [this.event], this.currentSearchNode, true).then((response) => {
           }).catch((e) => {})
           this.event._source.label = this.event._source.label.filter(e => e !== label)
         })

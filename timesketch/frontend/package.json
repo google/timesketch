@@ -28,6 +28,7 @@
     "vue": "^2.6.12",
     "vue-color": "^2.7.0",
     "vue-cytoscape": "^1.0.8",
+    "vue-dragscroll": "^3.0.0",
     "vue-moment": "^4.0.0",
     "vue-multiselect": "^2.1.6",
     "vue-router": "^3.0.2",
