@@ -654,7 +654,6 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                 )
 
                 if current_search_node:
-                    current_search_node.add_label(form.annotation.data)
                     current_search_node.add_label('__ts_label')
             else:
                 abort(

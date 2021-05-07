@@ -792,6 +792,7 @@ class SearchHistory(LabelMixin, BaseModel):
 
     def build_tree(self, node, node_dict, recurse=True):
         """Recursive function to generate full search history tree.
+
         Args:
             node (SearchHistory): SearchHistory object as root node.
             node_dict (dict): Dictionary to use for recursion.
@@ -817,7 +818,7 @@ class SearchHistory(LabelMixin, BaseModel):
 
         children = node.children.values()
         if children and recurse:
-            for _, child in enumerate(children):
+            for child in children:
                 child_dict = {}
                 child.build_tree(child, child_dict)
                 node_dict['children'].append(child_dict)
