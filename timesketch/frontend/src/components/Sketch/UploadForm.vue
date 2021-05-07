@@ -39,6 +39,7 @@ limitations under the License.
       <span v-if="error">
         {{ error }}
       </span>
+    </div>
     <div class="field" v-if="fileName">
       <label class="label">Name</label>
       <div class="control">
