@@ -32,10 +32,10 @@ limitations under the License.
                   </a>
 
                   <b-dropdown-item v-for="graphPlugin in graphs" :key="graphPlugin.name" v-on:click="buildGraph(graphPlugin)">
-                    <router-link :to="{ name: 'SketchGraphExplore', query: {plugin: graphPlugin.name}}">{{ graphPlugin.display_name }}</router-link>
+                    <router-link :to="{ name: 'GraphExplore', query: {plugin: graphPlugin.name}}">{{ graphPlugin.display_name }}</router-link>
                   </b-dropdown-item>
                   <b-dropdown-item v-for="savedGraph in savedGraphs" :key="savedGraph.id" v-on:click="buildSavedGraph(savedGraph)">
-                    <router-link :to="{ name: 'SketchGraphExplore', query: {graph: savedGraph.id}}">{{ savedGraph.name }}</router-link>
+                    <router-link :to="{ name: 'GraphExplore', query: {graph: savedGraph.id}}">{{ savedGraph.name }}</router-link>
                   </b-dropdown-item>
                 </b-dropdown>
 
@@ -165,7 +165,7 @@ limitations under the License.
 import spread from 'cytoscape-spread'
 import dagre from 'cytoscape-dagre'
 import ApiClient from '../../utils/RestApiClient'
-import TsEventListCompact from './EventListCompact'
+import TsEventListCompact from '../Explore/EventListCompact'
 import EventBus from '../../main'
 import _ from 'lodash'
 

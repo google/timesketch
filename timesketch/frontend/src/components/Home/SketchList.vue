@@ -23,7 +23,7 @@ limitations under the License.
       <li class="list-item" v-for="sketch in sketches" :key="sketch.id" style="padding:20px;">
         <div class="columns">
           <div class="column is-8">
-            <router-link :to="{ name: 'SketchOverview', params: {sketchId: sketch.id } }"><strong>{{ sketch.name }}</strong></router-link>
+            <router-link :to="{ name: 'Overview', params: {sketchId: sketch.id } }"><strong>{{ sketch.name }}</strong></router-link>
             <div class="description">{{ sketch.description }}</div>
           </div>
           <div class="column">

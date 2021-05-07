@@ -61,8 +61,8 @@ limitations under the License.
 </template>
 
 <script>
-import TsStoryList from '../components/Sketch/StoryList'
-import TsStoryCreateForm from '../components/Sketch/CreateStoryForm'
+import TsStoryList from '../components/Stories/StoryList'
+import TsStoryCreateForm from '../components/Stories/CreateStoryForm'
 import TsNavbarMain from '../components/AppNavbarMain'
 
 export default {

@@ -346,11 +346,12 @@ limitations under the License.
 
 <script>
 import ApiClient from '../utils/RestApiClient'
-import TsViewListDropdown from '../components/Sketch/ViewListDropdown'
-import TsSketchExploreEventList from '../components/Sketch/EventList'
-import TsExploreTimelinePicker from '../components/Sketch/TimelinePicker'
-import TsExploreFilterTime from '../components/Sketch/TimeFilter'
+import TsViewListDropdown from '../components/Common/ViewListDropdown'
+import TsSketchExploreEventList from '../components/Explore/EventList'
+import TsExploreTimelinePicker from '../components/Explore/TimelinePicker'
+import TsExploreFilterTime from '../components/Explore/TimeFilter'
 import TsSearchHistoryTree from '../components/Tree'
+
 import EventBus from '../main'
 import { None } from 'vega'
 

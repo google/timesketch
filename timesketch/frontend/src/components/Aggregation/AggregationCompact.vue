@@ -33,7 +33,7 @@ limitations under the License.
 import ApiClient from '../../utils/RestApiClient'
 import TsVegaLiteChart from './VegaLiteChart'
 import TsTableChart from './TableChart'
-import TsTimelineChip from './TimelineChip'
+import TsTimelineChip from '../Explore/TimelineChip'
 
 export default {
   props: ['aggregation', 'cardHeader'],

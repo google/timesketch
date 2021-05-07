@@ -23,8 +23,8 @@ limitations under the License.
     </ts-navbar-main>
 
     <!-- Secondary navigation -->
-    <section class="section" style="margin-top:20px; margin-bottom: 20px;">
-      <div class="container">
+    <section class="section" style="margin-top:10px; margin-bottom: 10px;">
+      <div class="container is-fluid">
           <button class="button is-success" v-on:click="showSketchCreateModal = !showSketchCreateModal">
             <span class="icon is-small">
               <i class="fas fa-plus-circle"></i>
@@ -48,24 +48,16 @@ limitations under the License.
     </b-modal>
 
     <section class="section" v-if="newSearchQuery">
-      <div class="container">
-        <div class="card">
-          <header class="card-header">
-            <div class="card-header-title">
-              Search results
-            </div>
-          </header>
-          <div class="card-content">
+      <div class="container is-fluid">
+        <b-message title="Search results" :closable="false">
             <ts-sketch-list scope="search" :search-query="newSearchQuery"></ts-sketch-list>
-            <hr>
-            <button class="button is-info" v-on:click="newSearchQuery = ''">Back</button>
-          </div>
-        </div>
+            <button class="button" v-on:click="newSearchQuery = ''">Close</button>
+        </b-message>
       </div>
     </section>
 
-    <section class="section" v-if="!newSearchQuery">
-      <div class="container">
+    <section class="section">
+      <div class="container is-fluid">
         <div class="card">
           <header class="card-header">
             <div class="card-header-title">
@@ -80,8 +72,8 @@ limitations under the License.
       <br>
     </section>
 
-    <section class="section" v-if="!newSearchQuery">
-      <div class="container">
+    <section class="section">
+      <div class="container is-fluid">
         <div class="card">
           <header class="card-header">
             <div class="card-header-title">
@@ -95,8 +87,8 @@ limitations under the License.
       </div>
     </section>
 
-    <section class="section" v-if="!newSearchQuery">
-      <div class="container">
+    <section class="section">
+      <div class="container is-fluid">
         <div class="card">
           <header class="card-header">
             <div class="card-header-title">
@@ -110,8 +102,8 @@ limitations under the License.
       </div>
     </section>
 
-    <section class="section" v-if="!newSearchQuery">
-      <div class="container">
+    <section class="section">
+      <div class="container is-fluid">
         <div class="card">
           <header class="card-header">
             <div class="card-header-title">
@@ -132,7 +124,7 @@ limitations under the License.
 
 <script>
 import TsSketchList from '../components/Home/SketchList'
-import TsCreateSketchForm from '../components/Home/CreateSketchForm'
+import TsCreateSketchForm from '../components/Common/CreateSketchForm'
 import TsNavbarMain from '../components/AppNavbarMain'
 
 export default {

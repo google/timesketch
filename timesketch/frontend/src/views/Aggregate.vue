@@ -44,9 +44,9 @@ limitations under the License.
 </template>
 
 <script>
-import TsSketchExploreAggregation from '../components/Sketch/Aggregation'
+import TsSketchExploreAggregation from '../components/Aggregation/Aggregation'
 import ApiClient from '../utils/RestApiClient'
-import TsAggregationCompact from '../components/Sketch/AggregationCompact'
+import TsAggregationCompact from '../components/Aggregation/AggregationCompact'
 
 export default {
   components: { TsSketchExploreAggregation, TsAggregationCompact },
