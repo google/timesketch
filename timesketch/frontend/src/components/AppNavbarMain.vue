@@ -35,7 +35,7 @@ limitations under the License.
               <slot name="center"></slot>
             </div>
 
-            <div class="navbar-end">
+            <div class="navbar-end" style="margin-right:-10px;">
               <div class="navbar-item">
                 <b-switch
                   v-model="isDarkTheme"

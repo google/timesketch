@@ -24,6 +24,7 @@ const defaultState = (currentUser) => {
     sketch: {},
     meta: {},
     count: 0,
+    currentSearchNode: null,
     currentUser: currentUser
   }
 }
@@ -40,6 +41,9 @@ export default new Vuex.Store({
     },
     SET_COUNT (state, payload) {
       Vue.set(state, 'count', payload)
+    },
+    SET_SEARCH_NODE (state, payload) {
+      Vue.set(state, 'currentSearchNode', payload)
     },
     RESET_STATE (state, payload) {
       ApiClient.getLoggedInUser().then((response) => {
@@ -61,6 +65,9 @@ export default new Vuex.Store({
     },
     resetState (context) {
       context.commit('RESET_STATE')
+    },
+    updateSearchNode (context, nodeId) {
+      context.commit('SET_SEARCH_NODE', nodeId)
     }
   }
 })
