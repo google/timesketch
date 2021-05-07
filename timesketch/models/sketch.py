@@ -747,6 +747,7 @@ association_table = Table('searchhistory_event', BaseModel.metadata,
     Column('event_id', Integer, ForeignKey('event.id'))
 )
 
+
 class SearchHistory(LabelMixin, BaseModel):
     """Implements the SearchHistory model."""
     id = Column(Integer, primary_key=True)
