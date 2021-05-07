@@ -35,16 +35,15 @@ class SigmaPlugin(interface.BaseAnalyzer):
         """
         return_fields = []
         tagged_events_counter = 0
-        # TODO: tune the below line to be more effective
         events = self.event_stream(
             query_string=query, return_fields=return_fields)
         for event in events:
-            ts_sigma_rule = event.source.get('ts_sigma_rule',[])
-            ts_sigma_rule.append(rule_name)
-            event.add_attributes({'ts_sigma_rule': list(set(ts_sigma_rule))})
-            ts_ttp = event.source.get('ts_ttp',[])
+            ts_sigma_rules = event.source.get('ts_sigma_rule', [])
+            ts_sigma_rules.append(rule_name)
+            event.add_attributes({'ts_sigma_rule': list(set(ts_sigma_rules))})
+            ts_ttp = event.source.get('ts_ttp', [])
             for tag in tag_list:
-                if tag.startswith(('attack.','car.')):
+                if tag.startswith(('attack.', 'car.')):
                     ts_ttp.append(tag)
                     tag_list.remove(tag)
             event.add_tags(tag_list)
@@ -77,17 +76,20 @@ class SigmaPlugin(interface.BaseAnalyzer):
                     rule.get('es_query'), rule.get('file_name'),
                     tag_list=rule.get('tags'))
                 tags_applied[rule.get('file_name')] += tagged_events_counter
+                # The sleep does readuce sudden load peaks on ES. 
+                # The value was determined by try & error.
                 time.sleep(0.5)
                 if sigma_rule_counter % 10 == 0:
                     logger.debug('Rule {0:d}/{1:d}'.format(
-                        sigma_rule_counter,len(sigma_rules)))
+                        sigma_rule_counter, len(sigma_rules)))
             except elasticsearch.TransportError as e:
                 logger.error(
                     'Timeout executing search for {0:s}: '
                     '{1!s} waiting for 10 seconds'.format(
                         rule.get('file_name'), e), exc_info=True)
                 # this is caused by to many ES queries in short time range
-                # thus waiting for 10 seconds before sending the next one.
+                # thus waiting for 15 seconds before sending the next one. 
+                # The value was determined by try and error.
                 time.sleep(15)
                 tagged_events_counter = self.run_sigma_rule(
                     rule.get('es_query'), rule.get('file_name'),

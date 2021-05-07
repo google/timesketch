@@ -233,7 +233,7 @@ def get_sigma_rule(filepath, sigma_config=None):
             # TODO Investigate how to handle .keyword
             # fields in Sigma.
             # https://github.com/google/timesketch/issues/1199#issuecomment-639475885
-            sigma_rule = sigma_rule.replace(".keyword:", ":")
+            sigma_rule = sigma_rule.replace('.keyword:', ':')
             sigma_es_query = sigma_rule
 
         rule_return.update(
@@ -288,7 +288,7 @@ def get_sigma_rule_by_text(rule_text, sigma_config=None):
         rule_yaml_data = yaml.safe_load_all(rule_text)
         for doc in rule_yaml_data:
             parser = sigma_collection.SigmaCollectionParser(
-                str(doc), sigma_conf_obj, None)
+                doc, sigma_conf_obj, None)
             parsed_sigma_rules = parser.generate(sigma_backend)
             rule_return.update(doc)
 
@@ -311,7 +311,7 @@ def get_sigma_rule_by_text(rule_text, sigma_config=None):
     sigma_es_query = ''
 
     for sigma_rule in parsed_sigma_rules:
-        sigma_rule = sigma_rule.replace(".keyword:", ":")
+        sigma_rule = sigma_rule.replace('.keyword:', ':')
         sigma_es_query = sigma_rule
 
     rule_return.update(

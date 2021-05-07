@@ -37,12 +37,14 @@ logging.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO'))
 
 
 def get_sigma_blocklist(blocklist_path=None):
-    """Get a List of paths to ignore.
+    """Get a dataframe of sigma rules to ignore. This includes filenames, paths, ids.
 
     Args:
         blocklist_path: Optional path to a blocklist file
+
     Returns:
         Pandas dataframe with blocklist
+
     Raises:
         ValueError: If SIGMA_BLOCKLIST is not found in the config file.
             or the Sigma config file is not readabale.
@@ -66,16 +68,15 @@ def get_sigma_blocklist(blocklist_path=None):
             'Unable to open file: [{0:s}], cannot open it for '
             'read, please check permissions.'.format(config_file_path))
 
-    ignore = pd.read_csv(config_file_path)
+    return pd.read_csv(config_file_path)
 
-    return ignore
-
-def run_verifier(rules_path, config_file_path):
+def run_verifier(rules_path, config_file_path, blocklist_path=None):
     """Run an sigma parsing test on a dir and returns results from the run.
 
     Args:
         rules_path: the path to the rules.
         config_file_path: the path to a config file that contains mapping data.
+        blocklist_path: Optional path to a blocklist file
 
     Raises:
         IOError: if the path to either test or analyzer file does not exist
@@ -102,7 +103,7 @@ def run_verifier(rules_path, config_file_path):
     return_verified_rules = []
     return_rules_with_problems = []
 
-    ignore = get_sigma_blocklist()
+    ignore = get_sigma_blocklist(blocklist_path)
 
     for dirpath, dirnames, files in os.walk(rules_path):
         if 'deprecated' in [x.lower() for x in dirnames]:
@@ -122,7 +123,7 @@ def run_verifier(rules_path, config_file_path):
                         return_rules_with_problems.append(rule_file_path)
                         block_because_csv = True
                         logging.info('{0:s} Ignoring because {1:s}'.format(
-                            rule_file_path,item))
+                            rule_file_path, item))
 
                 if block_because_csv:
                     continue
@@ -130,6 +131,8 @@ def run_verifier(rules_path, config_file_path):
                 try:
                     parsed_rule = sigma_util.get_sigma_rule(
                         rule_file_path, sigma_config)
+                # This except is to keep the unknown exceptions
+                # this function is made to catch them and document them the broad exception is needed
                 except Exception:# pylint: disable=broad-except
                     return_rules_with_problems.append(rule_file_path)
 
@@ -161,7 +164,7 @@ def move_problematic_rule(filepath, move_to_path, reason=None):
         base_path = os.path.basename(filepath)
         logging.info('Moving the rule: {0:s} to {1:s}'.format(
         filepath, f'{move_to_path}{base_path}'))
-        os.rename(filepath, os.path.join(move_to_path,base_path))
+        os.rename(filepath, os.path.join(move_to_path, base_path))
     except OSError:
         logger.error('OS Error - rule not moved', exc_info=True)
 
@@ -182,6 +185,11 @@ if __name__ == '__main__':
         '--config_file', '--file', dest='config_file_path', action='store',
         default='', type=str, metavar='PATH_TO_TEST_FILE', help=(
             'Path to the file containing the config data to feed sigma '
+        ))
+    arguments.add_argument(
+        '--blocklist_file', dest='blocklist_file_path', action='store',
+        default='', type=str, metavar='PATH_TO_BLOCK_FILE', help=(
+            'Path to the file containing the blocklist '
         ))
     arguments.add_argument(
         'rules_path', action='store', default='', type=str,
@@ -216,9 +224,15 @@ if __name__ == '__main__':
             options.rules_path))
         sys.exit(1)
 
+    if len(options.blocklist_file_path) > 0:
+        if not os.path.isfile(options.config_file_path):
+            print('Blocklist file not found.')
+            sys.exit(1)
+
     sigma_verified_rules, sigma_rules_with_problems = run_verifier(
         rules_path=options.rules_path,
-        config_file_path=options.config_file_path)
+        config_file_path=options.config_file_path, 
+        blocklist_path=options.config_file_path)
 
     if len(sigma_rules_with_problems) > 0:
         print('### Do NOT import below.###')
