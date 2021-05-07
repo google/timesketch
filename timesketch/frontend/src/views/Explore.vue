@@ -350,7 +350,7 @@ import TsViewListDropdown from '../components/Common/ViewListDropdown'
 import TsSketchExploreEventList from '../components/Explore/EventList'
 import TsExploreTimelinePicker from '../components/Explore/TimelinePicker'
 import TsExploreFilterTime from '../components/Explore/TimeFilter'
-import TsSearchHistoryTree from '../components/Tree'
+import TsSearchHistoryTree from '../components/Explore/SearchHistoryTree'
 
 import EventBus from '../main'
 import { None } from 'vega'

@@ -654,12 +654,16 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                 )
 
                 if current_search_node:
-                    current_search_node.add_label('__ts_label')
+                    search_node_label = '__ts_label'
+                    if '__ts_star' in form.annotation.data:
+                        search_node_label = '__ts_star'
+                    current_search_node.add_label(search_node_label)
             else:
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
                     'Annotation type needs to be either label or comment, '
                     'not {0!s}'.format(annotation_type))
+                    
 
             annotations.append(annotation)
             # Save the event to the database
