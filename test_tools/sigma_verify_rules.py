@@ -35,9 +35,8 @@ logger = logging.getLogger('timesketch.test_tool.sigma-verify')
 logging.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO'))
 
 
-
 def get_sigma_blocklist(blocklist_path=None):
-    """Get a dataframe of sigma rules to ignore. 
+    """Get a dataframe of sigma rules to ignore.
     This includes filenames, paths, ids.
 
     Args:
@@ -133,7 +132,7 @@ def run_verifier(rules_path, config_file_path, blocklist_path=None):
                     parsed_rule = sigma_util.get_sigma_rule(
                         rule_file_path, sigma_config)
                 # This except is to keep the unknown exceptions
-                # this function is made to catch them and document 
+                # this function is made to catch them and document
                 # them the broad exception is needed
                 except Exception:# pylint: disable=broad-except
                     return_rules_with_problems.append(rule_file_path)
