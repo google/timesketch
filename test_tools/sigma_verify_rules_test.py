@@ -24,6 +24,7 @@ class TestSigmaVerifyRules(unittest.TestCase):
         sigma_ok_rules, sigma_prob_rules = run_verifier(
             config_file_path=config, rules_path=rules)
         found = False
+        self.assertEqual(len(sigma_prob_rules),0)
         for verified_rule in sigma_ok_rules:
             if 'lnx_susp_zenmap' in verified_rule:
                 found = True
