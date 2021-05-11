@@ -18,6 +18,8 @@ import io
 import json
 import zipfile
 
+import prometheus_client
+
 from flask import abort
 from flask import jsonify
 from flask import request
@@ -35,12 +37,22 @@ from timesketch.lib.definitions import DEFAULT_SOURCE_FIELDS
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
+from timesketch.lib.definitions import METRICS_NAMESPACE
 from timesketch.models import db_session
 from timesketch.models.sketch import Event
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import View
 from timesketch.models.sketch import SearchHistory
 
+# Metrics definitions
+METRICS = {
+    'searchhistory': prometheus_client.Counter(
+        'searchhistory',
+        'Search History actions',
+        ['action'],
+        namespace=METRICS_NAMESPACE
+    )
+}
 
 class ExploreResource(resources.ResourceMixin, Resource):
     """Resource to search the datastore based on a query and a filter."""
@@ -313,6 +325,16 @@ class ExploreResource(resources.ResourceMixin, Resource):
             if not all([is_same_query, is_same_filter]):
                 db_session.add(new_search)
                 db_session.commit()
+                # Create metric if user creates a new branch.
+                if new_search.parent:
+                    if len(new_search.parent.children) > 1:
+                        METRICS['searchhistory'].labels(
+                            action='branch').inc()
+            else:
+                METRICS['searchhistory'].labels(
+                    action='ignore_same_query').inc()
+        else:
+            METRICS['searchhistory'].labels(action='incognito').inc()
 
         search_node = new_search if new_search.id else previous_search
 

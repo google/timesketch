@@ -42,10 +42,6 @@ export default {
       this.selectedNode = node
     },
     createBranch (newNode) {
-      if (Object.keys(this.treeData).length === 0) {
-        this.fetchHistory()
-      }
-
       if (this.selectedNode) {
         if (this.selectedNode.id === newNode.id) {
           return
