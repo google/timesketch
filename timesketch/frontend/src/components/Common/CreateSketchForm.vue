@@ -60,7 +60,7 @@ export default {
       ApiClient.createSketch(formData).then((response) => {
         let newSketchId = response.data.objects[0].id
         this.clearFormData()
-        this.$router.push({ name: 'SketchOverview', params: { sketchId: newSketchId } })
+        this.$router.push({ name: 'Overview', params: { sketchId: newSketchId } })
       }).catch((e) => {})
     }
   }
