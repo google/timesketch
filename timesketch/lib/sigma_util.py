@@ -268,6 +268,7 @@ def get_sigma_rule_by_text(rule_text, sigma_config=None):
         NotImplementedError: A feature in the provided Sigma rule is not
             implemented in Sigma for Timesketch
     """
+
     try:
         if isinstance(sigma_config, sigma_configuration.SigmaConfiguration):
             sigma_conf_obj = sigma_config
@@ -286,9 +287,11 @@ def get_sigma_rule_by_text(rule_text, sigma_config=None):
     # TODO check if input validation is needed / useful.
     try:
         rule_yaml_data = yaml.safe_load_all(rule_text)
+
         for doc in rule_yaml_data:
+
             parser = sigma_collection.SigmaCollectionParser(
-                doc, sigma_conf_obj, None)
+                str(doc), sigma_conf_obj, None)
             parsed_sigma_rules = parser.generate(sigma_backend)
             rule_return.update(doc)
 
