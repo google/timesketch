@@ -20,7 +20,6 @@ from sqlalchemy import ForeignKey
 from sqlalchemy import Integer
 from sqlalchemy import UnicodeText
 from sqlalchemy.orm import relationship
-from sqlalchemy.sql.sqltypes import Boolean
 
 from timesketch.models import BaseModel
 from timesketch.models.annotations import LabelMixin
