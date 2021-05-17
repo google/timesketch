@@ -425,7 +425,8 @@ class SearchHistoryResource(resources.ResourceMixin, Resource):
 
         tree = {}
         root_node = SearchHistory.query.filter_by(
-            user=current_user, sketch=sketch).first()
+            user=current_user, sketch=sketch).order_by(
+                SearchHistory.id).first()
         last_node = SearchHistory.query.filter_by(
             user=current_user, sketch=sketch).order_by(
                 SearchHistory.id.desc()).first()
