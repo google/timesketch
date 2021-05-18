@@ -338,7 +338,10 @@ class ElasticsearchDataStore(object):
 
         if query_string:
             query_dsl['query']['bool']['must'].append(
-                {'query_string': {'query': query_string}})
+                {'query_string': {
+                    'query': query_string,
+                    'default_operator': 'AND'}
+                })
 
         # New UI filters
         if query_filter.get('chips', None):
