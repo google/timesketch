@@ -161,7 +161,7 @@ limitations under the License.
       </div>
     </section>
 
-    <section class="section" v-show="showSearchHistory">
+    <section class="section" v-if="showSearchHistory">
       <div class="container is-fluid">
         <div class="card">
           <header class="card-header">
@@ -561,7 +561,7 @@ export default {
 
       if (viewId !== parseInt(viewId, 10) && typeof viewId !== 'string') {
         viewId = viewId.id
-        this.$router.push({ name: 'SketchExplore', query: { view: viewId } })
+        this.$router.push({ name: 'Explore', query: { view: viewId } })
       }
       ApiClient.getView(this.sketchId, viewId).then((response) => {
         let view = response.data.objects[0]

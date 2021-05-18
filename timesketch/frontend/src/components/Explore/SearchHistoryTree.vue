@@ -74,7 +74,8 @@ export default {
     scrollTo () {
       document.getElementById(this.selectedNode.id.toString()).scrollIntoView({
         behavior: 'smooth',
-        block: 'center'
+        block: 'center',
+        inline: 'center'
       })
     },
     fetchHistory () {
