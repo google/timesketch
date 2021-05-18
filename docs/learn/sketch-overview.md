@@ -12,7 +12,7 @@ Alternatively, you can go to “Timelines” tab and select from all available t
 ## Navigating a sketch
 A sketch consists of 5 tabs: “Overview”, “Explore”, “Stories”
 
-![navigation bar](/assets/images/Navigation.png)
+![navigation bar](../assets/images/Navigation.png)
 
 **Overview** tab contains summary information about your sketch, such as sketch title, description, as well as shortcuts to saved views and timelines.
 
@@ -23,7 +23,7 @@ A sketch consists of 5 tabs: “Overview”, “Explore”, “Stories”
 ## Sharing and access control
 After the sketch is created, you can share it with other users in the system. To do so, click ![Share](/assets/images/sharebutton.png) button. You will be presented with the following dialogue:
 
-![Share dialogue](/assets/images/Sharingdialog.png) 
+![Share dialogue](../assets/images/Sharingdialog.png) 
 
 You can share the sketch with users, groups of users, make it available to all users in your system, or leave private.
 
@@ -41,7 +41,7 @@ You can share the sketch with users, groups of users, make it available to all u
 
 If you click on the "More" Button in the Sketch Overview, you get the following three options.
 
-![Sketch Overview more dialogue](/assets/images/SketchMore.png) 
+![Sketch Overview more dialogue](../assets/images/SketchMore.png) 
 
 ### Delete
 
