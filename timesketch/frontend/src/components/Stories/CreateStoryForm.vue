@@ -47,7 +47,7 @@ export default {
       ApiClient.createStory(this.title, content, this.sketch.id).then((response) => {
         let newStoryId = response.data.objects[0].id
         this.clearFormData()
-        this.$router.push({ name: 'SketchStoryContent', params: { storyId: newStoryId } })
+        this.$router.push({ name: 'StoryContent', params: { storyId: newStoryId } })
         this.$store.dispatch('updateSketch', this.sketch.id)
       }).catch((e) => {})
     }

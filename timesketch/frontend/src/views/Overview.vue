@@ -401,7 +401,7 @@ export default {
       this.isArchived = true
       ApiClient.archiveSketch(this.sketch.id).then((response) => {
         this.$store.dispatch('updateSketch', this.sketch.id)
-        this.$router.push({ name: 'SketchOverview', params: { sketchId: this.sketch.id } })
+        this.$router.push({ name: 'Overview', params: { sketchId: this.sketch.id } })
       }).catch((e) => {
         console.error(e)
       })
@@ -410,7 +410,7 @@ export default {
       this.isArchived = false
       ApiClient.unArchiveSketch(this.sketch.id).then((response) => {
         this.$store.dispatch('updateSketch', this.sketch.id)
-        this.$router.push({ name: 'SketchOverview', params: { sketchId: this.sketch.id } })
+        this.$router.push({ name: 'Overview', params: { sketchId: this.sketch.id } })
       }).catch((e) => {
         console.error(e)
       })
