@@ -161,7 +161,7 @@ limitations under the License.
       </div>
     </section>
 
-    <section class="section" v-show="showSearchHistory">
+    <section class="section" v-if="showSearchHistory">
       <div class="container is-fluid">
         <div class="card">
           <header class="card-header">
@@ -346,11 +346,12 @@ limitations under the License.
 
 <script>
 import ApiClient from '../utils/RestApiClient'
-import TsViewListDropdown from '../components/Sketch/ViewListDropdown'
-import TsSketchExploreEventList from '../components/Sketch/EventList'
-import TsExploreTimelinePicker from '../components/Sketch/TimelinePicker'
-import TsExploreFilterTime from '../components/Sketch/TimeFilter'
-import TsSearchHistoryTree from '../components/Tree'
+import TsViewListDropdown from '../components/Common/ViewListDropdown'
+import TsSketchExploreEventList from '../components/Explore/EventList'
+import TsExploreTimelinePicker from '../components/Explore/TimelinePicker'
+import TsExploreFilterTime from '../components/Explore/TimeFilter'
+import TsSearchHistoryTree from '../components/Explore/SearchHistoryTree'
+
 import EventBus from '../main'
 import { None } from 'vega'
 
@@ -560,7 +561,7 @@ export default {
 
       if (viewId !== parseInt(viewId, 10) && typeof viewId !== 'string') {
         viewId = viewId.id
-        this.$router.push({ name: 'SketchExplore', query: { view: viewId } })
+        this.$router.push({ name: 'Explore', query: { view: viewId } })
       }
       ApiClient.getView(this.sketchId, viewId).then((response) => {
         let view = response.data.objects[0]

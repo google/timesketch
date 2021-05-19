@@ -67,6 +67,9 @@
     --message-body-color: var(--font-color-dark);
     --markdown-body-font-color: var(--font-color-dark);
     --spinner-color: #333333;
+    --input-background-color: var(--search-input-light);
+    --input-color: var(--font-color-dark);
+    --input-placeholder-color: var(--font-color-grey);
 }
 
 [data-theme=dark] {
@@ -114,6 +117,9 @@
     --message-body-color: var(--font-color-light);
     --markdown-body-font-color: var(--font-color-light);
     --spinner-color: #ffffff;
+    --input-background-color: var(--search-input-dark);
+    --input-color: var(--font-color-light);
+    --input-placeholder-color: #969696;
 }
 
 // Customize Bulma
@@ -137,6 +143,10 @@ $tabs-link-active-color: var(--tabs-link-active-color);
 $tabs-link-active-border-bottom-color: var(--tabs-link-active-border-bottom-color);
 $tabs-link-hover-border-bottom-color: var(--tabs-link-hover-border-bottom-color);
 $tabs-border-bottom-color: var(--tabs-border-bottom-color);
+
+$input-background-color: var(--input-background-color);
+$input-color: var(--input-color);
+$input-placeholder-color: var(--input-placeholder-color);
 
 $button-text-color: var(--button-font-color);
 $button-text-hover-color: var(--button-font-color);
@@ -387,6 +397,7 @@ a, a:hover {
       padding: 0.33em 0.66em;
       border-radius: 4px;
       cursor: pointer;
+      min-width: 100px;
     }
 
     

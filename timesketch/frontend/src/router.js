@@ -18,20 +18,18 @@ import VueRouter from 'vue-router'
 
 import Home from './views/Home'
 import Sketch from './views/Sketch'
-import SketchOverview from './views/SketchOverview'
-import SketchManage from './views/SketchManage'
-import SketchManageViews from './views/SketchManageViews'
-import SketchManageTimelines from './views/SketchManageTimelines'
-import SketchAggregate from './views/SketchAggregate'
-import SketchExplore from './views/SketchExplore'
-import SketchGraph from './views/SketchGraph'
-import SketchGraphOverview from './views/SketchGraphOverview'
-import SketchGraphExplore from './views/SketchGraphExplore'
-import SketchAnalyzers from './views/SketchAnalyzers'
-import SketchAnalyzersOverview from './views/SketchAnalyzersOverview'
-import SketchStory from './views/SketchStory'
-import SketchStoryOverview from './views/SketchStoryOverview'
-import SketchStoryContent from './views/SketchStoryContent'
+import Overview from './views/Overview'
+import Explore from './views/Explore'
+import Graph from './views/Graph'
+import GraphOverview from './views/GraphOverview'
+import GraphExplore from './views/GraphExplore'
+import Aggregate from './views/Aggregate'
+import Analyze from './views/Analyze'
+import Timelines from './views/Timelines'
+import Story from './views/Story'
+import StoryOverview from './views/StoryOverview'
+import StoryContent from './views/StoryContent'
+import SavedSearches from './views/SavedSearches'
 
 Vue.use(VueRouter)
 
@@ -49,81 +47,72 @@ const routes = [
     children: [
       {
         path: '',
-        name: 'SketchOverview',
-        component: SketchOverview
+        name: 'Overview',
+        component: Overview
       },
       {
         path: 'explore',
-        name: 'SketchExplore',
-        component: SketchExplore,
+        name: 'Explore',
+        component: Explore,
         props: true
       },
       {
         path: 'graph',
-        component: SketchGraph,
+        component: Graph,
         props: true,
         children: [
           {
             path: '',
-            name: 'SketchGraphOverview',
-            component: SketchGraphOverview
+            name: 'GraphOverview',
+            component: GraphOverview
           },
           {
             path: 'explore',
-            name: 'SketchGraphExplore',
-            component: SketchGraphExplore,
+            name: 'GraphExplore',
+            component: GraphExplore,
             props: true
           }]
       },
       {
         path: 'aggregate',
-        name: 'SketchAggregate',
-        component: SketchAggregate,
+        name: 'Aggregate',
+        component: Aggregate,
         props: true
       },
       {
         path: 'analyzers',
-        component: SketchAnalyzers,
-        props: true,
-        children: [
-          {
-            path: '',
-            name: 'SketchAnalyzersOverview',
-            component: SketchAnalyzersOverview
-          }]
+        name: 'Analyze',
+        component: Analyze,
+        props: true
       },
       {
         path: 'story',
-        component: SketchStory,
+        component: Story,
         props: true,
         children: [
           {
             path: '',
-            name: 'SketchStoryOverview',
-            component: SketchStoryOverview
+            name: 'StoryOverview',
+            component: StoryOverview
           },
           {
             path: ':storyId',
-            name: 'SketchStoryContent',
-            component: SketchStoryContent,
+            name: 'StoryContent',
+            component: StoryContent,
             props: true
           }]
       },
       {
-        path: 'manage',
-        component: SketchManage,
-        props: true,
-        children: [
-          {
-            path: 'views',
-            name: 'SketchManageViews',
-            component: SketchManageViews
-          },
-          {
-            path: 'timelines',
-            name: 'SketchManageTimelines',
-            component: SketchManageTimelines
-          }]
+        path: 'timelines',
+        name: 'Timelines',
+        component: Timelines,
+        props: true
+      },
+      {
+        path: 'savedsearches',
+        name: 'SavedSearches',
+        component: SavedSearches,
+        props: true
       }
     ]
   }
