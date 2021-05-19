@@ -5,6 +5,8 @@ import logging
 import time
 import elasticsearch
 
+from flask import current_app
+
 from timesketch.lib.analyzers import utils
 
 from timesketch.lib.analyzers import interface
@@ -76,9 +78,6 @@ class SigmaPlugin(interface.BaseAnalyzer):
                     rule.get('es_query'), rule.get('file_name'),
                     tag_list=rule.get('tags'))
                 tags_applied[rule.get('file_name')] += tagged_events_counter
-                # The sleep does readuce sudden load peaks on ES.
-                # The value was determined by try & error.
-                time.sleep(0.5)
                 if sigma_rule_counter % 10 == 0:
                     logger.debug('Rule {0:d}/{1:d}'.format(
                         sigma_rule_counter, len(sigma_rules)))
@@ -88,9 +87,9 @@ class SigmaPlugin(interface.BaseAnalyzer):
                     '{1!s} waiting for 10 seconds'.format(
                         rule.get('file_name'), e), exc_info=True)
                 # this is caused by to many ES queries in short time range
-                # thus waiting for 15 seconds before sending the next one.
-                # The value was determined by try and error.
-                time.sleep(15)
+                sleep_time = current_app.config.get(
+                    'SIGMA_TAG_DELAY', 15)
+                time.sleep(sleep_time)
                 tagged_events_counter = self.run_sigma_rule(
                     rule.get('es_query'), rule.get('file_name'),
                     tag_list=rule.get('tags'))
