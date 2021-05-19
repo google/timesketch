@@ -5,9 +5,9 @@
 </template>
 
 <script>
-import TreeNode from './TreeNode'
-import ApiClient from '../utils/RestApiClient'
-import EventBus from '../main'
+import TreeNode from './SearchHistoryTreeNode'
+import ApiClient from '../../utils/RestApiClient'
+import EventBus from '../../main'
 
 // Based on https://stackoverflow.com/a/54470906
 function findSearchNode (object, key, predicate) {
@@ -42,10 +42,6 @@ export default {
       this.selectedNode = node
     },
     createBranch (newNode) {
-      if (Object.keys(this.treeData).length === 0) {
-        this.fetchHistory()
-      }
-
       if (this.selectedNode) {
         if (this.selectedNode.id === newNode.id) {
           return
@@ -78,7 +74,8 @@ export default {
     scrollTo () {
       document.getElementById(this.selectedNode.id.toString()).scrollIntoView({
         behavior: 'smooth',
-        block: 'center'
+        block: 'center',
+        inline: 'center'
       })
     },
     fetchHistory () {

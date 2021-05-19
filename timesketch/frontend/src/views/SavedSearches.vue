@@ -40,7 +40,7 @@ limitations under the License.
 </template>
 
 <script>
-import TsViewList from '../components/Sketch/ViewList'
+import TsViewList from '../components/Common/ViewList'
 
 export default {
   components: { TsViewList },

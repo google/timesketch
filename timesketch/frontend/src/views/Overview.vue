@@ -52,7 +52,7 @@ limitations under the License.
             </b-tooltip>
 
             <b-dropdown v-if="meta.permissions.write" aria-role="list" append-to-body position="is-bottom-left">
-              <a class="button ts-dropdown-button" style="background:transparent;border:none;" slot="trigger" slot-scope="{ active }">
+              <a class="button ts-dropdown-button is-small" style="background:transparent;border:none;margin-right:-18px;" slot="trigger" slot-scope="{ active }">
                   <span class="icon is-small">
                     <i :class="active ? 'fas fa-angle-up' : 'fas fa-angle-down'"></i>
                   </span>
@@ -203,16 +203,16 @@ limitations under the License.
                     <header class="card-header">
                       <p class="card-header-title">Timelines</p>
                       <div class="field is-grouped is-pulled-right" style="padding: 0.75rem;">
-                        <p v-if="meta.permissions.write" class="control">
-                          <button class="button is-success is-rounded is-small" v-on:click="showUploadTimelineModal = !showUploadTimelineModal">
+                        <div v-if="meta.permissions.write" class="control">
+                          <div class="button is-success is-rounded is-small" v-on:click="showUploadTimelineModal = !showUploadTimelineModal">
                                 <span class="icon is-small">
                                   <i class="fas fa-upload"></i>
                                 </span>
                             <span>Upload timeline</span>
-                          </button>
-                        </p>
+                          </div>
+                        </div>
                         <p class="control">
-                          <router-link class="button is-rounded is-small" :to="{ name: 'SketchManageTimelines' }">
+                          <router-link class="button is-rounded is-small" :to="{ name: 'Timelines' }">
                               <span class="icon is-small">
                                 <i class="fas fa-cog"></i>
                               </span>
@@ -225,7 +225,7 @@ limitations under the License.
                       <ts-timeline-list :timelines="sketch.timelines" :controls="false" :is-compact="true"></ts-timeline-list>
                       <ul v-if="sketch.timelines.length > 9" class="content-list">
                         <li style="padding:10px;">
-                          <router-link :to="{ name: 'SketchManageTimelines' }">
+                          <router-link :to="{ name: 'Timelines' }">
                             <span>There are {{ sketch.timelines.length - 10 }} more timelines in this sketch. <span style="text-decoration: underline">Click here to see them all</span></span>
                           </router-link>
                         </li>
@@ -238,7 +238,7 @@ limitations under the License.
                       <p class="card-header-title">Stories</p>
                       <div class="field is-grouped is-pulled-right" style="padding: 0.75rem;">
                         <p class="control">
-                          <router-link class="button is-rounded is-small is-success" :to="{ name: 'SketchStoryOverview' }">
+                          <router-link class="button is-rounded is-small is-success" :to="{ name: 'StoryOverview' }">
                               <span class="icon is-small">
                                 <i class="fas fa-plus-circle"></i>
                               </span>
@@ -265,11 +265,11 @@ limitations under the License.
                     <div style="padding:1.25em;">
                       <p>
                         Welcome to your new investigation.
-                        You get started by navigating to the <router-link style="text-decoration: underline;" :to="{ name: 'SketchExplore' }">explore page</router-link> where you can navigate your timelines, use search queries,
+                        You get started by navigating to the <router-link style="text-decoration: underline;" :to="{ name: 'Explore' }">explore page</router-link> where you can navigate your timelines, use search queries,
                         apply filters, view timeline data and save your search discoveries as new saved searches.
                       </p>
                       <br>
-                      <router-link class="button is-success" :to="{ name: 'SketchExplore' }">
+                      <router-link class="button is-success" :to="{ name: 'Explore' }">
                         <span>Begin to explore your data</span>
                         <span class="icon is-small">
                           <i class="fas fa-chevron-circle-right"></i>
@@ -283,7 +283,7 @@ limitations under the License.
                       <p class="card-header-title">Saved searches</p>
                       <div class="field is-grouped is-pulled-right" style="padding: 0.75rem;">
                         <p class="control" v-if="meta.views.length">
-                          <router-link class="button is-rounded is-small" :to="{ name: 'SketchManageViews' }">
+                          <router-link class="button is-rounded is-small" :to="{ name: 'SavedSearches' }">
                             <span class="icon is-small">
                               <i class="fas fa-cog"></i>
                             </span>
@@ -303,7 +303,7 @@ limitations under the License.
                       <p class="card-header-title">Saved graphs</p>
                       <div class="field is-grouped is-pulled-right" style="padding: 0.75rem;">
                         <p class="control">
-                          <router-link class="button is-rounded is-small is-success" :to="{ name: 'SketchGraphOverview' }">
+                          <router-link class="button is-rounded is-small is-success" :to="{ name: 'GraphOverview' }">
                             <span>Explore all graphs</span>
                             <span class="icon is-small">
                               <i class="fas fa-chevron-circle-right"></i>
@@ -332,15 +332,15 @@ limitations under the License.
 
 <script>
 import ApiClient from '../utils/RestApiClient'
-import TsSketchSummary from '../components/Sketch/SketchSummary'
-import TsSketchMetrics from '../components/Sketch/SketchMetrics'
-import TsTimelineList from '../components/Sketch/TimelineList'
-import TsSavedViewList from '../components/Sketch/ViewList'
-import TsSketchStoryList from '../components/Sketch/StoryList'
-import TsUploadTimelineForm from '../components/Sketch/UploadForm'
-import TsSketchTimelinesManage from './SketchManageTimelines'
-import TsShareForm from '../components/Sketch/ShareForm'
-import TsGraphList from '../components/Sketch/GraphList'
+import TsSketchSummary from '../components/Overview/SketchSummary'
+import TsSketchMetrics from '../components/Overview/SketchMetrics'
+import TsTimelineList from '../components/Timelines/TimelineList'
+import TsSavedViewList from '../components/Common/ViewList'
+import TsSketchStoryList from '../components/Stories/StoryList'
+import TsUploadTimelineForm from '../components/Common/UploadForm'
+import TsSketchTimelinesManage from './Timelines'
+import TsShareForm from '../components/Overview/ShareForm'
+import TsGraphList from '../components/Graph/GraphList'
 
 export default {
   components: {
@@ -401,7 +401,7 @@ export default {
       this.isArchived = true
       ApiClient.archiveSketch(this.sketch.id).then((response) => {
         this.$store.dispatch('updateSketch', this.sketch.id)
-        this.$router.push({ name: 'SketchOverview', params: { sketchId: this.sketch.id } })
+        this.$router.push({ name: 'Overview', params: { sketchId: this.sketch.id } })
       }).catch((e) => {
         console.error(e)
       })
@@ -410,7 +410,7 @@ export default {
       this.isArchived = false
       ApiClient.unArchiveSketch(this.sketch.id).then((response) => {
         this.$store.dispatch('updateSketch', this.sketch.id)
-        this.$router.push({ name: 'SketchOverview', params: { sketchId: this.sketch.id } })
+        this.$router.push({ name: 'Overview', params: { sketchId: this.sketch.id } })
       }).catch((e) => {
         console.error(e)
       })

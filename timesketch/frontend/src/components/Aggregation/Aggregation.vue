@@ -91,10 +91,10 @@ limitations under the License.
 <script>
 import ApiClient from '../../utils/RestApiClient'
 import TsVegaLiteChart from './VegaLiteChart'
-import TsDynamicForm from './DynamicForm'
+import TsDynamicForm from '../Common/DynamicForm'
 import TsSketchExploreAggregatorListDropdown from './AggregatorListDropdown'
 import TsTableChart from './TableChart'
-import TsTimelineListDropdown from './TimelineListDropdown'
+import TsTimelineListDropdown from '../Timelines/TimelineListDropdown'
 
 export default {
   components: {

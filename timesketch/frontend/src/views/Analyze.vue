@@ -84,7 +84,7 @@ limitations under the License.
 </template>
 
 <script>
-import TsAnalysisSessionDetail from '../components/Sketch/AnalyzerSessionDetail'
+import TsAnalysisSessionDetail from '../components/Analyze/AnalyzerSessionDetail'
 import ApiClient from '../utils/RestApiClient'
 
 export default {

@@ -166,7 +166,7 @@ limitations under the License.
       </p>
     </div>
 
-    <router-link v-if="timelineStatus === 'ready'" :to="{ name: 'SketchExplore', query: {timeline: timeline.id}}">{{ timeline.name }}</router-link>
+    <router-link v-if="timelineStatus === 'ready'" :to="{ name: 'Explore', query: {timeline: timeline.id}}">{{ timeline.name }}</router-link>
     <span v-if="timelineStatus !== 'ready'">{{ timeline.name }}</span>
     <br>
 
@@ -209,7 +209,7 @@ import _ from 'lodash'
 
 import ApiClient from '../../utils/RestApiClient'
 
-import TsAnalyzerHistory from './AnalyzerHistory'
+import TsAnalyzerHistory from '../Analyze/AnalyzerHistory'
 
 import EventBus from '../../main'
 
@@ -301,7 +301,7 @@ export default {
         }
         searchQuery += 'data_type:"' + dt + '"'
       }
-      this.$router.push({ name: 'SketchExplore', query: { index: index, q: searchQuery } })
+      this.$router.push({ name: 'Explore', query: { index: index, q: searchQuery } })
     },
     toggleTheme: function () {
       this.isDarkTheme = !this.isDarkTheme

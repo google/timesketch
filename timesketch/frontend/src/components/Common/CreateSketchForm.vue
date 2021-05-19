@@ -16,14 +16,20 @@ limitations under the License.
 <template>
   <form v-on:submit.prevent="submitForm">
     <div class="field">
-      <label class="label">Title</label>
+      <label class="label">Name</label>
       <div class="control">
-        <input v-model="title" class="input" type="text" required placeholder="Title of your story" autofocus>
+        <input v-model="form.name" class="input" type="text" required placeholder="Name your sketch" autofocus>
+      </div>
+    </div>
+    <div class="field">
+      <label class="label">Description (optional)</label>
+      <div class="control">
+        <textarea v-model="form.description" class="textarea" placeholder="Describe your sketch"></textarea>
       </div>
     </div>
     <div class="field">
       <div class="control">
-        <input class="button is-success" type="submit" value="Create">
+        <input class="button is-success" type="submit" value="Save">
       </div>
     </div>
   </form>
@@ -35,29 +41,27 @@ import ApiClient from '../../utils/RestApiClient'
 export default {
   data () {
     return {
-      title: ''
+      form: {
+        name: '',
+        description: ''
+      }
     }
   },
   methods: {
     clearFormData: function () {
-      this.title = ''
+      this.form.name = ''
+      this.form.description = ''
     },
     submitForm: function () {
-      let content = ''
-      ApiClient.createStory(this.title, content, this.sketch.id).then((response) => {
-        let newStoryId = response.data.objects[0].id
+      let formData = {
+        name: this.form.name,
+        description: this.form.description
+      }
+      ApiClient.createSketch(formData).then((response) => {
+        let newSketchId = response.data.objects[0].id
         this.clearFormData()
-        this.$router.push({ name: 'SketchStoryContent', params: { storyId: newStoryId } })
-        this.$store.dispatch('updateSketch', this.sketch.id)
+        this.$router.push({ name: 'Overview', params: { sketchId: newSketchId } })
       }).catch((e) => {})
-    }
-  },
-  computed: {
-    sketch () {
-      return this.$store.state.sketch
-    },
-    meta () {
-      return this.$store.state.meta
     }
   }
 }

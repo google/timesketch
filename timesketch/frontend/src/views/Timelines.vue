@@ -65,8 +65,8 @@ limitations under the License.
 </template>
 
 <script>
-import TsTimelineList from '../components/Sketch/TimelineList'
-import TsUploadTimelineForm from '../components/Sketch/UploadForm'
+import TsTimelineList from '../components/Timelines/TimelineList'
+import TsUploadTimelineForm from '../components/Common/UploadForm'
 
 export default {
   components: {

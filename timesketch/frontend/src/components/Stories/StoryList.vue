@@ -18,7 +18,7 @@ limitations under the License.
     <ul class="content-list">
       <li style="padding:10px;border-bottom:none;" v-for="story in meta.stories" :key="story.id">
         <div>
-          <router-link :to="{ name: 'SketchStoryContent', params: {sketchId: sketch.id, storyId: story.id}}">{{ story.title }}</router-link>
+          <router-link :to="{ name: 'StoryContent', params: {sketchId: sketch.id, storyId: story.id}}">{{ story.title }}</router-link>
           <div class="field is-grouped is-pulled-right" style="margin-top:10px;">
             <p class="control">
               <button v-if="controls" v-on:click="remove(story)" class="button is-small is-rounded is-danger">
