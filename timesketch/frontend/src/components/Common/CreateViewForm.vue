@@ -53,7 +53,7 @@ export default {
         this.$emit('setActiveView', newView)
         this.$store.state.meta.views.push(newView)
         this.clearFormData()
-        this.$router.push({ name: 'SketchExplore', query: { view: newView.id } })
+        this.$router.push({ name: 'Explore', query: { view: newView.id } })
       }).catch((e) => {})
     }
   }

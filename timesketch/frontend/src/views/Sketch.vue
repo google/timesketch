@@ -31,7 +31,7 @@ export default {
   watch: {
     sketch: function (newVal) {
       if (newVal.status[0].status === 'archived') {
-        this.$router.push({ name: 'SketchOverview', params: { sketchId: this.sketch.id } })
+        this.$router.push({ name: 'Overview', params: { sketchId: this.sketch.id } })
       }
       document.title = this.sketch.name
     }
