@@ -40,7 +40,7 @@ def get_sigma_blocklist(blocklist_path='./data/sigma_blocklist.csv'):
     This includes filenames, paths, ids.
 
     Args:
-        blocklist_path(str): Path to a blocklist file. 
+        blocklist_path(str): Path to a blocklist file.
             The default value is './data/sigma_blocklist.csv'
 
     Returns:
@@ -75,7 +75,7 @@ def run_verifier(rules_path, config_file_path, blocklist_path=None):
     Args:
         rules_path (str): Path to the Sigma rules.
         config_file_path (str): Path to a config file with Sigma mapping data.
-        blocklist_path (str): Optional path to a blocklist file. 
+        blocklist_path (str): Optional path to a blocklist file.
             The default value is none.
 
     Raises:
