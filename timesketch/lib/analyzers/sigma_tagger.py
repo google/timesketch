@@ -45,6 +45,8 @@ class SigmaPlugin(interface.BaseAnalyzer):
             event.add_attributes({'ts_sigma_rule': list(set(ts_sigma_rules))})
             ts_ttp = event.source.get('ts_ttp', [])
             for tag in tag_list:
+                # special handling for sigma tags that TS considers TTPS
+                # https://car.mitre.org and https://attack.mitre.org 
                 if tag.startswith(('attack.', 'car.')):
                     ts_ttp.append(tag)
                     tag_list.remove(tag)
@@ -86,7 +88,8 @@ class SigmaPlugin(interface.BaseAnalyzer):
                     'Timeout executing search for {0:s}: '
                     '{1!s} waiting for 10 seconds'.format(
                         rule.get('file_name'), e), exc_info=True)
-                # this is caused by to many ES queries in short time range
+                # this is caused by too many ES queries in short time range
+                # TODO: https://github.com/google/timesketch/issues/1782
                 sleep_time = current_app.config.get(
                     'SIGMA_TAG_DELAY', 15)
                 time.sleep(sleep_time)
@@ -94,9 +97,8 @@ class SigmaPlugin(interface.BaseAnalyzer):
                     rule.get('es_query'), rule.get('file_name'),
                     tag_list=rule.get('tags'))
                 tags_applied[rule.get('file_name')] += tagged_events_counter
-            # This except block is by purpose very broad as one bad rule could
-            # otherwise stop the whole analyzer run
-            # it might be an option to write the problematic rules to the output
+            # Wide exception handling since there are multiple exceptions that
+            # can be raised by the underlying sigma library.
             except: # pylint: disable=bare-except
                 logger.error(
                     'Problem with rule in file {0:s}: '.format(

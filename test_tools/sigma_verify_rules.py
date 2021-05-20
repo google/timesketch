@@ -35,12 +35,13 @@ logger = logging.getLogger('timesketch.test_tool.sigma-verify')
 logging.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO'))
 
 
-def get_sigma_blocklist(blocklist_path=None):
+def get_sigma_blocklist(blocklist_path='./data/sigma_blocklist.csv'):
     """Get a dataframe of sigma rules to ignore.
     This includes filenames, paths, ids.
 
     Args:
-        blocklist_path: Optional path to a blocklist file
+        blocklist_path(str): Path to a blocklist file. 
+            The default value is './data/sigma_blocklist.csv'
 
     Returns:
         Pandas dataframe with blocklist
@@ -48,35 +49,34 @@ def get_sigma_blocklist(blocklist_path=None):
     Raises:
         ValueError: If SIGMA_BLOCKLIST is not found in the config file.
             or the Sigma config file is not readabale.
-        SigmaConfigParseError: If config file could not be parsed.
     """
-    if blocklist_path:
-        config_file_path = blocklist_path
-    else:
-        config_file_path = './data/sigma_blocklist.csv'
 
-    if not config_file_path:
+    if blocklist_path is None:
+        blocklist_path = './data/sigma_blocklist.csv'
+
+    if not blocklist_path:
         raise ValueError('No blocklist_file_path set via param or config file')
 
-    if not os.path.isfile(config_file_path):
+    if not os.path.isfile(blocklist_path):
         raise ValueError(
             'Unable to open file: [{0:s}], it does not exist.'.format(
-                config_file_path))
+                blocklist_path))
 
-    if not os.access(config_file_path, os.R_OK):
+    if not os.access(blocklist_path, os.R_OK):
         raise ValueError(
             'Unable to open file: [{0:s}], cannot open it for '
-            'read, please check permissions.'.format(config_file_path))
+            'read, please check permissions.'.format(blocklist_path))
 
-    return pd.read_csv(config_file_path)
+    return pd.read_csv(blocklist_path)
 
 def run_verifier(rules_path, config_file_path, blocklist_path=None):
     """Run an sigma parsing test on a dir and returns results from the run.
 
     Args:
-        rules_path: the path to the rules.
-        config_file_path: the path to a config file that contains mapping data.
-        blocklist_path: Optional path to a blocklist file
+        rules_path (str): Path to the Sigma rules.
+        config_file_path (str): Path to a config file with Sigma mapping data.
+        blocklist_path (str): Optional path to a blocklist file. 
+            The default value is none.
 
     Raises:
         IOError: if the path to either test or analyzer file does not exist
@@ -104,6 +104,8 @@ def run_verifier(rules_path, config_file_path, blocklist_path=None):
     return_rules_with_problems = []
 
     ignore = get_sigma_blocklist(blocklist_path)
+    ignore_list = list(ignore['path'].unique())
+
 
     for dirpath, dirnames, files in os.walk(rules_path):
         if 'deprecated' in [x.lower() for x in dirnames]:
@@ -118,12 +120,9 @@ def run_verifier(rules_path, config_file_path, blocklist_path=None):
                 rule_file_path = os.path.join(dirpath, rule_filename)
 
                 block_because_csv = False
-                for item in ignore['path']:
-                    if item in rule_file_path:
-                        return_rules_with_problems.append(rule_file_path)
-                        block_because_csv = True
-                        logging.info('{0:s} Ignoring because {1:s}'.format(
-                            rule_file_path, item))
+                if rule_file_path in ignore_list:
+                    return_rules_with_problems.append(rule_file_path)
+                    block_because_csv = True
 
                 if block_because_csv:
                     continue
