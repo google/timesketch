@@ -98,7 +98,7 @@ limitations under the License.
 
             <p class="control" style="top:-38px; float:right;">
               <span style="margin-right:10px; margin-left:15px;">Search history</span>
-              <b-switch v-model="showSearchHistory" size="is-small" type='is-info' style="top:2px;"></b-switch>
+              <b-switch v-model="showSearchHistory" v-on:input="triggerScrollTo" size="is-small" type='is-info' style="top:2px;"></b-switch>
             </p>
 
             <!-- Time filters -->
@@ -161,7 +161,7 @@ limitations under the License.
       </div>
     </section>
 
-    <section class="section" v-if="showSearchHistory">
+    <section class="section" v-show="showSearchHistory">
       <div class="container is-fluid">
         <div class="card">
           <header class="card-header">
@@ -821,6 +821,9 @@ export default {
       }
       this.contextEvent = false
       this.search(false, true, true, node.id)
+    },
+    triggerScrollTo: function () {
+      EventBus.$emit('triggerScrollTo')
     },
     zoomWithMouse: function (event) {
       // Add @wheel="zoomWithMouse" on element to activate.
