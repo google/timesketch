@@ -301,7 +301,7 @@ export default {
         }
         searchQuery += 'data_type:"' + dt + '"'
       }
-      this.$router.push({ name: 'SketchExplore', query: { index: index, q: searchQuery } })
+      this.$router.push({ name: 'Explore', query: { index: index, q: searchQuery } })
     },
     toggleTheme: function () {
       this.isDarkTheme = !this.isDarkTheme
