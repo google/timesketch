@@ -72,10 +72,12 @@ export default {
       }
     },
     scrollTo () {
-      document.getElementById(this.selectedNode.id.toString()).scrollIntoView({
-        behavior: 'smooth',
-        block: 'center',
-        inline: 'center'
+      this.$nextTick(function () {
+        document.getElementById(this.selectedNode.id.toString()).scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+          inline: 'center'
+        })
       })
     },
     fetchHistory () {
@@ -91,18 +93,18 @@ export default {
   beforeDestroy () {
     EventBus.$off('createBranch')
     EventBus.$off('eventAnnotated')
+    EventBus.$off('triggerScrollTo')
   },
   created: function () {
     EventBus.$on('createBranch', this.createBranch)
     EventBus.$on('eventAnnotated', this.annotateNode)
+    EventBus.$on('triggerScrollTo', this.scrollTo)
     this.fetchHistory()
   },
   watch: {
     selectedNode: function () {
       this.$store.dispatch('updateSearchNode', this.selectedNode)
-      this.$nextTick(function () {
-        this.scrollTo()
-      })
+      this.scrollTo()
     }
   }
 
