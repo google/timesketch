@@ -81,7 +81,7 @@ limitations under the License.
     <div class="field is-horizontal">
       <div class="field is-grouped">
         <p class="control">
-          <button :disabled="!ready" class="button is-success" v-on:click="submit">{{ selectedChip ? 'Update' : 'Create' }}</button>
+          <button :disabled="!ready" class="button is-info" v-on:click="submit">{{ selectedChip ? 'Update' : 'Apply' }}</button>
         </p>
       </div>
     </div>

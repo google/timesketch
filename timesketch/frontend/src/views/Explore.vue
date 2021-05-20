@@ -29,74 +29,80 @@ limitations under the License.
         <div class="card">
 
           <div class="card-content" v-if="showSearch">
+              <!--
               <div class="field has-addons">
                 <div class="control">
                   <ts-view-list-dropdown @setActiveView="searchView" @clearSearch="clearSearch" :current-query-string="currentQueryString" :current-query-filter="currentQueryFilter" :view-from-url="params.viewId" :sketch-id="sketchId"></ts-view-list-dropdown>
                 </div>
+                -->
+
                 <div class="control" style="width: 100%;">
-                  <input @keyup.enter="search" v-model="currentQueryString" class="ts-search-input" type="text" placeholder="Search" autofocus required>
-                </div>
-              </div>
+                  <input @keyup.enter="search" v-model="currentQueryString" v-on:focus="showSearchDropdown = true" class="ts-search-input" type="text" placeholder="Search" required>
 
-            <div class="field is-grouped">
+                  <div class="card" v-show="showSearchDropdown" style="z-index: 999; position:absolute; width:100%; box-shadow: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23); border-radius:0 0 4px 4px">
+                    <div class="card-content" style="padding:0;">
 
-              <p class="control">
-                <b-dropdown trap-focus append-to-body aria-role="menu" ref="NewTimeFilter">
-                  <a class="button is-text" style="text-decoration: none;" slot="trigger" role="button">
-                    <span>+ Time filter</span>
-                  </a>
-                  <b-dropdown-item custom :focusable="false" style="min-width: 500px; padding: 30px;">
-                    <strong>Create time filter</strong>
-                    <br>
-                    <br>
-                    <ts-explore-filter-time @addChip="addChip" @hideDropdown="hideDropdown"></ts-explore-filter-time>
-                  </b-dropdown-item>
-                </b-dropdown>
-              </p>
+                      <div class="tile is-ancestor">
+                        <div class="tile is-vertical is-12">
+                          <div class="tile">
+                            <div class="tile is-parent is-vertical is-8" style="padding-right:0;">
 
-              <p class="control">
-                <b-dropdown trap-focus append-to-body aria-role="menu">
+                              <div class="tile is-child">
+                                <div style="padding:20px; border-bottom:1px solid #d3d3d3;">
+                                    <div style="max-width:450px;">
+                                      <strong>Create time filter</strong>
+                                      <br><br>
+                                      <ts-explore-filter-time @addChip="addChip" @hideDropdown="hideDropdown"></ts-explore-filter-time>
+                                    </div>
+                                </div>
+                              </div>
 
-                  <a class="button is-text" style="text-decoration: none;" slot="trigger" role="button">
-                    <span>+ Add label filter</span>
-                  </a>
-
-                  <div class="modal-card" style="width:300px;color: var(--font-color-dark);">
-                    <section class="modal-card-body">
-                      <b-dropdown-item custom :focusable="false">
-                        <div class="field">
-                          <b-checkbox type="is-info" v-model="selectedLabels" native-value="__ts_star">
-                            <span style="margin-right:5px;" class="icon is-small"><i class="fas fa-star" style="color:#ffe300;-webkit-text-stroke-width: 1px;-webkit-text-stroke-color: silver;"></i></span>Show starred events
-                          </b-checkbox>
-                        </div>
-                        <div class="field">
-                          <b-checkbox type="is-info" v-model="selectedLabels" native-value="__ts_comment">
-                            <span style="margin-right:5px;" class="icon is-small"><i class="fas fa-comment"></i></span>Show events with comments
-                          </b-checkbox>
-                        </div>
-                        <hr v-if="meta.filter_labels.length">
-                        <div class="level" style="margin-bottom: 5px;" v-for="(label) in meta.filter_labels" :key="label">
-                          <div class="level-left">
-                            <div class="field">
-                              <b-checkbox type="is-info" v-model="selectedLabels" :native-value="label">
-                                {{ label }}
-                              </b-checkbox>
+                              <div class="tile is-child">
+                                <div style="padding:0 20px 20px 20px;">
+                                  <strong>Filter on Labels</strong>
+                                  <br><br>
+                                  <div class="field">
+                                    <b-checkbox type="is-info" v-model="selectedLabels" native-value="__ts_star">
+                                      <span style="margin-right:5px;" class="icon is-small"><i class="fas fa-star" style="color:#ffe300;-webkit-text-stroke-width: 1px;-webkit-text-stroke-color: silver;"></i></span>Show starred events
+                                    </b-checkbox>
+                                  </div>
+                                  <div class="field">
+                                    <b-checkbox type="is-info" v-model="selectedLabels" native-value="__ts_comment">
+                                      <span style="margin-right:5px;" class="icon is-small"><i class="fas fa-comment"></i></span>Show events with comments
+                                    </b-checkbox>
+                                  </div>
+                                  <div class="level" style="margin-bottom: 5px;" v-for="(label) in meta.filter_labels" :key="label">
+                                    <div class="level-left">
+                                      <div class="field">
+                                        <b-checkbox type="is-info" v-model="selectedLabels" :native-value="label">
+                                          {{ label }}
+                                        </b-checkbox>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <button class="button is-info" v-on:click="updateLabelChips()">Apply</button>
+                                </div>
+                              </div>
                             </div>
+
+                            <div class="tile is-parent" style="padding-left:0;">
+                              <div class="tile is-child">
+                                <div style="border-left:1px solid #d3d3d3; height:100%; padding:20px; background-color:#f5f5f5;">
+                                  <strong>Saved searches</strong>
+                                  <br><br>
+                                  <ts-view-list :views="meta.views" @setActiveView="searchView"></ts-view-list>
+                                </div>
+                              </div>
+                            </div>
+
                           </div>
                         </div>
-                      </b-dropdown-item>
-                    </section>
-                    <section class="modal-card-foot">
-                      <b-dropdown-item>
-                        <button class="button is-info" v-on:click="updateLabelChips()">Apply</button>
-                      </b-dropdown-item>
-                    </section>
+                      </div>
+                    </div>
                   </div>
-                </b-dropdown>
-              </p>
-            </div>
+                </div>
 
-            <p class="control" style="top:-38px; float:right;">
+            <p class="control" style="top:-45px; float:right;">
               <span style="margin-right:10px; margin-left:15px;">Search history</span>
               <b-switch v-model="showSearchHistory" size="is-small" type='is-info' style="top:2px;"></b-switch>
             </p>
@@ -161,7 +167,7 @@ limitations under the License.
       </div>
     </section>
 
-    <section class="section" v-if="showSearchHistory">
+    <section class="section" v-show="showSearchHistory">
       <div class="container is-fluid">
         <div class="card">
           <header class="card-header">
@@ -174,7 +180,7 @@ limitations under the License.
             </div>
           </header>
           <div class="card-content no-scrollbars" v-dragscroll style="overflow: scroll; white-space: nowrap; max-height:700px;min-height:500px">
-            <ts-search-history-tree @node-click="jumpInHistory" v-bind:style="{ transform: 'scale(' + zoomLevel + ')' }" style="transform-origin: top left;"></ts-search-history-tree>
+            <ts-search-history-tree @node-click="jumpInHistory" :show-history="showSearchHistory" v-bind:style="{ transform: 'scale(' + zoomLevel + ')' }" style="transform-origin: top left;"></ts-search-history-tree>
           </div>
         </div>
       </div>
@@ -347,6 +353,7 @@ limitations under the License.
 <script>
 import ApiClient from '../utils/RestApiClient'
 import TsViewListDropdown from '../components/Common/ViewListDropdown'
+import TsViewList from '../components/Common/ViewListExplore'
 import TsSketchExploreEventList from '../components/Explore/EventList'
 import TsExploreTimelinePicker from '../components/Explore/TimelinePicker'
 import TsExploreFilterTime from '../components/Explore/TimeFilter'
@@ -383,6 +390,7 @@ export default {
   },
   components: {
     TsViewListDropdown,
+    TsViewList,
     TsSketchExploreEventList,
     TsExploreTimelinePicker,
     TsExploreFilterTime,
@@ -401,6 +409,7 @@ export default {
       originalContext: false,
       isFullPage: true,
       loadingComponent: null,
+      showSearchDropdown: true,
       eventList: {
         meta: {},
         objects: []
@@ -521,6 +530,7 @@ export default {
 
       if (emitEvent) {
         EventBus.$emit('newSearch')
+        this.showSearchDropdown = false
       }
 
       ApiClient.search(this.sketchId, formData).then((response) => {
@@ -558,6 +568,8 @@ export default {
     searchView: function (viewId) {
       // Reset selected events.
       this.selectedEvents = {}
+
+      this.showSearchDropdown = false
 
       if (viewId !== parseInt(viewId, 10) && typeof viewId !== 'string') {
         viewId = viewId.id
@@ -887,8 +899,9 @@ export default {
     }
 
     if (!this.currentQueryString) {
-      this.currentQueryString = '*'
-      doSearch = true
+      // this.currentQueryString = '*'
+      // doSearch = true
+      this.currentQueryFilter.indices = ['_all']
     }
 
     if (doSearch) {

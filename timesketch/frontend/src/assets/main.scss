@@ -240,11 +240,12 @@ ul.content-list>li:last-child { border-bottom: none; }
     outline: none;
     border: none;
     font-size: 1.2em;
-    border-radius: 0 5px 5px 0;
+    border-radius: 5px;
     padding: 25px;
     height: 34px;
-    background: var(--search-input-explore);
+    // background: var(--search-input-explore);
     color: var(--search-input-font-color);
+    border:1px solid #d3d3d3;
     width: 100%;
 }
 
