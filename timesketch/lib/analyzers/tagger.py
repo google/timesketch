@@ -46,10 +46,12 @@ class TaggerSketchPlugin(interface.BaseAnalyzer):
         tag_results = []
         for name, tag_config in iter(config.items()):
             tag_result = self.tagger(name, tag_config)
-            if tag_result:
+            if tag_result and not tag_result.startswith('0 events tagged'):
                 tag_results.append(tag_result)
 
-        return ', '.join(tag_results)
+        if tag_results:
+            return ', '.join(tag_results)
+        return 'No tags applied'
 
     def tagger(self, name, config):
         """Tag and add emojis to events.
