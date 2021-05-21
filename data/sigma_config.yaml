@@ -81,22 +81,17 @@ logsources:
       source_name:
         - "Microsoft-Windows-Sysmon"
   # log source configurations for generic sigma rules
-  process_creation_1:
+  process_creation:
     category: process_creation
     product: windows
     conditions:
-      EventID: 1
-    rewrite:
-      product: windows
-      service: sysmon
-  process_creation_2:
-    category: process_creation
-    product: windows
-    conditions:
-      EventID: 4688
-    rewrite:
-      product: windows
-      service: security
+      EventID: 
+        - 1
+        - 4688
+      source_name:
+        - "Microsoft-Windows-Sysmon"
+        - "Microsoft-Windows-Security-Auditing"
+        - "Microsoft-Windows-Eventlog"
     fieldmappings:
       Image: NewProcessName
       ParentImage: ParentProcessName
@@ -299,4 +294,9 @@ fieldmappings:
     IntegrityLevel: xml_string
     Description: xml_string
     Signed: xml_string
+    ScriptBlockText: xml_string
+    ContextInfo: xml_string
     OriginalFileName: "xml_string:*OriginalFileName*"
+    Payload: xml_string
+    HostName: xml_string #96b9f619-aa91-478f-bacb-c3e50f8df575
+    HostApplication: xml_string #96b9f619-aa91-478f-bacb-c3e50f8df575
