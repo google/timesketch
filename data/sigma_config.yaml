@@ -292,6 +292,7 @@ fieldmappings:
     ImageLoaded: xml_string
     QueryName: xml_string
     TargetProcessAddress: xml_string
+    TargetObject: xml_string
     Signature: xml_string
     StartModule: xml_string
     StartFunction: xml_string
