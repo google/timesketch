@@ -154,7 +154,7 @@ class DictOntology(OntologyInterface):
     def decode(data):
         """Returns a dict object from the stored string in the database."""
         dict_value = json.loads(data)
-        if isinstance(dict_value, dict):
+        if not isinstance(dict_value, dict):
             raise ValueError(
                 'Unable to read in the data, it\'s not stored as a dictionary')
         return dict_value
