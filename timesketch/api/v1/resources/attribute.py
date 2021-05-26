@@ -23,6 +23,7 @@ from flask_login import current_user
 
 from timesketch.api.v1 import resources
 from timesketch.api.v1 import utils
+from timesketch.lib import ontology as ontology_lib
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
@@ -122,6 +123,10 @@ class AttributeResource(resources.ResourceMixin, Resource):
         name = form.get('name')
         ontology = form.get('ontology', 'text')
 
+        ontology_def = ontology_lib.ONTOLOGY
+        ontology_dict = ontology_def.get(ontology, {})
+        cast_as_string = ontology_dict.get('cast_as', 'str')
+
         if action == 'post':
             values = form.get('values')
             if not values:
@@ -133,7 +138,10 @@ class AttributeResource(resources.ResourceMixin, Resource):
                 return abort(
                     HTTP_STATUS_CODE_BAD_REQUEST, 'Values needs to be a list.')
 
-            if any([not isinstance(x, str) for x in values]):
+            value_strings = [ontology_lib.OntologyManager.encode_value(
+                x, cast_as_string) for x in values]
+
+            if any([not isinstance(x, str) for x in value_strings]):
                 return abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
                     'All values needs to be stored as strings.')
@@ -152,7 +160,7 @@ class AttributeResource(resources.ResourceMixin, Resource):
             db_session.add(attribute)
             db_session.commit()
 
-            for value in values:
+            for value in value_strings:
                 attribute_value = AttributeValue(
                     user=current_user,
                     attribute=attribute,
