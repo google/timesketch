@@ -128,9 +128,7 @@ class BoolOntology(OntologyInterface):
     @staticmethod
     def decode(data):
         """Returns a bool value from the stored string."""
-        if data == 'true':
-            return True
-        return False
+        return data == 'true'
 
 
 class DictOntology(OntologyInterface):
