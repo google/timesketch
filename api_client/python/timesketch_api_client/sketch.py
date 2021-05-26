@@ -234,7 +234,8 @@ class Sketch(resource.BaseResource):
 
         Args:
             name (str): The name of the attribute.
-            values (list): A list of string values of the attribute.
+            values (list): A list of values (in their correct type according
+                to the ontology).
             ontology (str): The ontology (matches with
                 /etc/ontology.yaml), which defines how the attribute
                 is interpreted.
@@ -248,10 +249,6 @@ class Sketch(resource.BaseResource):
         """
         if not isinstance(name, str):
             raise ValueError('Name needs to be a string.')
-
-        if not isinstance(values, (list, tuple)):
-            if any(not isinstance(x, str) for x in values):
-                raise ValueError('All values need to be a string.')
 
         if not isinstance(ontology, str):
             raise ValueError('Ontology needs to be a string.')
