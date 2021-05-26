@@ -30,5 +30,9 @@ float:
         description: "Float."
 
 bool:
-        case_as: bool
+        cast_as: bool
         description: "Boolean, True or False values."
+
+intelligence:
+        cast_as: dict
+        description: "Set of key/value pairs to summarize an intelligence report."
