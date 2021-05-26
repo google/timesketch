@@ -61,7 +61,7 @@ def get_sketch_attributes(sketch):
 
         for attr_value in attribute.values:
             try:
-                value = OntologyManager.decode_value(
+                value = ontology.OntologyManager.decode_value(
                     attr_value.value, cast_as_str)
             except ValueError:
                 value = 'Unable to cast'
