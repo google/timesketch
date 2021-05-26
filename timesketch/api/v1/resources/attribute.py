@@ -15,6 +15,7 @@
 
 import logging
 
+from flask import jsonify
 from flask import request
 from flask import abort
 from flask_restful import Resource
@@ -79,7 +80,7 @@ class AttributeResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_FORBIDDEN,
                 'User does not have read access to sketch')
 
-        return self.to_json(utils.get_sketch_attributes(sketch))
+        return jsonify(utils.get_sketch_attributes(sketch))
 
     @login_required
     def post(self, sketch_id):
