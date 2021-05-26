@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Ontology for attributes as well as related functions."""
+import json
 
 from timesketch.lib.analyzers import interface
 
@@ -21,37 +22,175 @@ def ontology():
     return interface.get_yaml_config('ontology.yaml')
 
 
-def cast_variable(value, cast_as_str):
-    """Cast a variable and return it.
+class OntologyInterface:
+    """Interface for the ontology class."""
 
-    Args:
-      value (str): Value as a string.
-      cast_as_str (str): The type to cast it as.
+    # Defines the type that this ontology class supports for encoding
+    # and decoding.
+    TYPE=''
 
-    Raises
-      TypeError: If the value isn't already a string.
+    @staticmethod
+    def encode(data):
+        """Returns an encoded string that can be stored in the database.
 
-    Returns:
-      The value cast as cast_as_str defines.
-    """
-    if not isinstance(value, str):
-        raise TypeError('Value needs to be a string, not {0!s}'.format(
-            type(value)))
+        Raises:
+            ValueError: If the value is not of the correct value, as dictated
+                by the ontology type.
+        """
+        raise NotImplementedError
 
-    if cast_as_str == 'str':
-        return value
+    @staticmethod
+    def decode(data):
+        """Returns the proper data structure for this ontology."""
+        raise NotImplementedError
 
-    if cast_as_str == 'int':
-        return int(value)
 
-    if cast_as_str == 'float':
-        return float(value)
+class StringOntology(OntologyInterface):
+    """Implements the string ontology."""
 
-    if cast_as_str == 'bool':
-        return bool(value == 'True')
+    TYPE='str'
 
-    # TODO: Support more casting.
-    return value
+    @staticmethod
+    def encode(data):
+        """Returns the string or the original value back.
+
+        Raises:
+            ValueError: If the value is not a string.
+        """
+        if not isinstance(data, str):
+            raise ValueError('Value needs to be a string.')
+        return data
+
+    @staticmethod
+    def decode(data):
+        """Returns back the string."""
+        return data
+
+
+class IntegerOntology(OntologyInterface):
+    """Implements the ontology for an integer."""
+
+    TYPE='int'
+
+    @staticmethod
+    def encode(data):
+        """Returns an encoded string that can be stored in the database.
+
+        Raises:
+            ValueError: If the value is not an integer.
+        """
+        if not isinstance(data, int):
+            raise ValueError('Data is not an integer.')
+
+        return str(data)
+
+    @staticmethod
+    def decode(data):
+        """Returns back an ineger."""
+        return int(data)
+
+
+class FloatOntology(OntologyInterface):
+    """Implements the ontology for floating numbers."""
+
+    TYPE='float'
+
+    @staticmethod
+    def encode(data):
+        """Returns an encoded string that can be stored in the database.
+
+        Raises:
+            ValueError: If the value is not a float.
+        """
+        if not isinstance(data, float):
+            raise ValueError('Data is not a float.')
+
+        return str(data)
+
+    @staticmethod
+    def decode(data):
+        """Returns back a float."""
+        return float(data)
+
+
+class BoolOntology(OntologyInterface):
+    """Implements the ontology for boolean values."""
+
+    TYPE='bool'
+
+    @staticmethod
+    def encode(data):
+        """Returns an encoded string that can be stored in the database."""
+        if data:
+            return 'true'
+        return 'false'
+
+    @staticmethod
+    def decode(data):
+        """Returns a bool value from the stored string."""
+        if data == 'true':
+            return True
+        return False
+
+
+class DictOntology(OntologyInterface):
+    """Implements the ontology for dict structures."""
+
+    TYPE='dict'
+
+    @staticmethod
+    def encode(data):
+        """Returns an encoded string that can be stored in the database.
+
+        Raises:
+            ValueError: If the value is not a dict.
+        """
+        if not isinstance(data, dict):
+            raise ValueError('Data needs to be a dictionary.')
+
+        return json.dumps(data)
+
+    @staticmethod
+    def decode(data):
+        """Returns a dict object from the stored string in the database."""
+        dict_value = json.loads(data)
+        if isinstance(dict_value, dict):
+            raise ValueError(
+                'Unable to read in the data, it\'s not stored as a dictionary')
+        return dict_value
+
+
+class OntologyManager:
+    """Manager that handles various ontology types."""
+
+    _types = {}
+
+    @classmethod
+    def register(cls, ontology_class):
+        """Registers an ontology into the manager."""
+
+        cls._types[ontology_class.TYPE] = ontology_class
+
+    @classmethod
+    def decode_value(cls, value, type_string):
+        """Decodes a value from storage."""
+        if type_string not in cls._types:
+            raise NotImplementedError(
+                'Type [{0:s}] is not yet implemented as a type.')
+        return cls._types[type_string].decode(value)
+
+    @classmethod
+    def encode_value(cls, value, type_string):
+        """Encodes a value for storage."""
+        if type_string not in cls._types:
+            raise NotImplementedError(
+                'Type [{0:s}] is not yet implemented as a type.')
+        return cls._types[type_string].encode(value)
 
 
 ONTOLOGY = ontology()
+OntologyManager.register(StringOntology)
+OntologyManager.register(IntegerOntology)
+OntologyManager.register(FloatOntology)
+OntologyManager.register(BoolOntology)
+OntologyManager.register(DictOntology)
