@@ -23,7 +23,7 @@ from flask_login import current_user
 
 from timesketch.api.v1 import resources
 from timesketch.api.v1 import utils
-from timesketch.lib import ontology
+from timesketch.lib import ontology as ontology_lib
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
@@ -123,7 +123,7 @@ class AttributeResource(resources.ResourceMixin, Resource):
         name = form.get('name')
         ontology = form.get('ontology', 'text')
 
-        ontology_def = ontology.ONTOLOGY
+        ontology_def = ontology_lib.ONTOLOGY
         ontology_dict = ontology_def.get(ontology, {})
         cast_as_string = ontology_dict.get('cast_as', 'str')
 
@@ -138,7 +138,7 @@ class AttributeResource(resources.ResourceMixin, Resource):
                 return abort(
                     HTTP_STATUS_CODE_BAD_REQUEST, 'Values needs to be a list.')
 
-            value_strings = [OntologyManager.encode_value(
+            value_strings = [ontology_lib.OntologyManager.encode_value(
                 x, cast_as_string) for x in values]
 
             if any([not isinstance(x, str) for x in value_strings]):
