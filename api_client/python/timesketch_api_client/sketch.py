@@ -84,12 +84,7 @@ class Sketch(resource.BaseResource):
         """Property that returns the sketch attributes."""
         data = self.lazyload_data(refresh_cache=True)
         meta = data.get('meta', {})
-        return_dict = {}
-        for items in meta.get('attributes', []):
-            name, values, ontology = items
-            return_dict[name] = (values, ontology)
-
-        return return_dict
+        return meta.get('attributes', {})
 
     @property
     def attributes_table(self):
