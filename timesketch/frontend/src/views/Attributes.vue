@@ -23,7 +23,6 @@ limitations under the License.
 
     <ts-navbar-secondary
       currentAppContext="sketch"
-      :sketchMeta="meta"
       currentPage="attributes"
     ></ts-navbar-secondary>
 

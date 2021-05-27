@@ -64,10 +64,10 @@ limitations under the License.
                   <span>Stories</span>
                 </router-link>
               </li>
-              <li v-bind:class="{'is-active': currentPage === 'attributes'}">
+              <li v-if="meta" v-bind:class="{'is-active': currentPage === 'attributes'}">
                 <router-link :to="{ name: 'Attributes' }">
                   <span class="icon is-small"><i class="fas fa-table" aria-hidden="true"></i></span>
-                  <span>Attributes <b-tag type="is-light">{{sketchMeta.attributes.length}}</b-tag></span>
+                  <span>Attributes <b-tag type="is-light">{{meta.attributes.length}}</b-tag></span>
                 </router-link>
               </li>
             </ul>
@@ -87,10 +87,18 @@ limitations under the License.
 <script>
 export default {
   name: 'ts-navbar-secondary',
-  props: ['currentAppContext', 'currentPage', 'sketchMeta'],
+  props: {
+    currentAppContext: String,
+    currentPage: String
+  },
   methods: {
     hasAttributeOntology: function (ontologyName) {
-      return this.sketchMeta.attributes.filter(item => item[2] === ontologyName).length > 0
+      return this.meta.attributes.filter(item => item.ontology === ontologyName).length > 0
+    }
+  },
+  computed: {
+    meta () {
+      return this.$store.state.meta
     }
   }
 }
