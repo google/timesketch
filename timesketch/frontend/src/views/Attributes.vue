@@ -27,8 +27,7 @@ limitations under the License.
       currentPage="attributes"
     ></ts-navbar-secondary>
 
-    <!-- Timelines to add -->
-    <section v-if="meta.permissions.write" class="section">
+    <section v-if="meta.permissions.read" class="section">
       <div class="container is-fluid">
         <div class="card" style="min-height:160px;">
           <header class="card-header">
@@ -70,16 +69,6 @@ export default {
     },
     meta() {
       return this.$store.state.meta;
-    },
-    timelines() {
-      let t = [];
-      this.sketch.timelines.forEach(timeline => {
-        t.push({
-          id: timeline.id,
-          name: timeline.name
-        });
-      });
-      return t;
     },
     sketchAttributes() {
       return this.$store.state.meta.attributes.map(item => ({
