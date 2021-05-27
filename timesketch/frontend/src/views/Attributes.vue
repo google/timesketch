@@ -58,7 +58,6 @@ limitations under the License.
 <script>
 
 export default {
-  props: ["sketchId"],
   components: {},
   data() {
     return {};
