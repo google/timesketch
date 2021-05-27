@@ -56,26 +56,28 @@ limitations under the License.
 </template>
 
 <script>
+import ApiClient from '../utils/RestApiClient'
 
 export default {
   components: {},
-  data() {
-    return {};
+  data () {
+    return {}
   },
   computed: {
-    sketch() {
-      return this.$store.state.sketch;
+    sketch () {
+      return this.$store.state.sketch
     },
-    meta() {
-      return this.$store.state.meta;
+    meta () {
+      return this.$store.state.meta
     },
-    sketchAttributes() {
+    sketchAttributes () {
+      // return this.$store.state.meta.attributes
       return this.$store.state.meta.attributes.map(item => ({
         name: item[0],
         value: item[1],
         ontology: item[2]
-      }));
+      }))
     }
   }
-};
+}
 </script>
