@@ -239,8 +239,7 @@ class Sketch(resource.BaseResource):
             ValueError: If any of the parameters are of the wrong type.
 
         Returns:
-            Boolean value whether the attribute was successfully
-            added or not.
+            A dict with the results from the operation.
         """
         if not isinstance(name, str):
             raise ValueError('Name needs to be a string.')
@@ -257,13 +256,12 @@ class Sketch(resource.BaseResource):
             'ontology': ontology,
         }
         response = self.api.session.post(resource_url, json=data)
-        print(response.text)
 
         status = error.check_return_status(response, logger)
         if not status:
             logger.error('Unable to add the attribute to the sketch.')
 
-        return status
+        return error.get_response_json(response, logger)
 
     def add_attribute(self, name, value, ontology='text'):
         """Adds or modifies an attribute to the sketch.
@@ -279,8 +277,7 @@ class Sketch(resource.BaseResource):
             ValueError: If any of the parameters are of the wrong type.
 
         Returns:
-            Boolean value whether the attribute was successfully
-            added or not.
+            A dict with the results from the operation.
         """
         if not isinstance(name, str):
             raise ValueError('Name needs to be a string.')
