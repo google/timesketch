@@ -151,8 +151,7 @@ class AttributeResource(resources.ResourceMixin, Resource):
                 break
 
         if update_attribute:
-            attribute_values = AttributeValue.query.filter_by(
-                attribute=attribute).delete()
+            _ = AttributeValue.query.filter_by(attribute=attribute).delete()
         else:
             attribute = Attribute(
                 user=current_user,
