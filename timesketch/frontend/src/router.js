@@ -29,6 +29,7 @@ import Timelines from './views/Timelines'
 import Story from './views/Story'
 import StoryOverview from './views/StoryOverview'
 import StoryContent from './views/StoryContent'
+import Attributes from './views/Attributes'
 import SavedSearches from './views/SavedSearches'
 
 Vue.use(VueRouter)
@@ -106,6 +107,12 @@ const routes = [
         path: 'timelines',
         name: 'Timelines',
         component: Timelines,
+        props: true
+      },
+      {
+        path: 'attributes',
+        name: 'Attributes',
+        component: Attributes,
         props: true
       },
       {
