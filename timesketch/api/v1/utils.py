@@ -70,10 +70,14 @@ def get_sketch_attributes(sketch):
 
             attribute_values.append(value)
 
+        values = attribute_values
         if len(attribute_values) == 1:
-            attributes[name] = (attribute_values[0], ontology_string)
-        else:
-            attributes[name] = (attribute_values, ontology_string)
+            values = attribute_values[0]
+
+        attributes[name] = {
+          'value': values,
+          'ontology': ontology_string,
+        }
     return attributes
 
 

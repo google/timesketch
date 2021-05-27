@@ -225,7 +225,7 @@ class Sketch(resource.BaseResource):
         return status_list[0].get('status', 'Unknown')
 
     def add_attribute_list(self, name, values, ontology='text'):
-        """Add an attribute to the sketch.
+        """Adds or modifies attributes to the sketch.
 
         Args:
             name (str): The name of the attribute.
@@ -255,9 +255,9 @@ class Sketch(resource.BaseResource):
             'name': name,
             'values': values,
             'ontology': ontology,
-            'action': 'post',
         }
         response = self.api.session.post(resource_url, json=data)
+        print(response.text)
 
         status = error.check_return_status(response, logger)
         if not status:
@@ -266,7 +266,7 @@ class Sketch(resource.BaseResource):
         return status
 
     def add_attribute(self, name, value, ontology='text'):
-        """Add an attribute to the sketch.
+        """Adds or modifies an attribute to the sketch.
 
         Args:
             name (str): The name of the attribute.
@@ -319,11 +319,14 @@ class Sketch(resource.BaseResource):
 
         return status
 
-    def remove_attribute(self, name):
+    def remove_attribute(self, name, ontology):
         """Remove an attribute from the sketch.
 
         Args:
             name (str): The name of the attribute.
+            ontology (str): The ontology (matches with
+                /etc/ontology.yaml), which defines how the attribute
+                is interpreted.
 
         Raises:
             ValueError: If any of the parameters are of the wrong type.
@@ -340,10 +343,9 @@ class Sketch(resource.BaseResource):
 
         data = {
             'name': name,
-            'ontology': 'text',
-            'action': 'delete',
+            'ontology': ontology,
         }
-        response = self.api.session.post(resource_url, json=data)
+        response = self.api.session.delete(resource_url, json=data)
 
         status = error.check_return_status(response, logger)
         if not status:
