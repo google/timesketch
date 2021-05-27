@@ -82,11 +82,25 @@ class TaggerSketchPlugin(interface.BaseAnalyzer):
         emojis_to_add = [emojis.get_emoji(x) for x in emoji_names]
 
         expression_string = config.get('regular_expression', '')
+        expression_flags = config.get('re_flags')
         expression = None
         attributes = None
         if expression_string:
+            if expression_flags:
+                flags = set()
+                for flag in expression_flags:
+                    try:
+                        flags.add(getattr(re, flag))
+                    except AttributeError:
+                        logger.warning(
+                            'Unknown regular expression flag defined '
+                            '-> {0:s}.'.format(flag))
+                re_flag = sum(flags)
+            else:
+                re_flag = 0
+
             try:
-                expression = re.compile(expression_string)
+                expression = re.compile(expression_string, flags=re_flag)
             except re.error as exception:
                 # pylint: disable=logging-format-interpolation
                 logger.warning((

@@ -12,6 +12,17 @@
 # attribute that is returned back from the search and only if there is
 # a match against the regular expression the tag will be added.
 #
+# Each regular expresion can define a flag, which is a list of flags
+# as strings from the re module. These include:
+# - DEBUG
+# - DOTALL
+# - IGNORECASE
+# - LOCALE
+# - MULTILINE
+# - TEMPLATE
+# - UNICODE
+# - VERBOSE
+#
 # A search is saved if the tag is added (only if there are results).
 #
 # Example:
