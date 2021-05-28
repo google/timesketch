@@ -26,7 +26,7 @@ limitations under the License.
       currentPage="attributes"
     ></ts-navbar-secondary>
 
-    <section v-if="meta.permissions.read" class="section">
+    <section class="section">
       <div class="container is-fluid">
         <div class="card" style="min-height:160px;">
           <header class="card-header">
