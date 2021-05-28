@@ -70,7 +70,6 @@ export default {
       return this.$store.state.meta
     },
     sketchAttributes () {
-      // return this.$store.state.meta.attributes
       return this.$store.state.meta.attributes.map(item => ({
         name: item[0],
         value: item[1],
