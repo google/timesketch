@@ -47,8 +47,8 @@ def bad_request(message):
 
 
 def get_sketch_attributes(sketch):
-    """Returns a list of attributes of a sketch."""
-    attributes = []
+    """Returns a dict with all attributes of a sketch."""
+    attributes = {}
     ontology_def = ontology.ONTOLOGY
     for attribute in sketch.attributes:
         if attribute.sketch_id != sketch.id:
@@ -70,12 +70,14 @@ def get_sketch_attributes(sketch):
 
             attribute_values.append(value)
 
+        values = attribute_values
         if len(attribute_values) == 1:
-            attributes.append(
-                (name, attribute_values[0], ontology_string))
-        else:
-            attributes.append(
-                (name, attribute_values, ontology_string))
+            values = attribute_values[0]
+
+        attributes[name] = {
+          'value': values,
+          'ontology': ontology_string,
+        }
     return attributes
 
 
