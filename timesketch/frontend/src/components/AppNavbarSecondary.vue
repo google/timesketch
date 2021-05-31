@@ -70,6 +70,12 @@ limitations under the License.
                   <span>Attributes <b-tag type="is-light">{{attributeCount}}</b-tag></span>
                 </router-link>
               </li>
+              <li v-if="hasAttributeOntology('intelligence')" v-bind:class="{'is-active': currentPage === 'intelligence'}">
+                <router-link :to="{ name: 'Intelligence' }">
+                  <span class="icon is-small"><i class="fas fa-brain" aria-hidden="true"></i></span>
+                  <span>Intelligence <b-tag type="is-light">{{attributeCount}}</b-tag></span>
+                </router-link>
+              </li>
             </ul>
           </div>
         </div>
@@ -93,7 +99,7 @@ export default {
   },
   methods: {
     hasAttributeOntology: function (ontologyName) {
-      return this.meta.attributes.filter(item => item.ontology === ontologyName).length > 0
+      return Object.values(this.meta.attributes).some(value => value.ontology === ontologyName)
     }
   },
   computed: {
