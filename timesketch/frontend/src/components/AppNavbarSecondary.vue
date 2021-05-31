@@ -67,7 +67,7 @@ limitations under the License.
               <li v-if="meta" v-bind:class="{'is-active': currentPage === 'attributes'}">
                 <router-link :to="{ name: 'Attributes' }">
                   <span class="icon is-small"><i class="fas fa-table" aria-hidden="true"></i></span>
-                  <span>Attributes <b-tag type="is-light">{{meta.attributes.length}}</b-tag></span>
+                  <span>Attributes <b-tag type="is-light">{{attributeCount}}</b-tag></span>
                 </router-link>
               </li>
             </ul>
@@ -99,6 +99,9 @@ export default {
   computed: {
     meta () {
       return this.$store.state.meta
+    },
+    attributeCount () {
+      return Object.entries(this.meta.attributes).length
     }
   }
 }
