@@ -24,6 +24,7 @@ import codecs
 import io
 import json
 import six
+import yaml
 
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch.exceptions import RequestError
@@ -41,6 +42,7 @@ except ImportError:
 
 from timesketch.app import configure_logger
 from timesketch.app import create_celery_app
+from timesketch.lib import datafinder
 from timesketch.lib import errors
 from timesketch.lib.analyzers import manager
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
@@ -254,6 +256,9 @@ def build_index_pipeline(
         file_path, events, timeline_name, index_name, file_extension,
         timeline_id)
 
+    # TODO: Check if a scenario is set or an investigative question
+    # is in the sketch, and then enable data finder on the newly
+    # indexed data.
     if only_index:
         return index_task
 
@@ -730,3 +735,60 @@ def run_csv_jsonl(
     _set_timeline_status(timeline_id, status='ready', error_msg=error_msg)
 
     return index_name
+
+
+@celery.task(track_started=True)
+def find_if_data_exists(rule_names, sketch_id, start_date, end_date, timeline_ids=None, parameters=None):
+    """Runs a task to find out if data exists in a dataset.
+
+    Args:
+        rule_names (list): A list of rule names to run.
+        sketch_id (int): Sketch identifier.
+        start_date (str): A string with an ISO formatted timestring for the
+            start date of the data search.
+        end_date (str): A string with an ISO formatted timestring for the
+            end date of the data search.
+        timeline_ids (list): An optional list of integers for the timelines
+            within the the sketch to limit the data search to. If not provided
+            all timelines are searched.
+    """
+    results = {}
+    data_finder_path = current_app.config.get('DATA_FINDER_PATH')
+    if not data_finder_path:
+        logger.error(
+            'Unable to find data, missing data finder path in the '
+            'configuration file.')
+        return results
+
+    if not os.path.isfile(data_finder_path):
+        logger.error(
+            'Unable to read data finder rules, the file does not exist, '
+            'please verify that the path in DATA_FINDER_PATH variable is '
+            'correct and points to a readable file.')
+        return results
+
+    data_finder_dict = {}
+    with open(data_finder_path, 'r') as fh:
+        try:
+            data_finder_dict = yaml.safe_load(fh)
+        except yaml.parser.ParserError:
+            logger.error(
+                'Unable to read in YAML config file', exc_info=True)
+            return results
+
+    for rule_name in rule_names:
+          if rule_name not in data_finder_dict:
+              results[rule_name] = (False, 'Rule not defined')
+              continue
+
+          data_finder = datafinder.DataFinder()
+          data_finder.set_parameters(parameters)
+          data_finder.set_rule(data_finder_dict.get(rule_name))
+
+          if not data_finder.can_run():
+              results[rule_name] = (False, 'Unable to run the data finder.')
+              continue
+
+          results[rule_name] = data_finder.find_data()
+
+    return results
