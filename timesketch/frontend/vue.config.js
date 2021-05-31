@@ -21,7 +21,7 @@ module.exports = {
     config.watchOptions = {
       aggregateTimeout: 500,
       poll: 1000,
-      ignored: /node_modules/
+      ignored: /node_modules/,
     }
   },
   pages: {
@@ -31,7 +31,7 @@ module.exports = {
       // the source template
       template: 'public/index.html',
       // output as dist/index.html
-      filename: 'index.html'
+      filename: 'index.html',
     },
     login: {
       // entry for the page
@@ -39,7 +39,7 @@ module.exports = {
       // the source template
       template: 'public/login.html',
       // output as dist/index.html
-      filename: 'login.html'
-    }
-  }
+      filename: 'login.html',
+    },
+  },
 }

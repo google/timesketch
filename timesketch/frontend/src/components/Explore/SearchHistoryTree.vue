@@ -10,7 +10,7 @@ import ApiClient from '../../utils/RestApiClient'
 import EventBus from '../../main'
 
 // Based on https://stackoverflow.com/a/54470906
-function findSearchNode (object, key, predicate) {
+function findSearchNode(object, key, predicate) {
   if (object.hasOwnProperty(key) && predicate(key, object[key]) === true) return object
   for (let i = 0; i < Object.keys(object).length; i++) {
     let value = object[Object.keys(object)[i]]
@@ -24,24 +24,24 @@ function findSearchNode (object, key, predicate) {
 
 export default {
   components: { TreeNode },
-  data () {
+  data() {
     return {
       treeData: {},
       selectedNode: null,
-      initialNode: null
+      initialNode: null,
     }
   },
   computed: {
-    sketch () {
+    sketch() {
       return this.$store.state.sketch
-    }
+    },
   },
   methods: {
-    handleClick (node) {
+    handleClick(node) {
       this.$emit('node-click', node)
       this.selectedNode = node
     },
-    createBranch (newNode) {
+    createBranch(newNode) {
       if (this.selectedNode) {
         if (this.selectedNode.id === newNode.id) {
           return
@@ -66,51 +66,50 @@ export default {
         this.selectedNode = node
       }
     },
-    annotateNode (annotation) {
+    annotateNode(annotation) {
       if (!annotation.searchNode.labels.includes(annotation.type)) {
         annotation.searchNode.labels.push(annotation.type)
       }
     },
-    scrollTo () {
-      this.$nextTick(function () {
+    scrollTo() {
+      this.$nextTick(function() {
         document.getElementById(this.selectedNode.id.toString()).scrollIntoView({
           behavior: 'smooth',
           block: 'center',
-          inline: 'center'
+          inline: 'center',
         })
       })
     },
-    fetchHistory () {
-      ApiClient.getSearchHistory(this.sketch.id).then((response) => {
-        this.treeData = response.data.objects[0]
-        if (!this.selectedNode) {
-          let lastNodeId = response.data.meta['last_node_id']
-          this.selectedNode = findSearchNode(this.treeData, 'id', (k, v) => v === lastNodeId)
-        }
-      }).catch((e) => {})
-    }
+    fetchHistory() {
+      ApiClient.getSearchHistory(this.sketch.id)
+        .then(response => {
+          this.treeData = response.data.objects[0]
+          if (!this.selectedNode) {
+            let lastNodeId = response.data.meta['last_node_id']
+            this.selectedNode = findSearchNode(this.treeData, 'id', (k, v) => v === lastNodeId)
+          }
+        })
+        .catch(e => {})
+    },
   },
-  beforeDestroy () {
+  beforeDestroy() {
     EventBus.$off('createBranch')
     EventBus.$off('eventAnnotated')
     EventBus.$off('triggerScrollTo')
   },
-  created: function () {
+  created: function() {
     EventBus.$on('createBranch', this.createBranch)
     EventBus.$on('eventAnnotated', this.annotateNode)
     EventBus.$on('triggerScrollTo', this.scrollTo)
     this.fetchHistory()
   },
   watch: {
-    selectedNode: function () {
+    selectedNode: function() {
       this.$store.dispatch('updateSearchNode', this.selectedNode)
       this.scrollTo()
-    }
-  }
-
+    },
+  },
 }
 </script>
 
-<style scoped lang="scss">
-
-</style>
+<style scoped lang="scss"></style>

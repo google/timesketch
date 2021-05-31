@@ -14,38 +14,68 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-
   <div>
     <!-- Time interval -->
     <div class="field is-horizontal">
       <div class="field-body" style="display:flex; align-items:center;">
-
         <b-radio v-model="radio" native-value="interval" @input="formatDateTime()" type="is-info"></b-radio>
         <div class="field" style="margin-left: 5px;">
           <p class="control">
-            <input class="input" ref="offsetStartInput" v-model.trim="offsetStart" type="text" :disabled="!isSelected('interval')" :placeholder="getPlaceholder('interval')"
-            v-on:change="offsetStart && formatDateTime()" v-on:keyup.enter="submit()">
+            <input
+              class="input"
+              ref="offsetStartInput"
+              v-model.trim="offsetStart"
+              type="text"
+              :disabled="!isSelected('interval')"
+              :placeholder="getPlaceholder('interval')"
+              v-on:change="offsetStart && formatDateTime()"
+              v-on:keyup.enter="submit()"
+            />
           </p>
         </div>
         <div>-</div>
         <div class="field" style="margin: 0px;">
           <p class="control" style="width: 40px; margin-left: 2px;">
-            <input class="input" ref="offsetMinusInput" v-model.trim="offsetMinus" type="text" style="width:90%;" :disabled="!isSelected('interval')"
-            v-on:change="offsetMinus && formatDateTime()" v-on:keyup.enter="submit()" v-on:keyup.up="offsetMinus++" v-on:keyup.down="offsetMinus--">
+            <input
+              class="input"
+              ref="offsetMinusInput"
+              v-model.trim="offsetMinus"
+              type="text"
+              style="width:90%;"
+              :disabled="!isSelected('interval')"
+              v-on:change="offsetMinus && formatDateTime()"
+              v-on:keyup.enter="submit()"
+              v-on:keyup.up="offsetMinus++"
+              v-on:keyup.down="offsetMinus--"
+            />
           </p>
         </div>
         <div>+</div>
         <div class="field" style="margin: 0px;">
           <p class="control" style="width: 40px; margin-left: 2px;">
-            <input class="input" ref="offsetPlusInput" v-model.trim="offsetPlus" type="text" style="width:90%;" :disabled="!isSelected('interval')"
-            v-on:change="offsetPlus && formatDateTime()" v-on:keyup.enter="submit()" v-on:keyup.up="offsetPlus++" v-on:keyup.down="offsetPlus--">
+            <input
+              class="input"
+              ref="offsetPlusInput"
+              v-model.trim="offsetPlus"
+              type="text"
+              style="width:90%;"
+              :disabled="!isSelected('interval')"
+              v-on:change="offsetPlus && formatDateTime()"
+              v-on:keyup.enter="submit()"
+              v-on:keyup.up="offsetPlus++"
+              v-on:keyup.down="offsetPlus--"
+            />
           </p>
         </div>
-        <div> </div>
+        <div></div>
         <div class="field" style="margin-right: 5px;">
           <p class="control">
             <span class="select">
-              <select v-model="selectedInterval" :disabled="!isSelected('interval')" v-on:change="offsetStart && formatDateTime()">
+              <select
+                v-model="selectedInterval"
+                :disabled="!isSelected('interval')"
+                v-on:change="offsetStart && formatDateTime()"
+              >
                 <option v-for="option in intervals" :value="option.value" :key="option.value">{{ option.text }}</option>
               </select>
             </span>
@@ -57,12 +87,19 @@ limitations under the License.
     <!-- Time range -->
     <div class="field is-horizontal">
       <div class="field-body" style="display:flex; align-items:center;">
-
         <b-radio v-model="radio" native-value="range" @input="formatDateTime()" type="is-info"></b-radio>
         <div class="field" style="margin:5px;">
           <p class="control">
-            <input class="input" ref="startInput" v-model.trim="startDateTime" type="text" :disabled="!isSelected('range')" :placeholder="getPlaceholder('range')"
-            v-on:change="startDateTime && formatDateTime()" v-on:keyup.enter="endDateTime ? submit() : formatDateTime(skipCheck=true) && jumpTo('endInput')">
+            <input
+              class="input"
+              ref="startInput"
+              v-model.trim="startDateTime"
+              type="text"
+              :disabled="!isSelected('range')"
+              :placeholder="getPlaceholder('range')"
+              v-on:change="startDateTime && formatDateTime()"
+              v-on:keyup.enter="endDateTime ? submit() : formatDateTime((skipCheck = true)) && jumpTo('endInput')"
+            />
           </p>
         </div>
 
@@ -70,8 +107,16 @@ limitations under the License.
 
         <div class="field" style="margin:5px;">
           <p class="control">
-            <input class="input" ref="endInput" v-model.trim="endDateTime" type="text" :disabled="!isSelected('range')" :placeholder="getPlaceholder('range')"
-            v-on:change="endDateTime && formatDateTime()" v-on:keyup.enter="submit()">
+            <input
+              class="input"
+              ref="endInput"
+              v-model.trim="endDateTime"
+              type="text"
+              :disabled="!isSelected('range')"
+              :placeholder="getPlaceholder('range')"
+              v-on:change="endDateTime && formatDateTime()"
+              v-on:keyup.enter="submit()"
+            />
           </p>
         </div>
       </div>
@@ -81,18 +126,19 @@ limitations under the License.
     <div class="field is-horizontal">
       <div class="field is-grouped">
         <p class="control">
-          <button :disabled="!ready" class="button is-success" v-on:click="submit">{{ selectedChip ? 'Update' : 'Create' }}</button>
+          <button :disabled="!ready" class="button is-success" v-on:click="submit">
+            {{ selectedChip ? 'Update' : 'Create' }}
+          </button>
         </p>
       </div>
     </div>
-
   </div>
 </template>
 
 <script>
 export default {
   props: ['selectedChip'],
-  data () {
+  data() {
     return {
       startDateTime: '',
       endDateTime: '',
@@ -102,17 +148,17 @@ export default {
       offsetMinus: 5,
       offsetPlus: 5,
       intervals: [
-        { 'text': 'Second', 'value': 's' },
-        { 'text': 'Minute', 'value': 'm' },
-        { 'text': 'Hour', 'value': 'h' },
-        { 'text': 'Day', 'value': 'd' }
+        { text: 'Second', value: 's' },
+        { text: 'Minute', value: 'm' },
+        { text: 'Hour', value: 'h' },
+        { text: 'Day', value: 'd' },
       ],
       selectedInterval: 'm',
       ready: false,
-      now: this.$moment.utc().format('YYYY-MM-DD[T]hh:mm:ss')
+      now: this.$moment.utc().format('YYYY-MM-DD[T]hh:mm:ss'),
     }
   },
-  created: function () {
+  created: function() {
     if (!this.selectedChip) {
       return
     }
@@ -137,7 +183,7 @@ export default {
     }
   },
   methods: {
-    hasAllInputs: function () {
+    hasAllInputs: function() {
       if (this.isSelected('interval')) {
         if (this.offsetStart && this.offsetMinus && this.offsetPlus) {
           return true
@@ -149,13 +195,13 @@ export default {
       }
       return false
     },
-    getPlaceholder: function (radioName) {
-      return (this.radio === radioName) ? this.now : ''
+    getPlaceholder: function(radioName) {
+      return this.radio === radioName ? this.now : ''
     },
-    getOffsetDateTime: function () {
+    getOffsetDateTime: function() {
       return `${this.offsetStart} -${this.offsetMinus}${this.selectedInterval} +${this.offsetPlus}${this.selectedInterval}`
     },
-    formatDateTime: function (skipCheck = false) {
+    formatDateTime: function(skipCheck = false) {
       this.ready = false
 
       // Exit early if user inputs are missing
@@ -189,12 +235,24 @@ export default {
           // Calculate time range
           // Warning: add() and subtract() mutate the object, hence we clone it first
           if (startDateTimeOffset === '-') {
-            this.startDateTime = startDateTimeMoment.clone().subtract(startDateTimeOffsetCount, startDateTimeOffsetInterval).format(dateTimeTemplate)
+            this.startDateTime = startDateTimeMoment
+              .clone()
+              .subtract(startDateTimeOffsetCount, startDateTimeOffsetInterval)
+              .format(dateTimeTemplate)
           } else if (startDateTimeOffset === '+') {
-            this.endDateTime = startDateTimeMoment.clone().add(startDateTimeOffsetCount, startDateTimeOffsetInterval).format(dateTimeTemplate)
+            this.endDateTime = startDateTimeMoment
+              .clone()
+              .add(startDateTimeOffsetCount, startDateTimeOffsetInterval)
+              .format(dateTimeTemplate)
           } else if (startDateTimeOffset === '-+' || startDateTimeOffset === '+-') {
-            this.startDateTime = startDateTimeMoment.clone().subtract(startDateTimeOffsetCount, startDateTimeOffsetInterval).format(dateTimeTemplate)
-            this.endDateTime = startDateTimeMoment.clone().add(startDateTimeOffsetCount, startDateTimeOffsetInterval).format(dateTimeTemplate)
+            this.startDateTime = startDateTimeMoment
+              .clone()
+              .subtract(startDateTimeOffsetCount, startDateTimeOffsetInterval)
+              .format(dateTimeTemplate)
+            this.endDateTime = startDateTimeMoment
+              .clone()
+              .add(startDateTimeOffsetCount, startDateTimeOffsetInterval)
+              .format(dateTimeTemplate)
           }
         }
         this.ready = true
@@ -209,8 +267,16 @@ export default {
       let startDateTimeMoment = this.$moment.utc(startDateTimeString)
       let endDateTimeMoment = this.$moment.utc(endDateTimeString)
 
-      if (!(startDateTimeMoment.hour() || startDateTimeMoment.minute() || startDateTimeMoment.second() ||
-          endDateTimeMoment.hour() || endDateTimeMoment.minute() || endDateTimeMoment.second())) {
+      if (
+        !(
+          startDateTimeMoment.hour() ||
+          startDateTimeMoment.minute() ||
+          startDateTimeMoment.second() ||
+          endDateTimeMoment.hour() ||
+          endDateTimeMoment.minute() ||
+          endDateTimeMoment.second()
+        )
+      ) {
         dateTimeTemplate = 'YYYY-MM-DD'
       }
 
@@ -230,14 +296,14 @@ export default {
       this.ready = true
       return true
     },
-    submit: function () {
+    submit: function() {
       if (!(this.startDateTime && this.endDateTime && this.formatDateTime())) {
         return
       }
 
       // The filter doesn't work if the start date is after the end date
       if (this.startDateTime > this.endDateTime) {
-        [this.startDateTime, this.endDateTime] = [this.endDateTime, this.startDateTime]
+        ;[this.startDateTime, this.endDateTime] = [this.endDateTime, this.startDateTime]
       }
 
       let chipType = ''
@@ -259,11 +325,11 @@ export default {
         this.$emit('updateChip', this.chip)
       } else {
         this.chip = {
-          'field': '',
-          'type': chipType,
-          'value': chipValue,
-          'operator': 'must',
-          'active': true
+          field: '',
+          type: chipType,
+          value: chipValue,
+          operator: 'must',
+          active: true,
         }
         this.$emit('addChip', this.chip)
 
@@ -274,16 +340,16 @@ export default {
       // Close the menu
       this.$emit('hideDropdown')
     },
-    resetInterface: function () {
+    resetInterface: function() {
       Object.assign(this.$data, this.$options.data.apply(this))
     },
-    isSelected: function (radioName) {
+    isSelected: function(radioName) {
       return this.radio === radioName
     },
-    jumpTo: function (name) {
+    jumpTo: function(name) {
       // Move cursor to the specified form input
       this.$refs[name].focus()
-    }
-  }
+    },
+  },
 }
 </script>

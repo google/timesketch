@@ -21,10 +21,7 @@ limitations under the License.
       </template>
     </ts-navbar-main>
 
-    <ts-navbar-secondary
-      currentAppContext="sketch"
-      currentPage="attributes"
-    ></ts-navbar-secondary>
+    <ts-navbar-secondary currentAppContext="sketch" currentPage="attributes"></ts-navbar-secondary>
 
     <section class="section">
       <div class="container is-fluid">
@@ -41,9 +38,7 @@ limitations under the License.
                 <code>{{ data.row.ontology }}</code>
               </b-table-column>
               <b-table-column field="value" label="Value" v-slot="data">
-                <pre v-if="typeof data.row.value === 'object'">{{
-                  data.row.value
-                }}</pre>
+                <pre v-if="typeof data.row.value === 'object'">{{ data.row.value }}</pre>
                 <span v-else>{{ data.row.value }}</span>
               </b-table-column>
             </b-table>
@@ -55,30 +50,29 @@ limitations under the License.
 </template>
 
 <script>
-
 export default {
   components: {},
-  data () {
+  data() {
     return {}
   },
   computed: {
-    sketch () {
+    sketch() {
       return this.$store.state.sketch
     },
-    meta () {
+    meta() {
       return this.$store.state.meta
     },
-    sketchAttributes () {
+    sketchAttributes() {
       let attributes = []
       for (let item in this.$store.state.meta.attributes) {
         attributes.push({
           name: item,
           ontology: this.$store.state.meta.attributes[item].ontology,
-          value: this.$store.state.meta.attributes[item].value
+          value: this.$store.state.meta.attributes[item].value,
         })
       }
       return attributes
-    }
-  }
+    },
+  },
 }
 </script>

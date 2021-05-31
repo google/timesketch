@@ -32,23 +32,23 @@ limitations under the License.
 <script>
 export default {
   props: ['isRounded', 'title'],
-  data () {
+  data() {
     return {
       selected: '',
-      selectedChart: ''
+      selectedChart: '',
     }
   },
   computed: {
-    meta () {
+    meta() {
       return this.$store.state.meta
-    }
+    },
   },
   methods: {
-    setActiveAggregator: function () {
+    setActiveAggregator: function() {
       let aggregatorClone = JSON.parse(JSON.stringify(this.meta.aggregators[this.selected]))
       aggregatorClone.name = this.selected
       this.$emit('setActiveAggregator', aggregatorClone)
-    }
-  }
+    },
+  },
 }
 </script>

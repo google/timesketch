@@ -18,7 +18,7 @@ limitations under the License.
     <div class="field">
       <label class="label">Name</label>
       <div class="control">
-        <input v-model="form.name" class="input" type="text" required placeholder="Name your sketch" autofocus>
+        <input v-model="form.name" class="input" type="text" required placeholder="Name your sketch" autofocus />
       </div>
     </div>
     <div class="field">
@@ -29,7 +29,7 @@ limitations under the License.
     </div>
     <div class="field">
       <div class="control">
-        <input class="button is-success" type="submit" value="Save">
+        <input class="button is-success" type="submit" value="Save" />
       </div>
     </div>
   </form>
@@ -39,30 +39,32 @@ limitations under the License.
 import ApiClient from '../../utils/RestApiClient'
 
 export default {
-  data () {
+  data() {
     return {
       form: {
         name: '',
-        description: ''
-      }
+        description: '',
+      },
     }
   },
   methods: {
-    clearFormData: function () {
+    clearFormData: function() {
       this.form.name = ''
       this.form.description = ''
     },
-    submitForm: function () {
+    submitForm: function() {
       let formData = {
         name: this.form.name,
-        description: this.form.description
+        description: this.form.description,
       }
-      ApiClient.createSketch(formData).then((response) => {
-        let newSketchId = response.data.objects[0].id
-        this.clearFormData()
-        this.$router.push({ name: 'Overview', params: { sketchId: newSketchId } })
-      }).catch((e) => {})
-    }
-  }
+      ApiClient.createSketch(formData)
+        .then(response => {
+          let newSketchId = response.data.objects[0].id
+          this.clearFormData()
+          this.$router.push({ name: 'Overview', params: { sketchId: newSketchId } })
+        })
+        .catch(e => {})
+    },
+  },
 }
 </script>

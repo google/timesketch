@@ -19,13 +19,13 @@ import ApiClient from './utils/RestApiClient'
 
 Vue.use(Vuex)
 
-const defaultState = (currentUser) => {
+const defaultState = currentUser => {
   return {
     sketch: {},
     meta: {},
     count: 0,
     currentSearchNode: null,
-    currentUser: currentUser
+    currentUser: currentUser,
   }
 }
 
@@ -35,39 +35,43 @@ const state = defaultState()
 export default new Vuex.Store({
   state,
   mutations: {
-    SET_SKETCH (state, payload) {
+    SET_SKETCH(state, payload) {
       Vue.set(state, 'sketch', payload.objects[0])
       Vue.set(state, 'meta', payload.meta)
     },
-    SET_COUNT (state, payload) {
+    SET_COUNT(state, payload) {
       Vue.set(state, 'count', payload)
     },
-    SET_SEARCH_NODE (state, payload) {
+    SET_SEARCH_NODE(state, payload) {
       Vue.set(state, 'currentSearchNode', payload)
     },
-    RESET_STATE (state, payload) {
-      ApiClient.getLoggedInUser().then((response) => {
+    RESET_STATE(state, payload) {
+      ApiClient.getLoggedInUser().then(response => {
         let currentUser = response.data.objects[0].username
         Object.assign(state, defaultState(currentUser))
       })
-    }
+    },
   },
   actions: {
-    updateSketch (context, sketchId) {
-      ApiClient.getSketch(sketchId).then((response) => {
-        context.commit('SET_SKETCH', response.data)
-      }).catch((e) => {})
+    updateSketch(context, sketchId) {
+      ApiClient.getSketch(sketchId)
+        .then(response => {
+          context.commit('SET_SKETCH', response.data)
+        })
+        .catch(e => {})
 
       // Count events for all timelines in the sketch
-      ApiClient.countSketchEvents(sketchId).then((response) => {
-        context.commit('SET_COUNT', response.data.meta.count)
-      }).catch((e) => {})
+      ApiClient.countSketchEvents(sketchId)
+        .then(response => {
+          context.commit('SET_COUNT', response.data.meta.count)
+        })
+        .catch(e => {})
     },
-    resetState (context) {
+    resetState(context) {
       context.commit('RESET_STATE')
     },
-    updateSearchNode (context, nodeId) {
+    updateSearchNode(context, nodeId) {
       context.commit('SET_SEARCH_NODE', nodeId)
-    }
-  }
+    },
+  },
 })

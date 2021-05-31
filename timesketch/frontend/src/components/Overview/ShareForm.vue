@@ -14,40 +14,48 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-
   <form v-on:submit.prevent="">
     <div class="field">
       <div class="control">
-
         <b-radio v-model="isPublic" type="is-info" name="name" native-value="false">
           <i class="fa fa-lock" style="margin-left: 10px;margin-right: 5px;"></i>
           Private - Only you and selected users/groups can access this sketch
         </b-radio>
-        <br>
+        <br />
         <b-radio v-model="isPublic" type="is-info" name="name" native-value="true">
           <i class="fa fa-globe" style="margin-left: 10px;margin-right: 5px;"></i>
-          Public -  All users of the system can access this sketch
+          Public - All users of the system can access this sketch
         </b-radio>
 
-        <hr>
+        <hr />
 
         <div v-if="currentUsers.length || currentGroups.length">
           Who has access
-          <br><br>
+          <br /><br />
           <table class="table is-hoverable">
-            <tr v-for="(user, index) in currentUsers" :key='index'>
+            <tr v-for="(user, index) in currentUsers" :key="index">
               <td>{{ user }}</td>
-              <td width="10px" style="cursor: pointer;" v-on:click="removeUser(user, index)"><i class="fa fa-trash"></i></td>
+              <td width="10px" style="cursor: pointer;" v-on:click="removeUser(user, index)">
+                <i class="fa fa-trash"></i>
+              </td>
             </tr>
-            <tr v-for="(group, index) in currentGroups" :key='index'>
+            <tr v-for="(group, index) in currentGroups" :key="index">
               <td>{{ group }}</td>
-              <td width="10px" style="cursor: pointer;" v-on:click="removeGroup(group, index)"><i class="fa fa-trash"></i></td>
+              <td width="10px" style="cursor: pointer;" v-on:click="removeGroup(group, index)">
+                <i class="fa fa-trash"></i>
+              </td>
             </tr>
           </table>
-          <br><br>
+
+          <br /><br />
         </div>
 
-        <b-notification v-if="usersToRemove.length || groupsToRemove.length" type="is-warning" role="alert" :closable=false>
+        <b-notification
+          v-if="usersToRemove.length || groupsToRemove.length"
+          type="is-warning"
+          role="alert"
+          :closable="false"
+        >
           You have made changes that you need to save
         </b-notification>
 
@@ -58,7 +66,8 @@ limitations under the License.
             :data="filteredUserArray"
             placeholder="Username .."
             icon="magnify"
-            @select="addUser">
+            @select="addUser"
+          >
             <template slot="empty">No user found</template>
           </b-autocomplete>
         </b-field>
@@ -75,7 +84,8 @@ limitations under the License.
             :data="filteredGroupArray"
             placeholder="Group name .."
             icon="magnify"
-            @select="addGroup">
+            @select="addGroup"
+          >
             <template slot="empty">No group found</template>
           </b-autocomplete>
         </b-field>
@@ -83,27 +93,35 @@ limitations under the License.
     </div>
 
     <div v-if="usersToAdd.length || groupsToAdd.length">
-      <br>
+      <br />
       <strong>Users/Groups to add</strong>
-      <br><br>
+      <br /><br />
       <b-field grouped group-multiline>
         <div class="control" v-for="(user, index) in usersToAdd" :key="user.name">
-          <b-tag attached closable aria-close-label="Close tag" size="is-medium" @close="usersToAdd.splice(index, 1)">{{ user }}</b-tag>
+          <b-tag attached closable aria-close-label="Close tag" size="is-medium" @close="usersToAdd.splice(index, 1)">{{
+            user
+          }}</b-tag>
         </div>
         <div class="control" v-for="(group, index) in groupsToAdd" :key="group.name">
-          <b-tag attached closable aria-close-label="Close tag" size="is-medium" @close="groupsToAdd.splice(index, 1)">{{ group }}</b-tag>
+          <b-tag
+            attached
+            closable
+            aria-close-label="Close tag"
+            size="is-medium"
+            @close="groupsToAdd.splice(index, 1)"
+            >{{ group }}</b-tag
+          >
         </div>
       </b-field>
     </div>
 
-    <br>
+    <br />
 
     <div class="field">
       <div class="control">
         <button class="button is-info" v-on:click="submitForm">Save changes</button>
       </div>
     </div>
-
   </form>
 </template>
 
@@ -111,7 +129,7 @@ limitations under the License.
 import ApiClient from '../../utils/RestApiClient'
 
 export default {
-  data () {
+  data() {
     return {
       isPublic: false,
       systemUsers: [],
@@ -121,77 +139,94 @@ export default {
       usersToRemove: [],
       groupsToRemove: [],
       userNameInput: '',
-      groupNameInput: ''
+      groupNameInput: '',
     }
   },
   computed: {
-    sketch () {
+    sketch() {
       return this.$store.state.sketch
     },
-    meta () {
+    meta() {
       return this.$store.state.meta
     },
-    currentUsers () {
+    currentUsers() {
       return this.meta.collaborators.users.filter(f => !this.usersToRemove.includes(f))
     },
-    currentGroups () {
+    currentGroups() {
       return this.meta.collaborators.groups.filter(f => !this.groupsToRemove.includes(f))
     },
-    filteredUserArray () {
-      return this.systemUsers.filter((option) => {
-        return option
-          .toString()
-          .toLowerCase()
-          .indexOf(this.userNameInput.toLowerCase()) >= 0
+    filteredUserArray() {
+      return this.systemUsers.filter(option => {
+        return (
+          option
+            .toString()
+            .toLowerCase()
+            .indexOf(this.userNameInput.toLowerCase()) >= 0
+        )
       })
     },
-    filteredGroupArray () {
-      return this.systemGroups.filter((option) => {
-        return option
-          .toString()
-          .toLowerCase()
-          .indexOf(this.groupNameInput.toLowerCase()) >= 0
+    filteredGroupArray() {
+      return this.systemGroups.filter(option => {
+        return (
+          option
+            .toString()
+            .toLowerCase()
+            .indexOf(this.groupNameInput.toLowerCase()) >= 0
+        )
       })
-    }
+    },
   },
   methods: {
-    addUser: function (userName) {
+    addUser: function(userName) {
       if (userName) {
         if (!this.usersToAdd.includes(userName)) {
           this.usersToAdd.push(userName)
         }
       }
     },
-    addGroup: function (groupName) {
+    addGroup: function(groupName) {
       if (!this.groupsToAdd.includes(groupName)) {
         this.groupsToAdd.push(groupName)
       }
     },
-    removeUser: function (userName, index) {
+    removeUser: function(userName, index) {
       this.usersToRemove.push(userName)
     },
-    removeGroup: function (groupName, index) {
+    removeGroup: function(groupName, index) {
       this.groupsToRemove.push(groupName)
     },
-    submitForm: function () {
-      ApiClient.editCollaborators(this.sketch.id, this.isPublic, this.usersToAdd, this.groupsToAdd, this.usersToRemove, this.groupsToRemove).then((response) => {}).catch((e) => {})
+    submitForm: function() {
+      ApiClient.editCollaborators(
+        this.sketch.id,
+        this.isPublic,
+        this.usersToAdd,
+        this.groupsToAdd,
+        this.usersToRemove,
+        this.groupsToRemove
+      )
+        .then(response => {})
+        .catch(e => {})
       this.$emit('closeShareModal')
-    }
+    },
   },
-  mounted () {
+  mounted() {
     if (this.meta.permissions.public) {
       this.isPublic = true
     }
-    ApiClient.getUsers().then((response) => {
-      response.data.objects[0].forEach(user => {
-        this.systemUsers.push(user.username)
+    ApiClient.getUsers()
+      .then(response => {
+        response.data.objects[0].forEach(user => {
+          this.systemUsers.push(user.username)
+        })
       })
-    }).catch((e) => {})
-    ApiClient.getGroups().then((response) => {
-      response.data.objects[0].forEach(group => {
-        this.systemGroups.push(group.name)
+      .catch(e => {})
+    ApiClient.getGroups()
+      .then(response => {
+        response.data.objects[0].forEach(group => {
+          this.systemGroups.push(group.name)
+        })
       })
-    }).catch((e) => {})
-  }
+      .catch(e => {})
+  },
 }
 </script>

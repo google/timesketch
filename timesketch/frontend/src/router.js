@@ -38,7 +38,7 @@ const routes = [
   {
     name: 'Home',
     path: '/',
-    component: Home
+    component: Home,
   },
   {
     // Sketch
@@ -49,13 +49,13 @@ const routes = [
       {
         path: '',
         name: 'Overview',
-        component: Overview
+        component: Overview,
       },
       {
         path: 'explore',
         name: 'Explore',
         component: Explore,
-        props: true
+        props: true,
       },
       {
         path: 'graph',
@@ -65,26 +65,27 @@ const routes = [
           {
             path: '',
             name: 'GraphOverview',
-            component: GraphOverview
+            component: GraphOverview,
           },
           {
             path: 'explore',
             name: 'GraphExplore',
             component: GraphExplore,
-            props: true
-          }]
+            props: true,
+          },
+        ],
       },
       {
         path: 'aggregate',
         name: 'Aggregate',
         component: Aggregate,
-        props: true
+        props: true,
       },
       {
         path: 'analyzers',
         name: 'Analyze',
         component: Analyze,
-        props: true
+        props: true,
       },
       {
         path: 'story',
@@ -94,38 +95,39 @@ const routes = [
           {
             path: '',
             name: 'StoryOverview',
-            component: StoryOverview
+            component: StoryOverview,
           },
           {
             path: ':storyId',
             name: 'StoryContent',
             component: StoryContent,
-            props: true
-          }]
+            props: true,
+          },
+        ],
       },
       {
         path: 'timelines',
         name: 'Timelines',
         component: Timelines,
-        props: true
+        props: true,
       },
       {
         path: 'attributes',
         name: 'Attributes',
         component: Attributes,
-        props: true
+        props: true,
       },
       {
         path: 'savedsearches',
         name: 'SavedSearches',
         component: SavedSearches,
-        props: true
-      }
-    ]
-  }
+        props: true,
+      },
+    ],
+  },
 ]
 
 export default new VueRouter({
   mode: 'history',
-  routes
+  routes,
 })
