@@ -791,6 +791,21 @@ class SearchHistory(LabelMixin, BaseModel):
         self.query_dsl = query_dsl
         self.parent = parent
 
+    @staticmethod
+    def _build_node_dict(node_dict, node):
+        node_dict['id'] = node.id
+        node_dict['description'] = node.description
+        node_dict['query_result_count'] = node.query_result_count
+        node_dict['query_time'] = node.query_time
+        node_dict['labels'] = node.get_labels
+        node_dict['created_at'] = node.created_at
+        node_dict['parent'] = node.parent_id
+        node_dict['query_string'] = node.query_string
+        node_dict['query_filter'] = node.query_filter
+        node_dict['query_dsl'] = node.query_dsl
+        node_dict['children'] = []
+        return node_dict
+
     def build_tree(self, node, node_dict, recurse=True):
         """Recursive function to generate full search history tree.
 
@@ -805,18 +820,7 @@ class SearchHistory(LabelMixin, BaseModel):
         if not isinstance(node_dict, dict):
             raise ValueError('node_dict must be a dictionary')
 
-        node_dict['id'] = node.id
-        node_dict['description'] = node.description
-        node_dict['query_result_count'] = node.query_result_count
-        node_dict['query_time'] = node.query_time
-        node_dict['labels'] = node.get_labels
-        node_dict['created_at'] = node.created_at
-        node_dict['parent'] = node.parent_id
-        node_dict['query_string'] = node.query_string
-        node_dict['query_filter'] = node.query_filter
-        node_dict['query_dsl'] = node.query_dsl
-        node_dict['children'] = []
-
+        node_dict = self._build_node_dict(node_dict, node)
         children = node.children.values()
         if children and recurse:
             for child in children:

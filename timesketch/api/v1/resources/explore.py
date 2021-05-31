@@ -423,6 +423,43 @@ class SearchHistoryResource(resources.ResourceMixin, Resource):
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
 
+        result = []
+        nodes = SearchHistory.query.filter_by(
+            user=current_user, sketch=sketch).order_by(
+                SearchHistory.id.desc()).limit(100).all()
+        
+        uniq_queries = set()
+        count = 0
+        for node in nodes:
+            if node.query_string not in uniq_queries:
+                if count > 8:
+                    break
+                result.append(node._build_node_dict({}, node))
+                uniq_queries.add(node.query_string)
+                count += 1
+        
+        schema = {
+            'objects': result,
+            'meta': {}
+        }
+        
+        return jsonify(schema)
+
+
+class SearchHistoryTreeResource(resources.ResourceMixin, Resource):
+    """Resource to get search history for a user."""
+
+    @login_required
+    def get(self, sketch_id):
+        """Handles GET request to the resource.
+
+        Returns:
+            Search history in JSON (instance of flask.wrappers.Response)
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+
         tree = {}
         root_node = SearchHistory.query.filter_by(
             user=current_user, sketch=sketch).order_by(
@@ -440,3 +477,5 @@ class SearchHistoryResource(resources.ResourceMixin, Resource):
         }
 
         return jsonify(schema)
+
+

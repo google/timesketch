@@ -15,11 +15,17 @@ limitations under the License.
 -->
 <template>
   <div>
-    <div v-on:click="setActiveView(view)" v-for="view in meta.views" :key="view.id" style="cursor:pointer; margin-bottom:10px;">
+    <div
+      v-on:click="setActiveView(view)"
+      v-for="view in meta.views"
+      :key="view.id"
+      class="view-list-item"
+      style="cursor:pointer;padding:10px;"
+    >
       {{ view.name }}
-      <br>
+      <br />
       <span class="is-size-7">
-        Created {{ view.created_at | moment("YYYY-MM-DD HH:mm") }} <span v-if="view.user"> by {{ view.user }}</span> <span v-if="view.description"> ({{ view.description }})</span>
+        Created by {{ view.user }} <span v-if="view.description"> ({{ view.description }})</span>
       </span>
     </div>
   </div>
@@ -27,38 +33,34 @@ limitations under the License.
 
 <script>
 import ApiClient from '../../utils/RestApiClient'
-import TsCreateViewForm from './CreateViewForm'
 
 export default {
-  components: {
-    TsCreateViewForm
-  },
   props: ['currentQueryString', 'currentQueryFilter', 'isSimple', 'isLast', 'sketchId'],
-  data () {
+  data() {
     return {
       activeView: null,
       showCreateViewModal: false,
-      position: 'is-bottom-right'
+      position: 'is-bottom-right',
     }
   },
   methods: {
-    setActiveView: function (view, doSearch = true) {
+    setActiveView: function(view, doSearch = true) {
       this.showCreateViewModal = false
       this.activeView = view
       if (doSearch) {
         this.$emit('setActiveView', view)
       }
     },
-    clearSearch: function () {
+    clearSearch: function() {
       this.$emit('clearSearch')
       this.activeView = null
       this.$refs.dropdown.toggle()
     },
-    saveView: function () {
+    saveView: function() {
       this.showCreateViewModal = true
       this.$refs.dropdown.toggle()
     },
-    updateView: function () {
+    updateView: function() {
       if (!this.activeView) {
         return
       }
@@ -66,35 +68,36 @@ export default {
       this.activeView.query = this.currentQueryString
       this.activeView.filter = JSON.stringify(this.currentQueryFilter)
       ApiClient.updateView(this.sketchId, this.activeView.id, this.currentQueryString, this.currentQueryFilter)
-        .then((response) => {
+        .then(response => {
           this.$buefy.toast.open('Saved search has been updated')
         })
-        .catch((e) => {})
-    }
+        .catch(e => {})
+    },
   },
   computed: {
-    meta () {
+    meta() {
       return this.$store.state.meta
-    }
+    },
   },
-  created: function () {
+  created: function() {
     if (this.isLast) {
       this.position = 'is-top-right'
     }
     let queryViewId = this.$route.query.view
     if (queryViewId) {
-      let view = this.meta.views.filter(function (view) {
+      let view = this.meta.views.filter(function(view) {
         return view.id === parseInt(queryViewId)
       })
       this.setActiveView(view[0], false)
     }
-  }
+  },
 }
 </script>
 
 <!-- CSS scoped to this component only -->
 <style scoped lang="scss">
-.button:focus, .button.is-focused {
+.button:focus,
+.button.is-focused {
   border-color: transparent;
 }
 
@@ -104,4 +107,7 @@ export default {
   padding: 15px;
 }
 
+.view-list-item:hover {
+  background-color: #e0e0e0;
+}
 </style>

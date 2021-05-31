@@ -14,122 +14,122 @@
 // limitations under the License.
 
 :root {
-    --font-color-dark: rgba(0, 0, 0, 0.87);
-    --font-color-dark-dimmed: rgba(0, 0, 0, 0.60);
-    --font-color-grey: #c9c9c9;
-    --font-color-light: #fafafa;
-    --font-color-red: #ca2b2b;
-    --search-input-light: #ffffff;
-    --search-input-dark: #464646;
-    --font-size-small: 13px;
-    --font-size-regular: 14px;
-    --font-size-large: 16px;
-    --font-size-title: 20px;  
+  --font-color-dark: rgba(0, 0, 0, 0.87);
+  --font-color-dark-dimmed: rgba(0, 0, 0, 0.6);
+  --font-color-grey: #c9c9c9;
+  --font-color-light: #fafafa;
+  --font-color-red: #ca2b2b;
+  --search-input-light: #ffffff;
+  --search-input-dark: #464646;
+  --font-size-small: 13px;
+  --font-size-regular: 14px;
+  --font-size-large: 16px;
+  --font-size-title: 20px;
 }
 
-[data-theme=light] {
-    --background-color: linear-gradient(90deg, rgba(249,249,249,1) 11%, rgba(241,241,241,1) 100%);
-    --default-font-color: var(--font-color-dark);
-    --default-link-color: var(--font-color-dark);
-    --default-title-font-color: var(--font-color-dark);
-    --navbar-background: #ffffff;
-    --navbar-font-color: var(--font-color-dark);
-    --navbar-border-color: #f5f5f5;
-    --tabs-link-color: var(--font-color-dark-dimmed);
-    --tabs-link-hover-color: var(--font-color-dark);
-    --tabs-link-active-color: var(--font-color-dark);
-    --tabs-link-active-border-bottom-color: transparent;
-    --tabs-link-hover-border-bottom-color: transparent;
-    --tabs-border-bottom-color: transparent;
-    --card-background-color: hsl(0, 0%, 100%);
-    --card-font-color: hsl(0, 0%, 29%);
-    --card-accent-background-color: #f5f5f5;
-    --card-accent-font-color: var(--font-color-dark);
-    --search-input-home: var(--search-input-light);
-    --search-input-explore: #f9f9f9;
-    --search-input-font-color: var(--font-color-dark);
-    --button-greyscale: grayscale(0%);
-    --timeline-name-column-background: #f1f1f1;
-    --timeline-name-column-font-color: #999999;
-    --table-cell-border-color: #f5f5f5;
-    --time-bubble-background-color: #f5f5f5;
-    --time-bubble-font-color: #666666;
-    --content-list-hover-color: #fcfcfc;
-    --content-list-border-color: #EEEEEE;
-    --login-page-background-color: var(--navbar-background);
-    --card-title-font-color: var(--font-color-dark);
-    --card-header-border-color: #f5f5f5;
-    --button-font-color: var(--font-color-dark);
-    --form-label-font-color: var(--font-color-dark);
-    --message-header-background-color: rgba(229, 229, 229, 0.84);
-    --message-header-font-color: #333333;
-    --message-background-color: #f9f9f9;
-    --message-body-color: var(--font-color-dark);
-    --markdown-body-font-color: var(--font-color-dark);
-    --spinner-color: #333333;
-    --input-background-color: var(--search-input-light);
-    --input-color: var(--font-color-dark);
-    --input-placeholder-color: var(--font-color-grey);
+[data-theme='light'] {
+  --background-color: linear-gradient(90deg, rgba(249, 249, 249, 1) 11%, rgba(241, 241, 241, 1) 100%);
+  --default-font-color: var(--font-color-dark);
+  --default-link-color: var(--font-color-dark);
+  --default-title-font-color: var(--font-color-dark);
+  --navbar-background: #ffffff;
+  --navbar-font-color: var(--font-color-dark);
+  --navbar-border-color: #f5f5f5;
+  --tabs-link-color: var(--font-color-dark-dimmed);
+  --tabs-link-hover-color: var(--font-color-dark);
+  --tabs-link-active-color: var(--font-color-dark);
+  --tabs-link-active-border-bottom-color: transparent;
+  --tabs-link-hover-border-bottom-color: transparent;
+  --tabs-border-bottom-color: transparent;
+  --card-background-color: hsl(0, 0%, 100%);
+  --card-font-color: hsl(0, 0%, 29%);
+  --card-accent-background-color: #f5f5f5;
+  --card-accent-font-color: var(--font-color-dark);
+  --search-input-home: var(--search-input-light);
+  --search-input-explore: #f9f9f9;
+  --search-input-font-color: var(--font-color-dark);
+  --button-greyscale: grayscale(0%);
+  --timeline-name-column-background: #f1f1f1;
+  --timeline-name-column-font-color: #999999;
+  --table-cell-border-color: #f5f5f5;
+  --time-bubble-background-color: #f5f5f5;
+  --time-bubble-font-color: #666666;
+  --content-list-hover-color: #fcfcfc;
+  --content-list-border-color: #eeeeee;
+  --login-page-background-color: var(--navbar-background);
+  --card-title-font-color: var(--font-color-dark);
+  --card-header-border-color: #f5f5f5;
+  --button-font-color: var(--font-color-dark);
+  --form-label-font-color: var(--font-color-dark);
+  --message-header-background-color: rgba(229, 229, 229, 0.84);
+  --message-header-font-color: #333333;
+  --message-background-color: #f9f9f9;
+  --message-body-color: var(--font-color-dark);
+  --markdown-body-font-color: var(--font-color-dark);
+  --spinner-color: #333333;
+  --input-background-color: var(--search-input-light);
+  --input-color: var(--font-color-dark);
+  --input-placeholder-color: var(--font-color-grey);
 }
 
-[data-theme=dark] {
-    --background-color: #2d2d2d;
-    --default-font-color: var(--font-color-light);
-    --default-link-color: var(--font-color-light);
-    --default-title-font-color: var(--font-color-light);
-    --navbar-background: #242424;
-    --navbar-font-color: var(--font-color-light);
-    --navbar-border-color: #3d3d3d;
-    --tabs-link-color: hsl(0, 0%, 60%);;
-    --tabs-link-hover-color: var(--font-color-light);
-    --tabs-link-active-color: var(--font-color-light);
-    --tabs-link-active-border-bottom-color: transparent;
-    --tabs-link-hover-border-bottom-color: transparent;
-    --tabs-border-bottom-color: transparent;
-    --card-background-color: #545454;
-    --card-font-color: #fafafa;
-    --card-accent-background-color: #494949;
-    --card-accent-font-color: var(--font-color-light);
-    --search-input-home: var(--search-input-dark);
-    --search-input-explore: var(--search-input-dark);
-    --search-input-font-color: var(--font-color-light);
-    --button-greyscale: grayscale(25%);
-    --timeline-name-column-background: #666666;
-    --timeline-name-column-font-color: #d9d9d9;
-    --table-background-color: #424242;
-    --table-row-hover-background-color: #494949;
-    --table-head-cell-color: #fafafa;
-    --table-color: #fafafa;
-    --table-cell-border-color: #818181;
-    --time-bubble-background-color: #666666;
-    --time-bubble-font-color: #d9d9d9;
-    --content-list-hover-color: #696969;
-    --content-list-border-color: #696969;
-    --login-page-background-color: var(--background-color);
-    --navbar-item-link-color: #fafafa;
-    --card-title-font-color: var(--font-color-light);
-    --card-header-border-color: #848484;
-    --button-font-color: var(--font-color-light);
-    --form-label-font-color: var(--font-color-light);
-    --message-header-background-color: var(--background-color);
-    --message-header-font-color: var(--font-color-light);
-    --message-background-color: #363636;
-    --message-body-color: var(--font-color-light);
-    --markdown-body-font-color: var(--font-color-light);
-    --spinner-color: #ffffff;
-    --input-background-color: var(--search-input-dark);
-    --input-color: var(--font-color-light);
-    --input-placeholder-color: #969696;
+[data-theme='dark'] {
+  --background-color: #2d2d2d;
+  --default-font-color: var(--font-color-light);
+  --default-link-color: var(--font-color-light);
+  --default-title-font-color: var(--font-color-light);
+  --navbar-background: #242424;
+  --navbar-font-color: var(--font-color-light);
+  --navbar-border-color: #3d3d3d;
+  --tabs-link-color: hsl(0, 0%, 60%);
+  --tabs-link-hover-color: var(--font-color-light);
+  --tabs-link-active-color: var(--font-color-light);
+  --tabs-link-active-border-bottom-color: transparent;
+  --tabs-link-hover-border-bottom-color: transparent;
+  --tabs-border-bottom-color: transparent;
+  --card-background-color: #545454;
+  --card-font-color: #fafafa;
+  --card-accent-background-color: #494949;
+  --card-accent-font-color: var(--font-color-light);
+  --search-input-home: var(--search-input-dark);
+  --search-input-explore: var(--search-input-dark);
+  --search-input-font-color: var(--font-color-light);
+  --button-greyscale: grayscale(25%);
+  --timeline-name-column-background: #666666;
+  --timeline-name-column-font-color: #d9d9d9;
+  --table-background-color: #424242;
+  --table-row-hover-background-color: #494949;
+  --table-head-cell-color: #fafafa;
+  --table-color: #fafafa;
+  --table-cell-border-color: #818181;
+  --time-bubble-background-color: #666666;
+  --time-bubble-font-color: #d9d9d9;
+  --content-list-hover-color: #696969;
+  --content-list-border-color: #696969;
+  --login-page-background-color: var(--background-color);
+  --navbar-item-link-color: #fafafa;
+  --card-title-font-color: var(--font-color-light);
+  --card-header-border-color: #848484;
+  --button-font-color: var(--font-color-light);
+  --form-label-font-color: var(--font-color-light);
+  --message-header-background-color: var(--background-color);
+  --message-header-font-color: var(--font-color-light);
+  --message-background-color: #363636;
+  --message-body-color: var(--font-color-light);
+  --markdown-body-font-color: var(--font-color-light);
+  --spinner-color: #ffffff;
+  --input-background-color: var(--search-input-dark);
+  --input-color: var(--font-color-light);
+  --input-placeholder-color: #969696;
 }
 
 // Customize Bulma
 $family-primary: Arial, sans-serif;
 $body-size: 15px;
-$card-shadow: 0 0 1px rgba(0,0,0,0.15);
+$card-shadow: 0 0 1px rgba(0, 0, 0, 0.15);
 $card-header-shadow: none;
 $section-padding: 15px 0 0 0;
-$info: rgb(66,133,244);
-$primary: rgb(66,133,244);
+$info: rgb(66, 133, 244);
+$primary: rgb(66, 133, 244);
 $success: #41ad49;
 $table-cell-padding: 10px;
 $box-shadow: 0px;
@@ -165,135 +165,140 @@ $message-background-color: var(--message-background-color);
 $message-body-color: var(--message-body-color);
 
 // Font Awesome
-$fa-font-path: "~@fortawesome/fontawesome-free/webfonts";
-@import "../../node_modules/@fortawesome/fontawesome-free/scss/fontawesome";
-@import "../../node_modules/@fortawesome/fontawesome-free/scss/solid";
+$fa-font-path: '~@fortawesome/fontawesome-free/webfonts';
+@import '../../node_modules/@fortawesome/fontawesome-free/scss/fontawesome';
+@import '../../node_modules/@fortawesome/fontawesome-free/scss/solid';
 
 // Import Bulma and Buefy styles
-@import "~bulma";
-@import "~buefy/src/scss/buefy";
+@import '~bulma';
+@import '~buefy/src/scss/buefy';
 
 // Global CSS
-html, body {
-    height: 100%;
-    overflow: auto;
-    font-family: 'Roboto';
-    font-size: var(--font-size-regular);
+html,
+body {
+  height: 100%;
+  overflow: auto;
+  font-family: 'Roboto';
+  font-size: var(--font-size-regular);
 }
 
 body {
-    background: var(--background-color);
-    color: var(--default-font-color);
+  background: var(--background-color);
+  color: var(--default-font-color);
 }
 
 .login-page {
-    background: var(--login-page-background-color);
-    color: var(--default-font-color);
+  background: var(--login-page-background-color);
+  color: var(--default-font-color);
 }
 
 .card {
-    border-radius: 5px;
-    background-color: var(--card-background-color);
-    color: var(--card-font-color);
+  border-radius: 5px;
+  background-color: var(--card-background-color);
+  color: var(--card-font-color);
 }
 
 .card-header {
-    border-bottom: 1px solid var(--card-header-border-color);
+  border-bottom: 1px solid var(--card-header-border-color);
 }
 
 .card-accent-background {
-    background-color: var(--card-accent-background-color);
-    color: var(--card-accent-font-color);
+  background-color: var(--card-accent-background-color);
+  color: var(--card-accent-font-color);
 }
 
 .card-header-title {
-    color: var(--card-title-font-color);
+  color: var(--card-title-font-color);
 }
 
 .ts-timeline-color-box {
-    width:43px;
-    height:43px;
-    margin-top: 2px;
-    margin-right: 10px;
-    border-radius: 4px;
+  width: 43px;
+  height: 43px;
+  margin-top: 2px;
+  margin-right: 10px;
+  border-radius: 4px;
 }
 
 ul.content-list {
-    list-style: none;
+  list-style: none;
 }
 
-ul.content-list>li {
-    padding-top: 5px;
-    padding-bottom: 5px;
-    border-bottom: 1px solid var(--content-list-border-color);
-    display: block;
-    margin: 0;
+ul.content-list > li {
+  padding-top: 5px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--content-list-border-color);
+  display: block;
+  margin: 0;
 }
 
-ul.content-list>li:hover {
-    background: var(--content-list-hover-color);
+ul.content-list > li:hover {
+  background: var(--content-list-hover-color);
 }
 
-ul.content-list>li:last-child { border-bottom: none; }
+ul.content-list > li:last-child {
+  border-bottom: none;
+}
 
 .ts-search-input {
-    outline: none;
-    border: none;
-    font-size: 1.2em;
-    border-radius: 5px;
-    padding: 25px;
-    height: 34px;
-    // background: var(--search-input-explore);
-    color: var(--search-input-font-color);
-    border:1px solid #d3d3d3;
-    width: 100%;
+  outline: none;
+  border: none;
+  font-size: 1.2em;
+  border-radius: 12px;
+  padding: 25px;
+  height: 34px;
+  // background: var(--search-input-explore);
+  color: var(--search-input-font-color);
+  border: 1px solid #d3d3d3;
+  width: 100%;
 }
 
 .ts-home-input {
-    outline: none;
-    border: none;
-    border-radius: 5px;
-    background: var(--search-input-explore);
-    color: var(--search-input-font-color);
-    padding: 13px;
-    width: 50%;
+  outline: none;
+  border: none;
+  border-radius: 5px;
+  background: var(--search-input-explore);
+  color: var(--search-input-font-color);
+  padding: 13px;
+  width: 50%;
 }
 
 .button.ts-search-dropdown {
-    outline: 0;
-    border: none;
-    border-radius: 5px 0 0 5px;
-    padding: 25px;
-    background: var(--card-accent-background-color);
-    color: var(--search-input-font-color);
+  outline: 0;
+  border: none;
+  border-radius: 5px 0 0 5px;
+  padding: 25px;
+  background: var(--card-accent-background-color);
+  color: var(--search-input-font-color);
 }
 
 .ts-home-search-input {
-    outline: none;
-    border: none;
-    font-size: 1.2em;
-    border-radius: 5px;
-    padding: 15px;
-    background: var(--search-input-home);
-    color: var(--search-input-font-color);
-    width: 100%;
+  outline: none;
+  border: none;
+  font-size: 1.2em;
+  border-radius: 5px;
+  padding: 15px;
+  background: var(--search-input-home);
+  color: var(--search-input-font-color);
+  width: 100%;
 }
 
-a, a:hover {
-    color: var(--link-color);
+a,
+a:hover {
+  color: var(--link-color);
 }
 
 .button {
-    filter: var(--button-greyscale);
+  filter: var(--button-greyscale);
 }
 
-.ts-dropdown-button, .ts-dropdown-button:hover {
-    color: var(--button-font-color)
+.ts-dropdown-button,
+.ts-dropdown-button:hover {
+  color: var(--button-font-color);
 }
 
 .navbar {
-    background: var(--navbar-background);
-    color: var(--navbar-font-color);
+  background: var(--navbar-background);
+  color: var(--navbar-font-color);
 }
 
 .ts-timeline-name-column-color {
@@ -303,7 +308,7 @@ a, a:hover {
 
 // Time bubble
 .ts-time-bubble-color {
-  background: var(--time-bubble-background-color)
+  background: var(--time-bubble-background-color);
 }
 
 .ts-time-bubble-color h5 {
@@ -315,100 +320,113 @@ a, a:hover {
 }
 
 .ts-markdown-body-color {
-    color: var(--markdown-body-font-color);
+  color: var(--markdown-body-font-color);
 }
 
 .button.is-small {
-    border-radius: 4px;
+  border-radius: 4px;
 }
 
-.pagination-previous, .pagination-next, .pagination-link {
-    color: var(--default-font-color);
+.pagination-previous,
+.pagination-next,
+.pagination-link {
+  color: var(--default-font-color);
 }
 
 // Search History tree
 // Based on http://fractaledmind.com/articles/css-tree/
 .tree {
-    list-style: none;
-    
-    &, * { margin: 0; padding: 0; }
-  
-    li {
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      padding-top: .5vh;
-      padding-bottom: .5vh;
-  
-      position: relative;
-      padding-left: 1vw;
-      
-      &::before {
-        content: '';
-        position: absolute;
-        left: 0;
-        top: 50%;
-        border-top: 1px solid #d4d4d4;
-        width: 1vw;
-      }
-  
-      &::after {
-        content: '';
-        position: absolute;
-        left: 0;
-        border-left: 1px solid #d4d4d4;
-      }
-      &:only-child::after {
-        border-left: 0;
-      }
+  list-style: none;
 
-      &:last-of-type::after {
-        height: 50%;
-        top: 0;
-      }
-      
-      &:first-of-type::after {
-        height: 50%;
-        bottom: 0;
-      }
+  &,
+  * {
+    margin: 0;
+    padding: 0;
+  }
 
-      &:not(:first-of-type):not(:last-of-type)::after {
-        height: 100%;
-      }
+  li {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding-top: 0.5vh;
+    padding-bottom: 0.5vh;
 
-    }
-    
-    ul, ol {
-      padding-left: 1vw;
-      position: relative;
-  
-      &::before {
-        content: '';
-        position: absolute;
-        left: 0;
-        top: 50%;
-        border-top: 1px solid #d4d4d4;
-        width: 1vw;
-      }
-    }
-  
-    span {
-      background-color:#dddddd;
-      text-align: center;
-      padding: 0.33em 0.66em;
-      border-radius: 4px;
-      cursor: pointer;
-      min-width: 100px;
+    position: relative;
+    padding-left: 1vw;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      border-top: 1px solid #d4d4d4;
+      width: 1vw;
     }
 
-    
-    > li {
-      padding-left: 0;
-     
-      &::before,
-      &::after {
-        display: none;
-      }
+    &::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      border-left: 1px solid #d4d4d4;
+    }
+    &:only-child::after {
+      border-left: 0;
+    }
+
+    &:last-of-type::after {
+      height: 50%;
+      top: 0;
+    }
+
+    &:first-of-type::after {
+      height: 50%;
+      bottom: 0;
+    }
+
+    &:not(:first-of-type):not(:last-of-type)::after {
+      height: 100%;
     }
   }
 
+  ul,
+  ol {
+    padding-left: 1vw;
+    position: relative;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      border-top: 1px solid #d4d4d4;
+      width: 1vw;
+    }
+  }
+
+  span {
+    background-color: #dddddd;
+    text-align: center;
+    padding: 0.33em 0.66em;
+    border-radius: 4px;
+    cursor: pointer;
+    min-width: 100px;
+  }
+
+  > li {
+    padding-left: 0;
+
+    &::before,
+    &::after {
+      display: none;
+    }
+  }
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s;
+}
+.fade-enter,
+.fade-leave-to {
+  opacity: 0;
+}

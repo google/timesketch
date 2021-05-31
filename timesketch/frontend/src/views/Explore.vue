@@ -15,96 +15,144 @@ limitations under the License.
 -->
 <template>
   <div>
-
     <ts-navbar-main>
       <template v-slot:left>
         {{ sketch.name }}
       </template>
     </ts-navbar-main>
 
-    <ts-navbar-secondary currentAppContext="sketch" currentPage="explore"></ts-navbar-secondary>
+    <ts-navbar-secondary ref="navigation" currentAppContext="sketch" currentPage="explore"></ts-navbar-secondary>
 
     <section class="section">
       <div class="container is-fluid">
         <div class="card">
+          <b-modal :active.sync="showSaveSearchModal" :width="640" scroll="keep">
+            <div class="card">
+              <header class="card-header">
+                <p class="card-header-title">Save search</p>
+              </header>
+              <div class="card-content">
+                <div class="content">
+                  <ts-create-view-form
+                    @setActiveView="searchView"
+                    :sketchId="sketchId"
+                    :currentQueryString="currentQueryString"
+                    :currentQueryFilter="currentQueryFilter"
+                  ></ts-create-view-form>
+                </div>
+              </div>
+            </div>
+          </b-modal>
 
           <div class="card-content" v-if="showSearch">
-              <!--
-              <div class="field has-addons">
-                <div class="control">
-                  <ts-view-list-dropdown @setActiveView="searchView" @clearSearch="clearSearch" :current-query-string="currentQueryString" :current-query-filter="currentQueryFilter" :view-from-url="params.viewId" :sketch-id="sketchId"></ts-view-list-dropdown>
-                </div>
-                -->
+            <div class="control" style="width: 100%; margin-bottom:10px;">
+              <input
+                @keyup.enter="search"
+                v-model="currentQueryString"
+                v-on:click="showSearchDropdown = true"
+                class="ts-search-input"
+                type="text"
+                ref="searchInput"
+                placeholder="Search"
+                autofocus
+                required
+              />
 
-                <div class="control" style="width: 100%;">
-                  <input @keyup.enter="search" v-model="currentQueryString" v-on:focus="showSearchDropdown = true" class="ts-search-input" type="text" placeholder="Search" required>
-
-                  <div class="card" v-show="showSearchDropdown" style="z-index: 999; position:absolute; width:100%; box-shadow: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23); border-radius:0 0 4px 4px">
-                    <div class="card-content" style="padding:0;">
-
-                      <div class="tile is-ancestor">
-                        <div class="tile is-vertical is-12">
-                          <div class="tile">
-                            <div class="tile is-parent is-vertical is-8" style="padding-right:0;">
-
-                              <div class="tile is-child">
-                                <div style="padding:20px; border-bottom:1px solid #d3d3d3;">
-                                    <div style="max-width:450px;">
-                                      <strong>Create time filter</strong>
-                                      <br><br>
-                                      <ts-explore-filter-time @addChip="addChip" @hideDropdown="hideDropdown"></ts-explore-filter-time>
-                                    </div>
-                                </div>
-                              </div>
-
-                              <div class="tile is-child">
-                                <div style="padding:0 20px 20px 20px;">
-                                  <strong>Filter on Labels</strong>
-                                  <br><br>
-                                  <div class="field">
-                                    <b-checkbox type="is-info" v-model="selectedLabels" native-value="__ts_star">
-                                      <span style="margin-right:5px;" class="icon is-small"><i class="fas fa-star" style="color:#ffe300;-webkit-text-stroke-width: 1px;-webkit-text-stroke-color: silver;"></i></span>Show starred events
-                                    </b-checkbox>
-                                  </div>
-                                  <div class="field">
-                                    <b-checkbox type="is-info" v-model="selectedLabels" native-value="__ts_comment">
-                                      <span style="margin-right:5px;" class="icon is-small"><i class="fas fa-comment"></i></span>Show events with comments
-                                    </b-checkbox>
-                                  </div>
-                                  <div class="level" style="margin-bottom: 5px;" v-for="(label) in meta.filter_labels" :key="label">
-                                    <div class="level-left">
-                                      <div class="field">
-                                        <b-checkbox type="is-info" v-model="selectedLabels" :native-value="label">
-                                          {{ label }}
-                                        </b-checkbox>
-                                      </div>
-                                    </div>
-                                  </div>
-                                  <button class="button is-info" v-on:click="updateLabelChips()">Apply</button>
-                                </div>
-                              </div>
-                            </div>
-
-                            <div class="tile is-parent" style="padding-left:0;">
-                              <div class="tile is-child">
-                                <div style="border-left:1px solid #d3d3d3; height:100%; padding:20px; background-color:#f5f5f5;">
-                                  <strong>Saved searches</strong>
-                                  <br><br>
-                                  <ts-view-list :views="meta.views" @setActiveView="searchView"></ts-view-list>
-                                </div>
-                              </div>
-                            </div>
-
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+              <transition name="fade">
+                <div
+                  class="card"
+                  v-if="showSearchDropdown"
+                  style="z-index: 999; position:absolute; margin-top:7px; width:100%; border:1px solid #d3d3d3; box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); border-radius:12px 12px 12px 12px"
+                >
+                  <div class="card-content" style="padding:0;">
+                    <ts-search-dropdown
+                      :selected-labels="selectedLabels"
+                      @setActiveView="searchView"
+                      @addChip="addChip"
+                      @updateLabelChips="updateLabelChips()"
+                      @close="closeSearchDropdown"
+                      @close-on-click="showSearchDropdown = false"
+                      @node-click="jumpInHistory"
+                      @setQueryAndFilter="setQueryAndFilter"
+                    >
+                    </ts-search-dropdown>
                   </div>
                 </div>
+              </transition>
+            </div>
 
-            <p class="control" style="top:-45px; float:right;">
-              <span style="margin-right:10px; margin-left:15px;">Search history</span>
-              <b-switch v-model="showSearchHistory" v-on:input="triggerScrollTo" size="is-small" type='is-info' style="top:2px;"></b-switch>
+            <div class="field is-grouped">
+              <p class="control">
+                <b-dropdown trap-focus append-to-body aria-role="menu" ref="NewTimeFilter">
+                  <a class="button is-text" style="text-decoration: none;" slot="trigger" role="button">
+                    <span>+ Time filter</span>
+                  </a>
+                  <b-dropdown-item custom :focusable="false" style="min-width: 500px; padding: 30px;">
+                    <strong>Create time filter</strong>
+                    <br />
+                    <br />
+                    <ts-explore-filter-time @addChip="addChip" @hideDropdown="hideDropdown"></ts-explore-filter-time>
+                  </b-dropdown-item>
+                </b-dropdown>
+              </p>
+
+              <p class="control">
+                <b-dropdown trap-focus append-to-body aria-role="menu">
+                  <a class="button is-text" style="text-decoration: none;" slot="trigger" role="button">
+                    <span>+ Add label filter</span>
+                  </a>
+
+                  <div class="modal-card" style="width:300px;color: var(--font-color-dark);">
+                    <section class="modal-card-body">
+                      <b-dropdown-item custom :focusable="false">
+                        <div class="field">
+                          <b-checkbox type="is-info" v-model="selectedLabels" native-value="__ts_star">
+                            <span style="margin-right:5px;" class="icon is-small"
+                              ><i
+                                class="fas fa-star"
+                                style="color:#ffe300;-webkit-text-stroke-width: 1px;-webkit-text-stroke-color: silver;"
+                              ></i></span
+                            >Show starred events
+                          </b-checkbox>
+                        </div>
+                        <div class="field">
+                          <b-checkbox type="is-info" v-model="selectedLabels" native-value="__ts_comment">
+                            <span style="margin-right:5px;" class="icon is-small"><i class="fas fa-comment"></i></span
+                            >Show events with comments
+                          </b-checkbox>
+                        </div>
+                        <hr v-if="meta.filter_labels.length" />
+                        <div class="level" style="margin-bottom: 5px;" v-for="label in meta.filter_labels" :key="label">
+                          <div class="level-left">
+                            <div class="field">
+                              <b-checkbox type="is-info" v-model="selectedLabels" :native-value="label">
+                                {{ label }}
+                              </b-checkbox>
+                            </div>
+                          </div>
+                        </div>
+                      </b-dropdown-item>
+                    </section>
+                    <section class="modal-card-foot">
+                      <b-dropdown-item>
+                        <button class="button is-info" v-on:click="updateLabelChips()">Apply</button>
+                      </b-dropdown-item>
+                    </section>
+                  </div>
+                </b-dropdown>
+              </p>
+            </div>
+
+            <!-- Search history toggle -->
+            <p class="control" style="top:-45px;float:right;">
+              <span style="margin-right:10px; margin-left:15px;">Show history</span>
+              <b-switch
+                v-model="showSearchHistory"
+                v-on:input="triggerScrollTo"
+                size="is-small"
+                type="is-info"
+                style="top:2px;"
+              ></b-switch>
             </p>
 
             <!-- Time filters -->
@@ -113,16 +161,25 @@ limitations under the License.
                 <b-dropdown trap-focus append-to-body aria-role="menu" ref="TimeFilters">
                   <span slot="trigger" role="button" class="is-small is-outlined">
                     <div class="tags" style="margin-bottom: 5px; margin-right:7px;">
-                      <span class="tag" style="cursor: pointer;" v-bind:class="{ 'chip-disabled': chip.active === false}">
+                      <span
+                        class="tag is-medium"
+                        style="cursor: pointer;"
+                        v-bind:class="{ 'chip-disabled': chip.active === false }"
+                      >
                         <span @click.stop="toggleChip(chip)">
                           <span v-if="index > 0" class="chip-operator-label">OR</span>
                           <span class="icon" style="margin-right:7px;"><i class="fas fa-clock"></i></span>
                           <span>{{ chip.value.split(',')[0] }}</span>
-                          <span v-if="chip.type === 'datetime_range' && chip.value.split(',')[0] !== chip.value.split(',')[1]"> &rarr; {{ chip.value.split(',')[1] }}</span>
+                          <span
+                            v-if="
+                              chip.type === 'datetime_range' && chip.value.split(',')[0] !== chip.value.split(',')[1]
+                            "
+                          >
+                            &rarr; {{ chip.value.split(',')[1] }}</span
+                          >
                         </span>
-                        <span class="fa-stack fa-lg" style="margin-left:5px; width:20px;">
-                          <i class="fas fa-circle fa-stack-1x can-change-background" style="transform:scale(1.1);"></i>
-                          <i class="fas fa-edit fa-stack-1x fa-inverse" style="transform:scale(0.7);"></i>
+                        <span class="fa-stack fa-lg is-small" style="margin-left:5px; width:20px;">
+                          <i class="fas fa-edit fa-stack-1x" style="transform:scale(0.7);color:#777;"></i>
                         </span>
                         <button class="delete is-small" style="margin-left:5px" v-on:click="removeChip(index)"></button>
                       </span>
@@ -130,9 +187,13 @@ limitations under the License.
                   </span>
                   <b-dropdown-item custom :focusable="false" style="min-width: 500px; padding: 30px;">
                     <strong>Update time filter</strong>
-                    <br>
-                    <br>
-                    <ts-explore-filter-time :selectedChip="chip" @updateChip="updateChip($event, chip)" @hideDropdown="hideDropdown"></ts-explore-filter-time>
+                    <br />
+                    <br />
+                    <ts-explore-filter-time
+                      :selectedChip="chip"
+                      @updateChip="updateChip($event, chip)"
+                      @hideDropdown="hideDropdown"
+                    ></ts-explore-filter-time>
                   </b-dropdown-item>
                 </b-dropdown>
               </span>
@@ -141,32 +202,60 @@ limitations under the License.
             <!-- Label and term filter chips -->
             <div class="tags">
               <span v-for="(chip, index) in filterChips" :key="index + chip.value">
-                <span v-if="chip.type === 'label'" class="tag is-light" style="margin-right:7px; cursor: pointer;" v-bind:class="{ 'chip-disabled': chip.active === false}" @click="toggleChip(chip, index)">
-                    <span v-if="index > 0 || timeFilterChips.length" class="chip-operator-label">AND</span>
-                    <span v-if="chip.value === '__ts_star'" style="margin-right:7px;" class="icon is-small"><i class="fas fa-star" style="color:#ffe300;-webkit-text-stroke-width: 1px;-webkit-text-stroke-color: silver;"></i></span>
-                    <span v-else-if="chip.value === '__ts_comment'" style="margin-right:7px;" class="icon is-small"><i class="fas fa-comment"></i></span>
-                    <span v-else-if="chip.type === 'label'" style="margin-right:7px;" class="icon is-small"><i class="fas fa-tag"></i></span>
-                    <span style="margin-right:7px;">{{ chip | filterChip }}</span>
-                    <button style="margin-left:7px" class="delete is-small" v-on:click="removeChip(chip)"></button>
-                  </span>
-                  <span v-if="chip.type === 'term'" class="tag is-light" style="margin-right:7px; cursor: pointer;" v-bind:class="{ 'chip-disabled': chip.active === false, 'is-danger': chip.operator === 'must_not'}" @click="toggleChip(chip, index)">
-                    <span v-if="index > 0 || timeFilterChips.length" class="chip-operator-label">AND</span>
-                    <span v-if="chip.operator === 'must_not'" class="chip-operator-label" style="font-weight:bold;">NOT</span>
-                    <span style="margin-right:7px;">{{ chip | filterChip }}</span>
-                    <button style="margin-left:7px" class="delete is-small" v-on:click="removeChip(chip)"></button>
-                  </span>
-
+                <span
+                  v-if="chip.type === 'label'"
+                  class="tag is-medium is-light"
+                  style="margin-right:7px; cursor: pointer;"
+                  v-bind:class="{ 'chip-disabled': chip.active === false }"
+                  @click="toggleChip(chip, index)"
+                >
+                  <span v-if="index > 0 || timeFilterChips.length" class="chip-operator-label">AND</span>
+                  <span v-if="chip.value === '__ts_star'" style="margin-right:7px;" class="icon is-small"
+                    ><i
+                      class="fas fa-star"
+                      style="color:#ffe300;-webkit-text-stroke-width: 1px;-webkit-text-stroke-color: silver;"
+                    ></i
+                  ></span>
+                  <span v-else-if="chip.value === '__ts_comment'" style="margin-right:7px;" class="icon is-small"
+                    ><i class="fas fa-comment"></i
+                  ></span>
+                  <span v-else-if="chip.type === 'label'" style="margin-right:7px;" class="icon is-small"
+                    ><i class="fas fa-tag"></i
+                  ></span>
+                  <span style="margin-right:7px;">{{ chip | filterChip }}</span>
+                  <button style="margin-left:7px" class="delete is-small" v-on:click="removeChip(chip)"></button>
+                </span>
+                <span
+                  v-if="chip.type === 'term'"
+                  class="tag is-light"
+                  style="margin-right:7px; cursor: pointer;"
+                  v-bind:class="{ 'chip-disabled': chip.active === false, 'is-danger': chip.operator === 'must_not' }"
+                  @click="toggleChip(chip, index)"
+                >
+                  <span v-if="index > 0 || timeFilterChips.length" class="chip-operator-label">AND</span>
+                  <span v-if="chip.operator === 'must_not'" class="chip-operator-label" style="font-weight:bold;"
+                    >NOT</span
+                  >
+                  <span style="margin-right:7px;">{{ chip | filterChip }}</span>
+                  <button style="margin-left:7px" class="delete is-small" v-on:click="removeChip(chip)"></button>
+                </span>
               </span>
             </div>
 
-            <ts-explore-timeline-picker v-if="sketch.active_timelines" @updateSelectedTimelines="updateSelectedTimelines($event)" :active-timelines="sketch.active_timelines" :current-query-filter="currentQueryFilter" :count-per-index="eventList.meta.count_per_index" :count-per-timeline="eventList.meta.count_per_timeline"></ts-explore-timeline-picker>
-
+            <ts-explore-timeline-picker
+              v-if="sketch.active_timelines"
+              @updateSelectedTimelines="updateSelectedTimelines($event)"
+              :active-timelines="sketch.active_timelines"
+              :current-query-filter="currentQueryFilter"
+              :count-per-index="eventList.meta.count_per_index"
+              :count-per-timeline="eventList.meta.count_per_timeline"
+            ></ts-explore-timeline-picker>
           </div>
-
         </div>
       </div>
     </section>
 
+    <!-- Search history -->
     <section class="section" v-show="showSearchHistory">
       <div class="container is-fluid">
         <div class="card">
@@ -179,21 +268,31 @@ limitations under the License.
               <b-slider style="margin-right:10px;" v-model="zoomLevel" :min="0.1" :max="1" :step="0.01"></b-slider>
             </div>
           </header>
-          <div class="card-content no-scrollbars" v-dragscroll style="overflow: scroll; white-space: nowrap; max-height:700px;min-height:500px">
-            <ts-search-history-tree @node-click="jumpInHistory" :show-history="showSearchHistory" v-bind:style="{ transform: 'scale(' + zoomLevel + ')' }" style="transform-origin: top left;"></ts-search-history-tree>
+          <div
+            class="card-content no-scrollbars"
+            v-dragscroll
+            style="overflow: scroll; white-space: nowrap; max-height:700px;min-height:500px"
+          >
+            <ts-search-history-tree
+              @node-click="jumpInHistory"
+              :show-history="showSearchHistory"
+              v-bind:style="{ transform: 'scale(' + zoomLevel + ')' }"
+              style="transform-origin: top left;"
+            ></ts-search-history-tree>
           </div>
         </div>
       </div>
     </section>
 
+    <!-- Context search -->
     <section class="section" id="context" v-show="contextEvent">
       <div class="container is-fluid">
         <b-message type="is-warning" aria-close-label="Close message">
           <strong>Context query</strong>
-          <br><br>
+          <br /><br />
           <div class="buttons">
-              <button class="button" v-on:click="removeContext">&larr; Go back to original query</button>
-              <button class="button" v-on:click="scrollToContextEvent">Help me find my event</button>
+            <button class="button" v-on:click="removeContext">&larr; Go back to original query</button>
+            <button class="button" v-on:click="scrollToContextEvent">Help me find my event</button>
           </div>
         </b-message>
       </div>
@@ -203,16 +302,25 @@ limitations under the License.
       <div class="container is-fluid">
         <div class="card">
           <div class="card-content">
-
             <nav class="level">
               <!-- Left side -->
               <div class="level-left">
                 <div class="level-item">
-                  <span v-if="toEvent && !searchInProgress">{{ fromEvent }}-{{ toEvent }} of {{ totalHits }} events ({{ totalTime }}s)</span>
+                  <span v-if="toEvent && !searchInProgress"
+                    >{{ fromEvent }}-{{ toEvent }} of {{ totalHits }} events ({{ totalTime }}s)</span
+                  >
                 </div>
                 <div class="level-item">
                   <span v-if="!toEvent && !searchInProgress">{{ totalHits }} events ({{ totalTime }}s)</span>
-                  <div v-if="searchInProgress"><span class="icon"><i class="fas fa-circle-notch fa-pulse"></i></span> Searching..</div>
+                  <div v-if="searchInProgress">
+                    <span class="icon"><i class="fas fa-circle-notch fa-pulse"></i></span> Searching..
+                  </div>
+                </div>
+                <div class="level-item">
+                  <button class="button is-small is-outlined" v-on:click="showSaveSearchModal = !showSavedSearchModal">
+                    <span class="icon is-small"><i class="fas fa-save"></i></span>
+                    <span>Save this search</span>
+                  </button>
                 </div>
                 <div class="level-item" v-if="numSelectedEvents" style="margin-right:50px;">
                   <button class="button is-small is-outlined" style="border-radius: 4px;" v-on:click="toggleStar">
@@ -226,18 +334,19 @@ limitations under the License.
 
               <!-- Right side -->
               <div class="level-right">
-
                 <div class="level-item">
                   <div v-if="eventList.objects.length">
-                    <b-pagination @change="paginate($event)"
-                                  :total="totalHitsForPagination"
-                                  :per-page="currentQueryFilter.size"
-                                  :current.sync="currentPage"
-                                  :simple=true
-                                  size="is-small"
-                                  icon-pack="fas"
-                                  icon-prev="chevron-left"
-                                  icon-next="chevron-right">
+                    <b-pagination
+                      @change="paginate($event)"
+                      :total="totalHitsForPagination"
+                      :per-page="currentQueryFilter.size"
+                      :current.sync="currentPage"
+                      :simple="true"
+                      size="is-small"
+                      icon-pack="fas"
+                      icon-prev="chevron-left"
+                      icon-next="chevron-right"
+                    >
                     </b-pagination>
                   </div>
                 </div>
@@ -256,7 +365,12 @@ limitations under the License.
                   </div>
                 </div>
                 <div class="level-item">
-                  <button v-if="eventList.objects.length" class="button is-small" style="border-radius: 4px;" v-on:click="changeSortOrder">
+                  <button
+                    v-if="eventList.objects.length"
+                    class="button is-small"
+                    style="border-radius: 4px;"
+                    v-on:click="changeSortOrder"
+                  >
                     {{ currentQueryFilter.order }}
                   </button>
                 </div>
@@ -264,87 +378,112 @@ limitations under the License.
                   <div v-if="eventList.objects.length">
                     <b-dropdown position="is-bottom-left" aria-role="menu" trap-focus append-to-body :can-close="true">
                       <button class="button is-outlined is-small" style="border-radius: 4px;" slot="trigger">
-                    <span class="icon is-small">
-                      <i class="fas fa-table"></i>
-                    </span>
+                        <span class="icon is-small">
+                          <i class="fas fa-table"></i>
+                        </span>
                         <span>Customize columns</span>
                       </button>
                       <b-dropdown-item aria-role="menu-item" :focusable="false" custom>
                         <div v-bind:class="{ tsdropdown: expandFieldDropdown }" style="width:300px;">
-                          <multiselect style="display: block" v-if="meta.mappings" :options="meta.mappings" :value="selectedFieldsProxy" @open="expandFieldDropdown = true" @close="expandFieldDropdown = false" @input="updateSelectedFields" :multiple="true" :searchable="true" :close-on-select="false" label="field" track-by="field" placeholder="Add more columns ..."></multiselect>
+                          <multiselect
+                            style="display: block"
+                            v-if="meta.mappings"
+                            :options="meta.mappings"
+                            :value="selectedFieldsProxy"
+                            @open="expandFieldDropdown = true"
+                            @close="expandFieldDropdown = false"
+                            @input="updateSelectedFields"
+                            :multiple="true"
+                            :searchable="true"
+                            :close-on-select="false"
+                            label="field"
+                            track-by="field"
+                            placeholder="Add more columns ..."
+                          ></multiselect>
                         </div>
                       </b-dropdown-item>
                       <b-dropdown-item aria-role="menu-item" :focusable="false" custom>
-                    <span v-if="selectedFields.length">
-                      <br>
-                      <strong>Selected columns</strong>
-                      <br><br>
-                    </span>
+                        <span v-if="selectedFields.length">
+                          <br />
+                          <strong>Selected columns</strong>
+                          <br /><br />
+                        </span>
                         <div class="tags">
                           <span v-for="(field, index) in selectedFields" :key="index">
                             <span class="tag is-light is-rounded" style="margin-right:7px;">
                               <span style="margin-right:7px;">{{ field.field }}</span>
-                              <button style="margin-left:7px" class="delete is-small" v-on:click="removeField(index)"></button>
+                              <button
+                                style="margin-left:7px"
+                                class="delete is-small"
+                                v-on:click="removeField(index)"
+                              ></button>
                             </span>
                           </span>
                         </div>
 
-                        <hr>
+                        <hr />
                         <b-switch type="is-info" v-model="displayOptions.showTags">
                           <span>Show tags</span>
                         </b-switch>
-                        <br>
+                        <br />
                         <b-switch type="is-info" v-model="displayOptions.showEmojis">
                           <span>Show emojis</span>
                         </b-switch>
-                        <br>
+                        <br />
                         <b-switch type="is-info" v-model="displayOptions.showMillis">
                           <span>Show microseconds</span>
                         </b-switch>
-
                       </b-dropdown-item>
                     </b-dropdown>
                   </div>
                 </div>
 
                 <div class="level-item">
-                  <button v-if="eventList.objects.length" class="button is-small" style="border-radius: 4px;" v-on:click="exportSearchResult">
+                  <button
+                    v-if="eventList.objects.length"
+                    class="button is-small"
+                    style="border-radius: 4px;"
+                    v-on:click="exportSearchResult"
+                  >
                     <span class="icon is-small" style="margin-right:5px;"><i class="fas fa-file-export"></i></span>
                     <span>Export to CSV</span>
                   </button>
                 </div>
-
               </div>
             </nav>
 
             <div v-if="totalHits > 0" style="margin-top:20px;"></div>
 
-            <ts-sketch-explore-event-list v-if="eventList.objects.length"
-                                          :event-list="eventList.objects"
-                                          :order="currentQueryFilter.order"
-                                          :selected-fields="selectedFields"
-                                          :display-options="displayOptions"
-                                          @addChip="addChip($event)"
-                                          @addLabel="updateLabelList($event)"
-                                          @searchContext="searchContext($event)">
+            <ts-sketch-explore-event-list
+              v-if="eventList.objects.length"
+              :event-list="eventList.objects"
+              :order="currentQueryFilter.order"
+              :selected-fields="selectedFields"
+              :display-options="displayOptions"
+              @addChip="addChip($event)"
+              @addLabel="updateLabelList($event)"
+              @searchContext="searchContext($event)"
+            >
             </ts-sketch-explore-event-list>
 
             <div v-if="eventList.objects.length" style="float:right;">
-              <b-pagination @change="paginate($event)"
-                            :total="totalHitsForPagination"
-                            :per-page="currentQueryFilter.size"
-                            :current.sync="currentPage"
-                            :simple=true
-                            size="is-small"
-                            icon-pack="fas"
-                            icon-prev="chevron-left"
-                            icon-next="chevron-right">
+              <b-pagination
+                @change="paginate($event)"
+                :total="totalHitsForPagination"
+                :per-page="currentQueryFilter.size"
+                :current.sync="currentPage"
+                :simple="true"
+                size="is-small"
+                icon-pack="fas"
+                icon-prev="chevron-left"
+                icon-next="chevron-right"
+              >
               </b-pagination>
             </div>
-            <br>
+            <br />
           </div>
         </div>
-        <br>
+        <br />
       </div>
     </section>
   </div>
@@ -352,12 +491,12 @@ limitations under the License.
 
 <script>
 import ApiClient from '../utils/RestApiClient'
-import TsViewListDropdown from '../components/Common/ViewListDropdown'
-import TsViewList from '../components/Common/ViewListExplore'
 import TsSketchExploreEventList from '../components/Explore/EventList'
 import TsExploreTimelinePicker from '../components/Explore/TimelinePicker'
 import TsExploreFilterTime from '../components/Explore/TimeFilter'
 import TsSearchHistoryTree from '../components/Explore/SearchHistoryTree'
+import TsSearchDropdown from '../components/Explore/SearchDropdown'
+import TsCreateViewForm from '../components/Common/CreateViewForm'
 
 import EventBus from '../main'
 import { None } from 'vega'
@@ -366,38 +505,38 @@ import { dragscroll } from 'vue-dragscroll'
 
 const defaultQueryFilter = () => {
   return {
-    'from': 0,
-    'terminate_after': 40,
-    'size': 40,
-    'indices': [],
-    'order': 'asc',
-    'chips': []
+    from: 0,
+    terminate_after: 40,
+    size: 40,
+    indices: [],
+    order: 'asc',
+    chips: [],
   }
 }
 
 const emptyEventList = () => {
   return {
-    'meta': {
-      'count_per_index': {}
+    meta: {
+      count_per_index: {},
     },
-    'objects': []
+    objects: [],
   }
 }
 
 export default {
   directives: {
-    dragscroll
+    dragscroll,
   },
   components: {
-    TsViewListDropdown,
-    TsViewList,
     TsSketchExploreEventList,
     TsExploreTimelinePicker,
     TsExploreFilterTime,
-    TsSearchHistoryTree
+    TsSearchHistoryTree,
+    TsSearchDropdown,
+    TsCreateViewForm,
   },
   props: ['sketchId'],
-  data () {
+  data() {
     return {
       params: {},
       showCreateViewModal: false,
@@ -410,9 +549,10 @@ export default {
       isFullPage: true,
       loadingComponent: null,
       showSearchDropdown: true,
+      showSaveSearchModal: false,
       eventList: {
         meta: {},
-        objects: []
+        objects: [],
       },
       currentQueryString: '',
       currentQueryFilter: defaultQueryFilter(),
@@ -423,7 +563,7 @@ export default {
       displayOptions: {
         showTags: true,
         showEmojis: true,
-        showMillis: false
+        showMillis: false,
       },
       selectedLabels: [],
       showSearchHistory: false,
@@ -431,21 +571,21 @@ export default {
       zoomLevel: 1,
       zoomOrigin: {
         x: 0,
-        y: 0
-      }
+        y: 0,
+      },
     }
   },
   computed: {
-    sketch () {
+    sketch() {
       return this.$store.state.sketch
     },
-    meta () {
+    meta() {
       return this.$store.state.meta
     },
-    totalHits () {
+    totalHits() {
       return this.eventList.meta.es_total_count_complete || 0
     },
-    totalHitsForPagination () {
+    totalHitsForPagination() {
       let total = this.eventList.meta.es_total_count_complete || 0
       // Elasticsearch only support pagination for the first 10k events.
       if (total > 9999) {
@@ -453,33 +593,33 @@ export default {
       }
       return total
     },
-    totalTime () {
+    totalTime() {
       return this.eventList.meta.es_time / 1000 || 0
     },
-    fromEvent () {
+    fromEvent() {
       return this.currentQueryFilter.from || 1
     },
-    toEvent () {
+    toEvent() {
       if (this.totalHits < this.currentQueryFilter.size) {
         return
       }
       return parseInt(this.currentQueryFilter.from) + parseInt(this.currentQueryFilter.size)
     },
-    numSelectedEvents () {
+    numSelectedEvents() {
       return Object.keys(this.selectedEvents).length
     },
-    filterChips: function () {
+    filterChips: function() {
       return this.currentQueryFilter.chips.filter(chip => chip.type === 'label' || chip.type === 'term')
     },
-    timeFilterChips: function () {
+    timeFilterChips: function() {
       return this.currentQueryFilter.chips.filter(chip => chip.type.startsWith('datetime'))
-    }
+    },
   },
   methods: {
-    hideDropdown: function () {
+    hideDropdown: function() {
       this.$refs['NewTimeFilter'].isActive = false
     },
-    search: function (emitEvent = true, resetPagination = true, incognito = false, parent = false) {
+    search: function(emitEvent = true, resetPagination = true, incognito = false, parent = false) {
       this.searchInProgress = true
       if (!this.currentQueryString) {
         return
@@ -507,8 +647,8 @@ export default {
       this.currentQueryFilter.fields = this.selectedFields
 
       let formData = {
-        'query': this.currentQueryString,
-        'filter': this.currentQueryFilter
+        query: this.currentQueryString,
+        filter: this.currentQueryFilter,
       }
 
       // Search history
@@ -533,81 +673,94 @@ export default {
         this.showSearchDropdown = false
       }
 
-      ApiClient.search(this.sketchId, formData).then((response) => {
-        this.eventList.objects = response.data.objects
-        this.eventList.meta = response.data.meta
-        this.searchInProgress = false
+      ApiClient.search(this.sketchId, formData)
+        .then(response => {
+          this.eventList.objects = response.data.objects
+          this.eventList.meta = response.data.meta
+          this.searchInProgress = false
 
-        if (!incognito) {
-          EventBus.$emit('createBranch', this.eventList.meta.search_node)
-          this.branchParent = this.eventList.meta.search_node.id
-        }
-      }).catch((e) => {})
+          if (!incognito) {
+            EventBus.$emit('createBranch', this.eventList.meta.search_node)
+            this.$store.dispatch('updateSearchHistory')
+            this.branchParent = this.eventList.meta.search_node.id
+          }
+        })
+        .catch(e => {})
     },
-    exportSearchResult: function () {
+    setQueryAndFilter: function(searchEvent) {
+      this.currentQueryString = searchEvent.queryString
+      this.currentQueryFilter = searchEvent.queryFilter
+      this.search()
+    },
+    exportSearchResult: function() {
       this.loadingOpen()
       let formData = {
-        'query': this.currentQueryString,
-        'filter': this.currentQueryFilter,
-        'file_name': 'export.zip'
+        query: this.currentQueryString,
+        filter: this.currentQueryFilter,
+        file_name: 'export.zip',
       }
-      ApiClient.exportSearchResult(this.sketchId, formData).then((response) => {
-        let fileURL = window.URL.createObjectURL(new Blob([response.data]))
-        let fileLink = document.createElement('a')
-        let fileName = 'export.zip'
-        fileLink.href = fileURL
-        fileLink.setAttribute('download', fileName)
-        document.body.appendChild(fileLink)
-        fileLink.click()
-        this.loadingClose()
-      }).catch((e) => {
-        console.error(e)
-        this.loadingClose()
-      })
+      ApiClient.exportSearchResult(this.sketchId, formData)
+        .then(response => {
+          let fileURL = window.URL.createObjectURL(new Blob([response.data]))
+          let fileLink = document.createElement('a')
+          let fileName = 'export.zip'
+          fileLink.href = fileURL
+          fileLink.setAttribute('download', fileName)
+          document.body.appendChild(fileLink)
+          fileLink.click()
+          this.loadingClose()
+        })
+        .catch(e => {
+          console.error(e)
+          this.loadingClose()
+        })
     },
-    searchView: function (viewId) {
+    searchView: function(viewId) {
       // Reset selected events.
       this.selectedEvents = {}
 
       this.showSearchDropdown = false
+      this.showSaveSearchModal = false
 
       if (viewId !== parseInt(viewId, 10) && typeof viewId !== 'string') {
         viewId = viewId.id
         this.$router.push({ name: 'Explore', query: { view: viewId } })
       }
-      ApiClient.getView(this.sketchId, viewId).then((response) => {
-        let view = response.data.objects[0]
-        this.currentQueryString = view.query_string
-        this.currentQueryFilter = JSON.parse(view.query_filter)
-        if (!this.currentQueryFilter.fields || !this.currentQueryFilter.fields.length) {
-          this.currentQueryFilter.fields = [{ field: 'message', type: 'text' }]
-        }
-        this.selectedFields = this.currentQueryFilter.fields
-        if (this.currentQueryFilter.indices[0] === '_all' || this.currentQueryFilter.indices === '_all') {
-          let allIndices = []
-          this.sketch.active_timelines.forEach((timeline) => {
-            let isLegacy = this.meta.indices_metadata[timeline.searchindex.index_name].is_legacy
-            if (isLegacy) {
-              allIndices.push(timeline.searchindex.index_name)
-            } else {
-              allIndices.push(timeline.id)
-            }
-          })
-          this.currentQueryFilter.indices = allIndices
-        }
-        let chips = this.currentQueryFilter.chips
-        if (chips) {
-          for (let i = 0; i < chips.length; i++) {
-            if (chips[i].type === 'label') {
-              this.selectedLabels.push(chips[i].value)
+      ApiClient.getView(this.sketchId, viewId)
+        .then(response => {
+          let view = response.data.objects[0]
+          this.currentQueryString = view.query_string
+          this.currentQueryFilter = JSON.parse(view.query_filter)
+          if (!this.currentQueryFilter.fields || !this.currentQueryFilter.fields.length) {
+            this.currentQueryFilter.fields = [{ field: 'message', type: 'text' }]
+          }
+          this.selectedFields = this.currentQueryFilter.fields
+          if (this.currentQueryFilter.indices[0] === '_all' || this.currentQueryFilter.indices === '_all') {
+            let allIndices = []
+            this.sketch.active_timelines.forEach(timeline => {
+              let isLegacy = this.meta.indices_metadata[timeline.searchindex.index_name].is_legacy
+              if (isLegacy) {
+                allIndices.push(timeline.searchindex.index_name)
+              } else {
+                allIndices.push(timeline.id)
+              }
+            })
+            this.currentQueryFilter.indices = allIndices
+          }
+          let chips = this.currentQueryFilter.chips
+          if (chips) {
+            for (let i = 0; i < chips.length; i++) {
+              if (chips[i].type === 'label') {
+                this.selectedLabels.push(chips[i].value)
+              }
             }
           }
-        }
-        this.contextEvent = false
-        this.search(false)
-      }).catch((e) => {})
+          this.contextEvent = false
+          this.search(false)
+        })
+        .catch(e => {})
     },
-    searchContext: function (event) {
+    searchContext: function(event) {
       // TODO: Make this selectable in the UI
       const contextTime = 300
       const numContextEvents = 500
@@ -616,26 +769,32 @@ export default {
       if (!this.originalContext) {
         let currentQueryStringCopy = JSON.parse(JSON.stringify(this.currentQueryString))
         let currentQueryFilterCopy = JSON.parse(JSON.stringify(this.currentQueryFilter))
-        this.originalContext = { 'queryString': currentQueryStringCopy, 'queryFilter': currentQueryFilterCopy }
+        this.originalContext = { queryString: currentQueryStringCopy, queryFilter: currentQueryFilterCopy }
       }
 
       const dateTimeTemplate = 'YYYY-MM-DDTHH:mm:ss'
       let startDateTimeMoment = this.$moment.utc(this.contextEvent._source.datetime)
-      let newStartDate = startDateTimeMoment.clone().subtract(contextTime, 's').format(dateTimeTemplate)
-      let newEndDate = startDateTimeMoment.clone().add(contextTime, 's').format(dateTimeTemplate)
+      let newStartDate = startDateTimeMoment
+        .clone()
+        .subtract(contextTime, 's')
+        .format(dateTimeTemplate)
+      let newEndDate = startDateTimeMoment
+        .clone()
+        .add(contextTime, 's')
+        .format(dateTimeTemplate)
       let startChip = {
-        'field': '',
-        'value': newStartDate + ',' + startDateTimeMoment.format(dateTimeTemplate),
-        'type': 'datetime_range',
-        'operator': 'must',
-        'active': true
+        field: '',
+        value: newStartDate + ',' + startDateTimeMoment.format(dateTimeTemplate),
+        type: 'datetime_range',
+        operator: 'must',
+        active: true,
       }
       let endChip = {
-        'field': '',
-        'value': startDateTimeMoment.format(dateTimeTemplate) + ',' + newEndDate,
-        'type': 'datetime_range',
-        'operator': 'must',
-        'active': true
+        field: '',
+        value: startDateTimeMoment.format(dateTimeTemplate) + ',' + newEndDate,
+        type: 'datetime_range',
+        operator: 'must',
+        active: true,
       }
       // TODO: Use chips instead
       this.currentQueryString = '* OR ' + '_id:' + this.contextEvent._id
@@ -652,16 +811,16 @@ export default {
 
       this.search()
     },
-    removeContext: function () {
+    removeContext: function() {
       this.contextEvent = false
       this.currentQueryString = JSON.parse(JSON.stringify(this.originalContext.queryString))
       this.currentQueryFilter = JSON.parse(JSON.stringify(this.originalContext.queryFilter))
       this.search()
     },
-    scrollToContextEvent: function () {
+    scrollToContextEvent: function() {
       this.$scrollTo('#' + this.contextEvent._id, 200, { offset: -300 })
     },
-    updateSelectedTimelines: function (timelines) {
+    updateSelectedTimelines: function(timelines) {
       let selected = []
       timelines.forEach(timeline => {
         let isLegacy = this.meta.indices_metadata[timeline.searchindex.index_name].is_legacy
@@ -674,14 +833,14 @@ export default {
       this.currentQueryFilter.indices = selected
       this.search()
     },
-    clearSearch: function () {
+    clearSearch: function() {
       this.currentQueryString = ''
       this.currentQueryFilter = defaultQueryFilter()
       this.currentQueryFilter.indices = '_all'
       this.eventList = emptyEventList()
-      this.$router.replace({ 'query': null })
+      this.$router.replace({ query: null })
     },
-    toggleChip: function (chip) {
+    toggleChip: function(chip) {
       // Treat undefined as active to support old chip formats.
       if (chip.active === undefined) {
         chip.active = true
@@ -689,7 +848,7 @@ export default {
       chip.active = !chip.active
       this.search()
     },
-    removeChip: function (chip) {
+    removeChip: function(chip) {
       let chipIndex = this.currentQueryFilter.chips.findIndex(c => c.value === chip.value)
       this.currentQueryFilter.chips.splice(chipIndex, 1)
       if (chip.type === 'label') {
@@ -697,13 +856,13 @@ export default {
       }
       this.search()
     },
-    updateChip: function (newChip, oldChip) {
+    updateChip: function(newChip, oldChip) {
       // Replace the chip at the given index
       let chipIndex = this.currentQueryFilter.chips.findIndex(c => c.value === oldChip.value && c.type === oldChip.type)
       this.currentQueryFilter.chips.splice(chipIndex, 1, newChip)
       this.search()
     },
-    addChip: function (chip) {
+    addChip: function(chip) {
       // Legacy views don't support chips so we need to add an array in order
       // to upgrade the view to the new filter system.
       if (!this.currentQueryFilter.chips) {
@@ -712,13 +871,13 @@ export default {
       this.currentQueryFilter.chips.push(chip)
       this.search()
     },
-    toggleLabelChip: function (labelName) {
+    toggleLabelChip: function(labelName) {
       let chip = {
-        'field': '',
-        'value': labelName,
-        'type': 'label',
-        'operator': 'must',
-        'active': true
+        field: '',
+        value: labelName,
+        type: 'label',
+        operator: 'must',
+        active: true,
       }
       let chips = this.currentQueryFilter.chips
       if (chips) {
@@ -731,46 +890,47 @@ export default {
       }
       this.addChip(chip)
     },
-    updateLabelChips: function () {
+    updateLabelChips: function() {
       // Remove all current label chips
       this.currentQueryFilter.chips = this.currentQueryFilter.chips.filter(chip => chip.type !== 'label')
-      this.selectedLabels.forEach((label) => {
+      this.selectedLabels.forEach(label => {
         let chip = {
-          'field': '',
-          'value': label,
-          'type': 'label',
-          'operator': 'must',
-          'active': true
+          field: '',
+          value: label,
+          type: 'label',
+          operator: 'must',
+          active: true,
         }
         this.addChip(chip)
+        this.showSearchDropdown = false
       })
     },
-    updateLabelList: function (label) {
+    updateLabelList: function(label) {
       if (this.meta.filter_labels.indexOf(label) === -1) {
         this.meta.filter_labels.push(label)
       }
     },
-    paginate: function (pageNum) {
-      this.currentQueryFilter.from = ((pageNum * this.currentQueryFilter.size) - this.currentQueryFilter.size)
+    paginate: function(pageNum) {
+      this.currentQueryFilter.from = pageNum * this.currentQueryFilter.size - this.currentQueryFilter.size
       this.search(true, false, true)
     },
-    updateSelectedFields: function (value) {
+    updateSelectedFields: function(value) {
       // If we haven't fetched the field before, do an new search.
-      value.forEach((field) => {
+      value.forEach(field => {
         if (!this.selectedFields.filter(e => e.field === field.field).length > 0) {
           this.search(true, true, true)
         }
       })
-      value.forEach((field) => {
+      value.forEach(field => {
         this.selectedFields.push(field)
       })
       // Prevents tags from being displayed
       this.selectedFieldsProxy = []
     },
-    removeField: function (index) {
+    removeField: function(index) {
       this.selectedFields.splice(index, 1)
     },
-    updateSelectedEvents: function (event) {
+    updateSelectedEvents: function(event) {
       let key = event._index + ':' + event._id
       if (event.isSelected) {
         this.$set(this.selectedEvents, key, event)
@@ -778,17 +938,18 @@ export default {
         this.$delete(this.selectedEvents, key)
       }
     },
-    toggleStar: function () {
+    toggleStar: function() {
       let eventsToToggle = []
       Object.keys(this.selectedEvents).forEach((key, index) => {
         eventsToToggle.push(this.selectedEvents[key])
       })
-      ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', eventsToToggle).then((response) => {
-      }).catch((e) => {})
+      ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', eventsToToggle)
+        .then(response => {})
+        .catch(e => {})
 
       EventBus.$emit('toggleStar', this.selectedEvents)
     },
-    changeSortOrder: function () {
+    changeSortOrder: function() {
       if (this.currentQueryFilter.order === 'asc') {
         this.currentQueryFilter.order = 'desc'
       } else {
@@ -796,15 +957,15 @@ export default {
       }
       this.search(true, true, true)
     },
-    loadingOpen: function () {
+    loadingOpen: function() {
       this.loadingComponent = this.$buefy.loading.open({
-        container: this.isFullPage ? null : this.$refs.element.$el
+        container: this.isFullPage ? null : this.$refs.element.$el,
       })
     },
-    loadingClose: function () {
+    loadingClose: function() {
       this.loadingComponent.close()
     },
-    jumpInHistory: function (node) {
+    jumpInHistory: function(node) {
       this.currentQueryString = node.query_string
       this.currentQueryFilter = JSON.parse(node.query_filter)
       if (!this.currentQueryFilter.fields || !this.currentQueryFilter.fields.length) {
@@ -813,7 +974,7 @@ export default {
       this.selectedFields = this.currentQueryFilter.fields
       if (this.currentQueryFilter.indices[0] === '_all' || this.currentQueryFilter.indices === '_all') {
         let allIndices = []
-        this.sketch.active_timelines.forEach((timeline) => {
+        this.sketch.active_timelines.forEach(timeline => {
           let isLegacy = this.meta.indices_metadata[timeline.searchindex.index_name].is_legacy
           if (isLegacy) {
             allIndices.push(timeline.searchindex.index_name)
@@ -834,10 +995,10 @@ export default {
       this.contextEvent = false
       this.search(false, true, true, node.id)
     },
-    triggerScrollTo: function () {
+    triggerScrollTo: function() {
       EventBus.$emit('triggerScrollTo')
     },
-    zoomWithMouse: function (event) {
+    zoomWithMouse: function(event) {
       // Add @wheel="zoomWithMouse" on element to activate.
       this.zoomOrigin.x = event.pageX
       this.zoomOrigin.y = event.pageY
@@ -846,31 +1007,40 @@ export default {
       } else if (event.deltaY > 0) {
         this.zoomLevel -= 0.07
       }
-    }
+    },
+    closeSearchDropdown: function(targetElement) {
+      // Prevent dropdown to close when the search input field is clicked.
+      if (targetElement !== this.$refs.searchInput && targetElement.getAttribute('data-explore-element') === null) {
+        this.showSearchDropdown = false
+      }
+    },
   },
 
   watch: {
-    numEvents: function (newVal) {
+    numEvents: function(newVal) {
       this.currentQueryFilter.size = newVal
       this.search(false, true, true)
-    }
+    },
   },
-  mounted () {
-    EventBus.$on('eventSelected', (eventData) => {
+  mounted() {
+    this.$refs.searchInput.focus()
+    this.showSearchDropdown = true
+
+    EventBus.$on('eventSelected', eventData => {
       this.updateSelectedEvents(eventData)
     })
     EventBus.$on('clearSelectedEvents', () => {
       this.selectedEvents = {}
     })
   },
-  created: function () {
+  created: function() {
     let doSearch = false
 
     this.params = {
       viewId: this.$route.query.view,
       indexName: this.$route.query.timeline,
       resultLimit: this.$route.query.limit,
-      queryString: this.$route.query.q
+      queryString: this.$route.query.q,
     }
 
     if (this.params.viewId) {
@@ -888,7 +1058,7 @@ export default {
         this.currentQueryString = '*'
       }
 
-      let timeline = this.sketch.active_timelines.find((timeline) => {
+      let timeline = this.sketch.active_timelines.find(timeline => {
         return timeline.id === parseInt(this.params.indexName, 10)
       })
 
@@ -913,13 +1083,13 @@ export default {
       }
       this.search()
     }
-  }
+  },
 }
 </script>
 
 <style lang="scss">
 .dropdown-menu {
-  box-shadow: 0 30px 30px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+  box-shadow: 0 30px 30px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.23);
 }
 
 .multiselect,
@@ -930,7 +1100,7 @@ export default {
 
 .multiselect__option--highlight {
   background: #f5f5f5;
-  color:#333;
+  color: #333;
 }
 
 .multiselect__option--highlight:after {
@@ -969,5 +1139,4 @@ export default {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
-
 </style>
