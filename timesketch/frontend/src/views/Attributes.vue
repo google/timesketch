@@ -70,11 +70,15 @@ export default {
       return this.$store.state.meta
     },
     sketchAttributes () {
-      return this.$store.state.meta.attributes.map(item => ({
-        name: item[0],
-        value: item[1],
-        ontology: item[2]
-      }))
+      let attributes = []
+      for (let item in this.$store.state.meta.attributes) {
+        attributes.push({
+          name: item,
+          ontology: this.$store.state.meta.attributes[item].ontology,
+          value: this.$store.state.meta.attributes[item].value
+        })
+      }
+      return attributes
     }
   }
 }
