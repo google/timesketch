@@ -101,6 +101,18 @@ export default {
     }
     return RestApiBlobClient.post('/sketches/' + sketchId + '/archive/', formData)
   },
+  getSketchAttributes (sketchId) {
+    return RestApiClient.get('/sketches/' + sketchId + '/attribute/')
+  },
+  addSketchAttribute (sketchId, name, value, ontology) {
+    let attribute = {
+      name: name,
+      values: [value],
+      ontology: ontology,
+      action: 'post'
+    }
+    return RestApiClient.post('/sketches/' + sketchId + '/attribute/', attribute)
+  },
   getSketchTimeline (sketchId, timelineId) {
     return RestApiClient.get('/sketches/' + sketchId + '/timelines/' + timelineId + '/')
   },
