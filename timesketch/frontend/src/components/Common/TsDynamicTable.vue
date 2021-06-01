@@ -18,13 +18,11 @@ limitations under the License.
     <section class="section">
       <div class="container is-fluid">
         <div class="card" style="min-height:160px;">
-
           <header class="card-header">
             <p class="card-header-title">{{ section.label }}</p>
           </header>
 
           <div class="card-content">
-
             <b-table :data="data">
               <b-table-column
                 v-for="column in section.columns"
@@ -35,23 +33,17 @@ limitations under the License.
                 :numeric="typeof data[0][column.field] === 'number' ? true : false"
                 sortable
               >
-
                 <!-- column is an object -->
-                <pre v-if="typeof props.row[column.field] === 'object'">{{
-                  props.row[column.field]
-                }}</pre>
+                <pre v-if="typeof props.row[column.field] === 'object'">{{ props.row[column.field] }}</pre>
 
                 <!-- deal with all other cases -->
                 <span v-else>{{ props.row[column.field] }}</span>
               </b-table-column>
             </b-table>
-
           </div>
-
         </div>
       </div>
     </section>
-
   </div>
 </template>
 
@@ -61,13 +53,12 @@ export default {
   components: {},
   props: ['section', 'data'],
   computed: {
-    sketch () {
+    sketch() {
       return this.$store.state.sketch
     },
-    meta () {
+    meta() {
       return this.$store.state.meta
-    }
-  }
+    },
+  },
 }
-
 </script>

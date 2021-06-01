@@ -21,18 +21,15 @@ limitations under the License.
       </template>
     </ts-navbar-main>
 
-    <ts-navbar-secondary
-      currentAppContext="sketch"
-      currentPage="intelligence"
-    ></ts-navbar-secondary>
+    <ts-navbar-secondary currentAppContext="sketch" currentPage="intelligence"></ts-navbar-secondary>
 
     <ts-dynamic-table
-     v-for="section in intelligence.meta.sections"
-     v-bind:key="section.key"
-     :section="section"
-     :data="intelligence.data[section.key]">
+      v-for="section in intelligence.meta.sections"
+      v-bind:key="section.key"
+      :section="section"
+      :data="intelligence.data[section.key]"
+    >
     </ts-dynamic-table>
-
   </div>
 </template>
 
@@ -41,18 +38,18 @@ import TsDynamicTable from '../components/Common/TsDynamicTable'
 
 export default {
   components: {
-    TsDynamicTable
+    TsDynamicTable,
   },
   computed: {
-    sketch () {
+    sketch() {
       return this.$store.state.sketch
     },
-    meta () {
+    meta() {
       return this.$store.state.meta
     },
-    intelligence () {
+    intelligence() {
       return this.meta.attributes.intelligence.value
-    }
-  }
+    },
+  },
 }
 </script>
