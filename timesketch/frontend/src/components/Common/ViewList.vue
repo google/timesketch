@@ -17,14 +17,13 @@ limitations under the License.
   <div>
     <ul class="content-list">
       <li style="padding:10px;border-bottom:none;" v-for="(view, index) in views" :key="view.id">
-        <router-link :to="{ name: 'Explore', query: {view: view.id}}">{{ view.name }}</router-link>
-        <br>
+        <router-link :to="{ name: 'Explore', query: { view: view.id } }">{{ view.name }}</router-link>
+        <br />
         <span v-if="!controls" class="is-size-7">
-          Created {{ view.created_at | moment("YYYY-MM-DD HH:mm") }} <span v-if="view.user"> by {{ view.user }}</span> <span v-if="view.description"> ({{ view.description }})</span>
+          Created {{ view.created_at | moment('YYYY-MM-DD HH:mm') }} <span v-if="view.user"> by {{ view.user }}</span>
+          <span v-if="view.description"> ({{ view.description }})</span>
         </span>
-        <span v-if="controls" class="is-size-7">
-          <b>Query:</b> {{ view.query }}
-        </span>
+        <span v-if="controls" class="is-size-7"> <b>Query:</b> {{ view.query }} </span>
         <div v-if="controls" class="field is-grouped is-pulled-right" style="margin-top: -15px;">
           <p class="control">
             <button v-on:click="remove(view, index)" class="button is-small is-rounded is-danger">
@@ -47,22 +46,22 @@ import ApiClient from '../../utils/RestApiClient'
 export default {
   props: ['views', 'controls'],
   computed: {
-    sketch () {
+    sketch() {
       return this.$store.state.sketch
     },
-    meta () {
+    meta() {
       return this.$store.state.meta
-    }
+    },
   },
   methods: {
-    remove (view, index) {
+    remove(view, index) {
       Vue.delete(this.views, index)
-      ApiClient.deleteView(this.sketch.id, view.id).then((response) => {
-      }).catch((e) => {
-        console.error(e)
-      })
-    }
-  }
-
+      ApiClient.deleteView(this.sketch.id, view.id)
+        .then(response => {})
+        .catch(e => {
+          console.error(e)
+        })
+    },
+  },
 }
 </script>

@@ -15,7 +15,7 @@ limitations under the License.
 */
 export default {
   name: 'compactBytes',
-  filter: function (input) {
+  filter: function(input) {
     // Based on https://gist.github.com/james2doyle/4aba55c22f084800c199
     if (!input) {
       input = 0
@@ -24,5 +24,5 @@ export default {
     let exponent = Math.min(Math.floor(Math.log(input) / Math.log(1000)), units.length - 1)
     let num = (input / Math.pow(1000, exponent)).toFixed(2) * 1
     return num + units[exponent]
-  }
+  },
 }

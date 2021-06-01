@@ -15,7 +15,7 @@ limitations under the License.
 -->
 <template>
   <b-dropdown ref="dropdown" animation="none" aria-role="menu" :position="position">
-    <a class="button" v-bind:class="{ 'is-rounded': isRounded}" slot="trigger">
+    <a class="button" v-bind:class="{ 'is-rounded': isRounded }" slot="trigger">
       <span>+ Aggregation</span>
       <b-icon :icon="active ? 'chevron-up' : 'chevron-down'" style="font-size: 0.6em;"></b-icon>
     </a>
@@ -33,21 +33,21 @@ limitations under the License.
 <script>
 export default {
   props: ['isRounded', 'aggregations', 'isLast'],
-  data () {
+  data() {
     return {
-      position: 'is-bottom-right'
+      position: 'is-bottom-right',
     }
   },
   methods: {
-    setActiveAggregation: function (aggregation) {
+    setActiveAggregation: function(aggregation) {
       this.$emit('addAggregation', aggregation)
-    }
+    },
   },
-  created: function () {
+  created: function() {
     if (this.isLast) {
       this.position = 'is-top-right'
     }
-  }
+  },
 }
 </script>
 

@@ -15,7 +15,6 @@ limitations under the License.
 -->
 <template>
   <div>
-
     <b-modal :active.sync="showSaveModal" :width="640" scroll="keep">
       <div class="card">
         <header class="card-header">
@@ -27,12 +26,19 @@ limitations under the License.
               <div class="field">
                 <label class="label">Name</label>
                 <div class="control">
-                  <input v-model="aggregationName" class="input" type="text" required placeholder="Name your aggregation" autofocus>
+                  <input
+                    v-model="aggregationName"
+                    class="input"
+                    type="text"
+                    required
+                    placeholder="Name your aggregation"
+                    autofocus
+                  />
                 </div>
               </div>
               <div class="field">
                 <div class="control">
-                  <input class="button is-success" type="submit" value="Save">
+                  <input class="button is-success" type="submit" value="Save" />
                 </div>
               </div>
             </form>
@@ -53,10 +59,18 @@ limitations under the License.
           <div class="card-content">
             <label class="label">Select timelines (optional)</label>
             <ts-timeline-list-dropdown @selectedTimelines="selectedTimelines = $event"></ts-timeline-list-dropdown>
-            <br>
-            <ts-sketch-explore-aggregator-list-dropdown @setActiveAggregator="updateAggregatorFormFields"></ts-sketch-explore-aggregator-list-dropdown>
-            <br>
-            <ts-dynamic-form :schema="schema" v-model="formData" @formSubmitted="getVegaSpec" :key="selectedAggregator.name" ref="vegaChart"></ts-dynamic-form>
+            <br />
+            <ts-sketch-explore-aggregator-list-dropdown
+              @setActiveAggregator="updateAggregatorFormFields"
+            ></ts-sketch-explore-aggregator-list-dropdown>
+            <br />
+            <ts-dynamic-form
+              :schema="schema"
+              v-model="formData"
+              @formSubmitted="getVegaSpec"
+              :key="selectedAggregator.name"
+              ref="vegaChart"
+            ></ts-dynamic-form>
           </div>
         </div>
       </div>
@@ -70,12 +84,12 @@ limitations under the License.
               {{ selectedAggregator.display_name }}
             </span>
             <span class="card-header-icon">
-            <a class="button is-rounded is-small" v-on:click="showSaveModal =! showSaveModal">
-              <span class="icon is-small">
-                <i class="fas fa-save"></i>
-              </span>
-              <span>Save</span>
-            </a>
+              <a class="button is-rounded is-small" v-on:click="showSaveModal = !showSaveModal">
+                <span class="icon is-small">
+                  <i class="fas fa-save"></i>
+                </span>
+                <span>Save</span>
+              </a>
             </span>
           </header>
           <div class="card-content">
@@ -102,9 +116,9 @@ export default {
     TsVegaLiteChart,
     TsSketchExploreAggregatorListDropdown,
     TsTableChart,
-    TsTimelineListDropdown
+    TsTimelineListDropdown,
   },
-  data () {
+  data() {
     return {
       schema: {},
       formData: {},
@@ -115,50 +129,54 @@ export default {
       aggregationName: '',
       chartType: '',
       chartData: {},
-      selectedTimelines: []
+      selectedTimelines: [],
     }
   },
   computed: {
-    sketch () {
+    sketch() {
       return this.$store.state.sketch
-    }
+    },
   },
   methods: {
-    updateAggregatorFormFields: function (aggregator) {
+    updateAggregatorFormFields: function(aggregator) {
       this.showChart = false
       let data = {}
       this.schema = aggregator.form_fields
-      this.schema.forEach(function (field) {
+      this.schema.forEach(function(field) {
         data[field.name] = field.default_value
       })
       this.formData = data
       this.selectedAggregator = aggregator
     },
-    getVegaSpec: function () {
+    getVegaSpec: function() {
       this.showChart = true
       this.formData['index'] = this.selectedTimelines
       let d = {
-        'aggregator_name': this.selectedAggregator.name,
-        'aggregator_parameters': this.formData
+        aggregator_name: this.selectedAggregator.name,
+        aggregator_parameters: this.formData,
       }
-      ApiClient.runAggregator(this.sketch.id, d).then((response) => {
-        let spec = response.data.meta.vega_spec
-        spec.config.view.width = this.$refs.vegaChart.$el.offsetWidth
-        spec.config.autosize = { type: 'fit', contains: 'padding' }
-        this.vegaSpec = JSON.stringify(spec)
-        this.chartType = response.data.meta.chart_type
-        // Get the first key of the object.
-        this.chartData = spec.datasets[Object.keys(spec.datasets)[0]]
-      }).catch((e) => {})
+      ApiClient.runAggregator(this.sketch.id, d)
+        .then(response => {
+          let spec = response.data.meta.vega_spec
+          spec.config.view.width = this.$refs.vegaChart.$el.offsetWidth
+          spec.config.autosize = { type: 'fit', contains: 'padding' }
+          this.vegaSpec = JSON.stringify(spec)
+          this.chartType = response.data.meta.chart_type
+          // Get the first key of the object.
+          this.chartData = spec.datasets[Object.keys(spec.datasets)[0]]
+        })
+        .catch(e => {})
     },
-    save: function () {
+    save: function() {
       this.showSaveModal = false
-      ApiClient.saveAggregation(this.sketch.id, this.selectedAggregator, this.aggregationName, this.formData).then((response) => {
-        let aggregation = response.data.objects[0]
-        this.$emit('newAggregation', aggregation)
-        this.aggregationName = ''
-      }).catch((e) => {})
-    }
-  }
+      ApiClient.saveAggregation(this.sketch.id, this.selectedAggregator, this.aggregationName, this.formData)
+        .then(response => {
+          let aggregation = response.data.objects[0]
+          this.$emit('newAggregation', aggregation)
+          this.aggregationName = ''
+        })
+        .catch(e => {})
+    },
+  },
 }
 </script>

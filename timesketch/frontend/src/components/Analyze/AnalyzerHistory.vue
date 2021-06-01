@@ -38,9 +38,10 @@ limitations under the License.
         icon-pack="fas"
         icon-prev="chevron-left"
         icon-next="chevron-right"
-        default-sort="created_at">
+        default-sort="created_at"
+      >
         <b-table-column field="created_at" label="Date" width="150" sortable custom-sort="dateSort" v-slot="props">
-          {{ new Date(props.row.created_at) | moment("YYYY-MM-DD HH:mm") }}
+          {{ new Date(props.row.created_at) | moment('YYYY-MM-DD HH:mm') }}
         </b-table-column>
 
         <b-table-column field="name" label="Analyzer" v-slot="props">
@@ -57,7 +58,6 @@ limitations under the License.
       </b-table>
 
       <span v-if="!analyses">No analysis available.</span>
-
     </div>
   </div>
 </template>
@@ -67,27 +67,29 @@ import ApiClient from '../../utils/RestApiClient'
 
 export default {
   props: ['timeline'],
-  data () {
+  data() {
     return {
       analyses: [],
       currentPage: 1,
-      perPage: 5
+      perPage: 5,
     }
   },
   computed: {
-    sketch () {
+    sketch() {
       return this.$store.state.sketch
-    }
+    },
   },
   methods: {
-    dateSort (a, b, key) {
+    dateSort(a, b, key) {
       return a[key] - b[key]
-    }
+    },
   },
-  created () {
-    ApiClient.getSketchTimelineAnalysis(this.sketch.id, this.timeline.id).then((response) => {
-      this.analyses = response.data.objects[0]
-    }).catch((e) => {})
-  }
+  created() {
+    ApiClient.getSketchTimelineAnalysis(this.sketch.id, this.timeline.id)
+      .then(response => {
+        this.analyses = response.data.objects[0]
+      })
+      .catch(e => {})
+  },
 }
 </script>

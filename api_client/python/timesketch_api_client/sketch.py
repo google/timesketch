@@ -84,12 +84,7 @@ class Sketch(resource.BaseResource):
         """Property that returns the sketch attributes."""
         data = self.lazyload_data(refresh_cache=True)
         meta = data.get('meta', {})
-        return_dict = {}
-        for items in meta.get('attributes', []):
-            name, values, ontology = items
-            return_dict[name] = (values, ontology)
-
-        return return_dict
+        return meta.get('attributes', {})
 
     @property
     def attributes_table(self):
@@ -230,11 +225,12 @@ class Sketch(resource.BaseResource):
         return status_list[0].get('status', 'Unknown')
 
     def add_attribute_list(self, name, values, ontology='text'):
-        """Add an attribute to the sketch.
+        """Adds or modifies attributes to the sketch.
 
         Args:
             name (str): The name of the attribute.
-            values (list): A list of string values of the attribute.
+            values (list): A list of values (in their correct type according
+                to the ontology).
             ontology (str): The ontology (matches with
                 /etc/ontology.yaml), which defines how the attribute
                 is interpreted.
@@ -243,15 +239,10 @@ class Sketch(resource.BaseResource):
             ValueError: If any of the parameters are of the wrong type.
 
         Returns:
-            Boolean value whether the attribute was successfully
-            added or not.
+            A dict with the results from the operation.
         """
         if not isinstance(name, str):
             raise ValueError('Name needs to be a string.')
-
-        if not isinstance(values, (list, tuple)):
-            if any(not isinstance(x, str) for x in values):
-                raise ValueError('All values need to be a string.')
 
         if not isinstance(ontology, str):
             raise ValueError('Ontology needs to be a string.')
@@ -263,7 +254,6 @@ class Sketch(resource.BaseResource):
             'name': name,
             'values': values,
             'ontology': ontology,
-            'action': 'post',
         }
         response = self.api.session.post(resource_url, json=data)
 
@@ -271,10 +261,10 @@ class Sketch(resource.BaseResource):
         if not status:
             logger.error('Unable to add the attribute to the sketch.')
 
-        return status
+        return error.get_response_json(response, logger)
 
     def add_attribute(self, name, value, ontology='text'):
-        """Add an attribute to the sketch.
+        """Adds or modifies an attribute to the sketch.
 
         Args:
             name (str): The name of the attribute.
@@ -287,8 +277,7 @@ class Sketch(resource.BaseResource):
             ValueError: If any of the parameters are of the wrong type.
 
         Returns:
-            Boolean value whether the attribute was successfully
-            added or not.
+            A dict with the results from the operation.
         """
         if not isinstance(name, str):
             raise ValueError('Name needs to be a string.')
@@ -327,11 +316,14 @@ class Sketch(resource.BaseResource):
 
         return status
 
-    def remove_attribute(self, name):
+    def remove_attribute(self, name, ontology):
         """Remove an attribute from the sketch.
 
         Args:
             name (str): The name of the attribute.
+            ontology (str): The ontology (matches with
+                /etc/ontology.yaml), which defines how the attribute
+                is interpreted.
 
         Raises:
             ValueError: If any of the parameters are of the wrong type.
@@ -348,10 +340,9 @@ class Sketch(resource.BaseResource):
 
         data = {
             'name': name,
-            'ontology': 'text',
-            'action': 'delete',
+            'ontology': ontology,
         }
-        response = self.api.session.post(resource_url, json=data)
+        response = self.api.session.delete(resource_url, json=data)
 
         status = error.check_return_status(response, logger)
         if not status:

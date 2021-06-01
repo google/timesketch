@@ -14,135 +14,207 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-<div>
+  <div>
     <section class="section">
       <div class="container is-fluid" style="height: 75vh;" ref="graphContainer">
-            <div class="card" style="height: 100%;">
-              <header class="card-header" style="border-bottom: 0;">
+        <div class="card" style="height: 100%;">
+          <header class="card-header" style="border-bottom: 0;">
+            <div v-if="currentGraph">
+              <b-dropdown aria-role="list" append-to-body>
+                <a
+                  class="button ts-search-dropdown"
+                  style="background-color: transparent;"
+                  slot="trigger"
+                  slot-scope="{ active }"
+                >
+                  <span class="icon is-small" style="margin-right: 10px; margin-top:2px; font-size: 0.6em;">
+                    <i class="fas fa-project-diagram"></i>
+                  </span>
+                  <div v-if="currentGraph" style="margin-right: 7px;">
+                    <strong>{{ currentGraph }}</strong>
+                  </div>
+                  <b-icon :icon="active ? 'chevron-up' : 'chevron-down'" style="font-size: 0.6em;"></b-icon>
+                </a>
 
-                <div v-if="currentGraph">
-                <b-dropdown aria-role="list" append-to-body>
-
-                  <a class="button ts-search-dropdown" style="background-color: transparent;" slot="trigger" slot-scope="{ active }">
-                    <span class="icon is-small" style="margin-right: 10px; margin-top:2px; font-size: 0.6em;">
-                      <i class="fas fa-project-diagram"></i>
-                    </span>
-                    <div v-if="currentGraph" style="margin-right: 7px;"><strong>{{ currentGraph }}</strong></div>
-                    <b-icon :icon="active ? 'chevron-up' : 'chevron-down'" style="font-size: 0.6em;"></b-icon>
-                  </a>
-
-                  <b-dropdown-item v-for="graphPlugin in graphs" :key="graphPlugin.name" v-on:click="buildGraph(graphPlugin)">
-                    <router-link :to="{ name: 'GraphExplore', query: {plugin: graphPlugin.name}}">{{ graphPlugin.display_name }}</router-link>
-                  </b-dropdown-item>
-                  <b-dropdown-item v-for="savedGraph in savedGraphs" :key="savedGraph.id" v-on:click="buildSavedGraph(savedGraph)">
-                    <router-link :to="{ name: 'GraphExplore', query: {graph: savedGraph.id}}">{{ savedGraph.name }}</router-link>
-                  </b-dropdown-item>
-                </b-dropdown>
-
-                </div>
-
-                <input class="ts-search-input" v-if="currentGraph" v-model="filterString" v-on:keyup="filterGraphByInput" style="border-radius: 0; padding:25px;" placeholder="Filter nodes and edges">
-
-                <span class="card-header-icon" v-if="currentGraph">
-                  <b-dropdown position="is-bottom-left" aria-role="menu" trap-focus append-to-body>
-                      <button class="button is-outlined is-rounded is-small" slot="trigger" :disabled="!currentGraph">
-                        <span class="icon is-small">
-                          <i class="fas fa-cog"></i>
-                        </span>
-                        <span>Settings</span>
-                      </button>
-                      <div class="modal-card" style="width:500px;color: var(--font-color-dark);">
-                        <section class="modal-card-body">
-                          <b-dropdown-item aria-role="menu-item" :focusable="false" custom>
-                            <b-field label="Transparency for unselected elements">
-                              <b-slider class="is-rounded" type="is-info" :custom-formatter="val => val + '%'" v-model="fadeOpacity" v-on:input="changeOpacity"></b-slider>
-                            </b-field>
-
-                            <b-field label="Layout type">
-                              <b-radio v-for="layout in layouts" :key="layout" v-model="layoutName" :native-value="layout" type="is-info" v-on:input="buildGraph({name: currentGraph})" :disabled="!hasGraphCache">
-                                <span>{{ layout }}</span>
-                              </b-radio>
-                            </b-field>
-
-                            <b-field label="Edge style">
-                              <b-radio v-for="edge in edgeStyles" :key="edge" v-model="edgeStyle" :native-value="edge" type="is-info" v-on:input="buildGraph({name: currentGraph})" :disabled="!hasGraphCache">
-                                <span>{{ edge }}</span>
-                              </b-radio>
-                            </b-field>
-                          </b-dropdown-item>
-                        </section>
-                      </div>
-                  </b-dropdown>
-
-                  <b-dropdown ref="saveDropdown" position="is-bottom-left" aria-role="menu" trap-focus append-to-body :disabled="!edgeQuery">
-                      <button class="button is-outlined is-rounded is-small" slot="trigger">
-                        <span class="icon is-small">
-                          <i class="fas fa-save"></i>
-                        </span>
-                        <span>Save selection</span>
-                      </button>
-                      <div class="modal-card" style="width:300px;color: var(--font-color-dark);">
-                        <section class="modal-card-body">
-                          <b-dropdown-item aria-role="menu-item" :focusable="false" custom>
-                            <strong>Save selected graph</strong>
-                            <div class="field">
-                              <label class="label">Name</label>
-                              <div class="control">
-                                <input v-model="saveAsName" class="input" type="text" placeholder="Graph name" required>
-                              </div>
-                            </div>
-                            <button class="button is-small" v-on:click="saveSelection">Save</button>
-                          </b-dropdown-item>
-                        </section>
-                      </div>
-                  </b-dropdown>
-
-                  <button class="button is-outlined is-rounded is-small" style="margin-left:7px;" v-on:click="buildGraph({name: currentGraph}, true)" :disabled="!hasGraphCache">
-                    <span class="icon is-small">
-                      <i class="fas fa-sync-alt"></i>
-                    </span>
-                    <span>Refresh cache</span>
-                  </button>
-
-                  <button class="button is-outlined is-rounded is-small" style="margin-left:7px;" v-on:click="cy.fit()">
-                    <span class="icon is-small">
-                      <i class="fas fa-eye"></i>
-                    </span>
-                    <span>Fit to canvas</span>
-                  </button>
-
-                </span>
-              </header>
-              <div class="card-content">
-                <b-loading :is-full-page="false" v-model="isLoading" :can-cancel="false">
-                  <div class="lds-ripple"><div></div><div></div></div>
-                  <div style="position: absolute; margin-top:120px;">Generating graph: <b>{{currentGraph}}</b></div>
-                </b-loading>
-                <div class="no-data" v-if="!elements.length && showGraph && currentGraph">Empty graph</div>
-                <cytoscape
-                  ref="cyRef"
-                  v-if="elements.length && showGraph"
-                  v-on:select="filterGraphBySelection($event)"
-                  v-on:unselect="unSelectAllElements($event)"
-                  v-on:tap="unSelectAllElements($event)"
-                  :config="config"
-                  :preConfig="preConfig"
-                  :afterCreated="afterCreated">
-                  <cy-element
-                    v-for="def in elements"
-                    :key="def.data.id"
-                    :definition="def">
-                  </cy-element>
-                </cytoscape>
-                <span v-if="hasGraphCache">
-                  <span><i>Generated {{ $moment.utc(currentGraphCache.updated_at).local().fromNow() }}</i></span>
-                  <a class="is-small" style="text-decoration: underline; margin-left:15px;" v-on:click="buildGraph({name: currentGraph}, true)">
-                    <span>Refresh</span>
-                  </a>
-                </span>
-              </div>
+                <b-dropdown-item
+                  v-for="graphPlugin in graphs"
+                  :key="graphPlugin.name"
+                  v-on:click="buildGraph(graphPlugin)"
+                >
+                  <router-link :to="{ name: 'GraphExplore', query: { plugin: graphPlugin.name } }">{{
+                    graphPlugin.display_name
+                  }}</router-link>
+                </b-dropdown-item>
+                <b-dropdown-item
+                  v-for="savedGraph in savedGraphs"
+                  :key="savedGraph.id"
+                  v-on:click="buildSavedGraph(savedGraph)"
+                >
+                  <router-link :to="{ name: 'GraphExplore', query: { graph: savedGraph.id } }">{{
+                    savedGraph.name
+                  }}</router-link>
+                </b-dropdown-item>
+              </b-dropdown>
             </div>
+
+            <input
+              class="ts-search-input"
+              v-if="currentGraph"
+              v-model="filterString"
+              v-on:keyup="filterGraphByInput"
+              style="border-radius: 0; padding:25px;"
+              placeholder="Filter nodes and edges"
+            />
+
+            <span class="card-header-icon" v-if="currentGraph">
+              <b-dropdown position="is-bottom-left" aria-role="menu" trap-focus append-to-body>
+                <button class="button is-outlined is-rounded is-small" slot="trigger" :disabled="!currentGraph">
+                  <span class="icon is-small">
+                    <i class="fas fa-cog"></i>
+                  </span>
+                  <span>Settings</span>
+                </button>
+                <div class="modal-card" style="width:500px;color: var(--font-color-dark);">
+                  <section class="modal-card-body">
+                    <b-dropdown-item aria-role="menu-item" :focusable="false" custom>
+                      <b-field label="Transparency for unselected elements">
+                        <b-slider
+                          class="is-rounded"
+                          type="is-info"
+                          :custom-formatter="val => val + '%'"
+                          v-model="fadeOpacity"
+                          v-on:input="changeOpacity"
+                        ></b-slider>
+                      </b-field>
+
+                      <b-field label="Layout type">
+                        <b-radio
+                          v-for="layout in layouts"
+                          :key="layout"
+                          v-model="layoutName"
+                          :native-value="layout"
+                          type="is-info"
+                          v-on:input="buildGraph({ name: currentGraph })"
+                          :disabled="!hasGraphCache"
+                        >
+                          <span>{{ layout }}</span>
+                        </b-radio>
+                      </b-field>
+
+                      <b-field label="Edge style">
+                        <b-radio
+                          v-for="edge in edgeStyles"
+                          :key="edge"
+                          v-model="edgeStyle"
+                          :native-value="edge"
+                          type="is-info"
+                          v-on:input="buildGraph({ name: currentGraph })"
+                          :disabled="!hasGraphCache"
+                        >
+                          <span>{{ edge }}</span>
+                        </b-radio>
+                      </b-field>
+                    </b-dropdown-item>
+                  </section>
+                </div>
+              </b-dropdown>
+
+              <b-dropdown
+                ref="saveDropdown"
+                position="is-bottom-left"
+                aria-role="menu"
+                trap-focus
+                append-to-body
+                :disabled="!edgeQuery"
+              >
+                <button class="button is-outlined is-rounded is-small" slot="trigger">
+                  <span class="icon is-small">
+                    <i class="fas fa-save"></i>
+                  </span>
+                  <span>Save selection</span>
+                </button>
+                <div class="modal-card" style="width:300px;color: var(--font-color-dark);">
+                  <section class="modal-card-body">
+                    <b-dropdown-item aria-role="menu-item" :focusable="false" custom>
+                      <strong>Save selected graph</strong>
+                      <div class="field">
+                        <label class="label">Name</label>
+                        <div class="control">
+                          <input v-model="saveAsName" class="input" type="text" placeholder="Graph name" required />
+                        </div>
+                      </div>
+                      <button class="button is-small" v-on:click="saveSelection">Save</button>
+                    </b-dropdown-item>
+                  </section>
+                </div>
+              </b-dropdown>
+
+              <button
+                class="button is-outlined is-rounded is-small"
+                style="margin-left:7px;"
+                v-on:click="buildGraph({ name: currentGraph }, true)"
+                :disabled="!hasGraphCache"
+              >
+                <span class="icon is-small">
+                  <i class="fas fa-sync-alt"></i>
+                </span>
+                <span>Refresh cache</span>
+              </button>
+
+              <button class="button is-outlined is-rounded is-small" style="margin-left:7px;" v-on:click="cy.fit()">
+                <span class="icon is-small">
+                  <i class="fas fa-eye"></i>
+                </span>
+                <span>Fit to canvas</span>
+              </button>
+            </span>
+          </header>
+          <div class="card-content">
+            <b-loading :is-full-page="false" v-model="isLoading" :can-cancel="false">
+              <div class="lds-ripple">
+                <div></div>
+                <div></div>
+              </div>
+              <div style="position: absolute; margin-top:120px;">
+                Generating graph: <b>{{ currentGraph }}</b>
+              </div>
+            </b-loading>
+            <div class="no-data" v-if="!elements.length && showGraph && currentGraph">Empty graph</div>
+            <cytoscape
+              ref="cyRef"
+              v-if="elements.length && showGraph"
+              v-on:select="filterGraphBySelection($event)"
+              v-on:unselect="unSelectAllElements($event)"
+              v-on:tap="unSelectAllElements($event)"
+              :config="config"
+              :preConfig="preConfig"
+              :afterCreated="afterCreated"
+            >
+              <cy-element v-for="def in elements" :key="def.data.id" :definition="def"> </cy-element>
+            </cytoscape>
+            <span v-if="hasGraphCache">
+              <span
+                ><i
+                  >Generated
+                  {{
+                    $moment
+                      .utc(currentGraphCache.updated_at)
+                      .local()
+                      .fromNow()
+                  }}</i
+                ></span
+              >
+              <a
+                class="is-small"
+                style="text-decoration: underline; margin-left:15px;"
+                v-on:click="buildGraph({ name: currentGraph }, true)"
+              >
+                <span>Refresh</span>
+              </a>
+            </span>
           </div>
+        </div>
+      </div>
     </section>
 
     <section class="section" v-if="edgeQuery">
@@ -158,7 +230,6 @@ limitations under the License.
       </div>
     </section>
   </div>
-
 </template>
 
 <script>
@@ -171,7 +242,7 @@ import _ from 'lodash'
 
 export default {
   components: { TsEventListCompact },
-  data () {
+  data() {
     return {
       showGraph: true,
       isLoading: false,
@@ -195,64 +266,64 @@ export default {
           {
             selector: 'node',
             style: {
-              'shape': 'roundrectangle',
-              'width': 'label',
-              'height': 'label',
+              shape: 'roundrectangle',
+              width: 'label',
+              height: 'label',
               'compound-sizing-wrt-labels': 'include',
               'text-halign': 'center',
               'text-valign': 'center',
-              'color': '#FFFFFF',
+              color: '#FFFFFF',
               'font-size': '10',
               'font-weight': 'bold',
               'text-outline-width': '0px',
-              'padding': '7px',
+              padding: '7px',
               'background-color': 'gray',
               'text-outline-color': 'gray',
               'text-wrap': 'wrap',
               'text-max-width': '12em',
-              'label': 'data(label)'
-            }
+              label: 'data(label)',
+            },
           },
           {
             selector: 'node:selected',
             style: {
               'overlay-color': 'black',
               'overlay-opacity': '0.3',
-              'overlay-padding': '7px'
-            }
+              'overlay-padding': '7px',
+            },
           },
           {
             selector: "node[type = 'user']",
             style: {
               'background-color': '#FF756E',
-              'text-outline-color': '#FF756E'
-            }
+              'text-outline-color': '#FF756E',
+            },
           },
           {
             selector: "node[type = 'computer']",
             style: {
               'background-color': '#6992f3',
-              'text-outline-color': '#ffffff'
-            }
+              'text-outline-color': '#ffffff',
+            },
           },
           {
             selector: "node[type = 'file']",
             style: {
               'background-color': '#82b578',
-              'text-outline-color': '#2b2b2b'
-            }
+              'text-outline-color': '#2b2b2b',
+            },
           },
           {
             selector: "node[type = 'winservice']",
             style: {
               'background-color': '#9d8f35',
-              'text-outline-color': '#2b2b2b'
-            }
+              'text-outline-color': '#2b2b2b',
+            },
           },
           {
             selector: 'edge',
             style: {
-              'width': 1,
+              width: 1,
               'curve-style': 'bezier',
               'control-point-step-size': 70,
               'target-arrow-shape': 'triangle',
@@ -260,31 +331,31 @@ export default {
               'text-rotation': 'autorotate',
               'text-outline-width': 3,
               'text-outline-color': '#FFFFFF',
-              'label': 'data(label)'
-            }
+              label: 'data(label)',
+            },
           },
           {
             selector: 'edge:selected',
             style: {
-              'width': 2,
+              width: 2,
               'line-color': '#333333',
               'source-arrow-color': '#333333',
-              'target-arrow-color': '#333333'
-            }
+              'target-arrow-color': '#333333',
+            },
           },
           {
             selector: '.faded',
             style: {
-              'opacity': 0.07,
-              'color': '#333333'
-            }
-          }
+              opacity: 0.07,
+              color: '#333333',
+            },
+          },
         ],
         layout: {
           name: '',
           animate: false,
           prelayout: false,
-          spacingFactor: 2
+          spacingFactor: 2,
         },
 
         // interaction options:
@@ -310,20 +381,20 @@ export default {
         textureOnViewport: false,
         motionBlur: false,
         motionBlurOpacity: 0.2,
-        pixelRatio: 'auto'
-      }
+        pixelRatio: 'auto',
+      },
     }
   },
   computed: {
-    sketch () {
+    sketch() {
       return this.$store.state.sketch
     },
-    hasGraphCache () {
+    hasGraphCache() {
       return Object.keys(this.currentGraphCache).length !== 0
-    }
+    },
   },
   methods: {
-    buildGraph: function (graphPlugin, refresh = false) {
+    buildGraph: function(graphPlugin, refresh = false) {
       this.config.layout.name = this.layoutName
 
       let edgeStyle = this.config.style.filter(selector => selector.selector === 'edge')
@@ -344,40 +415,42 @@ export default {
       }, 600)
       this.edgeQuery = ''
       let currentIndices = []
-      this.sketch.timelines.forEach((timeline) => {
+      this.sketch.timelines.forEach(timeline => {
         currentIndices.push(timeline.searchindex.index_name)
       })
-      ApiClient.generateGraphFromPlugin(this.sketch.id, this.currentGraph, currentIndices, refresh).then((response) => {
-        let graphCache = response.data['objects'][0]
-        let elementsCache = JSON.parse(graphCache.graph_elements)
-        let elements = []
-        let nodes
-        let edges
+      ApiClient.generateGraphFromPlugin(this.sketch.id, this.currentGraph, currentIndices, refresh)
+        .then(response => {
+          let graphCache = response.data['objects'][0]
+          let elementsCache = JSON.parse(graphCache.graph_elements)
+          let elements = []
+          let nodes
+          let edges
 
-        if ('elements' in elementsCache) {
-          nodes = elementsCache['elements']['nodes']
-          edges = elementsCache['elements']['edges']
-        } else {
-          nodes = elementsCache['nodes']
-          edges = elementsCache['edges']
-        }
-        nodes.forEach((node) => {
-          elements.push({ data: node.data, group: 'nodes' })
+          if ('elements' in elementsCache) {
+            nodes = elementsCache['elements']['nodes']
+            edges = elementsCache['elements']['edges']
+          } else {
+            nodes = elementsCache['nodes']
+            edges = elementsCache['edges']
+          }
+          nodes.forEach(node => {
+            elements.push({ data: node.data, group: 'nodes' })
+          })
+          edges.forEach(edge => {
+            elements.push({ data: edge.data, group: 'edges' })
+          })
+          delete graphCache.graph_elements
+          this.currentGraphCache = graphCache
+          this.elements = elements
+          clearTimeout(this.loadingTimeout)
+          this.showGraph = true
+          this.isLoading = false
         })
-        edges.forEach((edge) => {
-          elements.push({ data: edge.data, group: 'edges' })
+        .catch(e => {
+          console.error(e)
         })
-        delete graphCache.graph_elements
-        this.currentGraphCache = graphCache
-        this.elements = elements
-        clearTimeout(this.loadingTimeout)
-        this.showGraph = true
-        this.isLoading = false
-      }).catch((e) => {
-        console.error(e)
-      })
     },
-    buildSavedGraph: function (savedGraph) {
+    buildSavedGraph: function(savedGraph) {
       this.config.layout.name = 'preset'
       this.currentGraph = savedGraph.name
       this.currentGraphCache = {}
@@ -397,29 +470,31 @@ export default {
         graphId = savedGraph
       }
 
-      ApiClient.getSavedGraph(this.sketch.id, graphId).then((response) => {
-        this.currentGraph = response.data['objects'][0].name
-        let elements = JSON.parse(response.data['objects'][0].graph_elements)
-        let nodes = elements.filter(ele => ele.group === 'nodes')
-        let edges = elements.filter(ele => ele.group === 'edges')
-        let orderedElements = []
-        nodes.forEach((node) => {
-          node.selected = false
-          orderedElements.push(node)
+      ApiClient.getSavedGraph(this.sketch.id, graphId)
+        .then(response => {
+          this.currentGraph = response.data['objects'][0].name
+          let elements = JSON.parse(response.data['objects'][0].graph_elements)
+          let nodes = elements.filter(ele => ele.group === 'nodes')
+          let edges = elements.filter(ele => ele.group === 'edges')
+          let orderedElements = []
+          nodes.forEach(node => {
+            node.selected = false
+            orderedElements.push(node)
+          })
+          edges.forEach(edge => {
+            edge.selected = false
+            orderedElements.push(edge)
+          })
+          clearTimeout(this.loadingTimeout)
+          this.elements = orderedElements
+          this.showGraph = true
+          this.isLoading = false
         })
-        edges.forEach((edge) => {
-          edge.selected = false
-          orderedElements.push(edge)
+        .catch(e => {
+          console.error(e)
         })
-        clearTimeout(this.loadingTimeout)
-        this.elements = orderedElements
-        this.showGraph = true
-        this.isLoading = false
-      }).catch((e) => {
-        console.error(e)
-      })
     },
-    buildNeighborhood: function (selected) {
+    buildNeighborhood: function(selected) {
       // Build a new collection to use as the neighborhood
       let neighborhood = this.cy.collection()
 
@@ -430,7 +505,7 @@ export default {
 
       return neighborhood
     },
-    showNeighborhood: function (selected) {
+    showNeighborhood: function(selected) {
       let neighborhood = this.buildNeighborhood(selected)
 
       if (selected.length === 0) {
@@ -444,23 +519,20 @@ export default {
 
       // Build Elasticsearch query DSL to fetch edge events.
       let queryDsl = {
-        'query': {
-          'bool': {
-            'should': []
-          }
+        query: {
+          bool: {
+            should: [],
+          },
         },
-        'size': this.maxEvents
+        size: this.maxEvents,
       }
-      neighborhood.forEach((element) => {
+      neighborhood.forEach(element => {
         if (element.group() === 'edges') {
-          Object.keys(element.data().events).forEach((index) => {
+          Object.keys(element.data().events).forEach(index => {
             let boolMustQuery = {
-              'bool': {
-                'must': [
-                  { 'ids': { 'values': element.data().events[index] } },
-                  { 'term': { '_index': { 'value': index } } }
-                ]
-              }
+              bool: {
+                must: [{ ids: { values: element.data().events[index] } }, { term: { _index: { value: index } } }],
+              },
             }
             queryDsl.query.bool.should.push(boolMustQuery)
           })
@@ -468,7 +540,7 @@ export default {
       })
       this.edgeQuery = queryDsl
     },
-    saveSelection: function () {
+    saveSelection: function() {
       let selected = this.cy.filter(':selected')
       let neighborhood = this.buildNeighborhood(selected)
       let elements = neighborhood.jsons()
@@ -477,44 +549,48 @@ export default {
       this.elements = elements
       this.currentGraph = this.saveAsName
       this.showGraph = true
-      ApiClient.saveGraph(this.sketch.id, this.saveAsName, elements).then((response) => {
+      ApiClient.saveGraph(this.sketch.id, this.saveAsName, elements).then(response => {
         let savedGraph = response.data['objects'][0]
         this.savedGraphs.push(savedGraph)
       })
       this.saveAsName = ''
     },
-    filterGraphBySelection: function (event) {
+    filterGraphBySelection: function(event) {
       let selected = this.cy.filter(':selected')
       this.showNeighborhood(selected)
     },
-    filterGraphByInput: function () {
+    filterGraphByInput: function() {
       // Unselect all events to remove any potential left over
       this.cy.elements().unselect()
 
       // This is the collection of matched nodes/edges
-      let selected = this.cy.elements()
-        .filter(ele => ele.data('label')
+      let selected = this.cy.elements().filter(ele =>
+        ele
+          .data('label')
           .toLowerCase()
-          .includes(this.filterString))
+          .includes(this.filterString)
+      )
 
       // Build the neighborhood
       this.showNeighborhood(selected)
     },
-    unSelectAllElements: function (event) {
+    unSelectAllElements: function(event) {
       this.cy.elements().removeClass('faded')
       this.edgeQuery = null
     },
-    changeOpacity: function () {
+    changeOpacity: function() {
       if (!this.cy) {
         return
       }
-      this.cy.style()
+      this.cy
+        .style()
         .selector('.faded')
         .style({
-          'opacity': this.fadeOpacity / 100
-        }).update()
+          opacity: this.fadeOpacity / 100,
+        })
+        .update()
     },
-    resizeCanvas: function () {
+    resizeCanvas: function() {
       let canvasHeight = this.$refs.graphContainer.clientHeight - 100
       let canvasWidth = this.$refs.graphContainer.clientWidth - 100
       let canvas = document.getElementById('cytoscape-div')
@@ -524,13 +600,13 @@ export default {
       canvas.style.width = canvasWidth + 'px'
     },
     // vue-cytoscape life-cycle hook, runs before graph is created.
-    preConfig (cytoscape) {
+    preConfig(cytoscape) {
       cytoscape.use(spread)
       cytoscape.use(dagre)
       this.resizeCanvas()
     },
     // vue-cytoscape life-cycle hook, runs after graph is created.
-    async afterCreated (cy = null) {
+    async afterCreated(cy = null) {
       // Add Cytoscape "cy" objects to this component instance.
       if (cy !== null) {
         this.cy = cy
@@ -543,47 +619,58 @@ export default {
       // Run the layout to render the graph elements.
       cy.layout(this.config.layout).run()
     },
-    setTheme: function () {
+    setTheme: function() {
       this.isDarkTheme = localStorage.theme === 'dark'
       if (this.isDarkTheme) {
-        this.cy.style()
+        this.cy
+          .style()
           .selector('edge')
           .style({
-            'color': '#f5f5f5',
-            'text-outline-color': '#545454'
-          }).update()
+            color: '#f5f5f5',
+            'text-outline-color': '#545454',
+          })
+          .update()
       } else {
-        this.cy.style()
+        this.cy
+          .style()
           .selector('edge')
           .style({
-            'color': '#333333',
-            'text-outline-color': '#FFFFFF'
-          }).update()
+            color: '#333333',
+            'text-outline-color': '#FFFFFF',
+          })
+          .update()
       }
-    }
+    },
   },
-  created () {
-    window.addEventListener('resize', _.debounce(() => {
-      this.resizeCanvas()
-    }, 250))
-    ApiClient.getGraphPluginList().then((response) => {
-      this.graphs = response.data
-    }).catch((e) => {
-      console.error(e)
-    })
-    ApiClient.getSavedGraphList(this.sketch.id).then((response) => {
-      let graphs = response.data['objects'][0]
-      if (graphs !== undefined) {
-        this.savedGraphs = response.data['objects'][0]
-      }
-    }).catch((e) => {
-      console.error(e)
-    })
+  created() {
+    window.addEventListener(
+      'resize',
+      _.debounce(() => {
+        this.resizeCanvas()
+      }, 250)
+    )
+    ApiClient.getGraphPluginList()
+      .then(response => {
+        this.graphs = response.data
+      })
+      .catch(e => {
+        console.error(e)
+      })
+    ApiClient.getSavedGraphList(this.sketch.id)
+      .then(response => {
+        let graphs = response.data['objects'][0]
+        if (graphs !== undefined) {
+          this.savedGraphs = response.data['objects'][0]
+        }
+      })
+      .catch(e => {
+        console.error(e)
+      })
     EventBus.$on('isDarkTheme', this.setTheme)
 
     this.params = {
       graphId: this.$route.query.graph,
-      pluginName: this.$route.query.plugin
+      pluginName: this.$route.query.plugin,
     }
 
     if (this.params.graphId) {
@@ -593,11 +680,10 @@ export default {
     if (this.params.pluginName) {
       this.buildGraph(this.params.pluginName)
     }
-  }
+  },
 }
 </script>
 <style lang="scss">
-
 .lds-ripple {
   display: inline-block;
   position: relative;
@@ -637,5 +723,4 @@ export default {
   overflow: hidden;
   display: flex;
 }
-
 </style>

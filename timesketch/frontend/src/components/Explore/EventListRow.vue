@@ -14,163 +14,217 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-    <tbody>
-      <!-- Time bubbles -->
-      <tr v-if="deltaDays > 0">
-        <td colspan="5" style="padding: 0">
-          <div class="ts-time-bubble-vertical-line ts-time-bubble-vertical-line-color"></div>
-          <div class="ts-time-bubble ts-time-bubble-color">
-            <h5><b>{{ deltaDays | compactNumber }}</b><br>days</h5>
-          </div>
-          <div class="ts-time-bubble-vertical-line ts-time-bubble-vertical-line-color"></div>
-        </td>
-      </tr>
+  <tbody>
+    <!-- Time bubbles -->
+    <tr v-if="deltaDays > 0">
+      <td colspan="5" style="padding: 0">
+        <div class="ts-time-bubble-vertical-line ts-time-bubble-vertical-line-color"></div>
+        <div class="ts-time-bubble ts-time-bubble-color">
+          <h5>
+            <b>{{ deltaDays | compactNumber }}</b
+            ><br />days
+          </h5>
+        </div>
+        <div class="ts-time-bubble-vertical-line ts-time-bubble-vertical-line-color"></div>
+      </td>
+    </tr>
 
-      <!-- The event -->
-      <tr>
+    <!-- The event -->
+    <tr>
+      <!-- Timeline color (set the color for the timeline) -->
+      <td v-bind:style="timelineColor">
+        {{ event._source.timestamp | formatTimestamp | moment('utc', datetimeFormat) }}
+      </td>
 
-        <!-- Timeline color (set the color for the timeline) -->
-        <td v-bind:style="timelineColor">
-          {{ event._source.timestamp | formatTimestamp | moment("utc", datetimeFormat) }}
-        </td>
-
-        <!-- Action column -->
-        <td>
-          <div class="field is-grouped">
-            <span v-if="displayControls" class="control">
-              <input type="checkbox" :checked="isSelected" v-on:click="toggleSelect">
-            </span>
-            <span class="icon control" v-on:click="toggleStar" style="margin-right: 3px; cursor: pointer;">
-              <i class="fas fa-star" v-if="isStarred" title="Unstar the event" style="color: #ffe300; -webkit-text-stroke-width: 1px; -webkit-text-stroke-color: #d1d1d1;"></i>
-              <i class="fas fa-star" v-if="!isStarred" title="Star the event" style="color: #d3d3d3;"></i>
-            </span>
-            <span v-if="displayControls" class="icon control" style="margin-right: 3px; cursor: pointer;" v-on:click="searchContext">
-              <i class="fas fa-search" title="Search +/- 5min" style="color: #d3d3d3;"></i>
-            </span>
-            <span class="icon control">
-                <b-dropdown ref="labelDropdown" aria-role="list" append-to-body>
-                  <i class="fas fa-tag" title="Labels" style="color: #d3d3d3;" slot="trigger"></i>
-                  <div class="modal-card" style="width:300px;color: var(--font-color-dark);">
-                    <section class="modal-card-body">
-                      <b-dropdown-item custom :focusable="false">
-                        <span v-if="filteredLabelsToAdd.length">
-                          <b>Label as:</b>
-                          <br><br>
-                          <div class="level" style="margin-bottom: 5px;" v-for="(label) in filteredLabelsToAdd" :key="label">
-                            <div class="level-left">
-                              <div class="field">
-                                <b-checkbox type="is-info" v-model="selectedLabels" :native-value="label">
-                                  {{ label }}
-                                </b-checkbox>
-                              </div>
-                            </div>
+      <!-- Action column -->
+      <td>
+        <div class="field is-grouped">
+          <span v-if="displayControls" class="control">
+            <input type="checkbox" :checked="isSelected" v-on:click="toggleSelect" />
+          </span>
+          <span class="icon control" v-on:click="toggleStar" style="margin-right: 3px; cursor: pointer;">
+            <i
+              class="fas fa-star"
+              v-if="isStarred"
+              title="Unstar the event"
+              style="color: #ffe300; -webkit-text-stroke-width: 1px; -webkit-text-stroke-color: #d1d1d1;"
+            ></i>
+            <i class="fas fa-star" v-if="!isStarred" title="Star the event" style="color: #d3d3d3;"></i>
+          </span>
+          <span
+            v-if="displayControls"
+            class="icon control"
+            style="margin-right: 3px; cursor: pointer;"
+            v-on:click="searchContext"
+          >
+            <i class="fas fa-search" title="Search +/- 5min" style="color: #d3d3d3;"></i>
+          </span>
+          <span class="icon control">
+            <b-dropdown ref="labelDropdown" aria-role="list" append-to-body>
+              <i class="fas fa-tag" title="Labels" style="color: #d3d3d3;" slot="trigger"></i>
+              <div class="modal-card" style="width:300px;color: var(--font-color-dark);">
+                <section class="modal-card-body">
+                  <b-dropdown-item custom :focusable="false">
+                    <span v-if="filteredLabelsToAdd.length">
+                      <b>Label as:</b>
+                      <br /><br />
+                      <div class="level" style="margin-bottom: 5px;" v-for="label in filteredLabelsToAdd" :key="label">
+                        <div class="level-left">
+                          <div class="field">
+                            <b-checkbox type="is-info" v-model="selectedLabels" :native-value="label">
+                              {{ label }}
+                            </b-checkbox>
                           </div>
-                          <hr>
-                        </span>
-
-                        <span v-if="event._source.label.length">
-                          <i class="fas fa-trash" style="margin-right: 7px;"></i>
-                          <b>Remove:</b>
-                          <br><br>
-                          <div class="level" style="margin-bottom: 5px;" v-for="(label) in event._source.label" :key="label">
-                            <div class="level-left">
-                              <div class="field">
-                                <b-checkbox type="is-danger" v-model="labelsToRemove" :native-value="label">
-                                  {{ label }}
-                                </b-checkbox>
-                              </div>
-                            </div>
-                          </div>
-                          <hr>
-                        </span>
-                        <div class="field is-grouped">
-                          <p class="control is-expanded">
-                            <input class="input" v-model="labelToAdd" placeholder="Create new">
-                          </p>
-                          <p class="control">
-                            <button v-on:click="addLabels(labelToAdd)" class="button">Save</button>
-                          </p>
                         </div>
-                      </b-dropdown-item>
-                    </section>
-                    <section class="modal-card-foot">
-                      <b-dropdown-item>
-                        <button v-if="selectedLabels.length || labelsToRemove.length" class="button is-info" v-on:click="addLabels()" :disabled="labelToAdd !== null && labelToAdd !== ''">Apply</button>
-                      </b-dropdown-item>
-                    </section>
-                  </div>
-                </b-dropdown>
-            </span>
-          </div>
-        </td>
+                      </div>
+                      <hr />
+                    </span>
 
-        <!-- Dynamic columns based on selected fields -->
-        <td v-bind:style="fieldColumnColor" v-on:click="showDetail = !showDetail" style="cursor: pointer; max-width: 50ch;" v-for="(field, index) in selectedFields" :key="index">
-          <span v-bind:class="{ 'ts-event-field-container': selectedFields.length === 1 }">
-            <span v-bind:class="{ 'ts-event-field-ellipsis': selectedFields.length === 1 }">
-              <span v-if="index === 0">
-                <!--eslint-disable-next-line vue/no-use-v-if-with-v-for-->
-                <span v-if="displayOptions.showEmojis" v-for="emoji in event._source.__ts_emojis" :key="emoji" v-html="emoji" :title="meta.emojis[emoji]">{{ emoji }}</span>
-                <span style="margin-left:10px;"></span>
-                <!--eslint-disable-next-line vue/no-use-v-if-with-v-for-->
-                <span v-if="displayOptions.showTags" v-for="tag in event._source.tag" :key="tag" class="tag is-small is-light" style="margin-right:5px; border:1px solid #d1d1d1;">{{ tag }}</span>
-                <!--eslint-disable-next-line vue/no-use-v-if-with-v-for-->
-                <span v-if="displayOptions.showTags" v-for="label in filteredLabels" :key="label" class="tag is-small is-light" style="margin-right:5px; border:1px solid #d1d1d1;">{{ label }}</span>
-              </span>
-              <span style="word-break: break-word;" :title="event._source[field.field]">
-                {{ event._source[field.field] }}
-              </span>
-            </span>
-          </span>
-        </td>
-
-        <!-- Timeline name -->
-        <td class="ts-timeline-name-column ts-timeline-name-column-color">
-          <span :title="timelineName">
-            {{ timelineName }}
-          </span>
-        </td>
-
-      </tr>
-
-      <!-- Comments row -->
-      <tr v-if="comments.length">
-        <td colspan="5">
-          <div style="max-width: 600px; border:1px solid #f5f5f5; border-radius: 4px; padding:10px; margin-bottom: 20px;">
-            <article  class="media" v-for="comment in comments" :key="comment.created_at">
-              <div class="media-content">
-                <div class="content">
-                  <p>
-                    {{ comment.user.username }} <small style="margin-left: 10px;">{{ comment.created_at | moment("ll") }}</small>
-                    <br>
-                    {{ comment.comment }}
-                  </p>
-                </div>
+                    <span v-if="event._source.label.length">
+                      <i class="fas fa-trash" style="margin-right: 7px;"></i>
+                      <b>Remove:</b>
+                      <br /><br />
+                      <div class="level" style="margin-bottom: 5px;" v-for="label in event._source.label" :key="label">
+                        <div class="level-left">
+                          <div class="field">
+                            <b-checkbox type="is-danger" v-model="labelsToRemove" :native-value="label">
+                              {{ label }}
+                            </b-checkbox>
+                          </div>
+                        </div>
+                      </div>
+                      <hr />
+                    </span>
+                    <div class="field is-grouped">
+                      <p class="control is-expanded">
+                        <input class="input" v-model="labelToAdd" placeholder="Create new" />
+                      </p>
+                      <p class="control">
+                        <button v-on:click="addLabels(labelToAdd)" class="button">Save</button>
+                      </p>
+                    </div>
+                  </b-dropdown-item>
+                </section>
+                <section class="modal-card-foot">
+                  <b-dropdown-item>
+                    <button
+                      v-if="selectedLabels.length || labelsToRemove.length"
+                      class="button is-info"
+                      v-on:click="addLabels()"
+                      :disabled="labelToAdd !== null && labelToAdd !== ''"
+                    >
+                      Apply
+                    </button>
+                  </b-dropdown-item>
+                </section>
               </div>
-            </article>
-          </div>
-        </td>
-      </tr>
+            </b-dropdown>
+          </span>
+        </div>
+      </td>
 
-      <!-- Event details that gets activated when the event row is clicked -->
-      <tr>
-        <td colspan="5" style="padding: 0">
-          <div v-if="showDetail" style="padding-top:20px; padding-bottom: 20px;padding-left:10px;">
-            <div  class="field" style="max-width: 50%;">
-              <p class="control">
-                <textarea v-model="comment" required autofocus class="textarea" rows="1" placeholder="Add a comment ..."></textarea>
-              </p>
-            </div>
-            <div class="field">
-              <p class="control">
-                <button class="button" v-on:click="postComment(comment)">Post comment</button>
-              </p>
-            </div>
-            <ts-sketch-explore-event-list-row-detail :event="event" @addChip="$emit('addChip', $event)"></ts-sketch-explore-event-list-row-detail>
-          </div>
-        </td>
-      </tr>
+      <!-- Dynamic columns based on selected fields -->
+      <td
+        v-bind:style="fieldColumnColor"
+        v-on:click="showDetail = !showDetail"
+        style="cursor: pointer; max-width: 50ch;"
+        v-for="(field, index) in selectedFields"
+        :key="index"
+      >
+        <span v-bind:class="{ 'ts-event-field-container': selectedFields.length === 1 }">
+          <span v-bind:class="{ 'ts-event-field-ellipsis': selectedFields.length === 1 }">
+            <!-- eslint-disable vue/no-use-v-if-with-v-for -->
+            <span v-if="index === 0">
+              <span
+                v-if="displayOptions.showEmojis"
+                v-for="emoji in event._source.__ts_emojis"
+                :key="emoji"
+                v-html="emoji"
+                :title="meta.emojis[emoji]"
+                >{{ emoji }}</span
+              >
+              <span style="margin-left:10px;"></span>
+              <span
+                v-if="displayOptions.showTags"
+                v-for="tag in event._source.tag"
+                :key="tag"
+                class="tag is-small is-light"
+                style="margin-right:5px; border:1px solid #d1d1d1;"
+                >{{ tag }}</span
+              >
+              <span
+                v-if="displayOptions.showTags"
+                v-for="label in filteredLabels"
+                :key="label"
+                class="tag is-small is-light"
+                style="margin-right:5px; border:1px solid #d1d1d1;"
+                >{{ label }}</span
+              >
+            </span>
+            <!--eslint-enable-->
+            <span style="word-break: break-word;" :title="event._source[field.field]">
+              {{ event._source[field.field] }}
+            </span>
+          </span>
+        </span>
+      </td>
 
+      <!-- Timeline name -->
+      <td class="ts-timeline-name-column ts-timeline-name-column-color">
+        <span :title="timelineName">
+          {{ timelineName }}
+        </span>
+      </td>
+    </tr>
+
+    <!-- Comments row -->
+    <tr v-if="comments.length">
+      <td colspan="5">
+        <div style="max-width: 600px; border:1px solid #f5f5f5; border-radius: 4px; padding:10px; margin-bottom: 20px;">
+          <article class="media" v-for="comment in comments" :key="comment.created_at">
+            <div class="media-content">
+              <div class="content">
+                <p>
+                  {{ comment.user.username }}
+                  <small style="margin-left: 10px;">{{ comment.created_at | moment('ll') }}</small>
+                  <br />
+                  {{ comment.comment }}
+                </p>
+              </div>
+            </div>
+          </article>
+        </div>
+      </td>
+    </tr>
+
+    <!-- Event details that gets activated when the event row is clicked -->
+    <tr>
+      <td colspan="5" style="padding: 0">
+        <div v-if="showDetail" style="padding-top:20px; padding-bottom: 20px;padding-left:10px;">
+          <div class="field" style="max-width: 50%;">
+            <p class="control">
+              <textarea
+                v-model="comment"
+                required
+                autofocus
+                class="textarea"
+                rows="1"
+                placeholder="Add a comment ..."
+              ></textarea>
+            </p>
+          </div>
+          <div class="field">
+            <p class="control">
+              <button class="button" v-on:click="postComment(comment)">Post comment</button>
+            </p>
+          </div>
+          <ts-sketch-explore-event-list-row-detail
+            :event="event"
+            @addChip="$emit('addChip', $event)"
+          ></ts-sketch-explore-event-list-row-detail>
+        </div>
+      </td>
+    </tr>
   </tbody>
 </template>
 
@@ -182,10 +236,10 @@ import { ToastProgrammatic as Toast } from 'buefy'
 
 export default {
   components: {
-    TsSketchExploreEventListRowDetail
+    TsSketchExploreEventListRowDetail,
   },
   props: ['event', 'prevEvent', 'order', 'selectedFields', 'isRemoteSelected', 'displayOptions', 'displayControls'],
-  data () {
+  data() {
     return {
       showDetail: false,
       isStarred: false,
@@ -195,20 +249,20 @@ export default {
       comments: [],
       labelToAdd: null,
       selectedLabels: [],
-      labelsToRemove: []
+      labelsToRemove: [],
     }
   },
   computed: {
-    sketch () {
+    sketch() {
       return this.$store.state.sketch
     },
-    meta () {
+    meta() {
       return this.$store.state.meta
     },
-    currentSearchNode () {
+    currentSearchNode() {
       return this.$store.state.currentSearchNode
     },
-    timelineColor () {
+    timelineColor() {
       let backgroundColor = this.timeline.color
       if (!backgroundColor.startsWith('#')) {
         backgroundColor = '#' + backgroundColor
@@ -216,15 +270,15 @@ export default {
       if (this.isDarkTheme) {
         return {
           'background-color': backgroundColor,
-          'filter': 'grayscale(25%)',
-          'color': '#333'
+          filter: 'grayscale(25%)',
+          color: '#333',
         }
       }
       return {
-        'background-color': backgroundColor
+        'background-color': backgroundColor,
       }
     },
-    fieldColumnColor () {
+    fieldColumnColor() {
       let backgroundColor = '#f5f5f5'
       let fontColor = '#333'
 
@@ -246,25 +300,25 @@ export default {
       if (this.isDarkTheme) {
         return {
           'background-color': backgroundColor,
-          'color': fontColor
+          color: fontColor,
         }
       }
       return {
         'background-color': backgroundColor,
-        'color': fontColor
+        color: fontColor,
       }
     },
-    datetimeFormat () {
+    datetimeFormat() {
       if (this.displayOptions.showMillis) {
         return 'YYYY-MM-DDTHH:mm:ss.SSSSSS'
       } else {
         return 'YYYY-MM-DDTHH:mm:ss'
       }
     },
-    timelineName () {
+    timelineName() {
       return this.timeline.name
     },
-    deltaDays () {
+    deltaDays() {
       if (!this.prevEvent) {
         return 0
       }
@@ -279,7 +333,7 @@ export default {
       let deltaDays = delta / 60 / 60 / 24
       return Math.floor(deltaDays)
     },
-    eventDataSparse () {
+    eventDataSparse() {
       let eventData = {}
       eventData['_index'] = this.event._index
       eventData['_id'] = this.event._id
@@ -287,40 +341,43 @@ export default {
       eventData['isSelected'] = this.isSelected
       return eventData
     },
-    filteredLabels () {
+    filteredLabels() {
       return this.event._source.label.filter(label => !label.startsWith('__'))
     },
-    filteredLabelsToAdd () {
+    filteredLabelsToAdd() {
       return this.meta.filter_labels.filter(label => this.event._source.label.indexOf(label) === -1)
     },
-    filteredLabelsToRemove () {
+    filteredLabelsToRemove() {
       return this.meta.filter_labels.filter(label => this.event._source.label.indexOf(label) !== -1)
-    }
+    },
   },
   methods: {
-    toggleStar () {
+    toggleStar() {
       if (!this.isStarred) {
-        EventBus.$emit('eventAnnotated', { 'type': '__ts_star', 'event': this.event, 'searchNode': this.currentSearchNode })
+        EventBus.$emit('eventAnnotated', { type: '__ts_star', event: this.event, searchNode: this.currentSearchNode })
       }
       this.isStarred = !this.isStarred
-      ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', this.event, this.currentSearchNode).then((response) => {
-      }).catch((e) => {
-        console.error(e)
-      })
+      ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', this.event, this.currentSearchNode)
+        .then(response => {})
+        .catch(e => {
+          console.error(e)
+        })
     },
-    toggleStarOnSelect () {
+    toggleStarOnSelect() {
       if (this.isSelected) {
         this.isStarred = !this.isStarred
       }
     },
-    postComment: function (comment) {
-      EventBus.$emit('eventAnnotated', { 'type': '__ts_comment', 'event': this.event, 'searchNode': this.currentSearchNode })
-      ApiClient.saveEventAnnotation(this.sketch.id, 'comment', comment, [this.event], this.currentSearchNode).then((response) => {
-        this.comments.push(response.data.objects[0][0])
-        this.comment = ''
-      }).catch((e) => {})
+    postComment: function(comment) {
+      EventBus.$emit('eventAnnotated', { type: '__ts_comment', event: this.event, searchNode: this.currentSearchNode })
+      ApiClient.saveEventAnnotation(this.sketch.id, 'comment', comment, [this.event], this.currentSearchNode)
+        .then(response => {
+          this.comments.push(response.data.objects[0][0])
+          this.comment = ''
+        })
+        .catch(e => {})
     },
-    addLabels: function (labels) {
+    addLabels: function(labels) {
       if (labels === undefined) {
         labels = this.selectedLabels
       }
@@ -329,25 +386,28 @@ export default {
       }
 
       if (labels.length) {
-        EventBus.$emit('eventAnnotated', { 'type': '__ts_label', 'event': this.event, 'searchNode': this.currentSearchNode })
+        EventBus.$emit('eventAnnotated', { type: '__ts_label', event: this.event, searchNode: this.currentSearchNode })
       }
 
-      labels.forEach((label) => {
+      labels.forEach(label => {
         if (this.event._source.label.indexOf(label) === -1) {
           this.event._source.label.push(label)
-          ApiClient.saveEventAnnotation(this.sketch.id, 'label', label, [this.event], this.currentSearchNode).then((response) => {
-            this.$emit('addLabel', label)
-          }).catch((e) => {
-            Toast.open('Error adding label')
-            this.event._source.label = this.event._source.label.filter(e => e !== label)
-          })
+          ApiClient.saveEventAnnotation(this.sketch.id, 'label', label, [this.event], this.currentSearchNode)
+            .then(response => {
+              this.$emit('addLabel', label)
+            })
+            .catch(e => {
+              Toast.open('Error adding label')
+              this.event._source.label = this.event._source.label.filter(e => e !== label)
+            })
         }
       })
 
       if (this.labelsToRemove.length) {
-        this.labelsToRemove.forEach((label) => {
-          ApiClient.saveEventAnnotation(this.sketch.id, 'label', label, [this.event], this.currentSearchNode, true).then((response) => {
-          }).catch((e) => {})
+        this.labelsToRemove.forEach(label => {
+          ApiClient.saveEventAnnotation(this.sketch.id, 'label', label, [this.event], this.currentSearchNode, true)
+            .then(response => {})
+            .catch(e => {})
           this.event._source.label = this.event._source.label.filter(e => e !== label)
         })
         this.labelsToRemove = []
@@ -357,34 +417,34 @@ export default {
       this.labelToAdd = null
       this.$refs.labelDropdown.toggle()
     },
-    searchContext: function () {
+    searchContext: function() {
       this.$emit('searchContext', this.event)
     },
-    selectEvent: function () {
+    selectEvent: function() {
       this.isSelected = true
       EventBus.$emit('eventSelected', this.eventDataSparse)
     },
-    unSelectEvent: function () {
+    unSelectEvent: function() {
       this.isSelected = false
       EventBus.$emit('eventSelected', this.eventDataSparse)
     },
-    toggleSelect: function () {
+    toggleSelect: function() {
       if (this.isSelected) {
         this.unSelectEvent()
       } else {
         this.selectEvent()
       }
     },
-    toggleTheme: function () {
+    toggleTheme: function() {
       this.isDarkTheme = !this.isDarkTheme
-    }
+    },
   },
-  beforeDestroy () {
+  beforeDestroy() {
     EventBus.$off('selectEvent', this.selectEvent)
     EventBus.$off('clearSelectedEvents', this.unSelectEvent)
     EventBus.$off('toggleStar', this.toggleStarOnSelect)
   },
-  created () {
+  created() {
     EventBus.$on('selectEvent', this.selectEvent)
     EventBus.$on('clearSelectedEvents', this.unSelectEvent)
     EventBus.$on('toggleStar', this.toggleStarOnSelect)
@@ -392,9 +452,13 @@ export default {
 
     let isLegacy = this.meta.indices_metadata[this.event._index].is_legacy
     if (isLegacy) {
-      this.timeline = this.sketch.active_timelines.filter(timeline => timeline.searchindex.index_name === this.event._index)[0]
+      this.timeline = this.sketch.active_timelines.filter(
+        timeline => timeline.searchindex.index_name === this.event._index
+      )[0]
     } else {
-      this.timeline = this.sketch.active_timelines.filter(timeline => timeline.id === this.event._source.__ts_timeline_id)[0]
+      this.timeline = this.sketch.active_timelines.filter(
+        timeline => timeline.id === this.event._source.__ts_timeline_id
+      )[0]
     }
 
     this.isDarkTheme = localStorage.theme === 'dark'
@@ -405,16 +469,17 @@ export default {
     if (this.event._source.label.indexOf('__ts_comment') > -1) {
       let searchindexId = this.event._index
       let eventId = this.event._id
-      ApiClient.getEvent(this.sketch.id, searchindexId, eventId).then((response) => {
-        this.comments = response.data.meta.comments
-      }).catch((e) => {})
+      ApiClient.getEvent(this.sketch.id, searchindexId, eventId)
+        .then(response => {
+          this.comments = response.data.meta.comments
+        })
+        .catch(e => {})
     }
-  }
+  },
 }
 </script>
 
 <style lang="scss" scoped>
-
 .ts-event-field-container {
   position: relative;
   max-width: 100%;
@@ -426,10 +491,10 @@ export default {
 }
 
 .ts-event-field-container:after {
-    content: '-';
-    display: inline;
-    visibility: hidden;
-    width: 0;
+  content: '-';
+  display: inline;
+  visibility: hidden;
+  width: 0;
 }
 
 .ts-event-field-ellipsis {
@@ -442,7 +507,7 @@ export default {
   -o-text-overflow: ellipsis;
   max-width: 100%;
   min-width: 0;
-  width:100%;
+  width: 100%;
   top: 0;
   left: 0;
 }
@@ -481,8 +546,7 @@ export default {
 }
 
 .ts-shadow-on-hover:hover {
-  opacity:0.999999;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 2px 6px rgba(0,0,0,0.24);
+  opacity: 0.999999;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.24);
 }
-
 </style>
