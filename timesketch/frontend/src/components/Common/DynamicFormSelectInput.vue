@@ -29,6 +29,6 @@ limitations under the License.
 
 <script>
 export default {
-  props: ['options', 'label', 'value', 'display']
+  props: ['options', 'label', 'value', 'display'],
 }
 </script>

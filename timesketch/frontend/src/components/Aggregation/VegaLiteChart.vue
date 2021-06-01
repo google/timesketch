@@ -23,15 +23,15 @@ import { default as vegaEmbed } from 'vega-embed'
 
 export default {
   props: ['vegaSpec'],
-  data () {
+  data() {
     return {
-      vegaId: 'vega-' + this._uid
+      vegaId: 'vega-' + this._uid,
     }
   },
   watch: {
-    vegaSpec: function (newVal, oldVal) {
+    vegaSpec: function(newVal, oldVal) {
       vegaEmbed('#' + this.vegaId, JSON.parse(this.vegaSpec), { actions: false })
-    }
-  }
+    },
+  },
 }
 </script>

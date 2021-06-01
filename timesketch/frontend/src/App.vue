@@ -22,13 +22,13 @@ limitations under the License.
 <script>
 export default {
   name: 'app',
-  created: function () {
+  created: function() {
     let element = document.body
     if (!localStorage.theme) {
       localStorage.theme = 'light'
     }
     element.dataset.theme = localStorage.theme
-  }
+  },
 }
 </script>
 

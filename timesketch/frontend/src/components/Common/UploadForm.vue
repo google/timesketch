@@ -15,54 +15,61 @@ limitations under the License.
 -->
 <template>
   <div>
-  <form v-on:submit.prevent="submitForm">
-    <div class="field">
-      <div class="file has-name">
-        <label class="file-label">
-          <input class="file-input" type="file" name="resume" v-on:change="setFileName($event.target.files)">
-          <span class="file-cta">
-            <span class="file-icon">
-              <i class="fas fa-upload"></i>
+    <form v-on:submit.prevent="submitForm">
+      <div class="field">
+        <div class="file has-name">
+          <label class="file-label">
+            <input class="file-input" type="file" name="resume" v-on:change="setFileName($event.target.files)" />
+            <span class="file-cta">
+              <span class="file-icon">
+                <i class="fas fa-upload"></i>
+              </span>
+              <span class="file-label">
+                Choose a file…
+              </span>
             </span>
-            <span class="file-label">
-              Choose a file…
+            <span class="file-name" v-if="fileName">
+              <span v-if="!fileName">Please select a file</span>
+              {{ fileName }}
             </span>
-          </span>
-          <span class="file-name" v-if="fileName">
-            <span v-if="!fileName">Please select a file</span>
-            {{ fileName }}
-          </span>
-        </label>
+          </label>
+        </div>
       </div>
-    </div>
-    <div class="field">
-      <span v-if="error">
-        {{ error }}
-      </span>
-    </div>
-    <div class="field" v-if="fileName">
-      <label class="label">Name</label>
-      <div class="control">
-        <input v-model="form.name" class="input" type="text" required placeholder="Name your timeline">
+      <div class="field">
+        <span v-if="error">
+          {{ error }}
+        </span>
       </div>
-    </div>
-    <div class="error" v-if="!error">
       <div class="field" v-if="fileName">
         <label class="label">Name</label>
         <div class="control">
-          <input v-model="form.name" class="input" type="text" required placeholder="Name your timeline">
+          <input v-model="form.name" class="input" type="text" required placeholder="Name your timeline" />
         </div>
       </div>
+      <div class="error" v-if="!error">
+        <div class="field" v-if="fileName">
+          <label class="label">Name</label>
+          <div class="control">
+            <input v-model="form.name" class="input" type="text" required placeholder="Name your timeline" />
+          </div>
+        </div>
 
-      <div class="field" v-if="fileName && percentCompleted === 0">
-        <div class="control">
-          <input class="button is-success" type="submit" value="Upload">
+        <div class="field" v-if="fileName && percentCompleted === 0">
+          <div class="control">
+            <input class="button is-success" type="submit" value="Upload" />
+          </div>
         </div>
       </div>
-    </div>
-  </form>
-    <br>
-    <b-progress v-if="percentCompleted !== 0" :value="percentCompleted" show-value format="percent" type="is-info" size="is-medium">
+    </form>
+    <br />
+    <b-progress
+      v-if="percentCompleted !== 0"
+      :value="percentCompleted"
+      show-value
+      format="percent"
+      type="is-info"
+      size="is-medium"
+    >
       <span v-if="percentCompleted === 100">Waiting for request to finish..</span>
     </b-progress>
   </div>
@@ -72,24 +79,24 @@ limitations under the License.
 import ApiClient from '../../utils/RestApiClient'
 
 export default {
-  data () {
+  data() {
     return {
       form: {
         name: '',
-        file: ''
+        file: '',
       },
       fileName: '',
       error: '',
-      percentCompleted: 0
+      percentCompleted: 0,
     }
   },
   methods: {
-    clearFormData: function () {
+    clearFormData: function() {
       this.form.name = ''
       this.form.file = ''
       this.fileName = ''
     },
-    submitForm: function () {
+    submitForm: function() {
       let formData = new FormData()
       formData.append('file', this.form.file)
       formData.append('name', this.form.name)
@@ -99,24 +106,29 @@ export default {
       formData.append('sketch_id', this.$store.state.sketch.id)
       let config = {
         headers: {
-          'Content-Type': 'multipart/form-data'
+          'Content-Type': 'multipart/form-data',
         },
-        onUploadProgress: function (progressEvent) {
+        onUploadProgress: function(progressEvent) {
           this.percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
-        }.bind(this)
+        }.bind(this),
       }
-      ApiClient.uploadTimeline(formData, config).then((response) => {
-        this.$store.dispatch('updateSketch', this.$store.state.sketch.id)
-        this.$emit('toggleModal')
-        this.clearFormData()
-        this.percentCompleted = 0
-      }).catch((e) => {})
+      ApiClient.uploadTimeline(formData, config)
+        .then(response => {
+          this.$store.dispatch('updateSketch', this.$store.state.sketch.id)
+          this.$emit('toggleModal')
+          this.clearFormData()
+          this.percentCompleted = 0
+        })
+        .catch(e => {})
     },
-    setFileName: function (fileList) {
+    setFileName: function(fileList) {
       let fileName = fileList[0].name
       let fileExtension = fileName.split('.')[1]
       this.form.file = fileList[0]
-      this.form.name = fileName.split('.').slice(0, -1).join('.')
+      this.form.name = fileName
+        .split('.')
+        .slice(0, -1)
+        .join('.')
       this.fileName = fileName
 
       this.error = ''
@@ -124,7 +136,7 @@ export default {
       if (!allowedExtensions.includes(fileExtension)) {
         this.error = 'Please select a file with a valid extension'
       }
-    }
-  }
+    },
+  },
 }
 </script>

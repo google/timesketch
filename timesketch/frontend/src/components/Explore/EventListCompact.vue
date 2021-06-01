@@ -28,7 +28,8 @@ limitations under the License.
       :prevEvent="eventList.objects[index - 1]"
       :selected-fields="selectedFields"
       :display-options="displayOptions"
-      :display-controls="false">
+      :display-controls="false"
+    >
     </ts-sketch-explore-event-list-row>
   </table>
 </template>
@@ -39,59 +40,63 @@ import TsSketchExploreEventListRow from './EventListRow'
 
 export default {
   components: {
-    TsSketchExploreEventListRow
+    TsSketchExploreEventListRow,
   },
   props: ['view', 'queryString', 'queryDsl', 'queryFilter'],
-  data () {
+  data() {
     return {
       eventList: [],
       selectedFields: [],
       displayOptions: {
         showTags: true,
-        showEmojis: true
-      }
+        showEmojis: true,
+      },
     }
   },
   computed: {
-    sketch () {
+    sketch() {
       return this.$store.state.sketch
     },
-    meta () {
+    meta() {
       return this.$store.state.meta
-    }
+    },
   },
   methods: {
-    search: function (query, queryFilter = {}) {
+    search: function(query, queryFilter = {}) {
       if (!Object.keys(queryFilter).length) {
         queryFilter = {}
         this.selectedFields = [{ field: 'message', type: 'text' }]
       }
 
-      let formData = { 'filter': queryFilter }
+      let formData = { filter: queryFilter }
       if (typeof query === 'object') {
         formData['dsl'] = query
       } else {
         formData['query'] = query
       }
 
-      ApiClient.search(this.sketch.id, formData).then((response) => {
-        this.eventList = response.data
-      }).catch((e) => {})
+      ApiClient.search(this.sketch.id, formData)
+        .then(response => {
+          this.eventList = response.data
+        })
+        .catch(e => {})
     },
-    searchView: function (viewId) {
-      ApiClient.getView(this.sketch.id, viewId).then((response) => {
-        let view = response.data.objects[0]
-        let queryString = view.query_string
-        let queryFilter = JSON.parse(view.query_filter)
-        if (!queryFilter.fields || !queryFilter.fields.length) {
-          queryFilter.fields = [{ field: 'message', type: 'text' }]
-        }
-        this.selectedFields = queryFilter.fields
-        this.search(queryString, queryFilter)
-      }).catch((e) => {})
-    }
+    searchView: function(viewId) {
+      ApiClient.getView(this.sketch.id, viewId)
+        .then(response => {
+          let view = response.data.objects[0]
+          let queryString = view.query_string
+          let queryFilter = JSON.parse(view.query_filter)
+          if (!queryFilter.fields || !queryFilter.fields.length) {
+            queryFilter.fields = [{ field: 'message', type: 'text' }]
+          }
+          this.selectedFields = queryFilter.fields
+          this.search(queryString, queryFilter)
+        })
+        .catch(e => {})
+    },
   },
-  created: function () {
+  created: function() {
     if (this.view) {
       this.searchView(this.view.id)
     }
@@ -103,12 +108,12 @@ export default {
     }
   },
   watch: {
-    queryString: function (queryString) {
+    queryString: function(queryString) {
       this.search(queryString)
     },
-    queryDsl: function (queryDsl) {
+    queryDsl: function(queryDsl) {
       this.search(queryDsl)
-    }
-  }
+    },
+  },
 }
 </script>
