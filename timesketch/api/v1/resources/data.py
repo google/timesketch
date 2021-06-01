@@ -110,12 +110,13 @@ class DataFinderResource(resources.ResourceMixin, Resource):
         task_id = uuid.uuid4().hex
         pipeline.apply_async(task_id=task_id)
 
-        results = pipeline.get()
+        result = pipeline.delay()
+        results = result.join()
 
         schema = {
             'meta': {
                 'rules': rule_names
             },
-            'objects': [results],
+            'objects': results,
         }
         return jsonify(schema)

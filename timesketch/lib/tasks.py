@@ -31,6 +31,7 @@ from elasticsearch.exceptions import RequestError
 from flask import current_app
 
 from celery import chain
+from celery import group
 from celery import signals
 from sqlalchemy import create_engine
 
@@ -738,13 +739,13 @@ def run_csv_jsonl(
 
 
 @celery.task(track_started=True)
-def find_if_data_exists(
-        rule_names, sketch_id, start_date, end_date,
+def find_data_task(
+        rule_name, sketch_id, start_date, end_date,
         timeline_ids=None, parameters=None):
     """Runs a task to find out if data exists in a dataset.
 
     Args:
-        rule_names (list): A list of rule names to run.
+        rule_name (str): A rule names to run.
         sketch_id (int): Sketch identifier.
         start_date (str): A string with an ISO formatted timestring for the
             start date of the data search.
@@ -780,19 +781,47 @@ def find_if_data_exists(
                 'Unable to read in YAML config file', exc_info=True)
             return results
 
-    for rule_name in rule_names:
-        if rule_name not in data_finder_dict:
-            results[rule_name] = (False, 'Rule not defined')
-            continue
+    if rule_name not in data_finder_dict:
+        results[rule_name] = (False, 'Rule not defined')
+        return results
 
-        data_finder = datafinder.DataFinder()
-        data_finder.set_parameters(parameters)
-        data_finder.set_rule(data_finder_dict.get(rule_name))
+    data_finder = datafinder.DataFinder()
+    data_finder.set_start_date(start_date)
+    data_finder.set_end_date(end_date)
+    data_finder.set_parameters(parameters)
+    data_finder.set_rule(data_finder_dict.get(rule_name))
 
-        if not data_finder.can_run():
-            results[rule_name] = (False, 'Unable to run the data finder.')
-            continue
+    if not data_finder.can_run():
+        results[rule_name] = (False, 'Unable to run the data finder.')
+        return results
 
-        results[rule_name] = data_finder.find_data()
-
+    results[rule_name] = data_finder.find_data()
     return results
+
+
+def find_if_data_exists(
+        rule_names, sketch_id, start_date, end_date,
+        timeline_ids=None, parameters=None):
+    """Runs a task to find out if data exists in a dataset.
+
+    Args:
+        rule_names (list): A list of rule names to run.
+        sketch_id (int): Sketch identifier.
+        start_date (str): A string with an ISO formatted timestring for the
+            start date of the data search.
+        end_date (str): A string with an ISO formatted timestring for the
+            end date of the data search.
+        timeline_ids (list): An optional list of integers for the timelines
+            within the the sketch to limit the data search to. If not provided
+            all timelines are searched.
+        parameters (dict): An optional dict with key/value pairs of parameters
+            and their values, used for filling in regular expressions.
+
+    Returns:
+        Celery task object.
+    """
+    task_group = group(find_data_task.s(
+        rule_name=x, sketch_id=sketch_id, start_date=start_date,
+        end_date=end_date, timeline_ids=timeline_ids,
+        parameters=parameters) for x in rule_names)
+    return task_group

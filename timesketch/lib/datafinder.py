@@ -13,6 +13,10 @@
 # limitations under the License.
 """The class definitions for the data finder, or the data analyzer."""
 
+import logging
+
+logger = logging.getLogger('timesketch.data_finder')
+
 
 class DataFinder:
     """The data finder class."""
@@ -27,12 +31,20 @@ class DataFinder:
     def can_run(self):
         """Returns a boolean whether the data finder can be run."""
         if not self._rule:
+            logger.warning(
+                'Unable to run data finder since no rule has been defined.')
             return False
 
         if not self._start_date:
+            logger.warning(
+                'Unable to run data finder since no start date has been '
+                'defined.')
             return False
 
         if not self._end_date:
+            logger.warning(
+                'Unable to run data finder since no end date has been '
+                'defined.')
             return False
 
         if not self._parameters:
@@ -41,9 +53,18 @@ class DataFinder:
         re_parameters = self._rule.get('re_parameters', [])
         for parameter in re_parameters:
             if not parameter in self._parameters:
+                logger.warning(
+                    'Parameters are defined, but parameter: [{0:s}] does not '
+                    'exist in parameter definitions for the rule.'.format(
+                        parameter))
                 return False
 
         return True
+
+    def set_end_date(self, end_date):
+        """Sets the end date of the time period the data finder uses."""
+        # TODO: Implement a check if this is a valid ISO formatted date.
+        self._end_date = end_date
 
     def set_parameter(self, parameter, value):
         """Sets the value of a single parameter.
@@ -60,7 +81,8 @@ class DataFinder:
         Args:
             parameter_dict (dict): A set of parameters and their values.
         """
-        self._parameters.update(parameter_dict)
+        if isinstance(parameter_dict, dict):
+            self._parameters.update(parameter_dict)
 
     def set_rule(self, rule_dict):
         """Sets the rules of the data finder.
@@ -71,6 +93,11 @@ class DataFinder:
                 regular expression, etc.
         """
         self._rule = rule_dict
+
+    def set_start_date(self, start_date):
+        """Sets the start date of the time period the data finder uses."""
+        # TODO: Implement a check if this is a valid ISO formatted date.
+        self._start_date = start_date
 
     def find_data(self):
         """Returns a tuple with a boolen on whether data was found and text."""
