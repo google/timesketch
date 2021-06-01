@@ -15,17 +15,19 @@ limitations under the License.
 -->
 <template>
   <form v-if="schema.length" v-on:submit.prevent="submitForm" v-on:keydown.enter.prevent="">
-      <component v-for="(field, index) in schema"
-                 :key="index"
-                 :is="field.type"
-                 :value="formData[field.name]"
-                 :display="field.display"
-                 @input="updateForm(field.name, $event)"
-                 v-bind="field">
-      </component>
-      <div class="control">
-        <input class="button is-info" type="submit" value="Run">
-      </div>
+    <component
+      v-for="(field, index) in schema"
+      :key="index"
+      :is="field.type"
+      :value="formData[field.name]"
+      :display="field.display"
+      @input="updateForm(field.name, $event)"
+      v-bind="field"
+    >
+    </component>
+    <div class="control">
+      <input class="button is-info" type="submit" value="Run" />
+    </div>
   </form>
 </template>
 
@@ -38,22 +40,22 @@ export default {
   components: {
     TsDynamicFormTextInput,
     TsDynamicFormSelectInput,
-    TsDynamicFormDatetimeInput
+    TsDynamicFormDatetimeInput,
   },
   props: ['schema', 'value'],
-  data () {
+  data() {
     return {
-      formData: this.value || {}
+      formData: this.value || {},
     }
   },
   methods: {
-    updateForm (fieldName, value) {
+    updateForm(fieldName, value) {
       this.$set(this.formData, fieldName, value)
       this.$emit('input', this.formData)
     },
-    submitForm () {
+    submitForm() {
       this.$emit('formSubmitted')
-    }
-  }
+    },
+  },
 }
 </script>

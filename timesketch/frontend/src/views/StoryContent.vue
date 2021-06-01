@@ -15,7 +15,6 @@ limitations under the License.
 -->
 <template>
   <div>
-
     <ts-navbar-main>
       <template v-slot:left>
         {{ sketch.name }}
@@ -28,26 +27,40 @@ limitations under the License.
       <div class="container is-fluid">
         <div class="card">
           <div class="card-content" style="padding:50px;">
-
             <div class="markdown-body ts-markdown-body-color" style="margin-bottom:20px;padding-left:10px">
               <h1>{{ title }}</h1>
             </div>
 
             <div v-for="(obj, index) in blocks" :key="index">
-
-              <div v-if="!obj.componentName" @mouseover="obj.isActive = true" @mouseleave="obj.isActive = false" v-bind:class="{ activeBlock: obj.isActive }" class="inactiveBlock" style="padding-left:10px;margin-top:10px;margin-bottom: 10px;">
-
+              <div
+                v-if="!obj.componentName"
+                @mouseover="obj.isActive = true"
+                @mouseleave="obj.isActive = false"
+                v-bind:class="{ activeBlock: obj.isActive }"
+                class="inactiveBlock"
+                style="padding-left:10px;margin-top:10px;margin-bottom: 10px;"
+              >
                 <span v-if="obj.isActive" style="float:right;">
                   <button class="delete" v-on:click="deleteBlock(index)"></button>
                 </span>
 
                 <div class="columns" v-if="obj.edit" style="margin-bottom:0;">
                   <div class="column">
-                    <textarea class="textarea" style="height: 100%;" :value="obj.content" @input="update($event, obj)" placeholder="Your story starts here.."></textarea>
+                    <textarea
+                      class="textarea"
+                      style="height: 100%;"
+                      :value="obj.content"
+                      @input="update($event, obj)"
+                      placeholder="Your story starts here.."
+                    ></textarea>
                   </div>
                   <transition name="fade">
                     <div class="column" v-if="obj.content">
-                      <div v-html="toHtml(obj.content)" class="markdown-body" style="max-height: 600px;overflow: auto;"></div>
+                      <div
+                        v-html="toHtml(obj.content)"
+                        class="markdown-body"
+                        style="max-height: 600px;overflow: auto;"
+                      ></div>
                     </div>
                   </transition>
                 </div>
@@ -59,14 +72,26 @@ limitations under the License.
                     </button>
                   </p>
                 </div>
-                <div v-on:dblclick="obj.edit = !obj.edit" class="markdown-body" v-if="!obj.edit" v-html="toHtml(obj.content)"></div>
+                <div
+                  v-on:dblclick="obj.edit = !obj.edit"
+                  class="markdown-body"
+                  v-if="!obj.edit"
+                  v-html="toHtml(obj.content)"
+                ></div>
               </div>
 
-              <div style="margin-top:10px;margin-bottom: 10px;" v-if="obj.componentName" @mouseover="obj.isActive = true" @mouseleave="obj.isActive = false">
+              <div
+                style="margin-top:10px;margin-bottom: 10px;"
+                v-if="obj.componentName"
+                @mouseover="obj.isActive = true"
+                @mouseleave="obj.isActive = false"
+              >
                 <article class="message">
                   <div class="message-header">
                     <p v-if="obj.componentName === 'TsViewEventList'">
-                      <router-link :to="{ name: 'Explore', query: {view: obj.componentProps.view.id}}"><strong>{{ obj.componentProps.view.name }}</strong></router-link>
+                      <router-link :to="{ name: 'Explore', query: { view: obj.componentProps.view.id } }"
+                        ><strong>{{ obj.componentProps.view.name }}</strong></router-link
+                      >
                     </p>
                     <p v-if="obj.componentName === 'TsAggregationCompact'">
                       {{ obj.componentProps.aggregation.name }}
@@ -84,27 +109,35 @@ limitations under the License.
 
               <div style="min-height:40px;" @mouseover="obj.showPanel = true" @mouseleave="obj.showPanel = false">
                 <div v-if="index === blocks.length - 1" style="padding-top:20px;"></div>
-                  <div v-if="index === blocks.length - 1 || obj.showPanel || obj.isActive" class="field is-grouped">
-                    <p class="control">
-                      <button class="button is-rounded" v-on:click="addBlock(index)">
-                        + Text
-                      </button>
-                    </p>
-                    <p class="control" v-if="meta.views.length">
-                      <ts-view-list-dropdown @setActiveView="addViewComponent($event, index)" :is-simple="true" :is-last="index === blocks.length - 1" :title="'+ Saved search'"></ts-view-list-dropdown>
-                    </p>
-                    <p class="control" v-if="allAggregations">
-                      <ts-aggregation-list-dropdown @addAggregation="addAggregationComponent($event, index)" :is-rounded="true" :is-last="index === blocks.length - 1" :aggregations="allAggregations" ></ts-aggregation-list-dropdown>
-                    </p>
-                  </div>
+                <div v-if="index === blocks.length - 1 || obj.showPanel || obj.isActive" class="field is-grouped">
+                  <p class="control">
+                    <button class="button is-rounded" v-on:click="addBlock(index)">
+                      + Text
+                    </button>
+                  </p>
+                  <p class="control" v-if="meta.views.length">
+                    <ts-view-list-dropdown
+                      @setActiveView="addViewComponent($event, index)"
+                      :is-simple="true"
+                      :is-last="index === blocks.length - 1"
+                      :title="'+ Saved search'"
+                    ></ts-view-list-dropdown>
+                  </p>
+                  <p class="control" v-if="allAggregations">
+                    <ts-aggregation-list-dropdown
+                      @addAggregation="addAggregationComponent($event, index)"
+                      :is-rounded="true"
+                      :is-last="index === blocks.length - 1"
+                      :aggregations="allAggregations"
+                    ></ts-aggregation-list-dropdown>
+                  </p>
+                </div>
               </div>
-
             </div>
           </div>
         </div>
       </div>
     </section>
-
   </div>
 </template>
 
@@ -125,39 +158,45 @@ const defaultBlock = () => {
     content: '',
     edit: true,
     showPanel: false,
-    isActive: false
+    isActive: false,
   }
 }
 
 export default {
-  components: { TsAggregationListDropdown, TsAggregationCompact, TsAggregationGroupCompact, TsViewListDropdown, TsViewEventList },
+  components: {
+    TsAggregationListDropdown,
+    TsAggregationCompact,
+    TsAggregationGroupCompact,
+    TsViewListDropdown,
+    TsViewEventList,
+  },
   props: ['sketchId', 'storyId'],
-  data () {
+  data() {
     return {
       blocks: [],
       title: '',
       aggregations: [],
-      aggregationGroups: []
+      aggregationGroups: [],
     }
   },
   methods: {
-    update: _.debounce(function (e, obj) {
+    update: _.debounce(function(e, obj) {
       obj.content = e.target.value
       this.save()
     }, 300),
-    addBlock (index) {
+    addBlock(index) {
       let newIndex = index + 1
       let newBlock = defaultBlock()
       this.blocks.splice(newIndex, 0, newBlock)
     },
-    deleteBlock (index) {
+    deleteBlock(index) {
       this.blocks.splice(index, 1)
       if (!this.blocks.length) {
         this.blocks = [defaultBlock()]
       }
       this.save()
     },
-    addAggregationComponent (event, index) {
+    addAggregationComponent(event, index) {
       let newIndex = index + 1
       let newBlock = defaultBlock()
       // If object has an agg_ids key it is an aggregation group.
@@ -171,7 +210,7 @@ export default {
       this.blocks.splice(newIndex, 0, newBlock)
       this.save()
     },
-    addViewComponent (event, index) {
+    addViewComponent(event, index) {
       this.showPanel = false
       let newIndex = index + 1
       let newBlock = defaultBlock()
@@ -180,67 +219,72 @@ export default {
       this.blocks.splice(newIndex, 0, newBlock)
       this.save()
     },
-    hideBlock (block) {
+    hideBlock(block) {
       block.edit = !block.edit
     },
-    saveAndHide (block) {
+    saveAndHide(block) {
       this.hideBlock(block)
       this.save()
     },
-    save () {
-      this.blocks.forEach(function (block) {
+    save() {
+      this.blocks.forEach(function(block) {
         block.showPanel = false
         block.isActive = false
       })
       let content = JSON.stringify(this.blocks)
       ApiClient.updateStory(this.title, content, this.sketchId, this.storyId)
-        .then((response) => {
-        }).catch((e) => {})
+        .then(response => {})
+        .catch(e => {})
     },
-    toHtml (markdown) {
+    toHtml(markdown) {
       return marked(markdown, { sanitize: false })
-    }
+    },
   },
   computed: {
-    sketch () {
+    sketch() {
       return this.$store.state.sketch
     },
-    meta () {
+    meta() {
       return this.$store.state.meta
     },
-    allAggregations () {
+    allAggregations() {
       const concat = (...arrays) => [].concat(...arrays.filter(Array.isArray))
       return concat(this.aggregations, this.aggregationGroups)
-    }
+    },
   },
-  created: function () {
-    ApiClient.getStory(this.sketchId, this.storyId).then((response) => {
-      this.title = response.data.objects[0].title
-      let content = response.data.objects[0].content
-      if (content === '[]') {
-        this.blocks = [defaultBlock()]
-      } else {
-        this.blocks = JSON.parse(content)
-      }
-    }).catch((e) => {
-      console.error(e)
-    })
-    ApiClient.getAggregations(this.sketchId).then((response) => {
-      this.aggregations = response.data.objects[0]
-    }).catch((e) => {
-      console.error(e)
-    })
-    ApiClient.getAggregationGroups(this.sketchId).then((response) => {
-      this.aggregationGroups = response.data.objects
-    }).catch((e) => {
-      console.error(e)
-    })
-  }
+  created: function() {
+    ApiClient.getStory(this.sketchId, this.storyId)
+      .then(response => {
+        this.title = response.data.objects[0].title
+        let content = response.data.objects[0].content
+        if (content === '[]') {
+          this.blocks = [defaultBlock()]
+        } else {
+          this.blocks = JSON.parse(content)
+        }
+      })
+      .catch(e => {
+        console.error(e)
+      })
+    ApiClient.getAggregations(this.sketchId)
+      .then(response => {
+        this.aggregations = response.data.objects[0]
+      })
+      .catch(e => {
+        console.error(e)
+      })
+    ApiClient.getAggregationGroups(this.sketchId)
+      .then(response => {
+        this.aggregationGroups = response.data.objects
+      })
+      .catch(e => {
+        console.error(e)
+      })
+  },
 }
 </script>
 
 <style lang="scss">
-
 .inactiveBlock {
   border-left: 1px solid transparent;
 }
@@ -250,10 +294,12 @@ export default {
 }
 
 // Transition animation
-.fade-enter-active, .fade-leave-active {
-  transition: opacity .5s;
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.5s;
 }
-.fade-enter, .fade-leave-to {
+.fade-enter,
+.fade-leave-to {
   opacity: 0;
 }
 
@@ -262,7 +308,8 @@ export default {
   -ms-text-size-adjust: 100%;
   -webkit-text-size-adjust: 100%;
   line-height: 1.5;
-  font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol;
+  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji,
+    Segoe UI Emoji, Segoe UI Symbol;
   font-size: 16px;
   line-height: 1.5;
   word-wrap: break-word;
@@ -293,7 +340,7 @@ export default {
 
 .markdown-body h1 {
   font-size: 2em;
-  margin: .67em 0;
+  margin: 0.67em 0;
 }
 
 .markdown-body img {
@@ -303,7 +350,7 @@ export default {
 .markdown-body code,
 .markdown-body kbd,
 .markdown-body pre {
-  font-family: monospace,monospace;
+  font-family: monospace, monospace;
   font-size: 1em;
 }
 
@@ -322,7 +369,7 @@ export default {
   overflow: visible;
 }
 
-.markdown-body [type=checkbox] {
+.markdown-body [type='checkbox'] {
   box-sizing: border-box;
   padding: 0;
 }
@@ -360,13 +407,13 @@ export default {
 }
 
 .markdown-body hr:before {
-  content: "";
+  content: '';
   display: table;
 }
 
 .markdown-body hr:after {
   clear: both;
-  content: "";
+  content: '';
   display: table;
 }
 
@@ -467,7 +514,7 @@ export default {
 
 .markdown-body code,
 .markdown-body pre {
-  font-family: SFMono-Regular,Consolas,Liberation Mono,Menlo,Courier,monospace;
+  font-family: SFMono-Regular, Consolas, Liberation Mono, Menlo, Courier, monospace;
   font-size: 12px;
 }
 
@@ -484,22 +531,22 @@ export default {
 }
 
 .markdown-body:before {
-  content: "";
+  content: '';
   display: table;
 }
 
 .markdown-body:after {
   clear: both;
-  content: "";
+  content: '';
   display: table;
 }
 
-.markdown-body>:first-child {
-  margin-top: 0!important;
+.markdown-body > :first-child {
+  margin-top: 0 !important;
 }
 
-.markdown-body>:last-child {
-  margin-bottom: 0!important;
+.markdown-body > :last-child {
+  margin-bottom: 0 !important;
 }
 
 .markdown-body a:not([href]) {
@@ -521,22 +568,22 @@ export default {
 .markdown-body hr {
   background-color: #e1e4e8;
   border: 0;
-  height: .25em;
+  height: 0.25em;
   margin: 24px 0;
   padding: 0;
 }
 
 .markdown-body blockquote {
-  border-left: .25em solid #dfe2e5;
+  border-left: 0.25em solid #dfe2e5;
   color: #6a737d;
   padding: 0 1em;
 }
 
-.markdown-body blockquote>:first-child {
+.markdown-body blockquote > :first-child {
   margin-top: 0;
 }
 
-.markdown-body blockquote>:last-child {
+.markdown-body blockquote > :last-child {
   margin-bottom: 0;
 }
 
@@ -572,7 +619,7 @@ export default {
 
 .markdown-body h1,
 .markdown-body h2 {
-  padding-bottom: .3em;
+  padding-bottom: 0.3em;
 }
 
 .markdown-body h2 {
@@ -588,12 +635,12 @@ export default {
 }
 
 .markdown-body h5 {
-  font-size: .875em;
+  font-size: 0.875em;
 }
 
 .markdown-body h6 {
   color: #6a737d;
-  font-size: .85em;
+  font-size: 0.85em;
 }
 
 .markdown-body ol,
@@ -613,12 +660,12 @@ export default {
   word-wrap: break-all;
 }
 
-.markdown-body li>p {
+.markdown-body li > p {
   margin-top: 16px;
 }
 
-.markdown-body li+li {
-  margin-top: .25em;
+.markdown-body li + li {
+  margin-top: 0.25em;
 }
 
 .markdown-body dl {
@@ -669,27 +716,27 @@ export default {
   max-width: 100%;
 }
 
-.markdown-body img[align=right] {
+.markdown-body img[align='right'] {
   padding-left: 20px;
 }
 
-.markdown-body img[align=left] {
+.markdown-body img[align='left'] {
   padding-right: 20px;
 }
 
 .markdown-body code {
-  background-color: rgba(27,31,35,.05);
+  background-color: rgba(27, 31, 35, 0.05);
   border-radius: 3px;
   font-size: 85%;
   margin: 0;
-  padding: .2em .4em;
+  padding: 0.2em 0.4em;
 }
 
 .markdown-body pre {
   word-wrap: normal;
 }
 
-.markdown-body pre>code {
+.markdown-body pre > code {
   background: transparent;
   border: 0;
   font-size: 100%;
@@ -728,7 +775,7 @@ export default {
   box-shadow: inset 0 -1px 0 #c6cbd1;
   color: #444d56;
   display: inline-block;
-  font: 11px SFMono-Regular,Consolas,Liberation Mono,Menlo,Courier,monospace;
+  font: 11px SFMono-Regular, Consolas, Liberation Mono, Menlo, Courier, monospace;
   line-height: 10px;
   padding: 3px 5px;
   vertical-align: middle;
@@ -737,5 +784,4 @@ export default {
 .markdown-body hr {
   border-bottom-color: #eee;
 }
-
 </style>

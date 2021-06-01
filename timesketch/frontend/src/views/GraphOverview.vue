@@ -15,7 +15,6 @@ limitations under the License.
 -->
 <template>
   <div>
-
     <ts-navbar-main>
       <template v-slot:left>
         {{ sketch.name }}
@@ -31,7 +30,7 @@ limitations under the License.
             <div v-if="sketch.graphs.length">
               <span class="title is-6 is-uppercase">Saved graphs</span>
               <ts-graph-list></ts-graph-list>
-              <br><br>
+              <br /><br />
             </div>
             <span class="title is-6 is-uppercase">Graph plugins</span>
             <ts-graph-plugin-list></ts-graph-plugin-list>
@@ -39,7 +38,6 @@ limitations under the License.
         </div>
       </div>
     </section>
-
   </div>
 </template>
 
@@ -51,9 +49,9 @@ export default {
   props: ['sketchId'],
   components: { TsGraphList, TsGraphPluginList },
   computed: {
-    sketch () {
+    sketch() {
       return this.$store.state.sketch
-    }
-  }
+    },
+  },
 }
 </script>
