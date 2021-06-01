@@ -16,16 +16,19 @@ limitations under the License.
 <template>
   <div class="field" v-if="display">
     <label class="label">{{ label }}</label>
-    <input class="input" style="max-width: 400px;"
-           type="text"
-           :name="name"
-           :value="value"
-           :placeholder="placeholder"
-           @input="$emit('input', $event.target.value)">
+    <input
+      class="input"
+      style="max-width: 400px;"
+      type="text"
+      :name="name"
+      :value="value"
+      :placeholder="placeholder"
+      @input="$emit('input', $event.target.value)"
+    />
   </div>
 </template>
 <script>
 export default {
-  props: ['placeholder', 'label', 'name', 'value', 'display']
+  props: ['placeholder', 'label', 'name', 'value', 'display'],
 }
 </script>

@@ -28,31 +28,32 @@ import TsVegaLiteChart from './VegaLiteChart'
 export default {
   props: ['aggregation_group'],
   components: { TsVegaLiteChart },
-  data () {
+  data() {
     return {
       vegaSpec: {},
-      title: ''
+      title: '',
     }
   },
   computed: {
-    sketch () {
+    sketch() {
       return this.$store.state.sketch
-    }
+    },
   },
   methods: {
-    getVegaSpec: function () {
-      ApiClient.runAggregatorGroup(this.sketch.id, this.aggregation_group.id).then((response) => {
-        let spec = response.data.meta.vega_spec
-        spec.config.view.width = this.$refs.vegaChart.offsetWidth - 50
-        spec.config.autosize = { type: 'fit', contains: 'padding' }
-        this.vegaSpec = JSON.stringify(spec)
-        this.title = response.data.meta.vega_chart_title
-      }).catch((e) => {})
-    }
+    getVegaSpec: function() {
+      ApiClient.runAggregatorGroup(this.sketch.id, this.aggregation_group.id)
+        .then(response => {
+          let spec = response.data.meta.vega_spec
+          spec.config.view.width = this.$refs.vegaChart.offsetWidth - 50
+          spec.config.autosize = { type: 'fit', contains: 'padding' }
+          this.vegaSpec = JSON.stringify(spec)
+          this.title = response.data.meta.vega_chart_title
+        })
+        .catch(e => {})
+    },
   },
-  mounted: function () {
+  mounted: function() {
     this.getVegaSpec()
-  }
-
+  },
 }
 </script>

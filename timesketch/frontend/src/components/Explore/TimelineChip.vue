@@ -15,25 +15,27 @@ limitations under the License.
 -->
 <template>
   <div class="tag is-medium has-text-left" style="background-color: #f5f5f5; padding-left: 5px;">
-    <div style="width: 20px; height: 20px; border-radius: 6px; margin-right: 10px;" v-bind:style="timelineColorStyle"></div>
+    <div
+      style="width: 20px; height: 20px; border-radius: 6px; margin-right: 10px;"
+      v-bind:style="timelineColorStyle"
+    ></div>
     <div style="font-weight: normal;">{{ timeline.name }}</div>
   </div>
 </template>
 
 <script>
-
 export default {
   props: ['timeline'],
   computed: {
-    timelineColorStyle () {
+    timelineColorStyle() {
       let backgroundColor = this.timeline.color
       if (!backgroundColor.startsWith('#')) {
         backgroundColor = '#' + backgroundColor
       }
       return {
-        'background-color': backgroundColor
+        'background-color': backgroundColor,
       }
-    }
-  }
+    },
+  },
 }
 </script>

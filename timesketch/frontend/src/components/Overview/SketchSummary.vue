@@ -15,8 +15,20 @@ limitations under the License.
 -->
 <template>
   <div>
-    <div style="font-size: var(--font-size-title); margin-bottom:10px;" :contenteditable="meta.permissions.write" v-text="sketch.name" @blur="onEditTitle" @keydown.enter.prevent="onEditTitle"></div>
-    <p style="max-width:75ch;" :contenteditable="meta.permissions.write" v-text="sketch.description" @blur="onEditDescription" @keydown.enter.prevent="onEditDescription"></p>
+    <div
+      style="font-size: var(--font-size-title); margin-bottom:10px;"
+      :contenteditable="meta.permissions.write"
+      v-text="sketch.name"
+      @blur="onEditTitle"
+      @keydown.enter.prevent="onEditTitle"
+    ></div>
+    <p
+      style="max-width:75ch;"
+      :contenteditable="meta.permissions.write"
+      v-text="sketch.description"
+      @blur="onEditDescription"
+      @keydown.enter.prevent="onEditDescription"
+    ></p>
   </div>
 </template>
 
@@ -25,27 +37,29 @@ import ApiClient from '../../utils/RestApiClient'
 
 export default {
   computed: {
-    sketch () {
+    sketch() {
       return this.$store.state.sketch
     },
-    meta () {
+    meta() {
       return this.$store.state.meta
-    }
+    },
   },
   methods: {
-    onEditTitle (e) {
+    onEditTitle(e) {
       this.sketch.name = e.target.innerText
       this.saveSketchSummary()
     },
-    onEditDescription (e) {
+    onEditDescription(e) {
       this.sketch.description = e.target.innerText
       this.saveSketchSummary()
     },
-    saveSketchSummary () {
-      ApiClient.saveSketchSummary(this.sketch.id, this.sketch.name, this.sketch.description).then((response) => {}).catch((e) => {
-        console.error(e)
-      })
-    }
-  }
+    saveSketchSummary() {
+      ApiClient.saveSketchSummary(this.sketch.id, this.sketch.name, this.sketch.description)
+        .then(response => {})
+        .catch(e => {
+          console.error(e)
+        })
+    },
+  },
 }
 </script>
