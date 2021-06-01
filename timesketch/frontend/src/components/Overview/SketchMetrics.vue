@@ -18,19 +18,19 @@ limitations under the License.
     <div class="level-item has-text-centered">
       <div>
         <p class="heading">Timelines</p>
-        <p class="title">{{ timelines && timelines.length ? timelines.length: 0 }}</p>
+        <p class="title">{{ timelines && timelines.length ? timelines.length : 0 }}</p>
       </div>
     </div>
     <div class="level-item has-text-centered">
       <div>
         <p class="heading">Views</p>
-        <p class="title">{{ views && views.length ? views.length: 0  }}</p>
+        <p class="title">{{ views && views.length ? views.length : 0 }}</p>
       </div>
     </div>
     <div class="level-item has-text-centered">
       <div>
         <p class="heading">Stories</p>
-        <p class="title">{{ views && stories.length ? stories.length: 0  }}</p>
+        <p class="title">{{ views && stories.length ? stories.length : 0 }}</p>
       </div>
     </div>
     <div class="level-item has-text-centered">
@@ -44,6 +44,6 @@ limitations under the License.
 
 <script>
 export default {
-  props: ['timelines', 'views', 'stories', 'count']
+  props: ['timelines', 'views', 'stories', 'count'],
 }
 </script>

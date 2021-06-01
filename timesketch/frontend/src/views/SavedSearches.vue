@@ -15,7 +15,6 @@ limitations under the License.
 -->
 <template>
   <div>
-
     <ts-navbar-main>
       <template v-slot:left>
         {{ sketch.name }}
@@ -45,12 +44,12 @@ import TsViewList from '../components/Common/ViewList'
 export default {
   components: { TsViewList },
   computed: {
-    sketch () {
+    sketch() {
       return this.$store.state.sketch
     },
-    meta () {
+    meta() {
       return this.$store.state.meta
-    }
-  }
+    },
+  },
 }
 </script>
