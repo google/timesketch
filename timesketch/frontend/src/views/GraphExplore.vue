@@ -15,7 +15,6 @@ limitations under the License.
 -->
 <template>
   <div>
-
     <ts-navbar-main>
       <template v-slot:left>
         {{ sketch.name }}
@@ -35,9 +34,9 @@ export default {
   components: { TsGraph },
   props: ['sketchId'],
   computed: {
-    sketch () {
+    sketch() {
       return this.$store.state.sketch
-    }
-  }
+    },
+  },
 }
 </script>

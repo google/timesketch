@@ -47,8 +47,8 @@ def bad_request(message):
 
 
 def get_sketch_attributes(sketch):
-    """Returns a list of attributes of a sketch."""
-    attributes = []
+    """Returns a dict with all attributes of a sketch."""
+    attributes = {}
     ontology_def = ontology.ONTOLOGY
     for attribute in sketch.attributes:
         if attribute.sketch_id != sketch.id:
@@ -61,18 +61,23 @@ def get_sketch_attributes(sketch):
 
         for attr_value in attribute.values:
             try:
-                value = ontology.cast_variable(attr_value.value, cast_as_str)
-            except TypeError:
+                value = ontology.OntologyManager.decode_value(
+                    attr_value.value, cast_as_str)
+            except ValueError:
                 value = 'Unable to cast'
+            except NotImplementedError:
+                value = f'Ontology {cast_as_str} not yet defined.'
 
             attribute_values.append(value)
 
+        values = attribute_values
         if len(attribute_values) == 1:
-            attributes.append(
-                (name, attribute_values[0], ontology_string))
-        else:
-            attributes.append(
-                (name, attribute_values, ontology_string))
+            values = attribute_values[0]
+
+        attributes[name] = {
+          'value': values,
+          'ontology': ontology_string,
+        }
     return attributes
 
 

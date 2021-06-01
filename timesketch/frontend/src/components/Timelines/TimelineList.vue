@@ -16,7 +16,13 @@ limitations under the License.
 <template>
   <ul class="content-list">
     <li style="padding:10px;" v-for="timeline in timelineList" :key="timeline.id">
-      <ts-timeline-list-item :timeline="timeline" :controls="controls" :is-compact="isCompact" @remove="remove(timeline)" @save="save(timeline)"></ts-timeline-list-item>
+      <ts-timeline-list-item
+        :timeline="timeline"
+        :controls="controls"
+        :is-compact="isCompact"
+        @remove="remove(timeline)"
+        @save="save(timeline)"
+      ></ts-timeline-list-item>
     </li>
   </ul>
 </template>
@@ -29,36 +35,40 @@ export default {
   components: { TsTimelineListItem },
   props: ['timelines', 'controls', 'isCompact'],
   computed: {
-    sketch () {
+    sketch() {
       return this.$store.state.sketch
     },
-    meta () {
+    meta() {
       return this.$store.state.meta
     },
-    timelineList () {
+    timelineList() {
       let timelines = [...this.timelines]
       if (this.isCompact && this.timelines.length > 9) {
         return timelines.reverse().slice(0, 10)
       } else {
         return timelines.reverse()
       }
-    }
+    },
   },
   methods: {
-    remove (timeline) {
-      ApiClient.deleteSketchTimeline(this.sketch.id, timeline.id).then((response) => {
-        this.$store.dispatch('updateSketch', this.sketch.id)
-      }).catch((e) => {
-        console.error(e)
-      })
+    remove(timeline) {
+      ApiClient.deleteSketchTimeline(this.sketch.id, timeline.id)
+        .then(response => {
+          this.$store.dispatch('updateSketch', this.sketch.id)
+        })
+        .catch(e => {
+          console.error(e)
+        })
     },
-    save (timeline) {
-      ApiClient.saveSketchTimeline(this.sketch.id, timeline.id, timeline.name, timeline.description, timeline.color).then((response) => {
-        this.$store.dispatch('updateSketch', this.sketch.id)
-      }).catch((e) => {
-        console.error(e)
-      })
-    }
-  }
+    save(timeline) {
+      ApiClient.saveSketchTimeline(this.sketch.id, timeline.id, timeline.name, timeline.description, timeline.color)
+        .then(response => {
+          this.$store.dispatch('updateSketch', this.sketch.id)
+        })
+        .catch(e => {
+          console.error(e)
+        })
+    },
+  },
 }
 </script>

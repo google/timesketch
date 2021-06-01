@@ -18,12 +18,12 @@ limitations under the License.
     <div class="field">
       <label class="label">Title</label>
       <div class="control">
-        <input v-model="title" class="input" type="text" required placeholder="Title of your story" autofocus>
+        <input v-model="title" class="input" type="text" required placeholder="Title of your story" autofocus />
       </div>
     </div>
     <div class="field">
       <div class="control">
-        <input class="button is-success" type="submit" value="Create">
+        <input class="button is-success" type="submit" value="Create" />
       </div>
     </div>
   </form>
@@ -33,32 +33,34 @@ limitations under the License.
 import ApiClient from '../../utils/RestApiClient'
 
 export default {
-  data () {
+  data() {
     return {
-      title: ''
+      title: '',
     }
   },
   methods: {
-    clearFormData: function () {
+    clearFormData: function() {
       this.title = ''
     },
-    submitForm: function () {
+    submitForm: function() {
       let content = ''
-      ApiClient.createStory(this.title, content, this.sketch.id).then((response) => {
-        let newStoryId = response.data.objects[0].id
-        this.clearFormData()
-        this.$router.push({ name: 'StoryContent', params: { storyId: newStoryId } })
-        this.$store.dispatch('updateSketch', this.sketch.id)
-      }).catch((e) => {})
-    }
+      ApiClient.createStory(this.title, content, this.sketch.id)
+        .then(response => {
+          let newStoryId = response.data.objects[0].id
+          this.clearFormData()
+          this.$router.push({ name: 'StoryContent', params: { storyId: newStoryId } })
+          this.$store.dispatch('updateSketch', this.sketch.id)
+        })
+        .catch(e => {})
+    },
   },
   computed: {
-    sketch () {
+    sketch() {
       return this.$store.state.sketch
     },
-    meta () {
+    meta() {
       return this.$store.state.meta
-    }
-  }
+    },
+  },
 }
 </script>

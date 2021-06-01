@@ -15,11 +15,15 @@ limitations under the License.
 -->
 <template>
   <div>
-    <router-link :to="{ name: 'GraphExplore', query: {plugin: graph.name}}" v-for="graph in graphs" :key="graph.name">
+    <router-link
+      :to="{ name: 'GraphExplore', query: { plugin: graph.name } }"
+      v-for="graph in graphs"
+      :key="graph.name"
+    >
       <ul class="content-list">
         <li style="padding:10px;border-bottom:none;cursor:pointer;">
           <strong style="color: var(--default-font-color)">{{ graph.display_name }}</strong>
-          <br>
+          <br />
           <span>{{ graph.description }}</span>
         </li>
       </ul>
@@ -31,26 +35,28 @@ limitations under the License.
 import ApiClient from '../../utils/RestApiClient'
 
 export default {
-  data () {
+  data() {
     return {
-      graphs: []
+      graphs: [],
     }
   },
   computed: {
-    sketch () {
+    sketch() {
       return this.$store.state.sketch
     },
-    meta () {
+    meta() {
       return this.$store.state.meta
-    }
+    },
   },
-  created () {
-    ApiClient.getGraphPluginList().then((response) => {
-      this.graphs = response.data
-    }).catch((e) => {
-      console.error(e)
-    })
-  }
+  created() {
+    ApiClient.getGraphPluginList()
+      .then(response => {
+        this.graphs = response.data
+      })
+      .catch(e => {
+        console.error(e)
+      })
+  },
 }
 </script>
 

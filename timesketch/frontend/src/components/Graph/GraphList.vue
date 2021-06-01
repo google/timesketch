@@ -15,12 +15,12 @@ limitations under the License.
 -->
 <template>
   <div>
-    <router-link :to="{ name: 'GraphExplore', query: {graph: graph.id}}" v-for="graph in graphs" :key="graph.id">
+    <router-link :to="{ name: 'GraphExplore', query: { graph: graph.id } }" v-for="graph in graphs" :key="graph.id">
       <ul class="content-list">
         <li style="padding:10px;border-bottom:none;cursor:pointer;">
           <strong style="color: var(--default-font-color)">{{ graph.name }}</strong>
-          <br>
-          <span>Created: {{ graph.created_at | moment("YYYY-MM-DD HH:mm") }}</span>
+          <br />
+          <span>Created: {{ graph.created_at | moment('YYYY-MM-DD HH:mm') }}</span>
         </li>
       </ul>
     </router-link>
@@ -31,29 +31,31 @@ limitations under the License.
 import ApiClient from '../../utils/RestApiClient'
 
 export default {
-  data () {
+  data() {
     return {
-      graphs: []
+      graphs: [],
     }
   },
   computed: {
-    sketch () {
+    sketch() {
       return this.$store.state.sketch
     },
-    meta () {
+    meta() {
       return this.$store.state.meta
-    }
+    },
   },
-  created () {
-    ApiClient.getSavedGraphList(this.sketch.id).then((response) => {
-      let graphs = response.data['objects'][0]
-      if (graphs !== undefined) {
-        this.graphs = response.data['objects'][0]
-      }
-    }).catch((e) => {
-      console.error(e)
-    })
-  }
+  created() {
+    ApiClient.getSavedGraphList(this.sketch.id)
+      .then(response => {
+        let graphs = response.data['objects'][0]
+        if (graphs !== undefined) {
+          this.graphs = response.data['objects'][0]
+        }
+      })
+      .catch(e => {
+        console.error(e)
+      })
+  },
 }
 </script>
 
