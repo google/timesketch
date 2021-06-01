@@ -28,6 +28,7 @@ from .resources.analysis import AnalyzerSessionResource
 from .resources.attribute import AttributeResource
 from .resources.explore import ExploreResource
 from .resources.explore import SearchHistoryResource
+from .resources.data import DataFinderResource
 from .resources.datasource import DataSourceResource
 from .resources.datasource import DataSourceListResource
 from .resources.event import EventResource
@@ -121,4 +122,5 @@ API_ROUTES = [
     (GraphCacheResource, '/sketches/<int:sketch_id>/graph/'),
     (DataSourceListResource, '/sketches/<int:sketch_id>/datasource/'),
     (DataSourceResource, '/sketches/<int:sketch_id>/datasource/<int:datasource_id>/'),
+    (DataFinderResource, '/sketches/<int:sketch_id>/data/find/'),
 ]
