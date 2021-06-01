@@ -17,21 +17,10 @@ limitations under the License.
   <div>
     <b-dropdown aria-role="list">
       <template #trigger="{ active }">
-        <b-button style="width:215.5px;"
-          :label="label"
-          :icon-right="active ? 'chevron-up' : 'chevron-down'" />
+        <b-button style="width:215.5px;" :label="label" :icon-right="active ? 'chevron-up' : 'chevron-down'" />
       </template>
-      <b-dropdown-item
-        aria-role="menu-item"
-        :focusable="false"
-        custom
-        paddingless>
-        <b-table
-          :data="timelines"
-          :columns="timelineColumns"
-          :checked-rows.sync="selected"
-          checkable>
-        </b-table>
+      <b-dropdown-item aria-role="menu-item" :focusable="false" custom paddingless>
+        <b-table :data="timelines" :columns="timelineColumns" :checked-rows.sync="selected" checkable> </b-table>
       </b-dropdown-item>
     </b-dropdown>
   </div>
@@ -40,24 +29,24 @@ limitations under the License.
 <script>
 export default {
   props: [],
-  data () {
+  data() {
     return {
       selected: [],
       timelineColumns: [
         {
-          field: 'name'
-        }
-      ]
+          field: 'name',
+        },
+      ],
     }
   },
   computed: {
-    sketch () {
+    sketch() {
       return this.$store.state.sketch
     },
-    meta () {
+    meta() {
       return this.$store.state.meta
     },
-    timelines () {
+    timelines() {
       let timelines = []
       this.sketch.active_timelines.forEach(timeline => {
         let timelineId = timeline.id
@@ -67,24 +56,27 @@ export default {
           timelineId = timeline.searchindex.index_name
         }
         timelines.push({
-          'id': timelineId,
-          'name': timeline.name
+          id: timelineId,
+          name: timeline.name,
         })
       })
       return timelines
     },
-    label () {
+    label() {
       let label = 'Select individual timelines'
       if (this.selected.length) {
         label = 'Selected timelines (' + this.selected.length + '/' + this.timelines.length + ')'
       }
       return label
-    }
+    },
   },
   watch: {
-    selected (val) {
-      this.$emit('selectedTimelines', val.map(timeline => timeline.id))
-    }
-  }
+    selected(val) {
+      this.$emit(
+        'selectedTimelines',
+        val.map(timeline => timeline.id)
+      )
+    },
+  },
 }
 </script>

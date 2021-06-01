@@ -14,50 +14,54 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-    <section class="section" style="background-color:var(--navbar-background);padding:0;border-bottom: 1px solid var(--navbar-border-color);">
-        <div class="container is-fluid">
-
-          <nav class="navbar" role="navigation" aria-label="main navigation">
-            <div class="navbar-brand">
-              <router-link class="navbar-item" to="/">
-                <div class="logo" style="margin-top:7px;">
-                  <img src="/dist/timesketch-color.png">
-                </div>
-                <span style="color: var(--default-title-font-color); margin-left: 7px; margin-top: 1px; font-size: var(--font-size-title);">time<b>sketch</b></span>
-              </router-link>
+  <section
+    class="section"
+    style="background-color:var(--navbar-background);padding:0;border-bottom: 1px solid var(--navbar-border-color);"
+  >
+    <div class="container is-fluid">
+      <nav class="navbar" role="navigation" aria-label="main navigation">
+        <div class="navbar-brand">
+          <router-link class="navbar-item" to="/">
+            <div class="logo" style="margin-top:7px;">
+              <img src="/dist/timesketch-color.png" />
             </div>
-
-            <div class="navbar-item" style="margin-left: 20px; margin-top:5px; font-size: var(--font-size-large);">
-              <slot name="left"></slot>
-            </div>
-
-            <div class="navbar-item navbar-center">
-              <slot name="center"></slot>
-            </div>
-
-            <div class="navbar-end" style="margin-right:-10px;">
-              <div class="navbar-item">
-                <b-switch
-                  v-model="isDarkTheme"
-                  v-on:input="switchTheme"
-                  size="is-small"
-                  passive-type='is-dark'
-                  type='is-dark'>
-                  Dark Mode
-                </b-switch>
-              </div>
-              <div class="navbar-item">
-                {{ currentUser }}
-              </div>
-              <div class="navbar-item">
-                <a href="/logout">Logout</a>
-              </div>
-            </div>
-          </nav>
-
+            <span
+              style="color: var(--default-title-font-color); margin-left: 7px; margin-top: 1px; font-size: var(--font-size-title);"
+              >time<b>sketch</b></span
+            >
+          </router-link>
         </div>
-    </section>
 
+        <div class="navbar-item" style="margin-left: 20px; margin-top:5px; font-size: var(--font-size-large);">
+          <slot name="left"></slot>
+        </div>
+
+        <div class="navbar-item navbar-center">
+          <slot name="center"></slot>
+        </div>
+
+        <div class="navbar-end" style="margin-right:-10px;">
+          <div class="navbar-item">
+            <b-switch
+              v-model="isDarkTheme"
+              v-on:input="switchTheme"
+              size="is-small"
+              passive-type="is-dark"
+              type="is-dark"
+            >
+              Dark Mode
+            </b-switch>
+          </div>
+          <div class="navbar-item">
+            {{ currentUser }}
+          </div>
+          <div class="navbar-item">
+            <a href="/logout">Logout</a>
+          </div>
+        </div>
+      </nav>
+    </div>
+  </section>
 </template>
 
 <script>
@@ -65,19 +69,19 @@ import EventBus from '../main'
 
 export default {
   name: 'ts-navbar-main',
-  data () {
+  data() {
     return {
-      isDarkTheme: null
+      isDarkTheme: null,
     }
   },
 
   computed: {
-    currentUser () {
+    currentUser() {
       return this.$store.state.currentUser
-    }
+    },
   },
   methods: {
-    switchTheme () {
+    switchTheme() {
       let element = document.body
       switch (element.dataset.theme) {
         case 'light':
@@ -93,42 +97,43 @@ export default {
           EventBus.$emit('isDarkTheme', false)
           break
       }
-    }
+    },
   },
-  created () {
+  created() {
     this.isDarkTheme = localStorage.theme === 'dark'
-  }
+  },
 }
 </script>
 
 <!-- CSS scoped to this component only -->
 <style scoped lang="scss">
-  .navbar {
-    height: 70px;
-  }
+.navbar {
+  height: 70px;
+}
 
-  .navbar-item {
-    padding-left: 0;
-  }
+.navbar-item {
+  padding-left: 0;
+}
 
-  .logo img {
-    width: 20px;
-    height: 25px;
-  }
+.logo img {
+  width: 20px;
+  height: 25px;
+}
 
-  .navbar-item img {
-    width: 20px;
-    height: 25px;
-    max-height: 25px;
-  }
+.navbar-item img {
+  width: 20px;
+  height: 25px;
+  max-height: 25px;
+}
 
-  .navbar-item.navbar-center {
-    flex-grow: 1;
-    flex-direction: column;
-    justify-content: center;
-  }
+.navbar-item.navbar-center {
+  flex-grow: 1;
+  flex-direction: column;
+  justify-content: center;
+}
 
-  .navbar > .container .navbar-brand, .container > .navbar .navbar-brand {
-    margin-left: 0;
+.navbar > .container .navbar-brand,
+.container > .navbar .navbar-brand {
+  margin-left: 0;
 }
 </style>

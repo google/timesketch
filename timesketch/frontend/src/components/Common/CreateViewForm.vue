@@ -18,12 +18,12 @@ limitations under the License.
     <div class="field">
       <label class="label">Name</label>
       <div class="control">
-        <input v-model="viewName" class="input" type="text" required placeholder="Name your view" autofocus>
+        <input v-model="viewName" class="input" type="text" required placeholder="Name your view" autofocus />
       </div>
     </div>
     <div class="field">
       <div class="control">
-        <input class="button is-success" type="submit" value="Save">
+        <input class="button is-success" type="submit" value="Save" />
       </div>
     </div>
   </form>
@@ -33,29 +33,27 @@ limitations under the License.
 import ApiClient from '../../utils/RestApiClient'
 
 export default {
-  props: [
-    'sketchId',
-    'currentQueryString',
-    'currentQueryFilter'
-  ],
-  data () {
+  props: ['sketchId', 'currentQueryString', 'currentQueryFilter'],
+  data() {
     return {
-      viewName: ''
+      viewName: '',
     }
   },
   methods: {
-    clearFormData: function () {
+    clearFormData: function() {
       this.viewName = ''
     },
-    submitForm: function () {
-      ApiClient.createView(this.sketchId, this.viewName, this.currentQueryString, this.currentQueryFilter).then((response) => {
-        let newView = response.data.objects[0]
-        this.$emit('setActiveView', newView)
-        this.$store.state.meta.views.push(newView)
-        this.clearFormData()
-        this.$router.push({ name: 'Explore', query: { view: newView.id } })
-      }).catch((e) => {})
-    }
-  }
+    submitForm: function() {
+      ApiClient.createView(this.sketchId, this.viewName, this.currentQueryString, this.currentQueryFilter)
+        .then(response => {
+          let newView = response.data.objects[0]
+          this.$emit('setActiveView', newView)
+          this.$store.state.meta.views.push(newView)
+          this.clearFormData()
+          this.$router.push({ name: 'Explore', query: { view: newView.id } })
+        })
+        .catch(e => {})
+    },
+  },
 }
 </script>

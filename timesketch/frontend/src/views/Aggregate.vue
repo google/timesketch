@@ -15,7 +15,6 @@ limitations under the License.
 -->
 <template>
   <div>
-
     <ts-navbar-main>
       <template v-slot:left>
         {{ sketch.name }}
@@ -26,7 +25,7 @@ limitations under the License.
 
     <ts-sketch-explore-aggregation @newAggregation="addAggregation($event)"></ts-sketch-explore-aggregation>
 
-    <br><br>
+    <br /><br />
 
     <section class="section" v-if="allAggregations.length">
       <div class="container is-fluid">
@@ -39,7 +38,6 @@ limitations under the License.
         <ts-aggregation-compact :aggregation="aggregation" :card-header="true"></ts-aggregation-compact>
       </div>
     </section>
-
   </div>
 </template>
 
@@ -50,40 +48,46 @@ import TsAggregationCompact from '../components/Aggregation/AggregationCompact'
 
 export default {
   components: { TsSketchExploreAggregation, TsAggregationCompact },
-  data () {
+  data() {
     return {
       aggregations: [],
-      aggregationGroups: []
+      aggregationGroups: [],
     }
   },
   computed: {
-    sketch () {
+    sketch() {
       return this.$store.state.sketch
     },
-    meta () {
+    meta() {
       return this.$store.state.meta
     },
-    allAggregations () {
+    allAggregations() {
       const concat = (...arrays) => [].concat(...arrays.filter(Array.isArray))
-      return concat(this.aggregations, this.aggregationGroups).slice().reverse()
-    }
+      return concat(this.aggregations, this.aggregationGroups)
+        .slice()
+        .reverse()
+    },
   },
   methods: {
-    addAggregation (aggregation) {
+    addAggregation(aggregation) {
       this.aggregations.push(aggregation)
-    }
+    },
   },
-  created: function () {
-    ApiClient.getAggregations(this.sketch.id).then((response) => {
-      this.aggregations = response.data.objects[0]
-    }).catch((e) => {
-      console.error(e)
-    })
-    ApiClient.getAggregationGroups(this.sketch.id).then((response) => {
-      this.aggregationGroups = response.data.objects
-    }).catch((e) => {
-      console.error(e)
-    })
-  }
+  created: function() {
+    ApiClient.getAggregations(this.sketch.id)
+      .then(response => {
+        this.aggregations = response.data.objects[0]
+      })
+      .catch(e => {
+        console.error(e)
+      })
+    ApiClient.getAggregationGroups(this.sketch.id)
+      .then(response => {
+        this.aggregationGroups = response.data.objects
+      })
+      .catch(e => {
+        console.error(e)
+      })
+  },
 }
 </script>

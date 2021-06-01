@@ -15,11 +15,27 @@ limitations under the License.
 -->
 <template>
   <div>
-    <span v-for="timeline in activeTimelines" :key="timeline.id" class="tag is-medium has-text-left" style="cursor: pointer; margin-right: 7px;margin-bottom:7px;" v-bind:style="timelineColor(timeline)" v-on:click="toggleTimeline(timeline)">
-      {{ timeline.name }} <span class="tag is-small" style="margin-left:10px;margin-right:-7px;background-color: rgba(255,255,255,0.5);min-width:50px;"><span v-if="timelineIsEnabled(timeline) && countPerTimeline">{{ getCount(timeline) | compactNumber }}</span></span>
+    <span
+      v-for="timeline in activeTimelines"
+      :key="timeline.id"
+      class="tag is-medium has-text-left"
+      style="cursor: pointer; margin-right: 7px;margin-bottom:7px;"
+      v-bind:style="timelineColor(timeline)"
+      v-on:click="toggleTimeline(timeline)"
+    >
+      {{ timeline.name }}
+      <span
+        class="tag is-small"
+        style="margin-left:10px;margin-right:-7px;background-color: rgba(255,255,255,0.5);min-width:50px;"
+        ><span v-if="timelineIsEnabled(timeline) && countPerTimeline">{{
+          getCount(timeline) | compactNumber
+        }}</span></span
+      >
     </span>
     <div v-if="activeTimelines.length > 3" style="margin-top:7px;">
-      <span style="text-decoration: underline; cursor: pointer; margin-right: 10px;" v-on:click="enableAllTimelines">Enable all</span>
+      <span style="text-decoration: underline; cursor: pointer; margin-right: 10px;" v-on:click="enableAllTimelines"
+        >Enable all</span
+      >
       <span style="text-decoration: underline; cursor: pointer;" v-on:click="disableAllTimelines">Disable all</span>
     </div>
   </div>
@@ -30,15 +46,15 @@ import EventBus from '../../main'
 
 export default {
   props: ['activeTimelines', 'currentQueryFilter', 'countPerIndex', 'countPerTimeline'],
-  data () {
+  data() {
     return {
       isDarkTheme: false,
       selectedTimelines: [],
-      timelineCount: {}
+      timelineCount: {},
     }
   },
   methods: {
-    timelineColor (timeline) {
+    timelineColor(timeline) {
       this.isDarkTheme = localStorage.theme === 'dark'
       let backgroundColor = timeline.color
       let textDecoration = 'none'
@@ -57,18 +73,18 @@ export default {
         return {
           'background-color': backgroundColor,
           'text-decoration': textDecoration,
-          'opacity': opacity,
-          'filter': 'grayscale(25%)',
-          'color': '#333333'
+          opacity: opacity,
+          filter: 'grayscale(25%)',
+          color: '#333333',
         }
       }
       return {
         'background-color': backgroundColor,
         'text-decoration': textDecoration,
-        'opacity': opacity
+        opacity: opacity,
       }
     },
-    toggleTimeline: function (timeline) {
+    toggleTimeline: function(timeline) {
       let newArray = this.selectedTimelines.slice()
       let timelineIdx = newArray.indexOf(timeline)
       if (timelineIdx === -1) {
@@ -79,21 +95,21 @@ export default {
       this.selectedTimelines = newArray
       this.$emit('updateSelectedTimelines', this.selectedTimelines)
     },
-    enableAllTimelines: function () {
+    enableAllTimelines: function() {
       this.selectedTimelines = this.activeTimelines
       this.$emit('updateSelectedTimelines', this.selectedTimelines)
     },
-    disableAllTimelines: function () {
+    disableAllTimelines: function() {
       this.selectedTimelines = []
       this.$emit('updateSelectedTimelines', this.selectedTimelines)
     },
-    timelineIsEnabled: function (timeline) {
+    timelineIsEnabled: function(timeline) {
       return this.selectedTimelines.includes(timeline)
     },
-    toggleTheme: function () {
+    toggleTheme: function() {
       this.isDarkTheme = !this.isDarkTheme
     },
-    getCount: function (timeline) {
+    getCount: function(timeline) {
       let count = this.countPerTimeline[timeline.id]
       // Support for old style indices
       if (count === undefined) {
@@ -101,25 +117,25 @@ export default {
       }
       return count
     },
-    syncSelectedTimelines: function () {
+    syncSelectedTimelines: function() {
       let timelines = []
-      this.currentQueryFilter.indices.forEach((index) => {
-        if (typeof (index) === 'string') {
-          let timeline = this.activeTimelines.find((timeline) => {
+      this.currentQueryFilter.indices.forEach(index => {
+        if (typeof index === 'string') {
+          let timeline = this.activeTimelines.find(timeline => {
             return timeline.searchindex.index_name === index
           })
           timelines.push(timeline)
-        } else if (typeof (index) === 'number') {
-          let timeline = this.activeTimelines.find((timeline) => {
+        } else if (typeof index === 'number') {
+          let timeline = this.activeTimelines.find(timeline => {
             return timeline.id === index
           })
           timelines.push(timeline)
         }
       })
       this.selectedTimelines = timelines
-    }
+    },
   },
-  created: function () {
+  created: function() {
     EventBus.$on('isDarkTheme', this.toggleTheme)
     EventBus.$on('clearSearch', this.enableAllTimelines)
 
@@ -130,10 +146,10 @@ export default {
     }
   },
   watch: {
-    'currentQueryFilter.indices' (val) {
+    'currentQueryFilter.indices'(val) {
       this.syncSelectedTimelines()
     },
-    deep: true
-  }
+    deep: true,
+  },
 }
 </script>

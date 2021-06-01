@@ -39,19 +39,9 @@ import {
   faAngleRight,
   faArrowUp,
   faArrowDown,
-  faTag
+  faTag,
 } from '@fortawesome/free-solid-svg-icons'
-library.add(
-  faChevronUp,
-  faChevronDown,
-  faSave,
-  faUserEdit,
-  faAngleLeft,
-  faAngleRight,
-  faArrowUp,
-  faArrowDown,
-  faTag
-)
+library.add(faChevronUp, faChevronDown, faSave, faUserEdit, faAngleLeft, faAngleRight, faArrowUp, faArrowDown, faTag)
 
 Vue.component('font-awesome-icon', FontAwesomeIcon)
 
@@ -71,7 +61,7 @@ Vue.use(VueCytoscape)
 
 Vue.use(Buefy, {
   defaultIconComponent: 'font-awesome-icon',
-  defaultIconPack: 'fas'
+  defaultIconPack: 'fas',
 })
 
 Vue.use(VueScrollTo)
@@ -83,5 +73,5 @@ Vue.config.productionTip = false
 new Vue({
   router,
   store,
-  render: h => h(App)
+  render: h => h(App),
 }).$mount('#app')
