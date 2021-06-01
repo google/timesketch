@@ -1,7 +1,13 @@
 """Analyzer plugin for tagging."""
+import logging
+import re
+
 from timesketch.lib import emojis
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
+
+
+logger = logging.getLogger('timesketch.analyzers.tagger')
 
 
 class TaggerSketchPlugin(interface.BaseAnalyzer):
@@ -40,10 +46,12 @@ class TaggerSketchPlugin(interface.BaseAnalyzer):
         tag_results = []
         for name, tag_config in iter(config.items()):
             tag_result = self.tagger(name, tag_config)
-            if tag_result:
+            if tag_result and not tag_result.startswith('0 events tagged'):
                 tag_results.append(tag_result)
 
-        return ', '.join(tag_results)
+        if tag_results:
+            return ', '.join(tag_results)
+        return 'No tags applied'
 
     def tagger(self, name, config):
         """Tag and add emojis to events.
@@ -58,16 +66,66 @@ class TaggerSketchPlugin(interface.BaseAnalyzer):
         """
         query = config.get('query_string')
         query_dsl = config.get('query_dsl')
-        create_view = config.get('create_view', False)
-        view_name = config.get('view_name', name)
+        save_search = config.get('save_search', False)
+        # For legacy reasons to support both save_search and
+        # create_view parameters.
+        if not save_search:
+            save_search = config.get('create_view', False)
+
+        search_name = config.get('search_name', None)
+        # For legacy reasons to support both search_name and view_name.
+        if search_name is None:
+            search_name = config.get('view_name', name)
+
         tags = config.get('tags', [])
         emoji_names = config.get('emojis', [])
         emojis_to_add = [emojis.get_emoji(x) for x in emoji_names]
 
+        expression_string = config.get('regular_expression', '')
+        expression_flags = config.get('re_flags')
+        expression = None
+        attributes = None
+        if expression_string:
+            if expression_flags:
+                flags = set()
+                for flag in expression_flags:
+                    try:
+                        flags.add(getattr(re, flag))
+                    except AttributeError:
+                        logger.warning(
+                            'Unknown regular expression flag defined '
+                            '-> {0:s}.'.format(flag))
+                re_flag = sum(flags)
+            else:
+                re_flag = 0
+
+            try:
+                expression = re.compile(expression_string, flags=re_flag)
+            except re.error as exception:
+                # pylint: disable=logging-format-interpolation
+                logger.warning((
+                    'Regular expression [{0:s}] failed to compile, with '
+                    'error: {1!s}').format(expression_string, exception))
+                expression = None
+
+            attribute = config.get('re_attribute')
+            if attribute:
+                attributes = [attribute]
+
         event_counter = 0
-        events = self.event_stream(query_string=query, query_dsl=query_dsl)
+        events = self.event_stream(
+            query_string=query, query_dsl=query_dsl, return_fields=attributes)
 
         for event in events:
+            if expression:
+                value = event.source.get(attributes[0])
+                if value:
+                    result = expression.findall(value)
+                    if not result:
+                        # Skip counting this tag since the regular expression
+                        # didn't find anything.
+                        continue
+
             event_counter += 1
             event.add_tags(tags)
             event.add_emojis(emojis_to_add)
@@ -75,9 +133,9 @@ class TaggerSketchPlugin(interface.BaseAnalyzer):
             # Commit the event to the datastore.
             event.commit()
 
-        if create_view and event_counter:
+        if save_search and event_counter:
             self.sketch.add_view(
-                view_name, self.NAME, query_string=query, query_dsl=query_dsl)
+                search_name, self.NAME, query_string=query, query_dsl=query_dsl)
 
         return '{0:d} events tagged for [{1:s}]'.format(event_counter, name)
 
