@@ -46,7 +46,7 @@ class SigmaPlugin(interface.BaseAnalyzer):
             ts_ttp = event.source.get('ts_ttp', [])
             for tag in tag_list:
                 # special handling for sigma tags that TS considers TTPS
-                # https://car.mitre.org and https://attack.mitre.org 
+                # https://car.mitre.org and https://attack.mitre.org
                 if tag.startswith(('attack.', 'car.')):
                     ts_ttp.append(tag)
                     tag_list.remove(tag)
