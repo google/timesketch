@@ -738,7 +738,9 @@ def run_csv_jsonl(
 
 
 @celery.task(track_started=True)
-def find_if_data_exists(rule_names, sketch_id, start_date, end_date, timeline_ids=None, parameters=None):
+def find_if_data_exists(
+        rule_names, sketch_id, start_date, end_date,
+        timeline_ids=None, parameters=None):
     """Runs a task to find out if data exists in a dataset.
 
     Args:
@@ -751,6 +753,8 @@ def find_if_data_exists(rule_names, sketch_id, start_date, end_date, timeline_id
         timeline_ids (list): An optional list of integers for the timelines
             within the the sketch to limit the data search to. If not provided
             all timelines are searched.
+        parameters (dict): An optional dict with key/value pairs of parameters
+            and their values, used for filling in regular expressions.
     """
     results = {}
     data_finder_path = current_app.config.get('DATA_FINDER_PATH')
@@ -777,18 +781,18 @@ def find_if_data_exists(rule_names, sketch_id, start_date, end_date, timeline_id
             return results
 
     for rule_name in rule_names:
-          if rule_name not in data_finder_dict:
-              results[rule_name] = (False, 'Rule not defined')
-              continue
+        if rule_name not in data_finder_dict:
+            results[rule_name] = (False, 'Rule not defined')
+            continue
 
-          data_finder = datafinder.DataFinder()
-          data_finder.set_parameters(parameters)
-          data_finder.set_rule(data_finder_dict.get(rule_name))
+        data_finder = datafinder.DataFinder()
+        data_finder.set_parameters(parameters)
+        data_finder.set_rule(data_finder_dict.get(rule_name))
 
-          if not data_finder.can_run():
-              results[rule_name] = (False, 'Unable to run the data finder.')
-              continue
+        if not data_finder.can_run():
+            results[rule_name] = (False, 'Unable to run the data finder.')
+            continue
 
-          results[rule_name] = data_finder.find_data()
+        results[rule_name] = data_finder.find_data()
 
     return results
