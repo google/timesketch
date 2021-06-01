@@ -57,7 +57,7 @@ limitations under the License.
 
 <script>
 export default {
-  name: 'DynamicTableDisplay',
+  name: 'TsDynamicTable',
   components: {},
   props: ['section', 'data'],
   computed: {

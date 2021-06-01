@@ -26,22 +26,22 @@ limitations under the License.
       currentPage="intelligence"
     ></ts-navbar-secondary>
 
-    <dynamic-table-display
+    <ts-dynamic-table
      v-for="section in intelligence.meta.sections"
      v-bind:key="section.key"
      :section="section"
      :data="intelligence.data[section.key]">
-    </dynamic-table-display>
+    </ts-dynamic-table>
 
   </div>
 </template>
 
 <script>
-import DynamicTableDisplay from '../components/Common/DynamicTableDisplay'
+import TsDynamicTable from '../components/Common/TsDynamicTable'
 
 export default {
   components: {
-    DynamicTableDisplay
+    TsDynamicTable
   },
   computed: {
     sketch () {
