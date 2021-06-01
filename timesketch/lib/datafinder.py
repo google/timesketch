@@ -148,10 +148,20 @@ class DataFinder:
         else:
             expression = None
 
+        query_filter = {
+            'chips': [{
+                'field': '',
+                'type': 'datetime_range',
+                'operator': 'must',
+                'active': True,
+                'value': f'{self._start_date},{self._end_date}',
+            }]
+        }
+
         event_generator = self.datastore.search_stream(
             query_string=query_string,
             query_dsl=query_dsl,
-            query_filter={},
+            query_filter=query_filter,
             indices=self._indices,
             return_fields=attribute,
             enable_scroll=True,
