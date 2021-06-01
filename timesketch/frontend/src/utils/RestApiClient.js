@@ -317,10 +317,7 @@ export default {
   getSearchHistory(sketchId) {
     return RestApiClient.get('/sketches/' + sketchId + /searchhistory/)
   },
-<<<<<<< HEAD
   getSearchHistoryTree(sketchId) {
     return RestApiClient.get('/sketches/' + sketchId + /searchhistorytree/)
   },
-=======
->>>>>>> master
 }
