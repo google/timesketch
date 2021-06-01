@@ -401,6 +401,34 @@ a:hover {
       border-top: 1px solid #d4d4d4;
       width: 1vw;
     }
+
+    &:not(:first-of-type):not(:last-of-type)::after {
+      height: 100%;
+    }
+  }
+
+  ul,
+  ol {
+    padding-left: 1vw;
+    position: relative;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      border-top: 1px solid #d4d4d4;
+      width: 1vw;
+    }
+  }
+
+  span {
+    background-color: #dddddd;
+    text-align: center;
+    padding: 0.33em 0.66em;
+    border-radius: 4px;
+    cursor: pointer;
+    min-width: 100px;
   }
 
   span {

@@ -19,24 +19,26 @@ limitations under the License.
       <th :width="datetimeWidth">Datetime (UTC)</th>
       <th width="1">
         <span class="control">
-          <input type="checkbox" v-on:click="toggleSelectAll">
+          <input type="checkbox" v-on:click="toggleSelectAll" />
         </span>
       </th>
       <th v-for="(field, index) in selectedFields" :key="index">{{ field.field | capitalize }}</th>
       <th width="150">Timeline name</th>
     </thead>
-    <ts-sketch-explore-event-list-row v-for="(event, index) in eventList"
-                                      :key="index"
-                                      :event="event"
-                                      :prevEvent="eventList[index - 1]"
-                                      :order="order"
-                                      :selected-fields="selectedFields"
-                                      :display-options="displayOptions"
-                                      :display-controls="true"
-                                      v-bind:id="event._id"
-                                      @addChip="$emit('addChip', $event)"
-                                      @addLabel="$emit('addLabel', $event)"
-                                      @searchContext="$emit('searchContext', $event)">
+    <ts-sketch-explore-event-list-row
+      v-for="(event, index) in eventList"
+      :key="index"
+      :event="event"
+      :prevEvent="eventList[index - 1]"
+      :order="order"
+      :selected-fields="selectedFields"
+      :display-options="displayOptions"
+      :display-controls="true"
+      v-bind:id="event._id"
+      @addChip="$emit('addChip', $event)"
+      @addLabel="$emit('addLabel', $event)"
+      @searchContext="$emit('searchContext', $event)"
+    >
     </ts-sketch-explore-event-list-row>
   </table>
 </template>
@@ -48,13 +50,13 @@ import EventBus from '../../main'
 export default {
   components: { TsSketchExploreEventListRow },
   props: ['eventList', 'order', 'selectedFields', 'displayOptions'],
-  data () {
+  data() {
     return {
-      selectAll: false
+      selectAll: false,
     }
   },
   methods: {
-    toggleSelectAll: function () {
+    toggleSelectAll: function() {
       if (this.selectAll) {
         EventBus.$emit('clearSelectedEvents')
         this.selectAll = false
@@ -62,24 +64,22 @@ export default {
         EventBus.$emit('selectEvent')
         this.selectAll = true
       }
-    }
+    },
   },
   computed: {
-    datetimeWidth () {
+    datetimeWidth() {
       if (this.displayOptions.showMillis) {
         return '220'
       } else {
         return '165'
       }
-    }
-  }
+    },
+  },
 }
 </script>
 
 <style lang="scss" scoped>
-
 .table thead th {
-  border:0;
+  border: 0;
 }
-
 </style>

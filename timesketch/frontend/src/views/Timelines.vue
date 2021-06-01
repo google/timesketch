@@ -15,14 +15,17 @@ limitations under the License.
 -->
 <template>
   <div>
-
     <ts-navbar-main v-if="!hideNavigation">
       <template v-slot:left>
         {{ sketch.name }}
       </template>
     </ts-navbar-main>
 
-    <ts-navbar-secondary v-if="!hideNavigation" currentAppContext="sketch" currentPage="timelines"></ts-navbar-secondary>
+    <ts-navbar-secondary
+      v-if="!hideNavigation"
+      currentAppContext="sketch"
+      currentPage="timelines"
+    ></ts-navbar-secondary>
 
     <!-- Timelines to add -->
     <section v-if="meta.permissions.write" class="section">
@@ -34,11 +37,19 @@ limitations under the License.
           <div class="card-content">
             <b-message>
               <p>
-                Upload a new timeline or choose an existing one from the list below. You can upload either a Plaso storage file, JSONL, or a CSV file.
-                <br>
-                If you are uploading a CSV or JSONL file make sure to read the <a href="https://github.com/google/timesketch/blob/master/docs/Users-Guide.md#adding-timelines" rel="noreferrer" target="_blank">documentation</a> to learn what columns are needed.
+                Upload a new timeline or choose an existing one from the list below. You can upload either a Plaso
+                storage file, JSONL, or a CSV file.
+                <br />
+                If you are uploading a CSV or JSONL file make sure to read the
+                <a
+                  href="https://github.com/google/timesketch/blob/master/docs/Users-Guide.md#adding-timelines"
+                  rel="noreferrer"
+                  target="_blank"
+                  >documentation</a
+                >
+                to learn what columns are needed.
               </p>
-              <br>
+              <br />
               <ts-upload-timeline-form></ts-upload-timeline-form>
             </b-message>
           </div>
@@ -52,7 +63,9 @@ limitations under the License.
         <div class="card" style="min-height:160px;">
           <header class="card-header">
             <p class="card-header-title">Active Timelines</p>
-            <p class="is-pulled-right" style="padding: 0.75rem;font-weight: bold;color: #777777;">{{ count | compactNumber }} events</p>
+            <p class="is-pulled-right" style="padding: 0.75rem;font-weight: bold;color: #777777;">
+              {{ count | compactNumber }} events
+            </p>
           </header>
           <div class="card-content">
             <ts-timeline-list :timelines="sketch.timelines" :controls="true"></ts-timeline-list>
@@ -60,7 +73,6 @@ limitations under the License.
         </div>
       </div>
     </section>
-
   </div>
 </template>
 
@@ -71,20 +83,20 @@ import TsUploadTimelineForm from '../components/Common/UploadForm'
 export default {
   components: {
     TsTimelineList,
-    TsUploadTimelineForm
+    TsUploadTimelineForm,
   },
   props: ['hideNavigation'],
   computed: {
-    sketch () {
+    sketch() {
       return this.$store.state.sketch
     },
-    meta () {
+    meta() {
       return this.$store.state.meta
     },
-    count () {
+    count() {
       return this.$store.state.count
-    }
-  }
+    },
+  },
 }
 </script>
 

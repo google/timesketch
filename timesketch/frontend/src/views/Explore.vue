@@ -1025,7 +1025,6 @@ export default {
   mounted() {
     this.$refs.searchInput.focus()
     this.showSearchDropdown = true
-
     EventBus.$on('eventSelected', eventData => {
       this.updateSelectedEvents(eventData)
     })

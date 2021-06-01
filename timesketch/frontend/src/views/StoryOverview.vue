@@ -15,7 +15,6 @@ limitations under the License.
 -->
 <template>
   <div>
-
     <ts-navbar-main>
       <template v-slot:left>
         {{ sketch.name }}
@@ -39,7 +38,11 @@ limitations under the License.
 
     <section class="section">
       <div class="container is-fluid">
-        <button class="button is-success" style="margin-right:7px;" v-on:click="showCreateStoryModal = !showCreateStoryModal">
+        <button
+          class="button is-success"
+          style="margin-right:7px;"
+          v-on:click="showCreateStoryModal = !showCreateStoryModal"
+        >
           <span class="icon is-small">
             <i class="fas fa-plus-circle"></i>
           </span>
@@ -56,7 +59,6 @@ limitations under the License.
         </div>
       </div>
     </section>
-
   </div>
 </template>
 
@@ -69,20 +71,20 @@ export default {
   components: {
     TsNavbarMain,
     TsStoryList,
-    TsStoryCreateForm
+    TsStoryCreateForm,
   },
-  data () {
+  data() {
     return {
-      showCreateStoryModal: false
+      showCreateStoryModal: false,
     }
   },
   computed: {
-    sketch () {
+    sketch() {
       return this.$store.state.sketch
     },
-    meta () {
+    meta() {
       return this.$store.state.meta
-    }
-  }
+    },
+  },
 }
 </script>

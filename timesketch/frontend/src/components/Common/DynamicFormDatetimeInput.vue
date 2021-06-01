@@ -16,18 +16,22 @@ limitations under the License.
 <template>
   <div class="field" v-if="display">
     <label class="label">{{ label }}</label>
-    <b-datetimepicker placeholder="Optional: Select a date..." :datetime-formatter="dateFormatter" editable></b-datetimepicker>
+    <b-datetimepicker
+      placeholder="Optional: Select a date..."
+      :datetime-formatter="dateFormatter"
+      editable
+    ></b-datetimepicker>
   </div>
 </template>
 <script>
 export default {
   props: ['placeholder', 'label', 'name', 'value', 'display'],
   methods: {
-    dateFormatter (dt) {
+    dateFormatter(dt) {
       let dateString = dt.toISOString().replace('.000Z', '')
       this.$emit('input', dateString)
       return dateString
-    }
-  }
+    },
+  },
 }
 </script>
