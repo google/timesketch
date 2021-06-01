@@ -14,6 +14,13 @@
 """The class definitions for the data finder, or the data analyzer."""
 
 import logging
+import re
+
+from flask import current_app
+
+from timesketch.lib import utils
+from timesketch.lib.datastores.elastic import ElasticsearchDataStore
+
 
 logger = logging.getLogger('timesketch.data_finder')
 
@@ -24,9 +31,15 @@ class DataFinder:
     def __init__(self):
         """Initialize the data finder."""
         self._end_date = ''
+        self._indices = []
         self._parameters = {}
         self._rule = {}
         self._start_date = ''
+        self._timeline_ids = []
+
+        self.datastore = ElasticsearchDataStore(
+            host=current_app.config['ELASTIC_HOST'],
+            port=current_app.config['ELASTIC_PORT'])
 
     def can_run(self):
         """Returns a boolean whether the data finder can be run."""
@@ -66,6 +79,10 @@ class DataFinder:
         # TODO: Implement a check if this is a valid ISO formatted date.
         self._end_date = end_date
 
+    def set_indices(self, indices):
+        """Sets the value of the indices."""
+        self._indices = indices
+
     def set_parameter(self, parameter, value):
         """Sets the value of a single parameter.
 
@@ -99,7 +116,61 @@ class DataFinder:
         # TODO: Implement a check if this is a valid ISO formatted date.
         self._start_date = start_date
 
+    def set_timeline_ids(self, timeline_ids):
+        """Sets the timeline identifiers."""
+        self._timeline_ids = timeline_ids
+
     def find_data(self):
-        """Returns a tuple with a boolen on whether data was found and text."""
-        # TODO: Implement, query data, and inspect.
-        return False, 'No search performed'
+        """Returns a tuple with a boolen on whether data was found and text.
+
+        Raises:
+            RuntimeError: If the data finder cannot run.
+        """
+        query_string = self._rule.get('query_string')
+        query_dsl = self._rule.get('query_dsl')
+
+        if not query_string and not query_dsl:
+            raise RuntimeError(
+                'Unable to run, missing either a query string or a DSL to '
+                'perform the search.')
+
+        attribute = self._rule.get('attribute')
+        regular_expression = self._rule.get('regular_expression')
+        if regular_expression:
+            if not attribute:
+                raise RuntimeError(
+                    'Attribute must be set in a rule if a regular expression '
+                    'is used.')
+            expression = utils.get_regular_expression(
+                expression_string=regular_expression,
+                expression_flags=self._rule.get('re_flags'),
+                expression_parameters=self._rule.get('re_parameters'))
+        else:
+            expression = None
+
+        event_generator = self.datastore.search_stream(
+            query_string=query_string,
+            query_dsl=query_dsl,
+            query_filter={},
+            indices=self._indices,
+            return_fields=attribute,
+            enable_scroll=True,
+            timeline_ids=self._timeline_ids
+        )
+
+        for event in event_generator:
+            if not expression:
+                return True, 'Hits Discovered'
+
+            source = event.get('_source', {})
+            value = source.get(attribute)
+            if not value:
+                logger.warning('Attribute: [{0:s}] is empty'.format(attribute))
+
+            result = expression.findall(value)
+            if not result:
+                continue
+
+            return True, 'Hits Discovered using Regular Expression'
+
+        return False, 'No hits discovered'

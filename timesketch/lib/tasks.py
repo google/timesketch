@@ -790,6 +790,16 @@ def find_data_task(
     data_finder.set_end_date(end_date)
     data_finder.set_parameters(parameters)
     data_finder.set_rule(data_finder_dict.get(rule_name))
+    data_finder.set_timeline_ids(timeline_ids)
+
+    sketch = Sketch.query.get(sketch_id)
+    indices = set()
+    for timeline in sketch.active_timelines:
+        if timeline.id not in timeline_ids:
+            continue
+        indices.add(timeline.searchindex.index_name)
+
+    data_finder.set_indices(list(indices))
 
     if not data_finder.can_run():
         results[rule_name] = (False, 'Unable to run the data finder.')
