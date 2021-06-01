@@ -1762,3 +1762,66 @@ class Sketch(resource.BaseResource):
         _ = error.get_response_json(response, logger)
 
         return timeline_obj
+
+    def run_data_finder(
+            self, start_date, end_date, rule_names, timelines=None):
+        """Runs the data finder .
+
+        Args:
+            start_date (str): Start date as a ISO 8601 formatted string.
+            end_date (str): End date as a ISO 8601 formatted string.
+            rule_names (list): A list of strings with rule names to run
+                against the dataset in the sketch.
+            timelines (list): Optional list of timeline identifiers or
+                timeline names to limit the data search to certain
+                timelines within the sketch. Defaults to search all
+                timelines.
+
+        Returns:
+            A list of dictionaries, one dict for each rule that was run,
+            alongside it's results.
+        """
+        if timelines is None:
+            timeline_ids = [t.id for t in self.list_timelines()]
+        else:
+            timeline_ids = []
+            valid_ids = set()
+            name_to_id = {}
+            for timeline in self.list_timelines():
+                valid_ids.add(timeline.id)
+                name_to_id[timeline.name.lower()] = timeline.id
+
+            for timeline in timelines:
+                if isinstance(timeline, int) and timeline in valid_ids:
+                    timeline_ids.append(timeline)
+                    continue
+
+                if not isinstance(timeline, str):
+                    logger.error(
+                        'Unable to use timeline, it needs to either be '
+                        'a string or an integer.')
+                    continue
+
+                if timeline.lower() not in name_to_id:
+                    logger.error(
+                        'Unable to add timeline, name not found in active '
+                        'timelines in the sketch.')
+                    continue
+                timeline_ids.append(name_to_id[timeline.lower()])
+
+        data = {
+            'start_date': start_date,
+            'end_date': end_date,
+            'timeline_ids': timeline_ids,
+            'rule_names': rule_names
+        }
+        resource_url = f'{self.api.api_root}/sketches/{self.id}/data/find/'
+        response = self.api.session.post(resource_url, json=data)
+
+        if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
+            error.error_message(
+                response, message='Unable to find data', error=ValueError)
+
+        response_dict = error.get_response_json(response, logger)
+
+        return response_dict.get('objects', [])
