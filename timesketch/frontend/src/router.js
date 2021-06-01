@@ -30,6 +30,7 @@ import Story from './views/Story'
 import StoryOverview from './views/StoryOverview'
 import StoryContent from './views/StoryContent'
 import Attributes from './views/Attributes'
+import Intelligence from './views/Intelligence'
 import SavedSearches from './views/SavedSearches'
 
 Vue.use(VueRouter)
@@ -116,6 +117,12 @@ const routes = [
         name: 'Attributes',
         component: Attributes,
         props: true,
+      },
+      {
+        path: 'intelligence',
+        name: 'Intelligence',
+        component: Intelligence,
+        props: true
       },
       {
         path: 'savedsearches',
