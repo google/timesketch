@@ -294,7 +294,7 @@ def get_events_from_data_frame(frame, datastore):
 
 
 def compile_regular_expression(
-        expression_string, expression_flags, expression_parameters):
+        expression_string, expression_flags, expression_parameters=None):
     """Returns a compiled regular expression from parameters.
 
     Args:

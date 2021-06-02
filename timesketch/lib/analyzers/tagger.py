@@ -1,6 +1,5 @@
 """Analyzer plugin for tagging."""
 import logging
-import re
 
 from timesketch.lib import emojis
 from timesketch.lib.analyzers import interface
