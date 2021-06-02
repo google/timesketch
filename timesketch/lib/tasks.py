@@ -756,6 +756,11 @@ def find_data_task(
             all timelines are searched.
         parameters (dict): An optional dict with key/value pairs of parameters
             and their values, used for filling in regular expressions.
+
+    Returns:
+        A dict with the key value being the rule name used and the value
+        as a tuple with two items, boolean whether data was found and a
+        reason string.
     """
     results = {}
     data_finder_path = current_app.config.get('DATA_FINDER_PATH')

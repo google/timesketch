@@ -13,8 +13,6 @@
 # limitations under the License.
 """End to end tests of Timesketch data finder functionality."""
 
-import pandas as pd
-
 from . import interface
 from . import manager
 
