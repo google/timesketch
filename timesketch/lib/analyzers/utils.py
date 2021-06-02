@@ -297,16 +297,17 @@ def get_events_from_data_frame(frame, datastore):
 
 
 def compile_regular_expression(
-        expression_string, expression_flags, expression_parameters=None):
+        expression_string, expression_flags=None, expression_parameters=None):
     """Returns a compiled regular expression from parameters.
 
     Args:
         expression_string (str): The regular expression string to compile. It
             can contain parameters that will be replaced before compilation.
-        expression_flags (list): A list of flags for the regular expression.
-        expression_parameters (dict): A dict with the keys as the parameter
-            names and values as the values that the keys in the expression
-            string should replace.
+        expression_flags (list): Optional list of flags for the regular
+            expression.
+        expression_parameters (dict): Optional dict with the keys as the
+            parameter names and values as the values that the keys in the
+            expression string should replace.
 
     Returns:
         A compiled regular expression (instance of re.Pattern).

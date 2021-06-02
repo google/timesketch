@@ -84,3 +84,29 @@ class TestAnalyzerUtils(BaseTest):
         self.assertEqual(len(events), 3)
         ids = [x.event_id for x in events]
         self.assertEqual(set(ids), set(['123', '124', '125']))
+
+    def test_regular_expression_compile(self):
+        """Test compiling regular expressions."""
+        test_re_string = r'Foo[0-9]bar'
+        string_test = 'foo2bar'
+        string_test_2 = 'Foo9bar'
+
+        expression = utils.compile_regular_expression(
+            expression_string=test_re_string)
+        self.assertFalse(expression.match(string_test))
+        self.assertTrue(expression.match(string_test_2))
+
+        expression = utils.compile_regular_expression(
+            expression_string=test_re_string,
+            expression_flags=['IGNORECASE'])
+        self.assertTrue(expression.match(string_test))
+
+        test_re_string = r'Foo[0-9]{param}'
+        re_parameters = {
+            'param': 'bar',
+        }
+        expression = utils.compile_regular_expression(
+            expression_string=test_re_string,
+            expression_flags=['IGNORECASE'],
+            expression_parameters=re_parameters)
+        self.assertTrue(expression.match(string_test))
