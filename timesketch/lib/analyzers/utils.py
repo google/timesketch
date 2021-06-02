@@ -13,6 +13,7 @@
 # limitations under the License.
 """This file contains utilities for analyzers."""
 
+import logging
 import re
 from six.moves import urllib_parse as urlparse
 
@@ -20,6 +21,8 @@ import numpy
 
 from timesketch.lib.analyzers import interface
 
+
+logger = logging.getLogger('timesketch.analyzer_utils')
 
 # Title and header text of a story that is common among browser
 # based analyzers.
