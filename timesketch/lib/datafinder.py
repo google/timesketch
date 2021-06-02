@@ -14,7 +14,6 @@
 """The class definitions for the data finder, or the data analyzer."""
 
 import logging
-import re
 
 from flask import current_app
 
