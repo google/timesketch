@@ -17,7 +17,7 @@ import logging
 
 from flask import current_app
 
-from timesketch.lib import utils
+from timesketch.lib.analyzers import utils
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 
 
@@ -140,7 +140,7 @@ class DataFinder:
                 raise RuntimeError(
                     'Attribute must be set in a rule if a regular expression '
                     'is used.')
-            expression = utils.get_regular_expression(
+            expression = utils.compile_regular_expression(
                 expression_string=regular_expression,
                 expression_flags=self._rule.get('re_flags'),
                 expression_parameters=self._rule.get('re_parameters'))
