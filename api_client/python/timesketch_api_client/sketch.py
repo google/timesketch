@@ -1787,27 +1787,27 @@ class Sketch(resource.BaseResource):
             timeline_ids = []
             valid_ids = set()
             name_to_id = {}
-            for timeline in self.list_timelines():
-                valid_ids.add(timeline.id)
-                name_to_id[timeline.name.lower()] = timeline.id
+            for _timeline in self.list_timelines():
+                valid_ids.add(_timeline.id)
+                name_to_id[_timeline.name.lower()] = _timeline.id
 
-            for timeline in timelines:
-                if isinstance(timeline, int) and timeline in valid_ids:
-                    timeline_ids.append(timeline)
+            for _timeline in timelines:
+                if isinstance(_timeline, int) and _timeline in valid_ids:
+                    timeline_ids.append(_timeline)
                     continue
 
-                if not isinstance(timeline, str):
+                if not isinstance(_timeline, str):
                     logger.error(
                         'Unable to use timeline, it needs to either be '
                         'a string or an integer.')
                     continue
 
-                if timeline.lower() not in name_to_id:
+                if _timeline.lower() not in name_to_id:
                     logger.error(
                         'Unable to add timeline, name not found in active '
                         'timelines in the sketch.')
                     continue
-                timeline_ids.append(name_to_id[timeline.lower()])
+                timeline_ids.append(name_to_id[_timeline.lower()])
 
         data = {
             'start_date': start_date,
