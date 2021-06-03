@@ -37,6 +37,7 @@ logging.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO'))
 
 def get_sigma_blocklist(blocklist_path='./data/sigma_blocklist.csv'):
     """Get a dataframe of sigma rules to ignore.
+
     This includes filenames, paths, ids.
 
     Args:
@@ -47,11 +48,10 @@ def get_sigma_blocklist(blocklist_path='./data/sigma_blocklist.csv'):
         Pandas dataframe with blocklist
 
     Raises:
-        ValueError: If SIGMA_BLOCKLIST is not found in the config file.
-            or the Sigma config file is not readabale.
+        ValueError: Sigma blocklist file is not readabale.
     """
 
-    if blocklist_path is None:
+    if blocklist_path is None or blocklist_path is '':
         blocklist_path = './data/sigma_blocklist.csv'
 
     if not blocklist_path:
@@ -225,14 +225,14 @@ if __name__ == '__main__':
         sys.exit(1)
 
     if len(options.blocklist_file_path) > 0:
-        if not os.path.isfile(options.config_file_path):
+        if not os.path.isfile(options.blocklist_file_path):
             print('Blocklist file not found.')
             sys.exit(1)
 
     sigma_verified_rules, sigma_rules_with_problems = run_verifier(
         rules_path=options.rules_path,
         config_file_path=options.config_file_path,
-        blocklist_path=options.config_file_path)
+        blocklist_path=options.blocklist_file_path)
 
     if len(sigma_rules_with_problems) > 0:
         print('### Do NOT import below.###')
