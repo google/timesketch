@@ -206,7 +206,7 @@ def get_sigma_rule(filepath, sigma_config=None):
             for doc in rule_yaml_data:
                 rule_return.update(doc)
                 parser = sigma_collection.SigmaCollectionParser(
-                    str(doc), sigma_conf_obj, None)
+                    yaml.dump(doc), sigma_conf_obj, None)
                 parsed_sigma_rules = parser.generate(sigma_backend)
 
         except NotImplementedError as exception:
