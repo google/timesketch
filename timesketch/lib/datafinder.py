@@ -177,7 +177,8 @@ class DataFinder:
         )
 
         for event in event_generator:
-            # TODO: Save the result to the Investigation object when that exist in the future.
+            # TODO: Save the result to the Investigation object when that exist in
+            # the future.
             if not expression:
                 return True, 'Data discovered'
 
