@@ -61,4 +61,22 @@ user_insert_usb:
     parameters:
       - username
       - operating_system
+    answer_source:
+      must:
+        - usb_device_inserted
 
+user_downloaded_file:
+    display_name: Did user download a specific file.
+    description: This question checks whether there is browser activity
+        happening, ...
+    data_sources:
+      - browser_activity
+    parameters:
+      - username
+      - filename
+    answer_source:
+      must:
+        - browser_activity
+        - user_browser_activity
+        - browser_download
+        - browser_specific_file_download
