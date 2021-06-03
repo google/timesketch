@@ -44,7 +44,7 @@ class DataFinderTest(interface.BaseEndToEndTest):
         result_dict = results[0]
         self.assertions.assertTrue(result_dict.get('test_data_finder')[0])
         self.assertions.assertTrue(
-            result_dict.get('test_data_finder')[1].startswith('Data Disc'))
+            result_dict.get('test_data_finder')[1].startswith('Data disc'))
 
 
 manager.EndToEndTestManager.register_test(DataFinderTest)
