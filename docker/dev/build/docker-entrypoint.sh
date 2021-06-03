@@ -14,6 +14,7 @@ if [ "$1" = 'timesketch' ]; then
   cp /usr/local/src/timesketch/data/plaso.mappings /etc/timesketch/
   cp /usr/local/src/timesketch/data/generic.mappings /etc/timesketch/
   cp /usr/local/src/timesketch/data/ontology.yaml /etc/timesketch/
+  cp /usr/local/src/timesketch/data/data_finder.yaml /etc/timesketch/
   ln -s /usr/local/src/timesketch/data/sigma_config.yaml /etc/timesketch/sigma_config.yaml
   ln -s /usr/local/src/timesketch/data/sigma /etc/timesketch/
 
