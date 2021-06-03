@@ -201,7 +201,6 @@ def get_sigma_rule(filepath, sigma_config=None):
     with codecs.open(
             abs_path, 'r', encoding='utf-8', errors='replace') as file:
         try:
-            breakpoint()
             rule_return = {}
             rule_yaml_data = yaml.safe_load_all(file.read())
             for doc in rule_yaml_data:
