@@ -51,7 +51,7 @@ def get_sigma_blocklist(blocklist_path='./data/sigma_blocklist.csv'):
         ValueError: Sigma blocklist file is not readabale.
     """
 
-    if blocklist_path is None or blocklist_path is '':
+    if blocklist_path is None or blocklist_path == '':
         blocklist_path = './data/sigma_blocklist.csv'
 
     if not blocklist_path:
@@ -134,6 +134,7 @@ def run_verifier(rules_path, config_file_path, blocklist_path=None):
                 # this function is made to catch them and document
                 # them the broad exception is needed
                 except Exception:# pylint: disable=broad-except
+                    logger.debug('Rule parsing error', exc_info=True)
                     return_rules_with_problems.append(rule_file_path)
 
                 if parsed_rule:
