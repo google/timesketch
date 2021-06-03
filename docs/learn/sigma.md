@@ -43,6 +43,22 @@ timesketch/data/linux
 timesketch/data/sigma/rules/linux
 ```
 
+### Timesketch config file
+
+There are multiple sigma related config variables in ```timesketch.conf```.
+
+```
+# Sigma Settings
+
+SIGMA_RULES_FOLDERS = ['/etc/timesketch/sigma/rules/']
+SIGMA_CONFIG = '/etc/timesketch/sigma_config.yaml'
+SIGMA_TAG_DELAY = 5
+```
+
+The ```SIGMA_RULES_FOLDERS``` points to the folder(s) where Sigma rules are stored. The folder is the local folder of the Timesketch server (celery worker and webserver). For a distributed system, mounting network shares is possible.
+
+```SIGMA_TAG_DELAY```can be used to throttle the Sigma analyzer. If Timesketch is running on a less powerful machine (or docker-dev) a sleep timer of 15 seconds will help avoid Elastic Search exceptions for to many requests to the ES backend in a to short timerange. For more powerfull Timesketch installations, this value can be set to 0.
+
 ### Sigma config
 
 In the config file
