@@ -168,8 +168,9 @@ class DataFinder:
         )
 
         for event in event_generator:
+            # TODO: Save the result to the Investigation object when that exist in the future.
             if not expression:
-                return True, 'Hits Discovered'
+                return True, 'Data discovered'
 
             source = event.get('_source', {})
             value = source.get(attribute)
@@ -180,6 +181,6 @@ class DataFinder:
             if not result:
                 continue
 
-            return True, 'Hits Discovered using Regular Expression'
+            return True, 'Data discovered using Regular Expression'
 
         return False, 'No hits discovered'
