@@ -1,0 +1,106 @@
+# Config file for analyzing data to detect whether data sources
+# are present in the data set or not.
+#
+# Each analyzer definition in this file defines sets of requirements
+# that are needed to determine if a certain type of data is present
+# in the sketch. In addition to the parameters given in this definition
+# start and end time are defined as parameters to the data analyzer
+# to further limit the data set that is searched.
+#
+# The analyzer is simple, it runs the query, which is defined either as a
+# query_string or a query_dsl. Then a particular field or an attribute
+# of the resulting data set is fetched and compared against a regular
+# expression. If there is a match in the regular expression then a True
+# value is returned, and that data is considered to be part of the
+# overall dataset for that time period, otherwise False is returned and
+# we assume that data is missing from the total dataset.
+#
+# These are the available fields:
+#       description         Simple string that provides a bit more description
+#                           of the data that is being analyzed.
+#
+#       notes               A message that may be displayed to the user if the
+#                           data source is not present in the dataset, perhaps
+#                           helpful hints on where the data is defined, how to
+#                           collect it, or how to add it to Timesketch.
+#
+#       query_string        A query string (Elastic Query String) that defines
+#                           the search string that will be used to find data
+#                           within the dataset. This is the same search string
+#                           as can be found in the Web UI of Timesketch.
+#
+#       query_dsl           A query DSL (Elastic Query DSL) that defines the
+#                           full query DSL that is used to find data within the
+#                           the dataset. Each data analyzer needs to define
+#                           either a query_string or a query_dsl. If both are
+#                           defined the query_string is used and query_dsl
+#                           is ignored.
+#
+#       attribute           The attribute or field that will be further
+#                           inspected by a regular expression in order to
+#                           determine if the data exists within the dataset.
+#
+#       regular_expression  The regular expression that is run on the data from
+#                           the field or the attribute that is fetched from the
+#                           the attribute definition.
+#
+#       re_flags            Each regular expresion can define a flag, which is
+#                           a list of flags as strings from the re module.
+#                           These include:
+#                               - DEBUG
+#                               - DOTALL
+#                               - IGNORECASE
+#                               - LOCALE
+#                               - MULTILINE
+#                               - TEMPLATE
+#                               - UNICODE
+#                               - VERBOSE
+#
+#       re_parameters       A regular expression may also contain a variable
+#                           that can be replaced by a user supplied value,
+#                           eg. 'http(s)?://{domain}' to further check for
+#                           a particular value. If and only if a re_parameters
+#                           value is set then all values in the RE that are
+#                           within curly brackets ({}) are replaced with the
+#                           user supplied value. Only string values are
+#                           supported for now.
+#
+# Example:
+#
+# windows_administrator_login:
+#       description: Login information for Administrator in Windows EVTX files.
+#       notes: Collect the SECURITY.EVTX log from a Windows machine.
+#       query_string: data_type:"windows:evtx:record" AND event_identifier:4624
+#       attribute: username
+#       regular_expression: "^Administrator"
+
+# ------------------------------------------------------------------------
+windows_administrator_login:
+    description: Login information for Administrator in Windows EVTX files.
+    notes: Collect the SECURITY.EVTX log from a Windows machine.
+    query_string: data_type:"windows:evtx:record" AND event_identifier:4624
+    attribute: username
+    regular_expression: "^Administrator"
+
+windows_login:
+    description: Login information in Windows EVTX files.
+    notes: Collect the SECURITY.EVTX log from a Windows machine.
+    query_string: data_type:"windows:evtx:record" AND event_identifier:4624
+
+browser_history:
+    description: Browser history information.
+    notes: Collect browser history and parse using plaso or make source and url fields are set.
+    query_string: source_short:"WEBHIST" OR source:"WEBHIST"
+    attribute: url
+    regular_expression: "https?://"
+
+windows_event_log_specific_computer:
+    description: 
+    notes: Collect
+    query_string: data_type:"windows:evtx:record"
+    attribute: computer_name
+    regular_expression: "{computer_name}"
+    re_flags: [IGNORECASE]
+    re_parameters:
+        - computer_name
+

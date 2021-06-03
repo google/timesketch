@@ -62,6 +62,13 @@ if [ "$1" = 'timesketch' ]; then
   tsctl add_user --username "$TIMESKETCH_USER" --password "$TIMESKETCH_PASSWORD"
   unset TIMESKETCH_PASSWORD
 
+  cat <<EOF >> /etc/timesketch/data_finder.yaml
+test_data_finder:
+    description: Testing the data finder in the e2e test.
+    notes: Import the partial EVTX file for e2e tests.
+    query_string: data_type:"windows:evtx:record" AND event_identifier:7036
+EOF
+
   # Run the Timesketch server (without SSL)
   cd /tmp
   exec `bash -c "/usr/local/bin/celery -A timesketch.lib.tasks worker --uid nobody --loglevel info & \
