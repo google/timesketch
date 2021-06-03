@@ -361,6 +361,7 @@ def main(args=None):
     conf_password = ''
 
     if credentials:
+        logger.info('Using cached credentials.')
         if credentials.TYPE.lower() == 'oauth':
             assistant.set_config('auth_mode', 'oauth')
         elif credentials.TYPE.lower() == 'timesketch':
