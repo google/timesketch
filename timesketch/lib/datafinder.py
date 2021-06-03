@@ -36,7 +36,7 @@ class DataFinder:
         self._start_date = ''
         self._timeline_ids = []
 
-        self.datastore = ElasticsearchDataStore(
+        self._datastore = ElasticsearchDataStore(
             host=current_app.config['ELASTIC_HOST'],
             port=current_app.config['ELASTIC_PORT'])
 
@@ -120,11 +120,20 @@ class DataFinder:
         self._timeline_ids = timeline_ids
 
     def find_data(self):
-        """Returns a tuple with a boolen on whether data was found and text.
+        """Returns a tuple with a bool on whether data was found and a message.
 
         Raises:
             RuntimeError: If the data finder cannot run.
+
+        Returns:
+            A tuple with two entries:
+                bool: whether data was discovered or not.
+                str: a message string indicating how the data was found or the
+                    the reason why it wasn't.
         """
+        if not self.can_run():
+            return False, 'Unable to run the data finder, missing information.'
+
         query_string = self._rule.get('query_string')
         query_dsl = self._rule.get('query_dsl')
 
@@ -157,7 +166,7 @@ class DataFinder:
             }]
         }
 
-        event_generator = self.datastore.search_stream(
+        event_generator = self._datastore.search_stream(
             query_string=query_string,
             query_dsl=query_dsl,
             query_filter=query_filter,

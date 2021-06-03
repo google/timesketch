@@ -28,7 +28,7 @@ from .resources.analysis import AnalyzerSessionResource
 from .resources.attribute import AttributeResource
 from .resources.explore import ExploreResource
 from .resources.explore import SearchHistoryResource
-from .resources.data import DataFinderResource
+from .resources.datafinder import DataFinderResource
 from .resources.datasource import DataSourceResource
 from .resources.datasource import DataSourceListResource
 from .resources.event import EventResource

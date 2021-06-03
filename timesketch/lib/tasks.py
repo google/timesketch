@@ -806,15 +806,11 @@ def find_data_task(
 
     data_finder.set_indices(list(indices))
 
-    if not data_finder.can_run():
-        results[rule_name] = (False, 'Unable to run the data finder.')
-        return results
-
     results[rule_name] = data_finder.find_data()
     return results
 
 
-def find_if_data_exists(
+def run_data_finder(
         rule_names, sketch_id, start_date, end_date,
         timeline_ids=None, parameters=None):
     """Runs a task to find out if data exists in a dataset.

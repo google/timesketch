@@ -104,7 +104,7 @@ class DataFinderResource(resources.ResourceMixin, Resource):
         # Import here to avoid circular imports.
         # pylint: disable=import-outside-toplevel
         from timesketch.lib import tasks
-        pipeline = tasks.find_if_data_exists(
+        pipeline = tasks.run_data_finder(
             rule_names=rule_names, sketch_id=sketch.id, start_date=start_date,
             end_date=end_date, timeline_ids=timeline_ids, parameters=parameters)
         task_id = uuid.uuid4().hex
