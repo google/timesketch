@@ -118,9 +118,9 @@ def run_verifier(rules_path, config_file_path, blocklist_path=None):
                     continue
 
                 rule_file_path = os.path.join(dirpath, rule_filename)
-
                 block_because_csv = False
-                if rule_file_path in ignore_list:
+
+                if any(x in rule_file_path for x in ignore_list):
                     return_rules_with_problems.append(rule_file_path)
                     block_because_csv = True
 
