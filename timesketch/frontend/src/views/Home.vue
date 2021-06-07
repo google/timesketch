@@ -15,22 +15,28 @@ limitations under the License.
 -->
 <template>
   <div>
-
     <ts-navbar-main>
       <template v-slot:center>
-        <input v-on:keyup.enter="search" v-model="searchQuery" class="ts-home-input" type="text" placeholder="Search for investigations" autofocus>
+        <input
+          v-on:keyup.enter="search"
+          v-model="searchQuery"
+          class="ts-home-input"
+          type="text"
+          placeholder="Search for investigations"
+          autofocus
+        />
       </template>
     </ts-navbar-main>
 
     <!-- Secondary navigation -->
-    <section class="section" style="margin-top:20px; margin-bottom: 20px;">
-      <div class="container">
-          <button class="button is-success" v-on:click="showSketchCreateModal = !showSketchCreateModal">
-            <span class="icon is-small">
-              <i class="fas fa-plus-circle"></i>
-            </span>
-            <strong>New investigation</strong>
-          </button>
+    <section class="section" style="margin-top:10px; margin-bottom: 10px;">
+      <div class="container is-fluid">
+        <button class="button is-success" v-on:click="showSketchCreateModal = !showSketchCreateModal">
+          <span class="icon is-small">
+            <i class="fas fa-plus-circle"></i>
+          </span>
+          <strong>New investigation</strong>
+        </button>
       </div>
     </section>
 
@@ -48,24 +54,16 @@ limitations under the License.
     </b-modal>
 
     <section class="section" v-if="newSearchQuery">
-      <div class="container">
-        <div class="card">
-          <header class="card-header">
-            <div class="card-header-title">
-              Search results
-            </div>
-          </header>
-          <div class="card-content">
-            <ts-sketch-list scope="search" :search-query="newSearchQuery"></ts-sketch-list>
-            <hr>
-            <button class="button is-info" v-on:click="newSearchQuery = ''">Back</button>
-          </div>
-        </div>
+      <div class="container is-fluid">
+        <b-message title="Search results" :closable="false">
+          <ts-sketch-list scope="search" :search-query="newSearchQuery"></ts-sketch-list>
+          <button class="button" v-on:click="newSearchQuery = ''">Close</button>
+        </b-message>
       </div>
     </section>
 
-    <section class="section" v-if="!newSearchQuery">
-      <div class="container">
+    <section class="section">
+      <div class="container is-fluid">
         <div class="card">
           <header class="card-header">
             <div class="card-header-title">
@@ -77,11 +75,11 @@ limitations under the License.
           </div>
         </div>
       </div>
-      <br>
+      <br />
     </section>
 
-    <section class="section" v-if="!newSearchQuery">
-      <div class="container">
+    <section class="section">
+      <div class="container is-fluid">
         <div class="card">
           <header class="card-header">
             <div class="card-header-title">
@@ -95,8 +93,8 @@ limitations under the License.
       </div>
     </section>
 
-    <section class="section" v-if="!newSearchQuery">
-      <div class="container">
+    <section class="section">
+      <div class="container is-fluid">
         <div class="card">
           <header class="card-header">
             <div class="card-header-title">
@@ -110,8 +108,8 @@ limitations under the License.
       </div>
     </section>
 
-    <section class="section" v-if="!newSearchQuery">
-      <div class="container">
+    <section class="section">
+      <div class="container is-fluid">
         <div class="card">
           <header class="card-header">
             <div class="card-header-title">
@@ -125,23 +123,22 @@ limitations under the License.
       </div>
     </section>
 
-    <br>
-
+    <br />
   </div>
 </template>
 
 <script>
 import TsSketchList from '../components/Home/SketchList'
-import TsCreateSketchForm from '../components/Home/CreateSketchForm'
+import TsCreateSketchForm from '../components/Common/CreateSketchForm'
 import TsNavbarMain from '../components/AppNavbarMain'
 
 export default {
   components: {
     TsNavbarMain,
     TsSketchList,
-    TsCreateSketchForm
+    TsCreateSketchForm,
   },
-  data () {
+  data() {
     return {
       showSketchCreateModal: false,
       allSketches: [],
@@ -152,34 +149,34 @@ export default {
       isFullPage: true,
       loadingComponent: null,
       searchQuery: '',
-      newSearchQuery: ''
+      newSearchQuery: '',
     }
   },
   computed: {
-    filteredList () {
+    filteredList() {
       return this.allSketches.filter(sketch => {
         return sketch.name.toLowerCase().includes(this.search.toLowerCase())
       })
-    }
+    },
   },
   methods: {
-    loadingOpen: function () {
+    loadingOpen: function() {
       this.loading = true
       this.loadingComponent = this.$buefy.loading.open({
-        container: this.isFullPage ? null : this.$refs.element.$el
+        container: this.isFullPage ? null : this.$refs.element.$el,
       })
     },
-    loadingClose: function () {
+    loadingClose: function() {
       this.loading = false
       this.loadingComponent.close()
     },
-    search: function () {
+    search: function() {
       this.newSearchQuery = this.searchQuery
-    }
+    },
   },
-  created: function () {
+  created: function() {
     this.$store.dispatch('resetState')
     document.title = 'Timesketch'
-  }
+  },
 }
 </script>

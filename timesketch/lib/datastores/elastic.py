@@ -338,7 +338,10 @@ class ElasticsearchDataStore(object):
 
         if query_string:
             query_dsl['query']['bool']['must'].append(
-                {'query_string': {'query': query_string}})
+                {'query_string': {
+                    'query': query_string,
+                    'default_operator': 'AND'}
+                })
 
         # New UI filters
         if query_filter.get('chips', None):
@@ -582,7 +585,7 @@ class ElasticsearchDataStore(object):
                 exc_info=True)
             raise ValueError(cause) from e
 
-        METRICS['search_requests'].labels(type='all').inc()
+        METRICS['search_requests'].labels(type='single').inc()
         return _search_result
 
     # pylint: disable=too-many-arguments
@@ -611,7 +614,7 @@ class ElasticsearchDataStore(object):
         # Make sure that the list of index names is uniq.
         indices = list(set(indices))
 
-        METRICS['search_requests'].labels(type='streaming').inc()
+        METRICS['search_requests'].labels(type='stream').inc()
 
         if not query_filter.get('size'):
             query_filter['size'] = self.DEFAULT_STREAM_LIMIT

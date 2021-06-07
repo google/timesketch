@@ -58,6 +58,8 @@ class User(UserMixin, BaseModel):
         'SearchIndex', backref='user', lazy='dynamic')
     timelines = relationship('Timeline', backref='user', lazy='dynamic')
     views = relationship('View', backref='user', lazy='dynamic')
+    searchhistories = relationship(
+        'SearchHistory', backref='user', lazy='dynamic')
     stories = relationship('Story', backref='user', lazy='dynamic')
     aggregations = relationship('Aggregation', backref='user', lazy='dynamic')
     datasources = relationship('DataSource', backref='user', lazy='dynamic')

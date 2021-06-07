@@ -24,12 +24,14 @@ import codecs
 import io
 import json
 import six
+import yaml
 
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch.exceptions import RequestError
 from flask import current_app
 
 from celery import chain
+from celery import group
 from celery import signals
 from sqlalchemy import create_engine
 
@@ -41,6 +43,7 @@ except ImportError:
 
 from timesketch.app import configure_logger
 from timesketch.app import create_celery_app
+from timesketch.lib import datafinder
 from timesketch.lib import errors
 from timesketch.lib.analyzers import manager
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
@@ -254,6 +257,9 @@ def build_index_pipeline(
         file_path, events, timeline_name, index_name, file_extension,
         timeline_id)
 
+    # TODO: Check if a scenario is set or an investigative question
+    # is in the sketch, and then enable data finder on the newly
+    # indexed data.
     if only_index:
         return index_task
 
@@ -652,6 +658,21 @@ def run_csv_jsonl(
         'Index timeline [{0:s}] to index [{1:s}] (source: {2:s})'.format(
             timeline_name, index_name, source_type))
 
+    mappings = None
+    mappings_file_path = current_app.config.get('GENERIC_MAPPING_FILE', '')
+    if os.path.isfile(mappings_file_path):
+        try:
+            with open(mappings_file_path, 'r') as mfh:
+                mappings = json.load(mfh)
+
+                if not isinstance(mappings, dict):
+                    raise RuntimeError(
+                        'Unable to create mappings, the mappings are not a '
+                        'dict, please look at the file: {0:s}'.format(
+                            mappings_file_path))
+        except (json.JSONDecodeError, IOError):
+            logger.error('Unable to read in mapping', exc_info=True)
+
     es = ElasticsearchDataStore(
         host=current_app.config['ELASTIC_HOST'],
         port=current_app.config['ELASTIC_PORT'])
@@ -662,7 +683,8 @@ def run_csv_jsonl(
     error_msg = ''
     error_count = 0
     try:
-        es.create_index(index_name=index_name, doc_type=event_type)
+        es.create_index(
+            index_name=index_name, doc_type=event_type, mappings=mappings)
         for event in read_and_validate(file_handle):
             es.import_event(
                 index_name, event_type, event, timeline_id=timeline_id)
@@ -714,3 +736,103 @@ def run_csv_jsonl(
     _set_timeline_status(timeline_id, status='ready', error_msg=error_msg)
 
     return index_name
+
+
+@celery.task(track_started=True)
+def find_data_task(
+        rule_name, sketch_id, start_date, end_date,
+        timeline_ids=None, parameters=None):
+    """Runs a task to find out if data exists in a dataset.
+
+    Args:
+        rule_name (str): A rule names to run.
+        sketch_id (int): Sketch identifier.
+        start_date (str): A string with an ISO formatted timestring for the
+            start date of the data search.
+        end_date (str): A string with an ISO formatted timestring for the
+            end date of the data search.
+        timeline_ids (list): An optional list of integers for the timelines
+            within the the sketch to limit the data search to. If not provided
+            all timelines are searched.
+        parameters (dict): An optional dict with key/value pairs of parameters
+            and their values, used for filling in regular expressions.
+
+    Returns:
+        A dict with the key value being the rule name used and the value
+        as a tuple with two items, boolean whether data was found and a
+        reason string.
+    """
+    results = {}
+    data_finder_path = current_app.config.get('DATA_FINDER_PATH')
+    if not data_finder_path:
+        logger.error(
+            'Unable to find data, missing data finder path in the '
+            'configuration file.')
+        return results
+
+    if not os.path.isfile(data_finder_path):
+        logger.error(
+            'Unable to read data finder rules, the file does not exist, '
+            'please verify that the path in DATA_FINDER_PATH variable is '
+            'correct and points to a readable file.')
+        return results
+
+    data_finder_dict = {}
+    with open(data_finder_path, 'r') as fh:
+        try:
+            data_finder_dict = yaml.safe_load(fh)
+        except yaml.parser.ParserError:
+            logger.error(
+                'Unable to read in YAML config file', exc_info=True)
+            return results
+
+    if rule_name not in data_finder_dict:
+        results[rule_name] = (False, 'Rule not defined')
+        return results
+
+    data_finder = datafinder.DataFinder()
+    data_finder.set_start_date(start_date)
+    data_finder.set_end_date(end_date)
+    data_finder.set_parameters(parameters)
+    data_finder.set_rule(data_finder_dict.get(rule_name))
+    data_finder.set_timeline_ids(timeline_ids)
+
+    sketch = Sketch.query.get(sketch_id)
+    indices = set()
+    for timeline in sketch.active_timelines:
+        if timeline.id not in timeline_ids:
+            continue
+        indices.add(timeline.searchindex.index_name)
+
+    data_finder.set_indices(list(indices))
+
+    results[rule_name] = data_finder.find_data()
+    return results
+
+
+def run_data_finder(
+        rule_names, sketch_id, start_date, end_date,
+        timeline_ids=None, parameters=None):
+    """Runs a task to find out if data exists in a dataset.
+
+    Args:
+        rule_names (list): A list of rule names to run.
+        sketch_id (int): Sketch identifier.
+        start_date (str): A string with an ISO formatted timestring for the
+            start date of the data search.
+        end_date (str): A string with an ISO formatted timestring for the
+            end date of the data search.
+        timeline_ids (list): An optional list of integers for the timelines
+            within the the sketch to limit the data search to. If not provided
+            all timelines are searched.
+        parameters (dict): An optional dict with key/value pairs of parameters
+            and their values, used for filling in regular expressions.
+
+    Returns:
+        Celery task object.
+    """
+    task_group = group(find_data_task.s(
+        rule_name=x, sketch_id=sketch_id, start_date=start_date,
+        end_date=end_date, timeline_ids=timeline_ids,
+        parameters=parameters) for x in rule_names)
+    return task_group

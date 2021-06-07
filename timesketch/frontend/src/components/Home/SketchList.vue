@@ -15,20 +15,20 @@ limitations under the License.
 -->
 <template>
   <div>
-    <div v-if="!sketches.length">
-      No {{ scope }} investigations found
-    </div>
+    <div v-if="!sketches.length">No {{ scope }} investigations found</div>
 
     <ul class="content-list">
       <li class="list-item" v-for="sketch in sketches" :key="sketch.id" style="padding:20px;">
         <div class="columns">
           <div class="column is-8">
-            <router-link :to="{ name: 'SketchOverview', params: {sketchId: sketch.id } }"><strong>{{ sketch.name }}</strong></router-link>
+            <router-link :to="{ name: 'Overview', params: { sketchId: sketch.id } }"
+              ><strong>{{ sketch.name }}</strong></router-link
+            >
             <div class="description">{{ sketch.description }}</div>
           </div>
           <div class="column">
             <strong style="color:var(--default-font-color)">Created by:</strong> {{ sketch.user }}
-            <div style="font-size: 0.9em;">{{ sketch.created_at | moment("YYYY-MM-DD")}}</div>
+            <div style="font-size: 0.9em;">{{ sketch.created_at | moment('YYYY-MM-DD') }}</div>
           </div>
           <div class="column" style="text-align: right;">
             <span class="button is-small is-rounded is-light" style="border-radius: 20px;margin-top:10px;">
@@ -36,7 +36,13 @@ limitations under the License.
                 Archived
               </span>
               <span v-else-if="sketch.last_activity">
-                Active {{ $moment.utc(sketch.last_activity).local().fromNow() }}
+                Active
+                {{
+                  $moment
+                    .utc(sketch.last_activity)
+                    .local()
+                    .fromNow()
+                }}
               </span>
               <span v-else-if="!sketch.last_activity">
                 No activity yet
@@ -48,19 +54,19 @@ limitations under the License.
       </li>
     </ul>
 
-    <br>
-    <b-pagination class="is-right"
+    <br />
+    <b-pagination
+      class="is-right"
       v-if="numSketches > perPage"
       v-model="currentPage"
       @change="paginate"
       :total="numSketches"
       :simple="true"
       :per-page="perPage"
-      size="is-small">
+      size="is-small"
+    >
     </b-pagination>
-
   </div>
-
 </template>
 
 <script>
@@ -68,43 +74,44 @@ import ApiClient from '../../utils/RestApiClient'
 
 export default {
   props: ['scope', 'searchQuery'],
-  data () {
+  data() {
     return {
       sketches: [],
       numSketches: 0,
       currentPage: 1,
-      perPage: 10
+      perPage: 10,
     }
   },
   methods: {
-    getSketches: function () {
-      ApiClient.getSketchList(this.scope, this.currentPage, this.searchQuery).then((response) => {
-        this.sketches = response.data.objects
-        this.numSketches = response.data.meta.total_items
-      }).catch((e) => {
-        console.error(e)
-      })
+    getSketches: function() {
+      ApiClient.getSketchList(this.scope, this.currentPage, this.searchQuery)
+        .then(response => {
+          this.sketches = response.data.objects
+          this.numSketches = response.data.meta.total_items
+        })
+        .catch(e => {
+          console.error(e)
+        })
     },
-    paginate: function () {
+    paginate: function() {
       this.getSketches()
-    }
+    },
   },
-  created () {
+  created() {
     this.getSketches()
   },
   watch: {
-    searchQuery: function () {
+    searchQuery: function() {
       if (this.scope === 'search') {
         this.getSketches()
       }
-    }
-  }
+    },
+  },
 }
 </script>
 
 <!-- CSS scoped to this component only -->
 <style scoped lang="scss">
-
 .description {
   display: -webkit-box;
   font-size: 0.9em;
@@ -113,5 +120,4 @@ export default {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
 }
-
 </style>

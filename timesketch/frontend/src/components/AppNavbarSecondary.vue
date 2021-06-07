@@ -14,54 +14,69 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-
-  <section class="section" style="background-color:var(--navbar-background);padding:0;border-bottom: 1px solid var(--navbar-header-border-color);">
+  <section
+    class="section"
+    style="background-color:var(--navbar-background);padding:0;border-bottom: 1px solid var(--navbar-border-color);"
+  >
     <div class="container is-fluid" style="padding-bottom:0;">
-
       <nav class="navbar" role="navigation" aria-label="main navigation">
         <div class="navbar-item" v-if="currentAppContext === 'sketch'">
           <div class="tabs is-left">
             <ul>
-              <li v-bind:class="{'is-active': currentPage === 'overview'}">
-                <router-link :to="{ name: 'SketchOverview' }">
+              <li v-bind:class="{ 'is-active': currentPage === 'overview' }">
+                <router-link :to="{ name: 'Overview' }">
                   <span class="icon is-small"><i class="fas fa-cubes" aria-hidden="true"></i></span>
                   <span>Overview</span>
                 </router-link>
               </li>
-              <li v-bind:class="{'is-active': currentPage === 'explore'}">
-                <router-link :to="{ name: 'SketchExplore' }">
+              <li v-bind:class="{ 'is-active': currentPage === 'explore' }">
+                <router-link :to="{ name: 'Explore' }">
                   <span class="icon is-small"><i class="fas fa-search" aria-hidden="true"></i></span>
                   <span>Explore</span>
                 </router-link>
               </li>
-              <li v-bind:class="{'is-active': currentPage === 'graph'}">
-                <router-link :to="{ name: 'SketchGraphOverview' }">
+              <li v-bind:class="{ 'is-active': currentPage === 'graph' }">
+                <router-link :to="{ name: 'GraphOverview' }">
                   <span class="icon is-small"><i class="fas fa-project-diagram" aria-hidden="true"></i></span>
                   <span>Graph</span>
                 </router-link>
               </li>
-              <li v-bind:class="{'is-active': currentPage === 'aggregate'}">
-                <router-link :to="{ name: 'SketchAggregate' }">
+              <li v-bind:class="{ 'is-active': currentPage === 'aggregate' }">
+                <router-link :to="{ name: 'Aggregate' }">
                   <span class="icon is-small"><i class="fas fa-chart-bar" aria-hidden="true"></i></span>
                   <span>Aggregate</span>
                 </router-link>
               </li>
-              <li v-bind:class="{'is-active': currentPage === 'analyzers'}">
-                <router-link :to="{ name: 'SketchAnalyzersOverview' }">
+              <li v-bind:class="{ 'is-active': currentPage === 'analyzers' }">
+                <router-link :to="{ name: 'Analyze' }">
                   <span class="icon is-small"><i class="fas fa-magic" aria-hidden="true"></i></span>
                   <span>Analyze</span>
                 </router-link>
               </li>
-              <li v-bind:class="{'is-active': currentPage === 'timelines'}">
-                <router-link :to="{ name: 'SketchManageTimelines' }">
+              <li v-bind:class="{ 'is-active': currentPage === 'timelines' }">
+                <router-link :to="{ name: 'Timelines' }">
                   <span class="icon is-small"><i class="fas fa-stream" aria-hidden="true"></i></span>
                   <span>Timelines</span>
                 </router-link>
               </li>
-              <li v-bind:class="{'is-active': currentPage === 'stories'}">
-                <router-link :to="{ name: 'SketchStoryOverview' }">
+              <li v-bind:class="{ 'is-active': currentPage === 'stories' }">
+                <router-link :to="{ name: 'StoryOverview' }">
                   <span class="icon is-small"><i class="fas fa-book" aria-hidden="true"></i></span>
                   <span>Stories</span>
+                </router-link>
+              </li>
+              <li v-if="meta" v-bind:class="{ 'is-active': currentPage === 'attributes' }">
+                <router-link :to="{ name: 'Attributes' }">
+                  <span class="icon is-small"><i class="fas fa-table" aria-hidden="true"></i></span>
+                  <span
+                    >Attributes <b-tag type="is-light">{{ attributeCount }}</b-tag></span
+                  >
+                </router-link>
+              </li>
+              <li v-if="hasAttributeOntology('intelligence')" v-bind:class="{'is-active': currentPage === 'intelligence'}">
+                <router-link :to="{ name: 'Intelligence' }">
+                  <span class="icon is-small"><i class="fas fa-brain" aria-hidden="true"></i></span>
+                  <span>Intelligence <b-tag type="is-light">{{attributeCount}}</b-tag></span>
                 </router-link>
               </li>
             </ul>
@@ -75,25 +90,40 @@ limitations under the License.
       </nav>
     </div>
   </section>
-
 </template>
 
 <script>
 export default {
   name: 'ts-navbar-secondary',
-  props: ['currentAppContext', 'currentPage']
+  props: {
+    currentAppContext: String,
+    currentPage: String,
+  },
+  methods: {
+    hasAttributeOntology: function (ontologyName) {
+      return Object.values(this.meta.attributes).some(value => value.ontology === ontologyName)
+    }
+  },
+  computed: {
+    meta() {
+      return this.$store.state.meta
+    },
+    attributeCount() {
+      return Object.entries(this.meta.attributes).length
+    },
+  },
 }
 </script>
 
 <!-- CSS scoped to this component only -->
 <style scoped lang="scss">
-  .navbar {
-    background: transparent;
-  }
-  .tabs {
-    margin-left: -20px;
-  }
-  .tabs a {
-    padding: 0.5em 1em;
-  }
+.navbar {
+  background: transparent;
+}
+.tabs {
+  margin-left: -20px;
+}
+.tabs a {
+  padding: 0.5em 1em;
+}
 </style>

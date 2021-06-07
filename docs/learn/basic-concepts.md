@@ -12,13 +12,13 @@ Use the credentials provided by your Timesketch admin to log on to Timesketch or
 There is a dedicated document to walk you through [Sketches](sketch-overview.md)
 ## Adding Timelines
 
-- [Create timeline from JSON/JSONL/CSV file](/docs/CreateTimelineFromJSONorCSV.md)
-- [Upload data via the importer/API](/docs/UploadDataViaAPI.md)
-- [Enable Plaso upload via HTTP](/docs/EnablePlasoUpload.md)
+- [Create timeline from JSON/JSONL/CSV file](/learn/create-timeline-from-json-csv/)
+- [Basic uploading of data](/getting-started/upload-data/)
+- [Upload data via the importer/API](/developers/api-upload-data/)
 
 ## Adding event
 
-This feature is currently not implemented in the Web UI. But you can add events using the [API client](/developers/api-client/).
+This feature is currently not implemented in the Web UI. But you can add events using the [API client](../developers/api-client.md).
 
 ## Add a comment
 
@@ -92,7 +92,7 @@ To play with timesketch without any installation visit [demo.timesketch.org](htt
 
 ## Searching
 
-There is a dedicated document called [SearchQueryGuide](search-query-guide.md) to help you create custom searches.
+There is a dedicated document called [search query guide](search-query-guide.md) to help you create custom searches.
 
 All data within Timesketch is stored in elasticsearch. So the search works similar to ES.
 
