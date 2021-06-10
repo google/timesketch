@@ -1092,8 +1092,6 @@ export default {
     }
 
     if (!this.currentQueryString) {
-      // this.currentQueryString = '*'
-      // doSearch = true
       this.currentQueryFilter.indices = ['_all']
     }
 

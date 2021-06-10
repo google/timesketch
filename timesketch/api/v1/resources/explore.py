@@ -419,6 +419,12 @@ class SearchHistoryResource(resources.ResourceMixin, Resource):
         Returns:
             Search history in JSON (instance of flask.wrappers.Response)
         """
+        SQL_LIMIT = 100  # Limit to fetch first 100 results
+        
+        # How many results to return (12 if nothing is specified)
+        args = self.parser.parse_args()
+        limit = args.get('limit', 12)
+
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
@@ -426,13 +432,13 @@ class SearchHistoryResource(resources.ResourceMixin, Resource):
         result = []
         nodes = SearchHistory.query.filter_by(
             user=current_user, sketch=sketch).order_by(
-                SearchHistory.id.desc()).limit(100).all()
+                SearchHistory.id.desc()).limit(SQL_LIMIT).all()
         
         uniq_queries = set()
         count = 0
         for node in nodes:
             if node.query_string not in uniq_queries:
-                if count > 8:
+                if count > int(limit):
                     break
                 result.append(node._build_node_dict({}, node))
                 uniq_queries.add(node.query_string)

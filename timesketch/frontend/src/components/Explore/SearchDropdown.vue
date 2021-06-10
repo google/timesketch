@@ -105,7 +105,10 @@ limitations under the License.
       >
         <div style="padding:20px;">
           <div style="padding-bottom:10px;"><strong>Saved Searches</strong></div>
-          <ts-view-list :views="matches.savedSearches" @setActiveView="$emit('setActiveView', $event)"></ts-view-list>
+          <ts-view-list-compact
+            :views="matches.savedSearches"
+            @setActiveView="$emit('setActiveView', $event)"
+          ></ts-view-list-compact>
         </div>
       </div>
     </div>
@@ -113,7 +116,7 @@ limitations under the License.
 </template>
 
 <script>
-import TsViewList from '../Common/ViewListExplore'
+import TsViewListCompact from '../Common/ViewListCompact'
 
 const defaultQueryFilter = () => {
   return {
@@ -128,7 +131,7 @@ const defaultQueryFilter = () => {
 
 export default {
   components: {
-    TsViewList,
+    TsViewListCompact,
   },
   props: ['selectedLabels', 'queryString'],
   computed: {
