@@ -21,7 +21,7 @@ limitations under the License.
     <div class="container is-fluid" style="padding-bottom:0;">
       <nav class="navbar" role="navigation" aria-label="main navigation">
         <div class="navbar-item" v-if="currentAppContext === 'sketch'">
-          <div class="tabs is-left">
+          <div class="tabs is-left" v-if="activeTimelines.length">
             <ul>
               <li v-bind:class="{ 'is-active': currentPage === 'overview' }">
                 <router-link :to="{ name: 'Overview' }">
@@ -75,10 +75,15 @@ limitations under the License.
                   >
                 </router-link>
               </li>
-              <li v-if="hasAttributeOntology('intelligence')" v-bind:class="{'is-active': currentPage === 'intelligence'}">
+              <li
+                v-if="hasAttributeOntology('intelligence')"
+                v-bind:class="{ 'is-active': currentPage === 'intelligence' }"
+              >
                 <router-link :to="{ name: 'Intelligence' }">
                   <span class="icon is-small"><i class="fas fa-brain" aria-hidden="true"></i></span>
-                  <span>Intelligence <b-tag type="is-light">{{attributeCount}}</b-tag></span>
+                  <span
+                    >Intelligence <b-tag type="is-light">{{ attributeCount }}</b-tag></span
+                  >
                 </router-link>
               </li>
             </ul>
@@ -102,13 +107,16 @@ export default {
     currentPage: String,
   },
   methods: {
-    hasAttributeOntology: function (ontologyName) {
+    hasAttributeOntology: function(ontologyName) {
       return Object.values(this.meta.attributes).some(value => value.ontology === ontologyName)
-    }
+    },
   },
   computed: {
     meta() {
       return this.$store.state.meta
+    },
+    activeTimelines() {
+      return this.$store.state.sketch.active_timelines
     },
     attributeCount() {
       return Object.entries(this.meta.attributes).length

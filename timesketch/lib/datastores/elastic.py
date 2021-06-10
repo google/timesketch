@@ -706,7 +706,7 @@ class ElasticsearchDataStore(object):
         # Make sure that the list of index names is uniq.
         indices = list(set(indices))
 
-        labels = []
+        labels = []        
         # pylint: disable=unexpected-keyword-arg
         try:
             result = self.client.search(
@@ -719,11 +719,12 @@ class ElasticsearchDataStore(object):
         buckets = result.get(
             'aggregations', {}).get('nested', {}).get('inner', {}).get(
                 'labels', {}).get('buckets', [])
+        
         for bucket in buckets:
-            # Filter out special labels like __ts_star etc.
-            if bucket['key'].startswith('__'):
-                continue
-            labels.append(bucket['key'])
+            new_bucket = {}
+            new_bucket['label'] = bucket.pop('key')
+            new_bucket['count'] = bucket.pop('doc_count')
+            labels.append(new_bucket)
         return labels
 
     # pylint: disable=inconsistent-return-statements

@@ -23,8 +23,6 @@ export default {
   created: function() {
     this.$store.dispatch('updateSketch', this.sketchId)
     this.$store.dispatch('updateSearchHistory', this.sketchId)
-    this.$store.dispatch('updateTimelineTags', this.sketchId)
-    this.$store.dispatch('updateDataTypes', this.sketchId)
   },
   computed: {
     sketch() {

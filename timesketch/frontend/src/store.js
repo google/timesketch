@@ -71,6 +71,8 @@ export default new Vuex.Store({
       ApiClient.getSketch(sketchId)
         .then(response => {
           context.commit('SET_SKETCH', response.data)
+          context.dispatch('updateTimelineTags', sketchId)
+          context.dispatch('updateDataTypes', sketchId)
         })
         .catch(e => {})
 
@@ -98,6 +100,9 @@ export default new Vuex.Store({
         .catch(e => {})
     },
     updateTimelineTags(context, sketchId) {
+      if (!context.state.sketch.active_timelines.length) {
+        return
+      }
       let formData = {
         aggregator_name: 'field_bucket',
         aggregator_parameters: {
@@ -111,6 +116,9 @@ export default new Vuex.Store({
         .catch(e => {})
     },
     updateDataTypes(context, sketchId) {
+      if (!context.state.sketch.active_timelines.length) {
+        return
+      }
       let formData = {
         aggregator_name: 'field_bucket',
         aggregator_parameters: {

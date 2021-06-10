@@ -17,16 +17,12 @@ limitations under the License.
   <div>
     <div
       v-on:click="setActiveView(view)"
-      v-for="view in meta.views"
+      v-for="view in views"
       :key="view.id"
       class="view-list-item"
-      style="cursor:pointer;padding:10px;"
+      style="cursor:pointer;padding:5px 0 5px 0;"
     >
       {{ view.name }}
-      <br />
-      <span class="is-size-7">
-        Created by {{ view.user }} <span v-if="view.description"> ({{ view.description }})</span>
-      </span>
     </div>
   </div>
 </template>
@@ -35,7 +31,7 @@ limitations under the License.
 import ApiClient from '../../utils/RestApiClient'
 
 export default {
-  props: ['currentQueryString', 'currentQueryFilter', 'isSimple', 'isLast', 'sketchId'],
+  props: ['views'],
   data() {
     return {
       activeView: null,
@@ -96,17 +92,6 @@ export default {
 
 <!-- CSS scoped to this component only -->
 <style scoped lang="scss">
-.button:focus,
-.button.is-focused {
-  border-color: transparent;
-}
-
-.footer {
-  background: #f5f5f5;
-  border-top: solid 1px #d1d1d1;
-  padding: 15px;
-}
-
 .view-list-item:hover {
   background-color: #e0e0e0;
 }

@@ -178,7 +178,7 @@ html,
 body {
   height: 100%;
   overflow: auto;
-  font-family: 'Roboto';
+  font-family: 'Arial';
   font-size: var(--font-size-regular);
 }
 
@@ -248,8 +248,13 @@ ul.content-list > li:last-child {
   height: 34px;
   // background: var(--search-input-explore);
   color: var(--search-input-font-color);
-  border: 1px solid #d3d3d3;
+  // border: 1px solid #d3d3d3;
   width: 100%;
+}
+
+.ts-search-box {
+  border: 1px solid #d3d3d3;
+  border-radius: 12px;
 }
 
 .ts-home-input {
@@ -448,13 +453,4 @@ a:hover {
       display: none;
     }
   }
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.2s;
-}
-.fade-enter,
-.fade-leave-to {
-  opacity: 0;
 }

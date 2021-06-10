@@ -45,43 +45,41 @@ limitations under the License.
           </b-modal>
 
           <div class="card-content" v-if="showSearch">
-            <div class="control" style="width: 100%; margin-bottom:10px;">
-              <input
-                @keyup.enter="search"
-                v-model="currentQueryString"
-                v-on:click="showSearchDropdown = true"
-                class="ts-search-input"
-                type="text"
-                ref="searchInput"
-                placeholder="Search"
-                autofocus
-                required
-              />
-
-              <transition name="fade">
-                <div
-                  class="card"
-                  v-if="showSearchDropdown"
-                  style="z-index: 999; position:absolute; margin-top:7px; width:100%; border:1px solid #d3d3d3; box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); border-radius:12px 12px 12px 12px"
-                >
-                  <div class="card-content" style="padding:0;">
-                    <ts-search-dropdown
-                      :selected-labels="selectedLabels"
-                      @setActiveView="searchView"
-                      @addChip="addChip"
-                      @updateLabelChips="updateLabelChips()"
-                      @close="closeSearchDropdown"
-                      @close-on-click="showSearchDropdown = false"
-                      @node-click="jumpInHistory"
-                      @setQueryAndFilter="setQueryAndFilter"
-                    >
-                    </ts-search-dropdown>
-                  </div>
+            <div style="position:relative;">
+              <div class="ts-search-box" style="z-index:999; background-color:#fff; position:absolute; width:100%;">
+                <span class="icon" style="position:absolute;top:14px;margin-left:17px;font-size:16px;color:#777;">
+                  <i class="fas fa-search"></i>
+                </span>
+                <input
+                  @keyup.enter="search"
+                  v-model="currentQueryString"
+                  v-on:click="showSearchDropdown = true"
+                  class="ts-search-input"
+                  type="text"
+                  ref="searchInput"
+                  placeholder="Search"
+                  style="padding-left:50px;"
+                  autofocus
+                  required
+                />
+                <div v-if="showSearchDropdown">
+                  <ts-search-dropdown
+                    :selected-labels="selectedLabels"
+                    :query-string="currentQueryString"
+                    @setActiveView="searchView"
+                    @addChip="addChip"
+                    @updateLabelChips="updateLabelChips()"
+                    @close="closeSearchDropdown"
+                    @close-on-click="showSearchDropdown = false"
+                    @node-click="jumpInHistory"
+                    @setQueryAndFilter="setQueryAndFilter"
+                  >
+                  </ts-search-dropdown>
                 </div>
-              </transition>
+              </div>
             </div>
 
-            <div class="field is-grouped">
+            <div class="field is-grouped" style="margin-top:60px;">
               <p class="control">
                 <b-dropdown trap-focus append-to-body aria-role="menu" ref="NewTimeFilter">
                   <a class="button is-text" style="text-decoration: none;" slot="trigger" role="button">
@@ -122,11 +120,16 @@ limitations under the License.
                           </b-checkbox>
                         </div>
                         <hr v-if="meta.filter_labels.length" />
-                        <div class="level" style="margin-bottom: 5px;" v-for="label in meta.filter_labels" :key="label">
+                        <div
+                          class="level"
+                          style="margin-bottom: 5px;"
+                          v-for="label in filteredLabels"
+                          :key="label.label"
+                        >
                           <div class="level-left">
                             <div class="field">
                               <b-checkbox type="is-info" v-model="selectedLabels" :native-value="label">
-                                {{ label }}
+                                {{ label.label }}
                               </b-checkbox>
                             </div>
                           </div>
@@ -144,7 +147,7 @@ limitations under the License.
             </div>
 
             <!-- Search history toggle -->
-            <p class="control" style="top:-45px;float:right;">
+            <p class="control" style="top:-40px;float:right;">
               <span style="margin-right:10px; margin-left:15px;">Show history</span>
               <b-switch
                 v-model="showSearchHistory"
@@ -265,7 +268,15 @@ limitations under the License.
             </p>
             <div class="card-header-icon" style="width:20%;">
               <span style="margin-right:10px;">Zoom</span>
-              <b-slider style="margin-right:10px;" v-model="zoomLevel" :min="0.1" :max="1" :step="0.01"></b-slider>
+              <b-slider
+                style="margin-right:10px;"
+                @dragend="triggerScrollTo"
+                v-model="zoomLevel"
+                format="percent"
+                :min="0.1"
+                :max="1"
+                :step="0.01"
+              ></b-slider>
             </div>
           </header>
           <div
@@ -317,7 +328,11 @@ limitations under the License.
                   </div>
                 </div>
                 <div class="level-item">
-                  <button class="button is-small is-outlined" v-on:click="showSaveSearchModal = !showSavedSearchModal">
+                  <button
+                    class="button is-small is-outlined is-rounded"
+                    v-if="totalHits > 0"
+                    v-on:click="showSaveSearchModal = !showSavedSearchModal"
+                  >
                     <span class="icon is-small"><i class="fas fa-save"></i></span>
                     <span>Save this search</span>
                   </button>
@@ -614,6 +629,9 @@ export default {
     timeFilterChips: function() {
       return this.currentQueryFilter.chips.filter(chip => chip.type.startsWith('datetime'))
     },
+    filteredLabels() {
+      return this.$store.state.meta.filter_labels.filter(label => !label.label.startsWith('__'))
+    },
   },
   methods: {
     hideDropdown: function() {
@@ -690,7 +708,10 @@ export default {
     setQueryAndFilter: function(searchEvent) {
       this.currentQueryString = searchEvent.queryString
       this.currentQueryFilter = searchEvent.queryFilter
-      this.search()
+      this.$refs.searchInput.focus()
+      if (searchEvent.doSearch) {
+        this.search()
+      }
     },
     exportSearchResult: function() {
       this.loadingOpen()
@@ -896,7 +917,7 @@ export default {
       this.selectedLabels.forEach(label => {
         let chip = {
           field: '',
-          value: label,
+          value: label.label,
           type: 'label',
           operator: 'must',
           active: true,
