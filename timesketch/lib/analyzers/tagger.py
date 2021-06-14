@@ -67,6 +67,8 @@ class TaggerSketchPlugin(interface.BaseAnalyzer):
         query = config.get('query_string')
         query_dsl = config.get('query_dsl')
         save_search = config.get('save_search', False)
+        print('Query: ',query)
+        print('Query_DSL: ',query_dsl)
         # For legacy reasons to support both save_search and
         # create_view parameters.
         if not save_search:
@@ -83,6 +85,7 @@ class TaggerSketchPlugin(interface.BaseAnalyzer):
 
         expression_string = config.get('regular_expression', '')
         attributes = None
+        expression = None
         if expression_string:
             expression = utils.compile_regular_expression(
                 expression_string=expression_string,
