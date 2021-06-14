@@ -41,6 +41,6 @@ export default {
   padding: 5px 0 5px 0;
 }
 .view-list-item:hover {
-  background-color: #e0e0e0;
+  background-color: var(--table-row-hover-background-color);
 }
 </style>

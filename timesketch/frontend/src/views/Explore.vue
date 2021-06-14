@@ -46,8 +46,8 @@ limitations under the License.
 
           <div class="card-content" v-if="showSearch">
             <div style="position:relative;">
-              <div class="ts-search-box" style="z-index:999; background-color:#fff; position:absolute; width:100%;">
-                <span class="icon" style="position:absolute;top:14px;margin-left:17px;font-size:16px;color:#777;">
+              <div class="ts-search-box" style="z-index:999; position:absolute; width:100%;">
+                <span class="icon" style="position:absolute;top:14px;margin-left:17px;font-size:16px;">
                   <i class="fas fa-search"></i>
                 </span>
                 <input
