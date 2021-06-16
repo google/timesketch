@@ -22,7 +22,7 @@ limitations under the License.
             <p class="card-header-title">{{ section.label }}</p>
           </header>
 
-          <div class="card-content">
+          <div class="card-content ts-dynamic-table">
             <b-table :data="data">
               <b-table-column
                 v-for="column in section.columns"
@@ -33,11 +33,44 @@ limitations under the License.
                 :numeric="typeof data[0][column.field] === 'number' ? true : false"
                 sortable
               >
+                <!-- column is an text -->
+                <div v-if="column.type === 'text'">
+                  <router-link
+                    v-if="column.searchable"
+                    :to="{ name: 'Explore', query: generateQuery(props.row[column.field], column) }"
+                  >
+                    {{ props.row[column.field] }}
+                    <i class="fas fa-search" aria-hidden="true"></i>
+                  </router-link>
+                  <span v-else>{{ props.row[column.field] }}</span>
+                </div>
+
+                <!-- column is a timestamp -->
+                <div v-else-if="column.type === 'timestamp'">
+                  {{ props.row[column.field] }}
+                </div>
+
+                <!-- column is a list of tags -->
+                <div v-else-if="column.type === 'list'">
+                  <b-taglist v-if="column.searchable">
+                    <router-link
+                      v-bind:key="tag"
+                      v-for="tag in props.row[column.field]"
+                      :to="{ name: 'Explore', query: generateQuery(tag, column) }"
+                    >
+                      <b-tag type="is-link is-light">{{ tag }} <i class="fas fa-search" aria-hidden="true"></i></b-tag>
+                    </router-link>
+                  </b-taglist>
+                  <b-taglist v-else>
+                    <b-tag v-bind:key="tag" v-for="tag in props.row[column.field]" type="is-light">{{ tag }}</b-tag>
+                  </b-taglist>
+                </div>
+
                 <!-- column is an object -->
-                <pre v-if="typeof props.row[column.field] === 'object'">{{ props.row[column.field] }}</pre>
+                <pre v-else-if="column.type === 'object'">{{ props.row[column.field] }}</pre>
 
                 <!-- deal with all other cases -->
-                <span v-else>{{ props.row[column.field] }}</span>
+                <div v-else>{{ props.row[column.field] }}</div>
               </b-table-column>
             </b-table>
           </div>
@@ -60,5 +93,24 @@ export default {
       return this.$store.state.meta
     },
   },
+  methods: {
+    generateQuery(value, column) {
+      let query = `"${value}"`
+      if (column.searchKey) {
+        query = `${column.searchKey}:${query}`
+      }
+      return { q: query }
+    },
+  },
 }
 </script>
+
+<style scoped lang="scss">
+.tags a:not(:last-child) {
+  margin-right: 0.5rem;
+}
+
+.ts-dynamic-table a {
+  color: var(--default-link-color);
+}
+</style>
