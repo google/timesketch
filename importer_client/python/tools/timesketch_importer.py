@@ -199,6 +199,12 @@ def main(args=None):
             'SSH then it is recommended to set this option. When set an '
             'authentication URL is prompted on the screen, requiring a '
             'copy/paste into a browser to complete the OAUTH dance.'))
+    auth_group.add_argument(
+        '--re-prompt', '--re_prompt', action='store_true', dest='re_prompt',
+        help=(
+            'If for some reasons you type the wrong username, password '
+            'or host information you can use this parameter to re-enter '
+            'those mistyped values.'))
 
     config_group = argument_parser.add_argument_group(
         'Configuration Arguments')
@@ -355,6 +361,7 @@ def main(args=None):
     conf_password = ''
 
     if credentials:
+        logger.info('Using cached credentials.')
         if credentials.TYPE.lower() == 'oauth':
             assistant.set_config('auth_mode', 'oauth')
         elif credentials.TYPE.lower() == 'timesketch':
@@ -391,7 +398,8 @@ def main(args=None):
 
     # Gather all questions that are missing.
     config.configure_missing_parameters(
-        config_assistant=assistant, token_password=token_password)
+        config_assistant=assistant, token_password=token_password,
+        confirm_choices=options.re_prompt)
 
     logger.info('Creating a client.')
     ts_client = assistant.get_client(token_password=token_password)

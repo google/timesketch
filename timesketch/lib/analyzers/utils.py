@@ -13,14 +13,16 @@
 # limitations under the License.
 """This file contains utilities for analyzers."""
 
-from __future__ import unicode_literals
-
+import logging
+import re
 from six.moves import urllib_parse as urlparse
 
 import numpy
 
 from timesketch.lib.analyzers import interface
 
+
+logger = logging.getLogger('timesketch.analyzer_utils')
 
 # Title and header text of a story that is common among browser
 # based analyzers.
@@ -292,3 +294,46 @@ def get_events_from_data_frame(frame, datastore):
             _id=event_id, _type=event_type, _index=event_index,
             _source=source)
         yield interface.Event(event_dict, datastore)
+
+
+def compile_regular_expression(
+        expression_string, expression_flags=None, expression_parameters=None):
+    """Returns a compiled regular expression from parameters.
+
+    Args:
+        expression_string (str): The regular expression string to compile. It
+            can contain parameters that will be replaced before compilation.
+        expression_flags (list): Optional list of flags for the regular
+            expression.
+        expression_parameters (dict): Optional dict with the keys as the
+            parameter names and values as the values that the keys in the
+            expression string should replace.
+
+    Returns:
+        A compiled regular expression (instance of re.Pattern).
+    """
+    if expression_flags:
+        flags = set()
+        for flag in expression_flags:
+            try:
+                flags.add(getattr(re, flag))
+            except AttributeError:
+                logger.warning(
+                    'Unknown regular expression flag defined '
+                    '-> {0:s}.'.format(flag))
+        re_flag = sum(flags)
+    else:
+        re_flag = 0
+
+    if expression_parameters:
+        expression_string = expression_string.format(**expression_parameters)
+
+    try:
+        expression = re.compile(expression_string, flags=re_flag)
+    except re.error:
+        logger.error(
+            'Regular expression [{0:s}] failed to '
+            'compile'.format(expression_string), exc_info=True)
+        expression = None
+
+    return expression
