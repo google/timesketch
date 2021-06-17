@@ -792,7 +792,7 @@ class SearchHistory(LabelMixin, BaseModel):
         self.parent = parent
 
     @staticmethod
-    def _build_node_dict(node_dict, node):
+    def build_node_dict(node_dict, node):
         node_dict['id'] = node.id
         node_dict['description'] = node.description
         node_dict['query_result_count'] = node.query_result_count
@@ -820,7 +820,7 @@ class SearchHistory(LabelMixin, BaseModel):
         if not isinstance(node_dict, dict):
             raise ValueError('node_dict must be a dictionary')
 
-        node_dict = self._build_node_dict(node_dict, node)
+        node_dict = self.build_node_dict(node_dict, node)
         children = node.children.values()
         if children and recurse:
             for child in children:

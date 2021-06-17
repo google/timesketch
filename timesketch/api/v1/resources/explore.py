@@ -427,7 +427,7 @@ class SearchHistoryResource(resources.ResourceMixin, Resource):
         """
         SQL_LIMIT = 100  # Limit to fetch first 100 results
         DEFAULT_LIMIT= 12
-        
+
         # How many results to return (12 if nothing is specified)
         args = self.parser.parse_args()
         limit = args.get('limit')
@@ -443,22 +443,22 @@ class SearchHistoryResource(resources.ResourceMixin, Resource):
         nodes = SearchHistory.query.filter_by(
             user=current_user, sketch=sketch).order_by(
                 SearchHistory.id.desc()).limit(SQL_LIMIT).all()
-        
+
         uniq_queries = set()
         count = 0
         for node in nodes:
             if node.query_string not in uniq_queries:
                 if count >= int(limit):
                     break
-                result.append(node._build_node_dict({}, node))
+                result.append(node.build_node_dict({}, node))
                 uniq_queries.add(node.query_string)
                 count += 1
-        
+
         schema = {
             'objects': result,
             'meta': {}
         }
-        
+
         return jsonify(schema)
 
 
@@ -493,5 +493,3 @@ class SearchHistoryTreeResource(resources.ResourceMixin, Resource):
         }
 
         return jsonify(schema)
-
-
