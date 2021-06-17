@@ -114,6 +114,8 @@ limitations under the License.
             </div>
 
             <p class="control" style="top:-38px; float:right;">
+              <span style="margin-right:10px; margin-left:15px;">Histogram</span>
+              <b-switch v-model="showHistogram" size="is-small" type="is-info" style="top:2px;"></b-switch>
               <span style="margin-right:10px; margin-left:15px;">Search history</span>
               <b-switch
                 v-model="showSearchHistory"
@@ -247,6 +249,20 @@ limitations under the License.
               v-bind:style="{ transform: 'scale(' + zoomLevel + ')' }"
               style="transform-origin: top left;"
             ></ts-search-history-tree>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Histogram -->
+    <section class="section" v-if="showHistogram">
+      <div class="container is-fluid">
+        <div class="card">
+          <div class="card-content">
+            <ts-bar-chart
+              :chart-data="eventList.meta.count_over_time"
+              @addChip="addChipFromHistogram($event)"
+            ></ts-bar-chart>
           </div>
         </div>
       </div>
@@ -457,6 +473,7 @@ import TsSketchExploreEventList from '../components/Explore/EventList'
 import TsExploreTimelinePicker from '../components/Explore/TimelinePicker'
 import TsExploreFilterTime from '../components/Explore/TimeFilter'
 import TsSearchHistoryTree from '../components/Explore/SearchHistoryTree'
+import TsBarChart from '../components/Aggregation/BarChart'
 
 import EventBus from '../main'
 import { None } from 'vega'
@@ -493,6 +510,7 @@ export default {
     TsExploreTimelinePicker,
     TsExploreFilterTime,
     TsSearchHistoryTree,
+    TsBarChart,
   },
   props: ['sketchId'],
   data() {
@@ -524,6 +542,7 @@ export default {
       },
       selectedLabels: [],
       showSearchHistory: false,
+      showHistogram: false,
       branchParent: None,
       zoomLevel: 1,
       zoomOrigin: {
@@ -795,13 +814,15 @@ export default {
       chip.active = !chip.active
       this.search()
     },
-    removeChip: function(chip) {
+    removeChip: function(chip, search = true) {
       let chipIndex = this.currentQueryFilter.chips.findIndex(c => c.value === chip.value)
       this.currentQueryFilter.chips.splice(chipIndex, 1)
       if (chip.type === 'label') {
         this.selectedLabels = this.selectedLabels.filter(label => label !== chip.value)
       }
-      this.search()
+      if (search) {
+        this.search()
+      }
     },
     updateChip: function(newChip, oldChip) {
       // Replace the chip at the given index
@@ -818,6 +839,18 @@ export default {
       this.currentQueryFilter.chips.push(chip)
       this.search()
     },
+    addChipFromHistogram: function(chip) {
+      if (!this.currentQueryFilter.chips) {
+        this.currentQueryFilter.chips = []
+      }
+      this.currentQueryFilter.chips.forEach(chip => {
+        if (chip.type === 'datetime_range') {
+          this.removeChip(chip, false)
+        }
+      })
+      this.addChip(chip)
+    },
+
     toggleLabelChip: function(labelName) {
       let chip = {
         field: '',

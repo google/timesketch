@@ -153,7 +153,13 @@ class ExploreResource(resources.ResourceMixin, Resource):
                     'min_doc_count': 0,
                     'size': len(sketch.timelines)
                 }
-            }
+            },
+            'count_over_time': {
+                'auto_date_histogram': {
+                    'field': 'datetime',
+                    'buckets': 50,
+                }
+            }            
         }
         if count:
             # Count operations do not support size parameters.
@@ -226,6 +232,21 @@ class ExploreResource(resources.ResourceMixin, Resource):
                     timeline_ids=timeline_ids)
             except ValueError as e:
                 abort(HTTP_STATUS_CODE_BAD_REQUEST, str(e))
+
+        # Get number of matching documents over time.
+        histogram_interval = result.get(
+            'aggregations', {}).get('count_over_time', {}).get('interval', '')
+        count_over_time = {
+            'data': {},
+            'interval': histogram_interval
+        }
+        try:
+            for bucket in result['aggregations']['count_over_time']['buckets']:
+                key = bucket.get('key')
+                if key:
+                    count_over_time['data'][key] = bucket.get('doc_count')
+        except KeyError:
+            pass
 
         # Get number of matching documents per index.
         count_per_index = {}
@@ -360,6 +381,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
             'timeline_names': tl_names,
             'count_per_index': count_per_index,
             'count_per_timeline': count_per_timeline,
+            'count_over_time': count_over_time,
             'scroll_id': result.get('_scroll_id', ''),
             'search_node': search_node
         }
@@ -412,6 +434,8 @@ class QueryResource(resources.ResourceMixin, Resource):
 class SearchHistoryResource(resources.ResourceMixin, Resource):
     """Resource to get search history for a user."""
 
+    HISTORY_NODE_LIMIT = 250  # To prevent heap exhaustion during recursion.
+
     @login_required
     def get(self, sketch_id):
         """Handles GET request to the resource.
@@ -426,7 +450,8 @@ class SearchHistoryResource(resources.ResourceMixin, Resource):
         tree = {}
         root_node = SearchHistory.query.filter_by(
             user=current_user, sketch=sketch).order_by(
-                SearchHistory.id).first()
+                SearchHistory.id.desc()).limit(self.HISTORY_NODE_LIMIT)[-1]
+
         last_node = SearchHistory.query.filter_by(
             user=current_user, sketch=sketch).order_by(
                 SearchHistory.id.desc()).first()
