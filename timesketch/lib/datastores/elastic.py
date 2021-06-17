@@ -706,7 +706,7 @@ class ElasticsearchDataStore(object):
         # Make sure that the list of index names is uniq.
         indices = list(set(indices))
 
-        labels = []        
+        labels = []
         # pylint: disable=unexpected-keyword-arg
         try:
             result = self.client.search(
@@ -719,7 +719,7 @@ class ElasticsearchDataStore(object):
         buckets = result.get(
             'aggregations', {}).get('nested', {}).get('inner', {}).get(
                 'labels', {}).get('buckets', [])
-        
+
         for bucket in buckets:
             new_bucket = {}
             new_bucket['label'] = bucket.pop('key')
