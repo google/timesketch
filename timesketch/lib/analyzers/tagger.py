@@ -83,6 +83,7 @@ class TaggerSketchPlugin(interface.BaseAnalyzer):
 
         expression_string = config.get('regular_expression', '')
         attributes = None
+        expression = None
         if expression_string:
             expression = utils.compile_regular_expression(
                 expression_string=expression_string,
