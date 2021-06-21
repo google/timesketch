@@ -15,23 +15,29 @@ limitations under the License.
 -->
 <template>
   <div>
-    <span
+    <!-- TODO(bartoszi): Confirm if these are still required -->
+    <!-- :is-compact="isCompact" -->
+    <!-- :controls="controls" -->
+    <ts-timeline-chip
       v-for="timeline in activeTimelines"
       :key="timeline.id"
+      :timeline="timeline"
+      :selectedTimelines="selectedTimelines"
+      :countPerIndex="countPerIndex"
+      :countPerTimeline="countPerTimeline"
+      @remove="remove(timeline)"
+      @save="save(timeline)"
+      @toggle="toggleTimeline(timeline)"
+    ></ts-timeline-chip>
+    <!-- <ts-timeline-chip
+      v-for="timeline in activeTimelines"
+      :key="timeline.id"
+          :timeline="timeline"
       class="tag is-medium has-text-left"
-      style="cursor: pointer; margin-right: 7px;margin-bottom:7px;"
+          style="cursor:pointer; margin-right:7px; margin-bottom:7px; padding-right:6px;"
       v-bind:style="timelineColor(timeline)"
       v-on:click="toggleTimeline(timeline)"
-    >
-      {{ timeline.name }}
-      <span
-        class="tag is-small"
-        style="margin-left:10px;margin-right:-7px;background-color: rgba(255,255,255,0.5);min-width:50px;"
-        ><span v-if="timelineIsEnabled(timeline) && countPerTimeline">{{
-          getCount(timeline) | compactNumber
-        }}</span></span
-      >
-    </span>
+        ></ts-timeline-chip> -->
     <div v-if="activeTimelines.length > 3" style="margin-top:7px;">
       <span style="text-decoration: underline; cursor: pointer; margin-right: 10px;" v-on:click="enableAllTimelines"
         >Enable all</span
@@ -43,9 +49,17 @@ limitations under the License.
 
 <script>
 import EventBus from '../../main'
+import TsTimelineChip from './TimelineChip'
+import ApiClient from '../../utils/RestApiClient'
 
 export default {
+  components: { TsTimelineChip },
   props: ['activeTimelines', 'currentQueryFilter', 'countPerIndex', 'countPerTimeline'],
+  computed: {
+    sketch() {
+      return this.$store.state.sketch
+    },
+  },
   data() {
     return {
       isDarkTheme: false,
@@ -54,35 +68,32 @@ export default {
     }
   },
   methods: {
-    timelineColor(timeline) {
-      this.isDarkTheme = localStorage.theme === 'dark'
-      let backgroundColor = timeline.color
-      let textDecoration = 'none'
-      let opacity = '100%'
-      if (!backgroundColor.startsWith('#')) {
-        backgroundColor = '#' + backgroundColor
-      }
-      // Grey out the index if it is not selected.
-      if (!this.selectedTimelines.includes(timeline)) {
-        backgroundColor = '#d2d2d2'
-        textDecoration = 'line-through'
-        opacity = '50%'
-      }
-
-      if (this.isDarkTheme) {
-        return {
-          'background-color': backgroundColor,
-          'text-decoration': textDecoration,
-          opacity: opacity,
-          filter: 'grayscale(25%)',
-          color: '#333333',
-        }
-      }
-      return {
-        'background-color': backgroundColor,
-        'text-decoration': textDecoration,
-        opacity: opacity,
-      }
+    remove(timeline) {
+      ApiClient.deleteSketchTimeline(this.sketch.id, timeline.id)
+        .then(response => {
+          this.$store.dispatch('updateSketch', this.sketch.id)
+        })
+        .catch(e => {
+          console.error(e)
+        })
+    },
+    save(timeline) {
+      ApiClient.saveSketchTimeline(this.sketch.id, timeline.id, timeline.name, timeline.description, timeline.color)
+        .then(response => {
+          this.$store.dispatch('updateSketch', this.sketch.id)
+        })
+        .catch(e => {
+          console.error(e)
+        })
+      this.syncSelectedTimelines()
+    },
+    enableAllTimelines: function() {
+      this.selectedTimelines = this.activeTimelines
+      this.$emit('updateSelectedTimelines', this.selectedTimelines)
+    },
+    disableAllTimelines: function() {
+      this.selectedTimelines = []
+      this.$emit('updateSelectedTimelines', this.selectedTimelines)
     },
     toggleTimeline: function(timeline) {
       let newArray = this.selectedTimelines.slice()
@@ -95,27 +106,8 @@ export default {
       this.selectedTimelines = newArray
       this.$emit('updateSelectedTimelines', this.selectedTimelines)
     },
-    enableAllTimelines: function() {
-      this.selectedTimelines = this.activeTimelines
-      this.$emit('updateSelectedTimelines', this.selectedTimelines)
-    },
-    disableAllTimelines: function() {
-      this.selectedTimelines = []
-      this.$emit('updateSelectedTimelines', this.selectedTimelines)
-    },
-    timelineIsEnabled: function(timeline) {
-      return this.selectedTimelines.includes(timeline)
-    },
     toggleTheme: function() {
       this.isDarkTheme = !this.isDarkTheme
-    },
-    getCount: function(timeline) {
-      let count = this.countPerTimeline[timeline.id]
-      // Support for old style indices
-      if (count === undefined) {
-        count = this.countPerIndex[timeline.searchindex.index_name]
-      }
-      return count
     },
     syncSelectedTimelines: function() {
       let timelines = []

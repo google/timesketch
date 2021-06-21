@@ -216,6 +216,7 @@ limitations under the License.
               v-if="sketch.active_timelines"
               @updateSelectedTimelines="updateSelectedTimelines($event)"
               :active-timelines="sketch.active_timelines"
+              :controls="meta.permissions.write"
               :current-query-filter="currentQueryFilter"
               :count-per-index="eventList.meta.count_per_index"
               :count-per-timeline="eventList.meta.count_per_timeline"
