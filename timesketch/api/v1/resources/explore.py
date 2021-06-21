@@ -25,6 +25,7 @@ from flask import jsonify
 from flask import request
 from flask import send_file
 from flask_restful import Resource
+from flask_restful import reqparse
 from flask_login import login_required
 from flask_login import current_user
 
@@ -410,6 +411,58 @@ class QueryResource(resources.ResourceMixin, Resource):
 
 
 class SearchHistoryResource(resources.ResourceMixin, Resource):
+    """Resource to get search history for a user."""
+
+    def __init__(self):
+        super().__init__()
+        self.parser = reqparse.RequestParser()
+        self.parser.add_argument('limit', type=int, required=False)
+
+    @login_required
+    def get(self, sketch_id):
+        """Handles GET request to the resource.
+
+        Returns:
+            Search history in JSON (instance of flask.wrappers.Response)
+        """
+        SQL_LIMIT = 100  # Limit to fetch first 100 results
+        DEFAULT_LIMIT= 12
+
+        # How many results to return (12 if nothing is specified)
+        args = self.parser.parse_args()
+        limit = args.get('limit')
+
+        if not limit:
+            limit = DEFAULT_LIMIT
+
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+
+        result = []
+        nodes = SearchHistory.query.filter_by(
+            user=current_user, sketch=sketch).order_by(
+                SearchHistory.id.desc()).limit(SQL_LIMIT).all()
+
+        uniq_queries = set()
+        count = 0
+        for node in nodes:
+            if node.query_string not in uniq_queries:
+                if count >= int(limit):
+                    break
+                result.append(node.build_node_dict({}, node))
+                uniq_queries.add(node.query_string)
+                count += 1
+
+        schema = {
+            'objects': result,
+            'meta': {}
+        }
+
+        return jsonify(schema)
+
+
+class SearchHistoryTreeResource(resources.ResourceMixin, Resource):
     """Resource to get search history for a user."""
 
     @login_required
