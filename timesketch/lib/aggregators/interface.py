@@ -348,6 +348,7 @@ class BaseAggregator(object):
             Elasticsearch aggregation result.
         """
         # pylint: disable=unexpected-keyword-arg, no-value-for-parameter
+
         try:
             aggregation = self.elastic.client.search(
                 index=self.indices, body=aggregation_spec, size=0)

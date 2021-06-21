@@ -4,6 +4,7 @@
       @click="handleClick(node)"
       :class="[{ active: isSelected }, { star: hasStar && !isSelected }, { dimmed: count === 0 && !isSelected }]"
       :id="node.id"
+      style="min-width:205px;"
     >
       <i
         v-if="hasStar"

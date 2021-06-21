@@ -48,10 +48,13 @@
   --search-input-home: var(--search-input-light);
   --search-input-explore: #f9f9f9;
   --search-input-font-color: var(--font-color-dark);
+  --search-input-background-color: #ffffff;
+  --search-input-border-color: #d3d3d3;
   --button-greyscale: grayscale(0%);
   --timeline-name-column-background: #f1f1f1;
   --timeline-name-column-font-color: #999999;
-  --table-cell-border-color: #f5f5f5;
+  --table-cell-border-color: #d3d3d3;
+  --table-row-hover-background-color: #e0e0e0;
   --time-bubble-background-color: #f5f5f5;
   --time-bubble-font-color: #666666;
   --content-list-hover-color: #fcfcfc;
@@ -93,6 +96,8 @@
   --search-input-home: var(--search-input-dark);
   --search-input-explore: var(--search-input-dark);
   --search-input-font-color: var(--font-color-light);
+  --search-input-background-color: #666666;
+  --search-input-border-color: transparent;
   --button-greyscale: grayscale(25%);
   --timeline-name-column-background: #666666;
   --timeline-name-column-font-color: #d9d9d9;
@@ -243,12 +248,18 @@ ul.content-list > li:last-child {
   outline: none;
   border: none;
   font-size: 1.2em;
-  border-radius: 0 5px 5px 0;
+  border-radius: 12px;
   padding: 25px;
   height: 34px;
-  background: var(--search-input-explore);
+  background: var(--search-input-background-color);
   color: var(--search-input-font-color);
   width: 100%;
+}
+
+.ts-search-box {
+  border: 1px solid var(--table-cell-border-color);
+  border-radius: 12px;
+  background: var(--search-input-background-color);
 }
 
 .ts-home-input {
@@ -279,6 +290,23 @@ ul.content-list > li:last-child {
   background: var(--search-input-home);
   color: var(--search-input-font-color);
   width: 100%;
+}
+
+::placeholder {
+  color: var(--input-placeholder-color);
+  opacity: 1;
+}
+
+:-ms-input-placeholder {
+  color: var(--input-placeholder-color);
+}
+
+::-ms-input-placeholder {
+  color: var(--input-placeholder-color);
+}
+
+strong {
+  color: var(--default-font-color);
 }
 
 a,
@@ -400,6 +428,34 @@ a:hover {
       border-top: 1px solid #d4d4d4;
       width: 1vw;
     }
+
+    &:not(:first-of-type):not(:last-of-type)::after {
+      height: 100%;
+    }
+  }
+
+  ul,
+  ol {
+    padding-left: 1vw;
+    position: relative;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      border-top: 1px solid #d4d4d4;
+      width: 1vw;
+    }
+  }
+
+  span {
+    background-color: #dddddd;
+    text-align: center;
+    padding: 0.33em 0.66em;
+    border-radius: 4px;
+    cursor: pointer;
+    min-width: 100px;
   }
 
   span {

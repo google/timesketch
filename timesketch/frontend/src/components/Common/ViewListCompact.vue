@@ -1,5 +1,5 @@
 <!--
-Copyright 2019 Google Inc. All rights reserved.
+Copyright 2021 Google Inc. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,28 +14,33 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <router-view v-if="sketch.status"></router-view>
+  <div>
+    <div v-on:click="setActiveView(view)" v-for="view in views" :key="view.id" class="view-list-item">
+      {{ view.name }}
+    </div>
+  </div>
 </template>
 
 <script>
 export default {
-  props: ['sketchId'],
-  created: function() {
-    this.$store.dispatch('updateSketch', this.sketchId)
-    this.$store.dispatch('updateSearchHistory', this.sketchId)
-  },
-  computed: {
-    sketch() {
-      return this.$store.state.sketch
-    },
-  },
-  watch: {
-    sketch: function(newVal) {
-      if (newVal.status[0].status === 'archived') {
-        this.$router.push({ name: 'Overview', params: { sketchId: this.sketch.id } })
+  props: ['views'],
+  methods: {
+    setActiveView: function(view, doSearch = true) {
+      if (doSearch) {
+        this.$emit('setActiveView', view)
       }
-      document.title = this.sketch.name
     },
   },
 }
 </script>
+
+<!-- CSS scoped to this component only -->
+<style scoped lang="scss">
+.view-list-item {
+  cursor: pointer;
+  padding: 5px 0 5px 0;
+}
+.view-list-item:hover {
+  background-color: var(--table-row-hover-background-color);
+}
+</style>

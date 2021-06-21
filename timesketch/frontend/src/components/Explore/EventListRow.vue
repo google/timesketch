@@ -68,11 +68,16 @@ limitations under the License.
                     <span v-if="filteredLabelsToAdd.length">
                       <b>Label as:</b>
                       <br /><br />
-                      <div class="level" style="margin-bottom: 5px;" v-for="label in filteredLabelsToAdd" :key="label">
+                      <div
+                        class="level"
+                        style="margin-bottom: 5px;"
+                        v-for="label in filteredLabelsToAdd"
+                        :key="label.label"
+                      >
                         <div class="level-left">
                           <div class="field">
-                            <b-checkbox type="is-info" v-model="selectedLabels" :native-value="label">
-                              {{ label }}
+                            <b-checkbox type="is-info" v-model="selectedLabels" :native-value="label.label">
+                              {{ label.label }}
                             </b-checkbox>
                           </div>
                         </div>
@@ -345,10 +350,10 @@ export default {
       return this.event._source.label.filter(label => !label.startsWith('__'))
     },
     filteredLabelsToAdd() {
-      return this.meta.filter_labels.filter(label => this.event._source.label.indexOf(label) === -1)
+      return this.meta.filter_labels.filter(label => this.event._source.label.indexOf(label.label) === -1)
     },
     filteredLabelsToRemove() {
-      return this.meta.filter_labels.filter(label => this.event._source.label.indexOf(label) !== -1)
+      return this.meta.filter_labels.filter(label => this.event._source.label.indexOf(label.label) !== -1)
     },
   },
   methods: {
