@@ -21,37 +21,65 @@ limitations under the License.
       </template>
     </ts-navbar-main>
 
-    <ts-navbar-secondary currentAppContext="sketch" currentPage="explore"></ts-navbar-secondary>
+    <ts-navbar-secondary ref="navigation" currentAppContext="sketch" currentPage="explore"></ts-navbar-secondary>
 
     <section class="section">
       <div class="container is-fluid">
         <div class="card">
-          <div class="card-content" v-if="showSearch">
-            <div class="field has-addons">
-              <div class="control">
-                <ts-view-list-dropdown
-                  @setActiveView="searchView"
-                  @clearSearch="clearSearch"
-                  :current-query-string="currentQueryString"
-                  :current-query-filter="currentQueryFilter"
-                  :view-from-url="params.viewId"
-                  :sketch-id="sketchId"
-                ></ts-view-list-dropdown>
+          <b-modal :active.sync="showSaveSearchModal" :width="640" scroll="keep">
+            <div class="card">
+              <header class="card-header">
+                <p class="card-header-title">Save search</p>
+              </header>
+              <div class="card-content">
+                <div class="content">
+                  <ts-create-view-form
+                    @setActiveView="searchView"
+                    :sketchId="sketchId"
+                    :currentQueryString="currentQueryString"
+                    :currentQueryFilter="currentQueryFilter"
+                  ></ts-create-view-form>
+                </div>
               </div>
-              <div class="control" style="width: 100%;">
+            </div>
+          </b-modal>
+
+          <div class="card-content" v-if="showSearch">
+            <div style="position:relative;">
+              <div class="ts-search-box" style="z-index:999; position:absolute; width:100%;">
+                <span class="icon" style="position:absolute;top:14px;margin-left:17px;font-size:16px;">
+                  <i class="fas fa-search"></i>
+                </span>
                 <input
                   @keyup.enter="search"
                   v-model="currentQueryString"
+                  v-on:click="showSearchDropdown = true"
                   class="ts-search-input"
                   type="text"
+                  ref="searchInput"
                   placeholder="Search"
+                  style="padding-left:50px;"
                   autofocus
                   required
                 />
+                <div v-if="showSearchDropdown">
+                  <ts-search-dropdown
+                    :selected-labels="selectedLabels"
+                    :query-string="currentQueryString"
+                    @setActiveView="searchView"
+                    @addChip="addChip"
+                    @updateLabelChips="updateLabelChips()"
+                    @close="closeSearchDropdown"
+                    @close-on-click="showSearchDropdown = false"
+                    @node-click="jumpInHistory"
+                    @setQueryAndFilter="setQueryAndFilter"
+                  >
+                  </ts-search-dropdown>
+                </div>
               </div>
             </div>
 
-            <div class="field is-grouped">
+            <div class="field is-grouped" style="margin-top:60px;">
               <p class="control">
                 <b-dropdown trap-focus append-to-body aria-role="menu" ref="NewTimeFilter">
                   <a class="button is-text" style="text-decoration: none;" slot="trigger" role="button">
@@ -92,11 +120,16 @@ limitations under the License.
                           </b-checkbox>
                         </div>
                         <hr v-if="meta.filter_labels.length" />
-                        <div class="level" style="margin-bottom: 5px;" v-for="label in meta.filter_labels" :key="label">
+                        <div
+                          class="level"
+                          style="margin-bottom: 5px;"
+                          v-for="label in filteredLabels"
+                          :key="label.label"
+                        >
                           <div class="level-left">
                             <div class="field">
                               <b-checkbox type="is-info" v-model="selectedLabels" :native-value="label">
-                                {{ label }}
+                                {{ label.label }}
                               </b-checkbox>
                             </div>
                           </div>
@@ -113,8 +146,10 @@ limitations under the License.
               </p>
             </div>
 
-            <p class="control" style="top:-38px; float:right;">
-              <span style="margin-right:10px; margin-left:15px;">Search history</span>
+            <p class="control" style="top:-40px;float:right;">
+              <span style="margin-right:10px; margin-left:15px;">Histogram</span>
+              <b-switch v-model="showHistogram" size="is-small" type="is-info" style="top:2px;"></b-switch>
+              <span style="margin-right:10px; margin-left:15px;">Show history</span>
               <b-switch
                 v-model="showSearchHistory"
                 v-on:input="triggerScrollTo"
@@ -131,7 +166,7 @@ limitations under the License.
                   <span slot="trigger" role="button" class="is-small is-outlined">
                     <div class="tags" style="margin-bottom: 5px; margin-right:7px;">
                       <span
-                        class="tag"
+                        class="tag is-medium"
                         style="cursor: pointer;"
                         v-bind:class="{ 'chip-disabled': chip.active === false }"
                       >
@@ -147,9 +182,8 @@ limitations under the License.
                             &rarr; {{ chip.value.split(',')[1] }}</span
                           >
                         </span>
-                        <span class="fa-stack fa-lg" style="margin-left:5px; width:20px;">
-                          <i class="fas fa-circle fa-stack-1x can-change-background" style="transform:scale(1.1);"></i>
-                          <i class="fas fa-edit fa-stack-1x fa-inverse" style="transform:scale(0.7);"></i>
+                        <span class="fa-stack fa-lg is-small" style="margin-left:5px; width:20px;">
+                          <i class="fas fa-edit fa-stack-1x" style="transform:scale(0.7);color:#777;"></i>
                         </span>
                         <button class="delete is-small" style="margin-left:5px" v-on:click="removeChip(index)"></button>
                       </span>
@@ -174,7 +208,7 @@ limitations under the License.
               <span v-for="(chip, index) in filterChips" :key="index + chip.value">
                 <span
                   v-if="chip.type === 'label'"
-                  class="tag is-light"
+                  class="tag is-medium is-light"
                   style="margin-right:7px; cursor: pointer;"
                   v-bind:class="{ 'chip-disabled': chip.active === false }"
                   @click="toggleChip(chip, index)"
@@ -225,6 +259,7 @@ limitations under the License.
       </div>
     </section>
 
+    <!-- Search history -->
     <section class="section" v-show="showSearchHistory">
       <div class="container is-fluid">
         <div class="card">
@@ -234,7 +269,15 @@ limitations under the License.
             </p>
             <div class="card-header-icon" style="width:20%;">
               <span style="margin-right:10px;">Zoom</span>
-              <b-slider style="margin-right:10px;" v-model="zoomLevel" :min="0.1" :max="1" :step="0.01"></b-slider>
+              <b-slider
+                style="margin-right:10px;"
+                @dragend="triggerScrollTo"
+                v-model="zoomLevel"
+                format="percent"
+                :min="0.1"
+                :max="1"
+                :step="0.01"
+              ></b-slider>
             </div>
           </header>
           <div
@@ -244,6 +287,7 @@ limitations under the License.
           >
             <ts-search-history-tree
               @node-click="jumpInHistory"
+              :show-history="showSearchHistory"
               v-bind:style="{ transform: 'scale(' + zoomLevel + ')' }"
               style="transform-origin: top left;"
             ></ts-search-history-tree>
@@ -252,6 +296,21 @@ limitations under the License.
       </div>
     </section>
 
+    <!-- Histogram -->
+    <section class="section" v-if="showHistogram">
+      <div class="container is-fluid">
+        <div class="card">
+          <div class="card-content">
+            <ts-bar-chart
+              :chart-data="eventList.meta.count_over_time"
+              @addChip="addChipFromHistogram($event)"
+            ></ts-bar-chart>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Context search -->
     <section class="section" id="context" v-show="contextEvent">
       <div class="container is-fluid">
         <b-message type="is-warning" aria-close-label="Close message">
@@ -282,6 +341,16 @@ limitations under the License.
                   <div v-if="searchInProgress">
                     <span class="icon"><i class="fas fa-circle-notch fa-pulse"></i></span> Searching..
                   </div>
+                </div>
+                <div class="level-item">
+                  <button
+                    class="button is-small is-outlined is-rounded"
+                    v-if="totalHits > 0"
+                    v-on:click="showSaveSearchModal = !showSavedSearchModal"
+                  >
+                    <span class="icon is-small"><i class="fas fa-save"></i></span>
+                    <span>Save this search</span>
+                  </button>
                 </div>
                 <div class="level-item" v-if="numSelectedEvents" style="margin-right:50px;">
                   <button class="button is-small is-outlined" style="border-radius: 4px;" v-on:click="toggleStar">
@@ -452,11 +521,13 @@ limitations under the License.
 
 <script>
 import ApiClient from '../utils/RestApiClient'
-import TsViewListDropdown from '../components/Common/ViewListDropdown'
 import TsSketchExploreEventList from '../components/Explore/EventList'
 import TsExploreTimelinePicker from '../components/Explore/TimelinePicker'
 import TsExploreFilterTime from '../components/Explore/TimeFilter'
 import TsSearchHistoryTree from '../components/Explore/SearchHistoryTree'
+import TsBarChart from '../components/Aggregation/BarChart'
+import TsSearchDropdown from '../components/Explore/SearchDropdown'
+import TsCreateViewForm from '../components/Common/CreateViewForm'
 
 import EventBus from '../main'
 import { None } from 'vega'
@@ -488,11 +559,13 @@ export default {
     dragscroll,
   },
   components: {
-    TsViewListDropdown,
     TsSketchExploreEventList,
     TsExploreTimelinePicker,
     TsExploreFilterTime,
     TsSearchHistoryTree,
+    TsBarChart,
+    TsSearchDropdown,
+    TsCreateViewForm,
   },
   props: ['sketchId'],
   data() {
@@ -507,6 +580,8 @@ export default {
       originalContext: false,
       isFullPage: true,
       loadingComponent: null,
+      showSearchDropdown: true,
+      showSaveSearchModal: false,
       eventList: {
         meta: {},
         objects: [],
@@ -524,6 +599,7 @@ export default {
       },
       selectedLabels: [],
       showSearchHistory: false,
+      showHistogram: false,
       branchParent: None,
       zoomLevel: 1,
       zoomOrigin: {
@@ -570,6 +646,9 @@ export default {
     },
     timeFilterChips: function() {
       return this.currentQueryFilter.chips.filter(chip => chip.type.startsWith('datetime'))
+    },
+    filteredLabels() {
+      return this.$store.state.meta.filter_labels.filter(label => !label.label.startsWith('__'))
     },
   },
   methods: {
@@ -627,6 +706,7 @@ export default {
 
       if (emitEvent) {
         EventBus.$emit('newSearch')
+        this.showSearchDropdown = false
       }
 
       ApiClient.search(this.sketchId, formData)
@@ -637,10 +717,19 @@ export default {
 
           if (!incognito) {
             EventBus.$emit('createBranch', this.eventList.meta.search_node)
+            this.$store.dispatch('updateSearchHistory')
             this.branchParent = this.eventList.meta.search_node.id
           }
         })
         .catch(e => {})
+    },
+    setQueryAndFilter: function(searchEvent) {
+      this.currentQueryString = searchEvent.queryString
+      this.currentQueryFilter = searchEvent.queryFilter
+      this.$refs.searchInput.focus()
+      if (searchEvent.doSearch) {
+        this.search()
+      }
     },
     exportSearchResult: function() {
       this.loadingOpen()
@@ -668,6 +757,9 @@ export default {
     searchView: function(viewId) {
       // Reset selected events.
       this.selectedEvents = {}
+
+      this.showSearchDropdown = false
+      this.showSaveSearchModal = false
 
       if (viewId !== parseInt(viewId, 10) && typeof viewId !== 'string') {
         viewId = viewId.id
@@ -795,13 +887,15 @@ export default {
       chip.active = !chip.active
       this.search()
     },
-    removeChip: function(chip) {
+    removeChip: function(chip, search = true) {
       let chipIndex = this.currentQueryFilter.chips.findIndex(c => c.value === chip.value)
       this.currentQueryFilter.chips.splice(chipIndex, 1)
       if (chip.type === 'label') {
         this.selectedLabels = this.selectedLabels.filter(label => label !== chip.value)
       }
-      this.search()
+      if (search) {
+        this.search()
+      }
     },
     updateChip: function(newChip, oldChip) {
       // Replace the chip at the given index
@@ -818,6 +912,18 @@ export default {
       this.currentQueryFilter.chips.push(chip)
       this.search()
     },
+    addChipFromHistogram: function(chip) {
+      if (!this.currentQueryFilter.chips) {
+        this.currentQueryFilter.chips = []
+      }
+      this.currentQueryFilter.chips.forEach(chip => {
+        if (chip.type === 'datetime_range') {
+          this.removeChip(chip, false)
+        }
+      })
+      this.addChip(chip)
+    },
+
     toggleLabelChip: function(labelName) {
       let chip = {
         field: '',
@@ -843,12 +949,13 @@ export default {
       this.selectedLabels.forEach(label => {
         let chip = {
           field: '',
-          value: label,
+          value: label.label,
           type: 'label',
           operator: 'must',
           active: true,
         }
         this.addChip(chip)
+        this.showSearchDropdown = false
       })
     },
     updateLabelList: function(label) {
@@ -954,6 +1061,12 @@ export default {
         this.zoomLevel -= 0.07
       }
     },
+    closeSearchDropdown: function(targetElement) {
+      // Prevent dropdown to close when the search input field is clicked.
+      if (targetElement !== this.$refs.searchInput && targetElement.getAttribute('data-explore-element') === null) {
+        this.showSearchDropdown = false
+      }
+    },
   },
 
   watch: {
@@ -963,6 +1076,8 @@ export default {
     },
   },
   mounted() {
+    this.$refs.searchInput.focus()
+    this.showSearchDropdown = true
     EventBus.$on('eventSelected', eventData => {
       this.updateSelectedEvents(eventData)
     })
@@ -1009,8 +1124,7 @@ export default {
     }
 
     if (!this.currentQueryString) {
-      this.currentQueryString = '*'
-      doSearch = true
+      this.currentQueryFilter.indices = ['_all']
     }
 
     if (doSearch) {
