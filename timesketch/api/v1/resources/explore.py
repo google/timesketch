@@ -160,7 +160,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
                     'field': 'datetime',
                     'buckets': 50,
                 }
-            }            
+            }
         }
         if count:
             # Count operations do not support size parameters.
