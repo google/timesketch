@@ -182,6 +182,7 @@ class ExploreResourceTest(BaseTest):
             'timeline_names': {'test': 'Timeline 1'},
             'count_per_index': {},
             'count_per_timeline': {},
+            'count_over_time': {'data': {}, 'interval': ''},
             'scroll_id': '',
             'search_node': {
                 'children': [],
