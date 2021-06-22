@@ -106,7 +106,7 @@ export default {
     copyCode: function (field, value, operator) {    
       try {
           const el = document.createElement('textarea');
-          if (operator == 'both')
+          if (operator === 'both')
             el.value = field.concat(' : ',value);
           else
             el.value = value;
