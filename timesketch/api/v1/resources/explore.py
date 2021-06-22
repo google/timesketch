@@ -25,6 +25,7 @@ from flask import jsonify
 from flask import request
 from flask import send_file
 from flask_restful import Resource
+from flask_restful import reqparse
 from flask_login import login_required
 from flask_login import current_user
 
@@ -153,6 +154,12 @@ class ExploreResource(resources.ResourceMixin, Resource):
                     'min_doc_count': 0,
                     'size': len(sketch.timelines)
                 }
+            },
+            'count_over_time': {
+                'auto_date_histogram': {
+                    'field': 'datetime',
+                    'buckets': 50,
+                }
             }
         }
         if count:
@@ -226,6 +233,21 @@ class ExploreResource(resources.ResourceMixin, Resource):
                     timeline_ids=timeline_ids)
             except ValueError as e:
                 abort(HTTP_STATUS_CODE_BAD_REQUEST, str(e))
+
+        # Get number of matching documents over time.
+        histogram_interval = result.get(
+            'aggregations', {}).get('count_over_time', {}).get('interval', '')
+        count_over_time = {
+            'data': {},
+            'interval': histogram_interval
+        }
+        try:
+            for bucket in result['aggregations']['count_over_time']['buckets']:
+                key = bucket.get('key')
+                if key:
+                    count_over_time['data'][key] = bucket.get('doc_count')
+        except KeyError:
+            pass
 
         # Get number of matching documents per index.
         count_per_index = {}
@@ -360,6 +382,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
             'timeline_names': tl_names,
             'count_per_index': count_per_index,
             'count_per_timeline': count_per_timeline,
+            'count_over_time': count_over_time,
             'scroll_id': result.get('_scroll_id', ''),
             'search_node': search_node
         }
@@ -412,6 +435,60 @@ class QueryResource(resources.ResourceMixin, Resource):
 class SearchHistoryResource(resources.ResourceMixin, Resource):
     """Resource to get search history for a user."""
 
+    def __init__(self):
+        super().__init__()
+        self.parser = reqparse.RequestParser()
+        self.parser.add_argument('limit', type=int, required=False)
+
+    @login_required
+    def get(self, sketch_id):
+        """Handles GET request to the resource.
+
+        Returns:
+            Search history in JSON (instance of flask.wrappers.Response)
+        """
+        SQL_LIMIT = 100  # Limit to fetch first 100 results
+        DEFAULT_LIMIT= 12
+
+        # How many results to return (12 if nothing is specified)
+        args = self.parser.parse_args()
+        limit = args.get('limit')
+
+        if not limit:
+            limit = DEFAULT_LIMIT
+
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+
+        result = []
+        nodes = SearchHistory.query.filter_by(
+            user=current_user, sketch=sketch).order_by(
+                SearchHistory.id.desc()).limit(SQL_LIMIT).all()
+
+        uniq_queries = set()
+        count = 0
+        for node in nodes:
+            if node.query_string not in uniq_queries:
+                if count >= int(limit):
+                    break
+                result.append(node.build_node_dict({}, node))
+                uniq_queries.add(node.query_string)
+                count += 1
+
+        schema = {
+            'objects': result,
+            'meta': {}
+        }
+
+        return jsonify(schema)
+
+
+class SearchHistoryTreeResource(resources.ResourceMixin, Resource):
+    """Resource to get search history for a user."""
+
+    HISTORY_NODE_LIMIT = 250  # To prevent heap exhaustion during recursion.
+
     @login_required
     def get(self, sketch_id):
         """Handles GET request to the resource.
@@ -424,9 +501,15 @@ class SearchHistoryResource(resources.ResourceMixin, Resource):
             abort(HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
 
         tree = {}
-        root_node = SearchHistory.query.filter_by(
-            user=current_user, sketch=sketch).order_by(
-                SearchHistory.id).first()
+
+        try:
+            root_node = SearchHistory.query.filter_by(
+                user=current_user, sketch=sketch).order_by(
+                    SearchHistory.id.desc()).limit(
+                        self.HISTORY_NODE_LIMIT)[-1]
+        except IndexError:
+            root_node = None
+
         last_node = SearchHistory.query.filter_by(
             user=current_user, sketch=sketch).order_by(
                 SearchHistory.id.desc()).first()

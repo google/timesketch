@@ -23,6 +23,9 @@ const defaultState = currentUser => {
   return {
     sketch: {},
     meta: {},
+    searchHistory: {},
+    tags: [],
+    dataTypes: [],
     count: 0,
     currentSearchNode: null,
     currentUser: currentUser,
@@ -38,6 +41,17 @@ export default new Vuex.Store({
     SET_SKETCH(state, payload) {
       Vue.set(state, 'sketch', payload.objects[0])
       Vue.set(state, 'meta', payload.meta)
+    },
+    SET_SEARCH_HISTORY(state, payload) {
+      Vue.set(state, 'searchHistory', payload.objects)
+    },
+    SET_TIMELINE_TAGS(state, payload) {
+      let buckets = payload.objects[0]['field_bucket']['buckets']
+      Vue.set(state, 'tags', buckets)
+    },
+    SET_DATA_TYPES(state, payload) {
+      let buckets = payload.objects[0]['field_bucket']['buckets']
+      Vue.set(state, 'dataTypes', buckets)
     },
     SET_COUNT(state, payload) {
       Vue.set(state, 'count', payload)
@@ -57,6 +71,8 @@ export default new Vuex.Store({
       ApiClient.getSketch(sketchId)
         .then(response => {
           context.commit('SET_SKETCH', response.data)
+          context.dispatch('updateTimelineTags', sketchId)
+          context.dispatch('updateDataTypes', sketchId)
         })
         .catch(e => {})
 
@@ -72,6 +88,48 @@ export default new Vuex.Store({
     },
     updateSearchNode(context, nodeId) {
       context.commit('SET_SEARCH_NODE', nodeId)
+    },
+    updateSearchHistory(context, sketchId) {
+      if (!sketchId) {
+        sketchId = context.state.sketch.id
+      }
+      ApiClient.getSearchHistory(sketchId)
+        .then(response => {
+          context.commit('SET_SEARCH_HISTORY', response.data)
+        })
+        .catch(e => {})
+    },
+    updateTimelineTags(context, sketchId) {
+      if (!context.state.sketch.active_timelines.length) {
+        return
+      }
+      let formData = {
+        aggregator_name: 'field_bucket',
+        aggregator_parameters: {
+          field: 'tag',
+        },
+      }
+      ApiClient.runAggregator(sketchId, formData)
+        .then(response => {
+          context.commit('SET_TIMELINE_TAGS', response.data)
+        })
+        .catch(e => {})
+    },
+    updateDataTypes(context, sketchId) {
+      if (!context.state.sketch.active_timelines.length) {
+        return
+      }
+      let formData = {
+        aggregator_name: 'field_bucket',
+        aggregator_parameters: {
+          field: 'data_type',
+        },
+      }
+      ApiClient.runAggregator(sketchId, formData)
+        .then(response => {
+          context.commit('SET_DATA_TYPES', response.data)
+        })
+        .catch(e => {})
     },
   },
 })
