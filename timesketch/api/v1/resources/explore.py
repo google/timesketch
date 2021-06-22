@@ -501,7 +501,7 @@ class SearchHistoryTreeResource(resources.ResourceMixin, Resource):
             abort(HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
 
         tree = {}
-        
+
         try:
             root_node = SearchHistory.query.filter_by(
                 user=current_user, sketch=sketch).order_by(
