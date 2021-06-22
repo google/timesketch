@@ -14,6 +14,7 @@
 """Timesketch API client."""
 from __future__ import unicode_literals
 
+import json
 import os
 import logging
 
@@ -554,6 +555,26 @@ class TimesketchApi:
             rules.append(index_obj)
         return rules
 
+    def list_questions(self, as_pandas=True):
+        """Returns either a dataframe or a dict with available questions."""
+        response = self.fetch_resource_data('questions/')
+        objects = response.get('objects', [])
+
+        if not objects:
+            if as_pandas:
+                return pandas.DataFrame()
+            else:
+                return {}
+
+        questions = objects[0]
+        if not as_pandas:
+            return questions
+
+        return_values = []
+        for name, value in questions.items():
+            value['name'] = name
+            return_values.append(value)
+        return pandas.DataFrame(return_values)
 
     def get_sigma_rule(self, rule_uuid):
         """Get a sigma rule.

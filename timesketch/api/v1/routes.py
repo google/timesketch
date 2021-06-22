@@ -50,6 +50,7 @@ from .resources.task import TaskResource
 from .resources.story import StoryListResource
 from .resources.story import StoryResource
 from .resources.explore import QueryResource
+from .resources.question import QuestionListResource
 from .resources.timeline import TimelineResource
 from .resources.timeline import TimelineListResource
 from .resources.searchindex import SearchIndexListResource
@@ -123,4 +124,5 @@ API_ROUTES = [
     (DataSourceListResource, '/sketches/<int:sketch_id>/datasource/'),
     (DataSourceResource, '/sketches/<int:sketch_id>/datasource/<int:datasource_id>/'),
     (DataFinderResource, '/sketches/<int:sketch_id>/data/find/'),
+    (QuestionListResource, '/questions/'),
 ]
