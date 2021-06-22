@@ -16,18 +16,17 @@ limitations under the License.
 import Vue from 'vue'
 import App from './App.vue'
 
-import Buefy from 'buefy'
-
-import VueScrollTo from 'vue-scrollto'
-import Multiselect from 'vue-multiselect'
-
 import router from './router'
 import store from './store'
 
+// Third party
+import Buefy from 'buefy'
+import VueScrollTo from 'vue-scrollto'
+import Multiselect from 'vue-multiselect'
 import VueCytoscape from 'vue-cytoscape'
 
+// Icons
 import { library } from '@fortawesome/fontawesome-svg-core'
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import {
   faChevronUp,
   faChevronDown,
@@ -39,9 +38,8 @@ import {
   faArrowDown,
   faTag,
 } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 library.add(faChevronUp, faChevronDown, faSave, faUserEdit, faAngleLeft, faAngleRight, faArrowUp, faArrowDown, faTag)
-
-Vue.component('font-awesome-icon', FontAwesomeIcon)
 
 require('./assets/main.scss')
 require('./utils/RegisterAppComponents')
@@ -53,17 +51,16 @@ require('./utils/RegisterAppFilters')
 const EventBus = new Vue()
 export default EventBus
 
+// Third party
 Vue.use(require('vue-moment'))
-
 Vue.use(VueCytoscape)
-
 Vue.use(Buefy, {
   defaultIconComponent: 'font-awesome-icon',
   defaultIconPack: 'fas',
 })
-
 Vue.use(VueScrollTo)
 Vue.component('multiselect', Multiselect)
+Vue.component('font-awesome-icon', FontAwesomeIcon)
 
 // Disable warning during development
 Vue.config.productionTip = false

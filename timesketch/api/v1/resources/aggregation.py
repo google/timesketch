@@ -482,6 +482,10 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
             indices, timeline_ids = lib_utils.get_validated_indices(
                 indices, sketch)
 
+            if not (indices or timeline_ids):
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST, 'No indices to aggregate on')
+
             aggregator = agg_class(
                 sketch_id=sketch_id, indices=indices,
                 timeline_ids=timeline_ids)
