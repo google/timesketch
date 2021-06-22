@@ -184,7 +184,7 @@ limitations under the License.
                         <span class="fa-stack fa-lg is-small" style="margin-left:5px; width:20px;">
                           <i class="fas fa-edit fa-stack-1x" style="transform:scale(0.7);color:#777;"></i>
                         </span>
-                        <button class="delete is-small" style="margin-left:5px" v-on:click="removeChip(index)"></button>
+                        <button class="delete is-small" style="margin-left:5px" v-on:click="removeChip(chip)"></button>
                       </span>
                     </div>
                   </span>
