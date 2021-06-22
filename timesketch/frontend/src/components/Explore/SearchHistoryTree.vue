@@ -41,6 +41,11 @@ export default {
       this.$emit('node-click', node)
       this.selectedNode = node
     },
+    handleClickFromDropdown(nodeFromDropdown) {
+      let node = findSearchNode(this.treeData, 'id', (k, v) => v === nodeFromDropdown.id)
+      this.$emit('node-click', node)
+      this.selectedNode = node
+    },
     createBranch(newNode) {
       if (this.selectedNode) {
         if (this.selectedNode.id === newNode.id) {
@@ -49,6 +54,8 @@ export default {
         this.selectedNode.children.push(newNode)
         this.selectedNode = newNode
         return
+      } else {
+        this.fetchHistory()
       }
 
       let parent = findSearchNode(this.treeData, 'id', (k, v) => v === newNode.parent)
@@ -81,7 +88,7 @@ export default {
       })
     },
     fetchHistory() {
-      ApiClient.getSearchHistory(this.sketch.id)
+      ApiClient.getSearchHistoryTree(this.sketch.id)
         .then(response => {
           this.treeData = response.data.objects[0]
           if (!this.selectedNode) {
@@ -96,11 +103,13 @@ export default {
     EventBus.$off('createBranch')
     EventBus.$off('eventAnnotated')
     EventBus.$off('triggerScrollTo')
+    EventBus.$off('selected-node-from-dropdown')
   },
   created: function() {
     EventBus.$on('createBranch', this.createBranch)
     EventBus.$on('eventAnnotated', this.annotateNode)
     EventBus.$on('triggerScrollTo', this.scrollTo)
+    EventBus.$on('selected-node-from-dropdown', this.handleClickFromDropdown)
     this.fetchHistory()
   },
   watch: {
