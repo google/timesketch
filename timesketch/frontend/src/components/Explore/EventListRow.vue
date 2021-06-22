@@ -165,6 +165,13 @@ limitations under the License.
                 style="margin-right:5px; border:1px solid #d1d1d1;"
                 >{{ label }}</span
               >
+              <span
+                class="icon is-small"
+                style="cursor:pointer;float:right;"
+                title="Copy key:value"
+                v-on:click="copyCode(event._source[field.field])"
+                ><i class="fas fa-copy"></i
+              ></span>
             </span>
             <!--eslint-enable-->
             <span style="word-break: break-word;" :title="event._source[field.field]">
@@ -442,6 +449,23 @@ export default {
     },
     toggleTheme: function() {
       this.isDarkTheme = !this.isDarkTheme
+    },
+    copyCode: function (value) {    
+      try {
+          const el = document.createElement('textarea');
+          el.value = value;
+        
+          document.body.appendChild(el);
+          el.select();
+          var successful = document.execCommand('copy');
+          document.body.removeChild(el);
+          var msg = successful ? 'successful' : 'unsuccessful';
+          alert('Copied to clipboard ' + msg);
+          } catch (err) {
+            alert('Oops, unable to copy');
+          }      
+          
+          
     },
   },
   beforeDestroy() {

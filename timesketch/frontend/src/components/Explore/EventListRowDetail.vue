@@ -35,9 +35,24 @@ limitations under the License.
             ><i class="fas fa-search-minus"></i
           ></span>
         </td>
+        <td style="width:40px;">
+          <span
+            class="icon is-small"
+            style="cursor:pointer;"
+            title="Copy key:value"
+            v-on:click="copyCode(key,item,'both')"
+            ><i class="fas fa-copy"></i
+          ></span>
         <td style="white-space:pre-wrap;word-wrap: break-word; width: 150px;">{{ key }}</td>
         <td>
           <span style="white-space:pre-wrap;word-wrap: break-word">{{ item }}</span>
+          <span
+            class="icon is-small"
+            style="cursor:pointer; margin-left: 3px; color: #d3d3d3;float:right;"
+            title="Copy value"
+            v-on:click="copyCode(key,item,'value')"
+            ><i class="fas fa-copy"></i
+          ></span>
         </td>
       </tr>
     </tbody>
@@ -87,6 +102,26 @@ export default {
         active: true,
       }
       this.$emit('addChip', chip)
+    },
+    copyCode: function (field, value, operator) {    
+      try {
+          const el = document.createElement('textarea');
+          if (operator == 'both')
+            el.value = field.concat(' : ',value);
+          else
+            el.value = value;
+        
+          document.body.appendChild(el);
+          el.select();
+          var successful = document.execCommand('copy');
+          document.body.removeChild(el);
+          var msg = successful ? 'successful' : 'unsuccessful';
+          alert('Copied to clipboard ' + msg);
+          } catch (err) {
+            alert('Oops, unable to copy');
+          }      
+          
+          
     },
   },
   created: function() {
