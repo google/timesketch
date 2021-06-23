@@ -23,22 +23,95 @@ limitations under the License.
 
     <ts-navbar-secondary currentAppContext="sketch" currentPage="intelligence"></ts-navbar-secondary>
 
-    <ts-dynamic-table
-      v-for="section in intelligence.meta.sections"
-      v-bind:key="section.key"
-      :section="section"
-      :data="intelligence.data[section.key]"
-    >
-    </ts-dynamic-table>
+    <section class="section">
+      <div class="container is-fluid">
+        <div class="card">
+          <header class="card-header">
+            <p class="card-header-title">Local intelligence</p>
+          </header>
+          <div v-if="localIntelligence.data.length > 0" class="card-content">
+            <ts-dynamic-table
+              :data="localIntelligence.data"
+              :section="localIntelligenceMeta"
+              :deleteCallback="localIntelligenceDeleteCallback"
+            >
+            </ts-dynamic-table>
+          </div>
+          <div v-else class="card-content">
+            Examine events in the <router-link :to="{ name: 'Explore' }">Explore view</router-link> to add intelligence
+            locally
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container is-fluid">
+        <div v-if="this.meta.attributes.intelligence" class="card">
+          <header class="card-header">
+            <p class="card-header-title">External intelligence</p>
+          </header>
+          <div class="card-content">
+            <ts-dynamic-table
+              v-for="section in externalIntelligence.meta.sections"
+              v-bind:key="section.key"
+              :section="section"
+              :data="externalIntelligence.data[section.key]"
+            >
+            </ts-dynamic-table>
+          </div>
+        </div>
+      </div>
+    </section>
   </div>
 </template>
 
 <script>
+import ApiClient from '../utils/RestApiClient'
+
 import TsDynamicTable from '../components/Common/TsDynamicTable'
 
 export default {
   components: {
     TsDynamicTable,
+  },
+  data() {
+    return {
+      localIntelligenceMeta: {
+        columns: [
+          {
+            field: 'ioc',
+            label: 'IOC',
+            searchable: true,
+            type: 'text',
+          },
+          {
+            field: 'type',
+            label: 'Type',
+            searchable: false,
+            type: 'text',
+          },
+        ],
+        key: 'local_intel',
+        label: '',
+        deletable: true,
+      },
+    }
+  },
+  methods: {
+    localIntelligenceDeleteCallback(ioc) {
+      const data = this.localIntelligence.data.filter(i => i.ioc !== ioc.ioc)
+      ApiClient.addSketchAttribute(this.sketch.id, 'intelligence_local', { data: data }, 'intelligence').then(() => {
+        console.log(`${ioc.ioc} deleted successfully`)
+        this.localIntelligence.data = data
+      })
+    },
+    loadIntelligence() {
+      ApiClient.getSketchAttributes(this.sketch.id).then(response => {
+        this.meta.attributes.intelligence = response.data.intelligence
+        this.meta.attributes.intelligence_local = response.data.intelligence_local
+      })
+    },
   },
   computed: {
     sketch() {
@@ -47,9 +120,15 @@ export default {
     meta() {
       return this.$store.state.meta
     },
-    intelligence() {
-      return this.meta.attributes.intelligence.value
+    externalIntelligence() {
+      return this.meta.attributes.intelligence.value || { data: {}, meta: {} }
     },
+    localIntelligence() {
+      return this.meta.attributes.intelligence_local.value || { data: [] }
+    },
+  },
+  mounted() {
+    this.loadIntelligence()
   },
 }
 </script>
