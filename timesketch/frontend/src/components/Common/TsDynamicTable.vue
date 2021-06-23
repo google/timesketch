@@ -21,16 +21,15 @@ limitations under the License.
           <header class="card-header">
             <p class="card-header-title">{{ section.label }}</p>
           </header>
-
-          <div class="card-content ts-dynamic-table">
-            <b-table :data="data">
+          <div class="card-content ts-dynamic-table" v-if="dataArray.length > 0">
+            <b-table :data="dataArray">
               <b-table-column
                 v-for="column in section.columns"
                 v-bind:key="column.field"
                 :field="column.field"
                 :label="column.label"
                 v-slot="props"
-                :numeric="typeof data[0][column.field] === 'number' ? true : false"
+                :numeric="typeof dataArray[0][column.field] === 'number' ? true : false"
                 sortable
               >
                 <!-- column is an text -->
@@ -72,8 +71,18 @@ limitations under the License.
                 <!-- deal with all other cases -->
                 <div v-else>{{ props.row[column.field] }}</div>
               </b-table-column>
+              <b-table-column v-if="section.deletable" label="Delete" v-slot="props">
+                <span
+                  class="icon is-small"
+                  style="cursor:pointer;"
+                  title="Apply 'Exclude' filter"
+                  v-on:click="deleteCallback(props.row)"
+                  ><i class="fas fa-trash"></i
+                ></span>
+              </b-table-column>
             </b-table>
           </div>
+          <div v-else>Empty table</div>
         </div>
       </div>
     </section>
@@ -84,13 +93,16 @@ limitations under the License.
 export default {
   name: 'TsDynamicTable',
   components: {},
-  props: ['section', 'data'],
+  props: ['section', 'data', 'deleteCallback'],
   computed: {
     sketch() {
       return this.$store.state.sketch
     },
     meta() {
       return this.$store.state.meta
+    },
+    dataArray() {
+      return Object.values(this.data)
     },
   },
   methods: {
