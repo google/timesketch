@@ -14,7 +14,6 @@
 """Timesketch API client."""
 from __future__ import unicode_literals
 
-import json
 import os
 import logging
 
@@ -563,8 +562,7 @@ class TimesketchApi:
         if not objects:
             if as_pandas:
                 return pandas.DataFrame()
-            else:
-                return {}
+            return {}
 
         questions = objects[0]
         if not as_pandas:
