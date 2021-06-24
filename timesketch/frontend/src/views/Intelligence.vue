@@ -22,26 +22,16 @@ limitations under the License.
     </ts-navbar-main>
 
     <ts-navbar-secondary currentAppContext="sketch" currentPage="intelligence"></ts-navbar-secondary>
-
-    <section class="section">
-      <div class="container is-fluid">
-        <div class="card">
-          <header class="card-header">
-            <p class="card-header-title">Local intelligence</p>
-          </header>
-          <div v-if="localIntelligence.data.length > 0" class="card-content">
-            <ts-dynamic-table
-              :data="localIntelligence.data"
-              :section="localIntelligenceMeta"
-              :deleteCallback="localIntelligenceDeleteCallback"
-            >
-            </ts-dynamic-table>
-          </div>
-          <div v-else class="card-content">
-            Examine events in the <router-link :to="{ name: 'Explore' }">Explore view</router-link> to add intelligence
-            locally
-          </div>
-        </div>
+        <ts-dynamic-table
+          v-if="localIntelligence.data.length > 0"
+          :data="localIntelligence.data"
+          :section="localIntelligenceMeta"
+          :deleteCallback="localIntelligenceDeleteCallback"
+        >
+        </ts-dynamic-table>
+      <div v-else class="card-content">
+        Examine events in the <router-link :to="{ name: 'Explore' }">Explore view</router-link> to add intelligence
+        locally
       </div>
     </section>
 
@@ -93,7 +83,7 @@ export default {
           },
         ],
         key: 'local_intel',
-        label: '',
+        label: 'Local intelligence',
         deletable: true,
       },
     }
