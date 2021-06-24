@@ -117,7 +117,7 @@ export default {
           el.value = value;
           document.body.appendChild(el);
           el.select();
-          var successful = document.execCommand('copy');
+          document.execCommand('copy');
           this.$buefy.notification.open('Copied!!')
           document.body.removeChild(el);
           } catch (err) {
