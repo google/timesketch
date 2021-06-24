@@ -320,4 +320,10 @@ export default {
   getSearchHistoryTree(sketchId) {
     return RestApiClient.get('/sketches/' + sketchId + /searchhistorytree/)
   },
+  getSigmaList() {
+    return RestApiClient.get('/sigma/')
+  },
+  getSigmaResource(rule_uuid) {
+    return RestApiClient.get('/sigma/rule/'+ rule_uuid +'/')
+  },
 }

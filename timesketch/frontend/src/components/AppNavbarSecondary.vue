@@ -67,6 +67,12 @@ limitations under the License.
                   <span>Stories</span>
                 </router-link>
               </li>
+              <li v-bind:class="{ 'is-active': currentPage === 'sigma' }">
+                <router-link :to="{ name: 'SigmaOverview' }">
+                  <span class="icon is-small"><i class="fas fa-book" aria-hidden="true"></i></span>
+                  <span>Sigma</span>
+                </router-link>
+              </li>
               <li v-if="meta" v-bind:class="{ 'is-active': currentPage === 'attributes' }">
                 <router-link :to="{ name: 'Attributes' }">
                   <span class="icon is-small"><i class="fas fa-table" aria-hidden="true"></i></span>
