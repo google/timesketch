@@ -24,7 +24,7 @@ limitations under the License.
     </span>
     <TsContextMenu ref="contextMenu">
       <template v-slot="params">
-        <div v-if="params.data" class="box">
+        <div v-if="params.data" class="box ioc-context-menu">
           <table>
             <tr>
               <th>IOC</th>
@@ -33,7 +33,17 @@ limitations under the License.
             </tr>
             <tr>
               <td>{{ matchIOC.ioc }}</td>
-              <td>{{ matchIOC.type }}</td>
+              <td v-if="matchIOC.type">{{ matchIOC.type }}</td>
+              <td v-else>
+                <b-field>
+                  <b-select placeholder="IOC type" v-model="manualIOCType">
+                    <option v-for="option in IOCTypes" :value="option.type" :key="option.type">
+                      {{ option.type }}
+                    </option>
+                  </b-select>
+                </b-field>
+              </td>
+
               <td class="actions">
                 <span
                   class="icon is-small"
@@ -56,6 +66,7 @@ limitations under the License.
 <script>
 import ApiClient from '../../utils/RestApiClient'
 import TsContextMenu from './TsContextMenu'
+import { SnackbarProgrammatic as Snackbar } from 'buefy'
 
 export default {
   components: {
@@ -65,16 +76,17 @@ export default {
   name: 'TsIOCMenu',
   data() {
     return {
-      regexes: {
-        ip: /[0-9]{1,3}(\.[0-9]{1,3}\.)/g,
-        hash_sha256: /[0-9a-f]{64}/gi,
-        hash_sha1: /[0-9a-f]{40}/gi,
-        hash_md5: /[0-9a-f]{32}/gi,
-      },
+      IOCTypes: [
+        { regex: /[0-9]{1,3}(\.[0-9]{1,3}\.)/g, type: 'ip' },
+        { regex: /[0-9a-f]{64}/gi, type: 'hash_sha256' },
+        { regex: /[0-9a-f]{40}/gi, type: 'hash_sha1' },
+        { regex: /[0-9a-f]{32}/gi, type: 'hash_md5' },
+      ],
       iocColumns: [
         { field: 'ioc', label: 'IOC' },
         { field: 'type', label: 'Type' },
       ],
+      manualIOCType: null,
     }
   },
   methods: {
@@ -98,6 +110,9 @@ export default {
         if (attributes.intelligence_local.value.data.map(ioc => ioc.ioc).indexOf(ioc.ioc) >= 0) {
           return
         }
+        if (!ioc.type) {
+          ioc.type = this.manualIOCType
+        }
         attributes.intelligence_local.value.data.push(ioc)
         ApiClient.addSketchAttribute(
           this.sketch.id,
@@ -105,6 +120,17 @@ export default {
           attributes.intelligence_local.value,
           'intelligence'
         ).then(() => {
+          this.manualIOCType = null
+          Snackbar.open({
+            message: 'Attribtue added succesfully',
+            type: 'is-white',
+            position: 'is-top',
+            actionText: 'View intelligence',
+            indefinite: false,
+            onAction: () => {
+              this.$router.push({ name: 'Intelligence' })
+            },
+          })
           console.log('Attribute added successfully')
         })
       })
@@ -112,13 +138,13 @@ export default {
   },
   computed: {
     matchIOC() {
-      for (let type in this.regexes) {
-        let matches = this.regexes[type].exec(this.$attrs.text)
+      for (let iocType of this.IOCTypes) {
+        let matches = iocType.regex.exec(this.$attrs.text)
         if (matches) {
-          return { ioc: this.$attrs.text, type: type }
+          return { ioc: this.$attrs.text, type: iocType.type }
         }
       }
-      return {}
+      return { ioc: this.$attrs.text, type: null }
     },
     sketch() {
       return this.$store.state.sketch
