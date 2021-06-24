@@ -501,9 +501,14 @@ class SearchHistoryTreeResource(resources.ResourceMixin, Resource):
             abort(HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
 
         tree = {}
-        root_node = SearchHistory.query.filter_by(
-            user=current_user, sketch=sketch).order_by(
-                SearchHistory.id.desc()).limit(self.HISTORY_NODE_LIMIT)[-1]
+
+        try:
+            root_node = SearchHistory.query.filter_by(
+                user=current_user, sketch=sketch).order_by(
+                    SearchHistory.id.desc()).limit(
+                        self.HISTORY_NODE_LIMIT)[-1]
+        except IndexError:
+            root_node = None
 
         last_node = SearchHistory.query.filter_by(
             user=current_user, sketch=sketch).order_by(
