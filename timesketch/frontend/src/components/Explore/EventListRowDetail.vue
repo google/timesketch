@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <table class="table is-bordered" style="width:100%;table-layout: fixed;">
+  <table class="table is-bordered" style="width:100%;table-layout: fixed;" @mouseup="handleSelectionChange">
     <tbody>
       <tr v-for="(item, key) in fullEventFiltered" :key="key">
         <td style="width:40px;">
@@ -39,9 +39,9 @@ limitations under the License.
         <td>
           <text-highlight
             @addChip="$emit('addChip', $event)"
-            :attributeKey="key"
             :highlightComponent="TsIOCMenu"
             :queries="Object.values(regexes)"
+            :attributeKey="key"
             >{{ item }}</text-highlight
           >
         </td>
@@ -103,6 +103,17 @@ export default {
         active: true,
       }
       this.$emit('addChip', chip)
+    },
+    handleSelectionChange(event) {
+      if (event.target.closest('.ioc-match') || event.target.closest('.ioc-context-menu')) {
+        return
+      }
+      console.log('selection change')
+      const text = window.getSelection().toString()
+      this.regexes.selection = text
+      if (this.regexes.selection !== '') {
+        console.log(text)
+      }
     },
   },
   created: function() {
