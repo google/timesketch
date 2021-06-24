@@ -74,5 +74,10 @@ export default {
       return attributes
     },
   },
+  mounted() {
+    ApiClient.getSketchAttributes(this.sketch.id).then(response => {
+      this.meta.attributes = response.data
+    })
+  },
 }
 </script>
