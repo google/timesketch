@@ -146,8 +146,9 @@ limitations under the License.
               </p>
             </div>
 
-            <!-- Search history toggle -->
             <p class="control" style="top:-40px;float:right;">
+              <span style="margin-right:10px; margin-left:15px;">Histogram</span>
+              <b-switch v-model="showHistogram" size="is-small" type="is-info" style="top:2px;"></b-switch>
               <span style="margin-right:10px; margin-left:15px;">Show history</span>
               <b-switch
                 v-model="showSearchHistory"
@@ -184,7 +185,7 @@ limitations under the License.
                         <span class="fa-stack fa-lg is-small" style="margin-left:5px; width:20px;">
                           <i class="fas fa-edit fa-stack-1x" style="transform:scale(0.7);color:#777;"></i>
                         </span>
-                        <button class="delete is-small" style="margin-left:5px" v-on:click="removeChip(index)"></button>
+                        <button class="delete is-small" style="margin-left:5px" v-on:click="removeChip(chip)"></button>
                       </span>
                     </div>
                   </span>
@@ -291,6 +292,20 @@ limitations under the License.
               v-bind:style="{ transform: 'scale(' + zoomLevel + ')' }"
               style="transform-origin: top left;"
             ></ts-search-history-tree>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Histogram -->
+    <section class="section" v-if="showHistogram">
+      <div class="container is-fluid">
+        <div class="card">
+          <div class="card-content">
+            <ts-bar-chart
+              :chart-data="eventList.meta.count_over_time"
+              @addChip="addChipFromHistogram($event)"
+            ></ts-bar-chart>
           </div>
         </div>
       </div>
@@ -511,6 +526,7 @@ import TsSketchExploreEventList from '../components/Explore/EventList'
 import TsExploreTimelinePicker from '../components/Explore/TimelinePicker'
 import TsExploreFilterTime from '../components/Explore/TimeFilter'
 import TsSearchHistoryTree from '../components/Explore/SearchHistoryTree'
+import TsBarChart from '../components/Aggregation/BarChart'
 import TsSearchDropdown from '../components/Explore/SearchDropdown'
 import TsCreateViewForm from '../components/Common/CreateViewForm'
 
@@ -548,6 +564,7 @@ export default {
     TsExploreTimelinePicker,
     TsExploreFilterTime,
     TsSearchHistoryTree,
+    TsBarChart,
     TsSearchDropdown,
     TsCreateViewForm,
   },
@@ -583,6 +600,7 @@ export default {
       },
       selectedLabels: [],
       showSearchHistory: false,
+      showHistogram: false,
       branchParent: None,
       zoomLevel: 1,
       zoomOrigin: {
@@ -870,13 +888,15 @@ export default {
       chip.active = !chip.active
       this.search()
     },
-    removeChip: function(chip) {
+    removeChip: function(chip, search = true) {
       let chipIndex = this.currentQueryFilter.chips.findIndex(c => c.value === chip.value)
       this.currentQueryFilter.chips.splice(chipIndex, 1)
       if (chip.type === 'label') {
         this.selectedLabels = this.selectedLabels.filter(label => label !== chip.value)
       }
-      this.search()
+      if (search) {
+        this.search()
+      }
     },
     updateChip: function(newChip, oldChip) {
       // Replace the chip at the given index
@@ -893,6 +913,18 @@ export default {
       this.currentQueryFilter.chips.push(chip)
       this.search()
     },
+    addChipFromHistogram: function(chip) {
+      if (!this.currentQueryFilter.chips) {
+        this.currentQueryFilter.chips = []
+      }
+      this.currentQueryFilter.chips.forEach(chip => {
+        if (chip.type === 'datetime_range') {
+          this.removeChip(chip, false)
+        }
+      })
+      this.addChip(chip)
+    },
+
     toggleLabelChip: function(labelName) {
       let chip = {
         field: '',

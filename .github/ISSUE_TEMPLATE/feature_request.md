@@ -2,8 +2,7 @@
 name: Feature request
 about: Suggest an idea for this project
 title: ''
-labels: Feature request
-assignees: berggren, kiddinn
+labels: 'Feature request, Needs triage'
 
 ---
 
