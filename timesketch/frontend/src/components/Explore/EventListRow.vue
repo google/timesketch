@@ -450,23 +450,19 @@ export default {
     toggleTheme: function() {
       this.isDarkTheme = !this.isDarkTheme
     },
-    copyCode: function (value) {    
+    copyCode: function (value) {
       try {
           const el = document.createElement('textarea');
           el.value = value;
-        
           document.body.appendChild(el);
           el.select();
-          var successful = document.execCommand('copy');
+          document.execCommand('copy');
+          this.$buefy.notification.open('Copied!!')
           document.body.removeChild(el);
-          var msg = successful ? 'successful' : 'unsuccessful';
-          alert('Copied to clipboard ' + msg);
           } catch (err) {
             alert('Oops, unable to copy');
           }      
-          
-          
-    },
+      }
   },
   beforeDestroy() {
     EventBus.$off('selectEvent', this.selectEvent)

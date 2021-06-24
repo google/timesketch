@@ -103,26 +103,19 @@ export default {
       }
       this.$emit('addChip', chip)
     },
-    copyCode: function (field, value, operator) {    
+    copyCode: function (value) {
       try {
           const el = document.createElement('textarea');
-          if (operator === 'both')
-            el.value = field.concat(' : ',value);
-          else
-            el.value = value;
-        
+          el.value = value;
           document.body.appendChild(el);
           el.select();
-          var successful = document.execCommand('copy');
+          document.execCommand('copy');
+          this.$buefy.notification.open('Copied!!')
           document.body.removeChild(el);
-          var msg = successful ? 'successful' : 'unsuccessful';
-          alert('Copied to clipboard ' + msg);
           } catch (err) {
             alert('Oops, unable to copy');
           }      
-          
-          
-    },
+      }
   },
   created: function() {
     this.getEvent()
