@@ -31,7 +31,6 @@ export default {
       parentComponent: null,
     }
   },
-
   methods: {
     open(event, data, parentComponent) {
       this.close()
