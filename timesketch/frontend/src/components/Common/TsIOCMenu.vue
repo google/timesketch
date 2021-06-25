@@ -24,40 +24,25 @@ limitations under the License.
     </span>
     <TsContextMenu ref="contextMenu">
       <template v-slot="params">
-        <div v-if="params.data" class="box ioc-context-menu">
-          <table>
-            <tr>
-              <th>IOC</th>
-              <th>Type</th>
-              <th colspan="3" style="text-align:center;">Actions</th>
-            </tr>
-            <tr>
-              <td>{{ matchIOC.ioc }}</td>
-              <td v-if="matchIOC.type">{{ matchIOC.type }}</td>
-              <td v-else>
-                <b-field>
-                  <b-select placeholder="IOC type" v-model="manualIOCType">
-                    <option v-for="option in IOCTypes" :value="option.type" :key="option.type">
-                      {{ option.type }}
-                    </option>
-                  </b-select>
-                </b-field>
-              </td>
-
-              <td class="actions">
-                <span
-                  class="icon is-small"
-                  title="Apply 'Include' filter"
-                  v-on:click="addFilter(attributeKey, matchIOC.ioc, 'must')"
-                  ><i class="fas fa-search-plus"></i
-                ></span>
-                <span class="icon is-small" title="Send to threat intelligence" v-on:click="saveThreatIntel(matchIOC)"
-                  ><i class="fas fa-brain"></i
-                ></span>
-              </td>
-            </tr>
-          </table>
-        </div>
+        <section v-if="params.data" class="box ioc-context-menu">
+          <div class="ioc-display">
+            <span
+              class="icon is-small"
+              title="Apply 'Include' filter"
+              @click="addFilter(attributeKey, selectedIOC.ioc, 'must')"
+              ><i class="fas fa-search-plus"></i
+            ></span>
+            <pre>{{ selectedIOC.ioc }}</pre>
+          </div>
+          <b-field grouped message="Add to local intelligence">
+            <b-select size="is-small" placeholder="IOC type" v-model="selectedIOC.type">
+              <option v-for="option in IOCTypes" :value="option.type" :key="option.type">
+                {{ option.type }}
+              </option>
+            </b-select>
+            <b-button size="is-small" type="is-primary" @click="saveThreatIntel">Add</b-button>
+          </b-field>
+        </section>
       </template>
     </TsContextMenu>
   </div>
@@ -86,7 +71,7 @@ export default {
         { field: 'ioc', label: 'IOC' },
         { field: 'type', label: 'Type' },
       ],
-      manualIOCType: null,
+      selectedIOC: {},
     }
   },
   methods: {
@@ -100,7 +85,8 @@ export default {
       }
       this.$emit('addChip', chip)
     },
-    saveThreatIntel: function(ioc) {
+    saveThreatIntel: function() {
+      let ioc = this.selectedIOC
       ApiClient.getSketchAttributes(this.sketch.id).then(response => {
         let attributes = response.data
         if (!attributes.intelligence_local) {
@@ -111,7 +97,7 @@ export default {
           return
         }
         if (!ioc.type) {
-          ioc.type = this.manualIOCType
+          ioc.type = this.selectedIOCType
         }
         attributes.intelligence_local.value.data.push(ioc)
         ApiClient.addSketchAttribute(
@@ -120,7 +106,7 @@ export default {
           attributes.intelligence_local.value,
           'intelligence'
         ).then(() => {
-          this.manualIOCType = null
+          this.selectedIOCType = null
           Snackbar.open({
             message: 'Attribtue added succesfully',
             type: 'is-white',
@@ -137,25 +123,44 @@ export default {
     },
   },
   computed: {
-    matchIOC() {
-      for (let iocType of this.IOCTypes) {
-        let matches = iocType.regex.exec(this.$attrs.text)
-        if (matches) {
-          return { ioc: this.$attrs.text, type: iocType.type }
-        }
-      }
-      return { ioc: this.$attrs.text, type: null }
-    },
     sketch() {
       return this.$store.state.sketch
     },
   },
+  mounted() {
+    for (let iocType of this.IOCTypes) {
+      let matches = iocType.regex.exec(this.$attrs.text)
+      if (matches) {
+        this.selectedIOC = { ioc: this.$attrs.text, type: iocType.type }
+        return
+      }
+    }
+    this.selectedIOC = { ioc: this.$attrs.text, type: null }
+  },
 }
 </script>
 
-<style scoped lang="scss">
+<style lang="scss">
 .ioc-match {
   background-color: #ddd;
+}
+
+.ioc-display .icon {
+  cursor: pointer;
+  margin-right: 0.5em;
+}
+.ioc-context-menu div.ioc-display {
+  margin-bottom: 1em;
+  margin-top: 0.4em;
+}
+
+.box.ioc-context-menu pre {
+  display: inline;
+  padding: 0.7em;
+}
+
+.box.ioc-context-menu {
+  padding: 0.7em;
 }
 
 .ioc-match:hover {
@@ -165,10 +170,5 @@ export default {
 .text__highlight {
   background: none;
   border-radius: 0%;
-}
-
-.actions .icon {
-  cursor: pointer;
-  margin-right: 1em;
 }
 </style>
