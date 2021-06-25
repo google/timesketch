@@ -18,7 +18,7 @@ limitations under the License.
     <span
       class="ioc-match"
       ref="contextMenuParent"
-      @click="event => $refs.contextMenu.open(event, $attrs.text, $refs.contextMenuParent)"
+      @click="event => this.$refs.contextMenu.open(event, getIOC($attrs.text), $refs.contextMenuParent)"
     >
       <slot></slot>
     </span>
@@ -29,18 +29,18 @@ limitations under the License.
             <span
               class="icon is-small"
               title="Apply 'Include' filter"
-              @click="addFilter(attributeKey, selectedIOC.ioc, 'must')"
+              @click="addFilter(attributeKey, params.data.ioc, 'must')"
               ><i class="fas fa-search-plus"></i
             ></span>
-            <pre>{{ selectedIOC.ioc }}</pre>
+            <pre>{{ params.data.ioc }}</pre>
           </div>
-          <b-field v-if="!isInIntelligence" grouped message="Add to local intelligence">
-            <b-select size="is-small" placeholder="IOC type" v-model="selectedIOC.type">
+          <b-field v-if="!isInIntelligence(params.data)" grouped message="Add to local intelligence">
+            <b-select size="is-small" placeholder="IOC type" v-model="params.data.type">
               <option v-for="option in IOCTypes" :value="option.type" :key="option.type">
                 {{ option.type }}
               </option>
             </b-select>
-            <b-button size="is-small" type="is-primary" @click="saveThreatIntel">Add</b-button>
+            <b-button size="is-small" type="is-primary" @click="saveThreatIntel(params.data)">Add</b-button>
           </b-field>
           <div v-else>
             <small>Already added to <router-link :to="{ name: 'Intelligence' }">Intelligence</router-link></small>
@@ -88,8 +88,26 @@ export default {
       }
       this.$emit('addChip', chip)
     },
-    saveThreatIntel: function() {
-      let ioc = this.selectedIOC
+    getIOC: function(text) {
+      for (let iocType of this.IOCTypes) {
+        let matches = iocType.regex.exec(this.$attrs.text)
+        if (matches) {
+          return { ioc: this.$attrs.text, type: iocType.type }
+        }
+      }
+      return { ioc: this.$attrs.text, type: null }
+    },
+    isInIntelligence(ioc) {
+      const attributes = this.$store.state.meta.attributes
+      if (!attributes.intelligence_local) {
+        return false
+      }
+      if (attributes.intelligence_local.value.data.map(ioc => ioc.ioc).indexOf(ioc.ioc) >= 0) {
+        return true
+      }
+      return false
+    },
+    saveThreatIntel: function(ioc) {
       ApiClient.getSketchAttributes(this.sketch.id).then(response => {
         let attributes = response.data
         if (!attributes.intelligence_local) {
@@ -127,27 +145,8 @@ export default {
     sketch() {
       return this.$store.state.sketch
     },
-    isInIntelligence() {
-      const attributes = this.$store.state.meta.attributes
-      if (!attributes.intelligence_local) {
-        return false
-      }
-      if (attributes.intelligence_local.value.data.map(ioc => ioc.ioc).indexOf(this.selectedIOC.ioc) >= 0) {
-        return true
-      }
-      return false
-    },
   },
-  mounted() {
-    for (let iocType of this.IOCTypes) {
-      let matches = iocType.regex.exec(this.$attrs.text)
-      if (matches) {
-        this.selectedIOC = { ioc: this.$attrs.text, type: iocType.type }
-        return
-      }
-    }
-    this.selectedIOC = { ioc: this.$attrs.text, type: null }
-  },
+  mounted() {},
 }
 </script>
 
