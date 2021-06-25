@@ -66,6 +66,7 @@ export default {
         hash_md5: /[0-9a-f]{32}/gi,
         hash_sha1: /[0-9a-f]{40}/gi,
         hash_sha256: /[0-9a-f]{64}/gi,
+        selection: '',
       },
       fullEvent: {},
     }
