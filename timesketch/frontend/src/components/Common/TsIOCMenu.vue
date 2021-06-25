@@ -34,7 +34,7 @@ limitations under the License.
             ></span>
             <pre>{{ selectedIOC.ioc }}</pre>
           </div>
-          <b-field grouped message="Add to local intelligence">
+          <b-field v-if="!isInIntelligence" grouped message="Add to local intelligence">
             <b-select size="is-small" placeholder="IOC type" v-model="selectedIOC.type">
               <option v-for="option in IOCTypes" :value="option.type" :key="option.type">
                 {{ option.type }}
@@ -42,6 +42,9 @@ limitations under the License.
             </b-select>
             <b-button size="is-small" type="is-primary" @click="saveThreatIntel">Add</b-button>
           </b-field>
+          <div v-else>
+            <small>Already added to <router-link :to="{ name: 'Intelligence' }">Intelligence</router-link></small>
+          </div>
         </section>
       </template>
     </TsContextMenu>
@@ -96,9 +99,6 @@ export default {
         if (attributes.intelligence_local.value.data.map(ioc => ioc.ioc).indexOf(ioc.ioc) >= 0) {
           return
         }
-        if (!ioc.type) {
-          ioc.type = this.selectedIOCType
-        }
         attributes.intelligence_local.value.data.push(ioc)
         ApiClient.addSketchAttribute(
           this.sketch.id,
@@ -106,7 +106,6 @@ export default {
           attributes.intelligence_local.value,
           'intelligence'
         ).then(() => {
-          this.selectedIOCType = null
           Snackbar.open({
             message: 'Attribtue added succesfully',
             type: 'is-white',
@@ -117,6 +116,8 @@ export default {
               this.$router.push({ name: 'Intelligence' })
             },
           })
+          // refresh computed property based on attributes
+          this.$store.state.meta.attributes = attributes
           console.log('Attribute added successfully')
         })
       })
@@ -125,6 +126,16 @@ export default {
   computed: {
     sketch() {
       return this.$store.state.sketch
+    },
+    isInIntelligence() {
+      const attributes = this.$store.state.meta.attributes
+      if (!attributes.intelligence_local) {
+        return false
+      }
+      if (attributes.intelligence_local.value.data.map(ioc => ioc.ioc).indexOf(this.selectedIOC.ioc) >= 0) {
+        return true
+      }
+      return false
     },
   },
   mounted() {
