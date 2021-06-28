@@ -22,13 +22,14 @@ limitations under the License.
     </ts-navbar-main>
 
     <ts-navbar-secondary currentAppContext="sketch" currentPage="intelligence"></ts-navbar-secondary>
-        <ts-dynamic-table
-          v-if="localIntelligence.data.length > 0"
-          :data="localIntelligence.data"
-          :section="localIntelligenceMeta"
-          :deleteCallback="localIntelligenceDeleteCallback"
-        >
-        </ts-dynamic-table>
+    <section class="section">
+      <ts-dynamic-table
+        v-if="localIntelligence.data.length > 0"
+        :data="localIntelligence.data"
+        :section="localIntelligenceMeta"
+        :deleteCallback="localIntelligenceDeleteCallback"
+      >
+      </ts-dynamic-table>
       <div v-else class="card-content">
         Examine events in the <router-link :to="{ name: 'Explore' }">Explore view</router-link> to add intelligence
         locally
