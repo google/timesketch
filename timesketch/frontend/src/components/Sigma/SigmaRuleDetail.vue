@@ -19,6 +19,7 @@ limitations under the License.
         <li style="padding:10px;border-bottom:none;cursor:pointer;">
           <strong style="color: var(--default-font-color)">{{ rule.id }}</strong>
           <br />
+          {{ ruleId }}
           <div v-for="(value, name) in rule" v-bind:key="name">
             {{ name }}: {{ value }}
         </div>
@@ -45,6 +46,7 @@ export default {
     },
   },
   created() {
+    // TOTO (jaegeral): change that to be dynamic
     ApiClient.getSigmaResource('5266a592-b793-11ea-b3de-0242ac130004')
       .then(response => {
         this.rule = response.data['objects'][0]

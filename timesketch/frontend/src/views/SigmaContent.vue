@@ -15,6 +15,8 @@ limitations under the License.
 -->
 <template>
   <div>
+        <section class="section">
+
     <ts-navbar-main>
       <template v-slot:left>
         {{ sketch.name }}
@@ -22,13 +24,11 @@ limitations under the License.
     </ts-navbar-main>
 
     <ts-navbar-secondary currentAppContext="sketch" currentPage="sigma"></ts-navbar-secondary>
-
-    <section class="section">
       <div class="container is-fluid">
         <div class="card">
           <div class="card-content">
-            <span class="title is-6 is-uppercase">Sigma rules</span>
-            <ts-sigma-list></ts-sigma-list>
+            <span class="title is-6 is-uppercase">Sigma details</span>
+            <ts-sigma-rule-detail></ts-sigma-rule-detail>
           </div>
         </div>
       </div>
@@ -37,11 +37,11 @@ limitations under the License.
 </template>
 
 <script>
-import TsSigmaList from '../components/Sigma/SigmaList'
+import TsSigmaRuleDetail from '../components/Sigma/SigmaRuleDetail'
 
 export default {
-  props: ['sketchId'],
-  components: { TsSigmaList},
+  props: ['sketchId', 'ruleId'],
+  components: { TsSigmaRuleDetail },
   computed: {
     sketch() {
       return this.$store.state.sketch

@@ -42,6 +42,10 @@ limitations under the License.
                 title="Copy value"
                 v-on:click="copyCode(props.row.id)">
           <i class="fas fa-copy"></i></span>
+          <span class="icon is-small">
+                <router-link :to="{ name: 'SigmaContent', ruleId: props.row.id }"
+                   ><i class="fas fa-search">aaaaaaa</i></router-link></span>
+
           <span
                 class="icon is-small"
                 style="cursor:pointer;float:right;"
@@ -114,7 +118,6 @@ export default {
   },
   methods: {
     copyCode: function (value) {
-      try {
           const el = document.createElement('textarea');
           el.value = value;
           document.body.appendChild(el);
@@ -122,8 +125,7 @@ export default {
           document.execCommand('copy');
           this.$buefy.notification.open('Copied')
           document.body.removeChild(el);
-
-      }
+    }
   },
   computed: {
     sigmas() {
@@ -145,14 +147,11 @@ export default {
 
 <!-- CSS scoped to this component only -->
 <style scoped lang="scss">
-
 span {
   background: red;
 }
-
 span:hover {
   background: green;
-    visibility: visible;
+  visibility: visible;
 }
-
 </style>
