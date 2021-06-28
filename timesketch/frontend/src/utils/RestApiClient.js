@@ -320,10 +320,17 @@ export default {
   getSearchHistoryTree(sketchId) {
     return RestApiClient.get('/sketches/' + sketchId + /searchhistorytree/)
   },
+  // Sigma
   getSigmaList() {
     return RestApiClient.get('/sigma/')
   },
   getSigmaResource(rule_uuid) {
     return RestApiClient.get('/sigma/rule/'+ rule_uuid +'/')
+  },
+  getSigmaByText(ruleText) {
+    let formData = {
+      content: ruleText,
+    }
+    return RestApiClient.post('/sigma/text/', formData)
   },
 }

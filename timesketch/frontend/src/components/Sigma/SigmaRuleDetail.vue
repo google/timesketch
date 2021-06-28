@@ -25,6 +25,21 @@ limitations under the License.
         </div>
         </li>
       </ul>
+
+  <!-- jaegeral: This is draft currently -->
+   <form v-on:submit.prevent="submitForm">
+    <div class="field">
+      <label class="label">Sigma Text</label>
+      <div class="multiline">
+        <input v-model="SigmaText" class="input" type="text" required placeholder="SigmaText" autofocus />
+      </div>
+    </div>
+    <div class="field">
+      <div class="control">
+        <input class="button is-success" type="submit" value="Save" />
+      </div>
+    </div>
+  </form>
   </div>
 </template>
 
@@ -35,6 +50,7 @@ export default {
   data() {
     return {
       rule: [],
+      SigmaText : '',
     }
   },
   computed: {
@@ -59,12 +75,25 @@ export default {
         console.error(e)
       })
   },
+  methods: {
+    clearFormData: function() {
+      this.SigmaText = ''
+    },
+    submitForm: function() {
+      ApiClient.getSigmaByText(this.SigmaText)
+        .then(response => {
+          let newView = response.data.objects[0]
+          console.log(newView)
+          //this.$emit('setActiveView', newView)
+          //this.$store.state.meta.views.push(newView)
+          //this.clearFormData()
+          //this.$router.push({ name: 'Explore', query: { view: newView.id } })
+        })
+        .catch(e => {})
+    },
+  }
 }
 </script>
 
 <!-- CSS scoped to this component only -->
 <style scoped lang="scss"></style>
-
-
-
-
