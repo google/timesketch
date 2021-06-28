@@ -41,13 +41,16 @@ export default {
     sketch() {
       return this.$store.state.sketch
     },
+    ruleId() {
+      return this.$route.query.ruleId
+    },
     meta() {
       return this.$store.state.meta
     },
   },
   created() {
-    // TOTO (jaegeral): change that to be dynamic
-    ApiClient.getSigmaResource('5266a592-b793-11ea-b3de-0242ac130004')
+    // TOTO (jaegeral): change that to use the rule from the already stored one
+    ApiClient.getSigmaResource(this.$route.query.ruleId)
       .then(response => {
         this.rule = response.data['objects'][0]
         console.log(this.rule)

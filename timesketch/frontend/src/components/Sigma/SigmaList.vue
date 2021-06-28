@@ -43,9 +43,8 @@ limitations under the License.
                 v-on:click="copyCode(props.row.id)">
           <i class="fas fa-copy"></i></span>
           <span class="icon is-small">
-                <router-link :to="{ name: 'SigmaContent', ruleId: props.row.id }"
+                <router-link :to="{ name: 'SigmaContent', query: {ruleId: props.row.id }}"
                    ><i class="fas fa-search">aaaaaaa</i></router-link></span>
-
           <span
                 class="icon is-small"
                 style="cursor:pointer;float:right;"
