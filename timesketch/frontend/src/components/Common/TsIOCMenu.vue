@@ -136,7 +136,6 @@ export default {
           })
           // refresh computed property based on attributes
           this.$store.state.meta.attributes = attributes
-          console.log('Attribute added successfully')
         })
       })
     },

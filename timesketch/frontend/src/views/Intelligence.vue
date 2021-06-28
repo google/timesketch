@@ -93,7 +93,6 @@ export default {
     localIntelligenceDeleteCallback(ioc) {
       const data = this.localIntelligence.data.filter(i => i.ioc !== ioc.ioc)
       ApiClient.addSketchAttribute(this.sketch.id, 'intelligence_local', { data: data }, 'intelligence').then(() => {
-        console.log(`${ioc.ioc} deleted successfully`)
         this.localIntelligence.data = data
       })
     },

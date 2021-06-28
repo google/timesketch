@@ -112,7 +112,6 @@ export default {
       const text = window.getSelection().toString()
       this.regexes.selection = text
       if (this.regexes.selection !== '') {
-        console.log(text)
       }
     },
   },
