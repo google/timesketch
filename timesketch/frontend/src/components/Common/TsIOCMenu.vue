@@ -151,7 +151,7 @@ export default {
 
 <style lang="scss">
 .ioc-match {
-  background-color: #ddd;
+  background-color: var(--highlight-color);
 }
 
 .ioc-display .icon {
