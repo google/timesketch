@@ -30,7 +30,6 @@ limitations under the License.
         icon-prev="chevron-left"
         icon-next="chevron-right"
         default-sort="title"
-        
       >
 
       <b-table-column field="id" 
@@ -69,12 +68,15 @@ limitations under the License.
                 ><i class="fas fa-copy"></i></span>
         </b-table-column>
         <b-table-column field="file_name" label="File Name" v-slot="props" sortable searchable>
-          {{ props.row.file_name }} <span class="icon is-small"
+          {{ props.row.file_name }} <span 
+                class="icon is-small" 
+                @mouseover="hover = true"
+                @mouseleave="hover = false"
+                :class="{ active: hover }"
                 style="cursor:pointer;float:right;"
                 title="Copy value"
                 v-on:click="copyCode(props.row.file_name)"
                 ><i class="fas fa-copy"></i></span>
-                
                 <span class="icon is-small">
                 <router-link
                       :to="{ name: 'Explore', query: {q : props.row.file_name} }"
@@ -118,11 +120,9 @@ export default {
           document.body.appendChild(el);
           el.select();
           document.execCommand('copy');
-          this.$buefy.notification.open('Copied!!')
+          this.$buefy.notification.open('Copied')
           document.body.removeChild(el);
-          } catch (err) {
-            alert('Oops, unable to copy');
-          }      
+
       }
   },
   computed: {
@@ -144,4 +144,15 @@ export default {
 </script>
 
 <!-- CSS scoped to this component only -->
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+
+span {
+  background: red;
+}
+
+span:hover {
+  background: green;
+    visibility: visible;
+}
+
+</style>

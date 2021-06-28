@@ -32,7 +32,6 @@ limitations under the License.
           </div>
         </div>
       </div>
-      <!--
       <div class="container is-fluid">
         <div class="card">
           <div class="card-content">
@@ -41,7 +40,7 @@ limitations under the License.
 
           </div>
         </div>
-      </div>-->
+      </div>
     </section>
   </div>
 </template>
