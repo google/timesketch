@@ -50,6 +50,8 @@ limitations under the License.
 </template>
 
 <script>
+import ApiClient from '../utils/RestApiClient'
+
 export default {
   components: {},
   data() {
