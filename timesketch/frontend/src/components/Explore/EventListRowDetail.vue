@@ -109,7 +109,6 @@ export default {
       if (event.target.closest('.ioc-match') || event.target.closest('.ioc-context-menu')) {
         return
       }
-      console.log('selection change')
       const text = window.getSelection().toString()
       this.regexes.selection = text
       if (this.regexes.selection !== '') {
