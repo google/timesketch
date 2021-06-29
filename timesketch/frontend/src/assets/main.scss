@@ -74,6 +74,7 @@
   --input-background-color: var(--search-input-light);
   --input-color: var(--font-color-dark);
   --input-placeholder-color: var(--font-color-grey);
+  --highlight-color: #ddd;
 }
 
 [data-theme='dark'] {
@@ -139,9 +140,9 @@
   --input-background-color: var(--background-color-3);
   --input-color: var(--font-color-light);
   --input-placeholder-color: #969696;
-
   --tag-background-color: var(--background-color-5);
   --tag-font-color: var(--font-color-light);
+  --highlight-color: #666;
 }
 
 // Customize Bulma
@@ -341,7 +342,7 @@ strong {
 
 a,
 a:hover {
-  color: var(--link-color);
+  color: var(--default-link-color);
 }
 
 .button,
