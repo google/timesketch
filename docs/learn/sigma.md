@@ -7,7 +7,42 @@ See description at the [Sigma Github repository](https://github.com/Neo23x0/sigm
 ## Sigma in Timesketch
 
 Since early 2020 Timesketch has Sigma support implemented. Sigma can be used as an analyser.
-The other option is to use Sigma via the API and the API client.
+The other option is to use Sigma via the API and the API client or the Web interface.
+
+### Web Interface
+
+Sigma rules are exposed to the Web Interface as part of a sketch.
+
+To list all Sigma rules, visit :
+
+```
+https://$TIMESKETCH/sketch/1/sigma/
+```
+
+This will show a table with all Sigma rules installed on a system. You can search for:
+
+- Rule ID
+- Title
+- Elastic Search query (ES Query)
+- File Name
+- Tag
+
+So if you want to search for Zenmap related rules, you can search for ```zenm``` in ```Title, File Name``` and it will show you the pre installed rule.
+
+#### ES Query
+
+From that table, there are small icons to copy the values or explore the sketch with the given value. For example if you click the small lens icon next to the ES Query from the found rule ```(data_type:("shell\:zsh\:history" OR "bash\:history\:command" OR "apt\:history\:line" OR "selinux\:line") AND "*apt\-get\ install\ zmap*")``` it will open an explore view for this sketch with this query pre filled for you to explore the data.
+
+#### Rule ID
+
+If you click the rule ID ```5266a592-b793-11ea-b3de-0242ac130004``` a detail view for that rule will open up.
+
+```bash
+https://$TIMESKETCH/sketch/1/sigma/details?ruleId=5266a592-b793-11ea-b3de-0242ac130004
+```
+
+In this detail view all key and values of that rule that has been parsed by Timesketch are exposed.
+
 
 ### Install rules
 
