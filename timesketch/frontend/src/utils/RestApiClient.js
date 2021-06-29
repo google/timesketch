@@ -324,8 +324,8 @@ export default {
   getSigmaList() {
     return RestApiClient.get('/sigma/')
   },
-  getSigmaResource(rule_uuid) {
-    return RestApiClient.get('/sigma/rule/'+ rule_uuid +'/')
+  getSigmaResource(ruleUuid) {
+    return RestApiClient.get('/sigma/rule/'+ ruleUuid +'/')
   },
   getSigmaByText(ruleText) {
     let formData = {
