@@ -16,6 +16,7 @@ limitations under the License.
 <template>
   <div>
     <span v-if="meta.permissions.write">
+
       <!-- Timeline info modal -->
       <b-modal :active.sync="showInfoModal" :width="1024" scroll="keep">
         <div class="modal-background"></div>
@@ -38,10 +39,10 @@ limitations under the License.
               <br />
 
               <b-message
-                :type="{ 'is-success': !datasource.error_message, 'is-danger': datasource.error_message }"
+                v-for="datasource in timeline.datasources"
+                :type="datasource.error_message ? 'is-danger' : 'is-success'"
                 :title="datasource.created_at"
                 :closable="false"
-                v-for="datasource in timeline.datasources"
                 :key="datasource.id"
               >
                 <ul>
@@ -75,15 +76,15 @@ limitations under the License.
           </header>
           <div class="card-content">
             <div class="content">
-              <form v-on:submit.prevent="saveTimeline">
+              <form v-on:submit.prevent> <!-- Without prevent(), the page will refresh -->
                 <div class="field">
                   <div class="control">
-                    <input v-model="timeline.name" class="input" type="text" required autofocus />
+                    <input v-model="newTimelineName" class="input" type="text" required autofocus />
                   </div>
                 </div>
                 <div class="field">
                   <div class="control">
-                    <input class="button is-success" type="submit" value="Save" />
+                    <input class="button is-success" @click="rename()" type="submit" value="Save" />
                   </div>
                 </div>
               </form>
@@ -94,17 +95,23 @@ limitations under the License.
       <button class="modal-close is-large" aria-label="close" v-on:click="showEditModal = !showEditModal"></button>
     </b-modal>
 
+    <!-- Analyzer logs modal -->
+      <b-modal :active.sync="showAnalysisHistory" :width="1024" scroll="keep">
+        <div class="modal-background"></div>
+        <div class="modal-content">
+          <div class="card">
+            <header class="card-header">
+              <p class="card-header-title">Analyzer logs for {{ timeline.name }}</p>
+            </header>
+            <div class="card-content" v-if="showAnalysisHistory">
+              <ts-analyzer-history :timeline="timeline" @closeHistory="showAnalysisHistory = false"></ts-analyzer-history>
+            </div>
+          </div>
+        </div>
+        <button class="modal-close is-large" aria-label="close" v-on:click="showAnalysisHistory = !showAnalysisHistory"></button>
+      </b-modal>
+
     </span>
-      <!-- <span> -->
-        <!-- <ts-timeline-chip
-          v-for="timeline in activeTimelines"
-          :key="timeline.id"
-          :timeline="timeline"
-          class="tag is-medium has-text-left"
-          style="cursor:pointer; margin-right:7px; margin-bottom:7px; padding-right:6px;"
-          v-bind:style="timelineColor(timeline)"
-          v-on:click="toggleTimeline(timeline)"
-        ></ts-timeline-chip> -->
 
     <span
       class="tag is-medium has-text-left"
@@ -145,7 +152,7 @@ limitations under the License.
             </span>
             <span>Analyzer logs</span>
           </b-dropdown-item>
-          <b-dropdown-item aria-role="listitem" v-on:click="remove(timeline)" class="is-danger">
+          <b-dropdown-item aria-role="listitem" v-on:click="remove()" class="is-danger">
             <span class="icon is-small">
             <i class="fas fa-trash"></i>
             </span>
@@ -183,7 +190,6 @@ export default {
   props: ['timeline', 'selectedTimelines', 'countPerIndex', 'countPerTimeline'], // TODO(bartoszi): do we need 'controls' and 'isCompact' ?
   data() {
     return {
-      checkedDataTypes: [],
       initialColor: {},
       newColor: '',
       newTimelineName: '',
@@ -191,7 +197,6 @@ export default {
       showInfoModal: false,
       showEditModal: false,
       analysisSessionId: false,
-      showAnalysisDetail: false,
       showAnalysisHistory: false,
       timelineStatus: null,
       autoRefresh: false,
@@ -234,9 +239,13 @@ export default {
     },
   },
   methods: {
-    remove(timeline) {
-      if (confirm('Are you sure?')) {
-        this.$emit('remove', timeline)
+    rename() {
+      this.showEditModal = false
+      this.$emit('save', this.timeline, this.newTimelineName)
+    },
+    remove() {
+      if (confirm('Delete the timeline?')) {
+        this.$emit('remove', this.timeline)
       }
     },
     updateColor: _.debounce(function(color) {
@@ -247,10 +256,6 @@ export default {
       Vue.set(this.timeline, 'color', this.newColor)
       this.$emit('save', this.timeline)
     }, 300),
-    saveTimeline() {
-      this.showEditModal = false
-      this.$emit('save', this.timeline)
-    },
     fetchData() {
       ApiClient.getSketchTimeline(this.sketch.id, this.timeline.id)
         .then(response => {
@@ -344,6 +349,7 @@ export default {
     if (this.timelineStatus !== 'ready') {
       this.autoRefresh = true
     }
+    this.newTimelineName = this.timeline.name
   },
   beforeDestroy() {
     clearInterval(this.t)

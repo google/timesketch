@@ -25,9 +25,9 @@ limitations under the License.
       :selectedTimelines="selectedTimelines"
       :countPerIndex="countPerIndex"
       :countPerTimeline="countPerTimeline"
-      @remove="remove(timeline)"
-      @save="save(timeline)"
-      @toggle="toggleTimeline(timeline)"
+      @remove="remove"
+      @save="save"
+      @toggle="toggleTimeline"
     ></ts-timeline-chip>
     <!-- <ts-timeline-chip
       v-for="timeline in activeTimelines"
@@ -39,10 +39,12 @@ limitations under the License.
       v-on:click="toggleTimeline(timeline)"
         ></ts-timeline-chip> -->
     <div v-if="activeTimelines.length > 3" style="margin-top:7px;">
-      <span style="text-decoration: underline; cursor: pointer; margin-right: 10px;" v-on:click="enableAllTimelines"
-        >Enable all</span
-      >
-      <span style="text-decoration: underline; cursor: pointer;" v-on:click="disableAllTimelines">Disable all</span>
+      <span style="text-decoration: underline; cursor: pointer; margin-right: 10px;"
+      v-on:click="enableAllTimelines">Enable all
+      </span>
+      <span style="text-decoration: underline; cursor: pointer;"
+      v-on:click="disableAllTimelines">Disable all
+      </span>
     </div>
   </div>
 </template>
@@ -77,8 +79,8 @@ export default {
           console.error(e)
         })
     },
-    save(timeline) {
-      ApiClient.saveSketchTimeline(this.sketch.id, timeline.id, timeline.name, timeline.description, timeline.color)
+    save(timeline, newTimelineName = false) {
+      ApiClient.saveSketchTimeline(this.sketch.id, timeline.id, newTimelineName || timeline.name, timeline.description, timeline.color)
         .then(response => {
           this.$store.dispatch('updateSketch', this.sketch.id)
         })
@@ -110,21 +112,35 @@ export default {
       this.isDarkTheme = !this.isDarkTheme
     },
     syncSelectedTimelines: function() {
-      let timelines = []
+      if (this.currentQueryFilter.indices.includes('_all')) {
+        console.log('Short circut')
+        this.enableAllTimelines()
+        return
+      }
+      let newArray = []
       this.currentQueryFilter.indices.forEach(index => {
         if (typeof index === 'string') {
-          let timeline = this.activeTimelines.find(timeline => {
-            return timeline.searchindex.index_name === index
+          console.log('in string')
+          let timeline = this.activeTimelines.find(t => {
+            console.log('Index_name')
+            console.log(t.searchindex.index_name)
+            console.log('Index')
+            console.log(index)
+            console.log('The result')
+            console.log(t.searchindex.index_name === index)
+            return t.searchindex.index_name === index
           })
-          timelines.push(timeline)
+          newArray.push(timeline)
         } else if (typeof index === 'number') {
-          let timeline = this.activeTimelines.find(timeline => {
-            return timeline.id === index
+          console.log('in number')
+          let timeline = this.activeTimelines.find(t => {
+            return t.id === index
           })
-          timelines.push(timeline)
+          newArray.push(timeline)
         }
       })
-      this.selectedTimelines = timelines
+      console.log(newArray)
+      this.selectedTimelines = newArray
     },
   },
   created: function() {
