@@ -60,8 +60,8 @@ export default new Vuex.Store({
       Vue.set(state, 'currentSearchNode', payload)
     },
     SET_SIGMA_LIST(state, payload) {
-      Vue.set(state, 'sigma_list', payload['objects'])
-      Vue.set(state, 'sigma_list_count', payload['meta']['rules_count'])
+      Vue.set(state, 'sigmaRuleList', payload['objects'])
+      Vue.set(state, 'sigmaRuleList_count', payload['meta']['rules_count'])
     },
     RESET_STATE(state, payload) {
       ApiClient.getLoggedInUser().then(response => {

@@ -16,8 +16,8 @@ limitations under the License.
 <template>
   <div>
     <b-table
-        v-if="sigma_list"
-        :data="sigma_list"
+        v-if="sigmaRuleList"
+        :data="sigmaRuleList"
         :current-page.sync="currentPage"
         :per-page="perPage"
         paginated
@@ -106,7 +106,6 @@ limitations under the License.
 export default {
   data() {
     return {
-      sigma_list: [],      
       currentPage: 1,
       ascending: false,
       sortColumn: '', 
@@ -127,8 +126,8 @@ export default {
     }
   },
   computed: {
-    sigmas() {
-      return this.sigma_list
+    sigmaRuleList() {
+      return this.$store.state.sigmaRuleList
     },
     sketch() {
       return this.$store.state.sketch
@@ -138,8 +137,7 @@ export default {
     },
   },
   created() {
-    this.sigma_list =  this.$store.state.sigma_list
-    this.sigma_list_count = this.$store.state.sigma_list_count
+    this.sigmaRuleList_count = this.$store.state.sigmaRuleList_count
   },
 }
 </script>

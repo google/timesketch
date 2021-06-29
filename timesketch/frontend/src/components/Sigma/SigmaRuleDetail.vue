@@ -24,22 +24,8 @@ limitations under the License.
             {{ name }}: {{ value }}
         </div>
         </li>
-      </ul>
-
-  <!-- jaegeral: This is draft currently -->
-   <form v-on:submit.prevent="submitForm">
-    <div class="field">
-      <label class="label">Sigma Text</label>
-      <div class="multiline">
-        <input v-model="SigmaText" class="input" type="text" required placeholder="SigmaText" autofocus />
-      </div>
-    </div>
-    <div class="field">
-      <div class="control">
-        <input class="button is-success" type="submit" value="Save" />
-      </div>
-    </div>
-  </form>
+      </ul>  
+    <div> Rule text: {{ SigmaRule }}</div>
   </div>
 </template>
 
@@ -50,7 +36,9 @@ export default {
   data() {
     return {
       rule: [],
-      SigmaText : '',
+      SigmaText : 'NotYetReady',
+      SigmaRule : 'Null'
+
     }
   },
   computed: {
@@ -80,14 +68,11 @@ export default {
       this.SigmaText = ''
     },
     submitForm: function() {
+      console.log(Message)
       ApiClient.getSigmaByText(this.SigmaText)
         .then(response => {
-          let newView = response.data.objects[0]
-          console.log(newView)
-          //this.$emit('setActiveView', newView)
-          //this.$store.state.meta.views.push(newView)
-          //this.clearFormData()
-          //this.$router.push({ name: 'Explore', query: { view: newView.id } })
+          let SigmaRule = response.data.objects[0]
+          console.log(SigmaRule)
         })
         .catch(e => {})
     },
