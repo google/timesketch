@@ -15,10 +15,13 @@ limitations under the License.
 -->
 <template>
   <div>
+    <strong>{{ rule.id }}</strong>
     <ul class="content-list">
-      <li style="padding:10px;border-bottom:none;cursor:pointer;">
-        <strong>{{ rule.id }}</strong>
-        <div v-for="(value, name) in rule" v-bind:key="name">{{ name }}: {{ value }}</div>
+      <li v-for="(value, name) in rule" v-bind:key="name" style="padding:10px;border-bottom:none;cursor:pointer;">
+        <div>
+          <b>{{ name }}</b
+          >: <code>{{ value }}</code>
+        </div>
       </li>
     </ul>
   </div>
@@ -45,7 +48,9 @@ export default {
     },
   },
   created() {
-    // TOTO (jaegeral): change that to use the rule from the already stored one
+    // TODO (jaegeral): change that to use the rule from the already stored one
+    //this.asd = this.$store.state.sigmaRuleList.find(rule => rule.ruleId === this.$route.query.ruleId)
+
     ApiClient.getSigmaResource(this.$route.query.ruleId)
       .then(response => {
         this.rule = response.data['objects'][0]
