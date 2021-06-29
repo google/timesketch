@@ -26,7 +26,7 @@ limitations under the License.
       {{ timeline.name }}
       <span
         class="tag is-small"
-        style="margin-left:10px;margin-right:-7px;background-color: rgba(255,255,255,0.5);min-width:50px;"
+        style="margin-left:10px;margin-right:-7px;background-color: rgba(255,255,255,0.5); color:var(--font-color-dark); min-width:50px;"
         ><span v-if="timelineIsEnabled(timeline) && countPerTimeline">{{
           getCount(timeline) | compactNumber
         }}</span></span

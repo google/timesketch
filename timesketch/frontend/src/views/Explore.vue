@@ -81,82 +81,70 @@ limitations under the License.
 
             <div class="field is-grouped" style="margin-top:60px;">
               <p class="control">
-                <b-dropdown trap-focus append-to-body aria-role="menu" ref="NewTimeFilter">
-                  <a class="button is-text" style="text-decoration: none;" slot="trigger" role="button">
-                    <span>+ Time filter</span>
-                  </a>
-                  <b-dropdown-item custom :focusable="false" style="min-width: 500px; padding: 30px;">
-                    <strong>Create time filter</strong>
-                    <br />
-                    <br />
-                    <ts-explore-filter-time @addChip="addChip" @hideDropdown="hideDropdown"></ts-explore-filter-time>
-                  </b-dropdown-item>
-                </b-dropdown>
+                <ts-dropdown width="500px">
+                  <template v-slot:dropdown-trigger-element>
+                    <a class="button is-text" style="text-decoration: none;" slot="trigger" role="button">
+                      <span>+ Time filter</span>
+                    </a>
+                  </template>
+                  <strong>Create time filter</strong>
+                  <br />
+                  <br />
+                  <ts-explore-filter-time @addChip="addChip" @hideDropdown="hideDropdown"></ts-explore-filter-time>
+                </ts-dropdown>
               </p>
 
               <p class="control">
-                <b-dropdown trap-focus append-to-body aria-role="menu">
-                  <a class="button is-text" style="text-decoration: none;" slot="trigger" role="button">
-                    <span>+ Add label filter</span>
-                  </a>
+                <ts-dropdown>
+                  <template v-slot:dropdown-trigger-element>
+                    <a class="button is-text" style="text-decoration: none;" role="button">
+                      <span>+ Add label filter</span>
+                    </a>
+                  </template>
 
-                  <div class="modal-card" style="width:300px;color: var(--font-color-dark);">
-                    <section class="modal-card-body">
-                      <b-dropdown-item custom :focusable="false">
-                        <div class="field">
-                          <b-checkbox type="is-info" v-model="selectedLabels" native-value="__ts_star">
-                            <span style="margin-right:5px;" class="icon is-small"
-                              ><i
-                                class="fas fa-star"
-                                style="color:#ffe300;-webkit-text-stroke-width: 1px;-webkit-text-stroke-color: silver;"
-                              ></i></span
-                            >Show starred events
-                          </b-checkbox>
-                        </div>
-                        <div class="field">
-                          <b-checkbox type="is-info" v-model="selectedLabels" native-value="__ts_comment">
-                            <span style="margin-right:5px;" class="icon is-small"><i class="fas fa-comment"></i></span
-                            >Show events with comments
-                          </b-checkbox>
-                        </div>
-                        <hr v-if="meta.filter_labels.length" />
-                        <div
-                          class="level"
-                          style="margin-bottom: 5px;"
-                          v-for="label in filteredLabels"
-                          :key="label.label"
-                        >
-                          <div class="level-left">
-                            <div class="field">
-                              <b-checkbox type="is-info" v-model="selectedLabels" :native-value="label">
-                                {{ label.label }}
-                              </b-checkbox>
-                            </div>
-                          </div>
-                        </div>
-                      </b-dropdown-item>
-                    </section>
-                    <section class="modal-card-foot">
-                      <b-dropdown-item>
-                        <button class="button is-info" v-on:click="updateLabelChips()">Apply</button>
-                      </b-dropdown-item>
-                    </section>
+                  <div class="field">
+                    <b-checkbox type="is-info" v-model="selectedLabels" native-value="__ts_star">
+                      <span style="margin-right:5px;" class="icon is-small"
+                        ><i
+                          class="fas fa-star"
+                          style="color:#ffe300;-webkit-text-stroke-width: 1px;-webkit-text-stroke-color: silver;"
+                        ></i></span
+                      >Show starred events
+                    </b-checkbox>
                   </div>
-                </b-dropdown>
+                  <div class="field">
+                    <b-checkbox type="is-info" v-model="selectedLabels" native-value="__ts_comment">
+                      <span style="margin-right:5px;" class="icon is-small"><i class="fas fa-comment"></i></span>Show
+                      events with comments
+                    </b-checkbox>
+                  </div>
+                  <hr v-if="meta.filter_labels.length" />
+                  <div class="level" style="margin-bottom: 5px;" v-for="label in filteredLabels" :key="label.label">
+                    <div class="level-left">
+                      <div class="field">
+                        <b-checkbox type="is-info" v-model="selectedLabels" :native-value="label.label">
+                          {{ label.label }}
+                        </b-checkbox>
+                      </div>
+                    </div>
+                  </div>
+                  <button class="button is-info" v-on:click="updateLabelChips()">Apply</button>
+                </ts-dropdown>
               </p>
             </div>
 
             <p class="control" style="top:-40px;float:right;">
-              <span style="margin-right:10px; margin-left:15px;">Histogram</span>
-              <b-switch v-model="showHistogram" size="is-small" type="is-info" style="top:2px;"></b-switch>
-              <span style="margin-right:10px; margin-left:15px;">Show history</span>
+              <b-switch v-model="showHistogram" size="is-small" type="is-info" style="top:2px; margin-right:15px;"
+                >Chart</b-switch
+              >
               <b-switch
                 v-model="showSearchHistory"
                 v-on:input="triggerScrollTo"
                 size="is-small"
                 type="is-info"
                 style="top:2px;"
-              ></b-switch>
+                >Show history</b-switch
+              >
             </p>
 
             <!-- Time filters -->
@@ -208,7 +196,7 @@ limitations under the License.
               <span v-for="(chip, index) in filterChips" :key="index + chip.value">
                 <span
                   v-if="chip.type === 'label'"
-                  class="tag is-medium is-light"
+                  class="tag is-medium"
                   style="margin-right:7px; cursor: pointer;"
                   v-bind:class="{ 'chip-disabled': chip.active === false }"
                   @click="toggleChip(chip, index)"
@@ -231,7 +219,7 @@ limitations under the License.
                 </span>
                 <span
                   v-if="chip.type === 'term'"
-                  class="tag is-light"
+                  class="tag is-medium"
                   style="margin-right:7px; cursor: pointer;"
                   v-bind:class="{ 'chip-disabled': chip.active === false, 'is-danger': chip.operator === 'must_not' }"
                   @click="toggleChip(chip, index)"
@@ -382,7 +370,11 @@ limitations under the License.
                 </div>
                 <div class="level-item">
                   <div v-if="eventList.objects.length" class="select is-small">
-                    <select v-model="currentQueryFilter.size" @change="search(true, true, true)">
+                    <select
+                      v-model="currentQueryFilter.size"
+                      @change="search(true, true, true)"
+                      style="border:1px solid var(--background-color-4);"
+                    >
                       <option v-bind:value="currentQueryFilter.size">{{ currentQueryFilter.size }}</option>
                       <option value="10">10</option>
                       <option value="20">20</option>
@@ -528,6 +520,7 @@ import TsSearchHistoryTree from '../components/Explore/SearchHistoryTree'
 import TsBarChart from '../components/Aggregation/BarChart'
 import TsSearchDropdown from '../components/Explore/SearchDropdown'
 import TsCreateViewForm from '../components/Common/CreateViewForm'
+import TsDropdown from '../components/Common/Dropdown'
 
 import EventBus from '../main'
 import { None } from 'vega'
@@ -566,6 +559,7 @@ export default {
     TsBarChart,
     TsSearchDropdown,
     TsCreateViewForm,
+    TsDropdown,
   },
   props: ['sketchId'],
   data() {
@@ -949,7 +943,7 @@ export default {
       this.selectedLabels.forEach(label => {
         let chip = {
           field: '',
-          value: label.label,
+          value: label,
           type: 'label',
           operator: 'must',
           active: true,
