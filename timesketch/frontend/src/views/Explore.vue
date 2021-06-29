@@ -23,30 +23,30 @@ limitations under the License.
 
     <ts-navbar-secondary ref="navigation" currentAppContext="sketch" currentPage="explore"></ts-navbar-secondary>
 
+    <b-modal :active.sync="showSaveSearchModal" :width="640" scroll="keep" style="z-index:999;">
+      <div class="card">
+        <header class="card-header">
+          <p class="card-header-title">Save search</p>
+        </header>
+        <div class="card-content">
+          <div class="content">
+            <ts-create-view-form
+              @setActiveView="searchView"
+              :sketchId="sketchId"
+              :currentQueryString="currentQueryString"
+              :currentQueryFilter="currentQueryFilter"
+            ></ts-create-view-form>
+          </div>
+        </div>
+      </div>
+    </b-modal>
+
     <section class="section">
       <div class="container is-fluid">
         <div class="card">
-          <b-modal :active.sync="showSaveSearchModal" :width="640" scroll="keep">
-            <div class="card">
-              <header class="card-header">
-                <p class="card-header-title">Save search</p>
-              </header>
-              <div class="card-content">
-                <div class="content">
-                  <ts-create-view-form
-                    @setActiveView="searchView"
-                    :sketchId="sketchId"
-                    :currentQueryString="currentQueryString"
-                    :currentQueryFilter="currentQueryFilter"
-                  ></ts-create-view-form>
-                </div>
-              </div>
-            </div>
-          </b-modal>
-
           <div class="card-content" v-if="showSearch">
             <div style="position:relative;">
-              <div class="ts-search-box" style="z-index:999; position:absolute; width:100%;">
+              <div class="ts-search-box" style="z-index:998; position:absolute; width:100%;">
                 <span class="icon" style="position:absolute;top:14px;margin-left:17px;font-size:16px;">
                   <i class="fas fa-search"></i>
                 </span>
@@ -118,7 +118,6 @@ limitations under the License.
                       events with comments
                     </b-checkbox>
                   </div>
-                  <hr v-if="meta.filter_labels.length" />
                   <div class="level" style="margin-bottom: 5px;" v-for="label in filteredLabels" :key="label.label">
                     <div class="level-left">
                       <div class="field">
@@ -128,7 +127,8 @@ limitations under the License.
                       </div>
                     </div>
                   </div>
-                  <button class="button is-info" v-on:click="updateLabelChips()">Apply</button>
+                  <br />
+                  <button class="button is-info" v-on:click="updateLabelChips()">Add filter</button>
                 </ts-dropdown>
               </p>
             </div>
@@ -353,27 +353,25 @@ limitations under the License.
               <!-- Right side -->
               <div class="level-right">
                 <div class="level-item">
-                  <div v-if="eventList.objects.length">
-                    <b-pagination
-                      @change="paginate($event)"
-                      :total="totalHitsForPagination"
-                      :per-page="currentQueryFilter.size"
-                      :current.sync="currentPage"
-                      :simple="true"
-                      size="is-small"
-                      icon-pack="fas"
-                      icon-prev="chevron-left"
-                      icon-next="chevron-right"
-                    >
-                    </b-pagination>
-                  </div>
+                  <b-pagination
+                    @change="paginate($event)"
+                    :total="totalHitsForPagination"
+                    :per-page="currentQueryFilter.size"
+                    :current.sync="currentPage"
+                    :simple="true"
+                    size="is-small"
+                    icon-pack="fas"
+                    icon-prev="chevron-left"
+                    icon-next="chevron-right"
+                  >
+                  </b-pagination>
                 </div>
                 <div class="level-item">
-                  <div v-if="eventList.objects.length" class="select is-small">
+                  <div class="select is-small">
                     <select
                       v-model="currentQueryFilter.size"
                       @change="search(true, true, true)"
-                      style="border:1px solid var(--background-color-4);"
+                      style="border:1px solid var(--table-cell-border-color);"
                     >
                       <option v-bind:value="currentQueryFilter.size">{{ currentQueryFilter.size }}</option>
                       <option value="10">10</option>
@@ -387,77 +385,68 @@ limitations under the License.
                   </div>
                 </div>
                 <div class="level-item">
-                  <button
-                    v-if="eventList.objects.length"
-                    class="button is-small"
-                    style="border-radius: 4px;"
-                    v-on:click="changeSortOrder"
-                  >
+                  <button class="button is-small" style="border-radius: 4px;" v-on:click="changeSortOrder">
                     {{ currentQueryFilter.order }}
                   </button>
                 </div>
                 <div class="level-item">
-                  <div v-if="eventList.objects.length">
-                    <b-dropdown position="is-bottom-left" aria-role="menu" trap-focus append-to-body :can-close="true">
-                      <button class="button is-outlined is-small" style="border-radius: 4px;" slot="trigger">
+                  <ts-dropdown position="is-bottom-left" width="300px">
+                    <template v-slot:dropdown-trigger-element>
+                      <button class="button is-small" style="border-radius: 4px;">
                         <span class="icon is-small">
                           <i class="fas fa-table"></i>
                         </span>
                         <span>Customize columns</span>
                       </button>
-                      <b-dropdown-item aria-role="menu-item" :focusable="false" custom>
-                        <div v-bind:class="{ tsdropdown: expandFieldDropdown }" style="width:300px;">
-                          <multiselect
-                            style="display: block"
-                            v-if="meta.mappings"
-                            :options="meta.mappings"
-                            :value="selectedFieldsProxy"
-                            @open="expandFieldDropdown = true"
-                            @close="expandFieldDropdown = false"
-                            @input="updateSelectedFields"
-                            :multiple="true"
-                            :searchable="true"
-                            :close-on-select="false"
-                            label="field"
-                            track-by="field"
-                            placeholder="Add more columns ..."
-                          ></multiselect>
-                        </div>
-                      </b-dropdown-item>
-                      <b-dropdown-item aria-role="menu-item" :focusable="false" custom>
-                        <span v-if="selectedFields.length">
-                          <br />
-                          <strong>Selected columns</strong>
-                          <br /><br />
-                        </span>
-                        <div class="tags">
-                          <span v-for="(field, index) in selectedFields" :key="index">
-                            <span class="tag is-light is-rounded" style="margin-right:7px;">
-                              <span style="margin-right:7px;">{{ field.field }}</span>
-                              <button
-                                style="margin-left:7px"
-                                class="delete is-small"
-                                v-on:click="removeField(index)"
-                              ></button>
-                            </span>
-                          </span>
-                        </div>
+                    </template>
 
-                        <hr />
-                        <b-switch type="is-info" v-model="displayOptions.showTags">
-                          <span>Show tags</span>
-                        </b-switch>
-                        <br />
-                        <b-switch type="is-info" v-model="displayOptions.showEmojis">
-                          <span>Show emojis</span>
-                        </b-switch>
-                        <br />
-                        <b-switch type="is-info" v-model="displayOptions.showMillis">
-                          <span>Show microseconds</span>
-                        </b-switch>
-                      </b-dropdown-item>
-                    </b-dropdown>
-                  </div>
+                    <multiselect
+                      style="display: block;"
+                      v-if="meta.mappings"
+                      :options="meta.mappings"
+                      :value="selectedFieldsProxy"
+                      @open="expandFieldDropdown = true"
+                      @close="expandFieldDropdown = false"
+                      @input="updateSelectedFields"
+                      :multiple="true"
+                      :searchable="true"
+                      :close-on-select="true"
+                      label="field"
+                      track-by="field"
+                      placeholder="Add columns ..."
+                    ></multiselect>
+
+                    <span v-if="selectedFields.length">
+                      <br />
+                      <strong>Selected columns</strong>
+                      <br /><br />
+                    </span>
+                    <div class="tags">
+                      <span v-for="(field, index) in selectedFields" :key="index">
+                        <span class="tag is-light is-rounded" style="margin-right:7px;">
+                          <span style="margin-right:7px;">{{ field.field }}</span>
+                          <button
+                            style="margin-left:7px"
+                            class="delete is-small"
+                            v-on:click="removeField(index)"
+                          ></button>
+                        </span>
+                      </span>
+                    </div>
+
+                    <br />
+                    <b-switch type="is-info" v-model="displayOptions.showTags" style="margin-bottom:7px;">
+                      <span>Show tags</span>
+                    </b-switch>
+                    <br />
+                    <b-switch type="is-info" v-model="displayOptions.showEmojis" style="margin-bottom:7px;">
+                      <span>Show emojis</span>
+                    </b-switch>
+                    <br />
+                    <b-switch type="is-info" v-model="displayOptions.showMillis">
+                      <span>Show microseconds</span>
+                    </b-switch>
+                  </ts-dropdown>
                 </div>
 
                 <div class="level-item">

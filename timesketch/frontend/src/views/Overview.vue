@@ -518,7 +518,6 @@ export default {
   width: 100%;
   align-items: center;
   justify-content: center;
-  border: 1px solid red;
 }
 .archive-card.is-wide {
   width: 520px;

@@ -51,7 +51,13 @@
   --search-input-font-color: var(--font-color-dark);
   --search-input-background-color: #ffffff;
   --search-input-border-color: #d3d3d3;
+
   --button-greyscale: grayscale(0%);
+
+  --button-color: var(--font-color-dark);
+  --button-background-color: #ffffff;
+  --button-border-color: #dbdbdb;
+
   --timeline-name-column-background: #f1f1f1;
   --timeline-name-column-font-color: #999999;
   --table-cell-border-color: #d3d3d3;
@@ -75,6 +81,8 @@
   --input-color: var(--font-color-dark);
   --input-placeholder-color: var(--font-color-grey);
   --highlight-color: #ddd;
+
+  --dropdown-background-color: #fff;
 }
 
 [data-theme='dark'] {
@@ -105,14 +113,19 @@
   --search-input-font-color: var(--font-color-light);
   --search-input-background-color: var(--background-color-3);
   --search-input-border-color: transparent;
+
   --button-greyscale: grayscale(25%);
+
+  --button-color: var(--font-color-light);
+  --button-background-color: var(--background-color-3);
+  --button-border-color: var(--background-color-5);
 
   --timeline-name-column-background: var(--background-color-4);
   --timeline-name-column-font-color: #d9d9d9;
 
   --table-background-color: var(--background-color-3);
   --table-row-background-color: var(--background-color-3);
-  --table-row-hover-background-color: #494949;
+  --table-row-hover-background-color: var(--background-color-4);
   --table-head-cell-color: #fafafa;
   --table-color: #fafafa;
   --table-cell-border-color: var(--background-color-4);
@@ -123,17 +136,17 @@
   --time-bubble-background-color: var(--background-color-4);
   --time-bubble-font-color: #d9d9d9;
 
-  --content-list-hover-color: #696969;
+  --content-list-hover-color: var(--background-color-3);
   --content-list-border-color: #696969;
   --login-page-background-color: var(--background-color);
   --navbar-item-link-color: #fafafa;
   --card-title-font-color: var(--font-color-light);
-  --card-header-border-color: #848484;
+  --card-header-border-color: var(--background-color-3);
   --button-font-color: var(--font-color-light);
   --form-label-font-color: var(--font-color-light);
   --message-header-background-color: var(--background-color-2);
   --message-header-font-color: var(--font-color-light);
-  --message-background-color: #363636;
+  --message-background-color: var(--background-color-3);
   --message-body-color: var(--font-color-light);
   --markdown-body-font-color: var(--font-color-light);
   --spinner-color: #ffffff;
@@ -143,6 +156,8 @@
   --tag-background-color: var(--background-color-5);
   --tag-font-color: var(--font-color-light);
   --highlight-color: #666;
+
+  --dropdown-background-color: var(--background-color-3);
 }
 
 // Customize Bulma
@@ -184,8 +199,10 @@ $button-text-color: var(--button-font-color);
 $button-text-hover-color: var(--button-font-color);
 $button-text-hover-background-color: transparent;
 
-$button-background-color: var(--background-color-3);
-$button-border-color: var(--background-color-4);
+$button-color: var(--button-color);
+$button-focus-color: var(--button-color);
+$button-background-color: var(--button-background-color);
+$button-border-color: var(--button-border-color);
 
 $title-color: var(--default-title-font-color);
 
@@ -523,7 +540,12 @@ a:hover {
   }
 }
 
+.dropdown-menu {
+  border-radius: 6px;
+}
+
 .dropdown-content {
   padding: 0;
   background-color: transparent;
+  border-radius: 6px;
 }

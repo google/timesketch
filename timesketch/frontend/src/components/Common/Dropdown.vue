@@ -14,15 +14,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <b-dropdown trap-focus append-to-body aria-role="menu">
+  <b-dropdown :position="position" append-to-body aria-role="menu">
     <span slot="trigger">
       <slot name="dropdown-trigger-element"></slot>
     </span>
     <div
-      style="border-radius:6px;background-color:#25272c;color:#fff;padding:16px;border: 1px solid var(--table-cell-border-color);"
-      :style="dropDownstyle"
+      style="border-radius:6px;background-color:var(--dropdown-background-color);color:var(--default-font-color);padding:16px;border: 1px solid var(--table-cell-border-color);"
+      :style="dropdownWidth"
     >
-      <b-dropdown-item paddingless custom :focusable="false" style="color:#fff;">
+      <b-dropdown-item paddingless custom :focusable="false" style="color:var(--default-font-color);">
         <slot></slot>
       </b-dropdown-item>
     </div>
@@ -36,9 +36,13 @@ export default {
       default: '300px',
       type: String,
     },
+    position: {
+      default: 'is-bottom-right',
+      type: String,
+    },
   },
   computed: {
-    dropDownstyle() {
+    dropdownWidth() {
       let style = {
         width: this.width,
       }
