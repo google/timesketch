@@ -15,15 +15,14 @@ limitations under the License.
 -->
 <template>
   <div>
-        <section class="section">
+    <section class="section">
+      <ts-navbar-main>
+        <template v-slot:left>
+          {{ sketch.name }}
+        </template>
+      </ts-navbar-main>
 
-    <ts-navbar-main>
-      <template v-slot:left>
-        {{ sketch.name }}
-      </template>
-    </ts-navbar-main>
-
-    <ts-navbar-secondary currentAppContext="sketch" currentPage="sigma"></ts-navbar-secondary>
+      <ts-navbar-secondary currentAppContext="sketch" currentPage="sigma"></ts-navbar-secondary>
       <div class="container is-fluid">
         <div class="card">
           <div class="card-content">

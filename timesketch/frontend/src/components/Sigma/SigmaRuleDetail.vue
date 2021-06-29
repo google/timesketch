@@ -15,17 +15,12 @@ limitations under the License.
 -->
 <template>
   <div>
-      <ul class="content-list">
-        <li style="padding:10px;border-bottom:none;cursor:pointer;">
-          <strong style="color: var(--default-font-color)">{{ rule.id }}</strong>
-          <br />
-          {{ ruleId }}
-          <div v-for="(value, name) in rule" v-bind:key="name">
-            {{ name }}: {{ value }}
-        </div>
-        </li>
-      </ul>  
-    <div> Rule text: {{ SigmaRule }}</div>
+    <ul class="content-list">
+      <li style="padding:10px;border-bottom:none;cursor:pointer;">
+        <strong>{{ rule.id }}</strong>
+        <div v-for="(value, name) in rule" v-bind:key="name">{{ name }}: {{ value }}</div>
+      </li>
+    </ul>
   </div>
 </template>
 
@@ -36,9 +31,6 @@ export default {
   data() {
     return {
       rule: [],
-      SigmaText : 'NotYetReady',
-      SigmaRule : 'Null'
-
     }
   },
   computed: {
@@ -57,26 +49,11 @@ export default {
     ApiClient.getSigmaResource(this.$route.query.ruleId)
       .then(response => {
         this.rule = response.data['objects'][0]
-        console.log(this.rule)
       })
       .catch(e => {
         console.error(e)
       })
   },
-  methods: {
-    clearFormData: function() {
-      this.SigmaText = ''
-    },
-    submitForm: function() {
-      console.log(Message)
-      ApiClient.getSigmaByText(this.SigmaText)
-        .then(response => {
-          let SigmaRule = response.data.objects[0]
-          console.log(SigmaRule)
-        })
-        .catch(e => {})
-    },
-  }
 }
 </script>
 
