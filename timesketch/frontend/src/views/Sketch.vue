@@ -22,6 +22,7 @@ export default {
   props: ['sketchId'],
   created: function() {
     this.$store.dispatch('updateSketch', this.sketchId)
+    this.$store.dispatch('updateSearchHistory', this.sketchId)
   },
   computed: {
     sketch() {
