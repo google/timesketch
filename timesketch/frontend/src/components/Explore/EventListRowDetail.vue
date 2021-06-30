@@ -39,10 +39,13 @@ limitations under the License.
           <span
             class="icon is-small"
             style="cursor:pointer;"
-            title="Copy key:value"
-            v-on:click="copyCode(key,item,'both')"
+            title="Copy key"
+            v-clipboard:copy="key"
+            v-clipboard:success="handleCopyStatus"
             ><i class="fas fa-copy"></i
           ></span>
+        </td>
+
         <td style="white-space:pre-wrap;word-wrap: break-word; width: 150px;">{{ key }}</td>
         <td>
           <span style="white-space:pre-wrap;word-wrap: break-word">{{ item }}</span>
@@ -50,7 +53,8 @@ limitations under the License.
             class="icon is-small"
             style="cursor:pointer; margin-left: 3px; color: #d3d3d3;float:right;"
             title="Copy value"
-            v-on:click="copyCode(key,item,'value')"
+            v-clipboard:copy="item"
+            v-clipboard:success="handleCopyStatus"
             ><i class="fas fa-copy"></i
           ></span>
         </td>
@@ -103,19 +107,9 @@ export default {
       }
       this.$emit('addChip', chip)
     },
-    copyCode: function (value) {
-      try {
-          const el = document.createElement('textarea');
-          el.value = value;
-          document.body.appendChild(el);
-          el.select();
-          document.execCommand('copy');
-          this.$buefy.notification.open('Copied!!')
-          document.body.removeChild(el);
-          } catch (err) {
-            alert('Oops, unable to copy');
-          }      
-      }
+    handleCopyStatus: function() {
+      this.$buefy.notification.open('Copied!')
+    },
   },
   created: function() {
     this.getEvent()

@@ -169,7 +169,8 @@ limitations under the License.
                 class="icon is-small"
                 style="cursor:pointer;float:right;"
                 title="Copy key:value"
-                v-on:click="copyCode(event._source[field.field])"
+                v-clipboard:copy="event._source[field.field]"
+                v-clipboard:success="handleCopyStatus"
                 ><i class="fas fa-copy"></i
               ></span>
             </span>
@@ -450,19 +451,9 @@ export default {
     toggleTheme: function() {
       this.isDarkTheme = !this.isDarkTheme
     },
-    copyCode: function (value) {
-      try {
-          const el = document.createElement('textarea');
-          el.value = value;
-          document.body.appendChild(el);
-          el.select();
-          document.execCommand('copy');
-          this.$buefy.notification.open('Copied!!')
-          document.body.removeChild(el);
-          } catch (err) {
-            alert('Oops, unable to copy');
-          }      
-      }
+    handleCopyStatus: function() {
+      this.$buefy.notification.open('Copied!')
+    },
   },
   beforeDestroy() {
     EventBus.$off('selectEvent', this.selectEvent)
