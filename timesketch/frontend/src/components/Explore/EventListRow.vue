@@ -30,7 +30,7 @@ limitations under the License.
     </tr>
 
     <!-- The event -->
-    <tr>
+    <tr @mouseover="hover = true" @mouseleave="hover = false">
       <!-- Timeline color (set the color for the timeline) -->
       <td v-bind:style="timelineColor">
         {{ event._source.timestamp | formatTimestamp | moment('utc', datetimeFormat) }}
@@ -166,6 +166,7 @@ limitations under the License.
                 >{{ label }}</span
               >
               <span
+                v-if="hover"
                 class="icon is-small"
                 style="cursor:pointer;float:right;"
                 title="Copy key:value"
@@ -263,6 +264,7 @@ export default {
       labelToAdd: null,
       selectedLabels: [],
       labelsToRemove: [],
+      hover: false,
     }
   },
   computed: {
