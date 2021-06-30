@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <table class="table is-bordered" style="width:100%;table-layout: fixed;">
+  <table class="table is-bordered" style="width:100%;table-layout: fixed;" @mouseup="handleSelectionChange">
     <tbody>
       <tr v-for="(item, key) in fullEventFiltered" :key="key">
         <td style="width:40px;">
@@ -57,6 +57,13 @@ limitations under the License.
             v-clipboard:success="handleCopyStatus"
             ><i class="fas fa-copy"></i
           ></span>
+          <text-highlight
+            @addChip="$emit('addChip', $event)"
+            :highlightComponent="TsIOCMenu"
+            :queries="Object.values(regexes)"
+            :attributeKey="key"
+            >{{ item }}</text-highlight
+          >
         </td>
       </tr>
     </tbody>
@@ -65,11 +72,22 @@ limitations under the License.
 
 <script>
 import ApiClient from '../../utils/RestApiClient'
+import TsIOCMenu from '../Common/TsIOCMenu'
+import TextHighlight from 'vue-text-highlight'
 
 export default {
+  components: { TextHighlight },
   props: ['event'],
   data() {
     return {
+      TsIOCMenu,
+      regexes: {
+        ip: /[0-9]{1,3}(\.[0-9]{1,3}\.)/g,
+        hash_md5: /[0-9a-f]{32}/gi,
+        hash_sha1: /[0-9a-f]{40}/gi,
+        hash_sha256: /[0-9a-f]{64}/gi,
+        selection: '',
+      },
       fullEvent: {},
     }
   },
@@ -109,6 +127,14 @@ export default {
     },
     handleCopyStatus: function() {
       this.$buefy.notification.open('Copied!')
+    handleSelectionChange(event) {
+      if (event.target.closest('.ioc-match') || event.target.closest('.ioc-context-menu')) {
+        return
+      }
+      const text = window.getSelection().toString()
+      this.regexes.selection = text
+      if (this.regexes.selection !== '') {
+      }
     },
   },
   created: function() {
