@@ -127,6 +127,7 @@ export default {
     },
     handleCopyStatus: function() {
       this.$buefy.notification.open('Copied!')
+    },
     handleSelectionChange(event) {
       if (event.target.closest('.ioc-match') || event.target.closest('.ioc-context-menu')) {
         return
