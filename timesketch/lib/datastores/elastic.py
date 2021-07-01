@@ -125,7 +125,6 @@ class ElasticsearchDataStore(object):
 
         if self.user and self.password:
             parameters['http_auth'] = (self.user, self.password)
-        
         if self.timeout:
             parameters['timeout'] = self.timeout
 
