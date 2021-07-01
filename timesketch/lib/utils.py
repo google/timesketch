@@ -247,103 +247,110 @@ def read_and_validate_jsonl(file_handle):
     # Fields that must be present in each entry of the JSONL file.
     mandatory_fields = ['message', 'datetime', 'timestamp_desc']
     line_number = 0
-    max_len_line_jsonl = current_app.config.get('MAX_LENGTH_LINE_JSONL')
+    max_len_line_jsonl = current_app.config.get(
+        'MAX_LENGTH_LINE_JSONL', 100000)
     tag_reducted = current_app.config.get('TAG_REDUCTED_JSONL')
+
     for line in file_handle:
         line_number += 1
         try:
             linedict = json.loads(line)
-            ld_keys = linedict.keys()
-
-            current_len = len(line)
-            if current_len > max_len_line_jsonl:
-                field_len={}
-                total_len=0
-                for key in ld_keys:
-                    if isinstance(linedict[key], str):
-                        field_len[key]=len(linedict[key])
-                        total_len+=field_len[key]
-                    elif isinstance(linedict[key], list):
-                        field_len[key]=len(str(linedict[key]))
-                        total_len+=field_len[key]
-                field_len = dict(sorted(
-                        field_len.items(),
-                        key=lambda item: item[1],
-                        reverse=True)
-                    )
-                cur_len_fields = 0
-                reduc_field = []
-                for key, key_length in field_len.items():
-                    cur_len_fields += key_length
-                    reduc_field.append(key)
-                    if max_len_line_jsonl > (total_len-cur_len_fields):
-                        break
-                current_max = int(
-                    max_len_line_jsonl - (
-                        max_len_line_jsonl / 100 * 10))
-                current_reduc = current_max - (total_len - cur_len_fields)
-                len_by_field = int(current_reduc / len(reduc_field))
-                for key in reduc_field:
-                    if isinstance(linedict[key], list):
-                        cur_len_val = 0
-                        new_value = []
-                        for val in linedict[key]:
-                            cur_len_val += len(val)
-                            if cur_len_val > len_by_field:
-                                cur_reduc = len_by_field - (
-                                    cur_len_val - len(val))
-                                new_value.append(val[0:cur_reduc])
-                                break
-                            new_value.append(val)
-                        linedict[key] = new_value
-                        if 'tag' in linedict:
-                            linedict['tag'] += tag_reducted + "_" + key
-                            continue
-                        linedict['tag'] = [tag_reducted + "_" + key]
-                        continue
-                    if len(linedict[key]) > len_by_field:
-                        linedict[key] = linedict[key][0:len_by_field]
-                        if 'tag' in linedict:
-                            linedict['tag'] += tag_reducted + "_" + key
-                            continue
-                        linedict['tag'] = [tag_reducted + "_" + key]
-                current_len = len(str(linedict))
-                if current_len > max_len_line_jsonl:
-                    logger.warning(
-                        'Line {0:d} too long ({1:d} chars which is over '
-                        'the maximum supported value of {2:d}'.format(
-                        line_number, current_len, max_len_line_jsonl))
-                    continue
-
-            if 'datetime' not in ld_keys and 'timestamp' in ld_keys:
-                epoch = int(str(linedict['timestamp'])[:10])
-                dt = datetime.datetime.fromtimestamp(epoch)
-                linedict['datetime'] = dt.isoformat()
-            if 'timestamp' not in ld_keys and 'datetime' in ld_keys:
-                try:
-                    linedict['timestamp'] = parser.parse(linedict['datetime'])
-                except parser.ParserError:
-                    logger.error(
-                        'Unable to parse timestamp, skipping line '
-                        '{0:d}'.format(lineno), exc_info=True)
-                    continue
-
-            missing_fields = [x for x in mandatory_fields if x not in linedict]
-            if missing_fields:
-                raise RuntimeError(
-                    'Missing field(s) at line {0:n}: {1:s}'.format(
-                        line_number, ','.join(missing_fields)))
-
-            if 'tag' in linedict:
-                linedict['tag'] = [
-                    x for x in _parse_tag_field(linedict['tag']) if x]
-            _scrub_special_tags(linedict)
-            yield linedict
-
         except ValueError as e:
+            # TODO: Should we stop ingesting, or continue and just log?
             raise errors.DataIngestionError(
                 'Error parsing JSON at line {0:n}: {1:s}'.format(
                     line_number, str(e)))
+
+        ld_keys = linedict.keys()
+
+        current_len = len(line)
+        if current_len > max_len_line_jsonl:
+            field_len = {}
+            total_len = 0
+            for key, value in linedict.items():
+                if isinstance(value, str):
+                    line_length = len(value)
+                elif isinstance(value, list):
+                    line_length = sum([len(str(x)) for x in value])
+                else:
+                    line_length = 0
+                field_len[key] = line_length
+                total_len += line_length
+                
+            field_len = dict(sorted(
+                    field_len.items(),
+                    key=lambda item: item[1],
+                    reverse=True)
+                )
+            cur_len_fields = 0
+            reduc_field = []
+            for key, key_length in field_len.items():
+                cur_len_fields += key_length
+                reduc_field.append(key)
+                if max_len_line_jsonl > (total_len - cur_len_fields):
+                    break
+            current_max = int(
+                max_len_line_jsonl - (
+                    max_len_line_jsonl / 100 * 10))
+            current_reduc = current_max - (total_len - cur_len_fields)
+            len_by_field = int(current_reduc / len(reduc_field))
+            for key in reduc_field:
+                if isinstance(linedict[key], list):
+                    cur_len_val = 0
+                    new_value = []
+                    for val in linedict[key]:
+                        cur_len_val += len(val)
+                        if cur_len_val > len_by_field:
+                            cur_reduc = len_by_field - (
+                                cur_len_val - len(val))
+                            new_value.append(val[0:cur_reduc])
+                            break
+                        new_value.append(val)
+                    linedict[key] = new_value
+                    if 'tag' in linedict:
+                        linedict['tag'] += tag_reducted + "_" + key
+                        continue
+                    linedict['tag'] = [tag_reducted + "_" + key]
+                    continue
+                if len(linedict[key]) > len_by_field:
+                    linedict[key] = linedict[key][0:len_by_field]
+                    if 'tag' in linedict:
+                        linedict['tag'] += tag_reducted + "_" + key
+                        continue
+                    linedict['tag'] = [tag_reducted + "_" + key]
+            current_len = len(str(linedict))
+            if current_len > max_len_line_jsonl:
+                logger.warning(
+                    'Line {0:d} too long ({1:d} chars which is over '
+                    'the maximum supported value of {2:d}'.format(
+                        line_number, current_len, max_len_line_jsonl))
+                continue
+
+        if 'datetime' not in ld_keys and 'timestamp' in ld_keys:
+            epoch = int(str(linedict['timestamp'])[:10])
+            dt = datetime.datetime.fromtimestamp(epoch)
+            linedict['datetime'] = dt.isoformat()
+        if 'timestamp' not in ld_keys and 'datetime' in ld_keys:
+            try:
+                linedict['timestamp'] = parser.parse(linedict['datetime'])
+            except parser.ParserError:
+                logger.error(
+                    'Unable to parse timestamp, skipping line '
+                    '{0:d}'.format(lineno), exc_info=True)
+                continue
+
+        missing_fields = [x for x in mandatory_fields if x not in linedict]
+        if missing_fields:
+            raise RuntimeError(
+                'Missing field(s) at line {0:n}: {1:s}'.format(
+                    line_number, ','.join(missing_fields)))
+
+        if 'tag' in linedict:
+            linedict['tag'] = [
+                x for x in _parse_tag_field(linedict['tag']) if x]
+        _scrub_special_tags(linedict)
+        yield linedict
+
 
 
 def get_validated_indices(indices, sketch):
