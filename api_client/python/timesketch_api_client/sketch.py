@@ -84,12 +84,7 @@ class Sketch(resource.BaseResource):
         """Property that returns the sketch attributes."""
         data = self.lazyload_data(refresh_cache=True)
         meta = data.get('meta', {})
-        return_dict = {}
-        for items in meta.get('attributes', []):
-            name, values, ontology = items
-            return_dict[name] = (values, ontology)
-
-        return return_dict
+        return meta.get('attributes', {})
 
     @property
     def attributes_table(self):
@@ -230,11 +225,12 @@ class Sketch(resource.BaseResource):
         return status_list[0].get('status', 'Unknown')
 
     def add_attribute_list(self, name, values, ontology='text'):
-        """Add an attribute to the sketch.
+        """Adds or modifies attributes to the sketch.
 
         Args:
             name (str): The name of the attribute.
-            values (list): A list of string values of the attribute.
+            values (list): A list of values (in their correct type according
+                to the ontology).
             ontology (str): The ontology (matches with
                 /etc/ontology.yaml), which defines how the attribute
                 is interpreted.
@@ -243,15 +239,10 @@ class Sketch(resource.BaseResource):
             ValueError: If any of the parameters are of the wrong type.
 
         Returns:
-            Boolean value whether the attribute was successfully
-            added or not.
+            A dict with the results from the operation.
         """
         if not isinstance(name, str):
             raise ValueError('Name needs to be a string.')
-
-        if not isinstance(values, (list, tuple)):
-            if any(not isinstance(x, str) for x in values):
-                raise ValueError('All values need to be a string.')
 
         if not isinstance(ontology, str):
             raise ValueError('Ontology needs to be a string.')
@@ -263,7 +254,6 @@ class Sketch(resource.BaseResource):
             'name': name,
             'values': values,
             'ontology': ontology,
-            'action': 'post',
         }
         response = self.api.session.post(resource_url, json=data)
 
@@ -271,10 +261,10 @@ class Sketch(resource.BaseResource):
         if not status:
             logger.error('Unable to add the attribute to the sketch.')
 
-        return status
+        return error.get_response_json(response, logger)
 
     def add_attribute(self, name, value, ontology='text'):
-        """Add an attribute to the sketch.
+        """Adds or modifies an attribute to the sketch.
 
         Args:
             name (str): The name of the attribute.
@@ -287,8 +277,7 @@ class Sketch(resource.BaseResource):
             ValueError: If any of the parameters are of the wrong type.
 
         Returns:
-            Boolean value whether the attribute was successfully
-            added or not.
+            A dict with the results from the operation.
         """
         if not isinstance(name, str):
             raise ValueError('Name needs to be a string.')
@@ -327,11 +316,14 @@ class Sketch(resource.BaseResource):
 
         return status
 
-    def remove_attribute(self, name):
+    def remove_attribute(self, name, ontology):
         """Remove an attribute from the sketch.
 
         Args:
             name (str): The name of the attribute.
+            ontology (str): The ontology (matches with
+                /etc/ontology.yaml), which defines how the attribute
+                is interpreted.
 
         Raises:
             ValueError: If any of the parameters are of the wrong type.
@@ -348,10 +340,9 @@ class Sketch(resource.BaseResource):
 
         data = {
             'name': name,
-            'ontology': 'text',
-            'action': 'delete',
+            'ontology': ontology,
         }
-        response = self.api.session.post(resource_url, json=data)
+        response = self.api.session.delete(resource_url, json=data)
 
         status = error.check_return_status(response, logger)
         if not status:
@@ -1522,8 +1513,14 @@ class Sketch(resource.BaseResource):
             'message': message,
             'tag': tags
         }
-        if any(x in attributes for x in form_data):
-            raise ValueError('Attributes cannot overwrite values already set.')
+
+        duplicate_attributes = [key for key in attributes if key in form_data]
+
+        if duplicate_attributes:
+            duplicates = ', '.join(duplicate_attributes)
+            raise ValueError(
+                f'Following attributes cannot overwrite values '
+                f'already set: {duplicates}')
 
         form_data['attributes'] = attributes
 
@@ -1765,3 +1762,66 @@ class Sketch(resource.BaseResource):
         _ = error.get_response_json(response, logger)
 
         return timeline_obj
+
+    def run_data_finder(
+            self, start_date, end_date, rule_names, timelines=None):
+        """Runs the data finder .
+
+        Args:
+            start_date (str): Start date as a ISO 8601 formatted string.
+            end_date (str): End date as a ISO 8601 formatted string.
+            rule_names (list): A list of strings with rule names to run
+                against the dataset in the sketch.
+            timelines (list): Optional list of timeline identifiers or
+                timeline names to limit the data search to certain
+                timelines within the sketch. Defaults to search all
+                timelines.
+
+        Returns:
+            A list of dictionaries, one dict for each rule that was run,
+            alongside it's results.
+        """
+        if timelines is None:
+            timeline_ids = [t.id for t in self.list_timelines()]
+        else:
+            timeline_ids = []
+            valid_ids = set()
+            name_to_id = {}
+            for _timeline in self.list_timelines():
+                valid_ids.add(_timeline.id)
+                name_to_id[_timeline.name.lower()] = _timeline.id
+
+            for _timeline in timelines:
+                if isinstance(_timeline, int) and _timeline in valid_ids:
+                    timeline_ids.append(_timeline)
+                    continue
+
+                if not isinstance(_timeline, str):
+                    logger.error(
+                        'Unable to use timeline, it needs to either be '
+                        'a string or an integer.')
+                    continue
+
+                if _timeline.lower() not in name_to_id:
+                    logger.error(
+                        'Unable to add timeline, name not found in active '
+                        'timelines in the sketch.')
+                    continue
+                timeline_ids.append(name_to_id[_timeline.lower()])
+
+        data = {
+            'start_date': start_date,
+            'end_date': end_date,
+            'timeline_ids': timeline_ids,
+            'rule_names': rule_names
+        }
+        resource_url = f'{self.api.api_root}/sketches/{self.id}/data/find/'
+        response = self.api.session.post(resource_url, json=data)
+
+        if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
+            error.error_message(
+                response, message='Unable to find data', error=ValueError)
+
+        response_dict = error.get_response_json(response, logger)
+
+        return response_dict.get('objects', [])

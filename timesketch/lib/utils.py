@@ -320,7 +320,13 @@ def read_and_validate_jsonl(file_handle):
                 dt = datetime.datetime.fromtimestamp(epoch)
                 linedict['datetime'] = dt.isoformat()
             if 'timestamp' not in ld_keys and 'datetime' in ld_keys:
-                linedict['timestamp'] = parser.parse(linedict['datetime'])
+                try:
+                    linedict['timestamp'] = parser.parse(linedict['datetime'])
+                except parser.ParserError:
+                    logger.error(
+                        'Unable to parse timestamp, skipping line '
+                        '{0:d}'.format(lineno), exc_info=True)
+                    continue
 
             missing_fields = [x for x in mandatory_fields if x not in linedict]
             if missing_fields:
@@ -336,8 +342,8 @@ def read_and_validate_jsonl(file_handle):
 
         except ValueError as e:
             raise errors.DataIngestionError(
-                'Error parsing JSON'
-                ' at line {0:n}: {1:s}'.format(line_number, e))
+                'Error parsing JSON at line {0:n}: {1:s}'.format(
+                    line_number, str(e)))
 
 
 def get_validated_indices(indices, sketch):

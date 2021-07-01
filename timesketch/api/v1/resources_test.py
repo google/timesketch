@@ -175,17 +175,26 @@ class ExploreResourceTest(BaseTest):
     resource_url = '/api/v1/sketches/1/explore/'
     expected_response = {
         'meta': {
-            'timeline_names': {
-                'test': 'Timeline 1'
-            },
-            'timeline_colors': {
-                'test': 'FFFFFF'
-            },
-            'es_total_count': 1,
             'es_time': 5,
+            'es_total_count': 1,
+            'es_total_count_complete': 0,
+            'timeline_colors': {'test': 'FFFFFF'},
+            'timeline_names': {'test': 'Timeline 1'},
             'count_per_index': {},
             'count_per_timeline': {},
-            'scroll_id': ''
+            'count_over_time': {'data': {}, 'interval': ''},
+            'scroll_id': '',
+            'search_node': {
+                'children': [],
+                'description': None,
+                'id': 1,
+                'labels': [],
+                'parent': None,
+                'query_dsl': None,
+                'query_filter': '{}',
+                'query_result_count': 0,
+                'query_string': 'test'
+            }
         },
         'objects': [{
             'sort': [1410593223000],
@@ -215,6 +224,10 @@ class ExploreResourceTest(BaseTest):
             self.resource_url,
             data=json.dumps(data, ensure_ascii=False),
             content_type='application/json')
+        response_json = response.json
+        # Remove flaky properties (dynamically generated)
+        del response_json['meta']['search_node']['created_at']
+        del response_json['meta']['search_node']['query_time']
         self.assertDictEqual(response.json, self.expected_response)
         self.assert200(response)
 

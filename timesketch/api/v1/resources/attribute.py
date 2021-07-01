@@ -15,6 +15,7 @@
 
 import logging
 
+from flask import jsonify
 from flask import request
 from flask import abort
 from flask_restful import Resource
@@ -23,8 +24,10 @@ from flask_login import current_user
 
 from timesketch.api.v1 import resources
 from timesketch.api.v1 import utils
+from timesketch.lib import ontology as ontology_lib
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
+from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.models import db_session
@@ -78,14 +81,14 @@ class AttributeResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_FORBIDDEN,
                 'User does not have read access to sketch')
 
-        return self.to_json(utils.get_sketch_attributes(sketch))
+        return jsonify(utils.get_sketch_attributes(sketch))
 
     @login_required
     def post(self, sketch_id):
         """Handles POST request to the resource.
 
         Returns:
-            A string with the response from running the analyzer.
+            A HTTP 200 if the attribute is successfully added or modified.
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
@@ -104,7 +107,7 @@ class AttributeResource(resources.ResourceMixin, Resource):
         if not form:
             return abort(
                 HTTP_STATUS_CODE_FORBIDDEN,
-                'Unable to add or remove an attribute from a '
+                'Unable to add or modify an attribute from a '
                 'sketch without any data submitted.')
 
         for check in ['name', 'ontology']:
@@ -113,66 +116,122 @@ class AttributeResource(resources.ResourceMixin, Resource):
                 return abort(
                     HTTP_STATUS_CODE_BAD_REQUEST, error_message)
 
-        action = form.get('action', '')
-        if action not in ('post', 'delete'):
-            return abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                'Action needs to be either "post" or "delete"')
-
         name = form.get('name')
         ontology = form.get('ontology', 'text')
 
-        if action == 'post':
-            values = form.get('values')
-            if not values:
-                return abort(
-                    HTTP_STATUS_CODE_BAD_REQUEST,
-                    'Missing values from the request.')
+        ontology_def = ontology_lib.ONTOLOGY
+        ontology_dict = ontology_def.get(ontology, {})
+        cast_as_string = ontology_dict.get('cast_as', 'str')
 
-            if not isinstance(values, (list, tuple)):
-                return abort(
-                    HTTP_STATUS_CODE_BAD_REQUEST, 'Values needs to be a list.')
+        values = form.get('values')
+        if not values:
+            return abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Missing values from the request.')
 
-            if any([not isinstance(x, str) for x in values]):
-                return abort(
-                    HTTP_STATUS_CODE_BAD_REQUEST,
-                    'All values needs to be stored as strings.')
+        if not isinstance(values, (list, tuple)):
+            return abort(
+                HTTP_STATUS_CODE_BAD_REQUEST, 'Values needs to be a list.')
 
-            for attribute in sketch.attributes:
-                if attribute.name == name:
-                    return abort(
-                        HTTP_STATUS_CODE_BAD_REQUEST,
-                        'Unable to add the attribute, it already exists.')
+        value_strings = [ontology_lib.OntologyManager.encode_value(
+            x, cast_as_string) for x in values]
 
+        if any([not isinstance(x, str) for x in value_strings]):
+            return abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'All values needs to be stored as strings.')
+
+        attribute = None
+        message = ''
+        update_attribute = False
+        for attribute in sketch.attributes:
+            if (attribute.name == name) and (attribute.ontology == ontology):
+                message = 'Attribute Updated'
+                update_attribute = True
+                break
+
+        if update_attribute:
+            _ = AttributeValue.query.filter_by(attribute=attribute).delete()
+        else:
             attribute = Attribute(
                 user=current_user,
                 sketch=sketch,
                 name=name,
                 ontology=ontology)
-            db_session.add(attribute)
-            db_session.commit()
-
-            for value in values:
-                attribute_value = AttributeValue(
-                    user=current_user,
-                    attribute=attribute,
-                    value=value)
-                attribute.values.append(attribute_value)
-                db_session.add(attribute_value)
-                db_session.commit()
 
             db_session.add(attribute)
             db_session.commit()
 
-            return HTTP_STATUS_CODE_OK
+        for value in value_strings:
+            attribute_value = AttributeValue(
+                user=current_user,
+                attribute=attribute,
+                value=value)
+            attribute.values.append(attribute_value)
+            db_session.add(attribute_value)
+            db_session.commit()
 
-        if action != 'delete':
+        db_session.add(attribute)
+        db_session.commit()
+
+        return_data = {
+            'name': name,
+            'ontology': ontology,
+            'cast_as': cast_as_string,
+        }
+        response = None
+        if message:
+            return_data['action'] = 'update'
+            response = jsonify(return_data)
+            response.status_code = HTTP_STATUS_CODE_OK
+        else:
+            return_data['action'] = 'create'
+            response = jsonify(return_data)
+            response.status_code = HTTP_STATUS_CODE_CREATED
+
+        return response
+
+    def delete(self, sketch_id):
+        """Handles delete request to the resource.
+
+        Returns:
+            A HTTP response code.
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+
+        if not sketch.has_permission(current_user, 'write'):
             return abort(
-                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to proceed.')
+                HTTP_STATUS_CODE_FORBIDDEN,
+                'User does not have write permission on the sketch.')
+
+        form = request.json
+        if not form:
+            form = request.data
+
+        if not form:
+            return abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                'Unable to remove an attribute from a '
+                'sketch without any data submitted.')
+
+        for check in ['name', 'ontology']:
+            error_message = self._validate_form_entry(form, check)
+            if error_message:
+                return abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST, error_message)
+
+        name = form.get('name')
+        ontology = form.get('ontology', 'text')
 
         for attribute in sketch.attributes:
             if attribute.name != name:
                 continue
+            if attribute.ontology != ontology:
+                continue
+
             for value in attribute.values:
                 attribute.values.remove(value)
             sketch.attributes.remove(attribute)

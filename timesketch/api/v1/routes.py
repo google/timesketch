@@ -27,6 +27,9 @@ from .resources.analysis import AnalyzerSessionActiveListResource
 from .resources.analysis import AnalyzerSessionResource
 from .resources.attribute import AttributeResource
 from .resources.explore import ExploreResource
+from .resources.explore import SearchHistoryResource
+from .resources.explore import SearchHistoryTreeResource
+from .resources.datafinder import DataFinderResource
 from .resources.datasource import DataSourceResource
 from .resources.datasource import DataSourceListResource
 from .resources.event import EventResource
@@ -84,6 +87,8 @@ API_ROUTES = [
     (AggregationInfoResource, '/aggregation/info/'),
     (AggregationResource, '/sketches/<int:sketch_id>/aggregation/<int:aggregation_id>/'),
     (ExploreResource, '/sketches/<int:sketch_id>/explore/'),
+    (SearchHistoryResource, '/sketches/<int:sketch_id>/searchhistory/'),
+    (SearchHistoryTreeResource, '/sketches/<int:sketch_id>/searchhistorytree/'),
     (EventResource, '/sketches/<int:sketch_id>/event/'),
     (EventTaggingResource, '/sketches/<int:sketch_id>/event/tagging/'),
     (EventAnnotationResource, '/sketches/<int:sketch_id>/event/annotate/'),
@@ -119,4 +124,5 @@ API_ROUTES = [
     (GraphCacheResource, '/sketches/<int:sketch_id>/graph/'),
     (DataSourceListResource, '/sketches/<int:sketch_id>/datasource/'),
     (DataSourceResource, '/sketches/<int:sketch_id>/datasource/<int:datasource_id>/'),
+    (DataFinderResource, '/sketches/<int:sketch_id>/data/find/'),
 ]

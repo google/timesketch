@@ -17,5 +17,6 @@
 # TODO: Re-enable this test. Temporarily disabled while debugging issues.
 # from . import agg_test
 from . import client_test
+from . import data_finder_test
 from . import graph_test
 from . import query_test
