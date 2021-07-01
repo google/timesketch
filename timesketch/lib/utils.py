@@ -276,7 +276,7 @@ def read_and_validate_jsonl(file_handle):
                     line_length = 0
                 field_len[key] = line_length
                 total_len += line_length
-                
+
             field_len = dict(sorted(
                     field_len.items(),
                     key=lambda item: item[1],
@@ -336,7 +336,7 @@ def read_and_validate_jsonl(file_handle):
             except parser.ParserError:
                 logger.error(
                     'Unable to parse timestamp, skipping line '
-                    '{0:d}'.format(lineno), exc_info=True)
+                    '{0:d}'.format(line_number), exc_info=True)
                 continue
 
         missing_fields = [x for x in mandatory_fields if x not in linedict]
