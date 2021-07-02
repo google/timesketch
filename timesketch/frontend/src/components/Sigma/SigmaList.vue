@@ -71,18 +71,6 @@ limitations under the License.
             ><i class="fas fa-search"></i></router-link
         ></span>
       </b-table-column>
-      <b-table-column field="tags" label="Tag" v-slot="props" sortable searchable>
-        <ul class="content-list">
-          <li style="padding:10px;border-bottom:none;cursor:pointer;">
-            <div v-for="tag in props.row.tags" v-bind:key="tag">
-              {{ tag }}
-              <span class="icon is-small">
-                <router-link :to="{ name: 'Explore', query: { q: tag } }"><i class="fas fa-search"></i></router-link
-              ></span>
-            </div>
-          </li>
-        </ul>
-      </b-table-column>
     </b-table>
   </div>
 </template>
@@ -95,6 +83,7 @@ export default {
       ascending: false,
       sortColumn: '',
       perPage: 10,
+      hover: false,
     }
   },
   methods: {

@@ -15,15 +15,43 @@ limitations under the License.
 -->
 <template>
   <div>
-    <strong>{{ rule.id }}</strong>
-    <ul class="content-list">
-      <li v-for="(value, name) in rule" v-bind:key="name" style="padding:10px;border-bottom:none;cursor:pointer;">
-        <div>
-          <b>{{ name }}</b
-          >: <code>{{ value }}</code>
-        </div>
-      </li>
-    </ul>
+    <table class="table is-fullwidth">
+      <tr>
+        <th>Key</th>
+        <th>Value</th>
+      </tr>
+      <tr v-for="(value, name) in rule" v-bind:key="name" @mouseover="hover = true" @mouseleave="hover = false">
+        <td>
+          {{ name }}
+        </td>
+        <td>
+          <div v-if="name === 'tags'">
+            <ul class="content-list">
+              <li style="padding:10px;border-bottom:none;cursor:pointer;">
+                <div v-for="tag in value" v-bind:key="tag">
+                  {{ tag }}
+                  <span class="icon is-small">
+                    <router-link :to="{ name: 'Explore', query: { q: tag } }"><i class="fas fa-search"></i></router-link
+                  ></span>
+                </div>
+              </li>
+            </ul>
+          </div>
+          <div v-else>
+            <code>{{ value }}</code>
+          </div>
+          <span
+            v-if="hover"
+            class="icon is-small"
+            style="cursor:pointer;float:right;"
+            title="Copy key:value"
+            v-clipboard:copy="value"
+            v-clipboard:success="handleCopyStatus"
+            ><i class="fas fa-copy"></i
+          ></span>
+        </td>
+      </tr>
+    </table>
   </div>
 </template>
 
@@ -34,6 +62,7 @@ export default {
   data() {
     return {
       rule: [],
+      hover: false,
     }
   },
   computed: {
@@ -45,6 +74,9 @@ export default {
     },
     meta() {
       return this.$store.state.meta
+    },
+    handleCopyStatus: function() {
+      this.$buefy.notification.open('Copied!')
     },
   },
   created() {
