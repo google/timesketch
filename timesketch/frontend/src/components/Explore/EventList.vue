@@ -22,7 +22,7 @@ limitations under the License.
           <input type="checkbox" v-on:click="toggleSelectAll" />
         </span>
       </th>
-      <th v-for="(field, index) in selectedFields" :key="index">{{ field.field | capitalize }}</th>
+      <th v-for="(field, index) in selectedFields" :key="index">{{ field.field }}</th>
       <th width="150">Timeline name</th>
     </thead>
     <ts-sketch-explore-event-list-row
