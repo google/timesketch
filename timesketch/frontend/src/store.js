@@ -68,16 +68,18 @@ export default new Vuex.Store({
   },
   actions: {
     updateSketch(context, sketchId) {
-      ApiClient.getSketch(sketchId)
+      return ApiClient.getSketch(sketchId)
         .then(response => {
           context.commit('SET_SKETCH', response.data)
           context.dispatch('updateTimelineTags', sketchId)
           context.dispatch('updateDataTypes', sketchId)
+          contest.dispatch('updateCount', sketchId)
         })
         .catch(e => {})
-
+    },
+    updateCount(context, sketchId) {
       // Count events for all timelines in the sketch
-      ApiClient.countSketchEvents(sketchId)
+      return ApiClient.countSketchEvents(sketchId)
         .then(response => {
           context.commit('SET_COUNT', response.data.meta.count)
         })

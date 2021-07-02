@@ -187,7 +187,7 @@ export default {
     'color-picker': Chrome,
     TsAnalyzerHistory,
   },
-  props: ['timeline', 'selectedTimelines', 'countPerIndex', 'countPerTimeline'], // TODO(bartoszi): do we need 'controls' and 'isCompact' ?
+  props: ['timeline', 'selectedTimelines', 'countPerIndex', 'countPerTimeline'],
   data() {
     return {
       initialColor: {},
