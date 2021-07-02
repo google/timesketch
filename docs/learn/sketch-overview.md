@@ -37,6 +37,14 @@ You can share the sketch with users, groups of users, make it available to all u
 
 **Filter** Add a filter, e.g. to show only starred events
 
+For each event, you can apply the following actions by clicking small icons in each event row:
+
+- Star the event
+- Label the event
+- Comment the event
+- Start a context query to find related events
+- Copy an event attributes
+
 ## More
 
 If you click on the "More" Button in the Sketch Overview, you get the following three options.

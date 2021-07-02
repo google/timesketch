@@ -264,8 +264,8 @@ Add Yarn repo
 ```bash
 $ curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
 $ echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+```
 
-```bash
 Install Node.js and Yarn
 
 ```bash
