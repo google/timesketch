@@ -20,35 +20,48 @@ limitations under the License.
         <th>Key</th>
         <th>Value</th>
       </tr>
-      <tr v-for="(value, name) in rule" v-bind:key="name" @mouseover="hover = true" @mouseleave="hover = false">
+      <tr v-for="(value, name) in rule" v-bind:key="name">
         <td>
           {{ name }}
         </td>
-        <td>
+        <td @mouseover="c_name = name" @mouseleave="c_name = -1">
           <div v-if="name === 'tags'">
             <ul class="content-list">
               <li style="padding:10px;border-bottom:none;cursor:pointer;">
                 <div v-for="tag in value" v-bind:key="tag">
                   {{ tag }}
-                  <span class="icon is-small">
+                  <span class="icon is-small" v-if="name == c_name">
                     <router-link :to="{ name: 'Explore', query: { q: tag } }"><i class="fas fa-search"></i></router-link
                   ></span>
                 </div>
               </li>
             </ul>
           </div>
+          <div v-else-if="name === 'es_query'">
+            <code>{{ value }}</code>
+            <span class="icon is-small" v-if="name == c_name">
+              <router-link :to="{ name: 'Explore', query: { q: value } }"><i class="fas fa-search"></i></router-link
+            ></span>
+            <i
+              class="fas fa-copy"
+              v-if="name == c_name"
+              style="cursor:pointer;float:right;"
+              title="Copy key:value"
+              v-clipboard:copy="value"
+              v-clipboard:success="handleCopyStatus"
+            ></i>
+          </div>
           <div v-else>
             <code>{{ value }}</code>
+            <i
+              class="fas fa-copy"
+              v-if="name == c_name"
+              style="cursor:pointer;float:right;"
+              title="Copy key:value"
+              v-clipboard:copy="value"
+              v-clipboard:success="handleCopyStatus"
+            ></i>
           </div>
-          <span
-            v-if="hover"
-            class="icon is-small"
-            style="cursor:pointer;float:right;"
-            title="Copy key:value"
-            v-clipboard:copy="value"
-            v-clipboard:success="handleCopyStatus"
-            ><i class="fas fa-copy"></i
-          ></span>
         </td>
       </tr>
     </table>
@@ -62,7 +75,7 @@ export default {
   data() {
     return {
       rule: [],
-      hover: false,
+      c_name: -1,
     }
   },
   computed: {

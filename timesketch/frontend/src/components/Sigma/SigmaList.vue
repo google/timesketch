@@ -30,10 +30,20 @@ limitations under the License.
       icon-prev="chevron-left"
       icon-next="chevron-right"
       default-sort="title"
+      @row-hovered="c_name = props.index"
+      @mouseover.native="c_name = props.index"
+      @mouseleave.native="c_name = -1"
     >
       <b-table-column field="id" label="Rule ID" v-slot="props" sortable searchable>
+        {{ props.index }}
         {{ props.row.id }}
-        <span class="icon is-small" style="cursor:pointer;" title="Copy value" v-on:click="copyCode(props.row.id)">
+        <span
+          class="icon is-small"
+          style="cursor:pointer;"
+          title="Copy value"
+          v-on:click="copyCode(props.row.id)"
+          v-if="props.index == c_name"
+        >
           <i class="fas fa-copy"></i
         ></span>
         <span class="icon is-small">
@@ -83,7 +93,7 @@ export default {
       ascending: false,
       sortColumn: '',
       perPage: 10,
-      hover: false,
+      c_name: -1,
     }
   },
   methods: {
@@ -95,6 +105,9 @@ export default {
       document.execCommand('copy')
       this.$buefy.notification.open('Copied')
       document.body.removeChild(el)
+    },
+    handleCopyStatus: function() {
+      this.$buefy.notification.open('Copied!')
     },
   },
   computed: {
