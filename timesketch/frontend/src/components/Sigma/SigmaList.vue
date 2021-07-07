@@ -108,15 +108,6 @@ export default {
     }
   },
   methods: {
-    copyCode: function(value) {
-      const el = document.createElement('textarea')
-      el.value = value
-      document.body.appendChild(el)
-      el.select()
-      document.execCommand('copy')
-      this.$buefy.notification.open('Copied')
-      document.body.removeChild(el)
-    },
     handleCopyStatus: function() {
       this.$buefy.notification.open('Copied!')
     },
