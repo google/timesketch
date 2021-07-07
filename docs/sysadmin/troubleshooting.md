@@ -27,7 +27,7 @@ To raise issues related to the web frontend, please provide the following:
 
 ## Docker
 
-To get all your docker instances, run:
+To list all your running Docker containers, run:
 
 ```shell
 docker container list
