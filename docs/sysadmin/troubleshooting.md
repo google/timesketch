@@ -126,3 +126,15 @@ Or run the following where ```$CONTAINER_ID``` is the ID from your ```postgres``
 ```shell
 docker logs $CONTAINER_ID
 ```
+
+## CSRF token expire
+
+You can edit ```/etc/timesketch/timesketch.conf``` and add:
+
+```
+WTF_CSRF_TIME_LIMIT = 1234 # seconds or "None" to never expire.
+```
+
+The default is 3600s.
+
+Restart the webserver and the new value is used.
