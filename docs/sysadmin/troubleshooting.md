@@ -121,7 +121,7 @@ docker logs $CONTAINER_ID
 /var/log/postgresql/
 ```
 
-Or run the following where ```$CONTAINER_ID``` is the ID from your ```postgres``` docker image
+Or run the following where `$CONTAINER_ID` is the ID from your `postgres` Docker container.
 
 ```shell
 docker logs $CONTAINER_ID
