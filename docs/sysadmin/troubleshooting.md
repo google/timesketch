@@ -89,7 +89,7 @@ If you started the webserver with docker, look in the console where you started:
 docker exec -it $CONTAINER_ID gunicorn --reload -b 0.0.0.0:5000 --log-file - --timeout 600 timesketch.wsgi:application
 ```
 
-Or run the following where ```$CONTAINER_ID``` is the ID from your ```timesketch-dev```or ```timesketch``` docker image
+Or run the following where `$CONTAINER_ID` is the ID from your `timesketch-dev` or `timesketch` Docker container.
 
 ```shell
 docker logs $CONTAINER_ID
