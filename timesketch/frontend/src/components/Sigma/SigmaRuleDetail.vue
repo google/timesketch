@@ -42,21 +42,23 @@ limitations under the License.
             <span class="icon is-small" v-if="name == c_name">
               <router-link :to="{ name: 'Explore', query: { q: value } }"><i class="fas fa-search"></i></router-link
             ></span>
-            <i
-              class="fas fa-copy"
-              v-if="name == c_name"
-              style="cursor:pointer;float:right;"
-              title="Copy key:value"
-              v-clipboard:copy="value"
-              v-clipboard:success="handleCopyStatus"
-            ></i>
+            <span class="icon is-small">
+              <i
+                class="fas fa-copy"
+                v-if="name == c_name"
+                style="cursor:pointer;"
+                title="Copy key:value"
+                v-clipboard:copy="value"
+                v-clipboard:success="handleCopyStatus"
+              ></i
+            ></span>
           </div>
           <div v-else>
             <code>{{ value }}</code>
             <i
               class="fas fa-copy"
               v-if="name == c_name"
-              style="cursor:pointer;float:right;"
+              style="cursor:pointer;"
               title="Copy key:value"
               v-clipboard:copy="value"
               v-clipboard:success="handleCopyStatus"

@@ -21,6 +21,7 @@ limitations under the License.
       :current-page.sync="currentPage"
       :per-page="perPage"
       paginated
+      hoverable
       pagination-simple
       pagination-position="bottom"
       default-sort-direction="desc"
@@ -30,51 +31,61 @@ limitations under the License.
       icon-prev="chevron-left"
       icon-next="chevron-right"
       default-sort="title"
-      @row-hovered="c_name = props.index"
-      @mouseover.native="c_name = props.index"
-      @mouseleave.native="c_name = -1"
+      key="props.row.id"
     >
       <b-table-column field="id" label="Rule ID" v-slot="props" sortable searchable>
-        {{ props.index }}
         {{ props.row.id }}
-        <span
-          class="icon is-small"
-          style="cursor:pointer;"
-          title="Copy value"
-          v-on:click="copyCode(props.row.id)"
-          v-if="props.index == c_name"
-        >
-          <i class="fas fa-copy"></i
+        <span class="icon is-small"
+          ><i
+            class="fas fa-copy"
+            style="cursor:pointer;"
+            title="Copy key:value"
+            v-clipboard:copy="props.row.id"
+            v-clipboard:success="handleCopyStatus"
+          ></i
         ></span>
         <span class="icon is-small">
           <router-link :to="{ name: 'SigmaContent', query: { ruleId: props.row.id } }"
-            ><i class="fas fa-search"></i></router-link
-        ></span>
+            ><i class="fas fa-search"></i
+          ></router-link>
+        </span>
       </b-table-column>
       <b-table-column field="title" label="Title" v-slot="props" sortable searchable>
         {{ props.row.title }}
-        <span class="icon is-small" style="cursor:pointer;" title="Copy value" v-on:click="copyCode(props.row.title)"
-          ><i class="fas fa-copy"></i
-        ></span>
+        <i
+          class="fas fa-copy"
+          style="cursor:pointer;float:right;"
+          title="Copy key:value"
+          v-clipboard:copy="props.row.title"
+          v-clipboard:success="handleCopyStatus"
+        ></i>
       </b-table-column>
       <b-table-column field="es_query" label="ES Query" v-slot="props" sortable searchable>
         {{ props.row.es_query }}
-        <span class="icon is-small">
-          <router-link :to="{ name: 'Explore', query: { q: props.row.es_query } }"
+        <span class="icon is-small"
+          ><router-link :to="{ name: 'Explore', query: { q: props.row.es_query } }"
             ><i class="fas fa-search"></i></router-link
         ></span>
-        <span class="icon is-small" style="cursor:pointer;" title="Copy value" v-on:click="copyCode(props.row.es_query)"
-          ><i class="fas fa-copy"></i
+        <span class="icon is-small">
+          <i
+            class="fas fa-copy"
+            style="cursor:pointer;float:left;"
+            title="Copy key:value"
+            v-clipboard:copy="props.row.es_query"
+            v-clipboard:success="handleCopyStatus"
+          ></i
         ></span>
       </b-table-column>
       <b-table-column field="file_name" label="File Name" v-slot="props" sortable searchable>
         {{ props.row.file_name }}
-        <span
-          class="icon is-small"
-          style="cursor:pointer;"
-          title="Copy value"
-          v-on:click="copyCode(props.row.file_name)"
-          ><i class="fas fa-copy"></i
+        <span class="icon is-small"
+          ><i
+            class="fas fa-copy"
+            style="cursor:pointer;"
+            title="Copy key:value"
+            v-clipboard:copy="props.row.file_name"
+            v-clipboard:success="handleCopyStatus"
+          ></i
         ></span>
         <span class="icon is-small">
           <router-link :to="{ name: 'Explore', query: { q: props.row.file_name } }"
