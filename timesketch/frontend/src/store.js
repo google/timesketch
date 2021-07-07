@@ -139,9 +139,7 @@ export default new Vuex.Store({
       ApiClient.getSigmaList()
       .then(response => {
         context.commit('SET_SIGMA_LIST', response.data)
-
       }).catch(e => {})
-     
     },
   },
 })
