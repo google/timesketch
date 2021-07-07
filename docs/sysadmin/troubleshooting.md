@@ -1,14 +1,14 @@
 ## Troubleshooting playbook
 
-- is it only affecting one user?
-- is it only affecting one sketch / timeline?
-- can the issue be reproduced on demo.timesketch.org?
+- Is it only affecting one user?
+- Is it only affecting one sketch / timeline?
+- Can the issue be reproduced on demo.timesketch.org?
+- Can the issue be reproduced on a different device / clear caches from browser?
 - Any output on Chrome console?
-- Try a different device / clear caches from browser
-- Look in nginx / webserver logs
-- Look in Timesketch / celery worker logs
-- Look in ES logs
-- Look in postgres logs
+- Any errors in nginx / webserver logs?
+- Any errors in Timesketch / celery worker logs
+- Any errors in ES logs?
+- Any errors in postgres logs?
 
 ## UX issues
 
