@@ -80,7 +80,7 @@ All of those are subject to change depending on your operating system.
 Good starter is to run the following grep:
 
 ```shell
-grep "http_code:500"  /var/log/nginx/access.log #to get all Error 500
+grep "http_code:500" /var/log/nginx/access.log  # to get all Error 500
 ```
 
 If you started the webserver with docker, look in the console where you started:
