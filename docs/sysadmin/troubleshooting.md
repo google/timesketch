@@ -109,7 +109,7 @@ docker exec -it $CONTAINER_ID celery -A timesketch.lib.tasks worker --loglevel=d
 /var/log/elasticsearch
 ```
 
-Or run the following where ```$CONTAINER_ID``` is the ID from your ```elasticsearch``` docker image
+Or run the following where `$CONTAINER_ID` is the ID from your `elasticsearch` Docker container.
 
 ```shell
 docker logs $CONTAINER_ID
