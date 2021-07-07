@@ -95,7 +95,7 @@ Or run the following where `$CONTAINER_ID` is the ID from your `timesketch-dev` 
 docker logs $CONTAINER_ID
 ```
 
-### Timesketch / celery worker
+### Timesketch / Celery worker
 
 See your console output if you started the workers with:
 
