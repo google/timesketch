@@ -14,7 +14,7 @@
 
 To troubleshoot web frontend issues, the first look should go to the Chrome developer console and look for any output / errors.
 
-To raise issues related to UX, please provide the following:
+To raise issues related to the web frontend, please provide the following:
 
 - Copy out the full error message(s) from Chrome Console
 - The URL (without your local IP or Domain)
