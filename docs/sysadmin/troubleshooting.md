@@ -38,8 +38,6 @@ Which will show something like
 ```shell
 b756f334d281   us-docker.pkg.dev/osdfir-registry/timesketch/dev:latest        "/docker-entrypoint.…"   8 days ago   Up 2 days   127.0.0.1:5000->5000/tcp             timesketch-dev
 7768635b4798   us-docker.pkg.dev/osdfir-registry/timesketch/notebook:latest   "jupyter notebook"       8 days ago   Up 2 days   127.0.0.1:8844->8844/tcp, 8899/tcp   notebook
-6d2e7da9453c   justwatch/elasticsearch_exporter:1.1.0                         "/bin/elasticsearch_…"   8 days ago   Up 2 days   9114/tcp                             es-metrics-exporter
-78443764330b   grafana/grafana:latest                                         "/run.sh"                8 days ago   Up 2 days   127.0.0.1:3000->3000/tcp             grafana
 51a576407ad2   docker.elastic.co/elasticsearch/elasticsearch-oss:7.10.2       "/tini -- /usr/local…"   8 days ago   Up 2 days   9200/tcp, 9300/tcp                   elasticsearch
 bf85b40ed003   redis:6.0.10-alpine                                            "docker-entrypoint.s…"   8 days ago   Up 2 days   6379/tcp                             redis
 f78f8b1f13d1   postgres:13.1-alpine                                           "docker-entrypoint.s…"   8 days ago   Up 2 days   5432/tcp                             postgres
