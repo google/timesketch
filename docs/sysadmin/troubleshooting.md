@@ -4,7 +4,7 @@
 - Is it only affecting one sketch / timeline?
 - Can the issue be reproduced on demo.timesketch.org?
 - Can the issue be reproduced on a different device / clear caches from browser?
-- Any output on Chrome console?
+- Any errors in Chrome console for any javascript errors or failed HTTP requests
 - Any errors in nginx / webserver logs?
 - Any errors in Timesketch / celery worker logs
 - Any errors in ES logs?
