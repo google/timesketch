@@ -86,7 +86,7 @@ grep "http_code:500"  /var/log/nginx/access.log #to get all Error 500
 If you started the webserver with docker, look in the console where you started:
 
 ```shell
-docker exec -it $CONTAINER_ID gunicorn --reload -b 0.0.0.0:5000 --log-file - --timeout 600 timesketch.wsgi:application
+docker exec -it $CONTAINER_ID gunicorn --reload -b 0.0.0.0:5000 --log-file --timeout 600 timesketch.wsgi:application
 ```
 
 Or run the following where `$CONTAINER_ID` is the ID from your `timesketch-dev` or `timesketch` Docker container.
