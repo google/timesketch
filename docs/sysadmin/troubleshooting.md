@@ -73,7 +73,7 @@ Should give the following error message:
 
 All of those are subject to change depending on your operating system.
 
-### nginx / webserver
+### Nginx / webserver
 
 ```shell
 /var/log/nginx/access
