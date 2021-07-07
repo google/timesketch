@@ -69,7 +69,7 @@ Should give the following error message:
 2020-08-19 14:40:48,912 [ERROR] (MainProcess) PID:568 <pinfo_tool> Format of storage file: $FILENAME not supported
 ```
 
-## logs
+## Logs
 
 All of those are subject to change depending on your operating system.
 
