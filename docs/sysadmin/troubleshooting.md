@@ -55,7 +55,7 @@ See [docs/learn/server-admin](docs/learn/server-admin#troubleshooting-database-s
 - Which plaso version was used to create the plaso file?
 - Is the issue for both web upload and `import_client`?
 
-Try to run the following in the Docker container after the file was uploaded (but not successfull imported):
+Try to run the following in the Docker container after the file was uploaded (but not successfully imported):
 
 ```shell
 pinfo.py $FILENAME
