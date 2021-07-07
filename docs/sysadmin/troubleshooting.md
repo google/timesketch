@@ -105,7 +105,7 @@ See your console output if you started the workers with:
 docker exec -it $CONTAINER_ID celery -A timesketch.lib.tasks worker --loglevel=debug
 ```
 
-### ElasticSearch
+### Elasticsearch
 
 ```shell
 /var/log/elasticsearch
