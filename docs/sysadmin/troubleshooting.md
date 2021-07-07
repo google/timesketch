@@ -12,7 +12,7 @@
 
 ## UX issues
 
-To troubleshoot UX issues, the first look should go to the Chrome developer console and look for any output / errors.
+To troubleshoot web frontend issues, the first look should go to the Chrome developer console and look for any output / errors.
 
 To raise issues related to UX, please provide the following:
 
