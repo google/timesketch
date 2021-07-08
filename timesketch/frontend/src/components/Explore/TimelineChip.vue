@@ -63,7 +63,7 @@ limitations under the License.
             </div>
           </div>
         </div>
-        <button class="modal-close is-large" aria-label="close" v-on:click="showInfoModal = !showInfoModal"></button>
+        <button class="modal-close is-large" aria-label="close" @click="showInfoModal = !showInfoModal"></button>
       </b-modal>
 
       <!-- Timeline rename modal -->
@@ -76,7 +76,7 @@ limitations under the License.
           </header>
           <div class="card-content">
             <div class="content">
-              <form v-on:submit.prevent> <!-- Without prevent(), the page will refresh -->
+              <form @submit.prevent> <!-- Without prevent(), the page will refresh -->
                 <div class="field">
                   <div class="control">
                     <input v-model="newTimelineName" class="input" type="text" required autofocus />
@@ -92,7 +92,7 @@ limitations under the License.
           </div>
         </div>
       </div>
-      <button class="modal-close is-large" aria-label="close" v-on:click="showEditModal = !showEditModal"></button>
+      <button class="modal-close is-large" aria-label="close" @click="showEditModal = !showEditModal"></button>
     </b-modal>
 
     <!-- Analyzer logs modal -->
@@ -108,7 +108,7 @@ limitations under the License.
             </div>
           </div>
         </div>
-        <button class="modal-close is-large" aria-label="close" v-on:click="showAnalysisHistory = !showAnalysisHistory"></button>
+        <button class="modal-close is-large" aria-label="close" @click="showAnalysisHistory = !showAnalysisHistory"></button>
       </b-modal>
 
     </span>
@@ -116,10 +116,23 @@ limitations under the License.
     <span
       class="tag is-medium has-text-left"
       style="cursor: pointer; margin-right: 7px;margin-bottom:7px;padding-right: 6px;"
-      v-bind:style="timelineColor(timeline)"
-      v-on:click="toggleTimeline(timeline)"
+      :style="timelineColor(timeline)"
+      @click="toggleTimeline(timeline)"
     >
       {{ timeline.name }}
+      <!-- Show a warning icon, if there were import errors. -->
+      <span
+        v-if="datasourceErrors.length"
+        class="b-tooltips"
+        style="padding-right: 6px; padding-left: 12px;"
+        @click.stop
+      >
+        <b-tooltip :label="failedImportsMessage" :type="isDarkTheme ? 'is-dark' : 'is-light'">
+          <span class="icon is-small" style="color:orange;">
+            <i class="fas fa-exclamation-triangle" @click="showInfoModal = !showInfoModal"></i>
+          </span>
+        </b-tooltip>
+      </span>
       <span
         class="tag is-small"
         style="margin-left:10px;margin-right:-7px;background-color: rgba(255,255,255,0.5);min-width:50px;"
@@ -129,30 +142,46 @@ limitations under the License.
         }}
         </span>
       </span>
-      <span v-if="meta.permissions.write" v-on:click.stop>
+
+      <span v-if="meta.permissions.write" @click.stop>
+        <b-dropdown append-to-body class="custom-dropdown">
+          <template #trigger>
+            <a role="button" ref="colorPicker"></a>
+          </template>
+          <b-dropdown-item aria-role="menu" style="padding:0;">
+            <color-picker v-model="initialColor" @input="updateColor"></color-picker>
+          </b-dropdown-item>
+        </b-dropdown>
+
         <b-dropdown append-to-body>
           <template #trigger>
             <a role="button">
               <i class="fas fa-ellipsis-v" style="padding-left: 14px;padding-right: 6px;"></i>
             </a>
           </template>
-          <b-dropdown-item aria-role="listitem" v-on:click="showInfoModal = !showInfoModal">
+          <b-dropdown-item aria-role="listitem" @click="showInfoModal = !showInfoModal">
             <span class="icon is-small"><i class="fas fa-info-circle"></i></span>
             <span>Info</span>
           </b-dropdown-item>
-          <b-dropdown-item aria-role="listitem" v-if="timelineStatus === 'ready'" v-on:click="showEditModal = !showEditModal">
+          <b-dropdown-item aria-role="listitem" v-if="timelineStatus === 'ready'" @click="showEditModal = !showEditModal">
             <span class="icon is-small">
             <i class="fas fa-edit"></i>
             </span>
             <span>Rename</span>
           </b-dropdown-item>
-          <b-dropdown-item aria-role="listitem" v-if="timelineStatus === 'ready'" v-on:click="showAnalysisHistory = !showAnalysisHistory">
+          <b-dropdown-item aria-role="listitem" v-if="timelineStatus === 'ready'" @click="test()">
+            <span class="icon is-small">
+            <i class="fas fa-palette"></i>
+            </span>
+            <span>Change color</span>
+          </b-dropdown-item>
+          <b-dropdown-item aria-role="listitem" v-if="timelineStatus === 'ready'" @click="showAnalysisHistory = !showAnalysisHistory">
             <span class="icon is-small">
             <i class="fas fa-history"></i>
             </span>
             <span>Analyzer logs</span>
           </b-dropdown-item>
-          <b-dropdown-item aria-role="listitem" v-on:click="remove()" class="is-danger">
+          <b-dropdown-item aria-role="listitem" @click="remove()" class="is-danger">
             <span class="icon is-small">
             <i class="fas fa-trash"></i>
             </span>
@@ -196,11 +225,9 @@ export default {
       colorPickerActive: false,
       showInfoModal: false,
       showEditModal: false,
-      analysisSessionId: false,
       showAnalysisHistory: false,
       timelineStatus: null,
       autoRefresh: false,
-      isOpen: false,
       isDarkTheme: false,
     }
   },
@@ -211,34 +238,41 @@ export default {
     timelineColorStyle() {
       // TODO(bartoszi): Confirm if the below code is required
       //
-      // let backgroundColor = this.newColor || this.timeline.color
-      // if (!backgroundColor.startsWith('#')) {
-      //   backgroundColor = '#' + backgroundColor
-      // }
-      // if (this.isDarkTheme) {
-      //   return {
-      //     'background-color': backgroundColor,
-      //     filter: 'grayscale(25%)',
-      //     color: '#333',
-      //   }
-      // }
-      // return {
-      //   'background-color': backgroundColor,
-      // }
-
-      let backgroundColor = this.timeline.color
+      let backgroundColor = this.newColor || this.timeline.color
       if (!backgroundColor.startsWith('#')) {
         backgroundColor = '#' + backgroundColor
+      }
+      if (this.isDarkTheme) {
+        return {
+          'background-color': backgroundColor,
+          filter: 'grayscale(25%)',
+          color: '#333',
+        }
       }
       return {
         'background-color': backgroundColor,
       }
+
+      // let backgroundColor = this.timeline.color
+      // if (!backgroundColor.startsWith('#')) {
+      //   backgroundColor = '#' + backgroundColor
+      // }
+      // return {
+      //   'background-color': backgroundColor,
+      // }
     },
     datasourceErrors() {
       return this.timeline.datasources.filter(datasource => datasource.error_message)
     },
+    failedImportsMessage() {
+      return this.datasourceErrors.length + " failed imports"
+    }
   },
   methods: {
+    test() {
+      //console.log(this.$refs.colorPicker)
+      this.$refs.colorPicker.click()
+    },
     rename() {
       this.showEditModal = false
       this.$emit('save', this.timeline, this.newTimelineName)
@@ -256,31 +290,19 @@ export default {
       Vue.set(this.timeline, 'color', this.newColor)
       this.$emit('save', this.timeline)
     }, 300),
-    fetchData() {
-      ApiClient.getSketchTimeline(this.sketch.id, this.timeline.id)
-        .then(response => {
-          this.timelineStatus = response.data.objects[0].status[0].status
-          if (this.timelineStatus !== 'ready') {
-            this.autoRefresh = true
-          }
-          this.$store.dispatch('updateSketch', this.$store.state.sketch.id)
-        })
-        .catch(e => {})
-    },
-    openFilteredTimeline: function(index, dataTypes) {
-      if (dataTypes.length === 0) {
-        return false
-      }
-      let searchQuery = ''
-      for (let i = 0; i < dataTypes.length; i++) {
-        const dt = dataTypes[i]
-        if (i !== 0) {
-          searchQuery += ' OR '
-        }
-        searchQuery += 'data_type:"' + dt + '"'
-      }
-      this.$router.push({ name: 'Explore', query: { index: index, q: searchQuery } })
-    },
+    // Don't need the below function for now, as we only accept Active Timelines
+    //
+    // fetchData() {
+    //   ApiClient.getSketchTimeline(this.sketch.id, this.timeline.id)
+    //     .then(response => {
+    //       this.timelineStatus = response.data.objects[0].status[0].status
+    //       if (this.timelineStatus !== 'ready') {
+    //         this.autoRefresh = true
+    //       }
+    //       this.$store.dispatch('updateSketch', this.$store.state.sketch.id)
+    //     })
+    //     .catch(e => {})
+    // },
     toggleTheme: function() {
       this.isDarkTheme = !this.isDarkTheme
     },
@@ -378,40 +400,49 @@ export default {
 
 <!-- CSS scoped to this component only -->
 <style scoped lang="scss">
-.list-item {
-  display: inline-block;
-  margin-right: 10px;
-}
-.list-enter-active,
-.list-leave-active {
-  transition: all 0.5s;
-}
-.list-enter,
-.list-leave-to {
-  opacity: 0;
-  transform: translateY(30px);
-}
-.vc-sketch {
-  box-shadow: none;
-}
-.blink {
-  animation: blinker 1s linear infinite;
-}
-.checkbox-margin {
-  margin-left: 10px;
-  margin-right: 6px;
-}
-.small-top-margin {
-  margin-top: 4px;
-}
-
-@keyframes blinker {
-  50% {
-    opacity: 40%;
+  .icon {
+    padding-right: 8px;
   }
-}
+  .custom-dropdown {
+    ::v-deep .dropdown-content {
+      padding: 0;
+    }
+  }
 
-.table th {
-  color: var(--default-font-color);
-}
+// .list-item {
+//   display: inline-block;
+//   margin-right: 10px;
+// }
+// .list-enter-active,
+// .list-leave-active {
+//   transition: all 0.5s;
+// }
+// .list-enter,
+// .list-leave-to {
+//   opacity: 0;
+//   transform: translateY(30px);
+// }
+// .vc-sketch {
+//   box-shadow: none;
+// }
+// .blink {
+//   animation: blinker 1s linear infinite;
+// }
+// .checkbox-margin {
+//   margin-left: 10px;
+//   margin-right: 6px;
+// }
+// .small-top-margin {
+//   margin-top: 4px;
+// }
+
+// @keyframes blinker {
+//   50% {
+//     opacity: 40%;
+//   }
+// }
+
+// .table th {
+//   color: var(--default-font-color);
+// }
 </style>
