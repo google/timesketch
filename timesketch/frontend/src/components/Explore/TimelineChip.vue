@@ -96,19 +96,19 @@ limitations under the License.
     </b-modal>
 
     <!-- Analyzer logs modal -->
-      <b-modal :active.sync="showAnalysisHistory" :width="1024" scroll="keep">
+      <b-modal :active.sync="showAnalyzerModal" :width="1024" scroll="keep">
         <div class="modal-background"></div>
         <div class="modal-content">
           <div class="card">
             <header class="card-header">
               <p class="card-header-title">Analyzer logs for {{ timeline.name }}</p>
             </header>
-            <div class="card-content" v-if="showAnalysisHistory">
-              <ts-analyzer-history :timeline="timeline" @closeHistory="showAnalysisHistory = false"></ts-analyzer-history>
+            <div class="card-content" v-if="showAnalyzerModal">
+              <ts-analyzer-history :timeline="timeline" @closeHistory="showAnalyzerModal = false"></ts-analyzer-history>
             </div>
           </div>
         </div>
-        <button class="modal-close is-large" aria-label="close" @click="showAnalysisHistory = !showAnalysisHistory"></button>
+        <button class="modal-close is-large" aria-label="close" @click="showAnalyzerModal = !showAnalyzerModal"></button>
       </b-modal>
 
     </span>
@@ -137,22 +137,24 @@ limitations under the License.
         class="tag is-small"
         style="margin-left:10px;margin-right:-7px;background-color: rgba(255,255,255,0.5);min-width:50px;"
       >
-        <span v-if="timelineIsEnabled(timeline) && countPerTimeline">{{
-          getCount(timeline) | compactNumber
+        <span v-if="isSelected && !isEmptyState">{{
+          eventsCount | compactNumber
         }}
         </span>
       </span>
 
       <span v-if="meta.permissions.write" @click.stop>
-        <b-dropdown append-to-body class="custom-dropdown">
+        <!-- The color change element -->
+        <b-dropdown class="color-picker-dropdown" append-to-body >
           <template #trigger>
             <a role="button" ref="colorPicker"></a>
           </template>
-          <b-dropdown-item aria-role="menu" style="padding:0;">
+          <b-dropdown-item aria-role="menu" paddingless>
             <color-picker v-model="initialColor" @input="updateColor"></color-picker>
           </b-dropdown-item>
         </b-dropdown>
 
+        <!-- 3-dots dropdown menu -->
         <b-dropdown append-to-body>
           <template #trigger>
             <a role="button">
@@ -169,13 +171,13 @@ limitations under the License.
             </span>
             <span>Rename</span>
           </b-dropdown-item>
-          <b-dropdown-item aria-role="listitem" v-if="timelineStatus === 'ready'" @click="test()">
+          <b-dropdown-item aria-role="listitem" v-if="timelineStatus === 'ready'" @click="showColorPicker()">
             <span class="icon is-small">
             <i class="fas fa-palette"></i>
             </span>
             <span>Change color</span>
           </b-dropdown-item>
-          <b-dropdown-item aria-role="listitem" v-if="timelineStatus === 'ready'" @click="showAnalysisHistory = !showAnalysisHistory">
+          <b-dropdown-item aria-role="listitem" v-if="timelineStatus === 'ready'" @click="showAnalyzerModal = !showAnalyzerModal">
             <span class="icon is-small">
             <i class="fas fa-history"></i>
             </span>
@@ -191,21 +193,12 @@ limitations under the License.
       </span>
     </span>
   </div>
-  <!-- <div class="tag is-medium has-text-left" style="background-color: #f5f5f5; padding-left: 5px;">
-    <div
-      style="width: 20px; height: 20px; border-radius: 6px; margin-right: 10px;"
-      v-bind:style="timelineColorStyle"
-    ></div>
-    <div style="font-weight: normal;">{{ timeline.name }}</div>
-  </div> -->
 </template>
 
 <script>
 import Vue from 'vue'
 import { Chrome } from 'vue-color'
 import _ from 'lodash'
-
-import ApiClient from '../../utils/RestApiClient'
 
 import TsAnalyzerHistory from '../Analyze/AnalyzerHistory'
 
@@ -216,18 +209,17 @@ export default {
     'color-picker': Chrome,
     TsAnalyzerHistory,
   },
-  props: ['timeline', 'selectedTimelines', 'countPerIndex', 'countPerTimeline'],
+  props: ['timeline', 'eventsCount', 'isSelected', 'isEmptyState'],
   data() {
     return {
       initialColor: {},
       newColor: '',
       newTimelineName: '',
+      timelineStatus: '',
       colorPickerActive: false,
       showInfoModal: false,
       showEditModal: false,
-      showAnalysisHistory: false,
-      timelineStatus: null,
-      autoRefresh: false,
+      showAnalyzerModal: false,
       isDarkTheme: false,
     }
   },
@@ -235,42 +227,15 @@ export default {
     meta() {
       return this.$store.state.meta
     },
-    timelineColorStyle() {
-      // TODO(bartoszi): Confirm if the below code is required
-      //
-      let backgroundColor = this.newColor || this.timeline.color
-      if (!backgroundColor.startsWith('#')) {
-        backgroundColor = '#' + backgroundColor
-      }
-      if (this.isDarkTheme) {
-        return {
-          'background-color': backgroundColor,
-          filter: 'grayscale(25%)',
-          color: '#333',
-        }
-      }
-      return {
-        'background-color': backgroundColor,
-      }
-
-      // let backgroundColor = this.timeline.color
-      // if (!backgroundColor.startsWith('#')) {
-      //   backgroundColor = '#' + backgroundColor
-      // }
-      // return {
-      //   'background-color': backgroundColor,
-      // }
-    },
     datasourceErrors() {
       return this.timeline.datasources.filter(datasource => datasource.error_message)
     },
     failedImportsMessage() {
       return this.datasourceErrors.length + " failed imports"
-    }
+    },
   },
   methods: {
-    test() {
-      //console.log(this.$refs.colorPicker)
+    showColorPicker() {
       this.$refs.colorPicker.click()
     },
     rename() {
@@ -290,19 +255,6 @@ export default {
       Vue.set(this.timeline, 'color', this.newColor)
       this.$emit('save', this.timeline)
     }, 300),
-    // Don't need the below function for now, as we only accept Active Timelines
-    //
-    // fetchData() {
-    //   ApiClient.getSketchTimeline(this.sketch.id, this.timeline.id)
-    //     .then(response => {
-    //       this.timelineStatus = response.data.objects[0].status[0].status
-    //       if (this.timelineStatus !== 'ready') {
-    //         this.autoRefresh = true
-    //       }
-    //       this.$store.dispatch('updateSketch', this.$store.state.sketch.id)
-    //     })
-    //     .catch(e => {})
-    // },
     toggleTheme: function() {
       this.isDarkTheme = !this.isDarkTheme
     },
@@ -315,7 +267,7 @@ export default {
         backgroundColor = '#' + backgroundColor
       }
       // Grey out the index if it is not selected.
-      if (!this.selectedTimelines.includes(timeline)) {
+      if (!this.isSelected) {
         backgroundColor = '#d2d2d2'
         textDecoration = 'line-through'
         opacity = '50%'
@@ -339,20 +291,9 @@ export default {
     toggleTimeline: function(timeline) {
       this.$emit('toggle', timeline)
     },
-    timelineIsEnabled: function(timeline) {
-      return this.selectedTimelines.includes(timeline)
-    },
-    getCount: function(timeline) {
-      let count = this.countPerTimeline[timeline.id]
-      // Support for old style indices
-      if (count === undefined) {
-        count = this.countPerIndex[timeline.searchindex.index_name]
-      }
-      return count
-    },
   },
   mounted() {
-    // Hide color picket when clicked outside.
+    // Hide color picker when clicked outside.
     let self = this
     window.addEventListener('click', function(e) {
       if (!self.$el.contains(e.target)) {
@@ -368,32 +309,11 @@ export default {
       hex: this.timeline.color,
     }
     this.timelineStatus = this.timeline.status[0].status
-    if (this.timelineStatus !== 'ready') {
-      this.autoRefresh = true
-    }
     this.newTimelineName = this.timeline.name
   },
   beforeDestroy() {
     clearInterval(this.t)
     this.t = false
-  },
-  watch: {
-    autoRefresh(val) {
-      if (val && !this.t) {
-        this.t = setInterval(
-          function() {
-            this.fetchData()
-            if (this.timelineStatus === 'ready') {
-              this.autoRefresh = false
-            }
-          }.bind(this),
-          5000
-        )
-      } else {
-        clearInterval(this.t)
-        this.t = false
-      }
-    },
   },
 }
 </script>
@@ -403,46 +323,11 @@ export default {
   .icon {
     padding-right: 8px;
   }
-  .custom-dropdown {
-    ::v-deep .dropdown-content {
-      padding: 0;
-    }
+</style>
+
+<!-- It was tricky to remove padding from the Color Picker's dropdown -->
+<style lang="scss">
+  .color-picker-dropdown .dropdown-content {
+    padding: 0px !important;
   }
-
-// .list-item {
-//   display: inline-block;
-//   margin-right: 10px;
-// }
-// .list-enter-active,
-// .list-leave-active {
-//   transition: all 0.5s;
-// }
-// .list-enter,
-// .list-leave-to {
-//   opacity: 0;
-//   transform: translateY(30px);
-// }
-// .vc-sketch {
-//   box-shadow: none;
-// }
-// .blink {
-//   animation: blinker 1s linear infinite;
-// }
-// .checkbox-margin {
-//   margin-left: 10px;
-//   margin-right: 6px;
-// }
-// .small-top-margin {
-//   margin-top: 4px;
-// }
-
-// @keyframes blinker {
-//   50% {
-//     opacity: 40%;
-//   }
-// }
-
-// .table th {
-//   color: var(--default-font-color);
-// }
 </style>

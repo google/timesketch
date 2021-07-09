@@ -1,5 +1,5 @@
 <!--
-Copyright 2019 Google Inc. All rights reserved.
+Copyright 2021 Google Inc. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -28,9 +28,9 @@ limitations under the License.
       v-for="timeline in activeTimelines"
       :key="timeline.id + timeline.name"
       :timeline="timeline"
-      :selectedTimelines="selectedTimelines"
-      :countPerIndex="countPerIndex"
-      :countPerTimeline="countPerTimeline"
+      :is-selected="isSelected(timeline)"
+      :is-empty-state="isEmptyState"
+      :events-count="getCount(timeline)"
       @remove="remove"
       @save="save"
       @toggle="toggleTimeline"
@@ -53,7 +53,7 @@ import ApiClient from '../../utils/RestApiClient'
 
 export default {
   components: { TsTimelineChip },
-  props: ['currentQueryFilter', 'countPerIndex', 'countPerTimeline'], // 'activeTimelines',
+  props: ['currentQueryFilter', 'countPerIndex', 'countPerTimeline'],
   computed: {
     sketch() {
       return this.$store.state.sketch
@@ -61,16 +61,32 @@ export default {
     activeTimelines() {
       return this.sketch.active_timelines
     },
+    isEmptyState() {
+      return this.countPerTimeline === undefined
+    }
   },
   data() {
     return {
       isDarkTheme: false,
       isLoading: false,
       selectedTimelines: [],
-      timelineCount: {},
     }
   },
   methods: {
+    isSelected(timeline) {
+      return this.selectedTimelines.includes(timeline)
+    },
+    getCount(timeline) {
+      let count = '';
+      if (this.countPerTimeline) {
+        count = this.countPerTimeline[timeline.id]
+      }
+      // Support for old style indices
+      if (!count && this.countPerIndex) {
+        count = this.countPerIndex[timeline.searchindex.index_name]
+      }
+      return count
+    },
     remove(timeline) {
       this.isLoading = true
       ApiClient.deleteSketchTimeline(this.sketch.id, timeline.id)
@@ -104,15 +120,15 @@ export default {
           this.isLoading = false
         })
     },
-    enableAllTimelines: function() {
+    enableAllTimelines() {
       this.selectedTimelines = this.activeTimelines
       this.$emit('updateSelectedTimelines', this.selectedTimelines)
     },
-    disableAllTimelines: function() {
+    disableAllTimelines() {
       this.selectedTimelines = []
       this.$emit('updateSelectedTimelines', this.selectedTimelines)
     },
-    toggleTimeline: function(timeline) {
+    toggleTimeline(timeline) {
       let newArray = this.selectedTimelines.slice()
       let timelineIdx = newArray.indexOf(timeline)
       if (timelineIdx === -1) {
@@ -123,10 +139,10 @@ export default {
       this.selectedTimelines = newArray
       this.$emit('updateSelectedTimelines', this.selectedTimelines)
     },
-    toggleTheme: function() {
+    toggleTheme() {
       this.isDarkTheme = !this.isDarkTheme
     },
-    syncSelectedTimelines: function() {
+    syncSelectedTimelines() {
       if (this.currentQueryFilter.indices.includes('_all')) {
         this.selectedTimelines = this.activeTimelines
        return
@@ -148,7 +164,7 @@ export default {
       this.selectedTimelines = newArray
     },
   },
-  created: function() {
+  created() {
     EventBus.$on('isDarkTheme', this.toggleTheme)
     EventBus.$on('clearSearch', this.enableAllTimelines)
 

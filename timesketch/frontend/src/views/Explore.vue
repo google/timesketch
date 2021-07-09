@@ -1,5 +1,5 @@
 <!--
-Copyright 2019 Google Inc. All rights reserved.
+Copyright 2021 Google Inc. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -249,7 +249,6 @@ limitations under the License.
             <ts-explore-timeline-picker
               v-if="sketch.active_timelines"
               @updateSelectedTimelines="updateSelectedTimelines($event)"
-              :controls="meta.permissions.write"
               :current-query-filter="currentQueryFilter"
               :count-per-index="eventList.meta.count_per_index"
               :count-per-timeline="eventList.meta.count_per_timeline"
