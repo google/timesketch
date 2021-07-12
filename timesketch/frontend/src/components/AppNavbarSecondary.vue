@@ -55,12 +55,6 @@ limitations under the License.
                   <span>Analyze</span>
                 </router-link>
               </li>
-              <li v-bind:class="{ 'is-active': currentPage === 'timelines' }">
-                <router-link :to="{ name: 'Timelines' }">
-                  <span class="icon is-small"><i class="fas fa-stream" aria-hidden="true"></i></span>
-                  <span>Timelines</span>
-                </router-link>
-              </li>
               <li v-bind:class="{ 'is-active': currentPage === 'stories' }">
                 <router-link :to="{ name: 'StoryOverview' }">
                   <span class="icon is-small"><i class="fas fa-book" aria-hidden="true"></i></span>
