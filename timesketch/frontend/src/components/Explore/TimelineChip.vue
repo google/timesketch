@@ -114,29 +114,24 @@ limitations under the License.
     </span>
 
     <span
-      class="tag is-medium has-text-left"
-      style="cursor: pointer; margin-right: 7px;margin-bottom:7px;padding-right: 6px;"
-      :style="timelineColor(timeline)"
+      class="tag is-medium has-text-left timeline-chip"
+      :style="getTimelineStyle(timeline)"
       @click="toggleTimeline(timeline)"
     >
       {{ timeline.name }}
       <!-- Show a warning icon, if there were import errors. -->
       <span
         v-if="datasourceErrors.length"
-        class="b-tooltips"
-        style="padding-right: 6px; padding-left: 12px;"
+        class="b-tooltips import-error"
         @click.stop
       >
-        <b-tooltip :label="failedImportsMessage" :type="isDarkTheme ? 'is-dark' : 'is-light'">
+        <b-tooltip :label="datasourceErrors.length + ' failed imports'" :type="isDarkTheme ? 'is-dark' : 'is-light'">
           <span class="icon is-small" style="color:orange;">
             <i class="fas fa-exclamation-triangle" @click="showInfoModal = !showInfoModal"></i>
           </span>
         </b-tooltip>
       </span>
-      <span
-        class="tag is-small"
-        style="margin-left:10px;margin-right:-7px;background-color: rgba(255,255,255,0.5);min-width:50px;"
-      >
+      <span class="tag is-small timeline-count">
         <span v-if="isSelected && !isEmptyState">{{
           eventsCount | compactNumber
         }}
@@ -230,9 +225,6 @@ export default {
     datasourceErrors() {
       return this.timeline.datasources.filter(datasource => datasource.error_message)
     },
-    failedImportsMessage() {
-      return this.datasourceErrors.length + " failed imports"
-    },
   },
   methods: {
     showColorPicker() {
@@ -258,7 +250,7 @@ export default {
     toggleTheme: function() {
       this.isDarkTheme = !this.isDarkTheme
     },
-    timelineColor(timeline) {
+    getTimelineStyle(timeline) {
       this.isDarkTheme = localStorage.theme === 'dark'
       let backgroundColor = timeline.color
       let textDecoration = 'none'
@@ -294,7 +286,7 @@ export default {
   },
   mounted() {
     // Hide color picker when clicked outside.
-    let self = this
+    let self = this // it might look redundant, but removing it breaks things
     window.addEventListener('click', function(e) {
       if (!self.$el.contains(e.target)) {
         self.colorPickerActive = false
@@ -322,6 +314,22 @@ export default {
 <style scoped lang="scss">
   .icon {
     padding-right: 8px;
+  }
+  .timeline-chip {
+    cursor: pointer;
+    margin-right: 7px;
+    margin-bottom:7px;
+    padding-right: 6px;
+  }
+  .timeline-count {
+    margin-left:10px;
+    margin-right:-7px;
+    background-color: rgba(255,255,255,0.5);
+    min-width:50px;
+  }
+  .import-error {
+    padding-right: 6px;
+    padding-left: 12px;
   }
 </style>
 
