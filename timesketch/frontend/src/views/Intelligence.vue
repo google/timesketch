@@ -27,7 +27,7 @@ limitations under the License.
         v-if="localIntelligence.data.length > 0"
         :data="localIntelligence.data"
         :section="localIntelligenceMeta"
-        :deleteCallback="localIntelligenceDeleteCallback"
+        @table-delete="deleteIoc"
       >
       </ts-dynamic-table>
       <div v-else class="card-content">
@@ -91,7 +91,7 @@ export default {
     }
   },
   methods: {
-    localIntelligenceDeleteCallback(ioc) {
+    deleteIoc(ioc) {
       const data = this.localIntelligence.data.filter(i => i.ioc !== ioc.ioc)
       ApiClient.addSketchAttribute(this.sketch.id, 'intelligence_local', { data: data }, 'intelligence').then(() => {
         this.localIntelligence.data = data
