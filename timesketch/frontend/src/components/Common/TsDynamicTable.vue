@@ -82,7 +82,7 @@ limitations under the License.
               </b-table-column>
             </b-table>
           </div>
-          <div v-else>Empty table</div>
+          <div class="card-content" v-else>Empty table</div>
         </div>
       </div>
     </section>

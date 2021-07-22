@@ -59,6 +59,7 @@ limitations under the License.
 
 <script>
 import ApiClient from '../utils/RestApiClient'
+import _ from 'lodash'
 
 import TsDynamicTable from '../components/Common/TsDynamicTable'
 
@@ -111,10 +112,16 @@ export default {
       return this.$store.state.meta
     },
     externalIntelligence() {
-      return this.meta.attributes.intelligence.value || { data: {}, meta: {} }
+      if (_.isEmpty(this.meta.attributes.intelligence.value)) {
+        return { data: {}, meta: {} }
+      }
+      return this.meta.attributes.intelligence.value
     },
     localIntelligence() {
-      return this.meta.attributes.intelligence_local.value || { data: [] }
+      if (_.isEmpty(this.meta.attributes.intelligence_local.value)) {
+        return { data: [] }
+      }
+      return this.meta.attributes.intelligence_local.value
     },
   },
   mounted() {
