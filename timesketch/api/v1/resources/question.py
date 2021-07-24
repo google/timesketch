@@ -65,6 +65,7 @@ class QuestionListResource(resources.ResourceMixin, Resource):
         Returns:
             A list of JSON representations of available questions.
         """
+        print('foo')
         questions = _get_questions_from_config()
         meta = {'count': len(questions.keys())}
         objects = [questions]
@@ -186,6 +187,7 @@ class QuestionResource(resources.ResourceMixin, Resource):
         analyzers = question.get('analyzers', [])
         max_wait_seconds = form.get(
             'maximum_wait_seconds', self.MAXIMUM_WAIT_SECONDS)
+        errors = None
         if analyzers:
             _, errors = self._run_analyzers(
                 indices_struct=indices_struct, analyzers=analyzers,

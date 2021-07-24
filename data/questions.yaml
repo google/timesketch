@@ -81,24 +81,26 @@
 #                           particular investigative question. The analyzer's
 #                           output is a story that will contain the answer.
 # ------------------------------------------------------------------------
-user_insert_usb:
-    display_name: Did a user insert a removable device.
-    description: This question aims to answer the question whether a user
-        inserted a USB device into the machine in the given timeframe of
-        the investigation.
+user_logged_in_win:
+    display_name: Did someone log into a Windows machine.
+    description: This question aism to answer whether
+        someone logged into the machine. It will run the login analyzer
+        to determine if there was any login activity. This question only
+        looks at activity logged in the EVTX file, therefore it only
+        applies to Windows machines.
     data_sources:
-      - ...
-    parameters:
-      - username
-      - operating_system
+      - windows_login
+    analyzers:
+      - login
     answer_source:
       must:
-        - usb_device_inserted
+        - windows_login
 
 user_downloaded_file:
     display_name: Did user download a specific file.
     description: This question checks whether there is browser activity
-        happening, ...
+        happening and during that activity a specific file got downloaded
+        or is seen on the disk during the time period.
     data_sources:
       - browser_activity
     parameters:

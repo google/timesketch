@@ -85,7 +85,9 @@ windows_administrator_login:
 windows_login:
     description: Login information in Windows EVTX files.
     notes: Collect the SECURITY.EVTX log from a Windows machine.
-    query_string: data_type:"windows:evtx:record" AND event_identifier:4624
+    query_string: data_type:"windows:evtx:record" AND (event_identifier:4624
+        OR event_identifier:4778 OR event_identifier:4779 OR 
+        event_identifier:4634 OR event_identifier:4647)
 
 browser_history:
     description: Browser history information.
