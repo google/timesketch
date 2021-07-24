@@ -27,7 +27,7 @@ limitations under the License.
         v-if="localIntelligence.data.length > 0"
         :data="localIntelligence.data"
         :section="localIntelligenceMeta"
-        :deleteCallback="localIntelligenceDeleteCallback"
+        @table-delete="deleteIoc"
       >
       </ts-dynamic-table>
       <div v-else class="card-content">
@@ -59,6 +59,7 @@ limitations under the License.
 
 <script>
 import ApiClient from '../utils/RestApiClient'
+import _ from 'lodash'
 
 import TsDynamicTable from '../components/Common/TsDynamicTable'
 
@@ -90,7 +91,7 @@ export default {
     }
   },
   methods: {
-    localIntelligenceDeleteCallback(ioc) {
+    deleteIoc(ioc) {
       const data = this.localIntelligence.data.filter(i => i.ioc !== ioc.ioc)
       ApiClient.addSketchAttribute(this.sketch.id, 'intelligence_local', { data: data }, 'intelligence').then(() => {
         this.localIntelligence.data = data
@@ -111,10 +112,16 @@ export default {
       return this.$store.state.meta
     },
     externalIntelligence() {
-      return this.meta.attributes.intelligence.value || { data: {}, meta: {} }
+      if (_.isEmpty(this.meta.attributes.intelligence.value)) {
+        return { data: {}, meta: {} }
+      }
+      return this.meta.attributes.intelligence.value
     },
     localIntelligence() {
-      return this.meta.attributes.intelligence_local.value || { data: [] }
+      if (_.isEmpty(this.meta.attributes.intelligence_local.value)) {
+        return { data: [] }
+      }
+      return this.meta.attributes.intelligence_local.value
     },
   },
   mounted() {
