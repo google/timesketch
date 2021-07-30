@@ -38,8 +38,8 @@ class GeoIPSketchPlugin(interface.BaseAnalyzer):
 
     NAME = 'geo_ip'
     DISPLAY_NAME = 'Geolocate IP addresses'
-    DESCRIPTION = 'Find the approximate geolocation of an IP address using ' +
-        'MaxMind GeoLite2'
+    DESCRIPTION = ('Find the approximate geolocation of an IP address using ' +
+                   'MaxMind GeoLite2')
     DEPENDENCIES = frozenset(['feature_extraction'])
     IP_FIELDS = ['ip_address', 'client_ip', 'host_ip']
 
