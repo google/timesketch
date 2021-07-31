@@ -315,6 +315,7 @@ class EventResource(resources.ResourceMixin, Resource):
                 else:
                     username = comment.user.username
                 comment_dict = {
+                    'id': comment.id,
                     'user': {
                         'username': username,
                     },
@@ -539,6 +540,47 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
 class EventAnnotationResource(resources.ResourceMixin, Resource):
     """Resource to create an annotation for an event."""
 
+    def __init__(self):
+        super().__init__()
+        self.parser = reqparse.RequestParser()
+        self.parser.add_argument(
+            'annotation_type', type=str, required=False)
+        self.parser.add_argument('annotation_id', type=int, required=False)
+        self.parser.add_argument(
+            'event_id', type=str, required=False)
+        self.parser.add_argument('event_index', type=str, required=False)
+        self.parser.add_argument('event_type', type=str, required=False)
+        self.parser.add_argument('currentSearchNode_id', type=int, required=False)
+
+    def _get_sketch(self, sketch_id):
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+        if not sketch.has_permission(current_user, 'write'):
+            abort(HTTP_STATUS_CODE_FORBIDDEN,
+                  'User does not have write access controls on sketch.')
+        return sketch
+
+    def _get_current_search_node(self, current_search_node_id, sketch):
+        current_search_node = SearchHistory.query.get(current_search_node_id)
+        if not current_search_node:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                'No search history found with this ID'
+            )
+        if not current_search_node.sketch == sketch:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Wrong sketch for this search history'
+            )
+        if not current_search_node.user == current_user:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Wrong user for this search history'
+            )
+        return current_search_node
+
     @login_required
     def post(self, sketch_id):
         """Handles POST request to the resource.
@@ -555,33 +597,13 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
 
         annotations = []
-        sketch = Sketch.query.get_with_acl(sketch_id)
-        if not sketch:
-            abort(
-                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
-        if not sketch.has_permission(current_user, 'write'):
-            abort(HTTP_STATUS_CODE_FORBIDDEN,
-                  'User does not have write access controls on sketch.')
+        sketch = self._get_sketch(sketch_id)
 
         current_search_node = None
         _search_node_id = request.json.get('current_search_node_id', None)
         if _search_node_id:
-            current_search_node = SearchHistory.query.get(_search_node_id)
-            if not current_search_node:
-                abort(
-                    HTTP_STATUS_CODE_NOT_FOUND,
-                    'No search history found with this ID'
-                )
-            if not current_search_node.sketch == sketch:
-                abort(
-                    HTTP_STATUS_CODE_BAD_REQUEST,
-                    'Wrong sketch for this search history'
-                )
-            if not current_search_node.user == current_user:
-                abort(
-                    HTTP_STATUS_CODE_BAD_REQUEST,
-                    'Wrong user for this search history'
-                )
+            current_search_node = self._get_current_search_node(_search_node_id,
+                sketch)
 
         indices = [
             t.searchindex.index_name for t in sketch.timelines
@@ -671,6 +693,148 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
 
         return self.to_json(
             annotations, status_code=HTTP_STATUS_CODE_CREATED)
+
+
+    @login_required
+    def put(self, sketch_id):
+        """Handles Update request to the resource."""
+
+        form = forms.EventAnnotationForm.build(request)
+        if not form.validate_on_submit():
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
+
+        updatedAnnotations = []
+        sketch = self._get_sketch(sketch_id)
+
+        indices = [
+            t.searchindex.index_name for t in sketch.timelines
+            if t.get_status.status.lower() == 'ready']
+
+        events = form.events.raw_data
+
+        for _event in events:
+            searchindex_id = _event['_index']
+            searchindex = SearchIndex.query.filter_by(
+                index_name=searchindex_id).first()
+            event_id = _event['_id']
+
+            if searchindex_id not in indices:
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    'Search index ID ({0!s}) does not belong to the list '
+                    'of indices'.format(searchindex_id))
+
+            eventObj = Event.query.filter_by(
+            sketch=sketch, searchindex=searchindex,
+            document_id=event_id).first()
+
+            if not eventObj:
+                abort(
+                    HTTP_STATUS_CODE_NOT_FOUND, 'No event found with the id: '
+                    '{0!s}'.format(event_id))
+
+            annotation_type = form.annotation_type.data
+            annotation = form.annotation.data
+
+            if 'comment' in annotation_type:
+                print (annotation)
+                commentObj = eventObj.get_comment(annotation['id'])
+                if not commentObj:
+                    abort(HTTP_STATUS_CODE_NOT_FOUND, 'No comment found with '
+                        'this id: {0!d}.'.format(annotation['id']))
+
+                if commentObj.user != current_user:
+                    abort(HTTP_STATUS_CODE_FORBIDDEN,
+                        'User is not owner of the comment.')
+
+                annotation = eventObj.update_comment(annotation['id'],
+                  annotation['comment'])
+
+                if not annotation:
+                    abort(
+                        HTTP_STATUS_CODE_BAD_REQUEST, 'Update operation unsuccessful')
+
+                updatedAnnotations.append(annotation)
+            else:
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    'Annotation type needs to be a comment, '
+                    'not {0!s}'.format(annotation_type))
+
+
+        return self.to_json(updatedAnnotations, status_code=HTTP_STATUS_CODE_OK)
+
+    @login_required
+    def delete(self, sketch_id):
+        """Handles DELETE request to the resource."""
+
+        args = self.parser.parse_args()
+        annotation_type = args.get('annotation_type')
+        annotation_id = args.get('annotation_id')
+        event_id = args.get('event_id')
+        event_index = args.get('event_index')
+        event_type = args.get('event_type')
+
+        sketch = self._get_sketch(sketch_id)
+
+        current_search_node = None
+        _search_node_id = args.get('currentSearchNode_id')
+        if _search_node_id:
+            current_search_node = self._get_current_search_node(_search_node_id,
+            sketch)
+
+        searchindex_id = event_index
+        searchindex = SearchIndex.query.filter_by(
+            index_name=searchindex_id).first()
+
+        eventObj = Event.query.filter_by(
+            sketch=sketch, searchindex=searchindex,
+            document_id=event_id).first()
+
+        if not eventObj:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No event found with the id: '
+                '{0!s}'.format(event_id))
+
+        if 'comment' in annotation_type:
+
+            commentObj = eventObj.get_comment(annotation_id)
+            if not commentObj:
+                abort(HTTP_STATUS_CODE_NOT_FOUND, 'No comment found with '
+                    'this id: {0!d}.'.format(annotation_id))
+
+            if commentObj.user != current_user:
+                abort(HTTP_STATUS_CODE_FORBIDDEN,
+                    'User is not owner of the comment.')
+
+            if eventObj.remove_comment(annotation_id):
+                #Remove label __ts_comment if the event has no more comments
+                if len(eventObj.comments) < 1:
+                    self.datastore.set_label(
+                      searchindex_id,
+                      event_id,
+                      event_type,
+                      sketch.id,
+                      current_user.id,
+                      '__ts_comment',
+                      toggle=True
+                    )
+                    if current_search_node:
+                        current_search_node.remove_label('__ts_comment')
+
+                return HTTP_STATUS_CODE_OK
+
+        else:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Annotation type needs to be a comment, '
+                'not {0!s}'.format(annotation_type))
+
+
+        return (HTTP_STATUS_CODE_BAD_REQUEST, 'Could not delete the annotation type {0!s} with the id {1!d}'
+            .format(annotation_type, annotation_id))
+
 
 
 class CountEventsResource(resources.ResourceMixin, Resource):
