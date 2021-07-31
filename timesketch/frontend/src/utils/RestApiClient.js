@@ -160,6 +160,27 @@ export default {
     }
     return RestApiClient.post('/sketches/' + sketchId + '/event/annotate/', formData)
   },
+  updateEventAnnotation(sketchId, annotationType, annotation, events, currentSearchNode) {
+    let formData = {
+      annotation: annotation,
+      annotation_type: annotationType,
+      events: events,
+      current_search_node_id: currentSearchNode.id,
+    }
+    return RestApiClient.put('/sketches/' + sketchId + '/event/annotate/', formData)
+  },
+  deleteEventAnnotation(sketchId, annotationType, annotation_id, event, currentSearchNode) {
+    let params = {
+      params: {
+        annotation_id: annotation_id,
+        annotation_type: annotationType,
+        event_id: event._id,
+        event_index: event._index,
+        current_search_node_id: currentSearchNode.id,
+      },
+    }
+    return RestApiClient.delete('/sketches/' + sketchId + '/event/annotate/', params)
+  },
   // Stories
   getStoryList(sketchId) {
     return RestApiClient.get('sketches/' + sketchId + '/stories/')

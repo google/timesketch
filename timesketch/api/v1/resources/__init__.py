@@ -212,6 +212,7 @@ class ResourceMixin(object):
     }
 
     comment_fields = {
+        'id': fields.Integer,
         'comment': fields.String,
         'user': fields.Nested(user_fields),
         'created_at': fields.DateTime('iso8601'),
