@@ -111,7 +111,7 @@ class GeoIPSketchPlugin(interface.BaseAnalyzer):
                     if flag_emoji is None:
                         logger.error(
                         'Invalid ISO code {0} encountered for IP {1}.'
-                            .formt(iso_code, ip_address))
+                            .format(iso_code, ip_address))
                     for ip_address_field, events in ip_address_fields.items():
                         for event in events:
 
