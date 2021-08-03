@@ -28,7 +28,7 @@ export default {
   props: ['placeholder', 'label', 'name', 'value', 'display'],
   methods: {
     dateFormatter(dt) {
-      let dateString = dt.toISOString().replace('.000Z', '')
+      let dateString = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000).toISOString().replace('.000Z', '')
       this.$emit('input', dateString)
       return dateString
     },
