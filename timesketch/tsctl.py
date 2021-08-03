@@ -91,7 +91,8 @@ class GrantUser(Command):
         else:
             sketch.grant_permission(permission='read', user=user)
             sketch.grant_permission(permission='write', user=user)
-            sys.stdout.write('User {0:s} added to the sketch.\n'.format(username))
+            sys.stdout.write('User {0:s} added to the sketch {1:s}.\n'.format(
+                username, sketch_id))
 
 
 class AddUser(Command):
