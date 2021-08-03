@@ -87,7 +87,7 @@ class GeoIPSketchPlugin(interface.BaseAnalyzer):
                         if ip_address is None:
                             continue
                         if not self._validate_ip(ip_address):
-                            logger.debug('Value {0} in {1} not valid'
+                            logger.debug('Value {0} in {1} not valid.'
                                 .format(ip_address, ip_address_field))
                             continue
                         ip_addresses[ip_address][ip_address_field].append(event)
@@ -96,7 +96,7 @@ class GeoIPSketchPlugin(interface.BaseAnalyzer):
                     try:
                         response = reader.city(ip_address)
                     except geoip2.errors.AddressNotFoundError as exception:
-                        logging.debug('IP address {0} not found'.format(
+                        logging.debug('IP address {0} not found.'.format(
                             ip_address))
                         continue
 
@@ -135,13 +135,13 @@ class GeoIPSketchPlugin(interface.BaseAnalyzer):
                             event.add_tags([country_name])
                             event.commit()
 
-                return 'GeoIP analyzer completed'
+                return 'GeoIP analyzer completed.'
         except FileNotFoundError as exception:
             logger.error('GeoLite2 database not found')
-            return 'GeoIP analyzer error - database not found'
+            return 'GeoIP analyzer error - database not found.'
         except geoip2.database.maxminddb.InvalidDatabaseError as exception:
             logger.error('Geolite2 database is corrupt')
-            return 'GeoIP analyzer error - corrupt database'
+            return 'GeoIP analyzer error - corrupt database.'
 
 
 manager.AnalysisManager.register_analyzer(GeoIPSketchPlugin)
