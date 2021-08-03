@@ -112,28 +112,28 @@ class TestGeoIPAnalyzer(BaseTest):
     def testValidIPv4(self):
         analyzer = GeoIPSketchPlugin('test', 1)
         analyzer.datastore.client = mock.Mock()
+
+        IP_FIELDS = ['ip', 'host_ip', 'src_ip', 'dst_ip', 'source_ip', 
+        'dest_ip', 'ip_address', 'client_ip', 'address', 'saddr', 'daddr', 
+        'requestMetadata_callerIp', 'a_answer']
+
         _create_mock_event(analyzer.datastore, 0, 1,
             source_attrs={
-                'ip_address': '127.0.0.1',
-                'client_ip': '127.0.0.1',
-                'host_ip': '127.0.0.1'
+                ip_field: '8.8.8.8' for ip_field in IP_FIELDS
             })
 
         message = analyzer.run()
         event = analyzer.datastore.event_store['0']
 
-        self.assertTrue('ip_address_latitude' in event['_source'])
-        self.assertTrue('ip_address_longitude' in event['_source'])
-        self.assertTrue('ip_address_iso_code' in event['_source'])
-        self.assertTrue('ip_address_city' in event['_source'])
-        self.assertTrue('client_ip_latitude' in event['_source'])
-        self.assertTrue('client_ip_longitude' in event['_source'])
-        self.assertTrue('client_ip_iso_code' in event['_source'])
-        self.assertTrue('client_ip_city' in event['_source'])
-        self.assertTrue('host_ip_latitude' in event['_source'])
-        self.assertTrue('host_ip_longitude' in event['_source'])
-        self.assertTrue('host_ip_iso_code' in event['_source'])
-        self.assertTrue('host_ip_city' in event['_source'])
+        for ip_field in IP_FIELDS:
+            self.assertTrue('{0}_latitude'.format(ip_field) 
+                in event['_source'])
+            self.assertTrue('{0}_longitude'.format(ip_field) 
+                in event['_source'])
+            self.assertTrue('{0}_iso_code'.format(ip_field) 
+                in event['_source'])
+            self.assertTrue('{0}_city'.format(ip_field) 
+                in event['_source'])
         self.assertEqual(message, 'GeoIP analyzer completed.')
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',

@@ -41,8 +41,10 @@ class GeoIPSketchPlugin(interface.BaseAnalyzer):
     DESCRIPTION = ('Find the approximate geolocation of an IP address using ' +
                    'MaxMind GeoLite2')
     DEPENDENCIES = frozenset(['feature_extraction'])
-    IP_FIELDS = ['ip_address', 'client_ip', 'host_ip']
-
+    IP_FIELDS = ['ip', 'host_ip', 'src_ip', 'dst_ip', 'source_ip', 'dest_ip', 
+        'ip_address', 'client_ip', 'address', 'saddr', 'daddr', 
+        'requestMetadata_callerIp', 'a_answer']
+    
     def __init__(self, index_name, sketch_id, timeline_id=None):
         """Initialize The Sketch Analyzer.
 
@@ -68,8 +70,9 @@ class GeoIPSketchPlugin(interface.BaseAnalyzer):
         Returns:
             String with summary of the analyzer result
         """
-        query = 'ip_address:*'
-
+        query = ' OR '.join(
+            ['{0}:*'.format(ip_field) for ip_field in self.IP_FIELDS])
+        
         return_fields = self.IP_FIELDS.copy()
 
         events = self.event_stream(
