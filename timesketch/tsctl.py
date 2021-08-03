@@ -78,20 +78,20 @@ class GrantUser(Command):
     def run(self, username, sketch_id):
         """Creates the user."""
         if not isinstance(sketch_id, six.text_type):
-          sketch_id = codecs.decode(sketch_id, 'utf-8')
+            sketch_id = codecs.decode(sketch_id, 'utf-8')
         if not isinstance(username, six.text_type):
-          username = codecs.decode(username, 'utf-8')
+            username = codecs.decode(username, 'utf-8')
         sketch = Sketch.query.filter_by(id=sketch_id).first()
         user = User.query.filter_by(username=username).first()
         if not sketch:
-          sys.stdout.write('No sketch found with this ID.')
+            sys.stdout.write('No sketch found with this ID.')
         elif not user:
-          sys.stdout.write('User [{0:s}] does not exist.\n'.format(
+            sys.stdout.write('User [{0:s}] does not exist.\n'.format(
                 username))
         else:
-          sketch.grant_permission(permission='read', user=user)
-          sketch.grant_permission(permission='write', user=user)
-          sys.stdout.write('User {0:s} added to the sketch.\n'.format(username))
+            sketch.grant_permission(permission='read', user=user)
+            sketch.grant_permission(permission='write', user=user)
+            sys.stdout.write('User {0:s} added to the sketch.\n'.format(username))
 
 
 class AddUser(Command):
