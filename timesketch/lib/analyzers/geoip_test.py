@@ -212,3 +212,26 @@ class TestGeoIPAnalyzer(BaseTest):
         message = analyzer.run()
 
         self.assertEqual(message, 'GeoIP analyzer completed.')
+
+    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+                MockDataStore)
+    @mock.patch('geoip2.database.Reader', MockReader)
+    def testMultipleValidIPv4(self):
+        """Test valid IPv4 addresses result in new attributes"""
+        analyzer = GeoIPSketchPlugin('test', 1)
+        analyzer._geolite_database = 'mock'
+        analyzer.datastore.client = mock.Mock()
+
+        _create_mock_event(analyzer.datastore, 0, 1,
+            source_attrs={
+                'ip_address': ['8.8.8.8', '8.8.4.4']
+            })
+
+        message = analyzer.run()
+        event = analyzer.datastore.event_store['0']
+        
+        self.assertTrue('ip_address_latitude' in event['_source'])
+        self.assertTrue('ip_address_longitude' in event['_source'])
+        self.assertTrue('ip_address_iso_code' in event['_source'])
+        self.assertTrue('ip_address_city' in event['_source'])
+        self.assertEqual(message, 'GeoIP analyzer completed.')
