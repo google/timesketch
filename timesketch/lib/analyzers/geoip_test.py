@@ -141,7 +141,7 @@ class TestGeoIPAnalyzer(BaseTest):
 
         message = analyzer.run()
         event = analyzer.datastore.event_store['0']
-        print(event)
+        
         for ip_field in IP_FIELDS:
             self.assertTrue('{0}_latitude'.format(ip_field) 
                 in event['_source'])
