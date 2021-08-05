@@ -57,10 +57,10 @@ class GeoIPSketchPlugin(interface.BaseAnalyzer):
         super().__init__(index_name, sketch_id, timeline_id=timeline_id)
 
     def _validate_ip(self, ip_address):
-        """Return true if ip_address is valid"""
+        """Return true if ip_address is in a valid format and is non-private."""
         try:
-            ipaddress.ip_address(ip_address)
-            return True
+            ip = ipaddress.ip_address(ip_address)
+            return ip.is_global
         except ValueError as exception:
             return False
 
@@ -80,6 +80,9 @@ class GeoIPSketchPlugin(interface.BaseAnalyzer):
             return_fields=return_fields
         )
 
+        if self._geolite_database is None:
+            return 'GeoIP analyzer error - database configuration not set.'
+
         try:
             with geoip2.database.Reader(self._geolite_database) as reader:
                 ip_addresses = defaultdict(lambda: defaultdict(list))
@@ -89,11 +92,17 @@ class GeoIPSketchPlugin(interface.BaseAnalyzer):
                         ip_address = event.source.get(ip_address_field)
                         if ip_address is None:
                             continue
-                        if not self._validate_ip(ip_address):
-                            logger.debug('Value {0} in {1} not valid.'
-                                .format(ip_address, ip_address_field))
-                            continue
-                        ip_addresses[ip_address][ip_address_field].append(event)
+                        
+                        ip_address = [ip_address] if isinstance(ip_address, str) else ip_address
+                        
+                        for ip_addr in ip_address:
+                            if not self._validate_ip(ip_addr):
+                                logger.debug('Value {0} in {1} not valid.'
+                                    .format(ip_addr, ip_address_field))
+                                continue
+                            ip_addresses[ip_addr][ip_address_field].append(event)
+
+                logger.info('Found {0} ip address(es)'.format(len(ip_addresses)))
 
                 for ip_address, ip_address_fields in ip_addresses.items():
                     try:

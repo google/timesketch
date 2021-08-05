@@ -87,11 +87,25 @@ class TestGeoIPAnalyzer(BaseTest):
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
     @mock.patch('geoip2.database.Reader')
+    def testGeoIPConfigNotFound(self, reader):
+        """Test when the GeoIP Database configuration in timesketch.conf does 
+           not exist"""
+        reader.side_effect = FileNotFoundError()
+
+        analyzer = GeoIPSketchPlugin('test', 1)
+        message = analyzer.run()
+        self.assertEqual(message, 
+            'GeoIP analyzer error - database configuration not set.')
+
+    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+                MockDataStore)
+    @mock.patch('geoip2.database.Reader')
     def testGeoIPDatabaseNotFound(self, reader):
         """Test when the GeoIP Database does not exist"""
         reader.side_effect = FileNotFoundError()
 
         analyzer = GeoIPSketchPlugin('test', 1)
+        analyzer._geolite_database = 'mock'
         message = analyzer.run()
         self.assertEqual(message, 'GeoIP analyzer error - database not found.')
 
@@ -103,6 +117,7 @@ class TestGeoIPAnalyzer(BaseTest):
         reader.side_effect = geoip2.database.maxminddb.InvalidDatabaseError()
 
         analyzer = GeoIPSketchPlugin('test', 1)
+        analyzer._geolite_database = 'mock'
         message = analyzer.run()
         self.assertEqual(message, 'GeoIP analyzer error - corrupt database.')
 
@@ -110,7 +125,9 @@ class TestGeoIPAnalyzer(BaseTest):
                 MockDataStore)
     @mock.patch('geoip2.database.Reader', MockReader)
     def testValidIPv4(self):
+        """Test valid IPv4 addresses result in new attributes"""
         analyzer = GeoIPSketchPlugin('test', 1)
+        analyzer._geolite_database = 'mock'
         analyzer.datastore.client = mock.Mock()
 
         IP_FIELDS = ['ip', 'host_ip', 'src_ip', 'dst_ip', 'source_ip', 
@@ -124,7 +141,7 @@ class TestGeoIPAnalyzer(BaseTest):
 
         message = analyzer.run()
         event = analyzer.datastore.event_store['0']
-
+        print(event)
         for ip_field in IP_FIELDS:
             self.assertTrue('{0}_latitude'.format(ip_field) 
                 in event['_source'])
@@ -138,10 +155,35 @@ class TestGeoIPAnalyzer(BaseTest):
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
-    def testInvalidIPv4(self):
+    def testPrivateIPv4(self):
+        """Test private IPv4 address does not result in new attributes"""
         geoip2.database.Reader = mock.mock_open()
 
         analyzer = GeoIPSketchPlugin('test', 1)
+        analyzer._geolite_database = 'mock'
+        analyzer.datastore.client = mock.Mock()
+        _create_mock_event(analyzer.datastore, 0, 1,
+            source_attrs={
+                'ip_address': '127.0.0.1'
+            })
+
+        message = analyzer.run()
+        event = analyzer.datastore.event_store['0']
+
+        self.assertTrue('ip_address_latitude' not in event['_source'])
+        self.assertTrue('ip_address_longitude' not in event['_source'])
+        self.assertTrue('ip_address_iso_code' not in event['_source'])
+        self.assertTrue('ip_address_city' not in event['_source'])
+        self.assertEqual(message, 'GeoIP analyzer completed.')
+
+    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+                MockDataStore)
+    def testInvalidIPv4(self):
+        """Test invalid IP address"""
+        geoip2.database.Reader = mock.mock_open()
+
+        analyzer = GeoIPSketchPlugin('test', 1)
+        analyzer._geolite_database = 'mock'
         analyzer.datastore.client = mock.Mock()
         _create_mock_event(analyzer.datastore, 0, 1,
             source_attrs={
@@ -160,9 +202,11 @@ class TestGeoIPAnalyzer(BaseTest):
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
     def testNoEvents(self):
+        """Test no events"""
         geoip2.database.Reader = mock.mock_open()
 
         analyzer = GeoIPSketchPlugin('test', 1)
+        analyzer._geolite_database = 'mock'
         analyzer.datastore.client = mock.Mock()
 
         message = analyzer.run()
