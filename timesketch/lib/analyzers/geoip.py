@@ -37,14 +37,14 @@ logger = logging.getLogger('timesketch.analyzers.geoip')
 
 
 class GeoIpClientAdapter(object):
-    """Base adapter interface for a third party geolocation service"""
+    """Base adapter interface for a third party geolocation service."""
 
     def __enter__(self):
-        """Initialise and open a new a client for performing geoip lookups """
+        """Initialise and open a new a client for performing geoip lookups."""
         raise NotImplementedError
 
     def __exit__(self, type, value, traceback):
-        """Close and clean up client"""
+        """Close and clean up client."""
         raise NotImplementedError
 
     def ip2geo(self, ip_address: str) -> Union[Tuple[str, str, str, str], None]:
@@ -61,13 +61,14 @@ class GeoIpClientAdapter(object):
             - longitude (str) - the east-west coordinate
             - country_name (str) - the full country name
             - city (str) - the city name that approximates the location
-            Or None, if the IP address does not have a resolvable location
+            Or None:
+            - when the IP address does not have a resolvable location
         """
         raise NotImplementedError
 
 
 class MaxMindGeoDbClient(geoip2.database.Reader, GeoIpClientAdapter):
-    """A GeoIP client using the MaxMind databse """
+    """A GeoIP client using the MaxMind database."""
 
     def __init__(self):
         self._geolite_database = current_app.config.get('MAXMIND_DB_PATH')
@@ -91,7 +92,8 @@ class MaxMindGeoDbClient(geoip2.database.Reader, GeoIpClientAdapter):
             - longitude (str) - the east-west coordinate
             - country_name (str) - the full country name
             - city (str) - the city name that approximates the location
-            Or None, if the IP address does not have a resolvable location
+            Or None:
+            - when the IP address does not have a resolvable location
         """
         try:
             response = self.city(ip_address)
@@ -114,7 +116,7 @@ class MaxMindGeoDbClient(geoip2.database.Reader, GeoIpClientAdapter):
 
 
 class MaxMindGeoWebClient(geoip2.webservice.Client, GeoIpClientAdapter):
-    """A GeoIP client using the MaxMind web service api """
+    """A GeoIP client using the MaxMind web service api."""
 
     def __init__(self):
         self._account_id = current_app.config.get('MAXMIND_WEB_ACCOUNT_ID')
@@ -142,7 +144,8 @@ class MaxMindGeoWebClient(geoip2.webservice.Client, GeoIpClientAdapter):
             - longitude (str) - the east-west coordinate
             - country_name (str) - the full country name
             - city (str) - the city name that approximates the location
-            Or None, if the IP address does not have a resolvable location
+            Or None:
+            - when the IP address does not have a resolvable location
         """
         try:
             response = self.city(ip_address)
@@ -165,9 +168,11 @@ class MaxMindGeoWebClient(geoip2.webservice.Client, GeoIpClientAdapter):
 
 
 class BaseGeoIpSketchPlugin(interface.BaseAnalyzer):
-    """Sketch analyzer for geolocating IP addresses
+    """Sketch analyzer for geolocating IP addresses.
 
-    Concrete geolocations should define """
+    Concrete plugin implementations should define the following attributes
+    NAME, DISPLAY_NAME, DESCRIPTION, GEOIP_CLIENT.
+    """
 
     NAME = ""
     DISPLAY_NAME = ""
