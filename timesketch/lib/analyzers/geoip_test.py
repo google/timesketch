@@ -17,8 +17,8 @@ from __future__ import unicode_literals
 
 import mock
 
-import geoip2.database
-from timesketch.lib.analyzers.geoip import GeoIPSketchPlugin
+from timesketch.lib.analyzers.geoip import MaxMindDbGeoIPSketchPlugin
+from timesketch.lib.analyzers.geoip import MaxMindDbWebIPSketchPlugin
 
 from timesketch.lib import emojis
 from timesketch.lib.testlib import BaseTest
@@ -30,34 +30,10 @@ from timesketch.lib.analyzers.base_sessionizer_test \
     import _create_mock_event
 
 
-class MockCity(object):
-    """A mock of a City that returns dummy data."""
-    name = 'City'
-
-
-class MockCountry(object):
-    """A mock of a Country that returns dummy data."""
-    iso_code = 'XX'
-    name = 'Country'
-
-
-class MockLocation(object):
-    """A mock of a Location that returns dummy data."""
-    latitude = 1.0
-    longitude = 2.0
-
-
-class MockResponse(object):
-    """A mock response to a database lookup."""
-    location = MockLocation()
-    country = MockCountry()
-    city = MockCity()
-
-
 class MockReader(object):
     """A mock implementation of a GeoLite2 database reader"""
-    def __init__(self, name):
-        self.name = name
+    def __init__(self, *args, **kwargs):
+        pass
 
     def __enter__(self):
         return self
@@ -68,12 +44,13 @@ class MockReader(object):
     def __exit__(self, *args):
         pass
 
-    def city(self, *args):
-        return MockResponse()
+    def ip2geo(self, *args):
+        return 'a', 'b', 'c', 'd', 'e'
 
 
-class TestGeoIPAnalyzer(BaseTest):
-    """Tests for the functionality of the Geo IP Analyzer."""
+class TestMaxMindDbGeoIPAnalyzer(BaseTest):
+    """Tests for the functionality of the MaxMind Databse based Geo IP
+       Analyzer."""
 
     _TEST_ISO_CODE = "US"
     _TEST_EMOJI = "&#x1F1FA&#x1F1F8"
@@ -86,52 +63,15 @@ class TestGeoIPAnalyzer(BaseTest):
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
-    @mock.patch('geoip2.database.Reader')
-    def testGeoIPConfigNotFound(self, reader):
-        """Test when the GeoIP Database configuration in timesketch.conf does 
-           not exist"""
-        reader.side_effect = FileNotFoundError()
-
-        analyzer = GeoIPSketchPlugin('test', 1)
-        message = analyzer.run()
-        self.assertEqual(message, 
-            'GeoIP analyzer error - database configuration not set.')
-
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
-                MockDataStore)
-    @mock.patch('geoip2.database.Reader')
-    def testGeoIPDatabaseNotFound(self, reader):
-        """Test when the GeoIP Database does not exist"""
-        reader.side_effect = FileNotFoundError()
-
-        analyzer = GeoIPSketchPlugin('test', 1)
-        analyzer._geolite_database = 'mock'
-        message = analyzer.run()
-        self.assertEqual(message, 'GeoIP analyzer error - database not found.')
-
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
-                MockDataStore)
-    @mock.patch('geoip2.database.Reader')
-    def testGeoIPDatabaseCorrupt(self, reader):
-        """Test when the GeoIP Database is corrupt"""
-        reader.side_effect = geoip2.database.maxminddb.InvalidDatabaseError()
-
-        analyzer = GeoIPSketchPlugin('test', 1)
-        analyzer._geolite_database = 'mock'
-        message = analyzer.run()
-        self.assertEqual(message, 'GeoIP analyzer error - corrupt database.')
-
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
-                MockDataStore)
-    @mock.patch('geoip2.database.Reader', MockReader)
     def testValidIPv4(self):
         """Test valid IPv4 addresses result in new attributes"""
-        analyzer = GeoIPSketchPlugin('test', 1)
-        analyzer._geolite_database = 'mock'
+        analyzer = MaxMindDbGeoIPSketchPlugin('test', 1)
+        analyzer.GEOIP_CLIENT = MockReader
+
         analyzer.datastore.client = mock.Mock()
 
-        IP_FIELDS = ['ip', 'host_ip', 'src_ip', 'dst_ip', 'source_ip', 
-        'dest_ip', 'ip_address', 'client_ip', 'address', 'saddr', 'daddr', 
+        IP_FIELDS = ['ip', 'host_ip', 'src_ip', 'dst_ip', 'source_ip',
+        'dest_ip', 'ip_address', 'client_ip', 'address', 'saddr', 'daddr',
         'requestMetadata_callerIp', 'a_answer']
 
         _create_mock_event(analyzer.datastore, 0, 1,
@@ -141,15 +81,15 @@ class TestGeoIPAnalyzer(BaseTest):
 
         message = analyzer.run()
         event = analyzer.datastore.event_store['0']
-        
+
         for ip_field in IP_FIELDS:
-            self.assertTrue('{0}_latitude'.format(ip_field) 
+            self.assertTrue('{0}_latitude'.format(ip_field)
                 in event['_source'])
-            self.assertTrue('{0}_longitude'.format(ip_field) 
+            self.assertTrue('{0}_longitude'.format(ip_field)
                 in event['_source'])
-            self.assertTrue('{0}_iso_code'.format(ip_field) 
+            self.assertTrue('{0}_iso_code'.format(ip_field)
                 in event['_source'])
-            self.assertTrue('{0}_city'.format(ip_field) 
+            self.assertTrue('{0}_city'.format(ip_field)
                 in event['_source'])
         self.assertEqual(message, 'GeoIP analyzer completed.')
 
@@ -157,11 +97,10 @@ class TestGeoIPAnalyzer(BaseTest):
                 MockDataStore)
     def testPrivateIPv4(self):
         """Test private IPv4 address does not result in new attributes"""
-        geoip2.database.Reader = mock.mock_open()
-
-        analyzer = GeoIPSketchPlugin('test', 1)
-        analyzer._geolite_database = 'mock'
+        analyzer = MaxMindDbGeoIPSketchPlugin('test', 1)
+        analyzer.GEOIP_CLIENT = MockReader
         analyzer.datastore.client = mock.Mock()
+
         _create_mock_event(analyzer.datastore, 0, 1,
             source_attrs={
                 'ip_address': '127.0.0.1'
@@ -180,11 +119,10 @@ class TestGeoIPAnalyzer(BaseTest):
                 MockDataStore)
     def testInvalidIPv4(self):
         """Test invalid IP address"""
-        geoip2.database.Reader = mock.mock_open()
-
-        analyzer = GeoIPSketchPlugin('test', 1)
-        analyzer._geolite_database = 'mock'
+        analyzer = MaxMindDbGeoIPSketchPlugin('test', 1)
+        analyzer.GEOIP_CLIENT = MockReader
         analyzer.datastore.client = mock.Mock()
+
         _create_mock_event(analyzer.datastore, 0, 1,
             source_attrs={
                 'ip_address': None
@@ -203,10 +141,8 @@ class TestGeoIPAnalyzer(BaseTest):
                 MockDataStore)
     def testNoEvents(self):
         """Test no events"""
-        geoip2.database.Reader = mock.mock_open()
-
-        analyzer = GeoIPSketchPlugin('test', 1)
-        analyzer._geolite_database = 'mock'
+        analyzer = MaxMindDbGeoIPSketchPlugin('test', 1)
+        analyzer.GEOIP_CLIENT = MockReader
         analyzer.datastore.client = mock.Mock()
 
         message = analyzer.run()
@@ -218,8 +154,8 @@ class TestGeoIPAnalyzer(BaseTest):
     @mock.patch('geoip2.database.Reader', MockReader)
     def testMultipleValidIPv4(self):
         """Test valid IPv4 addresses result in new attributes"""
-        analyzer = GeoIPSketchPlugin('test', 1)
-        analyzer._geolite_database = 'mock'
+        analyzer = MaxMindDbGeoIPSketchPlugin('test', 1)
+        analyzer.GEOIP_CLIENT = MockReader
         analyzer.datastore.client = mock.Mock()
 
         _create_mock_event(analyzer.datastore, 0, 1,
@@ -229,7 +165,132 @@ class TestGeoIPAnalyzer(BaseTest):
 
         message = analyzer.run()
         event = analyzer.datastore.event_store['0']
-        
+
+        self.assertTrue('ip_address_latitude' in event['_source'])
+        self.assertTrue('ip_address_longitude' in event['_source'])
+        self.assertTrue('ip_address_iso_code' in event['_source'])
+        self.assertTrue('ip_address_city' in event['_source'])
+        self.assertEqual(message, 'GeoIP analyzer completed.')
+
+
+class TestMaxMindDbWebIPAnalyzer(BaseTest):
+    """Tests for the functionality of the MaxMind web service based Geo IP
+       Analyzer."""
+
+    _TEST_ISO_CODE = "US"
+    _TEST_EMOJI = "&#x1F1FA&#x1F1F8"
+
+
+    def testEmoji(self):
+        """Test a flag emoji exists"""
+        flag_emoji = emojis.get_emoji(self._TEST_ISO_CODE)
+        self.assertEqual(flag_emoji, self._TEST_EMOJI)
+
+    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+                MockDataStore)
+    def testValidIPv4(self):
+        """Test valid IPv4 addresses result in new attributes"""
+        analyzer = MaxMindDbWebIPSketchPlugin('test', 1)
+        analyzer.GEOIP_CLIENT = MockReader
+
+        analyzer.datastore.client = mock.Mock()
+
+        IP_FIELDS = ['ip', 'host_ip', 'src_ip', 'dst_ip', 'source_ip',
+        'dest_ip', 'ip_address', 'client_ip', 'address', 'saddr', 'daddr',
+        'requestMetadata_callerIp', 'a_answer']
+
+        _create_mock_event(analyzer.datastore, 0, 1,
+            source_attrs={
+                ip_field: '8.8.8.8' for ip_field in IP_FIELDS
+            })
+
+        message = analyzer.run()
+        event = analyzer.datastore.event_store['0']
+
+        for ip_field in IP_FIELDS:
+            self.assertTrue('{0}_latitude'.format(ip_field)
+                in event['_source'])
+            self.assertTrue('{0}_longitude'.format(ip_field)
+                in event['_source'])
+            self.assertTrue('{0}_iso_code'.format(ip_field)
+                in event['_source'])
+            self.assertTrue('{0}_city'.format(ip_field)
+                in event['_source'])
+        self.assertEqual(message, 'GeoIP analyzer completed.')
+
+    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+                MockDataStore)
+    def testPrivateIPv4(self):
+        """Test private IPv4 address does not result in new attributes"""
+        analyzer = MaxMindDbWebIPSketchPlugin('test', 1)
+        analyzer.GEOIP_CLIENT = MockReader
+        analyzer.datastore.client = mock.Mock()
+
+        _create_mock_event(analyzer.datastore, 0, 1,
+            source_attrs={
+                'ip_address': '127.0.0.1'
+            })
+
+        message = analyzer.run()
+        event = analyzer.datastore.event_store['0']
+
+        self.assertTrue('ip_address_latitude' not in event['_source'])
+        self.assertTrue('ip_address_longitude' not in event['_source'])
+        self.assertTrue('ip_address_iso_code' not in event['_source'])
+        self.assertTrue('ip_address_city' not in event['_source'])
+        self.assertEqual(message, 'GeoIP analyzer completed.')
+
+    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+                MockDataStore)
+    def testInvalidIPv4(self):
+        """Test invalid IP address"""
+        analyzer = MaxMindDbWebIPSketchPlugin('test', 1)
+        analyzer.GEOIP_CLIENT = MockReader
+        analyzer.datastore.client = mock.Mock()
+
+        _create_mock_event(analyzer.datastore, 0, 1,
+            source_attrs={
+                'ip_address': None
+            })
+
+        message = analyzer.run()
+        event = analyzer.datastore.event_store['0']
+
+        self.assertTrue('ip_address_latitude' not in event['_source'])
+        self.assertTrue('ip_address_longitude' not in event['_source'])
+        self.assertTrue('ip_address_iso_code' not in event['_source'])
+        self.assertTrue('ip_address_city' not in event['_source'])
+        self.assertEqual(message, 'GeoIP analyzer completed.')
+
+    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+                MockDataStore)
+    def testNoEvents(self):
+        """Test no events"""
+        analyzer = MaxMindDbWebIPSketchPlugin('test', 1)
+        analyzer.GEOIP_CLIENT = MockReader
+        analyzer.datastore.client = mock.Mock()
+
+        message = analyzer.run()
+
+        self.assertEqual(message, 'GeoIP analyzer completed.')
+
+    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+                MockDataStore)
+    @mock.patch('geoip2.database.Reader', MockReader)
+    def testMultipleValidIPv4(self):
+        """Test valid IPv4 addresses result in new attributes"""
+        analyzer = MaxMindDbWebIPSketchPlugin('test', 1)
+        analyzer.GEOIP_CLIENT = MockReader
+        analyzer.datastore.client = mock.Mock()
+
+        _create_mock_event(analyzer.datastore, 0, 1,
+            source_attrs={
+                'ip_address': ['8.8.8.8', '8.8.4.4']
+            })
+
+        message = analyzer.run()
+        event = analyzer.datastore.event_store['0']
+
         self.assertTrue('ip_address_latitude' in event['_source'])
         self.assertTrue('ip_address_longitude' in event['_source'])
         self.assertTrue('ip_address_iso_code' in event['_source'])
