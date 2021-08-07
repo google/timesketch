@@ -13,7 +13,6 @@
 # limitations under the License.
 
 """Sketch analyzer plugin for geolocating IP addresses."""
-from __future__ import unicode_literals
 
 import os
 import ipaddress
