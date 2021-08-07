@@ -238,7 +238,7 @@ class BaseGeoIpSketchPlugin(interface.BaseAnalyzer):
                                 continue
                             ip_addresses[ip_addr][ip_address_field].append(event)
 
-                logger.info('Found {0} ip address(es)'.format(len(ip_addresses)))
+                logger.info('Found {0} IP address(es)'.format(len(ip_addresses)))
 
                 for ip_address, ip_address_fields in ip_addresses.items():
                     response = client.ip2geo(ip_address)
