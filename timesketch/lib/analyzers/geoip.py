@@ -295,7 +295,7 @@ class MaxMindDbGeoIPSketchPlugin(BaseGeoIpSketchPlugin):
                    'a MaxMind GeoLite2 database')
 
 
-class MaxMindDbWebIPSketchPlugin(BaseGeoIpSketchPlugin):
+class MaxMindDbWebIPAnalyzer(BaseGeoIpAnalyzer):
 
     GEOIP_CLIENT = MaxMindGeoWebClient
 
