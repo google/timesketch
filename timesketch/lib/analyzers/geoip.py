@@ -166,7 +166,7 @@ class MaxMindGeoWebClient(geoip2.webservice.Client, GeoIpClientAdapter):
         return (iso_code, latitude, longitude, country_name, city)
 
 
-class BaseGeoIpSketchPlugin(interface.BaseAnalyzer):
+class BaseGeoIpAnalyzer(interface.BaseAnalyzer):
     """Sketch analyzer for geolocating IP addresses.
 
     Concrete plugin implementations should define the following attributes
