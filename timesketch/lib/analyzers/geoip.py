@@ -262,8 +262,7 @@ class BaseGeoIpSketchPlugin(interface.BaseAnalyzer):
 
                             new_attributes = {}
                             if latitude and longitude:
-                                new_attributes['{0}_latitude'
-                                    .format(ip_address_field)] = latitude
+                                new_attributes[f'{ip_address_field}_latitude'] = latitude
                                 new_attributes['{0}_longitude'
                                     .format(ip_address_field)] = longitude
                             if iso_code:
