@@ -305,5 +305,5 @@ class MaxMindDbWebIPAnalyzer(BaseGeoIpAnalyzer):
                    'a MaxMind GeoLite2 web client API')
 
 
-manager.AnalysisManager.register_analyzer(MaxMindDbGeoIPSketchPlugin)
-manager.AnalysisManager.register_analyzer(MaxMindDbWebIPSketchPlugin)
+manager.AnalysisManager.register_analyzer(MaxMindDbGeoIPAnalyzer)
+manager.AnalysisManager.register_analyzer(MaxMindDbWebIPAnalyzer)
