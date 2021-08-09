@@ -39,14 +39,16 @@ class GeoIpClientAdapter(object):
     """Base adapter interface for a third party geolocation service."""
 
     def __enter__(self):
-        """Initialise and open a new a client for performing geoip lookups."""
+        """Initialise and open a new a client (self) for performing IP address
+           lookups against a database or service.
+        """
         raise NotImplementedError
 
     def __exit__(self, type, value, traceback):
         """Close and clean up client."""
         raise NotImplementedError
 
-    def ip2geo(self, ip_address: str) -> Union[Tuple[str, str, str, str], None]:
+    def ip2geo(self, ip_address: str) -> Union[Tuple[str, str, str, str, str], None]:
         """Perform a IP to geolocation lookup.
 
         Args:
@@ -97,12 +99,10 @@ class MaxMindGeoDbClient(geoip2.database.Reader, GeoIpClientAdapter):
         try:
             response = self.city(ip_address)
         except geoip2.errors.AddressNotFoundError as exception:
-            logging.debug('IP address {0} not found.'.format(
-                ip_address))
+            logging.debug(f'IP address {ip_address} not found.')
             return None
         except Exception as error:
-            logging.error('Error while geolocating {0} - {1}'.format(
-                ip_address, error))
+            logging.error(f'Error while geolocating {ip_address} - {error}')
             return None
 
         latitude = response.location.latitude
@@ -149,12 +149,10 @@ class MaxMindGeoWebClient(geoip2.webservice.Client, GeoIpClientAdapter):
         try:
             response = self.city(ip_address)
         except geoip2.errors.AddressNotFoundError as exception:
-            logging.debug('IP address {0} not found.'.format(
-                ip_address))
+            logging.debug(f'IP address {ip_address} not found.')
             return None
         except Exception as error:
-            logging.error('Error while geolocating {0} - {1}'.format(
-                ip_address, error))
+            logging.error(f'Error while geolocating {ip_address} - {error}')
             return None
 
         latitude = response.location.latitude
@@ -170,7 +168,10 @@ class BaseGeoIpAnalyzer(interface.BaseAnalyzer):
     """Sketch analyzer for geolocating IP addresses.
 
     Concrete plugin implementations should define the following attributes
-    NAME, DISPLAY_NAME, DESCRIPTION, GEOIP_CLIENT.
+    - NAME (str)
+    - DISPLAY_NAME (str)
+    - DESCRIPTION (str)
+    - GEOIP_CLIENT (concrete subclass of GeoIpClientAdapter).
     """
 
     NAME = ""
@@ -187,16 +188,25 @@ class BaseGeoIpAnalyzer(interface.BaseAnalyzer):
 
     def __init__(self, index_name, sketch_id, timeline_id=None):
         """Initialize The Sketch Analyzer.
+
         Args:
             index_name: Elasticsearch index name
             sketch_id: Sketch ID
+            timeline_id: Timeline ID
         """
         self.index_name = index_name
         super().__init__(index_name, sketch_id, timeline_id=timeline_id)
 
 
     def _validate_ip(self, ip_address):
-        """Return true if ip_address is in a valid format and is non-private."""
+        """Validate an IP address for analysis.
+
+        Args:
+            ip_address: the IP address to validate
+
+        Returns:
+            True if given IP address is valid and global
+        """
         try:
             ip = ipaddress.ip_address(ip_address)
             return ip.is_global
@@ -209,8 +219,7 @@ class BaseGeoIpAnalyzer(interface.BaseAnalyzer):
         Returns:
             String with summary of the analyzer result
         """
-        query = ' OR '.join(
-            ['{0}:*'.format(ip_field) for ip_field in self.IP_FIELDS])
+        query = f'_exists_:({" OR ".join(self.IP_FIELDS)})'
 
         return_fields = self.IP_FIELDS.copy()
 
@@ -219,78 +228,87 @@ class BaseGeoIpAnalyzer(interface.BaseAnalyzer):
             return_fields=return_fields
         )
 
-        try:
-            with self.GEOIP_CLIENT() as client:
-                ip_addresses = defaultdict(lambda: defaultdict(list))
+        ip_addresses = defaultdict(lambda: defaultdict(list))
 
-                for event in events:
-                    for ip_address_field in self.IP_FIELDS:
-                        ip_address = event.source.get(ip_address_field)
-                        if ip_address is None:
-                            continue
+        for event in events:
+            for ip_address_field in self.IP_FIELDS:
+                ip_address = event.source.get(ip_address_field)
+                if ip_address is None:
+                    continue
 
-                        ip_address = [ip_address] if isinstance(ip_address, str) else ip_address
+                if isinstance(ip_address, str):
+                    ip_address = [ip_address]
 
-                        for ip_addr in ip_address:
-                            if not self._validate_ip(ip_addr):
-                                logger.debug('Value {0} in {1} not valid.'
-                                    .format(ip_addr, ip_address_field))
-                                continue
-                            ip_addresses[ip_addr][ip_address_field].append(event)
-
-                logger.info('Found {0} IP address(es)'.format(len(ip_addresses)))
-
-                for ip_address, ip_address_fields in ip_addresses.items():
-                    response = client.ip2geo(ip_address)
-
-                    if response is None:
+                for ip_addr in ip_address:
+                    if not self._validate_ip(ip_addr):
+                        logger.debug(
+                            f'Value {ip_addr} in {ip_address_field} not valid.')
                         continue
+                    ip_addresses[ip_addr][ip_address_field].append(event)
 
-                    if len(response) != 5:
-                        logging.error('Invalid response from GeoIP client')
+        logger.info(f'Found {len(ip_addresses)} IP address(es).')
 
-                    iso_code, latitude, longitude, country_name, city_name = response
+        for ip_address, ip_address_fields in ip_addresses.items():
+            try:
+                with self.GEOIP_CLIENT() as client:
+                    response = client.ip2geo(ip_address)
+            except Exception as error:
+                logging.error(f"Error {error}")
+                return f"GeoIP analyzer error: {error}"
 
-                    flag_emoji = emojis.get_emoji(iso_code)
+            try:
+                iso_code, latitude, longitude, country_name, city_name = \
+                    response
+            except ValueError as error:
+                logging.error(f"GeoIP client must return 5 fields: "
+                    f"<iso_code, latitude, longitude, country_name, city_name>."
+                    f" Number of fields returned: {len(response)}")
+            if response is None:
+                continue
 
-                    if flag_emoji is None:
-                        logger.error(
-                        'Invalid ISO code {0} encountered for IP {1}.'
-                            .format(iso_code, ip_address))
-                    for ip_address_field, events in ip_address_fields.items():
-                        for event in events:
+            if len(response) != 5:
+                logging.error('Invalid response from GeoIP client')
 
-                            new_attributes = {}
-                            if latitude and longitude:
-                                new_attributes[f'{ip_address_field}_latitude'] = latitude
-                                new_attributes['{0}_longitude'
-                                    .format(ip_address_field)] = longitude
-                            if iso_code:
-                                new_attributes['{0}_iso_code'
-                                    .format(ip_address_field)] = iso_code
-                            if city_name:
-                                new_attributes['{0}_city'
-                                    .format(ip_address_field)] = city_name
-                            event.add_attributes(new_attributes)
+            flag_emoji = emojis.get_emoji(f"FLAG_{iso_code}")
 
-                            if flag_emoji:
-                                event.add_emojis([flag_emoji])
+            if flag_emoji is None:
+                logger.error(
+                    f'Invalid ISO code {iso_code} encountered for IP ' +
+                    f'{ip_address}.')
 
-                            event.add_tags([country_name])
-                            event.commit()
+            for ip_address_field, events in ip_address_fields.items():
+                for event in events:
 
-                return 'GeoIP analyzer completed.'
-        except Exception as error:
-            logging.error("Error {}".format(error))
-            return "GeoIP analyzer error: {}".format(error)
+                    new_attributes = {}
+                    if latitude and longitude:
+                        new_attributes[
+                            f'{ip_address_field}_latitude'] = latitude
+                        new_attributes[
+                            f'{ip_address_field}_longitude'] = longitude
+                    if iso_code:
+                        new_attributes[
+                            f'{ip_address_field}_iso_code'] = iso_code
+                    if city_name:
+                        new_attributes[
+                            f'{ip_address_field}_city'] = city_name
+                    event.add_attributes(new_attributes)
+
+                    if flag_emoji:
+                        event.add_emojis([flag_emoji])
+
+                    if country_name:
+                        event.add_tags([country_name])
+                    event.commit()
+
+        return 'GeoIP analyzer completed.'
 
 
-class MaxMindDbGeoIPSketchPlugin(BaseGeoIpSketchPlugin):
+class MaxMindDbGeoIPAnalyzer(BaseGeoIpAnalyzer):
 
     GEOIP_CLIENT = MaxMindGeoDbClient
 
-    NAME = 'geo_ip_db'
-    DISPLAY_NAME = 'Geolocate IP addresses (Database based)'
+    NAME = 'geo_ip_maxmind_db'
+    DISPLAY_NAME = 'Geolocate IP addresses (MaxMind Database based)'
     DESCRIPTION = ('Find the approximate geolocation of an IP address using ' +
                    'a MaxMind GeoLite2 database')
 
@@ -299,8 +317,8 @@ class MaxMindDbWebIPAnalyzer(BaseGeoIpAnalyzer):
 
     GEOIP_CLIENT = MaxMindGeoWebClient
 
-    NAME = 'geo_ip_web'
-    DISPLAY_NAME = 'Geolocate IP addresses (Web client based)'
+    NAME = 'geo_ip_maxmind_web'
+    DISPLAY_NAME = 'Geolocate IP addresses (MaxMind Web client based)'
     DESCRIPTION = ('Find the approximate geolocation of an IP address using ' +
                    'a MaxMind GeoLite2 web client API')
 
