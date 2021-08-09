@@ -79,7 +79,7 @@ class MaxMindGeoDbClient(geoip2.database.Reader, GeoIpClientAdapter):
             raise RuntimeError('MaxMind Database does not exist.')
         super().__init__(self._geolite_database)
 
-    def ip2geo(self, ip_address) -> Union[Tuple[str, str, str, str], None]:
+    def ip2geo(self, ip_address) -> Union[Tuple[str, str, str, str, str], None]:
         """Perform a IP to geolocation lookup.
 
         Args:
@@ -129,7 +129,7 @@ class MaxMindGeoWebClient(geoip2.webservice.Client, GeoIpClientAdapter):
             raise RuntimeError('MaxMind host not set.')
         super().__init__(self._account_id, self._license_key, host=self._host)
 
-    def ip2geo(self, ip_address) -> Union[Tuple[str, str, str, str], None]:
+    def ip2geo(self, ip_address) -> Union[Tuple[str, str, str, str, str], None]:
         """Perform a IP to geolocation lookup.
 
         Args:
