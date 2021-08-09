@@ -947,9 +947,11 @@ export default {
       // Remove all current label chips
       this.currentQueryFilter.chips = this.currentQueryFilter.chips.filter(chip => chip.type !== 'label')
       this.selectedLabels.forEach(label => {
+        console.log("labelsssss")
+        console.log(label)
         let chip = {
           field: '',
-          value: label.label,
+          value: label,
           type: 'label',
           operator: 'must',
           active: true,
