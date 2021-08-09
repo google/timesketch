@@ -420,35 +420,35 @@ export default {
         })
         .catch(e => {})
     },
-    updateComment: function(comment, comment_index) {
+    updateComment: function(comment, commentIndex) {
       ApiClient.updateEventAnnotation(this.sketch.id, 'comment', comment, [this.event], this.currentSearchNode)
         .then(response => {
-          this.$set(this.comments, comment_index, response.data.objects[0][0]);
+          this.$set(this.comments, commentIndex, response.data.objects[0][0]);
         })
         .catch(e => {
           console.error(e)
         })
     },
-    deleteComment: function(comment_id,comment_index) {
+    deleteComment: function(commentId,commentIndex) {
       if(confirm("Are you sure?")){
-        ApiClient.deleteEventAnnotation(this.sketch.id, 'comment', comment_id, this.event, this.currentSearchNode)
+        ApiClient.deleteEventAnnotation(this.sketch.id, 'comment', commentId, this.event, this.currentSearchNode)
           .then(response => {
-            this.comments.splice(comment_index,1)
+            this.comments.splice(commentIndex,1)
           })
           .catch(e => {
             console.error(e)
           })
       }
     },
-    toggleEditComment(comment_index,enable) {
+    toggleEditComment(commentIndex,enable) {
       if (enable){
-        const changeComment = this.comments[comment_index];
+        const changeComment = this.comments[commentIndex];
         changeComment.editable = true;
-        this.$set(this.comments, comment_index, changeComment);
+        this.$set(this.comments, commentIndex, changeComment);
       }else {
-        const changeComment = this.comments[comment_index];
+        const changeComment = this.comments[commentIndex];
         changeComment.editable = false;
-        this.$set(this.comments, comment_index, changeComment);
+        this.$set(this.comments, commentIndex, changeComment);
       }
     },
     getCurrentUser(){
