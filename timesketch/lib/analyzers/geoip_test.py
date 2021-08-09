@@ -95,6 +95,38 @@ class TestMaxMindDbGeoIPAnalyzer(BaseTest):
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
+    def testValidIPv6(self):
+        """Test valid IPv6 addresses result in new attributes"""
+        analyzer = MaxMindDbGeoIPAnalyzer('test', 1)
+        analyzer.GEOIP_CLIENT = MockReader
+
+        analyzer.datastore.client = mock.Mock()
+
+        IP_FIELDS = ['ip', 'host_ip', 'src_ip', 'dst_ip', 'source_ip',
+        'dest_ip', 'ip_address', 'client_ip', 'address', 'saddr', 'daddr',
+        'requestMetadata_callerIp', 'a_answer']
+
+        _create_mock_event(analyzer.datastore, 0, 1,
+            source_attrs={
+                ip_field: '2001:4860:4860::8888' for ip_field in IP_FIELDS
+            })
+
+        message = analyzer.run()
+        event = analyzer.datastore.event_store['0']
+
+        for ip_field in IP_FIELDS:
+            self.assertTrue('{0}_latitude'.format(ip_field)
+                in event['_source'])
+            self.assertTrue('{0}_longitude'.format(ip_field)
+                in event['_source'])
+            self.assertTrue('{0}_iso_code'.format(ip_field)
+                in event['_source'])
+            self.assertTrue('{0}_city'.format(ip_field)
+                in event['_source'])
+        self.assertEqual(message, 'GeoIP analyzer completed.')
+        
+    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+                MockDataStore)
     def testPrivateIPv4(self):
         """Test private IPv4 address does not result in new attributes"""
         analyzer = MaxMindDbGeoIPAnalyzer('test', 1)
@@ -161,6 +193,29 @@ class TestMaxMindDbGeoIPAnalyzer(BaseTest):
         _create_mock_event(analyzer.datastore, 0, 1,
             source_attrs={
                 'ip_address': ['8.8.8.8', '8.8.4.4']
+            })
+
+        message = analyzer.run()
+        event = analyzer.datastore.event_store['0']
+
+        self.assertTrue('ip_address_latitude' in event['_source'])
+        self.assertTrue('ip_address_longitude' in event['_source'])
+        self.assertTrue('ip_address_iso_code' in event['_source'])
+        self.assertTrue('ip_address_city' in event['_source'])
+        self.assertEqual(message, 'GeoIP analyzer completed.')
+
+    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+                MockDataStore)
+    @mock.patch('geoip2.database.Reader', MockReader)
+    def testMixedValidIP(self):
+        """Test valid IPv4 addresses result in new attributes"""
+        analyzer = MaxMindDbGeoIPAnalyzer('test', 1)
+        analyzer.GEOIP_CLIENT = MockReader
+        analyzer.datastore.client = mock.Mock()
+
+        _create_mock_event(analyzer.datastore, 0, 1,
+            source_attrs={
+                'ip_address': ['8.8.8.8', '2001:4860:4860::8844']
             })
 
         message = analyzer.run()
@@ -220,6 +275,38 @@ class TestMaxMindDbWebIPAnalyzer(BaseTest):
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
+    def testValidIPv6(self):
+        """Test valid IPv6 addresses result in new attributes"""
+        analyzer = MaxMindDbWebIPAnalyzer('test', 1)
+        analyzer.GEOIP_CLIENT = MockReader
+
+        analyzer.datastore.client = mock.Mock()
+
+        IP_FIELDS = ['ip', 'host_ip', 'src_ip', 'dst_ip', 'source_ip',
+        'dest_ip', 'ip_address', 'client_ip', 'address', 'saddr', 'daddr',
+        'requestMetadata_callerIp', 'a_answer']
+
+        _create_mock_event(analyzer.datastore, 0, 1,
+            source_attrs={
+                ip_field: '2001:4860:4860::8888' for ip_field in IP_FIELDS
+            })
+
+        message = analyzer.run()
+        event = analyzer.datastore.event_store['0']
+
+        for ip_field in IP_FIELDS:
+            self.assertTrue('{0}_latitude'.format(ip_field)
+                in event['_source'])
+            self.assertTrue('{0}_longitude'.format(ip_field)
+                in event['_source'])
+            self.assertTrue('{0}_iso_code'.format(ip_field)
+                in event['_source'])
+            self.assertTrue('{0}_city'.format(ip_field)
+                in event['_source'])
+        self.assertEqual(message, 'GeoIP analyzer completed.')
+        
+    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+                MockDataStore)
     def testPrivateIPv4(self):
         """Test private IPv4 address does not result in new attributes"""
         analyzer = MaxMindDbWebIPAnalyzer('test', 1)
@@ -296,3 +383,27 @@ class TestMaxMindDbWebIPAnalyzer(BaseTest):
         self.assertTrue('ip_address_iso_code' in event['_source'])
         self.assertTrue('ip_address_city' in event['_source'])
         self.assertEqual(message, 'GeoIP analyzer completed.')
+
+    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+                MockDataStore)
+    @mock.patch('geoip2.database.Reader', MockReader)
+    def testMixedValidIP(self):
+        """Test valid IPv4 addresses result in new attributes"""
+        analyzer = MaxMindDbWebIPAnalyzer('test', 1)
+        analyzer.GEOIP_CLIENT = MockReader
+        analyzer.datastore.client = mock.Mock()
+
+        _create_mock_event(analyzer.datastore, 0, 1,
+            source_attrs={
+                'ip_address': ['8.8.8.8', '2001:4860:4860::8844']
+            })
+
+        message = analyzer.run()
+        event = analyzer.datastore.event_store['0']
+
+        self.assertTrue('ip_address_latitude' in event['_source'])
+        self.assertTrue('ip_address_longitude' in event['_source'])
+        self.assertTrue('ip_address_iso_code' in event['_source'])
+        self.assertTrue('ip_address_city' in event['_source'])
+        self.assertEqual(message, 'GeoIP analyzer completed.')
+
