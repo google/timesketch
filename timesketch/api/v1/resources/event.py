@@ -550,7 +550,8 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
             'event_id', type=str, required=False)
         self.parser.add_argument('event_index', type=str, required=False)
         self.parser.add_argument('event_type', type=str, required=False)
-        self.parser.add_argument('currentSearchNode_id', type=int, required=False)
+        self.parser.add_argument('currentSearchNode_id', type=int,
+          required=False)
 
     def _get_sketch(self, sketch_id):
         sketch = Sketch.query.get_with_acl(sketch_id)
@@ -753,7 +754,8 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
 
                 if not annotation:
                     abort(
-                        HTTP_STATUS_CODE_BAD_REQUEST, 'Update operation unsuccessful')
+                        HTTP_STATUS_CODE_BAD_REQUEST,
+                        'Update operation unsuccessful')
 
                 updatedAnnotations.append(annotation)
             else:
@@ -832,7 +834,8 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                 'not {0!s}'.format(annotation_type))
 
 
-        return (HTTP_STATUS_CODE_BAD_REQUEST, 'Could not delete the annotation type {0!s} with the id {1!d}'
+        return (HTTP_STATUS_CODE_BAD_REQUEST, 'Could not delete the annotation'
+            ' type {0!s} with the id {1!d}'
             .format(annotation_type, annotation_id))
 
 
