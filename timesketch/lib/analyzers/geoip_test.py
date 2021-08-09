@@ -17,8 +17,8 @@ from __future__ import unicode_literals
 
 import mock
 
-from timesketch.lib.analyzers.geoip import MaxMindDbGeoIPSketchPlugin
-from timesketch.lib.analyzers.geoip import MaxMindDbWebIPSketchPlugin
+from timesketch.lib.analyzers.geoip import MaxMindDbGeoIPAnalyzer
+from timesketch.lib.analyzers.geoip import MaxMindDbWebIPAnalyzer
 
 from timesketch.lib import emojis
 from timesketch.lib.testlib import BaseTest
@@ -52,7 +52,7 @@ class TestMaxMindDbGeoIPAnalyzer(BaseTest):
     """Tests for the functionality of the MaxMind Database based Geo IP
        Analyzer."""
 
-    _TEST_ISO_CODE = "US"
+    _TEST_ISO_CODE = "FLAG_US"
     _TEST_EMOJI = "&#x1F1FA&#x1F1F8"
 
 
@@ -65,7 +65,7 @@ class TestMaxMindDbGeoIPAnalyzer(BaseTest):
                 MockDataStore)
     def testValidIPv4(self):
         """Test valid IPv4 addresses result in new attributes"""
-        analyzer = MaxMindDbGeoIPSketchPlugin('test', 1)
+        analyzer = MaxMindDbGeoIPAnalyzer('test', 1)
         analyzer.GEOIP_CLIENT = MockReader
 
         analyzer.datastore.client = mock.Mock()
@@ -97,7 +97,7 @@ class TestMaxMindDbGeoIPAnalyzer(BaseTest):
                 MockDataStore)
     def testPrivateIPv4(self):
         """Test private IPv4 address does not result in new attributes"""
-        analyzer = MaxMindDbGeoIPSketchPlugin('test', 1)
+        analyzer = MaxMindDbGeoIPAnalyzer('test', 1)
         analyzer.GEOIP_CLIENT = MockReader
         analyzer.datastore.client = mock.Mock()
 
@@ -119,7 +119,7 @@ class TestMaxMindDbGeoIPAnalyzer(BaseTest):
                 MockDataStore)
     def testInvalidIPv4(self):
         """Test invalid IP address"""
-        analyzer = MaxMindDbGeoIPSketchPlugin('test', 1)
+        analyzer = MaxMindDbGeoIPAnalyzer('test', 1)
         analyzer.GEOIP_CLIENT = MockReader
         analyzer.datastore.client = mock.Mock()
 
@@ -141,7 +141,7 @@ class TestMaxMindDbGeoIPAnalyzer(BaseTest):
                 MockDataStore)
     def testNoEvents(self):
         """Test no events"""
-        analyzer = MaxMindDbGeoIPSketchPlugin('test', 1)
+        analyzer = MaxMindDbGeoIPAnalyzer('test', 1)
         analyzer.GEOIP_CLIENT = MockReader
         analyzer.datastore.client = mock.Mock()
 
@@ -154,7 +154,7 @@ class TestMaxMindDbGeoIPAnalyzer(BaseTest):
     @mock.patch('geoip2.database.Reader', MockReader)
     def testMultipleValidIPv4(self):
         """Test valid IPv4 addresses result in new attributes"""
-        analyzer = MaxMindDbGeoIPSketchPlugin('test', 1)
+        analyzer = MaxMindDbGeoIPAnalyzer('test', 1)
         analyzer.GEOIP_CLIENT = MockReader
         analyzer.datastore.client = mock.Mock()
 
@@ -177,7 +177,7 @@ class TestMaxMindDbWebIPAnalyzer(BaseTest):
     """Tests for the functionality of the MaxMind web service based Geo IP
        Analyzer."""
 
-    _TEST_ISO_CODE = "US"
+    _TEST_ISO_CODE = "FLAG_US"
     _TEST_EMOJI = "&#x1F1FA&#x1F1F8"
 
 
@@ -190,7 +190,7 @@ class TestMaxMindDbWebIPAnalyzer(BaseTest):
                 MockDataStore)
     def testValidIPv4(self):
         """Test valid IPv4 addresses result in new attributes"""
-        analyzer = MaxMindDbWebIPSketchPlugin('test', 1)
+        analyzer = MaxMindDbWebIPAnalyzer('test', 1)
         analyzer.GEOIP_CLIENT = MockReader
 
         analyzer.datastore.client = mock.Mock()
@@ -222,7 +222,7 @@ class TestMaxMindDbWebIPAnalyzer(BaseTest):
                 MockDataStore)
     def testPrivateIPv4(self):
         """Test private IPv4 address does not result in new attributes"""
-        analyzer = MaxMindDbWebIPSketchPlugin('test', 1)
+        analyzer = MaxMindDbWebIPAnalyzer('test', 1)
         analyzer.GEOIP_CLIENT = MockReader
         analyzer.datastore.client = mock.Mock()
 
@@ -244,7 +244,7 @@ class TestMaxMindDbWebIPAnalyzer(BaseTest):
                 MockDataStore)
     def testInvalidIPv4(self):
         """Test invalid IP address"""
-        analyzer = MaxMindDbWebIPSketchPlugin('test', 1)
+        analyzer = MaxMindDbWebIPAnalyzer('test', 1)
         analyzer.GEOIP_CLIENT = MockReader
         analyzer.datastore.client = mock.Mock()
 
@@ -266,7 +266,7 @@ class TestMaxMindDbWebIPAnalyzer(BaseTest):
                 MockDataStore)
     def testNoEvents(self):
         """Test no events"""
-        analyzer = MaxMindDbWebIPSketchPlugin('test', 1)
+        analyzer = MaxMindDbWebIPAnalyzer('test', 1)
         analyzer.GEOIP_CLIENT = MockReader
         analyzer.datastore.client = mock.Mock()
 
@@ -279,7 +279,7 @@ class TestMaxMindDbWebIPAnalyzer(BaseTest):
     @mock.patch('geoip2.database.Reader', MockReader)
     def testMultipleValidIPv4(self):
         """Test valid IPv4 addresses result in new attributes"""
-        analyzer = MaxMindDbWebIPSketchPlugin('test', 1)
+        analyzer = MaxMindDbWebIPAnalyzer('test', 1)
         analyzer.GEOIP_CLIENT = MockReader
         analyzer.datastore.client = mock.Mock()
 
