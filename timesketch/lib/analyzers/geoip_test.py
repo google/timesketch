@@ -49,7 +49,7 @@ class MockReader(object):
 
 
 class TestMaxMindDbGeoIPAnalyzer(BaseTest):
-    """Tests for the functionality of the MaxMind Databse based Geo IP
+    """Tests for the functionality of the MaxMind Database based Geo IP
        Analyzer."""
 
     _TEST_ISO_CODE = "US"
