@@ -169,10 +169,10 @@ export default {
     }
     return RestApiClient.put('/sketches/' + sketchId + '/event/annotate/', formData)
   },
-  deleteEventAnnotation(sketchId, annotationType, annotation_id, event, currentSearchNode) {
+  deleteEventAnnotation(sketchId, annotationType, annotationId, event, currentSearchNode) {
     let params = {
       params: {
-        annotation_id: annotation_id,
+        annotation_id: annotationId,
         annotation_type: annotationType,
         event_id: event._id,
         event_index: event._index,
