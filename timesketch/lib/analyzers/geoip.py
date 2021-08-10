@@ -45,11 +45,12 @@ class GeoIpClientAdapter(object):
         """
         raise NotImplementedError
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, exc_type, exc_value, traceback):
         """Close and clean up client."""
         raise NotImplementedError
 
-    def ip2geo(self, ip_address: str) -> Union[Tuple[str, str, str, str, str], None]:
+    def ip2geo(self, ip_address: str) -> Union[Tuple[
+            str, str, str, str, str], None]:
         """Perform a IP to geolocation lookup.
 
         Args:
@@ -80,6 +81,16 @@ class MaxMindGeoDbClient(geoip2.database.Reader, GeoIpClientAdapter):
             raise RuntimeError('MaxMind Database does not exist.')
         super().__init__(self._geolite_database)
 
+    def __enter__(self):
+        """Initialise and open a new a client (self) for performing IP address
+           lookups against a database or service.
+        """
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        """Close and clean up client."""
+        return self.__exit__(exc_type, exc_value, traceback)
+
     def ip2geo(self, ip_address) -> Union[Tuple[str, str, str, str, str], None]:
         """Perform a IP to geolocation lookup.
 
@@ -99,11 +110,12 @@ class MaxMindGeoDbClient(geoip2.database.Reader, GeoIpClientAdapter):
         """
         try:
             response = self.city(ip_address)
-        except geoip2.errors.AddressNotFoundError as exception:
-            logging.debug(f'IP address {ip_address} not found.')
+        except geoip2.errors.AddressNotFoundError:
+            logging.debug('IP address {0} not found.'.format(ip_address))
             return None
         except maxminddb.InvalidDatabaseError as error:
-            logging.error(f'Error geolocating {ip_address} - {error}')
+            logging.error('Error while geolocating {0} - {1}'.format(
+                ip_address, error))
             return None
 
         latitude = response.location.latitude
@@ -130,6 +142,16 @@ class MaxMindGeoWebClient(geoip2.webservice.Client, GeoIpClientAdapter):
             raise RuntimeError('MaxMind host not set.')
         super().__init__(self._account_id, self._license_key, host=self._host)
 
+    def __enter__(self):
+        """Initialise and open a new a client (self) for performing IP address
+           lookups against a database or service.
+        """
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        """Close and clean up client."""
+        return self.__exit__(exc_type, exc_value, traceback)
+
     def ip2geo(self, ip_address) -> Union[Tuple[str, str, str, str, str], None]:
         """Perform a IP to geolocation lookup.
 
@@ -149,11 +171,12 @@ class MaxMindGeoWebClient(geoip2.webservice.Client, GeoIpClientAdapter):
         """
         try:
             response = self.city(ip_address)
-        except geoip2.errors.AddressNotFoundError as exception:
-            logging.debug(f'IP address {ip_address} not found.')
+        except geoip2.errors.AddressNotFoundError:
+            logging.debug('IP address {0} not found.'.format(ip_address))
             return None
         except geoip2.errors.GeoIP2Error as error:
-            logging.error(f'Error while geolocating {ip_address} - {error}')
+            logging.error('Error while geolocating {0} - {1}'.format(
+                ip_address, error))
             return None
 
         latitude = response.location.latitude
@@ -179,12 +202,12 @@ class BaseGeoIpAnalyzer(interface.BaseAnalyzer):
     DISPLAY_NAME = ""
     DESCRIPTION = ""
 
-    GEOIP_CLIENT = None
+    GEOIP_CLIENT: type = None
 
     DEPENDENCIES = frozenset(['feature_extraction'])
     IP_FIELDS = ['ip', 'host_ip', 'src_ip', 'dst_ip', 'source_ip', 'dest_ip',
-        'ip_address', 'client_ip', 'address', 'saddr', 'daddr',
-        'requestMetadata_callerIp', 'a_answer']
+                 'ip_address', 'client_ip', 'address', 'saddr', 'daddr',
+                 'requestMetadata_callerIp', 'a_answer']
 
 
     def __init__(self, index_name, sketch_id, timeline_id=None):
@@ -211,7 +234,7 @@ class BaseGeoIpAnalyzer(interface.BaseAnalyzer):
         try:
             ip = ipaddress.ip_address(ip_address)
             return ip.is_global
-        except ValueError as exception:
+        except ValueError:
             return False
 
     def run(self):
@@ -220,6 +243,9 @@ class BaseGeoIpAnalyzer(interface.BaseAnalyzer):
         Returns:
             String with summary of the analyzer result
         """
+        if self.GEOIP_CLIENT is None:
+            return 'GeoIP Client not configured in analyzer'
+
         query = f'_exists_:({" OR ".join(self.IP_FIELDS)})'
 
         return_fields = self.IP_FIELDS.copy()
@@ -242,24 +268,24 @@ class BaseGeoIpAnalyzer(interface.BaseAnalyzer):
 
                 for ip_addr in ip_address:
                     if not self._validate_ip(ip_addr):
-                        logger.debug(
-                            f'Value {ip_addr} in {ip_address_field} not valid.')
+                        logger.debug(f'Value {0} in {1} not valid.'.format(
+                            ip_addr, ip_address_field))
                         continue
                     ip_addresses[ip_addr][ip_address_field].append(event)
 
- 
-
         for ip_address, ip_address_fields in ip_addresses.items():
-            with self.GEOIP_CLIENT() as client:
+            with self.GEOIP_CLIENT() as client:  # pylint: disable=E1102
                 response = client.ip2geo(ip_address)
 
             try:
                 iso_code, latitude, longitude, country_name, city_name = \
                     response
-            except ValueError as error:
-                logging.error(f'GeoIP client must return 5 fields: '
-                    f'<iso_code, latitude, longitude, country_name, city_name>.'
-                    f' Number of fields returned: {len(response)}')
+            except ValueError:
+                logging.error('GeoIP client must return 5 fields: '
+                              '<iso_code, latitude, longitude, country_name, '
+                              'city_name>. '
+                              ' Number of fields returned: {0:d}'.format(
+                                  len(response)))
             if response is None:
                 continue
 
@@ -270,8 +296,8 @@ class BaseGeoIpAnalyzer(interface.BaseAnalyzer):
 
             if flag_emoji is None:
                 logger.error(
-                    f'Invalid ISO code {iso_code} encountered for IP ' +
-                    f'{ip_address}.')
+                    'Invalid ISO code {0} encountered for IP {1}.'.format(
+                        iso_code, ip_address))
 
             for ip_address_field, events in ip_address_fields.items():
                 for event in events:
@@ -297,7 +323,8 @@ class BaseGeoIpAnalyzer(interface.BaseAnalyzer):
                         event.add_tags([country_name])
                     event.commit()
 
-        return f'GeoIP analyzer completed: Found {len(ip_addresses)} IP address(es).'
+        return (f'GeoIP analyzer completed: Found {len(ip_addresses)} ' +
+                f'IP address(es).')
 
 
 class MaxMindDbGeoIPAnalyzer(BaseGeoIpAnalyzer):

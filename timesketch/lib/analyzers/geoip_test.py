@@ -38,13 +38,13 @@ class MockReader(object):
     def __enter__(self):
         return self
 
-    def open(self, *args):
+    def open(self, *unused_args):
         return self
 
     def __exit__(self, *args):
         pass
 
-    def ip2geo(self, *args):
+    def ip2geo(self, *unused_args):
         return 'a', 'b', 'c', 'd', 'e'
 
 
@@ -52,8 +52,8 @@ class TestMaxMindDbGeoIPAnalyzer(BaseTest):
     """Tests for the functionality of the MaxMind Database based Geo IP
        Analyzer."""
 
-    _TEST_ISO_CODE = "FLAG_US"
-    _TEST_EMOJI = "&#x1F1FA&#x1F1F8"
+    _TEST_ISO_CODE = 'FLAG_US'
+    _TEST_EMOJI = '&#x1F1FA&#x1F1F8'
 
 
     def testEmoji(self):
@@ -71,27 +71,29 @@ class TestMaxMindDbGeoIPAnalyzer(BaseTest):
         analyzer.datastore.client = mock.Mock()
 
         IP_FIELDS = ['ip', 'host_ip', 'src_ip', 'dst_ip', 'source_ip',
-        'dest_ip', 'ip_address', 'client_ip', 'address', 'saddr', 'daddr',
-        'requestMetadata_callerIp', 'a_answer']
+                     'dest_ip', 'ip_address', 'client_ip', 'address', 'saddr',
+                     'daddr', 'requestMetadata_callerIp', 'a_answer']
 
         _create_mock_event(analyzer.datastore, 0, 1,
-            source_attrs={
-                ip_field: '8.8.8.8' for ip_field in IP_FIELDS
-            })
+                           source_attrs={
+                               ip_field: '8.8.8.8' for ip_field in IP_FIELDS
+                           })
 
         message = analyzer.run()
         event = analyzer.datastore.event_store['0']
 
         for ip_field in IP_FIELDS:
             self.assertTrue('{0}_latitude'.format(ip_field)
-                in event['_source'])
+                            in event['_source'])
             self.assertTrue('{0}_longitude'.format(ip_field)
-                in event['_source'])
+                            in event['_source'])
             self.assertTrue('{0}_iso_code'.format(ip_field)
-                in event['_source'])
+                            in event['_source'])
             self.assertTrue('{0}_city'.format(ip_field)
-                in event['_source'])
-        self.assertEqual(message, 'GeoIP analyzer completed.')
+                            in event['_source'])
+        self.assertEqual(message,
+                         'GeoIP analyzer completed: Found 1 IP address(es).')
+
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
@@ -103,28 +105,31 @@ class TestMaxMindDbGeoIPAnalyzer(BaseTest):
         analyzer.datastore.client = mock.Mock()
 
         IP_FIELDS = ['ip', 'host_ip', 'src_ip', 'dst_ip', 'source_ip',
-        'dest_ip', 'ip_address', 'client_ip', 'address', 'saddr', 'daddr',
-        'requestMetadata_callerIp', 'a_answer']
+                     'dest_ip', 'ip_address', 'client_ip', 'address', 'saddr',
+                     'daddr', 'requestMetadata_callerIp', 'a_answer']
 
         _create_mock_event(analyzer.datastore, 0, 1,
-            source_attrs={
-                ip_field: '2001:4860:4860::8888' for ip_field in IP_FIELDS
-            })
+                           source_attrs={
+                               ip_field: '2001:4860:4860::8888'
+                               for ip_field in IP_FIELDS
+                           })
 
         message = analyzer.run()
         event = analyzer.datastore.event_store['0']
 
         for ip_field in IP_FIELDS:
             self.assertTrue('{0}_latitude'.format(ip_field)
-                in event['_source'])
+                            in event['_source'])
             self.assertTrue('{0}_longitude'.format(ip_field)
-                in event['_source'])
+                            in event['_source'])
             self.assertTrue('{0}_iso_code'.format(ip_field)
-                in event['_source'])
+                            in event['_source'])
             self.assertTrue('{0}_city'.format(ip_field)
-                in event['_source'])
-        self.assertEqual(message, 'GeoIP analyzer completed.')
-        
+                            in event['_source'])
+        self.assertEqual(message,
+                         'GeoIP analyzer completed: Found 1 IP address(es).')
+
+
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
     def testPrivateIPv4(self):
@@ -134,9 +139,9 @@ class TestMaxMindDbGeoIPAnalyzer(BaseTest):
         analyzer.datastore.client = mock.Mock()
 
         _create_mock_event(analyzer.datastore, 0, 1,
-            source_attrs={
-                'ip_address': '127.0.0.1'
-            })
+                           source_attrs={
+                               'ip_address': '127.0.0.1'
+                           })
 
         message = analyzer.run()
         event = analyzer.datastore.event_store['0']
@@ -145,7 +150,9 @@ class TestMaxMindDbGeoIPAnalyzer(BaseTest):
         self.assertTrue('ip_address_longitude' not in event['_source'])
         self.assertTrue('ip_address_iso_code' not in event['_source'])
         self.assertTrue('ip_address_city' not in event['_source'])
-        self.assertEqual(message, 'GeoIP analyzer completed.')
+        self.assertEqual(message,
+                         'GeoIP analyzer completed: Found 0 IP address(es).')
+
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
@@ -156,9 +163,9 @@ class TestMaxMindDbGeoIPAnalyzer(BaseTest):
         analyzer.datastore.client = mock.Mock()
 
         _create_mock_event(analyzer.datastore, 0, 1,
-            source_attrs={
-                'ip_address': None
-            })
+                           source_attrs={
+                               'ip_address': None
+                           })
 
         message = analyzer.run()
         event = analyzer.datastore.event_store['0']
@@ -167,7 +174,9 @@ class TestMaxMindDbGeoIPAnalyzer(BaseTest):
         self.assertTrue('ip_address_longitude' not in event['_source'])
         self.assertTrue('ip_address_iso_code' not in event['_source'])
         self.assertTrue('ip_address_city' not in event['_source'])
-        self.assertEqual(message, 'GeoIP analyzer completed.')
+        self.assertEqual(message,
+                         'GeoIP analyzer completed: Found 0 IP address(es).')
+
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
@@ -179,7 +188,9 @@ class TestMaxMindDbGeoIPAnalyzer(BaseTest):
 
         message = analyzer.run()
 
-        self.assertEqual(message, 'GeoIP analyzer completed.')
+        self.assertEqual(message,
+                         'GeoIP analyzer completed: Found 0 IP address(es).')
+
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
@@ -191,9 +202,9 @@ class TestMaxMindDbGeoIPAnalyzer(BaseTest):
         analyzer.datastore.client = mock.Mock()
 
         _create_mock_event(analyzer.datastore, 0, 1,
-            source_attrs={
-                'ip_address': ['8.8.8.8', '8.8.4.4']
-            })
+                           source_attrs={
+                               'ip_address': ['8.8.8.8', '8.8.4.4']
+                           })
 
         message = analyzer.run()
         event = analyzer.datastore.event_store['0']
@@ -202,7 +213,8 @@ class TestMaxMindDbGeoIPAnalyzer(BaseTest):
         self.assertTrue('ip_address_longitude' in event['_source'])
         self.assertTrue('ip_address_iso_code' in event['_source'])
         self.assertTrue('ip_address_city' in event['_source'])
-        self.assertEqual(message, 'GeoIP analyzer completed.')
+        self.assertEqual(message,
+                         'GeoIP analyzer completed: Found 2 IP address(es).')
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
@@ -214,9 +226,9 @@ class TestMaxMindDbGeoIPAnalyzer(BaseTest):
         analyzer.datastore.client = mock.Mock()
 
         _create_mock_event(analyzer.datastore, 0, 1,
-            source_attrs={
-                'ip_address': ['8.8.8.8', '2001:4860:4860::8844']
-            })
+                           source_attrs={
+                               'ip_address': ['8.8.8.8', '2001:4860:4860::8844']
+                           })
 
         message = analyzer.run()
         event = analyzer.datastore.event_store['0']
@@ -225,15 +237,17 @@ class TestMaxMindDbGeoIPAnalyzer(BaseTest):
         self.assertTrue('ip_address_longitude' in event['_source'])
         self.assertTrue('ip_address_iso_code' in event['_source'])
         self.assertTrue('ip_address_city' in event['_source'])
-        self.assertEqual(message, 'GeoIP analyzer completed.')
+        self.assertEqual(message,
+                         'GeoIP analyzer completed: Found 2 IP address(es).')
+
 
 
 class TestMaxMindDbWebIPAnalyzer(BaseTest):
     """Tests for the functionality of the MaxMind web service based Geo IP
        Analyzer."""
 
-    _TEST_ISO_CODE = "FLAG_US"
-    _TEST_EMOJI = "&#x1F1FA&#x1F1F8"
+    _TEST_ISO_CODE = 'FLAG_US'
+    _TEST_EMOJI = '&#x1F1FA&#x1F1F8'
 
 
     def testEmoji(self):
@@ -251,27 +265,29 @@ class TestMaxMindDbWebIPAnalyzer(BaseTest):
         analyzer.datastore.client = mock.Mock()
 
         IP_FIELDS = ['ip', 'host_ip', 'src_ip', 'dst_ip', 'source_ip',
-        'dest_ip', 'ip_address', 'client_ip', 'address', 'saddr', 'daddr',
-        'requestMetadata_callerIp', 'a_answer']
+                     'dest_ip', 'ip_address', 'client_ip', 'address', 'saddr',
+                     'daddr', 'requestMetadata_callerIp', 'a_answer']
 
         _create_mock_event(analyzer.datastore, 0, 1,
-            source_attrs={
-                ip_field: '8.8.8.8' for ip_field in IP_FIELDS
-            })
+                           source_attrs={
+                               ip_field: '8.8.8.8' for ip_field in IP_FIELDS
+                           })
 
         message = analyzer.run()
         event = analyzer.datastore.event_store['0']
 
         for ip_field in IP_FIELDS:
             self.assertTrue('{0}_latitude'.format(ip_field)
-                in event['_source'])
+                            in event['_source'])
             self.assertTrue('{0}_longitude'.format(ip_field)
-                in event['_source'])
+                            in event['_source'])
             self.assertTrue('{0}_iso_code'.format(ip_field)
-                in event['_source'])
+                            in event['_source'])
             self.assertTrue('{0}_city'.format(ip_field)
-                in event['_source'])
-        self.assertEqual(message, 'GeoIP analyzer completed.')
+                            in event['_source'])
+        self.assertEqual(message,
+                         'GeoIP analyzer completed: Found 1 IP address(es).')
+
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
@@ -283,28 +299,31 @@ class TestMaxMindDbWebIPAnalyzer(BaseTest):
         analyzer.datastore.client = mock.Mock()
 
         IP_FIELDS = ['ip', 'host_ip', 'src_ip', 'dst_ip', 'source_ip',
-        'dest_ip', 'ip_address', 'client_ip', 'address', 'saddr', 'daddr',
-        'requestMetadata_callerIp', 'a_answer']
+                     'dest_ip', 'ip_address', 'client_ip', 'address', 'saddr',
+                     'daddr', 'requestMetadata_callerIp', 'a_answer']
 
         _create_mock_event(analyzer.datastore, 0, 1,
-            source_attrs={
-                ip_field: '2001:4860:4860::8888' for ip_field in IP_FIELDS
-            })
+                           source_attrs={
+                               ip_field: '2001:4860:4860::8888'
+                               for ip_field in IP_FIELDS
+                           })
 
         message = analyzer.run()
         event = analyzer.datastore.event_store['0']
 
         for ip_field in IP_FIELDS:
             self.assertTrue('{0}_latitude'.format(ip_field)
-                in event['_source'])
+                            in event['_source'])
             self.assertTrue('{0}_longitude'.format(ip_field)
-                in event['_source'])
+                            in event['_source'])
             self.assertTrue('{0}_iso_code'.format(ip_field)
-                in event['_source'])
+                            in event['_source'])
             self.assertTrue('{0}_city'.format(ip_field)
-                in event['_source'])
-        self.assertEqual(message, 'GeoIP analyzer completed.')
-        
+                            in event['_source'])
+        self.assertEqual(message,
+                         'GeoIP analyzer completed: Found 1 IP address(es).')
+
+
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
     def testPrivateIPv4(self):
@@ -314,9 +333,9 @@ class TestMaxMindDbWebIPAnalyzer(BaseTest):
         analyzer.datastore.client = mock.Mock()
 
         _create_mock_event(analyzer.datastore, 0, 1,
-            source_attrs={
-                'ip_address': '127.0.0.1'
-            })
+                           source_attrs={
+                               'ip_address': '127.0.0.1'
+                           })
 
         message = analyzer.run()
         event = analyzer.datastore.event_store['0']
@@ -325,7 +344,9 @@ class TestMaxMindDbWebIPAnalyzer(BaseTest):
         self.assertTrue('ip_address_longitude' not in event['_source'])
         self.assertTrue('ip_address_iso_code' not in event['_source'])
         self.assertTrue('ip_address_city' not in event['_source'])
-        self.assertEqual(message, 'GeoIP analyzer completed.')
+        self.assertEqual(message,
+                         'GeoIP analyzer completed: Found 0 IP address(es).')
+
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
@@ -336,9 +357,9 @@ class TestMaxMindDbWebIPAnalyzer(BaseTest):
         analyzer.datastore.client = mock.Mock()
 
         _create_mock_event(analyzer.datastore, 0, 1,
-            source_attrs={
-                'ip_address': None
-            })
+                           source_attrs={
+                               'ip_address': None
+                           })
 
         message = analyzer.run()
         event = analyzer.datastore.event_store['0']
@@ -347,7 +368,9 @@ class TestMaxMindDbWebIPAnalyzer(BaseTest):
         self.assertTrue('ip_address_longitude' not in event['_source'])
         self.assertTrue('ip_address_iso_code' not in event['_source'])
         self.assertTrue('ip_address_city' not in event['_source'])
-        self.assertEqual(message, 'GeoIP analyzer completed.')
+        self.assertEqual(message,
+                         'GeoIP analyzer completed: Found 0 IP address(es).')
+
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
@@ -359,7 +382,9 @@ class TestMaxMindDbWebIPAnalyzer(BaseTest):
 
         message = analyzer.run()
 
-        self.assertEqual(message, 'GeoIP analyzer completed.')
+        self.assertEqual(message,
+                         'GeoIP analyzer completed: Found 0 IP address(es).')
+
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
@@ -371,9 +396,9 @@ class TestMaxMindDbWebIPAnalyzer(BaseTest):
         analyzer.datastore.client = mock.Mock()
 
         _create_mock_event(analyzer.datastore, 0, 1,
-            source_attrs={
-                'ip_address': ['8.8.8.8', '8.8.4.4']
-            })
+                           source_attrs={
+                               'ip_address': ['8.8.8.8', '8.8.4.4']
+                           })
 
         message = analyzer.run()
         event = analyzer.datastore.event_store['0']
@@ -382,7 +407,8 @@ class TestMaxMindDbWebIPAnalyzer(BaseTest):
         self.assertTrue('ip_address_longitude' in event['_source'])
         self.assertTrue('ip_address_iso_code' in event['_source'])
         self.assertTrue('ip_address_city' in event['_source'])
-        self.assertEqual(message, 'GeoIP analyzer completed.')
+        self.assertEqual(message,
+                         'GeoIP analyzer completed: Found 2 IP address(es).')
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
@@ -394,9 +420,9 @@ class TestMaxMindDbWebIPAnalyzer(BaseTest):
         analyzer.datastore.client = mock.Mock()
 
         _create_mock_event(analyzer.datastore, 0, 1,
-            source_attrs={
-                'ip_address': ['8.8.8.8', '2001:4860:4860::8844']
-            })
+                           source_attrs={
+                               'ip_address': ['8.8.8.8', '2001:4860:4860::8844']
+                           })
 
         message = analyzer.run()
         event = analyzer.datastore.event_store['0']
@@ -405,5 +431,5 @@ class TestMaxMindDbWebIPAnalyzer(BaseTest):
         self.assertTrue('ip_address_longitude' in event['_source'])
         self.assertTrue('ip_address_iso_code' in event['_source'])
         self.assertTrue('ip_address_city' in event['_source'])
-        self.assertEqual(message, 'GeoIP analyzer completed.')
-
+        self.assertEqual(message,
+                         'GeoIP analyzer completed: Found 2 IP address(es).')
