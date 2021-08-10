@@ -91,8 +91,7 @@ class TestMaxMindDbGeoIPAnalyzer(BaseTest):
                             in event['_source'])
             self.assertTrue('{0}_city'.format(ip_field)
                             in event['_source'])
-        self.assertEqual(message,
-                         'GeoIP analyzer completed: Found 1 IP address(es).')
+        self.assertEqual(message, 'Found 1 IP address(es).')
 
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
@@ -126,8 +125,7 @@ class TestMaxMindDbGeoIPAnalyzer(BaseTest):
                             in event['_source'])
             self.assertTrue('{0}_city'.format(ip_field)
                             in event['_source'])
-        self.assertEqual(message,
-                         'GeoIP analyzer completed: Found 1 IP address(es).')
+        self.assertEqual(message, 'Found 1 IP address(es).')
 
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
@@ -150,8 +148,7 @@ class TestMaxMindDbGeoIPAnalyzer(BaseTest):
         self.assertTrue('ip_address_longitude' not in event['_source'])
         self.assertTrue('ip_address_iso_code' not in event['_source'])
         self.assertTrue('ip_address_city' not in event['_source'])
-        self.assertEqual(message,
-                         'GeoIP analyzer completed: Found 0 IP address(es).')
+        self.assertEqual(message, 'Found 0 IP address(es).')
 
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
@@ -174,8 +171,7 @@ class TestMaxMindDbGeoIPAnalyzer(BaseTest):
         self.assertTrue('ip_address_longitude' not in event['_source'])
         self.assertTrue('ip_address_iso_code' not in event['_source'])
         self.assertTrue('ip_address_city' not in event['_source'])
-        self.assertEqual(message,
-                         'GeoIP analyzer completed: Found 0 IP address(es).')
+        self.assertEqual(message, 'Found 0 IP address(es).')
 
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
@@ -188,8 +184,7 @@ class TestMaxMindDbGeoIPAnalyzer(BaseTest):
 
         message = analyzer.run()
 
-        self.assertEqual(message,
-                         'GeoIP analyzer completed: Found 0 IP address(es).')
+        self.assertEqual(message, 'Found 0 IP address(es).')
 
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
@@ -213,8 +208,7 @@ class TestMaxMindDbGeoIPAnalyzer(BaseTest):
         self.assertTrue('ip_address_longitude' in event['_source'])
         self.assertTrue('ip_address_iso_code' in event['_source'])
         self.assertTrue('ip_address_city' in event['_source'])
-        self.assertEqual(message,
-                         'GeoIP analyzer completed: Found 2 IP address(es).')
+        self.assertEqual(message, 'Found 2 IP address(es).')
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
@@ -237,8 +231,7 @@ class TestMaxMindDbGeoIPAnalyzer(BaseTest):
         self.assertTrue('ip_address_longitude' in event['_source'])
         self.assertTrue('ip_address_iso_code' in event['_source'])
         self.assertTrue('ip_address_city' in event['_source'])
-        self.assertEqual(message,
-                         'GeoIP analyzer completed: Found 2 IP address(es).')
+        self.assertEqual(message, 'Found 2 IP address(es).')
 
 
 
@@ -285,8 +278,7 @@ class TestMaxMindDbWebIPAnalyzer(BaseTest):
                             in event['_source'])
             self.assertTrue('{0}_city'.format(ip_field)
                             in event['_source'])
-        self.assertEqual(message,
-                         'GeoIP analyzer completed: Found 1 IP address(es).')
+        self.assertEqual(message, 'Found 1 IP address(es).')
 
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
@@ -320,8 +312,7 @@ class TestMaxMindDbWebIPAnalyzer(BaseTest):
                             in event['_source'])
             self.assertTrue('{0}_city'.format(ip_field)
                             in event['_source'])
-        self.assertEqual(message,
-                         'GeoIP analyzer completed: Found 1 IP address(es).')
+        self.assertEqual(message, 'Found 1 IP address(es).')
 
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
@@ -344,8 +335,7 @@ class TestMaxMindDbWebIPAnalyzer(BaseTest):
         self.assertTrue('ip_address_longitude' not in event['_source'])
         self.assertTrue('ip_address_iso_code' not in event['_source'])
         self.assertTrue('ip_address_city' not in event['_source'])
-        self.assertEqual(message,
-                         'GeoIP analyzer completed: Found 0 IP address(es).')
+        self.assertEqual(message, 'Found 0 IP address(es).')
 
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
@@ -368,8 +358,7 @@ class TestMaxMindDbWebIPAnalyzer(BaseTest):
         self.assertTrue('ip_address_longitude' not in event['_source'])
         self.assertTrue('ip_address_iso_code' not in event['_source'])
         self.assertTrue('ip_address_city' not in event['_source'])
-        self.assertEqual(message,
-                         'GeoIP analyzer completed: Found 0 IP address(es).')
+        self.assertEqual(message, 'Found 0 IP address(es).')
 
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
@@ -382,8 +371,7 @@ class TestMaxMindDbWebIPAnalyzer(BaseTest):
 
         message = analyzer.run()
 
-        self.assertEqual(message,
-                         'GeoIP analyzer completed: Found 0 IP address(es).')
+        self.assertEqual(message, 'Found 0 IP address(es).')
 
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
@@ -407,8 +395,7 @@ class TestMaxMindDbWebIPAnalyzer(BaseTest):
         self.assertTrue('ip_address_longitude' in event['_source'])
         self.assertTrue('ip_address_iso_code' in event['_source'])
         self.assertTrue('ip_address_city' in event['_source'])
-        self.assertEqual(message,
-                         'GeoIP analyzer completed: Found 2 IP address(es).')
+        self.assertEqual(message, 'Found 2 IP address(es).')
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
@@ -431,5 +418,4 @@ class TestMaxMindDbWebIPAnalyzer(BaseTest):
         self.assertTrue('ip_address_longitude' in event['_source'])
         self.assertTrue('ip_address_iso_code' in event['_source'])
         self.assertTrue('ip_address_city' in event['_source'])
-        self.assertEqual(message,
-                         'GeoIP analyzer completed: Found 2 IP address(es).')
+        self.assertEqual(message, 'Found 2 IP address(es).')
