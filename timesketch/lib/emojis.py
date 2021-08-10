@@ -137,7 +137,7 @@ EMOJI_MAP = {
     'FLAG_GP': emoji('&#x1F1EC&#x1F1F5', 'Guadeloupe'),
     'FLAG_GQ': emoji('&#x1F1EC&#x1F1F6', 'Equatorial Guinea'),
     'FLAG_GR': emoji('&#x1F1EC&#x1F1F7', 'Greece'),
-    'FLAG_GS': emoji('&#x1F1EC&#x1F1F8', 
+    'FLAG_GS': emoji('&#x1F1EC&#x1F1F8',
         'South Georgia & South Sandwich Islands'),
     'FLAG_GT': emoji('&#x1F1EC&#x1F1F9', 'Guatemala'),
     'FLAG_GU': emoji('&#x1F1EC&#x1F1FA', 'Guam'),
