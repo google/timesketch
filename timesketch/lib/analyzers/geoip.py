@@ -266,7 +266,7 @@ class BaseGeoIpAnalyzer(interface.BaseAnalyzer):
             if len(response) != 5:
                 logging.error('Invalid response from GeoIP client')
 
-            flag_emoji = emojis.get_emoji(f"FLAG_{iso_code}")
+            flag_emoji = emojis.get_emoji(f'FLAG_{iso_code}')
 
             if flag_emoji is None:
                 logger.error(
