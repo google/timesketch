@@ -247,7 +247,7 @@ class BaseGeoIpAnalyzer(interface.BaseAnalyzer):
                         continue
                     ip_addresses[ip_addr][ip_address_field].append(event)
 
-        logger.info(f'Found {len(ip_addresses)} IP address(es).')
+ 
 
         for ip_address, ip_address_fields in ip_addresses.items():
             with self.GEOIP_CLIENT() as client:
