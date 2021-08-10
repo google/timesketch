@@ -40,24 +40,24 @@ limitations under the License.
         icon-next="chevron-right"
         default-sort="created_at"
       >
-        <b-table-column field="created_at" label="Date" width="150" sortable custom-sort="dateSort" v-slot="props">
+        <b-table-column field="created_at" label="Date" width="150" sortable v-slot="props">
           {{ new Date(props.row.created_at) | moment('YYYY-MM-DD HH:mm') }}
         </b-table-column>
 
-        <b-table-column field="name" label="Analyzer" v-slot="props">
+        <b-table-column field="name" label="Analyzer" sortable v-slot="props">
           {{ props.row.analyzer_name }}
         </b-table-column>
 
-        <b-table-column field="result" label="Result" v-slot="props">
+        <b-table-column field="result" label="Result" sortable v-slot="props">
           {{ props.row.result }}
         </b-table-column>
 
-        <b-table-column field="status" label="Status" width="40" v-slot="props">
+        <b-table-column field="status" label="Status" sortable v-slot="props" width="40">
           {{ props.row.status[0].status }}
         </b-table-column>
       </b-table>
 
-      <span v-if="!analyses">No analysis available.</span>
+      <span v-if="!analyses">No logs available. You need to run one of the analyzers first.</span>
     </div>
   </div>
 </template>
@@ -77,11 +77,6 @@ export default {
   computed: {
     sketch() {
       return this.$store.state.sketch
-    },
-  },
-  methods: {
-    dateSort(a, b, key) {
-      return a[key] - b[key]
     },
   },
   created() {

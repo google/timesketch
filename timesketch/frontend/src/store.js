@@ -68,16 +68,17 @@ export default new Vuex.Store({
   },
   actions: {
     updateSketch(context, sketchId) {
-      ApiClient.getSketch(sketchId)
+      return ApiClient.getSketch(sketchId)
         .then(response => {
           context.commit('SET_SKETCH', response.data)
           context.dispatch('updateTimelineTags', sketchId)
           context.dispatch('updateDataTypes', sketchId)
         })
         .catch(e => {})
-
+    },
+    updateCount(context, sketchId) {
       // Count events for all timelines in the sketch
-      ApiClient.countSketchEvents(sketchId)
+      return ApiClient.countSketchEvents(sketchId)
         .then(response => {
           context.commit('SET_COUNT', response.data.meta.count)
         })
@@ -93,7 +94,7 @@ export default new Vuex.Store({
       if (!sketchId) {
         sketchId = context.state.sketch.id
       }
-      ApiClient.getSearchHistory(sketchId)
+      return ApiClient.getSearchHistory(sketchId)
         .then(response => {
           context.commit('SET_SEARCH_HISTORY', response.data)
         })
@@ -109,7 +110,7 @@ export default new Vuex.Store({
           field: 'tag',
         },
       }
-      ApiClient.runAggregator(sketchId, formData)
+      return ApiClient.runAggregator(sketchId, formData)
         .then(response => {
           context.commit('SET_TIMELINE_TAGS', response.data)
         })
@@ -125,7 +126,7 @@ export default new Vuex.Store({
           field: 'data_type',
         },
       }
-      ApiClient.runAggregator(sketchId, formData)
+      return ApiClient.runAggregator(sketchId, formData)
         .then(response => {
           context.commit('SET_DATA_TYPES', response.data)
         })
