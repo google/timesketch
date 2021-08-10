@@ -76,13 +76,13 @@ limitations under the License.
                   class="icon is-small"
                   style="cursor:pointer;"
                   title="Apply 'Exclude' filter"
-                  v-on:click="deleteCallback(props.row)"
+                  @click="$emit('table-delete', props.row)"
                   ><i class="fas fa-trash"></i
                 ></span>
               </b-table-column>
             </b-table>
           </div>
-          <div v-else>Empty table</div>
+          <div class="card-content" v-else>Empty table</div>
         </div>
       </div>
     </section>
@@ -93,7 +93,7 @@ limitations under the License.
 export default {
   name: 'TsDynamicTable',
   components: {},
-  props: ['section', 'data', 'deleteCallback'],
+  props: ['section', 'data'],
   computed: {
     sketch() {
       return this.$store.state.sketch

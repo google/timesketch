@@ -948,7 +948,7 @@ export default {
       this.selectedLabels.forEach(label => {
         let chip = {
           field: '',
-          value: label.label,
+          value: label,
           type: 'label',
           operator: 'must',
           active: true,
