@@ -323,8 +323,7 @@ class BaseGeoIpAnalyzer(interface.BaseAnalyzer):
                         event.add_tags([country_name])
                     event.commit()
 
-        return (f'GeoIP analyzer completed: Found {len(ip_addresses)} ' +
-                f'IP address(es).')
+        return (f'Found {len(ip_addresses)} IP address(es).')
 
 
 class MaxMindDbGeoIPAnalyzer(BaseGeoIpAnalyzer):
