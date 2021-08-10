@@ -797,7 +797,8 @@ class MarkEventsWithTimelineIdentifier(resources.ResourceMixin, Resource):
         }
         # pylint: disable=unexpected-keyword-arg
         self.datastore.client.update_by_query(
-            body=query_dsl, index=searchindex.index_name, conflicts='proceed')
+            body=query_dsl, index=searchindex.index_name, conflicts='proceed',
+            wait_for_completion=False)
 
         # Update mappings - to make sure that we can label events.
         mapping_update = {

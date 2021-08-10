@@ -238,14 +238,6 @@ limitations under the License.
                             <span>Upload timeline</span>
                           </div>
                         </div>
-                        <p class="control">
-                          <router-link class="button is-rounded is-small" :to="{ name: 'Timelines' }">
-                            <span class="icon is-small">
-                              <i class="fas fa-cog"></i>
-                            </span>
-                            <span>Manage</span>
-                          </router-link>
-                        </p>
                       </div>
                     </header>
                     <div style="padding:1.25em;">
