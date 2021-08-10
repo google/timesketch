@@ -26,6 +26,7 @@ from flask import current_app
 import geoip2.database
 import geoip2.errors
 import geoip2.webservice
+import maxminddb
 
 from timesketch.lib import emojis
 from timesketch.lib.analyzers import interface
@@ -101,8 +102,8 @@ class MaxMindGeoDbClient(geoip2.database.Reader, GeoIpClientAdapter):
         except geoip2.errors.AddressNotFoundError as exception:
             logging.debug(f'IP address {ip_address} not found.')
             return None
-        except Exception as error:
-            logging.error(f'Error while geolocating {ip_address} - {error}')
+        except maxminddb.InvalidDatabaseError as error:
+            logging.error(f'Error geolocating {ip_address} - {error}')
             return None
 
         latitude = response.location.latitude
@@ -151,7 +152,7 @@ class MaxMindGeoWebClient(geoip2.webservice.Client, GeoIpClientAdapter):
         except geoip2.errors.AddressNotFoundError as exception:
             logging.debug(f'IP address {ip_address} not found.')
             return None
-        except Exception as error:
+        except geoip2.errors.GeoIP2Error as error:
             logging.error(f'Error while geolocating {ip_address} - {error}')
             return None
 
@@ -249,20 +250,16 @@ class BaseGeoIpAnalyzer(interface.BaseAnalyzer):
         logger.info(f'Found {len(ip_addresses)} IP address(es).')
 
         for ip_address, ip_address_fields in ip_addresses.items():
-            try:
-                with self.GEOIP_CLIENT() as client:
-                    response = client.ip2geo(ip_address)
-            except Exception as error:
-                logging.error(f"Error {error}")
-                return f"GeoIP analyzer error: {error}"
+            with self.GEOIP_CLIENT() as client:
+                response = client.ip2geo(ip_address)
 
             try:
                 iso_code, latitude, longitude, country_name, city_name = \
                     response
             except ValueError as error:
-                logging.error(f"GeoIP client must return 5 fields: "
-                    f"<iso_code, latitude, longitude, country_name, city_name>."
-                    f" Number of fields returned: {len(response)}")
+                logging.error(f'GeoIP client must return 5 fields: '
+                    f'<iso_code, latitude, longitude, country_name, city_name>.'
+                    f' Number of fields returned: {len(response)}')
             if response is None:
                 continue
 
