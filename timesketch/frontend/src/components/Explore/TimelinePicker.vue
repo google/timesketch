@@ -58,7 +58,8 @@ export default {
     },
     activeTimelines() {
       // Sort alphabetically based on timeline name.
-      return this.sketch.active_timelines.sort(function(a, b) {
+      let timelines = [...this.sketch.active_timelines]
+      return timelines.sort(function(a, b) {
         return a.name.localeCompare(b.name)
       })
     },
