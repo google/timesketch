@@ -92,11 +92,12 @@ export default {
     },
     handleCopyStatus: function() {
       this.$buefy.notification.open('Copied!')
+      return true
     },
   },
   created() {
     // TODO (jaegeral): change that to use the rule from the already stored one
-    //this.asd = this.$store.state.sigmaRuleList.find(rule => rule.ruleId === this.$route.query.ruleId)
+    // this.asd = this.$store.state.sigmaRuleList.find(rule => rule.ruleId === this.$route.query.ruleId)
 
     ApiClient.getSigmaResource(this.$route.query.ruleId)
       .then(response => {

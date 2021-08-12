@@ -110,6 +110,7 @@ export default {
   methods: {
     handleCopyStatus: function() {
       this.$buefy.notification.open('Copied!')
+      return true
     },
   },
   computed: {
