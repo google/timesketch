@@ -59,6 +59,10 @@ export default new Vuex.Store({
     SET_SEARCH_NODE(state, payload) {
       Vue.set(state, 'currentSearchNode', payload)
     },
+    SET_SIGMA_LIST(state, payload) {
+      Vue.set(state, 'sigmaRuleList', payload['objects'])
+      Vue.set(state, 'sigmaRuleList_count', payload['meta']['rules_count'])
+    },
     RESET_STATE(state, payload) {
       ApiClient.getLoggedInUser().then(response => {
         let currentUser = response.data.objects[0].username
@@ -132,6 +136,12 @@ export default new Vuex.Store({
           context.commit('SET_DATA_TYPES', response.data)
         })
         .catch(e => {})
+    },
+    updateSigmaList(context) {
+      ApiClient.getSigmaList()
+      .then(response => {
+        context.commit('SET_SIGMA_LIST', response.data)
+      }).catch(e => {})
     },
   },
 })

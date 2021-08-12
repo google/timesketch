@@ -1,5 +1,5 @@
 <!--
-Copyright 2019 Google Inc. All rights reserved.
+Copyright 2021 Google Inc. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -59,6 +59,12 @@ limitations under the License.
                 <router-link :to="{ name: 'StoryOverview' }">
                   <span class="icon is-small"><i class="fas fa-book" aria-hidden="true"></i></span>
                   <span>Stories</span>
+                </router-link>
+              </li>
+              <li v-bind:class="{ 'is-active': currentPage === 'sigma' }">
+                <router-link :to="{ name: 'SigmaOverview' }">
+                  <span class="icon is-small"><i class="fas fa-file-signature" aria-hidden="true"></i></span>
+                  <span>Sigma</span>
                 </router-link>
               </li>
               <li v-if="meta" v-bind:class="{ 'is-active': currentPage === 'attributes' }">

@@ -1,5 +1,5 @@
 <!--
-Copyright 2019 Google Inc. All rights reserved.
+Copyright 2021 Google Inc. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,28 +14,37 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <router-view v-if="sketch.status"></router-view>
+  <div>
+    <ts-navbar-main>
+      <template v-slot:left>
+        {{ sketch.name }}
+      </template>
+    </ts-navbar-main>
+
+    <ts-navbar-secondary currentAppContext="sketch" currentPage="sigma"></ts-navbar-secondary>
+
+    <section class="section">
+      <div class="container is-fluid">
+        <div class="card">
+          <div class="card-content">
+            <span class="title is-6 is-uppercase">Sigma rules</span>
+            <ts-sigma-list></ts-sigma-list>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
 </template>
 
 <script>
+import TsSigmaList from '../components/Sigma/SigmaList'
+
 export default {
   props: ['sketchId'],
-  created: function() {
-    this.$store.dispatch('updateSketch', this.sketchId)
-    this.$store.dispatch('updateSearchHistory', this.sketchId)
-    this.$store.dispatch('updateSigmaList', this.sketchId)
-  },
+  components: { TsSigmaList},
   computed: {
     sketch() {
       return this.$store.state.sketch
-    },
-  },
-  watch: {
-    sketch: function(newVal) {
-      if (newVal.status[0].status === 'archived') {
-        this.$router.push({ name: 'Overview', params: { sketchId: this.sketch.id } })
-      }
-      document.title = this.sketch.name
     },
   },
 }
