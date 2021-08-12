@@ -74,6 +74,7 @@ export default new Vuex.Store({
     updateSketch(context, sketchId) {
       return ApiClient.getSketch(sketchId)
         .then(response => {
+          // console.log(response.data.objects[0].active_timelines[0].color)
           context.commit('SET_SKETCH', response.data)
           context.dispatch('updateTimelineTags', sketchId)
           context.dispatch('updateDataTypes', sketchId)
