@@ -25,7 +25,6 @@ import GraphOverview from './views/GraphOverview'
 import GraphExplore from './views/GraphExplore'
 import Aggregate from './views/Aggregate'
 import Analyze from './views/Analyze'
-import Timelines from './views/Timelines'
 import Story from './views/Story'
 import StoryOverview from './views/StoryOverview'
 import StoryContent from './views/StoryContent'
@@ -127,12 +126,6 @@ const routes = [
             props: true,
           },
         ],
-      },
-      {
-        path: 'timelines',
-        name: 'Timelines',
-        component: Timelines,
-        props: true,
       },
       {
         path: 'attributes',
