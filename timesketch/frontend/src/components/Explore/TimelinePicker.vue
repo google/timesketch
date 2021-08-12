@@ -57,7 +57,10 @@ export default {
       return this.$store.state.sketch
     },
     activeTimelines() {
-      return this.sketch.active_timelines
+      // Sort alphabetically based on timeline name.
+      return this.sketch.active_timelines.sort(function(a, b) {
+        return a.name.localeCompare(b.name)
+      })
     },
     isEmptyState() {
       return this.countPerTimeline === undefined
@@ -75,9 +78,12 @@ export default {
       return this.selectedTimelines.includes(timeline)
     },
     getCount(timeline) {
-      let count = ''
+      let count = 0
       if (this.countPerTimeline) {
         count = this.countPerTimeline[timeline.id]
+        if (typeof count === 'number') {
+          return count
+        }
       }
       // Support for old style indices
       if (!count && this.countPerIndex) {

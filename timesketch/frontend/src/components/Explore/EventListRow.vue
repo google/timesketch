@@ -308,6 +308,20 @@ export default {
         return 'YYYY-MM-DDTHH:mm:ss'
       }
     },
+    timeline() {
+      let isLegacy = this.meta.indices_metadata[this.event._index].is_legacy
+      let timeline
+      if (isLegacy) {
+        timeline = this.sketch.active_timelines.filter(
+          timeline => timeline.searchindex.index_name === this.event._index
+        )[0]
+      } else {
+        timeline = this.sketch.active_timelines.filter(
+          timeline => timeline.id === this.event._source.__ts_timeline_id
+        )[0]
+      }
+      return timeline
+    },
     timelineName() {
       return this.timeline.name
     },
@@ -446,6 +460,7 @@ export default {
     EventBus.$on('toggleStar', this.toggleStarOnSelect)
     EventBus.$on('isDarkTheme', this.toggleTheme)
 
+    /*
     let isLegacy = this.meta.indices_metadata[this.event._index].is_legacy
     if (isLegacy) {
       this.timeline = this.sketch.active_timelines.filter(
@@ -456,6 +471,7 @@ export default {
         timeline => timeline.id === this.event._source.__ts_timeline_id
       )[0]
     }
+    */
 
     this.isDarkTheme = localStorage.theme === 'dark'
 

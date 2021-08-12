@@ -150,44 +150,49 @@ limitations under the License.
             <!-- Time filters -->
             <div class="tags" style="margin-bottom:-5px;">
               <span v-for="(chip, index) in timeFilterChips" :key="index + chip.value">
-                <b-dropdown trap-focus append-to-body aria-role="menu" ref="TimeFilters">
-                  <span slot="trigger" role="button" class="is-small is-outlined">
-                    <div class="tags" style="margin-bottom: 5px; margin-right:7px;">
-                      <span
-                        class="tag is-medium"
-                        style="cursor: pointer;"
-                        v-bind:class="{ 'chip-disabled': chip.active === false }"
-                      >
-                        <span @click.stop="toggleChip(chip)">
-                          <span v-if="index > 0" class="chip-operator-label">OR</span>
-                          <span class="icon" style="margin-right:7px;"><i class="fas fa-clock"></i></span>
-                          <span>{{ chip.value.split(',')[0] }}</span>
-                          <span
-                            v-if="
-                              chip.type === 'datetime_range' && chip.value.split(',')[0] !== chip.value.split(',')[1]
-                            "
-                          >
-                            &rarr; {{ chip.value.split(',')[1] }}</span
-                          >
+                <ts-dropdown width="500px" ref="TimeFilters">
+                  <template v-slot:dropdown-trigger-element>
+                    <span role="button" class="is-small is-outlined">
+                      <div class="tags" style="margin-bottom: 5px; margin-right:7px;">
+                        <span
+                          class="tag is-medium"
+                          style="cursor: pointer;"
+                          v-bind:class="{ 'chip-disabled': chip.active === false }"
+                        >
+                          <span @click.stop="toggleChip(chip)">
+                            <span v-if="index > 0" class="chip-operator-label">OR</span>
+                            <span class="icon" style="margin-right:7px;"><i class="fas fa-clock"></i></span>
+                            <span>{{ chip.value.split(',')[0] }}</span>
+                            <span
+                              v-if="
+                                chip.type === 'datetime_range' && chip.value.split(',')[0] !== chip.value.split(',')[1]
+                              "
+                            >
+                              &rarr; {{ chip.value.split(',')[1] }}</span
+                            >
+                          </span>
+                          <span class="fa-stack fa-lg is-small" style="margin-left:5px; width:20px;">
+                            <i class="fas fa-edit fa-stack-1x" style="transform:scale(0.7);color:#777;"></i>
+                          </span>
+                          <button
+                            class="delete is-small"
+                            style="margin-left:5px"
+                            v-on:click="removeChip(chip)"
+                          ></button>
                         </span>
-                        <span class="fa-stack fa-lg is-small" style="margin-left:5px; width:20px;">
-                          <i class="fas fa-edit fa-stack-1x" style="transform:scale(0.7);color:#777;"></i>
-                        </span>
-                        <button class="delete is-small" style="margin-left:5px" v-on:click="removeChip(chip)"></button>
-                      </span>
-                    </div>
-                  </span>
-                  <b-dropdown-item custom :focusable="false" style="min-width: 500px; padding: 30px;">
-                    <strong>Update time filter</strong>
-                    <br />
-                    <br />
-                    <ts-explore-filter-time
-                      :selectedChip="chip"
-                      @updateChip="updateChip($event, chip)"
-                      @hideDropdown="hideDropdown"
-                    ></ts-explore-filter-time>
-                  </b-dropdown-item>
-                </b-dropdown>
+                      </div>
+                    </span>
+                  </template>
+
+                  <strong>Update time filter</strong>
+                  <br />
+                  <br />
+                  <ts-explore-filter-time
+                    :selectedChip="chip"
+                    @updateChip="updateChip($event, chip)"
+                    @hideDropdown="hideDropdown"
+                  ></ts-explore-filter-time>
+                </ts-dropdown>
               </span>
             </div>
 

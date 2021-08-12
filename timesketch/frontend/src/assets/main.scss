@@ -51,13 +51,10 @@
   --search-input-font-color: var(--font-color-dark);
   --search-input-background-color: #ffffff;
   --search-input-border-color: #d3d3d3;
-
   --button-greyscale: grayscale(0%);
-
   --button-color: var(--font-color-dark);
   --button-background-color: #ffffff;
   --button-border-color: #dbdbdb;
-
   --timeline-name-column-background: #f1f1f1;
   --timeline-name-column-font-color: #999999;
   --table-cell-border-color: #d3d3d3;
@@ -81,8 +78,8 @@
   --input-color: var(--font-color-dark);
   --input-placeholder-color: var(--font-color-grey);
   --highlight-color: #ddd;
-
   --dropdown-background-color: #fff;
+  --hr-color: var(--navbar-border-color);
 }
 
 [data-theme='dark'] {
@@ -91,13 +88,12 @@
   --background-color-3: #25272c;
   --background-color-4: #32353b;
   --background-color-5: #3e4249;
-
   --default-font-color: var(--font-color-light);
   --default-link-color: var(--font-color-light);
   --default-title-font-color: var(--font-color-light);
-  --navbar-background: #121212;
+  --navbar-background: var(--background-color-2);
   --navbar-font-color: var(--font-color-light);
-  --navbar-border-color: #3d3d3d;
+  --navbar-border-color: var(--background-color-3);
   --tabs-link-color: hsl(0, 0%, 60%);
   --tabs-link-hover-color: var(--font-color-light);
   --tabs-link-active-color: var(--font-color-light);
@@ -113,31 +109,24 @@
   --search-input-font-color: var(--font-color-light);
   --search-input-background-color: var(--background-color-3);
   --search-input-border-color: transparent;
-
   --button-greyscale: grayscale(25%);
-
   --button-color: var(--font-color-light);
   --button-background-color: var(--background-color-3);
   --button-border-color: var(--background-color-5);
-
   --timeline-name-column-background: var(--background-color-4);
   --timeline-name-column-font-color: #d9d9d9;
-
   --table-background-color: var(--background-color-3);
   --table-row-background-color: var(--background-color-3);
   --table-row-hover-background-color: var(--background-color-4);
   --table-head-cell-color: #fafafa;
   --table-color: #fafafa;
   --table-cell-border-color: var(--background-color-4);
-
   --event-list-row-background-color: var(--background-color-3);
   --event-list-row-background-hover-color: var(--background-color-4);
-
   --time-bubble-background-color: var(--background-color-4);
   --time-bubble-font-color: #d9d9d9;
-
   --content-list-hover-color: var(--background-color-3);
-  --content-list-border-color: #696969;
+  --content-list-border-color: var(--background-color-3);
   --login-page-background-color: var(--background-color);
   --navbar-item-link-color: #fafafa;
   --card-title-font-color: var(--font-color-light);
@@ -156,8 +145,8 @@
   --tag-background-color: var(--background-color-5);
   --tag-font-color: var(--font-color-light);
   --highlight-color: #666;
-
   --dropdown-background-color: var(--background-color-3);
+  --hr-color: var(--background-color-5);
 }
 
 // Customize Bulma
@@ -238,6 +227,10 @@ body {
 body {
   background: var(--background-color);
   color: var(--default-font-color);
+}
+
+hr {
+  border: 1px solid var(--hr-color);
 }
 
 .login-page {
@@ -548,4 +541,19 @@ a:hover {
   padding: 0;
   background-color: transparent;
   border-radius: 6px;
+}
+
+.ts-dropdown-item {
+  padding: 7px;
+  cursor: pointer;
+}
+
+.ts-dropdown-item:hover {
+  background-color: var(--table-row-hover-background-color);
+}
+
+// Style Color picker component
+.vc-compact {
+  box-shadow: none;
+  background-color: transparent;
 }
