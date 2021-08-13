@@ -175,7 +175,7 @@ export default {
         annotation_id: annotationId,
         annotation_type: annotationType,
         event_id: event._id,
-        event_index: event._index,
+        searchindex_id: event._index,
         current_search_node_id: currentSearchNode.id,
       },
     }
