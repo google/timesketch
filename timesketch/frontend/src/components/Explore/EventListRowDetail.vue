@@ -35,8 +35,28 @@ limitations under the License.
             ><i class="fas fa-search-minus"></i
           ></span>
         </td>
+        <td style="width:40px;">
+          <span
+            class="icon is-small"
+            style="cursor:pointer;"
+            title="Copy key"
+            v-clipboard:copy="key"
+            v-clipboard:success="handleCopyStatus"
+            ><i class="fas fa-copy"></i
+          ></span>
+        </td>
+
         <td style="white-space:pre-wrap;word-wrap: break-word; width: 150px;">{{ key }}</td>
         <td>
+          <span style="white-space:pre-wrap;word-wrap: break-word">{{ item }}</span>
+          <span
+            class="icon is-small"
+            style="cursor:pointer; margin-left: 3px; color: #d3d3d3;float:right;"
+            title="Copy value"
+            v-clipboard:copy="item"
+            v-clipboard:success="handleCopyStatus"
+            ><i class="fas fa-copy"></i
+          ></span>
           <text-highlight
             @addChip="$emit('addChip', $event)"
             :highlightComponent="TsIOCMenu"
@@ -104,6 +124,9 @@ export default {
         active: true,
       }
       this.$emit('addChip', chip)
+    },
+    handleCopyStatus: function() {
+      this.$buefy.notification.open('Copied!')
     },
     handleSelectionChange(event) {
       if (event.target.closest('.ioc-match') || event.target.closest('.ioc-context-menu')) {

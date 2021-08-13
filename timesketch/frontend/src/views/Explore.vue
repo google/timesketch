@@ -1,5 +1,5 @@
 <!--
-Copyright 2019 Google Inc. All rights reserved.
+Copyright 2021 Google Inc. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,30 +23,30 @@ limitations under the License.
 
     <ts-navbar-secondary ref="navigation" currentAppContext="sketch" currentPage="explore"></ts-navbar-secondary>
 
+    <b-modal :active.sync="showSaveSearchModal" :width="640" scroll="keep" style="z-index:999;">
+      <div class="card">
+        <header class="card-header">
+          <p class="card-header-title">Save search</p>
+        </header>
+        <div class="card-content">
+          <div class="content">
+            <ts-create-view-form
+              @setActiveView="searchView"
+              :sketchId="sketchId"
+              :currentQueryString="currentQueryString"
+              :currentQueryFilter="currentQueryFilter"
+            ></ts-create-view-form>
+          </div>
+        </div>
+      </div>
+    </b-modal>
+
     <section class="section">
       <div class="container is-fluid">
         <div class="card">
-          <b-modal :active.sync="showSaveSearchModal" :width="640" scroll="keep">
-            <div class="card">
-              <header class="card-header">
-                <p class="card-header-title">Save search</p>
-              </header>
-              <div class="card-content">
-                <div class="content">
-                  <ts-create-view-form
-                    @setActiveView="searchView"
-                    :sketchId="sketchId"
-                    :currentQueryString="currentQueryString"
-                    :currentQueryFilter="currentQueryFilter"
-                  ></ts-create-view-form>
-                </div>
-              </div>
-            </div>
-          </b-modal>
-
           <div class="card-content" v-if="showSearch">
             <div style="position:relative;">
-              <div class="ts-search-box" style="z-index:999; position:absolute; width:100%;">
+              <div class="ts-search-box" style="z-index:998; position:absolute; width:100%;">
                 <span class="icon" style="position:absolute;top:14px;margin-left:17px;font-size:16px;">
                   <i class="fas fa-search"></i>
                 </span>
@@ -81,125 +81,118 @@ limitations under the License.
 
             <div class="field is-grouped" style="margin-top:60px;">
               <p class="control">
-                <b-dropdown trap-focus append-to-body aria-role="menu" ref="NewTimeFilter">
-                  <a class="button is-text" style="text-decoration: none;" slot="trigger" role="button">
-                    <span>+ Time filter</span>
-                  </a>
-                  <b-dropdown-item custom :focusable="false" style="min-width: 500px; padding: 30px;">
-                    <strong>Create time filter</strong>
-                    <br />
-                    <br />
-                    <ts-explore-filter-time @addChip="addChip" @hideDropdown="hideDropdown"></ts-explore-filter-time>
-                  </b-dropdown-item>
-                </b-dropdown>
+                <ts-dropdown width="500px">
+                  <template v-slot:dropdown-trigger-element>
+                    <a class="button is-text" style="text-decoration: none;" slot="trigger" role="button">
+                      <span>+ Time filter</span>
+                    </a>
+                  </template>
+                  <strong>Create time filter</strong>
+                  <br />
+                  <br />
+                  <ts-explore-filter-time @addChip="addChip" @hideDropdown="hideDropdown"></ts-explore-filter-time>
+                </ts-dropdown>
               </p>
 
               <p class="control">
-                <b-dropdown trap-focus append-to-body aria-role="menu">
-                  <a class="button is-text" style="text-decoration: none;" slot="trigger" role="button">
-                    <span>+ Add label filter</span>
-                  </a>
+                <ts-dropdown>
+                  <template v-slot:dropdown-trigger-element>
+                    <a class="button is-text" style="text-decoration: none;" role="button">
+                      <span>+ Add label filter</span>
+                    </a>
+                  </template>
 
-                  <div class="modal-card" style="width:300px;color: var(--font-color-dark);">
-                    <section class="modal-card-body">
-                      <b-dropdown-item custom :focusable="false">
-                        <div class="field">
-                          <b-checkbox type="is-info" v-model="selectedLabels" native-value="__ts_star">
-                            <span style="margin-right:5px;" class="icon is-small"
-                              ><i
-                                class="fas fa-star"
-                                style="color:#ffe300;-webkit-text-stroke-width: 1px;-webkit-text-stroke-color: silver;"
-                              ></i></span
-                            >Show starred events
-                          </b-checkbox>
-                        </div>
-                        <div class="field">
-                          <b-checkbox type="is-info" v-model="selectedLabels" native-value="__ts_comment">
-                            <span style="margin-right:5px;" class="icon is-small"><i class="fas fa-comment"></i></span
-                            >Show events with comments
-                          </b-checkbox>
-                        </div>
-                        <hr v-if="meta.filter_labels.length" />
-                        <div
-                          class="level"
-                          style="margin-bottom: 5px;"
-                          v-for="label in filteredLabels"
-                          :key="label.label"
-                        >
-                          <div class="level-left">
-                            <div class="field">
-                              <b-checkbox type="is-info" v-model="selectedLabels" :native-value="label">
-                                {{ label.label }}
-                              </b-checkbox>
-                            </div>
-                          </div>
-                        </div>
-                      </b-dropdown-item>
-                    </section>
-                    <section class="modal-card-foot">
-                      <b-dropdown-item>
-                        <button class="button is-info" v-on:click="updateLabelChips()">Apply</button>
-                      </b-dropdown-item>
-                    </section>
+                  <div class="field">
+                    <b-checkbox type="is-info" v-model="selectedLabels" native-value="__ts_star">
+                      <span style="margin-right:5px;" class="icon is-small"
+                        ><i
+                          class="fas fa-star"
+                          style="color:#ffe300;-webkit-text-stroke-width: 1px;-webkit-text-stroke-color: silver;"
+                        ></i></span
+                      >Show starred events
+                    </b-checkbox>
                   </div>
-                </b-dropdown>
+                  <div class="field">
+                    <b-checkbox type="is-info" v-model="selectedLabels" native-value="__ts_comment">
+                      <span style="margin-right:5px;" class="icon is-small"><i class="fas fa-comment"></i></span>Show
+                      events with comments
+                    </b-checkbox>
+                  </div>
+                  <div class="level" style="margin-bottom: 5px;" v-for="label in filteredLabels" :key="label.label">
+                    <div class="level-left">
+                      <div class="field">
+                        <b-checkbox type="is-info" v-model="selectedLabels" :native-value="label.label">
+                          {{ label.label }}
+                        </b-checkbox>
+                      </div>
+                    </div>
+                  </div>
+                  <br />
+                  <button class="button is-info" v-on:click="updateLabelChips()">Add filter</button>
+                </ts-dropdown>
               </p>
             </div>
 
             <p class="control" style="top:-40px;float:right;">
-              <span style="margin-right:10px; margin-left:15px;">Histogram</span>
-              <b-switch v-model="showHistogram" size="is-small" type="is-info" style="top:2px;"></b-switch>
-              <span style="margin-right:10px; margin-left:15px;">Show history</span>
+              <b-switch v-model="showHistogram" size="is-small" type="is-info" style="top:2px; margin-right:15px;"
+                >Chart</b-switch
+              >
               <b-switch
                 v-model="showSearchHistory"
                 v-on:input="triggerScrollTo"
                 size="is-small"
                 type="is-info"
                 style="top:2px;"
-              ></b-switch>
+                >Show history</b-switch
+              >
             </p>
 
             <!-- Time filters -->
             <div class="tags" style="margin-bottom:-5px;">
               <span v-for="(chip, index) in timeFilterChips" :key="index + chip.value">
-                <b-dropdown trap-focus append-to-body aria-role="menu" ref="TimeFilters">
-                  <span slot="trigger" role="button" class="is-small is-outlined">
-                    <div class="tags" style="margin-bottom: 5px; margin-right:7px;">
-                      <span
-                        class="tag is-medium"
-                        style="cursor: pointer;"
-                        v-bind:class="{ 'chip-disabled': chip.active === false }"
-                      >
-                        <span @click.stop="toggleChip(chip)">
-                          <span v-if="index > 0" class="chip-operator-label">OR</span>
-                          <span class="icon" style="margin-right:7px;"><i class="fas fa-clock"></i></span>
-                          <span>{{ chip.value.split(',')[0] }}</span>
-                          <span
-                            v-if="
-                              chip.type === 'datetime_range' && chip.value.split(',')[0] !== chip.value.split(',')[1]
-                            "
-                          >
-                            &rarr; {{ chip.value.split(',')[1] }}</span
-                          >
+                <ts-dropdown width="500px" ref="TimeFilters">
+                  <template v-slot:dropdown-trigger-element>
+                    <span role="button" class="is-small is-outlined">
+                      <div class="tags" style="margin-bottom: 5px; margin-right:7px;">
+                        <span
+                          class="tag is-medium"
+                          style="cursor: pointer;"
+                          v-bind:class="{ 'chip-disabled': chip.active === false }"
+                        >
+                          <span @click.stop="toggleChip(chip)">
+                            <span v-if="index > 0" class="chip-operator-label">OR</span>
+                            <span class="icon" style="margin-right:7px;"><i class="fas fa-clock"></i></span>
+                            <span>{{ chip.value.split(',')[0] }}</span>
+                            <span
+                              v-if="
+                                chip.type === 'datetime_range' && chip.value.split(',')[0] !== chip.value.split(',')[1]
+                              "
+                            >
+                              &rarr; {{ chip.value.split(',')[1] }}</span
+                            >
+                          </span>
+                          <span class="fa-stack fa-lg is-small" style="margin-left:5px; width:20px;">
+                            <i class="fas fa-edit fa-stack-1x" style="transform:scale(0.7);color:#777;"></i>
+                          </span>
+                          <button
+                            class="delete is-small"
+                            style="margin-left:5px"
+                            v-on:click="removeChip(chip)"
+                          ></button>
                         </span>
-                        <span class="fa-stack fa-lg is-small" style="margin-left:5px; width:20px;">
-                          <i class="fas fa-edit fa-stack-1x" style="transform:scale(0.7);color:#777;"></i>
-                        </span>
-                        <button class="delete is-small" style="margin-left:5px" v-on:click="removeChip(chip)"></button>
-                      </span>
-                    </div>
-                  </span>
-                  <b-dropdown-item custom :focusable="false" style="min-width: 500px; padding: 30px;">
-                    <strong>Update time filter</strong>
-                    <br />
-                    <br />
-                    <ts-explore-filter-time
-                      :selectedChip="chip"
-                      @updateChip="updateChip($event, chip)"
-                      @hideDropdown="hideDropdown"
-                    ></ts-explore-filter-time>
-                  </b-dropdown-item>
-                </b-dropdown>
+                      </div>
+                    </span>
+                  </template>
+
+                  <strong>Update time filter</strong>
+                  <br />
+                  <br />
+                  <ts-explore-filter-time
+                    :selectedChip="chip"
+                    @updateChip="updateChip($event, chip)"
+                    @hideDropdown="hideDropdown"
+                  ></ts-explore-filter-time>
+                </ts-dropdown>
               </span>
             </div>
 
@@ -208,7 +201,7 @@ limitations under the License.
               <span v-for="(chip, index) in filterChips" :key="index + chip.value">
                 <span
                   v-if="chip.type === 'label'"
-                  class="tag is-medium is-light"
+                  class="tag is-medium"
                   style="margin-right:7px; cursor: pointer;"
                   v-bind:class="{ 'chip-disabled': chip.active === false }"
                   @click="toggleChip(chip, index)"
@@ -231,7 +224,7 @@ limitations under the License.
                 </span>
                 <span
                   v-if="chip.type === 'term'"
-                  class="tag is-light"
+                  class="tag is-medium"
                   style="margin-right:7px; cursor: pointer;"
                   v-bind:class="{ 'chip-disabled': chip.active === false, 'is-danger': chip.operator === 'must_not' }"
                   @click="toggleChip(chip, index)"
@@ -249,7 +242,6 @@ limitations under the License.
             <ts-explore-timeline-picker
               v-if="sketch.active_timelines"
               @updateSelectedTimelines="updateSelectedTimelines($event)"
-              :active-timelines="sketch.active_timelines"
               :current-query-filter="currentQueryFilter"
               :count-per-index="eventList.meta.count_per_index"
               :count-per-timeline="eventList.meta.count_per_timeline"
@@ -365,24 +357,26 @@ limitations under the License.
               <!-- Right side -->
               <div class="level-right">
                 <div class="level-item">
-                  <div v-if="eventList.objects.length">
-                    <b-pagination
-                      @change="paginate($event)"
-                      :total="totalHitsForPagination"
-                      :per-page="currentQueryFilter.size"
-                      :current.sync="currentPage"
-                      :simple="true"
-                      size="is-small"
-                      icon-pack="fas"
-                      icon-prev="chevron-left"
-                      icon-next="chevron-right"
-                    >
-                    </b-pagination>
-                  </div>
+                  <b-pagination
+                    @change="paginate($event)"
+                    :total="totalHitsForPagination"
+                    :per-page="currentQueryFilter.size"
+                    :current.sync="currentPage"
+                    :simple="true"
+                    size="is-small"
+                    icon-pack="fas"
+                    icon-prev="chevron-left"
+                    icon-next="chevron-right"
+                  >
+                  </b-pagination>
                 </div>
                 <div class="level-item">
-                  <div v-if="eventList.objects.length" class="select is-small">
-                    <select v-model="currentQueryFilter.size" @change="search(true, true, true)">
+                  <div class="select is-small">
+                    <select
+                      v-model="currentQueryFilter.size"
+                      @change="search(true, true, true)"
+                      style="border:1px solid var(--table-cell-border-color);"
+                    >
                       <option v-bind:value="currentQueryFilter.size">{{ currentQueryFilter.size }}</option>
                       <option value="10">10</option>
                       <option value="20">20</option>
@@ -395,77 +389,68 @@ limitations under the License.
                   </div>
                 </div>
                 <div class="level-item">
-                  <button
-                    v-if="eventList.objects.length"
-                    class="button is-small"
-                    style="border-radius: 4px;"
-                    v-on:click="changeSortOrder"
-                  >
+                  <button class="button is-small" style="border-radius: 4px;" v-on:click="changeSortOrder">
                     {{ currentQueryFilter.order }}
                   </button>
                 </div>
                 <div class="level-item">
-                  <div v-if="eventList.objects.length">
-                    <b-dropdown position="is-bottom-left" aria-role="menu" trap-focus append-to-body :can-close="true">
-                      <button class="button is-outlined is-small" style="border-radius: 4px;" slot="trigger">
+                  <ts-dropdown position="is-bottom-left" width="300px">
+                    <template v-slot:dropdown-trigger-element>
+                      <button class="button is-small" style="border-radius: 4px;">
                         <span class="icon is-small">
                           <i class="fas fa-table"></i>
                         </span>
                         <span>Customize columns</span>
                       </button>
-                      <b-dropdown-item aria-role="menu-item" :focusable="false" custom>
-                        <div v-bind:class="{ tsdropdown: expandFieldDropdown }" style="width:300px;">
-                          <multiselect
-                            style="display: block"
-                            v-if="meta.mappings"
-                            :options="meta.mappings"
-                            :value="selectedFieldsProxy"
-                            @open="expandFieldDropdown = true"
-                            @close="expandFieldDropdown = false"
-                            @input="updateSelectedFields"
-                            :multiple="true"
-                            :searchable="true"
-                            :close-on-select="false"
-                            label="field"
-                            track-by="field"
-                            placeholder="Add more columns ..."
-                          ></multiselect>
-                        </div>
-                      </b-dropdown-item>
-                      <b-dropdown-item aria-role="menu-item" :focusable="false" custom>
-                        <span v-if="selectedFields.length">
-                          <br />
-                          <strong>Selected columns</strong>
-                          <br /><br />
-                        </span>
-                        <div class="tags">
-                          <span v-for="(field, index) in selectedFields" :key="index">
-                            <span class="tag is-light is-rounded" style="margin-right:7px;">
-                              <span style="margin-right:7px;">{{ field.field }}</span>
-                              <button
-                                style="margin-left:7px"
-                                class="delete is-small"
-                                v-on:click="removeField(index)"
-                              ></button>
-                            </span>
-                          </span>
-                        </div>
+                    </template>
 
-                        <hr />
-                        <b-switch type="is-info" v-model="displayOptions.showTags">
-                          <span>Show tags</span>
-                        </b-switch>
-                        <br />
-                        <b-switch type="is-info" v-model="displayOptions.showEmojis">
-                          <span>Show emojis</span>
-                        </b-switch>
-                        <br />
-                        <b-switch type="is-info" v-model="displayOptions.showMillis">
-                          <span>Show microseconds</span>
-                        </b-switch>
-                      </b-dropdown-item>
-                    </b-dropdown>
-                  </div>
+                    <multiselect
+                      style="display: block;"
+                      v-if="meta.mappings"
+                      :options="meta.mappings"
+                      :value="selectedFieldsProxy"
+                      @open="expandFieldDropdown = true"
+                      @close="expandFieldDropdown = false"
+                      @input="updateSelectedFields"
+                      :multiple="true"
+                      :searchable="true"
+                      :close-on-select="true"
+                      label="field"
+                      track-by="field"
+                      placeholder="Add columns ..."
+                    ></multiselect>
+
+                    <span v-if="selectedFields.length">
+                      <br />
+                      <strong>Selected columns</strong>
+                      <br /><br />
+                    </span>
+                    <div class="tags">
+                      <span v-for="(field, index) in selectedFields" :key="index">
+                        <span class="tag is-light is-rounded" style="margin-right:7px;">
+                          <span style="margin-right:7px;">{{ field.field }}</span>
+                          <button
+                            style="margin-left:7px"
+                            class="delete is-small"
+                            v-on:click="removeField(index)"
+                          ></button>
+                        </span>
+                      </span>
+                    </div>
+
+                    <br />
+                    <b-switch type="is-info" v-model="displayOptions.showTags" style="margin-bottom:7px;">
+                      <span>Show tags</span>
+                    </b-switch>
+                    <br />
+                    <b-switch type="is-info" v-model="displayOptions.showEmojis" style="margin-bottom:7px;">
+                      <span>Show emojis</span>
+                    </b-switch>
+                    <br />
+                    <b-switch type="is-info" v-model="displayOptions.showMillis">
+                      <span>Show microseconds</span>
+                    </b-switch>
+                  </ts-dropdown>
                 </div>
 
                 <div class="level-item">
@@ -528,6 +513,7 @@ import TsSearchHistoryTree from '../components/Explore/SearchHistoryTree'
 import TsBarChart from '../components/Aggregation/BarChart'
 import TsSearchDropdown from '../components/Explore/SearchDropdown'
 import TsCreateViewForm from '../components/Common/CreateViewForm'
+import TsDropdown from '../components/Common/Dropdown'
 
 import EventBus from '../main'
 import { None } from 'vega'
@@ -566,6 +552,7 @@ export default {
     TsBarChart,
     TsSearchDropdown,
     TsCreateViewForm,
+    TsDropdown,
   },
   props: ['sketchId'],
   data() {
@@ -949,7 +936,7 @@ export default {
       this.selectedLabels.forEach(label => {
         let chip = {
           field: '',
-          value: label.label,
+          value: label,
           type: 'label',
           operator: 'must',
           active: true,

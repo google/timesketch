@@ -25,13 +25,15 @@ import GraphOverview from './views/GraphOverview'
 import GraphExplore from './views/GraphExplore'
 import Aggregate from './views/Aggregate'
 import Analyze from './views/Analyze'
-import Timelines from './views/Timelines'
 import Story from './views/Story'
 import StoryOverview from './views/StoryOverview'
 import StoryContent from './views/StoryContent'
 import Attributes from './views/Attributes'
 import Intelligence from './views/Intelligence'
 import SavedSearches from './views/SavedSearches'
+import Sigma from './views/Sigma'
+import SigmaContent from './views/SigmaContent'
+import SigmaOverview from './views/SigmaOverview'
 
 Vue.use(VueRouter)
 
@@ -51,6 +53,25 @@ const routes = [
         path: '',
         name: 'Overview',
         component: Overview,
+      },
+      {
+        path: 'sigma',
+        component: Sigma,
+        props: true,
+        children: [
+          {
+            path: '',
+            name: 'SigmaOverview',
+            component: SigmaOverview,
+            props: true,
+          },
+          {
+            path: 'details',
+            name: 'SigmaContent',
+            component: SigmaContent,
+            props: true,
+          },
+        ],
       },
       {
         path: 'explore',
@@ -105,12 +126,6 @@ const routes = [
             props: true,
           },
         ],
-      },
-      {
-        path: 'timelines',
-        name: 'Timelines',
-        component: Timelines,
-        props: true,
       },
       {
         path: 'attributes',

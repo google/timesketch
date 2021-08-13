@@ -28,7 +28,9 @@ export default {
   props: ['placeholder', 'label', 'name', 'value', 'display'],
   methods: {
     dateFormatter(dt) {
-      let dateString = dt.toISOString().replace('.000Z', '')
+      // Output whatever datetime string that the user chooses in the datetime picket widget.
+      // The calculations here are to match the users local timezone setting as that is what is used in the widget.
+      let dateString = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000).toISOString().replace('.000Z', '')
       this.$emit('input', dateString)
       return dateString
     },
