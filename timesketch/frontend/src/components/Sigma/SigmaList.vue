@@ -20,8 +20,9 @@ limitations under the License.
       :data="sigmaRuleList"
       :current-page.sync="currentPage"
       :per-page="perPage"
+      detailed
+      detail-key="title"
       paginated
-      hoverable
       pagination-simple
       pagination-position="bottom"
       default-sort-direction="desc"
@@ -33,65 +34,32 @@ limitations under the License.
       default-sort="title"
       key="props.row.id"
     >
-      <b-table-column field="id" label="Rule ID" v-slot="props" sortable searchable>
-        {{ props.row.id }}
-        <span class="icon is-small"
-          ><i
-            class="fas fa-copy"
-            style="cursor:pointer;"
-            title="Copy key:value"
-            v-clipboard:copy="props.row.id"
-            v-clipboard:success="handleCopyStatus"
-          ></i
-        ></span>
-        <span class="icon is-small">
-          <router-link :to="{ name: 'SigmaContent', query: { ruleId: props.row.id } }"
-            ><i class="fas fa-search"></i
-          ></router-link>
-        </span>
+      <b-table-column field="title" label="Name" v-slot="props" sortable searchable>
+        <div @click="props.toggleDetails(props.row)" style="margin-top:5px;cursor:pointer;">
+          {{ props.row.title }}
+        </div>
       </b-table-column>
-      <b-table-column field="title" label="Title" v-slot="props" sortable searchable>
-        {{ props.row.title }}
-        <i
-          class="fas fa-copy"
-          style="cursor:pointer;float:right;"
-          title="Copy key:value"
-          v-clipboard:copy="props.row.title"
-          v-clipboard:success="handleCopyStatus"
-        ></i>
+
+      <b-table-column field="description" label="Description" v-slot="props" searchable>
+        <div @click="props.toggleDetails(props.row)" style="margin-top:5px;cursor:pointer;">
+          {{ props.row.description }}
+        </div>
       </b-table-column>
-      <b-table-column field="es_query" label="ES Query" v-slot="props" sortable searchable>
-        {{ props.row.es_query }}
-        <span class="icon is-small"
-          ><router-link :to="{ name: 'Explore', query: { q: props.row.es_query } }"
-            ><i class="fas fa-search"></i></router-link
-        ></span>
-        <span class="icon is-small">
-          <i
-            class="fas fa-copy"
-            style="cursor:pointer;float:left;"
-            title="Copy key:value"
-            v-clipboard:copy="props.row.es_query"
-            v-clipboard:success="handleCopyStatus"
-          ></i
-        ></span>
+
+      <b-table-column field="actions" label="" v-slot="props">
+        <router-link :to="{ name: 'Explore', query: { q: props.row.es_query } }">
+          <button class="button is-outlined" style="float:right;">
+            <span class="icon is-small" style="margin-right:7px">
+              <i class="fas fa-search"></i>
+            </span>
+            Search
+          </button>
+        </router-link>
       </b-table-column>
-      <b-table-column field="file_name" label="File Name" v-slot="props" sortable searchable>
-        {{ props.row.file_name }}
-        <span class="icon is-small"
-          ><i
-            class="fas fa-copy"
-            style="cursor:pointer;"
-            title="Copy key:value"
-            v-clipboard:copy="props.row.file_name"
-            v-clipboard:success="handleCopyStatus"
-          ></i
-        ></span>
-        <span class="icon is-small">
-          <router-link :to="{ name: 'Explore', query: { q: props.row.file_name } }"
-            ><i class="fas fa-search"></i></router-link
-        ></span>
-      </b-table-column>
+
+      <template #detail="props">
+        <pre>{{ JSON.stringify(props['row'], null, 2) }}</pre>
+      </template>
     </b-table>
   </div>
 </template>
@@ -104,14 +72,7 @@ export default {
       ascending: false,
       sortColumn: '',
       perPage: 10,
-      c_name: -1,
     }
-  },
-  methods: {
-    handleCopyStatus: function() {
-      this.$buefy.notification.open('Copied!')
-      return true
-    },
   },
   computed: {
     sigmaRuleList() {
@@ -124,11 +85,16 @@ export default {
       return this.$store.state.meta
     },
   },
-  created() {
-    this.sigmaRuleList_count = this.$store.state.sigmaRuleList_count
-  },
 }
 </script>
 
 <!-- CSS scoped to this component only -->
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+pre {
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+  white-space: -pre-wrap;
+  white-space: -o-pre-wrap;
+  word-wrap: break-word;
+}
+</style>

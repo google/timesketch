@@ -80,6 +80,8 @@
   --highlight-color: #ddd;
   --dropdown-background-color: #fff;
   --hr-color: var(--navbar-border-color);
+  --pre-background-color: var(--card-background-color);
+  --pre-font-color: var(--default-font-color);
 }
 
 [data-theme='dark'] {
@@ -147,6 +149,8 @@
   --highlight-color: #666;
   --dropdown-background-color: var(--background-color-3);
   --hr-color: var(--background-color-5);
+  --pre-background-color: var(--background-color-2);
+  --pre-font-color: var(--default-font-color);
 }
 
 // Customize Bulma
@@ -231,6 +235,11 @@ body {
 
 hr {
   border: 1px solid var(--hr-color);
+}
+
+pre {
+  background-color: var(--pre-background-color);
+  color: var(--pre-font-color);
 }
 
 .login-page {
@@ -556,4 +565,10 @@ a:hover {
 .vc-compact {
   box-shadow: none;
   background-color: transparent;
+}
+
+.b-table .table tr.detail {
+  background-color: transparent;
+  -webkit-box-shadow: none;
+  box-shadow: none;
 }
