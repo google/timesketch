@@ -90,6 +90,7 @@ class MaxMindGeoDbClient(geoip2.database.Reader, GeoIpClientAdapter):
         """
         return self
 
+    # pylint: disable=W0235
     def __exit__(self, exc_type, exc_value, traceback):
         """Close and clean up client."""
         return super().__exit__(exc_type, exc_value, traceback)
@@ -151,6 +152,7 @@ class MaxMindGeoWebClient(geoip2.webservice.Client, GeoIpClientAdapter):
         """
         return self
 
+    # pylint: disable=W0235
     def __exit__(self, exc_type, exc_value, traceback):
         """Close and clean up client."""
         return super().__exit__(exc_type, exc_value, traceback)
