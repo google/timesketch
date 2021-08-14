@@ -36,6 +36,9 @@ from timesketch.lib.analyzers import manager
 logger = logging.getLogger('timesketch.analyzers.geoip')
 
 
+class GeoIPClientError(Exception):
+    """An error raised by the GeoIP client"""
+
 class GeoIpClientAdapter(object):
     """Base adapter interface for a third party geolocation service."""
 
@@ -76,9 +79,9 @@ class MaxMindGeoDbClient(geoip2.database.Reader, GeoIpClientAdapter):
     def __init__(self):
         self._geolite_database = current_app.config.get('MAXMIND_DB_PATH')
         if not self._geolite_database:
-            raise RuntimeError('MaxMind Database configuration not set.')
+            raise GeoIPClientError('MaxMind Database configuration not set.')
         if not os.path.exists(self._geolite_database):
-            raise RuntimeError('MaxMind Database does not exist.')
+            raise GeoIPClientError('MaxMind Database does not exist.')
         super().__init__(self._geolite_database)
 
     def __enter__(self):
@@ -89,7 +92,7 @@ class MaxMindGeoDbClient(geoip2.database.Reader, GeoIpClientAdapter):
 
     def __exit__(self, exc_type, exc_value, traceback):
         """Close and clean up client."""
-        return self.__exit__(exc_type, exc_value, traceback)
+        return super().__exit__(exc_type, exc_value, traceback)
 
     def ip2geo(self, ip_address) -> Union[Tuple[str, str, str, str, str], None]:
         """Perform a IP to geolocation lookup.
@@ -135,11 +138,11 @@ class MaxMindGeoWebClient(geoip2.webservice.Client, GeoIpClientAdapter):
         self._license_key = current_app.config.get('MAXMIND_WEB_LICENSE_KEY')
         self._host = current_app.config.get('MAXMIND_WEB_HOST')
         if not self._account_id:
-            raise RuntimeError('MaxMind Account ID not set.')
+            raise GeoIPClientError('MaxMind Account ID not set.')
         if not self._license_key:
-            raise RuntimeError('MaxMind License key not set.')
+            raise GeoIPClientError('MaxMind License key not set.')
         if not self._host:
-            raise RuntimeError('MaxMind host not set.')
+            raise GeoIPClientError('MaxMind host not set.')
         super().__init__(self._account_id, self._license_key, host=self._host)
 
     def __enter__(self):
@@ -150,7 +153,7 @@ class MaxMindGeoWebClient(geoip2.webservice.Client, GeoIpClientAdapter):
 
     def __exit__(self, exc_type, exc_value, traceback):
         """Close and clean up client."""
-        return self.__exit__(exc_type, exc_value, traceback)
+        return super().__exit__(exc_type, exc_value, traceback)
 
     def ip2geo(self, ip_address) -> Union[Tuple[str, str, str, str, str], None]:
         """Perform a IP to geolocation lookup.
@@ -274,8 +277,11 @@ class BaseGeoIpAnalyzer(interface.BaseAnalyzer):
                     ip_addresses[ip_addr][ip_address_field].append(event)
 
         for ip_address, ip_address_fields in ip_addresses.items():
-            with self.GEOIP_CLIENT() as client:  # pylint: disable=E1102
-                response = client.ip2geo(ip_address)
+            try:
+                with self.GEOIP_CLIENT() as client:  # pylint: disable=E1102
+                    response = client.ip2geo(ip_address)
+            except GeoIPClientError as error:
+                return f'GeoIP Client error - {error}'
 
             try:
                 iso_code, latitude, longitude, country_name, city_name = \
@@ -286,11 +292,7 @@ class BaseGeoIpAnalyzer(interface.BaseAnalyzer):
                               'city_name>. '
                               ' Number of fields returned: {0:d}'.format(
                                   len(response)))
-            if response is None:
                 continue
-
-            if len(response) != 5:
-                logging.error('Invalid response from GeoIP client')
 
             flag_emoji = emojis.get_emoji(f'FLAG_{iso_code}')
 
