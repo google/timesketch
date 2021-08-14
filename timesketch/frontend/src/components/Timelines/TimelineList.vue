@@ -24,6 +24,12 @@ limitations under the License.
         @save="save(timeline)"
       ></ts-timeline-list-item>
     </li>
+    <li v-if="timelines.length > 9" style="padding:10px; cursor:pointer;">
+      <span v-if="!showAllTimelines" v-on:click="showAllTimelines = true"
+        >Show more ({{ sketch.timelines.length - 10 }})</span
+      >
+      <span v-if="showAllTimelines" v-on:click="showAllTimelines = false">Show less</span>
+    </li>
   </ul>
 </template>
 
@@ -34,6 +40,11 @@ import TsTimelineListItem from './TimelineListItem'
 export default {
   components: { TsTimelineListItem },
   props: ['timelines', 'controls', 'isCompact'],
+  data() {
+    return {
+      showAllTimelines: false,
+    }
+  },
   computed: {
     sketch() {
       return this.$store.state.sketch
@@ -43,6 +54,9 @@ export default {
     },
     timelineList() {
       let timelines = [...this.timelines]
+      if (this.showAllTimelines) {
+        return timelines.reverse()
+      }
       if (this.isCompact && this.timelines.length > 9) {
         return timelines.reverse().slice(0, 10)
       } else {

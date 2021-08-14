@@ -20,23 +20,21 @@ limitations under the License.
         <div class="card" style="height: 100%;">
           <header class="card-header" style="border-bottom: 0;">
             <div v-if="currentGraph">
-              <b-dropdown aria-role="list" append-to-body>
-                <a
-                  class="button ts-search-dropdown"
-                  style="background-color: transparent;"
-                  slot="trigger"
-                  slot-scope="{ active }"
-                >
-                  <span class="icon is-small" style="margin-right: 10px; margin-top:2px; font-size: 0.6em;">
-                    <i class="fas fa-project-diagram"></i>
-                  </span>
-                  <div v-if="currentGraph" style="margin-right: 7px;">
-                    <strong>{{ currentGraph }}</strong>
-                  </div>
-                  <b-icon :icon="active ? 'chevron-up' : 'chevron-down'" style="font-size: 0.6em;"></b-icon>
-                </a>
+              <ts-dropdown>
+                <template v-slot:dropdown-trigger-element>
+                  <a class="button ts-search-dropdown" style="background-color: transparent;">
+                    <span class="icon is-small" style="margin-right: 10px; margin-top:2px; font-size: 0.6em;">
+                      <i class="fas fa-project-diagram"></i>
+                    </span>
+                    <div v-if="currentGraph" style="margin-right: 7px;">
+                      <strong>{{ currentGraph }}</strong>
+                    </div>
+                    <b-icon icon="chevron-down" style="font-size: 0.6em;"></b-icon>
+                  </a>
+                </template>
 
-                <b-dropdown-item
+                <div
+                  class="ts-dropdown-item"
                   v-for="graphPlugin in graphs"
                   :key="graphPlugin.name"
                   v-on:click="buildGraph(graphPlugin)"
@@ -44,8 +42,9 @@ limitations under the License.
                   <router-link :to="{ name: 'GraphExplore', query: { plugin: graphPlugin.name } }">{{
                     graphPlugin.display_name
                   }}</router-link>
-                </b-dropdown-item>
-                <b-dropdown-item
+                </div>
+                <div
+                  class="ts-dropdown-item"
                   v-for="savedGraph in savedGraphs"
                   :key="savedGraph.id"
                   v-on:click="buildSavedGraph(savedGraph)"
@@ -53,8 +52,8 @@ limitations under the License.
                   <router-link :to="{ name: 'GraphExplore', query: { graph: savedGraph.id } }">{{
                     savedGraph.name
                   }}</router-link>
-                </b-dropdown-item>
-              </b-dropdown>
+                </div>
+              </ts-dropdown>
             </div>
 
             <input
@@ -67,87 +66,77 @@ limitations under the License.
             />
 
             <span class="card-header-icon" v-if="currentGraph">
-              <b-dropdown position="is-bottom-left" aria-role="menu" trap-focus append-to-body>
-                <button class="button is-outlined is-rounded is-small" slot="trigger" :disabled="!currentGraph">
-                  <span class="icon is-small">
-                    <i class="fas fa-cog"></i>
-                  </span>
-                  <span>Settings</span>
-                </button>
-                <div class="modal-card" style="width:500px;color: var(--font-color-dark);">
-                  <section class="modal-card-body">
-                    <b-dropdown-item aria-role="menu-item" :focusable="false" custom>
-                      <b-field label="Transparency for unselected elements">
-                        <b-slider
-                          class="is-rounded"
-                          type="is-info"
-                          :custom-formatter="val => val + '%'"
-                          v-model="fadeOpacity"
-                          v-on:input="changeOpacity"
-                        ></b-slider>
-                      </b-field>
+              <ts-dropdown position="is-bottom-left" width="500px">
+                <template v-slot:dropdown-trigger-element>
+                  <button class="button is-outlined is-rounded is-small" slot="trigger" :disabled="!currentGraph">
+                    <span class="icon is-small">
+                      <i class="fas fa-cog"></i>
+                    </span>
+                    <span>Settings</span>
+                  </button>
+                </template>
+                <div>
+                  <div class="ts-dropdown-item">
+                    <b-field label="Transparency for unselected elements">
+                      <b-slider
+                        class="is-rounded"
+                        type="is-info"
+                        :custom-formatter="val => val + '%'"
+                        v-model="fadeOpacity"
+                        v-on:input="changeOpacity"
+                      ></b-slider>
+                    </b-field>
 
-                      <b-field label="Layout type">
-                        <b-radio
-                          v-for="layout in layouts"
-                          :key="layout"
-                          v-model="layoutName"
-                          :native-value="layout"
-                          type="is-info"
-                          v-on:input="buildGraph({ name: currentGraph })"
-                          :disabled="!hasGraphCache"
-                        >
-                          <span>{{ layout }}</span>
-                        </b-radio>
-                      </b-field>
+                    <b-field label="Layout type">
+                      <b-radio
+                        v-for="layout in layouts"
+                        :key="layout"
+                        v-model="layoutName"
+                        :native-value="layout"
+                        type="is-info"
+                        v-on:input="buildGraph({ name: currentGraph })"
+                        :disabled="!hasGraphCache"
+                      >
+                        <span>{{ layout }}</span>
+                      </b-radio>
+                    </b-field>
 
-                      <b-field label="Edge style">
-                        <b-radio
-                          v-for="edge in edgeStyles"
-                          :key="edge"
-                          v-model="edgeStyle"
-                          :native-value="edge"
-                          type="is-info"
-                          v-on:input="buildGraph({ name: currentGraph })"
-                          :disabled="!hasGraphCache"
-                        >
-                          <span>{{ edge }}</span>
-                        </b-radio>
-                      </b-field>
-                    </b-dropdown-item>
-                  </section>
+                    <b-field label="Edge style">
+                      <b-radio
+                        v-for="edge in edgeStyles"
+                        :key="edge"
+                        v-model="edgeStyle"
+                        :native-value="edge"
+                        type="is-info"
+                        v-on:input="buildGraph({ name: currentGraph })"
+                        :disabled="!hasGraphCache"
+                      >
+                        <span>{{ edge }}</span>
+                      </b-radio>
+                    </b-field>
+                  </div>
                 </div>
-              </b-dropdown>
+              </ts-dropdown>
 
-              <b-dropdown
-                ref="saveDropdown"
-                position="is-bottom-left"
-                aria-role="menu"
-                trap-focus
-                append-to-body
-                :disabled="!edgeQuery"
-              >
-                <button class="button is-outlined is-rounded is-small" slot="trigger">
-                  <span class="icon is-small">
-                    <i class="fas fa-save"></i>
-                  </span>
-                  <span>Save selection</span>
-                </button>
-                <div class="modal-card" style="width:300px;color: var(--font-color-dark);">
-                  <section class="modal-card-body">
-                    <b-dropdown-item aria-role="menu-item" :focusable="false" custom>
-                      <strong>Save selected graph</strong>
-                      <div class="field">
-                        <label class="label">Name</label>
-                        <div class="control">
-                          <input v-model="saveAsName" class="input" type="text" placeholder="Graph name" required />
-                        </div>
-                      </div>
-                      <button class="button is-small" v-on:click="saveSelection">Save</button>
-                    </b-dropdown-item>
-                  </section>
+              <ts-dropdown position="is-bottom-left" width="500px">
+                <template v-slot:dropdown-trigger-element :disabled="!edgeQuery">
+                  <button class="button is-outlined is-rounded is-small">
+                    <span class="icon is-small">
+                      <i class="fas fa-save"></i>
+                    </span>
+                    <span>Save selection</span>
+                  </button>
+                </template>
+
+                <strong>Save selected graph</strong>
+                <br /><br />
+                <div class="field">
+                  <div class="control">
+                    <input v-model="saveAsName" class="input" type="text" placeholder="Graph name" required />
+                  </div>
                 </div>
-              </b-dropdown>
+                <button class="button is-small" v-on:click="saveSelection">Save</button>
+              </ts-dropdown>
 
               <button
                 class="button is-outlined is-rounded is-small"
@@ -237,11 +226,12 @@ import spread from 'cytoscape-spread'
 import dagre from 'cytoscape-dagre'
 import ApiClient from '../../utils/RestApiClient'
 import TsEventListCompact from '../Explore/EventListCompact'
+import TsDropdown from '../Common/Dropdown'
 import EventBus from '../../main'
 import _ from 'lodash'
 
 export default {
-  components: { TsEventListCompact },
+  components: { TsEventListCompact, TsDropdown },
   data() {
     return {
       showGraph: true,
@@ -544,7 +534,6 @@ export default {
       let selected = this.cy.filter(':selected')
       let neighborhood = this.buildNeighborhood(selected)
       let elements = neighborhood.jsons()
-      this.$refs.saveDropdown.toggle()
       this.showGraph = false
       this.elements = elements
       this.currentGraph = this.saveAsName
@@ -627,7 +616,7 @@ export default {
           .selector('edge')
           .style({
             color: '#f5f5f5',
-            'text-outline-color': '#545454',
+            'text-outline-color': '#25272c',
           })
           .update()
       } else {

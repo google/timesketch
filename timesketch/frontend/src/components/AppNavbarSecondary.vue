@@ -1,5 +1,5 @@
 <!--
-Copyright 2019 Google Inc. All rights reserved.
+Copyright 2021 Google Inc. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -61,12 +61,23 @@ limitations under the License.
                   <span>Stories</span>
                 </router-link>
               </li>
+              <li v-bind:class="{ 'is-active': currentPage === 'sigma' }">
+                <router-link :to="{ name: 'SigmaOverview' }">
+                  <span class="icon is-small"><i class="fas fa-file-signature" aria-hidden="true"></i></span>
+                  <span>Sigma</span>
+                </router-link>
+              </li>
               <li v-if="meta" v-bind:class="{ 'is-active': currentPage === 'attributes' }">
                 <router-link :to="{ name: 'Attributes' }">
                   <span class="icon is-small"><i class="fas fa-table" aria-hidden="true"></i></span>
                   <span
-                    >Attributes <b-tag type="is-light">{{ attributeCount }}</b-tag></span
-                  >
+                    >Attributes
+                    <span
+                      class="tag is-small"
+                      style="background-color:var(--tag-background-color); color:var(--tag-font-color);"
+                      >{{ attributeCount }}</span
+                    >
+                  </span>
                 </router-link>
               </li>
               <li
@@ -76,8 +87,13 @@ limitations under the License.
                 <router-link :to="{ name: 'Intelligence' }">
                   <span class="icon is-small"><i class="fas fa-brain" aria-hidden="true"></i></span>
                   <span
-                    >Intelligence <b-tag type="is-light">{{ attributeCount }}</b-tag></span
-                  >
+                    >Intelligence
+                    <span
+                      class="tag is-small"
+                      style="background-color:var(--tag-background-color); color:var(--tag-font-color);"
+                      >{{ attributeCount }}</span
+                    >
+                  </span>
                 </router-link>
               </li>
             </ul>
