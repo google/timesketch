@@ -16,14 +16,13 @@ limitations under the License.
 <template>
   <form v-on:submit.prevent="submitForm">
     <div class="field">
-      <label class="label">Name</label>
       <div class="control">
-        <input v-model="viewName" class="input" type="text" required placeholder="Name your view" autofocus />
+        <input v-model="viewName" class="input" type="text" required placeholder="Name your search" autofocus />
       </div>
     </div>
     <div class="field">
       <div class="control">
-        <input class="button is-success" type="submit" value="Save" />
+        <input class="button is-success" type="submit" value="Save search" />
       </div>
     </div>
   </form>

@@ -39,6 +39,7 @@ logger = logging.getLogger('timesketch.analyzers.geoip')
 class GeoIPClientError(Exception):
     """An error raised by the GeoIP client"""
 
+
 class GeoIpClientAdapter(object):
     """Base adapter interface for a third party geolocation service."""
 
