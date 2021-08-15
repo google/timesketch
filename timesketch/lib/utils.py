@@ -176,7 +176,8 @@ def read_and_validate_csv(
                     'Rows {0} to {1} skipped due to malformed '
                     'datetime values ')
                 logger.warning(warning_string.format(
-                    idx * reader.chunksize, chunk.shape[0]))
+                    idx * reader.chunksize, 
+                    idx * reader.chunksize + chunk.shape[0]))
                 continue
             if 'tag' in chunk:
                 chunk['tag'] = chunk['tag'].apply(_parse_tag_field)
