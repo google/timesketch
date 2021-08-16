@@ -168,7 +168,7 @@ def read_and_validate_csv(
                 chunk['datetime'] = pandas.to_datetime(
                     chunk['datetime'], errors='coerce')
                 num_chunk_rows = chunk.shape[0]
-                chunk.dropna(inplace=True)
+                chunk.dropna(subset=['datetime'], inplace=True)
                 if len(chunk) < num_chunk_rows:
                     warning_string = (
                         '{0} rows dropped from Rows {1} to {2} due to invalid '
