@@ -88,8 +88,10 @@ class SigmaPlugin(interface.BaseAnalyzer):
                     'SIGMA_TAG_DELAY', 15)
                 logger.error(
                     'Timeout executing search for {0:s}: '
-                    '{1!s} waiting for {2:d} seconds (https://github.com/google/timesketch/issues/1782)'
-                    .format(rule.get('file_name'), e, sleep_time), exc_info=True)
+                    '{1!s} waiting for {2:d} seconds '
+                    '(https://github.com/google/timesketch/issues/1782)'
+                    .format(
+                        rule.get('file_name'), e, sleep_time), exc_info=True)
                 # this is caused by too many ES queries in short time range
                 # TODO: https://github.com/google/timesketch/issues/1782
                 time.sleep(sleep_time)
