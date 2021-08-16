@@ -279,12 +279,13 @@ class BaseGeoIpAnalyzer(interface.BaseAnalyzer):
                         continue
                     ip_addresses[ip_addr][ip_address_field].append(event)
 
+        try:
+            client = self.GEOIP_CLIENT()  # pylint: disable=E1102
+        except GeoIPClientError as error:
+            return f'GeoIP Client error - {error}'
+
         for ip_address, ip_address_fields in ip_addresses.items():
-            try:
-                with self.GEOIP_CLIENT() as client:  # pylint: disable=E1102
-                    response = client.ip2geo(ip_address)
-            except GeoIPClientError as error:
-                return f'GeoIP Client error - {error}'
+            response = client.ip2geo(ip_address)
 
             try:
                 iso_code, latitude, longitude, country_name, city_name = \
