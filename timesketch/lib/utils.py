@@ -167,12 +167,16 @@ def read_and_validate_csv(
             try:
                 chunk['datetime'] = pandas.to_datetime(
                     chunk['datetime'], errors='coerce')
+                num_chunk_rows = chunk.shape[0]
                 chunk.dropna(inplace=True)
-                if len(chunk) < DEFAULT_CHUNK_SIZE:
+                if len(chunk) < num_chunk_rows:
                     warning_string = (
-                        '{0} rows dropped due to invalid datetime values')
+                        '{0} rows dropped from Rows {1} to {2} due to invalid '
+                        'datetime values')
                     logger.warning(warning_string.format(
-                        DEFAULT_CHUNK_SIZE - len(chunk)))
+                        num_chunk_rows - len(chunk),
+                        idx * reader.chunksize,
+                        idx * reader.chunksize + num_chunk_rows))
                 chunk['timestamp'] = chunk['datetime'].dt.strftime(
                     '%s%f').astype(int)
                 chunk['datetime'] = chunk['datetime'].apply(
