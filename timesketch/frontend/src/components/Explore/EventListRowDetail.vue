@@ -48,7 +48,6 @@ limitations under the License.
 
         <td style="white-space:pre-wrap;word-wrap: break-word; width: 150px;">{{ key }}</td>
         <td>
-          <span style="white-space:pre-wrap;word-wrap: break-word">{{ item }}</span>
           <span
             class="icon is-small"
             style="cursor:pointer; margin-left: 3px; color: #d3d3d3;float:right;"
