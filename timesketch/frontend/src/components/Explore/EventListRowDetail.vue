@@ -16,7 +16,7 @@ limitations under the License.
 <template>
   <table class="table is-bordered" style="width:100%;table-layout: fixed;" @mouseup="handleSelectionChange">
     <tbody>
-      <tr v-for="(item, key) in fullEventFiltered" :key="key">
+      <tr v-for="(item, key) in fullEventFiltered" :key="key" @mouseover="c_key = key" @mouseleave="c_key = -1">
         <td style="width:40px;">
           <span
             class="icon is-small"
@@ -35,8 +35,11 @@ limitations under the License.
             ><i class="fas fa-search-minus"></i
           ></span>
         </td>
-        <td style="width:40px;">
+
+        <td style="word-wrap: break-word; width: 150px;">
+          {{ key }}
           <span
+            v-if="key == c_key"
             class="icon is-small"
             style="cursor:pointer;"
             title="Copy key"
@@ -45,12 +48,11 @@ limitations under the License.
             ><i class="fas fa-copy"></i
           ></span>
         </td>
-
-        <td style="white-space:pre-wrap;word-wrap: break-word; width: 150px;">{{ key }}</td>
         <td>
           <span
+            v-if="key == c_key"
             class="icon is-small"
-            style="cursor:pointer; margin-left: 3px; color: #d3d3d3;float:right;"
+            style="cursor:pointer; margin-left: 3px; float:right;"
             title="Copy value"
             v-clipboard:copy="item"
             v-clipboard:success="handleCopyStatus"
@@ -87,6 +89,7 @@ export default {
         hash_sha256: /[0-9a-f]{64}/gi,
         selection: '',
       },
+      c_key: -1,
       fullEvent: {},
     }
   },

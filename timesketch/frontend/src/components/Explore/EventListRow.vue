@@ -30,7 +30,7 @@ limitations under the License.
     </tr>
 
     <!-- The event -->
-    <tr @mouseover="hover = true" @mouseleave="hover = false">
+    <tr>
       <!-- Timeline color (set the color for the timeline) -->
       <td v-bind:style="timelineColor">
         {{ event._source.timestamp | formatTimestamp | moment('utc', datetimeFormat) }}
@@ -247,7 +247,6 @@ export default {
       labelToAdd: null,
       selectedLabels: [],
       labelsToRemove: [],
-      hover: false,
     }
   },
   computed: {
