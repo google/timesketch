@@ -9,7 +9,9 @@ As much as we try to stick to the roadmap, the development of the project will r
  
 # How to contribute to the roadmap
  
-We invite users, developers from the entire community to provide feedback via e.g. [Twitter](https://twitter.com/TimesketchProj), Slack and Github issues. To directly contribute to this roadmap create a PR and propose changes and explain the rationale behind your proposed changes.
+We invite users, developers from the entire community to provide feedback via e.g [Github issues] (https://github.com/google/timesketch/issues/new/choose), [Slack] (https://timesketch.org/community/resources/) or [Twitter](https://twitter.com/TimesketchProj)
+
+To directly contribute to this roadmap create a PR and propose changes and explain the rationale behind your proposed changes.
  
 ## Sigma
  
