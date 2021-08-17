@@ -24,7 +24,7 @@ class SigmaPlugin(interface.BaseAnalyzer):
     DISPLAY_NAME = 'Sigma'
     DESCRIPTION = 'Run pre-defined Sigma rules and tag matching events'
 
-    def run_sigma_rule(self, query, rule_name, tag_list = None):
+    def run_sigma_rule(self, query, rule_name, tag_list=None):
         """Runs a sigma rule and applies the appropriate tags.
 
         Args:
@@ -63,7 +63,11 @@ class SigmaPlugin(interface.BaseAnalyzer):
         Returns:
             String with summary of the analyzer result.
         """
+        #import pdb
+        # pdb.set_trace()
 
+        logger.debug(self)
+        exit()
         tags_applied = {}
         sigma_rule_counter = 0
         sigma_rules = ts_sigma_lib.get_all_sigma_rules()
@@ -99,7 +103,7 @@ class SigmaPlugin(interface.BaseAnalyzer):
                 tags_applied[rule.get('file_name')] += tagged_events_counter
             # Wide exception handling since there are multiple exceptions that
             # can be raised by the underlying sigma library.
-            except: # pylint: disable=bare-except
+            except:  # pylint: disable=bare-except
                 logger.error(
                     'Problem with rule in file {0:s}: '.format(
                         rule.get('file_name')), exc_info=True)
@@ -161,5 +165,6 @@ class RulesSigmaPlugin(SigmaPlugin):
     """Sigma plugin to run rules."""
 
     NAME = 'sigma'
+
 
 manager.AnalysisManager.register_analyzer(RulesSigmaPlugin)

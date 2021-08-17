@@ -34,6 +34,7 @@ from celery import chain
 from celery import group
 from celery import signals
 from sqlalchemy import create_engine
+import timesketch.lib.sigma_util as ts_sigma_lib
 
 # To be able to determine plaso's version.
 try:
@@ -320,7 +321,8 @@ def build_sketch_analysis_pipeline(
         return None, None
 
     if not analyzer_kwargs:
-        analyzer_kwargs = current_app.config.get('ANALYZERS_DEFAULT_KWARGS', {})
+        analyzer_kwargs = current_app.config.get(
+            'ANALYZERS_DEFAULT_KWARGS', {})
 
     if user_id:
         user = User.query.get(user_id)
@@ -408,7 +410,8 @@ def run_email_result_task(index_name, sketch_id=None):
     """
     # We need to get a fake request context so that url_for() will work.
     with current_app.test_request_context():
-        searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
+        searchindex = SearchIndex.query.filter_by(
+            index_name=index_name).first()
         sketch = None
 
         try:
@@ -469,10 +472,40 @@ def run_sketch_analyzer(
     Returns:
       Name (str) of the index.
     """
+    from celery.contrib import rdb
+
     analyzer_class = manager.AnalysisManager.get_analyzer(analyzer_name)
-    analyzer = analyzer_class(
-        sketch_id=sketch_id, index_name=index_name,
-        timeline_id=timeline_id, **kwargs)
+
+    if analyzer_name == "sigma":
+        logger.info("will start an sigma analyzer")
+        # now wil start a lot more celery jobs
+        #rule.get('es_query'), rule.get('file_name'),
+        #            tag_list=rule.get('tags')
+        sigma_rules = ts_sigma_lib.get_all_sigma_rules()
+        if sigma_rules is None:
+            logger.error('No  Sigma rules found. Check SIGMA_RULES_FOLDERS')
+        problem_strings = []
+        output_strings = []
+
+        for rule in sigma_rules:
+            logger.debug(rule)
+            rdb.set_trace()
+            # query, rule_name, tag_list
+            build_sketch_analysis_pipeline(
+                sketch_id, searchindex_id=123, user_id=123, analyzer_names=["sigma"], analyzer_kwargs={
+                    "es_query": rule.get('es_query'),
+                    "rule_name": rule.get('file_name'),
+                    "tag_list": rule.get('tags')
+                }, timeline_id=timeline_id)
+
+            # analyzer = analyzer_class(
+            #   sketch_id=sketch_id, index_name=index_name,
+            #    timeline_id=timeline_id, ** kwargs)
+
+    else:
+        analyzer = analyzer_class(
+            sketch_id=sketch_id, index_name=index_name,
+            timeline_id=timeline_id, **kwargs)
 
     result = analyzer.run_wrapper(analysis_id)
     logger.info('[{0:s}] result: {1:s}'.format(analyzer_name, result))
@@ -600,7 +633,6 @@ def run_plaso(
     elastic_ssl = current_app.config.get('ELASTIC_SSL', False)
     if elastic_ssl:
         cmd.extend(['--use_ssl'])
-
 
     psort_memory = current_app.config.get('PLASO_UPPER_MEMORY_LIMIT', '')
     if psort_memory:
