@@ -49,7 +49,7 @@ For each event, you can apply the following actions by clicking small icons in e
 
 Implemented as a tree with support for branching, annotations and intuitive navigation means you will never get lost in your searches again
 
-![Share dialogue](/assets/videos/SearchHistory.mp4)
+![Sketch History](/assets/videos/SearchHistory.mp4)
 
 ## More
 
