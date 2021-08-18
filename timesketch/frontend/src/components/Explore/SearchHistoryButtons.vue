@@ -44,7 +44,7 @@ export default {
     },
     hasParent() {
       if (this.currentSearchNode) {
-        return typeof this.currentSearchNode.parent == 'number'
+        return typeof this.currentSearchNode.parent === 'number'
       } else {
         return false
       }
