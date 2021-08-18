@@ -29,6 +29,7 @@
 }
 
 [data-theme='light'] {
+  color-scheme: light;
   --background-color: linear-gradient(90deg, rgba(249, 249, 249, 1) 11%, rgba(241, 241, 241, 1) 100%);
   --default-font-color: var(--font-color-dark);
   --default-link-color: var(--font-color-dark);
@@ -85,6 +86,7 @@
 }
 
 [data-theme='dark'] {
+  color-scheme: dark;
   --background-color: #121212;
   --background-color-2: #1a1b1e;
   --background-color-3: #25272c;
