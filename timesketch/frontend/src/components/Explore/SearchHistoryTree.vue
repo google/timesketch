@@ -43,7 +43,7 @@ export default {
     },
     handleClickFromDropdown(nodeFromDropdown) {
       let nodeId
-      if (typeof nodeFromDropdown == 'number') {
+      if (typeof nodeFromDropdown === 'number') {
         nodeId = nodeFromDropdown
       } else {
         nodeId = nodeFromDropdown.id
