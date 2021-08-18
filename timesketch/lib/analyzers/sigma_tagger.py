@@ -112,7 +112,7 @@ class SigmaPlugin(interface.BaseAnalyzer):
         total_tagged_events = sum(tags_applied.values())
         output_strings.append('Applied {0:d} tags'.format(total_tagged_events))
 
-        if sigma_rule_counter > 0:
+        if total_tagged_events > 0:
             self.add_sigma_match_view(sigma_rule_counter)
 
         if len(problem_strings) > 0:

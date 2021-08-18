@@ -30,7 +30,7 @@ limitations under the License.
     </tr>
 
     <!-- The event -->
-    <tr @mouseover="hover = true" @mouseleave="hover = false">
+    <tr>
       <!-- Timeline color (set the color for the timeline) -->
       <td v-bind:style="timelineColor">
         {{ event._source.timestamp | formatTimestamp | moment('utc', datetimeFormat) }}
@@ -155,15 +155,6 @@ limitations under the License.
                 style="margin-right:5px; background-color:var(--tag-background-color); color:var(--tag-font-color);"
                 >{{ label }}</span
               >
-              <span
-                v-if="hover"
-                class="icon is-small"
-                style="cursor:pointer;float:right;"
-                title="Copy key:value"
-                v-clipboard:copy="event._source[field.field]"
-                v-clipboard:success="handleCopyStatus"
-                ><i class="fas fa-copy"></i
-              ></span>
             </span>
             <!--eslint-enable-->
             <span style="word-break: break-word;" :title="event._source[field.field]">
@@ -256,7 +247,6 @@ export default {
       labelToAdd: null,
       selectedLabels: [],
       labelsToRemove: [],
-      hover: false,
     }
   },
   computed: {
@@ -444,9 +434,6 @@ export default {
     },
     toggleTheme: function() {
       this.isDarkTheme = !this.isDarkTheme
-    },
-    handleCopyStatus: function() {
-      this.$buefy.notification.open('Copied!')
     },
   },
   beforeDestroy() {
