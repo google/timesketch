@@ -44,8 +44,8 @@ class Investigation(BaseModel):
     display_name = Column(UnicodeText())    
     description = Column(UnicodeText())
     conclusion = Column(UnicodeText())
-    timeframes = Column(UnicodeText())
     user_id = Column(Integer, ForeignKey('user.id'))
+    timeframes = Column(UnicodeText())
     timelines = relationship(
         'Timeline', backref='investigation', lazy='select')
     questions = relationship(
@@ -60,10 +60,7 @@ class InvestigativeQuestion(BaseModel):
     conclusion = Column(UnicodeText())
     user_id = Column(Integer, ForeignKey('user.id'))
     investigation_id = Column(Integer, ForeignKey('investigation.id'))
-    # Helpful assets
-    searchtemplates = relationship(
-        'SearchTemplate', backref='investigationquestion', lazy='select')
-    # There are no database models for analyzers and graphs. Reference them
-    # by name instead.
     analyzers = Column(UnicodeText())
     graphs = Column(UnicodeText())
+    searchtemplates = relationship(
+        'SearchTemplate', backref='investigationquestion', lazy='select')
