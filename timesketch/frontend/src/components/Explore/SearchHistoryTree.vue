@@ -42,7 +42,13 @@ export default {
       this.selectedNode = node
     },
     handleClickFromDropdown(nodeFromDropdown) {
-      let node = findSearchNode(this.treeData, 'id', (k, v) => v === nodeFromDropdown.id)
+      let nodeId
+      if (typeof nodeFromDropdown === 'number') {
+        nodeId = nodeFromDropdown
+      } else {
+        nodeId = nodeFromDropdown.id
+      }
+      let node = findSearchNode(this.treeData, 'id', (k, v) => v === nodeId)
       this.$emit('node-click', node)
       this.selectedNode = node
     },

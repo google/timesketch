@@ -56,7 +56,7 @@ jobs:
             python3-flask-restful python3-flask-script python3-flask-sqlalchemy \
             python3-flaskext.wtf python3-google-auth python3-google-auth-oauthlib \
             python3-gunicorn python3-idna python3-itsdangerous python3-jinja2 \
-            python3-jsonschema python3-jwt python3-kombu python3-mako python3-mans-to-es \
+            python3-jsonschema python3-jwt python3-kombu python3-mako \
             python3-markdown python3-markupsafe python3-neo4jrestclient python3-numpy \
             python3-oauthlib python3-pandas python3-parameterized python3-pycparser \
             python3-pyrsistent python3-redis python3-requests python3-requests-oauthlib \

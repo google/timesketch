@@ -14,11 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div style="max-height:700px;border-top:1px solid var(--table-cell-border-color);overflow: hidden;">
+  <div style="max-height:600px;border-top:1px solid var(--table-cell-border-color);overflow: hidden;">
     <div class="columns is-gapless" v-if="Object.keys(matches).length">
       <div
         class="column"
-        style="max-width:50%;overflow:auto;overflow-x: hidden;max-height:700px;"
+        style="max-width:50%;overflow:auto;overflow-x: hidden;max-height:600px;"
         v-if="matches.fields.length"
       >
         <div style="padding:20px;">
@@ -38,7 +38,7 @@ limitations under the License.
       <div
         class="column"
         v-if="matches.dataTypes.length"
-        style="border-left:1px solid var(--table-cell-border-color);max-width:50%;overflow:auto;overflow-x: hidden;max-height:700px;"
+        style="border-left:1px solid var(--table-cell-border-color);max-width:50%;overflow:auto;overflow-x: hidden;max-height:600px;"
       >
         <div style="padding:20px;">
           <div style="padding-bottom:10px;"><strong>Data Types</strong></div>
@@ -58,7 +58,7 @@ limitations under the License.
       <div
         v-if="matches.tags.length || matches.labels.length"
         class="column"
-        style="border-left:1px solid var(--table-cell-border-color);max-width:50%;overflow:auto;overflow-x: hidden;max-height:700px;"
+        style="border-left:1px solid var(--table-cell-border-color);max-width:50%;overflow:auto;overflow-x: hidden;max-height:600px;"
       >
         <div style="padding:20px;">
           <div style="padding-bottom:10px;"><strong>Tags</strong></div>
@@ -100,7 +100,7 @@ limitations under the License.
 
       <div
         class="column"
-        style="border-left:1px solid var(--table-cell-border-color);max-width:50%;overflow:auto;overflow-x: hidden;max-height:700px;"
+        style="border-left:1px solid var(--table-cell-border-color);max-width:50%;overflow:auto;overflow-x: hidden;max-height:600px;"
         v-if="matches.savedSearches.length"
       >
         <div style="padding:20px;">

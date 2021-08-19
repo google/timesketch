@@ -59,6 +59,10 @@ export default new Vuex.Store({
     SET_SEARCH_NODE(state, payload) {
       Vue.set(state, 'currentSearchNode', payload)
     },
+    SET_SIGMA_LIST(state, payload) {
+      Vue.set(state, 'sigmaRuleList', payload['objects'])
+      Vue.set(state, 'sigmaRuleList_count', payload['meta']['rules_count'])
+    },
     RESET_STATE(state, payload) {
       ApiClient.getLoggedInUser().then(response => {
         let currentUser = response.data.objects[0].username
@@ -68,16 +72,18 @@ export default new Vuex.Store({
   },
   actions: {
     updateSketch(context, sketchId) {
-      ApiClient.getSketch(sketchId)
+      return ApiClient.getSketch(sketchId)
         .then(response => {
+          // console.log(response.data.objects[0].active_timelines[0].color)
           context.commit('SET_SKETCH', response.data)
           context.dispatch('updateTimelineTags', sketchId)
           context.dispatch('updateDataTypes', sketchId)
         })
         .catch(e => {})
-
+    },
+    updateCount(context, sketchId) {
       // Count events for all timelines in the sketch
-      ApiClient.countSketchEvents(sketchId)
+      return ApiClient.countSketchEvents(sketchId)
         .then(response => {
           context.commit('SET_COUNT', response.data.meta.count)
         })
@@ -93,7 +99,7 @@ export default new Vuex.Store({
       if (!sketchId) {
         sketchId = context.state.sketch.id
       }
-      ApiClient.getSearchHistory(sketchId)
+      return ApiClient.getSearchHistory(sketchId)
         .then(response => {
           context.commit('SET_SEARCH_HISTORY', response.data)
         })
@@ -109,7 +115,7 @@ export default new Vuex.Store({
           field: 'tag',
         },
       }
-      ApiClient.runAggregator(sketchId, formData)
+      return ApiClient.runAggregator(sketchId, formData)
         .then(response => {
           context.commit('SET_TIMELINE_TAGS', response.data)
         })
@@ -125,11 +131,17 @@ export default new Vuex.Store({
           field: 'data_type',
         },
       }
-      ApiClient.runAggregator(sketchId, formData)
+      return ApiClient.runAggregator(sketchId, formData)
         .then(response => {
           context.commit('SET_DATA_TYPES', response.data)
         })
         .catch(e => {})
+    },
+    updateSigmaList(context) {
+      ApiClient.getSigmaList()
+      .then(response => {
+        context.commit('SET_SIGMA_LIST', response.data)
+      }).catch(e => {})
     },
   },
 })

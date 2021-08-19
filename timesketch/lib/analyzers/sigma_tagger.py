@@ -84,14 +84,16 @@ class SigmaPlugin(interface.BaseAnalyzer):
                     logger.debug('Rule {0:d}/{1:d}'.format(
                         sigma_rule_counter, len(sigma_rules)))
             except elasticsearch.TransportError as e:
+                sleep_time : int = current_app.config.get(
+                    'SIGMA_TAG_DELAY', 15)
                 logger.error(
                     'Timeout executing search for {0:s}: '
-                    '{1!s} waiting for 10 seconds'.format(
-                        rule.get('file_name'), e), exc_info=True)
+                    '{1!s} waiting for {2:d} seconds '
+                    '(https://github.com/google/timesketch/issues/1782)'
+                    .format(
+                        rule.get('file_name'), e, sleep_time), exc_info=True)
                 # this is caused by too many ES queries in short time range
                 # TODO: https://github.com/google/timesketch/issues/1782
-                sleep_time = current_app.config.get(
-                    'SIGMA_TAG_DELAY', 15)
                 time.sleep(sleep_time)
                 tagged_events_counter = self.run_sigma_rule(
                     rule.get('es_query'), rule.get('file_name'),
@@ -110,7 +112,7 @@ class SigmaPlugin(interface.BaseAnalyzer):
         total_tagged_events = sum(tags_applied.values())
         output_strings.append('Applied {0:d} tags'.format(total_tagged_events))
 
-        if sigma_rule_counter > 0:
+        if total_tagged_events > 0:
             self.add_sigma_match_view(sigma_rule_counter)
 
         if len(problem_strings) > 0:

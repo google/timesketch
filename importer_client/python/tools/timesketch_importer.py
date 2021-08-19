@@ -474,8 +474,8 @@ def main(args=None):
         status = timeline.status
         if status in ('archived', 'failed', 'fail'):
             print('[FAIL]')
-            print('Unable to index timeline, reason: {0:s}'.format(
-                timeline.description))
+            print('Unable to index timeline {0:s}, reason: {1:s}'.format(
+                timeline.description ,timeline.status))
             return
 
         if status not in ('ready', 'success'):

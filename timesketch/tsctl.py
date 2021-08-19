@@ -68,6 +68,33 @@ class DropDataBaseTables(Command):
             drop_all()
 
 
+class GrantUser(Command):
+    """Grant a user user access to a sketch."""
+    option_list = (
+        Option('--username', '-u', dest='username', required=True),
+        Option('--sketchId', '-s', dest='sketch_id', required=True), )
+
+    # pylint: disable=arguments-differ, method-hidden
+    def run(self, username, sketch_id):
+        """Creates the user."""
+        if not isinstance(sketch_id, six.text_type):
+            sketch_id = codecs.decode(sketch_id, 'utf-8')
+        if not isinstance(username, six.text_type):
+            username = codecs.decode(username, 'utf-8')
+        sketch = Sketch.query.filter_by(id=sketch_id).first()
+        user = User.query.filter_by(username=username).first()
+        if not sketch:
+            sys.stdout.write('No sketch found with this ID.')
+        elif not user:
+            sys.stdout.write('User [{0:s}] does not exist.\n'.format(
+                username))
+        else:
+            sketch.grant_permission(permission='read', user=user)
+            sketch.grant_permission(permission='write', user=user)
+            sys.stdout.write('User {0:s} added to the sketch {1:s}.\n'.format(
+                username, sketch_id))
+
+
 class AddUser(Command):
     """Create a new Timesketch user."""
     option_list = (
@@ -440,6 +467,7 @@ def main():
     """Main function of the script, setting up the shell manager."""
     # Setup Flask-script command manager and register commands.
     shell_manager = Manager(create_app)
+    shell_manager.add_command('grant_user', GrantUser())
     shell_manager.add_command('add_user', AddUser())
     shell_manager.add_command('make_admin', MakeUserAdmin())
     shell_manager.add_command('list_users', ListUsers())

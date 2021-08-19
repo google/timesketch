@@ -24,6 +24,7 @@ import Buefy from 'buefy'
 import VueScrollTo from 'vue-scrollto'
 import Multiselect from 'vue-multiselect'
 import VueCytoscape from 'vue-cytoscape'
+import VueClipboard from 'vue-clipboard2'
 
 // Icons
 import { library } from '@fortawesome/fontawesome-svg-core'
@@ -54,6 +55,7 @@ export default EventBus
 // Third party
 Vue.use(require('vue-moment'))
 Vue.use(VueCytoscape)
+Vue.use(VueClipboard);
 Vue.use(Buefy, {
   defaultIconComponent: 'font-awesome-icon',
   defaultIconPack: 'fas',

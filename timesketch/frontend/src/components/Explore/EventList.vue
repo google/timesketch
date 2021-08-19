@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <table class="table is-fullwidth">
+  <table class="table is-fullwidth" style="border-radius:4px;">
     <thead>
       <th :width="datetimeWidth">Datetime (UTC)</th>
       <th width="1">
@@ -22,7 +22,7 @@ limitations under the License.
           <input type="checkbox" v-on:click="toggleSelectAll" />
         </span>
       </th>
-      <th v-for="(field, index) in selectedFields" :key="index">{{ field.field | capitalize }}</th>
+      <th v-for="(field, index) in selectedFields" :key="index">{{ field.field }}</th>
       <th width="150">Timeline name</th>
     </thead>
     <ts-sketch-explore-event-list-row

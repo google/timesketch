@@ -63,37 +63,37 @@ limitations under the License.
           </a>
         </b-tooltip>
 
-        <b-dropdown v-if="meta.permissions.write" aria-role="list" append-to-body position="is-bottom-left">
-          <a
-            class="button ts-dropdown-button is-small"
-            style="background:transparent;border:none;margin-right:-18px;"
-            slot="trigger"
-            slot-scope="{ active }"
-          >
-            <span class="icon is-small">
-              <i :class="active ? 'fas fa-angle-up' : 'fas fa-angle-down'"></i>
-            </span>
-            <span>More</span>
-          </a>
-          <b-dropdown-item v-if="meta.permissions.delete" aria-role="listitem">
-            <a class="dropdown-item" v-on:click="showDeleteSketchModal = !showDeleteSketchModal">
+        <ts-dropdown v-if="meta.permissions.write" position="is-bottom-left">
+          <template v-slot:dropdown-trigger-element>
+            <a
+              class="button ts-dropdown-button is-small"
+              style="background:transparent;border:none;margin-right:-18px;"
+            >
+              <span class="icon is-small">
+                <i class="fas fa-angle-down"></i>
+              </span>
+              <span>More</span>
+            </a>
+          </template>
+          <div class="ts-dropdown-item" v-if="meta.permissions.delete" aria-role="listitem">
+            <span v-on:click="showDeleteSketchModal = !showDeleteSketchModal">
               <span class="icon is-small" style="margin-right:5px;"><i class="fas fa-trash"></i></span>
               <span>Delete</span>
-            </a>
-          </b-dropdown-item>
-          <b-dropdown-item v-if="meta.permissions.delete" aria-role="listitem">
-            <a class="dropdown-item" v-on:click="archiveSketch">
+            </span>
+          </div>
+          <div class="ts-dropdown-item" v-if="meta.permissions.delete" aria-role="listitem">
+            <a v-on:click="archiveSketch()">
               <span class="icon is-small" style="margin-right:5px;"><i class="fas fa-archive"></i></span>
               <span>Archive</span>
             </a>
-          </b-dropdown-item>
-          <b-dropdown-item v-if="meta.permissions.read" aria-role="listitem">
-            <a class="dropdown-item" v-on:click="exportSketch()">
+          </div>
+          <div class="ts-dropdown-item" v-if="meta.permissions.read" aria-role="listitem">
+            <a v-on:click="exportSketch()">
               <span class="icon is-small" style="margin-right:5px;"><i class="fas fa-file-export"></i></span>
               <span>Export</span>
             </a>
-          </b-dropdown-item>
-        </b-dropdown>
+          </div>
+        </ts-dropdown>
       </ts-navbar-secondary>
 
       <b-modal :active.sync="showShareModal" :width="640" scroll="keep">
@@ -238,14 +238,6 @@ limitations under the License.
                             <span>Upload timeline</span>
                           </div>
                         </div>
-                        <p class="control">
-                          <router-link class="button is-rounded is-small" :to="{ name: 'Timelines' }">
-                            <span class="icon is-small">
-                              <i class="fas fa-cog"></i>
-                            </span>
-                            <span>Manage</span>
-                          </router-link>
-                        </p>
                       </div>
                     </header>
                     <div style="padding:1.25em;">
@@ -254,16 +246,6 @@ limitations under the License.
                         :controls="false"
                         :is-compact="true"
                       ></ts-timeline-list>
-                      <ul v-if="sketch.timelines.length > 9" class="content-list">
-                        <li style="padding:10px;">
-                          <router-link :to="{ name: 'Timelines' }">
-                            <span
-                              >There are {{ sketch.timelines.length - 10 }} more timelines in this sketch.
-                              <span style="text-decoration: underline">Click here to see them all</span></span
-                            >
-                          </router-link>
-                        </li>
-                      </ul>
                     </div>
                   </div>
 
@@ -374,6 +356,7 @@ import TsUploadTimelineForm from '../components/Common/UploadForm'
 import TsSketchTimelinesManage from './Timelines'
 import TsShareForm from '../components/Overview/ShareForm'
 import TsGraphList from '../components/Graph/GraphList'
+import TsDropdown from '../components/Common/Dropdown'
 
 export default {
   components: {
@@ -386,6 +369,7 @@ export default {
     TsSketchTimelinesManage,
     TsShareForm,
     TsGraphList,
+    TsDropdown,
   },
   data() {
     return {
@@ -518,7 +502,6 @@ export default {
   width: 100%;
   align-items: center;
   justify-content: center;
-  border: 1px solid red;
 }
 .archive-card.is-wide {
   width: 520px;
