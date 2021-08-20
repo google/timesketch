@@ -91,7 +91,7 @@ limitations under the License.
                     <span
                       class="tag is-small"
                       style="background-color:var(--tag-background-color); color:var(--tag-font-color);"
-                      >{{ attributeCount }}</span
+                      >{{ intelligenceCount }}</span
                     >
                   </span>
                 </router-link>
@@ -130,6 +130,9 @@ export default {
     },
     attributeCount() {
       return Object.entries(this.meta.attributes).length
+    },
+    intelligenceCount() {
+      return (Object.entries(this.meta.attributes.intelligence).length + Object.entries(this.meta.attributes.intelligence_local).length)
     },
   },
 }
