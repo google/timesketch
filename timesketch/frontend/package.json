@@ -28,6 +28,7 @@
     "vega-lite": "3.4.0",
     "vue": "^2.6.12",
     "vue-apexcharts": "^1.6.1",
+    "vue-clipboard2": "^0.3.1",
     "vue-color": "^2.7.0",
     "vue-cytoscape": "^1.0.8",
     "vue-dragscroll": "^3.0.0",
@@ -35,6 +36,7 @@
     "vue-multiselect": "^2.1.6",
     "vue-router": "^3.0.2",
     "vue-scrollto": "^2.17.1",
+    "vue-text-highlight": "^2.0.10",
     "vuex": "^3.1.0"
   },
   "devDependencies": {

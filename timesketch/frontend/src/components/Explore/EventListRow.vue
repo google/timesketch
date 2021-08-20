@@ -60,70 +60,59 @@ limitations under the License.
             <i class="fas fa-search" title="Search +/- 5min" style="color: #d3d3d3;"></i>
           </span>
           <span class="icon control">
-            <b-dropdown ref="labelDropdown" aria-role="list" append-to-body>
-              <i class="fas fa-tag" title="Labels" style="color: #d3d3d3;" slot="trigger"></i>
-              <div class="modal-card" style="width:300px;color: var(--font-color-dark);">
-                <section class="modal-card-body">
-                  <b-dropdown-item custom :focusable="false">
-                    <span v-if="filteredLabelsToAdd.length">
-                      <b>Label as:</b>
-                      <br /><br />
-                      <div
-                        class="level"
-                        style="margin-bottom: 5px;"
-                        v-for="label in filteredLabelsToAdd"
-                        :key="label.label"
-                      >
-                        <div class="level-left">
-                          <div class="field">
-                            <b-checkbox type="is-info" v-model="selectedLabels" :native-value="label.label">
-                              {{ label.label }}
-                            </b-checkbox>
-                          </div>
-                        </div>
-                      </div>
-                      <hr />
-                    </span>
+            <ts-dropdown>
+              <template v-slot:dropdown-trigger-element>
+                <i class="fas fa-tag" title="Labels" style="color: #d3d3d3;" slot="trigger"></i>
+              </template>
 
-                    <span v-if="event._source.label.length">
-                      <i class="fas fa-trash" style="margin-right: 7px;"></i>
-                      <b>Remove:</b>
-                      <br /><br />
-                      <div class="level" style="margin-bottom: 5px;" v-for="label in event._source.label" :key="label">
-                        <div class="level-left">
-                          <div class="field">
-                            <b-checkbox type="is-danger" v-model="labelsToRemove" :native-value="label">
-                              {{ label }}
-                            </b-checkbox>
-                          </div>
-                        </div>
-                      </div>
-                      <hr />
-                    </span>
-                    <div class="field is-grouped">
-                      <p class="control is-expanded">
-                        <input class="input" v-model="labelToAdd" placeholder="Create new" />
-                      </p>
-                      <p class="control">
-                        <button v-on:click="addLabels(labelToAdd)" class="button">Save</button>
-                      </p>
+              <span v-if="filteredLabelsToAdd.length">
+                <b>Add label</b>
+                <br /><br />
+                <div class="level" style="margin-bottom: 5px;" v-for="label in filteredLabelsToAdd" :key="label.label">
+                  <div class="level-left">
+                    <div class="field">
+                      <b-checkbox type="is-info" v-model="selectedLabels" :native-value="label.label">
+                        {{ label.label }}
+                      </b-checkbox>
                     </div>
-                  </b-dropdown-item>
-                </section>
-                <section class="modal-card-foot">
-                  <b-dropdown-item>
-                    <button
-                      v-if="selectedLabels.length || labelsToRemove.length"
-                      class="button is-info"
-                      v-on:click="addLabels()"
-                      :disabled="labelToAdd !== null && labelToAdd !== ''"
-                    >
-                      Apply
-                    </button>
-                  </b-dropdown-item>
-                </section>
+                  </div>
+                </div>
+              </span>
+
+              <span v-if="event._source.label.length">
+                <i class="fas fa-trash" style="margin-right: 7px;"></i>
+                <b>Remove label</b>
+                <br /><br />
+                <div class="level" style="margin-bottom: 5px;" v-for="label in event._source.label" :key="label">
+                  <div class="level-left">
+                    <div class="field">
+                      <b-checkbox type="is-danger" v-model="labelsToRemove" :native-value="label">
+                        {{ label }}
+                      </b-checkbox>
+                    </div>
+                  </div>
+                </div>
+              </span>
+
+              <br />
+              <b>Create and add a new label</b>
+              <div class="field is-grouped" style="padding-top:10px;">
+                <p class="control is-expanded">
+                  <input class="input" v-model="labelToAdd" placeholder="New label" />
+                </p>
+                <p class="control">
+                  <button v-on:click="addLabels(labelToAdd)" class="button">Save</button>
+                </p>
               </div>
-            </b-dropdown>
+              <button
+                v-if="selectedLabels.length || labelsToRemove.length"
+                class="button is-info"
+                v-on:click="addLabels()"
+                :disabled="labelToAdd !== null && labelToAdd !== ''"
+              >
+                Apply
+              </button>
+            </ts-dropdown>
           </span>
         </div>
       </td>
@@ -133,6 +122,7 @@ limitations under the License.
         v-bind:style="fieldColumnColor"
         v-on:click="showDetail = !showDetail"
         style="cursor: pointer; max-width: 50ch;"
+        class="ts-event-list-row-background-color"
         v-for="(field, index) in selectedFields"
         :key="index"
       >
@@ -153,16 +143,16 @@ limitations under the License.
                 v-if="displayOptions.showTags"
                 v-for="tag in event._source.tag"
                 :key="tag"
-                class="tag is-small is-light"
-                style="margin-right:5px; border:1px solid #d1d1d1;"
+                class="tag is-small"
+                style="margin-right:5px; background-color:var(--tag-background-color); color:var(--tag-font-color)"
                 >{{ tag }}</span
               >
               <span
                 v-if="displayOptions.showTags"
                 v-for="label in filteredLabels"
                 :key="label"
-                class="tag is-small is-light"
-                style="margin-right:5px; border:1px solid #d1d1d1;"
+                class="tag is-small"
+                style="margin-right:5px; background-color:var(--tag-background-color); color:var(--tag-font-color);"
                 >{{ label }}</span
               >
             </span>
@@ -236,12 +226,14 @@ limitations under the License.
 <script>
 import ApiClient from '../../utils/RestApiClient'
 import TsSketchExploreEventListRowDetail from './EventListRowDetail'
+import TsDropdown from '../Common/Dropdown'
 import EventBus from '../../main'
 import { ToastProgrammatic as Toast } from 'buefy'
 
 export default {
   components: {
     TsSketchExploreEventListRowDetail,
+    TsDropdown,
   },
   props: ['event', 'prevEvent', 'order', 'selectedFields', 'isRemoteSelected', 'displayOptions', 'displayControls'],
   data() {
@@ -284,34 +276,20 @@ export default {
       }
     },
     fieldColumnColor() {
-      let backgroundColor = '#f5f5f5'
-      let fontColor = '#333'
-
-      if (this.isDarkTheme) {
-        backgroundColor = '#494949'
-        fontColor = '#fafafa'
+      if (this.isSelected) {
+        return {
+          'background-color': '#c3ecff',
+          color: '#333',
+        }
       }
 
       if (this.isStarred) {
-        backgroundColor = '#fff4b3'
-        fontColor = '#333'
-      }
-
-      if (this.isSelected) {
-        backgroundColor = '#c3ecff'
-        fontColor = '#333'
-      }
-
-      if (this.isDarkTheme) {
         return {
-          'background-color': backgroundColor,
-          color: fontColor,
+          'background-color': '#fff4b3',
+          color: '#333',
         }
       }
-      return {
-        'background-color': backgroundColor,
-        color: fontColor,
-      }
+      return {}
     },
     datetimeFormat() {
       if (this.displayOptions.showMillis) {
@@ -319,6 +297,20 @@ export default {
       } else {
         return 'YYYY-MM-DDTHH:mm:ss'
       }
+    },
+    timeline() {
+      let isLegacy = this.meta.indices_metadata[this.event._index].is_legacy
+      let timeline
+      if (isLegacy) {
+        timeline = this.sketch.active_timelines.filter(
+          timeline => timeline.searchindex.index_name === this.event._index
+        )[0]
+      } else {
+        timeline = this.sketch.active_timelines.filter(
+          timeline => timeline.id === this.event._source.__ts_timeline_id
+        )[0]
+      }
+      return timeline
     },
     timelineName() {
       return this.timeline.name
@@ -455,6 +447,7 @@ export default {
     EventBus.$on('toggleStar', this.toggleStarOnSelect)
     EventBus.$on('isDarkTheme', this.toggleTheme)
 
+    /*
     let isLegacy = this.meta.indices_metadata[this.event._index].is_legacy
     if (isLegacy) {
       this.timeline = this.sketch.active_timelines.filter(
@@ -465,6 +458,7 @@ export default {
         timeline => timeline.id === this.event._source.__ts_timeline_id
       )[0]
     }
+    */
 
     this.isDarkTheme = localStorage.theme === 'dark'
 

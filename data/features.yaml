@@ -142,5 +142,5 @@ ssh_client_password_ipv4_addresses:
         query_string: 'reporter:"sshd"'
         attribute: 'message'
         store_as: 'client_ip'
-        re: '^\[sshd, pid: \d+\] (Accepted|Failed) password for \w+ 
+        re: '^\[sshd, pid: \d+\] (Accepted|Failed) (password|publickey) for \w+ 
           from ((?:[0-9]{1,3}\.){3}[0-9]{1,3}) port \d+'
