@@ -21,7 +21,7 @@ limitations under the License.
         :controls="controls"
         :is-compact="isCompact"
         @remove="remove(timeline)"
-        @save="save(timeline)"
+        @save="save"
       ></ts-timeline-list-item>
     </li>
     <li v-if="timelines.length > 9" style="padding:10px; cursor:pointer;">
@@ -74,10 +74,16 @@ export default {
           console.error(e)
         })
     },
-    save(timeline) {
-      ApiClient.saveSketchTimeline(this.sketch.id, timeline.id, timeline.name, timeline.description, timeline.color)
-        .then(response => {
-          this.$store.dispatch('updateSketch', this.sketch.id)
+    save(timeline, newTimelineName = false) {
+      ApiClient.saveSketchTimeline(
+        this.sketch.id,
+        timeline.id,
+        newTimelineName || timeline.name,
+        timeline.description,
+        timeline.color
+      )
+        .then(() => {
+          this.$store.dispatch('updateSketch', this.sketch.id).then(() => {})
         })
         .catch(e => {
           console.error(e)
