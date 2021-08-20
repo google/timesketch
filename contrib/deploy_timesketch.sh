@@ -114,9 +114,15 @@ echo "* Installation done."
 
 echo
 echo "Start the system:"
+
 echo "1. cd timesketch"
+cd timesketch
 echo "2. docker-compose up -d"
+docker-compose up -d
 echo "3. docker-compose exec timesketch-web tsctl add_user --username <USERNAME>"
+#input the username
+read -p 'USERNAME : ' USRNAME
+docker-compose exec timesketch-web tsctl add_user --username $USRNAME
 echo
 echo "WARNING: The server is running without encryption."
 echo "Follow the instructions to enable SSL to secure the communications:"
