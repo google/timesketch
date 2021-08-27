@@ -23,6 +23,7 @@ import requests
 # pylint: disable=redefined-builtin
 from requests.exceptions import ConnectionError
 import webbrowser
+import json
 
 # pylint: disable-msg=import-error
 from google_auth_oauthlib import flow as googleauth_flow
@@ -361,6 +362,50 @@ class TimesketchApi:
 
         sketch_id = objects[0]['id']
         return self.get_sketch(sketch_id)
+
+    def modify_collab(self, isPublic, sketchID, usersToAdd, groupsToAdd, usersToRemove, groupsToRemove):
+        """
+        Modify collaboration settings for a sketch.
+
+        Args:
+            name: isPublic
+            description: choices=['true', 'false','keepcurrentvalue']
+            name: sketchID
+            description: ID is required to modify collaborators
+            name: usersToAdd
+            description: Optional list of users to add to the sketch
+            name: groupsToAdd
+            description: Optional list of groups to add to the sketch
+            name: usersToRemove
+            description: Optional list of users to remove from the sketch
+            name: groupsToRemove
+            description: Optional list of groups to remove from the sketch
+
+        Returns:
+            Boolean success status
+        """
+        #verify that ID exists
+        resource_url = '{0:s}/sketches/'.format(self.api_root) + sketchID
+        response = self.session.get(resource_url)
+        
+        #get HTTP API return JSON
+        response_dict = error.get_response_json(response, logger)
+        objects = response_dict.get('objects')
+        if not objects: #return false if no object was returned
+            return False
+        #get current isPublic value
+        all_perms = objects[0]['all_permissions']
+        dict_perms = json.loads(all_perms)
+        if isPublic == "keepcurrentvalue": #set current value for isPublic
+          isPublic = str(dict_perms['is_public']).lower()
+
+        resource_url += "/collaborators/"
+        form_data = {'public': isPublic, 'users': usersToAdd, 'groups': groupsToAdd, 'remove_users': usersToRemove, 'remove_groups': groupsToRemove}
+        response = self.session.post(resource_url, json=form_data) #Modify collaborators
+        if response.status_code == 200:
+          return True
+        else:
+          return False
 
     def get_oauth_token_status(self):
         """Return a dict with OAuth token status, if one exists."""
