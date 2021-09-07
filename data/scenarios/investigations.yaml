@@ -2,10 +2,7 @@
 #                       -- Investigations --
 # ------------------------------------------------------------------------
 #
-# This is a config file to define questions that can be asked
-# in Timesketch. A single question is by nature small in scope and tactical,
-# something that can be answered by analysis, either automatically or by
-# providing enough context so that an analyst can determine the answer.
+# This is a config file to define investigations that.
 #
 # Each investigation consists of the following fields:
 #
@@ -19,9 +16,8 @@
 #
 # ------------------------------------------------------------------------
 test_investigation:
-  display_name: Did someone log into a Windows machine.
-  description: This question aim to answer whether
-    someone logged into the machine. It will run the login analyzer
-    to determine if there was any login activity. This question only
-    looks at activity logged in the EVTX file, therefore it only
-    applies to Windows machines.
+  display_name: Lorem Ipsum investigation
+  description: Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+    Maecenas tristique sapien lorem, et vehicula ipsum vestibulum eu.
+    Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere
+    cubilia curae; Morbi ultrices vitae neque mollis aliquam.
