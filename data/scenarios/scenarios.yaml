@@ -1,0 +1,27 @@
+# ------------------------------------------------------------------------
+#                       -- Scenarios --
+# ------------------------------------------------------------------------
+#
+# This is a config file to define questions that can be asked
+# in Timesketch. A single question is by nature small in scope and tactical,
+# something that can be answered by analysis, either automatically or by
+# providing enough context so that an analyst can determine the answer.
+#
+# Each scenario consists of the following fields:
+#
+#                       -- metadata --
+#       display_name        Simple string that contains the display name that
+#                           be used in an UI to describe the question.
+#
+#       description         Further description of the question, what the
+#                           question attempts to answer, whether it will
+#                           require further manual analysis, etc.
+#
+# ------------------------------------------------------------------------
+test_foobar:
+  display_name: Did someone log into a Windows machine.
+  description: This question aim to answer whether
+    someone logged into the machine. It will run the login analyzer
+    to determine if there was any login activity. This question only
+    looks at activity logged in the EVTX file, therefore it only
+    applies to Windows machines.
