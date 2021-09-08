@@ -213,13 +213,13 @@ def get_sigma_rule(filepath, sigma_config=None):
             logger.error(
                 'Error generating rule in file {0:s}: {1!s}'
                 .format(abs_path, exception))
-            raise
+            return None
 
         except sigma_exceptions.SigmaParseError as exception:
             logger.error(
                 'Sigma parsing error generating rule in file {0:s}: {1!s}'
                 .format(abs_path, exception))
-            raise
+            return None
 
         except yaml.parser.ParserError as exception:
             logger.error(
