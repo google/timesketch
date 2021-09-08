@@ -29,6 +29,7 @@
 }
 
 [data-theme='light'] {
+  color-scheme: light;
   --background-color: linear-gradient(90deg, rgba(249, 249, 249, 1) 11%, rgba(241, 241, 241, 1) 100%);
   --default-font-color: var(--font-color-dark);
   --default-link-color: var(--font-color-dark);
@@ -61,6 +62,7 @@
   --table-row-hover-background-color: #e0e0e0;
   --time-bubble-background-color: #f5f5f5;
   --time-bubble-font-color: #666666;
+  --tag-background-color: #f1f1f1;
   --content-list-hover-color: #fcfcfc;
   --content-list-border-color: #eeeeee;
   --login-page-background-color: var(--navbar-background);
@@ -85,6 +87,7 @@
 }
 
 [data-theme='dark'] {
+  color-scheme: dark;
   --background-color: #121212;
   --background-color-2: #1a1b1e;
   --background-color-3: #25272c;

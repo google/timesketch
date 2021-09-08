@@ -15,8 +15,8 @@ limitations under the License.
 -->
 <template>
   <div>
-    <!-- Timeline detail modal -->
-    <b-modal :active.sync="showInfoModal" :width="1024" scroll="keep">
+    <!-- Timeline info modal -->
+    <b-modal :active.sync="showInfoModal" :width="1024" scroll="keep" style="z-index:999;">
       <div class="modal-background"></div>
       <div class="modal-content">
         <div class="card">
@@ -37,10 +37,10 @@ limitations under the License.
             <br />
 
             <b-message
-              :type="{ 'is-success': !datasource.error_message, 'is-danger': datasource.error_message }"
+              v-for="datasource in timeline.datasources"
+              :type="datasource.error_message ? 'is-danger' : 'is-success'"
               :title="datasource.created_at"
               :closable="false"
-              v-for="datasource in timeline.datasources"
               :key="datasource.id"
             >
               <ul>
@@ -61,11 +61,11 @@ limitations under the License.
           </div>
         </div>
       </div>
-      <button class="modal-close is-large" aria-label="close" v-on:click="showInfoModal = !showInfoModal"></button>
+      <button class="modal-close is-large" aria-label="close" @click="showInfoModal = !showInfoModal"></button>
     </b-modal>
 
     <!-- Timeline edit modal -->
-    <b-modal v-if="controls" :active.sync="showEditModal" :width="640" scroll="keep">
+    <b-modal :active.sync="showEditModal" :width="640" scroll="keep" style="z-index:999;">
       <div class="modal-background"></div>
       <div class="modal-content">
         <div class="card">
@@ -74,15 +74,16 @@ limitations under the License.
           </header>
           <div class="card-content">
             <div class="content">
-              <form v-on:submit.prevent="saveTimeline">
+              <form @submit.prevent>
+                <!-- Without prevent(), the page will refresh -->
                 <div class="field">
                   <div class="control">
-                    <input v-model="timeline.name" class="input" type="text" required autofocus />
+                    <input v-model="newTimelineName" class="input" type="text" required autofocus />
                   </div>
                 </div>
                 <div class="field">
                   <div class="control">
-                    <input class="button is-success" type="submit" value="Save" />
+                    <input class="button is-success" @click="saveTimeline" type="submit" value="Save" />
                   </div>
                 </div>
               </form>
@@ -90,7 +91,23 @@ limitations under the License.
           </div>
         </div>
       </div>
-      <button class="modal-close is-large" aria-label="close" v-on:click="showEditModal = !showEditModal"></button>
+      <button class="modal-close is-large" aria-label="close" @click="showEditModal = !showEditModal"></button>
+    </b-modal>
+
+    <!-- Analyzer logs modal -->
+    <b-modal :active.sync="showAnalyzerModal" :width="1024" scroll="keep" style="z-index:999;">
+      <div class="modal-background"></div>
+      <div class="modal-content">
+        <div class="card">
+          <header class="card-header">
+            <p class="card-header-title">Analyzer logs for {{ timeline.name }}</p>
+          </header>
+          <div class="card-content" v-if="showAnalyzerModal">
+            <ts-analyzer-history :timeline="timeline" @closeHistory="showAnalyzerModal = false"></ts-analyzer-history>
+          </div>
+        </div>
+      </div>
+      <button class="modal-close is-large" aria-label="close" @click="showAnalyzerModal = !showAnalyzerModal"></button>
     </b-modal>
 
     <div
@@ -132,6 +149,57 @@ limitations under the License.
     ></div>
     <div v-else class="ts-timeline-color-box is-pulled-left" style="background-color: #f5f5f5;"></div>
 
+    <!-- 3-dots dropdown menu -->
+    <div class="field is-grouped is-pulled-right" style="margin-top:7px;">
+      <span v-if="meta.permissions.write" @click.stop>
+        <ts-dropdown width="270px">
+          <template v-slot:dropdown-trigger-element>
+            <a role="button">
+              <i class="fas fa-ellipsis-v" style="padding-left: 14px;"></i>
+            </a>
+          </template>
+          <div class="ts-dropdown-item" @click="showInfoModal = !showInfoModal">
+            <span class="icon is-small"><i class="fas fa-info-circle"></i></span>
+            <span>Info</span>
+          </div>
+
+          <div class="ts-dropdown-item" v-if="timelineStatus === 'ready'" @click="showEditModal = !showEditModal">
+            <span class="icon is-small">
+              <i class="fas fa-edit"></i>
+            </span>
+            <span>Rename</span>
+          </div>
+
+          <div
+            class="ts-dropdown-item"
+            v-if="timelineStatus === 'ready'"
+            @click="showAnalyzerModal = !showAnalyzerModal"
+          >
+            <span class="icon is-small"> <i class="fas fa-history"></i> </span>
+            <span>Analyzer logs</span>
+          </div>
+
+          <div class="ts-dropdown-item" @click="remove()">
+            <span class="icon is-small is-danger">
+              <i class="fas fa-trash"></i>
+            </span>
+            <span>Delete</span>
+          </div>
+
+          <hr />
+
+          <div v-if="timelineStatus === 'ready'">
+            <color-picker
+              v-model="initialColor"
+              @input="updateColor"
+              style="box-shadow: none; background-color: transparent; padding:0;"
+              :palette="colorPickerPalette"
+            ></color-picker>
+          </div>
+        </ts-dropdown>
+      </span>
+    </div>
+
     <div v-if="!controls" class="field is-grouped is-pulled-right" style="margin-top:10px;">
       <span class="is-size-7">{{ timeline.updated_at | moment('YYYY-MM-DD HH:mm') }}</span>
     </div>
@@ -153,27 +221,6 @@ limitations under the License.
           <span>Rename</span>
         </button>
       </p>
-
-      <!-- Disabled 2020-12-17. Too expensive for large sketches. TODO: Refactor to do lazy loading instead.
-      <p v-if="timelineStatus === 'ready'" class="control">
-        <b-dropdown position="is-bottom-left" aria-role="menu" trap-focus append-to-body :scrollable="true" :max-height="300">
-          <button class="button is-outlined is-rounded is-small" slot="trigger">
-            <span class="icon is-small">
-              <i class="fas fa-info-circle"></i>
-            </span>
-            <span>Data types</span>
-          </button>
-          <b-dropdown-item aria-role="menu-item" :focusable="false" custom>
-            <div style="width:350px;">
-              <div class="field" v-for="(dt) in meta.indices_metadata[timeline.searchindex.index_name]['data_types']" :key="dt.data_type">
-                <b-checkbox v-model="checkedDataTypes" :native-value="dt.data_type" type="is-info">{{ dt.data_type }} ({{ dt.count | compactNumber }})</b-checkbox>
-              </div>
-              <button class="button is-success is-fullwidth" v-on:click="openFilteredTimeline(timeline.searchindex.index_name, checkedDataTypes)" :disabled="!checkedDataTypes.length">Open Filtered</button>
-            </div>
-          </b-dropdown-item>
-        </b-dropdown>
-      </p>
-       -->
 
       <p v-if="timelineStatus === 'ready' && controls" class="control">
         <button class="button is-small is-rounded is-outlined" @click="showAnalysisHistory = !showAnalysisHistory">
@@ -245,19 +292,22 @@ limitations under the License.
 
 <script>
 import Vue from 'vue'
-import { Chrome } from 'vue-color'
+import { Compact } from 'vue-color'
 import _ from 'lodash'
 
 import ApiClient from '../../utils/RestApiClient'
 
 import TsAnalyzerHistory from '../Analyze/AnalyzerHistory'
+import TsDropdown from '../Common/Dropdown'
 
+import { colorPickerPalette } from '../../definitions'
 import EventBus from '../../main'
 
 export default {
   components: {
-    'color-picker': Chrome,
+    'color-picker': Compact,
     TsAnalyzerHistory,
+    TsDropdown,
   },
   props: ['timeline', 'controls', 'isCompact'],
   data() {
@@ -269,6 +319,7 @@ export default {
       colorPickerActive: false,
       showInfoModal: false,
       showEditModal: false,
+      showAnalyzerModal: false,
       analysisSessionId: false,
       showAnalysisDetail: false,
       showAnalysisHistory: false,
@@ -276,6 +327,7 @@ export default {
       autoRefresh: false,
       isOpen: false,
       isDarkTheme: false,
+      colorPickerPalette: colorPickerPalette,
     }
   },
   computed: {
@@ -307,8 +359,11 @@ export default {
   },
   methods: {
     remove(timeline) {
-      this.$emit('remove', timeline)
+      if (confirm('Delete the timeline?')) {
+        this.$emit('remove', timeline)
+      }
     },
+    // Set debounce to 300ms if full Chrome colorpicker is used.
     updateColor: _.debounce(function(color) {
       this.newColor = color.hex
       if (this.newColor.startsWith('#')) {
@@ -316,10 +371,11 @@ export default {
       }
       Vue.set(this.timeline, 'color', this.newColor)
       this.$emit('save', this.timeline)
-    }, 300),
+    }, 0),
     saveTimeline() {
       this.showEditModal = false
-      this.$emit('save', this.timeline)
+      console.log(this.newTimelineName)
+      this.$emit('save', this.timeline, this.newTimelineName)
     },
     fetchData() {
       ApiClient.getSketchTimeline(this.sketch.id, this.timeline.id)
@@ -398,6 +454,9 @@ export default {
 
 <!-- CSS scoped to this component only -->
 <style scoped lang="scss">
+.icon {
+  padding-right: 8px;
+}
 .list-item {
   display: inline-block;
   margin-right: 10px;

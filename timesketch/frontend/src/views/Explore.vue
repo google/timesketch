@@ -47,9 +47,9 @@ limitations under the License.
           <div class="card-content" v-if="showSearch">
             <div style="position:relative;">
               <div class="ts-search-box" style="z-index:998; position:absolute; width:100%;">
-                <span class="icon" style="position:absolute;top:14px;margin-left:17px;font-size:16px;">
-                  <i class="fas fa-search"></i>
-                </span>
+                <ts-search-history-buttons
+                  style="position:absolute;top:7px;margin-left:10px;"
+                ></ts-search-history-buttons>
                 <input
                   @keyup.enter="search"
                   v-model="currentQueryString"
@@ -58,7 +58,7 @@ limitations under the License.
                   type="text"
                   ref="searchInput"
                   placeholder="Search"
-                  style="padding-left:50px;"
+                  style="padding-left:90px;"
                   autofocus
                   required
                 />
@@ -510,6 +510,7 @@ import TsSketchExploreEventList from '../components/Explore/EventList'
 import TsExploreTimelinePicker from '../components/Explore/TimelinePicker'
 import TsExploreFilterTime from '../components/Explore/TimeFilter'
 import TsSearchHistoryTree from '../components/Explore/SearchHistoryTree'
+import TsSearchHistoryButtons from '../components/Explore/SearchHistoryButtons'
 import TsBarChart from '../components/Aggregation/BarChart'
 import TsSearchDropdown from '../components/Explore/SearchDropdown'
 import TsCreateViewForm from '../components/Common/CreateViewForm'
@@ -549,6 +550,7 @@ export default {
     TsExploreTimelinePicker,
     TsExploreFilterTime,
     TsSearchHistoryTree,
+    TsSearchHistoryButtons,
     TsBarChart,
     TsSearchDropdown,
     TsCreateViewForm,
