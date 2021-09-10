@@ -33,6 +33,8 @@ class Scenario(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     description = Column(UnicodeText())
     sketch_id = Column(Integer, ForeignKey('sketch.id'))
     user_id = Column(Integer, ForeignKey('user.id'))
+    # JSON encoded dictionary with specification for the scenario.
+    scenario_spec_json = Column(UnicodeText())
     investigations = relationship(
         'Investigation', backref='scenario', lazy='select')
 
@@ -43,15 +45,22 @@ class Investigation(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     display_name = Column(UnicodeText())    
     description = Column(UnicodeText())
     user_id = Column(Integer, ForeignKey('user.id'))
-    timeframes = Column(UnicodeText())
+    # JSON encoded dictionary with specification for the investigation.
+    investigation_spec_json = Column(UnicodeText())
+    timeframes = relationship(
+        'InvestigationTimeframe', backref='investigation', lazy='select')
     timelines = relationship(
         'Timeline', backref='investigation', lazy='select')
     questions = relationship(
         'InvestigativeQuestion', backref='investigation', lazy='select')
-    conclutions = relationship(
-        'Conclusion', backref='investigativequestion', lazy='select')
+    conclusions = relationship(
+        'Conclusion', backref='investigation', lazy='select')
 
-
+class InvestigationTimeframe(BaseModel):
+    """Implements the InvestigationTimeframe model."""
+    start_time = Column(UnicodeText())
+    end_time = Column(UnicodeText())
+    investigation_id = Column(Integer, ForeignKey('investigation.id'))
 
 class InvestigativeQuestion(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     """Implements the InvestigativeQuestion model."""
@@ -60,28 +69,12 @@ class InvestigativeQuestion(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     description = Column(UnicodeText())
     user_id = Column(Integer, ForeignKey('user.id'))
     investigation_id = Column(Integer, ForeignKey('investigation.id'))
-
-    # Data source definition names to feed into the data_finder. These are
-    # data sources that needs to be present in order to answer the question.
-    data_sources = Column(UnicodeText())
-
+    # JSON encoded dictionary with specification for the question.
+    question_spec_json = Column(UnicodeText())
     # JSON encoded dictionary with parameters/values. This will be used in e.g
     # the data_finder as re_perameters.
-    parameters = Column(UnicodeText())
-
-    # JSON encoded dictionary with the specification from the question YAML.
-    question_spec = Column(UnicodeText())
-
-    # Pointers to helpful supportive functions that aim at helping the analyst
-    # get started with the work on answering the question.
-    # TODO: Add aggregation templates (as soon as they exist)
-    analyzers = Column(UnicodeText())
-    graphs = Column(UnicodeText())
-    sigmarules = Column(UnicodeText())
-    searchtemplates = relationship(
-        'SearchTemplate', backref='investigativequestion', lazy='select')
-
-    conclutions = relationship(
+    parameters_json = Column(UnicodeText())
+    conclusions = relationship(
         'Conclusion', backref='investigativequestion', lazy='select')
 
 
@@ -91,10 +84,9 @@ class Conclusion(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     user_id = Column(Integer, ForeignKey('user.id'))
     answer_simple = Column(Boolean(), default=False)
     answer_analyzer = Column(Boolean(), default=False)
-    
-    # Optional supportive data for transparency and reasoning.
+    # Support for the conclusion (optional).
     stories = relationship('Story', backref='conclusion', lazy='select')
-    saved_searches = relationship('View', backref='conclusion', lazy='select')
-    saved_graphs = relationship('Graph', backref='conclusion', lazy='select')
-    saved_aggregations = relationship(
+    searches = relationship('View', backref='conclusion', lazy='select')
+    graphs = relationship('Graph', backref='conclusion', lazy='select')
+    aggregations = relationship(
         'Aggregations', backref='conclusion', lazy='select')
