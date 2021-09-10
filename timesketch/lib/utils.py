@@ -258,7 +258,8 @@ def read_and_validate_jsonl(file_handle):
                 linedict['datetime'] = dt.isoformat()
             if 'timestamp' not in ld_keys and 'datetime' in ld_keys:
                 try:
-                    linedict['timestamp'] = parser.parse(linedict['datetime'])
+                    linedict['timestamp'] = int(parser.parse(
+                        linedict['datetime']).timestamp() * 1000000)
                 except parser.ParserError:
                     logger.error(
                         'Unable to parse timestamp, skipping line '
