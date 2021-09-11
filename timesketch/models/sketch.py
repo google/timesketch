@@ -1010,14 +1010,12 @@ class Investigation(LabelMixin, StatusMixin, CommentMixin, BaseModel):
         secondary=investigation_aggregation_association_table)
 
     def __init__(
-        self, name, display_name, sketch, user, scenario, spec_json,
-        description=None):
+        self, name, display_name, user, scenario, spec_json, description=None):
         """Initialize the Investigation object.
 
         Args:
             name (str): The name of the investigation
             display_name (str): The display name of the investigation
-            sketch (Sketch): A sketch
             user (User): A userinvestigationconclusion
             scenario (Scenario): The Scenario this investigation belongs to
             spec_json (str): Investigation specification from YAML
@@ -1026,7 +1024,6 @@ class Investigation(LabelMixin, StatusMixin, CommentMixin, BaseModel):
         super().__init__()
         self.name = name
         self.display_name = display_name
-        self.sketch = sketch
         self.user = user
         self.scenario = scenario
         self.spec_json = spec_json
@@ -1112,7 +1109,9 @@ class InvestigativeQuestion(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     conclusions = relationship(
         'QuestionConclusion', backref='investigativequestion', lazy='select')
 
-    def __init__(self, name, display_name, user, spec_json, description=None):
+    def __init__(
+        self, name, display_name, user, investigation, spec_json,
+        parameters_json, description=None):
         """Initialize the InvestigativeQuestion object.
 
         Args:
@@ -1127,5 +1126,7 @@ class InvestigativeQuestion(LabelMixin, StatusMixin, CommentMixin, BaseModel):
         self.name = name
         self.display_name = display_name
         self.user = user
+        self.investigation = investigation
         self.spec_json = spec_json
+        self.parameters_json = parameters_json
         self.description = description
