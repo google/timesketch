@@ -165,18 +165,30 @@ def read_and_validate_csv(
 
             # Normalize datetime to ISO 8601 format if it's not the case.
             try:
-                chunk['datetime'] = pandas.to_datetime(chunk['datetime'])
-
+                # Lines with unrecognized datetime format will result in "NaT"
+                # (not available) as its value and the event row will be
+                # dropped in the next line
+                chunk['datetime'] = pandas.to_datetime(
+                    chunk['datetime'], errors='coerce')
+                num_chunk_rows = chunk.shape[0]
+                chunk.dropna(subset=['datetime'], inplace=True)
+                if len(chunk) < num_chunk_rows:
+                    logger.warning(
+                        '{0} rows dropped from Rows {1} to {2} due to invalid '
+                        'datetime values'.format(
+                            num_chunk_rows - len(chunk),
+                            idx * reader.chunksize,
+                            idx * reader.chunksize + num_chunk_rows))
                 chunk['timestamp'] = chunk['datetime'].dt.strftime(
                     '%s%f').astype(int)
                 chunk['datetime'] = chunk['datetime'].apply(
                     Timestamp.isoformat).astype(str)
             except ValueError:
-                warning_string = (
+                logger.warning(
                     'Rows {0} to {1} skipped due to malformed '
-                    'datetime values ')
-                logger.warning(warning_string.format(
-                    idx * reader.chunksize, chunk.shape[0]))
+                    'datetime values '.format(
+                        idx * reader.chunksize,
+                        idx * reader.chunksize + chunk.shape[0]))
                 continue
             if 'tag' in chunk:
                 chunk['tag'] = chunk['tag'].apply(_parse_tag_field)
