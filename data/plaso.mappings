@@ -78,6 +78,10 @@
     "version": {
       "type": "text",
       "fields": {"keyword": {"type": "keyword"}}
+    },
+    "http_response_bytes" {
+      "type": "text",
+      "fields": {"keyword": {"type": "keyword"}}
     }
   }
 }
