@@ -129,7 +129,7 @@ Following scopes are available:
 
 - recent: Get list of sketches that the user has actively searched in.
 - shared: Get sketches that can be accessed
-- admin: pre-sets some base filters
+- admin: Get all sketches if the user is an admin 
 - archived: get archived sketches
 - search: pass additional search query
 
