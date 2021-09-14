@@ -121,6 +121,30 @@ for sketch in ts_client.list_sketches():
   print('[{0:d}] {1:s} <{2:s}>'.format(sketch.id, sketch.name, sketch.description))
 ```
 
+## List sketches
+
+There are some ways to list sketches by adjusting the ```scope```.
+
+Following scopes are available:
+
+- recent: Get list of sketches that the user has actively searched in.
+- shared: Get sketches that can be accessed
+- admin: pre-sets some base filters
+- archived: get archived sketches
+- search: pass additional search query
+
+```
+ts_client.list_sketches(per_page=1000, scope='user', include_archived=True)
+```
+
+Will return all sketches that are owned by the specified user.
+
+```
+ts_client.list_sketches(per_page=1000, scope='shared', include_archived=True)
+```
+
+Will return all sketches that the account used to connect to the API has access to.
+
 ## Connecting to a Sketch
 
 There are two ways of getting a sketch object, either by listing all available sketches or by fetching a specific one.
