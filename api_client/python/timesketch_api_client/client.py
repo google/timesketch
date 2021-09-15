@@ -435,7 +435,7 @@ class TimesketchApi:
             per_page: Number of items per page when paginating. Default is 50.
             scope: What scope to get sketches as. Default to user.
                 user: sketches owned by the user
-                recent: Get list of sketches that the user has actively searched in
+                recent: sketches that the user has actively searched in
                 shared: Get sketches that can be accessed
                 admin: Get all sketches if the user is an admin
                 archived: get archived sketches
