@@ -437,7 +437,7 @@ class TimesketchApi:
                 user: sketches owned by the user
                 recent: Get list of sketches that the user has actively searched in
                 shared: Get sketches that can be accessed
-                admin: Get all sketches if the user is an admin 
+                admin: Get all sketches if the user is an admin
                 archived: get archived sketches
                 search: pass additional search query
             include_archived: If archived sketches should be returned.
