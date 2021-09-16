@@ -1468,6 +1468,33 @@ class Sketch(resource.BaseResource):
             query_dsl=json.dumps({'query': query}), return_fields=return_fields,
             max_entries=max_entries, as_pandas=as_pandas)
 
+
+    def add_scenario(self, scenario_name):
+        """Adds a investigative scenario to the sketch.
+
+        Args:
+            scenario_name (str): Name of the scenario to add.
+
+        Raises:
+            RuntimeError: If sketch is archived.
+
+        Returns:
+            Dictionary with scenario.
+        """
+        if self.is_archived():
+            raise RuntimeError(
+                'Unable to add a scenario to an archived sketch')
+
+        form_data = {
+            'scenario_name': scenario_name
+        }
+        
+        resource_url = '{0:s}/sketches/{1:d}/scenarios/'.format(
+            self.api.api_root, self.id)
+        response = self.api.session.post(resource_url, json=form_data)
+        return error.get_response_json(response, logger)
+
+
     def add_event(
             self, message, date, timestamp_desc, attributes=None,
             tags=None):

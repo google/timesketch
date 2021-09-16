@@ -18,6 +18,12 @@
 test_investigation:
   display_name: Lorem Ipsum investigation
   description: Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-    Maecenas tristique sapien lorem, et vehicula ipsum vestibulum eu.
-    Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere
-    cubilia curae; Morbi ultrices vitae neque mollis aliquam.
+  questions:
+    - user_logged_in_win
+    - user_downloaded_file
+
+another_investigation:
+  display_name: Lorem Ipsum investigation
+  description: Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+  questions:
+    - user_logged_in_win

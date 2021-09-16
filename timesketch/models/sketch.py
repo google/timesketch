@@ -834,6 +834,7 @@ class SearchHistory(LabelMixin, BaseModel):
 
         return node_dict
 
+
 class Scenario(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     """Implements the Scenario model."""
     name = Column(UnicodeText())
@@ -982,6 +983,7 @@ investigation_aggregation_association_table = Table(
     Column('aggregation_id', Integer, ForeignKey('aggregation.id'))
 )
 
+
 class Investigation(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     """Implements the Investigation model."""
     name = Column(UnicodeText())
@@ -1010,7 +1012,7 @@ class Investigation(LabelMixin, StatusMixin, CommentMixin, BaseModel):
         secondary=investigation_aggregation_association_table)
 
     def __init__(
-        self, name, display_name, user, scenario, spec_json, description=None):
+        self, name, display_name, user, spec_json, description=None):
         """Initialize the Investigation object.
 
         Args:
@@ -1025,7 +1027,6 @@ class Investigation(LabelMixin, StatusMixin, CommentMixin, BaseModel):
         self.name = name
         self.display_name = display_name
         self.user = user
-        self.scenario = scenario
         self.spec_json = spec_json
         self.description = description
 
@@ -1058,6 +1059,7 @@ questionconclusion_aggregation_association_table = Table(
         'questionconclusion_id', Integer, ForeignKey('questionconclusion.id')),
     Column('aggregation_id', Integer, ForeignKey('aggregation.id'))
 )
+
 class QuestionConclusion(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     """Implements the QuestionConclusion model."""
     conclusion = Column(UnicodeText())
@@ -1095,6 +1097,7 @@ class QuestionConclusion(LabelMixin, StatusMixin, CommentMixin, BaseModel):
         self.from_simple = from_simple
         self.from_analyzer = from_analyzer
 
+
 class InvestigativeQuestion(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     """Implements the InvestigativeQuestion model."""
     name = Column(UnicodeText())
@@ -1110,14 +1113,13 @@ class InvestigativeQuestion(LabelMixin, StatusMixin, CommentMixin, BaseModel):
         'QuestionConclusion', backref='investigativequestion', lazy='select')
 
     def __init__(
-        self, name, display_name, user, investigation, spec_json,
-        parameters_json, description=None):
+        self, name, display_name, user, spec_json, parameters_json,
+        description=None):
         """Initialize the InvestigativeQuestion object.
 
         Args:
             name (str): The name of the question
             display_name (str): The display name of the question
-            sketch (timesketch.models.sketch.Sketch): A sketch
             user (timesketch.models.user.User): A user
             spec_json (str): Question specification from YAML
             description (str): Description of the question
@@ -1126,7 +1128,6 @@ class InvestigativeQuestion(LabelMixin, StatusMixin, CommentMixin, BaseModel):
         self.name = name
         self.display_name = display_name
         self.user = user
-        self.investigation = investigation
         self.spec_json = spec_json
         self.parameters_json = parameters_json
         self.description = description

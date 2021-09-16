@@ -225,6 +225,42 @@ class ResourceMixin(object):
         'updated_at': fields.DateTime('iso8601')
     }
 
+    question_fields = {
+        'id': fields.Integer,
+        'name': fields.String,
+        'display_name': fields.String,
+        'description': fields.String,
+        'spec_json': fields.String,
+        'paramters_json': fields.String,
+        'user': fields.Nested(user_fields),
+        'created_at': fields.DateTime('iso8601'),
+        'updated_at': fields.DateTime('iso8601')
+    }
+
+    investigation_fields = {
+        'id': fields.Integer,
+        'name': fields.String,
+        'display_name': fields.String,
+        'description': fields.String,
+        'spec_json': fields.String,
+        'user': fields.Nested(user_fields),
+        'questions': fields.List(fields.Nested(question_fields)),
+        'created_at': fields.DateTime('iso8601'),
+        'updated_at': fields.DateTime('iso8601')
+    }
+
+    scenario_fields = {
+        'id': fields.Integer,
+        'name': fields.String,
+        'display_name': fields.String,
+        'description': fields.String,
+        'spec_json': fields.String,
+        'user': fields.Nested(user_fields),
+        'investigations': fields.List(fields.Nested(investigation_fields)),
+        'created_at': fields.DateTime('iso8601'),
+        'updated_at': fields.DateTime('iso8601')
+    }
+
     fields_registry = {
         'aggregation': aggregation_fields,
         'aggregationgroup': aggregation_group_fields,
@@ -242,7 +278,8 @@ class ResourceMixin(object):
         'sketch': sketch_fields,
         'story': story_fields,
         'event_comment': comment_fields,
-        'event_label': label_fields
+        'event_label': label_fields,
+        'scenario': scenario_fields
     }
 
     @property

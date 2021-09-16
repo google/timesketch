@@ -17,7 +17,11 @@
 # ------------------------------------------------------------------------
 test_scenario:
   display_name: Lorem Ipsum scenario
-  description: Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-    Maecenas tristique sapien lorem, et vehicula ipsum vestibulum eu.
-    Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere
-    cubilia curae; Morbi ultrices vitae neque mollis aliquam.
+  description: Lorem ipsum dolor sit amet
+
+test_scenario2:
+  display_name: Lorem Ipsum scenario
+  description: Maecenas tristique sapien lorem, et vehicula ipsum vestibulum
+  investigations:
+    - test_investigation
+    - another_investigation

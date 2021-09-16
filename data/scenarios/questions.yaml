@@ -79,7 +79,7 @@
 #                           particular investigative question.
 # ------------------------------------------------------------------------
 user_logged_in_win:
-  display_name: Did someone log into a Windows machine.
+  display_name: Did someone log into a Windows machine?
   description: This question aim to answer whether
     someone logged into the machine. It will run the login analyzer
     to determine if there was any login activity. This question only
@@ -94,7 +94,7 @@ user_logged_in_win:
       - windows_login
 
 user_downloaded_file:
-  display_name: Did user download a specific file.
+  display_name: Did user download a specific file?
   description: This question checks whether there is browser activity
     happening and during that activity a specific file got downloaded
     or is seen on the disk during the time period.
