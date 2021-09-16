@@ -123,7 +123,7 @@ export default {
     },
     setFileName: function(fileList) {
       let fileName = fileList[0].name
-      let fileExtension = fileName.split('.')[1]
+      let fileExtension = fileName.split('.')[-1]
       this.form.file = fileList[0]
       this.form.name = fileName
         .split('.')
