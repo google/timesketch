@@ -61,10 +61,30 @@ limitations under the License.
         <pre>{{ JSON.stringify(props['row'], null, 2) }}</pre>
       </template>
     </b-table>
+    <b-switch v-model="isComposed"> Compose Sigma rule {{ isComposed }} </b-switch>
+    <div v-if="isComposed">
+      <div class="container is-fluid">
+        <div class="card">
+          <div class="card-content"></div>
+          <textarea id="textarea" v-model="text" placeholder="Enter your Sigma yaml File text..." rows="30" cols="80">
+title: Suspicious Installation of Zenmap</textarea
+          >
+
+          <div class="control">
+            <button id="parseButton" v-on:click="parseSigma">Parse</button>
+          </div>
+          <template>
+            <pre>{{ JSON.stringify(parsed, null, 2) }}</pre>
+          </template>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
+import ApiClient from '../../utils/RestApiClient'
+
 export default {
   data() {
     return {
@@ -72,6 +92,31 @@ export default {
       ascending: false,
       sortColumn: '',
       perPage: 10,
+      isComposed: false,
+      text: `title: Suspicious Installation of Zenmap2
+id: 5266a592-b793-11ea-b3de-0242ac130004
+description: Detects suspicious installation of Zenmap
+references:
+    - https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html
+author: Alexander Jaeger
+date: 2020/06/26
+modified: 2020/06/26
+tags:
+    - attack.discovery
+    - attack.t1046
+logsource:
+    product: linux
+    service: shell
+detection:
+    keywords:
+        # Generic suspicious commands
+        - '*apt-get install zmap*'
+    condition: keywords
+falsepositives:
+    - Unknown
+level: high
+      `,
+      parsed: '',
     }
   },
   computed: {
@@ -83,6 +128,22 @@ export default {
     },
     meta() {
       return this.$store.state.meta
+    },
+  },
+  methods: {
+    parseSigma: function(event) {
+      document.getElementById('parseButton').disabled = true
+      ApiClient.getSigmaByText(this.text)
+        .then(response => {
+          let SigmaRule = response.data.objects[0]
+          console.log(SigmaRule)
+          this.parsed = SigmaRule
+        })
+        .catch(e => {})
+      document.getElementById('parseButton').disabled = false
+    },
+    submitForm: function() {
+      console.log('aaa')
     },
   },
 }
