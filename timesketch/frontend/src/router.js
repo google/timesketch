@@ -33,7 +33,6 @@ import Intelligence from './views/Intelligence'
 import SavedSearches from './views/SavedSearches'
 import Sigma from './views/Sigma'
 import SigmaOverview from './views/SigmaOverview'
-import SigmaCompose from './views/SigmaCompose'
 
 
 Vue.use(VueRouter)
@@ -64,12 +63,6 @@ const routes = [
             path: '',
             name: 'SigmaOverview',
             component: SigmaOverview,
-            props: true,
-          },
-          {
-            path: 'compose',
-            name: 'SigmaCompose',
-            component: SigmaCompose,
             props: true,
           },
         ],
