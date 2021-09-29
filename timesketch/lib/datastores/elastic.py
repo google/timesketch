@@ -116,7 +116,7 @@ class ElasticsearchDataStore(object):
         self.password = current_app.config.get('ELASTIC_PASSWORD', 'pass')
         self.ssl = current_app.config.get('ELASTIC_SSL', False)
         self.verify = current_app.config.get('ELASTIC_VERIFY_CERTS', True)
-        self.timeout = current_app.config.get('ELASTIC_TIMEOUT')
+        self.timeout = current_app.config.get('ELASTIC_TIMEOUT', 10)
 
         parameters = {}
         if self.ssl:
