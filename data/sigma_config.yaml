@@ -80,6 +80,12 @@ logsources:
     conditions:
       source_name:
         - "Microsoft-Windows-Sysmon"
+  # GCP
+  gcp_audit:
+    service: gcp.audit
+    conditions:
+      query:
+        - "cloudaudit.googleapis.com"
   # log source configurations for generic sigma rules
   process_creation:
     category: process_creation
@@ -300,3 +306,4 @@ fieldmappings:
     Payload: xml_string
     HostName: xml_string #96b9f619-aa91-478f-bacb-c3e50f8df575
     HostApplication: xml_string #96b9f619-aa91-478f-bacb-c3e50f8df575
+    gcp.audit.method_name: methodName
