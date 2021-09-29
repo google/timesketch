@@ -2,10 +2,7 @@
 from __future__ import unicode_literals
 
 import logging
-import time
 import elasticsearch
-
-from flask import current_app
 
 from timesketch.lib.analyzers import utils
 
@@ -78,10 +75,6 @@ class SigmaPlugin(interface.BaseAnalyzer):
         Returns:
             String with summary of the analyzer result.
         """
-        #import pdb
-        # pdb.set_trace()
-        from celery.contrib import rdb
-        # rdb.set_trace()
 
         tags_applied = {}
         sigma_rule_counter = 0
@@ -107,8 +100,8 @@ class SigmaPlugin(interface.BaseAnalyzer):
             # this is caused by too many ES queries in short time range
             # TODO: https://github.com/google/timesketch/issues/1782
 
-        # Wide exception handling since there are multiple exceptions that
-        # can be raised by the underlying sigma library.
+        # Wide exception handling since there are multiple exceptions
+        # that can be raised by the underlying sigma library.
         except:  # pylint: disable=bare-except
             logger.error(
                 'Problem with rule in file {0:s}: '.format(
