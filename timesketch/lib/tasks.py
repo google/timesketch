@@ -476,40 +476,28 @@ def run_sketch_analyzer(
 
     analyzer_class = manager.AnalysisManager.get_analyzer(analyzer_name)
 
-    if analyzer_name == "sigma":
-        logger.info("will start an sigma analyzer")
-        # now wil start a lot more celery jobs
-        #rule.get('es_query'), rule.get('file_name'),
-        #            tag_list=rule.get('tags')
+    if analyzer_name == "sigma":  # or analyzer_name == 'domain':
+
         sigma_rules = ts_sigma_lib.get_all_sigma_rules()
         if sigma_rules is None:
             logger.error('No  Sigma rules found. Check SIGMA_RULES_FOLDERS')
-        problem_strings = []
-        output_strings = []
 
         for rule in sigma_rules:
-            logger.debug(rule)
-            rdb.set_trace()
-            # query, rule_name, tag_list
-            build_sketch_analysis_pipeline(
-                sketch_id, searchindex_id=123, user_id=123, analyzer_names=["sigma"], analyzer_kwargs={
-                    "es_query": rule.get('es_query'),
-                    "rule_name": rule.get('file_name'),
-                    "tag_list": rule.get('tags')
-                }, timeline_id=timeline_id)
+            # Start a celery worker for each rule
+            analyzer = analyzer_class(
+                sketch_id=sketch_id, index_name=index_name, timeline_id=timeline_id, sigma_rule=rule, **kwargs)
 
-            # analyzer = analyzer_class(
-            #   sketch_id=sketch_id, index_name=index_name,
-            #    timeline_id=timeline_id, ** kwargs)
+            result = analyzer.run_wrapper(analysis_id)
+            logger.info('[{0:s}] result: {1:s}'.format(analyzer_name, result))
 
     else:
         analyzer = analyzer_class(
             sketch_id=sketch_id, index_name=index_name,
             timeline_id=timeline_id, **kwargs)
 
-    result = analyzer.run_wrapper(analysis_id)
-    logger.info('[{0:s}] result: {1:s}'.format(analyzer_name, result))
-    return index_name
+        result = analyzer.run_wrapper(analysis_id)
+        logger.info('[{0:s}] result: {1:s}'.format(analyzer_name, result))
+        return index_name
 
 
 @celery.task(track_started=True, base=SqlAlchemyTask)

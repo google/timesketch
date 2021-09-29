@@ -24,6 +24,20 @@ class SigmaPlugin(interface.BaseAnalyzer):
     DISPLAY_NAME = 'Sigma'
     DESCRIPTION = 'Run pre-defined Sigma rules and tag matching events'
 
+    def __init__(self, index_name, sketch_id, timeline_id=None, sigma_rule=None):
+        """Initialize The Sigma Analyzer.
+
+        Args:
+            index_name: Elasticsearch index name
+            sketch_id: Sketch ID
+            timeline_id: The ID of the timeline.
+            sigma_rule: Optional dict that contains the configuration for the
+                analyzer. If not provided TBD.
+        """
+        self.index_name = index_name
+        self._rule = sigma_rule
+        super().__init__(index_name, sketch_id, timeline_id=timeline_id)
+
     def run_sigma_rule(self, query, rule_name, tag_list=None):
         """Runs a sigma rule and applies the appropriate tags.
 
@@ -65,51 +79,41 @@ class SigmaPlugin(interface.BaseAnalyzer):
         """
         #import pdb
         # pdb.set_trace()
+        from celery.contrib import rdb
+        # rdb.set_trace()
 
-        logger.debug(self)
-        exit()
         tags_applied = {}
         sigma_rule_counter = 0
-        sigma_rules = ts_sigma_lib.get_all_sigma_rules()
-        if sigma_rules is None:
+
+        rule = self._rule
+        if rule is None:
             logger.error('No  Sigma rules found. Check SIGMA_RULES_FOLDERS')
         problem_strings = []
         output_strings = []
 
-        for rule in sigma_rules:
-            tags_applied[rule.get('file_name')] = 0
-            try:
-                sigma_rule_counter += 1
-                tagged_events_counter = self.run_sigma_rule(
-                    rule.get('es_query'), rule.get('file_name'),
-                    tag_list=rule.get('tags'))
-                tags_applied[rule.get('file_name')] += tagged_events_counter
-                if sigma_rule_counter % 10 == 0:
-                    logger.debug('Rule {0:d}/{1:d}'.format(
-                        sigma_rule_counter, len(sigma_rules)))
-            except elasticsearch.TransportError as e:
-                logger.error(
-                    'Timeout executing search for {0:s}: '
-                    '{1!s} waiting for 10 seconds'.format(
-                        rule.get('file_name'), e), exc_info=True)
-                # this is caused by too many ES queries in short time range
-                # TODO: https://github.com/google/timesketch/issues/1782
-                sleep_time = current_app.config.get(
-                    'SIGMA_TAG_DELAY', 15)
-                time.sleep(sleep_time)
-                tagged_events_counter = self.run_sigma_rule(
-                    rule.get('es_query'), rule.get('file_name'),
-                    tag_list=rule.get('tags'))
-                tags_applied[rule.get('file_name')] += tagged_events_counter
-            # Wide exception handling since there are multiple exceptions that
-            # can be raised by the underlying sigma library.
-            except:  # pylint: disable=bare-except
-                logger.error(
-                    'Problem with rule in file {0:s}: '.format(
-                        rule.get('file_name')), exc_info=True)
-                problem_strings.append('* {0:s}'.format(
-                    rule.get('file_name')))
-                continue
+        tags_applied[rule.get('file_name')] = 0
+        try:
+            sigma_rule_counter += 1
+            tagged_events_counter = self.run_sigma_rule(
+                rule.get('es_query'), rule.get('file_name'),
+                tag_list=rule.get('tags'))
+            tags_applied[rule.get('file_name')] += tagged_events_counter
+        except elasticsearch.TransportError as e:
+            logger.error(
+                'Timeout executing search for {0:s} / {1!s}: '
+                '{2!s}'.format(
+                    rule.get('file_name'), rule.get('es_query'), e), exc_info=True)
+            # this is caused by too many ES queries in short time range
+            # TODO: https://github.com/google/timesketch/issues/1782
+
+        # Wide exception handling since there are multiple exceptions that
+        # can be raised by the underlying sigma library.
+        except:  # pylint: disable=bare-except
+            logger.error(
+                'Problem with rule in file {0:s}: '.format(
+                    rule.get('file_name')), exc_info=True)
+            problem_strings.append('* {0:s}'.format(
+                rule.get('file_name')))
 
         total_tagged_events = sum(tags_applied.values())
         output_strings.append('Applied {0:d} tags'.format(total_tagged_events))
