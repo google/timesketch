@@ -472,32 +472,20 @@ def run_sketch_analyzer(
     Returns:
       Name (str) of the index.
     """
-    from celery.contrib import rdb
-
     analyzer_class = manager.AnalysisManager.get_analyzer(analyzer_name)
 
-    if analyzer_name == "sigma":  # or analyzer_name == 'domain':
+    if analyzer_class.MULTI:
+        for params in analyzer_class.get_analyzers():
 
-        sigma_rules = ts_sigma_lib.get_all_sigma_rules()
-        if sigma_rules is None:
-            logger.error('No  Sigma rules found. Check SIGMA_RULES_FOLDERS')
-
-        for rule in sigma_rules:
-            # Start a celery worker for each rule
-            analyzer = analyzer_class(
-                sketch_id=sketch_id, index_name=index_name, timeline_id=timeline_id, sigma_rule=rule, **kwargs)
-
-            result = analyzer.run_wrapper(analysis_id)
-            logger.info('[{0:s}] result: {1:s}'.format(analyzer_name, result))
-
+            analyzer = analyzer_class(sketch_id=sketch_id, index_name=index_name,
+                                      timeline_id=timeline_id, **params)
     else:
-        analyzer = analyzer_class(
-            sketch_id=sketch_id, index_name=index_name,
-            timeline_id=timeline_id, **kwargs)
+        analyzer = analyzer_class(sketch_id=sketch_id,
+                                  index_name=index_name, timeline_id=timeline_id)
 
-        result = analyzer.run_wrapper(analysis_id)
-        logger.info('[{0:s}] result: {1:s}'.format(analyzer_name, result))
-        return index_name
+    result = analyzer.run_wrapper(analysis_id)
+    logger.info('[{0:s}] result: {1:s}'.format(analyzer_name, result))
+    return index_name
 
 
 @celery.task(track_started=True, base=SqlAlchemyTask)

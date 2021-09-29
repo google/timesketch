@@ -48,6 +48,7 @@ logger = logging.getLogger('timesketch.analyzers')
 
 def _flush_datastore_decorator(func):
     """Decorator that flushes the bulk insert queue in the datastore."""
+
     def wrapper(self, *args, **kwargs):
         func_return = func(self, *args, **kwargs)
 
@@ -128,6 +129,7 @@ class Event(object):
         index_name: The name of the Elasticsearch index.
         source: Source document from Elasticsearch.
     """
+
     def __init__(self, event, datastore, sketch=None, analyzer=None):
         """Initialize Event object.
 
@@ -326,6 +328,7 @@ class Sketch(object):
         id: Sketch ID.
         sql_sketch: Instance of a SQLAlchemy Sketch object.
     """
+
     def __init__(self, sketch_id):
         """Initializes a Sketch object.
 
@@ -524,6 +527,7 @@ class AggregationGroup(object):
     Attributes:
         group (SQLAlchemy): Instance of a SQLAlchemy AggregationGroup object.
     """
+
     def __init__(self, aggregation_group):
         """Initializes the AggregationGroup object.
 
@@ -621,6 +625,7 @@ class Story(object):
     Attributes:
         story (SQLAlchemy): Instance of a SQLAlchemy Story object.
     """
+
     def __init__(self, story):
         """Initializes a Story object.
 
@@ -719,7 +724,7 @@ class Story(object):
             'updated_at': today.isoformat(),
             'parameters': json.dumps(parameter_dict),
             'user': {'username': None},
-            }
+        }
         self._commit(block)
 
     def add_aggregation_group(self, aggregation_group):
@@ -767,6 +772,9 @@ class BaseAnalyzer:
     NAME = 'name'
     DISPLAY_NAME = None
     DESCRIPTION = None
+    # MULTI can be used to create sub celery jobs. Expects an
+    # implementation of get_analyzers in the Analyzer
+    MULTI = False
 
     # If this analyzer depends on another analyzer
     # it needs to be included in this frozenset by using
@@ -780,7 +788,6 @@ class BaseAnalyzer:
     # gets fully indexed.
     SECONDS_PER_WAIT = 10
     MAXIMUM_WAITS = 360
-
 
     def __init__(self, index_name, sketch_id, timeline_id=None):
         """Initialize the analyzer object.

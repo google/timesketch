@@ -23,8 +23,9 @@ class SigmaPlugin(interface.BaseAnalyzer):
     NAME = 'sigma'
     DISPLAY_NAME = 'Sigma'
     DESCRIPTION = 'Run pre-defined Sigma rules and tag matching events'
+    MULTI = True
 
-    def __init__(self, index_name, sketch_id, timeline_id=None, sigma_rule=None):
+    def __init__(self, index_name, sketch_id, timeline_id=None, **params):
         """Initialize The Sigma Analyzer.
 
         Args:
@@ -35,7 +36,7 @@ class SigmaPlugin(interface.BaseAnalyzer):
                 analyzer. If not provided TBD.
         """
         self.index_name = index_name
-        self._rule = sigma_rule
+        self._rule = params
         super().__init__(index_name, sketch_id, timeline_id=timeline_id)
 
     def run_sigma_rule(self, query, rule_name, tag_list=None):
@@ -115,10 +116,13 @@ class SigmaPlugin(interface.BaseAnalyzer):
             problem_strings.append('* {0:s}'.format(
                 rule.get('file_name')))
 
-
         total_tagged_events = sum(tags_applied.values())
+        # TODO: remove that, most likely not needed anymore if we distribute
+        # the load over multiple jobs
         output_strings.append('Applied {0:d} tags'.format(total_tagged_events))
 
+        # TODO: remove the view, as it is not really used and we only create
+        # tags, which will be used by other ways in Timesketch
         if total_tagged_events > 0:
             self.add_sigma_match_view(sigma_rule_counter)
 
@@ -127,6 +131,19 @@ class SigmaPlugin(interface.BaseAnalyzer):
             output_strings.extend(problem_strings)
 
         return '\n'.join(output_strings)
+
+    @staticmethod
+    def get_analyzers():
+        """Returns an array of all rules of Timesketch.
+
+        Returns:
+            sigma_rules All Sigma rules
+
+        """
+        sigma_rules = ts_sigma_lib.get_all_sigma_rules()
+        if sigma_rules is None:
+            logger.error('No  Sigma rules found. Check SIGMA_RULES_FOLDERS')
+        return sigma_rules
 
     def add_sigma_match_view(self, sigma_rule_counter):
         """Adds a view with the top 20 matching rules.
