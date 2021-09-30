@@ -23,6 +23,9 @@ import time
 import traceback
 import yaml
 
+from random import randint
+from time import sleep
+
 import elasticsearch
 from flask import current_app
 
@@ -943,18 +946,37 @@ class BaseAnalyzer:
         else:
             timeline_ids = None
 
-        event_generator = self.datastore.search_stream(
-            query_string=query_string,
-            query_filter=query_filter,
-            query_dsl=query_dsl,
-            indices=indices,
-            return_fields=return_fields,
-            enable_scroll=scroll,
-            timeline_ids=timeline_ids
-        )
-        for event in event_generator:
-            yield Event(
-                event, self.datastore, sketch=self.sketch, analyzer=self)
+        # the following loop will ensure that even complicated queries will not
+        # cause problems on ES if sent in bulk.
+        for x in range(0, 5):
+            try:
+                event_generator = self.datastore.search_stream(
+                    query_string=query_string,
+                    query_filter=query_filter,
+                    query_dsl=query_dsl,
+                    indices=indices,
+                    return_fields=return_fields,
+                    enable_scroll=scroll,
+                    timeline_ids=timeline_ids
+                )
+                for event in event_generator:
+                    yield Event(
+                        event, self.datastore, sketch=self.sketch, analyzer=self)
+                break  # query was succesful
+            except elasticsearch.TransportError as e:
+                sleeptimer = (randint(10, 30)*x)
+                logger.info(
+                    'Attempt: {0:d}/5 sleeping for {1:d} for query {2:s}'
+                    .format(x, sleeptimer, query_string))
+                sleep(sleeptimer)
+
+                if x == 5:
+                    logger.error(
+                        'Timeout executing search for {0:s}: '
+                        '{1!s} waiting for '
+                        '(https://github.com/google/timesketch/issues/1782)'
+                        .format(
+                            query_string, e), exc_info=True)
 
     @_flush_datastore_decorator
     def run_wrapper(self, analysis_id):
@@ -1011,6 +1033,18 @@ class BaseAnalyzer:
         db_session.commit()
 
         return result
+
+    # get_parameters that returns a not implemented exceptions
+    @staticmethod
+    def get_parameters_for_instances():
+        """Returns an array of paramters that will be iterated over to start 
+        instances of the analyzer.
+
+        Raises:
+            NotImplementedError
+
+        """
+        raise NotImplementedError
 
     def run(self):
         """Entry point for the analyzer."""

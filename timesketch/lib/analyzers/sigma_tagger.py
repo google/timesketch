@@ -92,32 +92,12 @@ class SigmaPlugin(interface.BaseAnalyzer):
                 rule.get('es_query'), rule.get('file_name'),
                 tag_list=rule.get('tags'))
             tags_applied[rule.get('file_name')] += tagged_events_counter
-        except elasticsearch.TransportError as e:
-            logger.error(
-                'Timeout executing search for {0:s} / {1!s}: '
-                '{2!s}'.format(
-                    rule.get('file_name'), rule.get('es_query'), e), exc_info=True)
-            # this is caused by too many ES queries in short time range
-            # TODO: https://github.com/google/timesketch/issues/1782
-
-        # Wide exception handling since there are multiple exceptions
-        # that can be raised by the underlying sigma library.
         except:  # pylint: disable=bare-except
             logger.error(
                 'Problem with rule in file {0:s}: '.format(
                     rule.get('file_name')), exc_info=True)
             problem_strings.append('* {0:s}'.format(
                 rule.get('file_name')))
-
-        total_tagged_events = sum(tags_applied.values())
-        # TODO: remove that, most likely not needed anymore if we distribute
-        # the load over multiple jobs
-        output_strings.append('Applied {0:d} tags'.format(total_tagged_events))
-
-        # TODO: remove the view, as it is not really used and we only create
-        # tags, which will be used by other ways in Timesketch
-        if total_tagged_events > 0:
-            self.add_sigma_match_view(sigma_rule_counter)
 
         if len(problem_strings) > 0:
             output_strings.append('Problematic rules:')
@@ -126,7 +106,7 @@ class SigmaPlugin(interface.BaseAnalyzer):
         return '\n'.join(output_strings)
 
     @staticmethod
-    def get_analyzers():
+    def get_parameters_for_instances():
         """Returns an array of all rules of Timesketch.
 
         Returns:

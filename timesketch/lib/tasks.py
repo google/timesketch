@@ -475,7 +475,7 @@ def run_sketch_analyzer(
     analyzer_class = manager.AnalysisManager.get_analyzer(analyzer_name)
 
     if analyzer_class.MULTI:
-        for params in analyzer_class.get_analyzers():
+        for params in analyzer_class.get_parameters_for_instances():
 
             analyzer = analyzer_class(sketch_id=sketch_id, index_name=index_name,
                                       timeline_id=timeline_id, **params)
