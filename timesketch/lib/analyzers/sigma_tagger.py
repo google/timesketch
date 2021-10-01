@@ -20,20 +20,17 @@ class SigmaPlugin(interface.BaseAnalyzer):
     NAME = 'sigma'
     DISPLAY_NAME = 'Sigma'
     DESCRIPTION = 'Run pre-defined Sigma rules and tag matching events'
-    MULTI = True
 
-    def __init__(self, index_name, sketch_id, timeline_id=None, **params):
+    def __init__(self, index_name, sketch_id, timeline_id=None, **kwargs):
         """Initialize The Sigma Analyzer.
 
         Args:
             index_name: Elasticsearch index name
             sketch_id: Sketch ID
             timeline_id: The ID of the timeline.
-            sigma_rule: Optional dict that contains the configuration for the
-                analyzer. If not provided TBD.
         """
         self.index_name = index_name
-        self._rule = params
+        self._rule = kwargs.get('rule')
         super().__init__(index_name, sketch_id, timeline_id=timeline_id)
 
     def run_sigma_rule(self, query, rule_name, tag_list=None):
@@ -57,7 +54,7 @@ class SigmaPlugin(interface.BaseAnalyzer):
             event.add_attributes({'ts_sigma_rule': list(set(ts_sigma_rules))})
             ts_ttp = event.source.get('ts_ttp', [])
             for tag in tag_list:
-                # special handling for sigma tags that TS considers TTPS
+                # Special handling for sigma tags that TS considers TTPS
                 # https://car.mitre.org and https://attack.mitre.org
                 if tag.startswith(('attack.', 'car.')):
                     ts_ttp.append(tag)
@@ -80,8 +77,9 @@ class SigmaPlugin(interface.BaseAnalyzer):
         sigma_rule_counter = 0
 
         rule = self._rule
-        if rule is None:
+        if not rule:
             logger.error('No  Sigma rules found. Check SIGMA_RULES_FOLDERS')
+        rule_name = rule.get('title', 'N/A')
         problem_strings = []
         output_strings = []
 
@@ -99,24 +97,13 @@ class SigmaPlugin(interface.BaseAnalyzer):
             problem_strings.append('* {0:s}'.format(
                 rule.get('file_name')))
 
+        output_strings.append(f'{tagged_events_counter} events tagged for rule [{rule_name}]')
+
         if len(problem_strings) > 0:
             output_strings.append('Problematic rules:')
             output_strings.extend(problem_strings)
 
         return '\n'.join(output_strings)
-
-    @staticmethod
-    def get_parameters_for_instances():
-        """Returns an array of all rules of Timesketch.
-
-        Returns:
-            sigma_rules All Sigma rules
-
-        """
-        sigma_rules = ts_sigma_lib.get_all_sigma_rules()
-        if sigma_rules is None:
-            logger.error('No  Sigma rules found. Check SIGMA_RULES_FOLDERS')
-        return sigma_rules
 
     def add_sigma_match_view(self, sigma_rule_counter):
         """Adds a view with the top 20 matching rules.
@@ -155,6 +142,18 @@ class SigmaPlugin(interface.BaseAnalyzer):
             'And an overview of all the discovered search terms:')
         story.add_view(view)
 
+
+    @staticmethod
+    def get_kwargs():
+        """Returns an array of all rules of Timesketch.
+
+        Returns:
+            sigma_rules All Sigma rules
+        """
+        sigma_rules = [
+            {'rule': rule} for rule in ts_sigma_lib.get_all_sigma_rules()
+        ]
+        return sigma_rules
 
 class RulesSigmaPlugin(SigmaPlugin):
     """Sigma plugin to run rules."""

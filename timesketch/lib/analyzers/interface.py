@@ -775,9 +775,6 @@ class BaseAnalyzer:
     NAME = 'name'
     DISPLAY_NAME = None
     DESCRIPTION = None
-    # MULTI can be used to create sub celery jobs. Expects an
-    # implementation of get_analyzers in the Analyzer
-    MULTI = False
 
     # If this analyzer depends on another analyzer
     # it needs to be included in this frozenset by using
@@ -1034,17 +1031,23 @@ class BaseAnalyzer:
 
         return result
 
-    # get_parameters that returns a not implemented exceptions
-    @staticmethod
-    def get_parameters_for_instances():
-        """Returns an array of paramters that will be iterated over to start 
-        instances of the analyzer.
-
-        Raises:
-            NotImplementedError
-
+    @classmethod
+    def get_kwargs(cls):
+        """Get keyword arguments needed to instantiate the class.
+        Every analyzer gets the index_name as its first argument from Celery.
+        By default this is the only argument. If your analyzer need more
+        arguments you can override this method and return as a dictionary.
+        
+        If you want more than one instance to be created for your analyzer you
+        can return a list of dictionaries with kwargs and each one will be
+        instantiated and registered in Celery. This is neat if you want to run
+        your analyzer with different arguments in parallel.
+        
+        Returns:
+            List of keyword argument dicts or None if no extra arguments are
+            needed.
         """
-        raise NotImplementedError
+        return None
 
     def run(self):
         """Entry point for the analyzer."""

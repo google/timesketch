@@ -333,9 +333,11 @@ def build_sketch_analysis_pipeline(
     analysis_session = AnalysisSession(user, sketch)
 
     analyzers = manager.AnalysisManager.get_analyzers(analyzer_names)
-    for analyzer_name, _ in analyzers:
+    for analyzer_name, analyzer_class in analyzers:
         kwargs = analyzer_kwargs.get(analyzer_name, {})
         searchindex = SearchIndex.query.get(searchindex_id)
+
+        multi_task_kwarg_list = analyzer_class.get_kwargs()
 
         timeline = None
         if timeline_id:
@@ -345,22 +347,42 @@ def build_sketch_analysis_pipeline(
             timeline = Timeline.query.filter_by(
                 sketch=sketch, searchindex=searchindex).first()
 
-        analysis = Analysis(
-            name=analyzer_name,
-            description=analyzer_name,
-            analyzer_name=analyzer_name,
-            parameters=json.dumps(kwargs),
-            user=user,
-            sketch=sketch,
-            timeline=timeline)
-        analysis.set_status('PENDING')
-        analysis_session.analyses.append(analysis)
-        db_session.add(analysis)
-        db_session.commit()
+        if multi_task_kwarg_list:
+            for _kwargs in multi_task_kwarg_list:
+                new_kwargs = {**kwargs, **_kwargs}
+                analysis = Analysis(
+                    name=analyzer_name,
+                    description=analyzer_name,
+                    analyzer_name=analyzer_name,
+                    parameters=json.dumps(new_kwargs),
+                    user=user,
+                    sketch=sketch,
+                    timeline=timeline)
+                analysis.set_status('PENDING')
+                analysis_session.analyses.append(analysis)
+                db_session.add(analysis)
+                db_session.commit()
 
-        tasks.append(run_sketch_analyzer.s(
-            sketch_id, analysis.id, analyzer_name,
-            timeline_id=timeline_id, **kwargs))
+                tasks.append(run_sketch_analyzer.s(
+                    sketch_id, analysis.id, analyzer_name,
+                    timeline_id=timeline_id, **new_kwargs))
+        else:
+            analysis = Analysis(
+                name=analyzer_name,
+                description=analyzer_name,
+                analyzer_name=analyzer_name,
+                parameters=json.dumps(kwargs),
+                user=user,
+                sketch=sketch,
+                timeline=timeline)
+            analysis.set_status('PENDING')
+            analysis_session.analyses.append(analysis)
+            db_session.add(analysis)
+            db_session.commit()
+            
+            tasks.append(run_sketch_analyzer.s(
+                sketch_id, analysis.id, analyzer_name,
+                timeline_id=timeline_id, **kwargs))
 
     # Commit the analysis session to the database.
     db_session.add(analysis_session)
@@ -461,27 +483,21 @@ def run_sketch_analyzer(
         index_name, sketch_id, analysis_id, analyzer_name,
         timeline_id=None, **kwargs):
     """Create a Celery task for a sketch analyzer.
-
+    
     Args:
         index_name: Name of the datastore index.
         sketch_id: ID of the sketch to analyze.
         analysis_id: ID of the analysis.
         analyzer_name: Name of the analyzer.
         timeline_id: Int of the timeline this analyzer belongs to.
-
+    
     Returns:
       Name (str) of the index.
     """
     analyzer_class = manager.AnalysisManager.get_analyzer(analyzer_name)
-
-    if analyzer_class.MULTI:
-        for params in analyzer_class.get_parameters_for_instances():
-
-            analyzer = analyzer_class(sketch_id=sketch_id, index_name=index_name,
-                                      timeline_id=timeline_id, **params)
-    else:
-        analyzer = analyzer_class(sketch_id=sketch_id,
-                                  index_name=index_name, timeline_id=timeline_id)
+    analyzer = analyzer_class(
+        sketch_id=sketch_id, index_name=index_name,
+        timeline_id=timeline_id, **kwargs)
 
     result = analyzer.run_wrapper(analysis_id)
     logger.info('[{0:s}] result: {1:s}'.format(analyzer_name, result))
