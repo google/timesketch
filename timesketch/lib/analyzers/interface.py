@@ -22,9 +22,7 @@ import os
 import time
 import traceback
 import yaml
-
-from random import randint
-from time import sleep
+import random
 
 import elasticsearch
 from flask import current_app
@@ -943,9 +941,13 @@ class BaseAnalyzer:
         else:
             timeline_ids = None
 
-        # the following loop will ensure that even complicated queries will not
-        # cause problems on ES if sent in bulk.
-        for x in range(0, 5):
+        # Exponential backoff for the call to Elasticsearch. Sometimes the 
+        # cluster can be a bit overloaded and timeout on requests. We want to
+        # retry a few times in order to give the cluster a chance to return
+        # results.
+        backoff_in_seconds = 3
+        retries = 5
+        for x in range(0, retries):
             try:
                 event_generator = self.datastore.search_stream(
                     query_string=query_string,
@@ -958,22 +960,23 @@ class BaseAnalyzer:
                 )
                 for event in event_generator:
                     yield Event(
-                        event, self.datastore, sketch=self.sketch, analyzer=self)
-                break  # query was succesful
+                        event, self.datastore, sketch=self.sketch,
+                        analyzer=self)
+                break  # Query was succesful
             except elasticsearch.TransportError as e:
-                sleeptimer = (randint(10, 30)*x)
+                sleep_seconds = (
+                    backoff_in_seconds * 2 ** x + random.uniform(3, 7))
                 logger.info(
-                    'Attempt: {0:d}/5 sleeping for {1:d} for query {2:s}'
-                    .format(x, sleeptimer, query_string))
-                sleep(sleeptimer)
+                    'Attempt: {0:d}/{1:d} sleeping {2:f} for query {3:s}'
+                    .format(x + 1, retries, sleep_seconds, query_string))
+                time.sleep(sleep_seconds)
 
-                if x == 5:
+                if x == retries-1:
                     logger.error(
-                        'Timeout executing search for {0:s}: '
-                        '{1!s} waiting for '
-                        '(https://github.com/google/timesketch/issues/1782)'
-                        .format(
-                            query_string, e), exc_info=True)
+                        'Timeout executing search for {0:s}: {1!s}'
+                        .format(query_string, e), exc_info=True
+                    )
+                    raise
 
     @_flush_datastore_decorator
     def run_wrapper(self, analysis_id):
@@ -1044,10 +1047,10 @@ class BaseAnalyzer:
         your analyzer with different arguments in parallel.
         
         Returns:
-            List of keyword argument dicts or None if no extra arguments are
-            needed.
+            List of keyword argument dicts or empty list if no extra arguments
+            are needed.
         """
-        return None
+        return []
 
     def run(self):
         """Entry point for the analyzer."""

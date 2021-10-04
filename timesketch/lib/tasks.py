@@ -14,6 +14,7 @@
 """Celery task for processing Plaso storage files."""
 
 from __future__ import unicode_literals
+from operator import add
 
 import os
 import logging
@@ -24,6 +25,7 @@ import codecs
 import io
 import json
 import six
+from sqlalchemy.orm.base import object_mapper
 import yaml
 
 from elasticsearch.exceptions import NotFoundError
@@ -334,11 +336,9 @@ def build_sketch_analysis_pipeline(
 
     analyzers = manager.AnalysisManager.get_analyzers(analyzer_names)
     for analyzer_name, analyzer_class in analyzers:
-        kwargs = analyzer_kwargs.get(analyzer_name, {})
+        base_kwargs = analyzer_kwargs.get(analyzer_name, {})
         searchindex = SearchIndex.query.get(searchindex_id)
-
-        multi_task_kwarg_list = analyzer_class.get_kwargs()
-
+        
         timeline = None
         if timeline_id:
             timeline = Timeline.query.get(timeline_id)
@@ -347,26 +347,19 @@ def build_sketch_analysis_pipeline(
             timeline = Timeline.query.filter_by(
                 sketch=sketch, searchindex=searchindex).first()
 
-        if multi_task_kwarg_list:
-            for _kwargs in multi_task_kwarg_list:
-                new_kwargs = {**kwargs, **_kwargs}
-                analysis = Analysis(
-                    name=analyzer_name,
-                    description=analyzer_name,
-                    analyzer_name=analyzer_name,
-                    parameters=json.dumps(new_kwargs),
-                    user=user,
-                    sketch=sketch,
-                    timeline=timeline)
-                analysis.set_status('PENDING')
-                analysis_session.analyses.append(analysis)
-                db_session.add(analysis)
-                db_session.commit()
+        additional_kwargs = analyzer_class.get_kwargs()
+        if isinstance(additional_kwargs, dict):
+            additional_kwargs = [additional_kwargs]
 
-                tasks.append(run_sketch_analyzer.s(
-                    sketch_id, analysis.id, analyzer_name,
-                    timeline_id=timeline_id, **new_kwargs))
-        else:
+        kwargs_list = []
+        for _kwargs in additional_kwargs:
+            combined_kwargs = {**base_kwargs, **_kwargs}
+            kwargs_list.append(combined_kwargs)
+
+        if not kwargs_list:
+            kwargs_list = [base_kwargs]
+
+        for kwargs in kwargs_list:
             analysis = Analysis(
                 name=analyzer_name,
                 description=analyzer_name,
@@ -379,7 +372,7 @@ def build_sketch_analysis_pipeline(
             analysis_session.analyses.append(analysis)
             db_session.add(analysis)
             db_session.commit()
-            
+
             tasks.append(run_sketch_analyzer.s(
                 sketch_id, analysis.id, analyzer_name,
                 timeline_id=timeline_id, **kwargs))
