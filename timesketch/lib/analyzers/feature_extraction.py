@@ -29,8 +29,6 @@ class FeatureExtractionSketchPlugin(interface.BaseAnalyzer):
     DISPLAY_NAME = 'Feature extractor'
     DESCRIPTION = 'Extract features from event based on stored definitions'
 
-    CONFIG_FILE = 'features.yaml'
-
     FORM_FIELDS = [
         {
             'name': 'query_string',
@@ -147,20 +145,19 @@ class FeatureExtractionSketchPlugin(interface.BaseAnalyzer):
     ]
 
 
-    def __init__(self, index_name, sketch_id, timeline_id=None, config=None):
+    def __init__(self, index_name, sketch_id, timeline_id=None, **kwargs):
         """Initialize The Sketch Analyzer.
 
         Args:
             index_name: Elasticsearch index name
             sketch_id: Sketch ID
             timeline_id: The ID of the timeline.
-            config: Optional dict that contains the configuration for the
-                analyzer. If not provided, the default YAML file will be
-                loaded up.
         """
         self.index_name = index_name
+        self._feature_name = kwargs.get('feature')
+        self._feature_config = kwargs.get('feature_config')
         super().__init__(index_name, sketch_id, timeline_id=timeline_id)
-        self._config = config
+        
 
     def run(self):
         """Entry point for the analyzer.
@@ -168,17 +165,7 @@ class FeatureExtractionSketchPlugin(interface.BaseAnalyzer):
         Returns:
             String with summary of the analyzer result.
         """
-        config = self._config or interface.get_yaml_config(self.CONFIG_FILE)
-        if not config:
-            return 'Unable to parse the config file.'
-
-        return_strings = []
-        for name, feature_config in iter(config.items()):
-            feature_string = self.extract_feature(name, feature_config)
-            if feature_string:
-                return_strings.append(feature_string)
-
-        return ', '.join(return_strings)
+        return self.extract_feature(self._feature_name, self._feature_config)
 
     @staticmethod
     def _get_attribute_value(
@@ -346,5 +333,21 @@ class FeatureExtractionSketchPlugin(interface.BaseAnalyzer):
         return 'Feature extraction [{0:s}] extracted {1:d} features.'.format(
             name, event_counter)
 
+    @staticmethod
+    def get_kwargs():
+        """Get kwargs for the analyzer.
+
+        Returns:
+            List of features to search for.
+        """
+        features_config = interface.get_yaml_config('features.yaml')
+        if not features_config:
+            return 'Unable to parse the config features file.'
+
+        features_kwargs = [
+            {'feature': feature, 'feature_config': config}
+            for feature, config in features_config.items()
+        ]
+        return features_kwargs
 
 manager.AnalysisManager.register_analyzer(FeatureExtractionSketchPlugin)
