@@ -2,7 +2,6 @@
 from __future__ import unicode_literals
 
 import logging
-import elasticsearch
 
 from timesketch.lib.analyzers import utils
 
@@ -97,7 +96,8 @@ class SigmaPlugin(interface.BaseAnalyzer):
             problem_strings.append('* {0:s}'.format(
                 rule.get('file_name')))
 
-        output_strings.append(f'{tagged_events_counter} events tagged for rule [{rule_name}]')
+        output_strings.append(
+            f'{tagged_events_counter} events tagged for rule [{rule_name}]')
 
         if len(problem_strings) > 0:
             output_strings.append('Problematic rules:')
