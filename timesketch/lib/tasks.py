@@ -14,7 +14,6 @@
 """Celery task for processing Plaso storage files."""
 
 from __future__ import unicode_literals
-from operator import add
 
 import os
 import logging
@@ -25,7 +24,6 @@ import codecs
 import io
 import json
 import six
-from sqlalchemy.orm.base import object_mapper
 import yaml
 
 from elasticsearch.exceptions import NotFoundError
@@ -36,7 +34,6 @@ from celery import chain
 from celery import group
 from celery import signals
 from sqlalchemy import create_engine
-import timesketch.lib.sigma_util as ts_sigma_lib
 
 # To be able to determine plaso's version.
 try:
@@ -338,7 +335,7 @@ def build_sketch_analysis_pipeline(
     for analyzer_name, analyzer_class in analyzers:
         base_kwargs = analyzer_kwargs.get(analyzer_name, {})
         searchindex = SearchIndex.query.get(searchindex_id)
-        
+
         timeline = None
         if timeline_id:
             timeline = Timeline.query.get(timeline_id)
@@ -476,14 +473,14 @@ def run_sketch_analyzer(
         index_name, sketch_id, analysis_id, analyzer_name,
         timeline_id=None, **kwargs):
     """Create a Celery task for a sketch analyzer.
-    
+
     Args:
         index_name: Name of the datastore index.
         sketch_id: ID of the sketch to analyze.
         analysis_id: ID of the analysis.
         analyzer_name: Name of the analyzer.
         timeline_id: Int of the timeline this analyzer belongs to.
-    
+
     Returns:
       Name (str) of the index.
     """
