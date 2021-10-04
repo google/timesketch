@@ -1030,6 +1030,13 @@ class Investigation(LabelMixin, StatusMixin, CommentMixin, BaseModel):
         self.spec_json = spec_json
         self.description = description
 
+    def add_conclusion(self, ):
+        """Add a conclusion to an investigation."""
+        if self.has_label(label):
+            return
+        self.labels.append(self.Label(user=user, label=label))
+        db_session.commit()    
+
  
  # Association tables for the many-to-many relationship for a Question.
 questionconclusion_story_association_table = Table(
@@ -1063,11 +1070,11 @@ questionconclusion_aggregation_association_table = Table(
 class QuestionConclusion(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     """Implements the QuestionConclusion model."""
     conclusion = Column(UnicodeText())
+    simple_answer = Column(UnicodeText())
+    automated = Column(Boolean(), default=False)
     user_id = Column(Integer, ForeignKey('user.id'))
     investigativequestion_id = Column(
         Integer, ForeignKey('investigativequestion.id'))    
-    from_simple = Column(Boolean(), default=False)
-    from_analyzer = Column(Boolean(), default=False)
     stories = relationship(
         'Story', secondary=questionconclusion_story_association_table)
     saved_searches = relationship(

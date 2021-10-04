@@ -42,6 +42,20 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
     """Resource for investigative scenarios."""
 
     @login_required
+    def get(self):
+        """Handles GET request to the resource.
+        
+        Returns:
+            A list of JSON representations of the scenarios.
+        """
+        scenarios = load_yaml_config('SCENARIOS_PATH')
+        return jsonify(scenarios)
+
+
+class ScenarioSketchResource(resources.ResourceMixin, Resource):
+    """Resource for investigative scenarios."""
+
+    @login_required
     def get(self, sketch_id):
         """Handles GET request to the resource.
         

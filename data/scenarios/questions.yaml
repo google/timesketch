@@ -57,11 +57,8 @@
 #       graphs              A list of graph plugins that will assist the
 #                           analyst with answering the question.
 #
-#       searches            A list of search templates that will assist the
+#       search_templates    A list of search templates that will assist the
 #                           analyst to be able to answer the question.
-#
-#       sigma_rules         A list of Sigma rules that will further the
-#                           analyst to be able to answer the questions.
 #
 #                       -- answers --
 #       answer_simple       If the answer can be simply derived from a search
