@@ -157,7 +157,6 @@ class FeatureExtractionSketchPlugin(interface.BaseAnalyzer):
         self._feature_name = kwargs.get('feature')
         self._feature_config = kwargs.get('feature_config')
         super().__init__(index_name, sketch_id, timeline_id=timeline_id)
-        
 
     def run(self):
         """Entry point for the analyzer.
@@ -165,6 +164,8 @@ class FeatureExtractionSketchPlugin(interface.BaseAnalyzer):
         Returns:
             String with summary of the analyzer result.
         """
+        import time
+        time.sleep(10)
         return self.extract_feature(self._feature_name, self._feature_config)
 
     @staticmethod
