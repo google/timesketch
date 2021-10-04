@@ -164,8 +164,6 @@ class FeatureExtractionSketchPlugin(interface.BaseAnalyzer):
         Returns:
             String with summary of the analyzer result.
         """
-        import time
-        time.sleep(10)
         return self.extract_feature(self._feature_name, self._feature_config)
 
     @staticmethod
