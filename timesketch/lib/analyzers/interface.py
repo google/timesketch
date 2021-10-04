@@ -19,10 +19,10 @@ import datetime
 import json
 import logging
 import os
+import random
 import time
 import traceback
 import yaml
-import random
 
 import elasticsearch
 from flask import current_app
@@ -941,7 +941,7 @@ class BaseAnalyzer:
         else:
             timeline_ids = None
 
-        # Exponential backoff for the call to Elasticsearch. Sometimes the 
+        # Exponential backoff for the call to Elasticsearch. Sometimes the
         # cluster can be a bit overloaded and timeout on requests. We want to
         # retry a few times in order to give the cluster a chance to return
         # results.
@@ -1040,12 +1040,12 @@ class BaseAnalyzer:
         Every analyzer gets the index_name as its first argument from Celery.
         By default this is the only argument. If your analyzer need more
         arguments you can override this method and return as a dictionary.
-        
+
         If you want more than one instance to be created for your analyzer you
         can return a list of dictionaries with kwargs and each one will be
         instantiated and registered in Celery. This is neat if you want to run
         your analyzer with different arguments in parallel.
-        
+
         Returns:
             List of keyword argument dicts or empty list if no extra arguments
             are needed.
