@@ -81,6 +81,7 @@ class SigmaPlugin(interface.BaseAnalyzer):
         rule_name = rule.get('title', 'N/A')
         problem_strings = []
         output_strings = []
+        tagged_events_counter = 0
 
         tags_applied[rule.get('file_name')] = 0
         try:
