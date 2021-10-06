@@ -836,10 +836,18 @@ class SearchHistory(LabelMixin, BaseModel):
 
 
 class Scenario(LabelMixin, StatusMixin, CommentMixin, BaseModel):
-    """Implements the Scenario model."""
+    """Implements the Scenario model.
+    
+    A Timesketch Scenario is setting the type of the sketch. A scenario has
+    one or many investigations. It acts as a container for investigations.
+
+    A scenario is created from a YAML specification that is provided by the 
+    server admin. This YAML file is used to cookiecut and bootstrap sketches.
+    """
     name = Column(UnicodeText())
     display_name = Column(UnicodeText())    
     description = Column(UnicodeText())
+    summary = Column(UnicodeText())
     sketch_id = Column(Integer, ForeignKey('sketch.id'))
     user_id = Column(Integer, ForeignKey('user.id'))
     spec_json = Column(UnicodeText())
@@ -847,7 +855,8 @@ class Scenario(LabelMixin, StatusMixin, CommentMixin, BaseModel):
         'Investigation', backref='scenario', lazy='select')
 
     def __init__(
-        self, name, display_name, sketch, user, spec_json, description=None):
+        self, name, display_name, sketch, user, spec_json, description=None,
+        summary=None):
         """Initialize the Scenario object.
 
         Args:
@@ -857,6 +866,7 @@ class Scenario(LabelMixin, StatusMixin, CommentMixin, BaseModel):
             user (timesketch.models.user.User): A user
             spec_json (str): Scenario specification from YAML
             description (str): Description of the scenario
+            summary (str): Summary of the outcome of the scenario
         """
         super().__init__()
         self.name = name
@@ -865,10 +875,15 @@ class Scenario(LabelMixin, StatusMixin, CommentMixin, BaseModel):
         self.user = user
         self.spec_json = spec_json
         self.description = description
+        self.summary = summary
 
 
 class InvestigationTimeFrame(BaseModel):
-    """Implements the InvestigationTimeFrame model."""
+    """Implements the InvestigationTimeFrame model.
+    
+    A timeframe is used in an investigation to set scope. This information
+    is used when automatically generatae queries and other helper functions.
+    """
     start_time = Column(UnicodeText())
     end_time = Column(UnicodeText())
     description = Column(UnicodeText())
@@ -890,7 +905,7 @@ class InvestigationTimeFrame(BaseModel):
         self.description = description
 
 
- # Association tables for the many-to-many relationship for an Investigation.
+ # Association tables for the many-to-many relationship for a conclusion.
 investigationconclusion_story_association_table = Table(
     'investigationconclusion_story', BaseModel.metadata,
     Column(
@@ -925,8 +940,16 @@ investigationconclusion_aggregation_association_table = Table(
 
 class InvestigationConclusion(
     LabelMixin, StatusMixin, CommentMixin, BaseModel):
-    """Implements the InvestigationConclusion model."""
+    """Implements the InvestigationConclusion model.
+    
+    A conslusion is the result of an investigation. It can be created both by
+    a human as well as automated by the system.
+
+    Together with a conclusion there can be evidence and pointers to supportive
+    resources such as saved searches, graphs, aggregations and stories.
+    """
     conclusion = Column(UnicodeText())
+    automated = Column(Boolean(), default=False)
     user_id = Column(Integer, ForeignKey('user.id'))
     investigation_id = Column(Integer, ForeignKey('investigation.id'))
     stories = relationship(
@@ -985,13 +1008,20 @@ investigation_aggregation_association_table = Table(
 
 
 class Investigation(LabelMixin, StatusMixin, CommentMixin, BaseModel):
-    """Implements the Investigation model."""
+    """Implements the Investigation model.
+    
+    An investigation is a collection of questions and answers/conclusions.
+    In order to be able to help the user as well as aid in automation it is
+    possible to set the scope for the investigation. The scope consist of
+    timeframes of interest, timelines and supplied parameters (key/value).
+    """
     name = Column(UnicodeText())
     display_name = Column(UnicodeText())    
     description = Column(UnicodeText())
     user_id = Column(Integer, ForeignKey('user.id'))
     scenario_id = Column(Integer, ForeignKey('scenario.id'))
     spec_json = Column(UnicodeText())
+    parameters_json = Column(UnicodeText())
     timeframes = relationship(
         'InvestigationTimeFrame', backref='investigation', lazy='select')
     timelines = relationship(
@@ -1012,7 +1042,8 @@ class Investigation(LabelMixin, StatusMixin, CommentMixin, BaseModel):
         secondary=investigation_aggregation_association_table)
 
     def __init__(
-        self, name, display_name, user, spec_json, description=None):
+        self, name, display_name, user, spec_json, parameters_json=None,
+        description=None):
         """Initialize the Investigation object.
 
         Args:
@@ -1021,6 +1052,7 @@ class Investigation(LabelMixin, StatusMixin, CommentMixin, BaseModel):
             user (User): A userinvestigationconclusion
             scenario (Scenario): The Scenario this investigation belongs to
             spec_json (str): Investigation specification from YAML
+            parameters_json (str): JSON encoded parameters
             description (str): Description of the investigation
         """
         super().__init__()
@@ -1028,14 +1060,8 @@ class Investigation(LabelMixin, StatusMixin, CommentMixin, BaseModel):
         self.display_name = display_name
         self.user = user
         self.spec_json = spec_json
+        self.parameters_json = parameters_json
         self.description = description
-
-    def add_conclusion(self, ):
-        """Add a conclusion to an investigation."""
-        if self.has_label(label):
-            return
-        self.labels.append(self.Label(user=user, label=label))
-        db_session.commit()    
 
  
  # Association tables for the many-to-many relationship for a Question.
@@ -1068,8 +1094,16 @@ questionconclusion_aggregation_association_table = Table(
 )
 
 class QuestionConclusion(LabelMixin, StatusMixin, CommentMixin, BaseModel):
-    """Implements the QuestionConclusion model."""
+    """Implements the QuestionConclusion model.
+
+    A conslusion is the result of a investigative question. It can be created
+    both by a human as well as automated by the system.
+
+    Together with a conclusion there can be evidence and pointers to supportive
+    resources such as saved searches, graphs, aggregations and stories.
+    """
     conclusion = Column(UnicodeText())
+    # TODO: Keep this?
     simple_answer = Column(UnicodeText())
     automated = Column(Boolean(), default=False)
     user_id = Column(Integer, ForeignKey('user.id'))
@@ -1106,7 +1140,11 @@ class QuestionConclusion(LabelMixin, StatusMixin, CommentMixin, BaseModel):
 
 
 class InvestigativeQuestion(LabelMixin, StatusMixin, CommentMixin, BaseModel):
-    """Implements the InvestigativeQuestion model."""
+    """Implements the InvestigativeQuestion model.
+    
+    An Investigative Question is the smallest component of an investigation.
+    The goal is to be tactical, and 
+    """
     name = Column(UnicodeText())
     display_name = Column(UnicodeText())
     description = Column(UnicodeText())
@@ -1120,7 +1158,7 @@ class InvestigativeQuestion(LabelMixin, StatusMixin, CommentMixin, BaseModel):
         'QuestionConclusion', backref='investigativequestion', lazy='select')
 
     def __init__(
-        self, name, display_name, user, spec_json, parameters_json,
+        self, name, display_name, user, spec_json, parameters_json=None,
         description=None):
         """Initialize the InvestigativeQuestion object.
 
@@ -1129,6 +1167,7 @@ class InvestigativeQuestion(LabelMixin, StatusMixin, CommentMixin, BaseModel):
             display_name (str): The display name of the question
             user (timesketch.models.user.User): A user
             spec_json (str): Question specification from YAML
+            parameters_json (str): JSON encoded parameters
             description (str): Description of the question
         """
         super().__init__()
