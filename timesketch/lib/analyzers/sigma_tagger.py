@@ -74,6 +74,7 @@ class SigmaPlugin(interface.BaseAnalyzer):
 
         tags_applied = {}
         sigma_rule_counter = 0
+        tagged_events_counter = 0
 
         rule = self._rule
         if not rule:
@@ -81,7 +82,6 @@ class SigmaPlugin(interface.BaseAnalyzer):
         rule_name = rule.get('title', 'N/A')
         problem_strings = []
         output_strings = []
-        tagged_events_counter = 0
 
         tags_applied[rule.get('file_name')] = 0
         try:
