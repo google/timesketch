@@ -74,6 +74,7 @@ class SigmaPlugin(interface.BaseAnalyzer):
 
         tags_applied = {}
         sigma_rule_counter = 0
+        tagged_events_counter = 0
 
         rule = self._rule
         if not rule:
