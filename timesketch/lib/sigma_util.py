@@ -238,6 +238,7 @@ def get_sigma_rule(filepath, sigma_config=None):
             sigma_rule = sigma_rule.replace('\\ ', ' ')
             sigma_rule = sigma_rule.replace('\"', '"')
             sigma_rule = sigma_rule.replace('\\:', ':')
+            sigma_rule = sigma_rule.replace('\\-', '-')
             sigma_es_query = sigma_rule
 
         rule_return.update(
@@ -326,6 +327,7 @@ def get_sigma_rule_by_text(rule_text, sigma_config=None):
         sigma_rule = sigma_rule.replace('\\ ', ' ')
         sigma_rule = sigma_rule.replace('\"', '"')
         sigma_rule = sigma_rule.replace('\\:', ':')
+        sigma_rule = sigma_rule.replace('\\-', '-')
         sigma_es_query = sigma_rule
 
     rule_return.update(
