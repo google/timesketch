@@ -29,7 +29,7 @@ import sys
 import pandas as pd
 
 
-from timesketch.lib import sigma_util# pylint: disable=no-name-in-module
+from timesketch.lib import sigma_util  # pylint: disable=no-name-in-module
 
 logger = logging.getLogger('timesketch.test_tool.sigma-verify')
 logging.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO'))
@@ -69,6 +69,7 @@ def get_sigma_blocklist(blocklist_path='./data/sigma_blocklist.csv'):
 
     return pd.read_csv(blocklist_path)
 
+
 def run_verifier(rules_path, config_file_path, blocklist_path=None):
     """Run an sigma parsing test on a dir and returns results from the run.
 
@@ -106,7 +107,6 @@ def run_verifier(rules_path, config_file_path, blocklist_path=None):
     ignore = get_sigma_blocklist(blocklist_path)
     ignore_list = list(ignore['path'].unique())
 
-
     for dirpath, dirnames, files in os.walk(rules_path):
         if 'deprecated' in [x.lower() for x in dirnames]:
             dirnames.remove('deprecated')
@@ -130,10 +130,11 @@ def run_verifier(rules_path, config_file_path, blocklist_path=None):
                 try:
                     parsed_rule = sigma_util.get_sigma_rule(
                         rule_file_path, sigma_config)
+                    print(parsed_rule)
                 # This except is to keep the unknown exceptions
                 # this function is made to catch them and document
                 # them the broad exception is needed
-                except Exception:# pylint: disable=broad-except
+                except Exception:  # pylint: disable=broad-except
                     logger.debug('Rule parsing error', exc_info=True)
                     return_rules_with_problems.append(rule_file_path)
 
