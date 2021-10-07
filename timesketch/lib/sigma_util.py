@@ -230,10 +230,14 @@ def get_sigma_rule(filepath, sigma_config=None):
         sigma_es_query = ''
 
         for sigma_rule in parsed_sigma_rules:
-            # TODO Investigate how to handle .keyword
+            # TODO: Investigate how to handle .keyword
             # fields in Sigma.
             # https://github.com/google/timesketch/issues/1199#issuecomment-639475885
+            # TODO: move all the below to a sanatize_sigma_rule
             sigma_rule = sigma_rule.replace('.keyword:', ':')
+            sigma_rule = sigma_rule.replace('\\ ', ' ')
+            sigma_rule = sigma_rule.replace('\"', '"')
+            sigma_rule = sigma_rule.replace('\\:', ':')
             sigma_es_query = sigma_rule
 
         rule_return.update(
@@ -314,7 +318,14 @@ def get_sigma_rule_by_text(rule_text, sigma_config=None):
     sigma_es_query = ''
 
     for sigma_rule in parsed_sigma_rules:
+        # TODO: Investigate how to handle .keyword
+        # fields in Sigma.
+        # https://github.com/google/timesketch/issues/1199#issuecomment-639475885
+        # TODO: move all the below to a sanatize_sigma_rule
         sigma_rule = sigma_rule.replace('.keyword:', ':')
+        sigma_rule = sigma_rule.replace('\\ ', ' ')
+        sigma_rule = sigma_rule.replace('\"', '"')
+        sigma_rule = sigma_rule.replace('\\:', ':')
         sigma_es_query = sigma_rule
 
     rule_return.update(
