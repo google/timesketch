@@ -15,20 +15,21 @@ limitations under the License.
 -->
 <template>
   <div>
-    <b-dropdown aria-role="list">
-      <template #trigger="{ active }">
+    <ts-dropdown aria-role="list">
+      <template v-slot:dropdown-trigger-element>
         <b-button style="width:215.5px;" :label="label" :icon-right="active ? 'chevron-up' : 'chevron-down'" />
       </template>
-      <b-dropdown-item aria-role="menu-item" :focusable="false" custom paddingless>
-        <b-table :data="timelines" :columns="timelineColumns" :checked-rows.sync="selected" checkable> </b-table>
-      </b-dropdown-item>
-    </b-dropdown>
+      <b-table :data="timelines" :columns="timelineColumns" :checked-rows.sync="selected" checkable> </b-table>
+    </ts-dropdown>
   </div>
 </template>
 
 <script>
+import TsDropdown from '../Common/Dropdown'
+
 export default {
   props: [],
+  components: { TsDropdown },
   data() {
     return {
       selected: [],

@@ -99,8 +99,12 @@ export default {
     },
     loadIntelligence() {
       ApiClient.getSketchAttributes(this.sketch.id).then(response => {
-        this.meta.attributes.intelligence = response.data.intelligence
-        this.meta.attributes.intelligence_local = response.data.intelligence_local
+        if (!_.isEmpty(response.data.intelligence)) {
+          this.meta.attributes.intelligence = response.data.intelligence
+        }
+        if (!_.isEmpty(response.data.intelligence_local)) {
+          this.meta.attributes.intelligence_local = response.data.intelligence_local
+        }
       })
     },
   },
@@ -112,13 +116,13 @@ export default {
       return this.$store.state.meta
     },
     externalIntelligence() {
-      if (_.isEmpty(this.meta.attributes.intelligence.value)) {
+      if (this.meta.attributes.intelligence === undefined || _.isEmpty(this.meta.attributes.intelligence.value)) {
         return { data: {}, meta: {} }
       }
       return this.meta.attributes.intelligence.value
     },
     localIntelligence() {
-      if (_.isEmpty(this.meta.attributes.intelligence_local.value)) {
+      if (this.meta.attributes.intelligence_local === undefined || _.isEmpty(this.meta.attributes.intelligence_local.value)) {
         return { data: [] }
       }
       return this.meta.attributes.intelligence_local.value

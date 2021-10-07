@@ -31,6 +31,8 @@ import StoryContent from './views/StoryContent'
 import Attributes from './views/Attributes'
 import Intelligence from './views/Intelligence'
 import SavedSearches from './views/SavedSearches'
+import Sigma from './views/Sigma'
+import SigmaOverview from './views/SigmaOverview'
 
 Vue.use(VueRouter)
 
@@ -50,6 +52,19 @@ const routes = [
         path: '',
         name: 'Overview',
         component: Overview,
+      },
+      {
+        path: 'sigma',
+        component: Sigma,
+        props: true,
+        children: [
+          {
+            path: '',
+            name: 'SigmaOverview',
+            component: SigmaOverview,
+            props: true,
+          },
+        ],
       },
       {
         path: 'explore',
@@ -115,7 +130,7 @@ const routes = [
         path: 'intelligence',
         name: 'Intelligence',
         component: Intelligence,
-        props: true
+        props: true,
       },
       {
         path: 'savedsearches',
