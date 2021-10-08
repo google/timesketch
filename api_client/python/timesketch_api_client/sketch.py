@@ -1488,7 +1488,7 @@ class Sketch(resource.BaseResource):
         form_data = {
             'scenario_name': scenario_name
         }
-        
+
         resource_url = '{0:s}/sketches/{1:d}/scenarios/'.format(
             self.api.api_root, self.id)
         response = self.api.session.post(resource_url, json=form_data)
