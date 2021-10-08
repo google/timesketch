@@ -43,6 +43,9 @@ class SigmaPlugin(interface.BaseAnalyzer):
         Returns:
             int: number of events tagged.
         """
+        if not tag_list:
+            tag_list = []
+
         return_fields = []
         tagged_events_counter = 0
         events = self.event_stream(
