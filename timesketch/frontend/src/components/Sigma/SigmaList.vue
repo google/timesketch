@@ -34,6 +34,28 @@ limitations under the License.
       default-sort="title"
       key="props.row.id"
     >
+      <b-switch v-model="isComposed">Compose Sigma rule</b-switch>
+      <div v-if="isComposed">
+        <div class="container is-fluid">
+          <div class="card">
+            <div class="card-content"></div>
+            <textarea
+              id="textarea"
+              v-model="text"
+              placeholder="Enter your Sigma yaml File text..."
+              rows="30"
+              cols="80"
+            ></textarea>
+
+            <div class="control">
+              <button id="parseButton" v-on:click="parseSigma">Parse</button>
+            </div>
+            <template>
+              <pre>{{ JSON.stringify(parsed, null, 2) }}</pre>
+            </template>
+          </div>
+        </div>
+      </div>
       <b-table-column field="title" label="Name" v-slot="props" sortable searchable>
         <div @click="props.toggleDetails(props.row)" style="margin-top:5px;cursor:pointer;">
           {{ props.row.title }}
@@ -61,24 +83,6 @@ limitations under the License.
         <pre>{{ JSON.stringify(props['row'], null, 2) }}</pre>
       </template>
     </b-table>
-    <b-switch v-model="isComposed"> Compose Sigma rule {{ isComposed }} </b-switch>
-    <div v-if="isComposed">
-      <div class="container is-fluid">
-        <div class="card">
-          <div class="card-content"></div>
-          <textarea id="textarea" v-model="text" placeholder="Enter your Sigma yaml File text..." rows="30" cols="80">
-title: Suspicious Installation of Zenmap</textarea
-          >
-
-          <div class="control">
-            <button id="parseButton" v-on:click="parseSigma">Parse</button>
-          </div>
-          <template>
-            <pre>{{ JSON.stringify(parsed, null, 2) }}</pre>
-          </template>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -93,7 +97,7 @@ export default {
       sortColumn: '',
       perPage: 10,
       isComposed: false,
-      text: `title: Suspicious Installation of Zenmap2
+      text: `title: Suspicious Installation of Zenmap
 id: 5266a592-b793-11ea-b3de-0242ac130004
 description: Detects suspicious installation of Zenmap
 references:
