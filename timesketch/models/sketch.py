@@ -38,6 +38,7 @@ from timesketch.models.acl import AccessControlMixin
 from timesketch.models.annotations import LabelMixin
 from timesketch.models.annotations import CommentMixin
 from timesketch.models.annotations import StatusMixin
+from timesketch.models.annotations import GenericAttributeMixin
 from timesketch.lib.utils import random_color
 
 
@@ -835,7 +836,8 @@ class SearchHistory(LabelMixin, BaseModel):
         return node_dict
 
 
-class Scenario(LabelMixin, StatusMixin, CommentMixin, BaseModel):
+class Scenario(
+    LabelMixin, StatusMixin, CommentMixin, GenericAttributeMixin, BaseModel):
     """Implements the Scenario model.
     
     A Timesketch Scenario is setting the type of the sketch. A scenario has
@@ -848,15 +850,14 @@ class Scenario(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     display_name = Column(UnicodeText())    
     description = Column(UnicodeText())
     summary = Column(UnicodeText())
+    spec_json = Column(UnicodeText())
     sketch_id = Column(Integer, ForeignKey('sketch.id'))
     user_id = Column(Integer, ForeignKey('user.id'))
-    spec_json = Column(UnicodeText())
     investigations = relationship(
         'Investigation', backref='scenario', lazy='select')
 
     def __init__(
-        self, name, display_name, sketch, user, spec_json, description=None,
-        summary=None):
+        self, name, display_name, sketch, user, spec_json, description=None):
         """Initialize the Scenario object.
 
         Args:
@@ -866,7 +867,6 @@ class Scenario(LabelMixin, StatusMixin, CommentMixin, BaseModel):
             user (timesketch.models.user.User): A user
             spec_json (str): Scenario specification from YAML
             description (str): Description of the scenario
-            summary (str): Summary of the outcome of the scenario
         """
         super().__init__()
         self.name = name
@@ -875,7 +875,6 @@ class Scenario(LabelMixin, StatusMixin, CommentMixin, BaseModel):
         self.user = user
         self.spec_json = spec_json
         self.description = description
-        self.summary = summary
 
 
 class InvestigationTimeFrame(BaseModel):
@@ -962,52 +961,32 @@ class InvestigationConclusion(
         'Aggregation',
         secondary=investigationconclusion_aggregation_association_table)
 
-    def __init__(self, conclusion, user, investigation):
+    def __init__(self, conclusion, user, investigation, automated=False):
         """Initialize the InvestigationConclusion object.
 
         Args:
             conclusion (str): The conclusion of the investigation
             user (User): A user
             investigation (Investigation): Investigation for this conclusion
+            automated (bool): Indicate if conclusion was automated
         """
         super().__init__()
         self.conclusion = conclusion
         self.user = user
         self.investigation = investigation
+        self.automated = automated
 
-# Association table for the many-to-many relationship for an Investigation.
+
+# Association table for the many-to-many relationship for an timelines in an
+# investigation.
 investigation_timeline_association_table = Table(
     'investigation_timeline', BaseModel.metadata,
     Column('investigation_id', Integer, ForeignKey('investigation.id')),
     Column('timeline_id', Integer, ForeignKey('timeline.id'))
 )
 
-investigation_story_association_table = Table(
-    'investigation_story', BaseModel.metadata,
-    Column('investigation_id', Integer, ForeignKey('investigation.id')),
-    Column('story_id', Integer, ForeignKey('story.id'))
-)
-
-investigation_view_association_table = Table(
-    'investigation_view', BaseModel.metadata,
-    Column('investigation_id', Integer, ForeignKey('investigation.id')),
-    Column('view_id', Integer, ForeignKey('view.id'))
-)
-
-investigation_graph_association_table = Table(
-    'investigation_graph', BaseModel.metadata,
-    Column('investigation_id', Integer, ForeignKey('investigation.id')),
-    Column('graph_id', Integer, ForeignKey('graph.id'))
-)
-
-investigation_aggregation_association_table = Table(
-    'investigation_aggregation', BaseModel.metadata,
-    Column('investigation_id', Integer, ForeignKey('investigation.id')),
-    Column('aggregation_id', Integer, ForeignKey('aggregation.id'))
-)
-
-
-class Investigation(LabelMixin, StatusMixin, CommentMixin, BaseModel):
+class Investigation(
+    LabelMixin, StatusMixin, CommentMixin, GenericAttributeMixin, BaseModel):
     """Implements the Investigation model.
     
     An investigation is a collection of questions and answers/conclusions.
@@ -1018,10 +997,9 @@ class Investigation(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     name = Column(UnicodeText())
     display_name = Column(UnicodeText())    
     description = Column(UnicodeText())
+    spec_json = Column(UnicodeText())
     user_id = Column(Integer, ForeignKey('user.id'))
     scenario_id = Column(Integer, ForeignKey('scenario.id'))
-    spec_json = Column(UnicodeText())
-    parameters_json = Column(UnicodeText())
     timeframes = relationship(
         'InvestigationTimeFrame', backref='investigation', lazy='select')
     timelines = relationship(
@@ -1030,20 +1008,8 @@ class Investigation(LabelMixin, StatusMixin, CommentMixin, BaseModel):
         'InvestigativeQuestion', backref='investigation', lazy='select')
     conclusions = relationship(
         'InvestigationConclusion', backref='investigation', lazy='select')    
-    # Supportive resources for an investigation
-    stories = relationship(
-        'Story', secondary=investigation_story_association_table)
-    saved_searches = relationship(
-        'View', secondary=investigation_view_association_table)
-    saved_graphs = relationship(
-        'Graph', secondary=investigation_graph_association_table)
-    saved_aggregations = relationship(
-        'Aggregation',
-        secondary=investigation_aggregation_association_table)
 
-    def __init__(
-        self, name, display_name, user, spec_json, parameters_json=None,
-        description=None):
+    def __init__(self, name, display_name, user, spec_json, description=None):
         """Initialize the Investigation object.
 
         Args:
@@ -1051,8 +1017,7 @@ class Investigation(LabelMixin, StatusMixin, CommentMixin, BaseModel):
             display_name (str): The display name of the investigation
             user (User): A userinvestigationconclusion
             scenario (Scenario): The Scenario this investigation belongs to
-            spec_json (str): Investigation specification from YAML
-            parameters_json (str): JSON encoded parameters
+            spec_json (str): Investigation specification
             description (str): Description of the investigation
         """
         super().__init__()
@@ -1060,41 +1025,42 @@ class Investigation(LabelMixin, StatusMixin, CommentMixin, BaseModel):
         self.display_name = display_name
         self.user = user
         self.spec_json = spec_json
-        self.parameters_json = parameters_json
         self.description = description
 
  
  # Association tables for the many-to-many relationship for a Question.
 questionconclusion_story_association_table = Table(
-    'questionconclusion_story', BaseModel.metadata,
+    'investigativequestionconclusion_story', BaseModel.metadata,
     Column(
-        'questionconclusion_id', Integer, ForeignKey('questionconclusion.id')),
+        'investigativequestionconclusion_id',
+        Integer, ForeignKey('investigativequestionconclusion.id')),
     Column('story_id', Integer, ForeignKey('story.id'))
 )
 
 questionconclusion_view_association_table = Table(
-    'questionconclusion_view', BaseModel.metadata,
+    'investigativequestionconclusion_view', BaseModel.metadata,
     Column(
-        'questionconclusion_id', Integer, ForeignKey('questionconclusion.id')),
+        'investigativequestionconclusion_id', Integer, ForeignKey('investigativequestionconclusion.id')),
     Column('view_id', Integer, ForeignKey('view.id'))
 )
 
 questionconclusion_graph_association_table = Table(
-    'questionconclusion_graph', BaseModel.metadata,
+    'investigativequestionconclusion_graph', BaseModel.metadata,
     Column(
-        'questionconclusion_id', Integer, ForeignKey('questionconclusion.id')),
+        'investigativequestionconclusion_id', Integer, ForeignKey('investigativequestionconclusion.id')),
     Column('graph_id', Integer, ForeignKey('graph.id'))
 )
 
 questionconclusion_aggregation_association_table = Table(
-    'questionconclusion_aggregation', BaseModel.metadata,
+    'investigativequestionconclusion_aggregation', BaseModel.metadata,
     Column(
-        'questionconclusion_id', Integer, ForeignKey('questionconclusion.id')),
+        'investigativequestionconclusion_id', Integer, ForeignKey('investigativequestionconclusion.id')),
     Column('aggregation_id', Integer, ForeignKey('aggregation.id'))
 )
 
-class QuestionConclusion(LabelMixin, StatusMixin, CommentMixin, BaseModel):
-    """Implements the QuestionConclusion model.
+class InvestigativeQuestionConclusion(
+    LabelMixin, StatusMixin, CommentMixin, BaseModel):
+    """Implements the InvestigativeQuestionConclusion model.
 
     A conslusion is the result of a investigative question. It can be created
     both by a human as well as automated by the system.
@@ -1103,43 +1069,53 @@ class QuestionConclusion(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     resources such as saved searches, graphs, aggregations and stories.
     """
     conclusion = Column(UnicodeText())
-    # TODO: Keep this?
-    simple_answer = Column(UnicodeText())
     automated = Column(Boolean(), default=False)
     user_id = Column(Integer, ForeignKey('user.id'))
     investigativequestion_id = Column(
         Integer, ForeignKey('investigativequestion.id'))    
     stories = relationship(
-        'Story', secondary=questionconclusion_story_association_table)
+        'Story',
+        secondary=questionconclusion_story_association_table)
     saved_searches = relationship(
-        'View', secondary=questionconclusion_view_association_table)
+        'View',
+        secondary=questionconclusion_view_association_table)
     saved_graphs = relationship(
-        'Graph', secondary=questionconclusion_graph_association_table)
+        'Graph',
+        secondary=questionconclusion_graph_association_table)
     saved_aggregations = relationship(
         'Aggregation',
         secondary=questionconclusion_aggregation_association_table)
 
     def __init__(
-        self, conclusion, user, investigativequestion, from_simple=False,
-        from_analyzer=False):
+        self, conclusion, user, investigativequestion, automated=False):
         """Initialize the QuestionConclusion object.
 
         Args:
             conclusion (str): The conclusion of the question
             user (timesketch.models.user.User): A user
             investigativequestion (InvestigativeQuestion): A question
-            from_simple (bool): Indicate if conclusion was automated
-            from_analyzer (bool): Indicate if conclusion was automated
+            automated (bool): Indicate if conclusion was automated
         """
         super().__init__()
         self.conclusion = conclusion
         self.user = user
         self.investigativequestion = investigativequestion
-        self.from_simple = from_simple
-        self.from_analyzer = from_analyzer
+        self.automated = automated
 
 
-class InvestigativeQuestion(LabelMixin, StatusMixin, CommentMixin, BaseModel):
+# Association table for the many-to-many relationship for search templates for
+# a investigative question.
+investigativequestion_searchtemplate_association_table = Table(
+    'investigativequestion_searchtemplate', BaseModel.metadata,
+    Column(
+        'investigativequestion_id',
+        Integer,
+        ForeignKey('investigativequestion.id')),
+    Column('searchtemplate_id', Integer, ForeignKey('searchtemplate.id'))
+)
+
+class InvestigativeQuestion(
+    LabelMixin, StatusMixin, CommentMixin, GenericAttributeMixin, BaseModel):
     """Implements the InvestigativeQuestion model.
     
     An Investigative Question is the smallest component of an investigation.
@@ -1149,25 +1125,23 @@ class InvestigativeQuestion(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     display_name = Column(UnicodeText())
     description = Column(UnicodeText())
     user_id = Column(Integer, ForeignKey('user.id'))
-    investigation_id = Column(Integer, ForeignKey('investigation.id'))
     spec_json = Column(UnicodeText())
-    # JSON encoded dictionary with parameters/values. This will be used in e.g
-    # the data_finder as re_perameters.
-    parameters_json = Column(UnicodeText())
+    investigation_id = Column(Integer, ForeignKey('investigation.id'))
+    searchtemplates = relationship(
+        'SearchTemplate',
+        secondary=investigativequestion_searchtemplate_association_table)
     conclusions = relationship(
-        'QuestionConclusion', backref='investigativequestion', lazy='select')
+        'InvestigativeQuestionConclusion', backref='investigativequestion',
+        lazy='select')
 
-    def __init__(
-        self, name, display_name, user, spec_json, parameters_json=None,
-        description=None):
+    def __init__(self, name, display_name, user, spec_json, description=None):
         """Initialize the InvestigativeQuestion object.
 
         Args:
             name (str): The name of the question
             display_name (str): The display name of the question
             user (timesketch.models.user.User): A user
-            spec_json (str): Question specification from YAML
-            parameters_json (str): JSON encoded parameters
+            spec_json (str): Question specification
             description (str): Description of the question
         """
         super().__init__()
@@ -1175,5 +1149,4 @@ class InvestigativeQuestion(LabelMixin, StatusMixin, CommentMixin, BaseModel):
         self.display_name = display_name
         self.user = user
         self.spec_json = spec_json
-        self.parameters_json = parameters_json
         self.description = description

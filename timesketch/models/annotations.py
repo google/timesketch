@@ -102,6 +102,29 @@ class Status(BaseAnnotation):
         self.status = status
 
 
+class GenericAttribute(BaseAnnotation):
+    """Implements the attribute model."""
+    name = Column(UnicodeText())
+    value = Column(UnicodeText())
+    ontology = Column(UnicodeText())
+
+    def __init__(self, user, name, value, ontology):
+        """Initialize the Attribute object.
+
+        Args:
+            name (str): The name of the attribute.
+            value (str):  The value of the attribute
+            ontology (str): The ontology of the value, The values that can
+                be used are defined in timesketch/lib/ontology.py (ONTOLOGY).
+            user: A user (instance of timesketch.models.user.User)
+        """
+        super().__init__()
+        self.user = user
+        self.name = name
+        self.value = value
+        self.ontology = ontology
+
+
 class LabelMixin(object):
     """
     A MixIn for generating the necessary tables in the database and to make
@@ -292,3 +315,34 @@ class StatusMixin(object):
         if not self.status:
             self.status.append(self.Status(user=None, status='new'))
         return self.status[0]
+
+
+class GenericAttributeMixin(object):
+    """
+    A MixIn for generating the necessary tables in the database and to make
+    it accessible from the parent model object (the model object that uses this
+    MixIn, i.e. the object that the attribute is added to).
+    """
+
+    @declared_attr
+    def genericattribute(self):
+        """
+        Generates the status tables and adds the attribute to the parent model
+        object.
+
+        Returns:
+            A relationship with (timesketch.models.annotation.GenericAttribute)
+        """
+        class_name = '{0:s}GenericAttribute'.format(self.__name__)
+
+        self.GenericAttribute = type(
+            class_name, (
+                GenericAttribute,
+                BaseModel, ),
+            dict(
+                __tablename__='{0:s}_genericattribute'.format(self.__tablename__),
+                parent_id=Column(
+                    Integer,
+                    ForeignKey('{0:s}.id'.format(self.__tablename__))),
+                parent=relationship(self), ))
+        return relationship(self.GenericAttribute)

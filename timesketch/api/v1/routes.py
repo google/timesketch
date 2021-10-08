@@ -68,8 +68,8 @@ from .resources.graph import GraphResource
 from .resources.graph import GraphPluginListResource
 from .resources.graph import GraphCacheResource
 
+from .resources.scenarios import ScenarioTemplateListResource
 from .resources.scenarios import ScenarioListResource
-from .resources.scenarios import ScenarioSketchResource
 
 
 # Disable error for long line. Readability is more important than line
@@ -129,7 +129,7 @@ API_ROUTES = [
     (DataSourceResource, '/sketches/<int:sketch_id>/datasource/<int:datasource_id>/'),
     (DataFinderResource, '/sketches/<int:sketch_id>/data/find/'),
 
-    (ScenarioListResource, '/scenarios/'),    
-    (ScenarioSketchResource, '/sketches/<int:sketch_id>/scenarios/'),    
+    (ScenarioTemplateListResource, '/scenarios/'),    
+    (ScenarioListResource, '/sketches/<int:sketch_id>/scenarios/'),    
     
 ]

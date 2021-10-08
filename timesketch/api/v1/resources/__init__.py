@@ -247,7 +247,6 @@ class ResourceMixin(object):
         'display_name': fields.String,
         'description': fields.String,
         'spec_json': fields.String,
-        'paramters_json': fields.String,
         'user': fields.Nested(user_fields),
         'created_at': fields.DateTime('iso8601'),
         'updated_at': fields.DateTime('iso8601')

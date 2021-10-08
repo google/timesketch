@@ -52,13 +52,13 @@
 #
 #                       -- context/enrichment --
 #       analyzers           A list of analyzers that will be run on the
-#                           dataset enrich the dataset.
+#                           dataset.
 #
 #       graphs              A list of graph plugins that will assist the
 #                           analyst with answering the question.
 #
 #       search_templates    A list of search templates that will assist the
-#                           analyst to be able to answer the question.
+#                           analyst with answering the question.
 #
 #                       -- answers --
 #       answer_simple       If the answer can be simply derived from a search

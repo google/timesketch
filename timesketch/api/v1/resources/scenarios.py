@@ -38,7 +38,7 @@ from timesketch.models.sketch import InvestigativeQuestion
 logger = logging.getLogger('timesketch.scenario_api')
 
 
-class ScenarioListResource(resources.ResourceMixin, Resource):
+class ScenarioTemplateListResource(resources.ResourceMixin, Resource):
     """Resource for investigative scenarios."""
 
     @login_required
@@ -52,7 +52,7 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
         return jsonify(scenarios)
 
 
-class ScenarioSketchResource(resources.ResourceMixin, Resource):
+class ScenarioListResource(resources.ResourceMixin, Resource):
     """Resource for investigative scenarios."""
 
     @login_required
@@ -129,11 +129,37 @@ class ScenarioSketchResource(resources.ResourceMixin, Resource):
                     display_name=question_dict.get('display_name', ''),
                     description=question_dict.get('description', ''),
                     spec_json=json.dumps(question_dict),
-                    parameters_json=json.dumps({}),
                     user=current_user)
                 investigation.questions.append(question)
 
         db_session.add(scenario) 
         db_session.commit()        
+
+        return self.to_json(scenario)
+
+
+class ScenarioResource(resources.ResourceMixin, Resource):
+    """Resource for investigative scenarios."""
+
+    @login_required
+    def get(self, sketch_id, scenario_id):
+        """Handles GET request to the resource.
+        
+        Returns:
+            A list of JSON representations of the scenarios.
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        scenario = Scenario.query.get(scenario_id)
+
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID')
+        if not sketch.has_permission(current_user, 'write'):
+            abort(HTTP_STATUS_CODE_FORBIDDEN,
+                  'User does not have write access controls on sketch')
+
+        if not scenario.sketch.id == sketch.id:
+            abort(HTTP_STATUS_CODE_FORBIDDEN,
+                  'Scenario is not part of this sketch.')
 
         return self.to_json(scenario)
