@@ -15,7 +15,7 @@ nav:
       - Interactive notebook: learn/notebook.md
       - Create timeline from JSON or CSV: learn/create-timeline-from-json-csv.md
       - Use Sigma: learn/sigma.md
-  - Sysadmin:
+  - System Administrators:
       - Installation: sysadmin/install.md
       - Troubleshooting: sysadmin/troubleshooting.md
       - tsctl: sysadmin/tsctl.md
