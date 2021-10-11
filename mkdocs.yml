@@ -7,6 +7,7 @@ nav:
   - Getting started:
     - Installation: getting-started/install.md
     - Upload data: getting-started/upload-data.md
+    - Sizing: getting-started/sizing.md
   - Learn:
       - Basic concepts: learn/basic-concepts.md
       - Sketch overview: learn/sketch-overview.md
@@ -26,6 +27,7 @@ nav:
       - Upload data via API: developers/api-upload-data.md
     - Analyzers:
       - Create an analyzer: developers/analyzer-development.md
+    - Roadmap: developers/roadmap.md
   - Community:
     - Resources: community/resources.md
     - 2021 Summit: community/2021_timesketch_summit.md
