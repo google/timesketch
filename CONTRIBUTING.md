@@ -34,7 +34,7 @@ With the code review process we ensure that at least two eyes looked over the co
 
 #### Documenation review
 
-One exception from the code review policy outlined above is simple documenation updates and additions made by core project members (repo admins and maintainers). These can be merged without review.
+One exception from the code review policy outlined above is simple documenation updates and additions made by core project members (repo admins and maintainers with merge permissions). These can be merged without review.
 
 Note: Any change that affects the layout and structure of the site (timesketch.org) has to go through the review process and any update from external contributers has to be reviewed as well.
 
