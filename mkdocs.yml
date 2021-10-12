@@ -7,17 +7,19 @@ nav:
   - Getting started:
     - Installation: getting-started/install.md
     - Upload data: getting-started/upload-data.md
+    - Sizing: getting-started/sizing.md
   - Learn:
       - Basic concepts: learn/basic-concepts.md
       - Sketch overview: learn/sketch-overview.md
       - Search query guide: learn/search-query-guide.md
       - Interactive notebook: learn/notebook.md
-      - Howto:
-        - Create timeline from JSON or CSV: learn/create-timeline-from-json-csv.md
-        - Use Sigma: learn/sigma.md
-      - Deployment:
-        - Upgrade: learn/upgrade.md
-        - Server administration: learn/server-admin.md
+      - Create timeline from JSON or CSV: learn/create-timeline-from-json-csv.md
+      - Use Sigma: learn/sigma.md
+  - System Administrators:
+      - Installation: sysadmin/install.md
+      - Troubleshooting: sysadmin/troubleshooting.md
+      - tsctl: sysadmin/tsctl.md
+      - Upgrade: sysadmin/upgrade.md
   - Developers:
     - Getting started: developers/developer-guide.md
     - API client:
@@ -25,6 +27,7 @@ nav:
       - Upload data via API: developers/api-upload-data.md
     - Analyzers:
       - Create an analyzer: developers/analyzer-development.md
+    - Roadmap: developers/roadmap.md
   - Community:
     - Resources: community/resources.md
     - 2021 Summit: community/2021_timesketch_summit.md
