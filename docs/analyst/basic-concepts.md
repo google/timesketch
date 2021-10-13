@@ -12,13 +12,13 @@ Use the credentials provided by your Timesketch admin to log on to Timesketch or
 There is a dedicated document to walk you through [Sketches](sketch-overview.md)
 ## Adding Timelines
 
-- [Create timeline from JSON/JSONL/CSV file](/learn/create-timeline-from-json-csv/)
-- [Basic uploading of data](/getting-started/upload-data/)
-- [Upload data via the importer/API](/developers/api-upload-data/)
+- [Create timeline from JSON/JSONL/CSV file](/analyst/create-timeline-from-json-csv/)
+- [Basic uploading of data](/analyst/upload-data/)
+- [Upload data via the importer/API](/developer/api-upload-data/)
 
 ## Adding event
 
-This feature is currently not implemented in the Web UI. But you can add events using the [API client](../developers/api-client.md).
+This feature is currently not implemented in the Web UI. But you can add events using the [API client](/developer/api-client.md).
 
 ## Add a comment
 
