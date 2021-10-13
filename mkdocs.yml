@@ -5,33 +5,50 @@ extra_css:
 nav:
   - Home: index.md
   - Getting started:
-    - Installation: getting-started/install.md
-    - Upload data: getting-started/upload-data.md
-    - Sizing: getting-started/sizing.md
-  - Learn:
-      - Basic concepts: learn/basic-concepts.md
-      - Sketch overview: learn/sketch-overview.md
-      - Search query guide: learn/search-query-guide.md
-      - Interactive notebook: learn/notebook.md
-      - Create timeline from JSON or CSV: learn/create-timeline-from-json-csv.md
-      - Use Sigma: learn/sigma.md
-  - System Administrators:
+    - Installation: sysadmin/install.md
+    - Upload data: analyst/upload-data.md
+    - Sizing: sysadmin/sizing.md
+  - Analyst:
+      - Basic concepts: analyst/basic-concepts.md
+      - Sketch overview: analyst/sketch-overview.md
+      - Search query guide: analyst/search-query-guide.md
+      - Interactive notebook: analyst/notebook.md
+      - Create timeline from JSON or CSV: analyst/create-timeline-from-json-csv.md
+      - Use Sigma: analyst/sigma.md
+  - System Administrator:
       - Installation: sysadmin/install.md
       - Troubleshooting: sysadmin/troubleshooting.md
       - tsctl: sysadmin/tsctl.md
       - Upgrade: sysadmin/upgrade.md
-  - Developers:
-    - Getting started: developers/developer-guide.md
+  - Developer:
+    - Getting started: developer/developer-guide.md
     - API client:
-      - Introduction: developers/api-client.md
-      - Upload data via API: developers/api-upload-data.md
+      - Introduction: developer/api-client.md
+      - Upload data via API: developer/api-upload-data.md
     - Analyzers:
-      - Create an analyzer: developers/analyzer-development.md
-    - Roadmap: developers/roadmap.md
+      - Create an analyzer: developer/analyzer-development.md
+    - Roadmap: developer/roadmap.md
   - Community:
     - Resources: community/resources.md
     - 2021 Summit: community/2021_timesketch_summit.md
-    
+
+plugins:
+    - redirects:
+        redirect_maps:
+            'getting-started/install.md': 'new.md'
+            'developers/api-client.md' : developer/api-client.md
+            'developers/developer-guide.md' : 'developer/developer-guide.md'
+            'developers/api-upload-data.md' : 'developer/api-upload-data.md'
+            'developers/roadmap.md' : 'developer/roadmap.md'
+            'learn/basic-concepts.md' : 'learn/basic-concepts.md'
+            'learn/sketch-overview.md' : 'learn/sketch-overview.md'
+            'learn/search-query-guide.md' : 'learn/search-query-guide.md'
+            'learn/notebook.md' : 'learn/notebook.md'
+            'learn/create-timeline-from-json-csv.md' : 'learn/create-timeline-from-json-csv.md'
+            'learn/sigma.md' : 'learn/sigma.md'
+            'getting-started/sizing.md' : 'sysadmin/sizing.md'
+            'getting-started/install.md' : 'sysadmin/install.md'
+            'getting-started/upload-data.md' : 'analyst/upload-data.md'
 theme:
   name: material
   logo: assets/images/timesketch-color.svg 
