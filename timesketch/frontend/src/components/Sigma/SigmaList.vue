@@ -140,7 +140,6 @@ level: high
       ApiClient.getSigmaByText(this.text)
         .then(response => {
           let SigmaRule = response.data.objects[0]
-          console.log(SigmaRule)
           this.parsed = SigmaRule
         })
         .catch(e => {})
