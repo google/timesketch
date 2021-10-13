@@ -8,7 +8,7 @@ nav:
     - Installation: sysadmin/install.md
     - Upload data: analyst/upload-data.md
     - Sizing: sysadmin/sizing.md
-  - Learn:
+  - Analyst:
       - Basic concepts: analyst/basic-concepts.md
       - Sketch overview: analyst/sketch-overview.md
       - Search query guide: analyst/search-query-guide.md
