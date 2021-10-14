@@ -14,6 +14,7 @@ nav:
       - Interactive notebook: user-guide/notebook.md
       - Create timeline from JSON or CSV: user-guide/create-timeline-from-json-csv.md
       - Use Sigma: user-guide/sigma.md
+      - Intelligence: user-guide/intelligence.md
   - Admin Guide:
       - Installation: admin-guide/install.md
       - Sizing: admin-guide/sizing.md
