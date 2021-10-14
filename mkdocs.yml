@@ -2,56 +2,51 @@ site_name: timesketch
 use_directory_urls: true
 extra_css:
   - assets/css/extra.css
+markdown_extensions:
+  - attr_list
 nav:
   - Home: index.md
-  - Getting started:
-    - Installation: sysadmin/install.md
-    - Upload data: analyst/upload-data.md
-    - Sizing: sysadmin/sizing.md
-  - Analyst:
-      - Basic concepts: analyst/basic-concepts.md
-      - Sketch overview: analyst/sketch-overview.md
-      - Search query guide: analyst/search-query-guide.md
-      - Interactive notebook: analyst/notebook.md
-      - Create timeline from JSON or CSV: analyst/create-timeline-from-json-csv.md
-      - Use Sigma: analyst/sigma.md
-  - System Administrator:
-      - Installation: sysadmin/install.md
-      - Troubleshooting: sysadmin/troubleshooting.md
-      - tsctl: sysadmin/tsctl.md
-      - Upgrade: sysadmin/upgrade.md
-  - Developer:
-    - Getting started: developer/developer-guide.md
-    - API client:
-      - Introduction: developer/api-client.md
-      - Upload data via API: developer/api-upload-data.md
-    - Analyzers:
-      - Create an analyzer: developer/analyzer-development.md
-    - Roadmap: developer/roadmap.md
+  - User Guide:
+      - Upload data: user-guide/upload-data.md
+      - Basic concepts: user-guide/basic-concepts.md
+      - Sketch overview: user-guide/sketch-overview.md
+      - Search query guide: user-guide/search-query-guide.md
+      - Interactive notebook: user-guide/notebook.md
+      - Create timeline from JSON or CSV: user-guide/create-timeline-from-json-csv.md
+      - Use Sigma: user-guide/sigma.md
+  - Admin Guide:
+      - Installation: admin-guide/install.md
+      - Sizing: admin-guide/sizing.md
+      - Troubleshooting: admin-guide/troubleshooting.md
+      - tsctl: admin-guide/tsctl.md
+      - Upgrade: admin-guide/upgrade.md
+  - Developers:
+      - Getting started: developers/getting-started.md
+      - API client:
+          - Introduction: developers/api-client.md
+          - Upload data via API: developers/api-upload-data.md
+      - Analyzers:
+          - Create an analyzer: developers/analyzer-development.md
   - Community:
-    - Resources: community/resources.md
-    - 2021 Summit: community/2021_timesketch_summit.md
-
+      - Resources: community/resources.md
+      - Roadmap: community/roadmap.md
+      - Events:
+          - 2021 Summit: community/2021-timesketch-summit.md
 plugins:
-    - redirects:
-        redirect_maps:
-            'getting-started/install.md': 'new.md'
-            'developers/api-client.md' : developer/api-client.md
-            'developers/developer-guide.md' : 'developer/developer-guide.md'
-            'developers/api-upload-data.md' : 'developer/api-upload-data.md'
-            'developers/roadmap.md' : 'developer/roadmap.md'
-            'learn/basic-concepts.md' : 'learn/basic-concepts.md'
-            'learn/sketch-overview.md' : 'learn/sketch-overview.md'
-            'learn/search-query-guide.md' : 'learn/search-query-guide.md'
-            'learn/notebook.md' : 'learn/notebook.md'
-            'learn/create-timeline-from-json-csv.md' : 'learn/create-timeline-from-json-csv.md'
-            'learn/sigma.md' : 'learn/sigma.md'
-            'getting-started/sizing.md' : 'sysadmin/sizing.md'
-            'getting-started/install.md' : 'sysadmin/install.md'
-            'getting-started/upload-data.md' : 'analyst/upload-data.md'
+  - redirects:
+      redirect_maps:
+        "learn/basic-concepts.md": "user-guide/basic-concepts.md"
+        "learn/sketch-overview.md": "user-guide/sketch-overview.md"
+        "learn/search-query-guide.md": "user-guide/search-query-guide.md"
+        "learn/notebook.md": "user-guide/notebook.md"
+        "learn/create-timeline-from-json-csv.md": "user-guide/create-timeline-from-json-csv.md"
+        "learn/sigma.md": "user-guide/sigma.md"
+        "getting-started/install.md": "admin-guide/install.md"
+        "getting-started/sizing.md": "admin-guide/sizing.md"
+        "getting-started/upload-data.md": "user-guide/upload-data.md"
 theme:
   name: material
-  logo: assets/images/timesketch-color.svg 
+  logo: assets/images/timesketch-color.svg
   language: en
   features:
     - navigation.sections

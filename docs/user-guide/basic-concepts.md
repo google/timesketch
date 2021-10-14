@@ -10,15 +10,16 @@ Use the credentials provided by your Timesketch admin to log on to Timesketch or
 ## Sketches
 
 There is a dedicated document to walk you through [Sketches](sketch-overview.md)
+
 ## Adding Timelines
 
-- [Create timeline from JSON/JSONL/CSV file](/analyst/create-timeline-from-json-csv/)
-- [Basic uploading of data](/analyst/upload-data/)
-- [Upload data via the importer/API](/developer/api-upload-data/)
+- [Create timeline from JSON/JSONL/CSV file](/user-guide/create-timeline-from-json-csv/)
+- [Basic uploading of data](/user-guide/upload-data/)
+- [Upload data via the importer/API](/developers/api-upload-data/)
 
 ## Adding event
 
-This feature is currently not implemented in the Web UI. But you can add events using the [API client](/developer/api-client.md).
+This feature is currently not implemented in the Web UI. But you can add events using the [API client](/developers/api-client.md).
 
 ## Add a comment
 
@@ -32,13 +33,14 @@ Click the little star symbol in the Event List to star an event. Stared events c
 
 Views are saved search queries. Those can either be created by the User, by API or via Analyzers.
 
-To create a view from the Web Ui, click the *Save as view* button on the top right of the Search fields in the Explore Tab of a sketch.
+To create a view from the Web Ui, click the _Save as view_ button on the top right of the Search fields in the Explore Tab of a sketch.
 
 ## Insights / Aggegations
 
-The *Insights* functionality in a sketch gives the opportunity to run aggregations on the events in a sketch.
+The _Insights_ functionality in a sketch gives the opportunity to run aggregations on the events in a sketch.
 
 There are currently two aggregators available:
+
 - Terms aggregation
 - Filtered terms aggregation
 
@@ -58,7 +60,7 @@ The next value to provide is the field you want to aggregate on, for example the
 
 The last value is the number of results to return.
 
-Once the aggregation is completed, you can save the aggregation by clicking the *save* button on the top right  corner of the aggregation result, for example to add it to a story.
+Once the aggregation is completed, you can save the aggregation by clicking the _save_ button on the top right corner of the aggregation result, for example to add it to a story.
 
 ### Filtered terms aggregation
 
@@ -66,7 +68,7 @@ The filtered terms aggregation works the same way the terms aggregation works wi
 
 ## Customize columns
 
-In the Explore view of a sketch the message is the only column visible. To add more columns, click the *customize* columns* button on the top right of the events list.
+In the Explore view of a sketch the message is the only column visible. To add more columns, click the _customize_ columns\* button on the top right of the events list.
 
 The list of available columns is pre-populated from the columns in your timeline.
 
@@ -100,20 +102,20 @@ Using the advances search, a JSON can be passed to Timesketch
 
 ```json
 {
- "query": {
-   "bool": {
-     "must": [
-       {
-         "query_string": {
-           "query": "*"
-         }
-       }
-     ]
-   }
- },
- "sort": {
-   "datetime": "asc"
- }
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "query_string": {
+            "query": "*"
+          }
+        }
+      ]
+    }
+  },
+  "sort": {
+    "datetime": "asc"
+  }
 }
 ```
 
@@ -131,7 +133,7 @@ The code for Analyzers is located at
 
 ### Analyzer description
 
-*Note:* Not all analyzers are explained in this documentation. If you have questions to a particular analyzer, please have a look at the code or file an [Issue on Github](https://github.com/google/timesketch/issues/new).
+_Note:_ Not all analyzers are explained in this documentation. If you have questions to a particular analyzer, please have a look at the code or file an [Issue on Github](https://github.com/google/timesketch/issues/new).
 
 #### Browser Search Analyzer
 
@@ -160,7 +162,7 @@ The signs of execution could lie in multiple events, from different sources, but
 
 #### Domain Analyzer
 
-The Domain Analyzer extracts domain and Top Level Domain (TLD) info from events that have a field with either ```url``` or ```domain```.
+The Domain Analyzer extracts domain and Top Level Domain (TLD) info from events that have a field with either `url` or `domain`.
 
 It will also add information about:
 
@@ -186,26 +188,25 @@ The results of this analyzer will be a story, that details the findings.
 
 This Analyzer checks urls found in a sketch against the [Google Safebrowsing API](https://developers.google.com/safe-browsing/v4/reference/rest).
 
-To use this Analyzer, the following parameter must be set in the ````timesketch.conf````:
+To use this Analyzer, the following parameter must be set in the `timesketch.conf`:
 
-````config
+```config
 SAFEBROWSING_API_KEY = ''
-````
+```
 
 This analyzer can be customized by creating an optional file containing URL wildcards to be allow listed called
 
-````config
+```config
 safebrowsing_allowlist.yaml
-````
+```
 
 There are also two additional config parameters, please refer to the [Safe Browsing API reference](https://developers.google.com/safe-browsing/v4/reference/rest).
 
- 
 Platforms to be looked at in Safe Browsing (PlatformType).
-````SAFEBROWSING_PLATFORMS = ['ANY_PLATFORM']````
+`SAFEBROWSING_PLATFORMS = ['ANY_PLATFORM']`
 
 Types to be looked at in Safe Browsing (ThreatType).
-````SAFEBROWSING_THREATTYPES = ['MALWARE']````
+`SAFEBROWSING_THREATTYPES = ['MALWARE']`
 
 #### Sigma Analyzer
 
@@ -219,10 +220,9 @@ There is a dedicated document to walk you through the process of using the [Sigm
 
 This is a Index analyzer for [Yeti](https://yeti-platform.github.io/) threat intel indicators.
 
-To use this Analyzer, the following parameter must be set with corresponding values in the ````timesketch.conf````:
+To use this Analyzer, the following parameter must be set with corresponding values in the `timesketch.conf`:
 
-````config
+```config
 YETI_API_ROOT = ''
 YETI_API_KEY = ''
-````
-
+```
