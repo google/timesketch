@@ -24,6 +24,19 @@ module.exports = {
       ignored: /node_modules/,
     }
   },
+  devServer: {
+    // see https://cli.vuejs.org/config/#devserver for more options
+    proxy: {
+      "^/api": {
+        autoRewrite: true,
+        target: "http://localhost:5000/"
+      },
+      "^/login|logout": {
+        autoRewrite: true,
+        target: "http://localhost:5000/"
+      },
+    }
+  },
   pages: {
     index: {
       // entry for the page
