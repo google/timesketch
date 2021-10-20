@@ -3,19 +3,15 @@
 Timesketch is built on multiple sketches, where one sketch is usually one case.
 Every sketch can consist of multiple timelines with multiple views.
 
-## Login
-
-Use the credentials provided by your Timesketch admin to log on to Timesketch or use OAuth to authenticate.
-
 ## Sketches
 
 There is a dedicated document to walk you through [Sketches](sketch-overview.md)
 
 ## Adding Timelines
 
-- [Create timeline from JSON/JSONL/CSV file](/user-guide/create-timeline-from-json-csv/)
-- [Basic uploading of data](/user-guide/upload-data/)
-- [Upload data via the importer/API](/developers/api-upload-data/)
+- [Create timeline from JSON/JSONL/CSV file](/guides/user/import-from-json-csv/)
+- [Uploading data](/guides/user/upload-data/)
+- [Upload data via the API](/developers/api-upload-data/)
 
 ## Adding event
 
