@@ -29,13 +29,13 @@ module.exports = {
     proxy: {
       "^/api": {
         autoRewrite: true,
-        target: "http://localhost:5000/"
+        target: "http://localhost:5000/",
       },
       "^/login|logout": {
         autoRewrite: true,
-        target: "http://localhost:5000/"
-      }
-    }
+        target: "http://localhost:5000/",
+      },
+    },
   },
   pages: {
     index: {
