@@ -34,7 +34,7 @@ module.exports = {
       "^/login|logout": {
         autoRewrite: true,
         target: "http://localhost:5000/"
-      },
+      }
     }
   },
   pages: {
