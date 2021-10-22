@@ -43,6 +43,7 @@ https://$TIMESKETCH/sketch/1/sigma/details?ruleId=5266a592-b793-11ea-b3de-0242ac
 
 In this detail view all key and values of that rule that has been parsed by Timesketch are exposed.
 
+
 ### Install rules
 
 Timesketch deliberately does not provide a set of Sigma rules, as those would add complexity to maintain.
