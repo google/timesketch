@@ -74,7 +74,6 @@ timesketch/data/sigma/rules/windows
 The linux rules are stored in
 
 ```shell
-timesketch/data/linux
 timesketch/data/sigma/rules/linux
 ```
 
