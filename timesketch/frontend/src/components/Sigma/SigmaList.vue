@@ -51,6 +51,7 @@ limitations under the License.
               <button id="parseButton" v-on:click="parseSigma">Parse</button>
             </div>
             <template>
+              <b>Clean ES Query: {{ parsed['es_query'] }}</b>
               <pre>{{ JSON.stringify(parsed, null, 2) }}</pre>
             </template>
           </div>
@@ -80,6 +81,8 @@ limitations under the License.
       </b-table-column>
 
       <template #detail="props">
+        <b>{{ props['row']['es_query'] }}</b>
+
         <pre>{{ JSON.stringify(props['row'], null, 2) }}</pre>
       </template>
     </b-table>
