@@ -65,7 +65,8 @@ def get_sigma_config_file(config_file=None):
         sigma_config_file = config_file_read.read()
 
     try:
-        sigma_config = sigma_configuration.SigmaConfiguration(sigma_config_file)
+        sigma_config = sigma_configuration.SigmaConfiguration(
+            sigma_config_file)
     except SigmaConfigParseError:
         logger.error('Parsing error with {0:s}'.format(sigma_config_file))
         raise
@@ -182,7 +183,8 @@ def get_sigma_rule(filepath, sigma_config=None):
             'Problem reading the Sigma config', exc_info=True)
         raise ValueError('Problem reading the Sigma config') from e
 
-    sigma_backend = sigma_es.ElasticsearchQuerystringBackend(sigma_conf_obj, {})
+    sigma_backend = sigma_es.ElasticsearchQuerystringBackend(
+        sigma_conf_obj, {})
 
     try:
         sigma_rules_paths = get_sigma_rules_path()
@@ -242,9 +244,9 @@ def get_sigma_rule(filepath, sigma_config=None):
             sigma_es_query = sigma_rule
 
         rule_return.update(
-            {'es_query':sigma_es_query})
+            {'es_query': sigma_es_query})
         rule_return.update(
-            {'file_name':os.path.basename(filepath)})
+            {'file_name': os.path.basename(filepath)})
 
         # in case multiple folders are in the config, need to remove them
         if sigma_rules_paths:
@@ -254,9 +256,10 @@ def get_sigma_rule(filepath, sigma_config=None):
             file_relpath = 'N/A'
 
         rule_return.update(
-            {'file_relpath':file_relpath})
+            {'file_relpath': file_relpath})
 
         return rule_return
+
 
 def get_sigma_rule_by_text(rule_text, sigma_config=None):
     """Returns a JSON represenation for a rule
@@ -286,7 +289,8 @@ def get_sigma_rule_by_text(rule_text, sigma_config=None):
             'Problem reading the Sigma config', exc_info=True)
         raise ValueError('Problem reading the Sigma config') from e
 
-    sigma_backend = sigma_es.ElasticsearchQuerystringBackend(sigma_conf_obj, {})
+    sigma_backend = sigma_es.ElasticsearchQuerystringBackend(
+        sigma_conf_obj, {})
 
     rule_return = {}
     # TODO check if input validation is needed / useful.
@@ -328,13 +332,14 @@ def get_sigma_rule_by_text(rule_text, sigma_config=None):
         sigma_rule = sigma_rule.replace('\"', '"')
         sigma_rule = sigma_rule.replace('\\:', ':')
         sigma_rule = sigma_rule.replace('\\-', '-')
+        logger.error(sigma_rule)
         sigma_es_query = sigma_rule
 
     rule_return.update(
-        {'es_query':sigma_es_query})
+        {'es_query': sigma_es_query})
     rule_return.update(
-        {'file_name':'N/A'})
+        {'file_name': 'N/A'})
     rule_return.update(
-        {'file_relpath':'N/A'})
-
+        {'file_relpath': 'N/A'})
+    logger.error(rule_return)
     return rule_return
