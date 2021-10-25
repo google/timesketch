@@ -81,6 +81,7 @@ powershell_xor_commandline.yml, good, no sample data,2021-05-04,
 win_powershell_web_request.yml, bad, multiple rules in one file,2021-05-04,
 windows/process_access/sysmon_,bad,no test data available,2021-05-04,
 windows/process_creation/,bad,no test data available,2021-05-04,
+windows/process_creation/win_office_shell.yml,good,479eb1c4644de672a5b221c6ad19b5b1cbd2875b45af76a291e9ff594d651b68,2021-10-25
 windows/raw_access_thread/,bad,no test data available,2021-05-04,
 windows/registry_event/,bad,no test data available,2021-05-04,
 windows/wmi_event/,bad,no test data available,2021-05-04,
