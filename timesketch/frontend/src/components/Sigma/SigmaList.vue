@@ -100,29 +100,7 @@ export default {
       sortColumn: '',
       perPage: 10,
       isComposed: false,
-      text: `title: Suspicious Installation of Zenmap
-id: 5266a592-b793-11ea-b3de-0242ac130004
-description: Detects suspicious installation of Zenmap
-references:
-    - https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html
-author: Alexander Jaeger
-date: 2020/06/26
-modified: 2020/06/26
-tags:
-    - attack.discovery
-    - attack.t1046
-logsource:
-    product: linux
-    service: shell
-detection:
-    keywords:
-        # Generic suspicious commands
-        - '*apt-get install zmap*'
-    condition: keywords
-falsepositives:
-    - Unknown
-level: high
-      `,
+      text: `Place your Sigma rule here and press parse`,
       parsed: '',
     }
   },
@@ -139,14 +117,14 @@ level: high
   },
   methods: {
     parseSigma: function(event) {
-      document.getElementById('parseButton').disabled = true
+      parseButton.disabled = true
       ApiClient.getSigmaByText(this.text)
         .then(response => {
           let SigmaRule = response.data.objects[0]
           this.parsed = SigmaRule
         })
         .catch(e => {})
-      document.getElementById('parseButton').disabled = false
+      parseButton.disabled = false
     },
     submitForm: function() {
       console.log('aaa')
