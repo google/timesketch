@@ -232,16 +232,8 @@ def get_sigma_rule(filepath, sigma_config=None):
         sigma_es_query = ''
 
         for sigma_rule in parsed_sigma_rules:
-            # TODO: Investigate how to handle .keyword
-            # fields in Sigma.
-            # https://github.com/google/timesketch/issues/1199#issuecomment-639475885
-            # TODO: move all the below to a sanatize_sigma_rule
-            sigma_rule = sigma_rule.replace('.keyword:', ':')
-            sigma_rule = sigma_rule.replace('\\ ', ' ')
-            sigma_rule = sigma_rule.replace('\"', '"')
-            sigma_rule = sigma_rule.replace('\\:', ':')
-            sigma_rule = sigma_rule.replace('\\-', '-')
-            sigma_es_query = sigma_rule
+
+            sigma_es_query = _sanatize_sigma_rule(sigma_rule)
 
         rule_return.update(
             {'es_query': sigma_es_query})
@@ -259,6 +251,27 @@ def get_sigma_rule(filepath, sigma_config=None):
             {'file_relpath': file_relpath})
 
         return rule_return
+
+
+def _sanatize_sigma_rule(sigma_rule_query: str) -> str:
+    """Returns a sanatized sigma rule
+    Args:
+        sigma_rule_query: path to the sigma rule to be parsed
+    Returns:
+        String of a cleaned string
+    """
+    # TODO: Investigate how to handle .keyword
+    # fields in Sigma.
+    # https://github.com/google/timesketch/issues/1199#issuecomment-639475885
+    # TODO: move all the below to a sanatize_sigma_rule
+    sigma_rule_query = sigma_rule_query.replace('.keyword:', ':')
+    sigma_rule_query = sigma_rule_query.replace('\\ ', ' ')
+    sigma_rule_query = sigma_rule_query.replace('\"', '"')
+    sigma_rule_query = sigma_rule_query.replace('\\:', ':')
+    sigma_rule_query = sigma_rule_query.replace('\\-', '-')
+    sigma_rule_query = sigma_rule_query.replace('*\\\\', ' *')
+
+    return sigma_rule_query
 
 
 def get_sigma_rule_by_text(rule_text, sigma_config=None):
@@ -323,17 +336,7 @@ def get_sigma_rule_by_text(rule_text, sigma_config=None):
     sigma_es_query = ''
 
     for sigma_rule in parsed_sigma_rules:
-        # TODO: Investigate how to handle .keyword
-        # fields in Sigma.
-        # https://github.com/google/timesketch/issues/1199#issuecomment-639475885
-        # TODO: move all the below to a sanatize_sigma_rule
-        sigma_rule = sigma_rule.replace('.keyword:', ':')
-        sigma_rule = sigma_rule.replace('\\ ', ' ')
-        sigma_rule = sigma_rule.replace('\"', '"')
-        sigma_rule = sigma_rule.replace('\\:', ':')
-        sigma_rule = sigma_rule.replace('\\-', '-')
-        logger.error(sigma_rule)
-        sigma_es_query = sigma_rule
+        sigma_es_query = _sanatize_sigma_rule(sigma_rule)
 
     rule_return.update(
         {'es_query': sigma_es_query})
