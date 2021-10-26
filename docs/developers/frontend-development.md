@@ -40,7 +40,7 @@ Follow the steps in the previous section to get dependencies installed.
 
 ### Start the VueJS development server
 
-You need to shells.
+You need two shells:
 
 1. Start the main webserver (for serving the API etc) in the first shell:
 ```bash
