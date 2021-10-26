@@ -117,17 +117,12 @@ export default {
   },
   methods: {
     parseSigma: function(event) {
-      parseButton.disabled = true
       ApiClient.getSigmaByText(this.text)
         .then(response => {
           let SigmaRule = response.data.objects[0]
           this.parsed = SigmaRule
         })
         .catch(e => {})
-      parseButton.disabled = false
-    },
-    submitForm: function() {
-      console.log('aaa')
     },
   },
 }

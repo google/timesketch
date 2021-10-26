@@ -263,7 +263,6 @@ def _sanatize_sigma_rule(sigma_rule_query: str) -> str:
     # TODO: Investigate how to handle .keyword
     # fields in Sigma.
     # https://github.com/google/timesketch/issues/1199#issuecomment-639475885
-    # TODO: move all the below to a sanatize_sigma_rule
     sigma_rule_query = sigma_rule_query.replace('.keyword:', ':')
     sigma_rule_query = sigma_rule_query.replace('\\ ', ' ')
     sigma_rule_query = sigma_rule_query.replace('\"', '"')
