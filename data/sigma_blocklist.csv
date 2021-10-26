@@ -83,6 +83,12 @@ windows/process_access/sysmon_,bad,no test data available,2021-05-04,
 windows/process_creation/,bad,no test data available,2021-05-04,
 windows/process_creation/win_office_shell.yml,good,479eb1c4644de672a5b221c6ad19b5b1cbd2875b45af76a291e9ff594d651b68,2021-10-25
 rules/windows/process_creation/win_shadow_copies_deletion.yml, good,62a8fc79a775abce91c4cb87c7f3cdc4cbdf85d0f0083c72703052710d645119,2021-10-25 
+rules/windows/registry_event/sysmon_asep_reg_keys_modification.yml, bad,to long query needs to be tuned 0628997695cf9655c523896f1703472cee08b66eb5ae6bd385433b73105f4ca9,2021-10-26,17f878b8-9968-4578-b814-c4217fc5768c
+rules/windows/process_creation/win_non_interactive_powershell.yml,good,good 0628997695cf9655c523896f1703472cee08b66eb5ae6bd385433b73105f4ca9,2021-10-26,f4bbd493-b796-416e-bbf2-121235348529
+rules/windows/registry_event/sysmon_susp_download_run_key.yml,bad,no evtx sample found,2021-10-26,9c5037d1-c568-49b3-88c7-9846a5bdc2be
+rules/windows/file_event/sysmon_creation_system_file.yml,bad,no evtx sample only sylog,2021-10-26,d5866ddf-ce8f-4aea-b28e-d96485a20d3d
+rules/windows/process_creation/win_susp_net_execution.yml,good,501113c57563009a37feb467c0828c153a1f7097f16c4038636f3651a266189e,2021-10-26,183e7ea8-ac4b-4c23-9aec-b3dac4e401ac
+rules/windows/process_creation/win_service_stop.yml,good,501113c57563009a37feb467c0828c153a1f7097f16c4038636f3651a266189e,2021-10-26,eb87818d-db5d-49cc-a987-d5da331fbd90
 windows/raw_access_thread/,bad,no test data available,2021-05-04,
 windows/registry_event/,bad,no test data available,2021-05-04,
 windows/wmi_event/,bad,no test data available,2021-05-04,
