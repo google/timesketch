@@ -89,6 +89,12 @@ rules/windows/registry_event/sysmon_susp_download_run_key.yml,bad,no evtx sample
 rules/windows/file_event/sysmon_creation_system_file.yml,bad,no evtx sample only sylog,2021-10-26,d5866ddf-ce8f-4aea-b28e-d96485a20d3d
 rules/windows/process_creation/win_susp_net_execution.yml,good,501113c57563009a37feb467c0828c153a1f7097f16c4038636f3651a266189e,2021-10-26,183e7ea8-ac4b-4c23-9aec-b3dac4e401ac
 rules/windows/process_creation/win_service_stop.yml,good,501113c57563009a37feb467c0828c153a1f7097f16c4038636f3651a266189e,2021-10-26,eb87818d-db5d-49cc-a987-d5da331fbd90
+rules/windows/process_creation/win_proc_wrong_parent.yml,bad,no test data for evtx d01bb6498156f94164d67cc854b64fb12077886f2c7f46f503a1c2dbdfd57169,2021-10-26,96036718-71cc-4027-a538-d1587e0006a7
+rules/windows/process_creation/win_system_exe_anomaly.yml,bad,rule to noisy 9ac87754adb88a8ac14969bb4adaed043f783d7264d0846365ca0cf4b7f80ffb,2021-10-26,e4a6b256-3e47-40fc-89d2-7a477edd6915
+rules/windows/process_creation/process_creation_powershell_web_request.yml,bad, very noisy 3402ef40e1e748a6d1e62cc80d8319a132683a326803ed812e4e386f04455a12 and 4df37056407ca0353e2357399ec8f2bd7583b6d10fc5d1d4f6744b9415a1ce2f,2021-10-26,9fc51a3c-81b3-4fa7-b35f-7c02cf10fd2d
+rules/windows/powershell/powershell_script/powershell_web_request.yml,bad, very noisy 3402ef40e1e748a6d1e62cc80d8319a132683a326803ed812e4e386f04455a12 and 4df37056407ca0353e2357399ec8f2bd7583b6d10fc5d1d4f6744b9415a1ce2f,2021-10-26,9fc51a3c-81b3-4fa7-b35f-7c02cf10fd2d
+rules/windows/process_creation/win_malware_script_dropper.yml,bad,cannot parse 3402ef40e1e748a6d1e62cc80d8319a132683a326803ed812e4e386f04455a12,2021-10-26,cea72823-df4d-4567-950c-0b579eaf0846
+rules/windows/network_connection/sysmon_notepad_network_connection.yml,bad,no hits in e70f141f138d899c80ee9d94792e4e4c6b6d5e2e8cb59f9c3d3a8dde68db5cd4,2021-10-26,e81528db-fc02-45e8-8e98-4e84aba1f10b
 windows/raw_access_thread/,bad,no test data available,2021-05-04,
 windows/registry_event/,bad,no test data available,2021-05-04,
 windows/wmi_event/,bad,no test data available,2021-05-04,
