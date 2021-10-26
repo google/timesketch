@@ -16,7 +16,7 @@ limitations under the License.
 
 module.exports = {
   lintOnSave: false,
-  publicPath: '/dist/',
+  publicPath: process.env.NODE_ENV === 'development' ? '/' : '/dist/',
   configureWebpack: config => {
     config.watchOptions = {
       aggregateTimeout: 500,
@@ -25,9 +25,14 @@ module.exports = {
     }
   },
   devServer: {
-    // see https://cli.vuejs.org/config/#devserver for more options
+    // See https://cli.vuejs.org/config/#devserver for more options
+    port: 5001,
     proxy: {
       '^/api': {
+        autoRewrite: true,
+        target: 'http://localhost:5000/',
+      },
+      '^/dist': {
         autoRewrite: true,
         target: 'http://localhost:5000/',
       },

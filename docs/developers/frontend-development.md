@@ -27,26 +27,33 @@ This will create `node_modules/` folder from `package.json` in the frontend dire
 ! yarn install
 ```
 
-## (beta) Frontend development (using the VueJS server)
+## Frontend development
 
-If you want to do some heavy UX hacking, you might want to use the VueJS frontend server, as changes will be picked up
-as soon as a `.vue` file is saved, without having to rebuild the whole frontend or even refresh your browser.
+When developing the frontend you use the VueJS frontend server. Changes will be picked up automatically
+as soon as a `.vue` file is saved without having to rebuild the frontend or even refresh your browser.
 
 Follow the steps in the previous section to get dependencies installed.
 
 ### Tweak config files
 
 * In your `timesketch` docker container, edit `/etc/timesketch/config.yaml` and set `WTF_CSRF_ENABLED = False`.
-* In your cloned repo, edit the `timesketch/timesketch/frontend/vue.config.js` and set `publicPath` to `'/'`.
 
 ### Start the VueJS development server
 
-In your running `timesketch` container, run:
+You need two shells:
 
+1. Start the main webserver (for serving the API etc) in the first shell:
 ```bash
-$ sudo docker-compose exec timesketch yarn run --cwd=/usr/local/src/timesketch/timesketch/frontend serve
+$ CONTAINER_ID="$(docker container list -f name=timesketch-dev -q)"
+$ docker exec -it $CONTAINER_ID gunicorn --reload -b 0.0.0.0:5000 --log-file - --timeout 600 -c /usr/local/src/timesketch/data/gunicorn_config.py timesketch.wsgi:application 
 ```
 
-This will spawn a listener on port `8080`. Point your browser to `http://localhost:8080/login`, login with your
+2. Start the development webserver in the second shell:
+```bash
+$ CONTAINER_ID="$(docker container list -f name=timesketch-dev -q)"
+$ docker-compose exec timesketch yarn run --cwd=/usr/local/src/timesketch/timesketch/frontend serve
+```
+
+This will spawn a listener on port `5001`. Point your browser to `http://localhost:5001/login`, login with your
 dev credentials, and you should be redirected to the main Timesketch page. All code changes in `.vue` files will
 be instantly picked up.
