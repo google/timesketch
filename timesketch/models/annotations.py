@@ -112,11 +112,11 @@ class GenericAttribute(BaseAnnotation):
         """Initialize the Attribute object.
 
         Args:
+            user: A user (instance of timesketch.models.user.User)
             name (str): The name of the attribute.
             value (str):  The value of the attribute
-            ontology (str): The ontology of the value, The values that can
-                be used are defined in timesketch/lib/ontology.py (ONTOLOGY).
-            user: A user (instance of timesketch.models.user.User)
+            ontology (str): The ontology (type) of the value, The values that 
+                can be used are defined in timesketch/lib/ontology.py.
         """
         super().__init__()
         self.user = user

@@ -76,6 +76,9 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
     @login_required
     def post(self, sketch_id):
         """Handles POST request to the resource.
+
+        This resource creates a new scenario for a sketch based on a template.
+        Templates are defined in data/scenarios.yaml.
         
         Returns:
             A JSON representation of the scenario.

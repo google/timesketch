@@ -1103,17 +1103,6 @@ class InvestigativeQuestionConclusion(
         self.automated = automated
 
 
-# Association table for the many-to-many relationship for search templates for
-# a investigative question.
-investigativequestion_searchtemplate_association_table = Table(
-    'investigativequestion_searchtemplate', BaseModel.metadata,
-    Column(
-        'investigativequestion_id',
-        Integer,
-        ForeignKey('investigativequestion.id')),
-    Column('searchtemplate_id', Integer, ForeignKey('searchtemplate.id'))
-)
-
 class InvestigativeQuestion(
     LabelMixin, StatusMixin, CommentMixin, GenericAttributeMixin, BaseModel):
     """Implements the InvestigativeQuestion model.
@@ -1127,9 +1116,6 @@ class InvestigativeQuestion(
     user_id = Column(Integer, ForeignKey('user.id'))
     spec_json = Column(UnicodeText())
     investigation_id = Column(Integer, ForeignKey('investigation.id'))
-    searchtemplates = relationship(
-        'SearchTemplate',
-        secondary=investigativequestion_searchtemplate_association_table)
     conclusions = relationship(
         'InvestigativeQuestionConclusion', backref='investigativequestion',
         lazy='select')
