@@ -419,11 +419,11 @@ class SigmaListResourceTest(BaseTest):
                     ]
                 },
             'es_query':
-                '(data_type:("shell\\:zsh\\:history" OR '\
-                '"bash\\:history\\:command" OR '\
-                '"apt\\:history\\:line" OR '\
-                '"selinux\\:line") AND '\
-                '"*apt\\-get\\ install\\ zmap*")',
+                '(data_type:("shell:zsh:history" OR '\
+                '"bash:history:command" OR '\
+                '"apt:history:line" OR '\
+                '"selinux:line") AND '\
+                '"*apt-get install zmap*")',
             'falsepositives': ['Unknown'],
             'file_name': 'lnx_susp_zenmap.yml',
             'file_relpath': 'lnx_susp_zenmap.yml',
@@ -501,7 +501,7 @@ class SigmaByTextResourceTest(BaseTest):
                 'falsepositives': ['Unknown'],
                 'level': 'high',
                 'es_query':
-                    '(data_type:("shell\\:zsh\\:history" OR "bash\\:history\\:command" OR "apt\\:history\\:line" OR "selinux\\:line") AND "*apt\\-get\\ install\\ foobar*")',# pylint: disable=line-too-long
+                    '(data_type:("shell:zsh:history" OR "bash:history:command" OR "apt:history:line" OR "selinux:line") AND "*apt-get install foobar*")',# pylint: disable=line-too-long
                 'file_name': 'N/A',
                 'file_relpath': 'N/A'
             }
