@@ -27,7 +27,7 @@ This will show a table with all Sigma rules installed on a system. You can searc
 - File Name
 - Tag
 
-So if you want to search for Zenmap related rules, you can search for ```zenm``` in ```Title, File Name``` and it will show you the pre installed rule.
+So if you want to search for zmap related rules, you can search for ```zenm``` in ```Title, File Name``` and it will show you the pre installed rule.
 
 #### ES Query
 

@@ -383,13 +383,13 @@ class SigmaResourceTest(BaseTest):
     resource_url = '/api/v1/sigma/rule/'
     expected_response = {
         'objects': {
-            'description': 'Detects suspicious installation of Zenmap',
+            'description': 'Detects suspicious installation of zmap',
             'id': '5266a592-b793-11ea-b3de-0242ac130004',
             'level': 'high',
             'logsource': {
                 'product': 'linux', 'service': 'shell'
                 },
-            'title': 'Suspicious Installation of Zenmap',
+            'title': 'Suspicious Installation of zmap',
         }
     }
 
@@ -411,7 +411,7 @@ class SigmaListResourceTest(BaseTest):
         'objects':[{
             'author': 'Alexander Jaeger',
             'date': '2020/06/26',
-            'description': 'Detects suspicious installation of Zenmap',
+            'description': 'Detects suspicious installation of zmap',
             'detection': {
                 'condition': 'keywords',
                 'keywords': [
@@ -425,8 +425,8 @@ class SigmaListResourceTest(BaseTest):
                 '"selinux:line") AND '\
                 '"*apt-get install zmap*")',
             'falsepositives': ['Unknown'],
-            'file_name': 'lnx_susp_zenmap.yml',
-            'file_relpath': 'lnx_susp_zenmap.yml',
+            'file_name': 'lnx_susp_zmap.yml',
+            'file_relpath': 'lnx_susp_zmap.yml',
             'id': '5266a592-b793-11ea-b3de-0242ac130004',
             'level': 'high',
             'logsource': {
@@ -438,7 +438,7 @@ class SigmaListResourceTest(BaseTest):
             'references': [
                 'https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html'
             ],
-            'title': 'Suspicious Installation of Zenmap'
+            'title': 'Suspicious Installation of zmap'
         }]}
     def test_get_sigma_rule_list(self):
         self.login()
