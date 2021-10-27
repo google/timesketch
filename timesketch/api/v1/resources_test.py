@@ -383,13 +383,13 @@ class SigmaResourceTest(BaseTest):
     resource_url = '/api/v1/sigma/rule/'
     expected_response = {
         'objects': {
-            'description': 'Detects suspicious installation of zmap',
+            'description': 'Detects suspicious installation of ZMap',
             'id': '5266a592-b793-11ea-b3de-0242ac130004',
             'level': 'high',
             'logsource': {
                 'product': 'linux', 'service': 'shell'
                 },
-            'title': 'Suspicious Installation of zmap',
+            'title': 'Suspicious Installation of ZMap',
         }
     }
 
@@ -411,11 +411,11 @@ class SigmaListResourceTest(BaseTest):
         'objects':[{
             'author': 'Alexander Jaeger',
             'date': '2020/06/26',
-            'description': 'Detects suspicious installation of zmap',
+            'description': 'Detects suspicious installation of ZMap',
             'detection': {
                 'condition': 'keywords',
                 'keywords': [
-                    '*apt-get install zmap*'
+                    '*apt-get install ZMap*'
                     ]
                 },
             'es_query':
@@ -438,7 +438,7 @@ class SigmaListResourceTest(BaseTest):
             'references': [
                 'https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html'
             ],
-            'title': 'Suspicious Installation of zmap'
+            'title': 'Suspicious Installation of ZMap'
         }]}
     def test_get_sigma_rule_list(self):
         self.login()
