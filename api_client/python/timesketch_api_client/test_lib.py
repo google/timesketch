@@ -234,7 +234,7 @@ def mock_response(*args, **kwargs):
             {
                 'author': 'Alexander Jaeger',
                 'date': '2020/06/26',
-                'description': 'Detects suspicious installation of zmap',
+                'description': 'Detects suspicious installation of ZMap',
                 'detection': {
                     'condition': 'keywords',
                     'keywords': ['*apt-get install zmap*']
@@ -268,7 +268,7 @@ def mock_response(*args, **kwargs):
                 'es_query': '("*apt\\-get\\ install\\ foo*")',
                 'modified': '2020/06/26',
                 'references': ['httpx://foobar.com'],
-                'title': 'Suspicious Installation of zmap',
+                'title': 'Suspicious Installation of ZMap',
                 'file_name': 'lnx_susp_foobar',
                 'file_relpath' : '/windows/foobar/'
                 }
@@ -281,9 +281,9 @@ def mock_response(*args, **kwargs):
         },
         'objects':[
             {
-            'title': 'Suspicious Installation of zmap',
+            'title': 'Suspicious Installation of ZMap',
             'id': '5266a592-b793-11ea-b3de-0242ac130004',
-            'description': 'Detects suspicious installation of zmap',
+            'description': 'Detects suspicious installation of ZMap',
             'references': ['httpx://foobar.com'],
             'author': 'Alexander Jaeger',
             'date': '2020/06/26',
