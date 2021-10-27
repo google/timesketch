@@ -415,7 +415,7 @@ class SigmaListResourceTest(BaseTest):
             'detection': {
                 'condition': 'keywords',
                 'keywords': [
-                    '*apt-get install ZMap*'
+                    '*apt-get install zmap*'
                     ]
                 },
             'es_query':
