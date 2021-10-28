@@ -1,6 +1,6 @@
 # Getting started
 
-The supported enfironment for Timesketch development is Docker.
+The supported environment for Timesketch development is Docker.
 
 Note: Exclamation mark `!` denotes commands that should run in the docker container shell, dollar sign `$` denotes commands to run in your local shell.
 
