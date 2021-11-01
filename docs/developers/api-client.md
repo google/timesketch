@@ -498,12 +498,78 @@ The output can be:
 + A pandas DataFrame if the `as_pandas=True` is set
 + A python dict (default behavior)
 
-### Other Options
+
+## Add data
+
+#### Manually add events to the sketch
+
+Fill in your event data Put in your message, date and timestamp description
+
+
+```python
+
+message = "foobar"
+date = "2020-08-06T12:48:06.994188Z"
+timestamp_desc = "Test_description"
+
+#attributes: A dict of extra attributes to add to the event.  
+attributes = {"a": "alpha", "o": "omega", "g": "gamma"}
+
+#tags: A list of strings to include as tags.
+tags = ["not", "important"]
+
+sketch.add_event(message, date, timestamp_desc, attributes, tags)
+
+```
+
+### Add Tags to events
+
+To add tags to multiple events:
+
+```python
+# first search for the events that you want to search for
+events = sketch.explore('foobarsearchterm')
+events['objects']
+for event in events['objects']:
+ print(event.get('_id'))
+ events2 = [{
+               '_id': event.get('_id'),
+               '_index': event.get('_index'),
+               '_type': 'generic_event'
+               }]
+ tags = ['foobartag']
+ sketch.tag_events(events2, tags)
+```
+
+Of if you want to tag a signle event:
+
+```python
+# Or if you want to do single ones:
+events2 = [{
+               '_id': 'g-abcdErfededed',
+               '_index': 'asd23r23dk19b398abe405cbf33f',
+               '_type': 'generic_event'
+               }]
+tags = ['foobartag']
+sketch.tag_events(events2, tags)
+```
+
+Both will give you something like:
+
+```python
+ 
+{'events_processed_by_api': 1,
+ 'number_of_events_passed_to_api': 1,
+ 'number_of_events_with_added_tags': 1,
+ 'tags_applied': 1,
+ 'total_number_of_events_sent_by_client': 1}
+```
+
+## Other Options
 
 The sketch object can be used to do several other actions that are not documented in this first document, such as:
 
 + Create/list/retrieve stories
-+ Manually add events to the sketch
 + Add timelines to the sketch
 + Modify the ACL of the sketch
 + Archive the sketch (via the `sketch.archive` function)
