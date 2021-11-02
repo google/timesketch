@@ -93,6 +93,16 @@ In a new shell, run the following:
 $ docker-compose exec timesketch celery -A timesketch.lib.tasks worker --loglevel info
 ```
 
+### Restarting
+
+To restart the webserver and celery workers, stop the execution. Depending on your system `ctrl+c` will do it.
+Then start them both as outlined before with:
+
+```bash
+$ docker-compose exec timesketch gunicorn --reload -b 0.0.0.0:5000 --log-file - --timeout 120 timesketch.wsgi:application
+$ docker-compose exec timesketch celery -A timesketch.lib.tasks worker --loglevel info
+```
+
 ## API development
 
 Exposing new functionality via the API starts at `/timesketch/api/v1/routes.py`. In that file the different routes / endpoints are defined that can be used.
