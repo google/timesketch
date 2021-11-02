@@ -512,7 +512,7 @@ message = "foobar"
 date = "2020-08-06T12:48:06.994188Z"
 timestamp_desc = "Test_description"
 
-#attributes: A dict of extra attributes to add to the event.  
+# Attributes: A dict of extra attributes to add to the event.  
 attributes = {"a": "alpha", "o": "omega", "g": "gamma"}
 
 #tags: A list of strings to include as tags.
