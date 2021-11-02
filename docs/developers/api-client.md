@@ -515,7 +515,7 @@ timestamp_desc = "Test_description"
 # Attributes: A dict of extra attributes to add to the event.  
 attributes = {"a": "alpha", "o": "omega", "g": "gamma"}
 
-#tags: A list of strings to include as tags.
+# Tags: A list of strings to include as tags.
 tags = ["not", "important"]
 
 sketch.add_event(message, date, timestamp_desc, attributes, tags)
