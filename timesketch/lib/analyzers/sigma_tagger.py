@@ -43,6 +43,8 @@ class SigmaPlugin(interface.BaseAnalyzer):
         Returns:
             int: number of events tagged.
         """
+        if not tag_list:
+            tag_list = []
         return_fields = []
         tagged_events_counter = 0
         events = self.event_stream(
@@ -52,13 +54,16 @@ class SigmaPlugin(interface.BaseAnalyzer):
             ts_sigma_rules.append(rule_name)
             event.add_attributes({'ts_sigma_rule': list(set(ts_sigma_rules))})
             ts_ttp = event.source.get('ts_ttp', [])
+            special_tags = []
             for tag in tag_list:
                 # Special handling for sigma tags that TS considers TTPS
                 # https://car.mitre.org and https://attack.mitre.org
                 if tag.startswith(('attack.', 'car.')):
                     ts_ttp.append(tag)
-                    tag_list.remove(tag)
-            event.add_tags(tag_list)
+                    special_tags.append(tag)
+            # ad the remaining tags as plain tags
+            tags_to_add = list(set(tag_list) - set(special_tags))
+            event.add_tags(tags_to_add)
             if len(ts_ttp) > 0:
                 event.add_attributes({'ts_ttp': list(set(ts_ttp))})
             event.commit()
@@ -143,7 +148,6 @@ class SigmaPlugin(interface.BaseAnalyzer):
             'And an overview of all the discovered search terms:')
         story.add_view(view)
 
-
     @staticmethod
     def get_kwargs():
         """Returns an array of all rules of Timesketch.
@@ -155,6 +159,7 @@ class SigmaPlugin(interface.BaseAnalyzer):
             {'rule': rule} for rule in ts_sigma_lib.get_all_sigma_rules()
         ]
         return sigma_rules
+
 
 class RulesSigmaPlugin(SigmaPlugin):
     """Sigma plugin to run rules."""

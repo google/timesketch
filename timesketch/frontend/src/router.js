@@ -34,6 +34,7 @@ import SavedSearches from './views/SavedSearches'
 import Sigma from './views/Sigma'
 import SigmaOverview from './views/SigmaOverview'
 
+
 Vue.use(VueRouter)
 
 const routes = [

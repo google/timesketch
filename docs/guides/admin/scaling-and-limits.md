@@ -4,9 +4,9 @@ Timesketch is designed to scale.
 
 The minimum system requirements are:
 
-* Machine with Ubuntu 20.04 installed.
-* At least 8GB RAM, but more the better.
-* Optional: Domain name registered and configure for the machine if you want to setup SSL for the webserver.
+- Machine with Ubuntu 20.04 installed.
+- At least 8GB RAM, but more the better.
+- Optional: Domain name registered and configure for the machine if you want to setup SSL for the webserver.
 
 These are the limitations:
 
