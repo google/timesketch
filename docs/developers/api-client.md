@@ -503,7 +503,7 @@ The output can be:
 
 #### Manually add events to the sketch
 
-Fill in your event data Put in your message, date and timestamp description
+Fill in your event data, you need at least these fields: message, date and timestamp description
 
 
 ```python
