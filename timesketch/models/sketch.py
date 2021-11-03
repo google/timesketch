@@ -877,72 +877,71 @@ class Scenario(
         self.description = description
 
 
-class InvestigationTimeFrame(BaseModel):
-    """Implements the InvestigationTimeFrame model.
+class FacetTimeFrame(BaseModel):
+    """Implements the FacetTimeFrame model.
     
-    A timeframe is used in an investigation to set scope. This information
+    A timeframe is used in a facet to set scope. This information
     is used when automatically generatae queries and other helper functions.
     """
     start_time = Column(UnicodeText())
     end_time = Column(UnicodeText())
     description = Column(UnicodeText())
-    investigation_id = Column(Integer, ForeignKey('investigation.id'))
+    facet_id = Column(Integer, ForeignKey('facet.id'))
 
-    def __init__(self, start_time, end_time, investigation, description=None):
+    def __init__(self, start_time, end_time, facet, description=None):
         """Initialize the InvestigationTimeFrame object.
 
         Args:
             start_time (str): Start time in ISO format (UTC)
             end_time (str): End time in ISO format (UTC)
-            investigation (Investigation): Investigation for this time frame
+            facet (Facet): Facet for this time frame
             description (str): Description of the timeframe (optional)
         """
         super().__init__()
         self.start_time = start_time
         self.end_time = end_time
-        self.investigation = investigation
+        self.facet = facet
         self.description = description
 
 
- # Association tables for the many-to-many relationship for a conclusion.
-investigationconclusion_story_association_table = Table(
-    'investigationconclusion_story', BaseModel.metadata,
+# Association tables for the many-to-many relationship for a conclusion.
+facetconclusion_story_association_table = Table(
+    'facetconclusion_story', BaseModel.metadata,
     Column(
-        'investigationconclusion_id', Integer,
-        ForeignKey('investigationconclusion.id')),
+        'facetconclusion_id', Integer,
+        ForeignKey('facetconclusion.id')),
     Column('story_id', Integer, ForeignKey('story.id'))
 )
 
-investigationconclusion_view_association_table = Table(
-    'investigationconclusion_view', BaseModel.metadata,
+facetconclusion_view_association_table = Table(
+    'facetconclusion_view', BaseModel.metadata,
     Column(
-        'investigationconclusion_id', Integer,
-        ForeignKey('investigationconclusion.id')),
+        'facetconclusion_id', Integer,
+        ForeignKey('facetconclusion.id')),
     Column('view_id', Integer, ForeignKey('view.id'))
 )
 
-investigationconclusion_graph_association_table = Table(
-    'investigationconclusion_graph', BaseModel.metadata,
+facetconclusion_graph_association_table = Table(
+    'facetconclusion_graph', BaseModel.metadata,
     Column(
-        'investigationconclusion_id', Integer,
-        ForeignKey('investigationconclusion.id')),
+        'facetconclusion_id', Integer,
+        ForeignKey('facetconclusion.id')),
     Column('graph_id', Integer, ForeignKey('graph.id'))
 )
 
-investigationconclusion_aggregation_association_table = Table(
-    'investigationconclusion_aggregation', BaseModel.metadata,
+facetconclusion_aggregation_association_table = Table(
+    'facetconclusion_aggregation', BaseModel.metadata,
     Column(
-        'investigationconclusion_id', Integer,
-        ForeignKey('investigationconclusion.id')),
+        'facetconclusion_id', Integer,
+        ForeignKey('facetconclusion.id')),
     Column('aggregation_id', Integer, ForeignKey('aggregation.id'))
 )
 
-class InvestigationConclusion(
-    LabelMixin, StatusMixin, CommentMixin, BaseModel):
-    """Implements the InvestigationConclusion model.
+class FacetConclusion(LabelMixin, StatusMixin, CommentMixin, BaseModel):
+    """Implements the FacetConclusion model.
     
-    A conslusion is the result of an investigation. It can be created both by
-    a human as well as automated by the system.
+    A conslusion is the result of an investigation (facet). It can be created
+    both by a human as well as automated by the system.
 
     Together with a conclusion there can be evidence and pointers to supportive
     resources such as saved searches, graphs, aggregations and stories.
@@ -952,46 +951,46 @@ class InvestigationConclusion(
     user_id = Column(Integer, ForeignKey('user.id'))
     investigation_id = Column(Integer, ForeignKey('investigation.id'))
     stories = relationship(
-        'Story', secondary=investigationconclusion_story_association_table)
+        'Story', secondary=facetconclusion_story_association_table)
     saved_searches = relationship(
-        'View', secondary=investigationconclusion_view_association_table)
+        'View', secondary=facetconclusion_view_association_table)
     saved_graphs = relationship(
-        'Graph', secondary=investigationconclusion_graph_association_table)
+        'Graph', secondary=facetconclusion_graph_association_table)
     saved_aggregations = relationship(
         'Aggregation',
-        secondary=investigationconclusion_aggregation_association_table)
+        secondary=facetconclusion_aggregation_association_table)
 
-    def __init__(self, conclusion, user, investigation, automated=False):
+    def __init__(self, conclusion, user, facet, automated=False):
         """Initialize the InvestigationConclusion object.
 
         Args:
             conclusion (str): The conclusion of the investigation
             user (User): A user
-            investigation (Investigation): Investigation for this conclusion
+            facet (Facet): Facet for this conclusion
             automated (bool): Indicate if conclusion was automated
         """
         super().__init__()
         self.conclusion = conclusion
         self.user = user
-        self.investigation = investigation
+        self.investigation = facet
         self.automated = automated
 
 
 # Association table for the many-to-many relationship for an timelines in an
 # investigation.
-investigation_timeline_association_table = Table(
-    'investigation_timeline', BaseModel.metadata,
-    Column('investigation_id', Integer, ForeignKey('investigation.id')),
+facet_timeline_association_table = Table(
+    'facet_timeline', BaseModel.metadata,
+    Column('facet_id', Integer, ForeignKey('facet.id')),
     Column('timeline_id', Integer, ForeignKey('timeline.id'))
 )
 
-class Investigation(
+class Facet(
     LabelMixin, StatusMixin, CommentMixin, GenericAttributeMixin, BaseModel):
-    """Implements the Investigation model.
+    """Implements the Facet model.
     
-    An investigation is a collection of questions and answers/conclusions.
+    A facet is a collection of questions and answers/conclusions.
     In order to be able to help the user as well as aid in automation it is
-    possible to set the scope for the investigation. The scope consist of
+    possible to set the scope for the facet. The scope consist of
     timeframes of interest, timelines and supplied parameters (key/value).
     """
     name = Column(UnicodeText())
@@ -1001,16 +1000,16 @@ class Investigation(
     user_id = Column(Integer, ForeignKey('user.id'))
     scenario_id = Column(Integer, ForeignKey('scenario.id'))
     timeframes = relationship(
-        'InvestigationTimeFrame', backref='investigation', lazy='select')
+        'FacetTimeFrame', backref='facet', lazy='select')
     timelines = relationship(
-        'Timeline', secondary=investigation_timeline_association_table)
+        'Timeline', secondary=facet_timeline_association_table)
     questions = relationship(
-        'InvestigativeQuestion', backref='investigation', lazy='select')
+        'InvestigativeQuestion', backref='facet', lazy='select')
     conclusions = relationship(
-        'InvestigationConclusion', backref='investigation', lazy='select')    
+        'FacetConclusion', backref='facet', lazy='select')    
 
     def __init__(self, name, display_name, user, spec_json, description=None):
-        """Initialize the Investigation object.
+        """Initialize the Facet object.
 
         Args:
             name (str): The name of the investigation
@@ -1115,7 +1114,7 @@ class InvestigativeQuestion(
     description = Column(UnicodeText())
     user_id = Column(Integer, ForeignKey('user.id'))
     spec_json = Column(UnicodeText())
-    investigation_id = Column(Integer, ForeignKey('investigation.id'))
+    facet_id = Column(Integer, ForeignKey('facet.id'))
     conclusions = relationship(
         'InvestigativeQuestionConclusion', backref='investigativequestion',
         lazy='select')
