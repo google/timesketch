@@ -15,13 +15,13 @@
 #                           require further manual analysis, etc.
 #
 # ------------------------------------------------------------------------
-test_scenario:
+compromise_assessment:
+  display_name: Compromise Assessment
+  description: Maecenas tristique sapien lorem, et vehicula ipsum vestibulum
+  facets:
+    - attacker_maintain_access
+    - interference_with_protective_measures
+
+exfil:
   display_name: Lorem Ipsum scenario
   description: Lorem ipsum dolor sit amet
-
-test_scenario2:
-  display_name: Lorem Ipsum scenario
-  description: Maecenas tristique sapien lorem, et vehicula ipsum vestibulum
-  investigations:
-    - test_investigation
-    - another_investigation

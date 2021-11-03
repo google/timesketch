@@ -31,7 +31,7 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.models import db_session
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Scenario
-from timesketch.models.sketch import Investigation
+from timesketch.models.sketch import Facet
 from timesketch.models.sketch import InvestigativeQuestion
 
 
@@ -96,7 +96,7 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
             form = request.data
 
         scenarios = load_yaml_config('SCENARIOS_PATH')
-        investigations = load_yaml_config('INVESTIGATIONS_PATH')
+        facets = load_yaml_config('FACETS_PATH')
         questions = load_yaml_config('QUESTIONS_PATH')
 
         scenario_name = form.get('scenario_name')
@@ -115,25 +115,25 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
             sketch=sketch,
             user=current_user)
 
-        for investigation_name in scenario_dict.get('investigations', []):
-            investigation_dict = investigations.get(investigation_name)
-            investigation = Investigation(
-                name=investigation_name,
-                display_name=investigation_dict.get('display_name', ''),
-                description=investigation_dict.get('description', ''),
-                spec_json=json.dumps(investigation_dict),
+        for facet_name in scenario_dict.get('facets', []):
+            facet_dict = facets.get(facet_name)
+            facet = Facet(
+                name=facet_name,
+                display_name=facet_dict.get('display_name', ''),
+                description=facet_dict.get('description', ''),
+                spec_json=json.dumps(facet_dict),
                 user=current_user)
-            scenario.investigations.append(investigation)
+            scenario.facets.append(facet)
 
-            for question_name in investigation_dict.get('questions', []):
+            for question_name in facet_dict.get('questions', []):
                 question_dict = questions.get(question_name)
                 question = InvestigativeQuestion(
-                    name=investigation_name,
+                    name=question_name,
                     display_name=question_dict.get('display_name', ''),
                     description=question_dict.get('description', ''),
                     spec_json=json.dumps(question_dict),
                     user=current_user)
-                investigation.questions.append(question)
+                facet.questions.append(question)
 
         db_session.add(scenario) 
         db_session.commit()        

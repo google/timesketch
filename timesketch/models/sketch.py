@@ -853,8 +853,8 @@ class Scenario(
     spec_json = Column(UnicodeText())
     sketch_id = Column(Integer, ForeignKey('sketch.id'))
     user_id = Column(Integer, ForeignKey('user.id'))
-    investigations = relationship(
-        'Investigation', backref='scenario', lazy='select')
+    facets = relationship(
+        'Facet', backref='scenario', lazy='select')
 
     def __init__(
         self, name, display_name, sketch, user, spec_json, description=None):
@@ -949,7 +949,7 @@ class FacetConclusion(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     conclusion = Column(UnicodeText())
     automated = Column(Boolean(), default=False)
     user_id = Column(Integer, ForeignKey('user.id'))
-    investigation_id = Column(Integer, ForeignKey('investigation.id'))
+    facet_id = Column(Integer, ForeignKey('facet.id'))
     stories = relationship(
         'Story', secondary=facetconclusion_story_association_table)
     saved_searches = relationship(
@@ -972,7 +972,7 @@ class FacetConclusion(LabelMixin, StatusMixin, CommentMixin, BaseModel):
         super().__init__()
         self.conclusion = conclusion
         self.user = user
-        self.investigation = facet
+        self.facet = facet
         self.automated = automated
 
 
@@ -1039,21 +1039,24 @@ questionconclusion_story_association_table = Table(
 questionconclusion_view_association_table = Table(
     'investigativequestionconclusion_view', BaseModel.metadata,
     Column(
-        'investigativequestionconclusion_id', Integer, ForeignKey('investigativequestionconclusion.id')),
+        'investigativequestionconclusion_id', Integer,
+        ForeignKey('investigativequestionconclusion.id')),
     Column('view_id', Integer, ForeignKey('view.id'))
 )
 
 questionconclusion_graph_association_table = Table(
     'investigativequestionconclusion_graph', BaseModel.metadata,
     Column(
-        'investigativequestionconclusion_id', Integer, ForeignKey('investigativequestionconclusion.id')),
+        'investigativequestionconclusion_id', Integer,
+        ForeignKey('investigativequestionconclusion.id')),
     Column('graph_id', Integer, ForeignKey('graph.id'))
 )
 
 questionconclusion_aggregation_association_table = Table(
     'investigativequestionconclusion_aggregation', BaseModel.metadata,
     Column(
-        'investigativequestionconclusion_id', Integer, ForeignKey('investigativequestionconclusion.id')),
+        'investigativequestionconclusion_id', Integer,
+        ForeignKey('investigativequestionconclusion.id')),
     Column('aggregation_id', Integer, ForeignKey('aggregation.id'))
 )
 

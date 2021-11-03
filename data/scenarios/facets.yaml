@@ -1,10 +1,10 @@
 # ------------------------------------------------------------------------
-#                       -- Investigations --
+#                       -- Facets --
 # ------------------------------------------------------------------------
 #
-# This is a config file to define investigations that.
+# This is a config file to define facets.
 #
-# Each investigation consists of the following fields:
+# Each facet consists of the following fields:
 #
 #                       -- metadata --
 #       display_name        Simple string that contains the display name that
@@ -15,15 +15,15 @@
 #                           require further manual analysis, etc.
 #
 # ------------------------------------------------------------------------
-test_investigation:
-  display_name: Lorem Ipsum investigation
+attacker_maintain_access:
+  display_name: Are there any signs of an attacker trying to maintain their access?
   description: Lorem ipsum dolor sit amet, consectetur adipiscing elit.
   questions:
     - user_logged_in_win
     - user_downloaded_file
 
-another_investigation:
-  display_name: Lorem Ipsum investigation
+interference_with_protective_measures:
+  display_name: Are there any signs of interference with protective measures?
   description: Lorem ipsum dolor sit amet, consectetur adipiscing elit.
   questions:
     - user_logged_in_win
