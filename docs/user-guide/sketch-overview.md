@@ -20,10 +20,6 @@ A sketch consists of 5 tabs: “Overview”, “Explore”, “Stories”
 
 **Stories** tab allows creating outlines of your Stories can be annotated with selected items from your timelines
 
-**Attributes** tab shows the attributes of the sketch.
-
-**Intelligence** tab shows intelligence values added from the sketch. See [Intelligence](user-guide/intelligence.md)
-
 ## Sharing and access control
 After the sketch is created, you can share it with other users in the system. To do so, click ![Share](/assets/images/sharebutton.png) button. You will be presented with the following dialogue:
 
