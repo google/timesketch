@@ -1,28 +1,29 @@
 # Intelligence
 
-This is a feature per Sketch. It can store key value pairs.
+Each sketch can have Intelligence items associated with it. This comes in the form of simple strings extracted from events
+usually as IOCs. (e.g. a suspicious IP address in a log file that you want to highlight.)
 
-## Add new information
+## Addding new intelligence
 
-To add new information to the Intelligence part, go to the Sketch, find the event that contains the piece of information you want to highlight and mark it with the mouse. Then in the popup select the piece of information you have marked. This can be one of:
+Timesketch will parse events attributes for potential IOCs to be added as Intelligence. (e.g. when Timesketch finds something that looks like a sha256 hash, IP address, etc.) This will be surfaced to you by a grey highlight on the corresponding string. You can then click the highlighted string to open and pre-fill the `add local intelligence` dialog. You can optionally change the IOC type before confirming the suggestion.
 
-* hash sha256
-* hash sha1
-* hash md5
-* ip
+To add an IOC that isn't highlighted, just select the string you want to add with your cursor. The string will become higlighted, and you will be able to follow the same steps as above to add it.
 
-The key value pair then will be added to the Intelligence Tab as well as the Attributes tab, technically, Intelligence is an per sketch attribute.
+The currently supported IOC types are:
 
-For some attributes, Timesketch will try to find and suggest Intelligence. This will be surfaced to the you by highlighting the value with grey, e.g. when Timesketch finds something that looks like a sha256 hash. YOu then simply need to klick the suggestion and it will pre-fill the suggested type where you can simply confirm the suggestion.
+* `hash_sha256`
+* `hash_sha1`
+* `hash_md5`
+* `ip`
 
 ## Searching for local Intelligence in your Sketch
 
-After you added Intelligence for your Sketch, you can go over to `/sketch/{SKECTH_ID}/intelligence` and you see all the Intelligence.
+The list of all the IOCs added to a sketch can be seen in the *Intelligence* tab (accessible at `/sketch/{SKECTH_ID}/intelligence`).
 
-By clicking the lense icon next to the Indicator, an search will be executed for the given value.
+By clicking the lens icon next to the IOC, you will be taken to the Explore view with a query for the given value.
 
-![Share dialogue](/assets/images/add_intelligence.gif) 
+![Share dialogue](/assets/images/add_intelligence.gif)
 
 ## Delete Intelligence
 
-Deleting Intelligence can be done from the Intelligence Tab by clicking the trash icon at the very end of the row.
+Deleting IOCs can be done from the *Intelligence* tab by clicking the trash icon at the very end of the row.
