@@ -252,7 +252,7 @@ class ResourceMixin(object):
         'updated_at': fields.DateTime('iso8601')
     }
 
-    investigation_fields = {
+    facet_fields = {
         'id': fields.Integer,
         'name': fields.String,
         'display_name': fields.String,
@@ -275,7 +275,7 @@ class ResourceMixin(object):
         'description': fields.String,
         'spec_json': fields.String,
         'user': fields.Nested(user_fields),
-        'investigations': fields.List(fields.Nested(investigation_fields)),
+        'facets': fields.List(fields.Nested(facet_fields)),
         'created_at': fields.DateTime('iso8601'),
         'updated_at': fields.DateTime('iso8601')
     }
