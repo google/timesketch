@@ -248,7 +248,7 @@ def mock_response(*args, **kwargs):
                 'es_query': '("*apt\\-get\\ install\\ zmap*")',
                 'modified': '2020/06/26',
                 'references': ['httpx://foobar.com'],
-                'title': 'Suspicious Installation of zmap',
+                'title': 'Suspicious Installation of ZMap',
                 'file_name': 'lnx_susp_zmap',
                 'file_relpath' : '/linux/syslog/foobar/'
             }, {
