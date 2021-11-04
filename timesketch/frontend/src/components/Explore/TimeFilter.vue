@@ -177,7 +177,7 @@ export default {
       let offset = this.chip.value
       // offsetStart regex accepts any allowed chars >=4 long, until it
       // encounters a space followed by the minus sign
-      this.offsetStart = offset.match(/^\s*([0-9\/:T -]{4,})(:? -)/)[1]
+      this.offsetStart = offset.match(/^\s*([0-9/:T -]{4,})(:? -)/)[1]
       this.offsetPlus = offset.match(/\s[+]([0-9]+)/)[1]
       this.offsetMinus = offset.match(/\s[-]([0-9]+)/)[1]
       this.selectedInterval = offset.match(/\s\+[0-9]+([a-zA-Z])/)[1] // interval type (day, minute, etc.)
