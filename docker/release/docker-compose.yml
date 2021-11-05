@@ -5,11 +5,16 @@ services:
     environment:
       - NUM_WSGI_WORKERS=${NUM_WSGI_WORKERS}
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:5000/ || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     command: timesketch-web
     volumes:
-      - ./etc/timesketch:/etc/timesketch/
-      - ./upload:/usr/share/timesketch/upload/
-      - ./logs:/var/log/timesketch/
+      - ${TIMESKETCH_LOCAL_PATH_ETC}:/etc/timesketch/
+      - ${TIMESKETCH_LOCAL_PATH_UPLOAD}:/usr/share/timesketch/upload/
+      - ${TIMESKETCH_LOCAL_PATH_LOGS}:/var/log/timesketch/
 
   timesketch-worker:
     image: us-docker.pkg.dev/osdfir-registry/timesketch/timesketch:${TIMESKETCH_VERSION}
@@ -18,9 +23,9 @@ services:
     restart: always
     command: timesketch-worker
     volumes:
-      - ./etc/timesketch:/etc/timesketch/
-      - ./upload:/usr/share/timesketch/upload/
-      - ./logs:/var/log/timesketch/
+      - ${TIMESKETCH_LOCAL_PATH_ETC}:/etc/timesketch/
+      - ${TIMESKETCH_LOCAL_PATH_UPLOAD}:/usr/share/timesketch/upload/
+      - ${TIMESKETCH_LOCAL_PATH_LOGS}:/var/log/timesketch/
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch-oss:${ELASTIC_VERSION}
@@ -30,8 +35,13 @@ services:
       - TAKE_FILE_OWNERSHIP=1
       - ES_JAVA_OPTS=-Xms${ELASTIC_MEM_USE_GB}g -Xmx${ELASTIC_MEM_USE_GB}g
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "curl -so /dev/null http://localhost:9200/ || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     volumes:
-      - ./data/elasticsearch:/usr/share/elasticsearch/data/
+      - ${ELASTIC_LOCAL_PATH_DATA}:/usr/share/elasticsearch/data/
 
   postgres:
     image: postgres:${POSTGRES_VERSION}
@@ -39,19 +49,34 @@ services:
       - POSTGRES_USER=timesketch
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "</dev/tcp/127.0.0.1/5432 || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     volumes:
-      - ./data/postgresql:/var/lib/postgresql/data
+      - ${POSTGRES_LOCAL_PATH_DB}:/var/lib/postgresql/data
 
   redis:
     image: redis:${REDIS_VERSION}
     command: "redis-server"
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "</dev/tcp/127.0.0.1/6379 || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   nginx:
     image: nginx:${NGINX_VERSION}
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:80/ || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     ports:
-      - "80:80"
-      - "443:443"
+      - ${NGINX_PORT_80_BIND}:80
+      - ${NGINX_PORT_443_BIND}:443
     volumes:
-      - ./etc/nginx.conf:/etc/nginx/nginx.conf
+      - ${NGINX_LOCAL_PATH_CONF}:/etc/nginx/nginx.conf
