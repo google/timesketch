@@ -5,7 +5,7 @@ usually as IOCs. (e.g. a suspicious IP address in a log file that you want to hi
 
 ## Addding new intelligence
 
-Timesketch will parse events attributes for potential IOCs to be added as Intelligence (e.g. when Timesketch finds something that looks like a sha256 hash, IP address, etc.). This will be surfaced to you by a grey highlight on the corresponding string. You can then click the highlighted string to open and pre-fill the `add local intelligence` dialog. You can optionally change the IOC type before confirming the suggestion.
+Timesketch will parse events attributes for potential IOCs to be added as Intelligence (e.g. when Timesketch finds something that looks like a SHA-256 hash, IP address, etc.). This will be surfaced to you by a grey highlight on the corresponding string. You can then click the highlighted string to open and pre-fill the `add local intelligence` dialog. You can optionally change the IOC type before confirming the suggestion.
 
 To add an IOC that isn't highlighted, just select the string you want to add with your cursor. The string will become higlighted, and you will be able to follow the same steps as above to add it.
 
