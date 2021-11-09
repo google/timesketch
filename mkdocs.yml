@@ -46,15 +46,15 @@ nav:
 plugins:
   - redirects:
       redirect_maps:
-        "learn/basic-concepts.md": "user-guide/basic-concepts.md"
-        "learn/sketch-overview.md": "user-guide/sketch-overview.md"
-        "learn/search-query-guide.md": "user-guide/search-query-guide.md"
-        "learn/notebook.md": "user-guide/notebook.md"
-        "learn/create-timeline-from-json-csv.md": "user-guide/create-timeline-from-json-csv.md"
-        "learn/sigma.md": "user-guide/sigma.md"
-        "getting-started/install.md": "admin-guide/install.md"
-        "getting-started/sizing.md": "admin-guide/sizing.md"
-        "getting-started/upload-data.md": "user-guide/upload-data.md"
+        "learn/basic-concepts.md": "guides/user/basic-concepts.md"
+        "learn/sketch-overview.md": "guides/user/sketch-overview.md"
+        "learn/search-query-guide.md": "guides/user/search-query-guide.md"
+        "learn/notebook.md": "guides/user/notebook.md"
+        "learn/create-timeline-from-json-csv.md": "guides/user/import-from-json-csv.md"
+        "learn/sigma.md": "guides/user/sigma.md"
+        "getting-started/install.md": "guides/admin/install.md"
+        "getting-started/sizing.md": "guides/admin/scaling-and-limits.md"
+        "getting-started/upload-data.md": "guides/user/upload-data.md"
 
 theme:
   name: material
