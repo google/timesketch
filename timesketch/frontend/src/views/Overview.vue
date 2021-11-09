@@ -120,7 +120,7 @@ limitations under the License.
                 Supported formats are Plaso storage file, JSON(L), or a CSV file. If you are uploading a CSV or JSON(L)
                 file make sure to read the
                 <a
-                  href="https://github.com/google/timesketch/blob/master/docs/Users-Guide.md#adding-timelines"
+                  href="https://github.com/google/timesketch/blob/master/docs/guides/user/import-from-json-csv.md"
                   rel="noreferrer"
                   target="_blank"
                   >documentation</a
