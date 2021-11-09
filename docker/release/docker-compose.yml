@@ -7,7 +7,7 @@ services:
     restart: always
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:5000/ || exit 1"]
-      interval: 5s
+      interval: 30s
       timeout: 5s
       retries: 5
     command: timesketch-web
@@ -37,7 +37,7 @@ services:
     restart: always
     healthcheck:
       test: ["CMD-SHELL", "curl -so /dev/null http://localhost:9200/ || exit 1"]
-      interval: 5s
+      interval: 30s
       timeout: 5s
       retries: 5
     volumes:
@@ -51,7 +51,7 @@ services:
     restart: always
     healthcheck:
       test: ["CMD-SHELL", "bash -c '</dev/tcp/127.0.0.1/5432' || exit 1"]
-      interval: 5s
+      interval: 30s
       timeout: 5s
       retries: 5
     volumes:https://github.com/cybersante
@@ -63,7 +63,7 @@ services:
     restart: always
     healthcheck:
       test: ["CMD-SHELL", "bash -c '</dev/tcp/127.0.0.1/6379' || exit 1"]
-      interval: 5s
+      interval: 30s
       timeout: 5s
       retries: 5
 
@@ -72,7 +72,7 @@ services:
     restart: always
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:80/ || exit 1"]
-      interval: 5s
+      interval: 30s
       timeout: 5s
       retries: 5
     ports:
