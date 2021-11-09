@@ -50,11 +50,11 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     restart: always
     healthcheck:
-      test: ["CMD-SHELL", "</dev/tcp/127.0.0.1/5432 || exit 1"]
+      test: ["CMD-SHELL", "bash -c '</dev/tcp/127.0.0.1/5432' || exit 1"]
       interval: 5s
       timeout: 5s
       retries: 5
-    volumes:
+    volumes:https://github.com/cybersante
       - ${POSTGRES_LOCAL_PATH_DB}:/var/lib/postgresql/data
 
   redis:
@@ -62,7 +62,7 @@ services:
     command: "redis-server"
     restart: always
     healthcheck:
-      test: ["CMD-SHELL", "</dev/tcp/127.0.0.1/6379 || exit 1"]
+      test: ["CMD-SHELL", "bash -c '</dev/tcp/127.0.0.1/6379' || exit 1"]
       interval: 5s
       timeout: 5s
       retries: 5
