@@ -179,4 +179,4 @@ sysmon_wsman_provider_image_load.yml,bad, Failed to parse query,2021-05-05,
 rules/windows/file_event/sysmon_susp_desktop_ini.yml,good,9ac87754adb88a8ac14969bb4adaed043f783d7264d0846365ca0cf4b7f80ffb,2021-10-26,81315b50-6b60-4d8f-9928-3466e1022515
 rules/windows/file_event/sysmon_startup_folder_file_write.yml,bad,no good sample found 9ac87754adb88a8ac14969bb4adaed043f783d7264d0846365ca0cf4b7f80ffb,2021-10-26,2aa0a6b4-a865-495b-ab51-c28249537b75
 rules/windows/process_creation/sysmon_always_install_elevated_windows_installer.yml,bad,no good sample found e5874027b483a6bcac952f302eedcadb59f858e9d7cc1f89b08102c8dbc69160,2021-10-26,cd951fdc-4b2f-47f5-ba99-a33bf61e3770
-rules/windows/process_creation/win_susp_svchost.yml,cc565bd2909f2889f8369939c3b932030f4dddba3b52ec17a2b4961144b05aa6,2021-10-26,01d2e2a1-5f09-44f7-9fc1-24faa7479b6d
+rules/windows/process_creation/win_susp_svchost.yml,good,cc565bd2909f2889f8369939c3b932030f4dddba3b52ec17a2b4961144b05aa6,2021-10-26,01d2e2a1-5f09-44f7-9fc1-24faa7479b6d
