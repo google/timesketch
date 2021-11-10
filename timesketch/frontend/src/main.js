@@ -16,20 +16,18 @@ limitations under the License.
 import Vue from 'vue'
 import App from './App.vue'
 
-import Buefy from 'buefy'
-
-import VueScrollTo from 'vue-scrollto'
-import Multiselect from 'vue-multiselect'
-
 import router from './router'
 import store from './store'
 
+// Third party
+import Buefy from 'buefy'
+import VueScrollTo from 'vue-scrollto'
+import Multiselect from 'vue-multiselect'
 import VueCytoscape from 'vue-cytoscape'
+import VueClipboard from 'vue-clipboard2'
 
-import '@fontsource/roboto/latin-ext.css'
-
+// Icons
 import { library } from '@fortawesome/fontawesome-svg-core'
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import {
   faChevronUp,
   faChevronDown,
@@ -39,21 +37,10 @@ import {
   faAngleRight,
   faArrowUp,
   faArrowDown,
-  faTag
+  faTag,
 } from '@fortawesome/free-solid-svg-icons'
-library.add(
-  faChevronUp,
-  faChevronDown,
-  faSave,
-  faUserEdit,
-  faAngleLeft,
-  faAngleRight,
-  faArrowUp,
-  faArrowDown,
-  faTag
-)
-
-Vue.component('font-awesome-icon', FontAwesomeIcon)
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+library.add(faChevronUp, faChevronDown, faSave, faUserEdit, faAngleLeft, faAngleRight, faArrowUp, faArrowDown, faTag)
 
 require('./assets/main.scss')
 require('./utils/RegisterAppComponents')
@@ -65,17 +52,17 @@ require('./utils/RegisterAppFilters')
 const EventBus = new Vue()
 export default EventBus
 
+// Third party
 Vue.use(require('vue-moment'))
-
 Vue.use(VueCytoscape)
-
+Vue.use(VueClipboard);
 Vue.use(Buefy, {
   defaultIconComponent: 'font-awesome-icon',
-  defaultIconPack: 'fas'
+  defaultIconPack: 'fas',
 })
-
 Vue.use(VueScrollTo)
 Vue.component('multiselect', Multiselect)
+Vue.component('font-awesome-icon', FontAwesomeIcon)
 
 // Disable warning during development
 Vue.config.productionTip = false
@@ -83,5 +70,5 @@ Vue.config.productionTip = false
 new Vue({
   router,
   store,
-  render: h => h(App)
+  render: h => h(App),
 }).$mount('#app')

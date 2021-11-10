@@ -1,7 +1,13 @@
 """Analyzer plugin for tagging."""
+import logging
+
 from timesketch.lib import emojis
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
+from timesketch.lib.analyzers import utils
+
+
+logger = logging.getLogger('timesketch.analyzers.tagger')
 
 
 class TaggerSketchPlugin(interface.BaseAnalyzer):
@@ -13,18 +19,17 @@ class TaggerSketchPlugin(interface.BaseAnalyzer):
 
     CONFIG_FILE = 'tags.yaml'
 
-    def __init__(self, index_name, sketch_id, timeline_id=None, config=None):
+    def __init__(self, index_name, sketch_id, timeline_id=None, **kwargs):
         """Initialize The Sketch Analyzer.
 
         Args:
             index_name: Elasticsearch index name
             sketch_id: Sketch ID
-            timeline_id: The ID of the timeline.
-            config: Optional dict that contains the configuration for the
-                analyzer. If not provided, the default YAML file will be used.
+            timeline_id: The ID of the timeline
         """
         self.index_name = index_name
-        self._config = config
+        self._tag_name = kwargs.get('tag')
+        self._tag_config = kwargs.get('tag_config')
         super().__init__(index_name, sketch_id, timeline_id=timeline_id)
 
     def run(self):
@@ -33,17 +38,24 @@ class TaggerSketchPlugin(interface.BaseAnalyzer):
         Returns:
             String with summary of the analyzer result.
         """
-        config = self._config or interface.get_yaml_config(self.CONFIG_FILE)
-        if not config:
-            return 'Unable to parse the config file.'
+        return self.tagger(self._tag_name, self._tag_config)
 
-        tag_results = []
-        for name, tag_config in iter(config.items()):
-            tag_result = self.tagger(name, tag_config)
-            if tag_result:
-                tag_results.append(tag_result)
+    @staticmethod
+    def get_kwargs():
+        """Get kwargs for the analyzer.
 
-        return ', '.join(tag_results)
+        Returns:
+            List of searches to tag results for.
+        """
+        tags_config = interface.get_yaml_config('tags.yaml')
+        if not tags_config:
+            return 'Unable to parse the tags config file.'
+
+        tags_kwargs = [
+            {'tag': tag, 'tag_config': config}
+            for tag, config in tags_config.items()
+        ]
+        return tags_kwargs
 
     def tagger(self, name, config):
         """Tag and add emojis to events.
@@ -58,16 +70,47 @@ class TaggerSketchPlugin(interface.BaseAnalyzer):
         """
         query = config.get('query_string')
         query_dsl = config.get('query_dsl')
-        create_view = config.get('create_view', False)
-        view_name = config.get('view_name', name)
+        save_search = config.get('save_search', False)
+        # For legacy reasons to support both save_search and
+        # create_view parameters.
+        if not save_search:
+            save_search = config.get('create_view', False)
+
+        search_name = config.get('search_name', None)
+        # For legacy reasons to support both search_name and view_name.
+        if search_name is None:
+            search_name = config.get('view_name', name)
+
         tags = config.get('tags', [])
         emoji_names = config.get('emojis', [])
         emojis_to_add = [emojis.get_emoji(x) for x in emoji_names]
 
+        expression_string = config.get('regular_expression', '')
+        attributes = None
+        expression = None
+        if expression_string:
+            expression = utils.compile_regular_expression(
+                expression_string=expression_string,
+                expression_flags=config.get('re_flags'))
+
+            attribute = config.get('re_attribute')
+            if attribute:
+                attributes = [attribute]
+
         event_counter = 0
-        events = self.event_stream(query_string=query, query_dsl=query_dsl)
+        events = self.event_stream(
+            query_string=query, query_dsl=query_dsl, return_fields=attributes)
 
         for event in events:
+            if expression:
+                value = event.source.get(attributes[0])
+                if value:
+                    result = expression.findall(value)
+                    if not result:
+                        # Skip counting this tag since the regular expression
+                        # didn't find anything.
+                        continue
+
             event_counter += 1
             event.add_tags(tags)
             event.add_emojis(emojis_to_add)
@@ -75,9 +118,9 @@ class TaggerSketchPlugin(interface.BaseAnalyzer):
             # Commit the event to the datastore.
             event.commit()
 
-        if create_view and event_counter:
+        if save_search and event_counter:
             self.sketch.add_view(
-                view_name, self.NAME, query_string=query, query_dsl=query_dsl)
+                search_name, self.NAME, query_string=query, query_dsl=query_dsl)
 
         return '{0:d} events tagged for [{1:s}]'.format(event_counter, name)
 

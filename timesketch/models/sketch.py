@@ -20,6 +20,7 @@ import json
 from flask import current_app
 from flask import url_for
 
+from sqlalchemy import Table
 from sqlalchemy import BigInteger
 from sqlalchemy import Column
 from sqlalchemy import ForeignKey
@@ -27,6 +28,9 @@ from sqlalchemy import Integer
 from sqlalchemy import Unicode
 from sqlalchemy import UnicodeText
 from sqlalchemy.orm import relationship
+
+from sqlalchemy.orm import backref
+from sqlalchemy.orm.collections import attribute_mapped_collection
 
 from timesketch.models import BaseModel
 from timesketch.models.acl import AccessControlMixin
@@ -59,6 +63,8 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
     analysis = relationship('Analysis', backref='sketch', lazy='select')
     analysissessions = relationship(
         'AnalysisSession', backref='sketch', lazy='select')
+    searchhistories = relationship(
+        'SearchHistory', backref='sketch', lazy='dynamic')
 
     def __init__(self, name, description, user):
         """Initialize the Sketch object.
@@ -732,3 +738,96 @@ class DataSource(LabelMixin, StatusMixin, CommentMixin, BaseModel):
         self.original_filename = original_filename
         self.data_label = data_label
         self.error_message = error_message
+
+
+# Association table for the many-to-many relationship between SearchHistory
+# and Event.
+association_table = Table('searchhistory_event', BaseModel.metadata,
+    Column('searchhistory_id', Integer, ForeignKey('searchhistory.id')),
+    Column('event_id', Integer, ForeignKey('event.id'))
+)
+
+
+class SearchHistory(LabelMixin, BaseModel):
+    """Implements the SearchHistory model."""
+    id = Column(Integer, primary_key=True)
+    parent_id = Column(Integer, ForeignKey(id))
+    sketch_id = Column(Integer, ForeignKey('sketch.id'))
+    user_id = Column(Integer, ForeignKey('user.id'))
+    description = Column(UnicodeText())
+    query_string = Column(UnicodeText())
+    query_filter = Column(UnicodeText())
+    query_dsl = Column(UnicodeText())
+    query_result_count = Column(BigInteger())
+    query_time = Column(BigInteger())
+    events = relationship('Event', secondary=association_table)
+    children = relationship(
+        'SearchHistory',
+        # Cascade deletions
+        cascade='all, delete-orphan',
+        backref=backref('parent', remote_side=id),
+        collection_class=attribute_mapped_collection('id'),
+    )
+
+    def __init__(
+        self, user, sketch, description=None, query_string=None,
+        query_filter=None, query_dsl=None, parent=None):
+        """"Initialize the SearchHistory object
+
+        Args:
+            user (User): The user who owns the search history.
+            sketch (Sketch): The sketch for the search history.
+            description (str): Description for the search history entry.
+            query_string (str): The query string.
+            query_filter (str): The filter to apply (JSON format as string).
+            query_dsl (str): A query DSL document (JSON format as string).
+            parent (SearchHistory): Reference to parent search history entry.
+        """
+        self.user = user
+        self.sketch = sketch
+        self.description = description
+        self.query_string = query_string
+        self.query_filter = query_filter
+        self.query_dsl = query_dsl
+        self.parent = parent
+
+    @staticmethod
+    def build_node_dict(node_dict, node):
+        node_dict['id'] = node.id
+        node_dict['description'] = node.description
+        node_dict['query_result_count'] = node.query_result_count
+        node_dict['query_time'] = node.query_time
+        node_dict['labels'] = node.get_labels
+        node_dict['created_at'] = node.created_at
+        node_dict['parent'] = node.parent_id
+        node_dict['query_string'] = node.query_string
+        node_dict['query_filter'] = node.query_filter
+        node_dict['query_dsl'] = node.query_dsl
+        node_dict['children'] = []
+        return node_dict
+
+    def build_tree(self, node, node_dict, recurse=True):
+        """Recursive function to generate full search history tree.
+
+        Args:
+            node (SearchHistory): SearchHistory object as root node.
+            node_dict (dict): Dictionary to use for recursion.
+            recurse (bool): If the function should recurse on all children.
+
+        Returns:
+            Dictionary with a SearchHistory tree.
+        """
+        if not isinstance(node_dict, dict):
+            raise ValueError('node_dict must be a dictionary')
+
+        node_dict = self.build_node_dict(node_dict, node)
+        children = node.children.values()
+        if children and recurse:
+            for child in children:
+                child_dict = {}
+                child.build_tree(child, child_dict)
+                node_dict['children'].append(child_dict)
+        else:
+            return node_dict
+
+        return node_dict

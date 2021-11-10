@@ -1,5 +1,5 @@
 <!--
-Copyright 2019 Google Inc. All rights reserved.
+Copyright 2021 Google Inc. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,54 +14,86 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-
-  <section class="section" style="background-color:var(--navbar-background);padding:0;border-bottom: 1px solid var(--navbar-header-border-color);">
+  <section
+    class="section"
+    style="background-color:var(--navbar-background);padding:0;border-bottom: 1px solid var(--navbar-border-color);"
+  >
     <div class="container is-fluid" style="padding-bottom:0;">
-
       <nav class="navbar" role="navigation" aria-label="main navigation">
         <div class="navbar-item" v-if="currentAppContext === 'sketch'">
-          <div class="tabs is-left">
+          <div class="tabs is-left" v-if="activeTimelines.length">
             <ul>
-              <li v-bind:class="{'is-active': currentPage === 'overview'}">
-                <router-link :to="{ name: 'SketchOverview' }">
+              <li v-bind:class="{ 'is-active': currentPage === 'overview' }">
+                <router-link :to="{ name: 'Overview' }">
                   <span class="icon is-small"><i class="fas fa-cubes" aria-hidden="true"></i></span>
                   <span>Overview</span>
                 </router-link>
               </li>
-              <li v-bind:class="{'is-active': currentPage === 'explore'}">
-                <router-link :to="{ name: 'SketchExplore' }">
-                  <span class="icon is-small"><i class="fas fa-search" aria-hidden="true"></i></span>
-                  <span>Explore</span>
+              <li v-bind:class="{ 'is-active': currentPage === 'explore' }">
+                <router-link :to="{ name: 'Explore' }" data-explore-element="true">
+                  <span class="icon is-small"
+                    ><i class="fas fa-search" data-explore-element="true" aria-hidden="true"></i
+                  ></span>
+                  <span data-explore-element="true">Explore</span>
                 </router-link>
               </li>
-              <li v-bind:class="{'is-active': currentPage === 'graph'}">
-                <router-link :to="{ name: 'SketchGraphOverview' }">
+              <li v-bind:class="{ 'is-active': currentPage === 'graph' }">
+                <router-link :to="{ name: 'GraphOverview' }">
                   <span class="icon is-small"><i class="fas fa-project-diagram" aria-hidden="true"></i></span>
                   <span>Graph</span>
                 </router-link>
               </li>
-              <li v-bind:class="{'is-active': currentPage === 'aggregate'}">
-                <router-link :to="{ name: 'SketchAggregate' }">
+              <li v-bind:class="{ 'is-active': currentPage === 'aggregate' }">
+                <router-link :to="{ name: 'Aggregate' }">
                   <span class="icon is-small"><i class="fas fa-chart-bar" aria-hidden="true"></i></span>
                   <span>Aggregate</span>
                 </router-link>
               </li>
-              <li v-bind:class="{'is-active': currentPage === 'analyzers'}">
-                <router-link :to="{ name: 'SketchAnalyzersOverview' }">
+              <li v-bind:class="{ 'is-active': currentPage === 'analyzers' }">
+                <router-link :to="{ name: 'Analyze' }">
                   <span class="icon is-small"><i class="fas fa-magic" aria-hidden="true"></i></span>
                   <span>Analyze</span>
                 </router-link>
               </li>
-              <li v-bind:class="{'is-active': currentPage === 'timelines'}">
-                <router-link :to="{ name: 'SketchManageTimelines' }">
-                  <span class="icon is-small"><i class="fas fa-stream" aria-hidden="true"></i></span>
-                  <span>Timelines</span>
-                </router-link>
-              </li>
-              <li v-bind:class="{'is-active': currentPage === 'stories'}">
-                <router-link :to="{ name: 'SketchStoryOverview' }">
+              <li v-bind:class="{ 'is-active': currentPage === 'stories' }">
+                <router-link :to="{ name: 'StoryOverview' }">
                   <span class="icon is-small"><i class="fas fa-book" aria-hidden="true"></i></span>
                   <span>Stories</span>
+                </router-link>
+              </li>
+              <li v-bind:class="{ 'is-active': currentPage === 'sigma' }">
+                <router-link :to="{ name: 'SigmaOverview' }">
+                  <span class="icon is-small"><i class="fas fa-file-signature" aria-hidden="true"></i></span>
+                  <span>Sigma</span>
+                </router-link>
+              </li>
+              <li v-if="meta" v-bind:class="{ 'is-active': currentPage === 'attributes' }">
+                <router-link :to="{ name: 'Attributes' }">
+                  <span class="icon is-small"><i class="fas fa-table" aria-hidden="true"></i></span>
+                  <span
+                    >Attributes
+                    <span
+                      class="tag is-small"
+                      style="background-color:var(--tag-background-color); color:var(--tag-font-color);"
+                      >{{ attributeCount }}</span
+                    >
+                  </span>
+                </router-link>
+              </li>
+              <li
+                v-if="hasAttributeOntology('intelligence')"
+                v-bind:class="{ 'is-active': currentPage === 'intelligence' }"
+              >
+                <router-link :to="{ name: 'Intelligence' }">
+                  <span class="icon is-small"><i class="fas fa-brain" aria-hidden="true"></i></span>
+                  <span
+                    >Intelligence
+                    <span
+                      class="tag is-small"
+                      style="background-color:var(--tag-background-color); color:var(--tag-font-color);"
+                      >{{ intelligenceCount }}</span
+                    >
+                  </span>
                 </router-link>
               </li>
             </ul>
@@ -75,25 +107,46 @@ limitations under the License.
       </nav>
     </div>
   </section>
-
 </template>
 
 <script>
 export default {
   name: 'ts-navbar-secondary',
-  props: ['currentAppContext', 'currentPage']
+  props: {
+    currentAppContext: String,
+    currentPage: String,
+  },
+  methods: {
+    hasAttributeOntology: function(ontologyName) {
+      return Object.values(this.meta.attributes).some(value => value.ontology === ontologyName)
+    },
+  },
+  computed: {
+    meta() {
+      return this.$store.state.meta
+    },
+    activeTimelines() {
+      return this.$store.state.sketch.active_timelines
+    },
+    attributeCount() {
+      return Object.entries(this.meta.attributes).length
+    },
+    intelligenceCount() {
+      return (Object.entries(this.meta.attributes.intelligence || {}).length + Object.entries(this.meta.attributes.intelligence_local || {}).length)
+    },
+  },
 }
 </script>
 
 <!-- CSS scoped to this component only -->
 <style scoped lang="scss">
-  .navbar {
-    background: transparent;
-  }
-  .tabs {
-    margin-left: -20px;
-  }
-  .tabs a {
-    padding: 0.5em 1em;
-  }
+.navbar {
+  background: transparent;
+}
+.tabs {
+  margin-left: -20px;
+}
+.tabs a {
+  padding: 0.5em 1em;
+}
 </style>

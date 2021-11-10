@@ -116,6 +116,7 @@ class ElasticsearchDataStore(object):
         self.password = current_app.config.get('ELASTIC_PASSWORD', 'pass')
         self.ssl = current_app.config.get('ELASTIC_SSL', False)
         self.verify = current_app.config.get('ELASTIC_VERIFY_CERTS', True)
+        self.timeout = current_app.config.get('ELASTIC_TIMEOUT', 10)
 
         parameters = {}
         if self.ssl:
@@ -124,6 +125,8 @@ class ElasticsearchDataStore(object):
 
         if self.user and self.password:
             parameters['http_auth'] = (self.user, self.password)
+        if self.timeout:
+            parameters['timeout'] = self.timeout
 
         self.client = Elasticsearch(
             [{'host': host, 'port': port}], **parameters)
@@ -338,7 +341,10 @@ class ElasticsearchDataStore(object):
 
         if query_string:
             query_dsl['query']['bool']['must'].append(
-                {'query_string': {'query': query_string}})
+                {'query_string': {
+                    'query': query_string,
+                    'default_operator': 'AND'}
+                })
 
         # New UI filters
         if query_filter.get('chips', None):
@@ -582,7 +588,7 @@ class ElasticsearchDataStore(object):
                 exc_info=True)
             raise ValueError(cause) from e
 
-        METRICS['search_requests'].labels(type='all').inc()
+        METRICS['search_requests'].labels(type='single').inc()
         return _search_result
 
     # pylint: disable=too-many-arguments
@@ -611,7 +617,7 @@ class ElasticsearchDataStore(object):
         # Make sure that the list of index names is uniq.
         indices = list(set(indices))
 
-        METRICS['search_requests'].labels(type='streaming').inc()
+        METRICS['search_requests'].labels(type='stream').inc()
 
         if not query_filter.get('size'):
             query_filter['size'] = self.DEFAULT_STREAM_LIMIT
@@ -716,11 +722,12 @@ class ElasticsearchDataStore(object):
         buckets = result.get(
             'aggregations', {}).get('nested', {}).get('inner', {}).get(
                 'labels', {}).get('buckets', [])
+
         for bucket in buckets:
-            # Filter out special labels like __ts_star etc.
-            if bucket['key'].startswith('__'):
-                continue
-            labels.append(bucket['key'])
+            new_bucket = {}
+            new_bucket['label'] = bucket.pop('key')
+            new_bucket['count'] = bucket.pop('doc_count')
+            labels.append(new_bucket)
         return labels
 
     # pylint: disable=inconsistent-return-statements

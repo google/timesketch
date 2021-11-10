@@ -18,11 +18,14 @@ import io
 import json
 import zipfile
 
+import prometheus_client
+
 from flask import abort
 from flask import jsonify
 from flask import request
 from flask import send_file
 from flask_restful import Resource
+from flask_restful import reqparse
 from flask_login import login_required
 from flask_login import current_user
 
@@ -35,11 +38,22 @@ from timesketch.lib.definitions import DEFAULT_SOURCE_FIELDS
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
+from timesketch.lib.definitions import METRICS_NAMESPACE
 from timesketch.models import db_session
 from timesketch.models.sketch import Event
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import View
+from timesketch.models.sketch import SearchHistory
 
+# Metrics definitions
+METRICS = {
+    'searchhistory': prometheus_client.Counter(
+        'searchhistory',
+        'Search History actions',
+        ['action'],
+        namespace=METRICS_NAMESPACE
+    )
+}
 
 class ExploreResource(resources.ResourceMixin, Resource):
     """Resource to search the datastore based on a query and a filter."""
@@ -84,6 +98,8 @@ class ExploreResource(resources.ResourceMixin, Resource):
         count = bool(form.count.data)
 
         query_filter = request.json.get('filter', {})
+        parent = request.json.get('parent', None)
+        incognito = request.json.get('incognito', False)
 
         return_field_string = form.fields.data
         if return_field_string:
@@ -138,6 +154,12 @@ class ExploreResource(resources.ResourceMixin, Resource):
                     'min_doc_count': 0,
                     'size': len(sketch.timelines)
                 }
+            },
+            'count_over_time': {
+                'auto_date_histogram': {
+                    'field': 'datetime',
+                    'buckets': 50,
+                }
             }
         }
         if count:
@@ -157,8 +179,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
                     timeline_ids=timeline_ids,
                     count=True)
             except ValueError as e:
-                abort(
-                    HTTP_STATUS_CODE_BAD_REQUEST, e)
+                abort(HTTP_STATUS_CODE_BAD_REQUEST, str(e))
 
             # Get number of matching documents per index.
             schema = {'meta': {'total_count': result}, 'objects': []}
@@ -211,8 +232,22 @@ class ExploreResource(resources.ResourceMixin, Resource):
                     enable_scroll=enable_scroll,
                     timeline_ids=timeline_ids)
             except ValueError as e:
-                abort(
-                    HTTP_STATUS_CODE_BAD_REQUEST, e)
+                abort(HTTP_STATUS_CODE_BAD_REQUEST, str(e))
+
+        # Get number of matching documents over time.
+        histogram_interval = result.get(
+            'aggregations', {}).get('count_over_time', {}).get('interval', '')
+        count_over_time = {
+            'data': {},
+            'interval': histogram_interval
+        }
+        try:
+            for bucket in result['aggregations']['count_over_time']['buckets']:
+                key = bucket.get('key')
+                if key:
+                    count_over_time['data'][key] = bucket.get('doc_count')
+        except KeyError:
+            pass
 
         # Get number of matching documents per index.
         count_per_index = {}
@@ -233,6 +268,9 @@ class ExploreResource(resources.ResourceMixin, Resource):
                     count_per_timeline[key] = bucket.get('doc_count')
         except KeyError:
             pass
+
+        # Total count for query regardless of returned results.
+        count_total_complete = sum(count_per_index.values())
 
         comments = {}
         if 'comment' in return_fields:
@@ -262,8 +300,8 @@ class ExploreResource(resources.ResourceMixin, Resource):
 
         # Update or create user state view. This is used in the UI to let
         # the user get back to the last state in the explore view.
-        # TODO: Add a call to utils.update_sketch_last_activity once new
-        # mechanism has been added, instead of relying on user views.
+        # TODO: Deprecate this and change how last activity is determined, e.g
+        # use the new Search History feature instead.
         view = View.get_or_create(
             user=current_user, sketch=sketch, name='')
         view.update_modification_time()
@@ -272,6 +310,60 @@ class ExploreResource(resources.ResourceMixin, Resource):
         view.query_dsl = json.dumps(query_dsl, ensure_ascii=False)
         db_session.add(view)
         db_session.commit()
+
+        # Search History
+        search_node = None
+        new_search = SearchHistory(user=current_user, sketch=sketch)
+
+        if parent:
+            previous_search = SearchHistory.query.get(parent)
+        else:
+            previous_search = SearchHistory.query.filter_by(
+                user=current_user, sketch=sketch).order_by(
+                    SearchHistory.id.desc()).first()
+
+        if not incognito:
+            is_same_query = False
+            is_same_filter = False
+
+            new_search.query_string = form.query.data
+            new_search.query_filter = json.dumps(
+                query_filter, ensure_ascii=False)
+
+            new_search.query_result_count = count_total_complete
+            new_search.query_time = result['took']
+
+            if previous_search:
+                new_search.parent = previous_search
+
+                new_query = new_search.query_string
+                new_filter = new_search.query_filter
+                previous_query = previous_search.query_string
+                previous_filter = previous_search.query_filter
+
+                is_same_query = previous_query == new_query
+                is_same_filter = previous_filter == new_filter
+
+            if not all([is_same_query, is_same_filter]):
+                db_session.add(new_search)
+                db_session.commit()
+                # Create metric if user creates a new branch.
+                if new_search.parent:
+                    if len(new_search.parent.children) > 1:
+                        METRICS['searchhistory'].labels(
+                            action='branch').inc()
+            else:
+                METRICS['searchhistory'].labels(
+                    action='ignore_same_query').inc()
+        else:
+            METRICS['searchhistory'].labels(action='incognito').inc()
+
+        search_node = new_search if new_search.id else previous_search
+
+        if not search_node:
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to save search')
+
+        search_node = search_node.build_tree(search_node, {}, recurse=False)
 
         # Add metadata for the query result. This is used by the UI to
         # render the event correctly and to display timing and hit count
@@ -285,11 +377,14 @@ class ExploreResource(resources.ResourceMixin, Resource):
         meta = {
             'es_time': result['took'],
             'es_total_count': result['hits']['total'],
+            'es_total_count_complete': count_total_complete,
             'timeline_colors': tl_colors,
             'timeline_names': tl_names,
             'count_per_index': count_per_index,
             'count_per_timeline': count_per_timeline,
+            'count_over_time': count_over_time,
             'scroll_id': result.get('_scroll_id', ''),
+            'search_node': search_node
         }
 
         # Elasticsearch version 7.x returns total hits as a dictionary.
@@ -334,4 +429,97 @@ class QueryResource(resources.ResourceMixin, Resource):
         query = self.datastore.build_query(
             sketch.id, query_string, query_filter, query_dsl)
         schema['objects'].append(query)
+        return jsonify(schema)
+
+
+class SearchHistoryResource(resources.ResourceMixin, Resource):
+    """Resource to get search history for a user."""
+
+    def __init__(self):
+        super().__init__()
+        self.parser = reqparse.RequestParser()
+        self.parser.add_argument('limit', type=int, required=False)
+
+    @login_required
+    def get(self, sketch_id):
+        """Handles GET request to the resource.
+
+        Returns:
+            Search history in JSON (instance of flask.wrappers.Response)
+        """
+        SQL_LIMIT = 100  # Limit to fetch first 100 results
+        DEFAULT_LIMIT= 12
+
+        # How many results to return (12 if nothing is specified)
+        args = self.parser.parse_args()
+        limit = args.get('limit')
+
+        if not limit:
+            limit = DEFAULT_LIMIT
+
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+
+        result = []
+        nodes = SearchHistory.query.filter_by(
+            user=current_user, sketch=sketch).order_by(
+                SearchHistory.id.desc()).limit(SQL_LIMIT).all()
+
+        uniq_queries = set()
+        count = 0
+        for node in nodes:
+            if node.query_string not in uniq_queries:
+                if count >= int(limit):
+                    break
+                result.append(node.build_node_dict({}, node))
+                uniq_queries.add(node.query_string)
+                count += 1
+
+        schema = {
+            'objects': result,
+            'meta': {}
+        }
+
+        return jsonify(schema)
+
+
+class SearchHistoryTreeResource(resources.ResourceMixin, Resource):
+    """Resource to get search history for a user."""
+
+    HISTORY_NODE_LIMIT = 250  # To prevent heap exhaustion during recursion.
+
+    @login_required
+    def get(self, sketch_id):
+        """Handles GET request to the resource.
+
+        Returns:
+            Search history in JSON (instance of flask.wrappers.Response)
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+
+        tree = {}
+
+        try:
+            root_node = SearchHistory.query.filter_by(
+                user=current_user, sketch=sketch).order_by(
+                    SearchHistory.id.desc()).limit(
+                        self.HISTORY_NODE_LIMIT)[-1]
+        except IndexError:
+            root_node = None
+
+        last_node = SearchHistory.query.filter_by(
+            user=current_user, sketch=sketch).order_by(
+                SearchHistory.id.desc()).first()
+
+        if root_node:
+            tree = root_node.build_tree(root_node, {})
+
+        schema = {
+            'objects': [tree],
+            'meta': {'last_node_id': last_node.id if last_node else None}
+        }
+
         return jsonify(schema)

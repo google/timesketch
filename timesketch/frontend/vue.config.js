@@ -16,13 +16,31 @@ limitations under the License.
 
 module.exports = {
   lintOnSave: false,
-  publicPath: '/dist/',
+  publicPath: process.env.NODE_ENV === 'development' ? '/' : '/dist/',
   configureWebpack: config => {
     config.watchOptions = {
       aggregateTimeout: 500,
       poll: 1000,
-      ignored: /node_modules/
+      ignored: /node_modules/,
     }
+  },
+  devServer: {
+    // See https://cli.vuejs.org/config/#devserver for more options
+    port: 5001,
+    proxy: {
+      '^/api': {
+        autoRewrite: true,
+        target: 'http://localhost:5000/',
+      },
+      '^/dist': {
+        autoRewrite: true,
+        target: 'http://localhost:5000/',
+      },
+      '^/login|logout': {
+        autoRewrite: true,
+        target: 'http://localhost:5000/',
+      },
+    },
   },
   pages: {
     index: {
@@ -31,7 +49,7 @@ module.exports = {
       // the source template
       template: 'public/index.html',
       // output as dist/index.html
-      filename: 'index.html'
+      filename: 'index.html',
     },
     login: {
       // entry for the page
@@ -39,7 +57,7 @@ module.exports = {
       // the source template
       template: 'public/login.html',
       // output as dist/index.html
-      filename: 'login.html'
-    }
-  }
+      filename: 'login.html',
+    },
+  },
 }

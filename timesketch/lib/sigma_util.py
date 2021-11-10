@@ -65,12 +65,14 @@ def get_sigma_config_file(config_file=None):
         sigma_config_file = config_file_read.read()
 
     try:
-        sigma_config = sigma_configuration.SigmaConfiguration(sigma_config_file)
+        sigma_config = sigma_configuration.SigmaConfiguration(
+            sigma_config_file)
     except SigmaConfigParseError:
         logger.error('Parsing error with {0:s}'.format(sigma_config_file))
         raise
 
     return sigma_config
+
 
 def get_sigma_rules_path():
     """Get Sigma rules paths.
@@ -181,8 +183,8 @@ def get_sigma_rule(filepath, sigma_config=None):
             'Problem reading the Sigma config', exc_info=True)
         raise ValueError('Problem reading the Sigma config') from e
 
-
-    sigma_backend = sigma_es.ElasticsearchQuerystringBackend(sigma_conf_obj, {})
+    sigma_backend = sigma_es.ElasticsearchQuerystringBackend(
+        sigma_conf_obj, {})
 
     try:
         sigma_rules_paths = get_sigma_rules_path()
@@ -206,7 +208,7 @@ def get_sigma_rule(filepath, sigma_config=None):
             for doc in rule_yaml_data:
                 rule_return.update(doc)
                 parser = sigma_collection.SigmaCollectionParser(
-                    str(doc), sigma_conf_obj, None)
+                    yaml.safe_dump(doc), sigma_conf_obj, None)
                 parsed_sigma_rules = parser.generate(sigma_backend)
 
         except NotImplementedError as exception:
@@ -230,12 +232,13 @@ def get_sigma_rule(filepath, sigma_config=None):
         sigma_es_query = ''
 
         for sigma_rule in parsed_sigma_rules:
-            sigma_es_query = sigma_rule
+
+            sigma_es_query = _sanatize_sigma_rule(sigma_rule)
 
         rule_return.update(
-            {'es_query':sigma_es_query})
+            {'es_query': sigma_es_query})
         rule_return.update(
-            {'file_name':os.path.basename(filepath)})
+            {'file_name': os.path.basename(filepath)})
 
         # in case multiple folders are in the config, need to remove them
         if sigma_rules_paths:
@@ -245,9 +248,30 @@ def get_sigma_rule(filepath, sigma_config=None):
             file_relpath = 'N/A'
 
         rule_return.update(
-            {'file_relpath':file_relpath})
+            {'file_relpath': file_relpath})
 
         return rule_return
+
+
+def _sanatize_sigma_rule(sigma_rule_query: str) -> str:
+    """Returns a sanatized sigma rule
+    Args:
+        sigma_rule_query: path to the sigma rule to be parsed
+    Returns:
+        String of a cleaned string
+    """
+    # TODO: Investigate how to handle .keyword
+    # fields in Sigma.
+    # https://github.com/google/timesketch/issues/1199#issuecomment-639475885
+    sigma_rule_query = sigma_rule_query.replace('.keyword:', ':')
+    sigma_rule_query = sigma_rule_query.replace('\\ ', ' ')
+    sigma_rule_query = sigma_rule_query.replace('\"', '"')
+    sigma_rule_query = sigma_rule_query.replace('\\:', ':')
+    sigma_rule_query = sigma_rule_query.replace('\\-', '-')
+    sigma_rule_query = sigma_rule_query.replace('*\\\\', ' *')
+
+    return sigma_rule_query
+
 
 def get_sigma_rule_by_text(rule_text, sigma_config=None):
     """Returns a JSON represenation for a rule
@@ -264,6 +288,7 @@ def get_sigma_rule_by_text(rule_text, sigma_config=None):
         NotImplementedError: A feature in the provided Sigma rule is not
             implemented in Sigma for Timesketch
     """
+
     try:
         if isinstance(sigma_config, sigma_configuration.SigmaConfiguration):
             sigma_conf_obj = sigma_config
@@ -276,17 +301,19 @@ def get_sigma_rule_by_text(rule_text, sigma_config=None):
             'Problem reading the Sigma config', exc_info=True)
         raise ValueError('Problem reading the Sigma config') from e
 
-    sigma_backend = sigma_es.ElasticsearchQuerystringBackend(sigma_conf_obj, {})
+    sigma_backend = sigma_es.ElasticsearchQuerystringBackend(
+        sigma_conf_obj, {})
 
     rule_return = {}
-
     # TODO check if input validation is needed / useful.
     try:
-        parser = sigma_collection.SigmaCollectionParser(
-            rule_text, sigma_conf_obj, None)
-        parsed_sigma_rules = parser.generate(sigma_backend)
         rule_yaml_data = yaml.safe_load_all(rule_text)
+
         for doc in rule_yaml_data:
+
+            parser = sigma_collection.SigmaCollectionParser(
+                str(doc), sigma_conf_obj, None)
+            parsed_sigma_rules = parser.generate(sigma_backend)
             rule_return.update(doc)
 
     except NotImplementedError as exception:
@@ -308,13 +335,13 @@ def get_sigma_rule_by_text(rule_text, sigma_config=None):
     sigma_es_query = ''
 
     for sigma_rule in parsed_sigma_rules:
-        sigma_es_query = sigma_rule
+        sigma_es_query = _sanatize_sigma_rule(sigma_rule)
 
     rule_return.update(
-        {'es_query':sigma_es_query})
+        {'es_query': sigma_es_query})
     rule_return.update(
-        {'file_name':'N/A'})
+        {'file_name': 'N/A'})
     rule_return.update(
-        {'file_relpath':'N/A'})
-
+        {'file_relpath': 'N/A'})
+    logger.error(rule_return)
     return rule_return

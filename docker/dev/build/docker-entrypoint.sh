@@ -12,7 +12,9 @@ if [ "$1" = 'timesketch' ]; then
   cp /usr/local/src/timesketch/data/features.yaml /etc/timesketch/
   cp /usr/local/src/timesketch/data/tags.yaml /etc/timesketch/
   cp /usr/local/src/timesketch/data/plaso.mappings /etc/timesketch/
+  cp /usr/local/src/timesketch/data/generic.mappings /etc/timesketch/
   cp /usr/local/src/timesketch/data/ontology.yaml /etc/timesketch/
+  cp /usr/local/src/timesketch/data/data_finder.yaml /etc/timesketch/
   ln -s /usr/local/src/timesketch/data/sigma_config.yaml /etc/timesketch/sigma_config.yaml
   ln -s /usr/local/src/timesketch/data/sigma /etc/timesketch/
 
@@ -59,6 +61,9 @@ if [ "$1" = 'timesketch' ]; then
   sed -i s/"ENABLE_INDEX_ANALYZERS = False"/"ENABLE_INDEX_ANALYZERS = True"/ /etc/timesketch/timesketch.conf
   sed -i s/"ENABLE_SKETCH_ANALYZERS = False"/"ENABLE_SKETCH_ANALYZERS = True"/ /etc/timesketch/timesketch.conf
   sed -i s/"ENABLE_EXPERIMENTAL_UI = False"/"ENABLE_EXPERIMENTAL_UI = True"/ /etc/timesketch/timesketch.conf
+
+  # Disable CSRF checks for the development server
+  echo "WTF_CSRF_ENABLED = False" >> /etc/timesketch/timesketch.conf
 
   # Add web user
   tsctl add_user --username "${TIMESKETCH_USER}" --password "${TIMESKETCH_USER}"

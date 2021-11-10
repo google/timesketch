@@ -47,6 +47,7 @@ from timesketch.models.sketch import Event
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
+from timesketch.models.sketch import SearchHistory
 
 
 logger = logging.getLogger('timesketch.event_api')
@@ -562,6 +563,26 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
             abort(HTTP_STATUS_CODE_FORBIDDEN,
                   'User does not have write access controls on sketch.')
 
+        current_search_node = None
+        _search_node_id = request.json.get('current_search_node_id', None)
+        if _search_node_id:
+            current_search_node = SearchHistory.query.get(_search_node_id)
+            if not current_search_node:
+                abort(
+                    HTTP_STATUS_CODE_NOT_FOUND,
+                    'No search history found with this ID'
+                )
+            if not current_search_node.sketch == sketch:
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    'Wrong sketch for this search history'
+                )
+            if not current_search_node.user == current_user:
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    'Wrong user for this search history'
+                )
+
         indices = [
             t.searchindex.index_name for t in sketch.timelines
             if t.get_status.status.lower() == 'ready']
@@ -588,6 +609,9 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                 searchindex=searchindex,
                 document_id=event_id)
 
+            if current_search_node:
+                current_search_node.events.append(event)
+
             # Add the annotation to the event object.
             if 'comment' in annotation_type:
                 annotation = Event.Comment(
@@ -600,7 +624,10 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                     sketch.id,
                     current_user.id,
                     '__ts_comment',
-                    toggle=False)
+                    toggle=False
+                )
+                if current_search_node:
+                    current_search_node.add_label('__ts_comment')
 
             elif 'label' in annotation_type:
                 annotation = Event.Label.get_or_create(
@@ -623,8 +650,14 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                     sketch.id,
                     current_user.id,
                     form.annotation.data,
-                    toggle=toggle)
+                    toggle=toggle
+                )
 
+                if current_search_node:
+                    search_node_label = '__ts_label'
+                    if '__ts_star' in form.annotation.data:
+                        search_node_label = '__ts_star'
+                    current_search_node.add_label(search_node_label)
             else:
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
@@ -764,7 +797,8 @@ class MarkEventsWithTimelineIdentifier(resources.ResourceMixin, Resource):
         }
         # pylint: disable=unexpected-keyword-arg
         self.datastore.client.update_by_query(
-            body=query_dsl, index=searchindex.index_name, conflicts='proceed')
+            body=query_dsl, index=searchindex.index_name, conflicts='proceed',
+            wait_for_completion=False)
 
         # Update mappings - to make sure that we can label events.
         mapping_update = {

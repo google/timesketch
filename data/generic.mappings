@@ -1,0 +1,11 @@
+{
+  "date_detection": false,
+  "properties": {
+    "datetime": {
+      "type": "date"
+    },
+    "timesketch_label": {
+      "type": "nested"
+     }
+  }
+}

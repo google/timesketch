@@ -40,8 +40,8 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Install dependencies
-      run: yarn add eslint
+      run: yarn add eslint@5.16.0
     - name: Run eslint
       run: |
         git config pull.rebase false && git fetch -p origin master
-        for FILE in `git --no-pager diff origin/master --name-only | grep -e \.vue$ -e \.js$ | grep -v dist\/js | sed s/'^timesketch\/frontend\/'/''/`; do echo "Running eslint against ${FILE}"; yarn run eslint ${FILE}; done
+        for FILE in `git --no-pager diff origin/master --name-only --diff-filter=ACMR | grep -e \.vue$ -e \.js$ | grep -v dist\/js | sed s/'^timesketch\/frontend\/'/''/`; do echo "Running eslint against ${FILE}"; yarn run eslint ${FILE}; done

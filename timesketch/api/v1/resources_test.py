@@ -175,17 +175,26 @@ class ExploreResourceTest(BaseTest):
     resource_url = '/api/v1/sketches/1/explore/'
     expected_response = {
         'meta': {
-            'timeline_names': {
-                'test': 'Timeline 1'
-            },
-            'timeline_colors': {
-                'test': 'FFFFFF'
-            },
-            'es_total_count': 1,
             'es_time': 5,
+            'es_total_count': 1,
+            'es_total_count_complete': 0,
+            'timeline_colors': {'test': 'FFFFFF'},
+            'timeline_names': {'test': 'Timeline 1'},
             'count_per_index': {},
             'count_per_timeline': {},
-            'scroll_id': ''
+            'count_over_time': {'data': {}, 'interval': ''},
+            'scroll_id': '',
+            'search_node': {
+                'children': [],
+                'description': None,
+                'id': 1,
+                'labels': [],
+                'parent': None,
+                'query_dsl': None,
+                'query_filter': '{}',
+                'query_result_count': 0,
+                'query_string': 'test'
+            }
         },
         'objects': [{
             'sort': [1410593223000],
@@ -215,6 +224,10 @@ class ExploreResourceTest(BaseTest):
             self.resource_url,
             data=json.dumps(data, ensure_ascii=False),
             content_type='application/json')
+        response_json = response.json
+        # Remove flaky properties (dynamically generated)
+        del response_json['meta']['search_node']['created_at']
+        del response_json['meta']['search_node']['query_time']
         self.assertDictEqual(response.json, self.expected_response)
         self.assert200(response)
 
@@ -370,13 +383,13 @@ class SigmaResourceTest(BaseTest):
     resource_url = '/api/v1/sigma/rule/'
     expected_response = {
         'objects': {
-            'description': 'Detects suspicious installation of Zenmap',
+            'description': 'Detects suspicious installation of ZMap',
             'id': '5266a592-b793-11ea-b3de-0242ac130004',
             'level': 'high',
             'logsource': {
                 'product': 'linux', 'service': 'shell'
                 },
-            'title': 'Suspicious Installation of Zenmap',
+            'title': 'Suspicious Installation of ZMap',
         }
     }
 
@@ -398,7 +411,7 @@ class SigmaListResourceTest(BaseTest):
         'objects':[{
             'author': 'Alexander Jaeger',
             'date': '2020/06/26',
-            'description': 'Detects suspicious installation of Zenmap',
+            'description': 'Detects suspicious installation of ZMap',
             'detection': {
                 'condition': 'keywords',
                 'keywords': [
@@ -406,14 +419,14 @@ class SigmaListResourceTest(BaseTest):
                     ]
                 },
             'es_query':
-                '(data_type:("shell\\:zsh\\:history" OR '\
-                '"bash\\:history\\:command" OR '\
-                '"apt\\:history\\:line" OR '\
-                '"selinux\\:line") AND '\
-                '"*apt\\-get\\ install\\ zmap*")',
+                '(data_type:("shell:zsh:history" OR '\
+                '"bash:history:command" OR '\
+                '"apt:history:line" OR '\
+                '"selinux:line") AND '\
+                '"*apt-get install zmap*")',
             'falsepositives': ['Unknown'],
-            'file_name': 'lnx_susp_zenmap.yml',
-            'file_relpath': 'lnx_susp_zenmap.yml',
+            'file_name': 'lnx_susp_zmap.yml',
+            'file_relpath': 'lnx_susp_zmap.yml',
             'id': '5266a592-b793-11ea-b3de-0242ac130004',
             'level': 'high',
             'logsource': {
@@ -425,7 +438,7 @@ class SigmaListResourceTest(BaseTest):
             'references': [
                 'https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html'
             ],
-            'title': 'Suspicious Installation of Zenmap'
+            'title': 'Suspicious Installation of ZMap'
         }]}
     def test_get_sigma_rule_list(self):
         self.login()
@@ -488,7 +501,7 @@ class SigmaByTextResourceTest(BaseTest):
                 'falsepositives': ['Unknown'],
                 'level': 'high',
                 'es_query':
-                    '(data_type:("shell\\:zsh\\:history" OR "bash\\:history\\:command" OR "apt\\:history\\:line" OR "selinux\\:line") AND "*apt\\-get\\ install\\ foobar*")',# pylint: disable=line-too-long
+                    '(data_type:("shell:zsh:history" OR "bash:history:command" OR "apt:history:line" OR "selinux:line") AND "*apt-get install foobar*")',# pylint: disable=line-too-long
                 'file_name': 'N/A',
                 'file_relpath': 'N/A'
             }
