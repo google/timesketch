@@ -6,10 +6,10 @@ on:
 
 jobs:
   yarn:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
     strategy:
       matrix:
-        os: [ubuntu-22.04]
+        os: [ubuntu-20.04]
         node-version: ['10', '12']
     steps:
     - uses: actions/checkout@v2
