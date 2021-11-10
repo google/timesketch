@@ -90,9 +90,9 @@ export default {
     },
     getIOC: function(text) {
       for (let iocType of this.IOCTypes) {
-        let matches = iocType.regex.exec(this.$attrs.text)
+        let matches = iocType.regex.exec(text)
         if (matches) {
-          return { ioc: this.$attrs.text, type: iocType.type }
+          return { ioc: text, type: iocType.type }
         }
       }
       return { ioc: this.$attrs.text, type: null }
