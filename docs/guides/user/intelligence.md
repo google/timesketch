@@ -16,6 +16,8 @@ The currently supported IOC types are:
 * `hash_md5`
 * `ip`
 
+If a string doesn't match any of the aforementioned IOC types, the type will fall back to `other`.
+
 ## Searching for local Intelligence in your Sketch
 
 The list of all the IOCs added to a sketch can be seen in the *Intelligence* tab (accessible at `/sketch/{SKECTH_ID}/intelligence`).
