@@ -18,6 +18,9 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
     - name: Install dependencies
-      run: sudo apt install yarn
+      run: |
+        sudo apt install yarn
+        yarn install --cwd=timesketch/frontend
+
     - name: Run unit tests with yarn
       run: yarn run --cwd=timesketch/frontend test:unit
