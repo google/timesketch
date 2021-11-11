@@ -24,6 +24,16 @@ const testIOCs = [
     {text: '11a3e229084349bc25d97e29393ced1d', type: 'hash_md5'},
     {text: '0011a3e229084349bc25d97e29393ced1d', type: 'other'},
     {text: 'ZZa3e229084349bc25d97e29393ced1d', type: 'other'},
+
+    {text: '/tmp/tmpcl4mrm0w/4370B0F43479C318.body', type: 'fs_path'},
+    {text: '/tmp/tmpcl4mrm0w/4370B0F43 479C318.body', type: 'other'},
+
+    {text: 'tomchop.me', type: 'hostname'},
+    {text: 'subdomain.tomchop.me', type: 'hostname'},
+    {text: 'sub-domain99.tomchop.me', type: 'hostname'},
+    {text: 'sub.tomc-hop.me', type: 'hostname'},
+    {text: 'tomchop.m-e', type: 'other'},
+
 ]
 
 describe('TsIOCMenu.vue', () => {
