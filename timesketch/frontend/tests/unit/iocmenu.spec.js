@@ -45,7 +45,7 @@ describe('TsIOCMenu.vue', () => {
   it('IOC type is correctly derived from text selection', () => {
     const wrapper = shallowMount(TsIOCMenu, {})
     for (let testIoc of testIOCs) {
-        expect(wrapper.vm.getIOC(testIoc.text).type).to.equal(testIoc.type, testIoc.text)
+        expect(wrapper.vm.getIOC(testIoc.text).type).to.equal(testIoc.type, 'Mismatch on ' + testIoc.text)
     }
   })
 })
