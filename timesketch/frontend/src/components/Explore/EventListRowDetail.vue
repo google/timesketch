@@ -59,12 +59,14 @@ limitations under the License.
             ><i class="fas fa-copy"></i
           ></span>
           <text-highlight
+            v-if="getRegexes(key).length > 0"
             @addChip="$emit('addChip', $event)"
             :highlightComponent="TsIOCMenu"
-            :queries="Object.values(regexes)"
+            :queries="getRegexes(key)"
             :attributeKey="key"
             >{{ item }}</text-highlight
           >
+          <span v-else>{{item}}</span>
         </td>
       </tr>
     </tbody>
@@ -82,13 +84,13 @@ export default {
   data() {
     return {
       TsIOCMenu,
-      regexes: {
-        ip: /((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/g,
-        hash_md5: /[0-9a-f]{32}/gi,
-        hash_sha1: /[0-9a-f]{40}/gi,
-        hash_sha256: /[0-9a-f]{64}/gi,
-        selection: '',
-      },
+      regexSelection: '',
+      regexes: [
+        { type: 'ip', regex: /((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/g, match_fields: 'message' },
+        { type: 'hash_md5', regex: /[0-9a-f]{32}/i, match_fields: 'message' },
+        { type: 'hash_sha1', regex: /[0-9a-f]{40}/i, match_fields: 'message' },
+        { type: 'hash_sha256', regex: /[0-9a-f]{64}/i, match_fields: 'message' },
+      ],
       c_key: -1,
       fullEvent: {},
     }
@@ -135,10 +137,18 @@ export default {
         return
       }
       const text = window.getSelection().toString()
-      this.regexes.selection = text
-      if (this.regexes.selection !== '') {
-      }
+      this.regexSelection = text
     },
+    getRegexes(key) {
+      if (this.regexSelection !== '') {
+        return this.regexSelection
+      }
+      let regexes = Object.values(this.regexes.filter(r=> r.match_fields === key || r.match_fields === '*').map(r => r.regex))
+      if (this.regexSelection !== '') {
+        regexes.push(this.regexSelection)
+      }
+      return regexes
+    }
   },
   created: function() {
     this.getEvent()
