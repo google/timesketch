@@ -86,8 +86,8 @@ export default {
       TsIOCMenu,
       regexSelection: '',
       regexes: [
-        { type: 'fs_path', regex: /(\/[\S]+)+/, match_fields: 'message' },
-        { type: 'hostname', regex: /([-\w]+\.)+[a-z]{2,}/, match_fields: 'hostname' },
+        { type: 'fs_path', regex: /(\/[\S]+)+/i, match_fields: 'message' },
+        { type: 'hostname', regex: /([-\w]+\.)+[a-z]{2,}/i, match_fields: 'hostname' },
         { type: 'ip', regex: /((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/g, match_fields: 'message' },
         { type: 'hash_md5', regex: /[0-9a-f]{32}/i, match_fields: 'message' },
         { type: 'hash_sha1', regex: /[0-9a-f]{40}/i, match_fields: 'message' },
