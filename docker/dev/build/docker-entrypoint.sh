@@ -62,6 +62,9 @@ if [ "$1" = 'timesketch' ]; then
   sed -i s/"ENABLE_SKETCH_ANALYZERS = False"/"ENABLE_SKETCH_ANALYZERS = True"/ /etc/timesketch/timesketch.conf
   sed -i s/"ENABLE_EXPERIMENTAL_UI = False"/"ENABLE_EXPERIMENTAL_UI = True"/ /etc/timesketch/timesketch.conf
 
+  # Disable CSRF checks for the development server
+  echo "WTF_CSRF_ENABLED = False" >> /etc/timesketch/timesketch.conf
+
   # Add web user
   tsctl add_user --username "${TIMESKETCH_USER}" --password "${TIMESKETCH_USER}"
 

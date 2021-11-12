@@ -2,10 +2,6 @@
 from __future__ import unicode_literals
 
 import logging
-import time
-import elasticsearch
-
-from flask import current_app
 
 from timesketch.lib.analyzers import utils
 
@@ -24,7 +20,19 @@ class SigmaPlugin(interface.BaseAnalyzer):
     DISPLAY_NAME = 'Sigma'
     DESCRIPTION = 'Run pre-defined Sigma rules and tag matching events'
 
-    def run_sigma_rule(self, query, rule_name, tag_list = None):
+    def __init__(self, index_name, sketch_id, timeline_id=None, **kwargs):
+        """Initialize The Sigma Analyzer.
+
+        Args:
+            index_name: Elasticsearch index name
+            sketch_id: Sketch ID
+            timeline_id: The ID of the timeline.
+        """
+        self.index_name = index_name
+        self._rule = kwargs.get('rule')
+        super().__init__(index_name, sketch_id, timeline_id=timeline_id)
+
+    def run_sigma_rule(self, query, rule_name, tag_list=None):
         """Runs a sigma rule and applies the appropriate tags.
 
         Args:
@@ -35,6 +43,8 @@ class SigmaPlugin(interface.BaseAnalyzer):
         Returns:
             int: number of events tagged.
         """
+        if not tag_list:
+            tag_list = []
         return_fields = []
         tagged_events_counter = 0
         events = self.event_stream(
@@ -44,13 +54,16 @@ class SigmaPlugin(interface.BaseAnalyzer):
             ts_sigma_rules.append(rule_name)
             event.add_attributes({'ts_sigma_rule': list(set(ts_sigma_rules))})
             ts_ttp = event.source.get('ts_ttp', [])
+            special_tags = []
             for tag in tag_list:
-                # special handling for sigma tags that TS considers TTPS
+                # Special handling for sigma tags that TS considers TTPS
                 # https://car.mitre.org and https://attack.mitre.org
                 if tag.startswith(('attack.', 'car.')):
                     ts_ttp.append(tag)
-                    tag_list.remove(tag)
-            event.add_tags(tag_list)
+                    special_tags.append(tag)
+            # ad the remaining tags as plain tags
+            tags_to_add = list(set(tag_list) - set(special_tags))
+            event.add_tags(tags_to_add)
             if len(ts_ttp) > 0:
                 event.add_attributes({'ts_ttp': list(set(ts_ttp))})
             event.commit()
@@ -66,52 +79,31 @@ class SigmaPlugin(interface.BaseAnalyzer):
 
         tags_applied = {}
         sigma_rule_counter = 0
-        sigma_rules = ts_sigma_lib.get_all_sigma_rules()
-        if sigma_rules is None:
+        tagged_events_counter = 0
+
+        rule = self._rule
+        if not rule:
             logger.error('No  Sigma rules found. Check SIGMA_RULES_FOLDERS')
+        rule_name = rule.get('title', 'N/A')
         problem_strings = []
         output_strings = []
 
-        for rule in sigma_rules:
-            tags_applied[rule.get('file_name')] = 0
-            try:
-                sigma_rule_counter += 1
-                tagged_events_counter = self.run_sigma_rule(
-                    rule.get('es_query'), rule.get('file_name'),
-                    tag_list=rule.get('tags'))
-                tags_applied[rule.get('file_name')] += tagged_events_counter
-                if sigma_rule_counter % 10 == 0:
-                    logger.debug('Rule {0:d}/{1:d}'.format(
-                        sigma_rule_counter, len(sigma_rules)))
-            except elasticsearch.TransportError as e:
-                logger.error(
-                    'Timeout executing search for {0:s}: '
-                    '{1!s} waiting for 10 seconds'.format(
-                        rule.get('file_name'), e), exc_info=True)
-                # this is caused by too many ES queries in short time range
-                # TODO: https://github.com/google/timesketch/issues/1782
-                sleep_time = current_app.config.get(
-                    'SIGMA_TAG_DELAY', 15)
-                time.sleep(sleep_time)
-                tagged_events_counter = self.run_sigma_rule(
-                    rule.get('es_query'), rule.get('file_name'),
-                    tag_list=rule.get('tags'))
-                tags_applied[rule.get('file_name')] += tagged_events_counter
-            # Wide exception handling since there are multiple exceptions that
-            # can be raised by the underlying sigma library.
-            except: # pylint: disable=bare-except
-                logger.error(
-                    'Problem with rule in file {0:s}: '.format(
-                        rule.get('file_name')), exc_info=True)
-                problem_strings.append('* {0:s}'.format(
-                    rule.get('file_name')))
-                continue
+        tags_applied[rule.get('file_name')] = 0
+        try:
+            sigma_rule_counter += 1
+            tagged_events_counter = self.run_sigma_rule(
+                rule.get('es_query'), rule.get('file_name'),
+                tag_list=rule.get('tags'))
+            tags_applied[rule.get('file_name')] += tagged_events_counter
+        except:  # pylint: disable=bare-except
+            logger.error(
+                'Problem with rule in file {0:s}: '.format(
+                    rule.get('file_name')), exc_info=True)
+            problem_strings.append('* {0:s}'.format(
+                rule.get('file_name')))
 
-        total_tagged_events = sum(tags_applied.values())
-        output_strings.append('Applied {0:d} tags'.format(total_tagged_events))
-
-        if sigma_rule_counter > 0:
-            self.add_sigma_match_view(sigma_rule_counter)
+        output_strings.append(
+            f'{tagged_events_counter} events tagged for rule [{rule_name}]')
 
         if len(problem_strings) > 0:
             output_strings.append('Problematic rules:')
@@ -156,10 +148,23 @@ class SigmaPlugin(interface.BaseAnalyzer):
             'And an overview of all the discovered search terms:')
         story.add_view(view)
 
+    @staticmethod
+    def get_kwargs():
+        """Returns an array of all rules of Timesketch.
+
+        Returns:
+            sigma_rules All Sigma rules
+        """
+        sigma_rules = [
+            {'rule': rule} for rule in ts_sigma_lib.get_all_sigma_rules()
+        ]
+        return sigma_rules
+
 
 class RulesSigmaPlugin(SigmaPlugin):
     """Sigma plugin to run rules."""
 
     NAME = 'sigma'
+
 
 manager.AnalysisManager.register_analyzer(RulesSigmaPlugin)

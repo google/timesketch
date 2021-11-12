@@ -36,12 +36,10 @@ limitations under the License.
       @toggle="toggleTimeline"
     ></ts-timeline-chip>
     <div v-if="activeTimelines.length > 3" style="margin-top:7px;">
-      <span style="text-decoration: underline; cursor: pointer; margin-right: 10px;"
-      v-on:click="enableAllTimelines">Enable all
+      <span style="text-decoration: underline; cursor: pointer; margin-right: 10px;" v-on:click="enableAllTimelines"
+        >Enable all
       </span>
-      <span style="text-decoration: underline; cursor: pointer;"
-      v-on:click="disableAllTimelines">Disable all
-      </span>
+      <span style="text-decoration: underline; cursor: pointer;" v-on:click="disableAllTimelines">Disable all </span>
     </div>
   </div>
 </template>
@@ -59,11 +57,15 @@ export default {
       return this.$store.state.sketch
     },
     activeTimelines() {
-      return this.sketch.active_timelines
+      // Sort alphabetically based on timeline name.
+      let timelines = [...this.sketch.active_timelines]
+      return timelines.sort(function(a, b) {
+        return a.name.localeCompare(b.name)
+      })
     },
     isEmptyState() {
       return this.countPerTimeline === undefined
-    }
+    },
   },
   data() {
     return {
@@ -77,9 +79,12 @@ export default {
       return this.selectedTimelines.includes(timeline)
     },
     getCount(timeline) {
-      let count = '';
+      let count = 0
       if (this.countPerTimeline) {
         count = this.countPerTimeline[timeline.id]
+        if (typeof count === 'number') {
+          return count
+        }
       }
       // Support for old style indices
       if (!count && this.countPerIndex) {
@@ -91,11 +96,10 @@ export default {
       this.isLoading = true
       ApiClient.deleteSketchTimeline(this.sketch.id, timeline.id)
         .then(() => {
-          this.$store.dispatch('updateSketch', this.sketch.id)
-            .then(() => {
-              this.syncSelectedTimelines()
-              this.isLoading = false
-            })
+          this.$store.dispatch('updateSketch', this.sketch.id).then(() => {
+            this.syncSelectedTimelines()
+            this.isLoading = false
+          })
         })
         .catch(e => {
           console.error(e)
@@ -107,13 +111,18 @@ export default {
       if (newTimelineName) {
         this.isLoading = true
       }
-      ApiClient.saveSketchTimeline(this.sketch.id, timeline.id, newTimelineName || timeline.name, timeline.description, timeline.color)
+      ApiClient.saveSketchTimeline(
+        this.sketch.id,
+        timeline.id,
+        newTimelineName || timeline.name,
+        timeline.description,
+        timeline.color
+      )
         .then(() => {
-          this.$store.dispatch('updateSketch', this.sketch.id)
-            .then(() => {
-              this.syncSelectedTimelines()
-              this.isLoading = false
-            })
+          this.$store.dispatch('updateSketch', this.sketch.id).then(() => {
+            this.syncSelectedTimelines()
+            this.isLoading = false
+          })
         })
         .catch(e => {
           console.error(e)
@@ -145,7 +154,7 @@ export default {
     syncSelectedTimelines() {
       if (this.currentQueryFilter.indices.includes('_all')) {
         this.selectedTimelines = this.activeTimelines
-       return
+        return
       }
       let newArray = []
       this.currentQueryFilter.indices.forEach(index => {

@@ -21,9 +21,9 @@ from . import test_lib
 from . import client
 
 MOCK_SIGMA_RULE = """
-title: Suspicious Installation of Zenmap
+title: Suspicious Installation of ZMap
 id: 5266a592-b793-11ea-b3de-0242ac130004
-description: Detects suspicious installation of Zenmap
+description: Detects suspicious installation of ZMap
 references:
     - https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html
 author: Alexander Jaeger
@@ -45,7 +45,7 @@ level: high
 MOCK_SIGMA_RULE_ERROR1 = """
 title: Suspicious Foobar
 id: 5266a592-b793-11ea-b3de-0242ac130004
-description: Detects suspicious installation of Zenmap
+description: Detects suspicious installation of ZMap
 references:
     - https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html
 author: Alexander Jaeger
@@ -73,16 +73,16 @@ class TimesketchSigmaTest(unittest.TestCase):
         self.assertIn('Alexander', rule.author)
         self.assertIn('Alexander', rule.get_attribute('author'))
         self.assertEqual(rule.id, '5266a592-b793-11ea-b3de-0242ac130004')
-        self.assertEqual(rule.title, 'Suspicious Installation of Zenmap')
+        self.assertEqual(rule.title, 'Suspicious Installation of ZMap')
         self.assertIn('zmap', rule.es_query, 'ES_Query does not match')
         self.assertIn('b793', rule.id)
         self.assertIn('/syslog/foobar/', rule.file_relpath)
         self.assertIn('sigma/rule/5266a592', rule.resource_uri)
-        self.assertIn('suspicious installation of Zenmap', rule.description)
+        self.assertIn('suspicious installation of ZMap', rule.description)
         self.assertIn('high', rule.level)
         self.assertEqual(len(rule.falsepositives), 1)
         self.assertIn('Unknown', rule.falsepositives[0])
-        self.assertIn('susp_zenmap', rule.file_name)
+        self.assertIn('susp_zmap', rule.file_name)
         self.assertIn('2020/06/26', rule.date)
         self.assertIn('2021/01/01', rule.modified)
         self.assertIn('high', rule.level)
@@ -98,12 +98,12 @@ class TimesketchSigmaTest(unittest.TestCase):
         self.assertIsNotNone(rules)
         self.assertEqual(len(rules), 2)
         rule = rules[0]
-        self.assertEqual(rule.title, 'Suspicious Installation of Zenmap')
+        self.assertEqual(rule.title, 'Suspicious Installation of ZMap')
         self.assertIn('zmap', rule.es_query, 'ES_Query does not match')
         self.assertIn('b793', rule.id)
         self.assertIn('Alexander', rule.author)
         self.assertIn('2020/06/26',rule.date)
-        self.assertIn('installation of Zenmap', rule.description)
+        self.assertIn('installation of ZMap', rule.description)
         self.assertEqual(len(rule.detection), 2)
         self.assertIn('zmap*', rule.es_query)
         self.assertIn('Unknown', rule.falsepositives[0])
@@ -111,7 +111,7 @@ class TimesketchSigmaTest(unittest.TestCase):
         self.assertEqual(len(rule.logsource), 2)
         self.assertIn('2020/06/26', rule.modified)
         self.assertIn('/linux/syslog/foobar', rule.file_relpath)
-        self.assertIn('lnx_susp_zenmap', rule.file_name)
+        self.assertIn('lnx_susp_zmap', rule.file_name)
         self.assertIn('high', rule.level)
         self.assertIn('foobar.com', rule.references[0])
 

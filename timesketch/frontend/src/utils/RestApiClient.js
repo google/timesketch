@@ -302,15 +302,19 @@ export default {
   getLoggedInUser() {
     return RestApiClient.get('/users/me/')
   },
-  generateGraphFromPlugin(sketchId, graphPlugin, currentIndices, refresh) {
+  generateGraphFromPlugin(sketchId, graphPlugin, currentIndices, timelineIds, refresh) {
     let formData = {
       plugin: graphPlugin,
       config: {
         filter: {
           indices: currentIndices,
+          timelineIds: timelineIds,
         },
       },
       refresh: refresh,
+    }
+    if (timelineIds.length) {
+      formData['timeline_ids'] = timelineIds
     }
     return RestApiClient.post('/sketches/' + sketchId + /graph/, formData)
   },
@@ -340,5 +344,18 @@ export default {
   },
   getSearchHistoryTree(sketchId) {
     return RestApiClient.get('/sketches/' + sketchId + /searchhistorytree/)
+  },
+  // Sigma
+  getSigmaList() {
+    return RestApiClient.get('/sigma/')
+  },
+  getSigmaResource(ruleUuid) {
+    return RestApiClient.get('/sigma/rule/' + ruleUuid + '/')
+  },
+  getSigmaByText(ruleText) {
+    let formData = {
+      content: ruleText,
+    }
+    return RestApiClient.post('/sigma/text/', formData)
   },
 }

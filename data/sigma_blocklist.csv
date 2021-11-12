@@ -2,6 +2,11 @@ path,bad,reason,last_ckecked,rule_id
 application/app,bad,not checked yet,2021-05-04,
 apt/apt_silence,bad,not checked yet,2021-05-04,
 cloud/aws_,bad,not checked yet,2021-05-04,
+cloud/azure,bad,no test data available,2021-09-23,
+cloud/gworkspace,bad,no test data available,2021-09-23,
+cloud/m365,bad,no test data available,2021-09-23,
+cloud/okta,bad,no test data available,2021-09-23,
+cloud/awd,bad,no test data available,2021-09-23,
 compliance/,bad,not checked yet,2021-05-04,
 generic/generic_brute_force.yml,bad,count not implemented,2021-05-04,
 network/cisco/aaa/cisco_,bad,no test data available,2021-05-04,
@@ -76,6 +81,20 @@ powershell_xor_commandline.yml, good, no sample data,2021-05-04,
 win_powershell_web_request.yml, bad, multiple rules in one file,2021-05-04,
 windows/process_access/sysmon_,bad,no test data available,2021-05-04,
 windows/process_creation/,bad,no test data available,2021-05-04,
+windows/process_creation/win_office_shell.yml,good,479eb1c4644de672a5b221c6ad19b5b1cbd2875b45af76a291e9ff594d651b68,2021-10-25,
+rules/windows/process_creation/win_shadow_copies_deletion.yml, good,62a8fc79a775abce91c4cb87c7f3cdc4cbdf85d0f0083c72703052710d645119,2021-10-25, 
+rules/windows/registry_event/sysmon_asep_reg_keys_modification.yml, bad,to long query needs to be tuned 0628997695cf9655c523896f1703472cee08b66eb5ae6bd385433b73105f4ca9,2021-10-26,17f878b8-9968-4578-b814-c4217fc5768c
+rules/windows/process_creation/win_non_interactive_powershell.yml,good,good 0628997695cf9655c523896f1703472cee08b66eb5ae6bd385433b73105f4ca9,2021-10-26,f4bbd493-b796-416e-bbf2-121235348529
+rules/windows/registry_event/sysmon_susp_download_run_key.yml,bad,no evtx sample found,2021-10-26,9c5037d1-c568-49b3-88c7-9846a5bdc2be
+rules/windows/file_event/sysmon_creation_system_file.yml,bad,no evtx sample only sylog,2021-10-26,d5866ddf-ce8f-4aea-b28e-d96485a20d3d
+rules/windows/process_creation/win_susp_net_execution.yml,good,501113c57563009a37feb467c0828c153a1f7097f16c4038636f3651a266189e,2021-10-26,183e7ea8-ac4b-4c23-9aec-b3dac4e401ac
+rules/windows/process_creation/win_service_stop.yml,good,501113c57563009a37feb467c0828c153a1f7097f16c4038636f3651a266189e,2021-10-26,eb87818d-db5d-49cc-a987-d5da331fbd90
+rules/windows/process_creation/win_proc_wrong_parent.yml,bad,no test data for evtx d01bb6498156f94164d67cc854b64fb12077886f2c7f46f503a1c2dbdfd57169,2021-10-26,96036718-71cc-4027-a538-d1587e0006a7
+rules/windows/process_creation/win_system_exe_anomaly.yml,bad,rule to noisy 9ac87754adb88a8ac14969bb4adaed043f783d7264d0846365ca0cf4b7f80ffb,2021-10-26,e4a6b256-3e47-40fc-89d2-7a477edd6915
+rules/windows/process_creation/process_creation_powershell_web_request.yml,bad, very noisy 3402ef40e1e748a6d1e62cc80d8319a132683a326803ed812e4e386f04455a12 and 4df37056407ca0353e2357399ec8f2bd7583b6d10fc5d1d4f6744b9415a1ce2f,2021-10-26,9fc51a3c-81b3-4fa7-b35f-7c02cf10fd2d
+rules/windows/powershell/powershell_script/powershell_web_request.yml,bad, very noisy 3402ef40e1e748a6d1e62cc80d8319a132683a326803ed812e4e386f04455a12 and 4df37056407ca0353e2357399ec8f2bd7583b6d10fc5d1d4f6744b9415a1ce2f,2021-10-26,9fc51a3c-81b3-4fa7-b35f-7c02cf10fd2d
+rules/windows/process_creation/win_malware_script_dropper.yml,bad,cannot parse 3402ef40e1e748a6d1e62cc80d8319a132683a326803ed812e4e386f04455a12,2021-10-26,cea72823-df4d-4567-950c-0b579eaf0846
+rules/windows/network_connection/sysmon_notepad_network_connection.yml,bad,no hits in e70f141f138d899c80ee9d94792e4e4c6b6d5e2e8cb59f9c3d3a8dde68db5cd4,2021-10-26,e81528db-fc02-45e8-8e98-4e84aba1f10b
 windows/raw_access_thread/,bad,no test data available,2021-05-04,
 windows/registry_event/,bad,no test data available,2021-05-04,
 windows/wmi_event/,bad,no test data available,2021-05-04,
@@ -157,3 +176,7 @@ linux/lnx,bad,not reviewed,2021-05-04,
 win_lsass_access_non_system_account.yml,bad,Failed to parse query,2021-05-04,
 sysmon_uipromptforcreds_dlls.yml,bad, Failed to parse query,2021-05-05,
 sysmon_wsman_provider_image_load.yml,bad, Failed to parse query,2021-05-05,
+rules/windows/file_event/sysmon_susp_desktop_ini.yml,good,9ac87754adb88a8ac14969bb4adaed043f783d7264d0846365ca0cf4b7f80ffb,2021-10-26,81315b50-6b60-4d8f-9928-3466e1022515
+rules/windows/file_event/sysmon_startup_folder_file_write.yml,bad,no good sample found 9ac87754adb88a8ac14969bb4adaed043f783d7264d0846365ca0cf4b7f80ffb,2021-10-26,2aa0a6b4-a865-495b-ab51-c28249537b75
+rules/windows/process_creation/sysmon_always_install_elevated_windows_installer.yml,bad,no good sample found e5874027b483a6bcac952f302eedcadb59f858e9d7cc1f89b08102c8dbc69160,2021-10-26,cd951fdc-4b2f-47f5-ba99-a33bf61e3770
+rules/windows/process_creation/win_susp_svchost.yml,good,cc565bd2909f2889f8369939c3b932030f4dddba3b52ec17a2b4961144b05aa6,2021-10-26,01d2e2a1-5f09-44f7-9fc1-24faa7479b6d
