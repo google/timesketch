@@ -69,4 +69,4 @@ appears below the timelines.
 
 The importer client defines an importer library that is used to help with
 file or data uploads. This is documented further
-[here](/docs/developers/api-upload-data.md)
+[here](/developers/api-upload-data/)

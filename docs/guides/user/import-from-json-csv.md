@@ -28,4 +28,4 @@ Unlike JSON files, imports in JSONL format can be streamed from disk, making the
 
 To create a new timeline in Timesketch you need to upload it to the server.
 
-[See here for instructions to do so](/guides/getting-started/upload-data/)
+[See here for instructions to do so](/guides/user/upload-data/)

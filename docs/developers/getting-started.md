@@ -140,7 +140,7 @@ To test mkdocs locally, run the following in your container:
 
 ```shell
 ! cd /usr/local/src/timesketch
-! pip3 install mkdocs mkdocs-material
+! pip3 install mkdocs mkdocs-material mkdocs-redirects
 ! mkdocs serve
 ```
 
