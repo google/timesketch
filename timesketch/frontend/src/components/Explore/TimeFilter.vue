@@ -175,7 +175,9 @@ export default {
     } else {
       this.radio = 'interval'
       let offset = this.chip.value
-      this.offsetStart = offset.match(/^\s*(([0-9/:-]{4,10})(:?[ T]([0-9]{2}:){2}([0-9]{2}))?)/)[1]
+      // offsetStart regex accepts any allowed chars >=4 long, until it
+      // encounters a space followed by the minus sign
+      this.offsetStart = offset.match(/^\s*([0-9/:T -]{4,})(:? -)/)[1]
       this.offsetPlus = offset.match(/\s[+]([0-9]+)/)[1]
       this.offsetMinus = offset.match(/\s[-]([0-9]+)/)[1]
       this.selectedInterval = offset.match(/\s\+[0-9]+([a-zA-Z])/)[1] // interval type (day, minute, etc.)

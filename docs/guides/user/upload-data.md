@@ -18,7 +18,7 @@ can be used. It utilizes the importer client library and the API client to uploa
 the file. This is a simple wrapper around the importer client libraries. The tool comes
 with the installation of the timesketch importer client.
 
-### Install the tool
+**Install the tool**
 
 ```shell
 $ pip3 install timesketch-import-client
@@ -27,8 +27,8 @@ $ pip3 install timesketch-import-client
 There are two methods to use the tool:
 
 1. Define all parameters on the command line.
-2. The preferred method of just running the tool omitting all information about the 
-authentication and/or server information and have the tool ask all the questions.
+2. The preferred method of just running the tool omitting all information about the
+   authentication and/or server information and have the tool ask all the questions.
 
 The easiest way to discover the parameters and how to run the tool is to run:
 
@@ -69,5 +69,4 @@ appears below the timelines.
 
 The importer client defines an importer library that is used to help with
 file or data uploads. This is documented further
-[here](/docs/developers/api-upload-data.md)
-
+[here](/developers/api-upload-data/)

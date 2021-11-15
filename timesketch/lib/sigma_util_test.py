@@ -23,11 +23,10 @@ from timesketch.lib.testlib import BaseTest
 import timesketch.lib.sigma_util as sigma_util
 
 
-
 MOCK_SIGMA_RULE = """
-title: Suspicious Installation of Zenmap
+title: Suspicious Installation of ZMap
 id: 5266a592-b793-11ea-b3de-0242ac130004
-description: Detects suspicious installation of Zenmap
+description: Detects suspicious installation of zmap
 references:
     - https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html
 author: Alexander Jaeger
@@ -49,7 +48,7 @@ level: high
 MOCK_SIGMA_RULE_ERROR1 = """
 title: Suspicious Foobar
 id: 5266a592-b793-11ea-b3de-0242ac130004
-description: Detects suspicious installation of Zenmap
+description: Detects suspicious installation of zmap
 references:
     - https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html
 author: Alexander Jaeger
@@ -61,7 +60,6 @@ modified: 2020/06/26
 class TestSigmaUtilLib(BaseTest):
     """Tests for the sigma support library."""
 
-
     def test_get_rule_by_text(self):
         """Test getting sigma rule by text."""
 
@@ -72,9 +70,9 @@ class TestSigmaUtilLib(BaseTest):
         self.assertIn('zmap', rule.get('es_query'))
         self.assertIn('b793', rule.get('id'))
         self.assertRaises(
-                        sigma_exceptions.SigmaParseError,
-                        sigma_util.get_sigma_rule_by_text,
-                        MOCK_SIGMA_RULE_ERROR1)
+            sigma_exceptions.SigmaParseError,
+            sigma_util.get_sigma_rule_by_text,
+            MOCK_SIGMA_RULE_ERROR1)
 
     def test_get_sigma_config_file(self):
         """Test getting sigma config file"""
@@ -84,7 +82,7 @@ class TestSigmaUtilLib(BaseTest):
     def test_get_sigma_rule(self):
         """Test getting sigma rule from file"""
 
-        filepath = './data/sigma/rules/lnx_susp_zenmap.yml'
+        filepath = './data/sigma/rules/lnx_susp_zmap.yml'
 
         rule = sigma_util.get_sigma_rule(filepath)
 

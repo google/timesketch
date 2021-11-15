@@ -10,7 +10,7 @@
 - Any errors in ES logs?
 - Any errors in postgres logs?
 
-## UX issues
+## Frontend issues
 
 To troubleshoot web frontend issues, the first look should go to the Chrome developer console and look for any output / errors.
 
@@ -23,7 +23,7 @@ To raise issues related to the web frontend, please provide the following:
 - Share a screenshot if possible
 - If possible details about the event / sketch
   - Was it an imported plaso file or CSV or JSONL?
-  - Was the data imported via Web or API client? 
+  - Was the data imported via Web or API client?
 
 ## Docker
 
@@ -129,7 +129,7 @@ docker logs $CONTAINER_ID
 
 ## CSRF token expire
 
-You can edit ```/etc/timesketch/timesketch.conf``` and add:
+You can edit `/etc/timesketch/timesketch.conf` and add:
 
 ```
 WTF_CSRF_TIME_LIMIT = 1234 # seconds or "None" to never expire.
