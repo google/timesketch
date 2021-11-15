@@ -24,9 +24,9 @@ limitations under the License.
     <ts-navbar-secondary currentAppContext="sketch" currentPage="intelligence"></ts-navbar-secondary>
     <section class="section">
       <ts-dynamic-table
-        v-if="localIntelligence.data.length > 0"
-        :data="localIntelligence.data"
-        :section="localIntelligenceMeta"
+        v-if="intelligence.data.length > 0"
+        :data="intelligence.data"
+        :section="intelligenceMeta"
         @table-delete="deleteIoc"
       >
       </ts-dynamic-table>
@@ -36,24 +36,6 @@ limitations under the License.
       </div>
     </section>
 
-    <section class="section">
-      <div class="container is-fluid">
-        <div v-if="this.meta.attributes.intelligence" class="card">
-          <header class="card-header">
-            <p class="card-header-title">External intelligence</p>
-          </header>
-          <div class="card-content">
-            <ts-dynamic-table
-              v-for="section in externalIntelligence.meta.sections"
-              v-bind:key="section.key"
-              :section="section"
-              :data="externalIntelligence.data[section.key]"
-            >
-            </ts-dynamic-table>
-          </div>
-        </div>
-      </div>
-    </section>
   </div>
 </template>
 
@@ -69,7 +51,7 @@ export default {
   },
   data() {
     return {
-      localIntelligenceMeta: {
+      intelligenceMeta: {
         columns: [
           {
             field: 'ioc',
@@ -92,18 +74,15 @@ export default {
   },
   methods: {
     deleteIoc(ioc) {
-      const data = this.localIntelligence.data.filter(i => i.ioc !== ioc.ioc)
-      ApiClient.addSketchAttribute(this.sketch.id, 'intelligence_local', { data: data }, 'intelligence').then(() => {
-        this.localIntelligence.data = data
+      var data = this.intelligence.data.filter(i => i.ioc !== ioc.ioc)
+      ApiClient.addSketchAttribute(this.sketch.id, 'intelligence', { data: data }, 'intelligence').then(() => {
+        this.intelligence.data = data
       })
     },
     loadIntelligence() {
       ApiClient.getSketchAttributes(this.sketch.id).then(response => {
         if (!_.isEmpty(response.data.intelligence)) {
           this.meta.attributes.intelligence = response.data.intelligence
-        }
-        if (!_.isEmpty(response.data.intelligence_local)) {
-          this.meta.attributes.intelligence_local = response.data.intelligence_local
         }
       })
     },
@@ -115,17 +94,11 @@ export default {
     meta() {
       return this.$store.state.meta
     },
-    externalIntelligence() {
-      if (this.meta.attributes.intelligence === undefined || _.isEmpty(this.meta.attributes.intelligence.value)) {
-        return { data: {}, meta: {} }
-      }
-      return this.meta.attributes.intelligence.value
-    },
-    localIntelligence() {
-      if (this.meta.attributes.intelligence_local === undefined || _.isEmpty(this.meta.attributes.intelligence_local.value)) {
+    intelligence() {
+      if (this.meta.attributes.intelligence === undefined) {
         return { data: [] }
       }
-      return this.meta.attributes.intelligence_local.value
+      return this.meta.attributes.intelligence.value
     },
   },
   mounted() {

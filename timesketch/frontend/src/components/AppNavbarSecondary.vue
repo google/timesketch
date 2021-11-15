@@ -132,7 +132,7 @@ export default {
       return Object.entries(this.meta.attributes).length
     },
     intelligenceCount() {
-      return (Object.entries(this.meta.attributes.intelligence || {}).length + Object.entries(this.meta.attributes.intelligence_local || {}).length)
+      return (Object.entries(this.meta.attributes.intelligence.value || {}).length)
     },
   },
 }

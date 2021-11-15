@@ -103,10 +103,10 @@ export default {
     },
     isInIntelligence(ioc) {
       const attributes = this.$store.state.meta.attributes
-      if (!attributes.intelligence_local) {
+      if (!attributes.intelligence) {
         return false
       }
-      if (attributes.intelligence_local.value.data.map(ioc => ioc.ioc).indexOf(ioc.ioc) >= 0) {
+      if (attributes.intelligence.value.data.map(ioc => ioc.ioc).indexOf(ioc.ioc) >= 0) {
         return true
       }
       return false
@@ -114,18 +114,18 @@ export default {
     saveThreatIntel: function(ioc) {
       ApiClient.getSketchAttributes(this.sketch.id).then(response => {
         let attributes = response.data
-        if (!attributes.intelligence_local) {
-          attributes.intelligence_local = { ontology: 'intelligence', value: { data: [] } }
+        if (!attributes.intelligence) {
+          attributes.intelligence = { ontology: 'intelligence', value: { data: [] } }
         }
 
-        if (attributes.intelligence_local.value.data.map(ioc => ioc.ioc).indexOf(ioc.ioc) >= 0) {
+        if (attributes.intelligence.value.data.map(ioc => ioc.ioc).indexOf(ioc.ioc) >= 0) {
           return
         }
-        attributes.intelligence_local.value.data.push(ioc)
+        attributes.intelligence.value.data.push(ioc)
         ApiClient.addSketchAttribute(
           this.sketch.id,
-          'intelligence_local',
-          attributes.intelligence_local.value,
+          'intelligence',
+          attributes.intelligence.value,
           'intelligence'
         ).then(() => {
           Snackbar.open({
