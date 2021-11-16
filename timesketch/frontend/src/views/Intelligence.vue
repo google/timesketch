@@ -37,7 +37,7 @@ limitations under the License.
 
         <b-table-column field="tags" label="Tags" v-slot="props">
           <b-taglist>
-            <b-tag v-for="tag in props.row.tags" type="is-info is-light">{{ tag }} </b-tag>
+            <b-tag v-for="tag in props.row.tags" v-bind:key="tag" type="is-info is-light">{{ tag }} </b-tag>
           </b-taglist>
         </b-table-column>
 
@@ -73,11 +73,8 @@ export default {
   },
   methods: {
     deleteIoc(ioc) {
-      console.log('deleteIoc', ioc)
       var data = this.intelligenceData.filter(i => i.ioc !== ioc.ioc)
-      console.log(data)
       ApiClient.addSketchAttribute(this.sketch.id, 'intelligence', { data: data }, 'intelligence').then(() => {
-        console.log(data)
         this.loadIntelligence()
       })
     },
