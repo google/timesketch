@@ -23,19 +23,43 @@ limitations under the License.
 
     <ts-navbar-secondary currentAppContext="sketch" currentPage="intelligence"></ts-navbar-secondary>
     <section class="section">
-      <ts-dynamic-table
-        v-if="intelligence.data.length > 0"
-        :data="intelligence.data"
-        :section="intelligenceMeta"
-        @table-delete="deleteIoc"
-      >
-      </ts-dynamic-table>
+      <b-table v-if="intelligenceData.length > 0" :data="intelligenceData">
+        <b-table-column field="type" label="IOC Type" v-slot="props">
+          <code>{{ props.row.type }}</code>
+        </b-table-column>
+
+        <b-table-column field="ioc" label="Indicator data" v-slot="props">
+          <router-link :to="{ name: 'Explore', query: generateQuery(props.row.ioc) }">
+            <i class="fas fa-search" aria-hidden="true"></i>
+          </router-link>
+          <code>{{ props.row.ioc }}</code>
+        </b-table-column>
+
+        <b-table-column field="tags" label="Tags" v-slot="props">
+          <b-taglist>
+            <b-tag v-for="tag in props.row.tags" type="is-info is-light">{{ tag }} </b-tag>
+          </b-taglist>
+        </b-table-column>
+
+        <b-table-column field="edit" label="" v-slot="props">
+          Edit
+        </b-table-column>
+
+        <b-table-column field="delete" label="" v-slot="props">
+          <span
+            class="icon is-small"
+            style="cursor:pointer;"
+            title="Apply 'Exclude' filter"
+            @click="deleteIoc(props.row)"
+            ><i class="fas fa-trash"></i>
+          </span>
+        </b-table-column>
+      </b-table>
       <div v-else class="card-content">
         Examine events in the <router-link :to="{ name: 'Explore' }">Explore view</router-link> to add intelligence
         locally
       </div>
     </section>
-
   </div>
 </template>
 
@@ -43,48 +67,26 @@ limitations under the License.
 import ApiClient from '../utils/RestApiClient'
 import _ from 'lodash'
 
-import TsDynamicTable from '../components/Common/TsDynamicTable'
-
 export default {
-  components: {
-    TsDynamicTable,
-  },
   data() {
-    return {
-      intelligenceMeta: {
-        columns: [
-          {
-            field: 'ioc',
-            label: 'IOC',
-            searchable: true,
-            type: 'text',
-          },
-          {
-            field: 'type',
-            label: 'Type',
-            searchable: false,
-            type: 'text',
-          },
-        ],
-        key: 'local_intel',
-        label: 'Local intelligence',
-        deletable: true,
-      },
-    }
+    return {}
   },
   methods: {
     deleteIoc(ioc) {
-      var data = this.intelligence.data.filter(i => i.ioc !== ioc.ioc)
+      console.log('deleteIoc', ioc)
+      var data = this.intelligenceData.filter(i => i.ioc !== ioc.ioc)
+      console.log(data)
       ApiClient.addSketchAttribute(this.sketch.id, 'intelligence', { data: data }, 'intelligence').then(() => {
-        this.intelligence.data = data
+        console.log(data)
+        this.loadIntelligence()
       })
     },
     loadIntelligence() {
-      ApiClient.getSketchAttributes(this.sketch.id).then(response => {
-        if (!_.isEmpty(response.data.intelligence)) {
-          this.meta.attributes.intelligence = response.data.intelligence
-        }
-      })
+      this.$store.dispatch('updateSketch', this.$store.state.sketch.id)
+    },
+    generateQuery(value) {
+      let query = `"${value}"`
+      return { q: query }
     },
   },
   computed: {
@@ -94,11 +96,14 @@ export default {
     meta() {
       return this.$store.state.meta
     },
-    intelligence() {
+    intelligenceAttribute() {
       if (this.meta.attributes.intelligence === undefined) {
-        return { data: [] }
+        return { ontology: 'intelligence', value: { data: [] }, name: 'intelligence' }
       }
-      return this.meta.attributes.intelligence.value
+      return this.meta.attributes.intelligence
+    },
+    intelligenceData() {
+      return this.intelligenceAttribute.value.data
     },
   },
   mounted() {
