@@ -35,7 +35,7 @@ limitations under the License.
             <pre>{{ params.data.ioc }}</pre>
           </div>
           <div v-if="!isInIntelligence(params.data)">
-            <b-field grouped message="Add to intelligence">
+            <b-field grouped message="Add to Intelligence">
               <b-select size="is-small" placeholder="IOC type" v-model="params.data.type">
                 <option v-for="option in IOCTypes" :value="option.type" :key="option.type">
                   {{ option.type }}
@@ -53,9 +53,9 @@ limitations under the License.
               <b-button size="is-small" type="is-primary" @click="saveThreatIntel(params.data)">Add</b-button>
             </b-field>
           </div>
-          <!-- <div v-else>
+          <div v-else>
             <small>Already added to <router-link :to="{ name: 'Intelligence' }">Intelligence</router-link></small>
-          </div> -->
+          </div>
         </section>
       </template>
     </TsContextMenu>
@@ -194,5 +194,9 @@ export default {
 .text__highlight {
   background: none;
   border-radius: 0%;
+}
+
+.ioc-context-menu a {
+  border-bottom: 1px dotted gray;
 }
 </style>
