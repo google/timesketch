@@ -320,7 +320,8 @@ def build_sketch_analysis_pipeline(
         return None, None
 
     if not analyzer_kwargs:
-        analyzer_kwargs = current_app.config.get('ANALYZERS_DEFAULT_KWARGS', {})
+        analyzer_kwargs = current_app.config.get(
+            'ANALYZERS_DEFAULT_KWARGS', {})
 
     if user_id:
         user = User.query.get(user_id)
@@ -331,8 +332,8 @@ def build_sketch_analysis_pipeline(
     analysis_session = AnalysisSession(user, sketch)
 
     analyzers = manager.AnalysisManager.get_analyzers(analyzer_names)
-    for analyzer_name, _ in analyzers:
-        kwargs = analyzer_kwargs.get(analyzer_name, {})
+    for analyzer_name, analyzer_class in analyzers:
+        base_kwargs = analyzer_kwargs.get(analyzer_name, {})
         searchindex = SearchIndex.query.get(searchindex_id)
 
         timeline = None
@@ -343,22 +344,35 @@ def build_sketch_analysis_pipeline(
             timeline = Timeline.query.filter_by(
                 sketch=sketch, searchindex=searchindex).first()
 
-        analysis = Analysis(
-            name=analyzer_name,
-            description=analyzer_name,
-            analyzer_name=analyzer_name,
-            parameters=json.dumps(kwargs),
-            user=user,
-            sketch=sketch,
-            timeline=timeline)
-        analysis.set_status('PENDING')
-        analysis_session.analyses.append(analysis)
-        db_session.add(analysis)
-        db_session.commit()
+        additional_kwargs = analyzer_class.get_kwargs()
+        if isinstance(additional_kwargs, dict):
+            additional_kwargs = [additional_kwargs]
 
-        tasks.append(run_sketch_analyzer.s(
-            sketch_id, analysis.id, analyzer_name,
-            timeline_id=timeline_id, **kwargs))
+        kwargs_list = []
+        for _kwargs in additional_kwargs:
+            combined_kwargs = {**base_kwargs, **_kwargs}
+            kwargs_list.append(combined_kwargs)
+
+        if not kwargs_list:
+            kwargs_list = [base_kwargs]
+
+        for kwargs in kwargs_list:
+            analysis = Analysis(
+                name=analyzer_name,
+                description=analyzer_name,
+                analyzer_name=analyzer_name,
+                parameters=json.dumps(kwargs),
+                user=user,
+                sketch=sketch,
+                timeline=timeline)
+            analysis.set_status('PENDING')
+            analysis_session.analyses.append(analysis)
+            db_session.add(analysis)
+            db_session.commit()
+
+            tasks.append(run_sketch_analyzer.s(
+                sketch_id, analysis.id, analyzer_name,
+                timeline_id=timeline_id, **kwargs))
 
     # Commit the analysis session to the database.
     db_session.add(analysis_session)
@@ -408,7 +422,8 @@ def run_email_result_task(index_name, sketch_id=None):
     """
     # We need to get a fake request context so that url_for() will work.
     with current_app.test_request_context():
-        searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
+        searchindex = SearchIndex.query.filter_by(
+            index_name=index_name).first()
         sketch = None
 
         try:
@@ -600,7 +615,6 @@ def run_plaso(
     elastic_ssl = current_app.config.get('ELASTIC_SSL', False)
     if elastic_ssl:
         cmd.extend(['--use_ssl'])
-
 
     psort_memory = current_app.config.get('PLASO_UPPER_MEMORY_LIMIT', '')
     if psort_memory:

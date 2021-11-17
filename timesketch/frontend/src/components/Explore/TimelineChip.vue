@@ -134,8 +134,8 @@ limitations under the License.
         <span v-if="isSelected && !isEmptyState">{{ eventsCount | compactNumber }} </span>
       </span>
 
+      <!-- 3-dots dropdown menu -->
       <span v-if="meta.permissions.write" @click.stop>
-        <!-- 3-dots dropdown menu -->
         <ts-dropdown width="270px">
           <template v-slot:dropdown-trigger-element>
             <a role="button" style="color:#333;">
@@ -177,44 +177,7 @@ limitations under the License.
               v-model="initialColor"
               @input="updateColor"
               style="box-shadow: none; background-color: transparent; padding:0;"
-              :palette="[
-                '#55efc4',
-                '#81ecec',
-                '#74b9ff',
-                '#a29bfe',
-                '#00b894',
-                '#00cec9',
-                '#0984e3',
-                '#6c5ce7',
-                '#ffeaa7',
-                '#fab1a0',
-                '#ff7675',
-                '#fd79a8',
-                '#fdcb6e',
-                '#e17055',
-                '#ff4d4d',
-                '#fffa65',
-                '#e84393',
-                '#f6e58d',
-                '#ffbe76',
-                '#ff7979',
-                '#badc58',
-                '#dff9fb',
-                '#f9ca24',
-                '#f0932b',
-                '#eb4d4b',
-                '#6ab04c',
-                '#c7ecee',
-                '#7ed6df',
-                '#e056fd',
-                '#686de0',
-                '#95afc0',
-                '#22a6b3',
-                '#4bcffa',
-                '#34e7e4',
-                '#0be881',
-                '#ffdd59',
-              ]"
+              :palette="colorPickerPalette"
             ></color-picker>
           </div>
         </ts-dropdown>
@@ -231,6 +194,7 @@ import _ from 'lodash'
 import TsAnalyzerHistory from '../Analyze/AnalyzerHistory'
 import TsDropdown from '../Common/Dropdown'
 
+import { colorPickerPalette } from '../../definitions'
 import EventBus from '../../main'
 
 export default {
@@ -251,6 +215,7 @@ export default {
       showEditModal: false,
       showAnalyzerModal: false,
       isDarkTheme: false,
+      colorPickerPalette: colorPickerPalette,
     }
   },
   computed: {

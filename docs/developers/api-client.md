@@ -121,6 +121,30 @@ for sketch in ts_client.list_sketches():
   print('[{0:d}] {1:s} <{2:s}>'.format(sketch.id, sketch.name, sketch.description))
 ```
 
+## List sketches
+
+There are some ways to list sketches by adjusting the ```scope```.
+
+Following scopes are available:
+
+- recent: Get list of sketches that the user has actively searched in.
+- shared: Get sketches that can be accessed
+- admin: Get all sketches if the user is an admin 
+- archived: get archived sketches
+- search: pass additional search query
+
+```
+ts_client.list_sketches(per_page=1000, scope='user', include_archived=True)
+```
+
+Will return all sketches that are owned by the specified user.
+
+```
+ts_client.list_sketches(per_page=1000, scope='shared', include_archived=True)
+```
+
+Will return all sketches that the account used to connect to the API has access to.
+
 ## Connecting to a Sketch
 
 There are two ways of getting a sketch object, either by listing all available sketches or by fetching a specific one.
@@ -440,9 +464,9 @@ To get this:
 
 ```JSON
 {
-  'title': 'Suspicious Installation of Zenmap',
+  'title': 'Suspicious Installation of ZMap',
   'id': '5266a592-b793-11ea-b3de-0242ac130004',
-  'description': 'Detects suspicious installation of Zenmap',
+  'description': 'Detects suspicious installation of ZMap',
   'references': ['https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html'],
   'author': 'Alexander Jaeger',
   'date': '2020/06/26',
@@ -457,7 +481,7 @@ To get this:
   },
   'falsepositives': ['Unknown'],
   'level': 'high',
-  'es_query': '(data_type:("shell\\:zsh\\:history" OR "bash\\:history\\:command" OR "apt\\:history\\:line" OR "selinux\\:line") AND "*apt\\-get\\ install\\ zmap*")', 'file_name': 'lnx_susp_zenmap'
+  'es_query': '(data_type:("shell\\:zsh\\:history" OR "bash\\:history\\:command" OR "apt\\:history\\:line" OR "selinux\\:line") AND "*apt\\-get\\ install\\ zmap*")', 'file_name': 'lnx_susp_zmap'
 }
 ```
 
@@ -474,12 +498,78 @@ The output can be:
 + A pandas DataFrame if the `as_pandas=True` is set
 + A python dict (default behavior)
 
-### Other Options
+
+## Add data
+
+#### Manually add events to the sketch
+
+Fill in your event data, you need at least these fields: message, date and timestamp description
+
+
+```python
+
+message = "foobar"
+date = "2020-08-06T12:48:06.994188Z"
+timestamp_desc = "Test_description"
+
+# Attributes: A dict of extra attributes to add to the event.  
+attributes = {"a": "alpha", "o": "omega", "g": "gamma"}
+
+# Tags: A list of strings to include as tags.
+tags = ["not", "important"]
+
+sketch.add_event(message, date, timestamp_desc, attributes, tags)
+
+```
+
+### Add Tags to events
+
+To add tags to multiple events:
+
+```python
+# first search for the events that you want to search for
+events = sketch.explore('foobarsearchterm')
+events['objects']
+for event in events['objects']:
+ print(event.get('_id'))
+ events2 = [{
+               '_id': event.get('_id'),
+               '_index': event.get('_index'),
+               '_type': 'generic_event'
+               }]
+ tags = ['foobartag']
+ sketch.tag_events(events2, tags)
+```
+
+Of if you want to tag a signle event:
+
+```python
+# Or if you want to do single ones:
+events2 = [{
+               '_id': 'g-abcdErfededed',
+               '_index': 'asd23r23dk19b398abe405cbf33f',
+               '_type': 'generic_event'
+               }]
+tags = ['foobartag']
+sketch.tag_events(events2, tags)
+```
+
+Both will give you something like:
+
+```python
+ 
+{'events_processed_by_api': 1,
+ 'number_of_events_passed_to_api': 1,
+ 'number_of_events_with_added_tags': 1,
+ 'tags_applied': 1,
+ 'total_number_of_events_sent_by_client': 1}
+```
+
+## Other Options
 
 The sketch object can be used to do several other actions that are not documented in this first document, such as:
 
 + Create/list/retrieve stories
-+ Manually add events to the sketch
 + Add timelines to the sketch
 + Modify the ACL of the sketch
 + Archive the sketch (via the `sketch.archive` function)

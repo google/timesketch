@@ -40,7 +40,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Install dependencies
-      run: yarn add eslint
+      run: yarn add eslint@5.16.0
     - name: Run eslint
       run: |
         git config pull.rebase false && git fetch -p origin master

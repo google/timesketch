@@ -135,3 +135,7 @@ docker-compose up -d
 
 Congratulations, your Timesketch system is operational and ready to use.
 
+
+## Set up users
+
+After system is set up, look at [here](/guides/admin/admin-cli/) to add users.

@@ -19,18 +19,17 @@ class TaggerSketchPlugin(interface.BaseAnalyzer):
 
     CONFIG_FILE = 'tags.yaml'
 
-    def __init__(self, index_name, sketch_id, timeline_id=None, config=None):
+    def __init__(self, index_name, sketch_id, timeline_id=None, **kwargs):
         """Initialize The Sketch Analyzer.
 
         Args:
             index_name: Elasticsearch index name
             sketch_id: Sketch ID
-            timeline_id: The ID of the timeline.
-            config: Optional dict that contains the configuration for the
-                analyzer. If not provided, the default YAML file will be used.
+            timeline_id: The ID of the timeline
         """
         self.index_name = index_name
-        self._config = config
+        self._tag_name = kwargs.get('tag')
+        self._tag_config = kwargs.get('tag_config')
         super().__init__(index_name, sketch_id, timeline_id=timeline_id)
 
     def run(self):
@@ -39,19 +38,24 @@ class TaggerSketchPlugin(interface.BaseAnalyzer):
         Returns:
             String with summary of the analyzer result.
         """
-        config = self._config or interface.get_yaml_config(self.CONFIG_FILE)
-        if not config:
-            return 'Unable to parse the config file.'
+        return self.tagger(self._tag_name, self._tag_config)
 
-        tag_results = []
-        for name, tag_config in iter(config.items()):
-            tag_result = self.tagger(name, tag_config)
-            if tag_result and not tag_result.startswith('0 events tagged'):
-                tag_results.append(tag_result)
+    @staticmethod
+    def get_kwargs():
+        """Get kwargs for the analyzer.
 
-        if tag_results:
-            return ', '.join(tag_results)
-        return 'No tags applied'
+        Returns:
+            List of searches to tag results for.
+        """
+        tags_config = interface.get_yaml_config('tags.yaml')
+        if not tags_config:
+            return 'Unable to parse the tags config file.'
+
+        tags_kwargs = [
+            {'tag': tag, 'tag_config': config}
+            for tag, config in tags_config.items()
+        ]
+        return tags_kwargs
 
     def tagger(self, name, config):
         """Tag and add emojis to events.

@@ -639,6 +639,9 @@ export default {
     filteredLabels() {
       return this.$store.state.meta.filter_labels.filter(label => !label.label.startsWith('__'))
     },
+    currentSearchNode() {
+      return this.$store.state.currentSearchNode
+    },
   },
   methods: {
     hideDropdown: function() {
@@ -985,7 +988,7 @@ export default {
       Object.keys(this.selectedEvents).forEach((key, index) => {
         eventsToToggle.push(this.selectedEvents[key])
       })
-      ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', eventsToToggle)
+      ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', eventsToToggle, this.currentSearchNode)
         .then(response => {})
         .catch(e => {})
 
