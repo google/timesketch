@@ -34,17 +34,28 @@ limitations under the License.
             ></span>
             <pre>{{ params.data.ioc }}</pre>
           </div>
-          <b-field v-if="!isInIntelligence(params.data)" grouped message="Add to local intelligence">
-            <b-select size="is-small" placeholder="IOC type" v-model="params.data.type">
-              <option v-for="option in IOCTypes" :value="option.type" :key="option.type">
-                {{ option.type }}
-              </option>
-            </b-select>
-            <b-button size="is-small" type="is-primary" @click="saveThreatIntel(params.data)">Add</b-button>
-          </b-field>
-          <div v-else>
-            <small>Already added to <router-link :to="{ name: 'Intelligence' }">Intelligence</router-link></small>
+          <div v-if="!isInIntelligence(params.data)">
+            <b-field grouped message="Add to intelligence">
+              <b-select size="is-small" placeholder="IOC type" v-model="params.data.type">
+                <option v-for="option in IOCTypes" :value="option.type" :key="option.type">
+                  {{ option.type }}
+                </option>
+              </b-select>
+              <b-taginput
+                v-model="params.data.tags"
+                ellipsis
+                icon="label"
+                placeholder="Add a tag"
+                aria-close-label="Delete this tag"
+                size="is-small"
+              >
+              </b-taginput>
+              <b-button size="is-small" type="is-primary" @click="saveThreatIntel(params.data)">Add</b-button>
+            </b-field>
           </div>
+          <!-- <div v-else>
+            <small>Already added to <router-link :to="{ name: 'Intelligence' }">Intelligence</router-link></small>
+          </div> -->
         </section>
       </template>
     </TsContextMenu>
@@ -96,7 +107,7 @@ export default {
       for (let iocType of this.IOCTypes) {
         let matches = iocType.regex.exec(text)
         if (matches) {
-          return { ioc: text, type: iocType.type }
+          return { ioc: text, type: iocType.type, tags: this.tags }
         }
       }
       return { ioc: this.$attrs.text, type: 'other' }
