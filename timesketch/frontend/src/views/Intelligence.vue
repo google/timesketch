@@ -122,10 +122,52 @@ limitations under the License.
         </div>
       </div>
     </section>
+
+    <!-- Tag & label list -->
     <section class="section">
       <div class="container is-fluid">
-        <div class="box">
-          <h1 class="title">Tag list</h1>
+        <div class="columns">
+          <!-- tag column -->
+          <div class="column">
+            <div class="box">
+              <h1 class="title">Tag List</h1>
+              <h1 class="subtitle">Tags that have been associated with IOCs.</h1>
+              <b-table v-if="Object.keys(tagInfo).length > 0" :data="Object.values(tagInfo)">
+                <b-table-column field="search" label="" v-slot="props" width="1em">
+                  <router-link :to="{ name: 'Explore', query: generateOrElasticQuery(props.row.iocs) }">
+                    <i class="fas fa-search" aria-hidden="true" title="Search sketch for all IOCs with this tag."></i>
+                  </router-link>
+                </b-table-column>
+                <b-table-column field="tagName" label="Tag name" v-slot="props" sortable>
+                  <b-tag type="is-info is-light">{{ props.row.tagName }} </b-tag>
+                </b-table-column>
+                <b-table-column field="count" label="IOCs tagged" v-slot="props" sortable numeric>
+                  {{ props.row.count }}
+                </b-table-column>
+              </b-table>
+              <span v-else>No IOCs have been tagged yet.</span>
+            </div>
+          </div>
+
+          <!-- labels column -->
+          <div class="column">
+            <div class="box">
+              <h1 class="title">Event labels</h1>
+              <h1 class="subtitle">Labels that have been applied to events.</h1>
+              <b-table v-if="meta.filter_labels.length > 0" :data="meta.filter_labels">
+                <b-table-column field="search" label="" v-slot="props" width="1em">
+                  <i class="fas fa-search" aria-hidden="true" title="Search sketch for all events with this label."></i>
+                </b-table-column>
+                <b-table-column field="label" label="Label" v-slot="props" sortable>
+                  <b-tag type="is-info is-light">{{ props.row.label }} </b-tag>
+                </b-table-column>
+                <b-table-column field="count" label="Events labeled" v-slot="props" sortable numeric>
+                  {{ props.row.count }}
+                </b-table-column>
+              </b-table>
+              <span v-else>No events have been labeled yet.</span>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -140,6 +182,7 @@ import { SnackbarProgrammatic as Snackbar } from 'buefy'
 export default {
   data() {
     return {
+      tagInfo: {},
       editingIoc: {},
       showEditModal: false,
       IOCTypes: [
@@ -165,10 +208,30 @@ export default {
     },
     loadSketchAttributes() {
       this.$store.dispatch('updateSketch', this.$store.state.sketch.id)
+      this.buildTagInfo()
     },
     notifyClipboardSuccess() {
       this.$buefy.notification.open({ message: 'Succesfully copied data to clipboard!', type: 'is-success' })
     },
+    buildTagInfo() {
+      this.tagInfo = {}
+      for (var ioc of this.intelligenceData) {
+        for (var tag of ioc.tags) {
+          if (!this.tagInfo[tag]) {
+            this.tagInfo[tag] = {
+              count: 0,
+              iocs: [],
+              tagName: tag,
+            }
+          }
+          this.tagInfo[tag].count++
+          this.tagInfo[tag].iocs.push(ioc.ioc)
+        }
+      }
+    },
+    generateOrElasticQuery(valueList) {
+      let query = valueList.map(v => `"${v}"`).reduce((a, b) => `${a} OR ${b}`)
+      return { q: query }
     },
     generateElasticQuery(value) {
       let query = `"${value}"`
@@ -192,6 +255,7 @@ export default {
             indefinite: false,
           })
           this.showEditModal = false
+          this.buildTagInfo()
         })
         .catch(e => {
           Snackbar.open({
