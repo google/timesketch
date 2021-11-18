@@ -67,7 +67,7 @@ limitations under the License.
         </b-table-column>
 
         <b-table-column field="ioc" label="Indicator data" v-slot="props">
-          <router-link :to="{ name: 'Explore', query: generateQuery(props.row.ioc) }">
+          <router-link :to="{ name: 'Explore', query: generateElasticQuery(props.row.ioc) }">
             <i class="fas fa-search" aria-hidden="true"></i>
           </router-link>
           <code>{{ props.row.ioc }}</code>
@@ -80,13 +80,13 @@ limitations under the License.
         </b-table-column>
 
         <b-table-column field="edit" label="" v-slot="props">
-          <span class="icon is-small" style="cursor:pointer;" title="Edit IOC" @click="startEdit(props.row)"
+          <span class="icon is-small" style="cursor:pointer;" title="Edit IOC" @click="startIOCEdit(props.row)"
             ><i class="fas fa-edit"></i>
           </span>
         </b-table-column>
 
         <b-table-column field="delete" label="" v-slot="props">
-          <span class="icon is-small" style="cursor:pointer;" title="Delete IOC" @click="deleteIoc(props.row)"
+          <span class="icon is-small" style="cursor:pointer;color:red" title="Delete IOC" @click="deleteIoc(props.row)"
             ><i class="fas fa-trash"></i>
           </span>
         </b-table-column>
@@ -124,18 +124,18 @@ export default {
     deleteIoc(ioc) {
       var data = this.intelligenceData.filter(i => i.ioc !== ioc.ioc)
       ApiClient.addSketchAttribute(this.sketch.id, 'intelligence', { data: data }, 'intelligence').then(() => {
-        this.loadIntelligence()
+        this.loadSketchAttributes()
       })
     },
-    loadIntelligence() {
+    loadSketchAttributes() {
       this.$store.dispatch('updateSketch', this.$store.state.sketch.id)
     },
-    generateQuery(value) {
+    generateElasticQuery(value) {
       let query = `"${value}"`
       return { q: query }
     },
-    startEdit(ioc) {
-      console.log('startedit')
+    startIOCEdit(ioc) {
+      console.log('startIOCedit')
       this.showEditModal = true
       this.editingIoc = ioc
     },
@@ -158,7 +158,7 @@ export default {
     },
   },
   mounted() {
-    this.loadIntelligence()
+    this.loadSketchAttributes()
   },
 }
 </script>
