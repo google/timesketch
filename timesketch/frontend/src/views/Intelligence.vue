@@ -123,10 +123,12 @@ export default {
   },
   methods: {
     deleteIoc(ioc) {
-      var data = this.intelligenceData.filter(i => i.ioc !== ioc.ioc)
-      ApiClient.addSketchAttribute(this.sketch.id, 'intelligence', { data: data }, 'intelligence').then(() => {
-        this.loadSketchAttributes()
-      })
+      if (confirm('Delete IOC?')) {
+        var data = this.intelligenceData.filter(i => i.ioc !== ioc.ioc)
+        ApiClient.addSketchAttribute(this.sketch.id, 'intelligence', { data: data }, 'intelligence').then(() => {
+          this.loadSketchAttributes()
+        })
+      }
     },
     loadSketchAttributes() {
       this.$store.dispatch('updateSketch', this.$store.state.sketch.id)
