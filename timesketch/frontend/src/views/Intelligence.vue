@@ -71,10 +71,24 @@ limitations under the License.
               <code>{{ props.row.type }}</code>
             </b-table-column>
 
-            <b-table-column field="ioc" label="Indicator data" v-slot="props">
+            <b-table-column field="ioc" label="" v-slot="props" width="5em">
               <router-link :to="{ name: 'Explore', query: generateElasticQuery(props.row.ioc) }">
-                <i class="fas fa-search" aria-hidden="true"></i>
+                <i
+                  class="fas fa-search"
+                  aria-hidden="true"
+                  title="Search sketch for all events containing this IOC."
+                ></i>
               </router-link>
+              <i
+                class="fas fa-copy"
+                style="cursor:pointer;margin-left:1em;"
+                title="Copy key"
+                v-clipboard:copy="props.row.ioc"
+                v-clipboard:success="notifyClipboardSuccess"
+              ></i>
+            </b-table-column>
+
+            <b-table-column field="ioc" label="Indicator data" v-slot="props" sortable>
               <code>{{ props.row.ioc }}</code>
             </b-table-column>
 
@@ -151,6 +165,10 @@ export default {
     },
     loadSketchAttributes() {
       this.$store.dispatch('updateSketch', this.$store.state.sketch.id)
+    },
+    notifyClipboardSuccess() {
+      this.$buefy.notification.open({ message: 'Succesfully copied data to clipboard!', type: 'is-success' })
+    },
     },
     generateElasticQuery(value) {
       let query = `"${value}"`
