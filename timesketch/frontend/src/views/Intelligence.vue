@@ -22,78 +22,97 @@ limitations under the License.
     </ts-navbar-main>
 
     <ts-navbar-secondary currentAppContext="sketch" currentPage="intelligence"></ts-navbar-secondary>
+    <b-modal :active.sync="showEditModal">
+      <section class="box">
+        <h1 class="subtitle">Edit IOC</h1>
+        <b-field label="Edit IOC" label-position="on-border">
+          <b-input custom-class="ioc-input" type="textarea" v-model="editingIoc.ioc"></b-input>
+        </b-field>
+        <b-field grouped>
+          <b-field>
+            <b-select placeholder="IOC type" v-model="editingIoc.type" label="IOC type" label-position="on-border">
+              <option v-for="option in IOCTypes" :value="option.type" :key="option.type">
+                {{ option.type }}
+              </option>
+            </b-select>
+          </b-field>
+          <b-field>
+            <b-taginput
+              v-model="editingIoc.tags"
+              ellipsis
+              icon="label"
+              placeholder="Add a tag"
+              aria-close-label="Delete this tag"
+            >
+            </b-taginput>
+          </b-field>
+          <b-field grouped expanded position="is-right">
+            <p class="control">
+              <b-button type="is-primary" @click="saveIOC()">Save</b-button>
+            </p>
+            <p class="control">
+              <b-button @click="showEditModal = false">Cancel</b-button>
+            </p>
+          </b-field>
+        </b-field>
+
+        <b-field position="is-right"> </b-field>
+      </section>
+    </b-modal>
+    <!-- End modal -->
+
+    <!-- IOC table -->
     <section class="section">
-      <b-modal :active.sync="showEditModal">
-        <section class="box">
-          <h1 class="subtitle">Edit IOC</h1>
-          <b-field label="Edit IOC" label-position="on-border">
-            <b-input custom-class="ioc-input" type="textarea" v-model="editingIoc.ioc"></b-input>
-          </b-field>
-          <b-field grouped>
-            <b-field>
-              <b-select placeholder="IOC type" v-model="editingIoc.type" label="IOC type" label-position="on-border">
-                <option v-for="option in IOCTypes" :value="option.type" :key="option.type">
-                  {{ option.type }}
-                </option>
-              </b-select>
-            </b-field>
-            <b-field>
-              <b-taginput
-                v-model="editingIoc.tags"
-                ellipsis
-                icon="label"
-                placeholder="Add a tag"
-                aria-close-label="Delete this tag"
-              >
-              </b-taginput>
-            </b-field>
-            <b-field grouped expanded position="is-right">
-              <p class="control">
-                <b-button type="is-primary" @click="saveIOC()">Save</b-button>
-              </p>
-              <p class="control">
-                <b-button @click="showEditModal = false">Cancel</b-button>
-              </p>
-            </b-field>
-          </b-field>
+      <div class="container is-fluid">
+        <div class="box">
+          <h1 class="title">Indicators of compromise</h1>
+          <b-table v-if="intelligenceData.length > 0" :data="intelligenceData">
+            <b-table-column field="type" label="IOC Type" v-slot="props">
+              <code>{{ props.row.type }}</code>
+            </b-table-column>
 
-          <b-field position="is-right"> </b-field>
-        </section>
-      </b-modal>
+            <b-table-column field="ioc" label="Indicator data" v-slot="props">
+              <router-link :to="{ name: 'Explore', query: generateElasticQuery(props.row.ioc) }">
+                <i class="fas fa-search" aria-hidden="true"></i>
+              </router-link>
+              <code>{{ props.row.ioc }}</code>
+            </b-table-column>
 
-      <b-table v-if="intelligenceData.length > 0" :data="intelligenceData">
-        <b-table-column field="type" label="IOC Type" v-slot="props">
-          <code>{{ props.row.type }}</code>
-        </b-table-column>
+            <b-table-column field="tags" label="Tags" v-slot="props">
+              <b-taglist>
+                <b-tag v-for="tag in props.row.tags" v-bind:key="tag" type="is-info is-light">{{ tag }} </b-tag>
+              </b-taglist>
+            </b-table-column>
 
-        <b-table-column field="ioc" label="Indicator data" v-slot="props">
-          <router-link :to="{ name: 'Explore', query: generateElasticQuery(props.row.ioc) }">
-            <i class="fas fa-search" aria-hidden="true"></i>
-          </router-link>
-          <code>{{ props.row.ioc }}</code>
-        </b-table-column>
+            <b-table-column field="edit" label="" v-slot="props">
+              <span class="icon is-small" style="cursor:pointer;" title="Edit IOC" @click="startIOCEdit(props.row)"
+                ><i class="fas fa-edit"></i>
+              </span>
+            </b-table-column>
 
-        <b-table-column field="tags" label="Tags" v-slot="props">
-          <b-taglist>
-            <b-tag v-for="tag in props.row.tags" v-bind:key="tag" type="is-info is-light">{{ tag }} </b-tag>
-          </b-taglist>
-        </b-table-column>
-
-        <b-table-column field="edit" label="" v-slot="props">
-          <span class="icon is-small" style="cursor:pointer;" title="Edit IOC" @click="startIOCEdit(props.row)"
-            ><i class="fas fa-edit"></i>
-          </span>
-        </b-table-column>
-
-        <b-table-column field="delete" label="" v-slot="props">
-          <span class="icon is-small" style="cursor:pointer;color:red" title="Delete IOC" @click="deleteIoc(props.row)"
-            ><i class="fas fa-trash"></i>
-          </span>
-        </b-table-column>
-      </b-table>
-      <div v-else class="card-content">
-        Examine events in the <router-link :to="{ name: 'Explore' }">Explore view</router-link> to add intelligence
-        locally
+            <b-table-column field="delete" label="" v-slot="props">
+              <span
+                class="icon is-small"
+                style="cursor:pointer;color:red"
+                title="Delete IOC"
+                @click="deleteIoc(props.row)"
+                ><i class="fas fa-trash"></i>
+              </span>
+            </b-table-column>
+          </b-table>
+          <!-- End IOC table, empty palceholder follows -->
+          <div v-else class="card-content">
+            Examine events in the <router-link :to="{ name: 'Explore' }">Explore view</router-link> to add intelligence
+            locally
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="section">
+      <div class="container is-fluid">
+        <div class="box">
+          <h1 class="title">Tag list</h1>
+        </div>
       </div>
     </section>
   </div>
