@@ -56,6 +56,29 @@ limitations under the License.
               </ts-dropdown>
             </div>
 
+            <ts-dropdown>
+              <template v-slot:dropdown-trigger-element>
+                <a class="button ts-search-dropdown" style="background-color: transparent;">
+                  <span v-if="currentGraphCacheConfig.filter.timelineIds.length">
+                    {{ getTimelineFromId(currentGraphCacheConfig.filter.timelineIds[0])[0].name }}
+                  </span>
+                  <strong v-else>Choose timeline</strong>
+                  <b-icon icon="chevron-down" style="font-size: 0.6em;"></b-icon>
+                </a>
+              </template>
+
+              <div
+                class="ts-dropdown-item"
+                v-for="timeline in sketch.timelines"
+                :key="timeline.id"
+                v-on:click="buildGraph(currentGraph)"
+              >
+                <router-link :to="{ name: 'GraphExplore', query: { plugin: currentGraph, timeline: timeline.id } }">{{
+                  timeline.name
+                }}</router-link>
+              </div>
+            </ts-dropdown>
+
             <input
               class="ts-search-input"
               v-if="currentGraph"
@@ -191,8 +214,8 @@ limitations under the License.
                       .local()
                       .fromNow()
                   }}</i
-                ></span
-              >
+                >
+              </span>
               <a
                 class="is-small"
                 style="text-decoration: underline; margin-left:15px;"
@@ -200,6 +223,13 @@ limitations under the License.
               >
                 <span>Refresh</span>
               </a>
+            </span>
+            <span
+              style="color:red; margin-left:20px;"
+              v-for="timelineId in currentGraphCacheConfig.filter.timelineIds"
+              :key="timelineId"
+            >
+              Note: Graph generated for timeline: {{ getTimelineFromId(timelineId)[0].name }}
             </span>
           </div>
         </div>
@@ -241,6 +271,7 @@ export default {
       savedGraphs: [],
       currentGraph: '',
       currentGraphCache: {},
+      currentGraphCacheConfig: {},
       selectedGraphs: [],
       fadeOpacity: 7,
       elements: [],
@@ -405,13 +436,20 @@ export default {
       }, 600)
       this.edgeQuery = ''
       let currentIndices = []
-      this.sketch.timelines.forEach(timeline => {
-        currentIndices.push(timeline.searchindex.index_name)
-      })
-      ApiClient.generateGraphFromPlugin(this.sketch.id, this.currentGraph, currentIndices, refresh)
+      let timelineIds = []
+      if (this.$route.query.timeline) {
+        timelineIds.push(parseInt(this.$route.query.timeline))
+        refresh = true
+      } else {
+        this.sketch.timelines.forEach(timeline => {
+          currentIndices.push(timeline.searchindex.index_name)
+        })
+      }
+      ApiClient.generateGraphFromPlugin(this.sketch.id, this.currentGraph, currentIndices, timelineIds, refresh)
         .then(response => {
           let graphCache = response.data['objects'][0]
           let elementsCache = JSON.parse(graphCache.graph_elements)
+          let configCache = JSON.parse(graphCache.graph_config)
           let elements = []
           let nodes
           let edges
@@ -431,6 +469,7 @@ export default {
           })
           delete graphCache.graph_elements
           this.currentGraphCache = graphCache
+          this.currentGraphCacheConfig = configCache
           this.elements = elements
           clearTimeout(this.loadingTimeout)
           this.showGraph = true
@@ -630,6 +669,9 @@ export default {
           .update()
       }
     },
+    getTimelineFromId(id) {
+      return this.sketch.timelines.filter(timeline => timeline.id === id)
+    },
   },
   created() {
     window.addEventListener(
@@ -660,6 +702,7 @@ export default {
     this.params = {
       graphId: this.$route.query.graph,
       pluginName: this.$route.query.plugin,
+      timelineId: this.$route.query.timeline,
     }
 
     if (this.params.graphId) {

@@ -484,7 +484,7 @@ def main(args=None):
             continue
 
         print('[DONE]')
-        print(f'Timeline uploaded to ID: {timeline.id}.')
+        print(f'Timeline uploaded to Timeline Id: {timeline.id}.')
 
         task_state = 'Unknown'
         task_list = ts_client.check_celery_status(task_id)
