@@ -49,10 +49,10 @@ limitations under the License.
             </b-field>
             <b-field grouped expanded position="is-right">
               <p class="control">
-                <b-button type="is-primary">Save</b-button>
+                <b-button type="is-primary" @click="saveIOC()">Save</b-button>
               </p>
               <p class="control">
-                <b-button>Cancel</b-button>
+                <b-button @click="showEditModal = false">Cancel</b-button>
               </p>
             </b-field>
           </b-field>
@@ -102,6 +102,7 @@ limitations under the License.
 <script>
 import ApiClient from '../utils/RestApiClient'
 import _ from 'lodash'
+import { SnackbarProgrammatic as Snackbar } from 'buefy'
 
 export default {
   data() {
@@ -138,6 +139,29 @@ export default {
       console.log('startIOCedit')
       this.showEditModal = true
       this.editingIoc = ioc
+    },
+    saveIOC() {
+      console.log('saveioc')
+      ApiClient.addSketchAttribute(this.sketch.id, 'intelligence', this.intelligenceAttribute.value, 'intelligence')
+        .then(() => {
+          console.log('ioc update success')
+          Snackbar.open({
+            message: 'IOC successfully updated!',
+            type: 'is-success',
+            position: 'is-top',
+            actionText: 'Dismiss',
+            indefinite: false,
+          })
+          this.showEditModal = false
+        })
+        .catch(e => {
+          Snackbar.open({
+            message: 'IOC update failed.',
+            type: 'is-danger',
+            position: 'is-top',
+            indefinite: false,
+          })
+        })
     },
   },
   computed: {
