@@ -23,6 +23,44 @@ limitations under the License.
 
     <ts-navbar-secondary currentAppContext="sketch" currentPage="intelligence"></ts-navbar-secondary>
     <section class="section">
+      <b-modal :active.sync="showEditModal">
+        <section class="box">
+          <h1 class="subtitle">Edit IOC</h1>
+          <b-field label="Edit IOC" label-position="on-border">
+            <b-input custom-class="ioc-input" type="textarea" v-model="editingIoc.ioc"></b-input>
+          </b-field>
+          <b-field grouped>
+            <b-field>
+              <b-select placeholder="IOC type" v-model="editingIoc.type" label="IOC type" label-position="on-border">
+                <option v-for="option in IOCTypes" :value="option.type" :key="option.type">
+                  {{ option.type }}
+                </option>
+              </b-select>
+            </b-field>
+            <b-field>
+              <b-taginput
+                v-model="editingIoc.tags"
+                ellipsis
+                icon="label"
+                placeholder="Add a tag"
+                aria-close-label="Delete this tag"
+              >
+              </b-taginput>
+            </b-field>
+            <b-field grouped expanded position="is-right">
+              <p class="control">
+                <b-button type="is-primary">Save</b-button>
+              </p>
+              <p class="control">
+                <b-button>Cancel</b-button>
+              </p>
+            </b-field>
+          </b-field>
+
+          <b-field position="is-right"> </b-field>
+        </section>
+      </b-modal>
+
       <b-table v-if="intelligenceData.length > 0" :data="intelligenceData">
         <b-table-column field="type" label="IOC Type" v-slot="props">
           <code>{{ props.row.type }}</code>
@@ -42,15 +80,13 @@ limitations under the License.
         </b-table-column>
 
         <b-table-column field="edit" label="" v-slot="props">
-          Edit
+          <span class="icon is-small" style="cursor:pointer;" title="Edit IOC" @click="startEdit(props.row)"
+            ><i class="fas fa-edit"></i>
+          </span>
         </b-table-column>
 
         <b-table-column field="delete" label="" v-slot="props">
-          <span
-            class="icon is-small"
-            style="cursor:pointer;"
-            title="Apply 'Exclude' filter"
-            @click="deleteIoc(props.row)"
+          <span class="icon is-small" style="cursor:pointer;" title="Delete IOC" @click="deleteIoc(props.row)"
             ><i class="fas fa-trash"></i>
           </span>
         </b-table-column>
@@ -69,7 +105,20 @@ import _ from 'lodash'
 
 export default {
   data() {
-    return {}
+    return {
+      editingIoc: {},
+      showEditModal: false,
+      IOCTypes: [
+        { regex: /^(\/[\S]+)+$/i, type: 'fs_path' },
+        { regex: /^([-\w]+\.)+[a-z]{2,}$/i, type: 'hostname' },
+        { regex: /^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/g, type: 'ip' },
+        { regex: /^[0-9a-f]{64}$/i, type: 'hash_sha256' },
+        { regex: /^[0-9a-f]{40}$/i, type: 'hash_sha1' },
+        { regex: /^[0-9a-f]{32}$/i, type: 'hash_md5' },
+        // Match any "other" selection
+        { regex: /./g, type: 'other' },
+      ],
+    }
   },
   methods: {
     deleteIoc(ioc) {
@@ -84,6 +133,11 @@ export default {
     generateQuery(value) {
       let query = `"${value}"`
       return { q: query }
+    },
+    startEdit(ioc) {
+      console.log('startedit')
+      this.showEditModal = true
+      this.editingIoc = ioc
     },
   },
   computed: {
@@ -108,3 +162,9 @@ export default {
   },
 }
 </script>
+
+<style lang="scss">
+.ioc-input {
+  font-family: monospace;
+}
+</style>
