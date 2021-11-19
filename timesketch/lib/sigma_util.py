@@ -17,6 +17,8 @@ import os
 import codecs
 import logging
 import yaml
+import pandas as pd
+import csv
 
 from flask import current_app
 
@@ -122,6 +124,10 @@ def get_sigma_rules(rule_folder, sigma_config=None):
     """
     return_array = []
 
+    blocklist_path = None
+    ignore = get_sigma_blocklist(blocklist_path)
+    ignore_list = list(ignore['path'].unique())
+
     for dirpath, dirnames, files in os.walk(rule_folder):
         if 'deprecated' in [x.lower() for x in dirnames]:
             dirnames.remove('deprecated')
@@ -133,6 +139,14 @@ def get_sigma_rules(rule_folder, sigma_config=None):
                     continue
 
                 rule_file_path = os.path.join(dirpath, rule_filename)
+                block_because_csv = False
+
+                if any(x in rule_file_path for x in ignore_list):
+                    block_because_csv = True
+
+                if block_because_csv:
+                    continue
+
                 parsed_rule = get_sigma_rule(rule_file_path, sigma_config)
                 if parsed_rule:
                     return_array.append(parsed_rule)
@@ -215,18 +229,24 @@ def get_sigma_rule(filepath, sigma_config=None):
             logger.error(
                 'Error generating rule in file {0:s}: {1!s}'
                 .format(abs_path, exception))
-            raise
+            add_problematic_rule(filepath, doc.get('id'),
+                                 'NotImplementedError - Something in the rule is not implemented for Timesketch')
+            return None
 
         except sigma_exceptions.SigmaParseError as exception:
             logger.error(
                 'Sigma parsing error generating rule in file {0:s}: {1!s}'
                 .format(abs_path, exception))
-            raise
+            add_problematic_rule(
+                filepath, doc.get('id'), 'sigma_exceptions.SigmaParseError')
+            return None
 
         except yaml.parser.ParserError as exception:
             logger.error(
                 'Yaml parsing error generating rule in file {0:s}: {1!s}'
                 .format(abs_path, exception))
+            add_problematic_rule(
+                filepath, None, 'yaml.parser.ParserError')
             return None
 
         sigma_es_query = ''
@@ -271,6 +291,94 @@ def _sanatize_sigma_rule(sigma_rule_query: str) -> str:
     sigma_rule_query = sigma_rule_query.replace('*\\\\', ' *')
 
     return sigma_rule_query
+
+
+def get_sigma_blocklist(blocklist_path=None):
+    """Get a dataframe of sigma rules to ignore.
+
+    This includes filenames, paths, ids.
+
+    Args:
+        blocklist_path(str): Path to a blocklist file.
+            The default value is None
+
+    Returns:
+        Pandas dataframe with blocklist
+
+    Raises:
+        ValueError: Sigma blocklist file is not readabale.
+    """
+
+    return pd.read_csv(get_sigma_blocklist_path(blocklist_path))
+
+
+def get_sigma_blocklist_path(blocklist_path=None):
+    """Checks and returns the Sigma blocklist path.
+
+    This includes filenames, paths, ids.
+
+    Args:
+        blocklist_path(str): Path to a blocklist file.
+            The default value is './data/sigma_blocklist.csv'
+
+    Returns:
+        Sigma Blocklist path
+
+    Raises:
+        ValueError: Sigma blocklist file is not readabale.
+    """
+    logger.error(blocklist_path)
+
+    if blocklist_path is None or blocklist_path == '':
+        blocklist_path = current_app.config.get(
+            'SIGMA_BLOCKLIST_CSV', './data/sigma_blocklist.csv')
+    if not blocklist_path:
+        raise ValueError('No blocklist_file_path set via param or config file')
+
+    if not os.path.isfile(blocklist_path):
+        raise ValueError(
+            'Unable to open file: [{0:s}], it does not exist.'.format(
+                blocklist_path))
+
+    if not os.access(blocklist_path, os.R_OK):
+        raise ValueError(
+            'Unable to open file: [{0:s}], cannot open it for '
+            'read, please check permissions.'.format(blocklist_path))
+
+    return blocklist_path
+
+
+def add_problematic_rule(filepath, rule_uuid=None, reason=None):
+    """Adds a problematic rule to the blocklist.csv.
+
+    Args:
+        filepath: path to the sigma rule that caused problems
+        rule_uuid: rule uuid
+        reason: optional reason why file is moved
+    """
+    blocklist_file_path = get_sigma_blocklist_path()
+    from datetime import datetime
+
+    # we only want to store the relative paths in the blocklist file
+
+    try:
+        sigma_rules_paths = get_sigma_rules_path()
+    except ValueError:
+        sigma_rules_paths = None
+
+    if sigma_rules_paths:
+        for rule_path in sigma_rules_paths:
+            file_relpath = os.path.relpath(filepath, rule_path)
+
+    # path,bad,reason,last_ckecked,rule_id
+    fields = [file_relpath, 'bad', reason,
+              datetime.now().strftime('%Y-%m-%d'), rule_uuid]
+    logging.error(f'Adding following rule to ignore list {fields}')
+
+    with open(blocklist_file_path, 'a') as f:
+        writer = csv.writer(f)
+        writer.writerow(fields)
+        f.close
 
 
 def get_sigma_rule_by_text(rule_text, sigma_config=None):

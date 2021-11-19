@@ -63,6 +63,24 @@ The rules then will be under
 timesketch/data/sigma
 ```
 
+### Sigma Rules Blocklist file
+
+The `data/sigma_blocklist.csv` is the central point where Timesketch tries to maintain which rules are considered good or bad. By default each rule is considered good, but it is good practice to add them in that file if they are tested.
+
+Each method that reads Sigma rules from the a folder is checking, if part of the full path of a rule is mentioned in the `data/sigma_blocklist.csv` file.
+
+For examle a file at `/etc/timesketch/data/sigma/rules-unsupported/foo/bar.yml` would not be parsed as a line in `data/sigma_blocklist.csv` mentions:
+
+```
+/rules-unsupported/,bad,Sigma internal folder name,2021-11-19,
+```
+
+The header for that file are:
+
+```
+path,bad,reason,last_ckecked,rule_id
+```
+
 ### Sigma Rules
 
 The windows rules are stored in
@@ -87,6 +105,7 @@ There are multiple sigma related config variables in ```timesketch.conf```.
 SIGMA_RULES_FOLDERS = ['/etc/timesketch/sigma/rules/']
 SIGMA_CONFIG = '/etc/timesketch/sigma_config.yaml'
 SIGMA_TAG_DELAY = 5
+SIGMA_BLOCKLIST_CSV = '/etc/timesketch/sigma_blocklist.csv'
 ```
 
 The ```SIGMA_RULES_FOLDERS``` points to the folder(s) where Sigma rules are stored. The folder is the local folder of the Timesketch server (celery worker and webserver). For a distributed system, mounting network shares is possible.
