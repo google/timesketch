@@ -54,8 +54,10 @@ See [docs/learn/server-admin](docs/learn/server-admin#troubleshooting-database-s
 - Is the celery worker running?
 - Have a look at the celery logs.
 - Is it a specific file that causes problems?
+- What is the WebUI status of the import?
 - Try switching from WebUI to the `import_client.py` to upload the same file
 - Try to upload one of the [sample files](https://github.com/google/timesketch/blob/master/test_tools/test_events/sigma_events.csv)
+- If you open a Github issue for an import issue, please indicate, what type of file you try to upload and what error message / stacktrace you have
 
 ### Issues importing a CSV file
 
