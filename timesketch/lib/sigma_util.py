@@ -15,10 +15,10 @@
 
 import os
 import codecs
+import csv
 import logging
 import yaml
 import pandas as pd
-import csv
 
 from flask import current_app
 
@@ -28,6 +28,8 @@ from sigma.backends import elasticsearch as sigma_es
 from sigma.parser import collection as sigma_collection
 from sigma.parser import exceptions as sigma_exceptions
 from sigma.config.exceptions import SigmaConfigParseError
+
+from datetime import datetime
 
 logger = logging.getLogger('timesketch.lib.sigma')
 
@@ -357,7 +359,6 @@ def add_problematic_rule(filepath, rule_uuid=None, reason=None):
         reason: optional reason why file is moved
     """
     blocklist_file_path = get_sigma_blocklist_path()
-    from datetime import datetime
 
     # we only want to store the relative paths in the blocklist file
 
@@ -373,7 +374,6 @@ def add_problematic_rule(filepath, rule_uuid=None, reason=None):
     # path,bad,reason,last_ckecked,rule_id
     fields = [file_relpath, 'bad', reason,
               datetime.now().strftime('%Y-%m-%d'), rule_uuid]
-    logging.error(f'Adding following rule to ignore list {fields}')
 
     with open(blocklist_file_path, 'a') as f:
         writer = csv.writer(f)
