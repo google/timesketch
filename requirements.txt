@@ -8,7 +8,7 @@ Flask==2.0.2
 flask_bcrypt==0.7.1
 flask_login==0.4.1
 flask_migrate==2.5.2
-flask_restful==0.3.7
+flask_restful==0.3.9
 flask_script==2.0.6
 flask_sqlalchemy==2.4.1
 flask_wtf==0.14.2
