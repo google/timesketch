@@ -17,6 +17,7 @@ import os
 import codecs
 import csv
 import logging
+from datetime import datetime
 import yaml
 import pandas as pd
 
@@ -29,7 +30,6 @@ from sigma.parser import collection as sigma_collection
 from sigma.parser import exceptions as sigma_exceptions
 from sigma.config.exceptions import SigmaConfigParseError
 
-from datetime import datetime
 
 logger = logging.getLogger('timesketch.lib.sigma')
 
@@ -232,7 +232,7 @@ def get_sigma_rule(filepath, sigma_config=None):
                 'Error generating rule in file {0:s}: {1!s}'
                 .format(abs_path, exception))
             add_problematic_rule(filepath, doc.get('id'),
-                                 'NotImplementedError - Something in the rule is not implemented for Timesketch')
+                                 'Parts of the rule not implemented in TS')
             return None
 
         except sigma_exceptions.SigmaParseError as exception:
@@ -378,7 +378,6 @@ def add_problematic_rule(filepath, rule_uuid=None, reason=None):
     with open(blocklist_file_path, 'a') as f:
         writer = csv.writer(f)
         writer.writerow(fields)
-        f.close
 
 
 def get_sigma_rule_by_text(rule_text, sigma_config=None):
