@@ -186,7 +186,6 @@ limitations under the License.
 
 <script>
 import ApiClient from '../utils/RestApiClient'
-import _ from 'lodash'
 import { SnackbarProgrammatic as Snackbar } from 'buefy'
 
 export default {
