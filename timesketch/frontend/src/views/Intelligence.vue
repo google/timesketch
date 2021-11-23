@@ -152,11 +152,13 @@ limitations under the License.
           <!-- labels column -->
           <div class="column">
             <div class="box">
-              <h1 class="title">Event labels</h1>
-              <h1 class="subtitle">Labels that have been applied to events.</h1>
+              <h1 class="title">Event tags</h1>
+              <h1 class="subtitle">Tags that have been applied to events.</h1>
               <b-table v-if="meta.filter_labels.length > 0" :data="meta.filter_labels">
                 <b-table-column field="search" label="" v-slot="props" width="1em">
-                  <i class="fas fa-search" aria-hidden="true" title="Search sketch for all events with this label."></i>
+                  <router-link :to="{ name: 'Explore', query: generateElasticQuery(props.row.label, 'tag') }">
+                    <i class="fas fa-search" aria-hidden="true" title="Search sketch for all events with this tag."></i>
+                  </router-link>
                 </b-table-column>
                 <b-table-column field="label" label="Label" v-slot="props" sortable>
                   <b-tag type="is-info is-light">{{ props.row.label }} </b-tag>
@@ -233,8 +235,11 @@ export default {
       let query = valueList.map(v => `"${v}"`).reduce((a, b) => `${a} OR ${b}`)
       return { q: query }
     },
-    generateElasticQuery(value) {
+    generateElasticQuery(value, field) {
       let query = `"${value}"`
+      if (field !== undefined) {
+        query = `${field}:${query}`
+      }
       return { q: query }
     },
     startIOCEdit(ioc) {
