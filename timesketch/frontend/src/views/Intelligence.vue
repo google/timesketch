@@ -154,20 +154,20 @@ limitations under the License.
             <div class="box">
               <h1 class="title">Event tags</h1>
               <h1 class="subtitle">Tags that have been applied to events.</h1>
-              <b-table v-if="meta.filter_labels.length > 0" :data="meta.filter_labels">
+              <b-table v-if="sketchTags.length > 0" :data="sketchTags">
                 <b-table-column field="search" label="" v-slot="props" width="1em">
-                  <router-link :to="{ name: 'Explore', query: generateElasticQuery(props.row.label, 'tag') }">
+                  <router-link :to="{ name: 'Explore', query: generateElasticQuery(props.row.tag, 'tag') }">
                     <i class="fas fa-search" aria-hidden="true" title="Search sketch for all events with this tag."></i>
                   </router-link>
                 </b-table-column>
-                <b-table-column field="label" label="Label" v-slot="props" sortable>
-                  <b-tag type="is-info is-light">{{ props.row.label }} </b-tag>
+                <b-table-column field="tag" label="Tag" v-slot="props" sortable>
+                  <b-tag type="is-info is-light">{{ props.row.tag }} </b-tag>
                 </b-table-column>
-                <b-table-column field="count" label="Events labeled" v-slot="props" sortable numeric>
+                <b-table-column field="count" label="Events tagged" v-slot="props" sortable numeric>
                   {{ props.row.count }}
                 </b-table-column>
               </b-table>
-              <span v-else>No events have been labeled yet.</span>
+              <span v-else>No events have been tagged yet.</span>
             </div>
           </div>
         </div>
@@ -184,6 +184,7 @@ import { SnackbarProgrammatic as Snackbar } from 'buefy'
 export default {
   data() {
     return {
+      sketchTags: [],
       tagInfo: {},
       editingIoc: {},
       showEditModal: false,
@@ -211,6 +212,15 @@ export default {
     loadSketchAttributes() {
       this.$store.dispatch('updateSketch', this.$store.state.sketch.id)
       this.buildTagInfo()
+    },
+    loadSketchTags() {
+      ApiClient.runAggregator(this.sketch.id, {
+        aggregator_name: 'field_bucket',
+        aggregator_parameters: { field: 'tag' },
+      }).then(response => {
+        this.sketchTags = response.data.objects[0].field_bucket.buckets
+        // of the form [{count: 0, tag: 'foo'}]
+      })
     },
     notifyClipboardSuccess() {
       this.$buefy.notification.open({ message: 'Succesfully copied data to clipboard!', type: 'is-success' })
@@ -288,6 +298,7 @@ export default {
   },
   mounted() {
     this.loadSketchAttributes()
+    this.loadSketchTags()
   },
 }
 </script>
