@@ -238,15 +238,12 @@ export default {
       return { q: query }
     },
     startIOCEdit(ioc) {
-      console.log('startIOCedit')
       this.showEditModal = true
       this.editingIoc = ioc
     },
     saveIOC() {
-      console.log('saveioc')
       ApiClient.addSketchAttribute(this.sketch.id, 'intelligence', this.intelligenceAttribute.value, 'intelligence')
         .then(() => {
-          console.log('ioc update success')
           Snackbar.open({
             message: 'IOC successfully updated!',
             type: 'is-success',
