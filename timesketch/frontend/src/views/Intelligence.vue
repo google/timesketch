@@ -55,8 +55,9 @@ limitations under the License.
             </p>
           </b-field>
         </b-field>
-
-        <b-field position="is-right"> </b-field>
+        <b-field label="External reference (URI)">
+          <b-input v-model="editingIoc.externalURI"></b-input>
+        </b-field>
       </section>
     </b-modal>
     <!-- End modal -->
@@ -67,25 +68,32 @@ limitations under the License.
         <div class="box">
           <h1 class="title">Indicators of compromise</h1>
           <b-table v-if="intelligenceData.length > 0" :data="intelligenceData">
-            <b-table-column field="type" label="IOC Type" v-slot="props">
+            <b-table-column field="type" label="IOC Type" v-slot="props" sortable>
               <code>{{ props.row.type }}</code>
             </b-table-column>
 
             <b-table-column field="ioc" label="" v-slot="props" width="5em">
-              <router-link :to="{ name: 'Explore', query: generateElasticQuery(props.row.ioc) }">
+              <i
+                class="fas fa-copy"
+                style="cursor:pointer"
+                title="Copy key"
+                v-clipboard:copy="props.row.ioc"
+                v-clipboard:success="notifyClipboardSuccess"
+              ></i>
+              <router-link :to="{ name: 'Explore', query: generateElasticQuery(props.row.ioc) }" class="ml-4">
                 <i
                   class="fas fa-search"
                   aria-hidden="true"
                   title="Search sketch for all events containing this IOC."
                 ></i>
               </router-link>
-              <i
-                class="fas fa-copy"
-                style="cursor:pointer;margin-left:1em;"
-                title="Copy key"
-                v-clipboard:copy="props.row.ioc"
-                v-clipboard:success="notifyClipboardSuccess"
-              ></i>
+            </b-table-column>
+
+            <b-table-column field="externalURI" label="External ref." v-slot="props" sortable>
+              <a v-if="getValidUrl(props.row.externalURI)" :href="getValidUrl(props.row.externalURI)" target="_blank">
+                <i class="fas fa-external-link-alt"></i> {{ getValidUrl(props.row.externalURI).host }}
+              </a>
+              <span v-else>{{ props.row.externalURI }}</span>
             </b-table-column>
 
             <b-table-column field="ioc" label="Indicator data" v-slot="props" sortable>
@@ -207,6 +215,18 @@ export default {
         ApiClient.addSketchAttribute(this.sketch.id, 'intelligence', { data: data }, 'intelligence').then(() => {
           this.loadSketchAttributes()
         })
+      }
+    },
+    getValidUrl(urlString) {
+      if (urlString === undefined || urlString === null || urlString === '') {
+        return false
+      }
+      if (urlString.startsWith('http')) {
+        return new URL(urlString)
+      } else if (urlString.includes('/')) {
+        return new URL('http://' + urlString)
+      } else {
+        return false
       }
     },
     loadSketchAttributes() {
