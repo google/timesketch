@@ -124,6 +124,19 @@ See your console output if you started the workers with:
 docker exec -it $CONTAINER_ID celery -A timesketch.lib.tasks worker --loglevel=debug
 ```
 
+It is possible to see current running jobs with:
+
+```shell
+docker exec -it $CONTAINER_ID celery -A timesketch.lib.tasks inspect active
+```
+
+Which will give a list of tasks, individual tasks that are running can be then checked with
+```shell
+docker exec -it $CONTAINER_ID celery -A timesketch.lib.tasks inspect query_task $TASKID
+```
+
+Where $TASKID is the id that was shown in the previous step.
+
 ### Elasticsearch
 
 ```shell
