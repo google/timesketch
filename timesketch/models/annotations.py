@@ -65,7 +65,7 @@ class Label(BaseAnnotation):
             user: A user (instance of timesketch.models.user.User)
             name: Name of the label
         """
-        super(Label, self).__init__()
+        super().__init__()
         self.user = user
         self.label = label
 
@@ -81,7 +81,7 @@ class Comment(BaseAnnotation):
             user: A user (instance of timesketch.models.user.User)
             body: The body if the comment
         """
-        super(Comment, self).__init__()
+        super().__init__()
         self.user = user
         self.comment = comment
 
@@ -97,7 +97,7 @@ class Status(BaseAnnotation):
             user: A user (instance of timesketch.models.user.User)
             status: The type of status (string, e.g. open)
         """
-        super(Status, self).__init__()
+        super().__init__()
         self.user = user
         self.status = status
 
@@ -234,6 +234,49 @@ class CommentMixin(object):
                     ForeignKey('{0:s}.id'.format(self.__tablename__))),
                 parent=relationship(self), ))
         return relationship(self.Comment)
+
+    def remove_comment(self, comment_id):
+        """Remove a comment from an event.
+
+        Args:
+            comment_id: Id of the comment.
+        """
+        for comment_obj in self.comments:
+            if comment_obj.id == int(comment_id):
+                self.comments.remove(comment_obj)
+                db_session.commit()
+                return True
+
+        return False
+
+    def get_comment(self, comment_id):
+        """Retrives a comment.
+
+        Args:
+            comment_id: Id of the comment.
+
+        Returns:
+            The comment object, or None if the comment does not exist.
+        """
+        for comment_obj in self.comments:
+            if comment_obj.id == int(comment_id):
+                return comment_obj
+        return None
+
+    def update_comment(self, comment_id, comment):
+        """Update an existing comment.
+
+        Args:
+            comment: Comment object with updated comment text.
+        """
+        for comment_obj in self.comments:
+            if comment_obj.id == int(comment_id):
+                comment_obj.comment = comment
+                db_session.commit()
+                return comment_obj
+
+        return False
+
 
 
 class StatusMixin(object):
