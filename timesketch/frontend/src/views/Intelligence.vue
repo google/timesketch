@@ -65,63 +65,67 @@ limitations under the License.
     <!-- IOC table -->
     <section class="section">
       <div class="container is-fluid">
-        <div class="box">
-          <h1 class="title">Indicators of compromise</h1>
-          <b-table v-if="intelligenceData.length > 0" :data="intelligenceData">
-            <b-table-column field="type" label="IOC Type" v-slot="props" sortable>
-              <code>{{ props.row.type }}</code>
-            </b-table-column>
+        <div class="card">
+          <div class="card-header">
+            <p class="card-header-title">Indicators of compromise</p>
+          </div>
+          <div class="card-content">
+            <b-table v-if="intelligenceData.length > 0" :data="intelligenceData">
+              <b-table-column field="type" label="IOC Type" v-slot="props" sortable>
+                <code>{{ props.row.type }}</code>
+              </b-table-column>
 
-            <b-table-column field="ioc" label="" v-slot="props" width="5em">
-              <i
-                class="fas fa-copy"
-                style="cursor:pointer"
-                title="Copy key"
-                v-clipboard:copy="props.row.ioc"
-                v-clipboard:success="notifyClipboardSuccess"
-              ></i>
-              <router-link :to="{ name: 'Explore', query: generateElasticQuery(props.row.ioc) }" class="ml-4">
+              <b-table-column field="ioc" label="" v-slot="props" width="5em">
                 <i
-                  class="fas fa-search"
-                  aria-hidden="true"
-                  title="Search sketch for all events containing this IOC."
+                  class="fas fa-copy"
+                  style="cursor:pointer"
+                  title="Copy key"
+                  v-clipboard:copy="props.row.ioc"
+                  v-clipboard:success="notifyClipboardSuccess"
                 ></i>
-              </router-link>
-            </b-table-column>
+                <router-link :to="{ name: 'Explore', query: generateElasticQuery(props.row.ioc) }" class="ml-4">
+                  <i
+                    class="fas fa-search"
+                    aria-hidden="true"
+                    title="Search sketch for all events containing this IOC."
+                  ></i>
+                </router-link>
+              </b-table-column>
 
-            <b-table-column field="externalURI" label="External ref." v-slot="props" sortable>
-              <a v-if="getValidUrl(props.row.externalURI)" :href="getValidUrl(props.row.externalURI)" target="_blank">
-                <i class="fas fa-external-link-alt"></i> {{ getValidUrl(props.row.externalURI).host }}
-              </a>
-              <span v-else>{{ props.row.externalURI }}</span>
-            </b-table-column>
+              <b-table-column field="externalURI" label="External ref." v-slot="props" sortable>
+                <a v-if="getValidUrl(props.row.externalURI)" :href="getValidUrl(props.row.externalURI)" target="_blank">
+                  <i class="fas fa-external-link-alt"></i> {{ getValidUrl(props.row.externalURI).host }}
+                </a>
+                <span v-else>{{ props.row.externalURI }}</span>
+              </b-table-column>
 
-            <b-table-column field="ioc" label="Indicator data" v-slot="props" sortable>
-              <code>{{ props.row.ioc }}</code>
-            </b-table-column>
+              <b-table-column field="ioc" label="Indicator data" v-slot="props" sortable>
+                <code>{{ props.row.ioc }}</code>
+              </b-table-column>
 
-            <b-table-column field="tags" label="Tags" v-slot="props">
-              <b-taglist>
-                <b-tag v-for="tag in props.row.tags" v-bind:key="tag" type="is-info is-light">{{ tag }} </b-tag>
-              </b-taglist>
-            </b-table-column>
+              <b-table-column field="tags" label="Tags" v-slot="props">
+                <b-taglist>
+                  <b-tag v-for="tag in props.row.tags" v-bind:key="tag" type="is-info is-light">{{ tag }} </b-tag>
+                </b-taglist>
+              </b-table-column>
 
-            <b-table-column field="edit" label="" v-slot="props">
-              <span class="icon is-small" style="cursor:pointer;" title="Edit IOC" @click="startIOCEdit(props.row)"
-                ><i class="fas fa-edit"></i>
-              </span>
-            </b-table-column>
+              <b-table-column field="edit" label="" v-slot="props">
+                <span class="icon is-small" style="cursor:pointer;" title="Edit IOC" @click="startIOCEdit(props.row)"
+                  ><i class="fas fa-edit"></i>
+                </span>
+              </b-table-column>
 
-            <b-table-column field="delete" label="" v-slot="props">
-              <span class="icon is-small delete-ioc" title="Delete IOC" @click="deleteIoc(props.row)"
-                ><i class="fas fa-trash"></i>
-              </span>
-            </b-table-column>
-          </b-table>
-          <!-- End IOC table, empty palceholder follows -->
-          <div v-else class="card-content">
-            Examine events in the <router-link :to="{ name: 'Explore' }">Explore view</router-link> to add intelligence
-            locally
+              <b-table-column field="delete" label="" v-slot="props">
+                <span class="icon is-small delete-ioc" title="Delete IOC" @click="deleteIoc(props.row)"
+                  ><i class="fas fa-trash"></i>
+                </span>
+              </b-table-column>
+            </b-table>
+            <!-- End IOC table, empty palceholder follows -->
+            <div v-else class="card-content">
+              Examine events in the <router-link :to="{ name: 'Explore' }">Explore view</router-link> to add
+              intelligence locally
+            </div>
           </div>
         </div>
       </div>
@@ -133,45 +137,66 @@ limitations under the License.
         <div class="columns">
           <!-- tag column -->
           <div class="column">
-            <div class="box">
-              <h1 class="title">Tag List</h1>
-              <h1 class="subtitle">Tags that have been associated with IOCs.</h1>
-              <b-table v-if="Object.keys(tagInfo).length > 0" :data="Object.values(tagInfo)">
-                <b-table-column field="search" label="" v-slot="props" width="1em">
-                  <router-link :to="{ name: 'Explore', query: generateOrElasticQuery(props.row.iocs) }">
-                    <i class="fas fa-search" aria-hidden="true" title="Search sketch for all IOCs with this tag."></i>
-                  </router-link>
-                </b-table-column>
-                <b-table-column field="tagName" label="Tag name" v-slot="props" sortable>
-                  <b-tag type="is-info is-light">{{ props.row.tagName }} </b-tag>
-                </b-table-column>
-                <b-table-column field="count" label="IOCs tagged" v-slot="props" sortable numeric>
-                  {{ props.row.count }}
-                </b-table-column>
-              </b-table>
-              <span v-else>No IOCs have been tagged yet.</span>
+            <div class="card">
+              <div class="card-header">
+                <p class="card-header-title">
+                  Tag list <i class="fas fa-question-circle" title="Tags that have been associated with IOCs."></i>
+                </p>
+                <p class="card-header-icon">
+                  <span class="icon"> </span>
+                </p>
+              </div>
+              <div class="card-content">
+                <b-table v-if="Object.keys(tagInfo).length > 0" :data="Object.values(tagInfo)">
+                  <b-table-column field="search" label="" v-slot="props" width="1em">
+                    <router-link :to="{ name: 'Explore', query: generateOrElasticQuery(props.row.iocs) }">
+                      <i class="fas fa-search" aria-hidden="true" title="Search sketch for all IOCs with this tag."></i>
+                    </router-link>
+                  </b-table-column>
+                  <b-table-column field="tagName" label="Tag name" v-slot="props" sortable>
+                    <b-tag type="is-info is-light">{{ props.row.tagName }} </b-tag>
+                  </b-table-column>
+                  <b-table-column field="count" label="IOCs tagged" v-slot="props" sortable numeric>
+                    {{ props.row.count }}
+                  </b-table-column>
+                </b-table>
+                <span v-else>No IOCs have been tagged yet.</span>
+              </div>
             </div>
           </div>
 
           <!-- labels column -->
           <div class="column">
-            <div class="box">
-              <h1 class="title">Event tags</h1>
-              <h1 class="subtitle">Tags that have been applied to events.</h1>
-              <b-table v-if="sketchTags.length > 0" :data="sketchTags">
-                <b-table-column field="search" label="" v-slot="props" width="1em">
-                  <router-link :to="{ name: 'Explore', query: generateElasticQuery(props.row.tag, 'tag') }">
-                    <i class="fas fa-search" aria-hidden="true" title="Search sketch for all events with this tag."></i>
-                  </router-link>
-                </b-table-column>
-                <b-table-column field="tag" label="Tag" v-slot="props" sortable>
-                  <b-tag type="is-info is-light">{{ props.row.tag }} </b-tag>
-                </b-table-column>
-                <b-table-column field="count" label="Events tagged" v-slot="props" sortable numeric>
-                  {{ props.row.count }}
-                </b-table-column>
-              </b-table>
-              <span v-else>No events have been tagged yet.</span>
+            <div class="card">
+              <div class="card-header">
+                <p class="card-header-title">
+                  Event tags <i class="fas fa-question-circle" title="Tags that have been applied to events."></i>
+                </p>
+                <p class="card-header-icon">
+                  <span class="icon"> </span>
+                </p>
+              </div>
+
+              <div class="card-content">
+                <b-table v-if="sketchTags.length > 0" :data="sketchTags">
+                  <b-table-column field="search" label="" v-slot="props" width="1em">
+                    <router-link :to="{ name: 'Explore', query: generateElasticQuery(props.row.tag, 'tag') }">
+                      <i
+                        class="fas fa-search"
+                        aria-hidden="true"
+                        title="Search sketch for all events with this tag."
+                      ></i>
+                    </router-link>
+                  </b-table-column>
+                  <b-table-column field="tag" label="Tag" v-slot="props" sortable>
+                    <b-tag type="is-info is-light">{{ props.row.tag }} </b-tag>
+                  </b-table-column>
+                  <b-table-column field="count" label="Events tagged" v-slot="props" sortable numeric>
+                    {{ props.row.count }}
+                  </b-table-column>
+                </b-table>
+                <span v-else>No events have been tagged yet.</span>
+              </div>
             </div>
           </div>
         </div>
@@ -326,5 +351,10 @@ export default {
 .delete-ioc {
   cursor: pointer;
   color: #da1039;
+}
+
+.fa-question-circle {
+  margin-left: 0.6em;
+  opacity: 0.5;
 }
 </style>
