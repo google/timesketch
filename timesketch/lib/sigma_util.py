@@ -141,12 +141,8 @@ def get_sigma_rules(rule_folder, sigma_config=None):
                     continue
 
                 rule_file_path = os.path.join(dirpath, rule_filename)
-                block_because_csv = False
 
                 if any(x in rule_file_path for x in ignore_list):
-                    block_because_csv = True
-
-                if block_because_csv:
                     continue
 
                 parsed_rule = get_sigma_rule(rule_file_path, sigma_config)
