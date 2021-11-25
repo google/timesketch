@@ -65,75 +65,85 @@ limitations under the License.
     <!-- IOC table -->
     <section class="section">
       <div class="container is-fluid">
-        <div class="card">
-          <div class="card-header">
-            <p class="card-header-title">Indicators of compromise</p>
-          </div>
-          <div class="card-content">
-            <b-table v-if="intelligenceData.length > 0" :data="intelligenceData">
-              <b-table-column field="type" label="IOC Type" v-slot="props" sortable>
-                <code>{{ props.row.type }}</code>
-              </b-table-column>
+        <div class="columns">
+          <div class="column">
+            <div class="card">
+              <div class="card-header">
+                <p class="card-header-title">Indicators of compromise</p>
+              </div>
+              <div class="card-content">
+                <b-table v-if="intelligenceData.length > 0" :data="intelligenceData">
+                  <b-table-column field="type" label="IOC Type" v-slot="props" sortable>
+                    <code>{{ props.row.type }}</code>
+                  </b-table-column>
 
-              <b-table-column field="ioc" label="" v-slot="props" width="5em">
-                <i
-                  class="fas fa-copy"
-                  style="cursor:pointer"
-                  title="Copy key"
-                  v-clipboard:copy="props.row.ioc"
-                  v-clipboard:success="notifyClipboardSuccess"
-                ></i>
-                <router-link :to="{ name: 'Explore', query: generateElasticQuery(props.row.ioc) }" class="ml-4">
-                  <i
-                    class="fas fa-search"
-                    aria-hidden="true"
-                    title="Search sketch for all events containing this IOC."
-                  ></i>
-                </router-link>
-              </b-table-column>
+                  <b-table-column field="ioc" label="" v-slot="props" width="5em">
+                    <i
+                      class="fas fa-copy"
+                      style="cursor:pointer"
+                      title="Copy key"
+                      v-clipboard:copy="props.row.ioc"
+                      v-clipboard:success="notifyClipboardSuccess"
+                    ></i>
+                    <router-link :to="{ name: 'Explore', query: generateElasticQuery(props.row.ioc) }" class="ml-4">
+                      <i
+                        class="fas fa-search"
+                        aria-hidden="true"
+                        title="Search sketch for all events containing this IOC."
+                      ></i>
+                    </router-link>
+                  </b-table-column>
 
-              <b-table-column field="externalURI" label="External ref." v-slot="props" sortable>
-                <a v-if="getValidUrl(props.row.externalURI)" :href="getValidUrl(props.row.externalURI)" target="_blank">
-                  <i class="fas fa-external-link-alt"></i> {{ getValidUrl(props.row.externalURI).host }}
-                </a>
-                <span v-else>{{ props.row.externalURI }}</span>
-              </b-table-column>
+                  <b-table-column field="externalURI" label="External ref." v-slot="props" sortable>
+                    <a
+                      v-if="getValidUrl(props.row.externalURI)"
+                      :href="getValidUrl(props.row.externalURI)"
+                      target="_blank"
+                    >
+                      <i class="fas fa-external-link-alt"></i> {{ getValidUrl(props.row.externalURI).host }}
+                    </a>
+                    <span v-else>{{ props.row.externalURI }}</span>
+                  </b-table-column>
 
-              <b-table-column field="ioc" label="Indicator data" v-slot="props" sortable>
-                <code>{{ props.row.ioc }}</code>
-              </b-table-column>
+                  <b-table-column field="ioc" label="Indicator data" v-slot="props" sortable>
+                    <code>{{ props.row.ioc }}</code>
+                  </b-table-column>
 
-              <b-table-column field="tags" label="Tags" v-slot="props">
-                <b-taglist>
-                  <b-tag v-for="tag in props.row.tags" v-bind:key="tag" type="is-info is-light">{{ tag }} </b-tag>
-                </b-taglist>
-              </b-table-column>
+                  <b-table-column field="tags" label="Tags" v-slot="props">
+                    <b-taglist>
+                      <b-tag v-for="tag in props.row.tags" v-bind:key="tag" type="is-info is-light">{{ tag }} </b-tag>
+                    </b-taglist>
+                  </b-table-column>
 
-              <b-table-column field="edit" label="" v-slot="props">
-                <span class="icon is-small" style="cursor:pointer;" title="Edit IOC" @click="startIOCEdit(props.row)"
-                  ><i class="fas fa-edit"></i>
-                </span>
-              </b-table-column>
+                  <b-table-column field="edit" label="" v-slot="props">
+                    <span
+                      class="icon is-small"
+                      style="cursor:pointer;"
+                      title="Edit IOC"
+                      @click="startIOCEdit(props.row)"
+                      ><i class="fas fa-edit"></i>
+                    </span>
+                  </b-table-column>
 
-              <b-table-column field="delete" label="" v-slot="props">
-                <span class="icon is-small delete-ioc" title="Delete IOC" @click="deleteIoc(props.row)"
-                  ><i class="fas fa-trash"></i>
-                </span>
-              </b-table-column>
-            </b-table>
-            <!-- End IOC table, empty palceholder follows -->
-            <div v-else class="card-content">
-              Examine events in the <router-link :to="{ name: 'Explore' }">Explore view</router-link> to add
-              intelligence locally
+                  <b-table-column field="delete" label="" v-slot="props">
+                    <span class="icon is-small delete-ioc" title="Delete IOC" @click="deleteIoc(props.row)"
+                      ><i class="fas fa-trash"></i>
+                    </span>
+                  </b-table-column>
+                </b-table>
+                <!-- End IOC table, empty palceholder follows -->
+                <div v-else class="card-content">
+                  Examine events in the <router-link :to="{ name: 'Explore' }">Explore view</router-link> to add
+                  intelligence locally
+                </div>
+              </div>
             </div>
           </div>
+          <!-- end column -->
         </div>
-      </div>
-    </section>
+        <!-- end columns -->
 
-    <!-- Tag & label list -->
-    <section class="section">
-      <div class="container is-fluid">
+        <!-- Tag & label list columns -->
         <div class="columns">
           <!-- tag column -->
           <div class="column">
@@ -201,6 +211,10 @@ limitations under the License.
           </div>
         </div>
       </div>
+    </section>
+
+    <section class="section">
+      <div class="container is-fluid"></div>
     </section>
   </div>
 </template>
