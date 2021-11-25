@@ -10,7 +10,7 @@ class GcpLoggingSketchPlugin(interface.BaseAnalyzer):
 
     NAME = 'gcp_logging'
     DISPLAY_NAME = 'Google Cloud Logging Analyzer'
-    DESCRIPTION = ('Extract accounts and resources from cloud logging and tag'
+    DESCRIPTION = ('Extract accounts and resources from cloud logging and tags'
         ' security relevant actions.')
 
     def run(self):
@@ -19,8 +19,6 @@ class GcpLoggingSketchPlugin(interface.BaseAnalyzer):
         Returns:
             String with summary of the analyzer result
         """
-        # TODO: update dftimewolf stackdriver module to produce more detailed
-        # attributes
 
         return ('GCP logging analyzer completed with '
                 '{0:d} service key marked').format(0)
