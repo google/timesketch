@@ -65,7 +65,7 @@ timesketch/data/sigma
 
 ### Sigma Rules Blocklist file
 
-The `data/sigma_blocklist.csv` is the central point where Timesketch tries to maintain which rules are considered good or bad. By default each rule is considered good, but it is good practice to add them in that file if they are tested.
+The `data/sigma_blocklist.csv` is where Timesketch maintains a list of incompatible rules. By default each rule is considered compatible, but it is good practice to add them in this file if they are tested and verified to not be compatible.
 
 Each method that reads Sigma rules from the a folder is checking, if part of the full path of a rule is mentioned in the `data/sigma_blocklist.csv` file.
 
