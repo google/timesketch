@@ -331,7 +331,7 @@ def get_sigma_blocklist_path(blocklist_path=None):
     """
     logger.error(blocklist_path)
 
-    if blocklist_path is None or blocklist_path == '':
+    if not blocklist_path or blocklist_path == '':
         blocklist_path = current_app.config.get(
             'SIGMA_BLOCKLIST_CSV', './data/sigma_blocklist.csv')
     if not blocklist_path:
