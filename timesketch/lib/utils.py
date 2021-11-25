@@ -165,18 +165,30 @@ def read_and_validate_csv(
 
             # Normalize datetime to ISO 8601 format if it's not the case.
             try:
-                chunk['datetime'] = pandas.to_datetime(chunk['datetime'])
-
+                # Lines with unrecognized datetime format will result in "NaT"
+                # (not available) as its value and the event row will be
+                # dropped in the next line
+                chunk['datetime'] = pandas.to_datetime(
+                    chunk['datetime'], errors='coerce')
+                num_chunk_rows = chunk.shape[0]
+                chunk.dropna(subset=['datetime'], inplace=True)
+                if len(chunk) < num_chunk_rows:
+                    logger.warning(
+                        '{0} rows dropped from Rows {1} to {2} due to invalid '
+                        'datetime values'.format(
+                            num_chunk_rows - len(chunk),
+                            idx * reader.chunksize,
+                            idx * reader.chunksize + num_chunk_rows))
                 chunk['timestamp'] = chunk['datetime'].dt.strftime(
                     '%s%f').astype(int)
                 chunk['datetime'] = chunk['datetime'].apply(
                     Timestamp.isoformat).astype(str)
             except ValueError:
-                warning_string = (
+                logger.warning(
                     'Rows {0} to {1} skipped due to malformed '
-                    'datetime values ')
-                logger.warning(warning_string.format(
-                    idx * reader.chunksize, chunk.shape[0]))
+                    'datetime values '.format(
+                        idx * reader.chunksize,
+                        idx * reader.chunksize + chunk.shape[0]))
                 continue
             if 'tag' in chunk:
                 chunk['tag'] = chunk['tag'].apply(_parse_tag_field)
@@ -246,111 +258,48 @@ def read_and_validate_jsonl(file_handle):
     """
     # Fields that must be present in each entry of the JSONL file.
     mandatory_fields = ['message', 'datetime', 'timestamp_desc']
-    line_number = 0
-    max_len_line_jsonl = current_app.config.get(
-        'MAX_LENGTH_LINE_JSONL', 100000)
-    tag_reducted = current_app.config.get('TAG_REDUCTED_JSONL')
-
+    lineno = 0
+    max_len_line_jsonl = current_app.config.get('MAX_LENGTH_LINE_JSONL')
     for line in file_handle:
-        line_number += 1
+        lineno += 1
         try:
             linedict = json.loads(line)
+            ld_keys = linedict.keys()
+            if len(line) > max_len_line_jsonl:
+                logger.error(
+                    'Json line too long, skipping line '
+                    '{0:d}'.format(lineno), exc_info=True)
+                continue
+            if 'datetime' not in ld_keys and 'timestamp' in ld_keys:
+                epoch = int(str(linedict['timestamp'])[:10])
+                dt = datetime.datetime.fromtimestamp(epoch)
+                linedict['datetime'] = dt.isoformat()
+            if 'timestamp' not in ld_keys and 'datetime' in ld_keys:
+                try:
+                    linedict['timestamp'] = int(parser.parse(
+                        linedict['datetime']).timestamp() * 1000000)
+                except parser.ParserError:
+                    logger.error(
+                        'Unable to parse timestamp, skipping line '
+                        '{0:d}'.format(lineno), exc_info=True)
+                    continue
+
+            missing_fields = [x for x in mandatory_fields if x not in linedict]
+            if missing_fields:
+                raise RuntimeError(
+                    'Missing field(s) at line {0:n}: {1:s}'.format(
+                        lineno, ','.join(missing_fields)))
+
+            if 'tag' in linedict:
+                linedict['tag'] = [
+                    x for x in _parse_tag_field(linedict['tag']) if x]
+            _scrub_special_tags(linedict)
+            yield linedict
+
         except ValueError as e:
-            # TODO: Should we stop ingesting, or continue and just log?
             raise errors.DataIngestionError(
                 'Error parsing JSON at line {0:n}: {1:s}'.format(
-                    line_number, str(e)))
-
-        ld_keys = linedict.keys()
-
-        current_len = len(line)
-        if current_len > max_len_line_jsonl:
-            field_len = {}
-            total_len = 0
-            for key, value in linedict.items():
-                if isinstance(value, str):
-                    line_length = len(value)
-                elif isinstance(value, list):
-                    line_length = sum([len(str(x)) for x in value])
-                else:
-                    line_length = 0
-                field_len[key] = line_length
-                total_len += line_length
-
-            field_len = dict(sorted(
-                    field_len.items(),
-                    key=lambda item: item[1],
-                    reverse=True)
-                )
-            cur_len_fields = 0
-            reduc_field = []
-            for key, key_length in field_len.items():
-                cur_len_fields += key_length
-                reduc_field.append(key)
-                if max_len_line_jsonl > (total_len - cur_len_fields):
-                    break
-            current_max = int(
-                max_len_line_jsonl - (
-                    max_len_line_jsonl / 100 * 10))
-            current_reduc = current_max - (total_len - cur_len_fields)
-            len_by_field = int(current_reduc / len(reduc_field))
-            for key in reduc_field:
-                if isinstance(linedict[key], list):
-                    cur_len_val = 0
-                    new_value = []
-                    for val in linedict[key]:
-                        cur_len_val += len(val)
-                        if cur_len_val > len_by_field:
-                            cur_reduc = len_by_field - (
-                                cur_len_val - len(val))
-                            new_value.append(val[0:cur_reduc])
-                            break
-                        new_value.append(val)
-                    linedict[key] = new_value
-                    if 'tag' in linedict:
-                        linedict['tag'] += tag_reducted + "_" + key
-                        continue
-                    linedict['tag'] = [tag_reducted + "_" + key]
-                    continue
-                if len(linedict[key]) > len_by_field:
-                    linedict[key] = linedict[key][0:len_by_field]
-                    if 'tag' in linedict:
-                        linedict['tag'] += tag_reducted + "_" + key
-                        continue
-                    linedict['tag'] = [tag_reducted + "_" + key]
-            current_len = len(str(linedict))
-            if current_len > max_len_line_jsonl:
-                logger.warning(
-                    'Line {0:d} too long ({1:d} chars which is over '
-                    'the maximum supported value of {2:d}'.format(
-                        line_number, current_len, max_len_line_jsonl))
-                continue
-
-        if 'datetime' not in ld_keys and 'timestamp' in ld_keys:
-            epoch = int(str(linedict['timestamp'])[:10])
-            dt = datetime.datetime.fromtimestamp(epoch)
-            linedict['datetime'] = dt.isoformat()
-        if 'timestamp' not in ld_keys and 'datetime' in ld_keys:
-            try:
-                linedict['timestamp'] = parser.parse(linedict['datetime'])
-            except parser.ParserError:
-                logger.error(
-                    'Unable to parse timestamp, skipping line '
-                    '{0:d}'.format(line_number), exc_info=True)
-                continue
-
-        missing_fields = [x for x in mandatory_fields if x not in linedict]
-        if missing_fields:
-            raise RuntimeError(
-                'Missing field(s) at line {0:n}: {1:s}'.format(
-                    line_number, ','.join(missing_fields)))
-
-        if 'tag' in linedict:
-            linedict['tag'] = [
-                x for x in _parse_tag_field(linedict['tag']) if x]
-        _scrub_special_tags(linedict)
-        yield linedict
-
+                    lineno, str(e)))
 
 
 def get_validated_indices(indices, sketch):
