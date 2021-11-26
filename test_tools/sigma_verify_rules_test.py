@@ -26,7 +26,7 @@ class TestSigmaVerifyRules(unittest.TestCase):
         found = False
         self.assertEqual(len(sigma_prob_rules),0)
         for verified_rule in sigma_ok_rules:
-            if 'lnx_susp_zenmap' in verified_rule:
+            if 'lnx_susp_zmap' in verified_rule:
                 found = True
 
         self.assertTrue(found)
