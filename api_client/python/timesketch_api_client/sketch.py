@@ -232,7 +232,7 @@ class Sketch(resource.BaseResource):
             values (list): A list of values (in their correct type according
                 to the ontology).
             ontology (str): The ontology (matches with
-                /etc/ontology.yaml), which defines how the attribute
+                /data/ontology.yaml), which defines how the attribute
                 is interpreted.
 
         Raises:
@@ -270,7 +270,7 @@ class Sketch(resource.BaseResource):
             name (str): The name of the attribute.
             value (str): Value of the attribute, stored as a string.
             ontology (str): The ontology (matches with
-                /etc/timesketch/ontology.yaml), which defines
+                /data/ontology.yaml), which defines
                 how the attribute is interpreted.
 
         Raises:
@@ -322,7 +322,7 @@ class Sketch(resource.BaseResource):
         Args:
             name (str): The name of the attribute.
             ontology (str): The ontology (matches with
-                /etc/ontology.yaml), which defines how the attribute
+                /data/ontology.yaml), which defines how the attribute
                 is interpreted.
 
         Raises:
