@@ -349,7 +349,7 @@ limitations under the License.
                     <span class="icon">
                       <i class="fas fa-star"></i>
                     </span>
-                    <span>Toggle star ({{ numSelectedEvents }})</span>
+                    <span>Star events ({{ numSelectedEvents }})</span>
                   </button>
                 </div>
               </div>
@@ -915,7 +915,9 @@ export default {
       })
       this.addChip(chip)
     },
-
+    isEventStarred: function(index) {
+      return this.eventList.objects[index]._source.label.includes('__ts_star')
+    },
     toggleLabelChip: function(labelName) {
       let chip = {
         field: '',
@@ -984,15 +986,34 @@ export default {
       }
     },
     toggleStar: function() {
+      // The function stars and unstars all selected events, instead of
+      // toggling them. This helps when some of the selected events (but not
+      // all) were already starred.
+      let eventsStarred = []
+      let eventsUnstarred = []
       let eventsToToggle = []
       Object.keys(this.selectedEvents).forEach((key, index) => {
-        eventsToToggle.push(this.selectedEvents[key])
+        if (this.isEventStarred(index)) {
+          eventsStarred.push(this.selectedEvents[key])
+        }
+        else {
+          eventsUnstarred.push(this.selectedEvents[key])
+        }
       })
+
+      // Find out if there's a mix of starred and unstarred events
+      if (eventsStarred.length && eventsUnstarred.length) {
+        eventsToToggle = eventsUnstarred
+      }
+      else {
+        eventsToToggle = (eventsUnstarred.length) ? eventsUnstarred : eventsStarred
+      }
+
+      console.log(eventsToToggle.length)
       ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', eventsToToggle, this.currentSearchNode)
         .then(response => {})
         .catch(e => {})
-
-      EventBus.$emit('toggleStar', this.selectedEvents)
+      EventBus.$emit('toggleStar', eventsToToggle)
     },
     changeSortOrder: function() {
       if (this.currentQueryFilter.order === 'asc') {
