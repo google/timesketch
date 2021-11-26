@@ -27,7 +27,6 @@ limitations under the License.
       <div class="container is-fluid">
         <div class="card">
           <div class="card-content">
-            <span class="title is-6 is-uppercase">Sigma rules</span>
             <ts-sigma-list></ts-sigma-list>
           </div>
         </div>
@@ -41,7 +40,7 @@ import TsSigmaList from '../components/Sigma/SigmaList'
 
 export default {
   props: ['sketchId'],
-  components: { TsSigmaList},
+  components: { TsSigmaList },
   computed: {
     sketch() {
       return this.$store.state.sketch

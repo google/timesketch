@@ -133,17 +133,6 @@ CELERY_RESULT_BACKEND = 'redis://127.0.0.1:6379'
 #PLASO_DATA_LOCATION = '/path/to/dir/with/plaso/data/files'
 
 #-------------------------------------------------------------------------------
-# Graph backend configuration.
-
-GRAPH_BACKEND_ENABLED = False
-
-# Neo4j server configuration
-NEO4J_HOST = '127.0.0.1'
-NEO4J_PORT = 7474
-NEO4J_USERNAME = 'neo4j'
-NEO4J_PASSWORD = '<NEO4J_PASSWORD>'
-
-#-------------------------------------------------------------------------------
 # Analyzers
 
 # Which analyzers to run automatically when a timeline is imported or added to

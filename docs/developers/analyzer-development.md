@@ -1,5 +1,13 @@
 # Write analyzers in Timesketch
 
+## Multi Analyzer
+
+When you develop an anylzer that would benefit from creating smaller sub-jobs, you should use Multi Analyzer.
+
+For example The Sigma analyzer is such a Multi Analyzer. That means, the Sigma analyzer is calling ```get_kwargs()``` from [sigma_tagger.py](https://github.com/google/timesketch/blob/master/timesketch/lib/analyzers/sigma_tagger.py). That will return a list of all Sigma rules installed on the instance. The Main celery job then spawns one celery job per Sigma rule that can run in paralell or serial depending on the celery config and sizing of the Timesketch instance.
+
+If ```get_kwargs()``` is not implemented in the analyzer, [tasks.py](https://github.com/google/timesketch/blob/master/timesketch/lib/tasks.py) expects it is not a multi analyzer, thus creating only one celery job.
+
 ## analyzer_run.py
 
 ### Purpose
@@ -27,7 +35,7 @@ analyzer_run.py: error: the following arguments are required: PATH_TO_ANALYZER, 
 
 You can create your sample data either in CSV or JSONL with the same format
 that Timesketch can ingest. To learn more about that visit 
-[CreateTimelineFromJSONorCSV](/user-guide/create-timeline-from-json-csv/) 
+[CreateTimelineFromJSONorCSV](/guides/user/import-from-json-csv/) 
 
 ### use existing sample data
 
@@ -83,13 +91,13 @@ Sketch updates:
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 Event Updates:
   ADD tag
-	[4] ['sigma_lnx_susp_zenmap']
+	[4] ['sigma_lnx_susp_zmap']
 
 
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 Result from analyzer run:
   Applied 4 tags
-* lnx_susp_zenmap: 4
+* lnx_susp_zmap: 4
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ```

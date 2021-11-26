@@ -48,7 +48,7 @@ def parse_requirements_from_file(path):
       path (str): path to the requirements file.
 
     Yields:
-      pkg_resources.Requirement: package resource requirement.
+      str: package resource requirement.
     """
     with open(path, 'r') as file_object:
         file_contents = file_object.read()

@@ -160,6 +160,27 @@ export default {
     }
     return RestApiClient.post('/sketches/' + sketchId + '/event/annotate/', formData)
   },
+  updateEventAnnotation(sketchId, annotationType, annotation, events, currentSearchNode) {
+    let formData = {
+      annotation: annotation,
+      annotation_type: annotationType,
+      events: events,
+      current_search_node_id: currentSearchNode.id,
+    }
+    return RestApiClient.put('/sketches/' + sketchId + '/event/annotate/', formData)
+  },
+  deleteEventAnnotation(sketchId, annotationType, annotationId, event, currentSearchNode) {
+    let params = {
+      params: {
+        annotation_id: annotationId,
+        annotation_type: annotationType,
+        event_id: event._id,
+        searchindex_id: event._index,
+        current_search_node_id: currentSearchNode.id,
+      },
+    }
+    return RestApiClient.delete('/sketches/' + sketchId + '/event/annotate/', params)
+  },
   // Stories
   getStoryList(sketchId) {
     return RestApiClient.get('sketches/' + sketchId + '/stories/')
@@ -281,15 +302,19 @@ export default {
   getLoggedInUser() {
     return RestApiClient.get('/users/me/')
   },
-  generateGraphFromPlugin(sketchId, graphPlugin, currentIndices, refresh) {
+  generateGraphFromPlugin(sketchId, graphPlugin, currentIndices, timelineIds, refresh) {
     let formData = {
       plugin: graphPlugin,
       config: {
         filter: {
           indices: currentIndices,
+          timelineIds: timelineIds,
         },
       },
       refresh: refresh,
+    }
+    if (timelineIds.length) {
+      formData['timeline_ids'] = timelineIds
     }
     return RestApiClient.post('/sketches/' + sketchId + /graph/, formData)
   },
@@ -325,7 +350,7 @@ export default {
     return RestApiClient.get('/sigma/')
   },
   getSigmaResource(ruleUuid) {
-    return RestApiClient.get('/sigma/rule/'+ ruleUuid +'/')
+    return RestApiClient.get('/sigma/rule/' + ruleUuid + '/')
   },
   getSigmaByText(ruleText) {
     let formData = {

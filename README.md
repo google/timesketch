@@ -27,23 +27,23 @@ Timesketch is an open-source tool for collaborative forensic timeline analysis. 
 ## Getting started
 
 #### Installation
-* [Install Timesketch](docs/getting-started/install.md)
+* [Install Timesketch](docs/guides/admin/install.md)
 
 #### Adding timelines
-* [Upload data](docs/getting-started/upload-data.md)
+* [Upload data](docs/guides/user/import-from-json-csv.md)
 
 #### Using Timesketch
-* [Users guide](docs/learn/basic-concepts.md)
+* [Users guide](docs/guides/user/basic-concepts.md)
 
 #### Adding a Notebook Container
-* [Installation](docs/learn/notebook.md)
+* [Installation](docs/guides/user/notebook.md)
 
 ## Community
 * [Community guide](docs/community/resources.md)
 
 ## Contributing
 * [Prerequisites](CONTRIBUTING.md)
-* [Developers guide](docs/developers/developer-guide.md)
+* [Developers guide](docs/developers/getting-started.md)
 
 ---
 
