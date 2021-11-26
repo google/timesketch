@@ -142,6 +142,7 @@ class BaseGraphElement:
         Returns:
             MD5 hash (str): MD5 hash of the provided label.
         """
+
         id_string = self.attributes.get('id', self.label)
         return hashlib.md5(id_string.encode('utf-8')).hexdigest()
 

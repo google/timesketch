@@ -85,10 +85,11 @@ class SSHSessionizerSketchPlugin(sessionizer.SessionizerSketchPlugin):
                 if process_id in started_sessions_ids.keys():
                     self.annotateEvent(event, started_sessions_ids[process_id])
 
-        self.sketch.add_view(
-            'SSH session view',
-            self.NAME,
-            query_string='session_id.{0:s}:*'.format(self.session_type))
+        if self.session_num:
+            self.sketch.add_view(
+                'SSH sessions',
+                self.NAME,
+                query_string='session_id.{0:s}:*'.format(self.session_type))
 
         return ('Sessionizing completed, number of {0:s} sessions created:'
                 ' {1:d}'.format(self.session_type, self.session_num))

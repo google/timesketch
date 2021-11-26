@@ -19,6 +19,7 @@ import datetime
 import json
 import logging
 import os
+import random
 import time
 import traceback
 import yaml
@@ -48,6 +49,7 @@ logger = logging.getLogger('timesketch.analyzers')
 
 def _flush_datastore_decorator(func):
     """Decorator that flushes the bulk insert queue in the datastore."""
+
     def wrapper(self, *args, **kwargs):
         func_return = func(self, *args, **kwargs)
 
@@ -128,6 +130,7 @@ class Event(object):
         index_name: The name of the Elasticsearch index.
         source: Source document from Elasticsearch.
     """
+
     def __init__(self, event, datastore, sketch=None, analyzer=None):
         """Initialize Event object.
 
@@ -326,6 +329,7 @@ class Sketch(object):
         id: Sketch ID.
         sql_sketch: Instance of a SQLAlchemy Sketch object.
     """
+
     def __init__(self, sketch_id):
         """Initializes a Sketch object.
 
@@ -524,6 +528,7 @@ class AggregationGroup(object):
     Attributes:
         group (SQLAlchemy): Instance of a SQLAlchemy AggregationGroup object.
     """
+
     def __init__(self, aggregation_group):
         """Initializes the AggregationGroup object.
 
@@ -621,6 +626,7 @@ class Story(object):
     Attributes:
         story (SQLAlchemy): Instance of a SQLAlchemy Story object.
     """
+
     def __init__(self, story):
         """Initializes a Story object.
 
@@ -719,7 +725,7 @@ class Story(object):
             'updated_at': today.isoformat(),
             'parameters': json.dumps(parameter_dict),
             'user': {'username': None},
-            }
+        }
         self._commit(block)
 
     def add_aggregation_group(self, aggregation_group):
@@ -780,7 +786,6 @@ class BaseAnalyzer:
     # gets fully indexed.
     SECONDS_PER_WAIT = 10
     MAXIMUM_WAITS = 360
-
 
     def __init__(self, index_name, sketch_id, timeline_id=None):
         """Initialize the analyzer object.
@@ -936,18 +941,42 @@ class BaseAnalyzer:
         else:
             timeline_ids = None
 
-        event_generator = self.datastore.search_stream(
-            query_string=query_string,
-            query_filter=query_filter,
-            query_dsl=query_dsl,
-            indices=indices,
-            return_fields=return_fields,
-            enable_scroll=scroll,
-            timeline_ids=timeline_ids
-        )
-        for event in event_generator:
-            yield Event(
-                event, self.datastore, sketch=self.sketch, analyzer=self)
+        # Exponential backoff for the call to Elasticsearch. Sometimes the
+        # cluster can be a bit overloaded and timeout on requests. We want to
+        # retry a few times in order to give the cluster a chance to return
+        # results.
+        backoff_in_seconds = 3
+        retries = 5
+        for x in range(0, retries):
+            try:
+                event_generator = self.datastore.search_stream(
+                    query_string=query_string,
+                    query_filter=query_filter,
+                    query_dsl=query_dsl,
+                    indices=indices,
+                    return_fields=return_fields,
+                    enable_scroll=scroll,
+                    timeline_ids=timeline_ids
+                )
+                for event in event_generator:
+                    yield Event(
+                        event, self.datastore, sketch=self.sketch,
+                        analyzer=self)
+                break  # Query was succesful
+            except elasticsearch.TransportError as e:
+                sleep_seconds = (
+                    backoff_in_seconds * 2 ** x + random.uniform(3, 7))
+                logger.info(
+                    'Attempt: {0:d}/{1:d} sleeping {2:f} for query {3:s}'
+                    .format(x + 1, retries, sleep_seconds, query_string))
+                time.sleep(sleep_seconds)
+
+                if x == retries-1:
+                    logger.error(
+                        'Timeout executing search for {0:s}: {1!s}'
+                        .format(query_string, e), exc_info=True
+                    )
+                    raise
 
     @_flush_datastore_decorator
     def run_wrapper(self, analysis_id):
@@ -1004,6 +1033,24 @@ class BaseAnalyzer:
         db_session.commit()
 
         return result
+
+    @classmethod
+    def get_kwargs(cls):
+        """Get keyword arguments needed to instantiate the class.
+        Every analyzer gets the index_name as its first argument from Celery.
+        By default this is the only argument. If your analyzer need more
+        arguments you can override this method and return as a dictionary.
+
+        If you want more than one instance to be created for your analyzer you
+        can return a list of dictionaries with kwargs and each one will be
+        instantiated and registered in Celery. This is neat if you want to run
+        your analyzer with different arguments in parallel.
+
+        Returns:
+            List of keyword argument dicts or empty list if no extra arguments
+            are needed.
+        """
+        return []
 
     def run(self):
         """Entry point for the analyzer."""
