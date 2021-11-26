@@ -259,7 +259,7 @@ def read_and_validate_jsonl(file_handle):
     # Fields that must be present in each entry of the JSONL file.
     mandatory_fields = ['message', 'datetime', 'timestamp_desc']
     lineno = 0
-    max_len_line_jsonl = current_app.config.get('MAX_LENGTH_LINE_JSONL')
+    max_len_line_jsonl = current_app.config.get('MAX_LENGTH_LINE_JSONL', 100000)
     for line in file_handle:
         lineno += 1
         try:
