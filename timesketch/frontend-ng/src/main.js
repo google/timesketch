@@ -27,22 +27,6 @@ import VueClipboard from 'vue-clipboard2'
 
 import vuetify from '@/plugins/vuetify' // path to vuetify export
 
-// Icons
-import { library } from '@fortawesome/fontawesome-svg-core'
-import {
-  faChevronUp,
-  faChevronDown,
-  faSave,
-  faUserEdit,
-  faAngleLeft,
-  faAngleRight,
-  faArrowUp,
-  faArrowDown,
-  faTag,
-} from '@fortawesome/free-solid-svg-icons'
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-library.add(faChevronUp, faChevronDown, faSave, faUserEdit, faAngleLeft, faAngleRight, faArrowUp, faArrowDown, faTag)
-
 require('./assets/main.scss')
 require('./utils/RegisterAppComponents')
 require('./utils/RegisterAppFilters')
@@ -57,13 +41,8 @@ export default EventBus
 Vue.use(require('vue-moment'))
 Vue.use(VueCytoscape)
 Vue.use(VueClipboard)
-Vue.use(Buefy, {
-  defaultIconComponent: 'font-awesome-icon',
-  defaultIconPack: 'fas',
-})
 Vue.use(VueScrollTo)
 Vue.component('multiselect', Multiselect)
-Vue.component('font-awesome-icon', FontAwesomeIcon)
 
 // Disable warning during development
 Vue.config.productionTip = false

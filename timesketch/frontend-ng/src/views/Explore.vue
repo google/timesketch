@@ -14,122 +14,281 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-row>
-    <v-col cols="12">
-      <v-card outlined class="pa-md-4">
-        <v-text-field
-          @keyup.enter="search"
-          v-model="currentQueryString"
-          v-on:click="showSearchDropdown = true"
-          hide-details
-          label="Search"
-          placeholder="Search"
-          rounded
-          dense
-          single-line
-          append-icon="mdi-magnify"
-          class="shrink mx-4"
-        >
-        </v-text-field>
-      </v-card>
-    </v-col>
-    <v-col cols="12">
-      <v-card outlined class="pa-md-4">
-        <v-data-table
-          v-model="selectedEvents"
-          :headers="headers"
-          :items="eventList.objects"
-          :loading="eventList.objects.length < 1"
-          item-key="_id"
-          loading-text="Searching... Please wait"
-          show-select
-          show-expand
-        >
-          <template v-slot:top> {{ fromEvent }}-{{ toEvent }} of {{ totalHits }} events ({{ totalTime }}s) </template>
+  <v-container fluid class="mt-4">
+    <v-navigation-drawer
+      v-model="selectedEvents.length"
+      fixed
+      right
+      width="600"
+      style="box-shadow: 0 10px 15px -3px #888"
+    >
+      <template v-slot:prepend>
+        <v-toolbar flat>
+          <v-toolbar-title>{{ selectedEvents.length }} events selected</v-toolbar-title>
 
-          <template v-slot:expanded-item="{ headers, item }">
-            <td :colspan="headers.length">
-              <v-row>
-                <v-col cols="8">
-                  <v-card outlined class="my-md-4">
-                    <v-simple-table dense>
-                      <template v-slot:default>
-                        <thead>
-                          <tr>
-                            <th class="text-left">Attribute</th>
-                            <th class="text-left">Value</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr v-for="(value, key) in item._source" :key="key">
-                            <td>{{ key }}</td>
-                            <td>{{ value }}</td>
-                          </tr>
-                        </tbody>
-                      </template>
-                    </v-simple-table>
-                  </v-card>
-                </v-col>
-                <v-col cols="4">
-                  <v-sheet class="my-md-4"> Comments </v-sheet>
-                </v-col>
-              </v-row>
-            </td>
-          </template>
+          <v-spacer></v-spacer>
 
-          <template v-slot:item.action="{ item }">
-            <v-btn icon>
-              <v-icon>mdi-star-outline</v-icon>
+          <v-btn icon @click="selectedEvents = []">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </v-toolbar>
+      </template>
+
+      <v-container>
+        <v-list>
+          <v-list-item v-for="(event, index) in selectedEvents" :key="index">
+            <v-list-item-content>
+              <v-list-item-title>{{ event._source.message }}</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+        </v-list>
+      </v-container>
+    </v-navigation-drawer>
+
+    <v-row>
+      <!-- Search card -->
+      <v-col cols="12">
+        <v-card outlined class="pa-md-2">
+          <v-card class="d-flex align-start" flat>
+            <v-sheet class="mt-1">
+              <ts-search-history-buttons @toggleSearchHistory="toggleSearchHistory()"></ts-search-history-buttons>
+            </v-sheet>
+            <v-divider vertical class="mx-4"></v-divider>
+
+            <v-text-field
+              v-model="currentQueryString"
+              hide-details
+              label="Search"
+              placeholder="Search"
+              single-line
+              dense
+              filled
+              flat
+              solo
+              append-icon="mdi-magnify"
+              id="tsSearchInput"
+              @keyup.enter="search"
+              @click="showSearchDropdown = true"
+              ref="searchInput"
+            >
+            </v-text-field>
+          </v-card>
+          <div v-if="showSearchDropdown" style="margin-top: 8px">
+            <v-divider></v-divider>
+            <ts-search-dropdown
+              v-click-outside="onClickOutside"
+              :selected-labels="selectedLabels"
+              :query-string="currentQueryString"
+              @setActiveView="searchView"
+              @addChip="addChip"
+              @updateLabelChips="updateLabelChips()"
+              @close-on-click="showSearchDropdown = false"
+              @node-click="jumpInHistory"
+              @setQueryAndFilter="setQueryAndFilter"
+            >
+            </ts-search-dropdown>
+          </div>
+        </v-card>
+      </v-col>
+      <v-col v-show="showSearchHistory" cols="12">
+        <v-card outlined>
+          <v-toolbar elevation="0">
+            <v-spacer></v-spacer>
+            <v-card-text>
+              <v-slider
+                v-model="zoomLevel"
+                append-icon="mdi-magnify-plus-outline"
+                prepend-icon="mdi-magnify-minus-outline"
+                min="0.1"
+                max="1"
+                step="0.01"
+              ></v-slider>
+            </v-card-text>
+          </v-toolbar>
+          <div
+            v-dragscroll
+            class="pa-md-4 no-scrollbars"
+            style="overflow: scroll; white-space: nowrap; max-height: 700px; min-height: 500px"
+          >
+            <ts-search-history-tree
+              @node-click="jumpInHistory"
+              :show-history="showSearchHistory"
+              v-bind:style="{ transform: 'scale(' + zoomLevel + ')' }"
+              style="transform-origin: top left"
+            ></ts-search-history-tree>
+          </div>
+        </v-card>
+      </v-col>
+
+      <!-- Eventlist -->
+      <v-col cols="12" v-if="!eventList.objects.length && !searchInProgress">
+        <v-card outlined class="pa-4">
+          <p>Your search "{{ currentQueryString }}" did not match any events.</p>
+          <p>Suggestions:</p>
+          <li>Try different keywords.</li>
+          <li>Try more general keywords.</li>
+          <li>Try fewer keywords.</li>
+        </v-card>
+      </v-col>
+
+      <v-col cols="12" v-if="eventList.objects.length || searchInProgress">
+        <v-card outlined>
+          <v-toolbar flat>
+            <v-card-text> {{ fromEvent }}-{{ toEvent }} of {{ totalHits }} events ({{ totalTime }}s) </v-card-text>
+            <v-spacer></v-spacer>
+
+            <v-btn icon @click="showHistogram = !showHistogram">
+              <v-icon>mdi-chart-bar</v-icon>
             </v-btn>
+
             <v-btn icon>
-              <v-icon>mdi-tag-plus-outline</v-icon>
+              <v-icon>mdi-content-save-outline</v-icon>
             </v-btn>
-          </template>
 
-          <template v-slot:item._source.datetime="{ item }">
-            <v-menu offset-y :close-on-content-click="false">
-              <template v-slot:activator="{ on, attrs }">
-                <span v-bind:style="getTimelineColor(item)" v-bind="attrs" v-on="on" style="padding: 15px">{{
-                  item._source.datetime
-                }}</span>
-              </template>
-              <v-card class="mx-auto" max-width="344" outlined>
-                <v-list-item three-line>
-                  <v-list-item-content>
-                    <div class="text-overline mb-4">OVERLINE</div>
-                    <v-list-item-title class="text-h5 mb-1"> Headline 5 </v-list-item-title>
-                    <v-list-item-subtitle>Greyhound divisely hello coldly fonwderfully</v-list-item-subtitle>
-                  </v-list-item-content>
+            <v-btn icon>
+              <v-icon>mdi-dots-vertical</v-icon>
+            </v-btn>
+          </v-toolbar>
 
-                  <v-list-item-avatar tile size="80" color="grey"></v-list-item-avatar>
-                </v-list-item>
+          <v-sheet class="pa-4">
+            <v-card class="pa-2" outlined v-if="showHistogram">
+              <ts-bar-chart
+                :chart-data="eventList.meta.count_over_time"
+                @addChip="addChipFromHistogram($event)"
+              ></ts-bar-chart>
+            </v-card>
+          </v-sheet>
 
-                <v-card-actions>
-                  <v-btn outlined rounded text> Button </v-btn>
-                </v-card-actions>
-              </v-card>
-            </v-menu>
-          </template>
+          <v-data-table
+            v-model="selectedEvents"
+            :headers="headers"
+            :items="eventList.objects"
+            :footer-props="{ 'items-per-page-options': [40, 80, 100, 200, 500] }"
+            :loading="searchInProgress"
+            :options="tableOptions"
+            item-key="_id"
+            loading-text="Searching... Please wait"
+            show-select
+            :expanded="expandedRows"
+          >
+            <!-- Event details -->
+            <template v-slot:expanded-item="{ headers, item }">
+              <td :colspan="headers.length">
+                <!-- Details -->
+                <v-container v-if="item.showDetails" fluid class="mt-4">
+                  <v-row>
+                    <v-col cols="8">
+                      <v-card outlined>
+                        <v-simple-table dense>
+                          <template v-slot:default>
+                            <thead>
+                              <tr>
+                                <th class="text-left">Attribute</th>
+                                <th class="text-left">Value</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr v-for="(value, key) in item._source" :key="key">
+                                <td>{{ key }}</td>
+                                <td>{{ value }}</td>
+                              </tr>
+                            </tbody>
+                          </template>
+                        </v-simple-table>
+                      </v-card>
+                    </v-col>
+                    <v-col cols="4">
+                      <v-list three-line>
+                        <v-list-item>
+                          <v-list-item-avatar>
+                            <v-img src="https://randomuser.me/api/portraits/women/81.jpg"></v-img>
+                          </v-list-item-avatar>
+                          <v-list-item-content>
+                            <v-list-item-title>Jane Doe</v-list-item-title>
+                            <p class="body-2">
+                              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris elit mauris, lobortis ut
+                              condimentum quis, imperdiet a eros. Maecenas tincidunt diam sit amet orci aliquam
+                              suscipit. Praesent condimentum vitae ante in rutrum. Cras ac velit lacus. Vestibulum at
+                              est massa. Nam vulputate justo turpis, at efficitur felis pulvinar id.
+                            </p>
+                          </v-list-item-content>
+                        </v-list-item>
+                        <v-list-item>
+                          <v-list-item-avatar>
+                            <v-img src="https://randomuser.me/api/portraits/men/75.jpg"></v-img>
+                          </v-list-item-avatar>
+                          <v-list-item-content>
+                            <v-list-item-title>John Doe</v-list-item-title>
+                            <p class="body-2">
+                              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris elit mauris, lobortis ut
+                              condimentum quis, imperdiet a eros.
+                            </p>
+                          </v-list-item-content>
+                        </v-list-item>
+                      </v-list>
+                    </v-col>
+                  </v-row>
+                </v-container>
 
-          <template v-slot:item._source.message="{ item }">
-            <span class="ts-event-field-container">
-              <span class="ts-event-field-ellipsis">
-                {{ item._source.message }}
+                <!-- Time bubble -->
+                <v-divider v-if="item.showDetails && item.deltaDays"></v-divider>
+                <div v-if="item.deltaDays > 0" class="ml-16">
+                  <div class="ts-time-bubble-vertical-line ts-time-bubble-vertical-line-color"></div>
+                  <div class="ts-time-bubble ts-time-bubble-color">
+                    <h5>
+                      <b>{{ item.deltaDays | compactNumber }}</b
+                      ><br />days
+                    </h5>
+                  </div>
+                  <div class="ts-time-bubble-vertical-line ts-time-bubble-vertical-line-color"></div>
+                </div>
+              </td>
+            </template>
+
+            <!-- Action bar -->
+            <template v-slot:item.action="{ item }">
+              <v-btn icon>
+                <v-icon>mdi-star-outline</v-icon>
+              </v-btn>
+              <v-btn icon>
+                <v-icon>mdi-tag-plus-outline</v-icon>
+              </v-btn>
+            </template>
+
+            <!-- Datetime field with menu -->
+            <template v-slot:item._source.timestamp="{ item }">
+              <span v-bind:style="getTimelineColor(item)" style="padding: 15px">
+                {{ item._source.timestamp | formatTimestamp | moment('utc', 'YYYY-MM-DDTHH:mm:ss') }}
               </span>
-            </span>
-          </template>
+            </template>
 
-          <template v-slot:item.timeline_name="{ item }">
-            <v-chip>{{ getTimeline(item).name }}</v-chip>
-          </template>
-        </v-data-table>
-      </v-card>
-    </v-col>
-  </v-row>
+            <!-- Message field -->
+            <template v-slot:item._source.message="{ item }">
+              <span class="ts-event-field-container" @click="toggleDetailedEvent(item)">
+                <span class="ts-event-field-ellipsis">
+                  {{ item._source.message }}
+                </span>
+              </span>
+            </template>
+
+            <!-- Timeline name field -->
+            <template v-slot:item.timeline_name="{ item }">
+              <v-chip>{{ getTimeline(item).name }}</v-chip>
+            </template>
+          </v-data-table>
+        </v-card>
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
 <script>
 import ApiClient from '../utils/RestApiClient'
+
+import TsSearchHistoryTree from '../components/Explore/SearchHistoryTree'
+import TsSearchHistoryButtons from '../components/Explore/SearchHistoryButtons'
+import TsSearchDropdown from '../components/Explore/SearchDropdown'
+import TsBarChart from '../components/Explore/BarChart'
 
 import EventBus from '../main'
 import { None } from 'vega'
@@ -160,7 +319,7 @@ export default {
   directives: {
     dragscroll,
   },
-  components: {},
+  components: { TsSearchHistoryTree, TsSearchHistoryButtons, TsSearchDropdown, TsBarChart },
   props: ['sketchId'],
   data() {
     return {
@@ -170,8 +329,8 @@ export default {
         {
           text: 'Datetime (UTC)',
           align: 'start',
-          value: '_source.datetime',
-          width: '255',
+          value: '_source.timestamp',
+          width: '200',
         },
 
         {
@@ -188,13 +347,16 @@ export default {
           width: '100%',
         },
         {
-          text: 'Name',
+          text: 'Timeline',
           value: 'timeline_name',
-          align: 'end',
         },
-        { text: '', value: 'data-table-expand', align: 'end' },
       ],
-
+      tableOptions: {
+        itemsPerPage: 40,
+      },
+      drawer: false,
+      expandedRows: [],
+      // old stuff
       params: {},
       showCreateViewModal: false,
       showFilterCard: true,
@@ -226,7 +388,7 @@ export default {
       showSearchHistory: false,
       showHistogram: false,
       branchParent: None,
-      zoomLevel: 1,
+      zoomLevel: 0.9,
       zoomOrigin: {
         x: 0,
         y: 0,
@@ -264,7 +426,8 @@ export default {
       return parseInt(this.currentQueryFilter.from) + parseInt(this.currentQueryFilter.size)
     },
     numSelectedEvents() {
-      return Object.keys(this.selectedEvents).length
+      //return Object.keys(this.selectedEvents).length
+      return this.selectedEvents.length
     },
     filterChips: function () {
       return this.currentQueryFilter.chips.filter((chip) => chip.type === 'label' || chip.type === 'term')
@@ -280,6 +443,62 @@ export default {
     },
   },
   methods: {
+    toggleSearchHistory: function () {
+      this.showSearchHistory = !this.showSearchHistory
+      if (this.showSearchHistory) {
+        this.triggerScrollTo()
+      }
+    },
+    toggleDetailedEvent: function (row) {
+      let index = this.expandedRows.findIndex((x) => x._id === row._id)
+      if (this.expandedRows.some((event) => event._id === row._id)) {
+        if (row.showDetails) {
+          console.log('set details to false')
+          row['showDetails'] = false
+          this.expandedRows.splice(index, 1)
+        } else {
+          console.log('has bubble, and want details')
+          row['showDetails'] = true
+          this.expandedRows.splice(index, 1)
+          this.expandedRows.push(row)
+          return
+        }
+
+        if (row.deltaDays) {
+          console.log('has delta days')
+          this.expandedRows.splice(index, 1)
+          this.expandedRows.push(row)
+        }
+      } else {
+        console.log('No bubble, show details')
+        row['showDetails'] = true
+        this.expandedRows.push(row)
+      }
+    },
+    addTimeBubbles: function () {
+      //let rows = []
+      this.expandedRows = []
+      this.eventList.objects.forEach((event, index) => {
+        if (index < 1) {
+          return
+        }
+        let prevEvent = this.eventList.objects[index - 1]
+        let timestampMillis = this.$options.filters.formatTimestamp(event._source.timestamp)
+        let prevTimestampMillis = this.$options.filters.formatTimestamp(prevEvent._source.timestamp)
+        let timestamp = Math.floor(timestampMillis / 1000)
+        let prevTimestamp = Math.floor(prevTimestampMillis / 1000)
+        let delta = Math.floor(timestamp - prevTimestamp)
+        if (this.order === 'desc') {
+          delta = Math.floor(prevTimestamp - timestamp)
+        }
+        let deltaDays = Math.floor(delta / 60 / 60 / 24)
+        if (deltaDays > 0) {
+          prevEvent['deltaDays'] = deltaDays
+          this.expandedRows.push(prevEvent)
+        }
+      })
+      //return rows
+    },
     getTimeline: function (event) {
       let isLegacy = this.meta.indices_metadata[event._index].is_legacy
       let timeline
@@ -309,9 +528,6 @@ export default {
         'background-color': backgroundColor,
       }
     },
-    hideDropdown: function () {
-      this.$refs['NewTimeFilter'].isActive = false
-    },
     search: function (emitEvent = true, resetPagination = true, incognito = false, parent = false) {
       this.searchInProgress = true
       if (!this.currentQueryString) {
@@ -324,7 +540,8 @@ export default {
       }
 
       // Reset selected events.
-      this.selectedEvents = {}
+      //this.selectedEvents = {}
+      this.selectedEvents = []
 
       this.eventList = emptyEventList()
 
@@ -372,6 +589,8 @@ export default {
           this.eventList.meta = response.data.meta
           this.searchInProgress = false
 
+          this.addTimeBubbles()
+
           if (!incognito) {
             EventBus.$emit('createBranch', this.eventList.meta.search_node)
             this.$store.dispatch('updateSearchHistory')
@@ -383,13 +602,11 @@ export default {
     setQueryAndFilter: function (searchEvent) {
       this.currentQueryString = searchEvent.queryString
       this.currentQueryFilter = searchEvent.queryFilter
-      this.$refs.searchInput.focus()
       if (searchEvent.doSearch) {
         this.search()
       }
     },
     exportSearchResult: function () {
-      this.loadingOpen()
       let formData = {
         query: this.currentQueryString,
         filter: this.currentQueryFilter,
@@ -408,12 +625,12 @@ export default {
         })
         .catch((e) => {
           console.error(e)
-          this.loadingClose()
         })
     },
     searchView: function (viewId) {
       // Reset selected events.
-      this.selectedEvents = {}
+      //this.selectedEvents = {}
+      this.selectedEvents = []
 
       this.showSearchDropdown = false
       this.showSaveSearchModal = false
@@ -506,9 +723,6 @@ export default {
       this.currentQueryString = JSON.parse(JSON.stringify(this.originalContext.queryString))
       this.currentQueryFilter = JSON.parse(JSON.stringify(this.originalContext.queryFilter))
       this.search()
-    },
-    scrollToContextEvent: function () {
-      this.$scrollTo('#' + this.contextEvent._id, 200, { offset: -300 })
     },
     updateSelectedTimelines: function (timelines) {
       let selected = []
@@ -636,14 +850,14 @@ export default {
     removeField: function (index) {
       this.selectedFields.splice(index, 1)
     },
-    updateSelectedEvents: function (event) {
-      let key = event._index + ':' + event._id
-      if (event.isSelected) {
-        this.$set(this.selectedEvents, key, event)
-      } else {
-        this.$delete(this.selectedEvents, key)
-      }
-    },
+    //updateSelectedEvents: function (event) {
+    //  let key = event._index + ':' + event._id
+    //  if (event.isSelected) {
+    //    this.$set(this.selectedEvents, key, event)
+    //  } else {
+    //    this.$delete(this.selectedEvents, key)
+    //  }
+    //},
     toggleStar: function () {
       let eventsToToggle = []
       Object.keys(this.selectedEvents).forEach((key, index) => {
@@ -720,6 +934,11 @@ export default {
         this.showSearchDropdown = false
       }
     },
+    onClickOutside: function (e) {
+      if (e.target.id !== 'tsSearchInput') {
+        this.showSearchDropdown = false
+      }
+    },
   },
 
   watch: {
@@ -731,12 +950,12 @@ export default {
   mounted() {
     this.$refs.searchInput.focus()
     this.showSearchDropdown = true
-    EventBus.$on('eventSelected', (eventData) => {
-      this.updateSelectedEvents(eventData)
-    })
-    EventBus.$on('clearSelectedEvents', () => {
-      this.selectedEvents = {}
-    })
+    //EventBus.$on('eventSelected', (eventData) => {
+    //  this.updateSelectedEvents(eventData)
+    //})
+    //EventBus.$on('clearSelectedEvents', () => {
+    //  this.selectedEvents = {}
+    //})
   },
   created: function () {
     let doSearch = false
@@ -791,30 +1010,6 @@ export default {
 </script>
 
 <style lang="scss">
-.dropdown-menu {
-  box-shadow: 0 30px 30px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.23);
-}
-
-.multiselect,
-.multiselect__input,
-.multiselect__single {
-  font-size: inherit;
-}
-
-.multiselect__option--highlight {
-  background: #f5f5f5;
-  color: #333;
-}
-
-.multiselect__option--highlight:after {
-  background: #f5f5f5;
-  color: #333;
-}
-
-.tsdropdown {
-  min-height: 330px;
-}
-
 .chip-disabled {
   text-decoration: line-through;
   opacity: 0.5;
@@ -824,14 +1019,6 @@ export default {
   margin-right: 7px;
   font-size: 0.7em;
   cursor: default;
-}
-
-.can-change-background {
-  color: rgba(10, 10, 10, 0.2);
-}
-
-.can-change-background:hover {
-  color: rgba(10, 10, 10, 0.3);
 }
 
 .no-scrollbars::-webkit-scrollbar {
@@ -871,5 +1058,32 @@ export default {
 
 .v-data-table__expanded.v-data-table__expanded__content {
   box-shadow: none !important;
+}
+
+.ts-time-bubble {
+  width: 60px;
+  height: 60px;
+  border-radius: 30px;
+  position: relative;
+  margin: 0 0 0 45px;
+  text-align: center;
+  font-size: var(--font-size-small);
+  background-color: #f5f5f5;
+}
+
+.ts-time-bubble h5 {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  opacity: 70%;
+}
+
+.ts-time-bubble-vertical-line {
+  width: 2px;
+  height: 15px;
+  margin: 0 0 0 75px;
+  background-color: #f5f5f5;
 }
 </style>

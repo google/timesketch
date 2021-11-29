@@ -14,41 +14,44 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-app id="app"
-    >""
-    <v-app-bar app outlined flat>
+  <v-app id="app">
+    <v-app-bar app clipped-right flat hide-on-scroll :color="$vuetify.theme.dark ? '' : 'white'">
       <v-img src="/dist/timesketch-color.png" max-height="30" max-width="30" contain></v-img>
       <v-toolbar-title class="ml-3"> timesketch </v-toolbar-title>
-
+      <span v-if="sketch.name" class="ml-6" style="margin-top: 5px">
+        {{ sketch.name }}
+      </span>
       <v-spacer></v-spacer>
 
-      <v-btn icon v-on:click="toggleTheme">
-        <v-icon>mdi-brightness-6</v-icon>
-      </v-btn>
+      <v-tooltip bottom>
+        <template v-slot:activator="{ on, attrs }">
+          <v-btn icon v-on:click="toggleTheme" v-bind="attrs" v-on="on">
+            <v-icon>mdi-brightness-6</v-icon>
+          </v-btn>
+        </template>
+        <span>Switch between light and dark theme</span>
+      </v-tooltip>
 
       <v-avatar class="ml-3" color="orange" size="32">
         <span class="white--text">jb</span>
       </v-avatar>
 
-      <!-- 
       <template v-slot:extension>
-        <v-tabs>
-          <v-tab>Overview</v-tab>
-          <v-tab :to="{ name: 'Explore' }"> Explore </v-tab>
-          <v-tab>Graph</v-tab>
-          <v-tab>Aggregate</v-tab>
-          <v-tab>Analyze</v-tab>
-          <v-tab>Timelines</v-tab>
-          <v-tab>Stories</v-tab>
+        <v-tabs class="ml-3">
+          <v-tab :to="{ name: 'Overview' }" exact-path><v-icon left small>mdi-cube-outline</v-icon> Overview </v-tab>
+          <v-tab :to="{ name: 'Explore' }"><v-icon left small>mdi-magnify</v-icon> Explore </v-tab>
+          <v-tab :to="{ name: 'GraphOverview' }"><v-icon left small>mdi-lan</v-icon> Graph </v-tab>
+          <!--
+          <v-tab disabled><v-icon left small>mdi-chart-bar</v-icon>Aggregate</v-tab>
+          <v-tab disabled><v-icon left small>mdi-auto-fix</v-icon>Analyze</v-tab>
+          <v-tab disabled><v-icon left small>mdi-bookshelf</v-icon>Stories</v-tab>
+          -->
         </v-tabs>
       </template>
-    -->
     </v-app-bar>
 
     <v-main>
-      <v-container fluid>
-        <router-view></router-view>
-      </v-container>
+      <router-view></router-view>
     </v-main>
   </v-app>
 </template>
@@ -56,6 +59,16 @@ limitations under the License.
 <script>
 export default {
   name: 'app',
+  data() {
+    return {
+      drawer: true,
+    }
+  },
+  computed: {
+    sketch() {
+      return this.$store.state.sketch
+    },
+  },
   methods: {
     toggleTheme: function () {
       this.$vuetify.theme.dark = !this.$vuetify.theme.dark
@@ -76,4 +89,12 @@ export default {
 </script>
 
 <style src="vue-multiselect/dist/vue-multiselect.min.css"></style>
-<style lang="scss"></style>
+<style lang="scss">
+.v-toolbar__content,
+.v-toolbar__extension {
+  border-bottom: thin solid rgba(0, 0, 0, 0.12);
+}
+.v-tab {
+  text-transform: none !important;
+}
+</style>
