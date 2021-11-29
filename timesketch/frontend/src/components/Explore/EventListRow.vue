@@ -396,6 +396,7 @@ export default {
   methods: {
     toggleStar() {
       if (!this.isStarred) {
+        // Update the Search History to indicate that an entry was starred
         EventBus.$emit('eventAnnotated', { type: '__ts_star', event: this.event, searchNode: this.currentSearchNode })
       }
       this.isStarred = !this.isStarred
@@ -405,8 +406,9 @@ export default {
           console.error(e)
         })
     },
-    toggleStarOnSelect() {
-      if (this.isSelected) {
+    toggleStarOnSelect(eventsToToggle) {
+      // The 'includes' check is there to avoid toggling all the selected events
+      if (this.isSelected && eventsToToggle.includes(this.event._id)) {
         this.isStarred = !this.isStarred
       }
     },

@@ -989,6 +989,7 @@ export default {
       // The function stars and unstars all selected events, instead of
       // toggling them. This helps when some of the selected events (but not
       // all) were already starred.
+
       let eventsStarred = []
       let eventsUnstarred = []
       let eventsToToggle = []
@@ -1009,11 +1010,13 @@ export default {
         eventsToToggle = (eventsUnstarred.length) ? eventsUnstarred : eventsStarred
       }
 
-      console.log(eventsToToggle.length)
       ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', eventsToToggle, this.currentSearchNode)
         .then(response => {})
         .catch(e => {})
-      EventBus.$emit('toggleStar', eventsToToggle)
+
+      // Tell the rows to update their "star" state
+      let idOfEventsToToggle = eventsToToggle.map(e => e._id)
+      EventBus.$emit('toggleStar', idOfEventsToToggle)
     },
     changeSortOrder: function() {
       if (this.currentQueryFilter.order === 'asc') {
