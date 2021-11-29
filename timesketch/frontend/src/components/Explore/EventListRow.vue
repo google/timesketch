@@ -381,6 +381,7 @@ export default {
       eventData['_id'] = this.event._id
       eventData['_type'] = this.event._type
       eventData['isSelected'] = this.isSelected
+      eventData['isStarred'] = this.isStarred
       return eventData
     },
     filteredLabels() {

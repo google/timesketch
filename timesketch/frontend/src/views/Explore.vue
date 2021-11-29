@@ -915,9 +915,6 @@ export default {
       })
       this.addChip(chip)
     },
-    isEventStarred: function(index) {
-      return this.eventList.objects[index]._source.label.includes('__ts_star')
-    },
     toggleLabelChip: function(labelName) {
       let chip = {
         field: '',
@@ -989,12 +986,11 @@ export default {
       // The function stars and unstars all selected events, instead of
       // toggling them. This helps when some of the selected events (but not
       // all) were already starred.
-
       let eventsStarred = []
       let eventsUnstarred = []
       let eventsToToggle = []
       Object.keys(this.selectedEvents).forEach((key, index) => {
-        if (this.isEventStarred(index)) {
+        if (this.selectedEvents[key].isStarred) {
           eventsStarred.push(this.selectedEvents[key])
         }
         else {
@@ -1010,13 +1006,18 @@ export default {
         eventsToToggle = (eventsUnstarred.length) ? eventsUnstarred : eventsStarred
       }
 
+      // Updating has 3 independent parts:
+      // 1) The backend via API
       ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', eventsToToggle, this.currentSearchNode)
         .then(response => {})
         .catch(e => {})
-
-      // Tell the rows to update their "star" state
+      // 2) The UI element representing each of the rows
       let idOfEventsToToggle = eventsToToggle.map(e => e._id)
       EventBus.$emit('toggleStar', idOfEventsToToggle)
+      // 3) The local copy of events
+      for (let event of eventsToToggle) {
+        event.isStarred = !event.isStarred
+      }
     },
     changeSortOrder: function() {
       if (this.currentQueryFilter.order === 'asc') {
