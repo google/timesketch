@@ -76,6 +76,12 @@ class GCPLoggingSketchPlugin(interface.BaseAnalyzer):
             if 'compute.networks.insert' in method_name:
                 event.add_tags(['network-created'])
 
+            if 'compute.projects.setCommonInstanceMetadata' in method_name:
+                event.add_tags(['compute-metadata-changed'])
+
+            if 'compute.instances.setMetadata' in method_name:
+                event.add_tags(['compute-metadata-changed'])
+
           event.commit()
 
         # Adding a random string to attribute names due to a bug where deleted
