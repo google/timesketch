@@ -1,4 +1,4 @@
-"""Sketch analyzer plugin for GCP Service Key usage."""
+"""Sketch analyzer plugin for GCP Logging."""
 from __future__ import unicode_literals
 
 import random # Remove before merge (issues/2051)
