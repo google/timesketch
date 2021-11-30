@@ -30,6 +30,7 @@ from timesketch.lib.analyzers import sigma_tagger
 from timesketch.lib.analyzers import similarity_scorer
 from timesketch.lib.analyzers import ssh_sessionizer
 from timesketch.lib.analyzers import gcp_servicekey
+from timesketch.lib.analyzers import gcp_logging
 from timesketch.lib.analyzers import ntfs_timestomp
 from timesketch.lib.analyzers import yetiindicators
 from timesketch.lib.analyzers import win_crash
