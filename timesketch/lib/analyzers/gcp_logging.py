@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 import random # Remove before merge (issues/2051)
 import string # Remove before merge (issues/2051)
+import re
 
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
@@ -45,8 +46,13 @@ class GCPLoggingSketchPlugin(interface.BaseAnalyzer):
           method_name = event.source.get('methodName')
           resource_name = event.source.get('resourceName')
 
-          if principal_email and principal_email not in users:
-            users.append(principal_email)
+          if principal_email:
+            if principal_email not in users:
+              users.append(principal_email)
+
+            if re.match(r'\d{12}-compute@developer\.gserviceaccount\.com',
+                principal_email):
+              event.add_tags(['default-service-account'])
           
           if resource_name:
             resource_type, resource_identifier = self._format_resource_name(
