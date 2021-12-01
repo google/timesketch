@@ -180,3 +180,32 @@ rules/windows/file_event/sysmon_susp_desktop_ini.yml,good,9ac87754adb88a8ac14969
 rules/windows/file_event/sysmon_startup_folder_file_write.yml,bad,no good sample found 9ac87754adb88a8ac14969bb4adaed043f783d7264d0846365ca0cf4b7f80ffb,2021-10-26,2aa0a6b4-a865-495b-ab51-c28249537b75
 rules/windows/process_creation/sysmon_always_install_elevated_windows_installer.yml,bad,no good sample found e5874027b483a6bcac952f302eedcadb59f858e9d7cc1f89b08102c8dbc69160,2021-10-26,cd951fdc-4b2f-47f5-ba99-a33bf61e3770
 rules/windows/process_creation/win_susp_svchost.yml,good,cc565bd2909f2889f8369939c3b932030f4dddba3b52ec17a2b4961144b05aa6,2021-10-26,01d2e2a1-5f09-44f7-9fc1-24faa7479b6d
+tools/config/generic/,bad,Sigma internal tools with yaml files in them,2021-11-19,
+/rules-unsupported/,bad,Sigma internal folder name,2021-11-19,
+sigma/tests/,bad,Sigma internal folder name,2021-11-19,
+sigma/tools/config/,bad,Sigma internal folder name,2021-11-19,
+.github/,bad,Github folder name in case Sigma project is clones,2021-11-19,
+sigma-schema.rx.yml,bad,Sigma internal filename,2021-11-19,
+/_config.yml,bad,Sigma internal filename,2021-11-19,
+sigma/rules/windows/dns_query/dns_query_possible_dns_rebinding.yml,bad,NotImplementedError,2021-11-19,
+sigma/rules/windows/builtin/win_susp_failed_remote_logons_single_source.yml,bad,NotImplementedError,2021-11-19,add2ef8d-dc91-4002-9e7e-f2702369f53a
+sigma/rules/windows/builtin/win_susp_failed_logons_single_source_kerberos3.yml,bad,NotImplementedError,2021-11-19,bc93dfe6-8242-411e-a2dd-d16fa0cc8564
+sigma/rules/windows/builtin/win_susp_failed_logons_single_source_ntlm2.yml,bad,NotImplementedError,2021-11-19,56d62ef8-3462-4890-9859-7b41e541f8d5
+sigma/rules/windows/builtin/win_susp_failed_logons_explicit_credentials.yml,bad,NotImplementedError,2021-11-19,196a29c2-e378-48d8-ba07-8a9e61f7fab9
+sigma/rules/windows/builtin/win_susp_failed_logons_single_source_ntlm.yml,bad,NotImplementedError,2021-11-19,f88bab7f-b1f4-41bb-bdb1-4b8af35b0470
+sigma/rules/windows/builtin/win_susp_failed_logons_single_source_kerberos2.yml,bad,NotImplementedError,2021-11-19,4b6fe998-b69c-46d8-901b-13677c9fb663
+sigma/rules/windows/builtin/win_susp_failed_logons_single_source2.yml,bad,NotImplementedError,2021-11-19,6309ffc4-8fa2-47cf-96b8-a2f72e58e538
+sigma/rules/windows/builtin/win_susp_multiple_files_renamed_or_deleted.yml,bad,NotImplementedError,2021-11-19,97919310-06a7-482c-9639-92b67ed63cf8
+sigma/rules/windows/builtin/win_susp_failed_logons_single_process.yml,bad,NotImplementedError,2021-11-19,fe563ab6-ded4-4916-b49f-a3a8445fe280
+sigma/rules/windows/builtin/win_susp_failed_logons_single_source_kerberos.yml,bad,NotImplementedError,2021-11-19,5d1d946e-32e6-4d9a-a0dc-0ac022c7eb98
+sigma/rules/windows/powershell/powershell_script/powershell_cl_invocation_lolscript_count.yml,bad,NotImplementedError,2021-11-19,f588e69b-0750-46bb-8f87-0e9320d57536
+sigma/rules/windows/powershell/powershell_script/powershell_cl_mutexverifiers_lolscript_count.yml,bad,NotImplementedError,2021-11-19,6609c444-9670-4eab-9636-fe4755a851ce
+sigma/rules/linux/modsecurity/modsec_mulitple_blocks.yml,bad,NotImplementedError,2021-11-19,a06eea10-d932-4aa6-8ba9-186df72c8d23
+sigma/rules/linux/builtin/lnx_shell_priv_esc_prep.yml,bad,NotImplementedError,2021-11-19,444ade84-c362-4260-b1f3-e45e20e1a905
+sigma/rules/linux/other/lnx_susp_failed_logons_single_source.yml,bad,NotImplementedError,2021-11-19,fc947f8e-ea81-4b14-9a7b-13f888f94e18
+sigma/rules/linux/auditd/lnx_auditd_cve_2021_3156_sudo_buffer_overflow.yml,bad,NotImplementedError,2021-11-19,5ee37487-4eb8-4ac2-9be1-d7d14cdc559f
+sigma/rules/linux/auditd/lnx_auditd_cve_2021_3156_sudo_buffer_overflow_brutforce.yml,bad,NotImplementedError,2021-11-19,b9748c98-9ea7-4fdb-80b6-29bed6ba71d2
+sigma/rules/cloud/aws/aws_macic_evasion.yml,bad,NotImplementedError,2021-11-19,91f6a16c-ef71-437a-99ac-0b070e3ad221
+sigma/rules/cloud/aws/aws_lambda_function_created_or_invoked.yml,bad,NotImplementedError,2021-11-19,d914951b-52c8-485f-875e-86abab710c0b
+sigma/rules/cloud/aws/aws_ec2_download_userdata.yml,bad,NotImplementedError,2021-11-19,26ff4080-194e-47e7-9889-ef7602efed0c
+sigma/rules/cloud/aws/aws_enum_listing.yml,bad,NotImplementedError,2021-11-19,e9c14b23-47e2-4a8b-8a63-d36618e33d70
