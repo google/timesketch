@@ -23,6 +23,13 @@ limitations under the License.
 
     <ts-navbar-secondary currentAppContext="sketch" currentPage="analyzers"></ts-navbar-secondary>
 
+    <!-- Analyzer logs -->
+    <section class="section">
+      <div class="container is-fluid">
+        <ts-analyzer-history></ts-analyzer-history>
+      </div>
+    </section>
+
     <section class="section">
       <div class="container is-fluid">
         <div class="card">
@@ -88,12 +95,16 @@ limitations under the License.
 </template>
 
 <script>
+import TsAnalyzerHistory from '../components/Analyze/AnalyzerHistory'
 import TsAnalysisSessionDetail from '../components/Analyze/AnalyzerSessionDetail'
 import ApiClient from '../utils/RestApiClient'
 
 export default {
   props: ['sketchId'],
-  components: { TsAnalysisSessionDetail },
+  components: {
+    TsAnalyzerHistory,
+    TsAnalysisSessionDetail,
+  },
   data() {
     return {
       availableAnalyzers: [],
