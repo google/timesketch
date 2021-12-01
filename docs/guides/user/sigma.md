@@ -67,7 +67,7 @@ timesketch/data/sigma
 
 The `data/sigma_blocklist.csv` is where Timesketch maintains a list of incompatible rules. By default each rule is considered compatible, but it is good practice to add them in this file if they are tested and verified to not be compatible.
 
-Each method that reads Sigma rules from the a folder is checking, if part of the full path of a rule is mentioned in the `data/sigma_blocklist.csv` file.
+Each method that reads Sigma rules from the a folder is checking if part of the full path of a rule is mentioned in the `data/sigma_blocklist.csv` file.
 
 For examle a file at `/etc/timesketch/data/sigma/rules-unsupported/foo/bar.yml` would not be parsed as a line in `data/sigma_blocklist.csv` mentions:
 
