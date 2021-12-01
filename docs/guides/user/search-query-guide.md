@@ -16,9 +16,6 @@ Data fields will vary depending on the source being uploaded, but here are some 
 | `datetime`|Date and time in ISO8601 format| `datetime:”2016-03-31T22:56:32+00:00”`
 | `timestamp_desc`|String explaining what type of timestamp it is|`timestamp_desc:”Content Modification Time”`|
 
-
-
-
 Additional fields come from the imported Plaso file  and depend on source type. You can see which additional fields are available in your timeline by clicking on any event and seeing the detailed list of all fields and their values.
 
 |Field|	Description|	Example query|
@@ -35,6 +32,7 @@ Query String supports boolean search operators AND, OR and NOT.
 Wildcards can be run on individual search terms using <code>?</code> for a single character and <code>*</code> for zero or more characters. Be aware that wildcards can use a lot of memory.
 
 Regular expression patterns can be embedded in the query string by wrapping them in forward-slashes ("/"):
+
 #### Syntax:
 
 Some characters are reserved for regular expressions and must be escaped in the pattern
@@ -46,8 +44,6 @@ Some characters are reserved for regular expressions and must be escaped in the 
 
 
 Below are syntax elements and example regular expressions
-
-
 
 <table>
   <tr>
@@ -172,8 +168,6 @@ Below are syntax elements and example regular expressions
   </tr>
 </table>
 
-
-
 ### Date Related Searches
 
 
@@ -188,7 +182,6 @@ Now that we can handle dates in the query bar, we can start building more comple
 This query will find all the potential Remote Desktop event log entries in the given date range.
 
 `data_type:"windows:evtx:record" AND event_identifier:4624 AND xml_string:"/LogonType\"\>3/" AND datetime:[2021-08-29 TO 2021-08-31]`
-
 
 ### Advanced search
 
@@ -212,4 +205,12 @@ Search templates allow quick creation of most commonly used views.
 You can browse available templates in the “Search templates” drop-down menu below search query window on “Explore page”
 
 On “Views” page, you can quickly generate and add a view from a template to your sketch. To do so, just scroll down to the template you want to use, and click “Quick add”
+
+## Examples
+
+Here are some common searches:
+
+| Description            |Example Query                                               |
+|------------------------|------------------------------------------------------------|
+| EventId 4624 and LogonType 5| event_identifier:4624 AND "LogonType\">5</Data>"    |
 
