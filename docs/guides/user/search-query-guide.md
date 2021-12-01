@@ -213,4 +213,5 @@ Here are some common searches:
 | Description            |Example Query                                               |
 |------------------------|------------------------------------------------------------|
 | EventId 4624 and LogonType 5| event_identifier:4624 AND "LogonType\">5</Data>"    |
+| Windows File path| "C:\\Users\\foobar\\Download\\folder\ whitespace\\filename.jpeg"    |
 
