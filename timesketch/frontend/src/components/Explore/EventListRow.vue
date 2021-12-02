@@ -174,17 +174,62 @@ limitations under the License.
 
     <!-- Comments row -->
     <tr v-if="comments.length">
-      <td colspan="5">
-        <div style="max-width: 600px; border:1px solid #f5f5f5; border-radius: 4px; padding:10px; margin-bottom: 20px;">
-          <article class="media" v-for="comment in comments" :key="comment.created_at">
-            <div class="media-content">
-              <div class="content">
-                <p>
-                  {{ comment.user.username }}
-                  <small style="margin-left: 10px;">{{ comment.created_at | moment('ll') }}</small>
-                  <br />
-                  {{ comment.comment }}
+      <td colspan="5" style="padding: 0">
+        <div style="max-width: 100%; border:1px solid #f5f5f5; border-radius: 4px; padding:10px; margin-bottom: 20px;">
+          <article class="field" v-for="(comment, index) in comments" :key="comment.id">
+            <small style="margin-right: 10px;">{{ comment.updated_at | moment('utc', 'YYYY-MM-DD HH:mm:ss') }}</small>
+            <small style="margin-right: 10px;">{{ comment.user.username }}</small>
+            <br />
+            <div v-if="comment && comment.editable" class="media-content">
+              <div class="field" style="max-width: 50%;">
+                <p class="control">
+                  <textarea v-model="comments[index].comment" required autofocus class="textarea" rows="1"></textarea>
                 </p>
+              </div>
+              <div class="field">
+                <p class="control">
+                  <button
+                    class="button is-small is-rounded"
+                    style="margin-right: 0.75rem"
+                    v-on:click="updateComment(comment, index)"
+                  >
+                    Save
+                  </button>
+
+                  <button
+                    class="button is-small is-rounded"
+                    style="margin-right: 0.75rem"
+                    v-on:click="toggleEditComment(index, false)"
+                  >
+                    Cancel
+                  </button>
+                </p>
+              </div>
+            </div>
+            <div v-if="comment && !comment.editable" class="media-content">
+              <div class="level content">
+                <div class="level-left">
+                  {{ comment.comment }}
+                </div>
+                <div
+                  v-if="meta.permissions.write && getCurrentUser() == comment.user.username"
+                  class="level-right field"
+                >
+                  <button
+                    class="button is-small is-rounded"
+                    style="margin-right: 0.75rem"
+                    v-on:click="toggleEditComment(index, true)"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    class="button is-small is-rounded is-danger"
+                    style="margin-right: 0.75rem"
+                    v-on:click="deleteComment(comment.id, index)"
+                  >
+                    Remove
+                  </button>
+                </div>
               </div>
             </div>
           </article>
@@ -210,7 +255,7 @@ limitations under the License.
           </div>
           <div class="field">
             <p class="control">
-              <button class="button" v-on:click="postComment(comment)">Post comment</button>
+              <button class="button is-small is-rounded" v-on:click="postComment(comment)">Post comment</button>
             </p>
           </div>
           <ts-sketch-explore-event-list-row-detail
@@ -336,6 +381,7 @@ export default {
       eventData['_id'] = this.event._id
       eventData['_type'] = this.event._type
       eventData['isSelected'] = this.isSelected
+      eventData['isStarred'] = this.isStarred
       return eventData
     },
     filteredLabels() {
@@ -351,6 +397,7 @@ export default {
   methods: {
     toggleStar() {
       if (!this.isStarred) {
+        // Update the Search History to indicate that an entry was starred
         EventBus.$emit('eventAnnotated', { type: '__ts_star', event: this.event, searchNode: this.currentSearchNode })
       }
       this.isStarred = !this.isStarred
@@ -360,8 +407,9 @@ export default {
           console.error(e)
         })
     },
-    toggleStarOnSelect() {
-      if (this.isSelected) {
+    toggleStarOnSelect(eventsToToggle) {
+      // The 'includes' check is there to avoid toggling all the selected events
+      if (this.isSelected && eventsToToggle.includes(this.event._id)) {
         this.isStarred = !this.isStarred
       }
     },
@@ -373,6 +421,48 @@ export default {
           this.comment = ''
         })
         .catch(e => {})
+    },
+    updateComment: function(comment, commentIndex) {
+      ApiClient.updateEventAnnotation(this.sketch.id, 'comment', comment, [this.event], this.currentSearchNode)
+        .then(response => {
+          this.$set(this.comments, commentIndex, response.data.objects[0][0])
+        })
+        .catch(e => {
+          console.error(e)
+        })
+    },
+    deleteComment: function(commentId, commentIndex) {
+      if (confirm('Are you sure?')) {
+        ApiClient.deleteEventAnnotation(this.sketch.id, 'comment', commentId, this.event, this.currentSearchNode)
+          .then(response => {
+            this.comments.splice(commentIndex, 1)
+          })
+          .catch(e => {
+            console.error(e)
+          })
+      }
+    },
+    toggleEditComment(commentIndex, enable) {
+      if (enable) {
+        const changeComment = this.comments[commentIndex]
+        changeComment.editable = true
+        this.$set(this.comments, commentIndex, changeComment)
+      } else {
+        const changeComment = this.comments[commentIndex]
+        changeComment.editable = false
+        this.$set(this.comments, commentIndex, changeComment)
+      }
+    },
+    getCurrentUser() {
+      if (this.$store.state.currentUser){
+          this.currentUser = this.$store.state.currentUser
+      }
+      else if (!this.currentUser) {
+        ApiClient.getLoggedInUser().then(response => {
+          this.currentUser = response.data.objects[0].username
+        })
+      }
+      return this.currentUser
     },
     addLabels: function(labels) {
       if (labels === undefined) {
