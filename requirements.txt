@@ -23,7 +23,7 @@ python-dateutil==2.8.2
 PyYAML==6.0
 redis==4.0.2
 requests==2.26.0
-sigmatools==0.20
+sigmatools==0.19.1
 six==1.16.0
 SQLAlchemy==1.4.27
 Werkzeug==2.0.2
