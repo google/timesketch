@@ -154,6 +154,47 @@ class MakeUserAdmin(Command):
         else:
             sys.stdout.write('User {0:s} is now an admin.\n'.format(username))
 
+class DisableUser(Command):
+    """Disable User"""
+    option_list = (
+        Option('--username', '-u', dest='username', required=True),
+    )
+
+    # pylint: disable=arguments-differ, method-hidden
+    def run(self, username):
+        """Sets the active bit of a user to false."""
+        user = User.query.filter_by(username=username).first()
+
+        if not user:
+            sys.stdout.write('User [{0:s}] does not exist.\n'.format(
+                username))
+            return
+        user.active = False
+        db_session.add(user)
+        db_session.commit()
+
+        sys.stdout.write('User {0:s} is deactivated.\n'.format(username))
+
+class EnableUser(Command):
+    """Enable User"""
+    option_list = (
+        Option('--username', '-u', dest='username', required=True),
+    )
+
+    # pylint: disable=arguments-differ, method-hidden
+    def run(self, username):
+        """Sets the active bit of a user to true."""
+        user = User.query.filter_by(username=username).first()
+
+        if not user:
+            sys.stdout.write('User [{0:s}] does not exist.\n'.format(
+                username))
+            return
+        user.active = True
+        db_session.add(user)
+        db_session.commit()
+
+        sys.stdout.write('User {0:s} is activated.\n'.format(username))
 
 class ListUsers(Command):
     """List all users."""
