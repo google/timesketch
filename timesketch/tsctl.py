@@ -523,6 +523,8 @@ def main():
     shell_manager.add_command('search_template', SearchTemplateManager())
     shell_manager.add_command('import', ImportTimeline())
     shell_manager.add_command('version', GetVersion())
+    shell_manager.add_command('disable_user', DisableUser())
+    shell_manager.add_command("enable_user", EnableUser())
     shell_manager.add_command('runserver',
                               Server(host='127.0.0.1', port=5000))
     shell_manager.add_option(
