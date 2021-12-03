@@ -13,6 +13,7 @@
 # limitations under the License.
 """Timesketch Sigma lib functions."""
 
+import re
 import os
 import codecs
 import csv
@@ -299,6 +300,17 @@ def _sanatize_sigma_rule(sigma_rule_query: str) -> str:
     sigma_rule_query = sigma_rule_query.replace("AND * ", 'AND " ')
     sigma_rule_query = sigma_rule_query.replace("(* ", '(" ')
     sigma_rule_query = sigma_rule_query.replace(" *)", ' ")')
+
+    elements = re.split("\s+", sigma_rule_query)
+    san = []
+    for el in elements:
+        if el.count("*") == 1:
+            # indicates a string that had a space before with only one star
+            san.append(el.replace("*", '"'))
+        else:
+            san.append(el)
+
+    sigma_rule_query = " ".join(san)
 
     return sigma_rule_query
 
