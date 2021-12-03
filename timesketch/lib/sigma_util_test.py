@@ -45,9 +45,36 @@ falsepositives:
 level: high
 """
 
+MOCK_SIGMA_RULE_2 = """
+title: This rule is full of test edge cases
+description: Various edge cases in a rule
+references:
+    - https://github.com/google/timesketch/issues/2007
+author: Alexander Jaeger
+date: 2021/12/03
+modified: 2021/12/03
+detection:
+    keywords:
+        - 'Whitespace at'
+        - ' beginning '
+        - ' and extra text '
+    condition: keywords
+falsepositives:
+    - Unknown
+level: high
+"""
+
+MOCK_SIGMA_RULE_3 = """
+logsource:
+    product: windows
+detection:
+    keywords:
+        - ' lorem '
+    condition: keywords
+"""
+
 MOCK_SIGMA_RULE_ERROR1 = """
 title: Suspicious Foobar
-id: 5266a592-b793-11ea-b3de-0242ac130004
 description: Detects suspicious installation of zmap
 references:
     - https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html
@@ -73,6 +100,14 @@ class TestSigmaUtilLib(BaseTest):
             sigma_exceptions.SigmaParseError,
             sigma_util.get_sigma_rule_by_text,
             MOCK_SIGMA_RULE_ERROR1)
+        rule2 = sigma_util.get_sigma_rule_by_text(MOCK_SIGMA_RULE_2)
+        rule3 = sigma_util.get_sigma_rule_by_text(MOCK_SIGMA_RULE_3)
+
+        self.assertIsNotNone(rule2)
+        self.assertEqual('("Whitespace at" OR " beginning " OR " and extra text ")', rule2.get('es_query'))
+
+        self.assertIsNotNone(rule3)
+        self.assertEqual('(data_type:"windows:evtx:record" AND " lorem ")', rule3.get('es_query'))
 
     def test_get_sigma_config_file(self):
         """Test getting sigma config file"""
