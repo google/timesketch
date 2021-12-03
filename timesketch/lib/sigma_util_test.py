@@ -87,6 +87,20 @@ modified: 2020/06/26
 class TestSigmaUtilLib(BaseTest):
     """Tests for the sigma support library."""
 
+    def test_sanatize_rule_string(self):
+        """Testing the string sanitization"""
+
+        test_1 = sigma_util._sanatize_sigma_rule("(* lorem * OR * lorema *)")
+
+        self.assertIsNotNone(test_1)
+        self.assertEqual(
+            sigma_util._sanatize_sigma_rule("test.keyword:foobar"), "test:foobar"
+        )
+        self.assertEqual(
+            sigma_util._sanatize_sigma_rule("(* foobar *)"), '(" foobar ")'
+        )
+        # self.assertEqual(sigma_util._sanatize_sigma_rule("*foo bar*"), '"foo bar"')
+
     def test_get_rule_by_text(self):
         """Test getting sigma rule by text."""
 
@@ -94,38 +108,44 @@ class TestSigmaUtilLib(BaseTest):
 
         self.assertIsNotNone(MOCK_SIGMA_RULE)
         self.assertIsNotNone(rule)
-        self.assertIn('zmap', rule.get('es_query'))
-        self.assertIn('b793', rule.get('id'))
+        self.assertIn("zmap", rule.get("es_query"))
+        self.assertIn("b793", rule.get("id"))
         self.assertRaises(
             sigma_exceptions.SigmaParseError,
             sigma_util.get_sigma_rule_by_text,
-            MOCK_SIGMA_RULE_ERROR1)
+            MOCK_SIGMA_RULE_ERROR1,
+        )
         rule2 = sigma_util.get_sigma_rule_by_text(MOCK_SIGMA_RULE_2)
         rule3 = sigma_util.get_sigma_rule_by_text(MOCK_SIGMA_RULE_3)
 
         self.assertIsNotNone(rule2)
-        self.assertEqual('("Whitespace at" OR " beginning " OR " and extra text ")', rule2.get('es_query'))
+        self.assertEqual(
+            '\*:("Whitespace at" OR " beginning " OR " and extra text ")',
+            rule2.get("es_query"),
+        )
 
         self.assertIsNotNone(rule3)
-        self.assertEqual('(data_type:"windows:evtx:record" AND " lorem ")', rule3.get('es_query'))
+        self.assertEqual(
+            '(data_type:"windows:evtx:record" AND " lorem ")', rule3.get("es_query")
+        )
 
     def test_get_sigma_config_file(self):
         """Test getting sigma config file"""
-        self.assertRaises(ValueError, sigma_util.get_sigma_config_file, '/foo')
+        self.assertRaises(ValueError, sigma_util.get_sigma_config_file, "/foo")
         self.assertIsNotNone(sigma_util.get_sigma_config_file())
 
     def test_get_blocklist_file(self):
         """Test getting sigma config file"""
-        self.assertRaises(ValueError, sigma_util.get_sigma_blocklist, '/foo')
+        self.assertRaises(ValueError, sigma_util.get_sigma_blocklist, "/foo")
         self.assertIsNotNone(sigma_util.get_sigma_config_file())
 
     def test_get_sigma_rule(self):
         """Test getting sigma rule from file"""
 
-        filepath = './data/sigma/rules/lnx_susp_zmap.yml'
+        filepath = "./data/sigma/rules/lnx_susp_zmap.yml"
 
         rule = sigma_util.get_sigma_rule(filepath)
 
         self.assertIsNotNone(rule)
-        self.assertIn('zmap', rule.get('es_query'))
-        self.assertIn('b793', rule.get('id'))
+        self.assertIn("zmap", rule.get("es_query"))
+        self.assertIn("b793", rule.get("id"))
