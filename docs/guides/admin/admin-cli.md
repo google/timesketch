@@ -62,7 +62,29 @@ tsctl add_user --username foo
 
 #### Removing users
 
-Not yet implemented.
+To remove an existing user, use the disable_user command.
+To add the same user back, use the enable_user command.
+Disabled users are not removed from the system, but marked as disabled.
+
+Command:
+
+```shell
+tsctl disable_user
+tsctl enable_user
+```
+
+Parameters:
+
+```shell
+--username / -u
+```
+
+Example
+
+```shell
+tsctl disalbe_user --username foo
+tsctl enalbe_user --username foo
+```
 
 ### Group management
 
