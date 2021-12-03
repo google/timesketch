@@ -83,6 +83,18 @@ date: 2020/06/26
 modified: 2020/06/26
 """
 
+COUNT_RULE_1 = """
+detection:
+  selection:
+    action: failure
+  timeframe: 10s
+  condition: selection | count(category) by foo > 30
+fields:
+  - foo
+  - bar
+  - user
+"""
+
 
 class TestSigmaUtilLib(BaseTest):
     """Tests for the sigma support library."""
@@ -119,8 +131,9 @@ class TestSigmaUtilLib(BaseTest):
         rule3 = sigma_util.get_sigma_rule_by_text(MOCK_SIGMA_RULE_3)
 
         self.assertIsNotNone(rule2)
+        # TODO Below should actually be: "Whitespace at"
         self.assertEqual(
-            '\*:("Whitespace at" OR " beginning " OR " and extra text ")',
+            '\*:(*Whitespace at* OR " beginning " OR " and extra text ")',
             rule2.get("es_query"),
         )
 
@@ -128,6 +141,14 @@ class TestSigmaUtilLib(BaseTest):
         self.assertEqual(
             '(data_type:"windows:evtx:record" AND " lorem ")', rule3.get("es_query")
         )
+
+        self.assertRaises(
+            NotImplementedError, sigma_util.get_sigma_rule_by_text, COUNT_RULE_1
+        )
+
+        import pdb
+
+        # pdb.set_trace()
 
     def test_get_sigma_config_file(self):
         """Test getting sigma config file"""
