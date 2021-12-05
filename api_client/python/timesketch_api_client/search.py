@@ -98,6 +98,7 @@ class DateIntervalChip(Chip):
     CHIP_VALUE = 'interval'
 
     _DATE_FORMAT = '%Y-%m-%dT%H:%M:%S'
+    _DATE_ONLY_FORMAT = '%Y-%m-%d'
 
     def __init__(self):
         """Initialize the chip."""
@@ -162,10 +163,14 @@ class DateIntervalChip(Chip):
         """Make changes to the date."""
         try:
             dt = datetime.datetime.strptime(date, self._DATE_FORMAT)
-        except ValueError as exc:
-            logger.error(
-                'Unable to add date chip, wrong date format', exc_info=True)
-            raise ValueError('Wrong date format') from exc
+        except ValueError:
+            try:
+                dt = datetime.datetime.strptime(date, self._DATE_ONLY_FORMAT)
+            except ValueError as exc:
+                logger.error(
+                    'Unable to add date chip, wrong date format',
+                    exc_info=True)
+                raise ValueError('Wrong date format') from exc
         self._date = dt
 
     def from_dict(self, chip_dict):
@@ -173,9 +178,16 @@ class DateIntervalChip(Chip):
         value = chip_dict.get('value')
         if not value:
             return
-        date, before, after = value.split()
+
+        split_value = value.split()
+        if len(split_value) == 3:
+            date_time, before, after = value.split()
+        elif len(split_value) == 4:
+            date, time, before, after = value.split()
+            date_time = f'{date}T{time}'
+
         self.unit = before[-1]
-        self.date = date
+        self.date = date_time
         self.before = int(before[1:-1])
         self.after = int(after[1:-1])
 
