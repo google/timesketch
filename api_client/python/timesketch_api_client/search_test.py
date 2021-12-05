@@ -130,3 +130,63 @@ class SearchTest(unittest.TestCase):
         expected_chip['value'] = f'{date_string} -1h +6h'
 
         self.assertEqual(chip.chip, expected_chip)
+
+        alt_date_string = '2021-11-30'
+        alt_chip = search.DateIntervalChip()
+        alt_chip.date = alt_date_string
+        alt_expected_chip = {
+            'active': True,
+            'field': '',
+            'type': 'datetime_interval',
+            'operator': 'must',
+            'value': f'{alt_date_string}T00:00:00 -5m +5m'
+        }
+        self.assertEqual(alt_chip.chip, alt_expected_chip)
+
+    def test_from_date_interval(self):
+        """Test from_date method in DateIntervalChip."""
+        date_string = "2021-11-30T12:12:12 -1m +1m"
+        chip = search.DateIntervalChip()
+        chip.from_dict({'value': date_string})
+
+        expected_chip = {
+            'active': True,
+            'field': '',
+            'type': 'datetime_interval',
+            'operator': 'must',
+            'value': date_string
+        }
+
+        self.assertEqual(chip.date, "2021-11-30T12:12:12")
+        self.assertEqual(chip.before, 1)
+        self.assertEqual(chip.after, 1)
+        self.assertEqual(chip.unit, 'm')
+        self.assertEqual(chip.chip, expected_chip)
+
+        date_string = "2021-11-30 12:12:12 -1m +1m"
+        chip = search.DateIntervalChip()
+        chip.from_dict({'value': date_string})
+
+        self.assertEqual(chip.date, "2021-11-30T12:12:12")
+        self.assertEqual(chip.before, 1)
+        self.assertEqual(chip.after, 1)
+        self.assertEqual(chip.unit, 'm')
+        self.assertEqual(chip.chip, expected_chip)
+
+        date_string = "2021-11-30 -1d +1d"
+        chip = search.DateIntervalChip()
+        chip.from_dict({'value': date_string})
+
+        expected_chip = {
+            'active': True,
+            'field': '',
+            'type': 'datetime_interval',
+            'operator': 'must',
+            'value': "2021-11-30T00:00:00 -1d +1d"
+        }
+
+        self.assertEqual(chip.date, "2021-11-30T00:00:00")
+        self.assertEqual(chip.before, 1)
+        self.assertEqual(chip.after, 1)
+        self.assertEqual(chip.unit, 'd')
+        self.assertEqual(chip.chip, expected_chip)
