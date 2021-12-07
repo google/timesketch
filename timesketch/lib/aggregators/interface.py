@@ -338,11 +338,12 @@ class BaseAggregator(object):
 
         return field_format
 
-    def elastic_aggregation(self, aggregation_spec):
+    def elastic_aggregation(self, aggregation_spec, size=0):
         """Helper method to execute aggregation in Elasticsearch.
 
         Args:
             aggregation_spec: Dict with Elasticsearch aggregation spec.
+            size: Int of limit number of result.
 
         Returns:
             Elasticsearch aggregation result.
@@ -351,7 +352,7 @@ class BaseAggregator(object):
 
         try:
             aggregation = self.elastic.client.search(
-                index=self.indices, body=aggregation_spec, size=0)
+                index=self.indices, body=aggregation_spec, size=size)
         except elasticsearch.NotFoundError:
             logger.error('Unable to find indices: {0:s}'.format(
                 ','.join(self.indices)))
