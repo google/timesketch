@@ -22,7 +22,7 @@ from datetime import datetime
 from timesketch.lib.aggregators import manager
 from timesketch.lib.aggregators import interface
 
-def get_fnc_duration(first, last, format='days'):
+def get_fnc_duration(first, last, fmt_durat='days'):
     """Returns duration between first and last seen.
     Args:
         first (str): this denotes the field term.
@@ -36,15 +36,17 @@ def get_fnc_duration(first, last, format='days'):
     if last == 'NC':
         return -1
     try:
-        duration = datetime.strptime(time.ctime(last/1000000), "%a %b %d %H:%M:%S %Y") \
-            - datetime.strptime(time.ctime(first/1000000), "%a %b %d %H:%M:%S %Y")
-        if format == 'hours':
+        duration = datetime.strptime(time.ctime(last/1000000),
+                   "%a %b %d %H:%M:%S %Y") \
+            - datetime.strptime(time.ctime(first/1000000),
+              "%a %b %d %H:%M:%S %Y")
+        if fmt_durat == 'hours':
             return int(duration.seconds/3600)
-        if format == 'seconds':
+        if fmt_durat == 'seconds':
             return int(duration.seconds)
         return int(duration.days)
-    except Exception as err:
-       return -1
+    except:
+        return -1
 
 def get_spec(field, limit=10, order_type='desc', query='', query_dsl=''):
     """Returns aggregation specs for a term of filtered events.
@@ -311,8 +313,8 @@ class FilteredTermsAggregation(interface.BaseAggregator):
         if filter_re:
             try:
                 re_compiled = re.compile(filter_re, re.IGNORECASE)
-            except re.error:
-                raise ValueError('Regexp filter not valid')
+            except re.error as reerror:
+                raise ValueError('Regexp filter not valid') from reerror
 
         self.field = field
         formatted_field_name = self.format_field_by_type(field)
@@ -362,41 +364,42 @@ class FilteredTermsAggregation(interface.BaseAggregator):
                 'count': bucket.get('doc_count', 0)
             }
             if get_duration:
-                 d['first'], d['fdate'] = self.get_date_event(
+                d['first'], d['fdate'] = self.get_date_event(
                     field=formatted_field_name,
                     value=d[field],
                     order='asc',
                     query=query_string)
-                 d['last'], d['ldate'] = self.get_date_event(
+                d['last'], d['ldate'] = self.get_date_event(
                     field=formatted_field_name,
                     value=d[field],
                     order='desc',
                     query=query_string)
-                 d['duration'] = get_fnc_duration(
-                     d['fdate'], d['ldate'], get_duration)
-                 if not filter_re:
-                     del d['fdate']
-                     del d['ldate']
+                d['duration'] = get_fnc_duration(
+                    d['fdate'], d['ldate'], get_duration)
+                if not filter_re:
+                    del d['fdate']
+                    del d['ldate']
             if filter_re and isinstance(d[field], str):
                 match=re_compiled.search(d[field])
                 if match:
                     d[field] = " ".join(match.groups())
                     if d[field] in re_chg:
-                        re_chg[d[field]]['count'] = re_chg[d[field]]['count'] + d['count']
+                        re_chg[d[field]]['count'] = re_chg[d[field]]['count'] \
+                                                    + d['count']
                         if get_duration and -1 != d['duration']:
                             if -1 == re_chg[d[field]]['duration']:
                                 re_chg[d[field]]['duration'] = d['duration']
                             elif d['duration'] > re_chg[d[field]]['duration']:
                                 re_chg[d[field]]['duration'] = d['duration']
-                        if get_duration and 'NC' != d['first']:
-                            if 'NC' == re_chg[d[field]]['first']:
+                        if get_duration and d['first'] != 'NC':
+                            if re_chg[d[field]]['first'] == 'NC':
                                 re_chg[d[field]]['first'] = d['first']
                                 re_chg[d[field]]['fdate'] = d['fdate']
                             elif re_chg[d[field]]['fdate'] > d['fdate']:
                                 re_chg[d[field]]['first'] = d['first']
                                 re_chg[d[field]]['fdate'] = d['fdate']
-                        if get_duration and 'NC' != d['last']:
-                            if 'NC' == re_chg[d[field]]['last']:
+                        if get_duration and d['last'] != 'NC':
+                            if re_chg[d[field]]['last'] == 'NC':
                                 re_chg[d[field]]['last'] = d['last']
                                 re_chg[d[field]]['ldate'] = d['ldate']
                             elif d['ldate'] > re_chg[d[field]]['ldate']:
