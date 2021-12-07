@@ -99,7 +99,6 @@ class TermsAggregation(interface.BaseAggregator):
         Args:
             field: What field to aggregate on.
             limit: How many buckets to return.
-            order_type: terms aggregation orders by desc/asc document _count.
             supported_charts: Chart type to render. Defaults to table.
             start_time: Optional ISO formatted date string that limits the time
                 range for the aggregation.
@@ -107,6 +106,7 @@ class TermsAggregation(interface.BaseAggregator):
                 range for the aggregation.
             order_field: The name of the field that is used for the order
                 of items in the aggregation, defaults to "count".
+            order_type: terms aggregation orders by desc/asc document _count.
 
         Returns:
             Instance of interface.AggregationResult with aggregation result.
