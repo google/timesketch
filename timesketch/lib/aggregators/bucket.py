@@ -27,6 +27,9 @@ class TermsAggregation(interface.BaseAggregator):
     SUPPORTED_CHARTS = frozenset(
         ['barchart', 'circlechart', 'hbarchart', 'linechart', 'table'])
 
+    SUPPORTED_ORDER = frozenset(
+        ['desc', 'asc'])
+
     FORM_FIELDS = [
         {
             'type': 'ts-dynamic-form-select-input',
@@ -68,6 +71,14 @@ class TermsAggregation(interface.BaseAggregator):
             'placeholder': 'Enter number of results to return',
             'default_value': '10',
             'display': True
+        },
+        {
+            'type': 'ts-dynamic-form-select-input',
+            'name': 'order_type',
+            'label': 'Order',
+            'options': list(SUPPORTED_ORDER),
+            'default_value': 'desc',
+            'display': True
         }
     ]
 
@@ -81,12 +92,14 @@ class TermsAggregation(interface.BaseAggregator):
     # pylint: disable=arguments-differ
     def run(
             self, field, limit=10, supported_charts='table',
-            start_time='', end_time='', order_field='count'):
+            start_time='', end_time='', order_field='count',
+            order_type='desc'):
         """Run the aggregation.
 
         Args:
             field: What field to aggregate on.
             limit: How many buckets to return.
+            order_type: terms aggregation orders by desc/asc document _count.
             supported_charts: Chart type to render. Defaults to table.
             start_time: Optional ISO formatted date string that limits the time
                 range for the aggregation.
@@ -123,7 +136,8 @@ class TermsAggregation(interface.BaseAggregator):
                 'aggregation': {
                     'terms': {
                         'field': formatted_field_name,
-                        'size': limit
+                        'size': limit,
+                        'order': { '_count': order_type }
                     }
                 }
             }
