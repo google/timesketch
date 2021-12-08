@@ -49,12 +49,12 @@ class SigmaListResource(resources.ResourceMixin, Resource):
         try:
             sigma_rules = ts_sigma_lib.get_all_sigma_rules()
 
-        except ValueError:
+        except ValueError as e:
             logger.error('OS Error, unable to get the path to the Sigma rules',
                          exc_info=True)
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                'OS Error, unable to get the path to the Sigma rules')
+                f'Value Error, {e}')
         # TODO: idea for meta: add a list of folders that have been parsed
         meta = {'current_user': current_user.username,
                 'rules_count': len(sigma_rules)}
@@ -78,12 +78,12 @@ class SigmaResource(resources.ResourceMixin, Resource):
         try:
             sigma_rules = ts_sigma_lib.get_all_sigma_rules()
 
-        except ValueError:
+        except ValueError as e:
             logger.error('OS Error, unable to get the path to the Sigma rules',
                          exc_info=True)
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                'OS Error, unable to get the path to the Sigma rules')
+                f'ValueError {e}')
         for rule in sigma_rules:
             if rule is not None:
                 if rule_uuid == rule.get('id'):
