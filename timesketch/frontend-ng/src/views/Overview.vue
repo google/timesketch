@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-container fluid class="mt-2">
-    <v-navigation-drawer app clipped permanent right width="500">
+  <v-container class="mt-2">
+    <v-navigation-drawer app clipped permanent right width="400">
       <template v-slot:prepend>
         <v-list dense>
           <v-card-title>Team</v-card-title>

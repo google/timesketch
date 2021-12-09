@@ -15,7 +15,7 @@ limitations under the License.
 -->
 <template>
   <v-app id="app">
-    <v-app-bar app clipped-right flat hide-on-scroll :color="$vuetify.theme.dark ? '' : 'white'">
+    <v-app-bar app clipped-right flat :color="$vuetify.theme.dark ? '' : 'white'">
       <v-img src="/dist/timesketch-color.png" max-height="30" max-width="30" contain></v-img>
       <v-toolbar-title class="ml-3"> timesketch </v-toolbar-title>
       <span v-if="sketch.name" class="ml-6" style="margin-top: 5px">
@@ -37,11 +37,15 @@ limitations under the License.
       </v-avatar>
 
       <template v-slot:extension>
-        <v-tabs class="ml-3">
-          <v-tab :to="{ name: 'Overview' }" exact-path><v-icon left small>mdi-cube-outline</v-icon> Overview </v-tab>
-          <v-tab :to="{ name: 'Explore' }"><v-icon left small>mdi-magnify</v-icon> Explore </v-tab>
-          <v-tab :to="{ name: 'GraphOverview' }"><v-icon left small>mdi-lan</v-icon> Graph </v-tab>
+        <v-tabs class="ml-2">
+          <v-tab :transition="false" :to="{ name: 'Overview' }" exact-path
+            ><v-icon left small>mdi-cube-outline</v-icon> Overview
+          </v-tab>
+
+          <v-tab :transition="false" :to="{ name: 'Explore' }"><v-icon left small>mdi-magnify</v-icon> Explore </v-tab>
+
           <!--
+          <v-tab :to="{ name: 'GraphOverview' }"><v-icon left small>mdi-lan</v-icon> Graph </v-tab>
           <v-tab disabled><v-icon left small>mdi-chart-bar</v-icon>Aggregate</v-tab>
           <v-tab disabled><v-icon left small>mdi-auto-fix</v-icon>Analyze</v-tab>
           <v-tab disabled><v-icon left small>mdi-bookshelf</v-icon>Stories</v-tab>
@@ -50,7 +54,7 @@ limitations under the License.
       </template>
     </v-app-bar>
 
-    <v-main>
+    <v-main class="mx-4">
       <router-view></router-view>
     </v-main>
   </v-app>

@@ -19,9 +19,6 @@ import VueRouter from 'vue-router'
 import Home from './views/Home'
 import Explore from './views/Explore'
 import Sketch from './views/Sketch'
-import Graph from './views/Graph'
-import GraphOverview from './views/GraphOverview'
-import GraphExplore from './views/GraphExplore'
 import Overview from './views/Overview'
 
 Vue.use(VueRouter)
@@ -48,24 +45,6 @@ const routes = [
         name: 'Explore',
         component: Explore,
         props: true,
-      },
-      {
-        path: 'graph',
-        component: Graph,
-        props: true,
-        children: [
-          {
-            path: '',
-            name: 'GraphOverview',
-            component: GraphOverview,
-          },
-          {
-            path: 'explore',
-            name: 'GraphExplore',
-            component: GraphExplore,
-            props: true,
-          },
-        ],
       },
     ],
   },
