@@ -274,7 +274,7 @@ class FilteredTermsAggregation(interface.BaseAggregator):
         tsdate = source.get('timestamp', 'NC')
         return date,tsdate
 
-    # pylint: disable=arguments-differ
+    # pylint: disable=arguments-differ,too-many-arguments
     def run(
             self, field, query_string='', query_dsl='', order_type='desc',
             supported_charts='table', start_time='', end_time='', limit=10,
