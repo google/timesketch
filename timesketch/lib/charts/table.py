@@ -13,10 +13,11 @@
 # limitations under the License.
 """Table chart."""
 import altair as alt
-alt.data_transformers.disable_max_rows()
 
 from timesketch.lib.charts import manager
 from timesketch.lib.charts import interface
+
+alt.data_transformers.disable_max_rows()
 
 
 class TableChart(interface.BaseChart):
