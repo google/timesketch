@@ -45,7 +45,7 @@ def get_fnc_duration(first, last, fmt_durat='days'):
         if fmt_durat == 'seconds':
             return int(duration.seconds)
         return int(duration.days)
-    except:
+    except ValueError:
         return -1
 
 def get_spec(field, limit=10, order_type='desc', query='', query_dsl=''):
