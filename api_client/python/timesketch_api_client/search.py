@@ -323,7 +323,6 @@ class DateRangeChip(Chip):
         if not chip_value:
             return
         start, end = chip_value.split(',')
-        print(start, end)
         self.start_time = start
         self.end_time = end
 
