@@ -15,11 +15,11 @@ It is possible to install Timesketch without docker but we strongly encourage us
 * Timesketch web/api server
 * Timesketch importer/analysis worker
 * PostgreSQL database
-* Elasticsearch single-node cluster
+* OpenSearch single-node cluster
 * Redis key-value database (for worker processes)
 * Nginx webserver
 
-**NOTE**: This guide sets up  single node Elasticsearch cluster. This is OK for smaller installations but in order to scale and have better performance you need to setup a multi node Elasticsearch cluster. This is out of scope for this guide but the official documentation on [installing Elasticsearch with Docker](https://www.elastic.co/guide/en/elasticsearch/reference/current/docker.html) will get you started.
+**NOTE**: This guide sets up  single node OpenSearch cluster. This is OK for smaller installations but in order to scale and have better performance you need to setup a multi node OpenSearch cluster. This is out of scope for this guide but the official documentation on [installing OpenSearch](https://opensearch.org/docs/latest/opensearch/install/index/) will get you started.
 
 ## 1. Install Docker
 
@@ -41,7 +41,7 @@ chmod 755 deploy_timesketch.sh
 ```
 
 ### Choose location for the installation
-You can choose to host the Timeksetch data directory anywhere but note that by default it will host Elasticsearch and PostgreSQL data in this directory so make sure you have enough disk space available.
+You can choose to host the Timeksetch data directory anywhere but note that by default it will host OpenSearch and PostgreSQL data in this directory so make sure you have enough disk space available.
 
 Example:
 
