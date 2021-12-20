@@ -24,7 +24,6 @@ limitations under the License.
 
 <script>
 import Vue from 'vue'
-import { Compact } from 'vue-color'
 import _ from 'lodash'
 
 import EventBus from '../../main'
@@ -84,6 +83,7 @@ export default {
       if (!backgroundColor.startsWith('#')) {
         backgroundColor = '#' + backgroundColor
       }
+
       // Grey out the index if it is not selected.
       if (!this.isSelected) {
         backgroundColor = '#d2d2d2'

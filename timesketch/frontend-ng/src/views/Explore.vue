@@ -419,21 +419,19 @@ limitations under the License.
 
             <!-- Datetime field with action buttons -->
             <template v-slot:item._source.timestamp="{ item }">
-              <v-row no-gutters>
-                <v-col>
-                  <v-chip label v-bind:style="getTimelineColor(item)">
-                    {{ item._source.timestamp | formatTimestamp | moment('utc', 'YYYY-MM-DDTHH:mm:ss') }}
-                  </v-chip>
-                </v-col>
-                <v-col class="ml-1">
-                  <v-btn small icon class="mt-1">
-                    <v-icon>mdi-star-outline</v-icon>
-                  </v-btn>
-                  <v-btn small icon class="mt-1">
-                    <v-icon>mdi-tag-plus-outline</v-icon>
-                  </v-btn>
-                </v-col>
-              </v-row>
+              <div v-bind:style="getTimelineColor(item)" class="datetime-table-cell">
+                {{ item._source.timestamp | formatTimestamp | moment('utc', 'YYYY-MM-DDTHH:mm:ss') }}
+              </div>
+            </template>
+
+            <!-- Actions field -->
+            <template v-slot:item.actions="{ item }">
+              <v-btn small icon>
+                <v-icon>mdi-star-outline</v-icon>
+              </v-btn>
+              <v-btn small icon>
+                <v-icon>mdi-tag-plus-outline</v-icon>
+              </v-btn>
             </template>
 
             <!-- Message field -->
@@ -532,7 +530,11 @@ export default {
           text: 'Datetime (UTC)',
           align: 'start',
           value: '_source.timestamp',
-          width: '250',
+          width: '200',
+        },
+        {
+          value: 'actions',
+          width: '90',
         },
 
         {
@@ -1275,5 +1277,12 @@ export default {
   height: 15px;
   margin: 0 0 0 75px;
   background-color: #f5f5f5;
+}
+
+.datetime-table-cell {
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 </style>
