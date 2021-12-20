@@ -9,7 +9,7 @@ set -e
 DEFAULT_ELASTICSEARCH_VERSION=7.9.3
 
 # Set Elasticsearch version to run
-[ -z "$ELASTICSEARCH_VERSION" ] && export ELASTICSEARCH_VERSION=$DEFAULT_ELASTICSEARCH_VERSION
+[ -z "$OPENSEARCH_VERSION" ] && export OPENSEARCH_VERSION=$DEFAULT_ELASTICSEARCH_VERSION
 
 # Container ID for the web server
 export CONTAINER_ID="$(sudo -E docker container list -f name=e2e_timesketch -q)"
