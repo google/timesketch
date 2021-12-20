@@ -1,6 +1,6 @@
 # Create timeline from JSONL or CSV file
 
-You can ingest timeline data from a JSONL or CSV file. You can have any number of attributes/columns as you wish but there are some mandatory fields that Timeksketch needs in order to render the events in the UI.
+You can ingest timeline data from a JSONL or CSV file. You can have any number of attributes/columns as you wish but there are some mandatory fields that Timesketch needs in order to render the events in the UI.
 
 **Mandatory fields:**
 
