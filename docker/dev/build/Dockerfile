@@ -28,11 +28,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     plaso-tools \
   && rm -rf /var/lib/apt/lists/*
 
-# Install NodeJS and Yarn for frontend development
+# Install NodeJS for frontend development
+RUN curl -sL https://deb.nodesource.com/setup_12.x -o nodesource_setup.sh
+RUN bash nodesource_setup.sh
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    nodejs \
+  && rm -rf /var/lib/apt/lists/*
+
+# Install Yarn for frontend development
 RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
 RUN echo "deb https://dl.yarnpkg.com/debian/ stable main" > /etc/apt/sources.list.d/yarn.list
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    nodejs \
     yarn \
   && rm -rf /var/lib/apt/lists/*
 
