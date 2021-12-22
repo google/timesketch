@@ -47,14 +47,13 @@ $POSTGRES_PORT="5432"
 $SECRET_KEY=(-join(1..42 | ForEach {((65..90)+(97..122)+(".") | % {[char]$_})+(0..9)+(".") | Get-Random}))
 $OPENSEARCH_ADDRESS="opensearch"
 $OPENSEARCH_PORT="9200"
+# The command below will take half of the system memory. This can be changed to whatever suits you. More the merrier for the ES though.
+$OPENSEARCH_MEM_USE_GB=(Get-CimInstance Win32_PhysicalMemory | Measure-Object -Property capacity -Sum).sum /1gb / 2
 $REDIS_ADDRESS="redis"
 $REDIS_PORT="6379"
 $GITHUB_BASE_URL="https://raw.githubusercontent.com/google/timesketch/master"
-# The command below will take half of the system memory. This can be changed to whatever suits you. More the merrier for the ES though.
-$OPENSEARCH_MEM_USE_GB=(Get-CimInstance Win32_PhysicalMemory | Measure-Object -Property capacity -Sum).sum /1gb / 2
 Write-Host "OK"
 Write-Host "Setting OpenSearch memory allocation to $OPENSEARCH_MEM_USE_GB GB"
-
 
 # Docker compose and configuration
 Write-Host "* Fetching configuration files.."
