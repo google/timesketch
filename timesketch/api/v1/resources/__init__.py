@@ -254,8 +254,8 @@ class ResourceMixin(object):
             Instance of lib.datastores.opensearch.OpenSearchDatastore
         """
         return OpenSearchDataStore(
-            host=current_app.config['ELASTIC_HOST'],
-            port=current_app.config['ELASTIC_PORT'])
+            host=current_app.config['OPENSEARCH_HOST'],
+            port=current_app.config['OPENSEARCH_PORT'])
 
     def to_json(self,
                 model,

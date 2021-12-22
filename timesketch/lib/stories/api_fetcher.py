@@ -38,8 +38,8 @@ class ApiDataFetcher(interface.DataFetcher):
         """Initialize the data fetcher."""
         super(ApiDataFetcher, self).__init__()
         self._datastore = OpenSearchDataStore(
-            host=current_app.config['ELASTIC_HOST'],
-            port=current_app.config['ELASTIC_PORT'])
+            host=current_app.config['OPENSEARCH_HOST'],
+            port=current_app.config['OPENSEARCH_PORT'])
 
     def get_aggregation(self, agg_dict):
         """Returns an aggregation object from an aggregation dict.

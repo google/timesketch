@@ -163,8 +163,8 @@ class BaseAggregator(object):
             raise RuntimeError('Need at least sketch_id or index')
 
         self.opensearch = OpenSearchDataStore(
-            host=current_app.config['ELASTIC_HOST'],
-            port=current_app.config['ELASTIC_PORT'])
+            host=current_app.config['OPENSEARCH_HOST'],
+            port=current_app.config['OPENSEARCH_PORT'])
 
         self._sketch_url = '/sketch/{0:d}/explore'.format(sketch_id)
         self.field = ''
@@ -338,7 +338,7 @@ class BaseAggregator(object):
 
         return field_format
 
-    def elastic_aggregation(self, aggregation_spec):
+    def opensearch_aggregation(self, aggregation_spec):
         """Helper method to execute aggregation in OpenSearch.
 
         Args:

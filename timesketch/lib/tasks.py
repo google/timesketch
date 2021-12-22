@@ -545,12 +545,12 @@ def run_plaso(
         except (json.JSONDecodeError, IOError):
             logger.error('Unable to read in mapping', exc_info=True)
 
-    opensearch_server = current_app.config.get('ELASTIC_HOST')
+    opensearch_server = current_app.config.get('OPENSEARCH_HOST')
     if not opensearch_server:
         raise RuntimeError(
             'Unable to connect to OpenSearch, no server set, unable to '
             'process plaso file.')
-    opensearch_port = current_app.config.get('ELASTIC_PORT')
+    opensearch_port = current_app.config.get('OPENSEARCH_PORT')
     if not opensearch_port:
         raise RuntimeError(
             'Unable to connect to OpenSearch, no port set, unable to '
@@ -662,7 +662,7 @@ def run_csv_jsonl(
         file_handle = codecs.open(
             file_path, 'r', encoding='utf-8', errors='replace')
 
-    event_type = 'generic_event'  # Document type for Elasticsearch
+    event_type = 'generic_event'  # Document type for OpenSearch
     validators = {
         'csv': read_and_validate_csv,
         'jsonl': read_and_validate_jsonl,
@@ -690,8 +690,8 @@ def run_csv_jsonl(
             logger.error('Unable to read in mapping', exc_info=True)
 
     opensearch = OpenSearchDataStore(
-        host=current_app.config['ELASTIC_HOST'],
-        port=current_app.config['ELASTIC_PORT'])
+        host=current_app.config['OPENSEARCH_HOST'],
+        port=current_app.config['OPENSEARCH_PORT'])
 
     # Reason for the broad exception catch is that we want to capture
     # all possible errors and exit the task.

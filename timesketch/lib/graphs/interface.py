@@ -217,8 +217,8 @@ class BaseGraphPlugin:
             KeyError if graph type specified is not supported.
         """
         self.datastore = OpenSearchDataStore(
-            host=current_app.config['ELASTIC_HOST'],
-            port=current_app.config['ELASTIC_PORT'])
+            host=current_app.config['OPENSEARCH_HOST'],
+            port=current_app.config['OPENSEARCH_PORT'])
         if not GRAPH_TYPES.get(self.GRAPH_TYPE):
             raise KeyError(f'Graph type {self.GRAPH_TYPE} is not supported')
         self.graph = Graph(self.GRAPH_TYPE)

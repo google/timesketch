@@ -139,14 +139,14 @@ class OpenSearchDataStore(object):
 
     @staticmethod
     def _build_labels_query(sketch_id, labels):
-        """Build Elasticsearch query for Timesketch labels.
+        """Build OpenSearch query for Timesketch labels.
 
         Args:
             sketch_id: Integer of sketch primary key.
             labels: List of label names.
 
         Returns:
-            Elasticsearch query as a dictionary.
+            OpenSearch query as a dictionary.
         """
         label_query = {
             'bool': {
@@ -180,13 +180,13 @@ class OpenSearchDataStore(object):
 
     @staticmethod
     def _build_events_query(events):
-        """Build Elasticsearch query for one or more document ids.
+        """Build OpenSearch query for one or more document ids.
 
         Args:
-            events: List of Elasticsearch document IDs.
+            events: List of OpenSearch document IDs.
 
         Returns:
-            Elasticsearch query as a dictionary.
+            OpenSearch query as a dictionary.
         """
         events_list = [event['event_id'] for event in events]
         query_dict = {'query': {'ids': {'values': events_list}}}
@@ -194,14 +194,14 @@ class OpenSearchDataStore(object):
 
     @staticmethod
     def _build_query_dsl(query_dsl, timeline_ids):
-        """Build Elastic Search DSL query by adding in timeline filtering.
+        """Build OpenSearch Search DSL query by adding in timeline filtering.
 
         Args:
             query_dsl: A dict with the current query_dsl
             timeline_ids: Either a list of timeline IDs (int) or None.
 
         Returns:
-            Elasticsearch query DSL as a dictionary.
+            OpenSearch query DSL as a dictionary.
         """
         # Remove any aggregation coming from user supplied Query DSL.
         # We have no way to display this data in a good way today.
@@ -302,19 +302,19 @@ class OpenSearchDataStore(object):
 
     def build_query(self, sketch_id, query_string, query_filter, query_dsl=None,
                     aggregations=None, timeline_ids=None):
-        """Build Elasticsearch DSL query.
+        """Build OpenSearch DSL query.
 
         Args:
             sketch_id: Integer of sketch primary key
             query_string: Query string
             query_filter: Dictionary containing filters to apply
-            query_dsl: Dictionary containing Elasticsearch DSL query
-            aggregations: Dict of Elasticsearch aggregations
+            query_dsl: Dictionary containing OpenSearch DSL query
+            aggregations: Dict of OpenSearch aggregations
             timeline_ids: Optional list of IDs of Timeline objects that should
                 be queried as part of the search.
 
         Returns:
-            Elasticsearch DSL query as a dictionary
+            OpenSearch DSL query as a dictionary
         """
 
         if query_dsl:
@@ -482,20 +482,20 @@ class OpenSearchDataStore(object):
     def search(self, sketch_id, query_string, query_filter, query_dsl, indices,
                count=False, aggregations=None, return_fields=None,
                enable_scroll=False, timeline_ids=None):
-        """Search ElasticSearch. This will take a query string from the UI
+        """Search OpenSearch. This will take a query string from the UI
         together with a filter definition. Based on this it will execute the
-        search request on ElasticSearch and get result back.
+        search request on OpenSearch and get result back.
 
         Args:
             sketch_id: Integer of sketch primary key
             query_string: Query string
             query_filter: Dictionary containing filters to apply
-            query_dsl: Dictionary containing Elasticsearch DSL query
+            query_dsl: Dictionary containing OpenSearch DSL query
             indices: List of indices to query
             count: Boolean indicating if we should only return result count
-            aggregations: Dict of Elasticsearch aggregations
+            aggregations: Dict of OpenSearch aggregations
             return_fields: List of fields to return
-            enable_scroll: If Elasticsearch scroll API should be used
+            enable_scroll: If OpenSearch scroll API should be used
             timeline_ids: Optional list of IDs of Timeline objects that should
                 be queried as part of the search.
 
@@ -526,7 +526,7 @@ class OpenSearchDataStore(object):
             query_filter=query_filter, query_dsl=query_dsl,
             aggregations=aggregations, timeline_ids=timeline_ids)
 
-        # Default search type for elasticsearch is query_then_fetch.
+        # Default search type for OpenSearch is query_then_fetch.
         search_type = 'query_then_fetch'
 
         # Only return how many documents matches the query.
@@ -545,7 +545,7 @@ class OpenSearchDataStore(object):
             return count_result.get('count', 0)
 
         if not return_fields:
-            # Suppress the lint error because elasticsearch-py adds parameters
+            # Suppress the lint error because opensearchpy adds parameters
             # to the function with a decorator and this makes pylint sad.
             # pylint: disable=unexpected-keyword-arg
             return self.client.search(
@@ -597,15 +597,15 @@ class OpenSearchDataStore(object):
                       query_filter=None, query_dsl=None, indices=None,
                       return_fields=None, enable_scroll=True,
                       timeline_ids=None):
-        """Search ElasticSearch. This will take a query string from the UI
+        """Search OpenSearch. This will take a query string from the UI
         together with a filter definition. Based on this it will execute the
-        search request on ElasticSearch and get result back.
+        search request on OpenSearch and get result back.
 
         Args :
             sketch_id: Integer of sketch primary key
             query_string: Query string
             query_filter: Dictionary containing filters to apply
-            query_dsl: Dictionary containing Elasticsearch DSL query
+            query_dsl: Dictionary containing OpenSearch DSL query
             indices: List of indices to query
             return_fields: List of fields to return
             enable_scroll: Boolean determining whether scrolling is enabled.
@@ -736,15 +736,15 @@ class OpenSearchDataStore(object):
         """Get one event from the datastore.
 
         Args:
-            searchindex_id: String of ElasticSearch index id
-            event_id: String of ElasticSearch event id
+            searchindex_id: String of OpenSearch index id
+            event_id: String of OpenSearch event id
 
         Returns:
             Event document in JSON format
         """
         METRICS['search_get_event'].inc()
         try:
-            # Suppress the lint error because elasticsearch-py adds parameters
+            # Suppress the lint error because opensearchpy adds parameters
             # to the function with a decorator and this makes pylint sad.
             # pylint: disable=unexpected-keyword-arg
             if self.version.startswith('6'):

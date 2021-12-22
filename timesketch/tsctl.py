@@ -266,8 +266,8 @@ class AddSearchIndex(Command):
     def run(self, name, index, username):
         """Create the SearchIndex."""
         es = OpenSearchDataStore(
-            host=current_app.config['ELASTIC_HOST'],
-            port=current_app.config['ELASTIC_PORT'])
+            host=current_app.config['OPENSEARCH_HOST'],
+            port=current_app.config['OPENSEARCH_PORT'])
         user = User.query.filter_by(username=username).first()
         if not user:
             sys.stderr.write('User does not exist\n')
@@ -310,8 +310,8 @@ class PurgeTimeline(Command):
             sys.exit()
 
         es = OpenSearchDataStore(
-            host=current_app.config['ELASTIC_HOST'],
-            port=current_app.config['ELASTIC_PORT'])
+            host=current_app.config['OPENSEARCH_HOST'],
+            port=current_app.config['OPENSEARCH_PORT'])
 
         timelines = Timeline.query.filter_by(searchindex=searchindex).all()
         sketches = [

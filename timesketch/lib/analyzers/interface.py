@@ -805,8 +805,8 @@ class BaseAnalyzer:
         self.emoji_events = {}
 
         self.datastore = OpenSearchDataStore(
-            host=current_app.config['ELASTIC_HOST'],
-            port=current_app.config['ELASTIC_PORT'])
+            host=current_app.config['OPENSEARCH_HOST'],
+            port=current_app.config['OPENSEARCH_PORT'])
 
         if not hasattr(self, 'sketch'):
             self.sketch = None
