@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Elasticsearch datastore."""
+"""OpenSearch datastore."""
 from __future__ import unicode_literals
 
 from collections import Counter
@@ -24,12 +24,13 @@ from uuid import uuid4
 import six
 
 from dateutil import parser, relativedelta
-from elasticsearch import Elasticsearch
-from elasticsearch.exceptions import ConnectionTimeout
-from elasticsearch.exceptions import NotFoundError
-from elasticsearch.exceptions import RequestError
+from opensearchpy import OpenSearch
+from opensearchpy.exceptions import ConnectionTimeout
+from opensearchpy.exceptions import NotFoundError
+from opensearchpy.exceptions import RequestError
 # pylint: disable=redefined-builtin
-from elasticsearch.exceptions import ConnectionError
+from opensearchpy.exceptions import ConnectionError
+
 from flask import abort
 from flask import current_app
 import prometheus_client
@@ -39,7 +40,7 @@ from timesketch.lib.definitions import METRICS_NAMESPACE
 
 
 # Setup logging
-es_logger = logging.getLogger('timesketch.elasticsearch')
+es_logger = logging.getLogger('timesketch.opensearch')
 es_logger.setLevel(logging.WARNING)
 
 # Metrics definitions
@@ -94,7 +95,7 @@ if (!removedLabel) {
 """
 
 
-class ElasticsearchDataStore(object):
+class OpenSearchDataStore(object):
     """Implements the datastore."""
 
     # Number of events to queue up when bulk inserting events.
@@ -108,7 +109,7 @@ class ElasticsearchDataStore(object):
     DEFAULT_EVENT_IMPORT_TIMEOUT = '3m' # Timeout value for importing events.
 
     def __init__(self, host='127.0.0.1', port=9200):
-        """Create a Elasticsearch client."""
+        """Create a OpenSearch client."""
         super().__init__()
         self._error_container = {}
 
@@ -128,7 +129,7 @@ class ElasticsearchDataStore(object):
         if self.timeout:
             parameters['timeout'] = self.timeout
 
-        self.client = Elasticsearch(
+        self.client = OpenSearch(
             [{'host': host, 'port': port}], **parameters)
 
         self.import_counter = Counter()

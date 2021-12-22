@@ -12,7 +12,7 @@ class TestWinCrashPlugin(BaseTest):
     """Tests the functionality of the analyzer."""
 
     @mock.patch(
-        'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+        'timesketch.lib.analyzers.interface.OpenSearchDataStore',
         MockDataStore)
     def setUp(self):
         super().setUp()

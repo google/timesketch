@@ -24,13 +24,13 @@ import time
 import traceback
 import yaml
 
-import elasticsearch
+import opensearchpy
 from flask import current_app
 
 import pandas
 
 from timesketch.lib import definitions
-from timesketch.lib.datastores.elastic import ElasticsearchDataStore
+from timesketch.lib.datastores.opensearch import OpenSearchDataStore
 from timesketch.models import db_session
 from timesketch.models.sketch import Aggregation
 from timesketch.models.sketch import Attribute
@@ -123,20 +123,20 @@ class Event(object):
     """Event object with helper methods.
 
     Attributes:
-        datastore: Instance of ElasticsearchDatastore.
+        datastore: Instance of OpenSearchDataStore.
         sketch: Sketch ID or None if not provided.
         event_id: ID of the Event.
-        event_type: Document type in Elasticsearch.
-        index_name: The name of the Elasticsearch index.
-        source: Source document from Elasticsearch.
+        event_type: Document type in OpenSearch.
+        index_name: The name of the OpenSearch index.
+        source: Source document from OpenSearch.
     """
 
     def __init__(self, event, datastore, sketch=None, analyzer=None):
         """Initialize Event object.
 
         Args:
-            event: Dictionary of event from Elasticsearch.
-            datastore: Instance of ElasticsearchDatastore.
+            event: Dictionary of event from OpenSearch.
+            datastore: Instance of OpenSearchDataStore.
             sketch: Optional instance of a Sketch object.
             analyzer: Optional instance of a BaseAnalyzer object.
 
@@ -167,7 +167,7 @@ class Event(object):
         self.updated_event.update(event)
 
     def commit(self, event_dict=None):
-        """Commit an event to Elasticsearch.
+        """Commit an event to OpenSearch.
 
         Args:
             event_dict: (optional) Dictionary with updated event attributes.
@@ -417,9 +417,9 @@ class Sketch(object):
         Args:
             view_name: The name of the view.
             analyzer_name: The name of the analyzer.
-            query_string: Elasticsearch query string.
-            query_dsl: Dictionary with Elasticsearch DSL query.
-            query_filter: Dictionary with Elasticsearch filters.
+            query_string: OpenSearch query string.
+            query_dsl: Dictionary with OpenSearch DSL query.
+            query_filter: Dictionary with OpenSearch filters.
             additional_fields: A list with field names to include in the
                 view output.
 
@@ -762,8 +762,8 @@ class BaseAnalyzer:
 
     Attributes:
         name: Analyzer name.
-        index_name: Name if Elasticsearch index.
-        datastore: Elasticsearch datastore client.
+        index_name: Name if OpenSearch index.
+        datastore: OpenSearch datastore client.
         sketch: Instance of Sketch object.
         timeline_id: The ID of the timeline the analyzer runs on.
         tagged_events: Dict with all events to add tags and those tags.
@@ -791,7 +791,7 @@ class BaseAnalyzer:
         """Initialize the analyzer object.
 
         Args:
-            index_name: Elasticsearch index name.
+            index_name: OpenSearch index name.
             sketch_id: Sketch ID.
             timeline_id: The timeline ID.
         """
@@ -804,7 +804,7 @@ class BaseAnalyzer:
         self.tagged_events = {}
         self.emoji_events = {}
 
-        self.datastore = ElasticsearchDataStore(
+        self.datastore = OpenSearchDataStore(
             host=current_app.config['ELASTIC_HOST'],
             port=current_app.config['ELASTIC_PORT'])
 
@@ -814,12 +814,12 @@ class BaseAnalyzer:
     def event_pandas(
             self, query_string=None, query_filter=None, query_dsl=None,
             indices=None, return_fields=None):
-        """Search ElasticSearch.
+        """Search OpenSearch.
 
         Args:
             query_string: Query string.
             query_filter: Dictionary containing filters to apply.
-            query_dsl: Dictionary containing Elasticsearch DSL query.
+            query_dsl: Dictionary containing OpenSearch DSL query.
             indices: List of indices to query.
             return_fields: List of fields to be included in the search results,
                 if not included all fields will be included in the results.
@@ -848,7 +848,7 @@ class BaseAnalyzer:
         for index in indices:
             try:
                 self.datastore.client.indices.refresh(index=index)
-            except elasticsearch.NotFoundError:
+            except opensearchpy.NotFoundError:
                 logger.error(
                     'Unable to refresh index: {0:s}, not found, '
                     'removing from list.'.format(index))
@@ -887,12 +887,12 @@ class BaseAnalyzer:
     def event_stream(
             self, query_string=None, query_filter=None, query_dsl=None,
             indices=None, return_fields=None, scroll=True):
-        """Search ElasticSearch.
+        """Search OpenSearch.
 
         Args:
             query_string: Query string.
             query_filter: Dictionary containing filters to apply.
-            query_dsl: Dictionary containing Elasticsearch DSL query.
+            query_dsl: Dictionary containing OpenSearch DSL query.
             indices: List of indices to query.
             return_fields: List of fields to return.
             scroll: Boolean determining whether we support scrolling searches
@@ -926,7 +926,7 @@ class BaseAnalyzer:
         for index in indices:
             try:
                 self.datastore.client.indices.refresh(index=index)
-            except elasticsearch.NotFoundError:
+            except opensearchpy.NotFoundError:
                 logger.error(
                     'Unable to find index: {0:s}, removing from '
                     'result set.'.format(index))
@@ -941,7 +941,7 @@ class BaseAnalyzer:
         else:
             timeline_ids = None
 
-        # Exponential backoff for the call to Elasticsearch. Sometimes the
+        # Exponential backoff for the call to OpenSearch. Sometimes the
         # cluster can be a bit overloaded and timeout on requests. We want to
         # retry a few times in order to give the cluster a chance to return
         # results.
@@ -963,7 +963,7 @@ class BaseAnalyzer:
                         event, self.datastore, sketch=self.sketch,
                         analyzer=self)
                 break  # Query was succesful
-            except elasticsearch.TransportError as e:
+            except opensearchpy.TransportError as e:
                 sleep_seconds = (
                     backoff_in_seconds * 2 ** x + random.uniform(3, 7))
                 logger.info(

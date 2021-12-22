@@ -85,7 +85,7 @@ def _parse_tag_field(row):
 
 
 def _scrub_special_tags(dict_obj):
-    """Remove Elastic specific fields from a dict."""
+    """Remove OpenSearch specific fields from a dict."""
     for field in FIELDS_TO_REMOVE:
         if field in dict_obj:
             _ = dict_obj.pop(field)
@@ -119,7 +119,7 @@ def validate_indices(indices, datastore):
 
     Args:
         indices (list): List of indices.
-        datastore (ElasticsearchDataStore): a data store object.
+        datastore (OpenSearchDataStore): a data store object.
 
     Returns:
         list of indices that exist within the datastore.

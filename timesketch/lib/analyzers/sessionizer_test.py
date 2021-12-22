@@ -16,7 +16,7 @@ from timesketch.lib.testlib import MockDataStore
 class TestSessionizerPlugin(BaseTest):
     """Tests the functionality of the sessionizing sketch analyzer, focusing
     on edge cases."""
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def test_multiple_sessions(self):
         """Test multiple events, two of which are in the same session and
@@ -42,7 +42,7 @@ class TestSessionizerPlugin(BaseTest):
         self.assertEqual(event3['_source']['session_id'], {'all_events': 2})
         check_surrounding_events(self, datastore, [202], 'all_events')
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def test_zero_time_diff(self):
         """Test events with no time difference between them are allocated
@@ -66,7 +66,7 @@ class TestSessionizerPlugin(BaseTest):
         event3 = datastore.event_store['101']
         self.assertEqual(event3['_source']['session_id'], {'all_events': 1})
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def test_zero_events(self):
         """Test the behaviour of the sessionizer when given zero events."""
@@ -82,7 +82,7 @@ class TestSessionizerPlugin(BaseTest):
         self.assertEqual(
             message, 'Sessionizing completed, number of session created: 0')
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def test_one_event(self):
         """Test the behaviour of the sessionizer when given one event."""

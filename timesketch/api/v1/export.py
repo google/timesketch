@@ -123,11 +123,11 @@ def query_to_filehandle(
     which gets returned back.
 
     Args:
-        query_string (str): Elasticsearch query string.
-        query_dsl (str): Elasticsearch query DSL as JSON string.
+        query_string (str): OpenSearch query string.
+        query_dsl (str): OpenSearch query DSL as JSON string.
         query_filter (dict): Filter for the query as a dict.
         sketch (timesketch.models.sketch.Sketch): a sketch object.
-        datastore (elastic.ElasticsearchDataStore): the datastore object.
+        datastore (opensearch.OpenSearchDataStore): the datastore object.
         indices (list): List of indices to query
         timeline_ids (list): Optional list of IDs of Timeline objects that
             should be queried as part of the search.
@@ -194,11 +194,11 @@ def query_to_filehandle(
 
 
 def query_results_to_dataframe(result, sketch):
-    """Returns a data frame from a Elastic query result dict.
+    """Returns a data frame from a OpenSearch query result dict.
 
     Args:
         result (dict): a dict that contains the response from a
-            Elastic datastore search.
+            OpenSearch datastore search.
         sketch (timesketch.models.sketch.Sketch): a sketch object.
 
     Returns:
@@ -231,11 +231,11 @@ def query_results_to_dataframe(result, sketch):
 
 
 def query_results_to_filehandle(result, sketch):
-    """Returns a data frame from a Elastic query result dict.
+    """Returns a data frame from a OpenSearch query result dict.
 
     Args:
         result (dict): a dict that contains the response from a
-            Elastic datastore search.
+            OpenSearch datastore search.
         sketch (timesketch.models.sketch.Sketch): a sketch object.
 
     Returns:

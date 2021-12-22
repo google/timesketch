@@ -26,8 +26,8 @@ import json
 import six
 import yaml
 
-from elasticsearch.exceptions import NotFoundError
-from elasticsearch.exceptions import RequestError
+from opensearchpy.exceptions import NotFoundError
+from opensearchpy.exceptions import RequestError
 from flask import current_app
 
 from celery import chain
@@ -46,7 +46,7 @@ from timesketch.app import create_celery_app
 from timesketch.lib import datafinder
 from timesketch.lib import errors
 from timesketch.lib.analyzers import manager
-from timesketch.lib.datastores.elastic import ElasticsearchDataStore
+from timesketch.lib.datastores.opensearch import OpenSearchDataStore
 from timesketch.lib.utils import read_and_validate_csv
 from timesketch.lib.utils import read_and_validate_jsonl
 from timesketch.lib.utils import send_email
@@ -143,8 +143,8 @@ def _close_index(index_name, data_store, timeline_id):
     """Helper function to close an index if it is not used somewhere else.
 
     Args:
-        index_name: String with the Elastic index name.
-        data_store: Instance of elastic.ElasticsearchDataStore.
+        index_name: String with the OpenSearch index name.
+        data_store: Instance of opensearch.OpenSearchDataStore.
         timeline_id: ID of the timeline the index belongs to.
     """
     indices = SearchIndex.query.filter_by(index_name=index_name).all()
@@ -528,7 +528,7 @@ def run_plaso(
     if events:
         raise RuntimeError('Plaso uploads needs a file, not events.')
 
-    event_type = 'generic_event'  # Document type for Elasticsearch
+    event_type = 'generic_event'  # Document type for OpenSearch
 
     mappings = None
     mappings_file_path = current_app.config.get('PLASO_MAPPING_FILE', '')
@@ -545,27 +545,28 @@ def run_plaso(
         except (json.JSONDecodeError, IOError):
             logger.error('Unable to read in mapping', exc_info=True)
 
-    elastic_server = current_app.config.get('ELASTIC_HOST')
-    if not elastic_server:
+    opensearch_server = current_app.config.get('ELASTIC_HOST')
+    if not opensearch_server:
         raise RuntimeError(
-            'Unable to connect to Elastic, no server set, unable to '
+            'Unable to connect to OpenSearch, no server set, unable to '
             'process plaso file.')
-    elastic_port = current_app.config.get('ELASTIC_PORT')
-    if not elastic_port:
+    opensearch_port = current_app.config.get('ELASTIC_PORT')
+    if not opensearch_port:
         raise RuntimeError(
-            'Unable to connect to Elastic, no port set, unable to '
+            'Unable to connect to OpenSearch, no port set, unable to '
             'process plaso file.')
 
-    es = ElasticsearchDataStore(
-        host=elastic_server, port=elastic_port)
+    opensearch = OpenSearchDataStore(
+        host=opensearch_server, port=opensearch_port)
 
     try:
-        es.create_index(
+        opensearch.create_index(
             index_name=index_name, doc_type=event_type, mappings=mappings)
     except errors.DataIngestionError as e:
         _set_timeline_status(timeline_id, status='fail', error_msg=str(e))
         _close_index(
-            index_name=index_name, data_store=es, timeline_id=timeline_id)
+            index_name=index_name, data_store=opensearch,
+            timeline_id=timeline_id)
         raise
 
     except (RuntimeError, ImportError, NameError, UnboundLocalError,
@@ -593,8 +594,9 @@ def run_plaso(
         psort_path = 'psort.py'
 
     cmd = [
-        psort_path, '-o', 'elastic_ts', file_path, '--server', elastic_server,
-        '--port', str(elastic_port), '--status_view', 'none',
+        psort_path, '-o', 'elastic_ts', file_path,
+        '--server', opensearch_server,
+        '--port', str(opensearch_port), '--status_view', 'none',
         '--index_name', index_name,
     ]
 
@@ -687,7 +689,7 @@ def run_csv_jsonl(
         except (json.JSONDecodeError, IOError):
             logger.error('Unable to read in mapping', exc_info=True)
 
-    es = ElasticsearchDataStore(
+    opensearch = OpenSearchDataStore(
         host=current_app.config['ELASTIC_HOST'],
         port=current_app.config['ELASTIC_PORT'])
 
@@ -697,15 +699,15 @@ def run_csv_jsonl(
     error_msg = ''
     error_count = 0
     try:
-        es.create_index(
+        opensearch.create_index(
             index_name=index_name, doc_type=event_type, mappings=mappings)
         for event in read_and_validate(file_handle):
-            es.import_event(
+            opensearch.import_event(
                 index_name, event_type, event, timeline_id=timeline_id)
             final_counter += 1
 
         # Import the remaining events
-        results = es.flush_queued_events()
+        results = opensearch.flush_queued_events()
 
         error_container = results.get('error_container', {})
         error_msg = get_import_errors(
@@ -731,7 +733,8 @@ def run_csv_jsonl(
         error_msg = traceback.format_exc()
         _set_timeline_status(timeline_id, status='fail', error_msg=error_msg)
         _close_index(
-            index_name=index_name, data_store=es, timeline_id=timeline_id)
+            index_name=index_name, data_store=opensearch,
+            timeline_id=timeline_id)
         logger.error('Error: {0!s}\n{1:s}'.format(e, error_msg))
         return None
 

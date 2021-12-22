@@ -24,7 +24,7 @@ import pandas as pd
 from timesketch.lib.stories import interface
 
 from timesketch.lib.aggregators import manager as aggregator_manager
-from timesketch.lib.datastores.elastic import ElasticsearchDataStore
+from timesketch.lib.datastores.opensearch import OpenSearchDataStore
 from timesketch.models.sketch import Aggregation
 from timesketch.models.sketch import AggregationGroup
 from timesketch.models.sketch import Sketch
@@ -37,7 +37,7 @@ class ApiDataFetcher(interface.DataFetcher):
     def __init__(self):
         """Initialize the data fetcher."""
         super(ApiDataFetcher, self).__init__()
-        self._datastore = ElasticsearchDataStore(
+        self._datastore = OpenSearchDataStore(
             host=current_app.config['ELASTIC_HOST'],
             port=current_app.config['ELASTIC_PORT'])
 
