@@ -496,7 +496,8 @@ def run_sketch_analyzer(
 
 @celery.task(track_started=True, base=SqlAlchemyTask)
 def run_plaso(
-        file_path, events, timeline_name, index_name, source_type, timeline_id):
+        file_path, events, timeline_name, index_name, source_type,
+        timeline_id):
     """Create a Celery task for processing Plaso storage file.
 
     Args:
@@ -573,7 +574,8 @@ def run_plaso(
             RequestError) as e:
         _set_timeline_status(timeline_id, status='fail', error_msg=str(e))
         _close_index(
-            index_name=index_name, data_store=opensearch, timeline_id=timeline_id)
+            index_name=index_name, data_store=opensearch,
+            timeline_id=timeline_id)
         raise
 
     except Exception as e:  # pylint: disable=broad-except
@@ -582,7 +584,8 @@ def run_plaso(
         _set_timeline_status(timeline_id, status='fail', error_msg=error_msg)
         logger.error('Error: {0!s}\n{1:s}'.format(e, error_msg))
         _close_index(
-            index_name=index_name, data_store=opensearch, timeline_id=timeline_id)
+            index_name=index_name, data_store=opensearch,
+            timeline_id=timeline_id)
         return None
 
     message = 'Index timeline [{0:s}] to index [{1:s}] (source: {2:s})'
@@ -630,7 +633,8 @@ def run_plaso(
         # Mark the searchindex and timelines as failed and exit the task
         _set_timeline_status(timeline_id, status='fail', error_msg=e.output)
         _close_index(
-            index_name=index_name, data_store=opensearch, timeline_id=timeline_id)
+            index_name=index_name, data_store=opensearch,
+            timeline_id=timeline_id)
         return e.output
 
     # Mark the searchindex and timelines as ready
@@ -641,7 +645,8 @@ def run_plaso(
 
 @celery.task(track_started=True, base=SqlAlchemyTask)
 def run_csv_jsonl(
-        file_path, events, timeline_name, index_name, source_type, timeline_id):
+        file_path, events, timeline_name, index_name, source_type,
+        timeline_id):
     """Create a Celery task for processing a CSV or JSONL file.
 
     Args:
@@ -718,14 +723,16 @@ def run_csv_jsonl(
     except errors.DataIngestionError as e:
         _set_timeline_status(timeline_id, status='fail', error_msg=str(e))
         _close_index(
-            index_name=index_name, data_store=opensearch, timeline_id=timeline_id)
+            index_name=index_name, data_store=opensearch,
+            timeline_id=timeline_id)
         raise
 
     except (RuntimeError, ImportError, NameError, UnboundLocalError,
             RequestError) as e:
         _set_timeline_status(timeline_id, status='fail', error_msg=str(e))
         _close_index(
-            index_name=index_name, data_store=opensearch, timeline_id=timeline_id)
+            index_name=index_name, data_store=opensearch,
+            timeline_id=timeline_id)
         raise
 
     except Exception as e:  # pylint: disable=broad-except
@@ -747,7 +754,8 @@ def run_csv_jsonl(
     else:
         logger.info(
             'Index timeline: [{0:s}] to index [{1:s}] - {2:d} '
-            'events imported.'.format(timeline_name, index_name, final_counter))
+            'events imported.'.format(
+                timeline_name, index_name, final_counter))
 
     # Set status to ready when done
     _set_timeline_status(timeline_id, status='ready', error_msg=error_msg)
