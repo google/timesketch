@@ -573,7 +573,7 @@ def run_plaso(
             RequestError) as e:
         _set_timeline_status(timeline_id, status='fail', error_msg=str(e))
         _close_index(
-            index_name=index_name, data_store=es, timeline_id=timeline_id)
+            index_name=index_name, data_store=opensearch, timeline_id=timeline_id)
         raise
 
     except Exception as e:  # pylint: disable=broad-except
@@ -582,7 +582,7 @@ def run_plaso(
         _set_timeline_status(timeline_id, status='fail', error_msg=error_msg)
         logger.error('Error: {0!s}\n{1:s}'.format(e, error_msg))
         _close_index(
-            index_name=index_name, data_store=es, timeline_id=timeline_id)
+            index_name=index_name, data_store=opensearch, timeline_id=timeline_id)
         return None
 
     message = 'Index timeline [{0:s}] to index [{1:s}] (source: {2:s})'
@@ -630,7 +630,7 @@ def run_plaso(
         # Mark the searchindex and timelines as failed and exit the task
         _set_timeline_status(timeline_id, status='fail', error_msg=e.output)
         _close_index(
-            index_name=index_name, data_store=es, timeline_id=timeline_id)
+            index_name=index_name, data_store=opensearch, timeline_id=timeline_id)
         return e.output
 
     # Mark the searchindex and timelines as ready
@@ -718,14 +718,14 @@ def run_csv_jsonl(
     except errors.DataIngestionError as e:
         _set_timeline_status(timeline_id, status='fail', error_msg=str(e))
         _close_index(
-            index_name=index_name, data_store=es, timeline_id=timeline_id)
+            index_name=index_name, data_store=opensearch, timeline_id=timeline_id)
         raise
 
     except (RuntimeError, ImportError, NameError, UnboundLocalError,
             RequestError) as e:
         _set_timeline_status(timeline_id, status='fail', error_msg=str(e))
         _close_index(
-            index_name=index_name, data_store=es, timeline_id=timeline_id)
+            index_name=index_name, data_store=opensearch, timeline_id=timeline_id)
         raise
 
     except Exception as e:  # pylint: disable=broad-except
