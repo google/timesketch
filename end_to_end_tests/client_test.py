@@ -56,7 +56,7 @@ class ClientTest(interface.BaseEndToEndTest):
         """Test injecting data into Elastic and make it acccessible in TS."""
         index_name = 'direct_testing'
 
-        self.import_directly_to_elastic(
+        self.import_directly_to_opensearch(
             filename='evtx_direct.csv', index_name=index_name)
 
         new_sketch = self.api.create_sketch(

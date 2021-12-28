@@ -16,7 +16,7 @@
 import json
 import time
 
-from elasticsearch.exceptions import NotFoundError
+from opensearchpy.exceptions import NotFoundError
 
 from flask import jsonify
 from flask import request
@@ -502,7 +502,7 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
                 abort(
                     HTTP_STATUS_CODE_NOT_FOUND,
                     'Attempting to run an aggregation on a non-existing '
-                    'Elastic index, index: {0:s} and parameters: {1!s}'.format(
+                    'index, index: {0:s} and parameters: {1!s}'.format(
                         ','.join(indices), aggregator_parameters))
             except ValueError as exc:
                 abort(

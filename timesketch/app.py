@@ -91,7 +91,7 @@ def create_app(config=None):
                          '$ openssl rand -base64 32\n\n')
         sys.exit()
 
-    # Support old style config using Elasticserach as backend.
+    # Support old style config using Elasticsearch as backend.
     # TODO: Deprecate the old ELASTIC_* config in 2023.
     if not app.config.get('OPENSEARCH_HOST'):
         sys.stderr.write('WARNING: Deprecated config field found: ELASTIC_HOST'
@@ -180,7 +180,7 @@ def configure_logger():
         """Custom filter to filter out ES logs"""
         def filter(self, record):
             """Filter out records."""
-            return not record.name.lower() == 'elasticsearch'
+            return not record.name.lower() == 'opensearch'
 
     logger_formatter = logging.Formatter(
         '[%(asctime)s] %(name)s/%(levelname)s %(message)s')
