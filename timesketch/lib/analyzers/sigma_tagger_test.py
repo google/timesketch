@@ -12,7 +12,7 @@ class TestSigmaPlugin(BaseTest):
     """Tests the functionality of the analyzer."""
 
     def __init__(self, *args, **kwargs):
-        super(TestSigmaPlugin, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.test_index = 'test_index'
 
 

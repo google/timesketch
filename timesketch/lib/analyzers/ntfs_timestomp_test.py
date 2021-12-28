@@ -43,9 +43,6 @@ class FileInfoTestCase(object):
 class TestNtfsTimestompPlugin(BaseTest):
     """Tests the functionality of the analyzer."""
 
-    #def __init__(self, *args, **kwargs):
-    #    super(TestNtfsTimestompPlugin, self).__init__(*args, **kwargs)
-
     @mock.patch(
         u'timesketch.lib.analyzers.interface.OpenSearchDataStore',
         MockDataStore)

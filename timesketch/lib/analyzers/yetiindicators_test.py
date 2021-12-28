@@ -36,7 +36,7 @@ class TestThreatintelPlugin(BaseTest):
     """Tests the functionality of the analyzer."""
 
     def setUp(self):
-        super(TestThreatintelPlugin, self).setUp()
+        super().setUp()
         current_app.config['YETI_API_ROOT'] = 'blah'
         current_app.config['YETI_API_KEY'] = 'blah'
 

@@ -36,7 +36,7 @@ class ApiDataFetcher(interface.DataFetcher):
 
     def __init__(self):
         """Initialize the data fetcher."""
-        super(ApiDataFetcher, self).__init__()
+        super().__init__()
         self._datastore = OpenSearchDataStore(
             host=current_app.config['OPENSEARCH_HOST'],
             port=current_app.config['OPENSEARCH_PORT'])

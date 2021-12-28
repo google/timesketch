@@ -36,7 +36,7 @@ class MockStreamer(importer.ImportStreamer):
     """Mock the import streamer."""
 
     def __init__(self):
-        super(MockStreamer, self).__init__()
+        super().__init__()
         self.lines = []
 
     @property
