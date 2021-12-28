@@ -21,8 +21,8 @@ import time
 import traceback
 import unittest
 
-import elasticsearch
-import elasticsearch.helpers
+import opensearchpy
+import opensearchpy.helpers
 import pandas as pd
 
 from timesketch_api_client import client as api_client
@@ -31,9 +31,9 @@ from timesketch_import_client import importer
 # Default values based on Docker config.
 TEST_DATA_DIR = '/usr/local/src/timesketch/end_to_end_tests/test_data'
 HOST_URI = 'http://127.0.0.1'
-ELASTIC_HOST = 'opensearch'
-ELASTIC_PORT = 9200
-ELASTIC_MAPPINGS_FILE = '/etc/timesketch/plaso.mappings'
+OPENSEARCH_HOST = 'opensearch'
+OPENSEARCH_PORT = 9200
+OPENSEARCH_MAPPINGS_FILE = '/etc/timesketch/plaso.mappings'
 USERNAME = 'test'
 PASSWORD = 'test'
 
@@ -101,12 +101,12 @@ class BaseEndToEndTest(object):
 
         self._imported_files.append(filename)
 
-    def import_directly_to_elastic(self, filename, index_name):
-        """Import a CSV file directly into Elastic.
+    def import_directly_to_opensearch(self, filename, index_name):
+        """Import a CSV file directly into OpenSearch.
 
         Args:
           filename (str): Filename of the file to be imported.
-          index_name (str): The Elastic index to store the documents in.
+          index_name (str): The OpenSearch index to store the documents in.
 
         Raises:
           ValueError: In case the file cannot be ingested, does not exist or
@@ -120,14 +120,14 @@ class BaseEndToEndTest(object):
         if not os.path.isfile(file_path):
             raise ValueError('File [{0:s}] does not exist.'.format(file_path))
 
-        es = elasticsearch.Elasticsearch(
-            [{'host': ELASTIC_HOST, 'port': ELASTIC_PORT}], http_compress=True)
+        es = opensearchpy.OpenSearch(
+            [{'host': OPENSEARCH_HOST, 'port': OPENSEARCH_PORT}], http_compress=True)
 
         df = pd.read_csv(file_path, error_bad_lines=False)
         if 'datetime' in df:
             df['datetime'] = pd.to_datetime(df['datetime'])
 
-        def _pandas_to_elastic(data_frame):
+        def _pandas_to_opensearch(data_frame):
             for _, row in data_frame.iterrows():
                 row.dropna(inplace=True)
                 yield {
@@ -136,16 +136,16 @@ class BaseEndToEndTest(object):
                     '_source': row.to_dict()
                 }
 
-        if os.path.isfile(ELASTIC_MAPPINGS_FILE):
+        if os.path.isfile(OPENSEARCH_MAPPINGS_FILE):
             mappings = {}
-            with open(ELASTIC_MAPPINGS_FILE, 'r') as file_object:
+            with open(OPENSEARCH_MAPPINGS_FILE, 'r') as file_object:
                 mappings = json.load(file_object)
 
             if not es.indices.exists(index_name):
                 es.indices.create(
                     body={'mappings': mappings}, index=index_name)
 
-        elasticsearch.helpers.bulk(es, _pandas_to_elastic(df))
+        opensearchpy.helpers.bulk(es, _pandas_to_opensearch(df))
         # Introduce a short break to allow data to be indexed.
         time.sleep(3)
 
