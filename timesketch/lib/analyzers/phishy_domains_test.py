@@ -16,7 +16,7 @@ class TestDomainsPlugin(BaseTest):
 
     def setUp(self):
         """Set up the tests."""
-        super(TestDomainsPlugin, self).setUp()
+        super().setUp()
         current_app.config['DOMAIN_ANALYZER_WATCHED_DOMAINS'] = ['foobar.com']
         current_app.config['DOMAIN_ANALYZER_WATCHED_DOMAINS_THRESHOLD'] = 10
         current_app.config[
