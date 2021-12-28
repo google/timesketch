@@ -121,7 +121,8 @@ class BaseEndToEndTest(object):
             raise ValueError('File [{0:s}] does not exist.'.format(file_path))
 
         es = opensearchpy.OpenSearch(
-            [{'host': OPENSEARCH_HOST, 'port': OPENSEARCH_PORT}], http_compress=True)
+            [{'host': OPENSEARCH_HOST, 'port': OPENSEARCH_PORT}],
+            http_compress=True)
 
         df = pd.read_csv(file_path, error_bad_lines=False)
         if 'datetime' in df:
