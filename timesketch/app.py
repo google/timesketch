@@ -94,17 +94,11 @@ def create_app(config=None):
     # Support old style config using Elasticsearch as backend.
     # TODO: Deprecate the old ELASTIC_* config in 2023.
     if not app.config.get('OPENSEARCH_HOST'):
-        sys.stderr.write('WARNING: Deprecated config field found: ELASTIC_HOST'
-                        ' has been renamed to OPENSEARCH_HOST. Please  update '
-                        'timesketch.conf. This config parameter will be '
-                        'removed in 2023.\n')
+        sys.stderr.write('Deprecated config field found: ELASTIC_HOST\n')
         app.config['OPENSEARCH_HOST'] = app.config.get('ELASTIC_HOST')
 
     if not app.config.get('OPENSEARCH_PORT'):
-        sys.stderr.write('WARNING: Deprecated config field found: ELASTIC_PORT'
-                        ' has been renamed to OPENSEARCH_PORT. Please  update '
-                        'timesketch.conf. This config parameter will be '
-                        'removed in 2023.\n')
+        sys.stderr.write('Deprecated config field found: ELASTIC_PORT\n')
         app.config['OPENSEARCH_PORT'] = app.config.get('ELASTIC_PORT')
 
     # Plaso version that we support

@@ -43,8 +43,8 @@ class TestConfig(object):
     SECRET_KEY = 'testing'
     SQLALCHEMY_DATABASE_URI = 'sqlite://'
     WTF_CSRF_ENABLED = False
-    OPENSEARCH_HOST = None
-    OPENSEARCH_PORT = None
+    OPENSEARCH_HOST = 'noserver'
+    OPENSEARCH_PORT = 4711
     ELASTIC_USER = None
     ELASTIC_PASSWORD = None
     ELASTIC_SSL = False
