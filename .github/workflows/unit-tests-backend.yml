@@ -1,11 +1,11 @@
-name: unit-tests
+name: unit-tests-backend
 
 on:
   pull_request:
     types: [opened, synchronize, reopened]
 
 jobs:
-  pip:
+  PyPi:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
@@ -26,7 +26,7 @@ jobs:
         run: |
           pipenv run python run_tests.py
 
-  ppa:
+  PPA:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
@@ -51,7 +51,7 @@ jobs:
               python3-asn1crypto python3-attr python3-bcrypt python3-billiard python3-blinker \
               python3-bs4 python3-celery python3-certifi python3-cffi python3-chardet \
               python3-ciso8601 python3-click python3-cryptography python3-datasketch \
-              python3-dateutil python3-editor python3-elasticsearch python3-entrypoints \
+              python3-dateutil python3-editor python3-opensearch python3-entrypoints \
               python3-flask python3-flask-bcrypt python3-flask-login python3-flask-migrate \
               python3-flask-restful python3-flask-script python3-flask-sqlalchemy \
               python3-flaskext.wtf python3-google-auth python3-google-auth-oauthlib \
