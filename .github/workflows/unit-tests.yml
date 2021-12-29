@@ -42,6 +42,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
+          sudo pip3 install importlib_resources
           sudo add-apt-repository ppa:gift/dev
           sudo apt-get update
           sudo apt-get -y install python3-distutils pylint
