@@ -1,4 +1,4 @@
-name: linter-python
+name: linters
 
 on:
   pull_request:
