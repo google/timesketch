@@ -70,7 +70,7 @@ METRICS = {
     )
 }
 
-# Elasticsearch scripts
+# OpenSearch scripts
 UPDATE_LABEL_SCRIPT = """
 if (ctx._source.timesketch_label == null) {
     ctx._source.timesketch_label = new ArrayList()
@@ -113,11 +113,11 @@ class OpenSearchDataStore(object):
         super().__init__()
         self._error_container = {}
 
-        self.user = current_app.config.get('ELASTIC_USER', 'user')
-        self.password = current_app.config.get('ELASTIC_PASSWORD', 'pass')
-        self.ssl = current_app.config.get('ELASTIC_SSL', False)
-        self.verify = current_app.config.get('ELASTIC_VERIFY_CERTS', True)
-        self.timeout = current_app.config.get('ELASTIC_TIMEOUT', 10)
+        self.user = current_app.config.get('OPENSEARCH_USER', 'user')
+        self.password = current_app.config.get('OPENSEARCH_PASSWORD', 'pass')
+        self.ssl = current_app.config.get('OPENSEARCH_SSL', False)
+        self.verify = current_app.config.get('OPENSEARCH_VERIFY_CERTS', True)
+        self.timeout = current_app.config.get('OPENSEARCH_TIMEOUT', 10)
 
         parameters = {}
         if self.ssl:
@@ -809,9 +809,9 @@ class OpenSearchDataStore(object):
         """Set label on event in the datastore.
 
         Args:
-            searchindex_id: String of ElasticSearch index id
-            event_id: String of ElasticSearch event id
-            event_type: String of ElasticSearch document type
+            searchindex_id: String of OpenSearch index id
+            event_id: String of OpenSearch event id
+            event_type: String of OpenSearch document type
             sketch_id: Integer of sketch primary key
             user_id: Integer of user primary key
             label: String with the name of the label
@@ -822,7 +822,7 @@ class OpenSearchDataStore(object):
         Returns:
             Dict with updated document body, or None if this is a single update.
         """
-        # Elasticsearch painless script.
+        # OpenSearch painless script.
         update_body = {
             'script': {
                 'lang': 'painless',
@@ -876,7 +876,7 @@ class OpenSearchDataStore(object):
         Args:
             index_name: Name of the index. Default is a generated UUID.
             doc_type: Name of the document type. Default id generic_event.
-            mappings: Optional dict with the document mapping for Elastic.
+            mappings: Optional dict with the document mapping for OpenSearch.
 
         Returns:
             Index name in string format.
@@ -896,7 +896,7 @@ class OpenSearchDataStore(object):
                 }
             }
 
-        # TODO: Remove when we deprecate Elasticsearch version 6.x
+        # TODO: Remove when we deprecate OpenSearch version 6.x
         if self.version.startswith('6'):
             _document_mapping = {doc_type: _document_mapping}
 
@@ -916,7 +916,7 @@ class OpenSearchDataStore(object):
         return index_name, doc_type
 
     def delete_index(self, index_name):
-        """Delete Elasticsearch index.
+        """Delete OpenSearch index.
 
         Args:
             index_name: Name of the index to delete.
@@ -931,13 +931,13 @@ class OpenSearchDataStore(object):
 
     def import_event(self, index_name, event_type, event=None, event_id=None,
                      flush_interval=DEFAULT_FLUSH_INTERVAL, timeline_id=None):
-        """Add event to Elasticsearch.
+        """Add event to OpenSearch.
 
         Args:
-            index_name: Name of the index in Elasticsearch
+            index_name: Name of the index in OpenSearch
             event_type: Type of event (e.g. plaso_event)
             event: Event dictionary
-            event_id: Event Elasticsearch ID
+            event_id: Event OpenSearch ID
             flush_interval: Number of events to queue up before indexing
             timeline_id: Optional ID number of a Timeline object this event
                 belongs to. If supplied an additional field will be added to
@@ -954,7 +954,7 @@ class OpenSearchDataStore(object):
 
                 event[k] = v
 
-            # Header needed by Elasticsearch when bulk inserting.
+            # Header needed by OpenSearch when bulk inserting.
             header = {
                 'index': {
                     '_index': index_name,
@@ -1002,7 +1002,7 @@ class OpenSearchDataStore(object):
 
         Returns:
             dict: A dict object that contains the number of events
-                that were sent to Elastic as well as information
+                that were sent to OpenSearch as well as information
                 on whether there were any errors, and what the
                 details of these errors if any.
             retry_count: optional int indicating whether this is a retry.
@@ -1096,7 +1096,7 @@ class OpenSearchDataStore(object):
 
     @property
     def version(self):
-        """Get Elasticsearch version.
+        """Get OpenSearch version.
 
         Returns:
           Version number as a string.

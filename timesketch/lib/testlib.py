@@ -45,10 +45,10 @@ class TestConfig(object):
     WTF_CSRF_ENABLED = False
     OPENSEARCH_HOST = 'noserver'
     OPENSEARCH_PORT = 4711
-    ELASTIC_USER = None
-    ELASTIC_PASSWORD = None
-    ELASTIC_SSL = False
-    ELASTIC_VERIFY_CERTS = True
+    OPENSEARCH_USER = None
+    OPENSEARCH_PASSWORD = None
+    OPENSEARCH_SSL = False
+    OPENSEARCH_VERIFY_CERTS = True
     LABELS_TO_PREVENT_DELETION = ['protected', 'magic']
     UPLOAD_ENABLED = False
     AUTO_SKETCH_ANALYZERS = []

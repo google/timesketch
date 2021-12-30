@@ -19,7 +19,7 @@ class TestWinCrashPlugin(BaseTest):
         self.analyzer = win_crash.WinCrashSketchPlugin('test_index', 1)
 
     def test_formulate_query(self):
-        """Test generator of Elasticsearch queries"""
+        """Test generator of OpenSearch queries"""
         template = {
             'Event - App Error' : (
                 'data_type:"windows:evtx:record"',

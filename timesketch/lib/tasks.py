@@ -609,16 +609,16 @@ def run_plaso(
     if timeline_id:
         cmd.extend(['--timeline_identifier', str(timeline_id)])
 
-    elastic_username = current_app.config.get('ELASTIC_USER', '')
-    if elastic_username:
-        cmd.extend(['--elastic_user', elastic_username])
+    opensearch_username = current_app.config.get('OPENSEARCH_USER', '')
+    if opensearch_username:
+        cmd.extend(['--elastic_user', opensearch_username])
 
-    elastic_password = current_app.config.get('ELASTIC_PASSWORD', '')
-    if elastic_password:
-        cmd.extend(['--elastic_password', elastic_password])
+    opensearch_password = current_app.config.get('OPENSEARCH_PASSWORD', '')
+    if opensearch_password:
+        cmd.extend(['--elastic_password', opensearch_password])
 
-    elastic_ssl = current_app.config.get('ELASTIC_SSL', False)
-    if elastic_ssl:
+    opensearch_ssl = current_app.config.get('OPENSEARCH_SSL', False)
+    if opensearch_ssl:
         cmd.extend(['--use_ssl'])
 
     psort_memory = current_app.config.get('PLASO_UPPER_MEMORY_LIMIT', '')

@@ -265,14 +265,14 @@ class AddSearchIndex(Command):
     # pylint: disable=arguments-differ, method-hidden
     def run(self, name, index, username):
         """Create the SearchIndex."""
-        es = OpenSearchDataStore(
+        datastore = OpenSearchDataStore(
             host=current_app.config['OPENSEARCH_HOST'],
             port=current_app.config['OPENSEARCH_PORT'])
         user = User.query.filter_by(username=username).first()
         if not user:
             sys.stderr.write('User does not exist\n')
             sys.exit(1)
-        if not es.client.indices.exists(index=index):
+        if not datastore.client.indices.exists(index=index):
             sys.stderr.write('Index does not exist in the datastore\n')
             sys.exit(1)
         if SearchIndex.query.filter_by(name=name, index_name=index).first():
@@ -309,7 +309,7 @@ class PurgeTimeline(Command):
             sys.stdout.write('No such index\n')
             sys.exit()
 
-        es = OpenSearchDataStore(
+        datastore = OpenSearchDataStore(
             host=current_app.config['OPENSEARCH_HOST'],
             port=current_app.config['OPENSEARCH_PORT'])
 
@@ -330,7 +330,7 @@ class PurgeTimeline(Command):
                 db_session.delete(timeline)
             db_session.delete(searchindex)
             db_session.commit()
-            es.client.indices.delete(index=index_name)
+            datastore.client.indices.delete(index=index_name)
 
 
 class SearchTemplateManager(Command):
