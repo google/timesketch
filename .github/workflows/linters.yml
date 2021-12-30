@@ -30,7 +30,7 @@ jobs:
       - name: Run pylint
         run: |
           git config pull.rebase false && git fetch -p origin master
-          for FILE in `git --no-pager diff origin/master --name-only | grep \.py$`; do echo "Running pylint against ${FILE}"; pylint --rcfile=.pylintrc ${FILE}; done
+          for FILE in `git --no-pager diff origin/master --name-only --diff-filter=ACMR | grep \.py$`; do echo "Running pylint against ${FILE}"; pylint --rcfile=.pylintrc ${FILE}; done
 
   ESLint:
     runs-on: ubuntu-20.04
