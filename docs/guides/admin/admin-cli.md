@@ -161,11 +161,11 @@ tsctl json2ts
 
 ### Purge
 
-Delete timeline permanently from Timesketch and Elasticsearch. It will alert if a timeline is still in use in a sketch and prompt for confirmation before deletion.
+Delete timeline permanently from Timesketch and OpenSearch. It will alert if a timeline is still in use in a sketch and prompt for confirmation before deletion.
 
 ```shell
  Args:
-   index_name: The name of the index in Elasticsearch
+   index_name: The name of the index in OpenSearch
 ```
 
 Command:
@@ -224,7 +224,6 @@ tsctl similarity_score
 ```
 
 ### Upgrade DB After Schema Change
-
 
 After changing the schema for the database a revision file needs to be generated.
 
