@@ -21,7 +21,7 @@ import json
 import logging
 import zipfile
 
-import elasticsearch
+import opensearchpy
 
 from flask import abort
 from flask import current_app
@@ -458,11 +458,11 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
             search_index.set_status(status='ready')
             indexes_to_open.append(search_index.index_name)
 
-        # TODO (kiddi): Move this to lib/datastores/elastic.py.
+        # TODO (kiddi): Move this to lib/datastores/opensearch.py.
         if indexes_to_open:
             try:
                 self.datastore.client.indices.open(','.join(indexes_to_open))
-            except elasticsearch.NotFoundError:
+            except opensearchpy.NotFoundError:
                 logger.error('Unable to open index, not found: {0:s}'.format(
                     ','.join(indexes_to_open)))
 
@@ -511,11 +511,11 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
             search_index.set_status(status='archived')
             indexes_to_close.append(search_index.index_name)
 
-        # TODO (kiddi): Move this to lib/datastores/elastic.py.
+        # TODO (kiddi): Move this to lib/datastores/opensearch.py.
         if indexes_to_close:
             try:
                 self.datastore.client.indices.close(','.join(indexes_to_close))
-            except elasticsearch.NotFoundError:
+            except opensearchpy.NotFoundError:
                 logger.error(
                     'Unable to close indices, not found: {0:s}'.format(
                         ','.join(indexes_to_close)))

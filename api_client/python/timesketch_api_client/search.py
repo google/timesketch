@@ -649,8 +649,8 @@ class Search(resource.SketchResource):
         """Explore the sketch.
 
         Args:
-            query_string (str): Elasticsearch query string.
-            query_dsl (str): Elasticsearch query DSL as JSON string.
+            query_string (str): OpenSearch query string.
+            query_dsl (str): OpenSearch query DSL as JSON string.
             query_filter (dict): Filter for the query as a dict.
             return_fields (str): A comma separated string with a list of fields
                 that should be included in the response. Optional and defaults

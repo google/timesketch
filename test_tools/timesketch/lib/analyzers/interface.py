@@ -156,7 +156,7 @@ class AnalyzerContext(object):
 
         Args:
             query_string: Query string.
-            query_dsl: Dictionary containing Elasticsearch DSL query.
+            query_dsl: Dictionary containing OpenSearch DSL query.
             indices: List of indices to query.
             fields: List of fields to return.
         """
@@ -209,12 +209,12 @@ class Event(object):
     """Event object with helper methods.
 
     Attributes:
-        datastore: Instance of ElasticsearchDatastore (mocked as None).
+        datastore: Instance of OpenSearchDatastore (mocked as None).
         sketch: Sketch ID or None if not provided.
         event_id: ID of the Event.
-        event_type: Document type in Elasticsearch.
-        index_name: The name of the Elasticsearch index.
-        source: Source document from Elasticsearch.
+        event_type: Document type in OpenSearch.
+        index_name: The name of the OpenSearch index.
+        source: Source document from OpenSearch.
         updates: A list of all changes made to an event, with each change
             stored as a EVENT_CHANGE named tuple.
     """
@@ -222,7 +222,7 @@ class Event(object):
         """Initialize Event object.
 
         Args:
-            event: Dictionary of event from Elasticsearch.
+            event: Dictionary of event from OpenSearch.
             datastore: Defaults to none, should be None as this is mocked.
             sketch: Optional instance of a Sketch object.
             context: Optional context object (instance of Context).
@@ -255,7 +255,7 @@ class Event(object):
             self._context.update_event(self)
 
     def commit(self, event_dict=None):
-        """Mock the commit of an event to Elasticsearch.
+        """Mock the commit of an event to OpenSearch.
 
         Args:
             event_dict: (optional) Dictionary with updated event attributes.
@@ -455,9 +455,9 @@ class Sketch(object):
         Args:
             view_name: The name of the view.
             analyzer_name: The name of the analyzer.
-            query_string: Elasticsearch query string.
-            query_dsl: Dictionary with Elasticsearch DSL query.
-            query_filter: Dictionary with Elasticsearch filters.
+            query_string: OpenSearch query string.
+            query_dsl: Dictionary with OpenSearch DSL query.
+            query_filter: Dictionary with OpenSearch filters.
             additional_fields: A list with field names to include in the
                 view output.
 
@@ -583,12 +583,12 @@ class BaseIndexAnalyzer(object):
     def event_stream(
             self, query_string=None, query_filter=None, query_dsl=None,
             indices=None, return_fields=None):
-        """Search ElasticSearch.
+        """Search OpenSearch.
 
         Args:
             query_string: Query string.
             query_filter: Dictionary containing filters to apply.
-            query_dsl: Dictionary containing Elasticsearch DSL query.
+            query_dsl: Dictionary containing OpenSearch DSL query.
             indices: List of indices to query.
             return_fields: List of fields to return.
 
@@ -725,12 +725,12 @@ class BaseSketchAnalyzer(BaseIndexAnalyzer):
     def event_pandas(
             self, query_string=None, query_filter=None, query_dsl=None,
             indices=None, return_fields=None):
-        """Search ElasticSearch.
+        """Search OpenSearch.
 
         Args:
             query_string: Query string.
             query_filter: Dictionary containing filters to apply.
-            query_dsl: Dictionary containing Elasticsearch DSL query.
+            query_dsl: Dictionary containing OpenSearch DSL query.
             indices: List of indices to query.
             return_fields: List of fields to be included in the search results,
                 if not included all fields will be included in the results.

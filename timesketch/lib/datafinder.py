@@ -18,7 +18,7 @@ import logging
 from flask import current_app
 
 from timesketch.lib.analyzers import utils
-from timesketch.lib.datastores.elastic import ElasticsearchDataStore
+from timesketch.lib.datastores.opensearch import OpenSearchDataStore
 
 
 logger = logging.getLogger('timesketch.data_finder')
@@ -36,9 +36,9 @@ class DataFinder:
         self._start_date = ''
         self._timeline_ids = []
 
-        self._datastore = ElasticsearchDataStore(
-            host=current_app.config['ELASTIC_HOST'],
-            port=current_app.config['ELASTIC_PORT'])
+        self._datastore = OpenSearchDataStore(
+            host=current_app.config['OPENSEARCH_HOST'],
+            port=current_app.config['OPENSEARCH_PORT'])
 
     def can_run(self):
         """Returns a boolean whether the data finder can be run."""

@@ -1,11 +1,11 @@
-name: linter
+name: linters
 
 on:
   pull_request:
     types: [opened, synchronize, reopened]
 
 jobs:
-  pylint:
+  PyLint:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
@@ -30,9 +30,9 @@ jobs:
       - name: Run pylint
         run: |
           git config pull.rebase false && git fetch -p origin master
-          for FILE in `git --no-pager diff origin/master --name-only | grep \.py$`; do echo "Running pylint against ${FILE}"; pylint --rcfile=.pylintrc ${FILE}; done
+          for FILE in `git --no-pager diff origin/master --name-only --diff-filter=ACMR | grep \.py$`; do echo "Running pylint against ${FILE}"; pylint --rcfile=.pylintrc ${FILE}; done
 
-  eslint:
+  ESLint:
     runs-on: ubuntu-20.04
     defaults:
       run:

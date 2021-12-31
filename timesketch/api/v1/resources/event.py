@@ -23,7 +23,7 @@ import time
 import six
 
 import dateutil
-from elasticsearch.exceptions import RequestError
+from opensearchpy.exceptions import RequestError
 import numpy as np
 import pandas as pd
 
@@ -64,7 +64,7 @@ def _tag_event(row, tag_dict, tags_to_add, datastore, flush_interval):
             by the API call to the user.
         tags_to_add (list[str]): a list of strings of tags to add to each
             event.
-        datastore (elastic.ElasticsearchDataStore): the datastore object.
+        datastore (opensearch.OpenSearchDataStore): the datastore object.
         flush_interval (int): the number of events to import before a bulk
             update is done with the datastore.
     """
@@ -182,7 +182,7 @@ class EventCreateResource(resources.ResourceMixin, Resource):
         # Try to create index
         timeline = None
         try:
-            # Create the index in Elasticsearch (unless it already exists)
+            # Create the index in OpenSearch (unless it already exists)
             self.datastore.create_index(
                 index_name=index_name,
                 doc_type=event_type)

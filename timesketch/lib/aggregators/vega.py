@@ -131,7 +131,7 @@ class ManualVegaSpecAggregation(interface.BaseAggregator):
 
         Args:
             sketch_id: Sketch ID.
-            indices: Optional list of elasticsearch index names. If not provided
+            indices: Optional list of OpenSearch index names. If not provided
                 the default behavior is to include all the indices in a sketch.
             timeline_ids: Optional list of timeline IDs, if not provided the
                 default behavior is to query all the data in the provided
