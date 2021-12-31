@@ -204,7 +204,7 @@ class FilteredTermsAggregation(interface.BaseAggregator):
                 {'field': 'count', 'type': 'quantitative'}],
         }
 
-        response = self.elastic_aggregation(aggregation_spec)
+        response = self.opensearch_aggregation(aggregation_spec)
         aggregations = response.get('aggregations', {})
         aggregation = aggregations.get('aggregation', {})
 

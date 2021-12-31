@@ -68,7 +68,7 @@ class SketchResourceTest(BaseTest):
     resource_url = '/api/v1/sketches/1/'
 
     @mock.patch(
-        'timesketch.api.v1.resources.ElasticsearchDataStore', MockDataStore)
+        'timesketch.api.v1.resources.OpenSearchDataStore', MockDataStore)
     def test_sketch_resource(self):
         """Authenticated request to get a sketch."""
         self.login()
@@ -214,7 +214,7 @@ class ExploreResourceTest(BaseTest):
         }]
     }
 
-    @mock.patch('timesketch.api.v1.resources.ElasticsearchDataStore',
+    @mock.patch('timesketch.api.v1.resources.OpenSearchDataStore',
                 MockDataStore)
     def test_search(self):
         """Authenticated request to query the datastore."""
@@ -237,7 +237,7 @@ class AggregationExploreResourceTest(BaseTest):
 
     resource_url = '/api/v1/sketches/1/aggregation/explore/'
 
-    @mock.patch('timesketch.api.v1.resources.ElasticsearchDataStore',
+    @mock.patch('timesketch.api.v1.resources.OpenSearchDataStore',
                 MockDataStore)
     def test_heatmap_aggregation(self):
         """Authenticated request to get aggregation requests."""
@@ -268,7 +268,7 @@ class EventResourceTest(BaseTest):
         }
     }
 
-    @mock.patch('timesketch.api.v1.resources.ElasticsearchDataStore',
+    @mock.patch('timesketch.api.v1.resources.OpenSearchDataStore',
                 MockDataStore)
     def test_get_event(self):
         """Authenticated request to get an event from the datastore."""
@@ -278,7 +278,7 @@ class EventResourceTest(BaseTest):
         self.assertDictContainsSubset(self.expected_response, response.json)
         self.assert200(response)
 
-    @mock.patch('timesketch.api.v1.resources.ElasticsearchDataStore',
+    @mock.patch('timesketch.api.v1.resources.OpenSearchDataStore',
                 MockDataStore)
     def test_invalid_index(self):
         """
@@ -295,7 +295,7 @@ class EventAnnotationResourceTest(BaseTest):
     """Test EventAnnotationResource."""
     resource_url = '/api/v1/sketches/1/event/annotate/'
 
-    @mock.patch('timesketch.api.v1.resources.ElasticsearchDataStore',
+    @mock.patch('timesketch.api.v1.resources.OpenSearchDataStore',
                 MockDataStore)
     def test_post_annotate_resource(self):
         """Authenticated request to create an annotation."""
@@ -338,7 +338,7 @@ class SearchIndexResourceTest(BaseTest):
     """Test SearchIndexResource."""
     resource_url = '/api/v1/searchindices/'
 
-    @mock.patch('timesketch.api.v1.resources.ElasticsearchDataStore',
+    @mock.patch('timesketch.api.v1.resources.OpenSearchDataStore',
                 MockDataStore)
     def test_post_create_searchindex(self):
         """Authenticated request to create a searchindex."""

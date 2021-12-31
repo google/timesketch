@@ -70,7 +70,7 @@ def describe_query(search_obj):
 @click.command('search')
 @click.option(
     '--query', '-q', default='*',
-    help='Search query in Elasticsearch query string format')
+    help='Search query in OpenSearch query string format')
 @click.option(
     '--time', 'times', multiple=True,
     help='Datetime filter (e.g. 2020-01-01T12:00)')

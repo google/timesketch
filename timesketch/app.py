@@ -91,6 +91,18 @@ def create_app(config=None):
                          '$ openssl rand -base64 32\n\n')
         sys.exit()
 
+    # Support old style config using Elasticsearch as backend.
+    # TODO: Deprecate the old ELASTIC_* config in 2023.
+    if not app.config.get('OPENSEARCH_HOST'):
+        sys.stderr.write('Deprecated config field found: ELASTIC_HOST. '
+                         'Update your config to use OPENSEARCH_HOST.\n')
+        app.config['OPENSEARCH_HOST'] = app.config.get('ELASTIC_HOST')
+
+    if not app.config.get('OPENSEARCH_PORT'):
+        sys.stderr.write('Deprecated config field found: ELASTIC_PORT. '
+                         'Update your config to use OPENSEARCH_PORT.\n')
+        app.config['OPENSEARCH_PORT'] = app.config.get('ELASTIC_PORT')
+
     # Plaso version that we support
     if app.config['UPLOAD_ENABLED']:
         try:
@@ -164,7 +176,7 @@ def configure_logger():
         """Custom filter to filter out ES logs"""
         def filter(self, record):
             """Filter out records."""
-            return not record.name.lower() == 'elasticsearch'
+            return not record.name.lower() == 'opensearch'
 
     logger_formatter = logging.Formatter(
         '[%(asctime)s] %(name)s/%(levelname)s %(message)s')

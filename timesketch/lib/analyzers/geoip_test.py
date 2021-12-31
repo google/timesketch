@@ -61,7 +61,7 @@ class TestMaxMindDbGeoIPAnalyzer(BaseTest):
         flag_emoji = emojis.get_emoji(self._TEST_ISO_CODE)
         self.assertEqual(flag_emoji, self._TEST_EMOJI)
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def testValidIPv4(self):
         """Test valid IPv4 addresses result in new attributes"""
@@ -94,7 +94,7 @@ class TestMaxMindDbGeoIPAnalyzer(BaseTest):
         self.assertEqual(message, 'Found 1 IP address(es).')
 
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def testValidIPv6(self):
         """Test valid IPv6 addresses result in new attributes"""
@@ -128,7 +128,7 @@ class TestMaxMindDbGeoIPAnalyzer(BaseTest):
         self.assertEqual(message, 'Found 1 IP address(es).')
 
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def testPrivateIPv4(self):
         """Test private IPv4 address does not result in new attributes"""
@@ -151,7 +151,7 @@ class TestMaxMindDbGeoIPAnalyzer(BaseTest):
         self.assertEqual(message, 'Found 0 IP address(es).')
 
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def testInvalidIPv4(self):
         """Test invalid IP address"""
@@ -174,7 +174,7 @@ class TestMaxMindDbGeoIPAnalyzer(BaseTest):
         self.assertEqual(message, 'Found 0 IP address(es).')
 
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def testNoEvents(self):
         """Test no events"""
@@ -187,7 +187,7 @@ class TestMaxMindDbGeoIPAnalyzer(BaseTest):
         self.assertEqual(message, 'Found 0 IP address(es).')
 
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     @mock.patch('geoip2.database.Reader', MockReader)
     def testMultipleValidIPv4(self):
@@ -210,7 +210,7 @@ class TestMaxMindDbGeoIPAnalyzer(BaseTest):
         self.assertTrue('ip_address_city' in event['_source'])
         self.assertEqual(message, 'Found 2 IP address(es).')
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     @mock.patch('geoip2.database.Reader', MockReader)
     def testMixedValidIP(self):
@@ -248,7 +248,7 @@ class TestMaxMindDbWebIPAnalyzer(BaseTest):
         flag_emoji = emojis.get_emoji(self._TEST_ISO_CODE)
         self.assertEqual(flag_emoji, self._TEST_EMOJI)
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def testValidIPv4(self):
         """Test valid IPv4 addresses result in new attributes"""
@@ -281,7 +281,7 @@ class TestMaxMindDbWebIPAnalyzer(BaseTest):
         self.assertEqual(message, 'Found 1 IP address(es).')
 
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def testValidIPv6(self):
         """Test valid IPv6 addresses result in new attributes"""
@@ -315,7 +315,7 @@ class TestMaxMindDbWebIPAnalyzer(BaseTest):
         self.assertEqual(message, 'Found 1 IP address(es).')
 
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def testPrivateIPv4(self):
         """Test private IPv4 address does not result in new attributes"""
@@ -338,7 +338,7 @@ class TestMaxMindDbWebIPAnalyzer(BaseTest):
         self.assertEqual(message, 'Found 0 IP address(es).')
 
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def testInvalidIPv4(self):
         """Test invalid IP address"""
@@ -361,7 +361,7 @@ class TestMaxMindDbWebIPAnalyzer(BaseTest):
         self.assertEqual(message, 'Found 0 IP address(es).')
 
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def testNoEvents(self):
         """Test no events"""
@@ -374,7 +374,7 @@ class TestMaxMindDbWebIPAnalyzer(BaseTest):
         self.assertEqual(message, 'Found 0 IP address(es).')
 
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     @mock.patch('geoip2.database.Reader', MockReader)
     def testMultipleValidIPv4(self):
@@ -397,7 +397,7 @@ class TestMaxMindDbWebIPAnalyzer(BaseTest):
         self.assertTrue('ip_address_city' in event['_source'])
         self.assertEqual(message, 'Found 2 IP address(es).')
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     @mock.patch('geoip2.database.Reader', MockReader)
     def testMixedValidIP(self):

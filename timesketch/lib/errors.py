@@ -32,7 +32,7 @@ class ApiHTTPError(Error):
             message: Description of the error.
             status_code: HTTP status code.
         """
-        super(ApiHTTPError, self).__init__()
+        super().__init__()
         self.message = message
         self.status_code = status_code
 

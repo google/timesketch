@@ -31,7 +31,7 @@ class BaseChainPlugin(object):
 
     def __init__(self, analyzer_object):
         """Initialize the plugin."""
-        super(BaseChainPlugin, self).__init__()
+        super().__init__()
         self.analyzer_object = analyzer_object
 
     def process_chain(self, base_event):

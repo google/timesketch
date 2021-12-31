@@ -36,7 +36,7 @@ class MockStreamer(importer.ImportStreamer):
     """Mock the import streamer."""
 
     def __init__(self):
-        super(MockStreamer, self).__init__()
+        super().__init__()
         self.lines = []
 
     @property
@@ -46,10 +46,10 @@ class MockStreamer(importer.ImportStreamer):
             columns.update(line.keys())
         return list(columns)
 
-    def _upload_data_buffer(self, end_stream):
+    def _upload_data_buffer(self, end_stream, retry_count=0):
         self.lines.extend(self._data_lines)
 
-    def _upload_data_frame(self, data_frame, end_stream):
+    def _upload_data_frame(self, data_frame, end_stream, retry_count=0):
         self.lines.extend(
             json.loads(data_frame.to_json(orient='records')))
 

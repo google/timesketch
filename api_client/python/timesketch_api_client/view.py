@@ -97,7 +97,7 @@ class View(resource.BaseResource):
         """Property that returns the views query string.
 
         Returns:
-            Elasticsearch query as string.
+            OpenSearch query as string.
         """
         return self._get_top_level_attribute('query_string', default_value='')
 
@@ -106,7 +106,7 @@ class View(resource.BaseResource):
         """Property that returns the views filter.
 
         Returns:
-            Elasticsearch filter as a dict.
+            OpenSearch filter as a dict.
         """
         query_filter_string = self._get_top_level_attribute(
             'query_filter', default_value='')
@@ -119,7 +119,7 @@ class View(resource.BaseResource):
         """Property that returns the views query DSL.
 
         Returns:
-            Elasticsearch DSL as a dict.
+            OpenSearch DSL as a dict.
         """
         dsl_string = self._get_top_level_attribute(
             'query_dsl', default_value='')

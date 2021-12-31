@@ -70,9 +70,9 @@ class TestFeatureExtractionPlugin(BaseTest):
             self.assertIsInstance(value, dict)
             self._config_validation(value)
 
-    # Mock the Elasticsearch datastore.
+    # Mock the OpenSearch datastore.
     @mock.patch(
-        'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+        'timesketch.lib.analyzers.interface.OpenSearchDataStore',
         MockDataStore)
     def test_get_attribute_value(self):
         """Test function _get_attribute_value()."""
