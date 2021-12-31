@@ -66,7 +66,7 @@ limitations under the License.
             :attributeKey="key"
             >{{ item }}</text-highlight
           >
-          <span v-else>{{item}}</span>
+          <span v-else>{{ item }}</span>
         </td>
       </tr>
     </tbody>
@@ -88,7 +88,11 @@ export default {
       regexes: [
         { type: 'fs_path', regex: /(\/[\S]+)+/i, match_field: 'message' },
         { type: 'hostname', regex: /([-\w]+\.)+[a-z]{2,}/i, match_field: 'hostname' },
-        { type: 'ip', regex: /((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/g, match_field: 'message' },
+        {
+          type: 'ipv4',
+          regex: /((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/g,
+          match_field: 'message',
+        },
         { type: 'hash_md5', regex: /[0-9a-f]{32}/i, match_field: 'message' },
         { type: 'hash_sha1', regex: /[0-9a-f]{40}/i, match_field: 'message' },
         { type: 'hash_sha256', regex: /[0-9a-f]{64}/i, match_field: 'message' },
@@ -145,12 +149,14 @@ export default {
       if (this.regexSelection !== '') {
         return this.regexSelection
       }
-      let regexes = Object.values(this.regexes.filter(r=> r.match_field === key || r.match_field === '*').map(r => r.regex))
+      let regexes = Object.values(
+        this.regexes.filter(r => r.match_field === key || r.match_field === '*').map(r => r.regex)
+      )
       if (this.regexSelection !== '') {
         regexes.push(this.regexSelection)
       }
       return regexes
-    }
+    },
   },
   created: function() {
     this.getEvent()
