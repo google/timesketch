@@ -298,7 +298,8 @@ export default {
         }
       }
     },
-    generateOrElasticQuery(valueList) {
+        // TODO: Use filter chips instead
+        generateOrElasticQuery(valueList) {
       let query = valueList.map(v => `"${v}"`).reduce((a, b) => `${a} OR ${b}`)
       return { q: query }
     },
