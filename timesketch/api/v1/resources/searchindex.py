@@ -14,7 +14,7 @@
 """SearchIndex resources for version 1 of the Timesketch API."""
 import logging
 
-import elasticsearch
+import opensearchpy
 from flask import request
 from flask import abort
 from flask_restful import Resource
@@ -92,7 +92,6 @@ class SearchIndexListResource(resources.ResourceMixin, Resource):
             datastore = self.datastore
 
             if not datastore.client.indices.exists(index=es_index_name):
-                # Create the index in Elasticsearch
                 self.datastore.create_index(
                     index_name=es_index_name, doc_type='generic_event')
 
@@ -119,7 +118,7 @@ class SearchIndexResource(resources.ResourceMixin, Resource):
         try:
             mapping = self.datastore.client.indices.get_mapping(
                 searchindex.index_name)
-        except elasticsearch.NotFoundError:
+        except opensearchpy.NotFoundError:
             logger.error('Unable to find index: {0:s}'.format(
                 searchindex.index_name))
             mapping = {}
@@ -233,7 +232,7 @@ class SearchIndexResource(resources.ResourceMixin, Resource):
 
         try:
             self.datastore.client.indices.close(index=searchindex.index_name)
-        except elasticsearch.NotFoundError:
+        except opensearchpy.NotFoundError:
             logger.warning(
                 'Unable to close index: {0:s}, the index wasn\'t '
                 'found.'.format(searchindex.index_name))

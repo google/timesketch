@@ -34,7 +34,7 @@ from sqlalchemy.exc import IntegrityError
 
 from timesketch import version
 from timesketch.app import create_app
-from timesketch.lib.datastores.elastic import ElasticsearchDataStore
+from timesketch.lib.datastores.opensearch import OpenSearchDataStore
 from timesketch.models import db_session
 from timesketch.models import drop_all
 from timesketch.models.user import Group
@@ -265,14 +265,14 @@ class AddSearchIndex(Command):
     # pylint: disable=arguments-differ, method-hidden
     def run(self, name, index, username):
         """Create the SearchIndex."""
-        es = ElasticsearchDataStore(
-            host=current_app.config['ELASTIC_HOST'],
-            port=current_app.config['ELASTIC_PORT'])
+        datastore = OpenSearchDataStore(
+            host=current_app.config['OPENSEARCH_HOST'],
+            port=current_app.config['OPENSEARCH_PORT'])
         user = User.query.filter_by(username=username).first()
         if not user:
             sys.stderr.write('User does not exist\n')
             sys.exit(1)
-        if not es.client.indices.exists(index=index):
+        if not datastore.client.indices.exists(index=index):
             sys.stderr.write('Index does not exist in the datastore\n')
             sys.exit(1)
         if SearchIndex.query.filter_by(name=name, index_name=index).first():
@@ -288,16 +288,16 @@ class AddSearchIndex(Command):
 
 
 class PurgeTimeline(Command):
-    """Delete timeline permanently from Timesketch and Elasticsearch."""
+    """Delete timeline permanently from Timesketch and OpenSearch."""
     option_list = (Option(
         '--index', '-i', dest='index_name', required=True), )
 
     # pylint: disable=arguments-differ, method-hidden
     def run(self, index_name):
-        """Delete timeline in both Timesketch and Elasticsearch.
+        """Delete timeline in both Timesketch and OpenSearch.
 
         Args:
-            index_name: The name of the index in Elasticsearch
+            index_name: The name of the index in OpenSearch
         """
         if not isinstance(index_name, six.text_type):
             index_name = codecs.decode(index_name, 'utf-8')
@@ -309,9 +309,9 @@ class PurgeTimeline(Command):
             sys.stdout.write('No such index\n')
             sys.exit()
 
-        es = ElasticsearchDataStore(
-            host=current_app.config['ELASTIC_HOST'],
-            port=current_app.config['ELASTIC_PORT'])
+        datastore = OpenSearchDataStore(
+            host=current_app.config['OPENSEARCH_HOST'],
+            port=current_app.config['OPENSEARCH_PORT'])
 
         timelines = Timeline.query.filter_by(searchindex=searchindex).all()
         sketches = [
@@ -330,7 +330,7 @@ class PurgeTimeline(Command):
                 db_session.delete(timeline)
             db_session.delete(searchindex)
             db_session.commit()
-            es.client.indices.delete(index=index_name)
+            datastore.client.indices.delete(index=index_name)
 
 
 class SearchTemplateManager(Command):

@@ -29,14 +29,14 @@ class TestSimilarityLibScorer(BaseTest):
     """Tests for the functionality of the scorer object."""
 
     def __init__(self, *args, **kwargs):
-        super(TestSimilarityLibScorer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.test_data_type = 'test:test'
         self.test_index = 'test_index'
         self.test_text = 'This is a test text-with tests/test'
         self.delimiters = [' ', '-', '/']
 
     @mock.patch(
-        'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+        'timesketch.lib.analyzers.interface.OpenSearchDataStore',
         MockDataStore)
     def test_shingles_from_text(self):
         """Test splitting up a text string to words."""
@@ -47,7 +47,7 @@ class TestSimilarityLibScorer(BaseTest):
         self.assertEqual(len(shingles), 8)
 
     @mock.patch(
-        'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+        'timesketch.lib.analyzers.interface.OpenSearchDataStore',
         MockDataStore)
     def test_minhash_from_text(self):
         """Test create minhash from text."""

@@ -16,7 +16,7 @@ class TestDomainsPlugin(BaseTest):
 
     def setUp(self):
         """Set up the tests."""
-        super(TestDomainsPlugin, self).setUp()
+        super().setUp()
         current_app.config['DOMAIN_ANALYZER_WATCHED_DOMAINS'] = ['foobar.com']
         current_app.config['DOMAIN_ANALYZER_WATCHED_DOMAINS_THRESHOLD'] = 10
         current_app.config[
@@ -26,9 +26,9 @@ class TestDomainsPlugin(BaseTest):
                 'ytimg.com', 'gstatic.com', 'yimg.com',
                 'akamaized.net', 'akamaihd.net', 's-microsoft.com']
 
-    # Mock the Elasticsearch datastore.
+    # Mock the OpenSearch datastore.
     @mock.patch(
-        'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+        'timesketch.lib.analyzers.interface.OpenSearchDataStore',
         MockDataStore)
     def test_minhash(self):
         """Test minhash function."""
@@ -45,9 +45,9 @@ class TestDomainsPlugin(BaseTest):
 
         self.assertEqual(minhash.jaccard(minhash2), 0.546875)
 
-    # Mock the Elasticsearch datastore.
+    # Mock the OpenSearch datastore.
     @mock.patch(
-        'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+        'timesketch.lib.analyzers.interface.OpenSearchDataStore',
         MockDataStore)
     def test_get_similar_domains(self):
         """Test get_similar_domains function."""

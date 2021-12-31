@@ -39,7 +39,7 @@ class TestStoryExportManager(BaseTest):
 
     def setUp(self):
         """Set up the tests."""
-        super(TestStoryExportManager, self).setUp()
+        super().setUp()
         manager.StoryExportManager.clear_registration()
         manager.StoryExportManager.register_exporter(MockStoryExporter)
 
