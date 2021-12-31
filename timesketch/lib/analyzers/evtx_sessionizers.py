@@ -3,7 +3,7 @@ log."""
 
 from __future__ import unicode_literals
 import re
-import elasticsearch.exceptions
+import opensearchpy.exceptions
 
 from timesketch.lib.analyzers import manager
 from timesketch.lib.analyzers.sessionizer import SessionizerSketchPlugin
@@ -100,8 +100,8 @@ class WinEVTXSessionizerSketchPlugin(SessionizerSketchPlugin):
 
             return (start_time, session_num, start_events, True)
 
-        except (elasticsearch.exceptions.NotFoundError,
-                elasticsearch.exceptions.ConnectionTimeout) as _:
+        except (opensearchpy.exceptions.NotFoundError,
+                opensearchpy.exceptions.ConnectionTimeout) as _:
             return (start_time, session_num, start_events, False)
 
     def getEventData(self, event, name):

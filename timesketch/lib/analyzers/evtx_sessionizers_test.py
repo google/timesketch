@@ -48,7 +48,7 @@ class TestWinEXTXSessionizerPlugin(BaseTest):
          "end_event_id": 4800}
     ]
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def test_get_event_data(self):
         """Test getEventData returns the correct values."""
@@ -73,7 +73,7 @@ class TestWinEXTXSessionizerPlugin(BaseTest):
             self.assertEqual(username, 'USER_1')
             self.assertEqual(logon_id, '0x0000000000000001')
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def test_one_session(self):
         """Test the behaviour of the analyzer given one start and one end
@@ -110,7 +110,7 @@ class TestWinEXTXSessionizerPlugin(BaseTest):
             self.assertEqual(event2['_source']['session_id']
                              [analyzer.session_type], ['0 (USER_1)'])
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def test_multiple_sessions(self):
         """Test multiple sessions are allocated correctly."""
@@ -176,7 +176,7 @@ class TestWinEXTXSessionizerPlugin(BaseTest):
             self.assertEqual(event6['_source']['session_id']
                              [analyzer.session_type], ['2 (USER_3)'])
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def test_startup(self):
         """Test the behaviour of the analyzer with an event stream containing
@@ -225,7 +225,7 @@ class TestWinEXTXSessionizerPlugin(BaseTest):
                             event4['_source']['session_id'].get(
                                 analyzer.session_type) is None)
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def test_no_end(self):
         """Test the behaviour of the analyzer given a start event without a
@@ -264,7 +264,7 @@ class TestWinEXTXSessionizerPlugin(BaseTest):
                             event2['_source']['session_id'].get(
                                 analyzer.session_type) is None)
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def test_end_before_start(self):
         """Test the behaviour of the analyzer when an end event occurs
@@ -309,7 +309,7 @@ class TestWinEXTXSessionizerPlugin(BaseTest):
             self.assertEqual(event3['_source']['session_id']
                              [analyzer.session_type], ['0 (USER_1)'])
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def test_identical_start_events(self):
         """Test the behaviour of the analyzer given multiple start events with
@@ -354,7 +354,7 @@ class TestWinEXTXSessionizerPlugin(BaseTest):
             self.assertEqual(event3['_source']['session_id']
                              [analyzer.session_type], ['1 (USER_1)'])
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def test_identical_end_events(self):
         """Test the behaviour of the analyzer given multiple end events with
@@ -399,7 +399,7 @@ class TestWinEXTXSessionizerPlugin(BaseTest):
                             event3['_source']['session_id'].get(
                                 analyzer.session_type) is None)
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def test_zero_events(self):
         """Test the behaviour of the analyzer given an empty event stream."""

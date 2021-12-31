@@ -14,7 +14,7 @@ class TestSafeBrowsingSketchPlugin(BaseTest):
     """Tests the functionality of the analyzer."""
 
     @mock.patch(
-        'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+        'timesketch.lib.analyzers.interface.OpenSearchDataStore',
         MockDataStore,
     )
     def test_safebrowsing_analyzer_class(self):
@@ -57,7 +57,7 @@ class TestSafeBrowsingSketchPlugin(BaseTest):
         }
 
     @mock.patch(
-        'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+        'timesketch.lib.analyzers.interface.OpenSearchDataStore',
         MockDataStore,
     )
     # pylint: disable=missing-docstring
@@ -99,7 +99,7 @@ class TestSafeBrowsingSketchPlugin(BaseTest):
             )
 
     @mock.patch(
-        'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+        'timesketch.lib.analyzers.interface.OpenSearchDataStore',
         MockDataStore,
     )
     def test_helper_functions(self):

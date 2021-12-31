@@ -17,7 +17,7 @@ class TestWebActivitySessionizerPlugin(BaseTest):
     """Tests the functionality of the web activity sessionizing sketch
     analyzer."""
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def test_event_type(self):
         """Test the mocking of events returns an event stream that matches the
@@ -52,7 +52,7 @@ class TestSSHBruteforceSessionizerPlugin(BaseTest):
     """Tests the functionality of the SSH bruteforce attack sessionizing sketch
     analyzer."""
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def test_event_type(self):
         """Test the mocking of events returns an event stream that matches the
