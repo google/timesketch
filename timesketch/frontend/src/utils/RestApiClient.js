@@ -53,9 +53,10 @@ RestApiClient.interceptors.response.use(
         },
       })
     } else {
+      console.error(error.response.data)
       Snackbar.open({
-        message: error.response.data.message,
-        type: 'is-white',
+        message: `Error: "${error.message}" (see console for details)`,
+        type: 'is-danger',
         position: 'is-top',
         actionText: 'Close',
         duration: 7000,
