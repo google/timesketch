@@ -12,13 +12,13 @@ These are the limitations:
 
 - Disk size: You can't save larger indexes than the physical hard disk space.
 
-## Elastic indices limitation
+## OpenSearch indices limitation
 
-In the past, every timeline in a sketch was a dedicated ElasticSearch Index. In larger installations, Timesketch hit the number of maximum open shards Elastic could handle.
+In the past, every timeline in a sketch was a dedicated OpenSearch Index. In larger installations, Timesketch hit the number of maximum open shards OpenSearch could handle.
 Therefor a design [https://github.com/google/timesketch/issues/1567](change) was made to tackle those limitations
 
 - There are maximum number (1500) of shards that can be opened.
-- There are limitations with Lucene (which Elastic uses) and then Elastic itself, see https://www.elastic.co/guide/en/app-search/current/limits.html and maximum sizes of HTTP requests, hence when Timesketch uploads files they are split up, to avoid HTTP limitations.
+- There are limitations with Lucene (which OpenSearch uses) and then OpenSearch itself, see https://www.elastic.co/guide/en/app-search/current/limits.html and maximum sizes of HTTP requests, hence when Timesketch uploads files they are split up, to avoid HTTP limitations.
 
 Using the `timesketch_importer` the system can be forced to create a dedicated index:
 
@@ -47,15 +47,15 @@ The following points are important to increase the performance of a Timesketch s
 - Fast local storrage
 - Memory, the more the better
 
-### ElasticSearch
+### OpenSearch
 
-The first thing to scale will be your ES cluster.
+The first thing to scale will be your OpenSearch cluster.
 
-With a decent Elasticsearch deployment you can have hundreds of millions events across many many investigations without issues.
+With a decent OpenSearch deployment you can have hundreds of millions events across many many investigations without issues.
 
-[This article](https://edward-cernera.medium.com/deploy-a-multi-node-elasticsearch-instance-with-docker-compose-ef63625f246e) will give you a good start to scale the ElasticSearch cluster. Be careful to not expose your Cluster to systems other then the Timesketch node(s).
+[This article](https://edward-cernera.medium.com/deploy-a-multi-node-elasticsearch-instance-with-docker-compose-ef63625f246e) will give you a good start to scale the OpenSearch cluster. Be careful to not expose your Cluster to systems other then the Timesketch node(s).
 
-The config and credentials to the ElasticSearch cluster are stored in https://github.com/google/timesketch/blob/master/data/timesketch.conf. If those calues are changed, the Timesketch Instance needs to be restarted.
+The config and credentials to the OpenSearch cluster are stored in https://github.com/google/timesketch/blob/master/data/timesketch.conf. If those calues are changed, the Timesketch Instance needs to be restarted.
 
 ### Celery workers
 
@@ -69,18 +69,18 @@ A potential 3 node (dedicated machines) setup could look like the following:
 
 ```
 timesketch-1:
-Elasticsearch 7.x
+OpenSearch
 Redis
 PostgreSQL 11.x
 Docker: Timesketch Web
 Docker: Timesketch Worker
 
 timesketch-2:
-Elasticsearch 7.x
+OpenSearch
 Docker: Timesketch Worker
 
 timesketch-3:
-Elasticsearch 7.x
+OpenSearch 
 Docker: Timesketch Worker
 ```
 
