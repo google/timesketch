@@ -14,7 +14,7 @@ nav:
   - Guides:
       - Getting started: guides/getting-started.md
       - User Guide:
-          - Uploding timelines: guides/user/upload-data.md
+          - Uploading timelines: guides/user/upload-data.md
           - Basic concepts: guides/user/basic-concepts.md
           - Sketch overview: guides/user/sketch-overview.md
           - Search query guide: guides/user/search-query-guide.md
