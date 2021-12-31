@@ -49,13 +49,13 @@ class TestSimilarityScorer(BaseTest):
     """Tests for the functionality of the scorer object."""
 
     def __init__(self, *args, **kwargs):
-        super(TestSimilarityScorer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.test_data_type = 'test:test'
         self.test_index = 'test_index'
         self.test_text = 'This is a test text-with tests/test'
 
     @mock.patch(
-        'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+        'timesketch.lib.analyzers.interface.OpenSearchDataStore',
         MockDataStore)
     def test_scorer(self):
         """Test scorer object."""

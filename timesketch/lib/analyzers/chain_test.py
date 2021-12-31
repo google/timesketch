@@ -107,7 +107,7 @@ class FakeChainPlugin(interface.BaseChainPlugin):
 class TestChainAnalyzer(testlib.BaseTest):
     """Tests the functionality of the analyzer."""
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 testlib.MockDataStore)
     def test_get_chains(self):
         """Test the chain."""

@@ -15,7 +15,7 @@
 
 import logging
 
-import elasticsearch
+import opensearchpy
 
 from flask import jsonify
 from flask import request
@@ -331,7 +331,7 @@ class SketchResource(resources.ResourceMixin, Resource):
             try:
                 mappings_settings = self.datastore.client.indices.get_mapping(
                     index=sketch_indices)
-            except elasticsearch.NotFoundError:
+            except opensearchpy.NotFoundError:
                 logger.error(
                     'Unable to get indices mapping in datastore, for '
                     'indices: {0:s}'.format(','.join(sketch_indices)))

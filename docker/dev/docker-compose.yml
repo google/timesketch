@@ -18,8 +18,8 @@ services:
       - POSTGRES_PASSWORD=password
       - POSTGRES_ADDRESS=postgres
       - POSTGRES_PORT=5432
-      - ELASTIC_ADDRESS=opensearch
-      - ELASTIC_PORT=9200
+      - OPENSEARCH_HOST=opensearch
+      - OPENSEARCH_PORT=9200
       - REDIS_ADDRESS=redis
       - REDIS_PORT=6379
       - TIMESKETCH_USER=dev

@@ -43,11 +43,8 @@ class FileInfoTestCase(object):
 class TestNtfsTimestompPlugin(BaseTest):
     """Tests the functionality of the analyzer."""
 
-    #def __init__(self, *args, **kwargs):
-    #    super(TestNtfsTimestompPlugin, self).__init__(*args, **kwargs)
-
     @mock.patch(
-        u'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+        u'timesketch.lib.analyzers.interface.OpenSearchDataStore',
         MockDataStore)
     def test_is_suspicious(self):
         """Test is_suspicious method."""
@@ -108,9 +105,9 @@ class TestNtfsTimestompPlugin(BaseTest):
             self.assertEqual(fn_diffs, tc.expected_fn_diffs)
 
 
-    # Mock the Elasticsearch datastore.
+    # Mock the OpenSearch datastore.
     @mock.patch(
-        u'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+        u'timesketch.lib.analyzers.interface.OpenSearchDataStore',
         MockDataStore)
     def test_analyzer(self):
         """Test analyzer."""

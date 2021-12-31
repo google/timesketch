@@ -3,7 +3,7 @@ altair==4.1.0
 celery==4.4.0
 cryptography==3.3.2
 datasketch==1.5.0
-elasticsearch==7.5.1
+opensearch-py==1.0.0
 Flask==1.1.1
 flask_bcrypt==0.7.1
 flask_login==0.4.1

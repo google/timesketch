@@ -18,7 +18,7 @@ class SessionizerSketchPlugin(interface.BaseAnalyzer):
         NAME (str): The name of the sessionizer.
         max_time_diff_micros (int): The maximum time difference between two
             events in the same session, in microseconds.
-        query (str): The Elasticsearch query string query identifying the
+        query (str): The OpenSearch query string query identifying the
             events to be sessionized.
         session_type (str): Used to label the events that are sessionized.
     """
