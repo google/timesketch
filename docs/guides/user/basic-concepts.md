@@ -90,9 +90,7 @@ To play with timesketch without any installation visit [demo.timesketch.org](htt
 
 ## Searching
 
-There is a dedicated document called [search query guide](search-query-guide.md) to help you create custom searches.
-
-All data within Timesketch is stored in OpenSearch. So the search works similar to ES.
+All data within Timesketch is stored in OpenSearch. There is a dedicated document called [search query guide](search-query-guide.md) to help you create custom searches.
 
 Using the advances search, a JSON can be passed to Timesketch
 

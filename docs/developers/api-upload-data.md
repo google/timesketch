@@ -259,7 +259,7 @@ ts_client = config.get_client()
 sketch = ts_client.get_sketch(SKETCH_ID)
 
 sketch.generate_timeline_from_es_index(
-    es_index_name=OPENSEARCH_INDEX_NAME,
+    index_name=OPENSEARCH_INDEX_NAME,
     name=TIMELINE_NAME,
     provider='My Custom Ingestion Script',
     context='python my_custom_script.py --ingest',

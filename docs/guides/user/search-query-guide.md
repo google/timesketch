@@ -186,7 +186,7 @@ This query will find all the potential Remote Desktop event log entries in the g
 
 Advanced search queries are in JSON format, and let you use the full power of OpenSearch. You can view your existing Query String query as an advanced OpenSearch query by clicking "Advanced" button below the query entry field.
 
-[Full query DSL guide](https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl.html)
+[Full query DSL guide](https://opensearch.org/docs/latest/opensearch/query-dsl/index/)
 
 ## Saved Searches
 

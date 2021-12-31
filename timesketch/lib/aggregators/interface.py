@@ -163,8 +163,9 @@ class BaseAggregator(object):
             raise RuntimeError('Need at least sketch_id or index')
 
         self.opensearch = OpenSearchDataStore(
-            host=current_app.config['OPENSEARCH_HOST'],
-            port=current_app.config['OPENSEARCH_PORT'])
+            host=current_app.config.get('OPENSEARCH_HOST'),
+            port=current_app.config.get('OPENSEARCH_PORT')
+        )
 
         self._sketch_url = '/sketch/{0:d}/explore'.format(sketch_id)
         self.field = ''

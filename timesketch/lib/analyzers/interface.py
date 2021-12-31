@@ -762,7 +762,7 @@ class BaseAnalyzer:
 
     Attributes:
         name: Analyzer name.
-        index_name: Name if OpenSearch index.
+        index_name: Name of OpenSearch index.
         datastore: OpenSearch datastore client.
         sketch: Instance of Sketch object.
         timeline_id: The ID of the timeline the analyzer runs on.

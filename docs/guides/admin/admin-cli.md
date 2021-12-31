@@ -165,7 +165,7 @@ Delete timeline permanently from Timesketch and OpenSearch. It will alert if a t
 
 ```shell
  Args:
-   index_name: The name of the index in OpenSearch
+   index_name: The OpenSearch index name
 ```
 
 Command:

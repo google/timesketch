@@ -42,7 +42,7 @@ class Timeline(resource.BaseResource):
             sketch_id: ID of a sketch.
             api: Instance of a TimesketchApi object.
             name: Name of the timeline (optional)
-            searchindex: The OpenSearchsearch index name (optional)
+            searchindex: The OpenSearch index name (optional)
         """
         self.id = timeline_id
         self._color = ''
@@ -152,7 +152,7 @@ class Timeline(resource.BaseResource):
         """Property that returns index name.
 
         Returns:
-            OpenSearchsearch index name as string.
+            OpenSearch index name as string.
         """
         if not self._searchindex:
             timeline = self.lazyload_data()
