@@ -18,7 +18,7 @@ import hashlib
 from flask import current_app
 import networkx as nx
 
-from timesketch.lib.datastores.elastic import ElasticsearchDataStore
+from timesketch.lib.datastores.opensearch import OpenSearchDataStore
 
 
 GRAPH_TYPES = {
@@ -74,7 +74,7 @@ class Graph:
             source: (Node) Node to use as source.
             target: (Node) Node to use as target.
             label: (str) Label for the node.
-            event: (dict): Elasticsearch event.
+            event: (dict): OpenSearch event.
             attributes: (dict) Attributes to add to node.
         """
         if not attributes:
@@ -186,7 +186,7 @@ class BaseGraphPlugin:
     """Base class for a graph.
 
     Attributes:
-        datastore (ElasticsearchDataStore): Elasticsearch datastore object.
+        datastore (OpenSearchDataStore): OpenSearch datastore object.
         graph (nx.Graph): NetworkX Graph object.
     """
     # Name that the graph will be registered as.
@@ -216,9 +216,9 @@ class BaseGraphPlugin:
         Raises:
             KeyError if graph type specified is not supported.
         """
-        self.datastore = ElasticsearchDataStore(
-            host=current_app.config['ELASTIC_HOST'],
-            port=current_app.config['ELASTIC_PORT'])
+        self.datastore = OpenSearchDataStore(
+            host=current_app.config['OPENSEARCH_HOST'],
+            port=current_app.config['OPENSEARCH_PORT'])
         if not GRAPH_TYPES.get(self.GRAPH_TYPE):
             raise KeyError(f'Graph type {self.GRAPH_TYPE} is not supported')
         self.graph = Graph(self.GRAPH_TYPE)
@@ -245,12 +245,12 @@ class BaseGraphPlugin:
     def event_stream(
             self, query_string=None, query_filter=None, query_dsl=None,
             indices=None, return_fields=None, scroll=True):
-        """Search ElasticSearch.
+        """Search OpenSearch.
 
         Args:
             query_string: Query string.
             query_filter: Dictionary containing filters to apply.
-            query_dsl: Dictionary containing Elasticsearch DSL query.
+            query_dsl: Dictionary containing OpenSearch DSL query.
             indices: List of indices to query.
             return_fields: List of fields to return.
             scroll: Boolean determining whether we support scrolling searches

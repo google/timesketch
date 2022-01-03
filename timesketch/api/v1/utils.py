@@ -115,7 +115,7 @@ def run_aggregator(sketch_id, aggregator_name, aggregator_parameters=None,
         aggregator_name (str): the name of the aggregator class to run.
         aggregator_parameters (dict): dict containing the parameters used
             for running the aggregator.
-        index (list): the list of elasticsearch index names to use.
+        index (list): the list of OpenSearch index names to use.
 
     Returns:
         Tuple[Object, Dict]: a tuple containing the aggregator result object

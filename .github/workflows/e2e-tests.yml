@@ -1,9 +1,9 @@
-name: end-to-end
+name: e2e-tests
 on:
   pull_request:
     types: [opened, synchronize, reopened]
 jobs:
-  pip:
+  PyPi:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2

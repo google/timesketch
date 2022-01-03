@@ -36,10 +36,10 @@ if [ "$1" = 'timesketch' ]; then
     exit 1
   fi
 
-  # Set up the Elastic connection
-  if [ $ELASTIC_ADDRESS ] && [ $ELASTIC_PORT ]; then
-    sed -i 's#ELASTIC_HOST = \x27127.0.0.1\x27#ELASTIC_HOST = \x27'$ELASTIC_ADDRESS'\x27#' /etc/timesketch/timesketch.conf
-    sed -i 's#ELASTIC_PORT = 9200#ELASTIC_PORT = '$ELASTIC_PORT'#' /etc/timesketch/timesketch.conf
+  # Set up the OpenSearch connection
+  if [ $OPENSEARCH_HOST ] && [ $OPENSEARCH_PORT ]; then
+    sed -i 's#OPENSEARCH_HOST = \x27127.0.0.1\x27#OPENSEARCH_HOST = \x27'$OPENSEARCH_HOST'\x27#' /etc/timesketch/timesketch.conf
+    sed -i 's#OPENSEARCH_PORT = 9200#OPENSEARCH_PORT = '$OPENSEARCH_PORT'#' /etc/timesketch/timesketch.conf
   else
     # Log an error since we need the above-listed environment variables
     echo "Please pass values for the ELASTIC_ADDRESS and ELASTIC_PORT environment variables"
