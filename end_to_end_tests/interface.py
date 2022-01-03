@@ -31,7 +31,7 @@ from timesketch_import_client import importer
 # Default values based on Docker config.
 TEST_DATA_DIR = '/usr/local/src/timesketch/end_to_end_tests/test_data'
 HOST_URI = 'http://127.0.0.1'
-ELASTIC_HOST = 'elasticsearch'
+ELASTIC_HOST = 'opensearch'
 ELASTIC_PORT = 9200
 ELASTIC_MAPPINGS_FILE = '/etc/timesketch/plaso.mappings'
 USERNAME = 'test'

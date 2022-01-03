@@ -27,8 +27,8 @@ if [ -d "./timesketch" ]; then
   exit 1
 fi
 
-# Exit early if docker is not available.
-if [ "$(systemctl is-active docker)" != "active" ]; then
+# Exit early if docker is not installed.
+if ! command -v docker; then
   echo "ERROR: Docker is not available."
   echo "See: https://docs.docker.com/engine/install/ubuntu/"
   exit 1
@@ -46,7 +46,7 @@ if [ ! -z "$(docker ps | grep timesketch)" ]; then
   exit 1
 fi
 
-# Tweak for Elasticsearch
+# Tweak for OpenSearch
 echo "* Setting vm.max_map_count for Elasticsearch"
 sysctl -q -w vm.max_map_count=262144
 if [ -z "$(grep vm.max_map_count /etc/sysctl.conf)" ]; then
@@ -54,7 +54,7 @@ if [ -z "$(grep vm.max_map_count /etc/sysctl.conf)" ]; then
 fi
 
 # Create dirs
-mkdir -p timesketch/{data/postgresql,data/elasticsearch,logs,etc,etc/timesketch,etc/timesketch/sigma/rules,upload}
+mkdir -p timesketch/{data/postgresql,data/opensearch,logs,etc,etc/timesketch,etc/timesketch/sigma/rules,upload}
 
 echo -n "* Setting default config parameters.."
 POSTGRES_USER="timesketch"
@@ -62,14 +62,14 @@ POSTGRES_PASSWORD="$(< /dev/urandom tr -dc A-Za-z0-9 | head -c 32 ; echo)"
 POSTGRES_ADDRESS="postgres"
 POSTGRES_PORT=5432
 SECRET_KEY="$(< /dev/urandom tr -dc A-Za-z0-9 | head -c 32 ; echo)"
-ELASTIC_ADDRESS="elasticsearch"
-ELASTIC_PORT=9200
+OPENSEARCH_ADDRESS="opensearch"
+OPENSEARCH_PORT=9200
+OPENSEARCH_MEM_USE_GB=$(cat /proc/meminfo | grep MemTotal | awk '{printf "%.0f", ($2 / (1024 * 1024) / 2)}')
 REDIS_ADDRESS="redis"
 REDIS_PORT=6379
 GITHUB_BASE_URL="https://raw.githubusercontent.com/google/timesketch/master"
-ELASTIC_MEM_USE_GB=$(cat /proc/meminfo | grep MemTotal | awk '{printf "%.0f", ($2 / 1000000 / 2)}')
 echo "OK"
-echo "* Setting Elasticsearch memory allocation to ${ELASTIC_MEM_USE_GB}GB"
+echo "* Setting OpenSearch memory allocation to ${OPENSEARCH_MEM_USE_GB}GB"
 
 # Docker compose and configuration
 echo -n "* Fetching configuration files.."
@@ -83,6 +83,7 @@ curl -s $GITHUB_BASE_URL/data/plaso.mappings > timesketch/etc/timesketch/plaso.m
 curl -s $GITHUB_BASE_URL/data/generic.mappings > timesketch/etc/timesketch/generic.mappings
 curl -s $GITHUB_BASE_URL/data/features.yaml > timesketch/etc/timesketch/features.yaml
 curl -s $GITHUB_BASE_URL/data/sigma_config.yaml > timesketch/etc/timesketch/sigma_config.yaml
+curl -s $GITHUB_BASE_URL/data/sigma_blocklist.csv > timesketch/etc/timesketch/sigma_blocklist.csv
 curl -s $GITHUB_BASE_URL/data/sigma/rules/lnx_susp_zmap.yml > timesketch/etc/timesketch/sigma/rules/lnx_susp_zmap.yml
 curl -s $GITHUB_BASE_URL/contrib/nginx.conf > timesketch/etc/nginx.conf
 echo "OK"
@@ -92,8 +93,8 @@ echo -n "* Edit configuration files.."
 sed -i 's#SECRET_KEY = \x27\x3CKEY_GOES_HERE\x3E\x27#SECRET_KEY = \x27'$SECRET_KEY'\x27#' timesketch/etc/timesketch/timesketch.conf
 
 # Set up the Elastic connection
-sed -i 's#^ELASTIC_HOST = \x27127.0.0.1\x27#ELASTIC_HOST = \x27'$ELASTIC_ADDRESS'\x27#' timesketch/etc/timesketch/timesketch.conf
-sed -i 's#^ELASTIC_PORT = 9200#ELASTIC_PORT = '$ELASTIC_PORT'#' timesketch/etc/timesketch/timesketch.conf
+sed -i 's#^ELASTIC_HOST = \x27127.0.0.1\x27#ELASTIC_HOST = \x27'$OPENSEARCH_ADDRESS'\x27#' timesketch/etc/timesketch/timesketch.conf
+sed -i 's#^ELASTIC_PORT = 9200#ELASTIC_PORT = '$OPENSEARCH_PORT'#' timesketch/etc/timesketch/timesketch.conf
 
 # Set up the Redis connection
 sed -i 's#^UPLOAD_ENABLED = False#UPLOAD_ENABLED = True#' timesketch/etc/timesketch/timesketch.conf
@@ -106,7 +107,7 @@ sed -i 's#^CELERY_RESULT_BACKEND =.*#CELERY_RESULT_BACKEND = \x27redis://'$REDIS
 sed -i 's#postgresql://<USERNAME>:<PASSWORD>@localhost#postgresql://'$POSTGRES_USER':'$POSTGRES_PASSWORD'@'$POSTGRES_ADDRESS':'$POSTGRES_PORT'#' timesketch/etc/timesketch/timesketch.conf
 
 sed -i 's#^POSTGRES_PASSWORD=#POSTGRES_PASSWORD='$POSTGRES_PASSWORD'#' timesketch/config.env
-sed -i 's#^ELASTIC_MEM_USE_GB=#ELASTIC_MEM_USE_GB='$ELASTIC_MEM_USE_GB'#' timesketch/config.env
+sed -i 's#^OPENSEARCH_MEM_USE_GB=#OPENSEARCH_MEM_USE_GB='$OPENSEARCH_MEM_USE_GB'#' timesketch/config.env
 
 ln -s ./config.env ./timesketch/.env
 echo "OK"

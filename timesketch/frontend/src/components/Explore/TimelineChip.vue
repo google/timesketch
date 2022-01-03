@@ -104,7 +104,7 @@ limitations under the License.
               <p class="card-header-title">Analyzer logs for {{ timeline.name }}</p>
             </header>
             <div class="card-content" v-if="showAnalyzerModal">
-              <ts-analyzer-history :timeline="timeline" @closeHistory="showAnalyzerModal = false"></ts-analyzer-history>
+              <ts-analyzer-history :timeline="timeline" isModal="true" @closeHistory="showAnalyzerModal = false"></ts-analyzer-history>
             </div>
           </div>
         </div>
