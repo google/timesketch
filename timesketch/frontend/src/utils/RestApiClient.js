@@ -53,9 +53,10 @@ RestApiClient.interceptors.response.use(
         },
       })
     } else {
+      console.error(error.response.data)
       Snackbar.open({
-        message: error.response.data.message,
-        type: 'is-white',
+        message: `Error: "${error.message}" (see console for details)`,
+        type: 'is-danger',
         position: 'is-top',
         actionText: 'Close',
         duration: 7000,
@@ -159,6 +160,27 @@ export default {
       remove: remove,
     }
     return RestApiClient.post('/sketches/' + sketchId + '/event/annotate/', formData)
+  },
+  updateEventAnnotation(sketchId, annotationType, annotation, events, currentSearchNode) {
+    let formData = {
+      annotation: annotation,
+      annotation_type: annotationType,
+      events: events,
+      current_search_node_id: currentSearchNode.id,
+    }
+    return RestApiClient.put('/sketches/' + sketchId + '/event/annotate/', formData)
+  },
+  deleteEventAnnotation(sketchId, annotationType, annotationId, event, currentSearchNode) {
+    let params = {
+      params: {
+        annotation_id: annotationId,
+        annotation_type: annotationType,
+        event_id: event._id,
+        searchindex_id: event._index,
+        current_search_node_id: currentSearchNode.id,
+      },
+    }
+    return RestApiClient.delete('/sketches/' + sketchId + '/event/annotate/', params)
   },
   // Stories
   getStoryList(sketchId) {

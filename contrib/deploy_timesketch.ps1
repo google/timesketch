@@ -21,8 +21,8 @@ if ((docker ps | sls timesketch) -ne $null) {
 	exit
 }
 
-#set the vm.max_map_count for elasticsearch in WSL
-write-host "Set the vm.max_map_count for Elasticsearch"
+#set the vm.max_map_count for OpenSearch in WSL
+write-host "Set the vm.max_map_count for OpenSearch"
 wsl -d docker-desktop sysctl -w vm.max_map_count=262144
 
 # Create dirs.
@@ -30,7 +30,7 @@ wsl -d docker-desktop sysctl -w vm.max_map_count=262144
 [void](New-Item -ItemType Directory -Name timesketch)
 [void](New-Item -ItemType Directory -Name timesketch\data)
 [void](New-Item -ItemType Directory -Name timesketch\data\postgresql)
-[void](New-Item -ItemType Directory -Name timesketch\data\elasticsearch)
+[void](New-Item -ItemType Directory -Name timesketch\data\opensearch)
 [void](New-Item -ItemType Directory -Name timesketch\logs)
 [void](New-Item -ItemType Directory -Name timesketch\etc)
 [void](New-Item -ItemType Directory -Name timesketch\etc\timesketch)
@@ -45,16 +45,15 @@ $POSTGRES_PASSWORD= (-join(1..42 | ForEach {((65..90)+(97..122)+(".") | % {[char
 $POSTGRES_ADDRESS="postgres"
 $POSTGRES_PORT="5432"
 $SECRET_KEY=(-join(1..42 | ForEach {((65..90)+(97..122)+(".") | % {[char]$_})+(0..9)+(".") | Get-Random}))
-$ELASTIC_ADDRESS="elasticsearch"
-$ELASTIC_PORT="9200"
+$OPENSEARCH_ADDRESS="opensearch"
+$OPENSEARCH_PORT="9200"
+# The command below will take half of the system memory. This can be changed to whatever suits you. More the merrier for the ES though.
+$OPENSEARCH_MEM_USE_GB=(Get-CimInstance Win32_PhysicalMemory | Measure-Object -Property capacity -Sum).sum /1gb / 2
 $REDIS_ADDRESS="redis"
 $REDIS_PORT="6379"
 $GITHUB_BASE_URL="https://raw.githubusercontent.com/google/timesketch/master"
-# The command below will take half of the system memory. This can be changed to whatever suits you. More the merrier for the ES though.
-$ELASTIC_MEM_USE_GB=(Get-CimInstance Win32_PhysicalMemory | Measure-Object -Property capacity -Sum).sum /1gb / 2
 Write-Host "OK"
-Write-Host "Setting Elasticsearch memory allocation to $ELASTIC_MEM_USE_GB GB"
-
+Write-Host "Setting OpenSearch memory allocation to $OPENSEARCH_MEM_USE_GB GB"
 
 # Docker compose and configuration
 Write-Host "* Fetching configuration files.."
@@ -69,6 +68,7 @@ Write-Host "* Fetching configuration files.."
 (Invoke-webrequest -URI $GITHUB_BASE_URL/data/generic.mappings).Content | out-file timesketch\etc\timesketch\generic.mappings -encoding UTF8NoBOM
 (Invoke-webrequest -URI $GITHUB_BASE_URL/data/features.yaml).Content | out-file timesketch\etc\timesketch\features.yaml -encoding UTF8NoBOM
 (Invoke-webrequest -URI $GITHUB_BASE_URL/data/sigma_config.yaml).Content | out-file timesketch\etc\timesketch\sigma_config.yaml -encoding UTF8NoBOM
+(Invoke-webrequest -URI $GITHUB_BASE_URL/data/sigma_blacklist.csv).Content | out-file timesketch\etc\timesketch\sigma_blocklist.csv -encoding UTF8NoBOM
 (Invoke-webrequest -URI $GITHUB_BASE_URL/data/sigma/rules/lnx_susp_zmap.yml).Content | out-file timesketch\etc\timesketch\sigma\rules\lnx_susp_zmap.yml -encoding UTF8NoBOM
 (Invoke-webrequest -URI $GITHUB_BASE_URL/contrib/nginx.conf).Content | out-file timesketch\etc\nginx.conf -encoding UTF8NoBOM
 Write-Host "OK"
@@ -79,9 +79,9 @@ $timesketchconf = 'timesketch\etc\timesketch\timesketch.conf'
 $convfenv = 'timesketch\config.env'
 (Get-Content $timesketchconf).replace("SECRET_KEY = '<KEY_GOES_HERE>'", "SECRET_KEY = '$SECRET_KEY'") | Set-Content $timesketchconf
 
-# Set up the Elastic connection
-(Get-Content $timesketchconf).replace("ELASTIC_HOST = '127.0.0.1'", "ELASTIC_HOST = '$ELASTIC_ADDRESS'") | Set-Content $timesketchconf
-(Get-Content $timesketchconf).replace("ELASTIC_PORT = 9200", "ELASTIC_PORT = $ELASTIC_PORT") | Set-Content $timesketchconf
+# Set up the OpenSearch connection
+(Get-Content $timesketchconf).replace("ELASTIC_HOST = '127.0.0.1'", "ELASTIC_HOST = '$OPENSEARCH_ADDRESS'") | Set-Content $timesketchconf
+(Get-Content $timesketchconf).replace("ELASTIC_PORT = 9200", "ELASTIC_PORT = $OPENSEARCH_PORT") | Set-Content $timesketchconf
 
 # Set up the Redis connection
 (Get-Content $timesketchconf).replace("UPLOAD_ENABLED = False", "UPLOAD_ENABLED = True") | Set-Content $timesketchconf
@@ -94,7 +94,7 @@ $convfenv = 'timesketch\config.env'
 (Get-Content $timesketchconf).replace("SQLALCHEMY_DATABASE_URI = 'postgresql://<USERNAME>:<PASSWORD>@localhost/timesketch'", "SQLALCHEMY_DATABASE_URI = 'postgresql://$($POSTGRES_USER):$($POSTGRES_PASSWORD)@$($POSTGRES_ADDRESS):$($POSTGRES_PORT)/timesketch'") | Set-Content $timesketchconf
 
 (Get-Content $convfenv).replace("POSTGRES_PASSWORD=", "POSTGRES_PASSWORD=$POSTGRES_PASSWORD") | Set-Content $convfenv
-(Get-Content $convfenv).replace("ELASTIC_MEM_USE_GB=", "ELASTIC_MEM_USE_GB=$ELASTIC_MEM_USE_GB") | Set-Content $convfenv
+(Get-Content $convfenv).replace("OPENSEARCH_MEM_USE_GB=", "OPENSEARCH_MEM_USE_GB=$OPENSEARCH_MEM_USE_GB") | Set-Content $convfenv
 
 copy-item -Path $convfenv -Destination timesketch\.env
 Write-Host "OK"

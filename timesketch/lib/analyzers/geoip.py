@@ -220,7 +220,7 @@ class BaseGeoIpAnalyzer(interface.BaseAnalyzer):
         """Initialize The Sketch Analyzer.
 
         Args:
-            index_name: Elasticsearch index name
+            index_name: OpenSearch index name
             sketch_id: Sketch ID
             timeline_id: Timeline ID
         """

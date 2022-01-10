@@ -41,7 +41,7 @@ no_ssh_session_args = [{
 
 class TestSSHSessionizerPlugin(BaseTest):
     """Tests the functionality of the ssh sessionizing sketch analyzer."""
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def test_sessionizer(self):
         """Test basic ssh sessionizer functionality."""
@@ -52,7 +52,7 @@ class TestSSHSessionizerPlugin(BaseTest):
         self.assertEqual(index, sessionizer.index_name)
         self.assertEqual(sketch_id, sessionizer.sketch.id)
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def test_session_starts_with_connection_event(self):
         """Test a session is created if it starts with SSH connection event."""
@@ -74,7 +74,7 @@ class TestSSHSessionizerPlugin(BaseTest):
         self.assertEqual(event['_source']['session_id']['ssh_session'],
                          session_id)
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def test_all_events_from_session_are_labeled(self):
         """Test one SSH session of events is finded and allocated correctly."""
@@ -100,7 +100,7 @@ class TestSSHSessionizerPlugin(BaseTest):
         self.assertEqual(event['_source']['session_id']['ssh_session'],
                          session_id)
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def test_session_doesnt_start_with_no_connection_event(self):
         """Test a session is not created if it doesn't start with SSH connection
@@ -122,7 +122,7 @@ class TestSSHSessionizerPlugin(BaseTest):
         event = datastore.event_store['0']
         self.assertNotIn('session_id', event['_source'])
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def test_multiple_sessions(self):
         """Test multiple sessions are found and allocated correctly."""

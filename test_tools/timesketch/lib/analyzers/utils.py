@@ -238,7 +238,7 @@ def get_events_from_data_frame(frame, datastore):
 
     Args:
         frame: a pandas DataFrame object.
-        datastore: Elasticsearch datastore client.
+        datastore: OpenSearch datastore client.
 
     Yields:
         An event (interface.Event) object for each row

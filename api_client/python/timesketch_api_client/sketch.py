@@ -232,7 +232,7 @@ class Sketch(resource.BaseResource):
             values (list): A list of values (in their correct type according
                 to the ontology).
             ontology (str): The ontology (matches with
-                /etc/ontology.yaml), which defines how the attribute
+                /data/ontology.yaml), which defines how the attribute
                 is interpreted.
 
         Raises:
@@ -270,7 +270,7 @@ class Sketch(resource.BaseResource):
             name (str): The name of the attribute.
             value (str): Value of the attribute, stored as a string.
             ontology (str): The ontology (matches with
-                /etc/timesketch/ontology.yaml), which defines
+                /data/ontology.yaml), which defines
                 how the attribute is interpreted.
 
         Raises:
@@ -322,7 +322,7 @@ class Sketch(resource.BaseResource):
         Args:
             name (str): The name of the attribute.
             ontology (str): The ontology (matches with
-                /etc/ontology.yaml), which defines how the attribute
+                /data/ontology.yaml), which defines how the attribute
                 is interpreted.
 
         Raises:
@@ -387,9 +387,9 @@ class Sketch(resource.BaseResource):
 
         Args:
             name (str): the name of the view.
-            query_string (str): Elasticsearch query string. This is optional
+            query_string (str): OpenSearch query string. This is optional
                 yet either a query string or a query DSL is required.
-            query_dsl (str): Elasticsearch query DSL as JSON string. This is
+            query_dsl (str): OpenSearch query DSL as JSON string. This is
                 optional yet either a query string or a query DSL is required.
             query_filter (dict): Filter for the query as a dict.
 
@@ -992,8 +992,8 @@ class Sketch(resource.BaseResource):
         """Explore the sketch.
 
         Args:
-            query_string (str): Elasticsearch query string.
-            query_dsl (str): Elasticsearch query DSL as JSON string.
+            query_string (str): OpenSearch query string.
+            query_dsl (str): OpenSearch query DSL as JSON string.
             query_filter (dict): Filter for the query as a dict.
             view: View object instance (optional).
             return_fields (str): A comma separated string with a list of fields
@@ -1199,7 +1199,7 @@ class Sketch(resource.BaseResource):
         """Run an aggregation request on the sketch.
 
         Args:
-            aggregate_dsl: Elasticsearch aggregation query DSL string.
+            aggregate_dsl: OpenSearch aggregation query DSL string.
 
         Returns:
             An aggregation object (instance of Aggregation).
@@ -1322,7 +1322,7 @@ class Sketch(resource.BaseResource):
 
         Args:
             event_id: id of the event
-            index: The Elasticsearch index name
+            index: The OpenSearch index name
             comment_text: text to add as a comment
         Returns:
              a json data of the query.
@@ -1618,10 +1618,10 @@ class Sketch(resource.BaseResource):
 
     def generate_timeline_from_es_index(
             self, es_index_name, name, index_name='', description='',
-            provider='Manually added to Elastic',
-            context='Added via API client', data_label='elastic',
+            provider='Manually added to OpenSearch',
+            context='Added via API client', data_label='OpenSearch',
             status='ready'):
-        """Creates and returns a Timeline from Elastic data.
+        """Creates and returns a Timeline from OpenSearch data.
 
         This function can be used to import data into a sketch that was
         ingested via different mechanism, such as ELK, etc.
@@ -1630,18 +1630,18 @@ class Sketch(resource.BaseResource):
         Timeline) for Timesketch to be able to properly support it.
 
         Args:
-            es_index_name: name of the index in Elasticsearch.
+            es_index_name: name of the index in OpenSearch.
             name: string with the name of the timeline.
             index_name: optional string for the SearchIndex name, defaults
                 to the same as the es_index_name.
             description: optional string with a description of the timeline.
             provider: optional string with the provider name for the data
                 source of the imported data. Defaults to "Manually added
-                to Elastic".
+                to OpenSearch".
             context: optional string with the context for the data upload,
                 defaults to "Added via API client".
-            data_label: optional string with the data label of the Elastic
-                data, defaults to "elastic".
+            data_label: optional string with the data label of the OpenSearch
+                data, defaults to "OpenSearch".
             status: Optional string, if provided will be used as a status
                 for the searchindex, valid options are: "ready", "fail",
                 "processing", "timeout". Defaults to "ready".

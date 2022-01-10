@@ -52,7 +52,7 @@ class SimilarityScorerConfig(object):
         """Initializes a similarity scorer config.
 
         Args:
-            index_name: Elasticsearch index name.
+            index_name: OpenSearch index name.
             data_type: Name of the data_type.
         """
         self._index_name = index_name
@@ -93,7 +93,7 @@ class SimilarityScorer(interface.BaseAnalyzer):
         """Initializes a similarity scorer.
 
         Args:
-            index_name: Elasticsearch index name.
+            index_name: OpenSearch index name.
             sketch_id: The ID of the sketch.
             timeline_id: The ID of the timeline.
             data_type: Name of the data_type.

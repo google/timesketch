@@ -23,7 +23,7 @@ import time
 import six
 
 import dateutil
-from elasticsearch.exceptions import RequestError
+from opensearchpy.exceptions import RequestError
 import numpy as np
 import pandas as pd
 
@@ -64,7 +64,7 @@ def _tag_event(row, tag_dict, tags_to_add, datastore, flush_interval):
             by the API call to the user.
         tags_to_add (list[str]): a list of strings of tags to add to each
             event.
-        datastore (elastic.ElasticsearchDataStore): the datastore object.
+        datastore (opensearch.OpenSearchDataStore): the datastore object.
         flush_interval (int): the number of events to import before a bulk
             update is done with the datastore.
     """
@@ -182,7 +182,7 @@ class EventCreateResource(resources.ResourceMixin, Resource):
         # Try to create index
         timeline = None
         try:
-            # Create the index in Elasticsearch (unless it already exists)
+            # Create the index in OpenSearch (unless it already exists)
             self.datastore.create_index(
                 index_name=index_name,
                 doc_type=event_type)
@@ -248,6 +248,7 @@ class EventResource(resources.ResourceMixin, Resource):
         searchindex_id: The datastore searchindex id as string
         event_id: The datastore event id as string
     """
+
     def __init__(self):
         super().__init__()
         self.parser = reqparse.RequestParser()
@@ -315,10 +316,12 @@ class EventResource(resources.ResourceMixin, Resource):
                 else:
                     username = comment.user.username
                 comment_dict = {
+                    'id': comment.id,
                     'user': {
                         'username': username,
                     },
                     'created_at': comment.created_at,
+                    'updated_at': comment.updated_at,
                     'comment': comment.comment
                 }
                 comments.append(comment_dict)
@@ -537,7 +540,76 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
 
 
 class EventAnnotationResource(resources.ResourceMixin, Resource):
-    """Resource to create an annotation for an event."""
+    """Resource to create, update and delete an annotation for an event.
+
+    HTTP Args (All optional. Used only for Delete request):
+        searchindex_id: The datastore searchindex id as string
+        event_id: The datastore event id as string
+        event_type: The datastore event type as string
+        annotation_type: The annotation type (comment,label) as string
+        annotation_id: The annotation id as integer
+        currentSearchNode_id: The search node id as string
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.parser = reqparse.RequestParser()
+        self.parser.add_argument('searchindex_id', type=str, required=False)
+        self.parser.add_argument(
+            'event_id', type=str, required=False)
+        self.parser.add_argument('event_type', type=str, required=False)
+        self.parser.add_argument(
+            'annotation_type', type=str, required=False)
+        self.parser.add_argument('annotation_id', type=int, required=False)
+        self.parser.add_argument('currentSearchNode_id', type=int,
+                                 required=False)
+
+    def _get_sketch(self, sketch_id):
+        """Helper function: Returns Sketch object givin a sketch id.
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+
+        Returns:
+            Sketch object
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+        if not sketch.has_permission(current_user, 'write'):
+            abort(HTTP_STATUS_CODE_FORBIDDEN,
+                  'User does not have write access controls on sketch.')
+        return sketch
+
+    def _get_current_search_node(self, current_search_node_id, sketch):
+        """Helper function: Returns Current Search Node object givin a search
+            node id
+
+        Args:
+            current_search_node_id: search node id
+                        sketch: Sketch object
+
+        Returns:
+            Search history object representing the current search node
+        """
+        current_search_node = SearchHistory.query.get(current_search_node_id)
+        if not current_search_node:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                'No search history found with this ID'
+            )
+        if not current_search_node.sketch == sketch:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Wrong sketch for this search history'
+            )
+        if not current_search_node.user == current_user:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Wrong user for this search history'
+            )
+        return current_search_node
 
     @login_required
     def post(self, sketch_id):
@@ -555,33 +627,13 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
 
         annotations = []
-        sketch = Sketch.query.get_with_acl(sketch_id)
-        if not sketch:
-            abort(
-                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
-        if not sketch.has_permission(current_user, 'write'):
-            abort(HTTP_STATUS_CODE_FORBIDDEN,
-                  'User does not have write access controls on sketch.')
+        sketch = self._get_sketch(sketch_id)
 
         current_search_node = None
         _search_node_id = request.json.get('current_search_node_id', None)
         if _search_node_id:
-            current_search_node = SearchHistory.query.get(_search_node_id)
-            if not current_search_node:
-                abort(
-                    HTTP_STATUS_CODE_NOT_FOUND,
-                    'No search history found with this ID'
-                )
-            if not current_search_node.sketch == sketch:
-                abort(
-                    HTTP_STATUS_CODE_BAD_REQUEST,
-                    'Wrong sketch for this search history'
-                )
-            if not current_search_node.user == current_user:
-                abort(
-                    HTTP_STATUS_CODE_BAD_REQUEST,
-                    'Wrong user for this search history'
-                )
+            current_search_node = self._get_current_search_node(_search_node_id,
+                                                                sketch)
 
         indices = [
             t.searchindex.index_name for t in sketch.timelines
@@ -671,6 +723,181 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
 
         return self.to_json(
             annotations, status_code=HTTP_STATUS_CODE_CREATED)
+
+    @login_required
+    def put(self, sketch_id):
+        """Handles update request to annotations (currently only comments are
+            supported).
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+
+        Returns:
+            The updated annotation object in JSON (instance of
+            flask.wrappers.Response)
+        """
+
+        form = forms.EventAnnotationForm.build(request)
+        if not form.validate_on_submit():
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
+
+        updated_annotations = []
+        sketch = self._get_sketch(sketch_id)
+
+        indices = [
+            t.searchindex.index_name for t in sketch.timelines
+            if t.get_status.status.lower() == 'ready']
+
+        # Retriving events list submitted in the request
+        events = form.events.raw_data
+
+        # Loop through all events supplied and update the annotation on each
+        # event with the supplied annotation value.
+        # Currently the UI does not support mass comments update, so typically
+        # only one event will be in the event list
+        for _event in events:
+            searchindex_id = _event['_index']
+            searchindex = SearchIndex.query.filter_by(
+                index_name=searchindex_id).first()
+            event_id = _event['_id']
+
+            if searchindex_id not in indices:
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    'Search index ID ({0!s}) does not belong to the list '
+                    'of indices'.format(searchindex_id))
+
+            # Retrive the event from the SQL database based on the event_id
+            # supplied in the request
+            event = Event.query.filter_by(
+                sketch=sketch, searchindex=searchindex,
+                document_id=event_id).first()
+
+            if not event:
+                abort(
+                    HTTP_STATUS_CODE_NOT_FOUND, 'No event found with the id: '
+                    '{0!s}'.format(event_id))
+
+            # Retrive annotation type supplied in the request
+            annotation_type = form.annotation_type.data
+            # Retrive the modified annotation supplied in the request
+            annotation = form.annotation.data
+
+            if 'comment' in annotation_type:
+                # Retrive the comment attached to the event bases on the comment
+                # id supplied in the request
+                comment = event.get_comment(annotation['id'])
+                if not comment:
+                    abort(HTTP_STATUS_CODE_NOT_FOUND, 'No comment found with '
+                          'this id: {0!d}.'.format(annotation['id']))
+
+                # Make sure the current user is the owner of the comment
+                if comment.user != current_user:
+                    abort(HTTP_STATUS_CODE_FORBIDDEN,
+                          'User is not owner of the comment.')
+
+                # Update the comment with the new value
+                annotation = event.update_comment(annotation['id'],
+                                                  annotation['comment'])
+
+                if not annotation:
+                    abort(
+                        HTTP_STATUS_CODE_BAD_REQUEST,
+                        'Update operation unsuccessful')
+
+                updated_annotations.append(annotation)
+            else:
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    'Annotation type needs to be a comment, '
+                    'not {0!s}'.format(annotation_type))
+
+        return self.to_json(updated_annotations,
+                            status_code=HTTP_STATUS_CODE_OK)
+
+    @login_required
+    def delete(self, sketch_id):
+        """Handles delete request of annotations (currently only comments are
+            supported).
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+
+        Returns:
+            A HTTP 200 if the annotation was successfully deleted and HTTP 400
+            otherwise
+        """
+
+        # Retrive request arguments
+        args = self.parser.parse_args()
+        annotation_type = args.get('annotation_type')
+        annotation_id = args.get('annotation_id')
+        event_id = args.get('event_id')
+        searchindex_id = args.get('searchindex_id')
+        event_type = args.get('event_type')
+
+        sketch = self._get_sketch(sketch_id)
+
+        current_search_node = None
+        _search_node_id = args.get('currentSearchNode_id')
+        if _search_node_id:
+            current_search_node = self._get_current_search_node(_search_node_id,
+                                                                sketch)
+        searchindex = SearchIndex.query.filter_by(
+            index_name=searchindex_id).first()
+
+        # Retrive the event from the SQL database based on the event_id
+        # supplied in the request
+        event = Event.query.filter_by(
+            sketch=sketch, searchindex=searchindex,
+            document_id=event_id).first()
+
+        if not event:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No event found with the id: '
+                '{0!s}'.format(event_id))
+
+        if 'comment' in annotation_type:
+
+            # Retrive the comment attached to the event bases on the comment
+            # id supplied in the request
+            comment = event.get_comment(annotation_id)
+            if not comment:
+                abort(HTTP_STATUS_CODE_NOT_FOUND, 'No comment found with '
+                      'this id: {0!d}.'.format(annotation_id))
+
+            # Make sure the current user is the owner of the comment
+            if comment.user != current_user:
+                abort(HTTP_STATUS_CODE_FORBIDDEN,
+                      'User is not owner of the comment.')
+
+            if event.remove_comment(annotation_id):
+                # Remove label __ts_comment if the event has no more comments
+                if len(event.comments) < 1:
+                    self.datastore.set_label(
+                        searchindex_id,
+                        event_id,
+                        event_type,
+                        sketch.id,
+                        current_user.id,
+                        '__ts_comment',
+                        toggle=True
+                    )
+                    if current_search_node:
+                        current_search_node.remove_label('__ts_comment')
+
+                return HTTP_STATUS_CODE_OK
+
+        else:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Annotation type needs to be a comment, '
+                'not {0!s}'.format(annotation_type))
+
+        return (HTTP_STATUS_CODE_BAD_REQUEST, 'Could not delete the annotation'
+                ' type {0!s} with the id {1!d}'
+                .format(annotation_type, annotation_id))
 
 
 class CountEventsResource(resources.ResourceMixin, Resource):
@@ -776,7 +1003,6 @@ class MarkEventsWithTimelineIdentifier(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_NOT_FOUND,
                 'The sketch ID ({0:d}) does not match with the timeline '
                 'sketch ID ({1:d})'.format(sketch.id, timeline.sketch.id))
-
 
         query_dsl = {
             'script': {
