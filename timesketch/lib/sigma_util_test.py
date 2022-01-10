@@ -17,6 +17,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import datetime
+
 from sigma.parser import exceptions as sigma_exceptions
 
 from timesketch.lib.testlib import BaseTest
@@ -90,10 +92,12 @@ class TestSigmaUtilLib(BaseTest):
             MOCK_SIGMA_RULE_ERROR1,
         )
         self.assertIn("2020/06/26", rule.get("date"))
+        self.assertIsInstance(rule.get("date"), str)
 
         rule = sigma_util.get_sigma_rule_by_text(MOCK_SIGMA_RULE_DATE_ERROR1)
         self.assertIsNotNone(MOCK_SIGMA_RULE_DATE_ERROR1)
         # it is actually: 'date': datetime.date(2022, 1, 10)
+        self.assertIsInstance(rule.get("date"), datetime.date)
         self.assertIsNot("2022-01-10", rule.get("date"))
         self.assertIn("dd23d2323432", rule.get("modified"))
 
