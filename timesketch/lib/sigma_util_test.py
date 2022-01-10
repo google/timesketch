@@ -20,8 +20,7 @@ from __future__ import unicode_literals
 from sigma.parser import exceptions as sigma_exceptions
 
 from timesketch.lib.testlib import BaseTest
-import timesketch.lib.sigma_util as sigma_util
-import datetime
+from timesketch.lib import sigma_util
 
 
 MOCK_SIGMA_RULE = """
