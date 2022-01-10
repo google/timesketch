@@ -21,6 +21,7 @@ from sigma.parser import exceptions as sigma_exceptions
 
 from timesketch.lib.testlib import BaseTest
 import timesketch.lib.sigma_util as sigma_util
+import datetime
 
 
 MOCK_SIGMA_RULE = """
@@ -56,6 +57,21 @@ date: 2020/06/26
 modified: 2020/06/26
 """
 
+MOCK_SIGMA_RULE_DATE_ERROR1 = """
+title: Wrong dateformat
+id: 67b9a11a-03ae-490a-9156-9be9900f86b0
+description: Does nothing useful
+references:
+    - https://github.com/google/timesketch/issues/2033
+author: Alexander Jaeger
+date: 2022-01-10
+modified: dd23d2323432
+detection:
+    keywords:
+        - 'foobar'
+    condition: keywords
+"""
+
 
 class TestSigmaUtilLib(BaseTest):
     """Tests for the sigma support library."""
@@ -67,30 +83,38 @@ class TestSigmaUtilLib(BaseTest):
 
         self.assertIsNotNone(MOCK_SIGMA_RULE)
         self.assertIsNotNone(rule)
-        self.assertIn('zmap', rule.get('es_query'))
-        self.assertIn('b793', rule.get('id'))
+        self.assertIn("zmap", rule.get("es_query"))
+        self.assertIn("b793", rule.get("id"))
         self.assertRaises(
             sigma_exceptions.SigmaParseError,
             sigma_util.get_sigma_rule_by_text,
-            MOCK_SIGMA_RULE_ERROR1)
+            MOCK_SIGMA_RULE_ERROR1,
+        )
+        self.assertIn("2020/06/26", rule.get("date"))
+
+        rule = sigma_util.get_sigma_rule_by_text(MOCK_SIGMA_RULE_DATE_ERROR1)
+        self.assertIsNotNone(MOCK_SIGMA_RULE_DATE_ERROR1)
+        # it is actually: 'date': datetime.date(2022, 1, 10)
+        self.assertIsNot("2022-01-10", rule.get("date"))
+        self.assertIn("dd23d2323432", rule.get("modified"))
 
     def test_get_sigma_config_file(self):
         """Test getting sigma config file"""
-        self.assertRaises(ValueError, sigma_util.get_sigma_config_file, '/foo')
+        self.assertRaises(ValueError, sigma_util.get_sigma_config_file, "/foo")
         self.assertIsNotNone(sigma_util.get_sigma_config_file())
 
     def test_get_blocklist_file(self):
         """Test getting sigma config file"""
-        self.assertRaises(ValueError, sigma_util.get_sigma_blocklist, '/foo')
+        self.assertRaises(ValueError, sigma_util.get_sigma_blocklist, "/foo")
         self.assertIsNotNone(sigma_util.get_sigma_config_file())
 
     def test_get_sigma_rule(self):
         """Test getting sigma rule from file"""
 
-        filepath = './data/sigma/rules/lnx_susp_zmap.yml'
+        filepath = "./data/sigma/rules/lnx_susp_zmap.yml"
 
         rule = sigma_util.get_sigma_rule(filepath)
 
         self.assertIsNotNone(rule)
-        self.assertIn('zmap', rule.get('es_query'))
-        self.assertIn('b793', rule.get('id'))
+        self.assertIn("zmap", rule.get("es_query"))
+        self.assertIn("b793", rule.get("id"))
