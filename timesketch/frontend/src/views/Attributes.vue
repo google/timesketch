@@ -50,8 +50,6 @@ limitations under the License.
 </template>
 
 <script>
-import ApiClient from '../utils/RestApiClient'
-
 export default {
   components: {},
   data() {
@@ -77,10 +75,7 @@ export default {
     },
   },
   mounted() {
-    ApiClient.getSketchAttributes(this.sketch.id).then(response => {
-      this.meta.attributes = response.data
-    })
+    this.$store.dispatch('updateSketch', this.$store.state.sketch.id)
   },
 }
-
 </script>

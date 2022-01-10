@@ -27,7 +27,7 @@ class BaseSessionizerTest(BaseTest):
         SSHBruteforceSessionizerSketchPlugin
     ]
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def test_analyzer(self):
         """Test basic analyzer functionality."""
@@ -39,7 +39,7 @@ class BaseSessionizerTest(BaseTest):
             self.assertEqual(index, analyzer.index_name)
             self.assertEqual(sketch_id, analyzer.sketch.id)
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def test_same_session(self):
         """Test multiple events in the same session are allocated correctly."""
@@ -71,7 +71,7 @@ class BaseSessionizerTest(BaseTest):
             self.assertEqual(event2['_source']['session_id'],
                              {analyzer.session_type: 1})
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def test_diff_session(self):
         """Test multiple events in different sessions are allocated
@@ -106,7 +106,7 @@ class BaseSessionizerTest(BaseTest):
             check_surrounding_events(self, datastore, [101],
                                      analyzer.session_type)
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def test_edge_time_diff(self):
         """Test events with the edge time difference between them are

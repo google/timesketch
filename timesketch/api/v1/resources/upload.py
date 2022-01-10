@@ -122,7 +122,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             file_extension: the extension of the uploaded file.
             timeline_name: name the timeline will be stored under in the
                            datastore.
-            index_name: the Elastic index name for the timeline.
+            index_name: the OpenSearch index name for the timeline.
             sketch: Instance of timesketch.models.sketch.Sketch
             form: a dict with the configuration for the upload.
             enable_stream: boolean indicating whether this is file is part of a
@@ -254,7 +254,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             events: string with all the events.
             form: a dict with the configuration for the upload.
             sketch: Instance of timesketch.models.sketch.Sketch
-            index_name: the Elastic index name for the timeline.
+            index_name: the OpenSearch index name for the timeline.
 
         Returns:
             A timeline if created otherwise a search index in JSON (instance
@@ -282,7 +282,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             file_storage: a FileStorage object.
             form: a dict with the configuration for the upload.
             sketch: Instance of timesketch.models.sketch.Sketch
-            index_name: the Elastic index name for the timeline.
+            index_name: the OpenSearch index name for the timeline.
             chunk_index_name: A unique identifier for a file if
                 chunks are used.
 

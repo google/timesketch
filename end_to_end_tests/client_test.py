@@ -52,17 +52,17 @@ class ClientTest(interface.BaseEndToEndTest):
                 continue
             self.assertions.assertTrue(bool(index.index_name))
 
-    def test_direct_es(self):
-        """Test injecting data into Elastic and make it acccessible in TS."""
+    def test_direct_opensearch(self):
+        """Test injecting data into OpenSearch directly."""
         index_name = 'direct_testing'
 
-        self.import_directly_to_elastic(
+        self.import_directly_to_opensearch(
             filename='evtx_direct.csv', index_name=index_name)
 
         new_sketch = self.api.create_sketch(
             name='Testing Direct', description='Adding data directly from ES')
 
-        context = 'e2e - > test_direct_es'
+        context = 'e2e - > test_direct_opensearch'
         timeline_name = 'Ingested Via Mechanism'
         timeline = new_sketch.generate_timeline_from_es_index(
             es_index_name=index_name, name=timeline_name,
