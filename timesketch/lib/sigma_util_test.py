@@ -96,6 +96,7 @@ fields:
   - foo
   - bar
   - user
+"""
 
 MOCK_SIGMA_RULE_DATE_ERROR1 = """
 title: Wrong dateformat
