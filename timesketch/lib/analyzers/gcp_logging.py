@@ -1,8 +1,6 @@
 """Sketch analyzer plugin for GCP Logging."""
 from __future__ import unicode_literals
 
-import random # Remove before merge (issues/2051)
-import string # Remove before merge (issues/2051)
 import re
 
 from timesketch.lib.analyzers import interface
@@ -84,20 +82,11 @@ class GCPLoggingSketchPlugin(interface.BaseAnalyzer):
 
             event.commit()
 
-        # Adding a random string to attribute names due to a bug where deleted
-        # attributes cannot be re-added with the same name (issues/2051).
-        # Remove before merge.
-        unique = ''.join(
-          random.choices(string.ascii_uppercase + string.digits, k=4))
+        self.sketch.add_sketch_attribute('gcp_identities', users, 'text')
 
-        # Remove unique (issues/2051)
-        self.sketch.add_sketch_attribute(
-          'gcp_identities' + unique, users, 'text')
-
-        # Remove unique (issues/2051)
         for resource_type, resource_list in resources.items():
             self.sketch.add_sketch_attribute(
-              resource_type + unique, resource_list, 'text')
+              resource_type, resource_list, 'text')
 
         for user in users:
             view_name = 'GCP User {0:s}'.format(user)
