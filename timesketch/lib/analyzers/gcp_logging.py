@@ -60,22 +60,28 @@ class GCPLoggingSketchPlugin(interface.BaseAnalyzer):
                     resources[resource_type].append(resource_identifier)
 
             if method_name:
-                if 'CreateServiceAccount' in method_name:
+                if method_name.endswith('CreateServiceAccount'):
                     event.add_tags(['service-account-created'])
 
-                if 'compute.instances.insert' in method_name:
+                if method_name.endswith('CreateServiceAccountKey'):
+                    event.add_tags(['service-account-key-created'])
+
+                if method_name.endswith('SetIamPolicy'):
+                    event.add_tags(['iam-policy-changed'])
+
+                if method_name.endswith('compute.instances.insert'):
                     event.add_tags(['gce-instance-created'])
 
-                if 'compute.firewalls.insert' in method_name:
+                if method_name.endswith('compute.firewalls.insert'):
                     event.add_tags(['fw-rule-created'])
 
-                if 'compute.networks.insert' in method_name:
+                if method_name.endswith('compute.networks.insert'):
                     event.add_tags(['network-created'])
 
-                if 'compute.projects.setCommonInstanceMetadata' in method_name:
+                if method_name.endswith('compute.projects.setCommonInstanceMetadata'):
                     event.add_tags(['compute-metadata-changed'])
 
-                if 'compute.instances.setMetadata' in method_name:
+                if method_name.endswith('compute.instances.setMetadata'):
                     event.add_tags(['compute-metadata-changed'])
 
             event.commit()
