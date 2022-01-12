@@ -86,9 +86,11 @@ class GCPLoggingSketchPlugin(interface.BaseAnalyzer):
 
             event.commit()
 
+        # TODO: Don't add attributes if they already exist.
         self.sketch.add_sketch_attribute('gcp_identities', users, 'text')
 
         for resource_type, resource_list in resources.items():
+            # TODO: Don't add attributes if they already exist.
             self.sketch.add_sketch_attribute(
               resource_type, resource_list, 'text')
 
