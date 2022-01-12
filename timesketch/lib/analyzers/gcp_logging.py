@@ -1,6 +1,4 @@
 """Sketch analyzer plugin for GCP Logging."""
-from __future__ import unicode_literals
-
 import re
 
 from timesketch.lib.analyzers import interface
