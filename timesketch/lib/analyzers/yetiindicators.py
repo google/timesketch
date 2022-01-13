@@ -24,7 +24,7 @@ class YetiIndicators(interface.BaseAnalyzer):
         """Initialize the Analyzer.
 
         Args:
-            index_name: Elasticsearch index name
+            index_name: OpenSearch index name
             sketch_id: The ID of the sketch.
             timeline_id: The ID of the timeline.
         """

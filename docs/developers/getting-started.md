@@ -25,21 +25,6 @@ $ cd timesketch/docker/dev
 $ docker-compose up
 ```
 
-Check that everything is running smoothly:
-
-```bash
-$ docker ps
-CONTAINER ID   IMAGE                                                          COMMAND                  CREATED       STATUS       PORTS                                NAMES
-d58d55bd53b3   us-docker.pkg.dev/osdfir-registry/timesketch/dev:latest        "/docker-entrypoint.…"   3 hours ago   Up 3 hours   127.0.0.1:5000->5000/tcp             timesketch-dev
-0b99c30fbd25   us-docker.pkg.dev/osdfir-registry/timesketch/notebook:latest   "jupyter notebook"       3 hours ago   Up 3 hours   127.0.0.1:8844->8844/tcp, 8899/tcp   notebook
-8696f39a2ba3   justwatch/elasticsearch_exporter:1.1.0                         "/bin/elasticsearch_…"   3 hours ago   Up 3 hours   9114/tcp                             es-metrics-exporter
-f91d133600ae   grafana/grafana:latest                                         "/run.sh"                3 hours ago   Up 3 hours   127.0.0.1:3000->3000/tcp             grafana
-c4b0f954eba6   prom/prometheus:v2.24.1                                        "/bin/prometheus --c…"   3 hours ago   Up 3 hours   127.0.0.1:9090->9090/tcp             prometheus
-75dd0ed520fc   redis:6.0.10-alpine                                            "docker-entrypoint.s…"   3 hours ago   Up 3 hours   6379/tcp                             redis
-bd10ed3677ca   docker.elastic.co/elasticsearch/elasticsearch-oss:7.10.2       "/tini -- /usr/local…"   3 hours ago   Up 3 hours   9200/tcp, 9300/tcp                   elasticsearch
-128ece4be3b5   postgres:13.1-alpine                                           "docker-entrypoint.s…"   3 hours ago   Up 3 hours   5432/tcp                             postgres
-```
-
 Wait a few mintues for the installation script to complete.
 
 ```bash

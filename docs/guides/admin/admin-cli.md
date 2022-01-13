@@ -62,7 +62,30 @@ tsctl add_user --username foo
 
 #### Removing users
 
-Not yet implemented.
+To remove an existing user, use the disable_user command. <br />
+To add the same user back, use the enable_user command. <br />
+Disabled users are not removed from the system, but marked as disabled. <br />
+The current implementation is not complete. Disabled users will still show up for other commands.
+
+Command:
+
+```shell
+tsctl disable_user
+tsctl enable_user
+```
+
+Parameters:
+
+```shell
+--username / -u
+```
+
+Example
+
+```shell
+tsctl disalbe_user --username foo
+tsctl enalbe_user --username foo
+```
 
 ### Group management
 
@@ -161,11 +184,11 @@ tsctl json2ts
 
 ### Purge
 
-Delete timeline permanently from Timesketch and Elasticsearch. It will alert if a timeline is still in use in a sketch and prompt for confirmation before deletion.
+Delete timeline permanently from Timesketch and OpenSearch. It will alert if a timeline is still in use in a sketch and prompt for confirmation before deletion.
 
 ```shell
  Args:
-   index_name: The name of the index in Elasticsearch
+   index_name: The OpenSearch index name
 ```
 
 Command:
@@ -224,7 +247,6 @@ tsctl similarity_score
 ```
 
 ### Upgrade DB After Schema Change
-
 
 After changing the schema for the database a revision file needs to be generated.
 

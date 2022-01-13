@@ -179,7 +179,7 @@ class Aggregation(resource.SketchResource):
         """Initialize the aggregation object by running an aggregation DSL.
 
         Args:
-            aggregate_dsl: Elasticsearch aggregation query DSL string.
+            aggregate_dsl: OpenSearch aggregation query DSL string.
         """
         super().from_manual(**kwargs)
         resource_url = '{0:s}/sketches/{1:d}/aggregation/explore/'.format(

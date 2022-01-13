@@ -6,32 +6,35 @@ It is possible to install Timesketch without docker but we strongly encourage us
 
 **You will need**
 
-* Machine with Ubuntu 20.04 installed.
-* At least 8GB RAM, but more the better.
-* Optional: Domain name registered and configure for the machine if you want to setup SSL for the webserver.
+- Machine with Ubuntu 20.04 installed.
+- At least 8GB RAM, but more the better.
+- Optional: Domain name registered and configure for the machine if you want to setup SSL for the webserver.
 
 **This guide setup the following services**
 
-* Timesketch web/api server
-* Timesketch importer/analysis worker
-* PostgreSQL database
-* Elasticsearch single-node cluster
-* Redis key-value database (for worker processes)
-* Nginx webserver
+- Timesketch web/api server
+- Timesketch importer/analysis worker
+- PostgreSQL database
+- OpenSearch single-node cluster
+- Redis key-value database (for worker processes)
+- Nginx webserver
 
-**NOTE**: This guide sets up  single node Elasticsearch cluster. This is OK for smaller installations but in order to scale and have better performance you need to setup a multi node Elasticsearch cluster. This is out of scope for this guide but the official documentation on [installing Elasticsearch with Docker](https://www.elastic.co/guide/en/elasticsearch/reference/current/docker.html) will get you started.
+**NOTE**: This guide sets up single node OpenSearch cluster. This is OK for smaller installations but in order to scale and have better performance you need to setup a multi node OpenSearch cluster. This is out of scope for this guide but the official documentation on [installing OpenSearch](https://opensearch.org/docs/latest/opensearch/install/index/) will get you started.
 
 ## 1. Install Docker
 
 Follow the official installation instructions to [install Docker Engine on Ubuntu](https://docs.docker.com/engine/install/ubuntu/).
 
 Make sure you install docker-compose as well
+
 ```shell
 sudo apt install docker-compose
 ```
 
 ## 2. Start the installation
+
 ### Download helper script
+
 We have created a helper script to get you started with all necessary configuration.
 Download the script here:
 
@@ -41,7 +44,8 @@ chmod 755 deploy_timesketch.sh
 ```
 
 ### Choose location for the installation
-You can choose to host the Timeksetch data directory anywhere but note that by default it will host Elasticsearch and PostgreSQL data in this directory so make sure you have enough disk space available.
+
+You can choose to host the Timeksetch data directory anywhere but note that by default it will host OpenSearch and PostgreSQL data in this directory so make sure you have enough disk space available.
 
 Example:
 
@@ -69,12 +73,13 @@ sudo docker-compose exec timesketch-web tsctl add_user --username <USERNAME>
 ```
 
 ## 4. Enable TLS (optional)
+
 It is out of scope for the deployment script to setup certificates but here are pointers on how to use Let's Encrypt.
 
 1. You need to configure a DNS name for the server. Use your DNS provider instructions.
 2. Make sure your webserver is reachable on port 80.
 3. Follow the official guide to install and run Let's Encrypt on Ubuntu:
-https://certbot.eff.org/lets-encrypt/ubuntufocal-other
+   https://certbot.eff.org/lets-encrypt/ubuntufocal-other
 
 When Let's Encrypt has been installed and you have generated certificates (located in /etc/letsencrypt) it is time to reconfigure Nginx.
 
@@ -134,7 +139,6 @@ docker-compose up -d
 ```
 
 Congratulations, your Timesketch system is operational and ready to use.
-
 
 ## Set up users
 

@@ -107,10 +107,10 @@ class SearchIndex(resource.BaseResource):
 
     @property
     def index_name(self):
-        """Property that returns Elasticsearch index name.
+        """Property that returns OpenSearch index name.
 
         Returns:
-            Elasticsearch index name as string.
+            OpenSearch index name as string.
         """
         index_data = self._get_object_dict()
         return index_data.get('index_name', 'unkown index name')

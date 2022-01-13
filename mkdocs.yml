@@ -14,13 +14,14 @@ nav:
   - Guides:
       - Getting started: guides/getting-started.md
       - User Guide:
-          - Uploding timelines: guides/user/upload-data.md
+          - Uploading timelines: guides/user/upload-data.md
           - Basic concepts: guides/user/basic-concepts.md
           - Sketch overview: guides/user/sketch-overview.md
           - Search query guide: guides/user/search-query-guide.md
           - Interactive notebook: guides/user/notebook.md
           - Import from JSON or CSV: guides/user/import-from-json-csv.md
           - Use Sigma: guides/user/sigma.md
+          - Intelligence: guides/user/intelligence.md
       - Admin Guide:
           - Installing Timesketch: guides/admin/install.md
           - Scaling and limits: guides/admin/scaling-and-limits.md

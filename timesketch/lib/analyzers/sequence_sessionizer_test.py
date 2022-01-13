@@ -87,7 +87,7 @@ class EmptyStrSessionTypeSequenceSessionizer(SequenceSessionizerSketchPlugin):
 class TestValidSequenceSessionizerPlugin(BaseTest):
     """Tests the validation functionality of the sequence sessionizing sketch
     analyzer."""
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def test_event_seq_none(self):
         """Test event_seq is not None."""
@@ -98,7 +98,7 @@ class TestValidSequenceSessionizerPlugin(BaseTest):
         with self.assertRaises(ValueError):
             sessionizer.run()
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def test_event_seq_empty(self):
         """Test event_seq is not empty."""
@@ -109,7 +109,7 @@ class TestValidSequenceSessionizerPlugin(BaseTest):
         with self.assertRaises(ValueError):
             sessionizer.run()
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def test_no_timestamp(self):
         """Test missing timestamp attribute is added in return_fields.
@@ -127,7 +127,7 @@ class TestValidSequenceSessionizerPlugin(BaseTest):
         sessionizer.run()
         self.assertIn('timestamp', sessionizer.return_fields)
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def test_missing_attr(self):
         """Test missing attributes added in return_fields.
@@ -149,7 +149,7 @@ class TestValidSequenceSessionizerPlugin(BaseTest):
             for attr in event:
                 self.assertIn(attr, sessionizer.return_fields)
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def test_session_type_none(self):
         """Test session_type is not None."""
@@ -160,7 +160,7 @@ class TestValidSequenceSessionizerPlugin(BaseTest):
         with self.assertRaises(ValueError):
             sessionizer.run()
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def test_session_type_empty_str(self):
         """Test session_type is not empty string."""
@@ -185,7 +185,7 @@ class TestManyEventsSequenceSessionizerPlugin(BaseTest):
         DestPsexecSessionizerSketchPlugin
     ]
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def test_sessionizer(self):
         """Test basic sequence sessionizer functionality."""
@@ -197,7 +197,7 @@ class TestManyEventsSequenceSessionizerPlugin(BaseTest):
             self.assertEqual(index, sessionizer.index_name)
             self.assertEqual(sketch_id, sessionizer.sketch.id)
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def test_one_session(self):
         """Test one sequence of events is finded and allocated as a session."""
@@ -229,7 +229,7 @@ class TestManyEventsSequenceSessionizerPlugin(BaseTest):
                     event['_source']['session_id'][sessionizer.session_type],
                     1)
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def test_multiple_sessions(self):
         """Test multiple sessions are found and allocated correctly."""
@@ -266,7 +266,7 @@ class TestManyEventsSequenceSessionizerPlugin(BaseTest):
                     event['_source']['session_id'][sessionizer.session_type],
                     2)
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def test_after_session(self):
         """Test events after the last event of a sequence are not allocated with
@@ -297,7 +297,7 @@ class TestManyEventsSequenceSessionizerPlugin(BaseTest):
                 event = datastore.event_store[str(i)]
                 self.assertNotIn('session_id', event['_source'])
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def test_edge_time_diff(self):
         """Test events with the edge time difference between them are
@@ -328,7 +328,7 @@ class TestManyEventsSequenceSessionizerPlugin(BaseTest):
                     event['_source']['session_id'][sessionizer.session_type],
                     1)
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def test_above_max_time_diff(self):
         """Test events with max time difference + 1 between them are allocated
@@ -360,7 +360,7 @@ class TestManyEventsSequenceSessionizerPlugin(BaseTest):
                 event = datastore.event_store[str(i)]
                 self.assertNotIn('session_id', event['_source'])
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def test_zero_events(self):
         """Test the behaviour of the sequence sessionizer when given zero
@@ -391,7 +391,7 @@ class TestOneEventSequenceSessionizerPlugin(BaseTest):
     """
     seq_sessionizer_classes = [OneEventSequenceSessionizer]
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def test_sessionizer(self):
         """Test basic sequence sessionizer functionality."""
@@ -403,7 +403,7 @@ class TestOneEventSequenceSessionizerPlugin(BaseTest):
             self.assertEqual(index, sessionizer.index_name)
             self.assertEqual(sketch_id, sessionizer.sketch.id)
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def test_one_session(self):
         """Test one sequence of events is finded and allocated as a session."""
@@ -428,7 +428,7 @@ class TestOneEventSequenceSessionizerPlugin(BaseTest):
             self.assertEqual(
                 event['_source']['session_id'][sessionizer.session_type], 1)
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def test_multiple_sessions(self):
         """Test multiple sessions are finded and allocated correctly."""
@@ -461,7 +461,7 @@ class TestOneEventSequenceSessionizerPlugin(BaseTest):
             self.assertEqual(
                 event['_source']['session_id'][sessionizer.session_type], 2)
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def test_after_session(self):
         """Test events after the last event of a sequence are not allocated with
@@ -492,7 +492,7 @@ class TestOneEventSequenceSessionizerPlugin(BaseTest):
                 event = datastore.event_store[str(i)]
                 self.assertNotIn('session_id', event['_source'])
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def test_zero_events(self):
         """Test the behaviour of the sequence sessionizer when given zero
