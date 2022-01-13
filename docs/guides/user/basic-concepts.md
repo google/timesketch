@@ -5,7 +5,7 @@ Every sketch can consist of multiple timelines with multiple views.
 
 We highly recommend to read two blog post to understand limitations of time and timeline analysis:
 
-- [Lets talk abot time](https://osdfir.blogspot.com/2021/06/lets-talk-about-time.html)
+- [Lets talk about time](https://osdfir.blogspot.com/2021/06/lets-talk-about-time.html)
 - [pearls and pitfalls of timeline analysis](https://osdfir.blogspot.com/2021/10/pearls-and-pitfalls-of-timeline-analysis.html) before starting your first timeline analysis.
 
 This should avoid wrong expectations and help analysts asking the right questions when looking at timelines in Timesketch.
