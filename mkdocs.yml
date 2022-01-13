@@ -21,6 +21,7 @@ nav:
           - Interactive notebook: guides/user/notebook.md
           - Import from JSON or CSV: guides/user/import-from-json-csv.md
           - Use Sigma: guides/user/sigma.md
+          - Intelligence: guides/user/intelligence.md
       - Admin Guide:
           - Installing Timesketch: guides/admin/install.md
           - Scaling and limits: guides/admin/scaling-and-limits.md
