@@ -216,4 +216,4 @@ Here are some common searches:
 
 ## Common questions
 
-There is a frequent question around Windows Event logs and how they are represented in Timesketch when imported from Plaso. For that we recommend reading up on [Common misconception aboud Windows EventLogs](https://osdfir.blogspot.com/2021/10/common-misconceptions-about-windows.html)
+There is a frequent question around Windows Event logs and how they are represented in Timesketch when imported from Plaso. For that we recommend reading up on [Common misconception about Windows EventLogs](https://osdfir.blogspot.com/2021/10/common-misconceptions-about-windows.html)
