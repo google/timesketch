@@ -107,7 +107,6 @@ class TaggerSketchPlugin(interface.BaseAnalyzer):
                 attributes.append(attribute)
 
         event_counter = 0
-        print(config)
         events = self.event_stream(
             query_string=query, query_dsl=query_dsl, return_fields=attributes)
 
@@ -134,8 +133,6 @@ class TaggerSketchPlugin(interface.BaseAnalyzer):
                     dynamic_tag_values.extend(tag_value)
                 else:
                     dynamic_tag_values.append(tag_value)
-
-            print('Dynamic tags: ', dynamic_tag_values)
             event.add_tags(dynamic_tag_values)
 
             event.add_emojis(emojis_to_add)

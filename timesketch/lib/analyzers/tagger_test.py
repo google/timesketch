@@ -50,6 +50,40 @@ class TestTaggerPlugin(BaseTest):
             self.assertIsInstance(value, dict)
             self._config_validation(value)
 
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
+                MockDataStore)
+    def test_event_tagging(self):
+        config = yaml.safe_load("""dummy_tagger:
+            query_string: '*'
+            tags: ['dummyTag']
+            save_search: true
+            search_name: 'Random test tagging'""")
+        analyzer = tagger.TaggerSketchPlugin(
+            'test_index',
+            1,
+            tag_config=config['dummy_tagger'],
+            tag='dummy_tagger')
+        analyzer.datastore.client = mock.Mock()
+        datastore = analyzer.datastore
+
+        source_attributes = {
+            '__ts_timeline_id': 1,
+            'es_index': '',
+            'es_id': '',
+            'label': '',
+            'timestamp': 1410895419859714,
+            'timestamp_desc': '',
+            'datetime': '2014-09-16T19:23:40+00:00',
+            'source_short': '',
+            'source_long': '',
+            'message': 'Dummy message',
+        }
+
+        datastore.import_event('blah', 'blah', source_attributes, '0')
+        message = analyzer.run()
+        self.assertEqual(analyzer.tagged_events['0']['tags'], ['dummyTag'])
+        self.assertEqual(message, '1 events tagged for [dummy_tagger]')
+
 
     @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
@@ -78,14 +112,13 @@ class TestTaggerPlugin(BaseTest):
             'datetime': '2014-09-16T19:23:40+00:00',
             'source_short': '',
             'source_long': '',
-            'message': '',
+            'message': 'Dummy message',
             'yara_match': 'rule1 rule2'
         }
 
         datastore.import_event('blah', 'blah', source_attributes, '0')
         message = analyzer.run()
-        # import pdb; pdb.set_trace()
         self.assertEqual(
-            analyzer.tagged_events['0']['tags'],
-            ['yara', 'rule2', 'rule1'])
+            sorted(analyzer.tagged_events['0']['tags']),
+            sorted(['yara', 'rule2', 'rule1']))
         self.assertEqual(message, '1 events tagged for [yara_match_tagger]')
