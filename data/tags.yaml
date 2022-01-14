@@ -70,3 +70,10 @@ gcs_bucket_permission_world_added_tagger:
   emojis: ['BUCKET', 'GLOBE']
   save_search: true
   search_name: 'Bucket permission - World Readable'
+
+yara_match_tagger:
+  query_string: '_exists_:yara_match AND NOT yara_match.keyword:"-"'
+  tags: ['yara', '$yara_match']
+  modifiers: ['split']
+  save_search: true
+  search_name: 'Yara rule matches'

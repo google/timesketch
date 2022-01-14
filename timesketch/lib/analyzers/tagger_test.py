@@ -1,8 +1,12 @@
 """Tests for TaggerSketchPlugin."""
+import pdb
 import yaml
+import mock
 
 from timesketch.lib import emojis
+from timesketch.lib.analyzers import tagger
 from timesketch.lib.testlib import BaseTest
+from timesketch.lib.testlib import MockDataStore
 
 
 class TestTaggerPlugin(BaseTest):
@@ -45,3 +49,43 @@ class TestTaggerPlugin(BaseTest):
             self.assertIsInstance(key, str)
             self.assertIsInstance(value, dict)
             self._config_validation(value)
+
+
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
+                MockDataStore)
+    def test_dynamic_tag_extraction(self):
+        config = yaml.safe_load("""yara_match_tagger:
+            query_string: '_exists_:yara_match AND NOT yara_match.keyword:"-"'
+            tags: ['yara', '$yara_match']
+            modifiers: ['split']
+            save_search: true
+            search_name: 'Yara rule matches'""")
+        analyzer = tagger.TaggerSketchPlugin(
+            'test_index',
+            1,
+            tag_config=config['yara_match_tagger'],
+            tag='yara_match_tagger')
+        analyzer.datastore.client = mock.Mock()
+        datastore = analyzer.datastore
+
+        source_attributes = {
+            '__ts_timeline_id': 1,
+            'es_index': '',
+            'es_id': '',
+            'label': '',
+            'timestamp': 1410895419859714,
+            'timestamp_desc': '',
+            'datetime': '2014-09-16T19:23:40+00:00',
+            'source_short': '',
+            'source_long': '',
+            'message': '',
+            'yara_match': 'rule1 rule2'
+        }
+
+        datastore.import_event('blah', 'blah', source_attributes, '0')
+        message = analyzer.run()
+        # import pdb; pdb.set_trace()
+        self.assertEqual(
+            analyzer.tagged_events['0']['tags'],
+            ['yara', 'rule2', 'rule1'])
+        self.assertEqual(message, '1 events tagged for [yara_match_tagger]')

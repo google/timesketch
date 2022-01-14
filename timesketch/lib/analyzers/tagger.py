@@ -1,4 +1,5 @@
 """Analyzer plugin for tagging."""
+from collections.abc import Iterable
 import logging
 
 from timesketch.lib import emojis
@@ -18,6 +19,11 @@ class TaggerSketchPlugin(interface.BaseAnalyzer):
     DESCRIPTION = 'Tag events based on pre-defined rules'
 
     CONFIG_FILE = 'tags.yaml'
+
+    MODIFIERS = {
+        'split': lambda x: x.split(),
+        'upper': lambda x: x.upper()
+    }
 
     def __init__(self, index_name, sketch_id, timeline_id=None, **kwargs):
         """Initialize The Sketch Analyzer.
@@ -81,12 +87,15 @@ class TaggerSketchPlugin(interface.BaseAnalyzer):
         if search_name is None:
             search_name = config.get('view_name', name)
 
-        tags = config.get('tags', [])
+        tags = set(config.get('tags', []))
+        dynamic_tags = {tag[1:] for tag in tags if tag.startswith('$')}
+        tags = {tag for tag in tags if not tag.startswith('$')}
+
         emoji_names = config.get('emojis', [])
         emojis_to_add = [emojis.get_emoji(x) for x in emoji_names]
 
         expression_string = config.get('regular_expression', '')
-        attributes = None
+        attributes = list(dynamic_tags)
         expression = None
         if expression_string:
             expression = utils.compile_regular_expression(
@@ -95,15 +104,16 @@ class TaggerSketchPlugin(interface.BaseAnalyzer):
 
             attribute = config.get('re_attribute')
             if attribute:
-                attributes = [attribute]
+                attributes.append(attribute)
 
         event_counter = 0
+        print(config)
         events = self.event_stream(
             query_string=query, query_dsl=query_dsl, return_fields=attributes)
 
         for event in events:
             if expression:
-                value = event.source.get(attributes[0])
+                value = event.source.get(config.get('re_attribute'))
                 if value:
                     result = expression.findall(value)
                     if not result:
@@ -113,6 +123,21 @@ class TaggerSketchPlugin(interface.BaseAnalyzer):
 
             event_counter += 1
             event.add_tags(tags)
+
+            # Compute dynamic tag values with modifiers.
+            dynamic_tag_values = []
+            for attribute in dynamic_tags:
+                tag_value = event.source.get(attribute)
+                for mod in config.get('modifiers', []):
+                    tag_value = self.MODIFIERS[mod](tag_value)
+                if isinstance(tag_value, Iterable):
+                    dynamic_tag_values.extend(tag_value)
+                else:
+                    dynamic_tag_values.append(tag_value)
+
+            print('Dynamic tags: ', dynamic_tag_values)
+            event.add_tags(dynamic_tag_values)
+
             event.add_emojis(emojis_to_add)
 
             # Commit the event to the datastore.
@@ -121,7 +146,6 @@ class TaggerSketchPlugin(interface.BaseAnalyzer):
         if save_search and event_counter:
             self.sketch.add_view(
                 search_name, self.NAME, query_string=query, query_dsl=query_dsl)
-
         return '{0:d} events tagged for [{1:s}]'.format(event_counter, name)
 
 
