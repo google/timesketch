@@ -464,7 +464,8 @@ class Sketch(object):
                 data/ontology.yaml.
         """
         # Check first whether the attribute already exists.
-        attribute = Attribute.query.filter_by(name=name).first()
+        attribute = Attribute.query.filter_by(
+          name=name, sketch=self.sql_sketch).first()
 
         if not attribute:
             attribute = Attribute(
