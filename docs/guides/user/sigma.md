@@ -162,6 +162,10 @@ You need to remember to copy your rule when you are ready and create a new file 
 When writing Rules specific for Timesketch first and foremost you should the guide from one of the creators of Sigma:
 [How to Write Sigma Rules](https://www.nextron-systems.com/2018/02/10/write-sigma-rules/).
 
+### Date format
+
+When setting the `date` field in your rule, stick to `YYYY/MM/DD`.
+
 #### Number of or
 
 On top of that, it is recommended to avoid a large chain or `or` checks.
