@@ -19,7 +19,7 @@ import logging
 import uuid
 import six
 
-import elasticsearch
+import opensearchpy
 from flask import request
 from flask import abort
 from flask import current_app
@@ -396,7 +396,7 @@ class TimelineResource(resources.ResourceMixin, Resource):
             try:
                 self.datastore.client.indices.close(
                     index=searchindex.index_name)
-            except elasticsearch.NotFoundError:
+            except opensearchpy.NotFoundError:
                 logger.error(
                     'Unable to close index: {0:s} - index not '
                     'found'.format(searchindex.index_name))

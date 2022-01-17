@@ -43,12 +43,12 @@ class TestConfig(object):
     SECRET_KEY = 'testing'
     SQLALCHEMY_DATABASE_URI = 'sqlite://'
     WTF_CSRF_ENABLED = False
-    ELASTIC_HOST = None
-    ELASTIC_PORT = None
-    ELASTIC_USER = None
-    ELASTIC_PASSWORD = None
-    ELASTIC_SSL = False
-    ELASTIC_VERIFY_CERTS = True
+    OPENSEARCH_HOST = 'noserver'
+    OPENSEARCH_PORT = 4711
+    OPENSEARCH_USER = None
+    OPENSEARCH_PASSWORD = None
+    OPENSEARCH_SSL = False
+    OPENSEARCH_VERIFY_CERTS = True
     LABELS_TO_PREVENT_DELETION = ['protected', 'magic']
     UPLOAD_ENABLED = False
     AUTO_SKETCH_ANALYZERS = []
@@ -56,12 +56,12 @@ class TestConfig(object):
     SIGMA_RULES_FOLDERS = ['./data/sigma/rules/']
 
 
-class MockElasticClient(object):
-    """A mock implementation of a ElasticSearch client."""
+class MockOpenSearchClient(object):
+    """A mock implementation of a OpenSearch client."""
 
     def __init__(self):
         """Initialize the client."""
-        self.indices = MockElasticIndices()
+        self.indices = MockOpenSearchIndices()
 
     def search(self, index, body, size):  # pylint: disable=unused-argument
         """Mock a client search, used for aggregations."""
@@ -85,7 +85,7 @@ class MockElasticClient(object):
         return {'meta': meta, 'objects': objects}
 
 
-class MockElasticIndices(object):
+class MockOpenSearchIndices(object):
     # pylint: disable=unused-argument
     def get_mapping(self, *args, **kwargs):
         """Mock get mapping call."""
@@ -173,7 +173,7 @@ class MockDataStore(object):
             host: Hostname or IP address to the datastore
             port: The port used by the datastore
         """
-        self.client = MockElasticClient()
+        self.client = MockOpenSearchClient()
         self.host = host
         self.port = port
         # Dictionary containing event dictionaries.
@@ -197,8 +197,8 @@ class MockDataStore(object):
         """Mock returning a single event from the datastore.
 
         Args:
-            searchindex_id: String of ElasticSearch index id
-            event_id: String of ElasticSearch event id
+            searchindex_id: String of OpenSearch index id
+            event_id: String of OpenSearch event id
 
         Returns:
             A dictionary with event data.
@@ -245,15 +245,15 @@ class MockDataStore(object):
 
     def import_event(self, index_name, event_type, event=None,
                      event_id=None, flush_interval=None):
-        """Mock adding the event to Elasticsearch, instead add the event
+        """Mock adding the event to OpenSearch, instead add the event
         to event_store.
         Args:
             flush_interval: Number of events to queue up before indexing. (This
             functionality is not supported.)
-            index_name: Name of the index in Elasticsearch
+            index_name: Name of the index in MockOpenSearchIndices
             event_type: Type of event (e.g. plaso_event)
             event: Event dictionary
-            event_id: Event Elasticsearch ID
+            event_id: Event MockOpenSearchIndices ID
         """
 
         if event_id in self.event_store:
@@ -270,7 +270,7 @@ class MockDataStore(object):
 
     @property
     def version(self):
-        """Get Elasticsearch version.
+        """Get MockOpenSearch version.
 
         Returns:
           Version number as a string.

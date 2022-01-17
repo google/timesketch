@@ -212,7 +212,7 @@ saved search.
 
 To search in the API client a search object is used. It will accept several
 parameters or configurations, for instances a free flowing query string
-(same as in the UI) or a raw Elastic query DSL. It can also support search
+(same as in the UI) or a raw OpenSearch query DSL. It can also support search
 chips.
 
 The output can be:
@@ -261,9 +261,9 @@ All of these parameters are optional, but in order for the search object to
 be able to query for results you need to provide either `query_string` or
 the `query_dsl`.
 
-+ **query_string**: This is the Elastic query string, the same one as you would
++ **query_string**: This is the OpenSearch query string, the same one as you would
 provide in the UI.
-+ **query_dsl**: This is an Elastic Query DSL string. Please see the official
++ **query_dsl**: This is an OpenSearch Query DSL string. Please see the official
 documentation about how it is structured.
 + **return_fields**: This is a comma separated string with all the fields you
 want to be included in the returned value. If you want all fields returned you

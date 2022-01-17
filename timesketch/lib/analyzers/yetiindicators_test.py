@@ -36,12 +36,12 @@ class TestThreatintelPlugin(BaseTest):
     """Tests the functionality of the analyzer."""
 
     def setUp(self):
-        super(TestThreatintelPlugin, self).setUp()
+        super().setUp()
         current_app.config['YETI_API_ROOT'] = 'blah'
         current_app.config['YETI_API_KEY'] = 'blah'
 
-    # Mock the Elasticsearch datastore.
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    # Mock the OpenSearch datastore.
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     @mock.patch('timesketch.lib.analyzers.yetiindicators.'
                 'YetiIndicators.get_neighbors')
@@ -66,8 +66,8 @@ class TestThreatintelPlugin(BaseTest):
         mock_get_indicators.assert_called_once()
         mock_get_neighbors.assert_called_once()
 
-    # Mock the Elasticsearch datastore.
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    # Mock the OpenSearch datastore.
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     @mock.patch('timesketch.lib.analyzers.yetiindicators.'
                 'YetiIndicators.get_neighbors')
@@ -90,7 +90,7 @@ class TestThreatintelPlugin(BaseTest):
         mock_get_indicators.assert_called_once()
         mock_get_neighbors.assert_not_called()
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     def test_slug(self):
         sessionizer = yetiindicators.YetiIndicators('test_index', 1)
