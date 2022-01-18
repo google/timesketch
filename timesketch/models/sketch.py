@@ -840,11 +840,11 @@ class Scenario(
     LabelMixin, StatusMixin, CommentMixin, GenericAttributeMixin, BaseModel):
     """Implements the Scenario model.
     
-    A Timesketch Scenario is setting the type of the sketch. A scenario has
-    one or many investigations. It acts as a container for investigations.
+    A Timesketch scenario describes the type of the sketch. A scenario has
+    one or many facets (investigations).
 
     A scenario is created from a YAML specification that is provided by the 
-    server admin. This YAML file is used to cookiecut and bootstrap sketches.
+    system. This YAML file is used to create and bootstrap sketches.
     """
     name = Column(UnicodeText())
     display_name = Column(UnicodeText())    
@@ -886,9 +886,11 @@ class FacetTimeFrame(BaseModel):
     start_time = Column(UnicodeText())
     end_time = Column(UnicodeText())
     description = Column(UnicodeText())
+    user_id = Column(Integer, ForeignKey('user.id'))
     facet_id = Column(Integer, ForeignKey('facet.id'))
 
-    def __init__(self, start_time, end_time, facet, description=None):
+    def __init__(
+        self, start_time, end_time, facet, user=None, description=None):
         """Initialize the InvestigationTimeFrame object.
 
         Args:
@@ -901,6 +903,7 @@ class FacetTimeFrame(BaseModel):
         self.start_time = start_time
         self.end_time = end_time
         self.facet = facet
+        self.user = user
         self.description = description
 
 
@@ -976,7 +979,7 @@ class FacetConclusion(LabelMixin, StatusMixin, CommentMixin, BaseModel):
         self.automated = automated
 
 
-# Association table for the many-to-many relationship for an timelines in an
+# Association table for the many-to-many relationship for timelines in an
 # investigation.
 facet_timeline_association_table = Table(
     'facet_timeline', BaseModel.metadata,
@@ -988,8 +991,9 @@ class Facet(
     LabelMixin, StatusMixin, CommentMixin, GenericAttributeMixin, BaseModel):
     """Implements the Facet model.
     
-    A facet is a collection of questions and answers/conclusions.
-    In order to be able to help the user as well as aid in automation it is
+    A facet is a collection of investigative questions.
+
+    In order to help the user as well as aid in automation it is
     possible to set the scope for the facet. The scope consist of
     timeframes of interest, timelines and supplied parameters (key/value).
     """

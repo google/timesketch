@@ -107,8 +107,9 @@ class GenericAttribute(BaseAnnotation):
     name = Column(UnicodeText())
     value = Column(UnicodeText())
     ontology = Column(UnicodeText())
+    description = Column(UnicodeText())
 
-    def __init__(self, user, name, value, ontology):
+    def __init__(self, user, name, value, ontology, description):
         """Initialize the Attribute object.
 
         Args:
@@ -123,6 +124,7 @@ class GenericAttribute(BaseAnnotation):
         self.name = name
         self.value = value
         self.ontology = ontology
+        self.description = description
 
 
 class LabelMixin(object):
@@ -368,7 +370,7 @@ class GenericAttributeMixin(object):
     """
 
     @declared_attr
-    def genericattribute(self):
+    def genericattributes(self):
         """
         Generates the status tables and adds the attribute to the parent model
         object.
@@ -383,9 +385,37 @@ class GenericAttributeMixin(object):
                 GenericAttribute,
                 BaseModel, ),
             dict(
-                __tablename__='{0:s}_genericattribute'.format(self.__tablename__),
+                __tablename__='{0:s}_genericattribute'.format(
+                    self.__tablename__),
                 parent_id=Column(
                     Integer,
                     ForeignKey('{0:s}.id'.format(self.__tablename__))),
                 parent=relationship(self), ))
         return relationship(self.GenericAttribute)
+
+    def add_attribute(
+        self, name, value, ontology=None, user=None, description=None):
+        """Add a label to an object.
+
+        Each entry can have multible labels.
+
+        Args:
+            label: Name of the label.
+            user: Optional user that adds the label (sketch.User).
+        """
+        self.genericattributes.append(
+            self.GenericAttribute(
+                user=user, name=name, value=value, ontology=ontology,
+                description=description))
+        db_session.commit()
+
+    @property
+    def get_attributes(self):
+        """Returns a list of all attributes.
+
+        Returns:
+            A list of strings with all attributes.
+        """
+        if not self.genericattributes:
+            return []
+        return self.genericattributes

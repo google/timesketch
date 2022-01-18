@@ -299,6 +299,8 @@ class ResourceMixin(object):
         'story': story_fields,
         'event_comment': comment_fields,
         'event_label': label_fields,
+        'investigative_question': question_fields,
+        'facet': facet_fields,
         'scenario': scenario_fields
     }
 
