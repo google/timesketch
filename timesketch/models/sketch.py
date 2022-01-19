@@ -883,8 +883,8 @@ class FacetTimeFrame(BaseModel):
     A timeframe is used to set the scope for the facet. This information
     is used when automatically generatae queries and other helper functions.
     """
-    start_time = Column(UnicodeText())
-    end_time = Column(UnicodeText())
+    start_time = Column(BigInteger())
+    end_time = Column(BigInteger())
     description = Column(UnicodeText())
     user_id = Column(Integer, ForeignKey('user.id'))
     facet_id = Column(Integer, ForeignKey('facet.id'))
@@ -894,8 +894,8 @@ class FacetTimeFrame(BaseModel):
         """Initialize the InvestigationTimeFrame object.
 
         Args:
-            start_time (str): Start time in ISO format (UTC)
-            end_time (str): End time in ISO format (UTC)
+            start_time (int): Microseconds since January 1, 1970, 00:00:00 UTC
+            end_time (int): Microseconds since January 1, 1970, 00:00:00 UTC
             facet (Facet): Facet for this time frame
             description (str): Description of the timeframe (optional)
         """
