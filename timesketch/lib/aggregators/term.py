@@ -264,7 +264,7 @@ class FilteredTermsAggregation(interface.BaseAggregator):
             "_source": ["datetime","timestamp"]
         }
 
-        response = self.elastic_aggregation(spec,size=1)
+        response = self.opensearch_aggregation(spec,size=1)
         hits = response.get('hits', {})
         hit = hits.get('hits', {})
         if not hit:
@@ -351,7 +351,7 @@ class FilteredTermsAggregation(interface.BaseAggregator):
                 {'field': field, 'type': 'nominal'},
                 {'field': 'count', 'type': 'quantitative'}]
 
-        response = self.elastic_aggregation(aggregation_spec)
+        response = self.opensearch_aggregation(aggregation_spec)
         aggregations = response.get('aggregations', {})
         aggregation = aggregations.get('aggregation', {})
 
