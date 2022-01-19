@@ -146,7 +146,7 @@ class TermsAggregation(interface.BaseAggregator):
         aggregation_spec = self._add_query_to_aggregation_spec(
             aggregation_spec, start_time, end_time)
 
-        response = self.elastic_aggregation(aggregation_spec)
+        response = self.opensearch_aggregation(aggregation_spec)
         aggregations = response.get('aggregations', {})
         aggregation = aggregations.get('aggregation', {})
 
