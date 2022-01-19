@@ -880,7 +880,7 @@ class Scenario(
 class FacetTimeFrame(BaseModel):
     """Implements the FacetTimeFrame model.
     
-    A timeframe is used in a facet to set scope. This information
+    A timeframe is used to set the scope for the facet. This information
     is used when automatically generatae queries and other helper functions.
     """
     start_time = Column(UnicodeText())
