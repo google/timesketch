@@ -17,11 +17,11 @@ import logging
 
 from flask import current_app
 
-import elasticsearch
+import opensearchpy
 import pandas
 
 from timesketch.lib.charts import manager as chart_manager
-from timesketch.lib.datastores.elastic import ElasticsearchDataStore
+from timesketch.lib.datastores.opensearch import OpenSearchDataStore
 from timesketch.models.sketch import Sketch as SQLSketch
 
 
@@ -153,7 +153,7 @@ class BaseAggregator(object):
         Args:
             field: String that contains the field name used for URL generation.
             sketch_id: Sketch ID.
-            indices: Optional list of elasticsearch index names. If not provided
+            indices: Optional list of OpenSearch index names. If not provided
                 the default behavior is to include all the indices in a sketch.
             timeline_ids: Optional list of timeline IDs, if not provided the
                 default behavior is to query all the data in the provided
@@ -162,9 +162,10 @@ class BaseAggregator(object):
         if not sketch_id and not indices:
             raise RuntimeError('Need at least sketch_id or index')
 
-        self.elastic = ElasticsearchDataStore(
-            host=current_app.config['ELASTIC_HOST'],
-            port=current_app.config['ELASTIC_PORT'])
+        self.opensearch = OpenSearchDataStore(
+            host=current_app.config.get('OPENSEARCH_HOST'),
+            port=current_app.config.get('OPENSEARCH_PORT')
+        )
 
         self._sketch_url = '/sketch/{0:d}/explore'.format(sketch_id)
         self.field = ''
@@ -307,9 +308,9 @@ class BaseAggregator(object):
 
         # Get the mapping for the field.
         try:
-            mapping = self.elastic.client.indices.get_field_mapping(
+            mapping = self.opensearch.client.indices.get_field_mapping(
                 index=self.indices, fields=field_name)
-        except elasticsearch.NotFoundError:
+        except opensearchpy.NotFoundError:
             mapping = {}
 
         # The returned structure is nested so we need to unpack it.
@@ -338,22 +339,22 @@ class BaseAggregator(object):
 
         return field_format
 
-    def elastic_aggregation(self, aggregation_spec, size=0):
-        """Helper method to execute aggregation in Elasticsearch.
+    def opensearch_aggregation(self, aggregation_spec, size=0):
+        """Helper method to execute aggregation in OpenSearch.
 
         Args:
-            aggregation_spec: Dict with Elasticsearch aggregation spec.
+            aggregation_spec: Dict with OpenSearch aggregation spec.
             size: Int of limit number of result.
 
         Returns:
-            Elasticsearch aggregation result.
+            OpenSearch aggregation result.
         """
         # pylint: disable=unexpected-keyword-arg, no-value-for-parameter
 
         try:
-            aggregation = self.elastic.client.search(
+            aggregation = self.opensearch.client.search(
                 index=self.indices, body=aggregation_spec, size=size)
-        except elasticsearch.NotFoundError:
+        except opensearchpy.NotFoundError:
             logger.error('Unable to find indices: {0:s}'.format(
                 ','.join(self.indices)))
             raise
