@@ -246,7 +246,7 @@ def load_yaml_config(config_parameter_name):
     """Load a YAML file.
     Args:
         config_paramater_name (str): Name of the config paramter to get the
-        path to the YAML file from.  
+        path to the YAML file from.
 
     Returns:
         A dictionary with the YAML data.
@@ -265,4 +265,3 @@ def load_yaml_config(config_parameter_name):
 
     with open(yaml_path, 'r') as fh:
         return yaml.safe_load(fh)
-

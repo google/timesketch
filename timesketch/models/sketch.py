@@ -839,15 +839,15 @@ class SearchHistory(LabelMixin, BaseModel):
 class Scenario(
     LabelMixin, StatusMixin, CommentMixin, GenericAttributeMixin, BaseModel):
     """Implements the Scenario model.
-    
+
     A Timesketch scenario describes the type of the sketch. A scenario has
     one or many facets (investigations).
 
-    A scenario is created from a YAML specification that is provided by the 
+    A scenario is created from a YAML specification that is provided by the
     system. This YAML file is used to create and bootstrap sketches.
     """
     name = Column(UnicodeText())
-    display_name = Column(UnicodeText())    
+    display_name = Column(UnicodeText())
     description = Column(UnicodeText())
     summary = Column(UnicodeText())
     spec_json = Column(UnicodeText())
@@ -879,7 +879,7 @@ class Scenario(
 
 class FacetTimeFrame(BaseModel):
     """Implements the FacetTimeFrame model.
-    
+
     A timeframe is used to set the scope for the facet. This information
     is used when automatically generatae queries and other helper functions.
     """
@@ -942,7 +942,7 @@ facetconclusion_aggregation_association_table = Table(
 
 class FacetConclusion(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     """Implements the FacetConclusion model.
-    
+
     A conslusion is the result of an investigation (facet). It can be created
     both by a human as well as automated by the system.
 
@@ -990,7 +990,7 @@ facet_timeline_association_table = Table(
 class Facet(
     LabelMixin, StatusMixin, CommentMixin, GenericAttributeMixin, BaseModel):
     """Implements the Facet model.
-    
+
     A facet is a collection of investigative questions.
 
     In order to help the user as well as aid in automation it is
@@ -998,7 +998,7 @@ class Facet(
     timeframes of interest, timelines and supplied parameters (key/value).
     """
     name = Column(UnicodeText())
-    display_name = Column(UnicodeText())    
+    display_name = Column(UnicodeText())
     description = Column(UnicodeText())
     spec_json = Column(UnicodeText())
     user_id = Column(Integer, ForeignKey('user.id'))
@@ -1010,7 +1010,7 @@ class Facet(
     questions = relationship(
         'InvestigativeQuestion', backref='facet', lazy='select')
     conclusions = relationship(
-        'FacetConclusion', backref='facet', lazy='select')    
+        'FacetConclusion', backref='facet', lazy='select')
 
     def __init__(self, name, display_name, user, spec_json, description=None):
         """Initialize the Facet object.
@@ -1030,7 +1030,7 @@ class Facet(
         self.spec_json = spec_json
         self.description = description
 
- 
+
  # Association tables for the many-to-many relationship for a Question.
 questionconclusion_story_association_table = Table(
     'investigativequestionconclusion_story', BaseModel.metadata,
@@ -1078,7 +1078,7 @@ class InvestigativeQuestionConclusion(
     automated = Column(Boolean(), default=False)
     user_id = Column(Integer, ForeignKey('user.id'))
     investigativequestion_id = Column(
-        Integer, ForeignKey('investigativequestion.id'))    
+        Integer, ForeignKey('investigativequestion.id'))
     stories = relationship(
         'Story',
         secondary=questionconclusion_story_association_table)
@@ -1112,9 +1112,9 @@ class InvestigativeQuestionConclusion(
 class InvestigativeQuestion(
     LabelMixin, StatusMixin, CommentMixin, GenericAttributeMixin, BaseModel):
     """Implements the InvestigativeQuestion model.
-    
+
     An Investigative Question is the smallest component of an investigation.
-    The goal is to be tactical, and 
+    The goal is to be tactical, and
     """
     name = Column(UnicodeText())
     display_name = Column(UnicodeText())

@@ -128,8 +128,7 @@ API_ROUTES = [
     (DataSourceListResource, '/sketches/<int:sketch_id>/datasource/'),
     (DataSourceResource, '/sketches/<int:sketch_id>/datasource/<int:datasource_id>/'),
     (DataFinderResource, '/sketches/<int:sketch_id>/data/find/'),
+    (ScenarioTemplateListResource, '/scenarios/'),
+    (ScenarioListResource, '/sketches/<int:sketch_id>/scenarios/'),
 
-    (ScenarioTemplateListResource, '/scenarios/'),    
-    (ScenarioListResource, '/sketches/<int:sketch_id>/scenarios/'),    
-    
 ]
