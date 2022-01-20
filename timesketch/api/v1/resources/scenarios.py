@@ -11,12 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""API for asking Timesketch questions for version 1 of the Timesketch API."""
+"""API for asking Timesketch scenarios for version 1 of the Timesketch API."""
 
 import logging
 import json
 
-from flask import current_app
 from flask import jsonify
 from flask import request
 from flask import abort
@@ -44,7 +43,7 @@ class ScenarioTemplateListResource(resources.ResourceMixin, Resource):
     @login_required
     def get(self):
         """Handles GET request to the resource.
-        
+
         Returns:
             A list of JSON representations of the scenarios.
         """
@@ -58,7 +57,7 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
     @login_required
     def get(self, sketch_id):
         """Handles GET request to the resource.
-        
+
         Returns:
             A list of JSON representations of the scenarios.
         """
@@ -79,7 +78,7 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
 
         This resource creates a new scenario for a sketch based on a template.
         Templates are defined in data/scenarios.yaml.
-        
+
         Returns:
             A JSON representation of the scenario.
         """
@@ -135,8 +134,8 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
                     user=current_user)
                 facet.questions.append(question)
 
-        db_session.add(scenario) 
-        db_session.commit()        
+        db_session.add(scenario)
+        db_session.commit()
 
         return self.to_json(scenario)
 
@@ -147,7 +146,7 @@ class ScenarioResource(resources.ResourceMixin, Resource):
     @login_required
     def get(self, sketch_id, scenario_id):
         """Handles GET request to the resource.
-        
+
         Returns:
             A list of JSON representations of the scenarios.
         """
