@@ -78,7 +78,7 @@
 user_logged_in_win:
   display_name: Did someone log into a Windows machine?
   description: This question aim to answer whether
-    someone logged into the machine. It will run the login analyzer
+    someone (anyone) logged into the machine. It will run the login analyzer
     to determine if there was any login activity. This question only
     looks at activity logged in the EVTX file, therefore it only
     applies to Windows machines.
