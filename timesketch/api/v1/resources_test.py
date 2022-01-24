@@ -1,13 +1,13 @@
 # Copyright 2015 Google Inc. All rights reserved.
 #
-# Licensed under the Apache License, Version 2.0 (the 'License');
+# Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
 #     http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an 'AS IS' BASIS,
+# distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
@@ -486,7 +486,7 @@ class SigmaByTextResourceTest(BaseTest):
     """Test Sigma by text resource."""
 
     resource_url = '/api/v1/sigma/text/'
-    correct_rule = """
+    correct_rule = '''
         title: Installation of foobar
         id: bb1e0d1d-cd13-4b65-bf7e-69b4e740266b
         description: Detects suspicious installation of foobar
@@ -509,7 +509,7 @@ class SigmaByTextResourceTest(BaseTest):
         falsepositives:
             - Unknown
         level: high
-        """
+        '''
     expected_response = {
         'meta': {'parsed': True},
         'objects': [
