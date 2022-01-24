@@ -72,7 +72,9 @@ def get_sigma_config_file(config_file=None):
         sigma_config_file = config_file_read.read()
 
     try:
-        sigma_config = sigma_configuration.SigmaConfiguration(sigma_config_file)
+        sigma_config = sigma_configuration.SigmaConfiguration(
+            sigma_config_file
+        )
     except SigmaConfigParseError:
         logger.error('Parsing error with {0:s}'.format(sigma_config_file))
         raise
@@ -101,7 +103,9 @@ def get_sigma_rules_path():
     for folder in rules_path:
         if not os.path.isdir(folder):
             raise ValueError(
-                'Unable to open dir: [{0:s}], it does not exist.'.format(folder)
+                'Unable to open dir: [{0:s}], it does not exist.'.format(
+                    folder
+                )
             )
 
         if not os.access(folder, os.R_OK):
@@ -195,7 +199,9 @@ def get_sigma_rule(filepath, sigma_config=None):
         logger.error('Problem reading the Sigma config', exc_info=True)
         raise ValueError('Problem reading the Sigma config') from e
 
-    sigma_backend = sigma_es.ElasticsearchQuerystringBackend(sigma_conf_obj, {})
+    sigma_backend = sigma_es.ElasticsearchQuerystringBackend(
+        sigma_conf_obj, {}
+    )
 
     try:
         sigma_rules_paths = get_sigma_rules_path()
@@ -211,7 +217,9 @@ def get_sigma_rule(filepath, sigma_config=None):
 
     abs_path = os.path.abspath(filepath)
 
-    with codecs.open(abs_path, 'r', encoding='utf-8', errors='replace') as file:
+    with codecs.open(
+        abs_path, 'r', encoding='utf-8', errors='replace'
+    ) as file:
         try:
             rule_return = {}
             rule_yaml_data = yaml.safe_load_all(file.read())
@@ -294,14 +302,14 @@ def _sanatize_sigma_rule(sigma_rule_query: str) -> str:
     # if one is found split it up into elements seperated by space
     # and go backwards to the next star
 
-    sigma_rule_query = sigma_rule_query.replace(' * OR', ' ' OR')
-    sigma_rule_query = sigma_rule_query.replace(' * AND', ' ' AND')
-    sigma_rule_query = sigma_rule_query.replace('OR * ', 'OR ' ')
-    sigma_rule_query = sigma_rule_query.replace('AND * ', 'AND ' ')
-    sigma_rule_query = sigma_rule_query.replace('(* ', '(' ')
-    sigma_rule_query = sigma_rule_query.replace(' *)', ' ')')
-    sigma_rule_query = sigma_rule_query.replace('*)', ' ')')
-    sigma_rule_query = sigma_rule_query.replace('(*', '('')
+    sigma_rule_query = sigma_rule_query.replace(' * OR', ' " OR')
+    sigma_rule_query = sigma_rule_query.replace(' * AND', ' " AND')
+    sigma_rule_query = sigma_rule_query.replace('OR * ', 'OR " ')
+    sigma_rule_query = sigma_rule_query.replace('AND * ', 'AND " ')
+    sigma_rule_query = sigma_rule_query.replace('(* ', '(" ')
+    sigma_rule_query = sigma_rule_query.replace(' *)', ' ")')
+    sigma_rule_query = sigma_rule_query.replace('*)', ' ")')
+    sigma_rule_query = sigma_rule_query.replace('(*', '("')
     sigma_rule_query = sigma_rule_query.replace(
         r'\*:', ''
     )  # removes wildcard at the beinning of a rule es_query
@@ -311,14 +319,14 @@ def _sanatize_sigma_rule(sigma_rule_query: str) -> str:
     for el in elements:
         if el.count('*') == 1:
             # indicates a string that had a space before with only one star
-            san.append(el.replace('*', """))
+            san.append(el.replace('*', '"'))
         else:
             san.append(el)
 
     sigma_rule_query = ' '.join(san)
 
     # above method might create strings that have '' in them, workaround:
-    sigma_rule_query = sigma_rule_query.replace("""', """)
+    sigma_rule_query = sigma_rule_query.replace('""', '"')
 
     return sigma_rule_query
 
@@ -368,7 +376,9 @@ def get_sigma_blocklist_path(blocklist_path=None):
 
     if not os.path.isfile(blocklist_path):
         raise ValueError(
-            'Unable to open file: [{0:s}] does not exist'.format(blocklist_path)
+            'Unable to open file: [{0:s}] does not exist'.format(
+                blocklist_path
+            )
         )
 
     if not os.access(blocklist_path, os.R_OK):
@@ -442,7 +452,9 @@ def get_sigma_rule_by_text(rule_text, sigma_config=None):
         logger.error('Problem reading the Sigma config', exc_info=True)
         raise ValueError('Problem reading the Sigma config') from e
 
-    sigma_backend = sigma_es.ElasticsearchQuerystringBackend(sigma_conf_obj, {})
+    sigma_backend = sigma_es.ElasticsearchQuerystringBackend(
+        sigma_conf_obj, {}
+    )
 
     rule_return = {}
     # TODO check if input validation is needed / useful.
