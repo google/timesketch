@@ -139,6 +139,10 @@ class TestSigmaUtilLib(BaseTest):
         self.assertIsNotNone(MOCK_SIGMA_RULE)
         self.assertIsNotNone(rule)
         self.assertIn("zmap", rule.get("es_query"))
+        self.assertEqual(
+            '(data_type:("shell:zsh:history" OR "bash:history:command" OR "apt:history:line" OR "selinux:line") AND "apt-get install zmap")',
+            rule.get("es_query"),
+        )
         self.assertIn("b793", rule.get("id"))
         self.assertRaises(
             sigma_exceptions.SigmaParseError,
@@ -150,9 +154,8 @@ class TestSigmaUtilLib(BaseTest):
         rule3 = sigma_util.get_sigma_rule_by_text(MOCK_SIGMA_RULE_3)
 
         self.assertIsNotNone(rule2)
-        # TODO Below should actually be: "Whitespace at"
         self.assertEqual(
-            '\*:(*Whitespace at* OR " beginning " OR " and extra text ")',
+            '("Whitespace at" OR " beginning " OR " and extra text ")',
             rule2.get("es_query"),
         )
 

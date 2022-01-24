@@ -59,7 +59,7 @@ def get_sigma_config_file(config_file=None):
 
     if not os.path.isfile(config_file_path):
         raise ValueError(
-            "Unable to open file: [{0:s}], it does not exist.".format(config_file_path)
+            "Unable to open: [{0:s}], does not exist.".format(config_file_path)
         )
 
     if not os.access(config_file_path, os.R_OK):
@@ -223,17 +223,15 @@ def get_sigma_rule(filepath, sigma_config=None):
                 parsed_sigma_rules = parser.generate(sigma_backend)
 
         except NotImplementedError as exception:
-            logger.error(
-                "Error generating rule in file {0:s}: {1!s}".format(abs_path, exception)
-            )
+            logger.error("Error rule {0:s}: {1!s}".format(abs_path, exception))
             add_problematic_rule(
-                filepath, doc.get("id"), "Parts of the rule not implemented in TS"
+                filepath, doc.get("id"), "Part of the rule not supported in TS"
             )
             return None
 
         except sigma_exceptions.SigmaParseError as exception:
             logger.error(
-                "Sigma parsing error generating rule in file {0:s}: {1!s}".format(
+                "Sigma parsing error rule in file {0:s}: {1!s}".format(
                     abs_path, exception
                 )
             )
@@ -244,7 +242,7 @@ def get_sigma_rule(filepath, sigma_config=None):
 
         except yaml.parser.ParserError as exception:
             logger.error(
-                "Yaml parsing error generating rule in file {0:s}: {1!s}".format(
+                "Yaml parsing error rule in file {0:s}: {1!s}".format(
                     abs_path, exception
                 )
             )
@@ -282,6 +280,7 @@ def _sanatize_sigma_rule(sigma_rule_query: str) -> str:
     # TODO: Investigate how to handle .keyword
     # fields in Sigma.
     # https://github.com/google/timesketch/issues/1199#issuecomment-639475885
+
     sigma_rule_query = sigma_rule_query.replace(".keyword:", ":")
     sigma_rule_query = sigma_rule_query.replace("\\ ", " ")
     sigma_rule_query = sigma_rule_query.replace('"', '"')
@@ -292,7 +291,8 @@ def _sanatize_sigma_rule(sigma_rule_query: str) -> str:
     # TODO: Improve the whitespace handling
     # https://github.com/google/timesketch/issues/2007
     # check if there is a " * "
-    # if one is found split it up into elements seperated by space and go backwards to the next star
+    # if one is found split it up into elements seperated by space
+    # and go backwards to the next star
 
     sigma_rule_query = sigma_rule_query.replace(" * OR", ' " OR')
     sigma_rule_query = sigma_rule_query.replace(" * AND", ' " AND')
@@ -300,8 +300,13 @@ def _sanatize_sigma_rule(sigma_rule_query: str) -> str:
     sigma_rule_query = sigma_rule_query.replace("AND * ", 'AND " ')
     sigma_rule_query = sigma_rule_query.replace("(* ", '(" ')
     sigma_rule_query = sigma_rule_query.replace(" *)", ' ")')
+    sigma_rule_query = sigma_rule_query.replace("*)", ' ")')
+    sigma_rule_query = sigma_rule_query.replace("(*", '("')
+    sigma_rule_query = sigma_rule_query.replace(
+        r"\*:", ""
+    )  # removes wildcard at the beinning of a rule es_query
 
-    elements = re.split("\s+", sigma_rule_query)
+    elements = re.split(r"\s+", sigma_rule_query)
     san = []
     for el in elements:
         if el.count("*") == 1:
@@ -311,6 +316,9 @@ def _sanatize_sigma_rule(sigma_rule_query: str) -> str:
             san.append(el)
 
     sigma_rule_query = " ".join(san)
+
+    # above method might create strings that have "" in them, workaround:
+    sigma_rule_query = sigma_rule_query.replace('""', '"')
 
     return sigma_rule_query
 
@@ -360,7 +368,7 @@ def get_sigma_blocklist_path(blocklist_path=None):
 
     if not os.path.isfile(blocklist_path):
         raise ValueError(
-            "Unable to open file: [{0:s}], it does not exist.".format(blocklist_path)
+            "Unable to open file: [{0:s}] does not exist".format(blocklist_path)
         )
 
     if not os.access(blocklist_path, os.R_OK):
@@ -402,7 +410,7 @@ def add_problematic_rule(filepath, rule_uuid=None, reason=None):
         rule_uuid,
     ]
 
-    with open(blocklist_file_path, "a") as f:
+    with open(blocklist_file_path, "a", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow(fields)
 
@@ -454,11 +462,11 @@ def get_sigma_rule_by_text(rule_text, sigma_config=None):
         raise
 
     except sigma_exceptions.SigmaParseError as exception:
-        logger.error("Sigma parsing error generating rule {0!s}".format(exception))
+        logger.error("Sigma parsing error rule {0!s}".format(exception))
         raise
 
     except yaml.parser.ParserError as exception:
-        logger.error("Yaml parsing error generating rule {0!s}".format(exception))
+        logger.error("Yaml parsing error rule {0!s}".format(exception))
         raise
 
     sigma_es_query = ""
@@ -469,5 +477,4 @@ def get_sigma_rule_by_text(rule_text, sigma_config=None):
     rule_return.update({"es_query": sigma_es_query})
     rule_return.update({"file_name": "N/A"})
     rule_return.update({"file_relpath": "N/A"})
-    logger.error(rule_return)
     return rule_return
