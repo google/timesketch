@@ -120,16 +120,22 @@ class TestSigmaUtilLib(BaseTest):
     def test_sanatize_rule_string(self):
         """Testing the string sanitization"""
 
+        # pylint: disable=protected-access
         test_1 = sigma_util._sanatize_sigma_rule("(* lorem * OR * lorema *)")
 
         self.assertIsNotNone(test_1)
         self.assertEqual(
-            sigma_util._sanatize_sigma_rule("test.keyword:foobar"), "test:foobar"
+            sigma_util._sanatize_sigma_rule("test.keyword:foobar"),
+            "test:foobar",
         )
         self.assertEqual(
-            sigma_util._sanatize_sigma_rule("(* foobar *)"), '(" foobar ")'
+            sigma_util._sanatize_sigma_rule("(* foobar *)"),
+            '(" foobar ")',
         )
-        # self.assertEqual(sigma_util._sanatize_sigma_rule("*foo bar*"), '"foo bar"')
+        self.assertEqual(
+            sigma_util._sanatize_sigma_rule("*foo bar*"), '"foo bar"'
+        )
+        # pylint: enable=protected-access
 
     def test_get_rule_by_text(self):
         """Test getting sigma rule by text."""
@@ -140,7 +146,7 @@ class TestSigmaUtilLib(BaseTest):
         self.assertIsNotNone(rule)
         self.assertIn("zmap", rule.get("es_query"))
         self.assertEqual(
-            '(data_type:("shell:zsh:history" OR "bash:history:command" OR "apt:history:line" OR "selinux:line") AND "apt-get install zmap")',
+            '(data_type:("shell:zsh:history" OR "bash:history:command" OR "apt:history:line" OR "selinux:line") AND "apt-get install zmap")',  # pylint: disable=line-too-long
             rule.get("es_query"),
         )
         self.assertIn("b793", rule.get("id"))
@@ -161,16 +167,15 @@ class TestSigmaUtilLib(BaseTest):
 
         self.assertIsNotNone(rule3)
         self.assertEqual(
-            '(data_type:"windows:evtx:record" AND " lorem ")', rule3.get("es_query")
+            '(data_type:"windows:evtx:record" AND " lorem ")',
+            rule3.get("es_query"),
         )
 
         self.assertRaises(
-            NotImplementedError, sigma_util.get_sigma_rule_by_text, COUNT_RULE_1
+            NotImplementedError,
+            sigma_util.get_sigma_rule_by_text,
+            COUNT_RULE_1,
         )
-
-        import pdb
-
-        # pdb.set_trace()
 
         self.assertIn("2020/06/26", rule.get("date"))
         self.assertIsInstance(rule.get("date"), str)
