@@ -55,6 +55,8 @@ fi
 
 # Create dirs
 mkdir -p timesketch/{data/postgresql,data/opensearch,logs,etc,etc/timesketch,etc/timesketch/sigma/rules,upload}
+# TODO: Switch to named volumes instead of host volumes.
+chown 1000 timesketch/data/opensearch
 
 echo -n "* Setting default config parameters.."
 POSTGRES_USER="timesketch"
