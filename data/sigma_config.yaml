@@ -247,7 +247,6 @@ fieldmappings:
     TargetLogonId: xml_string
     AuthenticationPackageName: xml_string
     WorkstationName: xml_string
-    LogonGuid: xml_string
     TransmittedServices: xml_string
     ProcessId: xml_string
     IpAddress: xml_string
@@ -278,7 +277,6 @@ fieldmappings:
     DeviceClassName: xml_string
     TicketOptions: xml_string
     TicketEncryptionType: xml_string
-    Properties: xml_string
     SourceWorkstation: xml_string
     DestinationAddress: xml_string
     DestinationPort: xml_string
