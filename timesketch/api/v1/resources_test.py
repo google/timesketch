@@ -466,7 +466,7 @@ class SigmaListResourceTest(BaseTest):
                 "modified": "2020/06/26",
                 "tags": ["attack.discovery", "attack.t1046"],
                 "references": [
-                    "https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html"  # pylint: disable=line-too-long
+                    "https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html" # pylint: disable=line-too-long
                 ],
                 "title": "Suspicious Installation of ZMap",
             }
