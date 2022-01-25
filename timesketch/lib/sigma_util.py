@@ -68,7 +68,7 @@ def get_sigma_config_file(config_file=None):
             'read, please check permissions.'.format(config_file_path)
         )
 
-    with open(config_file_path, 'r') as config_file_read:
+    with open(config_file_path, 'r', encoding='utf-8') as config_file_read:
         sigma_config_file = config_file_read.read()
 
     try:
