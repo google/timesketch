@@ -38,18 +38,11 @@ limitations under the License.
 
       <template v-slot:extension>
         <v-tabs class="ml-2">
-          <v-tab :transition="false" :to="{ name: 'Overview' }" exact-path
-            ><v-icon left small>mdi-cube-outline</v-icon> Overview
-          </v-tab>
-
-          <v-tab :transition="false" :to="{ name: 'Explore' }"><v-icon left small>mdi-magnify</v-icon> Explore </v-tab>
-
-          <!--
-          <v-tab :to="{ name: 'GraphOverview' }"><v-icon left small>mdi-lan</v-icon> Graph </v-tab>
-          <v-tab disabled><v-icon left small>mdi-chart-bar</v-icon>Aggregate</v-tab>
-          <v-tab disabled><v-icon left small>mdi-auto-fix</v-icon>Analyze</v-tab>
-          <v-tab disabled><v-icon left small>mdi-bookshelf</v-icon>Stories</v-tab>
-          -->
+          <v-tab :to="{ name: 'Overview' }" exact-path><v-icon left small>mdi-cube-outline</v-icon> Overview</v-tab>
+          <v-tab :to="{ name: 'Explore' }"><v-icon left small>mdi-magnify</v-icon> Explore </v-tab>
+          <v-tab disabled><v-icon left small>mdi-lan</v-icon> Graph </v-tab>
+          <v-tab disabled><v-icon left small>mdi-auto-fix</v-icon>Automation</v-tab>
+          <v-tab disabled><v-icon left small>mdi-head-lightbulb</v-icon>Intelligence</v-tab>
         </v-tabs>
       </template>
     </v-app-bar>
@@ -101,4 +94,5 @@ export default {
 .v-tab {
   text-transform: none !important;
 }
+
 </style>

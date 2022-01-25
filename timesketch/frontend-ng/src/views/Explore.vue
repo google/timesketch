@@ -70,7 +70,7 @@ limitations under the License.
                       </v-btn>
                     </template>
 
-                    <ts-filter-menu @cancel="timeFilterMenu = false"></ts-filter-menu>
+                    <ts-filter-menu @cancel="timeFilterMenu = false" @addChip="addChip"></ts-filter-menu>
                   </v-menu>
                 </v-sheet>
                 <v-divider vertical class="mx-2"></v-divider>
@@ -405,14 +405,14 @@ limitations under the License.
                 <!-- Time bubble -->
                 <v-divider v-if="item.showDetails && item.deltaDays"></v-divider>
                 <div v-if="item.deltaDays > 0" class="ml-16">
-                  <div class="ts-time-bubble-vertical-line ts-time-bubble-vertical-line-color"></div>
-                  <div class="ts-time-bubble ts-time-bubble-color">
+                  <div class="ts-time-bubble-vertical-line ts-time-bubble-vertical-line-color" v-bind:style="getTimeBubbleColor(item)"></div>
+                  <div class="ts-time-bubble ts-time-bubble-color" v-bind:style="getTimeBubbleColor(item)">
                     <h5>
                       <b>{{ item.deltaDays | compactNumber }}</b
                       ><br />days
                     </h5>
                   </div>
-                  <div class="ts-time-bubble-vertical-line ts-time-bubble-vertical-line-color"></div>
+                  <div class="ts-time-bubble-vertical-line ts-time-bubble-vertical-line-color" v-bind:style="getTimeBubbleColor(item)"></div>
                 </div>
               </td>
             </template>
@@ -420,7 +420,7 @@ limitations under the License.
             <!-- Datetime field with action buttons -->
             <template v-slot:item._source.timestamp="{ item }">
               <div v-bind:style="getTimelineColor(item)" class="datetime-table-cell">
-                {{ item._source.timestamp | formatTimestamp | moment('utc', 'YYYY-MM-DDTHH:mm:ss') }}
+                {{ item._source.timestamp | formatTimestamp | toISO8601 }}
               </div>
             </template>
 
@@ -530,13 +530,12 @@ export default {
           text: 'Datetime (UTC)',
           align: 'start',
           value: '_source.timestamp',
-          width: '200',
+          width: '230',
         },
         {
           value: 'actions',
           width: '90',
         },
-
         {
           text: 'Message',
           align: 'start',
@@ -718,6 +717,15 @@ export default {
       }
       return {
         'background-color': backgroundColor,
+      }
+    },
+    getTimeBubbleColor() {
+      let backgroundColor = '#f5f5f5'
+      if (this.$vuetify.theme.dark) {
+        backgroundColor = '#333'
+      }
+      return {
+        'background-color': backgroundColor
       }
     },
     search: function (emitEvent = true, resetPagination = true, incognito = false, parent = false) {
@@ -1257,7 +1265,7 @@ export default {
   height: 60px;
   border-radius: 30px;
   position: relative;
-  margin: 0 0 0 45px;
+  margin: 0 0 0 65px;
   text-align: center;
   font-size: var(--font-size-small);
   background-color: #f5f5f5;
@@ -1275,7 +1283,7 @@ export default {
 .ts-time-bubble-vertical-line {
   width: 2px;
   height: 15px;
-  margin: 0 0 0 75px;
+  margin: 0 0 0 95px;
   background-color: #f5f5f5;
 }
 

@@ -1,5 +1,5 @@
 /*
-Copyright 2020 Google Inc. All rights reserved.
+Copyright 2022 Google Inc. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -13,17 +13,11 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+import dayjs from '@/plugins/dayjs'
+
 export default {
-  name: 'formatTimestamp',
-  filter: function(input) {
-    let tsLength = parseInt(input).toString().length
-    if (tsLength === 13) {
-      return input // exit early if timestamp is already in milliseconds
-    } else if (tsLength === 15 || tsLength === 16) {
-      input = input / 1000 // microseconds -> milliseconds
-    } else if (tsLength === 10) {
-      input = input * 1000000 // seconds -> milliseconds
-    }
-    return parseInt(input)
+  name: 'toISO8601',
+  filter: function(timestampMillis) {
+    return dayjs(timestampMillis).toISOString()
   },
 }

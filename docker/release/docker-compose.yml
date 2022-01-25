@@ -1,7 +1,6 @@
 version: "3.7"
 services:
   timesketch-web:
-    container_name: timesketch-web
     image: us-docker.pkg.dev/osdfir-registry/timesketch/timesketch:${TIMESKETCH_VERSION}
     environment:
       - NUM_WSGI_WORKERS=${NUM_WSGI_WORKERS}
@@ -13,7 +12,6 @@ services:
       - ./logs:/var/log/timesketch/
 
   timesketch-worker:
-    container_name: timesketch-worker
     image: us-docker.pkg.dev/osdfir-registry/timesketch/timesketch:${TIMESKETCH_VERSION}
     environment:
       - WORKER_LOG_LEVEL=${WORKER_LOG_LEVEL}
@@ -25,7 +23,6 @@ services:
       - ./logs:/var/log/timesketch/
 
   opensearch:
-    container_name: opensearch
     image: opensearchproject/opensearch:${OPENSEARCH_VERSION}
     restart: always
     environment:
@@ -45,7 +42,6 @@ services:
       - ./data/opensearch:/usr/share/opensearch/data/
 
   postgres:
-    container_name: postgres
     image: postgres:${POSTGRES_VERSION}
     environment:
       - POSTGRES_USER=timesketch
@@ -55,13 +51,11 @@ services:
       - ./data/postgresql:/var/lib/postgresql/data
 
   redis:
-    container_name: redis
     image: redis:${REDIS_VERSION}
     command: "redis-server"
     restart: always
 
   nginx:
-    container_name: nginx
     image: nginx:${NGINX_VERSION}
     restart: always
     ports:

@@ -83,14 +83,19 @@ export default {
       if (!backgroundColor.startsWith('#')) {
         backgroundColor = '#' + backgroundColor
       }
-
       // Grey out the index if it is not selected.
       if (!this.isSelected) {
         backgroundColor = '#d2d2d2'
         textDecoration = 'line-through'
         opacity = '50%'
       }
-
+      if (this.$vuetify.theme.dark) {
+        return {
+          'background-color': backgroundColor,
+          filter: 'grayscale(25%)',
+          color: '#333',
+        }
+      }
       return {
         'background-color': backgroundColor,
         'text-decoration': textDecoration,
