@@ -181,19 +181,23 @@ class TestSigmaUtilLib(BaseTest):
             MOCK_SIGMA_RULE_ERROR1,
         )
 
-        rule2 = sigma_util.get_sigma_rule_by_text(MOCK_SIGMA_RULE_2)
-        rule3 = sigma_util.get_sigma_rule_by_text(MOCK_SIGMA_RULE_3)
+        self.assertIn("2020/06/26", rule.get("date"))
+        self.assertIsInstance(rule.get("date"), str)
 
-        self.assertIsNotNone(rule2)
+        rule = sigma_util.get_sigma_rule_by_text(MOCK_SIGMA_RULE_2)
+
+        self.assertIsNotNone(rule)
         self.assertEqual(
             '("Whitespace at" OR " beginning " OR " and extra text ")',
-            rule2.get("es_query"),
+            rule.get("es_query"),
         )
 
-        self.assertIsNotNone(rule3)
+        rule = sigma_util.get_sigma_rule_by_text(MOCK_SIGMA_RULE_3)
+
+        self.assertIsNotNone(rule)
         self.assertEqual(
             '(data_type:"windows:evtx:record" AND " lorem ")',
-            rule3.get("es_query"),
+            rule.get("es_query"),
         )
 
         self.assertRaises(
@@ -201,9 +205,6 @@ class TestSigmaUtilLib(BaseTest):
             sigma_util.get_sigma_rule_by_text,
             COUNT_RULE_1,
         )
-
-        self.assertIn("2020/06/26", rule.get("date"))
-        self.assertIsInstance(rule.get("date"), str)
 
         rule = sigma_util.get_sigma_rule_by_text(MOCK_SIGMA_RULE_DATE_ERROR1)
         self.assertIsNotNone(MOCK_SIGMA_RULE_DATE_ERROR1)
