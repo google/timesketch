@@ -33,14 +33,18 @@ class ResourceMixinTest(BaseTest):
     def test_to_json_empty_list(self):
         """Behavior of to_json when given an empty list."""
         response = ResourceMixin().to_json([])
-        self.assertEqual(response.json, {
-            'meta': {},
-            'objects': [],
-        })
+        self.assertEqual(
+            response.json,
+            {
+                'meta': {},
+                'objects': [],
+            },
+        )
 
 
 class SketchListResourceTest(BaseTest):
     """Test SketchListResource."""
+
     resource_url = '/api/v1/sketches/'
 
     def test_sketch_list_resource(self):
@@ -59,16 +63,19 @@ class SketchListResourceTest(BaseTest):
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data, ensure_ascii=False),
-            content_type='application/json')
+            content_type='application/json',
+        )
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
 
 
 class SketchResourceTest(BaseTest):
     """Test SketchResource."""
+
     resource_url = '/api/v1/sketches/1/'
 
     @mock.patch(
-        'timesketch.api.v1.resources.OpenSearchDataStore', MockDataStore)
+        'timesketch.api.v1.resources.OpenSearchDataStore', MockDataStore
+    )
     def test_sketch_resource(self):
         """Authenticated request to get a sketch."""
         self.login()
@@ -91,6 +98,7 @@ class SketchResourceTest(BaseTest):
 
 class ViewListResourceTest(BaseTest):
     """Test ViewListResource."""
+
     resource_url = '/api/v1/sketches/1/views/'
 
     def test_post_view_list_resource(self):
@@ -101,23 +109,28 @@ class ViewListResourceTest(BaseTest):
             new_searchtemplate=False,
             query='test',
             filter={},
-            dsl={})
+            dsl={},
+        )
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data, ensure_ascii=False),
-            content_type='application/json')
+            content_type='application/json',
+        )
         data['from_searchtemplate_id'] = 1
         response_with_searchtemplate = self.client.post(
             self.resource_url,
             data=json.dumps(data, ensure_ascii=False),
-            content_type='application/json')
+            content_type='application/json',
+        )
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
-        self.assertEqual(response_with_searchtemplate.status_code,
-                         HTTP_STATUS_CODE_CREATED)
+        self.assertEqual(
+            response_with_searchtemplate.status_code, HTTP_STATUS_CODE_CREATED
+        )
 
 
 class ViewResourceTest(BaseTest):
     """Test ViewResource."""
+
     resource_url = '/api/v1/sketches/1/views/1/'
 
     def test_view_resource(self):
@@ -135,7 +148,8 @@ class ViewResourceTest(BaseTest):
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data, ensure_ascii=False),
-            content_type='application/json')
+            content_type='application/json',
+        )
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
 
     def test_invalid_user_in_view(self):
@@ -153,6 +167,7 @@ class ViewResourceTest(BaseTest):
 
 class SearchTemplateResourceTest(BaseTest):
     """Test Search template resource."""
+
     resource_url = '/api/v1/searchtemplate/1/'
 
     def test_searchtemplate_resource(self):
@@ -172,6 +187,7 @@ class SearchTemplateResourceTest(BaseTest):
 
 class ExploreResourceTest(BaseTest):
     """Test ExploreResource."""
+
     resource_url = '/api/v1/sketches/1/explore/'
     expected_response = {
         'meta': {
@@ -193,29 +209,32 @@ class ExploreResourceTest(BaseTest):
                 'query_dsl': None,
                 'query_filter': '{}',
                 'query_result_count': 0,
-                'query_string': 'test'
-            }
-        },
-        'objects': [{
-            'sort': [1410593223000],
-            '_type': 'plaso_event',
-            '_source': {
-                'timestamp': 1410593222543942,
-                'message': 'Test event',
-                'label': ['__ts_star'],
-                'timestamp_desc': 'Content Modification Time',
-                'datetime': '2014-09-13T07:27:03+00:00',
-                '__ts_timeline_id': 1,
+                'query_string': 'test',
             },
-            '_score': 'null',
-            'selected': False,
-            '_index': 'test',
-            '_id': 'test'
-        }]
+        },
+        'objects': [
+            {
+                'sort': [1410593223000],
+                '_type': 'plaso_event',
+                '_source': {
+                    'timestamp': 1410593222543942,
+                    'message': 'Test event',
+                    'label': ['__ts_star'],
+                    'timestamp_desc': 'Content Modification Time',
+                    'datetime': '2014-09-13T07:27:03+00:00',
+                    '__ts_timeline_id': 1,
+                },
+                '_score': 'null',
+                'selected': False,
+                '_index': 'test',
+                '_id': 'test',
+            }
+        ],
     }
 
-    @mock.patch('timesketch.api.v1.resources.OpenSearchDataStore',
-                MockDataStore)
+    @mock.patch(
+        'timesketch.api.v1.resources.OpenSearchDataStore', MockDataStore
+    )
     def test_search(self):
         """Authenticated request to query the datastore."""
         self.login()
@@ -223,7 +242,8 @@ class ExploreResourceTest(BaseTest):
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data, ensure_ascii=False),
-            content_type='application/json')
+            content_type='application/json',
+        )
         response_json = response.json
         # Remove flaky properties (dynamically generated)
         del response_json['meta']['search_node']['created_at']
@@ -237,8 +257,9 @@ class AggregationExploreResourceTest(BaseTest):
 
     resource_url = '/api/v1/sketches/1/aggregation/explore/'
 
-    @mock.patch('timesketch.api.v1.resources.OpenSearchDataStore',
-                MockDataStore)
+    @mock.patch(
+        'timesketch.api.v1.resources.OpenSearchDataStore', MockDataStore
+    )
     def test_heatmap_aggregation(self):
         """Authenticated request to get aggregation requests."""
         self.login()
@@ -246,12 +267,14 @@ class AggregationExploreResourceTest(BaseTest):
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data, ensure_ascii=False),
-            content_type='application/json')
+            content_type='application/json',
+        )
         self.assert200(response)
 
 
 class EventResourceTest(BaseTest):
     """Test EventResource."""
+
     resource_url = '/api/v1/sketches/1/event/'
     expected_response = {
         'objects': {
@@ -268,18 +291,21 @@ class EventResourceTest(BaseTest):
         }
     }
 
-    @mock.patch('timesketch.api.v1.resources.OpenSearchDataStore',
-                MockDataStore)
+    @mock.patch(
+        'timesketch.api.v1.resources.OpenSearchDataStore', MockDataStore
+    )
     def test_get_event(self):
         """Authenticated request to get an event from the datastore."""
         self.login()
-        response = self.client.get(self.resource_url +
-                                   '?searchindex_id=test&event_id=test')
+        response = self.client.get(
+            self.resource_url + '?searchindex_id=test&event_id=test'
+        )
         self.assertDictContainsSubset(self.expected_response, response.json)
         self.assert200(response)
 
-    @mock.patch('timesketch.api.v1.resources.OpenSearchDataStore',
-                MockDataStore)
+    @mock.patch(
+        'timesketch.api.v1.resources.OpenSearchDataStore', MockDataStore
+    )
     def test_invalid_index(self):
         """
         Authenticated request to get an event from the datastore, but in the
@@ -287,33 +313,34 @@ class EventResourceTest(BaseTest):
         """
         self.login()
         response_400 = self.client.get(
-            self.resource_url + '?searchindex_id=wrong_index&event_id=test')
+            self.resource_url + '?searchindex_id=wrong_index&event_id=test'
+        )
         self.assert400(response_400)
 
 
 class EventAnnotationResourceTest(BaseTest):
     """Test EventAnnotationResource."""
+
     resource_url = '/api/v1/sketches/1/event/annotate/'
 
-    @mock.patch('timesketch.api.v1.resources.OpenSearchDataStore',
-                MockDataStore)
+    @mock.patch(
+        'timesketch.api.v1.resources.OpenSearchDataStore', MockDataStore
+    )
     def test_post_annotate_resource(self):
         """Authenticated request to create an annotation."""
         self.login()
         for annotation_type in ['comment', 'label']:
-            event = {
-                '_type': 'test_event',
-                '_index': 'test',
-                '_id': 'test'
-            }
+            event = {'_type': 'test_event', '_index': 'test', '_id': 'test'}
             data = dict(
                 annotation='test',
                 annotation_type=annotation_type,
-                events=[event])
+                events=[event],
+            )
             response = self.client.post(
                 self.resource_url,
                 data=json.dumps(data),
-                content_type='application/json')
+                content_type='application/json',
+            )
             self.assertIsInstance(response.json, dict)
             self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
 
@@ -326,35 +353,42 @@ class EventAnnotationResourceTest(BaseTest):
             annotation='test',
             annotation_type='comment',
             event_id='test',
-            searchindex_id='invalid_searchindex')
+            searchindex_id='invalid_searchindex',
+        )
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data),
-            content_type='application/json')
+            content_type='application/json',
+        )
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
 
 
 class SearchIndexResourceTest(BaseTest):
     """Test SearchIndexResource."""
+
     resource_url = '/api/v1/searchindices/'
 
-    @mock.patch('timesketch.api.v1.resources.OpenSearchDataStore',
-                MockDataStore)
+    @mock.patch(
+        'timesketch.api.v1.resources.OpenSearchDataStore', MockDataStore
+    )
     def test_post_create_searchindex(self):
         """Authenticated request to create a searchindex."""
         self.login()
         data = dict(
-            searchindex_name='test3', es_index_name='test3', public=False)
+            searchindex_name='test3', es_index_name='test3', public=False
+        )
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data),
-            content_type='application/json')
+            content_type='application/json',
+        )
         self.assertIsInstance(response.json, dict)
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
 
 
 class TimelineListResourceTest(BaseTest):
     """Test TimelineList resource."""
+
     resource_url = '/api/v1/sketches/1/timelines/'
 
     def test_add_existing_timeline_resource(self):
@@ -364,7 +398,8 @@ class TimelineListResourceTest(BaseTest):
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data, ensure_ascii=False),
-            content_type='application/json')
+            content_type='application/json',
+        )
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
 
     def test_add_new_timeline_resource(self):
@@ -374,21 +409,21 @@ class TimelineListResourceTest(BaseTest):
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data, ensure_ascii=False),
-            content_type='application/json')
+            content_type='application/json',
+        )
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
 
 
 class SigmaResourceTest(BaseTest):
     """Test Sigma resource."""
+
     resource_url = '/api/v1/sigma/rule/'
     expected_response = {
         'objects': {
             'description': 'Detects suspicious installation of ZMap',
             'id': '5266a592-b793-11ea-b3de-0242ac130004',
             'level': 'high',
-            'logsource': {
-                'product': 'linux', 'service': 'shell'
-                },
+            'logsource': {'product': 'linux', 'service': 'shell'},
             'title': 'Suspicious Installation of ZMap',
         }
     }
@@ -396,50 +431,48 @@ class SigmaResourceTest(BaseTest):
     def test_get_sigma_rule(self):
         """Authenticated request to get an sigma rule."""
         self.login()
-        response = self.client.get(self.resource_url +
-                                   '5266a592-b793-11ea-b3de-0242ac130004')
+        response = self.client.get(
+            self.resource_url + '5266a592-b793-11ea-b3de-0242ac130004'
+        )
         self.assertIsNotNone(response)
 
 
 class SigmaListResourceTest(BaseTest):
     """Test Sigma resource."""
+
     resource_url = '/api/v1/sigma/'
     expected_response = {
-        'meta': {
-            'current_user': 'test1', 'rules_count': 1
-            },
-        'objects':[{
-            'author': 'Alexander Jaeger',
-            'date': '2020/06/26',
-            'description': 'Detects suspicious installation of ZMap',
-            'detection': {
-                'condition': 'keywords',
-                'keywords': [
-                    '*apt-get install zmap*'
-                    ]
+        'meta': {'current_user': 'test1', 'rules_count': 1},
+        'objects': [
+            {
+                'author': 'Alexander Jaeger',
+                'date': '2020/06/26',
+                'description': 'Detects suspicious installation of ZMap',
+                'detection': {
+                    'condition': 'keywords',
+                    'keywords': ['*apt-get install zmap*'],
                 },
-            'es_query':
-                '(data_type:("shell:zsh:history" OR '\
-                '"bash:history:command" OR '\
-                '"apt:history:line" OR '\
-                '"selinux:line") AND '\
-                '"*apt-get install zmap*")',
-            'falsepositives': ['Unknown'],
-            'file_name': 'lnx_susp_zmap.yml',
-            'file_relpath': 'lnx_susp_zmap.yml',
-            'id': '5266a592-b793-11ea-b3de-0242ac130004',
-            'level': 'high',
-            'logsource': {
-                'product': 'linux',
-                'service': 'shell'
-            },
-            'modified': '2020/06/26',
-            'tags': ['attack.discovery', 'attack.t1046'],
-            'references': [
-                'https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html'
-            ],
-            'title': 'Suspicious Installation of ZMap'
-        }]}
+                'es_query': '(data_type:("shell:zsh:history" OR '
+                '"bash:history:command" OR '
+                '"apt:history:line" OR '
+                '"selinux:line") AND '
+                '"apt-get install zmap")',
+                'falsepositives': ['Unknown'],
+                'file_name': 'lnx_susp_zmap.yml',
+                'file_relpath': 'lnx_susp_zmap.yml',
+                'id': '5266a592-b793-11ea-b3de-0242ac130004',
+                'level': 'high',
+                'logsource': {'product': 'linux', 'service': 'shell'},
+                'modified': '2020/06/26',
+                'tags': ['attack.discovery', 'attack.t1046'],
+                'references': [
+                    'https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html'  # pylint: disable=line-too-long
+                ],
+                'title': 'Suspicious Installation of ZMap',
+            }
+        ],
+    }
+
     def test_get_sigma_rule_list(self):
         self.login()
         response = self.client.get(self.resource_url)
@@ -447,6 +480,7 @@ class SigmaListResourceTest(BaseTest):
         print(data)
         self.assertDictContainsSubset(self.expected_response, response.json)
         self.assertIsNotNone(response)
+
 
 class SigmaByTextResourceTest(BaseTest):
     """Test Sigma by text resource."""
@@ -477,10 +511,8 @@ class SigmaByTextResourceTest(BaseTest):
         level: high
         '''
     expected_response = {
-        'meta': {
-            'parsed': True
-        },
-        'objects':[
+        'meta': {'parsed': True},
+        'objects': [
             {
                 'title': 'Installation of foobar',
                 'id': 'bb1e0d1d-cd13-4b65-bf7e-69b4e740266b',
@@ -490,22 +522,18 @@ class SigmaByTextResourceTest(BaseTest):
                 'date': '2020/12/10',
                 'modified': '2020/12/10',
                 'tags': ['attack.discovery', 'attack.t1046'],
-                'logsource': {
-                    'product': 'linux',
-                    'service': 'shell'
-                },
+                'logsource': {'product': 'linux', 'service': 'shell'},
                 'detection': {
                     'keywords': ['*apt-get install foobar*'],
-                    'condition': 'keywords'
+                    'condition': 'keywords',
                 },
                 'falsepositives': ['Unknown'],
                 'level': 'high',
-                'es_query':
-                    '(data_type:("shell:zsh:history" OR "bash:history:command" OR "apt:history:line" OR "selinux:line") AND "*apt-get install foobar*")',# pylint: disable=line-too-long
+                'es_query': '(data_type:("shell:zsh:history" OR "bash:history:command" OR "apt:history:line" OR "selinux:line") AND "apt-get install foobar")',  # pylint: disable=line-too-long
                 'file_name': 'N/A',
-                'file_relpath': 'N/A'
+                'file_relpath': 'N/A',
             }
-        ]
+        ],
     }
 
     def test_get_sigma_rule(self):
@@ -516,7 +544,8 @@ class SigmaByTextResourceTest(BaseTest):
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data, ensure_ascii=False),
-            content_type='application/json')
+            content_type='application/json',
+        )
         self.assertIsNotNone(response)
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
         self.assertDictContainsSubset(self.expected_response, response.json)
@@ -527,7 +556,8 @@ class SigmaByTextResourceTest(BaseTest):
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data, ensure_ascii=False),
-            content_type='application/json')
+            content_type='application/json',
+        )
         data = json.loads(response.get_data(as_text=True))
 
         self.assertIn('No detection definitions found', data['message'])
@@ -538,7 +568,8 @@ class SigmaByTextResourceTest(BaseTest):
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data, ensure_ascii=False),
-            content_type='application/json')
+            content_type='application/json',
+        )
         data = json.loads(response.get_data(as_text=True))
 
         self.assertIn('Missing values from the request', data['message'])

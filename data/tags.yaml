@@ -1,48 +1,8 @@
 # Config file for the tagger analyzer.
 #
-# Each definition needs to define either a query_string or a query_dsl.
-#
-# The save_search is an optional boolean that determines whether a saved
-# search should be created if there are hits.
-#
-# The tagger works in the way that the query is run and the emojis and
-# tags that are defined are applied to the matching events.
-#
-# Optionally you can define a regular expression and run it against an
-# attribute that is returned back from the search and only if there is
-# a match against the regular expression the tag will be added.
-#
-# Each regular expresion can define a flag, which is a list of flags
-# as strings from the re module. These include:
-# - DEBUG
-# - DOTALL
-# - IGNORECASE
-# - LOCALE
-# - MULTILINE
-# - TEMPLATE
-# - UNICODE
-# - VERBOSE
-#
-# A search is saved if the tag is added (only if there are results).
-#
-# Example:
-#
-# test_tagger:
-#        query_string: 'test'
-#        tags: ['test-tag']
-#        emojis: ['FISHING_POLE']
-#        save_search: true
-#        search_name: 'TEST the tag'
-#
-# test_tagger_with_re:
-#        query_string: 'test'
-#        tags: ['test-retag']
-#        emojis: ['FISHING_POLE']
-#        save_search: true
-#        regular_expression: '[a-z][A-C]?://foobarX{0,4}'
-#        re_attribute: 'message'
-#        search_name: 'TEST with RE'
-# ------------------------------------------------------------------------
+# Please refer to docs/guides/analyzers/tagger.md for
+# instructions on how to edit this file.
+
 gcs_bucket_creation_tagger:
   query_string: 'serviceName: "storage.googleapis.com" AND methodName: "storage.buckets.create"'
   tags: ['gcs-bucket-create']
@@ -70,3 +30,10 @@ gcs_bucket_permission_world_added_tagger:
   emojis: ['BUCKET', 'GLOBE']
   save_search: true
   search_name: 'Bucket permission - World Readable'
+
+yara_match_tagger:
+  query_string: '_exists_:yara_match AND NOT yara_match.keyword:"-"'
+  tags: ['yara', '$yara_match']
+  modifiers: ['split']
+  save_search: true
+  search_name: 'Yara rule matches'
