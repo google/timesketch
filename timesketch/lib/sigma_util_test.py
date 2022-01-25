@@ -138,8 +138,8 @@ class TestSigmaUtilLib(BaseTest):
 
         # pylint: disable=protected-access
         test_1 = sigma_util._sanatize_sigma_rule("(* lorem * OR * lorema *)")
-
         self.assertIsNotNone(test_1)
+
         self.assertEqual(
             sigma_util._sanatize_sigma_rule("test.keyword:foobar"),
             "test:foobar",
