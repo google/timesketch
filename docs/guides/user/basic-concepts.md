@@ -16,8 +16,8 @@ There is a dedicated document to walk you through [Sketches](sketch-overview.md)
 
 ## Adding Timelines
 
-- [Create timeline from JSON/JSONL/CSV file](/guides/user/import-from-json-csv/)
-- [Uploading data](/guides/user/upload-data/)
+- [Create timeline from JSON/JSONL/CSV file](/docs/guides/user/import-from-json-csv.md)
+- [Uploading data](/docs/guides/user/upload-data.md)
 - [Upload data via the API](/developers/api-upload-data/)
 
 ## Adding event
