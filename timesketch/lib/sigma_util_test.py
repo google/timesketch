@@ -213,7 +213,7 @@ class TestSigmaUtilLib(BaseTest):
             '67b9a11a-03ae-490a-9156-9be9900aaaaa', rule.get('id')
         )
         self.assertEqual(
-            '("aaa:bbb" OR "ccc\:\:ddd")',
+            r'("aaa:bbb" OR "ccc\:\:ddd")',
             rule.get("es_query"),
         )
 
