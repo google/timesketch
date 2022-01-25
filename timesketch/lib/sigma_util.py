@@ -312,7 +312,7 @@ def _sanatize_sigma_rule(sigma_rule_query: str) -> str:
     sigma_rule_query = sigma_rule_query.replace('(*', '("')
     sigma_rule_query = sigma_rule_query.replace(
         r'\*:', ''
-    )  # removes wildcard at the beinning of a rule es_query
+    )  # removes wildcard at the beginning of a rule es_query
 
     elements = re.split(r'\s+', sigma_rule_query)
     san = []
