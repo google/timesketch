@@ -175,11 +175,9 @@ class TestSigmaUtilLib(BaseTest):
             rule.get("es_query"),
         )
         self.assertIn("b793", rule.get('id'))
-        self.assertRaises(
-            sigma_exceptions.SigmaParseError,
-            sigma_util.get_sigma_rule_by_text,
-            MOCK_SIGMA_RULE_ERROR1,
-        )
+
+        with self.assertRaises(sigma_exceptions.SigmaParseError):
+            sigma_util.get_sigma_rule_by_text(MOCK_SIGMA_RULE_ERROR1)
 
         self.assertIn("2020/06/26", rule.get("date"))
         self.assertIsInstance(rule.get("date"), str)
@@ -200,11 +198,8 @@ class TestSigmaUtilLib(BaseTest):
             rule.get("es_query"),
         )
 
-        self.assertRaises(
-            NotImplementedError,
-            sigma_util.get_sigma_rule_by_text,
-            COUNT_RULE_1,
-        )
+        with self.assertRaises(NotImplementedError):
+            sigma_util.get_sigma_rule_by_text(COUNT_RULE_1)
 
         rule = sigma_util.get_sigma_rule_by_text(MOCK_SIGMA_RULE_DATE_ERROR1)
         self.assertIsNotNone(MOCK_SIGMA_RULE_DATE_ERROR1)
@@ -226,7 +221,8 @@ class TestSigmaUtilLib(BaseTest):
 
     def test_get_sigma_config_file(self):
         """Test getting sigma config file"""
-        self.assertRaises(ValueError, sigma_util.get_sigma_config_file, "/foo")
+        with self.assertRaises(ValueError):
+            sigma_util.get_sigma_config_file("/foo")
         self.assertIsNotNone(sigma_util.get_sigma_config_file())
 
     def test_get_blocklist_file(self):
