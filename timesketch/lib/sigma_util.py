@@ -294,6 +294,7 @@ def _sanatize_sigma_rule(sigma_rule_query: str) -> str:
     sigma_rule_query = sigma_rule_query.replace('\\:', ':')
     sigma_rule_query = sigma_rule_query.replace('\\-', '-')
     sigma_rule_query = sigma_rule_query.replace('*\\\\', ' *')
+    sigma_rule_query = sigma_rule_query.replace('::', '\:\:')
 
     # TODO: Improve the whitespace handling
     # https://github.com/google/timesketch/issues/2007
@@ -307,7 +308,7 @@ def _sanatize_sigma_rule(sigma_rule_query: str) -> str:
     sigma_rule_query = sigma_rule_query.replace('AND * ', 'AND " ')
     sigma_rule_query = sigma_rule_query.replace('(* ', '(" ')
     sigma_rule_query = sigma_rule_query.replace(' *)', ' ")')
-    sigma_rule_query = sigma_rule_query.replace('*)', ' ")')
+    sigma_rule_query = sigma_rule_query.replace('*)', '")')
     sigma_rule_query = sigma_rule_query.replace('(*', '("')
     sigma_rule_query = sigma_rule_query.replace(
         r'\*:', ''

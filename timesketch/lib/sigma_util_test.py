@@ -113,6 +113,22 @@ detection:
     condition: keywords
 """
 
+MOCK_SIGMA_RULE_DOTS = """
+title: Two dots
+id: 67b9a11a-03ae-490a-9156-9be9900aaaaa
+description: Similar to a mimikatz rule
+references:
+    - https://github.com/google/timesketch/issues/2007
+author: Alexander Jaeger
+date: 2022-01-25
+modified: 2022-01-25
+detection:
+    keywords:
+        - 'aaa:bbb'
+        - 'ccc::ddd'
+    condition: keywords
+"""
+
 
 class TestSigmaUtilLib(BaseTest):
     """Tests for the sigma support library."""
@@ -135,6 +151,9 @@ class TestSigmaUtilLib(BaseTest):
         self.assertEqual(
             sigma_util._sanatize_sigma_rule("*foo bar*"), '"foo bar"'
         )
+
+        test_2 = sigma_util._sanatize_sigma_rule("(*a:b* OR *c::d*)")
+        self.assertEqual(test_2, r'("a:b" OR "c\:\:d")')
         # pylint: enable=protected-access
 
     def test_get_rule_by_text(self):
@@ -149,7 +168,7 @@ class TestSigmaUtilLib(BaseTest):
             '(data_type:("shell:zsh:history" OR "bash:history:command" OR "apt:history:line" OR "selinux:line") AND "apt-get install zmap")',  # pylint: disable=line-too-long
             rule.get("es_query"),
         )
-        self.assertIn("b793", rule.get("id"))
+        self.assertIn("b793", rule.get('id'))
         self.assertRaises(
             sigma_exceptions.SigmaParseError,
             sigma_util.get_sigma_rule_by_text,
@@ -186,6 +205,17 @@ class TestSigmaUtilLib(BaseTest):
         self.assertIsInstance(rule.get("date"), datetime.date)
         self.assertIsNot("2022-01-10", rule.get("date"))
         self.assertIn("dd23d2323432", rule.get("modified"))
+
+        rule = sigma_util.get_sigma_rule_by_text(MOCK_SIGMA_RULE_DOTS)
+        self.assertIsNotNone(MOCK_SIGMA_RULE_DOTS)
+        self.assertIsNotNone(rule)
+        self.assertEqual(
+            '67b9a11a-03ae-490a-9156-9be9900aaaaa', rule.get('id')
+        )
+        self.assertEqual(
+            '("aaa:bbb" OR "ccc\:\:ddd")',
+            rule.get("es_query"),
+        )
 
     def test_get_sigma_config_file(self):
         """Test getting sigma config file"""
