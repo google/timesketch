@@ -291,7 +291,6 @@ def _sanatize_sigma_rule(sigma_rule_query: str) -> str:
 
     sigma_rule_query = sigma_rule_query.replace('.keyword:', ':')
     sigma_rule_query = sigma_rule_query.replace('\\ ', ' ')
-    sigma_rule_query = sigma_rule_query.replace(""", """)
     sigma_rule_query = sigma_rule_query.replace('\\:', ':')
     sigma_rule_query = sigma_rule_query.replace('\\-', '-')
     sigma_rule_query = sigma_rule_query.replace('*\\\\', ' *')
