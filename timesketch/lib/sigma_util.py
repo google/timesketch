@@ -261,7 +261,7 @@ def get_sigma_rule(filepath, sigma_config=None):
 
         for sigma_rule in parsed_sigma_rules:
 
-            sigma_es_query = _sanatize_sigma_rule(sigma_rule)
+            sigma_es_query = _sanitize_query(sigma_rule)
 
         rule_return.update({'es_query': sigma_es_query})
         rule_return.update({'file_name': os.path.basename(filepath)})
@@ -278,8 +278,8 @@ def get_sigma_rule(filepath, sigma_config=None):
         return rule_return
 
 
-def _sanatize_sigma_rule(sigma_rule_query: str) -> str:
-    """Returns a sanatized sigma rule
+def _sanitize_query(sigma_rule_query: str) -> str:
+    """Returns a sanitized query
     Args:
         sigma_rule_query: path to the sigma rule to be parsed
     Returns:
@@ -484,7 +484,7 @@ def get_sigma_rule_by_text(rule_text, sigma_config=None):
     sigma_es_query = ''
 
     for sigma_rule in parsed_sigma_rules:
-        sigma_es_query = _sanatize_sigma_rule(sigma_rule)
+        sigma_es_query = _sanitize_query(sigma_rule)
 
     rule_return.update({'es_query': sigma_es_query})
     rule_return.update({'file_name': 'N/A'})

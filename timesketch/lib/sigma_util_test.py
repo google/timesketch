@@ -133,26 +133,32 @@ detection:
 class TestSigmaUtilLib(BaseTest):
     """Tests for the sigma support library."""
 
-    def test_sanatize_rule_string(self):
+    def test_sanitize_rule_string(self):
         """Testing the string sanitization"""
 
         # pylint: disable=protected-access
-        test_1 = sigma_util._sanatize_sigma_rule("(* lorem * OR * lorema *)")
+        test_1 = sigma_util._sanitize_query("(* lorem * OR * lorema *)")
         self.assertIsNotNone(test_1)
 
         self.assertEqual(
-            sigma_util._sanatize_sigma_rule("test.keyword:foobar"),
+            sigma_util._sanitize_query("test.keyword:foobar"),
             "test:foobar",
         )
         self.assertEqual(
-            sigma_util._sanatize_sigma_rule("(* foobar *)"),
+            sigma_util._sanitize_query("(* foobar *)"),
             '(" foobar ")',
         )
+        self.assertEqual(sigma_util._sanitize_query("*foo bar*"), '"foo bar"')
+
+        # test that the function does not break regular queries
         self.assertEqual(
-            sigma_util._sanatize_sigma_rule("*foo bar*"), '"foo bar"'
+            sigma_util._sanitize_query(
+                "*mimikatz* OR *mimikatz.exe* OR *mimilib.dll*"
+            ),
+            '*mimikatz* OR *mimikatz.exe* OR *mimilib.dll*',
         )
 
-        test_2 = sigma_util._sanatize_sigma_rule("(*a:b* OR *c::d*)")
+        test_2 = sigma_util._sanitize_query("(*a:b* OR *c::d*)")
         self.assertEqual(test_2, r'("a:b" OR "c\:\:d")')
         # pylint: enable=protected-access
 
