@@ -580,4 +580,4 @@ The sketch object can be used to do several other actions that are not documente
 
 ## Examples
 
-There are several examples using the API client in the [notebooks folder](../notebooks/) in the Github repository.
+There are several examples using the API client in the [notebooks folder](https://github.com/google/timesketch/notebooks) in the Github repository.
