@@ -77,6 +77,17 @@ limitations under the License.
                     <code>{{ props.row.type }}</code>
                   </b-table-column>
 
+                  <b-table-column field="externalURI" label="External ref." v-slot="props" sortable>
+                    <a
+                      v-if="getValidUrl(props.row.externalURI)"
+                      :href="getValidUrl(props.row.externalURI)"
+                      target="_blank"
+                    >
+                      <i class="fas fa-external-link-alt"></i> {{ getValidUrl(props.row.externalURI).host }}
+                    </a>
+                    <span v-else>{{ props.row.externalURI }}</span>
+                  </b-table-column>
+
                   <b-table-column field="ioc" label="" v-slot="props" width="5em">
                     <i
                       class="fas fa-copy"
@@ -92,17 +103,6 @@ limitations under the License.
                         title="Search sketch for all events containing this IOC."
                       ></i>
                     </router-link>
-                  </b-table-column>
-
-                  <b-table-column field="externalURI" label="External ref." v-slot="props" sortable>
-                    <a
-                      v-if="getValidUrl(props.row.externalURI)"
-                      :href="getValidUrl(props.row.externalURI)"
-                      target="_blank"
-                    >
-                      <i class="fas fa-external-link-alt"></i> {{ getValidUrl(props.row.externalURI).host }}
-                    </a>
-                    <span v-else>{{ props.row.externalURI }}</span>
                   </b-table-column>
 
                   <b-table-column field="ioc" label="Indicator data" v-slot="props" sortable>
