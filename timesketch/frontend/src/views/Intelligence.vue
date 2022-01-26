@@ -80,7 +80,7 @@ limitations under the License.
                   <b-table-column field="ioc" label="" v-slot="props" width="5em">
                     <i
                       class="fas fa-copy"
-                      style="cursor:pointer"
+                      style="cursor: pointer"
                       title="Copy key"
                       v-clipboard:copy="props.row.ioc"
                       v-clipboard:success="notifyClipboardSuccess"
@@ -111,14 +111,20 @@ limitations under the License.
 
                   <b-table-column field="tags" label="Tags" v-slot="props">
                     <b-taglist>
-                      <b-tag v-for="tag in props.row.tags" v-bind:key="tag" type="is-info is-light">{{ tag }} </b-tag>
+                      <b-tag
+                        v-for="tag in getEnrichedTags(props.row.tags)"
+                        v-bind:key="tag.name"
+                        :type="`is-${tag.class} is-light`"
+                      >
+                        {{ tag.name }}
+                      </b-tag>
                     </b-taglist>
                   </b-table-column>
 
                   <b-table-column field="edit" label="" v-slot="props">
                     <span
                       class="icon is-small"
-                      style="cursor:pointer;"
+                      style="cursor: pointer"
                       title="Edit IOC"
                       @click="startIOCEdit(props.row)"
                       ><i class="fas fa-edit"></i>
@@ -220,8 +226,10 @@ limitations under the License.
 </template>
 
 <script>
+import _ from 'lodash'
 import ApiClient from '../utils/RestApiClient'
 import { SnackbarProgrammatic as Snackbar } from 'buefy'
+import { tagMetadata, IOCTypes } from '../utils/tagMetadata'
 
 export default {
   data() {
@@ -230,25 +238,13 @@ export default {
       tagInfo: {},
       editingIoc: {},
       showEditModal: false,
-      IOCTypes: [
-        { regex: /^(\/[\S]+)+$/i, type: 'fs_path' },
-        { regex: /^([-\w]+\.)+[a-z]{2,}$/i, type: 'hostname' },
-        {
-          regex: /^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/g,
-          type: 'ipv4',
-        },
-        { regex: /^[0-9a-f]{64}$/i, type: 'hash_sha256' },
-        { regex: /^[0-9a-f]{40}$/i, type: 'hash_sha1' },
-        { regex: /^[0-9a-f]{32}$/i, type: 'hash_md5' },
-        // Match any "other" selection
-        { regex: /./g, type: 'other' },
-      ],
+      IOCTypes: IOCTypes,
     }
   },
   methods: {
     deleteIoc(ioc) {
       if (confirm('Delete IOC?')) {
-        var data = this.intelligenceData.filter(i => i.ioc !== ioc.ioc)
+        var data = this.intelligenceData.filter((i) => i.ioc !== ioc.ioc)
         ApiClient.addSketchAttribute(this.sketch.id, 'intelligence', { data: data }, 'intelligence').then(() => {
           this.loadSketchAttributes()
         })
@@ -274,7 +270,7 @@ export default {
       ApiClient.runAggregator(this.sketch.id, {
         aggregator_name: 'field_bucket',
         aggregator_parameters: { field: 'tag' },
-      }).then(response => {
+      }).then((response) => {
         this.sketchTags = response.data.objects[0].field_bucket.buckets
         // of the form [{count: 0, tag: 'foo'}]
       })
@@ -298,9 +294,20 @@ export default {
         }
       }
     },
-        // TODO: Use filter chips instead
-        generateOrElasticQuery(valueList) {
-      let query = valueList.map(v => `"${v}"`).reduce((a, b) => `${a} OR ${b}`)
+    getEnrichedTags(tags) {
+      return tags.map((tag) => this.enrichTag(tag)).sort((a, b) => b.weight - a.weight)
+    },
+    enrichTag(tag) {
+      let tagInfo = { name: tag }
+      if (tagMetadata[tag]) {
+        return _.extend(tagInfo, tagMetadata[tag])
+      } else {
+        return _.extend(tagInfo, tagMetadata.default)
+      }
+    },
+    // TODO: Use filter chips instead
+    generateOrElasticQuery(valueList) {
+      let query = valueList.map((v) => `"${v}"`).reduce((a, b) => `${a} OR ${b}`)
       return { q: query }
     },
     generateElasticQuery(value, field) {
@@ -327,7 +334,7 @@ export default {
           this.showEditModal = false
           this.buildTagInfo()
         })
-        .catch(e => {
+        .catch((e) => {
           Snackbar.open({
             message: 'IOC update failed.',
             type: 'is-danger',
