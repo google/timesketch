@@ -17,7 +17,7 @@ import dayjs from '@/plugins/dayjs'
 
 export default {
   name: 'toISO8601',
-  filter: function(timestampMillis) {
+  filter: function (timestampMillis) {
     return dayjs(timestampMillis).toISOString()
   },
 }

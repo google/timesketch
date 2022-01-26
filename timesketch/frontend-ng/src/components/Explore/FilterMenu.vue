@@ -24,19 +24,19 @@ limitations under the License.
     <v-tabs-items v-model="filterTab">
       <v-tab-item :transition="false">
         <v-container class="px-8">
-          <br>
+          <br />
 
           <v-row>
             <v-col cols="12">
-            <v-btn class="mr-2" small depressed @click="getDateRange(0, 'days')">Today</v-btn>
-            <v-btn class="mr-2" small depressed @click="getDateRange(7, 'days')">Last 7 days</v-btn>
-            <v-btn class="mr-2" small depressed @click="getDateRange(30, 'days')">Last 30 days</v-btn>
-            <v-btn class="mr-2" small depressed @click="getDateRange(90, 'days')">Last 90 days</v-btn>
-            <v-btn class="mr-2" small depressed @click="getDateRange(1, 'year')">Last 1 year</v-btn>
+              <v-btn class="mr-2" small depressed @click="getDateRange(0, 'days')">Today</v-btn>
+              <v-btn class="mr-2" small depressed @click="getDateRange(7, 'days')">Last 7 days</v-btn>
+              <v-btn class="mr-2" small depressed @click="getDateRange(30, 'days')">Last 30 days</v-btn>
+              <v-btn class="mr-2" small depressed @click="getDateRange(90, 'days')">Last 90 days</v-btn>
+              <v-btn class="mr-2" small depressed @click="getDateRange(1, 'year')">Last 1 year</v-btn>
             </v-col>
           </v-row>
 
-          <br>
+          <br />
 
           <h5>Single day</h5>
           <v-row>
@@ -52,7 +52,7 @@ limitations under the License.
             </v-col>
           </v-row>
 
-          <br>
+          <br />
 
           <h5>Timerange</h5>
           <v-row>
@@ -86,7 +86,9 @@ limitations under the License.
             <v-col cols="3">
               <v-menu transition="scale-transition" offset-y min-width="auto">
                 <template v-slot:activator="{ on, attrs }">
-                  <v-text-field v-model="timerange.endDate" label="End date" v-bind="attrs" v-on="on">{{ timerange.endDate }}</v-text-field>
+                  <v-text-field v-model="timerange.endDate" label="End date" v-bind="attrs" v-on="on">{{
+                    timerange.endDate
+                  }}</v-text-field>
                 </template>
 
                 <v-date-picker v-model="timerange.endDate" no-title> </v-date-picker>
@@ -95,53 +97,46 @@ limitations under the License.
             <v-col cols="2">
               <v-menu transition="scale-transition" offset-y min-width="auto" :close-on-content-click="false">
                 <template v-slot:activator="{ on, attrs }">
-                  <v-text-field v-model="timerange.endTime" label="End time" v-bind="attrs" v-on="on">{{ timerange.endTime }}</v-text-field>
+                  <v-text-field v-model="timerange.endTime" label="End time" v-bind="attrs" v-on="on">{{
+                    timerange.endTime
+                  }}</v-text-field>
                 </template>
                 <v-time-picker v-model="timerange.endTime" format="24hr" use-seconds> </v-time-picker>
               </v-menu>
             </v-col>
-
           </v-row>
 
-          <br>
+          <br />
 
           <h5>Datetime string</h5>
           <v-row dense>
-
             <v-col cols="5">
-                  <v-text-field v-model="startDate" label="Datetime string"></v-text-field>
+              <v-text-field v-model="startDate" label="Datetime string"></v-text-field>
             </v-col>
             <v-col cols="2">
               <v-icon class="mt-5 ml-10">mdi-arrow-right-thin</v-icon>
             </v-col>
             <v-col cols="5">
-                  <v-text-field v-model="startDate" label="(Optional) Make it a timerange"></v-text-field>
-            </v-col>
-
-          </v-row>
-
-          <v-card class="pa-4" >
-          <h5>Create a timerange</h5>
-          <br>
-          <v-row>
-            <v-col cols="2">
-              <v-text-field prepend-inner-icon="mdi-minus" dense placeholder="5"></v-text-field>
-            </v-col>
-            <v-col cols="2">
-              <v-text-field prepend-inner-icon="mdi-plus" dense placeholder="5"></v-text-field>
-            </v-col>
-
-            <v-col cols="4">
-              <v-select
-                dense
-                value="Minutes"
-                :items="['Seconds', 'Minutes', 'Hours', 'Days']"
-                outlined
-              ></v-select>
+              <v-text-field v-model="startDate" label="(Optional) Make it a timerange"></v-text-field>
             </v-col>
           </v-row>
+
+          <v-card class="pa-4">
+            <h5>Create a timerange</h5>
+            <br />
+            <v-row>
+              <v-col cols="2">
+                <v-text-field prepend-inner-icon="mdi-minus" dense placeholder="5"></v-text-field>
+              </v-col>
+              <v-col cols="2">
+                <v-text-field prepend-inner-icon="mdi-plus" dense placeholder="5"></v-text-field>
+              </v-col>
+
+              <v-col cols="4">
+                <v-select dense value="Minutes" :items="['Seconds', 'Minutes', 'Hours', 'Days']" outlined></v-select>
+              </v-col>
+            </v-row>
           </v-card>
-
 
           <v-card-actions>
             <v-spacer></v-spacer>
@@ -185,9 +180,9 @@ export default {
       this.$emit('addChip', this.chip)
       this.$emit('cancel')
 
-return {'start': now, 'end': then}
+      return { start: now, end: then }
     },
-    submit: function() {
+    submit: function () {
       // Single date
       if (this.singleDate) {
         let chipType = 'datetime_range'
@@ -208,7 +203,7 @@ return {'start': now, 'end': then}
         let startDateTime = this.timerange.startDate + 'T' + this.timerange.startTime
         let endDateTime = this.timerange.endDate + 'T' + this.timerange.endTime
         let chipType = 'datetime_range'
-        let chipValue = startDateTime+ ',' + endDateTime
+        let chipValue = startDateTime + ',' + endDateTime
         this.chip = {
           field: '',
           type: chipType,
@@ -220,8 +215,8 @@ return {'start': now, 'end': then}
         this.timerange = {}
       }
       this.$emit('cancel')
-    }
-  }
+    },
+  },
 }
 </script>
 

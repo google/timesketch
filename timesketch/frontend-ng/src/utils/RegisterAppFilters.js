@@ -24,7 +24,7 @@ const requireFilter = require.context(
   /[A-Z]\w+\.(js)$/
 )
 
-requireFilter.keys().forEach(fileName => {
+requireFilter.keys().forEach((fileName) => {
   // Get component config
   const filterModule = requireFilter(fileName)
 

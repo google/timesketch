@@ -24,7 +24,7 @@ const requireComponent = require.context(
   /App[A-Z]\w+\.(vue|js)$/
 )
 
-requireComponent.keys().forEach(fileName => {
+requireComponent.keys().forEach((fileName) => {
   // Get component config
   const componentConfig = requireComponent(fileName)
   const componentName = componentConfig.default.name

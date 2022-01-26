@@ -15,7 +15,7 @@ limitations under the License.
 */
 export default {
   name: 'filterChip',
-  filter: function(input) {
+  filter: function (input) {
     if (input.type === 'label') {
       if (input.value === '__ts_star') {
         return 'Starred'

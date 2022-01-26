@@ -94,5 +94,4 @@ export default {
 .v-tab {
   text-transform: none !important;
 }
-
 </style>

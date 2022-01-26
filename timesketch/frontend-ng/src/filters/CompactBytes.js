@@ -15,7 +15,7 @@ limitations under the License.
 */
 export default {
   name: 'compactBytes',
-  filter: function(input) {
+  filter: function (input) {
     // Based on https://gist.github.com/james2doyle/4aba55c22f084800c199
     if (!input) {
       input = 0

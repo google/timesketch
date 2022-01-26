@@ -405,14 +405,20 @@ limitations under the License.
                 <!-- Time bubble -->
                 <v-divider v-if="item.showDetails && item.deltaDays"></v-divider>
                 <div v-if="item.deltaDays > 0" class="ml-16">
-                  <div class="ts-time-bubble-vertical-line ts-time-bubble-vertical-line-color" v-bind:style="getTimeBubbleColor(item)"></div>
+                  <div
+                    class="ts-time-bubble-vertical-line ts-time-bubble-vertical-line-color"
+                    v-bind:style="getTimeBubbleColor(item)"
+                  ></div>
                   <div class="ts-time-bubble ts-time-bubble-color" v-bind:style="getTimeBubbleColor(item)">
                     <h5>
                       <b>{{ item.deltaDays | compactNumber }}</b
                       ><br />days
                     </h5>
                   </div>
-                  <div class="ts-time-bubble-vertical-line ts-time-bubble-vertical-line-color" v-bind:style="getTimeBubbleColor(item)"></div>
+                  <div
+                    class="ts-time-bubble-vertical-line ts-time-bubble-vertical-line-color"
+                    v-bind:style="getTimeBubbleColor(item)"
+                  ></div>
                 </div>
               </td>
             </template>
@@ -725,7 +731,7 @@ export default {
         backgroundColor = '#333'
       }
       return {
-        'background-color': backgroundColor
+        'background-color': backgroundColor,
       }
     },
     search: function (emitEvent = true, resetPagination = true, incognito = false, parent = false) {

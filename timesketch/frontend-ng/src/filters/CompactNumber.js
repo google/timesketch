@@ -15,7 +15,7 @@ limitations under the License.
 */
 export default {
   name: 'compactNumber',
-  filter: function(input) {
+  filter: function (input) {
     if (!input) {
       input = 0
     }

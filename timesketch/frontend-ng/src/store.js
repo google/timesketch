@@ -19,7 +19,7 @@ import ApiClient from './utils/RestApiClient'
 
 Vue.use(Vuex)
 
-const defaultState = currentUser => {
+const defaultState = (currentUser) => {
   return {
     sketch: {},
     meta: {},
@@ -64,7 +64,7 @@ export default new Vuex.Store({
       Vue.set(state, 'sigmaRuleList_count', payload['meta']['rules_count'])
     },
     RESET_STATE(state, payload) {
-      ApiClient.getLoggedInUser().then(response => {
+      ApiClient.getLoggedInUser().then((response) => {
         let currentUser = response.data.objects[0].username
         Object.assign(state, defaultState(currentUser))
       })
@@ -73,21 +73,21 @@ export default new Vuex.Store({
   actions: {
     updateSketch(context, sketchId) {
       return ApiClient.getSketch(sketchId)
-        .then(response => {
+        .then((response) => {
           // console.log(response.data.objects[0].active_timelines[0].color)
           context.commit('SET_SKETCH', response.data)
           context.dispatch('updateTimelineTags', sketchId)
           context.dispatch('updateDataTypes', sketchId)
         })
-        .catch(e => {})
+        .catch((e) => {})
     },
     updateCount(context, sketchId) {
       // Count events for all timelines in the sketch
       return ApiClient.countSketchEvents(sketchId)
-        .then(response => {
+        .then((response) => {
           context.commit('SET_COUNT', response.data.meta.count)
         })
-        .catch(e => {})
+        .catch((e) => {})
     },
     resetState(context) {
       context.commit('RESET_STATE')
@@ -100,10 +100,10 @@ export default new Vuex.Store({
         sketchId = context.state.sketch.id
       }
       return ApiClient.getSearchHistory(sketchId)
-        .then(response => {
+        .then((response) => {
           context.commit('SET_SEARCH_HISTORY', response.data)
         })
-        .catch(e => {})
+        .catch((e) => {})
     },
     updateTimelineTags(context, sketchId) {
       if (!context.state.sketch.active_timelines.length) {
@@ -116,10 +116,10 @@ export default new Vuex.Store({
         },
       }
       return ApiClient.runAggregator(sketchId, formData)
-        .then(response => {
+        .then((response) => {
           context.commit('SET_TIMELINE_TAGS', response.data)
         })
-        .catch(e => {})
+        .catch((e) => {})
     },
     updateDataTypes(context, sketchId) {
       if (!context.state.sketch.active_timelines.length) {
@@ -132,16 +132,17 @@ export default new Vuex.Store({
         },
       }
       return ApiClient.runAggregator(sketchId, formData)
-        .then(response => {
+        .then((response) => {
           context.commit('SET_DATA_TYPES', response.data)
         })
-        .catch(e => {})
+        .catch((e) => {})
     },
     updateSigmaList(context) {
       ApiClient.getSigmaList()
-      .then(response => {
-        context.commit('SET_SIGMA_LIST', response.data)
-      }).catch(e => {})
+        .then((response) => {
+          context.commit('SET_SIGMA_LIST', response.data)
+        })
+        .catch((e) => {})
     },
   },
 })

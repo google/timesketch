@@ -37,10 +37,10 @@ const RestApiBlobClient = axios.create({
 
 // Show message on errors.
 RestApiClient.interceptors.response.use(
-  function(response) {
+  function (response) {
     return response
   },
-  function(error) {
+  function (error) {
     if (error.response.data.message === 'The CSRF token has expired.') {
       Snackbar.open({
         message: error.response.data.message,
