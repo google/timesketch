@@ -139,7 +139,7 @@ limitations under the License.
                   </b-table-column>
 
                   <b-table-column field="delete" label="" v-slot="props">
-                    <span class="icon is-small delete-ioc" title="Delete IOC" @click="deleteIoc(props.row)"
+                    <span class="icon is-small delete-ioc" style="cursor: pointer" title="Delete IOC" @click="deleteIoc(props.row)"
                       ><i class="fas fa-trash"></i>
                     </span>
                   </b-table-column>
