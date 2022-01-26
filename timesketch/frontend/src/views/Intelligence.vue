@@ -116,6 +116,13 @@ limitations under the License.
                         v-bind:key="tag.name"
                         :type="`is-${tag.class} is-light`"
                       >
+                        <router-link :to="{ name: 'Explore', query: generateOrElasticQuery(tagInfo[tag.name].iocs) }">
+                          <i
+                            class="fas fa-search"
+                            aria-hidden="true"
+                            title="Search sketch for all IOCs with this tag."
+                          ></i>
+                        </router-link>
                         {{ tag.name }}
                       </b-tag>
                     </b-taglist>
