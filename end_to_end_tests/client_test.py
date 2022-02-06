@@ -38,11 +38,11 @@ class ClientTest(interface.BaseEndToEndTest):
         sketch_name = 'Testing'
         sketch_description = 'This is truly a foobar'
         new_sketch = self.api.create_sketch(
-            name=sketch_name, description=sketch_description)
+            name=sketch_name, description=sketch_description
+        )
 
         self.assertions.assertEqual(new_sketch.name, sketch_name)
-        self.assertions.assertEqual(
-            new_sketch.description, sketch_description)
+        self.assertions.assertEqual(new_sketch.description, sketch_description)
 
         sketches = list(self.api.list_sketches())
         self.assertions.assertEqual(len(sketches), number_of_sketches + 1)
@@ -57,16 +57,21 @@ class ClientTest(interface.BaseEndToEndTest):
         index_name = 'direct_testing'
 
         self.import_directly_to_opensearch(
-            filename='evtx_direct.csv', index_name=index_name)
+            filename='evtx_direct.csv', index_name=index_name
+        )
 
         new_sketch = self.api.create_sketch(
-            name='Testing Direct', description='Adding data directly from ES')
+            name='Testing Direct', description='Adding data directly from ES'
+        )
 
         context = 'e2e - > test_direct_opensearch'
         timeline_name = 'Ingested Via Mechanism'
         timeline = new_sketch.generate_timeline_from_es_index(
-            es_index_name=index_name, name=timeline_name,
-            provider='end_to_end_testing_platform', context=context)
+            es_index_name=index_name,
+            name=timeline_name,
+            provider='end_to_end_testing_platform',
+            context=context,
+        )
 
         _ = new_sketch.lazyload_data(refresh_cache=True)
         self.assertions.assertEqual(len(new_sketch.list_timelines()), 1)
@@ -87,10 +92,13 @@ class ClientTest(interface.BaseEndToEndTest):
         self.assertions.assertIn('Installation of ZMap', rule.title)
         self.assertions.assertIn('zmap', rule.es_query)
         self.assertions.assertIn('Alexander', rule.author)
-        self.assertions.assertIn('2020/06/26',rule.date)
+        self.assertions.assertIn('2020/06/26', rule.date)
         self.assertions.assertIn('installation of ZMap', rule.description)
         self.assertions.assertEqual(len(rule.detection), 2)
-        self.assertions.assertIn('zmap*', rule.es_query)
+        self.assertions.assertEqual(
+            '(data_type:("shell:zsh:history" OR "bash:history:command" OR "apt:history:line" OR "selinux:line") AND "apt-get install zmap")',  # pylint: disable=line-too-long
+            rule.es_query,
+        )
         self.assertions.assertIn('shell:zsh:history', rule.es_query)
         self.assertions.assertIn('Unknown', rule.falsepositives[0])
         self.assertions.assertEqual(len(rule.logsource), 2)
@@ -103,9 +111,10 @@ class ClientTest(interface.BaseEndToEndTest):
     def test_get_sigma_rule(self):
         """Client Sigma object tests."""
         rule = self.api.get_sigma_rule(
-            rule_uuid='5266a592-b793-11ea-b3de-0242ac130004')
+            rule_uuid='5266a592-b793-11ea-b3de-0242ac130004'
+        )
         rule.from_rule_uuid('5266a592-b793-11ea-b3de-0242ac130004')
-        self.assertions.assertGreater(len(rule.attributes),5)
+        self.assertions.assertGreater(len(rule.attributes), 5)
         self.assertions.assertIsNotNone(rule)
         self.assertions.assertIn('Alexander', rule.author)
         self.assertions.assertIn('Alexander', rule.get_attribute('author'))
