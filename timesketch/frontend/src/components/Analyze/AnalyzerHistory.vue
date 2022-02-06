@@ -19,13 +19,13 @@ limitations under the License.
       <p class="card-header-title">
         Analysis history
       </p>
-      <span class="card-header-icon" aria-label="close">
+      <span v-if="isModal" class="card-header-icon" aria-label="close">
         <span class="delete" v-on:click="$emit('closeHistory')"></span>
       </span>
     </header>
     <div class="card-content">
       <b-table
-        v-if="analyses"
+        v-if="analyses.length"
         :data="analyses"
         :current-page.sync="currentPage"
         :per-page="perPage"
@@ -41,7 +41,7 @@ limitations under the License.
         default-sort="created_at"
       >
         <b-table-column field="created_at" label="Date" width="150" sortable v-slot="props">
-          {{ new Date(props.row.created_at) | moment('YYYY-MM-DD HH:mm') }}
+          {{ new Date(props.row.created_at) | moment('YYYY-MM-DD HH:mm:ss') }}
         </b-table-column>
 
         <b-table-column field="name" label="Analyzer" sortable v-slot="props">
@@ -57,7 +57,7 @@ limitations under the License.
         </b-table-column>
       </b-table>
 
-      <span v-if="!analyses">No logs available. You need to run one of the analyzers first.</span>
+      <span v-if="!(analyses && analyses.length)">No logs available. You need to run one of the analyzers first.</span>
     </div>
   </div>
 </template>
@@ -66,7 +66,10 @@ limitations under the License.
 import ApiClient from '../../utils/RestApiClient'
 
 export default {
-  props: ['timeline'],
+  props: [
+    'timeline',
+    'isModal',
+  ],
   data() {
     return {
       analyses: [],
@@ -80,11 +83,23 @@ export default {
     },
   },
   created() {
-    ApiClient.getSketchTimelineAnalysis(this.sketch.id, this.timeline.id)
-      .then(response => {
-        this.analyses = response.data.objects[0]
+    if (this.timeline) {
+      ApiClient.getSketchTimelineAnalysis(this.sketch.id, this.timeline.id)
+        .then(response => {
+          this.analyses = response.data.objects[0]
+        })
+        .catch(e => {})
+    }
+    // If no timeline was specified then loop over all of them
+    else {
+      this.sketch.timelines.forEach(timeline => {
+        ApiClient.getSketchTimelineAnalysis(this.sketch.id, timeline.id)
+        .then(response => {
+          this.analyses = this.analyses.concat(response.data.objects[0])
+        })
+        .catch(e => {})
       })
-      .catch(e => {})
+    }
   },
 }
 </script>

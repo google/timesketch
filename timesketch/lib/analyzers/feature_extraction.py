@@ -149,7 +149,7 @@ class FeatureExtractionSketchPlugin(interface.BaseAnalyzer):
         """Initialize The Sketch Analyzer.
 
         Args:
-            index_name: Elasticsearch index name
+            index_name: OpenSearch index name
             sketch_id: Sketch ID
             timeline_id: The ID of the timeline.
         """

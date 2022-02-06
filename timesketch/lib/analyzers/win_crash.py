@@ -84,13 +84,13 @@ class WinCrashSketchPlugin(interface.BaseAnalyzer):
     }
 
     def formulate_query(self, elements):
-        """Generates the Elasticsearch query.
+        """Generates the OpenSearch query.
 
         Args:
             elements: Dictionary with a list of conditions
 
         Returns:
-            The Elasticsearch query
+            The OpenSearch query
         """
         conditions = list()
         for element_list in elements.values():
@@ -118,7 +118,7 @@ class WinCrashSketchPlugin(interface.BaseAnalyzer):
         """Mark entries with crash artefacts.
 
         Args:
-            event: Elasticsearch event
+            event: OpenSearch event
             filename: Application that crashed
         """
         if filename:

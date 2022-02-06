@@ -23,19 +23,19 @@ This will show a table with all Sigma rules installed on a system. You can searc
 
 - Rule ID
 - Title
-- Elastic Search query (ES Query)
+- OpenSearch Search query (ES Query)
 - File Name
 - Tag
 
-So if you want to search for ZMap related rules, you can search for ```zma``` in ```Title, File Name``` and it will show you the pre installed rule.
+So if you want to search for ZMap related rules, you can search for `zma` in `Title, File Name` and it will show you the pre installed rule.
 
 #### ES Query
 
-From that table, there are small icons to copy the values or explore the sketch with the given value. For example if you click the small lens icon next to the ES Query from the found rule ```(data_type:("shell\:zsh\:history" OR "bash\:history\:command" OR "apt\:history\:line" OR "selinux\:line") AND "*apt\-get\ install\ zmap*")``` it will open an explore view for this sketch with this query pre filled for you to explore the data.
+From that table, there are small icons to copy the values or explore the sketch with the given value. For example if you click the small lens icon next to the ES Query from the found rule `(data_type:("shell\:zsh\:history" OR "bash\:history\:command" OR "apt\:history\:line" OR "selinux\:line") AND "*apt\-get\ install\ zmap*")` it will open an explore view for this sketch with this query pre filled for you to explore the data.
 
 #### Rule ID
 
-If you click the rule ID ```5266a592-b793-11ea-b3de-0242ac130004``` a detail view for that rule will open up.
+If you click the rule ID `5266a592-b793-11ea-b3de-0242ac130004` a detail view for that rule will open up.
 
 ```bash
 https://$TIMESKETCH/sketch/1/sigma/details?ruleId=5266a592-b793-11ea-b3de-0242ac130004
@@ -43,14 +43,13 @@ https://$TIMESKETCH/sketch/1/sigma/details?ruleId=5266a592-b793-11ea-b3de-0242ac
 
 In this detail view all key and values of that rule that has been parsed by Timesketch are exposed.
 
-
 ### Install rules
 
 Timesketch deliberately does not provide a set of Sigma rules, as those would add complexity to maintain.
 To use the official community rules you can clone [github.com/Neo23x0/sigma](https://github.com/Neo23x0/sigma) to /data/sigma.
 This directory will not be caught by git.
 
->Warning: Currently it is not recommended to just clone the directory. See https://github.com/google/timesketch/issues/1532 for more info.
+> Warning: Currently it is not recommended to just clone the directory. See https://github.com/google/timesketch/issues/1532 for more info.
 
 ```shell
 cd data
@@ -61,6 +60,24 @@ The rules then will be under
 
 ```shell
 timesketch/data/sigma
+```
+
+### Sigma Rules Blocklist file
+
+The `data/sigma_blocklist.csv` is where Timesketch maintains a list of incompatible rules. By default each rule is considered compatible, but it is good practice to add them in this file if they are tested and verified to not be compatible.
+
+Each method that reads Sigma rules from the a folder is checking if part of the full path of a rule is mentioned in the `data/sigma_blocklist.csv` file.
+
+For examle a file at `/etc/timesketch/data/sigma/rules-unsupported/foo/bar.yml` would not be parsed as a line in `data/sigma_blocklist.csv` mentions:
+
+```
+/rules-unsupported/,bad,Sigma internal folder name,2021-11-19,
+```
+
+The header for that file are:
+
+```
+path,bad,reason,last_ckecked,rule_id
 ```
 
 ### Sigma Rules
@@ -79,7 +96,7 @@ timesketch/data/sigma/rules/linux
 
 ### Timesketch config file
 
-There are multiple sigma related config variables in ```timesketch.conf```.
+There are multiple sigma related config variables in `timesketch.conf`.
 
 ```
 # Sigma Settings
@@ -87,11 +104,12 @@ There are multiple sigma related config variables in ```timesketch.conf```.
 SIGMA_RULES_FOLDERS = ['/etc/timesketch/sigma/rules/']
 SIGMA_CONFIG = '/etc/timesketch/sigma_config.yaml'
 SIGMA_TAG_DELAY = 5
+SIGMA_BLOCKLIST_CSV = '/etc/timesketch/sigma_blocklist.csv'
 ```
 
-The ```SIGMA_RULES_FOLDERS``` points to the folder(s) where Sigma rules are stored. The folder is the local folder of the Timesketch server (celery worker and webserver). For a distributed system, mounting network shares is possible.
+The `SIGMA_RULES_FOLDERS` points to the folder(s) where Sigma rules are stored. The folder is the local folder of the Timesketch server (celery worker and webserver). For a distributed system, mounting network shares is possible.
 
-```SIGMA_TAG_DELAY```can be used to throttle the Sigma analyzer. If Timesketch is running on a less powerful machine (or docker-dev) a sleep timer of 15 seconds will help avoid Elastic Search exceptions for to many requests to the ES backend in a to short timerange. For more powerfull Timesketch installations, this value can be set to 0.
+`SIGMA_TAG_DELAY`can be used to throttle the Sigma analyzer. If Timesketch is running on a less powerful machine (or docker-dev) a sleep timer of 15 seconds will help avoid OpenSearch Search exceptions for to many requests to the ES backend in a to short timerange. For more powerfull Timesketch installations, this value can be set to 0.
 
 ### Sigma config
 
@@ -122,21 +140,20 @@ python3 test_tools/analyzer_run.py --test_file test_tools/test_events/sigma_even
 ## Test data
 
 If you want to test that feature, get some evtx files from the following
- links and parse it via plaso
+links and parse it via plaso
 
 - [github.com/sbousseaden/EVTX-ATTACK-SAMPLES](https://github.com/sbousseaden/EVTX-ATTACK-SAMPLES)
 - [github.com/sans-blue-team/DeepBlueCLI/evtx](https://github.com/sans-blue-team/DeepBlueCLI/evtx)
 
-
 ## Compose new rules
 
-In the Sigma Tab in a sketch there is a toggle called ```Compose Sigma rule```.
+In the Sigma Tab in a sketch there is a toggle called `Compose Sigma rule`.
 If turned on it will show a text area that takes the yaml text of a Sigma rule.
-Once you are happy with your rule, click ```Parse``` and the rule will be parsed as if it is installed on Timesketch.
+Once you are happy with your rule, click `Parse` and the rule will be parsed as if it is installed on Timesketch.
 
 This feature can be helpful if you want to test out field mapping.
 
-From the parse result you can copy the ```es_query``` value and paste it in a new window where you have the explore of a Sketch open.
+From the parse result you can copy the `es_query` value and paste it in a new window where you have the explore of a Sketch open.
 
 You need to remember to copy your rule when you are ready and create a new file on your TImesketch server to store the rule and make it available to others. The text from the compose area will be resetted with each reload of the page.
 
@@ -145,9 +162,13 @@ You need to remember to copy your rule when you are ready and create a new file 
 When writing Rules specific for Timesketch first and foremost you should the guide from one of the creators of Sigma:
 [How to Write Sigma Rules](https://www.nextron-systems.com/2018/02/10/write-sigma-rules/).
 
+### Date format
+
+When setting the `date` field in your rule, stick to `YYYY/MM/DD`.
+
 #### Number of or
 
-On top of that, it is recommended to avoid a large chain or ```or``` checks.
+On top of that, it is recommended to avoid a large chain or `or` checks.
 
 ```yaml
 detection:
@@ -160,13 +181,13 @@ detection:
     condition: keywords
 ```
 
-
 such a query would look like:
-``` *value1* or *value2* or *value3* ... or *value20*``` because that results in a very expensive / long query to execute on the dataset.
+` *value1* or *value2* or *value3* ... or *value20*` because that results in a very expensive / long query to execute on the dataset.
 
 Instead it is recommended to splice it into multiple rules:
 
 Rule 1:
+
 ```yaml
 detection:
     keywords:
@@ -178,9 +199,10 @@ detection:
     condition: keywords
 ```
 
- and 
+and
 
 Rule 2:
+
 ```yaml
 detection:
     keywords:
@@ -193,14 +215,13 @@ detection:
 ```
 
 That will create two queries:
-``` *value1* or *value2* or *value3* ... or *value10*``` and ``` *value11* or *value12* or *value13* ... or *value20*```.
+` *value1* or *value2* or *value3* ... or *value10*` and ` *value11* or *value12* or *value13* ... or *value20*`.
 
 The Sigma analyzer is designed to batch and throttle execution of queries which is benefitial for such rule structure.
 
 ### Reduce the haystack
 
-If you can, define the haystack Elastic has to query. This can be achieved by adding a check for ```data_type:"foosource"```.
-
+If you can, define the haystack OpenSearch has to query. This can be achieved by adding a check for `data_type:"foosource"`.
 
 ## Verify rules
 

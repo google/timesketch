@@ -12,14 +12,14 @@ class TestWinCrashPlugin(BaseTest):
     """Tests the functionality of the analyzer."""
 
     @mock.patch(
-        'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+        'timesketch.lib.analyzers.interface.OpenSearchDataStore',
         MockDataStore)
     def setUp(self):
         super().setUp()
         self.analyzer = win_crash.WinCrashSketchPlugin('test_index', 1)
 
     def test_formulate_query(self):
-        """Test generator of Elasticsearch queries"""
+        """Test generator of OpenSearch queries"""
         template = {
             'Event - App Error' : (
                 'data_type:"windows:evtx:record"',

@@ -1,13 +1,8 @@
 global:
-    scrape_interval: 10s
-    external_labels:
-        monitor: 'timesketch'
+  scrape_interval: 10s
+  external_labels:
+    monitor: "timesketch"
 scrape_configs:
-    - job_name: 'es-metrics-exporter'
-      static_configs:
-      - targets: ['es-metrics-exporter:9114']
-  
-    - job_name: 'timesketch'
-      static_configs:
-      - targets: ['timesketch:8080']          
-
+  - job_name: "timesketch"
+    static_configs:
+      - targets: ["timesketch:8080"]

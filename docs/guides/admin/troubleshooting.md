@@ -33,16 +33,6 @@ To list all your running Docker containers, run:
 docker container list
 ```
 
-Which will show something like
-
-```shell
-b756f334d281   us-docker.pkg.dev/osdfir-registry/timesketch/dev:latest        "/docker-entrypoint.…"   8 days ago   Up 2 days   127.0.0.1:5000->5000/tcp             timesketch-dev
-7768635b4798   us-docker.pkg.dev/osdfir-registry/timesketch/notebook:latest   "jupyter notebook"       8 days ago   Up 2 days   127.0.0.1:8844->8844/tcp, 8899/tcp   notebook
-51a576407ad2   docker.elastic.co/elasticsearch/elasticsearch-oss:7.10.2       "/tini -- /usr/local…"   8 days ago   Up 2 days   9200/tcp, 9300/tcp                   elasticsearch
-bf85b40ed003   redis:6.0.10-alpine                                            "docker-entrypoint.s…"   8 days ago   Up 2 days   6379/tcp                             redis
-f78f8b1f13d1   postgres:13.1-alpine                                           "docker-entrypoint.s…"   8 days ago   Up 2 days   5432/tcp                             postgres
-```
-
 If one of these is not up, you might need to troubleshoot docker.
 
 ## Troubleshooting Database Schema Changes
@@ -131,19 +121,20 @@ docker exec -it $CONTAINER_ID celery -A timesketch.lib.tasks inspect active
 ```
 
 Which will give a list of tasks, individual tasks that are running can be then checked with
+
 ```shell
 docker exec -it $CONTAINER_ID celery -A timesketch.lib.tasks inspect query_task $TASKID
 ```
 
 Where $TASKID is the id that was shown in the previous step.
 
-### Elasticsearch
+### OpenSearch
 
 ```shell
-/var/log/elasticsearch
+/var/log/opensearch
 ```
 
-Or run the following where `$CONTAINER_ID` is the ID from your `elasticsearch` Docker container.
+Or run the following where `$CONTAINER_ID` is the ID from your `opensearch` Docker container.
 
 ```shell
 docker logs $CONTAINER_ID

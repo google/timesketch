@@ -25,7 +25,7 @@ from flask_restful import fields
 from flask_restful import marshal
 
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
-from timesketch.lib.datastores.elastic import ElasticsearchDataStore
+from timesketch.lib.datastores.opensearch import OpenSearchDataStore
 
 
 logging.basicConfig(
@@ -251,11 +251,11 @@ class ResourceMixin(object):
         """Property to get an instance of the datastore backend.
 
         Returns:
-            Instance of timesketch.lib.datastores.elastic.ElasticSearchDatastore
+            Instance of lib.datastores.opensearch.OpenSearchDatastore
         """
-        return ElasticsearchDataStore(
-            host=current_app.config['ELASTIC_HOST'],
-            port=current_app.config['ELASTIC_PORT'])
+        return OpenSearchDataStore(
+            host=current_app.config['OPENSEARCH_HOST'],
+            port=current_app.config['OPENSEARCH_PORT'])
 
     def to_json(self,
                 model,

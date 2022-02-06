@@ -34,14 +34,25 @@ limitations under the License.
             ></span>
             <pre>{{ params.data.ioc }}</pre>
           </div>
-          <b-field v-if="!isInIntelligence(params.data)" grouped message="Add to local intelligence">
-            <b-select size="is-small" placeholder="IOC type" v-model="params.data.type">
-              <option v-for="option in IOCTypes" :value="option.type" :key="option.type">
-                {{ option.type }}
-              </option>
-            </b-select>
-            <b-button size="is-small" type="is-primary" @click="saveThreatIntel(params.data)">Add</b-button>
-          </b-field>
+          <div v-if="!isInIntelligence(params.data)">
+            <b-field grouped message="Add to Intelligence">
+              <b-select size="is-small" placeholder="IOC type" v-model="params.data.type">
+                <option v-for="option in IOCTypes" :value="option.type" :key="option.type">
+                  {{ option.type }}
+                </option>
+              </b-select>
+              <b-taginput
+                v-model="params.data.tags"
+                ellipsis
+                icon="label"
+                placeholder="Add a tag"
+                aria-close-label="Delete this tag"
+                size="is-small"
+              >
+              </b-taginput>
+              <b-button size="is-small" type="is-primary" @click="saveThreatIntel(params.data)">Add</b-button>
+            </b-field>
+          </div>
           <div v-else>
             <small>Already added to <router-link :to="{ name: 'Intelligence' }">Intelligence</router-link></small>
           </div>
@@ -67,7 +78,10 @@ export default {
       IOCTypes: [
         { regex: /^(\/[\S]+)+$/i, type: 'fs_path' },
         { regex: /^([-\w]+\.)+[a-z]{2,}$/i, type: 'hostname' },
-        { regex: /^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/g, type: 'ip' },
+        {
+          regex: /^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/g,
+          type: 'ipv4',
+        },
         { regex: /^[0-9a-f]{64}$/i, type: 'hash_sha256' },
         { regex: /^[0-9a-f]{40}$/i, type: 'hash_sha1' },
         { regex: /^[0-9a-f]{32}$/i, type: 'hash_md5' },
@@ -96,17 +110,17 @@ export default {
       for (let iocType of this.IOCTypes) {
         let matches = iocType.regex.exec(text)
         if (matches) {
-          return { ioc: text, type: iocType.type }
+          return { ioc: text, type: iocType.type, tags: this.tags }
         }
       }
       return { ioc: this.$attrs.text, type: 'other' }
     },
     isInIntelligence(ioc) {
       const attributes = this.$store.state.meta.attributes
-      if (!attributes.intelligence_local) {
+      if (!attributes.intelligence) {
         return false
       }
-      if (attributes.intelligence_local.value.data.map(ioc => ioc.ioc).indexOf(ioc.ioc) >= 0) {
+      if (attributes.intelligence.value.data.map(ioc => ioc.ioc).indexOf(ioc.ioc) >= 0) {
         return true
       }
       return false
@@ -114,22 +128,22 @@ export default {
     saveThreatIntel: function(ioc) {
       ApiClient.getSketchAttributes(this.sketch.id).then(response => {
         let attributes = response.data
-        if (!attributes.intelligence_local) {
-          attributes.intelligence_local = { ontology: 'intelligence', value: { data: [] } }
+        if (!attributes.intelligence) {
+          attributes.intelligence = { ontology: 'intelligence', value: { data: [] } }
         }
 
-        if (attributes.intelligence_local.value.data.map(ioc => ioc.ioc).indexOf(ioc.ioc) >= 0) {
+        if (attributes.intelligence.value.data.map(ioc => ioc.ioc).indexOf(ioc.ioc) >= 0) {
           return
         }
-        attributes.intelligence_local.value.data.push(ioc)
+        attributes.intelligence.value.data.push(ioc)
         ApiClient.addSketchAttribute(
           this.sketch.id,
-          'intelligence_local',
-          attributes.intelligence_local.value,
+          'intelligence',
+          attributes.intelligence.value,
           'intelligence'
         ).then(() => {
           Snackbar.open({
-            message: 'Attribtue added successfully',
+            message: 'Attribute added successfully',
             type: 'is-white',
             position: 'is-top',
             actionText: 'View intelligence',
@@ -183,5 +197,9 @@ export default {
 .text__highlight {
   background: none;
   border-radius: 0%;
+}
+
+.ioc-context-menu a {
+  border-bottom: 1px dotted gray;
 }
 </style>
