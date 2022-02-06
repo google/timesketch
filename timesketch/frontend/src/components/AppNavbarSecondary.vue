@@ -16,9 +16,9 @@ limitations under the License.
 <template>
   <section
     class="section"
-    style="background-color:var(--navbar-background);padding:0;border-bottom: 1px solid var(--navbar-border-color);"
+    style="background-color: var(--navbar-background); padding: 0; border-bottom: 1px solid var(--navbar-border-color)"
   >
-    <div class="container is-fluid" style="padding-bottom:0;">
+    <div class="container is-fluid" style="padding-bottom: 0">
       <nav class="navbar" role="navigation" aria-label="main navigation">
         <div class="navbar-item" v-if="currentAppContext === 'sketch'">
           <div class="tabs is-left" v-if="activeTimelines.length">
@@ -74,23 +74,20 @@ limitations under the License.
                     >Attributes
                     <span
                       class="tag is-small"
-                      style="background-color:var(--tag-background-color); color:var(--tag-font-color);"
+                      style="background-color: var(--tag-background-color); color: var(--tag-font-color)"
                       >{{ attributeCount }}</span
                     >
                   </span>
                 </router-link>
               </li>
-              <li
-                v-if="hasAttributeOntology('intelligence')"
-                v-bind:class="{ 'is-active': currentPage === 'intelligence' }"
-              >
+              <li v-bind:class="{ 'is-active': currentPage === 'intelligence' }">
                 <router-link :to="{ name: 'Intelligence' }">
                   <span class="icon is-small"><i class="fas fa-brain" aria-hidden="true"></i></span>
                   <span
                     >Intelligence
                     <span
                       class="tag is-small"
-                      style="background-color:var(--tag-background-color); color:var(--tag-font-color);"
+                      style="background-color: var(--tag-background-color); color: var(--tag-font-color)"
                       >{{ intelligenceCount }}</span
                     >
                   </span>
@@ -117,8 +114,8 @@ export default {
     currentPage: String,
   },
   methods: {
-    hasAttributeOntology: function(ontologyName) {
-      return Object.values(this.meta.attributes).some(value => value.ontology === ontologyName)
+    hasAttributeOntology: function (ontologyName) {
+      return Object.values(this.meta.attributes).some((value) => value.ontology === ontologyName)
     },
   },
   computed: {
@@ -132,7 +129,12 @@ export default {
       return Object.entries(this.meta.attributes).length
     },
     intelligenceCount() {
-      return (Object.entries(this.meta.attributes.intelligence || {}).length + Object.entries(this.meta.attributes.intelligence_local || {}).length)
+      if ('intelligence' in this.meta.attributes) {
+        if ('data' in this.meta.attributes.intelligence.value) {
+          return this.meta.attributes.intelligence.value.data.length
+        }
+      }
+      return 0
     },
   },
 }

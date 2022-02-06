@@ -3,6 +3,13 @@
 Timesketch is built on multiple sketches, where one sketch is usually one case.
 Every sketch can consist of multiple timelines with multiple views.
 
+We highly recommend to read two blog post to understand limitations of time and timeline analysis:
+
+- [Lets talk about time](https://osdfir.blogspot.com/2021/06/lets-talk-about-time.html)
+- [pearls and pitfalls of timeline analysis](https://osdfir.blogspot.com/2021/10/pearls-and-pitfalls-of-timeline-analysis.html) before starting your first timeline analysis.
+
+This should avoid wrong expectations and help analysts asking the right questions when looking at timelines in Timesketch.
+
 ## Sketches
 
 There is a dedicated document to walk you through [Sketches](sketch-overview.md)
@@ -90,9 +97,7 @@ To play with timesketch without any installation visit [demo.timesketch.org](htt
 
 ## Searching
 
-There is a dedicated document called [search query guide](search-query-guide.md) to help you create custom searches.
-
-All data within Timesketch is stored in elasticsearch. So the search works similar to ES.
+All data within Timesketch is stored in OpenSearch. There is a dedicated document called [search query guide](search-query-guide.md) to help you create custom searches.
 
 Using the advances search, a JSON can be passed to Timesketch
 
@@ -206,7 +211,7 @@ Types to be looked at in Safe Browsing (ThreatType).
 
 #### Sigma Analyzer
 
-The Sigma Analyzer translates Sigma rules in Elastic Search Queries and adds a tag to every matching event.
+The Sigma Analyzer translates Sigma rules in OpenSearch Search Queries and adds a tag to every matching event.
 
 It will also create a story with the Top 10 matched Sigma rules.
 

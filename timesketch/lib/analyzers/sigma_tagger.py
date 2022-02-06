@@ -24,7 +24,7 @@ class SigmaPlugin(interface.BaseAnalyzer):
         """Initialize The Sigma Analyzer.
 
         Args:
-            index_name: Elasticsearch index name
+            index_name: OpenSearch index name
             sketch_id: Sketch ID
             timeline_id: The ID of the timeline.
         """
@@ -36,7 +36,7 @@ class SigmaPlugin(interface.BaseAnalyzer):
         """Runs a sigma rule and applies the appropriate tags.
 
         Args:
-            query: elastic search query for events to tag.
+            query: OpenSearch search query for events to tag.
             rule_name: rule_name to apply to matching events.
             tag_list: a list of additional tags to be added to the event(s)
 
