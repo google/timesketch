@@ -14,12 +14,41 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-chip :style="getTimelineStyle(timeline)" @click="toggleTimeline(timeline)">
-    {{ timeline.name }}
-    <v-avatar right style="background-color: rgba(0, 0, 0, 0.1); font-size: 0.55em">
-      {{ eventsCount | compactNumber }}
-    </v-avatar>
-  </v-chip>
+  <v-menu offset-y content-class="menu-with-gap">
+    <template v-slot:activator="{ on }">
+      <v-chip v-on="on" :style="getTimelineStyle(timeline)">
+        {{ timeline.name }}
+        <v-avatar right style="background-color: rgba(0, 0, 0, 0.1); font-size: 0.55em">
+          {{ eventsCount | compactNumber }}
+        </v-avatar>
+      </v-chip>
+    </template>
+    <v-card width="300">
+      <v-list>
+        <v-list-item>
+          <v-list-item-action>
+            <v-icon>mdi-square-edit-outline</v-icon>
+          </v-list-item-action>
+          <v-list-item-subtitle>Rename timeline</v-list-item-subtitle>
+        </v-list-item>
+
+        <v-list-item @click="toggleTimeline(timeline)">
+          <v-list-item-action>
+            <v-icon v-if="isSelected">mdi-eye-off</v-icon>
+            <v-icon v-else>mdi-eye</v-icon>
+          </v-list-item-action>
+          <v-list-item-subtitle v-if="isSelected">Temporarily disabled</v-list-item-subtitle>
+          <v-list-item-subtitle v-else>Re-enable</v-list-item-subtitle>
+        </v-list-item>
+        <v-list-item @click="removeChip(chip)">
+          <v-list-item-action>
+            <v-icon>mdi-delete</v-icon>
+          </v-list-item-action>
+          <v-list-item-subtitle>Remove from sketch</v-list-item-subtitle>
+        </v-list-item>
+      </v-list>
+    </v-card>
+  </v-menu>
 </template>
 
 <script>

@@ -62,6 +62,8 @@ limitations under the License.
                     :close-on-content-click="false"
                     :close-on-click="true"
                     content-class="menu-with-gap"
+                    allow-overflow
+                    style="overflow: visible"
                   >
                     <template v-slot:activator="{ on, attrs }">
                       <v-btn small depressed v-bind="attrs" v-on="on">
@@ -70,7 +72,7 @@ limitations under the License.
                       </v-btn>
                     </template>
 
-                    <ts-filter-menu @cancel="timeFilterMenu = false" @addChip="addChip"></ts-filter-menu>
+                    <ts-filter-menu app @cancel="timeFilterMenu = false" @addChip="addChip"></ts-filter-menu>
                   </v-menu>
                 </v-sheet>
                 <v-divider vertical class="mx-2"></v-divider>
@@ -121,15 +123,52 @@ limitations under the License.
             <v-col cols="12" class="py-0">
               <v-chip-group>
                 <span v-for="(chip, index) in timeFilterChips" :key="index + chip.value">
-                  <v-chip>
-                    <v-icon left small> mdi-clock-outline </v-icon>
-                    <span>{{ chip.value.split(',')[0] }}</span>
-                    <span
-                      v-if="chip.type === 'datetime_range' && chip.value.split(',')[0] !== chip.value.split(',')[1]"
-                    >
-                      &rarr; {{ chip.value.split(',')[1] }}</span
-                    >
-                  </v-chip>
+                  <v-menu offset-y content-class="menu-with-gap">
+                    <template v-slot:activator="{ on }">
+                      <v-chip v-on="on">
+                        <v-icon left small> mdi-clock-outline </v-icon>
+                        <span
+                          v-bind:style="[!chip.active ? { 'text-decoration': 'line-through', opacity: '50%' } : '']"
+                        >
+                          <span>{{ chip.value.split(',')[0] }}</span>
+                          <span
+                            v-if="
+                              chip.type === 'datetime_range' && chip.value.split(',')[0] !== chip.value.split(',')[1]
+                            "
+                          >
+                            &rarr; {{ chip.value.split(',')[1] }}</span
+                          >
+                        </span>
+                      </v-chip>
+                    </template>
+                    <v-card>
+                      <v-list>
+                        <v-list-item>
+                          <v-list-item-action>
+                            <v-icon>mdi-square-edit-outline</v-icon>
+                          </v-list-item-action>
+                          <v-list-item-subtitle>Edit filter</v-list-item-subtitle>
+                        </v-list-item>
+
+                        <v-list-item @click="toggleChip(chip)">
+                          <v-list-item-action>
+                            <v-icon v-if="chip.active">mdi-eye-off</v-icon>
+                            <v-icon v-else>mdi-eye</v-icon>
+                          </v-list-item-action>
+                          <v-list-item-subtitle
+                            ><span v-if="chip.active">Temporarily disable</span
+                            ><span v-else>Re-enable</span></v-list-item-subtitle
+                          >
+                        </v-list-item>
+                        <v-list-item @click="removeChip(chip)">
+                          <v-list-item-action>
+                            <v-icon>mdi-delete</v-icon>
+                          </v-list-item-action>
+                          <v-list-item-subtitle>Remove filter</v-list-item-subtitle>
+                        </v-list-item>
+                      </v-list>
+                    </v-card>
+                  </v-menu>
                   <v-btn v-if="index + 1 < timeFilterChips.length" icon small style="margin-top: 2px" class="mr-2"
                     >OR</v-btn
                   >
@@ -219,9 +258,14 @@ limitations under the License.
 
     <!-- Eventlist -->
     <v-row>
-      <v-col cols="12" v-if="!eventList.objects.length && !searchInProgress">
+      <v-col
+        cols="12"
+        v-if="(!eventList.objects.length && !searchInProgress) || !this.currentQueryFilter.indices.length"
+      >
         <v-card outlined class="pa-4">
-          <p>Your search "{{ currentQueryString }}" did not match any events.</p>
+          <p>
+            Your search <span v-if="currentQueryString">"{{ currentQueryString }}"</span> did not match any events.
+          </p>
           <p>Suggestions:</p>
           <li>Try different keywords.</li>
           <li>Try more general keywords.</li>
@@ -229,7 +273,7 @@ limitations under the License.
         </v-card>
       </v-col>
 
-      <v-col cols="12" v-if="eventList.objects.length || searchInProgress">
+      <v-col cols="12" v-if="eventList.objects.length || (searchInProgress && this.currentQueryFilter.indices.length)">
         <v-card outlined>
           <v-toolbar flat>
             <v-card-text> {{ fromEvent }}-{{ toEvent }} of {{ totalHits }} events ({{ totalTime }}s) </v-card-text>
@@ -735,10 +779,10 @@ export default {
       }
     },
     search: function (emitEvent = true, resetPagination = true, incognito = false, parent = false) {
-      this.searchInProgress = true
       if (!this.currentQueryString) {
         return
       }
+      this.searchInProgress = true
 
       if (this.contextEvent) {
         // Scroll to the context box in the UI

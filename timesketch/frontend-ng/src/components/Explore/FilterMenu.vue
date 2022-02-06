@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-card width="700">
+  <v-card width="700" style="overflow: visible">
     <v-toolbar flat>
       <v-tabs centered grow v-model="filterTab">
         <v-tab> Time filter </v-tab>
@@ -36,111 +36,51 @@ limitations under the License.
             </v-col>
           </v-row>
 
-          <br />
-
-          <h5>Single day</h5>
           <v-row>
+            <v-col cols="6">
+              <v-text-field
+                :value="formatStartTime"
+                label="From"
+                outlined
+                hide-details
+                v-on:click="showPicker = true"
+                v-on:change="setStartTime"
+              >
+              </v-text-field>
+            </v-col>
+            <v-col cols="6">
+              <v-text-field
+                :value="formatEndTime"
+                label="To (optional)"
+                outlined
+                hide-details
+                v-on:click="showPicker = true"
+                v-on:change="setEndTime"
+                :append-outer-icon="showPicker ? 'mdi-calendar-remove' : 'mdi-calendar'"
+                @click:append-outer="showPicker = !showPicker"
+              >
+              </v-text-field>
+            </v-col>
+          </v-row>
+
+          <v-row v-if="showPicker">
             <v-col cols="12">
-              <v-menu transition="scale-transition" offset-y min-width="auto">
-                <template v-slot:activator="{ on, attrs }">
-                  <v-text-field v-model="singleDate" label="Single day" v-bind="attrs" v-on="on">{{
-                    singleDate
-                  }}</v-text-field>
-                </template>
-                <v-date-picker v-model="singleDate" no-title> </v-date-picker>
-              </v-menu>
+              <date-picker
+                v-model="dateRange"
+                mode="dateTime"
+                ref="picker"
+                timezone="UTC"
+                :is-dark="$vuetify.theme.dark"
+                is24hr
+                is-range
+                is-expanded
+              ></date-picker>
             </v-col>
           </v-row>
-
-          <br />
-
-          <h5>Timerange</h5>
-          <v-row>
-            <v-col cols="3">
-              <v-menu transition="scale-transition" offset-y min-width="auto">
-                <template v-slot:activator="{ on, attrs }">
-                  <v-text-field v-model="timerange.startDate" label="Start date" v-bind="attrs" v-on="on">{{
-                    timerange.startDate
-                  }}</v-text-field>
-                </template>
-                <v-date-picker v-model="timerange.startDate" no-title> </v-date-picker>
-              </v-menu>
-            </v-col>
-
-            <v-col cols="2">
-              <v-menu transition="scale-transition" offset-y min-width="auto" :close-on-content-click="false">
-                <template v-slot:activator="{ on, attrs }">
-                  <v-text-field v-model="timerange.startTime" label="Start time" v-bind="attrs" v-on="on">{{
-                    timerange.startTime
-                  }}</v-text-field>
-                </template>
-
-                <v-time-picker v-model="timerange.startTime" format="24hr" use-seconds> </v-time-picker>
-              </v-menu>
-            </v-col>
-
-            <v-col cols="2">
-              <v-icon class="mt-5 ml-8">mdi-arrow-right-thin</v-icon>
-            </v-col>
-
-            <v-col cols="3">
-              <v-menu transition="scale-transition" offset-y min-width="auto">
-                <template v-slot:activator="{ on, attrs }">
-                  <v-text-field v-model="timerange.endDate" label="End date" v-bind="attrs" v-on="on">{{
-                    timerange.endDate
-                  }}</v-text-field>
-                </template>
-
-                <v-date-picker v-model="timerange.endDate" no-title> </v-date-picker>
-              </v-menu>
-            </v-col>
-            <v-col cols="2">
-              <v-menu transition="scale-transition" offset-y min-width="auto" :close-on-content-click="false">
-                <template v-slot:activator="{ on, attrs }">
-                  <v-text-field v-model="timerange.endTime" label="End time" v-bind="attrs" v-on="on">{{
-                    timerange.endTime
-                  }}</v-text-field>
-                </template>
-                <v-time-picker v-model="timerange.endTime" format="24hr" use-seconds> </v-time-picker>
-              </v-menu>
-            </v-col>
-          </v-row>
-
-          <br />
-
-          <h5>Datetime string</h5>
-          <v-row dense>
-            <v-col cols="5">
-              <v-text-field v-model="startDate" label="Datetime string"></v-text-field>
-            </v-col>
-            <v-col cols="2">
-              <v-icon class="mt-5 ml-10">mdi-arrow-right-thin</v-icon>
-            </v-col>
-            <v-col cols="5">
-              <v-text-field v-model="startDate" label="(Optional) Make it a timerange"></v-text-field>
-            </v-col>
-          </v-row>
-
-          <v-card class="pa-4">
-            <h5>Create a timerange</h5>
-            <br />
-            <v-row>
-              <v-col cols="2">
-                <v-text-field prepend-inner-icon="mdi-minus" dense placeholder="5"></v-text-field>
-              </v-col>
-              <v-col cols="2">
-                <v-text-field prepend-inner-icon="mdi-plus" dense placeholder="5"></v-text-field>
-              </v-col>
-
-              <v-col cols="4">
-                <v-select dense value="Minutes" :items="['Seconds', 'Minutes', 'Hours', 'Days']" outlined></v-select>
-              </v-col>
-            </v-row>
-          </v-card>
 
           <v-card-actions>
             <v-spacer></v-spacer>
-            <v-btn text color="primary" @click="$emit('cancel')"> Cancel </v-btn>
+            <v-btn text color="primary" @click="clearAndCancel"> Cancel </v-btn>
             <v-btn text color="primary" @click="submit()"> Add filter </v-btn>
           </v-card-actions>
         </v-container>
@@ -154,20 +94,50 @@ limitations under the License.
 
 <script>
 import dayjs from '@/plugins/dayjs'
+import DatePicker from 'v-calendar/lib/components/date-picker.umd'
 
 export default {
+  components: {
+    DatePicker,
+  },
   data() {
     return {
-      singleDate: null,
-      timerange: {},
+      range: {
+        start: '',
+        end: '',
+      },
       filterTab: null,
+      showPicker: false,
     }
+  },
+  computed: {
+    dateRange: {
+      set(val) {
+        this.range.start = dayjs.utc(val.start).millisecond(0).toISOString()
+        this.range.end = dayjs.utc(val.end).millisecond(0).toISOString()
+      },
+      get() {
+        let range = {
+          start: this.range.start,
+          end: this.range.end,
+        }
+        return range
+      },
+    },
+    formatStartTime: function () {
+      return this.range.start
+    },
+    formatEndTime: function () {
+      if (this.range.start === this.range.end || !this.range.start) {
+        return ''
+      }
+      return this.range.end
+    },
   },
   methods: {
     getDateRange: function (num, resolution) {
       let now = dayjs.utc()
       let then = now.subtract(num, resolution)
-
       let chipType = 'datetime_range'
       let chipValue = then.format('YYYY-MM-DD') + ',' + now.format('YYYY-MM-DD')
       this.chip = {
@@ -182,28 +152,67 @@ export default {
 
       return { start: now, end: then }
     },
-    submit: function () {
-      // Single date
-      if (this.singleDate) {
-        let chipType = 'datetime_range'
-        let chipValue = this.singleDate + ',' + this.singleDate
-        this.chip = {
-          field: '',
-          type: chipType,
-          value: chipValue,
-          operator: 'must',
-          active: true,
+    setStartTime: function (newDateTime) {
+      if (!newDateTime) {
+        this.range.start = ''
+        return
+      }
+      this.range.start = dayjs.utc(newDateTime).toISOString()
+      if (!this.range.end) {
+        if (this.range.start) {
+          this.range.end = this.range.start || ''
         }
-        this.$emit('addChip', this.chip)
-        this.singleDate = null
+      }
+      this.$refs.picker.focusDate(this.range.start)
+    },
+    setEndTime: function (newDateTime) {
+      if (!newDateTime) {
+        this.range.end = ''
+        return
+      }
+      this.range.end = dayjs.utc(newDateTime).toISOString()
+      this.$refs.picker.focusDate(this.range.start)
+    },
+    addDateTimeChip: function (chipValue) {
+      const chipType = 'datetime_range'
+      let chip = {
+        field: '',
+        type: chipType,
+        value: chipValue,
+        operator: 'must',
+        active: true,
+      }
+      this.$emit('addChip', chip)
+      this.range = {
+        start: null,
+        end: null,
+      }
+    },
+    clearAndCancel: function () {
+      this.range = {
+        start: '',
+        end: '',
+      }
+      this.$emit('cancel')
+    },
+    submit: function () {
+      if (!this.range.start) {
+        return
       }
 
-      // Timerange
-      if (Object.keys(this.timerange).length !== 0) {
-        let startDateTime = this.timerange.startDate + 'T' + this.timerange.startTime
-        let endDateTime = this.timerange.endDate + 'T' + this.timerange.endTime
+      if (this.range.start === this.range.end) {
+        let dateTimeArray = this.range.start.split('T')
+        let date = dateTimeArray[0]
+        let chipValue = date + ',' + date
+        this.addDateTimeChip(chipValue)
+      }
+
+      if (this.range.start !== this.range.end) {
+      }
+
+      if (this.range.start !== this.range.end) {
         let chipType = 'datetime_range'
-        let chipValue = startDateTime + ',' + endDateTime
+        let chipValue = this.range.start + ',' + this.range.end
         this.chip = {
           field: '',
           type: chipType,
@@ -212,8 +221,12 @@ export default {
           active: true,
         }
         this.$emit('addChip', this.chip)
-        this.timerange = {}
+        this.range = {
+          start: '',
+          end: '',
+        }
       }
+
       this.$emit('cancel')
     },
   },
