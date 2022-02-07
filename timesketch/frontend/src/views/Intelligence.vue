@@ -96,7 +96,7 @@ limitations under the License.
                       v-clipboard:copy="props.row.ioc"
                       v-clipboard:success="notifyClipboardSuccess"
                     ></i>
-                    <router-link :to="{ name: 'Explore', query: generateElasticQuery(props.row.ioc) }" class="ml-4">
+                    <router-link :to="{ name: 'Explore', query: generateOpenSearchQuery(props.row.ioc) }" class="ml-4">
                       <i
                         class="fas fa-search"
                         aria-hidden="true"
@@ -116,7 +116,9 @@ limitations under the License.
                         v-bind:key="tag.name"
                         :type="`is-${tag.class} is-light`"
                       >
-                        <router-link :to="{ name: 'Explore', query: generateOrElasticQuery(tagInfo[tag.name].iocs) }">
+                        <router-link
+                          :to="{ name: 'Explore', query: generateOrOpenSearchQuery(tagInfo[tag.name].iocs) }"
+                        >
                           <i
                             class="fas fa-search"
                             aria-hidden="true"
@@ -139,7 +141,11 @@ limitations under the License.
                   </b-table-column>
 
                   <b-table-column field="delete" label="" v-slot="props">
-                    <span class="icon is-small delete-ioc" style="cursor: pointer" title="Delete IOC" @click="deleteIoc(props.row)"
+                    <span
+                      class="icon is-small delete-ioc"
+                      style="cursor: pointer"
+                      title="Delete IOC"
+                      @click="deleteIoc(props.row)"
                       ><i class="fas fa-trash"></i>
                     </span>
                   </b-table-column>
@@ -172,7 +178,7 @@ limitations under the License.
               <div class="card-content">
                 <b-table v-if="Object.keys(tagInfo).length > 0" :data="Object.values(tagInfo)">
                   <b-table-column field="search" label="" v-slot="props" width="1em">
-                    <router-link :to="{ name: 'Explore', query: generateOrElasticQuery(props.row.iocs) }">
+                    <router-link :to="{ name: 'Explore', query: generateOrOpenSearchQuery(props.row.iocs) }">
                       <i class="fas fa-search" aria-hidden="true" title="Search sketch for all IOCs with this tag."></i>
                     </router-link>
                   </b-table-column>
@@ -203,7 +209,7 @@ limitations under the License.
               <div class="card-content">
                 <b-table v-if="sketchTags.length > 0" :data="sketchTags">
                   <b-table-column field="search" label="" v-slot="props" width="1em">
-                    <router-link :to="{ name: 'Explore', query: generateElasticQuery(props.row.tag, 'tag') }">
+                    <router-link :to="{ name: 'Explore', query: generateOpenSearchQuery(props.row.tag, 'tag') }">
                       <i
                         class="fas fa-search"
                         aria-hidden="true"
@@ -313,11 +319,11 @@ export default {
       }
     },
     // TODO: Use filter chips instead
-    generateOrElasticQuery(valueList) {
+    generateOrOpenSearchQuery(valueList) {
       let query = valueList.map((v) => `"${v}"`).reduce((a, b) => `${a} OR ${b}`)
       return { q: query }
     },
-    generateElasticQuery(value, field) {
+    generateOpenSearchQuery(value, field) {
       let query = `"${value}"`
       if (field !== undefined) {
         query = `${field}:${query}`
