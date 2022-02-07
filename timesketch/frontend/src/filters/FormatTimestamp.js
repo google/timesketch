@@ -23,6 +23,8 @@ export default {
       input = input / 1000 // microseconds -> milliseconds
     } else if (tsLength === 10) {
       input = input * 1000000 // seconds -> milliseconds
+    } else if (tsLength === 19) {
+      input = input / 1000000 // nanoseconds -> milliseconds
     }
     return input
   },
