@@ -176,17 +176,25 @@ limitations under the License.
                 </p>
               </div>
               <div class="card-content">
-                <b-table v-if="Object.keys(tagInfo).length > 0" :data="Object.values(tagInfo)">
+                <b-table
+                  v-if="Object.keys(tagInfo).length > 0"
+                  :data="Object.values(tagInfo)"
+                  default-sort="tag.weight"
+                  default-sort-direction="desc"
+                >
                   <b-table-column field="search" label="" v-slot="props" width="1em">
                     <router-link :to="{ name: 'Explore', query: generateOrOpenSearchQuery(props.row.iocs) }">
                       <i class="fas fa-search" aria-hidden="true" title="Search sketch for all IOCs with this tag."></i>
                     </router-link>
                   </b-table-column>
-                  <b-table-column field="tagName" label="Tag name" v-slot="props" sortable>
-                    <b-tag type="is-info is-light">{{ props.row.tagName }} </b-tag>
+                  <b-table-column field="tag.name" label="Tag name" v-slot="props" sortable>
+                    <b-tag :type="`is-${props.row.tag.class} is-light`">{{ props.row.tag.name }} </b-tag>
                   </b-table-column>
                   <b-table-column field="count" label="IOCs tagged" v-slot="props" sortable numeric>
                     {{ props.row.count }}
+                  </b-table-column>
+                  <b-table-column field="tag.weight" label="Weight" v-slot="props" width="2em" sortable>
+                    {{ props.row.tag.weight }}
                   </b-table-column>
                 </b-table>
                 <span v-else>No IOCs have been tagged yet.</span>
@@ -299,7 +307,7 @@ export default {
             this.tagInfo[tag] = {
               count: 0,
               iocs: [],
-              tagName: tag,
+              tag: this.enrichTag(tag),
             }
           }
           this.tagInfo[tag].count++
