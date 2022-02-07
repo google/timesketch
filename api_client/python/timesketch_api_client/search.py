@@ -98,6 +98,8 @@ class DateIntervalChip(Chip):
     CHIP_VALUE = 'interval'
 
     _DATE_FORMAT = '%Y-%m-%dT%H:%M:%S'
+    _DATE_FORMAT_MICROSECONDS = '%Y-%m-%dT%H:%M:%S.%f'
+    _DATE_ONLY_FORMAT = '%Y-%m-%d'
 
     def __init__(self):
         """Initialize the chip."""
@@ -161,11 +163,22 @@ class DateIntervalChip(Chip):
     def date(self, date):
         """Make changes to the date."""
         try:
-            dt = datetime.datetime.strptime(date, self._DATE_FORMAT)
-        except ValueError as exc:
-            logger.error(
-                'Unable to add date chip, wrong date format', exc_info=True)
-            raise ValueError('Wrong date format') from exc
+            dt = datetime.datetime.strptime(date,
+                                            self._DATE_FORMAT_MICROSECONDS)
+        except ValueError:
+            try:
+                dt = datetime.datetime.strptime(date, self._DATE_FORMAT)
+            except ValueError:
+                try:
+                    dt = datetime.datetime.strptime(date,
+                                                    self._DATE_ONLY_FORMAT)
+                except ValueError as exc:
+                    logger.error(
+                        'Unable to add date chip, wrong date format',
+                        exc_info=True)
+                    raise ValueError('Wrong date format') from exc
+        if dt.microsecond > 0:
+            raise ValueError('Microsecond dates are not currently supported')
         self._date = dt
 
     def from_dict(self, chip_dict):
@@ -173,9 +186,22 @@ class DateIntervalChip(Chip):
         value = chip_dict.get('value')
         if not value:
             return
-        date, before, after = value.split()
+
+        split_value = value.split()
+        if len(split_value) == 3:
+            date_time, before, after = split_value
+        elif len(split_value) == 4:
+            date, time, before, after = split_value
+            date_time = f'{date}T{time}'
+        else:
+            raise ValueError(
+                'Unable to configure date chip, wrong date format.')
+
         self.unit = before[-1]
-        self.date = date
+        if date_time.endswith('Z'):
+            self.date = date_time[:-1]
+        else:
+            self.date = date_time
         self.before = int(before[1:-1])
         self.after = int(after[1:-1])
 
@@ -207,6 +233,7 @@ class DateRangeChip(Chip):
     CHIP_VALUE = 'date_range'
 
     _DATE_FORMAT = '%Y-%m-%dT%H:%M:%S'
+    _DATE_FORMAT_MICROSECONDS = '%Y-%m-%dT%H:%M:%S.%f'
 
     def __init__(self):
         """Initialize the date range."""
@@ -223,12 +250,21 @@ class DateRangeChip(Chip):
         Raises:
             ValueError: if the date format is incorrectly formatted.
         """
+        if end_time.endswith('Z'):
+            end_time = end_time[:-1]
         try:
-            dt = datetime.datetime.strptime(end_time, self._DATE_FORMAT)
+            dt = datetime.datetime.strptime(end_time,
+                                            self._DATE_FORMAT_MICROSECONDS)
         except ValueError as exc:
-            logger.error(
-                'Unable to add date chip, wrong date format', exc_info=True)
-            raise ValueError('Wrong date format') from exc
+            try:
+                dt = datetime.datetime.strptime(end_time, self._DATE_FORMAT)
+            except ValueError as exc:
+                logger.error(
+                    'Unable to add date chip, wrong date format',
+                    exc_info=True)
+                raise ValueError('Wrong date format') from exc
+        if dt.microsecond > 0:
+            raise ValueError('Microsecond dates are not currently supported')
         self._end_date = dt
 
     def add_start_time(self, start_time):
@@ -240,12 +276,21 @@ class DateRangeChip(Chip):
         Raises:
             ValueError: if the date format is incorrectly formatted.
         """
+        if start_time.endswith('Z'):
+            start_time = start_time[:-1]
         try:
-            dt = datetime.datetime.strptime(start_time, self._DATE_FORMAT)
+            dt = datetime.datetime.strptime(start_time,
+                                            self._DATE_FORMAT_MICROSECONDS)
         except ValueError as exc:
-            logger.error(
-                'Unable to add date chip, wrong date format', exc_info=True)
-            raise ValueError('Wrong date format') from exc
+            try:
+                dt = datetime.datetime.strptime(start_time, self._DATE_FORMAT)
+            except ValueError as exc:
+                logger.error(
+                    'Unable to add date chip, wrong date format',
+                    exc_info=True)
+                raise ValueError('Wrong date format') from exc
+        if dt.microsecond > 0:
+            raise ValueError('Microsecond dates are not currently supported')
         self._start_date = dt
 
     @property
