@@ -1,12 +1,12 @@
 .md-header,
 .md-tabs {
-  background-color: rgba(0, 0, 0, 0.87);
-  color: #fff;
+  background-color: #fff;
+  color: #333;
 }
 
 .md-tabs {
-  background-color: rgba(0, 0, 0, 0.87);
-  color: #fff;
+  background-color: #fff;
+  color: #333;
   padding: 5px;
 }
 

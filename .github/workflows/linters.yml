@@ -19,7 +19,10 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
+        # Pin pip to pip==22.0.3 due to upstream bug in pip.
+        # TODO: Revisit and remove this when fixed upstream.
         run: |
+          pip install -U pip==22.0.3
           pip install astroid==2.4.0
           pip install pylint==2.6.0
           pip install -r test_requirements.txt
