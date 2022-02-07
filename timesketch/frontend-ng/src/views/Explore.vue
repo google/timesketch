@@ -417,7 +417,9 @@ limitations under the License.
                       <v-list three-line>
                         <v-list-item>
                           <v-list-item-avatar>
-                            <v-img src="https://randomuser.me/api/portraits/women/81.jpg"></v-img>
+                            <v-avatar class="ml-3" color="orange" size="32">
+                              <span class="white--text">jb</span>
+                            </v-avatar>
                           </v-list-item-avatar>
                           <v-list-item-content>
                             <v-list-item-title>Jane Doe</v-list-item-title>
@@ -431,7 +433,9 @@ limitations under the License.
                         </v-list-item>
                         <v-list-item>
                           <v-list-item-avatar>
-                            <v-img src="https://randomuser.me/api/portraits/men/75.jpg"></v-img>
+                            <v-avatar class="ml-3" color="orange" size="32">
+                              <span class="white--text">jb</span>
+                            </v-avatar>
                           </v-list-item-avatar>
                           <v-list-item-content>
                             <v-list-item-title>John Doe</v-list-item-title>
