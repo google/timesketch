@@ -143,7 +143,7 @@ export default {
           'intelligence'
         ).then(() => {
           Snackbar.open({
-            message: 'Attribtue added successfully',
+            message: 'Attribute added successfully',
             type: 'is-white',
             position: 'is-top',
             actionText: 'View intelligence',

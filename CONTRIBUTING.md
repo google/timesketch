@@ -32,11 +32,11 @@ All submissions, including submissions by project members, require review. To ke
 The code is easy to maintain and understand. As a developer you'll sometimes find yourself thinking hmm, what is the code supposed to do here. It is important that you should be able to come back to code 5 months later and still quickly understand what it supposed to be doing. Also for other people that want to contribute it is necessary that they need to be able to quickly understand the code. Be that said, quick-and-dirty solutions might work in the short term, but we'll ban them from the code base to gain better long term quality.
 With the code review process we ensure that at least two eyes looked over the code in hopes of finding potential bugs or errors (before they become bugs and errors). This also improves the overall code quality and makes sure that every developer knows to (largely) expect the same coding style.
 
-#### Documenation review
+#### Documentation review
 
-One exception from the code review policy outlined above is simple documenation updates and additions made by core project members (repo admins and maintainers with merge permissions). These can be merged without review.
+One exception from the code review policy outlined above is simple documentation updates and additions made by core project members (repo admins and maintainers with merge permissions). These can be merged without review.
 
-Note: Any change that affects the layout and structure of the site (timesketch.org) has to go through the review process and any update from external contributers has to be reviewed as well.
+Note: Any change that affects the layout and structure of the site (timesketch.org) has to go through the review process and any update from external contributors has to be reviewed as well.
 
 #### Style guide
 
