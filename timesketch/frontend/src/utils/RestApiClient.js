@@ -359,4 +359,7 @@ export default {
     }
     return RestApiClient.post('/sigma/text/', formData)
   },
+  getTagMetadata() {
+    return RestApiClient.get('/intelligence/tagmetadata/')
+  }
 }

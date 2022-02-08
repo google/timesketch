@@ -15,9 +15,12 @@
 import logging
 import json
 import time
+import os
+import yaml
 
 from flask import abort
 from flask import jsonify
+from flask import current_app
 from flask_login import current_user
 
 import altair as alt
@@ -236,3 +239,27 @@ def run_aggregator_group(group, sketch_id):
     }
 
     return result_chart, objects, meta
+
+
+def load_yaml_config(config_parameter_name):
+    """Load a YAML file.
+    Args:
+        config_paramater_name (str): Name of the config paramter to get the
+        path to the YAML file from.
+    Returns:
+        A dictionary with the YAML data.
+    """
+    yaml_path = current_app.config.get(config_parameter_name, '')
+    if not yaml_path:
+        logger.error(
+            'The path to the YAML file isn\'t defined in the '
+            'main configuration file')
+        return {}
+    if not os.path.isfile(yaml_path):
+        logger.error(
+            'Unable to read the config, file: '
+            '[{0:s}] does not exist'.format(yaml_path))
+        return {}
+
+    with open(yaml_path, 'r') as fh:
+        return yaml.safe_load(fh)

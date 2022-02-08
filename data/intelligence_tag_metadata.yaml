@@ -1,0 +1,15 @@
+malware:
+  weight: 100
+  class: 'danger'
+
+suspicious:
+  weight: 50
+  class: 'warning'
+
+legit:
+  weight: 10
+  class: 'success'
+
+default:
+  weight: 0
+  class: 'info'

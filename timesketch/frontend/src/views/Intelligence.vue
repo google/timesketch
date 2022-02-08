@@ -63,7 +63,7 @@ limitations under the License.
     <!-- End modal -->
 
     <!-- IOC table -->
-    <section class="section">
+    <section class="section" v-if="Object.keys(tagMetadata).length > 0">
       <div class="container is-fluid">
         <div class="columns">
           <div class="column">
@@ -163,7 +163,7 @@ limitations under the License.
         <!-- end columns -->
 
         <!-- Tag & label list columns -->
-        <div class="columns">
+        <div class="columns" v-if="Object.keys(tagMetadata).length > 0">
           <!-- tag column -->
           <div class="column">
             <div class="card">
@@ -250,13 +250,14 @@ limitations under the License.
 import _ from 'lodash'
 import ApiClient from '../utils/RestApiClient'
 import { SnackbarProgrammatic as Snackbar } from 'buefy'
-import { tagMetadata, IOCTypes } from '../utils/tagMetadata'
+import { IOCTypes } from '../utils/tagMetadata'
 
 export default {
   data() {
     return {
       sketchTags: [],
       tagInfo: {},
+      tagMetadata: {},
       editingIoc: {},
       showEditModal: false,
       IOCTypes: IOCTypes,
@@ -285,7 +286,11 @@ export default {
     },
     loadSketchAttributes() {
       this.$store.dispatch('updateSketch', this.$store.state.sketch.id)
-      this.buildTagInfo()
+      // buildTagInfo depends on tagMetadata to be present.
+      ApiClient.getTagMetadata().then((response) => {
+        this.tagMetadata = response.data
+        this.buildTagInfo()
+      })
     },
     loadSketchTags() {
       ApiClient.runAggregator(this.sketch.id, {
@@ -300,6 +305,8 @@ export default {
       this.$buefy.notification.open({ message: 'Succesfully copied data to clipboard!', type: 'is-success' })
     },
     buildTagInfo() {
+      // We need tagMetadata to be embedded in the list below as it is used
+      // for sorting in the table.
       this.tagInfo = {}
       for (var ioc of this.intelligenceData) {
         for (var tag of ioc.tags) {
@@ -320,15 +327,15 @@ export default {
     },
     enrichTag(tag) {
       let tagInfo = { name: tag }
-      if (tagMetadata[tag]) {
-        return _.extend(tagInfo, tagMetadata[tag])
+      if (this.tagMetadata[tag]) {
+        return _.extend(tagInfo, this.tagMetadata[tag])
       } else {
-        return _.extend(tagInfo, tagMetadata.default)
+        return _.extend(tagInfo, this.tagMetadata.default)
       }
     },
     // TODO: Use filter chips instead
-    generateOrOpenSearchQuery(valueList) {
-      let query = valueList.map((v) => `"${v}"`).reduce((a, b) => `${a} OR ${b}`)
+    generateOrOpenSearchQuery(iocs) {
+      let query = iocs.map((v) => `"${v}"`).reduce((a, b) => `${a} OR ${b}`)
       return { q: query }
     },
     generateOpenSearchQuery(value, field) {
