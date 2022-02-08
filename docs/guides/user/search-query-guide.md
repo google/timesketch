@@ -213,3 +213,7 @@ Here are some common searches:
 | ---------------------------- | ---------------------------------------------------------------- |
 | EventId 4624 and LogonType 5 | event_identifier:4624 AND "LogonType\">5</Data>"                 |
 | Windows File path            | "C:\\Users\\foobar\\Download\\folder\ whitespace\\filename.jpeg" |
+
+## Common questions
+
+There is a frequent question around Windows Event logs and how they are represented in Timesketch when imported from Plaso. For that we recommend reading up on [Common misconception about Windows EventLogs](https://osdfir.blogspot.com/2021/10/common-misconceptions-about-windows.html)
