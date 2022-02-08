@@ -54,7 +54,7 @@ class User(resource.BaseResource):
             ValueError: If there was an error.
 
         Returns:
-            Boolean: Whether the password was sucessfully modified.
+            Boolean: Whether the password was successfully modified.
         """
         if not new_password:
             raise ValueError('No new password supplied.')

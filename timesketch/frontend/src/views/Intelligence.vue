@@ -77,23 +77,6 @@ limitations under the License.
                     <code>{{ props.row.type }}</code>
                   </b-table-column>
 
-                  <b-table-column field="ioc" label="" v-slot="props" width="5em">
-                    <i
-                      class="fas fa-copy"
-                      style="cursor:pointer"
-                      title="Copy key"
-                      v-clipboard:copy="props.row.ioc"
-                      v-clipboard:success="notifyClipboardSuccess"
-                    ></i>
-                    <router-link :to="{ name: 'Explore', query: generateElasticQuery(props.row.ioc) }" class="ml-4">
-                      <i
-                        class="fas fa-search"
-                        aria-hidden="true"
-                        title="Search sketch for all events containing this IOC."
-                      ></i>
-                    </router-link>
-                  </b-table-column>
-
                   <b-table-column field="externalURI" label="External ref." v-slot="props" sortable>
                     <a
                       v-if="getValidUrl(props.row.externalURI)"
@@ -105,20 +88,52 @@ limitations under the License.
                     <span v-else>{{ props.row.externalURI }}</span>
                   </b-table-column>
 
+                  <b-table-column field="ioc" label="" v-slot="props" width="5em">
+                    <i
+                      class="fas fa-copy"
+                      style="cursor: pointer"
+                      title="Copy key"
+                      v-clipboard:copy="props.row.ioc"
+                      v-clipboard:success="notifyClipboardSuccess"
+                    ></i>
+                    <router-link :to="{ name: 'Explore', query: generateOpenSearchQuery(props.row.ioc) }" class="ml-4">
+                      <i
+                        class="fas fa-search"
+                        aria-hidden="true"
+                        title="Search sketch for all events containing this IOC."
+                      ></i>
+                    </router-link>
+                  </b-table-column>
+
                   <b-table-column field="ioc" label="Indicator data" v-slot="props" sortable>
                     <code>{{ props.row.ioc }}</code>
                   </b-table-column>
 
                   <b-table-column field="tags" label="Tags" v-slot="props">
                     <b-taglist>
-                      <b-tag v-for="tag in props.row.tags" v-bind:key="tag" type="is-info is-light">{{ tag }} </b-tag>
+                      <b-tag
+                        v-for="tag in getEnrichedTags(props.row.tags)"
+                        v-bind:key="tag.name"
+                        :type="`is-${tag.class} is-light`"
+                      >
+                        <router-link
+                          :to="{ name: 'Explore', query: generateOrOpenSearchQuery(tagInfo[tag.name].iocs) }"
+                        >
+                          <i
+                            class="fas fa-search"
+                            aria-hidden="true"
+                            title="Search sketch for all IOCs with this tag."
+                          ></i>
+                        </router-link>
+                        {{ tag.name }}
+                      </b-tag>
                     </b-taglist>
                   </b-table-column>
 
                   <b-table-column field="edit" label="" v-slot="props">
                     <span
                       class="icon is-small"
-                      style="cursor:pointer;"
+                      style="cursor: pointer"
                       title="Edit IOC"
                       @click="startIOCEdit(props.row)"
                       ><i class="fas fa-edit"></i>
@@ -126,7 +141,11 @@ limitations under the License.
                   </b-table-column>
 
                   <b-table-column field="delete" label="" v-slot="props">
-                    <span class="icon is-small delete-ioc" title="Delete IOC" @click="deleteIoc(props.row)"
+                    <span
+                      class="icon is-small delete-ioc"
+                      style="cursor: pointer"
+                      title="Delete IOC"
+                      @click="deleteIoc(props.row)"
                       ><i class="fas fa-trash"></i>
                     </span>
                   </b-table-column>
@@ -157,17 +176,25 @@ limitations under the License.
                 </p>
               </div>
               <div class="card-content">
-                <b-table v-if="Object.keys(tagInfo).length > 0" :data="Object.values(tagInfo)">
+                <b-table
+                  v-if="Object.keys(tagInfo).length > 0"
+                  :data="Object.values(tagInfo)"
+                  default-sort="tag.weight"
+                  default-sort-direction="desc"
+                >
                   <b-table-column field="search" label="" v-slot="props" width="1em">
-                    <router-link :to="{ name: 'Explore', query: generateOrElasticQuery(props.row.iocs) }">
+                    <router-link :to="{ name: 'Explore', query: generateOrOpenSearchQuery(props.row.iocs) }">
                       <i class="fas fa-search" aria-hidden="true" title="Search sketch for all IOCs with this tag."></i>
                     </router-link>
                   </b-table-column>
-                  <b-table-column field="tagName" label="Tag name" v-slot="props" sortable>
-                    <b-tag type="is-info is-light">{{ props.row.tagName }} </b-tag>
+                  <b-table-column field="tag.name" label="Tag name" v-slot="props" sortable>
+                    <b-tag :type="`is-${props.row.tag.class} is-light`">{{ props.row.tag.name }} </b-tag>
                   </b-table-column>
                   <b-table-column field="count" label="IOCs tagged" v-slot="props" sortable numeric>
                     {{ props.row.count }}
+                  </b-table-column>
+                  <b-table-column field="tag.weight" label="Weight" v-slot="props" width="2em" sortable>
+                    {{ props.row.tag.weight }}
                   </b-table-column>
                 </b-table>
                 <span v-else>No IOCs have been tagged yet.</span>
@@ -190,7 +217,7 @@ limitations under the License.
               <div class="card-content">
                 <b-table v-if="sketchTags.length > 0" :data="sketchTags">
                   <b-table-column field="search" label="" v-slot="props" width="1em">
-                    <router-link :to="{ name: 'Explore', query: generateElasticQuery(props.row.tag, 'tag') }">
+                    <router-link :to="{ name: 'Explore', query: generateOpenSearchQuery(props.row.tag, 'tag') }">
                       <i
                         class="fas fa-search"
                         aria-hidden="true"
@@ -220,8 +247,10 @@ limitations under the License.
 </template>
 
 <script>
+import _ from 'lodash'
 import ApiClient from '../utils/RestApiClient'
 import { SnackbarProgrammatic as Snackbar } from 'buefy'
+import { tagMetadata, IOCTypes } from '../utils/tagMetadata'
 
 export default {
   data() {
@@ -230,25 +259,13 @@ export default {
       tagInfo: {},
       editingIoc: {},
       showEditModal: false,
-      IOCTypes: [
-        { regex: /^(\/[\S]+)+$/i, type: 'fs_path' },
-        { regex: /^([-\w]+\.)+[a-z]{2,}$/i, type: 'hostname' },
-        {
-          regex: /^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/g,
-          type: 'ipv4',
-        },
-        { regex: /^[0-9a-f]{64}$/i, type: 'hash_sha256' },
-        { regex: /^[0-9a-f]{40}$/i, type: 'hash_sha1' },
-        { regex: /^[0-9a-f]{32}$/i, type: 'hash_md5' },
-        // Match any "other" selection
-        { regex: /./g, type: 'other' },
-      ],
+      IOCTypes: IOCTypes,
     }
   },
   methods: {
     deleteIoc(ioc) {
       if (confirm('Delete IOC?')) {
-        var data = this.intelligenceData.filter(i => i.ioc !== ioc.ioc)
+        var data = this.intelligenceData.filter((i) => i.ioc !== ioc.ioc)
         ApiClient.addSketchAttribute(this.sketch.id, 'intelligence', { data: data }, 'intelligence').then(() => {
           this.loadSketchAttributes()
         })
@@ -274,7 +291,7 @@ export default {
       ApiClient.runAggregator(this.sketch.id, {
         aggregator_name: 'field_bucket',
         aggregator_parameters: { field: 'tag' },
-      }).then(response => {
+      }).then((response) => {
         this.sketchTags = response.data.objects[0].field_bucket.buckets
         // of the form [{count: 0, tag: 'foo'}]
       })
@@ -290,7 +307,7 @@ export default {
             this.tagInfo[tag] = {
               count: 0,
               iocs: [],
-              tagName: tag,
+              tag: this.enrichTag(tag),
             }
           }
           this.tagInfo[tag].count++
@@ -298,12 +315,23 @@ export default {
         }
       }
     },
-        // TODO: Use filter chips instead
-        generateOrElasticQuery(valueList) {
-      let query = valueList.map(v => `"${v}"`).reduce((a, b) => `${a} OR ${b}`)
+    getEnrichedTags(tags) {
+      return tags.map((tag) => this.enrichTag(tag)).sort((a, b) => b.weight - a.weight)
+    },
+    enrichTag(tag) {
+      let tagInfo = { name: tag }
+      if (tagMetadata[tag]) {
+        return _.extend(tagInfo, tagMetadata[tag])
+      } else {
+        return _.extend(tagInfo, tagMetadata.default)
+      }
+    },
+    // TODO: Use filter chips instead
+    generateOrOpenSearchQuery(valueList) {
+      let query = valueList.map((v) => `"${v}"`).reduce((a, b) => `${a} OR ${b}`)
       return { q: query }
     },
-    generateElasticQuery(value, field) {
+    generateOpenSearchQuery(value, field) {
       let query = `"${value}"`
       if (field !== undefined) {
         query = `${field}:${query}`
@@ -327,7 +355,7 @@ export default {
           this.showEditModal = false
           this.buildTagInfo()
         })
-        .catch(e => {
+        .catch((e) => {
           Snackbar.open({
             message: 'IOC update failed.',
             type: 'is-danger',
