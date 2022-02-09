@@ -513,7 +513,6 @@ class SearchHistoryTreeResource(resources.ResourceMixin, Resource):
         last_node = SearchHistory.query.filter_by(
             user=current_user, sketch=sketch).order_by(
                 SearchHistory.id.desc()).first()
-
         if root_node:
             tree = root_node.build_tree(root_node, {})
 
