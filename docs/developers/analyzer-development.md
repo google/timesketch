@@ -109,26 +109,14 @@ Result from analyzer run:
 - Do not try to run analyzer_run.py in your docker instance of Timesketch
   as it will mix certain things with the actual installed Timesketch instance.
 
-- Analyzer_run does not actually execute the ES query. Instead all event data
+* Analyzer_run does not actually execute the ES query. Instead all event data
   passed to the script are assumed to "match" the analyzer.
 
-- If you require a dependency that is not part of the core Timesketch system
-  you need to add it to the `contrib_requirements.txt` file in the analyzer/contrib
-  directory.
+## Community contributed analyzers
 
-In order to support extra dependencies you need to catch any import errors
-in your code. For example:
+This is currently an experiment and subject to rapid change!
 
-```
-has_required_deps = True
-try:
-    from google.cloud import bigquery
-except ImportError:
-    has_required_deps = False
+`timesketch/lib/analyzers/contrib` hosts community contributed analyzers. They are not maintained
+by the core Timesketch development team.
 
-... <your analyzer code here> ...
-
-# Only register the module if all dependencies can be imported
-if has_required_deps:
-    manager.AnalysisManager.register_analyzer(TestContrib)
-```
+Please read `timesketch/lib/analyzers/contrib/README.md` for more information.

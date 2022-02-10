@@ -11,7 +11,7 @@ you need to add it to the `contrib_requirements.txt` file in this directory.
 In order to support extra dependencies you need to catch any import errors
 in your code. For example:
 
-```
+```python
 has_required_deps = True
 try:
     from google.cloud import bigquery
