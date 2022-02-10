@@ -18,7 +18,7 @@ def run_python_tests(coverage=False):
                 ' cli_client/python/'), shell=True)
         else:
             subprocess.check_call(
-                ['nosetests', '-x', 'timesketch/', 'api_client/python/',
+                ['nosetests', '-x', '-s', 'timesketch/', 'api_client/python/',
                  'importer_client/python', 'cli_client/python/'])
     finally:
         subprocess.check_call(['rm', '-f', '.coverage'])
