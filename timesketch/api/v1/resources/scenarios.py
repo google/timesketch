@@ -77,7 +77,7 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
         """Handles POST request to the resource.
 
         This resource creates a new scenario for a sketch based on a template.
-        Templates are defined in data/scenarios.yaml.
+        Templates are defined in SCENARIOS_PATH.
 
         Returns:
             A JSON representation of the scenario.

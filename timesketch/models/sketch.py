@@ -28,6 +28,7 @@ from sqlalchemy import Integer
 from sqlalchemy import Unicode
 from sqlalchemy import UnicodeText
 from sqlalchemy import Boolean
+from sqlalchemy import TIMESTAMP
 from sqlalchemy.orm import relationship
 
 from sqlalchemy.orm import backref
@@ -856,6 +857,8 @@ class Scenario(
     facets = relationship(
         'Facet', backref='scenario', lazy='select')
 
+
+
     def __init__(
         self, name, display_name, sketch, user, spec_json, description=None):
         """Initialize the Scenario object.
@@ -883,8 +886,8 @@ class FacetTimeFrame(BaseModel):
     A timeframe is used to set the scope for the facet. This information
     is used when automatically generatae queries and other helper functions.
     """
-    start_time = Column(BigInteger())
-    end_time = Column(BigInteger())
+    start_time = Column(TIMESTAMP(timezone=True))
+    end_time = Column(TIMESTAMP(timezone=True))
     description = Column(UnicodeText())
     user_id = Column(Integer, ForeignKey('user.id'))
     facet_id = Column(Integer, ForeignKey('facet.id'))
@@ -894,8 +897,8 @@ class FacetTimeFrame(BaseModel):
         """Initialize the InvestigationTimeFrame object.
 
         Args:
-            start_time (int): Microseconds since January 1, 1970, 00:00:00 UTC
-            end_time (int): Microseconds since January 1, 1970, 00:00:00 UTC
+            start_time (datetime): Timezone-aware UTC datetime object.
+            end_time (datetime): Timezone-aware UTC datetime object.
             facet (Facet): Facet for this time frame
             description (str): Description of the timeframe (optional)
         """
