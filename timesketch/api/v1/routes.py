@@ -69,6 +69,9 @@ from .resources.graph import GraphPluginListResource
 from .resources.graph import GraphCacheResource
 from .resources.intelligence import TagMetadataResource
 
+from .resources.scenarios import ScenarioTemplateListResource
+from .resources.scenarios import ScenarioListResource
+
 
 # Disable error for long line. Readability is more important than line
 # length in this case.
@@ -126,5 +129,7 @@ API_ROUTES = [
     (DataSourceListResource, '/sketches/<int:sketch_id>/datasource/'),
     (DataSourceResource, '/sketches/<int:sketch_id>/datasource/<int:datasource_id>/'),
     (DataFinderResource, '/sketches/<int:sketch_id>/data/find/'),
+    (ScenarioTemplateListResource, '/scenarios/'),
+    (ScenarioListResource, '/sketches/<int:sketch_id>/scenarios/'),
     (TagMetadataResource, '/intelligence/tagmetadata/'),
 ]

@@ -23,6 +23,7 @@ from flask import jsonify
 from flask import current_app
 from flask_login import current_user
 
+
 import altair as alt
 
 from timesketch.lib import ontology
@@ -246,6 +247,7 @@ def load_yaml_config(config_parameter_name):
     Args:
         config_paramater_name (str): Name of the config paramter to get the
         path to the YAML file from.
+
     Returns:
         A dictionary with the YAML data.
     """

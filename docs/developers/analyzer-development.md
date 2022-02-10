@@ -109,7 +109,7 @@ Result from analyzer run:
 - Do not try to run analyzer_run.py in your docker instance of Timesketch
   as it will mix certain things with the actual installed Timesketch instance.
 
-* Analyzer_run does not actually execute the ES query. Instead all event data
+- Analyzer_run does not actually execute the ES query. Instead all event data
   passed to the script are assumed to "match" the analyzer.
 
 ## Community contributed analyzers
