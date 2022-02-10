@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Information API for version 1 of the Timesketch API."""
+"""Intelligence API for version 1 of the Timesketch API."""
 
 from flask import jsonify
 from flask_restful import Resource
