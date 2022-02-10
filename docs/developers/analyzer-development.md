@@ -111,7 +111,3 @@ Result from analyzer run:
 
 - Analyzer_run does not actually execute the ES query. Instead all event data
   passed to the script are assumed to "match" the analyzer.
-
-- If your analyzer needs a dependency that is not provided by Timesketch you
-  need to add your analyzer to the contrib/ directory and add the dependency
-  to the contrib_requirements.txt file.
