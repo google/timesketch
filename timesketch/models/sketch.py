@@ -857,8 +857,6 @@ class Scenario(
     facets = relationship(
         'Facet', backref='scenario', lazy='select')
 
-
-
     def __init__(
         self, name, display_name, sketch, user, spec_json, description=None):
         """Initialize the Scenario object.
