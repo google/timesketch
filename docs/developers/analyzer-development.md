@@ -4,15 +4,15 @@
 
 When you develop an anylzer that would benefit from creating smaller sub-jobs, you should use Multi Analyzer.
 
-For example The Sigma analyzer is such a Multi Analyzer. That means, the Sigma analyzer is calling ```get_kwargs()``` from [sigma_tagger.py](https://github.com/google/timesketch/blob/master/timesketch/lib/analyzers/sigma_tagger.py). That will return a list of all Sigma rules installed on the instance. The Main celery job then spawns one celery job per Sigma rule that can run in paralell or serial depending on the celery config and sizing of the Timesketch instance.
+For example The Sigma analyzer is such a Multi Analyzer. That means, the Sigma analyzer is calling `get_kwargs()` from [sigma_tagger.py](https://github.com/google/timesketch/blob/master/timesketch/lib/analyzers/sigma_tagger.py). That will return a list of all Sigma rules installed on the instance. The Main celery job then spawns one celery job per Sigma rule that can run in paralell or serial depending on the celery config and sizing of the Timesketch instance.
 
-If ```get_kwargs()``` is not implemented in the analyzer, [tasks.py](https://github.com/google/timesketch/blob/master/timesketch/lib/tasks.py) expects it is not a multi analyzer, thus creating only one celery job.
+If `get_kwargs()` is not implemented in the analyzer, [tasks.py](https://github.com/google/timesketch/blob/master/timesketch/lib/tasks.py) expects it is not a multi analyzer, thus creating only one celery job.
 
 ## analyzer_run.py
 
 ### Purpose
 
-`analyzer_run.py` is a standalone python script made to bootstrap the 
+`analyzer_run.py` is a standalone python script made to bootstrap the
 development workflow to a minimum where only a file with events and
 a class file with your analyzer code is needed.
 You do not have to install Timesketch or any docker for that.
@@ -22,7 +22,7 @@ You do not have to install Timesketch or any docker for that.
 To be able to run it, you need a python environment with some requirements
 installed.
 
-A good guide to install a venv is published by github 
+A good guide to install a venv is published by github
 [here](https://uoa-eresearch.github.io/eresearch-cookbook/recipe/2014/11/26/python-virtual-env/)
 
 ```
@@ -34,8 +34,8 @@ analyzer_run.py: error: the following arguments are required: PATH_TO_ANALYZER, 
 ### create your sample data
 
 You can create your sample data either in CSV or JSONL with the same format
-that Timesketch can ingest. To learn more about that visit 
-[CreateTimelineFromJSONorCSV](/guides/user/import-from-json-csv/) 
+that Timesketch can ingest. To learn more about that visit
+[CreateTimelineFromJSONorCSV](/guides/user/import-from-json-csv/)
 
 ### use existing sample data
 
@@ -48,11 +48,13 @@ timesketch/test_tools/test_events/sigma_events.jsonl
 ### Running it with parameters
 
 The following command
+
 ```
 PYTHONPATH=. python3 analyzer_run.py --test_file test_events/sigma_events.jsonl ../timesketch/lib/analyzers/sigma_tagger.py RulesSigmaPlugin
 ```
 
 Will give you that output:
+
 ```
 --------------------------------------------------------------------------------
                                      sigma
@@ -104,8 +106,29 @@ Result from analyzer run:
 
 ### Remark
 
-* Do not try to run analyzer_run.py in your docker instance of Timesketch
-as it will mix certain things with the actual installed Timesketch instance.
+- Do not try to run analyzer_run.py in your docker instance of Timesketch
+  as it will mix certain things with the actual installed Timesketch instance.
 
-* Analyzer_run does not actually execute the ES query. Instead all event data 
-passed to the script are assumed to "match" the analyzer.
+- Analyzer_run does not actually execute the ES query. Instead all event data
+  passed to the script are assumed to "match" the analyzer.
+
+- If you require a dependency that is not part of the core Timesketch system
+  you need to add it to the `contrib_requirements.txt` file in the analyzer/contrib
+  directory.
+
+In order to support extra dependencies you need to catch any import errors
+in your code. For example:
+
+```
+has_required_deps = True
+try:
+    from google.cloud import bigquery
+except ImportError:
+    has_required_deps = False
+
+... <your analyzer code here> ...
+
+# Only register the module if all dependencies can be imported
+if has_required_deps:
+    manager.AnalysisManager.register_analyzer(TestContrib)
+```
