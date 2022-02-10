@@ -574,3 +574,34 @@ class SigmaByTextResourceTest(BaseTest):
 
         self.assertIn('Missing values from the request', data['message'])
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
+
+
+class IntelligenceResourceTest(BaseTest):
+    """Test Intelligence resource."""
+
+    def test_get_intelligence_tag_metadata(self):
+        """Authenticated request to get intelligence tag metadata."""
+        expected_tag_metadata = {
+            "default": {
+                "class": "info",
+                "weight": 0
+            },
+            "legit": {
+                "class": "success",
+                "weight": 10
+            },
+            "malware": {
+                "class": "danger",
+                "weight": 100
+            },
+            "suspicious": {
+                "class": "warning",
+                "weight": 50
+            }
+        }
+        self.login()
+        response = self.client.get('/api/v1/intelligence/tagmetadata/', content_type='application/json')
+        data = json.loads(response.get_data(as_text=True))
+        self.assertIsNotNone(response)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+        self.assertEqual(data, expected_tag_metadata)
