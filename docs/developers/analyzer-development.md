@@ -111,3 +111,12 @@ Result from analyzer run:
 
 - Analyzer_run does not actually execute the ES query. Instead all event data
   passed to the script are assumed to "match" the analyzer.
+
+## Community contributed analyzers
+
+This is currently an experiment and subject to rapid change!
+
+`timesketch/lib/analyzers/contrib` hosts community contributed analyzers. They are not maintained
+by the core Timesketch development team.
+
+Please read `timesketch/lib/analyzers/contrib/README.md` for more information.
