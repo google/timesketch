@@ -600,7 +600,7 @@ class IntelligenceResourceTest(BaseTest):
             }
         }
         self.login()
-        response = self.client.get('/api/v1/intelligence/tagmetadata/', content_type='application/json')
+        response = self.client.get('/api/v1/intelligence/tagmetadata/')
         data = json.loads(response.get_data(as_text=True))
         self.assertIsNotNone(response)
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
