@@ -1117,7 +1117,6 @@ class InvestigativeQuestion(
     """Implements the InvestigativeQuestion model.
 
     An Investigative Question is the smallest component of an investigation.
-    The goal is to be tactical, and
     """
     name = Column(UnicodeText())
     display_name = Column(UnicodeText())
