@@ -14,11 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div style="display:inline;">
+  <div style="display: inline">
     <span
       class="ioc-match"
       ref="contextMenuParent"
-      @click="event => this.$refs.contextMenu.open(event, getIOC($attrs.text), $refs.contextMenuParent)"
+      @click="(event) => this.$refs.contextMenu.open(event, getIOC($attrs.text), $refs.contextMenuParent)"
     >
       <slot></slot>
     </span>
@@ -66,6 +66,7 @@ limitations under the License.
 import ApiClient from '../../utils/RestApiClient'
 import TsContextMenu from './TsContextMenu'
 import { SnackbarProgrammatic as Snackbar } from 'buefy'
+import { IOCTypes } from '../../utils/tagMetadata'
 
 export default {
   components: {
@@ -75,19 +76,7 @@ export default {
   name: 'TsIOCMenu',
   data() {
     return {
-      IOCTypes: [
-        { regex: /^(\/[\S]+)+$/i, type: 'fs_path' },
-        { regex: /^([-\w]+\.)+[a-z]{2,}$/i, type: 'hostname' },
-        {
-          regex: /^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/g,
-          type: 'ipv4',
-        },
-        { regex: /^[0-9a-f]{64}$/i, type: 'hash_sha256' },
-        { regex: /^[0-9a-f]{40}$/i, type: 'hash_sha1' },
-        { regex: /^[0-9a-f]{32}$/i, type: 'hash_md5' },
-        // Match any "other" selection
-        { regex: /./g, type: 'other' },
-      ],
+      IOCTypes: IOCTypes,
       iocColumns: [
         { field: 'ioc', label: 'IOC' },
         { field: 'type', label: 'Type' },
@@ -96,7 +85,7 @@ export default {
     }
   },
   methods: {
-    addFilter: function(field, value, operator) {
+    addFilter: function (field, value, operator) {
       let chip = {
         field: field,
         value: value,
@@ -106,7 +95,7 @@ export default {
       }
       this.$emit('addChip', chip)
     },
-    getIOC: function(text) {
+    getIOC: function (text) {
       for (let iocType of this.IOCTypes) {
         let matches = iocType.regex.exec(text)
         if (matches) {
@@ -120,19 +109,19 @@ export default {
       if (!attributes.intelligence) {
         return false
       }
-      if (attributes.intelligence.value.data.map(ioc => ioc.ioc).indexOf(ioc.ioc) >= 0) {
+      if (attributes.intelligence.value.data.map((ioc) => ioc.ioc).indexOf(ioc.ioc) >= 0) {
         return true
       }
       return false
     },
-    saveThreatIntel: function(ioc) {
-      ApiClient.getSketchAttributes(this.sketch.id).then(response => {
+    saveThreatIntel: function (ioc) {
+      ApiClient.getSketchAttributes(this.sketch.id).then((response) => {
         let attributes = response.data
         if (!attributes.intelligence) {
           attributes.intelligence = { ontology: 'intelligence', value: { data: [] } }
         }
 
-        if (attributes.intelligence.value.data.map(ioc => ioc.ioc).indexOf(ioc.ioc) >= 0) {
+        if (attributes.intelligence.value.data.map((ioc) => ioc.ioc).indexOf(ioc.ioc) >= 0) {
           return
         }
         attributes.intelligence.value.data.push(ioc)

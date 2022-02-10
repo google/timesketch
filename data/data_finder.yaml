@@ -44,7 +44,7 @@
 #                           the field or the attribute that is fetched from the
 #                           the attribute definition.
 #
-#       re_flags            Each regular expresion can define a flag, which is
+#       re_flags            Each regular expression can define a flag, which is
 #                           a list of flags as strings from the re module.
 #                           These include:
 #                               - DEBUG
