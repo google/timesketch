@@ -97,29 +97,31 @@ export default {
       this.fileName = ''
     },
     submitForm: function() {
-      let formData = new FormData()
-      formData.append('file', this.form.file)
-      formData.append('name', this.form.name)
-      formData.append('provider', 'WebUpload')
-      formData.append('context', this.fileName)
-      formData.append('total_file_size', this.form.file.size)
-      formData.append('sketch_id', this.$store.state.sketch.id)
-      let config = {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        onUploadProgress: function(progressEvent) {
-          this.percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
-        }.bind(this),
-      }
-      ApiClient.uploadTimeline(formData, config)
-        .then(response => {
-          this.$store.dispatch('updateSketch', this.$store.state.sketch.id)
-          this.$emit('toggleModal')
-          this.clearFormData()
-          this.percentCompleted = 0
-        })
-        .catch(e => {})
+      if (this.error != 'Please select a file with a valid extension') {
+        let formData = new FormData()
+        formData.append('file', this.form.file)
+        formData.append('name', this.form.name)
+        formData.append('provider', 'WebUpload')
+        formData.append('context', this.fileName)
+        formData.append('total_file_size', this.form.file.size)
+        formData.append('sketch_id', this.$store.state.sketch.id)
+        let config = {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+          onUploadProgress: function(progressEvent) {
+            this.percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+          }.bind(this),
+        }
+        ApiClient.uploadTimeline(formData, config)
+          .then(response => {
+            this.$store.dispatch('updateSketch', this.$store.state.sketch.id)
+            this.$emit('toggleModal')
+            this.clearFormData()
+            this.percentCompleted = 0
+          })
+          .catch(e => {})
+        }
     },
     setFileName: function(fileList) {
       let fileName = fileList[0].name
