@@ -256,6 +256,10 @@ limitations under the License.
       </v-col>
     </v-row>
 
+    <v-row>
+      <v-col cols="12"> <ts-sketch-scenarios></ts-sketch-scenarios> </v-col
+    ></v-row>
+
     <!-- Eventlist -->
     <v-row>
       <v-col
@@ -276,7 +280,10 @@ limitations under the License.
       <v-col cols="12" v-if="eventList.objects.length || (searchInProgress && this.currentQueryFilter.indices.length)">
         <v-card outlined>
           <v-toolbar flat>
-            <v-card-text> {{ fromEvent }}-{{ toEvent }} of {{ totalHits }} events ({{ totalTime }}s) </v-card-text>
+            <v-toolbar-title style="font-size: 1em"
+              >{{ fromEvent }}-{{ toEvent }} of {{ totalHits }} events ({{ totalTime }}s)</v-toolbar-title
+            >
+
             <v-spacer></v-spacer>
 
             <v-btn icon @click="showHistogram = !showHistogram">
@@ -536,6 +543,7 @@ import TsSearchDropdown from '../components/Explore/SearchDropdown'
 import TsBarChart from '../components/Explore/BarChart'
 import TsTimelinePicker from '../components/Explore/TimelinePicker'
 import TsFilterMenu from '../components/Explore/FilterMenu'
+import TsSketchScenarios from '../components/Explore/Scenarios'
 
 import EventBus from '../main'
 import { None } from 'vega'
@@ -573,6 +581,7 @@ export default {
     TsBarChart,
     TsTimelinePicker,
     TsFilterMenu,
+    TsSketchScenarios,
   },
   props: ['sketchId'],
   data() {

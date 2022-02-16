@@ -86,16 +86,21 @@ limitations under the License.
         </v-container>
       </v-col>
     </v-row>
+    <v-row>
+      <v-col cols="12">
+        <ts-sketch-scenarios></ts-sketch-scenarios>
+      </v-col>
+    </v-row>
   </v-container>
 </template>
 
 <script>
 import ApiClient from '../utils/RestApiClient'
-//import TsSketchSummary from '../components/Overview/SketchSummary'
+import TsSketchScenarios from '../components/Explore/Scenarios'
 
 export default {
   components: {
-    //TsSketchSummary,
+    TsSketchScenarios,
   },
   data() {
     return {

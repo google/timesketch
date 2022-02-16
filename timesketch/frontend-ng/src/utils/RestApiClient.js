@@ -337,4 +337,14 @@ export default {
     }
     return RestApiClient.post('/sigma/text/', formData)
   },
+  getScenarios() {
+    return RestApiClient.get('/scenarios/')
+  },
+  getSketchScenarios(sketchId) {
+    return RestApiClient.get('/sketches/' + sketchId + '/scenarios/')
+  },
+  addScenario(sketchId, scenarioName) {
+    let formData = { scenario_name: scenarioName }
+    return RestApiClient.post('/sketches/' + sketchId + '/scenarios/', formData)
+  },
 }
