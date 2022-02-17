@@ -23,6 +23,8 @@ limitations under the License.
       </span>
       <v-spacer></v-spacer>
 
+      <v-btn small depressed v-on:click="switchUI"> Use the old UI </v-btn>
+
       <v-tooltip bottom>
         <template v-slot:activator="{ on, attrs }">
           <v-btn icon v-on:click="toggleTheme" v-bind="attrs" v-on="on">
@@ -70,6 +72,9 @@ export default {
     toggleTheme: function () {
       this.$vuetify.theme.dark = !this.$vuetify.theme.dark
       localStorage.setItem('isDarkTheme', this.$vuetify.theme.dark.toString())
+    },
+    switchUI: function () {
+      window.location.href = window.location.href.replace('/v2/', '/')
     },
   },
   mounted() {
