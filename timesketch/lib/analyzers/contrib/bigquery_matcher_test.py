@@ -1,13 +1,12 @@
 """Tests for BigQueryMatcher Plugin."""
-from __future__ import unicode_literals
-
+import sys
 import copy
 import mock
 
 from timesketch.lib.testlib import MockDataStore
 
 from timesketch.lib.emojis import EMOJI_MAP
-from timesketch.lib.analyzers import bigquery_matcher
+from timesketch.lib.analyzers.contrib import bigquery_matcher
 from timesketch.lib.testlib import BaseTest
 
 
@@ -16,6 +15,9 @@ class TestBigQueryMatcherPlugin(BaseTest):
 
     _TEST_EMOJI = 'SKULL'
     _TEST_TAG = 'test-tag'
+    
+    # Skip the tests if bigquery is not imported.
+    __test__ = True if 'google.cloud.bigquery' in sys.modules else False
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

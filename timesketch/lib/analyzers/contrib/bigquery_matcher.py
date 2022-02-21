@@ -1,10 +1,12 @@
 """Index analyzer plugin for matching against data in BigQuery tables."""
-from __future__ import unicode_literals
-
 import itertools
 import logging
 
-from google.cloud import bigquery
+has_required_deps = True
+try:
+    from google.cloud import bigquery
+except ImportError:
+    has_required_deps = False
 from google.auth import exceptions as google_auth_exceptions
 
 from timesketch.lib import emojis
@@ -120,5 +122,5 @@ class BigQueryMatcherPlugin(interface.BaseAnalyzer):
         return ('{0:d} events found for matcher [{1:s}]').format(
             num_matches, name)
 
-
-manager.AnalysisManager.register_analyzer(BigQueryMatcherPlugin)
+if has_required_deps:
+    manager.AnalysisManager.register_analyzer(BigQueryMatcherPlugin)
