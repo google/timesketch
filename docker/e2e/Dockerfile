@@ -38,6 +38,7 @@ RUN mkdir /etc/timesketch
 RUN cp /tmp/timesketch/data/timesketch.conf /etc/timesketch/
 RUN cp /tmp/timesketch/data/ontology.yaml /etc/timesketch/
 RUN cp /tmp/timesketch/data/tags.yaml /etc/timesketch/
+RUN cp /tmp/timesketch/data/intelligence_tag_metadata.yaml /etc/timesketch/
 RUN cp /tmp/timesketch/data/features.yaml /etc/timesketch/
 RUN cp /tmp/timesketch/data/plaso.mappings /etc/timesketch/
 RUN cp /tmp/timesketch/data/generic.mappings /etc/timesketch/

@@ -44,6 +44,7 @@ logger = logging.getLogger('timesketch.wsgi_server')
 
 configure_logger()
 application = create_app()
+application_v2 = create_app(v2=True)
 
 # Setup metrics endpoint.
 if os.environ.get('prometheus_multiproc_dir'):

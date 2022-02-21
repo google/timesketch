@@ -169,10 +169,26 @@ class ResourceMixin(object):
         'updated_at': fields.DateTime('iso8601')
     }
 
+    view_compact_fields = {
+        'id': fields.Integer,
+        'name': fields.String,
+        'user': fields.Nested(user_fields),
+        'created_at': fields.DateTime('iso8601'),
+        'updated_at': fields.DateTime('iso8601')
+    }
+
     story_fields = {
         'id': fields.Integer,
         'title': fields.String,
         'content': fields.String,
+        'user': fields.Nested(user_fields),
+        'created_at': fields.DateTime('iso8601'),
+        'updated_at': fields.DateTime('iso8601')
+    }
+
+    story_compact_fields = {
+        'id': fields.Integer,
+        'title': fields.String,
         'user': fields.Nested(user_fields),
         'created_at': fields.DateTime('iso8601'),
         'updated_at': fields.DateTime('iso8601')
@@ -226,6 +242,45 @@ class ResourceMixin(object):
         'updated_at': fields.DateTime('iso8601')
     }
 
+    question_fields = {
+        'id': fields.Integer,
+        'name': fields.String,
+        'display_name': fields.String,
+        'description': fields.String,
+        'spec_json': fields.String,
+        'user': fields.Nested(user_fields),
+        'created_at': fields.DateTime('iso8601'),
+        'updated_at': fields.DateTime('iso8601')
+    }
+
+    facet_fields = {
+        'id': fields.Integer,
+        'name': fields.String,
+        'display_name': fields.String,
+        'description': fields.String,
+        'spec_json': fields.String,
+        'user': fields.Nested(user_fields),
+        'questions': fields.List(fields.Nested(question_fields)),
+        'stories': fields.List(fields.Nested(story_compact_fields)),
+        'saved_searches': fields.List(fields.Nested(view_compact_fields)),
+        'saved_graphs': fields.List(fields.Nested(graph_fields)),
+        'saved_aggregations': fields.List(fields.Nested(aggregation_fields)),
+        'created_at': fields.DateTime('iso8601'),
+        'updated_at': fields.DateTime('iso8601')
+    }
+
+    scenario_fields = {
+        'id': fields.Integer,
+        'name': fields.String,
+        'display_name': fields.String,
+        'description': fields.String,
+        'spec_json': fields.String,
+        'user': fields.Nested(user_fields),
+        'facets': fields.List(fields.Nested(facet_fields)),
+        'created_at': fields.DateTime('iso8601'),
+        'updated_at': fields.DateTime('iso8601')
+    }
+
     fields_registry = {
         'aggregation': aggregation_fields,
         'aggregationgroup': aggregation_group_fields,
@@ -243,7 +298,10 @@ class ResourceMixin(object):
         'sketch': sketch_fields,
         'story': story_fields,
         'event_comment': comment_fields,
-        'event_label': label_fields
+        'event_label': label_fields,
+        'investigative_question': question_fields,
+        'facet': facet_fields,
+        'scenario': scenario_fields
     }
 
     @property
