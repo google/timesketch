@@ -109,14 +109,62 @@ user_downloaded_file:
 
 file_directory_permission_modification_lin_osx:
   display_name: Did someone change file or directory permissions on OSX or Linux?
-    description: Adversaries may modify file or directory permissions/attributes to evade access control lists (ACLs) and access protected files.
-    tags:
-      - attack.defense_evasion
-      - attack.t1222.002
-    data_sources:
+  description: Adversaries may modify file or directory permissions/attributes to evade access control lists (ACLs) and access protected files.
+  tags:
+    - attack.defense_evasion
+    - attack.t1222.002
+  data_sources:
+    - lin_command_execution
+  parameters:
+    - command # how would I set command to be chmod?
+  answer_simple:
+    must:
       - lin_command_execution
-    parameters:
-      - command # how would I set command to be chmod?
-    answer_simple:
-      must:
-        - lin_command_execution
+
+file_directory_permission_modification_lin_osx:
+  display_name: Did someone change file or directory permissions on OSX or Linux?
+  description: Adversaries may modify file or directory permissions/attributes to evade access control lists (ACLs) and access protected files.
+  tags:
+    - attack.defense_evasion
+    - attack.t1222.002
+  data_sources:
+    - lin_command_execution
+  parameters:
+    - command # how would I set command to be chmod?
+  answer_simple:
+    must:
+      - lin_command_execution
+
+external_device_attached:
+  display_name: Was a new external device recognized by the system?
+  description:
+  references:
+    - https://www.ultimatewindowssecurity.com/securitylog/encyclopedia/event.aspx?eventid=6416
+  tags:
+    - attack.exfiltration
+    - attack.t1052.001
+  data_sources:
+    - win_eid_6416
+  parameters:
+    - usb # how would I set command to be chmod?
+  answer_simple:
+    must:
+      - win_eid_6416
+
+network_traffic_flow_cloud:
+  display_name: Was there network traffic flow to a cloud vendor?
+  description:
+  references:
+    - 
+  tags:
+    - attack.exfiltration
+    - attack.t1567.002
+  data_sources:
+    - network_traffic_flow
+  parameters:
+    - browser_activity
+    - user_browser_activity
+  answer_simple:
+    must:
+      - browser_activity
+      - user_browser_activity

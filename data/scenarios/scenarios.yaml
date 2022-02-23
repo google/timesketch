@@ -25,4 +25,10 @@ compromise_assessment:
 
 exfil:
   display_name: Lorem Ipsum scenario
-  description: Lorem ipsum dolor sit amet
+  description: The adversary is trying to steal data.
+  tags:
+    - attack.tA0010
+    - attack.exfil
+  facets:
+    - exfil_usb
+    - exfil_web_cloud_services

@@ -44,3 +44,24 @@ defense_evasion:
   questions:
     - file_directory_permission_modification_win
     - file_directory_permission_modification_lin_osx
+
+exfil_usb:
+  display_name: Exfiltration over USB
+  description: Adversaries may attempt to exfiltrate data over a USB connected physical device. In certain circumstances, such as an air-gapped network compromise, exfiltration could occur via a USB device introduced by a user. The USB device could be used as the final exfiltration point or to hop between otherwise disconnected systems.
+  reference: https://attack.mitre.org/techniques/T1052/001/
+  tags:
+    - attack.exfiltration
+    - attack.t1052.001
+  questions:
+    - external_device_attached
+
+exfil_web_cloud_services:
+  display_name: Exfiltration over Cloud Storage
+  description: Adversaries may attempt to exfiltrate data over a Cloud Storage.
+  reference: https://attack.mitre.org/techniques/T1567/002/
+  tags:
+    - attack.exfiltration
+    - attack.t1567.002
+  questions:
+    - network_traffic_flow
+

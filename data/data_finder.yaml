@@ -128,3 +128,14 @@ win_command_execution:
   re_flags: [IGNORECASE]
   re_parameters:
     - command
+
+win_eid_6416:
+  tags:
+    - device
+  description: A new external device was recognized by the system
+  notes:
+  query_string:  data_type:("windows:evtx:record") AND event_identifier:6416 AND xml_string:USB
+  regular_expression: "{USB}"
+  re_flags: [IGNORECASE]
+  re_parameters:
+    - USB
