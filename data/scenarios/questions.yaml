@@ -106,3 +106,17 @@ user_downloaded_file:
       - user_browser_activity
       - browser_download
       - browser_specific_file_download
+
+file_directory_permission_modification_lin_osx:
+  display_name: Did someone change file or directory permissions on OSX or Linux?
+    description: Adversaries may modify file or directory permissions/attributes to evade access control lists (ACLs) and access protected files.
+    tags:
+      - attack.defense_evasion
+      - attack.t1222.002
+    data_sources:
+      - lin_command_execution
+    parameters:
+      - command # how would I set command to be chmod?
+    answer_simple:
+      must:
+        - lin_command_execution

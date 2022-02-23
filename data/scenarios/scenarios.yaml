@@ -21,6 +21,7 @@ compromise_assessment:
   facets:
     - attacker_maintain_access
     - interference_with_protective_measures
+    - defense_evasion
 
 exfil:
   display_name: Lorem Ipsum scenario

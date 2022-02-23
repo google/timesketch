@@ -33,3 +33,14 @@ interference_with_protective_measures:
   description: Lorem ipsum dolor sit amet, consectetur adipiscing elit.
   questions:
     - user_logged_in_win
+
+defense_evasion:
+  display_name: Defense Evasion
+  description: The adversary is trying to avoid being detected.
+  reference: https://attack.mitre.org/tactics/TA0005/
+  tags:
+    - attack.defense_evasion
+    - attack.t1222
+  questions:
+    - file_directory_permission_modification_win
+    - file_directory_permission_modification_lin_osx

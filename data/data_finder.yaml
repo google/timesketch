@@ -103,3 +103,28 @@ windows_event_log_specific_computer:
   re_flags: [IGNORECASE]
   re_parameters:
     - computer_name
+
+lin_command_execution:
+  tags:
+    - attack.datasource.DS0017
+    - attack.datasource.command
+  description: Execution of a command on a Unix system
+  notes:
+  query_string:  data_type:("shell:zsh:history" OR "bash:history:command" OR "apt:history:line" OR "selinux:line
+  attribute: command
+  regular_expression: "{command}"
+  re_flags: [IGNORECASE]
+  re_parameters:
+    - command
+
+win_command_execution:
+  tags:
+    - attack.datasource.DS0017
+    - attack.datasource.command
+  description: Execution of a command on a Windows system
+  notes:
+  query_string:  data_type:("windows:evtx:record") AND event_identifier:4688
+  regular_expression: "{command}"
+  re_flags: [IGNORECASE]
+  re_parameters:
+    - command
