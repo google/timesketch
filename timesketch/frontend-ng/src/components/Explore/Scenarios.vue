@@ -31,14 +31,18 @@ limitations under the License.
     </v-toolbar>
 
     <v-toolbar flat>
-      <v-tabs v-model="tab" v-on:change="resetActiveQuestion()" grow>
+      <v-tabs v-model="tab" v-on:change="resetActiveQuestion()" show-arrows>
         <v-tab v-for="facet in scenario.facets" :key="facet.id">
-          <v-avatar size="32" class="mr-2">
+          <v-avatar size="28" class="mr-2">
             <img src="https://avatars.githubusercontent.com/u/316362?v=4" alt="Johan" />
           </v-avatar>
           {{ facet.display_name }}
         </v-tab>
       </v-tabs>
+
+      <v-btn icon>
+        <v-icon>mdi-plus</v-icon>
+      </v-btn>
     </v-toolbar>
 
     <v-tabs-items v-model="tab">
@@ -66,10 +70,15 @@ limitations under the License.
             </v-col>
             <v-divider vertical></v-divider>
             <v-col cols="8" v-if="activeQuestion.description">
-              {{ activeQuestion.description }}
-              <li v-for="analyzer in activeQuestionSpec.analyzers" :key="analyzer">
-                {{ analyzer }}
-              </li>
+              <v-card flat class="mt-2 mr-3">
+                <v-alert dense text type="info">
+                  {{ activeQuestion.description }}
+                </v-alert>
+
+                <li v-for="analyzer in activeQuestionSpec.analyzers" :key="analyzer">
+                  {{ analyzer }}
+                </li>
+              </v-card>
             </v-col>
           </v-row>
         </v-card>
@@ -116,7 +125,7 @@ export default {
   created() {
     ApiClient.getSketchScenarios(this.sketch.id)
       .then((response) => {
-        this.scenario = response.data.objects[0][2]
+        this.scenario = response.data.objects[0][1]
       })
       .catch((e) => {})
   },
