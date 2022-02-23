@@ -77,7 +77,13 @@ limitations under the License.
                 </v-sheet>
                 <v-divider vertical class="mx-2"></v-divider>
 
-                <v-menu v-model="showSearchDropdown" offset-y :close-on-content-click="false" :close-on-click="true">
+                <v-menu
+                  v-model="showSearchDropdown"
+                  offset-y
+                  attach
+                  :close-on-content-click="false"
+                  :close-on-click="true"
+                >
                   <template v-slot:activator="{ on, attrs }">
                     <v-text-field
                       v-model="currentQueryString"
