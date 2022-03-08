@@ -35,7 +35,7 @@ limitations under the License.
       </v-tooltip>
 
       <v-avatar class="ml-3" color="orange" size="32">
-        <span class="white--text">jb</span>
+        <span v-if="currentUser" class="white--text">{{ currentUser.charAt(0).toUpperCase() }}</span>
       </v-avatar>
 
       <template v-slot:extension>
@@ -66,6 +66,9 @@ export default {
   computed: {
     sketch() {
       return this.$store.state.sketch
+    },
+    currentUser() {
+      return this.$store.state.currentUser
     },
   },
   methods: {

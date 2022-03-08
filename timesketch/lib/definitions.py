@@ -34,7 +34,8 @@ DEFAULT_FIELDS = [
     'timestamp_desc',
     '_index',
     '__ts_timeline_id',
-    'message']
+    'message',
+    'comment']
 DEFAULT_SOURCE_FIELDS = DEFAULT_FIELDS + [
     'timesketch_label',
     'tag',
