@@ -328,7 +328,7 @@ class EventResource(resources.ResourceMixin, Resource):
 
         schema = {
             'meta': {
-                'comments': comments
+                'comments': sorted(comments, key=lambda d: d['created_at'])
             },
             'objects': result['_source']
         }
