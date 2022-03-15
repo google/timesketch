@@ -77,7 +77,10 @@ limitations under the License.
                 <p v-else style="max-width: 90%" class="body-2">{{ comment.comment }}</p>
               </v-list-item-content>
 
-              <v-list-item-action v-if="comment === selectedComment" style="position: absolute; right: 0">
+              <v-list-item-action
+                v-if="comment === selectedComment && meta.permissions.write && currentUser == comment.user.username"
+                style="position: absolute; right: 0"
+              >
                 <v-chip outlined style="margin-right: 10px">
                   <v-btn icon small @click="editComment(index)">
                     <v-icon small>mdi-square-edit-outline</v-icon>
@@ -90,7 +93,7 @@ limitations under the License.
             </v-list-item>
           </v-list>
 
-          <v-card-actions>
+          <v-card-actions v-if="meta.permissions.write">
             <v-textarea
               v-model="comment"
               hide-details
@@ -128,6 +131,12 @@ export default {
   computed: {
     sketch() {
       return this.$store.state.sketch
+    },
+    meta() {
+      return this.$store.state.meta
+    },
+    currentUser() {
+      return this.$store.state.currentUser
     },
     currentSearchNode() {
       return this.$store.state.currentSearchNode
