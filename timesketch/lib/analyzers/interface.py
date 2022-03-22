@@ -44,7 +44,7 @@ from timesketch.models.sketch import View
 from timesketch.models.sketch import Analysis
 
 
-logger = logging.getLogger('timesketch.analyzers')
+logger = logging.getLogger("timesketch.analyzers")
 
 
 def _flush_datastore_decorator(func):
@@ -55,19 +55,20 @@ def _flush_datastore_decorator(func):
 
         # Add in tagged events and emojis.
         for event_dict in self.tagged_events.values():
-            event = event_dict.get('event')
-            tags = event_dict.get('tags')
+            event = event_dict.get("event")
+            tags = event_dict.get("tags")
 
-            event.commit({'tag': tags})
+            event.commit({"tag": tags})
 
         for event_dict in self.emoji_events.values():
-            event = event_dict.get('event')
-            emojis = event_dict.get('emojis')
+            event = event_dict.get("event")
+            emojis = event_dict.get("emojis")
 
-            event.commit({'__ts_emojis': emojis})
+            event.commit({"__ts_emojis": emojis})
 
         self.datastore.flush_queued_events()
         return func_return
+
     return wrapper
 
 
@@ -80,12 +81,11 @@ def get_config_path(file_name):
     Returns:
         The path to the configuration file or None if the file cannot be found.
     """
-    path = os.path.join(os.path.sep, 'etc', 'timesketch', file_name)
+    path = os.path.join(os.path.sep, "etc", "timesketch", file_name)
     if os.path.isfile(path):
         return path
 
-    path = os.path.join(
-        os.path.dirname(__file__), '..', '..', '..', 'data', file_name)
+    path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", file_name)
     path = os.path.abspath(path)
     if os.path.isfile(path):
         return path
@@ -108,14 +108,16 @@ def get_yaml_config(file_name):
     if not path:
         return {}
 
-    with open(path, 'r') as fh:
+    with open(path, "r") as fh:
         try:
             return yaml.safe_load(fh)
         except yaml.parser.ParserError as exception:
             # pylint: disable=logging-format-interpolation
-            logger.warning((
-                'Unable to read in YAML config file, '
-                'with error: {0!s}').format(exception))
+            logger.warning(
+                ("Unable to read in YAML config file, " "with error: {0!s}").format(
+                    exception
+                )
+            )
             return {}
 
 
@@ -150,13 +152,13 @@ class Event(object):
         self.updated_event = {}
 
         try:
-            self.event_id = event['_id']
-            self.event_type = event['_type']
-            self.index_name = event['_index']
-            self.timeline_id = event.get('_source', {}).get('__ts_timeline_id')
-            self.source = event.get('_source', None)
+            self.event_id = event["_id"]
+            self.event_type = event["_type"]
+            self.index_name = event["_index"]
+            self.timeline_id = event.get("_source", {}).get("__ts_timeline_id")
+            self.source = event.get("_source", None)
         except KeyError as e:
-            raise KeyError('Malformed event: {0!s}'.format(e)) from e
+            raise KeyError("Malformed event: {0!s}".format(e)) from e
 
     def _update(self, event):
         """Update event attributes to add.
@@ -182,8 +184,11 @@ class Event(object):
             return
 
         self.datastore.import_event(
-            self.index_name, self.event_type, event_id=self.event_id,
-            event=event_to_commit)
+            self.index_name,
+            self.event_type,
+            event_id=self.event_id,
+            event=event_to_commit,
+        )
         self.updated_event = {}
 
     def add_attributes(self, attributes):
@@ -204,12 +209,19 @@ class Event(object):
         Raises: RuntimeError of sketch ID is missing.
         """
         if not self.sketch:
-            raise RuntimeError('No sketch provided.')
+            raise RuntimeError("No sketch provided.")
 
         user_id = 0
         updated_event = self.datastore.set_label(
-            self.index_name, self.event_id, self.event_type, self.sketch.id,
-            user_id, label, toggle=toggle, single_update=False)
+            self.index_name,
+            self.event_id,
+            self.event_type,
+            self.sketch.id,
+            user_id,
+            label,
+            toggle=toggle,
+            single_update=False,
+        )
         self.commit(updated_event)
 
     def add_tags(self, tags):
@@ -221,20 +233,21 @@ class Event(object):
         if not tags:
             return
 
-        existing_tags = self.source.get('tag', [])
+        existing_tags = self.source.get("tag", [])
         if self._analyzer:
             if self.event_id in self._analyzer.tagged_events:
-                existing_tags = self._analyzer.tagged_events[
-                    self.event_id].get('tags')
+                existing_tags = self._analyzer.tagged_events[self.event_id].get("tags")
             else:
                 self._analyzer.tagged_events[self.event_id] = {
-                    'event': self, 'tags': existing_tags}
+                    "event": self,
+                    "tags": existing_tags,
+                }
 
         new_tags = list(set().union(existing_tags, tags))
         if self._analyzer:
-            self._analyzer.tagged_events[self.event_id]['tags'] = new_tags
+            self._analyzer.tagged_events[self.event_id]["tags"] = new_tags
         else:
-            updated_event_attribute = {'tag': new_tags}
+            updated_event_attribute = {"tag": new_tags}
             self._update(updated_event_attribute)
 
     def add_emojis(self, emojis):
@@ -246,30 +259,32 @@ class Event(object):
         if not emojis:
             return
 
-        existing_emoji_list = self.source.get('__ts_emojis', [])
+        existing_emoji_list = self.source.get("__ts_emojis", [])
         if not isinstance(existing_emoji_list, (list, tuple)):
             existing_emoji_list = []
 
         if self._analyzer:
             if self.event_id in self._analyzer.emoji_events:
-                existing_emoji_list = self._analyzer.emoji_events[
-                    self.event_id].get('emojis')
+                existing_emoji_list = self._analyzer.emoji_events[self.event_id].get(
+                    "emojis"
+                )
             else:
                 self._analyzer.emoji_events[self.event_id] = {
-                    'event': self, 'emojis': existing_emoji_list}
+                    "event": self,
+                    "emojis": existing_emoji_list,
+                }
 
         new_emoji_list = list(set().union(existing_emoji_list, emojis))
 
         if self._analyzer:
-            self._analyzer.emoji_events[
-                self.event_id]['emojis'] = new_emoji_list
+            self._analyzer.emoji_events[self.event_id]["emojis"] = new_emoji_list
         else:
-            updated_event_attribute = {'__ts_emojis': new_emoji_list}
+            updated_event_attribute = {"__ts_emojis": new_emoji_list}
             self._update(updated_event_attribute)
 
     def add_star(self):
         """Star event."""
-        self.add_label(label='__ts_star')
+        self.add_label(label="__ts_star")
 
     def add_comment(self, comment):
         """Add comment to event.
@@ -281,18 +296,19 @@ class Event(object):
             RuntimeError: if no sketch is present.
         """
         if not self.sketch:
-            raise RuntimeError('No sketch provided.')
+            raise RuntimeError("No sketch provided.")
 
-        searchindex = SearchIndex.query.filter_by(
-            index_name=self.index_name).first()
+        searchindex = SearchIndex.query.filter_by(index_name=self.index_name).first()
         db_event = SQLEvent.get_or_create(
-            sketch=self.sketch.sql_sketch, searchindex=searchindex,
-            document_id=self.event_id)
+            sketch=self.sketch.sql_sketch,
+            searchindex=searchindex,
+            document_id=self.event_id,
+        )
         comment = SQLEvent.Comment(comment=comment, user=None)
         db_event.comments.append(comment)
         db_session.add(db_event)
         db_session.commit()
-        self.add_label(label='__ts_comment')
+        self.add_label(label="__ts_comment")
 
     def add_human_readable(self, human_readable, analyzer_name, append=True):
         """Add a human readable string to event.
@@ -306,9 +322,9 @@ class Event(object):
                 been defined. Defaults to True, and does nothing if
                 human_readable is not defined.
         """
-        existing_human_readable = self.source.get('human_readable', [])
+        existing_human_readable = self.source.get("human_readable", [])
 
-        human_readable = '[{0:s}] {1:s}'.format(analyzer_name, human_readable)
+        human_readable = "[{0:s}] {1:s}".format(analyzer_name, human_readable)
 
         if human_readable in existing_human_readable:
             return
@@ -318,7 +334,7 @@ class Event(object):
         else:
             existing_human_readable.insert(0, human_readable)
 
-        updated_human_readable = {'human_readable': existing_human_readable}
+        updated_human_readable = {"human_readable": existing_human_readable}
         self._update(updated_human_readable)
 
 
@@ -340,11 +356,18 @@ class Sketch(object):
         self.sql_sketch = SQLSketch.query.get(sketch_id)
 
         if not self.sql_sketch:
-            raise RuntimeError('No such sketch')
+            raise RuntimeError("No such sketch")
 
     def add_aggregation(
-            self, name, agg_name, agg_params, description='', view_id=None,
-            chart_type=None, label=''):
+        self,
+        name,
+        agg_name,
+        agg_params,
+        description="",
+        view_id=None,
+        chart_type=None,
+        label="",
+    ):
         """Add aggregation to the sketch.
 
         Args:
@@ -358,9 +381,9 @@ class Sketch(object):
             label: string with a label to attach to the aggregation.
         """
         if not agg_name:
-            raise ValueError('Aggregator name needs to be defined.')
+            raise ValueError("Aggregator name needs to be defined.")
         if not agg_params:
-            raise ValueError('Aggregator parameters have to be defined.')
+            raise ValueError("Aggregator parameters have to be defined.")
 
         if view_id:
             view = View.query.get(view_id)
@@ -368,13 +391,19 @@ class Sketch(object):
             view = None
 
         if chart_type:
-            agg_params['supported_charts'] = chart_type
+            agg_params["supported_charts"] = chart_type
 
         agg_json = json.dumps(agg_params)
         aggregation = Aggregation.get_or_create(
-            name=name, description=description, agg_type=agg_name,
-            parameters=agg_json, chart_type=chart_type, user=None,
-            sketch=self.sql_sketch, view=view)
+            name=name,
+            description=description,
+            agg_type=agg_name,
+            parameters=agg_json,
+            chart_type=chart_type,
+            user=None,
+            sketch=self.sql_sketch,
+            view=view,
+        )
 
         if label:
             aggregation.add_label(label)
@@ -382,7 +411,7 @@ class Sketch(object):
         db_session.commit()
         return aggregation
 
-    def add_aggregation_group(self, name, description='', view_id=None):
+    def add_aggregation_group(self, name, description="", view_id=None):
         """Add aggregation Group to the sketch.
 
         Args:
@@ -392,7 +421,7 @@ class Sketch(object):
             view_id: optional ID of the view to attach the aggregation to.
         """
         if not name:
-            raise ValueError('Aggregator group name needs to be defined.')
+            raise ValueError("Aggregator group name needs to be defined.")
 
         if view_id:
             view = View.query.get(view_id)
@@ -400,18 +429,29 @@ class Sketch(object):
             view = None
 
         if not description:
-            description = 'Created by an analyzer'
+            description = "Created by an analyzer"
 
         aggregation_group = SQLAggregationGroup.get_or_create(
-            name=name, description=description, user=None,
-            sketch=self.sql_sketch, view=view)
+            name=name,
+            description=description,
+            user=None,
+            sketch=self.sql_sketch,
+            view=view,
+        )
         db_session.add(aggregation_group)
         db_session.commit()
 
         return AggregationGroup(aggregation_group)
 
-    def add_view(self, view_name, analyzer_name, query_string=None,
-                 query_dsl=None, query_filter=None, additional_fields=None):
+    def add_view(
+        self,
+        view_name,
+        analyzer_name,
+        query_string=None,
+        query_dsl=None,
+        query_filter=None,
+        additional_fields=None,
+    ):
         """Add saved view to the Sketch.
 
         Args:
@@ -429,31 +469,30 @@ class Sketch(object):
         Returns: An instance of a SQLAlchemy View object.
         """
         if not (query_string or query_dsl):
-            raise ValueError('Both query_string and query_dsl are missing.')
+            raise ValueError("Both query_string and query_dsl are missing.")
 
         if not query_filter:
-            query_filter = {'indices': '_all'}
+            query_filter = {"indices": "_all"}
 
         if additional_fields:
-            query_filter['fields'] = [
-                {'field': x.strip()} for x in additional_fields]
+            query_filter["fields"] = [{"field": x.strip()} for x in additional_fields]
 
-        description = 'analyzer: {0:s}'.format(analyzer_name)
+        description = "analyzer: {0:s}".format(analyzer_name)
         view = View.get_or_create(
-            name=view_name, description=description, sketch=self.sql_sketch,
-            user=None)
+            name=view_name, description=description, sketch=self.sql_sketch, user=None
+        )
         view.description = description
         view.query_string = query_string
         view.query_filter = view.validate_filter(query_filter)
         view.query_dsl = query_dsl
         view.searchtemplate = None
-        view.set_status(status='new')
+        view.set_status(status="new")
 
         db_session.add(view)
         db_session.commit()
         return view
 
-    def add_sketch_attribute(self, name, values, ontology='text'):
+    def add_sketch_attribute(self, name, values, ontology="text"):
         """Add an attribute to the sketch.
 
         Args:
@@ -464,23 +503,19 @@ class Sketch(object):
                 data/ontology.yaml.
         """
         # Check first whether the attribute already exists.
-        attribute = Attribute.query.filter_by(
-          name=name, sketch=self.sql_sketch).first()
+        attribute = Attribute.query.filter_by(name=name, sketch=self.sql_sketch).first()
 
         if not attribute:
             attribute = Attribute(
-                user=None,
-                sketch=self.sql_sketch,
-                name=name,
-                ontology=ontology)
+                user=None, sketch=self.sql_sketch, name=name, ontology=ontology
+            )
             db_session.add(attribute)
             db_session.commit()
 
         for value in values:
             attribute_value = AttributeValue(
-                user=None,
-                attribute=attribute,
-                value=value)
+                user=None, attribute=attribute, value=value
+            )
 
             attribute.values.append(attribute_value)
             db_session.add(attribute_value)
@@ -502,13 +537,15 @@ class Sketch(object):
             An instance of a Story object.
         """
         story = SQLStory.query.filter_by(
-            title=title, sketch=self.sql_sketch, user=None).first()
+            title=title, sketch=self.sql_sketch, user=None
+        ).first()
 
         if story:
             return Story(story)
 
         story = SQLStory.get_or_create(
-            title=title, content='[]', sketch=self.sql_sketch, user=None)
+            title=title, content="[]", sketch=self.sql_sketch, user=None
+        )
         db_session.add(story)
         db_session.commit()
         return Story(story)
@@ -537,8 +574,8 @@ class AggregationGroup(object):
             aggregation_group: SQLAlchemy AggregationGroup object.
         """
         self.group = aggregation_group
-        self._orientation = 'layer'
-        self._parameters = ''
+        self._orientation = "layer"
+        self._parameters = ""
 
     @property
     def id(self):
@@ -569,7 +606,7 @@ class AggregationGroup(object):
         db_session.add(self.group)
         db_session.commit()
 
-    def set_orientation(self, orientation='layer'):
+    def set_orientation(self, orientation="layer"):
         """Sets how charts should be joined.
 
         Args:
@@ -579,27 +616,27 @@ class AggregationGroup(object):
                 is "layer".
         """
         orientation = orientation.lower()
-        if orientation == 'layer' or orientation.starstwith('layer'):
-            self._orientation = 'layer'
-        elif orientation == 'horizontal' or orientation.startswith('hor'):
-            self._orientation = 'horizontal'
-        elif orientation == 'vertical' or orientation.startswith('ver'):
-            self._orientation = 'vertical'
+        if orientation == "layer" or orientation.starstwith("layer"):
+            self._orientation = "layer"
+        elif orientation == "horizontal" or orientation.startswith("hor"):
+            self._orientation = "horizontal"
+        elif orientation == "vertical" or orientation.startswith("ver"):
+            self._orientation = "vertical"
         self.commit()
 
     def set_vertical(self):
         """Sets the "orientation" to vertical."""
-        self._orientation = 'vertical'
+        self._orientation = "vertical"
         self.commit()
 
     def set_horizontal(self):
         """Sets the "orientation" to horizontal."""
-        self._orientation = 'horizontal'
+        self._orientation = "horizontal"
         self.commit()
 
     def set_layered(self):
         """Sets the "orientation" to layer."""
-        self._orientation = 'layer'
+        self._orientation = "layer"
         self.commit()
 
     def set_parameters(self, parameters=None):
@@ -614,7 +651,7 @@ class AggregationGroup(object):
         elif isinstance(parameters, str):
             parameter_string = parameters
         elif parameters is None:
-            parameter_string = ''
+            parameter_string = ""
         else:
             parameter_string = str(parameters)
         self._parameters = parameter_string
@@ -649,12 +686,12 @@ class Story(object):
             Dictionary with default block content.
         """
         block = {
-            'componentName': '',
-            'componentProps': {},
-            'content': '',
-            'edit': False,
-            'showPanel': False,
-            'isActive': False
+            "componentName": "",
+            "componentProps": {},
+            "content": "",
+            "edit": False,
+            "showPanel": False,
+            "isActive": False,
         }
         return block
 
@@ -684,17 +721,17 @@ class Story(object):
                     continue
                 if not isinstance(block, dict):
                     continue
-                old_text = block.get('content')
+                old_text = block.get("content")
                 if not old_text:
                     continue
                 if text == old_text:
                     return
 
         block = self._create_new_block()
-        block['content'] = text
+        block["content"] = text
         self._commit(block)
 
-    def add_aggregation(self, aggregation, agg_type=''):
+    def add_aggregation(self, aggregation, agg_type=""):
         """Add a saved aggregation to the Story.
 
         Args:
@@ -707,25 +744,25 @@ class Story(object):
         block = self._create_new_block()
         parameter_dict = json.loads(aggregation.parameters)
         if agg_type:
-            parameter_dict['supported_charts'] = agg_type
+            parameter_dict["supported_charts"] = agg_type
         else:
-            agg_type = parameter_dict.get('supported_charts')
+            agg_type = parameter_dict.get("supported_charts")
             # Neither agg_type nor supported_charts is set.
             if not agg_type:
-                agg_type = 'table'
-                parameter_dict['supported_charts'] = 'table'
+                agg_type = "table"
+                parameter_dict["supported_charts"] = "table"
 
-        block['componentName'] = 'TsAggregationCompact'
-        block['componentProps']['aggregation'] = {
-            'agg_type': aggregation.agg_type,
-            'id': aggregation.id,
-            'name': aggregation.name,
-            'chart_type': agg_type,
-            'description': aggregation.description,
-            'created_at': today.isoformat(),
-            'updated_at': today.isoformat(),
-            'parameters': json.dumps(parameter_dict),
-            'user': {'username': None},
+        block["componentName"] = "TsAggregationCompact"
+        block["componentProps"]["aggregation"] = {
+            "agg_type": aggregation.agg_type,
+            "id": aggregation.id,
+            "name": aggregation.name,
+            "chart_type": agg_type,
+            "description": aggregation.description,
+            "created_at": today.isoformat(),
+            "updated_at": today.isoformat(),
+            "parameters": json.dumps(parameter_dict),
+            "user": {"username": None},
         }
         self._commit(block)
 
@@ -740,10 +777,11 @@ class Story(object):
             return
 
         block = self._create_new_block()
-        block['componentName'] = 'TsAggregationGroupCompact'
-        block['componentProps']['aggregation_group'] = {
-            'id': aggregation_group.id,
-            'name': aggregation_group.name}
+        block["componentName"] = "TsAggregationGroupCompact"
+        block["componentProps"]["aggregation_group"] = {
+            "id": aggregation_group.id,
+            "name": aggregation_group.name,
+        }
         self._commit(block)
 
     def add_view(self, view):
@@ -753,8 +791,8 @@ class Story(object):
             view (View): Saved view to add to the story.
         """
         block = self._create_new_block()
-        block['componentName'] = 'TsViewEventList'
-        block['componentProps']['view'] = {'id': view.id, 'name': view.name}
+        block["componentName"] = "TsViewEventList"
+        block["componentProps"]["view"] = {"id": view.id, "name": view.name}
         self._commit(block)
 
 
@@ -771,7 +809,7 @@ class BaseAnalyzer:
         emoji_events: Dict with all events to add emojis and those emojis.
     """
 
-    NAME = 'name'
+    NAME = "name"
     DISPLAY_NAME = None
     DESCRIPTION = None
 
@@ -800,21 +838,27 @@ class BaseAnalyzer:
         self.index_name = index_name
         self.sketch = Sketch(sketch_id=sketch_id)
         self.timeline_id = timeline_id
-        self.timeline_name = ''
+        self.timeline_name = ""
 
         self.tagged_events = {}
         self.emoji_events = {}
 
         self.datastore = OpenSearchDataStore(
-            host=current_app.config['OPENSEARCH_HOST'],
-            port=current_app.config['OPENSEARCH_PORT'])
+            host=current_app.config["OPENSEARCH_HOST"],
+            port=current_app.config["OPENSEARCH_PORT"],
+        )
 
-        if not hasattr(self, 'sketch'):
+        if not hasattr(self, "sketch"):
             self.sketch = None
 
     def event_pandas(
-            self, query_string=None, query_filter=None, query_dsl=None,
-            indices=None, return_fields=None):
+        self,
+        query_string=None,
+        query_filter=None,
+        query_dsl=None,
+        indices=None,
+        return_fields=None,
+    ):
         """Search OpenSearch.
 
         Args:
@@ -832,10 +876,10 @@ class BaseAnalyzer:
             ValueError: if neither query_string or query_dsl is provided.
         """
         if not (query_string or query_dsl):
-            raise ValueError('Both query_string and query_dsl are missing')
+            raise ValueError("Both query_string and query_dsl are missing")
 
         if not query_filter:
-            query_filter = {'indices': self.index_name, 'size': 10000}
+            query_filter = {"indices": self.index_name, "size": 10000}
 
         if not indices:
             indices = [self.index_name]
@@ -851,19 +895,20 @@ class BaseAnalyzer:
                 self.datastore.client.indices.refresh(index=index)
             except opensearchpy.NotFoundError:
                 logger.error(
-                    'Unable to refresh index: {0:s}, not found, '
-                    'removing from list.'.format(index))
+                    "Unable to refresh index: {0:s}, not found, "
+                    "removing from list.".format(index)
+                )
                 broken_index = indices.index(index)
                 _ = indices.pop(broken_index)
 
         if not indices:
-            raise ValueError('Unable to get events, no indices to query.')
+            raise ValueError("Unable to get events, no indices to query.")
 
         if return_fields:
             default_fields = definitions.DEFAULT_SOURCE_FIELDS
             return_fields.extend(default_fields)
             return_fields = list(set(return_fields))
-            return_fields = ','.join(return_fields)
+            return_fields = ",".join(return_fields)
 
         results = self.datastore.search_stream(
             sketch_id=self.sketch.id,
@@ -877,17 +922,23 @@ class BaseAnalyzer:
 
         events = []
         for event in results:
-            source = event.get('_source')
-            source['_id'] = event.get('_id')
-            source['_type'] = event.get('_type')
-            source['_index'] = event.get('_index')
+            source = event.get("_source")
+            source["_id"] = event.get("_id")
+            source["_type"] = event.get("_type")
+            source["_index"] = event.get("_index")
             events.append(source)
 
         return pandas.DataFrame(events)
 
     def event_stream(
-            self, query_string=None, query_filter=None, query_dsl=None,
-            indices=None, return_fields=None, scroll=True):
+        self,
+        query_string=None,
+        query_filter=None,
+        query_dsl=None,
+        indices=None,
+        return_fields=None,
+        scroll=True,
+    ):
         """Search OpenSearch.
 
         Args:
@@ -906,18 +957,18 @@ class BaseAnalyzer:
             ValueError: if neither query_string or query_dsl is provided.
         """
         if not (query_string or query_dsl):
-            raise ValueError('Both query_string and query_dsl are missing')
+            raise ValueError("Both query_string and query_dsl are missing")
 
         if not query_filter:
-            query_filter = {'indices': self.index_name}
+            query_filter = {"indices": self.index_name}
 
         # If not provided we default to the message field as this will always
         # be present.
         if not return_fields:
-            return_fields = ['message']
+            return_fields = ["message"]
 
         # Make sure we always return tag, human_readable and emoji attributes.
-        return_fields.extend(['tag', 'human_readable', '__ts_emojis'])
+        return_fields.extend(["tag", "human_readable", "__ts_emojis"])
         return_fields = list(set(return_fields))
 
         if not indices:
@@ -929,13 +980,15 @@ class BaseAnalyzer:
                 self.datastore.client.indices.refresh(index=index)
             except opensearchpy.NotFoundError:
                 logger.error(
-                    'Unable to find index: {0:s}, removing from '
-                    'result set.'.format(index))
+                    "Unable to find index: {0:s}, removing from "
+                    "result set.".format(index)
+                )
                 broken_index = indices.index(index)
                 _ = indices.pop(broken_index)
         if not indices:
             raise ValueError(
-                'Unable to query for analyzers, discovered no index to query.')
+                "Unable to query for analyzers, discovered no index to query."
+            )
 
         if self.timeline_id:
             timeline_ids = [self.timeline_id]
@@ -957,25 +1010,28 @@ class BaseAnalyzer:
                     indices=indices,
                     return_fields=return_fields,
                     enable_scroll=scroll,
-                    timeline_ids=timeline_ids
+                    timeline_ids=timeline_ids,
                 )
                 for event in event_generator:
                     yield Event(
-                        event, self.datastore, sketch=self.sketch,
-                        analyzer=self)
+                        event, self.datastore, sketch=self.sketch, analyzer=self
+                    )
                 break  # Query was succesful
             except opensearchpy.TransportError as e:
-                sleep_seconds = (
-                    backoff_in_seconds * 2 ** x + random.uniform(3, 7))
+                sleep_seconds = backoff_in_seconds * 2**x + random.uniform(3, 7)
                 logger.info(
-                    'Attempt: {0:d}/{1:d} sleeping {2:f} for query {3:s}'
-                    .format(x + 1, retries, sleep_seconds, query_string))
+                    "Attempt: {0:d}/{1:d} sleeping {2:f} for query {3:s}".format(
+                        x + 1, retries, sleep_seconds, query_string
+                    )
+                )
                 time.sleep(sleep_seconds)
 
-                if x == retries-1:
+                if x == retries - 1:
                     logger.error(
-                        'Timeout executing search for {0:s}: {1!s}'
-                        .format(query_string, e), exc_info=True
+                        "Timeout executing search for {0:s}: {1!s}".format(
+                            query_string, e
+                        ),
+                        exc_info=True,
                     )
                     raise
 
@@ -990,7 +1046,7 @@ class BaseAnalyzer:
             Return value of the run method.
         """
         analysis = Analysis.query.get(analysis_id)
-        analysis.set_status('STARTED')
+        analysis.set_status("STARTED")
 
         timeline = analysis.timeline
         self.timeline_name = timeline.name
@@ -1000,22 +1056,24 @@ class BaseAnalyzer:
         while True:
             status = searchindex.get_status.status
             status = status.lower()
-            if status == 'ready':
+            if status == "ready":
                 break
 
-            if status == 'fail':
+            if status == "fail":
                 logger.error(
-                    'Unable to run analyzer on a failed index ({0:s})'.format(
-                        searchindex.index_name))
-                return 'Failed'
+                    "Unable to run analyzer on a failed index ({0:s})".format(
+                        searchindex.index_name
+                    )
+                )
+                return "Failed"
 
             time.sleep(self.SECONDS_PER_WAIT)
             counter += 1
             if counter >= self.MAXIMUM_WAITS:
                 logger.error(
-                    'Indexing has taken too long time, aborting run of '
-                    'analyzer')
-                return 'Failed'
+                    "Indexing has taken too long time, aborting run of " "analyzer"
+                )
+                return "Failed"
             # Refresh the searchindex object.
             db_session.refresh(searchindex)
 
@@ -1023,13 +1081,13 @@ class BaseAnalyzer:
         # the error in the DB for display in the UI.
         try:
             result = self.run()
-            analysis.set_status('DONE')
+            analysis.set_status("DONE")
         except Exception:  # pylint: disable=broad-except
-            analysis.set_status('ERROR')
+            analysis.set_status("ERROR")
             result = traceback.format_exc()
 
         # Update database analysis object with result and status
-        analysis.result = '{0:s}'.format(result)
+        analysis.result = "{0:s}".format(result)
         db_session.add(analysis)
         db_session.commit()
 

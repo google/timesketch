@@ -50,8 +50,7 @@ class EndToEndTestManager(object):
         try:
             test_class = cls._class_registry[test_name.lower()]
         except KeyError:
-            raise KeyError(
-                'No such test type: {0:s}'.format(test_name.lower()))
+            raise KeyError("No such test type: {0:s}".format(test_name.lower()))
         return test_class
 
     @classmethod
@@ -71,8 +70,7 @@ class EndToEndTestManager(object):
         """
         test_name = test_class.NAME.lower()
         if test_name in cls._class_registry:
-            raise KeyError('Class already set for name: {0:s}.'.format(
-                test_class.NAME))
+            raise KeyError("Class already set for name: {0:s}.".format(test_class.NAME))
         cls._class_registry[test_name] = test_class
         if exclude_from_list:
             cls._exclude_registry.add(test_name)

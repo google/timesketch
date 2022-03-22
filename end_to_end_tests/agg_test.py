@@ -22,22 +22,22 @@ from . import manager
 class AggregationTest(interface.BaseEndToEndTest):
     """End to end tests for aggregation functionality."""
 
-    NAME = 'aggregation_test'
+    NAME = "aggregation_test"
 
     def setup(self):
         """Import test timeline."""
-        self.import_timeline('evtx.plaso')
-        self.import_timeline('evtx_part.csv')
+        self.import_timeline("evtx.plaso")
+        self.import_timeline("evtx_part.csv")
 
     def test_entire_set(self):
         """Test aggregating over the entire data set in the sketch."""
         agg_obj = aggregation.Aggregation(self.sketch)
         parameters = {
-            'supported_charts': 'table',
-            'field': 'computer_name',
-            'limit': 5,
+            "supported_charts": "table",
+            "field": "computer_name",
+            "limit": 5,
         }
-        agg_obj.from_aggregator_run('field_bucket', parameters)
+        agg_obj.from_aggregator_run("field_bucket", parameters)
         df = agg_obj.table
 
         self.assertions.assertEqual(df.shape, (1, 3))
@@ -45,24 +45,25 @@ class AggregationTest(interface.BaseEndToEndTest):
         computer_names = list(df.computer_name.values)
         self.assertions.assertEqual(len(computer_names), 1)
         self.assertions.assertEqual(
-            computer_names[0], 'WKS-WIN764BITB.shieldbase.local')
-        count = list(df['count'].values)[0]
+            computer_names[0], "WKS-WIN764BITB.shieldbase.local"
+        )
+        count = list(df["count"].values)[0]
         self.assertions.assertEqual(count, 3215)
 
     def test_partial_set(self):
         """Test partial aggregation sets."""
         timelines = {t.name: t.id for t in self.sketch.list_timelines()}
-        evtx_part_id = timelines.get('evtx_part', 'evtx_part')
+        evtx_part_id = timelines.get("evtx_part", "evtx_part")
         self.assertions.assertEqual(len(timelines.values()), 2)
 
         partial_agg = aggregation.Aggregation(self.sketch)
         partial_parameters = {
-            'supported_charts': 'table',
-            'field': 'computer_name',
-            'index': [evtx_part_id],
-            'limit': 5,
+            "supported_charts": "table",
+            "field": "computer_name",
+            "index": [evtx_part_id],
+            "limit": 5,
         }
-        partial_agg.from_aggregator_run('field_bucket', partial_parameters)
+        partial_agg.from_aggregator_run("field_bucket", partial_parameters)
 
         df = partial_agg.table
         self.assertions.assertEqual(df.shape, (1, 3))
@@ -70,18 +71,19 @@ class AggregationTest(interface.BaseEndToEndTest):
         computer_names = list(df.computer_name.values)
         self.assertions.assertEqual(len(computer_names), 1)
         self.assertions.assertEqual(
-            computer_names[0], 'WKS-WIN764BITB.shieldbase.local')
-        count = list(df['count'].values)[0]
+            computer_names[0], "WKS-WIN764BITB.shieldbase.local"
+        )
+        count = list(df["count"].values)[0]
         self.assertions.assertEqual(count, 13)
 
         agg_obj = aggregation.Aggregation(self.sketch)
         parameters = {
-            'supported_charts': 'table',
-            'field': 'computer_name',
-            'index': ['evtx'],
-            'limit': 5,
+            "supported_charts": "table",
+            "field": "computer_name",
+            "index": ["evtx"],
+            "limit": 5,
         }
-        agg_obj.from_aggregator_run('field_bucket', parameters)
+        agg_obj.from_aggregator_run("field_bucket", parameters)
         df = agg_obj.table
 
         self.assertions.assertEqual(df.shape, (1, 3))
@@ -89,8 +91,9 @@ class AggregationTest(interface.BaseEndToEndTest):
         computer_names = list(df.computer_name.values)
         self.assertions.assertEqual(len(computer_names), 1)
         self.assertions.assertEqual(
-            computer_names[0], 'WKS-WIN764BITB.shieldbase.local')
-        count = list(df['count'].values)[0]
+            computer_names[0], "WKS-WIN764BITB.shieldbase.local"
+        )
+        count = list(df["count"].values)[0]
         self.assertions.assertEqual(count, 3202)
 
 

@@ -24,7 +24,7 @@ from timesketch.lib.charts import interface
 class LineChart(interface.BaseChart):
     """Line Chart object."""
 
-    NAME = 'linechart'
+    NAME = "linechart"
 
     def generate(self):
         """Generate the chart.

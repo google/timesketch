@@ -38,10 +38,13 @@ from timesketch.models.annotations import LabelMixin
 from timesketch.models.annotations import StatusMixin
 
 # Helper table for Groups many-to-many relationship.
-user_group = Table('user_group', BaseModel.metadata,
-                   Column('user_id', Integer(), ForeignKey('user.id')),
-                   Column('group_id', Integer(), ForeignKey('group.id')),
-                   PrimaryKeyConstraint('user_id', 'group_id'))
+user_group = Table(
+    "user_group",
+    BaseModel.metadata,
+    Column("user_id", Integer(), ForeignKey("user.id")),
+    Column("group_id", Integer(), ForeignKey("group.id")),
+    PrimaryKeyConstraint("user_id", "group_id"),
+)
 
 
 class User(UserMixin, BaseModel):
@@ -53,23 +56,19 @@ class User(UserMixin, BaseModel):
     email = Column(Unicode(255))
     active = Column(Boolean(), default=True)
     admin = Column(Boolean(), default=False)
-    sketches = relationship('Sketch', backref='user', lazy='dynamic')
-    searchindices = relationship(
-        'SearchIndex', backref='user', lazy='dynamic')
-    timelines = relationship('Timeline', backref='user', lazy='dynamic')
-    views = relationship('View', backref='user', lazy='dynamic')
-    searchhistories = relationship(
-        'SearchHistory', backref='user', lazy='dynamic')
-    stories = relationship('Story', backref='user', lazy='dynamic')
-    aggregations = relationship('Aggregation', backref='user', lazy='dynamic')
-    datasources = relationship('DataSource', backref='user', lazy='dynamic')
-    aggregationgroups = relationship(
-        'AggregationGroup', backref='user', lazy='dynamic')
-    my_groups = relationship('Group', backref='user', lazy='dynamic')
+    sketches = relationship("Sketch", backref="user", lazy="dynamic")
+    searchindices = relationship("SearchIndex", backref="user", lazy="dynamic")
+    timelines = relationship("Timeline", backref="user", lazy="dynamic")
+    views = relationship("View", backref="user", lazy="dynamic")
+    searchhistories = relationship("SearchHistory", backref="user", lazy="dynamic")
+    stories = relationship("Story", backref="user", lazy="dynamic")
+    aggregations = relationship("Aggregation", backref="user", lazy="dynamic")
+    datasources = relationship("DataSource", backref="user", lazy="dynamic")
+    aggregationgroups = relationship("AggregationGroup", backref="user", lazy="dynamic")
+    my_groups = relationship("Group", backref="user", lazy="dynamic")
     groups = relationship(
-        'Group',
-        secondary=user_group,
-        backref=backref('users', lazy='dynamic'))
+        "Group", secondary=user_group, backref=backref("users", lazy="dynamic")
+    )
 
     def __init__(self, username, name=None):
         """Initialize the User object.
@@ -94,7 +93,7 @@ class User(UserMixin, BaseModel):
         """
         password_hash = generate_password_hash(plaintext, rounds)
         if isinstance(password_hash, six.binary_type):
-            password_hash = codecs.decode(password_hash, 'utf-8')
+            password_hash = codecs.decode(password_hash, "utf-8")
         self.password = password_hash
 
     def check_password(self, plaintext):
@@ -116,7 +115,7 @@ class Group(LabelMixin, StatusMixin, BaseModel):
     name = Column(Unicode(255), unique=True)
     display_name = Column(Unicode(255))
     description = Column(UnicodeText())
-    user_id = Column(Integer, ForeignKey('user.id'))
+    user_id = Column(Integer, ForeignKey("user.id"))
 
     def __init__(self, name, display_name=None, description=None, user=None):
         """Initialize the Group object.

@@ -51,8 +51,7 @@ class GetVersion(Command):
     # pylint: disable=method-hidden
     def run(self):
         """Return the version information of Timesketch."""
-        return 'Timesketch version: {0:s}'.format(
-            version.get_version())
+        return "Timesketch version: {0:s}".format(version.get_version())
 
 
 class DropDataBaseTables(Command):
@@ -61,52 +60,55 @@ class DropDataBaseTables(Command):
     # pylint: disable=method-hidden
     def run(self):
         """Drop all tables after user ha verified."""
-        verified = prompt_bool(
-            'Do you really want to drop all the database tables?')
+        verified = prompt_bool("Do you really want to drop all the database tables?")
         if verified:
-            sys.stdout.write('All tables dropped. Database is now empty.\n')
+            sys.stdout.write("All tables dropped. Database is now empty.\n")
             drop_all()
 
 
 class GrantUser(Command):
     """Grant a user user access to a sketch."""
+
     option_list = (
-        Option('--username', '-u', dest='username', required=True),
-        Option('--sketchId', '-s', dest='sketch_id', required=True), )
+        Option("--username", "-u", dest="username", required=True),
+        Option("--sketchId", "-s", dest="sketch_id", required=True),
+    )
 
     # pylint: disable=arguments-differ, method-hidden
     def run(self, username, sketch_id):
         """Creates the user."""
         if not isinstance(sketch_id, six.text_type):
-            sketch_id = codecs.decode(sketch_id, 'utf-8')
+            sketch_id = codecs.decode(sketch_id, "utf-8")
         if not isinstance(username, six.text_type):
-            username = codecs.decode(username, 'utf-8')
+            username = codecs.decode(username, "utf-8")
         sketch = Sketch.query.filter_by(id=sketch_id).first()
         user = User.query.filter_by(username=username).first()
         if not sketch:
-            sys.stdout.write('No sketch found with this ID.')
+            sys.stdout.write("No sketch found with this ID.")
         elif not user:
-            sys.stdout.write('User [{0:s}] does not exist.\n'.format(
-                username))
+            sys.stdout.write("User [{0:s}] does not exist.\n".format(username))
         else:
-            sketch.grant_permission(permission='read', user=user)
-            sketch.grant_permission(permission='write', user=user)
-            sys.stdout.write('User {0:s} added to the sketch {1:s}.\n'.format(
-                username, sketch_id))
+            sketch.grant_permission(permission="read", user=user)
+            sketch.grant_permission(permission="write", user=user)
+            sys.stdout.write(
+                "User {0:s} added to the sketch {1:s}.\n".format(username, sketch_id)
+            )
 
 
 class AddUser(Command):
     """Create a new Timesketch user."""
+
     option_list = (
-        Option('--username', '-u', dest='username', required=True),
-        Option('--password', '-p', dest='password', required=False), )
+        Option("--username", "-u", dest="username", required=True),
+        Option("--password", "-p", dest="password", required=False),
+    )
 
     def get_password_from_prompt(self):
         """Get password from the command line prompt."""
-        first_password = prompt_pass('Enter password')
-        second_password = prompt_pass('Enter password again')
+        first_password = prompt_pass("Enter password")
+        second_password = prompt_pass("Enter password again")
         if first_password != second_password:
-            sys.stderr.write('Passwords don\'t match, try again.\n')
+            sys.stderr.write("Passwords don't match, try again.\n")
             self.get_password_from_prompt()
         return first_password
 
@@ -116,23 +118,29 @@ class AddUser(Command):
         if not password:
             password = self.get_password_from_prompt()
         if not isinstance(password, six.text_type):
-            password = codecs.decode(password, 'utf-8')
+            password = codecs.decode(password, "utf-8")
         if not isinstance(username, six.text_type):
-            username = codecs.decode(username, 'utf-8')
+            username = codecs.decode(username, "utf-8")
         user = User.get_or_create(username=username)
         user.set_password(plaintext=password)
         db_session.add(user)
         db_session.commit()
-        sys.stdout.write('User {0:s} created/updated\n'.format(username))
+        sys.stdout.write("User {0:s} created/updated\n".format(username))
 
 
 class MakeUserAdmin(Command):
     """Make user into an administrator."""
+
     option_list = (
-        Option('--username', '-u', dest='username', required=True),
+        Option("--username", "-u", dest="username", required=True),
         Option(
-            '--remove', '-r', dest='remove', action='store_true',
-            required=False, default=False),
+            "--remove",
+            "-r",
+            dest="remove",
+            action="store_true",
+            required=False,
+            default=False,
+        ),
     )
 
     # pylint: disable=arguments-differ, method-hidden
@@ -141,24 +149,22 @@ class MakeUserAdmin(Command):
         user = User.query.filter_by(username=username).first()
 
         if not user:
-            sys.stdout.write('User [{0:s}] does not exist.\n'.format(
-                username))
+            sys.stdout.write("User [{0:s}] does not exist.\n".format(username))
             return
         user.admin = not remove
         db_session.add(user)
         db_session.commit()
 
         if remove:
-            sys.stdout.write('User {0:s} is no longer an admin.\n'.format(
-                username))
+            sys.stdout.write("User {0:s} is no longer an admin.\n".format(username))
         else:
-            sys.stdout.write('User {0:s} is now an admin.\n'.format(username))
+            sys.stdout.write("User {0:s} is now an admin.\n".format(username))
+
 
 class DisableUser(Command):
     """Disable User"""
-    option_list = (
-        Option('--username', '-u', dest='username', required=True),
-    )
+
+    option_list = (Option("--username", "-u", dest="username", required=True),)
 
     # pylint: disable=arguments-differ, method-hidden
     def run(self, username):
@@ -166,20 +172,19 @@ class DisableUser(Command):
         user = User.query.filter_by(username=username).first()
 
         if not user:
-            sys.stdout.write('User [{0:s}] does not exist.\n'.format(
-                username))
+            sys.stdout.write("User [{0:s}] does not exist.\n".format(username))
             return
         user.active = False
         db_session.add(user)
         db_session.commit()
 
-        sys.stdout.write('User {0:s} is deactivated.\n'.format(username))
+        sys.stdout.write("User {0:s} is deactivated.\n".format(username))
+
 
 class EnableUser(Command):
     """Enable User"""
-    option_list = (
-        Option('--username', '-u', dest='username', required=True),
-    )
+
+    option_list = (Option("--username", "-u", dest="username", required=True),)
 
     # pylint: disable=arguments-differ, method-hidden
     def run(self, username):
@@ -187,14 +192,14 @@ class EnableUser(Command):
         user = User.query.filter_by(username=username).first()
 
         if not user:
-            sys.stdout.write('User [{0:s}] does not exist.\n'.format(
-                username))
+            sys.stdout.write("User [{0:s}] does not exist.\n".format(username))
             return
         user.active = True
         db_session.add(user)
         db_session.commit()
 
-        sys.stdout.write('User {0:s} is activated.\n'.format(username))
+        sys.stdout.write("User {0:s} is activated.\n".format(username))
+
 
 class ListUsers(Command):
     """List all users."""
@@ -204,25 +209,26 @@ class ListUsers(Command):
         """The run method for the command."""
         for user in User.query.all():
             if user.admin:
-                extra = ' (admin)'
+                extra = " (admin)"
             else:
-                extra = ''
-            print('{0:s}{1:s}'.format(user.username, extra))
+                extra = ""
+            print("{0:s}{1:s}".format(user.username, extra))
 
 
 class AddGroup(Command):
     """Create a new Timesketch group."""
-    option_list = (Option('--name', '-n', dest='name', required=True), )
+
+    option_list = (Option("--name", "-n", dest="name", required=True),)
 
     # pylint: disable=arguments-differ, method-hidden
     def run(self, name):
         """Creates the group."""
         if not isinstance(name, six.text_type):
-            name = codecs.decode(name, 'utf-8')
+            name = codecs.decode(name, "utf-8")
         group = Group.get_or_create(name=name)
         db_session.add(group)
         db_session.commit()
-        sys.stdout.write('Group {0:s} created\n'.format(name))
+        sys.stdout.write("Group {0:s} created\n".format(name))
 
 
 class ListGroups(Command):
@@ -237,29 +243,32 @@ class ListGroups(Command):
 
 class GroupManager(Command):
     """Manage group memberships."""
+
     option_list = (
         Option(
-            '--remove',
-            '-r',
-            dest='remove',
-            action='store_true',
+            "--remove",
+            "-r",
+            dest="remove",
+            action="store_true",
             required=False,
-            default=False),
+            default=False,
+        ),
         Option(
-            '--expand',
-            dest='expand',
-            action='store_true',
+            "--expand",
+            dest="expand",
+            action="store_true",
             required=False,
-            default=False),
-        Option('--group', '-g', dest='group_name', required=True),
-        Option('--user', '-u', dest='user_name', required=False, default=None)
+            default=False,
+        ),
+        Option("--group", "-g", dest="group_name", required=True),
+        Option("--user", "-u", dest="user_name", required=False, default=None),
     )
 
     # pylint: disable=arguments-differ, method-hidden
     def run(self, remove, expand, group_name, user_name):
         """Add the user to the group."""
         if not isinstance(group_name, six.text_type):
-            group_name = codecs.decode(group_name, 'utf-8')
+            group_name = codecs.decode(group_name, "utf-8")
 
         group = Group.query.filter_by(name=group_name).first()
 
@@ -270,7 +279,7 @@ class GroupManager(Command):
             return
 
         if not isinstance(user_name, six.text_type):
-            user_name = codecs.decode(user_name, 'utf-8')
+            user_name = codecs.decode(user_name, "utf-8")
         user = None
         if user_name:
             user = User.query.filter_by(username=user_name).first()
@@ -279,59 +288,70 @@ class GroupManager(Command):
         if remove and user:
             try:
                 user.groups.remove(group)
-                sys.stdout.write('{0:s} removed from group {1:s}\n'.format(
-                    user_name, group_name))
+                sys.stdout.write(
+                    "{0:s} removed from group {1:s}\n".format(user_name, group_name)
+                )
                 db_session.commit()
             except ValueError:
-                sys.stdout.write('{0:s} is not a member of group {1:s}\n'.
-                                 format(user_name, group_name))
+                sys.stdout.write(
+                    "{0:s} is not a member of group {1:s}\n".format(
+                        user_name, group_name
+                    )
+                )
         elif user:
             user.groups.append(group)
             try:
                 db_session.commit()
-                sys.stdout.write('{0:s} added to group {1:s}\n'.format(
-                    user_name, group_name))
+                sys.stdout.write(
+                    "{0:s} added to group {1:s}\n".format(user_name, group_name)
+                )
             except IntegrityError:
-                sys.stdout.write('{0:s} is already a member of group {1:s}\n'.
-                                 format(user_name, group_name))
+                sys.stdout.write(
+                    "{0:s} is already a member of group {1:s}\n".format(
+                        user_name, group_name
+                    )
+                )
 
 
 class AddSearchIndex(Command):
     """Create a new Timesketch searchindex."""
+
     option_list = (
-        Option('--name', '-n', dest='name', required=True),
-        Option('--index', '-i', dest='index', required=True),
-        Option('--user', '-u', dest='username', required=True), )
+        Option("--name", "-n", dest="name", required=True),
+        Option("--index", "-i", dest="index", required=True),
+        Option("--user", "-u", dest="username", required=True),
+    )
 
     # pylint: disable=arguments-differ, method-hidden
     def run(self, name, index, username):
         """Create the SearchIndex."""
         datastore = OpenSearchDataStore(
-            host=current_app.config['OPENSEARCH_HOST'],
-            port=current_app.config['OPENSEARCH_PORT'])
+            host=current_app.config["OPENSEARCH_HOST"],
+            port=current_app.config["OPENSEARCH_PORT"],
+        )
         user = User.query.filter_by(username=username).first()
         if not user:
-            sys.stderr.write('User does not exist\n')
+            sys.stderr.write("User does not exist\n")
             sys.exit(1)
         if not datastore.client.indices.exists(index=index):
-            sys.stderr.write('Index does not exist in the datastore\n')
+            sys.stderr.write("Index does not exist in the datastore\n")
             sys.exit(1)
         if SearchIndex.query.filter_by(name=name, index_name=index).first():
-            sys.stderr.write(
-                'Index with this name already exist in Timesketch\n')
+            sys.stderr.write("Index with this name already exist in Timesketch\n")
             sys.exit(1)
         searchindex = SearchIndex(
-            name=name, description=name, user=user, index_name=index)
+            name=name, description=name, user=user, index_name=index
+        )
         db_session.add(searchindex)
         db_session.commit()
-        searchindex.grant_permission('read')
-        sys.stdout.write('Search index {0:s} created\n'.format(name))
+        searchindex.grant_permission("read")
+        sys.stdout.write("Search index {0:s} created\n".format(name))
 
 
 class PurgeTimeline(Command):
     """Delete timeline permanently from Timesketch and OpenSearch."""
-    option_list = (Option(
-        '--index', '-i', dest='index_name', required=True), )
+
+    option_list = (Option("--index", "-i", dest="index_name", required=True),)
 
     # pylint: disable=arguments-differ, method-hidden
     def run(self, index_name):
@@ -341,31 +361,31 @@ class PurgeTimeline(Command):
             index_name: The name of the index in OpenSearch
         """
         if not isinstance(index_name, six.text_type):
-            index_name = codecs.decode(index_name, 'utf-8')
+            index_name = codecs.decode(index_name, "utf-8")
 
-        searchindex = SearchIndex.query.filter_by(
-            index_name=index_name).first()
+        searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
 
         if not searchindex:
-            sys.stdout.write('No such index\n')
+            sys.stdout.write("No such index\n")
             sys.exit()
 
         datastore = OpenSearchDataStore(
-            host=current_app.config['OPENSEARCH_HOST'],
-            port=current_app.config['OPENSEARCH_PORT'])
+            host=current_app.config["OPENSEARCH_HOST"],
+            port=current_app.config["OPENSEARCH_PORT"],
+        )
 
         timelines = Timeline.query.filter_by(searchindex=searchindex).all()
         sketches = [
-            t.sketch for t in timelines
-            if t.sketch and t.sketch.get_status.status != 'deleted'
+            t.sketch
+            for t in timelines
+            if t.sketch and t.sketch.get_status.status != "deleted"
         ]
         if sketches:
-            sys.stdout.write('WARNING: This timeline is in use by:\n')
+            sys.stdout.write("WARNING: This timeline is in use by:\n")
             for sketch in sketches:
-                sys.stdout.write(' * {0:s}\n'.format(sketch.name))
+                sys.stdout.write(" * {0:s}\n".format(sketch.name))
                 sys.stdout.flush()
-        really_delete = prompt_bool(
-            'Are you sure you want to delete this timeline?')
+        really_delete = prompt_bool("Are you sure you want to delete this timeline?")
         if really_delete:
             for timeline in timelines:
                 db_session.delete(timeline)
@@ -376,9 +396,10 @@ class PurgeTimeline(Command):
 
 class SearchTemplateManager(Command):
     """Command Module to manipulate Search templates."""
+
     option_list = (
-        Option('--import', '-i', dest='import_location', required=False),
-        Option('--export', '-e', dest='export_location', required=False),
+        Option("--import", "-i", dest="import_location", required=False),
+        Option("--export", "-e", dest="export_location", required=False),
     )
 
     # pylint: disable=arguments-differ, method-hidden
@@ -395,31 +416,32 @@ class SearchTemplateManager(Command):
             for search_template in SearchTemplate.query.all():
                 labels = []
                 for label in search_template.labels:
-                    if label.label.startswith('supported_os:'):
-                        labels.append(label.label.replace(
-                            'supported_os:', ''))
-                search_templates.append({
-                    'name': search_template.name,
-                    'query_string': search_template.query_string,
-                    'query_dsl': search_template.query_dsl,
-                    'supported_os': labels
-                })
+                    if label.label.startswith("supported_os:"):
+                        labels.append(label.label.replace("supported_os:", ""))
+                search_templates.append(
+                    {
+                        "name": search_template.name,
+                        "query_string": search_template.query_string,
+                        "query_dsl": search_template.query_dsl,
+                        "supported_os": labels,
+                    }
+                )
 
-            with open(export_location, 'w') as fh:
+            with open(export_location, "w") as fh:
                 yaml.safe_dump(search_templates, stream=fh)
 
         if import_location:
             try:
-                with open(import_location, 'rb') as fh:
+                with open(import_location, "rb") as fh:
                     search_templates = yaml.safe_load(fh)
             except IOError as e:
-                sys.stdout.write('Unable to open file: {0!s}\n'.format(e))
+                sys.stdout.write("Unable to open file: {0!s}\n".format(e))
                 sys.exit(1)
 
             for search_template in search_templates:
-                name = search_template['name']
-                query_string = search_template['query_string']
-                query_dsl = search_template['query_dsl']
+                name = search_template["name"]
+                query_string = search_template["query_string"]
+                query_dsl = search_template["query_dsl"]
 
                 # Skip search template if already exits.
                 if SearchTemplate.query.filter_by(name=name).first():
@@ -429,18 +451,21 @@ class SearchTemplateManager(Command):
                     name=name,
                     user=User(None),
                     query_string=query_string,
-                    query_dsl=query_dsl)
+                    query_dsl=query_dsl,
+                )
 
                 # Add supported_os labels.
-                for supported_os in search_template['supported_os']:
-                    label_name = 'supported_os:{0:s}'.format(supported_os)
+                for supported_os in search_template["supported_os"]:
+                    label_name = "supported_os:{0:s}".format(supported_os)
                     label = SearchTemplate.Label.get_or_create(
-                        label=label_name, user=None)
+                        label=label_name, user=None
+                    )
                     imported_template.labels.append(label)
 
                 # Set flag to identify local vs import templates.
                 remote_flag = SearchTemplate.Label.get_or_create(
-                    label='remote_template', user=None)
+                    label="remote_template", user=None
+                )
                 imported_template.labels.append(remote_flag)
 
                 db_session.add(imported_template)
@@ -463,78 +488,79 @@ class ListSketches(Command):
         if not desc_len:
             desc_len = 10
 
-        fmt_string = '{{0:^3d}} | {{1:{0:d}s}} | {{2:{1:d}s}}'.format(
-            name_len, desc_len)
+        fmt_string = "{{0:^3d}} | {{1:{0:d}s}} | {{2:{1:d}s}}".format(
+            name_len, desc_len
+        )
 
-        print('+-'*40)
-        print(' ID | Name {0:s} | Description'.format(' '*(name_len-5)))
-        print('+-'*40)
+        print("+-" * 40)
+        print(" ID | Name {0:s} | Description".format(" " * (name_len - 5)))
+        print("+-" * 40)
         for sketch in sketches:
             status = sketch.get_status.status
-            if status == 'deleted':
+            if status == "deleted":
                 continue
 
-            if status == 'archived':
-                name = '{0:s} (archived)'.format(sketch.name)
+            if status == "archived":
+                name = "{0:s} (archived)".format(sketch.name)
             else:
                 name = sketch.name
 
-            print(fmt_string.format(
-                sketch.id, name, sketch.description))
-            print('-'*80)
+            print(fmt_string.format(sketch.id, name, sketch.description))
+            print("-" * 80)
 
 
 class ImportTimeline(Command):
     """Create a new Timesketch timeline from a file."""
+
     option_list = (
-        Option('--file', '-f', dest='file_path', required=True),
-        Option('--sketch_id', '-s', dest='sketch_id', required=False),
-        Option('--username', '-u', dest='username', required=False),
-        Option('--timeline_name', '-n', dest='timeline_name',
-               required=False),
+        Option("--file", "-f", dest="file_path", required=True),
+        Option("--sketch_id", "-s", dest="sketch_id", required=False),
+        Option("--username", "-u", dest="username", required=False),
+        Option("--timeline_name", "-n", dest="timeline_name", required=False),
     )
 
     # pylint: disable=arguments-differ, method-hidden, unused-argument
     def run(self, file_path, sketch_id, username, timeline_name):
         """This is the run method."""
         print(
-            'This function has been deprecated, please use the '
-            'timesketch_importer instead: '
-            'https://github.com/google/timesketch/blob/master/'
-            'docs/UploadData.md')
+            "This function has been deprecated, please use the "
+            "timesketch_importer instead: "
+            "https://github.com/google/timesketch/blob/master/"
+            "docs/UploadData.md"
+        )
 
 
 def main():
     """Main function of the script, setting up the shell manager."""
     # Setup Flask-script command manager and register commands.
     shell_manager = Manager(create_app)
-    shell_manager.add_command('grant_user', GrantUser())
-    shell_manager.add_command('add_user', AddUser())
-    shell_manager.add_command('make_admin', MakeUserAdmin())
-    shell_manager.add_command('list_users', ListUsers())
-    shell_manager.add_command('add_group', AddGroup())
-    shell_manager.add_command('list_groups', ListGroups)
-    shell_manager.add_command('manage_group', GroupManager())
-    shell_manager.add_command('add_index', AddSearchIndex())
-    shell_manager.add_command('db', MigrateCommand)
-    shell_manager.add_command('drop_db', DropDataBaseTables())
-    shell_manager.add_command('list_sketches', ListSketches())
-    shell_manager.add_command('purge', PurgeTimeline())
-    shell_manager.add_command('search_template', SearchTemplateManager())
-    shell_manager.add_command('import', ImportTimeline())
-    shell_manager.add_command('version', GetVersion())
-    shell_manager.add_command('disable_user', DisableUser())
+    shell_manager.add_command("grant_user", GrantUser())
+    shell_manager.add_command("add_user", AddUser())
+    shell_manager.add_command("make_admin", MakeUserAdmin())
+    shell_manager.add_command("list_users", ListUsers())
+    shell_manager.add_command("add_group", AddGroup())
+    shell_manager.add_command("list_groups", ListGroups)
+    shell_manager.add_command("manage_group", GroupManager())
+    shell_manager.add_command("add_index", AddSearchIndex())
+    shell_manager.add_command("db", MigrateCommand)
+    shell_manager.add_command("drop_db", DropDataBaseTables())
+    shell_manager.add_command("list_sketches", ListSketches())
+    shell_manager.add_command("purge", PurgeTimeline())
+    shell_manager.add_command("search_template", SearchTemplateManager())
+    shell_manager.add_command("import", ImportTimeline())
+    shell_manager.add_command("version", GetVersion())
+    shell_manager.add_command("disable_user", DisableUser())
     shell_manager.add_command("enable_user", EnableUser())
-    shell_manager.add_command('runserver',
-                              Server(host='127.0.0.1', port=5000))
+    shell_manager.add_command("runserver", Server(host="127.0.0.1", port=5000))
     shell_manager.add_option(
-        '-c',
-        '--config',
-        dest='config',
-        default='/etc/timesketch/timesketch.conf',
-        required=False)
+        "-c",
+        "--config",
+        dest="config",
+        default="/etc/timesketch/timesketch.conf",
+        required=False,
+    )
     shell_manager.run()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

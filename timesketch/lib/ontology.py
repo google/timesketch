@@ -19,7 +19,7 @@ from timesketch.lib.analyzers import interface
 
 def ontology():
     """Return a dict with the ontology definitions."""
-    return interface.get_yaml_config('ontology.yaml')
+    return interface.get_yaml_config("ontology.yaml")
 
 
 class OntologyInterface:
@@ -27,7 +27,7 @@ class OntologyInterface:
 
     # Defines the type that this ontology class supports for encoding
     # and decoding.
-    TYPE=''
+    TYPE = ""
 
     @staticmethod
     def encode(data):
@@ -48,7 +48,7 @@ class OntologyInterface:
 class StringOntology(OntologyInterface):
     """Implements the string ontology."""
 
-    TYPE='str'
+    TYPE = "str"
 
     @staticmethod
     def encode(data):
@@ -58,7 +58,7 @@ class StringOntology(OntologyInterface):
             ValueError: If the value is not a string.
         """
         if not isinstance(data, str):
-            raise ValueError('Value needs to be a string.')
+            raise ValueError("Value needs to be a string.")
         return data
 
     @staticmethod
@@ -70,7 +70,7 @@ class StringOntology(OntologyInterface):
 class IntegerOntology(OntologyInterface):
     """Implements the ontology for an integer."""
 
-    TYPE='int'
+    TYPE = "int"
 
     @staticmethod
     def encode(data):
@@ -80,7 +80,7 @@ class IntegerOntology(OntologyInterface):
             ValueError: If the value is not an integer.
         """
         if not isinstance(data, int):
-            raise ValueError('Data is not an integer.')
+            raise ValueError("Data is not an integer.")
 
         return str(data)
 
@@ -93,7 +93,7 @@ class IntegerOntology(OntologyInterface):
 class FloatOntology(OntologyInterface):
     """Implements the ontology for floating numbers."""
 
-    TYPE='float'
+    TYPE = "float"
 
     @staticmethod
     def encode(data):
@@ -103,7 +103,7 @@ class FloatOntology(OntologyInterface):
             ValueError: If the value is not a float.
         """
         if not isinstance(data, float):
-            raise ValueError('Data is not a float.')
+            raise ValueError("Data is not a float.")
 
         return str(data)
 
@@ -116,25 +116,25 @@ class FloatOntology(OntologyInterface):
 class BoolOntology(OntologyInterface):
     """Implements the ontology for boolean values."""
 
-    TYPE='bool'
+    TYPE = "bool"
 
     @staticmethod
     def encode(data):
         """Returns an encoded string that can be stored in the database."""
         if data:
-            return 'true'
-        return 'false'
+            return "true"
+        return "false"
 
     @staticmethod
     def decode(data):
         """Returns a bool value from the stored string."""
-        return data == 'true'
+        return data == "true"
 
 
 class DictOntology(OntologyInterface):
     """Implements the ontology for dict structures."""
 
-    TYPE='dict'
+    TYPE = "dict"
 
     @staticmethod
     def encode(data):
@@ -144,7 +144,7 @@ class DictOntology(OntologyInterface):
             ValueError: If the value is not a dict.
         """
         if not isinstance(data, dict):
-            raise ValueError('Data needs to be a dictionary.')
+            raise ValueError("Data needs to be a dictionary.")
 
         return json.dumps(data)
 
@@ -154,7 +154,8 @@ class DictOntology(OntologyInterface):
         dict_value = json.loads(data)
         if not isinstance(dict_value, dict):
             raise ValueError(
-                'Unable to read in the data, it\'s not stored as a dictionary')
+                "Unable to read in the data, it's not stored as a dictionary"
+            )
         return dict_value
 
 
@@ -173,16 +174,14 @@ class OntologyManager:
     def decode_value(cls, value, type_string):
         """Decodes a value from storage."""
         if type_string not in cls._types:
-            raise NotImplementedError(
-                'Type [{0:s}] is not yet implemented as a type.')
+            raise NotImplementedError("Type [{0:s}] is not yet implemented as a type.")
         return cls._types[type_string].decode(value)
 
     @classmethod
     def encode_value(cls, value, type_string):
         """Encodes a value for storage."""
         if type_string not in cls._types:
-            raise NotImplementedError(
-                'Type [{0:s}] is not yet implemented as a type.')
+            raise NotImplementedError("Type [{0:s}] is not yet implemented as a type.")
         return cls._types[type_string].encode(value)
 
 

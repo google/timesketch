@@ -35,9 +35,11 @@ from timesketch import version
 
 version_tuple = (sys.version_info[0], sys.version_info[1])
 if version_tuple < (3, 6):
-    print((
-        'Unsupported Python version: {0:s}, version 3.6 or higher '
-        'required.').format(sys.version))
+    print(
+        (
+            "Unsupported Python version: {0:s}, version 3.6 or higher " "required."
+        ).format(sys.version)
+    )
     sys.exit(1)
 
 
@@ -50,7 +52,7 @@ def parse_requirements_from_file(path):
     Yields:
       str: package resource requirement.
     """
-    with open(path, 'r') as file_object:
+    with open(path, "r") as file_object:
         file_contents = file_object.read()
     for req in pkg_resources.parse_requirements(file_contents):
         try:
@@ -61,38 +63,36 @@ def parse_requirements_from_file(path):
 
 
 timesketch_description = (
-    'Timesketch is a web based tool for collaborative forensic timeline '
-    'analysis. Using sketches you and your collaborators can easily organize '
-    'timelines and analyze them all at the same time.  Add meaning to '
-    'your raw data with rich annotations, comments, tags and stars.')
+    "Timesketch is a web based tool for collaborative forensic timeline "
+    "analysis. Using sketches you and your collaborators can easily organize "
+    "timelines and analyze them all at the same time.  Add meaning to "
+    "your raw data with rich annotations, comments, tags and stars."
+)
 
 setup(
-    name='timesketch',
+    name="timesketch",
     version=version.get_version(),
-    description='Digital forensic timeline analysis',
+    description="Digital forensic timeline analysis",
     long_description=timesketch_description,
-    license='Apache License, Version 2.0',
-    url='http://www.timesketch.org/',
-    maintainer='Timesketch development team',
-    maintainer_email='timesketch-dev@googlegroups.com',
+    license="Apache License, Version 2.0",
+    url="http://www.timesketch.org/",
+    maintainer="Timesketch development team",
+    maintainer_email="timesketch-dev@googlegroups.com",
     classifiers=[
-        'Development Status :: 4 - Beta',
-        'Environment :: Web Environment',
-        'Operating System :: OS Independent',
-        'Programming Language :: Python',
+        "Development Status :: 4 - Beta",
+        "Environment :: Web Environment",
+        "Operating System :: OS Independent",
+        "Programming Language :: Python",
     ],
     data_files=[
-        ('share/timesketch', glob.glob(
-            os.path.join('data', '*.*'))),
-        ('share/timesketch/linux', glob.glob(
-            os.path.join('data', 'linux', '*.*'))),
-        ('share/doc/timesketch', [
-            'AUTHORS', 'LICENSE', 'README.md']),
+        ("share/timesketch", glob.glob(os.path.join("data", "*.*"))),
+        ("share/timesketch/linux", glob.glob(os.path.join("data", "linux", "*.*"))),
+        ("share/doc/timesketch", ["AUTHORS", "LICENSE", "README.md"]),
     ],
     packages=find_packages(),
     include_package_data=True,
     zip_safe=False,
-    entry_points={'console_scripts': ['tsctl=timesketch.tsctl:main']},
-    install_requires=parse_requirements_from_file('requirements.txt'),
-    tests_require=parse_requirements_from_file('test_requirements.txt'),
+    entry_points={"console_scripts": ["tsctl=timesketch.tsctl:main"]},
+    install_requires=parse_requirements_from_file("requirements.txt"),
+    tests_require=parse_requirements_from_file("test_requirements.txt"),
 )
