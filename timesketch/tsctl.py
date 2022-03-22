@@ -1,3 +1,18 @@
+# Copyright 2020 Google Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""CLI management tool."""
+
 import click
 from flask.cli import FlaskGroup
 from sqlalchemy.exc import IntegrityError
@@ -8,16 +23,12 @@ from timesketch.models import db_session
 from timesketch.models import drop_all
 from timesketch.models.user import Group
 from timesketch.models.user import User
-from timesketch.models.sketch import SearchIndex
-from timesketch.models.sketch import SearchTemplate
 from timesketch.models.sketch import Sketch
-from timesketch.models.sketch import Timeline
 
 
 @click.group(cls=FlaskGroup, create_app=create_app)
 def cli():
     """Management script for the Timesketch application."""
-    pass
 
 
 @cli.command(name="list-users")
@@ -99,7 +110,7 @@ def make_admin(username):
     user.admin = True
     db_session.add(user)
     db_session.commit()
-    print(f"User is now an admin.")
+    print("User is now an admin.")
 
 
 @cli.command(name="revoke-admin")
@@ -114,7 +125,7 @@ def revoke_admin(username):
     user.admin = False
     db_session.add(user)
     db_session.commit()
-    print(f"User is not an admin anymore.")
+    print("User is not an admin anymore.")
 
 
 @cli.command(name="grant-user")
