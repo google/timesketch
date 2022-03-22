@@ -46,491 +46,497 @@ limitations under the License.
       </v-container>
     </v-navigation-drawer>
 
+    <v-navigation-drawer app clipped left width="400">
+      <ts-sketch-scenarios></ts-sketch-scenarios>
+    </v-navigation-drawer>
+
     <!-- Search -->
-    <v-row>
-      <v-col cols="12">
-        <v-card outlined class="pa-md-2">
-          <v-row>
-            <v-col cols="12">
-              <v-card class="d-flex align-start" flat>
-                <v-sheet class="mt-1">
-                  <ts-search-history-buttons @toggleSearchHistory="toggleSearchHistory()"></ts-search-history-buttons>
-                  <!-- Time filter menu -->
-                  <v-menu
-                    v-model="timeFilterMenu"
-                    offset-y
-                    :close-on-content-click="false"
-                    :close-on-click="true"
-                    content-class="menu-with-gap"
-                    allow-overflow
-                    style="overflow: visible"
-                  >
-                    <template v-slot:activator="{ on, attrs }">
-                      <v-btn small depressed v-bind="attrs" v-on="on">
-                        <v-icon left> mdi-filter-variant-plus </v-icon>
-                        Add filter
-                      </v-btn>
-                    </template>
 
-                    <ts-filter-menu app @cancel="timeFilterMenu = false" @addChip="addChip"></ts-filter-menu>
-                  </v-menu>
-                </v-sheet>
-                <v-divider vertical class="mx-2"></v-divider>
-
-                <v-menu v-model="showSearchDropdown" offset-y :close-on-content-click="false" :close-on-click="true">
-                  <template v-slot:activator="{ on, attrs }">
-                    <v-text-field
-                      v-model="currentQueryString"
-                      hide-details
-                      label="Search"
-                      placeholder="Search"
-                      single-line
-                      dense
-                      filled
-                      flat
-                      solo
-                      append-icon="mdi-magnify"
-                      id="tsSearchInput"
-                      @keyup.enter="search"
-                      @click="showSearchDropdown = true"
-                      ref="searchInput"
-                      v-bind="attrs"
-                      v-on="on"
+    <v-sheet>
+      <v-row>
+        <v-col cols="12">
+          <v-card outlined class="pa-md-2">
+            <v-row>
+              <v-col cols="12">
+                <v-card class="d-flex align-start" flat>
+                  <v-sheet class="mt-1">
+                    <ts-search-history-buttons @toggleSearchHistory="toggleSearchHistory()"></ts-search-history-buttons>
+                    <!-- Time filter menu -->
+                    <v-menu
+                      v-model="timeFilterMenu"
+                      offset-y
+                      :close-on-content-click="false"
+                      :close-on-click="true"
+                      content-class="menu-with-gap"
+                      allow-overflow
+                      style="overflow: visible"
                     >
-                    </v-text-field>
-                  </template>
+                      <template v-slot:activator="{ on, attrs }">
+                        <v-btn small depressed v-bind="attrs" v-on="on">
+                          <v-icon left> mdi-filter-variant-plus </v-icon>
+                          Add filter
+                        </v-btn>
+                      </template>
 
-                  <ts-search-dropdown
-                    v-click-outside="onClickOutside"
-                    :selected-labels="selectedLabels"
-                    :query-string="currentQueryString"
-                    @setActiveView="searchView"
-                    @addChip="addChip"
-                    @updateLabelChips="updateLabelChips()"
-                    @close-on-click="showSearchDropdown = false"
-                    @node-click="jumpInHistory"
-                    @setQueryAndFilter="setQueryAndFilter"
-                  >
-                  </ts-search-dropdown>
-                </v-menu>
-              </v-card>
-            </v-col>
-          </v-row>
-          <v-divider class="mt-2 mb-3"></v-divider>
+                      <ts-filter-menu app @cancel="timeFilterMenu = false" @addChip="addChip"></ts-filter-menu>
+                    </v-menu>
+                  </v-sheet>
+                  <v-divider vertical class="mx-2"></v-divider>
 
-          <!-- Time filter chips -->
-          <v-row dense v-if="timeFilterChips.length">
-            <v-col cols="12" class="py-0">
-              <v-chip-group>
-                <span v-for="(chip, index) in timeFilterChips" :key="index + chip.value">
-                  <v-menu offset-y content-class="menu-with-gap">
-                    <template v-slot:activator="{ on }">
-                      <v-chip v-on="on">
-                        <v-icon left small> mdi-clock-outline </v-icon>
-                        <span
-                          v-bind:style="[!chip.active ? { 'text-decoration': 'line-through', opacity: '50%' } : '']"
-                        >
-                          <span>{{ chip.value.split(',')[0] }}</span>
-                          <span
-                            v-if="
-                              chip.type === 'datetime_range' && chip.value.split(',')[0] !== chip.value.split(',')[1]
-                            "
-                          >
-                            &rarr; {{ chip.value.split(',')[1] }}</span
-                          >
-                        </span>
-                      </v-chip>
+                  <v-menu v-model="showSearchDropdown" offset-y :close-on-content-click="false" :close-on-click="true">
+                    <template v-slot:activator="{ on, attrs }">
+                      <v-text-field
+                        v-model="currentQueryString"
+                        hide-details
+                        label="Search"
+                        placeholder="Search"
+                        single-line
+                        dense
+                        filled
+                        flat
+                        solo
+                        append-icon="mdi-magnify"
+                        id="tsSearchInput"
+                        @keyup.enter="search"
+                        @click="showSearchDropdown = true"
+                        ref="searchInput"
+                        v-bind="attrs"
+                        v-on="on"
+                      >
+                      </v-text-field>
                     </template>
-                    <v-card>
-                      <v-list>
-                        <v-list-item>
-                          <v-list-item-action>
-                            <v-icon>mdi-square-edit-outline</v-icon>
-                          </v-list-item-action>
-                          <v-list-item-subtitle>Edit filter</v-list-item-subtitle>
-                        </v-list-item>
 
-                        <v-list-item @click="toggleChip(chip)">
-                          <v-list-item-action>
-                            <v-icon v-if="chip.active">mdi-eye-off</v-icon>
-                            <v-icon v-else>mdi-eye</v-icon>
-                          </v-list-item-action>
-                          <v-list-item-subtitle
-                            ><span v-if="chip.active">Temporarily disable</span
-                            ><span v-else>Re-enable</span></v-list-item-subtitle
-                          >
-                        </v-list-item>
-                        <v-list-item @click="removeChip(chip)">
-                          <v-list-item-action>
-                            <v-icon>mdi-delete</v-icon>
-                          </v-list-item-action>
-                          <v-list-item-subtitle>Remove filter</v-list-item-subtitle>
-                        </v-list-item>
-                      </v-list>
-                    </v-card>
+                    <ts-search-dropdown
+                      v-click-outside="onClickOutside"
+                      :selected-labels="selectedLabels"
+                      :query-string="currentQueryString"
+                      @setActiveView="searchView"
+                      @addChip="addChip"
+                      @updateLabelChips="updateLabelChips()"
+                      @close-on-click="showSearchDropdown = false"
+                      @node-click="jumpInHistory"
+                      @setQueryAndFilter="setQueryAndFilter"
+                    >
+                    </ts-search-dropdown>
                   </v-menu>
-                  <v-btn v-if="index + 1 < timeFilterChips.length" icon small style="margin-top: 2px" class="mr-2"
-                    >OR</v-btn
-                  >
-                </span>
+                </v-card>
+              </v-col>
+            </v-row>
+            <v-divider class="mt-2 mb-3"></v-divider>
 
-                <v-btn @click="timeFilterMenu = true" icon style="margin-top: 2px">
-                  <v-icon>mdi-plus</v-icon>
-                </v-btn>
-              </v-chip-group>
-            </v-col>
-          </v-row>
+            <!-- Time filter chips -->
+            <v-row dense v-if="timeFilterChips.length">
+              <v-col cols="12" class="py-0">
+                <v-chip-group>
+                  <span v-for="(chip, index) in timeFilterChips" :key="index + chip.value">
+                    <v-menu offset-y content-class="menu-with-gap">
+                      <template v-slot:activator="{ on }">
+                        <v-chip v-on="on">
+                          <v-icon left small> mdi-clock-outline </v-icon>
+                          <span
+                            v-bind:style="[!chip.active ? { 'text-decoration': 'line-through', opacity: '50%' } : '']"
+                          >
+                            <span>{{ chip.value.split(',')[0] }}</span>
+                            <span
+                              v-if="
+                                chip.type === 'datetime_range' && chip.value.split(',')[0] !== chip.value.split(',')[1]
+                              "
+                            >
+                              &rarr; {{ chip.value.split(',')[1] }}</span
+                            >
+                          </span>
+                        </v-chip>
+                      </template>
+                      <v-card>
+                        <v-list>
+                          <v-list-item>
+                            <v-list-item-action>
+                              <v-icon>mdi-square-edit-outline</v-icon>
+                            </v-list-item-action>
+                            <v-list-item-subtitle>Edit filter</v-list-item-subtitle>
+                          </v-list-item>
 
-          <v-row dense v-if="filterChips.length">
-            <v-col cols="12" class="py-0">
-              <v-chip-group>
-                <span v-for="(chip, index) in filterChips" :key="index + chip.value">
-                  <v-chip>
-                    {{ chip.value | formatLabelText }}
-                  </v-chip>
-                  <v-btn v-if="index + 1 < timeFilterChips.length" icon small style="margin-top: 2px" class="mr-2"
-                    >AND</v-btn
-                  >
-                </span>
-                <v-btn @click="timeFilterMenu = true" icon style="margin-top: 2px">
-                  <v-icon>mdi-plus</v-icon>
-                </v-btn>
-              </v-chip-group>
-            </v-col>
-          </v-row>
+                          <v-list-item @click="toggleChip(chip)">
+                            <v-list-item-action>
+                              <v-icon v-if="chip.active">mdi-eye-off</v-icon>
+                              <v-icon v-else>mdi-eye</v-icon>
+                            </v-list-item-action>
+                            <v-list-item-subtitle
+                              ><span v-if="chip.active">Temporarily disable</span
+                              ><span v-else>Re-enable</span></v-list-item-subtitle
+                            >
+                          </v-list-item>
+                          <v-list-item @click="removeChip(chip)">
+                            <v-list-item-action>
+                              <v-icon>mdi-delete</v-icon>
+                            </v-list-item-action>
+                            <v-list-item-subtitle>Remove filter</v-list-item-subtitle>
+                          </v-list-item>
+                        </v-list>
+                      </v-card>
+                    </v-menu>
+                    <v-btn v-if="index + 1 < timeFilterChips.length" icon small style="margin-top: 2px" class="mr-2"
+                      >OR</v-btn
+                    >
+                  </span>
 
-          <!-- Timeline picker -->
-          <v-row dense>
-            <v-col class="py-0" cols="12">
-              <ts-timeline-picker
-                @updateSelectedTimelines="updateSelectedTimelines($event)"
-                :current-query-filter="currentQueryFilter"
-                :count-per-index="eventList.meta.count_per_index"
-                :count-per-timeline="eventList.meta.count_per_timeline"
-              ></ts-timeline-picker>
-            </v-col>
-          </v-row>
-        </v-card>
-      </v-col>
-    </v-row>
+                  <v-btn @click="timeFilterMenu = true" icon style="margin-top: 2px">
+                    <v-icon>mdi-plus</v-icon>
+                  </v-btn>
+                </v-chip-group>
+              </v-col>
+            </v-row>
 
-    <!-- Search History -->
-    <v-row>
-      <v-col v-show="showSearchHistory" cols="12">
-        <v-card outlined>
-          <v-toolbar elevation="0" dense>
-            <v-toolbar-title>Search history</v-toolbar-title>
-            <v-spacer></v-spacer>
+            <v-row dense v-if="filterChips.length">
+              <v-col cols="12" class="py-0">
+                <v-chip-group>
+                  <span v-for="(chip, index) in filterChips" :key="index + chip.value">
+                    <v-chip>
+                      {{ chip.value | formatLabelText }}
+                    </v-chip>
+                    <v-btn v-if="index + 1 < timeFilterChips.length" icon small style="margin-top: 2px" class="mr-2"
+                      >AND</v-btn
+                    >
+                  </span>
+                  <v-btn @click="timeFilterMenu = true" icon style="margin-top: 2px">
+                    <v-icon>mdi-plus</v-icon>
+                  </v-btn>
+                </v-chip-group>
+              </v-col>
+            </v-row>
 
-            <v-slider
-              v-model="zoomLevel"
-              thumb-label
-              ticks
-              append-icon="mdi-magnify-plus-outline"
-              prepend-icon="mdi-magnify-minus-outline"
-              min="0.1"
-              max="1"
-              step="0.1"
-              class="mt-6"
+            <!-- Timeline picker -->
+            <v-row dense>
+              <v-col class="py-0" cols="12">
+                <ts-timeline-picker
+                  @updateSelectedTimelines="updateSelectedTimelines($event)"
+                  :current-query-filter="currentQueryFilter"
+                  :count-per-index="eventList.meta.count_per_index"
+                  :count-per-timeline="eventList.meta.count_per_timeline"
+                ></ts-timeline-picker>
+              </v-col>
+            </v-row>
+          </v-card>
+        </v-col>
+      </v-row>
+
+      <!-- Search History -->
+      <v-row>
+        <v-col v-show="showSearchHistory" cols="12">
+          <v-card outlined>
+            <v-toolbar elevation="0" dense>
+              <v-toolbar-title>Search history</v-toolbar-title>
+              <v-spacer></v-spacer>
+
+              <v-slider
+                v-model="zoomLevel"
+                thumb-label
+                ticks
+                append-icon="mdi-magnify-plus-outline"
+                prepend-icon="mdi-magnify-minus-outline"
+                min="0.1"
+                max="1"
+                step="0.1"
+                class="mt-6"
+              >
+                <template v-slot:thumb-label="{ value }"> {{ value * 100 }}% </template>
+              </v-slider>
+
+              <v-btn icon @click="showSearchHistory = false" class="ml-4">
+                <v-icon>mdi-close</v-icon>
+              </v-btn>
+            </v-toolbar>
+            <div
+              v-dragscroll
+              class="pa-md-4 no-scrollbars"
+              style="overflow: scroll; white-space: nowrap; max-height: 500px; min-height: 500px"
             >
-              <template v-slot:thumb-label="{ value }"> {{ value * 100 }}% </template>
-            </v-slider>
+              <ts-search-history-tree
+                @node-click="jumpInHistory"
+                :show-history="showSearchHistory"
+                v-bind:style="{ transform: 'scale(' + zoomLevel + ')' }"
+                style="transform-origin: top left"
+              ></ts-search-history-tree>
+            </div>
+          </v-card>
+        </v-col>
+      </v-row>
 
-            <v-btn icon @click="showSearchHistory = false" class="ml-4">
-              <v-icon>mdi-close</v-icon>
-            </v-btn>
-          </v-toolbar>
-          <div
-            v-dragscroll
-            class="pa-md-4 no-scrollbars"
-            style="overflow: scroll; white-space: nowrap; max-height: 500px; min-height: 500px"
-          >
-            <ts-search-history-tree
-              @node-click="jumpInHistory"
-              :show-history="showSearchHistory"
-              v-bind:style="{ transform: 'scale(' + zoomLevel + ')' }"
-              style="transform-origin: top left"
-            ></ts-search-history-tree>
-          </div>
-        </v-card>
-      </v-col>
-    </v-row>
+      <!-- Eventlist -->
+      <v-row>
+        <v-col
+          cols="12"
+          v-if="(!eventList.objects.length && !searchInProgress) || !this.currentQueryFilter.indices.length"
+        >
+          <v-card outlined class="pa-4">
+            <p>
+              Your search <span v-if="currentQueryString">"{{ currentQueryString }}"</span> did not match any events.
+            </p>
+            <p>Suggestions:</p>
+            <li>Try different keywords.</li>
+            <li>Try more general keywords.</li>
+            <li>Try fewer keywords.</li>
+          </v-card>
+        </v-col>
 
-    <v-row>
-      <v-col cols="12"> <ts-sketch-scenarios></ts-sketch-scenarios> </v-col
-    ></v-row>
+        <v-col
+          cols="12"
+          v-if="eventList.objects.length || (searchInProgress && this.currentQueryFilter.indices.length)"
+        >
+          <v-card outlined>
+            <v-toolbar flat>
+              <v-toolbar-title style="font-size: 1em"
+                >{{ fromEvent }}-{{ toEvent }} of {{ totalHits }} events ({{ totalTime }}s)</v-toolbar-title
+              >
 
-    <!-- Eventlist -->
-    <v-row>
-      <v-col
-        cols="12"
-        v-if="(!eventList.objects.length && !searchInProgress) || !this.currentQueryFilter.indices.length"
-      >
-        <v-card outlined class="pa-4">
-          <p>
-            Your search <span v-if="currentQueryString">"{{ currentQueryString }}"</span> did not match any events.
-          </p>
-          <p>Suggestions:</p>
-          <li>Try different keywords.</li>
-          <li>Try more general keywords.</li>
-          <li>Try fewer keywords.</li>
-        </v-card>
-      </v-col>
+              <v-spacer></v-spacer>
 
-      <v-col cols="12" v-if="eventList.objects.length || (searchInProgress && this.currentQueryFilter.indices.length)">
-        <v-card outlined>
-          <v-toolbar flat>
-            <v-toolbar-title style="font-size: 1em"
-              >{{ fromEvent }}-{{ toEvent }} of {{ totalHits }} events ({{ totalTime }}s)</v-toolbar-title
+              <v-btn icon @click="showHistogram = !showHistogram">
+                <v-icon>mdi-chart-bar</v-icon>
+              </v-btn>
+
+              <v-btn icon>
+                <v-icon>mdi-content-save-outline</v-icon>
+              </v-btn>
+
+              <v-btn icon>
+                <v-icon>mdi-view-column-outline</v-icon>
+              </v-btn>
+
+              <v-menu offset-y :close-on-content-click="false">
+                <template v-slot:activator="{ on, attrs }">
+                  <v-btn icon v-bind="attrs" v-on="on">
+                    <v-icon>mdi-dots-vertical</v-icon>
+                  </v-btn>
+                </template>
+
+                <v-card outlined max-width="475" class="mx-auto">
+                  <v-list subheader two-line flat dense>
+                    <v-subheader>Density</v-subheader>
+
+                    <v-list-item-group>
+                      <v-list-item :ripple="false">
+                        <template>
+                          <v-list-item-action>
+                            <v-radio-group v-model="displayOptions.isCompact">
+                              <v-radio :value="false"></v-radio>
+                            </v-radio-group>
+                          </v-list-item-action>
+
+                          <v-list-item-content>
+                            <v-list-item-title>Comfortable</v-list-item-title>
+                            <v-list-item-subtitle>More space between rows</v-list-item-subtitle>
+                          </v-list-item-content>
+                        </template>
+                      </v-list-item>
+
+                      <v-list-item :ripple="false">
+                        <template>
+                          <v-list-item-action>
+                            <v-radio-group v-model="displayOptions.isCompact">
+                              <v-radio :value="true"></v-radio>
+                            </v-radio-group>
+                          </v-list-item-action>
+
+                          <v-list-item-content>
+                            <v-list-item-title>Compact</v-list-item-title>
+                            <v-list-item-subtitle>Less space between rows</v-list-item-subtitle>
+                          </v-list-item-content>
+                        </template>
+                      </v-list-item>
+                    </v-list-item-group>
+                    <v-divider></v-divider>
+
+                    <v-list subheader two-line flat>
+                      <v-subheader>Misc</v-subheader>
+                      <v-list-item-group>
+                        <v-list-item :ripple="false">
+                          <v-list-item-action>
+                            <v-switch dense color="" v-model="displayOptions.showTags"></v-switch>
+                          </v-list-item-action>
+                          <v-list-item-content>
+                            <v-list-item-title>Tags</v-list-item-title>
+                            <v-list-item-subtitle>Show tags</v-list-item-subtitle>
+                          </v-list-item-content>
+                        </v-list-item>
+                      </v-list-item-group>
+                      <v-list-item-group>
+                        <v-list-item :ripple="false">
+                          <v-list-item-action>
+                            <v-switch dense v-model="displayOptions.showEmojis"></v-switch>
+                          </v-list-item-action>
+                          <v-list-item-content>
+                            <v-list-item-title>Emojis</v-list-item-title>
+                            <v-list-item-subtitle>Show emojis</v-list-item-subtitle>
+                          </v-list-item-content>
+                        </v-list-item>
+                      </v-list-item-group>
+                    </v-list>
+                  </v-list>
+                </v-card>
+              </v-menu>
+            </v-toolbar>
+
+            <v-sheet class="pa-4">
+              <v-card class="pa-2" outlined v-if="showHistogram">
+                <ts-bar-chart
+                  :chart-data="eventList.meta.count_over_time"
+                  @addChip="addChipFromHistogram($event)"
+                ></ts-bar-chart>
+              </v-card>
+            </v-sheet>
+
+            <v-data-table
+              v-model="selectedEvents"
+              :headers="headers"
+              :items="eventList.objects"
+              :footer-props="{ 'items-per-page-options': [40, 80, 100, 200, 500] }"
+              :loading="searchInProgress"
+              :options="tableOptions"
+              item-key="_id"
+              loading-text="Searching... Please wait"
+              show-select
+              :expanded="expandedRows"
+              :dense="displayOptions.isCompact"
             >
+              <!-- Event details -->
+              <template v-slot:expanded-item="{ headers, item }">
+                <td :colspan="headers.length">
+                  <!-- Details -->
+                  <v-container v-if="item.showDetails" fluid class="mt-4">
+                    <v-row>
+                      <v-col cols="8">
+                        <v-card outlined>
+                          <v-simple-table dense>
+                            <template v-slot:default>
+                              <thead>
+                                <tr>
+                                  <th class="text-left">Attribute</th>
+                                  <th class="text-left">Value</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                <tr v-for="(value, key) in item._source" :key="key">
+                                  <td>{{ key }}</td>
+                                  <td>{{ value }}</td>
+                                </tr>
+                              </tbody>
+                            </template>
+                          </v-simple-table>
+                        </v-card>
+                      </v-col>
+                      <v-col cols="4">
+                        <v-list three-line>
+                          <v-list-item>
+                            <v-list-item-avatar>
+                              <v-avatar class="ml-3" color="orange" size="32">
+                                <span class="white--text">jb</span>
+                              </v-avatar>
+                            </v-list-item-avatar>
+                            <v-list-item-content>
+                              <v-list-item-title>Jane Doe</v-list-item-title>
+                              <p class="body-2">
+                                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris elit mauris, lobortis ut
+                                condimentum quis, imperdiet a eros. Maecenas tincidunt diam sit amet orci aliquam
+                                suscipit. Praesent condimentum vitae ante in rutrum. Cras ac velit lacus. Vestibulum at
+                                est massa. Nam vulputate justo turpis, at efficitur felis pulvinar id.
+                              </p>
+                            </v-list-item-content>
+                          </v-list-item>
+                          <v-list-item>
+                            <v-list-item-avatar>
+                              <v-avatar class="ml-3" color="orange" size="32">
+                                <span class="white--text">jb</span>
+                              </v-avatar>
+                            </v-list-item-avatar>
+                            <v-list-item-content>
+                              <v-list-item-title>John Doe</v-list-item-title>
+                              <p class="body-2">
+                                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris elit mauris, lobortis ut
+                                condimentum quis, imperdiet a eros.
+                              </p>
+                            </v-list-item-content>
+                          </v-list-item>
+                        </v-list>
+                      </v-col>
+                    </v-row>
+                  </v-container>
 
-            <v-spacer></v-spacer>
+                  <!-- Time bubble -->
+                  <v-divider v-if="item.showDetails && item.deltaDays"></v-divider>
+                  <div v-if="item.deltaDays > 0" class="ml-16">
+                    <div
+                      class="ts-time-bubble-vertical-line ts-time-bubble-vertical-line-color"
+                      v-bind:style="getTimeBubbleColor(item)"
+                    ></div>
+                    <div class="ts-time-bubble ts-time-bubble-color" v-bind:style="getTimeBubbleColor(item)">
+                      <h5>
+                        <b>{{ item.deltaDays | compactNumber }}</b
+                        ><br />days
+                      </h5>
+                    </div>
+                    <div
+                      class="ts-time-bubble-vertical-line ts-time-bubble-vertical-line-color"
+                      v-bind:style="getTimeBubbleColor(item)"
+                    ></div>
+                  </div>
+                </td>
+              </template>
 
-            <v-btn icon @click="showHistogram = !showHistogram">
-              <v-icon>mdi-chart-bar</v-icon>
-            </v-btn>
+              <!-- Datetime field with action buttons -->
+              <template v-slot:item._source.timestamp="{ item }">
+                <div v-bind:style="getTimelineColor(item)" class="datetime-table-cell">
+                  {{ item._source.timestamp | formatTimestamp | toISO8601 }}
+                </div>
+              </template>
 
-            <v-btn icon>
-              <v-icon>mdi-content-save-outline</v-icon>
-            </v-btn>
-
-            <v-btn icon>
-              <v-icon>mdi-view-column-outline</v-icon>
-            </v-btn>
-
-            <v-menu offset-y :close-on-content-click="false">
-              <template v-slot:activator="{ on, attrs }">
-                <v-btn icon v-bind="attrs" v-on="on">
-                  <v-icon>mdi-dots-vertical</v-icon>
+              <!-- Actions field -->
+              <template v-slot:item.actions="{ item }">
+                <v-btn small icon>
+                  <v-icon>mdi-star-outline</v-icon>
+                </v-btn>
+                <v-btn small icon>
+                  <v-icon>mdi-tag-plus-outline</v-icon>
                 </v-btn>
               </template>
 
-              <v-card outlined max-width="475" class="mx-auto">
-                <v-list subheader two-line flat dense>
-                  <v-subheader>Density</v-subheader>
-
-                  <v-list-item-group>
-                    <v-list-item :ripple="false">
-                      <template>
-                        <v-list-item-action>
-                          <v-radio-group v-model="displayOptions.isCompact">
-                            <v-radio :value="false"></v-radio>
-                          </v-radio-group>
-                        </v-list-item-action>
-
-                        <v-list-item-content>
-                          <v-list-item-title>Comfortable</v-list-item-title>
-                          <v-list-item-subtitle>More space between rows</v-list-item-subtitle>
-                        </v-list-item-content>
-                      </template>
-                    </v-list-item>
-
-                    <v-list-item :ripple="false">
-                      <template>
-                        <v-list-item-action>
-                          <v-radio-group v-model="displayOptions.isCompact">
-                            <v-radio :value="true"></v-radio>
-                          </v-radio-group>
-                        </v-list-item-action>
-
-                        <v-list-item-content>
-                          <v-list-item-title>Compact</v-list-item-title>
-                          <v-list-item-subtitle>Less space between rows</v-list-item-subtitle>
-                        </v-list-item-content>
-                      </template>
-                    </v-list-item>
-                  </v-list-item-group>
-                  <v-divider></v-divider>
-
-                  <v-list subheader two-line flat>
-                    <v-subheader>Misc</v-subheader>
-                    <v-list-item-group>
-                      <v-list-item :ripple="false">
-                        <v-list-item-action>
-                          <v-switch dense color="" v-model="displayOptions.showTags"></v-switch>
-                        </v-list-item-action>
-                        <v-list-item-content>
-                          <v-list-item-title>Tags</v-list-item-title>
-                          <v-list-item-subtitle>Show tags</v-list-item-subtitle>
-                        </v-list-item-content>
-                      </v-list-item>
-                    </v-list-item-group>
-                    <v-list-item-group>
-                      <v-list-item :ripple="false">
-                        <v-list-item-action>
-                          <v-switch dense v-model="displayOptions.showEmojis"></v-switch>
-                        </v-list-item-action>
-                        <v-list-item-content>
-                          <v-list-item-title>Emojis</v-list-item-title>
-                          <v-list-item-subtitle>Show emojis</v-list-item-subtitle>
-                        </v-list-item-content>
-                      </v-list-item>
-                    </v-list-item-group>
-                  </v-list>
-                </v-list>
-              </v-card>
-            </v-menu>
-          </v-toolbar>
-
-          <v-sheet class="pa-4">
-            <v-card class="pa-2" outlined v-if="showHistogram">
-              <ts-bar-chart
-                :chart-data="eventList.meta.count_over_time"
-                @addChip="addChipFromHistogram($event)"
-              ></ts-bar-chart>
-            </v-card>
-          </v-sheet>
-
-          <v-data-table
-            v-model="selectedEvents"
-            :headers="headers"
-            :items="eventList.objects"
-            :footer-props="{ 'items-per-page-options': [40, 80, 100, 200, 500] }"
-            :loading="searchInProgress"
-            :options="tableOptions"
-            item-key="_id"
-            loading-text="Searching... Please wait"
-            show-select
-            :expanded="expandedRows"
-            :dense="displayOptions.isCompact"
-          >
-            <!-- Event details -->
-            <template v-slot:expanded-item="{ headers, item }">
-              <td :colspan="headers.length">
-                <!-- Details -->
-                <v-container v-if="item.showDetails" fluid class="mt-4">
-                  <v-row>
-                    <v-col cols="8">
-                      <v-card outlined>
-                        <v-simple-table dense>
-                          <template v-slot:default>
-                            <thead>
-                              <tr>
-                                <th class="text-left">Attribute</th>
-                                <th class="text-left">Value</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              <tr v-for="(value, key) in item._source" :key="key">
-                                <td>{{ key }}</td>
-                                <td>{{ value }}</td>
-                              </tr>
-                            </tbody>
-                          </template>
-                        </v-simple-table>
-                      </v-card>
-                    </v-col>
-                    <v-col cols="4">
-                      <v-list three-line>
-                        <v-list-item>
-                          <v-list-item-avatar>
-                            <v-avatar class="ml-3" color="orange" size="32">
-                              <span class="white--text">jb</span>
-                            </v-avatar>
-                          </v-list-item-avatar>
-                          <v-list-item-content>
-                            <v-list-item-title>Jane Doe</v-list-item-title>
-                            <p class="body-2">
-                              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris elit mauris, lobortis ut
-                              condimentum quis, imperdiet a eros. Maecenas tincidunt diam sit amet orci aliquam
-                              suscipit. Praesent condimentum vitae ante in rutrum. Cras ac velit lacus. Vestibulum at
-                              est massa. Nam vulputate justo turpis, at efficitur felis pulvinar id.
-                            </p>
-                          </v-list-item-content>
-                        </v-list-item>
-                        <v-list-item>
-                          <v-list-item-avatar>
-                            <v-avatar class="ml-3" color="orange" size="32">
-                              <span class="white--text">jb</span>
-                            </v-avatar>
-                          </v-list-item-avatar>
-                          <v-list-item-content>
-                            <v-list-item-title>John Doe</v-list-item-title>
-                            <p class="body-2">
-                              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris elit mauris, lobortis ut
-                              condimentum quis, imperdiet a eros.
-                            </p>
-                          </v-list-item-content>
-                        </v-list-item>
-                      </v-list>
-                    </v-col>
-                  </v-row>
-                </v-container>
-
-                <!-- Time bubble -->
-                <v-divider v-if="item.showDetails && item.deltaDays"></v-divider>
-                <div v-if="item.deltaDays > 0" class="ml-16">
-                  <div
-                    class="ts-time-bubble-vertical-line ts-time-bubble-vertical-line-color"
-                    v-bind:style="getTimeBubbleColor(item)"
-                  ></div>
-                  <div class="ts-time-bubble ts-time-bubble-color" v-bind:style="getTimeBubbleColor(item)">
-                    <h5>
-                      <b>{{ item.deltaDays | compactNumber }}</b
-                      ><br />days
-                    </h5>
-                  </div>
-                  <div
-                    class="ts-time-bubble-vertical-line ts-time-bubble-vertical-line-color"
-                    v-bind:style="getTimeBubbleColor(item)"
-                  ></div>
-                </div>
-              </td>
-            </template>
-
-            <!-- Datetime field with action buttons -->
-            <template v-slot:item._source.timestamp="{ item }">
-              <div v-bind:style="getTimelineColor(item)" class="datetime-table-cell">
-                {{ item._source.timestamp | formatTimestamp | toISO8601 }}
-              </div>
-            </template>
-
-            <!-- Actions field -->
-            <template v-slot:item.actions="{ item }">
-              <v-btn small icon>
-                <v-icon>mdi-star-outline</v-icon>
-              </v-btn>
-              <v-btn small icon>
-                <v-icon>mdi-tag-plus-outline</v-icon>
-              </v-btn>
-            </template>
-
-            <!-- Message field -->
-            <template v-slot:item._source.message="{ item }">
-              <span class="ts-event-field-container">
-                <span class="ts-event-field-ellipsis">
-                  <!-- Tags -->
-                  <span v-if="displayOptions.showTags">
-                    <v-chip small label outlined class="mr-2" v-for="tag in item._source.tag" :key="tag">{{
-                      tag
-                    }}</v-chip>
-                  </span>
-                  <!-- Emojis -->
-                  <span v-if="displayOptions.showEmojis">
-                    <span
-                      class="mr-2"
-                      v-for="emoji in item._source.__ts_emojis"
-                      :key="emoji"
-                      v-html="emoji"
-                      :title="meta.emojis[emoji]"
-                      >{{ emoji }}
+              <!-- Message field -->
+              <template v-slot:item._source.message="{ item }">
+                <span class="ts-event-field-container">
+                  <span class="ts-event-field-ellipsis">
+                    <!-- Tags -->
+                    <span v-if="displayOptions.showTags">
+                      <v-chip small label outlined class="mr-2" v-for="tag in item._source.tag" :key="tag">{{
+                        tag
+                      }}</v-chip>
                     </span>
+                    <!-- Emojis -->
+                    <span v-if="displayOptions.showEmojis">
+                      <span
+                        class="mr-2"
+                        v-for="emoji in item._source.__ts_emojis"
+                        :key="emoji"
+                        v-html="emoji"
+                        :title="meta.emojis[emoji]"
+                        >{{ emoji }}
+                      </span>
+                    </span>
+                    <span @click="toggleDetailedEvent(item)">{{ item._source.message }}</span>
                   </span>
-                  <span @click="toggleDetailedEvent(item)">{{ item._source.message }}</span>
                 </span>
-              </span>
-            </template>
+              </template>
 
-            <!-- Timeline name field -->
-            <template v-slot:item.timeline_name="{ item }">
-              <v-chip label style="margin-top: 1px; margin-bottom: 1px; font-size: 0.9em">{{
-                getTimeline(item).name
-              }}</v-chip>
-            </template>
-          </v-data-table>
-        </v-card>
-      </v-col>
-    </v-row>
+              <!-- Timeline name field -->
+              <template v-slot:item.timeline_name="{ item }">
+                <v-chip label style="margin-top: 1px; margin-bottom: 1px; font-size: 0.9em">{{
+                  getTimeline(item).name
+                }}</v-chip>
+              </template>
+            </v-data-table>
+          </v-card>
+        </v-col>
+      </v-row>
+    </v-sheet>
   </v-container>
 </template>
 
@@ -543,7 +549,7 @@ import TsSearchDropdown from '../components/Explore/SearchDropdown'
 import TsBarChart from '../components/Explore/BarChart'
 import TsTimelinePicker from '../components/Explore/TimelinePicker'
 import TsFilterMenu from '../components/Explore/FilterMenu'
-import TsSketchScenarios from '../components/Explore/Scenarios'
+import TsSketchScenarios from '../components/Explore/ScenariosVertical'
 
 import EventBus from '../main'
 import { None } from 'vega'

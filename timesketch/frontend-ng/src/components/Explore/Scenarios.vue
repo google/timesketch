@@ -15,13 +15,15 @@ limitations under the License.
 -->
 <template>
   <v-card outlined>
+    <!--
     <v-toolbar flat>
+
       <v-toolbar-title v-if="!activeQuestion.display_name" style="font-size: 1em">
         Investigative Questions</v-toolbar-title
       >
       <v-toolbar-title style="font-size: 1em"> {{ activeQuestion.display_name }}</v-toolbar-title>
       <v-spacer></v-spacer>
-      <!--<v-btn v-on:click="addScenario">Add scenario</v-btn>-->
+      <v-btn v-on:click="addScenario">Add scenario</v-btn>
       <v-btn icon>
         <v-icon>mdi-view-dashboard</v-icon>
       </v-btn>
@@ -29,13 +31,16 @@ limitations under the License.
         <v-icon>mdi-dots-vertical</v-icon>
       </v-btn>
     </v-toolbar>
+    -->
 
     <v-toolbar flat>
       <v-tabs v-model="tab" v-on:change="resetActiveQuestion()" show-arrows>
         <v-tab v-for="facet in scenario.facets" :key="facet.id">
+          <!--
           <v-avatar size="28" class="mr-2">
             <img src="https://avatars.githubusercontent.com/u/316362?v=4" alt="Johan" />
           </v-avatar>
+          -->
           {{ facet.display_name }}
         </v-tab>
       </v-tabs>

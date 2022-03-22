@@ -15,7 +15,7 @@ limitations under the License.
 -->
 <template>
   <v-app id="app">
-    <v-app-bar app clipped-right flat :color="$vuetify.theme.dark ? '' : 'white'">
+    <v-app-bar app clipped-left flat :color="$vuetify.theme.dark ? '' : 'white'">
       <v-img src="/dist/timesketch-color.png" max-height="30" max-width="30" contain></v-img>
       <v-toolbar-title class="ml-3"> timesketch </v-toolbar-title>
       <span v-if="sketch.name" class="ml-6" style="margin-top: 5px">

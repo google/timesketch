@@ -15,37 +15,22 @@ limitations under the License.
 -->
 <template>
   <v-container class="mt-2">
-    <v-navigation-drawer app clipped permanent right width="400">
-      <template v-slot:prepend>
-        <v-list dense>
-          <v-card-title>Team</v-card-title>
-          <v-list-item>
-            <v-list-item-avatar>
-              <v-avatar class="ml-3" color="orange" size="32">
-                <span class="white--text">jb</span>
-              </v-avatar>
-            </v-list-item-avatar>
-            <v-list-item-content>
-              <v-list-item-title>John Doe</v-list-item-title>
-              <v-list-item-subtitle>Creator</v-list-item-subtitle>
-            </v-list-item-content>
-          </v-list-item>
-
-          <v-list-item>
-            <v-list-item-avatar>
-              <v-avatar class="ml-3" color="orange" size="32">
-                <span class="white--text">jb</span>
-              </v-avatar>
-            </v-list-item-avatar>
-            <v-list-item-content>
-              <v-list-item-title>Jane Doe</v-list-item-title>
-              <v-list-item-subtitle>Working on ...</v-list-item-subtitle>
-            </v-list-item-content>
-          </v-list-item>
-        </v-list>
-
-        <v-divider></v-divider>
-
+    <v-row>
+      <v-col cols="12">
+        <v-container>
+          <h3 class="mb-4">Summary</h3>
+          <p style="max-width: 800px">
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean risus diam, dictum ut ultricies ac, aliquet
+            eget sem. Vestibulum mollis, est at euismod laoreet, nisi nibh mollis dolor, quis laoreet odio ipsum
+            volutpat leo. Curabitur vel convallis turpis. Fusce quam odio, viverra ac volutpat nec, gravida et purus.
+            Mauris scelerisque eleifend ligula eget laoreet. Etiam mattis massa ex. Sed ullamcorper hendrerit nunc,
+            sodales imperdiet odio bibendum eu. Mauris ornare quis mi sed facilisis.
+          </p>
+        </v-container>
+      </v-col>
+    </v-row>
+    <v-row>
+      <v-col cols="12">
         <v-list dense>
           <v-card-title>Timelines</v-card-title>
 
@@ -69,23 +54,9 @@ limitations under the License.
             </v-list-item-action>
           </v-list-item>
         </v-list>
-      </template>
-    </v-navigation-drawer>
-
-    <v-row>
-      <v-col cols="12">
-        <v-container>
-          <h3 class="mb-4">Summary</h3>
-          <p style="max-width: 800px">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean risus diam, dictum ut ultricies ac, aliquet
-            eget sem. Vestibulum mollis, est at euismod laoreet, nisi nibh mollis dolor, quis laoreet odio ipsum
-            volutpat leo. Curabitur vel convallis turpis. Fusce quam odio, viverra ac volutpat nec, gravida et purus.
-            Mauris scelerisque eleifend ligula eget laoreet. Etiam mattis massa ex. Sed ullamcorper hendrerit nunc,
-            sodales imperdiet odio bibendum eu. Mauris ornare quis mi sed facilisis.
-          </p>
-        </v-container>
       </v-col>
     </v-row>
+
     <v-row>
       <v-col cols="12">
         <ts-sketch-scenarios></ts-sketch-scenarios>
