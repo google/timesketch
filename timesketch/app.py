@@ -38,18 +38,26 @@ from timesketch.views.auth import auth_views
 from timesketch.views.spa import spa_views
 
 
-def create_app(config=None):
+def create_app(config=None, v2=False):
     """Create the Flask app instance that is used throughout the application.
 
     Args:
         config: Path to configuration file as a string or an object with config
         directives.
+        v2: Temporary flag to indicate to serve the new UI.
+            TODO: Remove this when the old UI has been deprecated.
 
     Returns:
         Application object (instance of flask.Flask).
     """
     template_folder = 'frontend/dist'
     static_folder = 'frontend/dist'
+
+    # Serve the new UI.
+    # This is still experimental and will be broken and have missing features.
+    if v2:
+        template_folder = 'frontend-ng/dist'
+        static_folder = 'frontend-ng/dist'
 
     app = Flask(
         __name__,

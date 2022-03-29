@@ -1,0 +1,121 @@
+html {
+  overflow-y: auto;
+}
+
+// Search History tree
+// Based on http://fractaledmind.com/articles/css-tree/
+.tree {
+  color: #333;
+  list-style: none;
+
+  &,
+  * {
+    margin: 0;
+    padding: 0;
+  }
+
+  li {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding-top: 0.5vh;
+    padding-bottom: 0.5vh;
+
+    position: relative;
+    padding-left: 1vw;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      border-top: 1px solid #d4d4d4;
+      width: 1vw;
+    }
+
+    &::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      border-left: 1px solid #d4d4d4;
+    }
+    &:only-child::after {
+      border-left: 0;
+    }
+
+    &:last-of-type::after {
+      height: 50%;
+      top: 0;
+    }
+
+    &:first-of-type::after {
+      height: 50%;
+      bottom: 0;
+    }
+
+    &:not(:first-of-type):not(:last-of-type)::after {
+      height: 100%;
+    }
+  }
+
+  ul,
+  ol {
+    padding-left: 1vw;
+    position: relative;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      border-top: 1px solid #d4d4d4;
+      width: 1vw;
+    }
+
+    &:not(:first-of-type):not(:last-of-type)::after {
+      height: 100%;
+    }
+  }
+
+  ul,
+  ol {
+    padding-left: 1vw;
+    position: relative;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      border-top: 1px solid #d4d4d4;
+      width: 1vw;
+    }
+  }
+
+  span {
+    background-color: #dddddd;
+    text-align: center;
+    padding: 0.33em 0.66em;
+    border-radius: 4px;
+    cursor: pointer;
+    min-width: 100px;
+  }
+
+  > li {
+    padding-left: 0;
+
+    &::before,
+    &::after {
+      display: none;
+    }
+  }
+}
+
+// Add space between menu dropdown and activator
+.menu-with-gap {
+  margin-top: 10px;
+}
+
+.search-dropdown {
+  margin-top: 15px;
+}

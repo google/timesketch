@@ -209,3 +209,4 @@ sigma/rules/cloud/aws/aws_macic_evasion.yml,bad,NotImplementedError,2021-11-19,9
 sigma/rules/cloud/aws/aws_lambda_function_created_or_invoked.yml,bad,NotImplementedError,2021-11-19,d914951b-52c8-485f-875e-86abab710c0b
 sigma/rules/cloud/aws/aws_ec2_download_userdata.yml,bad,NotImplementedError,2021-11-19,26ff4080-194e-47e7-9889-ef7602efed0c
 sigma/rules/cloud/aws/aws_enum_listing.yml,bad,NotImplementedError,2021-11-19,e9c14b23-47e2-4a8b-8a63-d36618e33d70
+deprecated,bad,deprecated sigma rules e.g. https://github.com/SigmaHQ/sigma/tree/master/rules/windows/deprecated,2022-01-26,
