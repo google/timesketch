@@ -103,3 +103,60 @@ windows_event_log_specific_computer:
   re_flags: [IGNORECASE]
   re_parameters:
     - computer_name
+
+windows_usb_devices_registry:
+  description: List USB Devices based on registry
+  notes: Collect the registry
+  query_string: data_type:"windows:registry:key_value" AND "USBSTOR"
+
+windows_usb_event_log:
+  description: List USB related events
+  notes: Filters out Mouse and Keyboard related events
+  query_string: data_type:"windows:evtx:record" AND event_identifier:* AND usb NOT (UserPnp OR Kernel-Pnp) AND NOT ("USB Keyboard" OR "USB Optical Mouse")
+
+windows_10_usb_storage_auditing_enabled:
+  description: Checks on Windows 10 if USB Storage auditing is enabled.
+  notes: https://www.eventsentry.com/kb/410
+  query_string: key_path:SYSTEM\\CurrentControlSet\\Control\\Storage AND 
+
+windows_current_control_set:
+  description: Get the current active control set
+  notes: This is used to determine further interesting aspects in the registry.
+  query_string: HKEY_LOCAL_MACHINE*System*Select
+  attribute: values
+
+windows_current_timezone_information:
+  description: Get the current timezone information
+  notes: In case there are multiple ControlSets, check for the active one.
+  query_string: data_type:"windows:registry:timezone" AND TimeZoneInformation
+  attribute: configuration
+
+windows_users_reg:
+  description: Shows user profiles on a windows system
+  notes: None
+  query_string: data_type:"windows:registry:key_value" AND Domains\\Account\\Users\\Names
+
+windows_network_history:
+  description: Identifies networks a computer has been connected to.
+  notes: location is depending on the Windows version
+  query_string: data_type:"windows:registry:key_value" AND (NetworkList\\Signatures\\Unmanaged OR NetworkList\\Signatures\\Managed OR NetworkList\\Nla\\Cache)
+
+windows_wlan_history_network_started:
+  description: 
+  notes:
+  query_string: source_name:Microsoft-Windows-WLAN AND event_identifier:11000
+
+windows_wlan_history_network_successful_connecting:
+  description: 
+  notes:
+  query_string: source_name:Microsoft-Windows-WLAN AND event_identifier:8001
+
+windows_wlan_history_network_failed_connecting:
+  description: Failed connection attempt
+  notes:
+  query_string: source_name:Microsoft-Windows-WLAN AND event_identifier:8002
+
+windows_wlan_history_network_disconnect:
+  description: Disconnected connection
+  notes:
+  query_string: source_name:Microsoft-Windows-WLAN AND event_identifier:8003

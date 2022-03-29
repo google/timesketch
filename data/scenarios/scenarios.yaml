@@ -23,5 +23,17 @@ compromise_assessment:
     - interference_with_protective_measures
 
 exfil:
-  display_name: Lorem Ipsum scenario
-  description: Lorem ipsum dolor sit amet
+  display_name: Exfiltration
+  description: Multiple facets covering various exfil techniques.
+  facets:
+    - exfiltrate_over_phyiscal_medium
+  
+system_information:
+  display_name: System information
+  facets:
+    - windows_system_information
+
+wlan_history:
+  display_name: Determine wlan history of a system
+  facets:
+    - windows_wlan_history

@@ -106,3 +106,46 @@ user_downloaded_file:
       - user_browser_activity
       - browser_download
       - browser_specific_file_download
+
+win_usb_device_attached:
+  display_name: Was a USB device attached to the system?
+  description: This question aim to answer whether
+    someone (anyone) has attached any USB device to the system.
+  data_sources:
+    - windows_usb_event_log
+    - windows_usb_devices_registry
+    - windows_usb_storage_auditing_enabled
+  answer_simple:
+    must:
+      - windows_usb_event_log
+      - windows_usb_devices_registry
+      - windows_usb_storage_auditing_enabled
+
+windows_timezone_settings:
+  display_name: What is the current Timezone setting?
+  description: This can give a hint on the location and context info on when a normal user would be active.
+  data_sources:
+    - windows_current_control_set
+    - windows_current_timezone_information
+
+windows_users:
+  display_name: What users are on a Windows system?
+  description: By looking at the registry
+  data_sources:
+    - windows_users_reg
+
+windows_network_history:
+  display_name: Which networks was the system connected to?
+  description: Based on registry.
+  data_sources:
+    - windows_network_history
+
+windows_wlan_history:
+  display_name: Which wireless networks did a system connect to / see?
+  description: Based on Windows Event logs
+  data_sources:
+    - windows_wlan_history_network_started
+    - windows_wlan_history_network_successful_connecting
+    - windows_wlan_history_network_failed_connecting
+    - windows_wlan_history_network_disconnect
+

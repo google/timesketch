@@ -33,3 +33,26 @@ interference_with_protective_measures:
   description: Lorem ipsum dolor sit amet, consectetur adipiscing elit.
   questions:
     - user_logged_in_win
+
+exfiltrate_over_phyiscal_medium:
+  display_name: Exfiltration Over Physical Medium
+  description: Adversaries may attempt to exfiltrate data via a physical medium, such as a removable drive. In certain circumstances, such as an air-gapped network compromise, exfiltration could occur via a physical medium or device introduced by a user. Such media could be an external hard drive, USB drive, cellular phone, MP3 player, or other removable storage and processing device. The physical medium or device could be used as the final exfiltration point or to hop between otherwise disconnected systems.
+  tag: 
+    - attack.T1052
+    - attack.exfiltration
+  questions:
+    - win_usb_device_attached
+    - usb_write_events
+
+windows_system_information:
+  display_name: Windows System information
+  description: Show various system information relevant for the investigation.
+  questions:
+    - windows_timezone_settings
+    - windows_users
+
+windows_wlan_history:
+  display_name: WLAN history of a Windows system
+  description: Based on Windows Event logs
+  questions:
+    - windows_wlan_history
