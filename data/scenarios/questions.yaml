@@ -153,9 +153,7 @@ external_device_attached:
 
 network_traffic_flow_cloud:
   display_name: Was there network traffic flow to a cloud vendor?
-  description:
-  references:
-    - 
+  description: Finding destinations related to Cloud vendors.
   tags:
     - attack.exfiltration
     - attack.t1567.002
