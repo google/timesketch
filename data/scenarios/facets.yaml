@@ -50,9 +50,39 @@ windows_system_information:
   questions:
     - windows_timezone_settings
     - windows_users
+    - windows_version
 
 windows_wlan_history:
   display_name: WLAN history of a Windows system
   description: Based on Windows Event logs
   questions:
     - windows_wlan_history
+
+create_account:
+  display_name: Create account
+  description: Adversaries may create an account to maintain access to victim systems. With a sufficient level of access, creating such accounts may be used to establish secondary credentialed access that do not require persistent remote access tools to be deployed on the system.
+  tag:
+    - attack.T1136
+    - attack.persistence
+  questions:
+    - windows_local_account_created
+
+modify_account:
+  display_name: Modify a user
+  description: Adversaries may manipulate accounts to maintain access to victim systems.
+  tag:
+    - attack.T1098
+    - attack.persistence
+    - attack.account_manipulation
+  questions:
+    - windows_rest_user_password
+
+bruteforce_password_guessing:
+  display_name: Brute Force Password Guessing
+  description: Adversaries with no prior knowledge of legitimate credentials within the system or environment may guess passwords to attempt access to accounts.
+  tags:
+    - attack.T1110.001
+    - attack.brute_force
+  questions:
+    - windows_failed_logons
+    - windows_successful_logon

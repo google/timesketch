@@ -133,8 +133,8 @@ windows_current_timezone_information:
 
 windows_users_reg:
   description: Shows user profiles on a windows system
-  notes: None
-  query_string: data_type:"windows:registry:key_value" AND Domains\\Account\\Users\\Names
+  notes: StoredIdentities is showing a Windows 10 Account
+  query_string: data_type:"windows:registry:key_value" AND (Domains\\Account\\Users\\Names OR Software\\Microsoft\\IdentityCRL\\StoredIdentities\\)
 
 windows_network_history:
   description: Identifies networks a computer has been connected to.
@@ -160,3 +160,27 @@ windows_wlan_history_network_disconnect:
   description: Disconnected connection
   notes:
   query_string: source_name:Microsoft-Windows-WLAN AND event_identifier:8003
+
+windows_local_account_created:
+  description: A local account was created
+  notes: https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4720
+  query_string: event_identifier:4720
+
+windows_rest_user_password:
+  description: Attempt to reset a local user password
+  notes:
+  query_string: data_type:"windows:evtx:record" AND source_name:"Microsoft-Windows-Security-Auditing" AND event_identifier:4724
+
+windows_version:
+  description: Get the Windows Version from Registry
+  notes: https://www.gaijin.at/en/infos/windows-version-numbers
+  query_string: data_type:"windows:registry:installation" AND HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion
+
+windows_failed_logons_4625:
+  description: An account failed to log on
+  notes: See: https://www.ultimatewindowssecurity.com/securitylog/encyclopedia/event.aspx?eventID=4625 for more information.
+  query_string: source_name:"Microsoft-Windows-Security-Auditing" AND event_identifier:4625
+
+windows_successful_logon_4624:
+  description: An successful logon
+  query_string: source_name:"Microsoft-Windows-Security-Auditing" AND (event_identifier:4624 OR tag:logon_event)

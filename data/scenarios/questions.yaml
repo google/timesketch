@@ -128,6 +128,12 @@ windows_timezone_settings:
     - windows_current_control_set
     - windows_current_timezone_information
 
+windows_version:
+  display_name: What version of Windows is installed?
+  description: Depending on the version, artifacts might show in different locations, so it is important to know the Windows version.
+  data_sources:
+    - windows_version
+
 windows_users:
   display_name: What users are on a Windows system?
   description: By looking at the registry
@@ -149,3 +155,34 @@ windows_wlan_history:
     - windows_wlan_history_network_failed_connecting
     - windows_wlan_history_network_disconnect
 
+windows_local_account_created:
+  display_name: Was there an local account created?
+  description: Adversaries may create a local account to maintain access to victim systems.
+  tags:
+    - attack.T1136.001
+  data_sources:
+    - windows_local_account_created
+  
+windows_rest_user_password:
+  display_name: Was a local user password resetted?
+  description: 
+  tags:
+    - attack.T1098
+    - attack.account_manipulation
+  data_sources:
+    - windows_rest_user_password
+
+windows_failed_logons:
+  display_name: Where there any failed logon attempts?
+  description: E.g. SMB failed logons.
+  tags:
+    - T1110.001
+  data_sources:
+    - windows_failed_logons_4625
+
+windows_successful_logon:
+  display_name: Where there any successful logon attempts?
+  tags:
+    - T1110.001
+  data_sources:
+    - windows_successful_logon_4624
