@@ -24,8 +24,8 @@ compromise_assessment:
     - defense_evasion
 
 exfil:
-  display_name: Lorem Ipsum scenario
-  description: The adversary is trying to steal data.
+  display_name: Effiltration of data
+  description: The adversary is trying to exfiltrate data.
   tags:
     - attack.tA0010
     - attack.exfil

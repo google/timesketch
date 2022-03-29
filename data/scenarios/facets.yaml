@@ -30,7 +30,7 @@ attacker_maintain_access:
 
 interference_with_protective_measures:
   display_name: Are there any signs of interference with protective measures?
-  description: Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+  description: For example disabling AV solution.
   questions:
     - user_logged_in_win
 
@@ -64,4 +64,3 @@ exfil_web_cloud_services:
     - attack.t1567.002
   questions:
     - network_traffic_flow
-
