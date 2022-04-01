@@ -19,38 +19,17 @@ compromise_assessment:
   display_name: Compromise Assessment
   description: Maecenas tristique sapien lorem, et vehicula ipsum vestibulum
   facets:
+    - windows_system_information
     - attacker_maintain_access
     - interference_with_protective_measures
+    - bruteforce_password_guessing
+    - create_account
+    - modify_account
 
 exfil:
   display_name: Exfiltration
   description: Multiple facets covering various exfil techniques.
   facets:
-    - exfiltrate_over_phyiscal_medium
-  
-system_information:
-  display_name: System information
-  facets:
     - windows_system_information
-
-wlan_history:
-  display_name: Determine wlan history of a system
-  facets:
+    - exfiltrate_over_phyiscal_medium
     - windows_wlan_history
-
-persistence:
-  display_name: Persistence
-  description: Persistence consists of techniques that adversaries use to keep access to systems across restarts, changed credentials, and other interruptions that could cut off their access.
-  tags:
-    - attack.TA0003
-  facets:
-    - create_account
-    - modify_account
-
-credential_access:
-  display_name: Credential Access
-  description: Credential Access consists of techniques for stealing credentials like account names and passwords. Techniques used to get credentials include keylogging or credential dumping. Using legitimate credentials can give adversaries access to systems, make them harder to detect, and provide the opportunity to create more accounts to help achieve their goals.
-  tags:
-    - attack.TA0006
-  facets:
-    - bruteforce_password_guessing
