@@ -140,7 +140,7 @@ Or run the following where `$CONTAINER_ID` is the ID from your `opensearch` Dock
 docker logs $CONTAINER_ID
 ```
 
-### Postgress
+### PostgreSQL
 
 ```shell
 /var/log/postgresql/
