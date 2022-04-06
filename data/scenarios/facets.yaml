@@ -17,6 +17,10 @@
 #                           facet attempts to answer, whether it will
 #                           require further manual analysis, etc.
 #
+#       ttp                 Tactics, Techniques and Procedures (TTP). An
+#                           optional list of ttps. For example MITRE ATT&CK(r)
+#                           based ttps.
+#
 #       questions           List of investigative questions that will help
 #                           the analyst to come to an conclusion for the facet.
 #
@@ -37,7 +41,7 @@ interference_with_protective_measures:
 exfiltrate_over_phyiscal_medium:
   display_name: Exfiltration Over Physical Medium
   description: Adversaries may attempt to exfiltrate data via a physical medium, such as a removable drive. In certain circumstances, such as an air-gapped network compromise, exfiltration could occur via a physical medium or device introduced by a user. Such media could be an external hard drive, USB drive, cellular phone, MP3 player, or other removable storage and processing device. The physical medium or device could be used as the final exfiltration point or to hop between otherwise disconnected systems.
-  tag: 
+  ttps: 
     - attack.T1052
     - attack.exfiltration
   questions:
@@ -61,7 +65,7 @@ windows_wlan_history:
 create_account:
   display_name: Create account
   description: Adversaries may create an account to maintain access to victim systems. With a sufficient level of access, creating such accounts may be used to establish secondary credentialed access that do not require persistent remote access tools to be deployed on the system.
-  tag:
+  ttps:
     - attack.T1136
     - attack.persistence
   questions:
@@ -70,7 +74,7 @@ create_account:
 modify_account:
   display_name: Modify a user
   description: Adversaries may manipulate accounts to maintain access to victim systems.
-  tag:
+  ttps:
     - attack.T1098
     - attack.persistence
     - attack.account_manipulation
@@ -80,7 +84,7 @@ modify_account:
 bruteforce_password_guessing:
   display_name: Brute Force Password Guessing
   description: Adversaries with no prior knowledge of legitimate credentials within the system or environment may guess passwords to attempt access to accounts.
-  tags:
+  ttps:
     - attack.T1110.001
     - attack.brute_force
   questions:
