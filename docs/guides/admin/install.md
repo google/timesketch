@@ -45,7 +45,7 @@ chmod 755 deploy_timesketch.sh
 
 ### Choose location for the installation
 
-You can choose to host the Timeksetch data directory anywhere but note that by default it will host OpenSearch and PostgreSQL data in this directory so make sure you have enough disk space available.
+You can choose to host the Timesketch data directory anywhere but note that by default it will host OpenSearch and PostgreSQL data in this directory so make sure you have enough disk space available.
 
 Example:
 
