@@ -15,7 +15,7 @@ Intelligence entries have the following, simple format;
 }
 ```
 
-## Addding new intelligence
+## Adding new intelligence
 
 Timesketch will parse events attributes for potential IOCs to be added as Intelligence (e.g. when Timesketch finds something that looks like a SHA-256 hash, IP address, etc.). This will be surfaced to you by a grey highlight on the corresponding string. You can then click the highlighted string to open and pre-fill the `add local intelligence` dialog. You can optionally change the IOC type before confirming the suggestion.
 
@@ -34,7 +34,7 @@ If a string doesn't match any of the aforementioned IOC types, the type will fal
 
 ## Intelligence view
 
-The list of all the IOCs added to a sketch can be seen in the *Intelligence* tab (accessible at `/sketch/{SKECTH_ID}/intelligence`).
+The list of all the IOCs added to a sketch can be seen in the *Intelligence* tab (accessible at `/sketch/{SKETCH_ID}/intelligence`).
 
 ![Intelligence view demo](/assets/images/inteldemo.png)
 
