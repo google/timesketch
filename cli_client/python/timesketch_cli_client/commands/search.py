@@ -216,16 +216,10 @@ def list_saved_searches(ctx):
 
 
 @saved_searches_group.command('describe')
-@click.argument(
-    'search_id', type=int, required=False, help='Search ID from argument.')
+@click.argument('search_id', type=int, required=False)
 @click.pass_context
 def describe_saved_search(ctx, search_id):
-    """Show details for saved search.
-
-    Args:
-        ctx: Click CLI context object.
-        search_id: Search ID from argument.
-    """
+    """Show details for saved search."""
     sketch = ctx.obj.sketchs
     # TODO (berggren): Add support for saved search name.
     saved_search = sketch.get_saved_search(search_id=search_id)
