@@ -37,11 +37,14 @@ def format_output(search_obj, output_format, show_headers):
 
     # Label is being set regardless of return_fields. Remove if it is not in
     # the list of requested fields.
-    if 'label' not in search_obj.return_fields:
-        dataframe = dataframe.drop(columns=['label'], errors='ignore')
+    if "label" not in search_obj.return_fields:
+        dataframe = dataframe.drop(columns=["label"], errors="ignore")
 
     # Remove internal OpenSeearch columns
-    dataframe = dataframe.drop(columns=['__ts_timeline_id', '_id', '_index', '_source', '_type'], errors='ignore')
+    dataframe = dataframe.drop(
+        columns=["__ts_timeline_id", "_id", "_index", "_source", "_type"],
+        errors="ignore",
+    )
 
     result = None
     if output_format == "text":
@@ -215,12 +218,12 @@ def list_saved_searches(ctx):
         click.echo(f"{saved_search.id} {saved_search.name}")
 
 
-@saved_searches_group.command('describe')
-@click.argument('search_id', type=int, required=False)
+@saved_searches_group.command("describe")
+@click.argument("search_id", type=int, required=False)
 @click.pass_context
 def describe_saved_search(ctx, search_id):
     """Show details for saved search."""
-    sketch = ctx.obj.sketchs
+    sketch = ctx.obj.sketch
     # TODO (berggren): Add support for saved search name.
     saved_search = sketch.get_saved_search(search_id=search_id)
     if not saved_search:
