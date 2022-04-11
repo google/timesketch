@@ -24,8 +24,8 @@ class ChromeDownloadsGraph(BaseGraphPlugin):
     executions.
     """
 
-    NAME = 'ChromeDownloads'
-    DISPLAY_NAME = 'Chrome downloads'
+    NAME = "ChromeDownloads"
+    DISPLAY_NAME = "Chrome downloads"
 
     def generate(self):
         """Generate the graph.
@@ -34,64 +34,62 @@ class ChromeDownloadsGraph(BaseGraphPlugin):
             Graph object instance.
         """
         query = 'data_type:"chrome:history:file_downloaded"'
-        return_fields = [
-            'hostname', 'received_bytes', 'full_path', 'url', 'domain'
-        ]
+        return_fields = ["hostname", "received_bytes", "full_path", "url", "domain"]
 
         chrome_events = self.event_stream(
-            query_string=query, return_fields=return_fields)
+            query_string=query, return_fields=return_fields
+        )
 
         for chrome_event in chrome_events:
-            computer_name = chrome_event['_source'].get('hostname', '')
-            full_path = chrome_event['_source'].get('full_path', '')
-            received_bytes = chrome_event['_source'].get('received_bytes', '')
-            url = chrome_event['_source'].get('url', '')
-            domain = chrome_event['_source'].get('domain', '')
+            computer_name = chrome_event["_source"].get("hostname", "")
+            full_path = chrome_event["_source"].get("full_path", "")
+            received_bytes = chrome_event["_source"].get("received_bytes", "")
+            url = chrome_event["_source"].get("url", "")
+            domain = chrome_event["_source"].get("domain", "")
 
             # Note: If any component of the path contains a \, it will be split
             # split, potentially wrong split. No data will be lost, but the
             # file node will have part of the path as the filename.
             # TODO: Revisit this and see if we can make it more robust.
-            if '\\' in full_path:
-                separator = '\\'
+            if "\\" in full_path:
+                separator = "\\"
             else:
-                separator = '/'
+                separator = "/"
 
             filename = full_path.split(separator)[-1]
-            computer = self.graph.add_node(computer_name, {'type': 'computer'})
+            computer = self.graph.add_node(computer_name, {"type": "computer"})
 
             # If full patch is missing, set url as label.
             if not full_path:
                 full_path = url
-                filename = f'UNKNOWN file download from {domain}'
+                filename = f"UNKNOWN file download from {domain}"
 
-            file = self.graph.add_node(filename, {
-                'full_path': full_path,
-                'received_bytes': received_bytes,
-                'type': 'file'
-            })
+            file = self.graph.add_node(
+                filename,
+                {
+                    "full_path": full_path,
+                    "received_bytes": received_bytes,
+                    "type": "file",
+                },
+            )
 
-            edge_label = f'Downloaded {received_bytes} bytes'
+            edge_label = f"Downloaded {received_bytes} bytes"
             self.graph.add_edge(computer, file, edge_label, chrome_event)
 
             # Get prefetch events that matches the filename.
             prefetch_query = f'executable:"*{filename}"'
-            prefetch_return_fields = ['executable', 'hostname']
+            prefetch_return_fields = ["executable", "hostname"]
             prefetch_events = self.event_stream(
                 query_string=prefetch_query,
                 return_fields=prefetch_return_fields,
-                scroll=False
+                scroll=False,
             )
             for prefetch_event in prefetch_events:
-                computer_name = prefetch_event['_source'].get('hostname')
-                executable_name = prefetch_event['_source'].get('executable')
-                computer = self.graph.add_node(
-                    computer_name, {'type': 'computer'})
-                executable = self.graph.add_node(executable_name, {
-                    'type': 'file'
-                })
-                self.graph.add_edge(
-                    computer, executable, 'Executed', prefetch_event)
+                computer_name = prefetch_event["_source"].get("hostname")
+                executable_name = prefetch_event["_source"].get("executable")
+                computer = self.graph.add_node(computer_name, {"type": "computer"})
+                executable = self.graph.add_node(executable_name, {"type": "file"})
+                self.graph.add_edge(computer, executable, "Executed", prefetch_event)
 
         self.graph.commit()
 

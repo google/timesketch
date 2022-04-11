@@ -21,17 +21,20 @@ from timesketch.lib.stories import manager
 
 class MockStoryExporter(object):
     """Mock story exporter class,"""
-    EXPORT_FORMAT = 'MockFormat'
+
+    EXPORT_FORMAT = "MockFormat"
 
 
 class MockStoryExporter2(object):
     """Mock story exporter class,"""
-    EXPORT_FORMAT = 'MockFormat2'
+
+    EXPORT_FORMAT = "MockFormat2"
 
 
 class MockStoryExporter3(object):
     """Mock story exporter class,"""
-    EXPORT_FORMAT = 'MockFormat3'
+
+    EXPORT_FORMAT = "MockFormat3"
 
 
 class TestStoryExportManager(BaseTest):
@@ -51,8 +54,8 @@ class TestStoryExportManager(BaseTest):
         exporter_dict = {}
         for name, exporter_class in exporter_list:
             exporter_dict[name] = exporter_class
-        self.assertIn('mockformat', exporter_dict)
-        exporter_class = exporter_dict.get('mockformat')
+        self.assertIn("mockformat", exporter_dict)
+        exporter_class = exporter_dict.get("mockformat")
         self.assertEqual(exporter_class, MockStoryExporter)
 
         manager.StoryExportManager.clear_registration()
@@ -68,15 +71,15 @@ class TestStoryExportManager(BaseTest):
         exporters = manager.StoryExportManager.get_exporters()
         exporter_list = [x for x, _ in exporters]
         self.assertEqual(len(exporter_list), 3)
-        self.assertIn('mockformat', exporter_list)
+        self.assertIn("mockformat", exporter_list)
 
     def test_get_exporter(self):
         """Test to get exporter class from registry."""
-        exporter_class = manager.StoryExportManager.get_exporter('mockformat')
+        exporter_class = manager.StoryExportManager.get_exporter("mockformat")
         self.assertEqual(exporter_class, MockStoryExporter)
 
     def test_register_exporter(self):
         """Test so we raise KeyError when exporter is already registered."""
         self.assertRaises(
-            KeyError, manager.StoryExportManager.register_exporter,
-            MockStoryExporter)
+            KeyError, manager.StoryExportManager.register_exporter, MockStoryExporter
+        )

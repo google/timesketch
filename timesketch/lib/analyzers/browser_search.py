@@ -14,49 +14,98 @@ from timesketch.lib.analyzers import utils
 from timesketch.lib import emojis
 
 
-logger = logging.getLogger('timesketch.analyzers.browser_search')
+logger = logging.getLogger("timesketch.analyzers.browser_search")
 
 
 class BrowserSearchSketchPlugin(interface.BaseAnalyzer):
     """Sketch analyzer for BrowserSearch."""
 
-    NAME = 'browser_search'
-    DISPLAY_NAME = 'Browser search terms'
-    DESCRIPTION = 'Extract search terms from various search providers'
+    NAME = "browser_search"
+    DISPLAY_NAME = "Browser search terms"
+    DESCRIPTION = "Extract search terms from various search providers"
 
-    DEPENDENCIES = frozenset(['domain'])
+    DEPENDENCIES = frozenset(["domain"])
 
     # A list of fields to include in the view output.
-    _FIELDS_TO_INCLUDE = ['domain', 'url', 'search_string']
+    _FIELDS_TO_INCLUDE = ["domain", "url", "search_string"]
 
     # Here we define filters and callback methods for all hits on each filter.
-    _URL_FILTERS = frozenset([
-        ('Bing', re.compile(r'bing\.com/search'),
-         '_extract_search_query_from_url', 'q'),
-        ('DuckDuckGo', re.compile(r'duckduckgo\.com'),
-         '_extract_search_query_from_url', 'q'),
-        ('GMail', re.compile(r'mail\.google\.com'),
-         '_extract_urlpart_search_query', None),
-        ('Google Inbox', re.compile(r'inbox\.google\.com'),
-         '_extract_urlpart_search_query', None),
-        ('Google Docs', re.compile(r'docs\.google\.com'),
-         '_extract_search_query_from_url', 'q'),
-        ('Google Groups', re.compile(r'groups\.google\.com/a'),
-         '_extract_urlpart_search_query', None),
-        ('Google Drive', re.compile(r'drive\.google\.com/.+/search'),
-         '_extract_search_query_from_url', 'q'),
-        ('Google',
-         re.compile(r'(www\.|[a-zA-Z]\.|/)google\.[a-zA-Z]+/search'),
-         '_extract_search_query_from_url', 'q'),
-        ('Google Sites', re.compile(r'sites\.google\.'),
-         '_extract_search_query_from_url', 'q'),
-        ('Yahoo', re.compile(r'yahoo\.com/search'),
-         '_extract_search_query_from_url', 'p'),
-        ('Yandex', re.compile(r'yandex\.com/search'),
-         '_extract_search_query_from_url', 'text'),
-        ('Youtube', re.compile(r'youtube\.com'),
-         '_extract_search_query_from_url', 'search_query'),
-    ])
+    _URL_FILTERS = frozenset(
+        [
+            (
+                "Bing",
+                re.compile(r"bing\.com/search"),
+                "_extract_search_query_from_url",
+                "q",
+            ),
+            (
+                "DuckDuckGo",
+                re.compile(r"duckduckgo\.com"),
+                "_extract_search_query_from_url",
+                "q",
+            ),
+            (
+                "GMail",
+                re.compile(r"mail\.google\.com"),
+                "_extract_urlpart_search_query",
+                None,
+            ),
+            (
+                "Google Inbox",
+                re.compile(r"inbox\.google\.com"),
+                "_extract_urlpart_search_query",
+                None,
+            ),
+            (
+                "Google Docs",
+                re.compile(r"docs\.google\.com"),
+                "_extract_search_query_from_url",
+                "q",
+            ),
+            (
+                "Google Groups",
+                re.compile(r"groups\.google\.com/a"),
+                "_extract_urlpart_search_query",
+                None,
+            ),
+            (
+                "Google Drive",
+                re.compile(r"drive\.google\.com/.+/search"),
+                "_extract_search_query_from_url",
+                "q",
+            ),
+            (
+                "Google",
+                re.compile(r"(www\.|[a-zA-Z]\.|/)google\.[a-zA-Z]+/search"),
+                "_extract_search_query_from_url",
+                "q",
+            ),
+            (
+                "Google Sites",
+                re.compile(r"sites\.google\."),
+                "_extract_search_query_from_url",
+                "q",
+            ),
+            (
+                "Yahoo",
+                re.compile(r"yahoo\.com/search"),
+                "_extract_search_query_from_url",
+                "p",
+            ),
+            (
+                "Yandex",
+                re.compile(r"yandex\.com/search"),
+                "_extract_search_query_from_url",
+                "text",
+            ),
+            (
+                "Youtube",
+                re.compile(r"youtube\.com"),
+                "_extract_search_query_from_url",
+                "search_query",
+            ),
+        ]
+    )
 
     def _decode_url(self, url):
         """Decodes the URL, replaces %XX to their corresponding characters.
@@ -68,18 +117,20 @@ class BrowserSearchSketchPlugin(interface.BaseAnalyzer):
           str: decoded URL.
         """
         if not url:
-            return ''
+            return ""
 
         # pylint: disable=too-many-function-args
         decoded_url = urlparse.unquote(url)
         if isinstance(decoded_url, six.binary_type):
             try:
-                decoded_url = decoded_url.decode('utf-8')
+                decoded_url = decoded_url.decode("utf-8")
             except UnicodeDecodeError as exception:
-                decoded_url = decoded_url.decode('utf-8', errors='replace')
+                decoded_url = decoded_url.decode("utf-8", errors="replace")
                 logger.warning(
-                    'Unable to decode URL: {0:s} with error: {1!s}'.format(
-                        url, exception))
+                    "Unable to decode URL: {0:s} with error: {1!s}".format(
+                        url, exception
+                    )
+                )
 
         return decoded_url
 
@@ -97,14 +148,14 @@ class BrowserSearchSketchPlugin(interface.BaseAnalyzer):
         Returns:
             str: search query or None if no query was found.
         """
-        if 'search/' not in url:
+        if "search/" not in url:
             return None
 
-        _, _, line = url.partition('search/')
-        line, _, _ = line.partition('/')
-        line, _, _ = line.partition('?')
+        _, _, line = url.partition("search/")
+        line, _, _ = line.partition("/")
+        line, _, _ = line.partition("?")
 
-        search_quoted = line.replace('+', ' ')
+        search_quoted = line.replace("+", " ")
         return self._decode_url(search_quoted)
 
     def _extract_search_query_from_url(self, url, parameter):
@@ -131,7 +182,7 @@ class BrowserSearchSketchPlugin(interface.BaseAnalyzer):
           str: search query, the search parameter or None if no
               query was found.
         """
-        if '{0:s}='.format(parameter) not in url:
+        if "{0:s}=".format(parameter) not in url:
             return None
 
         return self._get_url_parameter_value(url, parameter)
@@ -147,15 +198,15 @@ class BrowserSearchSketchPlugin(interface.BaseAnalyzer):
           str: the GET parameter value or None if no parameter was found.
         """
         # Make sure we're analyzing the query part of the URL.
-        _, _, url = url.partition('?')
+        _, _, url = url.partition("?")
         # Look for a key value pair named 'q'.
-        _, _, url = url.partition('{0:s}='.format(parameter))
+        _, _, url = url.partition("{0:s}=".format(parameter))
         if not url:
-            return ''
+            return ""
 
         # Strip additional key value pairs.
-        parameter, _, _ = url.partition('&')
-        parameter = parameter.replace('+', ' ')
+        parameter, _, _ = url.partition("&")
+        parameter = parameter.replace("+", " ")
 
         return self._decode_url(parameter)
 
@@ -166,16 +217,15 @@ class BrowserSearchSketchPlugin(interface.BaseAnalyzer):
             String with summary of the analyzer result
         """
         query = 'source_short:"WEBHIST" OR source:"WEBHIST"'
-        return_fields = ['url', 'datetime']
-        search_emoji = emojis.get_emoji('MAGNIFYING_GLASS')
+        return_fields = ["url", "datetime"]
+        search_emoji = emojis.get_emoji("MAGNIFYING_GLASS")
 
         # Generator of events based on your query.
-        events = self.event_stream(
-            query_string=query, return_fields=return_fields)
+        events = self.event_stream(query_string=query, return_fields=return_fields)
 
         simple_counter = 0
         for event in events:
-            url = event.source.get('url')
+            url = event.source.get("url")
 
             if url is None:
                 continue
@@ -198,17 +248,21 @@ class BrowserSearchSketchPlugin(interface.BaseAnalyzer):
                     continue
 
                 simple_counter += 1
-                datetime = event.source.get('datetime')
-                day, _, _ = datetime.partition('T')
-                event.add_attributes({
-                    'search_string': search_query,
-                    'search_engine': engine,
-                    'search_day': 'D:{0:s}'.format(day)})
+                datetime = event.source.get("datetime")
+                day, _, _ = datetime.partition("T")
+                event.add_attributes(
+                    {
+                        "search_string": search_query,
+                        "search_engine": engine,
+                        "search_day": "D:{0:s}".format(day),
+                    }
+                )
 
-                event.add_human_readable('{0:s} search query: {1:s}'.format(
-                    engine, search_query), self.NAME)
+                event.add_human_readable(
+                    "{0:s} search query: {1:s}".format(engine, search_query), self.NAME
+                )
                 event.add_emojis([search_emoji])
-                event.add_tags(['browser-search'])
+                event.add_tags(["browser-search"])
                 # We break at the first hit of a successful search engine.
                 break
 
@@ -217,72 +271,82 @@ class BrowserSearchSketchPlugin(interface.BaseAnalyzer):
 
         if simple_counter > 0:
             view = self.sketch.add_view(
-                view_name='Browser Search', analyzer_name=self.NAME,
+                view_name="Browser Search",
+                analyzer_name=self.NAME,
                 query_string='tag:"browser-search"',
-                additional_fields=self._FIELDS_TO_INCLUDE)
+                additional_fields=self._FIELDS_TO_INCLUDE,
+            )
 
             params = {
-                'field': 'search_string',
-                'limit': 20,
-                'index': [self.timeline_id],
+                "field": "search_string",
+                "limit": 20,
+                "index": [self.timeline_id],
             }
             agg_obj = self.sketch.add_aggregation(
-                name='Top 20 browser search queries ({0:s})'.format(
-                    self.timeline_name),
-                agg_name='field_bucket', agg_params=params, view_id=view.id,
-                chart_type='table',
-                description='Created by the browser search analyzer')
+                name="Top 20 browser search queries ({0:s})".format(self.timeline_name),
+                agg_name="field_bucket",
+                agg_params=params,
+                view_id=view.id,
+                chart_type="table",
+                description="Created by the browser search analyzer",
+            )
 
             params = {
-                'field': 'search_day',
-                'index': [self.timeline_id],
-                'limit': 20,
+                "field": "search_day",
+                "index": [self.timeline_id],
+                "limit": 20,
             }
             agg_days = self.sketch.add_aggregation(
-                name='Top 20 days of search queries ({0:s})'.format(
-                    self.timeline_name), agg_name='field_bucket',
-                agg_params=params, chart_type='table',
-                description='Created by the browser search analyzer',
-                label='informational')
+                name="Top 20 days of search queries ({0:s})".format(self.timeline_name),
+                agg_name="field_bucket",
+                agg_params=params,
+                chart_type="table",
+                description="Created by the browser search analyzer",
+                label="informational",
+            )
 
             params = {
-                'query_string': 'tag:"browser-search"',
-                'index': [self.timeline_id],
-                'field': 'domain',
+                "query_string": 'tag:"browser-search"',
+                "index": [self.timeline_id],
+                "field": "domain",
             }
             agg_engines = self.sketch.add_aggregation(
-                name='Top Search Engines ({0:s})'.format(self.timeline_name),
-                agg_name='query_bucket', agg_params=params, view_id=view.id,
-                chart_type='hbarchart',
-                description='Created by the browser search analyzer')
+                name="Top Search Engines ({0:s})".format(self.timeline_name),
+                agg_name="query_bucket",
+                agg_params=params,
+                view_id=view.id,
+                chart_type="hbarchart",
+                description="Created by the browser search analyzer",
+            )
 
-            story = self.sketch.add_story('{0:s} - {1:s}'.format(
-                utils.BROWSER_STORY_TITLE, self.timeline_name))
+            story = self.sketch.add_story(
+                "{0:s} - {1:s}".format(utils.BROWSER_STORY_TITLE, self.timeline_name)
+            )
             story.add_text(utils.BROWSER_STORY_HEADER, skip_if_exists=True)
 
             story.add_text(
-                '## Browser Search Analyzer.\n\nThe browser search '
-                'analyzer takes URLs usually resevered for browser '
-                'search queries and extracts the search string.'
-                'In this timeline the analyzer discovered {0:d} '
-                'browser searches.\n\nThis is a summary of '
-                'it\'s findings for the timeline **{1:s}**.'.format(
-                    simple_counter, self.timeline_name))
+                "## Browser Search Analyzer.\n\nThe browser search "
+                "analyzer takes URLs usually resevered for browser "
+                "search queries and extracts the search string."
+                "In this timeline the analyzer discovered {0:d} "
+                "browser searches.\n\nThis is a summary of "
+                "it's findings for the timeline **{1:s}**.".format(
+                    simple_counter, self.timeline_name
+                )
+            )
 
-            story.add_text(
-                'The top 20 most commonly discovered searches were:')
+            story.add_text("The top 20 most commonly discovered searches were:")
             story.add_aggregation(agg_obj)
-            story.add_text('The domains used to search:')
-            story.add_aggregation(agg_engines, 'hbarchart')
-            story.add_text('And the most common days of search:')
+            story.add_text("The domains used to search:")
+            story.add_aggregation(agg_engines, "hbarchart")
+            story.add_text("And the most common days of search:")
             story.add_aggregation(agg_days)
-            story.add_text(
-                'And an overview of all the discovered search terms:')
+            story.add_text("And an overview of all the discovered search terms:")
             story.add_view(view)
 
         return (
-            'Browser Search completed with {0:d} search results '
-            'extracted.').format(simple_counter)
+            "Browser Search completed with {0:d} search results " "extracted."
+        ).format(simple_counter)
 
 
 manager.AnalysisManager.register_analyzer(BrowserSearchSketchPlugin)

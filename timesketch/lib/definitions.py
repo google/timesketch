@@ -37,11 +37,12 @@ DEFAULT_FIELDS = [
     'message',
     'comment']
 DEFAULT_SOURCE_FIELDS = DEFAULT_FIELDS + [
-    'timesketch_label',
-    'tag',
-    'similarity_score',
-    'human_readable',
-    '__ts_emojis']
+    "timesketch_label",
+    "tag",
+    "similarity_score",
+    "human_readable",
+    "__ts_emojis",
+]
 
 # Prometheus metrics
-METRICS_NAMESPACE = 'timesketch'
+METRICS_NAMESPACE = "timesketch"

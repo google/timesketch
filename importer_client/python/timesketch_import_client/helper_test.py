@@ -40,16 +40,17 @@ vindur:
         columns: 'vedur,magn,auka,rigning'
 """
 
+
 class MockStreamer:
     """Mock streamer object for testing."""
 
     def __init__(self):
         """Initialize."""
-        self.format_string = ''
-        self.timestamp_description = ''
-        self.csv_delimiter = ''
-        self.text_encoding = ''
-        self.datetime_column = ''
+        self.format_string = ""
+        self.timestamp_description = ""
+        self.csv_delimiter = ""
+        self.text_encoding = ""
+        self.datetime_column = ""
 
     def set_message_format_string(self, message):
         self.format_string = message
@@ -73,7 +74,7 @@ class TimesketchHelperTest(unittest.TestCase):
     def setUp(self):
         """Set up the test."""
         self._helper = helper.ImportHelper()
-        with tempfile.NamedTemporaryFile('w', suffix='.yaml') as fw:
+        with tempfile.NamedTemporaryFile("w", suffix=".yaml") as fw:
             fw.write(MOCK_CONFIG)
             fw.seek(0)
             self._helper.add_config(fw.name)
@@ -81,55 +82,58 @@ class TimesketchHelperTest(unittest.TestCase):
     def test_not_config(self):
         """Test a helper that does not match."""
         streamer = MockStreamer()
-        self._helper.configure_streamer(streamer, data_type='foo:no')
+        self._helper.configure_streamer(streamer, data_type="foo:no")
 
-        self.assertEqual(streamer.format_string, '')
-        self.assertEqual(streamer.timestamp_description, '')
-        self.assertEqual(streamer.csv_delimiter, '')
-        self.assertEqual(streamer.text_encoding, '')
-        self.assertEqual(streamer.datetime_column, '')
+        self.assertEqual(streamer.format_string, "")
+        self.assertEqual(streamer.timestamp_description, "")
+        self.assertEqual(streamer.csv_delimiter, "")
+        self.assertEqual(streamer.text_encoding, "")
+        self.assertEqual(streamer.datetime_column, "")
 
     def test_sub_column(self):
         """Test a helper that matches on sub columns."""
         streamer = MockStreamer()
         self._helper.configure_streamer(
-            streamer, data_type='foo:no',
-            columns=['cA', 'cB', 'cC', 'cD', 'cE', 'cF', 'cG'])
+            streamer,
+            data_type="foo:no",
+            columns=["cA", "cB", "cC", "cD", "cE", "cF", "cG"],
+        )
 
         self.assertEqual(
             streamer.format_string,
-            'The {cA} went bananas with {cC}, but without letting {cD} know.')
-        self.assertEqual(streamer.timestamp_description, 'Event Logged')
-        self.assertEqual(streamer.csv_delimiter, '')
-        self.assertEqual(streamer.text_encoding, '')
-        self.assertEqual(streamer.datetime_column, 'cB')
+            "The {cA} went bananas with {cC}, but without letting {cD} know.",
+        )
+        self.assertEqual(streamer.timestamp_description, "Event Logged")
+        self.assertEqual(streamer.csv_delimiter, "")
+        self.assertEqual(streamer.text_encoding, "")
+        self.assertEqual(streamer.datetime_column, "cB")
 
     def test_columns(self):
         """Test a helper that matches on columns."""
         streamer = MockStreamer()
         self._helper.configure_streamer(
-            streamer, data_type='foo:no',
-            columns=['vedur', 'magn', 'auka', 'rigning'])
+            streamer, data_type="foo:no", columns=["vedur", "magn", "auka", "rigning"]
+        )
 
         self.assertEqual(
-            streamer.format_string,
-            'Vedrid i dag er: {vedur}, med typiskri {auka}')
-        self.assertEqual(streamer.timestamp_description, 'Thu Veist Thad')
-        self.assertEqual(streamer.csv_delimiter, '')
-        self.assertEqual(streamer.text_encoding, '')
-        self.assertEqual(streamer.datetime_column, '')
+            streamer.format_string, "Vedrid i dag er: {vedur}, med typiskri {auka}"
+        )
+        self.assertEqual(streamer.timestamp_description, "Thu Veist Thad")
+        self.assertEqual(streamer.csv_delimiter, "")
+        self.assertEqual(streamer.text_encoding, "")
+        self.assertEqual(streamer.datetime_column, "")
 
     def test_data_type(self):
         """Test a helper that matches on data_type."""
         streamer = MockStreamer()
         self._helper.configure_streamer(
-            streamer, data_type='data:secret:message',
-            columns=['vedur', 'auka', 'rigning'])
+            streamer,
+            data_type="data:secret:message",
+            columns=["vedur", "auka", "rigning"],
+        )
 
-        self.assertEqual(
-            streamer.format_string,
-            'Some people {stuff}, with {other}')
-        self.assertEqual(streamer.timestamp_description, 'Stuff Happened')
-        self.assertEqual(streamer.csv_delimiter, '>')
-        self.assertEqual(streamer.text_encoding, 'secret-formula')
-        self.assertEqual(streamer.datetime_column, '')
+        self.assertEqual(streamer.format_string, "Some people {stuff}, with {other}")
+        self.assertEqual(streamer.timestamp_description, "Stuff Happened")
+        self.assertEqual(streamer.csv_delimiter, ">")
+        self.assertEqual(streamer.text_encoding, "secret-formula")
+        self.assertEqual(streamer.datetime_column, "")

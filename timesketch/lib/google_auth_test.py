@@ -62,7 +62,7 @@ MOCK_RSA_PRIVATE_PUBLIC_KEY_JWK = {
     "use": "sig",
     "kid": "oidc_1234",
     "alg": "RS256",
-    "n": "jVUkmrTXhFmaahZExVcdJqb3BqZp2A6Kk-IFkmeLimK2DJg3OpUSxEJ5mlaymu7XQJUlG2qKI7zhL7WV-S9CNYdLCVWMhg_XQ9dKB9VoYf92eAufkGrl2GbGd0y6KdMrTuxGfESC-l-exTcQAPvn1Md95difnruob6K1KXQTqEqQEFhKLiciFtssyiC90r8ia7-082MSJUXpXNhHyyuehuV5Xs5GCVqZfP65MMiDiKidUxq40UNTodqJCzhum7iSK42SF9la7ao0FTizF1uFl7oU7fIbN2qzNBgn5U3CTfaZaII54Xn6pzoIwinYXCZzeTy7x-8ZIN41VDNGulTK_w"
+    "n": "jVUkmrTXhFmaahZExVcdJqb3BqZp2A6Kk-IFkmeLimK2DJg3OpUSxEJ5mlaymu7XQJUlG2qKI7zhL7WV-S9CNYdLCVWMhg_XQ9dKB9VoYf92eAufkGrl2GbGd0y6KdMrTuxGfESC-l-exTcQAPvn1Md95difnruob6K1KXQTqEqQEFhKLiciFtssyiC90r8ia7-082MSJUXpXNhHyyuehuV5Xs5GCVqZfP65MMiDiKidUxq40UNTodqJCzhum7iSK42SF9la7ao0FTizF1uFl7oU7fIbN2qzNBgn5U3CTfaZaII54Xn6pzoIwinYXCZzeTy7x-8ZIN41VDNGulTK_w",
 }
 
 # pylint: disable=line-too-long
@@ -72,7 +72,7 @@ MOCK_RSA_PUBLIC_KEY_JWK = {
     "use": "sig",
     "kid": "oidc_1234",
     "alg": "RS256",
-    "n": "jVUkmrTXhFmaahZExVcdJqb3BqZp2A6Kk-IFkmeLimK2DJg3OpUSxEJ5mlaymu7XQJUlG2qKI7zhL7WV-S9CNYdLCVWMhg_XQ9dKB9VoYf92eAufkGrl2GbGd0y6KdMrTuxGfESC-l-exTcQAPvn1Md95difnruob6K1KXQTqEqQEFhKLiciFtssyiC90r8ia7-082MSJUXpXNhHyyuehuV5Xs5GCVqZfP65MMiDiKidUxq40UNTodqJCzhum7iSK42SF9la7ao0FTizF1uFl7oU7fIbN2qzNBgn5U3CTfaZaII54Xn6pzoIwinYXCZzeTy7x-8ZIN41VDNGulTK_w"
+    "n": "jVUkmrTXhFmaahZExVcdJqb3BqZp2A6Kk-IFkmeLimK2DJg3OpUSxEJ5mlaymu7XQJUlG2qKI7zhL7WV-S9CNYdLCVWMhg_XQ9dKB9VoYf92eAufkGrl2GbGd0y6KdMrTuxGfESC-l-exTcQAPvn1Md95difnruob6K1KXQTqEqQEFhKLiciFtssyiC90r8ia7-082MSJUXpXNhHyyuehuV5Xs5GCVqZfP65MMiDiKidUxq40UNTodqJCzhum7iSK42SF9la7ao0FTizF1uFl7oU7fIbN2qzNBgn5U3CTfaZaII54Xn6pzoIwinYXCZzeTy7x-8ZIN41VDNGulTK_w",
 }
 
 # pylint: disable=line-too-long
@@ -82,7 +82,7 @@ MOCK_INVALID_RSA_PUBLIC_KEY_JWK = {
     "use": "sig",
     "kid": "invalid_oidc_1234",
     "alg": "RS256",
-    "n": "tQjrbztEuU3GFrNzgxCyb2lAeMXBQPsMctyaQAx05JLiqIxWYE__oSgMXyGz9SR7F_cCZ-x0FVQO1UjIyHU1BUPQxlO88NwEXlIrP5Eo_dnKzn972Cl4AjmoISApp2dTlwhSkHRqycOxJApzsqsg2HQxbrtM6oZrOyFU3uc2u0PHJqVAO6W7fplZXRHRGMd7KaT2a4GJ8zfNHD157Mv7ttjCeQ7rmqkB6OLVpNzO8idKo33gz5gDID2f7IGIPlqpAOAZaaKkRlGqUoaG0EZHns3fPcl27AvNOvmvOl9Blb43UnbBIBFGm6MY9aJUEJzmqcX-td9mch5HtGG14v3sUQ"
+    "n": "tQjrbztEuU3GFrNzgxCyb2lAeMXBQPsMctyaQAx05JLiqIxWYE__oSgMXyGz9SR7F_cCZ-x0FVQO1UjIyHU1BUPQxlO88NwEXlIrP5Eo_dnKzn972Cl4AjmoISApp2dTlwhSkHRqycOxJApzsqsg2HQxbrtM6oZrOyFU3uc2u0PHJqVAO6W7fplZXRHRGMd7KaT2a4GJ8zfNHD157Mv7ttjCeQ7rmqkB6OLVpNzO8idKo33gz5gDID2f7IGIPlqpAOAZaaKkRlGqUoaG0EZHns3fPcl27AvNOvmvOl9Blb43UnbBIBFGm6MY9aJUEJzmqcX-td9mch5HtGG14v3sUQ",
 }
 
 # Converted to PEM format with pem-jwk (npm install -g pem-jwk)
@@ -116,21 +116,21 @@ taxXqti9HRcj+oSgKNlL4A4W7pUmDh5sv6tHIx16MVoJO++2CjQN8V+m9DjPlgEx
 -----END RSA PRIVATE KEY-----
 """
 
-IAP_VALID_AUDIENCE = '/projects/1234/global/backendServices/1234'
-IAP_INVALID_AUDIENCE = '/projects/foo/global/backendServices/bar'
+IAP_VALID_AUDIENCE = "/projects/1234/global/backendServices/1234"
+IAP_INVALID_AUDIENCE = "/projects/foo/global/backendServices/bar"
 
-OIDC_CLIENT_ID = '123456'
+OIDC_CLIENT_ID = "123456"
 OIDC_VALID_AUDIENCE = OIDC_CLIENT_ID
 
 # Defaults for Google Cloud Identity-Aware Proxy
-IAP_PUBLIC_KEY_URL = 'https://www.gstatic.com/iap/verify/public_key'
-IAP_VALID_ISSUER = 'https://cloud.google.com/iap'
-IAP_JWT_ALGORITHM = 'ES256'
+IAP_PUBLIC_KEY_URL = "https://www.gstatic.com/iap/verify/public_key"
+IAP_VALID_ISSUER = "https://cloud.google.com/iap"
+IAP_JWT_ALGORITHM = "ES256"
 
 # Defaults for Google OAuth/OpenID Connect
-OIDC_PUBLIC_KEY_URL = 'https://www.googleapis.com/oauth2/v3/certs'
-OIDC_VALID_ISSUER = 'https://accounts.google.com'
-OIDC_JWT_ALGORITHM = 'RS256'
+OIDC_PUBLIC_KEY_URL = "https://www.googleapis.com/oauth2/v3/certs"
+OIDC_VALID_ISSUER = "https://accounts.google.com"
+OIDC_JWT_ALGORITHM = "RS256"
 
 
 # pylint: disable=unused-argument
@@ -162,21 +162,19 @@ def create_default_payload(audience, issuer):
         "iat": now - 300,  # issued 5 min ago
         "exp": now + 300,  # expires in 5 min
         "aud": audience,
-        "iss": issuer
+        "iss": issuer,
     }
     return payload
 
 
 def create_default_header(algorithm, key_id):
-    header = {
-        "alg": algorithm,
-        "kid": key_id
-    }
+    header = {"alg": algorithm, "kid": key_id}
     return header
 
 
-def create_mock_jwt(key, algorithm, key_id, audience, issuer, header=None,
-                    payload=None):
+def create_mock_jwt(
+    key, algorithm, key_id, audience, issuer, header=None, payload=None
+):
     """Create test JSON Web Token (JWT).
 
     Args:
@@ -195,159 +193,210 @@ def create_mock_jwt(key, algorithm, key_id, audience, issuer, header=None,
     if not payload:
         payload = create_default_payload(audience, issuer)
 
-    return jwt.encode(
-        payload, key, algorithm=algorithm, headers=header)
+    return jwt.encode(payload, key, algorithm=algorithm, headers=header)
 
 
-@mock.patch(
-    'timesketch.lib.google_auth._fetch_public_keys', mock_fetch_iap_public_keys)
+@mock.patch("timesketch.lib.google_auth._fetch_public_keys", mock_fetch_iap_public_keys)
 class TestGoogleCloudIAP(BaseTest):
     """Tests for the functionality of the google_auth module."""
 
     def _test_payload_raises_jwt_validation_error(self, payload, domain=None):
         """Test JWT with supplied payload."""
         test_jwt = create_mock_jwt(
-            MOCK_EC_PRIVATE_KEY, algorithm=IAP_JWT_ALGORITHM, key_id='iap_1234',
-            audience=IAP_VALID_AUDIENCE, issuer=IAP_VALID_ISSUER,
-            payload=payload)
+            MOCK_EC_PRIVATE_KEY,
+            algorithm=IAP_JWT_ALGORITHM,
+            key_id="iap_1234",
+            audience=IAP_VALID_AUDIENCE,
+            issuer=IAP_VALID_ISSUER,
+            payload=payload,
+        )
         public_key = get_public_key_for_jwt(test_jwt, IAP_PUBLIC_KEY_URL)
         with self.assertRaises(JwtValidationError):
             test_decoded_jwt = decode_jwt(
-                test_jwt, public_key, IAP_JWT_ALGORITHM, IAP_VALID_AUDIENCE)
+                test_jwt, public_key, IAP_JWT_ALGORITHM, IAP_VALID_AUDIENCE
+            )
             validate_jwt(test_decoded_jwt, IAP_VALID_ISSUER, domain)
 
     def _test_header_raises_jwt_validation_error(self, header):
         """Test JWT with supplied header."""
         test_jwt = create_mock_jwt(
-            MOCK_EC_PRIVATE_KEY, algorithm=IAP_JWT_ALGORITHM, key_id='iap_1234',
-            audience=IAP_VALID_AUDIENCE, issuer=IAP_VALID_ISSUER, header=header)
+            MOCK_EC_PRIVATE_KEY,
+            algorithm=IAP_JWT_ALGORITHM,
+            key_id="iap_1234",
+            audience=IAP_VALID_AUDIENCE,
+            issuer=IAP_VALID_ISSUER,
+            header=header,
+        )
         public_key = get_public_key_for_jwt(test_jwt, IAP_PUBLIC_KEY_URL)
 
         with self.assertRaises(JwtValidationError):
             test_decoded_jwt = decode_jwt(
-                test_jwt, public_key, IAP_JWT_ALGORITHM, IAP_VALID_AUDIENCE)
+                test_jwt, public_key, IAP_JWT_ALGORITHM, IAP_VALID_AUDIENCE
+            )
             validate_jwt(test_decoded_jwt, IAP_VALID_ISSUER)
 
     def test_valid_jwt(self):
         """Test to validate a valid JWT."""
         test_jwt = create_mock_jwt(
-            MOCK_EC_PRIVATE_KEY, algorithm=IAP_JWT_ALGORITHM, key_id='iap_1234',
-            audience=IAP_VALID_AUDIENCE, issuer=IAP_VALID_ISSUER)
+            MOCK_EC_PRIVATE_KEY,
+            algorithm=IAP_JWT_ALGORITHM,
+            key_id="iap_1234",
+            audience=IAP_VALID_AUDIENCE,
+            issuer=IAP_VALID_ISSUER,
+        )
         public_key = get_public_key_for_jwt(test_jwt, IAP_PUBLIC_KEY_URL)
         test_decoded_jwt = decode_jwt(
-            test_jwt, public_key, IAP_JWT_ALGORITHM, IAP_VALID_AUDIENCE)
+            test_jwt, public_key, IAP_JWT_ALGORITHM, IAP_VALID_AUDIENCE
+        )
         validate_jwt(test_decoded_jwt, IAP_VALID_ISSUER)
         self.assertIsInstance(test_decoded_jwt, dict)
-        self.assertEqual(test_decoded_jwt.get('email'), 'test@example.com')
+        self.assertEqual(test_decoded_jwt.get("email"), "test@example.com")
 
     def test_invalid_audience_raises_jwt_validation_error(self):
         """Test to validate a JWT with wrong audience."""
         test_jwt = create_mock_jwt(
-            MOCK_EC_PRIVATE_KEY, algorithm=IAP_JWT_ALGORITHM, key_id='iap_1234',
-            audience=IAP_VALID_AUDIENCE, issuer=IAP_VALID_ISSUER)
+            MOCK_EC_PRIVATE_KEY,
+            algorithm=IAP_JWT_ALGORITHM,
+            key_id="iap_1234",
+            audience=IAP_VALID_AUDIENCE,
+            issuer=IAP_VALID_ISSUER,
+        )
         public_key = get_public_key_for_jwt(test_jwt, IAP_PUBLIC_KEY_URL)
         self.assertRaises(
-            JwtValidationError, decode_jwt, test_jwt, public_key,
-            IAP_JWT_ALGORITHM, IAP_INVALID_AUDIENCE)
+            JwtValidationError,
+            decode_jwt,
+            test_jwt,
+            public_key,
+            IAP_JWT_ALGORITHM,
+            IAP_INVALID_AUDIENCE,
+        )
 
     def test_invalid_algorithm_raises_jwt_validation_error(self):
         """Test to validate a JWT with invalid algorithm."""
-        header = create_default_header(IAP_JWT_ALGORITHM, 'iap_1234')
-        header['alg'] = 'HS256'
+        header = create_default_header(IAP_JWT_ALGORITHM, "iap_1234")
+        header["alg"] = "HS256"
         self._test_header_raises_jwt_validation_error(header)
 
     def test_missing_key_id_raises_jwt_key_error(self):
         """Test to validate a JWT with key ID missing."""
-        header = create_default_header(IAP_JWT_ALGORITHM, 'iap_1234')
-        del header['kid']
+        header = create_default_header(IAP_JWT_ALGORITHM, "iap_1234")
+        del header["kid"]
         test_jwt = create_mock_jwt(
-            MOCK_EC_PRIVATE_KEY, algorithm=IAP_JWT_ALGORITHM, key_id='iap_1234',
-            audience=IAP_VALID_AUDIENCE, issuer=IAP_VALID_ISSUER, header=header)
+            MOCK_EC_PRIVATE_KEY,
+            algorithm=IAP_JWT_ALGORITHM,
+            key_id="iap_1234",
+            audience=IAP_VALID_AUDIENCE,
+            issuer=IAP_VALID_ISSUER,
+            header=header,
+        )
         self.assertRaises(
-            JwtKeyError, get_public_key_for_jwt, test_jwt, IAP_PUBLIC_KEY_URL)
+            JwtKeyError, get_public_key_for_jwt, test_jwt, IAP_PUBLIC_KEY_URL
+        )
 
     def test_missing_email_raises_jwt_validation_error(self):
         """Test to validate a JWT with email missing."""
         payload = create_default_payload(IAP_VALID_AUDIENCE, IAP_VALID_ISSUER)
-        del payload['email']
+        del payload["email"]
         self._test_payload_raises_jwt_validation_error(payload)
 
     def test_missing_issuer_raises_jwt_validation_error(self):
         """Test to validate a JWT with issuer missing."""
         payload = create_default_payload(IAP_VALID_AUDIENCE, IAP_VALID_ISSUER)
-        del payload['iss']
+        del payload["iss"]
         self._test_payload_raises_jwt_validation_error(payload)
 
     def test_invalid_issuer_raises_jwt_validation_error(self):
         """Test to validate a JWT with invalid issuer"""
-        payload = create_default_payload(IAP_VALID_AUDIENCE, 'invalid_issuer')
+        payload = create_default_payload(IAP_VALID_AUDIENCE, "invalid_issuer")
         self._test_payload_raises_jwt_validation_error(payload)
 
     def test_issued_in_the_future_raises_jwt_validation_error(self):
         """Test to validate a JWT created in the future."""
         payload = create_default_payload(IAP_VALID_AUDIENCE, IAP_VALID_ISSUER)
-        payload['iat'] = payload['iat'] + 600  # seconds
+        payload["iat"] = payload["iat"] + 600  # seconds
         self._test_payload_raises_jwt_validation_error(payload)
 
     def test_expired_jwt_raises_jwt_validation_error(self):
         """Test to validate an expired JWT."""
         payload = create_default_payload(IAP_VALID_AUDIENCE, IAP_VALID_ISSUER)
-        payload['exp'] = payload['exp'] - 600  # seconds
+        payload["exp"] = payload["exp"] - 600  # seconds
         self._test_payload_raises_jwt_validation_error(payload)
 
     def test_valid_domain(self):
         """Test to validate a JWT with domain."""
-        valid_domain = 'example.com'
+        valid_domain = "example.com"
         test_jwt = create_mock_jwt(
-            MOCK_EC_PRIVATE_KEY, algorithm=IAP_JWT_ALGORITHM, key_id='iap_1234',
-            audience=IAP_VALID_AUDIENCE, issuer=IAP_VALID_ISSUER)
+            MOCK_EC_PRIVATE_KEY,
+            algorithm=IAP_JWT_ALGORITHM,
+            key_id="iap_1234",
+            audience=IAP_VALID_AUDIENCE,
+            issuer=IAP_VALID_ISSUER,
+        )
         public_key = get_public_key_for_jwt(test_jwt, IAP_PUBLIC_KEY_URL)
         test_decoded_jwt = decode_jwt(
-            test_jwt, public_key, IAP_JWT_ALGORITHM, IAP_VALID_AUDIENCE)
+            test_jwt, public_key, IAP_JWT_ALGORITHM, IAP_VALID_AUDIENCE
+        )
         validate_jwt(test_decoded_jwt, IAP_VALID_ISSUER, valid_domain)
         self.assertIsInstance(test_decoded_jwt, dict)
-        self.assertEqual(test_decoded_jwt.get('hd'), 'example.com')
+        self.assertEqual(test_decoded_jwt.get("hd"), "example.com")
 
     def test_invalid_domain_raises_jwt_validation_error(self):
         """Test to validate a JWT with an invalid domain."""
-        invalid_domain = 'foobar.com'
+        invalid_domain = "foobar.com"
         payload = create_default_payload(IAP_VALID_AUDIENCE, IAP_VALID_ISSUER)
         self._test_payload_raises_jwt_validation_error(payload, domain=invalid_domain)
 
     def test_invalid_public_key_raises_jwt_validation_error(self):
         """Test to validate a JWT with wrong public key."""
         test_jwt = create_mock_jwt(
-            MOCK_EC_PRIVATE_KEY, algorithm=IAP_JWT_ALGORITHM, key_id='iap_1234',
-            audience=IAP_VALID_AUDIENCE, issuer=IAP_VALID_ISSUER)
+            MOCK_EC_PRIVATE_KEY,
+            algorithm=IAP_JWT_ALGORITHM,
+            key_id="iap_1234",
+            audience=IAP_VALID_AUDIENCE,
+            issuer=IAP_VALID_ISSUER,
+        )
         self.assertRaises(
-            JwtValidationError, decode_jwt, test_jwt,
-            MOCK_INVALID_EC_PUBLIC_KEY, IAP_JWT_ALGORITHM, IAP_VALID_AUDIENCE)
+            JwtValidationError,
+            decode_jwt,
+            test_jwt,
+            MOCK_INVALID_EC_PUBLIC_KEY,
+            IAP_JWT_ALGORITHM,
+            IAP_VALID_AUDIENCE,
+        )
 
 
 @mock.patch(
-    'timesketch.lib.google_auth._fetch_public_keys',
-    mock_fetch_oidc_public_keys)
+    "timesketch.lib.google_auth._fetch_public_keys", mock_fetch_oidc_public_keys
+)
 class TestGoogleCloudOpenIdConnect(BaseTest):
     """Tests for the functionality of the google_auth module."""
+
     def test_fetching_oidc_keys(self):
         """Test to fetch OpenID Connect formatted keys."""
         test_jwt = create_mock_jwt(
-            MOCK_RSA_PRIVATE_KEY_PEM, algorithm=OIDC_JWT_ALGORITHM,
-            key_id='oidc_1234', audience=OIDC_VALID_AUDIENCE,
-            issuer=OIDC_VALID_ISSUER)
+            MOCK_RSA_PRIVATE_KEY_PEM,
+            algorithm=OIDC_JWT_ALGORITHM,
+            key_id="oidc_1234",
+            audience=OIDC_VALID_AUDIENCE,
+            issuer=OIDC_VALID_ISSUER,
+        )
         public_key = get_public_key_for_jwt(test_jwt, OIDC_PUBLIC_KEY_URL)
         self.assertIsInstance(public_key, _RSAPublicKey)
 
     def test_valid_oidc_jwt(self):
         """Test to validate a valid OpenID Connect JWT."""
         test_jwt = create_mock_jwt(
-            MOCK_RSA_PRIVATE_KEY_PEM, algorithm=OIDC_JWT_ALGORITHM,
-            key_id='oidc_1234', audience=OIDC_VALID_AUDIENCE,
-            issuer=OIDC_VALID_ISSUER)
+            MOCK_RSA_PRIVATE_KEY_PEM,
+            algorithm=OIDC_JWT_ALGORITHM,
+            key_id="oidc_1234",
+            audience=OIDC_VALID_AUDIENCE,
+            issuer=OIDC_VALID_ISSUER,
+        )
         public_key = get_public_key_for_jwt(test_jwt, OIDC_PUBLIC_KEY_URL)
         test_decoded_jwt = decode_jwt(
-            test_jwt, public_key, OIDC_JWT_ALGORITHM, OIDC_VALID_AUDIENCE)
+            test_jwt, public_key, OIDC_JWT_ALGORITHM, OIDC_VALID_AUDIENCE
+        )
         validate_jwt(test_decoded_jwt, OIDC_VALID_ISSUER)
 
         self.assertIsInstance(test_decoded_jwt, dict)
-        self.assertEqual(test_decoded_jwt.get('email'), 'test@example.com')
+        self.assertEqual(test_decoded_jwt.get("email"), "test@example.com")
