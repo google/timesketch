@@ -59,11 +59,7 @@ def format_output(search_obj, output_format, show_headers):
 
 
 def describe_query(search_obj):
-    """Print details of a search query nd filter.
-
-    Args:
-        search_obj: API Search object.
-    """
+    """Print details of a search query nd filter."""
     filter_pretty = json.dumps(search_obj.query_filter, indent=2)
     click.echo(f'Query string: {search_obj.query_string}')
     click.echo(f'Return fields: {search_obj.return_fields}')
@@ -197,18 +193,15 @@ def saved_searches_group():
 @saved_searches_group.command('list')
 @click.pass_context
 def list_saved_searches(ctx):
-    """List saved searches in the sketch.
-
-    Args:
-        ctx: Click CLI context object.
-    """
+    """List saved searches in the sketch."""
     sketch = ctx.obj.sketch
     for saved_search in sketch.list_saved_searches():
         click.echo(f'{saved_search.id} {saved_search.name}')
 
 
 @saved_searches_group.command('describe')
-@click.argument('search_id', type=int, required=False)
+@click.argument(
+    'search_id', type=int, required=False, help='Search ID from argument.')
 @click.pass_context
 def describe_saved_search(ctx, search_id):
     """Show details for saved search.
@@ -217,7 +210,7 @@ def describe_saved_search(ctx, search_id):
         ctx: Click CLI context object.
         search_id: Search ID from argument.
     """
-    sketch = ctx.obj.sketch
+    sketch = ctx.obj.sketchs
     # TODO (berggren): Add support for saved search name.
     saved_search = sketch.get_saved_search(search_id=search_id)
     if not saved_search:
