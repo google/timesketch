@@ -1,6 +1,6 @@
 ## Using Notebook
 
-The development container contains a jupyter notebook environment to expirement
+The development container contains a jupyter notebook environment to experiment
 with the developer instance.
 
 To access the notebook access it in a browser using the URL:
