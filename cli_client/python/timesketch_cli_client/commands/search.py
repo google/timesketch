@@ -38,7 +38,10 @@ def format_output(search_obj, output_format, show_headers):
     # Label is being set regardless of return_fields. Remove if it is not in
     # the list of requested fields.
     if 'label' not in search_obj.return_fields:
-        dataframe = dataframe.drop(columns=['label'])
+        dataframe = dataframe.drop(columns=['label'], errors='ignore')
+
+    # Remove internal OpenSeearch columns
+    dataframe = dataframe.drop(columns=['__ts_timeline_id', '_id', '_index', '_source', '_type'], errors='ignore')
 
     result = None
     if output_format == 'text':
