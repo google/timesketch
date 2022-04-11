@@ -28,7 +28,7 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.models.sketch import Sketch
 
 
-logger = logging.getLogger('timesketch.data_api')
+logger = logging.getLogger("timesketch.data_api")
 
 
 class DataFinderResource(resources.ResourceMixin, Resource):
@@ -46,67 +46,72 @@ class DataFinderResource(resources.ResourceMixin, Resource):
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
-            abort(
-                HTTP_STATUS_CODE_NOT_FOUND,
-                'No sketch found with this ID.')
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
-        if sketch.get_status.status == 'archived':
+        if sketch.get_status.status == "archived":
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'Unable to search for data sources from an archived sketch.')
+                "Unable to search for data sources from an archived sketch.",
+            )
 
         form = request.json
         if not form:
             form = request.data
 
-        start_date = form.get('start_date')
+        start_date = form.get("start_date")
         if not start_date:
             abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                'Need a start date for discovering data.')
+                HTTP_STATUS_CODE_BAD_REQUEST, "Need a start date for discovering data."
+            )
 
-        end_date = form.get('end_date')
+        end_date = form.get("end_date")
         if not end_date:
             abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                'Need an end date for discovering data.')
+                HTTP_STATUS_CODE_BAD_REQUEST, "Need an end date for discovering data."
+            )
 
-        rule_names = form.get('rule_names', [])
+        rule_names = form.get("rule_names", [])
         if not rule_names:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'Need a list of rule names to be able to start the '
-                'data discovery.')
+                "Need a list of rule names to be able to start the " "data discovery.",
+            )
 
         if not isinstance(rule_names, (list, tuple)):
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                'Rule names needs to a list')
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, "Rule names needs to a list")
 
         if any([not isinstance(x, str) for x in rule_names]):
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'Rule names needs to a list of string values.')
+                "Rule names needs to a list of string values.",
+            )
 
-        timeline_ids_read = form.get('timeline_ids', [])
+        timeline_ids_read = form.get("timeline_ids", [])
         timeline_ids = []
         for timeline in sketch.active_timelines:
             if timeline.id in timeline_ids_read:
                 timeline_ids.append(timeline.id)
 
-        parameters = form.get('parameters')
+        parameters = form.get("parameters")
         if parameters and not isinstance(parameters, dict):
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'If parameters are provided, it needs to be a dict.')
+                "If parameters are provided, it needs to be a dict.",
+            )
 
         # Start Celery pipeline for indexing and analysis.
         # Import here to avoid circular imports.
         # pylint: disable=import-outside-toplevel
         from timesketch.lib import tasks
+
         pipeline = tasks.run_data_finder(
-            rule_names=rule_names, sketch_id=sketch.id, start_date=start_date,
-            end_date=end_date, timeline_ids=timeline_ids, parameters=parameters)
+            rule_names=rule_names,
+            sketch_id=sketch.id,
+            start_date=start_date,
+            end_date=end_date,
+            timeline_ids=timeline_ids,
+            parameters=parameters,
+        )
         task_id = uuid.uuid4().hex
         pipeline.apply_async(task_id=task_id)
 
@@ -114,9 +119,7 @@ class DataFinderResource(resources.ResourceMixin, Resource):
         results = result.join()
 
         schema = {
-            'meta': {
-                'rules': rule_names
-            },
-            'objects': results,
+            "meta": {"rules": rule_names},
+            "objects": results,
         }
         return jsonify(schema)

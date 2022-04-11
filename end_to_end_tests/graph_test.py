@@ -22,11 +22,11 @@ from . import manager
 class GraphTest(interface.BaseEndToEndTest):
     """End to end tests for query functionality."""
 
-    NAME = 'graph_test'
+    NAME = "graph_test"
 
     def setup(self):
         """Import test timeline."""
-        self.import_timeline('evtx.plaso')
+        self.import_timeline("evtx.plaso")
 
     def test_graph(self):
         """Test pulling graphs from the backend."""
@@ -35,11 +35,11 @@ class GraphTest(interface.BaseEndToEndTest):
         self.assertions.assertEqual(empty_list, [])
 
         graph_obj = graph.Graph(self.sketch)
-        graph_obj.from_plugin('winservice')
+        graph_obj.from_plugin("winservice")
         self.assertions.assertEqual(graph_obj.graph.size(), 12)
 
-        graph_obj.name = 'foobar'
-        graph_obj.description = 'this is it'
+        graph_obj.name = "foobar"
+        graph_obj.description = "this is it"
 
         graph_obj.save()
 
@@ -48,8 +48,8 @@ class GraphTest(interface.BaseEndToEndTest):
         self.assertions.assertEqual(len(graph_list), 1)
         graph_saved = graph_list[0]
         self.assertions.assertEqual(graph_saved.graph.size(), 12)
-        self.assertions.assertEqual(graph_saved.name, 'foobar')
-        self.assertions.assertEqual(graph_saved.description, 'this is it')
+        self.assertions.assertEqual(graph_saved.name, "foobar")
+        self.assertions.assertEqual(graph_saved.description, "this is it")
 
 
 manager.EndToEndTestManager.register_test(GraphTest)

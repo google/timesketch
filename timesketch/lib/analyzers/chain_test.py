@@ -36,27 +36,34 @@ class FakeEvent(object):
 class FakeAnalyzer(chain.ChainSketchPlugin):
     """Fake analyzer object used for "finding events"."""
 
-    def event_stream(self, query_string=None, query_filter=None, query_dsl=None,
-                     indices=None, return_fields=None, scroll=True):
+    def event_stream(
+        self,
+        query_string=None,
+        query_filter=None,
+        query_dsl=None,
+        indices=None,
+        return_fields=None,
+        scroll=True,
+    ):
         """Yields few test events."""
-        event_one = FakeEvent({
-            'url': 'http://minsida.biz',
-            'stuff': 'foo'})
+        event_one = FakeEvent({"url": "http://minsida.biz", "stuff": "foo"})
 
         yield event_one
 
-        event_two = FakeEvent({
-            'url': 'http://onnursida.biz',
-            'stuff': 'bar',
-            'annad': 'lesa_um_mig_herna',
-            'tenging': 'ekki satt'})
+        event_two = FakeEvent(
+            {
+                "url": "http://onnursida.biz",
+                "stuff": "bar",
+                "annad": "lesa_um_mig_herna",
+                "tenging": "ekki satt",
+            }
+        )
 
         yield event_two
 
-        event_three = FakeEvent({
-            'tenging': 'klarlega',
-            'gengur': 'bara svona lala',
-            'url': 'N/A'})
+        event_three = FakeEvent(
+            {"tenging": "klarlega", "gengur": "bara svona lala", "url": "N/A"}
+        )
 
         yield event_three
 
@@ -64,10 +71,10 @@ class FakeAnalyzer(chain.ChainSketchPlugin):
 class FakeChainPlugin(interface.BaseChainPlugin):
     """Fake chain plugin."""
 
-    NAME = 'fake_chain'
-    DESCRIPTION = 'Fake plugin for the chain analyzer.'
-    SEARCH_QUERY = 'give me all the data'
-    EVENT_FIELDS = ['kedjur']
+    NAME = "fake_chain"
+    DESCRIPTION = "Fake plugin for the chain analyzer."
+    SEARCH_QUERY = "give me all the data"
+    EVENT_FIELDS = ["kedjur"]
     ALL_EVENTS = []
 
     def process_chain(self, base_event):
@@ -75,30 +82,31 @@ class FakeChainPlugin(interface.BaseChainPlugin):
 
     def get_chained_events(self, base_event):
         """Implementation of the chained events."""
-        url = base_event.source.get('url', '')
-        tenging = base_event.source.get('tenging', '')
+        url = base_event.source.get("url", "")
+        tenging = base_event.source.get("tenging", "")
         self.ALL_EVENTS.append(base_event)
 
-        if url == 'http://onnursida.biz':
-            event_a = FakeEvent({'domain': 'minn en ekki thinn'})
+        if url == "http://onnursida.biz":
+            event_a = FakeEvent({"domain": "minn en ekki thinn"})
             self.ALL_EVENTS.append(event_a)
             yield event_a
 
-            event_b = FakeEvent({'some_bar': 'foo'})
+            event_b = FakeEvent({"some_bar": "foo"})
             self.ALL_EVENTS.append(event_b)
             yield event_b
-        elif tenging == 'klarlega':
-            event_a = FakeEvent({'stuff': 'yes please'})
+        elif tenging == "klarlega":
+            event_a = FakeEvent({"stuff": "yes please"})
             self.ALL_EVENTS.append(event_a)
             yield event_a
         else:
             events = [
-                FakeEvent({'a': 'q'}),
-                FakeEvent({'b': 'w'}),
-                FakeEvent({'c': 'e'}),
-                FakeEvent({'d': 'r'}),
-                FakeEvent({'e': 't'}),
-                FakeEvent({'f': 'y'})]
+                FakeEvent({"a": "q"}),
+                FakeEvent({"b": "w"}),
+                FakeEvent({"c": "e"}),
+                FakeEvent({"d": "r"}),
+                FakeEvent({"e": "t"}),
+                FakeEvent({"f": "y"}),
+            ]
             self.ALL_EVENTS.extend(events)
             for event in events:
                 yield event
@@ -107,8 +115,9 @@ class FakeChainPlugin(interface.BaseChainPlugin):
 class TestChainAnalyzer(testlib.BaseTest):
     """Tests the functionality of the analyzer."""
 
-    @mock.patch('timesketch.lib.analyzers.interface.OpenSearchDataStore',
-                testlib.MockDataStore)
+    @mock.patch(
+        "timesketch.lib.analyzers.interface.OpenSearchDataStore", testlib.MockDataStore
+    )
     def test_get_chains(self):
         """Test the chain."""
 
@@ -117,10 +126,10 @@ class TestChainAnalyzer(testlib.BaseTest):
 
         manager.ChainPluginsManager.register_plugin(FakeChainPlugin)
 
-        analyzer = FakeAnalyzer('test_index', sketch_id=1)
+        analyzer = FakeAnalyzer("test_index", sketch_id=1)
         analyzer.datastore.client = mock.Mock()
 
-        plugins = getattr(analyzer, '_chain_plugins')
+        plugins = getattr(analyzer, "_chain_plugins")
         self.assertEqual(len(plugins), 1)
 
         plugin = plugins[0]
@@ -128,17 +137,18 @@ class TestChainAnalyzer(testlib.BaseTest):
 
         analyzer_result = analyzer.run()
         expected_result = (
-            '3 base events annotated with a chain UUID for 3 chains '
-            'for a total of 9 events. [fake_chain] 9')
+            "3 base events annotated with a chain UUID for 3 chains "
+            "for a total of 9 events. [fake_chain] 9"
+        )
         self.assertEqual(analyzer_result, expected_result)
 
-        link_emoji = emojis.get_emoji('LINK')
+        link_emoji = emojis.get_emoji("LINK")
         for event in plugin.ALL_EVENTS:
             attributes = event.attributes
-            chains = attributes.get('chains', [])
+            chains = attributes.get("chains", [])
             for event_chain in chains:
-                plugin = event_chain.get('plugin', '')
-                self.assertEqual(plugin, 'fake_chain')
+                plugin = event_chain.get("plugin", "")
+                self.assertEqual(plugin, "fake_chain")
 
             event_emojis = event.emojis
             self.assertEqual(len(event_emojis), 1)

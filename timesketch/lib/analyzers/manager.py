@@ -41,7 +41,8 @@ class AnalysisManager(object):
         for analyzer_name in analyzer_names:
             analyzer_class = cls.get_analyzer(analyzer_name)
             dependencies[analyzer_name] = [
-                x.lower() for x in analyzer_class.DEPENDENCIES]
+                x.lower() for x in analyzer_class.DEPENDENCIES
+            ]
 
         while dependencies:
             dependency_list = []
@@ -51,12 +52,16 @@ class AnalysisManager(object):
             # Find items without a dependency.
             dependency_set = set(dependency_list) - set(dependencies.keys())
             dependency_set.update(
-                name for name, dep in iter(dependencies.items()) if not dep)
+                name for name, dep in iter(dependencies.items()) if not dep
+            )
 
             if not dependency_set:
-                raise KeyError((
-                    'Unable to build dependency tree, there is a circular '
-                    'dependency somewhere'))
+                raise KeyError(
+                    (
+                        "Unable to build dependency tree, there is a circular "
+                        "dependency somewhere"
+                    )
+                )
 
             dependency_tree.append(dependency_set)
 
@@ -66,7 +71,8 @@ class AnalysisManager(object):
                 if not analyzer_dependencies:
                     continue
                 new_dependencies[analyzer_name] = list(
-                    set(analyzer_dependencies) - dependency_set)
+                    set(analyzer_dependencies) - dependency_set
+                )
             dependencies = new_dependencies
 
         return dependency_tree
@@ -128,6 +134,7 @@ class AnalysisManager(object):
         """
         analyzer_name = analyzer_class.NAME.lower()
         if analyzer_name in cls._class_registry:
-            raise KeyError('Class already set for name: {0:s}.'.format(
-                analyzer_class.NAME))
+            raise KeyError(
+                "Class already set for name: {0:s}.".format(analyzer_class.NAME)
+            )
         cls._class_registry[analyzer_name] = analyzer_class

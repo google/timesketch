@@ -24,7 +24,7 @@ from datasketch.lsh import MinHashLSH
 
 
 # Parameters for Jaccard and Minhash calculations.
-DEFAULT_DELIMITERS = [' ', '-', '/']
+DEFAULT_DELIMITERS = [" ", "-", "/"]
 DEFAULT_THRESHOLD = 0.5
 DEFAULT_PERMUTATIONS = 128
 
@@ -42,7 +42,7 @@ def _shingles_from_text(text, delimiters):
     """
     # TODO: Remove stopwords using the NLTK python package.
     # TODO: Remove configured patterns from string.
-    return list(filter(None, re.split('|'.join(delimiters), text)))
+    return list(filter(None, re.split("|".join(delimiters), text)))
 
 
 def minhash_from_text(text, num_perm, delimiters):
@@ -60,12 +60,11 @@ def minhash_from_text(text, num_perm, delimiters):
     """
     minhash = MinHash(num_perm)
     for word in _shingles_from_text(text, delimiters):
-        minhash.update(word.encode('utf8'))
+        minhash.update(word.encode("utf8"))
     return minhash
 
 
-def new_lsh_index(events, field, delimiters=None, num_perm=None,
-                  threshold=None):
+def new_lsh_index(events, field, delimiters=None, num_perm=None, threshold=None):
     """Create a new LSH from a set of Timesketch events.
 
     Args:
@@ -97,8 +96,7 @@ def new_lsh_index(events, field, delimiters=None, num_perm=None,
         for event in events:
             # Insert minhash in LSH index.
             key = (event.event_id, event.event_type, event.index_name)
-            minhash = minhash_from_text(
-                event.source[field], num_perm, delimiters)
+            minhash = minhash_from_text(event.source[field], num_perm, delimiters)
             minhashes[key] = minhash
             lsh_session.insert(key, minhash)
 

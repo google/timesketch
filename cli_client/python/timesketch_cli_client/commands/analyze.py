@@ -20,32 +20,38 @@ import click
 from timesketch_api_client import error
 
 
-@click.group('analyze')
+@click.group("analyze")
 def analysis_group():
     """Analyze timelines."""
 
 
 # TODO (berggren) Add --timeline-name as well, to select timeline based on name
 # instead of ID.
-@analysis_group.command('run')
+@analysis_group.command("run")
 @click.option(
-    '--analyzer', 'analyzer_name', required=True,
-    help='The name of the analyzer to run.')
+    "--analyzer",
+    "analyzer_name",
+    required=True,
+    help="The name of the analyzer to run.",
+)
 @click.option(
-    '--timeline', 'timeline_id', required=True,
-    help='The id of the timeline you want to analyze.')
+    "--timeline",
+    "timeline_id",
+    required=True,
+    help="The id of the timeline you want to analyze.",
+)
 @click.pass_context
 def run_analyzer(ctx, analyzer_name, timeline_id):
     """Run an analyzer on one or more timelines.
 
-   Args:
-       ctx: Click CLI context object.
-       analyzer_name: Name of the analyzer to run.
-       timeline_id: Timeline ID of the timeline to analyze.
+    Args:
+        ctx: Click CLI context object.
+        analyzer_name: Name of the analyzer to run.
+        timeline_id: Timeline ID of the timeline to analyze.
     """
     sketch = ctx.obj.sketch
     timelines = []
-    if timeline_id == 'all':
+    if timeline_id == "all":
         timelines = sketch.list_timelines()
     else:
         timeline = sketch.get_timeline(timeline_id=int(timeline_id))
@@ -55,35 +61,30 @@ def run_analyzer(ctx, analyzer_name, timeline_id):
         try:
             # TODO: Add support for running multiple analyzers.
             # TODO: Make progress pretty
-            sessions = timeline.run_analyzer(
-                analyzer_name, ignore_previous=True)
+            sessions = timeline.run_analyzer(analyzer_name, ignore_previous=True)
             session_statuses = sessions[0].status_dict
             total_tasks = len(session_statuses.values())
 
             for analyzer, _ in session_statuses.items():
-                click.echo(
-                    f'Running analyzer [{analyzer}] on [{timeline.name}]:')
+                click.echo(f"Running analyzer [{analyzer}] on [{timeline.name}]:")
 
             while True:
                 # Count all analysis tasks that has the status DONE
                 completed_tasks = len(
-                    [
-                        x[0] for x in sessions[0].status_dict.values()
-                        if x[0] == 'DONE'
-                    ]
+                    [x[0] for x in sessions[0].status_dict.values() if x[0] == "DONE"]
                 )
                 if completed_tasks == total_tasks:
-                    click.echo('\nResults')
+                    click.echo("\nResults")
                     click.echo(sessions[0].results)
                     break
-                click.echo('.', nl=False)
+                click.echo(".", nl=False)
                 time.sleep(3)
         except error.UnableToRunAnalyzer as e:
-            click.echo(f'Unable to run analyzer: {e}')
+            click.echo(f"Unable to run analyzer: {e}")
             sys.exit(1)
 
 
-@analysis_group.command('list')
+@analysis_group.command("list")
 @click.pass_context
 def list_analyzers(ctx):
     """List all available analyzers.

@@ -54,9 +54,9 @@ class TestBrowserTimeframePlugin(BaseTest):
             np.repeat(23, 100),
         ]
 
-        data_frame = pd.DataFrame({
-            'hour': np.concatenate(hours),
-            'datetime': date_array})
+        data_frame = pd.DataFrame(
+            {"hour": np.concatenate(hours), "datetime": date_array}
+        )
 
         expected_hours = [0, 1, 18, 19, 20, 21, 22, 23]
         active_hours, _, _ = browser_timeframe.get_active_hours(data_frame)
