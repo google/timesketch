@@ -13,5 +13,5 @@
 # limitations under the License.
 """Definitions for the Timesketch CLI client."""
 
-SUPPORTED_OUTPUT_FORMATS = ['text', 'csv', 'tabular']
-DEFAULT_OUTPUT_FORMAT = 'tabular'
+SUPPORTED_OUTPUT_FORMATS = ["text", "csv", "tabular"]
+DEFAULT_OUTPUT_FORMAT = "tabular"

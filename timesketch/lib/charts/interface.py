@@ -23,11 +23,17 @@ class BaseChart(object):
     """Base class for a chart."""
 
     # Name that the chart will be registered as.
-    NAME = 'name'
+    NAME = "name"
 
     def __init__(
-            self, data, title='', sketch_url='', field='',
-            extra_query_url='', aggregation_id=None):
+        self,
+        data,
+        title="",
+        sketch_url="",
+        field="",
+        extra_query_url="",
+        aggregation_id=None,
+    ):
         """Initialize the chart object.
 
         Args:
@@ -43,11 +49,11 @@ class BaseChart(object):
         Raises:
             RuntimeError if values or encoding is missing from data.
         """
-        _values = data.get('values')
-        _encoding = data.get('encoding')
+        _values = data.get("values")
+        _encoding = data.get("encoding")
 
         if _values is None or not _encoding:
-            raise RuntimeError('Values and/or Encoding missing from data')
+            raise RuntimeError("Values and/or Encoding missing from data")
 
         self.name = self.NAME
         if isinstance(_values, pd.DataFrame):
@@ -79,13 +85,11 @@ class BaseChart(object):
 
         datum = getattr(alt.datum, self._field)
         if self._aggregation_id:
-            agg_string = 'a={0:d}&'.format(self._aggregation_id)
+            agg_string = "a={0:d}&".format(self._aggregation_id)
         else:
-            agg_string = ''
-        url = '{0:s}?{1:s}q={2:s}:"'.format(
-            self._sketch_url, agg_string, self._field)
-        return chart.transform_calculate(
-            url=url + datum + '" ' + self._extra_query_url)
+            agg_string = ""
+        url = '{0:s}?{1:s}q={2:s}:"'.format(self._sketch_url, agg_string, self._field)
+        return chart.transform_calculate(url=url + datum + '" ' + self._extra_query_url)
 
     def _add_url_href(self, encoding):
         """Adds a HREF reference to encoding dict if needed.
@@ -97,7 +101,7 @@ class BaseChart(object):
             return
         if not self._field:
             return
-        encoding['href'] = {'field': 'url', 'type': 'nominal'}
+        encoding["href"] = {"field": "url", "type": "nominal"}
 
     def generate(self):
         """Entry point for the chart."""
@@ -109,6 +113,5 @@ class BaseChart(object):
         Args:
             color: a string with the color name to be added.
         """
-        self.values['color'] = color
-        self.encoding['color'] = {
-            'type': 'nominal', 'field': 'color', 'scale': None}
+        self.values["color"] = color
+        self.encoding["color"] = {"type": "nominal", "field": "color", "scale": None}

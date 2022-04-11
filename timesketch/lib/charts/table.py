@@ -21,7 +21,7 @@ from timesketch.lib.charts import interface
 class TableChart(interface.BaseChart):
     """Table chart object."""
 
-    NAME = 'table'
+    NAME = "table"
 
     def generate(self):
         """Generate the chart.

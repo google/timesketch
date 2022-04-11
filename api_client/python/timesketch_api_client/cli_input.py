@@ -22,9 +22,11 @@ import getpass
 
 
 def ask_question(
-        question: Text, input_type: Callable[[Text], Any],
-        default: Optional[Any] = None,
-        hide_input: Optional[bool] = False) -> Any:
+    question: Text,
+    input_type: Callable[[Text], Any],
+    default: Optional[Any] = None,
+    hide_input: Optional[bool] = False,
+) -> Any:
     """Presents the user with a prompt with a default return value and a type.
 
     Args:
@@ -39,24 +41,24 @@ def ask_question(
     """
     if hide_input:
         if default:
-            hint = '**'
+            hint = "**"
         else:
-            hint = ''
+            hint = ""
 
-        return getpass.getpass(f'{question} [{hint}] ')
+        return getpass.getpass(f"{question} [{hint}] ")
 
     if default:
-        ask = f'{question} [{default}]'
+        ask = f"{question} [{default}]"
     else:
         ask = question
 
-    answer = input(f'{ask}: ')
+    answer = input(f"{ask}: ")
     return input_type(answer)
 
 
 def confirm_choice(
-        choice: Text, default: Optional[bool] = True,
-        abort: Optional[bool] = True) -> bool:
+    choice: Text, default: Optional[bool] = True, abort: Optional[bool] = True
+) -> bool:
     """Returns a bool from a yes/no question presented to the end user.
 
     Args:
@@ -73,26 +75,26 @@ def confirm_choice(
         bool: False if the user entered no, True if the user entered yes
     """
     if default:
-        hint = 'Y/n'
+        hint = "Y/n"
     else:
-        hint = 'y/N'
-    answer = input(f'{choice} [{hint}]: ')
+        hint = "y/N"
+    answer = input(f"{choice} [{hint}]: ")
 
     value = None
-    if answer.lower() in ['y', 'yes']:
+    if answer.lower() in ["y", "yes"]:
         value = True
 
-    if answer.lower() in ['n', 'no']:
+    if answer.lower() in ["n", "no"]:
         value = False
 
     if not answer:
         value = default
 
     if value is None:
-        print('Invalid answer')
+        print("Invalid answer")
         return confirm_choice(choice=choice, default=default, abort=abort)
 
     if abort and not value:
-        raise RuntimeError('Aborting')
+        raise RuntimeError("Aborting")
 
     return value
