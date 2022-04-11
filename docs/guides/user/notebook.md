@@ -89,7 +89,7 @@ the docker compose up command used earlier).
 ## Credentials
 
 The docker container will have default credentials and configuration to connect
-to the developement server running in a container on the localhost, using the
+to the development server running in a container on the localhost, using the
 user/pass combination of dev/dev.
 
 To connect to a different server, few options are available:

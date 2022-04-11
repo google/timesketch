@@ -25,15 +25,14 @@ from . import test_lib
 class TimesketchApiTest(unittest.TestCase):
     """Test TimesketchApi"""
 
-    @mock.patch('requests.Session', test_lib.mock_session)
+    @mock.patch("requests.Session", test_lib.mock_session)
     def setUp(self):
         """Setup test case."""
-        self.api_client = client.TimesketchApi(
-            'http://127.0.0.1', 'test', 'test')
+        self.api_client = client.TimesketchApi("http://127.0.0.1", "test", "test")
 
     def test_fetch_resource_data(self):
         """Test fetch resource."""
-        response = self.api_client.fetch_resource_data('sketches/')
+        response = self.api_client.fetch_resource_data("sketches/")
         self.assertIsInstance(response, dict)
 
     # TODO: Add test for create_sketch()
@@ -43,8 +42,8 @@ class TimesketchApiTest(unittest.TestCase):
         sketch = self.api_client.get_sketch(1)
         self.assertIsInstance(sketch, sketch_lib.Sketch)
         self.assertEqual(sketch.id, 1)
-        self.assertEqual(sketch.name, 'test')
-        self.assertEqual(sketch.description, 'test')
+        self.assertEqual(sketch.name, "test")
+        self.assertEqual(sketch.description, "test")
 
     def test_get_sketches(self):
         """Test to get a list of sketches."""

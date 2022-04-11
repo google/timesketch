@@ -23,20 +23,15 @@ from . import test_lib
 class GraphTest(unittest.TestCase):
     """Test Graph object."""
 
-    @mock.patch('requests.Session', test_lib.mock_session)
+    @mock.patch("requests.Session", test_lib.mock_session)
     def setUp(self):
         """Setup test case."""
-        self.api_client = client.TimesketchApi(
-            'http://127.0.0.1', 'test', 'test')
+        self.api_client = client.TimesketchApi("http://127.0.0.1", "test", "test")
         self.sketch = self.api_client.get_sketch(1)
 
     def test_from_manual(self):
         """Test setting up a graph from manual."""
-        data = {
-          0: {
-            1: {'weight': 1}
-          }
-        }
+        data = {0: {1: {"weight": 1}}}
         graph_obj = graph.Graph(self.sketch)
         graph_obj.from_manual(data)
         self.assertEqual(graph_obj.graph.size(), 1)

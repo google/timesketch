@@ -45,7 +45,7 @@ $ docker-compose exec timesketch tsctl add_user --username dev --password dev
 User dev created/updated
 ```
 
-Now, start the `gunicon` server that will serve the Timsesketch WSGI app
+Now, start the `gunicon` server that will serve the Timsketch WSGI app
 
 In one shell:
 

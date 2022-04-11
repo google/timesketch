@@ -38,7 +38,7 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 
-logger = logging.getLogger('timesketch.graph_api')
+logger = logging.getLogger("timesketch.graph_api")
 
 
 class GraphListResource(resources.ResourceMixin, Resource):
@@ -53,7 +53,7 @@ class GraphListResource(resources.ResourceMixin, Resource):
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
-            abort(HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
         graphs = sketch.graphs
         return self.to_json(graphs)
@@ -62,18 +62,19 @@ class GraphListResource(resources.ResourceMixin, Resource):
         """Handles POST request to the resource."""
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
-            abort(HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
-        if not sketch.has_permission(current_user, 'write'):
-            abort(HTTP_STATUS_CODE_FORBIDDEN,
-                  'User does not have write access on sketch.')
+        if not sketch.has_permission(current_user, "write"):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN, "User does not have write access on sketch."
+            )
 
         form = request.json
 
-        name = form.get('name')
-        description = form.get('description')
-        elements = form.get('elements')
-        graph_config = form.get('graph_config')
+        name = form.get("name")
+        description = form.get("description")
+        elements = form.get("elements")
+        graph_config = form.get("graph_config")
 
         if graph_config:
             if isinstance(graph_config, dict):
@@ -81,17 +82,19 @@ class GraphListResource(resources.ResourceMixin, Resource):
             elif isinstance(graph_config, str):
                 graph_json = graph_config
             else:
-                graph_json = ''
-                logger.warning(
-                    'Graph config not of the correct value, not saving.')
+                graph_json = ""
+                logger.warning("Graph config not of the correct value, not saving.")
         else:
-            graph_json = ''
+            graph_json = ""
 
         graph = Graph(
-            user=current_user, sketch=sketch, name=str(name),
+            user=current_user,
+            sketch=sketch,
+            name=str(name),
             graph_config=graph_json,
             description=description,
-            graph_elements=json.dumps(elements))
+            graph_elements=json.dumps(elements),
+        )
 
         db_session.add(graph)
         db_session.commit()
@@ -108,7 +111,7 @@ class GraphResource(resources.ResourceMixin, Resource):
     def __init__(self):
         super().__init__()
         self.parser = reqparse.RequestParser()
-        self.parser.add_argument('format', type=str, required=False)
+        self.parser.add_argument("format", type=str, required=False)
 
     @login_required
     def get(self, sketch_id, graph_id):
@@ -118,47 +121,42 @@ class GraphResource(resources.ResourceMixin, Resource):
             List of graphs in JSON (instance of flask.wrappers.Response)
         """
         args = self.parser.parse_args()
-        output_format = args.get('format', None)
+        output_format = args.get("format", None)
 
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
-            abort(HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
         graph = Graph.query.get(graph_id)
         if not graph:
-            abort(HTTP_STATUS_CODE_NOT_FOUND, 'No graph found with this ID.')
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No graph found with this ID.")
 
         if not sketch.id == graph.sketch.id:
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                'Graph does not belong to this sketch.')
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, "Graph does not belong to this sketch.")
 
         # If requested use a format suitable for the CytoscapeJS frontend.
-        if output_format == 'cytoscape':
+        if output_format == "cytoscape":
             response = self.to_json(graph).json
-            response['objects'][0]['graph_elements'] = graph.graph_elements
+            response["objects"][0]["graph_elements"] = graph.graph_elements
             return jsonify(response)
 
         # Reformat elements to work with networkx python library.
         # TODO: Change frontend to save directed and multigraph attributes.
         graph_elements = json.loads(graph.graph_elements)
         formatted_graph = {
-            'data': [],
-            'directed': True,
-            'multigraph': True,
-            'elements': {
-                'nodes': [],
-                'edges': []
-            }
+            "data": [],
+            "directed": True,
+            "multigraph": True,
+            "elements": {"nodes": [], "edges": []},
         }
         for element in graph_elements:
-            group = element['group']
-            element_data = {'data': element['data']}
-            formatted_graph['elements'][group].append(element_data)
+            group = element["group"]
+            element_data = {"data": element["data"]}
+            formatted_graph["elements"][group].append(element_data)
 
         response = self.to_json(graph).json
-        response['objects'][0]['graph_elements'] = formatted_graph
-        response['objects'][0]['graph_config'] = graph.graph_config
+        response["objects"][0]["graph_elements"] = formatted_graph
+        response["objects"][0]["graph_config"] = graph.graph_config
 
         # Update the last activity of a sketch.
         utils.update_sketch_last_activity(sketch)
@@ -174,39 +172,39 @@ class GraphResource(resources.ResourceMixin, Resource):
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
-            abort(HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
-        if not sketch.has_permission(current_user, 'write'):
-            abort(HTTP_STATUS_CODE_FORBIDDEN,
-                  'User does not have write access controls on sketch.')
+        if not sketch.has_permission(current_user, "write"):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "User does not have write access controls on sketch.",
+            )
 
         graph = Graph.query.get(graph_id)
         if not graph:
-            abort(HTTP_STATUS_CODE_NOT_FOUND, 'No graph found with this ID.')
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No graph found with this ID.")
 
         if not sketch.id == graph.sketch.id:
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                'Graph does not belong to this sketch.')
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, "Graph does not belong to this sketch.")
 
         form = request.json
         if not form:
             form = request.data
 
-        name = form.get('name')
+        name = form.get("name")
         if name:
             graph.name = name
 
-        description = form.get('description')
+        description = form.get("description")
         if description:
             graph.description = description
 
-        elements = form.get('elements')
+        elements = form.get("elements")
         if elements:
             graph.graph_elements = json.dumps(elements)
 
-        graph_config = form.get('graph_config')
-        graph_json = ''
+        graph_config = form.get("graph_config")
+        graph_json = ""
         if graph_config:
             if isinstance(graph_config, dict):
                 graph_json = json.dumps(graph_config)
@@ -235,24 +233,26 @@ class GraphResource(resources.ResourceMixin, Resource):
         graph = Graph.query.get(graph_id)
 
         if not graph:
-            msg = 'No Graph found with this ID.'
+            msg = "No Graph found with this ID."
             abort(HTTP_STATUS_CODE_NOT_FOUND, msg)
 
         if not sketch:
-            msg = 'No sketch found with this ID.'
+            msg = "No sketch found with this ID."
             abort(HTTP_STATUS_CODE_NOT_FOUND, msg)
 
         # Check that this graph belongs to the sketch
         if graph.sketch.id != sketch.id:
             msg = (
-                f'The sketch ID ({sketch.id}) does not match with the story'
-                f'sketch ID ({graph.sketch.id})')
+                f"The sketch ID ({sketch.id}) does not match with the story"
+                f"sketch ID ({graph.sketch.id})"
+            )
             abort(HTTP_STATUS_CODE_FORBIDDEN, msg)
 
-        if not sketch.has_permission(user=current_user, permission='write'):
+        if not sketch.has_permission(user=current_user, permission="write"):
             abort(
                 HTTP_STATUS_CODE_FORBIDDEN,
-                'The user does not have write permission on the sketch.')
+                "The user does not have write permission on the sketch.",
+            )
 
         sketch.graphs.remove(graph)
         db_session.commit()
@@ -277,9 +277,9 @@ class GraphPluginListResource(resources.ResourceMixin, Resource):
         graphs = []
         for name, graph_class in graph_plugins:
             graph_plugin = {
-                'name': name,
-                'display_name': graph_class.DISPLAY_NAME,
-                'description': graph_class.DESCRIPTION
+                "name": name,
+                "display_name": graph_class.DISPLAY_NAME,
+                "description": graph_class.DESCRIPTION,
             }
             graphs.append(graph_plugin)
 
@@ -298,32 +298,31 @@ class GraphCacheResource(resources.ResourceMixin, Resource):
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
-            abort(HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
         form = request.json
-        plugin_name = form.get('plugin')
-        graph_config = form.get('config')
-        refresh = form.get('refresh')
-        timeline_ids = form.get('timeline_ids', None)
+        plugin_name = form.get("plugin")
+        graph_config = form.get("config")
+        refresh = form.get("refresh")
+        timeline_ids = form.get("timeline_ids", None)
 
         if timeline_ids and not isinstance(timeline_ids, (list, tuple)):
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'Timeline IDs if supplied need to be a list.')
+                "Timeline IDs if supplied need to be a list.",
+            )
 
-        if timeline_ids and not all(
-                [isinstance(x, int) for x in timeline_ids]):
+        if timeline_ids and not all([isinstance(x, int) for x in timeline_ids]):
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'Timeline IDs needs to be a list of integers.')
+                "Timeline IDs needs to be a list of integers.",
+            )
 
         sketch_indices = [
-            timeline.searchindex.index_name
-            for timeline in sketch.active_timelines
+            timeline.searchindex.index_name for timeline in sketch.active_timelines
         ]
 
-        cache = GraphCache.get_or_create(
-            sketch=sketch, graph_plugin=plugin_name)
+        cache = GraphCache.get_or_create(sketch=sketch, graph_plugin=plugin_name)
 
         if graph_config:
             cache_config = graph_config
@@ -335,8 +334,8 @@ class GraphCacheResource(resources.ResourceMixin, Resource):
 
         # Refresh cache if timelines have been added/removed from the sketch.
         if cache_config:
-            cache_graph_filter = cache_config.get('filter', {})
-            cache_filter_indices = cache_graph_filter.get('indices', [])
+            cache_graph_filter = cache_config.get("filter", {})
+            cache_filter_indices = cache_graph_filter.get("indices", [])
             if set(sketch_indices) ^ set(cache_filter_indices):
                 refresh = True
 

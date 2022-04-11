@@ -14,11 +14,11 @@ from timesketch.lib import emojis
 class YetiIndicators(interface.BaseAnalyzer):
     """Analyzer for Yeti threat intel indicators."""
 
-    NAME = 'yetiindicators'
-    DISPLAY_NAME = 'Yeti threat intel indicators'
-    DESCRIPTION = 'Mark events using Yeti threat intel indicators'
+    NAME = "yetiindicators"
+    DISPLAY_NAME = "Yeti threat intel indicators"
+    DESCRIPTION = "Mark events using Yeti threat intel indicators"
 
-    DEPENDENCIES = frozenset(['domain'])
+    DEPENDENCIES = frozenset(["domain"])
 
     def __init__(self, index_name, sketch_id, timeline_id=None):
         """Initialize the Analyzer.
@@ -30,8 +30,8 @@ class YetiIndicators(interface.BaseAnalyzer):
         """
         super().__init__(index_name, sketch_id, timeline_id=timeline_id)
         self.intel = {}
-        self.yeti_api_root = current_app.config.get('YETI_API_ROOT')
-        self.yeti_api_key = current_app.config.get('YETI_API_KEY')
+        self.yeti_api_root = current_app.config.get("YETI_API_ROOT")
+        self.yeti_api_key = current_app.config.get("YETI_API_KEY")
 
     def get_neighbors(self, entity_id):
         """Retrieves a list of neighbors associated to a given entity.
@@ -44,13 +44,13 @@ class YetiIndicators(interface.BaseAnalyzer):
           A list of JSON objects describing a Yeti object.
         """
         results = requests.post(
-            self.yeti_api_root + '/entities/{0:s}/neighbors/'.format(entity_id),
-            headers={'X-Yeti-API': self.yeti_api_key},
+            self.yeti_api_root + "/entities/{0:s}/neighbors/".format(entity_id),
+            headers={"X-Yeti-API": self.yeti_api_key},
         )
         if results.status_code != 200:
             return []
         neighbors = []
-        for neighbor in results.json().get('vertices', {}).values():
+        for neighbor in results.json().get("vertices", {}).values():
             neighbors.append(neighbor)
 
         return neighbors
@@ -58,35 +58,35 @@ class YetiIndicators(interface.BaseAnalyzer):
     def get_indicators(self, indicator_type):
         """Populates the intel attribute with entities from Yeti."""
         results = requests.post(
-            self.yeti_api_root + '/indicators/filter/',
-            json={'name': '', 'type': indicator_type},
-            headers={'X-Yeti-API': self.yeti_api_key},
+            self.yeti_api_root + "/indicators/filter/",
+            json={"name": "", "type": indicator_type},
+            headers={"X-Yeti-API": self.yeti_api_key},
         )
         if results.status_code != 200:
             return
-        self.intel = {item['id']: item for item in results.json()}
+        self.intel = {item["id"]: item for item in results.json()}
         for item in results.json():
-            item['compiled_regexp'] = re.compile(item['pattern'])
-            self.intel[item['id']] = item
+            item["compiled_regexp"] = re.compile(item["pattern"])
+            self.intel[item["id"]] = item
 
     def mark_event(self, indicator, event, neighbors):
         """Anotate an event with data from indicators and neighbors.
 
         Tags with skull emoji, adds a comment to the event.
         """
-        event.add_emojis([emojis.get_emoji('SKULL')])
+        event.add_emojis([emojis.get_emoji("SKULL")])
         tags = []
         for n in neighbors:
-            slug = re.sub(r'[^a-z0-9]', '-', n['name'].lower())
-            slug = re.sub(r'-+', '-', slug)
+            slug = re.sub(r"[^a-z0-9]", "-", n["name"].lower())
+            slug = re.sub(r"-+", "-", slug)
             tags.append(slug)
         event.add_tags(tags)
         event.commit()
 
         msg = 'Indicator match: "{0:s}" ({1:s})\n'.format(
-            indicator['name'], indicator['id'])
-        msg += 'Related entities: {0!s}'.format(
-            [n['name'] for n in neighbors])
+            indicator["name"], indicator["id"]
+        )
+        msg += "Related entities: {0!s}".format([n["name"] for n in neighbors])
         event.add_comment(msg)
         event.commit()
 
@@ -97,40 +97,39 @@ class YetiIndicators(interface.BaseAnalyzer):
             String with summary of the analyzer result
         """
         if not self.yeti_api_root or not self.yeti_api_key:
-            return 'No Yeti configuration settings found, aborting.'
+            return "No Yeti configuration settings found, aborting."
 
-        self.get_indicators('x-regex')
+        self.get_indicators("x-regex")
 
         entities_found = set()
 
-        events = self.event_stream(query_string='*',
-                                   return_fields=['message'])
+        events = self.event_stream(query_string="*", return_fields=["message"])
         total_matches = 0
         matching_indicators = set()
         for event in events:
             for _id, indicator in self.intel.items():
-                regexp = indicator['compiled_regexp']
-                if regexp.search(event.source['message']):
+                regexp = indicator["compiled_regexp"]
+                if regexp.search(event.source["message"]):
                     total_matches += 1
-                    matching_indicators.add(indicator['id'])
-                    neighbors = self.get_neighbors(indicator['id'])
+                    matching_indicators.add(indicator["id"])
+                    neighbors = self.get_neighbors(indicator["id"])
                     self.mark_event(indicator, event, neighbors)
                     for n in neighbors:
-                        entities_found.add('{0:s}:{1:s}'.format(
-                            n['name'], n['type']
-                        ))
+                        entities_found.add("{0:s}:{1:s}".format(n["name"], n["type"]))
 
         if not total_matches:
-            return 'No indicators were found in the timeline.'
+            return "No indicators were found in the timeline."
 
         for entity in entities_found:
-            name, _type = entity.split(':')
+            name, _type = entity.split(":")
             self.sketch.add_view(
-                'Indicator matches for {0:s} ({1:s})'.format(name, _type),
+                "Indicator matches for {0:s} ({1:s})".format(name, _type),
                 self.NAME,
-                query_string='tag:"{0:s}"'.format(name))
-        return '{0:d} events matched {1:d} indicators. [{2:s}]'.format(
-            total_matches, len(matching_indicators), ', '.join(entities_found))
+                query_string='tag:"{0:s}"'.format(name),
+            )
+        return "{0:d} events matched {1:d} indicators. [{2:s}]".format(
+            total_matches, len(matching_indicators), ", ".join(entities_found)
+        )
 
 
 manager.AnalysisManager.register_analyzer(YetiIndicators)

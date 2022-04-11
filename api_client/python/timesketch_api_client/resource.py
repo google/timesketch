@@ -67,7 +67,7 @@ class SketchResource(BaseResource):
         self._labels = []
         self._resource_id = 0
         self._sketch = sketch
-        self._username = ''
+        self._username = ""
 
     def _get_top_level_attribute(self, name, default_value=None, refresh=False):
         """Returns a top level attribute from a resource object.
@@ -82,7 +82,7 @@ class SketchResource(BaseResource):
             The dict value of the key "name".
         """
         resource = self.lazyload_data(refresh_cache=refresh)
-        resource_objects = resource.get('objects')
+        resource_objects = resource.get("objects")
         if not resource_objects:
             return default_value
 
@@ -134,8 +134,9 @@ class SketchResource(BaseResource):
                 the function.
         """
         if kwargs:
-            raise ValueError('Unused keyword arguments: {0:s}.'.format(
-                ', '.join(kwargs.keys())))
+            raise ValueError(
+                "Unused keyword arguments: {0:s}.".format(", ".join(kwargs.keys()))
+            )
 
     def from_saved(self, resource_id):
         """Initialize the resource object from a saved resource.
@@ -174,7 +175,7 @@ class SketchResource(BaseResource):
     def user(self):
         """Property that returns the username of who ran the aggregation."""
         if not self._username:
-            return 'System'
+            return "System"
         return self._username
 
     def to_dict(self):

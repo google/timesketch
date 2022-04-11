@@ -44,7 +44,7 @@ To learn more about those limitations: https://www.elastic.co/de/blog/how-many-s
 
 The following points are important to increase the performance of a Timesketch system
 
-- Fast local storrage
+- Fast local storage
 - Memory, the more the better
 
 ### OpenSearch
@@ -59,7 +59,7 @@ The config and credentials to the OpenSearch cluster are stored in https://githu
 
 ### Celery workers
 
-If Celery workers take to long to process, more ressources for the host running the workers might a be a first step to eliminate that bottleneck.
+If Celery workers take to long to process, more resources for the host running the workers might a be a first step to eliminate that bottleneck.
 
 ### Multi node setup
 
