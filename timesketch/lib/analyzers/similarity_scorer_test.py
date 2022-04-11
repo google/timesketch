@@ -27,18 +27,18 @@ class TestSimilarityScorerConfig(BaseTest):
 
     def test_config(self):
         """Test config object."""
-        data_type = 'test:test'
-        index = 'test_index'
+        data_type = "test:test"
+        index = "test_index"
         config = SimilarityScorerConfig(data_type=data_type, index_name=index)
 
         compare_config = {
-            'index_name': '{0}'.format(index),
-            'data_type': '{0}'.format(data_type),
-            'query': 'data_type:"{0}"'.format(data_type),
-            'field': 'message',
-            'delimiters': [' ', '-', '/'],
-            'threshold': config.DEFAULT_THRESHOLD,
-            'num_perm': config.DEFAULT_PERMUTATIONS
+            "index_name": "{0}".format(index),
+            "data_type": "{0}".format(data_type),
+            "query": 'data_type:"{0}"'.format(data_type),
+            "field": "message",
+            "delimiters": [" ", "-", "/"],
+            "threshold": config.DEFAULT_THRESHOLD,
+            "num_perm": config.DEFAULT_PERMUTATIONS,
         }
         self.assertIsInstance(config, SimilarityScorerConfig)
         for k, v in compare_config.items():
@@ -50,17 +50,14 @@ class TestSimilarityScorer(BaseTest):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.test_data_type = 'test:test'
-        self.test_index = 'test_index'
-        self.test_text = 'This is a test text-with tests/test'
+        self.test_data_type = "test:test"
+        self.test_index = "test_index"
+        self.test_text = "This is a test text-with tests/test"
 
-    @mock.patch(
-        'timesketch.lib.analyzers.interface.OpenSearchDataStore',
-        MockDataStore)
+    @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     def test_scorer(self):
         """Test scorer object."""
         scorer = SimilarityScorer(
-            index_name=self.test_index,
-            sketch_id=1,
-            data_type=self.test_data_type)
+            index_name=self.test_index, sketch_id=1, data_type=self.test_data_type
+        )
         self.assertIsInstance(scorer, SimilarityScorer)

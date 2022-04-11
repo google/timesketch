@@ -21,12 +21,12 @@ import os
 import yaml
 
 
-logger = logging.getLogger('timesketch_importer.config_loader')
+logger = logging.getLogger("timesketch_importer.config_loader")
 
-DEFAULT_FILE = 'formatter.yaml'
+DEFAULT_FILE = "formatter.yaml"
 
 
-def load_config(file_path=''):
+def load_config(file_path=""):
     """Loads YAML config and returns a list of dict with the results.
 
     Args:
@@ -42,20 +42,20 @@ def load_config(file_path=''):
         base_path = os.path.dirname(__file__)
         file_path = os.path.join(base_path, DEFAULT_FILE)
 
-    if not file_path.endswith('.yaml'):
-        logger.error('Can\'t load a config that is not a YAML file.')
+    if not file_path.endswith(".yaml"):
+        logger.error("Can't load a config that is not a YAML file.")
         return {}
 
     if not os.path.isfile(file_path):
-        logger.error('File path does not exist, unable to load YAML config.')
+        logger.error("File path does not exist, unable to load YAML config.")
         return {}
 
-    with codecs.open(file_path, 'r') as fh:
+    with codecs.open(file_path, "r") as fh:
         try:
             data = yaml.safe_load(fh)
             return data
         except (AttributeError, yaml.parser.ParserError) as e:
-            logger.error('Unable to parse YAML file, with error: %s', e)
+            logger.error("Unable to parse YAML file, with error: %s", e)
             return {}
 
     return {}

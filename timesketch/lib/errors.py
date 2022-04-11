@@ -42,10 +42,7 @@ class ApiHTTPError(Error):
         Returns:
             Response object (instance of flask.wrappers.Response)
         """
-        response = jsonify({
-            'message': self.message,
-            'status': self.status_code
-        })
+        response = jsonify({"message": self.message, "status": self.status_code})
         response.status_code = self.status_code
         return response
 

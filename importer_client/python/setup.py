@@ -24,33 +24,34 @@ from setuptools import setup
 from timesketch_import_client import version
 
 setup(
-    name='timesketch-import-client',
+    name="timesketch-import-client",
     version=version.get_version(),
-    description='Timesketch Import Client',
-    license='Apache License, Version 2.0',
-    url='http://www.timesketch.org/',
-    maintainer='Timesketch development team',
-    maintainer_email='timesketch-dev@googlegroups.com',
+    description="Timesketch Import Client",
+    license="Apache License, Version 2.0",
+    url="http://www.timesketch.org/",
+    maintainer="Timesketch development team",
+    maintainer_email="timesketch-dev@googlegroups.com",
     classifiers=[
-        'Development Status :: 4 - Beta',
-        'Environment :: Console',
-        'Operating System :: OS Independent',
-        'Programming Language :: Python',
+        "Development Status :: 4 - Beta",
+        "Environment :: Console",
+        "Operating System :: OS Independent",
+        "Programming Language :: Python",
     ],
     data_files=[
-        ('data', glob.glob(
-            os.path.join('timesketch_import_client', 'data', '*.yaml'))),
+        ("data", glob.glob(os.path.join("timesketch_import_client", "data", "*.yaml"))),
     ],
     packages=find_packages(),
     include_package_data=True,
     zip_safe=False,
     entry_points={
-        'console_scripts': [
-            'timesketch_importer = tools.timesketch_importer:main']},
-    install_requires=frozenset([
-        'pandas',
-        'xlrd',
-        'timesketch-api-client',
-        'pyyaml',
-    ]),
-    )
+        "console_scripts": ["timesketch_importer = tools.timesketch_importer:main"]
+    },
+    install_requires=frozenset(
+        [
+            "pandas",
+            "xlrd",
+            "timesketch-api-client",
+            "pyyaml",
+        ]
+    ),
+)

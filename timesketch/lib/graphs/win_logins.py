@@ -20,8 +20,8 @@ from timesketch.lib.graphs import manager
 class WinLoginsGraph(BaseGraphPlugin):
     """Graph plugin for Windows logins."""
 
-    NAME = 'WinLogins'
-    DISPLAY_NAME = 'Windows logins'
+    NAME = "WinLogins"
+    DISPLAY_NAME = "Windows logins"
 
     def generate(self):
         """Generate the graph.
@@ -29,21 +29,18 @@ class WinLoginsGraph(BaseGraphPlugin):
         Returns:
             Graph object instance.
         """
-        query = 'tag:logon-event'
-        return_fields = [
-            'computer_name', 'username', 'logon_type', 'logon_process'
-        ]
+        query = "tag:logon-event"
+        return_fields = ["computer_name", "username", "logon_type", "logon_process"]
 
-        events = self.event_stream(
-            query_string=query, return_fields=return_fields)
+        events = self.event_stream(query_string=query, return_fields=return_fields)
 
         for event in events:
-            computer_name = event['_source'].get('computer_name')
-            username = event['_source'].get('username')
-            logon_type = event['_source'].get('logon_type')
+            computer_name = event["_source"].get("computer_name")
+            username = event["_source"].get("username")
+            logon_type = event["_source"].get("logon_type")
 
-            computer = self.graph.add_node(computer_name, {'type': 'computer'})
-            user = self.graph.add_node(username, {'type': 'user'})
+            computer = self.graph.add_node(computer_name, {"type": "computer"})
+            user = self.graph.add_node(username, {"type": "user"})
             self.graph.add_edge(user, computer, logon_type, event)
 
         self.graph.commit()

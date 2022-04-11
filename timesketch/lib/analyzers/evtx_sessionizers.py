@@ -8,9 +8,10 @@ import opensearchpy.exceptions
 from timesketch.lib.analyzers import manager
 from timesketch.lib.analyzers.sessionizer import SessionizerSketchPlugin
 
-#number of event record ids to keep when checking for duplicates
+# number of event record ids to keep when checking for duplicates
 EVENT_HISTORY_LENGTH = 5
-EVENT_DATA_RE = re.compile(r'<EventData>[\s\S]+<\/EventData>')
+EVENT_DATA_RE = re.compile(r"<EventData>[\s\S]+<\/EventData>")
+
 
 class WinEVTXSessionizerSketchPlugin(SessionizerSketchPlugin):
     """Base class for sessionizing sketch analyzers for user sessions based on
@@ -24,8 +25,13 @@ class WinEVTXSessionizerSketchPlugin(SessionizerSketchPlugin):
         Returns:
             String containing the number of sessions created.
         """
-        return_fields = ['timestamp', 'xml_string', 'event_identifier',
-                         'record_number', 'session_id']
+        return_fields = [
+            "timestamp",
+            "xml_string",
+            "event_identifier",
+            "record_number",
+            "session_id",
+        ]
         last_login_time = 0
         session_num = 0
         login_events = dict()
@@ -33,12 +39,17 @@ class WinEVTXSessionizerSketchPlugin(SessionizerSketchPlugin):
 
         while not processed:
             query_string = self.query_template.format(last_login_time)
-            events = self.event_stream(query_string=query_string,
-                                       return_fields=return_fields)
-            last_login_time, session_num, login_events, processed = \
-                self.processSessions(events, session_num, login_events)
+            events = self.event_stream(
+                query_string=query_string, return_fields=return_fields
+            )
+            (
+                last_login_time,
+                session_num,
+                login_events,
+                processed,
+            ) = self.processSessions(events, session_num, login_events)
 
-        msg = 'Sessionizing completed, number of sessions created: {0:d}'
+        msg = "Sessionizing completed, number of sessions created: {0:d}"
         return msg.format(session_num)
 
     def processSessions(self, events, session_num, start_events):
@@ -63,16 +74,15 @@ class WinEVTXSessionizerSketchPlugin(SessionizerSketchPlugin):
             prev_record_ids = []
 
             for event in events:
-                curr_record_id = event.source.get('record_number')
-                if (curr_record_id is not None and curr_record_id in
-                        prev_record_ids):
-                    #skip if duplicate event
+                curr_record_id = event.source.get("record_number")
+                if curr_record_id is not None and curr_record_id in prev_record_ids:
+                    # skip if duplicate event
                     continue
                 prev_record_ids.append(curr_record_id)
-                prev_record_ids = prev_record_ids[(EVENT_HISTORY_LENGTH * -1):]
+                prev_record_ids = prev_record_ids[(EVENT_HISTORY_LENGTH * -1) :]
 
-                event_id = event.source.get('event_identifier')
-                start_time = event.source.get('timestamp')
+                event_id = event.source.get("event_identifier")
+                start_time = event.source.get("timestamp")
 
                 if event_id in self.start_events:
                     logon_id = self.getLogonId(event, event_id)
@@ -81,9 +91,9 @@ class WinEVTXSessionizerSketchPlugin(SessionizerSketchPlugin):
                     start_events[logon_id] = session_id
 
                     view_query = 'session_id.{0:s}:"{1:s}"'.format(
-                        self.session_type, session_id)
-                    self.sketch.add_view(
-                        session_id, self.NAME, query_string=view_query)
+                        self.session_type, session_id
+                    )
+                    self.sketch.add_view(session_id, self.NAME, query_string=view_query)
                     session_num += 1
 
                 elif event_id in self.end_events:
@@ -100,8 +110,10 @@ class WinEVTXSessionizerSketchPlugin(SessionizerSketchPlugin):
 
             return (start_time, session_num, start_events, True)
 
-        except (opensearchpy.exceptions.NotFoundError,
-                opensearchpy.exceptions.ConnectionTimeout) as _:
+        except (
+            opensearchpy.exceptions.NotFoundError,
+            opensearchpy.exceptions.ConnectionTimeout,
+        ) as _:
             return (start_time, session_num, start_events, False)
 
     def getEventData(self, event, name):
@@ -114,8 +126,7 @@ class WinEVTXSessionizerSketchPlugin(SessionizerSketchPlugin):
         Returns:
             The value contained in the attribute.
         """
-        event_data = EVENT_DATA_RE.search(
-            event.source.get('xml_string')).group()
+        event_data = EVENT_DATA_RE.search(event.source.get("xml_string")).group()
         data_name_re = re.compile(r'<Data Name="%s">([^<>]+)<\/Data>' % name)
         text = data_name_re.search(event_data).group(1)
         return text
@@ -125,10 +136,12 @@ class LogonSessionizerSketchPlugin(WinEVTXSessionizerSketchPlugin):
     """Sessionizing sketch analyzer for logon sessions, where a session begins
     with a login event and ends with a logout or startup event."""
 
-    NAME = 'logon_sessionizer'
-    session_type = 'logon_session'
-    query_template = 'data_type:"windows:evtx:record" AND event_identifier:(' \
-        '4624 OR 4778 OR 4634 OR 4647 OR 4779 OR 6005) AND timestamp:[%d TO *]'
+    NAME = "logon_sessionizer"
+    session_type = "logon_session"
+    query_template = (
+        'data_type:"windows:evtx:record" AND event_identifier:('
+        "4624 OR 4778 OR 4634 OR 4647 OR 4779 OR 6005) AND timestamp:[%d TO *]"
+    )
 
     start_events = [4624, 4778]
     end_events = [4634, 4647, 4779]
@@ -136,17 +149,17 @@ class LogonSessionizerSketchPlugin(WinEVTXSessionizerSketchPlugin):
     def getLogonId(self, event, event_id):
         """Retrieves the logon ID for an event."""
         if event_id in [4624, 4634, 4647]:
-            return self.getEventData(event, 'TargetLogonId')
-        return self.getEventData(event, 'LogonID')
+            return self.getEventData(event, "TargetLogonId")
+        return self.getEventData(event, "LogonID")
 
     def getSessionId(self, event, session_num):
         """Creates the session ID for an event."""
-        event_id = event.source.get('event_identifier')
+        event_id = event.source.get("event_identifier")
         if event_id == 4624:
-            account_name = self.getEventData(event, 'TargetUserName')
+            account_name = self.getEventData(event, "TargetUserName")
         else:
-            account_name = self.getEventData(event, 'AccountName')
-        return '%i (%s)' % (session_num, account_name)
+            account_name = self.getEventData(event, "AccountName")
+        return "%i (%s)" % (session_num, account_name)
 
 
 class UnlockSessionizerSketchPlugin(WinEVTXSessionizerSketchPlugin):
@@ -154,24 +167,26 @@ class UnlockSessionizerSketchPlugin(WinEVTXSessionizerSketchPlugin):
     begins with a workstation unlock event and ends with a workstation lock,
     logout or startup event."""
 
-    NAME = 'unlock_sessionizer'
-    session_type = 'unlock_session'
-    query_template = 'data_type:"windows:evtx:record" AND event_identifier:' \
-            '(4801 OR 4800 OR 4634 OR 4647 OR 4779 OR 6005) AND timestamp:' \
-            '[%d TO *]'
+    NAME = "unlock_sessionizer"
+    session_type = "unlock_session"
+    query_template = (
+        'data_type:"windows:evtx:record" AND event_identifier:'
+        "(4801 OR 4800 OR 4634 OR 4647 OR 4779 OR 6005) AND timestamp:"
+        "[%d TO *]"
+    )
     start_events = [4801]
     end_events = [4800, 4802, 4634, 4647, 4779]
 
     def getLogonId(self, event, event_id):
         """Retrieves the logon ID for an event."""
         if event_id == 4779:
-            return self.getEventData(event, 'LogonID')
-        return self.getEventData(event, 'TargetLogonId')
+            return self.getEventData(event, "LogonID")
+        return self.getEventData(event, "TargetLogonId")
 
     def getSessionId(self, event, session_num):
         """Creates the session ID for an event."""
-        account_name = self.getEventData(event, 'TargetUserName')
-        return '%i (%s)' % (session_num, account_name)
+        account_name = self.getEventData(event, "TargetUserName")
+        return "%i (%s)" % (session_num, account_name)
 
 
 manager.AnalysisManager.register_analyzer(LogonSessionizerSketchPlugin)

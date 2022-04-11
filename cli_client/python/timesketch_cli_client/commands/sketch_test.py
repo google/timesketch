@@ -27,7 +27,7 @@ from .sketch import sketch_group
 class SketchTest(unittest.TestCase):
     """Test Sketch."""
 
-    @mock.patch('requests.Session', api_test_lib.mock_session)
+    @mock.patch("requests.Session", api_test_lib.mock_session)
     def setUp(self):
         """Setup test case."""
         self.ctx = test_lib.get_cli_context()
@@ -35,11 +35,11 @@ class SketchTest(unittest.TestCase):
     def test_list_sketches(self):
         """Test to list sketches."""
         runner = CliRunner()
-        result = runner.invoke(sketch_group, ['list'], obj=self.ctx)
-        assert result.output == '1 test\n'
+        result = runner.invoke(sketch_group, ["list"], obj=self.ctx)
+        assert result.output == "1 test\n"
 
     def test_describe_sketch(self):
         """Test to get details for a sketch."""
         runner = CliRunner()
-        result = runner.invoke(sketch_group, ['describe'], obj=self.ctx)
-        assert result.output == 'Name: test\nDescription: test\n'
+        result = runner.invoke(sketch_group, ["describe"], obj=self.ctx)
+        assert result.output == "Name: test\nDescription: test\n"

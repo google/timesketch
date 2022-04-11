@@ -32,12 +32,7 @@ class VersionResource(resources.ResourceMixin, Resource):
         Returns:
             JSON object including version info
         """
-        schema = {
-            'meta': {
-                'version': version.get_version()
-            },
-            'objects': []
-        }
+        schema = {"meta": {"version": version.get_version()}, "objects": []}
         response = jsonify(schema)
         response.status_code = HTTP_STATUS_CODE_OK
         return response

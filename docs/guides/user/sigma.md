@@ -6,7 +6,7 @@ See description at the [Sigma Github repository](https://github.com/Neo23x0/sigm
 
 ## Sigma in Timesketch
 
-Since early 2020 Timesketch has Sigma support implemented. Sigma can be used as an analyser.
+Since early 2020 Timesketch has Sigma support implemented. Sigma can be used as an analyzer.
 The other option is to use Sigma via the API and the API client or the Web interface.
 
 ### Web Interface
@@ -68,7 +68,7 @@ The `data/sigma_blocklist.csv` is where Timesketch maintains a list of incompati
 
 Each method that reads Sigma rules from the a folder is checking if part of the full path of a rule is mentioned in the `data/sigma_blocklist.csv` file.
 
-For examle a file at `/etc/timesketch/data/sigma/rules-unsupported/foo/bar.yml` would not be parsed as a line in `data/sigma_blocklist.csv` mentions:
+For example a file at `/etc/timesketch/data/sigma/rules-unsupported/foo/bar.yml` would not be parsed as a line in `data/sigma_blocklist.csv` mentions:
 
 ```
 /rules-unsupported/,bad,Sigma internal folder name,2021-11-19,

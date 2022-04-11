@@ -30,27 +30,23 @@ class TestSimilarityLibScorer(BaseTest):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.test_data_type = 'test:test'
-        self.test_index = 'test_index'
-        self.test_text = 'This is a test text-with tests/test'
-        self.delimiters = [' ', '-', '/']
+        self.test_data_type = "test:test"
+        self.test_index = "test_index"
+        self.test_text = "This is a test text-with tests/test"
+        self.delimiters = [" ", "-", "/"]
 
-    @mock.patch(
-        'timesketch.lib.analyzers.interface.OpenSearchDataStore',
-        MockDataStore)
+    @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     def test_shingles_from_text(self):
         """Test splitting up a text string to words."""
         # pylint: disable=protected-access
-        shingles = similarity._shingles_from_text(
-            self.test_text, self.delimiters)
+        shingles = similarity._shingles_from_text(self.test_text, self.delimiters)
         self.assertIsInstance(shingles, list)
         self.assertEqual(len(shingles), 8)
 
-    @mock.patch(
-        'timesketch.lib.analyzers.interface.OpenSearchDataStore',
-        MockDataStore)
+    @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     def test_minhash_from_text(self):
         """Test create minhash from text."""
         minhash = similarity.minhash_from_text(
-            self.test_text, similarity.DEFAULT_PERMUTATIONS, self.delimiters)
+            self.test_text, similarity.DEFAULT_PERMUTATIONS, self.delimiters
+        )
         self.assertIsInstance(minhash, MinHash)

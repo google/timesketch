@@ -18,11 +18,12 @@ class SequenceSessionizerSketchPlugin(sessionizer.SessionizerSketchPlugin):
             the specified sequence of events.
         session_num: Counter for the number of sessions.
     """
+
     event_seq = []
     event_storage = []
     num_event_to_find = 0
     recording = False
-    return_fields = ['timestamp']
+    return_fields = ["timestamp"]
     session_num = 0
     session_type = None
 
@@ -37,35 +38,40 @@ class SequenceSessionizerSketchPlugin(sessionizer.SessionizerSketchPlugin):
             String containing the name of the event sequence and the
             number of sessions created.
         """
-        if self.session_type is None or self.session_type == '':
-            raise ValueError('No session_type provided.')
+        if self.session_type is None or self.session_type == "":
+            raise ValueError("No session_type provided.")
         if self.event_seq is None or self.event_seq == []:
-            raise ValueError('No event_seq provided.')
+            raise ValueError("No event_seq provided.")
         # If return_fields in None, then all attributes are provided.
         if self.return_fields is not None:
             self.build_return_fields()
 
         # event_stream returns an ordered generator of events (by time)
         # therefore no further sorting is needed.
-        events = self.event_stream(query_string=self.query,
-                                   return_fields=self.return_fields)
+        events = self.event_stream(
+            query_string=self.query, return_fields=self.return_fields
+        )
 
         last_timestamp = None
         for event in events:
-            curr_timestamp = event.source.get('timestamp')
-            if last_timestamp and \
-                (curr_timestamp - last_timestamp > self.max_time_diff_micros):
+            curr_timestamp = event.source.get("timestamp")
+            if last_timestamp and (
+                curr_timestamp - last_timestamp > self.max_time_diff_micros
+            ):
                 self.flush_events(drop=True)
             self.process_event(event)
             last_timestamp = curr_timestamp
 
-        self.sketch.add_view('Session view',
-                             self.NAME,
-                             query_string='session_id.{0:s}:*'.format(
-                                 self.session_type))
+        self.sketch.add_view(
+            "Session view",
+            self.NAME,
+            query_string="session_id.{0:s}:*".format(self.session_type),
+        )
 
-        return ('Sessionizing completed, number of {0:s} sessions created:'
-                ' {1:d}'.format(self.session_type, self.session_num))
+        return (
+            "Sessionizing completed, number of {0:s} sessions created:"
+            " {1:d}".format(self.session_type, self.session_num)
+        )
 
     def process_event(self, event):
         """Process event depending on if the event is significant for the
@@ -128,8 +134,8 @@ class SequenceSessionizerSketchPlugin(sessionizer.SessionizerSketchPlugin):
     def build_return_fields(self):
         """Add missing fields to return_fields. Additional fields are not
         removed."""
-        if 'timestamp' not in self.return_fields:
-            self.return_fields.append('timestamp')
+        if "timestamp" not in self.return_fields:
+            self.return_fields.append("timestamp")
         for event in self.event_seq:
             self.return_fields.extend(event)
         self.return_fields = list(set(self.return_fields))
