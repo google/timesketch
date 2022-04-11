@@ -92,7 +92,7 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     zip_safe=False,
-    entry_points={"console_scripts": ["tsctl=timesketch.tsctl:main"]},
+    entry_points={"console_scripts": ["tsctl=timesketch.tsctl:cli"]},
     install_requires=parse_requirements_from_file("requirements.txt"),
     tests_require=parse_requirements_from_file("test_requirements.txt"),
 )

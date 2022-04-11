@@ -18,6 +18,7 @@ nav:
           - Basic concepts: guides/user/basic-concepts.md
           - Sketch overview: guides/user/sketch-overview.md
           - Search query guide: guides/user/search-query-guide.md
+          - Command line client: guides/user/cli-client.md
           - Interactive notebook: guides/user/notebook.md
           - Import from JSON or CSV: guides/user/import-from-json-csv.md
           - Use Sigma: guides/user/sigma.md
@@ -61,7 +62,7 @@ plugins:
 
 theme:
   name: material
-  logo: assets/images/timesketch-color.svg
+  logo: assets/images/timesketch-white.svg
   language: en
   features:
     - navigation.tabs

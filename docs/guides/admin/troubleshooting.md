@@ -18,7 +18,7 @@ To raise issues related to the web frontend, please provide the following:
 
 - Copy out the full error message(s) from Chrome Console
 - The URL (without your local IP or Domain)
-- What was clicked before it happend
+- What was clicked before it happened
 - Any entries in the server side logs (see below)?
 - Share a screenshot if possible
 - If possible details about the event / sketch
@@ -140,7 +140,7 @@ Or run the following where `$CONTAINER_ID` is the ID from your `opensearch` Dock
 docker logs $CONTAINER_ID
 ```
 
-### Postgress
+### PostgreSQL
 
 ```shell
 /var/log/postgresql/

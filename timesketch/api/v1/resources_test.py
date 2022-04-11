@@ -244,7 +244,7 @@ class ExploreResourceTest(BaseTest):
         # Remove flaky properties (dynamically generated)
         del response_json["meta"]["search_node"]["created_at"]
         del response_json["meta"]["search_node"]["query_time"]
-        self.assertDictEqual(response.json, self.expected_response)
+        self.assertDictEqual(response_json, self.expected_response)
         self.assert200(response)
 
 
