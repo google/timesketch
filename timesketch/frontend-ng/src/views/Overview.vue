@@ -56,23 +56,14 @@ limitations under the License.
         </v-list>
       </v-col>
     </v-row>
-
-    <v-row>
-      <v-col cols="12">
-        <ts-sketch-scenarios></ts-sketch-scenarios>
-      </v-col>
-    </v-row>
   </v-container>
 </template>
 
 <script>
 import ApiClient from '../utils/RestApiClient'
-import TsSketchScenarios from '../components/Explore/Scenarios'
 
 export default {
-  components: {
-    TsSketchScenarios,
-  },
+  components: {},
   data() {
     return {
       showUploadTimelineModal: false,

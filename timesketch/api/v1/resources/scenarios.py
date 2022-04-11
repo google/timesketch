@@ -98,8 +98,6 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
         facets = load_yaml_config('FACETS_PATH')
         questions = load_yaml_config('QUESTIONS_PATH')
 
-        print(facets)
-
         scenario_name = form.get('scenario_name')
         scenario_dict = scenarios.get(scenario_name)
 

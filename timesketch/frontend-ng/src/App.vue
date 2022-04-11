@@ -49,9 +49,12 @@ limitations under the License.
       </template>
     </v-app-bar>
 
+
+
     <v-main class="mx-4">
       <router-view></router-view>
     </v-main>
+
   </v-app>
 </template>
 
@@ -61,6 +64,7 @@ export default {
   data() {
     return {
       drawer: true,
+      mini: false
     }
   },
   computed: {
