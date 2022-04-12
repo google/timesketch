@@ -22,17 +22,17 @@ class StoryExporter(object):
     """Interface for a story exporter."""
 
     # String representing the output format of the story.
-    EXPORT_FORMAT = ''
+    EXPORT_FORMAT = ""
 
     def __init__(self):
         """Initialize the exporter."""
-        self._creation_date = ''
+        self._creation_date = ""
         # List of Dict objects, two keys: type, value.
         self._data_lines = []
         self._data_fetcher = None
-        self._story_author = 'N/A'
-        self._story_exporter = 'N/A'
-        self._story_title = 'Unknown Title'
+        self._story_author = "N/A"
+        self._story_exporter = "N/A"
+        self._story_title = "Unknown Title"
 
     @property
     def data(self):
@@ -66,29 +66,39 @@ class StoryExporter(object):
         Args:
             block: single block dict from the story.
         """
-        component = block.get('componentName', 'N/A')
-        properties = block.get('componentProps', {})
+        component = block.get("componentName", "N/A")
+        properties = block.get("componentProps", {})
 
         if not self._data_fetcher:
             return
 
         if not component:
+            self._data_lines.append({"type": "text", "value": block.get("content", "")})
+        elif component == "TsViewEventList":
             self._data_lines.append(
-                {'type': 'text', 'value': block.get('content', '')})
-        elif component == 'TsViewEventList':
-            self._data_lines.append({
-                'type': 'dataframe',
-                'value': self._data_fetcher.get_view(properties.get('view'))})
-        elif component == 'TsAggregationCompact':
-            self._data_lines.append({
-                'type': 'aggregation',
-                'value': self._data_fetcher.get_aggregation(
-                    properties.get('aggregation'))})
-        elif component == 'TsAggregationGroupCompact':
-            self._data_lines.append({
-                'type': 'chart',
-                'value': self._data_fetcher.get_aggregation_group(
-                    properties.get('aggregation_group'))})
+                {
+                    "type": "dataframe",
+                    "value": self._data_fetcher.get_view(properties.get("view")),
+                }
+            )
+        elif component == "TsAggregationCompact":
+            self._data_lines.append(
+                {
+                    "type": "aggregation",
+                    "value": self._data_fetcher.get_aggregation(
+                        properties.get("aggregation")
+                    ),
+                }
+            )
+        elif component == "TsAggregationGroupCompact":
+            self._data_lines.append(
+                {
+                    "type": "chart",
+                    "value": self._data_fetcher.get_aggregation_group(
+                        properties.get("aggregation_group")
+                    ),
+                }
+            )
 
     def reset(self):
         """Reset story by removing all blocks.
@@ -124,7 +134,7 @@ class StoryExporter(object):
         if user:
             self._story_author = user
         else:
-            self._story_author = 'System'
+            self._story_author = "System"
 
     def set_exporter(self, user):
         """Sets the username of the person exporting the story.

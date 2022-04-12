@@ -20,6 +20,7 @@ import logging
 # pylint: disable=wrong-import-order
 import bs4
 import requests
+
 # pylint: disable=redefined-builtin
 from requests.exceptions import ConnectionError
 import webbrowser
@@ -39,7 +40,7 @@ from . import version
 from . import sigma
 
 
-logger = logging.getLogger('timesketch_api.client')
+logger = logging.getLogger("timesketch_api.client")
 
 
 class TimesketchApi:
@@ -51,29 +52,31 @@ class TimesketchApi:
     """
 
     DEFAULT_OAUTH_SCOPE = [
-        'https://www.googleapis.com/auth/userinfo.email',
-        'openid',
-        'https://www.googleapis.com/auth/userinfo.profile'
+        "https://www.googleapis.com/auth/userinfo.email",
+        "openid",
+        "https://www.googleapis.com/auth/userinfo.profile",
     ]
 
-    DEFAULT_OAUTH_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth'
-    DEFAULT_OAUTH_TOKEN_URL = 'https://oauth2.googleapis.com/token'
-    DEFAULT_OAUTH_PROVIDER_URL = 'https://www.googleapis.com/oauth2/v1/certs'
-    DEFAULT_OAUTH_OOB_URL = 'urn:ietf:wg:oauth:2.0:oob'
-    DEFAULT_OAUTH_API_CALLBACK = '/login/api_callback/'
+    DEFAULT_OAUTH_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
+    DEFAULT_OAUTH_TOKEN_URL = "https://oauth2.googleapis.com/token"
+    DEFAULT_OAUTH_PROVIDER_URL = "https://www.googleapis.com/oauth2/v1/certs"
+    DEFAULT_OAUTH_OOB_URL = "urn:ietf:wg:oauth:2.0:oob"
+    DEFAULT_OAUTH_API_CALLBACK = "/login/api_callback/"
 
     # Default retry count for operations that attempt a retry.
     DEFAULT_RETRY_COUNT = 5
 
-    def __init__(self,
-                 host_uri,
-                 username,
-                 password='',
-                 verify=True,
-                 client_id='',
-                 client_secret='',
-                 auth_mode='userpass',
-                 create_session=True):
+    def __init__(
+        self,
+        host_uri,
+        username,
+        password="",
+        verify=True,
+        client_id="",
+        client_secret="",
+        auth_mode="userpass",
+        create_session=True,
+    ):
         """Initializes the TimesketchApi object.
 
         Args:
@@ -96,7 +99,7 @@ class TimesketchApi:
                 backend.
         """
         self._host_uri = host_uri
-        self.api_root = '{0:s}/api/v1'.format(host_uri)
+        self.api_root = "{0:s}/api/v1".format(host_uri)
         self.credentials = None
         self._flow = None
 
@@ -106,13 +109,19 @@ class TimesketchApi:
 
         try:
             self.session = self._create_session(
-                username, password, verify=verify, client_id=client_id,
-                client_secret=client_secret, auth_mode=auth_mode)
+                username,
+                password,
+                verify=verify,
+                client_id=client_id,
+                client_secret=client_secret,
+                auth_mode=auth_mode,
+            )
         except ConnectionError as exc:
-            raise ConnectionError('Timesketch server unreachable') from exc
+            raise ConnectionError("Timesketch server unreachable") from exc
         except RuntimeError as e:
             raise RuntimeError(
-                'Unable to connect to server, error: {0!s}'.format(e)) from e
+                "Unable to connect to server, error: {0!s}".format(e)
+            ) from e
 
     @property
     def current_user(self):
@@ -122,16 +131,17 @@ class TimesketchApi:
     @property
     def version(self):
         """Property that returns back the API client version."""
-        version_dict = self.fetch_resource_data('version/')
+        version_dict = self.fetch_resource_data("version/")
         ts_version = None
         if version_dict:
-            ts_version = version_dict.get('meta', {}).get('version')
+            ts_version = version_dict.get("meta", {}).get("version")
 
         if ts_version:
-            return 'API Client: {0:s}\nTS Backend: {1:s}'.format(
-                version.get_version(), ts_version)
+            return "API Client: {0:s}\nTS Backend: {1:s}".format(
+                version.get_version(), ts_version
+            )
 
-        return 'API Client: {0:s}'.format(version.get_version())
+        return "API Client: {0:s}".format(version.get_version())
 
     def set_credentials(self, credential_object):
         """Sets the credential object."""
@@ -150,8 +160,8 @@ class TimesketchApi:
             password: User password.
         """
         # Do a POST to the login handler to set up the session cookies
-        data = {'username': username, 'password': password}
-        session.post('{0:s}/login/'.format(self._host_uri), data=data)
+        data = {"username": username, "password": password}
+        session.post("{0:s}/login/".format(self._host_uri), data=data)
 
     def _set_csrf_token(self, session):
         """Retrieve CSRF token from the server and append to HTTP headers.
@@ -161,28 +171,30 @@ class TimesketchApi:
         """
         # Scrape the CSRF token from the response
         response = session.get(self._host_uri)
-        soup = bs4.BeautifulSoup(response.text, features='html.parser')
+        soup = bs4.BeautifulSoup(response.text, features="html.parser")
 
-        tag = soup.find(id='csrf_token')
+        tag = soup.find(id="csrf_token")
         csrf_token = None
         if tag:
-            csrf_token = tag.get('value')
+            csrf_token = tag.get("value")
         else:
-            tag = soup.find('meta', attrs={'name': 'csrf-token'})
+            tag = soup.find("meta", attrs={"name": "csrf-token"})
             if tag:
-                csrf_token = tag.attrs.get('content')
+                csrf_token = tag.attrs.get("content")
 
         if not csrf_token:
             return
 
-        session.headers.update({
-            'x-csrftoken': csrf_token,
-            'referer': self._host_uri
-        })
+        session.headers.update({"x-csrftoken": csrf_token, "referer": self._host_uri})
 
     def _create_oauth_session(
-            self, client_id='', client_secret='', client_secrets_file=None,
-            run_server=True, skip_open=False):
+        self,
+        client_id="",
+        client_secret="",
+        client_secrets_file=None,
+        run_server=True,
+        skip_open=False,
+    ):
         """Return an OAuth session.
 
         Args:
@@ -205,47 +217,50 @@ class TimesketchApi:
         if client_secrets_file:
             if not os.path.isfile(client_secrets_file):
                 raise RuntimeError(
-                    'Unable to log in, client secret files does not exist.')
+                    "Unable to log in, client secret files does not exist."
+                )
             flow = googleauth_flow.InstalledAppFlow.from_client_secrets_file(
-                client_secrets_file, scopes=self.DEFAULT_OAUTH_SCOPE,
-                autogenerate_code_verifier=True)
+                client_secrets_file,
+                scopes=self.DEFAULT_OAUTH_SCOPE,
+                autogenerate_code_verifier=True,
+            )
         else:
             provider_url = self.DEFAULT_OAUTH_PROVIDER_URL
             client_config = {
-                'installed': {
-                    'client_id': client_id,
-                    'client_secret': client_secret,
-                    'auth_uri': self.DEFAULT_OAUTH_AUTH_URL,
-                    'token_uri': self.DEFAULT_OAUTH_TOKEN_URL,
-                    'auth_provider_x509_cert_url': provider_url,
-                    'redirect_uris': [self.DEFAULT_OAUTH_OOB_URL],
+                "installed": {
+                    "client_id": client_id,
+                    "client_secret": client_secret,
+                    "auth_uri": self.DEFAULT_OAUTH_AUTH_URL,
+                    "token_uri": self.DEFAULT_OAUTH_TOKEN_URL,
+                    "auth_provider_x509_cert_url": provider_url,
+                    "redirect_uris": [self.DEFAULT_OAUTH_OOB_URL],
                 },
             }
 
             flow = googleauth_flow.InstalledAppFlow.from_client_config(
-                client_config, self.DEFAULT_OAUTH_SCOPE,
-                autogenerate_code_verifier=True)
+                client_config, self.DEFAULT_OAUTH_SCOPE, autogenerate_code_verifier=True
+            )
 
             flow.redirect_uri = self.DEFAULT_OAUTH_OOB_URL
 
         if run_server:
             _ = flow.run_local_server()
         else:
-            auth_url, _ = flow.authorization_url(prompt='select_account')
+            auth_url, _ = flow.authorization_url(prompt="select_account")
 
             if skip_open:
-                print('Visit the following URL to authenticate: {0:s}'.format(
-                    auth_url))
+                print("Visit the following URL to authenticate: {0:s}".format(auth_url))
             else:
-                open_browser = input('Open the URL in a browser window? [y/N] ')
-                if open_browser.lower() == 'y' or open_browser.lower() == 'yes':
+                open_browser = input("Open the URL in a browser window? [y/N] ")
+                if open_browser.lower() == "y" or open_browser.lower() == "yes":
                     webbrowser.open(auth_url)
                 else:
                     print(
-                        'Need to manually visit URL to authenticate: '
-                        '{0:s}'.format(auth_url))
+                        "Need to manually visit URL to authenticate: "
+                        "{0:s}".format(auth_url)
+                    )
 
-            code = input('Enter the token code: ')
+            code = input("Enter the token code: ")
             _ = flow.fetch_token(code=code)
 
         session = flow.authorized_session()
@@ -261,22 +276,24 @@ class TimesketchApi:
             session: Authorized session object.
         """
         # Authenticate to the Timesketch backend.
-        login_callback_url = '{0:s}{1:s}'.format(
-            self._host_uri, self.DEFAULT_OAUTH_API_CALLBACK)
+        login_callback_url = "{0:s}{1:s}".format(
+            self._host_uri, self.DEFAULT_OAUTH_API_CALLBACK
+        )
         params = {
-            'id_token': session.credentials.id_token,
+            "id_token": session.credentials.id_token,
         }
         response = session.get(login_callback_url, params=params)
         if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
             error.error_message(
-                response, message='Unable to authenticate', error=RuntimeError)
+                response, message="Unable to authenticate", error=RuntimeError
+            )
 
         self._set_csrf_token(session)
         return session
 
     def _create_session(
-            self, username, password, verify, client_id, client_secret,
-            auth_mode):
+        self, username, password, verify, client_id, client_secret, auth_mode
+    ):
         """Create authenticated HTTP session for server communication.
 
         Args:
@@ -292,18 +309,21 @@ class TimesketchApi:
         Returns:
             Instance of requests.Session.
         """
-        if auth_mode == 'oauth':
+        if auth_mode == "oauth":
             return self._create_oauth_session(client_id, client_secret)
 
-        if auth_mode == 'oauth_local':
+        if auth_mode == "oauth_local":
             return self._create_oauth_session(
-                client_id=client_id, client_secret=client_secret,
-                run_server=False, skip_open=True)
+                client_id=client_id,
+                client_secret=client_secret,
+                run_server=False,
+                skip_open=True,
+            )
 
         session = requests.Session()
 
         # If using HTTP Basic auth, add the user/pass to the session
-        if auth_mode == 'http-basic':
+        if auth_mode == "http-basic":
             session.auth = (username, password)
 
         # SSL Cert verification is turned on by default.
@@ -312,7 +332,7 @@ class TimesketchApi:
 
         # Get and set CSRF token and authenticate the session if appropriate.
         self._set_csrf_token(session)
-        if auth_mode == 'userpass':
+        if auth_mode == "userpass":
             self._authenticate_session(session, username, password)
 
         return session
@@ -327,7 +347,7 @@ class TimesketchApi:
         Returns:
             Dictionary with the response data.
         """
-        resource_url = '{0:s}/{1:s}'.format(self.api_root, resource_uri)
+        resource_url = "{0:s}/{1:s}".format(self.api_root, resource_uri)
         response = self.session.get(resource_url, params=params)
         return error.get_response_json(response, logger)
 
@@ -347,29 +367,28 @@ class TimesketchApi:
         retry_count = 0
         objects = None
         while True:
-            resource_url = '{0:s}/sketches/'.format(self.api_root)
-            form_data = {'name': name, 'description': description}
+            resource_url = "{0:s}/sketches/".format(self.api_root)
+            form_data = {"name": name, "description": description}
             response = self.session.post(resource_url, json=form_data)
             response_dict = error.get_response_json(response, logger)
-            objects = response_dict.get('objects')
+            objects = response_dict.get("objects")
             if objects:
                 break
             retry_count += 1
 
             if retry_count >= self.DEFAULT_RETRY_COUNT:
-                raise RuntimeError('Unable to create a new sketch.')
+                raise RuntimeError("Unable to create a new sketch.")
 
-        sketch_id = objects[0]['id']
+        sketch_id = objects[0]["id"]
         return self.get_sketch(sketch_id)
 
     def get_oauth_token_status(self):
         """Return a dict with OAuth token status, if one exists."""
         if not self.credentials:
-            return {
-                'status': 'No stored credentials.'}
+            return {"status": "No stored credentials."}
         return {
-            'expired': self.credentials.credential.expired,
-            'expiry_time': self.credentials.credential.expiry.isoformat(),
+            "expired": self.credentials.credential.expired,
+            "expiry_time": self.credentials.credential.expiry.isoformat(),
         }
 
     def get_sketch(self, sketch_id):
@@ -383,7 +402,7 @@ class TimesketchApi:
         """
         return sketch.Sketch(sketch_id, api=self)
 
-    def get_aggregator_info(self, name='', as_pandas=False):
+    def get_aggregator_info(self, name="", as_pandas=False):
         """Returns information about available aggregators.
 
         Args:
@@ -397,11 +416,11 @@ class TimesketchApi:
             unless as_pandas is set, then the function returns a DataFrame
             object.
         """
-        resource_uri = 'aggregation/info/'
+        resource_uri = "aggregation/info/"
 
         if name:
-            data = {'aggregator': name}
-            resource_url = '{0:s}/{1:s}'.format(self.api_root, resource_uri)
+            data = {"aggregator": name}
+            resource_url = "{0:s}/{1:s}".format(self.api_root, resource_uri)
             response = self.session.post(resource_url, json=data)
             response_json = error.get_response_json(response, logger)
         else:
@@ -416,19 +435,21 @@ class TimesketchApi:
 
         for line in response_json:
             line_dict = {
-                'name': line.get('name', 'N/A'),
-                'description': line.get('description', 'N/A'),
+                "name": line.get("name", "N/A"),
+                "description": line.get("description", "N/A"),
             }
-            for field_index, field in enumerate(line.get('fields', [])):
-                line_dict['field_{0:d}_name'.format(
-                    field_index + 1)] = field.get('name')
-                line_dict['field_{0:d}_description'.format(
-                    field_index + 1)] = field.get('description')
+            for field_index, field in enumerate(line.get("fields", [])):
+                line_dict["field_{0:d}_name".format(field_index + 1)] = field.get(
+                    "name"
+                )
+                line_dict[
+                    "field_{0:d}_description".format(field_index + 1)
+                ] = field.get("description")
             lines.append(line_dict)
 
         return pandas.DataFrame(lines)
 
-    def list_sketches(self, per_page=50, scope='user', include_archived=True):
+    def list_sketches(self, per_page=50, scope="user", include_archived=True):
         """Get a list of all open sketches that the user has access to.
 
         Args:
@@ -446,28 +467,29 @@ class TimesketchApi:
             Sketch objects instances.
         """
         url_params = {
-            'per_page': per_page,
-            'scope': scope,
-            'include_archived': include_archived
+            "per_page": per_page,
+            "scope": scope,
+            "include_archived": include_archived,
         }
         # Start with the first page
         page = 1
         has_next_page = True
 
         while has_next_page:
-            url_params['page'] = page
-            response = self.fetch_resource_data('sketches/', params=url_params)
-            meta = response.get('meta', {})
+            url_params["page"] = page
+            response = self.fetch_resource_data("sketches/", params=url_params)
+            meta = response.get("meta", {})
 
-            page = meta.get('next_page')
+            page = meta.get("next_page")
             if not page:
                 has_next_page = False
 
-            for sketch_dict in response.get('objects', []):
-                sketch_id = sketch_dict['id']
-                sketch_name = sketch_dict['name']
+            for sketch_dict in response.get("objects", []):
+                sketch_id = sketch_dict["id"]
+                sketch_name = sketch_dict["name"]
                 sketch_obj = sketch.Sketch(
-                    sketch_id=sketch_id, api=self, sketch_name=sketch_name)
+                    sketch_id=sketch_id, api=self, sketch_name=sketch_name
+                )
                 yield sketch_obj
 
     def get_searchindex(self, searchindex_id):
@@ -481,7 +503,7 @@ class TimesketchApi:
         """
         return index.SearchIndex(searchindex_id, api=self)
 
-    def check_celery_status(self, job_id=''):
+    def check_celery_status(self, job_id=""):
         """Return information about outstanding celery tasks or a specific one.
 
         Args:
@@ -494,12 +516,11 @@ class TimesketchApi:
             that were outstanding.
         """
         if job_id:
-            response = self.fetch_resource_data(
-                'tasks/?job_id={0:s}'.format(job_id))
+            response = self.fetch_resource_data("tasks/?job_id={0:s}".format(job_id))
         else:
-            response = self.fetch_resource_data('tasks/')
+            response = self.fetch_resource_data("tasks/")
 
-        return response.get('objects', [])
+        return response.get("objects", [])
 
     def list_searchindices(self):
         """Yields all searchindices that the user has access to.
@@ -507,17 +528,18 @@ class TimesketchApi:
         Yields:
             A SearchIndex object instances.
         """
-        response = self.fetch_resource_data('searchindices/')
-        response_objects = response.get('objects')
+        response = self.fetch_resource_data("searchindices/")
+        response_objects = response.get("objects")
         if not response_objects:
             yield None
             return
 
         for index_dict in response_objects[0]:
-            index_id = index_dict['id']
-            index_name = index_dict['name']
+            index_id = index_dict["id"]
+            index_name = index_dict["name"]
             index_obj = index.SearchIndex(
-                searchindex_id=index_id, api=self, searchindex_name=index_name)
+                searchindex_id=index_id, api=self, searchindex_name=index_name
+            )
             yield index_obj
 
     def refresh_oauth_token(self):
@@ -542,24 +564,23 @@ class TimesketchApi:
             ValueError: If no rules are found.
         """
         rules = []
-        response = self.fetch_resource_data('sigma/')
+        response = self.fetch_resource_data("sigma/")
 
         if not response:
-            raise ValueError('No rules found.')
+            raise ValueError("No rules found.")
 
         if as_pandas:
-            return pandas.DataFrame.from_records(response.get('objects'))
+            return pandas.DataFrame.from_records(response.get("objects"))
 
-        for rule_dict in response['objects']:
+        for rule_dict in response["objects"]:
             if not rule_dict:
-                raise ValueError('No rules found.')
+                raise ValueError("No rules found.")
 
             index_obj = sigma.Sigma(api=self)
             for key, value in rule_dict.items():
                 index_obj.set_value(key, value)
             rules.append(index_obj)
         return rules
-
 
     def get_sigma_rule(self, rule_uuid):
         """Get a sigma rule.
@@ -588,13 +609,12 @@ class TimesketchApi:
             ValueError: No Rule text given or issues parsing it.
         """
         if not rule_text:
-            raise ValueError('No rule text given.')
+            raise ValueError("No rule text given.")
 
         try:
             sigma_obj = sigma.Sigma(api=self)
             sigma_obj.from_text(rule_text)
         except ValueError:
-            logger.error(
-                'Parsing Error, unable to parse the Sigma rule',exc_info=True)
+            logger.error("Parsing Error, unable to parse the Sigma rule", exc_info=True)
 
         return sigma_obj

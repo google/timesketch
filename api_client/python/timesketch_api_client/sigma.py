@@ -19,7 +19,7 @@ import logging
 from . import resource
 from . import error
 
-logger = logging.getLogger('timesketch_api.sigma')
+logger = logging.getLogger("timesketch_api.sigma")
 
 
 class Sigma(resource.BaseResource):
@@ -31,7 +31,6 @@ class Sigma(resource.BaseResource):
         rule_uuid: The ID of the rule.
     """
 
-
     def __init__(self, api):
         """Initializes the Sigma object.
 
@@ -40,9 +39,8 @@ class Sigma(resource.BaseResource):
 
         """
         self._attr_dict = {}
-        resource_uri = 'sigma/'
-        super().__init__(
-            api=api, resource_uri=resource_uri)
+        resource_uri = "sigma/"
+        super().__init__(api=api, resource_uri=resource_uri)
 
     @property
     def attributes(self):
@@ -52,84 +50,83 @@ class Sigma(resource.BaseResource):
     def get_attribute(self, key):
         """Get a value for a given key in case it has no dedicated property"""
         if not self._attr_dict:
-            return ''
-        return self._attr_dict.get(key, '')
+            return ""
+        return self._attr_dict.get(key, "")
 
     @property
     def es_query(self):
         """Returns the ElasticSearch query."""
-        return self.get_attribute('es_query')
+        return self.get_attribute("es_query")
 
     @property
     def title(self):
         """Returns the sigma rule title."""
-        return self.get_attribute('title')
+        return self.get_attribute("title")
 
     @property
     def id(self):
         """Returns the sigma rule id."""
-        return self.get_attribute('id')
+        return self.get_attribute("id")
 
     @property
     def file_relpath(self):
         """Returns the relative filepath of the rule."""
-        return self.get_attribute('file_relpath')
+        return self.get_attribute("file_relpath")
 
     @property
     def rule_uuid(self):
         """Returns the rule id."""
-        return self.get_attribute('id')
+        return self.get_attribute("id")
 
     @property
     def file_name(self):
         """Returns the rule filename."""
-        return self.get_attribute('file_name')
+        return self.get_attribute("file_name")
 
     @property
     def description(self):
         """Returns the rule description."""
-        return self.get_attribute('description')
+        return self.get_attribute("description")
 
     @property
     def level(self):
         """Returns the rule confidence level."""
-        return self.get_attribute('level')
+        return self.get_attribute("level")
 
     @property
     def falsepositives(self):
         """Returns the rule falsepositives."""
-        return self.get_attribute('falsepositives')
+        return self.get_attribute("falsepositives")
 
     @property
     def author(self):
         """Returns the rule author."""
-        return self.get_attribute('author')
+        return self.get_attribute("author")
 
     @property
     def date(self):
         """Returns the rule date."""
-        return self.get_attribute('date')
+        return self.get_attribute("date")
 
     @property
     def modified(self):
         """Returns the rule modified date."""
-        return self.get_attribute('modified')
-
+        return self.get_attribute("modified")
 
     @property
     def logsource(self):
         """Returns the rule logsource."""
-        return self.get_attribute('logsource')
+        return self.get_attribute("logsource")
 
     @property
     def detection(self):
         """Returns the rule detection."""
-        return self.get_attribute('detection')
+        return self.get_attribute("detection")
 
     @property
     def references(self):
         """Returns the rule references."""
-        return self.get_attribute('references')
+        return self.get_attribute("references")
 
     def set_value(self, key, value):
         """Sets the value for a given key
@@ -153,13 +150,13 @@ class Sigma(resource.BaseResource):
             rule_uuid: Id of the sigma rule.
 
         """
-        self.resource_uri = f'sigma/rule/{rule_uuid}'
+        self.resource_uri = f"sigma/rule/{rule_uuid}"
 
         self.lazyload_data(refresh_cache=True)
-        objects = self.data.get('objects')
+        objects = self.data.get("objects")
         if not objects:
-            logger.error('Unable to parse rule with given text')
-            raise ValueError('No rules found.')
+            logger.error("Unable to parse rule with given text")
+            raise ValueError("No rules found.")
         rule_dict = objects[0]
         for key, value in rule_dict.items():
             self.set_value(key, value)
@@ -173,16 +170,15 @@ class Sigma(resource.BaseResource):
         Raises:
             ValueError: If no response was given
         """
-        self.resource_uri = '{0:s}/sigma/text/'.format(self.api.api_root)
-        data = {'title': 'Get_Sigma_by_text', 'content': rule_text}
+        self.resource_uri = "{0:s}/sigma/text/".format(self.api.api_root)
+        data = {"title": "Get_Sigma_by_text", "content": rule_text}
         response = self.api.session.post(self.resource_uri, json=data)
         response_dict = error.get_response_json(response, logger)
 
-        objects = response_dict.get('objects')
+        objects = response_dict.get("objects")
         if not objects:
-            logger.warning(
-                'Unable to parse rule with given text')
-            raise ValueError('No rules found.')
+            logger.warning("Unable to parse rule with given text")
+            raise ValueError("No rules found.")
 
         rule_dict = objects[0]
         for key, value in rule_dict.items():

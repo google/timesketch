@@ -27,29 +27,30 @@ class AuthViewTest(BaseTest):
 
     def test_login_view_unauthenticated(self):
         """Test the login view handler with an unauthenticated session."""
-        response = self.client.get('/login/')
+        response = self.client.get("/login/")
         self.assert200(response)
 
     def test_login_view_form_authenticated(self):
         """Test the login view handler with an authenticated session."""
         self.login()
-        response = self.client.get('/login/')
+        response = self.client.get("/login/")
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
 
     def test_login_view_sso_authenticated(self):
         """Test the login view handler with an SSO authenticated session."""
-        current_app.config['SSO_ENABLED'] = True
-        current_app.config['SSO_GROUP_ENV_VARIABLE'] = 'SSO_GROUP'
-        current_app.config['SSO_GROUP_SEPARATOR'] = ';'
-        current_app.config['SSO_GROUP_NOT_MEMBER_SIGN'] = '-'
+        current_app.config["SSO_ENABLED"] = True
+        current_app.config["SSO_GROUP_ENV_VARIABLE"] = "SSO_GROUP"
+        current_app.config["SSO_GROUP_SEPARATOR"] = ";"
+        current_app.config["SSO_GROUP_NOT_MEMBER_SIGN"] = "-"
         with self.client:
             response = self.client.get(
-                '/login/',
+                "/login/",
                 environ_base={
-                    'REMOTE_USER': 'test1',
-                    'SSO_GROUP': 'test_group1;-test_group2'
-                })
-            self.assertEqual(current_user.username, 'test1')
+                    "REMOTE_USER": "test1",
+                    "SSO_GROUP": "test_group1;-test_group2",
+                },
+            )
+            self.assertEqual(current_user.username, "test1")
             self.assertIn(self.group1, current_user.groups)
             self.assertNotIn(self.group2, current_user.groups)
             self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
@@ -57,5 +58,5 @@ class AuthViewTest(BaseTest):
     def test_logout_view(self):
         """Test the logout view handler."""
         self.login()
-        response = self.client.get('/logout/')
+        response = self.client.get("/logout/")
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)

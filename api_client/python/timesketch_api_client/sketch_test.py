@@ -26,11 +26,10 @@ from . import timeline as timeline_lib
 class SketchTest(unittest.TestCase):
     """Test Sketch object."""
 
-    @mock.patch('requests.Session', test_lib.mock_session)
+    @mock.patch("requests.Session", test_lib.mock_session)
     def setUp(self):
         """Setup test case."""
-        self.api_client = client.TimesketchApi(
-            'http://127.0.0.1', 'test', 'test')
+        self.api_client = client.TimesketchApi("http://127.0.0.1", "test", "test")
         self.sketch = self.api_client.get_sketch(1)
 
     # TODO: Add test for upload()

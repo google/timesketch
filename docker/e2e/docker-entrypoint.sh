@@ -59,7 +59,7 @@ if [ "$1" = 'timesketch' ]; then
 
   # Sleep to allow the other processes to start
   sleep 5
-  tsctl add_user --username "$TIMESKETCH_USER" --password "$TIMESKETCH_PASSWORD"
+  tsctl create-user "$TIMESKETCH_USER" --password "$TIMESKETCH_PASSWORD"
   unset TIMESKETCH_PASSWORD
 
   cat <<EOF >> /etc/timesketch/data_finder.yaml

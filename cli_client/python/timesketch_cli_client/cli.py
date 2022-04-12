@@ -38,7 +38,8 @@ class TimesketchCli(object):
         sketch_from_flag: Sketch ID if provided by flag
         config_assistant: Instance of ConfigAssistant
     """
-    def __init__(self, api_client=None, sketch_from_flag=None, conf_file=''):
+
+    def __init__(self, api_client=None, sketch_from_flag=None, conf_file=""):
         """Initialize the state object.
 
         Args:
@@ -54,7 +55,7 @@ class TimesketchCli(object):
                 if not self.api:
                     raise RequestConnectionError
             except RequestConnectionError:
-                click.echo('ERROR: Cannot connect to the Timesketch server.')
+                click.echo("ERROR: Cannot connect to the Timesketch server.")
                 sys.exit(1)
 
         self.config_assistant = timesketch_config.ConfigAssistant()
@@ -68,26 +69,25 @@ class TimesketchCli(object):
             Sketch object.
         """
         active_sketch = None
-        sketch_from_config = self.config_assistant.get_config('sketch')
+        sketch_from_config = self.config_assistant.get_config("sketch")
 
         if self.sketch_from_flag:
-            active_sketch = self.api.get_sketch(
-                sketch_id=int(self.sketch_from_flag))
+            active_sketch = self.api.get_sketch(sketch_id=int(self.sketch_from_flag))
         elif sketch_from_config:
-            active_sketch = self.api.get_sketch(
-                sketch_id=int(sketch_from_config))
+            active_sketch = self.api.get_sketch(sketch_id=int(sketch_from_config))
 
         if not active_sketch:
             click.echo(
-                'ERROR: You need to specify a sketch, either with a '
-                'flag (--sketch <SKETCH ID>) or update the config.')
+                "ERROR: You need to specify a sketch, either with a "
+                "flag (--sketch <SKETCH ID>) or update the config."
+            )
             sys.exit(1)
 
         # Make sure we have access to the sketch.
         try:
             active_sketch.name
         except KeyError:
-            click.echo('ERROR: No such sketch or you don\'t have access.')
+            click.echo("ERROR: No such sketch or you don't have access.")
             sys.exit(1)
 
         return active_sketch
@@ -99,17 +99,17 @@ class TimesketchCli(object):
         Returns:
             Output format as a string.
         """
-        output_format = self.config_assistant.get_config('output_format')
+        output_format = self.config_assistant.get_config("output_format")
         if not output_format:
-            self.config_assistant.set_config('output', DEFAULT_OUTPUT_FORMAT)
+            self.config_assistant.set_config("output", DEFAULT_OUTPUT_FORMAT)
             self.config_assistant.save_config()
             output_format = DEFAULT_OUTPUT_FORMAT
         return output_format
 
 
-@click.group(context_settings={'help_option_names': ['-h', '--help']})
-@click.version_option(version=get_version(), prog_name='Timesketch CLI')
-@click.option('--sketch', type=int, default=None, help='Sketch to work in.')
+@click.group(context_settings={"help_option_names": ["-h", "--help"]})
+@click.version_option(version=get_version(), prog_name="Timesketch CLI")
+@click.option("--sketch", type=int, default=None, help="Sketch to work in.")
 @click.pass_context
 def cli(ctx, sketch):
     """Timesketch CLI client.
@@ -139,5 +139,5 @@ cli.add_command(importer.importer)
 
 
 # pylint: disable=no-value-for-parameter
-if __name__ == '__main__':
+if __name__ == "__main__":
     cli()
