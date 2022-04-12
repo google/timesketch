@@ -94,4 +94,4 @@ def list_analyzers(ctx):
     """
     sketch = ctx.obj.sketch
     for analyzer in sketch.list_available_analyzers():
-        click.echo(analyzer)
+        click.echo(analyzer.get("name"))
