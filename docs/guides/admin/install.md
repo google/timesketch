@@ -69,7 +69,7 @@ sudo docker-compose up -d
 ### Create the first user
 
 ```shell
-sudo docker-compose exec timesketch-web tsctl add_user --username <USERNAME>
+sudo docker-compose exec timesketch-web tsctl create-user <USERNAME>
 ```
 
 ## 4. Enable TLS (optional)
@@ -134,8 +134,8 @@ nginx:
 Restart the system:
 
 ```shell
-docker-compose down
-docker-compose up -d
+sudo docker-compose down
+sudo docker-compose up -d
 ```
 
 Congratulations, your Timesketch system is operational and ready to use.
