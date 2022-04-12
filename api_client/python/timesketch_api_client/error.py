@@ -32,12 +32,12 @@ def _get_message(response):
         str: a string with the message field extracted from the
             response.text.
     """
-    soup = bs4.BeautifulSoup(response.text, features='html.parser')
+    soup = bs4.BeautifulSoup(response.text, features="html.parser")
     if soup.p:
         return soup.p.string
 
     if isinstance(response.text, bytes):
-        response_text = response.text.decode('utf-8')
+        response_text = response.text.decode("utf-8")
     else:
         response_text = response.text
 
@@ -49,7 +49,7 @@ def _get_message(response):
     if not isinstance(response_dict, dict):
         return str(response_dict)
 
-    return response_dict.get('message', str(response_dict))
+    return response_dict.get("message", str(response_dict))
 
 
 def _get_reason(response):
@@ -65,7 +65,7 @@ def _get_reason(response):
     """
     reason = response.reason
     if isinstance(reason, bytes):
-        return reason.decode('utf-8')
+        return reason.decode("utf-8")
 
     return reason
 
@@ -86,14 +86,16 @@ def get_response_json(response, logger):
     status = response.status_code in definitions.HTTP_STATUS_CODE_20X
     if not status:
         reason = _get_reason(response)
-        logger.warning('Failed response: [{0:d}] {2:s} {1:s}'.format(
-            response.status_code, reason, _get_message(response)))
+        logger.warning(
+            "Failed response: [{0:d}] {2:s} {1:s}".format(
+                response.status_code, reason, _get_message(response)
+            )
+        )
 
     try:
         return response.json()
     except json.JSONDecodeError as e:
-        logger.error(
-            'Unable to decode response: {0!s}'.format(e), exc_info=True)
+        logger.error("Unable to decode response: {0!s}".format(e), exc_info=True)
 
     return {}
 
@@ -101,11 +103,14 @@ def get_response_json(response, logger):
 def error_message(response, message=None, error=RuntimeError):
     """Raise an error using error message extracted from response."""
     if not message:
-        message = 'Unknown error, with error: '
+        message = "Unknown error, with error: "
     text = _get_message(response)
 
-    raise error('{0:s}, with error [{1:d}] {2:s} {3:s}'.format(
-        message, response.status_code, _get_reason(response), text))
+    raise error(
+        "{0:s}, with error [{1:d}] {2:s} {3:s}".format(
+            message, response.status_code, _get_reason(response), text
+        )
+    )
 
 
 def check_return_status(response, logger):
@@ -125,8 +130,11 @@ def check_return_status(response, logger):
     if status:
         return status
 
-    logger.warning('Failed response: [{0:d}] {1:s}'.format(
-        response.status_code, _get_message(response)))
+    logger.warning(
+        "Failed response: [{0:d}] {1:s}".format(
+            response.status_code, _get_message(response)
+        )
+    )
     return status
 
 

@@ -56,8 +56,8 @@ class ViewListResource(resources.ResourceMixin, Resource):
 
         query_filter_dict = form.filter.data
         # Stripping potential pagination from views before saving it.
-        if 'from' in query_filter_dict:
-            del query_filter_dict['from']
+        if "from" in query_filter_dict:
+            del query_filter_dict["from"]
         query_filter = json.dumps(query_filter_dict, ensure_ascii=False)
         query_dsl = json.dumps(form.dsl.data, ensure_ascii=False)
 
@@ -85,14 +85,14 @@ class ViewListResource(resources.ResourceMixin, Resource):
                 query_filter = query_filter[0]
 
         if not view_name:
-            abort(HTTP_STATUS_CODE_BAD_REQUEST, 'View name is missing.')
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, "View name is missing.")
 
         # Create a new search template based on this view (only if requested by
         # the user).
         if form.new_searchtemplate.data:
             query_filter_dict = json.loads(query_filter)
-            if query_filter_dict.get('indices', None):
-                query_filter_dict['indices'] = '_all'
+            if query_filter_dict.get("indices", None):
+                query_filter_dict["indices"] = "_all"
 
             query_filter = json.dumps(query_filter_dict, ensure_ascii=False)
 
@@ -101,7 +101,8 @@ class ViewListResource(resources.ResourceMixin, Resource):
                 user=current_user,
                 query_string=query_string,
                 query_filter=query_filter,
-                query_dsl=query_dsl)
+                query_dsl=query_dsl,
+            )
             db_session.add(searchtemplate)
             db_session.commit()
 
@@ -113,7 +114,8 @@ class ViewListResource(resources.ResourceMixin, Resource):
             query_string=query_string,
             query_filter=query_filter,
             query_dsl=query_dsl,
-            searchtemplate=searchtemplate)
+            searchtemplate=searchtemplate,
+        )
         db_session.add(view)
         db_session.commit()
 
@@ -131,11 +133,12 @@ class ViewListResource(resources.ResourceMixin, Resource):
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
+        if not sketch.has_permission(current_user, "read"):
             abort(
-                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
-        if not sketch.has_permission(current_user, 'read'):
-            abort(HTTP_STATUS_CODE_FORBIDDEN,
-                  'User does not have read access controls on sketch.')
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "User does not have read access controls on sketch.",
+            )
         return self.to_json(sketch.get_named_views)
 
     @login_required
@@ -152,16 +155,18 @@ class ViewListResource(resources.ResourceMixin, Resource):
         if not form.validate_on_submit():
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'Unable to save view, not able to validate form data.')
+                "Unable to save view, not able to validate form data.",
+            )
 
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
-            abort(
-                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
-        if not sketch.has_permission(current_user, 'write'):
-            abort(HTTP_STATUS_CODE_FORBIDDEN,
-                  'User does not have write access controls on sketch.')
+        if not sketch.has_permission(current_user, "write"):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "User does not have write access controls on sketch.",
+            )
 
         view = self.create_view_from_form(sketch, form)
 
@@ -187,32 +192,33 @@ class ViewResource(resources.ResourceMixin, Resource):
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
-            abort(
-                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
         view = View.query.get(view_id)
 
-        if not sketch.has_permission(current_user, 'read'):
-            abort(HTTP_STATUS_CODE_FORBIDDEN,
-                  'User does not have read access controls on sketch.')
+        if not sketch.has_permission(current_user, "read"):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "User does not have read access controls on sketch.",
+            )
 
         # Check that this view belongs to the sketch
         if view.sketch_id != sketch.id:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                'Sketch ID ({0:d}) does not match with the sketch ID '
-                'that is defined in the view ({1:d})'.format(
-                    view.sketch_id, sketch.id))
+                "Sketch ID ({0:d}) does not match with the sketch ID "
+                "that is defined in the view ({1:d})".format(view.sketch_id, sketch.id),
+            )
 
         # If this is a user state view, check that it
         # belongs to the current_user
-        if view.name == '' and view.user != current_user:
+        if view.name == "" and view.user != current_user:
             abort(
                 HTTP_STATUS_CODE_FORBIDDEN,
-                'Unable to view a state view that belongs to a '
-                'different user.')
+                "Unable to view a state view that belongs to a " "different user.",
+            )
 
         # Check if view has been deleted
-        if view.get_status.status == 'deleted':
+        if view.get_status.status == "deleted":
             meta = dict(deleted=True, name=view.name)
             schema = dict(meta=meta, objects=[])
             return jsonify(schema)
@@ -234,30 +240,32 @@ class ViewResource(resources.ResourceMixin, Resource):
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
-            abort(
-                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
-        if not sketch.has_permission(current_user, 'write'):
-            abort(HTTP_STATUS_CODE_FORBIDDEN,
-                  'User does not have write access controls on sketch.')
+        if not sketch.has_permission(current_user, "write"):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "User does not have write access controls on sketch.",
+            )
         view = View.query.get(view_id)
         if not view:
-            abort(
-                HTTP_STATUS_CODE_NOT_FOUND, 'No view found with this ID.')
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No view found with this ID.")
 
         # Check that this view belongs to the sketch
         if view.sketch_id != sketch.id:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                'The view does not belong to the sketch ({0:d} vs '
-                '{1:d})'.format(view.sketch_id, sketch.id))
+                "The view does not belong to the sketch ({0:d} vs "
+                "{1:d})".format(view.sketch_id, sketch.id),
+            )
 
-        if not sketch.has_permission(user=current_user, permission='write'):
+        if not sketch.has_permission(user=current_user, permission="write"):
             abort(
                 HTTP_STATUS_CODE_FORBIDDEN,
-                'User does not have write permission on sketch.')
+                "User does not have write permission on sketch.",
+            )
 
-        view.set_status(status='deleted')
+        view.set_status(status="deleted")
 
         # Update the last activity of a sketch.
         utils.update_sketch_last_activity(sketch)
@@ -279,24 +287,26 @@ class ViewResource(resources.ResourceMixin, Resource):
         if not form.validate_on_submit():
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'Unable to update view, not able to validate form data')
+                "Unable to update view, not able to validate form data",
+            )
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
+        if not sketch.has_permission(current_user, "write"):
             abort(
-                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
-        if not sketch.has_permission(current_user, 'write'):
-            abort(HTTP_STATUS_CODE_FORBIDDEN,
-                  'User does not have write access controls on sketch.')
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "User does not have write access controls on sketch.",
+            )
 
         view = View.query.get(view_id)
         if not view:
-            abort(
-                HTTP_STATUS_CODE_NOT_FOUND, 'No view found with this ID.')
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No view found with this ID.")
 
         if view.sketch.id != sketch.id:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'Unable to update view, view not attached to sketch.')
+                "Unable to update view, view not attached to sketch.",
+            )
 
         view.query_string = form.query.data
         description = form.description.data
@@ -306,8 +316,8 @@ class ViewResource(resources.ResourceMixin, Resource):
         query_filter = form.filter.data
 
         # Stripping potential pagination from views before saving it.
-        if 'from' in query_filter:
-            del query_filter['from']
+        if "from" in query_filter:
+            del query_filter["from"]
 
         view.query_filter = json.dumps(query_filter, ensure_ascii=False)
 
@@ -321,7 +331,7 @@ class ViewResource(resources.ResourceMixin, Resource):
         view.sketch = sketch
 
         if form.dsl.data:
-            view.query_string = ''
+            view.query_string = ""
 
         db_session.add(view)
         db_session.commit()

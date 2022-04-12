@@ -43,32 +43,31 @@ from timesketch.models.annotations import GenericAttributeMixin
 from timesketch.lib.utils import random_color
 
 
-class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
-             BaseModel):
+class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, BaseModel):
     """Implements the Sketch model.
 
     A Sketch is the collaborative entity in Timesketch. It contains one or more
     timelines that can be grouped and queried on.
     """
+
     name = Column(Unicode(255))
     description = Column(UnicodeText())
-    user_id = Column(Integer, ForeignKey('user.id'))
-    timelines = relationship('Timeline', backref='sketch', lazy='select')
-    views = relationship('View', backref='sketch', lazy='select')
-    events = relationship('Event', backref='sketch', lazy='select')
-    stories = relationship('Story', backref='sketch', lazy='select')
-    aggregations = relationship('Aggregation', backref='sketch', lazy='select')
-    attributes = relationship('Attribute', backref='sketch', lazy='select')
-    graphs = relationship('Graph', backref='sketch', lazy='select')
-    graphcaches = relationship('GraphCache', backref='sketch', lazy='select')
+    user_id = Column(Integer, ForeignKey("user.id"))
+    timelines = relationship("Timeline", backref="sketch", lazy="select")
+    views = relationship("View", backref="sketch", lazy="select")
+    events = relationship("Event", backref="sketch", lazy="select")
+    stories = relationship("Story", backref="sketch", lazy="select")
+    aggregations = relationship("Aggregation", backref="sketch", lazy="select")
+    attributes = relationship("Attribute", backref="sketch", lazy="select")
+    graphs = relationship("Graph", backref="sketch", lazy="select")
+    graphcaches = relationship("GraphCache", backref="sketch", lazy="select")
     aggregationgroups = relationship(
-        'AggregationGroup', backref='sketch', lazy='select')
-    analysis = relationship('Analysis', backref='sketch', lazy='select')
-    analysissessions = relationship(
-        'AnalysisSession', backref='sketch', lazy='select')
-    searchhistories = relationship(
-        'SearchHistory', backref='sketch', lazy='dynamic')
-    scenarios = relationship('Scenario', backref='sketch', lazy='dynamic')
+        "AggregationGroup", backref="sketch", lazy="select"
+    )
+    analysis = relationship("Analysis", backref="sketch", lazy="select")
+    analysissessions = relationship("AnalysisSession", backref="sketch", lazy="select")
+    searchhistories = relationship("SearchHistory", backref="sketch", lazy="dynamic")
+    scenarios = relationship("Scenario", backref="sketch", lazy="dynamic")
 
     def __init__(self, name, description, user):
         """Initialize the Sketch object.
@@ -91,8 +90,9 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         are not part of a group.
         """
         return [
-            agg for agg in self.aggregations
-            if agg.name != '' and not agg.aggregationgroup
+            agg
+            for agg in self.aggregations
+            if agg.name != "" and not agg.aggregationgroup
         ]
 
     @property
@@ -103,8 +103,9 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         are used as user state views and should not be visible in the UI.
         """
         views = [
-            view for view in self.views
-            if view.get_status.status != 'deleted' and view.name != ''
+            view
+            for view in self.views
+            if view.get_status.status != "deleted" and view.name != ""
         ]
         return views
 
@@ -117,9 +118,8 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         Returns:
             Full URL to the sketch as string.
         """
-        url_host = current_app.config.get(
-            'EXTERNAL_HOST_URL', 'https://localhost')
-        url_path = url_for('sketch_views.overview', sketch_id=self.id)
+        url_host = current_app.config.get("EXTERNAL_HOST_URL", "https://localhost")
+        url_path = url_for("sketch_views.overview", sketch_id=self.id)
         return url_host + url_path
 
     def get_view_urls(self):
@@ -131,10 +131,10 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
 
         views = {}
         for view in self.get_named_views:
-            url_host = current_app.config.get(
-                'EXTERNAL_HOST_URL', 'https://localhost')
+            url_host = current_app.config.get("EXTERNAL_HOST_URL", "https://localhost")
             url_path = url_for(
-                'sketch_views.explore', sketch_id=self.id, view_id=view.id)
+                "sketch_views.explore", sketch_id=self.id, view_id=view.id
+            )
             url = url_host + url_path
             views[url] = view.name
         return views
@@ -150,8 +150,7 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         for timeline in self.timelines:
             timeline_status = timeline.get_status.status
             index_status = timeline.searchindex.get_status.status
-            if (timeline_status or index_status) in (
-                    'processing', 'fail', 'archived'):
+            if (timeline_status or index_status) in ("processing", "fail", "archived"):
                 continue
             _timelines.append(timeline)
         return _timelines
@@ -165,7 +164,7 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         active_sessions = []
         for session in self.analysissessions:
             for analysis in session.analyses:
-                if analysis.get_status.status in ('PENDING', 'STARTED'):
+                if analysis.get_status.status in ("PENDING", "STARTED"):
                     active_sessions.append(session)
                     # Break early on first running analysis as this is enough
                     # to mark the session as active.
@@ -186,30 +185,29 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         Returns:
             view: Instance of timesketch.models.sketch.View
         """
-        view = View.query.filter(View.user == user, View.name == '',
-                                 View.sketch_id == self.id).order_by(
-                                     View.created_at.desc()).first()
+        view = (
+            View.query.filter(
+                View.user == user, View.name == "", View.sketch_id == self.id
+            )
+            .order_by(View.created_at.desc())
+            .first()
+        )
         return view
 
 
 class Timeline(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     """Implements the Timeline model."""
+
     name = Column(Unicode(255))
     description = Column(UnicodeText())
     color = Column(Unicode(6))
-    user_id = Column(Integer, ForeignKey('user.id'))
-    searchindex_id = Column(Integer, ForeignKey('searchindex.id'))
-    sketch_id = Column(Integer, ForeignKey('sketch.id'))
-    analysis = relationship('Analysis', backref='timeline', lazy='select')
-    datasources = relationship('DataSource', backref='timeline', lazy='select')
+    user_id = Column(Integer, ForeignKey("user.id"))
+    searchindex_id = Column(Integer, ForeignKey("searchindex.id"))
+    sketch_id = Column(Integer, ForeignKey("sketch.id"))
+    analysis = relationship("Analysis", backref="timeline", lazy="select")
+    datasources = relationship("DataSource", backref="timeline", lazy="select")
 
-    def __init__(self,
-                 name,
-                 user,
-                 sketch,
-                 searchindex,
-                 color=None,
-                 description=None):
+    def __init__(self, name, user, sketch, searchindex, color=None, description=None):
         """Initialize the Timeline object.
 
         Args:
@@ -234,16 +232,15 @@ class Timeline(LabelMixin, StatusMixin, CommentMixin, BaseModel):
         self.searchindex = searchindex
 
 
-class SearchIndex(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
-                  BaseModel):
+class SearchIndex(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, BaseModel):
     """Implements the SearchIndex model."""
+
     name = Column(Unicode(255))
     description = Column(UnicodeText())
     index_name = Column(Unicode(255))
-    user_id = Column(Integer, ForeignKey('user.id'))
-    timelines = relationship(
-        'Timeline', backref='searchindex', lazy='dynamic')
-    events = relationship('Event', backref='searchindex', lazy='dynamic')
+    user_id = Column(Integer, ForeignKey("user.id"))
+    timelines = relationship("Timeline", backref="searchindex", lazy="dynamic")
+    events = relationship("Event", backref="searchindex", lazy="dynamic")
 
     def __init__(self, name, description, index_name, user):
         """Initialize the SearchIndex object.
@@ -261,30 +258,31 @@ class SearchIndex(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         self.user = user
 
 
-class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
-           BaseModel):
+class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, BaseModel):
     """Implements the View model."""
+
     name = Column(Unicode(255))
     description = Column(UnicodeText())
     query_string = Column(UnicodeText())
     query_filter = Column(UnicodeText())
     query_dsl = Column(UnicodeText())
-    user_id = Column(Integer, ForeignKey('user.id'))
-    sketch_id = Column(Integer, ForeignKey('sketch.id'))
-    searchtemplate_id = Column(Integer, ForeignKey('searchtemplate.id'))
-    aggregations = relationship('Aggregation', backref='view', lazy='select')
-    aggregationgroups = relationship(
-        'AggregationGroup', backref='view', lazy='select')
+    user_id = Column(Integer, ForeignKey("user.id"))
+    sketch_id = Column(Integer, ForeignKey("sketch.id"))
+    searchtemplate_id = Column(Integer, ForeignKey("searchtemplate.id"))
+    aggregations = relationship("Aggregation", backref="view", lazy="select")
+    aggregationgroups = relationship("AggregationGroup", backref="view", lazy="select")
 
-    def __init__(self,
-                 name,
-                 sketch,
-                 user,
-                 description=None,
-                 searchtemplate=None,
-                 query_string=None,
-                 query_filter=None,
-                 query_dsl=None):
+    def __init__(
+        self,
+        name,
+        sketch,
+        user,
+        description=None,
+        searchtemplate=None,
+        query_string=None,
+        query_filter=None,
+        query_dsl=None,
+    ):
         """Initialize the View object.
 
         Args:
@@ -322,16 +320,16 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
 
         """
         DEFAULT_FROM = 0
-        DEFAULT_SIZE = 40 # Number of resulting documents to return
+        DEFAULT_SIZE = 40  # Number of resulting documents to return
         DEFAULT_LIMIT = DEFAULT_SIZE  # Number of resulting documents to return
         DEFAULT_VALUES = {
-            'from': DEFAULT_FROM,
-            'size': DEFAULT_SIZE,
-            'terminate_after': DEFAULT_LIMIT,
-            'indices': [],
-            'exclude': [],
-            'order': 'asc',
-            'chips': []
+            "from": DEFAULT_FROM,
+            "size": DEFAULT_SIZE,
+            "terminate_after": DEFAULT_LIMIT,
+            "indices": [],
+            "exclude": [],
+            "order": "asc",
+            "chips": [],
         }
         # If not provided, get the saved filter from the view
         if not query_filter:
@@ -344,32 +342,35 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
             filter_dict = query_filter
 
         # Get all missing attributes and set them to their default value
-        missing_attributes = list(
-            set(DEFAULT_VALUES.keys()) - set(filter_dict.keys()))
+        missing_attributes = list(set(DEFAULT_VALUES.keys()) - set(filter_dict.keys()))
         for key in missing_attributes:
             filter_dict[key] = DEFAULT_VALUES[key]
 
         return json.dumps(filter_dict, ensure_ascii=False)
 
 
-class SearchTemplate(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
-                     BaseModel):
+class SearchTemplate(
+    AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, BaseModel
+):
     """Implements the Search Template model."""
+
     name = Column(Unicode(255))
     description = Column(UnicodeText())
     query_string = Column(UnicodeText())
     query_filter = Column(UnicodeText())
     query_dsl = Column(UnicodeText())
-    user_id = Column(Integer, ForeignKey('user.id'))
-    views = relationship('View', backref='searchtemplate', lazy='select')
+    user_id = Column(Integer, ForeignKey("user.id"))
+    views = relationship("View", backref="searchtemplate", lazy="select")
 
-    def __init__(self,
-                 name,
-                 user,
-                 description=None,
-                 query_string=None,
-                 query_filter=None,
-                 query_dsl=None):
+    def __init__(
+        self,
+        name,
+        user,
+        description=None,
+        query_string=None,
+        query_filter=None,
+        query_dsl=None,
+    ):
         """Initialize the Search Template object.
 
         Args:
@@ -387,11 +388,11 @@ class SearchTemplate(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         self.query_string = query_string
         if not query_filter:
             filter_template = {
-                'exclude': [],
-                'indices': '_all',
-                'terminate_after': 40,
-                'order': 'asc',
-                'size': '40'
+                "exclude": [],
+                "indices": "_all",
+                "terminate_after": 40,
+                "order": "asc",
+                "size": "40",
             }
             query_filter = json.dumps(filter_template, ensure_ascii=False)
         self.query_filter = query_filter
@@ -400,8 +401,9 @@ class SearchTemplate(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
 
 class Event(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     """Implements the Event model."""
-    sketch_id = Column(Integer, ForeignKey('sketch.id'))
-    searchindex_id = Column(Integer, ForeignKey('searchindex.id'))
+
+    sketch_id = Column(Integer, ForeignKey("sketch.id"))
+    searchindex_id = Column(Integer, ForeignKey("searchindex.id"))
     document_id = Column(Unicode(255))
 
     def __init__(self, sketch, searchindex, document_id):
@@ -419,13 +421,13 @@ class Event(LabelMixin, StatusMixin, CommentMixin, BaseModel):
         self.document_id = document_id
 
 
-class Story(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
-            BaseModel):
+class Story(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, BaseModel):
     """Implements the Story model."""
+
     title = Column(Unicode(255))
     content = Column(UnicodeText())
-    user_id = Column(Integer, ForeignKey('user.id'))
-    sketch_id = Column(Integer, ForeignKey('sketch.id'))
+    user_id = Column(Integer, ForeignKey("user.id"))
+    sketch_id = Column(Integer, ForeignKey("sketch.id"))
 
     def __init__(self, title, content, sketch, user):
         """Initialize the Story object.
@@ -443,21 +445,31 @@ class Story(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         self.user = user
 
 
-class Aggregation(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
-                  BaseModel):
+class Aggregation(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, BaseModel):
     """Implements the Aggregation model."""
+
     name = Column(Unicode(255))
     description = Column(UnicodeText())
     agg_type = Column(Unicode(255))
     parameters = Column(UnicodeText())
     chart_type = Column(Unicode(255))
-    user_id = Column(Integer, ForeignKey('user.id'))
-    sketch_id = Column(Integer, ForeignKey('sketch.id'))
-    view_id = Column(Integer, ForeignKey('view.id'))
-    aggregationgroup_id = Column(Integer, ForeignKey('aggregationgroup.id'))
+    user_id = Column(Integer, ForeignKey("user.id"))
+    sketch_id = Column(Integer, ForeignKey("sketch.id"))
+    view_id = Column(Integer, ForeignKey("view.id"))
+    aggregationgroup_id = Column(Integer, ForeignKey("aggregationgroup.id"))
 
-    def __init__(self, name, description, agg_type, parameters, chart_type,
-                 user, sketch, view=None, aggregationgroup=None):
+    def __init__(
+        self,
+        name,
+        description,
+        agg_type,
+        parameters,
+        chart_type,
+        user,
+        sketch,
+        view=None,
+        aggregationgroup=None,
+    ):
         """Initialize the Aggregation object.
 
         Args:
@@ -485,21 +497,32 @@ class Aggregation(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
 
 
 class AggregationGroup(
-        AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, BaseModel):
+    AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, BaseModel
+):
     """Implements the Aggregation Group model."""
+
     name = Column(Unicode(255))
     description = Column(UnicodeText())
     aggregations = relationship(
-        'Aggregation', backref='aggregationgroup', lazy='select')
+        "Aggregation", backref="aggregationgroup", lazy="select"
+    )
     parameters = Column(UnicodeText())
     orientation = Column(Unicode(40))
-    user_id = Column(Integer, ForeignKey('user.id'))
-    sketch_id = Column(Integer, ForeignKey('sketch.id'))
-    view_id = Column(Integer, ForeignKey('view.id'))
+    user_id = Column(Integer, ForeignKey("user.id"))
+    sketch_id = Column(Integer, ForeignKey("sketch.id"))
+    view_id = Column(Integer, ForeignKey("view.id"))
 
     def __init__(
-            self, name, description, user, sketch, aggregations=None,
-            parameters='', orientation='', view=None):
+        self,
+        name,
+        description,
+        user,
+        sketch,
+        aggregations=None,
+        parameters="",
+        orientation="",
+        view=None,
+    ):
         """Initialize the AggregationGroup object.
 
         Args:
@@ -526,20 +549,31 @@ class AggregationGroup(
 
 class Analysis(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     """Implements the analysis model."""
+
     name = Column(Unicode(255))
     description = Column(UnicodeText())
     analyzer_name = Column(Unicode(255))
     parameters = Column(UnicodeText())
     result = Column(UnicodeText())
     log = Column(UnicodeText())
-    analysissession_id = Column(Integer, ForeignKey('analysissession.id'))
-    user_id = Column(Integer, ForeignKey('user.id'))
-    sketch_id = Column(Integer, ForeignKey('sketch.id'))
-    timeline_id = Column(Integer, ForeignKey('timeline.id'))
-    searchindex_id = Column(Integer, ForeignKey('searchindex.id'))
+    analysissession_id = Column(Integer, ForeignKey("analysissession.id"))
+    user_id = Column(Integer, ForeignKey("user.id"))
+    sketch_id = Column(Integer, ForeignKey("sketch.id"))
+    timeline_id = Column(Integer, ForeignKey("timeline.id"))
+    searchindex_id = Column(Integer, ForeignKey("searchindex.id"))
 
-    def __init__(self, name, description, analyzer_name, parameters, user,
-                 sketch, timeline=None, searchindex=None, result=None):
+    def __init__(
+        self,
+        name,
+        description,
+        analyzer_name,
+        parameters,
+        user,
+        sketch,
+        timeline=None,
+        searchindex=None,
+        result=None,
+    ):
         """Initialize the Analysis object.
 
         Args:
@@ -563,15 +597,15 @@ class Analysis(LabelMixin, StatusMixin, CommentMixin, BaseModel):
         self.timeline = timeline
         self.searchindex = searchindex
         self.result = result
-        self.log = ''
+        self.log = ""
 
 
 class AnalysisSession(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     """Implements the analysis session model."""
-    user_id = Column(Integer, ForeignKey('user.id'))
-    sketch_id = Column(Integer, ForeignKey('sketch.id'))
-    analyses = relationship(
-        'Analysis', backref='analysissession', lazy='select')
+
+    user_id = Column(Integer, ForeignKey("user.id"))
+    sketch_id = Column(Integer, ForeignKey("sketch.id"))
+    analyses = relationship("Analysis", backref="analysissession", lazy="select")
 
     def __init__(self, user, sketch):
         """Initialize the AnalysisSession object.
@@ -587,12 +621,12 @@ class AnalysisSession(LabelMixin, StatusMixin, CommentMixin, BaseModel):
 
 class Attribute(BaseModel):
     """Implements the attribute model."""
-    user_id = Column(Integer, ForeignKey('user.id'))
-    sketch_id = Column(Integer, ForeignKey('sketch.id'))
+
+    user_id = Column(Integer, ForeignKey("user.id"))
+    sketch_id = Column(Integer, ForeignKey("sketch.id"))
     name = Column(UnicodeText())
     ontology = Column(UnicodeText())
-    values = relationship(
-        'AttributeValue', backref='attribute', lazy='select')
+    values = relationship("AttributeValue", backref="attribute", lazy="select")
 
     def __init__(self, user, sketch, name, ontology):
         """Initialize the Attribute object.
@@ -613,12 +647,12 @@ class Attribute(BaseModel):
 
 class AttributeValue(BaseModel):
     """Implements the attribute value model."""
-    user_id = Column(Integer, ForeignKey('user.id'))
-    attribute_id = Column(Integer, ForeignKey('attribute.id'))
+
+    user_id = Column(Integer, ForeignKey("user.id"))
+    attribute_id = Column(Integer, ForeignKey("attribute.id"))
     value = Column(UnicodeText())
 
-    def __init__(
-            self, user, attribute, value):
+    def __init__(self, user, attribute, value):
         """Initialize the Attribute value object.
 
         Args:
@@ -636,8 +670,9 @@ class AttributeValue(BaseModel):
 
 class Graph(LabelMixin, CommentMixin, BaseModel):
     """Implements the graph model."""
-    user_id = Column(Integer, ForeignKey('user.id'))
-    sketch_id = Column(Integer, ForeignKey('sketch.id'))
+
+    user_id = Column(Integer, ForeignKey("user.id"))
+    sketch_id = Column(Integer, ForeignKey("sketch.id"))
     name = Column(UnicodeText())
     description = Column(UnicodeText())
     graph_config = Column(UnicodeText())
@@ -646,9 +681,18 @@ class Graph(LabelMixin, CommentMixin, BaseModel):
     num_nodes = Column(Integer)
     num_edges = Column(Integer)
 
-    def __init__(self, user, sketch, name, description=None, graph_config=None,
-                 graph_elements=None, graph_thumbnail=None, num_nodes=None,
-                 num_edges=None):
+    def __init__(
+        self,
+        user,
+        sketch,
+        name,
+        description=None,
+        graph_config=None,
+        graph_elements=None,
+        graph_thumbnail=None,
+        num_nodes=None,
+        num_edges=None,
+    ):
         """Initialize the Graph object.
 
         Args:
@@ -676,15 +720,23 @@ class Graph(LabelMixin, CommentMixin, BaseModel):
 
 class GraphCache(BaseModel):
     """Implements the graph cache model."""
-    sketch_id = Column(Integer, ForeignKey('sketch.id'))
+
+    sketch_id = Column(Integer, ForeignKey("sketch.id"))
     graph_plugin = Column(UnicodeText())
     graph_config = Column(UnicodeText())
     graph_elements = Column(UnicodeText())
     num_nodes = Column(Integer)
     num_edges = Column(Integer)
 
-    def __init__(self, sketch, graph_plugin=None, graph_config=None,
-                 graph_elements=None, num_nodes=None, num_edges=None):
+    def __init__(
+        self,
+        sketch,
+        graph_plugin=None,
+        graph_config=None,
+        graph_elements=None,
+        num_nodes=None,
+        num_edges=None,
+    ):
         """Initialize the GraphCache object.
 
         Args:
@@ -706,8 +758,9 @@ class GraphCache(BaseModel):
 
 class DataSource(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     """Implements the datasource model."""
-    timeline_id = Column(Integer, ForeignKey('timeline.id'))
-    user_id = Column(Integer, ForeignKey('user.id'))
+
+    timeline_id = Column(Integer, ForeignKey("timeline.id"))
+    user_id = Column(Integer, ForeignKey("user.id"))
     provider = Column(UnicodeText())
     context = Column(UnicodeText())
     file_on_disk = Column(UnicodeText())
@@ -716,8 +769,18 @@ class DataSource(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     data_label = Column(UnicodeText())
     error_message = Column(UnicodeText())
 
-    def __init__(self, timeline, user, provider, context, file_on_disk,
-                 file_size, original_filename, data_label, error_message=''):
+    def __init__(
+        self,
+        timeline,
+        user,
+        provider,
+        context,
+        file_on_disk,
+        file_size,
+        original_filename,
+        data_label,
+        error_message="",
+    ):
         """Initialize the DataSource object.
 
         Args:
@@ -746,37 +809,47 @@ class DataSource(LabelMixin, StatusMixin, CommentMixin, BaseModel):
 
 # Association table for the many-to-many relationship between SearchHistory
 # and Event.
-association_table = Table('searchhistory_event', BaseModel.metadata,
-    Column('searchhistory_id', Integer, ForeignKey('searchhistory.id')),
-    Column('event_id', Integer, ForeignKey('event.id'))
+association_table = Table(
+    "searchhistory_event",
+    BaseModel.metadata,
+    Column("searchhistory_id", Integer, ForeignKey("searchhistory.id")),
+    Column("event_id", Integer, ForeignKey("event.id")),
 )
 
 
 class SearchHistory(LabelMixin, BaseModel):
     """Implements the SearchHistory model."""
+
     id = Column(Integer, primary_key=True)
     parent_id = Column(Integer, ForeignKey(id))
-    sketch_id = Column(Integer, ForeignKey('sketch.id'))
-    user_id = Column(Integer, ForeignKey('user.id'))
+    sketch_id = Column(Integer, ForeignKey("sketch.id"))
+    user_id = Column(Integer, ForeignKey("user.id"))
     description = Column(UnicodeText())
     query_string = Column(UnicodeText())
     query_filter = Column(UnicodeText())
     query_dsl = Column(UnicodeText())
     query_result_count = Column(BigInteger())
     query_time = Column(BigInteger())
-    events = relationship('Event', secondary=association_table)
+    events = relationship("Event", secondary=association_table)
     children = relationship(
-        'SearchHistory',
+        "SearchHistory",
         # Cascade deletions
-        cascade='all, delete-orphan',
-        backref=backref('parent', remote_side=id),
-        collection_class=attribute_mapped_collection('id'),
+        cascade="all, delete-orphan",
+        backref=backref("parent", remote_side=id),
+        collection_class=attribute_mapped_collection("id"),
     )
 
     def __init__(
-        self, user, sketch, description=None, query_string=None,
-        query_filter=None, query_dsl=None, parent=None):
-        """"Initialize the SearchHistory object
+        self,
+        user,
+        sketch,
+        description=None,
+        query_string=None,
+        query_filter=None,
+        query_dsl=None,
+        parent=None,
+    ):
+        """ "Initialize the SearchHistory object
 
         Args:
             user (User): The user who owns the search history.
@@ -797,17 +870,17 @@ class SearchHistory(LabelMixin, BaseModel):
 
     @staticmethod
     def build_node_dict(node_dict, node):
-        node_dict['id'] = node.id
-        node_dict['description'] = node.description
-        node_dict['query_result_count'] = node.query_result_count
-        node_dict['query_time'] = node.query_time
-        node_dict['labels'] = node.get_labels
-        node_dict['created_at'] = node.created_at
-        node_dict['parent'] = node.parent_id
-        node_dict['query_string'] = node.query_string
-        node_dict['query_filter'] = node.query_filter
-        node_dict['query_dsl'] = node.query_dsl
-        node_dict['children'] = []
+        node_dict["id"] = node.id
+        node_dict["description"] = node.description
+        node_dict["query_result_count"] = node.query_result_count
+        node_dict["query_time"] = node.query_time
+        node_dict["labels"] = node.get_labels
+        node_dict["created_at"] = node.created_at
+        node_dict["parent"] = node.parent_id
+        node_dict["query_string"] = node.query_string
+        node_dict["query_filter"] = node.query_filter
+        node_dict["query_dsl"] = node.query_dsl
+        node_dict["children"] = []
         return node_dict
 
     def build_tree(self, node, node_dict, recurse=True):
@@ -822,7 +895,7 @@ class SearchHistory(LabelMixin, BaseModel):
             Dictionary with a SearchHistory tree.
         """
         if not isinstance(node_dict, dict):
-            raise ValueError('node_dict must be a dictionary')
+            raise ValueError("node_dict must be a dictionary")
 
         node_dict = self.build_node_dict(node_dict, node)
         children = node.children.values()
@@ -830,15 +903,14 @@ class SearchHistory(LabelMixin, BaseModel):
             for child in children:
                 child_dict = {}
                 child.build_tree(child, child_dict)
-                node_dict['children'].append(child_dict)
+                node_dict["children"].append(child_dict)
         else:
             return node_dict
 
         return node_dict
 
 
-class Scenario(
-    LabelMixin, StatusMixin, CommentMixin, GenericAttributeMixin, BaseModel):
+class Scenario(LabelMixin, StatusMixin, CommentMixin, GenericAttributeMixin, BaseModel):
     """Implements the Scenario model.
 
     A Timesketch scenario describes the type of the sketch. A scenario has
@@ -847,18 +919,17 @@ class Scenario(
     A scenario is created from a YAML specification that is provided by the
     system. This YAML file is used to create and bootstrap sketches.
     """
+
     name = Column(UnicodeText())
     display_name = Column(UnicodeText())
     description = Column(UnicodeText())
     summary = Column(UnicodeText())
     spec_json = Column(UnicodeText())
-    sketch_id = Column(Integer, ForeignKey('sketch.id'))
-    user_id = Column(Integer, ForeignKey('user.id'))
-    facets = relationship(
-        'Facet', backref='scenario', lazy='select')
+    sketch_id = Column(Integer, ForeignKey("sketch.id"))
+    user_id = Column(Integer, ForeignKey("user.id"))
+    facets = relationship("Facet", backref="scenario", lazy="select")
 
-    def __init__(
-        self, name, display_name, sketch, user, spec_json, description=None):
+    def __init__(self, name, display_name, sketch, user, spec_json, description=None):
         """Initialize the Scenario object.
 
         Args:
@@ -884,14 +955,14 @@ class FacetTimeFrame(BaseModel):
     A timeframe is used to set the scope for the facet. This information
     is used when automatically generatae queries and other helper functions.
     """
+
     start_time = Column(TIMESTAMP(timezone=True))
     end_time = Column(TIMESTAMP(timezone=True))
     description = Column(UnicodeText())
-    user_id = Column(Integer, ForeignKey('user.id'))
-    facet_id = Column(Integer, ForeignKey('facet.id'))
+    user_id = Column(Integer, ForeignKey("user.id"))
+    facet_id = Column(Integer, ForeignKey("facet.id"))
 
-    def __init__(
-        self, start_time, end_time, facet, user=None, description=None):
+    def __init__(self, start_time, end_time, facet, user=None, description=None):
         """Initialize the InvestigationTimeFrame object.
 
         Args:
@@ -910,36 +981,33 @@ class FacetTimeFrame(BaseModel):
 
 # Association tables for the many-to-many relationship for a conclusion.
 facetconclusion_story_association_table = Table(
-    'facetconclusion_story', BaseModel.metadata,
-    Column(
-        'facetconclusion_id', Integer,
-        ForeignKey('facetconclusion.id')),
-    Column('story_id', Integer, ForeignKey('story.id'))
+    "facetconclusion_story",
+    BaseModel.metadata,
+    Column("facetconclusion_id", Integer, ForeignKey("facetconclusion.id")),
+    Column("story_id", Integer, ForeignKey("story.id")),
 )
 
 facetconclusion_view_association_table = Table(
-    'facetconclusion_view', BaseModel.metadata,
-    Column(
-        'facetconclusion_id', Integer,
-        ForeignKey('facetconclusion.id')),
-    Column('view_id', Integer, ForeignKey('view.id'))
+    "facetconclusion_view",
+    BaseModel.metadata,
+    Column("facetconclusion_id", Integer, ForeignKey("facetconclusion.id")),
+    Column("view_id", Integer, ForeignKey("view.id")),
 )
 
 facetconclusion_graph_association_table = Table(
-    'facetconclusion_graph', BaseModel.metadata,
-    Column(
-        'facetconclusion_id', Integer,
-        ForeignKey('facetconclusion.id')),
-    Column('graph_id', Integer, ForeignKey('graph.id'))
+    "facetconclusion_graph",
+    BaseModel.metadata,
+    Column("facetconclusion_id", Integer, ForeignKey("facetconclusion.id")),
+    Column("graph_id", Integer, ForeignKey("graph.id")),
 )
 
 facetconclusion_aggregation_association_table = Table(
-    'facetconclusion_aggregation', BaseModel.metadata,
-    Column(
-        'facetconclusion_id', Integer,
-        ForeignKey('facetconclusion.id')),
-    Column('aggregation_id', Integer, ForeignKey('aggregation.id'))
+    "facetconclusion_aggregation",
+    BaseModel.metadata,
+    Column("facetconclusion_id", Integer, ForeignKey("facetconclusion.id")),
+    Column("aggregation_id", Integer, ForeignKey("aggregation.id")),
 )
+
 
 class FacetConclusion(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     """Implements the FacetConclusion model.
@@ -950,19 +1018,21 @@ class FacetConclusion(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     Together with a conclusion there can be evidence and pointers to supportive
     resources such as saved searches, graphs, aggregations and stories.
     """
+
     conclusion = Column(UnicodeText())
     automated = Column(Boolean(), default=False)
-    user_id = Column(Integer, ForeignKey('user.id'))
-    facet_id = Column(Integer, ForeignKey('facet.id'))
-    stories = relationship(
-        'Story', secondary=facetconclusion_story_association_table)
+    user_id = Column(Integer, ForeignKey("user.id"))
+    facet_id = Column(Integer, ForeignKey("facet.id"))
+    stories = relationship("Story", secondary=facetconclusion_story_association_table)
     saved_searches = relationship(
-        'View', secondary=facetconclusion_view_association_table)
+        "View", secondary=facetconclusion_view_association_table
+    )
     saved_graphs = relationship(
-        'Graph', secondary=facetconclusion_graph_association_table)
+        "Graph", secondary=facetconclusion_graph_association_table
+    )
     saved_aggregations = relationship(
-        'Aggregation',
-        secondary=facetconclusion_aggregation_association_table)
+        "Aggregation", secondary=facetconclusion_aggregation_association_table
+    )
 
     def __init__(self, conclusion, user, facet, automated=False):
         """Initialize the InvestigationConclusion object.
@@ -983,13 +1053,14 @@ class FacetConclusion(LabelMixin, StatusMixin, CommentMixin, BaseModel):
 # Association table for the many-to-many relationship for timelines in an
 # investigation.
 facet_timeline_association_table = Table(
-    'facet_timeline', BaseModel.metadata,
-    Column('facet_id', Integer, ForeignKey('facet.id')),
-    Column('timeline_id', Integer, ForeignKey('timeline.id'))
+    "facet_timeline",
+    BaseModel.metadata,
+    Column("facet_id", Integer, ForeignKey("facet.id")),
+    Column("timeline_id", Integer, ForeignKey("timeline.id")),
 )
 
-class Facet(
-    LabelMixin, StatusMixin, CommentMixin, GenericAttributeMixin, BaseModel):
+
+class Facet(LabelMixin, StatusMixin, CommentMixin, GenericAttributeMixin, BaseModel):
     """Implements the Facet model.
 
     A facet is a collection of investigative questions.
@@ -998,20 +1069,17 @@ class Facet(
     possible to set the scope for the facet. The scope consist of
     timeframes of interest, timelines and supplied parameters (key/value).
     """
+
     name = Column(UnicodeText())
     display_name = Column(UnicodeText())
     description = Column(UnicodeText())
     spec_json = Column(UnicodeText())
-    user_id = Column(Integer, ForeignKey('user.id'))
-    scenario_id = Column(Integer, ForeignKey('scenario.id'))
-    timeframes = relationship(
-        'FacetTimeFrame', backref='facet', lazy='select')
-    timelines = relationship(
-        'Timeline', secondary=facet_timeline_association_table)
-    questions = relationship(
-        'InvestigativeQuestion', backref='facet', lazy='select')
-    conclusions = relationship(
-        'FacetConclusion', backref='facet', lazy='select')
+    user_id = Column(Integer, ForeignKey("user.id"))
+    scenario_id = Column(Integer, ForeignKey("scenario.id"))
+    timeframes = relationship("FacetTimeFrame", backref="facet", lazy="select")
+    timelines = relationship("Timeline", secondary=facet_timeline_association_table)
+    questions = relationship("InvestigativeQuestion", backref="facet", lazy="select")
+    conclusions = relationship("FacetConclusion", backref="facet", lazy="select")
 
     def __init__(self, name, display_name, user, spec_json, description=None):
         """Initialize the Facet object.
@@ -1032,41 +1100,53 @@ class Facet(
         self.description = description
 
 
- # Association tables for the many-to-many relationship for a Question.
+# Association tables for the many-to-many relationship for a Question.
 questionconclusion_story_association_table = Table(
-    'investigativequestionconclusion_story', BaseModel.metadata,
+    "investigativequestionconclusion_story",
+    BaseModel.metadata,
     Column(
-        'investigativequestionconclusion_id',
-        Integer, ForeignKey('investigativequestionconclusion.id')),
-    Column('story_id', Integer, ForeignKey('story.id'))
+        "investigativequestionconclusion_id",
+        Integer,
+        ForeignKey("investigativequestionconclusion.id"),
+    ),
+    Column("story_id", Integer, ForeignKey("story.id")),
 )
 
 questionconclusion_view_association_table = Table(
-    'investigativequestionconclusion_view', BaseModel.metadata,
+    "investigativequestionconclusion_view",
+    BaseModel.metadata,
     Column(
-        'investigativequestionconclusion_id', Integer,
-        ForeignKey('investigativequestionconclusion.id')),
-    Column('view_id', Integer, ForeignKey('view.id'))
+        "investigativequestionconclusion_id",
+        Integer,
+        ForeignKey("investigativequestionconclusion.id"),
+    ),
+    Column("view_id", Integer, ForeignKey("view.id")),
 )
 
 questionconclusion_graph_association_table = Table(
-    'investigativequestionconclusion_graph', BaseModel.metadata,
+    "investigativequestionconclusion_graph",
+    BaseModel.metadata,
     Column(
-        'investigativequestionconclusion_id', Integer,
-        ForeignKey('investigativequestionconclusion.id')),
-    Column('graph_id', Integer, ForeignKey('graph.id'))
+        "investigativequestionconclusion_id",
+        Integer,
+        ForeignKey("investigativequestionconclusion.id"),
+    ),
+    Column("graph_id", Integer, ForeignKey("graph.id")),
 )
 
 questionconclusion_aggregation_association_table = Table(
-    'investigativequestionconclusion_aggregation', BaseModel.metadata,
+    "investigativequestionconclusion_aggregation",
+    BaseModel.metadata,
     Column(
-        'investigativequestionconclusion_id', Integer,
-        ForeignKey('investigativequestionconclusion.id')),
-    Column('aggregation_id', Integer, ForeignKey('aggregation.id'))
+        "investigativequestionconclusion_id",
+        Integer,
+        ForeignKey("investigativequestionconclusion.id"),
+    ),
+    Column("aggregation_id", Integer, ForeignKey("aggregation.id")),
 )
 
-class InvestigativeQuestionConclusion(
-    LabelMixin, StatusMixin, CommentMixin, BaseModel):
+
+class InvestigativeQuestionConclusion(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     """Implements the InvestigativeQuestionConclusion model.
 
     A conslusion is the result of a investigative question. It can be created
@@ -1075,26 +1155,25 @@ class InvestigativeQuestionConclusion(
     Together with a conclusion there can be evidence and pointers to supportive
     resources such as saved searches, graphs, aggregations and stories.
     """
+
     conclusion = Column(UnicodeText())
     automated = Column(Boolean(), default=False)
-    user_id = Column(Integer, ForeignKey('user.id'))
-    investigativequestion_id = Column(
-        Integer, ForeignKey('investigativequestion.id'))
+    user_id = Column(Integer, ForeignKey("user.id"))
+    investigativequestion_id = Column(Integer, ForeignKey("investigativequestion.id"))
     stories = relationship(
-        'Story',
-        secondary=questionconclusion_story_association_table)
+        "Story", secondary=questionconclusion_story_association_table
+    )
     saved_searches = relationship(
-        'View',
-        secondary=questionconclusion_view_association_table)
+        "View", secondary=questionconclusion_view_association_table
+    )
     saved_graphs = relationship(
-        'Graph',
-        secondary=questionconclusion_graph_association_table)
+        "Graph", secondary=questionconclusion_graph_association_table
+    )
     saved_aggregations = relationship(
-        'Aggregation',
-        secondary=questionconclusion_aggregation_association_table)
+        "Aggregation", secondary=questionconclusion_aggregation_association_table
+    )
 
-    def __init__(
-        self, conclusion, user, investigativequestion, automated=False):
+    def __init__(self, conclusion, user, investigativequestion, automated=False):
         """Initialize the QuestionConclusion object.
 
         Args:
@@ -1111,20 +1190,24 @@ class InvestigativeQuestionConclusion(
 
 
 class InvestigativeQuestion(
-    LabelMixin, StatusMixin, CommentMixin, GenericAttributeMixin, BaseModel):
+    LabelMixin, StatusMixin, CommentMixin, GenericAttributeMixin, BaseModel
+):
     """Implements the InvestigativeQuestion model.
 
     An Investigative Question is the smallest component of an investigation.
     """
+
     name = Column(UnicodeText())
     display_name = Column(UnicodeText())
     description = Column(UnicodeText())
-    user_id = Column(Integer, ForeignKey('user.id'))
+    user_id = Column(Integer, ForeignKey("user.id"))
     spec_json = Column(UnicodeText())
-    facet_id = Column(Integer, ForeignKey('facet.id'))
+    facet_id = Column(Integer, ForeignKey("facet.id"))
     conclusions = relationship(
-        'InvestigativeQuestionConclusion', backref='investigativequestion',
-        lazy='select')
+        "InvestigativeQuestionConclusion",
+        backref="investigativequestion",
+        lazy="select",
+    )
 
     def __init__(self, name, display_name, user, spec_json, description=None):
         """Initialize the InvestigativeQuestion object.

@@ -34,7 +34,7 @@ from timesketch.models.sketch import Facet
 from timesketch.models.sketch import InvestigativeQuestion
 
 
-logger = logging.getLogger('timesketch.scenario_api')
+logger = logging.getLogger("timesketch.scenario_api")
 
 
 class ScenarioTemplateListResource(resources.ResourceMixin, Resource):
@@ -47,7 +47,7 @@ class ScenarioTemplateListResource(resources.ResourceMixin, Resource):
         Returns:
             A list of JSON representations of the scenarios.
         """
-        scenarios = load_yaml_config('SCENARIOS_PATH')
+        scenarios = load_yaml_config("SCENARIOS_PATH")
         return jsonify(scenarios)
 
 
@@ -63,11 +63,12 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
+        if not sketch.has_permission(current_user, "write"):
             abort(
-                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID')
-        if not sketch.has_permission(current_user, 'write'):
-            abort(HTTP_STATUS_CODE_FORBIDDEN,
-                  'User does not have write access controls on sketch')
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "User does not have write access controls on sketch",
+            )
 
         scenarios = Scenario.query.filter_by(sketch=sketch).all()
         return self.to_json(scenarios)
@@ -84,54 +85,56 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
+        if not sketch.has_permission(current_user, "write"):
             abort(
-                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID')
-        if not sketch.has_permission(current_user, 'write'):
-            abort(HTTP_STATUS_CODE_FORBIDDEN,
-                  'User does not have write access controls on sketch')
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "User does not have write access controls on sketch",
+            )
 
         form = request.json
         if not form:
             form = request.data
 
-        scenarios = load_yaml_config('SCENARIOS_PATH')
-        facets = load_yaml_config('FACETS_PATH')
-        questions = load_yaml_config('QUESTIONS_PATH')
+        scenarios = load_yaml_config("SCENARIOS_PATH")
+        facets = load_yaml_config("FACETS_PATH")
+        questions = load_yaml_config("QUESTIONS_PATH")
 
-        scenario_name = form.get('scenario_name')
+        scenario_name = form.get("scenario_name")
         scenario_dict = scenarios.get(scenario_name)
 
         if not scenario_dict:
-            abort(
-                HTTP_STATUS_CODE_NOT_FOUND,
-                f'No such scenario: {scenario_name}')
+            abort(HTTP_STATUS_CODE_NOT_FOUND, f"No such scenario: {scenario_name}")
 
         scenario = Scenario(
             name=scenario_name,
-            display_name=scenario_dict.get('display_name', ''),
-            description=scenario_dict.get('description', ''),
+            display_name=scenario_dict.get("display_name", ""),
+            description=scenario_dict.get("description", ""),
             spec_json=json.dumps(scenario_dict),
             sketch=sketch,
-            user=current_user)
+            user=current_user,
+        )
 
-        for facet_name in scenario_dict.get('facets', []):
+        for facet_name in scenario_dict.get("facets", []):
             facet_dict = facets.get(facet_name)
             facet = Facet(
                 name=facet_name,
-                display_name=facet_dict.get('display_name', ''),
-                description=facet_dict.get('description', ''),
+                display_name=facet_dict.get("display_name", ""),
+                description=facet_dict.get("description", ""),
                 spec_json=json.dumps(facet_dict),
-                user=current_user)
+                user=current_user,
+            )
             scenario.facets.append(facet)
 
-            for question_name in facet_dict.get('questions', []):
+            for question_name in facet_dict.get("questions", []):
                 question_dict = questions.get(question_name)
                 question = InvestigativeQuestion(
                     name=question_name,
-                    display_name=question_dict.get('display_name', ''),
-                    description=question_dict.get('description', ''),
+                    display_name=question_dict.get("display_name", ""),
+                    description=question_dict.get("description", ""),
                     spec_json=json.dumps(question_dict),
-                    user=current_user)
+                    user=current_user,
+                )
                 facet.questions.append(question)
 
         db_session.add(scenario)
@@ -154,14 +157,14 @@ class ScenarioResource(resources.ResourceMixin, Resource):
         scenario = Scenario.query.get(scenario_id)
 
         if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
+        if not sketch.has_permission(current_user, "write"):
             abort(
-                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID')
-        if not sketch.has_permission(current_user, 'write'):
-            abort(HTTP_STATUS_CODE_FORBIDDEN,
-                  'User does not have write access controls on sketch')
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "User does not have write access controls on sketch",
+            )
 
         if not scenario.sketch.id == sketch.id:
-            abort(HTTP_STATUS_CODE_FORBIDDEN,
-                  'Scenario is not part of this sketch.')
+            abort(HTTP_STATUS_CODE_FORBIDDEN, "Scenario is not part of this sketch.")
 
         return self.to_json(scenario)

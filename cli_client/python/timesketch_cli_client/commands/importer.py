@@ -20,11 +20,10 @@ import click
 from timesketch_import_client import importer as import_client
 
 
-@click.command('import')
-@click.option('--name', help='Name of the timeline.')
-@click.option(
-    '--timeout', type=int, default=600, help='Seconds to wait for indexing.')
-@click.argument('file_path', type=click.Path(exists=True))
+@click.command("import")
+@click.option("--name", help="Name of the timeline.")
+@click.option("--timeout", type=int, default=600, help="Seconds to wait for indexing.")
+@click.argument("file_path", type=click.Path(exists=True))
 @click.pass_context
 def importer(ctx, name, timeout, file_path):
     """Import timeline.
@@ -41,23 +40,23 @@ def importer(ctx, name, timeout, file_path):
 
     timeline = None
     with import_client.ImportStreamer() as streamer:
-        click.echo('Uploading to server .. ', nl=False)
+        click.echo("Uploading to server .. ", nl=False)
         streamer.set_sketch(sketch)
         streamer.set_timeline_name(name)
-        streamer.set_provider('Timesketch CLI client')
+        streamer.set_provider("Timesketch CLI client")
         # TODO: Consider using the whole command as upload context instead
         # of the file path.
         streamer.set_upload_context(file_path)
         streamer.add_file(file_path)
         timeline = streamer.timeline
         if not timeline:
-            click.echo('Error creating timeline, please try again.')
+            click.echo("Error creating timeline, please try again.")
             sys.exit(1)
 
-        click.echo('Done')
+        click.echo("Done")
 
     # Poll the timeline status and wait for the timeline to be ready
-    click.echo('Indexing .. ', nl=False)
+    click.echo("Indexing .. ", nl=False)
     max_time_seconds = timeout
     sleep_time_seconds = 5  # Sleep between API calls
     max_retries = max_time_seconds / sleep_time_seconds
@@ -65,15 +64,18 @@ def importer(ctx, name, timeout, file_path):
     while True:
         if retry_count >= max_retries:
             click.echo(
-                ('WARNING: The command timed out before indexing finished. '
-                 'The timeline will continue to be indexed in the background'))
+                (
+                    "WARNING: The command timed out before indexing finished. "
+                    "The timeline will continue to be indexed in the background"
+                )
+            )
             break
         status = timeline.status
         # TODO: Do something with other statuses? (e.g. failed)
-        if status == 'ready':
-            click.echo('Done')
+        if status == "ready":
+            click.echo("Done")
             break
         retry_count += 1
         time.sleep(sleep_time_seconds)
 
-    click.echo(f'Timeline imported: {timeline.name}')
+    click.echo(f"Timeline imported: {timeline.name}")

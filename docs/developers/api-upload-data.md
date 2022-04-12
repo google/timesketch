@@ -205,7 +205,7 @@ file will be indexed as soon as it is uploaded to the backend.
 
 In the case of a plaso file, it will also be split up into smaller chunks and
 uploaded. However indexing does not start until all pieces have been transferred
-and the final plaso storage file reassambled.
+and the final plaso storage file reassembled.
 
 ## Excel Sheet
 

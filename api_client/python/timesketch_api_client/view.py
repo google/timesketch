@@ -20,7 +20,7 @@ import logging
 from . import resource
 
 
-logger = logging.getLogger('timesketch_api.view')
+logger = logging.getLogger("timesketch_api.view")
 
 
 class View(resource.BaseResource):
@@ -41,11 +41,12 @@ class View(resource.BaseResource):
             api: Instance of a TimesketchApi object.
         """
         logger.info(
-            'View objects will be deprecated soon, consider transitioning '
-            'into using the search.Search object instead')
+            "View objects will be deprecated soon, consider transitioning "
+            "into using the search.Search object instead"
+        )
         self.id = view_id
         self.name = view_name
-        resource_uri = 'sketches/{0:d}/views/{1:d}/'.format(sketch_id, self.id)
+        resource_uri = "sketches/{0:d}/views/{1:d}/".format(sketch_id, self.id)
         super().__init__(api, resource_uri)
 
     def _get_top_level_attribute(self, name, default_value=None, refresh=False):
@@ -61,7 +62,7 @@ class View(resource.BaseResource):
             The dict value of the key "name".
         """
         view = self.lazyload_data(refresh_cache=refresh)
-        view_objects = view.get('objects')
+        view_objects = view.get("objects")
         if not view_objects:
             return default_value
         if not len(view_objects) == 1:
@@ -77,7 +78,7 @@ class View(resource.BaseResource):
         Returns:
             Description of the view as a string.
         """
-        return self._get_top_level_attribute('description', default_value='')
+        return self._get_top_level_attribute("description", default_value="")
 
     @property
     def user(self):
@@ -86,10 +87,10 @@ class View(resource.BaseResource):
         Returns:
             A string with the username of the user generating the view.
         """
-        user_dict = self._get_top_level_attribute('user', default_value={})
-        username = user_dict.get('username')
+        user_dict = self._get_top_level_attribute("user", default_value={})
+        username = user_dict.get("username")
         if not username:
-            return 'System'
+            return "System"
         return username
 
     @property
@@ -99,7 +100,7 @@ class View(resource.BaseResource):
         Returns:
             OpenSearch query as string.
         """
-        return self._get_top_level_attribute('query_string', default_value='')
+        return self._get_top_level_attribute("query_string", default_value="")
 
     @property
     def query_filter(self):
@@ -109,9 +110,10 @@ class View(resource.BaseResource):
             OpenSearch filter as a dict.
         """
         query_filter_string = self._get_top_level_attribute(
-            'query_filter', default_value='')
+            "query_filter", default_value=""
+        )
         if not query_filter_string:
-            return ''
+            return ""
         return json.loads(query_filter_string)
 
     @property
@@ -121,8 +123,7 @@ class View(resource.BaseResource):
         Returns:
             OpenSearch DSL as a dict.
         """
-        dsl_string = self._get_top_level_attribute(
-            'query_dsl', default_value='')
+        dsl_string = self._get_top_level_attribute("query_dsl", default_value="")
         if not dsl_string:
-            return ''
+            return ""
         return json.loads(dsl_string)

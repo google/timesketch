@@ -23,7 +23,7 @@ manager = test_manager.EndToEndTestManager()
 counter = Counter()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Sleep to make sure all containers are operational
     time.sleep(30)  # seconds
 
@@ -33,12 +33,15 @@ if __name__ == '__main__':
         test_class.setup()
         # Run all tests.
         run_counter = test_class.run_tests()
-        counter['tests'] += run_counter['tests']
-        counter['errors'] += run_counter['errors']
+        counter["tests"] += run_counter["tests"]
+        counter["errors"] += run_counter["errors"]
 
-    successful_tests = counter['tests'] - counter['errors']
-    print('{0:d} total tests: {1:d} successful and {2:d} failed'.format(
-        counter['tests'], successful_tests, counter['errors']))
+    successful_tests = counter["tests"] - counter["errors"]
+    print(
+        "{0:d} total tests: {1:d} successful and {2:d} failed".format(
+            counter["tests"], successful_tests, counter["errors"]
+        )
+    )
 
-    if counter['errors']:
+    if counter["errors"]:
         sys.exit(1)
