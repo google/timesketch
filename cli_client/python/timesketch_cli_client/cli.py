@@ -26,9 +26,9 @@ from timesketch_cli_client.commands import importer
 from timesketch_cli_client.commands import search
 from timesketch_cli_client.commands import sketch as sketch_command
 from timesketch_cli_client.commands import timelines
+from timesketch_cli_client.commands import version
 
 from .definitions import DEFAULT_OUTPUT_FORMAT
-from .version import get_version
 
 
 class TimesketchCli(object):
@@ -108,7 +108,6 @@ class TimesketchCli(object):
 
 
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
-@click.version_option(version=get_version(), prog_name="Timesketch CLI")
 @click.option("--sketch", type=int, default=None, help="Sketch to work in.")
 @click.pass_context
 def cli(ctx, sketch):
@@ -136,6 +135,7 @@ cli.add_command(search.saved_searches_group)
 cli.add_command(analyze.analysis_group)
 cli.add_command(sketch_command.sketch_group)
 cli.add_command(importer.importer)
+cli.add_command(version.version)
 
 
 # pylint: disable=no-value-for-parameter
