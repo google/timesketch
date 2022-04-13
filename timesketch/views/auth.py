@@ -105,7 +105,7 @@ def login():
             except (ImportError, NameError, UnboundLocalError):
                 raise
 
-            except (
+            except (  # pylint: disable=broad-except
                 JwtValidationError,
                 JwtKeyError,
                 Exception,
@@ -245,7 +245,7 @@ def validate_api_token():
         validate_jwt(token_json, expected_issuer)
     except (ImportError, NameError, UnboundLocalError):
         raise
-    except (
+    except (  # pylint: disable=broad-except
         JwtValidationError,
         JwtKeyError,
         Exception,
