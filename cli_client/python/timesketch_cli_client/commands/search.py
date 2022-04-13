@@ -38,7 +38,13 @@ def format_output(search_obj, output_format, show_headers):
     # Label is being set regardless of return_fields. Remove if it is not in
     # the list of requested fields.
     if "label" not in search_obj.return_fields:
-        dataframe = dataframe.drop(columns=["label"])
+        dataframe = dataframe.drop(columns=["label"], errors="ignore")
+
+    # Remove internal OpenSeearch columns
+    dataframe = dataframe.drop(
+        columns=["__ts_timeline_id", "_id", "_index", "_source", "_type"],
+        errors="ignore",
+    )
 
     result = None
     if output_format == "text":
@@ -57,11 +63,7 @@ def format_output(search_obj, output_format, show_headers):
 
 
 def describe_query(search_obj):
-    """Print details of a search query nd filter.
-
-    Args:
-        search_obj: API Search object.
-    """
+    """Print details of a search query nd filter."""
     filter_pretty = json.dumps(search_obj.query_filter, indent=2)
     click.echo(f"Query string: {search_obj.query_string}")
     click.echo(f"Return fields: {search_obj.return_fields}")
@@ -210,11 +212,7 @@ def saved_searches_group():
 @saved_searches_group.command("list")
 @click.pass_context
 def list_saved_searches(ctx):
-    """List saved searches in the sketch.
-
-    Args:
-        ctx: Click CLI context object.
-    """
+    """List saved searches in the sketch."""
     sketch = ctx.obj.sketch
     for saved_search in sketch.list_saved_searches():
         click.echo(f"{saved_search.id} {saved_search.name}")
@@ -224,12 +222,7 @@ def list_saved_searches(ctx):
 @click.argument("search_id", type=int, required=False)
 @click.pass_context
 def describe_saved_search(ctx, search_id):
-    """Show details for saved search.
-
-    Args:
-        ctx: Click CLI context object.
-        search_id: Search ID from argument.
-    """
+    """Show details for saved search."""
     sketch = ctx.obj.sketch
     # TODO (berggren): Add support for saved search name.
     saved_search = sketch.get_saved_search(search_id=search_id)
