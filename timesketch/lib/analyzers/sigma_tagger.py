@@ -47,7 +47,9 @@ class SigmaPlugin(interface.BaseAnalyzer):
             tag_list = []
         return_fields = []
         tagged_events_counter = 0
-        events = self.event_stream(query_string=query, return_fields=return_fields)
+        events = self.event_stream(
+            query_string=query, return_fields=return_fields
+        )
         for event in events:
             ts_sigma_rules = event.source.get("ts_sigma_rule", [])
             ts_sigma_rules.append(rule_name)
@@ -91,12 +93,16 @@ class SigmaPlugin(interface.BaseAnalyzer):
         try:
             sigma_rule_counter += 1
             tagged_events_counter = self.run_sigma_rule(
-                rule.get("es_query"), rule.get("file_name"), tag_list=rule.get("tags")
+                rule.get("es_query"),
+                rule.get("file_name"),
+                tag_list=rule.get("tags"),
             )
             tags_applied[rule.get("file_name")] += tagged_events_counter
         except:  # pylint: disable=bare-except
             logger.error(
-                "Problem with rule in file {0:s}: ".format(rule.get("file_name")),
+                "Problem with rule in file {0:s}: ".format(
+                    rule.get("file_name")
+                ),
                 exc_info=True,
             )
             problem_strings.append("* {0:s}".format(rule.get("file_name")))
@@ -159,7 +165,10 @@ class SigmaPlugin(interface.BaseAnalyzer):
         Returns:
             sigma_rules All Sigma rules
         """
-        sigma_rules = [{"rule": rule} for rule in ts_sigma_lib.get_all_sigma_rules()]
+        # TODO(jaegeral): Limit that to rules that have ts_use_in_analyzer
+        sigma_rules = [
+            {"rule": rule} for rule in ts_sigma_lib.get_all_sigma_rules()
+        ]
         return sigma_rules
 
 
