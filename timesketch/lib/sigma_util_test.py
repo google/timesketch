@@ -152,7 +152,9 @@ class TestSigmaUtilLib(BaseTest):
 
         # test that the function does not break regular queries
         self.assertEqual(
-            sigma_util._sanitize_query("*mimikatz* OR *mimikatz.exe* OR *mimilib.dll*"),
+            sigma_util._sanitize_query(
+                "*mimikatz* OR *mimikatz.exe* OR *mimilib.dll*"
+            ),
             "*mimikatz* OR *mimikatz.exe* OR *mimilib.dll*",
         )
 
@@ -209,7 +211,9 @@ class TestSigmaUtilLib(BaseTest):
         rule = sigma_util.get_sigma_rule_by_text(MOCK_SIGMA_RULE_DOTS)
         self.assertIsNotNone(MOCK_SIGMA_RULE_DOTS)
         self.assertIsNotNone(rule)
-        self.assertEqual("67b9a11a-03ae-490a-9156-9be9900aaaaa", rule.get("id"))
+        self.assertEqual(
+            "67b9a11a-03ae-490a-9156-9be9900aaaaa", rule.get("id")
+        )
         self.assertEqual(
             r'("aaa:bbb" OR "ccc\:\:ddd")',
             rule.get("es_query"),
@@ -225,6 +229,19 @@ class TestSigmaUtilLib(BaseTest):
         """Test getting sigma config file"""
         self.assertRaises(ValueError, sigma_util.get_sigma_blocklist, "/foo")
         self.assertIsNotNone(sigma_util.get_sigma_config_file())
+        blocklist = sigma_util.get_sigma_blocklist()
+        self.assertEqual('experimental', blocklist['bad'][0])
+        self.assertEqual(
+            'bad', blocklist[blocklist.values == 'deprecated']['bad']
+        )
+        self.assertEqual(
+            'good',
+            blocklist[
+                blocklist.values
+                == 'windows/powershell/powershell_create_local_user.yml'
+            ]['bad'],
+        )
+        self.assertIsNotNone(False)
 
     def test_get_sigma_rule(self):
         """Test getting sigma rule from file"""
@@ -232,7 +249,9 @@ class TestSigmaUtilLib(BaseTest):
         filepath = "./data/sigma/rules/lnx_susp_zmap.yml"
 
         rule = sigma_util.get_sigma_rule(filepath)
+        # import pdb
 
+        # pdb.set_trace()
         self.assertIsNotNone(rule)
         self.assertIn("zmap", rule.get("es_query"))
         self.assertIn("b793", rule.get("id"))

@@ -73,7 +73,9 @@ class SketchResourceTest(BaseTest):
 
     resource_url = "/api/v1/sketches/1/"
 
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
     def test_sketch_resource(self):
         """Authenticated request to get a sketch."""
         self.login()
@@ -230,7 +232,9 @@ class ExploreResourceTest(BaseTest):
         ],
     }
 
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
     def test_search(self):
         """Authenticated request to query the datastore."""
         self.login()
@@ -253,7 +257,9 @@ class AggregationExploreResourceTest(BaseTest):
 
     resource_url = "/api/v1/sketches/1/aggregation/explore/"
 
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
     def test_heatmap_aggregation(self):
         """Authenticated request to get aggregation requests."""
         self.login()
@@ -285,7 +291,9 @@ class EventResourceTest(BaseTest):
         }
     }
 
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
     def test_get_event(self):
         """Authenticated request to get an event from the datastore."""
         self.login()
@@ -295,7 +303,9 @@ class EventResourceTest(BaseTest):
         self.assertDictContainsSubset(self.expected_response, response.json)
         self.assert200(response)
 
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
     def test_invalid_index(self):
         """
         Authenticated request to get an event from the datastore, but in the
@@ -313,7 +323,9 @@ class EventAnnotationResourceTest(BaseTest):
 
     resource_url = "/api/v1/sketches/1/event/annotate/"
 
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
     def test_post_annotate_resource(self):
         """Authenticated request to create an annotation."""
         self.login()
@@ -356,11 +368,15 @@ class SearchIndexResourceTest(BaseTest):
 
     resource_url = "/api/v1/searchindices/"
 
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
     def test_post_create_searchindex(self):
         """Authenticated request to create a searchindex."""
         self.login()
-        data = dict(searchindex_name="test3", es_index_name="test3", public=False)
+        data = dict(
+            searchindex_name="test3", es_index_name="test3", public=False
+        )
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data),
@@ -453,6 +469,7 @@ class SigmaListResourceTest(BaseTest):
                     "https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html"  # pylint: disable=line-too-long
                 ],
                 "title": "Suspicious Installation of ZMap",
+                "ts_use_in_analyzer": True,
             }
         ],
     }

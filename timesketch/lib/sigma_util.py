@@ -72,7 +72,9 @@ def get_sigma_config_file(config_file=None):
         sigma_config_file = config_file_read.read()
 
     try:
-        sigma_config = sigma_configuration.SigmaConfiguration(sigma_config_file)
+        sigma_config = sigma_configuration.SigmaConfiguration(
+            sigma_config_file
+        )
     except SigmaConfigParseError:
         logger.error("Parsing error with {0:s}".format(sigma_config_file))
         raise
@@ -101,7 +103,9 @@ def get_sigma_rules_path():
     for folder in rules_path:
         if not os.path.isdir(folder):
             raise ValueError(
-                "Unable to open dir: [{0:s}], it does not exist.".format(folder)
+                "Unable to open dir: [{0:s}], it does not exist.".format(
+                    folder
+                )
             )
 
         if not os.access(folder, os.R_OK):
@@ -129,7 +133,13 @@ def get_sigma_rules(rule_folder, sigma_config=None):
 
     blocklist_path = None
     ignore = get_sigma_blocklist(blocklist_path)
-    ignore_list = list(ignore["path"].unique())
+    ignore_list = list(ignore.loc[ignore['bad'] == 'bad']["path"].unique())
+    experimental_list = list(
+        ignore.loc[ignore['bad'] == 'experimental']["path"].unique()
+    )
+    to_be_used_in_analyzer = list(
+        ignore.loc[ignore['bad'] == 'good']["path"].unique()
+    )
 
     for dirpath, dirnames, files in os.walk(rule_folder):
         if "deprecated" in [x.lower() for x in dirnames]:
@@ -147,6 +157,12 @@ def get_sigma_rules(rule_folder, sigma_config=None):
                     continue
 
                 parsed_rule = get_sigma_rule(rule_file_path, sigma_config)
+                if any(x in rule_file_path for x in experimental_list):
+                    parsed_rule['ts_use_in_analyzer'] = False
+                elif any(x in rule_file_path for x in to_be_used_in_analyzer):
+                    parsed_rule['ts_use_in_analyzer'] = True
+                else:
+                    parsed_rule['ts_use_in_analyzer'] = True
                 if parsed_rule:
                     return_array.append(parsed_rule)
     return return_array
@@ -195,7 +211,9 @@ def get_sigma_rule(filepath, sigma_config=None):
         logger.error("Problem reading the Sigma config", exc_info=True)
         raise ValueError("Problem reading the Sigma config") from e
 
-    sigma_backend = sigma_es.ElasticsearchQuerystringBackend(sigma_conf_obj, {})
+    sigma_backend = sigma_es.ElasticsearchQuerystringBackend(
+        sigma_conf_obj, {}
+    )
 
     try:
         sigma_rules_paths = get_sigma_rules_path()
@@ -211,7 +229,9 @@ def get_sigma_rule(filepath, sigma_config=None):
 
     abs_path = os.path.abspath(filepath)
 
-    with codecs.open(abs_path, "r", encoding="utf-8", errors="replace") as file:
+    with codecs.open(
+        abs_path, "r", encoding="utf-8", errors="replace"
+    ) as file:
         try:
             rule_return = {}
             rule_yaml_data = yaml.safe_load_all(file.read())
@@ -368,7 +388,9 @@ def get_sigma_blocklist_path(blocklist_path=None):
 
     if not os.path.isfile(blocklist_path):
         raise ValueError(
-            "Unable to open file: [{0:s}] does not exist".format(blocklist_path)
+            "Unable to open file: [{0:s}] does not exist".format(
+                blocklist_path
+            )
         )
 
     if not os.access(blocklist_path, os.R_OK):
@@ -442,7 +464,9 @@ def get_sigma_rule_by_text(rule_text, sigma_config=None):
         logger.error("Problem reading the Sigma config", exc_info=True)
         raise ValueError("Problem reading the Sigma config") from e
 
-    sigma_backend = sigma_es.ElasticsearchQuerystringBackend(sigma_conf_obj, {})
+    sigma_backend = sigma_es.ElasticsearchQuerystringBackend(
+        sigma_conf_obj, {}
+    )
 
     rule_return = {}
     # TODO check if input validation is needed / useful.
