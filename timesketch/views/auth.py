@@ -303,7 +303,7 @@ def validate_api_token():
             )
 
     user = User.get_or_create(username=validated_email, name=validated_email)
-    login_user(user)
+    login_user(user, remember=True)
 
     # Log the user in and setup the session.
     if current_user.is_authenticated:
