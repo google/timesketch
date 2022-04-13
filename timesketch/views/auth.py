@@ -245,11 +245,13 @@ def validate_api_token():
         validate_jwt(token_json, expected_issuer)
     except (ImportError, NameError, UnboundLocalError):
         raise
-    except (  # pylint: disable=broad-except
+    # pylint: disable=broad-except
+    except (
         JwtValidationError,
         JwtKeyError,
         Exception,
-    ) as e:  # pylint: disable=broad-except
+    # pylint: disable=broad-except
+    ) as e:
         return abort(
             HTTP_STATUS_CODE_UNAUTHORIZED,
             "Unable to validate the JWT token, with error: {0!s}.".format(e),
