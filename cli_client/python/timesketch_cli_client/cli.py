@@ -18,8 +18,6 @@ import click
 
 from requests.exceptions import ConnectionError as RequestConnectionError
 
-#from timesketch_api_client import config as timesketch_config
-
 from timesketch_cli_client.commands import analyze
 from timesketch_cli_client.commands import config
 from timesketch_cli_client.commands import importer
@@ -32,7 +30,7 @@ from .definitions import DEFAULT_OUTPUT_FORMAT
 
 
 class TimesketchCli(object):
-    """Timesketch CLI state object.
+    """CLI state object.
 
     Attributes:
         sketch_from_flag: Sketch ID if provided by flag
@@ -45,48 +43,49 @@ class TimesketchCli(object):
         Args:
             sketch_from_flag: Sketch ID if provided by flag.
         """
-        self.api_client = api_client
+        self.cached_api_client = api_client
+        self.cached_config_assistant = None
         self.conf_file = conf_file
         self.sketch_from_flag = sketch_from_flag
 
-        #if not api_client:
-        #    try:
-        #        # TODO: Consider other config sections here as well.
-        #        self.api = timesketch_config.get_client(load_cli_config=True)
-        #        if not self.api:
-        #            raise RequestConnectionError
-        #    except RequestConnectionError:
-        #        click.echo("ERROR: Cannot connect to the Timesketch server.")
-        #        sys.exit(1)
-
-        #self.config_assistant = timesketch_config.ConfigAssistant()
-        #self.config_assistant.load_config_file(conf_file, load_cli_config=True)
-
     @property
     def config_assistant(self):
+        """Config assistant from the API client.
+
+        Returns:
+            Config Assistant object.
+        """
+        if self.cached_config_assistant:
+            return self.cached_config_assistant
+
         from timesketch_api_client import config as timesketch_config
+
         _config_assistant = timesketch_config.ConfigAssistant()
-        _config_assistant.load_config_file(
-            self.conf_file, load_cli_config=True)
-        return _config_assistant
+        _config_assistant.load_config_file(self.conf_file, load_cli_config=True)
+        self.cached_config_assistant = _config_assistant
+        return self.cached_config_assistant
 
     @property
-    def api(self):
-        # Use cached API client if multiple calls are made in the same command.
-        if self.api_client:
-            return self.api_client
+    def api_client(self):
+        """Timesketch API client.
 
-        # Import late to optimize performance (i.e. don't import if not needed)
+        Returns:
+            API client object.
+        """
+        if self.cached_api_client:
+            return self.cached_api_client
+
         from timesketch_api_client import config as timesketch_config
+
         try:
             _api_client = timesketch_config.get_client(load_cli_config=True)
             if not _api_client:
                 raise RequestConnectionError
-            self.api_client = _api_client
+            self.cached_api_client = _api_client
         except RequestConnectionError:
             click.echo("ERROR: Cannot connect to the Timesketch server.")
             sys.exit(1)
-        return self.api_client
+        return self.cached_api_client
 
     @property
     def sketch(self):
@@ -99,9 +98,13 @@ class TimesketchCli(object):
         sketch_from_config = self.config_assistant.get_config("sketch")
 
         if self.sketch_from_flag:
-            active_sketch = self.api.get_sketch(sketch_id=int(self.sketch_from_flag))
+            active_sketch = self.api_client.get_sketch(
+                sketch_id=int(self.sketch_from_flag)
+            )
         elif sketch_from_config:
-            active_sketch = self.api.get_sketch(sketch_id=int(sketch_from_config))
+            active_sketch = self.api_client.get_sketch(
+                sketch_id=int(sketch_from_config)
+            )
 
         if not active_sketch:
             click.echo(
@@ -110,7 +113,6 @@ class TimesketchCli(object):
             )
             sys.exit(1)
 
-        # Make sure we have access to the sketch.
         try:
             active_sketch.name
         except KeyError:
@@ -144,7 +146,7 @@ def cli(ctx, sketch):
     It operates within the context of a sketch so you either need to
     provide an existing sketch or create a new one.
 
-    Basic options for editing the sketch is provided, e.g re-naming and
+    Basic options for editing the sketch is provided, e.g renaming and
     changing the description as well as archiving and exporting. For
     other actions not available in this CLI client the web client should be
     used.

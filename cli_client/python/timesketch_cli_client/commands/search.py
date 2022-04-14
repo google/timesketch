@@ -31,6 +31,7 @@ def format_output(search_obj, output_format, show_headers):
         Search results in the requested output format.
     """
     from tabulate import tabulate
+
     dataframe = search_obj.to_pandas()
 
     # Label is being set regardless of return_fields. Remove if it is not in
@@ -70,8 +71,10 @@ def describe_query(search_obj):
 
 @click.command("search")
 @click.option(
-    "--query", "-q", help="Search query in OpenSearch query string format",
-    required=True
+    "--query",
+    "-q",
+    help="Search query in OpenSearch query string format",
+    required=True,
 )
 @click.option(
     "--time", "times", multiple=True, help="Datetime filter (e.g. 2020-01-01T12:00)"

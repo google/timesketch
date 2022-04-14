@@ -25,7 +25,7 @@ def sketch_group():
 @click.pass_context
 def list_sketches(ctx):
     """List all sketches."""
-    api_client = ctx.obj.api
+    api_client = ctx.obj.api_client
     for sketch in api_client.list_sketches():
         click.echo(f"{sketch.id} {sketch.name}")
 
@@ -48,7 +48,7 @@ def describe_sketch(ctx):
 @click.pass_context
 def create_sketch(ctx, name, description):
     """Create a new sketch."""
-    api_client = ctx.obj.api
+    api_client = ctx.obj.api_client
     if not description:
         description = name
     sketch = api_client.create_sketch(name=name, description=description)
