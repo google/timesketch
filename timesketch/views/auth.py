@@ -242,15 +242,15 @@ def validate_api_token():
         )
 
     expected_issuer = discovery_document["issuer"]
+    # pylint: disable=broad-except
     try:
         validate_jwt(token_json, expected_issuer)
     except (ImportError, NameError, UnboundLocalError):
         raise
-    except (  # pylint: disable=broad-except
+    except (
         JwtValidationError,
         JwtKeyError,
         Exception,
-    # pylint: disable=broad-except
     ) as e:
         return abort(
             HTTP_STATUS_CODE_UNAUTHORIZED,
