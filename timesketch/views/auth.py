@@ -147,6 +147,7 @@ def login():
             db_session.commit()
 
     # Login form POST
+    # pylint: disable=using-constant-test
     form = UsernamePasswordForm()
     if form.validate_on_submit:
         user = User.query.filter_by(username=form.username.data).first()
@@ -245,8 +246,7 @@ def validate_api_token():
         validate_jwt(token_json, expected_issuer)
     except (ImportError, NameError, UnboundLocalError):
         raise
-    # pylint: disable=broad-except
-    except (
+    except (  # pylint: disable=broad-except
         JwtValidationError,
         JwtKeyError,
         Exception,
