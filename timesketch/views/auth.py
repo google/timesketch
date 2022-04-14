@@ -86,6 +86,7 @@ def login():
     # Google Identity-Aware Proxy authentication (using JSON Web Tokens)
     if current_app.config.get("GOOGLE_IAP_ENABLED", False):
         encoded_jwt = request.environ.get("HTTP_X_GOOG_IAP_JWT_ASSERTION", None)
+        # pylint: disable=broad-except
         if encoded_jwt:
             expected_audience = current_app.config.get("GOOGLE_IAP_AUDIENCE")
             expected_issuer = current_app.config.get("GOOGLE_IAP_ISSUER")
@@ -109,7 +110,7 @@ def login():
                 JwtValidationError,
                 JwtKeyError,
                 Exception,
-            ) as e:  # pylint: disable=broad-except
+            ) as e:
                 current_app.logger.error("{}".format(e))
 
     # SSO login based on environment variable, e.g. REMOTE_USER.
@@ -147,6 +148,7 @@ def login():
             db_session.commit()
 
     # Login form POST
+    # pylint: disable=using-constant-test
     form = UsernamePasswordForm()
     if form.validate_on_submit:
         user = User.query.filter_by(username=form.username.data).first()
@@ -241,6 +243,7 @@ def validate_api_token():
         )
 
     expected_issuer = discovery_document["issuer"]
+    # pylint: disable=broad-except
     try:
         validate_jwt(token_json, expected_issuer)
     except (ImportError, NameError, UnboundLocalError):
@@ -249,7 +252,7 @@ def validate_api_token():
         JwtValidationError,
         JwtKeyError,
         Exception,
-    ) as e:  # pylint: disable=broad-except
+    ) as e:
         return abort(
             HTTP_STATUS_CODE_UNAUTHORIZED,
             "Unable to validate the JWT token, with error: {0!s}.".format(e),
@@ -303,7 +306,7 @@ def validate_api_token():
             )
 
     user = User.get_or_create(username=validated_email, name=validated_email)
-    login_user(user)
+    login_user(user, remember=True)
 
     # Log the user in and setup the session.
     if current_user.is_authenticated:
