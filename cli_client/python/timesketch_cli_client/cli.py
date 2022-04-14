@@ -20,7 +20,7 @@ from requests.exceptions import ConnectionError as RequestConnectionError
 
 from timesketch_cli_client.commands import analyze
 from timesketch_cli_client.commands import config
-from timesketch_cli_client.commands import importer
+from timesketch_cli_client.commands import upload
 from timesketch_cli_client.commands import search
 from timesketch_cli_client.commands import sketch as sketch_command
 from timesketch_cli_client.commands import timelines
@@ -163,7 +163,7 @@ cli.add_command(search.search_group)
 cli.add_command(search.saved_searches_group)
 cli.add_command(analyze.analysis_group)
 cli.add_command(sketch_command.sketch_group)
-cli.add_command(importer.importer)
+cli.add_command(upload.upload)
 cli.add_command(version.version)
 
 

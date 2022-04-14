@@ -210,7 +210,7 @@ def search_group(
 
 @click.group("saved-searches")
 def saved_searches_group():
-    """Managed saved searches."""
+    """Manage saved searches."""
 
 
 @saved_searches_group.command("list")

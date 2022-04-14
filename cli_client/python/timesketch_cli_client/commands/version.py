@@ -20,5 +20,5 @@ from ..version import get_version
 
 @click.command("version")
 def version():
-    """Tool version."""
+    """Get the version of this tool."""
     click.echo(f"Timesketch CLI version {get_version()}")
