@@ -86,6 +86,7 @@ def login():
     # Google Identity-Aware Proxy authentication (using JSON Web Tokens)
     if current_app.config.get("GOOGLE_IAP_ENABLED", False):
         encoded_jwt = request.environ.get("HTTP_X_GOOG_IAP_JWT_ASSERTION", None)
+        # pylint: disable=broad-except
         if encoded_jwt:
             expected_audience = current_app.config.get("GOOGLE_IAP_AUDIENCE")
             expected_issuer = current_app.config.get("GOOGLE_IAP_ISSUER")
@@ -105,11 +106,11 @@ def login():
             except (ImportError, NameError, UnboundLocalError):
                 raise
 
-            except (  # pylint: disable=broad-except
+            except (
                 JwtValidationError,
                 JwtKeyError,
                 Exception,
-            ) as e:  # pylint: disable=broad-except
+            ) as e:
                 current_app.logger.error("{}".format(e))
 
     # SSO login based on environment variable, e.g. REMOTE_USER.
