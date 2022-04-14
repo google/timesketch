@@ -17,9 +17,6 @@ import json
 import sys
 
 import click
-from tabulate import tabulate
-
-from timesketch_api_client import search
 
 
 def format_output(search_obj, output_format, show_headers):
@@ -33,6 +30,7 @@ def format_output(search_obj, output_format, show_headers):
     Returns:
         Search results in the requested output format.
     """
+    from tabulate import tabulate
     dataframe = search_obj.to_pandas()
 
     # Label is being set regardless of return_fields. Remove if it is not in
@@ -72,7 +70,8 @@ def describe_query(search_obj):
 
 @click.command("search")
 @click.option(
-    "--query", "-q", default="*", help="Search query in OpenSearch query string format"
+    "--query", "-q", help="Search query in OpenSearch query string format",
+    required=True
 )
 @click.option(
     "--time", "times", multiple=True, help="Datetime filter (e.g. 2020-01-01T12:00)"
@@ -126,6 +125,8 @@ def search_group(
     describe,
 ):
     """Search and explore."""
+    from timesketch_api_client import search
+
     sketch = ctx.obj.sketch
     output_format = ctx.obj.output_format
     search_obj = search.Search(sketch=sketch)

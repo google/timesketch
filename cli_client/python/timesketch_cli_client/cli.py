@@ -18,7 +18,7 @@ import click
 
 from requests.exceptions import ConnectionError as RequestConnectionError
 
-from timesketch_api_client import config as timesketch_config
+#from timesketch_api_client import config as timesketch_config
 
 from timesketch_cli_client.commands import analyze
 from timesketch_cli_client.commands import config
@@ -45,21 +45,48 @@ class TimesketchCli(object):
         Args:
             sketch_from_flag: Sketch ID if provided by flag.
         """
-        self.api = api_client
+        self.api_client = api_client
+        self.conf_file = conf_file
         self.sketch_from_flag = sketch_from_flag
 
-        if not api_client:
-            try:
-                # TODO: Consider other config sections here as well.
-                self.api = timesketch_config.get_client(load_cli_config=True)
-                if not self.api:
-                    raise RequestConnectionError
-            except RequestConnectionError:
-                click.echo("ERROR: Cannot connect to the Timesketch server.")
-                sys.exit(1)
+        #if not api_client:
+        #    try:
+        #        # TODO: Consider other config sections here as well.
+        #        self.api = timesketch_config.get_client(load_cli_config=True)
+        #        if not self.api:
+        #            raise RequestConnectionError
+        #    except RequestConnectionError:
+        #        click.echo("ERROR: Cannot connect to the Timesketch server.")
+        #        sys.exit(1)
 
-        self.config_assistant = timesketch_config.ConfigAssistant()
-        self.config_assistant.load_config_file(conf_file, load_cli_config=True)
+        #self.config_assistant = timesketch_config.ConfigAssistant()
+        #self.config_assistant.load_config_file(conf_file, load_cli_config=True)
+
+    @property
+    def config_assistant(self):
+        from timesketch_api_client import config as timesketch_config
+        _config_assistant = timesketch_config.ConfigAssistant()
+        _config_assistant.load_config_file(
+            self.conf_file, load_cli_config=True)
+        return _config_assistant
+
+    @property
+    def api(self):
+        # Use cached API client if multiple calls are made in the same command.
+        if self.api_client:
+            return self.api_client
+
+        # Import late to optimize performance (i.e. don't import if not needed)
+        from timesketch_api_client import config as timesketch_config
+        try:
+            _api_client = timesketch_config.get_client(load_cli_config=True)
+            if not _api_client:
+                raise RequestConnectionError
+            self.api_client = _api_client
+        except RequestConnectionError:
+            click.echo("ERROR: Cannot connect to the Timesketch server.")
+            sys.exit(1)
+        return self.api_client
 
     @property
     def sketch(self):

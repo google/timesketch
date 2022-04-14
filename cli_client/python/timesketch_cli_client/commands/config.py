@@ -17,8 +17,6 @@ import sys
 
 import click
 
-from timesketch_cli_client.definitions import SUPPORTED_OUTPUT_FORMATS
-
 
 @click.group("config")
 def config_group():
@@ -34,12 +32,7 @@ def set_group():
 @click.argument("sketch_id")
 @click.pass_context
 def set_sketch(ctx, sketch_id):
-    """Set the active sketch.
-
-    Args:
-        ctx: Click CLI context object.
-        sketch_id: ID of the sketch to save to config.
-    """
+    """Set the active sketch."""
     ctx.obj.config_assistant.set_config("sketch", sketch_id)
     ctx.obj.config_assistant.save_config()
 
@@ -48,12 +41,9 @@ def set_sketch(ctx, sketch_id):
 @click.argument("output_format")
 @click.pass_context
 def set_output_format(ctx, output_format):
-    """Set the output format.
+    """Set the output format."""
+    from timesketch_cli_client.definitions import SUPPORTED_OUTPUT_FORMATS
 
-    Args:
-        ctx: Click CLI context object.
-        output_format: Format to use for output text.
-    """
     if output_format not in SUPPORTED_OUTPUT_FORMATS:
         supported_formats = " ".join(SUPPORTED_OUTPUT_FORMATS)
         click.echo(f"Unsupported format. Choose between {supported_formats}")
