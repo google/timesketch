@@ -29,279 +29,281 @@ from timesketch.lib.datastores.opensearch import OpenSearchDataStore
 
 
 logging.basicConfig(
-    format='%(asctime)s %(levelname)-8s %(message)s',
+    format="%(asctime)s %(levelname)-8s %(message)s",
     level=logging.INFO,
-    datefmt='%Y-%m-%d %H:%M:%S')
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
 
 
 class ResourceMixin(object):
     """Mixin for API resources."""
+
     # Schemas for database model resources
-    group_fields = {'name': fields.String}
+    group_fields = {"name": fields.String}
 
     user_fields = {
-        'username': fields.String,
-        'admin':  fields.Boolean,
-        'active': fields.Boolean,
-        'groups': fields.Nested(group_fields),
+        "username": fields.String,
+        "admin": fields.Boolean,
+        "active": fields.Boolean,
+        "groups": fields.Nested(group_fields),
     }
 
     aggregation_fields = {
-        'id': fields.Integer,
-        'name': fields.String,
-        'description': fields.String,
-        'agg_type': fields.String,
-        'parameters': fields.String,
-        'chart_type': fields.String,
-        'label_string': fields.String,
-        'user': fields.Nested(user_fields),
-        'aggregationgroup_id': fields.Integer,
-        'created_at': fields.DateTime('iso8601'),
-        'updated_at': fields.DateTime('iso8601')
+        "id": fields.Integer,
+        "name": fields.String,
+        "description": fields.String,
+        "agg_type": fields.String,
+        "parameters": fields.String,
+        "chart_type": fields.String,
+        "label_string": fields.String,
+        "user": fields.Nested(user_fields),
+        "aggregationgroup_id": fields.Integer,
+        "created_at": fields.DateTime("iso8601"),
+        "updated_at": fields.DateTime("iso8601"),
     }
 
     aggregation_group_fields = {
-        'id': fields.Integer,
-        'name': fields.String,
-        'description': fields.String,
-        'aggregations': fields.Nested(aggregation_fields),
-        'parameters': fields.String,
-        'orientation': fields.String,
-        'user': fields.Nested(user_fields),
-        'created_at': fields.DateTime('iso8601'),
-        'updated_at': fields.DateTime('iso8601')
+        "id": fields.Integer,
+        "name": fields.String,
+        "description": fields.String,
+        "aggregations": fields.Nested(aggregation_fields),
+        "parameters": fields.String,
+        "orientation": fields.String,
+        "user": fields.Nested(user_fields),
+        "created_at": fields.DateTime("iso8601"),
+        "updated_at": fields.DateTime("iso8601"),
     }
 
     status_fields = {
-        'id': fields.Integer,
-        'status': fields.String,
-        'created_at': fields.DateTime('iso8601'),
-        'updated_at': fields.DateTime('iso8601')
+        "id": fields.Integer,
+        "status": fields.String,
+        "created_at": fields.DateTime("iso8601"),
+        "updated_at": fields.DateTime("iso8601"),
     }
 
     searchindex_fields = {
-        'id': fields.Integer,
-        'name': fields.String,
-        'user': fields.Nested(user_fields),
-        'description': fields.String,
-        'index_name': fields.String,
-        'status': fields.Nested(status_fields),
-        'label_string': fields.String,
-        'deleted': fields.Boolean,
-        'created_at': fields.DateTime('iso8601'),
-        'updated_at': fields.DateTime('iso8601')
+        "id": fields.Integer,
+        "name": fields.String,
+        "user": fields.Nested(user_fields),
+        "description": fields.String,
+        "index_name": fields.String,
+        "status": fields.Nested(status_fields),
+        "label_string": fields.String,
+        "deleted": fields.Boolean,
+        "created_at": fields.DateTime("iso8601"),
+        "updated_at": fields.DateTime("iso8601"),
     }
 
     datasource_fields = {
-        'id': fields.Integer,
-        'user': fields.Nested(user_fields),
-        'provider': fields.String,
-        'context': fields.String,
-        'file_on_disk': fields.String,
-        'file_size': fields.Integer,
-        'original_filename': fields.String,
-        'data_label': fields.String,
-        'error_message': fields.String,
-        'created_at': fields.DateTime('iso8601'),
-        'updated_at': fields.DateTime('iso8601')
+        "id": fields.Integer,
+        "user": fields.Nested(user_fields),
+        "provider": fields.String,
+        "context": fields.String,
+        "file_on_disk": fields.String,
+        "file_size": fields.Integer,
+        "original_filename": fields.String,
+        "data_label": fields.String,
+        "error_message": fields.String,
+        "created_at": fields.DateTime("iso8601"),
+        "updated_at": fields.DateTime("iso8601"),
     }
 
     timeline_fields = {
-        'id': fields.Integer,
-        'name': fields.String,
-        'user': fields.Nested(user_fields),
-        'description': fields.String,
-        'status': fields.Nested(status_fields),
-        'color': fields.String,
-        'label_string': fields.String,
-        'searchindex': fields.Nested(searchindex_fields),
-        'datasources': fields.Nested(datasource_fields),
-        'deleted': fields.Boolean,
-        'created_at': fields.DateTime('iso8601'),
-        'updated_at': fields.DateTime('iso8601')
+        "id": fields.Integer,
+        "name": fields.String,
+        "user": fields.Nested(user_fields),
+        "description": fields.String,
+        "status": fields.Nested(status_fields),
+        "color": fields.String,
+        "label_string": fields.String,
+        "searchindex": fields.Nested(searchindex_fields),
+        "datasources": fields.Nested(datasource_fields),
+        "deleted": fields.Boolean,
+        "created_at": fields.DateTime("iso8601"),
+        "updated_at": fields.DateTime("iso8601"),
     }
 
     analysis_fields = {
-        'id': fields.Integer,
-        'name': fields.String,
-        'description': fields.String,
-        'analyzer_name': fields.String,
-        'parameters': fields.String,
-        'result': fields.String,
-        'analysissession_id': fields.Integer,
-        'log': fields.String,
-        'user': fields.Nested(user_fields),
-        'timeline': fields.Nested(timeline_fields),
-        'status': fields.Nested(status_fields),
-        'created_at': fields.DateTime('iso8601'),
-        'updated_at': fields.DateTime('iso8601')
+        "id": fields.Integer,
+        "name": fields.String,
+        "description": fields.String,
+        "analyzer_name": fields.String,
+        "parameters": fields.String,
+        "result": fields.String,
+        "analysissession_id": fields.Integer,
+        "log": fields.String,
+        "user": fields.Nested(user_fields),
+        "timeline": fields.Nested(timeline_fields),
+        "status": fields.Nested(status_fields),
+        "created_at": fields.DateTime("iso8601"),
+        "updated_at": fields.DateTime("iso8601"),
     }
 
     analysis_session_fields = {
-        'id': fields.Integer,
-        'user': fields.Nested(user_fields),
-        'analyses': fields.Nested(analysis_fields),
-        'created_at': fields.DateTime('iso8601'),
-        'updated_at': fields.DateTime('iso8601')
+        "id": fields.Integer,
+        "user": fields.Nested(user_fields),
+        "analyses": fields.Nested(analysis_fields),
+        "created_at": fields.DateTime("iso8601"),
+        "updated_at": fields.DateTime("iso8601"),
     }
 
     searchtemplate_fields = {
-        'id': fields.Integer,
-        'name': fields.String,
-        'user': fields.Nested(user_fields),
-        'query_string': fields.String,
-        'query_filter': fields.String,
-        'query_dsl': fields.String,
-        'created_at': fields.DateTime('iso8601'),
-        'updated_at': fields.DateTime('iso8601')
+        "id": fields.Integer,
+        "name": fields.String,
+        "user": fields.Nested(user_fields),
+        "query_string": fields.String,
+        "query_filter": fields.String,
+        "query_dsl": fields.String,
+        "created_at": fields.DateTime("iso8601"),
+        "updated_at": fields.DateTime("iso8601"),
     }
 
     view_fields = {
-        'id': fields.Integer,
-        'name': fields.String,
-        'description': fields.String,
-        'user': fields.Nested(user_fields),
-        'query_string': fields.String,
-        'query_filter': fields.String,
-        'query_dsl': fields.String,
-        'searchtemplate': fields.Nested(searchtemplate_fields),
-        'created_at': fields.DateTime('iso8601'),
-        'updated_at': fields.DateTime('iso8601')
+        "id": fields.Integer,
+        "name": fields.String,
+        "description": fields.String,
+        "user": fields.Nested(user_fields),
+        "query_string": fields.String,
+        "query_filter": fields.String,
+        "query_dsl": fields.String,
+        "searchtemplate": fields.Nested(searchtemplate_fields),
+        "created_at": fields.DateTime("iso8601"),
+        "updated_at": fields.DateTime("iso8601"),
     }
 
     view_compact_fields = {
-        'id': fields.Integer,
-        'name': fields.String,
-        'user': fields.Nested(user_fields),
-        'created_at': fields.DateTime('iso8601'),
-        'updated_at': fields.DateTime('iso8601')
+        "id": fields.Integer,
+        "name": fields.String,
+        "user": fields.Nested(user_fields),
+        "created_at": fields.DateTime("iso8601"),
+        "updated_at": fields.DateTime("iso8601"),
     }
 
     story_fields = {
-        'id': fields.Integer,
-        'title': fields.String,
-        'content': fields.String,
-        'user': fields.Nested(user_fields),
-        'created_at': fields.DateTime('iso8601'),
-        'updated_at': fields.DateTime('iso8601')
+        "id": fields.Integer,
+        "title": fields.String,
+        "content": fields.String,
+        "user": fields.Nested(user_fields),
+        "created_at": fields.DateTime("iso8601"),
+        "updated_at": fields.DateTime("iso8601"),
     }
 
     story_compact_fields = {
-        'id': fields.Integer,
-        'title': fields.String,
-        'user': fields.Nested(user_fields),
-        'created_at': fields.DateTime('iso8601'),
-        'updated_at': fields.DateTime('iso8601')
+        "id": fields.Integer,
+        "title": fields.String,
+        "user": fields.Nested(user_fields),
+        "created_at": fields.DateTime("iso8601"),
+        "updated_at": fields.DateTime("iso8601"),
     }
 
     graph_fields = {
-        'id': fields.Integer,
-        'name': fields.String,
-        'user': fields.Nested(user_fields),
-        'description': fields.String,
-        'created_at': fields.DateTime('iso8601'),
-        'updated_at': fields.DateTime('iso8601')
+        "id": fields.Integer,
+        "name": fields.String,
+        "user": fields.Nested(user_fields),
+        "description": fields.String,
+        "created_at": fields.DateTime("iso8601"),
+        "updated_at": fields.DateTime("iso8601"),
     }
 
     graphcache_fields = {
-        'id': fields.Integer,
-        'graph_elements': fields.String,
-        'graph_config': fields.String,
-        'created_at': fields.DateTime('iso8601'),
-        'updated_at': fields.DateTime('iso8601')
+        "id": fields.Integer,
+        "graph_elements": fields.String,
+        "graph_config": fields.String,
+        "created_at": fields.DateTime("iso8601"),
+        "updated_at": fields.DateTime("iso8601"),
     }
 
     sketch_fields = {
-        'id': fields.Integer,
-        'name': fields.String,
-        'description': fields.String,
-        'user': fields.Nested(user_fields),
-        'timelines': fields.List(fields.Nested(timeline_fields)),
-        'graphs': fields.List(fields.Nested(graph_fields)),
-        'active_timelines': fields.List(fields.Nested(timeline_fields)),
-        'label_string': fields.String,
-        'status': fields.Nested(status_fields),
-        'all_permissions': fields.String,
-        'my_permissions': fields.String,
-        'created_at': fields.DateTime('iso8601'),
-        'updated_at': fields.DateTime('iso8601')
+        "id": fields.Integer,
+        "name": fields.String,
+        "description": fields.String,
+        "user": fields.Nested(user_fields),
+        "timelines": fields.List(fields.Nested(timeline_fields)),
+        "graphs": fields.List(fields.Nested(graph_fields)),
+        "active_timelines": fields.List(fields.Nested(timeline_fields)),
+        "label_string": fields.String,
+        "status": fields.Nested(status_fields),
+        "all_permissions": fields.String,
+        "my_permissions": fields.String,
+        "created_at": fields.DateTime("iso8601"),
+        "updated_at": fields.DateTime("iso8601"),
     }
 
     comment_fields = {
-        'id': fields.Integer,
-        'comment': fields.String,
-        'user': fields.Nested(user_fields),
-        'created_at': fields.DateTime('iso8601'),
-        'updated_at': fields.DateTime('iso8601')
+        "id": fields.Integer,
+        "comment": fields.String,
+        "user": fields.Nested(user_fields),
+        "created_at": fields.DateTime("iso8601"),
+        "updated_at": fields.DateTime("iso8601"),
     }
 
     label_fields = {
-        'name': fields.String,
-        'user': fields.Nested(user_fields),
-        'created_at': fields.DateTime('iso8601'),
-        'updated_at': fields.DateTime('iso8601')
+        "name": fields.String,
+        "user": fields.Nested(user_fields),
+        "created_at": fields.DateTime("iso8601"),
+        "updated_at": fields.DateTime("iso8601"),
     }
 
     question_fields = {
-        'id': fields.Integer,
-        'name': fields.String,
-        'display_name': fields.String,
-        'description': fields.String,
-        'spec_json': fields.String,
-        'user': fields.Nested(user_fields),
-        'created_at': fields.DateTime('iso8601'),
-        'updated_at': fields.DateTime('iso8601')
+        "id": fields.Integer,
+        "name": fields.String,
+        "display_name": fields.String,
+        "description": fields.String,
+        "spec_json": fields.String,
+        "user": fields.Nested(user_fields),
+        "created_at": fields.DateTime("iso8601"),
+        "updated_at": fields.DateTime("iso8601"),
     }
 
     facet_fields = {
-        'id': fields.Integer,
-        'name': fields.String,
-        'display_name': fields.String,
-        'description': fields.String,
-        'spec_json': fields.String,
-        'user': fields.Nested(user_fields),
-        'questions': fields.List(fields.Nested(question_fields)),
-        'stories': fields.List(fields.Nested(story_compact_fields)),
-        'saved_searches': fields.List(fields.Nested(view_compact_fields)),
-        'saved_graphs': fields.List(fields.Nested(graph_fields)),
-        'saved_aggregations': fields.List(fields.Nested(aggregation_fields)),
-        'created_at': fields.DateTime('iso8601'),
-        'updated_at': fields.DateTime('iso8601')
+        "id": fields.Integer,
+        "name": fields.String,
+        "display_name": fields.String,
+        "description": fields.String,
+        "spec_json": fields.String,
+        "user": fields.Nested(user_fields),
+        "questions": fields.List(fields.Nested(question_fields)),
+        "stories": fields.List(fields.Nested(story_compact_fields)),
+        "saved_searches": fields.List(fields.Nested(view_compact_fields)),
+        "saved_graphs": fields.List(fields.Nested(graph_fields)),
+        "saved_aggregations": fields.List(fields.Nested(aggregation_fields)),
+        "created_at": fields.DateTime("iso8601"),
+        "updated_at": fields.DateTime("iso8601"),
     }
 
     scenario_fields = {
-        'id': fields.Integer,
-        'name': fields.String,
-        'display_name': fields.String,
-        'description': fields.String,
-        'spec_json': fields.String,
-        'user': fields.Nested(user_fields),
-        'facets': fields.List(fields.Nested(facet_fields)),
-        'created_at': fields.DateTime('iso8601'),
-        'updated_at': fields.DateTime('iso8601')
+        "id": fields.Integer,
+        "name": fields.String,
+        "display_name": fields.String,
+        "description": fields.String,
+        "spec_json": fields.String,
+        "user": fields.Nested(user_fields),
+        "facets": fields.List(fields.Nested(facet_fields)),
+        "created_at": fields.DateTime("iso8601"),
+        "updated_at": fields.DateTime("iso8601"),
     }
 
     fields_registry = {
-        'aggregation': aggregation_fields,
-        'aggregationgroup': aggregation_group_fields,
-        'searchindex': searchindex_fields,
-        'analysis': analysis_fields,
-        'analysissession': analysis_session_fields,
-        'datasource': datasource_fields,
-        'timeline': timeline_fields,
-        'searchtemplate': searchtemplate_fields,
-        'view': view_fields,
-        'user': user_fields,
-        'graph': graph_fields,
-        'graphcache': graphcache_fields,
-        'group': group_fields,
-        'sketch': sketch_fields,
-        'story': story_fields,
-        'event_comment': comment_fields,
-        'event_label': label_fields,
-        'investigative_question': question_fields,
-        'facet': facet_fields,
-        'scenario': scenario_fields
+        "aggregation": aggregation_fields,
+        "aggregationgroup": aggregation_group_fields,
+        "searchindex": searchindex_fields,
+        "analysis": analysis_fields,
+        "analysissession": analysis_session_fields,
+        "datasource": datasource_fields,
+        "timeline": timeline_fields,
+        "searchtemplate": searchtemplate_fields,
+        "view": view_fields,
+        "user": user_fields,
+        "graph": graph_fields,
+        "graphcache": graphcache_fields,
+        "group": group_fields,
+        "sketch": sketch_fields,
+        "story": story_fields,
+        "event_comment": comment_fields,
+        "event_label": label_fields,
+        "investigative_question": question_fields,
+        "facet": facet_fields,
+        "scenario": scenario_fields,
     }
 
     @property
@@ -312,14 +314,13 @@ class ResourceMixin(object):
             Instance of lib.datastores.opensearch.OpenSearchDatastore
         """
         return OpenSearchDataStore(
-            host=current_app.config['OPENSEARCH_HOST'],
-            port=current_app.config['OPENSEARCH_PORT'])
+            host=current_app.config["OPENSEARCH_HOST"],
+            port=current_app.config["OPENSEARCH_PORT"],
+        )
 
-    def to_json(self,
-                model,
-                model_fields=None,
-                meta=None,
-                status_code=HTTP_STATUS_CODE_OK):
+    def to_json(
+        self, model, model_fields=None, meta=None, status_code=HTTP_STATUS_CODE_OK
+    ):
         """Create json response from a database models.
 
         Args:
@@ -334,7 +335,7 @@ class ResourceMixin(object):
         if not meta:
             meta = dict()
 
-        schema = {'meta': meta, 'objects': []}
+        schema = {"meta": meta, "objects": []}
 
         if model:
             if not model_fields:
@@ -342,7 +343,7 @@ class ResourceMixin(object):
                     model_fields = self.fields_registry[model.__tablename__]
                 except AttributeError:
                     model_fields = self.fields_registry[model[0].__tablename__]
-            schema['objects'] = [marshal(model, model_fields)]
+            schema["objects"] = [marshal(model, model_fields)]
 
         response = jsonify(schema)
         response.status_code = status_code

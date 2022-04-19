@@ -32,6 +32,6 @@ class TagMetadataResource(resources.ResourceMixin, Resource):
         Returns:
             JSON object including version info
         """
-        tag_metadata = load_yaml_config('INTELLIGENCE_TAG_METADATA')
+        tag_metadata = load_yaml_config("INTELLIGENCE_TAG_METADATA")
         response = jsonify(tag_metadata)
         return response

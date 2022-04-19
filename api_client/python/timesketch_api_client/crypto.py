@@ -28,27 +28,26 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from . import credentials
 
 
-logger = logging.getLogger('timesketch_api.crypto_client')
+logger = logging.getLogger("timesketch_api.crypto_client")
 
 
 class CredentialStorage:
     """Class to store and retrieve stored credentials."""
 
     # The default filename of the token file.
-    DEFAULT_CREDENTIAL_FILENAME = '.timesketch.token'
+    DEFAULT_CREDENTIAL_FILENAME = ".timesketch.token"
 
     # Length of the salt.
     SALT_LENGTH = 16
 
-    def __init__(self, file_path=''):
+    def __init__(self, file_path=""):
         """Initialize the class."""
         self._user = getpass.getuser()
         if file_path:
             self._filepath = file_path
         else:
-            home_path = os.path.expanduser('~')
-            self._filepath = os.path.join(
-                home_path, self.DEFAULT_CREDENTIAL_FILENAME)
+            home_path = os.path.expanduser("~")
+            self._filepath = os.path.join(home_path, self.DEFAULT_CREDENTIAL_FILENAME)
 
     def _get_key(self, salt, password):
         """Returns an encryption key.
@@ -66,10 +65,9 @@ class CredentialStorage:
             length=32,
             salt=salt,
             iterations=100000,
-            backend=backends.default_backend()
+            backend=backends.default_backend(),
         )
-        return base64.urlsafe_b64encode(
-            kdf.derive(password))
+        return base64.urlsafe_b64encode(kdf.derive(password))
 
     def set_filepath(self, file_path):
         """Set the filepath to the credential file."""
@@ -77,7 +75,8 @@ class CredentialStorage:
             self._filepath = file_path
 
     def save_credentials(
-            self, cred_obj, file_path='', password='', config_assistant=None):
+        self, cred_obj, file_path="", password="", config_assistant=None
+    ):
         """Save credential data to a token file.
 
         This function will create an encrypted file
@@ -100,15 +99,15 @@ class CredentialStorage:
             file_path = self._filepath
 
         if password:
-            password = bytes(password, 'utf-8')
+            password = bytes(password, "utf-8")
         else:
             password = fernet.Fernet.generate_key()
             if config_assistant:
-                config_assistant.set_config('cred_key', password)
+                config_assistant.set_config("cred_key", password)
                 config_assistant.save_config()
 
         if not os.path.isfile(file_path):
-            logger.info('File does not exist, creating it.')
+            logger.info("File does not exist, creating it.")
 
         salt = os.urandom(self.SALT_LENGTH)
         key = self._get_key(salt, password)
@@ -116,16 +115,15 @@ class CredentialStorage:
 
         data = cred_obj.serialize()
 
-        with open(file_path, 'wb') as fw:
+        with open(file_path, "wb") as fw:
             fw.write(salt)
             fw.write(crypto.encrypt(data))
 
         file_permission = stat.S_IREAD | stat.S_IWRITE
         os.chmod(file_path, file_permission)
-        logger.info('Credentials saved to: %s', file_path)
+        logger.info("Credentials saved to: %s", file_path)
 
-    def load_credentials(
-            self, file_path='', password='', config_assistant=None):
+    def load_credentials(self, file_path="", password="", config_assistant=None):
         """Load credentials from a file and return a credential object.
 
         Args:
@@ -152,22 +150,23 @@ class CredentialStorage:
             return None
 
         if password:
-            password = bytes(password, 'utf-8')
+            password = bytes(password, "utf-8")
         elif config_assistant:
             try:
-                password = config_assistant.get_config('cred_key')
+                password = config_assistant.get_config("cred_key")
                 if not isinstance(password, bytes):
-                    password = bytes(password, 'utf-8')
+                    password = bytes(password, "utf-8")
             except KeyError as exc:
                 raise IOError(
-                    'Not able to determine encryption key from '
-                    'config.') from exc
+                    "Not able to determine encryption key from " "config."
+                ) from exc
         else:
             raise IOError(
-                'Neither password nor a configuration assistant passed to '
-                'tool, unable to determine password.')
+                "Neither password nor a configuration assistant passed to "
+                "tool, unable to determine password."
+            )
 
-        with open(file_path, 'rb') as fh:
+        with open(file_path, "rb") as fh:
             salt = fh.read(self.SALT_LENGTH)
             key = self._get_key(salt, password)
             data = fh.read()
@@ -176,12 +175,13 @@ class CredentialStorage:
                 data_string = crypto.decrypt(data)
             except fernet.InvalidSignature as e:
                 raise IOError(
-                    'Unable to decrypt data, signature is not correct: '
-                    '{0!s}'.format(e)) from e
+                    "Unable to decrypt data, signature is not correct: "
+                    "{0!s}".format(e)
+                ) from e
             except fernet.InvalidToken as e:
                 raise IOError(
-                    'Unable to decrypt data, password wrong? (error '
-                    '{0!s})'.format(e)) from e
+                    "Unable to decrypt data, password wrong? (error " "{0!s})".format(e)
+                ) from e
 
             # TODO: Implement a manager.
             cred_obj = credentials.TimesketchPwdCredentials()

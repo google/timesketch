@@ -21,44 +21,50 @@ from timesketch.lib.analyzers import manager
 
 class MockAnalyzer(object):
     """Mock analyzer class,"""
-    NAME = 'MockAnalyzer'
+
+    NAME = "MockAnalyzer"
 
     DEPENDENCIES = frozenset()
 
 
 class MockAnalyzer2(object):
     """Mock analyzer class,"""
-    NAME = 'MockAnalyzer2'
 
-    DEPENDENCIES = frozenset(['MockAnalyzer'])
+    NAME = "MockAnalyzer2"
+
+    DEPENDENCIES = frozenset(["MockAnalyzer"])
 
 
 class MockAnalyzer3(object):
     """Mock analyzer class,"""
-    NAME = 'MockAnalyzer3'
+
+    NAME = "MockAnalyzer3"
 
     DEPENDENCIES = frozenset()
 
 
 class MockAnalyzer4(object):
     """Mock analyzer class,"""
-    NAME = 'MockAnalyzer4'
 
-    DEPENDENCIES = frozenset(['MockAnalyzer2', 'MockAnalyzer3'])
+    NAME = "MockAnalyzer4"
+
+    DEPENDENCIES = frozenset(["MockAnalyzer2", "MockAnalyzer3"])
 
 
 class MockAnalyzerFail1(object):
     """Mock analyzer class,"""
-    NAME = 'MockAnalyzerFail1'
 
-    DEPENDENCIES = frozenset(['MockAnalyzerFail2'])
+    NAME = "MockAnalyzerFail1"
+
+    DEPENDENCIES = frozenset(["MockAnalyzerFail2"])
 
 
 class MockAnalyzerFail2(object):
     """Mock analyzer class,"""
-    NAME = 'MockAnalyzerFail2'
 
-    DEPENDENCIES = frozenset(['MockAnalyzerFail1'])
+    NAME = "MockAnalyzerFail2"
+
+    DEPENDENCIES = frozenset(["MockAnalyzerFail1"])
 
 
 class TestAnalysisManager(BaseTest):
@@ -78,8 +84,8 @@ class TestAnalysisManager(BaseTest):
         analyzer_dict = {}
         for name, analyzer_class in analyzer_list:
             analyzer_dict[name] = analyzer_class
-        self.assertIn('mockanalyzer', analyzer_dict)
-        analyzer_class = analyzer_dict.get('mockanalyzer')
+        self.assertIn("mockanalyzer", analyzer_dict)
+        analyzer_class = analyzer_dict.get("mockanalyzer")
         self.assertEqual(analyzer_class, MockAnalyzer)
 
         manager.AnalysisManager.clear_registration()
@@ -95,22 +101,21 @@ class TestAnalysisManager(BaseTest):
         analyzers = manager.AnalysisManager.get_analyzers()
         analyzer_names_list = [x for x, _ in analyzers]
         self.assertEqual(len(analyzer_names_list), 4)
-        self.assertIn('mockanalyzer', analyzer_names_list)
+        self.assertIn("mockanalyzer", analyzer_names_list)
 
         # pylint: disable=protected-access
         analyzers_to_run = [
-            'mockanalyzer',
-            'mockanalyzer2',
-            'mockanalyzer3',
-            'mockanalyzer4'
+            "mockanalyzer",
+            "mockanalyzer2",
+            "mockanalyzer3",
+            "mockanalyzer4",
         ]
-        dependency_tree = manager.AnalysisManager._build_dependencies(
-            analyzers_to_run)
+        dependency_tree = manager.AnalysisManager._build_dependencies(analyzers_to_run)
         self.assertEqual(len(dependency_tree), 3)
-        self.assertIn('mockanalyzer', dependency_tree[0])
-        self.assertIn('mockanalyzer3', dependency_tree[0])
-        self.assertIn('mockanalyzer2', dependency_tree[1])
-        self.assertIn('mockanalyzer4', dependency_tree[2])
+        self.assertIn("mockanalyzer", dependency_tree[0])
+        self.assertIn("mockanalyzer3", dependency_tree[0])
+        self.assertIn("mockanalyzer2", dependency_tree[1])
+        self.assertIn("mockanalyzer4", dependency_tree[2])
 
         manager.AnalysisManager.clear_registration()
         manager.AnalysisManager.register_analyzer(MockAnalyzerFail1)
@@ -121,10 +126,11 @@ class TestAnalysisManager(BaseTest):
 
     def test_get_analyzer(self):
         """Test to get analyzer class from registry."""
-        analyzer_class = manager.AnalysisManager.get_analyzer('mockanalyzer')
+        analyzer_class = manager.AnalysisManager.get_analyzer("mockanalyzer")
         self.assertEqual(analyzer_class, MockAnalyzer)
 
     def test_register_analyzer(self):
         """Test so we raise KeyError when analyzer is already registered."""
         self.assertRaises(
-            KeyError, manager.AnalysisManager.register_analyzer, MockAnalyzer)
+            KeyError, manager.AnalysisManager.register_analyzer, MockAnalyzer
+        )

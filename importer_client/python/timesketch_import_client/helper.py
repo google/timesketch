@@ -20,7 +20,7 @@ import os
 from timesketch_import_client import data as data_config
 
 
-logger = logging.getLogger('timesketch_importer.ts_import_helper')
+logger = logging.getLogger("timesketch_importer.ts_import_helper")
 
 
 class ImportHelper:
@@ -41,23 +41,23 @@ class ImportHelper:
             config_dict (dict): A dictionary that contains
                 configuration details for the streamer.
         """
-        message = config_dict.get('message')
+        message = config_dict.get("message")
         if message:
             streamer.set_message_format_string(message)
 
-        timestamp_desc = config_dict.get('timestamp_desc')
+        timestamp_desc = config_dict.get("timestamp_desc")
         if timestamp_desc:
             streamer.set_timestamp_description(timestamp_desc)
 
-        separator = config_dict.get('separator')
+        separator = config_dict.get("separator")
         if separator:
             streamer.set_csv_delimiter(separator)
 
-        encoding = config_dict.get('encoding')
+        encoding = config_dict.get("encoding")
         if encoding:
             streamer.set_text_encoding(encoding)
 
-        datetime_string = config_dict.get('datetime')
+        datetime_string = config_dict.get("datetime")
         if datetime_string:
             streamer.set_datetime_column(datetime_string)
 
@@ -77,28 +77,29 @@ class ImportHelper:
         """
         if not os.path.isfile(file_path):
             raise ValueError(
-                'Unable to open file: [{0:s}], it does not exist.'.format(
-                    file_path))
+                "Unable to open file: [{0:s}], it does not exist.".format(file_path)
+            )
 
         if not os.access(file_path, os.R_OK):
             raise ValueError(
-                'Unable to open file: [{0:s}], cannot open it for '
-                'read, please check permissions.'.format(file_path))
-
+                "Unable to open file: [{0:s}], cannot open it for "
+                "read, please check permissions.".format(file_path)
+            )
 
         config = data_config.load_config(file_path)
         if not isinstance(config, dict):
             raise ValueError(
-                'Unable to read config file since it does not produce a dict')
+                "Unable to read config file since it does not produce a dict"
+            )
 
         if not all([isinstance(x, dict) for x in config.values()]):
             raise ValueError(
-                'The config needs to a dict that contains other dict '
-                'attributes.')
+                "The config needs to a dict that contains other dict " "attributes."
+            )
 
         self._data.update(config)
 
-    def add_config_dict(self, config, config_name='manual'):
+    def add_config_dict(self, config, config_name="manual"):
         """Add a config dict describing the log file config.
 
         Args:
@@ -109,7 +110,7 @@ class ImportHelper:
         """
         self._data[config_name] = config
 
-    def configure_streamer(self, streamer, data_type='', columns=None):
+    def configure_streamer(self, streamer, data_type="", columns=None):
         """Go through loaded config and setup a streamer if there is a match.
 
         This function takes a streamer object and compares the loaded config
@@ -127,9 +128,9 @@ class ImportHelper:
             columns (List[str]): optional list of strings with column names.
         """
         for config_name, config in self._data.items():
-            conf_data_type = config.get('data_type')
+            conf_data_type = config.get("data_type")
             if data_type and conf_data_type and conf_data_type == data_type:
-                logger.info('Using config %s for streamer.', config_name)
+                logger.info("Using config %s for streamer.", config_name)
                 self._configure_streamer(streamer, config)
                 return
 
@@ -137,19 +138,19 @@ class ImportHelper:
                 continue
 
             column_set = set(columns)
-            column_string = config.get('columns', '')
-            column_subset_string = config.get('columns_subset', '')
+            column_string = config.get("columns", "")
+            column_subset_string = config.get("columns_subset", "")
             if not any([column_string, column_subset_string]):
                 continue
 
-            conf_columns = set(column_string.split(','))
+            conf_columns = set(column_string.split(","))
             if conf_columns and column_set == conf_columns:
-                logger.info('Using config %s for streamer.', config_name)
+                logger.info("Using config %s for streamer.", config_name)
                 self._configure_streamer(streamer, config)
                 return
 
-            columns_subset = set(column_subset_string.split(','))
+            columns_subset = set(column_subset_string.split(","))
             if columns_subset and columns_subset.issubset(column_set):
-                logger.info('Using config %s for streamer.', config_name)
+                logger.info("Using config %s for streamer.", config_name)
                 self._configure_streamer(streamer, config)
                 return

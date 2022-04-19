@@ -18,9 +18,9 @@ import pathlib
 
 from prometheus_flask_exporter.multiprocess import GunicornPrometheusMetrics
 
-METRICS_HTTP_HOST = os.environ.get('TIMESKETCH_METRICS_HOST', '0.0.0.0')
-METRICS_HTTP_PORT = os.environ.get('TIMESKETCH_METRICS_PORT', 8080)
-METRICS_DB_DIR = os.environ.get('prometheus_multiproc_dir', None)
+METRICS_HTTP_HOST = os.environ.get("TIMESKETCH_METRICS_HOST", "0.0.0.0")
+METRICS_HTTP_PORT = os.environ.get("TIMESKETCH_METRICS_PORT", 8080)
+METRICS_DB_DIR = os.environ.get("prometheus_multiproc_dir", None)
 METRICS_ENABLED = METRICS_DB_DIR
 
 # Reference: https://github.com/rycus86/prometheus_flask_exporter#wsgi
@@ -33,14 +33,16 @@ def when_ready(server):
 
     # Clean up andy old prometheus database files
     if os.path.isdir(METRICS_DB_DIR):
-        files = glob.glob(METRICS_DB_DIR + '/*.db')
+        files = glob.glob(METRICS_DB_DIR + "/*.db")
         for file in files:
             os.remove(file)
     else:
         pathlib.Path(METRICS_DB_DIR).mkdir(parents=True, exist_ok=True)
 
     GunicornPrometheusMetrics.start_http_server_when_ready(
-        int(METRICS_HTTP_PORT), METRICS_HTTP_HOST)
+        int(METRICS_HTTP_PORT), METRICS_HTTP_HOST
+    )
+
 
 def child_exit(server, worker):
     """Mark a child worker as exited."""

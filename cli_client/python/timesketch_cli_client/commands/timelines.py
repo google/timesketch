@@ -16,12 +16,12 @@
 import click
 
 
-@click.group('timelines')
+@click.group("timelines")
 def timelines_group():
     """Manage timelines."""
 
 
-@timelines_group.command('list')
+@timelines_group.command("list")
 @click.pass_context
 def list_timelines(ctx):
     """List all timelines in the sketch.
@@ -31,11 +31,11 @@ def list_timelines(ctx):
     """
     sketch = ctx.obj.sketch
     for timeline in sketch.list_timelines():
-        click.echo(f'{timeline.id} {timeline.name}')
+        click.echo(f"{timeline.id} {timeline.name}")
 
 
-@timelines_group.command('describe')
-@click.argument('timeline_id', type=int, required=False)
+@timelines_group.command("describe")
+@click.argument("timeline_id", type=int, required=False)
 @click.pass_context
 def describe_timeline(ctx, timeline_id):
     """Show details for a timeline.
@@ -48,7 +48,7 @@ def describe_timeline(ctx, timeline_id):
     # TODO (berggren): Add more details to the output, e.g. the data_sources
     timeline = sketch.get_timeline(timeline_id=timeline_id)
     if not timeline:
-        click.echo('No such timeline')
+        click.echo("No such timeline")
         return
-    click.echo(f'Name: {timeline.name}')
-    click.echo(f'Index: {timeline.index_name}')
+    click.echo(f"Name: {timeline.name}")
+    click.echo(f"Index: {timeline.index_name}")

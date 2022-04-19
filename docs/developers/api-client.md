@@ -541,7 +541,7 @@ for event in events['objects']:
  sketch.tag_events(events2, tags)
 ```
 
-Of if you want to tag a signle event:
+Of if you want to tag a single event:
 
 ```python
 # Or if you want to do single ones:

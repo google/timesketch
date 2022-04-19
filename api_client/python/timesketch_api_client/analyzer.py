@@ -22,7 +22,7 @@ from . import error
 from . import resource
 
 
-logger = logging.getLogger('timesketch_api.analyzer')
+logger = logging.getLogger("timesketch_api.analyzer")
 
 
 class AnalyzerResult(resource.BaseResource):
@@ -33,22 +33,23 @@ class AnalyzerResult(resource.BaseResource):
         self._session_id = session_id
         self._sketch_id = sketch_id
         self._timeline_id = timeline_id
-        resource_uri = (
-            '{0:s}/sketches/{1:d}/timelines/{2:d}/analysis/').format(
-                api.api_root, sketch_id, timeline_id)
+        resource_uri = ("{0:s}/sketches/{1:d}/timelines/{2:d}/analysis/").format(
+            api.api_root, sketch_id, timeline_id
+        )
         super().__init__(api, resource_uri)
 
     def _get_status_data(self):
         """Yields a dict for each analyzer status."""
         data = self._fetch_data()
-        for entry in data.get('analyzers', []):
+        for entry in data.get("analyzers", []):
             yield {
-                'log': entry.get('log', 'No recorded logs.'),
-                'name': entry.get('name', 'No Name'),
-                'results': entry.get('results', ''),
-                'status': entry.get('status', 'Unknown'),
-                'date': entry.get(
-                    'status_date', datetime.datetime.utcnow().isoformat()),
+                "log": entry.get("log", "No recorded logs."),
+                "name": entry.get("name", "No Name"),
+                "results": entry.get("results", ""),
+                "status": entry.get("status", "Unknown"),
+                "date": entry.get(
+                    "status_date", datetime.datetime.utcnow().isoformat()
+                ),
             }
 
     def _fetch_data(self):
@@ -59,41 +60,42 @@ class AnalyzerResult(resource.BaseResource):
 
         data = error.get_response_json(response, logger)
 
-        objects = data.get('objects')
+        objects = data.get("objects")
         if not objects:
             return {}
 
         result_dict = {}
         for result in objects[0]:
-            result_id = result.get('analysissession_id')
+            result_id = result.get("analysissession_id")
             if result_id != self._session_id:
                 continue
-            status_list = result.get('status', [])
+            status_list = result.get("status", [])
             if len(status_list) != 1:
                 continue
             status = status_list[0]
 
-            timeline = result.get('timeline', {})
+            timeline = result.get("timeline", {})
 
-            result_dict['id'] = result_id
-            result_dict.setdefault('analyzers', [])
-            result_dict['analyzers'].append({
-                'name': result.get('analyzer_name', 'N/A'),
-                'results': result.get('result'),
-                'description': result.get('description', 'N/A'),
-                'user': result.get('user', {}).get('username', 'System'),
-                'parameters': json.loads(result.get('parameters', '{}')),
-                'status': status.get('status', 'Unknown'),
-                'status_date': status.get('updated_at', ''),
-                'log': result.get('log', ''),
-                'created': result.get('created_at'),
-                'timeline': timeline.get('name', 'N/A'),
-                'timeline_id': timeline.get('id', -1),
-                'timeline_user': timeline.get('user', {}).get(
-                    'username', 'System'),
-                'timeline_name': timeline.get('name', 'N/A'),
-                'timeline_deleted': timeline.get('deleted', False),
-            })
+            result_dict["id"] = result_id
+            result_dict.setdefault("analyzers", [])
+            result_dict["analyzers"].append(
+                {
+                    "name": result.get("analyzer_name", "N/A"),
+                    "results": result.get("result"),
+                    "description": result.get("description", "N/A"),
+                    "user": result.get("user", {}).get("username", "System"),
+                    "parameters": json.loads(result.get("parameters", "{}")),
+                    "status": status.get("status", "Unknown"),
+                    "status_date": status.get("updated_at", ""),
+                    "log": result.get("log", ""),
+                    "created": result.get("created_at"),
+                    "timeline": timeline.get("name", "N/A"),
+                    "timeline_id": timeline.get("id", -1),
+                    "timeline_user": timeline.get("user", {}).get("username", "System"),
+                    "timeline_name": timeline.get("name", "N/A"),
+                    "timeline_deleted": timeline.get("deleted", False),
+                }
+            )
 
         return result_dict
 
@@ -108,33 +110,34 @@ class AnalyzerResult(resource.BaseResource):
         return_strings = []
         for entry in self._get_status_data():
             return_strings.append(
-                '[{0:s}] = {1:s}'.format(
-                    entry.get('name', 'No Name'),
-                    entry.get('log', 'No recorded logs.')))
-        return '\n'.join(return_strings)
+                "[{0:s}] = {1:s}".format(
+                    entry.get("name", "No Name"), entry.get("log", "No recorded logs.")
+                )
+            )
+        return "\n".join(return_strings)
 
     @property
     def results(self):
         """Returns the results from the analyzer session."""
         return_strings = []
         for entry in self._get_status_data():
-            results = entry.get('results')
+            results = entry.get("results")
             if not results:
-                results = 'No results yet.'
+                results = "No results yet."
             return_strings.append(
-                '[{0:s}] = {1:s}'.format(
-                    entry.get('name', 'No Name'), results))
-        return '\n'.join(return_strings)
+                "[{0:s}] = {1:s}".format(entry.get("name", "No Name"), results)
+            )
+        return "\n".join(return_strings)
 
     @property
     def results_dict(self):
         """Returns the results from the analyzer session as a dict."""
         result_dict = {}
         for entry in self._get_status_data():
-            results = entry.get('results')
+            results = entry.get("results")
             if not results:
-                results = 'No results yet.'
-            name = entry.get('name', 'No Name')
+                results = "No results yet."
+            name = entry.get("name", "No Name")
             result_dict.setdefault(name, [])
             result_dict[name].append(results)
         return result_dict
@@ -145,20 +148,21 @@ class AnalyzerResult(resource.BaseResource):
         return_strings = []
         for entry in self._get_status_data():
             return_strings.append(
-                '[{0:s}] = {1:s}'.format(
-                    entry.get('name', 'No Name'),
-                    entry.get('status', 'Unknown.')))
-        return '\n'.join(return_strings)
+                "[{0:s}] = {1:s}".format(
+                    entry.get("name", "No Name"), entry.get("status", "Unknown.")
+                )
+            )
+        return "\n".join(return_strings)
 
     @property
     def status_dict(self):
         """Returns the current status of the analyzers run as a dict."""
         return_dict = {}
         for entry in self._get_status_data():
-            name = entry.get('name', 'No Name')
+            name = entry.get("name", "No Name")
 
             return_dict.setdefault(name, [])
-            return_dict[name].append(entry.get('status', 'Unknown'))
+            return_dict[name].append(entry.get("status", "Unknown"))
         return return_dict
 
     @property
@@ -167,9 +171,10 @@ class AnalyzerResult(resource.BaseResource):
         return_strings = []
         for entry in self._get_status_data():
             return_strings.append(
-                '{0:s} - {1:s}: {2:s}'.format(
-                    entry.get('name', 'No Name'),
-                    entry.get(
-                        'status_date', datetime.datetime.utcnow().isoformat()),
-                    entry.get('status', 'Unknown.')))
-        return '\n'.join(return_strings)
+                "{0:s} - {1:s}: {2:s}".format(
+                    entry.get("name", "No Name"),
+                    entry.get("status_date", datetime.datetime.utcnow().isoformat()),
+                    entry.get("status", "Unknown."),
+                )
+            )
+        return "\n".join(return_strings)

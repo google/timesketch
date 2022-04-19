@@ -28,10 +28,10 @@ class SimilarityScorerConfig(object):
     DEFAULT_PERMUTATIONS = 128
 
     DEFAULT_CONFIG = {
-        'field': 'message',
-        'delimiters': [' ', '-', '/'],
-        'threshold': DEFAULT_THRESHOLD,
-        'num_perm': DEFAULT_PERMUTATIONS
+        "field": "message",
+        "delimiters": [" ", "-", "/"],
+        "threshold": DEFAULT_THRESHOLD,
+        "num_perm": DEFAULT_PERMUTATIONS,
     }
 
     # For any data_type that need custom config parameters.
@@ -39,12 +39,12 @@ class SimilarityScorerConfig(object):
     # TODO: Add stopwords boolean config parameter.
     # TODO: Add remove_words boolean config parameter.
     CONFIG_REGISTRY = {
-        'windows:evtx:record': {
-            'query': 'data_type:"windows:evtx:record"',
-            'field': 'message',
-            'delimiters': [' ', '-', '/'],
-            'threshold': DEFAULT_THRESHOLD,
-            'num_perm': DEFAULT_PERMUTATIONS
+        "windows:evtx:record": {
+            "query": 'data_type:"windows:evtx:record"',
+            "field": "message",
+            "delimiters": [" ", "-", "/"],
+            "threshold": DEFAULT_THRESHOLD,
+            "num_perm": DEFAULT_PERMUTATIONS,
         }
     }
 
@@ -72,20 +72,22 @@ class SimilarityScorerConfig(object):
         # the query based on the data_type.
         if not config_dict:
             config_dict = self.DEFAULT_CONFIG
-            config_dict['query'] = 'data_type:"{0}"'.format(self._data_type)
+            config_dict["query"] = 'data_type:"{0}"'.format(self._data_type)
 
-        config_dict['index_name'] = self._index_name
-        config_dict['data_type'] = self._data_type
+        config_dict["index_name"] = self._index_name
+        config_dict["data_type"] = self._data_type
         return config_dict
 
 
 class SimilarityScorer(interface.BaseAnalyzer):
     """Score events based on Jaccard distance."""
 
-    NAME = 'similarity_scorer'
-    DISPLAY_NAME = 'Similarity Scorer'
-    DESCRIPTION = ('Experimental: Calculate similarity scores based on the '
-                   'Jaccard distance between events')
+    NAME = "similarity_scorer"
+    DISPLAY_NAME = "Similarity Scorer"
+    DESCRIPTION = (
+        "Experimental: Calculate similarity scores based on the "
+        "Jaccard distance between events"
+    )
 
     DEPENDENCIES = frozenset()
 
@@ -111,30 +113,32 @@ class SimilarityScorer(interface.BaseAnalyzer):
             data_types has been configured.
         """
         if not self._config:
-            return 'No data_type specified.'
+            return "No data_type specified."
 
         # Event generator for streaming results.
         events = self.event_stream(
-            query_string=self._config.query,
-            return_fields=[self._config.field]
+            query_string=self._config.query, return_fields=[self._config.field]
         )
 
         lsh, minhashes = similarity.new_lsh_index(
-            events, field=self._config.field,
-            delimiters=self._config.delimiters, num_perm=self._config.num_perm,
-            threshold=self._config.threshold)
+            events,
+            field=self._config.field,
+            delimiters=self._config.delimiters,
+            num_perm=self._config.num_perm,
+            threshold=self._config.threshold,
+        )
         total_num_events = len(minhashes)
         for key, minhash in minhashes.items():
             event_id, event_type, index_name = key
             event_dict = dict(_id=event_id, _type=event_type, _index=index_name)
             event = interface.Event(event_dict, self.datastore)
             score = similarity.calculate_score(lsh, minhash, total_num_events)
-            attributes_to_add = {'similarity_score': score}
+            attributes_to_add = {"similarity_score": score}
             event.add_attributes(attributes_to_add)
             # Commit the event to the datastore.
             event.commit()
 
-        msg = 'Similarity scorer processed {0:d} events for data_type {1:s}'
+        msg = "Similarity scorer processed {0:d} events for data_type {1:s}"
         return msg.format(total_num_events, self._config.data_type)
 
 
