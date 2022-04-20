@@ -122,7 +122,7 @@ Using the advances search, a JSON can be passed to Timesketch
 
 ## Analyzers
 
-With Analyzers you can enrich your data in timelines. The analysers are written in Python.
+With Analyzers you can enrich your data in timelines. The analyzers are written in Python.
 
 The system consist of a set of background workers that can execute Python code on a stream of events. It provides an easy to use API to programmatically do all the actions available in the UI, e.g. tagging events, star and create saved views etc. The idea is to automatically enrich data with encoded analysis knowledge.
 

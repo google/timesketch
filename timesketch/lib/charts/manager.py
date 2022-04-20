@@ -46,8 +46,7 @@ class ChartManager(object):
         try:
             chart_class = cls._class_registry[chart_name.lower()]
         except KeyError:
-            raise KeyError(
-                'No such chart type: {0:s}'.format(chart_name.lower()))
+            raise KeyError("No such chart type: {0:s}".format(chart_name.lower()))
         return chart_class
 
     @classmethod
@@ -64,8 +63,9 @@ class ChartManager(object):
         """
         chart_name = chart_class.NAME.lower()
         if chart_name in cls._class_registry:
-            raise KeyError('Class already set for name: {0:s}.'.format(
-                chart_class.NAME))
+            raise KeyError(
+                "Class already set for name: {0:s}.".format(chart_class.NAME)
+            )
         cls._class_registry[chart_name] = chart_class
 
     @classmethod

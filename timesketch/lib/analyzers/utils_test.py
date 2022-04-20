@@ -28,85 +28,82 @@ class TestAnalyzerUtils(BaseTest):
 
     def test_get_domain_from_url(self):
         """Test get_domain_from_url function."""
-        url = 'http://www.example.com/?foo=bar'
+        url = "http://www.example.com/?foo=bar"
         domain = utils.get_domain_from_url(url)
-        self.assertEqual(domain, 'www.example.com')
+        self.assertEqual(domain, "www.example.com")
 
     def test_get_tld_from_domain(self):
         """Test get_tld_from_domain function."""
-        domain = 'this.is.a.subdomain.example.com'
+        domain = "this.is.a.subdomain.example.com"
         tld = utils.get_tld_from_domain(domain)
-        self.assertEqual(tld, 'example.com')
+        self.assertEqual(tld, "example.com")
 
-        domain = 'a'
+        domain = "a"
         tld = utils.get_tld_from_domain(domain)
-        self.assertEqual(tld, 'a')
+        self.assertEqual(tld, "a")
 
-        domain = 'example.com'
+        domain = "example.com"
         tld = utils.get_tld_from_domain(domain)
-        self.assertEqual(tld, 'example.com')
+        self.assertEqual(tld, "example.com")
 
     def test_strip_www_from_domain(self):
         """Test strip_www_from_domain function."""
-        domain = 'www.mbl.is'
+        domain = "www.mbl.is"
         stripped = utils.strip_www_from_domain(domain)
-        self.assertEqual(stripped, 'mbl.is')
+        self.assertEqual(stripped, "mbl.is")
 
-        domain = 'mbl.is'
+        domain = "mbl.is"
         stripped = utils.strip_www_from_domain(domain)
         self.assertEqual(stripped, domain)
 
     def test_get_cdn_provider(self):
         """Test get_cdn_provider function."""
-        domain = 'foobar.gstatic.com'
+        domain = "foobar.gstatic.com"
         provider = utils.get_cdn_provider(domain)
         self.assertIsInstance(provider, six.text_type)
-        self.assertEqual(provider, 'Google')
+        self.assertEqual(provider, "Google")
 
-        domain = 'www.mbl.is'
+        domain = "www.mbl.is"
         provider = utils.get_cdn_provider(domain)
         self.assertIsInstance(provider, six.text_type)
-        self.assertEqual(provider, '')
+        self.assertEqual(provider, "")
 
     def test_get_events_from_data_frame(self):
         """Test getting all events from data frame."""
         lines = [
-            {'_id': '123', '_type': 'manual', '_index': 'asdfasdf',
-             'tool': 'isskeid'},
-            {'_id': '124', '_type': 'manual', '_index': 'asdfasdf',
-             'tool': 'tong'},
-            {'_id': '125', '_type': 'manual', '_index': 'asdfasdf',
-             'tool': 'klemma'},
+            {"_id": "123", "_type": "manual", "_index": "asdfasdf", "tool": "isskeid"},
+            {"_id": "124", "_type": "manual", "_index": "asdfasdf", "tool": "tong"},
+            {"_id": "125", "_type": "manual", "_index": "asdfasdf", "tool": "klemma"},
         ]
         frame = pd.DataFrame(lines)
 
         events = list(utils.get_events_from_data_frame(frame, None))
         self.assertEqual(len(events), 3)
         ids = [x.event_id for x in events]
-        self.assertEqual(set(ids), set(['123', '124', '125']))
+        self.assertEqual(set(ids), set(["123", "124", "125"]))
 
     def test_regular_expression_compile(self):
         """Test compiling regular expressions."""
-        test_re_string = r'Foo[0-9]bar'
-        string_test = 'foo2bar'
-        string_test_2 = 'Foo9bar'
+        test_re_string = r"Foo[0-9]bar"
+        string_test = "foo2bar"
+        string_test_2 = "Foo9bar"
 
-        expression = utils.compile_regular_expression(
-            expression_string=test_re_string)
+        expression = utils.compile_regular_expression(expression_string=test_re_string)
         self.assertFalse(expression.match(string_test))
         self.assertTrue(expression.match(string_test_2))
 
         expression = utils.compile_regular_expression(
-            expression_string=test_re_string,
-            expression_flags=['IGNORECASE'])
+            expression_string=test_re_string, expression_flags=["IGNORECASE"]
+        )
         self.assertTrue(expression.match(string_test))
 
-        test_re_string = r'Foo[0-9]{param}'
+        test_re_string = r"Foo[0-9]{param}"
         re_parameters = {
-            'param': 'bar',
+            "param": "bar",
         }
         expression = utils.compile_regular_expression(
             expression_string=test_re_string,
-            expression_flags=['IGNORECASE'],
-            expression_parameters=re_parameters)
+            expression_flags=["IGNORECASE"],
+            expression_parameters=re_parameters,
+        )
         self.assertTrue(expression.match(string_test))

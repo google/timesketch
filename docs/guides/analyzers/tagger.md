@@ -65,7 +65,7 @@ test_tagger:
     re_flags: ['IGNORECASE']
 ```
 
-all events matchint the query `test` will initially be selected, and for each
+all events matching the query `test` will initially be selected, and for each
 , the regular expression `^http://` with the `IGNORECASE` flag will be applied
 to the event's `message` attribute. If there is a match, the event will be
 tagged `'secure'`. If events are tagged this way, a saved search called

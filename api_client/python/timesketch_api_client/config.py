@@ -31,7 +31,7 @@ from . import credentials as ts_credentials
 from . import crypto
 
 
-logger = logging.getLogger('timesketch_api.config_assistance')
+logger = logging.getLogger("timesketch_api.config_assistance")
 
 
 class ConfigAssistant:
@@ -44,42 +44,49 @@ class ConfigAssistant:
     """
 
     # The name of the default config file.
-    RC_FILENAME = '.timesketchrc'
+    RC_FILENAME = ".timesketchrc"
 
     # The needed items to configure a client.
-    CLIENT_NEEDED = frozenset([
-        'host_uri',
-        'username',
-        'auth_mode',
-    ])
-    OAUTH_CLIENT_NEEDED = frozenset([
-        'client_id',
-        'client_secret',
-    ])
+    CLIENT_NEEDED = frozenset(
+        [
+            "host_uri",
+            "username",
+            "auth_mode",
+        ]
+    )
+    OAUTH_CLIENT_NEEDED = frozenset(
+        [
+            "client_id",
+            "client_secret",
+        ]
+    )
 
-    EXTRA_FIELDS = frozenset([
-        'token_file_path',
-        'verify',
-    ])
+    EXTRA_FIELDS = frozenset(
+        [
+            "token_file_path",
+            "verify",
+        ]
+    )
 
     CONFIG_ORDERING = {
-        'host_uri': 1,
-        'auth_mode': 2,
-        'username': 3,
-        'client_id': 4,
-        'client_secret': 5,
-        'password': 6,
+        "host_uri": 1,
+        "auth_mode": 2,
+        "username": 3,
+        "client_id": 4,
+        "client_secret": 5,
+        "password": 6,
     }
 
     CONFIG_HINTS = {
-        'host_uri': 'URL of the Timesketch server',
-        'username': 'The username of the Timesketch user',
-        'password': 'Password of the chosen user.',
-        'auth_mode': (
+        "host_uri": "URL of the Timesketch server",
+        "username": "The username of the Timesketch user",
+        "password": "Password of the chosen user.",
+        "auth_mode": (
             'Authentication mode, valid choices are: "userpass" '
-            '(user/pass) or "oauth"'),
-        'client_id': 'OAUTH Client identification.',
-        'client_secret': 'The OAUTH client secret',
+            '(user/pass) or "oauth"'
+        ),
+        "client_id": "OAUTH Client identification.",
+        "client_secret": "The OAUTH client secret",
     }
 
     def __init__(self):
@@ -108,8 +115,8 @@ class ConfigAssistant:
         return self._config[name]
 
     def get_client(
-            self, token_password: Optional[Text] = '') -> Optional[
-                client.TimesketchApi]:
+        self, token_password: Optional[Text] = ""
+    ) -> Optional[client.TimesketchApi]:
         """Returns a Timesketch API client if possible.
 
         Args:
@@ -119,41 +126,42 @@ class ConfigAssistant:
         if self.missing:
             return None
 
-        auth_mode = self._config.get('auth_mode', 'userpass')
+        auth_mode = self._config.get("auth_mode", "userpass")
         # TODO: Remove shortly, temporary due to change of
         # 'timesketch' to 'userpass'
-        if auth_mode == 'timesketch':
-            auth_mode = 'userpass'
+        if auth_mode == "timesketch":
+            auth_mode = "userpass"
 
-        file_path = self._config.get('token_file_path', '')
+        file_path = self._config.get("token_file_path", "")
         credential_storage = crypto.CredentialStorage(file_path=file_path)
         credentials = credential_storage.load_credentials(
-            config_assistant=self, password=token_password)
+            config_assistant=self, password=token_password
+        )
 
-        if auth_mode.startswith('oauth'):
+        if auth_mode.startswith("oauth"):
             if not credentials:
                 return client.TimesketchApi(
-                    host_uri=self._config.get('host_uri'),
-                    username=self._config.get('username'),
-                    password=self._config.get('password', ''),
-                    verify=self._config.get('verify', True),
-                    client_id=self._config.get('client_id', ''),
-                    client_secret=self._config.get('client_secret', ''),
+                    host_uri=self._config.get("host_uri"),
+                    username=self._config.get("username"),
+                    password=self._config.get("password", ""),
+                    verify=self._config.get("verify", True),
+                    client_id=self._config.get("client_id", ""),
+                    client_secret=self._config.get("client_secret", ""),
                     auth_mode=auth_mode,
                 )
 
             ts = client.TimesketchApi(
-                host_uri=self._config.get('host_uri'),
-                username=self._config.get('username'),
+                host_uri=self._config.get("host_uri"),
+                username=self._config.get("username"),
                 auth_mode=auth_mode,
-                create_session=False)
+                create_session=False,
+            )
             ts.set_credentials(credentials)
             session = auth_requests.AuthorizedSession(credentials.credential)
             try:
                 ts.refresh_oauth_token()
             except auth_requests.RefreshError as e:
-                logger.error(
-                    'Unable to refresh credentials, with error: %s', e)
+                logger.error("Unable to refresh credentials, with error: %s", e)
                 return None
             session = ts.authenticate_oauth_session(session)
             ts.set_session(session)
@@ -161,20 +169,22 @@ class ConfigAssistant:
 
         if credentials:
             username = credentials.credential.get(
-                'username', self._config.get('username', ''))
+                "username", self._config.get("username", "")
+            )
             password = credentials.credential.get(
-                'password', self._config.get('password', ''))
+                "password", self._config.get("password", "")
+            )
         else:
-            username = self._config.get('username', '')
-            password = self._config.get('password', '')
+            username = self._config.get("username", "")
+            password = self._config.get("password", "")
 
         return client.TimesketchApi(
-            host_uri=self._config.get('host_uri'),
+            host_uri=self._config.get("host_uri"),
             username=username,
             password=password,
-            verify=self._config.get('verify', True),
-            client_id=self._config.get('client_id', ''),
-            client_secret=self._config.get('client_secret', ''),
+            verify=self._config.get("verify", True),
+            client_id=self._config.get("client_id", ""),
+            client_secret=self._config.get("client_secret", ""),
             auth_mode=auth_mode,
         )
 
@@ -185,13 +195,14 @@ class ConfigAssistant:
             A list of parameters that are missing from the config object.
         """
         needed_set = self.CLIENT_NEEDED
-        auth_mode = self._config.get('auth_mode', '')
-        if auth_mode.startswith('oauth'):
+        auth_mode = self._config.get("auth_mode", "")
+        if auth_mode.startswith("oauth"):
             needed_set = needed_set.union(self.OAUTH_CLIENT_NEEDED)
         configured_set = set(self._config.keys())
         return sorted(
             list(needed_set.difference(configured_set)),
-            key=lambda x: self.CONFIG_ORDERING.get(x, 100))
+            key=lambda x: self.CONFIG_ORDERING.get(x, 100),
+        )
 
     def has_config(self, name: Text) -> bool:
         """Returns a boolean indicating whether a config parameter is set.
@@ -205,9 +216,11 @@ class ConfigAssistant:
         return name.lower() in self._config
 
     def load_config_file(
-            self, config_file_path: Optional[Text] = '',
-            section: Optional[Text] = 'timesketch',
-            load_cli_config: Optional[bool] = False):
+        self,
+        config_file_path: Optional[Text] = "",
+        section: Optional[Text] = "timesketch",
+        load_cli_config: Optional[bool] = False,
+    ):
         """Load the config from file.
 
         Args:
@@ -228,34 +241,33 @@ class ConfigAssistant:
         if config_file_path:
             if not os.path.isfile(config_file_path):
                 error_msg = (
-                    'Unable to load config file, file {0:s} does not '
-                    'exist.').format(config_file_path)
+                    "Unable to load config file, file {0:s} does not " "exist."
+                ).format(config_file_path)
                 logger.error(error_msg)
                 raise IOError(error_msg)
         else:
-            home_path = os.path.expanduser('~')
+            home_path = os.path.expanduser("~")
             config_file_path = os.path.join(home_path, self.RC_FILENAME)
 
         if not os.path.isfile(config_file_path):
-            fw = open(config_file_path, 'a')
+            fw = open(config_file_path, "a")
             fw.close()
 
         config = configparser.ConfigParser()
         try:
             files_read = config.read([config_file_path])
         except configparser.MissingSectionHeaderError as exc:
-            raise IOError(
-                'Unable to parse config file') from exc
+            raise IOError("Unable to parse config file") from exc
 
         if not files_read:
-            logger.warning('No config read')
+            logger.warning("No config read")
             return
 
         if not section:
-            section = 'timesketch'
+            section = "timesketch"
 
         if section not in config.sections():
-            logger.warning('No %s section in the config', section)
+            logger.warning("No %s section in the config", section)
             return
 
         timesketch_config = config[section]
@@ -263,14 +275,11 @@ class ConfigAssistant:
             self.set_config(name, value)
 
         if load_cli_config:
-            if 'cli' not in config.sections():
+            if "cli" not in config.sections():
                 # Set default CLI config section
-                config['cli'] = {
-                    'sketch': '',
-                    'output_format': 'tabular'
-                }
+                config["cli"] = {"sketch": "", "output_format": "tabular"}
 
-            cli_config = config['cli']
+            cli_config = config["cli"]
             for name, value in cli_config.items():
                 self.set_config(name, value)
 
@@ -297,9 +306,11 @@ class ConfigAssistant:
             self.set_config(key, value)
 
     def save_config(
-            self, file_path: Optional[Text] = '',
-            section: Optional[Text] = 'timesketch',
-            token_file_path: Optional[Text] = ''):
+        self,
+        file_path: Optional[Text] = "",
+        section: Optional[Text] = "timesketch",
+        token_file_path: Optional[Text] = "",
+    ):
         """Save the current config to a file.
 
         Args:
@@ -315,13 +326,13 @@ class ConfigAssistant:
                 file.
         """
         if not file_path:
-            home_path = os.path.expanduser('~')
+            home_path = os.path.expanduser("~")
             file_path = os.path.join(home_path, self.RC_FILENAME)
 
         config = configparser.ConfigParser()
 
         if not os.path.isfile(file_path):
-            fw = open(file_path, 'a')
+            fw = open(file_path, "a")
             fw.close()
 
         # Read in other sections in the config file as well.
@@ -332,35 +343,35 @@ class ConfigAssistant:
 
         # TODO: Remove this, temporary here to transition from the use of
         # timesketch to the auth mode of userpass.
-        auth_mode = self._config.get('auth_mode', 'userpass')
-        if auth_mode == 'timesketch':
-            auth_mode = 'userpass'
+        auth_mode = self._config.get("auth_mode", "userpass")
+        if auth_mode == "timesketch":
+            auth_mode = "userpass"
 
         if not section:
-            section = 'timesketch'
+            section = "timesketch"
 
         config[section] = {
-            'host_uri': self._config.get('host_uri'),
-            'username': self._config.get('username'),
-            'verify': self._config.get('verify', True),
-            'client_id': self._config.get('client_id', ''),
-            'client_secret': self._config.get('client_secret', ''),
-            'auth_mode': auth_mode,
+            "host_uri": self._config.get("host_uri"),
+            "username": self._config.get("username"),
+            "verify": self._config.get("verify", True),
+            "client_id": self._config.get("client_id", ""),
+            "client_secret": self._config.get("client_secret", ""),
+            "auth_mode": auth_mode,
         }
-        config['cli'] = {
-            'sketch': self._config.get('sketch', ''),
-            'output_format': self._config.get('output_format', 'tabular')
+        config["cli"] = {
+            "sketch": self._config.get("sketch", ""),
+            "output_format": self._config.get("output_format", "tabular"),
         }
         if token_file_path:
-            config[section]['token_file_path'] = token_file_path
+            config[section]["token_file_path"] = token_file_path
 
-        if 'cred_key' in self._config:
-            cred_key = self._config.get('cred_key')
+        if "cred_key" in self._config:
+            cred_key = self._config.get("cred_key")
             if isinstance(cred_key, bytes):
-                cred_key = cred_key.decode('utf-8')
-            config[section]['cred_key'] = cred_key
+                cred_key = cred_key.decode("utf-8")
+            config[section]["cred_key"] = cred_key
 
-        with open(file_path, 'w') as fw:
+        with open(file_path, "w") as fw:
             config.write(fw)
 
     def set_config(self, name: Text, value: Any):
@@ -374,13 +385,13 @@ class ConfigAssistant:
 
 
 def get_client(
-        config_dict: Optional[Dict[Text, Any]] = None,
-        config_path: Optional[Text] = '',
-        config_section: Optional[Text] = 'timesketch',
-        token_password: Optional[Text] = '',
-        confirm_choices: Optional[bool] = False,
-        load_cli_config: Optional[bool] = False
-        ) -> Optional[client.TimesketchApi]:
+    config_dict: Optional[Dict[Text, Any]] = None,
+    config_path: Optional[Text] = "",
+    config_section: Optional[Text] = "timesketch",
+    token_password: Optional[Text] = "",
+    confirm_choices: Optional[bool] = False,
+    load_cli_config: Optional[bool] = False,
+) -> Optional[client.TimesketchApi]:
     """Returns a Timesketch API client using the configuration assistant.
 
     Args:
@@ -407,42 +418,47 @@ def get_client(
     assistant = ConfigAssistant()
     try:
         assistant.load_config_file(
-            config_path, section=config_section,
-            load_cli_config=load_cli_config)
+            config_path, section=config_section, load_cli_config=load_cli_config
+        )
         if config_dict:
             assistant.load_config_dict(config_dict)
     except IOError as e:
-        logger.error('Unable to load the config file, is it valid?')
-        logger.error('Error: %s', e)
+        logger.error("Unable to load the config file, is it valid?")
+        logger.error("Error: %s", e)
 
     try:
         configure_missing_parameters(
             config_assistant=assistant,
             token_password=token_password,
             confirm_choices=confirm_choices,
-            config_section=config_section)
+            config_section=config_section,
+        )
         return assistant.get_client(token_password=token_password)
     except (RuntimeError, requests.ConnectionError) as e:
         logger.error(
-            'Unable to connect to the Timesketch server, are you '
-            'connected to the network? Is the timesketch server '
-            'running and accessible from your host? The error '
-            'message is %s', e)
+            "Unable to connect to the Timesketch server, are you "
+            "connected to the network? Is the timesketch server "
+            "running and accessible from your host? The error "
+            "message is %s",
+            e,
+        )
     except IOError as e:
-        logger.error('Unable to get a client, with error: %s', e)
+        logger.error("Unable to get a client, with error: %s", e)
         logger.error(
-            'If the issue is in the credentials then one solution '
-            'is to remove the ~/.timesketch.token file and the '
-            'credential section in ~/.timesketchrc or to remove '
-            'both files. Or you could have supplied a wrong '
-            'password to undecrypt the token file.')
+            "If the issue is in the credentials then one solution "
+            "is to remove the ~/.timesketch.token file and the "
+            "credential section in ~/.timesketchrc or to remove "
+            "both files. Or you could have supplied a wrong "
+            "password to undecrypt the token file."
+        )
 
 
 def configure_missing_parameters(
-        config_assistant: ConfigAssistant,
-        token_password: Optional[Text] = '',
-        confirm_choices: Optional[bool] = False,
-        config_section: Optional[Text] = 'timesketch'):
+    config_assistant: ConfigAssistant,
+    token_password: Optional[Text] = "",
+    confirm_choices: Optional[bool] = False,
+    config_section: Optional[Text] = "timesketch",
+):
     """Fill in missing configuration for a config assistant.
 
     This function will take in a configuration assistant object and check
@@ -469,9 +485,10 @@ def configure_missing_parameters(
     just_configured = []
 
     for field in config_assistant.missing:
-        hint = config_assistant.CONFIG_HINTS.get(field, '')
+        hint = config_assistant.CONFIG_HINTS.get(field, "")
         value = cli_input.ask_question(
-            f'What is the value for <{field}> ({hint})', input_type=str)
+            f"What is the value for <{field}> ({hint})", input_type=str
+        )
         if value:
             config_assistant.set_config(field, value)
             just_configured.append(field)
@@ -482,12 +499,13 @@ def configure_missing_parameters(
             config_assistant=config_assistant,
             token_password=token_password,
             confirm_choices=confirm_choices,
-            config_section=config_section)
+            config_section=config_section,
+        )
 
     if confirm_choices:
         # Go through prior answered parameters.
         for field in config_assistant.parameters:
-            if field in ('cred_key', 'verify', 'username'):
+            if field in ("cred_key", "verify", "username"):
                 continue
             # We don't want to re-ask the user about the field they just
             # configured.
@@ -497,61 +515,63 @@ def configure_missing_parameters(
             answer = config_assistant.get_config(field)
             change = cli_input.confirm_choice(
                 f'Want to change the value for "{field}" [{answer}]',
-                default=False, abort=False)
+                default=False,
+                abort=False,
+            )
             if not change:
                 continue
-            hint = config_assistant.CONFIG_HINTS.get(field, '')
+            hint = config_assistant.CONFIG_HINTS.get(field, "")
             value = cli_input.ask_question(
-                f'What is the value for <{field}> ({hint})', input_type=str)
+                f"What is the value for <{field}> ({hint})", input_type=str
+            )
             if value:
                 config_assistant.set_config(field, value)
 
     try:
-        file_path = config_assistant.get_config('token_file_path')
+        file_path = config_assistant.get_config("token_file_path")
     except KeyError:
-        file_path = ''
-    config_assistant.save_config(
-        section=config_section, token_file_path=file_path)
+        file_path = ""
+    config_assistant.save_config(section=config_section, token_file_path=file_path)
     credential_storage = crypto.CredentialStorage(file_path=file_path)
     credentials = credential_storage.load_credentials(
-        config_assistant=config_assistant, password=token_password)
+        config_assistant=config_assistant, password=token_password
+    )
 
     # Check if we are using username/password and we don't have credentials
     # saved.
-    auth_mode = config_assistant.get_config('auth_mode')
-    if auth_mode != 'userpass':
+    auth_mode = config_assistant.get_config("auth_mode")
+    if auth_mode != "userpass":
         return None
 
     choice = False
     if credentials and confirm_choices:
         choice = cli_input.confirm_choice(
-            'Want to change credentials?',
-            default=False, abort=False)
+            "Want to change credentials?", default=False, abort=False
+        )
 
     if not choice and credentials:
         return None
 
-    username = config_assistant.get_config('username')
+    username = config_assistant.get_config("username")
     if choice:
         value = cli_input.ask_question(
-            'What is the username?',
-            input_type=str, default=username)
+            "What is the username?", input_type=str, default=username
+        )
         if value:
             username = value
-            config_assistant.set_config('username', value)
+            config_assistant.set_config("username", value)
 
     password = cli_input.ask_question(
-        'Password for user {0:s}'.format(username), input_type=str,
-        hide_input=True, default='***')
+        "Password for user {0:s}".format(username),
+        input_type=str,
+        hide_input=True,
+        default="***",
+    )
     credentials = ts_credentials.TimesketchPwdCredentials()
-    credentials.credential = {
-        'username': username,
-        'password': password
-    }
+    credentials.credential = {"username": username, "password": password}
     cred_storage = crypto.CredentialStorage(file_path=file_path)
     cred_storage.save_credentials(
-        credentials, password=token_password,
-        config_assistant=config_assistant)
-    config_assistant.save_config(
-        section=config_section, token_file_path=file_path)
+        credentials, password=token_password, config_assistant=config_assistant
+    )
+    config_assistant.save_config(section=config_section, token_file_path=file_path)
     return None

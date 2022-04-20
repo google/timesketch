@@ -16,8 +16,8 @@ limitations under the License.
 
 module.exports = {
   lintOnSave: false,
-  publicPath: process.env.NODE_ENV === 'development' ? '/' : '/dist/',
-  configureWebpack: config => {
+  publicPath: process.env.NODE_ENV === 'development' ? '/' : '/v2/dist/',
+  configureWebpack: (config) => {
     config.watchOptions = {
       aggregateTimeout: 500,
       poll: 1000,

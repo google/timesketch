@@ -25,11 +25,10 @@ from . import test_lib
 class ViewTest(unittest.TestCase):
     """Test View object."""
 
-    @mock.patch('requests.Session', test_lib.mock_session)
+    @mock.patch("requests.Session", test_lib.mock_session)
     def setUp(self):
         """Setup test case."""
-        self.api_client = client.TimesketchApi(
-            'http://127.0.0.1', 'test', 'test')
+        self.api_client = client.TimesketchApi("http://127.0.0.1", "test", "test")
         self.sketch = self.api_client.get_sketch(1)
 
     def test_view(self):
@@ -37,4 +36,4 @@ class ViewTest(unittest.TestCase):
         view = self.sketch.list_views()[0]
         self.assertIsInstance(view, search.Search)
         self.assertEqual(view.id, 1)
-        self.assertEqual(view.name, 'test')
+        self.assertEqual(view.name, "test")

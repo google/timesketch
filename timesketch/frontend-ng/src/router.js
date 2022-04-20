@@ -52,5 +52,6 @@ const routes = [
 
 export default new VueRouter({
   mode: 'history',
+  base: process.env.NODE_ENV === 'development' ? '/' : '/v2/',
   routes,
 })

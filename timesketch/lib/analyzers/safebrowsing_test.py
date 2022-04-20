@@ -14,12 +14,12 @@ class TestSafeBrowsingSketchPlugin(BaseTest):
     """Tests the functionality of the analyzer."""
 
     @mock.patch(
-        'timesketch.lib.analyzers.interface.OpenSearchDataStore',
+        "timesketch.lib.analyzers.interface.OpenSearchDataStore",
         MockDataStore,
     )
     def test_safebrowsing_analyzer_class(self):
         """Test core functionality of the analyzer class."""
-        index_name = 'test'
+        index_name = "test"
         sketch_id = 1
         analyzer = safebrowsing.SafeBrowsingSketchPlugin(index_name, sketch_id)
         self.assertEqual(analyzer.index_name, index_name)
@@ -29,58 +29,58 @@ class TestSafeBrowsingSketchPlugin(BaseTest):
     # pylint: disable=unused-argument,missing-docstring
     def safebrowsing_find_mock(self, url, request):
         MOCK_RESULT = {
-            'matches': [
+            "matches": [
                 {
-                    'threat': {
-                        'url': 'http://A',
+                    "threat": {
+                        "url": "http://A",
                     },
-                    'cacheDuration': '300s',
-                    'threatEntryType': 'URL',
-                    'threatType': 'MALWARE',
-                    'platformType': 'ANY_PLATFORM',
+                    "cacheDuration": "300s",
+                    "threatEntryType": "URL",
+                    "threatType": "MALWARE",
+                    "platformType": "ANY_PLATFORM",
                 },
                 {
-                    'threat': {
-                        'url': 'https://B',
+                    "threat": {
+                        "url": "https://B",
                     },
-                    'cacheDuration': '300s',
-                    'threatEntryType': 'URL',
-                    'threatType': 'MALWARE',
-                    'platformType': 'WINDOWS',
+                    "cacheDuration": "300s",
+                    "threatEntryType": "URL",
+                    "threatType": "MALWARE",
+                    "platformType": "WINDOWS",
                 },
             ],
         }
 
         return {
-            'status_code': 200,
-            'content': MOCK_RESULT,
+            "status_code": 200,
+            "content": MOCK_RESULT,
         }
 
     @mock.patch(
-        'timesketch.lib.analyzers.interface.OpenSearchDataStore',
+        "timesketch.lib.analyzers.interface.OpenSearchDataStore",
         MockDataStore,
     )
     # pylint: disable=missing-docstring
     def test_do_safebrowsing_lookup(self):
-        index_name = 'test'
+        index_name = "test"
         sketch_id = 1
         analyzer = safebrowsing.SafeBrowsingSketchPlugin(index_name, sketch_id)
 
         with HTTMock(self.safebrowsing_find_mock):
             EXPECTED_RESULT = {
-                'http://A': {
-                    'platformType': 'ANY_PLATFORM',
-                    'threatType': 'MALWARE',
+                "http://A": {
+                    "platformType": "ANY_PLATFORM",
+                    "threatType": "MALWARE",
                 },
-                'https://B': {
-                    'platformType': 'WINDOWS',
-                    'threatType': 'MALWARE',
+                "https://B": {
+                    "platformType": "WINDOWS",
+                    "threatType": "MALWARE",
                 },
             }
 
             # pylint: disable=protected-access
             actual_result = analyzer._do_safebrowsing_lookup(
-                ['http://A', 'https://B'],
+                ["http://A", "https://B"],
                 [],
                 [],
             )
@@ -99,12 +99,12 @@ class TestSafeBrowsingSketchPlugin(BaseTest):
             )
 
     @mock.patch(
-        'timesketch.lib.analyzers.interface.OpenSearchDataStore',
+        "timesketch.lib.analyzers.interface.OpenSearchDataStore",
         MockDataStore,
     )
     def test_helper_functions(self):
         """Tests the helper functions used by the analyzer."""
-        index_name = 'test'
+        index_name = "test"
         sketch_id = 1
         analyzer = safebrowsing.SafeBrowsingSketchPlugin(index_name, sketch_id)
 
@@ -118,11 +118,11 @@ class TestSafeBrowsingSketchPlugin(BaseTest):
 
     def check_sanitize_url(self, analyzer):
         URLS = [
-            ('http://w.com', 'http://w.com'),
-            ('https://w.com', 'https://w.com'),
-            ('Something before@https://w.com', 'https://w.com'),
-            ('https://w.com and after', 'https://w.com'),
-            ('nothing', ''),
+            ("http://w.com", "http://w.com"),
+            ("https://w.com", "https://w.com"),
+            ("Something before@https://w.com", "https://w.com"),
+            ("https://w.com and after", "https://w.com"),
+            ("nothing", ""),
         ]
 
         for entry, result in URLS:
@@ -135,15 +135,15 @@ class TestSafeBrowsingSketchPlugin(BaseTest):
     # pylint: disable=missing-docstring
     def check_allowlist(self, analyzer):
         ALLOW_LIST = [
-            'lorem-*.com',
-            'ipsum.dk',
-            'dolo?.co.*',
+            "lorem-*.com",
+            "ipsum.dk",
+            "dolo?.co.*",
         ]
 
         self.assertTrue(
             # pylint: disable=protected-access
             analyzer._is_url_allowlisted(
-                'lorem-ipsum.com',
+                "lorem-ipsum.com",
                 ALLOW_LIST,
             ),
         )
@@ -151,7 +151,7 @@ class TestSafeBrowsingSketchPlugin(BaseTest):
         self.assertFalse(
             # pylint: disable=protected-access
             analyzer._is_url_allowlisted(
-                'ipsum.com',
+                "ipsum.com",
                 ALLOW_LIST,
             ),
         )
@@ -159,7 +159,7 @@ class TestSafeBrowsingSketchPlugin(BaseTest):
         self.assertTrue(
             # pylint: disable=protected-access
             analyzer._is_url_allowlisted(
-                'dolor.co.dk',
+                "dolor.co.dk",
                 ALLOW_LIST,
             ),
         )
@@ -167,7 +167,7 @@ class TestSafeBrowsingSketchPlugin(BaseTest):
         self.assertFalse(
             # pylint: disable=protected-access
             analyzer._is_url_allowlisted(
-                'www.amet.com',
+                "www.amet.com",
                 ALLOW_LIST,
             ),
         )

@@ -23,33 +23,29 @@ class AclModelTest(BaseTest):
 
     def test_change_permission(self):
         """Test changing permissions on a sketch with ACL."""
-        for permission in ('read', 'write', 'delete'):
-            self.sketch1.grant_permission(
-                permission=permission, user=self.user1)
+        for permission in ("read", "write", "delete"):
+            self.sketch1.grant_permission(permission=permission, user=self.user1)
             self.assertTrue(
-                self.sketch1.has_permission(
-                    permission=permission, user=self.user1))
-            self.sketch1.revoke_permission(
-                permission=permission, user=self.user1)
+                self.sketch1.has_permission(permission=permission, user=self.user1)
+            )
+            self.sketch1.revoke_permission(permission=permission, user=self.user1)
             self.assertFalse(
-                self.sketch1.has_permission(
-                    permission=permission, user=self.user1))
+                self.sketch1.has_permission(permission=permission, user=self.user1)
+            )
 
             # Test group permissions
-            self.sketch1.grant_permission(
-                permission=permission, group=self.group1)
+            self.sketch1.grant_permission(permission=permission, group=self.group1)
             self.assertTrue(
-                self.sketch1.has_permission(
-                    permission=permission, user=self.user1))
-            self.sketch1.revoke_permission(
-                permission=permission, group=self.group1)
+                self.sketch1.has_permission(permission=permission, user=self.user1)
+            )
+            self.sketch1.revoke_permission(permission=permission, group=self.group1)
             self.assertFalse(
-                self.sketch1.has_permission(
-                    permission=permission, user=self.user1))
+                self.sketch1.has_permission(permission=permission, user=self.user1)
+            )
 
     def test_change_public(self):
         """Test toggle the public permission on a sketch."""
-        self.sketch1.grant_permission(permission='read')
+        self.sketch1.grant_permission(permission="read")
         self.assertTrue(self.sketch1.is_public)
-        self.sketch1.revoke_permission(permission='read')
+        self.sketch1.revoke_permission(permission="read")
         self.assertFalse(self.sketch1.is_public)

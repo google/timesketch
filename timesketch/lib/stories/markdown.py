@@ -25,7 +25,7 @@ class MarkdownStoryExporter(interface.StoryExporter):
     """Markdown story exporter."""
 
     # String representing the output format of the story.
-    EXPORT_FORMAT = 'markdown'
+    EXPORT_FORMAT = "markdown"
 
     # Number of rows of a DataFrame to include at the top of a markdown table.
     _DATAFRAM_HEADER_ROWS = 20
@@ -38,49 +38,54 @@ class MarkdownStoryExporter(interface.StoryExporter):
         """Returns a markdown formatted string from a pandas DataFrame."""
         nr_rows, _ = data_frame.shape
         if not nr_rows:
-            return '*<empty table>*'
+            return "*<empty table>*"
 
         if nr_rows <= (self._DATAFRAM_HEADER_ROWS + self._DATAFRAM_TAIL_ROWS):
-            return tabulate.tabulate(
-                data_frame, tablefmt='pipe', headers='keys')
+            return tabulate.tabulate(data_frame, tablefmt="pipe", headers="keys")
 
         return_lines = []
-        return_lines.append(tabulate.tabulate(
-            data_frame[:self._DATAFRAM_HEADER_ROWS], tablefmt='pipe',
-            headers='keys'))
-        return_lines.append('| ... |')
-        return_lines.append(tabulate.tabulate(
-            data_frame[-self._DATAFRAM_TAIL_ROWS:], tablefmt='pipe',
-            headers='keys'))
-        return '\n'.join(return_lines)
+        return_lines.append(
+            tabulate.tabulate(
+                data_frame[: self._DATAFRAM_HEADER_ROWS],
+                tablefmt="pipe",
+                headers="keys",
+            )
+        )
+        return_lines.append("| ... |")
+        return_lines.append(
+            tabulate.tabulate(
+                data_frame[-self._DATAFRAM_TAIL_ROWS :], tablefmt="pipe", headers="keys"
+            )
+        )
+        return "\n".join(return_lines)
 
     def export_story(self):
         """Export the story as a markdown."""
         return_strings = []
         for line_dict in self._data_lines:
-            line_type = line_dict.get('type', '')
-            if line_type == 'text':
-                return_strings.append(line_dict.get('value', ''))
+            line_type = line_dict.get("type", "")
+            if line_type == "text":
+                return_strings.append(line_dict.get("value", ""))
 
-            elif line_type == 'aggregation':
-                aggregation_data = line_dict.get('value')
-                aggregation = aggregation_data.get('aggregation')
+            elif line_type == "aggregation":
+                aggregation_data = line_dict.get("value")
+                aggregation = aggregation_data.get("aggregation")
                 if not aggregation:
-                    return_strings.append(
-                        '**Unable to fetch aggregation data**')
+                    return_strings.append("**Unable to fetch aggregation data**")
                     continue
                 return_strings.append(
-                    self._dataframe_to_markdown(aggregation.to_pandas()))
+                    self._dataframe_to_markdown(aggregation.to_pandas())
+                )
 
-            elif line_type == 'dataframe':
+            elif line_type == "dataframe":
                 return_strings.append(
-                    self._dataframe_to_markdown(line_dict.get('value')))
+                    self._dataframe_to_markdown(line_dict.get("value"))
+                )
 
-            elif line_type == 'chart':
-                return_strings.append(
-                    '*<unable_to_display_chart_objects>*')
+            elif line_type == "chart":
+                return_strings.append("*<unable_to_display_chart_objects>*")
 
-        return '\n\n'.join(return_strings)
+        return "\n\n".join(return_strings)
 
 
 manager.StoryExportManager.register_exporter(MarkdownStoryExporter)

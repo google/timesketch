@@ -51,15 +51,17 @@ class StoryListResource(resources.ResourceMixin, Resource):
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
+        if not sketch.has_permission(current_user, "read"):
             abort(
-                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
-        if not sketch.has_permission(current_user, 'read'):
-            abort(HTTP_STATUS_CODE_FORBIDDEN,
-                  'User does not have read access controls on sketch.')
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "User does not have read access controls on sketch.",
+            )
 
         stories = []
-        for story in Story.query.filter_by(
-                sketch=sketch).order_by(desc(Story.created_at)):
+        for story in Story.query.filter_by(sketch=sketch).order_by(
+            desc(Story.created_at)
+        ):
             stories.append(story)
         return self.to_json(stories)
 
@@ -75,22 +77,21 @@ class StoryListResource(resources.ResourceMixin, Resource):
         """
         form = forms.StoryForm.build(request)
         if not form.validate_on_submit():
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, "Unable to validate form data.")
 
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
+        if not sketch.has_permission(current_user, "write"):
             abort(
-                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
-        if not sketch.has_permission(current_user, 'write'):
-            abort(HTTP_STATUS_CODE_FORBIDDEN,
-                  'User does not have write access controls on sketch.')
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "User does not have write access controls on sketch.",
+            )
 
-        title = ''
+        title = ""
         if form.title.data:
             title = form.title.data
-        story = Story(
-            title=title, content='[]', sketch=sketch, user=current_user)
+        story = Story(title=title, content="[]", sketch=sketch, user=current_user)
         db_session.add(story)
         db_session.commit()
 
@@ -103,7 +104,7 @@ class StoryResource(resources.ResourceMixin, Resource):
     """Resource to get a story."""
 
     @staticmethod
-    def _export_story(story, sketch_id, export_format='markdown'):
+    def _export_story(story, sketch_id, export_format="markdown"):
         """Returns a story in a format as requested in export_format.
 
         Args:
@@ -117,9 +118,10 @@ class StoryResource(resources.ResourceMixin, Resource):
             or a binary, depending on the output format.
         """
         exporter_class = story_export_manager.StoryExportManager.get_exporter(
-            export_format)
+            export_format
+        )
         if not exporter_class:
-            return b''
+            return b""
 
         with exporter_class() as exporter:
             data_fetcher = story_api_fetcher.ApiDataFetcher()
@@ -150,30 +152,33 @@ class StoryResource(resources.ResourceMixin, Resource):
         story = Story.query.get(story_id)
 
         if not story:
-            msg = 'No Story found with this ID.'
+            msg = "No Story found with this ID."
             abort(HTTP_STATUS_CODE_NOT_FOUND, msg)
 
         if not sketch:
-            msg = 'No sketch found with this ID.'
+            msg = "No sketch found with this ID."
             abort(HTTP_STATUS_CODE_NOT_FOUND, msg)
 
-        if not sketch.has_permission(current_user, 'read'):
-            abort(HTTP_STATUS_CODE_FORBIDDEN,
-                  'User does not have read access controls on sketch.')
+        if not sketch.has_permission(current_user, "read"):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "User does not have read access controls on sketch.",
+            )
 
         # Check that this story belongs to the sketch
         if story.sketch_id != sketch.id:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                'Sketch ID ({0:d}) does not match with the ID in '
-                'the story ({1:d})'.format(sketch.id, story.sketch_id))
+                "Sketch ID ({0:d}) does not match with the ID in "
+                "the story ({1:d})".format(sketch.id, story.sketch_id),
+            )
 
         # Only allow editing if the current user is the author.
         # This is needed until we have proper collaborative editing and
         # locking implemented.
         meta = dict(is_editable=False)
         if current_user == story.user:
-            meta['is_editable'] = True
+            meta["is_editable"] = True
 
         return self.to_json(story, meta=meta)
 
@@ -192,34 +197,40 @@ class StoryResource(resources.ResourceMixin, Resource):
         story = Story.query.get(story_id)
 
         if not story:
-            msg = 'No Story found with this ID.'
+            msg = "No Story found with this ID."
             abort(HTTP_STATUS_CODE_NOT_FOUND, msg)
 
         if not sketch:
-            msg = 'No sketch found with this ID.'
+            msg = "No sketch found with this ID."
             abort(HTTP_STATUS_CODE_NOT_FOUND, msg)
 
         if story.sketch_id != sketch.id:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                'Sketch ID ({0:d}) does not match with the ID in '
-                'the story ({1:d})'.format(sketch.id, story.sketch_id))
+                "Sketch ID ({0:d}) does not match with the ID in "
+                "the story ({1:d})".format(sketch.id, story.sketch_id),
+            )
 
-        if not sketch.has_permission(current_user, 'write'):
-            abort(HTTP_STATUS_CODE_FORBIDDEN,
-                  'User does not have write access controls on sketch.')
+        if not sketch.has_permission(current_user, "write"):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "User does not have write access controls on sketch.",
+            )
 
         form = request.json
         if not form:
             form = request.data
 
-        if form and form.get('export_format'):
-            export_format = form.get('export_format')
-            return jsonify(story=self._export_story(
-                story=story, sketch_id=sketch_id, export_format=export_format))
+        if form and form.get("export_format"):
+            export_format = form.get("export_format")
+            return jsonify(
+                story=self._export_story(
+                    story=story, sketch_id=sketch_id, export_format=export_format
+                )
+            )
 
-        story.title = form.get('title', '')
-        story.content = form.get('content', '[]')
+        story.title = form.get("title", "")
+        story.content = form.get("content", "[]")
         db_session.add(story)
         db_session.commit()
 
@@ -240,24 +251,26 @@ class StoryResource(resources.ResourceMixin, Resource):
         story = Story.query.get(story_id)
 
         if not story:
-            msg = 'No Story found with this ID.'
+            msg = "No Story found with this ID."
             abort(HTTP_STATUS_CODE_NOT_FOUND, msg)
 
         if not sketch:
-            msg = 'No sketch found with this ID.'
+            msg = "No sketch found with this ID."
             abort(HTTP_STATUS_CODE_NOT_FOUND, msg)
 
         # Check that this timeline belongs to the sketch
         if story.sketch_id != sketch.id:
             msg = (
-                'The sketch ID ({0:d}) does not match with the story'
-                'sketch ID ({1:d})'.format(sketch.id, story.sketch_id))
+                "The sketch ID ({0:d}) does not match with the story"
+                "sketch ID ({1:d})".format(sketch.id, story.sketch_id)
+            )
             abort(HTTP_STATUS_CODE_FORBIDDEN, msg)
 
-        if not sketch.has_permission(user=current_user, permission='write'):
+        if not sketch.has_permission(user=current_user, permission="write"):
             abort(
                 HTTP_STATUS_CODE_FORBIDDEN,
-                'The user does not have write permission on the sketch.')
+                "The user does not have write permission on the sketch.",
+            )
 
         sketch.stories.remove(story)
         db_session.commit()
