@@ -165,11 +165,10 @@ class SigmaPlugin(interface.BaseAnalyzer):
         Returns:
             sigma_rules All Sigma rules
         """
-        # TODO(jaegeral): Limit that to rules that have ts_use_in_analyzer
         sigma_rules = []
         for rule in ts_sigma_lib.get_all_sigma_rules():
             # Only rules that are meant to run in the analyzer will be added
-            if rule.get('ts_use_in_analyzer') == True:
+            if rule.get('ts_use_in_analyzer') is True:
                 sigma_rules.append({"rule": rule})
 
         return sigma_rules
