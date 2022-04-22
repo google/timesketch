@@ -84,7 +84,8 @@ class SigmaPlugin(interface.BaseAnalyzer):
 
         rule = self._rule
         if not rule:
-            logger.error("No  Sigma rules found. Check SIGMA_RULES_FOLDERS")
+            logger.error("No  Sigma rule given.")
+            return 'Unable to run, no rule given to the analyzer'
         rule_name = rule.get("title", "N/A")
         problem_strings = []
         output_strings = []
