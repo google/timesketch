@@ -6,6 +6,11 @@ backends:
   - es-qr
   - es-rule
 logsources:
+  linux_file:
+    category: file_event
+    product: linux
+    conditions:
+      data_type: "fs:stat"
   sshd:
     service: sshd
     conditions:
@@ -70,7 +75,7 @@ logsources:
     conditions:
       source_name:
         - "Microsoft-Windows-Security-Auditing"
-  os:
+  files:
     service: filesystem
     conditions:
       data_type:
@@ -91,7 +96,7 @@ logsources:
     category: process_creation
     product: windows
     conditions:
-      EventID: 
+      EventID:
         - 1
         - 4688
       source_name:
@@ -156,7 +161,7 @@ logsources:
       EventID: 10
     rewrite:
       product: windows
-      service: sysmon       
+      service: sysmon
   file_creation:
     category: file_event
     product: windows
@@ -169,9 +174,9 @@ logsources:
     category: registry_event
     product: windows
     conditions:
-      EventID: 
-        - 12 
-        - 13 
+      EventID:
+        - 12
+        - 13
         - 14
     rewrite:
       product: windows
@@ -188,7 +193,7 @@ logsources:
     category: pipe_created
     product: windows
     conditions:
-      EventID: 
+      EventID:
         - 17
         - 18
     rewrite:
@@ -198,7 +203,7 @@ logsources:
     category: wmi_event
     product: windows
     conditions:
-      EventID: 
+      EventID:
         - 19
         - 20
         - 21
@@ -286,7 +291,9 @@ fieldmappings:
     AuditPolicyChanges: xml_string
     SourceImage: xml_string
     TargetImage: xml_string
-    TargetFilename: xml_string
+    TargetFilename:
+      product=linux: filename
+      default: xml_string
     Image: xml_string # that is a value name that might be used in other queries as well. Ideally it would be something _all
     ImageLoaded: xml_string
     QueryName: xml_string
