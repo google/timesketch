@@ -232,14 +232,14 @@ class TestSigmaUtilLib(BaseTest):
         blocklist = sigma_util.get_sigma_blocklist()
         self.assertEqual('experimental', blocklist['bad'][0])
         self.assertEqual(
-            'bad', blocklist[blocklist.values == 'deprecated']['bad']
+            'bad', blocklist[blocklist.values == 'deprecated']['bad'].all()
         )
         self.assertEqual(
             'good',
             blocklist[
                 blocklist.values
                 == 'windows/powershell/powershell_create_local_user.yml'
-            ]['bad'],
+            ]['bad'].all(),
         )
         self.assertIsNotNone(False)
 
