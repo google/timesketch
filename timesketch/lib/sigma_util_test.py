@@ -249,9 +249,6 @@ class TestSigmaUtilLib(BaseTest):
         filepath = "./data/sigma/rules/lnx_susp_zmap.yml"
 
         rule = sigma_util.get_sigma_rule(filepath)
-        # import pdb
-
-        # pdb.set_trace()
         self.assertIsNotNone(rule)
         self.assertIn("zmap", rule.get("es_query"))
         self.assertIn("b793", rule.get("id"))
