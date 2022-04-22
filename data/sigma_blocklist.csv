@@ -210,3 +210,24 @@ sigma/rules/cloud/aws/aws_lambda_function_created_or_invoked.yml,bad,NotImplemen
 sigma/rules/cloud/aws/aws_ec2_download_userdata.yml,bad,NotImplementedError,2021-11-19,26ff4080-194e-47e7-9889-ef7602efed0c
 sigma/rules/cloud/aws/aws_enum_listing.yml,bad,NotImplementedError,2021-11-19,e9c14b23-47e2-4a8b-8a63-d36618e33d70
 deprecated,bad,deprecated sigma rules e.g. https://github.com/SigmaHQ/sigma/tree/master/rules/windows/deprecated,2022-01-26,
+sigma/rules/windows/dns_query/dns_query_win_possible_dns_rebinding.yml,bad,Part of the rule not supported in TS,2022-04-21,eb07e747-2552-44cd-af36-b659ae0958e4
+sigma/rules/windows/builtin/system/win_rare_service_installs.yml,bad,Part of the rule not supported in TS,2022-04-21,66bfef30-22a5-4fcd-ad44-8d81e60922ae
+sigma/rules/windows/builtin/taskscheduler/win_rare_schtask_creation.yml,bad,Part of the rule not supported in TS,2022-04-21,b20f6158-9438-41be-83da-a5a16ac90c2b
+sigma/rules/windows/builtin/security/win_susp_failed_remote_logons_single_source.yml,bad,Part of the rule not supported in TS,2022-04-21,add2ef8d-dc91-4002-9e7e-f2702369f53a
+sigma/rules/windows/builtin/security/win_susp_failed_logons_single_source_kerberos3.yml,bad,Part of the rule not supported in TS,2022-04-21,bc93dfe6-8242-411e-a2dd-d16fa0cc8564
+sigma/rules/windows/builtin/security/win_susp_failed_logons_single_source_ntlm2.yml,bad,Part of the rule not supported in TS,2022-04-21,56d62ef8-3462-4890-9859-7b41e541f8d5
+sigma/rules/windows/builtin/security/win_susp_failed_logons_single_source.yml,bad,Part of the rule not supported in TS,2022-04-21,e98374a6-e2d9-4076-9b5c-11bdb2569995
+sigma/rules/windows/builtin/security/win_susp_samr_pwset.yml,bad,Part of the rule not supported in TS,2022-04-21,7818b381-5eb1-4641-bea5-ef9e4cfb5951
+sigma/rules/windows/builtin/security/win_susp_failed_logons_explicit_credentials.yml,bad,Part of the rule not supported in TS,2022-04-21,196a29c2-e378-48d8-ba07-8a9e61f7fab9
+sigma/rules/windows/builtin/security/win_susp_failed_logons_single_source_ntlm.yml,bad,Part of the rule not supported in TS,2022-04-21,f88bab7f-b1f4-41bb-bdb1-4b8af35b0470
+sigma/rules/windows/builtin/security/win_susp_failed_logons_single_source_kerberos2.yml,bad,Part of the rule not supported in TS,2022-04-21,4b6fe998-b69c-46d8-901b-13677c9fb663
+sigma/rules/windows/builtin/security/win_global_catalog_enumeration.yml,bad,Part of the rule not supported in TS,2022-04-21,619b020f-0fd7-4f23-87db-3f51ef837a34
+sigma/rules/windows/builtin/security/win_susp_failed_logons_single_source2.yml,bad,Part of the rule not supported in TS,2022-04-21,6309ffc4-8fa2-47cf-96b8-a2f72e58e538
+sigma/rules/windows/builtin/security/win_rare_schtasks_creations.yml,bad,Part of the rule not supported in TS,2022-04-21,b0d77106-7bb0-41fe-bd94-d1752164d066
+sigma/rules/windows/builtin/security/win_susp_multiple_files_renamed_or_deleted.yml,bad,Part of the rule not supported in TS,2022-04-21,97919310-06a7-482c-9639-92b67ed63cf8
+sigma/rules/windows/builtin/security/win_susp_failed_logons_single_process.yml,bad,Part of the rule not supported in TS,2022-04-21,fe563ab6-ded4-4916-b49f-a3a8445fe280
+sigma/rules/windows/builtin/security/win_susp_failed_logons_single_source_kerberos.yml,bad,Part of the rule not supported in TS,2022-04-21,5d1d946e-32e6-4d9a-a0dc-0ac022c7eb98
+sigma/rules/windows/powershell/powershell_script/posh_ps_cl_invocation_lolscript_count.yml,bad,Part of the rule not supported in TS,2022-04-21,f588e69b-0750-46bb-8f87-0e9320d57536
+sigma/rules/windows/powershell/powershell_script/posh_ps_cl_mutexverifiers_lolscript_count.yml,bad,Part of the rule not supported in TS,2022-04-21,6609c444-9670-4eab-9636-fe4755a851ce
+sigma/rules/windows/image_load/image_load_mimikatz_inmemory_detection.yml,bad,Part of the rule not supported in TS,2022-04-21,c0478ead-5336-46c2-bd5e-b4c84bc3a36e
+sigma/rules/apt/apt_silence_downloader_v3.yml,bad,Part of the rule not supported in TS,2022-04-21,170901d1-de11-4de7-bccb-8fa13678d857
