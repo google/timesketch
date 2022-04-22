@@ -157,6 +157,7 @@ def get_sigma_rules(rule_folder, sigma_config=None):
                     continue
 
                 parsed_rule = get_sigma_rule(rule_file_path, sigma_config)
+
                 # Only assign the ts_use_in_analyzer flag to rules that are cleared
                 if any(x in rule_file_path for x in experimental_list):
                     parsed_rule.update({'ts_use_in_analyzer': False})
