@@ -231,3 +231,4 @@ sigma/rules/windows/powershell/powershell_script/posh_ps_cl_invocation_lolscript
 sigma/rules/windows/powershell/powershell_script/posh_ps_cl_mutexverifiers_lolscript_count.yml,bad,Part of the rule not supported in TS,2022-04-21,6609c444-9670-4eab-9636-fe4755a851ce
 sigma/rules/windows/image_load/image_load_mimikatz_inmemory_detection.yml,bad,Part of the rule not supported in TS,2022-04-21,c0478ead-5336-46c2-bd5e-b4c84bc3a36e
 sigma/rules/apt/apt_silence_downloader_v3.yml,bad,Part of the rule not supported in TS,2022-04-21,170901d1-de11-4de7-bccb-8fa13678d857
+lnx_susp_zmap,good,Part of Timesketch repo,2022-04-22,5266a592-b793-11ea-b3de-0242ac130004
