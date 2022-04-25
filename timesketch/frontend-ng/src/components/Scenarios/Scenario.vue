@@ -14,45 +14,35 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-sheet v-if="scenario">
+  <div v-if="scenario">
     <v-toolbar dense flat>
-      <v-toolbar-title style="font-size: 1.1em">Compromise assessment</v-toolbar-title>
+      <v-toolbar-title v-if="showPanel" style="font-size: 1em">Compromise assessment</v-toolbar-title>
       <v-spacer></v-spacer>
-      <v-btn icon small>
-        <v-icon small>mdi-chevron-left</v-icon>
-      </v-btn>
+      <v-icon v-if="showPanel" @click="$emit('togglePanel')">mdi-chevron-left</v-icon>
+      <v-icon v-else @click="$emit('togglePanel')" style="margin-left: -5px">mdi-chevron-right</v-icon>
     </v-toolbar>
     <!-- <v-btn @click="addScenario">Add scenario</v-btn> -->
-    <v-sheet v-for="facet in scenario.facets" :key="facet.id">
-      <ts-facets :facet="facet"></ts-facets>
-    </v-sheet>
-  </v-sheet>
+    <div v-show="showPanel">
+      <div v-for="facet in scenario.facets" :key="facet.id">
+        <ts-facet :facet="facet"></ts-facet>
+      </div>
+      <v-btn small text color="primary" class="ml-1 mt-3">+ Facet</v-btn>
+    </div>
+  </div>
 </template>
 
 <script>
 import ApiClient from '../../utils/RestApiClient'
-import TsFacets from './Facets'
+import TsFacet from './Facet'
 
 export default {
-  props: [],
-  components: { TsFacets },
+  props: ['showPanel'],
+  components: { TsFacet },
   data: function () {
     return {
       scenario: { facets: [] },
-      tab: '',
       activeQuestion: {},
       selectedItem: null,
-      expandedFacets: [],
-      dessertHeaders: [
-        { text: '', value: 'data-table-expand' },
-        {
-          text: '',
-          align: 'start',
-          sortable: false,
-          value: 'display_name',
-        },
-        { text: '', value: 'status' },
-      ],
     }
   },
   computed: {

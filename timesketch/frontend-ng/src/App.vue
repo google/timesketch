@@ -15,46 +15,73 @@ limitations under the License.
 -->
 <template>
   <v-app id="app">
-    <v-app-bar app clipped-left flat :color="$vuetify.theme.dark ? '' : 'white'">
-      <v-img src="/dist/timesketch-color.png" max-height="30" max-width="30" contain></v-img>
-      <v-toolbar-title class="ml-3"> timesketch </v-toolbar-title>
-      <span v-if="sketch.name" class="ml-6" style="margin-top: 5px">
-        {{ sketch.name }}
-      </span>
-      <v-spacer></v-spacer>
-
-      <v-btn small depressed v-on:click="switchUI"> Use the old UI </v-btn>
-
-      <v-tooltip bottom>
-        <template v-slot:activator="{ on, attrs }">
-          <v-btn icon v-on:click="toggleTheme" v-bind="attrs" v-on="on">
-            <v-icon>mdi-brightness-6</v-icon>
-          </v-btn>
-        </template>
-        <span>Switch between light and dark theme</span>
-      </v-tooltip>
-
-      <v-avatar class="ml-3" color="orange" size="32">
-        <span class="white--text">jb</span>
+    <v-navigation-drawer v-model="drawer" app mini-variant>
+      <v-avatar class="mb-2">
+        <v-img src="/dist/timesketch-color.png" max-height="30" max-width="30" contain></v-img>
       </v-avatar>
 
-      <template v-slot:extension>
-        <v-tabs class="ml-2">
-          <v-tab :to="{ name: 'Overview' }" exact-path><v-icon left small>mdi-cube-outline</v-icon> Overview</v-tab>
-          <v-tab :to="{ name: 'Explore' }"><v-icon left small>mdi-magnify</v-icon> Explore </v-tab>
-          <v-tab disabled><v-icon left small>mdi-lan</v-icon> Graph </v-tab>
-          <v-tab disabled><v-icon left small>mdi-auto-fix</v-icon>Automation</v-tab>
-          <v-tab disabled><v-icon left small>mdi-head-lightbulb</v-icon>Intelligence</v-tab>
-        </v-tabs>
+      <v-tooltip right>
+        <template v-slot:activator="{ on, attrs }">
+          <v-avatar>
+            <v-btn :to="{ name: 'Overview' }" exact-path icon v-bind="attrs" v-on="on">
+              <v-icon>mdi-home-outline</v-icon>
+            </v-btn>
+          </v-avatar>
+        </template>
+        <span>Overview</span>
+      </v-tooltip>
+
+      <v-tooltip right>
+        <template v-slot:activator="{ on, attrs }">
+          <v-avatar>
+            <v-btn :to="{ name: 'Explore' }" icon v-bind="attrs" v-on="on">
+              <v-icon>mdi-magnify</v-icon>
+            </v-btn>
+          </v-avatar>
+        </template>
+        <span>Search</span>
+      </v-tooltip>
+
+      <v-tooltip right>
+        <template v-slot:activator="{ on, attrs }">
+          <v-avatar>
+            <v-btn icon v-bind="attrs" v-on="on">
+              <v-icon>mdi-graph-outline</v-icon>
+            </v-btn>
+          </v-avatar>
+        </template>
+        <span>Graph</span>
+      </v-tooltip>
+
+      <v-avatar>
+        <v-btn icon>
+          <v-icon>mdi-auto-fix</v-icon>
+        </v-btn>
+      </v-avatar>
+
+      <v-avatar>
+        <v-btn icon>
+          <v-icon>mdi-head-lightbulb-outline</v-icon>
+        </v-btn>
+      </v-avatar>
+
+      <template v-slot:append>
+        <v-tooltip right>
+          <template v-slot:activator="{ on, attrs }">
+            <v-avatar>
+              <v-btn icon v-on:click="toggleTheme" v-bind="attrs" v-on="on">
+                <v-icon>mdi-brightness-6</v-icon>
+              </v-btn>
+            </v-avatar>
+          </template>
+          <span>Switch between light and dark theme</span>
+        </v-tooltip>
       </template>
-    </v-app-bar>
-
-
+    </v-navigation-drawer>
 
     <v-main class="mx-4">
       <router-view></router-view>
     </v-main>
-
   </v-app>
 </template>
 
@@ -64,7 +91,7 @@ export default {
   data() {
     return {
       drawer: true,
-      mini: false
+      mini: false,
     }
   },
   computed: {

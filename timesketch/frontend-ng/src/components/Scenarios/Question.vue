@@ -14,18 +14,26 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-sheet>
-    <span style="cursor: pointer" @click="expanded = !expanded">
-      <v-icon small color="green" class="mr-1">mdi-check</v-icon>
+  <div>
+    <div style="cursor: pointer; font-size: 0.9em; font-weight: bold" class="pl-3 pt-3" @click="expanded = !expanded">
+      <v-icon small v-if="!expanded">mdi-chevron-right</v-icon>
+      <v-icon small v-else>mdi-chevron-down</v-icon>
       {{ question.display_name }}
-    </span>
-    <v-card flat class="pa-3" v-show="expanded" filled>
-      {{ question.description }}
+    </div>
+    <div style="font-size: 0.9em" class="pa-3 pl-8" v-show="expanded">
+      <span>{{ question.description }}</span>
+      <v-textarea disabled outlined flat hide-details auto-grow rows="3" label="Your conclusion" class="mt-4">
+        <template v-slot:prepend-inner>
+          <v-avatar color="grey" class="mt-n1" size="28"></v-avatar>
+        </template>
+      </v-textarea>
       <v-card-actions class="pl-0">
-        <v-btn small text color="primary" class="pl-0"> Mark complete </v-btn>
+        <v-btn disabled x-small outlined color="primary"> Answer Yes </v-btn>
+        <v-btn disabled x-small outlined color="primary"> Answer No </v-btn>
+        <v-btn disabled x-small outlined color="primary"> Inconclusive </v-btn>
       </v-card-actions>
-    </v-card>
-  </v-sheet>
+    </div>
+  </div>
 </template>
 
 <script>

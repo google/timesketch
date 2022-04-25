@@ -18,7 +18,6 @@ limitations under the License.
     <v-toolbar flat>
       <v-tabs grow left v-model="searchDropdownTab">
         <v-tab> Quick </v-tab>
-        <v-tab> DFIQ </v-tab>
         <v-tab> Search Templates </v-tab>
         <v-tab> Sigma </v-tab>
       </v-tabs>

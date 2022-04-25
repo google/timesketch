@@ -14,10 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-container class="mt-2">
+  <v-container fluid class="mt-4">
     <v-row>
       <v-col cols="12">
-        <v-container>
+        <v-card outlined class="pa-md-2">
           <h3 class="mb-4">Summary</h3>
           <p style="max-width: 800px">
             Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean risus diam, dictum ut ultricies ac, aliquet
@@ -26,7 +26,7 @@ limitations under the License.
             Mauris scelerisque eleifend ligula eget laoreet. Etiam mattis massa ex. Sed ullamcorper hendrerit nunc,
             sodales imperdiet odio bibendum eu. Mauris ornare quis mi sed facilisis.
           </p>
-        </v-container>
+        </v-card>
       </v-col>
     </v-row>
     <v-row>

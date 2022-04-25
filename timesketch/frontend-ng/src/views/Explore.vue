@@ -47,12 +47,14 @@ limitations under the License.
     </v-navigation-drawer>
 
     <!-- Scenarios left panel -->
-    <v-navigation-drawer v-model="leftDrawer" app clipped fixed :width="400" hide-overlay persistent>
-      <ts-scenarios></ts-scenarios>
+    <v-navigation-drawer app :width="rightSidePanelWidth" hide-overlay class="ml-14">
+      <ts-scenario
+        :show-panel="showRightSidePanel"
+        @togglePanel="showRightSidePanel = !showRightSidePanel"
+      ></ts-scenario>
     </v-navigation-drawer>
 
     <!-- Search -->
-
     <v-row>
       <v-col cols="12">
         <v-card outlined class="pa-md-2">
@@ -545,7 +547,7 @@ import TsSearchDropdown from '../components/Explore/SearchDropdown'
 import TsBarChart from '../components/Explore/BarChart'
 import TsTimelinePicker from '../components/Explore/TimelinePicker'
 import TsFilterMenu from '../components/Explore/FilterMenu'
-import TsScenarios from '../components/Scenarios/Scenarios'
+import TsScenario from '../components/Scenarios/Scenario'
 
 import EventBus from '../main'
 import { None } from 'vega'
@@ -583,7 +585,7 @@ export default {
     TsBarChart,
     TsTimelinePicker,
     TsFilterMenu,
-    TsScenarios,
+    TsScenario,
   },
   props: ['sketchId'],
   data() {
@@ -656,6 +658,8 @@ export default {
         x: 0,
         y: 0,
       },
+      showRightSidePanel: true,
+      sidePanelTab: null,
     }
   },
   computed: {
@@ -703,6 +707,13 @@ export default {
     },
     currentSearchNode() {
       return this.$store.state.currentSearchNode
+    },
+    rightSidePanelWidth() {
+      let width = '400'
+      if (!this.showRightSidePanel) {
+        width = '50'
+      }
+      return width
     },
   },
   methods: {
