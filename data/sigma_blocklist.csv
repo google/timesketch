@@ -1,19 +1,19 @@
-path,bad,reason,last_ckecked,rule_id
-application/app,experimental,not checked yet,2021-05-04,
-apt/apt_silence,experimental,not checked yet,2021-05-04,
-cloud/aws_,experimental,not checked yet,2021-05-04,
-cloud/azure,experimental,no test data available,2021-09-23,
-cloud/gworkspace,experimental,no test data available,2021-09-23,
-cloud/m365,experimental,no test data available,2021-09-23,
-cloud/okta,experimental,no test data available,2021-09-23,
-cloud/awd,experimental,no test data available,2021-09-23,
-compliance/,experimental,not checked yet,2021-05-04,
+path,status,reason,last_ckecked,rule_id
+application/app,exploratory,not checked yet,2021-05-04,
+apt/apt_silence,exploratory,not checked yet,2021-05-04,
+cloud/aws_,exploratory,not checked yet,2021-05-04,
+cloud/azure,exploratory,no test data available,2021-09-23,
+cloud/gworkspace,exploratory,no test data available,2021-09-23,
+cloud/m365,exploratory,no test data available,2021-09-23,
+cloud/okta,exploratory,no test data available,2021-09-23,
+cloud/awd,exploratory,no test data available,2021-09-23,
+compliance/,exploratory,not checked yet,2021-05-04,
 generic/generic_brute_force.yml,bad,count not implemented,2021-05-04,
-network/cisco/aaa/cisco_,bad,no test data available,2021-05-04,
-network/net_,bad,no test data available,2021-05-04,
-network/zeek/zeek,bad,no test data available,2021-05-04,
-proxy/proxy_,bad,no test data available,2021-05-04,
-web/web_,bad,no test data available,2021-05-04,
+network/cisco/aaa/cisco_,exploratory,no test data available,2021-05-04,
+network/net_,exploratory,no test data available,2021-05-04,
+network/zeek/zeek,exploratory,no test data available,2021-05-04,
+proxy/proxy_,exploratory,no test data available,2021-05-04,
+web/web_,exploratory,no test data available,2021-05-04,
 windows/create_stream_hash/sysmon_regedit_export_to_ads,bad,endswith problem,2021-05-04,
 windows/dns_query/sysmon_,bad,no test data available,2021-05-04,
 windows/malware/av_password_dumper.yml,good,win10_4703_SeDebugPrivilege_enabled.evtx,2021-05-21,
@@ -24,7 +24,7 @@ windows/malware/mal_azorult_reg.yml,bad, endswith,2021-05-21,
 windows/malware/win_mal_darkside.yml,bad, no rules found,2021-05-21,
 windows/malware/win_mal_flowcloud.yml,bad, endswith,2021-05-21,
 windows/malware/win_mal_ryuk.yml,bad, endswith and   raise ValueError More than one matching log source contains a rewrite part ,2021-05-21,
-windows/network_connection,bad,no test data available,2021-05-04,
+windows/network_connection,exploratory,no test data available,2021-05-04,
 windows/other/win_,bad,no test data available,2021-05-04,
 windows/pipe_created/sysmon_,bad,no test data available,2021-05-04,
 windows/powershell/powershell_CL_Invocation_LOLScript.yml, bad,bot working, 2021-05-04,
@@ -89,8 +89,8 @@ rules/windows/registry_event/sysmon_susp_download_run_key.yml,bad,no evtx sample
 rules/windows/file_event/sysmon_creation_system_file.yml,bad,no evtx sample only sylog,2021-10-26,d5866ddf-ce8f-4aea-b28e-d96485a20d3d
 rules/windows/process_creation/win_susp_net_execution.yml,good,501113c57563009a37feb467c0828c153a1f7097f16c4038636f3651a266189e,2021-10-26,183e7ea8-ac4b-4c23-9aec-b3dac4e401ac
 rules/windows/process_creation/win_service_stop.yml,good,501113c57563009a37feb467c0828c153a1f7097f16c4038636f3651a266189e,2021-10-26,eb87818d-db5d-49cc-a987-d5da331fbd90
-rules/windows/process_creation/win_proc_wrong_parent.yml,bad,no test data for evtx d01bb6498156f94164d67cc854b64fb12077886f2c7f46f503a1c2dbdfd57169,2021-10-26,96036718-71cc-4027-a538-d1587e0006a7
-rules/windows/process_creation/win_system_exe_anomaly.yml,bad,rule to noisy 9ac87754adb88a8ac14969bb4adaed043f783d7264d0846365ca0cf4b7f80ffb,2021-10-26,e4a6b256-3e47-40fc-89d2-7a477edd6915
+rules/windows/process_creation/win_proc_wrong_parent.yml,exploratory,no test data for evtx d01bb6498156f94164d67cc854b64fb12077886f2c7f46f503a1c2dbdfd57169,2021-10-26,96036718-71cc-4027-a538-d1587e0006a7
+rules/windows/process_creation/win_system_exe_anomaly.yml,exploratory,rule to noisy 9ac87754adb88a8ac14969bb4adaed043f783d7264d0846365ca0cf4b7f80ffb,2021-10-26,e4a6b256-3e47-40fc-89d2-7a477edd6915
 rules/windows/process_creation/process_creation_powershell_web_request.yml,bad, very noisy 3402ef40e1e748a6d1e62cc80d8319a132683a326803ed812e4e386f04455a12 and 4df37056407ca0353e2357399ec8f2bd7583b6d10fc5d1d4f6744b9415a1ce2f,2021-10-26,9fc51a3c-81b3-4fa7-b35f-7c02cf10fd2d
 rules/windows/powershell/powershell_script/powershell_web_request.yml,bad, very noisy 3402ef40e1e748a6d1e62cc80d8319a132683a326803ed812e4e386f04455a12 and 4df37056407ca0353e2357399ec8f2bd7583b6d10fc5d1d4f6744b9415a1ce2f,2021-10-26,9fc51a3c-81b3-4fa7-b35f-7c02cf10fd2d
 rules/windows/process_creation/win_malware_script_dropper.yml,bad,cannot parse 3402ef40e1e748a6d1e62cc80d8319a132683a326803ed812e4e386f04455a12,2021-10-26,cea72823-df4d-4567-950c-0b579eaf0846

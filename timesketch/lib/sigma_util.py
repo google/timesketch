@@ -133,12 +133,12 @@ def get_sigma_rules(rule_folder, sigma_config=None):
 
     blocklist_path = None
     ignore = get_sigma_blocklist(blocklist_path)
-    ignore_list = list(ignore.loc[ignore['bad'] == 'bad']["path"].unique())
-    experimental_list = list(
-        ignore.loc[ignore['bad'] == 'experimental']["path"].unique()
+    ignore_list = list(ignore.loc[ignore['status'] == 'bad']["path"].unique())
+    exploratory_list = list(
+        ignore.loc[ignore['status'] == 'exploratory']["path"].unique()
     )
     to_be_used_in_analyzer = list(
-        ignore.loc[ignore['bad'] == 'good']["path"].unique()
+        ignore.loc[ignore['status'] == 'good']["path"].unique()
     )
 
     for dirpath, dirnames, files in os.walk(rule_folder):
@@ -159,7 +159,7 @@ def get_sigma_rules(rule_folder, sigma_config=None):
                 parsed_rule = get_sigma_rule(rule_file_path, sigma_config)
 
                 # Only assign the ts_use_in_analyzer flag to rules that are cleared
-                if any(x in rule_file_path for x in experimental_list):
+                if any(x in rule_file_path for x in exploratory_list):
                     parsed_rule.update({'ts_use_in_analyzer': False})
                 elif any(x in rule_file_path for x in to_be_used_in_analyzer):
                     parsed_rule.update({'ts_use_in_analyzer': True})
@@ -361,7 +361,16 @@ def get_sigma_blocklist(blocklist_path=None):
         ValueError: Sigma blocklist file is not readabale.
     """
 
-    return pd.read_csv(get_sigma_blocklist_path(blocklist_path))
+    df = pd.read_csv(get_sigma_blocklist_path(blocklist_path))
+    if 'bad' in df.columns:
+        df.rename(columns={"bad": "status"}, inplace=True)
+        logger.warning(
+            'Column name "bad" found in {0!s} - please rename to "status"'.format(
+                get_sigma_blocklist_path(blocklist_path)
+            )
+        )
+
+    return df
 
 
 def get_sigma_blocklist_path(blocklist_path=None):
@@ -424,7 +433,7 @@ def add_problematic_rule(filepath, rule_uuid=None, reason=None):
         for rule_path in sigma_rules_paths:
             file_relpath = os.path.relpath(filepath, rule_path)
 
-    # path,bad,reason,last_ckecked,rule_id
+    # path,status,reason,last_ckecked,rule_id
     fields = [
         file_relpath,
         "bad",

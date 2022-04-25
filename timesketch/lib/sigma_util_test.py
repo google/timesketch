@@ -230,9 +230,9 @@ class TestSigmaUtilLib(BaseTest):
         self.assertRaises(ValueError, sigma_util.get_sigma_blocklist, "/foo")
         self.assertIsNotNone(sigma_util.get_sigma_config_file())
         blocklist = sigma_util.get_sigma_blocklist()
-        self.assertEqual('experimental', blocklist['bad'][0])
+        self.assertEqual('exploratory', blocklist['status'][0])
         self.assertEqual(
-            'bad', blocklist[blocklist.values == 'deprecated']['bad'].all()
+            'bad', blocklist[blocklist.values == 'deprecated']['status'].all()
         )
         self.assertEqual(
             'good',
