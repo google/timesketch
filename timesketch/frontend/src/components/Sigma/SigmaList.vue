@@ -63,6 +63,12 @@ limitations under the License.
         </div>
       </b-table-column>
 
+      <b-table-column field="ts_use_in_analyzer" label="ts_use_in_analyzer" v-slot="props" sortable>
+        <div @click="props.toggleDetails(props.row)" style="margin-top:5px;cursor:pointer;">
+          {{ props.row.ts_use_in_analyzer }}
+        </div>
+      </b-table-column>
+
       <b-table-column field="description" label="Description" v-slot="props" searchable>
         <div @click="props.toggleDetails(props.row)" style="margin-top:5px;cursor:pointer;">
           {{ props.row.description }}
