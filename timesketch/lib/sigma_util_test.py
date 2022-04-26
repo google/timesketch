@@ -239,7 +239,7 @@ class TestSigmaUtilLib(BaseTest):
             blocklist[
                 blocklist.values
                 == 'windows/powershell/powershell_create_local_user.yml'
-            ]['bad'].all(),
+            ]['status'].all(),
         )
         self.assertIsNotNone(False)
 
