@@ -75,6 +75,12 @@ limitations under the License.
         </div>
       </b-table-column>
 
+      <b-table-column field="author" label="Author" v-slot="props" searchable sortable>
+        <div @click="props.toggleDetails(props.row)" style="margin-top:5px;cursor:pointer;">
+          {{ props.row.author }}
+        </div>
+      </b-table-column>
+
       <b-table-column field="actions" label="" v-slot="props">
         <router-link :to="{ name: 'Explore', query: { q: props.row.es_query } }">
           <button class="button is-outlined" style="float:right;">
