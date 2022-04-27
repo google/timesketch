@@ -28,15 +28,11 @@ HTTP_STATUS_CODE_NOT_FOUND = 404
 MICROSECONDS_PER_SECOND = 1000000
 
 # _source fields for search and export functions
-DEFAULT_FIELDS = [
-    'datetime',
-    'timestamp',
-    'timestamp_desc',
-    '_index',
-    'message']
+DEFAULT_FIELDS = ["datetime", "timestamp", "timestamp_desc", "_index", "message"]
 DEFAULT_SOURCE_FIELDS = DEFAULT_FIELDS + [
-    'timesketch_label',
-    'tag',
-    'similarity_score',
-    'human_readable',
-    '__ts_emojis']
+    "timesketch_label",
+    "tag",
+    "similarity_score",
+    "human_readable",
+    "__ts_emojis",
+]

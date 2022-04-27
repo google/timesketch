@@ -1,6 +1,6 @@
 # Sketches
 
-Sketches are a way to organise analysis of events across multiple timelines and increase data discoverability via search, targeted views, comments and stories.
+Sketches are a way to organize analysis of events across multiple timelines and increase data discoverability via search, targeted views, comments and stories.
 
 ## Creating a sketch
 To create a new sketch, click “New Sketch” button on the tool’s homepage. After that you will be redirected straight onto Overview page of your new sketch. Here you can click “Edit” icon to give your sketch a name and enter a description.

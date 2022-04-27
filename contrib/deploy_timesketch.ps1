@@ -67,6 +67,8 @@ Write-Host "* Fetching configuration files.."
 (Invoke-webrequest -URI $GITHUB_BASE_URL/data/plaso.mappings).Content | out-file timesketch\etc\timesketch\plaso.mappings -encoding UTF8NoBOM
 (Invoke-webrequest -URI $GITHUB_BASE_URL/data/generic.mappings).Content | out-file timesketch\etc\timesketch\generic.mappings -encoding UTF8NoBOM
 (Invoke-webrequest -URI $GITHUB_BASE_URL/data/features.yaml).Content | out-file timesketch\etc\timesketch\features.yaml -encoding UTF8NoBOM
+(Invoke-webrequest -URI $GITHUB_BASE_URL/data/ontology.yaml).Content | out-file timesketch\etc\timesketch\ontology.yaml -encoding UTF8NoBOM
+(Invoke-webrequest -URI $GITHUB_BASE_URL/data/intelligence_tag_metadata.yaml).Content | out-file timesketch\etc\timesketch\intelligence_tag_metadata.yaml -encoding UTF8NoBOM
 (Invoke-webrequest -URI $GITHUB_BASE_URL/data/sigma_config.yaml).Content | out-file timesketch\etc\timesketch\sigma_config.yaml -encoding UTF8NoBOM
 (Invoke-webrequest -URI $GITHUB_BASE_URL/data/sigma_blacklist.csv).Content | out-file timesketch\etc\timesketch\sigma_blocklist.csv -encoding UTF8NoBOM
 (Invoke-webrequest -URI $GITHUB_BASE_URL/data/sigma/rules/lnx_susp_zmap.yml).Content | out-file timesketch\etc\timesketch\sigma\rules\lnx_susp_zmap.yml -encoding UTF8NoBOM

@@ -21,7 +21,7 @@ from . import error
 from . import resource
 
 
-logger = logging.getLogger('timesketch_api.index')
+logger = logging.getLogger("timesketch_api.index")
 
 
 class SearchIndex(resource.BaseResource):
@@ -42,14 +42,13 @@ class SearchIndex(resource.BaseResource):
         self.id = searchindex_id
         self._labels = []
         self._searchindex_name = searchindex_name
-        resource_uri = f'searchindices/{self.id}/'
-        super().__init__(
-            api=api, resource_uri=resource_uri)
+        resource_uri = f"searchindices/{self.id}/"
+        super().__init__(api=api, resource_uri=resource_uri)
 
     def _get_object_dict(self):
         """Returns the object dict from the resources dict."""
         data = self.lazyload_data()
-        objects = data.get('objects', [])
+        objects = data.get("objects", [])
         if not objects:
             return {}
 
@@ -59,8 +58,8 @@ class SearchIndex(resource.BaseResource):
     def fields(self):
         """Property that returns the fields in the index mappings."""
         index_data = self.lazyload_data(refresh_cache=True)
-        meta = index_data.get('meta', {})
-        return meta.get('fields', [])
+        meta = index_data.get("meta", {})
+        return meta.get("fields", [])
 
     @property
     def has_timeline_id(self):
@@ -72,8 +71,8 @@ class SearchIndex(resource.BaseResource):
                 is the data set.
         """
         index_data = self.data
-        meta = index_data.get('meta', {})
-        return meta.get('contains_timeline_id', False)
+        meta = index_data.get("meta", {})
+        return meta.get("contains_timeline_id", False)
 
     @property
     def labels(self):
@@ -85,7 +84,7 @@ class SearchIndex(resource.BaseResource):
         if not index_data:
             return self._labels
 
-        label_string = index_data.get('label_string', '')
+        label_string = index_data.get("label_string", "")
         if label_string:
             self._labels = json.loads(label_string)
         else:
@@ -102,7 +101,7 @@ class SearchIndex(resource.BaseResource):
         """
         if not self._searchindex_name:
             index_data = self._get_object_dict()
-            self._searchindex_name = index_data.get('name', 'no name defined')
+            self._searchindex_name = index_data.get("name", "no name defined")
         return self._searchindex_name
 
     @property
@@ -113,7 +112,7 @@ class SearchIndex(resource.BaseResource):
             OpenSearch index name as string.
         """
         index_data = self._get_object_dict()
-        return index_data.get('index_name', 'unkown index name')
+        return index_data.get("index_name", "unkown index name")
 
     @property
     def status(self):
@@ -123,18 +122,18 @@ class SearchIndex(resource.BaseResource):
             String with the index status.
         """
         index_data = self._get_object_dict()
-        status_list = index_data.get('status')
+        status_list = index_data.get("status")
         if not status_list:
-            return 'Unknown'
+            return "Unknown"
 
         status = status_list[0]
-        return status.get('status')
+        return status.get("status")
 
     @status.setter
     def status(self, status):
         """Set the SearchIndex status."""
-        resource_url = f'{self.api.api_root}/searchindices/{self.id}/'
-        data = {'status': status}
+        resource_url = f"{self.api.api_root}/searchindices/{self.id}/"
+        data = {"status": status}
         response = self.api.session.post(resource_url, json=data)
 
         _ = error.check_return_status(response, logger)
@@ -143,11 +142,10 @@ class SearchIndex(resource.BaseResource):
     def description(self):
         """Property that returns the description of the index."""
         index_data = self._get_object_dict()
-        return index_data.get('description', 'no description provided')
+        return index_data.get("description", "no description provided")
 
     def delete(self):
         """Deletes the index."""
-        resource_url = '{0:s}/searchindices/{1:d}/'.format(
-            self.api.api_root, self.id)
+        resource_url = "{0:s}/searchindices/{1:d}/".format(self.api.api_root, self.id)
         response = self.api.session.delete(resource_url)
         return error.check_return_status(response, logger)

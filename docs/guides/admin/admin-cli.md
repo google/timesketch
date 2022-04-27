@@ -83,8 +83,8 @@ Parameters:
 Example
 
 ```shell
-tsctl disalbe_user --username foo
-tsctl enalbe_user --username foo
+tsctl disable_user --username foo
+tsctl enable_user --username foo
 ```
 
 ### Group management

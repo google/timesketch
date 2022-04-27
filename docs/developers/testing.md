@@ -56,6 +56,20 @@ The unittests for the api client can use `mock` to emulate responses from the se
 
 To introduce a new API endpoint to be tested, the endpoint needs to be registered in the `url_router` section in `/api_client/python/timesketch_api_client/test_lib.py` and the response needs to be defined in the same file.
 
+### Debugging tests
+
+To debug tests, simply add the following at the point of interest:
+
+```python
+breakpoint()
+```
+
+And then within the docker container execute
+
+```shell
+! nosetests /usr/local/src/timesketchtimesketch/lib/emojis_test.py -s -pdb
+```
+
 ## end2end tests
 
 End2end (e2e) tests are run on Github with every commit. Those tests will setup and run a full Timesketch instance, with the ability to import data and perform actions with it.

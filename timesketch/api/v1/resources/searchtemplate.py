@@ -48,14 +48,13 @@ class SearchTemplateResource(resources.ResourceMixin, Resource):
         """
         searchtemplate = SearchTemplate.query.get(searchtemplate_id)
 
-        meta = {'sketch_ids': []}
-        saved_searches = View.query.filter_by(
-            searchtemplate=searchtemplate)
+        meta = {"sketch_ids": []}
+        saved_searches = View.query.filter_by(searchtemplate=searchtemplate)
         for saved_search in saved_searches:
-            meta['sketch_ids'].append(saved_search.id)
+            meta["sketch_ids"].append(saved_search.id)
 
         if not searchtemplate:
-            abort(HTTP_STATUS_CODE_NOT_FOUND, 'Search template was not found')
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "Search template was not found")
         return self.to_json(searchtemplate, meta=meta)
 
     @login_required
@@ -70,7 +69,7 @@ class SearchTemplateResource(resources.ResourceMixin, Resource):
         """
         searchtemplate = SearchTemplate.query.get(searchtemplate_id)
         if not searchtemplate:
-            abort(HTTP_STATUS_CODE_NOT_FOUND, 'Search template was not found')
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "Search template was not found")
 
         saved_searches = View.query.filter_by(searchtemplate=searchtemplate)
         for saved_search in saved_searches:
@@ -93,19 +92,16 @@ class SearchTemplateListResource(resources.ResourceMixin, Resource):
             View in JSON (instance of flask.wrappers.Response)
         """
         templates = SearchTemplate.query.all()
-        meta = {
-            'collection': []
-        }
+        meta = {"collection": []}
         for template in templates:
-            saved_searches = View.query.filter_by(
-                searchtemplate=template)
+            saved_searches = View.query.filter_by(searchtemplate=template)
             for saved_search in saved_searches:
                 data = {
-                    'search_id': saved_search.id,
-                    'template_id': template.id,
-                    'sketch_id': saved_search.sketch.id
+                    "search_id": saved_search.id,
+                    "template_id": template.id,
+                    "sketch_id": saved_search.sketch.id,
                 }
-                meta['collection'].append(data)
+                meta["collection"].append(data)
 
         return self.to_json(templates, meta=meta)
 
@@ -120,50 +116,51 @@ class SearchTemplateListResource(resources.ResourceMixin, Resource):
         if not form:
             form = request.data
 
-        search_id = form.get('search_id')
+        search_id = form.get("search_id")
         if not search_id:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'Unable to save the searchtemplate, the saved search ID is '
-                'missing.')
+                "Unable to save the searchtemplate, the saved search ID is " "missing.",
+            )
 
         search_obj = View.query.get(search_id)
         if not search_obj:
-            abort(
-                HTTP_STATUS_CODE_NOT_FOUND, 'No search found with this ID.')
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No search found with this ID.")
 
         templates = SearchTemplate.query.filter_by(
-            name=search_obj.name,
-            description=search_obj.description).all()
+            name=search_obj.name, description=search_obj.description
+        ).all()
 
         if templates:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'This search has already been saved as a template.')
+                "This search has already been saved as a template.",
+            )
 
         sketch = Sketch.query.get_with_acl(search_obj.sketch.id)
         if not sketch:
-            abort(
-                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
-        if not sketch.has_permission(current_user, 'read'):
-            abort(HTTP_STATUS_CODE_FORBIDDEN,
-                  'User does not have read access controls on sketch.')
-
-        if sketch.get_status.status == 'archived':
+        if not sketch.has_permission(current_user, "read"):
             abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                'Unable to query on an archived sketch.')
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "User does not have read access controls on sketch.",
+            )
+
+        if sketch.get_status.status == "archived":
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST, "Unable to query on an archived sketch."
+            )
 
         # Remove date filter chips from the saved search.
         query_filter_dict = json.loads(search_obj.query_filter)
         chips = []
-        for chip in query_filter_dict.get('chips', []):
-            chip_type = chip.get('type', '')
-            if not chip_type.startswith('datetime'):
+        for chip in query_filter_dict.get("chips", []):
+            chip_type = chip.get("type", "")
+            if not chip_type.startswith("datetime"):
                 chips.append(chip)
 
-        query_filter_dict['chips'] = chips
+        query_filter_dict["chips"] = chips
         query_filter = json.dumps(query_filter_dict, ensure_ascii=False)
 
         searchtemplate = SearchTemplate(
@@ -172,7 +169,8 @@ class SearchTemplateListResource(resources.ResourceMixin, Resource):
             user=current_user,
             query_string=search_obj.query_string,
             query_filter=query_filter,
-            query_dsl=search_obj.query_dsl)
+            query_dsl=search_obj.query_dsl,
+        )
 
         db_session.add(searchtemplate)
         db_session.commit()

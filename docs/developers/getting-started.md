@@ -41,11 +41,11 @@ timesketch-dev         | Timesketch development server is ready!
 Add a user to your Timesketch server (this will add a user `dev` with password `dev`)
 
 ```bash
-$ docker-compose exec timesketch tsctl add_user --username dev --password dev
+$ docker-compose exec timesketch tsctl create-user dev --password dev
 User dev created/updated
 ```
 
-Now, start the `gunicon` server that will serve the Timsesketch WSGI app
+Now, start the `gunicon` server that will serve the Timsketch WSGI app
 
 In one shell:
 

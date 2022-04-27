@@ -38,15 +38,15 @@ from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import DataSource
 
-logger = logging.getLogger('timesketch.api_upload')
+logger = logging.getLogger("timesketch.api_upload")
 
 
 class UploadFileResource(resources.ResourceMixin, Resource):
     """Resource that processes uploaded files."""
 
     def _get_index(
-            self, name, description, sketch, index_name='',
-            data_label='', extension=''):
+        self, name, description, sketch, index_name="", data_label="", extension=""
+    ):
         """Returns a SearchIndex object to be used for uploads.
 
         Args:
@@ -67,42 +67,43 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         """
         if index_name:
             if not isinstance(index_name, str):
-                index_name = codecs.decode(index_name, 'utf-8')
+                index_name = codecs.decode(index_name, "utf-8")
 
             searchindex = SearchIndex.query.filter_by(
-                name=name, index_name=index_name).first()
+                name=name, index_name=index_name
+            ).first()
 
             if searchindex and searchindex.has_permission(
-                    permission='write', user=current_user):
+                permission="write", user=current_user
+            ):
                 return searchindex
 
         if extension and not data_label:
             data_label = extension
 
         if not data_label:
-            data_label = 'generic'
+            data_label = "generic"
 
         # Since CSV and JSON are basically the same label, we combine it here.
-        if data_label in ('csv', 'json', 'jsonl'):
-            data_label = 'csv_jsonl'
+        if data_label in ("csv", "json", "jsonl"):
+            data_label = "csv_jsonl"
 
         indices = [t.searchindex for t in sketch.active_timelines]
         for index in indices:
             if index.has_label(data_label) and sketch.has_permission(
-                    permission='write', user=current_user):
+                permission="write", user=current_user
+            ):
                 return index
 
         index_name = index_name or uuid.uuid4().hex
         searchindex = SearchIndex.get_or_create(
-            name=name,
-            index_name=index_name,
-            description=description,
-            user=current_user)
+            name=name, index_name=index_name, description=description, user=current_user
+        )
 
-        searchindex.grant_permission(permission='read', user=current_user)
-        searchindex.grant_permission(permission='write', user=current_user)
-        searchindex.grant_permission(permission='delete', user=current_user)
-        searchindex.set_status('processing')
+        searchindex.grant_permission(permission="read", user=current_user)
+        searchindex.grant_permission(permission="write", user=current_user)
+        searchindex.grant_permission(permission="delete", user=current_user)
+        searchindex.set_status("processing")
 
         db_session.add(searchindex)
         db_session.commit()
@@ -113,9 +114,19 @@ class UploadFileResource(resources.ResourceMixin, Resource):
 
     # pylint: disable=too-many-arguments
     def _upload_and_index(
-            self, file_extension, timeline_name, index_name, sketch, form,
-            enable_stream, original_filename='', data_label='', file_path='',
-            events='', meta=None):
+        self,
+        file_extension,
+        timeline_name,
+        index_name,
+        sketch,
+        form,
+        enable_stream,
+        original_filename="",
+        data_label="",
+        file_path="",
+        events="",
+        meta=None,
+    ):
         """Creates a full pipeline for an uploaded file and returns the results.
 
         Args:
@@ -144,18 +155,19 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             sketch=sketch,
             index_name=index_name,
             data_label=data_label,
-            extension=file_extension)
+            extension=file_extension,
+        )
 
         if not searchindex:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'We were unable to acquire a searchindex and therefore not '
-                'able to upload data, please try again. If this error persist '
-                'please create an issue on Github: https://github.com/'
-                'google/timesketch/issues/new/choose')
+                "We were unable to acquire a searchindex and therefore not "
+                "able to upload data, please try again. If this error persist "
+                "please create an issue on Github: https://github.com/"
+                "google/timesketch/issues/new/choose",
+            )
 
-        timelines = Timeline.query.filter_by(
-            name=timeline_name, sketch=sketch).all()
+        timelines = Timeline.query.filter_by(name=timeline_name, sketch=sketch).all()
 
         timeline = None
         for timeline_ in timelines:
@@ -164,23 +176,32 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 break
 
             logger.error(
-                'There is a timeline in the sketch that has the same name '
-                'but is stored in a different index: name {0:s} attempting '
-                'index: {1:s} but found index {2:s} - retrying with a '
-                'different timeline name.'.format(
-                    timeline_name, searchindex.index_name,
-                    timeline_.searchindex.index_name))
+                "There is a timeline in the sketch that has the same name "
+                "but is stored in a different index: name {0:s} attempting "
+                "index: {1:s} but found index {2:s} - retrying with a "
+                "different timeline name.".format(
+                    timeline_name,
+                    searchindex.index_name,
+                    timeline_.searchindex.index_name,
+                )
+            )
 
-            timeline_name = '{0:s}_{1:s}'.format(
-                timeline_name, uuid.uuid4().hex[-5:])
+            timeline_name = "{0:s}_{1:s}".format(timeline_name, uuid.uuid4().hex[-5:])
             return self._upload_and_index(
-                file_extension=file_extension, timeline_name=timeline_name,
-                index_name=searchindex.index_name, sketch=sketch, form=form,
+                file_extension=file_extension,
+                timeline_name=timeline_name,
+                index_name=searchindex.index_name,
+                sketch=sketch,
+                form=form,
                 enable_stream=enable_stream,
-                original_filename=original_filename, data_label=data_label,
-                file_path=file_path, events=events, meta=meta)
+                original_filename=original_filename,
+                data_label=data_label,
+                file_path=file_path,
+                events=events,
+                meta=meta,
+            )
 
-        searchindex.set_status('processing')
+        searchindex.set_status("processing")
 
         if not timeline:
             timeline = Timeline.get_or_create(
@@ -188,38 +209,41 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 description=timeline_name,
                 sketch=sketch,
                 user=current_user,
-                searchindex=searchindex)
+                searchindex=searchindex,
+            )
 
         if not timeline:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'Unable to get or create a new Timeline object.')
+                "Unable to get or create a new Timeline object.",
+            )
 
         # If the timeline already existed and has associated data sources
         # then we don't want to set the status to processing.
         if not timeline.datasources:
-            timeline.set_status('processing')
+            timeline.set_status("processing")
 
         sketch.timelines.append(timeline)
 
         labels_to_prevent_deletion = current_app.config.get(
-            'LABELS_TO_PREVENT_DELETION', [])
+            "LABELS_TO_PREVENT_DELETION", []
+        )
         for sketch_label in sketch.get_labels:
             if sketch_label not in labels_to_prevent_deletion:
                 continue
             timeline.add_label(sketch_label)
             searchindex.add_label(sketch_label)
 
-        file_size = form.get('total_file_size', 0)
+        file_size = form.get("total_file_size", 0)
         datasource = DataSource(
             timeline=timeline,
             user=current_user,
-            provider=form.get('provider', 'N/A'),
-            context=form.get('context', 'N/A'),
+            provider=form.get("provider", "N/A"),
+            context=form.get("context", "N/A"),
             file_on_disk=file_path,
             file_size=int(file_size),
             original_filename=original_filename,
-            data_label=data_label
+            data_label=data_label,
         )
 
         timeline.datasources.append(datasource)
@@ -232,20 +256,25 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         # Import here to avoid circular imports.
         # pylint: disable=import-outside-toplevel
         from timesketch.lib import tasks
+
         pipeline = tasks.build_index_pipeline(
-            file_path=file_path, events=events, timeline_name=timeline_name,
-            index_name=searchindex.index_name, file_extension=file_extension,
-            sketch_id=sketch_id, only_index=enable_stream,
-            timeline_id=timeline.id)
+            file_path=file_path,
+            events=events,
+            timeline_name=timeline_name,
+            index_name=searchindex.index_name,
+            file_extension=file_extension,
+            sketch_id=sketch_id,
+            only_index=enable_stream,
+            timeline_id=timeline.id,
+        )
         task_id = uuid.uuid4().hex
         pipeline.apply_async(task_id=task_id)
 
         if meta is None:
             meta = {}
 
-        meta['task_id'] = task_id
-        return self.to_json(
-            timeline, status_code=HTTP_STATUS_CODE_CREATED, meta=meta)
+        meta["task_id"] = task_id
+        return self.to_json(timeline, status_code=HTTP_STATUS_CODE_CREATED, meta=meta)
 
     def _upload_events(self, events, form, sketch, index_name):
         """Upload a file like object.
@@ -260,9 +289,9 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             A timeline if created otherwise a search index in JSON (instance
             of flask.wrappers.Response)
         """
-        timeline_name = form.get('name', 'unknown_events')
-        file_extension = 'jsonl'
-        data_label = form.get('data_label', '')
+        timeline_name = form.get("name", "unknown_events")
+        file_extension = "jsonl"
+        data_label = form.get("data_label", "")
 
         return self._upload_and_index(
             events=events,
@@ -272,10 +301,10 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             sketch=sketch,
             form=form,
             data_label=data_label,
-            enable_stream=form.get('enable_stream', False))
+            enable_stream=form.get("enable_stream", False),
+        )
 
-    def _upload_file(
-            self, file_storage, form, sketch, index_name, chunk_index_name=''):
+    def _upload_file(self, file_storage, form, sketch, index_name, chunk_index_name=""):
         """Upload a file.
 
         Args:
@@ -291,35 +320,33 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             of flask.wrappers.Response)
         """
         _filename, _extension = os.path.splitext(file_storage.filename)
-        file_extension = _extension.lstrip('.')
-        timeline_name = form.get('name', _filename.rstrip('.'))
+        file_extension = _extension.lstrip(".")
+        timeline_name = form.get("name", _filename.rstrip("."))
 
         # We do not need a human readable filename or
         # datastore index name, so we use UUIDs here.
         filename = uuid.uuid4().hex
         if not isinstance(filename, str):
-            filename = codecs.decode(filename, 'utf-8')
+            filename = codecs.decode(filename, "utf-8")
 
-        upload_folder = current_app.config['UPLOAD_FOLDER']
+        upload_folder = current_app.config["UPLOAD_FOLDER"]
         file_path = os.path.join(upload_folder, filename)
 
-        chunk_index = form.get('chunk_index')
+        chunk_index = form.get("chunk_index")
         if isinstance(chunk_index, str) and chunk_index.isdigit():
             chunk_index = int(chunk_index)
-        chunk_byte_offset = form.get('chunk_byte_offset')
-        if isinstance(
-                chunk_byte_offset, str) and chunk_byte_offset.isdigit():
+        chunk_byte_offset = form.get("chunk_byte_offset")
+        if isinstance(chunk_byte_offset, str) and chunk_byte_offset.isdigit():
             chunk_byte_offset = int(chunk_byte_offset)
-        chunk_total_chunks = form.get('chunk_total_chunks')
-        if isinstance(
-                chunk_total_chunks, str) and chunk_total_chunks.isdigit():
+        chunk_total_chunks = form.get("chunk_total_chunks")
+        if isinstance(chunk_total_chunks, str) and chunk_total_chunks.isdigit():
             chunk_total_chunks = int(chunk_total_chunks)
-        file_size = form.get('total_file_size')
+        file_size = form.get("total_file_size")
         if isinstance(file_size, str) and file_size.isdigit():
             file_size = int(file_size)
-        enable_stream = form.get('enable_stream', False)
+        enable_stream = form.get("enable_stream", False)
 
-        data_label = form.get('data_label', '')
+        data_label = form.get("data_label", "")
 
         if chunk_total_chunks is None:
             file_storage.save(file_path)
@@ -332,7 +359,8 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 sketch=sketch,
                 form=form,
                 data_label=data_label,
-                enable_stream=enable_stream)
+                enable_stream=enable_stream,
+            )
 
         # For file chunks we need the correct filepath, otherwise each chunk
         # will get their own UUID as a filename.
@@ -344,23 +372,26 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             file_path = os.path.join(upload_folder, uuid.uuid4().hex)
 
         try:
-            with open(file_path, 'ab') as fh:
+            with open(file_path, "ab") as fh:
                 fh.seek(chunk_byte_offset)
                 fh.write(file_storage.read())
         except OSError as e:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'Unable to write data with error: {0!s}.'.format(e))
+                "Unable to write data with error: {0!s}.".format(e),
+            )
 
         if (chunk_index + 1) != chunk_total_chunks:
             schema = {
-                'meta': {
-                    'file_upload': True,
-                    'upload_complete': False,
-                    'total_chunks': chunk_total_chunks,
-                    'chunk_index': chunk_index,
-                    'file_size': file_size},
-                'objects': []}
+                "meta": {
+                    "file_upload": True,
+                    "upload_complete": False,
+                    "total_chunks": chunk_total_chunks,
+                    "chunk_index": chunk_index,
+                    "file_size": file_size,
+                },
+                "objects": [],
+            }
             response = jsonify(schema)
             response.status_code = HTTP_STATUS_CODE_CREATED
             return response
@@ -368,15 +399,17 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         if os.path.getsize(file_path) != file_size:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'Unable to save file correctly, inconsistent file size '
-                '({0:d} but should have been {1:d})'.format(
-                    os.path.getsize(file_path), file_size))
+                "Unable to save file correctly, inconsistent file size "
+                "({0:d} but should have been {1:d})".format(
+                    os.path.getsize(file_path), file_size
+                ),
+            )
 
         meta = {
-            'file_upload': True,
-            'upload_complete': True,
-            'file_size': file_size,
-            'total_chunks': chunk_total_chunks,
+            "file_upload": True,
+            "upload_complete": True,
+            "file_size": file_size,
+            "total_chunks": chunk_total_chunks,
         }
 
         return self._upload_and_index(
@@ -389,7 +422,8 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             form=form,
             data_label=data_label,
             enable_stream=enable_stream,
-            meta=meta)
+            meta=meta,
+        )
 
     @login_required
     def post(self):
@@ -398,56 +432,63 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         Returns:
             A view in JSON (instance of flask.wrappers.Response)
         """
-        upload_enabled = current_app.config['UPLOAD_ENABLED']
+        upload_enabled = current_app.config["UPLOAD_ENABLED"]
         if not upload_enabled:
-            abort(HTTP_STATUS_CODE_BAD_REQUEST, 'Upload not enabled')
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, "Upload not enabled")
 
         form = request.get_data(parse_form_data=True)
         if not form:
             form = request.form
 
-        sketch_id = form.get('sketch_id', None)
+        sketch_id = form.get("sketch_id", None)
         if not sketch_id:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'Unable to upload data without supplying a '
-                'sketch to associated it with.')
+                "Unable to upload data without supplying a "
+                "sketch to associated it with.",
+            )
 
         if not isinstance(sketch_id, int):
             sketch_id = int(sketch_id)
 
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
-            abort(
-                HTTP_STATUS_CODE_NOT_FOUND,
-                'No sketch found with this ID.')
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
-        if sketch.get_status.status == 'archived':
+        if sketch.get_status.status == "archived":
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'Unable to upload a file to an archived sketch.')
+                "Unable to upload a file to an archived sketch.",
+            )
 
-        if not sketch.has_permission(current_user, 'write'):
+        if not sketch.has_permission(current_user, "write"):
             abort(
                 HTTP_STATUS_CODE_FORBIDDEN,
-                'Unable to upload data to a sketch, user does not have '
-                'write access.')
+                "Unable to upload data to a sketch, user does not have "
+                "write access.",
+            )
 
         utils.update_sketch_last_activity(sketch)
 
-        index_name = form.get('index_name', '')
-        file_storage = request.files.get('file')
+        index_name = form.get("index_name", "")
+        file_storage = request.files.get("file")
         if file_storage:
-            chunk_index_name = form.get('chunk_index_name', uuid.uuid4().hex)
+            chunk_index_name = form.get("chunk_index_name", uuid.uuid4().hex)
             return self._upload_file(
-                file_storage=file_storage, chunk_index_name=chunk_index_name,
-                form=form, sketch=sketch, index_name=index_name)
+                file_storage=file_storage,
+                chunk_index_name=chunk_index_name,
+                form=form,
+                sketch=sketch,
+                index_name=index_name,
+            )
 
-        events = form.get('events')
+        events = form.get("events")
         if not events:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'Unable to upload data, no file uploaded nor any events.')
+                "Unable to upload data, no file uploaded nor any events.",
+            )
 
         return self._upload_events(
-            events=events, form=form, sketch=sketch, index_name=index_name)
+            events=events, form=form, sketch=sketch, index_name=index_name
+        )

@@ -4,14 +4,13 @@ celery==5.2.2
 cryptography==3.3.2
 datasketch==1.5.0
 opensearch-py==1.0.0
-Flask==1.1.1
+Flask==2.0.3
 flask_bcrypt==0.7.1
 flask_login==0.4.1
 flask_migrate==2.5.2
-flask_restful==0.3.7
-flask_script==2.0.6
+flask_restful==0.3.9
 flask_sqlalchemy==2.4.1
-flask_wtf==0.14.2
+flask_wtf==1.0.0
 google-auth==1.7.0
 google_auth_oauthlib==0.4.1
 gunicorn==19.10.0  # Note: Last version to support py2
@@ -26,7 +25,7 @@ requests==2.25.1
 sigmatools==0.19.1 ; python_version > '3.4'
 six==1.12.0
 SQLAlchemy==1.3.12
-Werkzeug==0.16.0
+Werkzeug==2.0.3
 WTForms==2.2.1
 xlrd==1.2.0
 tabulate==0.8.6

@@ -39,21 +39,23 @@ from timesketch.models.sketch import Story
 
 class TestConfig(object):
     """Config for the test environment."""
+
     DEBUG = True
-    SECRET_KEY = 'testing'
-    SQLALCHEMY_DATABASE_URI = 'sqlite://'
+    SECRET_KEY = "testing"
+    SQLALCHEMY_DATABASE_URI = "sqlite://"
     WTF_CSRF_ENABLED = False
-    OPENSEARCH_HOST = 'noserver'
+    OPENSEARCH_HOST = "noserver"
     OPENSEARCH_PORT = 4711
     OPENSEARCH_USER = None
     OPENSEARCH_PASSWORD = None
     OPENSEARCH_SSL = False
     OPENSEARCH_VERIFY_CERTS = True
-    LABELS_TO_PREVENT_DELETION = ['protected', 'magic']
+    LABELS_TO_PREVENT_DELETION = ["protected", "magic"]
     UPLOAD_ENABLED = False
     AUTO_SKETCH_ANALYZERS = []
     SIMILARITY_DATA_TYPES = []
-    SIGMA_RULES_FOLDERS = ['./data/sigma/rules/']
+    SIGMA_RULES_FOLDERS = ["./data/sigma/rules/"]
+    INTELLIGENCE_TAG_METADATA = "./data/intelligence_tag_metadata.yaml"
 
 
 class MockOpenSearchClient(object):
@@ -66,23 +68,30 @@ class MockOpenSearchClient(object):
     def search(self, index, body, size):  # pylint: disable=unused-argument
         """Mock a client search, used for aggregations."""
         meta = {
-            'es_time': 23,
-            'es_total_count': 5621,
-            'timed_out': False,
-            'max_score': 0.0
+            "es_time": 23,
+            "es_total_count": 5621,
+            "timed_out": False,
+            "max_score": 0.0,
         }
 
-        objects = [{
-            'my_aggregation': {'buckets': [
-                {'foobar': 1, 'second': 'foobar'},
-                {'foobar': 4, 'second': 'more stuff'},
-                {'foobar': 532, 'second': 'hvernig hefurdu thad'}]},
-            'my_second_aggregation': {'buckets': [
-                {'foobar': 54, 'second': 'faranlegt', 'third': 'other text'},
-                {'foobar': 42, 'second': 'asnalegt'}]}
-
-        }]
-        return {'meta': meta, 'objects': objects}
+        objects = [
+            {
+                "my_aggregation": {
+                    "buckets": [
+                        {"foobar": 1, "second": "foobar"},
+                        {"foobar": 4, "second": "more stuff"},
+                        {"foobar": 532, "second": "hvernig hefurdu thad"},
+                    ]
+                },
+                "my_second_aggregation": {
+                    "buckets": [
+                        {"foobar": 54, "second": "faranlegt", "third": "other text"},
+                        {"foobar": 42, "second": "asnalegt"},
+                    ]
+                },
+            }
+        ]
+        return {"meta": meta, "objects": objects}
 
 
 class MockOpenSearchIndices(object):
@@ -92,7 +101,7 @@ class MockOpenSearchIndices(object):
         return {}
 
     def stats(self, *args, **kwargs):
-        return {'indices': {}}
+        return {"indices": {}}
 
     def refresh(self, *args, **kwargs):
         return
@@ -105,66 +114,50 @@ class MockDataStore(object):
     """A mock implementation of a Datastore."""
 
     event_dict = {
-        '_index': [],
-        '_id': 'adc123',
-        '_type': 'plaso_event',
-        '_source': {
-            '__ts_timeline_id': 1,
-            'es_index': '',
-            'es_id': '',
-            'label': '',
-            'timestamp': 1410895419859714,
-            'timestamp_desc': '',
-            'datetime': '2014-09-16T19:23:40+00:00',
-            'source_short': '',
-            'source_long': '',
-            'message': '',
-        }
+        "_index": [],
+        "_id": "adc123",
+        "_type": "plaso_event",
+        "_source": {
+            "__ts_timeline_id": 1,
+            "es_index": "",
+            "es_id": "",
+            "label": "",
+            "timestamp": 1410895419859714,
+            "timestamp_desc": "",
+            "datetime": "2014-09-16T19:23:40+00:00",
+            "source_short": "",
+            "source_long": "",
+            "message": "",
+        },
     }
     search_result_dict = {
-        'hits': {
-            'hits': [{
-                'sort': [1410593223000],
-                '_type': 'plaso_event',
-                '_source': {
-                    'timestamp':
-                    1410593222543942,
-                    'message':
-                    'Test event',
-                    'timesketch_label': [
-                        {
-                            'user_id': 1,
-                            'name': '__ts_star',
-                            'sketch_id': 1
-                        },
-                        {
-                            'user_id': 2,
-                            'name': '__ts_star',
-                            'sketch_id': 99
-                        },
-                    ],
-                    'timestamp_desc':
-                    'Content Modification Time',
-                    'datetime':
-                    '2014-09-13T07:27:03+00:00',
-                    '__ts_timeline_id': 1,
-                },
-                '_score': 'null',
-                '_index': 'test',
-                '_id': 'test'
-            }],
-            'total':
-            1,
-            'max_score':
-            'null'
+        "hits": {
+            "hits": [
+                {
+                    "sort": [1410593223000],
+                    "_type": "plaso_event",
+                    "_source": {
+                        "timestamp": 1410593222543942,
+                        "message": "Test event",
+                        "timesketch_label": [
+                            {"user_id": 1, "name": "__ts_star", "sketch_id": 1},
+                            {"user_id": 2, "name": "__ts_star", "sketch_id": 99},
+                        ],
+                        "timestamp_desc": "Content Modification Time",
+                        "datetime": "2014-09-13T07:27:03+00:00",
+                        "__ts_timeline_id": 1,
+                    },
+                    "_score": "null",
+                    "_index": "test",
+                    "_id": "test",
+                }
+            ],
+            "total": 1,
+            "max_score": "null",
         },
-        '_shards': {
-            'successful': 10,
-            'failed': 0,
-            'total': 10
-        },
-        'took': 5,
-        'timed_out': False
+        "_shards": {"successful": 10, "failed": 0, "total": 10},
+        "took": 5,
+        "timed_out": False,
     }
 
     def __init__(self, host, port):
@@ -185,7 +178,7 @@ class MockDataStore(object):
         Returns:
             A dictionary with search result or integer if count is requested.
         """
-        if kwargs.get('count'):
+        if kwargs.get("count"):
             # 4711 is sometimes used instead of 17, on occasions when you want
             # to denote a slightly larger number. Probably comes from the name
             # of 'genuine' Eau-de-cologne, 'No. 4711 ".
@@ -226,15 +219,17 @@ class MockDataStore(object):
         """
         return []
 
-    def set_label(self,
-                  searchindex_id,
-                  event_id,
-                  event_type,
-                  sketch_id,
-                  user_id,
-                  label,
-                  toggle=False,
-                  single_update=True):
+    def set_label(
+        self,
+        searchindex_id,
+        event_id,
+        event_type,
+        sketch_id,
+        user_id,
+        label,
+        toggle=False,
+        single_update=True,
+    ):
         """Mock adding a label to an event."""
         return
 
@@ -243,8 +238,9 @@ class MockDataStore(object):
         """Mock creating an index."""
         return
 
-    def import_event(self, index_name, event_type, event=None,
-                     event_id=None, flush_interval=None):
+    def import_event(
+        self, index_name, event_type, event=None, event_id=None, flush_interval=None
+    ):
         """Mock adding the event to OpenSearch, instead add the event
         to event_store.
         Args:
@@ -257,14 +253,14 @@ class MockDataStore(object):
         """
 
         if event_id in self.event_store:
-            self.event_store[event_id]['_source'].update(event)
+            self.event_store[event_id]["_source"].update(event)
             return
 
         new_event = {
-            '_index': index_name,
-            '_id': event_id,
-            '_type': event_type,
-            '_source': event
+            "_index": index_name,
+            "_id": event_id,
+            "_type": event_type,
+            "_source": event,
         }
         self.event_store[event_id] = new_event
 
@@ -275,12 +271,19 @@ class MockDataStore(object):
         Returns:
           Version number as a string.
         """
-        return '6.0'
+        return "6.0"
 
     # pylint: disable=unused-argument
-    def search_stream(self, query_string, query_filter, query_dsl,
-                      indices, return_fields, enable_scroll=True,
-                      timeline_ids=None):
+    def search_stream(
+        self,
+        query_string,
+        query_filter,
+        query_dsl,
+        indices,
+        return_fields,
+        enable_scroll=True,
+        timeline_ids=None,
+    ):
         for i in range(len(self.event_store)):
             yield self.event_store[str(i)]
 
@@ -301,31 +304,32 @@ class MockGraphDatabase(object):
 
     class MockQuerySequence(object):
         """A mock implementation of a QuerySequence."""
-        MOCK_GRAPH = [{
-            'nodes': [{
-                'id': '1',
-                'labels': ['User'],
-                'properties': {
-                    'username': 'test',
-                    'uid': '123456'
-                }
-            }, {
-                'id': '2',
-                'labels': ['Machine'],
-                'properties': {
-                    'hostname': 'test'
-                }
-            }],
-            'relationships': [{
-                'endNode': '2',
-                'id': '3',
-                'startNode': '1',
-                'properties': {
-                    'method': 'Network'
-                },
-                'type': 'ACCESS'
-            }]
-        }]
+
+        MOCK_GRAPH = [
+            {
+                "nodes": [
+                    {
+                        "id": "1",
+                        "labels": ["User"],
+                        "properties": {"username": "test", "uid": "123456"},
+                    },
+                    {
+                        "id": "2",
+                        "labels": ["Machine"],
+                        "properties": {"hostname": "test"},
+                    },
+                ],
+                "relationships": [
+                    {
+                        "endNode": "2",
+                        "id": "3",
+                        "startNode": "1",
+                        "properties": {"method": "Network"},
+                        "type": "ACCESS",
+                    }
+                ],
+            }
+        ]
         MOCK_ROWS = {}
         MOCK_STATS = {}
 
@@ -347,7 +351,7 @@ class MockGraphDatabase(object):
             A MockQuerySequence instance.
         """
         query = args[0]
-        if query == 'empty':
+        if query == "empty":
             return self.MockEmptyQuerySequence()
         return self.MockQuerySequence()
 
@@ -355,7 +359,7 @@ class MockGraphDatabase(object):
 class BaseTest(TestCase):
     """Base class for tests."""
 
-    COLOR_WHITE = 'FFFFFF'
+    COLOR_WHITE = "FFFFFF"
 
     def create_app(self):
         """Setup the Flask application.
@@ -383,7 +387,7 @@ class BaseTest(TestCase):
         """
         user = User.get_or_create(username=username)
         if set_password:
-            user.set_password(plaintext='test', rounds=4)
+            user.set_password(plaintext="test", rounds=4)
         self._commit_to_database(user)
         return user
 
@@ -411,10 +415,10 @@ class BaseTest(TestCase):
         """
         sketch = Sketch.get_or_create(name=name, description=name, user=user)
         if acl:
-            for permission in ['read', 'write', 'delete']:
+            for permission in ["read", "write", "delete"]:
                 sketch.grant_permission(permission=permission, user=user)
-        label = sketch.Label(label='Test label', user=user)
-        status = sketch.Status(status='Test status', user=user)
+        label = sketch.Label(label="Test label", user=user)
+        status = sketch.Status(status="Test status", user=user)
         sketch.labels.append(label)
         sketch.status.append(status)
         self._commit_to_database(sketch)
@@ -430,11 +434,12 @@ class BaseTest(TestCase):
             A searchindex (instance of timesketch.models.sketch.SearchIndex)
         """
         searchindex = SearchIndex.get_or_create(
-            name=name, description=name, index_name=name, user=user)
+            name=name, description=name, index_name=name, user=user
+        )
         if acl:
-            for permission in ['read', 'write', 'delete']:
+            for permission in ["read", "write", "delete"]:
                 searchindex.grant_permission(permission=permission, user=user)
-        searchindex.set_status(status='ready')
+        searchindex.set_status(status="ready")
         self._commit_to_database(searchindex)
         return searchindex
 
@@ -449,8 +454,9 @@ class BaseTest(TestCase):
             An event (instance of timesketch.models.sketch.Event)
         """
         event = Event.get_or_create(
-            sketch=sketch, searchindex=searchindex, document_id='test')
-        comment = event.Comment(comment='test', user=user)
+            sketch=sketch, searchindex=searchindex, document_id="test"
+        )
+        comment = event.Comment(comment="test", user=user)
         event.comments.append(comment)
         self._commit_to_database(event)
         return event
@@ -464,7 +470,8 @@ class BaseTest(TestCase):
             A story (instance of timesketch.models.story.Story)
         """
         story = Story.get_or_create(
-            title='Test', content='Test', sketch=sketch, user=user)
+            title="Test", content="Test", sketch=sketch, user=user
+        )
         self._commit_to_database(story)
         return story
 
@@ -485,8 +492,9 @@ class BaseTest(TestCase):
             user=user,
             sketch=sketch,
             searchindex=searchindex,
-            color=self.COLOR_WHITE)
-        timeline.set_status(status='ready')
+            color=self.COLOR_WHITE,
+        )
+        timeline.set_status(status="ready")
         self._commit_to_database(timeline)
         return timeline
 
@@ -504,7 +512,8 @@ class BaseTest(TestCase):
             query_string=name,
             query_filter=json.dumps(dict()),
             user=user,
-            sketch=sketch)
+            sketch=sketch,
+        )
         self._commit_to_database(view)
         return view
 
@@ -517,10 +526,8 @@ class BaseTest(TestCase):
             A search template (timesketch.models.sketch.SearchTemplate)
         """
         searchtemplate = SearchTemplate(
-            name=name,
-            query_string=name,
-            query_filter=json.dumps(dict()),
-            user=user)
+            name=name, query_string=name, query_filter=json.dumps(dict()), user=user
+        )
         self._commit_to_database(searchtemplate)
         return searchtemplate
 
@@ -528,42 +535,45 @@ class BaseTest(TestCase):
         """Setup the test database."""
         init_db()
 
-        self.user1 = self._create_user(username='test1', set_password=True)
-        self.user2 = self._create_user(username='test2', set_password=False)
+        self.user1 = self._create_user(username="test1", set_password=True)
+        self.user2 = self._create_user(username="test2", set_password=False)
 
-        self.group1 = self._create_group(name='test_group1', user=self.user1)
-        self.group2 = self._create_group(name='test_group2', user=self.user1)
+        self.group1 = self._create_group(name="test_group1", user=self.user1)
+        self.group2 = self._create_group(name="test_group2", user=self.user1)
 
-        self.sketch1 = self._create_sketch(
-            name='Test 1', user=self.user1, acl=True)
-        self.sketch2 = self._create_sketch(
-            name='Test 2', user=self.user1, acl=False)
-        self.sketch3 = self._create_sketch(
-            name='Test 3', user=self.user1, acl=True)
+        self.sketch1 = self._create_sketch(name="Test 1", user=self.user1, acl=True)
+        self.sketch2 = self._create_sketch(name="Test 2", user=self.user1, acl=False)
+        self.sketch3 = self._create_sketch(name="Test 3", user=self.user1, acl=True)
 
         self.searchindex = self._create_searchindex(
-            name='test', user=self.user1, acl=True)
+            name="test", user=self.user1, acl=True
+        )
         self.searchindex2 = self._create_searchindex(
-            name='test2', user=self.user1, acl=True)
+            name="test2", user=self.user1, acl=True
+        )
 
         self.timeline = self._create_timeline(
-            name='Timeline 1',
+            name="Timeline 1",
             sketch=self.sketch1,
             searchindex=self.searchindex,
-            user=self.user1)
+            user=self.user1,
+        )
 
         self.view1 = self._create_view(
-            name='View 1', sketch=self.sketch1, user=self.user1)
+            name="View 1", sketch=self.sketch1, user=self.user1
+        )
         self.view2 = self._create_view(
-            name='View 2', sketch=self.sketch2, user=self.user1)
-        self.view3 = self._create_view(
-            name='', sketch=self.sketch1, user=self.user2)
+            name="View 2", sketch=self.sketch2, user=self.user1
+        )
+        self.view3 = self._create_view(name="", sketch=self.sketch1, user=self.user2)
 
         self.searchtemplate = self._create_searchtemplate(
-            name='template', user=self.user1)
+            name="template", user=self.user1
+        )
 
         self.event = self._create_event(
-            sketch=self.sketch1, searchindex=self.searchindex, user=self.user1)
+            sketch=self.sketch1, searchindex=self.searchindex, user=self.user1
+        )
 
         self.story = self._create_story(sketch=self.sketch1, user=self.user1)
 
@@ -575,26 +585,27 @@ class BaseTest(TestCase):
     def login(self):
         """Authenticate the test user."""
         self.client.post(
-            '/login/',
-            data=dict(username='test1', password='test'),
-            follow_redirects=True)
+            "/login/",
+            data=dict(username="test1", password="test"),
+            follow_redirects=True,
+        )
 
     def test_unauthenticated(self):
         """
         Generic test for all resources. It tests that no
         unauthenticated request are accepted.
         """
-        if not getattr(self, 'resource_url', False):
+        if not getattr(self, "resource_url", False):
             self.skipTest(self)
 
         response = self.client.get(self.resource_url)
         if response.status_code == 405:
             response = self.client.post(self.resource_url)
         if isinstance(response.data, six.binary_type):
-            response_data = codecs.decode(response.data, 'utf-8')
+            response_data = codecs.decode(response.data, "utf-8")
         else:
             response_data = response.data
-        self.assertIn('/login/', response_data)
+        self.assertIn("/login/", response_data)
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
 
 

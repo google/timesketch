@@ -23,14 +23,14 @@ from . import resource
 from . import search
 
 
-logger = logging.getLogger('timesketch_api.story')
+logger = logging.getLogger("timesketch_api.story")
 
 
 class BaseBlock:
     """Base block object."""
 
     # A string representation of the type of block.
-    TYPE = ''
+    TYPE = ""
 
     def __init__(self, story, index):
         """Initialize the base block."""
@@ -58,12 +58,12 @@ class BaseBlock:
     def _get_base(self):
         """Returns a base building block."""
         return {
-            'componentName': '',
-            'componentProps': {},
-            'content': '',
-            'edit': False,
-            'showPanel': False,
-            'isActive': False
+            "componentName": "",
+            "componentProps": {},
+            "content": "",
+            "edit": False,
+            "showPanel": False,
+            "isActive": False,
         }
 
     def delete(self):
@@ -110,12 +110,12 @@ class BaseBlock:
 class ViewBlock(BaseBlock):
     """Block object for views."""
 
-    TYPE = 'view'
+    TYPE = "view"
 
     def __init__(self, story, index):
         super().__init__(story, index)
         self._view_id = 0
-        self._view_name = ''
+        self._view_name = ""
 
     @property
     def view(self):
@@ -130,26 +130,26 @@ class ViewBlock(BaseBlock):
     @property
     def view_id(self):
         """Returns the view ID."""
-        if self._data and hasattr(self._data, 'id'):
+        if self._data and hasattr(self._data, "id"):
             return self._data.id
         return self._view_id
 
     @property
     def view_name(self):
         """Returns the view name."""
-        if self._data and hasattr(self._data, 'name'):
+        if self._data and hasattr(self._data, "name"):
             return self._data.name
         return self._view_name
 
     def from_dict(self, data_dict):
         """Feed a block from a block dict."""
-        props = data_dict.get('componentProps', {})
-        view_dict = props.get('view')
+        props = data_dict.get("componentProps", {})
+        view_dict = props.get("view")
         if not view_dict:
-            raise TypeError('View not defined')
+            raise TypeError("View not defined")
 
-        self._view_id = view_dict.get('id', 0)
-        self._view_name = view_dict.get('name', '')
+        self._view_id = view_dict.get("id", 0)
+        self._view_name = view_dict.get("name", "")
 
     def to_dict(self):
         """Returns a dict with the block data.
@@ -162,19 +162,21 @@ class ViewBlock(BaseBlock):
             A dict with the block data.
         """
         if not self._data:
-            raise ValueError('No data has been fed to the block.')
+            raise ValueError("No data has been fed to the block.")
 
         view_obj = self._data
-        if not hasattr(view_obj, 'id'):
-            raise TypeError('View object is not correctly formed.')
+        if not hasattr(view_obj, "id"):
+            raise TypeError("View object is not correctly formed.")
 
-        if not hasattr(view_obj, 'name'):
-            raise TypeError('View object is not correctly formed.')
+        if not hasattr(view_obj, "name"):
+            raise TypeError("View object is not correctly formed.")
 
         view_block = self._get_base()
-        view_block['componentName'] = 'TsViewEventList'
-        view_block['componentProps']['view'] = {
-            'id': view_obj.id, 'name': view_obj.name}
+        view_block["componentName"] = "TsViewEventList"
+        view_block["componentProps"]["view"] = {
+            "id": view_obj.id,
+            "name": view_obj.name,
+        }
 
         return view_block
 
@@ -182,13 +184,13 @@ class ViewBlock(BaseBlock):
 class TextBlock(BaseBlock):
     """Block object for text."""
 
-    TYPE = 'text'
+    TYPE = "text"
 
     @property
     def text(self):
         """Returns the text."""
         if not self._data:
-            return ''
+            return ""
         return self._data
 
     @text.setter
@@ -198,7 +200,7 @@ class TextBlock(BaseBlock):
 
     def from_dict(self, data_dict):
         """Feed a block from a block dict."""
-        text = data_dict.get('content', '')
+        text = data_dict.get("content", "")
         self.feed(text)
 
     def to_dict(self):
@@ -212,13 +214,13 @@ class TextBlock(BaseBlock):
             A dict with the block data.
         """
         if not self._data:
-            raise ValueError('No data has been fed to the block.')
+            raise ValueError("No data has been fed to the block.")
 
         if not isinstance(self._data, str):
-            raise TypeError('Data to a text block needs to be a string.')
+            raise TypeError("Data to a text block needs to be a string.")
 
         text_block = self._get_base()
-        text_block['content'] = self._data
+        text_block["content"] = self._data
 
         return text_block
 
@@ -226,14 +228,14 @@ class TextBlock(BaseBlock):
 class AggregationBlock(BaseBlock):
     """Block object for aggregation."""
 
-    TYPE = 'aggregation'
+    TYPE = "aggregation"
 
     def __init__(self, story, index):
         super().__init__(story, index)
         self._agg_id = 0
-        self._agg_name = ''
+        self._agg_name = ""
         self._agg_dict = {}
-        self._chart_type = 'table'
+        self._chart_type = "table"
 
     @property
     def aggregation(self):
@@ -283,18 +285,18 @@ class AggregationBlock(BaseBlock):
 
     def from_dict(self, data_dict):
         """Feed a block from a block dict."""
-        component = data_dict.get('componentName', 'N/A')
-        if component != 'TsAggregationCompact':
-            raise TypeError('Not an aggregation block.')
+        component = data_dict.get("componentName", "N/A")
+        if component != "TsAggregationCompact":
+            raise TypeError("Not an aggregation block.")
 
-        props = data_dict.get('componentProps', {})
-        agg_dict = props.get('aggregation')
+        props = data_dict.get("componentProps", {})
+        agg_dict = props.get("aggregation")
         if not agg_dict:
-            raise TypeError('Aggregation not defined')
+            raise TypeError("Aggregation not defined")
 
-        self._agg_id = agg_dict.get('id', 0)
-        self._agg_name = agg_dict.get('name', '')
-        self._chart_type = agg_dict.get('chart_type', 'table')
+        self._agg_id = agg_dict.get("id", 0)
+        self._agg_name = agg_dict.get("name", "")
+        self._chart_type = agg_dict.get("chart_type", "table")
         self._agg_dict = agg_dict
 
     def to_dict(self):
@@ -308,15 +310,15 @@ class AggregationBlock(BaseBlock):
             A dict with the block data.
         """
         if not (self._data or self._agg_dict):
-            raise ValueError('No data has been fed to the block.')
+            raise ValueError("No data has been fed to the block.")
 
         aggregation_obj = self._data
         if aggregation_obj:
-            if not hasattr(aggregation_obj, 'id'):
-                raise TypeError('Aggregation object is not correctly formed.')
+            if not hasattr(aggregation_obj, "id"):
+                raise TypeError("Aggregation object is not correctly formed.")
 
-            if not hasattr(aggregation_obj, 'name'):
-                raise TypeError('Aggregation object is not correctly formed.')
+            if not hasattr(aggregation_obj, "name"):
+                raise TypeError("Aggregation object is not correctly formed.")
 
             name = aggregation_obj.name
             description = aggregation_obj.description
@@ -328,26 +330,26 @@ class AggregationBlock(BaseBlock):
             user = aggregation_obj.user
         else:
             name = self._agg_name
-            description = self._agg_dict.get('description', '')
+            description = self._agg_dict.get("description", "")
             agg_id = self._agg_id
-            agg_type = self._agg_dict.get('agg_type')
-            created_at = self._agg_dict.get('created_at')
-            updated_at = self._agg_dict.get('updated_at')
-            parameters = self._agg_dict.get('parameters', '{}')
-            user = self._agg_dict.get('user', {})
+            agg_type = self._agg_dict.get("agg_type")
+            created_at = self._agg_dict.get("created_at")
+            updated_at = self._agg_dict.get("updated_at")
+            parameters = self._agg_dict.get("parameters", "{}")
+            user = self._agg_dict.get("user", {})
 
         aggregation_block = self._get_base()
-        aggregation_block['componentName'] = 'TsAggregationCompact'
-        aggregation_block['componentProps']['aggregation'] = {
-            'id': agg_id,
-            'name': name,
-            'chart_type': self.chart_type,
-            'agg_type': agg_type,
-            'description': description,
-            'created_at': created_at,
-            'updated_at': updated_at,
-            'parameters': parameters,
-            'user': user,
+        aggregation_block["componentName"] = "TsAggregationCompact"
+        aggregation_block["componentProps"]["aggregation"] = {
+            "id": agg_id,
+            "name": name,
+            "chart_type": self.chart_type,
+            "agg_type": agg_type,
+            "description": description,
+            "created_at": created_at,
+            "updated_at": updated_at,
+            "parameters": parameters,
+            "user": user,
         }
 
         return aggregation_block
@@ -356,12 +358,12 @@ class AggregationBlock(BaseBlock):
 class AggregationGroupBlock(BaseBlock):
     """Block object for aggregation groups."""
 
-    TYPE = 'aggregation_group'
+    TYPE = "aggregation_group"
 
     def __init__(self, story, index):
         super().__init__(story, index)
         self._group_id = 0
-        self._group_name = ''
+        self._group_name = ""
 
     @property
     def group(self):
@@ -401,17 +403,17 @@ class AggregationGroupBlock(BaseBlock):
 
     def from_dict(self, data_dict):
         """Feed a block from a block dict."""
-        component = data_dict.get('componentName', 'N/A')
-        if component != 'TsAggregationGroupCompact':
-            raise TypeError('Not an aggregation group block.')
+        component = data_dict.get("componentName", "N/A")
+        if component != "TsAggregationGroupCompact":
+            raise TypeError("Not an aggregation group block.")
 
-        props = data_dict.get('componentProps', {})
-        group_dict = props.get('aggregation_group')
+        props = data_dict.get("componentProps", {})
+        group_dict = props.get("aggregation_group")
         if not group_dict:
-            raise TypeError('Aggregation group not defined')
+            raise TypeError("Aggregation group not defined")
 
-        self._group_id = group_dict.get('id', 0)
-        self._group_name = group_dict.get('name', '')
+        self._group_id = group_dict.get("id", 0)
+        self._group_name = group_dict.get("name", "")
 
     def to_dict(self):
         """Returns a dict with the block data.
@@ -424,20 +426,20 @@ class AggregationGroupBlock(BaseBlock):
             A dict with the block data.
         """
         if not self._data:
-            raise ValueError('No data has been fed to the block.')
+            raise ValueError("No data has been fed to the block.")
 
         group_obj = self._data
-        if not hasattr(group_obj, 'id'):
-            raise TypeError('Aggregation group object is not correctly formed.')
+        if not hasattr(group_obj, "id"):
+            raise TypeError("Aggregation group object is not correctly formed.")
 
-        if not hasattr(group_obj, 'aggregations'):
-            raise TypeError('Aggregation group object is not correctly formed.')
+        if not hasattr(group_obj, "aggregations"):
+            raise TypeError("Aggregation group object is not correctly formed.")
 
         group_block = self._get_base()
-        group_block['componentName'] = 'TsAggregationGroupCompact'
-        group_block['componentProps']['aggregation_group'] = {
-            'id': group_obj.id,
-            'name': group_obj.name,
+        group_block["componentName"] = "TsAggregationGroupCompact"
+        group_block["componentProps"]["aggregation_group"] = {
+            "id": group_obj.id,
+            "name": group_obj.name,
         }
 
         return group_block
@@ -460,12 +462,11 @@ class Story(resource.BaseResource):
         """
         self.id = story_id
         self._api = api
-        self._title = ''
+        self._title = ""
         self._blocks = []
         self._sketch = sketch
 
-        resource_uri = 'sketches/{0:d}/stories/{1:d}/'.format(
-            sketch.id, self.id)
+        resource_uri = "sketches/{0:d}/stories/{1:d}/".format(sketch.id, self.id)
         super().__init__(api, resource_uri)
 
     @property
@@ -473,23 +474,23 @@ class Story(resource.BaseResource):
         """Returns all the blocks of the story."""
         if not self._blocks:
             story_data = self.lazyload_data(refresh_cache=True)
-            objects = story_data.get('objects')
-            content = ''
+            objects = story_data.get("objects")
+            content = ""
             if objects:
-                content = objects[0].get('content', [])
+                content = objects[0].get("content", [])
             index = 0
             for content_block in json.loads(content):
-                name = content_block.get('componentName', '')
-                if content_block.get('content'):
+                name = content_block.get("componentName", "")
+                if content_block.get("content"):
                     block = TextBlock(self, index)
                     block.from_dict(content_block)
-                elif name == 'TsViewEventList':
+                elif name == "TsViewEventList":
                     block = ViewBlock(self, index)
                     block.from_dict(content_block)
                     search_obj = search.Search(sketch=self._sketch)
                     search_obj.from_saved(block.view_id)
                     block.feed(search_obj)
-                elif name == 'TsAggregationCompact':
+                elif name == "TsAggregationCompact":
                     block = AggregationBlock(self, index)
                     block.from_dict(content_block)
                     agg_obj = aggregation.Aggregation(self._sketch)
@@ -498,8 +499,8 @@ class Story(resource.BaseResource):
 
                     # Defaults to a table view.
                     if not block.chart_type:
-                        block.chart_type = 'table'
-                elif name == 'TsAggregationGroupCompact':
+                        block.chart_type = "table"
+                elif name == "TsAggregationGroupCompact":
                     block = AggregationGroupBlock(self, index)
                     block.from_dict(content_block)
                     group_obj = aggregation.AggregationGroup(self._sketch)
@@ -518,9 +519,9 @@ class Story(resource.BaseResource):
         """
         if not self._title:
             story_data = self.lazyload_data()
-            objects = story_data.get('objects')
+            objects = story_data.get("objects")
             if objects:
-                self._title = objects[0].get('title', 'No Title')
+                self._title = objects[0].get("title", "No Title")
         return self._title
 
     @property
@@ -549,7 +550,7 @@ class Story(resource.BaseResource):
         self.commit()
         self.reset()
 
-    def add_aggregation(self, agg_obj, chart_type='table', index=-1):
+    def add_aggregation(self, agg_obj, chart_type="table", index=-1):
         """Adds an aggregation object to the story.
 
         Args:
@@ -567,11 +568,11 @@ class Story(resource.BaseResource):
         Raises:
             TypeError: if the aggregation object is not of the correct type.
         """
-        if not hasattr(agg_obj, 'id'):
-            raise TypeError('Aggregation object is not correctly formed.')
+        if not hasattr(agg_obj, "id"):
+            raise TypeError("Aggregation object is not correctly formed.")
 
-        if not hasattr(agg_obj, 'name'):
-            raise TypeError('Aggregation object is not correctly formed.')
+        if not hasattr(agg_obj, "name"):
+            raise TypeError("Aggregation object is not correctly formed.")
 
         if index == -1:
             index = len(self._blocks)
@@ -633,11 +634,11 @@ class Story(resource.BaseResource):
         Raises:
             TypeError: if the search object is not of the correct type.
         """
-        if not hasattr(search_obj, 'id'):
-            raise TypeError('View object is not correctly formed.')
+        if not hasattr(search_obj, "id"):
+            raise TypeError("View object is not correctly formed.")
 
-        if not hasattr(search_obj, 'name'):
-            raise TypeError('View object is not correctly formed.')
+        if not hasattr(search_obj, "name"):
+            raise TypeError("View object is not correctly formed.")
 
         if index == -1:
             index = len(self._blocks)
@@ -653,12 +654,12 @@ class Story(resource.BaseResource):
         content = json.dumps(content_list)
 
         data = {
-            'title': self.title,
-            'content': content,
+            "title": self.title,
+            "content": content,
         }
         response = self._api.session.post(
-            '{0:s}/{1:s}'.format(self._api.api_root, self.resource_uri),
-            json=data)
+            "{0:s}/{1:s}".format(self._api.api_root, self.resource_uri), json=data
+        )
 
         return error.check_return_status(response, logger)
 
@@ -669,7 +670,8 @@ class Story(resource.BaseResource):
             Boolean that indicates whether the deletion was successful.
         """
         response = self._api.session.delete(
-            '{0:s}/{1:s}'.format(self._api.api_root, self.resource_uri))
+            "{0:s}/{1:s}".format(self._api.api_root, self.resource_uri)
+        )
 
         return error.check_return_status(response, logger)
 
@@ -680,7 +682,7 @@ class Story(resource.BaseResource):
         old_index = block.index
         old_block = self._blocks.pop(old_index)
         if old_block.data != block.data:
-            raise ValueError('Block is not correctly set.')
+            raise ValueError("Block is not correctly set.")
         self._blocks.insert(new_index, block)
         self.commit()
 
@@ -692,29 +694,28 @@ class Story(resource.BaseResource):
 
     def reset(self):
         """Refresh story content."""
-        self._title = ''
+        self._title = ""
         self._blocks = []
         _ = self.lazyload_data(refresh_cache=True)
         _ = self.blocks
 
     def to_html(self):
         """Returns HTML formatted string with the content of the story."""
-        story_dict = self.to_export_format('html')
-        return story_dict.get('story', '')
+        story_dict = self.to_export_format("html")
+        return story_dict.get("story", "")
 
     def to_markdown(self):
         """Returns markdown formatted string with the content of the story."""
-        story_dict = self.to_export_format('markdown')
-        return story_dict.get('story', '')
+        story_dict = self.to_export_format("markdown")
+        return story_dict.get("story", "")
 
     def to_export_format(self, export_format):
         """Returns exported copy of the story as defined in export_format."""
-        resource_url = '{0:s}/sketches/{1:d}/stories/{2:d}/'.format(
-            self._api.api_root, self._sketch.id, self.id)
+        resource_url = "{0:s}/sketches/{1:d}/stories/{2:d}/".format(
+            self._api.api_root, self._sketch.id, self.id
+        )
 
-        data = {
-            'export_format': export_format
-        }
+        data = {"export_format": export_format}
         response = self._api.session.post(resource_url, json=data)
 
         return error.get_response_json(response, logger)
@@ -724,15 +725,15 @@ class Story(resource.BaseResource):
         self.reset()
         string_list = []
         for block in self.blocks:
-            if block.TYPE == 'text':
+            if block.TYPE == "text":
                 string_list.append(block.text)
-            elif block.TYPE == 'view':
+            elif block.TYPE == "view":
                 search_obj = block.view
                 data_frame = search_obj.to_pandas()
                 string_list.append(data_frame.to_string(index=False))
-            elif block.TYPE == 'aggregation':
+            elif block.TYPE == "aggregation":
                 agg_obj = self._sketch.get_aggregation(block.agg_id)
                 # TODO: Support charts.
                 data_frame = agg_obj.table
                 string_list.append(data_frame.to_string(index=False))
-        return '\n\n'.join(string_list)
+        return "\n\n".join(string_list)

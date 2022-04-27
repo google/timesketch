@@ -31,7 +31,7 @@ from timesketch.models.user import User
 from timesketch.models.user import Group
 
 
-logger = logging.getLogger('timesketch.user_api')
+logger = logging.getLogger("timesketch.user_api")
 
 
 class UserListResource(resources.ResourceMixin, Resource):
@@ -83,17 +83,16 @@ class LoggedInUserResource(resources.ResourceMixin, Resource):
         if not form:
             form = request.data
 
-        password = form.get('password', '')
+        password = form.get("password", "")
 
         if not password:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                'No password supplied, unable to change the password.')
+                "No password supplied, unable to change the password.",
+            )
 
         if not isinstance(password, str):
-            abort(
-                HTTP_STATUS_CODE_FORBIDDEN,
-                'Password needs to be a string.')
+            abort(HTTP_STATUS_CODE_FORBIDDEN, "Password needs to be a string.")
 
         current_user.set_password(plaintext=password)
         db_session.add(current_user)
@@ -113,16 +112,16 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
-            abort(
-                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
         form = request.json
 
-        if not sketch.has_permission(user=current_user, permission='write'):
+        if not sketch.has_permission(user=current_user, permission="write"):
             abort(
                 HTTP_STATUS_CODE_FORBIDDEN,
-                'The user does not have write permission on the sketch.')
+                "The user does not have write permission on the sketch.",
+            )
 
-        permission_string = form.get('permissions', '')
+        permission_string = form.get("permissions", "")
         if permission_string:
             try:
                 permissions = json.loads(permission_string)
@@ -133,61 +132,63 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
 
         # You cannot grant a permission you don't have.
         for permission in permissions:
-            if not sketch.has_permission(
-                    user=current_user, permission=permission):
+            if not sketch.has_permission(user=current_user, permission=permission):
                 abort(
                     HTTP_STATUS_CODE_FORBIDDEN,
-                    'The user does not have {0:s} permission on the sketch '
-                    'and therefore can\'t grant it to '
-                    'others'.format(permission))
+                    "The user does not have {0:s} permission on the sketch "
+                    "and therefore can't grant it to "
+                    "others".format(permission),
+                )
 
-        for username in form.get('users', []):
+        for username in form.get("users", []):
             # Try the username with any potential @domain preserved.
             user = User.query.filter_by(username=username).first()
 
             # If no hit, then try to strip the domain.
             if not user:
-                base_username = username.split('@')[0]
+                base_username = username.split("@")[0]
                 base_username = base_username.strip()
                 user = User.query.filter_by(username=base_username).first()
 
             if user:
-                user_permissions = permissions or ['read', 'write']
+                user_permissions = permissions or ["read", "write"]
                 for permission in user_permissions:
                     sketch.grant_permission(permission=permission, user=user)
 
-        for group_name in form.get('groups', []):
+        for group_name in form.get("groups", []):
             group = Group.query.filter_by(name=group_name).first()
 
             if not group:
-                logger.error('Group: {0:s} not found'.format(group_name))
+                logger.error("Group: {0:s} not found".format(group_name))
                 continue
 
             # Only add groups publicly visible or owned by the current user
             if not group.user or group.user == current_user:
-                group_permissions = permissions or ['read', 'write']
+                group_permissions = permissions or ["read", "write"]
                 for permission in group_permissions:
                     sketch.grant_permission(permission=permission, group=group)
 
         all_permissions = sketch.get_all_permissions()
-        for username in form.get('remove_users', []):
+        for username in form.get("remove_users", []):
             user = User.query.filter_by(username=username).first()
             permission_list = permissions or all_permissions.get(
-                'user/{0:s}'.format(username), [])
+                "user/{0:s}".format(username), []
+            )
             for permission in permission_list:
                 sketch.revoke_permission(permission=permission, user=user)
 
-        for group_name in form.get('remove_groups', []):
+        for group_name in form.get("remove_groups", []):
             group = Group.query.filter_by(name=group_name).first()
             permission_list = permissions or all_permissions.get(
-                'group/{0:s}'.format(group_name), [])
+                "group/{0:s}".format(group_name), []
+            )
             for permission in permission_list:
                 sketch.revoke_permission(permission=permission, group=group)
 
-        public = form.get('public')
-        if public == 'true':
-            sketch.grant_permission(permission='read')
+        public = form.get("public")
+        if public == "true":
+            sketch.grant_permission(permission="read")
         else:
-            sketch.revoke_permission(permission='read')
+            sketch.revoke_permission(permission="read")
 
         return HTTP_STATUS_CODE_OK

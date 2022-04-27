@@ -33,7 +33,7 @@ from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import DataSource
 
 
-logger = logging.getLogger('timesketch.datasource_api')
+logger = logging.getLogger("timesketch.datasource_api")
 
 
 class DataSourceListResource(resources.ResourceMixin, Resource):
@@ -51,14 +51,13 @@ class DataSourceListResource(resources.ResourceMixin, Resource):
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
-            abort(
-                HTTP_STATUS_CODE_NOT_FOUND,
-                'No sketch found with this ID.')
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
-        if sketch.get_status.status == 'archived':
+        if sketch.get_status.status == "archived":
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'Unable to fetch data sources from an archived sketch.')
+                "Unable to fetch data sources from an archived sketch.",
+            )
 
         number_of_timelines = 0
         data_sources = []
@@ -68,11 +67,11 @@ class DataSourceListResource(resources.ResourceMixin, Resource):
                 data_sources.append(data_source)
 
         schema = {
-            'meta': {
-                'number_of_timelines': number_of_timelines,
-                'number_of_sources': len(data_sources)
+            "meta": {
+                "number_of_timelines": number_of_timelines,
+                "number_of_sources": len(data_sources),
             },
-            'objects': data_sources,
+            "objects": data_sources,
         }
         return jsonify(schema)
 
@@ -88,53 +87,50 @@ class DataSourceListResource(resources.ResourceMixin, Resource):
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
-            abort(
-                HTTP_STATUS_CODE_NOT_FOUND,
-                'No sketch found with this ID.')
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
-        if sketch.get_status.status == 'archived':
+        if sketch.get_status.status == "archived":
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'Unable to fetch data sources from an archived sketch.')
+                "Unable to fetch data sources from an archived sketch.",
+            )
 
-        if not sketch.has_permission(current_user, 'write'):
+        if not sketch.has_permission(current_user, "write"):
             abort(
-                HTTP_STATUS_CODE_FORBIDDEN, (
-                    'User does not have sufficient write access to '
-                    'to the sketch.'))
+                HTTP_STATUS_CODE_FORBIDDEN,
+                ("User does not have sufficient write access to " "to the sketch."),
+            )
 
         form = request.json
         if not form:
             form = request.data
 
-        timeline_id = form.get('timeline_id')
+        timeline_id = form.get("timeline_id")
         if not timeline_id:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'Unable to create a data source without a timeline '
-                'identifier.')
+                "Unable to create a data source without a timeline " "identifier.",
+            )
 
         timeline = Timeline.query.get(timeline_id)
         if not timeline:
-            abort(
-                HTTP_STATUS_CODE_NOT_FOUND,
-                'No timeline found with this ID.')
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No timeline found with this ID.")
 
         if timeline not in sketch.active_timelines:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                'The timeline is not part of the active timelines in '
-                'the sketch.')
+                "The timeline is not part of the active timelines in " "the sketch.",
+            )
 
         datasource = DataSource(
             timeline=timeline,
             user=current_user,
-            provider=form.get('provider', 'N/A'),
-            context=form.get('context', 'N/A'),
-            file_on_disk='',
+            provider=form.get("provider", "N/A"),
+            context=form.get("context", "N/A"),
+            file_on_disk="",
             file_size=0,
-            original_filename=form.get('original_filename', ''),
-            data_label=form.get('data_label', 'data')
+            original_filename=form.get("original_filename", ""),
+            data_label=form.get("data_label", "data"),
         )
 
         timeline.datasources.append(datasource)
@@ -156,26 +152,23 @@ class DataSourceResource(resources.ResourceMixin, Resource):
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
-            abort(
-                HTTP_STATUS_CODE_NOT_FOUND,
-                'No sketch found with this ID.')
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
-        if sketch.get_status.status == 'archived':
+        if sketch.get_status.status == "archived":
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'Unable to fetch data sources from an archived sketch.')
+                "Unable to fetch data sources from an archived sketch.",
+            )
 
         data_source = DataSource.query.get(datasource_id)
         if not data_source:
-            abort(
-                HTTP_STATUS_CODE_NOT_FOUND,
-                'No DataSource found with this ID.')
-
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No DataSource found with this ID.")
 
         if data_source.timeline.sketch.id != sketch.id:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'Data Source does not match the Sketch ID.')
+                "Data Source does not match the Sketch ID.",
+            )
 
     @login_required
     def get(self, sketch_id, datasource_id):
@@ -212,12 +205,12 @@ class DataSourceResource(resources.ResourceMixin, Resource):
         if not form:
             form = request.data
 
-        provider = form.get('provider')
+        provider = form.get("provider")
         if provider:
             changed = True
             data_source.provider = provider
 
-        context = form.get('context')
+        context = form.get("context")
         if context:
             changed = True
             data_source.context = context
