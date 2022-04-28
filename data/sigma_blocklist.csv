@@ -1,5 +1,9 @@
 path,status,reason,last_ckecked,rule_id
 application/app,exploratory,not checked yet,2021-05-04,
+application/sql/app_sqlinjection_errors.yml,good,no test data available,2022-04-28,8a670c6d-7189-4b1c-8017-a417ca84a086
+application/spring/appframework_spring_exceptions.yml,good,no test data available potentially field mapping needed if to broad,2022-04-28,ae48ab93-45f7-4051-9dfe-5d30a3f78e33
+application/rpc_firewall/rpc_firewall_sharphound_recon_sessions.yml, good, no test data available potentially field mapping needed if to broad,2022-04-28,6d580420-ff3f-4e0e-b6b0-41b90c787e28
+application/rpc_firewall/rpc_firewall_sharphound_recon_account.yml, exploratory, no test data available and field mapping might be weak, 2022-04-28,65f77b1e-8e79-45bf-bb67-5988a8ce45a5
 apt/apt_silence,exploratory,not checked yet,2021-05-04,
 cloud/aws_,exploratory,not checked yet,2021-05-04,
 cloud/azure,exploratory,no test data available,2021-09-23,
@@ -82,19 +86,19 @@ win_powershell_web_request.yml, bad, multiple rules in one file,2021-05-04,
 windows/process_access/sysmon_,bad,no test data available,2021-05-04,
 windows/process_creation/,bad,no test data available,2021-05-04,
 windows/process_creation/win_office_shell.yml,good,479eb1c4644de672a5b221c6ad19b5b1cbd2875b45af76a291e9ff594d651b68,2021-10-25,
-rules/windows/process_creation/win_shadow_copies_deletion.yml, good,62a8fc79a775abce91c4cb87c7f3cdc4cbdf85d0f0083c72703052710d645119,2021-10-25, 
-rules/windows/registry_event/sysmon_asep_reg_keys_modification.yml, bad,to long query needs to be tuned 0628997695cf9655c523896f1703472cee08b66eb5ae6bd385433b73105f4ca9,2021-10-26,17f878b8-9968-4578-b814-c4217fc5768c
-rules/windows/process_creation/win_non_interactive_powershell.yml,good,good 0628997695cf9655c523896f1703472cee08b66eb5ae6bd385433b73105f4ca9,2021-10-26,f4bbd493-b796-416e-bbf2-121235348529
-rules/windows/registry_event/sysmon_susp_download_run_key.yml,bad,no evtx sample found,2021-10-26,9c5037d1-c568-49b3-88c7-9846a5bdc2be
-rules/windows/file_event/sysmon_creation_system_file.yml,bad,no evtx sample only sylog,2021-10-26,d5866ddf-ce8f-4aea-b28e-d96485a20d3d
-rules/windows/process_creation/win_susp_net_execution.yml,good,501113c57563009a37feb467c0828c153a1f7097f16c4038636f3651a266189e,2021-10-26,183e7ea8-ac4b-4c23-9aec-b3dac4e401ac
-rules/windows/process_creation/win_service_stop.yml,good,501113c57563009a37feb467c0828c153a1f7097f16c4038636f3651a266189e,2021-10-26,eb87818d-db5d-49cc-a987-d5da331fbd90
-rules/windows/process_creation/win_proc_wrong_parent.yml,exploratory,no test data for evtx d01bb6498156f94164d67cc854b64fb12077886f2c7f46f503a1c2dbdfd57169,2021-10-26,96036718-71cc-4027-a538-d1587e0006a7
-rules/windows/process_creation/win_system_exe_anomaly.yml,exploratory,rule to noisy 9ac87754adb88a8ac14969bb4adaed043f783d7264d0846365ca0cf4b7f80ffb,2021-10-26,e4a6b256-3e47-40fc-89d2-7a477edd6915
-rules/windows/process_creation/process_creation_powershell_web_request.yml,bad, very noisy 3402ef40e1e748a6d1e62cc80d8319a132683a326803ed812e4e386f04455a12 and 4df37056407ca0353e2357399ec8f2bd7583b6d10fc5d1d4f6744b9415a1ce2f,2021-10-26,9fc51a3c-81b3-4fa7-b35f-7c02cf10fd2d
-rules/windows/powershell/powershell_script/powershell_web_request.yml,bad, very noisy 3402ef40e1e748a6d1e62cc80d8319a132683a326803ed812e4e386f04455a12 and 4df37056407ca0353e2357399ec8f2bd7583b6d10fc5d1d4f6744b9415a1ce2f,2021-10-26,9fc51a3c-81b3-4fa7-b35f-7c02cf10fd2d
-rules/windows/process_creation/win_malware_script_dropper.yml,bad,cannot parse 3402ef40e1e748a6d1e62cc80d8319a132683a326803ed812e4e386f04455a12,2021-10-26,cea72823-df4d-4567-950c-0b579eaf0846
-rules/windows/network_connection/sysmon_notepad_network_connection.yml,bad,no hits in e70f141f138d899c80ee9d94792e4e4c6b6d5e2e8cb59f9c3d3a8dde68db5cd4,2021-10-26,e81528db-fc02-45e8-8e98-4e84aba1f10b
+windows/process_creation/win_shadow_copies_deletion.yml, good,62a8fc79a775abce91c4cb87c7f3cdc4cbdf85d0f0083c72703052710d645119,2021-10-25, 
+windows/registry_event/sysmon_asep_reg_keys_modification.yml, bad,to long query needs to be tuned 0628997695cf9655c523896f1703472cee08b66eb5ae6bd385433b73105f4ca9,2021-10-26,17f878b8-9968-4578-b814-c4217fc5768c
+windows/process_creation/win_non_interactive_powershell.yml,good,good 0628997695cf9655c523896f1703472cee08b66eb5ae6bd385433b73105f4ca9,2021-10-26,f4bbd493-b796-416e-bbf2-121235348529
+windows/registry_event/sysmon_susp_download_run_key.yml,bad,no evtx sample found,2021-10-26,9c5037d1-c568-49b3-88c7-9846a5bdc2be
+windows/file_event/sysmon_creation_system_file.yml,bad,no evtx sample only sylog,2021-10-26,d5866ddf-ce8f-4aea-b28e-d96485a20d3d
+windows/process_creation/win_susp_net_execution.yml,good,501113c57563009a37feb467c0828c153a1f7097f16c4038636f3651a266189e,2021-10-26,183e7ea8-ac4b-4c23-9aec-b3dac4e401ac
+windows/process_creation/win_service_stop.yml,good,501113c57563009a37feb467c0828c153a1f7097f16c4038636f3651a266189e,2021-10-26,eb87818d-db5d-49cc-a987-d5da331fbd90
+windows/process_creation/win_proc_wrong_parent.yml,exploratory,no test data for evtx d01bb6498156f94164d67cc854b64fb12077886f2c7f46f503a1c2dbdfd57169,2021-10-26,96036718-71cc-4027-a538-d1587e0006a7
+windows/process_creation/win_system_exe_anomaly.yml,exploratory,rule to noisy 9ac87754adb88a8ac14969bb4adaed043f783d7264d0846365ca0cf4b7f80ffb,2021-10-26,e4a6b256-3e47-40fc-89d2-7a477edd6915
+windows/process_creation/process_creation_powershell_web_request.yml,bad, very noisy 3402ef40e1e748a6d1e62cc80d8319a132683a326803ed812e4e386f04455a12 and 4df37056407ca0353e2357399ec8f2bd7583b6d10fc5d1d4f6744b9415a1ce2f,2021-10-26,9fc51a3c-81b3-4fa7-b35f-7c02cf10fd2d
+windows/powershell/powershell_script/powershell_web_request.yml,bad, very noisy 3402ef40e1e748a6d1e62cc80d8319a132683a326803ed812e4e386f04455a12 and 4df37056407ca0353e2357399ec8f2bd7583b6d10fc5d1d4f6744b9415a1ce2f,2021-10-26,9fc51a3c-81b3-4fa7-b35f-7c02cf10fd2d
+windows/process_creation/win_malware_script_dropper.yml,bad,cannot parse 3402ef40e1e748a6d1e62cc80d8319a132683a326803ed812e4e386f04455a12,2021-10-26,cea72823-df4d-4567-950c-0b579eaf0846
+windows/network_connection/sysmon_notepad_network_connection.yml,bad,no hits in e70f141f138d899c80ee9d94792e4e4c6b6d5e2e8cb59f9c3d3a8dde68db5cd4,2021-10-26,e81528db-fc02-45e8-8e98-4e84aba1f10b
 windows/raw_access_thread/,bad,no test data available,2021-05-04,
 windows/registry_event/,bad,no test data available,2021-05-04,
 windows/wmi_event/,bad,no test data available,2021-05-04,
@@ -232,3 +236,8 @@ sigma/rules/windows/powershell/powershell_script/posh_ps_cl_mutexverifiers_lolsc
 sigma/rules/windows/image_load/image_load_mimikatz_inmemory_detection.yml,bad,Part of the rule not supported in TS,2022-04-21,c0478ead-5336-46c2-bd5e-b4c84bc3a36e
 sigma/rules/apt/apt_silence_downloader_v3.yml,bad,Part of the rule not supported in TS,2022-04-21,170901d1-de11-4de7-bccb-8fa13678d857
 lnx_susp_zmap,good,Part of Timesketch repo,2022-04-22,5266a592-b793-11ea-b3de-0242ac130004
+other/godmode_sigma_rule.yml,good,no test data available,2022-04-28,def6caac-a999-4fc9-8800-cfeff700ba98
+application/antivirus/av_hacktool.yml,good,no test data but should work,2022-04-28,fa0c05b6-8ad3-468d-8231-c1cbccb64fba
+application/antivirus/av_password_dumper.yml,good,no test data but should work,202204-28,78cc2dd2-7d20-4d32-93ff-057084c38b93
+application/antivirus/av_exploiting.yml,good,no test data but should work,2022-04-28,238527ad-3c2c-4e4f-a1f6-92fd63adb864
+application/antivirus/av_webshell.yml,exploratory,query seems weird and field mapping is currently on Windows,2022-04-28,fdf135a2-9241-4f96-a114-bb404948f736
