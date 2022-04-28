@@ -313,3 +313,6 @@ fieldmappings:
     HostApplication: xml_string #96b9f619-aa91-478f-bacb-c3e50f8df575
     gcp.audit.method_name: methodName
     ParentImage: xml_string
+    Value:
+      service=windefend: xml_string
+      default: Value
