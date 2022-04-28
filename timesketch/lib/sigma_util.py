@@ -166,6 +166,21 @@ def get_sigma_rules(rule_folder, sigma_config=None):
                     parsed_rule.update({'ts_use_in_analyzer': True})
                 else:
                     parsed_rule.update({'ts_use_in_analyzer': False})
+
+                # try to append any content from the reason field of the blocklist file:
+                pd.set_option(
+                    'display.max_colwidth', 200
+                )  # to avoid comments being truncated
+                if parsed_rule.get('id') in ignore['rule_id'].unique():
+
+                    parsed_rule.update(
+                        {
+                            'ts_comment': ignore.loc[
+                                ignore['rule_id'] == parsed_rule.get('id')
+                            ]['reason'].to_string()
+                        }
+                    )
+
                 if parsed_rule:
                     return_array.append(parsed_rule)
     return return_array
