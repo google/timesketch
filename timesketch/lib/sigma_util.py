@@ -19,6 +19,7 @@ import codecs
 import csv
 import logging
 from datetime import datetime
+import string
 import yaml
 import pandas as pd
 
@@ -447,6 +448,15 @@ def add_problematic_rule(filepath, rule_uuid=None, reason=None):
         writer.writerow(fields)
 
 
+def sanitice_incoming_sigma_rule_text(rule_text: string):
+    """Removes things that are not supportd in Timesketch right now as early as possible"""
+
+    rule_text = rule_text.replace("|endswith", "")
+    rule_text = rule_text.replace("|startswith", "")
+
+    return rule_text
+
+
 def get_sigma_rule_by_text(rule_text, sigma_config=None):
     """Returns a JSON represenation for a rule
 
@@ -477,6 +487,8 @@ def get_sigma_rule_by_text(rule_text, sigma_config=None):
     sigma_backend = sigma_es.ElasticsearchQuerystringBackend(
         sigma_conf_obj, {}
     )
+
+    rule_text = sanitice_incoming_sigma_rule_text(rule_text)
 
     rule_return = {}
     # TODO check if input validation is needed / useful.

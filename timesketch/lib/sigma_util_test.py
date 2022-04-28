@@ -129,6 +129,94 @@ detection:
     condition: keywords
 """
 
+MOCK_SIGMA_RULE_STARTSWITH_ENDSWITH = r"""
+title: MIXED LSASS Mock rule to test various combinations
+id: 5d2c62fe-3cbb-47c3-88e1-88ef73503a9f
+status: experimental
+author: Alexander Jaeger
+date: 2022/04/26
+references:
+    - https://github.com/SigmaHQ/sigma/blob/e4c8e62ba6a32f8966ab4216a15dd393af4ef3a3/rules/windows/process_access/proc_access_win_rare_proc_access_lsass.yml
+logsource:
+    category: process_access
+    product: windows
+detection:
+    selection:
+        TargetImage|endswith: '\foobar.exe'
+        GrantedAccess|endswith: '10'
+    # Absolute paths to programs that cause false positives
+    filter1:
+        SourceImage:
+            - 'C:\WINDOWS\system32\foo.exe'
+            - 'C:\Program Files\Malwarebytes\Anti-Malware\lorem.exe'
+            - 'C:\PROGRAMDATA\MALWAREBYTES\MBAMSERVICE\ipsum\gfdsa.exe'
+            - 'C:\WINDOWS\system32\taskhostv.exe'
+            - 'C:\Users\\*\AppData\Local\Programs\Microsoft VS Code\Microsoft.exe'
+            - 'C:\Program Files\Windows Defender\MsMpFoo.exe'
+            - 'C:\Windows\SysWOW64\gciexec.exe'
+            - 'C:\Windows\System32\gciexec.exe'
+            - 'C:\Windows\System32\lsoss.exe'
+            - 'C:\WINDOWS\System32\loremmon.exe'
+    # Windows Defender
+    filter2:
+        SourceImage|startswith: 'C:\ProgramData\Microsoft\Windows Avangers\'
+        SourceImage|endswith: '\MsMpFoo.exe'
+    # Microsoft Eating Services
+    filter3:
+        SourceImage|startswith: 'C:\Program Files\WindowsApps\'
+        SourceImage|endswith: '\EatingServices.exe'
+    # Process Drinker
+    filter4:
+        SourceImage|endswith:
+            - '\PROCDRINK64.EXE'
+            - '\PROCDRINK.EXE'
+    # BMware Tools
+    filter5:
+        SourceImage|startswith: 'C:\ProgramData\BMware\BMware Tools\'
+        SourceImage|endswith: '\bmtoolsd.exe'
+    # Provirus and MBR agents
+    filter6:
+        SourceImage|startswith:
+            - 'C:\Program Files\'
+            - 'C:\Program Files (x86)\'
+        SourceImage|contains:
+            - 'Provirus'
+    filter7:
+        SourceImage: 'C:\WINDOWS\system32\wbem\vgaprvse.exe'
+    filter8:
+        SourceImage: 'C:\Windows\sysWOW64\wbem\vgaprvse.exe'
+    filter_mcbfee:
+        SourceImage: 'C:\Program Files\Common Files\McBfee\ABBSHost\ABBSHOST.exe'
+    filter_prevtron:
+        SourceImage|startswith: 'C:\Windows\Temp\bsgbrd2-agent\'
+        SourceImage|endswith: 
+            - '\hammer64.exe'
+            - '\hammer.exe'
+    # Generic Filter for 0x1410 filter (caused by so many programs like PickBox updates etc.)
+    filter_generic:
+        SourceImage|startswith:
+            - 'C:\Program Files\'
+            - 'C:\Program Files (x86)\'
+            - 'C:\WINDOWS\system32\'
+    filter_localappdata:
+        SourceImage|contains|all:
+            - 'C:\Users\'
+            - '\AppData\Local\'
+        SourceImage|endswith:
+            - '\Maxisoft AB Cade\Cade.exe'
+            - '\software_influencer_tool.exe'
+            - '\PickUpdate.exe'
+            - '\NBAInstallerService.exe'
+    condition: selection and not 1 of filter*
+fields:
+    - User
+    - SourceImage
+    - GrantedAccess
+falsepositives:
+    - Legitimate software accessing LSASS process for legitimate reason
+level: medium
+"""
+
 
 class TestSigmaUtilLib(BaseTest):
     """Tests for the sigma support library."""
@@ -161,6 +249,19 @@ class TestSigmaUtilLib(BaseTest):
         test_2 = sigma_util._sanitize_query("(*a:b* OR *c::d*)")
         self.assertEqual(test_2, r'("a:b" OR "c\:\:d")')
         # pylint: enable=protected-access
+
+        test_3 = sigma_util._sanitize_query(
+            '(xml_string.keyword:"\\foobar.exe" AND GrantedAccess.keyword:"10")'
+        )
+
+        self.assertEqual(
+            test_3, r'(xml_string:"\foobar.exe" AND GrantedAccess:"10")'
+        )
+
+        test_4 = sigma_util._sanitize_query(
+            '(xml_string:C:\\Program Files\\WindowsApps\\\" AND xml_string: "GamingServices.exe)'
+        )
+        self.assertIsNotNone(test_4)
 
     def test_get_rule_by_text(self):
         """Test getting sigma rule by text."""
@@ -216,6 +317,20 @@ class TestSigmaUtilLib(BaseTest):
         )
         self.assertEqual(
             r'("aaa:bbb" OR "ccc\:\:ddd")',
+            rule.get("es_query"),
+        )
+
+        rule = sigma_util.get_sigma_rule_by_text(
+            MOCK_SIGMA_RULE_STARTSWITH_ENDSWITH
+        )
+
+        self.assertIsNotNone(MOCK_SIGMA_RULE_STARTSWITH_ENDSWITH)
+        self.assertIsNotNone(rule)
+        self.assertEqual(
+            "5d2c62fe-3cbb-47c3-88e1-88ef73503a9f", rule.get("id")
+        )
+        self.assertIn(
+            'event_identifier:"10" AND (xml_string:"\\\\foobar.exe" AND GrantedAccess:"10"',
             rule.get("es_query"),
         )
 
