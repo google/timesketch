@@ -159,6 +159,9 @@ def get_sigma_rules(rule_folder, sigma_config=None):
 
                 parsed_rule = get_sigma_rule(rule_file_path, sigma_config)
 
+                if parsed_rule is None:
+                    continue
+
                 # Only assign the ts_use_in_analyzer flag to rules that are cleared
                 if any(x in rule_file_path for x in exploratory_list):
                     parsed_rule.update({'ts_use_in_analyzer': False})
@@ -252,7 +255,12 @@ def get_sigma_rule(filepath, sigma_config=None):
     ) as file:
         try:
             rule_return = {}
-            rule_yaml_data = yaml.safe_load_all(file.read())
+            rule_file_content = file.read()
+            rule_file_content = sanitice_incoming_sigma_rule_text(
+                rule_file_content
+            )
+            rule_yaml_data = yaml.safe_load_all(rule_file_content)
+
             for doc in rule_yaml_data:
                 rule_return.update(doc)
                 parser = sigma_collection.SigmaCollectionParser(
@@ -290,8 +298,10 @@ def get_sigma_rule(filepath, sigma_config=None):
         sigma_es_query = ""
 
         for sigma_rule in parsed_sigma_rules:
-
+            logger.error("before " + sigma_rule)
             sigma_es_query = _sanitize_query(sigma_rule)
+
+        logger.error("after " + sigma_es_query)
 
         rule_return.update({"es_query": sigma_es_query})
         rule_return.update({"file_name": os.path.basename(filepath)})
@@ -354,7 +364,7 @@ def _sanitize_query(sigma_rule_query: str) -> str:
             san.append(el)
 
     sigma_rule_query = " ".join(san)
-
+    # breakpoint()
     # above method might create strings that have '' in them, workaround:
     sigma_rule_query = sigma_rule_query.replace('""', '"')
 
@@ -466,8 +476,8 @@ def add_problematic_rule(filepath, rule_uuid=None, reason=None):
 def sanitice_incoming_sigma_rule_text(rule_text: string):
     """Removes things that are not supportd in Timesketch right now as early as possible"""
 
-    rule_text = rule_text.replace("|endswith", "")
-    rule_text = rule_text.replace("|startswith", "")
+    rule_text = rule_text.replace('|endswith', '')
+    rule_text = rule_text.replace('|startswith', '')
 
     return rule_text
 
