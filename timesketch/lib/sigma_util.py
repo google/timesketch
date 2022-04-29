@@ -248,8 +248,11 @@ def get_sigma_rule(filepath, sigma_config=None):
     if os.path.isdir(filepath):
         raise IsADirectoryError(f"{filepath} is a directory - must be a file")
 
-    abs_path = os.path.abspath(filepath)
+    if os.stat(filepath).st_size == 0:
+        raise ValueError(f"{filepath} file is empty")
 
+    abs_path = os.path.abspath(filepath)
+    parsed_sigma_rules = None
     with codecs.open(
         abs_path, "r", encoding="utf-8", errors="replace"
     ) as file:
@@ -296,6 +299,8 @@ def get_sigma_rule(filepath, sigma_config=None):
             return None
 
         sigma_es_query = ""
+
+        assert parsed_sigma_rules is not None
 
         for sigma_rule in parsed_sigma_rules:
             sigma_es_query = _sanitize_query(sigma_rule)
@@ -512,6 +517,7 @@ def get_sigma_rule_by_text(rule_text, sigma_config=None):
     rule_text = sanitice_incoming_sigma_rule_text(rule_text)
 
     rule_return = {}
+    parsed_sigma_rules = None
     # TODO check if input validation is needed / useful.
     try:
         rule_yaml_data = yaml.safe_load_all(rule_text)
@@ -535,6 +541,8 @@ def get_sigma_rule_by_text(rule_text, sigma_config=None):
     except yaml.parser.ParserError as exception:
         logger.error("Yaml parsing error rule {0!s}".format(exception))
         raise
+
+    assert parsed_sigma_rules is not None
 
     sigma_es_query = ""
 

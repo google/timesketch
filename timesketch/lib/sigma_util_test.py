@@ -18,6 +18,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import datetime
+import os
 
 from sigma.parser import exceptions as sigma_exceptions
 
@@ -239,6 +240,30 @@ detection:
     condition: selection and not filter
 """
 
+SIGMA_MOCK_RULE_TEST4 = r"""
+title: Login with WMI
+id: 5af54681-df95-4c26-854f-2565e13cfab0
+status: stable
+description: Detection of logins performed with WMI
+author: Thomas Patzke
+date: 2019/12/04
+tags:
+    - attack.execution
+    - attack.t1047
+logsource:
+    product: windows
+    service: security
+detection:
+    selection:
+        EventID: 4624
+        ProcessName|endswith: '\WmiPrvSE.exe'
+    condition: selection
+falsepositives:
+    - Monitoring tools
+    - Legitimate system administration
+level: low
+"""
+
 
 class TestSigmaUtilLib(BaseTest):
     """Tests for the sigma support library."""
@@ -288,11 +313,19 @@ class TestSigmaUtilLib(BaseTest):
     def test_get_rule_by_text(self):
         """Test getting sigma rule by text."""
 
+        rule = sigma_util.get_sigma_rule_by_text(SIGMA_MOCK_RULE_TEST4)
+
+        self.assertIsNotNone(SIGMA_MOCK_RULE_TEST4)
+        self.assertIsNotNone(rule)
+        self.assertEqual(
+            '(data_type:"windows:evtx:record" AND source_name:("Microsoft-Windows-Security-Auditing" OR "Microsoft-Windows-Eventlog") AND event_identifier:"4624" AND xml_string:"\\\\WmiPrvSE.exe")',
+            rule.get("es_query"),
+        )
+
         rule = sigma_util.get_sigma_rule_by_text(SIGMA_MOCK_RULE_ENDSWITH)
 
         self.assertIsNotNone(SIGMA_MOCK_RULE_ENDSWITH)
         self.assertIsNotNone(rule)
-
         rule = sigma_util.get_sigma_rule_by_text(MOCK_SIGMA_RULE)
 
         self.assertIsNotNone(MOCK_SIGMA_RULE)
@@ -357,7 +390,7 @@ class TestSigmaUtilLib(BaseTest):
             "5d2c62fe-3cbb-47c3-88e1-88ef73503a9f", rule.get("id")
         )
         self.assertIn(
-            'event_identifier:"10" AND (xml_string:"\\\\foobar.exe" AND GrantedAccess:"10"',
+            'event_identifier:"10" AND (xml_string:"\\\\foobar.exe" AND xml_string:"10"',
             rule.get("es_query"),
         )
 
@@ -402,3 +435,25 @@ class TestSigmaUtilLib(BaseTest):
         self.assertIsNotNone(rule)
         self.assertIn("zmap", rule.get("es_query"))
         self.assertIn("b793", rule.get("id"))
+
+        # temp write a file with content
+
+        with open(
+            "./data/sigma/rules/temporary.yml", "w+", encoding='utf-8'
+        ) as f:
+            f.write(SIGMA_MOCK_RULE_TEST4)
+        self.assertNotEqual(0, os.stat(f.name).st_size)
+        self.assertIsNotNone(f)
+
+        rule_by_file = sigma_util.get_sigma_rule(f.name)
+
+        # Test that rule from file equals rule from text
+        rule_by_text = sigma_util.get_sigma_rule_by_text(SIGMA_MOCK_RULE_TEST4)
+
+        self.assertEqual(rule_by_file.get('id'), rule_by_text.get('id'))
+        self.assertEqual(
+            rule_by_file.get('es_query'), rule_by_text.get('es_query')
+        )
+
+        # clean up
+        os.remove(f.name)
