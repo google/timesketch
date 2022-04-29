@@ -11,6 +11,24 @@ logsources:
     product: linux
     conditions:
       data_type: "fs:stat"
+  linux_network:
+    category: network_connection
+    product: linux
+    conditions:
+      data_type:
+        - "shell:zsh:history"
+        - "bash:history:command"
+        - "apt:history:line"
+        - "selinux:line"
+  linux_process_creation:
+    category: process_creation
+    product: linux
+    conditions:
+      data_type:
+        - "shell:zsh:history"
+        - "bash:history:command"
+        - "apt:history:line"
+        - "selinux:line"
   sshd:
     service: sshd
     conditions:
@@ -324,3 +342,11 @@ fieldmappings:
       product=windows: xml_string
       default: param2
     GrantedAccess: xml_string #aa35a627-33fb-4d04-a165-d33b4afca3e8
+    DestinationIp:
+      product=linux: message
+      product=windows: xml_string
+      default: message
+    Image: #42df45e7-e6e9-43b5-8f26-bec5b39cc239
+      product=linux: message
+      product=windows: xml_string
+      default: message

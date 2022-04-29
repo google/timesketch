@@ -287,3 +287,8 @@ network/net_high_dns_bytes_out.yml,bad,Part of the rule not supported in TS,2022
 network/net_dns_c2_detection.yml,bad,Part of the rule not supported in TS,2022-04-29,1ec4b281-aa65-46a2-bdae-5fd830ed914e
 network/zeek/zeek_dce_rpc_domain_user_enumeration.yml,bad,Part of the rule not supported in TS,2022-04-29,66a0bdc6-ee04-441a-9125-99d2eb547942
 web/web_multiple_suspicious_resp_codes_single_source.yml,bad,Part of the rule not supported in TS,2022-04-29,6fdfc796-06b3-46e8-af08-58f3505318af
+network_connection/net_connection_lnx_back_connect_shell_dev.yml,exploratory,rule seems way to broad and no test data,2022-04-29,83dcd9f6-9ca8-4af7-a16e-a1c7a6b51871
+linux/process_creation/proc_creation_lnx_system_info_discovery.yml,good,no test data,2022-04-29,42df45e7-e6e9-43b5-8f26-bec5b39cc239
+linux/process_creation/proc_creation_lnx_file_deletion.ym,good,no test data,2022-04-29,30aed7b6-d2c1-4eaf-9382-b6bc43e50c5
+linux/process_creation/proc_creation_lnx_process_discovery.yml,good,no test data,2022-04-29,4e2f5868-08d4-413d-899f-dc2f1508627b
+linux/process_creation/proc_creation_lnx_at_command.yml,exploratory,seems very broad,2022-04-29,d2d642d7-b393-43fe-bae4-e81ed5915c4b
