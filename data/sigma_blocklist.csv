@@ -258,4 +258,32 @@ windows/builtin/windefend/win_defender_threat.yml,good,test data available in ev
 windows/builtin/security/win_susp_dsrm_password_change.yml,good,EVTX-ATTACK-SAMPLES/Credential_Access/4794_DSRM_password_change_t1098.evtx,2022-04-28,53ad8e36-f573-46bf-97e4-15ba5bf4bb51
 windows/create_remote_thread/sysmon_password_dumper_lsass.yml,exploratory,needs to be reviewed because of empty value maybe total rewrite for TS test data available in EVTX-ATTACK-SAMPLES/Credential_Access/CA_sysmon_hashdump_cmd_meterpreter.evtx,2022-04-28,f239b326-2f41-4d6b-9dfa-c846a60ef505
 windows/builtin/windefend/win_defender_amsi_trigger.yml,exploratory,unclear what source_name AMSI is,2022-04-28,ea9bf0fa-edec-4fb8-8b78-b119f2528186
-windows/builtin/security/win_susp_wmi_login.yml,exploratory,broken because end of the rule has no double quotes,2022-04-28,5af54681-df95-4c26-854f-2565e13cfab0
+windows/builtin/security/win_susp_wmi_login.yml,good,no test data,2022-04-29,5af54681-df95-4c26-854f-2565e13cfab0
+windows/builtin/system/win_susp_system_update_error.yml,good,no test data,2022-04-28,13cfeb75-9e33-4d04-b0f7-ab8faaa95a59
+windows/builtin/windefend/win_defender_history_delete.yml,good,no test data,2022-04-28,2afe6582-e149-11ea-87d0-0242ac130003
+windows/builtin/system/win_system_susp_eventlog_cleared.yml,good,EVTX-ATTACK-SAMPLES/Defense_Evasion/DE_104_system_log_cleared.evtx,2022-04-28,a62b37e0-45d3-48d9-a517-90c1a1b0186b
+windows/driver_load/driver_load_susp_temp_use.yml,good,no test data,2022-04-28,2c4523d5-d481-4ed0-8ec3-7fbf0cb41a75
+windows/builtin/system/win_apt_carbonpaper_turla.yml,good,no test data,2022-04-28,1df8b3da-b0ac-4d8a-b7c7-6cb7c24160e4
+windows/builtin/system/win_susp_sam_dump.yml,good,no test data,2022-04-28,839dd1e8-eda8-4834-8145-01beeee33acd
+windows/builtin/security/win_disable_event_logging.yml,good,no test data,2022-04-28,69aeb277-f15f-4d2d-b32a-55e883609563
+windows/builtin/security/win_susp_net_recon_activity.yml,good,no test data,2022-04-29,968eef52-9cff-4454-8992-1e74b9cbad6c
+windows/powershell/powershell_script/posh_ps_susp_win32_shadowcopy.yml,good,no test data,2022-04-28,e17121b4-ef2a-4418-8a59-12fb1631fa9e
+windows/powershell/powershell_classic/posh_pc_remote_powershell_session.yml,good,no test data,2022-04-28,60167e5c-84b2-4c95-a7ac-86281f27c445
+windows/file_event/file_event_win_cred_dump_tools_dropped_files.yml,good,potentially expensive,2022-04-28,8fbf3271-1ef6-4e94-8210-03c2317947f6
+windows/file_event/file_event_win_powershell_exploit_scripts.yml,exploratory,double quotes problem,2022-04-28,f331aa1f-8c53-4fc3-b083-cc159bc971cb
+windows/network_connection/net_connection_win_crypto_mining.yml,good,might be expensive rule,2022-04-28,fa5b1358-b040-4403-9868-15f7d9ab6329
+windows/process_access/proc_access_win_lazagne_cred_dump_lsass_access.yml,exploratory,double quotes problem,2022-04-28,4b9a8556-99c4-470b-a40c-9c8d02c77ed0
+windows/powershell/powershell_classic/posh_pc_delete_volume_shadow_copies.yml,good,no test data but looks fine,2022-04-28,87df9ee1-5416-453a-8a08-e8d4a51e9ce1
+windows/process_access/proc_access_win_mimikatz_trough_winrm.yml,good,no test data,2022-04-29,aa35a627-33fb-4d04-a165-d33b4afca3e8
+windows/builtin/security/win_user_added_to_local_administrators.yml,good,no test data,2022-04-29,c265cf08-3f99-46c1-8d59-328247057d57
+network/net_high_null_records_requests_rate.yml,bad,Part of the rule not supported in TS,2022-04-29,44ae5117-9c44-40cf-9c7c-7edad385ca70
+network/net_firewall_high_dns_bytes_out.yml,bad,Part of the rule not supported in TS,2022-04-29,3b6e327d-8649-4102-993f-d25786481589
+network/net_high_txt_records_requests_rate.yml,bad,Part of the rule not supported in TS,2022-04-29,f0a8cedc-1d22-4453-9c44-8d9f4ebd5d35
+network/net_susp_network_scan_by_port.yml,bad,Part of the rule not supported in TS,2022-04-29,fab0ddf0-b8a9-4d70-91ce-a20547209afb
+network/net_high_dns_requests_rate.yml,bad,Part of the rule not supported in TS,2022-04-29,b4163085-4001-46a3-a79a-55d8bbbc7a3a
+network/net_susp_network_scan_by_ip.yml,bad,Part of the rule not supported in TS,2022-04-29,4601eaec-6b45-4052-ad32-2d96d26ce0d8
+network/net_firewall_high_dns_requests_rate.yml,bad,Part of the rule not supported in TS,2022-04-29,51186749-7415-46be-90e5-6914865c825a
+network/net_high_dns_bytes_out.yml,bad,Part of the rule not supported in TS,2022-04-29,0f6c1bf5-70a5-4963-aef9-aab1eefb50bd
+network/net_dns_c2_detection.yml,bad,Part of the rule not supported in TS,2022-04-29,1ec4b281-aa65-46a2-bdae-5fd830ed914e
+network/zeek/zeek_dce_rpc_domain_user_enumeration.yml,bad,Part of the rule not supported in TS,2022-04-29,66a0bdc6-ee04-441a-9125-99d2eb547942
+web/web_multiple_suspicious_resp_codes_single_source.yml,bad,Part of the rule not supported in TS,2022-04-29,6fdfc796-06b3-46e8-af08-58f3505318af

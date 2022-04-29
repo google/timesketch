@@ -316,3 +316,11 @@ fieldmappings:
     Value:
       service=windefend: xml_string
       default: Value
+    Provider_Name: xml_string
+    param1: #6c0a7755-6d31-44fa-80e1-133e57752680
+      product=windows: xml_string
+      default: param1
+    param2: #6c0a7755-6d31-44fa-80e1-133e57752680
+      product=windows: xml_string
+      default: param2
+    GrantedAccess: xml_string #aa35a627-33fb-4d04-a165-d33b4afca3e8
