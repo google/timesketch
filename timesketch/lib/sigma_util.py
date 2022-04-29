@@ -298,10 +298,7 @@ def get_sigma_rule(filepath, sigma_config=None):
         sigma_es_query = ""
 
         for sigma_rule in parsed_sigma_rules:
-            logger.error("before " + sigma_rule)
             sigma_es_query = _sanitize_query(sigma_rule)
-
-        logger.error("after " + sigma_es_query)
 
         rule_return.update({"es_query": sigma_es_query})
         rule_return.update({"file_name": os.path.basename(filepath)})
@@ -364,7 +361,6 @@ def _sanitize_query(sigma_rule_query: str) -> str:
             san.append(el)
 
     sigma_rule_query = " ".join(san)
-    # breakpoint()
     # above method might create strings that have '' in them, workaround:
     sigma_rule_query = sigma_rule_query.replace('""', '"')
 
