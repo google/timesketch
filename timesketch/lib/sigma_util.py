@@ -33,6 +33,9 @@ from sigma.parser import exceptions as sigma_exceptions
 from sigma.config.exceptions import SigmaConfigParseError
 
 
+from functools import lru_cache
+
+
 logger = logging.getLogger("timesketch.lib.sigma")
 
 
@@ -118,6 +121,7 @@ def get_sigma_rules_path():
     return rules_path
 
 
+@lru_cache(maxsize=10)
 def get_sigma_rules(rule_folder, sigma_config=None):
     """Returns the Sigma rules for a folder including subfolders.
     Args:
@@ -189,6 +193,7 @@ def get_sigma_rules(rule_folder, sigma_config=None):
     return return_array
 
 
+@lru_cache(maxsize=None)
 def get_all_sigma_rules():
     """Returns all Sigma rules
 
@@ -209,6 +214,7 @@ def get_all_sigma_rules():
     return sigma_rules
 
 
+@lru_cache(maxsize=10)
 def get_sigma_rule(filepath, sigma_config=None):
     """Returns a JSON represenation for a rule
     Args:
@@ -372,6 +378,7 @@ def _sanitize_query(sigma_rule_query: str) -> str:
     return sigma_rule_query
 
 
+@lru_cache(maxsize=32)
 def get_sigma_blocklist(blocklist_path=None):
     """Get a dataframe of sigma rules to ignore.
 
@@ -400,6 +407,7 @@ def get_sigma_blocklist(blocklist_path=None):
     return df
 
 
+@lru_cache(maxsize=None)
 def get_sigma_blocklist_path(blocklist_path=None):
     """Checks and returns the Sigma blocklist path.
 
@@ -439,6 +447,7 @@ def get_sigma_blocklist_path(blocklist_path=None):
     return blocklist_path
 
 
+@lru_cache(maxsize=None)
 def add_problematic_rule(filepath, rule_uuid=None, reason=None):
     """Adds a problematic rule to the blocklist.csv.
 
@@ -483,6 +492,7 @@ def sanitice_incoming_sigma_rule_text(rule_text: string):
     return rule_text
 
 
+@lru_cache(maxsize=8)
 def get_sigma_rule_by_text(rule_text, sigma_config=None):
     """Returns a JSON represenation for a rule
 
