@@ -318,7 +318,7 @@ class TestSigmaUtilLib(BaseTest):
         self.assertIsNotNone(SIGMA_MOCK_RULE_TEST4)
         self.assertIsNotNone(rule)
         self.assertEqual(
-            '(data_type:"windows:evtx:record" AND source_name:("Microsoft-Windows-Security-Auditing" OR "Microsoft-Windows-Eventlog") AND event_identifier:"4624" AND xml_string:"\\\\WmiPrvSE.exe")',
+            '(data_type:"windows:evtx:record" AND source_name:("Microsoft-Windows-Security-Auditing" OR "Microsoft-Windows-Eventlog") AND event_identifier:"4624" AND xml_string:"\\\\WmiPrvSE.exe")',  # pylint: disable=line-too-long
             rule.get("es_query"),
         )
 
@@ -390,7 +390,7 @@ class TestSigmaUtilLib(BaseTest):
             "5d2c62fe-3cbb-47c3-88e1-88ef73503a9f", rule.get("id")
         )
         self.assertIn(
-            'event_identifier:"10" AND (xml_string:"\\\\foobar.exe" AND xml_string:"10"',
+            'event_identifier:"10" AND (xml_string:"\\\\foobar.exe" AND xml_string:"10"',  # pylint: disable=line-too-long
             rule.get("es_query"),
         )
 
