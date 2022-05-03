@@ -50,7 +50,7 @@ To check linting on a single file, run:
 
 ```bash
 ! apt-get update
-! apt-get install pylint
+! apt-get install pylint==2.6.0
 ! pylint /usr/local/src/timesketch/timesketch/  --rcfile .pylintrc -v
 ```
 
