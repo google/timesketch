@@ -465,7 +465,7 @@ class SigmaListResourceTest(BaseTest):
                 ],
                 'tags': ['attack.discovery', 'attack.t1046'],
                 'title': 'Suspicious Installation of ZMap',
-                'ts_comment': '78    Part of Timesketch repo',
+                'ts_comment': 'Part of Timesketch repo',
                 'ts_use_in_analyzer': True,
             }
         ],

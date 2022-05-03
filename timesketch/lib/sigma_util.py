@@ -180,14 +180,11 @@ def get_sigma_rules(rule_folder, sigma_config=None):
                     'display.max_colwidth', 200
                 )  # to avoid comments being truncated
                 if parsed_rule.get('id') in ignore['rule_id'].unique():
-
-                    parsed_rule.update(
-                        {
-                            'ts_comment': ignore.loc[
-                                ignore['rule_id'] == parsed_rule.get('id')
-                            ]['reason'].to_string()
-                        }
-                    )
+                    comment_string = ignore.loc[
+                        ignore['rule_id'] == parsed_rule.get('id')
+                    ]['reason'].to_string()
+                    comment_string = comment_string.split('    ', 1)[1]
+                    parsed_rule.update({'ts_comment': comment_string})
 
                 if parsed_rule:
                     return_array.append(parsed_rule)
