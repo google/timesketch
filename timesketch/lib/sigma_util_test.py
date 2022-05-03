@@ -295,7 +295,6 @@ class TestSigmaUtilLib(BaseTest):
 
         test_2 = sigma_util._sanitize_query("(*a:b* OR *c::d*)")
         self.assertEqual(test_2, r'("a:b" OR "c\:\:d")')
-        # pylint: enable=protected-access
 
         test_3 = sigma_util._sanitize_query(
             '(xml_string.keyword:"\\foobar.exe" AND GrantedAccess.keyword:"10")'
@@ -306,9 +305,10 @@ class TestSigmaUtilLib(BaseTest):
         )
 
         test_4 = sigma_util._sanitize_query(
-            '(xml_string:C:\\Program Files\\WindowsApps\\\" AND xml_string: "GamingServices.exe)'
+            '(xml_string:C:\\Program Files\\WindowsApps\\\" AND xml_string: "GamingServices.exe)'  # pylint: disable=line-too-long
         )
         self.assertIsNotNone(test_4)
+        # pylint: enable=protected-access
 
     def test_get_rule_by_text(self):
         """Test getting sigma rule by text."""

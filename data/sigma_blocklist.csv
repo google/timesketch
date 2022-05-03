@@ -69,13 +69,29 @@ cloud/okta,exploratory,no test data available,2021-09-23,
 compliance/,exploratory,not checked yet,2021-05-04,
 deprecated,bad,deprecated sigma rules e.g. https://github.com/SigmaHQ/sigma/tree/master/rules/windows/deprecated,2022-01-26,
 generic/generic_brute_force.yml,bad,count not implemented,2021-05-04,
+linux/builtin/lnx_file_copy.yml,exploratory,no test data,2022-04-29,7a14080d-a048-4de8-ae58-604ce58a795b
 linux/lnx,bad,not reviewed,2021-05-04,
 linux/lnx_buffer_overflows.yml,bad,causing ES exceptions,2021-05-04,
 linux/macos_,bad,not yet reviewed,2021-05-04,
+linux/process_creation/proc_creation_lnx_at_command.yml,exploratory,seems very broad,2022-04-29,d2d642d7-b393-43fe-bae4-e81ed5915c4b
+linux/process_creation/proc_creation_lnx_file_deletion.ym,good,no test data,2022-04-29,30aed7b6-d2c1-4eaf-9382-b6bc43e50c5
+linux/process_creation/proc_creation_lnx_process_discovery.yml,good,no test data,2022-04-29,4e2f5868-08d4-413d-899f-dc2f1508627b
+linux/process_creation/proc_creation_lnx_system_info_discovery.yml,good,no test data,2022-04-29,42df45e7-e6e9-43b5-8f26-bec5b39cc239
 lnx_susp_zmap,good,Part of Timesketch repo,2022-04-22,5266a592-b793-11ea-b3de-0242ac130004
 network/cisco/aaa/cisco_,exploratory,no test data available,2021-05-04,
 network/net_,exploratory,no test data available,2021-05-04,
+network/net_dns_c2_detection.yml,bad,Part of the rule not supported in TS,2022-04-29,1ec4b281-aa65-46a2-bdae-5fd830ed914e
+network/net_firewall_high_dns_bytes_out.yml,bad,Part of the rule not supported in TS,2022-04-29,3b6e327d-8649-4102-993f-d25786481589
+network/net_firewall_high_dns_requests_rate.yml,bad,Part of the rule not supported in TS,2022-04-29,51186749-7415-46be-90e5-6914865c825a
+network/net_high_dns_bytes_out.yml,bad,Part of the rule not supported in TS,2022-04-29,0f6c1bf5-70a5-4963-aef9-aab1eefb50bd
+network/net_high_dns_requests_rate.yml,bad,Part of the rule not supported in TS,2022-04-29,b4163085-4001-46a3-a79a-55d8bbbc7a3a
+network/net_high_null_records_requests_rate.yml,bad,Part of the rule not supported in TS,2022-04-29,44ae5117-9c44-40cf-9c7c-7edad385ca70
+network/net_high_txt_records_requests_rate.yml,bad,Part of the rule not supported in TS,2022-04-29,f0a8cedc-1d22-4453-9c44-8d9f4ebd5d35
+network/net_susp_network_scan_by_ip.yml,bad,Part of the rule not supported in TS,2022-04-29,4601eaec-6b45-4052-ad32-2d96d26ce0d8
+network/net_susp_network_scan_by_port.yml,bad,Part of the rule not supported in TS,2022-04-29,fab0ddf0-b8a9-4d70-91ce-a20547209afb
 network/zeek/zeek,exploratory,no test data available,2021-05-04,
+network/zeek/zeek_dce_rpc_domain_user_enumeration.yml,bad,Part of the rule not supported in TS,2022-04-29,66a0bdc6-ee04-441a-9125-99d2eb547942
+network_connection/net_connection_lnx_back_connect_shell_dev.yml,exploratory,rule seems way to broad and no test data,2022-04-29,83dcd9f6-9ca8-4af7-a16e-a1c7a6b51871
 other/godmode_sigma_rule.yml,good,no test data available,2022-04-28,def6caac-a999-4fc9-8800-cfeff700ba98
 powershell_icmp_exfiltration.yml,good,no test data,2021-05-04,
 powershell_invoke_obfuscation_clip+.yml,good,no test data,2021-05-04,
@@ -164,13 +180,37 @@ sysmon_uipromptforcreds_dlls.yml,bad, Failed to parse query,2021-05-05,
 sysmon_wsman_provider_image_load.yml,bad, Failed to parse query,2021-05-05,
 tools/config/generic/,bad,Sigma internal tools with yaml files in them,2021-11-19,
 web/web_,exploratory,no test data available,2021-05-04,
+web/web_multiple_suspicious_resp_codes_single_source.yml,bad,Part of the rule not supported in TS,2022-04-29,6fdfc796-06b3-46e8-af08-58f3505318af
 win_lsass_access_non_system_account.yml,bad,Failed to parse query,2021-05-04,
 win_powershell_web_request.yml, bad, multiple rules in one file,2021-05-04,
+windows/builtin/security/win_disable_event_logging.yml,good,no test data,2022-04-28,69aeb277-f15f-4d2d-b32a-55e883609563
+windows/builtin/security/win_susp_dsrm_password_change.yml,good,EVTX-ATTACK-SAMPLES/Credential_Access/4794_DSRM_password_change_t1098.evtx,2022-04-28,53ad8e36-f573-46bf-97e4-15ba5bf4bb51
+windows/builtin/security/win_susp_net_recon_activity.yml,good,no test data,2022-04-29,968eef52-9cff-4454-8992-1e74b9cbad6c
+windows/builtin/security/win_susp_wmi_login.yml,good,no test data,2022-04-29,5af54681-df95-4c26-854f-2565e13cfab0
+windows/builtin/security/win_sysmon_channel_reference_deletion.yml,good,no test data available,2022-04-28,18beca67-ab3e-4ee3-ba7a-a46ca8d7d0cc
+windows/builtin/security/win_user_added_to_local_administrators.yml,good,no test data,2022-04-29,c265cf08-3f99-46c1-8d59-328247057d57
+windows/builtin/system/win_apt_carbonpaper_turla.yml,good,no test data,2022-04-28,1df8b3da-b0ac-4d8a-b7c7-6cb7c24160e4
+windows/builtin/system/win_possible_zerologon_exploitation_using_wellknown_tools.yml,good,no test data available,2022-04-28,18f37338-b9bd-4117-a039-280c81f7a596
+windows/builtin/system/win_susp_sam_dump.yml,good,no test data,2022-04-28,839dd1e8-eda8-4834-8145-01beeee33acd
+windows/builtin/system/win_susp_system_update_error.yml,good,no test data,2022-04-28,13cfeb75-9e33-4d04-b0f7-ab8faaa95a59
+windows/builtin/system/win_system_application_sysmon_crash.yml,good,no test data available,2022-04-28,4d7f1827-1637-4def-8d8a-fd254f9454df
+windows/builtin/system/win_system_defender_disabled.yml,good,no test data available,2022-04-28,6c0a7755-6d31-44fa-80e1-133e57752680
+windows/builtin/system/win_system_susp_eventlog_cleared.yml,good,EVTX-ATTACK-SAMPLES/Defense_Evasion/DE_104_system_log_cleared.evtx,2022-04-28,a62b37e0-45d3-48d9-a517-90c1a1b0186b
 windows/builtin/win_global_catalog_enumeration.yml,bad, Aggregations not implemented for this backend,2021-05-04,
 windows/builtin/win_invoke_obfuscation_clip+_services.yml, bad, No condition found,2021-05-04,
+windows/builtin/windefend/win_defender_amsi_trigger.yml,exploratory,unclear what source_name AMSI is,2022-04-28,ea9bf0fa-edec-4fb8-8b78-b119f2528186
+windows/builtin/windefend/win_defender_disabled.yml,good,no test data available,2022-04-28,fe34868f-6e0e-4882-81f6-c43aa8f15b62
+windows/builtin/windefend/win_defender_history_delete.yml,good,no test data,2022-04-28,2afe6582-e149-11ea-87d0-0242ac130003
+windows/builtin/windefend/win_defender_tamper_protection_trigger.yml,good,no test data available,2022-04-28,49e5bc24-8b86-49f1-b743-535f332c2856
+windows/builtin/windefend/win_defender_tamper_protection_trigger.yml,good,no test data available,2022-04-28,49e5bc24-8b86-49f1-b743-535f332c2856
+windows/builtin/windefend/win_defender_threat.yml,good,test data available in evtx,2022-04-28,57b649ef-ff42-4fb0-8bf6-62da243a1708
+windows/create_remote_thread/sysmon_password_dumper_lsass.yml,exploratory,needs to be reviewed because of empty value maybe total rewrite for TS test data available in EVTX-ATTACK-SAMPLES/Credential_Access/CA_sysmon_hashdump_cmd_meterpreter.evtx,2022-04-28,f239b326-2f41-4d6b-9dfa-c846a60ef505
 windows/create_remote_thread/sysmon_suspicious_remote_thread.yml,bad,https://github.com/SigmaHQ/sigma/blob/c877a9a68dc9aca87dc849f75b0c49f676e03409/rules/windows/create_remote_thread/sysmon_suspicious_remote_thread.yml#L64 slash u causing parser to error out,2021-05-04,
 windows/create_stream_hash/sysmon_regedit_export_to_ads,bad,endswith problem,2021-05-04,
 windows/dns_query/sysmon_,bad,no test data available,2021-05-04,
+windows/driver_load/driver_load_susp_temp_use.yml,good,no test data,2022-04-28,2c4523d5-d481-4ed0-8ec3-7fbf0cb41a75
+windows/file_event/file_event_win_cred_dump_tools_dropped_files.yml,good,potentially expensive,2022-04-28,8fbf3271-1ef6-4e94-8210-03c2317947f6
+windows/file_event/file_event_win_powershell_exploit_scripts.yml,exploratory,double quotes problem,2022-04-28,f331aa1f-8c53-4fc3-b083-cc159bc971cb
 windows/file_event/sysmon_creation_system_file.yml,bad,no evtx sample only sylog,2021-10-26,d5866ddf-ce8f-4aea-b28e-d96485a20d3d
 windows/file_event/sysmon_creation_system_file.yml,bad,slash au in audio breaks things,2021-05-04,
 windows/file_event/sysmon_hack_dumpert.yml,bad,no rules found (section),2021-05-04,
@@ -203,6 +243,7 @@ windows/malware/win_mal_darkside.yml,bad, no rules found,2021-05-21,
 windows/malware/win_mal_flowcloud.yml,bad, endswith,2021-05-21,
 windows/malware/win_mal_ryuk.yml,bad, endswith and   raise ValueError More than one matching log source contains a rewrite part ,2021-05-21,
 windows/network_connection,exploratory,no test data available,2021-05-04,
+windows/network_connection/net_connection_win_crypto_mining.yml,good,might be expensive rule,2022-04-28,fa5b1358-b040-4403-9868-15f7d9ab6329
 windows/network_connection/sysmon_notepad_network_connection.yml,bad,no hits in e70f141f138d899c80ee9d94792e4e4c6b6d5e2e8cb59f9c3d3a8dde68db5cd4,2021-10-26,e81528db-fc02-45e8-8e98-4e84aba1f10b
 windows/other/win_,bad,no test data available,2021-05-04,
 windows/pipe_created/sysmon_,bad,no test data available,2021-05-04,
@@ -213,6 +254,8 @@ windows/powershell/powershell_CL_Mutexverifiers_LOLScript_v2.yml,bad,Aggregation
 windows/powershell/powershell_accessing_win_api.yml,good,,2021-05-04,
 windows/powershell/powershell_alternate_powershell_hosts.yml,good,,2021-05-04,
 windows/powershell/powershell_bad_opsec_artifacts.yml,good,,2021-05-04,
+windows/powershell/powershell_classic/posh_pc_delete_volume_shadow_copies.yml,good,no test data but looks fine,2022-04-28,87df9ee1-5416-453a-8a08-e8d4a51e9ce1
+windows/powershell/powershell_classic/posh_pc_remote_powershell_session.yml,good,no test data,2022-04-28,60167e5c-84b2-4c95-a7ac-86281f27c445
 windows/powershell/powershell_clear_powershell_history.yml,good, no examples,2021-05-04,
 windows/powershell/powershell_cmdline_reversed_strings.yml, good,,2021-05-04,
 windows/powershell/powershell_cmdline_special_characters.yml,bad,does not work,2021-05-04,
@@ -225,7 +268,11 @@ windows/powershell/powershell_dnscat_execution.yml,good,,2021-05-04,
 windows/powershell/powershell_downgrade_attack.yml,bad,startswith,2021-05-04,
 windows/powershell/powershell_exe_calling_ps.yml,bad,strartswith,2021-05-04,
 windows/powershell/powershell_get_clipboard.yml,good,no test data,2021-05-04,
+windows/powershell/powershell_script/posh_ps_susp_win32_shadowcopy.yml,good,no test data,2022-04-28,e17121b4-ef2a-4418-8a59-12fb1631fa9e
+windows/powershell/powershell_script/posh_ps_susp_zip_compress.yml,good,no test data available,2022-04-28,b7a3c9a3-09ea-4934-8864-6a32cacd98d9
 windows/powershell/powershell_script/powershell_web_request.yml,bad, very noisy 3402ef40e1e748a6d1e62cc80d8319a132683a326803ed812e4e386f04455a12 and 4df37056407ca0353e2357399ec8f2bd7583b6d10fc5d1d4f6744b9415a1ce2f,2021-10-26,9fc51a3c-81b3-4fa7-b35f-7c02cf10fd2d
+windows/process_access/proc_access_win_lazagne_cred_dump_lsass_access.yml,exploratory,double quotes problem,2022-04-28,4b9a8556-99c4-470b-a40c-9c8d02c77ed0
+windows/process_access/proc_access_win_mimikatz_trough_winrm.yml,good,no test data,2022-04-29,aa35a627-33fb-4d04-a165-d33b4afca3e8
 windows/process_access/sysmon_,bad,no test data available,2021-05-04,
 windows/process_creation/,bad,no test data available,2021-05-04,
 windows/process_creation/process_creation_powershell_web_request.yml,bad, very noisy 3402ef40e1e748a6d1e62cc80d8319a132683a326803ed812e4e386f04455a12 and 4df37056407ca0353e2357399ec8f2bd7583b6d10fc5d1d4f6744b9415a1ce2f,2021-10-26,9fc51a3c-81b3-4fa7-b35f-7c02cf10fd2d
@@ -241,54 +288,8 @@ windows/raw_access_thread/,bad,no test data available,2021-05-04,
 windows/registry_event/,bad,no test data available,2021-05-04,
 windows/registry_event/sysmon_asep_reg_keys_modification.yml, bad,to long query needs to be tuned 0628997695cf9655c523896f1703472cee08b66eb5ae6bd385433b73105f4ca9,2021-10-26,17f878b8-9968-4578-b814-c4217fc5768c
 windows/registry_event/sysmon_susp_download_run_key.yml,bad,no evtx sample found,2021-10-26,9c5037d1-c568-49b3-88c7-9846a5bdc2be
-windows/wmi_event/,bad,no test data available,2021-05-04,
-windows/builtin/security/win_sysmon_channel_reference_deletion.yml,good,no test data available,2022-04-28,18beca67-ab3e-4ee3-ba7a-a46ca8d7d0cc
 windows/sysmon/sysmon_config_modification.yml,good,no test data available,2022-04-28,8ac03a65-6c84-4116-acad-dc1558ff7a77
 windows/sysmon/sysmon_config_modification_error.yml,good,no test data available,2022-04-28,815cd91b-7dbc-4247-841a-d7dd1392b0a8
 windows/sysmon/sysmon_config_modification_status.yml,good,no test data available,2022-04-28,1f2b5353-573f-4880-8e33-7d04dcf97744
-windows/builtin/system/win_system_application_sysmon_crash.yml,good,no test data available,2022-04-28,4d7f1827-1637-4def-8d8a-fd254f9454df
 windows/sysmon/sysmon_process_hollowing.yml,good,no test data available,2022-04-28,c4b890e5-8d8c-4496-8c66-c805753817cd
-windows/powershell/powershell_script/posh_ps_susp_zip_compress.yml,good,no test data available,2022-04-28,b7a3c9a3-09ea-4934-8864-6a32cacd98d9
-windows/builtin/system/win_possible_zerologon_exploitation_using_wellknown_tools.yml,good,no test data available,2022-04-28,18f37338-b9bd-4117-a039-280c81f7a596
-windows/builtin/windefend/win_defender_tamper_protection_trigger.yml,good,no test data available,2022-04-28,49e5bc24-8b86-49f1-b743-535f332c2856
-windows/builtin/system/win_system_defender_disabled.yml,good,no test data available,2022-04-28,6c0a7755-6d31-44fa-80e1-133e57752680
-windows/builtin/windefend/win_defender_disabled.yml,good,no test data available,2022-04-28,fe34868f-6e0e-4882-81f6-c43aa8f15b62
-windows/builtin/windefend/win_defender_tamper_protection_trigger.yml,good,no test data available,2022-04-28,49e5bc24-8b86-49f1-b743-535f332c2856
-windows/builtin/windefend/win_defender_threat.yml,good,test data available in evtx,2022-04-28,57b649ef-ff42-4fb0-8bf6-62da243a1708
-windows/builtin/security/win_susp_dsrm_password_change.yml,good,EVTX-ATTACK-SAMPLES/Credential_Access/4794_DSRM_password_change_t1098.evtx,2022-04-28,53ad8e36-f573-46bf-97e4-15ba5bf4bb51
-windows/create_remote_thread/sysmon_password_dumper_lsass.yml,exploratory,needs to be reviewed because of empty value maybe total rewrite for TS test data available in EVTX-ATTACK-SAMPLES/Credential_Access/CA_sysmon_hashdump_cmd_meterpreter.evtx,2022-04-28,f239b326-2f41-4d6b-9dfa-c846a60ef505
-windows/builtin/windefend/win_defender_amsi_trigger.yml,exploratory,unclear what source_name AMSI is,2022-04-28,ea9bf0fa-edec-4fb8-8b78-b119f2528186
-windows/builtin/security/win_susp_wmi_login.yml,good,no test data,2022-04-29,5af54681-df95-4c26-854f-2565e13cfab0
-windows/builtin/system/win_susp_system_update_error.yml,good,no test data,2022-04-28,13cfeb75-9e33-4d04-b0f7-ab8faaa95a59
-windows/builtin/windefend/win_defender_history_delete.yml,good,no test data,2022-04-28,2afe6582-e149-11ea-87d0-0242ac130003
-windows/builtin/system/win_system_susp_eventlog_cleared.yml,good,EVTX-ATTACK-SAMPLES/Defense_Evasion/DE_104_system_log_cleared.evtx,2022-04-28,a62b37e0-45d3-48d9-a517-90c1a1b0186b
-windows/driver_load/driver_load_susp_temp_use.yml,good,no test data,2022-04-28,2c4523d5-d481-4ed0-8ec3-7fbf0cb41a75
-windows/builtin/system/win_apt_carbonpaper_turla.yml,good,no test data,2022-04-28,1df8b3da-b0ac-4d8a-b7c7-6cb7c24160e4
-windows/builtin/system/win_susp_sam_dump.yml,good,no test data,2022-04-28,839dd1e8-eda8-4834-8145-01beeee33acd
-windows/builtin/security/win_disable_event_logging.yml,good,no test data,2022-04-28,69aeb277-f15f-4d2d-b32a-55e883609563
-windows/builtin/security/win_susp_net_recon_activity.yml,good,no test data,2022-04-29,968eef52-9cff-4454-8992-1e74b9cbad6c
-windows/powershell/powershell_script/posh_ps_susp_win32_shadowcopy.yml,good,no test data,2022-04-28,e17121b4-ef2a-4418-8a59-12fb1631fa9e
-windows/powershell/powershell_classic/posh_pc_remote_powershell_session.yml,good,no test data,2022-04-28,60167e5c-84b2-4c95-a7ac-86281f27c445
-windows/file_event/file_event_win_cred_dump_tools_dropped_files.yml,good,potentially expensive,2022-04-28,8fbf3271-1ef6-4e94-8210-03c2317947f6
-windows/file_event/file_event_win_powershell_exploit_scripts.yml,exploratory,double quotes problem,2022-04-28,f331aa1f-8c53-4fc3-b083-cc159bc971cb
-windows/network_connection/net_connection_win_crypto_mining.yml,good,might be expensive rule,2022-04-28,fa5b1358-b040-4403-9868-15f7d9ab6329
-windows/process_access/proc_access_win_lazagne_cred_dump_lsass_access.yml,exploratory,double quotes problem,2022-04-28,4b9a8556-99c4-470b-a40c-9c8d02c77ed0
-windows/powershell/powershell_classic/posh_pc_delete_volume_shadow_copies.yml,good,no test data but looks fine,2022-04-28,87df9ee1-5416-453a-8a08-e8d4a51e9ce1
-windows/process_access/proc_access_win_mimikatz_trough_winrm.yml,good,no test data,2022-04-29,aa35a627-33fb-4d04-a165-d33b4afca3e8
-windows/builtin/security/win_user_added_to_local_administrators.yml,good,no test data,2022-04-29,c265cf08-3f99-46c1-8d59-328247057d57
-network/net_high_null_records_requests_rate.yml,bad,Part of the rule not supported in TS,2022-04-29,44ae5117-9c44-40cf-9c7c-7edad385ca70
-network/net_firewall_high_dns_bytes_out.yml,bad,Part of the rule not supported in TS,2022-04-29,3b6e327d-8649-4102-993f-d25786481589
-network/net_high_txt_records_requests_rate.yml,bad,Part of the rule not supported in TS,2022-04-29,f0a8cedc-1d22-4453-9c44-8d9f4ebd5d35
-network/net_susp_network_scan_by_port.yml,bad,Part of the rule not supported in TS,2022-04-29,fab0ddf0-b8a9-4d70-91ce-a20547209afb
-network/net_high_dns_requests_rate.yml,bad,Part of the rule not supported in TS,2022-04-29,b4163085-4001-46a3-a79a-55d8bbbc7a3a
-network/net_susp_network_scan_by_ip.yml,bad,Part of the rule not supported in TS,2022-04-29,4601eaec-6b45-4052-ad32-2d96d26ce0d8
-network/net_firewall_high_dns_requests_rate.yml,bad,Part of the rule not supported in TS,2022-04-29,51186749-7415-46be-90e5-6914865c825a
-network/net_high_dns_bytes_out.yml,bad,Part of the rule not supported in TS,2022-04-29,0f6c1bf5-70a5-4963-aef9-aab1eefb50bd
-network/net_dns_c2_detection.yml,bad,Part of the rule not supported in TS,2022-04-29,1ec4b281-aa65-46a2-bdae-5fd830ed914e
-network/zeek/zeek_dce_rpc_domain_user_enumeration.yml,bad,Part of the rule not supported in TS,2022-04-29,66a0bdc6-ee04-441a-9125-99d2eb547942
-web/web_multiple_suspicious_resp_codes_single_source.yml,bad,Part of the rule not supported in TS,2022-04-29,6fdfc796-06b3-46e8-af08-58f3505318af
-network_connection/net_connection_lnx_back_connect_shell_dev.yml,exploratory,rule seems way to broad and no test data,2022-04-29,83dcd9f6-9ca8-4af7-a16e-a1c7a6b51871
-linux/process_creation/proc_creation_lnx_system_info_discovery.yml,good,no test data,2022-04-29,42df45e7-e6e9-43b5-8f26-bec5b39cc239
-linux/process_creation/proc_creation_lnx_file_deletion.ym,good,no test data,2022-04-29,30aed7b6-d2c1-4eaf-9382-b6bc43e50c5
-linux/process_creation/proc_creation_lnx_process_discovery.yml,good,no test data,2022-04-29,4e2f5868-08d4-413d-899f-dc2f1508627b
-linux/process_creation/proc_creation_lnx_at_command.yml,exploratory,seems very broad,2022-04-29,d2d642d7-b393-43fe-bae4-e81ed5915c4b
+windows/wmi_event/,bad,no test data available,2021-05-04,
