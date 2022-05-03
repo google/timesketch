@@ -445,32 +445,28 @@ class SigmaListResourceTest(BaseTest):
         "meta": {"current_user": "test1", "rules_count": 1},
         "objects": [
             {
-                "author": "Alexander Jaeger",
-                "date": "2020/06/26",
-                "description": "Detects suspicious installation of ZMap",
-                "detection": {
-                    "condition": "keywords",
-                    "keywords": ["*apt-get install zmap*"],
+                'author': 'Alexander Jaeger',
+                'date': '2020/06/26',
+                'description': 'Detects suspicious installation of ZMap',
+                'detection': {
+                    'condition': 'keywords',
+                    'keywords': ['*apt-get install zmap*'],
                 },
-                "es_query": '(data_type:("shell:zsh:history" OR '
-                '"bash:history:command" OR '
-                '"apt:history:line" OR '
-                '"selinux:line") AND '
-                '"apt-get install zmap")',
-                "falsepositives": ["Unknown"],
-                "file_name": "lnx_susp_zmap.yml",
-                "file_relpath": "lnx_susp_zmap.yml",
-                "id": "5266a592-b793-11ea-b3de-0242ac130004",
-                "level": "high",
-                "logsource": {"product": "linux", "service": "shell"},
-                "modified": "2020/06/26",
-                "tags": ["attack.discovery", "attack.t1046"],
-                "references": [
-                    "https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html"  # pylint: disable=line-too-long
+                'es_query': '(data_type:("shell:zsh:history" OR "bash:history:command" OR "apt:history:line" OR "selinux:line") AND "apt-get install zmap")',  # pylint: disable=line-too-long
+                'falsepositives': ['Unknown'],
+                'file_name': 'lnx_susp_zmap.yml',
+                'file_relpath': 'lnx_susp_zmap.yml',
+                'id': '5266a592-b793-11ea-b3de-0242ac130004',
+                'level': 'high',
+                'logsource': {'product': 'linux', 'service': 'shell'},
+                'modified': '2020/06/26',
+                'references': [
+                    'https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html'  # pylint: disable=line-too-long
                 ],
-                "title": "Suspicious Installation of ZMap",
-                'ts_comment': '73    Part of Timesketch repo',
-                "ts_use_in_analyzer": True,
+                'tags': ['attack.discovery', 'attack.t1046'],
+                'title': 'Suspicious Installation of ZMap',
+                'ts_comment': '78    Part of Timesketch repo',
+                'ts_use_in_analyzer': True,
             }
         ],
     }
