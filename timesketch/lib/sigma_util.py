@@ -20,6 +20,7 @@ import csv
 import logging
 from datetime import datetime
 import string
+from functools import lru_cache
 import yaml
 import pandas as pd
 
@@ -31,9 +32,6 @@ from sigma.backends import elasticsearch as sigma_es
 from sigma.parser import collection as sigma_collection
 from sigma.parser import exceptions as sigma_exceptions
 from sigma.config.exceptions import SigmaConfigParseError
-
-
-from functools import lru_cache
 
 
 logger = logging.getLogger("timesketch.lib.sigma")
@@ -97,8 +95,11 @@ def get_sigma_rules_path():
             or the folders are not readabale.
     """
     try:
-        rules_path = current_app.config.get("SIGMA_RULES_FOLDERS", [])
+        rules_path = current_app.config.get(
+            "SIGMA_RULES_FOLDERS", ['/etc/timesketch/sigma/rules/']
+        )
     except RuntimeError as e:
+        logger.error(e)
         raise ValueError("SIGMA_RULES_FOLDERS not found in config file") from e
 
     if not rules_path:
@@ -484,7 +485,16 @@ def add_problematic_rule(filepath, rule_uuid=None, reason=None):
 
 
 def sanitice_incoming_sigma_rule_text(rule_text: string):
-    """Removes things that are not supportd in Timesketch right now as early as possible"""
+    """Removes things that are not supportd in Timesketch
+    right now as early as possible
+
+    Args:
+        rule_text: Text of the sigma rule to be parsed
+
+    Returns:
+        Cleaned version of the rule_text
+
+    """
 
     rule_text = rule_text.replace('|endswith', '')
     rule_text = rule_text.replace('|startswith', '')
