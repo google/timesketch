@@ -469,6 +469,7 @@ class SigmaListResourceTest(BaseTest):
                     "https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html"  # pylint: disable=line-too-long
                 ],
                 "title": "Suspicious Installation of ZMap",
+                'ts_comment': '73    Part of Timesketch repo',
                 "ts_use_in_analyzer": True,
             }
         ],
