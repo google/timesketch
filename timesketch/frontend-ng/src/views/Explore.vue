@@ -709,7 +709,7 @@ export default {
       return this.$store.state.currentSearchNode
     },
     rightSidePanelWidth() {
-      let width = '400'
+      let width = '450'
       if (!this.showRightSidePanel) {
         width = '50'
       }

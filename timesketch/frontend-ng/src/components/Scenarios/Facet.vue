@@ -15,22 +15,21 @@ limitations under the License.
 -->
 <template>
   <div>
-    <v-row style="cursor: pointer" @click="expanded = !expanded" class="pa-3 pb-0 pl-0">
+    <v-row style="cursor: pointer" @click="expanded = !expanded">
       <v-col cols="1">
-        <v-btn icon>
-          <v-icon v-if="!expanded">mdi-chevron-right</v-icon>
-          <v-icon v-else>mdi-chevron-down</v-icon>
-        </v-btn>
+        <v-icon class="ml-2" v-if="!expanded">mdi-chevron-right</v-icon>
+        <v-icon class="ml-2" v-else>mdi-chevron-down</v-icon>
       </v-col>
       <v-col cols="9">
         <span style="font-size: 0.9em">{{ facet.display_name }}</span>
       </v-col>
       <v-col cols="2">
-        <v-chip color="orange" small> 3/5 </v-chip>
+        <v-chip outlined small> 0/{{ facet.questions.length }} </v-chip>
       </v-col>
     </v-row>
 
-    <div v-show="expanded">
+    <div v-show="expanded" style="background-color: #f5f5f5">
+      <v-divider class="mt-3"></v-divider>
       <span style="font-size: 0.9em" v-for="question in facet.questions" :key="question.id">
         <ts-question :question="question"></ts-question>
       </span>

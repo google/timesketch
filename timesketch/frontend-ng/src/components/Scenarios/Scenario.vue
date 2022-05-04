@@ -15,16 +15,16 @@ limitations under the License.
 -->
 <template>
   <div v-if="scenario">
-    <v-toolbar dense flat>
+    <v-toolbar flat>
       <v-toolbar-title v-if="showPanel" style="font-size: 1em">Compromise assessment</v-toolbar-title>
       <v-spacer></v-spacer>
       <v-icon v-if="showPanel" @click="$emit('togglePanel')">mdi-chevron-left</v-icon>
       <v-icon v-else @click="$emit('togglePanel')" style="margin-left: -5px">mdi-chevron-right</v-icon>
     </v-toolbar>
-    <!-- <v-btn @click="addScenario">Add scenario</v-btn> -->
-    <div v-show="showPanel">
+    <!--<v-btn @click="addScenario">Add scenario</v-btn>-->
+    <div v-show="showPanel" class="mt-3">
       <div v-for="facet in scenario.facets" :key="facet.id">
-        <ts-facet :facet="facet"></ts-facet>
+        <ts-facet class="mt-3" :facet="facet"></ts-facet>
       </div>
       <v-btn small text color="primary" class="ml-1 mt-3">+ Facet</v-btn>
     </div>
@@ -70,7 +70,7 @@ export default {
   created() {
     ApiClient.getSketchScenarios(this.sketch.id)
       .then((response) => {
-        this.scenario = response.data.objects[0][0]
+        this.scenario = response.data.objects[0][4]
       })
       .catch((e) => {})
   },

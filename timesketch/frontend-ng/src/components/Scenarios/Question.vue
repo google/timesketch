@@ -14,15 +14,28 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div>
-    <div style="cursor: pointer; font-size: 0.9em; font-weight: bold" class="pl-3 pt-3" @click="expanded = !expanded">
-      <v-icon small v-if="!expanded">mdi-chevron-right</v-icon>
-      <v-icon small v-else>mdi-chevron-down</v-icon>
-      {{ question.display_name }}
-    </div>
-    <div style="font-size: 0.9em" class="pa-3 pl-8" v-show="expanded">
-      <span>{{ question.description }}</span>
-      <v-textarea disabled outlined flat hide-details auto-grow rows="3" label="Your conclusion" class="mt-4">
+  <div v-bind:class="{ selected: expanded }">
+    <v-row>
+      <v-col cols="11" @click="expanded = !expanded" style="cursor: pointer">
+        <div class="pl-8">
+          <v-menu open-on-hover offset-y :open-delay="1000" :close-on-content-click="false">
+            <template v-slot:activator="{ on, attrs }">
+              <span style="font-size: 0.9em" v-bind="attrs" v-on="on">{{ question.display_name }}</span>
+            </template>
+            <v-card style="font-size: 0.9em" class="pa-3" width="400">
+              {{ question.description }}
+            </v-card>
+          </v-menu>
+        </div>
+      </v-col>
+      <!--<v-col cols="1" class="pa-3">
+        <v-icon v-if="!expanded">mdi-dots-vertical</v-icon>
+      </v-col>-->
+    </v-row>
+
+    <div style="font-size: 0.9em" v-show="expanded">
+      <!--
+      <v-textarea disabled outlined flat hide-details auto-grow rows="3">
         <template v-slot:prepend-inner>
           <v-avatar color="grey" class="mt-n1" size="28"></v-avatar>
         </template>
@@ -32,7 +45,9 @@ limitations under the License.
         <v-btn disabled x-small outlined color="primary"> Answer No </v-btn>
         <v-btn disabled x-small outlined color="primary"> Inconclusive </v-btn>
       </v-card-actions>
-    </div>
+    --></div>
+
+    <v-divider></v-divider>
   </div>
 </template>
 
@@ -53,3 +68,10 @@ export default {
   created() {},
 }
 </script>
+
+<style scoped lang="scss">
+.selected {
+  background-color: #f5f5f5;
+  font-weight: bold;
+}
+</style>
