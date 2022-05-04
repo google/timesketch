@@ -46,6 +46,14 @@ Or all in one:
 $ sudo docker exec -it $CONTAINER_ID nosetests /usr/local/src/timesketch/timesketch/lib/emojis_test.py -v
 ```
 
+To check linting on a single file, run:
+
+```bash
+! apt-get update
+! apt-get install pylint==2.6.0
+! pylint /usr/local/src/timesketch/timesketch/  --rcfile .pylintrc -v
+```
+
 ### Writing unittests
 
 It is recommended to write unittests as much as possible.
