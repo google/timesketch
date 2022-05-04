@@ -263,7 +263,7 @@ def get_sigma_rule(filepath, sigma_config=None):
         try:
             rule_return = {}
             rule_file_content = file.read()
-            rule_file_content = sanitice_incoming_sigma_rule_text(
+            rule_file_content = sanitize_incoming_sigma_rule_text(
                 rule_file_content
             )
             rule_yaml_data = yaml.safe_load_all(rule_file_content)
@@ -481,7 +481,7 @@ def add_problematic_rule(filepath, rule_uuid=None, reason=None):
         writer.writerow(fields)
 
 
-def sanitice_incoming_sigma_rule_text(rule_text: string):
+def sanitize_incoming_sigma_rule_text(rule_text: string):
     """Removes things that are not supportd in Timesketch
     right now as early as possible
 
@@ -531,7 +531,7 @@ def get_sigma_rule_by_text(rule_text, sigma_config=None):
         sigma_conf_obj, {}
     )
 
-    rule_text = sanitice_incoming_sigma_rule_text(rule_text)
+    rule_text = sanitize_incoming_sigma_rule_text(rule_text)
 
     rule_return = {}
     parsed_sigma_rules = None
