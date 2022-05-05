@@ -98,6 +98,8 @@ logsources:
     conditions:
       data_type:
         - "fs:stat"
+        - "fs:mactime:line"
+        - "filesystem:santa:entry"
   sysmon:
     service: sysmon
     conditions:
