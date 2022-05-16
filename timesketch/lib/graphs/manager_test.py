@@ -19,8 +19,9 @@ from timesketch.lib.graphs import manager
 
 class MockGraph:
     """Mock graph class."""
-    NAME = 'MockGraph'
-    DISPLAY_NAME = 'MockGraph'
+
+    NAME = "MockGraph"
+    DISPLAY_NAME = "MockGraph"
 
 
 class TestGraphManager(BaseTest):
@@ -38,16 +39,14 @@ class TestGraphManager(BaseTest):
         self.assertIsInstance(graph_list, list)
         self.assertIsInstance(first_graph_tuple, tuple)
         self.assertEqual(graph_class, MockGraph)
-        self.assertEqual(graph_name, 'mockgraph')
+        self.assertEqual(graph_name, "mockgraph")
 
     def test_get_graph(self):
         """Test to get graph class from registry."""
-        graph_class = manager.GraphManager.get_graph('mockgraph')
+        graph_class = manager.GraphManager.get_graph("mockgraph")
         self.assertEqual(graph_class, MockGraph)
-        self.assertRaises(
-            KeyError, manager.GraphManager.get_graph, 'no_such_graph')
+        self.assertRaises(KeyError, manager.GraphManager.get_graph, "no_such_graph")
 
     def test_register_graph(self):
         """Test so we raise KeyError when graph is already registered."""
-        self.assertRaises(
-            KeyError, manager.GraphManager.register_graph, MockGraph)
+        self.assertRaises(KeyError, manager.GraphManager.register_graph, MockGraph)

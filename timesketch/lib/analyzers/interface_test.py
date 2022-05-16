@@ -33,11 +33,14 @@ class TestAnalysisEvent(BaseTest):
     def test_event(self):
         """Tests creating an Event object."""
         sketch = interface.Sketch(sketch_id=self.SKETCH_ID)
-        datastore = MockDataStore('127.0.0.1', 4711)
+        datastore = MockDataStore("127.0.0.1", 4711)
         valid_event = dict(
-            _id='1', _type='test', _index='test',
-            _source={'__ts_timeline_id': 1, 'test': True})
-        invalid_event = dict(_id='1')
+            _id="1",
+            _type="test",
+            _index="test",
+            _source={"__ts_timeline_id": 1, "test": True},
+        )
+        invalid_event = dict(_id="1")
         event = interface.Event(valid_event, datastore, sketch=None)
         sketch_event = interface.Event(valid_event, datastore, sketch=sketch)
         self.assertIsInstance(event.datastore, MockDataStore)
@@ -61,17 +64,19 @@ class TestAnalysisSketch(BaseTest):
         """Test adding a view to a sketch."""
         sketch = interface.Sketch(sketch_id=self.SKETCH_ID)
         view = sketch.add_view(
-            view_name='MockView', analyzer_name="Test", query_string='test')
+            view_name="MockView", analyzer_name="Test", query_string="test"
+        )
         self.assertIsInstance(view, View)
 
     def test_add_story(self):
         """Test adding a story to a sketch."""
         sketch = interface.Sketch(sketch_id=self.SKETCH_ID)
-        story = sketch.add_story(title='test')
+        story = sketch.add_story(title="test")
         view = sketch.add_view(
-            view_name='MockView', analyzer_name="Test", query_string='test')
+            view_name="MockView", analyzer_name="Test", query_string="test"
+        )
         sql_story = story.story
-        story.add_text('test')
+        story.add_text("test")
         story.add_view(view)
         content_json = sql_story.content
         content_list = json.loads(sql_story.content)
@@ -87,4 +92,4 @@ class TestAnalysisSketch(BaseTest):
         indices = sketch.get_all_indices()
         self.assertIsInstance(indices, list)
         self.assertEqual(len(indices), 1)
-        self.assertEqual(indices[0], 'test')
+        self.assertEqual(indices[0], "test")

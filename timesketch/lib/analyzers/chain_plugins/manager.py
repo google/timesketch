@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """The chain plugins manager object."""
 
+
 class ChainPluginsManager(object):
     """Class that implements the chain plugins manager."""
 
@@ -20,8 +21,9 @@ class ChainPluginsManager(object):
         """
         plugin_name = plugin_class.NAME.lower()
         if plugin_name not in cls._plugin_classes:
-            raise KeyError('Plugin class not set for name: {0:s}.'.format(
-                plugin_class.NAME))
+            raise KeyError(
+                "Plugin class not set for name: {0:s}.".format(plugin_class.NAME)
+            )
 
         del cls._plugin_classes[plugin_name]
 
@@ -35,8 +37,10 @@ class ChainPluginsManager(object):
         Returns:
             list[type]: list of all chain plugin objects.
         """
-        return [plugin_class(analyzer_object) for plugin_class in iter(
-            cls._plugin_classes.values())]
+        return [
+            plugin_class(analyzer_object)
+            for plugin_class in iter(cls._plugin_classes.values())
+        ]
 
     @classmethod
     def register_plugin(cls, plugin_class):
@@ -53,8 +57,9 @@ class ChainPluginsManager(object):
         """
         plugin_name = plugin_class.NAME.lower()
         if plugin_name in cls._plugin_classes:
-            raise KeyError(('Plugin class already set for : {0:s}.').format(
-                plugin_class.NAME))
+            raise KeyError(
+                ("Plugin class already set for : {0:s}.").format(plugin_class.NAME)
+            )
 
         cls._plugin_classes[plugin_name] = plugin_class
 

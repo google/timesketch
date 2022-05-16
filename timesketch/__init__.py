@@ -27,4 +27,5 @@ def create_app(config=None):
     """
     # pylint: disable=import-outside-toplevel
     from timesketch import app
+
     return app.create_app(config)

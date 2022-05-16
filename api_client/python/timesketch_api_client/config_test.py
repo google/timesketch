@@ -40,68 +40,72 @@ output_format = tabular
     def test_get_missing_config(self):
         """Test the missing config parameter."""
         config_obj = config.ConfigAssistant()
-        config_obj.set_config('host_uri', 'http://127.0.0.1')
+        config_obj.set_config("host_uri", "http://127.0.0.1")
 
         missing = config_obj.get_missing_config()
-        expected_missing = ['auth_mode', 'username']
+        expected_missing = ["auth_mode", "username"]
         self.assertEqual(set(expected_missing), set(missing))
 
-        config_obj.set_config('username', 'foobar')
+        config_obj.set_config("username", "foobar")
         missing = config_obj.get_missing_config()
-        expected_missing = ['auth_mode']
+        expected_missing = ["auth_mode"]
         self.assertEqual(set(expected_missing), set(missing))
 
-        config_obj.set_config('auth_mode', 'oauth')
+        config_obj.set_config("auth_mode", "oauth")
         missing = config_obj.get_missing_config()
-        expected_missing = ['client_id', 'client_secret']
+        expected_missing = ["client_id", "client_secret"]
         self.assertEqual(set(expected_missing), set(missing))
 
     def test_has_config(self):
         """Test the has_config function."""
         config_obj = config.ConfigAssistant()
-        config_obj.set_config('host_uri', 'http://127.0.0.1')
-        self.assertTrue(config_obj.has_config('host_uri'))
-        self.assertFalse(config_obj.has_config('foobar'))
+        config_obj.set_config("host_uri", "http://127.0.0.1")
+        self.assertTrue(config_obj.has_config("host_uri"))
+        self.assertFalse(config_obj.has_config("foobar"))
 
     def test_load_config(self):
         """Test loading config."""
         config_obj = config.ConfigAssistant()
-        with tempfile.NamedTemporaryFile(mode='w') as fw:
+        with tempfile.NamedTemporaryFile(mode="w") as fw:
             fw.write(self.TEST_CONFIG)
             fw.seek(0)
             config_obj.load_config_file(fw.name)
         expected_fields = [
-            'host_uri', 'auth_mode', 'verify', 'client_id', 'client_secret',
-            'username']
+            "host_uri",
+            "auth_mode",
+            "verify",
+            "client_id",
+            "client_secret",
+            "username",
+        ]
         self.assertEqual(set(expected_fields), set(config_obj.parameters))
 
-        self.assertEqual(config_obj.get_config('host_uri'), 'http://127.0.0.1')
+        self.assertEqual(config_obj.get_config("host_uri"), "http://127.0.0.1")
 
     def test_save_config(self):
         """Test saving the config."""
         config_obj = config.ConfigAssistant()
-        config_obj.set_config('host_uri', 'http://127.0.0.1')
-        config_obj.set_config('username', 'foobar')
-        config_obj.set_config('auth_mode', 'oauth')
-        config_obj.set_config('client_id', 'myidfoo')
-        config_obj.set_config('client_secret', 'sdfa@$FAsASDF132')
+        config_obj.set_config("host_uri", "http://127.0.0.1")
+        config_obj.set_config("username", "foobar")
+        config_obj.set_config("auth_mode", "oauth")
+        config_obj.set_config("client_id", "myidfoo")
+        config_obj.set_config("client_secret", "sdfa@$FAsASDF132")
 
-        data = ''
-        with tempfile.NamedTemporaryFile(mode='w') as fw:
+        data = ""
+        with tempfile.NamedTemporaryFile(mode="w") as fw:
             config_obj.save_config(fw.name)
 
             fw.seek(0)
-            with open(fw.name, 'r') as fh:
+            with open(fw.name, "r") as fh:
                 data = fh.read()
 
-        lines = [x.strip() for x in data.split('\n') if x]
-        expected_lines = [
-            x.strip() for x in self.TEST_CONFIG.split('\n') if x.strip()]
+        lines = [x.strip() for x in data.split("\n") if x]
+        expected_lines = [x.strip() for x in self.TEST_CONFIG.split("\n") if x.strip()]
         self.assertEqual(set(lines), set(expected_lines))
 
     def test_set_config(self):
         """Test the set config."""
         config_obj = config.ConfigAssistant()
-        config_obj.set_config('host_uri', 'http://127.0.0.1')
+        config_obj.set_config("host_uri", "http://127.0.0.1")
 
-        self.assertTrue(config_obj.has_config('host_uri'))
+        self.assertTrue(config_obj.has_config("host_uri"))

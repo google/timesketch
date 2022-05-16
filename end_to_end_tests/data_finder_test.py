@@ -20,31 +20,34 @@ from . import manager
 class DataFinderTest(interface.BaseEndToEndTest):
     """End to end tests for data finder functionality."""
 
-    NAME = 'data_finder_test'
+    NAME = "data_finder_test"
 
     def setup(self):
         """Import test timeline."""
-        self.import_timeline('evtx_part.csv')
+        self.import_timeline("evtx_part.csv")
 
     def test_data_finder(self):
         """Test the data finder."""
         results = self.sketch.run_data_finder(
-            start_date='2010-01-01T00:00:00',
-            end_date='2010-06-30T12:00:00',
-            rule_names=['test_data_finder'])
+            start_date="2010-01-01T00:00:00",
+            end_date="2010-06-30T12:00:00",
+            rule_names=["test_data_finder"],
+        )
 
         result_dict = results[0]
-        self.assertions.assertFalse(result_dict.get('test_data_finder')[0])
+        self.assertions.assertFalse(result_dict.get("test_data_finder")[0])
 
         results = self.sketch.run_data_finder(
-            start_date='2012-03-10T00:00:00',
-            end_date='2012-03-30T12:00:00',
-            rule_names=['test_data_finder'])
+            start_date="2012-03-10T00:00:00",
+            end_date="2012-03-30T12:00:00",
+            rule_names=["test_data_finder"],
+        )
 
         result_dict = results[0]
-        self.assertions.assertTrue(result_dict.get('test_data_finder')[0])
+        self.assertions.assertTrue(result_dict.get("test_data_finder")[0])
         self.assertions.assertTrue(
-            result_dict.get('test_data_finder')[1].startswith('Data disc'))
+            result_dict.get("test_data_finder")[1].startswith("Data disc")
+        )
 
 
 manager.EndToEndTestManager.register_test(DataFinderTest)

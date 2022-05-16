@@ -29,8 +29,8 @@ Example configuration for Apache with mod_wsgi (a2enmod mod_wsgi):
 
 # If you installed Timesketch in a virtualenv you need to activate it.
 # This needs to be before any imports in order to import from the virtualenv.
-#activate_virtualenv = '/path/to/your/virtualenv/bin/activate_this.py'
-#execfile(activate_virtualenv, dict(__file__=activate_virtualenv))
+# activate_virtualenv = '/path/to/your/virtualenv/bin/activate_this.py'
+# execfile(activate_virtualenv, dict(__file__=activate_virtualenv))
 import os
 import logging
 
@@ -40,16 +40,16 @@ from timesketch.app import configure_logger
 from timesketch.app import create_app
 from timesketch.models import db_session
 
-logger = logging.getLogger('timesketch.wsgi_server')
+logger = logging.getLogger("timesketch.wsgi_server")
 
 configure_logger()
 application = create_app()
 application_v2 = create_app(v2=True)
 
 # Setup metrics endpoint.
-if os.environ.get('prometheus_multiproc_dir'):
-    logger.info('Metrics server enabled')
-    GunicornPrometheusMetrics(application, group_by='endpoint')
+if os.environ.get("prometheus_multiproc_dir"):
+    logger.info("Metrics server enabled")
+    GunicornPrometheusMetrics(application, group_by="endpoint")
 
 # pylint: disable=unused-argument
 @application.teardown_appcontext

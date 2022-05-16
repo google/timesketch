@@ -24,7 +24,7 @@ from timesketch.lib.charts import interface
 class BarChart(interface.BaseChart):
     """Barchart object."""
 
-    NAME = 'barchart'
+    NAME = "barchart"
 
     def generate(self):
         """Generate the chart.
@@ -34,8 +34,7 @@ class BarChart(interface.BaseChart):
         """
         chart = self._get_chart_with_transform()
         if self.chart_title:
-            chart = chart.mark_bar(strokeWidth=0.3).properties(
-                title=self.chart_title)
+            chart = chart.mark_bar(strokeWidth=0.3).properties(title=self.chart_title)
         else:
             chart = chart.mark_bar(strokeWidth=0.3)
 
@@ -47,7 +46,7 @@ class BarChart(interface.BaseChart):
 class HorizontalBarChart(interface.BaseChart):
     """Horizontal barchart."""
 
-    NAME = 'hbarchart'
+    NAME = "hbarchart"
 
     def generate(self):
         """Generate the chart.
@@ -56,25 +55,24 @@ class HorizontalBarChart(interface.BaseChart):
             Instance of altair.Chart
         """
         encoding = self.encoding.copy()
-        encoding['x'] = self.encoding['y']
-        encoding['y'] = self.encoding['x']
+        encoding["x"] = self.encoding["y"]
+        encoding["y"] = self.encoding["x"]
 
         chart = self._get_chart_with_transform()
         self._add_url_href(encoding)
 
         if self.chart_title:
-            bars = chart.mark_bar().properties(
-                title=self.chart_title)
+            bars = chart.mark_bar().properties(title=self.chart_title)
         else:
             bars = chart.mark_bar()
 
         bars.encoding = alt.FacetedEncoding.from_dict(encoding)
 
-        text = bars.mark_text(align='left', baseline='middle', dx=3).encode(
-            text='{0:s}:{1:s}'.format(
-                encoding['x']['field'], encoding['x']['type']))
+        text = bars.mark_text(align="left", baseline="middle", dx=3).encode(
+            text="{0:s}:{1:s}".format(encoding["x"]["field"], encoding["x"]["type"])
+        )
 
-        chart = (bars + text)
+        chart = bars + text
         return chart
 
 

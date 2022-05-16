@@ -24,15 +24,25 @@ import dateutil.parser
 # that is generated using the available columns or keys in the dataset.
 # This constant defines what columns or keys should be skipped while
 # generating this message field.
-FIELDS_TO_SKIP_IN_FORMAT_STRING = frozenset([
-    'timestamp_desc', 'time', 'timestamp', 'data_type', 'datetime',
-    'source_short', 'source_long', 'source'
-])
+FIELDS_TO_SKIP_IN_FORMAT_STRING = frozenset(
+    [
+        "timestamp_desc",
+        "time",
+        "timestamp",
+        "data_type",
+        "datetime",
+        "source_short",
+        "source_long",
+        "source",
+    ]
+)
 # This constant defines patterns that are used to skip columns or keys
 # that start with the strings defined here.
-FIELDS_TO_SKIP_STARTSWITH = frozenset([
-    '_',
-])
+FIELDS_TO_SKIP_STARTSWITH = frozenset(
+    [
+        "_",
+    ]
+)
 
 
 def format_data_frame(dataframe, format_message_string):
@@ -43,15 +53,14 @@ def format_data_frame(dataframe, format_message_string):
         format_message_String (str): the format string used to generate
             a message column.
     """
-    dataframe['message'] = ''
+    dataframe["message"] = ""
 
     formatter = string.Formatter()
     for literal_text, field, _, _ in formatter.parse(format_message_string):
-        dataframe['message'] = dataframe['message'] + literal_text
+        dataframe["message"] = dataframe["message"] + literal_text
 
         if field:
-            dataframe['message'] = dataframe[
-                'message'] + dataframe[field].astype(str)
+            dataframe["message"] = dataframe["message"] + dataframe[field].astype(str)
 
 
 def get_combined_message_string(dataframe=None, mydict=None):
@@ -70,15 +79,14 @@ def get_combined_message_string(dataframe=None, mydict=None):
         A string that can be used as a default message string.
     """
     if dataframe is None and mydict is None:
-        raise ValueError('Need to define either a dict or a DataFrame')
+        raise ValueError("Need to define either a dict or a DataFrame")
 
     if mydict:
         my_list = list(mydict.keys())
     else:
         my_list = list(dataframe.columns)
 
-    fields_to_delete = list(set(my_list).intersection(
-        FIELDS_TO_SKIP_IN_FORMAT_STRING))
+    fields_to_delete = list(set(my_list).intersection(FIELDS_TO_SKIP_IN_FORMAT_STRING))
     for field in fields_to_delete:
         index = my_list.index(field)
         _ = my_list.pop(index)
@@ -88,9 +96,8 @@ def get_combined_message_string(dataframe=None, mydict=None):
             if field.startswith(del_field):
                 _ = my_list.pop(index)
 
-    string_values = [
-        '[{0:s}] = {{{0:s}}}'.format(x) for x in my_list]
-    return ', '.join(string_values)
+    string_values = ["[{0:s}] = {{{0:s}}}".format(x) for x in my_list]
+    return ", ".join(string_values)
 
 
 def get_datestring_from_value(value):
@@ -117,4 +124,4 @@ def get_datestring_from_value(value):
             return date.isoformat()
         except ValueError:
             pass
-    return ''
+    return ""

@@ -59,7 +59,7 @@ from timesketch.models.sketch import Timeline
 from timesketch.models.user import User
 
 
-logger = logging.getLogger('timesketch.tasks')
+logger = logging.getLogger("timesketch.tasks")
 celery = create_celery_app()
 
 
@@ -82,46 +82,46 @@ def get_import_errors(error_container, index_name, total_count):
       total_count: integer with the total amount of events indexed.
     """
     if index_name not in error_container:
-        return ''
+        return ""
 
     index_dict = error_container[index_name]
-    error_list = index_dict.get('errors', [])
+    error_list = index_dict.get("errors", [])
 
     if not error_list:
-        return ''
+        return ""
 
     error_count = len(error_list)
 
-    error_types = index_dict.get('types')
-    error_details = index_dict.get('details')
+    error_types = index_dict.get("types")
+    error_details = index_dict.get("details")
 
     if error_types:
         top_type = error_types.most_common()[0][0]
     else:
-        top_type = 'Unknown Reasons'
+        top_type = "Unknown Reasons"
 
     if error_details:
         top_details = error_details.most_common()[0][0]
     else:
-        top_details = 'Unknown Reasons'
+        top_details = "Unknown Reasons"
 
     if total_count is None:
         total_count = 0
 
     if not top_type:
-        top_type = 'Unknown Reasons'
+        top_type = "Unknown Reasons"
     if not top_details:
-        top_details = 'Unknown Reasons'
+        top_details = "Unknown Reasons"
 
     return (
-        '{0:d} out of {1:d} events imported. Most common error type '
-        'is "{2:s}" with the detail of "{3:s}"').format(
-            total_count - error_count, total_count,
-            top_type, top_details)
+        "{0:d} out of {1:d} events imported. Most common error type "
+        'is "{2:s}" with the detail of "{3:s}"'
+    ).format(total_count - error_count, total_count, top_type, top_details)
 
 
 class SqlAlchemyTask(celery.Task):
     """An abstract task that runs on task completion."""
+
     abstract = True
 
     def after_return(self, *args, **kwargs):
@@ -134,7 +134,7 @@ class SqlAlchemyTask(celery.Task):
 @signals.worker_process_init.connect
 def init_worker(**kwargs):
     """Create new database engine per worker process."""
-    url = celery.conf.get('SQLALCHEMY_DATABASE_URI')
+    url = celery.conf.get("SQLALCHEMY_DATABASE_URI")
     engine = create_engine(url)
     db_session.configure(bind=engine)
 
@@ -150,7 +150,7 @@ def _close_index(index_name, data_store, timeline_id):
     indices = SearchIndex.query.filter_by(index_name=index_name).all()
     for index in indices:
         for timeline in index.timelines:
-            if timeline.get_status.status in ('closed', 'deleted', 'archived'):
+            if timeline.get_status.status in ("closed", "deleted", "archived"):
                 continue
 
             if timeline.id != timeline_id:
@@ -160,8 +160,8 @@ def _close_index(index_name, data_store, timeline_id):
         data_store.client.indices.close(index=index_name)
     except NotFoundError:
         logger.error(
-            'Unable to close index: {0:s} - index not '
-            'found'.format(index_name))
+            "Unable to close index: {0:s} - index not " "found".format(index_name)
+        )
 
 
 def _set_timeline_status(timeline_id, status, error_msg=None):
@@ -175,7 +175,7 @@ def _set_timeline_status(timeline_id, status, error_msg=None):
     timeline = Timeline.query.get(timeline_id)
 
     if not timeline:
-        logger.warning('Cannot set status: No such timeline')
+        logger.warning("Cannot set status: No such timeline")
         return
 
     # Check if there is at least one data source that hasn't failed.
@@ -183,7 +183,7 @@ def _set_timeline_status(timeline_id, status, error_msg=None):
 
     if multiple_sources:
         timeline_status = timeline.get_status.status.lower()
-        if timeline_status != 'process' and status != 'fail':
+        if timeline_status != "process" and status != "fail":
             timeline.set_status(status)
             timeline.searchindex.set_status(status)
     else:
@@ -213,18 +213,25 @@ def _get_index_task_class(file_extension):
     Raises:
         KeyError if no task class can be found.
     """
-    if file_extension == 'plaso':
+    if file_extension == "plaso":
         index_class = run_plaso
-    elif file_extension in ['csv', 'jsonl']:
+    elif file_extension in ["csv", "jsonl"]:
         index_class = run_csv_jsonl
     else:
-        raise KeyError('No task that supports {0:s}'.format(file_extension))
+        raise KeyError("No task that supports {0:s}".format(file_extension))
     return index_class
 
 
 def build_index_pipeline(
-        file_path='', events='', timeline_name='', index_name='',
-        file_extension='', sketch_id=None, only_index=False, timeline_id=None):
+    file_path="",
+    events="",
+    timeline_name="",
+    index_name="",
+    file_extension="",
+    sketch_id=None,
+    only_index=False,
+    timeline_id=None,
+):
     """Build a pipeline for index and analysis.
 
     Args:
@@ -247,15 +254,14 @@ def build_index_pipeline(
         task group.
     """
     if not (file_path or events):
-        raise RuntimeError(
-            'Unable to upload data, missing either a file or events.')
+        raise RuntimeError("Unable to upload data, missing either a file or events.")
     index_task_class = _get_index_task_class(file_extension)
     sketch_analyzer_chain = None
     searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
 
     index_task = index_task_class.s(
-        file_path, events, timeline_name, index_name, file_extension,
-        timeline_id)
+        file_path, events, timeline_name, index_name, file_extension, timeline_id
+    )
 
     # TODO: Check if a scenario is set or an investigative question
     # is in the sketch, and then enable data finder on the newly
@@ -265,28 +271,30 @@ def build_index_pipeline(
 
     if sketch_id:
         sketch_analyzer_chain, _ = build_sketch_analysis_pipeline(
-            sketch_id, searchindex.id, user_id=None)
+            sketch_id, searchindex.id, user_id=None
+        )
 
     # If there are no analyzers just run the indexer.
     if not sketch_analyzer_chain:
         return index_task
 
     if sketch_analyzer_chain:
-        return chain(
-            index_task, run_sketch_init.s(), sketch_analyzer_chain)
+        return chain(index_task, run_sketch_init.s(), sketch_analyzer_chain)
 
-    if current_app.config.get('ENABLE_EMAIL_NOTIFICATIONS'):
-        return chain(
-            index_task,
-            run_email_result_task.s()
-        )
+    if current_app.config.get("ENABLE_EMAIL_NOTIFICATIONS"):
+        return chain(index_task, run_email_result_task.s())
 
     return chain(index_task)
 
 
 def build_sketch_analysis_pipeline(
-        sketch_id, searchindex_id, user_id, analyzer_names=None,
-        analyzer_kwargs=None, timeline_id=None):
+    sketch_id,
+    searchindex_id,
+    user_id,
+    analyzer_names=None,
+    analyzer_kwargs=None,
+    timeline_id=None,
+):
     """Build a pipeline for sketch analysis.
 
     If no analyzer_names is passed in then we assume auto analyzers should be
@@ -310,18 +318,16 @@ def build_sketch_analysis_pipeline(
     tasks = []
 
     if not analyzer_names:
-        analyzer_names = current_app.config.get('AUTO_SKETCH_ANALYZERS', [])
+        analyzer_names = current_app.config.get("AUTO_SKETCH_ANALYZERS", [])
         if not analyzer_kwargs:
-            analyzer_kwargs = current_app.config.get(
-                'AUTO_SKETCH_ANALYZERS_KWARGS', {})
+            analyzer_kwargs = current_app.config.get("AUTO_SKETCH_ANALYZERS_KWARGS", {})
 
     # Exit early if no sketch analyzers are configured to run.
     if not analyzer_names:
         return None, None
 
     if not analyzer_kwargs:
-        analyzer_kwargs = current_app.config.get(
-            'ANALYZERS_DEFAULT_KWARGS', {})
+        analyzer_kwargs = current_app.config.get("ANALYZERS_DEFAULT_KWARGS", {})
 
     if user_id:
         user = User.query.get(user_id)
@@ -342,7 +348,8 @@ def build_sketch_analysis_pipeline(
 
         if not timeline:
             timeline = Timeline.query.filter_by(
-                sketch=sketch, searchindex=searchindex).first()
+                sketch=sketch, searchindex=searchindex
+            ).first()
 
         additional_kwargs = analyzer_class.get_kwargs()
         if isinstance(additional_kwargs, dict):
@@ -364,21 +371,28 @@ def build_sketch_analysis_pipeline(
                 parameters=json.dumps(kwargs),
                 user=user,
                 sketch=sketch,
-                timeline=timeline)
-            analysis.set_status('PENDING')
+                timeline=timeline,
+            )
+            analysis.set_status("PENDING")
             analysis_session.analyses.append(analysis)
             db_session.add(analysis)
             db_session.commit()
 
-            tasks.append(run_sketch_analyzer.s(
-                sketch_id, analysis.id, analyzer_name,
-                timeline_id=timeline_id, **kwargs))
+            tasks.append(
+                run_sketch_analyzer.s(
+                    sketch_id,
+                    analysis.id,
+                    analyzer_name,
+                    timeline_id=timeline_id,
+                    **kwargs
+                )
+            )
 
     # Commit the analysis session to the database.
     db_session.add(analysis_session)
     db_session.commit()
 
-    if current_app.config.get('ENABLE_EMAIL_NOTIFICATIONS'):
+    if current_app.config.get("ENABLE_EMAIL_NOTIFICATIONS"):
         tasks.append(run_email_result_task.s(sketch_id))
 
     if not tasks:
@@ -422,56 +436,53 @@ def run_email_result_task(index_name, sketch_id=None):
     """
     # We need to get a fake request context so that url_for() will work.
     with current_app.test_request_context():
-        searchindex = SearchIndex.query.filter_by(
-            index_name=index_name).first()
+        searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
         sketch = None
 
         try:
             to_username = searchindex.user.username
         except AttributeError:
-            logger.warning('No user to send email to.')
-            return ''
+            logger.warning("No user to send email to.")
+            return ""
 
         if sketch_id:
             sketch = Sketch.query.get(sketch_id)
 
-        subject = 'Timesketch: [{0:s}] is ready'.format(searchindex.name)
+        subject = "Timesketch: [{0:s}] is ready".format(searchindex.name)
 
         # TODO: Use jinja templates.
-        body = 'Your timeline [{0:s}] has been imported and is ready.'.format(
-            searchindex.name)
+        body = "Your timeline [{0:s}] has been imported and is ready.".format(
+            searchindex.name
+        )
 
         if sketch:
             view_urls = sketch.get_view_urls()
             view_links = []
             for view_url, view_name in iter(view_urls.items()):
-                view_links.append('<a href="{0:s}">{1:s}</a>'.format(
-                    view_url,
-                    view_name))
+                view_links.append(
+                    '<a href="{0:s}">{1:s}</a>'.format(view_url, view_name)
+                )
 
-            body = body + '<br><br><b>Sketch</b><br>{0:s}'.format(
-                sketch.external_url)
+            body = body + "<br><br><b>Sketch</b><br>{0:s}".format(sketch.external_url)
 
-            analysis_results = searchindex.description.replace('\n', '<br>')
-            body = body + '<br><br><b>Analysis</b>{0:s}'.format(
-                analysis_results)
+            analysis_results = searchindex.description.replace("\n", "<br>")
+            body = body + "<br><br><b>Analysis</b>{0:s}".format(analysis_results)
 
             if view_links:
-                body = body + '<br><br><b>Views</b><br>' + '<br>'.join(
-                    view_links)
+                body = body + "<br><br><b>Views</b><br>" + "<br>".join(view_links)
 
         try:
             send_email(subject, body, to_username, use_html=True)
         except RuntimeError as e:
             return repr(e)
 
-    return 'Sent email to {0:s}'.format(to_username)
+    return "Sent email to {0:s}".format(to_username)
 
 
 @celery.task(track_started=True)
 def run_sketch_analyzer(
-        index_name, sketch_id, analysis_id, analyzer_name,
-        timeline_id=None, **kwargs):
+    index_name, sketch_id, analysis_id, analyzer_name, timeline_id=None, **kwargs
+):
     """Create a Celery task for a sketch analyzer.
 
     Args:
@@ -486,18 +497,16 @@ def run_sketch_analyzer(
     """
     analyzer_class = manager.AnalysisManager.get_analyzer(analyzer_name)
     analyzer = analyzer_class(
-        sketch_id=sketch_id, index_name=index_name,
-        timeline_id=timeline_id, **kwargs)
+        sketch_id=sketch_id, index_name=index_name, timeline_id=timeline_id, **kwargs
+    )
 
     result = analyzer.run_wrapper(analysis_id)
-    logger.info('[{0:s}] result: {1:s}'.format(analyzer_name, result))
+    logger.info("[{0:s}] result: {1:s}".format(analyzer_name, result))
     return index_name
 
 
 @celery.task(track_started=True, base=SqlAlchemyTask)
-def run_plaso(
-        file_path, events, timeline_name, index_name, source_type,
-        timeline_id):
+def run_plaso(file_path, events, timeline_name, index_name, source_type, timeline_id):
     """Create a Celery task for processing Plaso storage file.
 
     Args:
@@ -516,137 +525,149 @@ def run_plaso(
     """
     if not plaso:
         raise RuntimeError(
-            'Plaso isn\'t installed, unable to continue processing plaso '
-            'files.')
+            "Plaso isn't installed, unable to continue processing plaso " "files."
+        )
 
     plaso_version = int(plaso.__version__)
     if plaso_version <= PLASO_MINIMUM_VERSION:
         raise RuntimeError(
-            'Plaso version is out of date (version {0:d}, please upgrade to a '
-            'version that is later than {1:d}'.format(
-                plaso_version, PLASO_MINIMUM_VERSION))
+            "Plaso version is out of date (version {0:d}, please upgrade to a "
+            "version that is later than {1:d}".format(
+                plaso_version, PLASO_MINIMUM_VERSION
+            )
+        )
 
     if events:
-        raise RuntimeError('Plaso uploads needs a file, not events.')
+        raise RuntimeError("Plaso uploads needs a file, not events.")
 
-    event_type = 'generic_event'  # Document type for OpenSearch
+    event_type = "generic_event"  # Document type for OpenSearch
 
     mappings = None
-    mappings_file_path = current_app.config.get('PLASO_MAPPING_FILE', '')
+    mappings_file_path = current_app.config.get("PLASO_MAPPING_FILE", "")
     if os.path.isfile(mappings_file_path):
         try:
-            with open(mappings_file_path, 'r') as mfh:
+            with open(mappings_file_path, "r") as mfh:
                 mappings = json.load(mfh)
 
                 if not isinstance(mappings, dict):
                     raise RuntimeError(
-                        'Unable to create mappings, the mappings are not a '
-                        'dict, please look at the file: {0:s}'.format(
-                            mappings_file_path))
+                        "Unable to create mappings, the mappings are not a "
+                        "dict, please look at the file: {0:s}".format(
+                            mappings_file_path
+                        )
+                    )
         except (json.JSONDecodeError, IOError):
-            logger.error('Unable to read in mapping', exc_info=True)
+            logger.error("Unable to read in mapping", exc_info=True)
 
-    opensearch_server = current_app.config.get('OPENSEARCH_HOST')
+    opensearch_server = current_app.config.get("OPENSEARCH_HOST")
     if not opensearch_server:
         raise RuntimeError(
-            'Unable to connect to OpenSearch, no server set, unable to '
-            'process plaso file.')
-    opensearch_port = current_app.config.get('OPENSEARCH_PORT')
+            "Unable to connect to OpenSearch, no server set, unable to "
+            "process plaso file."
+        )
+    opensearch_port = current_app.config.get("OPENSEARCH_PORT")
     if not opensearch_port:
         raise RuntimeError(
-            'Unable to connect to OpenSearch, no port set, unable to '
-            'process plaso file.')
+            "Unable to connect to OpenSearch, no port set, unable to "
+            "process plaso file."
+        )
 
-    opensearch = OpenSearchDataStore(
-        host=opensearch_server, port=opensearch_port)
+    opensearch = OpenSearchDataStore(host=opensearch_server, port=opensearch_port)
 
     try:
         opensearch.create_index(
-            index_name=index_name, doc_type=event_type, mappings=mappings)
+            index_name=index_name, doc_type=event_type, mappings=mappings
+        )
     except errors.DataIngestionError as e:
-        _set_timeline_status(timeline_id, status='fail', error_msg=str(e))
+        _set_timeline_status(timeline_id, status="fail", error_msg=str(e))
         _close_index(
-            index_name=index_name, data_store=opensearch,
-            timeline_id=timeline_id)
+            index_name=index_name, data_store=opensearch, timeline_id=timeline_id
+        )
         raise
 
-    except (RuntimeError, ImportError, NameError, UnboundLocalError,
-            RequestError) as e:
-        _set_timeline_status(timeline_id, status='fail', error_msg=str(e))
+    except (RuntimeError, ImportError, NameError, UnboundLocalError, RequestError) as e:
+        _set_timeline_status(timeline_id, status="fail", error_msg=str(e))
         _close_index(
-            index_name=index_name, data_store=opensearch,
-            timeline_id=timeline_id)
+            index_name=index_name, data_store=opensearch, timeline_id=timeline_id
+        )
         raise
 
     except Exception as e:  # pylint: disable=broad-except
         # Mark the searchindex and timelines as failed and exit the task
         error_msg = traceback.format_exc()
-        _set_timeline_status(timeline_id, status='fail', error_msg=error_msg)
-        logger.error('Error: {0!s}\n{1:s}'.format(e, error_msg))
+        _set_timeline_status(timeline_id, status="fail", error_msg=error_msg)
+        logger.error("Error: {0!s}\n{1:s}".format(e, error_msg))
         _close_index(
-            index_name=index_name, data_store=opensearch,
-            timeline_id=timeline_id)
+            index_name=index_name, data_store=opensearch, timeline_id=timeline_id
+        )
         return None
 
-    message = 'Index timeline [{0:s}] to index [{1:s}] (source: {2:s})'
+    message = "Index timeline [{0:s}] to index [{1:s}] (source: {2:s})"
     logger.info(message.format(timeline_name, index_name, source_type))
 
     try:
-        psort_path = current_app.config['PSORT_PATH']
+        psort_path = current_app.config["PSORT_PATH"]
     except KeyError:
-        psort_path = 'psort.py'
+        psort_path = "psort.py"
 
     cmd = [
-        psort_path, '-o', 'elastic_ts', file_path,
-        '--server', opensearch_server,
-        '--port', str(opensearch_port), '--status_view', 'none',
-        '--index_name', index_name,
+        psort_path,
+        "-o",
+        "elastic_ts",
+        file_path,
+        "--server",
+        opensearch_server,
+        "--port",
+        str(opensearch_port),
+        "--status_view",
+        "none",
+        "--index_name",
+        index_name,
     ]
 
     if mappings_file_path:
-        cmd.extend(['--elastic_mappings', mappings_file_path])
+        cmd.extend(["--elastic_mappings", mappings_file_path])
 
     if timeline_id:
-        cmd.extend(['--timeline_identifier', str(timeline_id)])
+        cmd.extend(["--timeline_identifier", str(timeline_id)])
 
-    opensearch_username = current_app.config.get('OPENSEARCH_USER', '')
+    opensearch_username = current_app.config.get("OPENSEARCH_USER", "")
     if opensearch_username:
-        cmd.extend(['--elastic_user', opensearch_username])
+        cmd.extend(["--elastic_user", opensearch_username])
 
-    opensearch_password = current_app.config.get('OPENSEARCH_PASSWORD', '')
+    opensearch_password = current_app.config.get("OPENSEARCH_PASSWORD", "")
     if opensearch_password:
-        cmd.extend(['--elastic_password', opensearch_password])
+        cmd.extend(["--elastic_password", opensearch_password])
 
-    opensearch_ssl = current_app.config.get('OPENSEARCH_SSL', False)
+    opensearch_ssl = current_app.config.get("OPENSEARCH_SSL", False)
     if opensearch_ssl:
-        cmd.extend(['--use_ssl'])
+        cmd.extend(["--use_ssl"])
 
-    psort_memory = current_app.config.get('PLASO_UPPER_MEMORY_LIMIT', '')
+    psort_memory = current_app.config.get("PLASO_UPPER_MEMORY_LIMIT", "")
     if psort_memory:
-        cmd.extend(['--process_memory_limit', str(psort_memory)])
+        cmd.extend(["--process_memory_limit", str(psort_memory)])
 
     # Run psort.py
     try:
-        subprocess.check_output(
-            cmd, stderr=subprocess.STDOUT, encoding='utf-8')
+        subprocess.check_output(cmd, stderr=subprocess.STDOUT, encoding="utf-8")
     except subprocess.CalledProcessError as e:
         # Mark the searchindex and timelines as failed and exit the task
-        _set_timeline_status(timeline_id, status='fail', error_msg=e.output)
+        _set_timeline_status(timeline_id, status="fail", error_msg=e.output)
         _close_index(
-            index_name=index_name, data_store=opensearch,
-            timeline_id=timeline_id)
+            index_name=index_name, data_store=opensearch, timeline_id=timeline_id
+        )
         return e.output
 
     # Mark the searchindex and timelines as ready
-    _set_timeline_status(timeline_id, status='ready')
+    _set_timeline_status(timeline_id, status="ready")
 
     return index_name
 
 
 @celery.task(track_started=True, base=SqlAlchemyTask)
 def run_csv_jsonl(
-        file_path, events, timeline_name, index_name, source_type,
-        timeline_id):
+    file_path, events, timeline_name, index_name, source_type, timeline_id
+):
     """Create a Celery task for processing a CSV or JSONL file.
 
     Args:
@@ -662,111 +683,122 @@ def run_csv_jsonl(
     """
     if events:
         file_handle = io.StringIO(events)
-        source_type = 'jsonl'
+        source_type = "jsonl"
     else:
-        file_handle = codecs.open(
-            file_path, 'r', encoding='utf-8', errors='replace')
+        file_handle = codecs.open(file_path, "r", encoding="utf-8", errors="replace")
 
-    event_type = 'generic_event'  # Document type for OpenSearch
+    event_type = "generic_event"  # Document type for OpenSearch
     validators = {
-        'csv': read_and_validate_csv,
-        'jsonl': read_and_validate_jsonl,
+        "csv": read_and_validate_csv,
+        "jsonl": read_and_validate_jsonl,
     }
     read_and_validate = validators.get(source_type)
 
     # Log information to Celery
     logger.info(
-        'Index timeline [{0:s}] to index [{1:s}] (source: {2:s})'.format(
-            timeline_name, index_name, source_type))
+        "Index timeline [{0:s}] to index [{1:s}] (source: {2:s})".format(
+            timeline_name, index_name, source_type
+        )
+    )
 
     mappings = None
-    mappings_file_path = current_app.config.get('GENERIC_MAPPING_FILE', '')
+    mappings_file_path = current_app.config.get("GENERIC_MAPPING_FILE", "")
     if os.path.isfile(mappings_file_path):
         try:
-            with open(mappings_file_path, 'r') as mfh:
+            with open(mappings_file_path, "r") as mfh:
                 mappings = json.load(mfh)
 
                 if not isinstance(mappings, dict):
                     raise RuntimeError(
-                        'Unable to create mappings, the mappings are not a '
-                        'dict, please look at the file: {0:s}'.format(
-                            mappings_file_path))
+                        "Unable to create mappings, the mappings are not a "
+                        "dict, please look at the file: {0:s}".format(
+                            mappings_file_path
+                        )
+                    )
         except (json.JSONDecodeError, IOError):
-            logger.error('Unable to read in mapping', exc_info=True)
+            logger.error("Unable to read in mapping", exc_info=True)
 
     opensearch = OpenSearchDataStore(
-        host=current_app.config['OPENSEARCH_HOST'],
-        port=current_app.config['OPENSEARCH_PORT'])
+        host=current_app.config["OPENSEARCH_HOST"],
+        port=current_app.config["OPENSEARCH_PORT"],
+    )
 
     # Reason for the broad exception catch is that we want to capture
     # all possible errors and exit the task.
     final_counter = 0
-    error_msg = ''
+    error_msg = ""
     error_count = 0
     try:
         opensearch.create_index(
-            index_name=index_name, doc_type=event_type, mappings=mappings)
+            index_name=index_name, doc_type=event_type, mappings=mappings
+        )
         for event in read_and_validate(file_handle):
             opensearch.import_event(
-                index_name, event_type, event, timeline_id=timeline_id)
+                index_name, event_type, event, timeline_id=timeline_id
+            )
             final_counter += 1
 
         # Import the remaining events
         results = opensearch.flush_queued_events()
 
-        error_container = results.get('error_container', {})
+        error_container = results.get("error_container", {})
         error_msg = get_import_errors(
             error_container=error_container,
             index_name=index_name,
-            total_count=results.get('total_events', 0))
+            total_count=results.get("total_events", 0),
+        )
 
     except errors.DataIngestionError as e:
-        _set_timeline_status(timeline_id, status='fail', error_msg=str(e))
+        _set_timeline_status(timeline_id, status="fail", error_msg=str(e))
         _close_index(
-            index_name=index_name, data_store=opensearch,
-            timeline_id=timeline_id)
+            index_name=index_name, data_store=opensearch, timeline_id=timeline_id
+        )
         raise
 
-    except (RuntimeError, ImportError, NameError, UnboundLocalError,
-            RequestError) as e:
-        _set_timeline_status(timeline_id, status='fail', error_msg=str(e))
+    except (RuntimeError, ImportError, NameError, UnboundLocalError, RequestError) as e:
+        _set_timeline_status(timeline_id, status="fail", error_msg=str(e))
         _close_index(
-            index_name=index_name, data_store=opensearch,
-            timeline_id=timeline_id)
+            index_name=index_name, data_store=opensearch, timeline_id=timeline_id
+        )
         raise
 
     except Exception as e:  # pylint: disable=broad-except
         # Mark the searchindex and timelines as failed and exit the task
         error_msg = traceback.format_exc()
-        _set_timeline_status(timeline_id, status='fail', error_msg=error_msg)
+        _set_timeline_status(timeline_id, status="fail", error_msg=error_msg)
         _close_index(
-            index_name=index_name, data_store=opensearch,
-            timeline_id=timeline_id)
-        logger.error('Error: {0!s}\n{1:s}'.format(e, error_msg))
+            index_name=index_name, data_store=opensearch, timeline_id=timeline_id
+        )
+        logger.error("Error: {0!s}\n{1:s}".format(e, error_msg))
         return None
 
     if error_count:
         logger.info(
-            'Index timeline: [{0:s}] to index [{1:s}] - {2:d} out of {3:d} '
-            'events imported (in total {4:d} errors were discovered) '.format(
-                timeline_name, index_name, (final_counter - error_count),
-                final_counter, error_count))
+            "Index timeline: [{0:s}] to index [{1:s}] - {2:d} out of {3:d} "
+            "events imported (in total {4:d} errors were discovered) ".format(
+                timeline_name,
+                index_name,
+                (final_counter - error_count),
+                final_counter,
+                error_count,
+            )
+        )
     else:
         logger.info(
-            'Index timeline: [{0:s}] to index [{1:s}] - {2:d} '
-            'events imported.'.format(
-                timeline_name, index_name, final_counter))
+            "Index timeline: [{0:s}] to index [{1:s}] - {2:d} "
+            "events imported.".format(timeline_name, index_name, final_counter)
+        )
 
     # Set status to ready when done
-    _set_timeline_status(timeline_id, status='ready', error_msg=error_msg)
+    _set_timeline_status(timeline_id, status="ready", error_msg=error_msg)
 
     return index_name
 
 
 @celery.task(track_started=True)
 def find_data_task(
-        rule_name, sketch_id, start_date, end_date,
-        timeline_ids=None, parameters=None):
+    rule_name, sketch_id, start_date, end_date, timeline_ids=None, parameters=None
+):
     """Runs a task to find out if data exists in a dataset.
 
     Args:
@@ -788,31 +820,32 @@ def find_data_task(
         reason string.
     """
     results = {}
-    data_finder_path = current_app.config.get('DATA_FINDER_PATH')
+    data_finder_path = current_app.config.get("DATA_FINDER_PATH")
     if not data_finder_path:
         logger.error(
-            'Unable to find data, missing data finder path in the '
-            'configuration file.')
+            "Unable to find data, missing data finder path in the "
+            "configuration file."
+        )
         return results
 
     if not os.path.isfile(data_finder_path):
         logger.error(
-            'Unable to read data finder rules, the file does not exist, '
-            'please verify that the path in DATA_FINDER_PATH variable is '
-            'correct and points to a readable file.')
+            "Unable to read data finder rules, the file does not exist, "
+            "please verify that the path in DATA_FINDER_PATH variable is "
+            "correct and points to a readable file."
+        )
         return results
 
     data_finder_dict = {}
-    with open(data_finder_path, 'r') as fh:
+    with open(data_finder_path, "r") as fh:
         try:
             data_finder_dict = yaml.safe_load(fh)
         except yaml.parser.ParserError:
-            logger.error(
-                'Unable to read in YAML config file', exc_info=True)
+            logger.error("Unable to read in YAML config file", exc_info=True)
             return results
 
     if rule_name not in data_finder_dict:
-        results[rule_name] = (False, 'Rule not defined')
+        results[rule_name] = (False, "Rule not defined")
         return results
 
     data_finder = datafinder.DataFinder()
@@ -836,8 +869,8 @@ def find_data_task(
 
 
 def run_data_finder(
-        rule_names, sketch_id, start_date, end_date,
-        timeline_ids=None, parameters=None):
+    rule_names, sketch_id, start_date, end_date, timeline_ids=None, parameters=None
+):
     """Runs a task to find out if data exists in a dataset.
 
     Args:
@@ -856,8 +889,15 @@ def run_data_finder(
     Returns:
         Celery task object.
     """
-    task_group = group(find_data_task.s(
-        rule_name=x, sketch_id=sketch_id, start_date=start_date,
-        end_date=end_date, timeline_ids=timeline_ids,
-        parameters=parameters) for x in rule_names)
+    task_group = group(
+        find_data_task.s(
+            rule_name=x,
+            sketch_id=sketch_id,
+            start_date=start_date,
+            end_date=end_date,
+            timeline_ids=timeline_ids,
+            parameters=parameters,
+        )
+        for x in rule_names
+    )
     return task_group

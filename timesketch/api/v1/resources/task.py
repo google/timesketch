@@ -34,6 +34,7 @@ class TaskResource(resources.ResourceMixin, Resource):
         super().__init__()
         # pylint: disable=import-outside-toplevel
         from timesketch.app import create_celery_app
+
         self.celery = create_celery_app()
 
     def _get_celery_information(self, job_id):
@@ -43,10 +44,11 @@ class TaskResource(resources.ResourceMixin, Resource):
             task_id=celery_task.task_id,
             state=celery_task.state,
             successful=celery_task.successful(),
-            result=False)
+            result=False,
+        )
 
-        if task.get('state', '') == 'SUCCESS':
-            task['result'] = celery_task.result
+        if task.get("state", "") == "SUCCESS":
+            task["result"] = celery_task.result
         return task
 
     @login_required
@@ -56,30 +58,30 @@ class TaskResource(resources.ResourceMixin, Resource):
         Returns:
             A view in JSON (instance of flask.wrappers.Response)
         """
-        timeout_threshold_seconds = current_app.config.get(
-            'CELERY_TASK_TIMEOUT', 7200)
+        timeout_threshold_seconds = current_app.config.get("CELERY_TASK_TIMEOUT", 7200)
 
-        schema = {'objects': [], 'meta': {}}
+        schema = {"objects": [], "meta": {}}
 
-        job_id = request.args.get('job_id', '')
+        job_id = request.args.get("job_id", "")
         if job_id:
             task = self._get_celery_information(job_id)
-            schema['objects'].append(task)
+            schema["objects"].append(task)
             return jsonify(schema)
 
-        indices = SearchIndex.query.filter(
-            SearchIndex.status.any(status='processing')).filter_by(
-                user=current_user).all()
+        indices = (
+            SearchIndex.query.filter(SearchIndex.status.any(status="processing"))
+            .filter_by(user=current_user)
+            .all()
+        )
         for search_index in indices:
-            if search_index.get_status.status == 'deleted':
+            if search_index.get_status.status == "deleted":
                 continue
             task = self._get_celery_information(search_index.index_name)
-            task['name'] = search_index.name
+            task["name"] = search_index.name
 
-            if task.get('state', '') == 'PENDING':
-                time_pending = (
-                    search_index.updated_at - datetime.datetime.now())
+            if task.get("state", "") == "PENDING":
+                time_pending = search_index.updated_at - datetime.datetime.now()
                 if time_pending.seconds > timeout_threshold_seconds:
-                    search_index.set_status('timeout')
-            schema['objects'].append(task)
+                    search_index.set_status("timeout")
+            schema["objects"].append(task)
         return jsonify(schema)

@@ -23,7 +23,7 @@ alt.data_transformers.disable_max_rows()
 class TableChart(interface.BaseChart):
     """Table chart object."""
 
-    NAME = 'table'
+    NAME = "table"
 
     def generate(self):
         """Generate the chart.
