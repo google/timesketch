@@ -18,7 +18,7 @@ from . import error
 from . import resource
 
 
-logger = logging.getLogger('timesketch_api.user')
+logger = logging.getLogger("timesketch_api.user")
 
 
 class User(resource.BaseResource):
@@ -27,7 +27,7 @@ class User(resource.BaseResource):
     def __init__(self, api):
         """Initializes the user object."""
         self._object_data = None
-        resource_uri = 'users/me/'
+        resource_uri = "users/me/"
         super().__init__(api, resource_uri)
 
     def _get_data(self):
@@ -36,7 +36,7 @@ class User(resource.BaseResource):
             return self._object_data
 
         data = self.data
-        objects = data.get('objects')
+        objects = data.get("objects")
         if objects:
             self._object_data = objects[0]
         else:
@@ -54,16 +54,16 @@ class User(resource.BaseResource):
             ValueError: If there was an error.
 
         Returns:
-            Boolean: Whether the password was sucessfully modified.
+            Boolean: Whether the password was successfully modified.
         """
         if not new_password:
-            raise ValueError('No new password supplied.')
+            raise ValueError("No new password supplied.")
 
         if not isinstance(new_password, str):
-            raise ValueError('Password needs to be a string value.')
+            raise ValueError("Password needs to be a string value.")
 
-        data = {'password': new_password}
-        resource_url = f'{self.api.api_root}/{self.resource_uri}'
+        data = {"password": new_password}
+        resource_url = f"{self.api.api_root}/{self.resource_uri}"
         response = self.api.session.post(resource_url, json=data)
         return error.check_return_status(response, logger)
 
@@ -71,37 +71,37 @@ class User(resource.BaseResource):
     def groups(self):
         """Property that returns the groups the user belongs to."""
         data = self._get_data()
-        groups = data.get('groups', [])
-        return [x.get('name', '') for x in groups]
+        groups = data.get("groups", [])
+        return [x.get("name", "") for x in groups]
 
     @property
     def is_active(self):
         """Property that returns bool indicating whether the user is active."""
         data = self._get_data()
-        return data.get('active', True)
+        return data.get("active", True)
 
     @property
     def is_admin(self):
         """Property that returns bool indicating whether the user is admin."""
         data = self._get_data()
-        return data.get('admin', False)
+        return data.get("admin", False)
 
     @property
     def username(self):
         """Property that returns back the username of the current user."""
         data = self._get_data()
-        return data.get('username', 'Unknown')
+        return data.get("username", "Unknown")
 
     def __str__(self):
         """Returns a string representation of the username."""
         user_strings = [self.username]
 
         if self.is_active:
-            user_strings.append('[active]')
+            user_strings.append("[active]")
         else:
-            user_strings.append('[inactive]')
+            user_strings.append("[inactive]")
 
         if self.is_admin:
-            user_strings.append('<is admin>')
+            user_strings.append("<is admin>")
 
-        return ' '.join(user_strings)
+        return " ".join(user_strings)

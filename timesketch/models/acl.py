@@ -53,7 +53,7 @@ class AccessControlEntry(object):
         Returns:
             A column (instance of sqlalchemy.Column)
         """
-        return Column(Integer, ForeignKey('user.id'))
+        return Column(Integer, ForeignKey("user.id"))
 
     @declared_attr
     def user(self):
@@ -62,7 +62,7 @@ class AccessControlEntry(object):
         Returns:
             A relationship (instance of sqlalchemy.orm.relationship)
         """
-        return relationship('User')
+        return relationship("User")
 
     @declared_attr
     def group_id(self):
@@ -71,7 +71,7 @@ class AccessControlEntry(object):
         Returns:
             A column (instance of sqlalchemy.Column)
         """
-        return Column(Integer, ForeignKey('group.id'))
+        return Column(Integer, ForeignKey("group.id"))
 
     @declared_attr
     def group(self):
@@ -80,7 +80,7 @@ class AccessControlEntry(object):
         Returns:
             A relationship (instance of sqlalchemy.orm.relationship)
         """
-        return relationship('Group')
+        return relationship("Group")
 
     # Permission column (read, write or delete)
     permission = Column(Unicode(255))
@@ -103,14 +103,17 @@ class AccessControlMixin(object):
             A relationship to an ACE (timesketch.models.acl.AccessControlEntry)
         """
         self.AccessControlEntry = type(
-            '%sAccessControlEntry' % self.__name__, (
+            "%sAccessControlEntry" % self.__name__,
+            (
                 AccessControlEntry,
-                BaseModel, ),
+                BaseModel,
+            ),
             dict(
-                __tablename__='%s_accesscontrolentry' % self.__tablename__,
-                parent_id=Column(Integer,
-                                 ForeignKey('%s.id' % self.__tablename__)),
-                parent=relationship(self), ))
+                __tablename__="%s_accesscontrolentry" % self.__tablename__,
+                parent_id=Column(Integer, ForeignKey("%s.id" % self.__tablename__)),
+                parent=relationship(self),
+            ),
+        )
         return relationship(self.AccessControlEntry)
 
     @classmethod
@@ -132,13 +135,19 @@ class AccessControlMixin(object):
 
         # pylint: disable=singleton-comparison
         return cls.query.filter(
-            or_(cls.AccessControlEntry.user == user,
-                and_(cls.AccessControlEntry.user == None,
-                     cls.AccessControlEntry.group == None),
-                cls.AccessControlEntry.group_id.in_([
-                    group.id for group in user.groups
-                ])), cls.AccessControlEntry.permission == 'read',
-            cls.AccessControlEntry.parent)
+            or_(
+                cls.AccessControlEntry.user == user,
+                and_(
+                    cls.AccessControlEntry.user == None,
+                    cls.AccessControlEntry.group == None,
+                ),
+                cls.AccessControlEntry.group_id.in_(
+                    [group.id for group in user.groups]
+                ),
+            ),
+            cls.AccessControlEntry.permission == "read",
+            cls.AccessControlEntry.parent,
+        )
 
     def _get_ace(self, permission, user=None, group=None, check_group=True):
         """Get the specific access control entry for the user and permission.
@@ -156,11 +165,13 @@ class AccessControlMixin(object):
         # If group is specified check if an ACE exist for it and return early.
         if group:
             return self.AccessControlEntry.query.filter_by(
-                group=group, permission=permission, parent=self).all()
+                group=group, permission=permission, parent=self
+            ).all()
 
         # Check access for user.
         ace = self.AccessControlEntry.query.filter_by(
-            user=user, group=None, permission=permission, parent=self).all()
+            user=user, group=None, permission=permission, parent=self
+        ).all()
 
         # If user doesn't have a direct ACE, check group permission.
         if (user and check_group) and not ace:
@@ -168,7 +179,8 @@ class AccessControlMixin(object):
             for _group in group_intersection:
                 # Get group ACE with the requested permission.
                 ace = self.AccessControlEntry.query.filter_by(
-                    group=_group, permission=permission, parent=self).all()
+                    group=_group, permission=permission, parent=self
+                ).all()
                 if ace:
                     return ace
         return ace
@@ -178,13 +190,13 @@ class AccessControlMixin(object):
         """Return a string with the permissions of the current user."""
         has_permissions = []
 
-        permissions = ['read', 'write', 'delete']
+        permissions = ["read", "write", "delete"]
         for permission in permissions:
             if self.has_permission(user=current_user, permission=permission):
                 has_permissions.append(permission)
 
         if current_user.admin:
-            has_permissions.append('admin')
+            has_permissions.append("admin")
 
         return json.dumps(has_permissions)
 
@@ -203,7 +215,8 @@ class AccessControlMixin(object):
         # pylint: disable=singleton-comparison
         group_aces = self.AccessControlEntry.query.filter(
             not_(self.AccessControlEntry.group == None),
-            self.AccessControlEntry.parent == self).all()
+            self.AccessControlEntry.parent == self,
+        ).all()
         return set(ace.group for ace in group_aces)
 
     @property
@@ -214,7 +227,7 @@ class AccessControlMixin(object):
             An ACE (instance of timesketch.models.acl.AccessControlEntry) if the
             object is readable by everyone or None if the object is private.
         """
-        return self._get_ace(permission='read', user=None, group=None)
+        return self._get_ace(permission="read", user=None, group=None)
 
     @property
     def collaborators(self):
@@ -227,8 +240,9 @@ class AccessControlMixin(object):
         aces = self.AccessControlEntry.query.filter(
             not_(self.AccessControlEntry.user == self.user),
             not_(self.AccessControlEntry.user == None),
-            self.AccessControlEntry.permission == 'read',
-            self.AccessControlEntry.parent == self).all()
+            self.AccessControlEntry.permission == "read",
+            self.AccessControlEntry.parent == self,
+        ).all()
         return set(ace.user for ace in aces)
 
     def get_all_permissions(self):
@@ -243,23 +257,25 @@ class AccessControlMixin(object):
         # pylint: disable=singleton-comparison
         aces = self.AccessControlEntry.query.filter(
             not_(self.AccessControlEntry.user == None),
-            self.AccessControlEntry.parent == self).all()
+            self.AccessControlEntry.parent == self,
+        ).all()
 
         for ace in aces:
-            name = 'user/{0:s}'.format(ace.user.username)
+            name = "user/{0:s}".format(ace.user.username)
             return_dict.setdefault(name, [])
             return_dict[name].append(ace.permission)
 
         group_aces = self.AccessControlEntry.query.filter(
             not_(self.AccessControlEntry.group == None),
-            self.AccessControlEntry.parent == self).all()
+            self.AccessControlEntry.parent == self,
+        ).all()
 
         for ace in group_aces:
-            name = 'group/{0:s}'.format(ace.group.name)
+            name = "group/{0:s}".format(ace.group.name)
             return_dict.setdefault(name, [])
             return_dict[name].append(ace.permission)
 
-        return_dict['is_public'] = bool(self.is_public)
+        return_dict["is_public"] = bool(self.is_public)
 
         return return_dict
 
@@ -281,18 +297,20 @@ class AccessControlMixin(object):
         aces = self.AccessControlEntry.query.filter(
             not_(self.AccessControlEntry.user == None),
             self.AccessControlEntry.permission == permission,
-            self.AccessControlEntry.parent == self).all()
+            self.AccessControlEntry.parent == self,
+        ).all()
 
-        return_dict['users'] = set(ace.user for ace in aces)
+        return_dict["users"] = set(ace.user for ace in aces)
 
         group_aces = self.AccessControlEntry.query.filter(
             not_(self.AccessControlEntry.group == None),
             self.AccessControlEntry.permission == permission,
-            self.AccessControlEntry.parent == self).all()
+            self.AccessControlEntry.parent == self,
+        ).all()
 
-        return_dict['groups'] = set(ace.group for ace in group_aces)
+        return_dict["groups"] = set(ace.group for ace in group_aces)
 
-        return_dict['is_public'] = self.is_public
+        return_dict["is_public"] = self.is_public
         return return_dict
 
     def has_permission(self, user, permission):
@@ -308,10 +326,10 @@ class AccessControlMixin(object):
             permission.
         """
         public_ace = self.is_public
-        if public_ace and permission == 'read':
+        if public_ace and permission == "read":
             return public_ace
         if isinstance(permission, six.binary_type):
-            permission = codecs.decode(permission, 'utf-8')
+            permission = codecs.decode(permission, "utf-8")
         return self._get_ace(permission=permission, user=user)
 
     def grant_permission(self, permission, user=None, group=None):
@@ -324,15 +342,13 @@ class AccessControlMixin(object):
         """
         # Grant permission to a group.
         if group and not self._get_ace(permission, group=group):
-            self.acl.append(
-                self.AccessControlEntry(permission=permission, group=group))
+            self.acl.append(self.AccessControlEntry(permission=permission, group=group))
             db_session.commit()
             return
 
         # Grant permission to a user.
         if not self._get_ace(permission, user=user, check_group=False):
-            self.acl.append(
-                self.AccessControlEntry(permission=permission, user=user))
+            self.acl.append(self.AccessControlEntry(permission=permission, user=user))
             db_session.commit()
 
     def revoke_permission(self, permission, user=None, group=None):

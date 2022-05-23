@@ -24,7 +24,7 @@ import pandas as pd
 from timesketch.lib.stories import interface
 
 from timesketch.lib.aggregators import manager as aggregator_manager
-from timesketch.lib.datastores.elastic import ElasticsearchDataStore
+from timesketch.lib.datastores.opensearch import OpenSearchDataStore
 from timesketch.models.sketch import Aggregation
 from timesketch.models.sketch import AggregationGroup
 from timesketch.models.sketch import Sketch
@@ -36,10 +36,11 @@ class ApiDataFetcher(interface.DataFetcher):
 
     def __init__(self):
         """Initialize the data fetcher."""
-        super(ApiDataFetcher, self).__init__()
-        self._datastore = ElasticsearchDataStore(
-            host=current_app.config['ELASTIC_HOST'],
-            port=current_app.config['ELASTIC_PORT'])
+        super().__init__()
+        self._datastore = OpenSearchDataStore(
+            host=current_app.config["OPENSEARCH_HOST"],
+            port=current_app.config["OPENSEARCH_PORT"],
+        )
 
     def get_aggregation(self, agg_dict):
         """Returns an aggregation object from an aggregation dict.
@@ -53,7 +54,7 @@ class ApiDataFetcher(interface.DataFetcher):
             object (instance of AggregationResult) from a saved aggregation
             or an empty dict if not found.
         """
-        aggregation_id = agg_dict.get('id')
+        aggregation_id = agg_dict.get("id")
         if not aggregation_id:
             return {}
 
@@ -63,7 +64,8 @@ class ApiDataFetcher(interface.DataFetcher):
 
         try:
             agg_class = aggregator_manager.AggregatorManager.get_aggregator(
-                aggregation.agg_type)
+                aggregation.agg_type
+            )
         except KeyError:
             return {}
 
@@ -72,23 +74,23 @@ class ApiDataFetcher(interface.DataFetcher):
 
         parameter_string = aggregation.parameters
         parameters = json.loads(parameter_string)
-        index = parameters.pop('index', None)
+        index = parameters.pop("index", None)
         aggregator = agg_class(sketch_id=self._sketch_id, index=index)
 
-        _ = parameters.pop('supported_charts', None)
-        chart_color = parameters.pop('chart_color', 'N/A')
-        chart_title = parameters.pop('chart_title', 'N/A')
+        _ = parameters.pop("supported_charts", None)
+        chart_color = parameters.pop("chart_color", "N/A")
+        chart_title = parameters.pop("chart_title", "N/A")
 
         data = {
-            'aggregation': aggregator.run(**parameters),
-            'name': aggregation.name,
-            'description': aggregation.description,
-            'agg_type': aggregation.agg_type,
-            'parameters': parameters,
-            'chart_type': aggregation.chart_type,
-            'chart_title': chart_title,
-            'chart_color': chart_color,
-            'user': aggregation.user,
+            "aggregation": aggregator.run(**parameters),
+            "name": aggregation.name,
+            "description": aggregation.description,
+            "agg_type": aggregation.agg_type,
+            "parameters": parameters,
+            "chart_type": aggregation.chart_type,
+            "chart_title": chart_title,
+            "chart_color": chart_color,
+            "user": aggregation.user,
         }
         return data
 
@@ -104,7 +106,7 @@ class ApiDataFetcher(interface.DataFetcher):
             as well as a chart object (instance of altair.Chart)
             with the combined chart object from the group.
         """
-        group_id = agg_dict.get('id')
+        group_id = agg_dict.get("id")
         if not group_id:
             return None
 
@@ -122,17 +124,16 @@ class ApiDataFetcher(interface.DataFetcher):
                 aggregator_parameters = {}
 
             agg_class = aggregator_manager.AggregatorManager.get_aggregator(
-                aggregator.agg_type)
+                aggregator.agg_type
+            )
             if not agg_class:
                 continue
 
-
-
-            index = aggregator_parameters.pop('index', None)
+            index = aggregator_parameters.pop("index", None)
             aggregator_obj = agg_class(sketch_id=self._sketch_id, index=index)
-            chart_type = aggregator_parameters.pop('supported_charts', None)
-            color = aggregator_parameters.pop('chart_color', '')
-            chart_title = aggregator_parameters.pop('chart_title', None)
+            chart_type = aggregator_parameters.pop("supported_charts", None)
+            color = aggregator_parameters.pop("chart_color", "")
+            chart_title = aggregator_parameters.pop("chart_title", None)
             result_obj = aggregator_obj.run(**aggregator_parameters)
 
             title = chart_title or aggregator_obj.chart_title
@@ -140,24 +141,27 @@ class ApiDataFetcher(interface.DataFetcher):
             chart = result_obj.to_chart(
                 chart_name=chart_type,
                 chart_title=title,
-                as_chart=True, interactive=True, color=color)
+                as_chart=True,
+                interactive=True,
+                color=color,
+            )
 
             if result_chart is None:
                 result_chart = chart
-            elif orientation == 'horizontal':
+            elif orientation == "horizontal":
                 result_chart = alt.hconcat(chart, result_chart)
-            elif orientation == 'vertical':
+            elif orientation == "vertical":
                 result_chart = alt.vconcat(chart, result_chart)
             else:
                 result_chart = alt.layer(chart, result_chart)
 
         data = {
-            'name': group.name,
-            'description': group.description,
-            'chart': result_chart,
-            'parameters': group.parameters,
-            'orientation': group.orientation,
-            'user': group.user,
+            "name": group.name,
+            "description": group.description,
+            "chart": result_chart,
+            "parameters": group.parameters,
+            "orientation": group.orientation,
+            "user": group.user,
         }
         return data
 
@@ -171,7 +175,7 @@ class ApiDataFetcher(interface.DataFetcher):
         Returns:
             A pandas DataFrame with the results from a view aggregation.
         """
-        view_id = view_dict.get('id')
+        view_id = view_dict.get("id")
         if not view_id:
             return pd.DataFrame()
 
@@ -186,7 +190,7 @@ class ApiDataFetcher(interface.DataFetcher):
         if query_filter and isinstance(query_filter, str):
             query_filter = json.loads(query_filter)
         elif not query_filter:
-            query_filter = {'indices': '_all', 'size': 100}
+            query_filter = {"indices": "_all", "size": 100}
 
         if view.query_dsl:
             query_dsl = json.loads(view.query_dsl)
@@ -194,10 +198,7 @@ class ApiDataFetcher(interface.DataFetcher):
             query_dsl = None
 
         sketch = Sketch.query.get_with_acl(self._sketch_id)
-        sketch_indices = [
-            t.searchindex.index_name
-            for t in sketch.active_timelines
-        ]
+        sketch_indices = [t.searchindex.index_name for t in sketch.active_timelines]
 
         results = self._datastore.search_stream(
             sketch_id=self._sketch_id,
@@ -206,5 +207,5 @@ class ApiDataFetcher(interface.DataFetcher):
             query_dsl=query_dsl,
             indices=sketch_indices,
         )
-        result_list = [x.get('_source') for x in results]
+        result_list = [x.get("_source") for x in results]
         return pd.DataFrame(result_list)

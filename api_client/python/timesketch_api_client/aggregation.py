@@ -24,7 +24,7 @@ from . import error
 from . import resource
 
 
-logger = logging.getLogger('timesketch_api.aggregation')
+logger = logging.getLogger("timesketch_api.aggregation")
 
 
 class Aggregation(resource.SketchResource):
@@ -42,26 +42,25 @@ class Aggregation(resource.SketchResource):
     """
 
     def __init__(self, sketch):
-        self._created_at = ''
+        self._created_at = ""
         self._parameters = {}
-        self._updated_at = ''
+        self._updated_at = ""
         self._group_id = None
-        self.aggregator_name = ''
-        self.chart_color = ''
-        self.chart_type = ''
-        self.chart_title = ''
+        self.aggregator_name = ""
+        self.chart_color = ""
+        self.chart_type = ""
+        self.chart_title = ""
         self.search_id = None
         self.type = None
-        resource_uri = 'sketches/{0:d}/aggregation/explore/'.format(sketch.id)
-        super().__init__(
-            sketch=sketch, resource_uri=resource_uri)
+        resource_uri = "sketches/{0:d}/aggregation/explore/".format(sketch.id)
+        super().__init__(sketch=sketch, resource_uri=resource_uri)
 
     @property
     def created_at(self):
         """Returns a timestamp when the aggregation was created."""
         return self._created_at
 
-    def _get_aggregation_buckets(self, entry, name=''):
+    def _get_aggregation_buckets(self, entry, name=""):
         """Yields all buckets from an aggregation result object.
 
         Args:
@@ -73,20 +72,20 @@ class Aggregation(resource.SketchResource):
             A dict with each aggregation bucket as well as
             the bucket_name.
         """
-        if 'buckets' in entry:
-            for bucket in entry.get('buckets', []):
-                bucket['bucket_name'] = name
+        if "buckets" in entry:
+            for bucket in entry.get("buckets", []):
+                bucket["bucket_name"] = name
                 yield bucket
         else:
             for key, value in iter(entry.items()):
                 if not isinstance(value, dict):
                     continue
-                for bucket in self._get_aggregation_buckets(
-                        value, name=key):
+                for bucket in self._get_aggregation_buckets(value, name=key):
                     yield bucket
 
     def _run_aggregator(
-            self, aggregator_name, parameters, search_id=None, chart_type=None):
+        self, aggregator_name, parameters, search_id=None, chart_type=None
+    ):
         """Run an aggregator class.
 
         Args:
@@ -99,11 +98,12 @@ class Aggregation(resource.SketchResource):
         Returns:
             A dict with the aggregation results.
         """
-        resource_url = '{0:s}/sketches/{1:d}/aggregation/explore/'.format(
-            self.api.api_root, self._sketch.id)
+        resource_url = "{0:s}/sketches/{1:d}/aggregation/explore/".format(
+            self.api.api_root, self._sketch.id
+        )
 
-        if chart_type is None and parameters.get('supported_charts'):
-            chart_type = parameters.get('supported_charts')
+        if chart_type is None and parameters.get("supported_charts"):
+            chart_type = parameters.get("supported_charts")
             if isinstance(chart_type, (list, tuple)):
                 chart_type = chart_type[0]
 
@@ -114,20 +114,21 @@ class Aggregation(resource.SketchResource):
             self.search_id = search_id
 
         self.aggregator_name = aggregator_name
-        self.chart_color = parameters.get('chart_color', '')
+        self.chart_color = parameters.get("chart_color", "")
         self._parameters = parameters
 
         form_data = {
-            'aggregator_name': aggregator_name,
-            'aggregator_parameters': parameters,
-            'chart_type': chart_type,
-            'view_id': search_id,
+            "aggregator_name": aggregator_name,
+            "aggregator_parameters": parameters,
+            "chart_type": chart_type,
+            "view_id": search_id,
         }
 
         response = self.api.session.post(resource_url, json=form_data)
         if not error.check_return_status(response, logger):
             error.error_message(
-                response, message='Unable to query results', error=ValueError)
+                response, message="Unable to query results", error=ValueError
+            )
 
         return error.get_response_json(response, logger)
 
@@ -139,29 +140,30 @@ class Aggregation(resource.SketchResource):
             aggregation_id: integer value for the stored
                 aggregation (primary key).
         """
-        resource_uri = 'sketches/{0:d}/aggregation/{1:d}/'.format(
-            self._sketch.id, aggregation_id)
+        resource_uri = "sketches/{0:d}/aggregation/{1:d}/".format(
+            self._sketch.id, aggregation_id
+        )
         self._resource_id = aggregation_id
         resource_data = self.api.fetch_resource_data(resource_uri)
-        data = resource_data.get('objects', [None])[0]
+        data = resource_data.get("objects", [None])[0]
         if not data:
             return
 
-        self.aggregator_name = data.get('agg_type')
-        self.type = 'stored'
+        self.aggregator_name = data.get("agg_type")
+        self.type = "stored"
 
-        self._created_at = data.get('created_at', '')
-        self._updated_at = data.get('updated_at', '')
-        self._group_id = data.get('aggregationgroup_id')
+        self._created_at = data.get("created_at", "")
+        self._updated_at = data.get("updated_at", "")
+        self._group_id = data.get("aggregationgroup_id")
 
-        label_string = data.get('label_string', '')
+        label_string = data.get("label_string", "")
         if label_string:
             self._labels = json.loads(label_string)
         else:
             self._labels = []
 
-        chart_type = data.get('chart_type')
-        param_string = data.get('parameters', '')
+        chart_type = data.get("chart_type")
+        param_string = data.get("parameters", "")
         if param_string:
             parameters = json.loads(param_string)
         else:
@@ -169,44 +171,48 @@ class Aggregation(resource.SketchResource):
 
         self._parameters = parameters
 
-        self._username = data.get('user', {}).get('username', 'System')
+        self._username = data.get("user", {}).get("username", "System")
         self.resource_data = self._run_aggregator(
-            aggregator_name=self.aggregator_name, parameters=parameters,
-            chart_type=chart_type)
+            aggregator_name=self.aggregator_name,
+            parameters=parameters,
+            chart_type=chart_type,
+        )
 
     # pylint: disable=arguments-differ
     def from_manual(self, aggregate_dsl, **kwargs):
         """Initialize the aggregation object by running an aggregation DSL.
 
         Args:
-            aggregate_dsl: Elasticsearch aggregation query DSL string.
+            aggregate_dsl: OpenSearch aggregation query DSL string.
         """
         super().from_manual(**kwargs)
-        resource_url = '{0:s}/sketches/{1:d}/aggregation/explore/'.format(
-            self.api.api_root, self._sketch.id)
+        resource_url = "{0:s}/sketches/{1:d}/aggregation/explore/".format(
+            self.api.api_root, self._sketch.id
+        )
 
-        self.aggregator_name = 'DSL'
+        self.aggregator_name = "DSL"
         self._username = getpass.getuser()
-        self.type = 'DSL'
+        self.type = "DSL"
 
         date_now = datetime.datetime.now(datetime.timezone.utc)
         self._created_at = date_now.isoformat()
         self._updated_at = date_now.isoformat()
 
         form_data = {
-            'aggregation_dsl': aggregate_dsl,
+            "aggregation_dsl": aggregate_dsl,
         }
 
         response = self.api.session.post(resource_url, json=form_data)
         if not error.check_return_status(response, logger):
             error.error_message(
-                response, message='Unable to query results', error=ValueError)
+                response, message="Unable to query results", error=ValueError
+            )
 
         self.resource_data = error.get_response_json(response, logger)
 
     def from_aggregator_run(
-            self, aggregator_name, aggregator_parameters,
-            search_id=None, chart_type=None):
+        self, aggregator_name, aggregator_parameters, search_id=None, chart_type=None
+    ):
         """Initialize the aggregation object by running an aggregator class.
 
         Args:
@@ -217,7 +223,7 @@ class Aggregation(resource.SketchResource):
                 search.
             chart_type: optional string with the chart type.
         """
-        self.type = 'aggregator_run'
+        self.type = "aggregator_run"
         self._parameters = aggregator_parameters
         self._username = getpass.getuser()
 
@@ -226,7 +232,8 @@ class Aggregation(resource.SketchResource):
         self._updated_at = date_now.isoformat()
 
         self.resource_data = self._run_aggregator(
-            aggregator_name, aggregator_parameters, search_id, chart_type)
+            aggregator_name, aggregator_parameters, search_id, chart_type
+        )
 
     def lazyload_data(self, refresh_cache=False):
         """Load resource data once and cache the result.
@@ -263,8 +270,8 @@ class Aggregation(resource.SketchResource):
             return self.chart_title
 
         data = self.lazyload_data()
-        meta = data.get('meta', {})
-        self.chart_title = meta.get('vega_chart_title', '')
+        meta = data.get("meta", {})
+        self.chart_title = meta.get("vega_chart_title", "")
 
         return self.chart_title
 
@@ -282,23 +289,23 @@ class Aggregation(resource.SketchResource):
     def description(self):
         """Property that returns the description string."""
         data = self.resource_data
-        meta = data.get('meta', {})
-        return meta.get('description', '')
+        meta = data.get("meta", {})
+        return meta.get("description", "")
 
     @description.setter
     def description(self, description):
         """Set the description of an aggregation."""
-        if 'meta' not in self.resource_data:
+        if "meta" not in self.resource_data:
             return
-        meta = self.resource_data.get('meta')
-        meta['description'] = description
+        meta = self.resource_data.get("meta")
+        meta["description"] = description
 
     @property
     def name(self):
         """Property that returns the name of the aggregation."""
         data = self.resource_data
-        meta = data.get('meta', {})
-        name = meta.get('name')
+        meta = data.get("meta", {})
+        name = meta.get("name")
         if name:
             return name
         return self.aggregator_name
@@ -306,10 +313,10 @@ class Aggregation(resource.SketchResource):
     @name.setter
     def name(self, name):
         """Set the name of the aggregation."""
-        if 'meta' not in self.resource_data:
+        if "meta" not in self.resource_data:
             return
-        meta = self.resource_data.get('meta')
-        meta['name'] = name
+        meta = self.resource_data.get("meta")
+        meta["name"] = name
 
     def add_label(self, label):
         """Add a label to the aggregation.
@@ -327,9 +334,9 @@ class Aggregation(resource.SketchResource):
         entries = {}
         entry_index = 1
         data = self.lazyload_data()
-        for entry in data.get('objects', []):
+        for entry in data.get("objects", []):
             for bucket in self._get_aggregation_buckets(entry):
-                entries['entry_{0:d}'.format(entry_index)] = bucket
+                entries["entry_{0:d}".format(entry_index)] = bucket
                 entry_index += 1
         return entries
 
@@ -337,7 +344,7 @@ class Aggregation(resource.SketchResource):
         """Returns a pandas DataFrame."""
         panda_list = []
         data = self.lazyload_data()
-        for entry in data.get('objects', []):
+        for entry in data.get("objects", []):
             for bucket in self._get_aggregation_buckets(entry):
                 panda_list.append(bucket)
         return pandas.DataFrame(panda_list)
@@ -350,14 +357,14 @@ class Aggregation(resource.SketchResource):
     def generate_chart(self):
         """Returns an altair Vega-lite chart."""
         if not self.chart_type:
-            raise TypeError('Unable to generate chart, missing a chart type.')
+            raise TypeError("Unable to generate chart, missing a chart type.")
 
-        if not self._parameters.get('supported_charts'):
-            self._parameters['supported_charts'] = self.chart_type
+        if not self._parameters.get("supported_charts"):
+            self._parameters["supported_charts"] = self.chart_type
 
         data = self.lazyload_data()
-        meta = data.get('meta', {})
-        vega_spec = meta.get('vega_spec')
+        meta = data.get("meta", {})
+        vega_spec = meta.get("vega_spec")
 
         if not vega_spec:
             return altair.Chart(pandas.DataFrame()).mark_point()
@@ -368,46 +375,50 @@ class Aggregation(resource.SketchResource):
     def save(self):
         """Save the aggregation in the database."""
         data = {
-            'name': self.name,
-            'description': self.description,
-            'agg_type': self.aggregator_name,
-            'parameters': self._parameters,
-            'chart_type': self.chart_type,
+            "name": self.name,
+            "description": self.description,
+            "agg_type": self.aggregator_name,
+            "parameters": self._parameters,
+            "chart_type": self.chart_type,
         }
         if self.search_id:
-            data['view_id'] = self.search_id
+            data["view_id"] = self.search_id
         if self._labels:
-            data['labels'] = json.dumps(self._labels)
+            data["labels"] = json.dumps(self._labels)
 
         if self._resource_id:
-            resource_url = '{0:s}/sketches/{1:d}/aggregation/{2:d}/'.format(
-                self.api.api_root, self._sketch.id, self._resource_id)
+            resource_url = "{0:s}/sketches/{1:d}/aggregation/{2:d}/".format(
+                self.api.api_root, self._sketch.id, self._resource_id
+            )
         else:
-            resource_url = '{0:s}/sketches/{1:d}/aggregation/'.format(
-                self.api.api_root, self._sketch.id)
+            resource_url = "{0:s}/sketches/{1:d}/aggregation/".format(
+                self.api.api_root, self._sketch.id
+            )
 
         response = self.api.session.post(resource_url, json=data)
         if not error.check_return_status(response, logger):
-            return 'Unable to save the aggregation'
+            return "Unable to save the aggregation"
 
         response_json = response.json()
-        objects = response_json.get('objects')
+        objects = response_json.get("objects")
         if not objects:
-            return 'Unable to determine ID of saved object.'
+            return "Unable to determine ID of saved object."
         agg_data = objects[0]
-        self._resource_id = agg_data.get('id', 0)
-        return 'Saved aggregation to ID: {0:d}'.format(self._resource_id)
+        self._resource_id = agg_data.get("id", 0)
+        return "Saved aggregation to ID: {0:d}".format(self._resource_id)
 
     def delete(self):
         """Deletes the aggregation from the store."""
         if not self._resource_id:
             logger.warning(
-                'Unable to delete the aggregation, it does not appear to be '
-                'saved in the first place.')
+                "Unable to delete the aggregation, it does not appear to be "
+                "saved in the first place."
+            )
             return False
 
-        resource_uri = '{0:s}/sketches/{1:d}/aggregation/{2:d}/'.format(
-            self.api.api_root, self._sketch.id, self._resource_id)
+        resource_uri = "{0:s}/sketches/{1:d}/aggregation/{2:d}/".format(
+            self.api.api_root, self._sketch.id, self._resource_id
+        )
         response = self.api.session.delete(resource_uri)
         return error.check_return_status(response, logger)
 
@@ -417,22 +428,22 @@ class AggregationGroup(resource.SketchResource):
 
     def __init__(self, sketch):
         """Initialize the aggregation group."""
-        resource_uri = 'sketches/{0:d}/aggregation/group/'.format(
-            sketch.id)
+        resource_uri = "sketches/{0:d}/aggregation/group/".format(sketch.id)
         super().__init__(resource_uri=resource_uri, sketch=sketch)
 
-        self._name = 'N/A'
-        self._created_at = ''
-        self._description = 'N/A'
-        self._orientation = ''
+        self._name = "N/A"
+        self._created_at = ""
+        self._description = "N/A"
+        self._orientation = ""
         self._parameters = {}
         self._aggregations = []
-        self._updated_at = ''
+        self._updated_at = ""
 
     def __str__(self):
         """Return a string representation of the group."""
-        return '[{0:d}] {1:s} - {2:s}'.format(
-            self._resource_id, self._name, self._description)
+        return "[{0:d}] {1:s} - {2:s}".format(
+            self._resource_id, self._name, self._description
+        )
 
     @property
     def aggregations(self):
@@ -452,7 +463,7 @@ class AggregationGroup(resource.SketchResource):
     def to_dict(self):
         """Returns the aggregation values as a dict."""
         data_frame = self.to_pandas()
-        return data_frame.to_dict(orient='records')
+        return data_frame.to_dict(orient="records")
 
     @property
     def chart(self):
@@ -509,12 +520,14 @@ class AggregationGroup(resource.SketchResource):
         """Deletes the group from the store."""
         if not self._resource_id:
             logger.warning(
-                'Unable to delete the group, it does not appear to be saved '
-                'in the first place.')
+                "Unable to delete the group, it does not appear to be saved "
+                "in the first place."
+            )
             return False
 
-        resource_uri = '{0:s}/sketches/{1:d}/aggregation/group/{2:d}/'.format(
-            self.api.api_root, self._sketch.id, self._resource_id)
+        resource_uri = "{0:s}/sketches/{1:d}/aggregation/group/{2:d}/".format(
+            self.api.api_root, self._sketch.id, self._resource_id
+        )
         response = self.api.session.delete(resource_uri)
         return error.check_return_status(response, logger)
 
@@ -529,36 +542,37 @@ class AggregationGroup(resource.SketchResource):
             TypeError: if the dictionary does not contain the correct
                 information.
         """
-        group_id = group_dict.get('id')
+        group_id = group_dict.get("id")
         if not group_id:
-            raise TypeError('Group ID is missing.')
+            raise TypeError("Group ID is missing.")
         self._resource_id = group_id
-        self.resource_uri = 'sketches/{0:d}/aggregation/group/{1:d}/'.format(
-            self._sketch.id, group_id)
+        self.resource_uri = "sketches/{0:d}/aggregation/group/{1:d}/".format(
+            self._sketch.id, group_id
+        )
 
-        self._name = group_dict.get('name', '')
-        self._description = group_dict.get('description', '')
+        self._name = group_dict.get("name", "")
+        self._description = group_dict.get("description", "")
 
-        self._created_at = group_dict.get('created_at', '')
-        self._updated_at = group_dict.get('updated_at', '')
+        self._created_at = group_dict.get("created_at", "")
+        self._updated_at = group_dict.get("updated_at", "")
 
-        self._orientation = group_dict.get('orientation')
+        self._orientation = group_dict.get("orientation")
         if not self._orientation:
-            raise TypeError('How a group is connected needs to be defined.')
+            raise TypeError("How a group is connected needs to be defined.")
 
-        parameter_string = group_dict.get('parameters', '')
+        parameter_string = group_dict.get("parameters", "")
         if parameter_string:
             self._parameters = json.loads(parameter_string)
 
-        aggs = group_dict.get('agg_ids')
+        aggs = group_dict.get("agg_ids")
         if not aggs:
-            raise TypeError('Group contains no aggregations')
+            raise TypeError("Group contains no aggregations")
 
         if isinstance(aggs, str):
             aggs = json.loads(aggs)
 
         if not isinstance(aggs, (list, tuple)):
-            raise TypeError('Aggregations need to be a list.')
+            raise TypeError("Aggregations need to be a list.")
 
         self._aggregations = []
         for agg_id in aggs:
@@ -577,16 +591,15 @@ class AggregationGroup(resource.SketchResource):
             TypeError: if the group ID does not exist.
         """
         self._resource_id = group_id
-        resource_uri = (
-            f'sketches/{self._sketch.id}/aggregation/group/{group_id}/')
+        resource_uri = f"sketches/{self._sketch.id}/aggregation/group/{group_id}/"
         resource_data = self.api.fetch_resource_data(resource_uri)
 
-        objects = resource_data.get('objects')
+        objects = resource_data.get("objects")
         if not objects:
-            raise TypeError('Group ID not found.')
+            raise TypeError("Group ID not found.")
 
         group_dict = objects[0]
-        group_dict['id'] = group_id
+        group_dict["id"] = group_id
         self.from_dict(group_dict)
 
     def generate_chart(self):
@@ -596,8 +609,8 @@ class AggregationGroup(resource.SketchResource):
 
         data = self.lazyload_data()
 
-        meta = data.get('meta', {})
-        vega_spec = meta.get('vega_spec')
+        meta = data.get("meta", {})
+        vega_spec = meta.get("vega_spec")
 
         if not vega_spec:
             return altair.Chart(pandas.DataFrame()).mark_point()
@@ -619,19 +632,21 @@ class AggregationGroup(resource.SketchResource):
             return False
 
         data = {
-            'name': self._name,
-            'description': self._description,
-            'parameters': json.dumps(self._parameters),
-            'aggregations': json.dumps([x.id for x in self._aggregations]),
-            'orientation': self._orientation,
+            "name": self._name,
+            "description": self._description,
+            "parameters": json.dumps(self._parameters),
+            "aggregations": json.dumps([x.id for x in self._aggregations]),
+            "orientation": self._orientation,
         }
 
         if self._resource_id:
-            res_url = '{0:s}/sketches/{1:d}/aggregation/group/{2:d}/'.format(
-                self.api.api_root, self._sketch.id, self._resource_id)
+            res_url = "{0:s}/sketches/{1:d}/aggregation/group/{2:d}/".format(
+                self.api.api_root, self._sketch.id, self._resource_id
+            )
         else:
-            res_url = '{0:s}/sketches/{1:d}/aggregation/group/'.format(
-                self.api.api_root, self._sketch.id)
+            res_url = "{0:s}/sketches/{1:d}/aggregation/group/".format(
+                self.api.api_root, self._sketch.id
+            )
 
         response = self.api.session.post(res_url, json=data)
         _ = self.lazyload_data(refresh_cache=True)

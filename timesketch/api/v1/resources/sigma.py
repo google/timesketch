@@ -31,7 +31,7 @@ from timesketch.api.v1 import resources
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 
-logger = logging.getLogger('timesketch.api.sigma')
+logger = logging.getLogger("timesketch.api.sigma")
 
 
 class SigmaListResource(resources.ResourceMixin, Resource):
@@ -49,16 +49,14 @@ class SigmaListResource(resources.ResourceMixin, Resource):
         try:
             sigma_rules = ts_sigma_lib.get_all_sigma_rules()
 
-        except ValueError:
-            logger.error('OS Error, unable to get the path to the Sigma rules',
-                         exc_info=True)
-            abort(
-                HTTP_STATUS_CODE_NOT_FOUND,
-                'OS Error, unable to get the path to the Sigma rules')
+        except ValueError as e:
+            logger.error(
+                "OS Error, unable to get the path to the Sigma rules", exc_info=True
+            )
+            abort(HTTP_STATUS_CODE_NOT_FOUND, f"Value Error, {e}")
         # TODO: idea for meta: add a list of folders that have been parsed
-        meta = {'current_user': current_user.username,
-                'rules_count': len(sigma_rules)}
-        return jsonify({'objects': sigma_rules, 'meta': meta})
+        meta = {"current_user": current_user.username, "rules_count": len(sigma_rules)}
+        return jsonify({"objects": sigma_rules, "meta": meta})
 
 
 class SigmaResource(resources.ResourceMixin, Resource):
@@ -78,24 +76,21 @@ class SigmaResource(resources.ResourceMixin, Resource):
         try:
             sigma_rules = ts_sigma_lib.get_all_sigma_rules()
 
-        except ValueError:
-            logger.error('OS Error, unable to get the path to the Sigma rules',
-                         exc_info=True)
-            abort(
-                HTTP_STATUS_CODE_NOT_FOUND,
-                'OS Error, unable to get the path to the Sigma rules')
+        except ValueError as e:
+            logger.error(
+                "OS Error, unable to get the path to the Sigma rules", exc_info=True
+            )
+            abort(HTTP_STATUS_CODE_NOT_FOUND, f"ValueError {e}")
         for rule in sigma_rules:
             if rule is not None:
-                if rule_uuid == rule.get('id'):
+                if rule_uuid == rule.get("id"):
                     return_rule = rule
 
         if return_rule is None:
-            abort(
-                HTTP_STATUS_CODE_NOT_FOUND, 'No sigma rule found with this ID.')
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sigma rule found with this ID.")
 
-        meta = {'current_user': current_user.username,
-                'rules_count': len(sigma_rules)}
-        return jsonify({'objects': [return_rule], 'meta': meta})
+        meta = {"current_user": current_user.username, "rules_count": len(sigma_rules)}
+        return jsonify({"objects": [return_rule], "meta": meta})
 
 
 class SigmaByTextResource(resources.ResourceMixin, Resource):
@@ -113,50 +108,56 @@ class SigmaByTextResource(resources.ResourceMixin, Resource):
         if not form:
             form = request.data
 
-        content = form.get('content')
+        content = form.get("content")
         if not content:
             return abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                'Missing values from the request.')
+                HTTP_STATUS_CODE_BAD_REQUEST, "Missing values from the request."
+            )
 
         try:
             sigma_rule = ts_sigma_lib.get_sigma_rule_by_text(content)
 
         except ValueError:
-            logger.error('Sigma Parsing error with the user provided rule',
-                         exc_info=True)
+            logger.error(
+                "Sigma Parsing error with the user provided rule", exc_info=True
+            )
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'Error unable to parse the provided Sigma rule')
+                "Error unable to parse the provided Sigma rule",
+            )
 
         except NotImplementedError as exception:
             logger.error(
-                'Sigma Parsing error: Feature in the rule provided '
-                ' is not implemented in this backend', exc_info=True)
+                "Sigma Parsing error: Feature in the rule provided "
+                " is not implemented in this backend",
+                exc_info=True,
+            )
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'Error generating rule {0!s}'.format(exception))
+                "Error generating rule {0!s}".format(exception),
+            )
 
         except sigma_exceptions.SigmaParseError as exception:
-            logger.error(
-                'Sigma Parsing error: unknown error', exc_info=True)
+            logger.error("Sigma Parsing error: unknown error", exc_info=True)
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'Sigma parsing error generating rule  with error: {0!s}'.format(
-                    exception))
+                "Sigma parsing error generating rule  with error: {0!s}".format(
+                    exception
+                ),
+            )
 
         except yaml.parser.ParserError as exception:
             logger.error(
-                'Sigma Parsing error: an invalid yml file has been provided',
-                exc_info=True)
+                "Sigma Parsing error: an invalid yml file has been provided",
+                exc_info=True,
+            )
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'Sigma parsing error: invalid yaml provided {0!s}'.format(
-                    exception))
+                "Sigma parsing error: invalid yaml provided {0!s}".format(exception),
+            )
 
         if sigma_rule is None:
-            abort(
-                HTTP_STATUS_CODE_NOT_FOUND, 'No sigma was parsed')
-        metadata = {'parsed': True}
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sigma was parsed")
+        metadata = {"parsed": True}
 
-        return jsonify({'objects': [sigma_rule], 'meta': metadata})
+        return jsonify({"objects": [sigma_rule], "meta": metadata})

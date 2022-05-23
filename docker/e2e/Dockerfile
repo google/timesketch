@@ -38,10 +38,12 @@ RUN mkdir /etc/timesketch
 RUN cp /tmp/timesketch/data/timesketch.conf /etc/timesketch/
 RUN cp /tmp/timesketch/data/ontology.yaml /etc/timesketch/
 RUN cp /tmp/timesketch/data/tags.yaml /etc/timesketch/
+RUN cp /tmp/timesketch/data/intelligence_tag_metadata.yaml /etc/timesketch/
 RUN cp /tmp/timesketch/data/features.yaml /etc/timesketch/
 RUN cp /tmp/timesketch/data/plaso.mappings /etc/timesketch/
 RUN cp /tmp/timesketch/data/generic.mappings /etc/timesketch/
 RUN cp /tmp/timesketch/data/sigma_config.yaml /etc/timesketch/
+RUN cp /tmp/timesketch/data/sigma_blocklist.csv /etc/timesketch/
 RUN cp /tmp/timesketch/data/data_finder.yaml /etc/timesketch/
 RUN cp -r /tmp/timesketch/data/sigma /etc/timesketch/sigma
 RUN chmod -R go+r /etc/timesketch

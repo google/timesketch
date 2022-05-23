@@ -28,15 +28,15 @@ import pandas
 from timesketch.lib import definitions
 
 
-logger = logging.getLogger('test_tool.analyzer_run')
+logger = logging.getLogger("test_tool.analyzer_run")
 
 
 # Define named tuples to track changes made to events and sketches.
-EVENT_CHANGE = collections.namedtuple('event_change', 'type, source, what')
-SKETCH_CHANGE = collections.namedtuple('sketch_change', 'type, source, what')
+EVENT_CHANGE = collections.namedtuple("event_change", "type, source, what")
+SKETCH_CHANGE = collections.namedtuple("sketch_change", "type, source, what")
 
-VIEW_OBJECT = collections.namedtuple('view', 'id, name')
-AGG_OBJECT = collections.namedtuple('aggregation', 'id, name parameters')
+VIEW_OBJECT = collections.namedtuple("view", "id, name")
+AGG_OBJECT = collections.namedtuple("aggregation", "id, name parameters")
 
 
 def get_config_path(file_name):
@@ -49,27 +49,27 @@ def get_config_path(file_name):
         The path to the configuration file or an empty string if the file
         cannot be found.
     """
-    path = os.path.join('etc', 'timesketch', file_name)
+    path = os.path.join("etc", "timesketch", file_name)
     if os.path.isfile(path):
         return os.path.abspath(path)
 
-    path = os.path.join('data', file_name)
+    path = os.path.join("data", file_name)
     if os.path.isfile(path):
         return os.path.abspath(path)
 
-    path = os.path.join(
-        os.path.dirname(__file__), '..', 'data', file_name)
+    path = os.path.join(os.path.dirname(__file__), "..", "data", file_name)
     path = os.path.abspath(path)
     if os.path.isfile(path):
         return path
 
     path = os.path.join(
-        os.path.dirname(__file__), '..', '..', '..', '..', 'data', file_name)
+        os.path.dirname(__file__), "..", "..", "..", "..", "data", file_name
+    )
     path = os.path.abspath(path)
     if os.path.isfile(path):
         return path
 
-    return ''
+    return ""
 
 
 class AnalyzerContext(object):
@@ -78,7 +78,7 @@ class AnalyzerContext(object):
     def __init__(self, analyzer_name):
         """Initialize the report object."""
         self.analyzer_name = analyzer_name
-        self.analyzer_result = ''
+        self.analyzer_result = ""
         self.error = None
         self.event_cache = {}
         self.failed = False
@@ -87,59 +87,61 @@ class AnalyzerContext(object):
 
     def get_string_report(self):
         """Returns a string describing the changes made by the analyzer."""
-        return_strings = ['-'*80]
+        return_strings = ["-" * 80]
+        return_strings.append("{0:^80s}".format(self.analyzer_name))
+        return_strings.append("-" * 80)
         return_strings.append(
-            '{0:^80s}'.format(self.analyzer_name))
-        return_strings.append('-'*80)
-        return_strings.append('Total number of events: {0:d}'.format(
-            len(self.event_cache)))
-        return_strings.append('Total number of queries: {0:d}'.format(
-            len(self.queries)))
+            "Total number of events: {0:d}".format(len(self.event_cache))
+        )
+        return_strings.append(
+            "Total number of queries: {0:d}".format(len(self.queries))
+        )
 
-        return_strings.append('')
-        return_strings.append('+'*80)
+        return_strings.append("")
+        return_strings.append("+" * 80)
         for qid, query in enumerate(self.queries):
-            return_strings.append('  -- Query #{0:02d} --'.format(qid+1))
+            return_strings.append("  -- Query #{0:02d} --".format(qid + 1))
             for key, value in query.items():
-                return_strings.append('{0:>20s}: {1!s}'.format(key, value))
+                return_strings.append("{0:>20s}: {1!s}".format(key, value))
 
         if self.failed:
-            return '\n'.join(return_strings)
+            return "\n".join(return_strings)
 
         if self.sketch and self.sketch.updates:
-            return_strings.append('')
-            return_strings.append('+'*80)
-            return_strings.append('Sketch updates:')
+            return_strings.append("")
+            return_strings.append("+" * 80)
+            return_strings.append("Sketch updates:")
             for update in self.sketch.updates:
-                return_strings.append('  {0:s} {1:s}'.format(
-                    update.type, update.source))
-                return_strings.append('\t{0!s}'.format(update.what))
+                return_strings.append(
+                    "  {0:s} {1:s}".format(update.type, update.source)
+                )
+                return_strings.append("\t{0!s}".format(update.what))
 
-        return_strings.append('')
-        return_strings.append('+'*80)
-        return_strings.append('Event Updates:')
+        return_strings.append("")
+        return_strings.append("+" * 80)
+        return_strings.append("Event Updates:")
         event_container = {}
         for event in self.event_cache.values():
             if not event.updates:
                 continue
             for update in event.updates:
-                type_string = '{0:s} {1:s}'.format(update.type, update.source)
+                type_string = "{0:s} {1:s}".format(update.type, update.source)
                 event_container.setdefault(type_string, collections.Counter())
-                event_container[type_string]['{0!s}'.format(update.what)] += 1
+                event_container[type_string]["{0!s}".format(update.what)] += 1
 
         for key, counter in event_container.items():
-            return_strings.append('  {0:s}'.format(key))
+            return_strings.append("  {0:s}".format(key))
             for value, count in counter.most_common():
-                return_strings.append('\t[{0:d}] {1:s}\n'.format(count, value))
-        return_strings.append('')
-        return_strings.append('+'*80)
-        return_strings.append('Result from analyzer run:')
-        return_strings.append('  {0:s}'.format(self.analyzer_result))
-        return_strings.append('=-'*40)
+                return_strings.append("\t[{0:d}] {1:s}\n".format(count, value))
+        return_strings.append("")
+        return_strings.append("+" * 80)
+        return_strings.append("Result from analyzer run:")
+        return_strings.append("  {0:s}".format(self.analyzer_result))
+        return_strings.append("=-" * 40)
 
         if self.error:
-            return_strings.append('Error occurred:\n{0:s}'.format(self.error))
-        return '\n'.join(return_strings)
+            return_strings.append("Error occurred:\n{0:s}".format(self.error))
+        return "\n".join(return_strings)
 
     def add_event(self, event):
         """Add an event to the cache.
@@ -150,21 +152,20 @@ class AnalyzerContext(object):
         if event.event_id not in self.event_cache:
             self.event_cache[event.event_id] = event
 
-    def add_query(
-            self, query_string=None, query_dsl=None, indices=None, fields=None):
+    def add_query(self, query_string=None, query_dsl=None, indices=None, fields=None):
         """Add a query string or DSL to the context.
 
         Args:
             query_string: Query string.
-            query_dsl: Dictionary containing Elasticsearch DSL query.
+            query_dsl: Dictionary containing OpenSearch DSL query.
             indices: List of indices to query.
             fields: List of fields to return.
         """
         query = {
-            'string': query_string,
-            'dsl': query_dsl,
-            'indices': indices,
-            'fields': fields,
+            "string": query_string,
+            "dsl": query_dsl,
+            "indices": indices,
+            "fields": fields,
         }
         self.queries.append(query)
 
@@ -175,7 +176,7 @@ class AnalyzerContext(object):
               event: instance of Event.
         """
         if event.event_id not in self.event_cache:
-            raise ValueError('Event {0:s} not in cache.'.format(event.event_id))
+            raise ValueError("Event {0:s} not in cache.".format(event.event_id))
         del self.event_cache[event.event_id]
 
     def update_event(self, event):
@@ -209,20 +210,21 @@ class Event(object):
     """Event object with helper methods.
 
     Attributes:
-        datastore: Instance of ElasticsearchDatastore (mocked as None).
+        datastore: Instance of OpenSearchDatastore (mocked as None).
         sketch: Sketch ID or None if not provided.
         event_id: ID of the Event.
-        event_type: Document type in Elasticsearch.
-        index_name: The name of the Elasticsearch index.
-        source: Source document from Elasticsearch.
+        event_type: Document type in OpenSearch.
+        index_name: The name of the OpenSearch index.
+        source: Source document from OpenSearch.
         updates: A list of all changes made to an event, with each change
             stored as a EVENT_CHANGE named tuple.
     """
+
     def __init__(self, event, datastore=None, sketch=None, context=None):
         """Initialize Event object.
 
         Args:
-            event: Dictionary of event from Elasticsearch.
+            event: Dictionary of event from OpenSearch.
             datastore: Defaults to none, should be None as this is mocked.
             sketch: Optional instance of a Sketch object.
             context: Optional context object (instance of Context).
@@ -236,8 +238,8 @@ class Event(object):
         self.updates = []
 
         self.event_id = uuid.uuid4().hex
-        self.event_type = 'mocked_event'
-        self.index_name = 'mocked_index'
+        self.event_type = "mocked_event"
+        self.index_name = "mocked_index"
         self.source = event
 
     def _update_change(self, change=None):
@@ -255,7 +257,7 @@ class Event(object):
             self._context.update_event(self)
 
     def commit(self, event_dict=None):
-        """Mock the commit of an event to Elasticsearch.
+        """Mock the commit of an event to OpenSearch.
 
         Args:
             event_dict: (optional) Dictionary with updated event attributes.
@@ -278,7 +280,7 @@ class Event(object):
         Args:
             attributes: Dictionary with new or updated values to add.
         """
-        change = EVENT_CHANGE('ADD', 'attribute', attributes)
+        change = EVENT_CHANGE("ADD", "attribute", attributes)
         self._update_change(change)
 
     def add_label(self, label, toggle=False):
@@ -292,13 +294,13 @@ class Event(object):
             RuntimeError of sketch ID is missing.
         """
         if not self.sketch:
-            raise RuntimeError('No sketch provided.')
+            raise RuntimeError("No sketch provided.")
 
         if toggle:
-            event_type = 'UPDATE'
+            event_type = "UPDATE"
         else:
-            event_type = 'ADD'
-        change = EVENT_CHANGE(event_type, 'label', label)
+            event_type = "ADD"
+        change = EVENT_CHANGE(event_type, "label", label)
         self._update_change(change)
 
     def add_tags(self, tags):
@@ -310,7 +312,7 @@ class Event(object):
         if not tags:
             return
 
-        change = EVENT_CHANGE('ADD', 'tag', tags)
+        change = EVENT_CHANGE("ADD", "tag", tags)
         self._update_change(change)
 
     def add_emojis(self, emojis):
@@ -322,12 +324,12 @@ class Event(object):
         if not emojis:
             return
 
-        change = EVENT_CHANGE('ADD', 'emoji', emojis)
+        change = EVENT_CHANGE("ADD", "emoji", emojis)
         self._update_change(change)
 
     def add_star(self):
         """Star event."""
-        self.add_label(label='__ts_star')
+        self.add_label(label="__ts_star")
 
     def add_comment(self, comment):
         """Add comment to event.
@@ -339,11 +341,11 @@ class Event(object):
             RuntimeError: if no sketch is present.
         """
         if not self.sketch:
-            raise RuntimeError('No sketch provided.')
+            raise RuntimeError("No sketch provided.")
 
-        change = EVENT_CHANGE('ADD', 'comment', comment)
+        change = EVENT_CHANGE("ADD", "comment", comment)
         self._update_change(change)
-        self.add_label(label='__ts_comment')
+        self.add_label(label="__ts_comment")
 
     def add_human_readable(self, human_readable, analyzer_name, append=True):
         """Add a human readable string to event.
@@ -357,14 +359,14 @@ class Event(object):
                 been defined. Defaults to True, and does nothing if
                 human_readable is not defined.
         """
-        human_readable = '[{0:s}] {1:s}'.format(analyzer_name, human_readable)
+        human_readable = "[{0:s}] {1:s}".format(analyzer_name, human_readable)
 
         if append:
-            event_type = 'ADD'
+            event_type = "ADD"
         else:
-            event_type = 'PREPEND'
+            event_type = "PREPEND"
 
-        change = EVENT_CHANGE(event_type, 'human_readable', human_readable)
+        change = EVENT_CHANGE(event_type, "human_readable", human_readable)
         self._update_change(change)
 
 
@@ -376,6 +378,7 @@ class Sketch(object):
         updates: A list of all changes made to an event, with each change
             stored as a SKETCH_CHANGE namedtuple.
     """
+
     def __init__(self, sketch_id):
         """Initializes a Sketch object.
 
@@ -387,8 +390,15 @@ class Sketch(object):
         self._context = None
 
     def add_aggregation(
-            self, name, agg_name, agg_params, description='', view_id=None,
-            chart_type=None, label=''):
+        self,
+        name,
+        agg_name,
+        agg_params,
+        description="",
+        view_id=None,
+        chart_type=None,
+        label="",
+    ):
         """Add aggregation to the sketch.
 
         Args:
@@ -402,26 +412,26 @@ class Sketch(object):
             label: string with a label to attach to the aggregation.
         """
         if not agg_name:
-            raise ValueError('Aggregator name needs to be defined.')
+            raise ValueError("Aggregator name needs to be defined.")
         if not agg_params:
-            raise ValueError('Aggregator parameters have to be defined.')
+            raise ValueError("Aggregator parameters have to be defined.")
 
         params = {
-            'name': name,
-            'agg_name': agg_name,
-            'agg_params': agg_params,
-            'description': description,
-            'view_id': view_id,
-            'chart_type': chart_type,
-            'label': label
+            "name": name,
+            "agg_name": agg_name,
+            "agg_params": agg_params,
+            "description": description,
+            "view_id": view_id,
+            "chart_type": chart_type,
+            "label": label,
         }
-        change = SKETCH_CHANGE('ADD', 'aggregation', params)
+        change = SKETCH_CHANGE("ADD", "aggregation", params)
         self.updates.append(change)
 
         agg_obj = AGG_OBJECT(1, name, agg_params)
         return agg_obj
 
-    def add_aggregation_group(self, name, description='', view_id=None):
+    def add_aggregation_group(self, name, description="", view_id=None):
         """Add aggregation Group to the sketch.
 
         Args:
@@ -431,33 +441,41 @@ class Sketch(object):
             view_id: optional ID of the view to attach the aggregation to.
         """
         if not name:
-            raise ValueError('Aggregator group name needs to be defined.')
+            raise ValueError("Aggregator group name needs to be defined.")
 
         if not description:
-            description = 'Created by an analyzer'
+            description = "Created by an analyzer"
 
-        params = {
-            'name': name,
-            'description': description,
-            'view_id': view_id
-        }
-        change = SKETCH_CHANGE('ADD', 'aggregation_group', params)
+        params = {"name": name, "description": description, "view_id": view_id}
+        change = SKETCH_CHANGE("ADD", "aggregation_group", params)
         self.updates.append(change)
 
         return AggregationGroup(
-            analyzer=self, name=name, description=description, user=None,
-            sketch=self.id, view=view_id)
+            analyzer=self,
+            name=name,
+            description=description,
+            user=None,
+            sketch=self.id,
+            view=view_id,
+        )
 
-    def add_view(self, view_name, analyzer_name, query_string=None,
-                 query_dsl=None, query_filter=None, additional_fields=None):
+    def add_view(
+        self,
+        view_name,
+        analyzer_name,
+        query_string=None,
+        query_dsl=None,
+        query_filter=None,
+        additional_fields=None,
+    ):
         """Add saved view to the Sketch.
 
         Args:
             view_name: The name of the view.
             analyzer_name: The name of the analyzer.
-            query_string: Elasticsearch query string.
-            query_dsl: Dictionary with Elasticsearch DSL query.
-            query_filter: Dictionary with Elasticsearch filters.
+            query_string: OpenSearch query string.
+            query_dsl: Dictionary with OpenSearch DSL query.
+            query_filter: Dictionary with OpenSearch filters.
             additional_fields: A list with field names to include in the
                 view output.
 
@@ -467,26 +485,26 @@ class Sketch(object):
         Returns: An instance of a SQLAlchemy View object.
         """
         if not (query_string or query_dsl):
-            raise ValueError('Both query_string and query_dsl are missing.')
+            raise ValueError("Both query_string and query_dsl are missing.")
 
         if not query_filter:
-            query_filter = {'indices': '_all'}
+            query_filter = {"indices": "_all"}
 
-        name = '[{0:s}] {1:s}'.format(analyzer_name, view_name)
+        name = "[{0:s}] {1:s}".format(analyzer_name, view_name)
         params = {
-            'name': name,
-            'query_string': query_string,
-            'query_dsl': query_dsl,
-            'query_filter': query_filter,
-            'additional_fields': additional_fields,
+            "name": name,
+            "query_string": query_string,
+            "query_dsl": query_dsl,
+            "query_filter": query_filter,
+            "additional_fields": additional_fields,
         }
-        change = SKETCH_CHANGE('ADD', 'view', params)
+        change = SKETCH_CHANGE("ADD", "view", params)
         self.updates.append(change)
 
         view = VIEW_OBJECT(1, name)
         return view
 
-    def add_sketch_attribute(self, name, values, ontology='text'):
+    def add_sketch_attribute(self, name, values, ontology="text"):
         """Add an attribute to the sketch.
 
         Args:
@@ -497,11 +515,11 @@ class Sketch(object):
                 data/ontology.yaml.
         """
         params = {
-            'name': name,
-            'values': values,
-            'ontology': ontology,
+            "name": name,
+            "values": values,
+            "ontology": ontology,
         }
-        change = SKETCH_CHANGE('ADD', 'sketch_attribute', params)
+        change = SKETCH_CHANGE("ADD", "sketch_attribute", params)
         self.updates.append(change)
 
     def add_story(self, title):
@@ -517,9 +535,9 @@ class Sketch(object):
             An instance of a Story object.
         """
         params = {
-            'title': title,
+            "title": title,
         }
-        change = SKETCH_CHANGE('ADD', 'story', params)
+        change = SKETCH_CHANGE("ADD", "story", params)
         self.updates.append(change)
 
         story = Story(self, title=title)
@@ -550,7 +568,7 @@ class BaseIndexAnalyzer(object):
         sketch: Instance of Sketch object.
     """
 
-    NAME = 'name'
+    NAME = "name"
     IS_SKETCH_ANALYZER = False
 
     # If this analyzer depends on another analyzer
@@ -568,27 +586,32 @@ class BaseIndexAnalyzer(object):
             file_name: the file path to the test event file.
         """
         self.datastore = None
-        self.index_name = 'mocked_index'
+        self.index_name = "mocked_index"
         self.name = self.NAME
         if not os.path.isfile(file_name):
             raise IOError(
-                'Unable to read in data, file not found: {0:s}'.format(
-                    file_name))
+                "Unable to read in data, file not found: {0:s}".format(file_name)
+            )
         self._file_name = file_name
         self._context = None
 
-        if not hasattr(self, 'sketch'):
+        if not hasattr(self, "sketch"):
             self.sketch = None
 
     def event_stream(
-            self, query_string=None, query_filter=None, query_dsl=None,
-            indices=None, return_fields=None):
-        """Search ElasticSearch.
+        self,
+        query_string=None,
+        query_filter=None,
+        query_dsl=None,
+        indices=None,
+        return_fields=None,
+    ):
+        """Search OpenSearch.
 
         Args:
             query_string: Query string.
             query_filter: Dictionary containing filters to apply.
-            query_dsl: Dictionary containing Elasticsearch DSL query.
+            query_dsl: Dictionary containing OpenSearch DSL query.
             indices: List of indices to query.
             return_fields: List of fields to return.
 
@@ -599,55 +622,56 @@ class BaseIndexAnalyzer(object):
             ValueError: if neither query_string or query_dsl is provided.
         """
         if not (query_string or query_dsl):
-            raise ValueError('Both query_string and query_dsl are missing')
+            raise ValueError("Both query_string and query_dsl are missing")
 
         if not query_filter:
-            query_filter = {'indices': self.index_name}
+            query_filter = {"indices": self.index_name}
 
         # If not provided we default to the message field as this will always
         # be present.
         if not return_fields:
-            return_fields = ['message']
+            return_fields = ["message"]
 
         # Make sure we always return tag, human_readable and emoji attributes.
-        return_fields.extend(['tag', 'human_readable', '__ts_emojis'])
+        return_fields.extend(["tag", "human_readable", "__ts_emojis"])
         return_fields = list(set(return_fields))
 
         if not indices:
-            indices = ['MOCKED_INDEX']
+            indices = ["MOCKED_INDEX"]
 
         if self._context:
             self._context.add_query(
-                query_string=query_string, query_dsl=query_dsl,
-                indices=indices, fields=return_fields)
+                query_string=query_string,
+                query_dsl=query_dsl,
+                indices=indices,
+                fields=return_fields,
+            )
 
-        _, _, file_extension = self._file_name.rpartition('.')
+        _, _, file_extension = self._file_name.rpartition(".")
         file_extension = file_extension.lower()
-        if file_extension not in ['csv', 'jsonl']:
+        if file_extension not in ["csv", "jsonl"]:
             raise ValueError(
-                'Unable to parse the test file [{0:s}] unless it has the '
-                'extension of either .csv or .jsonl'.format(self._file_name))
+                "Unable to parse the test file [{0:s}] unless it has the "
+                "extension of either .csv or .jsonl".format(self._file_name)
+            )
 
-        with codecs.open(
-                self._file_name, encoding='utf-8', errors='replace') as fh:
+        with codecs.open(self._file_name, encoding="utf-8", errors="replace") as fh:
 
-            if file_extension == 'csv':
+            if file_extension == "csv":
                 reader = csv.DictReader(fh)
                 for row in reader:
-                    event = Event(
-                        row, sketch=self.sketch, context=self._context)
+                    event = Event(row, sketch=self.sketch, context=self._context)
                     if self._context:
                         self._context.add_event(event)
                     yield event
-            elif file_extension == 'jsonl':
+            elif file_extension == "jsonl":
                 for row in fh:
                     event = Event(
-                        json.loads(row), sketch=self.sketch,
-                        context=self._context)
+                        json.loads(row), sketch=self.sketch, context=self._context
+                    )
                     if self._context:
                         self._context.add_event(event)
                     yield event
-
 
     def run_wrapper(self):
         """A wrapper method to run the analyzer.
@@ -663,15 +687,17 @@ class BaseIndexAnalyzer(object):
             if self._context:
                 self._context.error = traceback.format_exc()
             logger.error(
-                'Unable to run the analyzer.\nMake sure the test data '
-                'contains all the necessary information to run.'
-                '\n\nThe traceback for the execution is:\n\n', exc_info=True)
+                "Unable to run the analyzer.\nMake sure the test data "
+                "contains all the necessary information to run."
+                "\n\nThe traceback for the execution is:\n\n",
+                exc_info=True,
+            )
             self._context.failed = True
             return
 
         # Update database analysis object with result and status
         if self._context:
-            self._context.result = '{0:s}'.format(result)
+            self._context.result = "{0:s}".format(result)
             self._context.analyzer_result = result
 
     def run(self):
@@ -699,7 +725,7 @@ class BaseSketchAnalyzer(BaseIndexAnalyzer):
         sketch: A Sketch instance.
     """
 
-    NAME = 'name'
+    NAME = "name"
     IS_SKETCH_ANALYZER = True
 
     def __init__(self, file_name, sketch_id):
@@ -723,14 +749,19 @@ class BaseSketchAnalyzer(BaseIndexAnalyzer):
         self.sketch.set_context(self._context)
 
     def event_pandas(
-            self, query_string=None, query_filter=None, query_dsl=None,
-            indices=None, return_fields=None):
-        """Search ElasticSearch.
+        self,
+        query_string=None,
+        query_filter=None,
+        query_dsl=None,
+        indices=None,
+        return_fields=None,
+    ):
+        """Search OpenSearch.
 
         Args:
             query_string: Query string.
             query_filter: Dictionary containing filters to apply.
-            query_dsl: Dictionary containing Elasticsearch DSL query.
+            query_dsl: Dictionary containing OpenSearch DSL query.
             indices: List of indices to query.
             return_fields: List of fields to be included in the search results,
                 if not included all fields will be included in the results.
@@ -742,28 +773,31 @@ class BaseSketchAnalyzer(BaseIndexAnalyzer):
             ValueError: if neither query_string or query_dsl is provided.
         """
         if not (query_string or query_dsl):
-            raise ValueError('Both query_string and query_dsl are missing')
+            raise ValueError("Both query_string and query_dsl are missing")
 
         if not query_filter:
-            query_filter = {'indices': self.index_name, 'size': 10000}
+            query_filter = {"indices": self.index_name, "size": 10000}
 
         if not indices:
-            indices = ['MOCKED_INDEX']
+            indices = ["MOCKED_INDEX"]
 
         if return_fields:
             default_fields = definitions.DEFAULT_SOURCE_FIELDS
             return_fields.extend(default_fields)
             return_fields = list(set(return_fields))
-            return_fields = ','.join(return_fields)
+            return_fields = ",".join(return_fields)
 
         self._context.add_query(
-            query_string=query_string, query_dsl=query_dsl, indices=indices,
-            fields=return_fields)
+            query_string=query_string,
+            query_dsl=query_dsl,
+            indices=indices,
+            fields=return_fields,
+        )
 
         data_frame = pandas.read_csv(self._file_name)
         data_frame = data_frame.assign(_id=lambda x: uuid.uuid4().hex)
-        data_frame['_type'] = 'mocked_event'
-        data_frame['_index'] = 'mocked_index'
+        data_frame["_type"] = "mocked_event"
+        data_frame["_index"] = "mocked_index"
 
         return data_frame
 
@@ -781,7 +815,7 @@ class Story(object):
         self.title = title
         self._analyzer = analyzer
 
-    def add_aggregation(self, aggregation, agg_type=''):
+    def add_aggregation(self, aggregation, agg_type=""):
         """Add a saved aggregation to the Story.
 
         Args:
@@ -792,21 +826,21 @@ class Story(object):
         """
         parameter_dict = aggregation.parameters
         if agg_type:
-            parameter_dict['supported_charts'] = agg_type
+            parameter_dict["supported_charts"] = agg_type
         else:
-            agg_type = parameter_dict.get('supported_charts')
+            agg_type = parameter_dict.get("supported_charts")
             # Neither agg_type nor supported_charts is set.
             if not agg_type:
-                agg_type = 'table'
-                parameter_dict['supported_charts'] = 'table'
+                agg_type = "table"
+                parameter_dict["supported_charts"] = "table"
 
         params = {
-            'agg_id': aggregation.id,
-            'agg_name': aggregation.name,
-            'agg_type': agg_type,
-            'agg_params': parameter_dict,
+            "agg_id": aggregation.id,
+            "agg_name": aggregation.name,
+            "agg_type": agg_type,
+            "agg_params": parameter_dict,
         }
-        change = SKETCH_CHANGE('STORY_ADD', 'aggregation', params)
+        change = SKETCH_CHANGE("STORY_ADD", "aggregation", params)
         self._analyzer.updates.append(change)
 
     def add_aggregation_group(self, aggregation_group):
@@ -820,10 +854,10 @@ class Story(object):
             return
 
         params = {
-            'group_id': aggregation_group.id,
-            'group_name': aggregation_group.name
+            "group_id": aggregation_group.id,
+            "group_name": aggregation_group.name,
         }
-        change = SKETCH_CHANGE('STORY_ADD', 'aggregation_group', params)
+        change = SKETCH_CHANGE("STORY_ADD", "aggregation_group", params)
         self._analyzer.updates.append(change)
 
     def add_text(self, text, skip_if_exists=False):
@@ -835,10 +869,10 @@ class Story(object):
                 will not be added if a block with this text already exists.
         """
         params = {
-            'text': text,
-            'skip_if_exists': skip_if_exists,
+            "text": text,
+            "skip_if_exists": skip_if_exists,
         }
-        change = SKETCH_CHANGE('STORY_ADD', 'text', params)
+        change = SKETCH_CHANGE("STORY_ADD", "text", params)
         self._analyzer.updates.append(change)
 
     def add_view(self, view):
@@ -847,11 +881,8 @@ class Story(object):
         Args:
             view (View): Saved view to add to the story.
         """
-        params = {
-            'view_id': view.id,
-            'view_name': view.name
-        }
-        change = SKETCH_CHANGE('STORY_ADD', 'view', params)
+        params = {"view_id": view.id, "view_name": view.name}
+        change = SKETCH_CHANGE("STORY_ADD", "view", params)
         self._analyzer.updates.append(change)
 
 
@@ -861,6 +892,7 @@ class AggregationGroup(object):
     Attributes:
         group (SQLAlchemy): Instance of a SQLAlchemy AggregationGroup object.
     """
+
     def __init__(self, analyzer, name, description, user, sketch, view):
         """Initializes the AggregationGroup object."""
         self._analyzer = analyzer
@@ -870,8 +902,8 @@ class AggregationGroup(object):
         self._sketch = sketch
         self._view = view
 
-        self._orientation = 'layer'
-        self._parameters = ''
+        self._orientation = "layer"
+        self._parameters = ""
 
     @property
     def id(self):
@@ -890,19 +922,18 @@ class AggregationGroup(object):
             aggregation_obj (Aggregation): the Aggregation objec.
         """
         params = {
-            'agg_id': aggregation_obj.id,
-            'agg_name': aggregation_obj.name,
+            "agg_id": aggregation_obj.id,
+            "agg_name": aggregation_obj.name,
         }
-        change = SKETCH_CHANGE('AGGREGATION_GROUP_ADD', 'aggregation', params)
+        change = SKETCH_CHANGE("AGGREGATION_GROUP_ADD", "aggregation", params)
         self._analyzer.updates.append(change)
 
     def commit(self):
         """Commit changes to DB."""
-        change = SKETCH_CHANGE(
-            'AGGREGATION_GROUP_CHANGE', 'commit_issued', {})
+        change = SKETCH_CHANGE("AGGREGATION_GROUP_CHANGE", "commit_issued", {})
         self._analyzer.updates.append(change)
 
-    def set_orientation(self, orientation='layer'):
+    def set_orientation(self, orientation="layer"):
         """Sets how charts should be joined.
 
         Args:
@@ -913,23 +944,22 @@ class AggregationGroup(object):
         """
         orientation = orientation.lower()
         params = {
-            'orientation': orientation,
+            "orientation": orientation,
         }
-        change = SKETCH_CHANGE(
-            'AGGREGATION_GROUP_CHANGE', 'orientation', params)
+        change = SKETCH_CHANGE("AGGREGATION_GROUP_CHANGE", "orientation", params)
         self._analyzer.updates.append(change)
 
     def set_vertical(self):
         """Sets the "orienation" to vertical."""
-        self.set_orientation('vertical')
+        self.set_orientation("vertical")
 
     def set_horizontal(self):
         """Sets the "orientation" to horizontal."""
-        self.set_orientation('horizontal')
+        self.set_orientation("horizontal")
 
     def set_layered(self):
         """Sets the "orientation" to layer."""
-        self.set_orientation('layer')
+        self.set_orientation("layer")
 
     def set_parameters(self, parameters=None):
         """Sets the parameters for the aggregation group.
@@ -943,14 +973,13 @@ class AggregationGroup(object):
         elif isinstance(parameters, str):
             parameter_string = parameters
         elif parameters is None:
-            parameter_string = ''
+            parameter_string = ""
         else:
             parameter_string = str(parameters)
 
         params = {
-            'parameters': parameter_string,
+            "parameters": parameter_string,
         }
-        change = SKETCH_CHANGE(
-            'AGGREGATION_GROUP_CHANGE', 'parameters', params)
+        change = SKETCH_CHANGE("AGGREGATION_GROUP_CHANGE", "parameters", params)
         self._analyzer.updates.append(change)
         self._parameters = parameter_string

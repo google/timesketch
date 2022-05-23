@@ -8,15 +8,14 @@ from timesketch.lib.analyzers import win_evtxgap
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.testlib import MockDataStore
 
+
 class TestEvtxGapPlugin(BaseTest):
     """Tests the functionality of the analyzer."""
 
-    @mock.patch(
-        'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
-        MockDataStore)
+    @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     def setUp(self):
         super().setUp()
-        self.analyzer = win_evtxgap.EvtxGapPlugin('test_index', 1)
+        self.analyzer = win_evtxgap.EvtxGapPlugin("test_index", 1)
 
     def test_get_range(self):
         """Test the get range function."""
@@ -47,5 +46,5 @@ class TestEvtxGapPlugin(BaseTest):
         self.assertSetEqual(set(), set(ranges))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

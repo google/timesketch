@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 services:
   timesketch:
     container_name: timesketch-dev
@@ -6,8 +6,10 @@ services:
     command: timesketch
     ports:
       - 127.0.0.1:5000:5000
+      - 127.0.0.1:5001:5001
+      - 127.0.0.1:8080:8080
     links:
-      - elasticsearch
+      - opensearch
       - postgres
       - redis
       - notebook
@@ -16,8 +18,8 @@ services:
       - POSTGRES_PASSWORD=password
       - POSTGRES_ADDRESS=postgres
       - POSTGRES_PORT=5432
-      - ELASTIC_ADDRESS=elasticsearch
-      - ELASTIC_PORT=9200
+      - OPENSEARCH_HOST=opensearch
+      - OPENSEARCH_PORT=9200
       - REDIS_ADDRESS=redis
       - REDIS_PORT=6379
       - TIMESKETCH_USER=dev
@@ -29,19 +31,25 @@ services:
     volumes:
       - ../../:/usr/local/src/timesketch/
 
-  elasticsearch:    
-    container_name: elasticsearch
-    image: docker.elastic.co/elasticsearch/elasticsearch-oss:7.10.2
+  opensearch:
+    container_name: opensearch
+    image: opensearchproject/opensearch:latest
     restart: always
     environment:
       - discovery.type=single-node
       - bootstrap.memory_lock=true
       - network.host=0.0.0.0
-      - "ES_JAVA_OPTS=-Xms2g -Xmx2g"
+      - "OPENSEARCH_JAVA_OPTS=-Xms2g -Xmx2g"
+      - "DISABLE_INSTALL_DEMO_CONFIG=true"
+      - "DISABLE_SECURITY_PLUGIN=true" # TODO: Enable when we have migrated the python client to Opensearch as well.
+
     ulimits:
       memlock:
         soft: -1
         hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
 
   postgres:
     container_name: postgres
@@ -63,11 +71,10 @@ services:
       - 127.0.0.1:8844:8844
     restart: on-failure
     links:
-      - elasticsearch
+      - opensearch
     volumes:
       - ../../:/usr/local/src/timesketch/:ro
       - /tmp/:/usr/local/src/picadata/
-
   prometheus:
     container_name: prometheus
     image: prom/prometheus:v2.24.1
@@ -76,15 +83,6 @@ services:
     ports:
       - 127.0.0.1:9090:9090
     command: --config.file=/etc/prometheus/prometheus.yml
-
-  es-metrics-exporter:
-    container_name: es-metrics-exporter
-    image: justwatch/elasticsearch_exporter:1.1.0
-    command: --es.uri=http://elasticsearch:9200 --es.all
-    restart: always
-    links:
-      - elasticsearch
-
   grafana:
     container_name: grafana
     image: "grafana/grafana:latest"

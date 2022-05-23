@@ -20,8 +20,8 @@ from timesketch.lib.graphs import manager
 class WinServiceGraph(BaseGraphPlugin):
     """Graph plugin for Windows services."""
 
-    NAME = 'WinService'
-    DISPLAY_NAME = 'Windows services'
+    NAME = "WinService"
+    DISPLAY_NAME = "Windows services"
 
     def generate(self):
         """Generate the graph.
@@ -29,16 +29,15 @@ class WinServiceGraph(BaseGraphPlugin):
         Returns:
             Graph object instance.
         """
-        query = 'event_identifier:7045'
-        return_fields = ['computer_name', 'username', 'strings']
+        query = "event_identifier:7045"
+        return_fields = ["computer_name", "username", "strings"]
 
-        events = self.event_stream(
-            query_string=query, return_fields=return_fields)
+        events = self.event_stream(query_string=query, return_fields=return_fields)
 
         for event in events:
-            computer_name = event['_source'].get('computer_name', 'UNKNOWN')
-            username = event['_source'].get('username', 'UNKNOWN')
-            event_strings = event['_source'].get('strings', [])
+            computer_name = event["_source"].get("computer_name", "UNKNOWN")
+            username = event["_source"].get("username", "UNKNOWN")
+            event_strings = event["_source"].get("strings", [])
 
             # Skip event if we don't have enough data to build the graph.
             try:
@@ -49,11 +48,11 @@ class WinServiceGraph(BaseGraphPlugin):
             except IndexError:
                 continue
 
-            computer = self.graph.add_node(computer_name, {'type': 'computer'})
-            user = self.graph.add_node(username, {'type': 'user'})
-            service = self.graph.add_node(service_name, {
-                'type': 'winservice', 'image_path': image_path
-            })
+            computer = self.graph.add_node(computer_name, {"type": "computer"})
+            user = self.graph.add_node(username, {"type": "user"})
+            service = self.graph.add_node(
+                service_name, {"type": "winservice", "image_path": image_path}
+            )
 
             self.graph.add_edge(user, service, start_type, event)
             self.graph.add_edge(service, computer, service_type, event)

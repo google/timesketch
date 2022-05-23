@@ -349,7 +349,7 @@ limitations under the License.
                     <span class="icon">
                       <i class="fas fa-star"></i>
                     </span>
-                    <span>Toggle star ({{ numSelectedEvents }})</span>
+                    <span>Star events ({{ numSelectedEvents }})</span>
                   </button>
                 </div>
               </div>
@@ -915,7 +915,6 @@ export default {
       })
       this.addChip(chip)
     },
-
     toggleLabelChip: function(labelName) {
       let chip = {
         field: '',
@@ -984,15 +983,44 @@ export default {
       }
     },
     toggleStar: function() {
+      // The function stars and unstars all selected events, instead of
+      // toggling them. This helps when some of the selected events (but not
+      // all) were already starred.
+      let eventsStarred = []
+      let eventsUnstarred = []
       let eventsToToggle = []
       Object.keys(this.selectedEvents).forEach((key, index) => {
-        eventsToToggle.push(this.selectedEvents[key])
+        if (this.selectedEvents[key].isStarred) {
+          eventsStarred.push(this.selectedEvents[key])
+        }
+        else {
+          eventsUnstarred.push(this.selectedEvents[key])
+        }
       })
+<<<<<<< HEAD
+=======
+
+      // Find out if there's a mix of starred and unstarred events
+      if (eventsStarred.length && eventsUnstarred.length) {
+        eventsToToggle = eventsUnstarred
+      }
+      else {
+        eventsToToggle = (eventsUnstarred.length) ? eventsUnstarred : eventsStarred
+      }
+
+      // Updating has 3 independent parts:
+      // 1) The backend via API
+>>>>>>> c4483eb0b041acb1fd2239e752c526f527d0ef89
       ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', eventsToToggle, this.currentSearchNode)
         .then(response => {})
         .catch(e => {})
-
-      EventBus.$emit('toggleStar', this.selectedEvents)
+      // 2) The UI element representing each of the rows
+      let idOfEventsToToggle = eventsToToggle.map(e => e._id)
+      EventBus.$emit('toggleStar', idOfEventsToToggle)
+      // 3) The local copy of events
+      for (let event of eventsToToggle) {
+        event.isStarred = !event.isStarred
+      }
     },
     changeSortOrder: function() {
       if (this.currentQueryFilter.order === 'asc') {

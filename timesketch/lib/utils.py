@@ -35,19 +35,19 @@ from pandas import Timestamp
 
 from timesketch.lib import errors
 
-logger = logging.getLogger('timesketch.utils')
+logger = logging.getLogger("timesketch.utils")
 
 # Fields to scrub from timelines.
-FIELDS_TO_REMOVE = ['_id', '_type', '_index', '_source', '__ts_timeline_id']
+FIELDS_TO_REMOVE = ["_id", "_type", "_index", "_source", "__ts_timeline_id"]
 
 # Number of rows processed at once when ingesting a CSV file.
 DEFAULT_CHUNK_SIZE = 10000
 
 # Columns that must be present in ingested timesketch files.
-TIMESKETCH_FIELDS = frozenset({'message', 'datetime', 'timestamp_desc'})
+TIMESKETCH_FIELDS = frozenset({"message", "datetime", "timestamp_desc"})
 
 # Columns that must be present in ingested redline files.
-REDLINE_FIELDS = frozenset({'Alert', 'Tag', 'Timestamp', 'Field', 'Summary'})
+REDLINE_FIELDS = frozenset({"Alert", "Tag", "Timestamp", "Field", "Summary"})
 
 
 def random_color():
@@ -57,11 +57,11 @@ def random_color():
         Color as string in HEX
     """
     hue = random.random()
-    golden_ratio_conjugate = (1 + 5 ** 0.5) / 2
+    golden_ratio_conjugate = (1 + 5**0.5) / 2
     hue += golden_ratio_conjugate
     hue %= 1
     rgb = tuple(int(i * 256) for i in colorsys.hsv_to_rgb(hue, 0.5, 0.95))
-    return '{0:02X}{1:02X}{2:02X}'.format(rgb[0], rgb[1], rgb[2])
+    return "{0:02X}{1:02X}{2:02X}".format(rgb[0], rgb[1], rgb[2])
 
 
 def _parse_tag_field(row):
@@ -72,20 +72,20 @@ def _parse_tag_field(row):
     if not isinstance(row, str):
         row = str(row)
 
-    if row.startswith('[') and row.endswith(']'):
+    if row.startswith("[") and row.endswith("]"):
         return json.loads(row)
 
-    if row == '-':
+    if row == "-":
         return []
 
-    if ',' in row:
-        return row.split(',')
+    if "," in row:
+        return row.split(",")
 
     return [row]
 
 
 def _scrub_special_tags(dict_obj):
-    """Remove Elastic specific fields from a dict."""
+    """Remove OpenSearch specific fields from a dict."""
     for field in FIELDS_TO_REMOVE:
         if field in dict_obj:
             _ = dict_obj.pop(field)
@@ -107,8 +107,11 @@ def _validate_csv_fields(mandatory_fields, data):
     if mandatory_set.issubset(parsed_set):
         return
 
-    raise RuntimeError('Missing fields in CSV header: {0:s}'.format(
-        ','.join(list(mandatory_set.difference(parsed_set)))))
+    raise RuntimeError(
+        "Missing fields in CSV header: {0:s}".format(
+            ",".join(list(mandatory_set.difference(parsed_set)))
+        )
+    )
 
 
 def validate_indices(indices, datastore):
@@ -119,17 +122,15 @@ def validate_indices(indices, datastore):
 
     Args:
         indices (list): List of indices.
-        datastore (ElasticsearchDataStore): a data store object.
+        datastore (OpenSearchDataStore): a data store object.
 
     Returns:
         list of indices that exist within the datastore.
     """
-    return [
-        i for i in indices if datastore.client.indices.exists(index=i)]
+    return [i for i in indices if datastore.client.indices.exists(index=i)]
 
 
-def read_and_validate_csv(
-        file_handle, delimiter=',', mandatory_fields=None):
+def read_and_validate_csv(file_handle, delimiter=",", mandatory_fields=None):
     """Generator for reading a CSV file.
 
     Args:
@@ -145,53 +146,59 @@ def read_and_validate_csv(
         mandatory_fields = TIMESKETCH_FIELDS
     # Ensures delimiter is a string.
     if not isinstance(delimiter, six.text_type):
-        delimiter = codecs.decode(delimiter, 'utf8')
+        delimiter = codecs.decode(delimiter, "utf8")
 
     header_reader = pandas.read_csv(file_handle, sep=delimiter, nrows=0)
     _validate_csv_fields(mandatory_fields, header_reader)
 
-    if hasattr(file_handle, 'seek'):
+    if hasattr(file_handle, "seek"):
         file_handle.seek(0)
 
     try:
         reader = pandas.read_csv(
-            file_handle, sep=delimiter, chunksize=DEFAULT_CHUNK_SIZE)
+            file_handle, sep=delimiter, chunksize=DEFAULT_CHUNK_SIZE
+        )
         for idx, chunk in enumerate(reader):
-            skipped_rows = chunk[chunk['datetime'].isnull()]
+            skipped_rows = chunk[chunk["datetime"].isnull()]
             if not skipped_rows.empty:
                 logger.warning(
-                    '{0} rows skipped since they were missing a datetime field '
-                    'or it was empty '.format(len(skipped_rows)))
+                    "{0} rows skipped since they were missing a datetime field "
+                    "or it was empty ".format(len(skipped_rows))
+                )
 
             # Normalize datetime to ISO 8601 format if it's not the case.
             try:
                 # Lines with unrecognized datetime format will result in "NaT"
                 # (not available) as its value and the event row will be
                 # dropped in the next line
-                chunk['datetime'] = pandas.to_datetime(
-                    chunk['datetime'], errors='coerce')
+                chunk["datetime"] = pandas.to_datetime(
+                    chunk["datetime"], errors="coerce"
+                )
                 num_chunk_rows = chunk.shape[0]
-                chunk.dropna(subset=['datetime'], inplace=True)
+                chunk.dropna(subset=["datetime"], inplace=True)
                 if len(chunk) < num_chunk_rows:
                     logger.warning(
-                        '{0} rows dropped from Rows {1} to {2} due to invalid '
-                        'datetime values'.format(
+                        "{0} rows dropped from Rows {1} to {2} due to invalid "
+                        "datetime values".format(
                             num_chunk_rows - len(chunk),
                             idx * reader.chunksize,
-                            idx * reader.chunksize + num_chunk_rows))
-                chunk['timestamp'] = chunk['datetime'].dt.strftime(
-                    '%s%f').astype(int)
-                chunk['datetime'] = chunk['datetime'].apply(
-                    Timestamp.isoformat).astype(str)
+                            idx * reader.chunksize + num_chunk_rows,
+                        )
+                    )
+                chunk["timestamp"] = chunk["datetime"].dt.strftime("%s%f").astype(int)
+                chunk["datetime"] = (
+                    chunk["datetime"].apply(Timestamp.isoformat).astype(str)
+                )
             except ValueError:
                 logger.warning(
-                    'Rows {0} to {1} skipped due to malformed '
-                    'datetime values '.format(
-                        idx * reader.chunksize,
-                        idx * reader.chunksize + chunk.shape[0]))
+                    "Rows {0} to {1} skipped due to malformed "
+                    "datetime values ".format(
+                        idx * reader.chunksize, idx * reader.chunksize + chunk.shape[0]
+                    )
+                )
                 continue
-            if 'tag' in chunk:
-                chunk['tag'] = chunk['tag'].apply(_parse_tag_field)
+            if "tag" in chunk:
+                chunk["tag"] = chunk["tag"].apply(_parse_tag_field)
 
             for _, row in chunk.iterrows():
                 _scrub_special_tags(row)
@@ -199,7 +206,7 @@ def read_and_validate_csv(
                 row.dropna(inplace=True)
                 yield row.to_dict()
     except (pandas.errors.EmptyDataError, pandas.errors.ParserError) as e:
-        error_string = 'Unable to read file, with error: {0!s}'.format(e)
+        error_string = "Unable to read file, with error: {0!s}".format(e)
         logger.error(error_string)
         raise errors.DataIngestionError(error_string) from e
 
@@ -215,30 +222,29 @@ def read_and_validate_redline(file_handle):
     """
 
     csv.register_dialect(
-        'redlineDialect', delimiter=',', quoting=csv.QUOTE_ALL,
-        skipinitialspace=True)
-    reader = pandas.read_csv(file_handle, delimiter=',',
-                             dialect='redlineDialect')
+        "redlineDialect", delimiter=",", quoting=csv.QUOTE_ALL, skipinitialspace=True
+    )
+    reader = pandas.read_csv(file_handle, delimiter=",", dialect="redlineDialect")
 
     _validate_csv_fields(REDLINE_FIELDS, reader)
     for row in reader:
-        dt = parser.parse(row['Timestamp'])
+        dt = parser.parse(row["Timestamp"])
         timestamp = int(time.mktime(dt.timetuple())) * 1000
         dt_iso_format = dt.isoformat()
-        timestamp_desc = row['Field']
+        timestamp_desc = row["Field"]
 
-        summary = row['Summary']
-        alert = row['Alert']
-        tag = row['Tag']
+        summary = row["Summary"]
+        alert = row["Alert"]
+        tag = row["Tag"]
 
         row_to_yield = {}
-        row_to_yield['message'] = summary
-        row_to_yield['timestamp'] = timestamp
-        row_to_yield['datetime'] = dt_iso_format
-        row_to_yield['timestamp_desc'] = timestamp_desc
+        row_to_yield["message"] = summary
+        row_to_yield["timestamp"] = timestamp
+        row_to_yield["datetime"] = dt_iso_format
+        row_to_yield["timestamp_desc"] = timestamp_desc
         tags = [tag]
-        row_to_yield['alert'] = alert  # Extra field
-        row_to_yield['tag'] = tags  # Extra field
+        row_to_yield["alert"] = alert  # Extra field
+        row_to_yield["tag"] = tags  # Extra field
 
         yield row_to_yield
 
@@ -257,43 +263,47 @@ def read_and_validate_jsonl(file_handle):
         A dict that's ready to add to the datastore.
     """
     # Fields that must be present in each entry of the JSONL file.
-    mandatory_fields = ['message', 'datetime', 'timestamp_desc']
+    mandatory_fields = ["message", "datetime", "timestamp_desc"]
     lineno = 0
     for line in file_handle:
         lineno += 1
         try:
             linedict = json.loads(line)
             ld_keys = linedict.keys()
-            if 'datetime' not in ld_keys and 'timestamp' in ld_keys:
-                epoch = int(str(linedict['timestamp'])[:10])
+            if "datetime" not in ld_keys and "timestamp" in ld_keys:
+                epoch = int(str(linedict["timestamp"])[:10])
                 dt = datetime.datetime.fromtimestamp(epoch)
-                linedict['datetime'] = dt.isoformat()
-            if 'timestamp' not in ld_keys and 'datetime' in ld_keys:
+                linedict["datetime"] = dt.isoformat()
+            if "timestamp" not in ld_keys and "datetime" in ld_keys:
                 try:
-                    linedict['timestamp'] = int(parser.parse(
-                        linedict['datetime']).timestamp() * 1000000)
+                    linedict["timestamp"] = int(
+                        parser.parse(linedict["datetime"]).timestamp() * 1000000
+                    )
                 except parser.ParserError:
                     logger.error(
-                        'Unable to parse timestamp, skipping line '
-                        '{0:d}'.format(lineno), exc_info=True)
+                        "Unable to parse timestamp, skipping line "
+                        "{0:d}".format(lineno),
+                        exc_info=True,
+                    )
                     continue
 
             missing_fields = [x for x in mandatory_fields if x not in linedict]
             if missing_fields:
                 raise RuntimeError(
-                    'Missing field(s) at line {0:n}: {1:s}'.format(
-                        lineno, ','.join(missing_fields)))
+                    "Missing field(s) at line {0:n}: {1:s}".format(
+                        lineno, ",".join(missing_fields)
+                    )
+                )
 
-            if 'tag' in linedict:
-                linedict['tag'] = [
-                    x for x in _parse_tag_field(linedict['tag']) if x]
+            if "tag" in linedict:
+                linedict["tag"] = [x for x in _parse_tag_field(linedict["tag"]) if x]
             _scrub_special_tags(linedict)
             yield linedict
 
         except ValueError as e:
             raise errors.DataIngestionError(
-                'Error parsing JSON at line {0:n}: {1:s}'.format(
-                    lineno, str(e)))
+                "Error parsing JSON at line {0:n}: {1:s}".format(lineno, str(e))
+            )
 
 
 def get_validated_indices(indices, sketch):
@@ -310,14 +320,16 @@ def get_validated_indices(indices, sketch):
     """
     sketch_structure = {}
     for timeline in sketch.timelines:
-        if timeline.get_status.status.lower() != 'ready':
+        if timeline.get_status.status.lower() != "ready":
             continue
         index_ = timeline.searchindex.index_name
         sketch_structure.setdefault(index_, [])
-        sketch_structure[index_].append({
-            'name': timeline.name,
-            'id': timeline.id,
-        })
+        sketch_structure[index_].append(
+            {
+                "name": timeline.name,
+                "id": timeline.id,
+            }
+        )
 
     sketch_indices = set(sketch_structure.keys())
     exclude = set(indices) - sketch_indices
@@ -328,8 +340,8 @@ def get_validated_indices(indices, sketch):
         for item in exclude:
             for index, timeline_list in sketch_structure.items():
                 for timeline_struct in timeline_list:
-                    timeline_id = timeline_struct.get('id')
-                    timeline_name = timeline_struct.get('name')
+                    timeline_id = timeline_struct.get("id")
+                    timeline_name = timeline_struct.get("name")
 
                     if not timeline_id:
                         continue
@@ -341,9 +353,7 @@ def get_validated_indices(indices, sketch):
                         timelines.add(timeline_id)
                         indices.append(index)
 
-                    if isinstance(
-                            item, str) and item.lower(
-                                ) == timeline_name.lower():
+                    if isinstance(item, str) and item.lower() == timeline_name.lower():
                         timelines.add(timeline_id)
                         indices.append(index)
 
@@ -363,39 +373,39 @@ def send_email(subject, body, to_username, use_html=False):
         RuntimeError if not properly configured or if the recipient user is no
         in the whitelist.
     """
-    email_enabled = current_app.config.get('ENABLE_EMAIL_NOTIFICATIONS')
-    email_domain = current_app.config.get('EMAIL_DOMAIN')
-    email_smtp_server = current_app.config.get('EMAIL_SMTP_SERVER')
-    email_from_user = current_app.config.get('EMAIL_FROM_ADDRESS', 'timesketch')
-    email_user_whitelist = current_app.config.get('EMAIL_USER_WHITELIST', [])
+    email_enabled = current_app.config.get("ENABLE_EMAIL_NOTIFICATIONS")
+    email_domain = current_app.config.get("EMAIL_DOMAIN")
+    email_smtp_server = current_app.config.get("EMAIL_SMTP_SERVER")
+    email_from_user = current_app.config.get("EMAIL_FROM_ADDRESS", "timesketch")
+    email_user_whitelist = current_app.config.get("EMAIL_USER_WHITELIST", [])
 
     if not email_enabled:
-        raise RuntimeError('Email notifications are not enabled, aborting.')
+        raise RuntimeError("Email notifications are not enabled, aborting.")
 
     if not email_domain:
-        raise RuntimeError('Email domain is not configured, aborting.')
+        raise RuntimeError("Email domain is not configured, aborting.")
 
     if not email_smtp_server:
-        raise RuntimeError('Email SMTP server is not configured, aborting.')
+        raise RuntimeError("Email SMTP server is not configured, aborting.")
 
     # Only send mail to whitelisted usernames.
     if to_username not in email_user_whitelist:
         return
 
-    from_address = '{0:s}@{1:s}'.format(email_from_user, email_domain)
+    from_address = "{0:s}@{1:s}".format(email_from_user, email_domain)
     # TODO: Add email address to user object and pick it up from there.
-    to_address = '{0:s}@{1:s}'.format(to_username, email_domain)
-    email_content_type = 'text'
+    to_address = "{0:s}@{1:s}".format(to_username, email_domain)
+    email_content_type = "text"
     if use_html:
-        email_content_type = 'text/html'
+        email_content_type = "text/html"
 
     msg = email.message.Message()
-    msg['Subject'] = subject
-    msg['From'] = from_address
-    msg['To'] = to_address
-    msg.add_header('Content-Type', email_content_type)
+    msg["Subject"] = subject
+    msg["From"] = from_address
+    msg["To"] = to_address
+    msg.add_header("Content-Type", email_content_type)
     msg.set_payload(body)
 
     smtp = smtplib.SMTP(email_smtp_server)
-    smtp.sendmail(msg['From'], [msg['To']], msg.as_string())
+    smtp.sendmail(msg["From"], [msg["To"]], msg.as_string())
     smtp.quit()

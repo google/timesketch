@@ -10,18 +10,30 @@ import argparse
 def run_python_tests(coverage=False):
     try:
         if coverage:
-            subprocess.check_call((
-                'nosetests --with-coverage'
-                ' --cover-package=timesketch_api_client,'
-                'timesketch_import_client,timesketch'
-                ' api_client/python/ timesketch/'
-                ' cli_client/python/'), shell=True)
+            subprocess.check_call(
+                (
+                    "nosetests --with-coverage"
+                    " --cover-package=timesketch_api_client,"
+                    "timesketch_import_client,timesketch"
+                    " api_client/python/ timesketch/"
+                    " cli_client/python/"
+                ),
+                shell=True,
+            )
         else:
             subprocess.check_call(
-                ['nosetests', '-x', 'timesketch/', 'api_client/python/',
-                 'importer_client/python', 'cli_client/python/'])
+                [
+                    "nosetests",
+                    "-x",
+                    "-s",
+                    "timesketch/",
+                    "api_client/python/",
+                    "importer_client/python",
+                    "cli_client/python/",
+                ]
+            )
     finally:
-        subprocess.check_call(['rm', '-f', '.coverage'])
+        subprocess.check_call(["rm", "-f", ".coverage"])
 
 
 def run_python(args):
@@ -42,16 +54,12 @@ def parse_cli_args(args=None):
     Raises:
         SystemExit if arguments are invalid or --help is present.
     """
-    p = argparse.ArgumentParser(
-        description="Run Python unit tests and linters."
+    p = argparse.ArgumentParser(description="Run Python unit tests and linters.")
+    p.add_argument(
+        "--no-tests", action="store_true", help="Skip tests, run only linters."
     )
     p.add_argument(
-        '--no-tests', action='store_true',
-        help='Skip tests, run only linters.'
-    )
-    p.add_argument(
-        '--coverage', action='store_true',
-        help='Print code coverage report.'
+        "--coverage", action="store_true", help="Print code coverage report."
     )
     return p.parse_args(args)
 

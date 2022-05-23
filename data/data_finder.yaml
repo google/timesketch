@@ -24,12 +24,12 @@
 #                           helpful hints on where the data is defined, how to
 #                           collect it, or how to add it to Timesketch.
 #
-#       query_string        A query string (Elastic Query String) that defines
-#                           the search string that will be used to find data
-#                           within the dataset. This is the same search string
-#                           as can be found in the Web UI of Timesketch.
+#       query_string        A query string (OpenSearch Query String) that
+#                           defines the search string that will be used to find
+#                           data within the dataset. This is the same search
+#                           string as can be found in the Web UI of Timesketch.
 #
-#       query_dsl           A query DSL (Elastic Query DSL) that defines the
+#       query_dsl           A query DSL (OpenSearch Query DSL) that defines the
 #                           full query DSL that is used to find data within the
 #                           the dataset. Each data analyzer needs to define
 #                           either a query_string or a query_dsl. If both are
@@ -44,7 +44,7 @@
 #                           the field or the attribute that is fetched from the
 #                           the attribute definition.
 #
-#       re_flags            Each regular expresion can define a flag, which is
+#       re_flags            Each regular expression can define a flag, which is
 #                           a list of flags as strings from the re module.
 #                           These include:
 #                               - DEBUG
@@ -76,31 +76,30 @@
 
 # ------------------------------------------------------------------------
 windows_administrator_login:
-    description: Login information for Administrator in Windows EVTX files.
-    notes: Collect the SECURITY.EVTX log from a Windows machine.
-    query_string: data_type:"windows:evtx:record" AND event_identifier:4624
-    attribute: username
-    regular_expression: "^Administrator"
+  description: Login information for Administrator in Windows EVTX files.
+  notes: Collect the SECURITY.EVTX log from a Windows machine.
+  query_string: data_type:"windows:evtx:record" AND event_identifier:4624
+  attribute: username
+  regular_expression: "^Administrator"
 
 windows_login:
-    description: Login information in Windows EVTX files.
-    notes: Collect the SECURITY.EVTX log from a Windows machine.
-    query_string: data_type:"windows:evtx:record" AND event_identifier:4624
+  description: Login information in Windows EVTX files.
+  notes: Collect the SECURITY.EVTX log from a Windows machine.
+  query_string: data_type:"windows:evtx:record" AND event_identifier:4624
 
 browser_history:
-    description: Browser history information.
-    notes: Collect browser history and parse using plaso or make source and url fields are set.
-    query_string: source_short:"WEBHIST" OR source:"WEBHIST"
-    attribute: url
-    regular_expression: "https?://"
+  description: Browser history information.
+  notes: Collect browser history and parse using plaso or make source and url fields are set.
+  query_string: source_short:"WEBHIST" OR source:"WEBHIST"
+  attribute: url
+  regular_expression: "https?://"
 
 windows_event_log_specific_computer:
-    description: 
-    notes: Collect
-    query_string: data_type:"windows:evtx:record"
-    attribute: computer_name
-    regular_expression: "{computer_name}"
-    re_flags: [IGNORECASE]
-    re_parameters:
-        - computer_name
-
+  description:
+  notes: Collect
+  query_string: data_type:"windows:evtx:record"
+  attribute: computer_name
+  regular_expression: "{computer_name}"
+  re_flags: [IGNORECASE]
+  re_parameters:
+    - computer_name

@@ -26,13 +26,13 @@ if [ "$1" = 'timesketch' ]; then
     exit 1
   fi
 
-  # Set up the Elastic connection
-  if [ $ELASTIC_ADDRESS ] && [ $ELASTIC_PORT ]; then
-    sed -i 's#ELASTIC_HOST = \x27127.0.0.1\x27#ELASTIC_HOST = \x27'$ELASTIC_ADDRESS'\x27#' /etc/timesketch/timesketch.conf
-    sed -i 's#ELASTIC_PORT = 9200#ELASTIC_PORT = '$ELASTIC_PORT'#' /etc/timesketch/timesketch.conf
+  # Set up the OpenSearch connection
+  if [ $OPENSEARCH_HOST ] && [ $OPENSEARCH_PORT ]; then
+    sed -i 's#OPENSEARCH_HOST = \x27127.0.0.1\x27#OPENSEARCH_HOST = \x27'$OPENSEARCH_HOST'\x27#' /etc/timesketch/timesketch.conf
+    sed -i 's#OPENSEARCH_PORT = 9200#OPENSEARCH_PORT = '$OPENSEARCH_PORT'#' /etc/timesketch/timesketch.conf
   else
     # Log an error since we need the above-listed environment variables
-    echo "Please pass values for the ELASTIC_ADDRESS and ELASTIC_PORT environment variables"
+    echo "Please pass values for the OPENSEARCH_HOST and OPENSEARCH_PORT environment variables"
   fi
 
   # Set up the Redis connection
@@ -59,7 +59,7 @@ if [ "$1" = 'timesketch' ]; then
 
   # Sleep to allow the other processes to start
   sleep 5
-  tsctl add_user --username "$TIMESKETCH_USER" --password "$TIMESKETCH_PASSWORD"
+  tsctl create-user "$TIMESKETCH_USER" --password "$TIMESKETCH_PASSWORD"
   unset TIMESKETCH_PASSWORD
 
   cat <<EOF >> /etc/timesketch/data_finder.yaml

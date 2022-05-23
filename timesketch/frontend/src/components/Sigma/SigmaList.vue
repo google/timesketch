@@ -34,15 +34,50 @@ limitations under the License.
       default-sort="title"
       key="props.row.id"
     >
+      <b-switch v-model="isComposed">Compose Sigma rule</b-switch>
+      <div v-if="isComposed">
+        <div class="container is-fluid">
+          <div class="card">
+            <div class="card-content"></div>
+            <textarea
+              id="textarea"
+              v-model="text"
+              placeholder="Enter your Sigma yaml File text..."
+              rows="30"
+              cols="80"
+            ></textarea>
+
+            <div class="control">
+              <button id="parseButton" v-on:click="parseSigma">Parse</button>
+            </div>
+            <template>
+              <b>Clean ES Query: {{ parsed['es_query'] }}</b>
+              <pre>{{ JSON.stringify(parsed, null, 2) }}</pre>
+            </template>
+          </div>
+        </div>
+      </div>
       <b-table-column field="title" label="Name" v-slot="props" sortable searchable>
         <div @click="props.toggleDetails(props.row)" style="margin-top:5px;cursor:pointer;">
           {{ props.row.title }}
         </div>
       </b-table-column>
 
+      <b-table-column field="ts_use_in_analyzer" label="Use in Analyzer" v-slot="props" sortable>
+        <div @click="props.toggleDetails(props.row)" style="margin-top:5px;cursor:pointer;">
+          {{ props.row.ts_use_in_analyzer }}
+        </div>
+      </b-table-column>
+
       <b-table-column field="description" label="Description" v-slot="props" searchable>
         <div @click="props.toggleDetails(props.row)" style="margin-top:5px;cursor:pointer;">
           {{ props.row.description }}
+        </div>
+      </b-table-column>
+
+      <b-table-column field="author" label="Author" v-slot="props" searchable sortable>
+        <div @click="props.toggleDetails(props.row)" style="margin-top:5px;cursor:pointer;">
+          {{ props.row.author }}
         </div>
       </b-table-column>
 
@@ -58,6 +93,8 @@ limitations under the License.
       </b-table-column>
 
       <template #detail="props">
+        <b>{{ props['row']['es_query'] }}</b>
+
         <pre>{{ JSON.stringify(props['row'], null, 2) }}</pre>
       </template>
     </b-table>
@@ -65,6 +102,8 @@ limitations under the License.
 </template>
 
 <script>
+import ApiClient from '../../utils/RestApiClient'
+
 export default {
   data() {
     return {
@@ -72,6 +111,9 @@ export default {
       ascending: false,
       sortColumn: '',
       perPage: 10,
+      isComposed: false,
+      text: `Place your Sigma rule here and press parse`,
+      parsed: '',
     }
   },
   computed: {
@@ -83,6 +125,16 @@ export default {
     },
     meta() {
       return this.$store.state.meta
+    },
+  },
+  methods: {
+    parseSigma: function(event) {
+      ApiClient.getSigmaByText(this.text)
+        .then(response => {
+          let SigmaRule = response.data.objects[0]
+          this.parsed = SigmaRule
+        })
+        .catch(e => {})
     },
   },
 }

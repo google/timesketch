@@ -18,14 +18,14 @@ import hashlib
 from flask import current_app
 import networkx as nx
 
-from timesketch.lib.datastores.elastic import ElasticsearchDataStore
+from timesketch.lib.datastores.opensearch import OpenSearchDataStore
 
 
 GRAPH_TYPES = {
-    'Graph': nx.Graph,
-    'MultiGraph': nx.MultiGraph,
-    'DiGraph': nx.DiGraph,
-    'MultiDiGraph': nx.MultiDiGraph
+    "Graph": nx.Graph,
+    "MultiGraph": nx.MultiGraph,
+    "DiGraph": nx.DiGraph,
+    "MultiDiGraph": nx.MultiDiGraph,
 }
 
 MAX_EVENTS_PER_EDGE = 500
@@ -37,6 +37,7 @@ class Graph:
     Attributes:
         nx_instance: Networkx graph object.
     """
+
     def __init__(self, graph_type):
         """Initialize Graph object.
 
@@ -62,7 +63,7 @@ class Graph:
             attributes = {}
 
         node = Node(label, attributes)
-        node.set_attribute('id', node.id)
+        node.set_attribute("id", node.id)
         if node.id not in self._nodes:
             self._nodes[node.id] = node
         return node
@@ -74,39 +75,38 @@ class Graph:
             source: (Node) Node to use as source.
             target: (Node) Node to use as target.
             label: (str) Label for the node.
-            event: (dict): Elasticsearch event.
+            event: (dict): OpenSearch event.
             attributes: (dict) Attributes to add to node.
         """
         if not attributes:
             attributes = {}
 
-        attributes['id'] = ''.join([source.id, target.id, label]).lower()
+        attributes["id"] = "".join([source.id, target.id, label]).lower()
 
         edge = Edge(source, target, label, attributes)
 
         if edge.node_counter < MAX_EVENTS_PER_EDGE:
-            index = event.get('_index')
-            doc_id = event.get('_id')
-            events = edge.attributes.get('events', {})
+            index = event.get("_index")
+            doc_id = event.get("_id")
+            events = edge.attributes.get("events", {})
             doc_ids = events.get(index, [])
             doc_ids.append(doc_id)
             edge.node_counter += 1
             events[index] = doc_ids
-            edge.set_attribute('events', events)
+            edge.set_attribute("events", events)
 
         self._edges[edge.id] = edge
 
     def commit(self):
         """Commit all nodes and edges to the networkx graph object."""
         for node_id, node in self._nodes.items():
-            self.nx_instance.add_node(
-                node_id, label=node.label, **node.attributes)
+            self.nx_instance.add_node(node_id, label=node.label, **node.attributes)
 
         for _, edge in self._edges.items():
-            label = edge.label + f' ({edge.node_counter})'
+            label = edge.label + f" ({edge.node_counter})"
             self.nx_instance.add_edge(
-                edge.source.id, edge.target.id, label=label,
-                **edge.attributes)
+                edge.source.id, edge.target.id, label=label, **edge.attributes
+            )
 
     def to_cytoscape(self):
         """Output graph in Cytoscape JSON format.
@@ -125,7 +125,8 @@ class BaseGraphElement:
         attributes (dict): Attributed to add to the node/edge.
         id (str): Uniq value generated from the label.
     """
-    def __init__(self, label='', attributes=None):
+
+    def __init__(self, label="", attributes=None):
         """Initialize the base element object.
 
         Args:
@@ -142,8 +143,9 @@ class BaseGraphElement:
         Returns:
             MD5 hash (str): MD5 hash of the provided label.
         """
-        id_string = self.attributes.get('id', self.label)
-        return hashlib.md5(id_string.encode('utf-8')).hexdigest()
+
+        id_string = self.attributes.get("id", self.label)
+        return hashlib.md5(id_string.encode("utf-8")).hexdigest()
 
     def set_attribute(self, key, value):
         """Add or replace an attribute to the element.
@@ -157,6 +159,7 @@ class BaseGraphElement:
 
 class Node(BaseGraphElement):
     """Graph node object."""
+
     # TODO: Add logic for Nodes when needed.
 
 
@@ -168,7 +171,8 @@ class Edge(BaseGraphElement):
         target (Node): Node to add as target node.
         node_counter (int): Counter for number of nodes referenced for the edge.
     """
-    def __init__(self, source, target, label='', attributes=None):
+
+    def __init__(self, source, target, label="", attributes=None):
         """Initialize the Edge object.
 
         Args:
@@ -185,17 +189,18 @@ class BaseGraphPlugin:
     """Base class for a graph.
 
     Attributes:
-        datastore (ElasticsearchDataStore): Elasticsearch datastore object.
+        datastore (OpenSearchDataStore): OpenSearch datastore object.
         graph (nx.Graph): NetworkX Graph object.
     """
+
     # Name that the graph will be registered as.
-    NAME = 'name'
+    NAME = "name"
 
     # Display name (used in the UI)
-    DISPLAY_NAME = 'display_name'
+    DISPLAY_NAME = "display_name"
 
     # Description of the plugin (used in the UI)
-    DESCRIPTION = 'description'
+    DESCRIPTION = "description"
 
     # Type of graph. There are four supported types: Undirected Graph,
     # Undirected Multi Graph, Directed Graph, Directed  Multi Graph.
@@ -203,7 +208,7 @@ class BaseGraphPlugin:
     #
     # See NetworkX documentation for details:
     # https://networkx.org/documentation/stable/reference/classes/index.html
-    GRAPH_TYPE = 'MultiDiGraph'
+    GRAPH_TYPE = "MultiDiGraph"
 
     def __init__(self, sketch=None, timeline_ids=None):
         """Initialize the graph object.
@@ -215,11 +220,12 @@ class BaseGraphPlugin:
         Raises:
             KeyError if graph type specified is not supported.
         """
-        self.datastore = ElasticsearchDataStore(
-            host=current_app.config['ELASTIC_HOST'],
-            port=current_app.config['ELASTIC_PORT'])
+        self.datastore = OpenSearchDataStore(
+            host=current_app.config["OPENSEARCH_HOST"],
+            port=current_app.config["OPENSEARCH_PORT"],
+        )
         if not GRAPH_TYPES.get(self.GRAPH_TYPE):
-            raise KeyError(f'Graph type {self.GRAPH_TYPE} is not supported')
+            raise KeyError(f"Graph type {self.GRAPH_TYPE} is not supported")
         self.graph = Graph(self.GRAPH_TYPE)
         self.sketch = sketch
         self.timeline_ids = timeline_ids
@@ -233,8 +239,11 @@ class BaseGraphPlugin:
         active_timelines = self.sketch.active_timelines
 
         if self.timeline_ids:
-            indices = [t.searchindex.index_name for t in active_timelines
-                       if t.id in self.timeline_ids]
+            indices = [
+                t.searchindex.index_name
+                for t in active_timelines
+                if t.id in self.timeline_ids
+            ]
         else:
             indices = [t.searchindex.index_name for t in active_timelines]
 
@@ -242,14 +251,20 @@ class BaseGraphPlugin:
 
     # TODO: Refactor this to reuse across analyzers and graphs.
     def event_stream(
-            self, query_string=None, query_filter=None, query_dsl=None,
-            indices=None, return_fields=None, scroll=True):
-        """Search ElasticSearch.
+        self,
+        query_string=None,
+        query_filter=None,
+        query_dsl=None,
+        indices=None,
+        return_fields=None,
+        scroll=True,
+    ):
+        """Search OpenSearch.
 
         Args:
             query_string: Query string.
             query_filter: Dictionary containing filters to apply.
-            query_dsl: Dictionary containing Elasticsearch DSL query.
+            query_dsl: Dictionary containing OpenSearch DSL query.
             indices: List of indices to query.
             return_fields: List of fields to return.
             scroll: Boolean determining whether we support scrolling searches
@@ -262,7 +277,7 @@ class BaseGraphPlugin:
             ValueError: if neither query_string or query_dsl is provided.
         """
         if not (query_string or query_dsl):
-            raise ValueError('Both query_string and query_dsl are missing')
+            raise ValueError("Both query_string and query_dsl are missing")
 
         # Query all sketch indices if none are specified.
         if not indices:

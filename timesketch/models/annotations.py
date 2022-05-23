@@ -42,7 +42,7 @@ class BaseAnnotation(object):
         Returns:
             A column (instance of sqlalchemy.Column)
         """
-        return Column(Integer, ForeignKey('user.id'))
+        return Column(Integer, ForeignKey("user.id"))
 
     @declared_attr
     def user(self):
@@ -51,11 +51,12 @@ class BaseAnnotation(object):
         Returns:
             A relationship (instance of sqlalchemy.orm.relationship)
         """
-        return relationship('User')
+        return relationship("User")
 
 
 class Label(BaseAnnotation):
     """A label annotation."""
+
     label = Column(Unicode(255))
 
     def __init__(self, user, label):
@@ -65,13 +66,14 @@ class Label(BaseAnnotation):
             user: A user (instance of timesketch.models.user.User)
             name: Name of the label
         """
-        super(Label, self).__init__()
+        super().__init__()
         self.user = user
         self.label = label
 
 
 class Comment(BaseAnnotation):
     """A comment annotation."""
+
     comment = Column(UnicodeText())
 
     def __init__(self, user, comment):
@@ -81,13 +83,14 @@ class Comment(BaseAnnotation):
             user: A user (instance of timesketch.models.user.User)
             body: The body if the comment
         """
-        super(Comment, self).__init__()
+        super().__init__()
         self.user = user
         self.comment = comment
 
 
 class Status(BaseAnnotation):
     """A status annotation."""
+
     status = Column(Unicode(255))
 
     def __init__(self, user, status):
@@ -97,9 +100,35 @@ class Status(BaseAnnotation):
             user: A user (instance of timesketch.models.user.User)
             status: The type of status (string, e.g. open)
         """
-        super(Status, self).__init__()
+        super().__init__()
         self.user = user
         self.status = status
+
+
+class GenericAttribute(BaseAnnotation):
+    """Implements the attribute model."""
+
+    name = Column(UnicodeText())
+    value = Column(UnicodeText())
+    ontology = Column(UnicodeText())
+    description = Column(UnicodeText())
+
+    def __init__(self, user, name, value, ontology, description):
+        """Initialize the Attribute object.
+
+        Args:
+            user: A user (instance of timesketch.models.user.User)
+            name (str): The name of the attribute.
+            value (str):  The value of the attribute
+            ontology (str): The ontology (type) of the value, The values that
+                can be used are defined in timesketch/lib/ontology.py.
+        """
+        super().__init__()
+        self.user = user
+        self.name = name
+        self.value = value
+        self.ontology = ontology
+        self.description = description
 
 
 class LabelMixin(object):
@@ -119,21 +148,24 @@ class LabelMixin(object):
             A relationship to an label (timesketch.models.annotation.Label)
         """
         if six.PY2:
-            class_name = b'{0:s}Label'.format(self.__name__)
+            class_name = b"{0:s}Label".format(self.__name__)
         else:
-            class_name = '{0:s}Label'.format(self.__name__)
+            class_name = "{0:s}Label".format(self.__name__)
 
-        self.Label = type(class_name, (
-            Label,
-            BaseModel,),
-                          dict(
-                              __tablename__='{0:s}_label'.format(
-                                  self.__tablename__),
-                              parent_id=Column(
-                                  Integer,
-                                  ForeignKey('{0:s}.id'.format(
-                                      self.__tablename__))),
-                              parent=relationship(self)))
+        self.Label = type(
+            class_name,
+            (
+                Label,
+                BaseModel,
+            ),
+            dict(
+                __tablename__="{0:s}_label".format(self.__tablename__),
+                parent_id=Column(
+                    Integer, ForeignKey("{0:s}.id".format(self.__tablename__))
+                ),
+                parent=relationship(self),
+            ),
+        )
         return relationship(self.Label)
 
     def add_label(self, label, user=None):
@@ -197,7 +229,7 @@ class LabelMixin(object):
             A JSON encoded string with the list of labels.
         """
         if not self.labels:
-            return ''
+            return ""
 
         return json.dumps([x.label for x in self.labels])
 
@@ -219,21 +251,67 @@ class CommentMixin(object):
             A relationship to a comment (timesketch.models.annotation.Comment)
         """
         if six.PY2:
-            class_name = b'{0:s}Comment'.format(self.__name__)
+            class_name = b"{0:s}Comment".format(self.__name__)
         else:
-            class_name = '{0:s}Comment'.format(self.__name__)
+            class_name = "{0:s}Comment".format(self.__name__)
 
         self.Comment = type(
-            class_name, (
+            class_name,
+            (
                 Comment,
-                BaseModel, ),
+                BaseModel,
+            ),
             dict(
-                __tablename__='{0:s}_comment'.format(self.__tablename__),
+                __tablename__="{0:s}_comment".format(self.__tablename__),
                 parent_id=Column(
-                    Integer,
-                    ForeignKey('{0:s}.id'.format(self.__tablename__))),
-                parent=relationship(self), ))
+                    Integer, ForeignKey("{0:s}.id".format(self.__tablename__))
+                ),
+                parent=relationship(self),
+            ),
+        )
         return relationship(self.Comment)
+
+    def remove_comment(self, comment_id):
+        """Remove a comment from an event.
+
+        Args:
+            comment_id: Id of the comment.
+        """
+        for comment_obj in self.comments:
+            if comment_obj.id == int(comment_id):
+                self.comments.remove(comment_obj)
+                db_session.commit()
+                return True
+
+        return False
+
+    def get_comment(self, comment_id):
+        """Retrives a comment.
+
+        Args:
+            comment_id: Id of the comment.
+
+        Returns:
+            The comment object, or None if the comment does not exist.
+        """
+        for comment_obj in self.comments:
+            if comment_obj.id == int(comment_id):
+                return comment_obj
+        return None
+
+    def update_comment(self, comment_id, comment):
+        """Update an existing comment.
+
+        Args:
+            comment: Comment object with updated comment text.
+        """
+        for comment_obj in self.comments:
+            if comment_obj.id == int(comment_id):
+                comment_obj.comment = comment
+                db_session.commit()
+                return comment_obj
+
+        return False
 
 
 class StatusMixin(object):
@@ -253,20 +331,24 @@ class StatusMixin(object):
             A relationship to a status (timesketch.models.annotation.Status)
         """
         if six.PY2:
-            class_name = b'{0:s}Status'.format(self.__name__)
+            class_name = b"{0:s}Status".format(self.__name__)
         else:
-            class_name = '{0:s}Status'.format(self.__name__)
+            class_name = "{0:s}Status".format(self.__name__)
 
         self.Status = type(
-            class_name, (
+            class_name,
+            (
                 Status,
-                BaseModel, ),
+                BaseModel,
+            ),
             dict(
-                __tablename__='{0:s}_status'.format(self.__tablename__),
+                __tablename__="{0:s}_status".format(self.__tablename__),
                 parent_id=Column(
-                    Integer,
-                    ForeignKey('{0:s}.id'.format(self.__tablename__))),
-                parent=relationship(self), ))
+                    Integer, ForeignKey("{0:s}.id".format(self.__tablename__))
+                ),
+                parent=relationship(self),
+            ),
+        )
         return relationship(self.Status)
 
     def set_status(self, status):
@@ -290,5 +372,71 @@ class StatusMixin(object):
             The status as a string
         """
         if not self.status:
-            self.status.append(self.Status(user=None, status='new'))
+            self.status.append(self.Status(user=None, status="new"))
         return self.status[0]
+
+
+class GenericAttributeMixin(object):
+    """
+    A MixIn for generating the necessary tables in the database and to make
+    it accessible from the parent model object (the model object that uses this
+    MixIn, i.e. the object that the attribute is added to).
+    """
+
+    @declared_attr
+    def genericattributes(self):
+        """
+        Generates the status tables and adds the attribute to the parent model
+        object.
+
+        Returns:
+            A relationship with (timesketch.models.annotation.GenericAttribute)
+        """
+        class_name = "{0:s}GenericAttribute".format(self.__name__)
+
+        self.GenericAttribute = type(
+            class_name,
+            (
+                GenericAttribute,
+                BaseModel,
+            ),
+            dict(
+                __tablename__="{0:s}_genericattribute".format(self.__tablename__),
+                parent_id=Column(
+                    Integer, ForeignKey("{0:s}.id".format(self.__tablename__))
+                ),
+                parent=relationship(self),
+            ),
+        )
+        return relationship(self.GenericAttribute)
+
+    def add_attribute(self, name, value, ontology=None, user=None, description=None):
+        """Add a label to an object.
+
+        Each entry can have multible labels.
+
+        Args:
+            label: Name of the label.
+            user: Optional user that adds the label (sketch.User).
+        """
+        self.genericattributes.append(
+            self.GenericAttribute(
+                user=user,
+                name=name,
+                value=value,
+                ontology=ontology,
+                description=description,
+            )
+        )
+        db_session.commit()
+
+    @property
+    def get_attributes(self):
+        """Returns a list of all attributes.
+
+        Returns:
+            A list of strings with all attributes.
+        """
+        if not self.genericattributes:
+            return []
+        return self.genericattributes

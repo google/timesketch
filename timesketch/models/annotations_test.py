@@ -34,7 +34,7 @@ class LabelModelTest(AnnotationBaseTest):
         """Test that the label is associated with our test sketch."""
         self._test_annotation(self.sketch1.labels)
         # pylint: disable=unsubscriptable-object
-        self.assertEqual(self.sketch1.labels[0].label, 'Test label')
+        self.assertEqual(self.sketch1.labels[0].label, "Test label")
 
 
 class StatusModelTest(AnnotationBaseTest):
@@ -44,7 +44,7 @@ class StatusModelTest(AnnotationBaseTest):
         """Test that the status is associated with our test sketch."""
         self._test_annotation(self.sketch1.status)
         # pylint: disable=unsubscriptable-object
-        self.assertEqual(self.sketch1.status[0].status, 'Test status')
+        self.assertEqual(self.sketch1.status[0].status, "Test status")
 
 
 class CommentModelTest(AnnotationBaseTest):
@@ -54,4 +54,4 @@ class CommentModelTest(AnnotationBaseTest):
         """Test that the comment is associated with our test event."""
         self._test_annotation(self.event.comments)
         # pylint: disable=unsubscriptable-object
-        self.assertEqual(self.event.comments[0].comment, 'test')
+        self.assertEqual(self.event.comments[0].comment, "test")

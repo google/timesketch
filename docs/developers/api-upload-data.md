@@ -1,7 +1,7 @@
 # Create Timeline From Other Sources
 
 Not all data comes in a good [CSV or JSONL
-format](/user-guide/create-timeline-from-json-csv/) that can be imported
+format](/guides/user/import-from-json-csv/) that can be imported
 directly into Timesketch. Your data may lie in a SQL database, Excel sheet, or
 even in CSV/JSON but it does not have the correct fields in it. In those cases
 it might be beneficial to have a separate importer in Timesketch that can deal
@@ -15,7 +15,6 @@ A small disclaimer. Timesketch is not a parser, and does not intend to be a
 parser. If you need to parse the data, you'll need other tools or libraries.
 Parsers can be implemented using [plaso](https://github.com/log2timeline/plaso)
 .
-
 
 ## What is the Importer Good For
 
@@ -34,31 +33,31 @@ configurable using a config file, until then a more manual approach is needed.
 
 The importer will take as an input either:
 
- + Pandas DataFrame.
- + CSV or JSONL.
- + JSON (one JSON per entry)
- + Python dict
- + Microsoft Excel spreadsheet (XLS or XLSX file).
+- Pandas DataFrame.
+- CSV or JSONL.
+- JSON (one JSON per entry)
+- Python dict
+- Microsoft Excel spreadsheet (XLS or XLSX file).
 
 The best way to use the streamer is to by using the the `with` statement in
 Python, which returns back an object. Before you can use the streamer you'll
 have to configure it:
 
- + Add a sketch object to it, this will be the sketch used to upload the data
-   to.
- + Set the name of the imported timeline.
- + If the data does not contain a timestamp description you'll need to set the
-   `timestamp_desc` field using the `streamer.set_timestamp_description`.
-   The content of this string will be used for the `timestamp_desc` field,
-   if it doesn't already exist.
- + If the data does not contain a column called `message` a format string can
-   be supplied to automatically generate one. This is basically a python
-   [formatting string](https://pyformat.info/) that uses the name of each column
-   as a variable name, eg. `"{src_ip:s} connected to {dst_ip:s}"` means that the
-   content in the column name `src_ip` will be formatted as a string and
-   replaces the `{src_ip:s}` in the format string. So if you have a row that
-   contains the variables: `src_ip = "10.10.10.10", dst_ip = "8.8.8.8"` then the
-   message string will look like: `10.10.10.10 connected to 8.8.8.8`.
+- Add a sketch object to it, this will be the sketch used to upload the data
+  to.
+- Set the name of the imported timeline.
+- If the data does not contain a timestamp description you'll need to set the
+  `timestamp_desc` field using the `streamer.set_timestamp_description`.
+  The content of this string will be used for the `timestamp_desc` field,
+  if it doesn't already exist.
+- If the data does not contain a column called `message` a format string can
+  be supplied to automatically generate one. This is basically a python
+  [formatting string](https://pyformat.info/) that uses the name of each column
+  as a variable name, eg. `"{src_ip:s} connected to {dst_ip:s}"` means that the
+  content in the column name `src_ip` will be formatted as a string and
+  replaces the `{src_ip:s}` in the format string. So if you have a row that
+  contains the variables: `src_ip = "10.10.10.10", dst_ip = "8.8.8.8"` then the
+  message string will look like: `10.10.10.10 connected to 8.8.8.8`.
 
 The reason why the `with` statement is preferred is that it ensures that the
 streamer gets properly closed at the end. The streamer can be used without
@@ -94,7 +93,7 @@ Timestamp What  URL Results
 
 Here we have a data frame that we may want to add to our Timesketch instance.
 What is missing here are few of the necessary columns, see
-[documentation](/user-guide/create-timeline-from-json-csv/). We don't really need to
+[documentation](/guides/user/import-from-json-csv/). We don't really need to
 add them here, we can do that all in our upload stream. Let's start by
 connecting to a Timesketch instance.
 
@@ -176,7 +175,6 @@ Let's look at an example:
 
 ```
 
-
 ## A file, CSV, PLASO or JSONL.
 
 Files can also be added using the importer. That is files that are
@@ -207,7 +205,7 @@ file will be indexed as soon as it is uploaded to the backend.
 
 In the case of a plaso file, it will also be split up into smaller chunks and
 uploaded. However indexing does not start until all pieces have been transferred
-and the final plaso storage file reassambled.
+and the final plaso storage file reassembled.
 
 ## Excel Sheet
 
@@ -231,28 +229,28 @@ def action():
     streamer.add_excel_file('~/Downloads/SomeRandomDocument.xlsx')
 ```
 
-## Import Data Already Ingested into Elastic.
+## Import Data Already Ingested into OpenSearch.
 
-You may have other mechanism to ingest data into Elastic, like an ELK stack or
-some manual scripts that ingest the data. Since the data is already in Elastic
+You may have other mechanism to ingest data into OpenSearch, like an ELK stack or
+some manual scripts that ingest the data. Since the data is already in OpenSearch
 it doesn't need to be re-ingested. In order to make it accessible in Timesketch
 the API client can be used.
 
-**disclaimer:** *the data ingested needs to be in a certain format in order to
+**disclaimer:** _the data ingested needs to be in a certain format in order to
 work with Timesketch. This function does limited checking before making it
 available. The timeline may or may not work in Timesketch, depending on
-multiple factors.*
+multiple factors._
 
 The data that is ingested needs to have few fields already set before it can be
 ingested into Timesketch:
 
-+ message
-+ timestamp
-+ datetime
+- message
+- timestamp
+- datetime
 
 The datetime field also needs to be mapped as a date, not a text string.
 
-A sample code on how to ingest data into Timesketch that is already in Elastic:
+A sample code on how to ingest data into Timesketch that is already in OpenSearch:
 
 ```python
 from timesketch_api_client import config
@@ -261,10 +259,9 @@ ts_client = config.get_client()
 sketch = ts_client.get_sketch(SKETCH_ID)
 
 sketch.generate_timeline_from_es_index(
-    es_index_name=ELASTIC_INDEX_NAME,
+    index_name=OPENSEARCH_INDEX_NAME,
     name=TIMELINE_NAME,
     provider='My Custom Ingestion Script',
     context='python my_custom_script.py --ingest',
 )
 ```
-

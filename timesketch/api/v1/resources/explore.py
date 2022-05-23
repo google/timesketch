@@ -47,13 +47,14 @@ from timesketch.models.sketch import SearchHistory
 
 # Metrics definitions
 METRICS = {
-    'searchhistory': prometheus_client.Counter(
-        'searchhistory',
-        'Search History actions',
-        ['action'],
-        namespace=METRICS_NAMESPACE
+    "searchhistory": prometheus_client.Counter(
+        "searchhistory",
+        "Search History actions",
+        ["action"],
+        namespace=METRICS_NAMESPACE,
     )
 }
+
 
 class ExploreResource(resources.ResourceMixin, Resource):
     """Resource to search the datastore based on a query and a filter."""
@@ -71,24 +72,26 @@ class ExploreResource(resources.ResourceMixin, Resource):
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
-            abort(
-                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
-        if not sketch.has_permission(current_user, 'read'):
-            abort(HTTP_STATUS_CODE_FORBIDDEN,
-                  'User does not have read access controls on sketch.')
-
-        if sketch.get_status.status == 'archived':
+        if not sketch.has_permission(current_user, "read"):
             abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                'Unable to query on an archived sketch.')
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "User does not have read access controls on sketch.",
+            )
+
+        if sketch.get_status.status == "archived":
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST, "Unable to query on an archived sketch."
+            )
 
         form = forms.ExploreForm.build(request)
 
         if not form.validate_on_submit():
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'Unable to explore data, unable to validate form data')
+                "Unable to explore data, unable to validate form data",
+            )
 
         # TODO: Remove form and use json instead.
         query_dsl = form.dsl.data
@@ -97,27 +100,26 @@ class ExploreResource(resources.ResourceMixin, Resource):
         file_name = form.file_name.data
         count = bool(form.count.data)
 
-        query_filter = request.json.get('filter', {})
-        parent = request.json.get('parent', None)
-        incognito = request.json.get('incognito', False)
+        query_filter = request.json.get("filter", {})
+        parent = request.json.get("parent", None)
+        incognito = request.json.get("incognito", False)
 
         return_field_string = form.fields.data
         if return_field_string:
-            return_fields = [x.strip() for x in return_field_string.split(',')]
+            return_fields = [x.strip() for x in return_field_string.split(",")]
         else:
-            return_fields = query_filter.get('fields', [])
-            return_fields = [field['field'] for field in return_fields]
+            return_fields = query_filter.get("fields", [])
+            return_fields = [field["field"] for field in return_fields]
             return_fields.extend(DEFAULT_SOURCE_FIELDS)
 
         if not query_filter:
             query_filter = {}
 
-        all_indices = list({
-            t.searchindex.index_name for t in sketch.timelines})
-        indices = query_filter.get('indices', all_indices)
+        all_indices = list({t.searchindex.index_name for t in sketch.timelines})
+        indices = query_filter.get("indices", all_indices)
 
         # If _all in indices then execute the query on all indices
-        if '_all' in indices:
+        if "_all" in indices:
             indices = all_indices
 
         # Make sure that the indices in the filter are part of the sketch.
@@ -130,44 +132,50 @@ class ExploreResource(resources.ResourceMixin, Resource):
         if not indices:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'No valid search indices were found to perform the search on.')
+                "No valid search indices were found to perform the search on.",
+            )
 
         # Make sure we have a query string or star filter
-        if not (form.query.data, query_filter.get('star'),
-                query_filter.get('events'), query_dsl):
+        if not (
+            form.query.data,
+            query_filter.get("star"),
+            query_filter.get("events"),
+            query_dsl,
+        ):
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'The request needs a query string/DSL and or a star filter.')
+                "The request needs a query string/DSL and or a star filter.",
+            )
 
         # Aggregate hit count per index.
         index_stats_agg = {
-            'indices': {
-                'terms': {
-                    'field': '_index',
-                    'min_doc_count': 0,
-                    'size': len(sketch.timelines)
+            "indices": {
+                "terms": {
+                    "field": "_index",
+                    "min_doc_count": 0,
+                    "size": len(sketch.timelines),
                 }
             },
-            'timelines': {
-                'terms': {
-                    'field': '__ts_timeline_id',
-                    'min_doc_count': 0,
-                    'size': len(sketch.timelines)
+            "timelines": {
+                "terms": {
+                    "field": "__ts_timeline_id",
+                    "min_doc_count": 0,
+                    "size": len(sketch.timelines),
                 }
             },
-            'count_over_time': {
-                'auto_date_histogram': {
-                    'field': 'datetime',
-                    'buckets': 50,
+            "count_over_time": {
+                "auto_date_histogram": {
+                    "field": "datetime",
+                    "buckets": 50,
                 }
-            }
+            },
         }
         if count:
             # Count operations do not support size parameters.
-            if 'size' in query_filter:
-                _ = query_filter.pop('size')
-            if 'terminate_after' in query_filter:
-                _ = query_filter.pop('terminate_after')
+            if "size" in query_filter:
+                _ = query_filter.pop("size")
+            if "terminate_after" in query_filter:
+                _ = query_filter.pop("terminate_after")
 
             try:
                 result = self.datastore.search(
@@ -177,28 +185,29 @@ class ExploreResource(resources.ResourceMixin, Resource):
                     query_dsl=query_dsl,
                     indices=indices,
                     timeline_ids=timeline_ids,
-                    count=True)
+                    count=True,
+                )
             except ValueError as e:
                 abort(HTTP_STATUS_CODE_BAD_REQUEST, str(e))
 
             # Get number of matching documents per index.
-            schema = {'meta': {'total_count': result}, 'objects': []}
+            schema = {"meta": {"total_count": result}, "objects": []}
             return jsonify(schema)
 
         if file_name:
             file_object = io.BytesIO()
 
             form_data = {
-                'created_at': datetime.datetime.utcnow().isoformat(),
-                'created_by': current_user.username,
-                'sketch': sketch_id,
-                'query': form.query.data,
-                'query_dsl': query_dsl,
-                'query_filter': query_filter,
-                'return_fields': return_fields,
+                "created_at": datetime.datetime.utcnow().isoformat(),
+                "created_by": current_user.username,
+                "sketch": sketch_id,
+                "query": form.query.data,
+                "query_dsl": query_dsl,
+                "query_filter": query_filter,
+                "return_fields": return_fields,
             }
-            with zipfile.ZipFile(file_object, mode='w') as zip_file:
-                zip_file.writestr('METADATA', data=json.dumps(form_data))
+            with zipfile.ZipFile(file_object, mode="w") as zip_file:
+                zip_file.writestr("METADATA", data=json.dumps(form_data))
                 fh = export.query_to_filehandle(
                     query_string=form.query.data,
                     query_dsl=query_dsl,
@@ -207,18 +216,16 @@ class ExploreResource(resources.ResourceMixin, Resource):
                     sketch=sketch,
                     datastore=self.datastore,
                     return_fields=return_fields,
-                    timeline_ids=timeline_ids)
+                    timeline_ids=timeline_ids,
+                )
                 fh.seek(0)
-                zip_file.writestr('query_results.csv', fh.read())
+                zip_file.writestr("query_results.csv", fh.read())
             file_object.seek(0)
-            return send_file(
-                file_object, mimetype='zip',
-                attachment_filename=file_name)
+            return send_file(file_object, mimetype="zip", attachment_filename=file_name)
 
         if scroll_id:
             # pylint: disable=unexpected-keyword-arg
-            result = self.datastore.client.scroll(
-                scroll_id=scroll_id, scroll='1m')
+            result = self.datastore.client.scroll(scroll_id=scroll_id, scroll="1m")
         else:
             try:
                 result = self.datastore.search(
@@ -230,42 +237,43 @@ class ExploreResource(resources.ResourceMixin, Resource):
                     aggregations=index_stats_agg,
                     return_fields=return_fields,
                     enable_scroll=enable_scroll,
-                    timeline_ids=timeline_ids)
+                    timeline_ids=timeline_ids,
+                )
             except ValueError as e:
                 abort(HTTP_STATUS_CODE_BAD_REQUEST, str(e))
 
         # Get number of matching documents over time.
-        histogram_interval = result.get(
-            'aggregations', {}).get('count_over_time', {}).get('interval', '')
-        count_over_time = {
-            'data': {},
-            'interval': histogram_interval
-        }
+        histogram_interval = (
+            result.get("aggregations", {})
+            .get("count_over_time", {})
+            .get("interval", "")
+        )
+        count_over_time = {"data": {}, "interval": histogram_interval}
         try:
-            for bucket in result['aggregations']['count_over_time']['buckets']:
-                key = bucket.get('key')
+            for bucket in result["aggregations"]["count_over_time"]["buckets"]:
+                key = bucket.get("key")
                 if key:
-                    count_over_time['data'][key] = bucket.get('doc_count')
+                    count_over_time["data"][key] = bucket.get("doc_count")
         except KeyError:
             pass
 
         # Get number of matching documents per index.
         count_per_index = {}
         try:
-            for bucket in result['aggregations']['indices']['buckets']:
-                key = bucket.get('key')
+            for bucket in result["aggregations"]["indices"]["buckets"]:
+                key = bucket.get("key")
                 if key:
-                    count_per_index[key] = bucket.get('doc_count')
+                    count_per_index[key] = bucket.get("doc_count")
         except KeyError:
             pass
 
         # Get number of matching documents per timeline.
         count_per_timeline = {}
         try:
-            for bucket in result['aggregations']['timelines']['buckets']:
-                key = bucket.get('key')
+            for bucket in result["aggregations"]["timelines"]["buckets"]:
+                key = bucket.get("key")
                 if key:
-                    count_per_timeline[key] = bucket.get('doc_count')
+                    count_per_timeline[key] = bucket.get("doc_count")
         except KeyError:
             pass
 
@@ -273,9 +281,8 @@ class ExploreResource(resources.ResourceMixin, Resource):
         count_total_complete = sum(count_per_index.values())
 
         comments = {}
-        if 'comment' in return_fields:
-            events = Event.query.filter_by(
-                sketch=sketch).all()
+        if "comment" in return_fields:
+            events = Event.query.filter_by(sketch=sketch).all()
             for event in events:
                 for comment in event.comments:
                     comments.setdefault(event.document_id, [])
@@ -283,27 +290,26 @@ class ExploreResource(resources.ResourceMixin, Resource):
 
         # Get labels for each event that matches the sketch.
         # Remove all other labels.
-        for event in result['hits']['hits']:
-            event['selected'] = False
-            event['_source']['label'] = []
+        for event in result["hits"]["hits"]:
+            event["selected"] = False
+            event["_source"]["label"] = []
             try:
-                for label in event['_source']['timesketch_label']:
-                    if sketch.id != label['sketch_id']:
+                for label in event["_source"]["timesketch_label"]:
+                    if sketch.id != label["sketch_id"]:
                         continue
-                    event['_source']['label'].append(label['name'])
-                del event['_source']['timesketch_label']
+                    event["_source"]["label"].append(label["name"])
+                del event["_source"]["timesketch_label"]
             except KeyError:
                 pass
 
-            if 'comment' in return_fields:
-                event['_source']['comment'] = comments.get(event['_id'], [])
+            if "comment" in return_fields:
+                event["_source"]["comment"] = comments.get(event["_id"], [])
 
         # Update or create user state view. This is used in the UI to let
         # the user get back to the last state in the explore view.
         # TODO: Deprecate this and change how last activity is determined, e.g
         # use the new Search History feature instead.
-        view = View.get_or_create(
-            user=current_user, sketch=sketch, name='')
+        view = View.get_or_create(user=current_user, sketch=sketch, name="")
         view.update_modification_time()
         view.query_string = form.query.data
         view.query_filter = json.dumps(query_filter, ensure_ascii=False)
@@ -318,20 +324,21 @@ class ExploreResource(resources.ResourceMixin, Resource):
         if parent:
             previous_search = SearchHistory.query.get(parent)
         else:
-            previous_search = SearchHistory.query.filter_by(
-                user=current_user, sketch=sketch).order_by(
-                    SearchHistory.id.desc()).first()
+            previous_search = (
+                SearchHistory.query.filter_by(user=current_user, sketch=sketch)
+                .order_by(SearchHistory.id.desc())
+                .first()
+            )
 
         if not incognito:
             is_same_query = False
             is_same_filter = False
 
             new_search.query_string = form.query.data
-            new_search.query_filter = json.dumps(
-                query_filter, ensure_ascii=False)
+            new_search.query_filter = json.dumps(query_filter, ensure_ascii=False)
 
             new_search.query_result_count = count_total_complete
-            new_search.query_time = result['took']
+            new_search.query_time = result["took"]
 
             if previous_search:
                 new_search.parent = previous_search
@@ -350,18 +357,16 @@ class ExploreResource(resources.ResourceMixin, Resource):
                 # Create metric if user creates a new branch.
                 if new_search.parent:
                     if len(new_search.parent.children) > 1:
-                        METRICS['searchhistory'].labels(
-                            action='branch').inc()
+                        METRICS["searchhistory"].labels(action="branch").inc()
             else:
-                METRICS['searchhistory'].labels(
-                    action='ignore_same_query').inc()
+                METRICS["searchhistory"].labels(action="ignore_same_query").inc()
         else:
-            METRICS['searchhistory'].labels(action='incognito').inc()
+            METRICS["searchhistory"].labels(action="incognito").inc()
 
         search_node = new_search if new_search.id else previous_search
 
         if not search_node:
-            abort(HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to save search')
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, "Unable to save search")
 
         search_node = search_node.build_tree(search_node, {}, recurse=False)
 
@@ -375,24 +380,24 @@ class ExploreResource(resources.ResourceMixin, Resource):
             tl_names[timeline.searchindex.index_name] = timeline.name
 
         meta = {
-            'es_time': result['took'],
-            'es_total_count': result['hits']['total'],
-            'es_total_count_complete': count_total_complete,
-            'timeline_colors': tl_colors,
-            'timeline_names': tl_names,
-            'count_per_index': count_per_index,
-            'count_per_timeline': count_per_timeline,
-            'count_over_time': count_over_time,
-            'scroll_id': result.get('_scroll_id', ''),
-            'search_node': search_node
+            "es_time": result["took"],
+            "es_total_count": result["hits"]["total"],
+            "es_total_count_complete": count_total_complete,
+            "timeline_colors": tl_colors,
+            "timeline_names": tl_names,
+            "count_per_index": count_per_index,
+            "count_per_timeline": count_per_timeline,
+            "count_over_time": count_over_time,
+            "scroll_id": result.get("_scroll_id", ""),
+            "search_node": search_node,
         }
 
         # Elasticsearch version 7.x returns total hits as a dictionary.
         # TODO: Refactor when version 6.x has been deprecated.
-        if isinstance(meta['es_total_count'], dict):
-            meta['es_total_count'] = meta['es_total_count'].get('value', 0)
+        if isinstance(meta["es_total_count"], dict):
+            meta["es_total_count"] = meta["es_total_count"].get("value", 0)
 
-        schema = {'meta': meta, 'objects': result['hits']['hits']}
+        schema = {"meta": meta, "objects": result["hits"]["hits"]}
         return jsonify(schema)
 
 
@@ -411,24 +416,23 @@ class QueryResource(resources.ResourceMixin, Resource):
         """
         form = forms.ExploreForm.build(request)
         if not form.validate_on_submit():
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, "Unable to validate form data.")
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
+        if not sketch.has_permission(current_user, "read"):
             abort(
-                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
-        if not sketch.has_permission(current_user, 'read'):
-            abort(HTTP_STATUS_CODE_FORBIDDEN,
-                  'User does not have read access controls on sketch.')
-        schema = {
-            'objects': [],
-            'meta': {}}
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "User does not have read access controls on sketch.",
+            )
+        schema = {"objects": [], "meta": {}}
         query_string = form.query.data
         query_filter = form.filter.data
         query_dsl = form.dsl.data
         query = self.datastore.build_query(
-            sketch.id, query_string, query_filter, query_dsl)
-        schema['objects'].append(query)
+            sketch.id, query_string, query_filter, query_dsl
+        )
+        schema["objects"].append(query)
         return jsonify(schema)
 
 
@@ -438,7 +442,7 @@ class SearchHistoryResource(resources.ResourceMixin, Resource):
     def __init__(self):
         super().__init__()
         self.parser = reqparse.RequestParser()
-        self.parser.add_argument('limit', type=int, required=False)
+        self.parser.add_argument("limit", type=int, required=False)
 
     @login_required
     def get(self, sketch_id):
@@ -448,23 +452,26 @@ class SearchHistoryResource(resources.ResourceMixin, Resource):
             Search history in JSON (instance of flask.wrappers.Response)
         """
         SQL_LIMIT = 100  # Limit to fetch first 100 results
-        DEFAULT_LIMIT= 12
+        DEFAULT_LIMIT = 12
 
         # How many results to return (12 if nothing is specified)
         args = self.parser.parse_args()
-        limit = args.get('limit')
+        limit = args.get("limit")
 
         if not limit:
             limit = DEFAULT_LIMIT
 
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
-            abort(HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
         result = []
-        nodes = SearchHistory.query.filter_by(
-            user=current_user, sketch=sketch).order_by(
-                SearchHistory.id.desc()).limit(SQL_LIMIT).all()
+        nodes = (
+            SearchHistory.query.filter_by(user=current_user, sketch=sketch)
+            .order_by(SearchHistory.id.desc())
+            .limit(SQL_LIMIT)
+            .all()
+        )
 
         uniq_queries = set()
         count = 0
@@ -476,10 +483,7 @@ class SearchHistoryResource(resources.ResourceMixin, Resource):
                 uniq_queries.add(node.query_string)
                 count += 1
 
-        schema = {
-            'objects': result,
-            'meta': {}
-        }
+        schema = {"objects": result, "meta": {}}
 
         return jsonify(schema)
 
@@ -498,28 +502,30 @@ class SearchHistoryTreeResource(resources.ResourceMixin, Resource):
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
-            abort(HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
         tree = {}
 
         try:
-            root_node = SearchHistory.query.filter_by(
-                user=current_user, sketch=sketch).order_by(
-                    SearchHistory.id.desc()).limit(
-                        self.HISTORY_NODE_LIMIT)[-1]
+            root_node = (
+                SearchHistory.query.filter_by(user=current_user, sketch=sketch)
+                .order_by(SearchHistory.id.desc())
+                .limit(self.HISTORY_NODE_LIMIT)[-1]
+            )
         except IndexError:
             root_node = None
 
-        last_node = SearchHistory.query.filter_by(
-            user=current_user, sketch=sketch).order_by(
-                SearchHistory.id.desc()).first()
-
+        last_node = (
+            SearchHistory.query.filter_by(user=current_user, sketch=sketch)
+            .order_by(SearchHistory.id.desc())
+            .first()
+        )
         if root_node:
             tree = root_node.build_tree(root_node, {})
 
         schema = {
-            'objects': [tree],
-            'meta': {'last_node_id': last_node.id if last_node else None}
+            "objects": [tree],
+            "meta": {"last_node_id": last_node.id if last_node else None},
         }
 
         return jsonify(schema)

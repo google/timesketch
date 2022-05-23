@@ -44,7 +44,7 @@ class VegaResult:
             spec: dict with the vega specification.
         """
 
-        self.chart_type = 'manual_vega'
+        self.chart_type = "manual_vega"
         self._spec = spec
 
     # pylint: disable=unused-argument
@@ -57,15 +57,13 @@ class VegaResult:
         Returns:
             Dict with aggregation result.
         """
-        datasets = self._spec.get('datasets', {})
+        datasets = self._spec.get("datasets", {})
         values = []
 
         for dataset in datasets.values():
             values.extend(list(dataset))
 
-        return {
-            'values': values
-        }
+        return {"values": values}
 
     def to_pandas(self):
         """Encode aggregation result as a pandas dataframe.
@@ -77,8 +75,14 @@ class VegaResult:
 
     # pylint: disable=unused-argument
     def to_chart(
-            self, chart_name='', chart_title='', as_html=False,
-            interactive=False, as_chart=False, color=''):
+        self,
+        chart_name="",
+        chart_title="",
+        as_html=False,
+        interactive=False,
+        as_chart=False,
+        color="",
+    ):
         """Encode aggregation result as Vega-Lite chart.
 
         Args:
@@ -119,9 +123,9 @@ class VegaResult:
 class ManualVegaSpecAggregation(interface.BaseAggregator):
     """Manual Vega Spec Aggregation."""
 
-    NAME = 'manual_vega'
-    DISPLAY_NAME = 'Manual Vega-Spec Aggregation'
-    DESCRIPTION = 'Aggregating values of a user supplied vega-spec'
+    NAME = "manual_vega"
+    DISPLAY_NAME = "Manual Vega-Spec Aggregation"
+    DESCRIPTION = "Aggregating values of a user supplied vega-spec"
 
     # No Form fields since this is not meant to be used in the UI.
     FORM_FIELDS = []
@@ -131,25 +135,26 @@ class ManualVegaSpecAggregation(interface.BaseAggregator):
 
         Args:
             sketch_id: Sketch ID.
-            indices: Optional list of elasticsearch index names. If not provided
+            indices: Optional list of OpenSearch index names. If not provided
                 the default behavior is to include all the indices in a sketch.
             timeline_ids: Optional list of timeline IDs, if not provided the
                 default behavior is to query all the data in the provided
                 search indices.
         """
         super().__init__(
-            sketch_id=sketch_id, indices=indices, timeline_ids=timeline_ids)
-        self.title = ''
+            sketch_id=sketch_id, indices=indices, timeline_ids=timeline_ids
+        )
+        self.title = ""
 
     @property
     def chart_title(self):
         """Returns a title for the chart."""
         if self.title:
             return self.title
-        return 'Results From A Manual Vega Spec'
+        return "Results From A Manual Vega Spec"
 
     # pylint: disable=arguments-differ
-    def run(self, data, title='', **kwargs):
+    def run(self, data, title="", **kwargs):
         """Run the aggregation.
 
         Args:
@@ -163,14 +168,15 @@ class ManualVegaSpecAggregation(interface.BaseAggregator):
             ValueError: data is not supplied.
         """
         if not data:
-            raise ValueError('Data is missing')
+            raise ValueError("Data is missing")
 
         if not isinstance(data, dict):
-            raise ValueError('Supplied data needs to be a dict.')
+            raise ValueError("Supplied data needs to be a dict.")
 
         self.title = title
         return VegaResult(data)
 
 
 manager.AggregatorManager.register_aggregator(
-    ManualVegaSpecAggregation, exclude_from_list=True)
+    ManualVegaSpecAggregation, exclude_from_list=True
+)

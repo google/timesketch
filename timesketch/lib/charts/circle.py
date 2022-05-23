@@ -24,7 +24,7 @@ from timesketch.lib.charts import interface
 class CircleChart(interface.BaseChart):
     """Circlechart object."""
 
-    NAME = 'circlechart'
+    NAME = "circlechart"
 
     def generate(self):
         """Generate the chart.
@@ -37,11 +37,12 @@ class CircleChart(interface.BaseChart):
 
         if self.chart_title:
             chart = chart.mark_circle(filled=True, size=100).properties(
-                title=self.chart_title)
+                title=self.chart_title
+            )
         else:
             chart = chart.mark_circle(filled=True, size=100)
-        field = self.encoding.get('y', {}).get('field', 'count')
-        color = alt.Color(field=field, type='quantitative')
+        field = self.encoding.get("y", {}).get("field", "count")
+        color = alt.Color(field=field, type="quantitative")
         chart.encoding = alt.FacetedEncoding.from_dict(self.encoding)
         chart.encoding.color = color
         return chart

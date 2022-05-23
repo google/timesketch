@@ -212,7 +212,7 @@ saved search.
 
 To search in the API client a search object is used. It will accept several
 parameters or configurations, for instances a free flowing query string
-(same as in the UI) or a raw Elastic query DSL. It can also support search
+(same as in the UI) or a raw OpenSearch query DSL. It can also support search
 chips.
 
 The output can be:
@@ -261,9 +261,9 @@ All of these parameters are optional, but in order for the search object to
 be able to query for results you need to provide either `query_string` or
 the `query_dsl`.
 
-+ **query_string**: This is the Elastic query string, the same one as you would
++ **query_string**: This is the OpenSearch query string, the same one as you would
 provide in the UI.
-+ **query_dsl**: This is an Elastic Query DSL string. Please see the official
++ **query_dsl**: This is an OpenSearch Query DSL string. Please see the official
 documentation about how it is structured.
 + **return_fields**: This is a comma separated string with all the fields you
 want to be included in the returned value. If you want all fields returned you
@@ -464,9 +464,9 @@ To get this:
 
 ```JSON
 {
-  'title': 'Suspicious Installation of Zenmap',
+  'title': 'Suspicious Installation of ZMap',
   'id': '5266a592-b793-11ea-b3de-0242ac130004',
-  'description': 'Detects suspicious installation of Zenmap',
+  'description': 'Detects suspicious installation of ZMap',
   'references': ['https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html'],
   'author': 'Alexander Jaeger',
   'date': '2020/06/26',
@@ -481,7 +481,7 @@ To get this:
   },
   'falsepositives': ['Unknown'],
   'level': 'high',
-  'es_query': '(data_type:("shell\\:zsh\\:history" OR "bash\\:history\\:command" OR "apt\\:history\\:line" OR "selinux\\:line") AND "*apt\\-get\\ install\\ zmap*")', 'file_name': 'lnx_susp_zenmap'
+  'es_query': '(data_type:("shell\\:zsh\\:history" OR "bash\\:history\\:command" OR "apt\\:history\\:line" OR "selinux\\:line") AND "*apt\\-get\\ install\\ zmap*")', 'file_name': 'lnx_susp_zmap'
 }
 ```
 
@@ -498,12 +498,78 @@ The output can be:
 + A pandas DataFrame if the `as_pandas=True` is set
 + A python dict (default behavior)
 
-### Other Options
+
+## Add data
+
+#### Manually add events to the sketch
+
+Fill in your event data, you need at least these fields: message, date and timestamp description
+
+
+```python
+
+message = "foobar"
+date = "2020-08-06T12:48:06.994188Z"
+timestamp_desc = "Test_description"
+
+# Attributes: A dict of extra attributes to add to the event.  
+attributes = {"a": "alpha", "o": "omega", "g": "gamma"}
+
+# Tags: A list of strings to include as tags.
+tags = ["not", "important"]
+
+sketch.add_event(message, date, timestamp_desc, attributes, tags)
+
+```
+
+### Add Tags to events
+
+To add tags to multiple events:
+
+```python
+# first search for the events that you want to search for
+events = sketch.explore('foobarsearchterm')
+events['objects']
+for event in events['objects']:
+ print(event.get('_id'))
+ events2 = [{
+               '_id': event.get('_id'),
+               '_index': event.get('_index'),
+               '_type': 'generic_event'
+               }]
+ tags = ['foobartag']
+ sketch.tag_events(events2, tags)
+```
+
+Of if you want to tag a single event:
+
+```python
+# Or if you want to do single ones:
+events2 = [{
+               '_id': 'g-abcdErfededed',
+               '_index': 'asd23r23dk19b398abe405cbf33f',
+               '_type': 'generic_event'
+               }]
+tags = ['foobartag']
+sketch.tag_events(events2, tags)
+```
+
+Both will give you something like:
+
+```python
+ 
+{'events_processed_by_api': 1,
+ 'number_of_events_passed_to_api': 1,
+ 'number_of_events_with_added_tags': 1,
+ 'tags_applied': 1,
+ 'total_number_of_events_sent_by_client': 1}
+```
+
+## Other Options
 
 The sketch object can be used to do several other actions that are not documented in this first document, such as:
 
 + Create/list/retrieve stories
-+ Manually add events to the sketch
 + Add timelines to the sketch
 + Modify the ACL of the sketch
 + Archive the sketch (via the `sketch.archive` function)
@@ -514,4 +580,4 @@ The sketch object can be used to do several other actions that are not documente
 
 ## Examples
 
-There are several examples using the API client in the [notebooks folder](../notebooks/) in the Github repository.
+There are several examples using the API client in the [notebooks folder](https://github.com/google/timesketch/notebooks) in the Github repository.

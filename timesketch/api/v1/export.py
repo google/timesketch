@@ -25,7 +25,7 @@ from timesketch.api.v1 import utils
 from timesketch.lib.stories import api_fetcher as story_api_fetcher
 
 
-logger = logging.getLogger('timesketch.api_exporter')
+logger = logging.getLogger("timesketch.api_exporter")
 
 
 def export_aggregation(aggregation, sketch, zip_file):
@@ -38,29 +38,30 @@ def export_aggregation(aggregation, sketch, zip_file):
         zip_file (ZipFile): a zip file handle that can be used to write
             content to.
     """
-    name = '{0:04d}_{1:s}'.format(aggregation.id, aggregation.name)
+    name = "{0:04d}_{1:s}".format(aggregation.id, aggregation.name)
     parameters = json.loads(aggregation.parameters)
     result_obj, meta = utils.run_aggregator(
-        sketch.id, aggregator_name=aggregation.agg_type,
-        aggregator_parameters=parameters)
+        sketch.id,
+        aggregator_name=aggregation.agg_type,
+        aggregator_parameters=parameters,
+    )
 
-    zip_file.writestr(
-        'aggregations/{0:s}.meta'.format(name), data=json.dumps(meta))
+    zip_file.writestr("aggregations/{0:s}.meta".format(name), data=json.dumps(meta))
 
     html = result_obj.to_chart(
-        chart_name=meta.get('chart_type'),
+        chart_name=meta.get("chart_type"),
         chart_title=aggregation.name,
-        color=meta.get('chart_color'),
-        interactive=True, as_html=True)
-    zip_file.writestr(
-        'aggregations/{0:s}.html'.format(name), data=html)
+        color=meta.get("chart_color"),
+        interactive=True,
+        as_html=True,
+    )
+    zip_file.writestr("aggregations/{0:s}.html".format(name), data=html)
 
     string_io = io.StringIO()
     data_frame = result_obj.to_pandas()
     data_frame.to_csv(string_io, index=False)
     string_io.seek(0)
-    zip_file.writestr(
-        'aggregations/{0:s}.csv'.format(name), data=string_io.read())
+    zip_file.writestr("aggregations/{0:s}.csv".format(name), data=string_io.read())
 
 
 def export_aggregation_group(group, sketch, zip_file):
@@ -73,13 +74,11 @@ def export_aggregation_group(group, sketch, zip_file):
         zip_file (ZipFile): a zip file handle that can be used to write
             content to.
     """
-    name = '{0:04d}_{1:s}'.format(group.id, group.name)
+    name = "{0:04d}_{1:s}".format(group.id, group.name)
     chart, _, meta = utils.run_aggregator_group(group, sketch_id=sketch.id)
 
-    zip_file.writestr(
-        'aggregation_groups/{0:s}.meta'.format(name), json.dumps(meta))
-    zip_file.writestr(
-        'aggregation_groups/{0:s}.html'.format(name), chart.to_html())
+    zip_file.writestr("aggregation_groups/{0:s}.meta".format(name), json.dumps(meta))
+    zip_file.writestr("aggregation_groups/{0:s}.html".format(name), chart.to_html())
 
 
 def export_story(story, sketch, story_exporter, zip_file):
@@ -103,19 +102,26 @@ def export_story(story, sketch, story_exporter, zip_file):
         if story.user:
             author = story.user.username
         else:
-            author = 'System'
+            author = "System"
         exporter.set_author(author)
         exporter.set_title(story.title)
 
         zip_file.writestr(
-            'stories/{0:04d}_{1:s}.html'.format(
-                story.id, story.title),
-            data=exporter.export_story())
+            "stories/{0:04d}_{1:s}.html".format(story.id, story.title),
+            data=exporter.export_story(),
+        )
 
 
 def query_to_filehandle(
-        query_string='', query_dsl='', query_filter=None, sketch=None,
-        datastore=None, indices=None, timeline_ids=None, return_fields=None):
+    query_string="",
+    query_dsl="",
+    query_filter=None,
+    sketch=None,
+    datastore=None,
+    indices=None,
+    timeline_ids=None,
+    return_fields=None,
+):
     """Query the datastore and return back a file object with the results.
 
     This function takes a query string or DSL, queries the datastore
@@ -123,11 +129,11 @@ def query_to_filehandle(
     which gets returned back.
 
     Args:
-        query_string (str): Elasticsearch query string.
-        query_dsl (str): Elasticsearch query DSL as JSON string.
+        query_string (str): OpenSearch query string.
+        query_dsl (str): OpenSearch query DSL as JSON string.
         query_filter (dict): Filter for the query as a dict.
         sketch (timesketch.models.sketch.Sketch): a sketch object.
-        datastore (elastic.ElasticsearchDataStore): the datastore object.
+        datastore (opensearch.OpenSearchDataStore): the datastore object.
         indices (list): List of indices to query
         timeline_ids (list): Optional list of IDs of Timeline objects that
             should be queried as part of the search.
@@ -138,11 +144,11 @@ def query_to_filehandle(
     """
     # Ignoring the size limits to reduce the amount of queries
     # needed to get all the data.
-    query_filter['terminate_after'] = 10000
-    query_filter['size'] = 10000
+    query_filter["terminate_after"] = 10000
+    query_filter["size"] = 10000
 
-    if 'from' in query_filter:
-        del query_filter['from']
+    if "from" in query_filter:
+        del query_filter["from"]
 
     result = datastore.search(
         sketch_id=sketch.id,
@@ -152,16 +158,16 @@ def query_to_filehandle(
         enable_scroll=True,
         timeline_ids=timeline_ids,
         return_fields=return_fields,
-        indices=indices)
+        indices=indices,
+    )
 
-    scroll_id = result.get('_scroll_id', '')
+    scroll_id = result.get("_scroll_id", "")
     if not scroll_id:
         return query_results_to_filehandle(result, sketch)
 
     data_frame = query_results_to_dataframe(result, sketch)
 
-    total_count = result.get(
-        'hits', {}).get('total', {}).get('value', 0)
+    total_count = result.get("hits", {}).get("total", {}).get("value", 0)
 
     if isinstance(total_count, str):
         try:
@@ -169,23 +175,21 @@ def query_to_filehandle(
         except ValueError:
             total_count = 0
 
-    event_count = len(result['hits']['hits'])
+    event_count = len(result["hits"]["hits"])
 
     while event_count < total_count:
         # pylint: disable=unexpected-keyword-arg
-        result = datastore.client.scroll(
-            scroll_id=scroll_id, scroll='1m')
-        event_count += len(result['hits']['hits'])
+        result = datastore.client.scroll(scroll_id=scroll_id, scroll="1m")
+        event_count += len(result["hits"]["hits"])
         add_frame = query_results_to_dataframe(result, sketch)
         if add_frame.shape[0]:
             data_frame = pd.concat([data_frame, add_frame], sort=False)
         else:
             logger.warning(
-                'Data Frame returned from a search operation was '
-                'empty, count {0:d} out of {1:d} total. Query is: '
-                '"{2:s}"'.format(
-                    event_count, total_count,
-                    query_string or query_dsl))
+                "Data Frame returned from a search operation was "
+                "empty, count {0:d} out of {1:d} total. Query is: "
+                '"{2:s}"'.format(event_count, total_count, query_string or query_dsl)
+            )
 
     fh = io.StringIO()
     data_frame.to_csv(fh, index=False)
@@ -194,11 +198,11 @@ def query_to_filehandle(
 
 
 def query_results_to_dataframe(result, sketch):
-    """Returns a data frame from a Elastic query result dict.
+    """Returns a data frame from a OpenSearch query result dict.
 
     Args:
         result (dict): a dict that contains the response from a
-            Elastic datastore search.
+            OpenSearch datastore search.
         sketch (timesketch.models.sketch.Sketch): a sketch object.
 
     Returns:
@@ -206,21 +210,21 @@ def query_results_to_dataframe(result, sketch):
             the query.
     """
     lines = []
-    for event in result['hits']['hits']:
-        line = event['_source']
-        line.setdefault('label', [])
-        line['_id'] = event['_id']
-        line['_type'] = event['_type']
-        line['_index'] = event['_index']
-        if 'tag' in line:
-            if isinstance(line['tag'], (list, tuple)):
-                line['tag'] = ','.join(line['tag'])
+    for event in result["hits"]["hits"]:
+        line = event["_source"]
+        line.setdefault("label", [])
+        line["_id"] = event["_id"]
+        line["_type"] = event["_type"]
+        line["_index"] = event["_index"]
+        if "tag" in line:
+            if isinstance(line["tag"], (list, tuple)):
+                line["tag"] = ",".join(line["tag"])
         try:
-            for label in line['timesketch_label']:
-                if sketch.id != label['sketch_id']:
+            for label in line["timesketch_label"]:
+                if sketch.id != label["sketch_id"]:
                     continue
-                line['label'].append(label['name'])
-            del line['timesketch_label']
+                line["label"].append(label["name"])
+            del line["timesketch_label"]
         except KeyError:
             pass
 
@@ -231,11 +235,11 @@ def query_results_to_dataframe(result, sketch):
 
 
 def query_results_to_filehandle(result, sketch):
-    """Returns a data frame from a Elastic query result dict.
+    """Returns a data frame from a OpenSearch query result dict.
 
     Args:
         result (dict): a dict that contains the response from a
-            Elastic datastore search.
+            OpenSearch datastore search.
         sketch (timesketch.models.sketch.Sketch): a sketch object.
 
     Returns:

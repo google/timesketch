@@ -32,12 +32,11 @@ from timesketch.lib.aggregators import interface
 class ManualFeedAggregation(interface.BaseAggregator):
     """Manual Feed Aggregation."""
 
-    NAME = 'manual_feed'
-    DISPLAY_NAME = 'Manual Feed Aggregation'
-    DESCRIPTION = 'Aggregating values of a user supplied data'
+    NAME = "manual_feed"
+    DISPLAY_NAME = "Manual Feed Aggregation"
+    DESCRIPTION = "Aggregating values of a user supplied data"
 
-    SUPPORTED_CHARTS = frozenset(
-        ['barchart', 'circlechart', 'hbarchart', 'table'])
+    SUPPORTED_CHARTS = frozenset(["barchart", "circlechart", "hbarchart", "table"])
 
     # No Form fields since this is not meant to be used in the UI.
     FORM_FIELDS = []
@@ -47,27 +46,28 @@ class ManualFeedAggregation(interface.BaseAggregator):
 
         Args:
             sketch_id: Sketch ID.
-            indices: Optional list of elasticsearch index names. If not provided
+            indices: Optional list of OpenSearch index names. If not provided
                 the default behavior is to include all the indices in a sketch.
             timeline_ids: Optional list of timeline IDs, if not provided the
                 default behavior is to query all the data in the provided
                 search indices.
         """
         super().__init__(
-            sketch_id=sketch_id, indices=indices, timeline_ids=timeline_ids)
-        self.title = ''
+            sketch_id=sketch_id, indices=indices, timeline_ids=timeline_ids
+        )
+        self.title = ""
 
     @property
     def chart_title(self):
         """Returns a title for the chart."""
         if self.title:
             return self.title
-        return 'Results From A Manually Fed Table'
+        return "Results From A Manually Fed Table"
 
     # pylint: disable=arguments-differ
     def run(
-            self, data, title='', supported_charts='table', field=None,
-            order_field='count'):
+        self, data, title="", supported_charts="table", field=None, order_field="count"
+    ):
         """Run the aggregation.
 
         Args:
@@ -86,7 +86,7 @@ class ManualFeedAggregation(interface.BaseAggregator):
             ValueError: data is not supplied.
         """
         if not data:
-            raise ValueError('Data is missing')
+            raise ValueError("Data is missing")
 
         self.title = title
 
@@ -94,30 +94,28 @@ class ManualFeedAggregation(interface.BaseAggregator):
             keys = set()
             for row in data:
                 list(map(keys.add, row.keys()))
-            keys.discard('count')
-            keys.discard('bucket_name')
+            keys.discard("count")
+            keys.discard("bucket_name")
             if keys:
                 field = list(keys)[0]
             else:
-                field = 'count'
+                field = "count"
 
         # Encoding information for Vega-Lite.
         encoding = {
-            'x': {
-                'field': field,
-                'type': 'nominal',
-                'sort': {
-                    'op': 'sum',
-                    'field': order_field,
-                    'order': 'descending'
-                }
+            "x": {
+                "field": field,
+                "type": "nominal",
+                "sort": {"op": "sum", "field": order_field, "order": "descending"},
             },
-            'y': {'field': 'count', 'type': 'quantitative'}
+            "y": {"field": "count", "type": "quantitative"},
         }
 
         return interface.AggregationResult(
-            encoding=encoding, values=data, chart_type=supported_charts)
+            encoding=encoding, values=data, chart_type=supported_charts
+        )
 
 
 manager.AggregatorManager.register_aggregator(
-    ManualFeedAggregation, exclude_from_list=True)
+    ManualFeedAggregation, exclude_from_list=True
+)
