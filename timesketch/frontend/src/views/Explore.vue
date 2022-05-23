@@ -997,8 +997,6 @@ export default {
           eventsUnstarred.push(this.selectedEvents[key])
         }
       })
-<<<<<<< HEAD
-=======
 
       // Find out if there's a mix of starred and unstarred events
       if (eventsStarred.length && eventsUnstarred.length) {
@@ -1010,7 +1008,6 @@ export default {
 
       // Updating has 3 independent parts:
       // 1) The backend via API
->>>>>>> c4483eb0b041acb1fd2239e752c526f527d0ef89
       ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', eventsToToggle, this.currentSearchNode)
         .then(response => {})
         .catch(e => {})
