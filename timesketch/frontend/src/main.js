@@ -55,7 +55,7 @@ export default EventBus
 // Third party
 Vue.use(require('vue-moment'))
 Vue.use(VueCytoscape)
-Vue.use(VueClipboard);
+Vue.use(VueClipboard)
 Vue.use(Buefy, {
   defaultIconComponent: 'font-awesome-icon',
   defaultIconPack: 'fas',
@@ -70,5 +70,5 @@ Vue.config.productionTip = false
 new Vue({
   router,
   store,
-  render: h => h(App),
+  render: (h) => h(App),
 }).$mount('#app')

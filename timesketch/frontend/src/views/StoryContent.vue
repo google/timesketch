@@ -26,8 +26,8 @@ limitations under the License.
     <section class="section" v-if="blocks">
       <div class="container is-fluid">
         <div class="card">
-          <div class="card-content" style="padding:50px;">
-            <div class="markdown-body ts-markdown-body-color" style="margin-bottom:20px;padding-left:10px">
+          <div class="card-content" style="padding: 50px">
+            <div class="markdown-body ts-markdown-body-color" style="margin-bottom: 20px; padding-left: 10px">
               <h1>{{ title }}</h1>
             </div>
 
@@ -38,17 +38,17 @@ limitations under the License.
                 @mouseleave="obj.isActive = false"
                 v-bind:class="{ activeBlock: obj.isActive }"
                 class="inactiveBlock"
-                style="padding-left:10px;margin-top:10px;margin-bottom: 10px;"
+                style="padding-left: 10px; margin-top: 10px; margin-bottom: 10px"
               >
-                <span v-if="obj.isActive" style="float:right;">
+                <span v-if="obj.isActive" style="float: right">
                   <button class="delete" v-on:click="deleteBlock(index)"></button>
                 </span>
 
-                <div class="columns" v-if="obj.edit" style="margin-bottom:0;">
+                <div class="columns" v-if="obj.edit" style="margin-bottom: 0">
                   <div class="column">
                     <textarea
                       class="textarea"
-                      style="height: 100%;"
+                      style="height: 100%"
                       :value="obj.content"
                       @input="update($event, obj)"
                       placeholder="Your story starts here.."
@@ -59,7 +59,7 @@ limitations under the License.
                       <div
                         v-html="toHtml(obj.content)"
                         class="markdown-body"
-                        style="max-height: 600px;overflow: auto;"
+                        style="max-height: 600px; overflow: auto"
                       ></div>
                     </div>
                   </transition>
@@ -81,7 +81,7 @@ limitations under the License.
               </div>
 
               <div
-                style="margin-top:10px;margin-bottom: 10px;"
+                style="margin-top: 10px; margin-bottom: 10px"
                 v-if="obj.componentName"
                 @mouseover="obj.isActive = true"
                 @mouseleave="obj.isActive = false"
@@ -107,13 +107,11 @@ limitations under the License.
                 </article>
               </div>
 
-              <div style="min-height:40px;" @mouseover="obj.showPanel = true" @mouseleave="obj.showPanel = false">
-                <div v-if="index === blocks.length - 1" style="padding-top:20px;"></div>
+              <div style="min-height: 40px" @mouseover="obj.showPanel = true" @mouseleave="obj.showPanel = false">
+                <div v-if="index === blocks.length - 1" style="padding-top: 20px"></div>
                 <div v-if="index === blocks.length - 1 || obj.showPanel || obj.isActive" class="field is-grouped">
                   <p class="control">
-                    <button class="button is-rounded" v-on:click="addBlock(index)">
-                      + Text
-                    </button>
+                    <button class="button is-rounded" v-on:click="addBlock(index)">+ Text</button>
                   </p>
                   <p class="control" v-if="meta.views.length">
                     <ts-view-list-dropdown
@@ -143,7 +141,7 @@ limitations under the License.
 
 <script>
 import ApiClient from '../utils/RestApiClient'
-import marked from 'marked'
+import { marked } from 'marked'
 import _ from 'lodash'
 import TsAggregationListDropdown from '../components/Aggregation/AggregationListDropdown'
 import TsAggregationCompact from '../components/Aggregation/AggregationCompact'
@@ -180,7 +178,7 @@ export default {
     }
   },
   methods: {
-    update: _.debounce(function(e, obj) {
+    update: _.debounce(function (e, obj) {
       obj.content = e.target.value
       this.save()
     }, 300),
@@ -227,14 +225,14 @@ export default {
       this.save()
     },
     save() {
-      this.blocks.forEach(function(block) {
+      this.blocks.forEach(function (block) {
         block.showPanel = false
         block.isActive = false
       })
       let content = JSON.stringify(this.blocks)
       ApiClient.updateStory(this.title, content, this.sketchId, this.storyId)
-        .then(response => {})
-        .catch(e => {})
+        .then((response) => {})
+        .catch((e) => {})
     },
     toHtml(markdown) {
       return marked(markdown, { sanitize: false })
@@ -252,9 +250,10 @@ export default {
       return concat(this.aggregations, this.aggregationGroups)
     },
   },
-  created: function() {
+  created: function () {
     ApiClient.getStory(this.sketchId, this.storyId)
-      .then(response => {
+      .then((response) => {
+        console.log()
         this.title = response.data.objects[0].title
         let content = response.data.objects[0].content
         if (content === '[]') {
@@ -263,21 +262,21 @@ export default {
           this.blocks = JSON.parse(content)
         }
       })
-      .catch(e => {
+      .catch((e) => {
         console.error(e)
       })
     ApiClient.getAggregations(this.sketchId)
-      .then(response => {
+      .then((response) => {
         this.aggregations = response.data.objects[0]
       })
-      .catch(e => {
+      .catch((e) => {
         console.error(e)
       })
     ApiClient.getAggregationGroups(this.sketchId)
-      .then(response => {
+      .then((response) => {
         this.aggregationGroups = response.data.objects
       })
-      .catch(e => {
+      .catch((e) => {
         console.error(e)
       })
   },
