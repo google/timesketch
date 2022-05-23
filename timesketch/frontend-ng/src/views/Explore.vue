@@ -47,7 +47,7 @@ limitations under the License.
     </v-navigation-drawer>
 
     <!-- Scenarios left panel -->
-    <v-navigation-drawer app :width="rightSidePanelWidth" hide-overlay class="ml-14">
+    <v-navigation-drawer app permanent :width="rightSidePanelWidth" hide-overlay class="ml-14">
       <ts-scenario
         :show-panel="showRightSidePanel"
         @togglePanel="showRightSidePanel = !showRightSidePanel"
@@ -709,7 +709,7 @@ export default {
       return this.$store.state.currentSearchNode
     },
     rightSidePanelWidth() {
-      let width = '450'
+      let width = '430'
       if (!this.showRightSidePanel) {
         width = '50'
       }

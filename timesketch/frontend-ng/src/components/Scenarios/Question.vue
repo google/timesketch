@@ -34,7 +34,6 @@ limitations under the License.
     </v-row>
 
     <div style="font-size: 0.9em" v-show="expanded">
-      <!--
       <v-textarea disabled outlined flat hide-details auto-grow rows="3">
         <template v-slot:prepend-inner>
           <v-avatar color="grey" class="mt-n1" size="28"></v-avatar>
@@ -45,7 +44,7 @@ limitations under the License.
         <v-btn disabled x-small outlined color="primary"> Answer No </v-btn>
         <v-btn disabled x-small outlined color="primary"> Inconclusive </v-btn>
       </v-card-actions>
-    --></div>
+    </div>
 
     <v-divider></v-divider>
   </div>
