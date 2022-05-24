@@ -79,7 +79,7 @@ timesketch/data/sigma
 ### Sigma Rules Blocklist file
 
 The `data/sigma_blocklist.csv` is where Timesketch maintains a list of rules. 
-Each rule can have one of the following status: `good,bad,exploratory`.
+Each rule can have one of the following status values: `good,bad,exploratory`.
 * `exploratoy` rules will be shown in the UI but ignored in the Analyzer. So this status can be used to test rules. By default each rule is considered `exploratory`. 
 * `good` rules will be used in the Sigma analyzer. 
 * `bad` will be ignored and not shown in the UI or used in the Sigma analyzer.
