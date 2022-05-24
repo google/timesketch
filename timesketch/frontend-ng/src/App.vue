@@ -15,8 +15,8 @@ limitations under the License.
 -->
 <template>
   <v-app id="app">
-    <v-navigation-drawer v-model="drawer" permanent app mini-variant>
-      <v-avatar class="mb-2">
+    <v-navigation-drawer v-model="drawer" permanent app mini-variant class="pl-1">
+      <v-avatar class="mb-2 mt-2">
         <v-img src="/dist/timesketch-color.png" max-height="30" max-width="30" contain></v-img>
       </v-avatar>
 

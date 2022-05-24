@@ -15,7 +15,11 @@ limitations under the License.
 -->
 <template>
   <div>
-    <v-row style="cursor: pointer" @click="expanded = !expanded">
+    <v-row
+      style="cursor: pointer"
+      @click="expanded = !expanded"
+      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+    >
       <v-col cols="1">
         <v-icon class="ml-2" v-if="!expanded">mdi-chevron-right</v-icon>
         <v-icon class="ml-2" v-else>mdi-chevron-down</v-icon>
@@ -28,7 +32,7 @@ limitations under the License.
       </v-col>
     </v-row>
 
-    <div v-show="expanded" style="background-color: #f5f5f5">
+    <div v-show="expanded">
       <v-divider class="mt-3"></v-divider>
       <span style="font-size: 0.9em" v-for="question in facet.questions" :key="question.id">
         <ts-question :question="question"></ts-question>

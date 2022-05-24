@@ -14,39 +14,36 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div v-bind:class="{ selected: expanded }">
-    <v-row>
-      <v-col cols="11" @click="expanded = !expanded" style="cursor: pointer">
-        <div class="pl-8">
-          <v-menu open-on-hover offset-y :open-delay="1000" :close-on-content-click="false">
-            <template v-slot:activator="{ on, attrs }">
-              <span style="font-size: 0.9em" v-bind="attrs" v-on="on">{{ question.display_name }}</span>
+  <div>
+    <div :class="highlightColor">
+      <div class="pa-2 pl-4" @click="expanded = !expanded" style="cursor: pointer">
+        <v-menu open-on-hover offset-y :open-delay="1000" :close-on-content-click="false">
+          <template v-slot:activator="{ on, attrs }">
+            <span style="font-size: 0.9em" v-bind="attrs" v-on="on">{{ question.display_name }}</span>
+          </template>
+          <v-card style="font-size: 0.9em" class="pa-3" width="400">
+            {{ question.description }}
+          </v-card>
+        </v-menu>
+      </div>
+
+      <div v-show="expanded">
+        <div style="font-size: 0.9em" class="pa-4">
+          <v-textarea disabled outlined flat hide-details auto-grow rows="3">
+            <template v-slot:prepend-inner>
+              <v-avatar color="grey" class="mt-n1" size="28"></v-avatar>
             </template>
-            <v-card style="font-size: 0.9em" class="pa-3" width="400">
-              {{ question.description }}
-            </v-card>
-          </v-menu>
+          </v-textarea>
+          <v-card-actions class="pl-0">
+            <v-btn disabled x-small outlined color="primary"> Answer Yes </v-btn>
+            <v-btn disabled x-small outlined color="primary"> Answer No </v-btn>
+            <v-btn disabled x-small outlined color="primary"> Inconclusive </v-btn>
+          </v-card-actions>
         </div>
-      </v-col>
-      <!--<v-col cols="1" class="pa-3">
-        <v-icon v-if="!expanded">mdi-dots-vertical</v-icon>
-      </v-col>-->
-    </v-row>
+      </div>
 
-    <div style="font-size: 0.9em" v-show="expanded">
-      <v-textarea disabled outlined flat hide-details auto-grow rows="3">
-        <template v-slot:prepend-inner>
-          <v-avatar color="grey" class="mt-n1" size="28"></v-avatar>
-        </template>
-      </v-textarea>
-      <v-card-actions class="pl-0">
-        <v-btn disabled x-small outlined color="primary"> Answer Yes </v-btn>
-        <v-btn disabled x-small outlined color="primary"> Answer No </v-btn>
-        <v-btn disabled x-small outlined color="primary"> Inconclusive </v-btn>
-      </v-card-actions>
+      <v-divider></v-divider>
     </div>
-
-    <v-divider></v-divider>
   </div>
 </template>
 
@@ -62,6 +59,12 @@ export default {
     sketch() {
       return this.$store.state.sketch
     },
+    highlightColor() {
+      if (!this.expanded) {
+        return
+      }
+      return this.$vuetify.theme.dark ? 'dark-highlight' : 'light-highlight'
+    },
   },
   methods: {},
   created() {},
@@ -70,7 +73,7 @@ export default {
 
 <style scoped lang="scss">
 .selected {
-  background-color: #f5f5f5;
   font-weight: bold;
+  background-color: #f5f5f5;
 }
 </style>
