@@ -166,8 +166,8 @@ def search_group(
         for time_range in time_ranges:
             try:
                 range_chip = search.DateRangeChip()
-                range_chip.add_start_time = time_range[0]
-                range_chip.add_end_time = time_range[1]
+                range_chip.add_start_time(time_range[0])
+                range_chip.add_end_time(time_range[1])
                 search_obj.add_chip(range_chip)
             except ValueError:
                 click.echo("Error parsing date (make sure it is ISO formatted)")
@@ -179,8 +179,8 @@ def search_group(
         for time in times:
             try:
                 range_chip = search.DateRangeChip()
-                range_chip.add_start_time = time
-                range_chip.add_end_time = time
+                range_chip.add_start_time(time)
+                range_chip.add_end_time(time)
                 search_obj.add_chip(range_chip)
             except ValueError:
                 click.echo("Error parsing date (make sure it is ISO formatted)")
