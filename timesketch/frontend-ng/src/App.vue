@@ -65,6 +65,7 @@ limitations under the License.
         </v-btn>
       </v-avatar>
 
+      <!--
       <template v-slot:append>
         <v-tooltip right>
           <template v-slot:activator="{ on, attrs }">
@@ -77,10 +78,28 @@ limitations under the License.
           <span>Switch between light and dark theme</span>
         </v-tooltip>
       </template>
+      -->
     </v-navigation-drawer>
 
-    <v-main class="mx-4">
-      <router-view></router-view>
+    <v-main>
+      <v-toolbar flat>
+        <v-toolbar-title>{{ sketch.name }}</v-toolbar-title>
+        <v-spacer></v-spacer>
+        <v-btn small depressed v-on:click="switchUI"> Use the old UI </v-btn>
+        <v-tooltip right>
+          <template v-slot:activator="{ on, attrs }">
+            <v-avatar>
+              <v-btn icon v-on:click="toggleTheme" v-bind="attrs" v-on="on">
+                <v-icon>mdi-brightness-6</v-icon>
+              </v-btn>
+            </v-avatar>
+          </template>
+          <span>Switch between light and dark theme</span>
+        </v-tooltip>
+      </v-toolbar>
+      <div class="mx-4">
+        <router-view></router-view>
+      </div>
     </v-main>
   </v-app>
 </template>
