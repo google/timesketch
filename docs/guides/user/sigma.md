@@ -31,7 +31,7 @@ So if you want to search for ZMap related rules, you can search for `zma` in `Ti
 
 #### Hits
 
-If you have run the Sigma Analyzer on a sketch and a rule has produced hits, the following fields will be added ot the event:
+If you have run the Sigma Analyzer on a sketch and a rule has produced hits, the following fields will be added to the event:
 
 * `ts_sigma_rule` will store the rule name that produced hits on an event.
 * `ts_ttp` if a rule had ATT&CK(r) tags added, they will be added to this array
