@@ -2,16 +2,16 @@
 import itertools
 import logging
 
-has_required_deps = True
-try:
-    from google.cloud import bigquery
-except ImportError:
-    has_required_deps = False
-from google.auth import exceptions as google_auth_exceptions
-
 from timesketch.lib import emojis
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
+
+has_required_deps = True
+try:
+    from google.cloud import bigquery
+    from google.auth import exceptions as google_auth_exceptions
+except ImportError:
+    has_required_deps = False
 
 logger = logging.getLogger('timesketch.analyzers.bigquery_matcher')
 
