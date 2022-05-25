@@ -15,7 +15,6 @@ class TestBigQueryMatcherPlugin(BaseTest):
 
     _TEST_EMOJI = 'SKULL'
     _TEST_TAG = 'test-tag'
-    
     # Skip the tests if bigquery is not imported.
     # pylint: disable=simplifiable-if-expression
     __test__ = True if 'google.cloud.bigquery' in sys.modules else False
