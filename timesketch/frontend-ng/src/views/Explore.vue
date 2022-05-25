@@ -646,7 +646,6 @@ export default {
       return parseInt(this.currentQueryFilter.from) + parseInt(this.currentQueryFilter.size)
     },
     numSelectedEvents() {
-      //return Object.keys(this.selectedEvents).length
       return this.selectedEvents.length
     },
     filterChips: function () {
@@ -762,10 +761,7 @@ export default {
         this.$scrollTo('#context', 200, { offset: -300 })
       }
 
-      // Reset selected events.
-      //this.selectedEvents = {}
       this.selectedEvents = []
-
       this.eventList = emptyEventList()
 
       if (resetPagination) {
@@ -851,8 +847,6 @@ export default {
         })
     },
     searchView: function (viewId) {
-      // Reset selected events.
-      //this.selectedEvents = {}
       this.selectedEvents = []
 
       this.showSearchDropdown = false
@@ -1073,14 +1067,6 @@ export default {
     removeField: function (index) {
       this.selectedFields.splice(index, 1)
     },
-    //updateSelectedEvents: function (event) {
-    //  let key = event._index + ':' + event._id
-    //  if (event.isSelected) {
-    //    this.$set(this.selectedEvents, key, event)
-    //  } else {
-    //    this.$delete(this.selectedEvents, key)
-    //  }
-    //},
     toggleStar: function () {
       let eventsToToggle = []
       Object.keys(this.selectedEvents).forEach((key, index) => {
@@ -1172,13 +1158,6 @@ export default {
   },
   mounted() {
     this.$refs.searchInput.focus()
-    //this.showSearchDropdown = true
-    //EventBus.$on('eventSelected', (eventData) => {
-    //  this.updateSelectedEvents(eventData)
-    //})
-    //EventBus.$on('clearSelectedEvents', () => {
-    //  this.selectedEvents = {}
-    //})
   },
   created: function () {
     let doSearch = false
