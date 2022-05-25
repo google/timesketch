@@ -163,7 +163,7 @@ export default {
         .catch((e) => {})
     },
     postComment: function () {
-      //EventBus.$emit('eventAnnotated', { type: '__ts_comment', event: this.event, searchNode: this.currentSearchNode })
+      EventBus.$emit('eventAnnotated', { type: '__ts_comment', event: this.event, searchNode: this.currentSearchNode })
       ApiClient.saveEventAnnotation(this.sketch.id, 'comment', this.comment, [this.event], this.currentSearchNode)
         .then((response) => {
           this.comments.push(response.data.objects[0][0])
