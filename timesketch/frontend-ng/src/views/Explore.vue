@@ -472,6 +472,7 @@ limitations under the License.
               }}</v-chip>
             </template>
 
+            <!-- Comment field -->
             <template v-slot:item._source.comment="{ item }">
               <v-badge
                 :offset-y="16"
