@@ -64,21 +64,6 @@ limitations under the License.
           <v-icon>mdi-head-lightbulb-outline</v-icon>
         </v-btn>
       </v-avatar>
-
-      <!--
-      <template v-slot:append>
-        <v-tooltip right>
-          <template v-slot:activator="{ on, attrs }">
-            <v-avatar>
-              <v-btn icon v-on:click="toggleTheme" v-bind="attrs" v-on="on">
-                <v-icon>mdi-brightness-6</v-icon>
-              </v-btn>
-            </v-avatar>
-          </template>
-          <span>Switch between light and dark theme</span>
-        </v-tooltip>
-      </template>
-      -->
     </v-navigation-drawer>
 
     <v-main>

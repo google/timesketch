@@ -47,10 +47,18 @@ limitations under the License.
     </v-navigation-drawer>
 
     <!-- Scenarios left panel -->
-    <v-navigation-drawer app permanent :width="rightSidePanelWidth" hide-overlay class="ml-14">
+    <v-navigation-drawer
+      v-if="scenario.facets.length"
+      app
+      permanent
+      :width="rightSidePanelWidth"
+      hide-overlay
+      class="ml-14"
+    >
       <ts-scenario
-        :show-panel="showRightSidePanel"
-        @togglePanel="showRightSidePanel = !showRightSidePanel"
+        :scenario="scenario"
+        :minimize-panel="minimizeRightSidePanel"
+        @togglePanel="minimizeRightSidePanel = !minimizeRightSidePanel"
       ></ts-scenario>
     </v-navigation-drawer>
 
@@ -658,7 +666,7 @@ export default {
         x: 0,
         y: 0,
       },
-      showRightSidePanel: true,
+      minimizeRightSidePanel: false,
       sidePanelTab: null,
     }
   },
@@ -668,6 +676,9 @@ export default {
     },
     meta() {
       return this.$store.state.meta
+    },
+    scenario() {
+      return this.$store.state.scenario
     },
     totalHits() {
       return this.eventList.meta.es_total_count_complete || 0
@@ -710,7 +721,7 @@ export default {
     },
     rightSidePanelWidth() {
       let width = '430'
-      if (!this.showRightSidePanel) {
+      if (this.minimizeRightSidePanel) {
         width = '50'
       }
       return width

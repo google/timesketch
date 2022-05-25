@@ -14,15 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div v-if="scenario">
+  <div>
     <v-toolbar flat>
-      <v-toolbar-title v-if="showPanel" style="font-size: 1em">Compromise assessment</v-toolbar-title>
+      <v-toolbar-title style="font-size: 1em">{{ scenario.display_name }}</v-toolbar-title>
       <v-spacer></v-spacer>
-      <v-icon v-if="showPanel" @click="$emit('togglePanel')">mdi-chevron-left</v-icon>
+      <v-icon v-if="!minimizePanel" @click="$emit('togglePanel')">mdi-chevron-left</v-icon>
       <v-icon v-else @click="$emit('togglePanel')" style="margin-left: -5px">mdi-chevron-right</v-icon>
     </v-toolbar>
-    <!--<v-btn @click="addScenario">Add scenario</v-btn>-->
-    <div v-show="showPanel" class="mt-3">
+    <div v-show="!minimizePanel" class="mt-3">
       <div v-for="facet in scenario.facets" :key="facet.id">
         <ts-facet class="mt-3" :facet="facet"></ts-facet>
       </div>
@@ -36,11 +35,10 @@ import ApiClient from '../../utils/RestApiClient'
 import TsFacet from './Facet'
 
 export default {
-  props: ['showPanel'],
+  props: ['scenario', 'minimizePanel'],
   components: { TsFacet },
   data: function () {
     return {
-      scenario: { facets: [] },
       activeQuestion: {},
       selectedItem: null,
     }
@@ -66,13 +64,6 @@ export default {
       this.selectedItem = null
       this.activeQuestion = {}
     },
-  },
-  created() {
-    ApiClient.getSketchScenarios(this.sketch.id)
-      .then((response) => {
-        this.scenario = response.data.objects[0][4]
-      })
-      .catch((e) => {})
   },
 }
 </script>
