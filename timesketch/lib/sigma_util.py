@@ -19,6 +19,8 @@ import codecs
 import csv
 import logging
 from datetime import datetime
+import string
+from functools import lru_cache
 import yaml
 import pandas as pd
 
@@ -72,7 +74,9 @@ def get_sigma_config_file(config_file=None):
         sigma_config_file = config_file_read.read()
 
     try:
-        sigma_config = sigma_configuration.SigmaConfiguration(sigma_config_file)
+        sigma_config = sigma_configuration.SigmaConfiguration(
+            sigma_config_file
+        )
     except SigmaConfigParseError:
         logger.error("Parsing error with {0:s}".format(sigma_config_file))
         raise
@@ -91,8 +95,11 @@ def get_sigma_rules_path():
             or the folders are not readabale.
     """
     try:
-        rules_path = current_app.config.get("SIGMA_RULES_FOLDERS", [])
+        rules_path = current_app.config.get(
+            "SIGMA_RULES_FOLDERS", ['/etc/timesketch/sigma/rules/']
+        )
     except RuntimeError as e:
+        logger.error(e)
         raise ValueError("SIGMA_RULES_FOLDERS not found in config file") from e
 
     if not rules_path:
@@ -101,7 +108,9 @@ def get_sigma_rules_path():
     for folder in rules_path:
         if not os.path.isdir(folder):
             raise ValueError(
-                "Unable to open dir: [{0:s}], it does not exist.".format(folder)
+                "Unable to open dir: [{0:s}], it does not exist.".format(
+                    folder
+                )
             )
 
         if not os.access(folder, os.R_OK):
@@ -113,6 +122,7 @@ def get_sigma_rules_path():
     return rules_path
 
 
+@lru_cache(maxsize=10)
 def get_sigma_rules(rule_folder, sigma_config=None):
     """Returns the Sigma rules for a folder including subfolders.
     Args:
@@ -129,7 +139,13 @@ def get_sigma_rules(rule_folder, sigma_config=None):
 
     blocklist_path = None
     ignore = get_sigma_blocklist(blocklist_path)
-    ignore_list = list(ignore["path"].unique())
+    ignore_list = list(ignore.loc[ignore['status'] == 'bad']["path"].unique())
+    exploratory_list = list(
+        ignore.loc[ignore['status'] == 'exploratory']["path"].unique()
+    )
+    to_be_used_in_analyzer = list(
+        ignore.loc[ignore['status'] == 'good']["path"].unique()
+    )
 
     for dirpath, dirnames, files in os.walk(rule_folder):
         if "deprecated" in [x.lower() for x in dirnames]:
@@ -147,11 +163,35 @@ def get_sigma_rules(rule_folder, sigma_config=None):
                     continue
 
                 parsed_rule = get_sigma_rule(rule_file_path, sigma_config)
+
+                if parsed_rule is None:
+                    continue
+
+                # Only assign the ts_use_in_analyzer flag to rules that are cleared
+                if any(x in rule_file_path for x in exploratory_list):
+                    parsed_rule.update({'ts_use_in_analyzer': False})
+                elif any(x in rule_file_path for x in to_be_used_in_analyzer):
+                    parsed_rule.update({'ts_use_in_analyzer': True})
+                else:
+                    parsed_rule.update({'ts_use_in_analyzer': False})
+
+                # try to append any content from the reason field of the blocklist file:
+                pd.set_option(
+                    'display.max_colwidth', 200
+                )  # to avoid comments being truncated
+                if parsed_rule.get('id') in ignore['rule_id'].unique():
+                    comment_string = ignore.loc[
+                        ignore['rule_id'] == parsed_rule.get('id')
+                    ]['reason'].to_string()
+                    comment_string = comment_string.split('    ', 1)[1]
+                    parsed_rule.update({'ts_comment': comment_string})
+
                 if parsed_rule:
                     return_array.append(parsed_rule)
     return return_array
 
 
+@lru_cache(maxsize=None)
 def get_all_sigma_rules():
     """Returns all Sigma rules
 
@@ -172,6 +212,7 @@ def get_all_sigma_rules():
     return sigma_rules
 
 
+@lru_cache(maxsize=10)
 def get_sigma_rule(filepath, sigma_config=None):
     """Returns a JSON represenation for a rule
     Args:
@@ -195,7 +236,9 @@ def get_sigma_rule(filepath, sigma_config=None):
         logger.error("Problem reading the Sigma config", exc_info=True)
         raise ValueError("Problem reading the Sigma config") from e
 
-    sigma_backend = sigma_es.ElasticsearchQuerystringBackend(sigma_conf_obj, {})
+    sigma_backend = sigma_es.ElasticsearchQuerystringBackend(
+        sigma_conf_obj, {}
+    )
 
     try:
         sigma_rules_paths = get_sigma_rules_path()
@@ -209,12 +252,22 @@ def get_sigma_rule(filepath, sigma_config=None):
     if os.path.isdir(filepath):
         raise IsADirectoryError(f"{filepath} is a directory - must be a file")
 
-    abs_path = os.path.abspath(filepath)
+    if os.stat(filepath).st_size == 0:
+        raise ValueError(f"{filepath} file is empty")
 
-    with codecs.open(abs_path, "r", encoding="utf-8", errors="replace") as file:
+    abs_path = os.path.abspath(filepath)
+    parsed_sigma_rules = None
+    with codecs.open(
+        abs_path, "r", encoding="utf-8", errors="replace"
+    ) as file:
         try:
             rule_return = {}
-            rule_yaml_data = yaml.safe_load_all(file.read())
+            rule_file_content = file.read()
+            rule_file_content = sanitize_incoming_sigma_rule_text(
+                rule_file_content
+            )
+            rule_yaml_data = yaml.safe_load_all(rule_file_content)
+
             for doc in rule_yaml_data:
                 rule_return.update(doc)
                 parser = sigma_collection.SigmaCollectionParser(
@@ -251,8 +304,9 @@ def get_sigma_rule(filepath, sigma_config=None):
 
         sigma_es_query = ""
 
-        for sigma_rule in parsed_sigma_rules:
+        assert parsed_sigma_rules is not None
 
+        for sigma_rule in parsed_sigma_rules:
             sigma_es_query = _sanitize_query(sigma_rule)
 
         rule_return.update({"es_query": sigma_es_query})
@@ -316,13 +370,13 @@ def _sanitize_query(sigma_rule_query: str) -> str:
             san.append(el)
 
     sigma_rule_query = " ".join(san)
-
     # above method might create strings that have '' in them, workaround:
     sigma_rule_query = sigma_rule_query.replace('""', '"')
 
     return sigma_rule_query
 
 
+@lru_cache(maxsize=32)
 def get_sigma_blocklist(blocklist_path=None):
     """Get a dataframe of sigma rules to ignore.
 
@@ -339,9 +393,19 @@ def get_sigma_blocklist(blocklist_path=None):
         ValueError: Sigma blocklist file is not readabale.
     """
 
-    return pd.read_csv(get_sigma_blocklist_path(blocklist_path))
+    df = pd.read_csv(get_sigma_blocklist_path(blocklist_path))
+    if 'bad' in df.columns:
+        df.rename(columns={"bad": "status"}, inplace=True)
+        logger.warning(
+            'Column name "bad" found in {0!s} - please rename to "status"'.format(
+                get_sigma_blocklist_path(blocklist_path)
+            )
+        )
+
+    return df
 
 
+@lru_cache(maxsize=None)
 def get_sigma_blocklist_path(blocklist_path=None):
     """Checks and returns the Sigma blocklist path.
 
@@ -357,7 +421,6 @@ def get_sigma_blocklist_path(blocklist_path=None):
     Raises:
         ValueError: Sigma blocklist file is not readabale.
     """
-    logger.error(blocklist_path)
 
     if not blocklist_path or blocklist_path == "":
         blocklist_path = current_app.config.get(
@@ -368,7 +431,9 @@ def get_sigma_blocklist_path(blocklist_path=None):
 
     if not os.path.isfile(blocklist_path):
         raise ValueError(
-            "Unable to open file: [{0:s}] does not exist".format(blocklist_path)
+            "Unable to open file: [{0:s}] does not exist".format(
+                blocklist_path
+            )
         )
 
     if not os.access(blocklist_path, os.R_OK):
@@ -380,6 +445,7 @@ def get_sigma_blocklist_path(blocklist_path=None):
     return blocklist_path
 
 
+@lru_cache(maxsize=None)
 def add_problematic_rule(filepath, rule_uuid=None, reason=None):
     """Adds a problematic rule to the blocklist.csv.
 
@@ -401,7 +467,7 @@ def add_problematic_rule(filepath, rule_uuid=None, reason=None):
         for rule_path in sigma_rules_paths:
             file_relpath = os.path.relpath(filepath, rule_path)
 
-    # path,bad,reason,last_ckecked,rule_id
+    # path,status,reason,last_ckecked,rule_id
     fields = [
         file_relpath,
         "bad",
@@ -415,6 +481,25 @@ def add_problematic_rule(filepath, rule_uuid=None, reason=None):
         writer.writerow(fields)
 
 
+def sanitize_incoming_sigma_rule_text(rule_text: string):
+    """Removes things that are not supportd in Timesketch
+    right now as early as possible
+
+    Args:
+        rule_text: Text of the sigma rule to be parsed
+
+    Returns:
+        Cleaned version of the rule_text
+
+    """
+
+    rule_text = rule_text.replace('|endswith', '')
+    rule_text = rule_text.replace('|startswith', '')
+
+    return rule_text
+
+
+@lru_cache(maxsize=8)
 def get_sigma_rule_by_text(rule_text, sigma_config=None):
     """Returns a JSON represenation for a rule
 
@@ -442,9 +527,14 @@ def get_sigma_rule_by_text(rule_text, sigma_config=None):
         logger.error("Problem reading the Sigma config", exc_info=True)
         raise ValueError("Problem reading the Sigma config") from e
 
-    sigma_backend = sigma_es.ElasticsearchQuerystringBackend(sigma_conf_obj, {})
+    sigma_backend = sigma_es.ElasticsearchQuerystringBackend(
+        sigma_conf_obj, {}
+    )
+
+    rule_text = sanitize_incoming_sigma_rule_text(rule_text)
 
     rule_return = {}
+    parsed_sigma_rules = None
     # TODO check if input validation is needed / useful.
     try:
         rule_yaml_data = yaml.safe_load_all(rule_text)
@@ -468,6 +558,8 @@ def get_sigma_rule_by_text(rule_text, sigma_config=None):
     except yaml.parser.ParserError as exception:
         logger.error("Yaml parsing error rule {0!s}".format(exception))
         raise
+
+    assert parsed_sigma_rules is not None
 
     sigma_es_query = ""
 
