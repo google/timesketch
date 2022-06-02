@@ -62,6 +62,7 @@ apt/apt_silence,exploratory,not checked yet,2021-05-04,
 cloud/awd,exploratory,no test data available,2021-09-23,
 cloud/aws_,exploratory,not checked yet,2021-05-04,
 cloud/azure,exploratory,no test data available,2021-09-23,
+cloud/azure/azure_aad_secops_signin_failure_bad_password_threshold.yml,bad,Aggregations not implemented,2022-06-02,
 cloud/gcp/gcp_full_network_traffic_packet_capture.yml,exploratory,issue because there are stars in the query values,2022-04-28,980a7598-1e7f-4962-9372-2d754c930d0e
 cloud/gworkspace,exploratory,no test data available,2021-09-23,
 cloud/m365,exploratory,no test data available,2021-09-23,
@@ -181,6 +182,7 @@ sysmon_wsman_provider_image_load.yml,bad, Failed to parse query,2021-05-05,
 tools/config/generic/,bad,Sigma internal tools with yaml files in them,2021-11-19,
 web/web_,exploratory,no test data available,2021-05-04,
 web/web_multiple_suspicious_resp_codes_single_source.yml,bad,Part of the rule not supported in TS,2022-04-29,6fdfc796-06b3-46e8-af08-58f3505318af
+web/web_multiple_susp_resp_codes_single_source.yml,bad,Aggregations not implemented for this backend,2022-06-02,
 win_lsass_access_non_system_account.yml,bad,Failed to parse query,2021-05-04,
 win_powershell_web_request.yml, bad, multiple rules in one file,2021-05-04,
 windows/builtin/security/win_disable_event_logging.yml,good,no test data,2022-04-28,69aeb277-f15f-4d2d-b32a-55e883609563
