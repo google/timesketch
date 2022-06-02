@@ -1,0 +1,89 @@
+<!--
+Copyright 2022 Google Inc. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<template>
+  <span @mouseenter="delayDisplay(true, 0)" @mouseleave="delayDisplay(false, 500)">
+    <b-tag rounded :type="previewData.length ? 'is-success is-light' : 'is-light'">
+      <span class="icon is-medium"><i class="fas fa-eye" aria-hidden="true"></i></span>
+      {{ previewData.length }}
+    </b-tag>
+    <div class="preview-box">
+      <event-list
+        v-show="isOpen"
+        :eventList="previewData"
+        order="asc"
+        :displayOptions="{ showEmojis: false, showMillis: false, showTags: true }"
+        :selectedFields="[{ field: 'message', type: 'text' }]"
+      ></event-list>
+    </div>
+  </span>
+</template>
+
+<script>
+import ApiClient from '../../utils/RestApiClient'
+import TsContextMenu from './TsContextMenu'
+import { SnackbarProgrammatic as Snackbar } from 'buefy'
+import EventList from '../Explore/EventList'
+
+export default {
+  components: { EventList },
+  props: ['searchQuery'],
+  data() {
+    return {
+      test: 'blah',
+      previewData: [],
+      isOpen: false,
+      timer: null,
+    }
+  },
+  methods: {
+    refreshPreview: function (query) {
+      ApiClient.search(this.sketch.id, { query: this.searchQuery['q'] }).then((response) => {
+        this.previewData = response.data.objects
+        this.$emit('preview-result-count', this.previewData.length)
+      })
+    },
+    delayDisplay: function (state, timeout) {
+      clearTimeout(this.timer)
+      this.timer = setTimeout(() => {
+        this.isOpen = state
+      }, timeout)
+    },
+  },
+  computed: {
+    sketch() {
+      return this.$store.state.sketch
+    },
+  },
+  mounted() {
+    this.refreshPreview(this.searchQuery)
+  },
+  watch: {
+    searchQuery: function (newVal, oldVal) {
+      this.refreshPreview(newVal)
+    },
+  },
+}
+</script>
+
+<style scoped>
+.preview-box {
+  z-index: 100;
+  position: fixed;
+  background: white;
+  width: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+}
+</style>
