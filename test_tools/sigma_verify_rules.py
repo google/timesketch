@@ -35,49 +35,51 @@ logger = logging.getLogger("timesketch.test_tool.sigma-verify")
 logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
 
 
-def get_sigma_blocklist(blocklist_path="./data/sigma_blocklist.csv"):
-    """Get a dataframe of sigma rules to ignore.
+def get_sigma_rule_status(rule_status_path="./data/sigma_rule_status.csv"):
+    """Get a dataframe of sigma rules status.
 
     This includes filenames, paths, ids.
 
     Args:
-        blocklist_path(str): Path to a blocklist file.
-            The default value is './data/sigma_blocklist.csv'
+        rule_status_path(str): Path to a status file.
+            The default value is './data/sigma_rule_status.csv'
 
     Returns:
-        Pandas dataframe with blocklist
+        Pandas dataframe with rule status
 
     Raises:
-        ValueError: Sigma blocklist file is not readabale.
+        ValueError: Sigma rule status file is not readabale.
     """
 
-    if blocklist_path is None or blocklist_path == "":
-        blocklist_path = "./data/sigma_blocklist.csv"
+    if rule_status_path is None or rule_status_path == "":
+        rule_status_path = "./data/sigma_rule_status.csv"
 
-    if not blocklist_path:
-        raise ValueError("No blocklist_file_path set via param or config file")
+    if not rule_status_path:
+        raise ValueError("No rule_status_path set via param or config file")
 
-    if not os.path.isfile(blocklist_path):
+    if not os.path.isfile(rule_status_path):
         raise ValueError(
-            "Unable to open file: [{0:s}], it does not exist.".format(blocklist_path)
+            "Unable to open file: [{0:s}], it does not exist.".format(
+                rule_status_path
+            )
         )
 
-    if not os.access(blocklist_path, os.R_OK):
+    if not os.access(rule_status_path, os.R_OK):
         raise ValueError(
             "Unable to open file: [{0:s}], cannot open it for "
-            "read, please check permissions.".format(blocklist_path)
+            "read, please check permissions.".format(rule_status_path)
         )
 
-    return pd.read_csv(blocklist_path)
+    return pd.read_csv(rule_status_path)
 
 
-def run_verifier(rules_path, config_file_path, blocklist_path=None):
+def run_verifier(rules_path, config_file_path, rule_status_path=None):
     """Run an sigma parsing test on a dir and returns results from the run.
 
     Args:
         rules_path (str): Path to the Sigma rules.
         config_file_path (str): Path to a config file with Sigma mapping data.
-        blocklist_path (str): Optional path to a blocklist file.
+        rule_status_path (str): Optional path to a status file.
             The default value is none.
 
     Raises:
@@ -96,15 +98,19 @@ def run_verifier(rules_path, config_file_path, blocklist_path=None):
         raise IOError("Rules not found at path: {0:s}".format(rules_path))
     if not os.path.isfile(config_file_path):
         raise IOError(
-            "Config file path not found at path: {0:s}".format(config_file_path)
+            "Config file path not found at path: {0:s}".format(
+                config_file_path
+            )
         )
 
-    sigma_config = sigma_util.get_sigma_config_file(config_file=config_file_path)
+    sigma_config = sigma_util.get_sigma_config_file(
+        config_file=config_file_path
+    )
 
     return_verified_rules = []
     return_rules_with_problems = []
 
-    ignore = get_sigma_blocklist(blocklist_path)
+    ignore = get_sigma_rule_status(rule_status_path)
     ignore_list = list(ignore["path"].unique())
 
     for dirpath, dirnames, files in os.walk(rules_path):
@@ -155,7 +161,9 @@ def move_problematic_rule(filepath, move_to_path, reason=None):
         move_to_path: path to move the problematic rules to
         reason: optional reason why file is moved
     """
-    logging.info("Moving the rule: {0:s} to {1:s}".format(filepath, move_to_path))
+    logging.info(
+        "Moving the rule: {0:s} to {1:s}".format(filepath, move_to_path)
+    )
     try:
         os.makedirs(move_to_path, exist_ok=True)
         debug_path = os.path.join(move_to_path, "debug.log")
@@ -183,7 +191,9 @@ if __name__ == "__main__":
     )
     epilog = "Remember to feed the tool with proper rule data."
 
-    arguments = argparse.ArgumentParser(description=description, allow_abbrev=True)
+    arguments = argparse.ArgumentParser(
+        description=description, allow_abbrev=True
+    )
     arguments.add_argument(
         "--config_file",
         "--file",
@@ -211,8 +221,12 @@ if __name__ == "__main__":
         metavar="PATH_TO_RULES",
         help="Path to the rules to test.",
     )
-    arguments.add_argument("--debug", action="store_true", help="print debug messages ")
-    arguments.add_argument("--info", action="store_true", help="print info messages ")
+    arguments.add_argument(
+        "--debug", action="store_true", help="print debug messages "
+    )
+    arguments.add_argument(
+        "--info", action="store_true", help="print info messages "
+    )
     arguments.add_argument(
         "--move",
         dest="move_to_path",
@@ -238,7 +252,11 @@ if __name__ == "__main__":
         sys.exit(1)
 
     if not os.path.isdir(options.rules_path):
-        print("The path to the rules does not exist ({0:s})".format(options.rules_path))
+        print(
+            "The path to the rules does not exist ({0:s})".format(
+                options.rules_path
+            )
+        )
         sys.exit(1)
 
     if len(options.blocklist_file_path) > 0:
