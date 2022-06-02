@@ -205,13 +205,13 @@ if __name__ == "__main__":
         help=("Path to the file containing the config data to feed sigma "),
     )
     arguments.add_argument(
-        "--blocklist_file",
-        dest="blocklist_file_path",
+        "--rule_status_file",
+        dest="rule_status_path",
         action="store",
         default="",
         type=str,
-        metavar="PATH_TO_BLOCK_FILE",
-        help=("Path to the file containing the blocklist "),
+        metavar="PATH_TO_STATUS_FILE",
+        help=("Path to the file containing the rule status"),
     )
     arguments.add_argument(
         "rules_path",
@@ -259,15 +259,15 @@ if __name__ == "__main__":
         )
         sys.exit(1)
 
-    if len(options.blocklist_file_path) > 0:
-        if not os.path.isfile(options.blocklist_file_path):
-            print("Blocklist file not found.")
+    if len(options.rule_status_path) > 0:
+        if not os.path.isfile(options.rule_status_path):
+            print("rule status file not found.")
             sys.exit(1)
 
     sigma_verified_rules, sigma_rules_with_problems = run_verifier(
         rules_path=options.rules_path,
         config_file_path=options.config_file_path,
-        blocklist_path=options.blocklist_file_path,
+        rule_status_path=options.rule_status_path,
     )
 
     if len(sigma_rules_with_problems) > 0:
