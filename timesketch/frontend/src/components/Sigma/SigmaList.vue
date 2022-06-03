@@ -15,6 +15,46 @@ limitations under the License.
 -->
 <template>
   <div>
+    <div class="container is-fluid">
+                <b-table v-if="sketchTags.length > 0" :data="sketchTags">
+                  <b-table-column field="search" label="" v-slot="props" width="1em">
+                    <router-link :to="{ name: 'Explore', query: generateOpenSearchQuery(props.row.ts_sigma_rule, 'ts_sigma_rule') }">
+                      <i
+                        class="fas fa-search"
+                        aria-hidden="true"
+                        title="Search sketch for all events with this tag."
+                      ></i>
+                    </router-link>
+                  </b-table-column>
+                  <b-table-column field="tag" label="Sigma rule name" v-slot="props" sortable>
+                    <b-tag type="is-info is-light">{{ props.row.ts_sigma_rule }} </b-tag>
+                  </b-table-column>
+                  <b-table-column field="count" label="Events tagged" v-slot="props" sortable numeric>
+                    {{ props.row.count }}
+                  </b-table-column>
+                </b-table>
+                <span v-else>No events have been tagged yet.</span>
+</div>
+<div class="container is-fluid">
+                <b-table v-if="sketchTTP.length > 0" :data="sketchTTP">
+                  <b-table-column field="search" label="" v-slot="props" width="1em">
+                    <router-link :to="{ name: 'Explore', query: generateOpenSearchQuery(props.row.ts_ttp, 'ts_ttp') }">
+                      <i
+                        class="fas fa-search"
+                        aria-hidden="true"
+                        title="Search sketch for all events with this tag."
+                      ></i>
+                    </router-link>
+                  </b-table-column>
+                  <b-table-column field="tag" label="TTP" v-slot="props" sortable>
+                    <b-tag type="is-info is-light">{{ props.row.ts_ttp }} </b-tag>
+                  </b-table-column>
+                  <b-table-column field="count" label="Events tagged" v-slot="props" sortable numeric>
+                    {{ props.row.count }}
+                  </b-table-column>
+                </b-table>
+                <span v-else>No events have been tagged yet.</span>
+</div>
     <b-table
       v-if="sigmaRuleList"
       :data="sigmaRuleList"
@@ -114,6 +154,8 @@ export default {
       isComposed: false,
       text: `Place your Sigma rule here and press parse`,
       parsed: '',
+      sketchTags: [],
+      sketchTTP: [],
     }
   },
   computed: {
@@ -127,6 +169,10 @@ export default {
       return this.$store.state.meta
     },
   },
+  mounted() {
+    this.loadSketchSigmaTags()
+    this.loadSketchTTP()
+  },
   methods: {
     parseSigma: function(event) {
       ApiClient.getSigmaByText(this.text)
@@ -135,6 +181,33 @@ export default {
           this.parsed = SigmaRule
         })
         .catch(e => {})
+    },
+    loadSketchSigmaTags() {
+      ApiClient.runAggregator(this.sketch.id, {
+        aggregator_name: 'field_bucket',
+        aggregator_parameters: { field: 'ts_sigma_rule' },
+      }).then((response) => {
+        this.sketchTags = response.data.objects[0].field_bucket.buckets
+        // of the form [{count: 0, tag: 'foo'}]
+      })
+    },
+    loadSketchTTP() {
+      ApiClient.runAggregator(this.sketch.id, {
+        aggregator_name: 'field_bucket',
+        aggregator_parameters: { field: 'ts_ttp' },
+      }).then((response) => {
+        this.sketchTTP = response.data.objects[0].field_bucket.buckets
+        // of the form [{count: 0, tag: 'foo'}]
+      })
+    },
+    generateOpenSearchQuery(value, field) {
+      let query = `"${value}"`
+      // Escape special OpenSearch characters: \, [space]
+      query = query.replace(/[\\\s]/g, '\\$&')
+      if (field !== undefined) {
+        query = `${field}:${query}`
+      }
+      return { q: query }
     },
   },
 }
