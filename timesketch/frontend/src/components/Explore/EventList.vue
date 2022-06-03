@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <table class="table is-fullwidth" style="border-radius:4px;">
+  <table class="table is-fullwidth" style="border-radius: 4px">
     <thead>
       <th :width="datetimeWidth">Datetime (UTC)</th>
       <th width="1">
@@ -57,7 +57,7 @@ export default {
     }
   },
   methods: {
-    toggleSelectAll: function() {
+    toggleSelectAll: function () {
       if (this.selectAll) {
         EventBus.$emit('clearSelectedEvents')
         this.selectAll = false

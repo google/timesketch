@@ -42,33 +42,33 @@ limitations under the License.
           <span v-if="displayControls" class="control">
             <input type="checkbox" :checked="isSelected" v-on:click="toggleSelect" />
           </span>
-          <span class="icon control" v-on:click="toggleStar" style="margin-right: 3px; cursor: pointer;">
+          <span class="icon control" v-on:click="toggleStar" style="margin-right: 3px; cursor: pointer">
             <i
               class="fas fa-star"
               v-if="isStarred"
               title="Unstar the event"
-              style="color: #ffe300; -webkit-text-stroke-width: 1px; -webkit-text-stroke-color: #d1d1d1;"
+              style="color: #ffe300; -webkit-text-stroke-width: 1px; -webkit-text-stroke-color: #d1d1d1"
             ></i>
-            <i class="fas fa-star" v-if="!isStarred" title="Star the event" style="color: #d3d3d3;"></i>
+            <i class="fas fa-star" v-if="!isStarred" title="Star the event" style="color: #d3d3d3"></i>
           </span>
           <span
             v-if="displayControls"
             class="icon control"
-            style="margin-right: 3px; cursor: pointer;"
+            style="margin-right: 3px; cursor: pointer"
             v-on:click="searchContext"
           >
-            <i class="fas fa-search" title="Search +/- 5min" style="color: #d3d3d3;"></i>
+            <i class="fas fa-search" title="Search +/- 5min" style="color: #d3d3d3"></i>
           </span>
           <span class="icon control">
             <ts-dropdown>
               <template v-slot:dropdown-trigger-element>
-                <i class="fas fa-tag" title="Labels" style="color: #d3d3d3;" slot="trigger"></i>
+                <i class="fas fa-tag" title="Labels" style="color: #d3d3d3" slot="trigger"></i>
               </template>
 
               <span v-if="filteredLabelsToAdd.length">
                 <b>Add label</b>
                 <br /><br />
-                <div class="level" style="margin-bottom: 5px;" v-for="label in filteredLabelsToAdd" :key="label.label">
+                <div class="level" style="margin-bottom: 5px" v-for="label in filteredLabelsToAdd" :key="label.label">
                   <div class="level-left">
                     <div class="field">
                       <b-checkbox type="is-info" v-model="selectedLabels" :native-value="label.label">
@@ -80,10 +80,10 @@ limitations under the License.
               </span>
 
               <span v-if="event._source.label.length">
-                <i class="fas fa-trash" style="margin-right: 7px;"></i>
+                <i class="fas fa-trash" style="margin-right: 7px"></i>
                 <b>Remove label</b>
                 <br /><br />
-                <div class="level" style="margin-bottom: 5px;" v-for="label in event._source.label" :key="label">
+                <div class="level" style="margin-bottom: 5px" v-for="label in event._source.label" :key="label">
                   <div class="level-left">
                     <div class="field">
                       <b-checkbox type="is-danger" v-model="labelsToRemove" :native-value="label">
@@ -96,7 +96,7 @@ limitations under the License.
 
               <br />
               <b>Create and add a new label</b>
-              <div class="field is-grouped" style="padding-top:10px;">
+              <div class="field is-grouped" style="padding-top: 10px">
                 <p class="control is-expanded">
                   <input class="input" v-model="labelToAdd" placeholder="New label" />
                 </p>
@@ -121,7 +121,7 @@ limitations under the License.
       <td
         v-bind:style="fieldColumnColor"
         v-on:click="showDetail = !showDetail"
-        style="cursor: pointer; max-width: 50ch;"
+        style="cursor: pointer; max-width: 50ch"
         class="ts-event-list-row-background-color"
         v-for="(field, index) in selectedFields"
         :key="index"
@@ -138,13 +138,13 @@ limitations under the License.
                 :title="meta.emojis[emoji]"
                 >{{ emoji }}</span
               >
-              <span style="margin-left:10px;"></span>
+              <span style="margin-left: 10px"></span>
               <span
                 v-if="displayOptions.showTags"
                 v-for="tag in event._source.tag"
                 :key="tag"
                 class="tag is-small"
-                style="margin-right:5px; background-color:var(--tag-background-color); color:var(--tag-font-color)"
+                style="margin-right: 5px; background-color: var(--tag-background-color); color: var(--tag-font-color)"
                 >{{ tag }}</span
               >
               <span
@@ -152,12 +152,12 @@ limitations under the License.
                 v-for="label in filteredLabels"
                 :key="label"
                 class="tag is-small"
-                style="margin-right:5px; background-color:var(--tag-background-color); color:var(--tag-font-color);"
+                style="margin-right: 5px; background-color: var(--tag-background-color); color: var(--tag-font-color)"
                 >{{ label }}</span
               >
             </span>
             <!--eslint-enable-->
-            <span style="word-break: break-word;" :title="event._source[field.field]">
+            <span style="word-break: break-word" :title="event._source[field.field]">
               {{ event._source[field.field] }}
             </span>
           </span>
@@ -175,13 +175,13 @@ limitations under the License.
     <!-- Comments row -->
     <tr v-if="comments.length">
       <td colspan="5" style="padding: 0">
-        <div style="max-width: 100%; border:1px solid #f5f5f5; border-radius: 4px; padding:10px; margin-bottom: 20px;">
+        <div style="max-width: 100%; border: 1px solid #f5f5f5; border-radius: 4px; padding: 10px; margin-bottom: 20px">
           <article class="field" v-for="(comment, index) in comments" :key="comment.id">
-            <small style="margin-right: 10px;">{{ comment.updated_at | moment('utc', 'YYYY-MM-DD HH:mm:ss') }}</small>
-            <small style="margin-right: 10px;">{{ comment.user.username }}</small>
+            <small style="margin-right: 10px">{{ comment.updated_at | moment('utc', 'YYYY-MM-DD HH:mm:ss') }}</small>
+            <small style="margin-right: 10px">{{ comment.user.username }}</small>
             <br />
             <div v-if="comment && comment.editable" class="media-content">
-              <div class="field" style="max-width: 50%;">
+              <div class="field" style="max-width: 50%">
                 <p class="control">
                   <textarea v-model="comments[index].comment" required autofocus class="textarea" rows="1"></textarea>
                 </p>
@@ -240,8 +240,8 @@ limitations under the License.
     <!-- Event details that gets activated when the event row is clicked -->
     <tr>
       <td colspan="5" style="padding: 0">
-        <div v-if="showDetail" style="padding-top:20px; padding-bottom: 20px;padding-left:10px;">
-          <div class="field" style="max-width: 50%;">
+        <div v-if="showDetail" style="padding-top: 20px; padding-bottom: 20px; padding-left: 10px">
+          <div class="field" style="max-width: 50%">
             <p class="control">
               <textarea
                 v-model="comment"
@@ -357,11 +357,11 @@ export default {
       let timeline
       if (isLegacy) {
         timeline = this.sketch.active_timelines.filter(
-          timeline => timeline.searchindex.index_name === this.event._index
+          (timeline) => timeline.searchindex.index_name === this.event._index
         )[0]
       } else {
         timeline = this.sketch.active_timelines.filter(
-          timeline => timeline.id === this.event._source.__ts_timeline_id
+          (timeline) => timeline.id === this.event._source.__ts_timeline_id
         )[0]
       }
       return timeline
@@ -394,13 +394,13 @@ export default {
       return eventData
     },
     filteredLabels() {
-      return this.event._source.label.filter(label => !label.startsWith('__'))
+      return this.event._source.label.filter((label) => !label.startsWith('__'))
     },
     filteredLabelsToAdd() {
-      return this.meta.filter_labels.filter(label => this.event._source.label.indexOf(label.label) === -1)
+      return this.meta.filter_labels.filter((label) => this.event._source.label.indexOf(label.label) === -1)
     },
     filteredLabelsToRemove() {
-      return this.meta.filter_labels.filter(label => this.event._source.label.indexOf(label.label) !== -1)
+      return this.meta.filter_labels.filter((label) => this.event._source.label.indexOf(label.label) !== -1)
     },
   },
   methods: {
@@ -411,8 +411,8 @@ export default {
       }
       this.isStarred = !this.isStarred
       ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', this.event, this.currentSearchNode)
-        .then(response => {})
-        .catch(e => {
+        .then((response) => {})
+        .catch((e) => {
           console.error(e)
         })
     },
@@ -422,31 +422,31 @@ export default {
         this.isStarred = !this.isStarred
       }
     },
-    postComment: function(comment) {
+    postComment: function (comment) {
       EventBus.$emit('eventAnnotated', { type: '__ts_comment', event: this.event, searchNode: this.currentSearchNode })
       ApiClient.saveEventAnnotation(this.sketch.id, 'comment', comment, [this.event], this.currentSearchNode)
-        .then(response => {
+        .then((response) => {
           this.comments.push(response.data.objects[0][0])
           this.comment = ''
         })
-        .catch(e => {})
+        .catch((e) => {})
     },
-    updateComment: function(comment, commentIndex) {
+    updateComment: function (comment, commentIndex) {
       ApiClient.updateEventAnnotation(this.sketch.id, 'comment', comment, [this.event], this.currentSearchNode)
-        .then(response => {
+        .then((response) => {
           this.$set(this.comments, commentIndex, response.data.objects[0][0])
         })
-        .catch(e => {
+        .catch((e) => {
           console.error(e)
         })
     },
-    deleteComment: function(commentId, commentIndex) {
+    deleteComment: function (commentId, commentIndex) {
       if (confirm('Are you sure?')) {
         ApiClient.deleteEventAnnotation(this.sketch.id, 'comment', commentId, this.event, this.currentSearchNode)
-          .then(response => {
+          .then((response) => {
             this.comments.splice(commentIndex, 1)
           })
-          .catch(e => {
+          .catch((e) => {
             console.error(e)
           })
       }
@@ -463,17 +463,16 @@ export default {
       }
     },
     getCurrentUser() {
-      if (this.$store.state.currentUser){
-          this.currentUser = this.$store.state.currentUser
-      }
-      else if (!this.currentUser) {
-        ApiClient.getLoggedInUser().then(response => {
+      if (this.$store.state.currentUser) {
+        this.currentUser = this.$store.state.currentUser
+      } else if (!this.currentUser) {
+        ApiClient.getLoggedInUser().then((response) => {
           this.currentUser = response.data.objects[0].username
         })
       }
       return this.currentUser
     },
-    addLabels: function(labels) {
+    addLabels: function (labels) {
       if (labels === undefined) {
         labels = this.selectedLabels
       }
@@ -485,26 +484,26 @@ export default {
         EventBus.$emit('eventAnnotated', { type: '__ts_label', event: this.event, searchNode: this.currentSearchNode })
       }
 
-      labels.forEach(label => {
+      labels.forEach((label) => {
         if (this.event._source.label.indexOf(label) === -1) {
           this.event._source.label.push(label)
           ApiClient.saveEventAnnotation(this.sketch.id, 'label', label, [this.event], this.currentSearchNode)
-            .then(response => {
+            .then((response) => {
               this.$emit('addLabel', label)
             })
-            .catch(e => {
+            .catch((e) => {
               Toast.open('Error adding label')
-              this.event._source.label = this.event._source.label.filter(e => e !== label)
+              this.event._source.label = this.event._source.label.filter((e) => e !== label)
             })
         }
       })
 
       if (this.labelsToRemove.length) {
-        this.labelsToRemove.forEach(label => {
+        this.labelsToRemove.forEach((label) => {
           ApiClient.saveEventAnnotation(this.sketch.id, 'label', label, [this.event], this.currentSearchNode, true)
-            .then(response => {})
-            .catch(e => {})
-          this.event._source.label = this.event._source.label.filter(e => e !== label)
+            .then((response) => {})
+            .catch((e) => {})
+          this.event._source.label = this.event._source.label.filter((e) => e !== label)
         })
         this.labelsToRemove = []
       }
@@ -513,25 +512,25 @@ export default {
       this.labelToAdd = null
       this.$refs.labelDropdown.toggle()
     },
-    searchContext: function() {
+    searchContext: function () {
       this.$emit('searchContext', this.event)
     },
-    selectEvent: function() {
+    selectEvent: function () {
       this.isSelected = true
       EventBus.$emit('eventSelected', this.eventDataSparse)
     },
-    unSelectEvent: function() {
+    unSelectEvent: function () {
       this.isSelected = false
       EventBus.$emit('eventSelected', this.eventDataSparse)
     },
-    toggleSelect: function() {
+    toggleSelect: function () {
       if (this.isSelected) {
         this.unSelectEvent()
       } else {
         this.selectEvent()
       }
     },
-    toggleTheme: function() {
+    toggleTheme: function () {
       this.isDarkTheme = !this.isDarkTheme
     },
   },
@@ -568,10 +567,10 @@ export default {
       let searchindexId = this.event._index
       let eventId = this.event._id
       ApiClient.getEvent(this.sketch.id, searchindexId, eventId)
-        .then(response => {
+        .then((response) => {
           this.comments = response.data.meta.comments
         })
-        .catch(e => {})
+        .catch((e) => {})
     }
   },
 }
