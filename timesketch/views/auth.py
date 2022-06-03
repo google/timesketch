@@ -66,13 +66,14 @@ SCOPES = [
 def login():
     """Handler for the login page view.
 
-    There are three ways of authentication.
-    1) Google Cloud Identity-Aware Proxy.
-    2) If Single Sign On (SSO) is enabled in the configuration and the
+    There are four ways of authentication.
+    1) Google OpenID connect.
+    2) Google Cloud Identity-Aware Proxy.
+    3) If Single Sign On (SSO) is enabled in the configuration and the
        environment variable is present, e.g. REMOTE_USER then the system will
        get or create the user object and setup a session for the user.
-    3) Local authentication is used if SSO login is not enabled. This will
-       authenticate the user against the local user database.
+    4) Local authentication is used if SSO login is not enabled. This will
+       authenticate the user against the local user database
 
     Returns:
         Redirect if authentication is successful or template with context
@@ -193,8 +194,15 @@ def validate_api_token():
     if not id_token:
         return abort(HTTP_STATUS_CODE_UNAUTHORIZED, "No ID token supplied.")
 
-    client_id = current_app.config.get("GOOGLE_OIDC_API_CLIENT_ID")
-    if not client_id:
+    client_ids = []
+    client_ids.append(current_app.config.get("GOOGLE_OIDC_CLIENT_ID"))
+    additional_client_ids = current_app.config.get(
+        "WHITELISTED_GOOGLE_OIDC_API_CLIENT_IDS")
+    if additional_client_ids:
+      client_ids.extend("".join(additional_client_ids.split()).split(","))
+    # Remove None and empty strings.
+    client_ids = [x for x in client_ids if x]
+    if not client_ids:
         return abort(
             HTTP_STATUS_CODE_BAD_REQUEST,
             "No OIDC API client ID defined in the configuration file.",
