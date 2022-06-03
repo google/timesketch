@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-container fluid class="mt-4">
+  <v-container fluid>
     <!-- Right side menu for selected events -->
     <v-navigation-drawer
       v-model="selectedEvents.length"

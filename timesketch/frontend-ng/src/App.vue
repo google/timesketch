@@ -67,7 +67,7 @@ limitations under the License.
     </v-navigation-drawer>
 
     <v-main>
-      <v-toolbar flat>
+      <v-toolbar flat style="background: transparent" class="ml-2">
         <v-toolbar-title>{{ sketch.name }}</v-toolbar-title>
         <v-spacer></v-spacer>
         <v-btn small depressed v-on:click="switchUI"> Use the old UI </v-btn>
@@ -82,7 +82,8 @@ limitations under the License.
           <span>Switch between light and dark theme</span>
         </v-tooltip>
       </v-toolbar>
-      <div class="mx-4">
+
+      <div class="mx-3 mt-n3">
         <router-view></router-view>
       </div>
     </v-main>
@@ -127,10 +128,6 @@ export default {
 
 <style src="vue-multiselect/dist/vue-multiselect.min.css"></style>
 <style lang="scss">
-.v-toolbar__content,
-.v-toolbar__extension {
-  border-bottom: thin solid rgba(0, 0, 0, 0.12);
-}
 .v-tab {
   text-transform: none !important;
 }
