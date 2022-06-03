@@ -40,8 +40,7 @@ class SigmaPlugin(interface.BaseAnalyzer):
             query: OpenSearch search query for events to tag.
             rule_name: rule_name to apply to matching events.
             tag_list: a list of additional tags to be added to the event(s)
-            status_good: value from sigma_status.csv good / bad / exploratory
-                anything but good will only add the rulename to an event if matched
+            status_good (bool): if rule is considered good based on the sigma_rule_status csv
 
         Returns:
             int: number of events tagged.
@@ -173,7 +172,6 @@ class SigmaPlugin(interface.BaseAnalyzer):
         """
         sigma_rules = []
         for rule in ts_sigma_lib.get_all_sigma_rules():
-            # if rule.get('ts_use_in_analyzer') is True:
             sigma_rules.append({"rule": rule})
 
         return sigma_rules
