@@ -46,7 +46,6 @@ export default {
   props: ['searchQuery'],
   data() {
     return {
-      test: 'blah',
       previewData: [],
       responseMeta: null,
       previewSearchNode: null,
