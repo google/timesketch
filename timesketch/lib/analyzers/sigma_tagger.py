@@ -67,7 +67,7 @@ class SigmaPlugin(interface.BaseAnalyzer):
                     if tag.startswith(("attack.", "car.")):
                         ts_ttp.append(tag)
                         special_tags.append(tag)
-                # ad the remaining tags as plain tags
+                # add the remaining tags as plain tags
                 tags_to_add = list(set(tag_list) - set(special_tags))
                 event.add_tags(tags_to_add)
                 if len(ts_ttp) > 0:
