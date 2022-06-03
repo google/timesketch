@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <span @mouseenter="delayDisplay(true, 0)" @mouseleave="delayDisplay(false, 500)">
-    <b-tag rounded :type="previewData.length ? 'is-success is-light' : 'is-light'">
+  <span v-if="previewData.length" @mouseenter="delayDisplay(true, 0)" @mouseleave="delayDisplay(false, 500)">
+    <b-tag rounded type="is-success is-light">
       <span class="icon is-medium"><i class="fas fa-eye" aria-hidden="true"></i></span>
       {{ previewData.length }}
     </b-tag>
@@ -30,12 +30,13 @@ limitations under the License.
       ></event-list>
     </div>
   </span>
+  <b-tag v-else rounded type="is-light" style="opacity: 0.5">
+    <span class="icon is-medium"><i class="fas fa-eye-slash" aria-hidden="true"></i></span>0
+  </b-tag>
 </template>
 
 <script>
 import ApiClient from '../../utils/RestApiClient'
-import TsContextMenu from './TsContextMenu'
-import { SnackbarProgrammatic as Snackbar } from 'buefy'
 import EventList from '../Explore/EventList'
 
 export default {
@@ -60,6 +61,9 @@ export default {
       })
     },
     delayDisplay: function (state, timeout) {
+      if (!this.previewData.length) {
+        return
+      }
       clearTimeout(this.timer)
       this.timer = setTimeout(() => {
         this.isOpen = state
@@ -76,11 +80,6 @@ export default {
   },
   mounted() {
     this.refreshPreview(this.searchQuery)
-  },
-  watch: {
-    searchQuery: function (newVal, oldVal) {
-      this.refreshPreview(newVal)
-    },
   },
 }
 </script>
