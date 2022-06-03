@@ -97,6 +97,9 @@ export default {
       this.fileName = ''
     },
     submitForm: function() {
+      if (this.error == 'Please select a file with a valid extension' ) {
+        return;
+      }
       let formData = new FormData()
       formData.append('file', this.form.file)
       formData.append('name', this.form.name)
@@ -118,8 +121,8 @@ export default {
           this.$emit('toggleModal')
           this.clearFormData()
           this.percentCompleted = 0
-        })
-        .catch(e => {})
+       })
+       .catch(e => {}) 
     },
     setFileName: function(fileList) {
       let fileName = fileList[0].name
