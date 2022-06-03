@@ -199,7 +199,7 @@ def validate_api_token():
     additional_client_ids = current_app.config.get(
         "WHITELISTED_GOOGLE_OIDC_API_CLIENT_IDS")
     if additional_client_ids:
-      client_ids.extend("".join(additional_client_ids.split()).split(","))
+        client_ids.extend("".join(additional_client_ids.split()).split(","))
     # Remove None and empty strings.
     client_ids = [x for x in client_ids if x]
     if not client_ids:
@@ -267,7 +267,7 @@ def validate_api_token():
         )
 
     read_client_id = token_json.get("aud", "")
-    if read_client_id != client_id:
+    if read_client_id not in client_ids:
         return abort(
             HTTP_STATUS_CODE_UNAUTHORIZED,
             "Client ID {0:s} does not match server configuration for "
