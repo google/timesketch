@@ -40,7 +40,7 @@ class SigmaPlugin(interface.BaseAnalyzer):
             query: OpenSearch search query for events to tag.
             rule_name: rule_name to apply to matching events.
             tag_list: a list of additional tags to be added to the event(s)
-            status_good (bool): if rule is considered good based on the sigma_rule_status csv
+            status_good (bool): rule status based on the sigma_rule_status csv
 
         Returns:
             int: number of events tagged.
