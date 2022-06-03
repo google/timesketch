@@ -280,7 +280,16 @@ export default {
     TsSketchExploreEventListRowDetail,
     TsDropdown,
   },
-  props: ['event', 'prevEvent', 'order', 'selectedFields', 'isRemoteSelected', 'displayOptions', 'displayControls'],
+  props: [
+    'event',
+    'prevEvent',
+    'order',
+    'selectedFields',
+    'isRemoteSelected',
+    'displayOptions',
+    'displayControls',
+    'searchNode',
+  ],
   data() {
     return {
       showDetail: false,
@@ -302,7 +311,7 @@ export default {
       return this.$store.state.meta
     },
     currentSearchNode() {
-      return this.$store.state.currentSearchNode
+      return this.searchNode || this.$store.state.currentSearchNode
     },
     timelineColor() {
       let backgroundColor = this.timeline.color

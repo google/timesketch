@@ -26,6 +26,7 @@ limitations under the License.
         order="asc"
         :displayOptions="{ showEmojis: false, showMillis: false, showTags: true }"
         :selectedFields="[{ field: 'message', type: 'text' }]"
+        :searchNode="previewSearchNode"
       ></event-list>
     </div>
   </span>
@@ -44,15 +45,18 @@ export default {
     return {
       test: 'blah',
       previewData: [],
+      responseMeta: null,
+      previewSearchNode: null,
       isOpen: false,
       timer: null,
     }
   },
   methods: {
     refreshPreview: function (query) {
-      ApiClient.search(this.sketch.id, { query: this.searchQuery['q'] }).then((response) => {
+      var formData = { query: this.searchQuery['q'], parent: this.currentSearchNode.id }
+      ApiClient.search(this.sketch.id, formData).then((response) => {
         this.previewData = response.data.objects
-        this.$emit('preview-result-count', this.previewData.length)
+        this.previewSearchNode = response.data.meta.search_node
       })
     },
     delayDisplay: function (state, timeout) {
@@ -65,6 +69,9 @@ export default {
   computed: {
     sketch() {
       return this.$store.state.sketch
+    },
+    currentSearchNode() {
+      return this.$store.state.currentSearchNode || { id: 0 }
     },
   },
   mounted() {

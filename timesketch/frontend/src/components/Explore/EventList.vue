@@ -34,6 +34,7 @@ limitations under the License.
       :selected-fields="selectedFields"
       :display-options="displayOptions"
       :display-controls="true"
+      :search-node="searchNode"
       v-bind:id="event._id"
       @addChip="$emit('addChip', $event)"
       @addLabel="$emit('addLabel', $event)"
@@ -49,7 +50,7 @@ import EventBus from '../../main'
 
 export default {
   components: { TsSketchExploreEventListRow },
-  props: ['eventList', 'order', 'selectedFields', 'displayOptions'],
+  props: ['eventList', 'order', 'selectedFields', 'displayOptions', 'searchNode'],
   data() {
     return {
       selectAll: false,
