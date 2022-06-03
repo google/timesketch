@@ -19,9 +19,11 @@ limitations under the License.
       <span class="icon is-medium"><i class="fas fa-eye" aria-hidden="true"></i></span>
       {{ previewData.length }}
     </b-tag>
-    <div class="preview-box">
+    <div class="preview-box" v-show="isOpen">
+      <div class="preview-title">
+        Previewing results for <code>{{ searchQuery['q'] }}</code>
+      </div>
       <event-list
-        v-show="isOpen"
         :eventList="previewData"
         order="asc"
         :displayOptions="{ showEmojis: false, showMillis: false, showTags: true }"
@@ -89,7 +91,13 @@ export default {
   z-index: 100;
   position: fixed;
   background: white;
-  width: 50%;
+  width: 60%;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  height: 50%;
+  overflow: scroll;
+}
+
+.preview-title {
+  padding: 5px;
 }
 </style>
