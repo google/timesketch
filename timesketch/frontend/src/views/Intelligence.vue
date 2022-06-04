@@ -340,6 +340,8 @@ export default {
     },
     generateOpenSearchQuery(value, field) {
       let query = `"${value}"`
+      // Escape special OpenSearch characters: \, [space]
+      query = query.replace(/[\\\s]/g, '\\$&')
       if (field !== undefined) {
         query = `${field}:${query}`
       }
