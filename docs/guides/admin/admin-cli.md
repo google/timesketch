@@ -34,7 +34,7 @@ Parameters:
 Example
 
 ```shell
-tsctl create-user --name foo
+tsctl create-user foo
 ```
 
 #### Change user password
@@ -57,7 +57,7 @@ Parameters:
 Example
 
 ```shell
-tsctl create-user --username foo
+tsctl create-user foo
 ```
 
 #### Removing users
