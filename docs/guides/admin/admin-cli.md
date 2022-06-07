@@ -21,7 +21,7 @@ tsctl runserver -c /etc/timesketch/timesketch.conf
 Command:
 
 ```shell
-tsctl add_user
+tsctl create-user
 ```
 
 Parameters:
@@ -34,17 +34,17 @@ Parameters:
 Example
 
 ```shell
-tsctl add_user --name foo
+tsctl create-user foo
 ```
 
 #### Change user password
 
-To change a user password, the add_user command can be used, as it is checking if the user exists if yes it will update the update.
+To change a user password, the create-user command can be used, as it is checking if the user exists if yes it will update the update.
 
 Command:
 
 ```shell
-tsctl add_user
+tsctl create-user
 ```
 
 Parameters:
@@ -57,7 +57,7 @@ Parameters:
 Example
 
 ```shell
-tsctl add_user --username foo
+tsctl create-user foo
 ```
 
 #### Removing users
