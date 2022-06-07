@@ -15,6 +15,46 @@ limitations under the License.
 -->
 <template>
   <div>
+    <div class="card card-accent-background" style="margin-top:15px;">
+      <header class="card-header">
+        <p class="card-header-title">
+          Analysis history
+        </p>
+        <span v-if="isModal" class="card-header-icon" aria-label="close">
+          <span class="delete" v-on:click="$emit('closeHistory')"></span>
+        </span>
+      </header>
+      <div class="card-content">
+        {{ analyses }}
+        <b-table v-if="analyses.length" :data="analyses"
+          :current-page.sync="currentPage" :per-page="perPage" paginated
+          pagination-simple pagination-position="bottom"
+          default-sort-direction="desc" sort-icon="arrow-down"
+          sort-icon-size="is-small" icon-pack="fas" icon-prev="chevron-left"
+          icon-next="chevron-right" default-sort="created_at">
+          <b-table-column field="created_at" label="Date" width="150" sortable
+            v-slot="props">
+            {{ new Date(props.row.created_at) | moment('YYYY-MM-DD HH:mm:ss') }}
+          </b-table-column>
+
+          <b-table-column field="name" label="Analyzer" sortable v-slot="props">
+            {{ props.row.analyzer_name }}
+          </b-table-column>
+
+          <b-table-column field="result" label="Result" sortable v-slot="props">
+            {{ props.row.result }}
+          </b-table-column>
+
+          <b-table-column field="status" label="Status" sortable v-slot="props"
+            width="40">
+            {{ props.row.status[0].status }}
+          </b-table-column>
+        </b-table>
+
+        <span v-if="!(analyses && analyses.length)">No logs available. You need
+          to run one of the analyzers first.</span>
+      </div>
+    </div>
     <div class="container is-fluid">
       <b-table v-if="sketchTags.length > 0" :data="sketchTags">
         <b-table-column field="search" label="" v-slot="props" width="1em">
@@ -162,6 +202,8 @@ export default {
       parsed: '',
       sketchTags: [],
       sketchTTP: [],
+      analyses: [],
+
     }
   },
   computed: {
@@ -174,6 +216,25 @@ export default {
     meta() {
       return this.$store.state.meta
     },
+  },
+  created() {
+    if (this.timeline) {
+      ApiClient.getSketchTimelineAnalysis(this.sketch.id, this.timeline.id)
+        .then(response => {
+          this.analyses = response.data.objects[0].obj.filter(obj => { return obj.analysissession_id === 1 })
+        })
+        .catch(e => { })
+    }
+    // If no timeline was specified then loop over all of them
+    else {
+      this.sketch.timelines.forEach(timeline => {
+        ApiClient.getSketchTimelineAnalysis(this.sketch.id, timeline.id)
+          .then(response => {
+            this.analyses = this.analyses.concat(response.data.objects[0])
+          })
+          .catch(e => { })
+      })
+    }
   },
   mounted() {
     this.loadSketchSigmaTags()
