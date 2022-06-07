@@ -20,12 +20,12 @@ limitations under the License.
         <p class="card-header-title">
           Analysis history
         </p>
-        <span v-if="isModal" class="card-header-icon" aria-label="close">
+        <!--<span v-if="isModal" class="card-header-icon" aria-label="close">
           <span class="delete" v-on:click="$emit('closeHistory')"></span>
-        </span>
+        </span>-->
       </header>
       <div class="card-content">
-        {{ analyses }}
+        <!--TODO(jaegeral): remove this{{ analyses }} -->
         <b-table v-if="analyses.length" :data="analyses"
           :current-page.sync="currentPage" :per-page="perPage" paginated
           pagination-simple pagination-position="bottom"
@@ -203,7 +203,6 @@ export default {
       sketchTags: [],
       sketchTTP: [],
       analyses: [],
-
     }
   },
   computed: {
@@ -221,7 +220,7 @@ export default {
     if (this.timeline) {
       ApiClient.getSketchTimelineAnalysis(this.sketch.id, this.timeline.id)
         .then(response => {
-          this.analyses = response.data.objects[0].obj.filter(obj => { return obj.analysissession_id === 1 })
+          this.analyses = response.data.objects[0]
         })
         .catch(e => { })
     }
@@ -277,10 +276,20 @@ export default {
       return { q: query }
     },
     getRuleByName(ruleName) {
-      var result = this.$store.state.sigmaRuleList.filter(obj => {
-        return obj.file_name === ruleName
-      })
-      return { result }
+      if (Array.isArray(this.$store.state.sigmaRuleList)) {
+        var result = this.$store.state.sigmaRuleList.filter(obj => {
+          return obj.file_name === ruleName
+        })
+        return { result }
+      } else {
+        console.log(ruleName + 'is not found');
+        return {
+          // If not found in the current installed rules
+          result: [{
+            "file_name": ruleName, "ts_use_in_analyzer": "Not found",
+          }]
+        }
+      }
     },
     getColor(status) {
       if (status === 'false') return "red"
