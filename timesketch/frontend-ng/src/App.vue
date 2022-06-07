@@ -35,7 +35,7 @@ limitations under the License.
       </v-tooltip>
 
       <v-avatar class="ml-3" color="orange" size="32">
-        <span class="white--text">jb</span>
+        <span v-if="currentUser" class="white--text">{{ currentUser.charAt(0).toUpperCase() }}</span>
       </v-avatar>
 
       <template v-slot:extension>
@@ -67,6 +67,9 @@ export default {
     sketch() {
       return this.$store.state.sketch
     },
+    currentUser() {
+      return this.$store.state.currentUser
+    },
   },
   methods: {
     toggleTheme: function () {
@@ -80,7 +83,7 @@ export default {
   mounted() {
     const isDark = localStorage.getItem('isDarkTheme')
     if (isDark) {
-      if (isDark == 'true') {
+      if (isDark === 'true') {
         this.$vuetify.theme.dark = true
       } else {
         this.$vuetify.theme.dark = false
