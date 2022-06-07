@@ -482,7 +482,6 @@ class SigmaListResourceTest(BaseTest):
     def test_get_sigma_rule_list(self):
         self.login()
         response = self.client.get(self.resource_url)
-        data = json.loads(response.get_data(as_text=True))
         self.assertDictContainsSubset(self.expected_response, response.json)
         self.assertIsNotNone(response)
 
