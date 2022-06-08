@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <table class="table is-fullwidth" style="border-radius:4px;">
+  <table class="table is-fullwidth" style="border-radius: 4px">
     <thead>
       <th :width="datetimeWidth">Datetime (UTC)</th>
       <th width="1">
@@ -34,6 +34,7 @@ limitations under the License.
       :selected-fields="selectedFields"
       :display-options="displayOptions"
       :display-controls="true"
+      :search-node="searchNode"
       v-bind:id="event._id"
       @addChip="$emit('addChip', $event)"
       @addLabel="$emit('addLabel', $event)"
@@ -49,14 +50,14 @@ import EventBus from '../../main'
 
 export default {
   components: { TsSketchExploreEventListRow },
-  props: ['eventList', 'order', 'selectedFields', 'displayOptions'],
+  props: ['eventList', 'order', 'selectedFields', 'displayOptions', 'searchNode'],
   data() {
     return {
       selectAll: false,
     }
   },
   methods: {
-    toggleSelectAll: function() {
+    toggleSelectAll: function () {
       if (this.selectAll) {
         EventBus.$emit('clearSelectedEvents')
         this.selectAll = false
