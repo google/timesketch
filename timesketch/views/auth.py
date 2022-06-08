@@ -194,14 +194,11 @@ def validate_api_token():
     if not id_token:
         return abort(HTTP_STATUS_CODE_UNAUTHORIZED, "No ID token supplied.")
 
-    client_ids = []
-    client_ids.append(current_app.config.get("GOOGLE_OIDC_CLIENT_ID"))
-    additional_client_ids = current_app.config.get(
-        "WHITELISTED_GOOGLE_OIDC_API_CLIENT_IDS")
-    if additional_client_ids:
-        client_ids.extend("".join(additional_client_ids.split()).split(","))
-    # Remove None and empty strings.
-    client_ids = [x for x in client_ids if x]
+    client_ids = set()
+    client_ids.add(current_app.config.get("GOOGLE_OIDC_CLIENT_ID"))
+    client_ids.update(current_app.config.get(
+        "ALLOWED_GOOGLE_OIDC_API_CLIENT_IDS"))
+    client_ids = list(client_ids)
     if not client_ids:
         return abort(
             HTTP_STATUS_CODE_BAD_REQUEST,
