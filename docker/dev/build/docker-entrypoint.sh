@@ -69,7 +69,7 @@ if [ "$1" = 'timesketch' ]; then
   echo "WTF_CSRF_ENABLED = False" >> /etc/timesketch/timesketch.conf
 
   # Add web user
-  tsctl add_user --username "${TIMESKETCH_USER}" --password "${TIMESKETCH_USER}"
+  tsctl create-user --password "${TIMESKETCH_USER}" "${TIMESKETCH_USER}"
 
   echo "Timesketch development server is ready!"
 
