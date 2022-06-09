@@ -93,7 +93,13 @@ limitations under the License.
                 </v-sheet>
                 <v-divider vertical class="mx-2"></v-divider>
 
-                <v-menu v-model="showSearchDropdown" offset-y :close-on-content-click="false" :close-on-click="true">
+                <v-menu
+                  v-model="showSearchDropdown"
+                  offset-y
+                  attach
+                  :close-on-content-click="false"
+                  :close-on-click="true"
+                >
                   <template v-slot:activator="{ on, attrs }">
                     <v-text-field
                       v-model="currentQueryString"
@@ -411,62 +417,7 @@ limitations under the License.
               <td :colspan="headers.length">
                 <!-- Details -->
                 <v-container v-if="item.showDetails" fluid class="mt-4">
-                  <v-row>
-                    <v-col cols="8">
-                      <v-card outlined>
-                        <v-simple-table dense>
-                          <template v-slot:default>
-                            <thead>
-                              <tr>
-                                <th class="text-left">Attribute</th>
-                                <th class="text-left">Value</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              <tr v-for="(value, key) in item._source" :key="key">
-                                <td>{{ key }}</td>
-                                <td>{{ value }}</td>
-                              </tr>
-                            </tbody>
-                          </template>
-                        </v-simple-table>
-                      </v-card>
-                    </v-col>
-                    <v-col cols="4">
-                      <v-list three-line>
-                        <v-list-item>
-                          <v-list-item-avatar>
-                            <v-avatar class="ml-3" color="orange" size="32">
-                              <span class="white--text">jb</span>
-                            </v-avatar>
-                          </v-list-item-avatar>
-                          <v-list-item-content>
-                            <v-list-item-title>Jane Doe</v-list-item-title>
-                            <p class="body-2">
-                              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris elit mauris, lobortis ut
-                              condimentum quis, imperdiet a eros. Maecenas tincidunt diam sit amet orci aliquam
-                              suscipit. Praesent condimentum vitae ante in rutrum. Cras ac velit lacus. Vestibulum at
-                              est massa. Nam vulputate justo turpis, at efficitur felis pulvinar id.
-                            </p>
-                          </v-list-item-content>
-                        </v-list-item>
-                        <v-list-item>
-                          <v-list-item-avatar>
-                            <v-avatar class="ml-3" color="orange" size="32">
-                              <span class="white--text">jb</span>
-                            </v-avatar>
-                          </v-list-item-avatar>
-                          <v-list-item-content>
-                            <v-list-item-title>John Doe</v-list-item-title>
-                            <p class="body-2">
-                              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris elit mauris, lobortis ut
-                              condimentum quis, imperdiet a eros.
-                            </p>
-                          </v-list-item-content>
-                        </v-list-item>
-                      </v-list>
-                    </v-col>
-                  </v-row>
+                  <ts-event-detail :event="item"></ts-event-detail>
                 </v-container>
 
                 <!-- Time bubble -->
@@ -509,7 +460,7 @@ limitations under the License.
 
             <!-- Message field -->
             <template v-slot:item._source.message="{ item }">
-              <span class="ts-event-field-container">
+              <span class="ts-event-field-container" style="cursor: pointer" @click="toggleDetailedEvent(item)">
                 <span class="ts-event-field-ellipsis">
                   <!-- Tags -->
                   <span v-if="displayOptions.showTags">
@@ -528,7 +479,7 @@ limitations under the License.
                       >{{ emoji }}
                     </span>
                   </span>
-                  <span @click="toggleDetailedEvent(item)">{{ item._source.message }}</span>
+                  <span>{{ item._source.message }}</span>
                 </span>
               </span>
             </template>
@@ -538,6 +489,18 @@ limitations under the License.
               <v-chip label style="margin-top: 1px; margin-bottom: 1px; font-size: 0.9em">{{
                 getTimeline(item).name
               }}</v-chip>
+            </template>
+
+            <!-- Comment field -->
+            <template v-slot:item._source.comment="{ item }">
+              <v-badge
+                :offset-y="16"
+                bordered
+                v-if="item._source.comment.length"
+                :content="item._source.comment.length"
+              >
+                <v-icon @click="toggleDetailedEvent(item)"> mdi-comment-text-multiple-outline </v-icon>
+              </v-badge>
             </template>
           </v-data-table>
         </v-card>
@@ -556,6 +519,7 @@ import TsBarChart from '../components/Explore/BarChart'
 import TsTimelinePicker from '../components/Explore/TimelinePicker'
 import TsFilterMenu from '../components/Explore/FilterMenu'
 import TsScenario from '../components/Scenarios/Scenario'
+import TsEventDetail from '../components/Explore/EventDetail'
 
 import EventBus from '../main'
 import { None } from 'vega'
@@ -594,6 +558,7 @@ export default {
     TsTimelinePicker,
     TsFilterMenu,
     TsScenario,
+    TsEventDetail,
   },
   props: ['sketchId'],
   data() {
@@ -616,6 +581,10 @@ export default {
           align: 'start',
           value: '_source.message',
           width: '100%',
+        },
+        {
+          value: '_source.comment',
+          align: 'end',
         },
         {
           value: 'timeline_name',
@@ -704,7 +673,6 @@ export default {
       return parseInt(this.currentQueryFilter.from) + parseInt(this.currentQueryFilter.size)
     },
     numSelectedEvents() {
-      //return Object.keys(this.selectedEvents).length
       return this.selectedEvents.length
     },
     filterChips: function () {
@@ -827,10 +795,7 @@ export default {
         this.$scrollTo('#context', 200, { offset: -300 })
       }
 
-      // Reset selected events.
-      //this.selectedEvents = {}
       this.selectedEvents = []
-
       this.eventList = emptyEventList()
 
       if (resetPagination) {
@@ -916,8 +881,6 @@ export default {
         })
     },
     searchView: function (viewId) {
-      // Reset selected events.
-      //this.selectedEvents = {}
       this.selectedEvents = []
 
       this.showSearchDropdown = false
@@ -1138,14 +1101,6 @@ export default {
     removeField: function (index) {
       this.selectedFields.splice(index, 1)
     },
-    //updateSelectedEvents: function (event) {
-    //  let key = event._index + ':' + event._id
-    //  if (event.isSelected) {
-    //    this.$set(this.selectedEvents, key, event)
-    //  } else {
-    //    this.$delete(this.selectedEvents, key)
-    //  }
-    //},
     toggleStar: function () {
       let eventsToToggle = []
       Object.keys(this.selectedEvents).forEach((key, index) => {
@@ -1237,13 +1192,6 @@ export default {
   },
   mounted() {
     this.$refs.searchInput.focus()
-    //this.showSearchDropdown = true
-    //EventBus.$on('eventSelected', (eventData) => {
-    //  this.updateSelectedEvents(eventData)
-    //})
-    //EventBus.$on('clearSelectedEvents', () => {
-    //  this.selectedEvents = {}
-    //})
   },
   created: function () {
     let doSearch = false

@@ -137,8 +137,8 @@ def get_sigma_rules(rule_folder, sigma_config=None):
     """
     return_array = []
 
-    blocklist_path = None
-    ignore = get_sigma_blocklist(blocklist_path)
+    rule_status_list_path = None
+    ignore = get_sigma_rule_status_list(rule_status_list_path)
     ignore_list = list(ignore.loc[ignore['status'] == 'bad']["path"].unique())
     exploratory_list = list(
         ignore.loc[ignore['status'] == 'exploratory']["path"].unique()
@@ -175,7 +175,7 @@ def get_sigma_rules(rule_folder, sigma_config=None):
                 else:
                     parsed_rule.update({'ts_use_in_analyzer': False})
 
-                # try to append any content from the reason field of the blocklist file:
+                # try to append any content from the reason field of the status file:
                 pd.set_option(
                     'display.max_colwidth', 200
                 )  # to avoid comments being truncated
@@ -377,28 +377,28 @@ def _sanitize_query(sigma_rule_query: str) -> str:
 
 
 @lru_cache(maxsize=32)
-def get_sigma_blocklist(blocklist_path=None):
+def get_sigma_rule_status_list(statuslist_path=None):
     """Get a dataframe of sigma rules to ignore.
 
     This includes filenames, paths, ids.
 
     Args:
-        blocklist_path(str): Path to a blocklist file.
+        statuslist_path(str): Path to a status file.
             The default value is None
 
     Returns:
-        Pandas dataframe with blocklist
+        Pandas dataframe with status
 
     Raises:
-        ValueError: Sigma blocklist file is not readabale.
+        ValueError: Sigma status file is not readabale.
     """
 
-    df = pd.read_csv(get_sigma_blocklist_path(blocklist_path))
+    df = pd.read_csv(get_sigma_rule_status_path(statuslist_path))
     if 'bad' in df.columns:
         df.rename(columns={"bad": "status"}, inplace=True)
         logger.warning(
             'Column name "bad" found in {0!s} - please rename to "status"'.format(
-                get_sigma_blocklist_path(blocklist_path)
+                get_sigma_rule_status_path(statuslist_path)
             )
         )
 
@@ -406,57 +406,57 @@ def get_sigma_blocklist(blocklist_path=None):
 
 
 @lru_cache(maxsize=None)
-def get_sigma_blocklist_path(blocklist_path=None):
-    """Checks and returns the Sigma blocklist path.
+def get_sigma_rule_status_path(rule_status_path=None):
+    """Checks and returns the Sigma rule_status path.
 
     This includes filenames, paths, ids.
 
     Args:
-        blocklist_path(str): Path to a blocklist file.
-            The default value is './data/sigma_blocklist.csv'
+        rule_status_path(str): Path to a rule_status file.
+            The default value is './data/sigma_rule_status.csv'
 
     Returns:
         Sigma Blocklist path
 
     Raises:
-        ValueError: Sigma blocklist file is not readabale.
+        ValueError: Sigma rule status file is not readabale.
     """
 
-    if not blocklist_path or blocklist_path == "":
-        blocklist_path = current_app.config.get(
-            "SIGMA_BLOCKLIST_CSV", "./data/sigma_blocklist.csv"
+    if not rule_status_path or rule_status_path == "":
+        rule_status_path = current_app.config.get(
+            "SIGMA_RULE_STATUS_CSV", "./data/sigma_rule_status.csv"
         )
-    if not blocklist_path:
-        raise ValueError("No blocklist_file_path set via param or config file")
+    if not rule_status_path:
+        raise ValueError("No rule_status_path set via param or config file")
 
-    if not os.path.isfile(blocklist_path):
+    if not os.path.isfile(rule_status_path):
         raise ValueError(
             "Unable to open file: [{0:s}] does not exist".format(
-                blocklist_path
+                rule_status_path
             )
         )
 
-    if not os.access(blocklist_path, os.R_OK):
+    if not os.access(rule_status_path, os.R_OK):
         raise ValueError(
             "Unable to open file: [{0:s}], cannot open it for "
-            "read, please check permissions.".format(blocklist_path)
+            "read, please check permissions.".format(rule_status_path)
         )
 
-    return blocklist_path
+    return rule_status_path
 
 
 @lru_cache(maxsize=None)
 def add_problematic_rule(filepath, rule_uuid=None, reason=None):
-    """Adds a problematic rule to the blocklist.csv.
+    """Adds a problematic rule to the sigma_rule_status.csv.
 
     Args:
         filepath: path to the sigma rule that caused problems
         rule_uuid: rule uuid
         reason: optional reason why file is moved
     """
-    blocklist_file_path = get_sigma_blocklist_path()
+    rule_status_file_path = get_sigma_rule_status_path()
 
-    # we only want to store the relative paths in the blocklist file
+    # we only want to store the relative paths in the status file
 
     try:
         sigma_rules_paths = get_sigma_rules_path()
@@ -476,7 +476,7 @@ def add_problematic_rule(filepath, rule_uuid=None, reason=None):
         rule_uuid,
     ]
 
-    with open(blocklist_file_path, "a", encoding="utf-8") as f:
+    with open(rule_status_file_path, "a", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow(fields)
 
