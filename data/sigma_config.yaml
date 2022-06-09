@@ -253,6 +253,11 @@ logsources:
     rewrite:
       product: windows
       service: sysmon
+  ssh:
+    service: ssh
+    conditions:
+      data_type:
+        - "syslog:ssh:login"
 fieldmappings:
     EventID: event_identifier
     ComputerName: computer_name
