@@ -13,7 +13,6 @@
 # limitations under the License.
 """This module implements the sigma model."""
 
-from flask_login import UserMixin
 from sqlalchemy import Column
 from sqlalchemy import ForeignKey
 from sqlalchemy import Integer
@@ -25,11 +24,11 @@ from timesketch.models.annotations import LabelMixin
 from timesketch.models.annotations import CommentMixin
 from timesketch.models.annotations import StatusMixin
 
-from timesketch.models.annotations import GenericAttribute
+from timesketch.models.annotations import GenericAttributeMixin
 
 
 class Sigma(
-    BaseModel, LabelMixin, StatusMixin, CommentMixin, GenericAttribute
+    BaseModel, LabelMixin, StatusMixin, CommentMixin, GenericAttributeMixin
 ):
     """Implements the Sigma model."""
 
