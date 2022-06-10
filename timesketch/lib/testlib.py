@@ -35,6 +35,30 @@ from timesketch.models.sketch import SearchTemplate
 from timesketch.models.sketch import View
 from timesketch.models.sketch import Event
 from timesketch.models.sketch import Story
+from timesketch.models.sigma import Sigma
+
+
+SIGMA_RULE = """
+title: Suspicious Installation of Zenmap
+id: 5266a592-b793-11ea-b3de-0242ac130004
+description: Detects suspicious installation of Zenmap
+references:
+    - https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html
+author: Alexander Jaeger
+date: 2020/06/26
+modified: 2021/01/01
+logsource:
+    product: linux
+    service: shell
+detection:
+    keywords:
+        # Generic suspicious commands
+        - '*apt-get install zmap*'
+    condition: keywords
+falsepositives:
+    - Unknown
+level: high
+"""
 
 
 class TestConfig(object):
@@ -85,7 +109,11 @@ class MockOpenSearchClient(object):
                 },
                 "my_second_aggregation": {
                     "buckets": [
-                        {"foobar": 54, "second": "faranlegt", "third": "other text"},
+                        {
+                            "foobar": 54,
+                            "second": "faranlegt",
+                            "third": "other text",
+                        },
                         {"foobar": 42, "second": "asnalegt"},
                     ]
                 },
@@ -140,8 +168,16 @@ class MockDataStore(object):
                         "timestamp": 1410593222543942,
                         "message": "Test event",
                         "timesketch_label": [
-                            {"user_id": 1, "name": "__ts_star", "sketch_id": 1},
-                            {"user_id": 2, "name": "__ts_star", "sketch_id": 99},
+                            {
+                                "user_id": 1,
+                                "name": "__ts_star",
+                                "sketch_id": 1,
+                            },
+                            {
+                                "user_id": 2,
+                                "name": "__ts_star",
+                                "sketch_id": 99,
+                            },
                         ],
                         "timestamp_desc": "Content Modification Time",
                         "datetime": "2014-09-13T07:27:03+00:00",
@@ -239,7 +275,12 @@ class MockDataStore(object):
         return
 
     def import_event(
-        self, index_name, event_type, event=None, event_id=None, flush_interval=None
+        self,
+        index_name,
+        event_type,
+        event=None,
+        event_id=None,
+        flush_interval=None,
     ):
         """Mock adding the event to OpenSearch, instead add the event
         to event_store.
@@ -526,10 +567,38 @@ class BaseTest(TestCase):
             A search template (timesketch.models.sketch.SearchTemplate)
         """
         searchtemplate = SearchTemplate(
-            name=name, query_string=name, query_filter=json.dumps(dict()), user=user
+            name=name,
+            query_string=name,
+            query_filter=json.dumps(dict()),
+            user=user,
         )
         self._commit_to_database(searchtemplate)
         return searchtemplate
+
+    def _create_sigma(
+        self, rule_uuid, user, title, description, query_string, rule_yaml
+    ):
+        """Create a sigma rule in the database.
+        Args:
+            rule_uuid: UUID for the rule
+            user: A user (instance of timesketch.models.user.User)
+            title: Sigma rule title
+            description: Description of the Sigma rule
+            query_string: Open Search Query String
+            rule_yaml: yaml content of the rule
+        Returns:
+            A search template (timesketch.models.sketch.SearchTemplate)
+        """
+        sigma = Sigma(
+            rule_uuid=rule_uuid,
+            user=user,
+            title=title,
+            query_string=query_string,
+            description=description,
+            rule_yaml=rule_yaml,
+        )
+        self._commit_to_database(sigma)
+        return sigma
 
     def setUp(self):
         """Setup the test database."""
@@ -541,9 +610,15 @@ class BaseTest(TestCase):
         self.group1 = self._create_group(name="test_group1", user=self.user1)
         self.group2 = self._create_group(name="test_group2", user=self.user1)
 
-        self.sketch1 = self._create_sketch(name="Test 1", user=self.user1, acl=True)
-        self.sketch2 = self._create_sketch(name="Test 2", user=self.user1, acl=False)
-        self.sketch3 = self._create_sketch(name="Test 3", user=self.user1, acl=True)
+        self.sketch1 = self._create_sketch(
+            name="Test 1", user=self.user1, acl=True
+        )
+        self.sketch2 = self._create_sketch(
+            name="Test 2", user=self.user1, acl=False
+        )
+        self.sketch3 = self._create_sketch(
+            name="Test 3", user=self.user1, acl=True
+        )
 
         self.searchindex = self._create_searchindex(
             name="test", user=self.user1, acl=True
@@ -565,7 +640,9 @@ class BaseTest(TestCase):
         self.view2 = self._create_view(
             name="View 2", sketch=self.sketch2, user=self.user1
         )
-        self.view3 = self._create_view(name="", sketch=self.sketch1, user=self.user2)
+        self.view3 = self._create_view(
+            name="", sketch=self.sketch1, user=self.user2
+        )
 
         self.searchtemplate = self._create_searchtemplate(
             name="template", user=self.user1
@@ -576,6 +653,15 @@ class BaseTest(TestCase):
         )
 
         self.story = self._create_story(sketch=self.sketch1, user=self.user1)
+
+        self.sigma1 = self._create_sigma(
+            rule_uuid='5266a592-b793-11ea-b3de-0242ac130004',
+            title='Suspicious Installation of Zenmap',
+            query_string='("*apt\\-get\\ install\\ zmap*")',
+            description='Detects suspicious installation of Zenmap',
+            rule_yaml=SIGMA_RULE,
+            user=self.user1,
+        )
 
     def tearDown(self):
         """Tear down the test database."""

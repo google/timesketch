@@ -37,18 +37,38 @@ class Sigma(
     user_id = Column(
         Integer, ForeignKey("user.id")
     )  # who added the rule to the system (TS user)
-    es_query = Column(UnicodeText())  # (auto generated / updated from parser)
+    query_string = Column(
+        UnicodeText()
+    )  # (auto generated / updated from parser)
+    title = Column(Unicode(255))
+    description = Column(UnicodeText())
 
-    def __init__(self, rule_uuid, user, rule_yaml=None):
+    def __init__(
+        self,
+        rule_uuid,
+        user,
+        title,
+        query_string=None,
+        description=None,
+        rule_yaml=None,
+    ):
         """Initialize the Sigma object.
 
         Args:
             rule_uuid: UUID for the rule
-            rule_yaml: Name of the rule
+            user: A user (instance of timesketch.models.user.User)
+            title: Sigma rule title
+            description: Description of the Sigma rule
+            query_string: Open Search Query String
+            rule_yaml: yaml content of the rule
         """
         super().__init__()
+        #breakpoint()
         self.rule_uuid = rule_uuid
         self.user = user
-        self.es_query = ""
-        if not rule_yaml:
-            self.rule_yaml = ""
+        self.query_string = query_string
+        self.title = title
+        #if not description:
+        #    self.description = ""  # if no title is given but a yaml is given, should we try to extract it?
+        self.description = description
+        self.rule_yaml = rule_yaml

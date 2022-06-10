@@ -16,8 +16,29 @@
 from __future__ import unicode_literals
 
 from timesketch.lib.testlib import ModelBaseTest
-from timesketch.models import BaseModel
 from timesketch.models.sigma import Sigma
+
+SIGMA_RULE = """
+title: Suspicious Installation of Zenmap
+id: 5266a592-b793-11ea-b3de-0242ac130004
+description: Detects suspicious installation of Zenmap
+references:
+    - https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html
+author: Alexander Jaeger
+date: 2020/06/26
+modified: 2021/01/01
+logsource:
+    product: linux
+    service: shell
+detection:
+    keywords:
+        # Generic suspicious commands
+        - '*apt-get install zmap*'
+    condition: keywords
+falsepositives:
+    - Unknown
+level: high
+"""
 
 
 class SigmaModelTest(ModelBaseTest):
@@ -27,10 +48,14 @@ class SigmaModelTest(ModelBaseTest):
         """Test that the test sigma rule has the expected data stored
         in the database.
         """
-        expected_result = frozenset([])
-        self._test_db_object(expected_result=expected_result, model_cls=Sigma)
-
-    def test_set_active(self):
-        """Test setting a Sigma rule to active"""
-        # TODO(jaegeral): implement
-        self.assertTrue(False)
+        expected_result2 = frozenset(
+            [
+                ('rule_uuid', '5266a592-b793-11ea-b3de-0242ac130004'),
+                ('title', 'Suspicious Installation of Zenmap'),
+                ('query_string', '("*apt\\-get\\ install\\ zmap*")'),
+                ('description', 'Detects suspicious installation of Zenmap'),
+                ('rule_yaml', SIGMA_RULE),
+                ('user', self.user1),
+            ]
+        )
+        self._test_db_object(expected_result=expected_result2, model_cls=Sigma)
