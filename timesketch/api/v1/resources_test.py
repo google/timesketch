@@ -436,6 +436,32 @@ class SigmaResourceTest(BaseTest):
         )
         self.assertIsNotNone(response)
 
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
+    def test_post_sigma_resource(self):
+        """Authenticated request to create an sigma rule."""
+        self.login()
+        sigma = dict(
+            rule_uuid="5266a592-b793-11ea-b3de-12345",
+            title='Suspicious Installation of Zenmap',
+            query_string='("*apt\\-get\\ install\\ zmap*")',
+            description='Detects suspicious installation of Zenmap',
+            rule_yaml='foobar',
+        )
+
+        data = dict(content=sigma)
+
+        response = self.client.post(
+            self.resource_url + "5266a592-b793-11ea-b3de-0242ac130004/",
+            data=json.dumps(sigma),
+            content_type="application/json",
+        )
+        # self.assertIsInstance(response.get("objects"), dict)
+        breakpoint()
+        # self.assertIsInstance(response.json, dict)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+
 
 class SigmaListResourceTest(BaseTest):
     """Test Sigma resource."""

@@ -29,7 +29,14 @@ import timesketch.lib.sigma_util as ts_sigma_lib
 
 from timesketch.api.v1 import resources
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
+
+from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
+from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
+from timesketch.models import sigma
+from timesketch.models.sigma import Sigma
+from timesketch.models import db_session
+
 
 logger = logging.getLogger("timesketch.api.sigma")
 
@@ -51,11 +58,15 @@ class SigmaListResource(resources.ResourceMixin, Resource):
 
         except ValueError as e:
             logger.error(
-                "OS Error, unable to get the path to the Sigma rules", exc_info=True
+                "OS Error, unable to get the path to the Sigma rules",
+                exc_info=True,
             )
             abort(HTTP_STATUS_CODE_NOT_FOUND, f"Value Error, {e}")
         # TODO: idea for meta: add a list of folders that have been parsed
-        meta = {"current_user": current_user.username, "rules_count": len(sigma_rules)}
+        meta = {
+            "current_user": current_user.username,
+            "rules_count": len(sigma_rules),
+        }
         return jsonify({"objects": sigma_rules, "meta": meta})
 
 
@@ -78,7 +89,8 @@ class SigmaResource(resources.ResourceMixin, Resource):
 
         except ValueError as e:
             logger.error(
-                "OS Error, unable to get the path to the Sigma rules", exc_info=True
+                "OS Error, unable to get the path to the Sigma rules",
+                exc_info=True,
             )
             abort(HTTP_STATUS_CODE_NOT_FOUND, f"ValueError {e}")
         for rule in sigma_rules:
@@ -87,10 +99,51 @@ class SigmaResource(resources.ResourceMixin, Resource):
                     return_rule = rule
 
         if return_rule is None:
-            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sigma rule found with this ID.")
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, "No sigma rule found with this ID."
+            )
 
-        meta = {"current_user": current_user.username, "rules_count": len(sigma_rules)}
+        meta = {
+            "current_user": current_user.username,
+            "rules_count": len(sigma_rules),
+        }
         return jsonify({"objects": [return_rule], "meta": meta})
+
+    @login_required
+    def post(self, rule_uuid):
+        """Handles POST request to the resource.
+
+        Returns:
+            HTTP status code indicating whether operation was sucessful.
+        """
+        form = request.json
+        if not form:
+            form = request.data
+
+        rule_uuid = form.get("rule_uuid", "")
+        title = form.get("title", "")
+
+        if not rule_uuid:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                "No rule_uuid supplied.",
+            )
+
+        if not isinstance(rule_uuid, str):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN, "rule_uuid needs to be a string."
+            )
+        # TODO(jaegeral): something is odd here, not sure how I can return the right object
+        sigma_rule = Sigma(rule_uuid=rule_uuid, user=current_user, title=title)
+        # sigma_rule = Sigma.query.get_with_acl(rule_uuid)
+        db_session.add(sigma_rule)
+        db_session.commit()
+        breakpoint()
+
+        if sigma_rule is None:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sigma was parsed")
+
+        return jsonify([{"rule_uuid": rule_uuid}])
 
 
 class SigmaByTextResource(resources.ResourceMixin, Resource):
@@ -111,7 +164,8 @@ class SigmaByTextResource(resources.ResourceMixin, Resource):
         content = form.get("content")
         if not content:
             return abort(
-                HTTP_STATUS_CODE_BAD_REQUEST, "Missing values from the request."
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                "Missing values from the request.",
             )
 
         try:
@@ -119,7 +173,8 @@ class SigmaByTextResource(resources.ResourceMixin, Resource):
 
         except ValueError:
             logger.error(
-                "Sigma Parsing error with the user provided rule", exc_info=True
+                "Sigma Parsing error with the user provided rule",
+                exc_info=True,
             )
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
@@ -153,7 +208,9 @@ class SigmaByTextResource(resources.ResourceMixin, Resource):
             )
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                "Sigma parsing error: invalid yaml provided {0!s}".format(exception),
+                "Sigma parsing error: invalid yaml provided {0!s}".format(
+                    exception
+                ),
             )
 
         if sigma_rule is None:
