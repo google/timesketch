@@ -283,6 +283,18 @@ class ResourceMixin(object):
         "updated_at": fields.DateTime("iso8601"),
     }
 
+    sigma_fields = {
+        "id": fields.Integer,
+        "rule_uuid": fields.String,
+        "description": fields.String,
+        "title": fields.String,
+        "query_string": fields.String,
+        "user": fields.Nested(user_fields),
+        "rule_yaml": fields.String,
+        "created_at": fields.DateTime("iso8601"),
+        "updated_at": fields.DateTime("iso8601"),
+    }
+
     fields_registry = {
         "aggregation": aggregation_fields,
         "aggregationgroup": aggregation_group_fields,
@@ -304,6 +316,7 @@ class ResourceMixin(object):
         "investigative_question": question_fields,
         "facet": facet_fields,
         "scenario": scenario_fields,
+        "sigma": sigma_fields,
     }
 
     @property
@@ -319,7 +332,11 @@ class ResourceMixin(object):
         )
 
     def to_json(
-        self, model, model_fields=None, meta=None, status_code=HTTP_STATUS_CODE_OK
+        self,
+        model,
+        model_fields=None,
+        meta=None,
+        status_code=HTTP_STATUS_CODE_OK,
     ):
         """Create json response from a database models.
 
