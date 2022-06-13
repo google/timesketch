@@ -30,12 +30,18 @@ import timesketch.lib.sigma_util as ts_sigma_lib
 from timesketch.api.v1 import resources
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 
-from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
-from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
+from timesketch.lib.definitions import HTTP_STATUS_CODE_CONFLICT
+from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
+from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
+from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
+
+
 from timesketch.models import sigma
 from timesketch.models.sigma import Sigma
 from timesketch.models import db_session
+
+from sqlalchemy.exc import IntegrityError
 
 
 logger = logging.getLogger("timesketch.api.sigma")
@@ -83,6 +89,43 @@ class SigmaResource(resources.ResourceMixin, Resource):
         Returns:
             JSON sigma rule
         """
+        rule = Sigma.query.filter_by(rule_uuid=rule_uuid).first()
+
+        if not rule:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No rule found with this ID.")
+        return_rules = []
+
+        assert isinstance(rule, Sigma)
+        # Return a subset of the sigma objects to reduce the amount of
+        # data sent to the client.
+        return_rules.append(
+            {
+                "rule_uuid": rule.rule_uuid,
+                "title": rule.title,
+                "description": rule.description,
+                "created_at": str(rule.created_at),
+                "query_string": rule.query_string,
+                "title": rule.title,
+                "rule_yaml": rule.rule_yaml,
+                "status": rule.get_status.status,
+            }
+        )
+
+        meta = {
+            "current_user": current_user.username,
+        }
+        return jsonify({"objects": return_rules, "meta": meta})
+
+    @login_required
+    def get_old_from_disk_deprecated(self, rule_uuid):
+        """Handles GET request to the resource.
+
+        Args:
+            rule_uuid: uuid of the sigma rule
+
+        Returns:
+            JSON sigma rule
+        """
         return_rule = None
         try:
             sigma_rules = ts_sigma_lib.get_all_sigma_rules()
@@ -120,7 +163,7 @@ class SigmaResource(resources.ResourceMixin, Resource):
         if not form:
             form = request.data
 
-        rule_uuid = form.get("rule_uuid", "")
+        rule_uuid = form.get("rule_uuid")
         title = form.get("title", "")
 
         if not rule_uuid:
@@ -133,17 +176,20 @@ class SigmaResource(resources.ResourceMixin, Resource):
             abort(
                 HTTP_STATUS_CODE_FORBIDDEN, "rule_uuid needs to be a string."
             )
-        # TODO(jaegeral): something is odd here, not sure how I can return the right object
         sigma_rule = Sigma(rule_uuid=rule_uuid, user=current_user, title=title)
-        # sigma_rule = Sigma.query.get_with_acl(rule_uuid)
-        db_session.add(sigma_rule)
-        db_session.commit()
-        breakpoint()
+        sigma_rule.description = form.get("description", "")
+        sigma_rule.query_string = form.get("query_string", "")
+        sigma_rule.rule_yaml = form.get("rule_yaml", "")
+        try:
+            db_session.add(sigma_rule)
+            db_session.commit()
+        except IntegrityError as e:
+            abort(HTTP_STATUS_CODE_CONFLICT, "Rule already exist")
 
         if sigma_rule is None:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sigma was parsed")
 
-        return jsonify([{"rule_uuid": rule_uuid}])
+        return self.to_json(sigma_rule, status_code=HTTP_STATUS_CODE_CREATED)
 
 
 class SigmaByTextResource(resources.ResourceMixin, Resource):

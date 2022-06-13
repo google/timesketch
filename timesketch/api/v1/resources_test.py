@@ -18,9 +18,12 @@ from __future__ import unicode_literals
 import json
 import mock
 
-from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
-from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
+from timesketch.lib.definitions import HTTP_STATUS_CODE_CONFLICT
+from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
+from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
+from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
+
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.testlib import MockDataStore
 
@@ -428,39 +431,108 @@ class SigmaResourceTest(BaseTest):
         }
     }
 
-    def test_get_sigma_rule(self):
+    '''def test_get_sigma_rule(self):
         """Authenticated request to get an sigma rule."""
         self.login()
         response = self.client.get(
             self.resource_url + "5266a592-b793-11ea-b3de-0242ac130004"
         )
+        self.assertIn('5266a592-b793-', response.json[0]["rule_uuid"])
+        breakpoint()
         self.assertIsNotNone(response)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+
+        response = self.client.get(self.resource_url + "abc")
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_NOT_FOUND)
+
+    '''
 
     @mock.patch(
         "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
     )
     def test_post_sigma_resource(self):
         """Authenticated request to create an sigma rule."""
+        MOCK_SIGMA_RULE = """
+title: Suspicious Installation of afafaf
+id: 5266a592-b793-11ea-b3de-afafaf
+description: Detects suspicious installation of ZMap
+references:
+    - https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html
+author: Alexander Jaeger
+date: 2020/06/26
+modified: 2022/06/12
+logsource:
+    product: linux
+    service: shell
+detection:
+    keywords:
+        # Generic suspicious commands
+        - '*apt-get install afafaf*'
+    condition: keywords
+falsepositives:
+    - Unknown
+level: high
+"""
+
         self.login()
         sigma = dict(
-            rule_uuid="5266a592-b793-11ea-b3de-12345",
-            title='Suspicious Installation of Zenmap',
-            query_string='("*apt\\-get\\ install\\ zmap*")',
-            description='Detects suspicious installation of Zenmap',
-            rule_yaml='foobar',
+            rule_uuid="5266a592-b793-11ea-b3de-afafaf",
+            title='Suspicious Installation of afafaf',
+            query_string='("*apt\\-get\\ install\\ afafaf*")',
+            description='Detects suspicious installation of afafaf',
+            rule_yaml=MOCK_SIGMA_RULE,
         )
 
-        data = dict(content=sigma)
-
         response = self.client.post(
-            self.resource_url + "5266a592-b793-11ea-b3de-0242ac130004/",
+            self.resource_url + "5266a592-b793-11ea-b3de-afafaf/",
             data=json.dumps(sigma),
             content_type="application/json",
         )
-        # self.assertIsInstance(response.get("objects"), dict)
-        breakpoint()
-        # self.assertIsInstance(response.json, dict)
+        self.assertIn(
+            '5266a592-b793-', response.json['objects'][0]["rule_uuid"]
+        )
+        self.assertIn(
+            'Detects suspicious installation of',
+            response.json['objects'][0]["description"],
+        )
+        self.assertIn(
+            'shell',
+            response.json['objects'][0]["rule_yaml"],
+        )
+        # TODO(jaegeral): make a dict based test
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+
+        # TODO(jaegeral): try to add the same rule twice
+
+        # Now GET the ressources
+        response = self.client.get(
+            self.resource_url + "5266a592-b793-11ea-b3de-afafaf/"
+        )
+
+        self.assertIsNotNone(response)
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+        self.assertIn(
+            '5266a592-b793-', response.json['objects'][0]["rule_uuid"]
+        )
+        self.assertIn(
+            'Detects suspicious installation of',
+            response.json['objects'][0]["description"],
+        )
+        self.assertIn(
+            'shell',
+            response.json['objects'][0]["rule_yaml"],
+        )
+
+        # Attempt to add the same thing again
+        response = self.client.post(
+            self.resource_url + "5266a592-b793-11ea-b3de-afafaf/",
+            data=json.dumps(sigma),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_CONFLICT)
+        response = self.client.get(self.resource_url + "abc/")
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_NOT_FOUND)
 
 
 class SigmaListResourceTest(BaseTest):

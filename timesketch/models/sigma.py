@@ -32,7 +32,7 @@ class Sigma(
 ):
     """Implements the Sigma model."""
 
-    uuid = Column(Unicode(255), unique=True)
+    rule_uuid = Column(Unicode(255), unique=True)
     rule_yaml = Column(UnicodeText())
     user_id = Column(
         Integer, ForeignKey("user.id")
@@ -63,12 +63,9 @@ class Sigma(
             rule_yaml: yaml content of the rule
         """
         super().__init__()
-        #breakpoint()
-        self.rule_uuid = rule_uuid
-        self.user = user
-        self.query_string = query_string
-        self.title = title
-        #if not description:
-        #    self.description = ""  # if no title is given but a yaml is given, should we try to extract it?
         self.description = description
+        self.query_string = query_string
+        self.rule_uuid = rule_uuid
         self.rule_yaml = rule_yaml
+        self.title = title
+        self.user = user
