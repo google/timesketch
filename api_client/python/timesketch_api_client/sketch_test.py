@@ -50,7 +50,8 @@ class SketchTest(unittest.TestCase):
 
     def test_get_event(self):
         """Test to get event data."""
-        event_data = self.sketch.get_event(event_id=test_event, index_id=test_index)
+        event_data = self.sketch.get_event(
+            event_id="test_event", index_id="test_index")
         self.assertIsInstance(event_data, dict)
         self.assertTrue('meta' in event_data)
         self.assertTrue('comments' in event_data['meta'])
