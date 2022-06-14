@@ -1342,6 +1342,26 @@ class Sketch(resource.BaseResource):
         response = self.api.session.post(resource_url, json=form_data)
         return error.get_response_json(response, logger)
 
+    def get_event(self, event_id, index_id):
+        """Gets information about an event, including raw event and meta data.
+
+        Args:
+            event_id: id of the event.
+            index_id: The OpenSearch index identifier.
+        
+        Returns:
+            a json data containing the event details.
+        """
+        if self.is_archived():
+            raise RuntimeError("Unable to retrieve an event in an archived sketch.")
+
+        resource_url = "{0:s}/sketches/{1:d}/event/?searchindex_id={2:s}&event_id={3:s}".format(
+            self.api.api_root, self.id, index_id, event_id
+        )
+
+        response = self.api.session.get(resource_url)
+        return error.get_response_json(response, logger)
+
     def label_events(self, events, label_name):
         """Labels one or more events with label_name.
 
