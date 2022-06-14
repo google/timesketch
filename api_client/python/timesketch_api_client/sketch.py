@@ -1359,7 +1359,7 @@ class Sketch(resource.BaseResource):
             self.api.api_root, self.id
         )
 
-        resource_url_params = "?searchindex_id={0:s}&event_id={1:s}").format(
+        resource_url_params = "?searchindex_id={0:s}&event_id={1:s}".format(
             index_id, event_id
         )
 
