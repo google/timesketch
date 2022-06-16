@@ -247,7 +247,7 @@ class TimesketchApi:
         if run_server:
             _ = flow.run_local_server()
         else:
-            if not sys.stdout.isatty():
+            if not sys.stdout.isatty() or not sys.stdin.isatty():
                 msg = ('You will be asked to paste a token into this session to'
                     'authenticate, but the session doesn\'t have a tty')
                 raise RuntimeError(msg)
