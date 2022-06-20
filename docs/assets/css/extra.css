@@ -1,12 +1,27 @@
 .md-header,
 .md-tabs {
-  background-color: #0071bc;
-  color: #fff;
+  background-color: #fff;
+  color: #333;
+  padding-top: 20px;
+}
+
+.md-header--shadow {
+  box-shadow: none;
+}
+
+.md-main__inner {
+  margin-top: 0;
+}
+
+.md-header__button.md-logo :-webkit-any(img, svg) {
+  width: 200px;
+  height: 40px;
+  margin-left: -20px;
 }
 
 .md-tabs {
-  background-color: #0071bc;
-  color: #fff;
+  background-color: #fff;
+  color: #333;
   padding: 5px;
 }
 

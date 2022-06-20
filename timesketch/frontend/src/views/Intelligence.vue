@@ -88,11 +88,11 @@ limitations under the License.
                     <span v-else>{{ props.row.externalURI }}</span>
                   </b-table-column>
 
-                  <b-table-column field="ioc" label="" v-slot="props" width="5em">
+                  <b-table-column field="ioc" label="" v-slot="props" width="10em">
                     <i
                       class="fas fa-copy"
                       style="cursor: pointer"
-                      title="Copy key"
+                      title="Copy IOC to clipboard."
                       v-clipboard:copy="props.row.ioc"
                       v-clipboard:success="notifyClipboardSuccess"
                     ></i>
@@ -103,6 +103,10 @@ limitations under the License.
                         title="Search sketch for all events containing this IOC."
                       ></i>
                     </router-link>
+                    <explore-preview
+                      style="margin-left: 10px"
+                      :searchQuery="generateOpenSearchQuery(props.row.ioc)"
+                    ></explore-preview>
                   </b-table-column>
 
                   <b-table-column field="ioc" label="Indicator data" v-slot="props" sortable>
@@ -251,8 +255,10 @@ import _ from 'lodash'
 import ApiClient from '../utils/RestApiClient'
 import { SnackbarProgrammatic as Snackbar } from 'buefy'
 import { IOCTypes } from '../utils/tagMetadata'
+import ExplorePreview from '../components/Common/ExplorePreview'
 
 export default {
+  components: { ExplorePreview },
   data() {
     return {
       sketchTags: [],
@@ -340,6 +346,8 @@ export default {
     },
     generateOpenSearchQuery(value, field) {
       let query = `"${value}"`
+      // Escape special OpenSearch characters: \, [space]
+      query = query.replace(/[\\\s]/g, '\\$&')
       if (field !== undefined) {
         query = `${field}:${query}`
       }

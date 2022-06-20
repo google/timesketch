@@ -76,9 +76,9 @@ The rules then will be under
 timesketch/data/sigma
 ```
 
-### Sigma Rules Blocklist file
+### Sigma Rules sigma_rule_status file
 
-The `data/sigma_blocklist.csv` is where Timesketch maintains a list of rules. 
+The `data/sigma_rule_status.csv` is where Timesketch maintains a list of rules. 
 Each rule can have one of the following status values: `good,bad,exploratory`.
 * `exploratoy` rules will be shown in the UI but ignored in the Analyzer. So this status can be used to test rules. By default each rule is considered `exploratory`. 
 * `good` rules will be used in the Sigma analyzer. 
@@ -86,9 +86,9 @@ Each rule can have one of the following status values: `good,bad,exploratory`.
 
 It is good practice to add new rules in this file if they are tested and verified to not be compatible.
 
-Each method that reads Sigma rules from the a folder is checking if part of the full path of a rule is mentioned in the `data/sigma_blocklist.csv` file.
+Each method that reads Sigma rules from the a folder is checking if part of the full path of a rule is mentioned in the `data/sigma_rule_status.csv` file.
 
-For example a file at `/etc/timesketch/data/sigma/rules-unsupported/foo/bar.yml` would not be parsed as a line in `data/sigma_blocklist.csv` mentions:
+For example a file at `/etc/timesketch/data/sigma/rules-unsupported/foo/bar.yml` would not be parsed as a line in `data/sigma_rule_status.csv` mentions:
 
 ```
 /rules-unsupported/,bad,Sigma internal folder name,2021-11-19,
@@ -124,7 +124,7 @@ There are multiple sigma related config variables in `timesketch.conf`.
 SIGMA_RULES_FOLDERS = ['/etc/timesketch/sigma/rules/']
 SIGMA_CONFIG = '/etc/timesketch/sigma_config.yaml'
 SIGMA_TAG_DELAY = 5
-SIGMA_BLOCKLIST_CSV = '/etc/timesketch/sigma_blocklist.csv'
+SIGMA_BLOCKLIST_CSV = '/etc/timesketch/sigma_rule_status.csv'
 ```
 
 The `SIGMA_RULES_FOLDERS` points to the folder(s) where Sigma rules are stored. The folder is the local folder of the Timesketch server (celery worker and webserver). For a distributed system, mounting network shares is possible.
@@ -175,7 +175,7 @@ This feature can be helpful if you want to test out field mapping.
 
 From the parse result you can copy the `es_query` value and paste it in a new window where you have the explore of a Sketch open.
 
-You need to remember to copy your rule when you are ready and create a new file on your Timesketch server to store the rule and make it available to others. The text from the compose area will be resetted with each reload of the page.
+You need to remember to copy your rule when you are ready and create a new file on your Timesketch server to store the rule and make it available to others. The text from the compose area will be reset with each reload of the page.
 
 ### Best practices
 
@@ -237,7 +237,7 @@ detection:
 That will create two queries:
 ` *value1* or *value2* or *value3* ... or *value10*` and ` *value11* or *value12* or *value13* ... or *value20*`.
 
-The Sigma analyzer is designed to batch and throttle execution of queries which is benefitial for such rule structure.
+The Sigma analyzer is designed to batch and throttle execution of queries which is beneficial for such rule structure.
 
 ### Reduce the haystack
 

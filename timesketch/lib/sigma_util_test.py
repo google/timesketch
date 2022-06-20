@@ -400,11 +400,13 @@ class TestSigmaUtilLib(BaseTest):
             sigma_util.get_sigma_config_file("/foo")
         self.assertIsNotNone(sigma_util.get_sigma_config_file())
 
-    def test_get_blocklist_file(self):
+    def test_get_rule_status_file(self):
         """Test getting sigma config file"""
-        self.assertRaises(ValueError, sigma_util.get_sigma_blocklist, "/foo")
+        self.assertRaises(
+            ValueError, sigma_util.get_sigma_rule_status_list, "/foo"
+        )
         self.assertIsNotNone(sigma_util.get_sigma_config_file())
-        blocklist = sigma_util.get_sigma_blocklist()
+        statuslist = sigma_util.get_sigma_rule_status_list()
         # self.assertIn(
         #    'exploratory',
         #    blocklist[
@@ -415,12 +417,13 @@ class TestSigmaUtilLib(BaseTest):
         #    ]['status'].to_string,
         # )
         self.assertEqual(
-            'bad', blocklist[blocklist.values == 'deprecated']['status'].all()
+            'bad',
+            statuslist[statuslist.values == 'deprecated']['status'].all(),
         )
         self.assertEqual(
             'good',
-            blocklist[
-                blocklist.values
+            statuslist[
+                statuslist.values
                 == 'windows/powershell/powershell_create_local_user.yml'
             ]['status'].all(),
         )
