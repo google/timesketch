@@ -10,7 +10,7 @@ including:
 
 ## Installing
 
-The CLI client is available as a packag on PyPi. To install, simply:
+The CLI client is available as a package on PyPi. To install, simply:
 
 ```
 pip3 install timesketch-cli-client
@@ -19,7 +19,7 @@ pip3 install timesketch-cli-client
 ## Basic usage
 
 The command line program is called `timesketch`. To see the help menu you can
-invoke without ay parameters alternativly issue `timesketch --help`.
+invoke without ay parameters alternatively issue `timesketch --help`.
 
 ```
 $ timesketch
@@ -58,7 +58,7 @@ Commands:
 #### Default sketch
 
 The program need to know what sketch you are working in. You can either specify it
-with the `--sketch` flag on all invocations, or you can configure it globaly:
+with the `--sketch` flag on all invocations, or you can configure it globally:
 
 ```
 timesketch config set sketch <ID of your sketch>

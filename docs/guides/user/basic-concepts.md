@@ -26,7 +26,7 @@ This feature is currently not implemented in the Web UI. But you can add events 
 
 ## Add a comment
 
-You can comment events in your sketch. The comments are safed in your sketch, that means if you add a timeline to multiple sketches, the comments are only shown in the one sketch you made the comments.
+You can comment events in your sketch. The comments are saved in your sketch, that means if you add a timeline to multiple sketches, the comments are only shown in the one sketch you made the comments.
 
 ## Star an event
 
@@ -38,7 +38,7 @@ Views are saved search queries. Those can either be created by the User, by API 
 
 To create a view from the Web Ui, click the _Save as view_ button on the top right of the Search fields in the Explore Tab of a sketch.
 
-## Insights / Aggegations
+## Insights / Aggregations
 
 The _Insights_ functionality in a sketch gives the opportunity to run aggregations on the events in a sketch.
 
