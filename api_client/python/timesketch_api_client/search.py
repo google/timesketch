@@ -511,7 +511,7 @@ class Search(resource.SketchResource):
             "filter": query_filter,
             "dsl": self._query_dsl,
             "count": count,
-            "fields": self._return_fields,
+            "fields": self.return_fields,
             "enable_scroll": scrolling,
             "file_name": file_name,
         }
@@ -736,7 +736,7 @@ class Search(resource.SketchResource):
             if "fields" in filter_dict:
                 fields = filter_dict.pop("fields")
                 return_fields = [x.get("field") for x in fields]
-                self.return_fields = ",".join(return_fields)
+                self._return_fields = ",".join(return_fields)
 
             indices = filter_dict.get("indices", [])
             if indices:
@@ -950,6 +950,11 @@ class Search(resource.SketchResource):
     @property
     def return_fields(self):
         """Property that returns the return_fields."""
+        if self._return_fields:
+            items = self._return_fields.split(",")
+            if "datetime" not in items:
+                items.append("datetime")
+            return ",".join(items)
         return self._return_fields
 
     @return_fields.setter
@@ -1095,7 +1100,7 @@ class Search(resource.SketchResource):
         timelines = {t.id: t.name for t in self._sketch.list_timelines()}
 
         return_field_list = []
-        return_fields = self._return_fields
+        return_fields = self.return_fields
         if return_fields:
             if return_fields.startswith("'"):
                 return_fields = return_fields[1:]

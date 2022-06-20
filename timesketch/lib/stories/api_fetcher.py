@@ -79,7 +79,7 @@ class ApiDataFetcher(interface.DataFetcher):
             parameter_index)
         aggregator = agg_class(
             sketch_id=self._sketch_id, indices=indices,
-            timeline_ids=timelines_ids)
+            timeline_ids=timeline_ids)
 
         _ = parameters.pop("supported_charts", None)
         chart_color = parameters.pop("chart_color", "N/A")
