@@ -60,6 +60,7 @@ SCOPES = [
     "openid",
     "https://www.googleapis.com/auth/userinfo.profile",
 ]
+_GOOGLE_OIDC_CLIENTS = []
 
 
 @auth_views.route("/login/", methods=["GET", "POST"])
@@ -193,17 +194,27 @@ def validate_api_token():
     id_token = request.args.get("id_token")
     if not id_token:
         return abort(HTTP_STATUS_CODE_UNAUTHORIZED, "No ID token supplied.")
-
-    client_ids = set()
-    client_ids.add(current_app.config.get("GOOGLE_OIDC_CLIENT_ID"))
-    client_ids.update(current_app.config.get(
-        "ALLOWED_GOOGLE_OIDC_API_CLIENT_IDS"))
-    client_ids = list(client_ids)
-    if not client_ids:
-        return abort(
-            HTTP_STATUS_CODE_BAD_REQUEST,
-            "No OIDC API client ID defined in the configuration file.",
-        )
+    if not _GOOGLE_OIDC_CLIENTS:
+        client_ids = set()
+        primary_client_id = current_app.config.get("GOOGLE_OIDC_CLIENT_ID")
+        if primary_client_id:
+            client_ids.add(primary_client_id)
+        else:
+            current_app.logger.warning(
+                "GOOGLE_OIDC_CLIENT_ID is not set in config file.")
+        additional_client_ids = current_app.config.get(
+            "ALLOWED_GOOGLE_OIDC_API_CLIENT_IDS",[])
+        if additional_client_ids:
+            client_ids.update(additional_client_ids)
+        else:
+            current_app.logger.warning(
+                "ALLOWED_GOOGLE_OIDC_API_CLIENT_IDS is not set in config file.")
+        _GOOGLE_OIDC_CLIENTS = list(client_ids)
+        if not _GOOGLE_OIDC_CLIENTS:
+            return abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                "No OIDC API client ID defined in the configuration file.",
+            )
 
     # Authenticating session, see more details here:
     # https://www.oauth.com/oauth2-servers/signing-in-with-google/\
@@ -264,7 +275,7 @@ def validate_api_token():
         )
 
     read_client_id = token_json.get("aud", "")
-    if read_client_id not in client_ids:
+    if read_client_id not in _GOOGLE_OIDC_CLIENTS:
         return abort(
             HTTP_STATUS_CODE_UNAUTHORIZED,
             "Client ID {0:s} does not match server configuration for "
