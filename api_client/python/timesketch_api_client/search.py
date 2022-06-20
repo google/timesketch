@@ -249,6 +249,11 @@ class DateRangeChip(Chip):
         """
         if end_time.endswith("Z"):
             end_time = end_time[:-1]
+
+        # Check for a whole day, YYYY-MM-DD.
+        if len(end_time) == 10:
+            end_time = f'{end_time}T23:59:59'
+
         try:
             dt = datetime.datetime.strptime(end_time, self._DATE_FORMAT_MICROSECONDS)
         except ValueError as exc:
@@ -274,6 +279,11 @@ class DateRangeChip(Chip):
         """
         if start_time.endswith("Z"):
             start_time = start_time[:-1]
+
+        # Check for a whole day, YYYY-MM-DD.
+        if len(start_time) == 10:
+            start_time = f'{start_time}T00:00:00'
+
         try:
             dt = datetime.datetime.strptime(start_time, self._DATE_FORMAT_MICROSECONDS)
         except ValueError as exc:
@@ -728,6 +738,10 @@ class Search(resource.SketchResource):
                 return_fields = [x.get("field") for x in fields]
                 self.return_fields = ",".join(return_fields)
 
+            indices = filter_dict.get("indices", [])
+            if indices:
+                self.indices = indices
+
             self.query_filter = filter_dict
         self._query_string = data.get("query_string", "")
         self._resource_id = search_id
@@ -745,7 +759,6 @@ class Search(resource.SketchResource):
     @indices.setter
     def indices(self, indices):
         """Make changes to the current set of indices."""
-
         if indices == "_all":
             self._indices = "_all"
             self.commit()
