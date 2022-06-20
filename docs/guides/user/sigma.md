@@ -175,7 +175,7 @@ This feature can be helpful if you want to test out field mapping.
 
 From the parse result you can copy the `es_query` value and paste it in a new window where you have the explore of a Sketch open.
 
-You need to remember to copy your rule when you are ready and create a new file on your Timesketch server to store the rule and make it available to others. The text from the compose area will be resetted with each reload of the page.
+You need to remember to copy your rule when you are ready and create a new file on your Timesketch server to store the rule and make it available to others. The text from the compose area will be reset with each reload of the page.
 
 ### Best practices
 
@@ -237,7 +237,7 @@ detection:
 That will create two queries:
 ` *value1* or *value2* or *value3* ... or *value10*` and ` *value11* or *value12* or *value13* ... or *value20*`.
 
-The Sigma analyzer is designed to batch and throttle execution of queries which is benefitial for such rule structure.
+The Sigma analyzer is designed to batch and throttle execution of queries which is beneficial for such rule structure.
 
 ### Reduce the haystack
 
