@@ -15,10 +15,10 @@
 
 set -e
 
-START_CNTR=
+START_CONTAINER=
 
 if [ "$1" == "--start-container" ]; then
-    START_CNTR=yes
+    START_CONTAINER=yes
 fi
 
 # Exit early if run as non-root user.
@@ -124,11 +124,11 @@ ln -s ./config.env ./timesketch/.env
 echo "OK"
 echo "* Installation done."
 
-if [ -z $START_CNTR ]; then
-  read -p "Would you like to start the containers? [Y/n] (default:no)" START_CNTR
+if [ -z $START_CONTAINER ]; then
+  read -p "Would you like to start the containers? [Y/n] (default:no)" START_CONTAINER
 fi
 
-if [ "$START_CNTR" != "${START_CNTR#[Yy]}" ] ;then # this grammar (the #[] operator) means that the variable $start_cnt where any Y or y in 1st position will be dropped if they exist.
+if [ "$START_CONTAINER" != "${START_CONTAINER#[Yy]}" ] ;then # this grammar (the #[] operator) means that the variable $start_cnt where any Y or y in 1st position will be dropped if they exist.
   cd timesketch
   docker-compose up -d
 else
@@ -156,7 +156,7 @@ if [ "$CREATE_USER" != "${CREATE_USER#[Yy]}" ] ;then
 
   if [ ! -z "$NEWUSERNAME" ] ;then
     until [ "`docker inspect -f {{.State.Health.Status}} timesketch-web`"=="healthy" ]; do
-      sleep 0.1;
+      sleep 1;
     done;
 
     docker-compose exec timesketch-web tsctl create-user "$NEWUSERNAME" && echo "user created"
