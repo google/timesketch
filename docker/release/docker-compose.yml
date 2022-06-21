@@ -76,7 +76,7 @@ services:
       retries: 5
     networks:
       - timesketch_internal
-    volumes:https://github.com/cybersante
+    volumes:
       - ${POSTGRES_LOCAL_PATH_DB}:/var/lib/postgresql/data
 
   redis:
