@@ -79,6 +79,23 @@ def mock_response(*args, **kwargs):
         "sketch_name": "test",
     }
 
+    event_data_1 = {
+        "meta": {
+            "comments": [
+                {
+                    "comment": "test comment",
+                    "created_at": "Wed, 18 May 2022 01:23:45 GMT",
+                    "id": 1,
+                    "updated_at": "Wed, 18 May 2022 01:23:45 GMT",
+                    "user": {
+                        "username": "testuser"
+                    }
+                }
+            ]
+        },
+        "objects": {}
+    }
+
     sketch_data = {
         "meta": {
             "views": [{"id": 1, "name": "test"}, {"id": 2, "name": "test"}],
@@ -301,6 +318,9 @@ def mock_response(*args, **kwargs):
         "http://127.0.0.1": MockResponse(text_data=auth_text_data),
         "http://127.0.0.1/api/v1/sketches/": MockResponse(json_data=sketch_list_data),
         "http://127.0.0.1/api/v1/sketches/1": MockResponse(json_data=sketch_data),
+        "http://127.0.0.1/api/v1/sketches/1/event/?searchindex_id=test_index&event_id=test_event": MockResponse(  # pylint: disable=line-too-long
+            json_data=event_data_1
+        ),
         "http://127.0.0.1/api/v1/sketches/1/views/1/": MockResponse(
             json_data=view_data_1
         ),
