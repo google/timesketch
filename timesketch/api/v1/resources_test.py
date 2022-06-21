@@ -226,6 +226,9 @@ class ExploreResourceTest(BaseTest):
                     "timestamp_desc": "Content Modification Time",
                     "datetime": "2014-09-13T07:27:03+00:00",
                     "__ts_timeline_id": 1,
+                    "comment": [
+                        "test"
+                    ],
                 },
                 "_score": "null",
                 "selected": False,
@@ -291,6 +294,9 @@ class EventResourceTest(BaseTest):
             "message": "",
             "datetime": "2014-09-16T19:23:40+00:00",
             "__ts_timeline_id": 1,
+            "comment": [
+                "test"
+            ]
         }
     }
 
@@ -303,7 +309,9 @@ class EventResourceTest(BaseTest):
         response = self.client.get(
             self.resource_url + "?searchindex_id=test&event_id=test"
         )
-        self.assertDictContainsSubset(self.expected_response, response.json)
+        response_json = response.json
+        del response_json["meta"]
+        self.assertDictContainsSubset(self.expected_response, response_json)
         self.assert200(response)
 
     @mock.patch(
@@ -572,8 +580,6 @@ class SigmaListResourceTest(BaseTest):
     def test_get_sigma_rule_list(self):
         self.login()
         response = self.client.get(self.resource_url)
-        data = json.loads(response.get_data(as_text=True))
-        print(data)
         self.assertDictContainsSubset(self.expected_response, response.json)
         self.assertIsNotNone(response)
 

@@ -18,7 +18,6 @@ limitations under the License.
     <v-toolbar flat>
       <v-tabs centered grow v-model="filterTab">
         <v-tab> Time filter </v-tab>
-        <v-tab> Field filter </v-tab>
       </v-tabs>
     </v-toolbar>
     <v-tabs-items v-model="filterTab">
