@@ -74,299 +74,287 @@ def mock_response(*args, **kwargs):
     auth_text_data = '<input id="csrf_token" name="csrf_token" value="test">'
 
     archive_data = {
-        'is_archived': False,
-        'sketch_id': 1,
-        'sketch_name': 'test',
+        "is_archived": False,
+        "sketch_id": 1,
+        "sketch_name": "test",
+    }
+
+    event_data_1 = {
+        "meta": {
+            "comments": [
+                {
+                    "comment": "test comment",
+                    "created_at": "Wed, 18 May 2022 01:23:45 GMT",
+                    "id": 1,
+                    "updated_at": "Wed, 18 May 2022 01:23:45 GMT",
+                    "user": {
+                        "username": "testuser"
+                    }
+                }
+            ]
+        },
+        "objects": {}
     }
 
     sketch_data = {
-        'meta': {
-            'views': [{
-                'id': 1,
-                'name': 'test'
-            }, {
-                'id': 2,
-                'name': 'test'
-            }],
-            'es_time': 41444,
+        "meta": {
+            "views": [{"id": 1, "name": "test"}, {"id": 2, "name": "test"}],
+            "es_time": 41444,
         },
-        'objects': [{
-            'id':
-            1,
-            'name': 'test',
-            'description': 'test',
-            'timelines': [{
-                'id': 1,
-                'name': 'test',
-                'searchindex': {
-                    'index_name': 'test'
-                }
-            }, {
-                'id': 2,
-                'name': 'test',
-                'searchindex': {
-                    'index_name': 'test'
-                }
-            }]
-        }]
+        "objects": [
+            {
+                "id": 1,
+                "name": "test",
+                "description": "test",
+                "timelines": [
+                    {"id": 1, "name": "test", "searchindex": {"index_name": "test"}},
+                    {"id": 2, "name": "test", "searchindex": {"index_name": "test"}},
+                ],
+            }
+        ],
     }
 
     view_data_1 = {
-        'objects': [{
-            'id': 1,
-            'name': 'test',
-            'description': 'meant for testing purposes only.',
-            'user': {'username': 'gisli'},
-            'query_string': 'test:"foobar"',
-            'query_dsl': '',
-            'searchtemplate': '',
-            'aggregation': '',
-            'created_at': '2020-11-30T15:17:29',
-            'updated_at': '2020-11-30T15:17:29',
-        }],
+        "objects": [
+            {
+                "id": 1,
+                "name": "test",
+                "description": "meant for testing purposes only.",
+                "user": {"username": "gisli"},
+                "query_string": 'test:"foobar"',
+                "query_dsl": "",
+                "searchtemplate": "",
+                "aggregation": "",
+                "created_at": "2020-11-30T15:17:29",
+                "updated_at": "2020-11-30T15:17:29",
+            }
+        ],
     }
 
     view_data_2 = {
-        'objects': [{
-            'id': 2,
-            'name': 'more test',
-            'description': 'really meant for testing purposes only.',
-            'user': {'username': 'eirikur'},
-            'query_string': 'test:"bar"',
-            'query_dsl': '',
-            'searchtemplate': '',
-            'aggregation': '',
-            'created_at': '2020-11-30T15:17:29',
-            'updated_at': '2020-11-30T15:17:29',
-        }],
+        "objects": [
+            {
+                "id": 2,
+                "name": "more test",
+                "description": "really meant for testing purposes only.",
+                "user": {"username": "eirikur"},
+                "query_string": 'test:"bar"',
+                "query_dsl": "",
+                "searchtemplate": "",
+                "aggregation": "",
+                "created_at": "2020-11-30T15:17:29",
+                "updated_at": "2020-11-30T15:17:29",
+            }
+        ],
     }
 
     sketch_list_data = {
-        'meta': {
-            'es_time': 324,
-            'total_pages': 1,
-            'current_page': 1
-        },
-        'objects': sketch_data['objects']}
+        "meta": {"es_time": 324, "total_pages": 1, "current_page": 1},
+        "objects": sketch_data["objects"],
+    }
 
     timeline_data = {
-        'meta': {
-            'es_time': 12,
+        "meta": {
+            "es_time": 12,
         },
-        'objects': [{
-            'id': 1,
-            'name': 'test',
-            'searchindex': {
-                'id': 1234,
-                'index_name': 'test'
-            }
-        }]
+        "objects": [
+            {"id": 1, "name": "test", "searchindex": {"id": 1234, "index_name": "test"}}
+        ],
     }
 
     more_timeline_data = {
-        'meta': {
-            'es_time': 12,
+        "meta": {
+            "es_time": 12,
         },
-        'objects': [{
-            'id': 2,
-            'name': 'more_test',
-            'searchindex': {
-                'id': 42,
-                'index_name': 'even_more_test'
+        "objects": [
+            {
+                "id": 2,
+                "name": "more_test",
+                "searchindex": {"id": 42, "index_name": "even_more_test"},
             }
-        }]
+        ],
     }
 
-    empty_data = {
-        'meta': {'es_time': 0},
-        'objects': []
-    }
+    empty_data = {"meta": {"es_time": 0}, "objects": []}
 
-    story_list_data = {
-        'meta': {'es_time': 23},
-        'objects': [[{'id': 1}]]
-    }
+    story_list_data = {"meta": {"es_time": 23}, "objects": [[{"id": 1}]]}
 
     story_data = {
-        'meta': {
-            'es_time': 1,
+        "meta": {
+            "es_time": 1,
         },
-        'objects': [{
-            'title': 'My First Story',
-            'content': json.dumps([
-                {
-                    'componentName': '',
-                    'componentProps': {},
-                    'content': '# My Heading\nWith Some Text.',
-                    'edit': False,
-                    'showPanel': False,
-                    'isActive': False
-                },
-                {
-                    'componentName': 'TsViewEventList',
-                    'componentProps': {
-                        'view': {
-                            'id': 1,
-                            'name': 'Smoking Gun'}},
-                    'content': '',
-                    'edit': False,
-                    'showPanel': False,
-                    'isActive': False
-                },
-                {
-                    'componentName': '',
-                    'componentProps': {},
-                    'content': '... and that was the true crime.',
-                    'edit': False,
-                    'showPanel': False,
-                    'isActive': False
-                }
-            ])
-        }]
+        "objects": [
+            {
+                "title": "My First Story",
+                "content": json.dumps(
+                    [
+                        {
+                            "componentName": "",
+                            "componentProps": {},
+                            "content": "# My Heading\nWith Some Text.",
+                            "edit": False,
+                            "showPanel": False,
+                            "isActive": False,
+                        },
+                        {
+                            "componentName": "TsViewEventList",
+                            "componentProps": {
+                                "view": {"id": 1, "name": "Smoking Gun"}
+                            },
+                            "content": "",
+                            "edit": False,
+                            "showPanel": False,
+                            "isActive": False,
+                        },
+                        {
+                            "componentName": "",
+                            "componentProps": {},
+                            "content": "... and that was the true crime.",
+                            "edit": False,
+                            "showPanel": False,
+                            "isActive": False,
+                        },
+                    ]
+                ),
+            }
+        ],
     }
 
     sigma_list = {
-        'meta': {
-            'current_user': 'dev',
-            'rules_count': 2
-        },
-        'objects': [
+        "meta": {"current_user": "dev", "rules_count": 2},
+        "objects": [
             {
-                'author': 'Alexander Jaeger',
-                'date': '2020/06/26',
-                'description': 'Detects suspicious installation of ZMap',
-                'detection': {
-                    'condition': 'keywords',
-                    'keywords': ['*apt-get install zmap*']
-                    },
-                'falsepositives': ['Unknown'],
-                'id': '5266a592-b793-11ea-b3de-0242ac130004',
-                'level': 'high',
-                'logsource': {
-                    'product': 'linux', 'service': 'shell'
-                    },
-                'es_query': '("*apt\\-get\\ install\\ zmap*")',
-                'modified': '2020/06/26',
-                'references': ['httpx://foobar.com'],
-                'title': 'Suspicious Installation of ZMap',
-                'file_name': 'lnx_susp_zmap',
-                'file_relpath' : '/linux/syslog/foobar/'
-            }, {
-                'author': 'Alexander Jaeger',
-                'date': '2020/11/10',
-                'description': 'Detects suspicious installation of foobar',
-                'detection': {
-                    'condition': 'keywords',
-                    'keywords': ['*apt-get install foobar*']
-                    },
-                'falsepositives': ['Unknown'],
-                'id': '776bdd11-f3aa-436e-9d03-9d6159e9814e',
-                'level': 'high',
-                'logsource': {
-                    'product': 'linux', 'service': 'shell'
-                    },
-                'es_query': '("*apt\\-get\\ install\\ foo*")',
-                'modified': '2020/06/26',
-                'references': ['httpx://foobar.com'],
-                'title': 'Suspicious Installation of ZMap',
-                'file_name': 'lnx_susp_foobar',
-                'file_relpath' : '/windows/foobar/'
-                }
-        ]
+                "author": "Alexander Jaeger",
+                "date": "2020/06/26",
+                "description": "Detects suspicious installation of ZMap",
+                "detection": {
+                    "condition": "keywords",
+                    "keywords": ["*apt-get install zmap*"],
+                },
+                "falsepositives": ["Unknown"],
+                "id": "5266a592-b793-11ea-b3de-0242ac130004",
+                "level": "high",
+                "logsource": {"product": "linux", "service": "shell"},
+                "es_query": '("*apt\\-get\\ install\\ zmap*")',
+                "modified": "2020/06/26",
+                "references": ["httpx://foobar.com"],
+                "title": "Suspicious Installation of ZMap",
+                "file_name": "lnx_susp_zmap",
+                "file_relpath": "/linux/syslog/foobar/",
+            },
+            {
+                "author": "Alexander Jaeger",
+                "date": "2020/11/10",
+                "description": "Detects suspicious installation of foobar",
+                "detection": {
+                    "condition": "keywords",
+                    "keywords": ["*apt-get install foobar*"],
+                },
+                "falsepositives": ["Unknown"],
+                "id": "776bdd11-f3aa-436e-9d03-9d6159e9814e",
+                "level": "high",
+                "logsource": {"product": "linux", "service": "shell"},
+                "es_query": '("*apt\\-get\\ install\\ foo*")',
+                "modified": "2020/06/26",
+                "references": ["httpx://foobar.com"],
+                "title": "Suspicious Installation of ZMap",
+                "file_name": "lnx_susp_foobar",
+                "file_relpath": "/windows/foobar/",
+            },
+        ],
     }
 
     sigma_rule = {
-        'meta': {
-            'parsed': True
-        },
-        'objects':[
+        "meta": {"parsed": True},
+        "objects": [
             {
-            'title': 'Suspicious Installation of ZMap',
-            'id': '5266a592-b793-11ea-b3de-0242ac130004',
-            'description': 'Detects suspicious installation of ZMap',
-            'references': ['httpx://foobar.com'],
-            'author': 'Alexander Jaeger',
-            'date': '2020/06/26',
-            'modified': '2021/01/01',
-            'logsource': {
-                'product': 'linux', 'service': 'shell'
+                "title": "Suspicious Installation of ZMap",
+                "id": "5266a592-b793-11ea-b3de-0242ac130004",
+                "description": "Detects suspicious installation of ZMap",
+                "references": ["httpx://foobar.com"],
+                "author": "Alexander Jaeger",
+                "date": "2020/06/26",
+                "modified": "2021/01/01",
+                "logsource": {"product": "linux", "service": "shell"},
+                "detection": {
+                    "keywords": ["*apt-get install zmap*"],
+                    "condition": "keywords",
                 },
-            'detection': {
-                'keywords': ['*apt-get install zmap*'],
-                'condition': 'keywords'
-                },
-            'falsepositives': ['Unknown'],
-            'level': 'high',
-            'es_query': '("*apt\\-get\\ install\\ zmap*")',
-            'file_name': 'lnx_susp_zmap',
-            'file_relpath' : '/linux/syslog/foobar/'
+                "falsepositives": ["Unknown"],
+                "level": "high",
+                "es_query": '("*apt\\-get\\ install\\ zmap*")',
+                "file_name": "lnx_susp_zmap",
+                "file_relpath": "/linux/syslog/foobar/",
             }
-        ]
+        ],
     }
     sigma_rule_text_mock = {
-        'meta': {
-            'parsed': True
-        },
-        'objects':[
+        "meta": {"parsed": True},
+        "objects": [
             {
-                'title': 'Installation of foobar',
-                'id': 'bb1e0d1d-cd13-4b65-bf7e-69b4e740266b',
-                'description': 'Detects suspicious installation of foobar',
-                'references': ['https://samle.com/foobar'],
-                'author': 'Alexander Jaeger',
-                'date': '2020/12/10',
-                'modified': '2021/01/01',
-                'logsource': {
-                    'product': 'linux',
-                    'service': 'shell'
+                "title": "Installation of foobar",
+                "id": "bb1e0d1d-cd13-4b65-bf7e-69b4e740266b",
+                "description": "Detects suspicious installation of foobar",
+                "references": ["https://samle.com/foobar"],
+                "author": "Alexander Jaeger",
+                "date": "2020/12/10",
+                "modified": "2021/01/01",
+                "logsource": {"product": "linux", "service": "shell"},
+                "detection": {
+                    "keywords": ["*apt-get install foobar*"],
+                    "condition": "keywords",
                 },
-                'detection': {
-                    'keywords': ['*apt-get install foobar*'],
-                    'condition': 'keywords'
-                },
-                'falsepositives': ['Unknown'],
-                'level': 'high',
-                'es_query':
-                    '(data_type:("shell\\:zsh\\:history" OR "bash\\:history\\:command" OR "apt\\:history\\:line" OR "selinux\\:line") AND "*apt\\-get\\ install\\ foobar*")',# pylint: disable=line-too-long
-                'file_name': 'N/A',
-                'file_relpath': 'N/A'
+                "falsepositives": ["Unknown"],
+                "level": "high",
+                "es_query": '(data_type:("shell\\:zsh\\:history" OR "bash\\:history\\:command" OR "apt\\:history\\:line" OR "selinux\\:line") AND "*apt\\-get\\ install\\ foobar*")',  # pylint: disable=line-too-long
+                "file_name": "N/A",
+                "file_relpath": "N/A",
             }
-        ]
+        ],
     }
 
     # Register API endpoints to the correct mock response data.
     url_router = {
-        'http://127.0.0.1':
-        MockResponse(text_data=auth_text_data),
-        'http://127.0.0.1/api/v1/sketches/':
-        MockResponse(json_data=sketch_list_data),
-        'http://127.0.0.1/api/v1/sketches/1':
-        MockResponse(json_data=sketch_data),
-        'http://127.0.0.1/api/v1/sketches/1/views/1/':
-        MockResponse(json_data=view_data_1),
-        'http://127.0.0.1/api/v1/sketches/1/views/2/':
-        MockResponse(json_data=view_data_2),
-        'http://127.0.0.1/api/v1/sketches/1/timelines/1/':
-        MockResponse(json_data=timeline_data),
-        'http://127.0.0.1/api/v1/sketches/1/timelines/2/':
-        MockResponse(json_data=more_timeline_data),
-        'http://127.0.0.1/api/v1/sketches/1/explore/':
-        MockResponse(json_data=timeline_data),
-        'http://127.0.0.1/api/v1/sketches/1/stories/':
-        MockResponse(json_data=story_list_data),
-        'http://127.0.0.1/api/v1/sketches/1/stories/1/':
-        MockResponse(json_data=story_data),
-        'http://127.0.0.1/api/v1/sketches/1/archive/':
-        MockResponse(json_data=archive_data),
-        'http://127.0.0.1/api/v1/sigma/rule/5266a592-b793-11ea-b3de-0242ac130004':# pylint: disable=line-too-long
-        MockResponse(json_data=sigma_rule),
-        'http://127.0.0.1/api/v1/sigma/':
-        MockResponse(json_data=sigma_list),
-        'http://127.0.0.1/api/v1/sigma/text/':
-        MockResponse(json_data=sigma_rule_text_mock),
+        "http://127.0.0.1": MockResponse(text_data=auth_text_data),
+        "http://127.0.0.1/api/v1/sketches/": MockResponse(json_data=sketch_list_data),
+        "http://127.0.0.1/api/v1/sketches/1": MockResponse(json_data=sketch_data),
+        "http://127.0.0.1/api/v1/sketches/1/event/?searchindex_id=test_index&event_id=test_event": MockResponse(  # pylint: disable=line-too-long
+            json_data=event_data_1
+        ),
+        "http://127.0.0.1/api/v1/sketches/1/views/1/": MockResponse(
+            json_data=view_data_1
+        ),
+        "http://127.0.0.1/api/v1/sketches/1/views/2/": MockResponse(
+            json_data=view_data_2
+        ),
+        "http://127.0.0.1/api/v1/sketches/1/timelines/1/": MockResponse(
+            json_data=timeline_data
+        ),
+        "http://127.0.0.1/api/v1/sketches/1/timelines/2/": MockResponse(
+            json_data=more_timeline_data
+        ),
+        "http://127.0.0.1/api/v1/sketches/1/explore/": MockResponse(
+            json_data=timeline_data
+        ),
+        "http://127.0.0.1/api/v1/sketches/1/stories/": MockResponse(
+            json_data=story_list_data
+        ),
+        "http://127.0.0.1/api/v1/sketches/1/stories/1/": MockResponse(
+            json_data=story_data
+        ),
+        "http://127.0.0.1/api/v1/sketches/1/archive/": MockResponse(
+            json_data=archive_data
+        ),
+        "http://127.0.0.1/api/v1/sigma/rule/5266a592-b793-11ea-b3de-0242ac130004": MockResponse(  # pylint: disable=line-too-long
+            json_data=sigma_rule
+        ),
+        "http://127.0.0.1/api/v1/sigma/": MockResponse(json_data=sigma_list),
+        "http://127.0.0.1/api/v1/sigma/text/": MockResponse(
+            json_data=sigma_rule_text_mock
+        ),
     }
 
-    if kwargs.get('empty', False):
+    if kwargs.get("empty", False):
         return MockResponse(text_data=empty_data)
 
     return url_router.get(args[0], MockResponse(None, 404))

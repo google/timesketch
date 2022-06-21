@@ -34,13 +34,15 @@ DEFAULT_FIELDS = [
     'timestamp_desc',
     '_index',
     '__ts_timeline_id',
-    'message']
+    'message',
+    'comment']
 DEFAULT_SOURCE_FIELDS = DEFAULT_FIELDS + [
-    'timesketch_label',
-    'tag',
-    'similarity_score',
-    'human_readable',
-    '__ts_emojis']
+    "timesketch_label",
+    "tag",
+    "similarity_score",
+    "human_readable",
+    "__ts_emojis",
+]
 
 # Prometheus metrics
-METRICS_NAMESPACE = 'timesketch'
+METRICS_NAMESPACE = "timesketch"

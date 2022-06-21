@@ -50,7 +50,7 @@ from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import SearchHistory
 
 
-logger = logging.getLogger('timesketch.event_api')
+logger = logging.getLogger("timesketch.event_api")
 
 
 def _tag_event(row, tag_dict, tags_to_add, datastore, flush_interval):
@@ -68,11 +68,11 @@ def _tag_event(row, tag_dict, tags_to_add, datastore, flush_interval):
         flush_interval (int): the number of events to import before a bulk
             update is done with the datastore.
     """
-    tag_dict['events_processed_by_api'] += 1
+    tag_dict["events_processed_by_api"] += 1
     existing_tags = set()
 
-    if 'tag' in row:
-        tag = row['tag']
+    if "tag" in row:
+        tag = row["tag"]
         if isinstance(tag, (list, tuple)):
             existing_tags = set(tag)
 
@@ -84,12 +84,15 @@ def _tag_event(row, tag_dict, tags_to_add, datastore, flush_interval):
         return
 
     datastore.import_event(
-        index_name=row['_index'], event_type=row['_type'],
-        event_id=row['_id'], event={'tag': new_tags},
-        flush_interval=flush_interval)
+        index_name=row["_index"],
+        event_type=row["_type"],
+        event_id=row["_id"],
+        event={"tag": new_tags},
+        flush_interval=flush_interval,
+    )
 
-    tag_dict['tags_applied'] += len(new_tags)
-    tag_dict['number_of_events_with_added_tags'] += 1
+    tag_dict["tags_applied"] += len(new_tags)
+    tag_dict["number_of_events_with_added_tags"] += 1
 
 
 class EventCreateResource(resources.ResourceMixin, Resource):
@@ -108,22 +111,23 @@ class EventCreateResource(resources.ResourceMixin, Resource):
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
-            abort(
-                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
-        if not sketch.has_permission(current_user, 'write'):
-            abort(HTTP_STATUS_CODE_FORBIDDEN,
-                  'User does not have write access controls on sketch.')
+        if not sketch.has_permission(current_user, "write"):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "User does not have write access controls on sketch.",
+            )
 
         form = request.json
         if not form:
             form = request.data
 
-        timeline_name = 'sketch specific timeline'
-        index_name_seed = 'timesketch_{0:d}'.format(sketch_id)
-        event_type = 'user_created_event'
+        timeline_name = "sketch specific timeline"
+        index_name_seed = "timesketch_{0:d}".format(sketch_id)
+        event_type = "user_created_event"
 
-        date_string = form.get('date_string')
+        date_string = form.get("date_string")
         if not date_string:
             date = datetime.datetime.utcnow().isoformat()
         else:
@@ -131,114 +135,105 @@ class EventCreateResource(resources.ResourceMixin, Resource):
             try:
                 date = dateutil.parser.parse(date_string)
             except (dateutil.parser.ParserError, OverflowError) as e:
-                logger.error('Unable to convert date string', exc_info=True)
+                logger.error("Unable to convert date string", exc_info=True)
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
-                    'Unable to add event, not able to convert the date '
-                    'string. Was it properly formatted? Error: '
-                    '{0!s}'.format(e))
+                    "Unable to add event, not able to convert the date "
+                    "string. Was it properly formatted? Error: "
+                    "{0!s}".format(e),
+                )
 
-        timestamp = int(
-            time.mktime(date.utctimetuple())) * 1000000
+        timestamp = int(time.mktime(date.utctimetuple())) * 1000000
         timestamp += date.microsecond
 
         event = {
-            'datetime': date_string,
-            'timestamp': timestamp,
-            'timestamp_desc': form.get('timestamp_desc', 'Event Happened'),
-            'message': form.get('message', 'No message string'),
+            "datetime": date_string,
+            "timestamp": timestamp,
+            "timestamp_desc": form.get("timestamp_desc", "Event Happened"),
+            "message": form.get("message", "No message string"),
         }
 
-        attributes = form.get('attributes', {})
+        attributes = form.get("attributes", {})
         if not isinstance(attributes, dict):
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'Unable to add an event where the attributes are not a '
-                'dict object.')
+                "Unable to add an event where the attributes are not a " "dict object.",
+            )
 
         event.update(attributes)
 
-        tag = form.get('tag', [])
+        tag = form.get("tag", [])
         if not isinstance(tag, list):
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'Unable to add an event where the tags are not a '
-                'list of strings.')
+                "Unable to add an event where the tags are not a " "list of strings.",
+            )
 
         if tag and any(not isinstance(x, str) for x in tag):
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'Unable to add an event where the tags are not a '
-                'list of strings.')
+                "Unable to add an event where the tags are not a " "list of strings.",
+            )
 
-        event['tag'] = tag
+        event["tag"] = tag
 
         # We do not need a human readable filename or
         # datastore index name, so we use UUIDs here.
         index_name = hashlib.md5(index_name_seed.encode()).hexdigest()
         if six.PY2:
-            index_name = codecs.decode(index_name, 'utf-8')
+            index_name = codecs.decode(index_name, "utf-8")
 
         # Try to create index
         timeline = None
         try:
             # Create the index in OpenSearch (unless it already exists)
-            self.datastore.create_index(
-                index_name=index_name,
-                doc_type=event_type)
+            self.datastore.create_index(index_name=index_name, doc_type=event_type)
 
             # Create the search index in the Timesketch database
             searchindex = SearchIndex.get_or_create(
                 name=timeline_name,
-                description='internal timeline for user-created events',
+                description="internal timeline for user-created events",
                 user=current_user,
-                index_name=index_name)
-            searchindex.grant_permission(
-                permission='read', user=current_user)
-            searchindex.grant_permission(
-                permission='write', user=current_user)
-            searchindex.grant_permission(
-                permission='delete', user=current_user)
-            searchindex.set_status('ready')
+                index_name=index_name,
+            )
+            searchindex.grant_permission(permission="read", user=current_user)
+            searchindex.grant_permission(permission="write", user=current_user)
+            searchindex.grant_permission(permission="delete", user=current_user)
+            searchindex.set_status("ready")
             db_session.add(searchindex)
             db_session.commit()
 
-            if sketch and sketch.has_permission(current_user, 'write'):
+            if sketch and sketch.has_permission(current_user, "write"):
                 self.datastore.import_event(
-                    index_name,
-                    event_type,
-                    event,
-                    flush_interval=1)
+                    index_name, event_type, event, flush_interval=1
+                )
 
                 timeline = Timeline.get_or_create(
                     name=searchindex.name,
                     description=searchindex.description,
                     sketch=sketch,
                     user=current_user,
-                    searchindex=searchindex)
+                    searchindex=searchindex,
+                )
 
                 if timeline not in sketch.timelines:
                     sketch.timelines.append(timeline)
 
-                timeline.set_status('ready')
+                timeline.set_status("ready")
                 db_session.add(timeline)
                 db_session.commit()
 
         # TODO: Can this be narrowed down, both in terms of the scope it
         # applies to, as well as not to catch a generic exception.
         except Exception as e:  # pylint: disable=broad-except
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                'Failed to add event ({0!s})'.format(e))
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, "Failed to add event ({0!s})".format(e))
 
         # Return Timeline if it was created.
         # pylint: disable=no-else-return
         if timeline:
-            return self.to_json(
-                timeline, status_code=HTTP_STATUS_CODE_CREATED)
+            return self.to_json(timeline, status_code=HTTP_STATUS_CODE_CREATED)
 
-        return self.to_json(
-            searchindex, status_code=HTTP_STATUS_CODE_CREATED)
+        return self.to_json(searchindex, status_code=HTTP_STATUS_CODE_CREATED)
 
 
 class EventResource(resources.ResourceMixin, Resource):
@@ -252,9 +247,8 @@ class EventResource(resources.ResourceMixin, Resource):
     def __init__(self):
         super().__init__()
         self.parser = reqparse.RequestParser()
-        self.parser.add_argument(
-            'searchindex_id', type=six.text_type, required=True)
-        self.parser.add_argument('event_id', type=six.text_type, required=True)
+        self.parser.add_argument("searchindex_id", type=six.text_type, required=True)
+        self.parser.add_argument("event_id", type=six.text_type, required=True)
 
     @login_required
     def get(self, sketch_id):
@@ -271,64 +265,68 @@ class EventResource(resources.ResourceMixin, Resource):
         args = self.parser.parse_args()
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
+        if not sketch.has_permission(current_user, "read"):
             abort(
-                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
-        if not sketch.has_permission(current_user, 'read'):
-            abort(HTTP_STATUS_CODE_FORBIDDEN,
-                  'User does not have read access controls on sketch.')
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "User does not have read access controls on sketch.",
+            )
 
-        searchindex_id = args.get('searchindex_id')
-        searchindex = SearchIndex.query.filter_by(
-            index_name=searchindex_id).first()
+        searchindex_id = args.get("searchindex_id")
+        searchindex = SearchIndex.query.filter_by(index_name=searchindex_id).first()
         if not searchindex:
             abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                'Search index not found for this event.')
-        if searchindex.get_status.status == 'deleted':
+                HTTP_STATUS_CODE_BAD_REQUEST, "Search index not found for this event."
+            )
+        if searchindex.get_status.status == "deleted":
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'Unable to query event on a closed search index.')
+                "Unable to query event on a closed search index.",
+            )
 
-        event_id = args.get('event_id')
+        event_id = args.get("event_id")
         indices = [
-            t.searchindex.index_name for t in sketch.timelines
-            if t.get_status.status.lower() == 'ready']
+            t.searchindex.index_name
+            for t in sketch.timelines
+            if t.get_status.status.lower() == "ready"
+        ]
 
         # Check if the requested searchindex is part of the sketch
         if searchindex_id not in indices:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'Search index ID ({0!s}) does not belong to the list '
-                'of indices'.format(searchindex_id))
+                "Search index ID ({0!s}) does not belong to the list "
+                "of indices".format(searchindex_id),
+            )
 
         result = self.datastore.get_event(searchindex_id, event_id)
 
         event = Event.query.filter_by(
-            sketch=sketch, searchindex=searchindex,
-            document_id=event_id).first()
+            sketch=sketch, searchindex=searchindex, document_id=event_id
+        ).first()
 
         # Comments for this event
         comments = []
         if event:
             for comment in event.comments:
                 if not comment.user:
-                    username = 'System'
+                    username = "System"
                 else:
                     username = comment.user.username
                 comment_dict = {
-                    'id': comment.id,
-                    'user': {
-                        'username': username,
+                    "id": comment.id,
+                    "user": {
+                        "username": username,
                     },
-                    'created_at': comment.created_at,
-                    'updated_at': comment.updated_at,
-                    'comment': comment.comment
+                    "created_at": comment.created_at,
+                    "updated_at": comment.updated_at,
+                    "comment": comment.comment,
                 }
                 comments.append(comment_dict)
 
         schema = {
             'meta': {
-                'comments': comments
+                'comments': sorted(comments, key=lambda d: d['created_at'])
             },
             'objects': result['_source']
         }
@@ -359,59 +357,59 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
-            msg = 'No sketch found with this ID.'
+            msg = "No sketch found with this ID."
             abort(HTTP_STATUS_CODE_NOT_FOUND, msg)
 
-        if not sketch.has_permission(current_user, 'write'):
+        if not sketch.has_permission(current_user, "write"):
             abort(
-                HTTP_STATUS_CODE_FORBIDDEN, (
-                    'User does not have sufficient access rights to '
-                    'modify a sketch.'))
+                HTTP_STATUS_CODE_FORBIDDEN,
+                ("User does not have sufficient access rights to " "modify a sketch."),
+            )
 
         form = request.json
         if not form:
             form = request.data
 
         tag_dict = {
-            'events_processed_by_api': 0,
-            'number_of_events_with_added_tags': 0,
-            'tags_applied': 0,
+            "events_processed_by_api": 0,
+            "number_of_events_with_added_tags": 0,
+            "tags_applied": 0,
         }
         datastore = self.datastore
 
         try:
-            tags_to_add = json.loads(form.get('tag_string', ''))
+            tags_to_add = json.loads(form.get("tag_string", ""))
         except json.JSONDecodeError as e:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'Unable to read the tags, with error: {0!s}'.format(e))
+                "Unable to read the tags, with error: {0!s}".format(e),
+            )
 
         if not isinstance(tags_to_add, list):
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST, 'Tags need to be a list')
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, "Tags need to be a list")
 
         if not all(isinstance(x, str) for x in tags_to_add):
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                'Tags need to be a list of strings')
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, "Tags need to be a list of strings")
 
-        events = form.get('events', [])
+        events = form.get("events", [])
         event_df = pd.DataFrame(events)
 
-        for field in ['_id', '_type', '_index']:
+        for field in ["_id", "_type", "_index"]:
             if field not in event_df:
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
-                    'Events need to have a [{0:s}] field associated '
-                    'to it.'.format(field))
+                    "Events need to have a [{0:s}] field associated "
+                    "to it.".format(field),
+                )
             if any(event_df[field].isna()):
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
-                    'All events need to have a [{0:s}] field '
-                    'set, it cannot have a non-value.'.format(field))
+                    "All events need to have a [{0:s}] field "
+                    "set, it cannot have a non-value.".format(field),
+                )
 
         # Remove any potential extra fields from the events.
-        event_df = event_df[['_id', '_type', '_index']]
+        event_df = event_df[["_id", "_type", "_index"]]
 
         tag_df = pd.DataFrame()
 
@@ -419,25 +417,26 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
         if event_size > self.MAX_EVENTS_TO_TAG:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'Cannot tag more than {0:d} events in a single '
-                'request'.format(self.MAX_EVENTS_TO_TAG))
+                "Cannot tag more than {0:d} events in a single "
+                "request".format(self.MAX_EVENTS_TO_TAG),
+            )
 
-        tag_dict['number_of_events_passed_to_api'] = event_size
+        tag_dict["number_of_events_passed_to_api"] = event_size
 
         errors = []
 
-        verbose = form.get('verbose', False)
+        verbose = form.get("verbose", False)
         if verbose:
-            tag_dict['number_of_indices'] = len(event_df['_index'].unique())
+            tag_dict["number_of_indices"] = len(event_df["_index"].unique())
             time_tag_gathering_start = time.time()
 
-        for _index in event_df['_index'].unique():
-            index_slice = event_df[event_df['_index'] == _index]
+        for _index in event_df["_index"].unique():
+            index_slice = event_df[event_df["_index"] == _index]
             index_size = index_slice.shape[0]
 
             if verbose:
-                tag_dict.setdefault('index_count', {})
-                tag_dict['index_count'][_index] = index_size
+                tag_dict.setdefault("index_count", {})
+                tag_dict["index_count"][_index] = index_size
 
             if index_size <= self.EVENT_CHUNK_SIZE:
                 chunks = 1
@@ -445,75 +444,67 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
                 chunks = math.ceil(index_size / self.EVENT_CHUNK_SIZE)
 
             tags = []
-            for index_chunk in np.array_split(
-                    index_slice['_id'].unique(), chunks):
-                should_list = [{'match': {'_id': x}} for x in index_chunk]
-                query_body = {
-                    'query': {
-                        'bool': {
-                            'should': should_list
-                        }
-                    }
-                }
+            for index_chunk in np.array_split(index_slice["_id"].unique(), chunks):
+                should_list = [{"match": {"_id": x}} for x in index_chunk]
+                query_body = {"query": {"bool": {"should": should_list}}}
 
                 # Adding a small buffer to make sure all results are captured.
                 size = len(should_list) + 100
-                query_body['size'] = size
-                query_body['terminate_after'] = size
+                query_body["size"] = size
+                query_body["terminate_after"] = size
 
                 try:
                     # pylint: disable=unexpected-keyword-arg
-                    if datastore.version.startswith('6'):
+                    if datastore.version.startswith("6"):
                         search = datastore.client.search(
                             body=json.dumps(query_body),
                             index=[_index],
-                            _source_include=['tag'],
-                            search_type='query_then_fetch'
+                            _source_include=["tag"],
+                            search_type="query_then_fetch",
                         )
                     else:
                         search = datastore.client.search(
                             body=json.dumps(query_body),
                             index=[_index],
-                            _source_includes=['tag'],
-                            search_type='query_then_fetch'
+                            _source_includes=["tag"],
+                            search_type="query_then_fetch",
                         )
 
                 except RequestError as e:
-                    logger.error('Unable to query for events', exc_info=True)
-                    errors.append(
-                        'Unable to query for events, {0!s}'.format(e))
+                    logger.error("Unable to query for events", exc_info=True)
+                    errors.append("Unable to query for events, {0!s}".format(e))
                     abort(
                         HTTP_STATUS_CODE_BAD_REQUEST,
-                        'Unable to query events, {0!s}'.format(e))
+                        "Unable to query events, {0!s}".format(e),
+                    )
 
-                for result in search['hits']['hits']:
-                    tag = result.get('_source', {}).get('tag', [])
+                for result in search["hits"]["hits"]:
+                    tag = result.get("_source", {}).get("tag", [])
                     if not tag:
                         continue
-                    tags.append({'_id': result.get('_id'), 'tag': tag})
+                    tags.append({"_id": result.get("_id"), "tag": tag})
 
             if not tags:
                 continue
             tag_df = pd.concat([tag_df, pd.DataFrame(tags)])
 
         if tag_df.shape[0]:
-            event_df = event_df.merge(tag_df, on='_id', how='left')
+            event_df = event_df.merge(tag_df, on="_id", how="left")
 
         if verbose:
-            tag_dict[
-                'time_to_gather_tags'] = time.time() - time_tag_gathering_start
-            tag_dict['number_of_events'] = len(events)
+            tag_dict["time_to_gather_tags"] = time.time() - time_tag_gathering_start
+            tag_dict["number_of_events"] = len(events)
 
             if tag_df.shape[0]:
-                tag_dict['number_of_events_in_tag_frame'] = tag_df.shape[0]
+                tag_dict["number_of_events_in_tag_frame"] = tag_df.shape[0]
 
-            if 'tag' in event_df:
-                current_tag_events = event_df[~event_df['tag'].isna()].shape[0]
-                tag_dict['number_of_events_with_tags'] = current_tag_events
+            if "tag" in event_df:
+                current_tag_events = event_df[~event_df["tag"].isna()].shape[0]
+                tag_dict["number_of_events_with_tags"] = current_tag_events
             else:
-                tag_dict['number_of_events_with_tags'] = 0
+                tag_dict["number_of_events_with_tags"] = 0
 
-            tag_dict['tags_to_add'] = tags_to_add
+            tag_dict["tags_to_add"] = tags_to_add
             time_tag_start = time.time()
 
         if event_size > datastore.DEFAULT_FLUSH_INTERVAL:
@@ -521,19 +512,22 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
         else:
             flush_interval = datastore.DEFAULT_FLUSH_INTERVAL
         _ = event_df.apply(
-            _tag_event, axis=1, tag_dict=tag_dict, tags_to_add=tags_to_add,
-            datastore=datastore, flush_interval=flush_interval)
+            _tag_event,
+            axis=1,
+            tag_dict=tag_dict,
+            tags_to_add=tags_to_add,
+            datastore=datastore,
+            flush_interval=flush_interval,
+        )
         datastore.flush_queued_events()
 
         if verbose:
-            tag_dict['time_to_tag'] = time.time() - time_tag_start
+            tag_dict["time_to_tag"] = time.time() - time_tag_start
 
         if errors:
-            tag_dict['errors'] = errors
+            tag_dict["errors"] = errors
 
-        schema = {
-            'meta': tag_dict,
-            'objects': []}
+        schema = {"meta": tag_dict, "objects": []}
         response = jsonify(schema)
         response.status_code = HTTP_STATUS_CODE_OK
         return response
@@ -554,15 +548,12 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
     def __init__(self):
         super().__init__()
         self.parser = reqparse.RequestParser()
-        self.parser.add_argument('searchindex_id', type=str, required=False)
-        self.parser.add_argument(
-            'event_id', type=str, required=False)
-        self.parser.add_argument('event_type', type=str, required=False)
-        self.parser.add_argument(
-            'annotation_type', type=str, required=False)
-        self.parser.add_argument('annotation_id', type=int, required=False)
-        self.parser.add_argument('currentSearchNode_id', type=int,
-                                 required=False)
+        self.parser.add_argument("searchindex_id", type=str, required=False)
+        self.parser.add_argument("event_id", type=str, required=False)
+        self.parser.add_argument("event_type", type=str, required=False)
+        self.parser.add_argument("annotation_type", type=str, required=False)
+        self.parser.add_argument("annotation_id", type=int, required=False)
+        self.parser.add_argument("currentSearchNode_id", type=int, required=False)
 
     def _get_sketch(self, sketch_id):
         """Helper function: Returns Sketch object givin a sketch id.
@@ -575,11 +566,12 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
+        if not sketch.has_permission(current_user, "write"):
             abort(
-                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
-        if not sketch.has_permission(current_user, 'write'):
-            abort(HTTP_STATUS_CODE_FORBIDDEN,
-                  'User does not have write access controls on sketch.')
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "User does not have write access controls on sketch.",
+            )
         return sketch
 
     def _get_current_search_node(self, current_search_node_id, sketch):
@@ -595,20 +587,11 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
         """
         current_search_node = SearchHistory.query.get(current_search_node_id)
         if not current_search_node:
-            abort(
-                HTTP_STATUS_CODE_NOT_FOUND,
-                'No search history found with this ID'
-            )
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No search history found with this ID")
         if not current_search_node.sketch == sketch:
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                'Wrong sketch for this search history'
-            )
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, "Wrong sketch for this search history")
         if not current_search_node.user == current_user:
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                'Wrong user for this search history'
-            )
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, "Wrong user for this search history")
         return current_search_node
 
     @login_required
@@ -623,51 +606,51 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
         """
         form = forms.EventAnnotationForm.build(request)
         if not form.validate_on_submit():
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, "Unable to validate form data.")
 
         annotations = []
         sketch = self._get_sketch(sketch_id)
 
         current_search_node = None
-        _search_node_id = request.json.get('current_search_node_id', None)
+        _search_node_id = request.json.get("current_search_node_id", None)
         if _search_node_id:
-            current_search_node = self._get_current_search_node(_search_node_id,
-                                                                sketch)
+            current_search_node = self._get_current_search_node(_search_node_id, sketch)
 
         indices = [
-            t.searchindex.index_name for t in sketch.timelines
-            if t.get_status.status.lower() == 'ready']
+            t.searchindex.index_name
+            for t in sketch.timelines
+            if t.get_status.status.lower() == "ready"
+        ]
         annotation_type = form.annotation_type.data
         events = form.events.raw_data
 
         for _event in events:
-            searchindex_id = _event['_index']
-            searchindex = SearchIndex.query.filter_by(
-                index_name=searchindex_id).first()
-            event_id = _event['_id']
-            event_type = _event['_type']
+            searchindex_id = _event["_index"]
+            searchindex = SearchIndex.query.filter_by(index_name=searchindex_id).first()
+            event_id = _event["_id"]
+            event_type = _event["_type"]
 
             if searchindex_id not in indices:
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
-                    'Search index ID ({0!s}) does not belong to the list '
-                    'of indices'.format(searchindex_id))
+                    "Search index ID ({0!s}) does not belong to the list "
+                    "of indices".format(searchindex_id),
+                )
 
             # Get or create an event in the SQL database to have something
             # to attach the annotation to.
             event = Event.get_or_create(
-                sketch=sketch,
-                searchindex=searchindex,
-                document_id=event_id)
+                sketch=sketch, searchindex=searchindex, document_id=event_id
+            )
 
             if current_search_node:
                 current_search_node.events.append(event)
 
             # Add the annotation to the event object.
-            if 'comment' in annotation_type:
+            if "comment" in annotation_type:
                 annotation = Event.Comment(
-                    comment=form.annotation.data, user=current_user)
+                    comment=form.annotation.data, user=current_user
+                )
                 event.comments.append(annotation)
                 self.datastore.set_label(
                     searchindex_id,
@@ -675,22 +658,23 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                     event_type,
                     sketch.id,
                     current_user.id,
-                    '__ts_comment',
-                    toggle=False
+                    "__ts_comment",
+                    toggle=False,
                 )
                 if current_search_node:
-                    current_search_node.add_label('__ts_comment')
+                    current_search_node.add_label("__ts_comment")
 
-            elif 'label' in annotation_type:
+            elif "label" in annotation_type:
                 annotation = Event.Label.get_or_create(
-                    label=form.annotation.data, user=current_user)
+                    label=form.annotation.data, user=current_user
+                )
                 if annotation not in event.labels:
                     event.labels.append(annotation)
 
                 toggle = False
-                if '__ts_star' in form.annotation.data:
+                if "__ts_star" in form.annotation.data:
                     toggle = True
-                if '__ts_hidden' in form.annotation.data:
+                if "__ts_hidden" in form.annotation.data:
                     toggle = True
                 if form.remove.data:
                     toggle = True
@@ -702,27 +686,27 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                     sketch.id,
                     current_user.id,
                     form.annotation.data,
-                    toggle=toggle
+                    toggle=toggle,
                 )
 
                 if current_search_node:
-                    search_node_label = '__ts_label'
-                    if '__ts_star' in form.annotation.data:
-                        search_node_label = '__ts_star'
+                    search_node_label = "__ts_label"
+                    if "__ts_star" in form.annotation.data:
+                        search_node_label = "__ts_star"
                     current_search_node.add_label(search_node_label)
             else:
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
-                    'Annotation type needs to be either label or comment, '
-                    'not {0!s}'.format(annotation_type))
+                    "Annotation type needs to be either label or comment, "
+                    "not {0!s}".format(annotation_type),
+                )
 
             annotations.append(annotation)
             # Save the event to the database
             db_session.add(event)
             db_session.commit()
 
-        return self.to_json(
-            annotations, status_code=HTTP_STATUS_CODE_CREATED)
+        return self.to_json(annotations, status_code=HTTP_STATUS_CODE_CREATED)
 
     @login_required
     def put(self, sketch_id):
@@ -739,15 +723,16 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
 
         form = forms.EventAnnotationForm.build(request)
         if not form.validate_on_submit():
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, "Unable to validate form data.")
 
         updated_annotations = []
         sketch = self._get_sketch(sketch_id)
 
         indices = [
-            t.searchindex.index_name for t in sketch.timelines
-            if t.get_status.status.lower() == 'ready']
+            t.searchindex.index_name
+            for t in sketch.timelines
+            if t.get_status.status.lower() == "ready"
+        ]
 
         # Retriving events list submitted in the request
         events = form.events.raw_data
@@ -757,64 +742,68 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
         # Currently the UI does not support mass comments update, so typically
         # only one event will be in the event list
         for _event in events:
-            searchindex_id = _event['_index']
-            searchindex = SearchIndex.query.filter_by(
-                index_name=searchindex_id).first()
-            event_id = _event['_id']
+            searchindex_id = _event["_index"]
+            searchindex = SearchIndex.query.filter_by(index_name=searchindex_id).first()
+            event_id = _event["_id"]
 
             if searchindex_id not in indices:
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
-                    'Search index ID ({0!s}) does not belong to the list '
-                    'of indices'.format(searchindex_id))
+                    "Search index ID ({0!s}) does not belong to the list "
+                    "of indices".format(searchindex_id),
+                )
 
             # Retrive the event from the SQL database based on the event_id
             # supplied in the request
             event = Event.query.filter_by(
-                sketch=sketch, searchindex=searchindex,
-                document_id=event_id).first()
+                sketch=sketch, searchindex=searchindex, document_id=event_id
+            ).first()
 
             if not event:
                 abort(
-                    HTTP_STATUS_CODE_NOT_FOUND, 'No event found with the id: '
-                    '{0!s}'.format(event_id))
+                    HTTP_STATUS_CODE_NOT_FOUND,
+                    "No event found with the id: " "{0!s}".format(event_id),
+                )
 
             # Retrive annotation type supplied in the request
             annotation_type = form.annotation_type.data
             # Retrive the modified annotation supplied in the request
             annotation = form.annotation.data
 
-            if 'comment' in annotation_type:
+            if "comment" in annotation_type:
                 # Retrive the comment attached to the event bases on the comment
                 # id supplied in the request
-                comment = event.get_comment(annotation['id'])
+                comment = event.get_comment(annotation["id"])
                 if not comment:
-                    abort(HTTP_STATUS_CODE_NOT_FOUND, 'No comment found with '
-                          'this id: {0!d}.'.format(annotation['id']))
+                    abort(
+                        HTTP_STATUS_CODE_NOT_FOUND,
+                        "No comment found with "
+                        "this id: {0!d}.".format(annotation["id"]),
+                    )
 
                 # Make sure the current user is the owner of the comment
                 if comment.user != current_user:
-                    abort(HTTP_STATUS_CODE_FORBIDDEN,
-                          'User is not owner of the comment.')
+                    abort(
+                        HTTP_STATUS_CODE_FORBIDDEN, "User is not owner of the comment."
+                    )
 
                 # Update the comment with the new value
-                annotation = event.update_comment(annotation['id'],
-                                                  annotation['comment'])
+                annotation = event.update_comment(
+                    annotation["id"], annotation["comment"]
+                )
 
                 if not annotation:
-                    abort(
-                        HTTP_STATUS_CODE_BAD_REQUEST,
-                        'Update operation unsuccessful')
+                    abort(HTTP_STATUS_CODE_BAD_REQUEST, "Update operation unsuccessful")
 
                 updated_annotations.append(annotation)
             else:
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
-                    'Annotation type needs to be a comment, '
-                    'not {0!s}'.format(annotation_type))
+                    "Annotation type needs to be a comment, "
+                    "not {0!s}".format(annotation_type),
+                )
 
-        return self.to_json(updated_annotations,
-                            status_code=HTTP_STATUS_CODE_OK)
+        return self.to_json(updated_annotations, status_code=HTTP_STATUS_CODE_OK)
 
     @login_required
     def delete(self, sketch_id):
@@ -831,46 +820,46 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
 
         # Retrive request arguments
         args = self.parser.parse_args()
-        annotation_type = args.get('annotation_type')
-        annotation_id = args.get('annotation_id')
-        event_id = args.get('event_id')
-        searchindex_id = args.get('searchindex_id')
-        event_type = args.get('event_type')
+        annotation_type = args.get("annotation_type")
+        annotation_id = args.get("annotation_id")
+        event_id = args.get("event_id")
+        searchindex_id = args.get("searchindex_id")
+        event_type = args.get("event_type")
 
         sketch = self._get_sketch(sketch_id)
 
         current_search_node = None
-        _search_node_id = args.get('currentSearchNode_id')
+        _search_node_id = args.get("currentSearchNode_id")
         if _search_node_id:
-            current_search_node = self._get_current_search_node(_search_node_id,
-                                                                sketch)
-        searchindex = SearchIndex.query.filter_by(
-            index_name=searchindex_id).first()
+            current_search_node = self._get_current_search_node(_search_node_id, sketch)
+        searchindex = SearchIndex.query.filter_by(index_name=searchindex_id).first()
 
         # Retrive the event from the SQL database based on the event_id
         # supplied in the request
         event = Event.query.filter_by(
-            sketch=sketch, searchindex=searchindex,
-            document_id=event_id).first()
+            sketch=sketch, searchindex=searchindex, document_id=event_id
+        ).first()
 
         if not event:
             abort(
-                HTTP_STATUS_CODE_NOT_FOUND, 'No event found with the id: '
-                '{0!s}'.format(event_id))
+                HTTP_STATUS_CODE_NOT_FOUND,
+                "No event found with the id: " "{0!s}".format(event_id),
+            )
 
-        if 'comment' in annotation_type:
+        if "comment" in annotation_type:
 
             # Retrive the comment attached to the event bases on the comment
             # id supplied in the request
             comment = event.get_comment(annotation_id)
             if not comment:
-                abort(HTTP_STATUS_CODE_NOT_FOUND, 'No comment found with '
-                      'this id: {0!d}.'.format(annotation_id))
+                abort(
+                    HTTP_STATUS_CODE_NOT_FOUND,
+                    "No comment found with " "this id: {0!d}.".format(annotation_id),
+                )
 
             # Make sure the current user is the owner of the comment
             if comment.user != current_user:
-                abort(HTTP_STATUS_CODE_FORBIDDEN,
-                      'User is not owner of the comment.')
+                abort(HTTP_STATUS_CODE_FORBIDDEN, "User is not owner of the comment.")
 
             if event.remove_comment(annotation_id):
                 # Remove label __ts_comment if the event has no more comments
@@ -881,23 +870,26 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                         event_type,
                         sketch.id,
                         current_user.id,
-                        '__ts_comment',
-                        toggle=True
+                        "__ts_comment",
+                        toggle=True,
                     )
                     if current_search_node:
-                        current_search_node.remove_label('__ts_comment')
+                        current_search_node.remove_label("__ts_comment")
 
                 return HTTP_STATUS_CODE_OK
 
         else:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'Annotation type needs to be a comment, '
-                'not {0!s}'.format(annotation_type))
+                "Annotation type needs to be a comment, "
+                "not {0!s}".format(annotation_type),
+            )
 
-        return (HTTP_STATUS_CODE_BAD_REQUEST, 'Could not delete the annotation'
-                ' type {0!s} with the id {1!d}'
-                .format(annotation_type, annotation_id))
+        return (
+            HTTP_STATUS_CODE_BAD_REQUEST,
+            "Could not delete the annotation"
+            " type {0!s} with the id {1!d}".format(annotation_type, annotation_id),
+        )
 
 
 class CountEventsResource(resources.ResourceMixin, Resource):
@@ -915,14 +907,16 @@ class CountEventsResource(resources.ResourceMixin, Resource):
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
+        if not sketch.has_permission(current_user, "read"):
             abort(
-                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
-        if not sketch.has_permission(current_user, 'read'):
-            abort(HTTP_STATUS_CODE_FORBIDDEN,
-                  'User does not have read access controls on sketch.')
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "User does not have read access controls on sketch.",
+            )
         indices = [
-            t.searchindex.index_name for t in sketch.active_timelines
-            if t.get_status.status != 'archived'
+            t.searchindex.index_name
+            for t in sketch.active_timelines
+            if t.get_status.status != "archived"
         ]
         count, bytes_on_disk = self.datastore.count(indices)
         meta = dict(count=count, bytes=bytes_on_disk)
@@ -946,109 +940,104 @@ class MarkEventsWithTimelineIdentifier(resources.ResourceMixin, Resource):
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
-            abort(
-                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
-        if not sketch.has_permission(current_user, 'write'):
-            abort(HTTP_STATUS_CODE_FORBIDDEN,
-                  'User does not have write access controls on sketch.')
+        if not sketch.has_permission(current_user, "write"):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "User does not have write access controls on sketch.",
+            )
 
         form = request.json
         if not form:
             form = request.data
 
-        searchindex_id = form.get('searchindex_id')
-        searchindex_name = form.get('searchindex_name')
+        searchindex_id = form.get("searchindex_id")
+        searchindex_name = form.get("searchindex_name")
 
         if not (searchindex_id or searchindex_name):
-            abort(
-                HTTP_STATUS_CODE_NOT_FOUND,
-                'No search index information supplied.')
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No search index information supplied.")
 
         searchindex = None
         if searchindex_name:
             searchindex = SearchIndex.query.filter_by(
-                index_name=searchindex_name).first()
+                index_name=searchindex_name
+            ).first()
         elif searchindex_id:
             searchindex = SearchIndex.query.get(searchindex_id)
 
         if not searchindex:
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, "Unable to find the Search index.")
+
+        if searchindex.get_status.status == "deleted":
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'Unable to find the Search index.')
+                "Unable to query event on a closed search index.",
+            )
 
-        if searchindex.get_status.status == 'deleted':
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                'Unable to query event on a closed search index.')
-
-        timeline_id = form.get('timeline_id')
+        timeline_id = form.get("timeline_id")
         if not timeline_id:
-            abort(
-                HTTP_STATUS_CODE_NOT_FOUND, 'No timeline identifier supplied.')
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No timeline identifier supplied.")
 
         timeline = Timeline.query.get(timeline_id)
         if not timeline:
-            abort(
-                HTTP_STATUS_CODE_NOT_FOUND, 'No Timeline found with this ID.')
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No Timeline found with this ID.")
 
         if timeline.sketch is None:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                f'The timeline {timeline_id} does not have an associated '
-                'sketch, does it belong to a sketch?')
+                f"The timeline {timeline_id} does not have an associated "
+                "sketch, does it belong to a sketch?",
+            )
 
         if timeline.sketch.id != sketch.id:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                'The sketch ID ({0:d}) does not match with the timeline '
-                'sketch ID ({1:d})'.format(sketch.id, timeline.sketch.id))
+                "The sketch ID ({0:d}) does not match with the timeline "
+                "sketch ID ({1:d})".format(sketch.id, timeline.sketch.id),
+            )
 
         query_dsl = {
-            'script': {
-                'source': (
-                    f'ctx._source.__ts_timeline_id={timeline_id};'
-                    f'ctx._source.timesketch_label=[];'),
-                'lang': 'painless'
+            "script": {
+                "source": (
+                    f"ctx._source.__ts_timeline_id={timeline_id};"
+                    f"ctx._source.timesketch_label=[];"
+                ),
+                "lang": "painless",
             },
-            'query': {
-                'bool': {
-                    'must_not': {
-                        'exists': {
-                            'field': '__ts_timeline_id',
+            "query": {
+                "bool": {
+                    "must_not": {
+                        "exists": {
+                            "field": "__ts_timeline_id",
                         }
                     }
                 }
-            }
+            },
         }
         # pylint: disable=unexpected-keyword-arg
         self.datastore.client.update_by_query(
-            body=query_dsl, index=searchindex.index_name, conflicts='proceed',
-            wait_for_completion=False)
+            body=query_dsl,
+            index=searchindex.index_name,
+            conflicts="proceed",
+            wait_for_completion=False,
+        )
 
         # Update mappings - to make sure that we can label events.
         mapping_update = {
-            'type': 'nested',
-            'properties': {
-                'name': {
-                    'type': 'text',
-                    'fields': {
-                        'keyword': {
-                            'type': 'keyword',
-                            'ignore_above': 256
-                        }
-                    }
+            "type": "nested",
+            "properties": {
+                "name": {
+                    "type": "text",
+                    "fields": {"keyword": {"type": "keyword", "ignore_above": 256}},
                 },
-                'sketch_id': {
-                    'type': 'long'
-                },
-                'user_id': {
-                    'type': 'long'
-                }
-            }
+                "sketch_id": {"type": "long"},
+                "user_id": {"type": "long"},
+            },
         }
         self.datastore.client.indices.put_mapping(
-            body={'properties': {'timesketch_label': mapping_update}},
-            index=searchindex.index_name)
+            body={"properties": {"timesketch_label": mapping_update}},
+            index=searchindex.index_name,
+        )
 
         return HTTP_STATUS_CODE_OK

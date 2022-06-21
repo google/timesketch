@@ -1,0 +1,2 @@
+# Contrib requirements
+google-cloud-bigquery==2.32.0

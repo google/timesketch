@@ -18,6 +18,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import datetime
+import os
 
 from sigma.parser import exceptions as sigma_exceptions
 
@@ -129,6 +130,140 @@ detection:
     condition: keywords
 """
 
+MOCK_SIGMA_RULE_STARTSWITH_ENDSWITH = r"""
+title: MIXED LSASS Mock rule to test various combinations
+id: 5d2c62fe-3cbb-47c3-88e1-88ef73503a9f
+status: experimental
+author: Alexander Jaeger
+date: 2022/04/26
+references:
+    - https://github.com/SigmaHQ/sigma/blob/e4c8e62ba6a32f8966ab4216a15dd393af4ef3a3/rules/windows/process_access/proc_access_win_rare_proc_access_lsass.yml
+logsource:
+    category: process_access
+    product: windows
+detection:
+    selection:
+        TargetImage|endswith: '\foobar.exe'
+        GrantedAccess|endswith: '10'
+    # Absolute paths to programs that cause false positives
+    filter1:
+        SourceImage:
+            - 'C:\WINDOWS\system32\foo.exe'
+            - 'C:\Program Files\Malwarebytes\Anti-Malware\lorem.exe'
+            - 'C:\PROGRAMDATA\MALWAREBYTES\MBAMSERVICE\ipsum\gfdsa.exe'
+            - 'C:\WINDOWS\system32\taskhostv.exe'
+            - 'C:\Users\\*\AppData\Local\Programs\Microsoft VS Code\Microsoft.exe'
+            - 'C:\Program Files\Windows Defender\MsMpFoo.exe'
+            - 'C:\Windows\SysWOW64\gciexec.exe'
+            - 'C:\Windows\System32\gciexec.exe'
+            - 'C:\Windows\System32\lsoss.exe'
+            - 'C:\WINDOWS\System32\loremmon.exe'
+    # Windows Defender
+    filter2:
+        SourceImage|startswith: 'C:\ProgramData\Microsoft\Windows Avangers\'
+        SourceImage|endswith: '\MsMpFoo.exe'
+    # Microsoft Eating Services
+    filter3:
+        SourceImage|startswith: 'C:\Program Files\WindowsApps\'
+        SourceImage|endswith: '\EatingServices.exe'
+    # Process Drinker
+    filter4:
+        SourceImage|endswith:
+            - '\PROCDRINK64.EXE'
+            - '\PROCDRINK.EXE'
+    # BMware Tools
+    filter5:
+        SourceImage|startswith: 'C:\ProgramData\BMware\BMware Tools\'
+        SourceImage|endswith: '\bmtoolsd.exe'
+    # Provirus and MBR agents
+    filter6:
+        SourceImage|startswith:
+            - 'C:\Program Files\'
+            - 'C:\Program Files (x86)\'
+        SourceImage|contains:
+            - 'Provirus'
+    filter7:
+        SourceImage: 'C:\WINDOWS\system32\wbem\vgaprvse.exe'
+    filter8:
+        SourceImage: 'C:\Windows\sysWOW64\wbem\vgaprvse.exe'
+    filter_mcbfee:
+        SourceImage: 'C:\Program Files\Common Files\McBfee\ABBSHost\ABBSHOST.exe'
+    filter_prevtron:
+        SourceImage|startswith: 'C:\Windows\Temp\bsgbrd2-agent\'
+        SourceImage|endswith: 
+            - '\hammer64.exe'
+            - '\hammer.exe'
+    # Generic Filter for 0x1410 filter (caused by so many programs like PickBox updates etc.)
+    filter_generic:
+        SourceImage|startswith:
+            - 'C:\Program Files\'
+            - 'C:\Program Files (x86)\'
+            - 'C:\WINDOWS\system32\'
+    filter_localappdata:
+        SourceImage|contains|all:
+            - 'C:\Users\'
+            - '\AppData\Local\'
+        SourceImage|endswith:
+            - '\Maxisoft AB Cade\Cade.exe'
+            - '\software_influencer_tool.exe'
+            - '\PickUpdate.exe'
+            - '\NBAInstallerService.exe'
+    condition: selection and not 1 of filter*
+fields:
+    - User
+    - SourceImage
+    - GrantedAccess
+falsepositives:
+    - Legitimate software accessing LSASS process for legitimate reason
+level: medium
+"""
+
+SIGMA_MOCK_RULE_ENDSWITH = r"""
+title: foobar through Windows Remote Management
+id: aa35a627-33fb-4d04-abcde-asdasdasdasd
+description: Detects usage of foobar through WinRM protocol by monitoring access to lsass process by foobarhost.exe.
+references:
+    - https://github.com/SigmaHQ/sigma/blob/master/rules/windows/process_access/proc_access_win_mimikatz_trough_winrm.yml
+status: stable
+author: Alexander Jaeger
+date: 2022/04/28
+modified: 2022/04/28
+logsource:
+    category: process_access
+    product: windows
+detection:
+    selection:
+        TargetImage|endswith: '\\lsass.exe'
+        SourceImage: 'C:\\Windows\system32\foobarhost.exe'
+    filter:
+        GrantedAccess: '0x123456'
+    condition: selection and not filter
+"""
+
+SIGMA_MOCK_RULE_TEST4 = r"""
+title: Login with WMI
+id: 5af54681-df95-4c26-854f-2565e13cfab0
+status: stable
+description: Detection of logins performed with WMI
+author: Thomas Patzke
+date: 2019/12/04
+tags:
+    - attack.execution
+    - attack.t1047
+logsource:
+    product: windows
+    service: security
+detection:
+    selection:
+        EventID: 4624
+        ProcessName|endswith: '\WmiPrvSE.exe'
+    condition: selection
+falsepositives:
+    - Monitoring tools
+    - Legitimate system administration
+level: low
+"""
+
 
 class TestSigmaUtilLib(BaseTest):
     """Tests for the sigma support library."""
@@ -155,16 +290,42 @@ class TestSigmaUtilLib(BaseTest):
             sigma_util._sanitize_query(
                 "*mimikatz* OR *mimikatz.exe* OR *mimilib.dll*"
             ),
-            '*mimikatz* OR *mimikatz.exe* OR *mimilib.dll*',
+            "*mimikatz* OR *mimikatz.exe* OR *mimilib.dll*",
         )
 
         test_2 = sigma_util._sanitize_query("(*a:b* OR *c::d*)")
         self.assertEqual(test_2, r'("a:b" OR "c\:\:d")')
+
+        test_3 = sigma_util._sanitize_query(
+            '(xml_string.keyword:"\\foobar.exe" AND GrantedAccess.keyword:"10")'
+        )
+
+        self.assertEqual(
+            test_3, r'(xml_string:"\foobar.exe" AND GrantedAccess:"10")'
+        )
+
+        test_4 = sigma_util._sanitize_query(
+            '(xml_string:C:\\Program Files\\WindowsApps\\\" AND xml_string: "GamingServices.exe)'  # pylint: disable=line-too-long
+        )
+        self.assertIsNotNone(test_4)
         # pylint: enable=protected-access
 
     def test_get_rule_by_text(self):
         """Test getting sigma rule by text."""
 
+        rule = sigma_util.get_sigma_rule_by_text(SIGMA_MOCK_RULE_TEST4)
+
+        self.assertIsNotNone(SIGMA_MOCK_RULE_TEST4)
+        self.assertIsNotNone(rule)
+        self.assertEqual(
+            '(data_type:"windows:evtx:record" AND source_name:("Microsoft-Windows-Security-Auditing" OR "Microsoft-Windows-Eventlog") AND event_identifier:"4624" AND xml_string:"\\\\WmiPrvSE.exe")',  # pylint: disable=line-too-long
+            rule.get("es_query"),
+        )
+
+        rule = sigma_util.get_sigma_rule_by_text(SIGMA_MOCK_RULE_ENDSWITH)
+
+        self.assertIsNotNone(SIGMA_MOCK_RULE_ENDSWITH)
+        self.assertIsNotNone(rule)
         rule = sigma_util.get_sigma_rule_by_text(MOCK_SIGMA_RULE)
 
         self.assertIsNotNone(MOCK_SIGMA_RULE)
@@ -174,7 +335,7 @@ class TestSigmaUtilLib(BaseTest):
             '(data_type:("shell:zsh:history" OR "bash:history:command" OR "apt:history:line" OR "selinux:line") AND "apt-get install zmap")',  # pylint: disable=line-too-long
             rule.get("es_query"),
         )
-        self.assertIn("b793", rule.get('id'))
+        self.assertIn("b793", rule.get("id"))
 
         with self.assertRaises(sigma_exceptions.SigmaParseError):
             sigma_util.get_sigma_rule_by_text(MOCK_SIGMA_RULE_ERROR1)
@@ -212,10 +373,24 @@ class TestSigmaUtilLib(BaseTest):
         self.assertIsNotNone(MOCK_SIGMA_RULE_DOTS)
         self.assertIsNotNone(rule)
         self.assertEqual(
-            '67b9a11a-03ae-490a-9156-9be9900aaaaa', rule.get('id')
+            "67b9a11a-03ae-490a-9156-9be9900aaaaa", rule.get("id")
         )
         self.assertEqual(
             r'("aaa:bbb" OR "ccc\:\:ddd")',
+            rule.get("es_query"),
+        )
+
+        rule = sigma_util.get_sigma_rule_by_text(
+            MOCK_SIGMA_RULE_STARTSWITH_ENDSWITH
+        )
+
+        self.assertIsNotNone(MOCK_SIGMA_RULE_STARTSWITH_ENDSWITH)
+        self.assertIsNotNone(rule)
+        self.assertEqual(
+            "5d2c62fe-3cbb-47c3-88e1-88ef73503a9f", rule.get("id")
+        )
+        self.assertIn(
+            'event_identifier:"10" AND (xml_string:"\\\\foobar.exe" AND xml_string:"10"',  # pylint: disable=line-too-long
             rule.get("es_query"),
         )
 
@@ -225,10 +400,34 @@ class TestSigmaUtilLib(BaseTest):
             sigma_util.get_sigma_config_file("/foo")
         self.assertIsNotNone(sigma_util.get_sigma_config_file())
 
-    def test_get_blocklist_file(self):
+    def test_get_rule_status_file(self):
         """Test getting sigma config file"""
-        self.assertRaises(ValueError, sigma_util.get_sigma_blocklist, "/foo")
+        self.assertRaises(
+            ValueError, sigma_util.get_sigma_rule_status_list, "/foo"
+        )
         self.assertIsNotNone(sigma_util.get_sigma_config_file())
+        statuslist = sigma_util.get_sigma_rule_status_list()
+        # self.assertIn(
+        #    'exploratory',
+        #    blocklist[
+        #        (
+        #            blocklist['rule_id']
+        #            == 'fdf135a2-9241-4f96-a114-bb404948f736'
+        #        )
+        #    ]['status'].to_string,
+        # )
+        self.assertEqual(
+            'bad',
+            statuslist[statuslist.values == 'deprecated']['status'].all(),
+        )
+        self.assertEqual(
+            'good',
+            statuslist[
+                statuslist.values
+                == 'windows/powershell/powershell_create_local_user.yml'
+            ]['status'].all(),
+        )
+        self.assertIsNotNone(False)
 
     def test_get_sigma_rule(self):
         """Test getting sigma rule from file"""
@@ -236,7 +435,28 @@ class TestSigmaUtilLib(BaseTest):
         filepath = "./data/sigma/rules/lnx_susp_zmap.yml"
 
         rule = sigma_util.get_sigma_rule(filepath)
-
         self.assertIsNotNone(rule)
         self.assertIn("zmap", rule.get("es_query"))
         self.assertIn("b793", rule.get("id"))
+
+        # temp write a file with content
+
+        with open(
+            "./data/sigma/rules/temporary.yml", "w+", encoding='utf-8'
+        ) as f:
+            f.write(SIGMA_MOCK_RULE_TEST4)
+        self.assertNotEqual(0, os.stat(f.name).st_size)
+        self.assertIsNotNone(f)
+
+        rule_by_file = sigma_util.get_sigma_rule(f.name)
+
+        # Test that rule from file equals rule from text
+        rule_by_text = sigma_util.get_sigma_rule_by_text(SIGMA_MOCK_RULE_TEST4)
+
+        self.assertEqual(rule_by_file.get('id'), rule_by_text.get('id'))
+        self.assertEqual(
+            rule_by_file.get('es_query'), rule_by_text.get('es_query')
+        )
+
+        # clean up
+        os.remove(f.name)

@@ -15,10 +15,14 @@
 import logging
 import json
 import time
+import os
+import yaml
 
 from flask import abort
 from flask import jsonify
+from flask import current_app
 from flask_login import current_user
+
 
 import altair as alt
 
@@ -29,7 +33,7 @@ from timesketch.models import db_session
 from timesketch.models.sketch import View
 
 
-logger = logging.getLogger('timesketch.api_utils')
+logger = logging.getLogger("timesketch.api_utils")
 
 
 def bad_request(message):
@@ -41,7 +45,7 @@ def bad_request(message):
     Returns: Response object (instance of flask.wrappers.Response)
 
     """
-    response = jsonify({'message': message})
+    response = jsonify({"message": message})
     response.status_code = HTTP_STATUS_CODE_BAD_REQUEST
     return response
 
@@ -57,16 +61,17 @@ def get_sketch_attributes(sketch):
         attribute_values = []
         ontology_string = attribute.ontology
         ontology_dict = ontology_def.get(ontology_string, {})
-        cast_as_str = ontology_dict.get('cast_as', 'str')
+        cast_as_str = ontology_dict.get("cast_as", "str")
 
         for attr_value in attribute.values:
             try:
                 value = ontology.OntologyManager.decode_value(
-                    attr_value.value, cast_as_str)
+                    attr_value.value, cast_as_str
+                )
             except ValueError:
-                value = 'Unable to cast'
+                value = "Unable to cast"
             except NotImplementedError:
-                value = f'Ontology {cast_as_str} not yet defined.'
+                value = f"Ontology {cast_as_str} not yet defined."
 
             attribute_values.append(value)
 
@@ -75,8 +80,8 @@ def get_sketch_attributes(sketch):
             values = attribute_values[0]
 
         attributes[name] = {
-          'value': values,
-          'ontology': ontology_string,
+            "value": values,
+            "ontology": ontology_string,
         }
     return attributes
 
@@ -84,26 +89,27 @@ def get_sketch_attributes(sketch):
 def get_sketch_last_activity(sketch):
     """Returns a date string with the last activity from a sketch."""
     try:
-        last_activity = View.query.filter_by(
-            sketch=sketch, name='').order_by(
-            View.updated_at.desc()).first().updated_at
+        last_activity = (
+            View.query.filter_by(sketch=sketch, name="")
+            .order_by(View.updated_at.desc())
+            .first()
+            .updated_at
+        )
     except AttributeError:
-        return ''
+        return ""
     return last_activity.isoformat()
 
 
 def update_sketch_last_activity(sketch):
     """Update the last activity date of a sketch."""
-    view = View.get_or_create(
-        user=current_user, sketch=sketch, name='')
+    view = View.get_or_create(user=current_user, sketch=sketch, name="")
     view.update_modification_time()
 
     db_session.add(view)
     db_session.commit()
 
 
-def run_aggregator(sketch_id, aggregator_name, aggregator_parameters=None,
-                   index=None):
+def run_aggregator(sketch_id, aggregator_name, aggregator_parameters=None, index=None):
     """Run an aggregator and return back results.
 
     Args:
@@ -118,8 +124,7 @@ def run_aggregator(sketch_id, aggregator_name, aggregator_parameters=None,
             (instance of AggregationResult) and a dict containing metadata
             from the aggregator run.
     """
-    agg_class = aggregator_manager.AggregatorManager.get_aggregator(
-        aggregator_name)
+    agg_class = aggregator_manager.AggregatorManager.get_aggregator(aggregator_name)
     if not agg_class:
         return None, {}
     if not aggregator_parameters:
@@ -127,8 +132,8 @@ def run_aggregator(sketch_id, aggregator_name, aggregator_parameters=None,
 
     aggregator = agg_class(sketch_id=sketch_id, index=index)
 
-    chart_type = aggregator_parameters.pop('supported_charts', None)
-    chart_color = aggregator_parameters.pop('chart_color', '')
+    chart_type = aggregator_parameters.pop("supported_charts", None)
+    chart_color = aggregator_parameters.pop("chart_color", "")
 
     time_before = time.time()
     result_obj = aggregator.run(**aggregator_parameters)
@@ -137,19 +142,19 @@ def run_aggregator(sketch_id, aggregator_name, aggregator_parameters=None,
     aggregator_description = aggregator.describe
 
     meta = {
-        'method': 'aggregator_run',
-        'chart_type': chart_type,
-        'chart_color': chart_color,
-        'name': aggregator_description.get('name'),
-        'description': aggregator_description.get('description'),
-        'es_time': time_after - time_before,
+        "method": "aggregator_run",
+        "chart_type": chart_type,
+        "chart_color": chart_color,
+        "name": aggregator_description.get("name"),
+        "description": aggregator_description.get("description"),
+        "es_time": time_after - time_before,
     }
 
     if chart_type:
-        meta['vega_spec'] = result_obj.to_chart(
-            chart_name=chart_type,
-            chart_title=aggregator.chart_title, color=chart_color)
-        meta['vega_chart_title'] = aggregator.chart_title
+        meta["vega_spec"] = result_obj.to_chart(
+            chart_name=chart_type, chart_title=aggregator.chart_title, color=chart_color
+        )
+        meta["vega_chart_title"] = aggregator.chart_title
 
     return result_obj, meta
 
@@ -174,12 +179,13 @@ def run_aggregator_group(group, sketch_id):
         if aggregator.aggregationgroup_id != group.id:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'All aggregations in a group must belong to the group.')
+                "All aggregations in a group must belong to the group.",
+            )
         if aggregator.sketch_id != group.sketch_id:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'All aggregations in a group must belong to the group '
-                'sketch')
+                "All aggregations in a group must belong to the group " "sketch",
+            )
 
         if aggregator.parameters:
             aggregator_parameters = json.loads(aggregator.parameters)
@@ -187,52 +193,78 @@ def run_aggregator_group(group, sketch_id):
             aggregator_parameters = {}
 
         agg_class = aggregator_manager.AggregatorManager.get_aggregator(
-            aggregator.agg_type)
+            aggregator.agg_type
+        )
         if not agg_class:
             continue
         aggregator_obj = agg_class(sketch_id=sketch_id)
-        chart_type = aggregator_parameters.pop('supported_charts', None)
-        color = aggregator_parameters.pop('chart_color', '')
+        chart_type = aggregator_parameters.pop("supported_charts", None)
+        color = aggregator_parameters.pop("chart_color", "")
         result_obj = aggregator_obj.run(**aggregator_parameters)
 
         chart = result_obj.to_chart(
             chart_name=chart_type,
             chart_title=aggregator_obj.chart_title,
-            as_chart=True, interactive=True, color=color)
+            as_chart=True,
+            interactive=True,
+            color=color,
+        )
 
         if result_chart is None:
             result_chart = chart
-        elif orientation == 'horizontal':
+        elif orientation == "horizontal":
             result_chart = alt.hconcat(chart, result_chart)
-        elif orientation == 'vertical':
+        elif orientation == "vertical":
             result_chart = alt.vconcat(chart, result_chart)
         else:
             result_chart = alt.layer(chart, result_chart)
 
         buckets = result_obj.to_dict()
-        buckets['buckets'] = buckets.pop('values')
-        result = {
-            'aggregation_result': {
-                aggregator.name: buckets
-            }
-        }
+        buckets["buckets"] = buckets.pop("values")
+        result = {"aggregation_result": {aggregator.name: buckets}}
         objects.append(result)
 
     parameters = {}
     if group.parameters:
         parameters = json.loads(group.parameters)
 
-    result_chart.title = parameters.get('chart_title', group.name)
+    result_chart.title = parameters.get("chart_title", group.name)
     time_after = time.time()
 
     meta = {
-        'method': 'aggregator_group',
-        'chart_type': 'compound: {0:s}'.format(orientation),
-        'name': group.name,
-        'description': group.description,
-        'es_time': time_after - time_before,
-        'vega_spec': result_chart.to_dict(),
-        'vega_chart_title': group.name
+        "method": "aggregator_group",
+        "chart_type": "compound: {0:s}".format(orientation),
+        "name": group.name,
+        "description": group.description,
+        "es_time": time_after - time_before,
+        "vega_spec": result_chart.to_dict(),
+        "vega_chart_title": group.name,
     }
 
     return result_chart, objects, meta
+
+
+def load_yaml_config(config_parameter_name):
+    """Load a YAML file.
+    Args:
+        config_paramater_name (str): Name of the config paramter to get the
+        path to the YAML file from.
+
+    Returns:
+        A dictionary with the YAML data.
+    """
+    yaml_path = current_app.config.get(config_parameter_name, "")
+    if not yaml_path:
+        logger.error(
+            "The path to the YAML file isn't defined in the " "main configuration file"
+        )
+        return {}
+    if not os.path.isfile(yaml_path):
+        logger.error(
+            "Unable to read the config, file: "
+            "[{0:s}] does not exist".format(yaml_path)
+        )
+        return {}
+
+    with open(yaml_path, "r") as fh:
+        return yaml.safe_load(fh)

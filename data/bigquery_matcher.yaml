@@ -1,0 +1,24 @@
+#
+# Configuration file for the BigQuery matcher analyzer plugin.
+# 
+# You can configure several matchers. They should look like this:
+#
+# matcher_name:
+#     event_field_name: sha256_hash
+#     bq_project: 'project_name'
+#     bq_query: 'SELECT DISTINCT hash FROM project.dataset.tablename WHERE hash IN UNNEST(@sha256_hash)'
+#     tags: ['bigquery-sha256-match']
+#     emojis: ['SKULL']
+#
+# The fields are used as follows:
+#     * matcher_name: Name for the matcher entry.
+#     * event_field_name: Field name in a Timesketch event that you want to match against.
+#     * bq_project: Google Cloud Project you want to run the BigQuery job under.
+#     * bq_query: Query that is used to match Timesketch events. Results from this query 
+#       will be tagged. Match the "IN UNNEST(@sha256_hash)" part to your event_field_name.
+#       This example would tag any Timesketch events which have a "sha256_hash" field that
+#       has a matching row in BigQuery in the "hash" column.
+#     * tags: Tags to apply for matching Timesketch events.
+#     * emojis: Emojis to add for matching Timesketch events.
+# 
+

@@ -6,7 +6,7 @@ See description at the [Sigma Github repository](https://github.com/Neo23x0/sigm
 
 ## Sigma in Timesketch
 
-Since early 2020 Timesketch has Sigma support implemented. Sigma can be used as an analyser.
+Since early 2020 Timesketch has Sigma support implemented. Sigma can be used as an analyzer.
 The other option is to use Sigma via the API and the API client or the Web interface.
 
 ### Web Interface
@@ -29,6 +29,22 @@ This will show a table with all Sigma rules installed on a system. You can searc
 
 So if you want to search for ZMap related rules, you can search for `zma` in `Title, File Name` and it will show you the pre installed rule.
 
+#### Hits
+
+If you have run the Sigma Analyzer on a sketch and a rule has produced hits, the following fields will be added to the event:
+
+* `ts_sigma_rule` will store the rule name that produced hits on an event.
+* `ts_ttp` if a rule had ATT&CK(r) tags added, they will be added to this array
+
+To query all rules that had Sigma rules matched in an analyzer run, query for:
+`ts_sigma_rule:*`.
+
+E.g. an event might have the following attributes:
+```
+ts_sigma_rule:[ "av_password_dumper.yml" ]
+ts_ttp:[ "attack.t1003.002", "attack.t1003.001", "attack.credential_access", "attack.t1558", "attack.t1003" ]
+```
+
 #### ES Query
 
 From that table, there are small icons to copy the values or explore the sketch with the given value. For example if you click the small lens icon next to the ES Query from the found rule `(data_type:("shell\:zsh\:history" OR "bash\:history\:command" OR "apt\:history\:line" OR "selinux\:line") AND "*apt\-get\ install\ zmap*")` it will open an explore view for this sketch with this query pre filled for you to explore the data.
@@ -49,8 +65,6 @@ Timesketch deliberately does not provide a set of Sigma rules, as those would ad
 To use the official community rules you can clone [github.com/Neo23x0/sigma](https://github.com/Neo23x0/sigma) to /data/sigma.
 This directory will not be caught by git.
 
-> Warning: Currently it is not recommended to just clone the directory. See https://github.com/google/timesketch/issues/1532 for more info.
-
 ```shell
 cd data
 git clone https://github.com/Neo23x0/sigma
@@ -62,13 +76,19 @@ The rules then will be under
 timesketch/data/sigma
 ```
 
-### Sigma Rules Blocklist file
+### Sigma Rules sigma_rule_status file
 
-The `data/sigma_blocklist.csv` is where Timesketch maintains a list of incompatible rules. By default each rule is considered compatible, but it is good practice to add them in this file if they are tested and verified to not be compatible.
+The `data/sigma_rule_status.csv` is where Timesketch maintains a list of rules. 
+Each rule can have one of the following status values: `good,bad,exploratory`.
+* `exploratoy` rules will be shown in the UI but ignored in the Analyzer. So this status can be used to test rules. By default each rule is considered `exploratory`. 
+* `good` rules will be used in the Sigma analyzer. 
+* `bad` will be ignored and not shown in the UI or used in the Sigma analyzer.
 
-Each method that reads Sigma rules from the a folder is checking if part of the full path of a rule is mentioned in the `data/sigma_blocklist.csv` file.
+It is good practice to add new rules in this file if they are tested and verified to not be compatible.
 
-For examle a file at `/etc/timesketch/data/sigma/rules-unsupported/foo/bar.yml` would not be parsed as a line in `data/sigma_blocklist.csv` mentions:
+Each method that reads Sigma rules from the a folder is checking if part of the full path of a rule is mentioned in the `data/sigma_rule_status.csv` file.
+
+For example a file at `/etc/timesketch/data/sigma/rules-unsupported/foo/bar.yml` would not be parsed as a line in `data/sigma_rule_status.csv` mentions:
 
 ```
 /rules-unsupported/,bad,Sigma internal folder name,2021-11-19,
@@ -77,7 +97,7 @@ For examle a file at `/etc/timesketch/data/sigma/rules-unsupported/foo/bar.yml` 
 The header for that file are:
 
 ```
-path,bad,reason,last_ckecked,rule_id
+path,status,reason,last_checked,rule_id
 ```
 
 ### Sigma Rules
@@ -104,12 +124,12 @@ There are multiple sigma related config variables in `timesketch.conf`.
 SIGMA_RULES_FOLDERS = ['/etc/timesketch/sigma/rules/']
 SIGMA_CONFIG = '/etc/timesketch/sigma_config.yaml'
 SIGMA_TAG_DELAY = 5
-SIGMA_BLOCKLIST_CSV = '/etc/timesketch/sigma_blocklist.csv'
+SIGMA_BLOCKLIST_CSV = '/etc/timesketch/sigma_rule_status.csv'
 ```
 
 The `SIGMA_RULES_FOLDERS` points to the folder(s) where Sigma rules are stored. The folder is the local folder of the Timesketch server (celery worker and webserver). For a distributed system, mounting network shares is possible.
 
-`SIGMA_TAG_DELAY`can be used to throttle the Sigma analyzer. If Timesketch is running on a less powerful machine (or docker-dev) a sleep timer of 15 seconds will help avoid OpenSearch Search exceptions for to many requests to the ES backend in a to short timerange. For more powerfull Timesketch installations, this value can be set to 0.
+`SIGMA_TAG_DELAY`can be used to throttle the Sigma analyzer. If Timesketch is running on a less powerful machine (or docker-dev) a sleep timer of 15 seconds will help avoid OpenSearch Search exceptions for to many requests to the ES backend in a to short timerange. For more powerful Timesketch installations, this value can be set to 0.
 
 ### Sigma config
 
@@ -155,7 +175,7 @@ This feature can be helpful if you want to test out field mapping.
 
 From the parse result you can copy the `es_query` value and paste it in a new window where you have the explore of a Sketch open.
 
-You need to remember to copy your rule when you are ready and create a new file on your TImesketch server to store the rule and make it available to others. The text from the compose area will be resetted with each reload of the page.
+You need to remember to copy your rule when you are ready and create a new file on your Timesketch server to store the rule and make it available to others. The text from the compose area will be reset with each reload of the page.
 
 ### Best practices
 
@@ -217,7 +237,7 @@ detection:
 That will create two queries:
 ` *value1* or *value2* or *value3* ... or *value10*` and ` *value11* or *value12* or *value13* ... or *value20*`.
 
-The Sigma analyzer is designed to batch and throttle execution of queries which is benefitial for such rule structure.
+The Sigma analyzer is designed to batch and throttle execution of queries which is beneficial for such rule structure.
 
 ### Reduce the haystack
 
@@ -260,7 +280,7 @@ You should NOT import the following rules
 ../timesketch/data/sigma/rules/linux/recon_commands.yaml
 ```
 
-## Toubleshooting
+## Troubleshooting
 
 ### How to find issues
 

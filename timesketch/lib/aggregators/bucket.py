@@ -20,55 +20,56 @@ from timesketch.lib.aggregators import interface
 class TermsAggregation(interface.BaseAggregator):
     """Terms Bucket Aggregation."""
 
-    NAME = 'field_bucket'
-    DISPLAY_NAME = 'Terms Aggregation'
-    DESCRIPTION = 'Aggregating values of a particular field'
+    NAME = "field_bucket"
+    DISPLAY_NAME = "Terms Aggregation"
+    DESCRIPTION = "Aggregating values of a particular field"
 
     SUPPORTED_CHARTS = frozenset(
-        ['barchart', 'circlechart', 'hbarchart', 'linechart', 'table'])
+        ["barchart", "circlechart", "hbarchart", "linechart", "table"]
+    )
 
     FORM_FIELDS = [
         {
-            'type': 'ts-dynamic-form-select-input',
-            'name': 'supported_charts',
-            'label': 'Chart type to render',
-            'options': list(SUPPORTED_CHARTS),
-            'display': True
+            "type": "ts-dynamic-form-select-input",
+            "name": "supported_charts",
+            "label": "Chart type to render",
+            "options": list(SUPPORTED_CHARTS),
+            "display": True,
         },
         {
-            'type': 'ts-dynamic-form-text-input',
-            'name': 'field',
-            'label': 'What field to aggregate on',
-            'placeholder': 'Enter a field to aggregate',
-            'default_value': '',
-            'display': True
+            "type": "ts-dynamic-form-text-input",
+            "name": "field",
+            "label": "What field to aggregate on",
+            "placeholder": "Enter a field to aggregate",
+            "default_value": "",
+            "display": True,
         },
         {
-            'type': 'ts-dynamic-form-datetime-input',
-            'name': 'start_time',
-            'label': (
-                'ISO formatted timestamp for the start time '
-                'of the aggregated data'),
-            'placeholder': 'Enter a start date for the aggregation',
-            'default_value': '',
-            'display': True
+            "type": "ts-dynamic-form-datetime-input",
+            "name": "start_time",
+            "label": (
+                "ISO formatted timestamp for the start time " "of the aggregated data"
+            ),
+            "placeholder": "Enter a start date for the aggregation",
+            "default_value": "",
+            "display": True,
         },
         {
-            'type': 'ts-dynamic-form-datetime-input',
-            'name': 'end_time',
-            'label': 'ISO formatted end time for the aggregation',
-            'placeholder': 'Enter an end date for the aggregation',
-            'default_value': '',
-            'display': True
+            "type": "ts-dynamic-form-datetime-input",
+            "name": "end_time",
+            "label": "ISO formatted end time for the aggregation",
+            "placeholder": "Enter an end date for the aggregation",
+            "default_value": "",
+            "display": True,
         },
         {
-            'type': 'ts-dynamic-form-text-input',
-            'name': 'limit',
-            'label': 'Number of results to return',
-            'placeholder': 'Enter number of results to return',
-            'default_value': '10',
-            'display': True
-        }
+            "type": "ts-dynamic-form-text-input",
+            "name": "limit",
+            "label": "Number of results to return",
+            "placeholder": "Enter number of results to return",
+            "default_value": "10",
+            "display": True,
+        },
     ]
 
     @property
@@ -76,12 +77,18 @@ class TermsAggregation(interface.BaseAggregator):
         """Returns a title for the chart."""
         if self.field:
             return f'Top results for "{self.field:s}"'
-        return 'Top results for an unknown field'
+        return "Top results for an unknown field"
 
     # pylint: disable=arguments-differ
     def run(
-            self, field, limit=10, supported_charts='table',
-            start_time='', end_time='', order_field='count'):
+        self,
+        field,
+        limit=10,
+        supported_charts="table",
+        start_time="",
+        end_time="",
+        order_field="count",
+    ):
         """Run the aggregation.
 
         Args:
@@ -103,48 +110,45 @@ class TermsAggregation(interface.BaseAggregator):
 
         # Encoding information for Vega-Lite.
         encoding = {
-            'x': {
-                'field': field,
-                'type': 'nominal',
-                'sort': {
-                    'op': 'sum',
-                    'field': order_field,
-                    'order': 'descending'
-                }
+            "x": {
+                "field": field,
+                "type": "nominal",
+                "sort": {"op": "sum", "field": order_field, "order": "descending"},
             },
-            'y': {'field': 'count', 'type': 'quantitative'},
-            'tooltip': [
-                {'field': field, 'type': 'nominal'},
-                {'field': order_field, 'type': 'quantitative'}],
+            "y": {"field": "count", "type": "quantitative"},
+            "tooltip": [
+                {"field": field, "type": "nominal"},
+                {"field": order_field, "type": "quantitative"},
+            ],
         }
 
         aggregation_spec = {
-            'aggs': {
-                'aggregation': {
-                    'terms': {
-                        'field': formatted_field_name,
-                        'size': limit
-                    }
-                }
+            "aggs": {
+                "aggregation": {"terms": {"field": formatted_field_name, "size": limit}}
             }
         }
 
         aggregation_spec = self._add_query_to_aggregation_spec(
-            aggregation_spec, start_time, end_time)
+            aggregation_spec, start_time, end_time
+        )
 
         response = self.opensearch_aggregation(aggregation_spec)
-        aggregations = response.get('aggregations', {})
-        aggregation = aggregations.get('aggregation', {})
+        aggregations = response.get("aggregations", {})
+        aggregation = aggregations.get("aggregation", {})
 
-        buckets = aggregation.get('buckets', [])
+        buckets = aggregation.get("buckets", [])
         values = []
         for bucket in buckets:
-            d = {field: bucket['key'], 'count': bucket['doc_count']}
+            d = {field: bucket["key"], "count": bucket["doc_count"]}
             values.append(d)
 
         return interface.AggregationResult(
-            encoding=encoding, values=values, chart_type=supported_charts,
-            sketch_url=self._sketch_url, field=field)
+            encoding=encoding,
+            values=values,
+            chart_type=supported_charts,
+            sketch_url=self._sketch_url,
+            field=field,
+        )
 
 
 manager.AggregatorManager.register_aggregator(TermsAggregation)

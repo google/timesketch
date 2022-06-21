@@ -36,7 +36,7 @@ from timesketch.models.sketch import AttributeValue
 from timesketch.models.sketch import Sketch
 
 
-logger = logging.getLogger('timesketch.sketch_api')
+logger = logging.getLogger("timesketch.sketch_api")
 
 
 class AttributeResource(resources.ResourceMixin, Resource):
@@ -55,14 +55,12 @@ class AttributeResource(resources.ResourceMixin, Resource):
         """
         value = form.get(key_to_check)
         if not value:
-            return 'Unable to save an attribute without a {0:s}.'.format(
-                key_to_check)
+            return "Unable to save an attribute without a {0:s}.".format(key_to_check)
 
         if not isinstance(value, str):
-            return 'Unable to save an attribute without a {0:s}.'.format(
-                key_to_check)
+            return "Unable to save an attribute without a {0:s}.".format(key_to_check)
 
-        return ''
+        return ""
 
     @login_required
     def get(self, sketch_id):
@@ -73,13 +71,12 @@ class AttributeResource(resources.ResourceMixin, Resource):
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
-            abort(
-                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
-        if not sketch.has_permission(current_user, 'read'):
+        if not sketch.has_permission(current_user, "read"):
             abort(
-                HTTP_STATUS_CODE_FORBIDDEN,
-                'User does not have read access to sketch')
+                HTTP_STATUS_CODE_FORBIDDEN, "User does not have read access to sketch"
+            )
 
         return jsonify(utils.get_sketch_attributes(sketch))
 
@@ -92,13 +89,13 @@ class AttributeResource(resources.ResourceMixin, Resource):
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
-            abort(
-                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
-        if not sketch.has_permission(current_user, 'write'):
+        if not sketch.has_permission(current_user, "write"):
             return abort(
                 HTTP_STATUS_CODE_FORBIDDEN,
-                'User does not have write permission on the sketch.')
+                "User does not have write permission on the sketch.",
+            )
 
         form = request.json
         if not form:
@@ -107,46 +104,47 @@ class AttributeResource(resources.ResourceMixin, Resource):
         if not form:
             return abort(
                 HTTP_STATUS_CODE_FORBIDDEN,
-                'Unable to add or modify an attribute from a '
-                'sketch without any data submitted.')
+                "Unable to add or modify an attribute from a "
+                "sketch without any data submitted.",
+            )
 
-        for check in ['name', 'ontology']:
+        for check in ["name", "ontology"]:
             error_message = self._validate_form_entry(form, check)
             if error_message:
-                return abort(
-                    HTTP_STATUS_CODE_BAD_REQUEST, error_message)
+                return abort(HTTP_STATUS_CODE_BAD_REQUEST, error_message)
 
-        name = form.get('name')
-        ontology = form.get('ontology', 'text')
+        name = form.get("name")
+        ontology = form.get("ontology", "text")
 
         ontology_def = ontology_lib.ONTOLOGY
         ontology_dict = ontology_def.get(ontology, {})
-        cast_as_string = ontology_dict.get('cast_as', 'str')
+        cast_as_string = ontology_dict.get("cast_as", "str")
 
-        values = form.get('values')
+        values = form.get("values")
         if not values:
             return abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                'Missing values from the request.')
+                HTTP_STATUS_CODE_BAD_REQUEST, "Missing values from the request."
+            )
 
         if not isinstance(values, (list, tuple)):
-            return abort(
-                HTTP_STATUS_CODE_BAD_REQUEST, 'Values needs to be a list.')
+            return abort(HTTP_STATUS_CODE_BAD_REQUEST, "Values needs to be a list.")
 
-        value_strings = [ontology_lib.OntologyManager.encode_value(
-            x, cast_as_string) for x in values]
+        value_strings = [
+            ontology_lib.OntologyManager.encode_value(x, cast_as_string) for x in values
+        ]
 
         if any([not isinstance(x, str) for x in value_strings]):
             return abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'All values needs to be stored as strings.')
+                "All values needs to be stored as strings.",
+            )
 
         attribute = None
-        message = ''
+        message = ""
         update_attribute = False
         for attribute in sketch.attributes:
             if (attribute.name == name) and (attribute.ontology == ontology):
-                message = 'Attribute Updated'
+                message = "Attribute Updated"
                 update_attribute = True
                 break
 
@@ -154,19 +152,16 @@ class AttributeResource(resources.ResourceMixin, Resource):
             _ = AttributeValue.query.filter_by(attribute=attribute).delete()
         else:
             attribute = Attribute(
-                user=current_user,
-                sketch=sketch,
-                name=name,
-                ontology=ontology)
+                user=current_user, sketch=sketch, name=name, ontology=ontology
+            )
 
             db_session.add(attribute)
             db_session.commit()
 
         for value in value_strings:
             attribute_value = AttributeValue(
-                user=current_user,
-                attribute=attribute,
-                value=value)
+                user=current_user, attribute=attribute, value=value
+            )
             attribute.values.append(attribute_value)
             db_session.add(attribute_value)
             db_session.commit()
@@ -175,17 +170,17 @@ class AttributeResource(resources.ResourceMixin, Resource):
         db_session.commit()
 
         return_data = {
-            'name': name,
-            'ontology': ontology,
-            'cast_as': cast_as_string,
+            "name": name,
+            "ontology": ontology,
+            "cast_as": cast_as_string,
         }
         response = None
         if message:
-            return_data['action'] = 'update'
+            return_data["action"] = "update"
             response = jsonify(return_data)
             response.status_code = HTTP_STATUS_CODE_OK
         else:
-            return_data['action'] = 'create'
+            return_data["action"] = "create"
             response = jsonify(return_data)
             response.status_code = HTTP_STATUS_CODE_CREATED
 
@@ -199,13 +194,13 @@ class AttributeResource(resources.ResourceMixin, Resource):
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
-            abort(
-                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
-        if not sketch.has_permission(current_user, 'write'):
+        if not sketch.has_permission(current_user, "write"):
             return abort(
                 HTTP_STATUS_CODE_FORBIDDEN,
-                'User does not have write permission on the sketch.')
+                "User does not have write permission on the sketch.",
+            )
 
         form = request.json
         if not form:
@@ -214,17 +209,17 @@ class AttributeResource(resources.ResourceMixin, Resource):
         if not form:
             return abort(
                 HTTP_STATUS_CODE_FORBIDDEN,
-                'Unable to remove an attribute from a '
-                'sketch without any data submitted.')
+                "Unable to remove an attribute from a "
+                "sketch without any data submitted.",
+            )
 
-        for check in ['name', 'ontology']:
+        for check in ["name", "ontology"]:
             error_message = self._validate_form_entry(form, check)
             if error_message:
-                return abort(
-                    HTTP_STATUS_CODE_BAD_REQUEST, error_message)
+                return abort(HTTP_STATUS_CODE_BAD_REQUEST, error_message)
 
-        name = form.get('name')
-        ontology = form.get('ontology', 'text')
+        name = form.get("name")
+        ontology = form.get("ontology", "text")
 
         for attribute in sketch.attributes:
             if attribute.name != name:
@@ -241,4 +236,5 @@ class AttributeResource(resources.ResourceMixin, Resource):
 
         return abort(
             HTTP_STATUS_CODE_BAD_REQUEST,
-            'Unable to delete the attribute, couldn\'t find it.')
+            "Unable to delete the attribute, couldn't find it.",
+        )

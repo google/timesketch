@@ -37,9 +37,10 @@ output_format = tabular
 
 def get_cli_context():
     """Return a CLI context object using a mock config."""
-    api_client = client.TimesketchApi('http://127.0.0.1', 'test', 'test')
-    with tempfile.NamedTemporaryFile(mode='w') as fw:
+    api_client = client.TimesketchApi("http://127.0.0.1", "test", "test")
+    with tempfile.NamedTemporaryFile(mode="w") as fw:
         fw.write(TEST_CONFIG)
         fw.seek(0)
         return TimesketchCli(
-            api_client=api_client, sketch_from_flag=1, conf_file=fw.name)
+            api_client=api_client, sketch_from_flag=1, conf_file=fw.name
+        )

@@ -21,7 +21,7 @@ from timesketch.lib.analyzers import utils
 from timesketch.lib.datastores.opensearch import OpenSearchDataStore
 
 
-logger = logging.getLogger('timesketch.data_finder')
+logger = logging.getLogger("timesketch.data_finder")
 
 
 class DataFinder:
@@ -29,46 +29,46 @@ class DataFinder:
 
     def __init__(self):
         """Initialize the data finder."""
-        self._end_date = ''
+        self._end_date = ""
         self._indices = []
         self._parameters = {}
         self._rule = {}
-        self._start_date = ''
+        self._start_date = ""
         self._timeline_ids = []
 
         self._datastore = OpenSearchDataStore(
-            host=current_app.config['OPENSEARCH_HOST'],
-            port=current_app.config['OPENSEARCH_PORT'])
+            host=current_app.config["OPENSEARCH_HOST"],
+            port=current_app.config["OPENSEARCH_PORT"],
+        )
 
     def can_run(self):
         """Returns a boolean whether the data finder can be run."""
         if not self._rule:
-            logger.warning(
-                'Unable to run data finder since no rule has been defined.')
+            logger.warning("Unable to run data finder since no rule has been defined.")
             return False
 
         if not self._start_date:
             logger.warning(
-                'Unable to run data finder since no start date has been '
-                'defined.')
+                "Unable to run data finder since no start date has been " "defined."
+            )
             return False
 
         if not self._end_date:
             logger.warning(
-                'Unable to run data finder since no end date has been '
-                'defined.')
+                "Unable to run data finder since no end date has been " "defined."
+            )
             return False
 
         if not self._parameters:
             return True
 
-        re_parameters = self._rule.get('re_parameters', [])
+        re_parameters = self._rule.get("re_parameters", [])
         for parameter in re_parameters:
             if not parameter in self._parameters:
                 logger.warning(
-                    'Parameters are defined, but parameter: [{0:s}] does not '
-                    'exist in parameter definitions for the rule.'.format(
-                        parameter))
+                    "Parameters are defined, but parameter: [{0:s}] does not "
+                    "exist in parameter definitions for the rule.".format(parameter)
+                )
                 return False
 
         return True
@@ -132,38 +132,43 @@ class DataFinder:
                     the reason why it wasn't.
         """
         if not self.can_run():
-            return False, 'Unable to run the data finder, missing information.'
+            return False, "Unable to run the data finder, missing information."
 
-        query_string = self._rule.get('query_string')
-        query_dsl = self._rule.get('query_dsl')
+        query_string = self._rule.get("query_string")
+        query_dsl = self._rule.get("query_dsl")
 
         if not query_string and not query_dsl:
             raise RuntimeError(
-                'Unable to run, missing either a query string or a DSL to '
-                'perform the search.')
+                "Unable to run, missing either a query string or a DSL to "
+                "perform the search."
+            )
 
-        attribute = self._rule.get('attribute')
-        regular_expression = self._rule.get('regular_expression')
+        attribute = self._rule.get("attribute")
+        regular_expression = self._rule.get("regular_expression")
         if regular_expression:
             if not attribute:
                 raise RuntimeError(
-                    'Attribute must be set in a rule if a regular expression '
-                    'is used.')
+                    "Attribute must be set in a rule if a regular expression "
+                    "is used."
+                )
             expression = utils.compile_regular_expression(
                 expression_string=regular_expression,
-                expression_flags=self._rule.get('re_flags'),
-                expression_parameters=self._rule.get('re_parameters'))
+                expression_flags=self._rule.get("re_flags"),
+                expression_parameters=self._rule.get("re_parameters"),
+            )
         else:
             expression = None
 
         query_filter = {
-            'chips': [{
-                'field': '',
-                'type': 'datetime_range',
-                'operator': 'must',
-                'active': True,
-                'value': f'{self._start_date},{self._end_date}',
-            }]
+            "chips": [
+                {
+                    "field": "",
+                    "type": "datetime_range",
+                    "operator": "must",
+                    "active": True,
+                    "value": f"{self._start_date},{self._end_date}",
+                }
+            ]
         }
 
         event_generator = self._datastore.search_stream(
@@ -173,24 +178,24 @@ class DataFinder:
             indices=self._indices,
             return_fields=attribute,
             enable_scroll=True,
-            timeline_ids=self._timeline_ids
+            timeline_ids=self._timeline_ids,
         )
 
         for event in event_generator:
             # TODO: Save the result to the Investigation object when that
             # exist in the future.
             if not expression:
-                return True, 'Data discovered'
+                return True, "Data discovered"
 
-            source = event.get('_source', {})
+            source = event.get("_source", {})
             value = source.get(attribute)
             if not value:
-                logger.warning('Attribute: [{0:s}] is empty'.format(attribute))
+                logger.warning("Attribute: [{0:s}] is empty".format(attribute))
 
             result = expression.findall(value)
             if not result:
                 continue
 
-            return True, 'Data discovered using Regular Expression'
+            return True, "Data discovered using Regular Expression"
 
-        return False, 'No hits discovered'
+        return False, "No hits discovered"

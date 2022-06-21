@@ -21,7 +21,8 @@ from timesketch.lib.charts import manager
 
 class MockChart(object):
     """Mock chart class."""
-    NAME = 'MockChart'
+
+    NAME = "MockChart"
 
 
 class TestChartManager(BaseTest):
@@ -39,16 +40,14 @@ class TestChartManager(BaseTest):
         self.assertIsInstance(chart_list, list)
         self.assertIsInstance(first_chart_tuple, tuple)
         self.assertEqual(chart_class, MockChart)
-        self.assertEqual(chart_name, 'mockchart')
+        self.assertEqual(chart_name, "mockchart")
 
     def test_get_chart(self):
         """Test to get chart class from registry."""
-        chart_class = manager.ChartManager.get_chart('mockchart')
+        chart_class = manager.ChartManager.get_chart("mockchart")
         self.assertEqual(chart_class, MockChart)
-        self.assertRaises(
-            KeyError, manager.ChartManager.get_chart, 'no_such_chart')
+        self.assertRaises(KeyError, manager.ChartManager.get_chart, "no_such_chart")
 
     def test_register_chart(self):
         """Test so we raise KeyError when chart is already registered."""
-        self.assertRaises(
-            KeyError, manager.ChartManager.register_chart, MockChart)
+        self.assertRaises(KeyError, manager.ChartManager.register_chart, MockChart)

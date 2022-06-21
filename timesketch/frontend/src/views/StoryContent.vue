@@ -143,7 +143,7 @@ limitations under the License.
 
 <script>
 import ApiClient from '../utils/RestApiClient'
-import marked from 'marked'
+import { marked } from 'marked'
 import _ from 'lodash'
 import TsAggregationListDropdown from '../components/Aggregation/AggregationListDropdown'
 import TsAggregationCompact from '../components/Aggregation/AggregationCompact'

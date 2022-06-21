@@ -26,11 +26,10 @@ from . import timeline as timeline_lib
 class SketchTest(unittest.TestCase):
     """Test Sketch object."""
 
-    @mock.patch('requests.Session', test_lib.mock_session)
+    @mock.patch("requests.Session", test_lib.mock_session)
     def setUp(self):
         """Setup test case."""
-        self.api_client = client.TimesketchApi(
-            'http://127.0.0.1', 'test', 'test')
+        self.api_client = client.TimesketchApi("http://127.0.0.1", "test", "test")
         self.sketch = self.api_client.get_sketch(1)
 
     # TODO: Add test for upload()
@@ -48,3 +47,11 @@ class SketchTest(unittest.TestCase):
         self.assertIsInstance(timelines, list)
         self.assertEqual(len(timelines), 2)
         self.assertIsInstance(timelines[0], timeline_lib.Timeline)
+
+    def test_get_event(self):
+        """Test to get event data."""
+        event_data = self.sketch.get_event(
+            event_id="test_event", index_id="test_index")
+        self.assertIsInstance(event_data, dict)
+        self.assertTrue('meta' in event_data)
+        self.assertTrue('comments' in event_data['meta'])

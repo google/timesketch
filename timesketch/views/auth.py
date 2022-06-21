@@ -52,51 +52,55 @@ from timesketch.models.user import Group
 from timesketch.models.user import User
 
 # Register flask blueprint
-auth_views = Blueprint('user_views', __name__)
+auth_views = Blueprint("user_views", __name__)
 
-TOKEN_URI = 'https://www.googleapis.com/oauth2/v3/tokeninfo'
+TOKEN_URI = "https://www.googleapis.com/oauth2/v3/tokeninfo"
 SCOPES = [
-    'https://www.googleapis.com/auth/userinfo.email',
-    'openid',
-    'https://www.googleapis.com/auth/userinfo.profile']
+    "https://www.googleapis.com/auth/userinfo.email",
+    "openid",
+    "https://www.googleapis.com/auth/userinfo.profile",
+]
+_GOOGLE_OIDC_CLIENTS = []
 
 
-@auth_views.route('/login/', methods=['GET', 'POST'])
+@auth_views.route("/login/", methods=["GET", "POST"])
 def login():
     """Handler for the login page view.
 
-    There are three ways of authentication.
-    1) Google Cloud Identity-Aware Proxy.
-    2) If Single Sign On (SSO) is enabled in the configuration and the
+    There are four ways of authentication.
+    1) Google OpenID connect.
+    2) Google Cloud Identity-Aware Proxy.
+    3) If Single Sign On (SSO) is enabled in the configuration and the
        environment variable is present, e.g. REMOTE_USER then the system will
        get or create the user object and setup a session for the user.
-    3) Local authentication is used if SSO login is not enabled. This will
-       authenticate the user against the local user database.
+    4) Local authentication is used if SSO login is not enabled. This will
+       authenticate the user against the local user database
 
     Returns:
         Redirect if authentication is successful or template with context
         otherwise.
     """
     # Google OpenID Connect authentication.
-    if current_app.config.get('GOOGLE_OIDC_ENABLED', False):
-        hosted_domain = current_app.config.get('GOOGLE_OIDC_HOSTED_DOMAIN')
+    if current_app.config.get("GOOGLE_OIDC_ENABLED", False):
+        hosted_domain = current_app.config.get("GOOGLE_OIDC_HOSTED_DOMAIN")
         return redirect(get_oauth2_authorize_url(hosted_domain))
 
     # Google Identity-Aware Proxy authentication (using JSON Web Tokens)
-    if current_app.config.get('GOOGLE_IAP_ENABLED', False):
-        encoded_jwt = request.environ.get(
-            'HTTP_X_GOOG_IAP_JWT_ASSERTION', None)
+    if current_app.config.get("GOOGLE_IAP_ENABLED", False):
+        encoded_jwt = request.environ.get("HTTP_X_GOOG_IAP_JWT_ASSERTION", None)
+        # pylint: disable=broad-except
         if encoded_jwt:
-            expected_audience = current_app.config.get('GOOGLE_IAP_AUDIENCE')
-            expected_issuer = current_app.config.get('GOOGLE_IAP_ISSUER')
-            algorithm = current_app.config.get('GOOGLE_IAP_ALGORITHM')
-            url = current_app.config.get('GOOGLE_IAP_PUBLIC_KEY_URL')
+            expected_audience = current_app.config.get("GOOGLE_IAP_AUDIENCE")
+            expected_issuer = current_app.config.get("GOOGLE_IAP_ISSUER")
+            algorithm = current_app.config.get("GOOGLE_IAP_ALGORITHM")
+            url = current_app.config.get("GOOGLE_IAP_PUBLIC_KEY_URL")
             try:
                 public_key = get_public_key_for_jwt(encoded_jwt, url)
                 decoded_jwt = decode_jwt(
-                    encoded_jwt, public_key, algorithm, expected_audience)
+                    encoded_jwt, public_key, algorithm, expected_audience
+                )
                 validate_jwt(decoded_jwt, expected_issuer)
-                email = decoded_jwt.get('email')
+                email = decoded_jwt.get("email")
                 if email:
                     user = User.get_or_create(username=email, name=email)
                     login_user(user)
@@ -104,14 +108,17 @@ def login():
             except (ImportError, NameError, UnboundLocalError):
                 raise
 
-            except (JwtValidationError, JwtKeyError, Exception) as e:  # pylint: disable=broad-except
-                current_app.logger.error('{}'.format(e))
+            except (
+                JwtValidationError,
+                JwtKeyError,
+                Exception,
+            ) as e:
+                current_app.logger.error("{}".format(e))
 
     # SSO login based on environment variable, e.g. REMOTE_USER.
-    if current_app.config.get('SSO_ENABLED', False):
-        remote_user_env = current_app.config.get('SSO_USER_ENV_VARIABLE',
-                                                 'REMOTE_USER')
-        sso_group_env = current_app.config.get('SSO_GROUP_ENV_VARIABLE', None)
+    if current_app.config.get("SSO_ENABLED", False):
+        remote_user_env = current_app.config.get("SSO_USER_ENV_VARIABLE", "REMOTE_USER")
+        sso_group_env = current_app.config.get("SSO_GROUP_ENV_VARIABLE", None)
 
         remote_user = request.environ.get(remote_user_env, None)
         if remote_user:
@@ -121,10 +128,9 @@ def login():
         # If we get groups from the SSO system create the group(s) in
         # Timesketch and add/remove the user from it.
         if sso_group_env:
-            groups_string = request.environ.get(sso_group_env, '')
-            separator = current_app.config.get('SSO_GROUP_SEPARATOR', ';')
-            not_member_sign = current_app.config.get(
-                'SSO_GROUP_NOT_MEMBER_SIGN', None)
+            groups_string = request.environ.get(sso_group_env, "")
+            separator = current_app.config.get("SSO_GROUP_SEPARATOR", ";")
+            not_member_sign = current_app.config.get("SSO_GROUP_NOT_MEMBER_SIGN", None)
             for group_name in groups_string.split(separator):
                 remove_group = False
                 if not_member_sign:
@@ -144,6 +150,7 @@ def login():
             db_session.commit()
 
     # Login form POST
+    # pylint: disable=using-constant-test
     form = UsernamePasswordForm()
     if form.validate_on_submit:
         user = User.query.filter_by(username=form.username.data).first()
@@ -153,12 +160,12 @@ def login():
 
     # Log the user in and setup the session.
     if current_user.is_authenticated:
-        return redirect(request.args.get('next') or '/')
+        return redirect(request.args.get("next") or "/")
 
-    return render_template('login.html', form=form)
+    return render_template("login.html", form=form)
 
 
-@auth_views.route('/logout/', methods=['GET'])
+@auth_views.route("/logout/", methods=["GET"])
 def logout():
     """Handler for the logout page view.
 
@@ -166,10 +173,10 @@ def logout():
         Redirect response.
     """
     logout_user()
-    return redirect(url_for('user_views.login'))
+    return redirect(url_for("user_views.login"))
 
 
-@auth_views.route('/login/api_callback/', methods=['GET'])
+@auth_views.route("/login/api_callback/", methods=["GET"])
 def validate_api_token():
     """Handler for logging in using an authenticated session for the API.
 
@@ -182,116 +189,140 @@ def validate_api_token():
         token = None
 
     if not token:
-        return abort(
-            HTTP_STATUS_CODE_UNAUTHORIZED, 'Request not authenticated.')
+        return abort(HTTP_STATUS_CODE_UNAUTHORIZED, "Request not authenticated.")
 
-    id_token = request.args.get('id_token')
+    id_token = request.args.get("id_token")
     if not id_token:
-        return abort(
-            HTTP_STATUS_CODE_UNAUTHORIZED, 'No ID token supplied.')
-
-    client_id = current_app.config.get('GOOGLE_OIDC_API_CLIENT_ID')
-    if not client_id:
-        return abort(
-            HTTP_STATUS_CODE_BAD_REQUEST,
-            'No OIDC API client ID defined in the configuration file.')
+        return abort(HTTP_STATUS_CODE_UNAUTHORIZED, "No ID token supplied.")
+    if not _GOOGLE_OIDC_CLIENTS:
+        client_ids = set()
+        primary_client_id = current_app.config.get("GOOGLE_OIDC_CLIENT_ID")
+        if primary_client_id:
+            client_ids.add(primary_client_id)
+        else:
+            current_app.logger.warning(
+                "GOOGLE_OIDC_CLIENT_ID is not set in config file.")
+        additional_client_ids = current_app.config.get(
+            "ALLOWED_GOOGLE_OIDC_API_CLIENT_IDS",[])
+        if additional_client_ids:
+            client_ids.update(additional_client_ids)
+        else:
+            current_app.logger.warning(
+                "ALLOWED_GOOGLE_OIDC_API_CLIENT_IDS is not set in config file.")
+        _GOOGLE_OIDC_CLIENTS = list(client_ids)
+        if not _GOOGLE_OIDC_CLIENTS:
+            return abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                "No OIDC API client ID defined in the configuration file.",
+            )
 
     # Authenticating session, see more details here:
     # https://www.oauth.com/oauth2-servers/signing-in-with-google/\
     #     verifying-the-user-info/
     # Sending a request to Google to verify that the access token
     # is valid, to be able to validate the session.
-    data = {
-        'access_token': token}
+    data = {"access_token": token}
     bearer_token_response = requests.post(TOKEN_URI, data=data)
     if bearer_token_response.status_code != HTTP_STATUS_CODE_OK:
-        return abort(
-            HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate access token.')
+        return abort(HTTP_STATUS_CODE_BAD_REQUEST, "Unable to validate access token.")
     bearer_token_json = bearer_token_response.json()
 
-    data = {
-        'id_token': id_token
-    }
+    data = {"id_token": id_token}
     token_response = requests.post(TOKEN_URI, data=data)
     token_json = token_response.json()
 
-    verified = token_json.get('email_verified', False)
+    verified = token_json.get("email_verified", False)
     if not verified:
         return abort(
             HTTP_STATUS_CODE_UNAUTHORIZED,
-            'Session not authenticated or account not verified')
+            "Session not authenticated or account not verified",
+        )
 
-    if bearer_token_json.get('azp', 'a') != token_json.get('azp', 'x'):
+    if bearer_token_json.get("azp", "a") != token_json.get("azp", "x"):
         return abort(
             HTTP_STATUS_CODE_UNAUTHORIZED,
-            'Auth token and client tokens don\'t match, azp differs.')
+            "Auth token and client tokens don't match, azp differs.",
+        )
 
-    if bearer_token_json.get('email', 'a') != token_json.get('email', 'b'):
+    if bearer_token_json.get("email", "a") != token_json.get("email", "b"):
         return abort(
             HTTP_STATUS_CODE_UNAUTHORIZED,
-            'Auth token and client tokens don\'t match, email differs.')
+            "Auth token and client tokens don't match, email differs.",
+        )
 
     try:
         discovery_document = get_oauth2_discovery_document()
     except DiscoveryDocumentError as e:
         return abort(
             HTTP_STATUS_CODE_BAD_REQUEST,
-            'Unable to discover document, with error: {0!s}'.format(e))
+            "Unable to discover document, with error: {0!s}".format(e),
+        )
 
-    expected_issuer = discovery_document['issuer']
+    expected_issuer = discovery_document["issuer"]
+    # pylint: disable=broad-except
     try:
         validate_jwt(token_json, expected_issuer)
     except (ImportError, NameError, UnboundLocalError):
         raise
-    except (JwtValidationError, JwtKeyError, Exception) as e:  # pylint: disable=broad-except
+    except (
+        JwtValidationError,
+        JwtKeyError,
+        Exception,
+    ) as e:
         return abort(
             HTTP_STATUS_CODE_UNAUTHORIZED,
-            'Unable to validate the JWT token, with error: {0!s}.'.format(e))
+            "Unable to validate the JWT token, with error: {0!s}.".format(e),
+        )
 
-    read_client_id = token_json.get('aud', '')
-    if read_client_id != client_id:
+    read_client_id = token_json.get("aud", "")
+    if read_client_id not in _GOOGLE_OIDC_CLIENTS:
         return abort(
             HTTP_STATUS_CODE_UNAUTHORIZED,
-            'Client ID {0:s} does not match server configuration for '
-            'client'.format(read_client_id))
+            "Client ID {0:s} does not match server configuration for "
+            "client".format(read_client_id),
+        )
 
-    read_scopes = bearer_token_json.get('scope', '').split()
+    read_scopes = bearer_token_json.get("scope", "").split()
     if not set(read_scopes) == set(SCOPES):
         return abort(
             HTTP_STATUS_CODE_UNAUTHORIZED,
-            'Client scopes differ from what they should be (email, openid, '
-            'profile) = {} VS {}'.format(SCOPES, read_scopes))
+            "Client scopes differ from what they should be (email, openid, "
+            "profile) = {} VS {}".format(SCOPES, read_scopes),
+        )
 
-    validated_email = token_json.get('email')
+    validated_email = token_json.get("email")
 
     # Check if the authenticating user is part of the allowed domains.
-    hosted_domains = current_app.config.get('GOOGLE_OIDC_HOSTED_DOMAIN')
+    hosted_domains = current_app.config.get("GOOGLE_OIDC_HOSTED_DOMAIN")
     if hosted_domains:
-        _, _, domain = validated_email.partition('@')
+        _, _, domain = validated_email.partition("@")
         if domain.lower() != hosted_domains.lower():
             return abort(
                 HTTP_STATUS_CODE_UNAUTHORIZED,
-                'Domain {0:s} is not allowed to authenticate against this '
-                'instance.'.format(domain))
+                "Domain {0:s} is not allowed to authenticate against this "
+                "instance.".format(domain),
+            )
 
-    allowed_users = current_app.config.get('GOOGLE_OIDC_ALLOWED_USERS')
+    allowed_users = current_app.config.get("GOOGLE_OIDC_ALLOWED_USERS")
     # TODO: Remove that after a 6 months, this following check is to ensure
     # compatibility of config file
     if not allowed_users:
-        current_app.logger.warning('Warning, GOOGLE_OIDC_USER_WHITELIST has '
-                                   'been deprecated. Please update '
-                                   'timesketch.conf.')
-        allowed_users = current_app.config.get('GOOGLE_OIDC_USER_WHITELIST', [])
+        current_app.logger.warning(
+            "Warning, GOOGLE_OIDC_USER_WHITELIST has "
+            "been deprecated. Please update "
+            "timesketch.conf."
+        )
+        allowed_users = current_app.config.get("GOOGLE_OIDC_USER_WHITELIST", [])
 
     # Check if the authenticating user is on the allow list.
     if allowed_users:
         if validated_email not in allowed_users:
             return abort(
-                HTTP_STATUS_CODE_UNAUTHORIZED,
-                'Unauthorized request, user not allowed')
+                HTTP_STATUS_CODE_UNAUTHORIZED, "Unauthorized request, user not allowed"
+            )
 
     user = User.get_or_create(username=validated_email, name=validated_email)
-    login_user(user)
+    login_user(user, remember=True)
 
     # Log the user in and setup the session.
     if current_user.is_authenticated:
@@ -299,11 +330,10 @@ def validate_api_token():
 <h1>Authenticated</h1>
         """
 
-    return abort(
-        HTTP_STATUS_CODE_BAD_REQUEST, 'User is not authenticated.')
+    return abort(HTTP_STATUS_CODE_BAD_REQUEST, "User is not authenticated.")
 
 
-@auth_views.route('/login/google_openid_connect/', methods=['GET'])
+@auth_views.route("/login/google_openid_connect/", methods=["GET"])
 def google_openid_connect():
     """Handler for the Google OpenID Connect callback.
 
@@ -313,75 +343,71 @@ def google_openid_connect():
     Returns:
         Redirect response.
     """
-    error = request.args.get('error', None)
+    error = request.args.get("error", None)
 
     if error:
-        current_app.logger.error('OAuth2 flow error: {}'.format(error))
+        current_app.logger.error("OAuth2 flow error: {}".format(error))
         return abort(
-            HTTP_STATUS_CODE_BAD_REQUEST,
-            'OAuth2 flow error: {0!s}'.format(error))
+            HTTP_STATUS_CODE_BAD_REQUEST, "OAuth2 flow error: {0!s}".format(error)
+        )
 
     try:
-        code = request.args['code']
-        client_csrf_token = request.args.get('state')
+        code = request.args["code"]
+        client_csrf_token = request.args.get("state")
         server_csrf_token = session[CSRF_KEY]
     except KeyError as e:
         return abort(
-            HTTP_STATUS_CODE_BAD_REQUEST,
-            'Client CSRF error, no CSRF key stored')
+            HTTP_STATUS_CODE_BAD_REQUEST, "Client CSRF error, no CSRF key stored"
+        )
 
     if client_csrf_token != server_csrf_token:
-        return abort(HTTP_STATUS_CODE_BAD_REQUEST, 'Invalid CSRF token')
+        return abort(HTTP_STATUS_CODE_BAD_REQUEST, "Invalid CSRF token")
 
     try:
         encoded_jwt = get_encoded_jwt_over_https(code)
     except JwtFetchError as e:
-        return abort(
-            HTTP_STATUS_CODE_BAD_REQUEST,
-            'Jwt Fetch error, {0!s}'.format(e))
+        return abort(HTTP_STATUS_CODE_BAD_REQUEST, "Jwt Fetch error, {0!s}".format(e))
 
     try:
         discovery_document = get_oauth2_discovery_document()
     except DiscoveryDocumentError as e:
         return abort(
             HTTP_STATUS_CODE_BAD_REQUEST,
-            'Unable to discover document, with error: {0!s}'.format(e))
+            "Unable to discover document, with error: {0!s}".format(e),
+        )
 
-    algorithm = discovery_document['id_token_signing_alg_values_supported'][0]
-    expected_audience = current_app.config.get('GOOGLE_OIDC_CLIENT_ID')
-    expected_domain = current_app.config.get('GOOGLE_OIDC_HOSTED_DOMAIN')
-    expected_issuer = discovery_document['issuer']
+    algorithm = discovery_document["id_token_signing_alg_values_supported"][0]
+    expected_audience = current_app.config.get("GOOGLE_OIDC_CLIENT_ID")
+    expected_domain = current_app.config.get("GOOGLE_OIDC_HOSTED_DOMAIN")
+    expected_issuer = discovery_document["issuer"]
 
     # Fetch the public key and try to validate the JWT.
     try:
-        public_key = get_public_key_for_jwt(
-            encoded_jwt, discovery_document['jwks_uri'])
-        decoded_jwt = decode_jwt(
-            encoded_jwt, public_key, algorithm, expected_audience)
-        validate_jwt(
-            decoded_jwt, expected_issuer, expected_domain)
+        public_key = get_public_key_for_jwt(encoded_jwt, discovery_document["jwks_uri"])
+        decoded_jwt = decode_jwt(encoded_jwt, public_key, algorithm, expected_audience)
+        validate_jwt(decoded_jwt, expected_issuer, expected_domain)
     except (JwtValidationError, JwtKeyError) as e:
-        current_app.logger.error('{}'.format(e))
+        current_app.logger.error("{}".format(e))
         return abort(
             HTTP_STATUS_CODE_UNAUTHORIZED,
-            'Unable to validate request, with error: {0!s}'.format(e))
+            "Unable to validate request, with error: {0!s}".format(e),
+        )
 
-    validated_email = decoded_jwt.get('email')
-    allowed_users = current_app.config.get('GOOGLE_OIDC_ALLOWED_USERS')
+    validated_email = decoded_jwt.get("email")
+    allowed_users = current_app.config.get("GOOGLE_OIDC_ALLOWED_USERS")
 
     # Check if the authenticating user is allowed.
     if allowed_users:
         if validated_email not in allowed_users:
             return abort(
-                HTTP_STATUS_CODE_UNAUTHORIZED,
-                'Unauthorized request, user not allowed')
+                HTTP_STATUS_CODE_UNAUTHORIZED, "Unauthorized request, user not allowed"
+            )
 
     user = User.get_or_create(username=validated_email, name=validated_email)
     login_user(user)
 
     # Log the user in and setup the session.
     if current_user.is_authenticated:
-        return redirect(request.args.get('next') or '/')
+        return redirect(request.args.get("next") or "/")
 
-    return abort(
-        HTTP_STATUS_CODE_BAD_REQUEST, 'User is not authenticated.')
+    return abort(HTTP_STATUS_CODE_BAD_REQUEST, "User is not authenticated.")
