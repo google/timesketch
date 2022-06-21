@@ -293,4 +293,3 @@ windows/sysmon/sysmon_config_modification_error.yml,good,no test data available,
 windows/sysmon/sysmon_config_modification_status.yml,good,no test data available,2022-04-28,1f2b5353-573f-4880-8e33-7d04dcf97744
 windows/sysmon/sysmon_process_hollowing.yml,good,no test data available,2022-04-28,c4b890e5-8d8c-4496-8c66-c805753817cd
 windows/wmi_event/,bad,no test data available,2021-05-04,
-network/zeek/zeek_rdp_public_listener.yml,bad, no sampe data available for zeek and it would flag every event so very noisy rule,2022-06-08,1fc0809e-06bf-4de3-ad52-25e5263b7623
