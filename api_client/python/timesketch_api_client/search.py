@@ -15,6 +15,7 @@
 import datetime
 import json
 import logging
+import re
 
 import pandas
 
@@ -232,11 +233,14 @@ class DateRangeChip(Chip):
     _DATE_FORMAT = "%Y-%m-%dT%H:%M:%S"
     _DATE_FORMAT_MICROSECONDS = "%Y-%m-%dT%H:%M:%S.%f"
 
+    _DATE_RE = r'^[0-9]{4}-[0-9]{1,2}-[0-9]{2}$'
+
     def __init__(self):
         """Initialize the date range."""
         super().__init__()
         self._start_date = None
         self._end_date = None
+        self._date_re = re.compile(self._DATE_RE)
 
     def add_end_time(self, end_time):
         """Add an end time to the range.
@@ -251,7 +255,7 @@ class DateRangeChip(Chip):
             end_time = end_time[:-1]
 
         # Check for a whole day, YYYY-MM-DD.
-        if len(end_time) == 10:
+        if self._date_re.match(end_time):
             end_time = f'{end_time}T23:59:59'
 
         try:
@@ -281,7 +285,7 @@ class DateRangeChip(Chip):
             start_time = start_time[:-1]
 
         # Check for a whole day, YYYY-MM-DD.
-        if len(start_time) == 10:
+        if self._date_re.match(start_time):
             start_time = f'{start_time}T00:00:00'
 
         try:

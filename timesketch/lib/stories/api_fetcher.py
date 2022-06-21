@@ -190,11 +190,11 @@ class ApiDataFetcher(interface.DataFetcher):
         if isinstance(index_list, str):
             index_list = index_list.split(',')
 
-        for item in index_list:
-            if isinstance(item, str):
-                indices.append(item)
-            if isinstance(item, int):
-                timeline_ids.append(item)
+        for index in index_list:
+            if isinstance(index, str):
+                indices.append(index)
+            if isinstance(index, int):
+                timeline_ids.append(index)
 
         return indices, timeline_ids
 
