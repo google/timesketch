@@ -89,6 +89,7 @@ curl -s $GITHUB_BASE_URL/data/tags.yaml > timesketch/etc/timesketch/tags.yaml
 curl -s $GITHUB_BASE_URL/data/intelligence_tag_metadata.yaml > timesketch/etc/timesketch/intelligence_tag_metadata.yaml
 curl -s $GITHUB_BASE_URL/data/sigma_config.yaml > timesketch/etc/timesketch/sigma_config.yaml
 curl -s $GITHUB_BASE_URL/data/sigma_blocklist.csv > timesketch/etc/timesketch/sigma_blocklist.csv
+curl -s $GITHUB_BASE_URL/data/sigma_rule_status.csv > timesketch/etc/timesketch/sigma_rule_status.csv
 curl -s $GITHUB_BASE_URL/data/sigma/rules/lnx_susp_zmap.yml > timesketch/etc/timesketch/sigma/rules/lnx_susp_zmap.yml
 curl -s $GITHUB_BASE_URL/contrib/nginx.conf > timesketch/etc/nginx.conf
 echo "OK"
