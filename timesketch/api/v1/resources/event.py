@@ -332,6 +332,77 @@ class EventResource(resources.ResourceMixin, Resource):
         }
         return jsonify(schema)
 
+    @login_required
+    def put(self, sketch_id):
+        """Handles update requests for an event.
+        Handler for /api/v1/sketches/:sketch_id/event/
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+
+        Returns:
+            An annotation in JSON (instance of flask.wrappers.Response)
+        """
+
+        args = self.parser.parse_args()
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
+        if not sketch.has_permission(current_user, "read"):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "User does not have read access controls on sketch.",
+            )
+
+        form = request.json
+        attribute_name = form.get('attribute_name')
+        attribute_value = form.get('attribute_value')
+        if not (attribute_name or attribute_value):
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+              "attribute_name and attribute_value must be provided."
+            )
+
+        searchindex_id = args.get("searchindex_id")
+        searchindex = SearchIndex.query.filter_by(index_name=searchindex_id).first()
+        if not searchindex:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST, "Search index not found for this event."
+            )
+        if searchindex.get_status.status == "deleted":
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                "Unable to query event on a closed search index.",
+            )
+
+        event_id = args.get("event_id")
+        indices = [
+            t.searchindex.index_name
+            for t in sketch.timelines
+            if t.get_status.status.lower() == "ready"
+        ]
+
+        # Check if the requested searchindex is part of the sketch
+        if searchindex_id not in indices:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                "Search index ID ({0!s}) does not belong to the list "
+                "of indices".format(searchindex_id),
+            )
+
+        # get_event will abort the request if the event isn't found.
+        event = self.datastore.get_event(searchindex_id, event_id)
+
+        self.datastore.import_event(
+          searchindex_id,
+          event['_type'],
+          event_id=event_id,
+          event={attribute_name: attribute_value},
+          flush_interval=1
+        )
+
+        return HTTP_STATUS_CODE_OK
+
 
 class EventTaggingResource(resources.ResourceMixin, Resource):
     """Resource to fetch and set tags to an event."""
