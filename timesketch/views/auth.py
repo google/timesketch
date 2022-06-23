@@ -60,7 +60,6 @@ SCOPES = [
     "openid",
     "https://www.googleapis.com/auth/userinfo.profile",
 ]
-_GOOGLE_OIDC_CLIENTS = []
 
 
 @auth_views.route("/login/", methods=["GET", "POST"])
@@ -183,6 +182,8 @@ def validate_api_token():
     Returns:
         A simple page indicating the user is authenticated.
     """
+    ALLOWED_CLIENT_IDS = []
+
     try:
         token = oauth2.rfc6749.tokens.get_token_from_header(request)
     except AttributeError:
@@ -194,27 +195,28 @@ def validate_api_token():
     id_token = request.args.get("id_token")
     if not id_token:
         return abort(HTTP_STATUS_CODE_UNAUTHORIZED, "No ID token supplied.")
-    if not _GOOGLE_OIDC_CLIENTS:
-        client_ids = set()
-        primary_client_id = current_app.config.get("GOOGLE_OIDC_CLIENT_ID")
-        if primary_client_id:
-            client_ids.add(primary_client_id)
-        else:
-            current_app.logger.warning(
-                "GOOGLE_OIDC_CLIENT_ID is not set in config file.")
-        additional_client_ids = current_app.config.get(
-            "ALLOWED_GOOGLE_OIDC_API_CLIENT_IDS",[])
-        if additional_client_ids:
-            client_ids.update(additional_client_ids)
-        else:
-            current_app.logger.warning(
-                "ALLOWED_GOOGLE_OIDC_API_CLIENT_IDS is not set in config file.")
-        _GOOGLE_OIDC_CLIENTS = list(client_ids)
-        if not _GOOGLE_OIDC_CLIENTS:
-            return abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                "No OIDC API client ID defined in the configuration file.",
-            )
+
+    client_ids = set()
+    primary_client_id = current_app.config.get("GOOGLE_OIDC_CLIENT_ID")
+    legacy_api_client_id = current_app.config.get("GOOGLE_OIDC_API_CLIENT_ID")
+    api_client_ids = current_app.config.get("GOOGLE_OIDC_API_CLIENT_IDS", [])
+
+    if primary_client_id:
+        client_ids.add(primary_client_id)
+
+    if legacy_api_client_id:
+        client_ids.add(legacy_api_client_id)
+
+    if api_client_ids:
+        client_ids.update(api_client_ids)
+
+    ALLOWED_CLIENT_IDS = list(client_ids)
+
+    if not ALLOWED_CLIENT_IDS:
+        return abort(
+            HTTP_STATUS_CODE_BAD_REQUEST,
+            "No OIDC client IDs defined in the configuration file.",
+        )
 
     # Authenticating session, see more details here:
     # https://www.oauth.com/oauth2-servers/signing-in-with-google/\
@@ -275,7 +277,7 @@ def validate_api_token():
         )
 
     read_client_id = token_json.get("aud", "")
-    if read_client_id not in _GOOGLE_OIDC_CLIENTS:
+    if read_client_id not in ALLOWED_CLIENT_IDS:
         return abort(
             HTTP_STATUS_CODE_UNAUTHORIZED,
             "Client ID {0:s} does not match server configuration for "
