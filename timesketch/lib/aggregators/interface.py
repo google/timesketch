@@ -330,10 +330,14 @@ class BaseAggregator(object):
         field_format = field_name
         field_type = None
 
+        indices = self.indices
+        if isinstance(indices, (list, tuple)):
+            indices = ','.join(indices)
+
         # Get the mapping for the field.
         try:
             mapping = self.opensearch.client.indices.get_field_mapping(
-                index=self.indices, fields=field_name
+                index=indices, fields=field_name
             )
         except opensearchpy.NotFoundError:
             mapping = {}
