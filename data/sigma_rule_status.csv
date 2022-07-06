@@ -1,0 +1,296 @@
+path,status,reason,last_ckecked,rule_id
+.github/,bad,Github folder name in case Sigma project is clones,2021-11-19,
+/_config.yml,bad,Sigma internal filename,2021-11-19,
+/rules-unsupported/,bad,Sigma internal folder name,2021-11-19,
+/windows/builtin/win_invoke_obfuscation_obfuscated_iex_services.yml, bad, No condition found,2021-05-04,
+/windows/builtin/win_invoke_obfuscation_stdin+_services.yml, bad, No condition found,2021-05-04,
+/windows/builtin/win_invoke_obfuscation_var+_services.yml, bad, No condition found,2021-05-04,
+/windows/builtin/win_invoke_obfuscation_via_compress_services.yml, bad, No condition found,2021-05-04,
+/windows/builtin/win_invoke_obfuscation_via_rundll_services.yml, bad, No condition found,2021-05-04,
+/windows/builtin/win_invoke_obfuscation_via_use_clip_services.yml, bad, No condition found,2021-05-04,
+/windows/builtin/win_invoke_obfuscation_via_use_mhsta_services.yml, bad, No condition found,2021-05-04,
+/windows/builtin/win_invoke_obfuscation_via_use_rundll32_services.yml, bad, No condition found,2021-05-04,
+/windows/builtin/win_invoke_obfuscation_via_var++_services.yml, bad, No condition found,2021-05-04,
+/windows/builtin/win_inwindows/image_load/sysmon_susp_fax_dll.ymlvoke_obfuscation_via_stdin_services.yml, bad, No condition found,2021-05-04,
+/windows/builtin/win_mal_creddumper.yml, bad, No condition found,2021-05-04,
+/windows/builtin/win_metasploit_or_impacket_smb_psexec_service_install.yml, bad, No condition found,2021-05-04,
+/windows/builtin/win_meterpreter_or_cobaltstrike_getsystem_service_installation.yml, bad, No condition found,2021-05-04,
+/windows/builtin/win_net_ntlm_downgrade.yml, bad, No condition found,2021-05-04,
+/windows/builtin/win_powershell_script_installed_as_service.yml, bad, No condition found,2021-05-04,
+/windows/builtin/win_rare_schtasks_creations.yml, bad, Aggregations not implemented for this backend,2021-05-04,
+/windows/builtin/win_rare_service_installs.yml, bad, Aggregations not implemented for this backend,2021-05-04,
+/windows/builtin/win_root_certificate_installed.yml, bad, No condition found,2021-05-04,
+/windows/builtin/win_software_discovery.yml, bad, No condition found,2021-05-04,
+/windows/builtin/win_susp_failed_logons_single_source.yml, bad, Aggregations not implemented for this backend,2021-05-04,
+/windows/builtin/win_susp_samr_pwset.yml, bad, Aggregations not implemented for this backend,2021-05-04,
+/windows/builtin/win_tap_driver_installation.yml, bad, No condition found,2021-05-04,
+/windows/file_event/sysmon_redmimicry_winnti_filedrop.yml,bad,slashes issue in path,2021-05-04,
+/windows/file_event/win_susp_multiple_files_renamed_or_deleted.yml, bad, Aggregations not implemented for this backend,2021-05-04,
+/windows/image_load/sysmon_in_memory_powershell.yml, bad, Yaml parsing error,2021-05-04,
+/windows/image_load/sysmon_mimikatz_inmemory_detection.yml, bad, Aggregations not implemented for this backend,2021-05-04,
+/windows/image_load/sysmon_tttracer_mod_load.yml, bad, No condition found,2021-05-04,
+/windows/malware/win_mal_blue_mockingbird.yml, bad, No condition found,2021-05-04,
+/windows/network_connection/sysmon_regsvr32_network_activity.yml, bad, No detection definitions found,2021-05-04,
+/windows/other/win_rare_schtask_creation.yml, bad, Aggregations not implemented for this backend,2021-05-04,
+/windows/other/win_tool_psexec.yml, bad, No condition found,2021-05-04,
+/windows/powershell/powershell_CL_Invocation_LOLScript_v2.yml, bad, Aggregations not implemented for this backend,2021-05-04,
+/windows/powershell/powershell_CL_Mutexverifiers_LOLScript_v2.yml, bad, Aggregations not implemented for this backend,2021-05-04,
+/windows/powershell/win_powershell_web_request.yml, bad, No condition found,2021-05-04,
+/windows/process_creation/win_apt_chafer_mar18.yml, bad, No condition found,2021-05-04,
+/windows/process_creation/win_apt_empiremonkey.yml, bad, No condition found,2021-05-04,
+/windows/process_creation/win_apt_slingshot.yml, bad, No condition found,2021-05-04,
+/windows/process_creation/win_apt_turla_commands.yml, bad, Aggregations not implemented for this backend,2021-05-04,
+/windows/process_creation/win_apt_unidentified_nov_18.yml, bad, No condition found,2021-05-04,
+/windows/process_creation/win_dnscat2_powershell_implementation.yml, bad, Aggregations not implemented for this backend,2021-05-04,
+/windows/process_creation/win_mal_adwind.yml, bad, No condition found,2021-05-04,
+/windows/process_creation/win_mouse_lock.yml, bad, Yaml parsing error,2021-05-04,
+/windows/process_creation/win_multiple_suspicious_cli.yml, bad, Aggregations not implemented for this backend,2021-05-04,
+/windows/process_creation/win_silenttrinity_stage_use.yml, bad, No detection definitions found,2021-05-04,
+/windows/process_creation/win_susp_commands_recon_activity.yml, bad, Aggregations not implemented for this backend,2021-05-04,
+/windows/process_creation/win_syncappvpublishingserver_exe.yml, bad, No condition found,2021-05-04,
+/windows/sysmon/sysmon_possible_dns_rebinding.yml, bad, Aggregations not implemented for this backend,2021-05-04,
+application/antivirus/av_exploiting.yml,good,no test data but should work,2022-04-28,238527ad-3c2c-4e4f-a1f6-92fd63adb864
+application/antivirus/av_hacktool.yml,good,no test data but should work,2022-04-28,fa0c05b6-8ad3-468d-8231-c1cbccb64fba
+application/antivirus/av_password_dumper.yml,good,no test data but should work,202204-28,78cc2dd2-7d20-4d32-93ff-057084c38b93
+application/antivirus/av_webshell.yml,exploratory,query seems weird and field mapping is currently on Windows,2022-04-28,fdf135a2-9241-4f96-a114-bb404948f736
+application/app,exploratory,not checked yet,2021-05-04,
+application/rpc_firewall/rpc_firewall_sharphound_recon_account.yml, exploratory, no test data available and field mapping might be weak, 2022-04-28,65f77b1e-8e79-45bf-bb67-5988a8ce45a5
+application/rpc_firewall/rpc_firewall_sharphound_recon_sessions.yml, good, no test data available potentially field mapping needed if to broad,2022-04-28,6d580420-ff3f-4e0e-b6b0-41b90c787e28
+application/spring/appframework_spring_exceptions.yml,good,no test data available potentially field mapping needed if to broad,2022-04-28,ae48ab93-45f7-4051-9dfe-5d30a3f78e33
+application/sql/app_sqlinjection_errors.yml,good,no test data available,2022-04-28,8a670c6d-7189-4b1c-8017-a417ca84a086
+apt/apt_silence,exploratory,not checked yet,2021-05-04,
+cloud/awd,exploratory,no test data available,2021-09-23,
+cloud/aws_,exploratory,not checked yet,2021-05-04,
+cloud/azure,exploratory,no test data available,2021-09-23,
+cloud/gcp/gcp_full_network_traffic_packet_capture.yml,exploratory,issue because there are stars in the query values,2022-04-28,980a7598-1e7f-4962-9372-2d754c930d0e
+cloud/gworkspace,exploratory,no test data available,2021-09-23,
+cloud/m365,exploratory,no test data available,2021-09-23,
+cloud/okta,exploratory,no test data available,2021-09-23,
+compliance/,exploratory,not checked yet,2021-05-04,
+deprecated,bad,deprecated sigma rules e.g. https://github.com/SigmaHQ/sigma/tree/master/rules/windows/deprecated,2022-01-26,
+generic/generic_brute_force.yml,bad,count not implemented,2021-05-04,
+linux/builtin/lnx_file_copy.yml,exploratory,no test data,2022-04-29,7a14080d-a048-4de8-ae58-604ce58a795b
+linux/lnx,bad,not reviewed,2021-05-04,
+linux/lnx_buffer_overflows.yml,bad,causing ES exceptions,2021-05-04,
+linux/macos_,bad,not yet reviewed,2021-05-04,
+linux/process_creation/proc_creation_lnx_at_command.yml,exploratory,seems very broad,2022-04-29,d2d642d7-b393-43fe-bae4-e81ed5915c4b
+linux/process_creation/proc_creation_lnx_file_deletion.ym,good,no test data,2022-04-29,30aed7b6-d2c1-4eaf-9382-b6bc43e50c5
+linux/process_creation/proc_creation_lnx_process_discovery.yml,good,no test data,2022-04-29,4e2f5868-08d4-413d-899f-dc2f1508627b
+linux/process_creation/proc_creation_lnx_system_info_discovery.yml,good,no test data,2022-04-29,42df45e7-e6e9-43b5-8f26-bec5b39cc239
+lnx_susp_zmap,good,Part of Timesketch repo,2022-04-22,5266a592-b793-11ea-b3de-0242ac130004
+network/cisco/aaa/cisco_,exploratory,no test data available,2021-05-04,
+network/net_,exploratory,no test data available,2021-05-04,
+network/net_dns_c2_detection.yml,bad,Part of the rule not supported in TS,2022-04-29,1ec4b281-aa65-46a2-bdae-5fd830ed914e
+network/net_firewall_high_dns_bytes_out.yml,bad,Part of the rule not supported in TS,2022-04-29,3b6e327d-8649-4102-993f-d25786481589
+network/net_firewall_high_dns_requests_rate.yml,bad,Part of the rule not supported in TS,2022-04-29,51186749-7415-46be-90e5-6914865c825a
+network/net_high_dns_bytes_out.yml,bad,Part of the rule not supported in TS,2022-04-29,0f6c1bf5-70a5-4963-aef9-aab1eefb50bd
+network/net_high_dns_requests_rate.yml,bad,Part of the rule not supported in TS,2022-04-29,b4163085-4001-46a3-a79a-55d8bbbc7a3a
+network/net_high_null_records_requests_rate.yml,bad,Part of the rule not supported in TS,2022-04-29,44ae5117-9c44-40cf-9c7c-7edad385ca70
+network/net_high_txt_records_requests_rate.yml,bad,Part of the rule not supported in TS,2022-04-29,f0a8cedc-1d22-4453-9c44-8d9f4ebd5d35
+network/net_susp_network_scan_by_ip.yml,bad,Part of the rule not supported in TS,2022-04-29,4601eaec-6b45-4052-ad32-2d96d26ce0d8
+network/net_susp_network_scan_by_port.yml,bad,Part of the rule not supported in TS,2022-04-29,fab0ddf0-b8a9-4d70-91ce-a20547209afb
+network/zeek/zeek,exploratory,no test data available,2021-05-04,
+network/zeek/zeek_dce_rpc_domain_user_enumeration.yml,bad,Part of the rule not supported in TS,2022-04-29,66a0bdc6-ee04-441a-9125-99d2eb547942
+network_connection/net_connection_lnx_back_connect_shell_dev.yml,exploratory,rule seems way to broad and no test data,2022-04-29,83dcd9f6-9ca8-4af7-a16e-a1c7a6b51871
+other/godmode_sigma_rule.yml,good,no test data available,2022-04-28,def6caac-a999-4fc9-8800-cfeff700ba98
+powershell_icmp_exfiltration.yml,good,no test data,2021-05-04,
+powershell_invoke_obfuscation_clip+.yml,good,no test data,2021-05-04,
+powershell_invoke_obfuscation_obfuscated_iex.yml,good,no test data,2021-05-04,
+powershell_invoke_obfuscation_stdin+.yml,good,no test data,2021-05-04,
+powershell_invoke_obfuscation_var+.yml,good,no tests data,2021-05-04,
+powershell_invoke_obfuscation_via_compress.yml, good, no test data,2021-05-04,
+powershell_invoke_obfuscation_via_rundll.yml,good, no test data,2021-05-04,
+powershell_invoke_obfuscation_via_stdin.yml,good, no test data,2021-05-04,
+powershell_invoke_obfuscation_via_use_clip.yml,good, no test data,2021-05-04,
+powershell_invoke_obfuscation_via_use_mhsta.yml,good, no test data,2021-05-04,
+powershell_invoke_obfuscation_via_use_rundll32.yml,good, no test data,2021-05-04,
+powershell_invoke_obfuscation_via_var++.yml,experimental, not sure why but this rule looked werid,2021-05-04,
+powershell_malicious_commandlets.yml,good, no sample data,2021-05-04,
+powershell_malicious_keywords.yml,good,,2021-05-04,
+powershell_nishang_malicious_commandlets.yml,bad, does not parse,2021-05-04,
+powershell_ntfs_ads_access.yml,bad, does not parse,2021-05-04,
+powershell_prompt_credentials.yml.good, good, no test data,2021-05-04,
+powershell_psattack.yml, good, no sample data,2021-05-04,
+powershell_remote_powershell_session.yml, good, no sample data,2021-05-04,
+powershell_shellcode_b64.yml, good, no sample data,2021-05-04,
+powershell_suspicious_download.yml, good, no sample data,2021-05-04, 
+powershell_suspicious_export_pfxcertificate.yml, good, no sample data,2021-05-04,
+powershell_suspicious_getprocess_lsass.yml, good, no sample data,2021-05-04,
+powershell_suspicious_invocation_generic.yml, bad, Connection timeout potentially because the all of them statement,2021-05-04,
+powershell_suspicious_invocation_specific.yml, good, no sample data ,2021-05-04,
+powershell_suspicious_keywords.yml, good, no sample data,2021-05-04,
+powershell_suspicious_mounted_share_deletion.yml, good, no sample data,2021-05-04,
+powershell_suspicious_profile_create.yml, bad, special char not allowed,2021-05-04,
+powershell_winlogon_helper_dll.yml, good, no sample data,2021-05-04,
+powershell_wmimplant.yml, good, no sample data,2021-05-04,
+powershell_wsman_com_provider_no_powershell.yml, good, no sample data,2021-05-04,
+powershell_xor_commandline.yml, good, no sample data,2021-05-04,
+proxy/proxy_,exploratory,no test data available,2021-05-04,
+rules/windows/file_event/sysmon_startup_folder_file_write.yml,bad,no good sample found 9ac87754adb88a8ac14969bb4adaed043f783d7264d0846365ca0cf4b7f80ffb,2021-10-26,2aa0a6b4-a865-495b-ab51-c28249537b75
+rules/windows/file_event/sysmon_susp_desktop_ini.yml,good,9ac87754adb88a8ac14969bb4adaed043f783d7264d0846365ca0cf4b7f80ffb,2021-10-26,81315b50-6b60-4d8f-9928-3466e1022515
+rules/windows/process_creation/sysmon_always_install_elevated_windows_installer.yml,bad,no good sample found e5874027b483a6bcac952f302eedcadb59f858e9d7cc1f89b08102c8dbc69160,2021-10-26,cd951fdc-4b2f-47f5-ba99-a33bf61e3770
+rules/windows/process_creation/win_susp_svchost.yml,good,cc565bd2909f2889f8369939c3b932030f4dddba3b52ec17a2b4961144b05aa6,2021-10-26,01d2e2a1-5f09-44f7-9fc1-24faa7479b6d
+sigma-schema.rx.yml,bad,Sigma internal filename,2021-11-19,
+sigma/rules/apt/apt_silence_downloader_v3.yml,bad,Part of the rule not supported in TS,2022-04-21,170901d1-de11-4de7-bccb-8fa13678d857
+sigma/rules/cloud/aws/aws_ec2_download_userdata.yml,bad,NotImplementedError,2021-11-19,26ff4080-194e-47e7-9889-ef7602efed0c
+sigma/rules/cloud/aws/aws_enum_listing.yml,bad,NotImplementedError,2021-11-19,e9c14b23-47e2-4a8b-8a63-d36618e33d70
+sigma/rules/cloud/aws/aws_lambda_function_created_or_invoked.yml,bad,NotImplementedError,2021-11-19,d914951b-52c8-485f-875e-86abab710c0b
+sigma/rules/cloud/aws/aws_macic_evasion.yml,bad,NotImplementedError,2021-11-19,91f6a16c-ef71-437a-99ac-0b070e3ad221
+sigma/rules/linux/auditd/lnx_auditd_cve_2021_3156_sudo_buffer_overflow.yml,bad,NotImplementedError,2021-11-19,5ee37487-4eb8-4ac2-9be1-d7d14cdc559f
+sigma/rules/linux/auditd/lnx_auditd_cve_2021_3156_sudo_buffer_overflow_brutforce.yml,bad,NotImplementedError,2021-11-19,b9748c98-9ea7-4fdb-80b6-29bed6ba71d2
+sigma/rules/linux/builtin/lnx_shell_priv_esc_prep.yml,bad,NotImplementedError,2021-11-19,444ade84-c362-4260-b1f3-e45e20e1a905
+sigma/rules/linux/modsecurity/modsec_mulitple_blocks.yml,bad,NotImplementedError,2021-11-19,a06eea10-d932-4aa6-8ba9-186df72c8d23
+sigma/rules/linux/other/lnx_susp_failed_logons_single_source.yml,bad,NotImplementedError,2021-11-19,fc947f8e-ea81-4b14-9a7b-13f888f94e18
+sigma/rules/windows/builtin/security/win_global_catalog_enumeration.yml,bad,Part of the rule not supported in TS,2022-04-21,619b020f-0fd7-4f23-87db-3f51ef837a34
+sigma/rules/windows/builtin/security/win_rare_schtasks_creations.yml,bad,Part of the rule not supported in TS,2022-04-21,b0d77106-7bb0-41fe-bd94-d1752164d066
+sigma/rules/windows/builtin/security/win_susp_failed_logons_explicit_credentials.yml,bad,Part of the rule not supported in TS,2022-04-21,196a29c2-e378-48d8-ba07-8a9e61f7fab9
+sigma/rules/windows/builtin/security/win_susp_failed_logons_single_process.yml,bad,Part of the rule not supported in TS,2022-04-21,fe563ab6-ded4-4916-b49f-a3a8445fe280
+sigma/rules/windows/builtin/security/win_susp_failed_logons_single_source.yml,bad,Part of the rule not supported in TS,2022-04-21,e98374a6-e2d9-4076-9b5c-11bdb2569995
+sigma/rules/windows/builtin/security/win_susp_failed_logons_single_source2.yml,bad,Part of the rule not supported in TS,2022-04-21,6309ffc4-8fa2-47cf-96b8-a2f72e58e538
+sigma/rules/windows/builtin/security/win_susp_failed_logons_single_source_kerberos.yml,bad,Part of the rule not supported in TS,2022-04-21,5d1d946e-32e6-4d9a-a0dc-0ac022c7eb98
+sigma/rules/windows/builtin/security/win_susp_failed_logons_single_source_kerberos2.yml,bad,Part of the rule not supported in TS,2022-04-21,4b6fe998-b69c-46d8-901b-13677c9fb663
+sigma/rules/windows/builtin/security/win_susp_failed_logons_single_source_kerberos3.yml,bad,Part of the rule not supported in TS,2022-04-21,bc93dfe6-8242-411e-a2dd-d16fa0cc8564
+sigma/rules/windows/builtin/security/win_susp_failed_logons_single_source_ntlm.yml,bad,Part of the rule not supported in TS,2022-04-21,f88bab7f-b1f4-41bb-bdb1-4b8af35b0470
+sigma/rules/windows/builtin/security/win_susp_failed_logons_single_source_ntlm2.yml,bad,Part of the rule not supported in TS,2022-04-21,56d62ef8-3462-4890-9859-7b41e541f8d5
+sigma/rules/windows/builtin/security/win_susp_failed_remote_logons_single_source.yml,bad,Part of the rule not supported in TS,2022-04-21,add2ef8d-dc91-4002-9e7e-f2702369f53a
+sigma/rules/windows/builtin/security/win_susp_multiple_files_renamed_or_deleted.yml,bad,Part of the rule not supported in TS,2022-04-21,97919310-06a7-482c-9639-92b67ed63cf8
+sigma/rules/windows/builtin/security/win_susp_samr_pwset.yml,bad,Part of the rule not supported in TS,2022-04-21,7818b381-5eb1-4641-bea5-ef9e4cfb5951
+sigma/rules/windows/builtin/system/win_rare_service_installs.yml,bad,Part of the rule not supported in TS,2022-04-21,66bfef30-22a5-4fcd-ad44-8d81e60922ae
+sigma/rules/windows/builtin/taskscheduler/win_rare_schtask_creation.yml,bad,Part of the rule not supported in TS,2022-04-21,b20f6158-9438-41be-83da-a5a16ac90c2b
+sigma/rules/windows/builtin/win_susp_failed_logons_explicit_credentials.yml,bad,NotImplementedError,2021-11-19,196a29c2-e378-48d8-ba07-8a9e61f7fab9
+sigma/rules/windows/builtin/win_susp_failed_logons_single_process.yml,bad,NotImplementedError,2021-11-19,fe563ab6-ded4-4916-b49f-a3a8445fe280
+sigma/rules/windows/builtin/win_susp_failed_logons_single_source2.yml,bad,NotImplementedError,2021-11-19,6309ffc4-8fa2-47cf-96b8-a2f72e58e538
+sigma/rules/windows/builtin/win_susp_failed_logons_single_source_kerberos.yml,bad,NotImplementedError,2021-11-19,5d1d946e-32e6-4d9a-a0dc-0ac022c7eb98
+sigma/rules/windows/builtin/win_susp_failed_logons_single_source_kerberos2.yml,bad,NotImplementedError,2021-11-19,4b6fe998-b69c-46d8-901b-13677c9fb663
+sigma/rules/windows/builtin/win_susp_failed_logons_single_source_kerberos3.yml,bad,NotImplementedError,2021-11-19,bc93dfe6-8242-411e-a2dd-d16fa0cc8564
+sigma/rules/windows/builtin/win_susp_failed_logons_single_source_ntlm.yml,bad,NotImplementedError,2021-11-19,f88bab7f-b1f4-41bb-bdb1-4b8af35b0470
+sigma/rules/windows/builtin/win_susp_failed_logons_single_source_ntlm2.yml,bad,NotImplementedError,2021-11-19,56d62ef8-3462-4890-9859-7b41e541f8d5
+sigma/rules/windows/builtin/win_susp_failed_remote_logons_single_source.yml,bad,NotImplementedError,2021-11-19,add2ef8d-dc91-4002-9e7e-f2702369f53a
+sigma/rules/windows/builtin/win_susp_multiple_files_renamed_or_deleted.yml,bad,NotImplementedError,2021-11-19,97919310-06a7-482c-9639-92b67ed63cf8
+sigma/rules/windows/dns_query/dns_query_possible_dns_rebinding.yml,bad,NotImplementedError,2021-11-19,
+sigma/rules/windows/dns_query/dns_query_win_possible_dns_rebinding.yml,bad,Part of the rule not supported in TS,2022-04-21,eb07e747-2552-44cd-af36-b659ae0958e4
+sigma/rules/windows/image_load/image_load_mimikatz_inmemory_detection.yml,bad,Part of the rule not supported in TS,2022-04-21,c0478ead-5336-46c2-bd5e-b4c84bc3a36e
+sigma/rules/windows/powershell/powershell_script/posh_ps_cl_invocation_lolscript_count.yml,bad,Part of the rule not supported in TS,2022-04-21,f588e69b-0750-46bb-8f87-0e9320d57536
+sigma/rules/windows/powershell/powershell_script/posh_ps_cl_mutexverifiers_lolscript_count.yml,bad,Part of the rule not supported in TS,2022-04-21,6609c444-9670-4eab-9636-fe4755a851ce
+sigma/rules/windows/powershell/powershell_script/powershell_cl_invocation_lolscript_count.yml,bad,NotImplementedError,2021-11-19,f588e69b-0750-46bb-8f87-0e9320d57536
+sigma/rules/windows/powershell/powershell_script/powershell_cl_mutexverifiers_lolscript_count.yml,bad,NotImplementedError,2021-11-19,6609c444-9670-4eab-9636-fe4755a851ce
+sigma/tests/,bad,Sigma internal folder name,2021-11-19,
+sigma/tools/config/,bad,Sigma internal folder name,2021-11-19,
+sysmon_uipromptforcreds_dlls.yml,bad, Failed to parse query,2021-05-05,
+sysmon_wsman_provider_image_load.yml,bad, Failed to parse query,2021-05-05,
+tools/config/generic/,bad,Sigma internal tools with yaml files in them,2021-11-19,
+web/web_,exploratory,no test data available,2021-05-04,
+web/web_multiple_suspicious_resp_codes_single_source.yml,bad,Part of the rule not supported in TS,2022-04-29,6fdfc796-06b3-46e8-af08-58f3505318af
+win_lsass_access_non_system_account.yml,bad,Failed to parse query,2021-05-04,
+win_powershell_web_request.yml, bad, multiple rules in one file,2021-05-04,
+windows/builtin/security/win_disable_event_logging.yml,good,no test data,2022-04-28,69aeb277-f15f-4d2d-b32a-55e883609563
+windows/builtin/security/win_susp_dsrm_password_change.yml,good,EVTX-ATTACK-SAMPLES/Credential_Access/4794_DSRM_password_change_t1098.evtx,2022-04-28,53ad8e36-f573-46bf-97e4-15ba5bf4bb51
+windows/builtin/security/win_susp_net_recon_activity.yml,good,no test data,2022-04-29,968eef52-9cff-4454-8992-1e74b9cbad6c
+windows/builtin/security/win_susp_wmi_login.yml,good,no test data,2022-04-29,5af54681-df95-4c26-854f-2565e13cfab0
+windows/builtin/security/win_sysmon_channel_reference_deletion.yml,good,no test data available,2022-04-28,18beca67-ab3e-4ee3-ba7a-a46ca8d7d0cc
+windows/builtin/security/win_user_added_to_local_administrators.yml,good,no test data,2022-04-29,c265cf08-3f99-46c1-8d59-328247057d57
+windows/builtin/system/win_apt_carbonpaper_turla.yml,good,no test data,2022-04-28,1df8b3da-b0ac-4d8a-b7c7-6cb7c24160e4
+windows/builtin/system/win_possible_zerologon_exploitation_using_wellknown_tools.yml,good,no test data available,2022-04-28,18f37338-b9bd-4117-a039-280c81f7a596
+windows/builtin/system/win_susp_sam_dump.yml,good,no test data,2022-04-28,839dd1e8-eda8-4834-8145-01beeee33acd
+windows/builtin/system/win_susp_system_update_error.yml,good,no test data,2022-04-28,13cfeb75-9e33-4d04-b0f7-ab8faaa95a59
+windows/builtin/system/win_system_application_sysmon_crash.yml,good,no test data available,2022-04-28,4d7f1827-1637-4def-8d8a-fd254f9454df
+windows/builtin/system/win_system_defender_disabled.yml,good,no test data available,2022-04-28,6c0a7755-6d31-44fa-80e1-133e57752680
+windows/builtin/system/win_system_susp_eventlog_cleared.yml,good,EVTX-ATTACK-SAMPLES/Defense_Evasion/DE_104_system_log_cleared.evtx,2022-04-28,a62b37e0-45d3-48d9-a517-90c1a1b0186b
+windows/builtin/win_global_catalog_enumeration.yml,bad, Aggregations not implemented for this backend,2021-05-04,
+windows/builtin/win_invoke_obfuscation_clip+_services.yml, bad, No condition found,2021-05-04,
+windows/builtin/windefend/win_defender_amsi_trigger.yml,exploratory,unclear what source_name AMSI is,2022-04-28,ea9bf0fa-edec-4fb8-8b78-b119f2528186
+windows/builtin/windefend/win_defender_disabled.yml,good,no test data available,2022-04-28,fe34868f-6e0e-4882-81f6-c43aa8f15b62
+windows/builtin/windefend/win_defender_history_delete.yml,good,no test data,2022-04-28,2afe6582-e149-11ea-87d0-0242ac130003
+windows/builtin/windefend/win_defender_tamper_protection_trigger.yml,good,no test data available,2022-04-28,49e5bc24-8b86-49f1-b743-535f332c2856
+windows/builtin/windefend/win_defender_tamper_protection_trigger.yml,good,no test data available,2022-04-28,49e5bc24-8b86-49f1-b743-535f332c2856
+windows/builtin/windefend/win_defender_threat.yml,good,test data available in evtx,2022-04-28,57b649ef-ff42-4fb0-8bf6-62da243a1708
+windows/create_remote_thread/sysmon_password_dumper_lsass.yml,exploratory,needs to be reviewed because of empty value maybe total rewrite for TS test data available in EVTX-ATTACK-SAMPLES/Credential_Access/CA_sysmon_hashdump_cmd_meterpreter.evtx,2022-04-28,f239b326-2f41-4d6b-9dfa-c846a60ef505
+windows/create_remote_thread/sysmon_suspicious_remote_thread.yml,bad,https://github.com/SigmaHQ/sigma/blob/c877a9a68dc9aca87dc849f75b0c49f676e03409/rules/windows/create_remote_thread/sysmon_suspicious_remote_thread.yml#L64 slash u causing parser to error out,2021-05-04,
+windows/create_stream_hash/sysmon_regedit_export_to_ads,bad,endswith problem,2021-05-04,
+windows/dns_query/sysmon_,bad,no test data available,2021-05-04,
+windows/driver_load/driver_load_susp_temp_use.yml,good,no test data,2022-04-28,2c4523d5-d481-4ed0-8ec3-7fbf0cb41a75
+windows/file_event/file_event_win_cred_dump_tools_dropped_files.yml,good,potentially expensive,2022-04-28,8fbf3271-1ef6-4e94-8210-03c2317947f6
+windows/file_event/file_event_win_powershell_exploit_scripts.yml,exploratory,double quotes problem,2022-04-28,f331aa1f-8c53-4fc3-b083-cc159bc971cb
+windows/file_event/sysmon_creation_system_file.yml,bad,no evtx sample only sylog,2021-10-26,d5866ddf-ce8f-4aea-b28e-d96485a20d3d
+windows/file_event/sysmon_creation_system_file.yml,bad,slash au in audio breaks things,2021-05-04,
+windows/file_event/sysmon_hack_dumpert.yml,bad,no rules found (section),2021-05-04,
+windows/file_event/sysmon_powershell_exploit_scripts.yml,bad,endswith problem does not match with xml_string #TODO,2021-05-04,
+windows/file_event/sysmon_startup_folder_file_write.yml,bad, slashes issue in path,2021-05-04,
+windows/file_event/sysmon_susp_adsi_cache_usage.yml,bad,slashes issue in path ,2021-05-04,
+windows/file_event/sysmon_susp_clr_logs.yml,bad,slashes issue in path,2021-05-04,
+windows/file_event/sysmon_susp_desktop_ini.yml,bad,1761,2021-05-04,
+windows/file_event/sysmon_susp_procexplorer_driver_created_in_tmp_folder.yml,bad,1761,2021-05-04,
+windows/file_event/sysmon_tsclient_filewrite_startup.yml,bad,1761,2021-05-04,
+windows/file_event/sysmon_webshell_creation_detect.yml,bad,1761,2021-05-04,
+windows/file_event/sysmon_wmi_persistence_script_event_consumer_write.yml,bad,1761,2021-05-04,
+windows/file_event/win_outlook_c2_macro_creation.yml,bad,1761,2021-05-04,
+windows/file_event/win_susp_desktopimgdownldr_file.yml,bad,1761,2021-05-04,
+windows/image_load/sysmon_pcre_net_load.yml,bad,1761,2021-05-04,
+windows/image_load/sysmon_susp_fax_dll.yml,bad,1761,2021-05-04,
+windows/image_load/sysmon_susp_office_dotnet_assembly_dll_load.yml,bad,1761,2021-05-04,
+windows/image_load/sysmon_susp_office_dotnet_gac_dll_load.yml,bad,1761,2021-05-04,
+windows/image_load/sysmon_svchost_dll_search_order_hijack.yml,bad,1761,2021-05-04,
+windows/image_load/sysmon_tttracer_mod_load.yml,bad, multiple riles in it,2021-05-04,
+windows/image_load/sysmon_uac_bypass_via_dism.yml,bad,1761,2021-05-04,
+windows/image_load/sysmon_wmi_module_load.yml,bad,1761,2021-05-04,
+windows/image_load/sysmon_wmi_persistence_commandline_event_consumer.yml,bad,1761,2021-05-04,
+windows/malware/av_exploiting.yml,good,win10_4703_SeDebugPrivilege_enabled.evtx,2021-05-21,
+windows/malware/av_password_dumper.yml,good,win10_4703_SeDebugPrivilege_enabled.evtx,2021-05-21,
+windows/malware/av_relevant_files.yml,bad,(unicode error) 'unicodeescape' codec can't decode bytes in position 550-551: truncated \UXXXXXXXX escape,2021-05-21,
+windows/malware/av_webshell.yml,bad,startswith problem,2021-05-21,
+windows/malware/mal_azorult_reg.yml,bad, endswith,2021-05-21,
+windows/malware/win_mal_darkside.yml,bad, no rules found,2021-05-21,
+windows/malware/win_mal_flowcloud.yml,bad, endswith,2021-05-21,
+windows/malware/win_mal_ryuk.yml,bad, endswith and   raise ValueError More than one matching log source contains a rewrite part ,2021-05-21,
+windows/network_connection,exploratory,no test data available,2021-05-04,
+windows/network_connection/net_connection_win_crypto_mining.yml,good,might be expensive rule,2022-04-28,fa5b1358-b040-4403-9868-15f7d9ab6329
+windows/network_connection/sysmon_notepad_network_connection.yml,bad,no hits in e70f141f138d899c80ee9d94792e4e4c6b6d5e2e8cb59f9c3d3a8dde68db5cd4,2021-10-26,e81528db-fc02-45e8-8e98-4e84aba1f10b
+windows/other/win_,bad,no test data available,2021-05-04,
+windows/pipe_created/sysmon_,bad,no test data available,2021-05-04,
+windows/powershell/powershell_CL_Invocation_LOLScript.yml, bad,bot working, 2021-05-04,
+windows/powershell/powershell_CL_Invocation_LOLScript_v2.yml,bad,Aggregations not implemented for this backend,2021-05-04,
+windows/powershell/powershell_CL_Mutexverifiers_LOLScript.yml, bad,not tested, 2021-05-04,
+windows/powershell/powershell_CL_Mutexverifiers_LOLScript_v2.yml,bad,Aggregations not implemented for this backend,2021-05-04,
+windows/powershell/powershell_accessing_win_api.yml,good,,2021-05-04,
+windows/powershell/powershell_alternate_powershell_hosts.yml,good,,2021-05-04,
+windows/powershell/powershell_bad_opsec_artifacts.yml,good,,2021-05-04,
+windows/powershell/powershell_classic/posh_pc_delete_volume_shadow_copies.yml,good,no test data but looks fine,2022-04-28,87df9ee1-5416-453a-8a08-e8d4a51e9ce1
+windows/powershell/powershell_classic/posh_pc_remote_powershell_session.yml,good,no test data,2022-04-28,60167e5c-84b2-4c95-a7ac-86281f27c445
+windows/powershell/powershell_clear_powershell_history.yml,good, no examples,2021-05-04,
+windows/powershell/powershell_cmdline_reversed_strings.yml, good,,2021-05-04,
+windows/powershell/powershell_cmdline_special_characters.yml,bad,does not work,2021-05-04,
+windows/powershell/powershell_cmdline_specific_comb_methods.yml,good,,2021-05-04,
+windows/powershell/powershell_code_injection.yml,bad,no test data,2021-05-04,
+windows/powershell/powershell_create_local_user.yml,good,,2021-05-04,
+windows/powershell/powershell_data_compressed.yml,good,,2021-05-04,
+windows/powershell/powershell_decompress_commands.yml,good,,2021-05-04,
+windows/powershell/powershell_dnscat_execution.yml,good,,2021-05-04,
+windows/powershell/powershell_downgrade_attack.yml,bad,startswith,2021-05-04,
+windows/powershell/powershell_exe_calling_ps.yml,bad,strartswith,2021-05-04,
+windows/powershell/powershell_get_clipboard.yml,good,no test data,2021-05-04,
+windows/powershell/powershell_script/posh_ps_susp_win32_shadowcopy.yml,good,no test data,2022-04-28,e17121b4-ef2a-4418-8a59-12fb1631fa9e
+windows/powershell/powershell_script/posh_ps_susp_zip_compress.yml,good,no test data available,2022-04-28,b7a3c9a3-09ea-4934-8864-6a32cacd98d9
+windows/powershell/powershell_script/powershell_web_request.yml,bad, very noisy 3402ef40e1e748a6d1e62cc80d8319a132683a326803ed812e4e386f04455a12 and 4df37056407ca0353e2357399ec8f2bd7583b6d10fc5d1d4f6744b9415a1ce2f,2021-10-26,9fc51a3c-81b3-4fa7-b35f-7c02cf10fd2d
+windows/process_access/proc_access_win_lazagne_cred_dump_lsass_access.yml,exploratory,double quotes problem,2022-04-28,4b9a8556-99c4-470b-a40c-9c8d02c77ed0
+windows/process_access/proc_access_win_mimikatz_trough_winrm.yml,good,no test data,2022-04-29,aa35a627-33fb-4d04-a165-d33b4afca3e8
+windows/process_access/sysmon_,bad,no test data available,2021-05-04,
+windows/process_creation/,bad,no test data available,2021-05-04,
+windows/process_creation/process_creation_powershell_web_request.yml,bad, very noisy 3402ef40e1e748a6d1e62cc80d8319a132683a326803ed812e4e386f04455a12 and 4df37056407ca0353e2357399ec8f2bd7583b6d10fc5d1d4f6744b9415a1ce2f,2021-10-26,9fc51a3c-81b3-4fa7-b35f-7c02cf10fd2d
+windows/process_creation/win_malware_script_dropper.yml,bad,cannot parse 3402ef40e1e748a6d1e62cc80d8319a132683a326803ed812e4e386f04455a12,2021-10-26,cea72823-df4d-4567-950c-0b579eaf0846
+windows/process_creation/win_non_interactive_powershell.yml,good,good 0628997695cf9655c523896f1703472cee08b66eb5ae6bd385433b73105f4ca9,2021-10-26,f4bbd493-b796-416e-bbf2-121235348529
+windows/process_creation/win_office_shell.yml,good,479eb1c4644de672a5b221c6ad19b5b1cbd2875b45af76a291e9ff594d651b68,2021-10-25,
+windows/process_creation/win_proc_wrong_parent.yml,exploratory,no test data for evtx d01bb6498156f94164d67cc854b64fb12077886f2c7f46f503a1c2dbdfd57169,2021-10-26,96036718-71cc-4027-a538-d1587e0006a7
+windows/process_creation/win_service_stop.yml,good,501113c57563009a37feb467c0828c153a1f7097f16c4038636f3651a266189e,2021-10-26,eb87818d-db5d-49cc-a987-d5da331fbd90
+windows/process_creation/win_shadow_copies_deletion.yml, good,62a8fc79a775abce91c4cb87c7f3cdc4cbdf85d0f0083c72703052710d645119,2021-10-25, 
+windows/process_creation/win_susp_net_execution.yml,good,501113c57563009a37feb467c0828c153a1f7097f16c4038636f3651a266189e,2021-10-26,183e7ea8-ac4b-4c23-9aec-b3dac4e401ac
+windows/process_creation/win_system_exe_anomaly.yml,exploratory,rule to noisy 9ac87754adb88a8ac14969bb4adaed043f783d7264d0846365ca0cf4b7f80ffb,2021-10-26,e4a6b256-3e47-40fc-89d2-7a477edd6915
+windows/raw_access_thread/,bad,no test data available,2021-05-04,
+windows/registry_event/,bad,no test data available,2021-05-04,
+windows/registry_event/sysmon_asep_reg_keys_modification.yml, bad,to long query needs to be tuned 0628997695cf9655c523896f1703472cee08b66eb5ae6bd385433b73105f4ca9,2021-10-26,17f878b8-9968-4578-b814-c4217fc5768c
+windows/registry_event/sysmon_susp_download_run_key.yml,bad,no evtx sample found,2021-10-26,9c5037d1-c568-49b3-88c7-9846a5bdc2be
+windows/sysmon/sysmon_config_modification.yml,good,no test data available,2022-04-28,8ac03a65-6c84-4116-acad-dc1558ff7a77
+windows/sysmon/sysmon_config_modification_error.yml,good,no test data available,2022-04-28,815cd91b-7dbc-4247-841a-d7dd1392b0a8
+windows/sysmon/sysmon_config_modification_status.yml,good,no test data available,2022-04-28,1f2b5353-573f-4880-8e33-7d04dcf97744
+windows/sysmon/sysmon_process_hollowing.yml,good,no test data available,2022-04-28,c4b890e5-8d8c-4496-8c66-c805753817cd
+windows/wmi_event/,bad,no test data available,2021-05-04,
+network/zeek/zeek_rdp_public_listener.yml,bad, no sampe data available for zeek and it would flag every event so very noisy rule,2022-06-08,1fc0809e-06bf-4de3-ad52-25e5263b7623 

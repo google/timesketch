@@ -32,13 +32,15 @@ class SigmaPlugin(interface.BaseAnalyzer):
         self._rule = kwargs.get("rule")
         super().__init__(index_name, sketch_id, timeline_id=timeline_id)
 
-    def run_sigma_rule(self, query, rule_name, tag_list=None):
+    def run_sigma_rule(
+        self, query, rule_name, tag_list=None, status_good=True):
         """Runs a sigma rule and applies the appropriate tags.
 
         Args:
             query: OpenSearch search query for events to tag.
             rule_name: rule_name to apply to matching events.
             tag_list: a list of additional tags to be added to the event(s)
+            status_good (bool): rule status based on the sigma_rule_status csv
 
         Returns:
             int: number of events tagged.
@@ -47,24 +49,27 @@ class SigmaPlugin(interface.BaseAnalyzer):
             tag_list = []
         return_fields = []
         tagged_events_counter = 0
-        events = self.event_stream(query_string=query, return_fields=return_fields)
+        events = self.event_stream(
+            query_string=query, return_fields=return_fields
+        )
         for event in events:
             ts_sigma_rules = event.source.get("ts_sigma_rule", [])
             ts_sigma_rules.append(rule_name)
             event.add_attributes({"ts_sigma_rule": list(set(ts_sigma_rules))})
-            ts_ttp = event.source.get("ts_ttp", [])
-            special_tags = []
-            for tag in tag_list:
-                # Special handling for sigma tags that TS considers TTPS
-                # https://car.mitre.org and https://attack.mitre.org
-                if tag.startswith(("attack.", "car.")):
-                    ts_ttp.append(tag)
-                    special_tags.append(tag)
-            # ad the remaining tags as plain tags
-            tags_to_add = list(set(tag_list) - set(special_tags))
-            event.add_tags(tags_to_add)
-            if len(ts_ttp) > 0:
-                event.add_attributes({"ts_ttp": list(set(ts_ttp))})
+            if status_good:
+                ts_ttp = event.source.get("ts_ttp", [])
+                special_tags = []
+                for tag in tag_list:
+                    # Special handling for sigma tags that TS considers TTPs
+                    # https://car.mitre.org and https://attack.mitre.org
+                    if tag.startswith(("attack.", "car.")):
+                        ts_ttp.append(tag)
+                        special_tags.append(tag)
+                # add the remaining tags as plain tags
+                tags_to_add = list(set(tag_list) - set(special_tags))
+                event.add_tags(tags_to_add)
+                if len(ts_ttp) > 0:
+                    event.add_attributes({"ts_ttp": list(set(ts_ttp))})
             event.commit()
             tagged_events_counter += 1
         return tagged_events_counter
@@ -82,7 +87,8 @@ class SigmaPlugin(interface.BaseAnalyzer):
 
         rule = self._rule
         if not rule:
-            logger.error("No  Sigma rules found. Check SIGMA_RULES_FOLDERS")
+            logger.error("No  Sigma rule given.")
+            return "Unable to run, no rule given to the analyzer"
         rule_name = rule.get("title", "N/A")
         problem_strings = []
         output_strings = []
@@ -91,12 +97,17 @@ class SigmaPlugin(interface.BaseAnalyzer):
         try:
             sigma_rule_counter += 1
             tagged_events_counter = self.run_sigma_rule(
-                rule.get("es_query"), rule.get("file_name"), tag_list=rule.get("tags")
+                rule.get("es_query"),
+                rule.get("file_name"),
+                tag_list=rule.get("tags"),
+                status_good=rule.get('ts_use_in_analyzer'),
             )
             tags_applied[rule.get("file_name")] += tagged_events_counter
         except:  # pylint: disable=bare-except
             logger.error(
-                "Problem with rule in file {0:s}: ".format(rule.get("file_name")),
+                "Problem with rule in file {0:s}: ".format(
+                    rule.get("file_name")
+                ),
                 exc_info=True,
             )
             problem_strings.append("* {0:s}".format(rule.get("file_name")))
@@ -159,7 +170,10 @@ class SigmaPlugin(interface.BaseAnalyzer):
         Returns:
             sigma_rules All Sigma rules
         """
-        sigma_rules = [{"rule": rule} for rule in ts_sigma_lib.get_all_sigma_rules()]
+        sigma_rules = []
+        for rule in ts_sigma_lib.get_all_sigma_rules():
+            sigma_rules.append({"rule": rule})
+
         return sigma_rules
 
 
