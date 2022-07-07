@@ -325,6 +325,9 @@ class EventResourceTest(BaseTest):
         )
         self.assert400(response_400)
 
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
     def test_add_event_attribute(self):
         """Test adding an attribute to an event."""
         self.login()
@@ -337,11 +340,10 @@ class EventResourceTest(BaseTest):
                 "attr_value": "test_attr_value"
             }]
         }
+        response = self.client.put(self.resource_url, json=form_data)
 
-        self.client.put(self.resource_url, json=form_data)
-
-        # TODO: Add actual checks - checking if test runs in CI
-        self.assertEqual(1, 1)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json, {"test_attr_name": "test_attr_value"})
 
 
 class EventAnnotationResourceTest(BaseTest):
