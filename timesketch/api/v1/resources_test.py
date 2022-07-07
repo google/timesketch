@@ -336,7 +336,7 @@ class EventResourceTest(BaseTest):
                 "attr_name": "test_attr_name",
                 "attr_value": "test_attr_value"
             }]
-        }      
+        }
 
         self.client.put(self.resource_url, json=form_data)
 
