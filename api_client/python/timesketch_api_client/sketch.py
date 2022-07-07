@@ -1360,7 +1360,7 @@ class Sketch(resource.BaseResource):
             event_attributes.append(
                 {'attr_name': attr_name, 'attr_value': attr_value}
             )
-        
+
         form_data = {
             "searchindex_id": index,
             "event_id": event_id,
