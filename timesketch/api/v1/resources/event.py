@@ -416,7 +416,7 @@ class EventResource(resources.ResourceMixin, Resource):
           flush_interval=1
         )
 
-        return HTTP_STATUS_CODE_OK
+        return event_attributes, HTTP_STATUS_CODE_CREATED
 
 
 class EventTaggingResource(resources.ResourceMixin, Resource):

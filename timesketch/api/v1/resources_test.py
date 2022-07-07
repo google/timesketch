@@ -325,6 +325,24 @@ class EventResourceTest(BaseTest):
         )
         self.assert400(response_400)
 
+    def test_add_event_attribute(self):
+        """Test adding an attribute to an event."""
+        self.login()
+
+        form_data = {
+            "searchindex_id": "test",
+            "event_id": "test",
+            "attributes": [{
+                "attr_name": "test_attr_name",
+                "attr_value": "test_attr_value"
+            }]
+        }      
+
+        self.client.put(self.resource_url, json=form_data)
+
+        # TODO: Add actual checks - checking if test runs in CI
+        self.assertEqual(1, 1)
+
 
 class EventAnnotationResourceTest(BaseTest):
     """Test EventAnnotationResource."""
