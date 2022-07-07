@@ -1599,7 +1599,6 @@ class Sketch(resource.BaseResource):
         response = self.api.session.post(resource_url, json=form_data)
         return error.get_response_json(response, logger)
 
-
     def is_archived(self):
         """Return a boolean indicating whether the sketch has been archived."""
         if self._archived is not None:
