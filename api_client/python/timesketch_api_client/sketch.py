@@ -1342,6 +1342,37 @@ class Sketch(resource.BaseResource):
         response = self.api.session.post(resource_url, json=form_data)
         return error.get_response_json(response, logger)
 
+    def add_event_attributes(self, event_id, index, attributes):
+        """Add new attributes to a single event.
+
+        Args:
+            event_id: id of the event
+            index: The OpenSearch index name
+            attributes: a dict of attributes to add to the event.
+        Returns:
+             json response with any errors.
+        """
+        if self.is_archived():
+            raise RuntimeError("Unable to add attributes to an archived sketch.")
+
+        event_attributes = []
+        for attr_name, attr_value in attributes.items():
+            event_attributes.append(
+                {'attr_name': attr_name, 'attr_value': attr_value}
+            )
+        
+        form_data = {
+            "searchindex_id": index,
+            "event_id": event_id,
+            "attributes": event_attributes
+        }
+
+        resource_url = '{0:s}/sketches/{1:d}/event/'.format(
+            self.api.api_root, self.id
+        )
+        response = self.api.session.put(resource_url, json=form_data)
+        return error.get_response_json(response, logger)
+
     def get_event(self, event_id, index_id):
         """Gets information about an event, including raw event and meta data.
 
@@ -1567,6 +1598,7 @@ class Sketch(resource.BaseResource):
         )
         response = self.api.session.post(resource_url, json=form_data)
         return error.get_response_json(response, logger)
+
 
     def is_archived(self):
         """Return a boolean indicating whether the sketch has been archived."""

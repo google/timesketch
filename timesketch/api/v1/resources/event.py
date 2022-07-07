@@ -335,7 +335,7 @@ class EventResource(resources.ResourceMixin, Resource):
     @login_required
     def put(self, sketch_id):
         """Handles update requests for an event.
-        Handler for /api/v1/sketches/:sketch_id/event/
+        Handler for PUT requests to /api/v1/sketches/:sketch_id/event/
 
         Args:
             sketch_id: Integer primary key for a sketch database model
@@ -364,7 +364,7 @@ class EventResource(resources.ResourceMixin, Resource):
                 "attributes, searchindex_id and event_id must be provided."
             )
 
-        if type(attributes) is not list:
+        if not isinstance(attributes, list):
             abort(HTTP_STATUS_CODE_BAD_REQUEST,
             "Malformed attributes, must be a list.")
 
@@ -375,11 +375,11 @@ class EventResource(resources.ResourceMixin, Resource):
             if None in (attr_name, attr_value):
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
-                    "Malformed attributes, must contain a list of JSON objects "
+                    "Malformed attributes, must be a list of JSON objects "
                     "with 'attr_name' and 'attr_value' keys."
                 )
             event_attributes[str(attr_name)] = str(attr_value)
-        
+
         searchindex = SearchIndex.query.filter_by(index_name=searchindex_id).first()
         if not searchindex:
             abort(
