@@ -344,7 +344,6 @@ class EventResource(resources.ResourceMixin, Resource):
             An annotation in JSON (instance of flask.wrappers.Response)
         """
 
-        args = self.parser.parse_args()
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
@@ -355,15 +354,32 @@ class EventResource(resources.ResourceMixin, Resource):
             )
 
         form = request.json
-        attribute_name = form.get('attribute_name')
-        attribute_value = form.get('attribute_value')
-        if not (attribute_name or attribute_value):
+        attributes = form.get('attributes')
+        searchindex_id = form.get('searchindex_id')
+        event_id = form.get('event_id')
+
+        if None in (attributes, searchindex_id, event_id):
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-              "attribute_name and attribute_value must be provided."
+                "attributes, searchindex_id and event_id must be provided."
             )
 
-        searchindex_id = args.get("searchindex_id")
+        if type(attributes) is not list:
+            abort(HTTP_STATUS_CODE_BAD_REQUEST,
+            "Malformed attributes, must be a list.")
+
+        event_attributes = {}
+        for attribute in attributes:
+            attr_name = attribute.get('attr_name')
+            attr_value = attribute.get('attr_value')
+            if None in (attr_name, attr_value):
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    "Malformed attributes, must contain a list of JSON objects "
+                    "with 'attr_name' and 'attr_value' keys."
+                )
+            event_attributes[str(attr_name)] = str(attr_value)
+        
         searchindex = SearchIndex.query.filter_by(index_name=searchindex_id).first()
         if not searchindex:
             abort(
@@ -375,7 +391,6 @@ class EventResource(resources.ResourceMixin, Resource):
                 "Unable to query event on a closed search index.",
             )
 
-        event_id = args.get("event_id")
         indices = [
             t.searchindex.index_name
             for t in sketch.timelines
@@ -397,7 +412,7 @@ class EventResource(resources.ResourceMixin, Resource):
           searchindex_id,
           event['_type'],
           event_id=event_id,
-          event={attribute_name: attribute_value},
+          event=event_attributes,
           flush_interval=1
         )
 
