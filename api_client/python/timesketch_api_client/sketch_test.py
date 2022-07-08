@@ -55,3 +55,10 @@ class SketchTest(unittest.TestCase):
         self.assertIsInstance(event_data, dict)
         self.assertTrue('meta' in event_data)
         self.assertTrue('comments' in event_data['meta'])
+
+    def test_add_event_attributes(self):
+        """Test to add event attributes."""
+        new_attributes = {"attr_name": "attr_value"}
+        response = self.sketch.add_event_attributes(
+            "test_event", "test_index", new_attributes)
+        self.assertEqual(response, new_attributes)

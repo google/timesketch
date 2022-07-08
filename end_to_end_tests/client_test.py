@@ -13,6 +13,9 @@
 # limitations under the License.
 """End to end tests of Timesketch client functionality."""
 
+import json
+import time
+
 from timesketch_api_client import search
 
 from . import interface
@@ -141,6 +144,26 @@ class ClientTest(interface.BaseEndToEndTest):
         data_frame = search_obj.table
         count = len(data_frame)
         self.assertions.assertEqual(count, 1)
+
+    def test_add_event_attributes(self):
+        """Tests adding attributes to an event."""
+        sketch = self.api.create_sketch(name="Add event attributes test")
+        sketch.add_event(
+            "event message", "2020-01-01T00:00:00", "timestamp_desc")
+        # Wait for new timeline and event to be created
+        time.sleep(1)
+
+        # Have to use search to get event_id
+        search_client = search.Search(sketch)
+        search_response = json.loads(search_client.json)
+        searchindex_id = search_response["objects"][0]["_index"]
+        event_id = search_response["objects"][0]["_id"]
+
+        new_attributes = {"attr_name": "attr_value"}
+        response = sketch.add_event_attributes(
+            event_id, searchindex_id, new_attributes)
+
+        self.assertions.assertEqual(response, new_attributes)
 
 
 manager.EndToEndTestManager.register_test(ClientTest)
