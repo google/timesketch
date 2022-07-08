@@ -25,6 +25,8 @@ from flask_login import current_user
 
 from sigma.parser import exceptions as sigma_exceptions
 
+from sqlalchemy.exc import IntegrityError
+
 import timesketch.lib.sigma_util as ts_sigma_lib
 
 from timesketch.api.v1 import resources
@@ -35,12 +37,9 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_CONFLICT
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 
-
-from timesketch.models import sigma
 from timesketch.models.sigma import Sigma
 from timesketch.models import db_session
 
-from sqlalchemy.exc import IntegrityError
 
 
 logger = logging.getLogger("timesketch.api.sigma")
@@ -90,7 +89,7 @@ class SigmaResource(resources.ResourceMixin, Resource):
         """
         try:
             rule = Sigma.query.filter_by(rule_uuid=rule_uuid).first()
-        except Exception as e:
+        except Exception as e: # pylint: disable=broad-except
             logger.error(
                 "Unable to get the Sigma rule",
                 exc_info=True,
