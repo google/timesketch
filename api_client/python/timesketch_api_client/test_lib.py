@@ -50,7 +50,7 @@ def mock_session():
             if self._post_done:
                 return mock_response(*args, empty=True)
             return mock_response(*args, **kwargs)
-        
+
         def put(self, *args, **kwargs):
             """Mock PUT request handler."""
             return mock_response(*args, **kwargs)
