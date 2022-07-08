@@ -34,7 +34,6 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CONFLICT
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
-from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 
 
 from timesketch.models import sigma
@@ -112,7 +111,6 @@ class SigmaResource(resources.ResourceMixin, Resource):
                 "description": rule.description,
                 "created_at": str(rule.created_at),
                 "query_string": rule.query_string,
-                "title": rule.title,
                 "rule_yaml": rule.rule_yaml,
                 "status": rule.get_status.status,
             }
@@ -190,7 +188,7 @@ class SigmaResource(resources.ResourceMixin, Resource):
         try:
             db_session.add(sigma_rule)
             db_session.commit()
-        except IntegrityError as e:
+        except IntegrityError:
             abort(HTTP_STATUS_CODE_CONFLICT, "Rule already exist")
 
         if sigma_rule is None:

@@ -459,7 +459,7 @@ class SigmaResourceTest(BaseTest):
         "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
     )
     def test_post_sigma_resource(self):
-        """Authenticated request to create an sigma rule."""
+        """Authenticated request to POST an sigma rule."""
         MOCK_SIGMA_RULE = """
 title: Suspicious Installation of afafaf
 id: 5266a592-b793-11ea-b3de-afafaf
@@ -539,9 +539,20 @@ level: high
         )
 
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_CONFLICT)
-        response = self.client.get(self.resource_url + "abc/")
-        self.assertEqual(response.status_code, HTTP_STATUS_CODE_NOT_FOUND)
+        
+        
 
+    @mock.patch(
+    "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
+    def test_get_sigma_resource(self):
+        resource_url = "/api/v1/sigma/rule/"
+        """Authenticated request to GET an sigma rule."""
+        # TODO: Try to get a rule that does not exist
+        self.login()
+
+        response = self.client.get(resource_url + "foobar/")
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_NOT_FOUND)
 
 class SigmaListResourceTest(BaseTest):
     """Test Sigma resource."""
