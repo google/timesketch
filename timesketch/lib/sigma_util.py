@@ -422,10 +422,11 @@ def get_sigma_rule_status_path(rule_status_path=None):
         ValueError: Sigma rule status file is not readabale.
     """
 
-    if len(current_app.config.get('SIGMA_BLOCKLIST_CSV')) > 0:
-        logger.warning(
-            'Config value SIGMA_BLOCKLIST_CSV found. Use SIGMA_RULE_STATUS_CSV'
-        )
+    if current_app.config.get('SIGMA_BLOCKLIST_CSV'):
+        if len(current_app.config.get('SIGMA_BLOCKLIST_CSV')) > 0:
+            logger.warning(
+                'Config value SIGMA_BLOCKLIST_CSV found. Use SIGMA_RULE_STATUS_CSV'
+            )
 
     if not rule_status_path or rule_status_path == "":
         rule_status_path = current_app.config.get(
