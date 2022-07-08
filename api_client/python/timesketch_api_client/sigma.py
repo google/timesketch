@@ -156,7 +156,7 @@ class Sigma(resource.BaseResource):
         objects = self.data.get("objects")
         if not objects:
             logger.error(f"No Rule found for rule_uuid: {rule_uuid}")
-            raise ValueError(f"No Rule found for rule_uuid: {rule_uuid}")
+            raise ValueError("No Rule found for rule_uuid: %s",rule_uuid)
         rule_dict = objects[0]
         for key, value in rule_dict.items():
             self.set_value(key, value)
