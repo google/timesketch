@@ -89,7 +89,14 @@ class SigmaResource(resources.ResourceMixin, Resource):
         Returns:
             JSON sigma rule
         """
-        rule = Sigma.query.filter_by(rule_uuid=rule_uuid).first()
+        try:
+            rule = Sigma.query.filter_by(rule_uuid=rule_uuid).first()
+        except Exception as e:
+            logger.error(
+                "Unable to get the Sigma rule",
+                exc_info=True,
+            )
+            abort(HTTP_STATUS_CODE_NOT_FOUND, f"ValueError {e}")
 
         if not rule:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No rule found with this ID.")
