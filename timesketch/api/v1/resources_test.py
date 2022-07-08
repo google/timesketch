@@ -539,19 +539,17 @@ level: high
         )
 
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_CONFLICT)
-        
-        
+
 
     @mock.patch(
     "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
     )
     def test_get_sigma_resource(self):
-        resource_url = "/api/v1/sigma/rule/"
         """Authenticated request to GET an sigma rule."""
         # TODO: Try to get a rule that does not exist
         self.login()
 
-        response = self.client.get(resource_url + "foobar/")
+        response = self.client.get(self.resource_url + "foobar/")
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_NOT_FOUND)
 
 class SigmaListResourceTest(BaseTest):
