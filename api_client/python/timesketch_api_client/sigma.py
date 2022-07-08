@@ -155,8 +155,8 @@ class Sigma(resource.BaseResource):
         self.lazyload_data(refresh_cache=True)
         objects = self.data.get("objects")
         if not objects:
-            logger.error("Unable to parse rule with given text")
-            raise ValueError("No rules found.")
+            logger.error(f"No Rule found for rule_uuid: {rule_uuid}")
+            raise ValueError(f"No Rule found for rule_uuid: {rule_uuid}")
         rule_dict = objects[0]
         for key, value in rule_dict.items():
             self.set_value(key, value)
