@@ -110,8 +110,8 @@ class ClientTest(interface.BaseEndToEndTest):
 
     def test_get_sigma_rule(self):
         """Client Sigma object tests."""
-        rule = self.api.get_sigma_rule(rule_uuid="5266a592-b793-11ea-b3de-0242ac130004")
-        rule.from_rule_uuid("5266a592-b793-11ea-b3de-0242ac130004")
+        rule = self.api.get_sigma_rule(rule_uuid="b793-11ea-b3de-0242ac130004")
+        rule.from_rule_uuid("b793-11ea-b3de-0242ac130004")
         self.assertions.assertGreater(len(rule.attributes), 5)
         self.assertions.assertIsNotNone(rule)
         self.assertions.assertIn("Alexander", rule.author)
@@ -141,6 +141,8 @@ class ClientTest(interface.BaseEndToEndTest):
         data_frame = search_obj.table
         count = len(data_frame)
         self.assertions.assertEqual(count, 1)
+
+        self.assertRaises(ValueError, self.api.get_sigma_rule, "foobar")
 
 
 manager.EndToEndTestManager.register_test(ClientTest)
