@@ -186,6 +186,7 @@ class AttributeResource(resources.ResourceMixin, Resource):
 
         return response
 
+    @login_required
     def delete(self, sketch_id):
         """Handles delete request to the resource.
 
