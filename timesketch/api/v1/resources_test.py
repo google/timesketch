@@ -364,6 +364,25 @@ class EventResourceTest(BaseTest):
 
         self.assertEqual(response.status_code, 400)
 
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
+    def test_add_existing_event_attribute(self):
+        """Test adding an existing attribute to an event."""
+        self.login()
+
+        form_data = {
+            "searchindex_id": "test",
+            "event_id": "test",
+            "attributes": [{
+                "attr_name": "message",
+                "attr_value": "test_attr_value"
+            }]
+        }
+        response = self.client.put(self.resource_url, json=form_data)
+
+        self.assertEqual(response.status_code, 400)
+
 
 class EventAnnotationResourceTest(BaseTest):
     """Test EventAnnotationResource."""

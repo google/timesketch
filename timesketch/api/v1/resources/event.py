@@ -368,7 +368,7 @@ class EventResource(resources.ResourceMixin, Resource):
             abort(HTTP_STATUS_CODE_BAD_REQUEST,
             "Malformed attributes, must be a list.")
 
-        event_attributes = {}
+        new_attributes = {}
         for attribute in attributes:
             attr_name = attribute.get('attr_name')
             attr_value = attribute.get('attr_value')
@@ -378,7 +378,7 @@ class EventResource(resources.ResourceMixin, Resource):
                     "Malformed attributes, must be a list of JSON objects "
                     "with 'attr_name' and 'attr_value' keys."
                 )
-            event_attributes[str(attr_name)] = str(attr_value)
+            new_attributes[str(attr_name)] = str(attr_value)
 
         searchindex = SearchIndex.query.filter_by(index_name=searchindex_id).first()
         if not searchindex:
@@ -408,15 +408,26 @@ class EventResource(resources.ResourceMixin, Resource):
         # get_event will abort the request if the event isn't found.
         event = self.datastore.get_event(searchindex_id, event_id)
 
+        # Ensure that existing attributes cannot be overwritten.
+        existing_attributes = event.get("_source")
+        for attribute in new_attributes:
+            if attribute in existing_attributes:
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    "Attribute '{0!s}' already exists for event.".format(
+                        attribute
+                    ),
+            )
+
         self.datastore.import_event(
           searchindex_id,
           event['_type'],
           event_id=event_id,
-          event=event_attributes,
+          event=new_attributes,
           flush_interval=1
         )
 
-        return event_attributes, HTTP_STATUS_CODE_CREATED
+        return new_attributes, HTTP_STATUS_CODE_CREATED
 
 
 class EventTaggingResource(resources.ResourceMixin, Resource):
