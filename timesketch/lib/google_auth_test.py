@@ -274,9 +274,9 @@ class TestGoogleCloudIAP(BaseTest):
     def test_invalid_algorithm_raises_jwt_validation_error(self):
         """Test to validate a JWT with invalid algorithm."""
 
-        # Hard coding an invalid JWT encoded with MOCK_EC_PRIVATE_KEY as newer
-        # versions of PyJWT won't encode a JWT with HS256 as alg and an
-        # asymmetric key as the key.
+        # Hard coding a JWT with MOCK_EC_PRIVATE_KEY as key and "HS256" as alg
+        # in the header. Newer versions of PyJWT won't encode JWTs with this
+        # configuration.
         test_jwt = (
             b'eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsImtpZCI6ImlhcF8xMjM0In0.eyJzd'
             b'WIiOiIxMjM0NTY3ODkwIiwiZW1haWwiOiJ0ZXN0QGV4YW1wbGUuY29tIiwiaGQiOi'
