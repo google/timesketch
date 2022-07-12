@@ -336,6 +336,11 @@ export default {
       if (this.tagMetadata[tag]) {
         return _.extend(tagInfo, this.tagMetadata[tag])
       } else {
+        for (var regex in this.tagMetadata['regexes']) {
+          if (tag.match(regex)) {
+            return _.extend(tagInfo, this.tagMetadata['regexes'][regex])
+          }
+        }
         return _.extend(tagInfo, this.tagMetadata.default)
       }
     },

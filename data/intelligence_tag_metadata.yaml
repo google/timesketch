@@ -22,3 +22,8 @@ legit:
 default:
   weight: 0
   class: 'info'
+
+regexes:
+  regex: '^GROUPNAME'
+    weight: 100
+    class: 'danger'
