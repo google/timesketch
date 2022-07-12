@@ -349,7 +349,7 @@ class EventResourceTest(BaseTest):
         "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
     )
     def test_add_event_attribute_invalid_event(self):
-        """Test adding an invalid attribute to an event."""
+        """Test adding invalid attributes to an event."""
         self.login()
 
         form_data = {
