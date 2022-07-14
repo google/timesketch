@@ -644,7 +644,7 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
         cmd.extend(["--use_ssl"])
 
     psort_memory = current_app.config.get("PLASO_UPPER_MEMORY_LIMIT", "")
-    if psort_memory:
+    if psort_memory != "":
         cmd.extend(["--process_memory_limit", str(psort_memory)])
 
     # Run psort.py
