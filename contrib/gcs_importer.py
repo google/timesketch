@@ -169,8 +169,9 @@ def callback(message):
     with open(local_metadata_file, "r") as metadata_file:
         metadata = json.load(metadata_file)
         username = metadata.get("globals", {}).get("requester")
-        if not username: 
-            username = metadata.get("requester")  # Backwards compatibility for old Turbinia versions.
+        if not username:
+            # Backwards compatibility for old Turbinia versions.
+            username = metadata.get("requester")
         sketch_id_from_metadata = metadata.get("sketch_id")
 
     if not username:
