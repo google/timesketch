@@ -69,7 +69,12 @@ limitations under the License.
           <div class="column">
             <div class="card">
               <div class="card-header">
-                <p class="card-header-title">Indicators of compromise</p>
+                <p class="card-header-title">
+                  Indicators of compromise
+                  <router-link :to="{ name: 'Explore', query: generateGlobalOpenSearchQuery() }"
+                    >Search all
+                  </router-link>
+                </p>
               </div>
               <div class="card-content">
                 <b-table v-if="intelligenceData.length > 0" :data="intelligenceData">
@@ -351,6 +356,12 @@ export default {
       if (field !== undefined) {
         query = `${field}:${query}`
       }
+      return { q: query }
+    },
+    generateGlobalOpenSearchQuery() {
+      let query = this.intelligenceData
+        .map((i) => this.generateOpenSearchQuery(i.ioc)['q'])
+        .reduce((a, b) => `${a} OR ${b}`)
       return { q: query }
     },
     startIOCEdit(ioc) {
