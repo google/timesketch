@@ -69,14 +69,17 @@ limitations under the License.
           <div class="column">
             <div class="card">
               <div class="card-header">
-                <p class="card-header-title">
-                  Indicators of compromise
-                  <router-link :to="{ name: 'Explore', query: generateGlobalOpenSearchQuery() }"
-                    >Search all
-                  </router-link>
-                </p>
+                <p class="card-header-title">Indicators of compromise</p>
               </div>
               <div class="card-content">
+                <b-button tag="router-link" :to="{ name: 'Explore', query: generateGlobalOpenSearchQuery() }">
+                  <i
+                    class="fas fa-search"
+                    aria-hidden="true"
+                    title="Search sketch for all events containing this IOC."
+                  ></i>
+                  Search all
+                </b-button>
                 <b-table v-if="intelligenceData.length > 0" :data="intelligenceData">
                   <b-table-column field="type" label="IOC Type" v-slot="props" sortable>
                     <code>{{ props.row.type }}</code>
