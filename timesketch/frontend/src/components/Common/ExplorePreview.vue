@@ -82,6 +82,11 @@ export default {
   mounted() {
     this.refreshPreview(this.searchQuery)
   },
+  watch: {
+    searchQuery: function (newQuery) {
+      this.refreshPreview(newQuery)
+    },
+  },
 }
 </script>
 
