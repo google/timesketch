@@ -441,8 +441,6 @@ export default {
         this.t = setInterval(
           function() {
             this.fetchData()
-            console.log("hi")
-            console.log(this.timelineStatus)
             if (this.timelineStatus === 'ready' || this.timelineStatus === 'fail') {
               this.autoRefresh = false
             }
