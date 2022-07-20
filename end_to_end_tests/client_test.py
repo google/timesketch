@@ -84,6 +84,9 @@ class ClientTest(interface.BaseEndToEndTest):
 
     def test_sigma_list(self):
         """Client Sigma list tests."""
+
+        # TODO(jaegeral) add the rule first to the database
+
         rules = self.api.list_sigma_rules()
         self.assertions.assertGreaterEqual(len(rules), 1)
         rule = rules[0]

@@ -624,3 +624,34 @@ class TimesketchApi:
             logger.error("Parsing Error, unable to parse the Sigma rule", exc_info=True)
 
         return sigma_obj
+
+    def create_sigma_rule(self, name, description=None):
+        """Create a new sigma rule.
+
+        Args:
+            name: Name of the Sigma rule.
+            description: Description of the Sigma rule.
+
+        Returns:
+            Instance of a Sigma object.
+        """
+        if not description:
+            description = name
+
+        retry_count = 0
+        objects = None
+        while True:
+            resource_url = "{0:s}/sigma/".format(self.api_root)
+            form_data = {"name": name, "description": description}
+            response = self.session.post(resource_url, json=form_data)
+            response_dict = error.get_response_json(response, logger)
+            objects = response_dict.get("objects")
+            if objects:
+                break
+            retry_count += 1
+
+            if retry_count >= self.DEFAULT_RETRY_COUNT:
+                raise RuntimeError("Unable to create a new sigma rule.")
+
+        rule_id = objects[0]["id"]
+        return self.get_sketch(rule_id)
