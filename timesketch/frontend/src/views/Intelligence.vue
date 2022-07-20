@@ -22,10 +22,12 @@ limitations under the License.
     </ts-navbar-main>
 
     <ts-navbar-secondary currentAppContext="sketch" currentPage="intelligence"></ts-navbar-secondary>
+
+    <!-- Edit / new modal -->
     <b-modal :active.sync="showEditModal">
       <section class="box">
-        <h1 class="subtitle">Edit IOC</h1>
-        <b-field label="Edit IOC" label-position="on-border">
+        <h1 class="subtitle">{{ isNew ? 'New' : 'Editing' }} IOC</h1>
+        <b-field :label="(isNew ? 'New' : 'Editing') + ' IOC'" label-position="on-border">
           <b-input custom-class="ioc-input" type="textarea" v-model="editingIoc.ioc"></b-input>
         </b-field>
         <b-field grouped>
@@ -48,7 +50,7 @@ limitations under the License.
           </b-field>
           <b-field grouped expanded position="is-right">
             <p class="control">
-              <b-button type="is-primary" @click="saveIOC()">Save</b-button>
+              <b-button type="is-primary" @click="saveIntelligence(isNew)">Save</b-button>
             </p>
             <p class="control">
               <b-button @click="showEditModal = false">Cancel</b-button>
@@ -69,13 +71,15 @@ limitations under the License.
           <div class="column">
             <div class="card">
               <div class="card-header">
-                <p class="card-header-title">Indicators of compromise</p>
+                <p class="card-header-title">
+                  Indicators of compromise
+                  <b-button @click="startIOCEdit(getNewIoc(), true)" type="is-success" size="is-small" class="new-ioc">
+                    <i class="fas fa-plus-circle" aria-hidden="true"></i>
+                    Add new
+                  </b-button>
+                </p>
               </div>
               <div class="card-content">
-                <b-button tag="router-link" :to="{ name: 'Explore', query: generateGlobalOpenSearchQuery() }">
-                  <i class="fas fa-search" aria-hidden="true" title="Search sketch for events containing any IOC."></i>
-                  Search all
-                </b-button>
                 <b-table v-if="intelligenceData.length > 0" :data="intelligenceData">
                   <b-table-column field="type" label="IOC Type" v-slot="props" sortable>
                     <code>{{ props.row.type }}</code>
@@ -109,7 +113,7 @@ limitations under the License.
                     </router-link>
                     <explore-preview
                       style="margin-left: 10px"
-                      :searchQuery="generateOpenSearchQuery(props.row.ioc)"
+                      :searchQuery="generateOpenSearchQuery(props.row.ioc)['q']"
                     ></explore-preview>
                   </b-table-column>
 
@@ -143,7 +147,7 @@ limitations under the License.
                       class="icon is-small"
                       style="cursor: pointer"
                       title="Edit IOC"
-                      @click="startIOCEdit(props.row)"
+                      @click="startIOCEdit(props.row, false)"
                       ><i class="fas fa-edit"></i>
                     </span>
                   </b-table-column>
@@ -269,6 +273,7 @@ export default {
       tagInfo: {},
       tagMetadata: {},
       editingIoc: {},
+      isNew: false,
       showEditModal: false,
       IOCTypes: IOCTypes,
     }
@@ -280,6 +285,14 @@ export default {
         ApiClient.addSketchAttribute(this.sketch.id, 'intelligence', { data: data }, 'intelligence').then(() => {
           this.loadSketchAttributes()
         })
+      }
+    },
+    getNewIoc() {
+      return {
+        ioc: null,
+        type: 'other',
+        externalURI: null,
+        tags: [],
       }
     },
     getValidUrl(urlString) {
@@ -357,21 +370,19 @@ export default {
       }
       return { q: query }
     },
-    generateGlobalOpenSearchQuery() {
-      let query = this.intelligenceData
-        .map((i) => this.generateOpenSearchQuery(i.ioc)['q'])
-        .reduce((a, b) => `${a} OR ${b}`)
-      return { q: query }
-    },
-    startIOCEdit(ioc) {
+    startIOCEdit(ioc, isNew) {
       this.showEditModal = true
+      this.isNew = isNew
       this.editingIoc = ioc
     },
-    saveIOC() {
+    saveIntelligence() {
+      if (this.isNew) {
+        this.intelligenceAttribute.value.data.push(this.editingIoc)
+      }
       ApiClient.addSketchAttribute(this.sketch.id, 'intelligence', this.intelligenceAttribute.value, 'intelligence')
         .then(() => {
           Snackbar.open({
-            message: 'IOC successfully updated!',
+            message: 'Intelligence successfully updated!',
             type: 'is-success',
             position: 'is-top',
             actionText: 'Dismiss',
@@ -427,5 +438,12 @@ export default {
 .fa-question-circle {
   margin-left: 0.6em;
   opacity: 0.5;
+}
+
+.new-ioc i {
+  margin-right: 0.5em;
+}
+.new-ioc {
+  margin-left: 0.5em;
 }
 </style>
