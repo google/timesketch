@@ -105,7 +105,7 @@ limitations under the License.
                     </router-link>
                     <explore-preview
                       style="margin-left: 10px"
-                      :searchQuery="generateOpenSearchQuery(props.row.ioc)"
+                      :searchQuery="generateOpenSearchQuery(props.row.ioc)['q']"
                     ></explore-preview>
                   </b-table-column>
 
