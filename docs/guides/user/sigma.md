@@ -144,10 +144,24 @@ If you find a mapping missing, feel free to add and create a PR.
 
 ### Field Mapping
 
+The field mappings are used to translate the generalised term from Sigma into the expected field names in Timesketch. Most of the field names in Timesketch are mapped to the expected output names of Plaso.
+
 Some adjustments verified:
 
 - s/EventID/event_identifier
 - s/Source/source_name
+
+There are many entries in https://github.com/google/timesketch/blob/master/data/sigma_config.yaml mapped to `xml_string`. This is because a lot of data in Windows EVTX XML is not valid XML and will be represented in the section `xml_string` (see https://github.com/log2timeline/plaso/issues/442).
+
+Field mappings like:
+
+```
+  TargetFilename:
+      product=linux: filename
+      default: xml_string
+```
+
+Are interpreted depending on the selected product in the rule. If the product in the rule is `linux` the Selector `TargetFilename` in a rule would be tranlated to `filename:"foobar"`. If the product is anything else, e.g. `Windows` it would be `xml_string:"foobar"`
 
 ### Analyzer_run.py
 

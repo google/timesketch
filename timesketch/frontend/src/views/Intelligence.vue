@@ -72,6 +72,10 @@ limitations under the License.
                 <p class="card-header-title">Indicators of compromise</p>
               </div>
               <div class="card-content">
+                <b-button tag="router-link" :to="{ name: 'Explore', query: generateGlobalOpenSearchQuery() }">
+                  <i class="fas fa-search" aria-hidden="true" title="Search sketch for events containing any IOC."></i>
+                  Search all
+                </b-button>
                 <b-table v-if="intelligenceData.length > 0" :data="intelligenceData">
                   <b-table-column field="type" label="IOC Type" v-slot="props" sortable>
                     <code>{{ props.row.type }}</code>
@@ -351,6 +355,12 @@ export default {
       if (field !== undefined) {
         query = `${field}:${query}`
       }
+      return { q: query }
+    },
+    generateGlobalOpenSearchQuery() {
+      let query = this.intelligenceData
+        .map((i) => this.generateOpenSearchQuery(i.ioc)['q'])
+        .reduce((a, b) => `${a} OR ${b}`)
       return { q: query }
     },
     startIOCEdit(ioc) {
