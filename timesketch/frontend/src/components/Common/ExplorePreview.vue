@@ -54,8 +54,10 @@ export default {
     }
   },
   methods: {
-    refreshPreview: function (query) {
-      var formData = { query: this.searchQuery['q'], parent: this.currentSearchNode.id }
+    refreshPreview: function () {
+      let q = this.searchQuery
+      console.log('refreshPreview', q)
+      var formData = { query: q, parent: this.currentSearchNode.id }
       ApiClient.search(this.sketch.id, formData).then((response) => {
         this.previewData = response.data.objects
         this.previewSearchNode = response.data.meta.search_node
@@ -80,7 +82,7 @@ export default {
     },
   },
   mounted() {
-    this.refreshPreview(this.searchQuery)
+    this.refreshPreview()
   },
   watch: {
     searchQuery: function (newQuery) {
@@ -93,7 +95,7 @@ export default {
 <style scoped lang="scss">
 .preview-box {
   z-index: 100;
-  position: fixed;
+  position: absolute;
   background: var(--background-color);
   width: 60%;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
