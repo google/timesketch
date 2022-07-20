@@ -55,9 +55,7 @@ export default {
   },
   methods: {
     refreshPreview: function () {
-      let q = this.searchQuery
-      console.log('refreshPreview', q)
-      var formData = { query: q, parent: this.currentSearchNode.id }
+      var formData = { query: this.searchQuery, parent: this.currentSearchNode.id }
       ApiClient.search(this.sketch.id, formData).then((response) => {
         this.previewData = response.data.objects
         this.previewSearchNode = response.data.meta.search_node
