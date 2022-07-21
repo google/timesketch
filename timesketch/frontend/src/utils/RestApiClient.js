@@ -365,6 +365,16 @@ export default {
     }
     return RestApiClient.post('/sigma/rule/aaa/', formData)
   },
+  updateSigmaRule(id, ruleText, rule_uuid) {
+    let formData = {
+      id: id,
+      rule_yaml: ruleText,
+    }
+    return RestApiClient.post('/sigma/rule/' + rule_uuid + '/', formData)
+  },
+  deleteSigmaRule(rule_uuid) {
+    return RestApiClient.delete('/sigma/rule/' + rule_uuid + '/')
+  },
   getTagMetadata() {
     return RestApiClient.get('/intelligence/tagmetadata/')
   }

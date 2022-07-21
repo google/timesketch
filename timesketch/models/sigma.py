@@ -32,22 +32,22 @@ class Sigma(
 ):
     """Implements the Sigma model."""
 
-    rule_uuid = Column(Unicode(255), unique=True)
+    #rule_uuid = Column(Unicode(255), unique=True)
     rule_yaml = Column(UnicodeText())
     user_id = Column(
         Integer, ForeignKey("user.id")
     )  # who added the rule to the system (TS user)
-    query_string = Column(
-        UnicodeText()
-    )  # (auto generated / updated from parser)
-    title = Column(Unicode(255))
-    description = Column(UnicodeText())
+    #query_string = Column(
+    #    UnicodeText()
+    #)  # (auto generated / updated from parser)
+    #title = Column(Unicode(255))
+    #description = Column(UnicodeText())
 
     def __init__(
         self,
-        rule_uuid,
-        user,
-        title,
+        #rule_uuid,
+        #user,
+        #title,
         query_string=None,
         description=None,
         rule_yaml=None,
@@ -63,9 +63,9 @@ class Sigma(
             rule_yaml: yaml content of the rule
         """
         super().__init__()
-        self.description = description
-        self.query_string = query_string
-        self.rule_uuid = rule_uuid
+        #self.description = description
+        #self.query_string = query_string
+        #self.rule_uuid = rule_uuid
         self.rule_yaml = rule_yaml
-        self.title = title
-        self.user = user
+        #self.title = title
+        #self.user = user

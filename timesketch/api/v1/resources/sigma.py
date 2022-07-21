@@ -39,6 +39,8 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CONFLICT
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
+from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
+
 
 from timesketch.models.sigma import Sigma
 from timesketch.models import db_session
@@ -176,6 +178,27 @@ class SigmaResource(resources.ResourceMixin, Resource):
         return jsonify({"objects": [return_rule], "meta": meta})
 
     @login_required
+    def delete(self,rule_uuid):
+        """Handles DELETE request to the resource.
+
+        Args:
+            id: Integer primary key for a sketch database model.
+        """
+        logger.error("Delete with id "+rule_uuid)
+
+        # TODO (jaegeral): remove this one
+        #sigma = Sigma.query.filter_by(rule_uuid=rule_uuid).first()
+        all_rules = Sigma.query.all()
+
+        for rule in all_rules:
+            if rule_uuid in rule.rule_yaml:
+                db_session.delete(rule)
+                db_session.commit()
+
+        return HTTP_STATUS_CODE_OK
+
+
+    @login_required
     def post(self, rule_uuid):
         """Handles POST request to the resource.
 
@@ -194,16 +217,16 @@ class SigmaResource(resources.ResourceMixin, Resource):
                 "No rule_yaml supplied.",
             )
 
+        # not sure if that is needed
         parsed_rule = ts_sigma_lib.get_sigma_rule_by_text(rule_yaml)
         
         if not isinstance(rule_yaml, str):
             abort(
                 HTTP_STATUS_CODE_FORBIDDEN, "rule_yaml needs to be a string."
             )
-        sigma_rule = Sigma( user=current_user, rule_yaml=form.get("rule_yaml", ""),rule_uuid=parsed_rule.get("id"))
+        sigma_rule = Sigma.get_or_create(rule_yaml=form.get("rule_yaml", ""))
         sigma_rule.description = form.get("description", "")
-        sigma_rule.query_string = form.get("query_string", "")
-        sigma_rule.rule_yaml = form.get("rule_yaml", "")
+        sigma_rule.query_string = parsed_rule.get("query_string", "")
 
         try:
             db_session.add(sigma_rule)
