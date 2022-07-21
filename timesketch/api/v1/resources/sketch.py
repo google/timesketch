@@ -425,7 +425,7 @@ class SketchResource(resources.ResourceMixin, Resource):
             stories.append(story)
         try:
             filter_labels = self.datastore.get_filter_labels(sketch.id, sketch_indices)
-        except Exception as e:
+        except Exception:
             filter_labels = []
             
         meta = dict(

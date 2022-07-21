@@ -178,7 +178,7 @@ export default {
       }
     },
     submitForm: function() {
-      if (this.error == 'Please select a file with a valid extension' ) {
+      if (this.error === 'Please select a file with a valid extension' ) {
         return;
       }
       let formData = new FormData()
@@ -258,12 +258,12 @@ export default {
         var vueJS = this
         reader.readAsText(file.slice(0, 1000))
         reader.onloadend = function(e){
-            if (e.target.readyState == FileReader.DONE){  // DONE == 2
+            if (e.target.readyState === FileReader.DONE){  // DONE == 2
               
-              /* 3a. Extract the headers from the CSV*/ 
+              /* 3a. Extract the headers from the CSV */ 
               
               var data = e.target.result
-              var headers = data.split("\n")[0] //<--- is there a better way to split columns?
+              var headers = data.split("\n")[0] // <--- is there a better way to split columns?
               headers = headers.split(",") // all  headers of CSV uploaded
               // BIG ASSUMPTION: CSV separator is ','
               for(let i in headers){
