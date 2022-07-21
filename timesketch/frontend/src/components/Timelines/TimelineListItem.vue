@@ -381,8 +381,10 @@ export default {
       ApiClient.getSketchTimeline(this.sketch.id, this.timeline.id)
         .then(response => {
           this.timelineStatus = response.data.objects[0].status[0].status
-          if (this.timelineStatus !== 'ready') {
+          if (this.timelineStatus !== 'ready' && this.timelineStatus !== 'fail') {
             this.autoRefresh = true
+          }else{
+            this.autoRefresh = false
           }
           this.$store.dispatch('updateSketch', this.$store.state.sketch.id)
         })
@@ -423,8 +425,10 @@ export default {
       hex: this.timeline.color,
     }
     this.timelineStatus = this.timeline.status[0].status
-    if (this.timelineStatus !== 'ready') {
+    if (this.timelineStatus !== 'ready' && this.timelineStatus !== 'fail') {
       this.autoRefresh = true
+    }else{
+      this.autoRefresh = false
     }
   },
   beforeDestroy() {
@@ -437,7 +441,7 @@ export default {
         this.t = setInterval(
           function() {
             this.fetchData()
-            if (this.timelineStatus === 'ready') {
+            if (this.timelineStatus === 'ready' || this.timelineStatus === 'fail') {
               this.autoRefresh = false
             }
           }.bind(this),

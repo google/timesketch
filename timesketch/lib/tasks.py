@@ -181,6 +181,10 @@ def _set_timeline_status(timeline_id, status, error_msg=None):
     # Check if there is at least one data source that hasn't failed.
     multiple_sources = any(not x.error_message for x in timeline.datasources)
 
+    if error_msg and status=="fail":
+        timeline.set_status(status)
+        timeline.searchindex.set_status(status)
+
     if multiple_sources:
         timeline_status = timeline.get_status.status.lower()
         if timeline_status != "process" and status != "fail":
