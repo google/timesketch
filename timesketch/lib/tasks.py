@@ -178,9 +178,10 @@ def _set_timeline_status(timeline_id, status, error_msg=None):
         logger.warning("Cannot set status: No such timeline")
         return
 
-    # Check if there is at least one data source that hasn't failed.
+    # Check if there is at least one data source that hasn't failed (i.e., with error_message null).
     multiple_sources = any(not x.error_message for x in timeline.datasources)
-
+    
+    # check if error_msg is not null and status = fail
     if error_msg and status=="fail":
         timeline.set_status(status)
         timeline.searchindex.set_status(status)
@@ -235,6 +236,7 @@ def build_index_pipeline(
     sketch_id=None,
     only_index=False,
     timeline_id=None,
+    headersMapping=None,
 ):
     """Build a pipeline for index and analysis.
 
@@ -252,6 +254,8 @@ def build_index_pipeline(
             we don't want to run the analyzers until all chunks have been
             uploaded.
         timeline_id: Optional ID of the timeline object this data belongs to.
+        headersMapping: mapping of the mandatory headers with the exsting one.
+                                This feature is useful only for CSV file
 
     Returns:
         Celery chain with indexing task (or single indexing task) and analyzer
@@ -263,9 +267,15 @@ def build_index_pipeline(
     sketch_analyzer_chain = None
     searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
 
-    index_task = index_task_class.s(
-        file_path, events, timeline_name, index_name, file_extension, timeline_id
-    )
+    if file_extension == "csv":
+        # passing the extra argument: headersMapping
+        index_task = index_task_class.s(
+            file_path, events, timeline_name, index_name, file_extension, timeline_id, headersMapping
+        )
+    else:
+        index_task = index_task_class.s(
+            file_path, events, timeline_name, index_name, file_extension, timeline_id
+        )
 
     # TODO: Check if a scenario is set or an investigative question
     # is in the sketch, and then enable data finder on the newly
@@ -670,7 +680,7 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
 
 @celery.task(track_started=True, base=SqlAlchemyTask)
 def run_csv_jsonl(
-    file_path, events, timeline_name, index_name, source_type, timeline_id
+    file_path, events, timeline_name, index_name, source_type, timeline_id, headersMapping=None
 ):
     """Create a Celery task for processing a CSV or JSONL file.
 
@@ -681,6 +691,8 @@ def run_csv_jsonl(
         index_name: Name of the datastore index.
         source_type: Type of file, csv or jsonl.
         timeline_id: ID of the timeline object this data belongs to.
+        headersMapping: mapping of the mandatory headers with the exsting one.
+                            This feature is useful only for CSV file
 
     Returns:
         Name (str) of the index.
@@ -736,7 +748,7 @@ def run_csv_jsonl(
         opensearch.create_index(
             index_name=index_name, doc_type=event_type, mappings=mappings
         )
-        for event in read_and_validate(file_handle):
+        for event in read_and_validate(file_handle=file_handle, headersMapping=headersMapping):
             opensearch.import_event(
                 index_name, event_type, event, timeline_id=timeline_id
             )

@@ -108,10 +108,9 @@ def _validate_csv_fields(mandatory_fields, data):
         return
 
     raise RuntimeError(
-        "Missing fields in CSV header: {0:s}".format(
-            ",".join(list(mandatory_set.difference(parsed_set)))
+        "Missing fields in CSV header: {}\nFields found: {}".format(
+            ",".join(list(mandatory_set.difference(parsed_set))), ", ".join(list(parsed_set)))
         )
-    )
 
 
 def validate_indices(indices, datastore):
@@ -130,13 +129,55 @@ def validate_indices(indices, datastore):
     return [i for i in indices if datastore.client.indices.exists(index=i)]
 
 
-def read_and_validate_csv(file_handle, delimiter=",", mandatory_fields=None):
+def headers_mapping_sanity_check(headers, headersMapping):
+    """Sanity check for headers mapping
+
+    Args:
+        headers: list of headers found in the CSV file
+        headersMapping: mapping of the mandatory headers with the exsting one.
+                            This feature is useful only for CSV file
+    
+    Returns: error message if any of the sanity checks fails, otherwise, OK
+    
+    """
+    # 0. create a hashmap for the exisiting CSV headers
+    headers = set(list(headers))
+
+    # 1. The mapping is done only if the mandatory header is missing
+    # 2. and, when a new column is created, a mandatory default value must be set
+    for mandHeader in headersMapping:
+        if mandHeader in headers:
+            return "The mapping is done only if the mandatory header is missing"
+        if (headersMapping[mandHeader][0] == "New header" and 
+                headersMapping[mandHeader][0] == ""):
+            msg = "Error to create new column {}\n".format(mandHeader)
+            msg += "A mandatory default value must be assigned in the headers mapping dictionary"
+            return msg
+
+    # 2. Check if the exisisting value specified in the headersMapping are actually present in the list headers
+    candidateHeaders = [e[0] for e in headersMapping.values() if e[0] != "New header"]
+    for candidate in candidateHeaders:
+        if candidate not in headers:
+            return """Value specified in headers mapping ({}), is not present as CSV column: {}""".format(candidate, ", ".join(headers))
+    
+    # 3. check if two or more mandatory headers are mapped to the same exisiting header
+    l1, l2 = len(candidateHeaders), len(set(candidateHeaders))
+    if l1 > l2:
+        return "2 or more mandatory headers are mapped to the same exisiting CSV headers"
+
+    # 4. other checks? 
+
+    return "OK"
+
+def read_and_validate_csv(file_handle, delimiter=",", mandatory_fields=None, headersMapping=None):
     """Generator for reading a CSV file.
 
     Args:
         file_handle: a file-like object containing the CSV content.
         delimiter: character used as a field separator, default: ','
         mandatory_fields: list of fields that must be present in the CSV header.
+        headersMapping: mapping of the mandatory headers with the exsting one.
+                            This feature is useful only for CSV file
 
     Raises:
         RuntimeError: when there are missing fields.
@@ -149,6 +190,24 @@ def read_and_validate_csv(file_handle, delimiter=",", mandatory_fields=None):
         delimiter = codecs.decode(delimiter, "utf8")
 
     header_reader = pandas.read_csv(file_handle, sep=delimiter, nrows=0)
+
+    if headersMapping:
+        # sanity check of headersMapping 
+        # e.g., 2 or more mandatory headers are mapped with the same exisiting CSV header
+        res = headers_mapping_sanity_check(header_reader, headersMapping)
+        if res != "OK":
+            raise Exception("Headers mapping is wrong.\n{}".format(res))
+
+        # modify header_reader with the current headersMapping
+        for key in headersMapping:
+            val = headersMapping[key]
+            newVal = key
+            oldVal = val[0]
+            if oldVal == "New header":
+                header_reader.insert(loc=0, column = key, value = "")
+            else:
+                header_reader.rename(columns = {oldVal: newVal}, inplace = True)
+
     _validate_csv_fields(mandatory_fields, header_reader)
 
     if hasattr(file_handle, "seek"):
@@ -159,6 +218,19 @@ def read_and_validate_csv(file_handle, delimiter=",", mandatory_fields=None):
             file_handle, sep=delimiter, chunksize=DEFAULT_CHUNK_SIZE
         )
         for idx, chunk in enumerate(reader):
+            if headersMapping:
+                # rename colunms according to the mapping
+                for key in headersMapping:
+                    val = headersMapping[key]
+                    newVal = key
+                    oldVal = val[0]
+                    if oldVal == "New header":
+                        # add header and def values
+                        chunk[newVal] = val[1]
+                    else:
+                        # just rename the heade
+                        chunk.rename(columns = {oldVal: newVal}, inplace = True)
+            
             skipped_rows = chunk[chunk["datetime"].isnull()]
             if not skipped_rows.empty:
                 logger.warning(
@@ -249,11 +321,12 @@ def read_and_validate_redline(file_handle):
         yield row_to_yield
 
 
-def read_and_validate_jsonl(file_handle):
+def read_and_validate_jsonl(file_handle, headersMapping=None):
     """Generator for reading a JSONL (json lines) file.
 
     Args:
         file_handle: a file-like object containing the CSV content.
+        headersMapping: not important here (for now)
 
     Raises:
         RuntimeError: if there are missing fields.

@@ -17,6 +17,7 @@ import codecs
 import logging
 import os
 import uuid
+import json # need to parse stringify json object into python dictionary
 
 from flask import jsonify
 from flask import request
@@ -126,6 +127,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         file_path="",
         events="",
         meta=None,
+        headersMapping=None,
     ):
         """Creates a full pipeline for an uploaded file and returns the results.
 
@@ -144,6 +146,8 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             events: a string with events to upload (optional).
             meta: optional dict with additional meta fields that will be
                   included in the return.
+            headersMapping: mapping of the mandatory headers with the exsting one.
+                                This feature is useful only for CSV file
 
         Returns:
             A timeline if created otherwise a search index in JSON (instance
@@ -199,6 +203,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 file_path=file_path,
                 events=events,
                 meta=meta,
+                headersMapping=headersMapping,
             )
 
         searchindex.set_status("processing")
@@ -266,6 +271,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             sketch_id=sketch_id,
             only_index=enable_stream,
             timeline_id=timeline.id,
+            headersMapping=headersMapping
         )
         task_id = uuid.uuid4().hex
         pipeline.apply_async(task_id=task_id)
@@ -304,7 +310,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             enable_stream=form.get("enable_stream", False),
         )
 
-    def _upload_file(self, file_storage, form, sketch, index_name, chunk_index_name=""):
+    def _upload_file(self, file_storage, form, sketch, index_name, chunk_index_name="",headersMapping=None,):
         """Upload a file.
 
         Args:
@@ -314,6 +320,8 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             index_name: the OpenSearch index name for the timeline.
             chunk_index_name: A unique identifier for a file if
                 chunks are used.
+            headersMapping: mapping of the mandatory headers with the exsting one.
+                            This feature is useful only for CSV file
 
         Returns:
             A timeline if created otherwise a search index in JSON (instance
@@ -360,6 +368,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 form=form,
                 data_label=data_label,
                 enable_stream=enable_stream,
+                headersMapping=headersMapping,
             )
 
         # For file chunks we need the correct filepath, otherwise each chunk
@@ -423,6 +432,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             data_label=data_label,
             enable_stream=enable_stream,
             meta=meta,
+            headersMapping=headersMapping,
         )
 
     @login_required
@@ -439,6 +449,14 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         form = request.get_data(parse_form_data=True)
         if not form:
             form = request.form
+
+        # map existing headers with the mandatory ones
+        res = form.get('headersMapping')
+        if res:
+            headersMapping = json.loads(res)
+        else:
+            headersMapping = None
+        print(headersMapping)
 
         sketch_id = form.get("sketch_id", None)
         if not sketch_id:
@@ -480,6 +498,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 form=form,
                 sketch=sketch,
                 index_name=index_name,
+                headersMapping=headersMapping,
             )
 
         events = form.get("events")
