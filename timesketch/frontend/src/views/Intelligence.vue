@@ -23,47 +23,6 @@ limitations under the License.
 
     <ts-navbar-secondary currentAppContext="sketch" currentPage="intelligence"></ts-navbar-secondary>
 
-    <!-- Edit / new modal -->
-    <b-modal :active.sync="showEditModal">
-      <section class="box">
-        <h1 class="subtitle">{{ isNew ? 'New' : 'Editing' }} IOC</h1>
-        <b-field :label="(isNew ? 'New' : 'Editing') + ' IOC'" label-position="on-border">
-          <b-input custom-class="ioc-input" type="textarea" v-model="editingIoc.ioc"></b-input>
-        </b-field>
-        <b-field grouped>
-          <b-field>
-            <b-select placeholder="IOC type" v-model="editingIoc.type" label="IOC type" label-position="on-border">
-              <option v-for="option in IOCTypes" :value="option.type" :key="option.type">
-                {{ option.type }}
-              </option>
-            </b-select>
-          </b-field>
-          <b-field>
-            <b-taginput
-              v-model="editingIoc.tags"
-              ellipsis
-              icon="label"
-              placeholder="Add a tag"
-              aria-close-label="Delete this tag"
-            >
-            </b-taginput>
-          </b-field>
-          <b-field grouped expanded position="is-right">
-            <p class="control">
-              <b-button type="is-primary" @click="saveIntelligence(isNew)">Save</b-button>
-            </p>
-            <p class="control">
-              <b-button @click="showEditModal = false">Cancel</b-button>
-            </p>
-          </b-field>
-        </b-field>
-        <b-field label="External reference (URI)">
-          <b-input v-model="editingIoc.externalURI"></b-input>
-        </b-field>
-      </section>
-    </b-modal>
-    <!-- End modal -->
-
     <!-- IOC table -->
     <section class="section" v-if="Object.keys(tagMetadata).length > 0">
       <div class="container is-fluid">
@@ -73,7 +32,7 @@ limitations under the License.
               <div class="card-header">
                 <p class="card-header-title">
                   Indicators of compromise
-                  <b-button @click="startIOCEdit(getNewIoc(), true)" type="is-success" size="is-small" class="new-ioc">
+                  <b-button @click="startIOCEdit(getNewIoc(), -1)" type="is-success" size="is-small" class="new-ioc">
                     <i class="fas fa-plus-circle" aria-hidden="true"></i>
                     Add new
                   </b-button>
@@ -147,7 +106,7 @@ limitations under the License.
                       class="icon is-small"
                       style="cursor: pointer"
                       title="Edit IOC"
-                      @click="startIOCEdit(props.row, false)"
+                      @click="startIOCEdit(props.row, props.index)"
                       ><i class="fas fa-edit"></i>
                     </span>
                   </b-table-column>
@@ -264,6 +223,7 @@ import ApiClient from '../utils/RestApiClient'
 import { SnackbarProgrammatic as Snackbar } from 'buefy'
 import { IOCTypes } from '../utils/tagMetadata'
 import ExplorePreview from '../components/Common/ExplorePreview'
+import TsIocCompose from '../components/Common/TsIocCompose'
 
 export default {
   components: { ExplorePreview },
@@ -353,11 +313,6 @@ export default {
       if (this.tagMetadata[tag]) {
         return _.extend(tagInfo, this.tagMetadata[tag])
       } else {
-        for (var regex in this.tagMetadata['regexes']) {
-          if (tag.match(regex)) {
-            return _.extend(tagInfo, this.tagMetadata['regexes'][regex])
-          }
-        }
         return _.extend(tagInfo, this.tagMetadata.default)
       }
     },
@@ -375,15 +330,26 @@ export default {
       }
       return { q: query }
     },
-    startIOCEdit(ioc, isNew) {
-      this.showEditModal = true
-      this.isNew = isNew
-      this.editingIoc = ioc
+    startIOCEdit(ioc, index) {
+      this.$buefy.modal.open({
+        parent: this,
+        component: TsIocCompose,
+        props: { value: ioc },
+        events: {
+          input: (value) => {
+            if (index === -1) {
+              this.intelligenceAttribute.value.data.push(value)
+            } else {
+              // Assigning a value to the array doesn't seem to trigger data refresh, we have to use splice
+              this.intelligenceAttribute.value.data.splice(index, 1, value)
+            }
+            this.saveIntelligence()
+          },
+        },
+      })
     },
     saveIntelligence() {
-      if (this.isNew) {
-        this.intelligenceAttribute.value.data.push(this.editingIoc)
-      }
+      // console.log(this.intelligenceAttribute.value)
       ApiClient.addSketchAttribute(this.sketch.id, 'intelligence', this.intelligenceAttribute.value, 'intelligence')
         .then(() => {
           Snackbar.open({

@@ -1,0 +1,95 @@
+<template>
+  <div>
+    <section class="box">
+      <h1 class="subtitle">Compose IOC</h1>
+      <b-field label-position="on-border">
+        <b-input custom-class="ioc-input" type="textarea" v-model="composeIoc.ioc"></b-input>
+      </b-field>
+      <b-field grouped>
+        <b-field>
+          <b-select placeholder="IOC type" v-model="composeIoc.type" label="IOC type" label-position="on-border">
+            <option v-for="option in IOCTypes" :value="option.type" :key="option.type">
+              {{ option.type }}
+            </option>
+          </b-select>
+        </b-field>
+        <b-field>
+          <b-taginput
+            v-model="composeIoc.tags"
+            ellipsis
+            icon="label"
+            placeholder="Add a tag"
+            aria-close-label="Delete this tag"
+          >
+          </b-taginput>
+        </b-field>
+        <b-field grouped expanded position="is-right">
+          <p class="control">
+            <b-button type="is-primary" @click="saveIoc">Save</b-button>
+          </p>
+          <p class="control">
+            <b-button @click="$parent.close()">Cancel</b-button>
+          </p>
+        </b-field>
+      </b-field>
+      <b-field label="External reference (URI)">
+        <b-input v-model="composeIoc.externalURI"></b-input>
+      </b-field>
+    </section>
+  </div>
+</template>
+
+<script>
+import _ from 'lodash'
+import ApiClient from '@/utils/RestApiClient'
+import { IOCTypes } from '@/utils/tagMetadata'
+import ExplorePreview from '@/components/Common/ExplorePreview'
+
+export default {
+  components: { ExplorePreview },
+  props: ['value'],
+  data() {
+    return {
+      composeIoc: JSON.parse(JSON.stringify(this.value)),
+      IOCTypes: IOCTypes,
+    }
+  },
+  methods: {
+    saveIoc() {
+      this.$parent.close()
+      this.$emit('input', this.composeIoc)
+    },
+  },
+  computed: {
+    sketch() {
+      return this.$store.state.sketch
+    },
+    meta() {
+      return this.$store.state.meta
+    },
+  },
+}
+</script>
+
+<style lang="scss">
+.ioc-input {
+  font-family: monospace;
+}
+
+.delete-ioc {
+  cursor: pointer;
+  color: #da1039;
+}
+
+.fa-question-circle {
+  margin-left: 0.6em;
+  opacity: 0.5;
+}
+
+.new-ioc i {
+  margin-right: 0.5em;
+}
+.new-ioc {
+  margin-left: 0.5em;
+}
+</style>
