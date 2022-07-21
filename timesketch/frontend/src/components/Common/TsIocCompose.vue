@@ -35,6 +35,11 @@
       <b-field label="External reference (URI)">
         <b-input v-model="composeIoc.externalURI"></b-input>
       </b-field>
+      <explore-preview
+        style="margin-left: 10px"
+        :searchQuery="generateOpenSearchQuery(composeIoc.ioc)['q']"
+        :display-inline="true"
+      ></explore-preview>
     </section>
   </div>
 </template>
@@ -58,6 +63,18 @@ export default {
     saveIoc() {
       this.$parent.close()
       this.$emit('input', this.composeIoc)
+    },
+    generateOpenSearchQuery(value, field) {
+      if (value === undefined) {
+        return { q: '' }
+      }
+      let query = `"${value}"`
+      // Escape special OpenSearch characters: \, [space]
+      query = query.replace(/[\\\s]/g, '\\$&')
+      if (field !== undefined) {
+        query = `${field}:${query}`
+      }
+      return { q: query }
     },
   },
   computed: {
