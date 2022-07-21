@@ -25,6 +25,6 @@ default:
   class: 'info'
 
 regexes:
-  regex: '^GROUPNAME'
+  '^DANGER_':
     weight: 100
     class: 'danger'
