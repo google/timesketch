@@ -121,7 +121,7 @@ export default {
   background: var(--background-color);
   width: 60%;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
-  height: 50%;
+  height: auto;
   overflow: scroll;
 }
 
