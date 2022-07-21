@@ -78,7 +78,6 @@ class TestConfig(object):
     UPLOAD_ENABLED = False
     AUTO_SKETCH_ANALYZERS = []
     SIMILARITY_DATA_TYPES = []
-    SIGMA_RULES_FOLDERS = ["./data/sigma/rules/"]
     INTELLIGENCE_TAG_METADATA = "./data/intelligence_tag_metadata.yaml"
 
 

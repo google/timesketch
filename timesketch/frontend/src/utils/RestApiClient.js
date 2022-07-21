@@ -37,10 +37,10 @@ const RestApiBlobClient = axios.create({
 
 // Show message on errors.
 RestApiClient.interceptors.response.use(
-  function(response) {
+  function (response) {
     return response
   },
-  function(error) {
+  function (error) {
     if (error.response.data.message === 'The CSRF token has expired.') {
       Snackbar.open({
         message: error.response.data.message,
@@ -358,6 +358,12 @@ export default {
       content: ruleText,
     }
     return RestApiClient.post('/sigma/text/', formData)
+  },
+  createSigmaRule(ruleText) {
+    let formData = {
+      rule_yaml: ruleText,
+    }
+    return RestApiClient.post('/sigma/rule/aaa/', formData)
   },
   getTagMetadata() {
     return RestApiClient.get('/intelligence/tagmetadata/')

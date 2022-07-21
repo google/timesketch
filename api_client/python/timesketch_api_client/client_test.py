@@ -51,3 +51,12 @@ class TimesketchApiTest(unittest.TestCase):
         self.assertIsInstance(sketches, list)
         self.assertEqual(len(sketches), 1)
         self.assertIsInstance(sketches[0], sketch_lib.Sketch)
+
+    def test_get_sigma_rule_by_text(self):
+        rule = self.api_client.get_sigma_rule_by_text("asdasd")
+        self.assertIn("Alexander", rule.author)
+
+    def test_create_sigma_rule(self):
+        rule = self.api_client.create_sigma_rule(name='testrule',description='rule_description')
+        self.assertIn("rule_description", rule.description)
+        self.assertIsInstance(rule,timesketch_api_client.sigma.Sigma)

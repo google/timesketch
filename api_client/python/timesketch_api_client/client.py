@@ -625,7 +625,8 @@ class TimesketchApi:
 
         return sigma_obj
 
-    def create_sigma_rule(self, name, description=None):
+    def create_sigma_rule(self, rule_text, description=None):
+        # TODO(jaegeral): this form needs to be fed by the rule_text and maybe nothing more than that.
         """Create a new sigma rule.
 
         Args:
@@ -634,15 +635,22 @@ class TimesketchApi:
 
         Returns:
             Instance of a Sigma object.
+
+        Raises:
+            ValueError: No Rule text given or issues parsing it.
         """
-        if not description:
-            description = name
+
+        if not rule_text:
+            raise ValueError("No rule text given.")
+
+        #if not description:
+        #    description = name
 
         retry_count = 0
         objects = None
         while True:
             resource_url = "{0:s}/sigma/".format(self.api_root)
-            form_data = {"name": name, "description": description}
+            form_data = {"rule_yaml": rule_text, "description": description}
             response = self.session.post(resource_url, json=form_data)
             response_dict = error.get_response_json(response, logger)
             objects = response_dict.get("objects")
@@ -654,4 +662,4 @@ class TimesketchApi:
                 raise RuntimeError("Unable to create a new sigma rule.")
 
         rule_id = objects[0]["id"]
-        return self.get_sketch(rule_id)
+        return self.get_sigma_rule(rule_id)

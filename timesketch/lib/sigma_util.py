@@ -204,10 +204,12 @@ def get_all_sigma_rules():
     """
     sigma_rules = []
 
-    rules_paths = get_sigma_rules_path()
+    # TODO (jaegeral): implement to get it from the database
 
-    for folder in rules_paths:
-        sigma_rules.extend(get_sigma_rules(folder))
+    #rules_paths = get_sigma_rules_path()
+
+    #for folder in rules_paths:
+    #    sigma_rules.extend(get_sigma_rules(folder))
 
     return sigma_rules
 

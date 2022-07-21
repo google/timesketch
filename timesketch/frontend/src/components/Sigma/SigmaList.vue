@@ -15,40 +15,28 @@ limitations under the License.
 -->
 <template>
   <div>
-    <b-table
-      v-if="sigmaRuleList"
-      :data="sigmaRuleList"
-      :current-page.sync="currentPage"
-      :per-page="perPage"
-      detailed
-      detail-key="title"
-      paginated
-      pagination-simple
-      pagination-position="bottom"
-      default-sort-direction="desc"
-      sort-icon="arrow-down"
-      sort-icon-size="is-small"
-      icon-pack="fas"
-      icon-prev="chevron-left"
-      icon-next="chevron-right"
-      default-sort="title"
-      key="props.row.id"
-    >
+
+    <b-table v-if="sigmaRuleList" :data="sigmaRuleList"
+      :current-page.sync="currentPage" :per-page="perPage" detailed
+      detail-key="title" paginated pagination-simple
+      pagination-position="bottom" default-sort-direction="desc"
+      sort-icon="arrow-down" sort-icon-size="is-small" icon-pack="fas"
+      icon-prev="chevron-left" icon-next="chevron-right" default-sort="title"
+      key="props.row.id">
       <b-switch v-model="isComposed">Compose Sigma rule</b-switch>
       <div v-if="isComposed">
         <div class="container is-fluid">
           <div class="card">
             <div class="card-content"></div>
-            <textarea
-              id="textarea"
-              v-model="text"
-              placeholder="Enter your Sigma yaml File text..."
-              rows="30"
-              cols="80"
-            ></textarea>
+            <textarea id="textarea" v-model="text"
+              placeholder="Enter your Sigma yaml File text..." rows="30"
+              cols="80"></textarea>
 
             <div class="control">
               <button id="parseButton" v-on:click="parseSigma">Parse</button>
+              <button id="saveSigmaRuleButton" v-on:click="addRule()">Add
+                rule</button>
+
             </div>
             <template>
               <b>Clean ES Query: {{ parsed['es_query'] }}</b>
@@ -57,32 +45,41 @@ limitations under the License.
           </div>
         </div>
       </div>
-      <b-table-column field="title" label="Name" v-slot="props" sortable searchable>
-        <div @click="props.toggleDetails(props.row)" style="margin-top:5px;cursor:pointer;">
+      <b-table-column field="title" label="Name" v-slot="props" sortable
+        searchable>
+        <div @click="props.toggleDetails(props.row)"
+          style="margin-top:5px;cursor:pointer;">
           {{ props.row.title }}
         </div>
       </b-table-column>
 
-      <b-table-column field="ts_use_in_analyzer" label="Use in Analyzer" v-slot="props" sortable>
-        <div @click="props.toggleDetails(props.row)" style="margin-top:5px;cursor:pointer;">
+      <b-table-column field="ts_use_in_analyzer" label="Use in Analyzer2"
+        v-slot="props" sortable>
+        <div @click="props.toggleDetails(props.row)"
+          style="margin-top:5px;cursor:pointer;">
           {{ props.row.ts_use_in_analyzer }}
         </div>
       </b-table-column>
 
-      <b-table-column field="description" label="Description" v-slot="props" searchable>
-        <div @click="props.toggleDetails(props.row)" style="margin-top:5px;cursor:pointer;">
+      <b-table-column field="description" label="Description" v-slot="props"
+        searchable>
+        <div @click="props.toggleDetails(props.row)"
+          style="margin-top:5px;cursor:pointer;">
           {{ props.row.description }}
         </div>
       </b-table-column>
 
-      <b-table-column field="author" label="Author" v-slot="props" searchable sortable>
-        <div @click="props.toggleDetails(props.row)" style="margin-top:5px;cursor:pointer;">
+      <b-table-column field="author" label="Author" v-slot="props" searchable
+        sortable>
+        <div @click="props.toggleDetails(props.row)"
+          style="margin-top:5px;cursor:pointer;">
           {{ props.row.author }}
         </div>
       </b-table-column>
 
       <b-table-column field="actions" label="" v-slot="props">
-        <router-link :to="{ name: 'Explore', query: { q: props.row.es_query } }">
+        <router-link
+          :to="{ name: 'Explore', query: { q: props.row.es_query } }">
           <button class="button is-outlined" style="float:right;">
             <span class="icon is-small" style="margin-right:7px">
               <i class="fas fa-search"></i>
@@ -112,7 +109,31 @@ export default {
       sortColumn: '',
       perPage: 10,
       isComposed: false,
-      text: `Place your Sigma rule here and press parse`,
+      text: `
+title: Suspicious Installation of ZMap
+id: 5266a592-b793-11ea-b3de-0242ac130004
+description: Detects suspicious installation of ZMap
+references:
+    - https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html
+author: Alexander Jaeger
+date: 2020/06/26
+modified: 2020/06/26
+tags:
+    - attack.discovery
+    - attack.t1046
+logsource:
+    product: linux
+    service: shell
+detection:
+    keywords:
+        # Generic suspicious commands
+        - '*apt-get install zmap*'
+    condition: keywords
+falsepositives:
+    - Unknown
+level: high
+      
+      `,
       parsed: '',
     }
   },
@@ -128,14 +149,21 @@ export default {
     },
   },
   methods: {
-    parseSigma: function(event) {
+    parseSigma: function (event) {
       ApiClient.getSigmaByText(this.text)
         .then(response => {
           let SigmaRule = response.data.objects[0]
           this.parsed = SigmaRule
         })
-        .catch(e => {})
+        .catch(e => { })
     },
+    addRule: function (event) {
+      ApiClient.createSigmaRule(this.text).then(response => {
+        let SigmaRule = response.data.objects[0]
+        this.parsed = SigmaRule
+      })
+      this.message = 'New message from method'
+    }
   },
 }
 </script>

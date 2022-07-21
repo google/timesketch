@@ -15,6 +15,7 @@
 
 import logging
 import yaml
+import uuid
 
 from flask import abort
 from flask import jsonify
@@ -30,6 +31,8 @@ from sqlalchemy.exc import IntegrityError
 import timesketch.lib.sigma_util as ts_sigma_lib
 
 from timesketch.api.v1 import resources
+from timesketch.api.v1 import utils
+
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
@@ -58,8 +61,24 @@ class SigmaListResource(resources.ResourceMixin, Resource):
         sigma_rules = []
 
         try:
-            sigma_rules = ts_sigma_lib.get_all_sigma_rules()
-
+            sigma_rules_results = Sigma.query.filter_by()
+            for rule in sigma_rules_results:
+            # Return a subset of the sketch objects to reduce the amount of
+            # data sent to the client.
+                parsed_rule = ts_sigma_lib.get_sigma_rule_by_text(rule.rule_yaml)
+                logger.error(parsed_rule)
+                sigma_rules.append({"id": rule.id, 
+                            "rule_uuid":parsed_rule.get("id"),
+                            "rule_yaml": rule.rule_yaml,
+                            "created_at": str(rule.created_at),
+                            "last_activity": utils.get_sketch_last_activity(rule),
+                            "status": rule.get_status.status,
+                            "es_query": parsed_rule.get("es_query"),
+                            "title": parsed_rule.get("title"),
+                            "author" :parsed_rule.get("author"),
+                            "description":parsed_rule.get("description")
+                        }
+                    )
         except ValueError as e:
             logger.error(
                 "OS Error, unable to get the path to the Sigma rules",
@@ -69,7 +88,7 @@ class SigmaListResource(resources.ResourceMixin, Resource):
         # TODO: idea for meta: add a list of folders that have been parsed
         meta = {
             "current_user": current_user.username,
-            "rules_count": len(sigma_rules),
+            "rules_count":len(sigma_rules),
         }
         return jsonify({"objects": sigma_rules, "meta": meta})
 
@@ -165,25 +184,27 @@ class SigmaResource(resources.ResourceMixin, Resource):
         """
         form = request.json
         if not form:
-            form = request.data
+            form = request.data        
 
-        rule_uuid = form.get("rule_uuid")
-        title = form.get("title", "")
+        rule_yaml = form.get("rule_yaml","")
 
-        if not rule_uuid:
+        if not rule_yaml:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                "No rule_uuid supplied.",
+                "No rule_yaml supplied.",
             )
 
-        if not isinstance(rule_uuid, str):
+        parsed_rule = ts_sigma_lib.get_sigma_rule_by_text(rule_yaml)
+        
+        if not isinstance(rule_yaml, str):
             abort(
-                HTTP_STATUS_CODE_FORBIDDEN, "rule_uuid needs to be a string."
+                HTTP_STATUS_CODE_FORBIDDEN, "rule_yaml needs to be a string."
             )
-        sigma_rule = Sigma(rule_uuid=rule_uuid, user=current_user, title=title)
+        sigma_rule = Sigma( user=current_user, rule_yaml=form.get("rule_yaml", ""),rule_uuid=parsed_rule.get("id"))
         sigma_rule.description = form.get("description", "")
         sigma_rule.query_string = form.get("query_string", "")
         sigma_rule.rule_yaml = form.get("rule_yaml", "")
+
         try:
             db_session.add(sigma_rule)
             db_session.commit()
