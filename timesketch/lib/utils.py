@@ -196,7 +196,7 @@ def read_and_validate_csv(file_handle, delimiter=",", mandatory_fields=None, hea
         # e.g., 2 or more mandatory headers are mapped with the same exisiting CSV header
         res = headers_mapping_sanity_check(header_reader, headersMapping)
         if res != "OK":
-            raise Exception("Headers mapping is wrong.\n{}".format(res))
+            raise RuntimeError("Headers mapping is wrong.\n{}".format(res))
 
         # modify header_reader with the current headersMapping
         for key in headersMapping:
