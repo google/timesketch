@@ -45,8 +45,6 @@
 </template>
 
 <script>
-import _ from 'lodash'
-import ApiClient from '@/utils/RestApiClient'
 import { IOCTypes } from '@/utils/tagMetadata'
 import ExplorePreview from '@/components/Common/ExplorePreview'
 
