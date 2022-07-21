@@ -120,12 +120,12 @@ export default {
     getSelection: function(e){
       /**
        * method to map of the missing headers
-       * it verify if some conditions are before submitting the form,
+       * it verifies if some conditions are met before submitting the form,
        * in particular:
        * 1. missing headers must be map with exsiting headers in the CSV
        * 2. 2 or more missing headers can not be mapped to the same exsiting header
        * 3. If missing header can not be mapped with an existing one, then, 
-       *      it can be "created" and a default value is associated to each row for that header
+       *      it can be "created" a new one and a default value is associated to each row for that header
        */
 
         var key = e.target.name; // key = datetime | message | timestamp_desc
@@ -147,7 +147,7 @@ export default {
           allValues.push(this.headersMapping[k][0])
         }
 
-        // 1. check if mapping is completed, i.e., there are not empty or null field for the mapping
+        // 1. check if mapping is completed, i.e., if there are not empty or null field for the mapping
         if(!allValues.some(e => (e==='' || !e))){ 
           // 2. check if all selected headers are unique (except from 'New header')
           allValues = allValues.filter(e => e !== "New header")
