@@ -121,7 +121,58 @@ limitations under the License.
         <pre>{{ JSON.stringify(props['row'], null, 2) }}</pre>
       </template>
     </b-table>
+    <div class="container is-fluid">
+      <b-table v-if="sketchTags.length > 0" :data="sketchTags">
+        <b-table-column field="search" label="" v-slot="props" width="1em">
+          <router-link
+            :to="{ name: 'Explore', query: generateOpenSearchQuery(props.row.ts_sigma_rule, 'ts_sigma_rule') }">
+            <i class="fas fa-search" aria-hidden="true"
+              title="Search sketch for all events with this tag."></i>
+          </router-link>
+        </b-table-column>
+        <b-table-column field="tag" label="Sigma rule name" v-slot="props"
+          sortable>
+          <b-tag type="is-info is-light">{{ props.row.ts_sigma_rule }}
+          </b-tag>
+        </b-table-column>
+        <b-table-column field="count" label="Events tagged" v-slot="props"
+          sortable numeric>
+          {{ props.row.count }}
+        </b-table-column>
+        <b-table-column field="tag" label="Status of rule" v-slot="props"
+          sortable>
+          <b-tag
+            :class="{ 'text-green': getRuleByName(props.row.ts_sigma_rule).result[0].ts_use_in_analyzer == true, 'text-red': getRuleByName(props.row.ts_sigma_rule).result[0].ts_use_in_analyzer == false }">
+            {{
+                getRuleByName(props.row.ts_sigma_rule).result[0].ts_use_in_analyzer
+            }}
+          </b-tag>
+          <!--TODO(jaegeral): This needs to be backed with actual data-->
+        </b-table-column>
+      </b-table>
+      <span v-else>No events have been tagged yet.</span>
+    </div>
+    <div class="container is-fluid">
+      <b-table v-if="sketchTTP.length > 0" :data="sketchTTP">
+        <b-table-column field="search" label="" v-slot="props" width="1em">
+          <router-link
+            :to="{ name: 'Explore', query: generateOpenSearchQuery(props.row.ts_ttp, 'ts_ttp') }">
+            <i class="fas fa-search" aria-hidden="true"
+              title="Search sketch for all events with this tag."></i>
+          </router-link>
+        </b-table-column>
+        <b-table-column field="tag" label="TTP" v-slot="props" sortable>
+          <b-tag type="is-info is-light">{{ props.row.ts_ttp }} </b-tag>
+        </b-table-column>
+        <b-table-column field="count" label="Events tagged" v-slot="props"
+          sortable numeric>
+          {{ props.row.count }}
+        </b-table-column>
+      </b-table>
+      <span v-else>No events have been tagged yet.</span>
+    </div>
   </div>
+
 </template>
 
 <script>
@@ -137,6 +188,9 @@ export default {
       perPage: 10,
       editingRule: {},
       showEditModal: false,
+      sketchTags: [],
+      sketchTTP: [],
+      analyses: [],
       text: `title: Suspicious Installation of ZMap
 id: 5266a592-b793-11ea-b3de-0242ac130004
 description: Detects suspicious installation of ZMap
@@ -172,6 +226,29 @@ level: high`,
     meta() {
       return this.$store.state.meta
     },
+  },
+  created() {
+    if (this.timeline) {
+      ApiClient.getSketchTimelineAnalysis(this.sketch.id, this.timeline.id)
+        .then(response => {
+          this.analyses = response.data.objects[0]
+        })
+        .catch(e => { })
+    }
+    // If no timeline was specified then loop over all of them
+    else {
+      this.sketch.timelines.forEach(timeline => {
+        ApiClient.getSketchTimelineAnalysis(this.sketch.id, timeline.id)
+          .then(response => {
+            this.analyses = this.analyses.concat(response.data.objects[0])
+          })
+          .catch(e => { })
+      })
+    }
+  },
+  mounted() {
+    this.loadSketchSigmaTags()
+    this.loadSketchTTP()
   },
   methods: {
     parseSigma: function (rule_yaml) { // eslint-disable-line
@@ -218,6 +295,53 @@ level: high`,
           })
       }
     },
+    generateOpenSearchQuery(value, field) {
+      let query = `"${value}"`
+      // Escape special OpenSearch characters: \, [space]
+      query = query.replace(/[\\\s]/g, '\\$&')
+      if (field !== undefined) {
+        query = `${field}:${query}`
+      }
+      return { q: query }
+    },
+    loadSketchSigmaTags() {
+      ApiClient.runAggregator(this.sketch.id, {
+        aggregator_name: 'field_bucket',
+        aggregator_parameters: { field: 'ts_sigma_rule' },
+      }).then((response) => {
+        this.sketchTags = response.data.objects[0].field_bucket.buckets
+        // of the form [{count: 0, tag: 'foo'}]
+      })
+    },
+    loadSketchTTP() {
+      ApiClient.runAggregator(this.sketch.id, {
+        aggregator_name: 'field_bucket',
+        aggregator_parameters: { field: 'ts_ttp' },
+      }).then((response) => {
+        this.sketchTTP = response.data.objects[0].field_bucket.buckets
+        // of the form [{count: 0, tag: 'foo'}]
+      })
+    },
+    getColor(status) {
+      if (status === 'false') return "red"
+      return "green";
+    },
+    getRuleByName(ruleName) {
+      if (Array.isArray(this.$store.state.sigmaRuleList)) {
+        var result = this.$store.state.sigmaRuleList.filter(obj => {
+          return obj.file_name === ruleName
+        })
+        return { result }
+      } else {
+        console.log(ruleName + 'is not found');
+        return {
+          // If not found in the current installed rules
+          result: [{
+            "file_name": ruleName, "ts_use_in_analyzer": "Not found",
+          }]
+        }
+      }
+    },
   },
 }
 </script>
@@ -230,5 +354,13 @@ pre {
   white-space: -pre-wrap;
   white-space: -o-pre-wrap;
   word-wrap: break-word;
+
+  .text-red {
+    color: red;
+  }
+
+  .text-green {
+    color: green;
+  }
 }
 </style>
