@@ -237,6 +237,7 @@ def build_index_pipeline(
     only_index=False,
     timeline_id=None,
     headersMapping=None,
+    delimiter=","
 ):
     """Build a pipeline for index and analysis.
 
@@ -270,7 +271,7 @@ def build_index_pipeline(
     if file_extension == "csv":
         # passing the extra argument: headersMapping
         index_task = index_task_class.s(
-            file_path, events, timeline_name, index_name, file_extension, timeline_id, headersMapping
+            file_path, events, timeline_name, index_name, file_extension, timeline_id, headersMapping, delimiter
         )
     else:
         index_task = index_task_class.s(
@@ -680,7 +681,7 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
 
 @celery.task(track_started=True, base=SqlAlchemyTask)
 def run_csv_jsonl(
-    file_path, events, timeline_name, index_name, source_type, timeline_id, headersMapping=None
+    file_path, events, timeline_name, index_name, source_type, timeline_id, headersMapping=None, delimiter=','
 ):
     """Create a Celery task for processing a CSV or JSONL file.
 
@@ -748,7 +749,7 @@ def run_csv_jsonl(
         opensearch.create_index(
             index_name=index_name, doc_type=event_type, mappings=mappings
         )
-        for event in read_and_validate(file_handle=file_handle, headersMapping=headersMapping):
+        for event in read_and_validate(file_handle=file_handle, headersMapping=headersMapping, delimiter=delimiter):
             opensearch.import_event(
                 index_name, event_type, event, timeline_id=timeline_id
             )

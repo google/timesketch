@@ -137,8 +137,7 @@ def headers_mapping_sanity_check(headers, headersMapping):
         headersMapping: mapping of the mandatory headers with the exsting one.
                             This feature is useful only for CSV file
     
-    Returns: error message if any of the sanity checks fails, otherwise, OK
-    
+    Returns: error message if any of the sanity checks fails
     """
     # 0. create a hashmap for the exisiting CSV headers
     headers = set(list(headers))
@@ -149,7 +148,7 @@ def headers_mapping_sanity_check(headers, headersMapping):
         if mandHeader in headers:
             return "The mapping is done only if the mandatory header is missing"
         if (headersMapping[mandHeader][0] == "New header" and 
-                headersMapping[mandHeader][0] == ""):
+                headersMapping[mandHeader][1] == ""):
             msg = "Error to create new column {}\n".format(mandHeader)
             msg += "A mandatory default value must be assigned in the headers mapping dictionary"
             return msg
@@ -165,9 +164,8 @@ def headers_mapping_sanity_check(headers, headersMapping):
     if l1 > l2:
         return "2 or more mandatory headers are mapped to the same exisiting CSV headers"
 
-    # 4. other checks? 
+    # 4. other checks?
 
-    return "OK"
 
 def read_and_validate_csv(file_handle, delimiter=",", mandatory_fields=None, headersMapping=None):
     """Generator for reading a CSV file.
@@ -195,7 +193,7 @@ def read_and_validate_csv(file_handle, delimiter=",", mandatory_fields=None, hea
         # sanity check of headersMapping 
         # e.g., 2 or more mandatory headers are mapped with the same exisiting CSV header
         res = headers_mapping_sanity_check(header_reader, headersMapping)
-        if res != "OK":
+        if res:
             raise RuntimeError("Headers mapping is wrong.\n{}".format(res))
 
         # modify header_reader with the current headersMapping
@@ -321,12 +319,13 @@ def read_and_validate_redline(file_handle):
         yield row_to_yield
 
 
-def read_and_validate_jsonl(file_handle, headersMapping=None):
+def read_and_validate_jsonl(file_handle, headersMapping=None, delimiter=None):
     """Generator for reading a JSONL (json lines) file.
 
     Args:
         file_handle: a file-like object containing the CSV content.
         headersMapping: not important here (for now)
+        delimiter: not useful for JSONL (only for CSV)
 
     Raises:
         RuntimeError: if there are missing fields.

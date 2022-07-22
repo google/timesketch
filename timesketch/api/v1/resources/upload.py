@@ -128,6 +128,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         events="",
         meta=None,
         headersMapping=None,
+        delimiter=","
     ):
         """Creates a full pipeline for an uploaded file and returns the results.
 
@@ -148,6 +149,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                   included in the return.
             headersMapping: mapping of the mandatory headers with the exsting one.
                                 This feature is useful only for CSV file
+            delimiter: delimiter used to parse the CSV
 
         Returns:
             A timeline if created otherwise a search index in JSON (instance
@@ -204,6 +206,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 events=events,
                 meta=meta,
                 headersMapping=headersMapping,
+                delimiter=delimiter
             )
 
         searchindex.set_status("processing")
@@ -271,7 +274,8 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             sketch_id=sketch_id,
             only_index=enable_stream,
             timeline_id=timeline.id,
-            headersMapping=headersMapping
+            headersMapping=headersMapping,
+            delimiter=delimiter
         )
         task_id = uuid.uuid4().hex
         pipeline.apply_async(task_id=task_id)
@@ -310,7 +314,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             enable_stream=form.get("enable_stream", False),
         )
 
-    def _upload_file(self, file_storage, form, sketch, index_name, chunk_index_name="",headersMapping=None,):
+    def _upload_file(self, file_storage, form, sketch, index_name, chunk_index_name="", headersMapping=None, delimiter=","):
         """Upload a file.
 
         Args:
@@ -322,6 +326,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 chunks are used.
             headersMapping: mapping of the mandatory headers with the exsting one.
                             This feature is useful only for CSV file
+            delimiter: delimiter to read the CSV file
 
         Returns:
             A timeline if created otherwise a search index in JSON (instance
@@ -369,6 +374,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 data_label=data_label,
                 enable_stream=enable_stream,
                 headersMapping=headersMapping,
+                delimiter=delimiter
             )
 
         # For file chunks we need the correct filepath, otherwise each chunk
@@ -433,6 +439,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             enable_stream=enable_stream,
             meta=meta,
             headersMapping=headersMapping,
+            delimiter=delimiter
         )
 
     @login_required
@@ -450,13 +457,15 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         if not form:
             form = request.form
 
-        # map existing headers with the mandatory ones
-        res = form.get('headersMapping')
+        # headers mapping: map between mandatory headers and new ones
+        res = form.get("headersMapping", None)
         if res:
             headersMapping = json.loads(res)
         else:
             headersMapping = None
-        print(headersMapping)
+
+        delimiter = form.get("delimiter", ",")
+        logger.info(delimiter)
 
         sketch_id = form.get("sketch_id", None)
         if not sketch_id:
@@ -499,6 +508,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 sketch=sketch,
                 index_name=index_name,
                 headersMapping=headersMapping,
+                delimiter=delimiter
             )
 
         events = form.get("events")
