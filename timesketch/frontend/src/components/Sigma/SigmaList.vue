@@ -49,7 +49,7 @@ limitations under the License.
     <!-- End modal -->
 
     <span class="icon is-small" style="cursor: pointer" title="Add a rule Rule"
-      @click="composeRule()"><i class="fas fa-edit"></i>
+      @click="composeRule()"><i class="fas fa-plus"></i>Add
     </span>
 
     <b-table v-if="sigmaRuleList" :data="sigmaRuleList"
@@ -198,22 +198,6 @@ level: high`,
       this.showEditModal = true
       this.editingRule = rule
     },
-    onEditTitle(e) {
-      console.log(e.target.innerText)
-      this.sketch.name = e.target.innerText
-      this.saveSigmaRule()
-    },
-    onEditYAML(e) {
-      console.log(e)
-      //console.log(this._data.props)
-      //this.sketch.name = e.target.innerText
-      //this.saveSigmaRule(e)
-    },
-    onEditAuthor(e) {
-      console.log(e.target.innerText)
-      this.sketch.description = e.target.innerText
-      this.saveSigmaRule(e)
-    },
     saveSigmaRule(rule) {
       console.log("save Sigma Rule")
       console.log(rule)
@@ -224,15 +208,9 @@ level: high`,
         })
       this.$buefy.notification.open({ message: 'Succesfully added Sigma rule!', type: 'is-success' })
       this.showEditModal = false
-
-
     },
     deleteRule(ioc) {
       if (confirm('Delete Rule?')) {
-        //var data = this.intelligenceData.filter((i) => i.ioc !== ioc.ioc)
-        //ApiClient.addSketchAttribute(this.sketch.id, 'intelligence', { data: data }, 'intelligence').then(() => {
-        //  this.loadSketchAttributes()
-        //})
         ApiClient.deleteSigmaRule(ioc.rule_uuid)
           .then(response => { })
           .catch(e => {

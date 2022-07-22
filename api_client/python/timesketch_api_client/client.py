@@ -626,7 +626,7 @@ class TimesketchApi:
         return sigma_obj
 
     def create_sigma_rule(self, rule_text, description=None):
-        # TODO(jaegeral): this form needs to be fed by the rule_text and maybe nothing more than that.
+        # TODO(jaegeral): this form needs to be fed by the rule_text
         """Create a new sigma rule.
 
         Args:
