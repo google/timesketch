@@ -24,7 +24,7 @@ limitations under the License.
             v-model="editingRule.rule_yaml"></b-input>
         </b-field>
         <b-field grouped>
-
+          Status: {{ editingRule.status }}
           <b-field grouped expanded position="is-right">
             <p class="control">
               <b-button type="is-primary"
@@ -32,6 +32,13 @@ limitations under the License.
                 Parse
               </b-button>
             </p>
+            <b-select placeholder="Rule status" v-model="editingRule.status"
+              label="Rule status" label-position="on-border">
+              <option v-for="option in RuleStatus" :value="option"
+                :key="option">
+                {{ option }}
+              </option>
+            </b-select>
             <p class="control">
               <b-button type="is-primary" @click="saveSigmaRule(editingRule)">
                 Save
@@ -121,37 +128,7 @@ limitations under the License.
         <pre>{{ JSON.stringify(props['row'], null, 2) }}</pre>
       </template>
     </b-table>
-    <div class="container is-fluid">
-      <b-table v-if="sketchTags.length > 0" :data="sketchTags">
-        <b-table-column field="search" label="" v-slot="props" width="1em">
-          <router-link
-            :to="{ name: 'Explore', query: generateOpenSearchQuery(props.row.ts_sigma_rule, 'ts_sigma_rule') }">
-            <i class="fas fa-search" aria-hidden="true"
-              title="Search sketch for all events with this tag."></i>
-          </router-link>
-        </b-table-column>
-        <b-table-column field="tag" label="Sigma rule name" v-slot="props"
-          sortable>
-          <b-tag type="is-info is-light">{{ props.row.ts_sigma_rule }}
-          </b-tag>
-        </b-table-column>
-        <b-table-column field="count" label="Events tagged" v-slot="props"
-          sortable numeric>
-          {{ props.row.count }}
-        </b-table-column>
-        <b-table-column field="tag" label="Status of rule" v-slot="props"
-          sortable>
-          <b-tag
-            :class="{ 'text-green': getRuleByName(props.row.ts_sigma_rule).result[0].ts_use_in_analyzer == true, 'text-red': getRuleByName(props.row.ts_sigma_rule).result[0].ts_use_in_analyzer == false }">
-            {{
-                getRuleByName(props.row.ts_sigma_rule).result[0].ts_use_in_analyzer
-            }}
-          </b-tag>
-          <!--TODO(jaegeral): This needs to be backed with actual data-->
-        </b-table-column>
-      </b-table>
-      <span v-else>No events have been tagged yet.</span>
-    </div>
+
     <div class="container is-fluid">
       <b-table v-if="sketchTTP.length > 0" :data="sketchTTP">
         <b-table-column field="search" label="" v-slot="props" width="1em">
@@ -160,13 +137,18 @@ limitations under the License.
             <i class="fas fa-search" aria-hidden="true"
               title="Search sketch for all events with this tag."></i>
           </router-link>
+
         </b-table-column>
+
         <b-table-column field="tag" label="TTP" v-slot="props" sortable>
           <b-tag type="is-info is-light">{{ props.row.ts_ttp }} </b-tag>
         </b-table-column>
         <b-table-column field="count" label="Events tagged" v-slot="props"
           sortable numeric>
           {{ props.row.count }}
+          <explore-preview style="margin-left: 10px"
+            :searchQuery="generateOpenSearchQuery(props.row.ts_ttp, 'ts_ttp')">
+          </explore-preview>
         </b-table-column>
       </b-table>
       <span v-else>No events have been tagged yet.</span>
@@ -191,6 +173,7 @@ export default {
       sketchTags: [],
       sketchTTP: [],
       analyses: [],
+      RuleStatus: ["new", "deactivated"],
       text: `title: Suspicious Installation of ZMap
 id: 5266a592-b793-11ea-b3de-0242ac130004
 description: Detects suspicious installation of ZMap
@@ -326,14 +309,15 @@ level: high`,
       if (status === 'false') return "red"
       return "green";
     },
-    getRuleByName(ruleName) {
+    getRuleByUUID(rule_uuid) {
       if (Array.isArray(this.$store.state.sigmaRuleList)) {
+        console.log("trying to find" + rule_uuid)
         var result = this.$store.state.sigmaRuleList.filter(obj => {
-          return obj.file_name === ruleName
+          return obj.rule_uuid === rule_uuid
         })
         return { result }
       } else {
-        console.log(ruleName + 'is not found');
+        console.log(rule_uuid + 'is not found');
         return {
           // If not found in the current installed rules
           result: [{

@@ -428,35 +428,3 @@ class TestSigmaUtilLib(BaseTest):
             ]['status'].all(),
         )
         self.assertIsNotNone(False)
-
-    def test_get_sigma_rule(self):
-        """Test getting sigma rule from file"""
-
-        filepath = "./data/sigma/rules/lnx_susp_zmap.yml"
-
-        rule = sigma_util.get_sigma_rule(filepath)
-        self.assertIsNotNone(rule)
-        self.assertIn("zmap", rule.get("es_query"))
-        self.assertIn("b793", rule.get("id"))
-
-        # temp write a file with content
-
-        with open(
-            "./data/sigma/rules/temporary.yml", "w+", encoding='utf-8'
-        ) as f:
-            f.write(SIGMA_MOCK_RULE_TEST4)
-        self.assertNotEqual(0, os.stat(f.name).st_size)
-        self.assertIsNotNone(f)
-
-        rule_by_file = sigma_util.get_sigma_rule(f.name)
-
-        # Test that rule from file equals rule from text
-        rule_by_text = sigma_util.get_sigma_rule_by_text(SIGMA_MOCK_RULE_TEST4)
-
-        self.assertEqual(rule_by_file.get('id'), rule_by_text.get('id'))
-        self.assertEqual(
-            rule_by_file.get('es_query'), rule_by_text.get('es_query')
-        )
-
-        # clean up
-        os.remove(f.name)

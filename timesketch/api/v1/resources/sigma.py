@@ -142,42 +142,6 @@ class SigmaResource(resources.ResourceMixin, Resource):
         return jsonify({"objects": return_rules, "meta": meta})
 
     @login_required
-    def get_old_from_disk_deprecated(self, rule_uuid):
-        """Handles GET request to the resource.
-
-        Args:
-            rule_uuid: uuid of the sigma rule
-
-        Returns:
-            JSON sigma rule
-        """
-        return_rule = None
-        try:
-            sigma_rules = ts_sigma_lib.get_all_sigma_rules()
-
-        except ValueError as e:
-            logger.error(
-                "OS Error, unable to get the path to the Sigma rules",
-                exc_info=True,
-            )
-            abort(HTTP_STATUS_CODE_NOT_FOUND, f"ValueError {e}")
-        for rule in sigma_rules:
-            if rule is not None:
-                if rule_uuid == rule.get("id"):
-                    return_rule = rule
-
-        if return_rule is None:
-            abort(
-                HTTP_STATUS_CODE_NOT_FOUND, "No sigma rule found with this ID."
-            )
-
-        meta = {
-            "current_user": current_user.username,
-            "rules_count": len(sigma_rules),
-        }
-        return jsonify({"objects": [return_rule], "meta": meta})
-
-    @login_required
     def delete(self,rule_uuid):
         """Handles DELETE request to the resource.
 

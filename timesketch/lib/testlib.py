@@ -578,25 +578,15 @@ class BaseTest(TestCase):
         return searchtemplate
 
     def _create_sigma(
-        self, rule_uuid, user, title, description, query_string, rule_yaml
+        self, rule_yaml
     ):
         """Create a sigma rule in the database.
         Args:
-            rule_uuid: UUID for the rule
-            user: A user (instance of timesketch.models.user.User)
-            title: Sigma rule title
-            description: Description of the Sigma rule
-            query_string: Open Search Query String
             rule_yaml: yaml content of the rule
         Returns:
             A search template (timesketch.models.sketch.SearchTemplate)
         """
         sigma = Sigma(
-            rule_uuid=rule_uuid,
-            user=user,
-            title=title,
-            query_string=query_string,
-            description=description,
             rule_yaml=rule_yaml,
         )
         self._commit_to_database(sigma)
@@ -657,12 +647,12 @@ class BaseTest(TestCase):
         self.story = self._create_story(sketch=self.sketch1, user=self.user1)
 
         self.sigma1 = self._create_sigma(
-            rule_uuid='5266a592-b793-11ea-b3de-0242ac130004',
-            title='Suspicious Installation of Zenmap',
-            query_string='("*apt\\-get\\ install\\ zmap*")',
-            description='Detects suspicious installation of Zenmap',
+            # rule_uuid='5266a592-b793-11ea-b3de-0242ac130004',
+            # title='Suspicious Installation of Zenmap',
+            # query_string='("*apt\\-get\\ install\\ zmap*")',
+            # description='Detects suspicious installation of Zenmap',
             rule_yaml=SIGMA_RULE,
-            user=self.user1,
+            # user=self.user1,
         )
 
     def tearDown(self):

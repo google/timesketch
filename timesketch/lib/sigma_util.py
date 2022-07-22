@@ -24,6 +24,8 @@ from functools import lru_cache
 import yaml
 import pandas as pd
 
+from deprecated import deprecated
+
 from flask import current_app
 
 import sigma.configuration as sigma_configuration
@@ -83,138 +85,8 @@ def get_sigma_config_file(config_file=None):
 
     return sigma_config
 
-
-def get_sigma_rules_path():
-    """Get Sigma rules paths.
-
-    Returns:
-        A list of strings to the Sigma rules
-
-    Raises:
-        ValueError: If SIGMA_RULES_FOLDERS is not found in the config file.
-            or the folders are not readabale.
-    """
-    try:
-        rules_path = current_app.config.get(
-            "SIGMA_RULES_FOLDERS", ['/etc/timesketch/sigma/rules/']
-        )
-    except RuntimeError as e:
-        logger.error(e)
-        raise ValueError("SIGMA_RULES_FOLDERS not found in config file") from e
-
-    if not rules_path:
-        raise ValueError("SIGMA_RULES_FOLDERS not found in config file")
-
-    for folder in rules_path:
-        if not os.path.isdir(folder):
-            raise ValueError(
-                "Unable to open dir: [{0:s}], it does not exist.".format(
-                    folder
-                )
-            )
-
-        if not os.access(folder, os.R_OK):
-            raise ValueError(
-                "Unable to open dir: [{0:s}], cannot open it for "
-                "read, please check permissions.".format(folder)
-            )
-
-    return rules_path
-
-
 @lru_cache(maxsize=10)
-def get_sigma_rules(rule_folder, sigma_config=None):
-    """Returns the Sigma rules for a folder including subfolders.
-    Args:
-        rule_folder: folder to be checked for rules
-        sigma_config: optional argument to pass a
-                sigma.configuration.SigmaConfiguration object
-    Returns:
-        A array of Sigma rules as JSON
-    Raises:
-        ValueError: If SIGMA_RULES_FOLDERS is not found in the config file.
-            or the folders are not readabale.
-    """
-    return_array = []
-
-    rule_status_list_path = None
-    ignore = get_sigma_rule_status_list(rule_status_list_path)
-    ignore_list = list(ignore.loc[ignore['status'] == 'bad']["path"].unique())
-    exploratory_list = list(
-        ignore.loc[ignore['status'] == 'exploratory']["path"].unique()
-    )
-    to_be_used_in_analyzer = list(
-        ignore.loc[ignore['status'] == 'good']["path"].unique()
-    )
-
-    for dirpath, dirnames, files in os.walk(rule_folder):
-        if "deprecated" in [x.lower() for x in dirnames]:
-            dirnames.remove("deprecated")
-
-        for rule_filename in files:
-            if rule_filename.lower().endswith(".yml"):
-                # if a sub dir is found, do not try to parse it.
-                if os.path.isdir(os.path.join(dirpath, rule_filename)):
-                    continue
-
-                rule_file_path = os.path.join(dirpath, rule_filename)
-
-                if any(x in rule_file_path for x in ignore_list):
-                    continue
-
-                parsed_rule = get_sigma_rule(rule_file_path, sigma_config)
-
-                if parsed_rule is None:
-                    continue
-
-                # Only assign the ts_use_in_analyzer flag to rules that are cleared
-                if any(x in rule_file_path for x in exploratory_list):
-                    parsed_rule.update({'ts_use_in_analyzer': False})
-                elif any(x in rule_file_path for x in to_be_used_in_analyzer):
-                    parsed_rule.update({'ts_use_in_analyzer': True})
-                else:
-                    parsed_rule.update({'ts_use_in_analyzer': False})
-
-                # try to append any content from the reason field of the status file:
-                pd.set_option(
-                    'display.max_colwidth', 200
-                )  # to avoid comments being truncated
-                if parsed_rule.get('id') in ignore['rule_id'].unique():
-                    comment_string = ignore.loc[
-                        ignore['rule_id'] == parsed_rule.get('id')
-                    ]['reason'].to_string()
-                    comment_string = comment_string.split('    ', 1)[1]
-                    parsed_rule.update({'ts_comment': comment_string})
-
-                if parsed_rule:
-                    return_array.append(parsed_rule)
-    return return_array
-
-
-@lru_cache(maxsize=None)
-def get_all_sigma_rules():
-    """Returns all Sigma rules
-
-    Returns:
-        A array of Sigma rules
-
-    Raises:
-        ValueError: If SIGMA_RULES_FOLDERS is not found in the config file.
-            or the folders are not readabale.
-    """
-    sigma_rules = []
-
-    # TODO (jaegeral): implement to get it from the database
-
-    #rules_paths = get_sigma_rules_path()
-
-    #for folder in rules_paths:
-    #    sigma_rules.extend(get_sigma_rules(folder))
-
-    return sigma_rules
-
-
-@lru_cache(maxsize=10)
+@deprecated
 def get_sigma_rule(filepath, sigma_config=None):
     """Returns a JSON represenation for a rule
     Args:
