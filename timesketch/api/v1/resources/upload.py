@@ -314,7 +314,9 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             enable_stream=form.get("enable_stream", False),
         )
 
-    def _upload_file(self, file_storage, form, sketch, index_name, chunk_index_name="", headersMapping=None, delimiter=","):
+    def _upload_file(   self, file_storage, form, sketch, 
+                        index_name, chunk_index_name="", 
+                        headersMapping=None, delimiter=","):
         """Upload a file.
 
         Args:
@@ -521,3 +523,4 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         return self._upload_events(
             events=events, form=form, sketch=sketch, index_name=index_name
         )
+        
