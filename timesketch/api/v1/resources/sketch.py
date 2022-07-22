@@ -43,6 +43,7 @@ from timesketch.models import db_session
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import SearchTemplate
 from timesketch.models.sketch import View
+from elasticsearch import TransportError
 
 
 logger = logging.getLogger("timesketch.sketch_api")
@@ -425,7 +426,7 @@ class SketchResource(resources.ResourceMixin, Resource):
             stories.append(story)
         try:
             filter_labels = self.datastore.get_filter_labels(sketch.id, sketch_indices)
-        except Exception:
+        except TransportError:
             filter_labels = []
             
         meta = dict(

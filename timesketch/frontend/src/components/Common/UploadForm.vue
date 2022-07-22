@@ -55,7 +55,7 @@ limitations under the License.
       <div v-for="(value, key) in headerMissing">
         <label v-if="!value">{{key}} </label>
         <select v-if="!value" :name="key" :id="key" v-on:click="getSelection($event)">
-          <option><br>New header</br></option>
+          <option>New header</option>
           <option v-for="h in headers" :value="h">
             <div v-if="!headerMissing[h.val]">
               {{h.val}}
