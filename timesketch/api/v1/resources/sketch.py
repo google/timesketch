@@ -423,11 +423,6 @@ class SketchResource(resources.ResourceMixin, Resource):
                 "updated_at": story.updated_at,
             }
             stories.append(story)
-        try:
-            filter_labels = self.datastore.get_filter_labels(sketch.id, sketch_indices)
-        except Exception:
-            filter_labels = []
-
         meta = dict(
             aggregators=aggregators,
             views=views,
@@ -452,8 +447,8 @@ class SketchResource(resources.ResourceMixin, Resource):
             indices_metadata=indices_metadata,
             stats_per_timeline=stats_per_timeline,
             last_activity=utils.get_sketch_last_activity(sketch),
-            filter_labels=filter_labels,
             sketch_labels=[label.label for label in sketch.labels],
+            filter_labels = self.datastore.get_filter_labels(sketch.id, sketch_indices),
         )
         return self.to_json(sketch, meta=meta)
 
