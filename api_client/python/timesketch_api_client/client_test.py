@@ -20,6 +20,7 @@ import mock
 from . import client
 from . import sketch as sketch_lib
 from . import test_lib
+from timesketch_api_client import sigma
 
 
 class TimesketchApiTest(unittest.TestCase):
@@ -57,6 +58,7 @@ class TimesketchApiTest(unittest.TestCase):
         self.assertIn("Alexander", rule.author)
 
     def test_create_sigma_rule(self):
-        rule = self.api_client.create_sigma_rule(name='testrule',description='rule_description')
+        rule = self.api_client.create_sigma_rule(
+            name='testrule',description='rule_description')
         self.assertIn("rule_description", rule.description)
-        self.assertIsInstance(rule,timesketch_api_client.sigma.Sigma)
+        self.assertIsInstance(rule,sigma.Sigma)

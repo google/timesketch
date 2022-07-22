@@ -174,7 +174,7 @@ level: high`,
     },
   },
   methods: {
-    parseSigma: function (rule_yaml) {
+    parseSigma: function (rule_yaml) { // eslint-disable-line
       ApiClient.getSigmaByText(rule_yaml)
         .then(response => {
           let SigmaRule = response.data.objects[0]
