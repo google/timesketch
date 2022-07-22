@@ -4,8 +4,9 @@
 #  * weight: Used for ordering, tags with larger weight will appear first in the list of tags.
 #  * class: Used in the UI to defined a Buefy class to color the tag with (common classes are danger, warning, success, and info)
 #
+# The `regex` attribute is used to specify regexes to match against the tags. 1:1 tag matches take precedence over regex matches.
+#
 # With the configuration below, an IOC with the 'malware' tag will have that tag displayed first (heavy weight), in red (danger)
-
 
 malware:
   weight: 100
@@ -22,3 +23,8 @@ legit:
 default:
   weight: 0
   class: 'info'
+
+regexes:
+  '^GROUPNAME':
+    weight: 100
+    class: 'danger'
