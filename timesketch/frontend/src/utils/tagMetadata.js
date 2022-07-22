@@ -1,22 +1,3 @@
-const tagMetadata = {
-    malware: {
-        weight: 100,
-        class: 'danger',
-    },
-    suspicious: {
-        weight: 50,
-        class: 'warning',
-    },
-    legit: {
-        weight: 10,
-        class: 'success',
-    },
-    default: {
-        weight: 0,
-        class: 'info'
-    }
-}
-
 const IOCTypes = [
     { regex: /^(\/[\S]+)+$/i, type: 'fs_path' },
     { regex: /^([-\w]+\.)+[a-z]{2,}$/i, type: 'hostname' },
@@ -31,4 +12,4 @@ const IOCTypes = [
     { regex: /./g, type: 'other' },
 ]
 
-export {tagMetadata, IOCTypes}
+export {IOCTypes}

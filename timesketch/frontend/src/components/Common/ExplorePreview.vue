@@ -14,14 +14,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <span v-if="previewData.length" @mouseenter="delayDisplay(true, 0)" @mouseleave="delayDisplay(false, 500)">
+  <!-- Floating -->
+  <span
+    v-if="previewData.length && !displayInline"
+    @mouseenter="delayDisplay(true, 0)"
+    @mouseleave="delayDisplay(false, 500)"
+  >
     <b-tag rounded type="is-success is-light">
       <span class="icon is-medium"><i class="fas fa-eye" aria-hidden="true"></i></span>
       {{ previewData.length }}
     </b-tag>
-    <div class="preview-box" v-show="isOpen">
+    <div class="preview-box-floating" v-show="isOpen">
       <div class="preview-title">
-        Previewing results for <code>{{ searchQuery['q'] }}</code>
+        Previewing results for <code>{{ searchQuery }}</code>
       </div>
       <event-list
         :eventList="previewData"
@@ -32,6 +37,21 @@ limitations under the License.
       ></event-list>
     </div>
   </span>
+
+  <!-- Inline -->
+  <span v-else-if="displayInline">
+    Live preview: {{ previewData.length || 'No' }} matching events.
+    <event-list
+      v-if="previewData.length"
+      :eventList="previewData"
+      order="asc"
+      :displayOptions="{ showEmojis: false, showMillis: false, showTags: true }"
+      :selectedFields="[{ field: 'message', type: 'text' }]"
+      :searchNode="previewSearchNode"
+    ></event-list>
+  </span>
+
+  <!-- No results -->
   <b-tag v-else rounded type="is-light" style="opacity: 0.5">
     <span class="icon is-medium"><i class="fas fa-eye-slash" aria-hidden="true"></i></span>0
   </b-tag>
@@ -40,10 +60,14 @@ limitations under the License.
 <script>
 import ApiClient from '../../utils/RestApiClient'
 import EventList from '../Explore/EventList'
+import _ from 'lodash'
 
 export default {
   components: { EventList },
-  props: ['searchQuery'],
+  props: {
+    searchQuery: [String],
+    displayInline: { type: Boolean, default: false },
+  },
   data() {
     return {
       previewData: [],
@@ -54,8 +78,8 @@ export default {
     }
   },
   methods: {
-    refreshPreview: function (query) {
-      var formData = { query: this.searchQuery['q'], parent: this.currentSearchNode.id }
+    refreshPreview: function () {
+      var formData = { query: this.searchQuery, parent: this.currentSearchNode.id }
       ApiClient.search(this.sketch.id, formData).then((response) => {
         this.previewData = response.data.objects
         this.previewSearchNode = response.data.meta.search_node
@@ -80,19 +104,24 @@ export default {
     },
   },
   mounted() {
-    this.refreshPreview(this.searchQuery)
+    this.refreshPreview()
+  },
+  watch: {
+    searchQuery: _.debounce(function (newQuery) {
+      this.refreshPreview(newQuery)
+    }, 300),
   },
 }
 </script>
 
 <style scoped lang="scss">
-.preview-box {
+.preview-box-floating {
   z-index: 100;
-  position: fixed;
+  position: absolute;
   background: var(--background-color);
   width: 60%;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
-  height: 50%;
+  height: auto;
   overflow: scroll;
 }
 
