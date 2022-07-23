@@ -338,13 +338,11 @@ def read_and_validate_redline(file_handle):
         yield row_to_yield
 
 
-def read_and_validate_jsonl(file_handle, headersMapping=None, delimiter=None):
+def read_and_validate_jsonl(file_handle, **kwargs):
     """Generator for reading a JSONL (json lines) file.
 
     Args:
         file_handle: a file-like object containing the CSV content.
-        headersMapping: not important here (for now)
-        delimiter: not useful for JSONL (only for CSV)
 
     Raises:
         RuntimeError: if there are missing fields.
