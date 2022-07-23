@@ -338,7 +338,7 @@ def read_and_validate_redline(file_handle):
         yield row_to_yield
 
 
-def read_and_validate_jsonl(file_handle, **kwargs):
+def read_and_validate_jsonl(file_handle, **_):
     """Generator for reading a JSONL (json lines) file.
 
     Args:
