@@ -173,7 +173,7 @@ def headers_mapping_sanity_check(headers, headersMapping):
             "2 or more mandatory headers are "
             "mapped to the same exisiting CSV headers")
 
-    # 4. other checks?
+    return None
 
 
 def read_and_validate_csv(

@@ -52,11 +52,11 @@ limitations under the License.
         the user to map the missing header with an exsting one
 
       -->
-      <div v-for="(value, key) in headerMissing">
+      <div v-for="(value, key) in headerMissing" :key="key">
         <label v-if="!value">{{key}} </label>
         <select v-if="!value" :name="key" :id="key" v-on:click="getSelection($event)">
           <option>New header</option>
-          <option v-for="h in headers" :value="h">
+          <option v-for="h in headers" :value="h" :key="h.id">
             <div v-if="!headerMissing[h.val]">
               {{h.val}}
             </div>
