@@ -71,10 +71,9 @@ limitations under the License.
         </div>
         <div v-if="fileName.split('.')[1]==='csv'">
           <label class="label">CSV Separator</label>
-          <div class="control">
-            <input type="radio" name="CSVDelimiter" v-on:click="changeCSVDelimiter($event)" value=","> Comma (,) 
-            <input type="radio" name="CSVDelimiter" v-on:click="changeCSVDelimiter($event)" value=";"> Semicolon (;)
-            <input type="radio" name="CSVDelimiter" v-on:click="changeCSVDelimiter($event)" value="|"> Pipe (|)
+          <div class="control" v-for="(v, key) in delimitersList" :key="key">
+              <input type="radio" name="CSVDelimiter" :value="v" v-on:click="changeCSVDelimiter($event)" >
+              {{key}} ({{v}})
           </div>
           <div v-if="infoMessage">
             <article class="message is-success mb-0">
@@ -125,6 +124,7 @@ export default {
       percentCompleted: 0,
       CSVDelimiter: ',',
       infoMessage : '',
+      delimitersList : {'Comma' : ',', 'Semicolon': ';', 'Pipe' : '|'}
     }
   },
   methods: {
@@ -327,6 +327,7 @@ export default {
               var data = e.target.result
               vueJS.headersString = data.split("\n")[0]
               var headers = vueJS.headersString.split(vueJS.CSVDelimiter) // all  headers of CSV uploaded
+              console.log(headers)
               for(let i in headers){
                 vueJS.headers.push({
                     id : i,
