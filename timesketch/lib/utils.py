@@ -106,7 +106,7 @@ def _validate_csv_fields(mandatory_fields, data, headers_mapping=None):
                          CSV to be substituted. If this value is equal to
                          "New Header”, we create a new column whose default
                          value is specified in the second entry of the array.
- 
+
     Raises:
         RuntimeError: if there are missing fields.
     """
@@ -116,11 +116,12 @@ def _validate_csv_fields(mandatory_fields, data, headers_mapping=None):
     headers_missing = mandatory_set - parsed_set
 
     if headers_mapping:
-        if headers_mapping_sanity_check(header_reader, headers_mapping):
+        res = headers_mapping_sanity_check(parsed_set, headers_mapping)
+        if res:
             raise RuntimeError("Headers mapping is wrong.\n{0}".format(res))
         headers_mapping_set = set(headers_mapping.keys())
         headers_missing = headers_missing - headers_mapping_set
-    
+
     if len(headers_missing) == 0:
         return
 
@@ -157,8 +158,6 @@ def headers_mapping_sanity_check(headers, headers_mapping):
 
     Returns: error message if any of the sanity checks fails
     """
-    # 0. create a hashmap for the exisiting CSV headers
-    headers = set(list(headers))
 
     # 1. The mapping is done only if the mandatory header is missing, and
     # 2. When a new column is created, a mandatory default value must be set
@@ -175,7 +174,7 @@ def headers_mapping_sanity_check(headers, headers_mapping):
     #       are actually present in the list headers
     candidate_headers = [
         e[0] for e in headers_mapping.values() if e[0] != "New header"
-        ]
+    ]
     for candidate in candidate_headers:
         if candidate not in headers:
             msg = "Value specified in headers mapping ({0}) ".format(candidate)
@@ -193,6 +192,35 @@ def headers_mapping_sanity_check(headers, headers_mapping):
     return None
 
 
+def rename_headers(chunk, headers_mapping):
+    """"Rename the headers of the dataframe
+
+    Args:
+        chunk: dataframe to be modified
+        headers_mapping: Python dictionary representing the mapping between
+                         mandatory (key) and existing CSV headers (value).
+                         The key is the name of the header that we want
+                         to substitute in the CSV.
+                         The value is an array whose length is 2.
+                         The first value shows the name of the header in the
+                         CSV to be substituted. If this value is equal to
+                         "New Header”, we create a new column whose default
+                         value is specified in the second entry of the array.
+
+    Returns: the renamed dataframe
+    """
+    for new_header in headers_mapping:
+        existing_header = headers_mapping[new_header][0]
+        default_value = headers_mapping[new_header][1]
+        if existing_header == "New header":
+            # add header and def values
+            chunk[new_header] = default_value
+        else:
+            # just rename the header
+            chunk.rename(columns={existing_header: new_header}, inplace=True)
+    return chunk
+
+
 def read_and_validate_csv(
     file_handle,
     delimiter=",",
@@ -207,14 +235,6 @@ def read_and_validate_csv(
         mandatory_fields: list of fields that must be present in the CSV header
         headers_mapping: Python dictionary representing the mapping between
                          mandatory (key) and existing CSV headers (value).
-                         The key is the name of the header that we want
-                         to substitute in the CSV.
-                         The value is an array whose length is 2.
-                         The first value shows the name of the header in the
-                         CSV to be substituted. If this value is equal to
-                         "New Header”, we create a new column whose default
-                         value is specified in the second entry of the array.
-
     Raises:
         RuntimeError: when there are missing fields.
         DataIngestionError: when there are issues with the data ingestion.
@@ -239,15 +259,7 @@ def read_and_validate_csv(
         for idx, chunk in enumerate(reader):
             if headers_mapping:
                 # rename colunms according to the mapping
-                for new_header in headers_mapping:
-                    existing_header = headers_mapping[new_header][0]
-                    default_value = headers_mapping[new_header][1]
-                    if existing_header == "New header":
-                        # add header and def values
-                        chunk[new_header] = default_value
-                    else:
-                        # just rename the header
-                        chunk.rename(columns={existing_header: new_header}, inplace=True)
+                chunk = rename_headers(chunk, headers_mapping)
 
             skipped_rows = chunk[chunk["datetime"].isnull()]
             if not skipped_rows.empty:
@@ -345,7 +357,7 @@ def read_and_validate_redline(file_handle):
         yield row_to_yield
 
 
-def read_and_validate_jsonl(file_handle, **kwargs): # pylint: disable=unused-argument
+def read_and_validate_jsonl(file_handle, **kwargs):  # pylint: disable=unused-argument
     """Generator for reading a JSONL (json lines) file.
 
     Args:
