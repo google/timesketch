@@ -91,20 +91,37 @@ def _scrub_special_tags(dict_obj):
             _ = dict_obj.pop(field)
 
 
-def _validate_csv_fields(mandatory_fields, data):
+def _validate_csv_fields(mandatory_fields, data, headers_mapping=None):
     """Validate parsed CSV fields against mandatory fields.
 
     Args:
         mandatory_fields: a list of fields that must be present.
         data: a DataFrame built from the ingested file.
-
+        headers_mapping: Python dictionary representing the mapping between
+                         mandatory (key) and existing CSV headers (value).
+                         The key is the name of the header that we want
+                         to substitute in the CSV.
+                         The value is an array whose length is 2.
+                         The first value shows the name of the header in the
+                         CSV to be substituted. If this value is equal to
+                         "New Header”, we create a new column whose default
+                         value is specified in the second entry of the array.
+ 
     Raises:
         RuntimeError: if there are missing fields.
     """
+
     mandatory_set = set(mandatory_fields)
     parsed_set = set(data.columns)
+    headers_missing = mandatory_set - parsed_set
 
-    if mandatory_set.issubset(parsed_set):
+    if headers_mapping:
+        if headers_mapping_sanity_check(header_reader, headers_mapping):
+            raise RuntimeError("Headers mapping is wrong.\n{0}".format(res))
+        headers_mapping_set = set(headers_mapping.keys())
+        headers_missing = headers_missing - headers_mapping_set
+    
+    if len(headers_missing) == 0:
         return
 
     raise RuntimeError(
@@ -210,22 +227,6 @@ def read_and_validate_csv(
 
     header_reader = pandas.read_csv(file_handle, sep=delimiter, nrows=0)
 
-    if headers_mapping:
-        # sanity check of headers_mapping
-        res = headers_mapping_sanity_check(header_reader, headers_mapping)
-        if res:
-            raise RuntimeError("Headers mapping is wrong.\n{0}".format(res))
-
-        # modify header_reader with the current headers_mapping
-        for key in headers_mapping:
-            val = headers_mapping[key]
-            newVal = key
-            oldVal = val[0]
-            if oldVal == "New header":
-                header_reader.insert(loc=0, column=key, value="")
-            else:
-                header_reader.rename(columns={oldVal: newVal}, inplace=True)
-
     _validate_csv_fields(mandatory_fields, header_reader)
 
     if hasattr(file_handle, "seek"):
@@ -238,16 +239,15 @@ def read_and_validate_csv(
         for idx, chunk in enumerate(reader):
             if headers_mapping:
                 # rename colunms according to the mapping
-                for key in headers_mapping:
-                    val = headers_mapping[key]
-                    newVal = key
-                    oldVal = val[0]
-                    if oldVal == "New header":
+                for new_header in headers_mapping:
+                    existing_header = headers_mapping[new_header][0]
+                    default_value = headers_mapping[new_header][1]
+                    if existing_header == "New header":
                         # add header and def values
-                        chunk[newVal] = val[1]
+                        chunk[new_header] = default_value
                     else:
-                        # just rename the heade
-                        chunk.rename(columns={oldVal: newVal}, inplace=True)
+                        # just rename the header
+                        chunk.rename(columns={existing_header: new_header}, inplace=True)
 
             skipped_rows = chunk[chunk["datetime"].isnull()]
             if not skipped_rows.empty:

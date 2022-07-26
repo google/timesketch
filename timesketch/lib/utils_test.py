@@ -66,91 +66,155 @@ class TestUtils(BaseTest):
             self.assertRegex(row["datetime"], ISO8601_REGEX)
 
     def test_wrong_headers_mapping(self):
-        """Test for Timesketch header mapping validation"""
+        """Test for wrong header mapping dictionary"""
+        file_name = "/tmp/unit_test_file.csv"
+        df = pd.DataFrame({
+            'DT': ['test'],
+            'message': ['test'],
+            'TD': ['test']
+        })
+        df.to_csv(file_name, index=False)
         mandatory_fields = ["message", "datetime", "timestamp_desc"]
-        # incorrect is a file without datetime and timestamp_desc as mandatory headers
-        all_wrong_headers_mapping = [
-            {"datetime": ["DT", ""], "timestamp_desc":[
-                "No.", ""], "message":["Source", ""]},
-            {"datetime": ["DT", ""], "timestamp_desc":[
-                "NotExisitingColumn", ""]},
-            {"datetime": ["DT", ""], "timestamp_desc":["DT", ""]},
-            {"datetime": ["New header", "foo"],
-                "timestamp_desc":["New header", ""]}
-        ]
-        for header_mapping in all_wrong_headers_mapping:
-            with self.assertRaises(RuntimeError):
-                next(read_and_validate_csv(TEST_CSV, ",",
-                     mandatory_fields, header_mapping))
+
+        wrong_header_1 = {
+            "datetime": ["DT", ""],
+            "timestamp_desc": ["No.", ""],
+            "message": ["Source", ""]
+        }
+        # column message already exists
+
+        with self.assertRaises(RuntimeError):
+            next(read_and_validate_csv(
+                file_name,
+                ",",
+                mandatory_fields,
+                wrong_header_1
+            ))
+
+        wrong_header_2 = {
+            "datetime": ["DT", ""],
+            "timestamp_desc": ["No Existing Column", ""]
+        }
+        # Mandatory header points to non existing column
+
+        with self.assertRaises(RuntimeError):
+            next(read_and_validate_csv(
+                file_name,
+                ",",
+                mandatory_fields,
+                wrong_header_2
+            ))
+
+        wrong_header_3 = {
+            "datetime": ["DT", ""],
+            "timestamp_desc": ["DT", ""],
+        }
+        # 2 mandatory headers point to the same existing one
+
+        with self.assertRaises(RuntimeError):
+            next(read_and_validate_csv(
+                file_name,
+                ",",
+                mandatory_fields,
+                wrong_header_1
+            ))
 
     def test_right_headers_mapping(self):
-        """Test for Timesketch header mapping validation"""
+        """Test for correct header mapping dictionary"""
+        file_name = "/tmp/unit_test_file.csv"
+        df = pd.DataFrame({
+            'DT': ['test'],
+            'message': ['test'],
+            'TD': ['test']
+        })
+        df.to_csv(file_name, index=False)
         mandatory_fields = ["message", "datetime", "timestamp_desc"]
-        # incorrect is a file without datetime and timestamp_desc as mandatory headers
-        all_good_headers_mapping = [
-            {"datetime": ["DT", ""], "timestamp_desc":["No.", ""]},
-            {"datetime": ["No.", ""], "timestamp_desc":["DT", ""]},
-            {"datetime": ["New header", "foo"],
-                "timestamp_desc":["New header", "baz"]}
-        ]
-        for header_mapping in all_good_headers_mapping:
-            res = read_and_validate_csv(
-                TEST_CSV, ",", mandatory_fields, header_mapping)
-            self.assertIsNot(res, None)
+
+        right_header_1 = {
+            "datetime": ["DT", ""],
+            "timestamp_desc": ["No.", ""],
+        }
+        res = read_and_validate_csv(
+            TEST_CSV, ",", mandatory_fields, right_header_1)
+        self.assertIsNot(res, None)
+
+        right_header_2 = {
+            "datetime": ["DT", ""],
+            "timestamp_desc": ["New header", "foo"],
+        }
+        res = read_and_validate_csv(
+            TEST_CSV, ",", mandatory_fields, right_header_2)
+        self.assertIsNot(res, None)
 
     def test_wrong_CSV_file(self):
-        """Test for wrong CSV file with wrong or missing mandatory headers"""
-        file_name = "/tmp/unittest_file.csv"
-        dfS = [
-            pd.DataFrame({'DT': ['test'],
-                          'MSG': ['test'],
-                          'TD': ['test']}),
-            pd.DataFrame({'datetime': ['test'],
-                          'MSG': ['test'],
-                          'TD': ['test']}),
-            pd.DataFrame({'datetime': ['test'],
-                          'message': ['test'],
-                          'TD': ['test']}),
-        ]
+        """Test for CSV with missing mandatory headers without mapping"""
+        file_name = "/tmp/unit_test_file.csv"
         mandatory_fields = ["message", "datetime", "timestamp_desc"]
-        for df in dfS:
-            df.to_csv(file_name, index=False)
-            with self.assertRaises(RuntimeError):
-                # Call next to work around lazy generators.
-                next(read_and_validate_csv(file_name, ",", mandatory_fields))
+
+        df = pd.DataFrame({
+            'DT': ['test'],
+            'MSG': ['test'],
+            'TD': ['test']
+        })
+
+        df.to_csv(file_name, index=False)
+
+        with self.assertRaises(RuntimeError):
+            # Call next to work around lazy generators.
+            next(read_and_validate_csv(file_name, ",", mandatory_fields))
+
+        df = pd.DataFrame({
+            'datetime': ['test'],
+            'MSG': ['test'],
+            'TD': ['test']
+        })
+
+        df.to_csv(file_name, index=False)
+        with self.assertRaises(RuntimeError):
+            # Call next to work around lazy generators.
+            next(read_and_validate_csv(file_name, ",", mandatory_fields))
 
     def test_mapped_CSV_file(self):
-        """Test for wrong CSV file with wrong or
-            missing mandatory headers but with correct mapping"""
-        file_name = "/tmp/unittest_file.csv"
-        dfS = [
-            (pd.DataFrame({'DT': ['test'],
-                           'MSG': ['test'],
-                           'TD': ['test']}),
-             {"datetime": ["DT", ""], "timestamp_desc":[
-                 "TD", ""], "message":["MSG", ""]}
-             ),
-            (pd.DataFrame({'datetime': ['test'],
-                           'MSG': ['test'],
-                           'TD': ['test']}),
-             {"timestamp_desc": ["TD", ""], "message":["MSG", ""]}
-             ),
-            (pd.DataFrame({'datetime': ['test'],
-                           'message': ['test'],
-                           'TD': ['test']}),
-             {"timestamp_desc": ["TD", ""]}
-             ),
-            (
-                pd.DataFrame({'datetime': ['test'],
-                              'message': ['test'],
-                              'timestamp_desc': ['test']}),
-                {}
-            )
-        ]
+        """Test for CSV with missing mandatory headers but correct mapping"""
+        file_name = "/tmp/unit_test_file.csv"
         mandatory_fields = ["message", "datetime", "timestamp_desc"]
-        for x in dfS:
-            x[0].to_csv(file_name, index=False)
-            headers_mapping = x[1]
-            res = read_and_validate_csv(
-                file_name, ",", mandatory_fields, headers_mapping)
-            self.assertIsNot(res, None)
+
+        df = pd.DataFrame({
+            'DT': ['test'],
+            'MSG': ['test'],
+            'TD': ['test']
+        })
+        df.to_csv(file_name, index=False)
+        headers_mapping = {
+            "datetime": ["DT", ""],
+            "timestamp_desc": ["TD", ""],
+            "message": ["MSG", ""]
+        }
+        res = read_and_validate_csv(
+            file_name, ",", mandatory_fields, headers_mapping)
+        self.assertIsNot(res, None)
+
+        df = pd.DataFrame({
+            'datetime': ['test'],
+            'MSG': ['test'],
+            'TD': ['test']
+        })
+        df.to_csv(file_name, index=False)
+        headers_mapping = {
+            "timestamp_desc": ["TD", ""],
+            "message": ["MSG", ""]
+        }
+        res = read_and_validate_csv(
+            file_name, ",", mandatory_fields, headers_mapping)
+        self.assertIsNot(res, None)
+
+        df = pd.DataFrame({
+            'datetime': ['test'],
+            'message': ['test'],
+            'timestamp_desc': ['test']
+        })
+        df.to_csv(file_name, index=False)
+        headers_mapping = {}
+        res = read_and_validate_csv(
+            file_name, ",", mandatory_fields, headers_mapping)
+        self.assertIsNot(res, None)
