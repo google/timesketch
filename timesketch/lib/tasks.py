@@ -238,7 +238,7 @@ def build_index_pipeline(
     sketch_id=None,
     only_index=False,
     timeline_id=None,
-    headersMapping=None,
+    headers_mapping=None,
     delimiter=","
 ):
     """Build a pipeline for index and analysis.
@@ -257,8 +257,8 @@ def build_index_pipeline(
             we don't want to run the analyzers until all chunks have been
             uploaded.
         timeline_id: Optional ID of the timeline object this data belongs to.
-        headersMapping: mapping the mandatory headers with the exsting one.
-                                This feature is useful only for CSV file
+        headers_mapping: Python dictionary representing the mapping between
+                         mandatory (key) and existing CSV headers (value).
 
     Returns:
         Celery chain with indexing task (or single indexing task) and analyzer
@@ -272,7 +272,7 @@ def build_index_pipeline(
     searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
 
     if file_extension == "csv":
-        # passing the extra argument: headersMapping
+        # passing the extra argument: headers_mapping
         index_task = index_task_class.s(
             file_path,
             events,
@@ -280,7 +280,7 @@ def build_index_pipeline(
             index_name,
             file_extension,
             timeline_id,
-            headersMapping,
+            headers_mapping,
             delimiter
         )
     else:
@@ -742,7 +742,7 @@ def run_csv_jsonl(
     index_name,
     source_type,
     timeline_id,
-    headersMapping=None,
+    headers_mapping=None,
     delimiter=','
 ):
     """Create a Celery task for processing a CSV or JSONL file.
@@ -754,8 +754,9 @@ def run_csv_jsonl(
         index_name: Name of the datastore index.
         source_type: Type of file, csv or jsonl.
         timeline_id: ID of the timeline object this data belongs to.
-        headersMapping: mapping the mandatory headers with the exsting one.
-                            This feature is useful only for CSV file
+        headers_mapping: Python dictionary representing the mapping
+                         between mandatory (key) and existing
+                         CSV headers (value).
 
     Returns:
         Name (str) of the index.
@@ -814,7 +815,7 @@ def run_csv_jsonl(
         )
         for event in read_and_validate(
             file_handle=file_handle,
-            headersMapping=headersMapping,
+            headers_mapping=headers_mapping,
             delimiter=delimiter
         ):
             opensearch.import_event(

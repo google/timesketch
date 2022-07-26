@@ -131,7 +131,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         file_path="",
         events="",
         meta=None,
-        headersMapping=None,
+        headers_mapping=None,
         delimiter=","
     ):
         """Creates a full pipeline for an uploaded file and returns the results.
@@ -151,8 +151,8 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             events: a string with events to upload (optional).
             meta: optional dict with additional meta fields that will be
                   included in the return.
-            headersMapping: mapping the mandatory headers with the exsting one.
-                                This feature is useful only for CSV file
+            headers_mapping: Python dictionary representing the mapping between
+                             mandatory (key) and existing CSV headers (value).
             delimiter: delimiter used to parse the CSV
 
         Returns:
@@ -211,7 +211,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 file_path=file_path,
                 events=events,
                 meta=meta,
-                headersMapping=headersMapping,
+                headers_mapping=headers_mapping,
                 delimiter=delimiter
             )
 
@@ -280,7 +280,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             sketch_id=sketch_id,
             only_index=enable_stream,
             timeline_id=timeline.id,
-            headersMapping=headersMapping,
+            headers_mapping=headers_mapping,
             delimiter=delimiter
         )
         task_id = uuid.uuid4().hex
@@ -330,7 +330,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         sketch,
         index_name,
         chunk_index_name="",
-        headersMapping=None,
+        headers_mapping=None,
         delimiter=","
     ):
         """Upload a file.
@@ -342,8 +342,9 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             index_name: the OpenSearch index name for the timeline.
             chunk_index_name: A unique identifier for a file if
                 chunks are used.
-            headersMapping: mapping the mandatory headers with the exsting one.
-                            This feature is useful only for CSV file
+            headers_mapping: Python dictionary representing the
+                             mapping between mandatory (key) and
+                             existing CSV headers (value).
             delimiter: delimiter to read the CSV file
 
         Returns:
@@ -394,7 +395,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 form=form,
                 data_label=data_label,
                 enable_stream=enable_stream,
-                headersMapping=headersMapping,
+                headers_mapping=headers_mapping,
                 delimiter=delimiter
             )
 
@@ -459,7 +460,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             data_label=data_label,
             enable_stream=enable_stream,
             meta=meta,
-            headersMapping=headersMapping,
+            headers_mapping=headers_mapping,
             delimiter=delimiter
         )
 
@@ -479,14 +480,9 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             form = request.form
 
         # headers mapping: map between mandatory headers and new ones
-        res = form.get("headersMapping", None)
-        if res:
-            headersMapping = json.loads(res)
-        else:
-            headersMapping = None
+        headers_mapping = json.loads(form.get("headersMapping", '{}')) or None
 
         delimiter = form.get("delimiter", ",")
-        logger.info(delimiter)
 
         sketch_id = form.get("sketch_id", None)
         if not sketch_id:
@@ -528,7 +524,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 form=form,
                 sketch=sketch,
                 index_name=index_name,
-                headersMapping=headersMapping,
+                headers_mapping=headers_mapping,
                 delimiter=delimiter
             )
 
