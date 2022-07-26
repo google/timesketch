@@ -116,7 +116,7 @@ class TestUtils(BaseTest):
                 file_name,
                 ",",
                 mandatory_fields,
-                wrong_header_1
+                wrong_header_3
             ))
 
     def test_right_headers_mapping(self):
