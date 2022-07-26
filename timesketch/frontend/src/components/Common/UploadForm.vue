@@ -19,7 +19,7 @@ limitations under the License.
       <div class="field">
         <div class="file has-name">
           <label class="file-label">
-            <input id="datafile" class="file-input" type="file" name="resume" v-on:change="setFileName($event.target.files)" />
+            <input id="datafile" class="file-input" type="file" name="resume" @change="setFileName($event.target.files)" />
             <span class="file-cta">
               <span class="file-icon">
                 <i class="fas fa-upload"></i>
