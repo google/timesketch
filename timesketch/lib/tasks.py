@@ -578,7 +578,7 @@ def run_plaso(
         raise RuntimeError(
             (
                 "Plaso isn't installed, "
-                "unable to continue processing plaso " "files."
+                "unable to continue processing plaso files."
             )
         )
 
