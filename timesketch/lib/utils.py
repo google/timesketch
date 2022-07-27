@@ -97,16 +97,10 @@ def _validate_csv_fields(mandatory_fields, data, headers_mapping=None):
     Args:
         mandatory_fields: a list of fields that must be present.
         data: a DataFrame built from the ingested file.
-        headers_mapping: Python dictionary representing the mapping between
-                         mandatory (key) and existing CSV headers (value).
-                         The key is the name of the header that we want
-                         to substitute in the CSV.
-                         The value is an array whose length is 2.
-                         The first value shows the name of the header in the
-                         CSV to be substituted. If this value is equal to
-                         "New Header”, we create a new column whose default
-                         value is specified in the second entry of the array.
-
+        headers_mapping: list of object containing the
+                         (i) target header to be modified,
+                         (ii) the source header to be substituted and
+                         (iii) the default value in case we add a new column
     Raises:
         RuntimeError: if there are missing fields.
     """
@@ -153,8 +147,10 @@ def check_mapping_errors(headers, headers_mapping):
 
     Args:
         headers: list of headers found in the CSV file
-        headers_mapping: Python dictionary representing the mapping between
-                         mandatory (key) and existing CSV headers (value).
+        headers_mapping: list of object containing the
+                             (i) target header to be modified,
+                             (ii) the source header to be substituted and
+                             (iii) the default value in case we add a new column
 
     Returns: error message if any of the sanity checks fails, None otherwise.
     """
@@ -199,15 +195,10 @@ def rename_headers(chunk, headers_mapping):
 
     Args:
         chunk: dataframe to be modified
-        headers_mapping: Python dictionary representing the mapping between
-                         mandatory (key) and existing CSV headers (value).
-                         The key is the name of the header that we want
-                         to substitute in the CSV.
-                         The value is an array whose length is 2.
-                         The first value shows the name of the header in the
-                         CSV to be substituted. If this value is equal to
-                         "New Header”, we create a new column whose default
-                         value is specified in the second entry of the array.
+        headers_mapping: list of object containing the
+                         (i) target header to be modified,
+                         (ii) the source header to be substituted and
+                         (iii) the default value in case we add a new column
 
     Returns: the renamed dataframe
     """
@@ -234,8 +225,10 @@ def read_and_validate_csv(
         file_handle: a file-like object containing the CSV content.
         delimiter: character used as a field separator, default: ','
         mandatory_fields: list of fields that must be present in the CSV header
-        headers_mapping: Python dictionary representing the mapping between
-                         mandatory (key) and existing CSV headers (value).
+        headers_mapping: list of object containing the
+                         (i) target header to be modified,
+                         (ii) the source header to be substituted and
+                         (iii) the default value in case we add a new column
     Raises:
         RuntimeError: when there are missing fields.
         DataIngestionError: when there are issues with the data ingestion.

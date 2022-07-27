@@ -151,8 +151,10 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             events: a string with events to upload (optional).
             meta: optional dict with additional meta fields that will be
                   included in the return.
-            headers_mapping: Python dictionary representing the mapping between
-                             mandatory (key) and existing CSV headers (value).
+            headers_mapping: list of object containing the
+                             (i) target header to be modified,
+                             (ii) the source header to be substituted and
+                             (iii) the default value in case we add a new column
             delimiter: delimiter used to parse the CSV
 
         Returns:
@@ -342,9 +344,10 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             index_name: the OpenSearch index name for the timeline.
             chunk_index_name: A unique identifier for a file if
                 chunks are used.
-            headers_mapping: Python dictionary representing the
-                             mapping between mandatory (key) and
-                             existing CSV headers (value).
+            headers_mapping: list of object containing the
+                             (i) target header to be modified,
+                             (ii) the source header to be substituted and
+                             (iii) the default value in case we add a new column
             delimiter: delimiter to read the CSV file
 
         Returns:
@@ -481,21 +484,6 @@ class UploadFileResource(resources.ResourceMixin, Resource):
 
         # headers mapping: map between mandatory headers and new ones
         headers_mapping = json.loads(form.get("headersMapping", '{}')) or None
-
-        # TO BE DELETED WHEN ADJUST CLIENT SIDE
-        tmp_headers_mapping = []
-        if headers_mapping:
-            for target in headers_mapping:
-                source = headers_mapping[target][0]
-                default_value = headers_mapping[target][1]
-                tmp_headers_mapping.append({
-                    "target": target,
-                    "source": source,
-                    "default_value": default_value
-                })
-        headers_mapping = tmp_headers_mapping
-        logger.info(headers_mapping)
-
         delimiter = form.get("delimiter", ",")
 
         sketch_id = form.get("sketch_id", None)

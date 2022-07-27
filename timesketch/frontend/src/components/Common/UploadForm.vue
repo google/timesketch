@@ -139,7 +139,7 @@ export default {
           this.missingHeaders.push(mandatoryHeader)
         }
         else{
-          this.missingHeaders = this.missingHeaders.filter(header => header != mandatoryHeader)
+          this.missingHeaders = this.missingHeaders.filter(header => header !== mandatoryHeader)
         }
       });
 

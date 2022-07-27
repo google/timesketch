@@ -257,8 +257,10 @@ def build_index_pipeline(
             we don't want to run the analyzers until all chunks have been
             uploaded.
         timeline_id: Optional ID of the timeline object this data belongs to.
-        headers_mapping: Python dictionary representing the mapping between
-                         mandatory (key) and existing CSV headers (value).
+        headers_mapping: list of object containing the
+                         (i) target header to be modified,
+                         (ii) the source header to be substituted and
+                         (iii) the default value in case we add a new column
 
     Returns:
         Celery chain with indexing task (or single indexing task) and analyzer
@@ -754,9 +756,10 @@ def run_csv_jsonl(
         index_name: Name of the datastore index.
         source_type: Type of file, csv or jsonl.
         timeline_id: ID of the timeline object this data belongs to.
-        headers_mapping: Python dictionary representing the mapping
-                         between mandatory (key) and existing
-                         CSV headers (value).
+        headers_mapping: list of object containing the
+                         (i) target header to be modified,
+                         (ii) the source header to be substituted and
+                         (iii) the default value in case we add a new column
 
     Returns:
         Name (str) of the index.
