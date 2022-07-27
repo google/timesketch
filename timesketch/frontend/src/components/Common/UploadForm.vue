@@ -297,19 +297,6 @@ export default {
           }        
       }
     },
-    isHMissing: function(){
-      /**
-       * isHMissing --> is there a missing header?
-       * verify if there is at least one missing header
-       * it returns an array containing the missing headers
-       */
-      let headerMissingArray = [] 
-      for(let key in this.headerMissing){
-        if(!this.headerMissing[key])
-          headerMissingArray.push(key)
-      }
-      return headerMissingArray
-    },
   },
 }
 </script>
