@@ -64,7 +64,13 @@ limitations under the License.
         </select>
       </div>
 
+      <!-- 
+      
+      Next lines of code represent the CSV radio button list
+      According to the user selection, the headers are automatically re-computed, and
+      as a consequence, also the missing headers
 
+      -->
       <div class="field" v-if="fileName">
         <label class="label">Name</label>
         <div class="control">
@@ -116,6 +122,12 @@ export default {
     return {
       headersString : '', // headers string not formatted (used when changing CSV separator)
       headers: [], // headers in the CSV 
+      /**
+       *  headersMapipng: list of object containing the
+       * (i) target header to be modified,
+       * (ii) the source header to be substituted and
+       * (iii) the default value in case we add a new columnst 
+      */
       headersMapping : [],
       mandatoryHeaders : ["datetime", "message", "timestamp_desc"],
       missingHeaders : [], 
@@ -141,7 +153,7 @@ export default {
         else{
           this.missingHeaders = this.missingHeaders.filter(header => header !== mandatoryHeader)
         }
-      });
+      })
 
       if(this.missingHeaders.length > 0){
         this.error = 'Missing headers: ' + this.missingHeaders.toString()
@@ -153,7 +165,7 @@ export default {
     changeCSVDelimiter: function(e){
       this.headersMapping = []
       this.missingHeaders = []
-      this.CSVDelimiter = e.target.value;
+      this.CSVDelimiter = e.target.value
       this.infoMessage = "CSV separator changed: < " + this.CSVDelimiter + " >."
       this.headers = this.headersString.split(this.CSVDelimiter) // all  headers of CSV uploaded
       this.checkMandatoryHeader()
@@ -228,7 +240,7 @@ export default {
       formData.append('sketch_id', this.$store.state.sketch.id)
       let exstension = this.fileName.split('.')[1]
       if(exstension === 'csv'){
-        var hMapping = JSON.stringify(this.headersMapping)
+        let hMapping = JSON.stringify(this.headersMapping)
         formData.append('headersMapping', hMapping)
         formData.append('delimiter', this.CSVDelimiter)
       }
