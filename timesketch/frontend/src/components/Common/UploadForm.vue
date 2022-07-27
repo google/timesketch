@@ -52,17 +52,18 @@ limitations under the License.
         the user to map the missing header with an exsting one
 
       -->
-      <div v-for="(value, key) in headerMissing" :key="key">
-        <label v-if="!value">{{key}} </label>
-        <select v-if="!value" :name="key" :id="key" v-on:click="getSelection($event)">
+      <div v-for="header in missingHeaders" :key="header">
+        <label>{{header}}</label>
+        <select :name="header" :id="header" v-on:click="getSelection($event)">
           <option>New header</option>
-          <option v-for="h in headers" :value="h" :key="h.id">
-            <div v-if="!headerMissing[h.val]">
-              {{h.val}}
+          <option v-for="h in headers" :value="h" :key="h">
+            <div v-if="!mandatoryHeaders.includes(h)">
+              {{h}}
             </div>
           </option>
         </select>
       </div>
+
 
       <div class="field" v-if="fileName">
         <label class="label">Name</label>
@@ -84,6 +85,8 @@ limitations under the License.
           </div>
         </div>
       </div>
+
+
       <div class="error" v-if="!error">
         <div class="field" v-if="fileName && percentCompleted === 0">
           <div class="control">
@@ -113,8 +116,9 @@ export default {
     return {
       headersString : '', // headers string not formatted (used when changing CSV separator)
       headers: [], // headers in the CSV 
-      headerMissing : {}, 
-      headersMapping : {},
+      headersMapping : [],
+      mandatoryHeaders : ["datetime", "message", "timestamp_desc"],
+      missingHeaders : [], 
       form: {
         name: '',
         file: '',
@@ -122,50 +126,37 @@ export default {
       fileName: '',
       error: '',
       percentCompleted: 0,
+      
       CSVDelimiter: ',',
       infoMessage : '',
       delimitersList : {'Comma' : ',', 'Semicolon': ';', 'Pipe' : '|'}
     }
   },
   methods: {
-    changeCSVDelimiter: function(e){
-      this.CSVDelimiter = e.target.value;
-      this.infoMessage = "CSV separator changed: < " + this.CSVDelimiter + " >."
-      let headers = this.headersString.split(this.CSVDelimiter) // all  headers of CSV uploaded
-      this.headers = []
-      for(let i in headers){
-        this.headers.push({
-            id : i,
-            val : headers[i]
-        })
+    checkMandatoryHeader: function(){
+      this.mandatoryHeaders.forEach(mandatoryHeader => {
+        if( this.headers.indexOf(mandatoryHeader) < 0 ){
+          this.missingHeaders.push(mandatoryHeader)
+        }
+        else{
+          this.missingHeaders = this.missingHeaders.filter(header => header != mandatoryHeader)
+        }
+      });
+
+      if(this.missingHeaders.length > 0){
+        this.error = 'Missing headers: ' + this.missingHeaders.toString()
       }
-      if( headers.indexOf("datetime") < 0 ){
-          this.headerMissing["datetime"] = false;
-          this.headersMapping["datetime"] = ["", ""]
-      }else{
-          delete this.headersMapping["datetime"]
-          this.headerMissing["datetime"] = true;
-      }
-      if( headers.indexOf("message") < 0 ){
-          this.headerMissing["message"] = false;
-          this.headersMapping["message"] = ["", ""]
-      }else{
-        delete this.headersMapping["message"]
-        this.headerMissing["message"] = true;
-      }
-      if( headers.indexOf("timestamp_desc") < 0 ){
-        this.headersMapping["timestamp_desc"] = ["", ""]
-        this.headerMissing["timestamp_desc"] = false;
-      }else{
-        delete this.headersMapping["timestamp_desc"]
-        this.headerMissing["timestamp_desc"] = true;
-      }
-      let headerMissingArray = this.isHMissing()
-      if (headerMissingArray.length > 0){
-        this.error = 'Missing headers: ' + headerMissingArray.toString()
-      }else{
+      else{
         this.error = ''
       }
+    },    
+    changeCSVDelimiter: function(e){
+      this.headersMapping = []
+      this.missingHeaders = []
+      this.CSVDelimiter = e.target.value;
+      this.infoMessage = "CSV separator changed: < " + this.CSVDelimiter + " >."
+      this.headers = this.headersString.split(this.CSVDelimiter) // all  headers of CSV uploaded
+      this.checkMandatoryHeader()
     },
     getSelection: function(e){
       /**
@@ -178,58 +169,49 @@ export default {
        *      it can be "created" a new one and a default value is associated to each row for that header
        */
 
-        var key = e.target.name; // key = datetime | message | timestamp_desc
-        var value = e.target.options[e.target.options.selectedIndex].text; // value = existing CSV header
-        this.headersMapping[key][0] = value
-        if(value === "New header"){ // ask to the user the default row's value
-          var newHeaderValue = ""
-          while(!newHeaderValue){
-            newHeaderValue = prompt("Insert the default value for this header")
-            if(newHeaderValue.includes(this.CSVDelimiter)){
+        let target = e.target.name // key = datetime | message | timestamp_desc
+        let source = e.target.options[e.target.options.selectedIndex].text // value = existing CSV header
+        let defaultValue = ""
+
+        if(source === "New header"){ // ask to the user the default row's value
+          do{
+            defaultValue = prompt("Insert the default value for this header")
+            if(defaultValue.includes(this.CSVDelimiter)){
               alert("New header value cannot contain CSV separator")
-              newHeaderValue = null
+              defaultValue = null
             }
+          }while(!defaultValue)
+        }
+
+        // remove outdated entry from headersMapping
+        this.headersMapping = this.headersMapping.filter(mapping => mapping["target"] !== target)
+        this.headersMapping.push({
+          target : target,
+          source : source,
+          default_value : defaultValue // leave snake case for python server code
+        })
+
+        // 1. check if mapping is completed, i.e., if all mandatory headers have been set
+        if(this.headersMapping.length !== this.missingHeaders.length){
+          this.error = "Finish to map mandatory headers"
+        }
+        else{
+          // 2. check for duplicate headers (except from 'New header')
+          let duplicates = this.headersMapping.filter(mapping => mapping["source"] !== "New header").map(e => e.source)
+          if(duplicates.length > new Set(duplicates).size){
+            this.error = "New headers mapping contains duplicates" 
           }
-          this.headersMapping[key][1] = newHeaderValue
-        }else{
-          this.headersMapping[key][1] = ""
-        }
-
-        // get all the values of headersMapping and put them in array
-        let allValues = []
-        for(let k in this.headersMapping){
-          allValues.push(this.headersMapping[k][0])
-        }
-
-        // 1. check if mapping is completed, i.e., if there are not empty or null field for the mapping
-        if(!allValues.some(e => (e==='' || !e))){ 
-          // 2. check if all selected headers are unique (except from 'New header')
-          allValues = allValues.filter(e => e !== "New header")
-          if(allValues.length === new Set(allValues).size){
+          else{
             this.error = ""
-          }else{
-            // there are duplicates in the selection list
-            this.error = "New headers mapping contains duplicates"  
           }
-        }else{
-          // meaning: Exist at least 1 element of allValues that is null or empty
-          this.error = "Finish headers selection"
         }
     },
     clearFormData: function() {
       this.form.name = ''
       this.form.file = ''
       this.fileName = ''
-      this.headersMapping = {
-        "datetime" : [null, null],
-        "message" : [null, null],
-        "timestamp_desc" : [null, null],
-      }
-      this.headerMissing = {
-        "datetime" : true,
-        "message" : true,
-        "timestamp_desc" : true,
-      }
+      this.headersMapping = []
+      this.missingHeaders = []
       this.infoMessage = ''
       this.headersString = ''
     },
@@ -271,23 +253,8 @@ export default {
 
       /* 1. Initilize the variables */
 
-      // this mapping represents a dictionary where for each mandatory fields we assign
-      // 0. name of the column to map
-      // 1. value of the column in case we want to insert a new one
-      //      e.g., we do not have timestamp_desc: we add a new one (the value of rows in this column
-      //            will be the same)
-      this.headersMapping = {
-        "datetime" : [null, null],
-        "message" : [null, null],
-        "timestamp_desc" : [null, null],
-      }
-      // headers missing in the CSV:
-      // if the headers is present, then the value of the corresponding field is set to true
-      this.headerMissing = {
-        "datetime" : true,
-        "message" : true,
-        "timestamp_desc" : true,
-      }
+      this.headersMapping = []
+      this.missingHeaders = []
       this.headersString = ''
       this.headers = []
       let fileName = fileList[0].name
@@ -307,55 +274,25 @@ export default {
         this.error = 'Please select a file with a valid extension'
       }
 
-      // TODO: need to verify with JSONL files
-
       /* 3. Manage CSV missing headers */
 
       if(fileExtension === "csv"){
-        var reader = new FileReader()
-        var file = document.getElementById("datafile").files[0]
+        let reader = new FileReader()
+        let file = document.getElementById("datafile").files[0]
         
         // read only 1000 B --> it is reasonable that the header of the CSV file ends before the 1000^ byte.
         // this is done to prevent JS reading a large CSV file (GBs) 
-        var vueJS = this
+        let vueJS = this
         reader.readAsText(file.slice(0, 1000))
         reader.onloadend = function(e){
             if (e.target.readyState === FileReader.DONE){  // DONE == 2
               
               /* 3a. Extract the headers from the CSV */ 
               
-              var data = e.target.result
+              let data = e.target.result
               vueJS.headersString = data.split("\n")[0]
-              var headers = vueJS.headersString.split(vueJS.CSVDelimiter) // all  headers of CSV uploaded
-              console.log(headers)
-              for(let i in headers){
-                vueJS.headers.push({
-                    id : i,
-                    val : headers[i]
-                })
-              }
-
-              /* 3b. Check if the mandatory headers are present in the extracted ones */
-
-              if( headers.indexOf("datetime") < 0 ){
-                  vueJS.headerMissing["datetime"] = false;
-              }else
-                delete vueJS.headersMapping["datetime"]
-              if( headers.indexOf("message") < 0 ){
-                  vueJS.headerMissing["message"] = false;
-              }else
-                delete vueJS.headersMapping["message"]
-              if( headers.indexOf("timestamp_desc") < 0 ){
-                vueJS.headerMissing["timestamp_desc"] = false;
-              }else
-                delete vueJS.headersMapping["timestamp_desc"]
-              
-              let headerMissingArray = vueJS.isHMissing()
-              if (headerMissingArray.length > 0){
-                vueJS.error = 'Missing headers: ' + headerMissingArray.toString()
-              }else{
-                vueJS.error = ''
-              }
+              vueJS.headers = vueJS.headersString.split(vueJS.CSVDelimiter) // all  headers of CSV uploaded
+              vueJS.checkMandatoryHeader()
             }
           }        
       }
