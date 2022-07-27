@@ -26,8 +26,6 @@ from timesketch.lib.analyzers import geoip
 from timesketch.lib.analyzers import login
 from timesketch.lib.analyzers import phishy_domains
 from timesketch.lib.analyzers import safebrowsing
-from timesketch.lib.analyzers import screenshot
-from timesketch.lib.analyzers import screenshot
 from timesketch.lib.analyzers import sessionizer
 from timesketch.lib.analyzers import sigma_tagger
 from timesketch.lib.analyzers import similarity_scorer
