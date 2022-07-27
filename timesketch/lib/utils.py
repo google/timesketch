@@ -116,10 +116,12 @@ def _validate_csv_fields(mandatory_fields, data, headers_mapping=None):
     headers_missing = mandatory_set - parsed_set
 
     if headers_mapping:
-        res = headers_mapping_sanity_check(parsed_set, headers_mapping)
-        if res:
-            raise RuntimeError("Headers mapping is wrong.\n{0}".format(res))
-        headers_mapping_set = set(headers_mapping.keys())
+        errs = check_mapping_errors(parsed_set, headers_mapping)
+        if errs:
+            raise RuntimeError("Headers mapping is wrong.\n{0}".format(errs))
+        headers_mapping_set = set(
+            [mapping["target"] for mapping in headers_mapping]
+        )
         headers_missing = headers_missing - headers_mapping_set
 
     if not headers_missing:
@@ -148,7 +150,7 @@ def validate_indices(indices, datastore):
     return [i for i in indices if datastore.client.indices.exists(index=i)]
 
 
-def headers_mapping_sanity_check(headers, headers_mapping):
+def check_mapping_errors(headers, headers_mapping):
     """Sanity check for headers mapping
 
     Args:
@@ -161,25 +163,27 @@ def headers_mapping_sanity_check(headers, headers_mapping):
 
     # 1. The mapping is done only if the mandatory header is missing, and
     # 2. When a new column is created, a mandatory default value must be set
-    for mand_header in headers_mapping:
-        if mand_header in headers:
+    for mapping in headers_mapping:
+        if mapping["target"] in headers:
             return "Mapping done only if the mandatory header is missing"
-        if (headers_mapping[mand_header][0] == "New header" and
-                headers_mapping[mand_header][1] == ""):
-            msg = "Error to create new column {0}\n".format(mand_header)
-            msg += "A default value must be assigned in the headers mapping"
-            return msg
+        if (mapping["source"] == "New header" and
+                not mapping["default_value"]):
+            err = "Error to create new column {0}\n".format(mapping["target"])
+            err += "A default value must be assigned in the headers mapping"
+            return err
 
     # 2. Check if the exisisting value specified in the headers_mapping
     #       are actually present in the list headers
     candidate_headers = [
-        e[0] for e in headers_mapping.values() if e[0] != "New header"
+        m["source"] for m in headers_mapping if m["source"] != "New header"
     ]
     for candidate in candidate_headers:
         if candidate not in headers:
-            msg = "Value specified in headers mapping ({0}) ".format(candidate)
-            msg += "not present as CSV column: {0}".format(", ".join(headers))
-            return msg
+            err = "Value specified in headers mapping ({0}) ".format(
+                candidate)
+            err += "not present as CSV column: {0}".format(
+                ", ".join(headers))
+            return err
 
     # 3. check if two or more mandatory headers are mapped
     #       to the same exisiting header
@@ -209,15 +213,14 @@ def rename_headers(chunk, headers_mapping):
 
     Returns: the renamed dataframe
     """
-    for new_header in headers_mapping:
-        existing_header = headers_mapping[new_header][0]
-        default_value = headers_mapping[new_header][1]
-        if existing_header == "New header":
+    for mapping in headers_mapping:
+        if mapping["source"] == "New header":
             # add header and def values
-            chunk[new_header] = default_value
+            chunk[mapping["target"]] = mapping["default_value"]
         else:
             # just rename the header
-            chunk.rename(columns={existing_header: new_header}, inplace=True)
+            chunk.rename(
+                columns={mapping["source"]: mapping["target"]}, inplace=True)
     return chunk
 
 
@@ -247,7 +250,7 @@ def read_and_validate_csv(
 
     header_reader = pandas.read_csv(file_handle, sep=delimiter, nrows=0)
 
-    _validate_csv_fields(mandatory_fields, header_reader)
+    _validate_csv_fields(mandatory_fields, header_reader, headers_mapping)
 
     if hasattr(file_handle, "seek"):
         file_handle.seek(0)

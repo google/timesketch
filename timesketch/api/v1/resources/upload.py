@@ -482,6 +482,20 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         # headers mapping: map between mandatory headers and new ones
         headers_mapping = json.loads(form.get("headersMapping", '{}')) or None
 
+        # TO BE DELETED WHEN ADJUST CLIENT SIDE
+        tmp_headers_mapping = []
+        if headers_mapping:
+            for target in headers_mapping:
+                source = headers_mapping[target][0]
+                default_value = headers_mapping[target][1]
+                tmp_headers_mapping.append({
+                    "target": target,
+                    "source": source,
+                    "default_value": default_value
+                })
+        headers_mapping = tmp_headers_mapping
+        logger.info(headers_mapping)
+
         delimiter = form.get("delimiter", ",")
 
         sketch_id = form.get("sketch_id", None)
