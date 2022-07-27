@@ -65,7 +65,7 @@ class TestUtils(BaseTest):
         for row in data_generator:
             self.assertRegex(row["datetime"], ISO8601_REGEX)
 
-    def test_wrong_headers_mapping(self):
+    def test_invalid_headers_mapping(self):
         """Test for wrong header mapping dictionary"""
         file_name = "/tmp/unit_test_file.csv"
         df = pd.DataFrame({
