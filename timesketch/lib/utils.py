@@ -156,7 +156,7 @@ def headers_mapping_sanity_check(headers, headers_mapping):
         headers_mapping: Python dictionary representing the mapping between
                          mandatory (key) and existing CSV headers (value).
 
-    Returns: error message if any of the sanity checks fails
+    Returns: error message if any of the sanity checks fails, None otherwise.
     """
 
     # 1. The mapping is done only if the mandatory header is missing, and
