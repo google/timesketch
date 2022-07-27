@@ -122,7 +122,7 @@ def _validate_csv_fields(mandatory_fields, data, headers_mapping=None):
         headers_mapping_set = set(headers_mapping.keys())
         headers_missing = headers_missing - headers_mapping_set
 
-    if len(headers_missing) == 0:
+    if not headers_missing:
         return
 
     raise RuntimeError(
