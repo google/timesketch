@@ -119,9 +119,7 @@ def _validate_csv_fields(mandatory_fields, data, headers_mapping=None):
         errs = check_mapping_errors(parsed_set, headers_mapping)
         if errs:
             raise RuntimeError("Headers mapping is wrong.\n{0}".format(errs))
-        headers_mapping_set = set(
-            [mapping["target"] for mapping in headers_mapping]
-        )
+        headers_mapping_set = set(m["target"] for m in headers_mapping)
         headers_missing = headers_missing - headers_mapping_set
 
     if not headers_missing:
