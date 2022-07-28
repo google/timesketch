@@ -72,9 +72,9 @@ class TestUtils(BaseTest):
         current_headers = ["DT", "message", "TD"]
 
         invalid_mapping_1 = [
-            {"target": "datetime", "source": "DT", "default_value": ""},
-            {"target": "timestamp_desc", "source": "No.", "default_value": ""},
-            {"target": "message", "source": "Source", "default_value": ""}
+            {"target": "datetime", "source": "DT", "default_value": None},
+            {"target": "timestamp_desc", "source": "No.", "default_value": None},
+            {"target": "message", "source": "Source", "default_value": None}
         ]
         # column message already exists
         check_mapping_errors(
@@ -84,8 +84,8 @@ class TestUtils(BaseTest):
         self.assertRaises(RuntimeError)
 
         invalid_mapping_2 = [
-            {"target": "datetime", "source": "DT", "default_value": ""},
-            {"target": "timestamp_desc", "source": "nope", "default_value": ""}
+            {"target": "datetime", "source": "DT", "default_value": None},
+            {"target": "timestamp_desc", "source": "nope", "default_value": None}
         ]
         # nope columns does not exists
         check_mapping_errors(
@@ -95,8 +95,8 @@ class TestUtils(BaseTest):
         self.assertRaises(RuntimeError)
 
         invalid_mapping_3 = [
-            {"target": "datetime", "source": "DT", "default_value": ""},
-            {"target": "timestamp_desc", "source": "DT", "default_value": ""}
+            {"target": "datetime", "source": "DT", "default_value": None},
+            {"target": "timestamp_desc", "source": "DT", "default_value": None}
         ]
         # 2 mandatory headers point to the same existing one
         check_mapping_errors(
@@ -110,22 +110,22 @@ class TestUtils(BaseTest):
         current_headers = ["DT", "message", "TD"]
 
         valid_mapping_1 = [
-            {"target": "datetime", "source": "DT", "default_value": ""},
-            {"target": "timestamp_desc", "source": "TD", "default_value": ""}
+            {"target": "datetime", "source": "DT", "default_value": None},
+            {"target": "timestamp_desc", "source": "TD", "default_value": None}
         ]
-        res = check_mapping_errors(
+        result = check_mapping_errors(
             current_headers,
             valid_mapping_1)
-        self.assertIs(res, None)
+        self.assertIs(result, None)
 
         valid_mapping_2 = [
-            {"target": "datetime", "source": "DT", "default_value": ""},
+            {"target": "datetime", "source": "DT", "default_value": None},
             {"target": "timestamp_desc", "source": "New header", "default_value": "a"}
         ]
-        res = check_mapping_errors(
+        result = check_mapping_errors(
             current_headers,
             valid_mapping_2)
-        self.assertIs(res, None)
+        self.assertIs(result, None)
 
     def test_invalid_CSV_file(self):
         """Test for CSV with missing mandatory headers without mapping"""

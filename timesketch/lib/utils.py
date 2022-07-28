@@ -121,16 +121,19 @@ def _validate_csv_fields(mandatory_fields, data, headers_mapping=None):
     if not headers_missing:
         return
 
+    headers_mapping_string = (", ".join(list(headers_mapping_set)) if headers_mapping_set else "None") # pylint: disable=line-too-long
+    headers_missing_string = (", ".join(list(headers_missing)) if headers_missing else "None") # pylint: disable=line-too-long
+    parset_set_string = (", ".join(list(parsed_set)) if parsed_set else "None")
     raise RuntimeError(
         """Missing mandatory CSV headers.
         Mandatory headers: {0}
         Headers found in the file: {1}
         Headers provided in the mapping: {2}
         Headers missing: {3}""".format(
-            ", ".join(list(mandatory_set)),
-            ", ".join(list(parsed_set)),
-            ", ".join(list(headers_mapping_set)),
-            ", ".join(list(headers_missing)))
+        ", ".join(list(mandatory_set)),
+        parset_set_string,
+        headers_mapping_string,
+        headers_missing_string)
     )
 
 
