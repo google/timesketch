@@ -211,7 +211,7 @@ def rename_headers(chunk, headers_mapping):
                          (ii) the source header to be substituted and
                          (iii) the default value in case we add a new column
 
-    Returns: the renamed dataframe
+    Returns: the dataframe with renamed headers
     """
     for mapping in headers_mapping:
         if mapping["source"] == "New header":
