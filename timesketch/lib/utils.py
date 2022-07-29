@@ -192,8 +192,7 @@ def check_mapping_errors(headers, headers_mapping):
 
     # 3. check if two or more mandatory headers are mapped
     #       to the same exisiting header
-    l1, l2 = len(candidate_headers), len(set(candidate_headers))
-    if l1 > l2:
+    if len(candidate_headers) != len(set(candidate_headers)):
         return (
             "2 or more mandatory headers are "
             "mapped to the same exisiting CSV headers")

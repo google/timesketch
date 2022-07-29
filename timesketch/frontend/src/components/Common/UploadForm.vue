@@ -126,7 +126,7 @@ export default {
        *  headersMapipng: list of object containing the
        * (i) target header to be modified,
        * (ii) the source header to be substituted and
-       * (iii) the default value in case we add a new columnst 
+       * (iii) the default value in case we add a new columns 
       */
       headersMapping : [],
       mandatoryHeaders : ["datetime", "message", "timestamp_desc"],
