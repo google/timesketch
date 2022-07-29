@@ -107,19 +107,17 @@ class TestUtils(BaseTest):
             {"target": "datetime", "source": "DT", "default_value": None},
             {"target": "timestamp_desc", "source": "TD", "default_value": None}
         ]
-        result = check_mapping_errors(
+        self.assertIs(check_mapping_errors(
             current_headers,
-            valid_mapping_1)
-        self.assertIs(result, None)
+            valid_mapping_1), None)
 
         valid_mapping_2 = [
             {"target": "datetime", "source": "DT", "default_value": None},
             {"target": "timestamp_desc", "source": "New header", "default_value": "a"}
         ]
-        result = check_mapping_errors(
+        self.assertIs(check_mapping_errors(
             current_headers,
-            valid_mapping_2)
-        self.assertIs(result, None)
+            valid_mapping_2), None)
 
     def test_invalid_CSV_file(self):
         """Test for CSV with missing mandatory headers without mapping"""
