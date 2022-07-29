@@ -111,8 +111,6 @@ def _validate_csv_fields(mandatory_fields, data, headers_mapping=None):
 
     if headers_mapping:
         check_mapping_errors(parsed_set, headers_mapping)
-        if errs:
-            raise RuntimeError("Headers mapping is wrong.\n{0}".format(errs))
         headers_mapping_set = set(m["target"] for m in headers_mapping)
         headers_missing = headers_missing - headers_mapping_set
     else:
@@ -121,8 +119,10 @@ def _validate_csv_fields(mandatory_fields, data, headers_mapping=None):
     if not headers_missing:
         return
 
-    headers_mapping_string = (", ".join(list(headers_mapping_set)) if headers_mapping_set else "None") # pylint: disable=line-too-long
-    headers_missing_string = (", ".join(list(headers_missing)) if headers_missing else "None") # pylint: disable=line-too-long
+    headers_mapping_string = (", ".join(list(headers_mapping_set))
+                              if headers_mapping_set else "None")  # pylint: disable=line-too-long
+    headers_missing_string = (", ".join(list(
+        headers_missing)) if headers_missing else "None")  # pylint: disable=line-too-long
     parset_set_string = (", ".join(list(parsed_set)) if parsed_set else "None")
     raise RuntimeError(
         """Missing mandatory CSV headers.
@@ -130,10 +130,10 @@ def _validate_csv_fields(mandatory_fields, data, headers_mapping=None):
         Headers found in the file: {1}
         Headers provided in the mapping: {2}
         Headers missing: {3}""".format(
-        ", ".join(list(mandatory_set)),
-        parset_set_string,
-        headers_mapping_string,
-        headers_missing_string)
+            ", ".join(list(mandatory_set)),
+            parset_set_string,
+            headers_mapping_string,
+            headers_missing_string)
     )
 
 
@@ -181,8 +181,8 @@ def check_mapping_errors(headers, headers_mapping):
                 "Error to create new column {0}. "
                 "A default value must be assigned in the headers mapping"
                 .format(mapping["target"])
-                )
-        
+            )
+
     # 2. Check if the exisisting value specified in the headers_mapping
     #       are actually present in the list headers
     candidate_headers = [
@@ -193,8 +193,9 @@ def check_mapping_errors(headers, headers_mapping):
             raise RuntimeError(
                 "Headers mapping is wrong.\n"
                 "Value specified in headers mapping ({0}) is "
-                "not present as CSV column: {1}".format(candidate, ", ".join(headers))
-                )
+                "not present as CSV column: {1}".format(
+                    candidate, ", ".join(headers))
+            )
 
     # 3. check if two or more mandatory headers are mapped
     #       to the same exisiting header
