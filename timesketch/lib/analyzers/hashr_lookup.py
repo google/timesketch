@@ -48,8 +48,8 @@ class HashRLookupSketchPlugin(interface.BaseAnalyzer):
           Error Message: If the connection cannot be setup or tested.
 
         Raises:
-          Exception:  Raises an exception if the database connection details cannot
-                      be loaded from the timesketch.conf file!
+          Exception:  Raises an exception if the database connection details
+                      cannot be loaded from the timesketch.conf file!
         """
 
         # TODO(setup): Provide connection infos in the data/timesketch.conf file!
@@ -64,9 +64,9 @@ class HashRLookupSketchPlugin(interface.BaseAnalyzer):
         if (not db_user or not db_pass or not db_address or not db_port or
                 not db_name or not self.add_source_attribute):
             msg = ('The hashR analyzer is not able to load the hashR database '
-                   'information from the timesketch.conf file. Please make sure to '
-                   'uncomment the section and provide the required connection '
-                   'details!')
+                   'information from the timesketch.conf file. Please make sure '
+                   'to uncomment the section and provide the required connection'
+                   ' details!')
             sys.tracebacklimit = 0
             raise Exception(msg)
 
@@ -95,13 +95,13 @@ class HashRLookupSketchPlugin(interface.BaseAnalyzer):
         """Check a list of hashes against the hashR database.
 
         Args:
-          sample_hashes: A list or dict of hash values that shall be checked against
-            the hashR database.
+          sample_hashes:  A list or dict of hash values that shall be checked
+                          against the hashR database.
 
         Returns:
-          matching_hashes: A list or dict containing all hashes that are found in
-                          the hashR database. (If type<dict> it also contains the
-                          corresponding source images.)
+          matching_hashes:  A list or dict containing all hashes that are found
+                            in the hashR database. (If type<dict> it also
+                            contains the corresponding source images.)
         """
         tmp_timeline_hashes_entries = []
         for sample_hash in sample_hashes:
@@ -194,19 +194,22 @@ class HashRLookupSketchPlugin(interface.BaseAnalyzer):
         return matching_hashes
 
     def process_event(self, hash_value, sources, event):
-        """Add tags and attributes to the given event, based on the rules for the analyzer.
+        """Add tags and attributes to the given event, based on the rules for
+        the analyzer.
 
         Args:
           hash_value: A string of a sha256 hash value.
           sources: A list of sources (image names) where this hash is known from.
-          event:  The OpenSearch event object that contains this hash and needs to
-            be tagged or to add an attribute.
+          event:  The OpenSearch event object that contains this hash and needs
+                  to be tagged or to add an attribute.
 
         Returns:
           None: If everything worked the function just returns.
         """
         tags_container = ['hashR']
-        if hash_value == 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855':
+        if (hash_value ==
+                'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+                ):
             tags_container.append('zerobyte file')
             self.zerobyte_file_counter += 1
             # Do not add any source attribute for zerobyte files,
@@ -275,8 +278,8 @@ class HashRLookupSketchPlugin(interface.BaseAnalyzer):
 
         if len(hash_events_dict) <= 0:
             return (
-                'The selected timeline "{0:s}" does not contain any fields with a '
-                'sha256 hash.'
+                'The selected timeline "{0:s}" does not contain any fields with'
+                ' a sha256 hash.'
                 .format(self.timeline_name))
 
         logger.info('Found {0:,} unique hashes in {1:,} events.'.format(
