@@ -77,33 +77,27 @@ class TestUtils(BaseTest):
             {"target": "message", "source": "Source", "default_value": None}
         ]
         # column message already exists
-        check_mapping_errors(
-            current_headers,
-            invalid_mapping_1
-        )
-        self.assertRaises(RuntimeError)
+        with self.assertRaises(RuntimeError):
+            # Call next to work around lazy generators.
+            next(check_mapping_errors(current_headers, invalid_mapping_1))
 
         invalid_mapping_2 = [
             {"target": "datetime", "source": "DT", "default_value": None},
             {"target": "timestamp_desc", "source": "nope", "default_value": None}
         ]
         # nope columns does not exists
-        check_mapping_errors(
-            current_headers,
-            invalid_mapping_2
-        )
-        self.assertRaises(RuntimeError)
+        with self.assertRaises(RuntimeError):
+            # Call next to work around lazy generators.
+            next(check_mapping_errors(current_headers, invalid_mapping_2))
 
         invalid_mapping_3 = [
             {"target": "datetime", "source": "DT", "default_value": None},
             {"target": "timestamp_desc", "source": "DT", "default_value": None}
         ]
         # 2 mandatory headers point to the same existing one
-        check_mapping_errors(
-            current_headers,
-            invalid_mapping_3
-        )
-        self.assertRaises(RuntimeError)
+        with self.assertRaises(RuntimeError):
+            # Call next to work around lazy generators.
+            next(check_mapping_errors(current_headers, invalid_mapping_3))
 
     def test_right_headers_mapping(self):
         """Test for valid headers mapping"""
