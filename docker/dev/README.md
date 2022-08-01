@@ -21,13 +21,13 @@ Timesketch development server is ready!
 ### Find out container ID for the timesketch container
 
 ```
-CONTAINER_ID="$(docker container list -f name=dev_timesketch -q)"
+CONTAINER_ID="$(docker container list -f name=timesketch-dev -q)"
 ```
 In the output look for CONTAINER ID for the timesketch container
 
 To write the ID to a variable, use:
 ```
-export CONTAINER_ID="$(docker container list -f name=dev_timesketch -q)"
+export CONTAINER_ID="$(docker container list -f name=timesketch-dev -q)"
 ```
 and test with
 ```
@@ -55,7 +55,7 @@ You can also access a metrics dashboard at http://127.0.0.1:3000/
 
 Running the following as a script after `docker-compose up -d` will bring up the development environment in the background for you.
 ```
-export CONTAINER_ID="$(docker container list -f name=dev_timesketch -q)"
+export CONTAINER_ID="$(docker container list -f name=timesketch-dev -q)"
 docker exec $CONTAINER_ID celery -A timesketch.lib.tasks worker --loglevel info
 docker exec $CONTAINER_ID gunicorn --reload -b 0.0.0.0:5000 --log-file - --timeout 120 timesketch.wsgi:application
 ```
