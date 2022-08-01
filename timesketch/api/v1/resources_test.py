@@ -648,6 +648,7 @@ class IntelligenceResourceTest(BaseTest):
             "legit": {"class": "success", "weight": 10},
             "malware": {"class": "danger", "weight": 100},
             "suspicious": {"class": "warning", "weight": 50},
+            'regexes': {'^GROUPNAME': {'class': 'danger', 'weight': 100}},
         }
         self.login()
         response = self.client.get("/api/v1/intelligence/tagmetadata/")

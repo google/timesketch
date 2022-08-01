@@ -25,7 +25,10 @@ class TestSigmaPlugin(BaseTest):
         _ = sigma_tagger.RulesSigmaPlugin(
             sketch_id=1, index_name=self.test_index
         )
-
+    # Mock the OpenSearch datastore.
+    @mock.patch(
+        "timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore
+    )
     def test_get_kwargs(self):
         analyzer_init = sigma_tagger.RulesSigmaPlugin(
             sketch_id=1, index_name=self.test_index
