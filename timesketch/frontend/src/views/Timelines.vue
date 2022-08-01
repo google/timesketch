@@ -42,7 +42,7 @@ limitations under the License.
                 <br />
                 If you are uploading a CSV or JSONL file make sure to read the
                 <a
-                  href="https://github.com/google/timesketch/blob/master/docs/Users-Guide.md#adding-timelines"
+                  href="https://timesketch.org/guides/user/import-from-json-csv/"
                   rel="noreferrer"
                   target="_blank"
                   >documentation</a

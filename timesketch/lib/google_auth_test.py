@@ -273,9 +273,27 @@ class TestGoogleCloudIAP(BaseTest):
 
     def test_invalid_algorithm_raises_jwt_validation_error(self):
         """Test to validate a JWT with invalid algorithm."""
-        header = create_default_header(IAP_JWT_ALGORITHM, "iap_1234")
-        header["alg"] = "HS256"
-        self._test_header_raises_jwt_validation_error(header)
+
+        # Hard coding a JWT with MOCK_EC_PRIVATE_KEY as key and "HS256" as alg
+        # in the header. Newer versions of PyJWT won't encode JWTs with this
+        # configuration.
+        test_jwt = (
+            b'eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsImtpZCI6ImlhcF8xMjM0In0.eyJzd'
+            b'WIiOiIxMjM0NTY3ODkwIiwiZW1haWwiOiJ0ZXN0QGV4YW1wbGUuY29tIiwiaGQiOi'
+            b'JleGFtcGxlLmNvbSIsImlhdCI6MTY1NzU5NDE4NSwiZXhwIjoxNjU3NTk0Nzg1LCJ'
+            b'hdWQiOiIvcHJvamVjdHMvMTIzNC9nbG9iYWwvYmFja2VuZFNlcnZpY2VzLzEyMzQi'
+            b'LCJpc3MiOiJodHRwczovL2Nsb3VkLmdvb2dsZS5jb20vaWFwIn0.s49RJ_Fhoaqpo'
+            b'GHfXTjEi5Ma373Zr69BU8rG3ZObNq0EJJXGgBq4E48LwaD_WMR4z3dMxv-UkcShmU'
+            b'3p6qnv7w'
+        )
+
+        public_key = get_public_key_for_jwt(test_jwt, IAP_PUBLIC_KEY_URL)
+
+        with self.assertRaises(JwtValidationError):
+            test_decoded_jwt = decode_jwt(
+                test_jwt, public_key, IAP_JWT_ALGORITHM, IAP_VALID_AUDIENCE
+            )
+            validate_jwt(test_decoded_jwt, IAP_VALID_ISSUER)
 
     def test_missing_key_id_raises_jwt_key_error(self):
         """Test to validate a JWT with key ID missing."""

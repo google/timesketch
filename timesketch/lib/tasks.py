@@ -181,6 +181,10 @@ def _set_timeline_status(timeline_id, status, error_msg=None):
     # Check if there is at least one data source that hasn't failed.
     multiple_sources = any(not x.error_message for x in timeline.datasources)
 
+    if error_msg and status=="fail":
+        timeline.set_status(status)
+        timeline.searchindex.set_status(status)
+
     if multiple_sources:
         timeline_status = timeline.get_status.status.lower()
         if timeline_status != "process" and status != "fail":
@@ -643,8 +647,8 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
     if opensearch_ssl:
         cmd.extend(["--use_ssl"])
 
-    psort_memory = current_app.config.get("PLASO_UPPER_MEMORY_LIMIT", "")
-    if psort_memory:
+    psort_memory = current_app.config.get("PLASO_UPPER_MEMORY_LIMIT", None)
+    if psort_memory is not None:
         cmd.extend(["--process_memory_limit", str(psort_memory)])
 
     # Run psort.py
