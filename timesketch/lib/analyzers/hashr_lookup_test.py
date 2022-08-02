@@ -15,6 +15,8 @@ from timesketch.lib.testlib import BaseTest, MockDataStore
 class TestHashRLookupPlugin(BaseTest):
     """Tests the functionality of the analyzer."""
 
+    @mock.patch(u'timesketch.lib.analyzers.interface.OpenSearchDataStore',
+                MockDataStore)
     def setUp(self):
         """Setup for for running the hashr lookup analyzer tests."""
         super().setUp()
