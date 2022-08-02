@@ -64,9 +64,9 @@ class HashRLookupSketchPlugin(interface.BaseAnalyzer):
         if (not db_user or not db_pass or not db_address or not db_port or
                 not db_name or not self.add_source_attribute):
             msg = ('The hashR analyzer is not able to load the hashR database '
-                   'information from the timesketch.conf file. Please make sure '
-                   'to uncomment the section and provide the required connection'
-                   ' details!')
+                   'information from the timesketch.conf file. Please make sure'
+                   ' to uncomment the section and provide the required '
+                   'connection details!')
             sys.tracebacklimit = 0
             raise Exception(msg)
 
@@ -87,9 +87,9 @@ class HashRLookupSketchPlugin(interface.BaseAnalyzer):
                 'possible! -- Provided connection string: "postgresql://'
                 '{0:s}:{1:s}@{2:s}:{3:s}/{4:s} -- Error message: {5:s}'.format(
                     db_user, '***', db_address, db_port, db_name, str(err)))
-            return ('Connection to the database FAILED. Please check the celery '
-                    'logs and make sure you have provided the correct database '
-                    'information in the analyzer file!')
+            return ('Connection to the database FAILED. Please check the celery'
+                    ' logs and make sure you have provided the correct database'
+                    ' information in the analyzer file!')
 
     def check_against_hashR(self, sample_hashes):
         """Check a list of hashes against the hashR database.
@@ -137,17 +137,18 @@ class HashRLookupSketchPlugin(interface.BaseAnalyzer):
                             ' attributes!')
                 select_statement = sqla.select([
                     tmp_timeline_hashes_table.c.sha256,
-                    samples_sources_table.c.source_sha256, sources_table.c.sourceid,
-                    sources_table.c.reponame
+                    samples_sources_table.c.source_sha256,
+                    sources_table.c.sourceid, sources_table.c.reponame
                 ]).select_from(
                     samples_sources_table.join(
-                        tmp_timeline_hashes_table, tmp_timeline_hashes_table.c.sha256 ==
+                        tmp_timeline_hashes_table,
+                        tmp_timeline_hashes_table.c.sha256 ==
                         samples_sources_table.c.sample_sha256).join(
-                            sources_table, samples_sources_table.c.source_sha256 ==
-                            sources_table.c.sha256))
+                            sources_table, samples_sources_table.c.source_sha256
+                            == sources_table.c.sha256))
                 logger.info(
-                    'Perform joined selection from {0:s}, samples_sources and sources.'
-                    .format(tmp_table_name))
+                    'Perform joined selection from {0:s}, samples_sources and '
+                    'sources.'.format(tmp_table_name))
                 results = conn.execute(select_statement)
 
                 # Process all found hashes and tag the events accordingly
@@ -167,15 +168,16 @@ class HashRLookupSketchPlugin(interface.BaseAnalyzer):
                 matching_hashes = hash_source_dict
 
             else:
-                logger.info(
-                    'ADD_SOURCE_ATTRIBUTE=False => going to only add ' 'tags!')
+                logger.info('ADD_SOURCE_ATTRIBUTE=False => adding tags only!')
 
-                select_statement = sqla.select([samples_table.c.sha256]).select_from(
-                    tmp_timeline_hashes_table.join(
-                        samples_table,
-                        tmp_timeline_hashes_table.c.sha256 == samples_table.c.sha256))
-                logger.info('Perform joined selection from {0:s} and samples.'.format(
-                    tmp_table_name))
+                select_statement = sqla.select(
+                    [samples_table.c.sha256]).select_from(
+                        tmp_timeline_hashes_table.join(
+                            samples_table, tmp_timeline_hashes_table.c.sha256 ==
+                            samples_table.c.sha256))
+                logger.info(
+                    'Perform joined selection from {0:s} and samples.'.format(
+                        tmp_table_name))
                 results = conn.execute(select_statement)
 
                 # Process all found hashes and tagg the events accordingly
@@ -262,8 +264,9 @@ class HashRLookupSketchPlugin(interface.BaseAnalyzer):
                 hash_value = event.source.get('sha256_hash')
             else:
                 error_hash_counter += 1
-                logger.warning('No matching field with a hash found in this event! '
-                               '-- Event Source: {0:s}'.format(str(event.source)))
+                logger.warning(
+                    'No matching field with a hash found in this event! '
+                    '-- Event Source: {0:s}'.format(str(event.source)))
                 continue
 
             if len(hash_value) != 64:
@@ -310,13 +313,15 @@ class HashRLookupSketchPlugin(interface.BaseAnalyzer):
                 total_event_counter, len(hash_events_dict),
                 self.unique_known_hash_counter,
                 (len(hash_events_dict) - self.unique_known_hash_counter),
-                known_hash_counter, self.zerobyte_file_counter, error_hash_counter))
+                known_hash_counter, self.zerobyte_file_counter,
+                error_hash_counter))
 
         return (
-            'Found a total of {0:,} events with a sha256 hash value - {1:,} unique '
-            'hashes queried against hashR - {2:,} hashes were known in hashR - '
-            '{3:,} hashes were unknown in hashR - {4:,} events tagged - {5:,} '
-            'entries were tagged as zerobyte files - {6:,} events raisend an error'
+            'Found a total of {0:,} events with a sha256 hash value - {1:,} '
+            'unique hashes queried against hashR - {2:,} hashes were known in '
+            'hashR - {3:,} hashes were unknown in hashR - {4:,} events tagged '
+            '- {5:,} entries were tagged as zerobyte files - {6:,} events '
+            'raisend an error'
             .format(total_event_counter, len(hash_events_dict),
                     self.unique_known_hash_counter,
                     (len(hash_events_dict) - self.unique_known_hash_counter),
