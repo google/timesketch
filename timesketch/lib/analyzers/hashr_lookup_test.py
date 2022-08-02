@@ -110,6 +110,7 @@ class TestHashRLookupPlugin(BaseTest):
             'http://sqlalche.me/e/e3q8)'
         )
 
+    # pylint: disable=no-method-argument
     def mock_custom_side_effect(*args):
         """This function is a custom side_effect to return results based on args.
 
@@ -162,6 +163,7 @@ class TestHashRLookupPlugin(BaseTest):
             ]
             return result_hashes
         return 'ERROR'
+    # pylint: enable=no-method-argument
 
     @mock.patch.object(sqlalchemy, 'select', autospec=True)
     @mock.patch.object(sqlalchemy, 'String', autospec=True)
@@ -273,7 +275,7 @@ class TestHashRLookupPlugin(BaseTest):
                                                          _mock_column,
                                                          _mock_string,
                                                          mock_select):
-        """Test the check_against_hashR function with existing matches + tags & attributes for events.
+        """Test check_against_hashR function with matches + tags & attributes.
 
         Args:
             mock_info: Mock object for the logger.info function.
