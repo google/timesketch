@@ -19,7 +19,7 @@ limitations under the License.
       <div class="field">
         <div class="file has-name">
           <label class="file-label">
-            <input class="file-input" type="file" name="resume" v-on:change="setFileName($event.target.files)" />
+            <input class="file-input" type="file" name="resume" v-on:change="setFile($event.target.files)" />
             <span class="file-cta">
               <span class="file-icon">
                 <i class="fas fa-upload"></i>
@@ -36,17 +36,12 @@ limitations under the License.
         </div>
       </div>
       <div class="field">
-        <span v-if="error">
-          {{ error }}
+        <span v-for="(errorMessage, index) in error" :key="index">
+            {{ errorMessage }}
+            <br/>
         </span>
       </div>
-      <div class="field" v-if="fileName">
-        <label class="label">Name</label>
-        <div class="control">
-          <input v-model="form.name" class="input" type="text" required placeholder="Name your timeline" />
-        </div>
-      </div>
-      <div class="error" v-if="!error">
+      <div class="error" v-if="!error.length">
         <div class="field" v-if="fileName">
           <label class="label">Name</label>
           <div class="control">
@@ -86,7 +81,7 @@ export default {
         file: '',
       },
       fileName: '',
-      error: '',
+      error: [],
       percentCompleted: 0,
     }
   },
@@ -97,9 +92,10 @@ export default {
       this.fileName = ''
     },
     submitForm: function() {
-      if (this.error == 'Please select a file with a valid extension' ) {
-        return;
+      if (!this.validateFile()) {
+        return
       }
+
       let formData = new FormData()
       formData.append('file', this.form.file)
       formData.append('name', this.form.name)
@@ -122,11 +118,26 @@ export default {
           this.clearFormData()
           this.percentCompleted = 0
        })
-       .catch(e => {}) 
+       .catch(e => {})
     },
-    setFileName: function(fileList) {
+    validateFile: function() {
+      this.error = []
+
+      if (this.form.file.size <= 0) {
+        this.error.push('Please select a non empty file')
+      }
+
+      let fileExtension = this.fileName.split('.')[1]
+      let allowedExtensions = ['csv', 'json', 'jsonl', 'plaso']
+      if (!allowedExtensions.includes(fileExtension)) {
+        this.error.push('Please select a file with a valid extension')
+      }
+
+      return this.error.length === 0;
+    },
+    setFile: function(fileList) {
       let fileName = fileList[0].name
-      let fileExtension = fileName.split('.')[1]
+
       this.form.file = fileList[0]
       this.form.name = fileName
         .split('.')
@@ -134,11 +145,7 @@ export default {
         .join('.')
       this.fileName = fileName
 
-      this.error = ''
-      let allowedExtensions = ['csv', 'json', 'jsonl', 'plaso']
-      if (!allowedExtensions.includes(fileExtension)) {
-        this.error = 'Please select a file with a valid extension'
-      }
+      this.validateFile()
     },
   },
 }

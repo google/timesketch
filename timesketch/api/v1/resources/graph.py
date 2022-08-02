@@ -58,6 +58,7 @@ class GraphListResource(resources.ResourceMixin, Resource):
         graphs = sketch.graphs
         return self.to_json(graphs)
 
+    @login_required
     def post(self, sketch_id):
         """Handles POST request to the resource."""
         sketch = Sketch.query.get_with_acl(sketch_id)
