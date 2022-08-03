@@ -158,7 +158,7 @@ def check_mapping_errors(headers, headers_mapping):
 
     Args:
         headers: list of headers found in the CSV file
-        headers_mapping: list of object containing the
+        headers_mapping: list of dicts containing the
                              (i) target header to be modified,
                              (ii) the source header to be substituted and
                              (iii) the default value in case we add a new column
