@@ -211,7 +211,7 @@ export default {
           // 2. check for duplicate headers (except from 'New header')
           let duplicates = this.headersMapping.filter(mapping => mapping["source"] !== "New header").map(e => e.source)
           if(duplicates.length > new Set(duplicates).size){
-            this.error = "New headers mapping contains duplicates" 
+            this.error = `New headers mapping contains duplicates (${duplicates})`
           }
           else{
             this.error = ""
