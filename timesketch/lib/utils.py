@@ -182,7 +182,7 @@ def check_mapping_errors(headers, headers_mapping):
             raise RuntimeError(
                 "Headers mapping is wrong.\n"
                 "Mapping done only if the mandatory header is missing")
-        if (mapping["source"]):
+        if mapping["source"]:
             # 3. Check if the header specified in headers mapping is in the headers list
             if mapping["source"] not in headers:
                 raise RuntimeError(
@@ -193,17 +193,15 @@ def check_mapping_errors(headers, headers_mapping):
             )
             # update the headers list that we will substitute
             candidate_headers.append(mapping["source"])
-            
+
         else:
-            if (not mapping["default_value"]):
+            if not mapping["default_value"]:
                 raise RuntimeError(
                     "Headers mapping is wrong.\n"
                     "Error to create new column {0:s}. "
                     "When create a new column, a default value must be assigned"
                     .format(mapping["target"])
                 )
-            
-
     # 4. check if two or more mandatory headers are mapped
     #    to the same exisiting header
     if len(candidate_headers) != len(set(candidate_headers)):
