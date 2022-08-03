@@ -19,7 +19,7 @@ limitations under the License.
       <div class="field">
         <div class="file has-name">
           <label class="file-label">
-            <input id="datafile" class="file-input" type="file" name="resume" @change="setFileName($event.target.files)" />
+            <input id="datafile" class="file-input" type="file" name="resume" @change="setFile($event.target.files)" />
             <span class="file-cta">
               <span class="file-icon">
                 <i class="fas fa-upload"></i>
@@ -36,12 +36,16 @@ limitations under the License.
         </div>
       </div>
       <div class="field">
-        <div v-if="error">
-          <article class="message is-danger mb-0">
-            <div class="message-body">
-              {{ error }}
-            </div>
-          </article>
+
+        <div v-if="error.length">
+          <span v-for="(errorMessage, index) in error" :key="index">
+            <article class="message is-danger mb-0">
+              <div class="message-body">
+                {{ errorMessage }}
+              </div>
+            </article>
+            <br/>
+          </span>
         </div>
       </div>
 
@@ -55,7 +59,7 @@ limitations under the License.
       <div v-if="fileName && extension === 'csv'">
         <div v-for="header in missingHeaders" :key="header">
           <label>{{header}}</label>
-          <select :name="header" :id="header" v-on:click="getSelection($event)">
+          <select :name="header" :id="header" v-on:click="changeHeaderMapping($event)">
             <option>Create new header</option>
             <option v-for="h in headers" :value="h" :key="h">
               <div v-if="!mandatoryHeaders.includes(h)">
@@ -95,7 +99,7 @@ limitations under the License.
       </div>
 
 
-      <div class="error" v-if="!error">
+      <div class="error" v-if="!error.length">
         <div class="field" v-if="fileName && percentCompleted === 0">
           <div class="control">
             <input class="button is-success" type="submit" value="Upload" />
@@ -155,24 +159,14 @@ export default {
       return this.fileName.split('.')[1]
     },
   },
-  methods: {
-    checkMandatoryHeader: function(){
-      let headers = this.headersString.split(this.CSVDelimiter)
-      let missingHeaders = this.missingHeaders
-      if(missingHeaders.length > 0){
-        this.error = 'Missing headers: ' + missingHeaders.toString()
-      }
-      else{
-        this.error = ''
-      }
-    },    
+  methods: {   
     changeCSVDelimiter: function(e){
       this.headersMapping = []
       this.CSVDelimiter = e.target.value
       this.infoMessage = "CSV separator changed: < " + this.CSVDelimiter + " >."
-      this.checkMandatoryHeader()
+      this.validateFile()
     },
-    getSelection: function(e){
+    changeHeaderMapping: function(e){
       /**
        * Method to map the missing headers.
        * First, it checks some conditions, in particular, the user needs to:
@@ -202,22 +196,8 @@ export default {
           source : source,
           default_value : defaultValue // leave snake case for python server code
         })
-
-        // 1. check if mapping is completed, i.e., if the user set all the mandatory headers
-        let missingHeaders = this.missingHeaders
-        if(this.headersMapping.length !== missingHeaders.length){
-          this.error = `All mandatory headers need to be mapped (missing: ${missingHeaders})`
-        }
-        else{
-          // 2. check for duplicate headers (except from the new header)
-          let duplicates = this.headersMapping.filter(mapping => mapping["source"]).map(e => e.source)
-          if(duplicates.length > new Set(duplicates).size){
-            this.error = `New headers mapping contains duplicates (${duplicates})`
-          }
-          else{
-            this.error = ""
-          }
-        }
+        this.validateFile()
+        
     },
     clearFormData: function() {
       this.form.name = ''
@@ -228,7 +208,7 @@ export default {
       this.headersString = ''
     },
     submitForm: function() {
-      if (this.error === 'Please select a file with a valid extension' ) {
+      if (!this.validateFile()) {
         return;
       }
       let formData = new FormData()
@@ -260,7 +240,29 @@ export default {
        })
        .catch(e => {}) 
     },
-    setFileName: function(fileList) {
+    validateFile: function() {
+      this.error = []
+      if (this.form.file.size <= 0) {
+        this.error.push('Please select a non empty file')
+      }
+      let allowedExtensions = ['csv', 'json', 'jsonl', 'plaso']
+      if (!allowedExtensions.includes(this.extension)) {
+        this.error.push('Please select a file with a valid extension')
+      }
+      if(this.extension === "csv"){
+        // 1. check if mapping is completed, i.e., if the user set all the mandatory headers
+        if(this.headersMapping.length !== this.missingHeaders.length){
+          this.error.push('Missing headers: ' + this.missingHeaders.toString())
+        }
+        // 2. check for duplicate headers (except from the new header)
+        let duplicates = this.headersMapping.filter(mapping => mapping["source"]).map(e => e.source)
+        if(duplicates.length > new Set(duplicates).size){
+          this.error.push(`New headers mapping contains duplicates (${duplicates})`)
+        }
+      }
+      return this.error.length === 0;
+    },
+    setFile: function(fileList) {
 
       /* 1. Initilize the variables */
 
@@ -273,15 +275,6 @@ export default {
         .slice(0, -1)
         .join('.')
       this.fileName = fileName
-      this.error = ''
-      this.infoMessage = ''
-      
-      /* 2. Check for the correct extension */
-      let allowedExtensions = ['csv', 'json', 'jsonl', 'plaso']
-      if (!allowedExtensions.includes(this.extension)) {
-        this.error = 'Please select a file with a valid extension'
-      }
-
       /* 3. Manage CSV missing headers */
 
       if(this.extension === "csv"){
@@ -297,9 +290,12 @@ export default {
               /* 3a. Extract the headers from the CSV */ 
               let data = e.target.result
               vueJS.headersString = data.split("\n")[0]
-              vueJS.checkMandatoryHeader()
+              vueJS.validateFile()
             }
           }        
+      }
+      else{
+        this.validateFile()
       }
     },
   },
