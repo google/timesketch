@@ -97,7 +97,7 @@ def _validate_csv_fields(mandatory_fields, data, headers_mapping=None):
     Args:
         mandatory_fields: a list of fields that must be present.
         data: a DataFrame built from the ingested file.
-        headers_mapping: list of object containing the
+        headers_mapping: list of dicts containing the
                          (i) target header to be modified,
                          (ii) the source header to be substituted and
                          (iii) the default value in case we add a new column
