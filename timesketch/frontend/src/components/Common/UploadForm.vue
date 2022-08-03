@@ -48,14 +48,14 @@ limitations under the License.
       <!-- 
       
       Next lines of code represent the dropdwon menu
-      It is dynamically generated (with an extra option: New header) to allow
+      It is dynamically generated (with an extra option: Create new header) to allow
         the user to map the missing header with an exsting one
 
       -->
       <div v-for="header in missingHeaders" :key="header">
         <label>{{header}}</label>
         <select :name="header" :id="header" v-on:click="getSelection($event)">
-          <option>New header</option>
+          <option>Create new header</option>
           <option v-for="h in headers" :value="h" :key="h">
             <div v-if="!mandatoryHeaders.includes(h)">
               {{h}}
@@ -185,11 +185,12 @@ export default {
         let source = e.target.options[e.target.options.selectedIndex].text // value = existing CSV header
         let defaultValue = ""
 
-        if(source === "New header"){ // ask to the user the default row's value
+        if(source === "Create new header"){ // ask to the user the default row's value
+          source = null
           do{
             defaultValue = prompt("Insert the default value for this header")
             if(defaultValue.includes(this.CSVDelimiter)){
-              alert(`New header value cannot contain CSV separator (found ${this.CSVDelimiter}`)
+              alert(`New header value cannot contain CSV separator (found ${this.CSVDelimiter})`)
               defaultValue = null
             }
           }while(!defaultValue)
@@ -205,11 +206,11 @@ export default {
 
         // 1. check if mapping is completed, i.e., if all mandatory headers have been set
         if(this.headersMapping.length !== this.missingHeaders.length){
-          this.error = `All mandatory headers need to be mapped (missing: ${this.missingHeaders}`
+          this.error = `All mandatory headers need to be mapped (missing: ${this.missingHeaders})`
         }
         else{
           // 2. check for duplicate headers (except from 'New header')
-          let duplicates = this.headersMapping.filter(mapping => mapping["source"] !== "New header").map(e => e.source)
+          let duplicates = this.headersMapping.filter(mapping => mapping["source"]).map(e => e.source)
           if(duplicates.length > new Set(duplicates).size){
             this.error = `New headers mapping contains duplicates (${duplicates})`
           }

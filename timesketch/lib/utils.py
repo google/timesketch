@@ -97,10 +97,10 @@ def _validate_csv_fields(mandatory_fields, data, headers_mapping=None):
     Args:
         mandatory_fields: a list of fields that must be present.
         data: a DataFrame built from the ingested file.
-        headers_mapping: list of dicts containing the
-                         (i) target header to be modified,
-                         (ii) the source header to be substituted and
-                         (iii) the default value in case we add a new column
+        headers_mapping: list of dicts containing:
+                         (i) target header to be modified [key=target],
+                         (ii) source header to be substituted [key=source], and
+                         (iii) def. value if we add a new column [key=default_value]
     Raises:
         RuntimeError: if there are missing fields.
     """
@@ -116,14 +116,21 @@ def _validate_csv_fields(mandatory_fields, data, headers_mapping=None):
     else:
         headers_mapping_set = {}
 
-    if not headers_missing:
+    if headers_missing:
+        headers_missing_string = ", ".join(list(headers_missing))
+    else:
         return
 
-    headers_mapping_string = (", ".join(list(headers_mapping_set))
-                              if headers_mapping_set else "None")  # pylint: disable=line-too-long
-    headers_missing_string = (", ".join(list(
-        headers_missing)) if headers_missing else "None")  # pylint: disable=line-too-long
-    parset_set_string = (", ".join(list(parsed_set)) if parsed_set else "None")
+    if headers_mapping_set:
+        headers_mapping_string = ", ".join(list(headers_mapping_set))
+    else:
+        headers_mapping_string = "None"
+
+    if parsed_set:
+        parset_set_string = ", ".join(list(parsed_set))
+    else:
+        parset_set_string = "None"
+
     raise RuntimeError(
         """Missing mandatory CSV headers.
         Mandatory headers: {0:s}
@@ -158,47 +165,47 @@ def check_mapping_errors(headers, headers_mapping):
 
     Args:
         csv_headers: list of headers found in the CSV file.
-        headers_mapping: list of dicts containing the
-                             (i) target header to be modified,
-                             (ii) the source header to be substituted and
-                             (iii) the default value in case we add a new column
+        headers_mapping: list of dicts containing:
+                         (i) target header to be modified [key=target],
+                         (ii) source header to be substituted [key=source], and
+                         (iii) def. value if we add a new column [key=default_value]
 
     Raises:
         RuntimeError: if there are errors in the headers mapping.
     """
 
-    # 1. The mapping is done only if the mandatory header is missing, and
-    # 2. When a new column is created, a mandatory default value must be set
+    # 1. Do the mapping only if the mandatory header is missing, and
+    # 2. When create a new column, need to set a default value
+    candidate_headers = []
     for mapping in headers_mapping:
         if mapping["target"] in headers:
             raise RuntimeError(
                 "Headers mapping is wrong.\n"
                 "Mapping done only if the mandatory header is missing")
-        if (mapping["source"] == "New header" and
-                not mapping["default_value"]):
-            raise RuntimeError(
+        if (mapping["source"]):
+            # 3. Check if the header specified in headers mapping is in the headers list
+            if mapping["source"] not in headers:
+                raise RuntimeError(
                 "Headers mapping is wrong.\n"
-                "Error to create new column {0:s}. "
-                "A default value must be assigned in the headers mapping"
-                .format(mapping["target"])
+                "Value specified in headers mapping ({0:s}) is "
+                "not present as CSV column: {1:s}".format(
+                    mapping["source"], ", ".join(headers))
             )
+            # update the headers list that we will substitute
+            candidate_headers.append(mapping["source"])
+            
+        else:
+            if (not mapping["default_value"]):
+                raise RuntimeError(
+                    "Headers mapping is wrong.\n"
+                    "Error to create new column {0:s}. "
+                    "When create a new column, a default value must be assigned"
+                    .format(mapping["target"])
+                )
+            
 
-    # 2. Check if the exisisting value specified in the headers_mapping
-    #       are actually present in the list headers
-    candidate_headers = [
-        m["source"] for m in headers_mapping if m["source"] != "New header"
-    ]
-    for candidate in candidate_headers:
-        if candidate not in headers:
-            raise RuntimeError(
-                "Headers mapping is wrong.\n"
-                "Value specified in headers mapping ({0}) is "
-                "not present as CSV column: {1}".format(
-                    candidate, ", ".join(headers))
-            )
-
-    # 3. check if two or more mandatory headers are mapped
-    #       to the same exisiting header
+    # 4. check if two or more mandatory headers are mapped
+    #    to the same exisiting header
     if len(candidate_headers) != len(set(candidate_headers)):
         raise RuntimeError(
             "Headers mapping is wrong.\n"
@@ -212,15 +219,15 @@ def rename_headers(chunk, headers_mapping):
 
     Args:
         chunk: dataframe to be modified
-        headers_mapping: list of object containing the
-                         (i) target header to be modified,
-                         (ii) the source header to be substituted and
-                         (iii) the default value in case we add a new column
+        headers_mapping: list of dicts containing:
+                         (i) target header to be modified [key=target],
+                         (ii) source header to be substituted [key=source], and
+                         (iii) def. value if we add a new column [key=default_value]
 
     Returns: the dataframe with renamed headers
     """
     for mapping in headers_mapping:
-        if mapping["source"] == "New header":
+        if not mapping["source"]:
             # add header and def values
             chunk[mapping["target"]] = mapping["default_value"]
         else:
@@ -242,10 +249,10 @@ def read_and_validate_csv(
         file_handle: a file-like object containing the CSV content.
         delimiter: character used as a field separator, default: ','
         mandatory_fields: list of fields that must be present in the CSV header
-        headers_mapping: list of object containing the
-                         (i) target header to be modified,
-                         (ii) the source header to be substituted and
-                         (iii) the default value in case we add a new column
+        headers_mapping: list of dicts containing:
+                         (i) target header to be modified [key=target],
+                         (ii) source header to be substituted [key=source], and
+                         (iii) def. value if we add a new column [key=default_value]
     Raises:
         RuntimeError: when there are missing fields.
         DataIngestionError: when there are issues with the data ingestion.

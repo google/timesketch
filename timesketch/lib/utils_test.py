@@ -113,7 +113,7 @@ class TestUtils(BaseTest):
 
         valid_mapping_2 = [
             {"target": "datetime", "source": "DT", "default_value": None},
-            {"target": "timestamp_desc", "source": "New header", "default_value": "a"}
+            {"target": "timestamp_desc", "source": None, "default_value": "a"}
         ]
         self.assertIs(check_mapping_errors(
             current_headers,
