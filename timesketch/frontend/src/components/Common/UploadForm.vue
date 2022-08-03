@@ -76,7 +76,7 @@ limitations under the License.
         <div class="control">
           <input v-model="form.name" class="input" type="text" required placeholder="Name your timeline" />
         </div>
-        <div v-if="fileName.split('.')[1]==='csv'">
+        <div v-if="fileName.split('.')[1] === 'csv'">
           <label class="label">CSV Separator</label>
           <div class="control" v-for="(v, key) in delimitersList" :key="key">
               <input type="radio" name="CSVDelimiter" :value="v" v-on:click="changeCSVDelimiter($event)" >
