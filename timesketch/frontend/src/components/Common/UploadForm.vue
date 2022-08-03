@@ -205,7 +205,7 @@ export default {
 
         // 1. check if mapping is completed, i.e., if all mandatory headers have been set
         if(this.headersMapping.length !== this.missingHeaders.length){
-          this.error = "Finish to map mandatory headers"
+          this.error = `All mandatory headers need to be mapped (missing: ${this.missingHeaders}`
         }
         else{
           // 2. check for duplicate headers (except from 'New header')
