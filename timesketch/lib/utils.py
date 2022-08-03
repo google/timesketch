@@ -126,10 +126,10 @@ def _validate_csv_fields(mandatory_fields, data, headers_mapping=None):
     parset_set_string = (", ".join(list(parsed_set)) if parsed_set else "None")
     raise RuntimeError(
         """Missing mandatory CSV headers.
-        Mandatory headers: {0}
-        Headers found in the file: {1}
-        Headers provided in the mapping: {2}
-        Headers missing: {3}""".format(
+        Mandatory headers: {0:s}
+        Headers found in the file: {1:s}
+        Headers provided in the mapping: {2:s}
+        Headers missing: {3:s}""".format(
             ", ".join(list(mandatory_set)),
             parset_set_string,
             headers_mapping_string,
