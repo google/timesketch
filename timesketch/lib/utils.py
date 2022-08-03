@@ -157,7 +157,7 @@ def check_mapping_errors(headers, headers_mapping):
     """Sanity check for headers mapping
 
     Args:
-        headers: list of headers found in the CSV file
+        csv_headers: list of headers found in the CSV file.
         headers_mapping: list of dicts containing the
                              (i) target header to be modified,
                              (ii) the source header to be substituted and
