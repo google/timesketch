@@ -382,6 +382,11 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         file_size = form.get("total_file_size")
         if isinstance(file_size, str) and file_size.isdigit():
             file_size = int(file_size)
+        if file_size <= 0:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                "Unable to upload file. File is empty"
+            )
         enable_stream = form.get("enable_stream", False)
 
         data_label = form.get("data_label", "")

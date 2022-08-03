@@ -140,7 +140,7 @@ export default {
         file: '',
       },
       fileName: '',
-      error: '',
+      error: [],
       percentCompleted: 0,
       
       CSVDelimiter: ',',
@@ -211,6 +211,7 @@ export default {
       if (!this.validateFile()) {
         return;
       }
+
       let formData = new FormData()
       formData.append('file', this.form.file)
       formData.append('name', this.form.name)
@@ -238,7 +239,7 @@ export default {
           this.clearFormData()
           this.percentCompleted = 0
        })
-       .catch(e => {}) 
+       .catch(e => {})
     },
     validateFile: function() {
       this.error = []
