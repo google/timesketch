@@ -47,28 +47,30 @@ limitations under the License.
 
       <!-- 
       
-      Next lines of code represent the dropdwon menu
+      Next lines of code represent the dropdwon menu.
       It is dynamically generated (with an extra option: Create new header) to allow
-        the user to map the missing header with an exsting one
+        the user to map the missing header with an exsting one.
 
       -->
-      <div v-for="header in missingHeaders" :key="header">
-        <label>{{header}}</label>
-        <select :name="header" :id="header" v-on:click="getSelection($event)">
-          <option>Create new header</option>
-          <option v-for="h in headers" :value="h" :key="h">
-            <div v-if="!mandatoryHeaders.includes(h)">
-              {{h}}
-            </div>
-          </option>
-        </select>
+      <div v-if="fileName && extension === 'csv'">
+        <div v-for="header in missingHeaders" :key="header">
+          <label>{{header}}</label>
+          <select :name="header" :id="header" v-on:click="getSelection($event)">
+            <option>Create new header</option>
+            <option v-for="h in headers" :value="h" :key="h">
+              <div v-if="!mandatoryHeaders.includes(h)">
+                {{h}}
+              </div>
+            </option>
+          </select>
+        </div>
       </div>
 
       <!-- 
       
-      Next lines of code represent the CSV radio button list
+      Next lines of code represent the CSV radio button list.
       According to the user selection, the headers are automatically re-computed, and
-      as a consequence, also the missing headers
+      as a consequence, also the missing headers.
 
       -->
       <div class="field" v-if="fileName">
@@ -121,16 +123,14 @@ export default {
   data() {
     return {
       headersString : '', // headers string not formatted (used when changing CSV separator)
-      headers: [], // headers in the CSV 
       /**
-       *  headersMapipng: list of object containing the
-       * (i) target header to be modified,
-       * (ii) the source header to be substituted and
-       * (iii) the default value in case we add a new columns 
+       *  headersMapipng: list of object containing the:
+       * (i) target header to be modified [key=target],
+       * (ii) the source header to be substituted [key=source] and
+       * (iii) the default value in case we add a new columns [key=default_value].
       */
       headersMapping : [],
       mandatoryHeaders : ["datetime", "message", "timestamp_desc"],
-      missingHeaders : [], 
       form: {
         name: '',
         file: '',
@@ -144,19 +144,23 @@ export default {
       delimitersList : {'Comma' : ',', 'Semicolon': ';', 'Pipe' : '|'}
     }
   },
+  computed: {
+    headers(){
+      return this.headersString.split(this.CSVDelimiter)
+    },
+    missingHeaders(){
+      return this.mandatoryHeaders.filter(header => this.headers.indexOf(header) < 0)
+    },
+    extension(){
+      return this.fileName.split('.')[1]
+    },
+  },
   methods: {
     checkMandatoryHeader: function(){
-      this.mandatoryHeaders.forEach(mandatoryHeader => {
-        if( this.headers.indexOf(mandatoryHeader) < 0 ){
-          this.missingHeaders.push(mandatoryHeader)
-        }
-        else{
-          this.missingHeaders = this.missingHeaders.filter(header => header !== mandatoryHeader)
-        }
-      })
-
-      if(this.missingHeaders.length > 0){
-        this.error = 'Missing headers: ' + this.missingHeaders.toString()
+      let headers = this.headersString.split(this.CSVDelimiter)
+      let missingHeaders = this.missingHeaders
+      if(missingHeaders.length > 0){
+        this.error = 'Missing headers: ' + missingHeaders.toString()
       }
       else{
         this.error = ''
@@ -164,26 +168,22 @@ export default {
     },    
     changeCSVDelimiter: function(e){
       this.headersMapping = []
-      this.missingHeaders = []
       this.CSVDelimiter = e.target.value
       this.infoMessage = "CSV separator changed: < " + this.CSVDelimiter + " >."
-      this.headers = this.headersString.split(this.CSVDelimiter) // all  headers of CSV uploaded
       this.checkMandatoryHeader()
     },
     getSelection: function(e){
       /**
-       * method to map of the missing headers
-       * it verifies if some conditions are met before submitting the form,
-       * in particular:
-       * 1. missing headers must be map with exsiting headers in the CSV
-       * 2. 2 or more missing headers can not be mapped to the same exsiting header
-       * 3. If missing header can not be mapped with an existing one, then, 
-       *      it can be "created" a new one and a default value is associated to each row for that header
+       * Method to map the missing headers.
+       * First, it checks some conditions, in particular, the user needs to:
+       * 1. map the missing header with any existing one in the CSV,
+       * 2. avoid to map 2 or more missing headers with the same exsiting one,
+       * 3. specify a default value in case he chooses to create a new column
        */
 
-        let target = e.target.name // key = datetime | message | timestamp_desc
-        let source = e.target.options[e.target.options.selectedIndex].text // value = existing CSV header
-        let defaultValue = ""
+        let target = e.target.name
+        let source = e.target.options[e.target.options.selectedIndex].text
+        let defaultValue = null
 
         if(source === "Create new header"){ // ask to the user the default row's value
           source = null
@@ -196,7 +196,6 @@ export default {
           }while(!defaultValue)
         }
 
-        // remove outdated entry from headersMapping
         this.headersMapping = this.headersMapping.filter(mapping => mapping["target"] !== target)
         this.headersMapping.push({
           target : target,
@@ -204,12 +203,13 @@ export default {
           default_value : defaultValue // leave snake case for python server code
         })
 
-        // 1. check if mapping is completed, i.e., if all mandatory headers have been set
-        if(this.headersMapping.length !== this.missingHeaders.length){
-          this.error = `All mandatory headers need to be mapped (missing: ${this.missingHeaders})`
+        // 1. check if mapping is completed, i.e., if the user set all the mandatory headers
+        let missingHeaders = this.missingHeaders
+        if(this.headersMapping.length !== missingHeaders.length){
+          this.error = `All mandatory headers need to be mapped (missing: ${missingHeaders})`
         }
         else{
-          // 2. check for duplicate headers (except from 'New header')
+          // 2. check for duplicate headers (except from the new header)
           let duplicates = this.headersMapping.filter(mapping => mapping["source"]).map(e => e.source)
           if(duplicates.length > new Set(duplicates).size){
             this.error = `New headers mapping contains duplicates (${duplicates})`
@@ -224,7 +224,6 @@ export default {
       this.form.file = ''
       this.fileName = ''
       this.headersMapping = []
-      this.missingHeaders = []
       this.infoMessage = ''
       this.headersString = ''
     },
@@ -239,8 +238,7 @@ export default {
       formData.append('context', this.fileName)
       formData.append('total_file_size', this.form.file.size)
       formData.append('sketch_id', this.$store.state.sketch.id)
-      let extension = this.fileName.split('.')[1]
-      if(extension === 'csv'){
+      if(this.extension === 'csv'){
         let hMapping = JSON.stringify(this.headersMapping)
         formData.append('headersMapping', hMapping)
         formData.append('delimiter', this.CSVDelimiter)
@@ -267,11 +265,8 @@ export default {
       /* 1. Initilize the variables */
 
       this.headersMapping = []
-      this.missingHeaders = []
       this.headersString = ''
-      this.headers = []
       let fileName = fileList[0].name
-      let fileExtension = fileName.split('.')[1]
       this.form.file = fileList[0]
       this.form.name = fileName
         .split('.')
@@ -283,28 +278,25 @@ export default {
       
       /* 2. Check for the correct extension */
       let allowedExtensions = ['csv', 'json', 'jsonl', 'plaso']
-      if (!allowedExtensions.includes(fileExtension)) {
+      if (!allowedExtensions.includes(this.extension)) {
         this.error = 'Please select a file with a valid extension'
       }
 
       /* 3. Manage CSV missing headers */
 
-      if(fileExtension === "csv"){
+      if(this.extension === "csv"){
         let reader = new FileReader()
         let file = document.getElementById("datafile").files[0]
         
         // read only 1000 B --> it is reasonable that the header of the CSV file ends before the 1000^ byte.
-        // this is done to prevent JS reading a large CSV file (GBs) 
+        // Done to prevent JS reading a large CSV file (GBs) 
         let vueJS = this
         reader.readAsText(file.slice(0, 1000))
         reader.onloadend = function(e){
-            if (e.target.readyState === FileReader.DONE){  // DONE == 2
-              
+            if (e.target.readyState === FileReader.DONE){
               /* 3a. Extract the headers from the CSV */ 
-              
               let data = e.target.result
               vueJS.headersString = data.split("\n")[0]
-              vueJS.headers = vueJS.headersString.split(vueJS.CSVDelimiter) // all  headers of CSV uploaded
               vueJS.checkMandatoryHeader()
             }
           }        

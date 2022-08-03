@@ -151,11 +151,11 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             events: a string with events to upload (optional).
             meta: optional dict with additional meta fields that will be
                   included in the return.
-            headers_mapping: list of object containing the
-                             (i) target header to be modified,
-                             (ii) the source header to be substituted and
-                             (iii) the default value in case we add a new column
-            delimiter: delimiter used to parse the CSV
+            headers_mapping: list of dicts containing:
+                             (i) target header to be modified [key=target],
+                             (ii) source header to be substituted [key=source], and
+                             (iii) def. value if we add a new column [key=default_value]
+            delimiter: delimiter to read the CSV file
 
         Returns:
             A timeline if created otherwise a search index in JSON (instance
@@ -344,10 +344,10 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             index_name: the OpenSearch index name for the timeline.
             chunk_index_name: A unique identifier for a file if
                 chunks are used.
-            headers_mapping: list of object containing the
-                             (i) target header to be modified,
-                             (ii) the source header to be substituted and
-                             (iii) the default value in case we add a new column
+            headers_mapping: list of dicts containing:
+                             (i) target header to be modified [key=target],
+                             (ii) source header to be substituted [key=source], and
+                             (iii) def. value if we add a new column [key=default_value]
             delimiter: delimiter to read the CSV file
 
         Returns:
