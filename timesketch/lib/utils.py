@@ -178,7 +178,7 @@ def check_mapping_errors(headers, headers_mapping):
                 not mapping["default_value"]):
             raise RuntimeError(
                 "Headers mapping is wrong.\n"
-                "Error to create new column {0}. "
+                "Error to create new column {0:s}. "
                 "A default value must be assigned in the headers mapping"
                 .format(mapping["target"])
             )
