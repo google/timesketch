@@ -189,7 +189,7 @@ export default {
           do{
             defaultValue = prompt("Insert the default value for this header")
             if(defaultValue.includes(this.CSVDelimiter)){
-              alert("New header value cannot contain CSV separator")
+              alert(`New header value cannot contain CSV separator (found ${this.CSVDelimiter}`)
               defaultValue = null
             }
           }while(!defaultValue)
