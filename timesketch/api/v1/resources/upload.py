@@ -152,9 +152,10 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             meta: optional dict with additional meta fields that will be
                   included in the return.
             headers_mapping: list of dicts containing:
-                             (i) target header to be modified [key=target],
-                             (ii) source header to be substituted [key=source], and
+                             (i) target header we want to insert [key=target],
+                             (ii) source header we want to replace [key=source], and
                              (iii) def. value if we add a new column [key=default_value]
+
             delimiter: delimiter to read the CSV file
 
         Returns:
@@ -345,8 +346,8 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             chunk_index_name: A unique identifier for a file if
                 chunks are used.
             headers_mapping: list of dicts containing:
-                             (i) target header to be modified [key=target],
-                             (ii) source header to be substituted [key=source], and
+                             (i) target header we want to insert [key=target],
+                             (ii) source header we want to replace [key=source], and
                              (iii) def. value if we add a new column [key=default_value]
             delimiter: delimiter to read the CSV file
 

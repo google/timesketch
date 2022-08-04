@@ -82,7 +82,7 @@ limitations under the License.
         <div class="control">
           <input v-model="form.name" class="input" type="text" required placeholder="Name your timeline" />
         </div>
-        <div v-if="fileName.split('.')[1] === 'csv'">
+        <div v-if="extension === 'csv'">
           <label class="label">CSV Separator</label>
           <div class="control" v-for="(v, key) in delimitersList" :key="key">
               <input type="radio" name="CSVDelimiter" :value="v" v-on:click="changeCSVDelimiter($event)" >
@@ -175,28 +175,30 @@ export default {
        * 3. specify a default value in case he chooses to create a new column
        */
 
-        let target = e.target.name
-        let source = e.target.options[e.target.options.selectedIndex].text
-        let defaultValue = null
+      let target = e.target.name
+      let source = e.target.options[e.target.options.selectedIndex].text
+      if(!source)
+        return
+      let defaultValue = null
 
-        if(source === "Create new header"){ // ask to the user the default row's value
-          source = null
-          do{
-            defaultValue = prompt("Insert the default value for this header")
-            if(defaultValue.includes(this.CSVDelimiter)){
-              alert(`New header value cannot contain CSV separator (found ${this.CSVDelimiter})`)
-              defaultValue = null
-            }
-          }while(!defaultValue)
-        }
+      if(source === "Create new header"){ // ask to the user the default row's value
+        source = null
+        do{
+          defaultValue = prompt("Insert the default value for this header")
+          if(defaultValue.includes(this.CSVDelimiter)){
+            alert(`New header value cannot contain CSV separator (found ${this.CSVDelimiter})`)
+            defaultValue = null
+          }
+        }while(!defaultValue)
+      }
 
-        this.headersMapping = this.headersMapping.filter(mapping => mapping["target"] !== target)
-        this.headersMapping.push({
-          target : target,
-          source : source,
-          default_value : defaultValue // leave snake case for python server code
-        })
-        this.validateFile()
+      this.headersMapping = this.headersMapping.filter(mapping => mapping["target"] !== target)
+      this.headersMapping.push({
+        target : target,
+        source : source,
+        default_value : defaultValue // leave snake case for python server code
+      })
+      this.validateFile()
         
     },
     clearFormData: function() {

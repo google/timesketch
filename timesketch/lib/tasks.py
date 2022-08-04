@@ -258,8 +258,8 @@ def build_index_pipeline(
             uploaded.
         timeline_id: Optional ID of the timeline object this data belongs to.
         headers_mapping: list of dicts containing:
-                         (i) target header to be modified [key=target],
-                         (ii) source header to be substituted [key=source], and
+                         (i) target header we want to replace [key=target],
+                         (ii) source header we want to insert [key=source], and
                          (iii) def. value if we add a new column [key=default_value]
 
     Returns:
@@ -757,8 +757,8 @@ def run_csv_jsonl(
         source_type: Type of file, csv or jsonl.
         timeline_id: ID of the timeline object this data belongs to.
         headers_mapping: list of dicts containing:
-                         (i) target header to be modified [key=target],
-                         (ii) source header to be substituted [key=source], and
+                         (i) target header we want to insert [key=target],
+                         (ii) source header we want to replace [key=source], and
                          (iii) def. value if we add a new column [key=default_value]
 
     Returns:
