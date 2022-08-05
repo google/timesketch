@@ -59,7 +59,7 @@ limitations under the License.
       <div v-if="fileName && extension === 'csv'">
         <div v-for="header in missingHeaders" :key="header">
           <label>{{header}}</label>
-          <select :name="header" :id="header" v-on:click="changeHeaderMapping($event)">
+          <select :name="header" :id="header" @click="changeHeaderMapping($event)">
             <option>Create new header</option>
             <option v-for="h in headers" :value="h" :key="h">
               <div v-if="!mandatoryHeaders.includes(h)">
@@ -85,7 +85,7 @@ limitations under the License.
         <div v-if="extension === 'csv'">
           <label class="label">CSV Separator</label>
           <div class="control" v-for="(v, key) in delimitersList" :key="key">
-              <input type="radio" name="CSVDelimiter" :value="v" v-on:click="changeCSVDelimiter($event)" >
+              <input type="radio" name="CSVDelimiter" :value="v" v-model="CSVDelimiter" @change="changeCSVDelimiter"/>
               {{key}} ({{v}})
           </div>
           <div v-if="infoMessage">
@@ -160,9 +160,8 @@ export default {
     },
   },
   methods: {   
-    changeCSVDelimiter: function(e){
+    changeCSVDelimiter: function(){
       this.headersMapping = []
-      this.CSVDelimiter = e.target.value
       this.infoMessage = "CSV separator changed: < " + this.CSVDelimiter + " >."
       this.validateFile()
     },
@@ -174,7 +173,7 @@ export default {
        * 2. avoid to map 2 or more missing headers with the same exsiting one,
        * 3. specify a default value in case he chooses to create a new column
        */
-
+      
       let target = e.target.name
       let source = e.target.options[e.target.options.selectedIndex].text
       if(!source)
@@ -279,27 +278,29 @@ export default {
         .join('.')
       this.fileName = fileName
       /* 3. Manage CSV missing headers */
-
       if(this.extension === "csv"){
-        let reader = new FileReader()
-        let file = document.getElementById("datafile").files[0]
-        
-        // read only 1000 B --> it is reasonable that the header of the CSV file ends before the 1000^ byte.
-        // Done to prevent JS reading a large CSV file (GBs) 
-        let vueJS = this
-        reader.readAsText(file.slice(0, 1000))
-        reader.onloadend = function(e){
-            if (e.target.readyState === FileReader.DONE){
-              /* 3a. Extract the headers from the CSV */ 
-              let data = e.target.result
-              vueJS.headersString = data.split("\n")[0]
-              vueJS.validateFile()
-            }
-          }        
+        this.extractCSVHeader()        
       }
       else{
         this.validateFile()
       }
+    },
+    extractCSVHeader: function(){
+      let reader = new FileReader()
+      let file = document.getElementById("datafile").files[0]
+      
+      // read only 1000 B --> it is reasonable that the header of the CSV file ends before the 1000^ byte.
+      // Done to prevent JS reading a large CSV file (GBs) 
+      let vueJS = this
+      reader.readAsText(file.slice(0, 1000))
+      reader.onloadend = function(e){
+          if (e.target.readyState === FileReader.DONE){
+            /* 3a. Extract the headers from the CSV */ 
+            let data = e.target.result
+            vueJS.headersString = data.split("\n")[0]
+            vueJS.validateFile()
+          }
+        }
     },
   },
 }
