@@ -59,7 +59,8 @@ limitations under the License.
       <div v-if="fileName && extension === 'csv'">
         <div v-for="header in missingHeaders" :key="header">
           <label>{{header}}</label>
-          <select :name="header" :id="header" @click="changeHeaderMapping($event)">
+          <select :name="header" :id="header" @change="changeHeaderMapping($event)">
+            <option selected disabled>-</option>
             <option>Create new header</option>
             <option v-for="h in headers" :value="h" :key="h">
               <div v-if="!mandatoryHeaders.includes(h)">
