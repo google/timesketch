@@ -87,10 +87,6 @@ def upload_file(
             ".jsonl (not {0:s})"
         ).format(file_extension.lower())
 
-    if os.path.getsize(file_path) <= 0:
-        return (
-            "File cannot be empty"
-        )
     import_helper = helper.ImportHelper()
     import_helper.add_config_dict(config_dict)
 
