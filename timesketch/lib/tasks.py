@@ -682,7 +682,7 @@ def run_plaso(
     cmd = [
         psort_path,
         "-o",
-        "opensearch_ts",
+        "elastic_ts",
         file_path,
         "--server",
         opensearch_server,
@@ -695,18 +695,18 @@ def run_plaso(
     ]
 
     if mappings_file_path:
-        cmd.extend(["--opensearch-mappings", mappings_file_path])
+        cmd.extend(["--elastic_mappings", mappings_file_path])
 
     if timeline_id:
         cmd.extend(["--timeline_identifier", str(timeline_id)])
 
     opensearch_username = current_app.config.get("OPENSEARCH_USER", "")
     if opensearch_username:
-        cmd.extend(["--opensearch-user", opensearch_username])
+        cmd.extend(["--elastic_user", opensearch_username])
 
     opensearch_password = current_app.config.get("OPENSEARCH_PASSWORD", "")
     if opensearch_password:
-        cmd.extend(["--opensearch-password", opensearch_password])
+        cmd.extend(["--elastic_password", opensearch_password])
 
     opensearch_ssl = current_app.config.get("OPENSEARCH_SSL", False)
     if opensearch_ssl:
