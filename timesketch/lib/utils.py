@@ -184,15 +184,23 @@ def check_mapping_errors(headers, headers_mapping):
                 "Mapping done only if the mandatory header is missing")
         if mapping["source"]:
             # 3. Check if the header specified in headers mapping is in the headers list
-            if mapping["source"] not in headers:
-                raise RuntimeError(
-                "Value specified in the headers mapping not found in the CSV\n"
-                "Value specified in headers mapping: {0:s}\n"
-                "CSV columns: {1:s}".format(
-                    mapping["source"], ", ".join(headers))
-            )
-            # update the headers list that we will substitute
-            candidate_headers.append(mapping["source"])
+            
+            for source in mapping["source"]:
+                if source not in headers:
+                    raise RuntimeError(
+                    "Value specified in the headers mapping not found in the CSV\n"
+                    "Value specified in headers mapping: {0:s}\n"
+                    "Value not found in the CSV: {1:s}\n"
+                    "CSV columns: {2:s}".format(
+                        ", ".join(mapping["source"]),
+                        source,
+                        ", ".join(headers))
+                )
+                # update the headers list that we will substitute/rename
+                # we do this check only over the header column that will be renamed,
+                # i.e., when mapping["source"] has only 1 value
+                if len(mapping["source"]) == 1:
+                    candidate_headers.append(mapping["source"][0])
 
         else:
             if not mapping["default_value"]:
@@ -224,14 +232,22 @@ def rename_headers(chunk, headers_mapping):
 
     Returns: the dataframe with renamed headers
     """
+    headers_mapping.sort(
+        key=lambda x: len(x["source"]) if x["source"] else 0, reverse=True
+        )
     for mapping in headers_mapping:
         if not mapping["source"]:
             # add header and def values
             chunk[mapping["target"]] = mapping["default_value"]
+        elif len(mapping["source"]) > 1:
+            # e.g., mapping["source"] = ["filepath, computer_name"]
+            chunk[mapping["target"]] = ""
+            for column in mapping["source"]:
+                chunk[mapping["target"]] += column +":"+ chunk[column].map(str) +" | "
         else:
             # just rename the header
             chunk.rename(
-                columns={mapping["source"]: mapping["target"]}, inplace=True)
+                columns={mapping["source"][0]: mapping["target"]}, inplace=True)
     return chunk
 
 

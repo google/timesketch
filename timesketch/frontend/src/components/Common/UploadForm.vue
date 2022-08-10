@@ -57,17 +57,36 @@ limitations under the License.
 
       -->
       <div v-if="fileName && extension === 'csv'">
-        <div v-for="header in missingHeaders" :key="header">
-          <label>{{header}}</label>
-          <select :name="header" :id="header" @change="changeHeaderMapping($event)">
-            <option selected disabled>-</option>
-            <option>Create new header</option>
-            <option v-for="h in headers" :value="h" :key="h">
-              <div v-if="!mandatoryHeaders.includes(h)">
-                {{h}}
-              </div>
-            </option>
-          </select>
+        <div v-for="header in missingHeaders" :key="header.name">
+          
+          <div v-if="header.type==='radio'">
+            <span class="tag is-info is-medium is-light"><label>{{header.name}}</label></span> &emsp;
+            <select :name="header.name" :id="header.name" @change="changeHeaderMapping($event.target.options[$event.target.options.selectedIndex].text, header.name)">
+              <option selected disabled>-</option>
+              <option>Create new header</option>
+              <option v-for="h in headers" :value="h" :key="h">
+                <div v-if="!mandatoryHeaders.map(header => header.name).includes(h)">
+                  {{h}}
+                </div>
+              </option>
+            </select>&emsp;
+            <span v-if="getDefaultValue(header.name)" class="tag is-info is-medium is-light">
+              <label>Def. Value: {{getDefaultValue(header.name)}}</label>
+            </span>
+          </div>
+
+          <div v-if="header.type==='checkbox'">
+            <span class="tag is-info is-medium is-light"><label>{{header.name}}</label></span><br><br>
+              <ul class="city__list" style="list-style: none; height: 100px; width: 350px; overflow: auto;">
+              <li v-for="h in headers" :key="h">
+                <input id="chk" type="checkbox" :value="h" :name="header.name" @click="changeHeaderMapping(h, header.name)" />
+                {{ h }}
+              </li>
+            </ul>
+          </div>
+
+          <hr/>
+
         </div>
       </div>
 
@@ -135,7 +154,11 @@ export default {
        * (iii) the default value in case we add a new columns [key=default_value].
       */
       headersMapping : [],
-      mandatoryHeaders : ["datetime", "message", "timestamp_desc"],
+      mandatoryHeaders : [
+        {name : "datetime", type : "radio"},
+        {name : "message", type : "checkbox"},
+        {name : "timestamp_desc", type : "radio"}
+        ],
       form: {
         name: '',
         file: '',
@@ -154,19 +177,35 @@ export default {
       return this.headersString.split(this.CSVDelimiter)
     },
     missingHeaders(){
-      return this.mandatoryHeaders.filter(header => this.headers.indexOf(header) < 0)
+      return this.mandatoryHeaders.filter(header => this.headers.indexOf(header.name) < 0)
     },
     extension(){
       return this.fileName.split('.')[1]
     },
+    defaultValues(){
+      // let defaultValues = {}
+      // for(let i; i < this.missingHeaders.length; i++){
+      //   let defaultValue = this.headersMapping.filter()
+      //   defaultValues[this.missingHeaders[i]] = defaultValue
+      // }
+    },
   },
-  methods: {   
+  methods: {
+    getDefaultValue: function(target){
+      let obj = this.headersMapping.find(x => x["target"] === target)
+      if(obj){
+        return obj["default_value"]
+      }
+      else{
+        return null
+      }
+    },   
     changeCSVDelimiter: function(){
       this.headersMapping = []
       this.infoMessage = "CSV separator changed: < " + this.CSVDelimiter + " >."
       this.validateFile()
     },
-    changeHeaderMapping: function(e){
+    changeHeaderMapping: function(source, target){
       /**
        * Method to map the missing headers.
        * First, it checks some conditions, in particular, the user needs to:
@@ -174,30 +213,56 @@ export default {
        * 2. avoid to map 2 or more missing headers with the same exsiting one,
        * 3. specify a default value in case he chooses to create a new column
        */
-      
-      let target = e.target.name
-      let source = e.target.options[e.target.options.selectedIndex].text
       if(!source)
         return
+      
       let defaultValue = null
+      let type = this.mandatoryHeaders.filter(h => h.name == target)[0].type
+      let listSelectedHeaders = [] // -> list of checkbox selected
 
-      if(source === "Create new header"){ // ask to the user the default row's value
-        source = null
-        do{
-          defaultValue = prompt("Insert the default value for this header")
-          if(defaultValue.includes(this.CSVDelimiter)){
-            alert(`New header value cannot contain CSV separator (found ${this.CSVDelimiter})`)
-            defaultValue = null
-          }
-        }while(!defaultValue)
+      if(type === "radio"){
+        if(source === "Create new header"){ // ask to the user the default row's value
+          source = null
+          do{
+            defaultValue = prompt("Insert the default value for this header")
+            if(defaultValue.includes(this.CSVDelimiter)){
+              alert(`New header value cannot contain CSV separator (found ${this.CSVDelimiter})`)
+              defaultValue = null
+            }
+          }while(!defaultValue)
+        }
+        listSelectedHeaders = source ? [source] : null
+        this.headersMapping = this.headersMapping.filter(mapping => mapping["target"] !== target)
+        this.headersMapping.push({
+          target : target,
+          source : listSelectedHeaders,
+          default_value : defaultValue // leave snake case for python server code
+        })
+      }
+      else if(type === "checkbox"){
+
+        // extract all ticked checkbox
+        let tmp = this.headersMapping.find(mapping => mapping["target"] === target)
+        listSelectedHeaders = tmp ? tmp["source"] : []
+        if (listSelectedHeaders.includes(source)){
+          listSelectedHeaders = listSelectedHeaders.filter(x => x !== source)
+        }
+        else{
+          listSelectedHeaders.push(source)
+        }
+        this.headersMapping = this.headersMapping.filter(mapping => mapping["target"] !== target)
+        if (listSelectedHeaders.length > 0)
+          this.headersMapping.push({
+            target : target,
+            source : listSelectedHeaders,
+            default_value : defaultValue // leave snake case for python server code
+          })
+      }
+      else{
+        return
       }
 
-      this.headersMapping = this.headersMapping.filter(mapping => mapping["target"] !== target)
-      this.headersMapping.push({
-        target : target,
-        source : source,
-        default_value : defaultValue // leave snake case for python server code
-      })
+      
       this.validateFile()
         
     },
@@ -255,10 +320,11 @@ export default {
       if(this.extension === "csv"){
         // 1. check if mapping is completed, i.e., if the user set all the mandatory headers
         if(this.headersMapping.length !== this.missingHeaders.length){
-          this.error.push('Missing headers: ' + this.missingHeaders.toString())
+          this.error.push('Missing headers: ' + this.missingHeaders.map(h => h.name).toString())
         }
-        // 2. check for duplicate headers (except from the new header)
+        // 2. check for duplicate headers (except from the new header and multiple headers)
         let duplicates = this.headersMapping.filter(mapping => mapping["source"]).map(e => e.source)
+        duplicates = duplicates.filter(x => x.length === 1).map(x => x[0]) // only mapping 1:1. They will be renamed on the database thus we do not want duplicates
         if(duplicates.length > new Set(duplicates).size){
           this.error.push(`New headers mapping contains duplicates (${duplicates})`)
         }
