@@ -15,9 +15,11 @@ limitations under the License.
 -->
 <template>
   <v-app id="app">
-    <v-navigation-drawer v-model="drawer" permanent app mini-variant class="pl-1">
-      <v-avatar class="mb-2 mt-2">
-        <v-img src="/dist/timesketch-color.png" max-height="30" max-width="30" contain></v-img>
+    <v-navigation-drawer v-if="!isRootPage" v-model="drawer" permanent app mini-variant class="pl-1">
+      <v-avatar class="mb-2 mt-3">
+        <router-link to="/">
+          <v-img src="/dist/timesketch-color.png" max-height="30" max-width="30" contain></v-img>
+        </router-link>
       </v-avatar>
 
       <v-tooltip right>
@@ -45,7 +47,7 @@ limitations under the License.
       <v-tooltip right>
         <template v-slot:activator="{ on, attrs }">
           <v-avatar>
-            <v-btn icon v-bind="attrs" v-on="on">
+            <v-btn disabled icon v-bind="attrs" v-on="on">
               <v-icon>mdi-graph-outline</v-icon>
             </v-btn>
           </v-avatar>
@@ -54,13 +56,13 @@ limitations under the License.
       </v-tooltip>
 
       <v-avatar>
-        <v-btn icon>
+        <v-btn disabled icon>
           <v-icon>mdi-auto-fix</v-icon>
         </v-btn>
       </v-avatar>
 
       <v-avatar>
-        <v-btn icon>
+        <v-btn disabled icon>
           <v-icon>mdi-head-lightbulb-outline</v-icon>
         </v-btn>
       </v-avatar>
@@ -68,7 +70,14 @@ limitations under the License.
 
     <v-main>
       <v-toolbar flat style="background: transparent" class="ml-2">
-        <v-toolbar-title>{{ sketch.name }}</v-toolbar-title>
+        <div v-if="isRootPage">
+          <v-avatar>
+            <v-img src="/dist/timesketch-color.png" max-height="40" max-width="40" contain></v-img>
+          </v-avatar>
+          <span style="font-size: 1.4em">timesketch</span>
+        </div>
+
+        <span style="font-size: 1.2em">{{ sketch.name }}</span>
         <v-spacer></v-spacer>
         <v-btn small depressed v-on:click="switchUI"> Use the old UI </v-btn>
         <v-tooltip right>
@@ -105,6 +114,9 @@ export default {
     },
     currentUser() {
       return this.$store.state.currentUser
+    },
+    isRootPage() {
+      return Object.keys(this.sketch).length === 0
     },
   },
   methods: {

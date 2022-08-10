@@ -38,7 +38,7 @@ limitations under the License.
         <ts-question :question="question"></ts-question>
       </span>
     </div>
-    <v-btn v-show="expanded" small text color="primary" class="ml-1 mt-3 mb-2">+ Question</v-btn>
+    <v-btn v-show="expanded" disabled small text color="primary" class="ml-1 mt-3 mb-2">+ Question</v-btn>
     <v-divider class="mt-3"></v-divider>
   </div>
 </template>

@@ -35,8 +35,8 @@ limitations under the License.
             </template>
           </v-textarea>
           <v-card-actions class="pl-0">
-            <v-btn disabled x-small outlined color="primary"> Answer Yes </v-btn>
-            <v-btn disabled x-small outlined color="primary"> Answer No </v-btn>
+            <v-btn disabled x-small outlined color="primary"> Yes </v-btn>
+            <v-btn disabled x-small outlined color="primary"> No </v-btn>
             <v-btn disabled x-small outlined color="primary"> Inconclusive </v-btn>
           </v-card-actions>
         </div>

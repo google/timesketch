@@ -26,12 +26,14 @@ limitations under the License.
       <tbody>
         <tr v-for="savedSearch in meta.views" :key="savedSearch.name">
           <td>
-            <router-link :to="{ name: 'Explore', query: { view: savedSearch.id } }">
+            <router-link style="text-decoration: none" :to="{ name: 'Explore', query: { view: savedSearch.id } }">
               {{ savedSearch.name }}
             </router-link>
           </td>
           <td>{{ savedSearch.user }}</td>
-          <td>{{ savedSearch.created_at }}</td>
+          <td>
+            {{ savedSearch.created_at | shortDateTime }} <small>({{ savedSearch.created_at | timeSince }})</small>
+          </td>
         </tr>
       </tbody>
     </template>

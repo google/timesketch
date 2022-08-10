@@ -16,39 +16,135 @@ limitations under the License.
 <template>
   <v-container fluid>
     <v-row>
-      <v-col cols="6">
-        <v-card>
-          <ts-timelines-table></ts-timelines-table>
-        </v-card>
-      </v-col>
-    </v-row>
-    <v-row>
-      <v-col cols="6">
-        <v-card>
-          <ts-search-history-table></ts-search-history-table>
-        </v-card>
-      </v-col>
-    </v-row>
-    <v-row>
-      <v-col cols="6">
-        <v-card>
-          <ts-saved-searches-table></ts-saved-searches-table>
-        </v-card>
-      </v-col>
-    </v-row>
+      <v-col cols="9">
+        <v-row>
+          <v-col>
+            <v-card outlined>
+              <v-app-bar flat dense> Timelines </v-app-bar>
+              <ts-timelines-table></ts-timelines-table>
+              <v-divider></v-divider>
+              <v-card-actions>
+                <v-btn small text> <v-icon>mdi-plus</v-icon> Upload timeline </v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-col>
+        </v-row>
+        <v-row v-if="searchHistory.length">
+          <v-col>
+            <v-card outlined>
+              <v-app-bar flat dense> Search History </v-app-bar>
+              <ts-search-history-table></ts-search-history-table>
+            </v-card>
+          </v-col>
+        </v-row>
+        <v-row v-if="meta.views.length">
+          <v-col>
+            <v-card outlined>
+              <v-app-bar flat dense> Saved Searches </v-app-bar>
+              <ts-saved-searches-table></ts-saved-searches-table>
+            </v-card>
+          </v-col>
+        </v-row>
 
-    <v-row>
-      <v-col cols="6">
-        <v-card>
-          <ts-data-types-table></ts-data-types-table>
-        </v-card>
+        <v-row v-if="dataTypes.length">
+          <v-col>
+            <v-card outlined>
+              <v-app-bar flat dense> Data Types </v-app-bar>
+              <ts-data-types-table></ts-data-types-table>
+            </v-card>
+          </v-col>
+        </v-row>
+        <v-row v-if="tags.length">
+          <v-col>
+            <v-card outlined>
+              <v-app-bar flat dense> Tags </v-app-bar>
+              <ts-tags-table></ts-tags-table>
+            </v-card>
+          </v-col>
+        </v-row>
       </v-col>
-    </v-row>
-    <v-row>
-      <v-col cols="6">
-        <v-card>
-          <ts-tags-table></ts-tags-table>
-        </v-card>
+      <v-col cols="3">
+        <v-sheet>
+          <v-list two-line>
+            <v-subheader>SKETCH DETAILS</v-subheader>
+            <v-list-item>
+              <v-list-item-content>
+                <v-list-item-title>
+                  <strong>Created:</strong> {{ sketch.created_at | shortDateTime }}
+                </v-list-item-title>
+                <v-list-item-subtitle>
+                  <small>{{ sketch.created_at | timeSince }} by {{ sketch.user.username }}</small>
+                </v-list-item-subtitle>
+              </v-list-item-content>
+            </v-list-item>
+
+            <v-list-item>
+              <v-list-item-content>
+                <v-list-item-title>
+                  <strong>Access: </strong>
+                  <span v-if="meta.permissions.public">Public</span>
+                  <span v-else>Restricted</span>
+                </v-list-item-title>
+                <v-list-item-subtitle>
+                  <small v-if="meta.permissions.public">Visibly to all users on this server</small>
+                  <small v-else>Only people with access can open</small>
+                </v-list-item-subtitle>
+              </v-list-item-content>
+            </v-list-item>
+
+            <v-list-item>
+              <v-list-item-content>
+                <v-list-item-title>
+                  <strong>Shared with</strong>
+                </v-list-item-title>
+                <v-list-item-subtitle>
+                  <small>People and groups with access</small>
+                </v-list-item-subtitle>
+              </v-list-item-content>
+            </v-list-item>
+          </v-list>
+
+          <v-divider></v-divider>
+          <v-list>
+            <v-list-item-group color="primary">
+              <v-list-item>
+                <v-list-item-icon>
+                  <v-icon>mdi-square-edit-outline</v-icon>
+                </v-list-item-icon>
+                <v-list-item-content>
+                  <v-list-item-title>Rename sketch</v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+
+              <v-list-item>
+                <v-list-item-icon>
+                  <v-icon>mdi-account-multiple-plus</v-icon>
+                </v-list-item-icon>
+                <v-list-item-content>
+                  <v-list-item-title>Access control</v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+
+              <v-list-item>
+                <v-list-item-icon>
+                  <v-icon>mdi-archive</v-icon>
+                </v-list-item-icon>
+                <v-list-item-content>
+                  <v-list-item-title>Archive sketch</v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+
+              <v-list-item>
+                <v-list-item-icon>
+                  <v-icon>mdi-export</v-icon>
+                </v-list-item-icon>
+                <v-list-item-content>
+                  <v-list-item-title>Export sketch</v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+            </v-list-item-group>
+          </v-list>
+        </v-sheet>
       </v-col>
     </v-row>
   </v-container>
@@ -72,6 +168,12 @@ export default {
       isFullPage: true,
       loadingComponent: null,
       isArchived: false,
+      selectedItem: 1,
+      items: [
+        { text: 'Real-Time', icon: 'mdi-clock' },
+        { text: 'Audience', icon: 'mdi-account' },
+        { text: 'Conversions', icon: 'mdi-flag' },
+      ],
     }
   },
   computed: {
@@ -83,6 +185,15 @@ export default {
     },
     count() {
       return this.$store.state.count
+    },
+    dataTypes() {
+      return this.$store.state.dataTypes
+    },
+    tags() {
+      return this.$store.state.tags
+    },
+    searchHistory() {
+      return this.$store.state.searchHistory
     },
     shareTooltip: function () {
       let msg = ''

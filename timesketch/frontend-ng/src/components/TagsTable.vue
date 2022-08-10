@@ -19,13 +19,13 @@ limitations under the License.
       <thead>
         <tr>
           <th class="text-left">Tag</th>
-          <th class="text-left">Count</th>
+          <th class="text-left">Events</th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="tag in tags" :key="tag.tag">
           <td>
-            <router-link :to="{ name: 'Explore', query: { q: 'tag:' + tag.tag } }">
+            <router-link style="text-decoration: none" :to="{ name: 'Explore', query: { q: 'tag:' + tag.tag } }">
               {{ tag.tag }}
             </router-link>
           </td>

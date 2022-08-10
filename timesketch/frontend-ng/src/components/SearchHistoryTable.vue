@@ -18,7 +18,7 @@ limitations under the License.
     <template v-slot:default>
       <thead>
         <tr>
-          <th class="text-left">Search history</th>
+          <th class="text-left">Query</th>
           <th class="text-left">Count</th>
           <th class="text-left">Query time</th>
           <th class="text-left">Date</th>
@@ -27,13 +27,15 @@ limitations under the License.
       <tbody>
         <tr v-for="search in searchHistory" :key="search">
           <td>
-            <router-link :to="{ name: 'Explore', query: { q: search.query_string } }">
+            <router-link style="text-decoration: none" :to="{ name: 'Explore', query: { q: search.query_string } }">
               {{ search.query_string }}
             </router-link>
           </td>
           <td>{{ search.query_result_count | compactNumber }}</td>
           <td>{{ search.query_time }}ms</td>
-          <td>{{ search.created_at }}</td>
+          <td>
+            {{ search.created_at | shortDateTime }} <small>({{ search.created_at | timeSince }})</small>
+          </td>
         </tr>
       </tbody>
     </template>

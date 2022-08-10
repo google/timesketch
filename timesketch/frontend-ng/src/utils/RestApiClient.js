@@ -67,11 +67,12 @@ RestApiClient.interceptors.response.use(
 
 export default {
   // Sketch
-  getSketchList(scope, page, searchQuery) {
+  getSketchList(scope, page, perPage, searchQuery) {
     let params = {
       params: {
         scope: scope,
         page: page,
+        per_page: perPage,
         search_query: searchQuery,
       },
     }

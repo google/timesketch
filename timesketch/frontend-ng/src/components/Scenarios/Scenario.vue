@@ -25,7 +25,7 @@ limitations under the License.
       <div v-for="facet in scenario.facets" :key="facet.id">
         <ts-facet class="mt-3" :facet="facet"></ts-facet>
       </div>
-      <v-btn small text color="primary" class="ml-1 mt-3">+ Facet</v-btn>
+      <v-btn disabled small text color="primary" class="ml-1 mt-3">+ Facet</v-btn>
     </div>
   </div>
 </template>

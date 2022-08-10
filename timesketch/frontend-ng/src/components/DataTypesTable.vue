@@ -18,14 +18,17 @@ limitations under the License.
     <template v-slot:default>
       <thead>
         <tr>
-          <th class="text-left">Data type</th>
-          <th class="text-left">Count</th>
+          <th class="text-left">Type</th>
+          <th class="text-left">Events</th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="dataType in dataTypes" :key="dataType.data_type">
           <td>
-            <router-link :to="{ name: 'Explore', query: { q: 'data_type:&quot;' + dataType.data_type + '&quot;' } }">
+            <router-link
+              style="text-decoration: none"
+              :to="{ name: 'Explore', query: { q: 'data_type:&quot;' + dataType.data_type + '&quot;' } }"
+            >
               {{ dataType.data_type }}
             </router-link>
           </td>
