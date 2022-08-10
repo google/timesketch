@@ -403,15 +403,27 @@ limitations under the License.
             v-model="selectedEvents"
             :headers="headers"
             :items="eventList.objects"
-            :footer-props="{ 'items-per-page-options': [40, 80, 100, 200, 500] }"
+            :footer-props="{ 'items-per-page-options': [10, 40, 80, 100, 200, 500], 'show-current-page': true }"
             :loading="searchInProgress"
-            :options="tableOptions"
+            :options.sync="tableOptions"
+            :server-items-length="totalHits"
             item-key="_id"
             loading-text="Searching... Please wait"
             show-select
+            disable-filtering
+            disable-sort
             :expanded="expandedRows"
             :dense="displayOptions.isCompact"
           >
+            <template v-slot:top="{ pagination, options, updateOptions }">
+              <v-data-footer
+                :pagination="pagination"
+                :options="options"
+                @update:options="updateOptions"
+                :show-current-page="true"
+                :items-per-page-options="[10, 40, 80, 100, 200, 500]"
+              ></v-data-footer>
+            </template>
             <!-- Event details -->
             <template v-slot:expanded-item="{ headers, item }">
               <td :colspan="headers.length">
@@ -594,6 +606,7 @@ export default {
       tableOptions: {
         itemsPerPage: 40,
       },
+      currentItemsPerPage: 40,
       drawer: false,
       leftDrawer: true,
       expandedRows: [],
@@ -651,14 +664,6 @@ export default {
     },
     totalHits() {
       return this.eventList.meta.es_total_count_complete || 0
-    },
-    totalHitsForPagination() {
-      let total = this.eventList.meta.es_total_count_complete || 0
-      // Elasticsearch only support pagination for the first 10k events.
-      if (total > 9999) {
-        total = 10000
-      }
-      return total
     },
     totalTime() {
       return this.eventList.meta.es_time / 1000 || 0
@@ -803,7 +808,6 @@ export default {
         // We need to calculate the new position in the page range and it is not
         // trivial with the current pagination UI component we use.
         this.currentQueryFilter.from = 0
-        this.currentPage = 1
       }
 
       // Update with selected fields
@@ -855,6 +859,9 @@ export default {
     setQueryAndFilter: function (searchEvent) {
       this.currentQueryString = searchEvent.queryString
       this.currentQueryFilter = searchEvent.queryFilter
+      // Preserve user defined item count instead of resetting.
+      this.currentQueryFilter.size = this.currentItemsPerPage
+      this.currentQueryFilter.terminate_after = this.currentItemsPerPage
       if (searchEvent.doSearch) {
         this.search()
       }
@@ -1081,8 +1088,24 @@ export default {
         this.meta.filter_labels.push(label)
       }
     },
-    paginate: function (pageNum) {
-      this.currentQueryFilter.from = pageNum * this.currentQueryFilter.size - this.currentQueryFilter.size
+    paginate: function () {
+      // Reset pagination if number of pages per page changes.
+      if (this.tableOptions.itemsPerPage != this.currentItemsPerPage) {
+        this.tableOptions.page = 1
+        this.currentPage = 1
+        this.currentItemsPerPage = this.tableOptions.itemsPerPage
+        this.currentQueryFilter.size = this.tableOptions.itemsPerPage
+        this.search(true, true, true)
+        return
+      }
+      // To avoid double search request exit early if this is the first search for this
+      // search session.
+      if (this.currentPage === this.tableOptions.page) {
+        return
+      }
+      this.currentQueryFilter.from =
+        this.tableOptions.page * this.currentQueryFilter.size - this.currentQueryFilter.size
+      this.currentPage = this.tableOptions.page
       this.search(true, false, true)
     },
     updateSelectedFields: function (value) {
@@ -1185,9 +1208,11 @@ export default {
   },
 
   watch: {
-    numEvents: function (newVal) {
-      this.currentQueryFilter.size = newVal
-      this.search(false, true, true)
+    tableOptions: {
+      handler() {
+        this.paginate()
+      },
+      deep: true,
     },
   },
   mounted() {
