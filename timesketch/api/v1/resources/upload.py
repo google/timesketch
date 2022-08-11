@@ -153,7 +153,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                   included in the return.
             headers_mapping: list of dicts containing:
                              (i) target header we want to insert [key=target],
-                             (ii) source header we want to replace [key=source], and
+                             (ii) sources header we want to rename/combine [key=source],
                              (iii) def. value if we add a new column [key=default_value]
 
             delimiter: delimiter to read the CSV file
@@ -347,7 +347,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 chunks are used.
             headers_mapping: list of dicts containing:
                              (i) target header we want to insert [key=target],
-                             (ii) source header we want to replace [key=source], and
+                             (ii) sources header we want to rename/combine [key=source],
                              (iii) def. value if we add a new column [key=default_value]
             delimiter: delimiter to read the CSV file
 

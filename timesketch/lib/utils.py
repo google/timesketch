@@ -99,7 +99,7 @@ def _validate_csv_fields(mandatory_fields, data, headers_mapping=None):
         data: a DataFrame built from the ingested file.
         headers_mapping: list of dicts containing:
                          (i) target header we want to insert [key=target],
-                         (ii) source header we want to replace [key=source], and
+                         (ii) sources header we want to rename/combine [key=source],
                          (iii) def. value if we add a new column [key=default_value]
     Raises:
         RuntimeError: if there are missing fields.
@@ -167,7 +167,7 @@ def check_mapping_errors(headers, headers_mapping):
         csv_headers: list of headers found in the CSV file.
         headers_mapping: list of dicts containing:
                          (i) target header we want to insert [key=target],
-                         (ii) source header we want to replace [key=source], and
+                         (ii) sources header we want to rename/combine [key=source],
                          (iii) def. value if we add a new column [key=default_value]
 
     Raises:
@@ -184,7 +184,7 @@ def check_mapping_errors(headers, headers_mapping):
                 "Mapping done only if the mandatory header is missing")
         if mapping["source"]:
             # 3. Check if the header specified in headers mapping is in the headers list
-            
+
             for source in mapping["source"]:
                 if source not in headers:
                     raise RuntimeError(
@@ -227,7 +227,7 @@ def rename_headers(chunk, headers_mapping):
         chunk: dataframe to be modified
         headers_mapping: list of dicts containing:
                          (i) target header we want to insert [key=target],
-                         (ii) source header we want to replace [key=source], and
+                         (ii) sources header we want to rename/combine [key=source],
                          (iii) def. value if we add a new column [key=default_value]
 
     Returns: the dataframe with renamed headers
@@ -265,7 +265,7 @@ def read_and_validate_csv(
         mandatory_fields: list of fields that must be present in the CSV header
         headers_mapping: list of dicts containing:
                          (i) target header we want to insert [key=target],
-                         (ii) source header we want to replace [key=source], and
+                         (ii) sources header we want to rename/combine [key=source],
                          (iii) def. value if we add a new column [key=default_value]
     Raises:
         RuntimeError: when there are missing fields.

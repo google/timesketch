@@ -758,7 +758,7 @@ def run_csv_jsonl(
         timeline_id: ID of the timeline object this data belongs to.
         headers_mapping: list of dicts containing:
                          (i) target header we want to insert [key=target],
-                         (ii) source header we want to replace [key=source], and
+                         (ii) sources header we want to rename/combine [key=source],
                          (iii) def. value if we add a new column [key=default_value]
 
     Returns:
