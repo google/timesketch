@@ -558,11 +558,13 @@ class EventAddAttributeResource(resources.ResourceMixin, Resource):
                 query_body["size"] = size
                 query_body["terminate_after"] = size
 
+                # pylint: disable=unexpected-keyword-arg
                 eventid_search = datastore.client.search(
                     body=json.dumps(query_body),
                     index=[index],
                     search_type="query_then_fetch",
                 )
+                # pylint: enable=unexpected-keyword-arg
                 existing_events = eventid_search["hits"]["hits"]
                 existing_events_dict = {event["_id"]: event for
                                         event in existing_events}
