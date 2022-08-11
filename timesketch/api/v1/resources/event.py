@@ -430,6 +430,198 @@ class EventResource(resources.ResourceMixin, Resource):
         return new_attributes, HTTP_STATUS_CODE_CREATED
 
 
+class EventAddAttributeResource(resources.ResourceMixin, Resource):
+    """Resource to add attributes to events."""
+
+    EVENT_FIELDS = ["_id", "_type", "_index", "attributes"]
+    ATTRIBUTE_FIELDS = ["attr_name", "attr_value"]
+    INVALID_ATTRIBUTES_NAMES = [
+        'datetime', 'timestamp', 'message', 'timestamp_desc']
+
+    MAX_EVENTS = 100000
+    MAX_ATTRIBUTES = 10
+    EVENT_CHUNK_SIZE = 1000
+
+    def _parse_request(self, flask_request):
+        """Validate and parse a POST request to add attributes.
+
+        Args:
+            flask_request (flask.Request): The unmodified request object.
+
+        Returns:
+            A dict with searchindex IDs as keys and the associated events as
+                values.
+        """
+        if not flask_request.is_json:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                "Request must be in JSON format."
+            )
+        form = flask_request.json
+        events = form.get("events")
+        if not events:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                "Request must contain an events field."
+            )
+        if not isinstance(events, list):
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                "Events field must be a list."
+            )
+        if len(events) > self.MAX_EVENTS:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                f"Request exceeds maximum events to process {self.MAX_EVENTS}"
+            )
+
+        events_by_index = {}
+        for event in events:
+            for field in self.EVENT_FIELDS:
+                if field not in event:
+                    abort(
+                        HTTP_STATUS_CODE_BAD_REQUEST,
+                        f"Event missing field {field}."
+                    )
+
+            attributes = event.get("attributes")
+            if not isinstance(attributes, list):
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    "Attributes must be a list."
+                )
+            if len(attributes) > self.MAX_ATTRIBUTES:
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    f"Attributes for event exceeds maximum "
+                    f"{self.MAX_ATTRIBUTES}"
+                )
+            for attribute in attributes:
+                for field in self.ATTRIBUTE_FIELDS:
+                    if field not in attribute:
+                        abort(
+                            HTTP_STATUS_CODE_BAD_REQUEST,
+                            f"Attribute missing field {field}."
+                      )
+
+            if event["_index"] not in events_by_index:
+                events_by_index[event["_index"]] = []
+            events_by_index[event["_index"]].append(event)
+
+        return events_by_index
+
+    @login_required
+    def post(self, sketch_id):
+        """Handles POST requests to the resource.
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+
+        Returns:
+            An annotation in JSON (instance of flask.wrappers.Response)
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            msg = "No sketch found with this ID."
+            abort(HTTP_STATUS_CODE_NOT_FOUND, msg)
+
+        if not sketch.has_permission(current_user, "write"):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                ("User does not have sufficient access rights to modify a "
+                "sketch."),
+            )
+
+        datastore = self.datastore
+
+        info_dict = {}
+        info_dict["errors"] = []
+        info_dict["events_modified"] = 0
+        info_dict["attributes_added"] = 0
+
+        events_by_index = self._parse_request(request)
+        info_dict["chunks_per_index"] = {index: [] for index
+                                         in list(events_by_index)}
+
+        for index, events in events_by_index.items():
+            chunks = []
+            for i in range(0, len(events), self.EVENT_CHUNK_SIZE):
+                chunks.append(events[i:i+self.EVENT_CHUNK_SIZE])
+            info_dict["chunks_per_index"][index] = len(chunks)
+
+            for chunk in chunks:
+                should_list = [{"match": {"_id": event["_id"]}}
+                               for event in chunk]
+                query_body = {"query": {"bool": {"should": should_list}}}
+                # Adding a small buffer to make sure all results are captured.
+                size = len(should_list) + 100
+                query_body["size"] = size
+                query_body["terminate_after"] = size
+
+                eventid_search = datastore.client.search(
+                    body=json.dumps(query_body),
+                    index=[index],
+                    search_type="query_then_fetch",
+                )
+                existing_events = eventid_search["hits"]["hits"]
+                existing_events_dict = {event["_id"]: event for
+                                        event in existing_events}
+
+                for request_event in chunk:
+                    request_event_id = request_event['_id']
+                    if request_event_id not in existing_events_dict:
+                        info_dict["errors"].append(
+                            f"Event ID {request_event_id} not found.")
+                        continue
+
+                    request_attributes = request_event["attributes"]
+                    existing_attributes = (
+                        existing_events_dict[request_event_id]["_source"])
+                    new_attributes = {}
+
+                    for request_attribute in request_attributes:
+                        request_attribute_name = request_attribute["attr_name"]
+                        request_attribute_value = (
+                            request_attribute["attr_value"])
+
+                        if request_attribute_name in existing_attributes:
+                            info_dict["errors"].append(
+                                f"Attribute '{request_attribute_name}' already "
+                                f"exists for event_id '{request_event_id}'.")
+                        elif request_attribute_name.startswith("_"):
+                            info_dict["errors"].append(
+                                f"Attribute '{request_attribute_name}' for "
+                                f"event_id '{request_event_id}' invalid, "
+                                f"cannot start with '_'")
+                        elif (request_attribute_name in
+                            self.INVALID_ATTRIBUTES_NAMES):
+                            info_dict["errors"].append(
+                                f"Cannot add '{request_attribute_name}' for "
+                                f"event_id' {request_event_id}', name not "
+                                f"allowed.")
+                        else:
+                            new_attributes[request_attribute_name] = (
+                                request_attribute_value)
+
+                    if new_attributes:
+                        datastore.import_event(
+                            index_name=request_event["_index"],
+                            event_type=request_event["_type"],
+                            event_id=request_event_id,
+                            event=new_attributes,
+                        )
+                        info_dict["events_modified"] += 1
+                        info_dict["attributes_added"] += len(new_attributes)
+
+        datastore.flush_queued_events()
+        # TODO: return sensible subset of errors.
+        info_dict["errors"] = len(info_dict["errors"])
+        schema = {"meta": info_dict, "objects": []}
+        response = jsonify(schema)
+        response.status_code = HTTP_STATUS_CODE_OK
+        return response
+
+
 class EventTaggingResource(resources.ResourceMixin, Resource):
     """Resource to fetch and set tags to an event."""
 
