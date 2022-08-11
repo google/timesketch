@@ -49,31 +49,12 @@ limitations under the License.
     <!-- Search -->
     <v-row>
       <v-col cols="12">
-        <v-card outlined class="pa-md-2">
+        <v-card outlined class="pa-md-3 pb-3">
           <v-row>
             <v-col cols="12">
               <v-card class="d-flex align-start" flat>
                 <v-sheet class="mt-1">
                   <ts-search-history-buttons @toggleSearchHistory="toggleSearchHistory()"></ts-search-history-buttons>
-                  <!-- Time filter menu -->
-                  <v-menu
-                    v-model="timeFilterMenu"
-                    offset-y
-                    :close-on-content-click="false"
-                    :close-on-click="true"
-                    content-class="menu-with-gap"
-                    allow-overflow
-                    style="overflow: visible"
-                  >
-                    <template v-slot:activator="{ on, attrs }">
-                      <v-btn small depressed v-bind="attrs" v-on="on">
-                        <v-icon left> mdi-filter-variant-plus </v-icon>
-                        Add filter
-                      </v-btn>
-                    </template>
-
-                    <ts-filter-menu app @cancel="timeFilterMenu = false" @addChip="addChip"></ts-filter-menu>
-                  </v-menu>
                 </v-sheet>
                 <v-divider vertical class="mx-2"></v-divider>
 
@@ -124,14 +105,26 @@ limitations under the License.
           </v-row>
           <v-divider class="mt-2 mb-3"></v-divider>
 
+          <!-- Timeline picker -->
+          <v-row dense>
+            <v-col cols="12">
+              <ts-timeline-picker
+                @updateSelectedTimelines="updateSelectedTimelines($event)"
+                :current-query-filter="currentQueryFilter"
+                :count-per-index="eventList.meta.count_per_index"
+                :count-per-timeline="eventList.meta.count_per_timeline"
+              ></ts-timeline-picker>
+            </v-col>
+          </v-row>
+
           <!-- Time filter chips -->
-          <v-row dense v-if="timeFilterChips.length">
+          <v-row dense>
             <v-col cols="12" class="py-0">
               <v-chip-group>
                 <span v-for="(chip, index) in timeFilterChips" :key="index + chip.value">
                   <v-menu offset-y content-class="menu-with-gap">
                     <template v-slot:activator="{ on }">
-                      <v-chip v-on="on">
+                      <v-chip outlined v-on="on">
                         <v-icon left small> mdi-clock-outline </v-icon>
                         <span
                           v-bind:style="[!chip.active ? { 'text-decoration': 'line-through', opacity: '50%' } : '']"
@@ -179,14 +172,32 @@ limitations under the License.
                     >OR</v-btn
                   >
                 </span>
+                <span>
+                  <v-menu
+                    v-model="timeFilterMenu"
+                    offset-y
+                    :close-on-content-click="false"
+                    :close-on-click="true"
+                    content-class="menu-with-gap"
+                    allow-overflow
+                    style="overflow: visible"
+                  >
+                    <template v-slot:activator="{ on, attrs }">
+                      <v-chip outlined color="success " v-bind="attrs" v-on="on">
+                        <v-icon left small> mdi-clock-plus-outline </v-icon>
+                        Add timefilter
+                      </v-chip>
+                      <!-- <v-btn class="pl-1" small text v-bind="attrs" v-on="on"> + Add timefilter </v-btn>-->
+                    </template>
 
-                <v-btn @click="timeFilterMenu = true" icon style="margin-top: 2px">
-                  <v-icon>mdi-plus</v-icon>
-                </v-btn>
+                    <ts-filter-menu app @cancel="timeFilterMenu = false" @addChip="addChip"></ts-filter-menu>
+                  </v-menu>
+                </span>
               </v-chip-group>
             </v-col>
           </v-row>
 
+          <!-- Term filters -->
           <v-row dense v-if="filterChips.length">
             <v-col cols="12" class="py-0">
               <v-chip-group>
@@ -198,22 +209,7 @@ limitations under the License.
                     >AND</v-btn
                   >
                 </span>
-                <v-btn @click="timeFilterMenu = true" icon style="margin-top: 2px">
-                  <v-icon>mdi-plus</v-icon>
-                </v-btn>
               </v-chip-group>
-            </v-col>
-          </v-row>
-
-          <!-- Timeline picker -->
-          <v-row dense>
-            <v-col class="py-0" cols="12">
-              <ts-timeline-picker
-                @updateSelectedTimelines="updateSelectedTimelines($event)"
-                :current-query-filter="currentQueryFilter"
-                :count-per-index="eventList.meta.count_per_index"
-                :count-per-timeline="eventList.meta.count_per_timeline"
-              ></ts-timeline-picker>
             </v-col>
           </v-row>
         </v-card>
@@ -280,20 +276,38 @@ limitations under the License.
       </v-col>
 
       <v-col cols="12" v-if="eventList.objects.length || (searchInProgress && this.currentQueryFilter.indices.length)">
-        <v-card outlined>
+        <v-card flat>
           <v-toolbar flat>
-            <v-card-text> {{ fromEvent }}-{{ toEvent }} of {{ totalHits }} events ({{ totalTime }}s) </v-card-text>
+            <v-card-text>
+              {{ fromEvent }}-{{ toEvent }} of {{ totalHits }} events ({{ totalTime }}s)
+
+              <v-menu ref="saveSearchMenu" offset-y :close-on-content-click="false">
+                <template v-slot:activator="{ on, attrs }">
+                  <v-btn icon v-bind="attrs" v-on="on">
+                    <v-icon>mdi-content-save-outline</v-icon>
+                  </v-btn>
+                </template>
+
+                <v-card outlined min-width="300px" class="mx-auto">
+                  <v-card-text>
+                    <v-text-field v-model="saveSearchFormName" required placeholder="Name your saved search">
+                    </v-text-field>
+                  </v-card-text>
+                  <v-divider></v-divider>
+                  <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn color="primary" text @click="saveSearch" :disabled="!saveSearchFormName"> Save </v-btn>
+                  </v-card-actions>
+                </v-card>
+              </v-menu>
+            </v-card-text>
             <v-spacer></v-spacer>
 
             <v-btn icon @click="showHistogram = !showHistogram">
               <v-icon>mdi-chart-bar</v-icon>
             </v-btn>
 
-            <v-btn icon>
-              <v-icon>mdi-content-save-outline</v-icon>
-            </v-btn>
-
-            <v-btn icon>
+            <v-btn icon @click="showHistogram = !showHistogram">
               <v-icon>mdi-view-column-outline</v-icon>
             </v-btn>
 
@@ -576,6 +590,8 @@ export default {
       drawer: false,
       expandedRows: [],
       timeFilterMenu: false,
+      saveSearchFormName: '',
+      fromSavedSearch: false,
       // old stuff
       params: {},
       showCreateViewModal: false,
@@ -751,6 +767,13 @@ export default {
       }
     },
     search: function (emitEvent = true, resetPagination = true, incognito = false, parent = false) {
+      // Remove URL parameter if new search is executed after saved search
+      if (this.fromSavedSearch) {
+        this.fromSavedSearch = false
+      } else {
+        this.$router.push(this.$route.path)
+      }
+
       if (!this.currentQueryString) {
         return
       }
@@ -848,9 +871,8 @@ export default {
     },
     searchView: function (viewId) {
       this.selectedEvents = []
-
       this.showSearchDropdown = false
-      this.showSaveSearchModal = false
+      this.fromSavedSearch = true
 
       if (viewId !== parseInt(viewId, 10) && typeof viewId !== 'string') {
         viewId = viewId.id
@@ -1147,6 +1169,17 @@ export default {
       if (e.target.id !== 'tsSearchInput') {
         this.showSearchDropdown = false
       }
+    },
+    saveSearch: function () {
+      ApiClient.createView(this.sketchId, this.saveSearchFormName, this.currentQueryString, this.currentQueryFilter)
+        .then((response) => {
+          this.saveSearchFormName = ''
+          this.$refs.saveSearchMenu.save()
+          let newView = response.data.objects[0]
+          this.$store.state.meta.views.push(newView)
+          this.$router.push({ name: 'Explore', query: { view: newView.id } })
+        })
+        .catch((e) => {})
     },
   },
 
