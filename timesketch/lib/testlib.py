@@ -67,10 +67,11 @@ class MockOpenSearchClient(object):
 
     def search(self, index, body, size=0, search_type=None):  # pylint: disable=unused-argument
         """Mock a client search.
-        
+
         Used for testing both aggregations and adding event attributes.
 
         """
+        # pylint: disable=line-too-long
         aggregation_search_result = {
             "meta": {
                 "es_time": 23,
@@ -96,6 +97,7 @@ class MockOpenSearchClient(object):
                 }
             ]
         }
+        # pylint: enable=line-too-long
 
         add_attributes_search_result = {
             "hits": {
