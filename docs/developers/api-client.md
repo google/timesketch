@@ -572,8 +572,20 @@ To add new attributes to event an event:
 ```python
 # event_id and searchindex_id can be found by searching for the target event.
 
-new_attributes = {'new_attribute_name': 'new_attribute_value'}
-sketch.add_event_attributes(event_id, searchindex_id, new_attributes)
+event = [
+  {
+    '_id': event_id,
+    '_index': searchindex_id,
+    '_type': '_doc',
+    'attributes': [
+      {
+        'attr_name': 'A new attribute name',
+        'attr_value': 'A new attribute value'
+      }
+    ]
+  }
+]
+sketch.add_event_attributes(events)
 ```
 
 
