@@ -54,6 +54,13 @@ limitations under the License.
           
           <!-- Dynamically generation of the preview of the CSV file -->
           <div v-if="showPreviewFlag">
+            <span>
+              <article class="message is-info mb-0">
+                <div class="message-body">
+                  The columns shown in the preview are only a representation of what will be uploaded on the server. Adding or removing columns using the "Add columns" button does not affect what will be uploaded on the server.
+                </div>
+              </article>
+            </span>
             <ul v-if="showAddColumnFlag" style="list-style: none; height: 100px; width: 100%; overflow: auto;">
               <li v-for="header in allHeaders" :key="header">
                 <input type="checkbox" :value="header" v-model="checkedHeaders"/>
