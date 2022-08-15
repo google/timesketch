@@ -156,14 +156,38 @@ class ClientTest(interface.BaseEndToEndTest):
         # Have to use search to get event_id
         search_client = search.Search(sketch)
         search_response = json.loads(search_client.json)
-        searchindex_id = search_response["objects"][0]["_index"]
-        event_id = search_response["objects"][0]["_id"]
+        old_event = search_response["objects"][0]
 
-        new_attributes = {"attr_name": "attr_value"}
-        response = sketch.add_event_attributes(
-            event_id, searchindex_id, new_attributes)
+        events = [
+            {
+                "_id": old_event["_id"],
+                "_index": old_event["_index"],
+                "_type": old_event["_type"],
+                "attributes": [
+                    {
+                        "attr_name": "foo",
+                        "attr_value": "bar"
+                    }
+                ]
+            }
+        ]
 
-        self.assertions.assertEqual(response, new_attributes)
+        response = sketch.add_event_attributes(events)
+        new_event = sketch.get_event(old_event["_id"], old_event["_index"])
+        self.assertions.assertEqual(
+            response,
+            {
+                "meta": {
+                    "attributes_added": 1,
+                    "chunks_per_index": {old_event["_index"]: 1},
+                    "error_count": 0,
+                    "errors": [],
+                    "events_modified": 1
+                },
+                "objects": []
+            }
+        )
+        self.assertions.assertIn("foo", new_event["objects"])
 
 
 manager.EndToEndTestManager.register_test(ClientTest)
