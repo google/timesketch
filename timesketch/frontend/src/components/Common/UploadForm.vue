@@ -37,17 +37,82 @@ limitations under the License.
       </div>
       <div class="field">
 
-        <div v-if="error.length">
-          <span v-for="(errorMessage, index) in error" :key="index">
-            <article class="message is-danger mb-0">
-              <div class="message-body">
-                {{ errorMessage }}
-              </div>
-            </article>
+        <div v-if="extension==='csv'">
+          <hr/>
+          <button type="button" class="button is-success" @click="showHelper">{{showHelperFlag ? "Hide Helper" : "Show Helper"}}</button>
+          &emsp;<button type="button" class="button is-success" @click="showPreview">{{showPreviewFlag ? "Hide preview" : "Show preview"}}</button>
+          &emsp;<button v-if="showPreviewFlag" type="button" class="button is-success" @click="showAddColumn">{{showAddColumnFlag ? "Hide colums" : "Add Columns"}}</button><br/><br/>
+          <div v-if="showPreviewFlag">
+
+            
+            <ul v-if="showAddColumnFlag" style="list-style: none; height: 100px; width: 100%; overflow: auto;">
+              <li v-for="header in allHeaders" :key="header">
+                <input type="checkbox" :value="header" v-model="checkedHeaders"/>
+                {{header}}
+              </li>
+            </ul>
             <br/>
-          </span>
+            <table id="example" class="table is-striped" style="width:100%">
+              <thead>
+                  <tr>
+                      <th v-for="mandatoryHeader in headersTable" :key="mandatoryHeader.name" :style="mandatoryHeader.color">
+                        {{mandatoryHeader.name}}
+                      </th>
+                  </tr>
+              </thead>
+              <tbody>
+                  <tr v-for="i in numberRows" :key="i">
+                    <td v-for="mandatoryHeader in headersTable" :key="mandatoryHeader.name">
+                      {{mandatoryHeader.values[i-1]}}
+                    </td>
+                  </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <div v-if="showHelperFlag">
+              <header class="modal-card-head">
+                <p class="modal-card-title">Header Mapping Helper</p>
+              </header>
+              <section class="modal-card-body">
+                <p>
+                  The form below allows you to map the headers in your file to the mandatory ones:
+                  <div class="content">
+                    <ul>
+                        <li v-for="header in missingHeaders" :key="header.name">{{header.name}}</li>
+                    </ul>
+                  </div>
+                  You can map a missinig header using a dropdown menu or a list of checkbox.
+                  <div class="content">
+                    <ul>
+                        <li>Dropdown menu:
+                          <div class="content">
+                            <ul>
+                                <li>Choose one exsiting header from your CSV. Timesketch will rename that column with the name of the missing heaeder.</li>
+                                <li>Create a new column by selecting "Create new header".
+                                    Timesketch will add a new column with the name of the missing ehader.
+                                    Doing so, you need to specify a default value that Timesketch will use to fill the new column.</li>
+                            </ul>
+                          </div>
+                        </li>
+                        <li>List of checkbox:
+                          <div class="content">
+                            <ul>
+                                <li>By choosing only one checkbox, Timesketch will rename that column with the name of the missing heaeder.</li>
+                                <li>By choosing more than one checkbox, Timesketch will create a new column that combines the different values of the selected columns.</li>
+                            </ul>
+                          </div>
+                        </li>
+
+                    </ul>
+                  </div>
+                </p>
+              </section>
+            </div>
         </div>
       </div>
+
+      <hr style="height:2px;border-width:0;color:gray;background-color:#B5B5B5"/>
 
       <!-- 
       
@@ -58,9 +123,8 @@ limitations under the License.
       -->
       <div v-if="fileName && extension === 'csv'">
         <div v-for="header in missingHeaders" :key="header.name">
-          
-          <div v-if="header.type==='radio'">
-            <span class="tag is-info is-medium is-light"><label>{{header.name}}</label></span> &emsp;
+          <span class="tag is-info is-large is-light"><label>{{header.name}}</label></span> &emsp;
+          <div v-if="header.type==='radio'" class="select is-link">
             <select :name="header.name" :id="header.name" @change="changeHeaderMapping($event.target.options[$event.target.options.selectedIndex].text, header.name)">
               <option selected disabled>-</option>
               <option>Create new header</option>
@@ -69,15 +133,14 @@ limitations under the License.
                   {{h}}
                 </div>
               </option>
-            </select>&emsp;
-            <span v-if="getDefaultValue(header.name)" class="tag is-info is-medium is-light">
+            </select>
+          </div>&emsp;
+          <span v-if="getDefaultValue(header.name)" class="tag is-info is-large is-light">
               <label>Def. Value: {{getDefaultValue(header.name)}}</label>
-            </span>
-          </div>
+          </span>
 
-          <div v-if="header.type==='checkbox'">
-            <span class="tag is-info is-medium is-light"><label>{{header.name}}</label></span><br><br>
-              <ul class="city__list" style="list-style: none; height: 100px; width: 350px; overflow: auto;">
+          <div v-if="header.type==='checkbox'"><br/>
+              <ul class="city__list" style="list-style: none; height: 100px; width: 100%; overflow: auto;">
               <li v-for="h in headers" :key="h">
                 <input id="chk" type="checkbox" :value="h" :name="header.name" @click="changeHeaderMapping(h, header.name)" />
                 {{ h }}
@@ -97,28 +160,21 @@ limitations under the License.
       as a consequence, also the missing headers.
 
       -->
+      <hr style="height:2px;border-width:0;color:gray;background-color:#B5B5B5"/>
       <div class="field" v-if="fileName">
         <label class="label">Name</label>
         <div class="control">
           <input v-model="form.name" class="input" type="text" required placeholder="Name your timeline" />
         </div>
+        <hr/>
         <div v-if="extension === 'csv'">
           <label class="label">CSV Separator</label>
           <div class="control" v-for="(v, key) in delimitersList" :key="key">
               <input type="radio" name="CSVDelimiter" :value="v" v-model="CSVDelimiter" @change="changeCSVDelimiter"/>
               {{key}} ({{v}})
           </div>
-          <div v-if="infoMessage">
-            <article class="message is-success mb-0">
-              <div class="message-body">
-                {{ infoMessage }}
-              </div>
-            </article>
-          </div>
         </div>
       </div>
-
-
       <div class="error" v-if="!error.length">
         <div class="field" v-if="fileName && percentCompleted === 0">
           <div class="control">
@@ -138,6 +194,18 @@ limitations under the License.
     >
       <span v-if="percentCompleted === 100">Waiting for request to finish..</span>
     </b-progress>
+    
+    <div v-if="error.length">
+      <span v-for="(errorMessage, index) in error" :key="index">
+        <article class="message is-danger mb-0">
+          <div class="message-body">
+            {{ errorMessage }}
+          </div>
+        </article>
+        <br/>
+      </span>
+    </div>
+
   </div>
 </template>
 <script>
@@ -146,9 +214,20 @@ import ApiClient from '../../utils/RestApiClient'
 export default {
   data() {
     return {
+      showHelperFlag : false,
+      showPreviewFlag : false,
+      checkedHeaders : [],
+      showAddColumnFlag : false,
       headersString : '', // headers string not formatted (used when changing CSV separator)
+      valuesString : [],
+      staticNumberRows : 3,
+      colors: [
+        {name : "red", value: "background-color: #FEECF0; color:#CC0F35"},
+        {name : "blue", value: "background-color: #EEF6FC; color:#1D72AA"},
+        {name : "green", value: "background-color: #EFFAF3; color:#257942"}
+        ],
       /**
-       *  headersMapipng: list of object containing the:
+       *  headersMapping: list of object containing the:
        * (i) target header to be modified [key=target],
        * (ii) the source header to be substituted [key=source] and
        * (iii) the default value in case we add a new columns [key=default_value].
@@ -169,7 +248,7 @@ export default {
       
       CSVDelimiter: ',',
       infoMessage : '',
-      delimitersList : {'Comma' : ',', 'Semicolon': ';', 'Pipe' : '|'}
+      delimitersList : {'Comma' : ',', 'Semicolon': ';', 'Pipe' : '|'},
     }
   },
   computed: {
@@ -179,18 +258,129 @@ export default {
     missingHeaders(){
       return this.mandatoryHeaders.filter(header => this.headers.indexOf(header.name) < 0)
     },
+    headersTable(){
+      /**
+       * headersTable = [
+       *                    {name : "datetime", values : ["v1", "v2", "v3"]},
+       *                    {name : "message", values : ["v1", "v2", "v3"]},
+       *                    {name : "timestamp_desc", values : ["v1", "v2", "v3"]},
+       *                 ]
+       */
+
+      let valuesAndHeaders = [] // list of dictionary with headers and respected values extracted from the CSV/JSONL
+      if(this.extension.toLowerCase() === "csv"){
+        let values = this.valuesString.map(x => x.split(this.CSVDelimiter)) // only values extracted from CSV
+        /**
+         * values is an array of array (matrix)
+         * For example, let's see how values could be for a CSV with 3 headers sucs as datetime, 
+         * timestamp description and permission
+         * E.g., values = | [2022-11-10, file_delete, high] |
+         *                | [2022-11-09, file_create, high] |
+         *                | [2022-11-09, file_update, low]  |
+         */
+        
+        for(let i = 0; i < this.headers.length; i++){  
+          let listValues = []
+          for(let j = 0; j < values.length; j++){   
+            listValues.push(values[j][i]) // list values aggregate the information on the columns
+          }
+          valuesAndHeaders.push({
+            name : this.headers[i],
+            values : listValues
+          })
+        }        
+      }
+      else{
+        console.log("JSONL not yet supported for this feature")
+      }
+
+
+      let values = []
+      let color = ""
+      let type = ""
+      
+      let listDisplayedHeaders = this.mandatoryHeaders.map(x => x.name)
+
+
+      return  this.checkedHeaders.sort().map(header => {
+        let values = []
+        if(this.headers.includes(header)){
+            // case 0: the missing header is already in the CSV
+            values = valuesAndHeaders.find(x => x.name === header).values
+            color = this.colors.find(x => x.name === "blue").value
+        }
+        else{ // header is missing, need to check to headers mapping
+          // case 1: we map the header with only one column -> thus, rename column
+          // case 2: we map the header with multiple fields -> thus, combine columns
+          // case 3: we want to create a new column with a default value
+          // case 4: we do not yet map the header
+          
+          // extract from the headers mapping if there is the entry associated to the missing header
+          let extractedMapping = this.headersMapping.find(x => x.target === header)
+          if(extractedMapping){
+            if(extractedMapping.source){
+              if(extractedMapping.source.length === 1){
+                // case 1
+                values = valuesAndHeaders.find(x => x.name === extractedMapping.source[0]).values
+              }
+              else{
+                // case 2
+                let listValues = valuesAndHeaders.filter(x => extractedMapping.source.includes(x.name))
+                for(let i = 0; i < this.numberRows; i++){
+                  let concatValue = ""
+                  for(let j = 0; j < listValues.length; j++){
+                    concatValue += listValues[j].name + ": "
+                    concatValue += listValues[j].values[i] + " | "
+                  }
+                  values.push(concatValue)
+                }
+              }
+            }
+            else{
+              // case 3
+              values = Array(this.numberRows).fill(extractedMapping.default_value)
+            }
+            color = this.colors.find(x => x.name === "green").value
+          }
+          else{
+            // case 4
+            values = Array(this.numberRows).fill("Header not mapped")
+            color = this.colors.find(x => x.name === "red").value
+          }
+        }
+        return { name : header, values : values, color : color }
+      })
+    },
     extension(){
       return this.fileName.split('.')[1]
     },
-    defaultValues(){
-      // let defaultValues = {}
-      // for(let i; i < this.missingHeaders.length; i++){
-      //   let defaultValue = this.headersMapping.filter()
-      //   defaultValues[this.missingHeaders[i]] = defaultValue
-      // }
+    numberRows(){
+      let n = this.valuesString.indexOf("")
+      return n < 0 ? this.staticNumberRows : n
     },
+    allHeaders(){
+      let setHeaders = new Set(this.mandatoryHeaders.map(x => x.name).concat(this.headers))
+      let headers = [...setHeaders]
+      return headers
+    }
   },
   methods: {
+    showHelper() {
+      // first hide the other menus
+      this.showPreviewFlag = false
+      this.showAddColumnFlag = false 
+
+      this.showHelperFlag = !(this.showHelperFlag)
+    },
+    showPreview() {
+      this.showHelperFlag = false
+      this.showPreviewFlag = !(this.showPreviewFlag)
+      if(!this.showPreviewFlag)
+        this.showAddColumnFlag = false
+    },
+    showAddColumn() {
+      this.showAddColumnFlag = !(this.showAddColumnFlag)
+    },
     getDefaultValue: function(target){
       let obj = this.headersMapping.find(x => x["target"] === target)
       if(obj){
@@ -202,7 +392,7 @@ export default {
     },   
     changeCSVDelimiter: function(){
       this.headersMapping = []
-      this.infoMessage = "CSV separator changed: < " + this.CSVDelimiter + " >."
+      this.checkedHeaders = this.mandatoryHeaders.map(x => x.name)
       this.validateFile()
     },
     changeHeaderMapping: function(source, target){
@@ -273,6 +463,7 @@ export default {
       this.headersMapping = []
       this.infoMessage = ''
       this.headersString = ''
+      this.valuesString = []
     },
     submitForm: function() {
       if (!this.validateFile()) {
@@ -335,9 +526,13 @@ export default {
 
       /* 1. Initilize the variables */
 
+      if(!fileList[0]){
+        return
+      }
+      let fileName = fileList[0].name
       this.headersMapping = []
       this.headersString = ''
-      let fileName = fileList[0].name
+      this.valuesString = []
       this.form.file = fileList[0]
       this.form.name = fileName
         .split('.')
@@ -351,6 +546,7 @@ export default {
       else{
         this.validateFile()
       }
+      this.checkedHeaders = this.mandatoryHeaders.map(x => x.name)
     },
     extractCSVHeader: function(){
       let reader = new FileReader()
@@ -359,12 +555,13 @@ export default {
       // read only 1000 B --> it is reasonable that the header of the CSV file ends before the 1000^ byte.
       // Done to prevent JS reading a large CSV file (GBs) 
       let vueJS = this
-      reader.readAsText(file.slice(0, 1000))
+      reader.readAsText(file.slice(0, 10000))
       reader.onloadend = function(e){
           if (e.target.readyState === FileReader.DONE){
             /* 3a. Extract the headers from the CSV */ 
             let data = e.target.result
             vueJS.headersString = data.split("\n")[0]
+            vueJS.valuesString = data.split("\n").slice(1,vueJS.staticNumberRows + 1)
             vueJS.validateFile()
           }
         }
