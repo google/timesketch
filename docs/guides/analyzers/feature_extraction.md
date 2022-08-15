@@ -3,6 +3,8 @@
 The feature extraction analyzer creates attributes out of event data based on regex. Different
 features can be specified in the `data/features.yaml` file.
 
+Please be aware that this analyzer does *not* extract ipv4, email-addresses and similar from *all* events, but only those that match the query_string.
+
 ### Use case
 
 This analyzer is helpful to built a list of `email_addresses` in a sketch that are used in in `WEBHIST`. To do that, run the analyzer to have the feature extracted. Check the results by running a query: `email_address:*`.
