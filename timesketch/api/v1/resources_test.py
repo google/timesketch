@@ -359,7 +359,7 @@ class EventAddAttributeResourceTest(BaseTest):
 
         response = self.client.post(self.resource_url, json=events)
         self.assertEqual(expected_response, response.json)
-  
+
     @mock.patch(
         "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
     )
@@ -521,7 +521,7 @@ class EventAddAttributeResourceTest(BaseTest):
                         "_type":"_doc",
                         "_index": "2",
                         "attributes": attrs
-                    }                  
+                    }
                 ]
             }
         )
