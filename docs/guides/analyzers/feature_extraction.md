@@ -3,6 +3,14 @@
 The feature extraction analyzer creates attributes out of event data based on regex. Different
 features can be specified in the `data/features.yaml` file.
 
+### Use case
+
+This analyzer is helpful to built a list of `email_addresses` in a sketch that are used in in `WEBHIST`. To do that, run the analyzer to have the feature extracted. Check the results by running a query: `email_address:*`.
+
+Those results now can be used in an aggregation to plot a table limited to that column.
+
+Another way of extracting that information is via API, querying events that contain `email_address:*` as a pandas dataframe, and work from there.
+
 ### Configuration
 
 A feature extraction definition looks like this:
