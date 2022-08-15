@@ -35,16 +35,25 @@ limitations under the License.
           </label>
         </div>
       </div>
+      
       <div class="field">
 
         <div v-if="extension==='csv'">
           <hr/>
-          <button type="button" class="button is-success" @click="showHelper">{{showHelperFlag ? "Hide Helper" : "Show Helper"}}</button>
-          &emsp;<button type="button" class="button is-success" @click="showPreview">{{showPreviewFlag ? "Hide preview" : "Show preview"}}</button>
-          &emsp;<button v-if="showPreviewFlag" type="button" class="button is-success" @click="showAddColumn">{{showAddColumnFlag ? "Hide colums" : "Add Columns"}}</button><br/><br/>
-          <div v-if="showPreviewFlag">
 
-            
+          <!-- List of button: showHelper, showPreview, addColumnsToPreview -->
+          <button type="button" class="button is-success" @click="showHelper">
+            {{showHelperFlag ? "Hide Helper" : "Show Helper"}}
+          </button>&emsp;
+          <button type="button" class="button is-success" @click="showPreview">
+            {{showPreviewFlag ? "Hide preview" : "Show preview"}}
+          </button>&emsp;
+          <button v-if="showPreviewFlag" type="button" class="button is-success" @click="showAddColumn">
+            {{showAddColumnFlag ? "Hide colums" : "Add Columns"}}
+          </button><br/><br/>
+          
+          <!-- Dynamically generation of the preview of the CSV file -->
+          <div v-if="showPreviewFlag">
             <ul v-if="showAddColumnFlag" style="list-style: none; height: 100px; width: 100%; overflow: auto;">
               <li v-for="header in allHeaders" :key="header">
                 <input type="checkbox" :value="header" v-model="checkedHeaders"/>
@@ -55,9 +64,9 @@ limitations under the License.
             <table id="example" class="table is-striped" style="width:100%">
               <thead>
                   <tr>
-                      <th v-for="mandatoryHeader in headersTable" :key="mandatoryHeader.name" :style="mandatoryHeader.color">
-                        {{mandatoryHeader.name}}
-                      </th>
+                    <th v-for="mandatoryHeader in headersTable" :key="mandatoryHeader.name" :style="mandatoryHeader.color">
+                      {{mandatoryHeader.name}}
+                    </th>
                   </tr>
               </thead>
               <tbody>
@@ -69,118 +78,125 @@ limitations under the License.
               </tbody>
             </table>
           </div>
-          
+
+          <!-- Helper menu -->
           <div v-if="showHelperFlag">
-              <header class="modal-card-head">
-                <p class="modal-card-title">Header Mapping Helper</p>
-              </header>
-              <section class="modal-card-body">
-                <p>
-                  The form below allows you to map the headers in your file to the mandatory ones:
-                  <div class="content">
-                    <ul>
-                        <li v-for="header in missingHeaders" :key="header.name">{{header.name}}</li>
-                    </ul>
-                  </div>
-                  You can map a missinig header using a dropdown menu or a list of checkbox.
-                  <div class="content">
-                    <ul>
-                        <li>Dropdown menu:
-                          <div class="content">
-                            <ul>
-                                <li>Choose one exsiting header from your CSV. Timesketch will rename that column with the name of the missing heaeder.</li>
-                                <li>Create a new column by selecting "Create new header".
-                                    Timesketch will add a new column with the name of the missing ehader.
-                                    Doing so, you need to specify a default value that Timesketch will use to fill the new column.</li>
-                            </ul>
-                          </div>
-                        </li>
-                        <li>List of checkbox:
-                          <div class="content">
-                            <ul>
-                                <li>By choosing only one checkbox, Timesketch will rename that column with the name of the missing heaeder.</li>
-                                <li>By choosing more than one checkbox, Timesketch will create a new column that combines the different values of the selected columns.</li>
-                            </ul>
-                          </div>
-                        </li>
-
-                    </ul>
-                  </div>
-                </p>
-              </section>
-            </div>
-        </div>
-      </div>
-
-      <hr style="height:2px;border-width:0;color:gray;background-color:#B5B5B5"/>
-
-      <!-- 
-      
-      Next lines of code represent the dropdwon menu.
-      It is dynamically generated (with an extra option: Create new header) to allow
-        the user to map the missing header with an exsting one.
-
-      -->
-      <div v-if="fileName && extension === 'csv'">
-        <div v-for="header in missingHeaders" :key="header.name">
-          <span class="tag is-info is-large is-light"><label>{{header.name}}</label></span> &emsp;
-          <div v-if="header.type==='radio'" class="select is-link">
-            <select :name="header.name" :id="header.name" @change="changeHeaderMapping($event.target.options[$event.target.options.selectedIndex].text, header.name)">
-              <option selected disabled>-</option>
-              <option>Create new header</option>
-              <option v-for="h in headers" :value="h" :key="h">
-                <div v-if="!mandatoryHeaders.map(header => header.name).includes(h)">
-                  {{h}}
+            <header class="modal-card-head">
+              <p class="modal-card-title">Header Mapping Helper</p>
+            </header>
+            <section class="modal-card-body">
+              <p>
+                The form below allows you to map the headers in your file to the mandatory ones:
+                <div class="content">
+                  <ul>
+                    <li v-for="header in missingHeaders" :key="header.name">{{header.name}}</li>
+                  </ul>
                 </div>
-              </option>
-            </select>
-          </div>&emsp;
-          <span v-if="getDefaultValue(header.name)" class="tag is-info is-large is-light">
-              <label>Def. Value: {{getDefaultValue(header.name)}}</label>
-          </span>
+                You can map a missing header using a dropdown menu or a list of checkboxes.
+                <div class="content">
+                  <ul>
+                    <li>Dropdown menu:
+                      <div class="content">
+                        <ul>
+                          <li>Choose one existing header from your CSV. Timesketch will rename that column with the name of the missing header.</li>
+                          <li>Create a new column by selecting "Create new header".
+                              Timesketch will add a new column with the name of the missing header.
+                              Doing so, you need to specify a default value that Timesketch will use to fill the new column.</li>
+                        </ul>
+                      </div>
+                    </li>
+                    <li>List of checkboxes:
+                      <div class="content">
+                        <ul>
+                          <li>By choosing only one checkbox, Timesketch will rename that column with the name of the missing header.</li>
+                          <li>By choosing more than one checkbox, Timesketch will create a new column that combines the different values of the selected columns.</li>
+                        </ul>
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+              </p>
+            </section>
+          </div>
+          <hr style="height:2px;border-width:0;color:gray;background-color:#B5B5B5"/>
 
-          <div v-if="header.type==='checkbox'"><br/>
-              <ul class="city__list" style="list-style: none; height: 100px; width: 100%; overflow: auto;">
-              <li v-for="h in headers" :key="h">
-                <input id="chk" type="checkbox" :value="h" :name="header.name" @click="changeHeaderMapping(h, header.name)" />
-                {{ h }}
-              </li>
-            </ul>
+          <!-- 
+      
+          Next lines of code represent the headers mapping selections.
+            It is dynamically generated according to the missing headers.
+            The user may have 3 possibilities to map the mandatory header:
+            1) Map it with one found in the CSV (1:1 mapping)
+            2) Map it with multiple headers found in the CSV (1:N mapping)
+            3) Create a new column and do not do any mapping
+
+          -->
+          <div v-for="header in missingHeaders" :key="header.name">
+            <span class="tag is-info is-large is-light"><label>{{header.name}}</label></span> &emsp;
+            
+            <!-- Dropdown menu: 1:1 mapping OR create new header -->
+            <div v-if="header.type==='single'" class="select is-link">
+              <select :name="header.name" :id="header.name" @change="changeHeaderMapping($event.target.options[$event.target.options.selectedIndex].text, header.name)">
+                <option selected disabled>-</option>
+                <option>Create new header</option>
+                <option v-for="h in headers" :value="h" :key="h">
+                  <div v-if="!mandatoryHeaders.map(header => header.name).includes(h)">
+                    {{h}}
+                  </div>
+                </option>
+              </select>
+            </div>&emsp;
+            <span v-if="getDefaultValue(header.name)" class="tag is-info is-large is-light">
+                <label>Def. Value: {{getDefaultValue(header.name)}}</label>
+            </span>
+
+            <!-- List of checkboxes: 1:N mapping -->
+            <div v-if="header.type==='multiple'"><br/>
+                <ul class="city__list" style="list-style: none; height: 100px; width: 100%; overflow: auto;">
+                <li v-for="h in headers" :key="h">
+                  <input id="chk" type="checkbox" :value="h" :name="header.name" @click="changeHeaderMapping(h, header.name)" />
+                  {{ h }}
+                </li>
+              </ul>
+            </div>
+            <hr/>
           </div>
 
-          <hr/>
-
-        </div>
-      </div>
-
-      <!-- 
-      
-      Next lines of code represent the CSV radio button list.
-      According to the user selection, the headers are automatically re-computed, and
-      as a consequence, also the missing headers.
-
-      -->
-      <hr style="height:2px;border-width:0;color:gray;background-color:#B5B5B5"/>
-      <div class="field" v-if="fileName">
-        <label class="label">Name</label>
-        <div class="control">
-          <input v-model="form.name" class="input" type="text" required placeholder="Name your timeline" />
-        </div>
-        <hr/>
-        <div v-if="extension === 'csv'">
+          <!-- CSV delimiter selection: the program will parse the file according to this choice -->
           <label class="label">CSV Separator</label>
           <div class="control" v-for="(v, key) in delimitersList" :key="key">
               <input type="radio" name="CSVDelimiter" :value="v" v-model="CSVDelimiter" @change="changeCSVDelimiter"/>
               {{key}} ({{v}})
           </div>
+
         </div>
       </div>
+      
+      
+      <div class="field" v-if="fileName">
+        <hr style="height:2px;border-width:0;color:gray;background-color:#B5B5B5"/>
+        <label class="label">Name</label>
+        <div class="control">
+          <input v-model="form.name" class="input" type="text" required placeholder="Name your timeline" />
+        </div>
+        <hr/>
+      </div>
+
       <div class="error" v-if="!error.length">
         <div class="field" v-if="fileName && percentCompleted === 0">
           <div class="control">
             <input class="button is-success" type="submit" value="Upload" />
           </div>
         </div>
+      </div>
+      <!-- Error lists -->
+      <div v-else>
+        <span v-for="(errorMessage, index) in error" :key="index">
+          <article class="message is-danger mb-0">
+            <div class="message-body">
+              {{ errorMessage }}
+            </div>
+          </article>
+        </span>
       </div>
     </form>
     <br />
@@ -194,18 +210,6 @@ limitations under the License.
     >
       <span v-if="percentCompleted === 100">Waiting for request to finish..</span>
     </b-progress>
-    
-    <div v-if="error.length">
-      <span v-for="(errorMessage, index) in error" :key="index">
-        <article class="message is-danger mb-0">
-          <div class="message-body">
-            {{ errorMessage }}
-          </div>
-        </article>
-        <br/>
-      </span>
-    </div>
-
   </div>
 </template>
 <script>
@@ -214,18 +218,8 @@ import ApiClient from '../../utils/RestApiClient'
 export default {
   data() {
     return {
-      showHelperFlag : false,
-      showPreviewFlag : false,
-      checkedHeaders : [],
-      showAddColumnFlag : false,
       headersString : '', // headers string not formatted (used when changing CSV separator)
       valuesString : [],
-      staticNumberRows : 3,
-      colors: [
-        {name : "red", value: "background-color: #FEECF0; color:#CC0F35"},
-        {name : "blue", value: "background-color: #EEF6FC; color:#1D72AA"},
-        {name : "green", value: "background-color: #EFFAF3; color:#257942"}
-        ],
       /**
        *  headersMapping: list of object containing the:
        * (i) target header to be modified [key=target],
@@ -234,9 +228,9 @@ export default {
       */
       headersMapping : [],
       mandatoryHeaders : [
-        {name : "datetime", type : "radio"},
-        {name : "message", type : "checkbox"},
-        {name : "timestamp_desc", type : "radio"}
+        {name : "datetime", type : "single"},
+        {name : "message", type : "multiple"},
+        {name : "timestamp_desc", type : "single"}
         ],
       form: {
         name: '',
@@ -249,6 +243,16 @@ export default {
       CSVDelimiter: ',',
       infoMessage : '',
       delimitersList : {'Comma' : ',', 'Semicolon': ';', 'Pipe' : '|'},
+      showHelperFlag : false,
+      showPreviewFlag : false,
+      showAddColumnFlag : false,
+      checkedHeaders : [],
+      staticNumberRows : 3,
+      colors: [
+        {name : "red", value: "background-color: #FEECF0; color:#CC0F35"},
+        {name : "blue", value: "background-color: #EEF6FC; color:#1D72AA"},
+        {name : "green", value: "background-color: #EFFAF3; color:#257942"}
+        ],
     }
   },
   computed: {
@@ -258,6 +262,18 @@ export default {
     missingHeaders(){
       return this.mandatoryHeaders.filter(header => this.headers.indexOf(header.name) < 0)
     },
+    extension(){
+      return this.fileName.split('.')[1]
+    },
+    numberRows(){
+      let n = this.valuesString.indexOf("")
+      return n < 0 ? this.staticNumberRows : n
+    },
+    allHeaders(){
+      let setHeaders = new Set(this.mandatoryHeaders.map(x => x.name).concat(this.headers))
+      let headers = [...setHeaders]
+      return headers
+    },
     headersTable(){
       /**
        * headersTable = [
@@ -266,14 +282,18 @@ export default {
        *                    {name : "timestamp_desc", values : ["v1", "v2", "v3"]},
        *                 ]
        */
-
-      let valuesAndHeaders = [] // list of dictionary with headers and respected values extracted from the CSV/JSONL
+      
+      /**
+       * valuesAndHeaders = list of dictionaries. Each entry represent a column in the CSV, i.e., 
+       *  - the key is the header, e.g., "datetime", "file_name"
+       *  - the value is an array containing the values of that column
+       */
+      let valuesAndHeaders = []
       if(this.extension.toLowerCase() === "csv"){
-        let values = this.valuesString.map(x => x.split(this.CSVDelimiter)) // only values extracted from CSV
+        let values = this.valuesString.map(x => x.split(this.CSVDelimiter))
         /**
          * values is an array of array (matrix)
-         * For example, let's see how values could be for a CSV with 3 headers sucs as datetime, 
-         * timestamp description and permission
+         * For example, for a CSV with 3 headers such as datetime, timestamp description and permission
          * E.g., values = | [2022-11-10, file_delete, high] |
          *                | [2022-11-09, file_create, high] |
          *                | [2022-11-09, file_update, low]  |
@@ -291,31 +311,26 @@ export default {
         }        
       }
       else{
-        console.log("JSONL not yet supported for this feature")
-      }
-
-
-      let values = []
-      let color = ""
-      let type = ""
-      
-      let listDisplayedHeaders = this.mandatoryHeaders.map(x => x.name)
-
+        console.log("JSONL not supported (yet) for this feature")
+      }    
 
       return  this.checkedHeaders.sort().map(header => {
-        let values = []
+        let color = "" // CSS property for the displayed column
+        let values = [] // values that we will display for the checked header
+        
         if(this.headers.includes(header)){
-            // case 0: the missing header is already in the CSV
+            // case 0: the mandatory header is in the CSV (no mapping required)
             values = valuesAndHeaders.find(x => x.name === header).values
             color = this.colors.find(x => x.name === "blue").value
         }
-        else{ // header is missing, need to check to headers mapping
-          // case 1: we map the header with only one column -> thus, rename column
-          // case 2: we map the header with multiple fields -> thus, combine columns
-          // case 3: we want to create a new column with a default value
-          // case 4: we do not yet map the header
+        else{ 
+          // header is missing, need to check to headers mapping
+          // case 1: we map the header with only one column -> rename column
+          // case 2: we map the header with multiple fields -> combine columns
+          // case 3: we want to create a new column with a default value -> create a new column
+          // case 4: we haven't mapped the header yet
           
-          // extract from the headers mapping if there is the entry associated to the missing header
+          // extract from the headersMapping the user's choice (it may be null if the user has not mapped the header yet)
           let extractedMapping = this.headersMapping.find(x => x.target === header)
           if(extractedMapping){
             if(extractedMapping.source){
@@ -327,6 +342,7 @@ export default {
                 // case 2
                 let listValues = valuesAndHeaders.filter(x => extractedMapping.source.includes(x.name))
                 for(let i = 0; i < this.numberRows; i++){
+                  // here we build the value that we will display in the message field
                   let concatValue = ""
                   for(let j = 0; j < listValues.length; j++){
                     concatValue += listValues[j].name + ": "
@@ -350,18 +366,6 @@ export default {
         }
         return { name : header, values : values, color : color }
       })
-    },
-    extension(){
-      return this.fileName.split('.')[1]
-    },
-    numberRows(){
-      let n = this.valuesString.indexOf("")
-      return n < 0 ? this.staticNumberRows : n
-    },
-    allHeaders(){
-      let setHeaders = new Set(this.mandatoryHeaders.map(x => x.name).concat(this.headers))
-      let headers = [...setHeaders]
-      return headers
     }
   },
   methods: {
@@ -410,7 +414,7 @@ export default {
       let type = this.mandatoryHeaders.filter(h => h.name == target)[0].type
       let listSelectedHeaders = [] // -> list of checkbox selected
 
-      if(type === "radio"){
+      if(type === "single"){
         if(source === "Create new header"){ // ask to the user the default row's value
           source = null
           do{
@@ -429,8 +433,7 @@ export default {
           default_value : defaultValue // leave snake case for python server code
         })
       }
-      else if(type === "checkbox"){
-
+      else if(type === "multiple"){
         // extract all ticked checkbox
         let tmp = this.headersMapping.find(mapping => mapping["target"] === target)
         listSelectedHeaders = tmp ? tmp["source"] : []
@@ -451,10 +454,7 @@ export default {
       else{
         return
       }
-
-      
-      this.validateFile()
-        
+      this.validateFile() 
     },
     clearFormData: function() {
       this.form.name = ''
