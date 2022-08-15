@@ -37,7 +37,6 @@ limitations under the License.
       </div>
       
       <div class="field">
-
         <div v-if="extension==='csv'">
           <hr/>
 
