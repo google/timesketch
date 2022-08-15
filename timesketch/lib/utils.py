@@ -183,8 +183,8 @@ def check_mapping_errors(headers, headers_mapping):
                 "Headers mapping is wrong.\n"
                 "Mapping done only if the mandatory header is missing")
         if mapping["source"]:
-            # 3. Check if any of the headers specified in headers mapping is in the headers list
-
+            # 3. Check if any of the headers specified in headers mapping 
+            # is in the headers list
             for source in mapping["source"]:
                 if source not in headers:
                     raise RuntimeError(
@@ -196,11 +196,12 @@ def check_mapping_errors(headers, headers_mapping):
                         source,
                         ", ".join(headers))
                 )
-                # update the headers list that we will substitute/rename
-                # we do this check only over the header column that will be renamed,
-                # i.e., when mapping["source"] has only 1 value
-                if len(mapping["source"]) == 1:
-                    candidate_headers.append(mapping["source"][0])
+
+            # Update the headers list that we will substitute/rename
+            # we do this check only over the header column that will be renamed,
+            # i.e., when mapping["source"] has only 1 value
+            if len(mapping["source"]) == 1:
+                candidate_headers.append(mapping["source"][0])
 
         else:
             if not mapping["default_value"]:
@@ -237,10 +238,10 @@ def rename_headers(chunk, headers_mapping):
         )
     for mapping in headers_mapping:
         if not mapping["source"]:
-            # add header and def values
+            # create new column with a given default value
             chunk[mapping["target"]] = mapping["default_value"]
         elif len(mapping["source"]) > 1:
-            # e.g., mapping["source"] = ["filepath, computer_name"]
+            # concatanete multiple source headers into a new one
             chunk[mapping["target"]] = ""
             for column in mapping["source"]:
                 chunk[mapping["target"]] += column +":"+ chunk[column].map(str) +" | "
