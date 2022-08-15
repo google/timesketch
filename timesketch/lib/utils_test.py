@@ -82,8 +82,8 @@ class TestUtils(BaseTest):
             next(check_mapping_errors(current_headers, invalid_mapping_1))
 
         invalid_mapping_2 = [
-            {"target": "datetime", "source": ["DT"], "default_value": None},
-            {"target": "timestamp_desc", "source": ["TD", "nope"], "default_value": None}
+          {"target": "datetime", "source": ["DT"], "default_value": None},
+          {"target": "timestamp_desc", "source": ["TD", "nope"], "default_value": None}
         ]
         # nope columns does not exists
         with self.assertRaises(RuntimeError):
@@ -131,15 +131,15 @@ class TestUtils(BaseTest):
 
         current_headers = ["DT", "last_access", "TD", "file_path", "T_desc"]
         valid_mapping_4 = [
-            {"target": "datetime", "source": ["DT"], "default_value": None},
-            {"target": "timestamp_desc", "source": ["T_desc"], "default_value": None},
-            {"target": "message", "source": ["T_desc","file_path"], "default_value": None}
+          {"target": "datetime", "source": ["DT"], "default_value": None},
+          {"target": "timestamp_desc", "source": ["T_desc"], "default_value": None},
+          {"target": "message", "source": ["T_desc","file_path"], "default_value": None}
         ]
         self.assertIs(check_mapping_errors(
             current_headers,
             valid_mapping_4), None)
-        
-        
+
+
 
     def test_invalid_CSV_file(self):
         """Test for CSV with missing mandatory headers without mapping"""
