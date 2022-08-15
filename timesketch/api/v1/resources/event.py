@@ -616,8 +616,9 @@ class EventAddAttributeResource(resources.ResourceMixin, Resource):
                         info_dict["attributes_added"] += len(new_attributes)
 
         datastore.flush_queued_events()
-        # TODO: return sensible subset of errors.
-        info_dict["errors"] = len(info_dict["errors"])
+        info_dict["error_count"] = len(info_dict["errors"])
+        # Only return last 10 errors to prevent overly large responses.
+        info_dict["errors"] = info_dict["errors"][-10:]
         schema = {"meta": info_dict, "objects": []}
         response = jsonify(schema)
         response.status_code = HTTP_STATUS_CODE_OK

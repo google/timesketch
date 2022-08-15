@@ -325,63 +325,281 @@ class EventResourceTest(BaseTest):
         )
         self.assert400(response_400)
 
-    @mock.patch(
-        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
-    )
-    def test_add_event_attribute(self):
-        """Test adding an attribute to an event."""
-        self.login()
 
-        form_data = {
-            "searchindex_id": "test",
-            "event_id": "test",
-            "attributes": [{
-                "attr_name": "test_attr_name",
-                "attr_value": "test_attr_value"
-            }]
-        }
-        response = self.client.put(self.resource_url, json=form_data)
+class EventAddAttributeResourceTest(BaseTest):
+    """Test EventAddAttributeResource."""
 
-        self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.json, {"test_attr_name": "test_attr_value"})
+    resource_url = "/api/v1/sketches/1/event/attributes/"
 
     @mock.patch(
         "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
     )
-    def test_add_event_attribute_invalid_event(self):
-        """Test adding invalid attributes to an event."""
+    def test_add_attributes(self):
+        """Test add attributes with a well formed request."""
         self.login()
 
-        form_data = {
-            "searchindex_id": "test",
-            "event_id": "test",
-            "attributes": [{
-                "not_attr_name": "test_attr_name",
-                "attr_value": "test_attr_value"
-            }]
+        attrs = [{"attr_name": "foo", "attr_value": "bar"}]
+        events = {
+          "events": [
+            {"_id": "1", "_type":"_doc", "_index": "1", "attributes": attrs},
+            {"_id": "2", "_type":"_doc", "_index": "1", "attributes": attrs}
+          ]
         }
-        response = self.client.put(self.resource_url, json=form_data)
 
-        self.assertEqual(response.status_code, 400)
+        expected_response = {
+            'meta': {
+                'attributes_added': 2,
+                'chunks_per_index': {'1': 1},
+                'error_count': 0,
+                'errors': [],
+                'events_modified': 2
+            },
+            'objects': []
+        }
+
+        response = self.client.post(self.resource_url, json=events)
+        self.assertEqual(expected_response, response.json)
+  
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
+    def test_incorrect_content_type(self):
+        """Test that a content-type other than application/json is handled."""
+        self.login()
+        response = self.client.post(self.resource_url)
+        self.assertEqual(400, response.status_code)
+        self.assertIn(b"Request must be in JSON format.", response.data)
 
     @mock.patch(
         "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
     )
-    def test_add_existing_event_attribute(self):
-        """Test adding an existing attribute to an event."""
+    def test_events_json_validation(self):
+        """Test that an incorrectly formed request is handled."""
         self.login()
 
-        form_data = {
-            "searchindex_id": "test",
-            "event_id": "test",
-            "attributes": [{
-                "attr_name": "message",
-                "attr_value": "test_attr_value"
-            }]
-        }
-        response = self.client.put(self.resource_url, json=form_data)
+        response = self.client.post(
+            self.resource_url,
+            json={
+                "events": []
+            })
+        self.assertEqual(HTTP_STATUS_CODE_BAD_REQUEST, response.status_code)
+        self.assertIn(b"Request must contain an events field.", response.data)
 
-        self.assertEqual(response.status_code, 400)
+        response = self.client.post(
+            self.resource_url,
+            json={
+                "events": "a string"
+            }
+        )
+        self.assertEqual(HTTP_STATUS_CODE_BAD_REQUEST, response.status_code)
+        self.assertIn(b"Events field must be a list.", response.data)
+
+        response = self.client.post(
+            self.resource_url,
+            json={
+                "events": ["a"]*100001
+            }
+        )
+        self.assertEqual(HTTP_STATUS_CODE_BAD_REQUEST, response.status_code)
+        self.assertIn(b"Request exceeds maximum events", response.data)
+
+        response = self.client.post(
+            self.resource_url,
+            json={
+                "events": [
+                    {}
+                ]
+            }
+        )
+        self.assertEqual(HTTP_STATUS_CODE_BAD_REQUEST, response.status_code)
+        self.assertIn(b"Event missing field _id.", response.data)
+
+        response = self.client.post(
+            self.resource_url,
+            json={
+                "events": [
+                    {
+                        "_id": "1",
+                        "_index": "1",
+                        "_type": "_doc",
+                        "attributes": "a string"
+                    }
+                ]
+            }
+        )
+        self.assertEqual(HTTP_STATUS_CODE_BAD_REQUEST, response.status_code)
+        self.assertIn(b"Attributes must be a list.", response.data)
+
+        response = self.client.post(
+            self.resource_url,
+            json={
+                "events": [
+                    {
+                        "_id": "1",
+                        "_index": "1",
+                        "_type": "_doc",
+                        "attributes": ["a"]*11
+                    }
+                ]
+            }
+        )
+        self.assertEqual(HTTP_STATUS_CODE_BAD_REQUEST, response.status_code)
+        self.assertIn(b"Attributes for event exceeds maximum", response.data)
+
+        response = self.client.post(
+            self.resource_url,
+            json={
+                "events": [
+                    {
+                        "_id": "1",
+                        "_index": "1",
+                        "_type": "_doc",
+                        "attributes": [
+                            {"attr_name": "abc"}
+                        ]
+                    }
+                ]
+            }
+        )
+        self.assertEqual(HTTP_STATUS_CODE_BAD_REQUEST, response.status_code)
+        self.assertIn(b"Attribute missing field", response.data)
+
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
+    def test_chunk_calculation(self):
+        """Tests that chunks are properly calculated."""
+        self.login()
+
+        attrs = [{"attr_name": "foo", "attr_value": "bar"}]
+
+        # One chunk when event count is the same as chunk size.
+        response = self.client.post(
+            self.resource_url,
+            json={
+                "events": [
+                    {
+                        "_id": "1",
+                        "_type":"_doc",
+                        "_index": "1",
+                        "attributes": attrs
+                    }
+                ]*1000
+            }
+        )
+        self.assertEqual({"1":1}, response.json["meta"]["chunks_per_index"])
+
+        # Two chunks when event count is chunk size + 1.
+        response = self.client.post(
+            self.resource_url,
+            json={
+                "events": [
+                    {
+                        "_id": "1",
+                        "_type":"_doc",
+                        "_index": "1",
+                        "attributes": attrs
+                    }
+                ]*1001
+            }
+        )
+        self.assertEqual({"1":2}, response.json["meta"]["chunks_per_index"])
+
+        # Chunk per index with multiple indexes.
+        response = self.client.post(
+            self.resource_url,
+            json={
+                "events": [
+                    {
+                        "_id": "1",
+                        "_type":"_doc",
+                        "_index": "1",
+                        "attributes": attrs
+                    },
+                    {
+                        "_id": "1",
+                        "_type":"_doc",
+                        "_index": "2",
+                        "attributes": attrs
+                    }                  
+                ]
+            }
+        )
+        self.assertEqual(
+            {"1":1, "2":1}, response.json["meta"]["chunks_per_index"])
+
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
+    def test_add_invalid_attributes(self):
+        """Tests existing attributes cannot be overidden."""
+        self.login()
+
+        response = self.client.post(
+          self.resource_url,
+          json={
+                "events": [
+                    {
+                        "_id": "1",
+                        "_type":"_doc",
+                        "_index": "1",
+                        "attributes": [
+                            {
+                                "attr_name": "exists",
+                                "attr_value": "yes"
+                            }
+                        ]
+                    }
+                ]
+            }
+        )
+        self.assertIn(
+            "Attribute 'exists' already exists for event_id '1'.",
+            response.json["meta"]["errors"])
+
+        response = self.client.post(
+          self.resource_url,
+          json={
+                "events": [
+                    {
+                        "_id": "1",
+                        "_type":"_doc",
+                        "_index": "1",
+                        "attributes": [
+                            {
+                                "attr_name": "_invalid",
+                                "attr_value": "yes"
+                            }
+                        ]
+                    }
+                ]
+            }
+        )
+        self.assertIn(
+            "Attribute '_invalid' for event_id '1' invalid, cannot start with "
+            "'_'", response.json["meta"]["errors"])
+
+        response = self.client.post(
+            self.resource_url,
+            json={
+                "events": [
+                    {
+                        "_id": "1",
+                        "_type":"_doc",
+                        "_index": "1",
+                        "attributes": [
+                            {
+                                "attr_name": "message",
+                                "attr_value": "yes"
+                            }
+                        ]
+                    }
+                ]
+            }
+        )
+        self.assertIn(
+            "Cannot add 'message' for event_id' 1', name not allowed.",
+            response.json["meta"]["errors"])
 
 
 class EventAnnotationResourceTest(BaseTest):
