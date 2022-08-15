@@ -92,7 +92,7 @@ limitations under the License.
               <p class="modal-card-title">Header Mapping Helper</p>
             </header>
             <section class="modal-card-body">
-              <p>
+              <div>
                 The form below allows you to map the headers in your file to the mandatory ones:
                 <div class="content">
                   <ul>
@@ -122,7 +122,7 @@ limitations under the License.
                     </li>
                   </ul>
                 </div>
-              </p>
+              </div>
             </section>
           </div>
           <hr style="height:2px;border-width:0;color:gray;background-color:#B5B5B5"/>
@@ -321,7 +321,8 @@ export default {
         console.log("JSONL not supported (yet) for this feature")
       }    
 
-      return  this.checkedHeaders.sort().map(header => {
+      let checkedHeaders = this.checkedHeaders
+      return  checkedHeaders.sort().map(header => {
         let color = "" // CSS property for the displayed column
         let values = [] // values that we will display for the checked header
         
@@ -418,7 +419,7 @@ export default {
         return
       
       let defaultValue = null
-      let type = this.mandatoryHeaders.filter(h => h.name == target)[0].type
+      let type = this.mandatoryHeaders.filter(h => h.name === target)[0].type
       let listSelectedHeaders = [] // -> list of checkbox selected
 
       if(type === "single"){

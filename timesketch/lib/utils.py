@@ -183,7 +183,7 @@ def check_mapping_errors(headers, headers_mapping):
                 "Headers mapping is wrong.\n"
                 "Mapping done only if the mandatory header is missing")
         if mapping["source"]:
-            # 3. Check if any of the headers specified in headers mapping 
+            # 3. Check if any of the headers specified in headers mapping
             # is in the headers list
             for source in mapping["source"]:
                 if source not in headers:
