@@ -1342,35 +1342,29 @@ class Sketch(resource.BaseResource):
         response = self.api.session.post(resource_url, json=form_data)
         return error.get_response_json(response, logger)
 
-    def add_event_attributes(self, event_id, index, attributes):
-        """Add new attributes to a single event.
+    def add_event_attributes(self, events):
+        """Add attributes to one or more events.
 
         Args:
-            event_id: id of the event
-            index: The OpenSearch index name
-            attributes: a dict of attributes to add to the event.
+            events: List of JSON objects representing events. Each event should
+              have an 'attributes' key with attributes to be added.
         Returns:
-             json response with any errors.
+             A dict with the results of adding attributes.
         """
         if self.is_archived():
             raise RuntimeError("Unable to add attributes to an archived sketch.")
 
-        event_attributes = []
-        for attr_name, attr_value in attributes.items():
-            event_attributes.append(
-                {'attr_name': attr_name, 'attr_value': attr_value}
-            )
+        if not isinstance(events, list):
+            raise ValueError("Events need to be a list.")
 
         form_data = {
-            "searchindex_id": index,
-            "event_id": event_id,
-            "attributes": event_attributes
+            "events": events
         }
-
-        resource_url = '{0:s}/sketches/{1:d}/event/'.format(
+        resource_url = '{0:s}/sketches/{1:d}/event/attributes/'.format(
             self.api.api_root, self.id
         )
-        response = self.api.session.put(resource_url, json=form_data)
+        response = self.api.session.post(resource_url, json=form_data)
+
         return error.get_response_json(response, logger)
 
     def get_event(self, event_id, index_id):

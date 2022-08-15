@@ -51,10 +51,6 @@ def mock_session():
                 return mock_response(*args, empty=True)
             return mock_response(*args, **kwargs)
 
-        def put(self, *args, **kwargs):
-            """Mock PUT request handler."""
-            return mock_response(*args, **kwargs)
-
     return MockSession()
 
 
@@ -101,7 +97,14 @@ def mock_response(*args, **kwargs):
     }
 
     add_event_attribute_data = {
-       "attr_name": "attr_value"
+        "meta": {
+            "attributes_added": 2,
+            "chunks_per_index": {"1": 1},
+            "error_count": 0,
+            "errors": [],
+            "events_modified": 2
+        },
+        "objects": []
     }
 
     sketch_data = {
@@ -329,7 +332,7 @@ def mock_response(*args, **kwargs):
         "http://127.0.0.1/api/v1/sketches/1/event/?searchindex_id=test_index&event_id=test_event": MockResponse(  # pylint: disable=line-too-long
             json_data=event_data_1
         ),
-        "http://127.0.0.1/api/v1/sketches/1/event/": MockResponse(
+        "http://127.0.0.1/api/v1/sketches/1/event/attributes/": MockResponse(
             json_data=add_event_attribute_data
         ),
         "http://127.0.0.1/api/v1/sketches/1/views/1/": MockResponse(

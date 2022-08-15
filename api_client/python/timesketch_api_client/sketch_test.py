@@ -58,7 +58,22 @@ class SketchTest(unittest.TestCase):
 
     def test_add_event_attributes(self):
         """Test to add event attributes."""
-        new_attributes = {"attr_name": "attr_value"}
-        response = self.sketch.add_event_attributes(
-            "test_event", "test_index", new_attributes)
-        self.assertEqual(response, new_attributes)
+        attrs = [{"attr_name": "foo", "attr_value": "bar"}]
+        events = [
+            {"_id": "1", "_type":"_doc", "_index": "1", "attributes": attrs},
+            {"_id": "2", "_type":"_doc", "_index": "1", "attributes": attrs}
+        ]
+
+        expected_response = {
+            "meta": {
+                "attributes_added": 2,
+                "chunks_per_index": {"1": 1},
+                "error_count": 0,
+                "errors": [],
+                "events_modified": 2
+            },
+            "objects": []
+        }
+
+        response = self.sketch.add_event_attributes(events)
+        self.assertEqual(response, expected_response)

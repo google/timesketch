@@ -347,14 +347,14 @@ class EventAddAttributeResourceTest(BaseTest):
         }
 
         expected_response = {
-            'meta': {
-                'attributes_added': 2,
-                'chunks_per_index': {'1': 1},
-                'error_count': 0,
-                'errors': [],
-                'events_modified': 2
+            "meta": {
+                "attributes_added": 2,
+                "chunks_per_index": {"1": 1},
+                "error_count": 0,
+                "errors": [],
+                "events_modified": 2
             },
-            'objects': []
+            "objects": []
         }
 
         response = self.client.post(self.resource_url, json=events)
