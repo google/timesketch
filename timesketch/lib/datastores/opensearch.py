@@ -134,6 +134,7 @@ class OpenSearchDataStore(object):
 
         self.import_counter = Counter()
         self.import_events = []
+        self.version = self.client.info().get("version").get("number")
         self._request_timeout = current_app.config.get(
             "TIMEOUT_FOR_EVENT_IMPORT", self.DEFAULT_EVENT_IMPORT_TIMEOUT
         )
@@ -1105,13 +1106,3 @@ class OpenSearchDataStore(object):
 
         self.import_events = []
         return return_dict
-
-    @property
-    def version(self):
-        """Get OpenSearch version.
-
-        Returns:
-          Version number as a string.
-        """
-        version_info = self.client.info().get("version")
-        return version_info.get("number")

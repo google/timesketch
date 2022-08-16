@@ -91,26 +91,56 @@ def _scrub_special_tags(dict_obj):
             _ = dict_obj.pop(field)
 
 
-def _validate_csv_fields(mandatory_fields, data):
+def _validate_csv_fields(mandatory_fields, data, headers_mapping=None):
     """Validate parsed CSV fields against mandatory fields.
 
     Args:
         mandatory_fields: a list of fields that must be present.
         data: a DataFrame built from the ingested file.
-
+        headers_mapping: list of dicts containing:
+                         (i) target header we want to insert [key=target],
+                         (ii) source header we want to replace [key=source], and
+                         (iii) def. value if we add a new column [key=default_value]
     Raises:
         RuntimeError: if there are missing fields.
     """
+
     mandatory_set = set(mandatory_fields)
     parsed_set = set(data.columns)
+    headers_missing = mandatory_set - parsed_set
 
-    if mandatory_set.issubset(parsed_set):
+    if headers_mapping:
+        check_mapping_errors(parsed_set, headers_mapping)
+        headers_mapping_set = set(m["target"] for m in headers_mapping)
+        headers_missing = headers_missing - headers_mapping_set
+    else:
+        headers_mapping_set = {}
+
+    if headers_missing:
+        headers_missing_string = ", ".join(list(headers_missing))
+    else:
         return
 
+    if headers_mapping_set:
+        headers_mapping_string = ", ".join(list(headers_mapping_set))
+    else:
+        headers_mapping_string = "None"
+
+    if parsed_set:
+        parset_set_string = ", ".join(list(parsed_set))
+    else:
+        parset_set_string = "None"
+
     raise RuntimeError(
-        "Missing fields in CSV header: {0:s}".format(
-            ",".join(list(mandatory_set.difference(parsed_set)))
-        )
+        """Missing mandatory CSV headers.
+        Mandatory headers: {0:s}
+        Headers found in the file: {1:s}
+        Headers provided in the mapping: {2:s}
+        Headers missing: {3:s}""".format(
+            ", ".join(list(mandatory_set)),
+            parset_set_string,
+            headers_mapping_string,
+            headers_missing_string)
     )
 
 
@@ -130,14 +160,97 @@ def validate_indices(indices, datastore):
     return [i for i in indices if datastore.client.indices.exists(index=i)]
 
 
-def read_and_validate_csv(file_handle, delimiter=",", mandatory_fields=None):
+def check_mapping_errors(headers, headers_mapping):
+    """Sanity check for headers mapping
+
+    Args:
+        csv_headers: list of headers found in the CSV file.
+        headers_mapping: list of dicts containing:
+                         (i) target header we want to insert [key=target],
+                         (ii) source header we want to replace [key=source], and
+                         (iii) def. value if we add a new column [key=default_value]
+
+    Raises:
+        RuntimeError: if there are errors in the headers mapping.
+    """
+
+    # 1. Do the mapping only if the mandatory header is missing, and
+    # 2. When create a new column, need to set a default value
+    candidate_headers = []
+    for mapping in headers_mapping:
+        if mapping["target"] in headers:
+            raise RuntimeError(
+                "Headers mapping is wrong.\n"
+                "Mapping done only if the mandatory header is missing")
+        if mapping["source"]:
+            # 3. Check if the header specified in headers mapping is in the headers list
+            if mapping["source"] not in headers:
+                raise RuntimeError(
+                "Value specified in the headers mapping not found in the CSV\n"
+                "Value specified in headers mapping: {0:s}\n"
+                "CSV columns: {1:s}".format(
+                    mapping["source"], ", ".join(headers))
+            )
+            # update the headers list that we will substitute
+            candidate_headers.append(mapping["source"])
+
+        else:
+            if not mapping["default_value"]:
+                raise RuntimeError(
+                    "Headers mapping is wrong.\n"
+                    "Error to create new column {0:s}. "
+                    "When create a new column, a default value must be assigned"
+                    .format(mapping["target"])
+                )
+    # 4. check if two or more mandatory headers are mapped
+    #    to the same exisiting header
+    if len(candidate_headers) != len(set(candidate_headers)):
+        raise RuntimeError(
+            "Headers mapping is wrong.\n"
+            "2 or more mandatory headers are "
+            "mapped to the same exisiting CSV headers"
+        )
+
+
+def rename_headers(chunk, headers_mapping):
+    """"Rename the headers of the dataframe
+
+    Args:
+        chunk: dataframe to be modified
+        headers_mapping: list of dicts containing:
+                         (i) target header we want to insert [key=target],
+                         (ii) source header we want to replace [key=source], and
+                         (iii) def. value if we add a new column [key=default_value]
+
+    Returns: the dataframe with renamed headers
+    """
+    for mapping in headers_mapping:
+        if not mapping["source"]:
+            # add header and def values
+            chunk[mapping["target"]] = mapping["default_value"]
+        else:
+            # just rename the header
+            chunk.rename(
+                columns={mapping["source"]: mapping["target"]}, inplace=True)
+    return chunk
+
+
+def read_and_validate_csv(
+    file_handle,
+    delimiter=",",
+    mandatory_fields=None,
+    headers_mapping=None
+):
     """Generator for reading a CSV file.
 
     Args:
         file_handle: a file-like object containing the CSV content.
         delimiter: character used as a field separator, default: ','
-        mandatory_fields: list of fields that must be present in the CSV header.
-
+        mandatory_fields: list of fields that must be present in the CSV header
+        headers_mapping: list of dicts containing:
+                         (i) target header we want to insert [key=target],
+                         (ii) source header we want to replace [key=source], and
+                         (iii) def. value if we add a new column [key=default_value]
     Raises:
         RuntimeError: when there are missing fields.
         DataIngestionError: when there are issues with the data ingestion.
@@ -149,7 +262,8 @@ def read_and_validate_csv(file_handle, delimiter=",", mandatory_fields=None):
         delimiter = codecs.decode(delimiter, "utf8")
 
     header_reader = pandas.read_csv(file_handle, sep=delimiter, nrows=0)
-    _validate_csv_fields(mandatory_fields, header_reader)
+
+    _validate_csv_fields(mandatory_fields, header_reader, headers_mapping)
 
     if hasattr(file_handle, "seek"):
         file_handle.seek(0)
@@ -159,10 +273,14 @@ def read_and_validate_csv(file_handle, delimiter=",", mandatory_fields=None):
             file_handle, sep=delimiter, chunksize=DEFAULT_CHUNK_SIZE
         )
         for idx, chunk in enumerate(reader):
+            if headers_mapping:
+                # rename colunms according to the mapping
+                chunk = rename_headers(chunk, headers_mapping)
+
             skipped_rows = chunk[chunk["datetime"].isnull()]
             if not skipped_rows.empty:
                 logger.warning(
-                    "{0} rows skipped since they were missing a datetime field "
+                    "{0} rows skipped since they were missing datetime field "
                     "or it was empty ".format(len(skipped_rows))
                 )
 
@@ -185,7 +303,8 @@ def read_and_validate_csv(file_handle, delimiter=",", mandatory_fields=None):
                             idx * reader.chunksize + num_chunk_rows,
                         )
                     )
-                chunk["timestamp"] = chunk["datetime"].dt.strftime("%s%f").astype(int)
+                chunk["timestamp"] = chunk["datetime"].dt.strftime(
+                    "%s%f").astype(int)
                 chunk["datetime"] = (
                     chunk["datetime"].apply(Timestamp.isoformat).astype(str)
                 )
@@ -193,7 +312,8 @@ def read_and_validate_csv(file_handle, delimiter=",", mandatory_fields=None):
                 logger.warning(
                     "Rows {0} to {1} skipped due to malformed "
                     "datetime values ".format(
-                        idx * reader.chunksize, idx * reader.chunksize + chunk.shape[0]
+                        idx * reader.chunksize, idx *
+                        reader.chunksize + chunk.shape[0]
                     )
                 )
                 continue
@@ -222,9 +342,13 @@ def read_and_validate_redline(file_handle):
     """
 
     csv.register_dialect(
-        "redlineDialect", delimiter=",", quoting=csv.QUOTE_ALL, skipinitialspace=True
+        "redlineDialect",
+        delimiter=",",
+        quoting=csv.QUOTE_ALL,
+        skipinitialspace=True
     )
-    reader = pandas.read_csv(file_handle, delimiter=",", dialect="redlineDialect")
+    reader = pandas.read_csv(file_handle, delimiter=",",
+                             dialect="redlineDialect")
 
     _validate_csv_fields(REDLINE_FIELDS, reader)
     for row in reader:
@@ -249,11 +373,13 @@ def read_and_validate_redline(file_handle):
         yield row_to_yield
 
 
-def read_and_validate_jsonl(file_handle):
+def read_and_validate_jsonl(file_handle, **kwargs):  # pylint: disable=unused-argument
     """Generator for reading a JSONL (json lines) file.
 
     Args:
         file_handle: a file-like object containing the CSV content.
+        **kwargs: headers_mapping and delimiter are passed to
+                  this function but they are currently not used here
 
     Raises:
         RuntimeError: if there are missing fields.
@@ -277,7 +403,8 @@ def read_and_validate_jsonl(file_handle):
             if "timestamp" not in ld_keys and "datetime" in ld_keys:
                 try:
                     linedict["timestamp"] = int(
-                        parser.parse(linedict["datetime"]).timestamp() * 1000000
+                        parser.parse(linedict["datetime"]
+                                     ).timestamp() * 1000000
                     )
                 except parser.ParserError:
                     logger.error(
@@ -296,13 +423,15 @@ def read_and_validate_jsonl(file_handle):
                 )
 
             if "tag" in linedict:
-                linedict["tag"] = [x for x in _parse_tag_field(linedict["tag"]) if x]
+                linedict["tag"] = [
+                    x for x in _parse_tag_field(linedict["tag"]) if x]
             _scrub_special_tags(linedict)
             yield linedict
 
         except ValueError as e:
             raise errors.DataIngestionError(
-                "Error parsing JSON at line {0:n}: {1:s}".format(lineno, str(e))
+                "Error parsing JSON at line {0:n}: {1:s}".format(
+                    lineno, str(e))
             )
 
 
@@ -353,7 +482,10 @@ def get_validated_indices(indices, sketch):
                         timelines.add(timeline_id)
                         indices.append(index)
 
-                    if isinstance(item, str) and item.lower() == timeline_name.lower():
+                    if (
+                        isinstance(item, str) and
+                        item.lower() == timeline_name.lower()
+                    ):
                         timelines.add(timeline_id)
                         indices.append(index)
 
@@ -376,7 +508,8 @@ def send_email(subject, body, to_username, use_html=False):
     email_enabled = current_app.config.get("ENABLE_EMAIL_NOTIFICATIONS")
     email_domain = current_app.config.get("EMAIL_DOMAIN")
     email_smtp_server = current_app.config.get("EMAIL_SMTP_SERVER")
-    email_from_user = current_app.config.get("EMAIL_FROM_ADDRESS", "timesketch")
+    email_from_user = current_app.config.get(
+        "EMAIL_FROM_ADDRESS", "timesketch")
     email_user_whitelist = current_app.config.get("EMAIL_USER_WHITELIST", [])
 
     if not email_enabled:
