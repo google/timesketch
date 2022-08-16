@@ -281,7 +281,7 @@ limitations under the License.
             <v-card-text>
               {{ fromEvent }}-{{ toEvent }} of {{ totalHits }} events ({{ totalTime }}s)
 
-              <v-menu ref="saveSearchMenu" offset-y :close-on-content-click="false">
+              <v-menu v-model="saveSearchMenu" offset-y :close-on-content-click="false">
                 <template v-slot:activator="{ on, attrs }">
                   <v-btn icon v-bind="attrs" v-on="on">
                     <v-icon>mdi-content-save-outline</v-icon>
@@ -296,6 +296,7 @@ limitations under the License.
                   <v-divider></v-divider>
                   <v-card-actions>
                     <v-spacer></v-spacer>
+                    <v-btn color="primary" text @click="saveSearchMenu = false"> Cancel </v-btn>
                     <v-btn color="primary" text @click="saveSearch" :disabled="!saveSearchFormName"> Save </v-btn>
                   </v-card-actions>
                 </v-card>
@@ -307,7 +308,7 @@ limitations under the License.
               <v-icon>mdi-chart-bar</v-icon>
             </v-btn>
 
-            <v-btn icon @click="showHistogram = !showHistogram">
+            <v-btn icon>
               <v-icon>mdi-view-column-outline</v-icon>
             </v-btn>
 
@@ -590,6 +591,7 @@ export default {
       drawer: false,
       expandedRows: [],
       timeFilterMenu: false,
+      saveSearchMenu: false,
       saveSearchFormName: '',
       fromSavedSearch: false,
       // old stuff
@@ -1174,7 +1176,7 @@ export default {
       ApiClient.createView(this.sketchId, this.saveSearchFormName, this.currentQueryString, this.currentQueryFilter)
         .then((response) => {
           this.saveSearchFormName = ''
-          this.$refs.saveSearchMenu.save()
+          this.saveSearchMenu = false
           let newView = response.data.objects[0]
           this.$store.state.meta.views.push(newView)
           this.$router.push({ name: 'Explore', query: { view: newView.id } })
