@@ -682,7 +682,7 @@ def run_plaso(
     cmd = [
         psort_path,
         "-o",
-        "elastic_ts",
+        "opensearch_ts",
         file_path,
         "--server",
         opensearch_server,
@@ -695,7 +695,7 @@ def run_plaso(
     ]
 
     if mappings_file_path:
-        cmd.extend(["--elastic_mappings", mappings_file_path])
+        cmd.extend(["--opensearch_mappings", mappings_file_path])
 
     if timeline_id:
         cmd.extend(["--timeline_identifier", str(timeline_id)])
