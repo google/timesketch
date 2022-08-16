@@ -1090,7 +1090,7 @@ export default {
     },
     paginate: function () {
       // Reset pagination if number of pages per page changes.
-      if (this.tableOptions.itemsPerPage != this.currentItemsPerPage) {
+      if (this.tableOptions.itemsPerPage !== this.currentItemsPerPage) {
         this.tableOptions.page = 1
         this.currentPage = 1
         this.currentItemsPerPage = this.tableOptions.itemsPerPage
