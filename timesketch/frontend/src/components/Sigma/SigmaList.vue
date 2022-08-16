@@ -60,33 +60,23 @@ limitations under the License.
     </span>
 
     <b-table v-if="sigmaRuleList" :data="sigmaRuleList"
-      :current-page.sync="currentPage" :per-page="perPage" detailed
-      detail-key="title" paginated pagination-simple
-      pagination-position="bottom" default-sort-direction="desc"
-      sort-icon="arrow-down" sort-icon-size="is-small" icon-pack="fas"
-      icon-prev="chevron-left" icon-next="chevron-right" default-sort="title"
-      key="props.row.id">
+      :current-page.sync="currentPage" :per-page="perPage" paginated
+      pagination-simple pagination-position="bottom"
+      default-sort-direction="desc" sort-icon="arrow-down"
+      sort-icon-size="is-small" icon-pack="fas" icon-prev="chevron-left"
+      icon-next="chevron-right" default-sort="title" key="props.row.id">
 
       <b-table-column field="title" label="Name" v-slot="props" sortable
         searchable>
-        <div @click="props.toggleDetails(props.row)"
+        <div @click="startRuleEdit(props.row)"
           style="margin-top:5px;cursor:pointer;">
           {{ props.row.title }}
         </div>
       </b-table-column>
 
-      <!-- This feature might be deprecated later
-      <b-table-column field="ts_use_in_analyzer" label="Use in Analyzer2"
-        v-slot="props" sortable>
-        <div @click="props.toggleDetails(props.row)"
-          style="margin-top:5px;cursor:pointer;">
-          {{ props.row.ts_use_in_analyzer }}
-        </div>
-      </b-table-column>
-      -->
       <b-table-column field="description" label="Description" v-slot="props"
         searchable>
-        <div @click="props.toggleDetails(props.row)"
+        <div @click="startRuleEdit(props.row)"
           style="margin-top:5px;cursor:pointer;">
           {{ props.row.description }}
         </div>
@@ -94,7 +84,7 @@ limitations under the License.
 
       <b-table-column field="author" label="Author" v-slot="props" searchable
         sortable>
-        <div @click="props.toggleDetails(props.row)"
+        <div @click="startRuleEdit(props.row)"
           style="margin-top:5px;cursor:pointer;">
           {{ props.row.author }}
         </div>
@@ -122,11 +112,11 @@ limitations under the License.
         </span>
       </b-table-column>
 
-      <template #detail="props">
+      <!--<template #detail="props">
         <b>{{ props['row']['es_query'] }}</b>
 
         <pre>{{ JSON.stringify(props['row'], null, 2) }}</pre>
-      </template>
+      </template>-->
     </b-table>
 
     <div class="container is-fluid">
@@ -146,9 +136,9 @@ limitations under the License.
         <b-table-column field="count" label="Events tagged" v-slot="props"
           sortable numeric>
           {{ props.row.count }}
-          <explore-preview style="margin-left: 10px"
+          <!--<explore-preview style="margin-left: 10px"
             :searchQuery="generateOpenSearchQuery(props.row.ts_ttp, 'ts_ttp')">
-          </explore-preview>
+          </explore-preview>-->
         </b-table-column>
       </b-table>
       <span v-else>No events have been tagged yet.</span>
