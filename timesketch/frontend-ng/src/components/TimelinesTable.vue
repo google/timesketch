@@ -75,19 +75,19 @@ limitations under the License.
               </template>
 
               <v-card>
-                <v-app-bar flat dense> Detailed information for: {{ timeline.name }}</v-app-bar>
+                <v-app-bar flat dense>Detailed information for: {{ timeline.name }}</v-app-bar>
                 <v-card-text class="pa-5">
                   <ul style="list-style-type: none">
-                    <li><strong>Opensearch index:</strong> {{ timeline.searchindex.index_name }}</li>
+                    <li><strong>Opensearch index: </strong>{{ timeline.searchindex.index_name }}</li>
                     <li>
-                      <strong>Number of events:</strong>
+                      <strong>Number of events: </strong>
                       {{ meta.stats_per_timeline[timeline.id]['count'] | compactNumber }} ({{
                         meta.stats_per_timeline[timeline.id]['count']
                       }})
                     </li>
-                    <li><strong>Created by: </strong> {{ timeline.user.username }}</li>
+                    <li><strong>Created by: </strong>{{ timeline.user.username }}</li>
                     <li>
-                      <strong>Created at: </strong> {{ timeline.created_at | shortDateTime }}
+                      <strong>Created at: </strong>{{ timeline.created_at | shortDateTime }}
                       <small>({{ timeline.created_at | timeSince }})</small>
                     </li>
                   </ul>

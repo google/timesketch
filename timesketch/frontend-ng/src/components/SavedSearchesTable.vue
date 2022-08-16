@@ -20,7 +20,7 @@ limitations under the License.
         <tr>
           <th class="text-left">Saved search</th>
           <th class="text-left">Created by</th>
-          <th class="text-left">Created</th>
+          <th class="text-left">Created at</th>
         </tr>
       </thead>
       <tbody>
