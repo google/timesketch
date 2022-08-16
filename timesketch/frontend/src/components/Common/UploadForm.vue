@@ -455,7 +455,7 @@ export default {
           this.headersMapping.push({
             target : target,
             source : listSelectedHeaders,
-            default_value : defaultValue // leave snake case for python server code
+            default_value : defaultValue
           })
       }
       else{
