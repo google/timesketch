@@ -132,15 +132,11 @@ def _validate_csv_fields(mandatory_fields, data, headers_mapping=None):
         parset_set_string = "None"
 
     raise RuntimeError(
-        """Missing mandatory CSV headers.
-        Mandatory headers: {0:s}
-        Headers found in the file: {1:s}
-        Headers provided in the mapping: {2:s}
-        Headers missing: {3:s}""".format(
-            ", ".join(list(mandatory_set)),
-            parset_set_string,
-            headers_mapping_string,
-            headers_missing_string)
+        f"Missing mandatory CSV headers."
+        f"Mandatory headers: {', '.join(list(mandatory_set))}"
+        f"Headers found in the file: {parset_set_string}"
+        f"Headers provided in the mapping: {headers_mapping_string}"
+        f"Headers missing: {headers_missing_string}"
     )
 
 
@@ -188,13 +184,10 @@ def check_mapping_errors(headers, headers_mapping):
             for source in mapping["source"]:
                 if source not in headers:
                     raise RuntimeError(
-                    "Value specified in the headers mapping not found in the CSV\n"
-                    "Value specified in headers mapping: {0:s}\n"
-                    "Value not found in the CSV: {1:s}\n"
-                    "CSV columns: {2:s}".format(
-                        ", ".join(mapping["source"]),
-                        source,
-                        ", ".join(headers))
+                    f"Value specified in the headers mapping not found in the CSV\n"
+                    f"Headers mapping: {', '.join(mapping['source'])}\n"
+                    f"Sources column/s: {source}\n"
+                    f"CSV columns: {', '.join(headers)}"
                 )
 
             # Update the headers list that we will substitute/rename
@@ -206,10 +199,9 @@ def check_mapping_errors(headers, headers_mapping):
         else:
             if not mapping["default_value"]:
                 raise RuntimeError(
-                    "Headers mapping is wrong.\n"
-                    "Error to create new column {0:s}. "
-                    "When create a new column, a default value must be assigned"
-                    .format(mapping["target"])
+                    f"Headers mapping is wrong.\n"
+                    f"Error to create new column {mapping['target']}. "
+                    f"When create a new column, a default value must be assigned"
                 )
     # 4. check if two or more mandatory headers are mapped
     #    to the same exisiting header
