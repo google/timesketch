@@ -37,19 +37,11 @@ class Sigma(
     user_id = Column(
         Integer, ForeignKey("user.id")
     )  # who added the rule to the system (TS user)
-    #query_string = Column(
-    #    UnicodeText()
-    #)  # (auto generated / updated from parser)
     #title = Column(Unicode(255))
     #description = Column(UnicodeText())
 
     def __init__(
         self,
-        #rule_uuid,
-        #user,
-        #title,
-        query_string=None,
-        description=None,
         rule_yaml=None,
     ):
         """Initialize the Sigma object.
@@ -59,13 +51,10 @@ class Sigma(
             user: A user (instance of timesketch.models.user.User)
             title: Sigma rule title
             description: Description of the Sigma rule
-            query_string: Open Search Query String
             rule_yaml: yaml content of the rule
         """
         super().__init__()
         #self.description = description
-        #self.query_string = query_string
-        #self.rule_uuid = rule_uuid
         self.rule_yaml = rule_yaml
         #self.title = title
         #self.user = user
