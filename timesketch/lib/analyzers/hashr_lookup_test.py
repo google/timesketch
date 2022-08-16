@@ -12,7 +12,7 @@ from timesketch.lib.analyzers import hashr_lookup
 from timesketch.lib.testlib import BaseTest, MockDataStore
 
 
-class TestHashRLookupPlugin(BaseTest):
+class TestHashRLookup(BaseTest):
     """Tests the functionality of the analyzer."""
 
     @mock.patch(u'timesketch.lib.analyzers.interface.OpenSearchDataStore',
@@ -20,7 +20,7 @@ class TestHashRLookupPlugin(BaseTest):
     def setUp(self):
         """Setup for for running the hashr lookup analyzer tests."""
         super().setUp()
-        self.analyzer = hashr_lookup.HashRLookupSketchPlugin('test_index', 1)
+        self.analyzer = hashr_lookup.HashRLookup('test_index', 1)
         self.logger = logging.getLogger('timesketch.analyzers.hashR')
 
     @mock.patch.object(sqlalchemy, 'create_engine', autospec=True)
@@ -144,28 +144,18 @@ class TestHashRLookupPlugin(BaseTest):
             mock_meta_data: Mock object for the sqlalchemy meta_data function.
             mock_select: Mock object for the sqlalchemy Select class.
         """
-        test_input_hashes = {
-            '78a249b6e0f74979d2d2a230abbe5f3c9b558fcc01e61c7c09950304cf95c7c0':
-                [],
-            'ff0e11660290f8a412ce4903b8936ae16737a6b3e3ec516e7a3e5d20c7fab542':
-                [],
-            '960c90b949f327f1eb7537489ea9688040da4ddcbc1551dc58a24e4555d0da0d':
-                [],
-            'bb5dbb52b436d4283379d30da8f44d068d3b788fab7e9fbd9f1e89306800726f':
-                [],
-            'c9082f8a24908bd6cc2ddeb14ba2c320ad4d3c0f7aac9257564e10299c790f83':
-                [],
-            '40db7cc1d23ff00cc3c5bfc0c24622ad9aafb749b574560a2ef61de5ec2c8651':
-                [],
-            '7af6a6e336fb128163d60ab424a9b2e9e682462dd669f611b550785c1d3d14af':
-                [],
-            '7f7764af3c8cb71c248efc4390dc0a19485f4b540b7d3aec8d3a4aeb0cabf94c':
-                [],
-            '66fd756e1c8dc4c7bb334c8d327c306d9006838b8bbc953e3acfeace48d3f7a3':
-                [],
-            '2aa72d5284dbe2a38d92cef68d084d4f689f9928db0cd1fe0a207ada2d10f5fc':
-                []
-        }
+        test_input_hashes = [
+            '78a249b6e0f74979d2d2a230abbe5f3c9b558fcc01e61c7c09950304cf95c7c0',
+            'ff0e11660290f8a412ce4903b8936ae16737a6b3e3ec516e7a3e5d20c7fab542',
+            '960c90b949f327f1eb7537489ea9688040da4ddcbc1551dc58a24e4555d0da0d',
+            'bb5dbb52b436d4283379d30da8f44d068d3b788fab7e9fbd9f1e89306800726f',
+            'c9082f8a24908bd6cc2ddeb14ba2c320ad4d3c0f7aac9257564e10299c790f83',
+            '40db7cc1d23ff00cc3c5bfc0c24622ad9aafb749b574560a2ef61de5ec2c8651',
+            '7af6a6e336fb128163d60ab424a9b2e9e682462dd669f611b550785c1d3d14af',
+            '7f7764af3c8cb71c248efc4390dc0a19485f4b540b7d3aec8d3a4aeb0cabf94c',
+            '66fd756e1c8dc4c7bb334c8d327c306d9006838b8bbc953e3acfeace48d3f7a3',
+            '2aa72d5284dbe2a38d92cef68d084d4f689f9928db0cd1fe0a207ada2d10f5fc'
+        ]
 
         test_db_return = [
             ('78a249b6e0f74979d2d2a230abbe5f3c9b558fcc01e61c7c09950304cf95c7c0',),
@@ -387,7 +377,7 @@ class TestHashRLookupPlugin(BaseTest):
         """Test check_against_hashR function with wrong input."""
         self.assertRaisesRegex(
             Exception, 'The check_against_hashR function only accepts '
-            "type<list> or type<dict> as input. But type <class 'str'>"
+            "type<list> as input. But type <class 'str'>"
             ' was provided!', self.analyzer.check_against_hashR, 'WrongInput')
 
     @mock.patch(u'timesketch.lib.analyzers.interface.OpenSearchDataStore',
@@ -395,9 +385,9 @@ class TestHashRLookupPlugin(BaseTest):
     @mock.patch.object(logging.Logger, 'warning', autospec=True)
     @mock.patch.object(logging.Logger, 'info', autospec=True)
     @mock.patch.object(
-        hashr_lookup.HashRLookupSketchPlugin, 'connect_hashR', autospec=True)
+        hashr_lookup.HashRLookup, 'connect_hashR', autospec=True)
     @mock.patch.object(
-        hashr_lookup.HashRLookupSketchPlugin, 'check_against_hashR',
+        hashr_lookup.HashRLookup, 'check_against_hashR',
         autospec=True)
     def test_run_tags_only(self, mock_check, mock_connect, mock_info,
                            mock_warning):
@@ -472,7 +462,7 @@ class TestHashRLookupPlugin(BaseTest):
             'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
         ]
 
-        analyzer = hashr_lookup.HashRLookupSketchPlugin('test_index', 1)
+        analyzer = hashr_lookup.HashRLookup('test_index', 1)
         analyzer.datastore.client = mock.Mock()
 
         event_id = 0
@@ -514,9 +504,9 @@ class TestHashRLookupPlugin(BaseTest):
     @mock.patch.object(logging.Logger, 'warning', autospec=True)
     @mock.patch.object(logging.Logger, 'info', autospec=True)
     @mock.patch.object(
-        hashr_lookup.HashRLookupSketchPlugin, 'connect_hashR', autospec=True)
+        hashr_lookup.HashRLookup, 'connect_hashR', autospec=True)
     @mock.patch.object(
-        hashr_lookup.HashRLookupSketchPlugin, 'check_against_hashR',
+        hashr_lookup.HashRLookup, 'check_against_hashR',
         autospec=True)
     def test_run_tags_and_sources(self, mock_check, mock_connect, mock_info,
                                   mock_warning):
@@ -602,7 +592,7 @@ class TestHashRLookupPlugin(BaseTest):
             ]
         }
 
-        analyzer = hashr_lookup.HashRLookupSketchPlugin('test_index', 1)
+        analyzer = hashr_lookup.HashRLookup('test_index', 1)
         analyzer.datastore.client = mock.Mock()
 
         event_id = 0
@@ -644,7 +634,7 @@ class TestHashRLookupPlugin(BaseTest):
                 MockDataStore)
     @mock.patch.object(logging.Logger, 'info', autospec=True)
     @mock.patch.object(
-        hashr_lookup.HashRLookupSketchPlugin, 'connect_hashR', autospec=True)
+        hashr_lookup.HashRLookup, 'connect_hashR', autospec=True)
     def test_run_no_hashes(self, mock_connect, _mock_info):
         """Test the run function with no hashes in the events.
 
@@ -652,7 +642,7 @@ class TestHashRLookupPlugin(BaseTest):
             _mock_info: Unused mock object for the logger.info function.
             mock_connect: Mock object for the connect_hashR function.
         """
-        analyzer = hashr_lookup.HashRLookupSketchPlugin('test_index', 1)
+        analyzer = hashr_lookup.HashRLookup('test_index', 1)
         analyzer.datastore.client = mock.Mock()
 
         mock_connect.return_value = True
@@ -695,6 +685,6 @@ class TestHashRLookupPlugin(BaseTest):
 
         self.analyzer.process_event(hash_value, sources, event)
         self.assertEqual(self.analyzer.zerobyte_file_counter, 1)
-        event.add_tags.assert_called_with(['hashR', 'zerobyte file'])
+        event.add_tags.assert_called_with(['hashR', 'zerobyte-file'])
         event.add_attributes.assert_not_called()
         event.commit.assert_called_once()
