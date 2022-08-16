@@ -118,7 +118,7 @@ class HashRLookup(interface.BaseAnalyzer):
           Exception:  Raises an exception if the provided sample_hashes
                       parameter is not of type list or dict.
         """
-        if (not isinstance(sample_hashes, list)):
+        if not isinstance(sample_hashes, list):
             raise Exception('The check_against_hashR function only accepts '
                             'type<list> as input. But type '
                             f'{type(sample_hashes)} was provided!')
@@ -238,7 +238,8 @@ class HashRLookup(interface.BaseAnalyzer):
             return msg
 
         # Note: Add fieldnames that contain sha256 values in your events.
-        query = '_exists_:hash_sha256 OR _exists_:sha256 OR _exists_:hash OR _exists_:sha256_hash'
+        query = ('_exists_:hash_sha256 OR _exists_:sha256 OR _exists_:hash OR '
+                 '_exists_:sha256_hash')
 
         # Note: Add fieldnames that contain sha256 values in your events.
         return_fields = ['hash_sha256', 'hash', 'sha256', 'sha256_hash']
