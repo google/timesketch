@@ -17,9 +17,9 @@ limitations under the License.
   <div>
     <v-toolbar dense flat style="background: transparent">
       <v-btn-toggle v-model="toggleStateButton" class="ml-n4">
-        <v-btn text small @click="switchScope('user')"> My sketches </v-btn>
-        <v-btn text small @click="switchScope('shared')"> Shared with me </v-btn>
-        <v-btn text small @click="switchScope('recent')"> Recent </v-btn>
+        <v-btn text small color="primary" @click="switchScope('user')"> My sketches </v-btn>
+        <v-btn text small color="primary" @click="switchScope('shared')"> Shared with me </v-btn>
+        <v-btn text small color="primary" @click="switchScope('recent')"> Recent </v-btn>
       </v-btn-toggle>
       <v-btn depressed small color="success" class="ml-3"> New sketch </v-btn>
       <v-spacer></v-spacer>
