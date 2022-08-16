@@ -16,11 +16,14 @@
 from __future__ import unicode_literals
 
 import re
+import pandas as pd
 
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.utils import get_validated_indices
 from timesketch.lib.utils import random_color
 from timesketch.lib.utils import read_and_validate_csv
+from timesketch.lib.utils import check_mapping_errors
+from timesketch.lib.utils import _validate_csv_fields
 
 TEST_CSV = "test_tools/test_events/sigma_events.csv"
 ISO8601_REGEX = (
@@ -63,3 +66,78 @@ class TestUtils(BaseTest):
         data_generator = read_and_validate_csv(TEST_CSV)
         for row in data_generator:
             self.assertRegex(row["datetime"], ISO8601_REGEX)
+
+    def test_invalid_headers_mapping(self):
+        """Test for invalid headers mapping"""
+        current_headers = ["DT", "message", "TD"]
+
+        invalid_mapping_1 = [
+            {"target": "datetime", "source": "DT", "default_value": None},
+            {"target": "timestamp_desc", "source": "No.", "default_value": None},
+            {"target": "message", "source": "Source", "default_value": None}
+        ]
+        # column message already exists
+        with self.assertRaises(RuntimeError):
+            # Call next to work around lazy generators.
+            next(check_mapping_errors(current_headers, invalid_mapping_1))
+
+        invalid_mapping_2 = [
+            {"target": "datetime", "source": "DT", "default_value": None},
+            {"target": "timestamp_desc", "source": "nope", "default_value": None}
+        ]
+        # nope columns does not exists
+        with self.assertRaises(RuntimeError):
+            # Call next to work around lazy generators.
+            next(check_mapping_errors(current_headers, invalid_mapping_2))
+
+        invalid_mapping_3 = [
+            {"target": "datetime", "source": "DT", "default_value": None},
+            {"target": "timestamp_desc", "source": "DT", "default_value": None}
+        ]
+        # 2 mandatory headers point to the same existing one
+        with self.assertRaises(RuntimeError):
+            # Call next to work around lazy generators.
+            next(check_mapping_errors(current_headers, invalid_mapping_3))
+
+    def test_right_headers_mapping(self):
+        """Test for valid headers mapping"""
+        current_headers = ["DT", "message", "TD"]
+
+        valid_mapping_1 = [
+            {"target": "datetime", "source": "DT", "default_value": None},
+            {"target": "timestamp_desc", "source": "TD", "default_value": None}
+        ]
+        self.assertIs(check_mapping_errors(
+            current_headers,
+            valid_mapping_1), None)
+
+        valid_mapping_2 = [
+            {"target": "datetime", "source": "DT", "default_value": None},
+            {"target": "timestamp_desc", "source": None, "default_value": "a"}
+        ]
+        self.assertIs(check_mapping_errors(
+            current_headers,
+            valid_mapping_2), None)
+
+    def test_invalid_CSV_file(self):
+        """Test for CSV with missing mandatory headers without mapping"""
+        mandatory_fields = ["message", "datetime", "timestamp_desc"]
+
+        df_01 = pd.DataFrame({
+            'DT': ['test'],
+            'MSG': ['test'],
+            'TD': ['test']
+        })
+
+        with self.assertRaises(RuntimeError):
+            # Call next to work around lazy generators.
+            next(_validate_csv_fields(mandatory_fields, df_01))
+
+        df_02 = pd.DataFrame({
+            'datetime': ['test'],
+            'MSG': ['test'],
+            'TD': ['test']
+        })
+        with self.assertRaises(RuntimeError):
+            # Call next to work around lazy generators.
+            next(_validate_csv_fields(mandatory_fields, df_02))

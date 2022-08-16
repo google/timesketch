@@ -160,7 +160,8 @@ def _close_index(index_name, data_store, timeline_id):
         data_store.client.indices.close(index=index_name)
     except NotFoundError:
         logger.error(
-            "Unable to close index: {0:s} - index not " "found".format(index_name)
+            "Unable to close index: {0:s} - index not " "found".format(
+                index_name)
         )
 
 
@@ -178,8 +179,14 @@ def _set_timeline_status(timeline_id, status, error_msg=None):
         logger.warning("Cannot set status: No such timeline")
         return
 
-    # Check if there is at least one data source that hasn't failed.
+    # Check if there is at least one data source that hasn't failed
+    #   (i.e., with error_message null).
     multiple_sources = any(not x.error_message for x in timeline.datasources)
+
+    # check if error_msg is not null and status = fail
+    if error_msg and status == "fail":
+        timeline.set_status(status)
+        timeline.searchindex.set_status(status)
 
     if multiple_sources:
         timeline_status = timeline.get_status.status.lower()
@@ -231,6 +238,8 @@ def build_index_pipeline(
     sketch_id=None,
     only_index=False,
     timeline_id=None,
+    headers_mapping=None,
+    delimiter=","
 ):
     """Build a pipeline for index and analysis.
 
@@ -248,20 +257,43 @@ def build_index_pipeline(
             we don't want to run the analyzers until all chunks have been
             uploaded.
         timeline_id: Optional ID of the timeline object this data belongs to.
+        headers_mapping: list of dicts containing:
+                         (i) target header we want to replace [key=target],
+                         (ii) source header we want to insert [key=source], and
+                         (iii) def. value if we add a new column [key=default_value]
 
     Returns:
         Celery chain with indexing task (or single indexing task) and analyzer
         task group.
     """
     if not (file_path or events):
-        raise RuntimeError("Unable to upload data, missing either a file or events.")
+        raise RuntimeError(
+            "Unable to upload data, missing either a file or events.")
     index_task_class = _get_index_task_class(file_extension)
     sketch_analyzer_chain = None
     searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
 
-    index_task = index_task_class.s(
-        file_path, events, timeline_name, index_name, file_extension, timeline_id
-    )
+    if file_extension == "csv":
+        # passing the extra argument: headers_mapping
+        index_task = index_task_class.s(
+            file_path,
+            events,
+            timeline_name,
+            index_name,
+            file_extension,
+            timeline_id,
+            headers_mapping,
+            delimiter
+        )
+    else:
+        index_task = index_task_class.s(
+            file_path,
+            events,
+            timeline_name,
+            index_name,
+            file_extension,
+            timeline_id
+        )
 
     # TODO: Check if a scenario is set or an investigative question
     # is in the sketch, and then enable data finder on the newly
@@ -320,14 +352,16 @@ def build_sketch_analysis_pipeline(
     if not analyzer_names:
         analyzer_names = current_app.config.get("AUTO_SKETCH_ANALYZERS", [])
         if not analyzer_kwargs:
-            analyzer_kwargs = current_app.config.get("AUTO_SKETCH_ANALYZERS_KWARGS", {})
+            analyzer_kwargs = current_app.config.get(
+                "AUTO_SKETCH_ANALYZERS_KWARGS", {})
 
     # Exit early if no sketch analyzers are configured to run.
     if not analyzer_names:
         return None, None
 
     if not analyzer_kwargs:
-        analyzer_kwargs = current_app.config.get("ANALYZERS_DEFAULT_KWARGS", {})
+        analyzer_kwargs = current_app.config.get(
+            "ANALYZERS_DEFAULT_KWARGS", {})
 
     if user_id:
         user = User.query.get(user_id)
@@ -436,7 +470,8 @@ def run_email_result_task(index_name, sketch_id=None):
     """
     # We need to get a fake request context so that url_for() will work.
     with current_app.test_request_context():
-        searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
+        searchindex = SearchIndex.query.filter_by(
+            index_name=index_name).first()
         sketch = None
 
         try:
@@ -463,13 +498,16 @@ def run_email_result_task(index_name, sketch_id=None):
                     '<a href="{0:s}">{1:s}</a>'.format(view_url, view_name)
                 )
 
-            body = body + "<br><br><b>Sketch</b><br>{0:s}".format(sketch.external_url)
+            body = body + \
+                "<br><br><b>Sketch</b><br>{0:s}".format(sketch.external_url)
 
             analysis_results = searchindex.description.replace("\n", "<br>")
-            body = body + "<br><br><b>Analysis</b>{0:s}".format(analysis_results)
+            body = body + \
+                "<br><br><b>Analysis</b>{0:s}".format(analysis_results)
 
             if view_links:
-                body = body + "<br><br><b>Views</b><br>" + "<br>".join(view_links)
+                body = body + "<br><br><b>Views</b><br>" + \
+                    "<br>".join(view_links)
 
         try:
             send_email(subject, body, to_username, use_html=True)
@@ -481,7 +519,12 @@ def run_email_result_task(index_name, sketch_id=None):
 
 @celery.task(track_started=True)
 def run_sketch_analyzer(
-    index_name, sketch_id, analysis_id, analyzer_name, timeline_id=None, **kwargs
+    index_name,
+    sketch_id,
+    analysis_id,
+    analyzer_name,
+    timeline_id=None,
+    **kwargs
 ):
     """Create a Celery task for a sketch analyzer.
 
@@ -497,7 +540,10 @@ def run_sketch_analyzer(
     """
     analyzer_class = manager.AnalysisManager.get_analyzer(analyzer_name)
     analyzer = analyzer_class(
-        sketch_id=sketch_id, index_name=index_name, timeline_id=timeline_id, **kwargs
+        sketch_id=sketch_id,
+        index_name=index_name,
+        timeline_id=timeline_id,
+        **kwargs
     )
 
     result = analyzer.run_wrapper(analysis_id)
@@ -506,7 +552,14 @@ def run_sketch_analyzer(
 
 
 @celery.task(track_started=True, base=SqlAlchemyTask)
-def run_plaso(file_path, events, timeline_name, index_name, source_type, timeline_id):
+def run_plaso(
+    file_path,
+    events,
+    timeline_name,
+    index_name,
+    source_type,
+    timeline_id
+):
     """Create a Celery task for processing Plaso storage file.
 
     Args:
@@ -525,7 +578,10 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
     """
     if not plaso:
         raise RuntimeError(
-            "Plaso isn't installed, unable to continue processing plaso " "files."
+            (
+                "Plaso isn't installed, "
+                "unable to continue processing plaso files."
+            )
         )
 
     plaso_version = int(plaso.__version__)
@@ -572,7 +628,8 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
             "process plaso file."
         )
 
-    opensearch = OpenSearchDataStore(host=opensearch_server, port=opensearch_port)
+    opensearch = OpenSearchDataStore(
+        host=opensearch_server, port=opensearch_port)
 
     try:
         opensearch.create_index(
@@ -581,14 +638,24 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
     except errors.DataIngestionError as e:
         _set_timeline_status(timeline_id, status="fail", error_msg=str(e))
         _close_index(
-            index_name=index_name, data_store=opensearch, timeline_id=timeline_id
+            index_name=index_name,
+            data_store=opensearch,
+            timeline_id=timeline_id
         )
         raise
 
-    except (RuntimeError, ImportError, NameError, UnboundLocalError, RequestError) as e:
+    except (
+        RuntimeError,
+        ImportError,
+        NameError,
+        UnboundLocalError,
+        RequestError
+    ) as e:
         _set_timeline_status(timeline_id, status="fail", error_msg=str(e))
         _close_index(
-            index_name=index_name, data_store=opensearch, timeline_id=timeline_id
+            index_name=index_name,
+            data_store=opensearch,
+            timeline_id=timeline_id
         )
         raise
 
@@ -598,7 +665,9 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
         _set_timeline_status(timeline_id, status="fail", error_msg=error_msg)
         logger.error("Error: {0!s}\n{1:s}".format(e, error_msg))
         _close_index(
-            index_name=index_name, data_store=opensearch, timeline_id=timeline_id
+            index_name=index_name,
+            data_store=opensearch,
+            timeline_id=timeline_id
         )
         return None
 
@@ -613,7 +682,7 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
     cmd = [
         psort_path,
         "-o",
-        "elastic_ts",
+        "opensearch_ts",
         file_path,
         "--server",
         opensearch_server,
@@ -626,7 +695,7 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
     ]
 
     if mappings_file_path:
-        cmd.extend(["--elastic_mappings", mappings_file_path])
+        cmd.extend(["--opensearch_mappings", mappings_file_path])
 
     if timeline_id:
         cmd.extend(["--timeline_identifier", str(timeline_id)])
@@ -643,18 +712,21 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
     if opensearch_ssl:
         cmd.extend(["--use_ssl"])
 
-    psort_memory = current_app.config.get("PLASO_UPPER_MEMORY_LIMIT", "")
-    if psort_memory:
+    psort_memory = current_app.config.get("PLASO_UPPER_MEMORY_LIMIT", None)
+    if psort_memory is not None:
         cmd.extend(["--process_memory_limit", str(psort_memory)])
 
     # Run psort.py
     try:
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT, encoding="utf-8")
+        subprocess.check_output(
+            cmd, stderr=subprocess.STDOUT, encoding="utf-8")
     except subprocess.CalledProcessError as e:
         # Mark the searchindex and timelines as failed and exit the task
         _set_timeline_status(timeline_id, status="fail", error_msg=e.output)
         _close_index(
-            index_name=index_name, data_store=opensearch, timeline_id=timeline_id
+            index_name=index_name,
+            data_store=opensearch,
+            timeline_id=timeline_id
         )
         return e.output
 
@@ -666,7 +738,14 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
 
 @celery.task(track_started=True, base=SqlAlchemyTask)
 def run_csv_jsonl(
-    file_path, events, timeline_name, index_name, source_type, timeline_id
+    file_path,
+    events,
+    timeline_name,
+    index_name,
+    source_type,
+    timeline_id,
+    headers_mapping=None,
+    delimiter=','
 ):
     """Create a Celery task for processing a CSV or JSONL file.
 
@@ -677,6 +756,10 @@ def run_csv_jsonl(
         index_name: Name of the datastore index.
         source_type: Type of file, csv or jsonl.
         timeline_id: ID of the timeline object this data belongs to.
+        headers_mapping: list of dicts containing:
+                         (i) target header we want to insert [key=target],
+                         (ii) source header we want to replace [key=source], and
+                         (iii) def. value if we add a new column [key=default_value]
 
     Returns:
         Name (str) of the index.
@@ -685,7 +768,8 @@ def run_csv_jsonl(
         file_handle = io.StringIO(events)
         source_type = "jsonl"
     else:
-        file_handle = codecs.open(file_path, "r", encoding="utf-8", errors="replace")
+        file_handle = codecs.open(
+            file_path, "r", encoding="utf-8", errors="replace")
 
     event_type = "generic_event"  # Document type for OpenSearch
     validators = {
@@ -732,7 +816,11 @@ def run_csv_jsonl(
         opensearch.create_index(
             index_name=index_name, doc_type=event_type, mappings=mappings
         )
-        for event in read_and_validate(file_handle):
+        for event in read_and_validate(
+            file_handle=file_handle,
+            headers_mapping=headers_mapping,
+            delimiter=delimiter
+        ):
             opensearch.import_event(
                 index_name, event_type, event, timeline_id=timeline_id
             )
@@ -751,14 +839,21 @@ def run_csv_jsonl(
     except errors.DataIngestionError as e:
         _set_timeline_status(timeline_id, status="fail", error_msg=str(e))
         _close_index(
-            index_name=index_name, data_store=opensearch, timeline_id=timeline_id
+            index_name=index_name,
+            data_store=opensearch,
+            timeline_id=timeline_id
         )
         raise
 
-    except (RuntimeError, ImportError, NameError, UnboundLocalError, RequestError) as e:
+    except (
+        RuntimeError, ImportError, NameError,
+        UnboundLocalError, RequestError
+    ) as e:
         _set_timeline_status(timeline_id, status="fail", error_msg=str(e))
         _close_index(
-            index_name=index_name, data_store=opensearch, timeline_id=timeline_id
+            index_name=index_name,
+            data_store=opensearch,
+            timeline_id=timeline_id
         )
         raise
 
@@ -869,7 +964,8 @@ def find_data_task(
 
 
 def run_data_finder(
-    rule_names, sketch_id, start_date, end_date, timeline_ids=None, parameters=None
+    rule_names, sketch_id, start_date,
+    end_date, timeline_ids=None, parameters=None
 ):
     """Runs a task to find out if data exists in a dataset.
 

@@ -66,13 +66,14 @@ SCOPES = [
 def login():
     """Handler for the login page view.
 
-    There are three ways of authentication.
-    1) Google Cloud Identity-Aware Proxy.
-    2) If Single Sign On (SSO) is enabled in the configuration and the
+    There are four ways of authentication.
+    1) Google OpenID connect.
+    2) Google Cloud Identity-Aware Proxy.
+    3) If Single Sign On (SSO) is enabled in the configuration and the
        environment variable is present, e.g. REMOTE_USER then the system will
        get or create the user object and setup a session for the user.
-    3) Local authentication is used if SSO login is not enabled. This will
-       authenticate the user against the local user database.
+    4) Local authentication is used if SSO login is not enabled. This will
+       authenticate the user against the local user database
 
     Returns:
         Redirect if authentication is successful or template with context
@@ -181,6 +182,8 @@ def validate_api_token():
     Returns:
         A simple page indicating the user is authenticated.
     """
+    ALLOWED_CLIENT_IDS = []
+
     try:
         token = oauth2.rfc6749.tokens.get_token_from_header(request)
     except AttributeError:
@@ -193,11 +196,26 @@ def validate_api_token():
     if not id_token:
         return abort(HTTP_STATUS_CODE_UNAUTHORIZED, "No ID token supplied.")
 
-    client_id = current_app.config.get("GOOGLE_OIDC_API_CLIENT_ID")
-    if not client_id:
+    client_ids = set()
+    primary_client_id = current_app.config.get("GOOGLE_OIDC_CLIENT_ID")
+    legacy_api_client_id = current_app.config.get("GOOGLE_OIDC_API_CLIENT_ID")
+    api_client_ids = current_app.config.get("GOOGLE_OIDC_API_CLIENT_IDS", [])
+
+    if primary_client_id:
+        client_ids.add(primary_client_id)
+
+    if legacy_api_client_id:
+        client_ids.add(legacy_api_client_id)
+
+    if api_client_ids:
+        client_ids.update(api_client_ids)
+
+    ALLOWED_CLIENT_IDS = list(client_ids)
+
+    if not ALLOWED_CLIENT_IDS:
         return abort(
             HTTP_STATUS_CODE_BAD_REQUEST,
-            "No OIDC API client ID defined in the configuration file.",
+            "No OIDC client IDs defined in the configuration file.",
         )
 
     # Authenticating session, see more details here:
@@ -259,7 +277,7 @@ def validate_api_token():
         )
 
     read_client_id = token_json.get("aud", "")
-    if read_client_id != client_id:
+    if read_client_id not in ALLOWED_CLIENT_IDS:
         return abort(
             HTTP_STATUS_CODE_UNAUTHORIZED,
             "Client ID {0:s} does not match server configuration for "

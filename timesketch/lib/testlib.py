@@ -119,6 +119,9 @@ class MockDataStore(object):
         "_type": "plaso_event",
         "_source": {
             "__ts_timeline_id": 1,
+            "comment": [
+                "test"
+            ],
             "es_index": "",
             "es_id": "",
             "label": "",

@@ -144,10 +144,24 @@ If you find a mapping missing, feel free to add and create a PR.
 
 ### Field Mapping
 
+The field mappings are used to translate the generalised term from Sigma into the expected field names in Timesketch. Most of the field names in Timesketch are mapped to the expected output names of Plaso.
+
 Some adjustments verified:
 
 - s/EventID/event_identifier
 - s/Source/source_name
+
+There are many entries in https://github.com/google/timesketch/blob/master/data/sigma_config.yaml mapped to `xml_string`. This is because a lot of data in Windows EVTX XML is not valid XML and will be represented in the section `xml_string` (see https://github.com/log2timeline/plaso/issues/442).
+
+Field mappings like:
+
+```
+  TargetFilename:
+      product=linux: filename
+      default: xml_string
+```
+
+Are interpreted depending on the selected product in the rule. If the product in the rule is `linux` the Selector `TargetFilename` in a rule would be tranlated to `filename:"foobar"`. If the product is anything else, e.g. `Windows` it would be `xml_string:"foobar"`
 
 ### Analyzer_run.py
 
@@ -175,7 +189,7 @@ This feature can be helpful if you want to test out field mapping.
 
 From the parse result you can copy the `es_query` value and paste it in a new window where you have the explore of a Sketch open.
 
-You need to remember to copy your rule when you are ready and create a new file on your Timesketch server to store the rule and make it available to others. The text from the compose area will be resetted with each reload of the page.
+You need to remember to copy your rule when you are ready and create a new file on your Timesketch server to store the rule and make it available to others. The text from the compose area will be reset with each reload of the page.
 
 ### Best practices
 
@@ -237,7 +251,7 @@ detection:
 That will create two queries:
 ` *value1* or *value2* or *value3* ... or *value10*` and ` *value11* or *value12* or *value13* ... or *value20*`.
 
-The Sigma analyzer is designed to batch and throttle execution of queries which is benefitial for such rule structure.
+The Sigma analyzer is designed to batch and throttle execution of queries which is beneficial for such rule structure.
 
 ### Reduce the haystack
 

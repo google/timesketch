@@ -230,7 +230,7 @@ class TimelineResource(resources.ResourceMixin, Resource):
 
     @login_required
     def post(self, sketch_id, timeline_id):
-        """Handles GET request to the resource.
+        """Handles POST request to the resource.
 
         Args:
             sketch_id: Integer primary key for a sketch database model
