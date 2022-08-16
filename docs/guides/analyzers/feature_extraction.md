@@ -1,6 +1,6 @@
 ## Feature extraction analyzer
 
-The feature extraction analyzer creates attributes out of event data based on regex. Different
+The feature extraction analyzer creates attributes out of event data based on regular expressions. Different
 features can be specified in the `data/features.yaml` file.
 
 Please be aware that this analyzer does *not* extract ipv4, email-addresses and similar from *all* events, but only those that match the query_string.
