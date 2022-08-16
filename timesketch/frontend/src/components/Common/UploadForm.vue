@@ -567,7 +567,7 @@ export default {
           if (e.target.readyState === FileReader.DONE){
             /* 3a. Extract the headers from the CSV */ 
             let data = e.target.result
-            vueJS.headersString = data.split("\n")[0]
+            vueJS.headersString = data.split("\n")[0].replaceAll('\"',"")
             vueJS.valuesString = data.split("\n").slice(1,vueJS.staticNumberRows + 1)
             vueJS.validateFile()
           }
