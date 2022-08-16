@@ -107,7 +107,7 @@ limitations under the License.
           <i class="fas fa-search" aria-hidden="true"
             title="Search sketch for all events with this tag."></i>
         </router-link>
-
+        {{ props.row.es_query }}
         <explore-preview style="margin-left: 10px"
           :searchQuery="props.row.es_query">
         </explore-preview>
@@ -153,6 +153,7 @@ limitations under the License.
       </b-table>
       <span v-else>No events have been tagged yet.</span>
     </div>
+
   </div>
 
 </template>
@@ -276,9 +277,12 @@ level: high`,
           .catch(e => {
             console.error(e)
           })
+        // remove the element from the array
       }
+      location.reload();
     },
     generateOpenSearchQuery(value, field) {
+      console.log("Looking for" + value + " in " + field)
       let query = `"${value}"`
       // Escape special OpenSearch characters: \, [space]
       query = query.replace(/[\\\s]/g, '\\$&')

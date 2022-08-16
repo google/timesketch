@@ -32,13 +32,14 @@ class SigmaPlugin(interface.BaseAnalyzer):
         self._rule = kwargs.get("rule")
         super().__init__(index_name, sketch_id, timeline_id=timeline_id)
 
+    # TODO(jaegeral): use rule_uud insead of rule name
     def run_sigma_rule(
-        self, query, rule_name, tag_list=None, status_good=True):
+        self, query, rule_uuid, tag_list=None, status_good=True):
         """Runs a sigma rule and applies the appropriate tags.
 
         Args:
             query: OpenSearch search query for events to tag.
-            rule_name: rule_name to apply to matching events.
+            rule_uuid: rule_name to apply to matching events.
             tag_list: a list of additional tags to be added to the event(s)
             status_good (bool): rule status based on the sigma_rule_status csv
 
@@ -54,7 +55,7 @@ class SigmaPlugin(interface.BaseAnalyzer):
         )
         for event in events:
             ts_sigma_rules = event.source.get("ts_sigma_rule", [])
-            ts_sigma_rules.append(rule_name)
+            ts_sigma_rules.append(rule_uuid)
             event.add_attributes({"ts_sigma_rule": list(set(ts_sigma_rules))})
             if status_good:
                 ts_ttp = event.source.get("ts_ttp", [])
