@@ -68,7 +68,7 @@ class SigmaListResource(resources.ResourceMixin, Resource):
             # Return a subset of the sketch objects to reduce the amount of
             # data sent to the client.
                 parsed_rule = ts_sigma_lib.get_sigma_rule_by_text(rule.rule_yaml)
-                logger.error(parsed_rule)
+                #logger.error(parsed_rule)
                 sigma_rules.append({"id": rule.id, 
                             "rule_uuid":parsed_rule.get("id"),
                             "rule_yaml": rule.rule_yaml,

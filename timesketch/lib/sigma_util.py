@@ -17,6 +17,7 @@ import re
 import os
 import codecs
 import csv
+import pandas
 import logging
 from datetime import datetime
 import string
@@ -34,7 +35,7 @@ from sigma.backends import elasticsearch as sigma_es
 from sigma.parser import collection as sigma_collection
 from sigma.parser import exceptions as sigma_exceptions
 from sigma.config.exceptions import SigmaConfigParseError
-
+from timesketch.models.sigma import Sigma
 
 logger = logging.getLogger("timesketch.lib.sigma")
 
@@ -450,3 +451,26 @@ def get_sigma_rule_by_text(rule_text, sigma_config=None):
     rule_return.update({"file_name": "N/A"})
     rule_return.update({"file_relpath": "N/A"})
     return rule_return
+
+@lru_cache(maxsize=None)
+def get_all_sigma_rules(as_pandas=False):
+    sigma_rules = []
+
+    sigma_rules_results = Sigma.query.filter_by()
+    for rule in sigma_rules_results:
+        parsed_rule = get_sigma_rule_by_text(rule.rule_yaml)
+        #logger.error(parsed_rule)
+        sigma_rules.append({"id": rule.id, 
+                    "rule_uuid":parsed_rule.get("id"),
+                    "rule_yaml": rule.rule_yaml,
+                    "created_at": str(rule.created_at),
+                    #"last_activity": utils.get_sketch_last_activity(rule),
+                    "status": rule.get_status.status,
+                    "es_query": parsed_rule.get("es_query"),
+                    "title": parsed_rule.get("title"),
+                    "author" :parsed_rule.get("author"),
+                    "description":parsed_rule.get("description")
+                }
+            )
+
+    return sigma_rules
