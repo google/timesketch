@@ -114,7 +114,7 @@ class SketchListResource(resources.ResourceMixin, Resource):
             views = (
                 View.query.filter_by(user=current_user, name="")
                 .order_by(View.updated_at.desc())
-                .limit(3)
+                .limit(10)
             )
             sketches = [view.sketch for view in views]
             total_items = len(sketches)
