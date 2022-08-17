@@ -71,6 +71,7 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
             )
 
         scenarios = Scenario.query.filter_by(sketch=sketch).all()
+
         return self.to_json(scenarios)
 
     @login_required
