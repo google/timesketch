@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-container fluid class="mt-4">
+  <v-container fluid>
     <!-- Right side menu for selected events -->
     <v-navigation-drawer
       v-model="selectedEvents.length"
@@ -44,6 +44,22 @@ limitations under the License.
           </v-list-item>
         </v-list>
       </v-container>
+    </v-navigation-drawer>
+
+    <!-- Scenarios left panel -->
+    <v-navigation-drawer
+      v-if="scenario.facets.length"
+      app
+      permanent
+      :width="rightSidePanelWidth"
+      hide-overlay
+      class="ml-14"
+    >
+      <ts-scenario
+        :scenario="scenario"
+        :minimize-panel="minimizeRightSidePanel"
+        @togglePanel="minimizeRightSidePanel = !minimizeRightSidePanel"
+      ></ts-scenario>
     </v-navigation-drawer>
 
     <!-- Search -->
@@ -282,7 +298,10 @@ limitations under the License.
       <v-col cols="12" v-if="eventList.objects.length || (searchInProgress && this.currentQueryFilter.indices.length)">
         <v-card outlined>
           <v-toolbar flat>
-            <v-card-text> {{ fromEvent }}-{{ toEvent }} of {{ totalHits }} events ({{ totalTime }}s) </v-card-text>
+            <v-toolbar-title style="font-size: 1em"
+              >{{ fromEvent }}-{{ toEvent }} of {{ totalHits }} events ({{ totalTime }}s)</v-toolbar-title
+            >
+
             <v-spacer></v-spacer>
 
             <v-btn icon @click="showHistogram = !showHistogram">
@@ -384,15 +403,27 @@ limitations under the License.
             v-model="selectedEvents"
             :headers="headers"
             :items="eventList.objects"
-            :footer-props="{ 'items-per-page-options': [40, 80, 100, 200, 500] }"
+            :footer-props="{ 'items-per-page-options': [10, 40, 80, 100, 200, 500], 'show-current-page': true }"
             :loading="searchInProgress"
-            :options="tableOptions"
+            :options.sync="tableOptions"
+            :server-items-length="totalHits"
             item-key="_id"
             loading-text="Searching... Please wait"
             show-select
+            disable-filtering
+            disable-sort
             :expanded="expandedRows"
             :dense="displayOptions.isCompact"
           >
+            <template v-slot:top="{ pagination, options, updateOptions }">
+              <v-data-footer
+                :pagination="pagination"
+                :options="options"
+                @update:options="updateOptions"
+                :show-current-page="true"
+                :items-per-page-options="[10, 40, 80, 100, 200, 500]"
+              ></v-data-footer>
+            </template>
             <!-- Event details -->
             <template v-slot:expanded-item="{ headers, item }">
               <td :colspan="headers.length">
@@ -499,6 +530,7 @@ import TsSearchDropdown from '../components/Explore/SearchDropdown'
 import TsBarChart from '../components/Explore/BarChart'
 import TsTimelinePicker from '../components/Explore/TimelinePicker'
 import TsFilterMenu from '../components/Explore/FilterMenu'
+import TsScenario from '../components/Scenarios/Scenario'
 import TsEventDetail from '../components/Explore/EventDetail'
 
 import EventBus from '../main'
@@ -537,6 +569,7 @@ export default {
     TsBarChart,
     TsTimelinePicker,
     TsFilterMenu,
+    TsScenario,
     TsEventDetail,
   },
   props: ['sketchId'],
@@ -573,7 +606,9 @@ export default {
       tableOptions: {
         itemsPerPage: 40,
       },
+      currentItemsPerPage: 40,
       drawer: false,
+      leftDrawer: true,
       expandedRows: [],
       timeFilterMenu: false,
       // old stuff
@@ -613,6 +648,8 @@ export default {
         x: 0,
         y: 0,
       },
+      minimizeRightSidePanel: false,
+      sidePanelTab: null,
     }
   },
   computed: {
@@ -622,16 +659,11 @@ export default {
     meta() {
       return this.$store.state.meta
     },
+    scenario() {
+      return this.$store.state.scenario
+    },
     totalHits() {
       return this.eventList.meta.es_total_count_complete || 0
-    },
-    totalHitsForPagination() {
-      let total = this.eventList.meta.es_total_count_complete || 0
-      // Elasticsearch only support pagination for the first 10k events.
-      if (total > 9999) {
-        total = 10000
-      }
-      return total
     },
     totalTime() {
       return this.eventList.meta.es_time / 1000 || 0
@@ -659,6 +691,13 @@ export default {
     },
     currentSearchNode() {
       return this.$store.state.currentSearchNode
+    },
+    rightSidePanelWidth() {
+      let width = '430'
+      if (this.minimizeRightSidePanel) {
+        width = '50'
+      }
+      return width
     },
   },
   methods: {
@@ -769,7 +808,6 @@ export default {
         // We need to calculate the new position in the page range and it is not
         // trivial with the current pagination UI component we use.
         this.currentQueryFilter.from = 0
-        this.currentPage = 1
       }
 
       // Update with selected fields
@@ -821,6 +859,9 @@ export default {
     setQueryAndFilter: function (searchEvent) {
       this.currentQueryString = searchEvent.queryString
       this.currentQueryFilter = searchEvent.queryFilter
+      // Preserve user defined item count instead of resetting.
+      this.currentQueryFilter.size = this.currentItemsPerPage
+      this.currentQueryFilter.terminate_after = this.currentItemsPerPage
       if (searchEvent.doSearch) {
         this.search()
       }
@@ -1047,8 +1088,24 @@ export default {
         this.meta.filter_labels.push(label)
       }
     },
-    paginate: function (pageNum) {
-      this.currentQueryFilter.from = pageNum * this.currentQueryFilter.size - this.currentQueryFilter.size
+    paginate: function () {
+      // Reset pagination if number of pages per page changes.
+      if (this.tableOptions.itemsPerPage !== this.currentItemsPerPage) {
+        this.tableOptions.page = 1
+        this.currentPage = 1
+        this.currentItemsPerPage = this.tableOptions.itemsPerPage
+        this.currentQueryFilter.size = this.tableOptions.itemsPerPage
+        this.search(true, true, true)
+        return
+      }
+      // To avoid double search request exit early if this is the first search for this
+      // search session.
+      if (this.currentPage === this.tableOptions.page) {
+        return
+      }
+      this.currentQueryFilter.from =
+        this.tableOptions.page * this.currentQueryFilter.size - this.currentQueryFilter.size
+      this.currentPage = this.tableOptions.page
       this.search(true, false, true)
     },
     updateSelectedFields: function (value) {
@@ -1151,9 +1208,11 @@ export default {
   },
 
   watch: {
-    numEvents: function (newVal) {
-      this.currentQueryFilter.size = newVal
-      this.search(false, true, true)
+    tableOptions: {
+      handler() {
+        this.paginate()
+      },
+      deep: true,
     },
   },
   mounted() {

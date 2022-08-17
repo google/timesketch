@@ -18,6 +18,10 @@ import dayjs from '@/plugins/dayjs'
 export default {
   name: 'timeSince',
   filter: function (date) {
+    if (!date) {
+      return ''
+    }
+
     return dayjs.utc(date).fromNow()
   },
 }
