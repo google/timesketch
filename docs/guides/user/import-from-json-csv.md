@@ -12,7 +12,7 @@ You can ingest timeline data from a JSONL or CSV file. You can have any number o
 
 ## [CSV ONLY] Headers Mapping via UI
 
-This section explains how you can map a missing mandatory header. This functionality allows you to map the mandatory fields with one or more exisitng headers found in the CSV
+This section explains how you can map a missing mandatory header. This functionality allows you to map the mandatory fields with one or more existing headers found in the CSV.
 
 
 In a few words, there are two different manners: using a drop down menu, or using a list of checkboxes.
