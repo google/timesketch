@@ -57,7 +57,7 @@ class HashRLookup(interface.BaseAnalyzer):
         db_name = current_app.config.get('HASHR_DB_NAME')
         self.add_source_attribute = current_app.config.get(
             'HASHR_ADD_SOURCE_ATTRIBUTE')
-        self.add_source_attribute = True
+
         try:
             self.query_chunk_size = int(current_app.config.get(
                 'HASHR_QUERY_CHUNK_SIZE'))
@@ -209,7 +209,7 @@ class HashRLookup(interface.BaseAnalyzer):
         Returns:
           None: If everything worked the function just returns.
         """
-        tags_container = ['hashR']
+        tags_container = ['known-hash']
         if (hash_value ==
             'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
             ):

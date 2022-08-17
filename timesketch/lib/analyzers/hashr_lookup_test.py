@@ -17,6 +17,7 @@ class TestHashRLookup(BaseTest):
 
     @mock.patch(u'timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
+    @mock.patch('sqlalchemy.create_engine', mock.MagicMock())
     def setUp(self):
         """Setup for for running the hashr lookup analyzer tests."""
         super().setUp()
@@ -665,7 +666,7 @@ class TestHashRLookup(BaseTest):
 
         self.analyzer.process_event(hash_value, sources, event)
         self.assertEqual(self.analyzer.zerobyte_file_counter, 0)
-        event.add_tags.assert_called_with(['hashR'])
+        event.add_tags.assert_called_with(['known-hash'])
         event.add_attributes.assert_called_with({
             'hashR_sample_sources': [
                 'WindowsPro:Windows10Home-10.0-19041-1288sp',
@@ -685,6 +686,6 @@ class TestHashRLookup(BaseTest):
 
         self.analyzer.process_event(hash_value, sources, event)
         self.assertEqual(self.analyzer.zerobyte_file_counter, 1)
-        event.add_tags.assert_called_with(['hashR', 'zerobyte-file'])
+        event.add_tags.assert_called_with(['known-hash', 'zerobyte-file'])
         event.add_attributes.assert_not_called()
         event.commit.assert_called_once()
