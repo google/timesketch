@@ -22,6 +22,28 @@ from . import sketch as sketch_lib
 from . import test_lib
 from timesketch_api_client import sigma
 
+MOCK_SIGMA_RULE = """
+title: Suspicious Installation of ZMap
+id: 5266a592-b793-11ea-b3de-0242ac130004
+description: Detects suspicious installation of zmap
+references:
+    - https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html
+author: Alexander Jaeger
+date: 2020/06/26
+modified: 2020/06/26
+logsource:
+    product: linux
+    service: shell
+detection:
+    keywords:
+        # Generic suspicious commands
+        - '*apt-get install zmap*'
+    condition: keywords
+falsepositives:
+    - Unknown
+level: high
+"""
+
 
 class TimesketchApiTest(unittest.TestCase):
     """Test TimesketchApi"""
@@ -59,6 +81,10 @@ class TimesketchApiTest(unittest.TestCase):
 
     def test_create_sigma_rule(self):
         rule = self.api_client.create_sigma_rule(
-            name='testrule',description='rule_description')
-        self.assertIn("rule_description", rule.description)
+            rule_text=MOCK_SIGMA_RULE)
         self.assertIsInstance(rule,sigma.Sigma)
+        self.assertIn("5266a592-b793-11ea-b3de-0242ac", rule.id)
+        self.assertIn("5266a592-b793-11ea-b3de-0242ac", rule.rule_uuid)
+        self.assertIn("suspicious installation of ZMap", rule.description)
+        self.assertIn('"*apt\\-get\\ install\\ zmap*"', rule.es_query)
+

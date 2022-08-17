@@ -14,6 +14,7 @@
 """Sigma resources for version 1 of the Timesketch API."""
 
 import logging
+from re import I
 import yaml
 import uuid
 
@@ -124,17 +125,18 @@ class SigmaResource(resources.ResourceMixin, Resource):
         assert isinstance(rule, Sigma)
         # Return a subset of the sigma objects to reduce the amount of
         # data sent to the client.
+        
+        parsed_rule = ts_sigma_lib.get_sigma_rule_by_text(rule.rule_yaml)
+        parsed_rule["rule_uuid"] = parsed_rule.pop("id")
+        parsed_rule["id"] = rule.id
+        parsed_rule["created_at"] = str(rule.created_at)
+        parsed_rule["updated_at"] = str(rule.updated_at)
+        parsed_rule["status"] = rule.get_status.status
+        parsed_rule["rule_yaml"] = rule.rule_yaml
+        #breakpoint()
         return_rules.append(
-            {
-                "rule_uuid": rule.rule_uuid,
-                "title": rule.title,
-                "description": rule.description,
-                "created_at": str(rule.created_at),
-                "query_string": rule.query_string,
-                "rule_yaml": rule.rule_yaml,
-                "status": rule.get_status.status,
-            }
-        )
+            parsed_rule)
+
 
         meta = {
             "current_user": current_user.username,
@@ -161,13 +163,34 @@ class SigmaResource(resources.ResourceMixin, Resource):
 
         return HTTP_STATUS_CODE_OK
 
+    @login_required
+    def put(self, rule_uuid):
+        """Handles update request to annotations (currently only comments are
+            supported).
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+
+        Returns:
+            The updated sigma object in JSON (instance of
+            flask.wrappers.Response)
+        """
+        form = request.json
+        if not form:
+            form = request.data
+        if not form.validate_on_submit():
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, "Unable to validate form data.")
+
+        rule_yaml = form.get("rule_yaml","")
+        parsed_rule = ts_sigma_lib.get_sigma_rule()
+
 
     @login_required
     def post(self, rule_uuid):
         """Handles POST request to the resource.
 
         Returns:
-            HTTP status code indicating whether operation was sucessful.
+            Sigma rule object and HTTP status code indicating whether operation was sucessful.
         """
         form = request.json
         if not form:
@@ -188,9 +211,19 @@ class SigmaResource(resources.ResourceMixin, Resource):
             abort(
                 HTTP_STATUS_CODE_FORBIDDEN, "rule_yaml needs to be a string."
             )
+
+        rule = Sigma.query.filter_by(rule_uuid=parsed_rule.get("rule_uuid", None)).first()
+    
+        if rule.rule_uuid is parsed_rule.get("rule_uuid"):
+            abort(HTTP_STATUS_CODE_CONFLICT, "Rule already exist")
+        
+
         sigma_rule = Sigma.get_or_create(rule_yaml=form.get("rule_yaml", ""))
         sigma_rule.description = form.get("description", "")
-        sigma_rule.query_string = parsed_rule.get("query_string", "")
+
+        sigma_rule.query_string = parsed_rule.get("es_query", "")
+        sigma_rule.rule_uuid = parsed_rule.get("id", None)
+        sigma_rule.user_id = current_user.id
 
         try:
             db_session.add(sigma_rule)

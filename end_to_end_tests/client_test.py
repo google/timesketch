@@ -18,11 +18,37 @@ from timesketch_api_client import search
 from . import interface
 from . import manager
 
+MOCK_SIGMA_RULE = """
+title: Suspicious Installation of Zenmap
+id: 5266a592-b793-11ea-b3de-0242ac130004
+description: Detects suspicious installation of Zenmap
+references:
+    - https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html
+author: Alexander Jaeger
+date: 2020/06/26
+modified: 2020/06/26
+logsource:
+    product: linux
+    service: shell
+detection:
+    keywords:
+        # Generic suspicious commands
+        - '*apt-get install zmap*'
+    condition: keywords
+falsepositives:
+    - Unknown
+level: high
+"""
 
 class ClientTest(interface.BaseEndToEndTest):
     """End to end tests for client functionality."""
 
     NAME = "client_test"
+
+    def setup(self):
+        """Create the rule"""
+        self.assertRaises(ValueError, self.api.create_sigma_rule,None)
+        self.api.create_sigma_rule(rule_text=MOCK_SIGMA_RULE)
 
     def test_client(self):
         """Client tests."""

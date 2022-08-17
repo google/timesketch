@@ -446,7 +446,6 @@ class SigmaResourceTest(BaseTest):
             self.resource_url + "5266a592-b793-11ea-b3de-0242ac130004"
         )
         self.assertIn('5266a592-b793-', response.json[0]["rule_uuid"])
-        breakpoint()
         self.assertIsNotNone(response)
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
 
@@ -483,10 +482,11 @@ level: high
 """
 
         self.login()
+
         sigma = dict(
             rule_uuid="5266a592-b793-11ea-b3de-afafaf",
             title='Suspicious Installation of afafaf',
-            query_string='("*apt\\-get\\ install\\ afafaf*")',
+            #query_string='("*apt\\-get\\ install\\ afafaf*")',
             description='Detects suspicious installation of afafaf',
             rule_yaml=MOCK_SIGMA_RULE,
         )
@@ -511,7 +511,7 @@ level: high
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
 
         # TODO(jaegeral): try to add the same rule twice
-
+        
         # Now GET the ressources
         response = self.client.get(
             self.resource_url + "5266a592-b793-11ea-b3de-afafaf/"
@@ -556,41 +556,17 @@ class SigmaListResourceTest(BaseTest):
     """Test Sigma resource."""
 
     resource_url = "/api/v1/sigma/"
-    expected_response = {
-        "meta": {"current_user": "test1", "rules_count": 1},
-        "objects": [
-            {
-                'author': 'Alexander Jaeger',
-                'date': '2020/06/26',
-                'description': 'Detects suspicious installation of ZMap',
-                'detection': {
-                    'condition': 'keywords',
-                    'keywords': ['*apt-get install zmap*'],
-                },
-                'es_query': '(data_type:("shell:zsh:history" OR "bash:history:command" OR "apt:history:line" OR "selinux:line") AND "apt-get install zmap")',  # pylint: disable=line-too-long
-                'falsepositives': ['Unknown'],
-                'file_name': 'lnx_susp_zmap.yml',
-                'file_relpath': 'lnx_susp_zmap.yml',
-                'id': '5266a592-b793-11ea-b3de-0242ac130004',
-                'level': 'high',
-                'logsource': {'product': 'linux', 'service': 'shell'},
-                'modified': '2020/06/26',
-                'references': [
-                    'https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html'  # pylint: disable=line-too-long
-                ],
-                'tags': ['attack.discovery', 'attack.t1046'],
-                'title': 'Suspicious Installation of ZMap',
-                'ts_comment': 'Part of Timesketch repo',
-                'ts_use_in_analyzer': True,
-            }
-        ],
-    }
 
     def test_get_sigma_rule_list(self):
         self.login()
         response = self.client.get(self.resource_url)
-        self.assertDictContainsSubset(self.expected_response, response.json)
         self.assertIsNotNone(response)
+        self.assertEqual(len(response.json["objects"]), response.json["meta"]["rules_count"])
+        rule = response.json["objects"][0]
+        self.assertIs(1, rule["id"])
+        self.assertIn("5266a592-b793-11ea-b3de-0242ac", rule["rule_uuid"])
+        self.assertIsNotNone(rule["last_activity"])
+        self.assertIsNotNone(rule["created_at"])
 
 
 class SigmaByTextResourceTest(BaseTest):
