@@ -116,7 +116,7 @@ or run the following outside of the container:
 $ sudo docker exec -it $CONTAINER_ID python3 /usr/local/src/timesketch/end_to_end_tests/tools/run_in_container.py
 ```
 
-## Linting
+## Linting / Code format
 
 The project has a certain code style / code format across the project. The main settings are stored in `.pylintrc`. When creating a Pull Request, one of the things automation checks is correct linting. Pull Request with failed pylint checks can not be accepted.
 
