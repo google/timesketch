@@ -147,7 +147,8 @@ class SigmaResource(resources.ResourceMixin, Resource):
         Args:
             id: Integer primary key for a sketch database model.
         """
-        logger.error("Delete with id "+rule_uuid)
+        logger.error("Delete with id")
+        logger.error(rule_uuid)
 
         # TODO (jaegeral): remove this one
         #sigma = Sigma.query.filter_by(rule_uuid=rule_uuid).first()
@@ -171,7 +172,7 @@ class SigmaResource(resources.ResourceMixin, Resource):
             The updated sigma object in JSON (instance of
             flask.wrappers.Response)
         """
-        
+
         logger.debug(rule_uuid)
         form = request.json
         if not form:

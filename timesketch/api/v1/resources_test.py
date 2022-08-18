@@ -559,7 +559,7 @@ class SigmaListResourceTest(BaseTest):
         self.login()
         response = self.client.get(self.resource_url)
         self.assertIsNotNone(response)
-        self.assertEqual(len(response.json["objects"]), 
+        self.assertEqual(len(response.json["objects"]),
             response.json["meta"]["rules_count"])
         rule = response.json["objects"][0]
         self.assertIs(1, rule["id"])
