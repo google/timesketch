@@ -24,6 +24,7 @@ const defaultState = (currentUser) => {
     sketch: {},
     meta: {},
     searchHistory: {},
+    scenario: { facets: [] },
     tags: [],
     dataTypes: [],
     count: 0,
@@ -44,6 +45,9 @@ export default new Vuex.Store({
     },
     SET_SEARCH_HISTORY(state, payload) {
       Vue.set(state, 'searchHistory', payload.objects)
+    },
+    SET_SCENARIO(state, payload) {
+      Vue.set(state, 'scenario', payload.objects[0][0])
     },
     SET_TIMELINE_TAGS(state, payload) {
       let buckets = payload.objects[0]['field_bucket']['buckets']
@@ -109,6 +113,16 @@ export default new Vuex.Store({
       return ApiClient.getSearchHistory(sketchId)
         .then((response) => {
           context.commit('SET_SEARCH_HISTORY', response.data)
+        })
+        .catch((e) => {})
+    },
+    updateScenario(context, sketchId) {
+      if (!sketchId) {
+        sketchId = context.state.sketch.id
+      }
+      return ApiClient.getSketchScenarios(sketchId)
+        .then((response) => {
+          context.commit('SET_SCENARIO', response.data)
         })
         .catch((e) => {})
     },

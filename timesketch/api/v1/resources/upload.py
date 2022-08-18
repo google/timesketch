@@ -17,6 +17,7 @@ import codecs
 import logging
 import os
 import uuid
+import json  # need to parse stringify json object into python dictionary
 
 from flask import jsonify
 from flask import request
@@ -45,7 +46,8 @@ class UploadFileResource(resources.ResourceMixin, Resource):
     """Resource that processes uploaded files."""
 
     def _get_index(
-        self, name, description, sketch, index_name="", data_label="", extension=""
+        self, name, description, sketch, index_name="",
+        data_label="", extension=""
     ):
         """Returns a SearchIndex object to be used for uploads.
 
@@ -97,7 +99,10 @@ class UploadFileResource(resources.ResourceMixin, Resource):
 
         index_name = index_name or uuid.uuid4().hex
         searchindex = SearchIndex.get_or_create(
-            name=name, index_name=index_name, description=description, user=current_user
+            name=name,
+            index_name=index_name,
+            description=description,
+            user=current_user
         )
 
         searchindex.grant_permission(permission="read", user=current_user)
@@ -126,6 +131,8 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         file_path="",
         events="",
         meta=None,
+        headers_mapping=None,
+        delimiter=","
     ):
         """Creates a full pipeline for an uploaded file and returns the results.
 
@@ -144,6 +151,12 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             events: a string with events to upload (optional).
             meta: optional dict with additional meta fields that will be
                   included in the return.
+            headers_mapping: list of dicts containing:
+                             (i) target header we want to insert [key=target],
+                             (ii) source header we want to replace [key=source], and
+                             (iii) def. value if we add a new column [key=default_value]
+
+            delimiter: delimiter to read the CSV file
 
         Returns:
             A timeline if created otherwise a search index in JSON (instance
@@ -167,7 +180,8 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 "google/timesketch/issues/new/choose",
             )
 
-        timelines = Timeline.query.filter_by(name=timeline_name, sketch=sketch).all()
+        timelines = Timeline.query.filter_by(
+            name=timeline_name, sketch=sketch).all()
 
         timeline = None
         for timeline_ in timelines:
@@ -186,7 +200,8 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 )
             )
 
-            timeline_name = "{0:s}_{1:s}".format(timeline_name, uuid.uuid4().hex[-5:])
+            timeline_name = "{0:s}_{1:s}".format(
+                timeline_name, uuid.uuid4().hex[-5:])
             return self._upload_and_index(
                 file_extension=file_extension,
                 timeline_name=timeline_name,
@@ -199,6 +214,8 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 file_path=file_path,
                 events=events,
                 meta=meta,
+                headers_mapping=headers_mapping,
+                delimiter=delimiter
             )
 
         searchindex.set_status("processing")
@@ -266,6 +283,8 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             sketch_id=sketch_id,
             only_index=enable_stream,
             timeline_id=timeline.id,
+            headers_mapping=headers_mapping,
+            delimiter=delimiter
         )
         task_id = uuid.uuid4().hex
         pipeline.apply_async(task_id=task_id)
@@ -274,7 +293,10 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             meta = {}
 
         meta["task_id"] = task_id
-        return self.to_json(timeline, status_code=HTTP_STATUS_CODE_CREATED, meta=meta)
+        return self.to_json(
+            timeline,
+            status_code=HTTP_STATUS_CODE_CREATED,
+            meta=meta)
 
     def _upload_events(self, events, form, sketch, index_name):
         """Upload a file like object.
@@ -304,7 +326,16 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             enable_stream=form.get("enable_stream", False),
         )
 
-    def _upload_file(self, file_storage, form, sketch, index_name, chunk_index_name=""):
+    def _upload_file(
+        self,
+        file_storage,
+        form,
+        sketch,
+        index_name,
+        chunk_index_name="",
+        headers_mapping=None,
+        delimiter=","
+    ):
         """Upload a file.
 
         Args:
@@ -314,6 +345,11 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             index_name: the OpenSearch index name for the timeline.
             chunk_index_name: A unique identifier for a file if
                 chunks are used.
+            headers_mapping: list of dicts containing:
+                             (i) target header we want to insert [key=target],
+                             (ii) source header we want to replace [key=source], and
+                             (iii) def. value if we add a new column [key=default_value]
+            delimiter: delimiter to read the CSV file
 
         Returns:
             A timeline if created otherwise a search index in JSON (instance
@@ -339,11 +375,19 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         if isinstance(chunk_byte_offset, str) and chunk_byte_offset.isdigit():
             chunk_byte_offset = int(chunk_byte_offset)
         chunk_total_chunks = form.get("chunk_total_chunks")
-        if isinstance(chunk_total_chunks, str) and chunk_total_chunks.isdigit():
+        if (
+            isinstance(chunk_total_chunks, str) and
+            chunk_total_chunks.isdigit()
+        ):
             chunk_total_chunks = int(chunk_total_chunks)
         file_size = form.get("total_file_size")
         if isinstance(file_size, str) and file_size.isdigit():
             file_size = int(file_size)
+        if file_size <= 0:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                "Unable to upload file. File is empty"
+            )
         enable_stream = form.get("enable_stream", False)
 
         data_label = form.get("data_label", "")
@@ -360,6 +404,8 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 form=form,
                 data_label=data_label,
                 enable_stream=enable_stream,
+                headers_mapping=headers_mapping,
+                delimiter=delimiter
             )
 
         # For file chunks we need the correct filepath, otherwise each chunk
@@ -423,6 +469,8 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             data_label=data_label,
             enable_stream=enable_stream,
             meta=meta,
+            headers_mapping=headers_mapping,
+            delimiter=delimiter
         )
 
     @login_required
@@ -439,6 +487,10 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         form = request.get_data(parse_form_data=True)
         if not form:
             form = request.form
+
+        # headers mapping: map between mandatory headers and new ones
+        headers_mapping = json.loads(form.get("headersMapping", '{}')) or None
+        delimiter = form.get("delimiter", ",")
 
         sketch_id = form.get("sketch_id", None)
         if not sketch_id:
@@ -480,6 +532,8 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 form=form,
                 sketch=sketch,
                 index_name=index_name,
+                headers_mapping=headers_mapping,
+                delimiter=delimiter
             )
 
         events = form.get("events")
