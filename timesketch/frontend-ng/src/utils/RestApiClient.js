@@ -67,11 +67,12 @@ RestApiClient.interceptors.response.use(
 
 export default {
   // Sketch
-  getSketchList(scope, page, searchQuery) {
+  getSketchList(scope, page, perPage, searchQuery) {
     let params = {
       params: {
         scope: scope,
         page: page,
+        per_page: perPage,
         search_query: searchQuery,
       },
     }
@@ -357,5 +358,15 @@ export default {
       content: ruleText,
     }
     return RestApiClient.post('/sigma/text/', formData)
+  },
+  getScenarios() {
+    return RestApiClient.get('/scenarios/')
+  },
+  getSketchScenarios(sketchId) {
+    return RestApiClient.get('/sketches/' + sketchId + '/scenarios/')
+  },
+  addScenario(sketchId, scenarioName) {
+    let formData = { scenario_name: scenarioName }
+    return RestApiClient.post('/sketches/' + sketchId + '/scenarios/', formData)
   },
 }
