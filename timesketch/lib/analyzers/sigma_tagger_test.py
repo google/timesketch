@@ -34,5 +34,5 @@ class TestSigmaPlugin(BaseTest):
         self.assertIsNotNone(rules)
         self.assertGreaterEqual(len(rules), 1)
         self.assertIn("zmap", rules[0]['rule'].get("es_query"))
-        self.assertIn("b793", rules[0]['rule'].get("id"))
-        self.assertEqual(rules[0]['rule'].get("ts_use_in_analyzer"), True)
+        self.assertIn("b793", rules[0]['rule'].get("rule_uuid"))
+        self.assertIn("new", rules[0]['rule'].get("status"))

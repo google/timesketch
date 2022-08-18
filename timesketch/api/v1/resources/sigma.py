@@ -186,7 +186,7 @@ class SigmaResource(resources.ResourceMixin, Resource):
 
 
     @login_required
-    def post(self, rule_uuid):
+    def post(self, rule_uuid = None):
         """Handles POST request to the resource.
 
         Returns:
@@ -207,15 +207,19 @@ class SigmaResource(resources.ResourceMixin, Resource):
         # not sure if that is needed
         parsed_rule = ts_sigma_lib.get_sigma_rule_by_text(rule_yaml)
         
+        if not rule_uuid:
+            rule_uuid = parsed_rule.get("id")
+
         if not isinstance(rule_yaml, str):
             abort(
                 HTTP_STATUS_CODE_FORBIDDEN, "rule_yaml needs to be a string."
             )
 
-        rule = Sigma.query.filter_by(rule_uuid=parsed_rule.get("rule_uuid", None)).first()
-    
-        if rule.rule_uuid is parsed_rule.get("rule_uuid"):
-            abort(HTTP_STATUS_CODE_CONFLICT, "Rule already exist")
+        # Query rules to see if it already exist
+        rule = Sigma.query.filter_by(rule_uuid=rule_uuid).first()
+        if rule:
+            if rule.rule_uuid == parsed_rule.get("rule_uuid"):
+                abort(HTTP_STATUS_CODE_CONFLICT, "Rule already exist")
         
 
         sigma_rule = Sigma.get_or_create(rule_yaml=form.get("rule_yaml", ""))

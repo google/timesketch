@@ -51,11 +51,7 @@ class SigmaModelTest(ModelBaseTest):
         expected_result2 = frozenset(
             [
                 ('rule_uuid', '5266a592-b793-11ea-b3de-0242ac130004'),
-                ('title', 'Suspicious Installation of Zenmap'),
-                ('query_string', '("*apt\\-get\\ install\\ zmap*")'),
-                ('description', 'Detects suspicious installation of Zenmap'),
                 ('rule_yaml', SIGMA_RULE),
-                ('user', self.user1),
             ]
         )
         self._test_db_object(expected_result=expected_result2, model_cls=Sigma)

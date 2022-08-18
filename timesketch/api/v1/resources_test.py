@@ -431,11 +431,11 @@ class SigmaResourceTest(BaseTest):
     resource_url = "/api/v1/sigma/rule/"
     expected_response = {
         "objects": {
-            "description": "Detects suspicious installation of ZMap",
-            "id": "5266a592-b793-11ea-b3de-0242ac130004",
+            "description": "Detects suspicious installation of bbbbbb",
+            "id": "5266a592-b793-11ea-b3de-bbbbbb",
             "level": "high",
             "logsource": {"product": "linux", "service": "shell"},
-            "title": "Suspicious Installation of ZMap",
+            "title": "Suspicious Installation of bbbbbb",
         }
     }
 
@@ -460,9 +460,9 @@ class SigmaResourceTest(BaseTest):
     def test_post_sigma_resource(self):
         """Authenticated request to POST an sigma rule."""
         MOCK_SIGMA_RULE = """
-title: Suspicious Installation of afafaf
-id: 5266a592-b793-11ea-b3de-afafaf
-description: Detects suspicious installation of ZMap
+title: Suspicious Installation of bbbbbb
+id: 5266a592-b793-11ea-b3de-bbbbbb
+description: Detects suspicious installation of bbbbbb
 references:
     - https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html
 author: Alexander Jaeger
@@ -474,7 +474,7 @@ logsource:
 detection:
     keywords:
         # Generic suspicious commands
-        - '*apt-get install afafaf*'
+        - '*apt-get install bbbbbb*'
     condition: keywords
 falsepositives:
     - Unknown
@@ -484,23 +484,23 @@ level: high
         self.login()
 
         sigma = dict(
-            rule_uuid="5266a592-b793-11ea-b3de-afafaf",
-            title='Suspicious Installation of afafaf',
+            rule_uuid="5266a592-b793-11ea-b3de-bbbbbb",
+            title='Suspicious Installation of bbbbbb',
             #query_string='("*apt\\-get\\ install\\ afafaf*")',
-            description='Detects suspicious installation of afafaf',
+            description='Detects suspicious installation of bbbbbb',
             rule_yaml=MOCK_SIGMA_RULE,
         )
 
         response = self.client.post(
-            self.resource_url + "5266a592-b793-11ea-b3de-afafaf/",
+            self.resource_url + "5266a592-b793-11ea-b3de-bbbbbb/",
             data=json.dumps(sigma),
             content_type="application/json",
         )
         self.assertIn(
-            '5266a592-b793-', response.json['objects'][0]["rule_uuid"]
+            'bbbbbb', response.json['objects'][0]["rule_uuid"]
         )
         self.assertIn(
-            'Detects suspicious installation of',
+            'bbbbbb',
             response.json['objects'][0]["description"],
         )
         self.assertIn(
@@ -509,21 +509,19 @@ level: high
         )
         # TODO(jaegeral): make a dict based test
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
-
-        # TODO(jaegeral): try to add the same rule twice
         
         # Now GET the ressources
         response = self.client.get(
-            self.resource_url + "5266a592-b793-11ea-b3de-afafaf/"
+            self.resource_url + "5266a592-b793-11ea-b3de-bbbbbb/"
         )
 
         self.assertIsNotNone(response)
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
         self.assertIn(
-            '5266a592-b793-', response.json['objects'][0]["rule_uuid"]
+            'bbbbbb', response.json['objects'][0]["rule_uuid"]
         )
         self.assertIn(
-            'Detects suspicious installation of',
+            'bbbbbb',
             response.json['objects'][0]["description"],
         )
         self.assertIn(
@@ -533,7 +531,7 @@ level: high
 
         # Attempt to add the same thing again
         response = self.client.post(
-            self.resource_url + "5266a592-b793-11ea-b3de-afafaf/",
+            self.resource_url + "5266a592-b793-11ea-b3de-bbbbbb/",
             data=json.dumps(sigma),
             content_type="application/json",
         )
