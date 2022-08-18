@@ -118,7 +118,7 @@ $ sudo docker exec -it $CONTAINER_ID python3 /usr/local/src/timesketch/end_to_en
 
 ## Linting
 
-We try to keep a certain code style / code format across the project. The main settings are stored in `.pylintrc`. When creating a Pull Request, one of the things automation checks is correct linting. We can not accept Pull Request with failed pylint checks.
+The project has a certain code style / code format across the project. The main settings are stored in `.pylintrc`. When creating a Pull Request, one of the things automation checks is correct linting. Pull Request with failed pylint checks can not be accepted.
 
 To check linting on a single file, run the following in your docker container:
 
