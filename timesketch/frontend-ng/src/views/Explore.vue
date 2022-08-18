@@ -199,11 +199,10 @@ limitations under the License.
                     style="overflow: visible"
                   >
                     <template v-slot:activator="{ on, attrs }">
-                      <v-chip outlined color="success " v-bind="attrs" v-on="on">
+                      <v-chip outlined v-bind="attrs" v-on="on">
                         <v-icon left small> mdi-clock-plus-outline </v-icon>
                         Add timefilter
                       </v-chip>
-                      <!-- <v-btn class="pl-1" small text v-bind="attrs" v-on="on"> + Add timefilter </v-btn>-->
                     </template>
 
                     <ts-filter-menu app @cancel="timeFilterMenu = false" @addChip="addChip"></ts-filter-menu>
