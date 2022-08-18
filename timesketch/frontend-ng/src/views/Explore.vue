@@ -293,9 +293,47 @@ limitations under the License.
               <v-icon>mdi-content-save-outline</v-icon>
             </v-btn>
 
-            <v-btn icon>
-              <v-icon>mdi-view-column-outline</v-icon>
-            </v-btn>
+            <v-dialog v-model="columnDialog" max-width="500px" scrollable>
+              <template v-slot:activator="{ on, attrs }">
+                <v-btn icon v-bind="attrs" v-on="on">
+                  <v-icon>mdi-view-column-outline</v-icon>
+                </v-btn>
+              </template>
+
+              <v-card height="50vh">
+                <v-card-title>Select columns</v-card-title>
+
+                <v-card-text>
+                  <v-text-field
+                    v-model="searchColumns"
+                    append-icon="mdi-magnify"
+                    label="Search"
+                    single-line
+                    hide-details
+                  ></v-text-field>
+                  <br />
+                  <v-data-table
+                    v-model="selectedFields"
+                    :headers="columnHeaders"
+                    :items="meta.mappings"
+                    :search="searchColumns"
+                    item-key="field"
+                    disable-pagination
+                    show-select
+                    dense
+                    @input="updateSelectedFields"
+                  >
+                  </v-data-table>
+                </v-card-text>
+
+                <v-divider></v-divider>
+
+                <v-card-actions>
+                  <v-spacer></v-spacer>
+                  <v-btn color="primary" text @click="columnDialog = false"> Close </v-btn>
+                </v-card-actions>
+              </v-card>
+            </v-dialog>
 
             <v-menu offset-y :close-on-content-click="false">
               <template v-slot:activator="{ on, attrs }">
@@ -439,17 +477,23 @@ limitations under the License.
               </v-btn>
             </template>
 
-            <!-- Message field -->
-            <template v-slot:item._source.message="{ item }">
-              <span class="ts-event-field-container" style="cursor: pointer" @click="toggleDetailedEvent(item)">
-                <span class="ts-event-field-ellipsis">
-                  <!-- Tags -->
-                  <span v-if="displayOptions.showTags">
+            <!-- Generic slot for any field type. Adds tags and emojis to the first column. -->
+            <template v-for="(field, index) in extraHeaders" v-slot:[getFieldName(field.text)]="{ item }">
+              <span
+                :key="field.text"
+                class="ts-event-field-container"
+                style="cursor: pointer"
+                @click="toggleDetailedEvent(item)"
+              >
+                <span :class="{ 'ts-event-field-ellipsis': field.text === 'message' }">
+                  <span v-if="displayOptions.showTags && index === 0">
                     <v-chip small label outlined class="mr-2" v-for="tag in item._source.tag" :key="tag">{{
                       tag
                     }}</v-chip>
+                    <v-chip small label outlined class="mr-2" v-for="label in item._source.label" :key="label">{{
+                      label
+                    }}</v-chip>
                   </span>
-                  <!-- Emojis -->
                   <span v-if="displayOptions.showEmojis">
                     <span
                       class="mr-2"
@@ -460,7 +504,7 @@ limitations under the License.
                       >{{ emoji }}
                     </span>
                   </span>
-                  <span>{{ item._source.message }}</span>
+                  <span>{{ item._source[field.text] }}</span>
                 </span>
               </span>
             </template>
@@ -542,32 +586,11 @@ export default {
   props: ['sketchId'],
   data() {
     return {
-      headers: [
-        { text: '', value: 'data-table-select' },
-
+      extraHeaders: [],
+      columnHeaders: [
         {
-          text: 'Datetime (UTC)',
-          align: 'start',
-          value: '_source.timestamp',
-          width: '230',
-        },
-        {
-          value: 'actions',
-          width: '90',
-        },
-        {
-          text: 'Message',
-          align: 'start',
-          value: '_source.message',
-          width: '100%',
-        },
-        {
-          value: '_source.comment',
-          align: 'end',
-        },
-        {
-          value: 'timeline_name',
-          align: 'end',
+          text: '',
+          value: 'field',
         },
       ],
       tableOptions: {
@@ -576,6 +599,9 @@ export default {
       drawer: false,
       expandedRows: [],
       timeFilterMenu: false,
+      selectedFields: [{ field: 'message', type: 'text' }],
+      searchColumns: '',
+      columnDialog: false,
       // old stuff
       params: {},
       showCreateViewModal: false,
@@ -594,7 +620,6 @@ export default {
       },
       currentQueryString: '',
       currentQueryFilter: defaultQueryFilter(),
-      selectedFields: [{ field: 'message', type: 'text' }],
       selectedFieldsProxy: [],
       expandFieldDropdown: false,
       selectedEvents: [],
@@ -660,8 +685,50 @@ export default {
     currentSearchNode() {
       return this.$store.state.currentSearchNode
     },
+    headers() {
+      let baseHeaders = [
+        {
+          text: '',
+          value: 'data-table-select',
+        },
+        {
+          text: 'Datetime (UTC)',
+          align: 'start',
+          value: '_source.timestamp',
+          width: '230',
+        },
+        {
+          value: 'actions',
+          width: '90',
+        },
+        {
+          value: '_source.comment',
+          align: 'end',
+        },
+        {
+          value: 'timeline_name',
+          align: 'end',
+        },
+      ]
+      // Initial display when nothing else is specified is to show the message field.
+      if (!this.extraHeaders.length && this.selectedFields.length === 1) {
+        let header = {
+          text: 'message',
+          align: 'start',
+          value: '_source.message',
+          width: '100%',
+        }
+        this.extraHeaders.push(header)
+      }
+      // Extend the column headers from position 3 (after the actions column).
+      baseHeaders.splice(3, 0, ...this.extraHeaders)
+      return baseHeaders
+    },
   },
   methods: {
+    getFieldName: function (field) {
+      return 'item._source.' + field
+    },
     toggleSearchHistory: function () {
       this.showSearchHistory = !this.showSearchHistory
       if (this.showSearchHistory) {
@@ -1047,22 +1114,27 @@ export default {
         this.meta.filter_labels.push(label)
       }
     },
-    paginate: function (pageNum) {
-      this.currentQueryFilter.from = pageNum * this.currentQueryFilter.size - this.currentQueryFilter.size
-      this.search(true, false, true)
-    },
     updateSelectedFields: function (value) {
       // If we haven't fetched the field before, do an new search.
       value.forEach((field) => {
-        if (!this.selectedFields.filter((e) => e.field === field.field).length > 0) {
+        if (!this.headers.filter((e) => e.field === field.field).length > 0) {
           this.search(true, true, true)
         }
       })
+      this.extraHeaders = []
       value.forEach((field) => {
-        this.selectedFields.push(field)
+        let header = {
+          text: field.field,
+          align: 'start',
+          value: '_source.' + field.field,
+        }
+        if (field.field === 'message') {
+          header.width = '100%'
+          this.extraHeaders.unshift(header)
+        } else {
+          this.extraHeaders.push(header)
+        }
       })
-      // Prevents tags from being displayed
-      this.selectedFieldsProxy = []
     },
     removeField: function (index) {
       this.selectedFields.splice(index, 1)
