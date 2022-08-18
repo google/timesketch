@@ -15,17 +15,11 @@
 
 import re
 import os
-import codecs
-import csv
-import pandas
 import logging
-from datetime import datetime
 import string
 from functools import lru_cache
 import yaml
 import pandas as pd
-
-from deprecated import deprecated
 
 from flask import current_app
 
@@ -85,119 +79,6 @@ def get_sigma_config_file(config_file=None):
         raise
 
     return sigma_config
-
-@lru_cache(maxsize=10)
-@deprecated
-def get_sigma_rule(filepath, sigma_config=None):
-    """Returns a JSON represenation for a rule
-    Args:
-        filepath: path to the sigma rule to be parsed
-        sigma_config: optional argument to pass a
-                sigma.configuration.SigmaConfiguration object
-    Returns:
-        Json representation of the parsed rule
-    Raises:
-        ValueError: Parsing error
-        IsADirectoryError: If a directory is passed as filepath
-    """
-    try:
-        if isinstance(sigma_config, sigma_configuration.SigmaConfiguration):
-            sigma_conf_obj = sigma_config
-        elif isinstance(sigma_config, str):
-            sigma_conf_obj = get_sigma_config_file(sigma_config)
-        else:
-            sigma_conf_obj = get_sigma_config_file()
-    except ValueError as e:
-        logger.error("Problem reading the Sigma config", exc_info=True)
-        raise ValueError("Problem reading the Sigma config") from e
-
-    sigma_backend = sigma_es.ElasticsearchQuerystringBackend(
-        sigma_conf_obj, {}
-    )
-
-    try:
-        sigma_rules_paths = get_sigma_rules_path()
-    except ValueError:
-        sigma_rules_paths = None
-
-    if not filepath.lower().endswith(".yml"):
-        raise ValueError(f"{filepath} does not end with .yml")
-
-    # if a sub dir is found, nothing can be parsed
-    if os.path.isdir(filepath):
-        raise IsADirectoryError(f"{filepath} is a directory - must be a file")
-
-    if os.stat(filepath).st_size == 0:
-        raise ValueError(f"{filepath} file is empty")
-
-    abs_path = os.path.abspath(filepath)
-    parsed_sigma_rules = None
-    with codecs.open(
-        abs_path, "r", encoding="utf-8", errors="replace"
-    ) as file:
-        try:
-            rule_return = {}
-            rule_file_content = file.read()
-            rule_file_content = sanitize_incoming_sigma_rule_text(
-                rule_file_content
-            )
-            rule_yaml_data = yaml.safe_load_all(rule_file_content)
-
-            for doc in rule_yaml_data:
-                rule_return.update(doc)
-                parser = sigma_collection.SigmaCollectionParser(
-                    yaml.safe_dump(doc), sigma_conf_obj, None
-                )
-                parsed_sigma_rules = parser.generate(sigma_backend)
-
-        except NotImplementedError as exception:
-            logger.error("Error rule {0:s}: {1!s}".format(abs_path, exception))
-            add_problematic_rule(
-                filepath, doc.get("id"), "Part of the rule not supported in TS"
-            )
-            return None
-
-        except sigma_exceptions.SigmaParseError as exception:
-            logger.error(
-                "Sigma parsing error rule in file {0:s}: {1!s}".format(
-                    abs_path, exception
-                )
-            )
-            add_problematic_rule(
-                filepath, doc.get("id"), "sigma_exceptions.SigmaParseError"
-            )
-            return None
-
-        except yaml.parser.ParserError as exception:
-            logger.error(
-                "Yaml parsing error rule in file {0:s}: {1!s}".format(
-                    abs_path, exception
-                )
-            )
-            add_problematic_rule(filepath, None, "yaml.parser.ParserError")
-            return None
-
-        sigma_es_query = ""
-
-        assert parsed_sigma_rules is not None
-
-        for sigma_rule in parsed_sigma_rules:
-            sigma_es_query = _sanitize_query(sigma_rule)
-
-        rule_return.update({"es_query": sigma_es_query})
-        rule_return.update({"file_name": os.path.basename(filepath)})
-
-        # in case multiple folders are in the config, need to remove them
-        if sigma_rules_paths:
-            for rule_path in sigma_rules_paths:
-                file_relpath = os.path.relpath(filepath, rule_path)
-        else:
-            file_relpath = "N/A"
-
-        rule_return.update({"file_relpath": file_relpath})
-
-        return rule_return
-
 
 def _sanitize_query(sigma_rule_query: str) -> str:
     """Returns a sanitized query
@@ -325,43 +206,6 @@ def get_sigma_rule_status_path(rule_status_path=None):
 
     return rule_status_path
 
-
-@lru_cache(maxsize=None)
-def add_problematic_rule(filepath, rule_uuid=None, reason=None):
-    """Adds a problematic rule to the sigma_rule_status.csv.
-
-    Args:
-        filepath: path to the sigma rule that caused problems
-        rule_uuid: rule uuid
-        reason: optional reason why file is moved
-    """
-    rule_status_file_path = get_sigma_rule_status_path()
-
-    # we only want to store the relative paths in the status file
-
-    try:
-        sigma_rules_paths = get_sigma_rules_path()
-    except ValueError:
-        sigma_rules_paths = None
-
-    if sigma_rules_paths:
-        for rule_path in sigma_rules_paths:
-            file_relpath = os.path.relpath(filepath, rule_path)
-
-    # path,status,reason,last_ckecked,rule_id
-    fields = [
-        file_relpath,
-        "bad",
-        reason,
-        datetime.now().strftime("%Y-%m-%d"),
-        rule_uuid,
-    ]
-
-    with open(rule_status_file_path, "a", encoding="utf-8") as f:
-        writer = csv.writer(f)
-        writer.writerow(fields)
-
-
 def sanitize_incoming_sigma_rule_text(rule_text: string):
     """Removes things that are not supportd in Timesketch
     right now as early as possible
@@ -453,18 +297,16 @@ def get_sigma_rule_by_text(rule_text, sigma_config=None):
     return rule_return
 
 @lru_cache(maxsize=None)
-def get_all_sigma_rules(as_pandas=False):
+def get_all_sigma_rules():
     sigma_rules = []
 
     sigma_rules_results = Sigma.query.filter_by()
     for rule in sigma_rules_results:
         parsed_rule = get_sigma_rule_by_text(rule.rule_yaml)
-        #logger.error(parsed_rule)
-        sigma_rules.append({"id": rule.id, 
+        sigma_rules.append({"id": rule.id,
                     "rule_uuid":parsed_rule.get("id"),
                     "rule_yaml": rule.rule_yaml,
                     "created_at": str(rule.created_at),
-                    #"last_activity": utils.get_sketch_last_activity(rule),
                     "status": rule.get_status.status,
                     "es_query": parsed_rule.get("es_query"),
                     "title": parsed_rule.get("title"),

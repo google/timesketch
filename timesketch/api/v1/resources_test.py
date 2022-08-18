@@ -509,7 +509,7 @@ level: high
         )
         # TODO(jaegeral): make a dict based test
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
-        
+
         # Now GET the ressources
         response = self.client.get(
             self.resource_url + "5266a592-b793-11ea-b3de-bbbbbb/"
@@ -559,7 +559,8 @@ class SigmaListResourceTest(BaseTest):
         self.login()
         response = self.client.get(self.resource_url)
         self.assertIsNotNone(response)
-        self.assertEqual(len(response.json["objects"]), response.json["meta"]["rules_count"])
+        self.assertEqual(len(response.json["objects"]), 
+            response.json["meta"]["rules_count"])
         rule = response.json["objects"][0]
         self.assertIs(1, rule["id"])
         self.assertIn("5266a592-b793-11ea-b3de-0242ac", rule["rule_uuid"])

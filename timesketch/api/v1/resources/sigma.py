@@ -14,9 +14,7 @@
 """Sigma resources for version 1 of the Timesketch API."""
 
 import logging
-from re import I
 import yaml
-import uuid
 
 from flask import abort
 from flask import jsonify
@@ -69,8 +67,7 @@ class SigmaListResource(resources.ResourceMixin, Resource):
             # Return a subset of the sketch objects to reduce the amount of
             # data sent to the client.
                 parsed_rule = ts_sigma_lib.get_sigma_rule_by_text(rule.rule_yaml)
-                #logger.error(parsed_rule)
-                sigma_rules.append({"id": rule.id, 
+                sigma_rules.append({"id": rule.id,
                             "rule_uuid":parsed_rule.get("id"),
                             "rule_yaml": rule.rule_yaml,
                             "created_at": str(rule.created_at),
@@ -125,7 +122,7 @@ class SigmaResource(resources.ResourceMixin, Resource):
         assert isinstance(rule, Sigma)
         # Return a subset of the sigma objects to reduce the amount of
         # data sent to the client.
-        
+
         parsed_rule = ts_sigma_lib.get_sigma_rule_by_text(rule.rule_yaml)
         parsed_rule["rule_uuid"] = parsed_rule.pop("id")
         parsed_rule["id"] = rule.id
@@ -144,7 +141,7 @@ class SigmaResource(resources.ResourceMixin, Resource):
         return jsonify({"objects": return_rules, "meta": meta})
 
     @login_required
-    def delete(self,rule_uuid):
+    def delete(self, rule_uuid):
         """Handles DELETE request to the resource.
 
         Args:
@@ -165,38 +162,42 @@ class SigmaResource(resources.ResourceMixin, Resource):
 
     @login_required
     def put(self, rule_uuid):
-        """Handles update request to annotations (currently only comments are
-            supported).
+        """Handles update request to Sigma rules
 
         Args:
-            sketch_id: Integer primary key for a sketch database model
+            rule_uuid: Sigma rule uuid
 
         Returns:
             The updated sigma object in JSON (instance of
             flask.wrappers.Response)
         """
+        
+        logger.debug(rule_uuid)
         form = request.json
         if not form:
             form = request.data
         if not form.validate_on_submit():
             abort(HTTP_STATUS_CODE_BAD_REQUEST, "Unable to validate form data.")
 
-        rule_yaml = form.get("rule_yaml","")
+        rule_yaml = form.get("rule_yaml", "")
         parsed_rule = ts_sigma_lib.get_sigma_rule()
+        logger.debug(rule_yaml + parsed_rule)
+        # TODO(jaegeral): complete this method
 
 
     @login_required
-    def post(self, rule_uuid = None):
+    def post(self, rule_uuid=None):
         """Handles POST request to the resource.
 
         Returns:
-            Sigma rule object and HTTP status code indicating whether operation was sucessful.
+            Sigma rule object and HTTP status code indicating
+            whether operation was sucessful.
         """
         form = request.json
         if not form:
-            form = request.data        
+            form = request.data
 
-        rule_yaml = form.get("rule_yaml","")
+        rule_yaml = form.get("rule_yaml", "")
 
         if not rule_yaml:
             abort(
@@ -206,7 +207,7 @@ class SigmaResource(resources.ResourceMixin, Resource):
 
         # not sure if that is needed
         parsed_rule = ts_sigma_lib.get_sigma_rule_by_text(rule_yaml)
-        
+
         if not rule_uuid:
             rule_uuid = parsed_rule.get("id")
 
@@ -220,7 +221,6 @@ class SigmaResource(resources.ResourceMixin, Resource):
         if rule:
             if rule.rule_uuid == parsed_rule.get("rule_uuid"):
                 abort(HTTP_STATUS_CODE_CONFLICT, "Rule already exist")
-        
 
         sigma_rule = Sigma.get_or_create(rule_yaml=form.get("rule_yaml", ""))
         sigma_rule.description = form.get("description", "")
