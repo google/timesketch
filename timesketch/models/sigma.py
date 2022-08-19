@@ -41,6 +41,7 @@ class Sigma(
     def __init__(
         self,
         rule_yaml=None,
+        rule_uuid=None
     ):
         """Initialize the Sigma object.
 
@@ -49,3 +50,4 @@ class Sigma(
         """
         super().__init__()
         self.rule_yaml = rule_yaml
+        self.rule_uuid = rule_uuid

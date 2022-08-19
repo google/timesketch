@@ -65,7 +65,7 @@ class Sigma(resource.BaseResource):
 
     @property
     def id(self):
-        """Returns the sigma rule id."""
+        """Returns the id of the rule in the database, this is not rule_uuid"""
         return self.get_attribute("id")
 
     @property
