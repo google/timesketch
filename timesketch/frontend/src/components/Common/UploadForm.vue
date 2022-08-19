@@ -402,6 +402,7 @@ export default {
       let extension = this.fileName.split(".")[1];
       console.log(extension);
       if (extension) return extension.toLowerCase();
+      else return null;
     },
     numberRows() {
       if (this.extension === "csv") {
