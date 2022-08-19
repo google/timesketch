@@ -365,16 +365,16 @@ export default {
     }
     return RestApiClient.post('/sigma/rule/aaa/', formData)
   },
-  updateSigmaRule(id, ruleText, rule_uuid) {
+  updateSigmaRule(id, ruleText, ruleUuid) {
     // TODO(jaegeal): This currently creates a new copy of the existing rule
     let formData = {
       id: id,
       rule_yaml: ruleText,
     }
-    return RestApiClient.put('/sigma/rule/' + rule_uuid + '/', formData)
+    return RestApiClient.put('/sigma/rule/' + ruleUuid + '/', formData)
   },
-  deleteSigmaRule(rule_uuid) {
-    return RestApiClient.delete('/sigma/rule/' + rule_uuid + '/')
+  deleteSigmaRule(ruleUuid) {
+    return RestApiClient.delete('/sigma/rule/' + ruleUuid + '/')
   },
   getTagMetadata() {
     return RestApiClient.get('/intelligence/tagmetadata/')
