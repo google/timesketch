@@ -32,7 +32,7 @@ class Sigma(
 ):
     """Implements the Sigma model."""
 
-    #rule_uuid = Column(Unicode(255))
+    rule_uuid = Column(Unicode(255))
     rule_yaml = Column(UnicodeText())
     user_id = Column(
         Integer, ForeignKey("user.id")
