@@ -285,7 +285,13 @@ def build_index_pipeline(
         )
     else:
         index_task = index_task_class.s(
-            file_path, events, timeline_name, index_name, file_extension, timeline_id
+            file_path,
+            events,
+            timeline_name,
+            index_name,
+            file_extension,
+            timeline_id,
+            headers_mapping,
         )
 
     # TODO: Check if a scenario is set or an investigative question

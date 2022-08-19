@@ -41,7 +41,7 @@ limitations under the License.
       </div>
 
       <div class="field">
-        <div v-if="extension === 'csv'">
+        <div v-if="['csv', 'jsonl'].includes(extension)">
           <hr />
 
           <!-- List of button: showHelper, showPreview, addColumnsToPreview -->
@@ -263,17 +263,24 @@ limitations under the License.
             <hr />
           </div>
 
-          <!-- CSV delimiter selection: the program will parse the file according to this choice -->
-          <label class="label">CSV Separator</label>
-          <div class="control" v-for="(v, key) in delimitersList" :key="key">
-            <input
-              type="radio"
-              name="CSVDelimiter"
-              :value="v"
-              v-model="CSVDelimiter"
-              @change="changeCSVDelimiter"
-            />
-            {{ key }} ({{ v }})
+          <!--
+
+            CSV delimiter selection: the program will parse 
+            the file according tothis choice
+          
+          -->
+          <div v-if="extension === 'csv'">
+            <label class="label">CSV Separator</label>
+            <div class="control" v-for="(v, key) in delimitersList" :key="key">
+              <input
+                type="radio"
+                name="CSVDelimiter"
+                :value="v"
+                v-model="CSVDelimiter"
+                @change="changeCSVDelimiter"
+              />
+              {{ key }} ({{ v }})
+            </div>
           </div>
         </div>
       </div>
@@ -378,7 +385,13 @@ export default {
   },
   computed: {
     headers() {
-      return this.headersString.split(this.CSVDelimiter);
+      let headers = [];
+      if (this.extension === "csv") {
+        headers = this.headersString.split(this.CSVDelimiter);
+      } else if (this.extension === "jsonl") {
+        headers = Object.keys(this.headersString);
+      }
+      return headers;
     },
     missingHeaders() {
       return this.mandatoryHeaders.filter(
@@ -386,11 +399,19 @@ export default {
       );
     },
     extension() {
-      return this.fileName.split(".")[1];
+      let extension = this.fileName.split(".")[1];
+      console.log(extension);
+      if (extension) return extension.toLowerCase();
     },
     numberRows() {
-      let n = this.valuesString.indexOf("");
-      return n < 0 ? this.staticNumberRows : n;
+      if (this.extension === "csv") {
+        let n = this.valuesString.indexOf("");
+        return n < 0 ? this.staticNumberRows : n;
+      } else if (this.extension === "jsonl") {
+        return this.valuesString.length;
+      } else {
+        return 0;
+      }
     },
     allHeaders() {
       let setHeaders = new Set(
@@ -409,12 +430,12 @@ export default {
        */
 
       /**
-       * valuesAndHeaders = list of dictionaries. Each entry represent a column in the CSV, i.e.,
+       * valuesAndHeaders = dictionary where
        *  - the key is the header, e.g., "datetime", "file_name"
        *  - the value is an array containing the values of that column
        */
-      let valuesAndHeaders = [];
-      if (this.extension.toLowerCase() === "csv") {
+      let valuesAndHeaders = {};
+      if (this.extension === "csv") {
         let values = this.valuesString.map((x) => x.split(this.CSVDelimiter));
         /**
          * values is an array of array (matrix)
@@ -423,21 +444,28 @@ export default {
          *                | [2022-11-09, file_create, high] |
          *                | [2022-11-09, file_update, low]  |
          */
-
         for (let i = 0; i < this.headers.length; i++) {
           let listValues = [];
           for (let j = 0; j < values.length; j++) {
             listValues.push(values[j][i]); // list values aggregate the information on the columns
           }
-          valuesAndHeaders.push({
-            name: this.headers[i],
-            values: listValues,
-          });
+          valuesAndHeaders[this.headers[i]] = listValues;
+        }
+      } else if (this.extension === "jsonl") {
+        for (let i = 0; i < this.valuesString.length; i++) {
+          for (let header in this.valuesString[i]) {
+            if (header in valuesAndHeaders) {
+              valuesAndHeaders[header].push(this.valuesString[i][header]);
+            } else {
+              valuesAndHeaders[header] = [this.valuesString[i][header]];
+            }
+          }
         }
       } else {
-        console.log("JSONL not supported (yet) for this feature");
+        console.error(
+          this.extension + " extension not supported for this feature"
+        );
       }
-
       let checkedHeaders = this.checkedHeaders;
       return checkedHeaders.sort().map((header) => {
         let color = ""; // CSS property for the displayed column
@@ -445,7 +473,7 @@ export default {
 
         if (this.headers.includes(header)) {
           // case 0: the mandatory header is in the CSV (no mapping required)
-          values = valuesAndHeaders.find((x) => x.name === header).values;
+          values = valuesAndHeaders[header];
           color = this.colors.find((x) => x.name === "blue").value;
         } else {
           // header is missing, need to check to headers mapping
@@ -462,21 +490,17 @@ export default {
             if (extractedMapping.source) {
               if (extractedMapping.source.length === 1) {
                 // case 1
-                values = valuesAndHeaders.find(
-                  (x) => x.name === extractedMapping.source[0]
-                ).values;
+                values = valuesAndHeaders[extractedMapping.source[0]];
               } else {
                 // case 2
-                let listValues = valuesAndHeaders.filter((x) =>
-                  extractedMapping.source.includes(x.name)
-                );
+                let listSources = extractedMapping.source;
                 for (let i = 0; i < this.numberRows; i++) {
-                  // here we build the value that we will display in the message field
                   let concatValue = "";
-                  for (let j = 0; j < listValues.length; j++) {
-                    concatValue += listValues[j].name + ": ";
-                    concatValue += listValues[j].values[i] + " | ";
-                  }
+                  listSources.forEach((source) => {
+                    concatValue += source + ": ";
+                    concatValue +=
+                      JSON.stringify(valuesAndHeaders[source][i]) + " | ";
+                  });
                   values.push(concatValue);
                 }
               }
@@ -609,7 +633,7 @@ export default {
       formData.append("context", this.fileName);
       formData.append("total_file_size", this.form.file.size);
       formData.append("sketch_id", this.$store.state.sketch.id);
-      if (this.extension === "csv") {
+      if (["csv", "jsonl"].includes(this.extension)) {
         let hMapping = JSON.stringify(this.headersMapping);
         formData.append("headersMapping", hMapping);
         formData.append("delimiter", this.CSVDelimiter);
@@ -638,11 +662,14 @@ export default {
       if (this.form.file.size <= 0) {
         this.error.push("Please select a non empty file");
       }
-      let allowedExtensions = ["csv", "json", "jsonl", "plaso"];
+      let allowedExtensions = ["csv", "jsonl", "plaso"];
       if (!allowedExtensions.includes(this.extension)) {
-        this.error.push("Please select a file with a valid extension");
+        this.error.push(
+          "Please select a file with a valid extension: " +
+            allowedExtensions.toString()
+        );
       }
-      if (this.extension === "csv") {
+      if (["csv", "jsonl"].includes(this.extension)) {
         // 1. check if mapping is completed, i.e., if the user set all the mandatory headers
         if (this.headersMapping.length !== this.missingHeaders.length) {
           this.error.push(
@@ -679,6 +706,8 @@ export default {
       /* 3. Manage CSV missing headers */
       if (this.extension === "csv") {
         this.extractCSVHeader();
+      } else if (this.extension === "jsonl") {
+        this.extractJSONLHeader();
       } else {
         this.validateFile();
       }
@@ -701,6 +730,72 @@ export default {
             .split("\n")
             .slice(1, vueJS.staticNumberRows + 1);
           vueJS.validateFile();
+        }
+      };
+    },
+    extractJSONLHeader: function () {
+      let reader = new FileReader();
+      let file = document.getElementById("datafile").files[0];
+      let vueJS = this;
+      reader.readAsText(file.slice(0, 10000));
+      reader.onloadend = function (e) {
+        if (e.target.readyState === FileReader.DONE) {
+          /* 3a. Extract the headers from the CSV */
+          let data = e.target.result;
+
+          // Algorithm to extract the JSON first lines
+
+          // let isText = false;
+          // let separator = '"';
+          // let curlyBrackets = [];
+          // let jsonObj = [];
+
+          // for (let i = 0; i < data.length; i++) {
+          //   let c = data[i];
+          //   if (isText) {
+          //     if (c === separator) isText = false;
+          //     continue;
+          //   } else {
+          //     if (c === "{") {
+          //       curlyBrackets.push(i);
+          //     } else if (c === "}") {
+          //       let index = curlyBrackets.pop();
+          //       if (curlyBrackets.length === 0) {
+          //         jsonObj.push(data.slice(index, i + 1));
+          //         if (jsonObj.length >= vueJS.staticNumberRows) {
+          //           break;
+          //         }
+          //       }
+          //     } else if (c === "'") {
+          //       separator = "'";
+          //       isText = true;
+          //     } else if (c === "'") {
+          //       separator = '"';
+          //       isText = true;
+          //     }
+          //   }
+          // }
+
+          // if (jsonObj.length === 0) {
+          //   vueJS.error.push("Cannot parse JSON FILE");
+          //   return;
+          // }
+
+          // instruction to parse JSONL: https://dbconvert.com/blog/json-lines-data-stream/
+          // according to this documentation, "It doesn’t require custom parsers. Just read a line, parse as JSON, read a line, parse as JSON… and so on."
+
+          let rows = data.split("\n");
+          let i = Math.min(vueJS.staticNumberRows, rows.length);
+          try {
+            vueJS.headersString = JSON.parse(rows[0]);
+            vueJS.valuesString = rows.slice(0, i).map((x) => JSON.parse(x));
+            vueJS.validateFile();
+          } catch (objError) {
+            let error = objError.message;
+            error += ". Your first lines of JSON: ";
+            error += jsonObj;
+            vueJS.error.push(error);
+          }
         }
       };
     },

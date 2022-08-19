@@ -67,7 +67,7 @@ class TestUtils(BaseTest):
         for row in data_generator:
             self.assertRegex(row["datetime"], ISO8601_REGEX)
 
-    def test_invalid_headers_mapping(self):
+    def test_invalid_CSV_headers_mapping(self):
         """Test for invalid headers mapping"""
         current_headers = ["DT", "message", "TD"]
 
@@ -103,7 +103,7 @@ class TestUtils(BaseTest):
             # Call next to work around lazy generators.
             next(check_mapping_errors(current_headers, invalid_mapping_3))
 
-    def test_valid_headers_mapping(self):
+    def test_valid_CSV_headers_mapping(self):
         """Test for valid headers mapping"""
         current_headers = ["DT", "message", "TD"]
 
@@ -153,3 +153,11 @@ class TestUtils(BaseTest):
         with self.assertRaises(RuntimeError):
             # Call next to work around lazy generators.
             next(_validate_csv_fields(mandatory_fields, df_02))
+
+
+def test_valid_JSONL_headers_mapping(self):
+    ...
+
+
+def test_invalid_JSONL_headers_mapping(self):
+    ...
