@@ -742,48 +742,6 @@ export default {
         if (e.target.readyState === FileReader.DONE) {
           /* 3a. Extract the headers from the CSV */
           let data = e.target.result;
-
-          // Algorithm to extract the JSON first lines
-
-          // let isText = false;
-          // let separator = '"';
-          // let curlyBrackets = [];
-          // let jsonObj = [];
-
-          // for (let i = 0; i < data.length; i++) {
-          //   let c = data[i];
-          //   if (isText) {
-          //     if (c === separator) isText = false;
-          //     continue;
-          //   } else {
-          //     if (c === "{") {
-          //       curlyBrackets.push(i);
-          //     } else if (c === "}") {
-          //       let index = curlyBrackets.pop();
-          //       if (curlyBrackets.length === 0) {
-          //         jsonObj.push(data.slice(index, i + 1));
-          //         if (jsonObj.length >= vueJS.staticNumberRows) {
-          //           break;
-          //         }
-          //       }
-          //     } else if (c === "'") {
-          //       separator = "'";
-          //       isText = true;
-          //     } else if (c === "'") {
-          //       separator = '"';
-          //       isText = true;
-          //     }
-          //   }
-          // }
-
-          // if (jsonObj.length === 0) {
-          //   vueJS.error.push("Cannot parse JSON FILE");
-          //   return;
-          // }
-
-          // instruction to parse JSONL: https://dbconvert.com/blog/json-lines-data-stream/
-          // according to this documentation, "It doesn’t require custom parsers. Just read a line, parse as JSON, read a line, parse as JSON… and so on."
-
           let rows = data.split("\n");
           let i = Math.min(vueJS.staticNumberRows, rows.length);
           try {
@@ -793,7 +751,7 @@ export default {
           } catch (objError) {
             let error = objError.message;
             error += ". Your first lines of JSON: ";
-            error += jsonObj;
+            error += rows[0];
             vueJS.error.push(error);
           }
         }

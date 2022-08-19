@@ -271,7 +271,7 @@ def build_index_pipeline(
     sketch_analyzer_chain = None
     searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
 
-    if file_extension == "csv" or file_extension == "jsonl":
+    if file_extension in {"csv", "jsonl"}:
         # passing the extra argument: headers_mapping
         index_task = index_task_class.s(
             file_path,
