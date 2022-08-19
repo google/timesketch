@@ -271,7 +271,7 @@ def build_index_pipeline(
     sketch_analyzer_chain = None
     searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
 
-    if file_extension == "csv":
+    if file_extension == "csv" or file_extension == "jsonl":
         # passing the extra argument: headers_mapping
         index_task = index_task_class.s(
             file_path,
@@ -285,13 +285,7 @@ def build_index_pipeline(
         )
     else:
         index_task = index_task_class.s(
-            file_path,
-            events,
-            timeline_name,
-            index_name,
-            file_extension,
-            timeline_id,
-            headers_mapping,
+            file_path, events, timeline_name, index_name, file_extension, timeline_id
         )
 
     # TODO: Check if a scenario is set or an investigative question
