@@ -17,10 +17,10 @@ from __future__ import unicode_literals
 import unittest
 import mock
 
+from timesketch_api_client import sigma
 from . import client
 from . import sketch as sketch_lib
 from . import test_lib
-from timesketch_api_client import sigma
 
 MOCK_SIGMA_RULE = """
 title: Suspicious Installation of ZMap
@@ -82,9 +82,8 @@ class TimesketchApiTest(unittest.TestCase):
     def test_create_sigma_rule(self):
         rule = self.api_client.create_sigma_rule(
             rule_text=MOCK_SIGMA_RULE)
-        self.assertIsInstance(rule,sigma.Sigma)
+        self.assertIsInstance(rule, sigma.Sigma)
         self.assertIn("5266a592-b793-11ea-b3de-0242ac", rule.id)
         self.assertIn("5266a592-b793-11ea-b3de-0242ac", rule.rule_uuid)
         self.assertIn("suspicious installation of ZMap", rule.description)
         self.assertIn('"*apt\\-get\\ install\\ zmap*"', rule.es_query)
-
