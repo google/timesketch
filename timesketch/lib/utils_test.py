@@ -158,7 +158,6 @@ class TestUtils(BaseTest):
 
     def test_invalid_JSONL_file(self):
         """Test for JSONL with missing keys in the dictionary wrt headers mapping"""
-        mandatory_fields = ["message", "datetime", "timestamp_desc"]
         linedict = {"DT": "2011-11-11", "MSG": "this is a test"}
         headers_mapping = [
             {"target": "datetime", "source": ["DT"], "default_value": None},
@@ -170,7 +169,6 @@ class TestUtils(BaseTest):
             # Call next to work around lazy generators.
             next(rename_jsonl_headers(linedict, headers_mapping, lineno))
 
-        mandatory_fields = ["message", "datetime", "timestamp_desc"]
         linedict = {"DT": "2011-11-11", "MSG": "this is a test", "ANOTHERMSG": "test2"}
         headers_mapping = [
             {"target": "datetime", "source": ["DT"], "default_value": None},
@@ -188,7 +186,6 @@ class TestUtils(BaseTest):
 
     def test_valid_JSONL_file(self):
         """Test valid JSONL with valid headers mapping"""
-        mandatory_fields = ["message", "datetime", "timestamp_desc"]
         linedict = {"DT": "2011-11-11", "MSG": "this is a test", "ANOTHERMSG": "test2"}
         lineno = 0
         headers_mapping = [
