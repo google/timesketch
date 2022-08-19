@@ -24,6 +24,8 @@ from timesketch.lib.utils import random_color
 from timesketch.lib.utils import read_and_validate_csv
 from timesketch.lib.utils import check_mapping_errors
 from timesketch.lib.utils import _validate_csv_fields
+from timesketch.lib.utils import rename_jsonl_headers
+
 
 TEST_CSV = "test_tools/test_events/sigma_events.csv"
 ISO8601_REGEX = (
@@ -67,7 +69,7 @@ class TestUtils(BaseTest):
         for row in data_generator:
             self.assertRegex(row["datetime"], ISO8601_REGEX)
 
-    def test_invalid_CSV_headers_mapping(self):
+    def test_invalid_headers_mapping(self):
         """Test for invalid headers mapping"""
         current_headers = ["DT", "message", "TD"]
 
@@ -103,7 +105,7 @@ class TestUtils(BaseTest):
             # Call next to work around lazy generators.
             next(check_mapping_errors(current_headers, invalid_mapping_3))
 
-    def test_valid_CSV_headers_mapping(self):
+    def test_valid_headers_mapping(self):
         """Test for valid headers mapping"""
         current_headers = ["DT", "message", "TD"]
 
@@ -154,10 +156,50 @@ class TestUtils(BaseTest):
             # Call next to work around lazy generators.
             next(_validate_csv_fields(mandatory_fields, df_02))
 
+    def test_invalid_JSONL_file(self):
+        """Test for JSONL with missing keys in the dictionary wrt headers mapping"""
+        mandatory_fields = ["message", "datetime", "timestamp_desc"]
+        linedict = {"DT": "2011-11-11", "MSG": "this is a test"}
+        headers_mapping = [
+            {"target": "datetime", "source": ["DT"], "default_value": None},
+            {"target": "timestamp_desc", "source": None, "default_value": "test time"},
+            {"target": "message", "source": ["msg"], "default_value": None},
+        ]
+        lineno = 0
+        with self.assertRaises(RuntimeError):
+            # Call next to work around lazy generators.
+            next(rename_jsonl_headers(linedict, headers_mapping, lineno))
 
-def test_valid_JSONL_headers_mapping(self):
-    ...
+        mandatory_fields = ["message", "datetime", "timestamp_desc"]
+        linedict = {"DT": "2011-11-11", "MSG": "this is a test", "ANOTHERMSG": "test2"}
+        headers_mapping = [
+            {"target": "datetime", "source": ["DT"], "default_value": None},
+            {"target": "timestamp_desc", "source": None, "default_value": "test time"},
+            {
+                "target": "message",
+                "source": ["MSG", "anothermsg"],
+                "default_value": None,
+            },
+        ]
+        lineno = 0
+        with self.assertRaises(RuntimeError):
+            # Call next to work around lazy generators.
+            next(rename_jsonl_headers(linedict, headers_mapping, lineno))
 
-
-def test_invalid_JSONL_headers_mapping(self):
-    ...
+    def test_valid_JSONL_file(self):
+        """Test valid JSONL with valid headers mapping"""
+        mandatory_fields = ["message", "datetime", "timestamp_desc"]
+        linedict = {"DT": "2011-11-11", "MSG": "this is a test", "ANOTHERMSG": "test2"}
+        lineno = 0
+        headers_mapping = [
+            {"target": "datetime", "source": ["DT"], "default_value": None},
+            {"target": "timestamp_desc", "source": None, "default_value": "test time"},
+            {
+                "target": "message",
+                "source": ["MSG", "ANOTHERMSG"],
+                "default_value": None,
+            },
+        ]
+        self.assertTrue(
+            isinstance(rename_jsonl_headers(linedict, headers_mapping, lineno), dict)
+        )
