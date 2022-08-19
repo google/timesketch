@@ -303,19 +303,19 @@ level: high`,
       if (status === 'false') return "red"
       return "green";
     },
-    getRuleByUUID(Rule_Uuid) {
+    getRuleByUUID(RuleUuid) {
       if (Array.isArray(this.$store.state.sigmaRuleList)) {
-        console.log("trying to find" + Rule_Uuid)
+        console.log("trying to find" + RuleUuid)
         var result = this.$store.state.sigmaRuleList.filter(obj => {
-          return obj.rule_uuid === Rule_Uuid
+          return obj.rule_uuid === RuleUuid
         })
         return { result }
       } else {
-        console.log(Rule_Uuid + 'is not found');
+        console.log(RuleUuid + 'is not found');
         return {
           // If not found in the current installed rules
           result: [{
-            "rule_uuid": Rule_Uuid, "ts_use_in_analyzer": "Not found",
+            "rule_uuid": RuleUuid, "ts_use_in_analyzer": "Not found",
           }]
         }
       }

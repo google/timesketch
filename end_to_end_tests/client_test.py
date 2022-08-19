@@ -47,7 +47,7 @@ class ClientTest(interface.BaseEndToEndTest):
 
     def setup(self):
         """Create the rule"""
-        self.assertRaises(ValueError, self.api.create_sigma_rule,None)
+        self.assertions.assertRaises(ValueError, self.api.create_sigma_rule,None)
         self.api.create_sigma_rule(rule_text=MOCK_SIGMA_RULE)
 
     def test_client(self):
