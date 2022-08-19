@@ -32,7 +32,7 @@ class Sigma(
 ):
     """Implements the Sigma model."""
 
-    rule_uuid = Column(Unicode(255))
+    #rule_uuid = Column(Unicode(255))
     rule_yaml = Column(UnicodeText())
     user_id = Column(
         Integer, ForeignKey("user.id")
@@ -41,7 +41,7 @@ class Sigma(
     def __init__(
         self,
         rule_yaml=None,
-        rule_uuid=None
+        #rule_uuid=None
     ):
         """Initialize the Sigma object.
 
@@ -50,4 +50,4 @@ class Sigma(
         """
         super().__init__()
         self.rule_yaml = rule_yaml
-        self.rule_uuid = rule_uuid
+        #self.rule_uuid = rule_uuid
