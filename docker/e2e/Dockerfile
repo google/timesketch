@@ -23,8 +23,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   plaso-tools \
   && rm -rf /var/lib/apt/lists/*
 
-# Install Timesketch from master to get the latest code
-#RUN wget https://raw.githubusercontent.com/google/timesketch/master/requirements.txt
+# Install Timesketch from main to get the latest code
+#RUN wget https://raw.githubusercontent.com/google/timesketch/main/requirements.txt
 #RUN pip3 install -r requirements.txt
 
 # Install timesketch from the current branch (In the context of CI platform)

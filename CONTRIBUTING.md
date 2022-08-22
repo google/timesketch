@@ -16,7 +16,7 @@ Add an upstream remote so you can easily keep up to date with the main repositor
 
 To update your local repo from the main:
 
-    $ git pull upstream master
+    $ git pull upstream main
 
 Please follow the Style Guide and make your changes. Once you're ready for review make sure the tests pass:
 

@@ -30,7 +30,7 @@ long_description = (
     "integrate Timesketch into other products such as Jupyter/Colab.\n\n"
     "To see how it works in action, try the colab notebook that is accessible "
     "from here: https://colab.research.google.com/github/google/timesketch/"
-    "blob/master/notebooks/colab-timesketch-demo.ipynb"
+    "blob/main/notebooks/colab-timesketch-demo.ipynb"
 )
 
 

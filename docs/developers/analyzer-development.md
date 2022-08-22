@@ -4,9 +4,9 @@
 
 When you develop an analyzer that would benefit from creating smaller sub-jobs, you should use Multi Analyzer.
 
-For example The Sigma analyzer is such a Multi Analyzer. That means, the Sigma analyzer is calling `get_kwargs()` from [sigma_tagger.py](https://github.com/google/timesketch/blob/master/timesketch/lib/analyzers/sigma_tagger.py). That will return a list of all Sigma rules installed on the instance. The Main celery job then spawns one celery job per Sigma rule that can run in parallel or serial depending on the celery config and sizing of the Timesketch instance.
+For example The Sigma analyzer is such a Multi Analyzer. That means, the Sigma analyzer is calling `get_kwargs()` from [sigma_tagger.py](https://github.com/google/timesketch/blob/main/timesketch/lib/analyzers/sigma_tagger.py). That will return a list of all Sigma rules installed on the instance. The Main celery job then spawns one celery job per Sigma rule that can run in parallel or serial depending on the celery config and sizing of the Timesketch instance.
 
-If `get_kwargs()` is not implemented in the analyzer, [tasks.py](https://github.com/google/timesketch/blob/master/timesketch/lib/tasks.py) expects it is not a multi analyzer, thus creating only one celery job.
+If `get_kwargs()` is not implemented in the analyzer, [tasks.py](https://github.com/google/timesketch/blob/main/timesketch/lib/tasks.py) expects it is not a multi analyzer, thus creating only one celery job.
 
 ## analyzer_run.py
 

@@ -32,8 +32,8 @@ jobs:
           pip install -e importer_client/python
       - name: Run pylint
         run: |
-          git config pull.rebase false && git fetch -p origin master
-          for FILE in `git --no-pager diff origin/master --name-only --diff-filter=ACMR | grep \.py$`; do echo "Running pylint against ${FILE}"; pylint --rcfile=.pylintrc ${FILE}; done
+          git config pull.rebase false && git fetch -p origin main
+          for FILE in `git --no-pager diff origin/main --name-only --diff-filter=ACMR | grep \.py$`; do echo "Running pylint against ${FILE}"; pylint --rcfile=.pylintrc ${FILE}; done
 
   ESLint-frontend:
     runs-on: ubuntu-20.04
@@ -54,8 +54,8 @@ jobs:
         run: yarn add eslint@5.16.0
       - name: Run eslint
         run: |
-          git config pull.rebase false && git fetch -p origin master
-          for FILE in `git --no-pager diff origin/master --name-only --diff-filter=ACMR | grep -e \.vue$ -e \.js$ | grep -v dist\/js | grep ^timesketch\/frontend\/ | sed s/'^timesketch\/frontend\/'/''/`; do echo "Running eslint against ${FILE}"; yarn run eslint ${FILE}; done
+          git config pull.rebase false && git fetch -p origin main
+          for FILE in `git --no-pager diff origin/main --name-only --diff-filter=ACMR | grep -e \.vue$ -e \.js$ | grep -v dist\/js | grep ^timesketch\/frontend\/ | sed s/'^timesketch\/frontend\/'/''/`; do echo "Running eslint against ${FILE}"; yarn run eslint ${FILE}; done
 
   ESLint-frontend-ng:
     runs-on: ubuntu-20.04
@@ -76,5 +76,5 @@ jobs:
         run: yarn add eslint@5.16.0
       - name: Run eslint
         run: |
-          git config pull.rebase false && git fetch -p origin master
-          for FILE in `git --no-pager diff origin/master --name-only --diff-filter=ACMR | grep -e \.vue$ -e \.js$ | grep -v dist\/js | grep ^timesketch\/frontend-ng\/ | sed s/'^timesketch\/frontend-ng\/'/''/`; do echo "Running eslint against ${FILE}"; yarn run eslint ${FILE}; done
+          git config pull.rebase false && git fetch -p origin main
+          for FILE in `git --no-pager diff origin/main --name-only --diff-filter=ACMR | grep -e \.vue$ -e \.js$ | grep -v dist\/js | grep ^timesketch\/frontend-ng\/ | sed s/'^timesketch\/frontend-ng\/'/''/`; do echo "Running eslint against ${FILE}"; yarn run eslint ${FILE}; done

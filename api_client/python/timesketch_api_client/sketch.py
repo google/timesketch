@@ -950,9 +950,9 @@ class Sketch(resource.BaseResource):
         message = (
             "This function has been deprecated, use the CLI tool: "
             "timesketch_importer: https://github.com/google/timesketch/blob/"
-            "master/docs/UploadData.md#using-the-importer-clie-tool or the "
+            "main/docs/UploadData.md#using-the-importer-clie-tool or the "
             "importer library: https://github.com/google/timesketch/blob/"
-            "master/docs/UploadDataViaAPI.md"
+            "main/docs/UploadDataViaAPI.md"
         )
         logger.error(message)
         raise RuntimeError(message)
