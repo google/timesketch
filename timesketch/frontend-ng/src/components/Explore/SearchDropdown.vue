@@ -57,7 +57,7 @@ limitations under the License.
                   v-on:click="searchForLabel(label.label)"
                   style="font-size: 0.9em"
                 >
-                  <v-icon v-if="label.label === '__ts_star'" left small color="#FFC300">mdi-star</v-icon>
+                  <v-icon v-if="label.label === '__ts_star'" left small color="amber">mdi-star</v-icon>
                   <v-icon v-if="label.label === '__ts_comment'" left small>mdi-comment-multiple-outline</v-icon>
 
                   <v-list-item-content>

@@ -513,15 +513,19 @@ limitations under the License.
                 {{ item._source.timestamp | formatTimestamp | toISO8601 }}
               </div>
             </template>
-
             <!-- Actions field -->
             <template v-slot:item.actions="{ item }">
-              <v-btn small icon>
-                <v-icon>mdi-star-outline</v-icon>
+              <v-btn small icon @click="toggleStar(item)">
+                <v-icon v-if="item._source.label.includes('__ts_star')" color="amber">mdi-star</v-icon>
+                <v-icon v-else>mdi-star-outline</v-icon>
               </v-btn>
-              <v-btn small icon>
-                <v-icon>mdi-tag-plus-outline</v-icon>
-              </v-btn>
+              <!-- Label menu -->
+              <v-menu offset-y :close-on-content-click="false">
+                <template v-slot:activator="{ on, attrs }">
+                  <v-icon v-bind="attrs" v-on="on">mdi-tag-plus-outline</v-icon>
+                </template>
+                <ts-event-tag-menu :event="item"></ts-event-tag-menu>
+              </v-menu>
             </template>
 
             <!-- Generic slot for any field type. Adds tags and emojis to the first column. -->
@@ -533,15 +537,17 @@ limitations under the License.
                 @click="toggleDetailedEvent(item)"
               >
                 <span :class="{ 'ts-event-field-ellipsis': field.text === 'message' }">
+                  <!-- Tags -->
                   <span v-if="displayOptions.showTags && index === 0">
-                    <v-chip small label outlined class="mr-2" v-for="tag in item._source.tag" :key="tag">{{
-                      tag
-                    }}</v-chip>
-                    <v-chip small label outlined class="mr-2" v-for="label in item._source.label" :key="label">{{
-                      label
-                    }}</v-chip>
+                    <v-chip small outlined class="mr-2" v-for="tag in item._source.tag" :key="tag">{{ tag }}</v-chip>
+                    <span v-for="label in item._source.label" :key="label">
+                      <v-chip v-if="!label.startsWith('__ts')" small outlined class="mr-2">
+                        {{ label }}
+                      </v-chip>
+                    </span>
                   </span>
-                  <span v-if="displayOptions.showEmojis">
+                  <!-- Emojis -->
+                  <span v-if="displayOptions.showEmojis && index === 0">
                     <span
                       class="mr-2"
                       v-for="emoji in item._source.__ts_emojis"
@@ -592,6 +598,7 @@ import TsTimelinePicker from '../components/Explore/TimelinePicker'
 import TsFilterMenu from '../components/Explore/FilterMenu'
 import TsScenario from '../components/Scenarios/Scenario'
 import TsEventDetail from '../components/Explore/EventDetail'
+import TsEventTagMenu from '../components/Explore/EventTagMenu.vue'
 
 import EventBus from '../main'
 import { None } from 'vega'
@@ -631,6 +638,7 @@ export default {
     TsFilterMenu,
     TsScenario,
     TsEventDetail,
+    TsEventTagMenu,
   },
   props: ['sketchId'],
   data() {
@@ -656,6 +664,7 @@ export default {
       saveSearchMenu: false,
       saveSearchFormName: '',
       fromSavedSearch: false,
+      selectedEventTags: [],
       // old stuff
       params: {},
       showCreateViewModal: false,
@@ -702,6 +711,9 @@ export default {
     },
     meta() {
       return this.$store.state.meta
+    },
+    tags() {
+      return this.$store.state.tags
     },
     scenario() {
       return this.$store.state.scenario
@@ -761,16 +773,21 @@ export default {
           align: 'end',
         },
       ]
-      // Initial display when nothing else is specified is to show the message field.
-      if (!this.extraHeaders.length && this.selectedFields.length === 1) {
+      this.extraHeaders = []
+      this.selectedFields.forEach((field) => {
         let header = {
-          text: 'message',
+          text: field.field,
           align: 'start',
-          value: '_source.message',
-          width: '100%',
+          value: '_source.' + field.field,
         }
-        this.extraHeaders.push(header)
-      }
+        if (field.field === 'message') {
+          header.width = '100%'
+          this.extraHeaders.unshift(header)
+        } else {
+          this.extraHeaders.push(header)
+        }
+      })
+
       // Extend the column headers from position 3 (after the actions column).
       baseHeaders.splice(3, 0, ...this.extraHeaders)
       return baseHeaders
@@ -781,6 +798,9 @@ export default {
         width = '50'
       }
       return width
+    },
+    tags() {
+      return this.$store.state.tags
     },
   },
   methods: {
@@ -1207,25 +1227,23 @@ export default {
           this.search(true, true, true)
         }
       })
-      this.extraHeaders = []
-      value.forEach((field) => {
-        let header = {
-          text: field.field,
-          align: 'start',
-          value: '_source.' + field.field,
-        }
-        if (field.field === 'message') {
-          header.width = '100%'
-          this.extraHeaders.unshift(header)
-        } else {
-          this.extraHeaders.push(header)
-        }
-      })
     },
     removeField: function (index) {
       this.selectedFields.splice(index, 1)
     },
-    toggleStar: function () {
+    toggleStar(event) {
+      if (event._source.label.includes('__ts_star')) {
+        event._source.label.splice(event._source.label.indexOf('__ts_star'), 1)
+      } else {
+        event._source.label.push('__ts_star')
+      }
+      ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', event, this.currentSearchNode)
+        .then((response) => {})
+        .catch((e) => {
+          console.error(e)
+        })
+    },
+    toggleMultipleStars: function () {
       let eventsToToggle = []
       Object.keys(this.selectedEvents).forEach((key, index) => {
         eventsToToggle.push(this.selectedEvents[key])
