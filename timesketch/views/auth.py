@@ -82,6 +82,8 @@ def login():
     # Google OpenID Connect authentication.
     if current_app.config.get("GOOGLE_OIDC_ENABLED", False):
         hosted_domain = current_app.config.get("GOOGLE_OIDC_HOSTED_DOMAIN")
+        # Save the next URL parameter in the session for redirect after login.
+        session['next'] = request.args.get("next", "/")
         return redirect(get_oauth2_authorize_url(hosted_domain))
 
     # Google Identity-Aware Proxy authentication (using JSON Web Tokens)
@@ -410,6 +412,6 @@ def google_openid_connect():
 
     # Log the user in and setup the session.
     if current_user.is_authenticated:
-        return redirect(request.args.get("next") or "/")
+        return redirect(session.get("next", "/"))
 
     return abort(HTTP_STATUS_CODE_BAD_REQUEST, "User is not authenticated.")

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-container fluid class="mt-4">
+  <v-container fluid>
     <!-- Right side menu for selected events -->
     <v-navigation-drawer
       v-model="selectedEvents.length"
@@ -46,34 +46,31 @@ limitations under the License.
       </v-container>
     </v-navigation-drawer>
 
+    <!-- Scenarios left panel -->
+    <v-navigation-drawer
+      v-if="scenario.facets.length"
+      app
+      permanent
+      :width="rightSidePanelWidth"
+      hide-overlay
+      class="ml-14"
+    >
+      <ts-scenario
+        :scenario="scenario"
+        :minimize-panel="minimizeRightSidePanel"
+        @togglePanel="minimizeRightSidePanel = !minimizeRightSidePanel"
+      ></ts-scenario>
+    </v-navigation-drawer>
+
     <!-- Search -->
     <v-row>
       <v-col cols="12">
-        <v-card outlined class="pa-md-2">
+        <v-card outlined class="pa-md-3 pb-3">
           <v-row>
             <v-col cols="12">
               <v-card class="d-flex align-start" flat>
                 <v-sheet class="mt-1">
                   <ts-search-history-buttons @toggleSearchHistory="toggleSearchHistory()"></ts-search-history-buttons>
-                  <!-- Time filter menu -->
-                  <v-menu
-                    v-model="timeFilterMenu"
-                    offset-y
-                    :close-on-content-click="false"
-                    :close-on-click="true"
-                    content-class="menu-with-gap"
-                    allow-overflow
-                    style="overflow: visible"
-                  >
-                    <template v-slot:activator="{ on, attrs }">
-                      <v-btn small depressed v-bind="attrs" v-on="on">
-                        <v-icon left> mdi-filter-variant-plus </v-icon>
-                        Add filter
-                      </v-btn>
-                    </template>
-
-                    <ts-filter-menu app @cancel="timeFilterMenu = false" @addChip="addChip"></ts-filter-menu>
-                  </v-menu>
                 </v-sheet>
                 <v-divider vertical class="mx-2"></v-divider>
 
@@ -124,14 +121,26 @@ limitations under the License.
           </v-row>
           <v-divider class="mt-2 mb-3"></v-divider>
 
+          <!-- Timeline picker -->
+          <v-row dense>
+            <v-col cols="12">
+              <ts-timeline-picker
+                @updateSelectedTimelines="updateSelectedTimelines($event)"
+                :current-query-filter="currentQueryFilter"
+                :count-per-index="eventList.meta.count_per_index"
+                :count-per-timeline="eventList.meta.count_per_timeline"
+              ></ts-timeline-picker>
+            </v-col>
+          </v-row>
+
           <!-- Time filter chips -->
-          <v-row dense v-if="timeFilterChips.length">
+          <v-row dense>
             <v-col cols="12" class="py-0">
               <v-chip-group>
                 <span v-for="(chip, index) in timeFilterChips" :key="index + chip.value">
                   <v-menu offset-y content-class="menu-with-gap">
                     <template v-slot:activator="{ on }">
-                      <v-chip v-on="on">
+                      <v-chip outlined v-on="on">
                         <v-icon left small> mdi-clock-outline </v-icon>
                         <span
                           v-bind:style="[!chip.active ? { 'text-decoration': 'line-through', opacity: '50%' } : '']"
@@ -179,14 +188,31 @@ limitations under the License.
                     >OR</v-btn
                   >
                 </span>
+                <span>
+                  <v-menu
+                    v-model="timeFilterMenu"
+                    offset-y
+                    :close-on-content-click="false"
+                    :close-on-click="true"
+                    content-class="menu-with-gap"
+                    allow-overflow
+                    style="overflow: visible"
+                  >
+                    <template v-slot:activator="{ on, attrs }">
+                      <v-chip outlined v-bind="attrs" v-on="on">
+                        <v-icon left small> mdi-clock-plus-outline </v-icon>
+                        Add timefilter
+                      </v-chip>
+                    </template>
 
-                <v-btn @click="timeFilterMenu = true" icon style="margin-top: 2px">
-                  <v-icon>mdi-plus</v-icon>
-                </v-btn>
+                    <ts-filter-menu app @cancel="timeFilterMenu = false" @addChip="addChip"></ts-filter-menu>
+                  </v-menu>
+                </span>
               </v-chip-group>
             </v-col>
           </v-row>
 
+          <!-- Term filters -->
           <v-row dense v-if="filterChips.length">
             <v-col cols="12" class="py-0">
               <v-chip-group>
@@ -198,22 +224,7 @@ limitations under the License.
                     >AND</v-btn
                   >
                 </span>
-                <v-btn @click="timeFilterMenu = true" icon style="margin-top: 2px">
-                  <v-icon>mdi-plus</v-icon>
-                </v-btn>
               </v-chip-group>
-            </v-col>
-          </v-row>
-
-          <!-- Timeline picker -->
-          <v-row dense>
-            <v-col class="py-0" cols="12">
-              <ts-timeline-picker
-                @updateSelectedTimelines="updateSelectedTimelines($event)"
-                :current-query-filter="currentQueryFilter"
-                :count-per-index="eventList.meta.count_per_index"
-                :count-per-timeline="eventList.meta.count_per_timeline"
-              ></ts-timeline-picker>
             </v-col>
           </v-row>
         </v-card>
@@ -280,17 +291,41 @@ limitations under the License.
       </v-col>
 
       <v-col cols="12" v-if="eventList.objects.length || (searchInProgress && this.currentQueryFilter.indices.length)">
-        <v-card outlined>
+        <v-card flat>
           <v-toolbar flat>
-            <v-card-text> {{ fromEvent }}-{{ toEvent }} of {{ totalHits }} events ({{ totalTime }}s) </v-card-text>
+            <v-card-text>
+              {{ fromEvent }}-{{ toEvent }} of {{ totalHits }} events ({{ totalTime }}s)
+
+              <v-dialog v-model="saveSearchMenu" width="500">
+                <template v-slot:activator="{ on, attrs }">
+                  <v-btn icon v-bind="attrs" v-on="on">
+                    <v-icon>mdi-content-save-outline</v-icon>
+                  </v-btn>
+                </template>
+
+                <v-card>
+                  <v-card-title> Save Search </v-card-title>
+
+                  <v-card-text>
+                    <v-text-field v-model="saveSearchFormName" required placeholder="Name your saved search">
+                    </v-text-field>
+                  </v-card-text>
+
+                  <v-divider></v-divider>
+
+                  <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn color="primary" text @click="saveSearchMenu = false"> Cancel </v-btn>
+                    <v-btn color="primary" text @click="saveSearch" :disabled="!saveSearchFormName"> Save </v-btn>
+                  </v-card-actions>
+                </v-card>
+              </v-dialog>
+            </v-card-text>
+
             <v-spacer></v-spacer>
 
             <v-btn icon @click="showHistogram = !showHistogram">
               <v-icon>mdi-chart-bar</v-icon>
-            </v-btn>
-
-            <v-btn icon>
-              <v-icon>mdi-content-save-outline</v-icon>
             </v-btn>
 
             <v-btn icon>
@@ -384,15 +419,27 @@ limitations under the License.
             v-model="selectedEvents"
             :headers="headers"
             :items="eventList.objects"
-            :footer-props="{ 'items-per-page-options': [40, 80, 100, 200, 500] }"
+            :footer-props="{ 'items-per-page-options': [10, 40, 80, 100, 200, 500], 'show-current-page': true }"
             :loading="searchInProgress"
-            :options="tableOptions"
+            :options.sync="tableOptions"
+            :server-items-length="totalHits"
             item-key="_id"
             loading-text="Searching... Please wait"
             show-select
+            disable-filtering
+            disable-sort
             :expanded="expandedRows"
             :dense="displayOptions.isCompact"
           >
+            <template v-slot:top="{ pagination, options, updateOptions }">
+              <v-data-footer
+                :pagination="pagination"
+                :options="options"
+                @update:options="updateOptions"
+                :show-current-page="true"
+                :items-per-page-options="[10, 40, 80, 100, 200, 500]"
+              ></v-data-footer>
+            </template>
             <!-- Event details -->
             <template v-slot:expanded-item="{ headers, item }">
               <td :colspan="headers.length">
@@ -499,6 +546,7 @@ import TsSearchDropdown from '../components/Explore/SearchDropdown'
 import TsBarChart from '../components/Explore/BarChart'
 import TsTimelinePicker from '../components/Explore/TimelinePicker'
 import TsFilterMenu from '../components/Explore/FilterMenu'
+import TsScenario from '../components/Scenarios/Scenario'
 import TsEventDetail from '../components/Explore/EventDetail'
 
 import EventBus from '../main'
@@ -537,6 +585,7 @@ export default {
     TsBarChart,
     TsTimelinePicker,
     TsFilterMenu,
+    TsScenario,
     TsEventDetail,
   },
   props: ['sketchId'],
@@ -573,9 +622,14 @@ export default {
       tableOptions: {
         itemsPerPage: 40,
       },
+      currentItemsPerPage: 40,
       drawer: false,
+      leftDrawer: true,
       expandedRows: [],
       timeFilterMenu: false,
+      saveSearchMenu: false,
+      saveSearchFormName: '',
+      fromSavedSearch: false,
       // old stuff
       params: {},
       showCreateViewModal: false,
@@ -613,6 +667,8 @@ export default {
         x: 0,
         y: 0,
       },
+      minimizeRightSidePanel: false,
+      sidePanelTab: null,
     }
   },
   computed: {
@@ -622,16 +678,11 @@ export default {
     meta() {
       return this.$store.state.meta
     },
+    scenario() {
+      return this.$store.state.scenario
+    },
     totalHits() {
       return this.eventList.meta.es_total_count_complete || 0
-    },
-    totalHitsForPagination() {
-      let total = this.eventList.meta.es_total_count_complete || 0
-      // Elasticsearch only support pagination for the first 10k events.
-      if (total > 9999) {
-        total = 10000
-      }
-      return total
     },
     totalTime() {
       return this.eventList.meta.es_time / 1000 || 0
@@ -659,6 +710,13 @@ export default {
     },
     currentSearchNode() {
       return this.$store.state.currentSearchNode
+    },
+    rightSidePanelWidth() {
+      let width = '430'
+      if (this.minimizeRightSidePanel) {
+        width = '50'
+      }
+      return width
     },
   },
   methods: {
@@ -751,6 +809,13 @@ export default {
       }
     },
     search: function (emitEvent = true, resetPagination = true, incognito = false, parent = false) {
+      // Remove URL parameter if new search is executed after saved search
+      if (this.fromSavedSearch) {
+        this.fromSavedSearch = false
+      } else {
+        this.$router.push(this.$route.path)
+      }
+
       if (!this.currentQueryString) {
         return
       }
@@ -769,7 +834,6 @@ export default {
         // We need to calculate the new position in the page range and it is not
         // trivial with the current pagination UI component we use.
         this.currentQueryFilter.from = 0
-        this.currentPage = 1
       }
 
       // Update with selected fields
@@ -821,6 +885,9 @@ export default {
     setQueryAndFilter: function (searchEvent) {
       this.currentQueryString = searchEvent.queryString
       this.currentQueryFilter = searchEvent.queryFilter
+      // Preserve user defined item count instead of resetting.
+      this.currentQueryFilter.size = this.currentItemsPerPage
+      this.currentQueryFilter.terminate_after = this.currentItemsPerPage
       if (searchEvent.doSearch) {
         this.search()
       }
@@ -848,9 +915,8 @@ export default {
     },
     searchView: function (viewId) {
       this.selectedEvents = []
-
       this.showSearchDropdown = false
-      this.showSaveSearchModal = false
+      this.fromSavedSearch = true
 
       if (viewId !== parseInt(viewId, 10) && typeof viewId !== 'string') {
         viewId = viewId.id
@@ -1047,8 +1113,24 @@ export default {
         this.meta.filter_labels.push(label)
       }
     },
-    paginate: function (pageNum) {
-      this.currentQueryFilter.from = pageNum * this.currentQueryFilter.size - this.currentQueryFilter.size
+    paginate: function () {
+      // Reset pagination if number of pages per page changes.
+      if (this.tableOptions.itemsPerPage !== this.currentItemsPerPage) {
+        this.tableOptions.page = 1
+        this.currentPage = 1
+        this.currentItemsPerPage = this.tableOptions.itemsPerPage
+        this.currentQueryFilter.size = this.tableOptions.itemsPerPage
+        this.search(true, true, true)
+        return
+      }
+      // To avoid double search request exit early if this is the first search for this
+      // search session.
+      if (this.currentPage === this.tableOptions.page) {
+        return
+      }
+      this.currentQueryFilter.from =
+        this.tableOptions.page * this.currentQueryFilter.size - this.currentQueryFilter.size
+      this.currentPage = this.tableOptions.page
       this.search(true, false, true)
     },
     updateSelectedFields: function (value) {
@@ -1148,12 +1230,25 @@ export default {
         this.showSearchDropdown = false
       }
     },
+    saveSearch: function () {
+      ApiClient.createView(this.sketchId, this.saveSearchFormName, this.currentQueryString, this.currentQueryFilter)
+        .then((response) => {
+          this.saveSearchFormName = ''
+          this.saveSearchMenu = false
+          let newView = response.data.objects[0]
+          this.$store.state.meta.views.push(newView)
+          this.$router.push({ name: 'Explore', query: { view: newView.id } })
+        })
+        .catch((e) => {})
+    },
   },
 
   watch: {
-    numEvents: function (newVal) {
-      this.currentQueryFilter.size = newVal
-      this.search(false, true, true)
+    tableOptions: {
+      handler() {
+        this.paginate()
+      },
+      deep: true,
     },
   },
   mounted() {

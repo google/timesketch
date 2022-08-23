@@ -130,3 +130,20 @@ To test mkdocs locally, run the following in your container:
 ```
 
 And visit the results / review remarks, warnings or errors from mkdocs.
+
+## Formatting
+
+Before merging a pull request, we expect the code to be formatted in a certain manner. You can use VS Code extensions to make your life easier in formatting your files. For example:
+* [Vetur](https://marketplace.visualstudio.com/items?itemName=octref.vetur) for *Vue* files
+* [Python](https://marketplace.visualstudio.com/items?itemName=ms-python.python) and [Black](https://github.com/psf/black) for *Python* files.
+
+### Formatting Python files
+
+We use `black` to format Python files. `black` is the uncompromising Python code formatter. There are two ways to use it:
+1. Manually from the command line: 
+    * Install `black` following the official [black documentation](https://pypi.org/project/black/).
+    * Format your file by running this command: `$ black path/to/python/file`
+2. Automatically from [VS Code](https://dev.to/adamlombard/how-to-use-the-black-python-code-formatter-in-vscode-3lo0):
+    * Download the VS Code extension `Python`.
+    * Navigate to `Code -> Preferences -> Settings` and search for `Python Formatting Provider`. Then, select `black` from the dropdown menu.
+    * Enable the `Format on Save` option to automatically format your files every time you save them.

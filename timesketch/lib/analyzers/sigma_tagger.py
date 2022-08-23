@@ -33,7 +33,7 @@ class SigmaPlugin(interface.BaseAnalyzer):
         super().__init__(index_name, sketch_id, timeline_id=timeline_id)
 
     def run_sigma_rule(
-        self, query, rule_name, tag_list=None, status_good=True):
+        self, query, rule_name, tag_list=None, status_good=False):
         """Runs a sigma rule and applies the appropriate tags.
 
         Args:
