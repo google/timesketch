@@ -65,7 +65,7 @@ class Sigma(
         """
         super().__init__()
         self.user = user
-        self.rule_yaml = rule_yaml
         self.rule_uuid = rule_uuid
+        self.rule_yaml = rule_yaml
         self.title = title
         self.description = description
