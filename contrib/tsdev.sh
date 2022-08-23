@@ -15,7 +15,6 @@ elif [ $1 == "vue-prod" ]; then
   docker exec -it $CONTAINER_ID yarn run --cwd=/usr/local/src/timesketch/timesketch/$frontend build
 elif [ $1 == "test" ]; then
   docker exec -w /usr/local/src/timesketch -it $CONTAINER_ID python3 run_tests.py --coverage
-
 elif [ $1 == "shell" ]; then
   docker exec -it $CONTAINER_ID /bin/bash
 elif [ $1 == "logs" ]; then
