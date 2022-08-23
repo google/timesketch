@@ -294,10 +294,11 @@ export default {
       for (var ioc of this.intelligenceData) {
         for (var tag of ioc.tags) {
           // deal with the case when tag is an object that is alread enriched.
+          var tagKey = null
           if (typeof tag === 'object') {
-            var tagKey = tag.name
+            tagKey = tag.name
           } else {
-            var tagKey = tag
+            tagKey = tag
           }
           if (!this.tagInfo[tagKey]) {
             this.tagInfo[tagKey] = {
