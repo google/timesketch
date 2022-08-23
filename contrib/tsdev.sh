@@ -11,7 +11,7 @@ elif [ $1 == "vue-install" ]; then
   docker exec -it $CONTAINER_ID yarn install --cwd=/usr/local/src/timesketch/timesketch/$frontend
 elif [ $1 == "vue-dev" ]; then
   docker exec -it $CONTAINER_ID yarn run --cwd=/usr/local/src/timesketch/timesketch/$frontend serve
-elif [ $1 == "vue-prod" ]; then
+elif [ $1 == "vue-build" ]; then
   docker exec -it $CONTAINER_ID yarn run --cwd=/usr/local/src/timesketch/timesketch/$frontend build
 elif [ $1 == "test" ]; then
   docker exec -w /usr/local/src/timesketch -it $CONTAINER_ID python3 run_tests.py --coverage
