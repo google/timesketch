@@ -7,7 +7,7 @@ if [ $1 == "web" ]; then
   docker exec -it $CONTAINER_ID gunicorn --reload -b 0.0.0.0:5000 --log-level debug --capture-output --timeout 600 timesketch.wsgi:application
 elif [ $1 == "celery" ]; then
   docker exec -it $CONTAINER_ID celery -A timesketch.lib.tasks worker --loglevel=info
-elif [ $1 == "vue-install" ]; then
+elif [ $1 == "vue-install-deps" ]; then
   docker exec -it $CONTAINER_ID yarn install --cwd=/usr/local/src/timesketch/timesketch/$frontend
 elif [ $1 == "vue-dev" ]; then
   docker exec -it $CONTAINER_ID yarn run --cwd=/usr/local/src/timesketch/timesketch/$frontend serve
