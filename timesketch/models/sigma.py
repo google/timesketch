@@ -50,10 +50,10 @@ class Sigma(
     def __init__(
         self,
         user,
-        rule_yaml=None,
-        rule_uuid=None,
         title = None,
-        description = None
+        description = None,
+        rule_uuid=None,
+        rule_yaml=None
     ):
         """Initialize the Sigma object.
         Args:
