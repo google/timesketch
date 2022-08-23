@@ -59,7 +59,7 @@ class Sigma(
         Args:
             user: A user (instance of timesketch.models.user.User)
             title: Title for the rule
-            description: description of the rule            
+            description: description of the rule
             rule_uuid: uuid of the rule
             rule_yaml: yaml content of the rule
         """
