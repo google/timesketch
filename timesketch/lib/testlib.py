@@ -565,7 +565,7 @@ class BaseTest(TestCase):
             rule_yaml: yaml content of the rule
             rule_uuid: rule uuid of the rule
         Returns:
-            A search template (timesketch.models.sketch.SearchTemplate)
+            A Sigma Rule (timesketch.models.sigma.Sigma)
         """
         sigma = Sigma(
             user=user,
