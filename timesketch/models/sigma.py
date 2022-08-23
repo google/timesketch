@@ -59,10 +59,10 @@ class Sigma(
         """Initialize the Sigma object.
         Args:
             user: A user (instance of timesketch.models.user.User)
-            rule_yaml: yaml content of the rule
-            rule_uuid: uuid of the rule
             title: Title for the rule
-            description: description of the rule
+            description: description of the rule            
+            rule_uuid: uuid of the rule
+            rule_yaml: yaml content of the rule
         """
         super().__init__()
         self.user = user
