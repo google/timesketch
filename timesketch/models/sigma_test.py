@@ -52,6 +52,8 @@ class SigmaModelTest(ModelBaseTest):
             [
                 ("rule_uuid", "5266a592-b793-11ea-b3de-0242ac130004"),
                 ("rule_yaml", SIGMA_RULE),
+                ("title", "Suspicious Installation of Zenmap"),
+                ("description", "Detects suspicious installation of Zenmap"),
                 ("user", self.user1),
             ]
         )

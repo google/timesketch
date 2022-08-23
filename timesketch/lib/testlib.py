@@ -17,6 +17,7 @@ from __future__ import unicode_literals
 
 import codecs
 import json
+from turtle import title
 import six
 
 from flask_testing import TestCase
@@ -557,20 +558,24 @@ class BaseTest(TestCase):
         return searchtemplate
 
     def _create_sigma(
-        self, user, rule_yaml, rule_uuid
+        self, user, rule_yaml, rule_uuid, title, description
     ):
         """Create a sigma rule in the database.
         Args:
             user: A user (instance of timesketch.models.user.User)
             rule_yaml: yaml content of the rule
             rule_uuid: rule uuid of the rule
+            title: Title for the rule
+            description: description of the rule
         Returns:
             A Sigma Rule (timesketch.models.sigma.Sigma)
         """
         sigma = Sigma(
             user=user,
             rule_yaml=rule_yaml,
-            rule_uuid=rule_uuid
+            rule_uuid=rule_uuid,
+            title=title,
+            description=description
         )
         self._commit_to_database(sigma)
         return sigma
@@ -625,6 +630,8 @@ class BaseTest(TestCase):
             user=self.user1,
             rule_uuid='5266a592-b793-11ea-b3de-0242ac130004',
             rule_yaml=SIGMA_RULE,
+            title='Suspicious Installation of Zenmap',
+            description='Detects suspicious installation of Zenmap'
         )
 
     def tearDown(self):

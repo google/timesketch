@@ -30,27 +30,44 @@ from timesketch.models.annotations import GenericAttributeMixin
 class Sigma(
     BaseModel, LabelMixin, StatusMixin, CommentMixin, GenericAttributeMixin
 ):
-    """Implements the Sigma model."""
+    """Implements the Sigma model.
+    Status mixin will be used to track the status of a rule:
+        - stable: may be used in production systems, analyzers or dashboards
+        - test: almost stable, could require some fine tuning, not for analyzers
+        - experimental: can lead to false positives and is noisy, but can reveal
+            interesting events, not for analyzers
+        - deprecated: is replaced by another rule, not for analyzers
+        - unsupported: can not be used in the current state, not for analyzers
+    """
 
     rule_uuid = Column(Unicode(255))
     rule_yaml = Column(UnicodeText())
+    title = Column(UnicodeText())
+    description = Column(UnicodeText())
     user_id = Column(
         Integer, ForeignKey("user.id")
     )  # who added the rule to the system (TS user)
 
+    # Status is a texdt field: use stable for use in analyzer yes, use status from the rule like "stable"
     def __init__(
         self,
         user,
         rule_yaml=None,
-        rule_uuid=None
+        rule_uuid=None,
+        title = None,
+        description = None
     ):
         """Initialize the Sigma object.
         Args:
             user: A user (instance of timesketch.models.user.User)
             rule_yaml: yaml content of the rule
             rule_uuid: uuid of the rule
+            title: Title for the rule
+            description: description of the rule
         """
         super().__init__()
         self.user = user
         self.rule_yaml = rule_yaml
         self.rule_uuid = rule_uuid
+        self.title = title
+        self.description = description
