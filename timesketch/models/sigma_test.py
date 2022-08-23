@@ -48,11 +48,11 @@ class SigmaModelTest(ModelBaseTest):
         """Test that the test sigma rule has the expected data stored
         in the database.
         """
-        expected_result2 = frozenset(
+        expected_result = frozenset(
             [
                 ("rule_uuid", "5266a592-b793-11ea-b3de-0242ac130004"),
                 ("rule_yaml", SIGMA_RULE),
                 ("user", self.user1),
             ]
         )
-        self._test_db_object(expected_result=expected_result2, model_cls=Sigma)
+        self._test_db_object(expected_result=expected_result, model_cls=Sigma)
