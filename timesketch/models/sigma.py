@@ -23,7 +23,6 @@ from timesketch.models import BaseModel
 from timesketch.models.annotations import LabelMixin
 from timesketch.models.annotations import CommentMixin
 from timesketch.models.annotations import StatusMixin
-
 from timesketch.models.annotations import GenericAttributeMixin
 
 
