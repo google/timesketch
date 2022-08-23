@@ -17,7 +17,6 @@ from __future__ import unicode_literals
 
 import codecs
 import json
-from turtle import title
 import six
 
 from flask_testing import TestCase

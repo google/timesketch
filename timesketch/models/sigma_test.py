@@ -13,7 +13,6 @@
 # limitations under the License.
 """Tests for the sigma model."""
 
-
 from timesketch.lib.testlib import ModelBaseTest
 from timesketch.models.sigma import Sigma
 
