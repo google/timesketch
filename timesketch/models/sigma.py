@@ -48,7 +48,6 @@ class Sigma(
         Integer, ForeignKey("user.id")
     )  # who added the rule to the system (TS user)
 
-    # Status is a texdt field: use stable for use in analyzer yes, use status from the rule like "stable"
     def __init__(
         self,
         user,
