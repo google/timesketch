@@ -39,10 +39,10 @@ class Sigma(
         - unsupported: can not be used in the current state, not for analyzers
     """
 
-    rule_uuid = Column(Unicode(255))
-    rule_yaml = Column(UnicodeText())
     title = Column(UnicodeText())
     description = Column(UnicodeText())
+    rule_uuid = Column(Unicode(255))
+    rule_yaml = Column(UnicodeText())
     user_id = Column(
         Integer, ForeignKey("user.id")
     )  # who added the rule to the system (TS user)
