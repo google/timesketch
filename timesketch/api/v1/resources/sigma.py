@@ -73,7 +73,6 @@ class SigmaListResource(resources.ResourceMixin, Resource):
                             "author" :parsed_rule.get("author"),
                             "description":rule.description,
                             "parsed_rule":parsed_rule,
-                            'object': rule['_source'] # does that make sense?
                         }
                     )
 
