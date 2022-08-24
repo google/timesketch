@@ -18,7 +18,10 @@ from __future__ import unicode_literals
 import json
 import mock
 
+from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
+from timesketch.lib.definitions import HTTP_STATUS_CODE_CONFLICT
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
+from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.testlib import BaseTest
@@ -428,13 +431,96 @@ class SigmaResourceTest(BaseTest):
     resource_url = "/api/v1/sigma/rule/"
     expected_response = {
         "objects": {
-            "description": "Detects suspicious installation of ZMap",
-            "id": "5266a592-b793-11ea-b3de-0242ac130004",
+            "description": "Detects suspicious installation of bbbbbb",
+            "id": "5266a592-b793-11ea-b3de-bbbbbb",
             "level": "high",
             "logsource": {"product": "linux", "service": "shell"},
-            "title": "Suspicious Installation of ZMap",
+            "title": "Suspicious Installation of bbbbbb",
         }
     }
+
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
+    def test_post_sigma_resource(self):
+        """Authenticated request to POST an sigma rule."""
+        MOCK_SIGMA_RULE = """
+title: Suspicious Installation of bbbbbb
+id: 5266a592-b793-11ea-b3de-bbbbbb
+description: Detects suspicious installation of bbbbbb
+references:
+    - https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html
+author: Alexander Jaeger
+date: 2020/06/26
+modified: 2022/06/12
+logsource:
+    product: linux
+    service: shell
+detection:
+    keywords:
+        # Generic suspicious commands
+        - '*apt-get install bbbbbb*'
+    condition: keywords
+falsepositives:
+    - Unknown
+level: high
+"""
+
+        self.login()
+
+        sigma = dict(
+            rule_uuid="5266a592-b793-11ea-b3de-bbbbbb",
+            title='Suspicious Installation of bbbbbb',
+            description='Detects suspicious installation of bbbbbb',
+            rule_yaml=MOCK_SIGMA_RULE,
+        )
+
+        response = self.client.post(
+            self.resource_url + "5266a592-b793-11ea-b3de-bbbbbb/",
+            data=json.dumps(sigma),
+            content_type="application/json",
+        )
+        self.assertIn(
+            'bbbbbb', response.json['objects'][0]["rule_uuid"]
+        )
+        self.assertIn(
+            'bbbbbb',
+            response.json['objects'][0]["description"],
+        )
+        self.assertIn(
+            'shell',
+            response.json['objects'][0]["rule_yaml"],
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+
+        # Now GET the ressources
+        response = self.client.get(
+            self.resource_url + "5266a592-b793-11ea-b3de-bbbbbb/"
+        )
+
+        self.assertIsNotNone(response)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+        self.assertIn(
+            'bbbbbb', response.json['objects'][0]["rule_uuid"]
+        )
+        self.assertIn(
+            'bbbbbb',
+            response.json['objects'][0]["description"],
+        )
+        self.assertIn(
+            'shell',
+            response.json['objects'][0]["rule_yaml"],
+        )
+
+        # Attempt to add the same thing again
+        response = self.client.post(
+            self.resource_url + "5266a592-b793-11ea-b3de-bbbbbb/",
+            data=json.dumps(sigma),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_CONFLICT)
+
 
     def test_get_sigma_rule(self):
         """Authenticated request to get an sigma rule."""
@@ -443,6 +529,9 @@ class SigmaResourceTest(BaseTest):
             self.resource_url + "5266a592-b793-11ea-b3de-0242ac130004"
         )
         self.assertIsNotNone(response)
+
+        response = self.client.get(self.resource_url + "foobar/")
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_NOT_FOUND)
 
 
 class SigmaListResourceTest(BaseTest):

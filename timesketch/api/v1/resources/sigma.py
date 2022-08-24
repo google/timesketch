@@ -24,7 +24,7 @@ from flask_login import current_user
 
 from sigma.parser import exceptions as sigma_exceptions
 
-#from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError
 
 import timesketch.lib.sigma_util as ts_sigma_lib
 
@@ -33,12 +33,13 @@ from timesketch.api.v1 import utils
 
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
-#from timesketch.lib.definitions import HTTP_STATUS_CODE_CONFLICT
-#from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
-#from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
-#from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
+from timesketch.lib.definitions import HTTP_STATUS_CODE_CONFLICT
+from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
+from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
+from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 
 from timesketch.models.sigma import Sigma
+from timesketch.models import db_session
 
 
 logger = logging.getLogger("timesketch.api.sigma")
@@ -93,30 +94,146 @@ class SigmaResource(resources.ResourceMixin, Resource):
         """Handles GET request to the resource.
 
         Args:
-            rule_uuid: uuid of the sigma rule
+            rule_uuid: uuid of the rule
 
         Returns:
             JSON sigma rule
         """
-        return_rule = None
         try:
-            sigma_rules = ts_sigma_lib.get_all_sigma_rules()
+            rule = Sigma.query.filter_by(rule_uuid=rule_uuid).first()
 
-        except ValueError as e:
+        except Exception as e: # pylint: disable=broad-except
             logger.error(
-                "OS Error, unable to get the path to the Sigma rules", exc_info=True
+                "Unable to get the Sigma rule",
+                exc_info=True,
             )
             abort(HTTP_STATUS_CODE_NOT_FOUND, f"ValueError {e}")
-        for rule in sigma_rules:
-            if rule is not None:
-                if rule_uuid == rule.get("id"):
-                    return_rule = rule
 
-        if return_rule is None:
-            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sigma rule found with this ID.")
+        if not rule:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No rule found with this ID.")
+        return_rules = []
 
-        meta = {"current_user": current_user.username, "rules_count": len(sigma_rules)}
-        return jsonify({"objects": [return_rule], "meta": meta})
+        assert isinstance(rule, Sigma)
+        # Return a subset of the sigma objects to reduce the amount of
+        # data sent to the client.
+
+        parsed_rule = ts_sigma_lib.get_sigma_rule_by_text(rule.rule_yaml)
+        # check if the rule_uuid that is parsed out matches the stored id
+        if rule_uuid == parsed_rule.pop("id"):
+            parsed_rule["rule_uuid"] = parsed_rule.pop("id")
+        else:
+            parsed_rule["rule_uuid"] = rule_uuid
+        parsed_rule["id"] = rule.id #this is the database id (1,2,3...)
+        parsed_rule["created_at"] = str(rule.created_at)
+        parsed_rule["updated_at"] = str(rule.updated_at)
+        parsed_rule["status"] = rule.get_status.status
+        parsed_rule["title"] = rule.title
+        parsed_rule["description"] = rule.description
+        parsed_rule["rule_yaml"] = rule.rule_yaml
+        return_rules.append(
+            parsed_rule)
+
+
+        meta = {
+            "current_user": current_user.username,
+        }
+        return jsonify({"objects": return_rules, "meta": meta})
+
+    @login_required
+    def delete(self, rule_uuid):
+        """Handles DELETE request to the resource.
+        Args:
+            rule_uuid: uuid of the rule
+        """
+
+        all_rules = Sigma.query.all()
+
+        for rule in all_rules:
+            if rule_uuid in rule.rule_yaml:
+                db_session.delete(rule)
+                db_session.commit()
+
+        return HTTP_STATUS_CODE_OK
+
+    @login_required
+    def put(self, rule_uuid):
+        """Handles update request to Sigma rules
+        Args:
+            rule_uuid: uuid of the rule
+        Returns:
+            The updated sigma object in JSON (instance of
+            flask.wrappers.Response)
+        """
+
+        logger.debug(rule_uuid)
+        form = request.json
+        if not form:
+            form = request.data
+        if not form.validate_on_submit():
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, "Unable to validate form data.")
+
+        rule_yaml = form.get("rule_yaml", "")
+        parsed_rule = ts_sigma_lib.get_sigma_rule()
+        logger.debug(rule_yaml + parsed_rule)
+        # TODO(jaegeral): complete this method
+
+
+    @login_required
+    def post(self, rule_uuid=None):
+        """Handles POST request to the resource.
+        Args:
+            rule_uuid: uuid of the rule
+
+        Returns:
+            Sigma rule object and HTTP status code indicating
+            whether operation was sucessful.
+        """
+        form = request.json
+        if not form:
+            form = request.data
+
+        rule_yaml = form.get("rule_yaml", "")
+
+        if not rule_yaml:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                "No rule_yaml supplied.",
+            )
+
+        # not sure if that is needed
+        parsed_rule = ts_sigma_lib.get_sigma_rule_by_text(rule_yaml)
+
+        if not rule_uuid:
+            rule_uuid = parsed_rule.get("id")
+
+        if not isinstance(rule_yaml, str):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN, "rule_yaml needs to be a string."
+            )
+
+        # Query rules to see if it already exist
+        rule = Sigma.query.filter_by(rule_uuid=rule_uuid).first()
+        if rule:
+            if rule.rule_uuid == parsed_rule.get("rule_uuid"):
+                abort(HTTP_STATUS_CODE_CONFLICT, "Rule already exist")
+
+        sigma_rule = Sigma.get_or_create(rule_yaml=form.get("rule_yaml", ""))
+        sigma_rule.description = form.get("description", "")
+
+        sigma_rule.query_string = parsed_rule.get("es_query", "")
+        sigma_rule.rule_uuid = parsed_rule.get("id", None)
+        sigma_rule.user_id = current_user.id
+
+        try:
+            db_session.add(sigma_rule)
+            db_session.commit()
+        except IntegrityError:
+            abort(HTTP_STATUS_CODE_CONFLICT, "Rule already exist")
+
+        if sigma_rule is None:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sigma was parsed")
+
+        return self.to_json(sigma_rule, status_code=HTTP_STATUS_CODE_CREATED)
 
 
 class SigmaByTextResource(resources.ResourceMixin, Resource):
