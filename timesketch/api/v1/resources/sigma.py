@@ -186,8 +186,9 @@ class SigmaResource(resources.ResourceMixin, Resource):
         # TODO(jaegeral): complete this method
         rule_yaml = form.get("rule_yaml", "")
         parsed_rule = ts_sigma_lib.get_sigma_rule_by_text(rule_yaml)
-        
-        logger.debug(rule_yaml + parsed_rule)
+
+        logger.debug(rule_yaml + parsed_rule + rule)
+
 
 
     @login_required
@@ -229,8 +230,12 @@ class SigmaResource(resources.ResourceMixin, Resource):
             if rule.rule_uuid == parsed_rule.get("rule_uuid"):
                 abort(HTTP_STATUS_CODE_CONFLICT, "Rule already exist")
 
-        sigma_rule = Sigma.get_or_create(rule_yaml=form.get("rule_yaml", ""))
-        sigma_rule.description = form.get("description", "")
+        sigma_rule = Sigma.get_or_create(
+            rule_yaml=form.get("rule_yaml", ""),
+            description = parsed_rule.get("description", ""),
+            title = parsed_rule.get("title", ""),
+            user=current_user,
+            )
 
         sigma_rule.query_string = parsed_rule.get("es_query", "")
         sigma_rule.rule_uuid = parsed_rule.get("id", None)

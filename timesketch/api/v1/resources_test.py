@@ -473,6 +473,7 @@ level: high
             title='Suspicious Installation of bbbbbb',
             description='Detects suspicious installation of bbbbbb',
             rule_yaml=MOCK_SIGMA_RULE,
+
         )
 
         response = self.client.post(
@@ -492,7 +493,6 @@ level: high
             response.json['objects'][0]["rule_yaml"],
         )
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
-
         # Now GET the ressources
         response = self.client.get(
             self.resource_url + "5266a592-b793-11ea-b3de-bbbbbb/"
