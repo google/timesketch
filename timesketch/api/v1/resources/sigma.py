@@ -165,17 +165,29 @@ class SigmaResource(resources.ResourceMixin, Resource):
             flask.wrappers.Response)
         """
 
-        logger.debug(rule_uuid)
+        try:
+            rule = Sigma.query.filter_by(rule_uuid=rule_uuid).first()
+
+        except Exception as e: # pylint: disable=broad-except
+            logger.error(
+                "Unable to get the Sigma rule",
+                exc_info=True,
+            )
+            abort(HTTP_STATUS_CODE_NOT_FOUND, f"ValueError {e}")
+
         form = request.json
         if not form:
             form = request.data
         if not form.validate_on_submit():
             abort(HTTP_STATUS_CODE_BAD_REQUEST, "Unable to validate form data.")
 
-        rule_yaml = form.get("rule_yaml", "")
-        parsed_rule = ts_sigma_lib.get_sigma_rule()
-        logger.debug(rule_yaml + parsed_rule)
+        abort(HTTP_STATUS_CODE_NOT_FOUND, "Method not implemented yet")
+
         # TODO(jaegeral): complete this method
+        rule_yaml = form.get("rule_yaml", "")
+        parsed_rule = ts_sigma_lib.get_sigma_rule_by_text(rule_yaml)
+        
+        logger.debug(rule_yaml + parsed_rule)
 
 
     @login_required
