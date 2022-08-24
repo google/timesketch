@@ -45,7 +45,7 @@ from timesketch.models import db_session
 logger = logging.getLogger("timesketch.api.sigma")
 
 
-class SigmaListResource(resources.ResourceMixin, Resource):
+class SigmaRuleListResource(resources.ResourceMixin, Resource):
     """Resource to get list of SigmaRules."""
 
     @login_required
@@ -252,7 +252,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         return self.to_json(sigma_rule, status_code=HTTP_STATUS_CODE_CREATED)
 
 
-class SigmaByTextResource(resources.ResourceMixin, Resource):
+class SigmaRuleByTextResource(resources.ResourceMixin, Resource):
     """Resource to get a Sigma rule by text."""
 
     @login_required
