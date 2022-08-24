@@ -38,7 +38,7 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 
-from timesketch.models.sigma import Sigma
+from timesketch.models.sigmarule import SigmaRule
 from timesketch.models import db_session
 
 
@@ -46,7 +46,7 @@ logger = logging.getLogger("timesketch.api.sigma")
 
 
 class SigmaListResource(resources.ResourceMixin, Resource):
-    """Resource to get list of Sigma rules."""
+    """Resource to get list of SigmaRules."""
 
     @login_required
     def get(self):
@@ -58,7 +58,7 @@ class SigmaListResource(resources.ResourceMixin, Resource):
         sigma_rules = []
 
         try:
-            sigma_rules_results = Sigma.query.filter_by()
+            sigma_rules_results = SigmaRule.query.filter_by()
             # Return a subset of the Sigma objects to reduce the amount of
             # data sent to the client.
             for rule in sigma_rules_results:
@@ -86,7 +86,7 @@ class SigmaListResource(resources.ResourceMixin, Resource):
         return jsonify({"objects": sigma_rules, "meta": meta})
 
 
-class SigmaResource(resources.ResourceMixin, Resource):
+class SigmaRuleResource(resources.ResourceMixin, Resource):
     """Resource to get a Sigma rule."""
 
     @login_required
@@ -100,7 +100,7 @@ class SigmaResource(resources.ResourceMixin, Resource):
             JSON sigma rule
         """
         try:
-            rule = Sigma.query.filter_by(rule_uuid=rule_uuid).first()
+            rule = SigmaRule.query.filter_by(rule_uuid=rule_uuid).first()
 
         except Exception as e: # pylint: disable=broad-except
             logger.error(
@@ -113,7 +113,7 @@ class SigmaResource(resources.ResourceMixin, Resource):
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No rule found with this ID.")
         return_rules = []
 
-        assert isinstance(rule, Sigma)
+        assert isinstance(rule, SigmaRule)
         # Return a subset of the sigma objects to reduce the amount of
         # data sent to the client.
 
@@ -146,7 +146,7 @@ class SigmaResource(resources.ResourceMixin, Resource):
             rule_uuid: uuid of the rule
         """
 
-        all_rules = Sigma.query.all()
+        all_rules = SigmaRule.query.all()
 
         for rule in all_rules:
             if rule_uuid in rule.rule_yaml:
@@ -166,7 +166,7 @@ class SigmaResource(resources.ResourceMixin, Resource):
         """
 
         try:
-            rule = Sigma.query.filter_by(rule_uuid=rule_uuid).first()
+            rule = SigmaRule.query.filter_by(rule_uuid=rule_uuid).first()
 
         except Exception as e: # pylint: disable=broad-except
             logger.error(
@@ -225,21 +225,20 @@ class SigmaResource(resources.ResourceMixin, Resource):
             )
 
         # Query rules to see if it already exist
-        rule = Sigma.query.filter_by(rule_uuid=rule_uuid).first()
+        rule = SigmaRule.query.filter_by(rule_uuid=rule_uuid).first()
         if rule:
             if rule.rule_uuid == parsed_rule.get("rule_uuid"):
                 abort(HTTP_STATUS_CODE_CONFLICT, "Rule already exist")
 
-        sigma_rule = Sigma.get_or_create(
+        sigma_rule = SigmaRule.get_or_create(
             rule_yaml=form.get("rule_yaml", ""),
             description = parsed_rule.get("description", ""),
             title = parsed_rule.get("title", ""),
-            user=current_user,
+            user = current_user
             )
 
         sigma_rule.query_string = parsed_rule.get("es_query", "")
         sigma_rule.rule_uuid = parsed_rule.get("id", None)
-        sigma_rule.user_id = current_user.id
 
         try:
             db_session.add(sigma_rule)

@@ -14,7 +14,7 @@
 """Tests for the sigma model."""
 
 from timesketch.lib.testlib import ModelBaseTest
-from timesketch.models.sigma import Sigma
+from timesketch.models.sigmarule import SigmaRule
 
 SIGMA_RULE = """
 title: Suspicious Installation of Zenmap
@@ -39,7 +39,7 @@ level: high
 """
 
 
-class SigmaModelTest(ModelBaseTest):
+class SigmaRuleModelTest(ModelBaseTest):
     """Tests the sigma model"""
 
     def test_sigma_model(self):
@@ -55,4 +55,4 @@ class SigmaModelTest(ModelBaseTest):
                 ("user", self.user1),
             ]
         )
-        self._test_db_object(expected_result=expected_result, model_cls=Sigma)
+        self._test_db_object(expected_result=expected_result, model_cls=SigmaRule)

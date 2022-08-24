@@ -26,10 +26,10 @@ from timesketch.models.annotations import StatusMixin
 from timesketch.models.annotations import GenericAttributeMixin
 
 
-class Sigma(
+class SigmaRule(
     BaseModel, LabelMixin, StatusMixin, CommentMixin, GenericAttributeMixin
 ):
-    """Implements the Sigma model.
+    """Implements the SigmaRule model.
     Status mixin will be used to track the status of a rule:
         - stable: may be used in production systems, analyzers or dashboards
         - test: almost stable, could require some fine tuning, not for analyzers
@@ -55,7 +55,7 @@ class Sigma(
         rule_uuid=None,
         rule_yaml=None
     ):
-        """Initialize the Sigma object.
+        """Initialize the SigmaRule object.
         Args:
             user: A user (instance of timesketch.models.user.User)
             title: Title for the rule
