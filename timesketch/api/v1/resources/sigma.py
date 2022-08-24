@@ -1,3 +1,7 @@
+# Copyright 2020 Google Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
 #     http://www.apache.org/licenses/LICENSE-2.0
@@ -10,12 +14,14 @@
 """Sigma resources for version 1 of the Timesketch API."""
 import logging
 import yaml
+
 from flask import abort
 from flask import jsonify
 from flask import request
 from flask_restful import Resource
 from flask_login import login_required
 from flask_login import current_user
+
 from sigma.parser import exceptions as sigma_exceptions
 
 #from sqlalchemy.exc import IntegrityError
@@ -31,7 +37,6 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 #from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 #from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 #from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
-
 
 from timesketch.models.sigma import Sigma
 
