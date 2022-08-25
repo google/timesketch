@@ -349,7 +349,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
             user = current_user
             )
 
-        sigma_rule.query_string = parsed_rule.get("es_query", "")
+        sigma_rule.query_string = parsed_rule.get("query_string", "")
         sigma_rule.rule_uuid = parsed_rule.get("id", None)
 
         try:
