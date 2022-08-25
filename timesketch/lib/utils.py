@@ -99,7 +99,7 @@ def _validate_csv_fields(mandatory_fields, data, headers_mapping=None):
         data: a DataFrame built from the ingested file.
         headers_mapping: list of dicts containing:
                          (i) target header we want to insert [key=target],
-                         (ii) source header we want to replace [key=source], and
+                         (ii) sources header we want to rename/combine [key=source],
                          (iii) def. value if we add a new column [key=default_value]
     Raises:
         RuntimeError: if there are missing fields.
@@ -132,15 +132,11 @@ def _validate_csv_fields(mandatory_fields, data, headers_mapping=None):
         parset_set_string = "None"
 
     raise RuntimeError(
-        """Missing mandatory CSV headers.
-        Mandatory headers: {0:s}
-        Headers found in the file: {1:s}
-        Headers provided in the mapping: {2:s}
-        Headers missing: {3:s}""".format(
-            ", ".join(list(mandatory_set)),
-            parset_set_string,
-            headers_mapping_string,
-            headers_missing_string)
+        f"Missing mandatory CSV headers."
+        f"Mandatory headers: {', '.join(list(mandatory_set))}"
+        f"Headers found in the file: {parset_set_string}"
+        f"Headers provided in the mapping: {headers_mapping_string}"
+        f"Headers missing: {headers_missing_string}"
     )
 
 
@@ -167,7 +163,7 @@ def check_mapping_errors(headers, headers_mapping):
         csv_headers: list of headers found in the CSV file.
         headers_mapping: list of dicts containing:
                          (i) target header we want to insert [key=target],
-                         (ii) source header we want to replace [key=source], and
+                         (ii) sources header we want to rename/combine [key=source],
                          (iii) def. value if we add a new column [key=default_value]
 
     Raises:
@@ -181,26 +177,32 @@ def check_mapping_errors(headers, headers_mapping):
         if mapping["target"] in headers:
             raise RuntimeError(
                 "Headers mapping is wrong.\n"
-                "Mapping done only if the mandatory header is missing")
-        if mapping["source"]:
-            # 3. Check if the header specified in headers mapping is in the headers list
-            if mapping["source"] not in headers:
-                raise RuntimeError(
-                "Value specified in the headers mapping not found in the CSV\n"
-                "Value specified in headers mapping: {0:s}\n"
-                "CSV columns: {1:s}".format(
-                    mapping["source"], ", ".join(headers))
+                "Mapping done only if the mandatory header is missing"
             )
-            # update the headers list that we will substitute
-            candidate_headers.append(mapping["source"])
+        if mapping["source"]:
+            # 3. Check if any of the headers specified in headers mapping
+            # is in the headers list
+            for source in mapping["source"]:
+                if source not in headers:
+                    raise RuntimeError(
+                        f"Value specified in the headers mapping not found in the CSV\n"
+                        f"Headers mapping: {', '.join(mapping['source'])}\n"
+                        f"Sources column/s: {source}\n"
+                        f"CSV columns: {', '.join(headers)}"
+                    )
+
+            # Update the headers list that we will substitute/rename
+            # we do this check only over the header column that will be renamed,
+            # i.e., when mapping["source"] has only 1 value
+            if len(mapping["source"]) == 1:
+                candidate_headers.append(mapping["source"][0])
 
         else:
             if not mapping["default_value"]:
                 raise RuntimeError(
-                    "Headers mapping is wrong.\n"
-                    "Error to create new column {0:s}. "
-                    "When create a new column, a default value must be assigned"
-                    .format(mapping["target"])
+                    f"Headers mapping is wrong.\n"
+                    f"Error to create new column {mapping['target']}. "
+                    f"When create a new column, a default value must be assigned"
                 )
     # 4. check if two or more mandatory headers are mapped
     #    to the same exisiting header
@@ -213,33 +215,41 @@ def check_mapping_errors(headers, headers_mapping):
 
 
 def rename_headers(chunk, headers_mapping):
-    """"Rename the headers of the dataframe
+    """ "Rename the headers of the dataframe
 
     Args:
         chunk: dataframe to be modified
         headers_mapping: list of dicts containing:
                          (i) target header we want to insert [key=target],
-                         (ii) source header we want to replace [key=source], and
+                         (ii) sources header we want to rename/combine [key=source],
                          (iii) def. value if we add a new column [key=default_value]
 
     Returns: the dataframe with renamed headers
     """
+    headers_mapping.sort(
+        key=lambda x: len(x["source"]) if x["source"] else 0, reverse=True
+    )
     for mapping in headers_mapping:
         if not mapping["source"]:
-            # add header and def values
+            # create new column with a given default value
             chunk[mapping["target"]] = mapping["default_value"]
+        elif len(mapping["source"]) > 1:
+            # concatanete multiple source headers into a new one
+            chunk[mapping["target"]] = ""
+            for column in mapping["source"]:
+                chunk[mapping["target"]] += (
+                    column + ":" + chunk[column].map(str) + " | "
+                )
         else:
             # just rename the header
             chunk.rename(
-                columns={mapping["source"]: mapping["target"]}, inplace=True)
+                columns={mapping["source"][0]: mapping["target"]}, inplace=True
+            )
     return chunk
 
 
 def read_and_validate_csv(
-    file_handle,
-    delimiter=",",
-    mandatory_fields=None,
-    headers_mapping=None
+    file_handle, delimiter=",", mandatory_fields=None, headers_mapping=None
 ):
     """Generator for reading a CSV file.
 
@@ -249,7 +259,7 @@ def read_and_validate_csv(
         mandatory_fields: list of fields that must be present in the CSV header
         headers_mapping: list of dicts containing:
                          (i) target header we want to insert [key=target],
-                         (ii) source header we want to replace [key=source], and
+                         (ii) sources header we want to rename/combine [key=source],
                          (iii) def. value if we add a new column [key=default_value]
     Raises:
         RuntimeError: when there are missing fields.
@@ -303,8 +313,7 @@ def read_and_validate_csv(
                             idx * reader.chunksize + num_chunk_rows,
                         )
                     )
-                chunk["timestamp"] = chunk["datetime"].dt.strftime(
-                    "%s%f").astype(int)
+                chunk["timestamp"] = chunk["datetime"].dt.strftime("%s%f").astype(int)
                 chunk["datetime"] = (
                     chunk["datetime"].apply(Timestamp.isoformat).astype(str)
                 )
@@ -312,8 +321,7 @@ def read_and_validate_csv(
                 logger.warning(
                     "Rows {0} to {1} skipped due to malformed "
                     "datetime values ".format(
-                        idx * reader.chunksize, idx *
-                        reader.chunksize + chunk.shape[0]
+                        idx * reader.chunksize, idx * reader.chunksize + chunk.shape[0]
                     )
                 )
                 continue
@@ -342,13 +350,9 @@ def read_and_validate_redline(file_handle):
     """
 
     csv.register_dialect(
-        "redlineDialect",
-        delimiter=",",
-        quoting=csv.QUOTE_ALL,
-        skipinitialspace=True
+        "redlineDialect", delimiter=",", quoting=csv.QUOTE_ALL, skipinitialspace=True
     )
-    reader = pandas.read_csv(file_handle, delimiter=",",
-                             dialect="redlineDialect")
+    reader = pandas.read_csv(file_handle, delimiter=",", dialect="redlineDialect")
 
     _validate_csv_fields(REDLINE_FIELDS, reader)
     for row in reader:
@@ -403,8 +407,7 @@ def read_and_validate_jsonl(file_handle, **kwargs):  # pylint: disable=unused-ar
             if "timestamp" not in ld_keys and "datetime" in ld_keys:
                 try:
                     linedict["timestamp"] = int(
-                        parser.parse(linedict["datetime"]
-                                     ).timestamp() * 1000000
+                        parser.parse(linedict["datetime"]).timestamp() * 1000000
                     )
                 except parser.ParserError:
                     logger.error(
@@ -423,15 +426,13 @@ def read_and_validate_jsonl(file_handle, **kwargs):  # pylint: disable=unused-ar
                 )
 
             if "tag" in linedict:
-                linedict["tag"] = [
-                    x for x in _parse_tag_field(linedict["tag"]) if x]
+                linedict["tag"] = [x for x in _parse_tag_field(linedict["tag"]) if x]
             _scrub_special_tags(linedict)
             yield linedict
 
         except ValueError as e:
             raise errors.DataIngestionError(
-                "Error parsing JSON at line {0:n}: {1:s}".format(
-                    lineno, str(e))
+                "Error parsing JSON at line {0:n}: {1:s}".format(lineno, str(e))
             )
 
 
@@ -482,10 +483,7 @@ def get_validated_indices(indices, sketch):
                         timelines.add(timeline_id)
                         indices.append(index)
 
-                    if (
-                        isinstance(item, str) and
-                        item.lower() == timeline_name.lower()
-                    ):
+                    if isinstance(item, str) and item.lower() == timeline_name.lower():
                         timelines.add(timeline_id)
                         indices.append(index)
 
@@ -508,8 +506,7 @@ def send_email(subject, body, to_username, use_html=False):
     email_enabled = current_app.config.get("ENABLE_EMAIL_NOTIFICATIONS")
     email_domain = current_app.config.get("EMAIL_DOMAIN")
     email_smtp_server = current_app.config.get("EMAIL_SMTP_SERVER")
-    email_from_user = current_app.config.get(
-        "EMAIL_FROM_ADDRESS", "timesketch")
+    email_from_user = current_app.config.get("EMAIL_FROM_ADDRESS", "timesketch")
     email_user_whitelist = current_app.config.get("EMAIL_USER_WHITELIST", [])
 
     if not email_enabled:

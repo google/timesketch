@@ -15,7 +15,7 @@
         </b-field>
         <b-field>
           <b-taginput
-            v-model="composeIoc.tags"
+            v-model="editableTags"
             ellipsis
             icon="label"
             placeholder="Add a tag"
@@ -23,6 +23,10 @@
           >
           </b-taginput>
         </b-field>
+        <b-field message="Readonly tags">
+          <b-taginput readonly v-model="readonlyTags" ellipsis :closable="false" field="name" />
+        </b-field>
+
         <b-field grouped expanded position="is-right">
           <p class="control">
             <b-button type="is-primary" @click="saveIoc">Save</b-button>
@@ -52,14 +56,18 @@ export default {
   components: { ExplorePreview },
   props: ['value'],
   data() {
+    let newobj = JSON.parse(JSON.stringify(this.value))
     return {
-      composeIoc: JSON.parse(JSON.stringify(this.value)),
+      composeIoc: newobj,
+      editableTags: newobj.tags.filter((tag) => typeof tag === 'string'),
+      readonlyTags: newobj.tags.filter((tag) => typeof tag === 'object'),
       IOCTypes: IOCTypes,
     }
   },
   methods: {
     saveIoc() {
       this.$parent.close()
+      this.composeIoc.tags = this.editableTags.concat(this.readonlyTags)
       this.$emit('input', this.composeIoc)
     },
     generateOpenSearchQuery(value, field) {
