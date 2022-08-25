@@ -545,9 +545,7 @@ class SigmaListResourceTest(BaseTest):
         self.assertEqual(len(response.json["objects"]),
             response.json["meta"]["rules_count"])
         rule = response.json["objects"][0]
-        self.assertIs(1, rule["id"])
         self.assertIn("5266a592-b793-11ea-b3de-0242ac", rule["rule_uuid"])
-        self.assertIsNotNone(rule["last_activity"])
         self.assertIsNotNone(rule["created_at"])
 
 

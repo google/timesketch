@@ -35,7 +35,7 @@ from timesketch.models.sketch import SearchTemplate
 from timesketch.models.sketch import View
 from timesketch.models.sketch import Event
 from timesketch.models.sketch import Story
-from timesketch.models.sigmarule import SigmaRule
+from timesketch.models.sigma import SigmaRule
 
 SIGMA_RULE = """
 title: Suspicious Installation of Zenmap

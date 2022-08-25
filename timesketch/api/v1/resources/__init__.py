@@ -283,7 +283,7 @@ class ResourceMixin(object):
         "updated_at": fields.DateTime("iso8601"),
     }
 
-    sigma_fields = {
+    sigmarule_fields = {
         "id": fields.Integer,
         "rule_uuid": fields.String,
         "description": fields.String,
@@ -316,7 +316,7 @@ class ResourceMixin(object):
         "investigative_question": question_fields,
         "facet": facet_fields,
         "scenario": scenario_fields,
-        "sigma": sigma_fields
+        "sigmarule": sigmarule_fields
     }
 
     @property

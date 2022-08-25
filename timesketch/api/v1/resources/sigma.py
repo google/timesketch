@@ -29,7 +29,6 @@ from sqlalchemy.exc import IntegrityError
 import timesketch.lib.sigma_util as ts_sigma_lib
 
 from timesketch.api.v1 import resources
-from timesketch.api.v1 import utils
 
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
@@ -44,29 +43,25 @@ from timesketch.models import db_session
 
 logger = logging.getLogger("timesketch.api.sigma")
 
-def _enrich_sigma_rule_object(self, rule: SigmaRule):
-        """Helper function: Returns an enriched Sigma object givin a SigmaRule.
+def _enrich_sigma_rule_object(rule: SigmaRule):
+    """Helper function: Returns an enriched Sigma object givin a SigmaRule.
 
-        Args:
-            SigmaRule: uuid of the rule
+    Args:
+        SigmaRule: uuid of the rule
 
-        Returns:
-            Sigma object
-        """
-        parsed_rule = ts_sigma_lib.get_sigma_rule_by_text(rule.rule_yaml)
-        # check if the rule_uuid that is parsed out matches the stored id
-        if rule.rule_uuid == parsed_rule.pop("id"):
-            parsed_rule["rule_uuid"] = parsed_rule.pop("id")
-        else:
-            parsed_rule["rule_uuid"] = rule.rule_uuid
-        parsed_rule["created_at"] = str(rule.created_at)
-        parsed_rule["updated_at"] = str(rule.updated_at)
-        parsed_rule["status"] = rule.get_status.status
-        parsed_rule["title"] = rule.title
-        parsed_rule["description"] = rule.description
-        parsed_rule["rule_yaml"] = rule.rule_yaml
+    Returns:
+        enriched Sigma dict
+    """
+    parsed_rule = ts_sigma_lib.get_sigma_rule_by_text(rule.rule_yaml)
+    parsed_rule["rule_uuid"] = parsed_rule.get("id",rule.rule_uuid)
+    parsed_rule["created_at"] = str(rule.created_at)
+    parsed_rule["updated_at"] = str(rule.updated_at)
+    parsed_rule["status"] = rule.get_status.status
+    parsed_rule["title"] = parsed_rule.get("title",rule.title)
+    parsed_rule["description"] = parsed_rule.get("description",rule.description)
+    parsed_rule["rule_yaml"] = rule.rule_yaml
 
-        return parsed_rule
+    return parsed_rule
 
 
 class SigmaRuleListResource(resources.ResourceMixin, Resource):
@@ -125,8 +120,6 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         return_rules = []
 
         assert isinstance(rule, SigmaRule)
-        # Return a subset of the sigma objects to reduce the amount of
-        # data sent to the client.        
 
         return_rules.append(
             _enrich_sigma_rule_object(rule=rule))
