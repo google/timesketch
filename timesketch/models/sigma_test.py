@@ -14,7 +14,7 @@
 """Tests for the sigma model."""
 
 from timesketch.lib.testlib import ModelBaseTest
-from timesketch.models.sigmarule import SigmaRule
+from timesketch.models.sigma import SigmaRule
 
 SIGMA_RULE = """
 title: Suspicious Installation of Zenmap

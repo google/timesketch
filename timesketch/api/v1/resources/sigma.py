@@ -38,11 +38,36 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 
-from timesketch.models.sigmarule import SigmaRule
+from timesketch.models.sigma import SigmaRule
 from timesketch.models import db_session
 
 
 logger = logging.getLogger("timesketch.api.sigma")
+
+def _enrich_sigma_rule_object(self, rule: SigmaRule):
+        """Helper function: Returns an enriched Sigma object givin a SigmaRule.
+
+        Args:
+            SigmaRule: uuid of the rule
+
+        Returns:
+            Sigma object
+        """
+        parsed_rule = ts_sigma_lib.get_sigma_rule_by_text(rule.rule_yaml)
+        # check if the rule_uuid that is parsed out matches the stored id
+        if rule.rule_uuid == parsed_rule.pop("id"):
+            parsed_rule["rule_uuid"] = parsed_rule.pop("id")
+        else:
+            parsed_rule["rule_uuid"] = rule.rule_uuid
+        parsed_rule["id"] = rule.id #this is the database id (1,2,3...)
+        parsed_rule["created_at"] = str(rule.created_at)
+        parsed_rule["updated_at"] = str(rule.updated_at)
+        parsed_rule["status"] = rule.get_status.status
+        parsed_rule["title"] = rule.title
+        parsed_rule["description"] = rule.description
+        parsed_rule["rule_yaml"] = rule.rule_yaml
+
+        return parsed_rule
 
 
 class SigmaRuleListResource(resources.ResourceMixin, Resource):
@@ -58,24 +83,11 @@ class SigmaRuleListResource(resources.ResourceMixin, Resource):
         sigma_rules = []
 
         try:
-            sigma_rules_results = SigmaRule.query.filter_by()
+            sigma_rules_results = SigmaRule.query.all()
             # Return a subset of the Sigma objects to reduce the amount of
             # data sent to the client.
             for rule in sigma_rules_results:
-                parsed_rule = ts_sigma_lib.get_sigma_rule_by_text(rule.rule_yaml)
-                sigma_rules.append({"id": rule.id,
-                            "rule_uuid":parsed_rule.get("id"),
-                            "rule_yaml": rule.rule_yaml,
-                            "created_at": str(rule.created_at),
-                            "last_activity": utils.get_sketch_last_activity(rule),
-                            "status": rule.get_status.status,
-                            "es_query": parsed_rule.get("es_query"),
-                            "title": rule.title,
-                            "author" :parsed_rule.get("author"),
-                            "description":rule.description,
-                            "parsed_rule":parsed_rule,
-                        }
-                    )
+                sigma_rules.append(_enrich_sigma_rule_object(rule=rule))
 
         except ValueError as e:
             logger.error(
@@ -115,24 +127,10 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
 
         assert isinstance(rule, SigmaRule)
         # Return a subset of the sigma objects to reduce the amount of
-        # data sent to the client.
+        # data sent to the client.        
 
-        parsed_rule = ts_sigma_lib.get_sigma_rule_by_text(rule.rule_yaml)
-        # check if the rule_uuid that is parsed out matches the stored id
-        if rule_uuid == parsed_rule.pop("id"):
-            parsed_rule["rule_uuid"] = parsed_rule.pop("id")
-        else:
-            parsed_rule["rule_uuid"] = rule_uuid
-        parsed_rule["id"] = rule.id #this is the database id (1,2,3...)
-        parsed_rule["created_at"] = str(rule.created_at)
-        parsed_rule["updated_at"] = str(rule.updated_at)
-        parsed_rule["status"] = rule.get_status.status
-        parsed_rule["title"] = rule.title
-        parsed_rule["description"] = rule.description
-        parsed_rule["rule_yaml"] = rule.rule_yaml
         return_rules.append(
-            parsed_rule)
-
+            _enrich_sigma_rule_object(rule=rule))
 
         meta = {
             "current_user": current_user.username,
@@ -146,12 +144,10 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
             rule_uuid: uuid of the rule
         """
 
-        all_rules = SigmaRule.query.all()
+        rule = SigmaRule.query.filter_by(rule_uuid=rule_uuid).first()
 
-        for rule in all_rules:
-            if rule_uuid in rule.rule_yaml:
-                db_session.delete(rule)
-                db_session.commit()
+        db_session.delete(rule)
+        db_session.commit()
 
         return HTTP_STATUS_CODE_OK
 
@@ -213,7 +209,6 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
                 "No rule_yaml supplied.",
             )
 
-        # not sure if that is needed
         parsed_rule = ts_sigma_lib.get_sigma_rule_by_text(rule_yaml)
 
         if not rule_uuid:
