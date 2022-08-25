@@ -228,7 +228,6 @@ limitations under the License.
                     <ts-add-manual-event
                       app
                       @cancel="addManualEvent = false"
-                      @addChip="addChip"
                       :datetimeProp="datetime"
                     ></ts-add-manual-event>
                   </v-menu>

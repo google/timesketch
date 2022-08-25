@@ -158,7 +158,6 @@ export default {
       if (this.datetime === null || this.message === null || this.timestampDesc === null) {
         return
       }
-      // console.log(this.$store.state.sketch.id) sketch ID
       let sketchId = this.$store.state.sketch.id
       let config = {
         headers: {
