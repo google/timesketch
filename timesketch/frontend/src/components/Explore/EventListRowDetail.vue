@@ -14,63 +14,73 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <table class="table is-bordered" style="width:100%;table-layout: fixed;" @mouseup="handleSelectionChange">
-    <tbody>
-      <tr v-for="(item, key) in fullEventFiltered" :key="key" @mouseover="c_key = key" @mouseleave="c_key = -1">
-        <td style="width:40px;">
-          <span
-            class="icon is-small"
-            style="cursor:pointer;"
-            title="Apply 'Include' filter"
-            v-on:click="addFilter(key, item, 'must')"
-            ><i class="fas fa-search-plus"></i
-          ></span>
-        </td>
-        <td style="width:40px;">
-          <span
-            class="icon is-small"
-            style="cursor:pointer;"
-            title="Apply 'Exclude' filter"
-            v-on:click="addFilter(key, item, 'must_not')"
-            ><i class="fas fa-search-minus"></i
-          ></span>
-        </td>
+  <div>
+    <table class="table is-bordered" style="width:100%;table-layout: fixed;" @mouseup="handleSelectionChange">
+      <tbody>
+        <tr v-for="(item, key) in fullEventFiltered" :key="key" @mouseover="c_key = key" @mouseleave="c_key = -1">
+          <td style="width:40px;">
+            <span
+              class="icon is-small"
+              style="cursor:pointer;"
+              title="Apply 'Include' filter"
+              v-on:click="addFilter(key, item, 'must')"
+              ><i class="fas fa-search-plus"></i
+            ></span>
+          </td>
+          <td style="width:40px;">
+            <span
+              class="icon is-small"
+              style="cursor:pointer;"
+              title="Apply 'Exclude' filter"
+              v-on:click="addFilter(key, item, 'must_not')"
+              ><i class="fas fa-search-minus"></i
+            ></span>
+          </td>
 
-        <td style="word-wrap: break-word; width: 150px;">
-          {{ key }}
-          <span
-            v-if="key == c_key"
-            class="icon is-small"
-            style="cursor:pointer;"
-            title="Copy key"
-            v-clipboard:copy="key"
-            v-clipboard:success="handleCopyStatus"
-            ><i class="fas fa-copy"></i
-          ></span>
-        </td>
-        <td>
-          <span
-            v-if="key == c_key"
-            class="icon is-small"
-            style="cursor:pointer; margin-left: 3px; float:right;"
-            title="Copy value"
-            v-clipboard:copy="item"
-            v-clipboard:success="handleCopyStatus"
-            ><i class="fas fa-copy"></i
-          ></span>
-          <text-highlight
-            v-if="getRegexes(key).length > 0"
-            @addChip="$emit('addChip', $event)"
-            :highlightComponent="TsIOCMenu"
-            :queries="getRegexes(key)"
-            :attributeKey="key"
-            >{{ item }}</text-highlight
-          >
-          <span v-else>{{ item }}</span>
-        </td>
-      </tr>
-    </tbody>
-  </table>
+          <td style="word-wrap: break-word; width: 150px;">
+            {{ key }}
+            <span
+              v-if="key == c_key"
+              class="icon is-small"
+              style="cursor:pointer;"
+              title="Copy key"
+              v-clipboard:copy="key"
+              v-clipboard:success="handleCopyStatus"
+              ><i class="fas fa-copy"></i
+            ></span>
+          </td>
+          <td>
+            <span
+              v-if="key == c_key"
+              class="icon is-small"
+              style="cursor:pointer; margin-left: 3px; float:right;"
+              title="Copy value"
+              v-clipboard:copy="item"
+              v-clipboard:success="handleCopyStatus"
+              ><i class="fas fa-copy"></i
+            ></span>
+            <text-highlight
+              v-if="getRegexes(key).length > 0"
+              @addChip="$emit('addChip', $event)"
+              :highlightComponent="TsIOCMenu"
+              :queries="getRegexes(key)"
+              :attributeKey="key"
+              >{{ item }}</text-highlight
+            >
+            <span v-else>{{ item }}</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <button
+      class="button is-small is-rounded"
+      style="margin-right: 0.75rem"
+      v-clipboard:copy="getEventLink()"
+      v-clipboard:success="handleCopyStatus"
+    >
+      Copy Link to Event
+    </button>
+  </div>
 </template>
 
 <script>
@@ -156,6 +166,9 @@ export default {
         regexes.push(this.regexSelection)
       }
       return regexes
+    },
+    getEventLink: function () {
+      return encodeURI(`${window.location.origin}/sketch/${this.$store.state.sketch.id}/explore?q=_id:"${this.event._id}"&timeline=${this.event._source.__ts_timeline_id}`);
     },
   },
   created: function() {
