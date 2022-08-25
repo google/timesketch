@@ -56,3 +56,9 @@ if os.environ.get("prometheus_multiproc_dir"):
 def shutdown_session(exception=None):
     """Remove the database session after every request or app shutdown."""
     db_session.remove()
+
+# pylint: disable=unused-argument
+@application_v2.teardown_appcontext
+def shutdown_session(exception=None):
+    """Remove the database session after every request or app shutdown."""
+    db_session.remove()

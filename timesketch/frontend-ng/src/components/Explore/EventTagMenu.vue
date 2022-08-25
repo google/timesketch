@@ -1,26 +1,7 @@
 <template>
-  <v-card class="mx-auto">
-    <!--
-    <v-list subheader>
-      <v-subheader>Tag as:</v-subheader>
-
-      <v-list-item-group multiple v-model="listItems">
-        <v-list-item v-for="tag in tags" :key="tag.tag">
-          <template v-slot:default="{ active }">
-            <v-list-item-action>
-              <v-checkbox dense :input-value="active" :value="tag.tag" v-model="selectedTags"></v-checkbox>
-            </v-list-item-action>
-
-            <v-list-item-content>
-              <v-list-item-title>{{ tag.tag }}</v-list-item-title>
-            </v-list-item-content>
-          </template>
-        </v-list-item>
-      </v-list-item-group>
-    </v-list>
-    -->
+  <v-card min-width="500px" class="mx-auto">
     <v-card-text>
-      Quick tags:
+      Quick tags
       <v-chip-group>
         <v-chip
           v-for="tag in quickTags"
@@ -28,20 +9,11 @@
           :color="tag.color"
           :text-color="tag.textColor"
           class="text-center"
+          small
+          @click="addTags(tag.tag)"
           >{{ tag.tag }}</v-chip
         >
       </v-chip-group>
-      <!--
-      <v-checkbox
-        v-for="tag in quickTags"
-        :key="tag"
-        v-model="selectedTags"
-        :value="tag"
-        :label="tag"
-        dense
-      ></v-checkbox>
-      -->
-
       <br />
       <v-autocomplete
         v-model="selectedTags"
@@ -52,8 +24,7 @@
         label="Add tag"
         multiple
       ></v-autocomplete>
-      <v-btn text small>Create new</v-btn>
-      <v-btn text small>Manage tags</v-btn>
+      <v-btn outlined text small>Create new</v-btn>
     </v-card-text>
     <v-divider></v-divider>
     <v-card-actions>
@@ -69,7 +40,7 @@ export default {
   data() {
     return {
       listItems: [],
-      selectedTags: ['win_crash'],
+      selectedTags: [],
       quickTags: [
         { tag: 'good', color: 'green', textColor: 'white' },
         { tag: 'bad', color: 'red', textColor: 'white' },
@@ -80,6 +51,44 @@ export default {
   computed: {
     tags() {
       return this.$store.state.tags.map((tag) => tag.tag)
+    },
+  },
+  methods: {
+    addTags: function (tagsToAdd) {
+      if (!Array.isArray(tagsToAdd)) {
+        tagsToAdd = [tagsToAdd]
+      }
+
+      //if (tags.length) {
+      //  EventBus.$emit('eventAnnotated', { type: '__ts_label', event: this.event, searchNode: this.currentSearchNode })
+      //}
+
+      tagsToAdd.forEach((tag) => {
+        if (this.event._source.tag.indexOf(tag) === -1) {
+          this.event._source.tag.push(tag)
+          /*
+          ApiClient.saveEventAnnotation(this.sketch.id, 'tag', tag, [this.event], this.currentSearchNode)
+            .then((response) => {
+              this.$emit('addLabel', label)
+            })
+            .catch((e) => {
+              Toast.open('Error adding label')
+              this.event._source.label = this.event._source.label.filter((e) => e !== label)
+            })
+            */
+        }
+      })
+      /*
+      if (this.labelsToRemove.length) {
+        this.labelsToRemove.forEach((label) => {
+          ApiClient.saveEventAnnotation(this.sketch.id, 'label', label, [this.event], this.currentSearchNode, true)
+            .then((response) => {})
+            .catch((e) => {})
+          this.event._source.label = this.event._source.label.filter((e) => e !== label)
+        })
+        this.labelsToRemove = []
+      }
+      */
     },
   },
 }

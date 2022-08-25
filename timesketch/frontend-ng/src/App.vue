@@ -128,7 +128,11 @@ export default {
       window.location.href = window.location.href.replace('/v2/', '/')
     },
   },
+  created() {
+    console.log('app created')
+  },
   mounted() {
+    console.log('app mounted')
     const isDark = localStorage.getItem('isDarkTheme')
     if (isDark) {
       if (isDark === 'true') {

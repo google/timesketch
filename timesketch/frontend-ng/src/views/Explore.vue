@@ -15,35 +15,18 @@ limitations under the License.
 -->
 <template>
   <v-container fluid>
-    <!-- Right side menu for selected events -->
-    <v-navigation-drawer
-      v-model="selectedEvents.length"
-      fixed
-      right
-      width="600"
-      style="box-shadow: 0 10px 15px -3px #888"
-    >
+    <!-- Right side menu -->
+    <v-navigation-drawer v-if="showRightSidePanel" fixed right width="600" style="box-shadow: 0 10px 15px -3px #888">
       <template v-slot:prepend>
         <v-toolbar flat>
-          <v-toolbar-title>{{ selectedEvents.length }} events selected</v-toolbar-title>
-
+          <v-toolbar-title>Right Side Panel</v-toolbar-title>
           <v-spacer></v-spacer>
-
-          <v-btn icon @click="selectedEvents = []">
+          <v-btn icon @click="showRightSidePanel = false">
             <v-icon>mdi-close</v-icon>
           </v-btn>
         </v-toolbar>
       </template>
-
-      <v-container>
-        <v-list>
-          <v-list-item v-for="(event, index) in selectedEvents" :key="index">
-            <v-list-item-content>
-              <v-list-item-title>{{ event._source.message }}</v-list-item-title>
-            </v-list-item-content>
-          </v-list-item>
-        </v-list>
-      </v-container>
+      <v-container> Content go here </v-container>
     </v-navigation-drawer>
 
     <!-- Scenarios left panel -->
@@ -352,6 +335,7 @@ limitations under the License.
                     :headers="columnHeaders"
                     :items="meta.mappings"
                     :search="searchColumns"
+                    :hide-default-footer="true"
                     item-key="field"
                     disable-pagination
                     show-select
@@ -365,6 +349,9 @@ limitations under the License.
 
                 <v-card-actions>
                   <v-spacer></v-spacer>
+                  <v-btn color="primary" text @click="selectedFields = [{ field: 'message', type: 'text' }]">
+                    Reset
+                  </v-btn>
                   <v-btn color="primary" text @click="columnDialog = false"> Close </v-btn>
                 </v-card-actions>
               </v-card>
@@ -438,14 +425,25 @@ limitations under the License.
                         </v-list-item-content>
                       </v-list-item>
                     </v-list-item-group>
+                    <v-list-item-group>
+                      <v-list-item :ripple="false">
+                        <v-list-item-action>
+                          <v-switch dense v-model="displayOptions.showTimelineName"></v-switch>
+                        </v-list-item-action>
+                        <v-list-item-content>
+                          <v-list-item-title>Timeline name</v-list-item-title>
+                          <v-list-item-subtitle>Show timeline name</v-list-item-subtitle>
+                        </v-list-item-content>
+                      </v-list-item>
+                    </v-list-item-group>
                   </v-list>
                 </v-list>
               </v-card>
             </v-menu>
           </v-toolbar>
 
-          <v-sheet class="pa-4">
-            <v-card class="pa-2" outlined v-if="showHistogram">
+          <v-sheet class="pa-4" v-if="showHistogram">
+            <v-card class="pa-2" outlined>
               <ts-bar-chart
                 :chart-data="eventList.meta.count_over_time"
                 @addChip="addChipFromHistogram($event)"
@@ -476,7 +474,11 @@ limitations under the License.
                 @update:options="updateOptions"
                 :show-current-page="true"
                 :items-per-page-options="[10, 40, 80, 100, 200, 500]"
-              ></v-data-footer>
+              >
+                <template v-slot:prepend v-if="selectedEvents.length">
+                  {{ selectedEvents.length }} events selected. Action menu to appear here..
+                </template>
+              </v-data-footer>
             </template>
             <!-- Event details -->
             <template v-slot:expanded-item="{ headers, item }">
@@ -665,17 +667,13 @@ export default {
       saveSearchFormName: '',
       fromSavedSearch: false,
       selectedEventTags: [],
+      showRightSidePanel: false,
       // old stuff
       params: {},
-      showCreateViewModal: false,
-      showFilterCard: true,
-      showSearch: true,
       searchInProgress: false,
       currentPage: 1,
       contextEvent: false,
       originalContext: false,
-      isFullPage: true,
-      loadingComponent: null,
       showSearchDropdown: false,
       eventList: {
         meta: {},
@@ -683,14 +681,13 @@ export default {
       },
       currentQueryString: '',
       currentQueryFilter: defaultQueryFilter(),
-      selectedFieldsProxy: [],
-      expandFieldDropdown: false,
       selectedEvents: [],
       displayOptions: {
         isCompact: false,
         showTags: true,
         showEmojis: true,
         showMillis: false,
+        showTimelineName: true,
       },
       selectedLabels: [],
       showSearchHistory: false,
@@ -702,7 +699,6 @@ export default {
         y: 0,
       },
       minimizeRightSidePanel: false,
-      sidePanelTab: null,
     }
   },
   computed: {
@@ -768,10 +764,6 @@ export default {
           value: '_source.comment',
           align: 'end',
         },
-        {
-          value: 'timeline_name',
-          align: 'end',
-        },
       ]
       this.extraHeaders = []
       this.selectedFields.forEach((field) => {
@@ -790,6 +782,14 @@ export default {
 
       // Extend the column headers from position 3 (after the actions column).
       baseHeaders.splice(3, 0, ...this.extraHeaders)
+
+      // Add timeline name based on configuration
+      if (this.displayOptions.showTimelineName) {
+        baseHeaders.push({
+          value: 'timeline_name',
+          align: 'end',
+        })
+      }
       return baseHeaders
     },
     rightSidePanelWidth() {
@@ -798,9 +798,6 @@ export default {
         width = '50'
       }
       return width
-    },
-    tags() {
-      return this.$store.state.tags
     },
   },
   methods: {
@@ -994,7 +991,6 @@ export default {
           fileLink.setAttribute('download', fileName)
           document.body.appendChild(fileLink)
           fileLink.click()
-          this.loadingClose()
         })
         .catch((e) => {
           console.error(e)
@@ -1253,22 +1249,6 @@ export default {
         .catch((e) => {})
 
       EventBus.$emit('toggleStar', this.selectedEvents)
-    },
-    changeSortOrder: function () {
-      if (this.currentQueryFilter.order === 'asc') {
-        this.currentQueryFilter.order = 'desc'
-      } else {
-        this.currentQueryFilter.order = 'asc'
-      }
-      this.search(true, true, true)
-    },
-    loadingOpen: function () {
-      this.loadingComponent = this.$buefy.loading.open({
-        container: this.isFullPage ? null : this.$refs.element.$el,
-      })
-    },
-    loadingClose: function () {
-      this.loadingComponent.close()
     },
     jumpInHistory: function (node) {
       this.currentQueryString = node.query_string
