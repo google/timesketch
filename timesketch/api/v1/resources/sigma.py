@@ -59,7 +59,6 @@ def _enrich_sigma_rule_object(self, rule: SigmaRule):
             parsed_rule["rule_uuid"] = parsed_rule.pop("id")
         else:
             parsed_rule["rule_uuid"] = rule.rule_uuid
-        parsed_rule["id"] = rule.id #this is the database id (1,2,3...)
         parsed_rule["created_at"] = str(rule.created_at)
         parsed_rule["updated_at"] = str(rule.updated_at)
         parsed_rule["status"] = rule.get_status.status
