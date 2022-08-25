@@ -37,7 +37,7 @@ You should provide the CSV header with the column names as the first line in the
     A message,1331698658276340,2015-07-24T19:01:01+00:00,Write time,foo,bar
     ...
     
-Using the headers mapping functionality, you can still submit a CSV file without the mandatory fields. However, the uploaded file should have those headers whose semantic meaning is correlated to the ones of `message`, `datetime` and `timestamp_desc`.
+Using the headers mapping functionality, you can still submit a CSV file without the mandatory fields. The uploaded file should have those headers whose semantic meaning is correlated to the ones of `message`, `datetime` and `timestamp_desc`.
 
 ## Example JSONL file
 
