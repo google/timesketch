@@ -17,14 +17,13 @@ class TestHashRLookup(BaseTest):
 
     @mock.patch(u'timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
-    @mock.patch('sqlalchemy.create_engine', mock.MagicMock())
     def setUp(self):
         """Setup for for running the hashr lookup analyzer tests."""
         super().setUp()
         self.analyzer = hashr_lookup.HashRLookup('test_index', 1)
         self.logger = logging.getLogger('timesketch.analyzers.hashR')
 
-    @mock.patch.object(sqlalchemy, 'create_engine', autospec=True)
+    @mock.patch.object(sqlalchemy, 'create_engine', autospec=False)
     @mock.patch.object(logging.Logger, 'warning', autospec=True)
     @mock.patch.object(logging.Logger, 'error', autospec=True)
     @mock.patch.object(logging.Logger, 'info', autospec=True)
@@ -48,6 +47,7 @@ class TestHashRLookup(BaseTest):
         current_app.config['HASHR_QUERY_CHUNK_SIZE'] = 10000
 
         mock_create_engine().connect.return_value = True
+
         test_conn = self.analyzer.connect_hashR()
         self.assertEqual(test_conn, True)
         mock_info.assert_called_with(
@@ -84,7 +84,7 @@ class TestHashRLookup(BaseTest):
             'default value of 50,000.')
         self.assertEqual(self.analyzer.query_chunk_size, 50000)
 
-    @mock.patch.object(sqlalchemy, 'create_engine', autospec=True)
+    @mock.patch.object(sqlalchemy, 'create_engine', autospec=False)
     @mock.patch.object(logging.Logger, 'warning', autospec=True)
     @mock.patch.object(logging.Logger, 'error', autospec=True)
     @mock.patch.object(logging.Logger, 'info', autospec=True)
@@ -124,13 +124,13 @@ class TestHashRLookup(BaseTest):
             self.logger,
             'HASHR_QUERY_CHUNK_SIZE is not convertable to integer.'
             ' Set chunksize to default value of 50,000.')
-        mock_error.assert_called_with(
-            self.logger, '!!! Connection to the hashR postgres database not '
-            'possible! -- Provided connection string: "%s" -- Error message: %s',
-            'postgresql://hashR:***@127.0.0.2:5432/hashRdb', '(builtins.str)'
-            ' Cannot connect to server!\n(Background on this error at: '
-            'http://sqlalche.me/e/e3q8)'
-        )
+        self.assertTrue(
+            ('!!! Connection to the hashR postgres database not possible! -- '
+             'Provided connection string: "%s" -- Error message: %s\', '
+             '\'postgresql://hashR:***@127.0.0.2:5432/hashRdb\', '
+             '\'(builtins.str) Cannot connect to server!\\n(Background on this '
+             'error at:') in str(mock_error.call_args_list))
+
 
     @mock.patch.object(sqlalchemy, 'select', autospec=True)
     @mock.patch.object(sqlalchemy, 'MetaData', autospec=True)
@@ -481,7 +481,6 @@ class TestHashRLookup(BaseTest):
         analyzer.unique_known_hash_counter = 5
 
         result_message = analyzer.run()
-        # import pdb; pdb.set_trace()
         self.assertEqual(
             result_message,
             'Found a total of 13 events with a sha256 hash value - 11 unique '
