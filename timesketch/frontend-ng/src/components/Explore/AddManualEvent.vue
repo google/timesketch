@@ -120,8 +120,8 @@ export default {
     }
   },
   watch: {
-    datetimeProp: function () {
-      this.datetime = this.datetimeProp
+    datetimeProp: function (newValue) {
+      this.datetime = newValue
     },
   },
   computed: {
