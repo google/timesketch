@@ -213,7 +213,7 @@ Here are some common searches:
 | ---------------------------- | ---------------------------------------------------------------- |------------|
 | EventId 4624 and LogonType 5 | event_identifier:4624 AND "LogonType\">5</Data>"                 | |
 | Windows File path            | "C:\\Users\\foobar\\Download\\folder\ whitespace\\filename.jpeg" ||
-| Events that have some value in a field that contains the name comm           | `_exists_:"*comm*"` | Can be very expensive search |
+| Events that have a value in a field that contains the name `*comm*`           | `_exists_:"*comm*"` | Can be very expensive search |
 
 ## Common questions
 
