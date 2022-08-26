@@ -24,8 +24,8 @@ BASE_TYPES = {
     'float': float
 }
 
+ONTOLOGY_DESCRIPTION = interface.get_yaml_config('event_attribute_ontology.yaml')
 ONTOLOGY_DESCRIPTION.update(BASE_TYPES)
-
 
 
 class Attribute:
