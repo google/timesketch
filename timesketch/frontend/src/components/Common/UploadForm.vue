@@ -187,14 +187,12 @@ limitations under the License.
           />
 
           <!-- 
-      
           Next lines of code represent the headers mapping selections.
             It is dynamically generated according to the missing headers.
             The user may have 3 possibilities to map the mandatory header:
             1) Map it with one found in the CSV (1:1 mapping)
             2) Map it with multiple headers found in the CSV (1:N mapping)
             3) Create a new column and do not do any mapping
-
           -->
           <div v-for="header in missingHeaders" :key="header.name">
             <span class="tag is-info is-large is-light"
@@ -264,10 +262,8 @@ limitations under the License.
           </div>
 
           <!--
-
             CSV delimiter selection: the program will parse 
-            the file according tothis choice
-          
+            the file according to this choice
           -->
           <div v-if="extension === 'csv'">
             <label class="label">CSV Separator</label>
@@ -464,7 +460,7 @@ export default {
         }
       } else {
         console.error(
-          this.extension + " extension not supported for this feature"
+          this.extension + " file extension not supported for this feature"
         );
       }
       let checkedHeaders = this.checkedHeaders;
@@ -663,7 +659,7 @@ export default {
       if (this.form.file.size <= 0) {
         this.error.push("Please select a non empty file");
       }
-      let allowedExtensions = ["csv", "jsonl", "plaso"];
+      let allowedExtensions = ["csv", "json", "jsonl", "plaso"];
       if (!allowedExtensions.includes(this.extension)) {
         this.error.push(
           "Please select a file with a valid extension: " +
