@@ -15,7 +15,6 @@
 
 import logging
 from numbers import Complex
-import yaml
 from timesketch.lib.analyzers import interface
 
 logger = logging.getLogger("timesketch.lib.attributes")
@@ -25,7 +24,6 @@ BASE_TYPES = {
     'float': float
 }
 
-ONTOLOGY_DESCRIPTION = interface.get_yaml_config('event_attribute_ontology.yaml')
 ONTOLOGY_DESCRIPTION.update(BASE_TYPES)
 
 
@@ -51,7 +49,6 @@ class Attribute:
             }
 
         # For compound types, cycle through all members defined
-        # in the Yaml and recursively serialize() them.
         if isinstance(members, dict):
             for attribute, attr_type in members.items():
                 value = getattr(self, attribute)
