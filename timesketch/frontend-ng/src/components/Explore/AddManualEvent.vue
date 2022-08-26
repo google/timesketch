@@ -67,30 +67,18 @@ limitations under the License.
 
       <v-row v-for="(attribute, index) in attributes" :key="index">
         <v-col cols="6">
-          <v-text-field
-            label="Attribute Name"
-            outlined
-            hide-details
-            v-model="attributes[index].name"
-            @change="setAddAttributeBtn(index)"
-          >
-          </v-text-field>
+          <v-text-field label="Attribute Name" outlined hide-details v-model="attributes[index].name"> </v-text-field>
         </v-col>
         <v-col cols="6">
-          <v-text-field
-            label="Attribute Value"
-            outlined
-            hide-details
-            v-model="attributes[index].value"
-            @change="setAddAttributeBtn(index)"
-          >
-          </v-text-field>
+          <v-text-field label="Attribute Value" outlined hide-details v-model="attributes[index].value"> </v-text-field>
         </v-col>
       </v-row>
 
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn text color="primary" @click="addAttribute" :disabled="isDisabled"> Add Attribute </v-btn>
+        <v-btn text color="primary" @click="attributes.push({ name: '', value: '' })" :disabled="isDisabled">
+          Add Attribute
+        </v-btn>
         <v-btn text color="primary" @click="clearAndCancel"> Cancel </v-btn>
         <v-btn text color="primary" @click="submit"> Add Event </v-btn>
       </v-card-actions>
@@ -115,7 +103,6 @@ export default {
       filterTab: null,
       showPicker: false,
       attributes: [],
-      isDisabled: false,
       datetime: this.datetimeProp,
     }
   },
@@ -133,25 +120,18 @@ export default {
         return this.datetime
       },
     },
+    isDisabled() {
+      return this.attributes.some((attribute) => {
+        return attribute.name === '' || attribute.value === ''
+      })
+    },
   },
   methods: {
-    setAddAttributeBtn: function (i) {
-      if (this.attributes[i].name === '' || this.attributes[i].value === '') {
-        this.isDisabled = true
-      } else {
-        this.isDisabled = false
-      }
-    },
-    addAttribute: function () {
-      this.attributes.push({ name: '', value: '' })
-      this.isDisabled = true
-    },
     clearAndCancel: function () {
       this.datetime = null
       this.message = null
       this.timestampDesc = null
       this.attributes = []
-      this.isDisabled = false
       this.$emit('cancel')
     },
     submit: function () {
@@ -165,10 +145,11 @@ export default {
         },
       }
       let attributes = {}
-      this.attributes.forEach((attribute) => {
-        if (attribute.name === '' || attribute.value === '') return
-        attributes[attribute.name] = attribute.value
-      })
+      this.attributes
+        .filter((attribute) => !(attribute.name === '' || attribute.value === ''))
+        .reduce((_, attribute) => {
+          attributes[attribute.name] = attribute.value
+        }, attributes)
       ApiClient.createEvent(sketchId, this.datetime, this.message, this.timestampDesc, attributes, config)
         .then((response) => {
           this.clearAndCancel()

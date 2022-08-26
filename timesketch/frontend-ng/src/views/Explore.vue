@@ -660,7 +660,7 @@ export default {
       saveSearchMenu: false,
       saveSearchFormName: '',
       fromSavedSearch: false,
-      datetime: '',
+      datetimeManualEvent: '', // datetime of an event used
       // old stuff
       params: {},
       showCreateViewModal: false,
@@ -751,8 +751,8 @@ export default {
     },
   },
   methods: {
-    addEventBtn: function (datetime) {
-      this.datetime = datetime
+    addEventBtn: function (datetimeManualEvent) {
+      this.datetimeManualEvent = datetimeManualEvent
       this.addManualEvent = true
     },
     toggleSearchHistory: function () {
