@@ -41,6 +41,16 @@ limitations under the License.
       </div>
 
       <div class="field">
+        <!-- Error lists -->
+        <div v-if="error.length>0">
+          <span v-for="(errorMessage, index) in error" :key="index">
+            <article class="message is-danger mb-0">
+              <div class="message-body">
+                {{ errorMessage }}
+              </div>
+            </article>
+          </span>
+        </div>
         <div v-if="extension === 'csv'">
           <hr />
 
@@ -306,16 +316,6 @@ limitations under the License.
             <input class="button is-success" type="submit" value="Upload" />
           </div>
         </div>
-      </div>
-      <!-- Error lists -->
-      <div v-else>
-        <span v-for="(errorMessage, index) in error" :key="index">
-          <article class="message is-danger mb-0">
-            <div class="message-body">
-              {{ errorMessage }}
-            </div>
-          </article>
-        </span>
       </div>
     </form>
     <br />
