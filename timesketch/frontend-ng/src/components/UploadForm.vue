@@ -14,255 +14,135 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div>
-    <form v-on:submit.prevent="submitForm">
-      <div class="field">
-        <div class="file has-name">
-          <label class="file-label">
-            <input id="datafile" class="file-input" type="file" name="resume" @change="setFile($event.target.files)" />
-            <span class="file-cta">
-              <span class="file-icon">
-                <i class="fas fa-upload"></i>
-              </span>
-              <span class="file-label"> Choose a file… </span>
-            </span>
-            <span class="file-name" v-if="fileName">
-              <span v-if="!fileName">Please select a file</span>
-              {{ fileName }}
-            </span>
-          </label>
+  <v-dialog v-model="dialog" persistent max-width="1000">
+    <template v-slot:activator="{ on, attrs }">
+      <v-btn small text v-bind="attrs" v-on="on"> <v-icon>mdi-plus</v-icon> Upload timeline </v-btn>
+    </template>
+    <v-card>
+      <v-container class="px-8">
+        <v-card-title class="text-h5"> {{ title }} </v-card-title>
+
+        <div v-if="error.length > 0">
+          <v-alert dense outlined type="error" v-for="(errorMessage, index) in error" :key="index">
+            {{ errorMessage }}
+          </v-alert>
         </div>
-      </div>
 
-      <div class="field">
-        <div v-if="['csv', 'jsonl'].includes(extension)">
-          <hr />
+        <v-simple-table height="300px">
+          <template v-slot:default>
+            <thead>
+              <tr>
+                <th
+                  v-for="mandatoryHeader in headersTable"
+                  :key="mandatoryHeader.name"
+                  :style="mandatoryHeader.color"
+                  class="text-left"
+                >
+                  {{ mandatoryHeader.name }}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="i in numberRows" :key="i">
+                <td v-for="mandatoryHeader in headersTable" :key="mandatoryHeader.name">
+                  {{ mandatoryHeader.values[i - 1] }}
+                </td>
+              </tr>
+            </tbody>
+          </template>
+        </v-simple-table>
 
-          <!-- List of button: showHelper, showPreview, addColumnsToPreview -->
-          <button type="button" class="button is-success" @click="showHelper">
-            {{ showHelperFlag ? 'Hide Helper' : 'Show Helper' }}</button
-          >&emsp;
-          <button type="button" class="button is-success" @click="showPreview">
-            {{ showPreviewFlag ? 'Hide preview' : 'Show preview' }}</button
-          >&emsp;
-          <button v-if="showPreviewFlag" type="button" class="button is-success" @click="showAddColumn">
-            {{ showAddColumnFlag ? 'Hide colums' : 'Add Columns' }}</button
-          ><br /><br />
-          ;
-          <!-- Dynamically generation of the preview of the CSV file -->
-          <div v-if="showPreviewFlag">
-            <span>
-              <article class="message is-info mb-0">
-                <div class="message-body">
-                  The columns shown in the preview are only a representation of what will be uploaded on the server.
-                  Adding or removing columns using the "Add columns" button does not affect what will be uploaded on the
-                  server.
-                </div>
-              </article>
-            </span>
-            <ul v-if="showAddColumnFlag" style="list-style: none; height: 100px; width: 100%; overflow: auto">
-              <li v-for="header in allHeaders" :key="header">
-                <input type="checkbox" :value="header" v-model="checkedHeaders" />
-                {{ header }}
-              </li>
-            </ul>
-            <br />
-            <table id="example" class="table is-striped" style="width: 100%">
-              <thead>
-                <tr>
-                  <th
-                    v-for="mandatoryHeader in headersTable"
-                    :key="mandatoryHeader.name"
-                    :style="mandatoryHeader.color"
-                  >
-                    {{ mandatoryHeader.name }}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="i in numberRows" :key="i">
-                  <td v-for="mandatoryHeader in headersTable" :key="mandatoryHeader.name">
-                    {{ mandatoryHeader.values[i - 1] }}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+        <v-file-input
+          label="Plaso/CSV/JSONL file"
+          outlined
+          dense
+          clearable
+          multiple
+          show-size
+          truncate-length="15"
+          id="datafile"
+          v-model="uploadedFiles"
+          @change="setFile($event)"
+          @click:clear="clearFormData"
+        ></v-file-input>
 
-          <!-- Helper menu -->
-          <div v-if="showHelperFlag">
-            <header class="modal-card-head">
-              <p class="modal-card-title">Header Mapping Helper</p>
-            </header>
-            <section class="modal-card-body">
-              <div>
-                The form below allows you to map the headers in your file to the mandatory ones:
-                <div class="content">
-                  <ul>
-                    <li v-for="header in missingHeaders" :key="header.name">
-                      {{ header.name }}
-                    </li>
-                  </ul>
-                </div>
-                You can map a missing header using a dropdown menu or a list of checkboxes.
-                <div class="content">
-                  <ul>
-                    <li>
-                      Dropdown menu:
-                      <div class="content">
-                        <ul>
-                          <li>
-                            Choose one existing header from your CSV. Timesketch will rename that column with the name
-                            of the missing header.
-                          </li>
-                          <li>
-                            Create a new column by selecting "Create new header". Timesketch will add a new column with
-                            the name of the missing header. Doing so, you need to specify a default value that
-                            Timesketch will use to fill the new column.
-                          </li>
-                        </ul>
-                      </div>
-                    </li>
-                    <li>
-                      List of checkboxes:
-                      <div class="content">
-                        <ul>
-                          <li>
-                            By choosing only one checkbox, Timesketch will rename that column with the name of the
-                            missing header.
-                          </li>
-                          <li>
-                            By choosing more than one checkbox, Timesketch will create a new column that combines the
-                            different values of the selected columns.
-                          </li>
-                        </ul>
-                      </div>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </section>
-          </div>
-          <hr style="height: 2px; border-width: 0; color: gray; background-color: #b5b5b5" />
-
-          <!-- 
-          Next lines of code represent the headers mapping selections.
-            It is dynamically generated according to the missing headers.
-            The user may have 3 possibilities to map the mandatory header:
-            1) Map it with one found in the CSV (1:1 mapping)
-            2) Map it with multiple headers found in the CSV (1:N mapping)
-            3) Create a new column and do not do any mapping
-          -->
-          <div v-for="header in missingHeaders" :key="header.name">
-            <span class="tag is-info is-large is-light"
-              ><label>{{ header.name }}</label></span
-            >
-            &emsp;
-
-            <!-- Dropdown menu: 1:1 mapping OR create new header -->
-            <div v-if="header.type === 'single'" class="select is-link">
-              <select
-                :name="header.name"
-                :id="header.name"
-                @change="
-                  changeHeaderMapping($event.target.options[$event.target.options.selectedIndex].text, header.name)
-                "
-              >
-                <option selected disabled>-</option>
-                <option>Create new header</option>
-                <option v-for="h in headers" :value="h" :key="h">
-                  <div v-if="!mandatoryHeaders.map((header) => header.name).includes(h)">
-                    {{ h }}
-                  </div>
-                </option>
-              </select>
-            </div>
-            &emsp;
-            <span v-if="getDefaultValue(header.name)" class="tag is-info is-large is-light">
-              <label>Def. Value: {{ getDefaultValue(header.name) }}</label>
-            </span>
-
-            <!-- List of checkboxes: 1:N mapping -->
-            <div v-if="header.type === 'multiple'">
-              <br />
-              <ul class="city__list" style="list-style: none; height: 100px; width: 100%; overflow: auto">
-                <li v-for="h in headers" :key="h">
-                  <input
-                    id="chk"
-                    type="checkbox"
-                    :value="h"
-                    :name="header.name"
-                    @click="changeHeaderMapping(h, header.name)"
-                  />
-                  {{ h }}
-                </li>
-              </ul>
-            </div>
-            <hr />
-          </div>
-
-          <!--
-            CSV delimiter selection: the program will parse 
-            the file according to this choice
-          -->
-          <div v-if="extension === 'csv'">
-            <label class="label">CSV Separator</label>
-            <div class="control" v-for="(v, key) in delimitersList" :key="key">
-              <input type="radio" name="CSVDelimiter" :value="v" v-model="CSVDelimiter" @change="changeCSVDelimiter" />
-              {{ key }} ({{ v }})
-            </div>
-          </div>
+        <div v-if="fileName">
+          <v-text-field label="Timeline Name" outlined v-model="form.name"></v-text-field>
         </div>
-      </div>
+      </v-container>
 
-      <div class="field" v-if="fileName">
-        <hr style="height: 2px; border-width: 0; color: gray; background-color: #b5b5b5" />
-        <label class="label">Name</label>
-        <div class="control">
-          <input v-model="form.name" class="input" type="text" required placeholder="Name your timeline" />
-        </div>
-        <hr />
-      </div>
+      
+      <v-card-actions>
+        <v-spacer></v-spacer>
+        <v-btn
+          color="red darken-1"
+          text
+          @click="
+            clearFormData()
+            dialog = false
+          "
+        >
+          Close
+        </v-btn>
 
-      <div class="error" v-if="!error.length">
-        <div class="field" v-if="fileName && percentCompleted === 0">
-          <div class="control">
-            <input class="button is-success" type="submit" value="Upload" />
-          </div>
-        </div>
-      </div>
-      <!-- Error lists -->
-      <div v-else>
-        <span v-for="(errorMessage, index) in error" :key="index">
-          <article class="message is-danger mb-0">
-            <div class="message-body">
-              {{ errorMessage }}
-            </div>
-          </article>
-        </span>
-      </div>
-    </form>
-    <br />
-    <b-progress
-      v-if="percentCompleted !== 0"
-      :value="percentCompleted"
-      show-value
-      format="percent"
-      type="is-info"
-      size="is-medium"
-    >
-      <span v-if="percentCompleted === 100">Waiting for request to finish..</span>
-    </b-progress>
-  </div>
+        <v-btn color="green darken-1" text @click="submitForm()" :disabled="error.length > 0 || !fileName">
+          Submit
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 <script>
-import ApiClient from '../../utils/RestApiClient'
+import ApiClient from '../utils/RestApiClient'
 
 export default {
   data() {
     return {
       headersString: '', // headers string not formatted (used when changing CSV separator)
       valuesString: [],
+      desserts: [
+        {
+          name: 'Frozen Yogurt',
+          calories: 159,
+        },
+        {
+          name: 'Ice cream sandwich',
+          calories: 237,
+        },
+        {
+          name: 'Eclair',
+          calories: 262,
+        },
+        {
+          name: 'Cupcake',
+          calories: 305,
+        },
+        {
+          name: 'Gingerbread',
+          calories: 356,
+        },
+        {
+          name: 'Jelly bean',
+          calories: 375,
+        },
+        {
+          name: 'Lollipop',
+          calories: 392,
+        },
+        {
+          name: 'Honeycomb',
+          calories: 408,
+        },
+        {
+          name: 'Donut',
+          calories: 452,
+        },
+        {
+          name: 'KitKat',
+          calories: 518,
+        },
+      ],
+      title: 'Upload your Plaso/JSONL/CSV file',
       /**
        *  headersMapping: list of object containing the:
        * (i) target header to be modified [key=target],
@@ -282,6 +162,7 @@ export default {
       fileName: '',
       error: [],
       percentCompleted: 0,
+      uploadedFiles: [],
 
       CSVDelimiter: ',',
       infoMessage: '',
@@ -291,6 +172,7 @@ export default {
       showAddColumnFlag: false,
       checkedHeaders: [],
       staticNumberRows: 3,
+      dialog: false,
       colors: [
         { name: 'red', value: 'background-color: #FEECF0; color:#CC0F35' },
         { name: 'blue', value: 'background-color: #EEF6FC; color:#1D72AA' },
@@ -313,7 +195,6 @@ export default {
     },
     extension() {
       let extension = this.fileName.split('.')[1]
-      console.log(extension)
       if (extension) return extension.toLowerCase()
       else return null
     },
@@ -453,6 +334,7 @@ export default {
     changeCSVDelimiter: function () {
       this.headersMapping = []
       this.checkedHeaders = this.mandatoryHeaders.map((x) => x.name)
+      console.log(this.CSVDelimiter)
       this.validateFile()
     },
     changeHeaderMapping: function (source, target) {
@@ -517,6 +399,9 @@ export default {
       this.infoMessage = ''
       this.headersString = ''
       this.valuesString = []
+      this.uploadedFiles = []
+      this.title = 'Upload your Plaso/JSONL/CSV file'
+      this.errors = []
     },
     submitForm: function () {
       if (!this.validateFile()) {
@@ -546,7 +431,6 @@ export default {
       ApiClient.uploadTimeline(formData, config)
         .then((response) => {
           this.$store.dispatch('updateSketch', this.$store.state.sketch.id)
-          this.$emit('toggleModal')
           this.clearFormData()
           this.percentCompleted = 0
         })
@@ -573,6 +457,11 @@ export default {
           this.error.push(`New headers mapping contains duplicates (${duplicates})`)
         }
       }
+      if (this.error.length === 0) {
+        this.title = 'Submit your file to Timesketch'
+      } else {
+        this.title = 'Almost there...'
+      }
       return this.error.length === 0
     },
     setFile: function (fileList) {
@@ -582,6 +471,7 @@ export default {
         return
       }
       let fileName = fileList[0].name
+      console.log(fileName)
       this.headersMapping = []
       this.headersString = ''
       this.valuesString = []
