@@ -19,13 +19,7 @@ limitations under the License.
       <div class="field">
         <div class="file has-name">
           <label class="file-label">
-            <input
-              id="datafile"
-              class="file-input"
-              type="file"
-              name="resume"
-              @change="setFile($event.target.files)"
-            />
+            <input id="datafile" class="file-input" type="file" name="resume" @change="setFile($event.target.files)" />
             <span class="file-cta">
               <span class="file-icon">
                 <i class="fas fa-upload"></i>
@@ -46,47 +40,29 @@ limitations under the License.
 
           <!-- List of button: showHelper, showPreview, addColumnsToPreview -->
           <button type="button" class="button is-success" @click="showHelper">
-            {{ showHelperFlag ? "Hide Helper" : "Show Helper" }}</button
+            {{ showHelperFlag ? 'Hide Helper' : 'Show Helper' }}</button
           >&emsp;
           <button type="button" class="button is-success" @click="showPreview">
-            {{ showPreviewFlag ? "Hide preview" : "Show preview" }}</button
+            {{ showPreviewFlag ? 'Hide preview' : 'Show preview' }}</button
           >&emsp;
-          <button
-            v-if="showPreviewFlag"
-            type="button"
-            class="button is-success"
-            @click="showAddColumn"
-          >
-            {{ showAddColumnFlag ? "Hide colums" : "Add Columns" }}</button
+          <button v-if="showPreviewFlag" type="button" class="button is-success" @click="showAddColumn">
+            {{ showAddColumnFlag ? 'Hide colums' : 'Add Columns' }}</button
           ><br /><br />
-;
+          ;
           <!-- Dynamically generation of the preview of the CSV file -->
           <div v-if="showPreviewFlag">
             <span>
               <article class="message is-info mb-0">
                 <div class="message-body">
-                  The columns shown in the preview are only a representation of
-                  what will be uploaded on the server. Adding or removing
-                  columns using the "Add columns" button does not affect what
-                  will be uploaded on the server.
+                  The columns shown in the preview are only a representation of what will be uploaded on the server.
+                  Adding or removing columns using the "Add columns" button does not affect what will be uploaded on the
+                  server.
                 </div>
               </article>
             </span>
-            <ul
-              v-if="showAddColumnFlag"
-              style="
-                list-style: none;
-                height: 100px;
-                width: 100%;
-                overflow: auto;
-              "
-            >
+            <ul v-if="showAddColumnFlag" style="list-style: none; height: 100px; width: 100%; overflow: auto">
               <li v-for="header in allHeaders" :key="header">
-                <input
-                  type="checkbox"
-                  :value="header"
-                  v-model="checkedHeaders"
-                />
+                <input type="checkbox" :value="header" v-model="checkedHeaders" />
                 {{ header }}
               </li>
             </ul>
@@ -105,10 +81,7 @@ limitations under the License.
               </thead>
               <tbody>
                 <tr v-for="i in numberRows" :key="i">
-                  <td
-                    v-for="mandatoryHeader in headersTable"
-                    :key="mandatoryHeader.name"
-                  >
+                  <td v-for="mandatoryHeader in headersTable" :key="mandatoryHeader.name">
                     {{ mandatoryHeader.values[i - 1] }}
                   </td>
                 </tr>
@@ -123,8 +96,7 @@ limitations under the License.
             </header>
             <section class="modal-card-body">
               <div>
-                The form below allows you to map the headers in your file to the
-                mandatory ones:
+                The form below allows you to map the headers in your file to the mandatory ones:
                 <div class="content">
                   <ul>
                     <li v-for="header in missingHeaders" :key="header.name">
@@ -132,8 +104,7 @@ limitations under the License.
                     </li>
                   </ul>
                 </div>
-                You can map a missing header using a dropdown menu or a list of
-                checkboxes.
+                You can map a missing header using a dropdown menu or a list of checkboxes.
                 <div class="content">
                   <ul>
                     <li>
@@ -141,16 +112,13 @@ limitations under the License.
                       <div class="content">
                         <ul>
                           <li>
-                            Choose one existing header from your CSV. Timesketch
-                            will rename that column with the name of the missing
-                            header.
+                            Choose one existing header from your CSV. Timesketch will rename that column with the name
+                            of the missing header.
                           </li>
                           <li>
-                            Create a new column by selecting "Create new
-                            header". Timesketch will add a new column with the
-                            name of the missing header. Doing so, you need to
-                            specify a default value that Timesketch will use to
-                            fill the new column.
+                            Create a new column by selecting "Create new header". Timesketch will add a new column with
+                            the name of the missing header. Doing so, you need to specify a default value that
+                            Timesketch will use to fill the new column.
                           </li>
                         </ul>
                       </div>
@@ -160,14 +128,12 @@ limitations under the License.
                       <div class="content">
                         <ul>
                           <li>
-                            By choosing only one checkbox, Timesketch will
-                            rename that column with the name of the missing
-                            header.
+                            By choosing only one checkbox, Timesketch will rename that column with the name of the
+                            missing header.
                           </li>
                           <li>
-                            By choosing more than one checkbox, Timesketch will
-                            create a new column that combines the different
-                            values of the selected columns.
+                            By choosing more than one checkbox, Timesketch will create a new column that combines the
+                            different values of the selected columns.
                           </li>
                         </ul>
                       </div>
@@ -177,14 +143,7 @@ limitations under the License.
               </div>
             </section>
           </div>
-          <hr
-            style="
-              height: 2px;
-              border-width: 0;
-              color: gray;
-              background-color: #b5b5b5;
-            "
-          />
+          <hr style="height: 2px; border-width: 0; color: gray; background-color: #b5b5b5" />
 
           <!-- 
           Next lines of code represent the headers mapping selections.
@@ -206,46 +165,27 @@ limitations under the License.
                 :name="header.name"
                 :id="header.name"
                 @change="
-                  changeHeaderMapping(
-                    $event.target.options[$event.target.options.selectedIndex]
-                      .text,
-                    header.name
-                  )
+                  changeHeaderMapping($event.target.options[$event.target.options.selectedIndex].text, header.name)
                 "
               >
                 <option selected disabled>-</option>
                 <option>Create new header</option>
                 <option v-for="h in headers" :value="h" :key="h">
-                  <div
-                    v-if="
-                      !mandatoryHeaders.map((header) => header.name).includes(h)
-                    "
-                  >
+                  <div v-if="!mandatoryHeaders.map((header) => header.name).includes(h)">
                     {{ h }}
                   </div>
                 </option>
               </select>
             </div>
             &emsp;
-            <span
-              v-if="getDefaultValue(header.name)"
-              class="tag is-info is-large is-light"
-            >
+            <span v-if="getDefaultValue(header.name)" class="tag is-info is-large is-light">
               <label>Def. Value: {{ getDefaultValue(header.name) }}</label>
             </span>
 
             <!-- List of checkboxes: 1:N mapping -->
             <div v-if="header.type === 'multiple'">
               <br />
-              <ul
-                class="city__list"
-                style="
-                  list-style: none;
-                  height: 100px;
-                  width: 100%;
-                  overflow: auto;
-                "
-              >
+              <ul class="city__list" style="list-style: none; height: 100px; width: 100%; overflow: auto">
                 <li v-for="h in headers" :key="h">
                   <input
                     id="chk"
@@ -268,13 +208,7 @@ limitations under the License.
           <div v-if="extension === 'csv'">
             <label class="label">CSV Separator</label>
             <div class="control" v-for="(v, key) in delimitersList" :key="key">
-              <input
-                type="radio"
-                name="CSVDelimiter"
-                :value="v"
-                v-model="CSVDelimiter"
-                @change="changeCSVDelimiter"
-              />
+              <input type="radio" name="CSVDelimiter" :value="v" v-model="CSVDelimiter" @change="changeCSVDelimiter" />
               {{ key }} ({{ v }})
             </div>
           </div>
@@ -282,23 +216,10 @@ limitations under the License.
       </div>
 
       <div class="field" v-if="fileName">
-        <hr
-          style="
-            height: 2px;
-            border-width: 0;
-            color: gray;
-            background-color: #b5b5b5;
-          "
-        />
+        <hr style="height: 2px; border-width: 0; color: gray; background-color: #b5b5b5" />
         <label class="label">Name</label>
         <div class="control">
-          <input
-            v-model="form.name"
-            class="input"
-            type="text"
-            required
-            placeholder="Name your timeline"
-          />
+          <input v-model="form.name" class="input" type="text" required placeholder="Name your timeline" />
         </div>
         <hr />
       </div>
@@ -330,19 +251,17 @@ limitations under the License.
       type="is-info"
       size="is-medium"
     >
-      <span v-if="percentCompleted === 100"
-        >Waiting for request to finish..</span
-      >
+      <span v-if="percentCompleted === 100">Waiting for request to finish..</span>
     </b-progress>
   </div>
 </template>
 <script>
-import ApiClient from "../../utils/RestApiClient";
+import ApiClient from '../../utils/RestApiClient'
 
 export default {
   data() {
     return {
-      headersString: "", // headers string not formatted (used when changing CSV separator)
+      headersString: '', // headers string not formatted (used when changing CSV separator)
       valuesString: [],
       /**
        *  headersMapping: list of object containing the:
@@ -352,70 +271,66 @@ export default {
        */
       headersMapping: [],
       mandatoryHeaders: [
-        { name: "datetime", type: "single" },
-        { name: "message", type: "multiple" },
-        { name: "timestamp_desc", type: "single" },
+        { name: 'datetime', type: 'single' },
+        { name: 'message', type: 'multiple' },
+        { name: 'timestamp_desc', type: 'single' },
       ],
       form: {
-        name: "",
-        file: "",
+        name: '',
+        file: '',
       },
-      fileName: "",
+      fileName: '',
       error: [],
       percentCompleted: 0,
 
-      CSVDelimiter: ",",
-      infoMessage: "",
-      delimitersList: { Comma: ",", Semicolon: ";", Pipe: "|" },
+      CSVDelimiter: ',',
+      infoMessage: '',
+      delimitersList: { Comma: ',', Semicolon: ';', Pipe: '|' },
       showHelperFlag: false,
       showPreviewFlag: false,
       showAddColumnFlag: false,
       checkedHeaders: [],
       staticNumberRows: 3,
       colors: [
-        { name: "red", value: "background-color: #FEECF0; color:#CC0F35" },
-        { name: "blue", value: "background-color: #EEF6FC; color:#1D72AA" },
-        { name: "green", value: "background-color: #EFFAF3; color:#257942" },
+        { name: 'red', value: 'background-color: #FEECF0; color:#CC0F35' },
+        { name: 'blue', value: 'background-color: #EEF6FC; color:#1D72AA' },
+        { name: 'green', value: 'background-color: #EFFAF3; color:#257942' },
       ],
-    };
+    }
   },
   computed: {
     headers() {
-      let headers = [];
-      if (this.extension === "csv") {
-        headers = this.headersString.split(this.CSVDelimiter);
-      } else if (this.extension === "jsonl") {
-        headers = Object.keys(this.headersString);
+      let headers = []
+      if (this.extension === 'csv') {
+        headers = this.headersString.split(this.CSVDelimiter)
+      } else if (this.extension === 'jsonl') {
+        headers = Object.keys(this.headersString)
       }
-      return headers;
+      return headers
     },
     missingHeaders() {
-      return this.mandatoryHeaders.filter(
-        (header) => this.headers.indexOf(header.name) < 0
-      );
+      return this.mandatoryHeaders.filter((header) => this.headers.indexOf(header.name) < 0)
     },
     extension() {
-      let extension = this.fileName.split(".")[1];
-      console.log(extension);
-      if (extension) return extension.toLowerCase();
-      else return null;
+      let extension = this.fileName.split('.')[1]
+      console.log(extension)
+      if (extension) return extension.toLowerCase()
+      else return null
     },
     numberRows() {
-      if (this.extension === "csv") {
-        let n = this.valuesString.indexOf("");
-        return n < 0 ? this.staticNumberRows : n;
-      } else if (this.extension === "jsonl") {
-        return this.valuesString.length;
+      if (this.extension === 'csv') {
+        let n = this.valuesString.indexOf('')
+        return n < 0 ? this.staticNumberRows : n
+      } else if (this.extension === 'jsonl') {
+        return this.valuesString.length
       } else {
-        return 0;
+        return 0
       }
     },
     allHeaders() {
-      let setHeaders = new Set(
-        this.mandatoryHeaders.map((x) => x.name).concat(this.headers)
-      );
-      let headers = [...setHeaders];
-      return headers;
+      let setHeaders = new Set(this.mandatoryHeaders.map((x) => x.name).concat(this.headers))
+      let headers = [...setHeaders]
+      return headers
     },
     headersTable() {
       /**
@@ -431,9 +346,9 @@ export default {
        *  - the key is the header, e.g., "datetime", "file_name"
        *  - the value is an array containing the values of that column
        */
-      let valuesAndHeaders = {};
-      if (this.extension === "csv") {
-        let values = this.valuesString.map((x) => x.split(this.CSVDelimiter));
+      let valuesAndHeaders = {}
+      if (this.extension === 'csv') {
+        let values = this.valuesString.map((x) => x.split(this.CSVDelimiter))
         /**
          * values is an array of array (matrix)
          * For example, for a CSV with 3 headers such as datetime, timestamp description and permission
@@ -442,36 +357,34 @@ export default {
          *                | [2022-11-09, file_update, low]  |
          */
         for (let i = 0; i < this.headers.length; i++) {
-          let listValues = [];
+          let listValues = []
           for (let j = 0; j < values.length; j++) {
-            listValues.push(values[j][i]); // list values aggregate the information on the columns
+            listValues.push(values[j][i]) // list values aggregate the information on the columns
           }
-          valuesAndHeaders[this.headers[i]] = listValues;
+          valuesAndHeaders[this.headers[i]] = listValues
         }
-      } else if (this.extension === "jsonl") {
+      } else if (this.extension === 'jsonl') {
         for (let i = 0; i < this.valuesString.length; i++) {
           for (let header in this.valuesString[i]) {
             if (header in valuesAndHeaders) {
-              valuesAndHeaders[header].push(this.valuesString[i][header]);
+              valuesAndHeaders[header].push(this.valuesString[i][header])
             } else {
-              valuesAndHeaders[header] = [this.valuesString[i][header]];
+              valuesAndHeaders[header] = [this.valuesString[i][header]]
             }
           }
         }
       } else {
-        console.error(
-          this.extension + " file extension not supported for this feature"
-        );
+        console.error(this.extension + ' file extension not supported for this feature')
       }
-      let checkedHeaders = this.checkedHeaders;
+      let checkedHeaders = this.checkedHeaders
       return checkedHeaders.sort().map((header) => {
-        let color = ""; // CSS property for the displayed column
-        let values = []; // values that we will display for the checked header
+        let color = '' // CSS property for the displayed column
+        let values = [] // values that we will display for the checked header
 
         if (this.headers.includes(header)) {
           // case 0: the mandatory header is in the CSV (no mapping required)
-          values = valuesAndHeaders[header];
-          color = this.colors.find((x) => x.name === "blue").value;
+          values = valuesAndHeaders[header]
+          color = this.colors.find((x) => x.name === 'blue').value
         } else {
           // header is missing, need to check to headers mapping
           // case 1: we map the header with only one column -> rename column
@@ -480,72 +393,67 @@ export default {
           // case 4: we haven't mapped the header yet
 
           // extract from the headersMapping the user's choice (it may be null if the user has not mapped the header yet)
-          let extractedMapping = this.headersMapping.find(
-            (x) => x.target === header
-          );
+          let extractedMapping = this.headersMapping.find((x) => x.target === header)
           if (extractedMapping) {
             if (extractedMapping.source) {
               if (extractedMapping.source.length === 1) {
                 // case 1
-                values = valuesAndHeaders[extractedMapping.source[0]];
+                values = valuesAndHeaders[extractedMapping.source[0]]
               } else {
                 // case 2
-                let listSources = extractedMapping.source;
+                let listSources = extractedMapping.source
                 for (let i = 0; i < this.numberRows; i++) {
-                  let concatValue = "";
+                  let concatValue = ''
                   listSources.forEach((source) => {
-                    concatValue += source + ": ";
-                    concatValue +=
-                      JSON.stringify(valuesAndHeaders[source][i]) + " | ";
-                  });
-                  values.push(concatValue);
+                    concatValue += source + ': '
+                    concatValue += JSON.stringify(valuesAndHeaders[source][i]) + ' | '
+                  })
+                  values.push(concatValue)
                 }
               }
             } else {
               // case 3
-              values = Array(this.numberRows).fill(
-                extractedMapping.default_value
-              );
+              values = Array(this.numberRows).fill(extractedMapping.default_value)
             }
-            color = this.colors.find((x) => x.name === "green").value;
+            color = this.colors.find((x) => x.name === 'green').value
           } else {
             // case 4
-            values = Array(this.numberRows).fill("Header not mapped");
-            color = this.colors.find((x) => x.name === "red").value;
+            values = Array(this.numberRows).fill('Header not mapped')
+            color = this.colors.find((x) => x.name === 'red').value
           }
         }
-        return { name: header, values: values, color: color };
-      });
+        return { name: header, values: values, color: color }
+      })
     },
   },
   methods: {
     showHelper() {
       // first hide the other menus
-      this.showPreviewFlag = false;
-      this.showAddColumnFlag = false;
+      this.showPreviewFlag = false
+      this.showAddColumnFlag = false
 
-      this.showHelperFlag = !this.showHelperFlag;
+      this.showHelperFlag = !this.showHelperFlag
     },
     showPreview() {
-      this.showHelperFlag = false;
-      this.showPreviewFlag = !this.showPreviewFlag;
-      if (!this.showPreviewFlag) this.showAddColumnFlag = false;
+      this.showHelperFlag = false
+      this.showPreviewFlag = !this.showPreviewFlag
+      if (!this.showPreviewFlag) this.showAddColumnFlag = false
     },
     showAddColumn() {
-      this.showAddColumnFlag = !this.showAddColumnFlag;
+      this.showAddColumnFlag = !this.showAddColumnFlag
     },
     getDefaultValue: function (target) {
-      let obj = this.headersMapping.find((x) => x["target"] === target);
+      let obj = this.headersMapping.find((x) => x['target'] === target)
       if (obj) {
-        return obj["default_value"];
+        return obj['default_value']
       } else {
-        return null;
+        return null
       }
     },
     changeCSVDelimiter: function () {
-      this.headersMapping = [];
-      this.checkedHeaders = this.mandatoryHeaders.map((x) => x.name);
-      this.validateFile();
+      this.headersMapping = []
+      this.checkedHeaders = this.mandatoryHeaders.map((x) => x.name)
+      this.validateFile()
     },
     changeHeaderMapping: function (source, target) {
       /**
@@ -555,205 +463,183 @@ export default {
        * 2. avoid to map 2 or more missing headers with the same exsiting one,
        * 3. specify a default value in case he chooses to create a new column
        */
-      if (!source) return;
+      if (!source) return
 
-      let defaultValue = null;
-      let type = this.mandatoryHeaders.filter((h) => h.name === target)[0].type;
-      let listSelectedHeaders = []; // -> list of checkbox selected
+      let defaultValue = null
+      let type = this.mandatoryHeaders.filter((h) => h.name === target)[0].type
+      let listSelectedHeaders = [] // -> list of checkbox selected
 
-      if (type === "single") {
-        if (source === "Create new header") {
+      if (type === 'single') {
+        if (source === 'Create new header') {
           // ask to the user the default row's value
-          source = null;
+          source = null
           do {
-            defaultValue = prompt("Insert the default value for this header");
+            defaultValue = prompt('Insert the default value for this header')
             if (defaultValue.includes(this.CSVDelimiter)) {
-              alert(
-                `New header value cannot contain CSV separator (found ${this.CSVDelimiter})`
-              );
-              defaultValue = null;
+              alert(`New header value cannot contain CSV separator (found ${this.CSVDelimiter})`)
+              defaultValue = null
             }
-          } while (!defaultValue);
+          } while (!defaultValue)
         }
-        listSelectedHeaders = source ? [source] : null;
-        this.headersMapping = this.headersMapping.filter(
-          (mapping) => mapping["target"] !== target
-        );
+        listSelectedHeaders = source ? [source] : null
+        this.headersMapping = this.headersMapping.filter((mapping) => mapping['target'] !== target)
         this.headersMapping.push({
           target: target,
           source: listSelectedHeaders,
           default_value: defaultValue, // leave snake case for python server code
-        });
-      } else if (type === "multiple") {
+        })
+      } else if (type === 'multiple') {
         // extract all ticked checkbox
-        let tmp = this.headersMapping.find(
-          (mapping) => mapping["target"] === target
-        );
-        listSelectedHeaders = tmp ? tmp["source"] : [];
+        let tmp = this.headersMapping.find((mapping) => mapping['target'] === target)
+        listSelectedHeaders = tmp ? tmp['source'] : []
         if (listSelectedHeaders.includes(source)) {
-          listSelectedHeaders = listSelectedHeaders.filter((x) => x !== source);
+          listSelectedHeaders = listSelectedHeaders.filter((x) => x !== source)
         } else {
-          listSelectedHeaders.push(source);
+          listSelectedHeaders.push(source)
         }
-        this.headersMapping = this.headersMapping.filter(
-          (mapping) => mapping["target"] !== target
-        );
+        this.headersMapping = this.headersMapping.filter((mapping) => mapping['target'] !== target)
         if (listSelectedHeaders.length > 0)
           this.headersMapping.push({
             target: target,
             source: listSelectedHeaders,
             default_value: defaultValue,
-          });
+          })
       } else {
-        return;
+        return
       }
-      this.validateFile();
+      this.validateFile()
     },
     clearFormData: function () {
-      this.form.name = "";
-      this.form.file = "";
-      this.fileName = "";
-      this.headersMapping = [];
-      this.infoMessage = "";
-      this.headersString = "";
-      this.valuesString = [];
+      this.form.name = ''
+      this.form.file = ''
+      this.fileName = ''
+      this.headersMapping = []
+      this.infoMessage = ''
+      this.headersString = ''
+      this.valuesString = []
     },
     submitForm: function () {
       if (!this.validateFile()) {
-        return;
+        return
       }
 
-      let formData = new FormData();
-      formData.append("file", this.form.file);
-      formData.append("name", this.form.name);
-      formData.append("provider", "WebUpload");
-      formData.append("context", this.fileName);
-      formData.append("total_file_size", this.form.file.size);
-      formData.append("sketch_id", this.$store.state.sketch.id);
-      if (["csv", "jsonl"].includes(this.extension)) {
-        let hMapping = JSON.stringify(this.headersMapping);
-        formData.append("headersMapping", hMapping);
-        formData.append("delimiter", this.CSVDelimiter);
+      let formData = new FormData()
+      formData.append('file', this.form.file)
+      formData.append('name', this.form.name)
+      formData.append('provider', 'WebUpload')
+      formData.append('context', this.fileName)
+      formData.append('total_file_size', this.form.file.size)
+      formData.append('sketch_id', this.$store.state.sketch.id)
+      if (['csv', 'jsonl'].includes(this.extension)) {
+        let hMapping = JSON.stringify(this.headersMapping)
+        formData.append('headersMapping', hMapping)
+        formData.append('delimiter', this.CSVDelimiter)
       }
       let config = {
         headers: {
-          "Content-Type": "multipart/form-data",
+          'Content-Type': 'multipart/form-data',
         },
         onUploadProgress: function (progressEvent) {
-          this.percentCompleted = Math.round(
-            (progressEvent.loaded * 100) / progressEvent.total
-          );
+          this.percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
         }.bind(this),
-      };
+      }
       ApiClient.uploadTimeline(formData, config)
         .then((response) => {
-          this.$store.dispatch("updateSketch", this.$store.state.sketch.id);
-          this.$emit("toggleModal");
-          this.clearFormData();
-          this.percentCompleted = 0;
+          this.$store.dispatch('updateSketch', this.$store.state.sketch.id)
+          this.$emit('toggleModal')
+          this.clearFormData()
+          this.percentCompleted = 0
         })
-        .catch((e) => {});
+        .catch((e) => {})
     },
     validateFile: function () {
-      this.error = [];
+      this.error = []
       if (this.form.file.size <= 0) {
-        this.error.push("Please select a non empty file");
+        this.error.push('Please select a non empty file')
       }
-      let allowedExtensions = ["csv", "json", "jsonl", "plaso"];
+      let allowedExtensions = ['csv', 'json', 'jsonl', 'plaso']
       if (!allowedExtensions.includes(this.extension)) {
-        this.error.push(
-          "Please select a file with a valid extension: " +
-            allowedExtensions.toString()
-        );
+        this.error.push('Please select a file with a valid extension: ' + allowedExtensions.toString())
       }
-      if (["csv", "jsonl"].includes(this.extension)) {
+      if (['csv', 'jsonl'].includes(this.extension)) {
         // 1. check if mapping is completed, i.e., if the user set all the mandatory headers
         if (this.headersMapping.length !== this.missingHeaders.length) {
-          this.error.push(
-            "Missing headers: " +
-              this.missingHeaders.map((h) => h.name).toString()
-          );
+          this.error.push('Missing headers: ' + this.missingHeaders.map((h) => h.name).toString())
         }
         // 2. check for duplicate headers (except from the new header and multiple headers)
-        let duplicates = this.headersMapping
-          .filter((mapping) => mapping["source"])
-          .map((e) => e.source);
-        duplicates = duplicates.filter((x) => x.length === 1).map((x) => x[0]); // only mapping 1:1. They will be renamed on the database thus we do not want duplicates
+        let duplicates = this.headersMapping.filter((mapping) => mapping['source']).map((e) => e.source)
+        duplicates = duplicates.filter((x) => x.length === 1).map((x) => x[0]) // only mapping 1:1. They will be renamed on the database thus we do not want duplicates
         if (duplicates.length > new Set(duplicates).size) {
-          this.error.push(
-            `New headers mapping contains duplicates (${duplicates})`
-          );
+          this.error.push(`New headers mapping contains duplicates (${duplicates})`)
         }
       }
-      return this.error.length === 0;
+      return this.error.length === 0
     },
     setFile: function (fileList) {
       /* 1. Initilize the variables */
 
       if (!fileList[0]) {
-        return;
+        return
       }
-      let fileName = fileList[0].name;
-      this.headersMapping = [];
-      this.headersString = "";
-      this.valuesString = [];
-      this.form.file = fileList[0];
-      this.form.name = fileName.split(".").slice(0, -1).join(".");
-      this.fileName = fileName;
+      let fileName = fileList[0].name
+      this.headersMapping = []
+      this.headersString = ''
+      this.valuesString = []
+      this.form.file = fileList[0]
+      this.form.name = fileName.split('.').slice(0, -1).join('.')
+      this.fileName = fileName
       /* 3. Manage CSV missing headers */
-      if (this.extension === "csv") {
-        this.extractCSVHeader();
-      } else if (this.extension === "jsonl") {
-        this.extractJSONLHeader();
+      if (this.extension === 'csv') {
+        this.extractCSVHeader()
+      } else if (this.extension === 'jsonl') {
+        this.extractJSONLHeader()
       } else {
-        this.validateFile();
+        this.validateFile()
       }
-      this.checkedHeaders = this.mandatoryHeaders.map((x) => x.name);
+      this.checkedHeaders = this.mandatoryHeaders.map((x) => x.name)
     },
     extractCSVHeader: function () {
-      let reader = new FileReader();
-      let file = document.getElementById("datafile").files[0];
+      let reader = new FileReader()
+      let file = document.getElementById('datafile').files[0]
 
       // read only 1000 B --> it is reasonable that the header of the CSV file ends before the 1000^ byte.
       // Done to prevent JS reading a large CSV file (GBs)
-      let vueJS = this;
-      reader.readAsText(file.slice(0, 10000));
+      let vueJS = this
+      reader.readAsText(file.slice(0, 10000))
       reader.onloadend = function (e) {
         if (e.target.readyState === FileReader.DONE) {
           /* 3a. Extract the headers from the CSV */
-          let data = e.target.result;
-          vueJS.headersString = data.split("\n")[0].replaceAll('"', "");
-          vueJS.valuesString = data
-            .split("\n")
-            .slice(1, vueJS.staticNumberRows + 1);
-          vueJS.validateFile();
+          let data = e.target.result
+          vueJS.headersString = data.split('\n')[0].replaceAll('"', '')
+          vueJS.valuesString = data.split('\n').slice(1, vueJS.staticNumberRows + 1)
+          vueJS.validateFile()
         }
-      };
+      }
     },
     extractJSONLHeader: function () {
-      let reader = new FileReader();
-      let file = document.getElementById("datafile").files[0];
-      let vueJS = this;
-      reader.readAsText(file.slice(0, 10000));
+      let reader = new FileReader()
+      let file = document.getElementById('datafile').files[0]
+      let vueJS = this
+      reader.readAsText(file.slice(0, 10000))
       reader.onloadend = function (e) {
         if (e.target.readyState === FileReader.DONE) {
           /* 3a. Extract the headers from the CSV */
-          let data = e.target.result;
-          let rows = data.split("\n");
-          let i = Math.min(vueJS.staticNumberRows, rows.length);
+          let data = e.target.result
+          let rows = data.split('\n')
+          let i = Math.min(vueJS.staticNumberRows, rows.length)
           try {
-            vueJS.headersString = JSON.parse(rows[0]);
-            vueJS.valuesString = rows.slice(0, i).map((x) => JSON.parse(x));
-            vueJS.validateFile();
+            vueJS.headersString = JSON.parse(rows[0])
+            vueJS.valuesString = rows.slice(0, i).map((x) => JSON.parse(x))
+            vueJS.validateFile()
           } catch (objError) {
-            let error = objError.message;
-            error += ". Your first lines of JSON: ";
-            error += rows[0];
-            vueJS.error.push(error);
+            let error = objError.message
+            error += '. Your first lines of JSON: '
+            error += rows[0]
+            vueJS.error.push(error)
           }
         }
-      };
+      }
     },
   },
-};
+}
 </script>
