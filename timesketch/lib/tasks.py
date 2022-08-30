@@ -178,8 +178,14 @@ def _set_timeline_status(timeline_id, status, error_msg=None):
         logger.warning("Cannot set status: No such timeline")
         return
 
-    # Check if there is at least one data source that hasn't failed.
+    # Check if there is at least one data source that hasn't failed
+    #   (i.e., with error_message null).
     multiple_sources = any(not x.error_message for x in timeline.datasources)
+
+    # check if error_msg is not null and status = fail
+    if error_msg and status == "fail":
+        timeline.set_status(status)
+        timeline.searchindex.set_status(status)
 
     if multiple_sources:
         timeline_status = timeline.get_status.status.lower()
@@ -231,6 +237,8 @@ def build_index_pipeline(
     sketch_id=None,
     only_index=False,
     timeline_id=None,
+    headers_mapping=None,
+    delimiter=",",
 ):
     """Build a pipeline for index and analysis.
 
@@ -248,6 +256,10 @@ def build_index_pipeline(
             we don't want to run the analyzers until all chunks have been
             uploaded.
         timeline_id: Optional ID of the timeline object this data belongs to.
+        headers_mapping: list of dicts containing:
+                         (i) target header we want to replace [key=target],
+                         (ii) source header we want to insert [key=source], and
+                         (iii) def. value if we add a new column [key=default_value]
 
     Returns:
         Celery chain with indexing task (or single indexing task) and analyzer
@@ -259,9 +271,22 @@ def build_index_pipeline(
     sketch_analyzer_chain = None
     searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
 
-    index_task = index_task_class.s(
-        file_path, events, timeline_name, index_name, file_extension, timeline_id
-    )
+    if file_extension == "csv":
+        # passing the extra argument: headers_mapping
+        index_task = index_task_class.s(
+            file_path,
+            events,
+            timeline_name,
+            index_name,
+            file_extension,
+            timeline_id,
+            headers_mapping,
+            delimiter,
+        )
+    else:
+        index_task = index_task_class.s(
+            file_path, events, timeline_name, index_name, file_extension, timeline_id
+        )
 
     # TODO: Check if a scenario is set or an investigative question
     # is in the sketch, and then enable data finder on the newly
@@ -525,7 +550,7 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
     """
     if not plaso:
         raise RuntimeError(
-            "Plaso isn't installed, unable to continue processing plaso " "files."
+            ("Plaso isn't installed, " "unable to continue processing plaso files.")
         )
 
     plaso_version = int(plaso.__version__)
@@ -613,7 +638,7 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
     cmd = [
         psort_path,
         "-o",
-        "elastic_ts",
+        "opensearch_ts",
         file_path,
         "--server",
         opensearch_server,
@@ -626,7 +651,7 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
     ]
 
     if mappings_file_path:
-        cmd.extend(["--elastic_mappings", mappings_file_path])
+        cmd.extend(["--opensearch_mappings", mappings_file_path])
 
     if timeline_id:
         cmd.extend(["--timeline_identifier", str(timeline_id)])
@@ -643,8 +668,8 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
     if opensearch_ssl:
         cmd.extend(["--use_ssl"])
 
-    psort_memory = current_app.config.get("PLASO_UPPER_MEMORY_LIMIT", "")
-    if psort_memory:
+    psort_memory = current_app.config.get("PLASO_UPPER_MEMORY_LIMIT", None)
+    if psort_memory is not None:
         cmd.extend(["--process_memory_limit", str(psort_memory)])
 
     # Run psort.py
@@ -666,7 +691,14 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
 
 @celery.task(track_started=True, base=SqlAlchemyTask)
 def run_csv_jsonl(
-    file_path, events, timeline_name, index_name, source_type, timeline_id
+    file_path,
+    events,
+    timeline_name,
+    index_name,
+    source_type,
+    timeline_id,
+    headers_mapping=None,
+    delimiter=",",
 ):
     """Create a Celery task for processing a CSV or JSONL file.
 
@@ -677,6 +709,10 @@ def run_csv_jsonl(
         index_name: Name of the datastore index.
         source_type: Type of file, csv or jsonl.
         timeline_id: ID of the timeline object this data belongs to.
+        headers_mapping: list of dicts containing:
+                         (i) target header we want to insert [key=target],
+                         (ii) sources header we want to rename/combine [key=source],
+                         (iii) def. value if we add a new column [key=default_value]
 
     Returns:
         Name (str) of the index.
@@ -732,7 +768,11 @@ def run_csv_jsonl(
         opensearch.create_index(
             index_name=index_name, doc_type=event_type, mappings=mappings
         )
-        for event in read_and_validate(file_handle):
+        for event in read_and_validate(
+            file_handle=file_handle,
+            headers_mapping=headers_mapping,
+            delimiter=delimiter,
+        ):
             opensearch.import_event(
                 index_name, event_type, event, timeline_id=timeline_id
             )

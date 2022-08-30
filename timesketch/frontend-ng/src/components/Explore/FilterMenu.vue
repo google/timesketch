@@ -15,80 +15,67 @@ limitations under the License.
 -->
 <template>
   <v-card width="700" style="overflow: visible">
-    <v-toolbar flat>
-      <v-tabs centered grow v-model="filterTab">
-        <v-tab> Time filter </v-tab>
-        <v-tab> Field filter </v-tab>
-      </v-tabs>
-    </v-toolbar>
-    <v-tabs-items v-model="filterTab">
-      <v-tab-item :transition="false">
-        <v-container class="px-8">
-          <br />
+    <v-container class="px-8">
+      <br />
 
-          <v-row>
-            <v-col cols="12">
-              <v-btn class="mr-2" small depressed @click="getDateRange(0, 'days')">Today</v-btn>
-              <v-btn class="mr-2" small depressed @click="getDateRange(7, 'days')">Last 7 days</v-btn>
-              <v-btn class="mr-2" small depressed @click="getDateRange(30, 'days')">Last 30 days</v-btn>
-              <v-btn class="mr-2" small depressed @click="getDateRange(90, 'days')">Last 90 days</v-btn>
-              <v-btn class="mr-2" small depressed @click="getDateRange(1, 'year')">Last 1 year</v-btn>
-            </v-col>
-          </v-row>
+      <v-row>
+        <v-col cols="12">
+          <v-btn class="mr-2" small depressed @click="getDateRange(0, 'days')">Today</v-btn>
+          <v-btn class="mr-2" small depressed @click="getDateRange(7, 'days')">Last 7 days</v-btn>
+          <v-btn class="mr-2" small depressed @click="getDateRange(30, 'days')">Last 30 days</v-btn>
+          <v-btn class="mr-2" small depressed @click="getDateRange(90, 'days')">Last 90 days</v-btn>
+          <v-btn class="mr-2" small depressed @click="getDateRange(1, 'year')">Last 1 year</v-btn>
+        </v-col>
+      </v-row>
 
-          <v-row>
-            <v-col cols="6">
-              <v-text-field
-                :value="formatStartTime"
-                label="From"
-                outlined
-                hide-details
-                v-on:click="showPicker = true"
-                v-on:change="setStartTime"
-              >
-              </v-text-field>
-            </v-col>
-            <v-col cols="6">
-              <v-text-field
-                :value="formatEndTime"
-                label="To (optional)"
-                outlined
-                hide-details
-                v-on:click="showPicker = true"
-                v-on:change="setEndTime"
-                :append-outer-icon="showPicker ? 'mdi-calendar-remove' : 'mdi-calendar'"
-                @click:append-outer="showPicker = !showPicker"
-              >
-              </v-text-field>
-            </v-col>
-          </v-row>
+      <v-row>
+        <v-col cols="6">
+          <v-text-field
+            :value="formatStartTime"
+            label="From"
+            outlined
+            hide-details
+            v-on:click="showPicker = true"
+            v-on:change="setStartTime"
+          >
+          </v-text-field>
+        </v-col>
+        <v-col cols="6">
+          <v-text-field
+            :value="formatEndTime"
+            label="To (optional)"
+            outlined
+            hide-details
+            v-on:click="showPicker = true"
+            v-on:change="setEndTime"
+            :append-outer-icon="showPicker ? 'mdi-calendar-remove' : 'mdi-calendar'"
+            @click:append-outer="showPicker = !showPicker"
+          >
+          </v-text-field>
+        </v-col>
+      </v-row>
 
-          <v-row v-if="showPicker">
-            <v-col cols="12">
-              <date-picker
-                v-model="dateRange"
-                mode="dateTime"
-                ref="picker"
-                timezone="UTC"
-                :is-dark="$vuetify.theme.dark"
-                is24hr
-                is-range
-                is-expanded
-              ></date-picker>
-            </v-col>
-          </v-row>
+      <v-row v-if="showPicker">
+        <v-col cols="12">
+          <date-picker
+            v-model="dateRange"
+            mode="dateTime"
+            ref="picker"
+            timezone="UTC"
+            :is-dark="$vuetify.theme.dark"
+            is24hr
+            is-range
+            is-expanded
+          ></date-picker>
+        </v-col>
+      </v-row>
 
-          <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn text color="primary" @click="clearAndCancel"> Cancel </v-btn>
-            <v-btn text color="primary" @click="submit()"> Add filter </v-btn>
-          </v-card-actions>
-        </v-container>
-      </v-tab-item>
-      <v-tab-item :transition="false">
-        <v-container class="px-8">Not implemented yet</v-container>
-      </v-tab-item>
-    </v-tabs-items>
+      <v-card-actions>
+        <v-spacer></v-spacer>
+        <v-btn text color="primary" @click="clearAndCancel"> Cancel </v-btn>
+        <v-btn text color="primary" @click="submit()"> Add filter </v-btn>
+      </v-card-actions>
+    </v-container>
   </v-card>
 </template>
 

@@ -20,6 +20,7 @@ logsources:
         - "bash:history:command"
         - "apt:history:line"
         - "selinux:line"
+        - "syslog"
   linux_process_creation:
     category: process_creation
     product: linux
@@ -100,11 +101,17 @@ logsources:
         - "fs:stat"
         - "fs:mactime:line"
         - "filesystem:santa:entry"
+        - "fs:bodyfile:entry"
   sysmon:
     service: sysmon
     conditions:
       source_name:
         - "Microsoft-Windows-Sysmon"
+  syslog:
+    service: syslog
+    conditions:
+      data_type:
+        - "syslog:line"
   # GCP
   gcp_audit:
     service: gcp.audit
@@ -246,6 +253,11 @@ logsources:
     rewrite:
       product: windows
       service: sysmon
+  ssh:
+    service: ssh
+    conditions:
+      data_type:
+        - "syslog:ssh:login"
 fieldmappings:
     EventID: event_identifier
     ComputerName: computer_name

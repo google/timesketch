@@ -14,11 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-card outlined height="600" style="overflow: hidden">
+  <v-card outlined height="550" style="overflow: hidden">
     <v-toolbar flat>
       <v-tabs grow left v-model="searchDropdownTab">
         <v-tab> Quick </v-tab>
-        <v-tab> DFIQ </v-tab>
         <v-tab> Search Templates </v-tab>
         <v-tab> Sigma </v-tab>
       </v-tabs>
