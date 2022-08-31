@@ -28,8 +28,8 @@ limitations under the License.
           </v-alert>
         </div>
 
-        <div v-if="extension === 'csv' || extension === 'jsonl'">
-          <v-simple-table height="300px">
+        <div v-if="extension === 'csv' || extension === 'jsonl' || extension === 'json'">
+          <v-simple-table height="350px">
             <template v-slot:default>
               <thead>
                 <tr>
@@ -39,15 +39,23 @@ limitations under the License.
                     :style="mandatoryHeader.color"
                     class="text-left"
                   >
-                    <v-select
-                      :items="headers"
-                      :label="mandatoryHeader.name"
-                      multiple
-                      chips
-                      hint="Mapped to"
-                      persistent-hint
-                      @click="changeHeaderMapping(selectedItems, mandatoryHeader.name)"
-                    ></v-select>
+                    <div v-if="missingHeaders.includes(mandatoryHeader.name)">
+                      <v-select
+                        :items="listHeadersSelectMenu"
+                        :label="mandatoryHeader.name"
+                        v-model="mandatoryHeaders.find((h) => h.name === mandatoryHeader.name).columnsSelected"
+                        multiple
+                        chips
+                        hint="Mapped to"
+                        persistent-hint
+                        @change="changeHeaderMapping($event, mandatoryHeader.name)"
+                      ></v-select>
+                    </div>
+                    <div v-else>
+                      <span class="tag is-large" :style="mandatoryHeader.color">
+                        <label>{{ mandatoryHeader.name }}</label>
+                      </span>
+                    </div>
                   </th>
                 </tr>
               </thead>
@@ -61,40 +69,59 @@ limitations under the License.
             </template>
           </v-simple-table>
         </div>
-        <v-file-input
-          label="Plaso/CSV/JSONL file"
-          outlined
-          dense
-          clearable
-          multiple
-          show-size
-          truncate-length="15"
-          id="datafile"
-          v-model="uploadedFiles"
-          @change="setFile($event)"
-          @click:clear="clearFormData"
-        ></v-file-input>
-
         <div v-if="fileName">
           <v-text-field label="Timeline Name" outlined v-model="form.name"></v-text-field>
-          <v-radio-group v-if="extension === 'csv'">
+          <v-radio-group v-if="extension === 'csv'" v-model="CSVDelimiter">
             <template v-slot:label>
               <div>Choose <strong>CSV delimiter</strong></div>
             </template>
-            <v-radio
-              v-for="(v, key) in delimitersList"
-              :value="v"
-              @change="
-                CSVDelimiter = v
-                validateFile()
-              "
-              :key="key"
-            >
+            <v-radio v-for="(v, key) in delimitersList" :value="v" @change="changeCSVDelimiter(v)" :key="key">
               <template v-slot:label>
                 <div>{{ key }} ({{ v }})</div>
               </template>
             </v-radio>
           </v-radio-group>
+
+          <v-list>
+            <v-list-group :value="true" prepend-icon="mdi-information">
+              <template v-slot:activator>
+                <v-list-item-content><strong>File Info</strong></v-list-item-content>
+              </template>
+              <v-simple-table height="100px">
+                <template v-slot:default>
+                  <thead>
+                    <tr>
+                      <th v-for="(value, key) in fileMetaData" :key="key" class="text-left">
+                        {{ key }}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td v-for="(value, key) in fileMetaData" :key="key" class="text-left">
+                        {{ value }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </template>
+              </v-simple-table>
+            </v-list-group>
+          </v-list>
+        </div>
+        <div v-else>
+          <v-file-input
+            label="Plaso/CSV/JSONL file"
+            outlined
+            dense
+            clearable
+            multiple
+            show-size
+            truncate-length="15"
+            id="datafile"
+            v-model="uploadedFiles"
+            @change="setFile($event)"
+            @click:clear="clearFormData"
+          ></v-file-input>
         </div>
       </v-container>
       <v-card-actions>
@@ -109,6 +136,7 @@ limitations under the License.
         >
           Close
         </v-btn>
+        <v-btn v-if="fileName" color="yellow darken-1" text @click="clearFormData()"> Clear Form </v-btn>
 
         <v-btn color="green darken-1" text @click="submitForm()" :disabled="error.length > 0 || !fileName">
           Submit
@@ -134,15 +162,16 @@ export default {
        */
       headersMapping: [],
       mandatoryHeaders: [
-        { name: 'datetime', type: 'single' },
-        { name: 'message', type: 'multiple' },
-        { name: 'timestamp_desc', type: 'single' },
+        { name: 'datetime', columnsSelected: [] },
+        { name: 'message', columnsSelected: [] },
+        { name: 'timestamp_desc', columnsSelected: [] },
       ],
       form: {
         name: '',
         file: '',
       },
       fileName: '',
+      fileMetaData: {},
       error: [],
       percentCompleted: 0,
       uploadedFiles: [],
@@ -154,7 +183,7 @@ export default {
       showPreviewFlag: false,
       showAddColumnFlag: false,
       checkedHeaders: [],
-      staticNumberRows: 3,
+      staticNumberRows: 5,
       dialog: false,
       colors: [
         { name: 'red', value: 'background-color: #FEECF0; color:#CC0F35' },
@@ -168,13 +197,19 @@ export default {
       let headers = []
       if (this.extension === 'csv') {
         headers = this.headersString.split(this.CSVDelimiter)
-      } else if (this.extension === 'jsonl') {
+      } else if (['json', 'jsonl'].includes(this.extension)) {
         headers = Object.keys(this.headersString)
       }
       return headers
     },
     missingHeaders() {
-      return this.mandatoryHeaders.filter((header) => this.headers.indexOf(header.name) < 0)
+      return this.mandatoryHeaders.filter((header) => this.headers.indexOf(header.name) < 0).map((h) => h.name)
+    },
+    listHeadersSelectMenu() {
+      let mandatoryHeaders = new Set(this.mandatoryHeaders.map((h) => h.name))
+      let headers = this.headers.filter((h) => !mandatoryHeaders.has(h))
+      headers.unshift('Create New Header')
+      return headers
     },
     extension() {
       let extension = this.fileName.split('.')[1]
@@ -185,16 +220,11 @@ export default {
       if (this.extension === 'csv') {
         let n = this.valuesString.indexOf('')
         return n < 0 ? this.staticNumberRows : n
-      } else if (this.extension === 'jsonl') {
+      } else if (['json', 'jsonl'].includes(this.extension)) {
         return this.valuesString.length
       } else {
         return 0
       }
-    },
-    allHeaders() {
-      let setHeaders = new Set(this.mandatoryHeaders.map((x) => x.name).concat(this.headers))
-      let headers = [...setHeaders]
-      return headers
     },
     headersTable() {
       /**
@@ -227,7 +257,7 @@ export default {
           }
           valuesAndHeaders[this.headers[i]] = listValues
         }
-      } else if (this.extension === 'jsonl') {
+      } else if (['json', 'jsonl'].includes(this.extension)) {
         for (let i = 0; i < this.valuesString.length; i++) {
           for (let header in this.valuesString[i]) {
             if (header in valuesAndHeaders) {
@@ -314,15 +344,17 @@ export default {
         return null
       }
     },
-    changeCSVDelimiter: function () {
+    changeCSVDelimiter: function (value) {
+      this.CSVDelimiter = value
+      this.mandatoryHeaders = [
+        { name: 'datetime', columnsSelected: [] },
+        { name: 'message', columnsSelected: [] },
+        { name: 'timestamp_desc', columnsSelected: [] },
+      ]
       this.headersMapping = []
-      this.checkedHeaders = this.mandatoryHeaders.map((x) => x.name)
-      console.log(this.CSVDelimiter)
       this.validateFile()
     },
-    changeHeaderMapping: function (source, target) {
-      console.log(source)
-      console.log(target)
+    changeHeaderMapping: function (columnsSelected, target) {
       /**
        * Method to map the missing headers.
        * First, it checks some conditions, in particular, the user needs to:
@@ -330,53 +362,41 @@ export default {
        * 2. avoid to map 2 or more missing headers with the same exsiting one,
        * 3. specify a default value in case he chooses to create a new column
        */
-      if (!source) return
-
+      let lastElementSelected = columnsSelected[columnsSelected.length - 1]
+      let i = this.mandatoryHeaders.findIndex((h) => h.name == target)
+      if (lastElementSelected === 'Create New Header') {
+        this.mandatoryHeaders[i].columnsSelected = ['Create New Header']
+      } else {
+        this.mandatoryHeaders[i].columnsSelected = this.mandatoryHeaders[i].columnsSelected.filter(
+          (h) => h !== 'Create New Header'
+        )
+      }
+      let sources = []
       let defaultValue = null
-      let type = this.mandatoryHeaders.filter((h) => h.name === target)[0].type
-      let listSelectedHeaders = [] // -> list of checkbox selected
+      if (lastElementSelected === 'Create New Header') {
+        sources = null
+        do {
+          defaultValue = prompt('Insert the default value for this header')
+          if (defaultValue.includes(this.CSVDelimiter)) {
+            alert(`New header value cannot contain CSV separator (found ${this.CSVDelimiter})`)
+            defaultValue = null
+          }
+        } while (!defaultValue)
+      } else {
+        sources = this.mandatoryHeaders[i].columnsSelected
+      }
 
-      if (type === 'single') {
-        if (source === 'Create new header') {
-          // ask to the user the default row's value
-          source = null
-          do {
-            defaultValue = prompt('Insert the default value for this header')
-            if (defaultValue.includes(this.CSVDelimiter)) {
-              alert(`New header value cannot contain CSV separator (found ${this.CSVDelimiter})`)
-              defaultValue = null
-            }
-          } while (!defaultValue)
-        }
-        listSelectedHeaders = source ? [source] : null
-        this.headersMapping = this.headersMapping.filter((mapping) => mapping['target'] !== target)
+      this.headersMapping = this.headersMapping.filter((mapping) => mapping['target'] !== target)
+      if (sources === null || sources.length > 0)
         this.headersMapping.push({
           target: target,
-          source: listSelectedHeaders,
-          default_value: defaultValue, // leave snake case for python server code
+          source: sources,
+          default_value: defaultValue,
         })
-      } else if (type === 'multiple') {
-        // extract all ticked checkbox
-        let tmp = this.headersMapping.find((mapping) => mapping['target'] === target)
-        listSelectedHeaders = tmp ? tmp['source'] : []
-        if (listSelectedHeaders.includes(source)) {
-          listSelectedHeaders = listSelectedHeaders.filter((x) => x !== source)
-        } else {
-          listSelectedHeaders.push(source)
-        }
-        this.headersMapping = this.headersMapping.filter((mapping) => mapping['target'] !== target)
-        if (listSelectedHeaders.length > 0)
-          this.headersMapping.push({
-            target: target,
-            source: listSelectedHeaders,
-            default_value: defaultValue,
-          })
-      } else {
-        return
-      }
       this.validateFile()
     },
     clearFormData: function () {
+      this.fileMetaData = {}
       this.form.name = ''
       this.form.file = ''
       this.fileName = ''
@@ -387,6 +407,11 @@ export default {
       this.uploadedFiles = []
       this.title = 'Upload your Plaso/JSONL/CSV file'
       this.error = []
+      this.mandatoryHeaders = [
+        { name: 'datetime', columnsSelected: [] },
+        { name: 'message', columnsSelected: [] },
+        { name: 'timestamp_desc', columnsSelected: [] },
+      ]
     },
     submitForm: function () {
       if (!this.validateFile()) {
@@ -430,10 +455,10 @@ export default {
       if (!allowedExtensions.includes(this.extension)) {
         this.error.push('Please select a file with a valid extension: ' + allowedExtensions.toString())
       }
-      if (['csv', 'jsonl'].includes(this.extension)) {
+      if (['csv', 'jsonl', 'json'].includes(this.extension)) {
         // 1. check if mapping is completed, i.e., if the user set all the mandatory headers
         if (this.headersMapping.length !== this.missingHeaders.length) {
-          this.error.push('Missing headers: ' + this.missingHeaders.map((h) => h.name).toString())
+          this.error.push('Missing headers: ' + this.missingHeaders.toString())
         }
         // 2. check for duplicate headers (except from the new header and multiple headers)
         let duplicates = this.headersMapping.filter((mapping) => mapping['source']).map((e) => e.source)
@@ -455,8 +480,15 @@ export default {
       if (!fileList[0]) {
         return
       }
+      const bytesToMegaBytes = (bytes) => bytes / 1024 ** 2
+      this.fileMetaData = {
+        Name: fileList[0].name,
+        Size: bytesToMegaBytes(fileList[0].size) + ' MB',
+        LastDateModified: fileList[0].lastModifiedDate,
+        Type: fileList[0].type,
+      }
+      console.log(this.fileMetaData)
       let fileName = fileList[0].name
-      console.log(fileName)
       this.headersMapping = []
       this.headersString = ''
       this.valuesString = []
@@ -466,7 +498,7 @@ export default {
       /* 3. Manage CSV missing headers */
       if (this.extension === 'csv') {
         this.extractCSVHeader()
-      } else if (this.extension === 'jsonl') {
+      } else if (['json', 'jsonl'].includes(this.extension)) {
         this.extractJSONLHeader()
       } else {
         this.validateFile()
@@ -508,7 +540,7 @@ export default {
             vueJS.validateFile()
           } catch (objError) {
             let error = objError.message
-            error += '. Your first lines of JSON: '
+            error += '. Your first lines of JSONL: '
             error += rows[0]
             vueJS.error.push(error)
           }
