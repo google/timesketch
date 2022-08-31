@@ -61,17 +61,15 @@ class TestHashRLookup(BaseTest):
         self.assertEqual(self.analyzer.query_batch_size, 10000)
 
     @mock.patch.object(sqlalchemy, 'create_engine', autospec=True)
-    @mock.patch.object(logging.Logger, 'warning', autospec=True)
     @mock.patch.object(logging.Logger, 'error', autospec=True)
     @mock.patch.object(logging.Logger, 'info', autospec=True)
-    def test_connect_hashR_no_db_info(self, mock_info, mock_error, mock_warning,
+    def test_connect_hashR_no_db_info(self, mock_info, mock_error,
                                       mock_create_engine):
         """Test the connect_hashR function with missing connection information.
 
         Args:
             mock_info: Mock object for the logger.info function.
             mock_error: Mock object for the logger.error function.
-            mock_warning: Mock objext for the logger.warning function.
             mock_create_engine: Mock object for the sqlalchemy.create_engine
                                 function.
         """
@@ -82,17 +80,15 @@ class TestHashRLookup(BaseTest):
         self.assertEqual(self.analyzer.query_batch_size, 50000)
 
     @mock.patch.object(sqlalchemy, 'create_engine', autospec=False)
-    @mock.patch.object(logging.Logger, 'warning', autospec=True)
     @mock.patch.object(logging.Logger, 'error', autospec=True)
     @mock.patch.object(logging.Logger, 'info', autospec=True)
-    def test_connect_hashr_conn_error(self, mock_info, mock_error, mock_warning,
+    def test_connect_hashr_conn_error(self, mock_info, mock_error,
                                       mock_create_engine):
         """Test the connect_hashr function simulating a connection error.
 
         Args:
             mock_info: Mock object for the logger.info function.
             mock_error: Mock object for the logger.error function.
-            mock_warning: Mock objext for the logger.warning function.
             mock_create_engine: Mock object for the sqlalchemy.create_engine
                                 function.
         """
