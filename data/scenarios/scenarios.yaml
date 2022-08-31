@@ -27,3 +27,11 @@ compromise_assessment:
 exfil:
   display_name: Lorem Ipsum scenario
   description: Lorem ipsum dolor sit amet
+
+initial_triage:
+	uuid: 5c57abd6-8104-4f39-bca1-d2e913d4e758
+	display_name: Initial triage for an investigation
+  	description: Have a most basic triage Scenario that can be used in an empty state for systems.
+  	facets:
+      - operating_system
+      - time_window_of_interest

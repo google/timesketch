@@ -33,3 +33,24 @@ interference_with_protective_measures:
   description: Are there any signs of an attacker trying to maintain their access? (Persistence)
   questions:
     - user_logged_in_win
+
+operating_system:
+	uuid: f131c057-0c06-421d-b606-f3f410927d94
+	display_name: What are the involved operating systems?
+	description: What OperatingSystem(s) is in scope or relevant for this case.
+	questions:
+		- operating_system
+
+time_window_of_interest:
+	uuid: 26ef99ad-fcd8-47c6-9aa7-566dfb2a7e87
+  display_name: Time window of interest facet
+	description: What is the time window that is relevant for this investigation.
+	questions:
+		- time_window_of_interest
+
+external_investigation_reference:
+	uuid: b04cd9a1-0feb-4051-a0cb-791115db71ad
+  display_name: External reference of the investigation
+	description: Link to a ticket or trigger that started the investigation.
+	questions:
+		- external_investigation_reference

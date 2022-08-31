@@ -106,3 +106,18 @@ user_downloaded_file:
       - user_browser_activity
       - browser_download
       - browser_specific_file_download
+
+operating_system:
+	uuid: baff7694-5477-4865-b82c-efead818c1a9
+	display_name: Operating system scope
+	description: What data type do you expect in this investigation (e.g. Windows, Linux, MacOS, ChromeOS, Android, iOS. You can duplicate the question if you expect multiple)
+
+time_window_of_interest:
+	uuid: 7026f193-f34e-46bb-9308-76aa46ad2495
+  display_name: Time window of interest
+  description: What is the potential time span for this investigation?
+
+external_investigation_reference:
+	uuid: 7004aa29-07a6-4ce0-ba18-aaef424defb5
+  display_name: External reference of the investigation
+	description: Provide a link to a ticket or trigger that started the investigation.
