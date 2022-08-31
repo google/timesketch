@@ -425,7 +425,7 @@ export default {
       formData.append('context', this.fileName)
       formData.append('total_file_size', this.form.file.size)
       formData.append('sketch_id', this.$store.state.sketch.id)
-      if (['csv', 'jsonl'].includes(this.extension)) {
+      if (['csv', 'jsonl', 'json'].includes(this.extension)) {
         let hMapping = JSON.stringify(this.headersMapping)
         formData.append('headersMapping', hMapping)
         formData.append('delimiter', this.CSVDelimiter)
