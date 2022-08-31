@@ -362,7 +362,7 @@ export default {
        * 3. specify a default value in case he chooses to create a new column
        */
       let lastElementSelected = columnsSelected[columnsSelected.length - 1]
-      let i = this.mandatoryHeaders.findIndex((h) => h.name == target)
+      let i = this.mandatoryHeaders.findIndex((h) => h.name === target)
       if (lastElementSelected === 'Create New Header') {
         this.mandatoryHeaders[i].columnsSelected = ['Create New Header']
       } else {
