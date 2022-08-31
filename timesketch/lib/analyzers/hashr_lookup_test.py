@@ -44,11 +44,11 @@ class TestHashRLookup(BaseTest):
         current_app.config['HASHR_DB_PORT'] = '5432'
         current_app.config['HASHR_DB_NAME'] = 'hashRdb'
         current_app.config['HASHR_ADD_SOURCE_ATTRIBUTE'] = True
-        current_app.config['HASHR_QUERY_CHUNK_SIZE'] = 10000
+        current_app.config['HASHR_QUERY_BATCH_SIZE'] = 10000
 
         mock_create_engine().connect.return_value = True
 
-        test_conn = self.analyzer.connect_hashR()
+        test_conn = self.analyzer.connect_hashr()
         self.assertEqual(test_conn, True)
         mock_info.assert_called_with(
             self.logger, 'Successful connected to hashR postgress database: %s',
@@ -58,7 +58,7 @@ class TestHashRLookup(BaseTest):
         mock_create_engine.assert_called_with(
             'postgresql://hashR:hashR123@127.0.0.1:5432/hashRdb',
             connect_args={'connect_timeout': 10})
-        self.assertEqual(self.analyzer.query_chunk_size, 10000)
+        self.assertEqual(self.analyzer.query_batch_size, 10000)
 
     @mock.patch.object(sqlalchemy, 'create_engine', autospec=True)
     @mock.patch.object(logging.Logger, 'warning', autospec=True)
@@ -75,14 +75,11 @@ class TestHashRLookup(BaseTest):
             mock_create_engine: Mock object for the sqlalchemy.create_engine
                                 function.
         """
-        self.assertRaises(Exception, self.analyzer.connect_hashR)
+        self.assertRaises(Exception, self.analyzer.connect_hashr)
         mock_info.assert_not_called()
         mock_error.assert_not_called()
         mock_create_engine.assert_not_called()
-        mock_warning.assert_called_with(
-            self.logger, 'HASHR_QUERY_CHUNK_SIZE is not set. Set chunksize to '
-            'default value of 50,000.')
-        self.assertEqual(self.analyzer.query_chunk_size, 50000)
+        self.assertEqual(self.analyzer.query_batch_size, 50000)
 
     @mock.patch.object(sqlalchemy, 'create_engine', autospec=False)
     @mock.patch.object(logging.Logger, 'warning', autospec=True)
@@ -90,7 +87,7 @@ class TestHashRLookup(BaseTest):
     @mock.patch.object(logging.Logger, 'info', autospec=True)
     def test_connect_hashr_conn_error(self, mock_info, mock_error, mock_warning,
                                       mock_create_engine):
-        """Test the connect_hashR function simulating a connection error.
+        """Test the connect_hashr function simulating a connection error.
 
         Args:
             mock_info: Mock object for the logger.info function.
@@ -105,12 +102,12 @@ class TestHashRLookup(BaseTest):
         current_app.config['HASHR_DB_PORT'] = '5432'
         current_app.config['HASHR_DB_NAME'] = 'hashRdb'
         current_app.config['HASHR_ADD_SOURCE_ATTRIBUTE'] = True
-        current_app.config['HASHR_QUERY_CHUNK_SIZE'] = 'notAnInteger'
+        current_app.config['HASHR_QUERY_BATCH_SIZE'] = '50000'
 
         mock_create_engine(
         ).connect.side_effect = sqlalchemy.exc.OperationalError(
             statement=None, params=None, orig='Cannot connect to server!')
-        test_conn = self.analyzer.connect_hashR()
+        test_conn = self.analyzer.connect_hashr()
         self.assertEqual(test_conn,
                          'Connection to the database FAILED. Please check the'
                          ' celery logs and make sure you have provided the '
@@ -119,11 +116,7 @@ class TestHashRLookup(BaseTest):
             'postgresql://hashR:hashR123@127.0.0.2:5432/hashRdb',
             connect_args={'connect_timeout': 10})
         mock_info.assert_not_called()
-        self.assertEqual(self.analyzer.query_chunk_size, 50000)
-        mock_warning.assert_called_with(
-            self.logger,
-            'HASHR_QUERY_CHUNK_SIZE is not convertable to integer.'
-            ' Set chunksize to default value of 50,000.')
+        self.assertEqual(self.analyzer.query_batch_size, 50000)
         self.assertTrue(
             ('!!! Connection to the hashR postgres database not possible! -- '
              'Provided connection string: "%s" -- Error message: %s\', '
@@ -135,10 +128,10 @@ class TestHashRLookup(BaseTest):
     @mock.patch.object(sqlalchemy, 'select', autospec=True)
     @mock.patch.object(sqlalchemy, 'MetaData', autospec=True)
     @mock.patch.object(logging.Logger, 'info', autospec=True)
-    def test_check_against_hashR_matching_hashes_tags(self, mock_info,
+    def test_check_against_hashr_matching_hashes_tags(self, mock_info,
                                                       mock_meta_data,
                                                       mock_select):
-        """Test the check_against_hashR function with existing matches and tags only.
+        """Test the check_against_hashr function with existing matches and tags only.
 
         Args:
             mock_info: Mock object for the logger.info function.
@@ -179,7 +172,7 @@ class TestHashRLookup(BaseTest):
                 {'TagsOnly'}
         }
 
-        self.analyzer.query_chunk_size = 4
+        self.analyzer.query_batch_size = 4
         self.analyzer.add_source_attribute = False
         test_bind = mock.MagicMock()
         self.analyzer.hashr_conn = test_bind
@@ -187,14 +180,9 @@ class TestHashRLookup(BaseTest):
         test_meta_data = mock.MagicMock()
         mock_meta_data.return_value = test_meta_data
 
-        test_output_hashes = self.analyzer.check_against_hashR(
+        test_output_hashes = self.analyzer.check_against_hashr(
             test_input_hashes)
 
-        mock_info.assert_any_call(
-            self.logger,
-            'Split a total of %d hashes into %d chunks with up to %d hashes each.',
-            10, 3, 4
-        )
         mock_meta_data.assert_called_with(bind=test_bind)
         mock_meta_data.reflect.assert_called_with(test_meta_data)
         mock_select.assert_has_calls([
@@ -213,10 +201,10 @@ class TestHashRLookup(BaseTest):
     @mock.patch.object(sqlalchemy, 'select', autospec=True)
     @mock.patch.object(sqlalchemy, 'MetaData', autospec=True)
     @mock.patch.object(logging.Logger, 'info', autospec=True)
-    def test_check_against_hashR_matching_hashes_sources(self, mock_info,
+    def test_check_against_hashr_matching_hashes_sources(self, mock_info,
                                                          mock_meta_data,
                                                          mock_select):
-        """Test check_against_hashR function with matches + tags & attributes.
+        """Test check_against_hashr function with matches + tags & attributes.
 
         Args:
             mock_info: Mock object for the logger.info function.
@@ -280,7 +268,7 @@ class TestHashRLookup(BaseTest):
              'GCP')
         ]
 
-        self.analyzer.query_chunk_size = 4
+        self.analyzer.query_batch_size = 4
         self.analyzer.add_source_attribute = True
         test_bind = mock.MagicMock()
         self.analyzer.hashr_conn = test_bind
@@ -288,14 +276,9 @@ class TestHashRLookup(BaseTest):
         test_meta_data = mock.MagicMock()
         mock_meta_data.return_value = test_meta_data
 
-        test_output_hashes = self.analyzer.check_against_hashR(
+        test_output_hashes = self.analyzer.check_against_hashr(
             test_input_hashes)
 
-        mock_info.assert_any_call(
-            self.logger,
-            'Split a total of %d hashes into %d chunks with up to %d hashes each.',
-            10, 3, 4
-        )
         mock_meta_data.assert_called_with(bind=test_bind)
         mock_meta_data.reflect.assert_called_with(test_meta_data)
         mock_select.assert_has_calls([
@@ -335,9 +318,9 @@ class TestHashRLookup(BaseTest):
     @mock.patch.object(sqlalchemy, 'select', autospec=True)
     @mock.patch.object(sqlalchemy, 'MetaData', autospec=True)
     @mock.patch.object(logging.Logger, 'info', autospec=True)
-    def test_check_against_hashR_no_matches(self, mock_info, mock_meta_data,
+    def test_check_against_hashr_no_matches(self, mock_info, mock_meta_data,
                                             _mock_select):
-        """Test the check_against_hashR function with no matching hashes.
+        """Test the check_against_hashr function with no matching hashes.
 
         Args:
             mock_info: Mock object for the logger.info function.
@@ -359,7 +342,7 @@ class TestHashRLookup(BaseTest):
 
         test_db_return = []
 
-        self.analyzer.query_chunk_size = 4
+        self.analyzer.query_batch_size = 4
         self.analyzer.add_source_attribute = True
         test_bind = mock.MagicMock()
         self.analyzer.hashr_conn = test_bind
@@ -367,28 +350,28 @@ class TestHashRLookup(BaseTest):
         test_meta_data = mock.MagicMock()
         mock_meta_data.return_value = test_meta_data
 
-        test_output_hashes = self.analyzer.check_against_hashR(
+        test_output_hashes = self.analyzer.check_against_hashr(
             test_input_hashes)
 
         mock_info.assert_any_call(
             self.logger, 'Found %d matching hashes in hashR DB.', 0)
         self.assertEqual(test_output_hashes, {})
 
-    def test_check_against_hashR_exception(self):
-        """Test check_against_hashR function with wrong input."""
+    def test_check_against_hashr_exception(self):
+        """Test check_against_hashr function with wrong input."""
         self.assertRaisesRegex(
             Exception, 'The check_against_hashR function only accepts '
             "type<list> as input. But type <class 'str'>"
-            ' was provided!', self.analyzer.check_against_hashR, 'WrongInput')
+            ' was provided!', self.analyzer.check_against_hashr, 'WrongInput')
 
     @mock.patch(u'timesketch.lib.analyzers.interface.OpenSearchDataStore',
                 MockDataStore)
     @mock.patch.object(logging.Logger, 'warning', autospec=True)
     @mock.patch.object(logging.Logger, 'info', autospec=True)
     @mock.patch.object(
-        hashr_lookup.HashRLookup, 'connect_hashR', autospec=True)
+        hashr_lookup.HashRLookup, 'connect_hashr', autospec=True)
     @mock.patch.object(
-        hashr_lookup.HashRLookup, 'check_against_hashR',
+        hashr_lookup.HashRLookup, 'check_against_hashr',
         autospec=True)
     def test_run_tags_only(self, mock_check, mock_connect, mock_info,
                            mock_warning):
@@ -397,8 +380,8 @@ class TestHashRLookup(BaseTest):
         Args:
             mock_info: Mock object for the logger.info function.
             mock_warning: Mock object for the logger.warning function.
-            mock_check: Mock object for the check_against_hashR function.
-            mock_connect: Mock object for the connect_hashR function.
+            mock_check: Mock object for the check_against_hashr function.
+            mock_connect: Mock object for the connect_hashr function.
         """
         test_input_hashes = [
             {
@@ -504,9 +487,9 @@ class TestHashRLookup(BaseTest):
     @mock.patch.object(logging.Logger, 'warning', autospec=True)
     @mock.patch.object(logging.Logger, 'info', autospec=True)
     @mock.patch.object(
-        hashr_lookup.HashRLookup, 'connect_hashR', autospec=True)
+        hashr_lookup.HashRLookup, 'connect_hashr', autospec=True)
     @mock.patch.object(
-        hashr_lookup.HashRLookup, 'check_against_hashR',
+        hashr_lookup.HashRLookup, 'check_against_hashr',
         autospec=True)
     def test_run_tags_and_sources(self, mock_check, mock_connect, mock_info,
                                   mock_warning):
@@ -515,8 +498,8 @@ class TestHashRLookup(BaseTest):
         Args:
             mock_info: Mock object for the logger.info function.
             mock_warning: Mock object for the logger.warning function.
-            mock_check: Mock object for the check_against_hashR function.
-            mock_connect: Mock object for the connect_hashR function.
+            mock_check: Mock object for the check_against_hashr function.
+            mock_connect: Mock object for the connect_hashr function.
         """
         test_input_hashes = [
             {
@@ -634,13 +617,13 @@ class TestHashRLookup(BaseTest):
                 MockDataStore)
     @mock.patch.object(logging.Logger, 'info', autospec=True)
     @mock.patch.object(
-        hashr_lookup.HashRLookup, 'connect_hashR', autospec=True)
+        hashr_lookup.HashRLookup, 'connect_hashr', autospec=True)
     def test_run_no_hashes(self, mock_connect, _mock_info):
         """Test the run function with no hashes in the events.
 
         Args:
             _mock_info: Unused mock object for the logger.info function.
-            mock_connect: Mock object for the connect_hashR function.
+            mock_connect: Mock object for the connect_hashr function.
         """
         analyzer = hashr_lookup.HashRLookup('test_index', 1)
         analyzer.datastore.client = mock.Mock()
@@ -663,7 +646,7 @@ class TestHashRLookup(BaseTest):
         ]
         hash_value = '5302a61849d2722551832734c5d246db90c41a7ffdad36b5558992227edc2e92'
 
-        self.analyzer.process_event(hash_value, sources, event)
+        self.analyzer.annotate_event(hash_value, sources, event)
         self.assertEqual(self.analyzer.zerobyte_file_counter, 0)
         event.add_tags.assert_called_with(['known-hash'])
         event.add_attributes.assert_called_with({
@@ -683,7 +666,7 @@ class TestHashRLookup(BaseTest):
         ]
         hash_value = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
 
-        self.analyzer.process_event(hash_value, sources, event)
+        self.analyzer.annotate_event(hash_value, sources, event)
         self.assertEqual(self.analyzer.zerobyte_file_counter, 1)
         event.add_tags.assert_called_with(['known-hash', 'zerobyte-file'])
         event.add_attributes.assert_not_called()

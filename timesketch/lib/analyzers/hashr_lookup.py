@@ -2,6 +2,7 @@
 import logging
 import sys
 
+from math import ceil
 from flask import current_app
 import sqlalchemy as sqla
 from timesketch.lib.analyzers import interface, manager
@@ -24,7 +25,8 @@ class HashRLookup(interface.BaseAnalyzer):
     unique_known_hash_counter = 0
     hashr_conn = None
     add_source_attribute = None
-    query_chunk_size = None
+    query_batch_size = None
+    DEFAULT_BATCH_SIZE = 50000
 
     def __init__(self, index_name, sketch_id, timeline_id=None):
         """Initialize The Sketch Analyzer.
@@ -37,7 +39,7 @@ class HashRLookup(interface.BaseAnalyzer):
         self.index_name = index_name
         super().__init__(index_name, sketch_id, timeline_id=timeline_id)
 
-    def connect_hashR(self):
+    def connect_hashr(self):
         """Connect to the hashR postgres database.
 
         Returns:
@@ -57,22 +59,12 @@ class HashRLookup(interface.BaseAnalyzer):
         db_name = current_app.config.get('HASHR_DB_NAME')
         self.add_source_attribute = current_app.config.get(
             'HASHR_ADD_SOURCE_ATTRIBUTE')
+        self.query_batch_size = int(current_app.config.get(
+            'HASHR_QUERY_BATCH_SIZE', self.DEFAULT_BATCH_SIZE))
 
-        try:
-            self.query_chunk_size = int(current_app.config.get(
-                'HASHR_QUERY_CHUNK_SIZE'))
-        except ValueError:
-            logger.warning('HASHR_QUERY_CHUNK_SIZE is not convertable to integer.'
-                           ' Set chunksize to default value of 50,000.')
-            self.query_chunk_size = 50000
-        except TypeError:
-            logger.warning('HASHR_QUERY_CHUNK_SIZE is not set.'
-                           ' Set chunksize to default value of 50,000.')
-            self.query_chunk_size = 50000
-
-        if (db_user is None or db_pass is None or db_address is None
-                or db_port is None or db_name is None
-                or self.add_source_attribute is None):
+        if not all(config_param for config_param in [
+                db_user, db_pass, db_address, db_port,
+                db_name, self.add_source_attribute]):
             msg = ('The hashR analyzer is not able to load the hashR database '
                    'information from the timesketch.conf file. Please make sure'
                    ' to uncomment the section and provide the required '
@@ -101,7 +93,17 @@ class HashRLookup(interface.BaseAnalyzer):
                     ' logs and make sure you have provided the correct database'
                     ' information in the analyzer file!')
 
-    def check_against_hashR(self, sample_hashes):
+    def batch_hashes(self, hash_list, batch_size=DEFAULT_BATCH_SIZE):
+        """ Generator function for slicing the hash list into batches
+
+        Args:
+          hash_list: A list of hash values.
+          batch_size: Size of each batch. Defalt defined in class var.
+        """
+        for i in range(0, len(hash_list), batch_size):
+            yield hash_list[i : i + batch_size]
+
+    def check_against_hashr(self, sample_hashes):
         """Check a list of hashes against the hashR database.
 
         Args:
@@ -123,30 +125,21 @@ class HashRLookup(interface.BaseAnalyzer):
                             'type<list> as input. But type '
                             f'{type(sample_hashes)} was provided!')
 
-        chunked_hashes_list = list()
-        for i in range(0, len(sample_hashes), self.query_chunk_size):
-            chunked_hashes_list.append(
-                sample_hashes[i:i+self.query_chunk_size])
-        logger.info(
-            'Split a total of %d hashes into %d chunks with up to %d hashes '
-            'each.', len(sample_hashes), len(chunked_hashes_list),
-            self.query_chunk_size)
-
         meta_data = sqla.MetaData(bind=self.hashr_conn)
         sqla.MetaData.reflect(meta_data)
         samples_table = meta_data.tables['samples']
         sources_table = meta_data.tables['sources']
         samples_sources_table = meta_data.tables['samples_sources']
 
-        matching_hashes = None
+        matching_hashes = {}
 
         with self.hashr_conn.connect() as conn:
-            chunk_counter = 1
-            total_chunks = len(chunked_hashes_list)
-            for chunk in chunked_hashes_list:
-                logger.info('Processing %d/%d chunks...',
-                            chunk_counter, total_chunks)
-                chunk_counter += 1
+            batch_counter = 1
+            total_batches = ceil(len(sample_hashes)/self.query_batch_size)
+            for batch in self.batch_hashes(sample_hashes, self.query_batch_size):
+                logger.info('Processing %d/%d batches...',
+                            batch_counter, total_batches)
+                batch_counter += 1
 
                 if self.add_source_attribute:
                     select_statement = sqla.select([
@@ -160,20 +153,18 @@ class HashRLookup(interface.BaseAnalyzer):
                             samples_sources_table.c.source_sha256 ==
                             sources_table.c.sha256
                         )).where(
-                        samples_sources_table.c.sample_sha256.in_(chunk))
+                        samples_sources_table.c.sample_sha256.in_(batch))
 
                     results = conn.execute(select_statement)
 
                 else:
                     select_statement = sqla.select(
                         [samples_table.c.sha256]).where(
-                        samples_table.c.sha256.in_(chunk))
+                        samples_table.c.sha256.in_(batch))
 
                     results = conn.execute(select_statement)
 
                 for entry in results:
-                    if not matching_hashes:
-                        matching_hashes = {}
                     sample_hash = entry[0]
                     try:
                         if isinstance(entry[2], list):
@@ -185,9 +176,6 @@ class HashRLookup(interface.BaseAnalyzer):
                     matching_hashes.setdefault(
                         sample_hash, set()).add(source)
 
-                if not matching_hashes:
-                    matching_hashes = {}
-
         logger.info(
             'Found %d matching hashes in hashR DB.', len(matching_hashes))
 
@@ -196,7 +184,7 @@ class HashRLookup(interface.BaseAnalyzer):
         logger.info('Closed database conenction.')
         return matching_hashes
 
-    def process_event(self, hash_value, sources, event):
+    def annotate_event(self, hash_value, sources, event):
         """Add tags and attributes to the given event, based on the rules for
         the analyzer.
 
@@ -205,14 +193,11 @@ class HashRLookup(interface.BaseAnalyzer):
           sources: A list of sources (image names) where this hash is known from.
           event:  The OpenSearch event object that contains this hash and needs
                   to be tagged or to add an attribute.
-
-        Returns:
-          None: If everything worked the function just returns.
         """
         tags_container = ['known-hash']
         if (hash_value ==
-            'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
-            ):
+                    'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+                ):
             tags_container.append('zerobyte-file')
             self.zerobyte_file_counter += 1
             # Do not add any source attribute for zerobyte files,
@@ -233,7 +218,7 @@ class HashRLookup(interface.BaseAnalyzer):
             String with summary of the analyzer result
         """
         # Check if analyzer can connect to hashR:
-        msg = self.connect_hashR()
+        msg = self.connect_hashr()
         if isinstance(msg, str):
             return msg
 
@@ -285,13 +270,14 @@ class HashRLookup(interface.BaseAnalyzer):
         logger.info('Found %d unique hashes in %d events.',
                     len(hash_events_dict), total_event_counter)
 
-        matching_hashes = self.check_against_hashR(list(hash_events_dict.keys()))
+        matching_hashes = self.check_against_hashr(
+            list(hash_events_dict.keys()))
         if self.add_source_attribute:
             logger.info('Start adding tags and attributes to events.')
             for sample_hash in matching_hashes:
                 for event in hash_events_dict[sample_hash]:
                     known_hash_counter += 1
-                    self.process_event(
+                    self.annotate_event(
                         sample_hash, matching_hashes[sample_hash], event)
             self.unique_known_hash_counter = len(matching_hashes)
         else:
@@ -299,7 +285,7 @@ class HashRLookup(interface.BaseAnalyzer):
             for sample_hash in matching_hashes:
                 for event in hash_events_dict[sample_hash]:
                     known_hash_counter += 1
-                    self.process_event(sample_hash, False, event)
+                    self.annotate_event(sample_hash, False, event)
 
         return_message = (
             f'Found a total of {total_event_counter} events '
