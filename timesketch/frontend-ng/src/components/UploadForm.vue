@@ -27,9 +27,8 @@ limitations under the License.
             {{ errorMessage }}
           </v-alert>
         </div>
-
         <div v-if="extension === 'csv' || extension === 'jsonl' || extension === 'json'">
-          <v-simple-table height="350px">
+          <v-simple-table height="350px" v-if="headers.length > 0">
             <template v-slot:default>
               <thead>
                 <tr>
@@ -153,7 +152,7 @@ export default {
     return {
       headersString: '', // headers string not formatted (used when changing CSV separator)
       valuesString: [],
-      title: 'Upload your Plaso/JSONL/CSV file',
+      title: 'Upload your Plaso/CSV/JSONL file',
       /**
        *  headersMapping: list of object containing the:
        * (i) target header to be modified [key=target],
@@ -470,7 +469,7 @@ export default {
       if (this.error.length === 0) {
         this.title = 'Submit your file to Timesketch'
       } else {
-        this.title = 'Almost there...'
+        this.title = 'Almost there... Map the ' + this.missingHeaders.length + ' missing headers.'
       }
       return this.error.length === 0
     },
@@ -487,7 +486,6 @@ export default {
         LastDateModified: fileList[0].lastModifiedDate,
         Type: fileList[0].type,
       }
-      console.log(this.fileMetaData)
       let fileName = fileList[0].name
       this.headersMapping = []
       this.headersString = ''
@@ -540,8 +538,10 @@ export default {
             vueJS.validateFile()
           } catch (objError) {
             let error = objError.message
-            error += '. Your first lines of JSONL: '
+            error += '. Your first lines of JSON: '
             error += rows[0]
+            error += '. Be sure to upload a JSON file in a JSONL format.'
+            vueJS.title = 'Cannot parse the JSON file'
             vueJS.error.push(error)
           }
         }
