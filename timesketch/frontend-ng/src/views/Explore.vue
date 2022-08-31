@@ -208,31 +208,36 @@ limitations under the License.
                     <ts-filter-menu app @cancel="timeFilterMenu = false" @addChip="addChip"></ts-filter-menu>
                   </v-menu>
                 </span>
-
-                <span>
-                  <v-menu
-                    v-model="addManualEvent"
-                    offset-y
-                    :close-on-content-click="false"
-                    :close-on-click="true"
-                    content-class="menu-with-gap"
-                    allow-overflow
-                    style="overflow: visible"
-                  >
-                    <template v-slot:activator="{ on, attrs }">
-                      <v-chip outlined v-bind="attrs" v-on="on">
-                        <v-icon left small> mdi-braille </v-icon>
-                        Add manual event
-                      </v-chip>
-                    </template>
-                    <ts-add-manual-event
-                      app
-                      @cancel="addManualEvent = false"
-                      :datetimeProp="datetimeManualEvent"
-                    ></ts-add-manual-event>
-                  </v-menu>
-                </span>
               </v-chip-group>
+            </v-col>
+          </v-row>
+
+          <!-- Add manual event -->
+          <v-row dense>
+            <v-col cols="12">
+              <span>
+                <v-menu
+                  v-model="addManualEvent"
+                  offset-y
+                  :close-on-content-click="false"
+                  :close-on-click="true"
+                  content-class="menu-with-gap"
+                  allow-overflow
+                  style="overflow: visible"
+                >
+                  <template v-slot:activator="{ on, attrs }">
+                    <v-chip outlined v-bind="attrs" v-on="on">
+                      <v-icon left small> mdi-braille </v-icon>
+                      Add manual event
+                    </v-chip>
+                  </template>
+                  <ts-add-manual-event
+                    app
+                    @cancel="addManualEvent = false"
+                    :datetimeProp="datetimeManualEvent"
+                  ></ts-add-manual-event>
+                </v-menu>
+              </span>
             </v-col>
           </v-row>
 
