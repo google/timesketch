@@ -28,30 +28,39 @@ limitations under the License.
           </v-alert>
         </div>
 
-        <v-simple-table height="300px">
-          <template v-slot:default>
-            <thead>
-              <tr>
-                <th
-                  v-for="mandatoryHeader in headersTable"
-                  :key="mandatoryHeader.name"
-                  :style="mandatoryHeader.color"
-                  class="text-left"
-                >
-                  {{ mandatoryHeader.name }}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="i in numberRows" :key="i">
-                <td v-for="mandatoryHeader in headersTable" :key="mandatoryHeader.name">
-                  {{ mandatoryHeader.values[i - 1] }}
-                </td>
-              </tr>
-            </tbody>
-          </template>
-        </v-simple-table>
-
+        <div v-if="extension === 'csv' || extension === 'jsonl'">
+          <v-simple-table height="300px">
+            <template v-slot:default>
+              <thead>
+                <tr>
+                  <th
+                    v-for="mandatoryHeader in headersTable"
+                    :key="mandatoryHeader.name"
+                    :style="mandatoryHeader.color"
+                    class="text-left"
+                  >
+                    <v-select
+                      :items="headers"
+                      :label="mandatoryHeader.name"
+                      multiple
+                      chips
+                      hint="Mapped to"
+                      persistent-hint
+                      @click="changeHeaderMapping(selectedItems, mandatoryHeader.name)"
+                    ></v-select>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="i in numberRows" :key="i">
+                  <td v-for="mandatoryHeader in headersTable" :key="mandatoryHeader.name">
+                    {{ mandatoryHeader.values[i - 1] }}
+                  </td>
+                </tr>
+              </tbody>
+            </template>
+          </v-simple-table>
+        </div>
         <v-file-input
           label="Plaso/CSV/JSONL file"
           outlined
@@ -68,10 +77,26 @@ limitations under the License.
 
         <div v-if="fileName">
           <v-text-field label="Timeline Name" outlined v-model="form.name"></v-text-field>
+          <v-radio-group v-if="extension === 'csv'">
+            <template v-slot:label>
+              <div>Choose <strong>CSV delimiter</strong></div>
+            </template>
+            <v-radio
+              v-for="(v, key) in delimitersList"
+              :value="v"
+              @change="
+                CSVDelimiter = v
+                validateFile()
+              "
+              :key="key"
+            >
+              <template v-slot:label>
+                <div>{{ key }} ({{ v }})</div>
+              </template>
+            </v-radio>
+          </v-radio-group>
         </div>
       </v-container>
-
-      
       <v-card-actions>
         <v-spacer></v-spacer>
         <v-btn
@@ -100,48 +125,6 @@ export default {
     return {
       headersString: '', // headers string not formatted (used when changing CSV separator)
       valuesString: [],
-      desserts: [
-        {
-          name: 'Frozen Yogurt',
-          calories: 159,
-        },
-        {
-          name: 'Ice cream sandwich',
-          calories: 237,
-        },
-        {
-          name: 'Eclair',
-          calories: 262,
-        },
-        {
-          name: 'Cupcake',
-          calories: 305,
-        },
-        {
-          name: 'Gingerbread',
-          calories: 356,
-        },
-        {
-          name: 'Jelly bean',
-          calories: 375,
-        },
-        {
-          name: 'Lollipop',
-          calories: 392,
-        },
-        {
-          name: 'Honeycomb',
-          calories: 408,
-        },
-        {
-          name: 'Donut',
-          calories: 452,
-        },
-        {
-          name: 'KitKat',
-          calories: 518,
-        },
-      ],
       title: 'Upload your Plaso/JSONL/CSV file',
       /**
        *  headersMapping: list of object containing the:
@@ -338,6 +321,8 @@ export default {
       this.validateFile()
     },
     changeHeaderMapping: function (source, target) {
+      console.log(source)
+      console.log(target)
       /**
        * Method to map the missing headers.
        * First, it checks some conditions, in particular, the user needs to:
@@ -401,7 +386,7 @@ export default {
       this.valuesString = []
       this.uploadedFiles = []
       this.title = 'Upload your Plaso/JSONL/CSV file'
-      this.errors = []
+      this.error = []
     },
     submitForm: function () {
       if (!this.validateFile()) {
