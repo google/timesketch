@@ -15,10 +15,10 @@
 /.eggs
 /.tox
 /__pycache__
-**/build/
+/build/
 /dependencies/
-**/dist/
-*.egg-info
+/dist/
+/timesketch.egg-info
 
 # Ignore frontend build related files
 node_modules
