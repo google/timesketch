@@ -292,7 +292,7 @@ class HashRLookup(interface.BaseAnalyzer):
             f'{len(hash_events_dict)} unique hashes known in hashR - '
             f'{known_hash_counter} events tagged - '
             f'{self.zerobyte_file_counter} entries were tagged as zerobyte '
-            f'files - {error_hash_counter} events raisend an error')
+            f'files - {error_hash_counter} events raised an error')
         logger.info('Analyzer summary: %s', return_message)
         return return_message
 

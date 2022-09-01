@@ -464,8 +464,8 @@ class TestHashRLookup(BaseTest):
         self.assertEqual(
             result_message,
             'Found a total of 13 events that contain a sha256 hash value '
-            '- 5 / 11 unique hashes known in hashR - 6 events tagged - 1 '
-            'entries were tagged as zerobyte files - 2 events raisend an error')
+            '- 6 / 11 unique hashes known in hashR - 6 events tagged - 1 '
+            'entries were tagged as zerobyte files - 2 events raised an error')
         mock_warning.assert_any_call(
             self.logger,
             'The extracted hash does not match the required lenght (64) of '
@@ -595,7 +595,7 @@ class TestHashRLookup(BaseTest):
             result_message,
             'Found a total of 13 events that contain a sha256 hash value '
             '- 5 / 11 unique hashes known in hashR - 5 events tagged - 1 '
-            'entries were tagged as zerobyte files - 2 events raisend an error')
+            'entries were tagged as zerobyte files - 2 events raised an error')
         mock_warning.assert_any_call(
             self.logger,
             'The extracted hash does not match the required lenght (64) of '
