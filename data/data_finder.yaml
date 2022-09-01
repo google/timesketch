@@ -117,7 +117,7 @@ windows_usb_event_log:
 windows_10_usb_storage_auditing_enabled:
   description: Checks on Windows 10 if USB Storage auditing is enabled.
   notes: https://www.eventsentry.com/kb/410
-  query_string: key_path:SYSTEM\\CurrentControlSet\\Control\\Storage AND 
+  query_string: key_path:SYSTEM\\CurrentControlSet\\Control\\Storage
 
 windows_current_control_set:
   description: Get the current active control set
