@@ -111,4 +111,3 @@ operating_system:
 	uuid: baff7694-5477-4865-b82c-efead818c1a9
 	display_name: Operating system scope
 	description: What data type do you expect in this investigation (e.g. Windows, Linux, MacOS, ChromeOS, Android, iOS. You can duplicate the question if you expect multiple)
-

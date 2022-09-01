@@ -34,4 +34,3 @@ initial_triage:
   	description: Have a most basic triage Scenario that can be used in an empty state for systems.
   	facets:
       - operating_system
-      - time_window_of_interest
