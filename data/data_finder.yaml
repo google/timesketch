@@ -142,23 +142,23 @@ windows_network_history:
   query_string: data_type:"windows:registry:key_value" AND (NetworkList\\Signatures\\Unmanaged OR NetworkList\\Signatures\\Managed OR NetworkList\\Nla\\Cache)
 
 windows_wlan_history_network_started:
-  description: 
-  notes:
+  description:  Windows Wlan history network started
+  notes: Wifi interface was started
   query_string: source_name:Microsoft-Windows-WLAN AND event_identifier:11000
 
 windows_wlan_history_network_successful_connecting:
-  description: 
-  notes:
+  description:  Windows Wlan network successful connecting
+  notes: Wifi network was connected
   query_string: source_name:Microsoft-Windows-WLAN AND event_identifier:8001
 
 windows_wlan_history_network_failed_connecting:
   description: Failed connection attempt
-  notes:
+  notes: Wifi connection attempt failed
   query_string: source_name:Microsoft-Windows-WLAN AND event_identifier:8002
 
 windows_wlan_history_network_disconnect:
   description: Disconnected connection
-  notes:
+  notes: Wifi network disconnected
   query_string: source_name:Microsoft-Windows-WLAN AND event_identifier:8003
 
 windows_local_account_created:
@@ -168,7 +168,7 @@ windows_local_account_created:
 
 windows_rest_user_password:
   description: Attempt to reset a local user password
-  notes:
+  notes: Might be a script or malicious activity
   query_string: data_type:"windows:evtx:record" AND source_name:"Microsoft-Windows-Security-Auditing" AND event_identifier:4724
 
 windows_version:
