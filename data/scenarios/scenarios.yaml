@@ -17,7 +17,7 @@
 # ------------------------------------------------------------------------
 compromise_assessment:
   display_name: Compromise Assessment
-  description: Maecenas tristique sapien lorem, et vehicula ipsum vestibulum
+  description: Check if a system shows signs for a compromise
   facets:
     - windows_system_information
     - attacker_maintain_access

@@ -96,7 +96,7 @@ user_logged_in_win:
 
 user_downloaded_file:
   display_name: Did user download a specific file?
-  description: This question checks whether there is browser activity
+  description: Checks whether there is browser activity
     happening and during that activity a specific file got downloaded
     or is seen on the disk during the time period.
   data_sources:
@@ -113,8 +113,7 @@ user_downloaded_file:
 
 win_usb_device_attached:
   display_name: Was a USB device attached to the system?
-  description: This question aim to answer whether
-    someone (anyone) has attached any USB device to the system.
+  description: Has someone (anyone) has attached any USB device to the system.
   data_sources:
     - windows_usb_event_log
     - windows_usb_devices_registry
@@ -139,20 +138,20 @@ windows_version:
     - windows_version
 
 windows_users:
-  display_name: What users are on a Windows system?
-  description: By looking at the registry
+  display_name: List Windows Users
+  description: What users are on a Windows system By looking at the registry
   data_sources:
     - windows_users_reg
 
 windows_network_history:
-  display_name: Which networks was the system connected to?
-  description: Based on registry.
+  display_name: Windows network history
+  description: Which networks was the system connected to based on registry.
   data_sources:
     - windows_network_history
 
 windows_wlan_history:
-  display_name: Which wireless networks did a system connect to / see?
-  description: Based on Windows Event logs
+  display_name: Windows WLAN / WIFI history
+  description: Which wireless networks did a system connect to / see based on Windows Event logs
   data_sources:
     - windows_wlan_history_network_started
     - windows_wlan_history_network_successful_connecting
@@ -168,8 +167,8 @@ windows_local_account_created:
     - windows_local_account_created
   
 windows_rest_user_password:
-  display_name: Was a local user password resetted?
-  description: 
+  display_name: Windows password reset events
+  description: Was a local user password resetted?
   ttps:
     - attack.T1098
     - attack.account_manipulation
@@ -177,15 +176,16 @@ windows_rest_user_password:
     - windows_rest_user_password
 
 windows_failed_logons:
-  display_name: Where there any failed logon attempts?
-  description: E.g. SMB failed logons.
+  display_name: Windows failed logons
+  description: Where there any failed logon attempts? E.g. SMB failed logons.
   ttps:
     - attack.T1110.001
   data_sources:
     - windows_failed_logons_4625
 
 windows_successful_logon:
-  display_name: Where there any successful logon attempts?
+  display_name: Windows successful logon
+  description: Where there any successful logon attempts?
   ttps:
     - attack.T1110.001
   data_sources:
