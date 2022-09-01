@@ -109,7 +109,12 @@ def update_sketch_last_activity(sketch):
     db_session.commit()
 
 
-def run_aggregator(sketch_id, aggregator_name, aggregator_parameters=None, indices=None):
+def run_aggregator(
+    sketch_id,
+    aggregator_name,
+    aggregator_parameters=None,
+    indices=None
+):
     """Run an aggregator and return back results.
 
     Args:
