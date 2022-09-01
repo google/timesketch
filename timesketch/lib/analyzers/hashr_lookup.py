@@ -44,11 +44,11 @@ class HashRLookup(interface.BaseAnalyzer):
 
         Returns:
           True: If connection is setup and successfully tested.
-          Error Message: If the connection cannot be setup or tested.
 
         Raises:
           Exception:  Raises an exception if the database connection details
                       cannot be loaded from the timesketch.conf file.
+          Exception: If the connection cannot be setup or tested.
         """
 
         # Note: Provide connection infos in the data/timesketch.conf file!
@@ -64,7 +64,7 @@ class HashRLookup(interface.BaseAnalyzer):
 
         if not all(config_param for config_param in [
                 db_user, db_pass, db_address, db_port,
-                db_name, self.add_source_attribute]):
+                db_name, isinstance(self.add_source_attribute, bool)]):
             msg = ('The hashR analyzer is not able to load the hashR database '
                    'information from the timesketch.conf file. Please make sure'
                    ' to uncomment the section and provide the required '
@@ -80,18 +80,17 @@ class HashRLookup(interface.BaseAnalyzer):
             db_string, connect_args={'connect_timeout': 10})
         try:
             db.connect()
-            logger.info('Successful connected to hashR postgress database: %s',
-                        db_string_redacted)
+            logger.debug('Successful connected to hashR postgress database: %s',
+                         db_string_redacted)
             self.hashr_conn = db
             return True
         except sqla.exc.OperationalError as err:
-            logger.error(
-                '!!! Connection to the hashR postgres database not '
-                'possible! -- Provided connection string: "%s"'
-                ' -- Error message: %s', db_string_redacted, str(err))
-            return ('Connection to the database FAILED. Please check the celery'
-                    ' logs and make sure you have provided the correct database'
-                    ' information in the analyzer file!')
+            msg = ('Connection to the hashR postgres database failed! '
+                   '-- Provided connection string: "%s" '
+                   '-- Error message: %s', db_string_redacted, str(err))
+            logger.error(msg)
+            sys.tracebacklimit = 0
+            raise Exception(msg) from err
 
     def batch_hashes(self, hash_list, batch_size=DEFAULT_BATCH_SIZE):
         """ Generator function for slicing the hash list into batches
@@ -101,7 +100,7 @@ class HashRLookup(interface.BaseAnalyzer):
           batch_size: Size of each batch. Defalt defined in class var.
         """
         for i in range(0, len(hash_list), batch_size):
-            yield hash_list[i : i + batch_size]
+            yield hash_list[i: i + batch_size]
 
     def check_against_hashr(self, sample_hashes):
         """Check a list of hashes against the hashR database.
@@ -137,8 +136,8 @@ class HashRLookup(interface.BaseAnalyzer):
             batch_counter = 1
             total_batches = ceil(len(sample_hashes)/self.query_batch_size)
             for batch in self.batch_hashes(sample_hashes, self.query_batch_size):
-                logger.info('Processing %d/%d batches...',
-                            batch_counter, total_batches)
+                logger.debug('Processing %d/%d batches...',
+                             batch_counter, total_batches)
                 batch_counter += 1
 
                 if self.add_source_attribute:
@@ -176,12 +175,12 @@ class HashRLookup(interface.BaseAnalyzer):
                     matching_hashes.setdefault(
                         sample_hash, set()).add(source)
 
-        logger.info(
+        logger.debug(
             'Found %d matching hashes in hashR DB.', len(matching_hashes))
 
         # close database engine
         self.hashr_conn.dispose()
-        logger.info('Closed database conenction.')
+        logger.debug('Closed database conenction.')
         return matching_hashes
 
     def annotate_event(self, hash_value, sources, event):
@@ -196,7 +195,7 @@ class HashRLookup(interface.BaseAnalyzer):
         """
         tags_container = ['known-hash']
         if (hash_value ==
-                    'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+                'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
                 ):
             tags_container.append('zerobyte-file')
             self.zerobyte_file_counter += 1
@@ -217,10 +216,8 @@ class HashRLookup(interface.BaseAnalyzer):
         Returns:
             String with summary of the analyzer result
         """
-        # Check if analyzer can connect to hashR:
-        msg = self.connect_hashr()
-        if isinstance(msg, str):
-            return msg
+        # Connect to the hashR database
+        self.connect_hashr()
 
         # Note: Add fieldnames that contain sha256 values in your events.
         query = ('_exists_:hash_sha256 OR _exists_:sha256 OR _exists_:hash OR '
@@ -237,7 +234,8 @@ class HashRLookup(interface.BaseAnalyzer):
         error_hash_counter = 0
         total_event_counter = 0
         hash_events_dict = {}
-        logger.info('Collect a list of unique hashes to check against hashR.')
+        logger.debug(
+            'Collecting a list of unique hashes to check against hashR.')
         for event in events:
             total_event_counter += 1
             hash_value = None
@@ -267,13 +265,13 @@ class HashRLookup(interface.BaseAnalyzer):
                 f'The selected timeline "{self.timeline_name}" does not contain'
                 ' any fields with a sha256 hash.')
 
-        logger.info('Found %d unique hashes in %d events.',
-                    len(hash_events_dict), total_event_counter)
+        logger.debug('Found %d unique hashes in %d events.',
+                     len(hash_events_dict), total_event_counter)
 
         matching_hashes = self.check_against_hashr(
             list(hash_events_dict.keys()))
         if self.add_source_attribute:
-            logger.info('Start adding tags and attributes to events.')
+            logger.debug('Start adding tags and attributes to events.')
             for sample_hash in matching_hashes:
                 for event in hash_events_dict[sample_hash]:
                     known_hash_counter += 1
@@ -281,19 +279,18 @@ class HashRLookup(interface.BaseAnalyzer):
                         sample_hash, matching_hashes[sample_hash], event)
             self.unique_known_hash_counter = len(matching_hashes)
         else:
-            logger.info('Start adding tags to events.')
+            logger.debug('Start adding tags to events.')
             for sample_hash in matching_hashes:
                 for event in hash_events_dict[sample_hash]:
                     known_hash_counter += 1
                     self.annotate_event(sample_hash, False, event)
+            self.unique_known_hash_counter = len(matching_hashes)
 
         return_message = (
-            f'Found a total of {total_event_counter} events '
-            f'with a sha256 hash value - {len(hash_events_dict)} unique hashes '
-            f'queried against hashR - {self.unique_known_hash_counter} hashes '
-            f'were known in hashR - '
-            f'{(len(hash_events_dict) - self.unique_known_hash_counter)} hashes'
-            f' were unknown in hashR - {known_hash_counter} events tagged - '
+            f'Found a total of {total_event_counter} events that contain a '
+            f'sha256 hash value - {self.unique_known_hash_counter} / '
+            f'{len(hash_events_dict)} unique hashes known in hashR - '
+            f'{known_hash_counter} events tagged - '
             f'{self.zerobyte_file_counter} entries were tagged as zerobyte '
             f'files - {error_hash_counter} events raisend an error')
         logger.info('Analyzer summary: %s', return_message)
