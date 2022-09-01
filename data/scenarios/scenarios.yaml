@@ -25,6 +25,8 @@ compromise_assessment:
     - bruteforce_password_guessing
     - create_account
     - modify_account
+    - lateral_movement
+    - attacker_run_code
 
 exfil:
   display_name: Exfiltration

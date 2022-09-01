@@ -35,7 +35,29 @@ from timesketch.models.sketch import SearchTemplate
 from timesketch.models.sketch import View
 from timesketch.models.sketch import Event
 from timesketch.models.sketch import Story
+from timesketch.models.sigma import Sigma
 
+SIGMA_RULE = """
+title: Suspicious Installation of Zenmap
+id: 5266a592-b793-11ea-b3de-0242ac130004
+description: Detects suspicious installation of Zenmap
+references:
+    - https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html
+author: Alexander Jaeger
+date: 2020/06/26
+modified: 2021/01/01
+logsource:
+    product: linux
+    service: shell
+detection:
+    keywords:
+        # Generic suspicious commands
+        - '*apt-get install zmap*'
+    condition: keywords
+falsepositives:
+    - Unknown
+level: high
+"""
 
 class TestConfig(object):
     """Config for the test environment."""
@@ -534,6 +556,29 @@ class BaseTest(TestCase):
         self._commit_to_database(searchtemplate)
         return searchtemplate
 
+    def _create_sigma(
+        self, user, rule_yaml, rule_uuid, title, description
+    ):
+        """Create a sigma rule in the database.
+        Args:
+            user: A user (instance of timesketch.models.user.User)
+            rule_yaml: yaml content of the rule
+            rule_uuid: rule uuid of the rule
+            title: Title for the rule
+            description: description of the rule
+        Returns:
+            A Sigma Rule (timesketch.models.sigma.Sigma)
+        """
+        sigma = Sigma(
+            user=user,
+            rule_yaml=rule_yaml,
+            rule_uuid=rule_uuid,
+            title=title,
+            description=description
+        )
+        self._commit_to_database(sigma)
+        return sigma
+
     def setUp(self):
         """Setup the test database."""
         init_db()
@@ -579,6 +624,14 @@ class BaseTest(TestCase):
         )
 
         self.story = self._create_story(sketch=self.sketch1, user=self.user1)
+
+        self.sigma1 = self._create_sigma(
+            user=self.user1,
+            rule_uuid='5266a592-b793-11ea-b3de-0242ac130004',
+            rule_yaml=SIGMA_RULE,
+            title='Suspicious Installation of Zenmap',
+            description='Detects suspicious installation of Zenmap'
+        )
 
     def tearDown(self):
         """Tear down the test database."""

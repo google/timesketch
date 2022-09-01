@@ -26,15 +26,15 @@
 #
 # ------------------------------------------------------------------------
 attacker_maintain_access:
-  display_name: Attacker mantain access
-  description: Are there any signs of an attacker trying to maintain their access?
+  display_name: Attacker maintained access?
+  description: Are there any signs of an attacker moving from the computer to another host? (Lateral Movement)
   questions:
     - user_logged_in_win
     - user_downloaded_file
 
 interference_with_protective_measures:
-  display_name: Interference with protective measures
-  description: Are there any signs of interference with protective measures?
+  display_name: Interference with protective measures?
+  description: Are there any signs of an attacker trying to maintain their access? (Persistence)
   questions:
     - user_logged_in_win
 
