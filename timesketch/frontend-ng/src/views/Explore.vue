@@ -212,6 +212,35 @@ limitations under the License.
             </v-col>
           </v-row>
 
+          <!-- Add manual event -->
+          <v-row dense>
+            <v-col cols="12">
+              <span>
+                <v-menu
+                  v-model="addManualEvent"
+                  offset-y
+                  :close-on-content-click="false"
+                  :close-on-click="true"
+                  content-class="menu-with-gap"
+                  allow-overflow
+                  style="overflow: visible"
+                >
+                  <template v-slot:activator="{ on, attrs }">
+                    <v-chip outlined v-bind="attrs" v-on="on">
+                      <v-icon left small> mdi-braille </v-icon>
+                      Add manual event
+                    </v-chip>
+                  </template>
+                  <ts-add-manual-event
+                    app
+                    @cancel="addManualEvent = false"
+                    :datetimeProp="datetimeManualEvent"
+                  ></ts-add-manual-event>
+                </v-menu>
+              </span>
+            </v-col>
+          </v-row>
+
           <!-- Term filters -->
           <v-row dense v-if="filterChips.length">
             <v-col cols="12" class="py-0">
@@ -484,6 +513,9 @@ limitations under the License.
               <v-btn small icon>
                 <v-icon>mdi-tag-plus-outline</v-icon>
               </v-btn>
+              <v-btn small icon @click="addEventBtn(item._source.datetime)">
+                <v-icon>mdi-braille</v-icon>
+              </v-btn>
             </template>
 
             <!-- Message field -->
@@ -546,6 +578,7 @@ import TsSearchDropdown from '../components/Explore/SearchDropdown'
 import TsBarChart from '../components/Explore/BarChart'
 import TsTimelinePicker from '../components/Explore/TimelinePicker'
 import TsFilterMenu from '../components/Explore/FilterMenu'
+import TsAddManualEvent from '../components/Explore/AddManualEvent'
 import TsScenario from '../components/Scenarios/Scenario'
 import TsEventDetail from '../components/Explore/EventDetail'
 
@@ -585,6 +618,7 @@ export default {
     TsBarChart,
     TsTimelinePicker,
     TsFilterMenu,
+    TsAddManualEvent,
     TsScenario,
     TsEventDetail,
   },
@@ -627,9 +661,11 @@ export default {
       leftDrawer: true,
       expandedRows: [],
       timeFilterMenu: false,
+      addManualEvent: false,
       saveSearchMenu: false,
       saveSearchFormName: '',
       fromSavedSearch: false,
+      datetimeManualEvent: '', // datetime of an event used
       // old stuff
       params: {},
       showCreateViewModal: false,
@@ -720,6 +756,10 @@ export default {
     },
   },
   methods: {
+    addEventBtn: function (datetimeManualEvent) {
+      this.datetimeManualEvent = datetimeManualEvent
+      this.addManualEvent = true
+    },
     toggleSearchHistory: function () {
       this.showSearchHistory = !this.showSearchHistory
       if (this.showSearchHistory) {

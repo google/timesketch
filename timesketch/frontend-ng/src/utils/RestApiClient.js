@@ -141,6 +141,15 @@ export default {
   deleteSketchTimeline(sketchId, timelineId) {
     return RestApiClient.delete('/sketches/' + sketchId + /timelines/ + timelineId + '/')
   },
+  createEvent(sketchId, datetime, message, timestampDesc, attributes, config) {
+    let formData = {
+      date_string: datetime,
+      message: message,
+      timestamp_desc: timestampDesc,
+      attributes : attributes
+    }
+    return RestApiClient.post('/sketches/' + sketchId + '/event/create/', formData, config)
+  },
   // Get details about an event
   getEvent(sketchId, searchindexId, eventId) {
     let params = {
