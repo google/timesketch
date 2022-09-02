@@ -579,7 +579,7 @@ event = [
     '_type': '_doc',
     'attributes': [
       {
-        'attr_name': 'A new attribute name',
+        'attr_name': 'an_attribute_name',
         'attr_value': 'A new attribute value'
       }
     ]

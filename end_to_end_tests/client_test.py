@@ -189,5 +189,55 @@ class ClientTest(interface.BaseEndToEndTest):
         )
         self.assertions.assertIn("foo", new_event["objects"])
 
+    def test_add_event_attributes_invalid(self):
+        """Tests adding invalid attributes to an event."""
+        sketch = self.api.create_sketch(name="Add invalid attributes test")
+        sketch.add_event(
+            "original message", "2020-01-01T00:00:00", "timestamp_desc",
+            attributes={"existing_attr": "original_value"})
+        # Wait for new timeline and event to be created
+        time.sleep(1)
+
+        # Have to use search to get event_id
+        search_client = search.Search(sketch)
+        search_response = json.loads(search_client.json)
+        old_event = search_response["objects"][0]
+
+        events = [
+            {
+                "_id": old_event["_id"],
+                "_index": old_event["_index"],
+                "_type": old_event["_type"],
+                "attributes": [
+                    {
+                        "attr_name": "existing_attr",
+                        "attr_value": "new_value"
+                    },
+                    {
+                        "attr_name": "message",
+                        "attr_value": "new message"
+                    }
+                ]
+            }
+        ]
+
+        response = sketch.add_event_attributes(events)
+        # Confirm the error lines are generated for the invalid attributes.
+        self.assertions.assertIn(
+            f"Attribute 'existing_attr' already exists for event_id "
+            f"'{old_event['_id']}'.",
+            response['meta']['errors'])
+        self.assertions.assertIn(
+            f"Cannot add 'message' for event_id '{old_event['_id']}', name not "
+            f"allowed.",
+            response['meta']['errors'])
+
+        new_event = sketch.get_event(old_event["_id"], old_event["_index"])
+        # Confirm attributes have not been changed.
+        self.assertions.assertEqual(
+            new_event["objects"]["message"], "original message")
+        self.assertions.assertEqual(
+            new_event["objects"]["existing_attr"], "original_value")
+
 
 manager.EndToEndTestManager.register_test(ClientTest)

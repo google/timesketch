@@ -489,21 +489,21 @@ class EventAddAttributeResource(resources.ResourceMixin, Resource):
                         request_attribute_value = (
                             request_attribute["attr_value"])
 
-                        if request_attribute_name in existing_attributes:
+                        if (request_attribute_name in
+                            self.INVALID_ATTRIBUTES_NAMES):
                             info_dict["errors"].append(
-                                f"Attribute '{request_attribute_name}' already "
-                                f"exists for event_id '{request_event_id}'.")
+                                f"Cannot add '{request_attribute_name}' for "
+                                f"event_id '{request_event_id}', name not "
+                                f"allowed.")
                         elif request_attribute_name.startswith("_"):
                             info_dict["errors"].append(
                                 f"Attribute '{request_attribute_name}' for "
                                 f"event_id '{request_event_id}' invalid, "
                                 f"cannot start with '_'")
-                        elif (request_attribute_name in
-                            self.INVALID_ATTRIBUTES_NAMES):
+                        elif request_attribute_name in existing_attributes:
                             info_dict["errors"].append(
-                                f"Cannot add '{request_attribute_name}' for "
-                                f"event_id' {request_event_id}', name not "
-                                f"allowed.")
+                                f"Attribute '{request_attribute_name}' already "
+                                f"exists for event_id '{request_event_id}'.")
                         else:
                             new_attributes[request_attribute_name] = (
                                 request_attribute_value)

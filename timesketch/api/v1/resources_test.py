@@ -598,7 +598,7 @@ class EventAddAttributeResourceTest(BaseTest):
             }
         )
         self.assertIn(
-            "Cannot add 'message' for event_id' 1', name not allowed.",
+            "Cannot add 'message' for event_id '1', name not allowed.",
             response.json["meta"]["errors"])
 
 
