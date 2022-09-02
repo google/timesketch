@@ -20,6 +20,16 @@ limitations under the License.
     </template>
     <v-card>
       <v-container class="px-8">
+        <v-dialog v-model="percentCompleted" width="500">
+          <v-card>
+            <v-card-title class="text-h5 grey lighten-2"> Uplaoding the file... </v-card-title>
+
+            <v-progress-linear color="light-blue" height="10" :value="percentCompleted" striped></v-progress-linear>
+
+            <v-divider></v-divider>
+          </v-card>
+        </v-dialog>
+
         <v-card-title class="text-h5"> {{ title }} </v-card-title>
 
         <div v-if="error.length > 0">
@@ -172,7 +182,7 @@ export default {
       fileName: '',
       fileMetaData: {},
       error: [],
-      percentCompleted: 0,
+      percentCompleted: -1,
       uploadedFiles: [],
 
       CSVDelimiter: ',',
@@ -442,6 +452,7 @@ export default {
           this.$store.dispatch('updateSketch', this.$store.state.sketch.id)
           this.clearFormData()
           this.percentCompleted = 0
+          this.dialog = false
         })
         .catch((e) => {})
     },

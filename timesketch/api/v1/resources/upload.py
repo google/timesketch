@@ -17,7 +17,8 @@ import codecs
 import logging
 import os
 import uuid
-import json  # need to parse stringify json object into python dictionary
+import json
+import subprocess
 
 from flask import jsonify
 from flask import request
@@ -38,6 +39,8 @@ from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import DataSource
+import re
+
 
 logger = logging.getLogger("timesketch.api_upload")
 
@@ -112,6 +115,61 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         searchindex.add_label(data_label, user=current_user)
 
         return searchindex
+
+    def _get_total_events(self, file_path, file_extension):
+        """Returns the number of total events read in the file
+
+        Args:
+            file_path: the path of the plaso/csv/jsonl file.
+            file_extension: json/jsonl/csv/plaso
+
+        Returns:
+            Number of events in the file
+        """
+        total_events_json = None
+        if file_extension == "plaso":
+            try:
+                pinfo_path = current_app.config["PINFO_PATH"]
+            except KeyError:
+                pinfo_path = "pinfo.py"
+
+            cmd = [
+                pinfo_path,
+                "--output-format",
+                "json",
+                "--sections",
+                "events",
+                file_path,
+            ]
+
+            # Run pinfo.py
+            try:
+                total_events = subprocess.run(cmd, capture_output=True).stdout.decode(
+                    "utf-8"
+                )
+                total_events = '{"storage_counters": {"parsers": {"filestat": 225, "total": 290371, "winevtx": 290146}, "event_labels": {}}}'
+                regex = 'parsers": (.+?})'
+                m = re.search(regex, total_events)
+                if m:
+                    total_events_json = json.loads(m.group(1))
+            except subprocess.CalledProcessError as e:
+                pass
+        elif file_extension in {"csv", "json", "jsonl"}:
+            # Run $ wc -l filepath
+            cmd = ["wc", "-l", file_path]
+            try:
+                total_events = (
+                    subprocess.run(cmd, capture_output=True)
+                    .stdout.decode("utf-8")
+                    .split(" ")[0]
+                )
+                total_events_json = {"total": total_events}
+            except subprocess.CalledProcessError as e:
+                pass
+
+        res = "Info about lines of the file: " + str(total_events_json)
+        logger.info(res)
+        return total_events_json
 
     # pylint: disable=too-many-arguments
     def _upload_and_index(
@@ -286,7 +344,12 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         if meta is None:
             meta = {}
 
+        total_events = self._get_total_events(
+            file_path=file_path, file_extension=file_extension
+        )
+
         meta["task_id"] = task_id
+        meta["total_events"] = total_events
         return self.to_json(timeline, status_code=HTTP_STATUS_CODE_CREATED, meta=meta)
 
     def _upload_events(self, events, form, sketch, index_name, headers_mapping=None):
