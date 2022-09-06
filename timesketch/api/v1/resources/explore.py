@@ -28,6 +28,7 @@ from flask_restful import Resource
 from flask_restful import reqparse
 from flask_login import login_required
 from flask_login import current_user
+from sqlalchemy.orm import aliased
 
 from timesketch.api.v1 import export
 from timesketch.api.v1 import resources
@@ -491,7 +492,7 @@ class SearchHistoryResource(resources.ResourceMixin, Resource):
 class SearchHistoryTreeResource(resources.ResourceMixin, Resource):
     """Resource to get search history for a user."""
 
-    HISTORY_NODE_LIMIT = 250  # To prevent heap exhaustion during recursion.
+    HISTORY_NODE_LIMIT = 10  # To prevent heap exhaustion during recursion.
 
     @login_required
     def get(self, sketch_id):
@@ -506,20 +507,21 @@ class SearchHistoryTreeResource(resources.ResourceMixin, Resource):
 
         tree = {}
 
-        try:
-            root_node = (
-                SearchHistory.query.filter_by(user=current_user, sketch=sketch)
-                .order_by(SearchHistory.id.desc())
-                .limit(self.HISTORY_NODE_LIMIT)[-1]
-            )
-        except IndexError:
-            root_node = None
-
+        # Get last history node for the current user and a specific sketch.
         last_node = (
             SearchHistory.query.filter_by(user=current_user, sketch=sketch)
             .order_by(SearchHistory.id.desc())
             .first()
         )
+
+        # Traverse (in reverse) the history tree 10 steps from the last node. Reason is
+        # to not build an unesessary big grapth.
+        root_node = last_node
+        for _ in range(self.HISTORY_NODE_LIMIT):
+            if not root_node.parent:
+                break
+            root_node = root_node.parent
+
         if root_node:
             tree = root_node.build_tree(root_node, {})
 
