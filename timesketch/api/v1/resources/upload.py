@@ -279,6 +279,9 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 sketch=sketch,
                 user=current_user,
                 searchindex=searchindex,
+                total_events=str(
+                    json.dumps(self._get_total_events(file_path, file_extension))
+                ),
             )
 
         if not timeline:
@@ -344,9 +347,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         if meta is None:
             meta = {}
 
-        total_events = self._get_total_events(
-            file_path=file_path, file_extension=file_extension
-        )
+        total_events = json.dumps(self._get_total_events(file_path, file_extension))
 
         meta["task_id"] = task_id
         meta["total_events"] = total_events
@@ -539,6 +540,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
 
         # headers mapping: map between mandatory headers and new ones
         headers_mapping = json.loads(form.get("headersMapping", "{}")) or None
+        headers_mapping = None
         logger.info(headers_mapping)
 
         delimiter = form.get("delimiter", ",")

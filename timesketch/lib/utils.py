@@ -520,7 +520,10 @@ def get_validated_indices(indices, sketch):
     """
     sketch_structure = {}
     for timeline in sketch.timelines:
-        if timeline.get_status.status.lower() != "ready":
+        if (
+            timeline.get_status.status.lower() != "ready"
+            and timeline.get_status.status.lower() != "processing"
+        ):
             continue
         index_ = timeline.searchindex.index_name
         sketch_structure.setdefault(index_, [])

@@ -436,8 +436,8 @@ export default {
       formData.append('sketch_id', this.$store.state.sketch.id)
       if (['csv', 'jsonl', 'json'].includes(this.extension)) {
         let hMapping = JSON.stringify(this.headersMapping)
-        formData.append('headersMapping', hMapping)
-        formData.append('delimiter', this.CSVDelimiter)
+        // formData.append('headersMapping', hMapping)
+        // formData.append('delimiter', this.CSVDelimiter)
       }
       let config = {
         headers: {
@@ -449,10 +449,14 @@ export default {
       }
       ApiClient.uploadTimeline(formData, config)
         .then((response) => {
-          this.$store.dispatch('updateSketch', this.$store.state.sketch.id)
           this.clearFormData()
           this.percentCompleted = 0
           this.dialog = false
+          this.$store.dispatch('updateSketch', this.$store.state.sketch.id)
+          this.$store.dispatch('updateTimelineTotalEvents', {
+            id: response.data.objects[0].id,
+            totalEvents: response.data.meta.total_events,
+          })
         })
         .catch((e) => {})
     },

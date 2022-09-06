@@ -20,7 +20,7 @@ limitations under the License.
         <thead>
           <tr>
             <th class="text-left">Name</th>
-            <th class="text-left">Import method</th>
+            <th class="text-left">Status</th>
             <th class="text-left">Events</th>
             <th class="text-left">Uploaded by</th>
             <th class="text-left">Created</th>
@@ -49,7 +49,6 @@ export default {
     meta() {
       return this.$store.state.meta
     },
-
     activeTimelines() {
       // Sort alphabetically based on timeline name.
       let timelines = [...this.sketch.timelines]
