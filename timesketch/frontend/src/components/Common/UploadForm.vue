@@ -41,7 +41,17 @@ limitations under the License.
       </div>
 
       <div class="field">
-        <div v-if="['csv', 'jsonl'].includes(extension)">
+        <!-- Error lists -->
+        <div v-if="error.length>0">
+          <span v-for="(errorMessage, index) in error" :key="index">
+            <article class="message is-danger mb-0">
+              <div class="message-body">
+                {{ errorMessage }}
+              </div>
+            </article>
+          </span>
+        </div>
+        <div v-if="extension === 'csv'">
           <hr />
 
           <!-- List of button: showHelper, showPreview, addColumnsToPreview -->
@@ -59,7 +69,6 @@ limitations under the License.
           >
             {{ showAddColumnFlag ? "Hide colums" : "Add Columns" }}</button
           ><br /><br />
-;
           <!-- Dynamically generation of the preview of the CSV file -->
           <div v-if="showPreviewFlag">
             <span>
@@ -309,16 +318,6 @@ limitations under the License.
             <input class="button is-success" type="submit" value="Upload" />
           </div>
         </div>
-      </div>
-      <!-- Error lists -->
-      <div v-else>
-        <span v-for="(errorMessage, index) in error" :key="index">
-          <article class="message is-danger mb-0">
-            <div class="message-body">
-              {{ errorMessage }}
-            </div>
-          </article>
-        </span>
       </div>
     </form>
     <br />
