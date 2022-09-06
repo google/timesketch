@@ -944,6 +944,7 @@ class OpenSearchDataStore(object):
         event_type,
         event=None,
         event_id=None,
+        flush_interval=None,
         timeline_id=None,
     ):
         """Add event to OpenSearch.
@@ -953,6 +954,7 @@ class OpenSearchDataStore(object):
             event_type: Type of event (e.g. plaso_event)
             event: Event dictionary
             event_id: Event OpenSearch ID
+            flush_interval: Number of events to queue up before indexing
             timeline_id: Optional ID number of a Timeline object this event
                 belongs to. If supplied an additional field will be added to
                 the store indicating the timeline this belongs to.
@@ -996,7 +998,10 @@ class OpenSearchDataStore(object):
             self.import_events.append(event)
             self.import_counter["events"] += 1
 
-            if self.import_counter["events"] % int(self.flush_interval) == 0:
+            if not flush_interval:
+                flush_interval = self.flush_interval
+
+            if self.import_counter["events"] % int(flush_interval) == 0:
                 _ = self.flush_queued_events()
                 self.import_events = []
         else:
