@@ -51,7 +51,7 @@
               color="teal"
             >
             </v-progress-circular>
-            <v-icon v-if="timelineStatus === 'fail'">mdi-check-circle</v-icon>
+            <v-icon v-if="timelineStatus === 'fail'">mdi-alert-circle</v-icon>
           </small>
         </template>
 
@@ -60,7 +60,7 @@
           <v-card-text class="pa-5">
             <ul style="list-style-type: none">
               <li><strong>Opensearch index: </strong>{{ timeline.searchindex.index_name }}</li>
-              <li>
+              <li v-if="timelineStatus === 'processing' || timelineStatus === 'ready'">
                 <strong v-if="timelineStatus === 'ready'">Number of events: </strong>
                 <strong v-if="timelineStatus === 'processing'">Number of indexed events: </strong>
                 {{ indexedEvents | compactNumber }} ({{ indexedEvents }})
@@ -82,7 +82,7 @@
               :type="timelineStatusColors()"
             >
               <ul style="list-style-type: none">
-                <li>
+                <li v-if="timelineStatus === 'processing' || timelineStatus === 'ready'">
                   <strong>Events:</strong>
                   <ul>
                     <li v-for="(numberEvents, type) in totalEvents" :key="type">
@@ -91,13 +91,18 @@
                     </li>
                   </ul>
                 </li>
+
                 <li v-if="timelineStatus === 'processing'">
                   <strong>Percentage Completed</strong> {{ indexedPercentage }} %
                 </li>
                 <li v-if="timelineStatus === 'processing'"><strong>Remaining time:</strong> {{ remainingTime }}</li>
 
+                <li v-if="timelineStatus === 'fail'">
+                  <strong>Error message:</strong>
+                  <code v-if="datasource.error_message"> {{ datasource.error_message }}</code>
+                </li>
+
                 <li v-if="timelineStatus !== 'processing'"><strong>Provider:</strong> {{ datasource.provider }}</li>
-                <li v-if="timelineStatus !== 'processing'"><strong>Context:</strong> {{ datasource.context }}</li>
                 <li v-if="timelineStatus !== 'processing'">
                   <strong>File on disk:</strong> {{ datasource.file_on_disk }}
                 </li>
@@ -146,8 +151,8 @@ export default {
       dialog: false,
       timelineStatus: null,
       autoRefresh: false,
-      indexedEvents: null,
-      totalEvents: {},
+      indexedEvents: 0,
+      totalEvents: null,
     }
   },
   computed: {
@@ -158,8 +163,12 @@ export default {
       return this.$store.state.sketch
     },
     indexedPercentage() {
-      let percentage = this.indexedEvents / this.totalEvents.total
-      return Math.floor(percentage * 100)
+      let totalEvents = 1
+      if(this.totalEvents){
+        totalEvents = this.totalEvents.total
+      }
+      let percentage = this.indexedEvents / totalEvents
+      return Math.min(Math.floor(percentage * 100), 100)
     },
     remainingTime() {
       let t = new Date()
@@ -171,6 +180,9 @@ export default {
       let tEnd = deltaX + t0
 
       return this.secondsToString(Math.floor(tEnd - tNow))
+    },
+    datasourceErrors() {
+      return this.timeline.datasources.filter((datasource) => datasource.error_message)
     },
   },
   created() {
@@ -188,9 +200,7 @@ export default {
         .then((response) => {
           this.timelineStatus = response.data.objects[0].status[0].status
           this.indexedEvents = response.data.meta.lines_indexed
-          console.log(response.data.objects)
           this.totalEvents = JSON.parse(response.data.objects[0].total_events)
-          console.log(this.totalEvents)
           if (this.timelineStatus !== 'ready' && this.timelineStatus !== 'fail') {
             this.autoRefresh = true
           } else {

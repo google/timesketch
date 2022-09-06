@@ -182,7 +182,7 @@ export default {
       fileName: '',
       fileMetaData: {},
       error: [],
-      percentCompleted: -1,
+      percentCompleted: 0,
       uploadedFiles: [],
 
       CSVDelimiter: ',',
@@ -416,6 +416,8 @@ export default {
       this.uploadedFiles = []
       this.title = 'Upload your Plaso/JSONL/CSV file'
       this.error = []
+      this.percentCompleted = 0
+
       this.mandatoryHeaders = [
         { name: 'datetime', columnsSelected: [] },
         { name: 'message', columnsSelected: [] },
@@ -453,10 +455,6 @@ export default {
           this.percentCompleted = 0
           this.dialog = false
           this.$store.dispatch('updateSketch', this.$store.state.sketch.id)
-          this.$store.dispatch('updateTimelineTotalEvents', {
-            id: response.data.objects[0].id,
-            totalEvents: response.data.meta.total_events,
-          })
         })
         .catch((e) => {})
     },

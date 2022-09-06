@@ -226,24 +226,26 @@ class TimelineResource(resources.ResourceMixin, Resource):
                 "The user does not have read permission on the sketch.",
             )
 
-        lines_indexed = 0
-        result = self.datastore.search(
-            sketch_id=timeline.searchindex.id,
-            query_string="*",
-            query_filter={
-                "from": 0,
-                "indices": [timeline.id],
-                "order": "asc",
-                "chips": [],
-                "fields": [{"field": "message", "type": "text"}],
-            },
-            query_dsl=None,
-            indices=[timeline.searchindex.index_name],
-            timeline_ids=[timeline.id],
-            count=True,
-        )
-        logger.info(result)
-        meta = {"lines_indexed": result}
+        meta = {"lines_indexed": None}
+        if timeline.get_status.status != "fail":
+            lines_indexed = 0
+            result = self.datastore.search(
+                sketch_id=timeline.searchindex.id,
+                query_string="*",
+                query_filter={
+                    "from": 0,
+                    "indices": [timeline.id],
+                    "order": "asc",
+                    "chips": [],
+                    "fields": [{"field": "message", "type": "text"}],
+                },
+                query_dsl=None,
+                indices=[timeline.searchindex.index_name],
+                timeline_ids=[timeline.id],
+                count=True,
+            )
+            logger.info(result)
+            meta["lines_indexed"] = result
 
         return self.to_json(timeline, meta=meta)
 

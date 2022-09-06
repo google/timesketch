@@ -548,6 +548,7 @@ import TsTimelinePicker from '../components/Explore/TimelinePicker'
 import TsFilterMenu from '../components/Explore/FilterMenu'
 import TsScenario from '../components/Scenarios/Scenario'
 import TsEventDetail from '../components/Explore/EventDetail'
+import TsUploadTimelineForm from '../components/UploadForm'
 
 import EventBus from '../main'
 import { None } from 'vega'
@@ -587,6 +588,7 @@ export default {
     TsFilterMenu,
     TsScenario,
     TsEventDetail,
+    TsUploadTimelineForm,
   },
   props: ['sketchId'],
   data() {
