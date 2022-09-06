@@ -673,7 +673,7 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
         cmd.extend(["--process_memory_limit", str(psort_memory)])
 
     opensearch_flush_interval = current_app.config.get("OPENSEARCH_FLUSH_INTERVAL", None)
-    if opensearch_flush_interval is not None:
+    if not opensearch_flush_interval:
         cmd.extend(["--flush_interval", str(opensearch_flush_interval)])
 
     # Run psort.py
