@@ -513,8 +513,8 @@ class SearchHistoryTreeResource(resources.ResourceMixin, Resource):
             .first()
         )
 
-        # Traverse (in reverse) the history tree 10 steps from the last node. Reason is
-        # to not build an unesessary big grapth.
+        # Traverse (in reverse) the history tree 10 steps from the last node in order to
+        # not build an unesessary big graph.
         root_node = last_node
         for _ in range(self.HISTORY_NODE_LIMIT):
             if not root_node.parent:
