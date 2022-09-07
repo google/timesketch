@@ -28,7 +28,6 @@ from flask_restful import Resource
 from flask_restful import reqparse
 from flask_login import login_required
 from flask_login import current_user
-from sqlalchemy.orm import aliased
 
 from timesketch.api.v1 import export
 from timesketch.api.v1 import resources
