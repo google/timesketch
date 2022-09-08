@@ -41,7 +41,7 @@ limitations under the License.
       </div>
 
       <div class="field">
-        <div v-if="['csv', 'jsonl'].includes(extension)">
+        <div v-if="['json', 'jsonl', 'csv'].includes(extension) && valuesString !== ''">
           <hr />
 
           <!-- List of button: showHelper, showPreview, addColumnsToPreview -->
@@ -59,7 +59,7 @@ limitations under the License.
           >
             {{ showAddColumnFlag ? "Hide colums" : "Add Columns" }}</button
           ><br /><br />
-;
+
           <!-- Dynamically generation of the preview of the CSV file -->
           <div v-if="showPreviewFlag">
             <span>
@@ -384,7 +384,7 @@ export default {
       let headers = [];
       if (this.extension === "csv") {
         headers = this.headersString.split(this.CSVDelimiter);
-      } else if (this.extension === "jsonl") {
+      } else if (["json", "jsonl"].includes(this.extension)) {
         headers = Object.keys(this.headersString);
       }
       return headers;
@@ -403,7 +403,7 @@ export default {
       if (this.extension === "csv") {
         let n = this.valuesString.indexOf("");
         return n < 0 ? this.staticNumberRows : n;
-      } else if (this.extension === "jsonl") {
+      } else if (["json", "jsonl"].includes(this.extension)) {
         return this.valuesString.length;
       } else {
         return 0;
@@ -447,7 +447,7 @@ export default {
           }
           valuesAndHeaders[this.headers[i]] = listValues;
         }
-      } else if (this.extension === "jsonl") {
+      } else if (["json", "jsonl"].includes(this.extension)) {
         for (let i = 0; i < this.valuesString.length; i++) {
           for (let header in this.valuesString[i]) {
             if (header in valuesAndHeaders) {
@@ -457,10 +457,6 @@ export default {
             }
           }
         }
-      } else {
-        console.error(
-          this.extension + " file extension not supported for this feature"
-        );
       }
       let checkedHeaders = this.checkedHeaders;
       return checkedHeaders.sort().map((header) => {
@@ -629,7 +625,7 @@ export default {
       formData.append("context", this.fileName);
       formData.append("total_file_size", this.form.file.size);
       formData.append("sketch_id", this.$store.state.sketch.id);
-      if (["csv", "jsonl"].includes(this.extension)) {
+      if (["csv", "jsonl", "json"].includes(this.extension)) {
         let hMapping = JSON.stringify(this.headersMapping);
         formData.append("headersMapping", hMapping);
         formData.append("delimiter", this.CSVDelimiter);
@@ -665,7 +661,7 @@ export default {
             allowedExtensions.toString()
         );
       }
-      if (["csv", "jsonl"].includes(this.extension)) {
+      if (["csv", "jsonl", "json"].includes(this.extension)) {
         // 1. check if mapping is completed, i.e., if the user set all the mandatory headers
         if (this.headersMapping.length !== this.missingHeaders.length) {
           this.error.push(
@@ -702,7 +698,7 @@ export default {
       /* 3. Manage CSV missing headers */
       if (this.extension === "csv") {
         this.extractCSVHeader();
-      } else if (this.extension === "jsonl") {
+      } else if (["json", "jsonl"].includes(this.extension)) {
         this.extractJSONLHeader();
       } else {
         this.validateFile();
@@ -745,10 +741,13 @@ export default {
             vueJS.valuesString = rows.slice(0, i).map((x) => JSON.parse(x));
             vueJS.validateFile();
           } catch (objError) {
+            vueJS.headersString = ""
+            vueJS.valuesString = ""
             let error = objError.message;
             error += ". Your first lines of JSON: ";
             error += rows[0];
             vueJS.error.push(error);
+            vueJS.error.push("Submit a valid JSONL/Plaso/CSV file")
           }
         }
       };

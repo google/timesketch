@@ -27,7 +27,7 @@ limitations under the License.
             {{ errorMessage }}
           </v-alert>
         </div>
-        <div v-if="extension === 'csv' || extension === 'jsonl' || extension === 'json'">
+        <div v-if="['csv', 'jsonl', 'json'].includes(extension)">
           <v-simple-table height="350px" v-if="headers.length > 0">
             <template v-slot:default>
               <thead>
@@ -192,6 +192,9 @@ export default {
     }
   },
   computed: {
+    sketch() {
+      return this.$store.state.sketch
+    },
     headers() {
       let headers = []
       if (this.extension === 'csv') {
@@ -423,7 +426,7 @@ export default {
       formData.append('provider', 'WebUpload')
       formData.append('context', this.fileName)
       formData.append('total_file_size', this.form.file.size)
-      formData.append('sketch_id', this.$store.state.sketch.id)
+      formData.append('sketch_id', this.sketch.id)
       if (['csv', 'jsonl', 'json'].includes(this.extension)) {
         let hMapping = JSON.stringify(this.headersMapping)
         formData.append('headersMapping', hMapping)
@@ -439,7 +442,7 @@ export default {
       }
       ApiClient.uploadTimeline(formData, config)
         .then((response) => {
-          this.$store.dispatch('updateSketch', this.$store.state.sketch.id)
+          this.$store.dispatch('updateSketch', this.sketch.id)
           this.clearFormData()
           this.percentCompleted = 0
         })
@@ -528,7 +531,7 @@ export default {
       reader.readAsText(file.slice(0, 10000))
       reader.onloadend = function (e) {
         if (e.target.readyState === FileReader.DONE) {
-          /* 3a. Extract the headers from the CSV */
+          /* 3a. Extract the headers from the JSON */
           let data = e.target.result
           let rows = data.split('\n')
           let i = Math.min(vueJS.staticNumberRows, rows.length)
