@@ -476,7 +476,6 @@ class UploadFileResource(resources.ResourceMixin, Resource):
 
         # headers mapping: map between mandatory headers and new ones
         headers_mapping = json.loads(form.get("headersMapping", "{}")) or None
-        logger.info(headers_mapping)
 
         delimiter = form.get("delimiter", ",")
 

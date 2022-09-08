@@ -717,8 +717,6 @@ def run_csv_jsonl(
     Returns:
         Name (str) of the index.
     """
-    logger.info("run_csv_jsonl-tasks.py")
-    logger.info(headers_mapping)
     if events:
         file_handle = io.StringIO(events)
         source_type = "jsonl"

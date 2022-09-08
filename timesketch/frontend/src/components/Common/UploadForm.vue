@@ -396,7 +396,6 @@ export default {
     },
     extension() {
       let extension = this.fileName.split(".")[1];
-      console.log(extension);
       if (extension) return extension.toLowerCase();
       else return null;
     },
@@ -737,7 +736,7 @@ export default {
       reader.readAsText(file.slice(0, 10000));
       reader.onloadend = function (e) {
         if (e.target.readyState === FileReader.DONE) {
-          /* 3a. Extract the headers from the CSV */
+          /* 3a. Extract the headers from the JSONL */
           let data = e.target.result;
           let rows = data.split("\n");
           let i = Math.min(vueJS.staticNumberRows, rows.length);
