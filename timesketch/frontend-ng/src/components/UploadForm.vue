@@ -16,7 +16,10 @@ limitations under the License.
 <template>
   <v-dialog v-model="dialog" persistent max-width="1000">
     <template v-slot:activator="{ on, attrs }">
-      <v-btn small text v-bind="attrs" v-on="on"> <v-icon>mdi-plus</v-icon> Upload timeline </v-btn>
+      <v-chip outlined v-bind="attrs" v-on="on">
+        <v-icon left small> mdi-alarm-plus </v-icon>
+        New timeline
+      </v-chip>
     </template>
     <v-card>
       <v-container class="px-8">
@@ -143,10 +146,10 @@ limitations under the License.
             dialog = false
           "
         >
-          Close
+          Cancel
         </v-btn>
         <v-btn v-if="fileName" color="yellow darken-1" text @click="clearFormData()"> Clear Form </v-btn>
-
+        <b-field class="file is-primary" :class="{ 'has-name': true }"> </b-field>
         <v-btn color="green darken-1" text @click="submitForm()" :disabled="error.length > 0 || !fileName">
           Submit
         </v-btn>
@@ -171,7 +174,7 @@ export default {
        */
       headersMapping: [],
       mandatoryHeaders: [
-        { name: 'datetime', columnsSelected: [] },
+        { name: 'timestamp', columnsSelected: [] },
         { name: 'message', columnsSelected: [] },
         { name: 'timestamp_desc', columnsSelected: [] },
       ],
@@ -355,11 +358,9 @@ export default {
     },
     changeCSVDelimiter: function (value) {
       this.CSVDelimiter = value
-      this.mandatoryHeaders = [
-        { name: 'datetime', columnsSelected: [] },
-        { name: 'message', columnsSelected: [] },
-        { name: 'timestamp_desc', columnsSelected: [] },
-      ]
+      for (let i = 0; i < this.mandatoryHeaders.length; i++) {
+        this.mandatoryHeaders[i]['columnsSelected'] = []
+      }
       this.headersMapping = []
       this.validateFile()
     },
@@ -418,11 +419,9 @@ export default {
       this.error = []
       this.percentCompleted = 0
 
-      this.mandatoryHeaders = [
-        { name: 'datetime', columnsSelected: [] },
-        { name: 'message', columnsSelected: [] },
-        { name: 'timestamp_desc', columnsSelected: [] },
-      ]
+      for (let i = 0; i < this.mandatoryHeaders.length; i++) {
+        this.mandatoryHeaders[i]['columnsSelected'] = []
+      }
     },
     submitForm: function () {
       if (!this.validateFile()) {
@@ -438,8 +437,8 @@ export default {
       formData.append('sketch_id', this.$store.state.sketch.id)
       if (['csv', 'jsonl', 'json'].includes(this.extension)) {
         let hMapping = JSON.stringify(this.headersMapping)
-        // formData.append('headersMapping', hMapping)
-        // formData.append('delimiter', this.CSVDelimiter)
+        formData.append('headersMapping', hMapping)
+        formData.append('delimiter', this.CSVDelimiter)
       }
       let config = {
         headers: {

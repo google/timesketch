@@ -201,7 +201,7 @@ limitations under the License.
                     <template v-slot:activator="{ on, attrs }">
                       <v-chip outlined v-bind="attrs" v-on="on">
                         <v-icon left small> mdi-clock-plus-outline </v-icon>
-                        Add timefilter
+                        Timefilter
                       </v-chip>
                     </template>
 
@@ -212,7 +212,13 @@ limitations under the License.
             </v-col>
           </v-row>
 
-          <!-- Add manual event -->
+          <!-- Add new timeline -->
+          <v-row dense>
+            <v-col cols="12">
+              <ts-upload-timeline-form></ts-upload-timeline-form>
+            </v-col>
+          </v-row>
+
           <v-row dense>
             <v-col cols="12">
               <span>
@@ -228,7 +234,7 @@ limitations under the License.
                   <template v-slot:activator="{ on, attrs }">
                     <v-chip outlined v-bind="attrs" v-on="on">
                       <v-icon left small> mdi-braille </v-icon>
-                      Add manual event
+                      Manual event
                     </v-chip>
                   </template>
                   <ts-add-manual-event

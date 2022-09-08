@@ -40,6 +40,18 @@ limitations under the License.
           <v-list-item-subtitle v-if="isSelected">Temporarily disabled</v-list-item-subtitle>
           <v-list-item-subtitle v-else>Re-enable</v-list-item-subtitle>
         </v-list-item>
+
+        <v-list-item>
+          <v-list-item-action>
+            <ts-timeline-status-information
+              :timeline="timeline"
+              :indexedEvents="indexedEvents"
+              :totalEvents="totalEvents"
+              :timelineStatus="timelineStatus"
+            ></ts-timeline-status-information>
+          </v-list-item-action>
+          <v-list-item-subtitle>Status</v-list-item-subtitle>
+        </v-list-item>
       </v-list>
     </v-card>
   </v-menu>
@@ -50,9 +62,14 @@ import Vue from 'vue'
 import _ from 'lodash'
 
 import EventBus from '../../main'
+import TsTimelineStatusInformation from '../TimelineStatusInformation'
+import ApiClient from '../../utils/RestApiClient'
 
 export default {
   props: ['timeline', 'eventsCount', 'isSelected', 'isEmptyState'],
+  components: {
+    TsTimelineStatusInformation,
+  },
   data() {
     return {
       initialColor: {},
@@ -64,6 +81,10 @@ export default {
       showEditModal: false,
       showAnalyzerModal: false,
       isDarkTheme: false,
+      timelineStatus: null,
+      autoRefresh: false,
+      indexedEvents: 0,
+      totalEvents: null,
     }
   },
   computed: {
@@ -72,6 +93,21 @@ export default {
     },
     datasourceErrors() {
       return this.timeline.datasources.filter((datasource) => datasource.error_message)
+    },
+    meta() {
+      return this.$store.state.meta
+    },
+    sketch() {
+      return this.$store.state.sketch
+    },
+    percentageTimeline() {
+      let totalEvents = 1
+      if (this.totalEvents) {
+        totalEvents = this.totalEvents.total
+      }
+      let percentage = Math.min(Math.floor((this.indexedEvents / totalEvents) * 100), 100)
+      if (this.timelineStatus === 'ready') percentage = 100
+      return percentage
     },
   },
   methods: {
@@ -100,33 +136,61 @@ export default {
       this.isDarkTheme = !this.isDarkTheme
     },
     getTimelineStyle(timeline) {
+      // background: 'linear-gradient(90deg, ' + backgroundColor + ' ' + p + '%, #d2d2d2 ' + q + '%);'
       let backgroundColor = timeline.color
       let textDecoration = 'none'
       let opacity = '100%'
+      let p = 100
+      let animation = ''
       if (!backgroundColor.startsWith('#')) {
         backgroundColor = '#' + backgroundColor
       }
-      // Grey out the index if it is not selected.
-      if (!this.isSelected) {
-        backgroundColor = '#d2d2d2'
-        textDecoration = 'line-through'
+
+      if (this.timelineStatus === 'ready') {
+        p = 100
+        // Grey out the index if it is not selected.
+        if (!this.isSelected) {
+          backgroundColor = '#d2d2d2'
+          textDecoration = 'line-through'
+          opacity = '50%'
+        }
+      } else if (this.timelineStatus === 'processing') {
+        animation = 'blinker 1s linear infinite'
+        p = this.percentageTimeline
         opacity = '50%'
       }
+      let bgColor = 'linear-gradient(90deg, ' + backgroundColor + ' ' + p + '%, #d2d2d2  0%) '
       if (this.$vuetify.theme.dark) {
         return {
-          'background-color': backgroundColor,
+          background: bgColor,
           filter: 'grayscale(25%)',
           color: '#333',
+          animation: animation,
         }
       }
       return {
-        'background-color': backgroundColor,
+        background: bgColor,
         'text-decoration': textDecoration,
         opacity: opacity,
+        animation: animation,
       }
     },
     toggleTimeline: function (timeline) {
       this.$emit('toggle', timeline)
+    },
+    fetchData() {
+      ApiClient.getSketchTimeline(this.sketch.id, this.timeline.id)
+        .then((response) => {
+          this.timelineStatus = response.data.objects[0].status[0].status
+          this.indexedEvents = response.data.meta.lines_indexed
+          this.totalEvents = JSON.parse(response.data.objects[0].total_events)
+          if (this.timelineStatus !== 'ready' && this.timelineStatus !== 'fail') {
+            this.autoRefresh = true
+          } else {
+            this.autoRefresh = false
+          }
+        })
+        .catch((e) => {})
     },
   },
   mounted() {
@@ -146,11 +210,35 @@ export default {
       hex: this.timeline.color,
     }
     this.timelineStatus = this.timeline.status[0].status
+    if (this.timelineStatus !== 'ready' && this.timelineStatus !== 'fail') {
+      this.autoRefresh = true
+    } else {
+      this.autoRefresh = false
+      this.indexedEvents = this.meta.stats_per_timeline[this.timeline.id]['count']
+    }
     this.newTimelineName = this.timeline.name
   },
   beforeDestroy() {
     clearInterval(this.t)
     this.t = false
+  },
+  watch: {
+    autoRefresh(val) {
+      if (val && !this.t) {
+        this.t = setInterval(
+          function () {
+            this.fetchData()
+            if (this.timelineStatus === 'ready' || this.timelineStatus === 'fail') {
+              this.autoRefresh = false
+            }
+          }.bind(this),
+          5000
+        )
+      } else {
+        clearInterval(this.t)
+        this.t = false
+      }
+    },
   },
 }
 </script>
