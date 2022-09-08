@@ -472,7 +472,7 @@ def read_and_validate_jsonl(
                     linedict["timestamp"] = int(
                         parser.parse(linedict["datetime"]).timestamp() * 1000000
                     )
-                // TODO: REcord this somewhere else and make available to the user.
+                # TODO: REcord this somewhere else and make available to the user.
                 except TypeError:
                     logger.error(
                         "Unable to parse timestamp, skipping line "
