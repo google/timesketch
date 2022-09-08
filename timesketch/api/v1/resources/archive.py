@@ -343,13 +343,13 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
         """
         name = "{0:04d}_{1:s}".format(view.id, view.name)
 
-        query_filter = json.loads(view.query_filter)
+        if view.query_filter:
+            query_filter = json.loads(view.query_filter)
+
         if not query_filter:
             query_filter = self.DEFAULT_QUERY_FILTER
 
-        indices = query_filter.get("indices", self.sketch_indices)
-        if not indices or "_all" in indices:
-            indices = self.sketch_indices
+        indices = self.sketch_indices
 
         # Ignoring the size limits in views to reduce the amount of queries
         # needed to get all the data.
