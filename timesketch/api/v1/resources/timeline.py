@@ -228,7 +228,6 @@ class TimelineResource(resources.ResourceMixin, Resource):
 
         meta = {"lines_indexed": None}
         if timeline.get_status.status != "fail":
-            lines_indexed = 0
             result = self.datastore.search(
                 sketch_id=timeline.searchindex.id,
                 query_string="*",

@@ -80,7 +80,6 @@ export default {
       initialColor: {},
       newColor: '',
       newTimelineName: '',
-      timelineStatus: '',
       colorPickerActive: false,
       showInfoModal: false,
       showEditModal: false,
@@ -104,7 +103,7 @@ export default {
       return this.$store.state.sketch
     },
     percentageTimeline() {
-      if (this.timelineStatus === 'ready') percentage = 100
+      if (this.timelineStatus === 'ready') return 100
       let totalEvents = 1
       if (this.totalEvents) {
         totalEvents = this.totalEvents.total
@@ -115,7 +114,7 @@ export default {
     iconStatus() {
       if (this.timelineStatus === 'ready') return 'mdi-check-circle'
       if (this.timelineStatus === 'processing') return 'mdi-circle-slice-7'
-      if (this.timelineStatus === 'fail') return 'mdi-alert-circle'
+      return 'mdi-alert-circle'
     },
   },
   methods: {
