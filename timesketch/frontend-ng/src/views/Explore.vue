@@ -212,15 +212,10 @@ limitations under the License.
             </v-col>
           </v-row>
 
-          <!-- Add new timeline -->
+          <!-- Add new timeline or manual event -->
           <v-row dense>
             <v-col cols="12">
-              <ts-upload-timeline-form></ts-upload-timeline-form>
-            </v-col>
-          </v-row>
-
-          <v-row dense>
-            <v-col cols="12">
+              <ts-upload-timeline-form></ts-upload-timeline-form>&emsp;
               <span>
                 <v-menu
                   v-model="addManualEvent"

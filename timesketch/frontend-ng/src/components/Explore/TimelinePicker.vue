@@ -16,7 +16,7 @@ limitations under the License.
 <template>
   <v-chip-group>
     <ts-timeline-chip
-      v-for="timeline in activeTimelines"
+      v-for="timeline in allTimelinesV2"
       :key="timeline.id + timeline.name"
       :timeline="timeline"
       :is-selected="isSelected(timeline)"
@@ -41,9 +41,16 @@ export default {
     sketch() {
       return this.$store.state.sketch
     },
-    activeTimelines() {
+    allTimelinesV2() {
       // Sort alphabetically based on timeline name.
       let timelines = [...this.sketch.timelines]
+      return timelines.sort(function (a, b) {
+        return a.name.localeCompare(b.name)
+      })
+    },
+    allTimelines() {
+      // Sort alphabetically based on timeline name.
+      let timelines = [...this.sketch.active_timelines]
       return timelines.sort(function (a, b) {
         return a.name.localeCompare(b.name)
       })
@@ -115,7 +122,7 @@ export default {
         })
     },
     enableAllTimelines() {
-      this.selectedTimelines = this.activeTimelines
+      this.selectedTimelines = this.allTimelines
       this.$emit('updateSelectedTimelines', this.selectedTimelines)
     },
     disableAllTimelines() {
@@ -124,7 +131,7 @@ export default {
     },
     toggleTimeline(timeline) {
       let newArray = this.selectedTimelines.slice()
-      let timelineIdx = newArray.indexOf(timeline)
+      let timelineIdx = newArray.map((x) => x.id).indexOf(timeline.id)
       if (timelineIdx === -1) {
         newArray.push(timeline)
       } else {
@@ -137,24 +144,26 @@ export default {
       this.isDarkTheme = !this.isDarkTheme
     },
     syncSelectedTimelines() {
+      let activeTimelines = this.allTimelines
       if (this.currentQueryFilter.indices.includes('_all')) {
-        this.selectedTimelines = this.activeTimelines
+        this.selectedTimelines = activeTimelines
         return
       }
       let newArray = []
       this.currentQueryFilter.indices.forEach((index) => {
         if (typeof index === 'string') {
-          let timeline = this.activeTimelines.find((t) => {
+          let timeline = activeTimelines.find((t) => {
             return t.searchindex.index_name === index
           })
           newArray.push(timeline)
         } else if (typeof index === 'number') {
-          let timeline = this.activeTimelines.find((t) => {
+          let timeline = activeTimelines.find((t) => {
             return t.id === index
           })
           newArray.push(timeline)
         }
       })
+      console.log(this.selectedTimelines)
       this.selectedTimelines = newArray
     },
   },
@@ -163,7 +172,7 @@ export default {
     EventBus.$on('clearSearch', this.enableAllTimelines)
 
     if (this.currentQueryFilter.indices.includes('_all')) {
-      this.selectedTimelines = this.activeTimelines
+      this.selectedTimelines = this.allTimelines
     } else {
       this.syncSelectedTimelines()
     }

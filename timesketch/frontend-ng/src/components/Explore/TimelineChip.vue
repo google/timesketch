@@ -25,14 +25,14 @@ limitations under the License.
     </template>
     <v-card width="300">
       <v-list>
-        <v-list-item>
+        <v-list-item v-if="timelineStatus === 'ready'">
           <v-list-item-action>
             <v-icon>mdi-square-edit-outline</v-icon>
           </v-list-item-action>
           <v-list-item-subtitle>Rename timeline</v-list-item-subtitle>
         </v-list-item>
 
-        <v-list-item @click="toggleTimeline(timeline)">
+        <v-list-item @click="$emit('toggle', timeline)" v-if="timelineStatus === 'ready'">
           <v-list-item-action>
             <v-icon v-if="isSelected">mdi-eye-off</v-icon>
             <v-icon v-else>mdi-eye</v-icon>
@@ -40,18 +40,23 @@ limitations under the License.
           <v-list-item-subtitle v-if="isSelected">Temporarily disabled</v-list-item-subtitle>
           <v-list-item-subtitle v-else>Re-enable</v-list-item-subtitle>
         </v-list-item>
-
-        <v-list-item>
-          <v-list-item-action>
-            <ts-timeline-status-information
-              :timeline="timeline"
-              :indexedEvents="indexedEvents"
-              :totalEvents="totalEvents"
-              :timelineStatus="timelineStatus"
-            ></ts-timeline-status-information>
-          </v-list-item-action>
-          <v-list-item-subtitle>Status</v-list-item-subtitle>
-        </v-list-item>
+        <v-dialog v-model="dialogStatus" width="600">
+          <template v-slot:activator="{ on, attrs }">
+            <v-list-item v-bind="attrs" v-on="on">
+              <v-list-item-action>
+                <v-icon>{{ iconStatus }}</v-icon>
+              </v-list-item-action>
+              <v-list-item-subtitle>Status</v-list-item-subtitle>
+            </v-list-item>
+          </template>
+          <ts-timeline-status-information
+            :timeline="timeline"
+            :indexedEvents="indexedEvents"
+            :totalEvents="totalEvents"
+            :timelineStatus="timelineStatus"
+            @closeDialog="closeDialogStatus"
+          ></ts-timeline-status-information>
+        </v-dialog>
       </v-list>
     </v-card>
   </v-menu>
@@ -85,6 +90,7 @@ export default {
       autoRefresh: false,
       indexedEvents: 0,
       totalEvents: null,
+      dialogStatus: false,
     }
   },
   computed: {
@@ -93,9 +99,6 @@ export default {
     },
     datasourceErrors() {
       return this.timeline.datasources.filter((datasource) => datasource.error_message)
-    },
-    meta() {
-      return this.$store.state.meta
     },
     sketch() {
       return this.$store.state.sketch
@@ -109,8 +112,16 @@ export default {
       if (this.timelineStatus === 'ready') percentage = 100
       return percentage
     },
+    iconStatus() {
+      if (this.timelineStatus === 'ready') return 'mdi-check-circle'
+      if (this.timelineStatus === 'processing') return 'mdi-circle-slice-7'
+      if (this.timelineStatus === 'fail') return 'mdi-alert-circle'
+    },
   },
   methods: {
+    closeDialogStatus() {
+      this.dialogStatus = false
+    },
     showColorPicker() {
       this.$refs.colorPicker.click()
     },
@@ -146,18 +157,21 @@ export default {
         backgroundColor = '#' + backgroundColor
       }
 
+      opacity = '50%'
       if (this.timelineStatus === 'ready') {
         p = 100
         // Grey out the index if it is not selected.
         if (!this.isSelected) {
           backgroundColor = '#d2d2d2'
           textDecoration = 'line-through'
-          opacity = '50%'
+        } else {
+          opacity = ''
         }
       } else if (this.timelineStatus === 'processing') {
-        animation = 'blinker 1s linear infinite'
         p = this.percentageTimeline
-        opacity = '50%'
+      } else {
+        backgroundColor = '#631c1c'
+        textDecoration = 'line-through'
       }
       let bgColor = 'linear-gradient(90deg, ' + backgroundColor + ' ' + p + '%, #d2d2d2  0%) '
       if (this.$vuetify.theme.dark) {
@@ -175,19 +189,19 @@ export default {
         animation: animation,
       }
     },
-    toggleTimeline: function (timeline) {
-      this.$emit('toggle', timeline)
-    },
     fetchData() {
       ApiClient.getSketchTimeline(this.sketch.id, this.timeline.id)
         .then((response) => {
-          this.timelineStatus = response.data.objects[0].status[0].status
+          let timeline = response.data.objects[0]
+          this.timelineStatus = timeline.status[0].status
           this.indexedEvents = response.data.meta.lines_indexed
-          this.totalEvents = JSON.parse(response.data.objects[0].total_events)
+          this.totalEvents = JSON.parse(timeline.total_events)
           if (this.timelineStatus !== 'ready' && this.timelineStatus !== 'fail') {
             this.autoRefresh = true
           } else {
             this.autoRefresh = false
+            this.$store.dispatch('updateSketch', this.sketch.id)
+            this.$emit('toggle', timeline)
           }
         })
         .catch((e) => {})
@@ -212,6 +226,7 @@ export default {
     this.timelineStatus = this.timeline.status[0].status
     if (this.timelineStatus !== 'ready' && this.timelineStatus !== 'fail') {
       this.autoRefresh = true
+      this.fetchData()
     } else {
       this.autoRefresh = false
       this.indexedEvents = this.meta.stats_per_timeline[this.timeline.id]['count']
@@ -228,9 +243,6 @@ export default {
         this.t = setInterval(
           function () {
             this.fetchData()
-            if (this.timelineStatus === 'ready' || this.timelineStatus === 'fail') {
-              this.autoRefresh = false
-            }
           }.bind(this),
           5000
         )

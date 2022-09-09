@@ -38,10 +38,20 @@
       </v-menu>
     </td>
     <td>
-      <ts-timeline-status-information
-        :timeline="timeline"
-        
-      ></ts-timeline-status-information>
+      <v-dialog v-model="dialogStatus" width="600">
+        <template v-slot:activator="{ on, attrs }">
+          <small v-bind="attrs" v-on="on">
+            <v-icon>{{ iconStatus }}</v-icon>
+          </small>
+        </template>
+        <ts-timeline-status-information
+          :timeline="timeline"
+          :indexedEvents="indexedEvents"
+          :totalEvents="totalEvents"
+          :timelineStatus="timelineStatus"
+          @closeDialog="closeDialogStatus"
+        ></ts-timeline-status-information>
+      </v-dialog>
     </td>
     <td>{{ indexedEvents | compactNumber }}</td>
     <td>{{ timeline.user.username }}</td>
@@ -66,6 +76,7 @@ export default {
       autoRefresh: false,
       indexedEvents: 0,
       totalEvents: null,
+      dialogStatus: false,
     }
   },
   computed: {
@@ -83,32 +94,29 @@ export default {
       let percentage = this.indexedEvents / totalEvents
       return Math.min(Math.floor(percentage * 100), 100)
     },
-    remainingTime() {
-      let t = new Date()
-      let tNow = t.getTime() / 1000
-      t = new Date(this.timeline.created_at)
-      let t0 = t.getTime() / 1000
-      let deltaNow = tNow - t0
-      let deltaX = (100 * deltaNow) / this.indexedPercentage
-      let tEnd = deltaX + t0
-
-      return this.secondsToString(Math.floor(tEnd - tNow))
-    },
     datasourceErrors() {
       return this.timeline.datasources.filter((datasource) => datasource.error_message)
+    },
+    iconStatus() {
+      if (this.timelineStatus === 'ready') return 'mdi-check-circle'
+      if (this.timelineStatus === 'processing') return 'mdi-circle-slice-7'
+      if (this.timelineStatus === 'fail') return 'mdi-alert-circle'
     },
   },
   created() {
     this.timelineStatus = this.timeline.status[0].status
     if (this.timelineStatus !== 'ready' && this.timelineStatus !== 'fail') {
-      console.log("created -> THAT'S WEIRD")
       this.autoRefresh = true
+      this.fetchData()
     } else {
       this.autoRefresh = false
       this.indexedEvents = this.meta.stats_per_timeline[this.timeline.id]['count']
     }
   },
   methods: {
+    closeDialogStatus() {
+      this.dialogStatus = false
+    },
     fetchData() {
       ApiClient.getSketchTimeline(this.sketch.id, this.timeline.id)
         .then((response) => {
@@ -117,12 +125,11 @@ export default {
           this.indexedEvents = response.data.meta.lines_indexed
           this.totalEvents = JSON.parse(response.data.objects[0].total_events)
           if (this.timelineStatus !== 'ready' && this.timelineStatus !== 'fail') {
-            console.log('fetch data --> autorefresh true')
             this.autoRefresh = true
           } else {
             this.autoRefresh = false
+            this.$store.dispatch('updateSketch', this.sketch.id)
           }
-          this.$store.dispatch('updateSketch', this.$store.state.sketch.id)
         })
         .catch((e) => {})
     },
@@ -134,17 +141,6 @@ export default {
       }
       // status = fail
       return 'error'
-    },
-    secondsToString(d) {
-      d = Number(d)
-      var h = Math.floor(d / 3600)
-      var m = Math.floor((d % 3600) / 60)
-      var s = Math.floor((d % 3600) % 60)
-
-      var hDisplay = h > 0 ? h + (h == 1 ? ' hour, ' : ' hours, ') : ''
-      var mDisplay = m > 0 ? m + (m == 1 ? ' minute, ' : ' minutes, ') : ''
-      var sDisplay = s > 0 ? s + (s == 1 ? ' second' : ' seconds') : ''
-      return hDisplay + mDisplay + sDisplay
     },
   },
   beforeDestroy() {
@@ -158,7 +154,6 @@ export default {
           function () {
             this.fetchData()
             if (this.timelineStatus === 'ready' || this.timelineStatus === 'fail') {
-              console.log('autoRefresh watch')
               this.autoRefresh = false
             }
           }.bind(this),

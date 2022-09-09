@@ -25,7 +25,7 @@ limitations under the License.
       <v-container class="px-8">
         <v-dialog v-model="percentCompleted" width="500">
           <v-card>
-            <v-card-title class="text-h5 grey lighten-2"> Uplaoding the file... </v-card-title>
+            <v-card-title class="text-h5 grey lighten-2"> Uploading the file... </v-card-title>
 
             <v-progress-linear color="light-blue" height="10" :value="percentCompleted" striped></v-progress-linear>
 
@@ -174,7 +174,7 @@ export default {
        */
       headersMapping: [],
       mandatoryHeaders: [
-        { name: 'timestamp', columnsSelected: [] },
+        { name: 'datetime', columnsSelected: [] },
         { name: 'message', columnsSelected: [] },
         { name: 'timestamp_desc', columnsSelected: [] },
       ],

@@ -1,12 +1,4 @@
 <template>
-  <v-dialog v-model="dialog" width="600">
-    <template v-slot:activator="{ on, attrs }">
-      <small v-bind="attrs" v-on="on">
-        <v-icon v-if="timelineStatus === 'ready'">mdi-check-circle</v-icon>
-        <v-icon v-if="timelineStatus === 'processing'">mdi-circle-slice-7</v-icon>
-        <v-icon v-if="timelineStatus === 'fail'">mdi-alert-circle</v-icon>
-      </small>
-    </template>
     <v-card>
       <v-app-bar flat dense>Detailed information for: {{ timeline.name }}</v-app-bar>
       <v-card-text class="pa-5">
@@ -24,72 +16,69 @@
           </li>
         </ul>
 
-        <br /><br />
-        <v-alert
-          v-for="datasource in timeline.datasources"
-          :key="datasource.id"
-          colored-border
-          border="left"
-          elevation="1"
-          :type="timelineStatusColors()"
-        >
-          <ul style="list-style-type: none">
-            <li v-if="timelineStatus === 'processing' || timelineStatus === 'ready'">
-              <strong>Events:</strong>
-              <ul>
-                <li v-for="(numberEvents, type) in totalEvents" :key="type">
-                  <strong>{{ type }}</strong
-                  >: {{ numberEvents | compactNumber }}
-                </li>
-              </ul>
-            </li>
+      <br /><br />
+      <v-alert
+        v-for="datasource in timeline.datasources"
+        :key="datasource.id"
+        colored-border
+        border="left"
+        elevation="1"
+        :type="timelineStatusColors()"
+      >
+        <ul style="list-style-type: none">
+          <li v-if="timelineStatus === 'processing' || timelineStatus === 'ready'">
+            <strong>Events:</strong>
+            <ul>
+              <li v-for="(numberEvents, type) in totalEvents" :key="type">
+                <strong>{{ type }}</strong
+                >: {{ numberEvents | compactNumber }}
+              </li>
+            </ul>
+          </li>
 
-            <li v-if="timelineStatus === 'processing'">
-              <strong>Percentage Completed</strong> {{ indexedPercentage }} %
-            </li>
-            <li v-if="timelineStatus === 'processing'"><strong>Remaining time:</strong> {{ remainingTime }}</li>
+          <li v-if="timelineStatus === 'processing'">
+            <strong>Percentage Completed</strong> {{ indexedPercentage }} %
+          </li>
+          <li v-if="timelineStatus === 'processing'"><strong>Remaining time:</strong> {{ remainingTime }}</li>
 
-            <li v-if="timelineStatus === 'fail'">
-              <strong>Error message:</strong>
-              <code v-if="datasource.error_message"> {{ datasource.error_message }}</code>
-            </li>
+          <li v-if="timelineStatus === 'fail'">
+            <strong>Error message:</strong>
+            <code v-if="datasource.error_message"> {{ datasource.error_message }}</code>
+          </li>
 
-            <li v-if="timelineStatus !== 'processing'"><strong>Provider:</strong> {{ datasource.provider }}</li>
-            <li v-if="timelineStatus !== 'processing'"><strong>File on disk:</strong> {{ datasource.file_on_disk }}</li>
-            <li v-if="timelineStatus !== 'processing'">
-              <strong>File size:</strong> {{ datasource.file_size | compactBytes }}
-            </li>
-            <li v-if="timelineStatus !== 'processing'">
-              <strong>Original filename:</strong> {{ datasource.original_filename }}
-            </li>
-            <li v-if="timelineStatus !== 'processing'"><strong>Data label:</strong> {{ datasource.data_label }}</li>
-          </ul>
-          <br />
-        </v-alert>
-      </v-card-text>
-      <v-progress-linear
-        v-if="timelineStatus === 'processing'"
-        color="light-blue"
-        height="10"
-        :value="indexedPercentage"
-        striped
-      ></v-progress-linear>
-      <v-divider></v-divider>
+          <li v-if="timelineStatus !== 'processing'"><strong>Provider:</strong> {{ datasource.provider }}</li>
+          <li v-if="timelineStatus !== 'processing'"><strong>File on disk:</strong> {{ datasource.file_on_disk }}</li>
+          <li v-if="timelineStatus !== 'processing'">
+            <strong>File size:</strong> {{ datasource.file_size | compactBytes }}
+          </li>
+          <li v-if="timelineStatus !== 'processing'">
+            <strong>Original filename:</strong> {{ datasource.original_filename }}
+          </li>
+          <li v-if="timelineStatus !== 'processing'"><strong>Data label:</strong> {{ datasource.data_label }}</li>
+        </ul>
+        <br />
+      </v-alert>
+    </v-card-text>
+    <v-progress-linear
+      v-if="timelineStatus === 'processing'"
+      color="light-blue"
+      height="10"
+      :value="indexedPercentage"
+      striped
+    ></v-progress-linear>
+    <v-divider></v-divider>
 
-      <v-card-actions>
-        <v-spacer></v-spacer>
-        <v-btn color="primary" text @click="dialog = false"> Close </v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
+    <v-card-actions>
+      <v-spacer></v-spacer>
+      <v-btn color="primary" text @click="$emit('closeDialog')"> Close </v-btn>
+    </v-card-actions>
+  </v-card>
 </template>
 <script>
 export default {
   props: ['timeline', 'indexedEvents', 'totalEvents', 'timelineStatus'],
   data() {
-    return {
-      dialog: false,
-    }
+    return {}
   },
   computed: {
     meta() {

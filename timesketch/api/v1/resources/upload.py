@@ -147,7 +147,6 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 total_events = subprocess.run(cmd, capture_output=True).stdout.decode(
                     "utf-8"
                 )
-                total_events = '{"storage_counters": {"parsers": {"filestat": 225, "total": 290371, "winevtx": 290146}, "event_labels": {}}}'
                 regex = 'parsers": (.+?})'
                 m = re.search(regex, total_events)
                 if m:
@@ -167,8 +166,6 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             except subprocess.CalledProcessError as e:
                 pass
 
-        res = "Info about lines of the file: " + str(total_events_json)
-        logger.info(res)
         return total_events_json
 
     # pylint: disable=too-many-arguments
@@ -540,7 +537,6 @@ class UploadFileResource(resources.ResourceMixin, Resource):
 
         # headers mapping: map between mandatory headers and new ones
         headers_mapping = json.loads(form.get("headersMapping", "{}")) or None
-        logger.info(headers_mapping)
 
         delimiter = form.get("delimiter", ",")
 
