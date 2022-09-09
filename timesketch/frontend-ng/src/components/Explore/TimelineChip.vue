@@ -200,8 +200,9 @@ export default {
             this.autoRefresh = true
           } else {
             this.autoRefresh = false
-            this.$store.dispatch('updateSketch', this.sketch.id)
-            this.$emit('toggle', timeline)
+            this.$store.dispatch('updateSketch', this.sketch.id).then(() => {
+              this.$emit('toggle', timeline)
+            })
           }
         })
         .catch((e) => {})

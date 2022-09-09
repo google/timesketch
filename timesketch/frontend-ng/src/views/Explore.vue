@@ -817,11 +817,9 @@ export default {
       let isLegacy = this.meta.indices_metadata[event._index].is_legacy
       let timeline
       if (isLegacy) {
-        timeline = this.sketch.active_timelines.filter(
-          (timeline) => timeline.searchindex.index_name === event._index
-        )[0]
+        timeline = this.sketch.active_timelines.find((timeline) => timeline.searchindex.index_name === event._index)
       } else {
-        timeline = this.sketch.active_timelines.filter((timeline) => timeline.id === event._source.__ts_timeline_id)[0]
+        timeline = this.sketch.active_timelines.find((timeline) => timeline.id === event._source.__ts_timeline_id)
       }
       return timeline
     },

@@ -16,7 +16,7 @@ limitations under the License.
 <template>
   <v-chip-group>
     <ts-timeline-chip
-      v-for="timeline in allTimelinesV2"
+      v-for="timeline in allTimelines"
       :key="timeline.id + timeline.name"
       :timeline="timeline"
       :is-selected="isSelected(timeline)"
@@ -41,14 +41,14 @@ export default {
     sketch() {
       return this.$store.state.sketch
     },
-    allTimelinesV2() {
+    allTimelines() {
       // Sort alphabetically based on timeline name.
       let timelines = [...this.sketch.timelines]
       return timelines.sort(function (a, b) {
         return a.name.localeCompare(b.name)
       })
     },
-    allTimelines() {
+    activeTimelines() {
       // Sort alphabetically based on timeline name.
       let timelines = [...this.sketch.active_timelines]
       return timelines.sort(function (a, b) {
@@ -122,7 +122,7 @@ export default {
         })
     },
     enableAllTimelines() {
-      this.selectedTimelines = this.allTimelines
+      this.selectedTimelines = this.activeTimelines
       this.$emit('updateSelectedTimelines', this.selectedTimelines)
     },
     disableAllTimelines() {
@@ -144,9 +144,8 @@ export default {
       this.isDarkTheme = !this.isDarkTheme
     },
     syncSelectedTimelines() {
-      let activeTimelines = this.allTimelines
       if (this.currentQueryFilter.indices.includes('_all')) {
-        this.selectedTimelines = activeTimelines
+        this.selectedTimelines = this.activeTimelines
         return
       }
       let newArray = []
@@ -163,16 +162,16 @@ export default {
           newArray.push(timeline)
         }
       })
-      console.log(this.selectedTimelines)
       this.selectedTimelines = newArray
     },
   },
   created() {
     EventBus.$on('isDarkTheme', this.toggleTheme)
-    EventBus.$on('clearSearch', this.enableAllTimelines)
+    // EventBus.$on('clearSearch', this.enableAllTimelines)
+    this.enableAllTimelines()
 
     if (this.currentQueryFilter.indices.includes('_all')) {
-      this.selectedTimelines = this.allTimelines
+      this.selectedTimelines = this.activeTimelines
     } else {
       this.syncSelectedTimelines()
     }

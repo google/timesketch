@@ -23,7 +23,7 @@ limitations under the License.
     </template>
     <v-card>
       <v-container class="px-8">
-        <v-dialog v-model="percentCompleted" width="500">
+        <v-dialog v-model="percentageFlag" width="500">
           <v-card>
             <v-card-title class="text-h5 grey lighten-2"> Uploading the file... </v-card-title>
 
@@ -237,6 +237,9 @@ export default {
       } else {
         return 0
       }
+    },
+    percentageFlag() {
+      return this.percentCompleted > 0
     },
     headersTable() {
       /**
