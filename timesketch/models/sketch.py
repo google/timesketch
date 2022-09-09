@@ -241,7 +241,7 @@ class Timeline(LabelMixin, StatusMixin, CommentMixin, BaseModel):
         self.sketch = sketch
         self.searchindex = searchindex
         self.total_events = total_events
-        
+
 
 class SearchIndex(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, BaseModel):
     """Implements the SearchIndex model."""
