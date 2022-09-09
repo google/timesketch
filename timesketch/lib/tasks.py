@@ -717,7 +717,7 @@ def run_csv_jsonl(
     Returns:
         Name (str) of the index.
     """
-    
+
     if events:
         file_handle = io.StringIO(events)
         source_type = "jsonl"
