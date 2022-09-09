@@ -19,6 +19,7 @@ import os
 import uuid
 import json
 import subprocess
+import re
 
 from flask import jsonify
 from flask import request
@@ -39,7 +40,6 @@ from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import DataSource
-import re
 
 
 logger = logging.getLogger("timesketch.api_upload")
@@ -144,26 +144,26 @@ class UploadFileResource(resources.ResourceMixin, Resource):
 
             # Run pinfo.py
             try:
-                total_events = subprocess.run(cmd, capture_output=True).stdout.decode(
-                    "utf-8"
-                )
+                total_events = subprocess.run(
+                    cmd, capture_output=True, check=True
+                ).stdout.decode("utf-8")
                 regex = 'parsers": (.+?})'
                 m = re.search(regex, total_events)
                 if m:
                     total_events_json = json.loads(m.group(1))
-            except subprocess.CalledProcessError as e:
+            except subprocess.CalledProcessError:
                 pass
         elif file_extension in {"csv", "json", "jsonl"}:
             # Run $ wc -l filepath
             cmd = ["wc", "-l", file_path]
             try:
                 total_events = (
-                    subprocess.run(cmd, capture_output=True)
+                    subprocess.run(cmd, capture_output=True, check=True)
                     .stdout.decode("utf-8")
                     .split(" ")[0]
                 )
                 total_events_json = {"total": total_events}
-            except subprocess.CalledProcessError as e:
+            except subprocess.CalledProcessError:
                 pass
 
         return total_events_json

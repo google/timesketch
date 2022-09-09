@@ -100,7 +100,7 @@ export default {
     iconStatus() {
       if (this.timelineStatus === 'ready') return 'mdi-check-circle'
       if (this.timelineStatus === 'processing') return 'mdi-circle-slice-7'
-      if (this.timelineStatus === 'fail') return 'mdi-alert-circle'
+      return 'mdi-alert-circle'
     },
   },
   created() {
