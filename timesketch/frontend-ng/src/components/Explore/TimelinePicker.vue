@@ -151,12 +151,12 @@ export default {
       let newArray = []
       this.currentQueryFilter.indices.forEach((index) => {
         if (typeof index === 'string') {
-          let timeline = activeTimelines.find((t) => {
+          let timeline = this.activeTimelines.find((t) => {
             return t.searchindex.index_name === index
           })
           newArray.push(timeline)
         } else if (typeof index === 'number') {
-          let timeline = activeTimelines.find((t) => {
+          let timeline = this.activeTimelines.find((t) => {
             return t.id === index
           })
           newArray.push(timeline)

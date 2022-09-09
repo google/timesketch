@@ -54,7 +54,7 @@ limitations under the License.
             :indexedEvents="indexedEvents"
             :totalEvents="totalEvents"
             :timelineStatus="timelineStatus"
-            @closeDialog="closeDialogStatus"
+            @closeDialog="dialogStatus = false"
           ></ts-timeline-status-information>
         </v-dialog>
       </v-list>
@@ -104,12 +104,12 @@ export default {
       return this.$store.state.sketch
     },
     percentageTimeline() {
+      if (this.timelineStatus === 'ready') percentage = 100
       let totalEvents = 1
       if (this.totalEvents) {
         totalEvents = this.totalEvents.total
       }
-      let percentage = Math.min(Math.floor((this.indexedEvents / totalEvents) * 100), 100)
-      if (this.timelineStatus === 'ready') percentage = 100
+      let percentage = Math.min(Math.floor((this.indexedEvents / totalEvents) * 100), 100) // percentage cannot be higher than 100
       return percentage
     },
     iconStatus() {
@@ -119,9 +119,6 @@ export default {
     },
   },
   methods: {
-    closeDialogStatus() {
-      this.dialogStatus = false
-    },
     showColorPicker() {
       this.$refs.colorPicker.click()
     },
@@ -147,25 +144,20 @@ export default {
       this.isDarkTheme = !this.isDarkTheme
     },
     getTimelineStyle(timeline) {
-      // background: 'linear-gradient(90deg, ' + backgroundColor + ' ' + p + '%, #d2d2d2 ' + q + '%);'
       let backgroundColor = timeline.color
       let textDecoration = 'none'
-      let opacity = '100%'
+      let opacity = '50%'
       let p = 100
-      let animation = ''
       if (!backgroundColor.startsWith('#')) {
         backgroundColor = '#' + backgroundColor
       }
-
-      opacity = '50%'
       if (this.timelineStatus === 'ready') {
-        p = 100
         // Grey out the index if it is not selected.
         if (!this.isSelected) {
           backgroundColor = '#d2d2d2'
           textDecoration = 'line-through'
         } else {
-          opacity = ''
+          opacity = '100%'
         }
       } else if (this.timelineStatus === 'processing') {
         p = this.percentageTimeline
@@ -179,14 +171,12 @@ export default {
           background: bgColor,
           filter: 'grayscale(25%)',
           color: '#333',
-          animation: animation,
         }
       }
       return {
         background: bgColor,
         'text-decoration': textDecoration,
         opacity: opacity,
-        animation: animation,
       }
     },
     fetchData() {

@@ -343,11 +343,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
 
         if meta is None:
             meta = {}
-
-        total_events = json.dumps(self._get_total_events(file_path, file_extension))
-
         meta["task_id"] = task_id
-        meta["total_events"] = total_events
         return self.to_json(timeline, status_code=HTTP_STATUS_CODE_CREATED, meta=meta)
 
     def _upload_events(self, events, form, sketch, index_name, headers_mapping=None):

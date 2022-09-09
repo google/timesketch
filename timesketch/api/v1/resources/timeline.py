@@ -244,7 +244,6 @@ class TimelineResource(resources.ResourceMixin, Resource):
                 timeline_ids=[timeline.id],
                 count=True,
             )
-            logger.info(result)
             meta["lines_indexed"] = result
 
         return self.to_json(timeline, meta=meta)
