@@ -29,19 +29,12 @@ limitations under the License.
             </v-card>
           </v-col>
         </v-row>
-        <v-row v-if="searchHistory.length">
-          <v-col>
-            <v-card outlined>
-              <v-app-bar flat dense> Search History </v-app-bar>
-              <ts-search-history-table></ts-search-history-table>
-            </v-card>
-          </v-col>
-        </v-row>
+
         <v-row v-if="meta.views.length">
           <v-col>
             <v-card outlined>
               <v-app-bar flat dense> Saved Searches </v-app-bar>
-              <ts-saved-searches-table></ts-saved-searches-table>
+              <ts-saved-searches-table :is-link="true"></ts-saved-searches-table>
             </v-card>
           </v-col>
         </v-row>

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-simple-table>
+  <v-simple-table dense>
     <template v-slot:default>
       <thead>
         <tr>

@@ -14,12 +14,44 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <router-view v-if="sketch.status"></router-view>
+  <div>
+    <!-- Left panel -->
+    <v-navigation-drawer app permanent width="450" hide-overlay>
+      <v-toolbar dense flat>
+        <v-avatar class="mt-2 ml-n4">
+          <router-link to="/">
+            <v-img src="/dist/timesketch-color.png" max-height="25" max-width="25" contain></v-img>
+          </router-link>
+        </v-avatar>
+        <span style="font-size: 1.1em">{{ sketch.name }}</span>
+      </v-toolbar>
+      <v-divider></v-divider>
+
+      <ts-scenario :scenario="scenario"></ts-scenario>
+      <br />
+      <ts-saved-searches></ts-saved-searches>
+      <ts-data-types></ts-data-types>
+      <ts-tags></ts-tags>
+    </v-navigation-drawer>
+
+    <router-view v-if="sketch.status"></router-view>
+  </div>
 </template>
 
 <script>
+import TsScenario from '../components/Scenarios/Scenario'
+import TsSavedSearches from '../components/LeftPanel/SavedSearches'
+import TsDataTypes from '../components/LeftPanel/DataTypes'
+import TsTags from '../components/LeftPanel/Tags'
+
 export default {
   props: ['sketchId'],
+  components: {
+    TsScenario,
+    TsSavedSearches,
+    TsDataTypes,
+    TsTags,
+  },
   created: function () {
     this.$store.dispatch('updateSketch', this.sketchId)
     this.$store.dispatch('updateSearchHistory', this.sketchId)
@@ -29,6 +61,9 @@ export default {
   computed: {
     sketch() {
       return this.$store.state.sketch
+    },
+    scenario() {
+      return this.$store.state.scenario
     },
   },
   watch: {

@@ -14,8 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-simple-table>
+  <v-simple-table dense>
     <template v-slot:default>
+
       <thead>
         <tr>
           <th class="text-left">Saved search</th>
@@ -23,16 +24,20 @@ limitations under the License.
           <th class="text-left">Created at</th>
         </tr>
       </thead>
+
       <tbody>
         <tr v-for="savedSearch in meta.views" :key="savedSearch.name">
-          <td>
+          <td v-if="isLink">
             <router-link style="text-decoration: none" :to="{ name: 'Explore', query: { view: savedSearch.id } }">
               {{ savedSearch.name }}
             </router-link>
           </td>
+          <td v-else >
+            {{ savedSearch.name }}
+          </td>
           <td>{{ savedSearch.user }}</td>
           <td>
-            {{ savedSearch.created_at | shortDateTime }} <small>({{ savedSearch.created_at | timeSince }})</small>
+            {{ savedSearch.created_at | timeSince }}</small>
           </td>
         </tr>
       </tbody>
@@ -42,7 +47,7 @@ limitations under the License.
 
 <script>
 export default {
-  props: [],
+  props: ["isLink"],
   computed: {
     sketch() {
       return this.$store.state.sketch

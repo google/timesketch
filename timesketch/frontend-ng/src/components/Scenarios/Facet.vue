@@ -24,11 +24,8 @@ limitations under the License.
         <v-icon class="ml-2" v-if="!expanded">mdi-chevron-right</v-icon>
         <v-icon class="ml-2" v-else>mdi-chevron-down</v-icon>
       </v-col>
-      <v-col cols="9">
+      <v-col cols="10">
         <span style="font-size: 0.9em">{{ facet.display_name }}</span>
-      </v-col>
-      <v-col cols="2">
-        <v-chip outlined small> 0/{{ facet.questions.length }} </v-chip>
       </v-col>
     </v-row>
 

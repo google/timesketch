@@ -50,7 +50,7 @@ limitations under the License.
               @mouseleave="unSelectComment()"
             >
               <v-list-item-avatar>
-                <v-avatar color="orange">
+                <v-avatar color="blue">
                   <span class="white--text">{{ comment.user.username.charAt(0).toUpperCase() }}</span>
                 </v-avatar>
               </v-list-item-avatar>

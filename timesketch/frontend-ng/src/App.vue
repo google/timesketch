@@ -15,71 +15,20 @@ limitations under the License.
 -->
 <template>
   <v-app id="app">
-    <v-navigation-drawer v-if="!isRootPage" v-model="drawer" permanent app mini-variant class="pl-1">
-      <v-avatar class="mb-2 mt-3">
-        <router-link to="/">
-          <v-img src="/dist/timesketch-color.png" max-height="30" max-width="30" contain></v-img>
-        </router-link>
-      </v-avatar>
-
-      <v-tooltip right>
-        <template v-slot:activator="{ on, attrs }">
-          <v-avatar>
-            <v-btn :to="{ name: 'Overview' }" exact-path icon v-bind="attrs" v-on="on">
-              <v-icon>mdi-home-outline</v-icon>
-            </v-btn>
-          </v-avatar>
-        </template>
-        <span>Overview</span>
-      </v-tooltip>
-
-      <v-tooltip right>
-        <template v-slot:activator="{ on, attrs }">
-          <v-avatar>
-            <v-btn :to="{ name: 'Explore' }" icon v-bind="attrs" v-on="on">
-              <v-icon>mdi-magnify</v-icon>
-            </v-btn>
-          </v-avatar>
-        </template>
-        <span>Search</span>
-      </v-tooltip>
-
-      <v-tooltip right>
-        <template v-slot:activator="{ on, attrs }">
-          <v-avatar>
-            <v-btn disabled icon v-bind="attrs" v-on="on">
-              <v-icon>mdi-graph-outline</v-icon>
-            </v-btn>
-          </v-avatar>
-        </template>
-        <span>Graph</span>
-      </v-tooltip>
-
-      <v-avatar>
-        <v-btn disabled icon>
-          <v-icon>mdi-auto-fix</v-icon>
-        </v-btn>
-      </v-avatar>
-
-      <v-avatar>
-        <v-btn disabled icon>
-          <v-icon>mdi-head-lightbulb-outline</v-icon>
-        </v-btn>
-      </v-avatar>
-    </v-navigation-drawer>
-
     <v-main>
-      <v-toolbar flat style="background: transparent" class="ml-2">
+      <!-- Top horizontal toolbar -->
+      <v-toolbar dense flat>
         <div v-if="isRootPage">
-          <v-avatar>
-            <v-img src="/dist/timesketch-color.png" max-height="40" max-width="40" contain></v-img>
+          <v-avatar class="mt-2 ml-n4">
+            <router-link to="/">
+              <v-img src="/dist/timesketch-color.png" max-height="25" max-width="25" contain></v-img>
+            </router-link>
           </v-avatar>
-          <span style="font-size: 1.4em">timesketch</span>
+          <span style="font-size: 1.2em">timesketch</span>
         </div>
-
-        <span style="font-size: 1.2em">{{ sketch.name }}</span>
         <v-spacer></v-spacer>
         <v-btn small depressed v-on:click="switchUI"> Use the old UI </v-btn>
+        <v-btn v-if="!isRootPage" small depressed color="primary" class="ml-2"> Share </v-btn>
         <v-tooltip right>
           <template v-slot:activator="{ on, attrs }">
             <v-avatar>
@@ -90,11 +39,14 @@ limitations under the License.
           </template>
           <span>Switch between light and dark theme</span>
         </v-tooltip>
+        <v-avatar color="primary" size="25">
+          <span class="white--text">{{ currentUser.charAt(0).toUpperCase() }}</span>
+        </v-avatar>
       </v-toolbar>
+      <v-divider></v-divider>
 
-      <div class="mx-3 mt-n3">
-        <router-view></router-view>
-      </div>
+      <!-- Main view -->
+      <router-view></router-view>
     </v-main>
   </v-app>
 </template>
@@ -137,13 +89,9 @@ export default {
         this.$vuetify.theme.dark = false
       }
     }
+    this.$store.dispatch('resetState', this.sketchId)
   },
 }
 </script>
 
-<style src="vue-multiselect/dist/vue-multiselect.min.css"></style>
-<style lang="scss">
-.v-tab {
-  text-transform: none !important;
-}
-</style>
+<style lang="scss"></style>
