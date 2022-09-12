@@ -195,6 +195,35 @@ limitations under the License.
             </v-col>
           </v-row>
 
+          <!-- Add manual event -->
+          <v-row dense>
+            <v-col cols="12">
+              <span>
+                <v-menu
+                  v-model="addManualEvent"
+                  offset-y
+                  :close-on-content-click="false"
+                  :close-on-click="true"
+                  content-class="menu-with-gap"
+                  allow-overflow
+                  style="overflow: visible"
+                >
+                  <template v-slot:activator="{ on, attrs }">
+                    <v-chip outlined v-bind="attrs" v-on="on">
+                      <v-icon left small> mdi-braille </v-icon>
+                      Add manual event
+                    </v-chip>
+                  </template>
+                  <ts-add-manual-event
+                    app
+                    @cancel="addManualEvent = false"
+                    :datetimeProp="datetimeManualEvent"
+                  ></ts-add-manual-event>
+                </v-menu>
+              </span>
+            </v-col>
+          </v-row>
+
           <!-- Term filters -->
           <v-row dense v-if="filterChips.length">
             <v-col cols="12" class="py-0">
@@ -598,6 +627,7 @@ import TsSearchDropdown from '../components/Explore/SearchDropdown'
 import TsBarChart from '../components/Explore/BarChart'
 import TsTimelinePicker from '../components/Explore/TimelinePicker'
 import TsFilterMenu from '../components/Explore/FilterMenu'
+import TsAddManualEvent from '../components/Explore/AddManualEvent'
 import TsScenario from '../components/Scenarios/Scenario'
 import TsEventDetail from '../components/Explore/EventDetail'
 import TsEventTagMenu from '../components/Explore/EventTagMenu.vue'
@@ -638,6 +668,7 @@ export default {
     TsBarChart,
     TsTimelinePicker,
     TsFilterMenu,
+    TsAddManualEvent,
     TsScenario,
     TsEventDetail,
     TsEventTagMenu,
@@ -668,6 +699,9 @@ export default {
       fromSavedSearch: false,
       selectedEventTags: [],
       showRightSidePanel: false,
+      addManualEvent: false,
+      datetimeManualEvent: '', // datetime of an event used
+
       // old stuff
       params: {},
       searchInProgress: false,
@@ -803,6 +837,10 @@ export default {
   methods: {
     getFieldName: function (field) {
       return 'item._source.' + field
+    },
+    addEventBtn: function (datetimeManualEvent) {
+      this.datetimeManualEvent = datetimeManualEvent
+      this.addManualEvent = true
     },
     toggleSearchHistory: function () {
       this.showSearchHistory = !this.showSearchHistory
