@@ -218,7 +218,7 @@ class SigmaRuleListResource(resources.ResourceMixin, Resource):
 
 
 class SigmaRuleResource(resources.ResourceMixin, Resource):
-    """Resource to get a Sigma rule."""
+    """Resource to get / delete / post / put a Sigma rule."""
 
     @login_required
     def get(self, rule_uuid):
@@ -326,21 +326,21 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
                 "No rule_yaml supplied.",
             )
 
-        parsed_rule = ts_sigma_lib.get_sigma_rule_by_text(rule_yaml)
-
-        if not rule_uuid:
-            rule_uuid = parsed_rule.get("id")
-
         if not isinstance(rule_yaml, str):
             abort(
                 HTTP_STATUS_CODE_FORBIDDEN, "rule_yaml needs to be a string."
             )
 
+        parsed_rule = ts_sigma_lib.get_sigma_rule_by_text(rule_yaml)
+
+        if not rule_uuid:
+            rule_uuid = parsed_rule.get("id")
+
+        
+
         # Query rules to see if it already exist
-        rule = SigmaRule.query.filter_by(rule_uuid=rule_uuid).first()
-        if rule:
-            if rule.rule_uuid == parsed_rule.get("rule_uuid"):
-                abort(HTTP_STATUS_CODE_CONFLICT, "Rule already exist")
+        if SigmaRule.query(SigmaRule.rule_uuid).filter_by(rule_uuid=parsed_rule.get("rule_uuid")).first() is None:
+            abort(HTTP_STATUS_CODE_CONFLICT, "Rule already exist")
 
         sigma_rule = SigmaRule.get_or_create(
             rule_yaml=form.get("rule_yaml", ""),
@@ -352,14 +352,15 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         sigma_rule.query_string = parsed_rule.get("query_string", "")
         sigma_rule.rule_uuid = parsed_rule.get("id", None)
 
+        if sigma_rule is None:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sigma was parsed")
+
         try:
             db_session.add(sigma_rule)
             db_session.commit()
         except IntegrityError:
             abort(HTTP_STATUS_CODE_CONFLICT, "Rule already exist")
 
-        if sigma_rule is None:
-            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sigma was parsed")
 
         return self.to_json(sigma_rule, status_code=HTTP_STATUS_CODE_CREATED)
 

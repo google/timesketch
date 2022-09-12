@@ -34,3 +34,31 @@ vagrant/*.log
 
 # Exclude .venv folder
 .venv/
+.ipynb_checkpoints/Untitled-checkpoint.ipynb
+.vscode/launch.json
+.vscode/settings.json
+.vscode/.ropeproject/config.py
+.vscode/.ropeproject/objectdb
+docker/dev/outputb/a5d6870d6313e93f6faa7746c0049d6e871e3c7ea602670023d9921458e85f92.evtx
+docker/dev/outputb/a5d6870d6313e93f6faa7746c0049d6e871e3c7ea602670023d9921458e85f92.evtx_extract/application.evtx
+docker/dev/outputb/a5d6870d6313e93f6faa7746c0049d6e871e3c7ea602670023d9921458e85f92.evtx_extract/Microsoft-Windows-PowershellOperational.evtx
+docker/dev/outputb/a5d6870d6313e93f6faa7746c0049d6e871e3c7ea602670023d9921458e85f92.evtx_extract/Microsoft-Windows-Sysmon%4Operational.evtx
+docker/dev/outputb/a5d6870d6313e93f6faa7746c0049d6e871e3c7ea602670023d9921458e85f92.evtx_extract/security.evtx
+docker/dev/outputb/a5d6870d6313e93f6faa7746c0049d6e871e3c7ea602670023d9921458e85f92.evtx_extract/system.evtx
+docker/dev/outputb/a5d6870d6313e93f6faa7746c0049d6e871e3c7ea602670023d9921458e85f92.evtx_extract/WindowsPowershell.evtx
+notebooks/.ipynb_checkpoints/colab-timesketch-demo-checkpoint.ipynb
+notebooks/.ipynb_checkpoints/Issue_1450-checkpoint.ipynb
+notebooks/.ipynb_checkpoints/Sigma evtx checker-checkpoint.ipynb
+notebooks/.ipynb_checkpoints/SigmaAPI research-checkpoint.ipynb
+notebooks/.ipynb_checkpoints/Stolen_Szechuan_Sauce_Analysis-checkpoint.ipynb
+notebooks/.ipynb_checkpoints/Stolen_Szechuan_Sauce_Data_Upload-checkpoint.ipynb
+notebooks/.ipynb_checkpoints/TS Sigma checking waterfall-checkpoint.ipynb
+notebooks/.ipynb_checkpoints/TS Sigma experiment 2-checkpoint.ipynb
+test_tools/test_events/.*.csv
+test_tools/test_events/._g_lnx_susp_nc.csv
+data/test_rules/baby_new.yml
+data/test_rules/powershell.yml
+data/test_rules/recon_commands.yaml
+data/test_rules/reverse_shell.yaml
+data/test_rules/deprecated/test.yml
+api_client/python/.ipynb_checkpoints/SigmaAPI research-checkpoint.ipynb
