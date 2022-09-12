@@ -336,10 +336,8 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         if not rule_uuid:
             rule_uuid = parsed_rule.get("id")
 
-        
-
         # Query rules to see if it already exist
-        if SigmaRule.query(SigmaRule.rule_uuid).filter_by(rule_uuid=parsed_rule.get("rule_uuid")).first() is None:
+        if SigmaRule.query(SigmaRule.rule_uuid).filter_by(rule_uuid=parsed_rule.get("rule_uuid")).first() is None:# pylint: disable=line-too-long
             abort(HTTP_STATUS_CODE_CONFLICT, "Rule already exist")
 
         sigma_rule = SigmaRule.get_or_create(
