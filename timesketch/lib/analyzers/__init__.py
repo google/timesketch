@@ -23,6 +23,7 @@ from timesketch.lib.analyzers import expert_sessionizers
 from timesketch.lib.analyzers import feature_extraction
 from timesketch.lib.analyzers import gcp_logging
 from timesketch.lib.analyzers import geoip
+from timesketch.lib.analyzers import hashr_lookup
 from timesketch.lib.analyzers import login
 from timesketch.lib.analyzers import phishy_domains
 from timesketch.lib.analyzers import safebrowsing
