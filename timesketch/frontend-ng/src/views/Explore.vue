@@ -216,32 +216,21 @@ limitations under the License.
           <v-row dense>
             <v-col cols="12">
               <ts-upload-timeline-form></ts-upload-timeline-form>&emsp;
-              <span>
-                <v-menu
-                  v-model="addManualEvent"
-                  offset-y
-                  :close-on-content-click="false"
-                  :close-on-click="true"
-                  content-class="menu-with-gap"
-                  allow-overflow
-                  style="overflow: visible"
-                >
-                  <template v-slot:activator="{ on, attrs }">
-                    <v-chip outlined v-bind="attrs" v-on="on">
-                      <v-icon left small> mdi-braille </v-icon>
-                      Manual event
-                    </v-chip>
-                  </template>
-                  <ts-add-manual-event
-                    app
-                    @cancel="addManualEvent = false"
-                    :datetimeProp="datetimeManualEvent"
-                  ></ts-add-manual-event>
-                </v-menu>
-              </span>
+              <v-dialog v-model="addManualEvent" width="600">
+                <template v-slot:activator="{ on, attrs }">
+                  <v-chip outlined v-bind="attrs" v-on="on">
+                    <v-icon left small> mdi-braille </v-icon>
+                    Add manual event
+                  </v-chip>
+                </template>
+                <ts-add-manual-event
+                  app
+                  @cancel="addManualEvent = false"
+                  :datetimeProp="datetimeManualEvent"
+                ></ts-add-manual-event>
+              </v-dialog>
             </v-col>
           </v-row>
-
           <!-- Term filters -->
           <v-row dense v-if="filterChips.length">
             <v-col cols="12" class="py-0">
