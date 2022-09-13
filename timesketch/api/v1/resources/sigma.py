@@ -337,7 +337,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
             rule_uuid = parsed_rule.get("id")
 
         # Query rules to see if it already exist
-        rule = SigmaRule.query.filter_by(rule_uuid=rule_uuid).first()
+        rule = SigmaRule.query(SigmaRule.rule_uuid).filter_by(rule_uuid=rule_uuid).first()
         if rule:
             if rule.rule_uuid == parsed_rule.get("rule_uuid"):
                 abort(HTTP_STATUS_CODE_CONFLICT, "Rule already exist")
@@ -359,6 +359,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
             db_session.add(sigma_rule)
             db_session.commit()
         except IntegrityError as e:
+            logger.error("Unable to add Sigma rule to DB, with error: %s", e)
             abort(HTTP_STATUS_CODE_CONFLICT, "Problem adding Sigma rule")
 
 
