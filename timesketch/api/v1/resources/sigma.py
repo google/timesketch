@@ -337,8 +337,10 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
             rule_uuid = parsed_rule.get("id")
 
         # Query rules to see if it already exist
-        if SigmaRule.query(SigmaRule.rule_uuid).filter_by(rule_uuid=parsed_rule.get("rule_uuid")).first() is None:# pylint: disable=line-too-long
-            abort(HTTP_STATUS_CODE_CONFLICT, "Rule already exist")
+        rule = SigmaRule.query.filter_by(rule_uuid=rule_uuid).first()
+        if rule:
+            if rule.rule_uuid == parsed_rule.get("rule_uuid"):
+                abort(HTTP_STATUS_CODE_CONFLICT, "Rule already exist")
 
         sigma_rule = SigmaRule.get_or_create(
             rule_yaml=form.get("rule_yaml", ""),
@@ -356,8 +358,8 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         try:
             db_session.add(sigma_rule)
             db_session.commit()
-        except IntegrityError:
-            abort(HTTP_STATUS_CODE_CONFLICT, "Rule already exist")
+        except IntegrityError as e:
+            abort(HTTP_STATUS_CODE_CONFLICT, "Problem adding Sigma rule")
 
 
         return self.to_json(sigma_rule, status_code=HTTP_STATUS_CODE_CREATED)
