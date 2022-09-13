@@ -16,7 +16,7 @@ limitations under the License.
 <template>
   <v-chip-group>
     <ts-timeline-chip
-      v-for="timeline in activeTimelines"
+      v-for="timeline in allTimelines"
       :key="timeline.id + timeline.name"
       :timeline="timeline"
       :is-selected="isSelected(timeline)"
@@ -41,6 +41,13 @@ export default {
     sketch() {
       return this.$store.state.sketch
     },
+    allTimelines() {
+      // Sort alphabetically based on timeline name.
+      let timelines = [...this.sketch.timelines]
+      return timelines.sort(function (a, b) {
+        return a.name.localeCompare(b.name)
+      })
+    },
     activeTimelines() {
       // Sort alphabetically based on timeline name.
       let timelines = [...this.sketch.active_timelines]
@@ -61,7 +68,7 @@ export default {
   },
   methods: {
     isSelected(timeline) {
-      return this.selectedTimelines.includes(timeline)
+      return this.selectedTimelines.map((x) => x.id).includes(timeline.id)
     },
     getCount(timeline) {
       let count = 0
@@ -124,7 +131,7 @@ export default {
     },
     toggleTimeline(timeline) {
       let newArray = this.selectedTimelines.slice()
-      let timelineIdx = newArray.indexOf(timeline)
+      let timelineIdx = newArray.map((x) => x.id).indexOf(timeline.id)
       if (timelineIdx === -1) {
         newArray.push(timeline)
       } else {
@@ -160,7 +167,7 @@ export default {
   },
   created() {
     EventBus.$on('isDarkTheme', this.toggleTheme)
-    EventBus.$on('clearSearch', this.enableAllTimelines)
+    this.enableAllTimelines()
 
     if (this.currentQueryFilter.indices.includes('_all')) {
       this.selectedTimelines = this.activeTimelines

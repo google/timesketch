@@ -201,7 +201,7 @@ limitations under the License.
                     <template v-slot:activator="{ on, attrs }">
                       <v-chip outlined v-bind="attrs" v-on="on">
                         <v-icon left small> mdi-clock-plus-outline </v-icon>
-                        Add timefilter
+                        Timefilter
                       </v-chip>
                     </template>
 
@@ -212,9 +212,10 @@ limitations under the License.
             </v-col>
           </v-row>
 
-          <!-- Add manual event -->
+          <!-- Add new timeline or manual event -->
           <v-row dense>
             <v-col cols="12">
+              <ts-upload-timeline-form></ts-upload-timeline-form>&emsp;
               <v-dialog v-model="addManualEvent" width="600">
                 <template v-slot:activator="{ on, attrs }">
                   <v-chip outlined v-bind="attrs" v-on="on">
@@ -230,7 +231,6 @@ limitations under the License.
               </v-dialog>
             </v-col>
           </v-row>
-
           <!-- Term filters -->
           <v-row dense v-if="filterChips.length">
             <v-col cols="12" class="py-0">
@@ -571,6 +571,7 @@ import TsFilterMenu from '../components/Explore/FilterMenu'
 import TsAddManualEvent from '../components/Explore/AddManualEvent'
 import TsScenario from '../components/Scenarios/Scenario'
 import TsEventDetail from '../components/Explore/EventDetail'
+import TsUploadTimelineForm from '../components/UploadForm'
 
 import EventBus from '../main'
 import { None } from 'vega'
@@ -611,6 +612,7 @@ export default {
     TsAddManualEvent,
     TsScenario,
     TsEventDetail,
+    TsUploadTimelineForm,
   },
   props: ['sketchId'],
   data() {
@@ -804,11 +806,9 @@ export default {
       let isLegacy = this.meta.indices_metadata[event._index].is_legacy
       let timeline
       if (isLegacy) {
-        timeline = this.sketch.active_timelines.filter(
-          (timeline) => timeline.searchindex.index_name === event._index
-        )[0]
+        timeline = this.sketch.active_timelines.find((timeline) => timeline.searchindex.index_name === event._index)
       } else {
-        timeline = this.sketch.active_timelines.filter((timeline) => timeline.id === event._source.__ts_timeline_id)[0]
+        timeline = this.sketch.active_timelines.find((timeline) => timeline.id === event._source.__ts_timeline_id)
       }
       return timeline
     },
