@@ -33,7 +33,7 @@ class Attribute:
     def __init__(self, value=None):
         self.value = value
 
-    def serialize(self):
+    def serialize(self, source=None):
         members = ONTOLOGY_DESCRIPTION[self.type]
         serialized = {}
 
@@ -41,11 +41,14 @@ class Attribute:
         # we want to return a dict encoding the type and the value.
         if isinstance(members, str) and members in BASE_TYPES:
             _type = BASE_TYPES[members]
+            serialized = {
+                'type': self.type,
+                'value': _type(self.value)
+            }
+            if source:
+                serialized['source'] = source
             return {
-                '__' + self.type: {
-                    'type': self.type,
-                    'value': _type(self.value)
-                },
+                '__' + self.type: serialized,
             }
 
         # For compound types, cycle through all members defined
@@ -58,6 +61,8 @@ class Attribute:
                     serialized[attribute] = value.serialize()
 
             serialized['type'] = self.type
+            if source:
+                serialized['source'] = source
             return {
                 "__" + self.type : serialized,
             }

@@ -28,6 +28,19 @@ class TestComplexAttributes(BaseTest):
         serialized,
         { '__hostname': {'type': 'hostname', 'value': 'google.com'}})
 
+    def test_simple_attribute_serialize_with_source(self):
+      attr = event_attributes.Hostname(value='google.com')
+      serialized = attr.serialize(source='tests')
+      self.assertDictEqual(
+        serialized,
+        {
+          '__hostname': {
+            'source': 'tests',
+            'type': 'hostname',
+            'value': 'google.com'
+          }
+        })
+
     def test_simple_attribute_load(self):
       attr = event_attributes.Hostname.load({
         '__hostname' : {'type': 'hostname', 'value': 'youtube.com'}
@@ -57,8 +70,7 @@ class TestComplexAttributes(BaseTest):
                 'ip_address_latitude': 0.0,
                 'ip_address_longitude': 0.0
               }
-            }
-        )
+            })
 
     def test_geoip_load(self):
         attr = event_attributes.GeoIP.load(
