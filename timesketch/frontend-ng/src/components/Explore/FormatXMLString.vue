@@ -20,9 +20,7 @@ limitations under the License.
         <v-alert border="right" colored-border type="error" elevation="2"> {{ error }} </v-alert>
       </div>
       <div v-else>
-        <v-alert border="top" colored-border type="info" elevation="2">
-          XML String parsing... not 100% reliable
-        </v-alert>
+        <v-alert border="top" colored-border type="info" elevation="2"> XML viewer </v-alert>
       </div>
       <v-alert colored-border :color="'success'" border="left" elevation="1">
         <ul style="list-style-type: none">
@@ -57,12 +55,12 @@ export default {
     let xmlDoc = parser.parseFromString(this.xmlString, 'text/xml')
     let errorNode = xmlDoc.querySelector('parsererror')
     if (errorNode) {
-      this.error = 'Document cannot be format correclty'
+      this.error = 'Document cannot be formatted correctly... '
     } else {
       this.error = ''
-      this.xmlToJson(xmlDoc.childNodes[0], 0)
-      this.items.sort((a, b) => (a.id > b.id ? 1 : b.id > a.id ? -1 : 0))
     }
+    this.xmlToJson(xmlDoc.childNodes[0], 0)
+    this.items.sort((a, b) => (a.id > b.id ? 1 : b.id > a.id ? -1 : 0))
   },
   methods: {
     clearAndCancel: function () {
