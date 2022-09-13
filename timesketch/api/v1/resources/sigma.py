@@ -351,6 +351,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
 
         sigma_rule.query_string = parsed_rule.get("query_string", "")
         sigma_rule.rule_uuid = parsed_rule.get("id", None)
+        sigma_rule.set_status(parsed_rule.get("status", "experimental"))
 
         if sigma_rule is None:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sigma was parsed")
