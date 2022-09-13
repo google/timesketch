@@ -1,20 +1,20 @@
 <template>
-    <v-card>
-      <v-app-bar flat dense>Detailed information for: {{ timeline.name }}</v-app-bar>
-      <v-card-text class="pa-5">
-        <ul style="list-style-type: none">
-          <li><strong>Opensearch index: </strong>{{ timeline.searchindex.index_name }}</li>
-          <li v-if="timelineStatus === 'processing' || timelineStatus === 'ready'">
-            <strong v-if="timelineStatus === 'ready'">Number of events: </strong>
-            <strong v-if="timelineStatus === 'processing'">Number of indexed events: </strong>
-            {{ indexedEvents | compactNumber }} ({{ indexedEvents }})
-          </li>
-          <li><strong>Created by: </strong>{{ timeline.user.username }}</li>
-          <li>
-            <strong>Created at: </strong>{{ timeline.created_at | shortDateTime }}
-            <small>({{ timeline.created_at | timeSince }})</small>
-          </li>
-        </ul>
+  <v-card>
+    <v-app-bar flat dense>Detailed information for: {{ timeline.name }}</v-app-bar>
+    <v-card-text class="pa-5">
+      <ul style="list-style-type: none">
+        <li><strong>Opensearch index: </strong>{{ timeline.searchindex.index_name }}</li>
+        <li v-if="timelineStatus === 'processing' || timelineStatus === 'ready'">
+          <strong v-if="timelineStatus === 'ready'">Number of events: </strong>
+          <strong v-if="timelineStatus === 'processing'">Number of indexed events: </strong>
+          {{ indexedEvents | compactNumber }} ({{ indexedEvents }})
+        </li>
+        <li><strong>Created by: </strong>{{ timeline.user.username }}</li>
+        <li>
+          <strong>Created at: </strong>{{ timeline.created_at | shortDateTime }}
+          <small>({{ timeline.created_at | timeSince }})</small>
+        </li>
+      </ul>
 
       <br /><br />
       <v-alert
@@ -102,10 +102,8 @@ export default {
       t = new Date(this.timeline.created_at)
       let t0 = t.getTime() / 1000
       let deltaNow = tNow - t0
-      let deltaX = (100 * deltaNow) / this.indexedPercentage
-      let tEnd = deltaX + t0
-
-      return this.secondsToString(Math.floor(tEnd - tNow))
+      let deltaX = ((100 - this.indexedPercentage) * deltaNow) / this.indexedPercentage
+      return this.secondsToString(Math.floor(deltaX))
     },
     datasourceErrors() {
       return this.timeline.datasources.filter((datasource) => datasource.error_message)
