@@ -150,7 +150,7 @@ limitations under the License.
         </v-btn>
         <v-btn v-if="fileName" color="yellow darken-1" text @click="clearFormData()"> Clear Form </v-btn>
         <b-field class="file is-primary" :class="{ 'has-name': true }"> </b-field>
-        <v-btn color="green darken-1" text @click="submitForm()" :disabled="error.length > 0 || !fileName">
+        <v-btn color="green darken-1" text @click="submitForm()" v-if="!(error.length > 0 || !fileName)">
           Submit
         </v-btn>
       </v-card-actions>
