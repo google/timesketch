@@ -23,9 +23,8 @@ limitations under the License.
               <v-app-bar flat dense> Timelines </v-app-bar>
               <ts-timelines-table></ts-timelines-table>
               <v-divider></v-divider>
-              <v-card-actions>
-                <v-btn small text> <v-icon>mdi-plus</v-icon> Upload timeline </v-btn>
-              </v-card-actions>
+              <br />
+              <ts-upload-timeline-form></ts-upload-timeline-form>
             </v-card>
           </v-col>
         </v-row>
@@ -157,9 +156,17 @@ import TsTagsTable from '../components/TagsTable'
 import TsSearchHistoryTable from '../components/SearchHistoryTable'
 import TsSavedSearchesTable from '../components/SavedSearchesTable'
 import ApiClient from '../utils/RestApiClient'
+import TsUploadTimelineForm from '../components/UploadForm'
 
 export default {
-  components: { TsTimelinesTable, TsDataTypesTable, TsTagsTable, TsSearchHistoryTable, TsSavedSearchesTable },
+  components: {
+    TsTimelinesTable,
+    TsDataTypesTable,
+    TsTagsTable,
+    TsSearchHistoryTable,
+    TsSavedSearchesTable,
+    TsUploadTimelineForm,
+  },
   data() {
     return {
       showUploadTimelineModal: false,
