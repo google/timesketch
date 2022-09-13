@@ -54,12 +54,12 @@ def _enrich_sigma_rule_object(rule: SigmaRule):
         enriched Sigma dict
     """
     parsed_rule = ts_sigma_lib.get_sigma_rule_by_text(rule.rule_yaml)
-    parsed_rule["rule_uuid"] = parsed_rule.get("id",rule.rule_uuid)
+    parsed_rule["rule_uuid"] = parsed_rule.get("id", rule.rule_uuid)
     parsed_rule["created_at"] = str(rule.created_at)
     parsed_rule["updated_at"] = str(rule.updated_at)
-    parsed_rule["status"] = rule.get_status.status
-    parsed_rule["title"] = parsed_rule.get("title",rule.title)
-    parsed_rule["description"] = parsed_rule.get("description",rule.description)
+    parsed_rule["status"] = rule.get_status.status # via StatusMixin, values according to: https://github.com/SigmaHQ/sigma/wiki/Specification#status-optional
+    parsed_rule["title"] = parsed_rule.get("title", rule.title)
+    parsed_rule["description"] = parsed_rule.get("description", rule.description)
     parsed_rule["rule_yaml"] = rule.rule_yaml
 
     return parsed_rule
@@ -85,7 +85,7 @@ class SigmaListResource(resources.ResourceMixin, Resource):
             )
             abort(HTTP_STATUS_CODE_NOT_FOUND, f"Value Error, {e}")
         # TODO: idea for meta: add a list of folders that have been parsed
-        meta = {"current_user": current_user.username, "rules_count": len(sigma_rules)}
+        meta = {"rules_count": len(sigma_rules)}
         return jsonify({"objects": sigma_rules, "meta": meta})
 
 # TODO(jaegeral): deprecate this class
@@ -183,11 +183,10 @@ class SigmaByTextResource(resources.ResourceMixin, Resource):
                 "Sigma parsing error: invalid yaml provided {0!s}".format(exception),
             )
 
-        if sigma_rule is None:
+        if not sigma_rule:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sigma was parsed")
-        metadata = {"parsed": True}
 
-        return jsonify({"objects": [sigma_rule], "meta": metadata})
+        return jsonify({"objects": [sigma_rule], "meta": {}})
 
 class SigmaRuleListResource(resources.ResourceMixin, Resource):
     """Resource to get list of SigmaRules."""
@@ -213,7 +212,7 @@ class SigmaRuleListResource(resources.ResourceMixin, Resource):
                 "Error, unable to get Sigma rules", exc_info=True
             )
             abort(HTTP_STATUS_CODE_NOT_FOUND, f"Value Error, {e}")
-        meta = {"current_user": current_user.username, "rules_count": len(sigma_rules)}
+        meta = {"rules_count": len(sigma_rules)}
         return jsonify({"objects": sigma_rules, "meta": meta})
 
 
@@ -223,6 +222,8 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
     @login_required
     def get(self, rule_uuid):
         """Handles GET request to the resource.
+        Fetches a single sigma rule from the database and returns enriched 
+        contents
 
         Args:
             rule_uuid: uuid of the rule
@@ -249,10 +250,8 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         return_rules.append(
             _enrich_sigma_rule_object(rule=rule))
 
-        meta = {
-            "current_user": current_user.username,
-        }
-        return jsonify({"objects": return_rules, "meta": meta})
+        
+        return jsonify({"objects": return_rules, "meta": {}})
 
     @login_required
     def delete(self, rule_uuid):
@@ -342,10 +341,12 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
             if rule.rule_uuid == parsed_rule.get("rule_uuid"):
                 abort(HTTP_STATUS_CODE_CONFLICT, "Rule already exist")
 
+        title = parsed_rule.get("title")
+
         sigma_rule = SigmaRule.get_or_create(
             rule_yaml=form.get("rule_yaml", ""),
             description = parsed_rule.get("description", ""),
-            title = parsed_rule.get("title", ""),
+            title = title,
             user = current_user
             )
 
@@ -353,7 +354,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         sigma_rule.rule_uuid = parsed_rule.get("id", None)
         sigma_rule.set_status(parsed_rule.get("status", "experimental"))
 
-        if sigma_rule is None:
+        if not sigma_rule:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sigma was parsed")
 
         try:
