@@ -57,10 +57,12 @@ def _enrich_sigma_rule_object(rule: SigmaRule):
     parsed_rule["rule_uuid"] = parsed_rule.get("id", rule.rule_uuid)
     parsed_rule["created_at"] = str(rule.created_at)
     parsed_rule["updated_at"] = str(rule.updated_at)
-    parsed_rule["status"] = rule.get_status.status # via StatusMixin, values according to: https://github.com/SigmaHQ/sigma/wiki/Specification#status-optional
     parsed_rule["title"] = parsed_rule.get("title", rule.title)
     parsed_rule["description"] = parsed_rule.get("description", rule.description)
     parsed_rule["rule_yaml"] = rule.rule_yaml
+
+    # via StatusMixin, values according to: https://github.com/SigmaHQ/sigma/wiki/Specification#status-optional
+    parsed_rule["status"] = rule.get_status.status
 
     return parsed_rule
 
@@ -201,10 +203,10 @@ class SigmaRuleListResource(resources.ResourceMixin, Resource):
         sigma_rules = []
 
         try:
-            sigma_rules_results = SigmaRule.query.all()
+            all_sigma_rules = SigmaRule.query.all()
             # Return a subset of the Sigma objects to reduce the amount of
             # data sent to the client.
-            for rule in sigma_rules_results:
+            for rule in all_sigma_rules:
                 sigma_rules.append(_enrich_sigma_rule_object(rule=rule))
 
         except ValueError as e:
@@ -221,9 +223,9 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
 
     @login_required
     def get(self, rule_uuid):
-        """Handles GET request to the resource.
-        Fetches a single sigma rule from the database and returns enriched 
-        contents
+        """Handles GET request to the Sigma Rule resource.
+        Fetches a single sigma rule from the database given a rule_uuid and
+        returns enriched contents
 
         Args:
             rule_uuid: uuid of the rule
@@ -250,7 +252,6 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         return_rules.append(
             _enrich_sigma_rule_object(rule=rule))
 
-        
         return jsonify({"objects": return_rules, "meta": {}})
 
     @login_required
@@ -296,7 +297,12 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         abort(HTTP_STATUS_CODE_NOT_FOUND, "Method not implemented yet")
 
         # TODO(jaegeral): complete this method
-        rule_yaml = form.get("rule_yaml", "")
+        rule_yaml = form.get("rule_yaml")
+        if not rule_yaml:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                "Sigma parsing error: no yaml provided",
+            )
         parsed_rule = ts_sigma_lib.get_sigma_rule_by_text(rule_yaml)
 
         logger.debug(rule_yaml + parsed_rule + rule)
@@ -350,12 +356,12 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
             user = current_user
             )
 
+        if not sigma_rule:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sigma rule object created")
+
         sigma_rule.query_string = parsed_rule.get("query_string", "")
         sigma_rule.rule_uuid = parsed_rule.get("id", None)
         sigma_rule.set_status(parsed_rule.get("status", "experimental"))
-
-        if not sigma_rule:
-            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sigma was parsed")
 
         try:
             db_session.add(sigma_rule)
