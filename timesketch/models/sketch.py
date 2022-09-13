@@ -206,8 +206,18 @@ class Timeline(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     sketch_id = Column(Integer, ForeignKey("sketch.id"))
     analysis = relationship("Analysis", backref="timeline", lazy="select")
     datasources = relationship("DataSource", backref="timeline", lazy="select")
+    total_events = Column(UnicodeText())
 
-    def __init__(self, name, user, sketch, searchindex, color=None, description=None):
+    def __init__(
+        self,
+        name,
+        user,
+        sketch,
+        searchindex,
+        color=None,
+        description=None,
+        total_events=None,
+    ):
         """Initialize the Timeline object.
 
         Args:
@@ -230,6 +240,7 @@ class Timeline(LabelMixin, StatusMixin, CommentMixin, BaseModel):
         self.user = user
         self.sketch = sketch
         self.searchindex = searchindex
+        self.total_events = total_events
 
 
 class SearchIndex(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, BaseModel):

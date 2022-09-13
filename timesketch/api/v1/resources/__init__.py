@@ -121,6 +121,7 @@ class ResourceMixin(object):
         "deleted": fields.Boolean,
         "created_at": fields.DateTime("iso8601"),
         "updated_at": fields.DateTime("iso8601"),
+        "total_events": fields.String,
     }
 
     analysis_fields = {
