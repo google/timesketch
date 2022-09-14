@@ -30,7 +30,6 @@ from sqlalchemy.exc import IntegrityError
 import timesketch.lib.sigma_util as ts_sigma_lib
 
 from timesketch.api.v1 import resources
-from timesketch.lib import forms
 
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
