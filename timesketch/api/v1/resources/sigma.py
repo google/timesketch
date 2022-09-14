@@ -495,7 +495,7 @@ class SigmaRuleByTextResource(resources.ResourceMixin, Resource):
                 ),
             )
 
-        if sigma_rule is None:
+        if not sigma_rule:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sigma was parsed")
         metadata = {"parsed": True}
 
