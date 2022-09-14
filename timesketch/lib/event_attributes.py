@@ -94,9 +94,13 @@ class GeoIP(Attribute):
 
 class BrowserSearch(Attribute):
     type = 'browser_search'
-    def __init__(self, search_string=None, search_engine=None):
+    def __init__(self,
+                 search_string=None,
+                 search_engine_hostname=None,
+                 search_engine_name=None):
         self.search_string = search_string
-        self.search_engine = search_engine
+        self.search_engine_hostname = search_engine_hostname
+        self.search_engine_name = search_engine_name
 
 
 # Leaf attributes

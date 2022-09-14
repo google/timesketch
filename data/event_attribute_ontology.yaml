@@ -8,7 +8,8 @@ email_addres: string
 
 browser_search:
   search_string: string
-  search_engine: hostname
+  search_engine_name: string
+  search_engine_hostname: hostname
 
 geoip:
   ip_address_latitude: float

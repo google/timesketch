@@ -88,7 +88,8 @@ class TestComplexAttributes(BaseTest):
     def test_browser_search_serialize(self):
       attr = event_attributes.BrowserSearch()
       attr.search_string = 'random_search'
-      attr.search_engine = event_attributes.Hostname(value='google.com')
+      attr.search_engine_hostname = event_attributes.Hostname(value='google.com')
+      attr.search_engine_name = 'Google'
       serialized = attr.serialize()
 
       self.assertDictEqual(
@@ -97,7 +98,8 @@ class TestComplexAttributes(BaseTest):
             '__browser_search': {
               'type': 'browser_search',
               'search_string': 'random_search',
-              'search_engine': {
+              'search_engine_name': 'Google',
+              'search_engine_hostname': {
                 '__hostname': {
                   'type': 'hostname',
                   'value': 'google.com'
@@ -113,7 +115,8 @@ class TestComplexAttributes(BaseTest):
           '__browser_search': {
             'type': 'browser_search',
             'search_string': 'random_search',
-            'search_engine': {
+            'search_engine_name': 'Google',
+            'search_engine_hostname': {
               '__hostname': {
                 'type': 'hostname',
                 'value': 'google.com'
@@ -124,5 +127,6 @@ class TestComplexAttributes(BaseTest):
       )
 
       self.assertEqual(attr.search_string, 'random_search')
-      self.assertIsInstance(attr.search_engine, event_attributes.Hostname)
-      self.assertEqual(attr.search_engine.value, 'google.com')
+      self.assertIsInstance(attr.search_engine_hostname, event_attributes.Hostname)
+      self.assertEqual(attr.search_engine_hostname.value, 'google.com')
+      self.assertEqual(attr.search_engine_name, 'Google')
