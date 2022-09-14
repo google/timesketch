@@ -12,6 +12,8 @@ from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 from timesketch.lib.analyzers import utils
 from timesketch.lib import emojis
+from timesketch.lib import event_attributes
+
 
 
 logger = logging.getLogger("timesketch.analyzers.browser_search")
@@ -37,72 +39,84 @@ class BrowserSearchSketchPlugin(interface.BaseAnalyzer):
                 re.compile(r"bing\.com/search"),
                 "_extract_search_query_from_url",
                 "q",
+                "bing.com"
             ),
             (
                 "DuckDuckGo",
                 re.compile(r"duckduckgo\.com"),
                 "_extract_search_query_from_url",
                 "q",
+                "duckduckgo.com"
             ),
             (
                 "GMail",
                 re.compile(r"mail\.google\.com"),
                 "_extract_urlpart_search_query",
                 None,
+                "mail.google.com"
             ),
             (
                 "Google Inbox",
                 re.compile(r"inbox\.google\.com"),
                 "_extract_urlpart_search_query",
                 None,
+                "inbox.google.com"
             ),
             (
                 "Google Docs",
                 re.compile(r"docs\.google\.com"),
                 "_extract_search_query_from_url",
                 "q",
+                "docs.google.com"
             ),
             (
                 "Google Groups",
                 re.compile(r"groups\.google\.com/a"),
                 "_extract_urlpart_search_query",
                 None,
+                "groups.google.com"
             ),
             (
                 "Google Drive",
                 re.compile(r"drive\.google\.com/.+/search"),
                 "_extract_search_query_from_url",
                 "q",
+                "drive.google.com"
             ),
             (
                 "Google",
                 re.compile(r"(www\.|[a-zA-Z]\.|/)google\.[a-zA-Z]+/search"),
                 "_extract_search_query_from_url",
                 "q",
+                "google.com"
             ),
             (
                 "Google Sites",
                 re.compile(r"sites\.google\."),
                 "_extract_search_query_from_url",
                 "q",
+                "sites.google.com"
             ),
             (
                 "Yahoo",
                 re.compile(r"yahoo\.com/search"),
                 "_extract_search_query_from_url",
                 "p",
+                "yahoo.com"
             ),
             (
                 "Yandex",
                 re.compile(r"yandex\.com/search"),
                 "_extract_search_query_from_url",
                 "text",
+                "yandex.com"
             ),
             (
                 "Youtube",
                 re.compile(r"youtube\.com"),
                 "_extract_search_query_from_url",
                 "search_query",
+                "youtube.com"
             ),
         ]
     )
@@ -230,7 +244,7 @@ class BrowserSearchSketchPlugin(interface.BaseAnalyzer):
             if url is None:
                 continue
 
-            for engine, expression, method_name, parameter in self._URL_FILTERS:
+            for engine, expression, method_name, parameter, hostname in self._URL_FILTERS:
                 callback_method = getattr(self, method_name, None)
                 if not callback_method:
                     continue
@@ -250,13 +264,13 @@ class BrowserSearchSketchPlugin(interface.BaseAnalyzer):
                 simple_counter += 1
                 datetime = event.source.get("datetime")
                 day, _, _ = datetime.partition("T")
-                event.add_attributes(
-                    {
-                        "search_string": search_query,
-                        "search_engine": engine,
-                        "search_day": "D:{0:s}".format(day),
-                    }
+                search = event_attributes.BrowserSearch(
+                    search_string=search_query,
+                    search_engine_hostname=event_attributes.Hostname(value=hostname),
+                    search_engine_name=engine,
+                    # "search_day": "D:{0:s}".format(day),
                 )
+                event.add_rich_attribute(search, self.name)
 
                 event.add_human_readable(
                     "{0:s} search query: {1:s}".format(engine, search_query), self.NAME
