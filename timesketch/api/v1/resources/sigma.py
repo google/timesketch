@@ -44,6 +44,7 @@ from timesketch.models import db_session
 
 logger = logging.getLogger("timesketch.api.sigma")
 
+
 def _enrich_sigma_rule_object(rule: SigmaRule):
     """Helper function: Returns an enriched Sigma object givin a SigmaRule.
 
@@ -58,13 +59,16 @@ def _enrich_sigma_rule_object(rule: SigmaRule):
     parsed_rule["created_at"] = str(rule.created_at)
     parsed_rule["updated_at"] = str(rule.updated_at)
     parsed_rule["title"] = parsed_rule.get("title", rule.title)
-    parsed_rule["description"] = parsed_rule.get("description", rule.description)
+    parsed_rule["description"] = parsed_rule.get(
+        "description", rule.description
+    )
     parsed_rule["rule_yaml"] = rule.rule_yaml
 
     # via StatusMixin, values according to: https://github.com/SigmaHQ/sigma/wiki/Specification#status-optional
     parsed_rule["status"] = rule.get_status.status
 
     return parsed_rule
+
 
 # TODO(jaegeral): deprecate this class
 class SigmaListResource(resources.ResourceMixin, Resource):
@@ -83,12 +87,14 @@ class SigmaListResource(resources.ResourceMixin, Resource):
 
         except ValueError as e:
             logger.error(
-                "OS Error, unable to get the path to the Sigma rules", exc_info=True
+                "OS Error, unable to get the path to the Sigma rules",
+                exc_info=True,
             )
             abort(HTTP_STATUS_CODE_NOT_FOUND, f"Value Error, {e}")
         # TODO: idea for meta: add a list of folders that have been parsed
         meta = {"rules_count": len(sigma_rules)}
         return jsonify({"objects": sigma_rules, "meta": meta})
+
 
 # TODO(jaegeral): deprecate this class
 class SigmaResource(resources.ResourceMixin, Resource):
@@ -108,7 +114,8 @@ class SigmaResource(resources.ResourceMixin, Resource):
 
         except ValueError as e:
             logger.error(
-                "OS Error, unable to get the path to the Sigma rules", exc_info=True
+                "OS Error, unable to get the path to the Sigma rules",
+                exc_info=True,
             )
             abort(HTTP_STATUS_CODE_NOT_FOUND, f"ValueError {e}")
         for rule in sigma_rules:
@@ -117,10 +124,16 @@ class SigmaResource(resources.ResourceMixin, Resource):
                     return_rule = rule
 
         if return_rule is None:
-            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sigma rule found with this ID.")
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, "No sigma rule found with this ID."
+            )
 
-        meta = {"current_user": current_user.username, "rules_count": len(sigma_rules)}
+        meta = {
+            "current_user": current_user.username,
+            "rules_count": len(sigma_rules),
+        }
         return jsonify({"objects": [return_rule], "meta": meta})
+
 
 # TODO(jaegeral): deprecate this class
 class SigmaByTextResource(resources.ResourceMixin, Resource):
@@ -140,7 +153,8 @@ class SigmaByTextResource(resources.ResourceMixin, Resource):
         content = form.get("content")
         if not content:
             return abort(
-                HTTP_STATUS_CODE_BAD_REQUEST, "Missing values from the request."
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                "Missing values from the request.",
             )
 
         try:
@@ -148,7 +162,8 @@ class SigmaByTextResource(resources.ResourceMixin, Resource):
 
         except ValueError:
             logger.error(
-                "Sigma Parsing error with the user provided rule", exc_info=True
+                "Sigma Parsing error with the user provided rule",
+                exc_info=True,
             )
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
@@ -183,13 +198,16 @@ class SigmaByTextResource(resources.ResourceMixin, Resource):
             )
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                "Sigma parsing error: invalid yaml provided {0!s}".format(exception),
+                "Sigma parsing error: invalid yaml provided {0!s}".format(
+                    exception
+                ),
             )
 
         if not sigma_rule:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sigma was parsed")
 
         return jsonify({"objects": [sigma_rule], "meta": {}})
+
 
 class SigmaRuleListResource(resources.ResourceMixin, Resource):
     """Resource to get list of SigmaRules."""
@@ -211,9 +229,7 @@ class SigmaRuleListResource(resources.ResourceMixin, Resource):
                 sigma_rules.append(_enrich_sigma_rule_object(rule=rule))
 
         except ValueError as e:
-            logger.error(
-                "Error, unable to get Sigma rules", exc_info=True
-            )
+            logger.error("Error, unable to get Sigma rules", exc_info=True)
             abort(HTTP_STATUS_CODE_NOT_FOUND, f"Value Error, {e}")
         meta = {"rules_count": len(sigma_rules)}
         return jsonify({"objects": sigma_rules, "meta": meta})
@@ -225,7 +241,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
     @login_required
     def get(self, rule_uuid):
         """Handles GET request to the Sigma Rule resource.
-        
+
         Handels GET API calls to /sigmarule/<string:rule_uuid>/ where the
         rule_uuid is the primaray way to identify the rule.
 
@@ -238,7 +254,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         try:
             rule = SigmaRule.query.filter_by(rule_uuid=rule_uuid).first()
 
-        except Exception as e: # pylint: disable=broad-except
+        except Exception as e:  # pylint: disable=broad-except
             logger.error(
                 "Unable to get the Sigma rule",
                 exc_info=True,
@@ -251,8 +267,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
 
         assert isinstance(rule, SigmaRule)
 
-        return_rules.append(
-            _enrich_sigma_rule_object(rule=rule))
+        return_rules.append(_enrich_sigma_rule_object(rule=rule))
 
         return jsonify({"objects": return_rules, "meta": {}})
 
@@ -265,7 +280,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
 
         Args:
             rule_uuid: uuid of the rule
-        
+
         Returns:
             HTTP_STATUS_CODE_NOT_FOUND if rule not found
             HTTP_STATUS_CODE_OK if rule deleted
@@ -305,7 +320,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         try:
             rule = SigmaRule.query.filter_by(rule_uuid=rule_uuid).first()
 
-        except Exception as e: # pylint: disable=broad-except
+        except Exception as e:  # pylint: disable=broad-except
             logger.error(
                 "Unable to get the Sigma rule",
                 exc_info=True,
@@ -316,7 +331,9 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         if not form:
             form = request.data
         if not form.validate_on_submit():
-            abort(HTTP_STATUS_CODE_BAD_REQUEST, "Unable to validate form data.")
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST, "Unable to validate form data."
+            )
 
         abort(HTTP_STATUS_CODE_NOT_FOUND, "Method not implemented yet")
 
@@ -331,8 +348,6 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
 
         logger.debug(rule_yaml + parsed_rule + rule)
 
-
-
     @login_required
     def post(self, rule_uuid=None):
         """Handles POST request to the resource.
@@ -342,7 +357,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
 
         If no `rule_yaml` is found in the reuqest, the method will fail as this
         is required to parse the rule.
-        
+
         Args:
             rule_uuid: uuid of the rule
 
@@ -376,17 +391,19 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         rule = SigmaRule.query.filter_by(rule_uuid=rule_uuid).first()
         if rule:
             if rule.rule_uuid == parsed_rule.get("rule_uuid"):
-                abort(HTTP_STATUS_CODE_CONFLICT,
-                "Rule already exist in the DB - consider using the PUT method")
+                abort(
+                    HTTP_STATUS_CODE_CONFLICT,
+                    "Rule already exist in the DB - consider using the PUT method",
+                )
 
         title = parsed_rule.get("title")
 
         sigma_rule = SigmaRule.get_or_create(
             rule_yaml=form.get("rule_yaml", ""),
-            description = parsed_rule.get("description", ""),
-            title = title,
-            user = current_user
-            )
+            description=parsed_rule.get("description", ""),
+            title=title,
+            user=current_user,
+        )
 
         if not sigma_rule:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sigma rule object created")
@@ -401,7 +418,6 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         except IntegrityError as e:
             logger.error("Unable to add Sigma rule to DB, with error: %s", e)
             abort(HTTP_STATUS_CODE_CONFLICT, "Problem adding Sigma rule")
-
 
         return self.to_json(sigma_rule, status_code=HTTP_STATUS_CODE_CREATED)
 
@@ -424,7 +440,8 @@ class SigmaRuleByTextResource(resources.ResourceMixin, Resource):
         content = form.get("content")
         if not content:
             return abort(
-                HTTP_STATUS_CODE_BAD_REQUEST, "Missing values from the request."
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                "Missing values from the request.",
             )
 
         try:
@@ -432,7 +449,8 @@ class SigmaRuleByTextResource(resources.ResourceMixin, Resource):
 
         except ValueError:
             logger.error(
-                "Sigma Parsing error with the user provided rule", exc_info=True
+                "Sigma Parsing error with the user provided rule",
+                exc_info=True,
             )
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
@@ -466,7 +484,9 @@ class SigmaRuleByTextResource(resources.ResourceMixin, Resource):
             )
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                "Sigma parsing error: invalid yaml provided {0!s}".format(exception),
+                "Sigma parsing error: invalid yaml provided {0!s}".format(
+                    exception
+                ),
             )
 
         if sigma_rule is None:

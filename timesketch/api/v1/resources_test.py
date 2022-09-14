@@ -225,9 +225,7 @@ class ExploreResourceTest(BaseTest):
                     "timestamp_desc": "Content Modification Time",
                     "datetime": "2014-09-13T07:27:03+00:00",
                     "__ts_timeline_id": 1,
-                    "comment": [
-                        "test"
-                    ],
+                    "comment": ["test"],
                 },
                 "_score": "null",
                 "selected": False,
@@ -293,9 +291,7 @@ class EventResourceTest(BaseTest):
             "message": "",
             "datetime": "2014-09-16T19:23:40+00:00",
             "__ts_timeline_id": 1,
-            "comment": [
-                "test"
-            ]
+            "comment": ["test"],
         }
     }
 
@@ -423,6 +419,7 @@ class TimelineListResourceTest(BaseTest):
         )
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
 
+
 class SigmaResourceTest(BaseTest):
     """Test Sigma resource."""
 
@@ -451,7 +448,7 @@ class SigmaListResourceTest(BaseTest):
 
     resource_url = "/api/v1/sigma/"
     expected_response = {
-        "meta": {"current_user": "test1", "rules_count": 1},
+        "meta": {"rules_count": 1},
         "objects": [
             {
                 'author': 'Alexander Jaeger',
@@ -487,11 +484,9 @@ class SigmaListResourceTest(BaseTest):
         self.assertIsNotNone(response)
 
 
-
 class SigmaRuleResourceTest(BaseTest):
     """Test Sigma resource."""
 
-    resource_url = "/api/v1/sigmarule/"
     expected_response = {
         "objects": {
             "description": "Detects suspicious installation of bbbbbb",
@@ -536,17 +531,14 @@ level: high
             title='Suspicious Installation of bbbbbb',
             description='Detects suspicious installation of bbbbbb',
             rule_yaml=MOCK_SIGMA_RULE,
-
         )
 
         response = self.client.post(
-            self.resource_url + "5266a592-b793-11ea-b3de-bbbbbb/",
+            "/api/v1/sigmarule/5266a592-b793-11ea-b3de-bbbbbb/",
             data=json.dumps(sigma),
             content_type="application/json",
         )
-        self.assertIn(
-            'bbbbbb', response.json['objects'][0]["rule_uuid"]
-        )
+        self.assertIn('bbbbbb', response.json['objects'][0]["rule_uuid"])
         self.assertIn(
             'bbbbbb',
             response.json['objects'][0]["description"],
@@ -558,14 +550,12 @@ level: high
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
         # Now GET the ressources
         response = self.client.get(
-            self.resource_url + "5266a592-b793-11ea-b3de-bbbbbb/"
+            "/api/v1/sigmarule/5266a592-b793-11ea-b3de-bbbbbb/"
         )
 
         self.assertIsNotNone(response)
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
-        self.assertIn(
-            'bbbbbb', response.json['objects'][0]["rule_uuid"]
-        )
+        self.assertIn('bbbbbb', response.json['objects'][0]["rule_uuid"])
         self.assertIn(
             'bbbbbb',
             response.json['objects'][0]["description"],
@@ -577,37 +567,36 @@ level: high
 
         # Attempt to add the same thing again
         response = self.client.post(
-            self.resource_url + "5266a592-b793-11ea-b3de-bbbbbb/",
+            "/api/v1/sigmarule/5266a592-b793-11ea-b3de-bbbbbb/",
             data=json.dumps(sigma),
             content_type="application/json",
         )
 
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_CONFLICT)
 
-
     def test_get_sigma_rule(self):
         """Authenticated request to get an sigma rule."""
         self.login()
         response = self.client.get(
-            self.resource_url + "5266a592-b793-11ea-b3de-0242ac130004"
+            "/api/v1/sigmarule/5266a592-b793-11ea-b3de-0242ac130004"
         )
         self.assertIsNotNone(response)
 
-        response = self.client.get(self.resource_url + "foobar/")
+        # Search a rule that does not exist
+        response = self.client.get("/api/v1/sigmarule/foobar/")
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_NOT_FOUND)
 
 
 class SigmaRuleListResourceTest(BaseTest):
     """Test Sigma resource."""
 
-    resource_url = "/api/v1/sigmarule/"
-
     def test_get_sigma_rule_list(self):
         self.login()
-        response = self.client.get(self.resource_url)
+        response = self.client.get("/api/v1/sigmarule/")
         self.assertIsNotNone(response)
-        self.assertEqual(len(response.json["objects"]),
-            response.json["meta"]["rules_count"])
+        self.assertEqual(
+            len(response.json["objects"]), response.json["meta"]["rules_count"]
+        )
         rule = response.json["objects"][0]
         self.assertIn("5266a592-b793-11ea-b3de-0242ac", rule["rule_uuid"])
         self.assertIsNotNone(rule["created_at"])
