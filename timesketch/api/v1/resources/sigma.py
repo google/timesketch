@@ -54,7 +54,7 @@ def _enrich_sigma_rule_object(rule: SigmaRule):
     Returns:
         enriched Sigma dict
     """
-    parsed_rule = ts_sigma_lib.get_sigma_rule_by_text(rule.rule_yaml)
+    parsed_rule = ts_sigma_lib.parse_sigma_rule_by_text(rule.rule_yaml)
     parsed_rule["rule_uuid"] = parsed_rule.get("id", rule.rule_uuid)
     parsed_rule["created_at"] = str(rule.created_at)
     parsed_rule["updated_at"] = str(rule.updated_at)
@@ -159,7 +159,7 @@ class SigmaByTextResource(resources.ResourceMixin, Resource):
             )
 
         try:
-            sigma_rule = ts_sigma_lib.get_sigma_rule_by_text(content)
+            sigma_rule = ts_sigma_lib.parse_sigma_rule_by_text(content)
 
         except ValueError:
             logger.error(
@@ -347,7 +347,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 "Sigma parsing error: no yaml provided",
             )
-        parsed_rule = ts_sigma_lib.get_sigma_rule_by_text(rule_yaml)
+        parsed_rule = ts_sigma_lib.parse_sigma_rule_by_text(rule_yaml)
 
         logger.debug(rule_yaml + parsed_rule + rule)
 
@@ -385,7 +385,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_FORBIDDEN, "rule_yaml needs to be a string."
             )
 
-        parsed_rule = ts_sigma_lib.get_sigma_rule_by_text(rule_yaml)
+        parsed_rule = ts_sigma_lib.parse_sigma_rule_by_text(rule_yaml)
 
         if not rule_uuid:
             rule_uuid = parsed_rule.get("id")
@@ -451,7 +451,7 @@ class SigmaRuleByTextResource(resources.ResourceMixin, Resource):
             )
 
         try:
-            sigma_rule = ts_sigma_lib.get_sigma_rule_by_text(content)
+            sigma_rule = ts_sigma_lib.parse_sigma_rule_by_text(content)
 
         except ValueError:
             logger.error(

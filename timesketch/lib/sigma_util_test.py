@@ -313,7 +313,7 @@ class TestSigmaUtilLib(BaseTest):
     def test_get_rule_by_text(self):
         """Test getting sigma rule by text."""
 
-        rule = sigma_util.get_sigma_rule_by_text(SIGMA_MOCK_RULE_TEST4)
+        rule = sigma_util.parse_sigma_rule_by_text(SIGMA_MOCK_RULE_TEST4)
 
         self.assertIsNotNone(SIGMA_MOCK_RULE_TEST4)
         self.assertIsNotNone(rule)
@@ -322,11 +322,11 @@ class TestSigmaUtilLib(BaseTest):
             rule.get("es_query"),
         )
 
-        rule = sigma_util.get_sigma_rule_by_text(SIGMA_MOCK_RULE_ENDSWITH)
+        rule = sigma_util.parse_sigma_rule_by_text(SIGMA_MOCK_RULE_ENDSWITH)
 
         self.assertIsNotNone(SIGMA_MOCK_RULE_ENDSWITH)
         self.assertIsNotNone(rule)
-        rule = sigma_util.get_sigma_rule_by_text(MOCK_SIGMA_RULE)
+        rule = sigma_util.parse_sigma_rule_by_text(MOCK_SIGMA_RULE)
 
         self.assertIsNotNone(MOCK_SIGMA_RULE)
         self.assertIsNotNone(rule)
@@ -338,12 +338,12 @@ class TestSigmaUtilLib(BaseTest):
         self.assertIn("b793", rule.get("id"))
 
         with self.assertRaises(sigma_exceptions.SigmaParseError):
-            sigma_util.get_sigma_rule_by_text(MOCK_SIGMA_RULE_ERROR1)
+            sigma_util.parse_sigma_rule_by_text(MOCK_SIGMA_RULE_ERROR1)
 
         self.assertIn("2020/06/26", rule.get("date"))
         self.assertIsInstance(rule.get("date"), str)
 
-        rule = sigma_util.get_sigma_rule_by_text(MOCK_SIGMA_RULE_2)
+        rule = sigma_util.parse_sigma_rule_by_text(MOCK_SIGMA_RULE_2)
 
         self.assertIsNotNone(rule)
         self.assertEqual(
@@ -351,7 +351,7 @@ class TestSigmaUtilLib(BaseTest):
             rule.get("es_query"),
         )
 
-        rule = sigma_util.get_sigma_rule_by_text(MOCK_SIGMA_RULE_3)
+        rule = sigma_util.parse_sigma_rule_by_text(MOCK_SIGMA_RULE_3)
 
         self.assertIsNotNone(rule)
         self.assertEqual(
@@ -360,16 +360,16 @@ class TestSigmaUtilLib(BaseTest):
         )
 
         with self.assertRaises(NotImplementedError):
-            sigma_util.get_sigma_rule_by_text(COUNT_RULE_1)
+            sigma_util.parse_sigma_rule_by_text(COUNT_RULE_1)
 
-        rule = sigma_util.get_sigma_rule_by_text(MOCK_SIGMA_RULE_DATE_ERROR1)
+        rule = sigma_util.parse_sigma_rule_by_text(MOCK_SIGMA_RULE_DATE_ERROR1)
         self.assertIsNotNone(MOCK_SIGMA_RULE_DATE_ERROR1)
         # it is actually: 'date': datetime.date(2022, 1, 10)
         self.assertIsInstance(rule.get("date"), datetime.date)
         self.assertIsNot("2022-01-10", rule.get("date"))
         self.assertIn("dd23d2323432", rule.get("modified"))
 
-        rule = sigma_util.get_sigma_rule_by_text(MOCK_SIGMA_RULE_DOTS)
+        rule = sigma_util.parse_sigma_rule_by_text(MOCK_SIGMA_RULE_DOTS)
         self.assertIsNotNone(MOCK_SIGMA_RULE_DOTS)
         self.assertIsNotNone(rule)
         self.assertEqual(
@@ -380,7 +380,7 @@ class TestSigmaUtilLib(BaseTest):
             rule.get("es_query"),
         )
 
-        rule = sigma_util.get_sigma_rule_by_text(
+        rule = sigma_util.parse_sigma_rule_by_text(
             MOCK_SIGMA_RULE_STARTSWITH_ENDSWITH
         )
 
@@ -451,7 +451,9 @@ class TestSigmaUtilLib(BaseTest):
         rule_by_file = sigma_util.get_sigma_rule(f.name)
 
         # Test that rule from file equals rule from text
-        rule_by_text = sigma_util.get_sigma_rule_by_text(SIGMA_MOCK_RULE_TEST4)
+        rule_by_text = sigma_util.parse_sigma_rule_by_text(
+            SIGMA_MOCK_RULE_TEST4
+        )
 
         self.assertEqual(rule_by_file.get('id'), rule_by_text.get('id'))
         self.assertEqual(

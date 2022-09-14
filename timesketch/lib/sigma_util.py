@@ -500,7 +500,7 @@ def sanitize_incoming_sigma_rule_text(rule_text: string):
 
 
 @lru_cache(maxsize=8)
-def get_sigma_rule_by_text(rule_text, sigma_config=None):
+def parse_sigma_rule_by_text(rule_text, sigma_config=None):
     """Returns a JSON represenation for a rule
 
     Args:
