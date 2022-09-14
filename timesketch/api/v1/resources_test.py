@@ -19,7 +19,6 @@ import json
 import mock
 
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
-from timesketch.lib.definitions import HTTP_STATUS_CODE_CONFLICT
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
