@@ -642,7 +642,7 @@ class SigmaByTextResourceTest(BaseTest):
         level: high
         """
     expected_response = {
-        "meta": {"parsed": True},
+        "meta": {},
         "objects": [
             {
                 "title": "Installation of foobar",

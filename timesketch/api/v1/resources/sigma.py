@@ -163,7 +163,8 @@ class SigmaByTextResource(resources.ResourceMixin, Resource):
             )
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                "Error generating rule {0!s}".format(exception),
+                "Sigma Parsing error: Feature in the rule provided "
+                " is not implemented in this backend {0!s}".format(exception),
             )
 
         except sigma_exceptions.SigmaParseError as exception:
@@ -224,8 +225,9 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
     @login_required
     def get(self, rule_uuid):
         """Handles GET request to the Sigma Rule resource.
-        Fetches a single sigma rule from the database given a rule_uuid and
-        returns enriched contents
+        
+        Handels GET API calls to /sigmarule/<string:rule_uuid>/ where the
+        rule_uuid is the primaray way to identify the rule.
 
         Args:
             rule_uuid: uuid of the rule
@@ -257,11 +259,25 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
     @login_required
     def delete(self, rule_uuid):
         """Handles DELETE request to the resource.
+
+        Handels DELETE API calls to /sigmarule/<string:rule_uuid>/ where the
+        rule_uuid is the primaray way to identify the rule.
+
         Args:
             rule_uuid: uuid of the rule
+        
+        Returns:
+            HTTP_STATUS_CODE_NOT_FOUND if rule not found
+            HTTP_STATUS_CODE_OK if rule deleted
         """
 
         rule = SigmaRule.query.filter_by(rule_uuid=rule_uuid).first()
+
+        if not rule:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                "No rule found with rule_uuid.{0!s}".format(rule_uuid),
+            )
 
         db_session.delete(rule)
         db_session.commit()
@@ -271,6 +287,14 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
     @login_required
     def put(self, rule_uuid):
         """Handles update request to Sigma rules
+
+        Handels PUT API calls to /sigmarule/<string:rule_uuid>/ where the
+        rule_uuid is the primaray way to identify the rule.
+        The remaining attributes of the rule are provided in request itself.
+
+        If no `rule_yaml` is found in the reuqest, the method will fail as this
+        is required to parse the rule.
+
         Args:
             rule_uuid: uuid of the rule
         Returns:
@@ -312,6 +336,13 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
     @login_required
     def post(self, rule_uuid=None):
         """Handles POST request to the resource.
+        Handels POST API calls to /sigmarule/<string:rule_uuid>/ where the
+        rule_uuid is the primaray way to identify the rule.
+        The remaining attributes of the rule are provided in request itself.
+
+        If no `rule_yaml` is found in the reuqest, the method will fail as this
+        is required to parse the rule.
+        
         Args:
             rule_uuid: uuid of the rule
 
@@ -323,12 +354,12 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         if not form:
             form = request.data
 
-        rule_yaml = form.get("rule_yaml", "")
+        rule_yaml = form.get("rule_yaml")
 
         if not rule_yaml:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                "No rule_yaml supplied.",
+                "No rule_yaml supplied in the POST request to the API.",
             )
 
         if not isinstance(rule_yaml, str):
@@ -341,11 +372,12 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         if not rule_uuid:
             rule_uuid = parsed_rule.get("id")
 
-        # Query rules to see if it already exist
+        # Query rules to see if it already exist and exit if found
         rule = SigmaRule.query.filter_by(rule_uuid=rule_uuid).first()
         if rule:
             if rule.rule_uuid == parsed_rule.get("rule_uuid"):
-                abort(HTTP_STATUS_CODE_CONFLICT, "Rule already exist")
+                abort(HTTP_STATUS_CODE_CONFLICT,
+                "Rule already exist in the DB - consider using the PUT method")
 
         title = parsed_rule.get("title")
 
