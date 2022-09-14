@@ -64,7 +64,8 @@ def _enrich_sigma_rule_object(rule: SigmaRule):
     )
     parsed_rule["rule_yaml"] = rule.rule_yaml
 
-    # via StatusMixin, values according to: https://github.com/SigmaHQ/sigma/wiki/Specification#status-optional
+    # via StatusMixin, values according to:
+    # https://github.com/SigmaHQ/sigma/wiki/Specification#status-optional
     parsed_rule["status"] = rule.get_status.status
 
     return parsed_rule
