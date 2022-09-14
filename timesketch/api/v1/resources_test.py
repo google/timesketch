@@ -628,49 +628,6 @@ level: high
         response = self.client.get("/api/v1/sigmarule/foobar/")
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_NOT_FOUND)
 
-    def test_put_sigma_rule(self):
-        """Authenticated request to get an sigma rule."""
-        self.login()
-        response = self.client.get(
-            "/api/v1/sigmarule/5266a592-b793-11ea-b3de-0242ac130004"
-        )
-        self.assertIsNotNone(response)
-        # self.client.put("/api/v1/sigmarule/5266a592-b793-11ea-b3de-bbbbbb/")
-        response2 = self.client.put(
-            "/api/v1/sigmarule/5266a592-b793-11ea-b3de-bbbbbb/",
-            data=json.dumps(
-                dict(
-                    rule_uuid="5266a592-b793-11ea-b3de-bbbbbb",
-                    title='Suspicious Installation of bbbbbb',
-                    description='Detects suspicious installation of bbbbbb',
-                    rule_yaml="""
-title: Suspicious Installation of bbbbbb
-id: 5266a592-b793-11ea-b3de-bbbbbb
-description: Detects suspicious installation of bbbbbb
-references:
-    - https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html
-author: Alexander Jaeger
-date: 2020/06/26
-modified: 2022/06/12
-logsource:
-    product: linux
-    service: shell
-detection:
-    keywords:
-        # Generic suspicious commands
-        - '*apt-get install bbbbbb*'
-    condition: keywords
-falsepositives:
-    - Unknown
-level: high
-""",
-                )
-            ),
-            content_type="application/json",
-        )
-        # breakpoint()
-        self.assertIsNotNone(response)
-
 
 class SigmaRuleListResourceTest(BaseTest):
     """Test Sigma resource."""
