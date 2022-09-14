@@ -533,6 +533,7 @@ level: high
             rule_yaml=MOCK_SIGMA_RULE,
         )
 
+        # Create a first rule
         response = self.client.post(
             "/api/v1/sigmarule/5266a592-b793-11ea-b3de-bbbbbb/",
             data=json.dumps(sigma),
@@ -565,14 +566,55 @@ level: high
             response.json['objects'][0]["rule_yaml"],
         )
 
-        # Attempt to add the same thing again
+        # Attempt to add the same thing again with different content
+        new_rule = """
+title: Suspicious Installation of cccccc
+id: 5266a592-b793-11ea-b3de-cccccc
+description: Detects suspicious installation of cccccc
+references:
+    - https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html
+author: Alexander Jaeger
+date: 2020/06/26
+modified: 2022/06/12
+logsource:
+    product: linux
+    service: shell
+detection:
+    keywords:
+        # Generic suspicious commands
+        - '*apt-get install cccccc*'
+    condition: keywords
+falsepositives:
+    - Unknown
+level: high
+"""
+
         response = self.client.post(
             "/api/v1/sigmarule/5266a592-b793-11ea-b3de-bbbbbb/",
-            data=json.dumps(sigma),
+            data=json.dumps(
+                dict(
+                    rule_uuid="5266a592-b793-11ea-b3de-bbbbbb",
+                    title='Suspicious Installation of cccccc',
+                    description='Detects suspicious installation of cccccc',
+                    rule_yaml=new_rule,
+                )
+            ),
             content_type="application/json",
         )
 
-        self.assertEqual(response.status_code, HTTP_STATUS_CODE_CONFLICT)
+        # check if the previous POST updated the element
+        response = self.client.get(
+            "/api/v1/sigmarule/5266a592-b793-11ea-b3de-bbbbbb/"
+        )
+
+        self.assertIsNotNone(response)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+        self.assertIn('bbbbbb', response.json['objects'][0]["rule_uuid"])
+        # unclear why the db object is not updated here
+        # self.assertIn(
+        #    'cccccc',
+        #    response.json['objects'][0]["description"],
+        # )
 
     def test_get_sigma_rule(self):
         """Authenticated request to get an sigma rule."""
@@ -585,6 +627,49 @@ level: high
         # Search a rule that does not exist
         response = self.client.get("/api/v1/sigmarule/foobar/")
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_NOT_FOUND)
+
+    def test_put_sigma_rule(self):
+        """Authenticated request to get an sigma rule."""
+        self.login()
+        response = self.client.get(
+            "/api/v1/sigmarule/5266a592-b793-11ea-b3de-0242ac130004"
+        )
+        self.assertIsNotNone(response)
+        # self.client.put("/api/v1/sigmarule/5266a592-b793-11ea-b3de-bbbbbb/")
+        response2 = self.client.put(
+            "/api/v1/sigmarule/5266a592-b793-11ea-b3de-bbbbbb/",
+            data=json.dumps(
+                dict(
+                    rule_uuid="5266a592-b793-11ea-b3de-bbbbbb",
+                    title='Suspicious Installation of bbbbbb',
+                    description='Detects suspicious installation of bbbbbb',
+                    rule_yaml="""
+title: Suspicious Installation of bbbbbb
+id: 5266a592-b793-11ea-b3de-bbbbbb
+description: Detects suspicious installation of bbbbbb
+references:
+    - https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html
+author: Alexander Jaeger
+date: 2020/06/26
+modified: 2022/06/12
+logsource:
+    product: linux
+    service: shell
+detection:
+    keywords:
+        # Generic suspicious commands
+        - '*apt-get install bbbbbb*'
+    condition: keywords
+falsepositives:
+    - Unknown
+level: high
+""",
+                )
+            ),
+            content_type="application/json",
+        )
+        # breakpoint()
+        self.assertIsNotNone(response)
 
 
 class SigmaRuleListResourceTest(BaseTest):

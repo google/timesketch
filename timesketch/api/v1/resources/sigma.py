@@ -30,6 +30,7 @@ from sqlalchemy.exc import IntegrityError
 import timesketch.lib.sigma_util as ts_sigma_lib
 
 from timesketch.api.v1 import resources
+from timesketch.lib import forms
 
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
@@ -300,58 +301,6 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         return HTTP_STATUS_CODE_OK
 
     @login_required
-    def put(self, rule_uuid):
-        """Handles update request to Sigma rules
-
-        Handels PUT API calls to /sigmarule/<string:rule_uuid>/ where the
-        rule_uuid is the primaray way to identify the rule.
-        The remaining attributes of the rule are provided in request itself.
-
-        If no `rule_yaml` is found in the reuqest, the method will fail as this
-        is required to parse the rule.
-
-        Args:
-            rule_uuid: uuid of the rule
-        Returns:
-            The updated sigma object in JSON (instance of
-            flask.wrappers.Response)
-        """
-
-        try:
-            rule = SigmaRule.query.filter_by(rule_uuid=rule_uuid).first()
-
-        except Exception as e:  # pylint: disable=broad-except
-            logger.error(
-                "Unable to get the Sigma rule to be updated",
-                exc_info=True,
-            )
-            abort(
-                HTTP_STATUS_CODE_NOT_FOUND,
-                f"Unable to get Sigma rule to be updated {0!s}".format(e),
-            )
-
-        form = request.json
-        if not form:
-            form = request.data
-        if not form.validate_on_submit():
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST, "Unable to validate form data."
-            )
-
-        abort(HTTP_STATUS_CODE_NOT_FOUND, "Method not implemented yet")
-
-        # TODO(jaegeral): complete this method
-        rule_yaml = form.get("rule_yaml")
-        if not rule_yaml:
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                "Sigma parsing error: no yaml provided",
-            )
-        parsed_rule = ts_sigma_lib.parse_sigma_rule_by_text(rule_yaml)
-
-        logger.debug(rule_yaml + parsed_rule + rule)
-
-    @login_required
     def post(self, rule_uuid=None):
         """Handles POST request to the resource.
         Handels POST API calls to /sigmarule/<string:rule_uuid>/ where the
@@ -391,19 +340,33 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
             rule_uuid = parsed_rule.get("id")
 
         # Query rules to see if it already exist and exit if found
-        rule = SigmaRule.query.filter_by(rule_uuid=rule_uuid).first()
-        if rule:
-            if rule.rule_uuid == parsed_rule.get("rule_uuid"):
-                abort(
-                    HTTP_STATUS_CODE_CONFLICT,
-                    "Rule already in the DB - consider using the PUT method",
-                )
+        sigma_rule_from_db = SigmaRule.query.filter_by(
+            rule_uuid=rule_uuid
+        ).first()
+        if sigma_rule_from_db:
+            if sigma_rule_from_db.rule_uuid == parsed_rule.get("rule_uuid"):
+                logger.debug("Rule was already found in teh database")
+                # it will overwritten with the provided content
 
         title = parsed_rule.get("title")
+        if not title:
+            logger.error("Sigma rule without title was given")
+            return abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                "Missing value: 'title' from the request.",
+            )
+
+        description = parsed_rule.get("description")
+        if not description:
+            return abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                "Missing value: 'description' from the request.",
+            )
 
         sigma_rule = SigmaRule.get_or_create(
-            rule_yaml=form.get("rule_yaml", ""),
-            description=parsed_rule.get("description", ""),
+            rule_uuid=rule_uuid,
+            rule_yaml=form.get("rule_yaml"),
+            description=description,
             title=title,
             user=current_user,
         )
@@ -411,8 +374,8 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         if not sigma_rule:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sigma rule object created")
 
-        sigma_rule.query_string = parsed_rule.get("query_string", "")
-        sigma_rule.rule_uuid = parsed_rule.get("id", None)
+        sigma_rule.query_string = parsed_rule.get("es_query")
+        sigma_rule.rule_uuid = parsed_rule.get("id")
         sigma_rule.set_status(parsed_rule.get("status", "experimental"))
 
         try:
