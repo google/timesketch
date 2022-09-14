@@ -222,16 +222,12 @@ class SigmaRuleListResource(resources.ResourceMixin, Resource):
         """
         sigma_rules = []
 
-        try:
-            all_sigma_rules = SigmaRule.query.all()
-            # Return a subset of the Sigma objects to reduce the amount of
-            # data sent to the client.
-            for rule in all_sigma_rules:
-                sigma_rules.append(_enrich_sigma_rule_object(rule=rule))
+        all_sigma_rules = SigmaRule.query.all()
+        # Return a subset of the Sigma objects to reduce the amount of
+        # data sent to the client.
+        for rule in all_sigma_rules:
+            sigma_rules.append(_enrich_sigma_rule_object(rule=rule))
 
-        except ValueError as e:
-            logger.error("Error, unable to get Sigma rules", exc_info=True)
-            abort(HTTP_STATUS_CODE_NOT_FOUND, f"Value Error, {e}")
         meta = {"rules_count": len(sigma_rules)}
         return jsonify({"objects": sigma_rules, "meta": meta})
 
@@ -260,7 +256,10 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
                 "Unable to get the Sigma rule",
                 exc_info=True,
             )
-            abort(HTTP_STATUS_CODE_NOT_FOUND, f"ValueError {e}")
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                "Unable to get Sigma rule. Error {0!s}".format(e),
+            )
 
         if not rule:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No rule found with this ID.")
@@ -323,10 +322,13 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
 
         except Exception as e:  # pylint: disable=broad-except
             logger.error(
-                "Unable to get the Sigma rule",
+                "Unable to get the Sigma rule to be updated",
                 exc_info=True,
             )
-            abort(HTTP_STATUS_CODE_NOT_FOUND, f"ValueError {e}")
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                f"Unable to get Sigma rule to be updated {0!s}".format(e),
+            )
 
         form = request.json
         if not form:
@@ -394,7 +396,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
             if rule.rule_uuid == parsed_rule.get("rule_uuid"):
                 abort(
                     HTTP_STATUS_CODE_CONFLICT,
-                    "Rule already exist in the DB - consider using the PUT method",
+                    "Rule already in the DB - consider using the PUT method",
                 )
 
         title = parsed_rule.get("title")
@@ -418,7 +420,10 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
             db_session.commit()
         except IntegrityError as e:
             logger.error("Unable to add Sigma rule to DB, with error: %s", e)
-            abort(HTTP_STATUS_CODE_CONFLICT, "Problem adding Sigma rule")
+            abort(
+                HTTP_STATUS_CODE_CONFLICT,
+                "Problem adding Sigma rule {0!s}".format(e),
+            )
 
         return self.to_json(sigma_rule, status_code=HTTP_STATUS_CODE_CREATED)
 
