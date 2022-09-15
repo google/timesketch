@@ -566,6 +566,8 @@ level: high
         )
 
     def test_post_sigma_resource_missmatch_rule_uuid(self):
+        """Authenticated request to POST an sigma rule with different values
+        in parameter vs post body."""
         # Post a rule with different rule_uuid in param then in rule_yaml
         new_rule = """
 title: Suspicious Installation of cccccc
@@ -639,7 +641,6 @@ class SigmaRuleListResourceTest(BaseTest):
 class SigmaByTextResourceTest(BaseTest):
     """Test Sigma by text resource."""
 
-    resource_url = "/api/v1/sigma/text/"
     correct_rule = """
         title: Installation of foobar
         id: bb1e0d1d-cd13-4b65-bf7e-69b4e740266b
@@ -696,7 +697,7 @@ class SigmaByTextResourceTest(BaseTest):
 
         data = dict(content=self.correct_rule)
         response = self.client.post(
-            self.resource_url,
+            "/api/v1/sigma/text/",
             data=json.dumps(data, ensure_ascii=False),
             content_type="application/json",
         )
@@ -706,11 +707,12 @@ class SigmaByTextResourceTest(BaseTest):
         self.assert200(response)
 
     def test_get_non_existing_rule_by_text(self):
-
-        # wrong sigma rule
+        """Authenticated request to get an sigma rule by text with non parseable
+        yaml text."""
+        self.login()
         data = dict(content="foobar: asd")
         response = self.client.post(
-            self.resource_url,
+            "/api/v1/sigma/text/",
             data=json.dumps(data, ensure_ascii=False),
             content_type="application/json",
         )
@@ -719,10 +721,13 @@ class SigmaByTextResourceTest(BaseTest):
         self.assertIn("No detection definitions found", data["message"])
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
 
-        # no content given
+    def test_get_rule_by_text_no_form_data(self):
+        """Authenticated request to get an sigma rule by text with no form
+        data"""
+        self.login()
         data = dict(action="post")
         response = self.client.post(
-            self.resource_url,
+            "/api/v1/sigma/text/",
             data=json.dumps(data, ensure_ascii=False),
             content_type="application/json",
         )
