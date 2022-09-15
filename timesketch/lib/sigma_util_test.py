@@ -296,7 +296,7 @@ status: experimental
 author: Alexander Jaeger
 date: 2022/04/26
 references:
-    - https://github.com/SigmaHQ/sigma/blob/e4c8e62ba6a32f8966ab4216a15dd393af4ef3a3/rules/windows/process_access/proc_access_win_rare_proc_access_lsass.yml
+    - https://github.com/SigmaHQ/sigma/blob/e4c8e62ba6a32f8966ab4216a15dd393af4ef3a3/rules/windows/process_access/proc_access_win_rare_proc_access_lsass.yml # pylint: disable=line-too-long
 logsource:
     category: process_access
     product: windows
@@ -349,10 +349,9 @@ detection:
         SourceImage: 'C:\Program Files\Common Files\McBfee\ABBSHost\ABBSHOST.exe'
     filter_prevtron:
         SourceImage|startswith: 'C:\Windows\Temp\bsgbrd2-agent\'
-        SourceImage|endswith: 
+        SourceImage|endswith:
             - '\hammer64.exe'
             - '\hammer.exe'
-    # Generic Filter for 0x1410 filter (caused by so many programs like PickBox updates etc.)
     filter_generic:
         SourceImage|startswith:
             - 'C:\Program Files\'
