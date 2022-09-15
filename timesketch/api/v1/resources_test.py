@@ -799,8 +799,8 @@ class SigmaByTextResourceTest(BaseTest):
         self.assert200(response)
 
     def test_get_non_existing_rule_by_text(self):
-        """DEPRECATED: Authenticated request to get an sigma rule by text with non parseable
-        yaml text."""
+        """DEPRECATED: Authenticated request to get an sigma rule by text
+        with non parseable yaml text."""
         self.login()
         data = dict(content="foobar: asd")
         response = self.client.post(
