@@ -550,13 +550,8 @@ limitations under the License.
                 <v-icon v-if="item._source.label.includes('__ts_star')" color="amber">mdi-star</v-icon>
                 <v-icon v-else>mdi-star-outline</v-icon>
               </v-btn>
-              <!-- Label menu -->
-              <v-menu offset-y :close-on-content-click="false">
-                <template v-slot:activator="{ on, attrs }">
-                  <v-icon v-bind="attrs" v-on="on">mdi-tag-plus-outline</v-icon>
-                </template>
-                <ts-event-tag-menu :event="item"></ts-event-tag-menu>
-              </v-menu>
+              <!-- Tag menu -->
+              <ts-event-tag-menu :event="item"></ts-event-tag-menu>
             </template>
 
             <!-- Generic slot for any field type. Adds tags and emojis to the first column. -->
@@ -570,7 +565,17 @@ limitations under the License.
                 <span :class="{ 'ts-event-field-ellipsis': field.text === 'message' }">
                   <!-- Tags -->
                   <span v-if="displayOptions.showTags && index === 0">
-                    <v-chip small outlined class="mr-2" v-for="tag in item._source.tag" :key="tag">{{ tag }}</v-chip>
+                    <v-chip
+                      small
+                      class="mr-2"
+                      v-for="tag in item._source.tag"
+                      :key="tag"
+                      :color="tagColor(tag).color"
+                      :text-color="tagColor(tag).textColor"
+                    >
+                      <v-icon v-if="tag in tagConfig" left small>{{ tagConfig[tag].label }}</v-icon>
+                      {{ tag }}</v-chip
+                    >
                     <span v-for="label in item._source.label" :key="label">
                       <v-chip v-if="!label.startsWith('__ts')" small outlined class="mr-2">
                         {{ label }}
@@ -701,6 +706,12 @@ export default {
       showRightSidePanel: false,
       addManualEvent: false,
       datetimeManualEvent: '', // datetime of an event used
+      // TODO: Refactor this into a configurable option
+      tagConfig: {
+        good: { color: 'green', textColor: 'white', label: 'mdi-check-circle-outline' },
+        bad: { color: 'red', textColor: 'white', label: 'mdi-alert-circle-outline' },
+        suspicious: { color: 'orange', textColor: 'white', label: 'mdi-help-circle-outline' },
+      },
 
       // old stuff
       params: {},
@@ -835,6 +846,12 @@ export default {
     },
   },
   methods: {
+    tagColor: function (tag) {
+      if (this.tagConfig[tag]) {
+        return this.tagConfig[tag]
+      }
+      return 'lightgrey'
+    },
     getFieldName: function (field) {
       return 'item._source.' + field
     },
