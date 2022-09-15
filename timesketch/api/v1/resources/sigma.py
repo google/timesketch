@@ -46,7 +46,10 @@ logger = logging.getLogger("timesketch.api.sigma")
 
 
 def _enrich_sigma_rule_object(rule: SigmaRule):
-    """Helper function: Returns an enriched Sigma object givin a SigmaRule.
+    """Helper function: Returns an enriched Sigma object given a SigmaRule.
+
+    It will extract the `status`, `created_at` and `updated_at` and make them
+    a field.
 
     Args:
         SigmaRule: uuid of the rule
@@ -496,7 +499,11 @@ class SigmaRuleByTextResource(resources.ResourceMixin, Resource):
 
     @login_required
     def post(self):
-        """Text provided via form is parsed as a SigmaRule.
+        """Text provided via form is parsed as a SigmaRule and returned as a
+        JSON.
+
+        Response looks as following:
+            - {"objects": [sigma_rule], "meta": {"parsed": True}}
 
         If no form content is given, the method will abort.
 
