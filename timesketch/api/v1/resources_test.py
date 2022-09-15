@@ -656,12 +656,13 @@ level: high
             ),
             content_type="application/json",
         )
+        breakpoint()
         self.assertIsNotNone(response)
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
         self.assertIn('bbbbbb', response.json['objects'][0]["rule_uuid"])
         self.assertIn(
             'cccccc',
-            response.json['objects'][0]["description"],
+            response.json['objects'][0]["rule_yaml"],
         )
 
 
