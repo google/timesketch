@@ -545,7 +545,7 @@ limitations under the License.
             </template>
 
             <!-- Generic slot for any field type. Adds tags and emojis to the first column. -->
-            <template v-for="(field, index) in extraHeaders" v-slot:[getFieldName(field.text)]="{ item }">
+            <template v-for="(field, index) in headers" v-slot:[getFieldName(field.text)]="{ item }">
               <span
                 :key="field.text"
                 class="ts-event-field-container"
@@ -554,7 +554,7 @@ limitations under the License.
               >
                 <span :class="{ 'ts-event-field-ellipsis': field.text === 'message' }">
                   <!-- Tags -->
-                  <span v-if="displayOptions.showTags && index === 0">
+                  <span v-if="displayOptions.showTags && index === 3">
                     <v-chip
                       small
                       class="mr-2"
@@ -671,7 +671,6 @@ export default {
   props: ['sketchId'],
   data() {
     return {
-      extraHeaders: [],
       columnHeaders: [
         {
           text: '',
@@ -800,7 +799,7 @@ export default {
           align: 'end',
         },
       ]
-      this.extraHeaders = []
+      let extraHeaders = []
       this.selectedFields.forEach((field) => {
         let header = {
           text: field.field,
@@ -809,14 +808,14 @@ export default {
         }
         if (field.field === 'message') {
           header.width = '100%'
-          this.extraHeaders.unshift(header)
+          extraHeaders.unshift(header)
         } else {
-          this.extraHeaders.push(header)
+          extraHeaders.push(header)
         }
       })
 
       // Extend the column headers from position 3 (after the actions column).
-      baseHeaders.splice(3, 0, ...this.extraHeaders)
+      baseHeaders.splice(3, 0, ...extraHeaders)
 
       // Add timeline name based on configuration
       if (this.displayOptions.showTimelineName) {
