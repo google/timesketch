@@ -229,9 +229,7 @@ class SigmaRuleListResource(resources.ResourceMixin, Resource):
 
     @login_required
     def get(self):
-        """Handles GET request to the `/sigma/` resource.
-
-        Will fetch all rules stored in the database on the system
+        """Will fetch all Sigma rules stored in the database on the system
         and return a list of JSON representations of the rules.
 
         The result will formatted as:
@@ -257,10 +255,8 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
 
     @login_required
     def get(self, rule_uuid):
-        """Handles GET request to the Sigma Rule resource.
-
-        Handels GET API calls to /sigmarule/<string:rule_uuid>/ where the
-        rule_uuid is the primaray way to identify the rule.
+        """Handels GET API calls to /sigmarule/<string:rule_uuid>/ where the
+        rule_uuid is the way to find the Sigma rule.
 
         Fetches a single SigmaRule from the database by filtering on rule_uuid
         and returns a JSON representation of it
@@ -299,14 +295,12 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
 
     @login_required
     def delete(self, rule_uuid):
-        """Handles DELETE request to the resource.
-
-        Handels DELETE API calls to /sigmarule/<string:rule_uuid>/ where the
-        rule_uuid is the primaray way to identify the rule.
+        """Handels DELETE API calls to /sigmarule/<string:rule_uuid>/ where the
+        rule_uuid is used to identify the rule.
         Deletes the SigmaRule matching the specified UUID from the database.
 
         Args:
-            rule_uuid: uuid of the rule
+            rule_uuid: uuid of the rule to be deleted
 
         Returns:
             HTTP_STATUS_CODE_NOT_FOUND if rule not found
@@ -330,9 +324,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
 
     @login_required
     def post(self, rule_uuid=None):
-        """Handles POST request to the resource.
-
-        Handels POST API calls to /sigmarule/ where the
+        """Handels POST API calls to `/sigmarule/` where the
         rule_uuid is the primaray way to identify the rule.
 
         The rule is created in the database if non with the given
@@ -429,12 +421,16 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
 
     @login_required
     def put(self, rule_uuid):
-        """Handles update request to Sigma rules
-        Handels PUT API calls to /sigmarule/<string:rule_uuid>/ where the
-        rule_uuid is the primaray way to identify the rule.
+        """Update existing Sigma rules
+
+        Calls to /sigmarule/<string:rule_uuid>/ where the
+        rule_uuid is way to identify the rule.
         The remaining attributes of the rule are provided in request itself.
         If no `rule_yaml` is found in the reuqest, the method will fail as this
         is required to parse the rule.
+
+        If the parameter `rule_uuid`and the id provided in `rule_yaml` does
+        not match, the method will abort.
 
         Args:
             rule_uuid: uuid of the rule
@@ -500,9 +496,8 @@ class SigmaRuleByTextResource(resources.ResourceMixin, Resource):
 
     @login_required
     def post(self):
-        """Handles POST request to the resource /sigmarule/text/.
+        """Text provided via form is parsed as a SigmaRule.
 
-        Text provided via form is parsed as a SigmaRule
         If no form content is given, the method will abort.
 
         Returns:
