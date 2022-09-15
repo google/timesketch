@@ -565,51 +565,6 @@ level: high
             response.json['objects'][0]["rule_yaml"],
         )
 
-    def test_post_sigma_resource_missmatch_rule_uuid(self):
-        """Authenticated request to POST an sigma rule with different values
-        in parameter vs post body."""
-        # Post a rule with different rule_uuid in param then in rule_yaml
-        new_rule = """
-title: Suspicious Installation of cccccc
-id: 5266a592-b793-11ea-b3de-cccccc
-description: Detects suspicious installation of cccccc
-references:
-    - https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html
-author: Alexander Jaeger
-date: 2020/06/26
-modified: 2022/06/12
-logsource:
-    product: linux
-    service: shell
-detection:
-    keywords:
-        # Generic suspicious commands
-        - '*apt-get install cccccc*'
-    condition: keywords
-falsepositives:
-    - Unknown
-level: high
-"""
-
-        response = self.client.post(
-            "/api/v1/sigmarule/5266a592-b793-11ea-b3de-bbbbbb/",
-            data=json.dumps(
-                dict(
-                    rule_yaml=new_rule,
-                )
-            ),
-            content_type="application/json",
-        )
-
-        # check if the previous POST updated the element
-        response = self.client.get(
-            "/api/v1/sigmarule/5266a592-b793-11ea-b3de-bbbbbb/"
-        )
-
-        self.assertIsNotNone(response)
-        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
-        self.assertIn('cccc', response.json['objects'][0]["rule_uuid"])
-
     def test_get_sigma_rule(self):
         """Authenticated request to get an sigma rule."""
         self.login()
@@ -621,6 +576,44 @@ level: high
         # Search a rule that does not exist
         response = self.client.get("/api/v1/sigmarule/foobar/")
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_NOT_FOUND)
+
+    def test_put_sigma_rule(self):
+        """Authenticated request to update sigma rule."""
+        self.login()
+
+        response = self.client.put(
+            "/api/v1/sigmarule/5266a592-b793-11ea-b3de-bbbbbb/",
+            data=json.dumps(
+                dict(
+                    rule_uuid="5266a592-b793-11ea-b3de-bbbbbb",
+                    title='Suspicious Installation of bbbbbb',
+                    description='Detects suspicious installation of bbbbbb',
+                    rule_yaml="""
+title: Suspicious Installation of bbbbbb
+id: 5266a592-b793-11ea-b3de-bbbbbb
+description: Detects suspicious installation of bbbbbb
+references:
+    - https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html
+author: Alexander Jaeger
+date: 2020/06/26
+modified: 2022/06/12
+logsource:
+    product: linux
+    service: shell
+detection:
+    keywords:
+        # Generic suspicious commands
+        - '*apt-get install bbbbbb*'
+    condition: keywords
+falsepositives:
+    - Unknown
+level: high
+""",
+                )
+            ),
+            content_type="application/json",
+        )
+        self.assertIsNotNone(response)
 
 
 class SigmaRuleListResourceTest(BaseTest):
@@ -638,8 +631,107 @@ class SigmaRuleListResourceTest(BaseTest):
         self.assertIsNotNone(rule["created_at"])
 
 
+class SigmaRuleByTextResourceTest(BaseTest):
+    """Test SigmaRule by text resource."""
+
+    correct_rule = """
+        title: Installation of foobar
+        id: bb1e0d1d-cd13-4b65-bf7e-69b4e740266b
+        description: Detects suspicious installation of foobar
+        references:
+            - https://samle.com/foobar
+        author: Alexander Jaeger
+        date: 2020/12/10
+        modified: 2020/12/10
+        tags:
+            - attack.discovery
+            - attack.t1046
+        logsource:
+            product: linux
+            service: shell
+        detection:
+            keywords:
+                # Generic suspicious commands
+                - '*apt-get install foobar*'
+            condition: keywords
+        falsepositives:
+            - Unknown
+        level: high
+        """
+    expected_response = {
+        "meta": {"parsed": True},
+        "objects": [
+            {
+                "title": "Installation of foobar",
+                "id": "bb1e0d1d-cd13-4b65-bf7e-69b4e740266b",
+                "description": "Detects suspicious installation of foobar",
+                "references": ["https://samle.com/foobar"],
+                "author": "Alexander Jaeger",
+                "date": "2020/12/10",
+                "modified": "2020/12/10",
+                "tags": ["attack.discovery", "attack.t1046"],
+                "logsource": {"product": "linux", "service": "shell"},
+                "detection": {
+                    "keywords": ["*apt-get install foobar*"],
+                    "condition": "keywords",
+                },
+                "falsepositives": ["Unknown"],
+                "level": "high",
+                "es_query": '(data_type:("shell:zsh:history" OR "bash:history:command" OR "apt:history:line" OR "selinux:line") AND "apt-get install foobar")',  # pylint: disable=line-too-long
+                "file_name": "N/A",
+                "file_relpath": "N/A",
+            }
+        ],
+    }
+
+    def test_get_sigma_rule(self):
+        """Authenticated request to get an sigma rule by text."""
+        self.login()
+
+        data = dict(content=self.correct_rule)
+        response = self.client.post(
+            "/api/v1/sigmarule/text/",
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        self.assertIsNotNone(response)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+        self.assertDictContainsSubset(self.expected_response, response.json)
+        self.assert200(response)
+
+    def test_get_non_existing_rule_by_text(self):
+        """Authenticated request to get an sigma rule by text with non parseable
+        yaml text."""
+        self.login()
+        data = dict(content="foobar: asd")
+        response = self.client.post(
+            "/api/v1/sigmarule/text/",
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        data = json.loads(response.get_data(as_text=True))
+
+        self.assertIn("Sigma parsing error generating rule", data["message"])
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
+
+    def test_get_rule_by_text_no_form_data(self):
+        """Authenticated request to get an sigma rule by text with no form
+        data"""
+        self.login()
+        data = dict(action="post")
+        response = self.client.post(
+            "/api/v1/sigmarule/text/",
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        data = json.loads(response.get_data(as_text=True))
+
+        self.assertIn("Missing value in the request", data["message"])
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
+
+
 class SigmaByTextResourceTest(BaseTest):
-    """Test Sigma by text resource."""
+    """DEPRECATED: Test Sigma by text resource."""
 
     correct_rule = """
         title: Installation of foobar
@@ -692,7 +784,7 @@ class SigmaByTextResourceTest(BaseTest):
     }
 
     def test_get_sigma_rule(self):
-        """Authenticated request to get an sigma rule by text."""
+        """DEPRECATED: Authenticated request to get an sigma rule by text."""
         self.login()
 
         data = dict(content=self.correct_rule)
@@ -707,7 +799,7 @@ class SigmaByTextResourceTest(BaseTest):
         self.assert200(response)
 
     def test_get_non_existing_rule_by_text(self):
-        """Authenticated request to get an sigma rule by text with non parseable
+        """DEPRECATED: Authenticated request to get an sigma rule by text with non parseable
         yaml text."""
         self.login()
         data = dict(content="foobar: asd")
@@ -722,8 +814,8 @@ class SigmaByTextResourceTest(BaseTest):
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
 
     def test_get_rule_by_text_no_form_data(self):
-        """Authenticated request to get an sigma rule by text with no form
-        data"""
+        """DEPRECATED: Authenticated request to get an sigma rule by text with
+        no form data"""
         self.login()
         data = dict(action="post")
         response = self.client.post(

@@ -394,6 +394,21 @@ class TestSigmaUtilLib(BaseTest):
             rule.get("es_query"),
         )
 
+    def test_get_sigma_rule_by_text_missing_title(self):
+        """Test the Sigma yaml rule parsing with missing title value"""
+        rule = """
+id: 5af54681-df95-4c26-854f-2565e13cfab0
+status: stable
+description: Detection of logins performed with WMI
+detection:
+    selection:
+        EventID: 4624
+        ProcessName|endswith: '\WmiPrvSE.exe'
+    condition: selection
+"""
+        with self.assertRaises(NotImplementedError):
+            sigma_util.parse_sigma_rule_by_text(rule)
+
     def test_get_sigma_config_file(self):
         """Test getting sigma config file"""
         with self.assertRaises(ValueError):
@@ -407,15 +422,6 @@ class TestSigmaUtilLib(BaseTest):
         )
         self.assertIsNotNone(sigma_util.get_sigma_config_file())
         statuslist = sigma_util.get_sigma_rule_status_list()
-        # self.assertIn(
-        #    'exploratory',
-        #    blocklist[
-        #        (
-        #            blocklist['rule_id']
-        #            == 'fdf135a2-9241-4f96-a114-bb404948f736'
-        #        )
-        #    ]['status'].to_string,
-        # )
         self.assertEqual(
             'bad',
             statuslist[statuslist.values == 'deprecated']['status'].all(),

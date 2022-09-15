@@ -514,6 +514,9 @@ def parse_sigma_rule_by_text(rule_text, sigma_config=None):
         yaml.parser.ParserError: Not a correct YAML text provided
         NotImplementedError: A feature in the provided Sigma rule is not
             implemented in Sigma for Timesketch
+        ValueError: If one of the following fiels are missing in the yaml file:
+            - title
+            - description
     """
 
     try:
@@ -565,6 +568,21 @@ def parse_sigma_rule_by_text(rule_text, sigma_config=None):
 
     for sigma_rule in parsed_sigma_rules:
         sigma_es_query = _sanitize_query(sigma_rule)
+
+    if not isinstance(rule_return.get("title"), str):
+        error_msg = "Missing value: 'title' from the yaml file."
+        logger.error(error_msg)
+        raise ValueError(error_msg)
+
+    if not isinstance(rule_return.get("description"), str):
+        error_msg = "Missing value: 'description' from the yaml file."
+        logger.error(error_msg)
+        raise ValueError(error_msg)
+
+    if not isinstance(rule_return.get("id"), str):
+        error_msg = "Missing value: 'id' from the yaml file."
+        logger.error(error_msg)
+        raise ValueError(error_msg)
 
     rule_return.update({"es_query": sigma_es_query})
     rule_return.update({"file_name": "N/A"})

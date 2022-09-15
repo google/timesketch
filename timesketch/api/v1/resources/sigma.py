@@ -324,7 +324,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
     def post(self, rule_uuid=None):
         """Handles POST request to the resource.
 
-        Handels POST API calls to /sigmarule/<string:rule_uuid>/ where the
+        Handels POST API calls to /sigmarule/ where the
         rule_uuid is the primaray way to identify the rule.
 
         The rule is either created in the database if non with the given
@@ -342,17 +342,17 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         yaml file, the one from the yaml file is used.
 
         Args:
-            rule_uuid: uuid of the rule
+            only form data as json
 
         Returns:
             Sigma rule object and HTTP status code indicating
             whether operation was sucessful.
         """
-        form = request.json
-        if not form:
-            form = request.data
+        # form = request.json
+        # if not form:
+        #    form = request.data
 
-        rule_yaml = form.get("rule_yaml")
+        rule_yaml = request.json.get("rule_yaml")
 
         if not rule_yaml:
             abort(
@@ -364,29 +364,17 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
             abort(
                 HTTP_STATUS_CODE_FORBIDDEN, "rule_yaml needs to be a string."
             )
-
-        parsed_rule = ts_sigma_lib.parse_sigma_rule_by_text(rule_yaml)
-
-        if not rule_uuid:
-            rule_uuid = parsed_rule.get("id")
-
-        # does it actually make sense to have the rule_uuid as parameter?
-        if rule_uuid != parsed_rule.get("id"):
-            rule_uuid = parsed_rule.get("id")
+        try:
+            parsed_rule = ts_sigma_lib.parse_sigma_rule_by_text(rule_yaml)
+        except ValueError as e:
+            return abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                "Parsing error: {0!s}.format(e)",
+            )
+        rule_uuid = parsed_rule.get("id")
 
         title = parsed_rule.get("title")
-        if not title:
-            return abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                "Missing value: 'title' from the request.",
-            )
-
         description = parsed_rule.get("description")
-        if not description:
-            return abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                "Missing value: 'description' from the request.",
-            )
 
         # Query rules to see if it already exist and exit if found
         sigma_rule_from_db = SigmaRule.query.filter_by(
@@ -399,7 +387,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
 
         sigma_rule = SigmaRule.get_or_create(
             rule_uuid=rule_uuid,
-            rule_yaml=form.get("rule_yaml"),
+            rule_yaml=rule_yaml,
             description=description,
             title=title,
             user=current_user,
@@ -423,6 +411,65 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
             )
 
         return self.to_json(sigma_rule, status_code=HTTP_STATUS_CODE_CREATED)
+
+    @login_required
+    def put(self, rule_uuid):
+        """Handles update request to Sigma rules
+        Handels PUT API calls to /sigmarule/<string:rule_uuid>/ where the
+        rule_uuid is the primaray way to identify the rule.
+        The remaining attributes of the rule are provided in request itself.
+        If no `rule_yaml` is found in the reuqest, the method will fail as this
+        is required to parse the rule.
+        Args:
+            rule_uuid: uuid of the rule
+        Returns:
+            The updated sigma object in JSON (instance of
+            flask.wrappers.Response)
+        """
+
+        rule_yaml = request.json.get("rule_yaml")
+        if not rule_yaml:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                "Sigma parsing error: no yaml provided",
+            )
+        parsed_rule = ts_sigma_lib.parse_sigma_rule_by_text(rule_yaml)
+
+        if rule_uuid != parsed_rule.get("id"):
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                "Rule ID mismatch between parameter and yaml content",
+            )
+
+        sigma_rule_from_db = SigmaRule.query.filter_by(
+            rule_uuid=rule_uuid
+        ).first()
+
+        if not sigma_rule_from_db:
+            error_msg = "Sigma rule with uuid: {0!s} not found".format(
+                rule_uuid
+            )
+            logger.error(error_msg)
+            abort(HTTP_STATUS_CODE_NOT_FOUND, error_msg)
+
+        sigma_rule_from_db.rule_uuid = rule_uuid
+        sigma_rule_from_db.rule_yaml = rule_yaml
+        sigma_rule_from_db.title = parsed_rule.get("title")
+
+        try:
+            db_session.add(sigma_rule_from_db)
+            db_session.commit()
+        except IntegrityError as e:
+            error_msg = "Problem adding Sigma rule {0!s}".format(e)
+            logger.error(error_msg)
+            abort(
+                HTTP_STATUS_CODE_CONFLICT,
+                error_msg,
+            )
+
+        return self.to_json(
+            sigma_rule_from_db, status_code=HTTP_STATUS_CODE_CREATED
+        )
 
 
 class SigmaRuleByTextResource(resources.ResourceMixin, Resource):
