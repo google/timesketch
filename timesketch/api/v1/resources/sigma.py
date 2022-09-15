@@ -452,6 +452,9 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         try:
             parsed_rule = ts_sigma_lib.parse_sigma_rule_by_text(rule_yaml)
         except ValueError as e:
+            error_msg = "Error parsing Sigma rule {0!s}: {0!s}".format(
+                rule_uuid, e
+            )
             abort(HTTP_STATUS_CODE_BAD_REQUEST, error_msg)
 
         if rule_uuid != parsed_rule.get("id"):
