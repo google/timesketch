@@ -664,6 +664,15 @@ level: high
             response.json['objects'][0]["rule_yaml"],
         )
 
+        self.assertIn(
+            'cccccc',
+            response.json['objects'][0]["description"],
+        )
+        self.assertIn(
+            'cccccc',
+            response.json['objects'][0]["title"],
+        )
+
 
 class SigmaRuleListResourceTest(BaseTest):
     """Test Sigma resource."""
