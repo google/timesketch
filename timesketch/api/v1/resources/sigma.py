@@ -259,6 +259,9 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         Handels GET API calls to /sigmarule/<string:rule_uuid>/ where the
         rule_uuid is the primaray way to identify the rule.
 
+        Fetches a single SigmaRule from the database by filtering on rule_uuid
+        and returns a JSON representation of it
+
         Args:
             rule_uuid: uuid of the rule
 
@@ -353,7 +356,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
 
         if not rule_yaml:
             abort(
-                HTTP_STATUS_CODE_NOT_FOUND,
+                HTTP_STATUS_CODE_BAD_REQUEST,
                 "No rule_yaml supplied in the POST request to the API.",
             )
 
@@ -390,7 +393,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
             rule_uuid=rule_uuid
         ).first()
         if sigma_rule_from_db:
-            if sigma_rule_from_db.rule_uuid == parsed_rule.get("rule_uuid"):
+            if sigma_rule_from_db.rule_uuid == rule_uuid:
                 logger.debug("Rule was already found in teh database")
                 # it will overwritten with the provided content
 
@@ -403,10 +406,9 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         )
 
         if not sigma_rule:
-            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sigma rule object created")
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, "No sigma rule object created")
 
         sigma_rule.query_string = parsed_rule.get("es_query")
-        sigma_rule.rule_uuid = parsed_rule.get("id")
         sigma_rule.set_status(parsed_rule.get("status", "experimental"))
 
         try:

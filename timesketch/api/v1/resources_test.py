@@ -484,7 +484,7 @@ class SigmaListResourceTest(BaseTest):
 
 
 class SigmaRuleResourceTest(BaseTest):
-    """Test Sigma resource."""
+    """Test Sigma Rule resource."""
 
     expected_response = {
         "objects": {
@@ -565,7 +565,8 @@ level: high
             response.json['objects'][0]["rule_yaml"],
         )
 
-        # Attempt to add the same thing again with different content
+    def test_post_sigma_resource_missmatch_rule_uuid(self):
+        # Post a rule with different rule_uuid in param then in rule_yaml
         new_rule = """
 title: Suspicious Installation of cccccc
 id: 5266a592-b793-11ea-b3de-cccccc
@@ -592,9 +593,6 @@ level: high
             "/api/v1/sigmarule/5266a592-b793-11ea-b3de-bbbbbb/",
             data=json.dumps(
                 dict(
-                    rule_uuid="5266a592-b793-11ea-b3de-bbbbbb",
-                    title='Suspicious Installation of cccccc',
-                    description='Detects suspicious installation of cccccc',
                     rule_yaml=new_rule,
                 )
             ),
@@ -608,12 +606,7 @@ level: high
 
         self.assertIsNotNone(response)
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
-        self.assertIn('bbbbbb', response.json['objects'][0]["rule_uuid"])
-        # unclear why the db object is not updated here
-        # self.assertIn(
-        #    'cccccc',
-        #    response.json['objects'][0]["description"],
-        # )
+        self.assertIn('cccc', response.json['objects'][0]["rule_uuid"])
 
     def test_get_sigma_rule(self):
         """Authenticated request to get an sigma rule."""
@@ -711,6 +704,8 @@ class SigmaByTextResourceTest(BaseTest):
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
         self.assertDictContainsSubset(self.expected_response, response.json)
         self.assert200(response)
+
+    def test_get_non_existing_rule_by_text(self):
 
         # wrong sigma rule
         data = dict(content="foobar: asd")

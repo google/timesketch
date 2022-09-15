@@ -41,7 +41,7 @@ class SigmaRule(
 
     title = Column(UnicodeText())
     description = Column(UnicodeText())
-    rule_uuid = Column(Unicode(255))
+    rule_uuid = Column(Unicode(255), unique=True)
     rule_yaml = Column(UnicodeText())
     user_id = Column(
         Integer, ForeignKey("user.id")
@@ -50,10 +50,10 @@ class SigmaRule(
     def __init__(
         self,
         user,
-        title = None,
-        description = None,
+        title=None,
+        description=None,
         rule_uuid=None,
-        rule_yaml=None
+        rule_yaml=None,
     ):
         """Initialize the SigmaRule object.
         Args:
