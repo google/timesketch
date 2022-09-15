@@ -229,10 +229,13 @@ class SigmaRuleListResource(resources.ResourceMixin, Resource):
 
     @login_required
     def get(self):
-        """Handles GET request to the /sigma/ resource.
+        """Handles GET request to the `/sigma/` resource.
 
-        Will return all rules stored in the database on the system.
-        And returns a list of JSON representations of the rules.
+        Will fetch all rules stored in the database on the system
+        and return a list of JSON representations of the rules.
+
+        The result will formatted as:
+            {"objects": [sigma_rules], "meta": {"rules_count":42}
 
         Returns:
             List of sigma rules represented in JSON
@@ -262,6 +265,8 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         Fetches a single SigmaRule from the database by filtering on rule_uuid
         and returns a JSON representation of it
 
+        Result looks like: {"objects": [return_rule], "meta": {}}
+
         Args:
             rule_uuid: uuid of the rule
 
@@ -272,24 +277,25 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
             rule = SigmaRule.query.filter_by(rule_uuid=rule_uuid).first()
 
         except Exception as e:  # pylint: disable=broad-except
+            error_msg = "Unable to get the Sigma rule {0!s}".format(e)
             logger.error(
-                "Unable to get the Sigma rule",
+                error_msg,
                 exc_info=True,
             )
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                "Unable to get Sigma rule. Error {0!s}".format(e),
+                error_msg,
             )
 
         if not rule:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No rule found with this ID.")
-        return_rules = []
+        return_rule = []
 
         assert isinstance(rule, SigmaRule)
 
-        return_rules.append(_enrich_sigma_rule_object(rule=rule))
+        return_rule.append(_enrich_sigma_rule_object(rule=rule))
 
-        return jsonify({"objects": return_rules, "meta": {}})
+        return jsonify({"objects": return_rule, "meta": {}})
 
     @login_required
     def delete(self, rule_uuid):
@@ -310,9 +316,11 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         rule = SigmaRule.query.filter_by(rule_uuid=rule_uuid).first()
 
         if not rule:
+            error_msg = "No rule found with rule_uuid.{0!s}".format(rule_uuid)
+            logger.debug(error_msg)  # only needed in debug cases
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                "No rule found with rule_uuid.{0!s}".format(rule_uuid),
+                error_msg,
             )
 
         db_session.delete(rule)
@@ -327,7 +335,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         Handels POST API calls to /sigmarule/ where the
         rule_uuid is the primaray way to identify the rule.
 
-        The rule is either created in the database if non with the given
+        The rule is created in the database if non with the given
         rule_uuid is found in the database
 
         The remaining attributes of the rule are provided in request itself.
@@ -341,17 +349,15 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         If the `rule_uuid` parameter is different to the one provided in the
         yaml file, the one from the yaml file is used.
 
+        To update a rule, use `PUT`instead.
+
         Args:
-            only form data as json
+            rule_uuid: optional field that is not needed
 
         Returns:
             Sigma rule object and HTTP status code indicating
             whether operation was sucessful.
         """
-        # form = request.json
-        # if not form:
-        #    form = request.data
-
         rule_yaml = request.json.get("rule_yaml")
 
         if not rule_yaml:
@@ -367,9 +373,11 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         try:
             parsed_rule = ts_sigma_lib.parse_sigma_rule_by_text(rule_yaml)
         except ValueError as e:
+            error_msg = "Sigma Rule Parsing error: {0!s}".format(e)
+            logger.debug(error_msg)
             return abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                "Parsing error: {0!s}.format(e)",
+                error_msg,
             )
         rule_uuid = parsed_rule.get("id")
 
@@ -382,8 +390,13 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         ).first()
         if sigma_rule_from_db:
             if sigma_rule_from_db.rule_uuid == rule_uuid:
-                logger.debug("Rule was already found in teh database")
-                # it will overwritten with the provided content
+                error_msg = (
+                    "Rule {0!s} was already found in the database".format(
+                        rule_uuid
+                    )
+                )
+                logger.debug(error_msg)
+                abort(HTTP_STATUS_CODE_BAD_REQUEST, error_msg)
 
         sigma_rule = SigmaRule.get_or_create(
             rule_uuid=rule_uuid,
@@ -396,8 +409,10 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         if not sigma_rule:
             abort(HTTP_STATUS_CODE_BAD_REQUEST, "No sigma rule object created")
 
-        sigma_rule.query_string = parsed_rule.get("es_query")
         sigma_rule.set_status(parsed_rule.get("status", "experimental"))
+        # query string is not stored in the database but we attach it to
+        # the JSON result here as it is added in the GET methods
+        sigma_rule.query_string = parsed_rule.get("es_query")
 
         try:
             db_session.add(sigma_rule)
@@ -420,6 +435,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         The remaining attributes of the rule are provided in request itself.
         If no `rule_yaml` is found in the reuqest, the method will fail as this
         is required to parse the rule.
+
         Args:
             rule_uuid: uuid of the rule
         Returns:
@@ -433,7 +449,10 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 "Sigma parsing error: no yaml provided",
             )
-        parsed_rule = ts_sigma_lib.parse_sigma_rule_by_text(rule_yaml)
+        try:
+            parsed_rule = ts_sigma_lib.parse_sigma_rule_by_text(rule_yaml)
+        except ValueError as e:
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, error_msg)
 
         if rule_uuid != parsed_rule.get("id"):
             abort(
@@ -468,7 +487,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
             )
 
         return self.to_json(
-            sigma_rule_from_db, status_code=HTTP_STATUS_CODE_CREATED
+            sigma_rule_from_db, status_code=HTTP_STATUS_CODE_OK
         )
 
 

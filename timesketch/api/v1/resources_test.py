@@ -581,14 +581,11 @@ level: high
         """Authenticated request to update sigma rule."""
         self.login()
 
-        response = self.client.put(
-            "/api/v1/sigmarule/5266a592-b793-11ea-b3de-bbbbbb/",
-            data=json.dumps(
-                dict(
-                    rule_uuid="5266a592-b793-11ea-b3de-bbbbbb",
-                    title='Suspicious Installation of bbbbbb',
-                    description='Detects suspicious installation of bbbbbb',
-                    rule_yaml="""
+        sigma = dict(
+            rule_uuid="5266a592-b793-11ea-b3de-bbbbbb",
+            title='Suspicious Installation of bbbbbb',
+            description='Detects suspicious installation of bbbbbb',
+            rule_yaml="""
 title: Suspicious Installation of bbbbbb
 id: 5266a592-b793-11ea-b3de-bbbbbb
 description: Detects suspicious installation of bbbbbb
@@ -609,11 +606,63 @@ falsepositives:
     - Unknown
 level: high
 """,
+        )
+
+        # Create a first rule
+        response = self.client.post(
+            "/api/v1/sigmarule/5266a592-b793-11ea-b3de-bbbbbb/",
+            data=json.dumps(sigma),
+            content_type="application/json",
+        )
+        self.assertIn('bbbbbb', response.json['objects'][0]["rule_uuid"])
+        self.assertIn(
+            'bbbbbb',
+            response.json['objects'][0]["description"],
+        )
+        self.assertIn(
+            'shell',
+            response.json['objects'][0]["rule_yaml"],
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+        response = self.client.put(
+            "/api/v1/sigmarule/5266a592-b793-11ea-b3de-bbbbbb/",
+            data=json.dumps(
+                dict(
+                    rule_uuid="5266a592-b793-11ea-b3de-bbbbbb",
+                    title='Suspicious Installation of cccccc',
+                    description='Detects suspicious installation of cccccc',
+                    rule_yaml="""
+title: Suspicious Installation of cccccc
+id: 5266a592-b793-11ea-b3de-bbbbbb
+description: Detects suspicious installation of cccccc
+references:
+    - https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html
+author: Alexander Jaeger
+date: 2020/06/26
+modified: 2022/06/12
+logsource:
+    product: linux
+    service: shell
+detection:
+    keywords:
+        # Generic suspicious commands
+        - '*apt-get install cccccc*'
+    condition: keywords
+falsepositives:
+    - Unknown
+level: high
+""",
                 )
             ),
             content_type="application/json",
         )
         self.assertIsNotNone(response)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+        self.assertIn('bbbbbb', response.json['objects'][0]["rule_uuid"])
+        self.assertIn(
+            'cccccc',
+            response.json['objects'][0]["description"],
+        )
 
 
 class SigmaRuleListResourceTest(BaseTest):
