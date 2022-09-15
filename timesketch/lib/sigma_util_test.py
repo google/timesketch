@@ -396,7 +396,7 @@ class TestSigmaUtilLib(BaseTest):
 
     def test_get_sigma_rule_by_text_missing_title(self):
         """Test the Sigma yaml rule parsing with missing title value"""
-        rule = """
+        rule = r"""
 id: 5af54681-df95-4c26-854f-2565e13cfab0
 status: stable
 description: Detection of logins performed with WMI
