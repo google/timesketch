@@ -346,7 +346,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
             rule_uuid: optional field that is not needed
 
         Returns:
-            Sigma rule object and HTTP status 401 code indicating
+            Sigma rule object and HTTP status 200 code indicating
             whether operation was sucessful.
             HTTP Error code 400 if no `rule_yaml` is provided
             HTTP Error code 400 if rule_uuid does not match id in the yaml.
