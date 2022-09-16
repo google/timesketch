@@ -348,7 +348,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         rule.
 
         Args:
-            rule_uuid: UUID of the rule
+            rule_uuid: UUID of the rule.
 
         Returns:
             JSON sigma rule representation
@@ -384,7 +384,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         `/sigmarule/<string:rule_uuid>/`.
 
         Args:
-            rule_uuid: UUID of the rule to be deleted
+            rule_uuid: UUID of the rule to be deleted.
 
         Returns:
             HTTP_STATUS_CODE_NOT_FOUND if rule not found.
