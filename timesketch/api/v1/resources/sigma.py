@@ -259,7 +259,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
     def get(self, rule_uuid):
         """Fetches a single Sigma rule from the databse.
 
-        Fetches a single Sigma rule selected by the `uuid` in
+        Fetches a single Sigma rule selected by the `UUID` in
         `/sigmarule/<string:rule_uuid>/` and returns a JSON represantion of the
         rule.
 
