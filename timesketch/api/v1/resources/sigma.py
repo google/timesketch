@@ -523,7 +523,6 @@ class SigmaRuleByTextResource(resources.ResourceMixin, Resource):
 
         try:
             sigma_rule = ts_sigma_lib.parse_sigma_rule_by_text(content)
-
         except ValueError as e:
             error_msg = (
                 "Sigma rule Parsing error with provided rule {0!s}".format(e)
