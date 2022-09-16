@@ -266,9 +266,6 @@ class SigmaRuleListResource(resources.ResourceMixin, Resource):
 
         Remark: To update a rule, use `PUT`instead.
 
-        Args:
-            rule_uuid: optional field that is not needed.
-
         Returns:
             Sigma rule object and HTTP status 200 code indicating
             whether operation was sucessful.
@@ -294,12 +291,6 @@ class SigmaRuleListResource(resources.ResourceMixin, Resource):
                 error_msg,
             )
 
-        if rule_uuid:
-            if rule_uuid != parsed_rule.get("id"):
-                abort(
-                    HTTP_STATUS_CODE_BAD_REQUEST,
-                    "Rule ID mismatch between parameter and YAML content",
-                )
         rule_uuid = parsed_rule.get("id")
 
         # Query rules to see if it already exist and exit if found
