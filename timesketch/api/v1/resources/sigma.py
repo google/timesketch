@@ -261,9 +261,6 @@ class SigmaRuleListResource(resources.ResourceMixin, Resource):
         If no `rule_yaml` is found in the reuqest, the method will fail as this
         is required to parse the rule.
 
-        If `rule_uuid` does not match the id provided in the YAML file the
-        request will fail.
-
         Remark: To update a rule, use `PUT`instead.
 
         Returns:
