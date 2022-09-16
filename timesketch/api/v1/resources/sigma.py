@@ -309,14 +309,6 @@ class SigmaRuleListResource(resources.ResourceMixin, Resource):
             user=current_user,
         )
 
-        if not sigma_rule:
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                "No sigma rule object created for UUID: {0:s}".format(
-                    rule_uuid
-                ),
-            )
-
         sigma_rule.set_status(parsed_rule.get("status", "experimental"))
         # query string is not stored in the database but we attach it to
         # the JSON result here as it is added in the GET methods
@@ -557,13 +549,6 @@ class SigmaRuleByTextResource(resources.ResourceMixin, Resource):
                 error_msg,
             )
 
-        if not sigma_rule:
-            error_msg = "Sigma parsing error: No sigma rule was parsed"
-            logger.error(
-                error_msg,
-                exc_info=True,
-            )
-            abort(HTTP_STATUS_CODE_BAD_REQUEST, error_msg)
         metadata = {"parsed": True}
 
         return jsonify({"objects": [sigma_rule], "meta": metadata})
