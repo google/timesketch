@@ -780,7 +780,7 @@ class SigmaRuleByTextResourceTest(BaseTest):
         self.login()
         response = self.client.post(
             "/api/v1/sigmarule/text/",
-            data={'action': 'post'},
+            data=json.dumps(dict(action="post")),
             content_type="application/json",
         )
         data = json.loads(response.get_data(as_text=True))
