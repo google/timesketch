@@ -233,14 +233,15 @@ class SigmaRuleListResource(resources.ResourceMixin, Resource):
 
     @login_required
     def get(self):
-        """Will fetch all Sigma rules stored in the database on the system
-        and return a list of JSON representations of the rules.
+        """Fetches Sigma rules from the database
 
-        The result will formatted as:
-            {"objects": [sigma_rules], "meta": {"rules_count":42}
+        Fetches fetch all Sigma rules stored in the database on the system
+        and returns a list of JSON representations of the rules.
+
 
         Returns:
-            List of sigma rules represented in JSON
+            List of sigma rules represented in JSON e.g.
+                {"objects": [sigma_rules], "meta": {"rules_count": 42}
         """
         sigma_rules = []
 
@@ -257,12 +258,11 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
 
     @login_required
     def get(self, rule_uuid):
-        """Fetches a signle Sigma rule by UUID from the databse..
+        """Fetches a single Sigma rule from the databse.
 
-        Handles GET API calls to `/sigmarule/<string:rule_uuid>/` where the
-        rule_uuid parameter is the rule identifier.
-
-        Result looks like: {"objects": [return_rule], "meta": {}}
+        Fetches a single Sigma rule selected by the `uuid` in
+        `/sigmarule/<string:rule_uuid>/` and returns a JSON represantion of the
+        rule.
 
         Args:
             rule_uuid: uuid of the rule
@@ -297,9 +297,11 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
 
     @login_required
     def delete(self, rule_uuid):
-        """Handels DELETE API calls to /sigmarule/<string:rule_uuid>/ where the
-        rule_uuid is used to identify the rule.
-        Deletes the SigmaRule matching the specified UUID from the database.
+        """Deletes a Sigma rule from the database,.
+
+        Deletes a single Sigma rule selected by the `uuid` in
+        `/sigmarule/<string:rule_uuid>/` and returns a HTTP Code 200 if
+        the rule is deleted.
 
         Args:
             rule_uuid: uuid of the rule to be deleted
@@ -326,31 +328,30 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
 
     @login_required
     def post(self, rule_uuid=None):
-        """Handels POST API calls to `/sigmarule/` where the
-        rule_uuid is the primaray way to identify the rule.
+        """Adds a single Sigma rule to the database.
 
-        The rule is created in the database if non with the given
-        rule_uuid is found in the database
+        Adds a single Sigma rule to the database when `/sigmarule/` is called
+        with a POST request.
 
-        The remaining attributes of the rule are provided in request itself.
+        All attributes of the rule are taken by the `rule_yaml` value in the
+        POST request.
 
         If no `rule_yaml` is found in the reuqest, the method will fail as this
         is required to parse the rule.
 
-        In case no `rule_uuid`is given as a parameter, the methd will try to
-        get it from the yaml file.
+        If `rule_uuid` does not match the id provided in the yaml file the
+        request will fail.
 
-        If the `rule_uuid` parameter is different to the one provided in the
-        yaml file, the one from the yaml file is used.
-
-        To update a rule, use `PUT`instead.
+        Remark: To update a rule, use `PUT`instead.
 
         Args:
             rule_uuid: optional field that is not needed
 
         Returns:
-            Sigma rule object and HTTP status code indicating
+            Sigma rule object and HTTP status 401 code indicating
             whether operation was sucessful.
+            HTTP Error code 400 if no `rule_yaml` is provided
+            HTTP Error code 400 if rule_uuid does not match id in the yaml.
         """
         rule_yaml = request.json.get("rule_yaml")
 
@@ -369,6 +370,13 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 error_msg,
             )
+
+        if rule_uuid:
+            if rule_uuid != parsed_rule.get("id"):
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    "Rule ID mismatch between parameter and yaml content",
+                )
         rule_uuid = parsed_rule.get("id")
 
         title = parsed_rule.get("title")
@@ -419,10 +427,11 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
 
     @login_required
     def put(self, rule_uuid):
-        """Update existing Sigma rules
+        """Update existing Sigma rule and its values in the database.
 
-        Calls to /sigmarule/<string:rule_uuid>/ where the
+        Calls to `/sigmarule/<string:rule_uuid>/` where the
         rule_uuid is way to identify the rule.
+
         The remaining attributes of the rule are provided in request itself.
         If no `rule_yaml` is found in the reuqest, the method will fail as this
         is required to parse the rule.
@@ -432,9 +441,9 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
 
         Args:
             rule_uuid: uuid of the rule
+
         Returns:
-            The updated sigma object in JSON (instance of
-            flask.wrappers.Response)
+            The updated sigma object in JSON
         """
 
         rule_yaml = request.json.get("rule_yaml")
@@ -490,20 +499,20 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
 
 
 class SigmaRuleByTextResource(resources.ResourceMixin, Resource):
-    """Resource to get a Sigma rule by text."""
+    """Get a Sigma rule by providing a text."""
 
     @login_required
     def post(self):
-        """Text provided via form is parsed as a SigmaRule and returned as a
-        JSON.
+        """Get a parsed Sigma rule by providing a text
 
-        Response looks as following:
-            - {"objects": [sigma_rule], "meta": {"parsed": True}}
+        Will parse a provided text `rule_yaml`, parse it and return as JSON
 
-        If no form content is given, the method will abort.
+
+        If no form content is given, the method will abort with HTTP Error 400.
 
         Returns:
-            JSON sigma rule
+            JSON sigma rule e.g.
+                {"objects": [sigma_rule], "meta": {"parsed": True}}
         """
 
         form = request.json
