@@ -261,6 +261,7 @@ limitations under the License.
           <ts-sketch-explore-event-list-row-detail
             :event="event"
             @addChip="$emit('addChip', $event)"
+            @setQueryAndFilter="$emit('setQueryAndFilter', $event)"
           ></ts-sketch-explore-event-list-row-detail>
         </div>
       </td>

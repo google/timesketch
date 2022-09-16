@@ -37,6 +37,7 @@ limitations under the License.
       :search-node="searchNode"
       v-bind:id="event._id"
       @addChip="$emit('addChip', $event)"
+      @setQueryAndFilter="$emit('setQueryAndFilter', $event)"
       @addLabel="$emit('addLabel', $event)"
       @searchContext="$emit('searchContext', $event)"
     >
