@@ -299,8 +299,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         """Deletes a Sigma rule from the database,.
 
         Deletes a single Sigma rule selected by the `uuid` in
-        `/sigmarule/<string:rule_uuid>/` and returns a HTTP Code 200 if
-        the rule is deleted.
+        `/sigmarule/<string:rule_uuid>/`.
 
         Args:
             rule_uuid: uuid of the rule to be deleted
