@@ -35,9 +35,9 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CONFLICT
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
-from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR
+from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 
 from timesketch.models.sigma import SigmaRule
 from timesketch.models import db_session
@@ -198,7 +198,7 @@ class SigmaByTextResource(resources.ResourceMixin, Resource):
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 "Sigma Parsing error: Feature in the rule provided "
-                " is not implemented in this backend {0!s}".format(exception),
+                " is not implemented in this backend: {0!s}".format(exception),
             )
 
         except sigma_exceptions.SigmaParseError as exception:
@@ -217,7 +217,7 @@ class SigmaByTextResource(resources.ResourceMixin, Resource):
             )
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                "Sigma parsing error: invalid yaml provided {0!s}".format(
+                "Sigma parsing error: invalid yaml provided: {0!s}".format(
                     exception
                 ),
             )
@@ -379,28 +379,22 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
                 )
         rule_uuid = parsed_rule.get("id")
 
-        title = parsed_rule.get("title")
-        description = parsed_rule.get("description")
-
         # Query rules to see if it already exist and exit if found
         sigma_rule_from_db = SigmaRule.query.filter_by(
             rule_uuid=rule_uuid
         ).first()
         if sigma_rule_from_db:
-            if sigma_rule_from_db.rule_uuid == rule_uuid:
-                error_msg = (
-                    "Rule {0!s} was already found in the database".format(
-                        rule_uuid
-                    )
-                )
-                logger.debug(error_msg)
-                abort(HTTP_STATUS_CODE_BAD_REQUEST, error_msg)
+            error_msg = "Rule {0!s} was already found in the database".format(
+                rule_uuid
+            )
+            logger.debug(error_msg)
+            abort(HTTP_STATUS_CODE_FORBIDDEN, error_msg)
 
         sigma_rule = SigmaRule.get_or_create(
             rule_uuid=rule_uuid,
             rule_yaml=rule_yaml,
-            description=description,
-            title=title,
+            description=parsed_rule.get("description"),
+            title=parsed_rule.get("title"),
             user=current_user,
         )
 
@@ -416,7 +410,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
             db_session.add(sigma_rule)
             db_session.commit()
         except IntegrityError as e:
-            error_msg = "Problem adding Sigma rule {0!s}".format(e)
+            error_msg = "Error adding Sigma rule {0!s}".format(e)
             logger.error(error_msg)
             abort(
                 HTTP_STATUS_CODE_CONFLICT,
@@ -450,7 +444,9 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         if not rule_yaml:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                "Sigma parsing error: no yaml provided",
+                "Error parsing Sigma rule {0!s}: no yaml provided".format(
+                    rule_uuid
+                ),
             )
         try:
             parsed_rule = ts_sigma_lib.parse_sigma_rule_by_text(rule_yaml)
@@ -463,7 +459,9 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         if rule_uuid != parsed_rule.get("id"):
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                "Rule ID mismatch between parameter and yaml content",
+                "Rule ID mismatch parameter:{0!s} and yaml content:{1!s}".format(
+                    rule_uuid, parsed_rule.get("id")
+                ),
             )
 
         sigma_rule_from_db = SigmaRule.query.filter_by(
@@ -477,7 +475,6 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
             logger.error(error_msg)
             abort(HTTP_STATUS_CODE_NOT_FOUND, error_msg)
 
-        sigma_rule_from_db.rule_uuid = rule_uuid
         sigma_rule_from_db.rule_yaml = rule_yaml
         sigma_rule_from_db.title = parsed_rule.get("title")
         sigma_rule_from_db.description = parsed_rule.get("description")
@@ -486,7 +483,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
             db_session.add(sigma_rule_from_db)
             db_session.commit()
         except IntegrityError as e:
-            error_msg = "Problem adding Sigma rule {0!s}".format(e)
+            error_msg = "Error adding Sigma rule {0!s}".format(e)
             logger.error(error_msg)
             abort(
                 HTTP_STATUS_CODE_CONFLICT,
@@ -531,9 +528,7 @@ class SigmaRuleByTextResource(resources.ResourceMixin, Resource):
 
         except ValueError as e:
             error_msg = (
-                "Sigma Parsing error with the user provided rule {0!s}".format(
-                    e
-                )
+                "Sigma rule Parsing error with provided rule {0!s}".format(e)
             )
             logger.error(
                 error_msg,
@@ -547,7 +542,7 @@ class SigmaRuleByTextResource(resources.ResourceMixin, Resource):
         except NotImplementedError as e:
             error_msg = (
                 "Sigma Parsing error: Feature in the rule provided"
-                " is not implemented in this backend{0!s}".format(e)
+                " is not implemented in this backend {0!s}".format(e)
             )
             logger.error(
                 error_msg,

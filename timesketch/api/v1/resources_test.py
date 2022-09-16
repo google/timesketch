@@ -573,7 +573,9 @@ level: high
         )
         self.assertIsNotNone(response)
 
-        # Search a rule that does not exist
+    def test_get_sigma_rule_that_does_not_exist(self):
+        """Fetch a Sigma rule that does not exist."""
+        self.login()
         response = self.client.get("/api/v1/sigmarule/foobar/")
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_NOT_FOUND)
 
@@ -776,10 +778,9 @@ class SigmaRuleByTextResourceTest(BaseTest):
         """Authenticated request to get an sigma rule by text with no form
         data"""
         self.login()
-        data = dict(action="post")
         response = self.client.post(
             "/api/v1/sigmarule/text/",
-            data=json.dumps(data, ensure_ascii=False),
+            data={'action': 'post'},
             content_type="application/json",
         )
         data = json.loads(response.get_data(as_text=True))
