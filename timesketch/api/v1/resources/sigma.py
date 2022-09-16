@@ -118,7 +118,7 @@ class SigmaResource(resources.ResourceMixin, Resource):
     def get(self, rule_uuid):
         """DEPRECATED: Handles GET request to the resource.
         Args:
-            rule_uuid: uuid of the sigma rule
+            rule_uuid: UUID of the sigma rule
         Returns:
             JSON sigma rule
         """
@@ -217,7 +217,7 @@ class SigmaByTextResource(resources.ResourceMixin, Resource):
             )
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                "Sigma parsing error: invalid yaml provided: {0!s}".format(
+                "Sigma parsing error: invalid YAML provided: {0!s}".format(
                     exception
                 ),
             )
@@ -264,7 +264,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         rule.
 
         Args:
-            rule_uuid: uuid of the rule
+            rule_uuid: UUID of the rule
 
         Returns:
             JSON sigma rule representation
@@ -302,7 +302,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         `/sigmarule/<string:rule_uuid>/`.
 
         Args:
-            rule_uuid: uuid of the rule to be deleted
+            rule_uuid: UUID of the rule to be deleted
 
         Returns:
             HTTP_STATUS_CODE_NOT_FOUND if rule not found.
@@ -337,7 +337,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         If no `rule_yaml` is found in the reuqest, the method will fail as this
         is required to parse the rule.
 
-        If `rule_uuid` does not match the id provided in the yaml file the
+        If `rule_uuid` does not match the id provided in the YAML file the
         request will fail.
 
         Remark: To update a rule, use `PUT`instead.
@@ -350,7 +350,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
             whether operation was sucessful.
             HTTP Error code 400 if no `rule_yaml` is provided or a parsing
                 error occurs.
-            HTTP Error code 400 if rule_uuid does not match id in the yaml.
+            HTTP Error code 400 if rule_uuid does not match id in the YAML.
         """
         rule_yaml = request.json.get("rule_yaml")
 
@@ -374,7 +374,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
             if rule_uuid != parsed_rule.get("id"):
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
-                    "Rule ID mismatch between parameter and yaml content",
+                    "Rule ID mismatch between parameter and YAML content",
                 )
         rule_uuid = parsed_rule.get("id")
 
@@ -438,7 +438,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         If `rule_uuid` doesn't match the UUI in `rule_yaml`, the request will fail.
 
         Args:
-            rule_uuid: uuid of the rule
+            rule_uuid: UUID of the rule
 
         Returns:
             The updated Sigma object in JSON
@@ -448,7 +448,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         if not rule_yaml:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                "Error parsing Sigma rule {0!s}: no yaml provided".format(
+                "Error parsing Sigma rule {0!s}: no YAML provided".format(
                     rule_uuid
                 ),
             )
@@ -463,7 +463,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         if rule_uuid != parsed_rule.get("id"):
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                "Rule ID mismatch parameter:{0!s} and yaml content:{1!s}".format(
+                "Rule ID mismatch parameter:{0!s} and YAML content:{1!s}".format(
                     rule_uuid, parsed_rule.get("id")
                 ),
             )
@@ -473,7 +473,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         ).first()
 
         if not sigma_rule_from_db:
-            error_msg = "Sigma rule with uuid: {0!s} not found".format(
+            error_msg = "Sigma rule with UUID: {0!s} not found".format(
                 rule_uuid
             )
             logger.error(error_msg)
@@ -563,7 +563,7 @@ class SigmaRuleByTextResource(resources.ResourceMixin, Resource):
 
         except yaml.parser.ParserError as e:
             error_msg = (
-                "Sigma parsing error: invalid yaml provided {0!s}".format(e)
+                "Sigma parsing error: invalid YAML provided {0!s}".format(e)
             )
             logger.error(
                 error_msg,
