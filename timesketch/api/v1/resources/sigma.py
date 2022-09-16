@@ -233,11 +233,10 @@ class SigmaRuleListResource(resources.ResourceMixin, Resource):
 
     @login_required
     def get(self):
-        """Fetches Sigma rules from the database
+        """Fetches Sigma rules from the database.
 
         Fetches fetch all Sigma rules stored in the database on the system
         and returns a list of JSON representations of the rules.
-
 
         Returns:
             List of sigma rules represented in JSON e.g.
