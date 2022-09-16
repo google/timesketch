@@ -508,13 +508,13 @@ def parse_sigma_rule_by_text(rule_text, sigma_config=None):
         sigma_config: config file object
 
     Returns:
-        Json representation of the parsed rule
+        JSON representation of the parsed rule
     Raises:
         sigma_exceptions.SigmaParseError: Issue with parsing the given rule
         yaml.parser.ParserError: Not a correct YAML text provided
         NotImplementedError: A feature in the provided Sigma rule is not
             implemented in Sigma for Timesketch
-        ValueError: If one of the following fiels are missing in the yaml file:
+        ValueError: If one of the following fiels are missing in the YAML file:
             - title
             - description
         ValueError: If provided rule_text is not a string
@@ -574,17 +574,17 @@ def parse_sigma_rule_by_text(rule_text, sigma_config=None):
         sigma_es_query = _sanitize_query(sigma_rule)
 
     if not isinstance(rule_return.get("title"), str):
-        error_msg = "Missing value: 'title' from the yaml file."
+        error_msg = "Missing value: 'title' from the YAML data."
         logger.error(error_msg)
         raise ValueError(error_msg)
 
     if not isinstance(rule_return.get("description"), str):
-        error_msg = "Missing value: 'description' from the yaml file."
+        error_msg = "Missing value: 'description' from the YAML data."
         logger.error(error_msg)
         raise ValueError(error_msg)
 
     if not isinstance(rule_return.get("id"), str):
-        error_msg = "Missing value: 'id' from the yaml file."
+        error_msg = "Missing value: 'id' from the YAML data."
         logger.error(error_msg)
         raise ValueError(error_msg)
 

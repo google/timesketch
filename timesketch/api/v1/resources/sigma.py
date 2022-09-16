@@ -53,10 +53,10 @@ def _enrich_sigma_rule_object(rule: SigmaRule):
     a field.
 
     Args:
-        rule: type SigmaRule
+        rule: type SigmaRule.
 
     Returns:
-        enriched Sigma dict
+        Enriched Sigma dict.
     """
     parsed_rule = ts_sigma_lib.parse_sigma_rule_by_text(rule.rule_yaml)
     parsed_rule["rule_uuid"] = parsed_rule.get("id", rule.rule_uuid)
@@ -80,7 +80,7 @@ class SigmaListResource(resources.ResourceMixin, Resource):
     """DEPRECATED: Resource to get list of Sigma rules.
 
     Will be removed as part of
-    https://github.com/google/timesketch/issues/2301
+    https://github.com/google/timesketch/issues/2301.
 
     """
 
@@ -111,7 +111,7 @@ class SigmaResource(resources.ResourceMixin, Resource):
     """DEPRECATED: Resource to get a Sigma rule.
 
     Will be removed as part of
-    https://github.com/google/timesketch/issues/2301
+    https://github.com/google/timesketch/issues/2301.
     """
 
     @login_required
@@ -154,7 +154,7 @@ class SigmaByTextResource(resources.ResourceMixin, Resource):
     """DEPRECATED: Resource to get a Sigma rule by text.
 
     Will be removed as part of
-    https://github.com/google/timesketch/issues/2301
+    https://github.com/google/timesketch/issues/2301.
 
     """
 
@@ -222,9 +222,6 @@ class SigmaByTextResource(resources.ResourceMixin, Resource):
                 ),
             )
 
-        if not sigma_rule:
-            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sigma was parsed")
-
         return jsonify({"objects": [sigma_rule], "meta": {}})
 
 
@@ -264,7 +261,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         rule.
 
         Args:
-            rule_uuid: UUID of the rule
+            rule_uuid: UUID of the rule.
 
         Returns:
             JSON sigma rule representation
@@ -272,7 +269,6 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         """
         try:
             rule = SigmaRule.query.filter_by(rule_uuid=rule_uuid).first()
-
         except Exception as e:  # pylint: disable=broad-except
             error_msg = "Unable to get the Sigma rule {0!s}".format(e)
             logger.error(
@@ -286,11 +282,10 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
 
         if not rule:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No rule found with this ID.")
-        return_rule = []
 
-        return_rule.append(_enrich_sigma_rule_object(rule=rule))
+        return_rule = _enrich_sigma_rule_object(rule=rule)
 
-        return jsonify({"objects": return_rule, "meta": {}})
+        return jsonify({"objects": [return_rule], "meta": {}})
 
     @login_required
     def delete(self, rule_uuid):
@@ -300,7 +295,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         `/sigmarule/<string:rule_uuid>/`.
 
         Args:
-            rule_uuid: UUID of the rule to be deleted
+            rule_uuid: UUID of the rule to be deleted.
 
         Returns:
             HTTP_STATUS_CODE_NOT_FOUND if rule not found.
@@ -436,10 +431,10 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         If `rule_uuid` doesn't match the UUI in `rule_yaml`, the request will fail.
 
         Args:
-            rule_uuid: UUID of the rule
+            rule_uuid: UUID of the rule.
 
         Returns:
-            The updated Sigma object in JSON
+            The updated Sigma object in JSON.
         """
 
         rule_yaml = request.json.get("rule_yaml")
