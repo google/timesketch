@@ -534,7 +534,7 @@ level: high
 
         # Create a first rule
         response = self.client.post(
-            "/api/v1/sigmarule/5266a592-b793-11ea-b3de-bbbbbb/",
+            "/api/v1/sigmarule/",
             data=json.dumps(sigma),
             content_type="application/json",
         )
@@ -612,7 +612,7 @@ level: high
 
         # Create a first rule
         response = self.client.post(
-            "/api/v1/sigmarule/5266a592-b793-11ea-b3de-bbbbbb/",
+            "/api/v1/sigmarule/",
             data=json.dumps(sigma),
             content_type="application/json",
         )

@@ -248,77 +248,8 @@ class SigmaRuleListResource(resources.ResourceMixin, Resource):
         meta = {"rules_count": len(sigma_rules)}
         return jsonify({"objects": sigma_rules, "meta": meta})
 
-
-class SigmaRuleResource(resources.ResourceMixin, Resource):
-    """Resource to read / delete / create / update a Sigma rule."""
-
     @login_required
-    def get(self, rule_uuid):
-        """Fetches a single Sigma rule from the databse.
-
-        Fetches a single Sigma rule selected by the `UUID` in
-        `/sigmarule/<string:rule_uuid>/` and returns a JSON represantion of the
-        rule.
-
-        Args:
-            rule_uuid: UUID of the rule.
-
-        Returns:
-            JSON sigma rule representation
-            e.g.:  {"objects": [return_rule], "meta": {}}.
-        """
-        try:
-            rule = SigmaRule.query.filter_by(rule_uuid=rule_uuid).first()
-        except Exception as e:  # pylint: disable=broad-except
-            error_msg = "Unable to get the Sigma rule {0!s}".format(e)
-            logger.error(
-                error_msg,
-                exc_info=True,
-            )
-            abort(
-                HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
-                error_msg,
-            )
-
-        if not rule:
-            abort(HTTP_STATUS_CODE_NOT_FOUND, "No rule found with this ID.")
-
-        return_rule = _enrich_sigma_rule_object(rule=rule)
-
-        return jsonify({"objects": [return_rule], "meta": {}})
-
-    @login_required
-    def delete(self, rule_uuid):
-        """Deletes a Sigma rule from the database.
-
-        Deletes a single Sigma rule selected by the `uuid` in
-        `/sigmarule/<string:rule_uuid>/`.
-
-        Args:
-            rule_uuid: UUID of the rule to be deleted.
-
-        Returns:
-            HTTP_STATUS_CODE_NOT_FOUND if rule not found.
-            HTTP_STATUS_CODE_OK if rule deleted.
-        """
-
-        rule = SigmaRule.query.filter_by(rule_uuid=rule_uuid).first()
-
-        if not rule:
-            error_msg = "No rule found with rule_uuid.{0!s}".format(rule_uuid)
-            logger.debug(error_msg)  # only needed in debug cases
-            abort(
-                HTTP_STATUS_CODE_NOT_FOUND,
-                error_msg,
-            )
-
-        db_session.delete(rule)
-        db_session.commit()
-
-        return HTTP_STATUS_CODE_OK
-
-    @login_required
-    def post(self, rule_uuid=None):
+    def post(self):
         """Adds a single Sigma rule to the database.
 
         Adds a single Sigma rule to the database when `/sigmarule/` is called
@@ -415,6 +346,77 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
             )
 
         return self.to_json(sigma_rule, status_code=HTTP_STATUS_CODE_CREATED)
+
+
+class SigmaRuleResource(resources.ResourceMixin, Resource):
+    """Resource to read / delete / create / update a Sigma rule."""
+
+    @login_required
+    def get(self, rule_uuid):
+        """Fetches a single Sigma rule from the databse.
+
+        Fetches a single Sigma rule selected by the `UUID` in
+        `/sigmarule/<string:rule_uuid>/` and returns a JSON represantion of the
+        rule.
+
+        Args:
+            rule_uuid: UUID of the rule
+
+        Returns:
+            JSON sigma rule representation
+            e.g.:  {"objects": [return_rule], "meta": {}}.
+        """
+        try:
+            rule = SigmaRule.query.filter_by(rule_uuid=rule_uuid).first()
+
+        except Exception as e:  # pylint: disable=broad-except
+            error_msg = "Unable to get the Sigma rule {0!s}".format(e)
+            logger.error(
+                error_msg,
+                exc_info=True,
+            )
+            abort(
+                HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
+                error_msg,
+            )
+
+        if not rule:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No rule found with this ID.")
+        return_rule = []
+
+        return_rule.append(_enrich_sigma_rule_object(rule=rule))
+
+        return jsonify({"objects": return_rule, "meta": {}})
+
+    @login_required
+    def delete(self, rule_uuid):
+        """Deletes a Sigma rule from the database.
+
+        Deletes a single Sigma rule selected by the `uuid` in
+        `/sigmarule/<string:rule_uuid>/`.
+
+        Args:
+            rule_uuid: UUID of the rule to be deleted
+
+        Returns:
+            HTTP_STATUS_CODE_NOT_FOUND if rule not found.
+            HTTP_STATUS_CODE_OK if rule deleted.
+        """
+
+        rule = SigmaRule.query.filter_by(rule_uuid=rule_uuid).first()
+
+        if not rule:
+            error_msg = "No rule found with rule_uuid.{0!s}".format(rule_uuid)
+            logger.debug(error_msg)  # only needed in debug cases
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                error_msg,
+            )
+
+        db_session.delete(rule)
+        db_session.commit()
+
+        return HTTP_STATUS_CODE_OK
 
     @login_required
     def put(self, rule_uuid):
