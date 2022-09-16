@@ -37,6 +37,7 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_CONFLICT
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
+from timesketch.lib.definitions import HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR
 
 from timesketch.models.sigma import SigmaRule
 from timesketch.models import db_session
@@ -244,8 +245,6 @@ class SigmaRuleListResource(resources.ResourceMixin, Resource):
         sigma_rules = []
 
         all_sigma_rules = SigmaRule.query.all()
-        # Return a subset of the Sigma objects to reduce the amount of
-        # data sent to the client.
         for rule in all_sigma_rules:
             sigma_rules.append(_enrich_sigma_rule_object(rule=rule))
 
@@ -254,15 +253,14 @@ class SigmaRuleListResource(resources.ResourceMixin, Resource):
 
 
 class SigmaRuleResource(resources.ResourceMixin, Resource):
-    """Resource to get / delete / post / put a Sigma rule."""
+    """Resource to read / delete / create / update a Sigma rule."""
 
     @login_required
     def get(self, rule_uuid):
-        """Handels GET API calls to /sigmarule/<string:rule_uuid>/ where the
-        rule_uuid is the way to find the Sigma rule.
+        """Fetches a signle Sigma rule by UUID from the databse..
 
-        Fetches a single SigmaRule from the database by filtering on rule_uuid
-        and returns a JSON representation of it
+        Handles GET API calls to `/sigmarule/<string:rule_uuid>/` where the
+        rule_uuid parameter is the rule identifier.
 
         Result looks like: {"objects": [return_rule], "meta": {}}
 
@@ -271,6 +269,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
 
         Returns:
             JSON sigma rule representation
+            e.g.:  {"objects": [return_rule], "meta": {}}
         """
         try:
             rule = SigmaRule.query.filter_by(rule_uuid=rule_uuid).first()
@@ -282,7 +281,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
                 exc_info=True,
             )
             abort(
-                HTTP_STATUS_CODE_NOT_FOUND,
+                HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
                 error_msg,
             )
 
@@ -361,10 +360,6 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
                 "No rule_yaml supplied in the POST request to the API.",
             )
 
-        if not isinstance(rule_yaml, str):
-            abort(
-                HTTP_STATUS_CODE_FORBIDDEN, "rule_yaml needs to be a string."
-            )
         try:
             parsed_rule = ts_sigma_lib.parse_sigma_rule_by_text(rule_yaml)
         except ValueError as e:

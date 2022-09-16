@@ -517,7 +517,11 @@ def parse_sigma_rule_by_text(rule_text, sigma_config=None):
         ValueError: If one of the following fiels are missing in the yaml file:
             - title
             - description
+        ValueError: If provided rule_text is not a string
     """
+
+    if not isinstance(rule_text, str):
+        raise ValueError("rule_text needs to be a string.")
 
     try:
         if isinstance(sigma_config, sigma_configuration.SigmaConfiguration):

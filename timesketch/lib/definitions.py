@@ -24,6 +24,7 @@ HTTP_STATUS_CODE_UNAUTHORIZED = 401
 HTTP_STATUS_CODE_FORBIDDEN = 403
 HTTP_STATUS_CODE_NOT_FOUND = 404
 HTTP_STATUS_CODE_CONFLICT = 409
+HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR = 500
 
 # Time and date
 MICROSECONDS_PER_SECOND = 1000000
@@ -36,7 +37,8 @@ DEFAULT_FIELDS = [
     '_index',
     '__ts_timeline_id',
     'message',
-    'comment']
+    'comment',
+]
 DEFAULT_SOURCE_FIELDS = DEFAULT_FIELDS + [
     "timesketch_label",
     "tag",
