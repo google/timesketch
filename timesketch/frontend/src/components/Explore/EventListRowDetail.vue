@@ -134,16 +134,16 @@ export default {
     },
   },
   methods: {
-    getEvent: function() {
+    getEvent: function () {
       let searchindexId = this.event._index
       let eventId = this.event._id
       ApiClient.getEvent(this.sketch.id, searchindexId, eventId)
-        .then(response => {
+        .then((response) => {
           this.fullEvent = response.data.objects
         })
-        .catch(e => {})
+        .catch((e) => {})
     },
-    addFilter: function(field, value, operator) {
+    addFilter: function (field, value, operator) {
       let chip = {
         field: field,
         value: value,
@@ -153,7 +153,7 @@ export default {
       }
       this.$emit('addChip', chip)
     },
-    handleCopyStatus: function() {
+    handleCopyStatus: function () {
       this.$buefy.notification.open('Copied!')
     },
     handleSelectionChange(event) {
@@ -168,7 +168,7 @@ export default {
         return this.regexSelection
       }
       let regexes = Object.values(
-        this.regexes.filter(r => r.match_field === key || r.match_field === '*').map(r => r.regex)
+        this.regexes.filter((r) => r.match_field === key || r.match_field === '*').map((r) => r.regex)
       )
       if (this.regexSelection !== '') {
         regexes.push(this.regexSelection)
@@ -176,7 +176,7 @@ export default {
       return regexes
     },
   },
-  created: function() {
+  created: function () {
     this.getEvent()
   },
 }
