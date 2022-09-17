@@ -77,7 +77,7 @@ class LoggedInUserResource(resources.ResourceMixin, Resource):
         """Handles POST request to the resource.
 
         Returns:
-            HTTP status code indicating whether operation was sucessful.
+            HTTP status code indicating whether operation was successful.
         """
         form = request.json
         if not form:
