@@ -366,7 +366,7 @@ export default {
   getSigmaRuleList() {
     return RestApiClient.get('/sigmarule/')
   },
-  getSigmaResource(ruleUuid) {
+  getSigmaRuleResource(ruleUuid) {
     return RestApiClient.get('/sigmarule/' + ruleUuid + '/')
   },
   getSigmaRuleByText(ruleText) {

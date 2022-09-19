@@ -232,7 +232,7 @@ class SigmaRuleListResource(resources.ResourceMixin, Resource):
     def get(self):
         """Fetches Sigma rules from the database.
 
-        Fetches fetch all Sigma rules stored in the database on the system
+        Fetches all Sigma rules stored in the database on the system
         and returns a list of JSON representations of the rules.
 
         Returns:
@@ -312,7 +312,7 @@ class SigmaRuleListResource(resources.ResourceMixin, Resource):
         sigma_rule.set_status(parsed_rule.get("status", "experimental"))
         # query string is not stored in the database but we attach it to
         # the JSON result here as it is added in the GET methods
-        sigma_rule.query_string = parsed_rule.get("es_query")
+        sigma_rule.query_string = parsed_rule.get("search_query")
 
         try:
             db_session.add(sigma_rule)
@@ -382,7 +382,6 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
             HTTP_STATUS_CODE_NOT_FOUND if rule not found.
             HTTP_STATUS_CODE_OK if rule deleted.
         """
-
         rule = SigmaRule.query.filter_by(rule_uuid=rule_uuid).first()
 
         if not rule:
@@ -488,7 +487,6 @@ class SigmaRuleByTextResource(resources.ResourceMixin, Resource):
             JSON sigma rule e.g.
                 {"objects": [sigma_rule], "meta": {"parsed": True}}.
         """
-
         content = request.json.get("content")
         if not content:
             return abort(
