@@ -346,7 +346,7 @@ export default {
   getSearchHistoryTree(sketchId) {
     return RestApiClient.get('/sketches/' + sketchId + /searchhistorytree/)
   },
-  // Sigma (deprecated)
+  // Sigma (to be deprecated)
   getSigmaList() {
     // deprecated
     return RestApiClient.get('/sigma/')
@@ -362,7 +362,7 @@ export default {
     }
     return RestApiClient.post('/sigma/text/', formData)
   },
-  // SigmaRule
+  // SigmaRule (new rules file based)
   getSigmaRuleList() {
     return RestApiClient.get('/sigmarule/')
   },
@@ -376,7 +376,6 @@ export default {
     return RestApiClient.post('/sigmarule/text/', formData)
   },
   deleteSigmaRule(ruleUuid) {
-    console.log("Deleting+" + ruleUuid)
     return RestApiClient.delete('/sigmarule/' + ruleUuid + '/')
   },
   createSigmaRule(ruleText) {
