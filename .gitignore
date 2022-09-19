@@ -34,3 +34,5 @@ vagrant/*.log
 
 # Exclude .venv folder
 .venv/
+**/.ipynb_checkpoints/
+.vscode/*
