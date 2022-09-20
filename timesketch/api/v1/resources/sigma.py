@@ -456,6 +456,9 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         sigma_rule_from_db.rule_yaml = rule_yaml
         sigma_rule_from_db.title = parsed_rule.get("title")
         sigma_rule_from_db.description = parsed_rule.get("description")
+        sigma_rule_from_db.set_status(
+            parsed_rule.get("status", "experimental")
+        )
 
         try:
             db_session.add(sigma_rule_from_db)
