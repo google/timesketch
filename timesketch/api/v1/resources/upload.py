@@ -230,8 +230,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 "Unable to get or create a new Timeline object.",
             )
 
-        if not timeline.datasources:
-            timeline.set_status("processing")
+        timeline.set_status("processing")
 
         sketch.timelines.append(timeline)
 

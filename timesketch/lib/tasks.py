@@ -165,35 +165,46 @@ def _close_index(index_name, data_store, timeline_id):
         )
 
 
-def _set_timeline_status(timeline_id):
+def _set_timeline_status(timeline_id, status, error_msg=None):
     """Helper function to set status for searchindex and all related timelines.
 
     Args:
         timeline_id: Timeline ID.
     """
     timeline = Timeline.query.get(timeline_id)
+
     if not timeline:
         logger.warning("Cannot set status: No such timeline")
         return
 
-    list_datasources_status = [
-        datasource.get_status for datasource in timeline.datasources
-    ]
+    # Check if there is at least one data source that hasn't failed
+    #   (i.e., with error_message null).
+    multiple_sources = any(not x.error_message for x in timeline.datasources)
 
-    status = ""
-    if len(set(list_datasources_status)) == 1 and "fail" in list_datasources_status:
-        status = "fail"
+    # check if error_msg is not null and status = fail
+    if error_msg and status == "fail":
+        timeline.set_status(status)
+        timeline.searchindex.set_status(status)
+
+    if multiple_sources:
+        timeline_status = timeline.get_status.status.lower()
+        if timeline_status != "process" and status != "fail":
+            timeline.set_status(status)
+            timeline.searchindex.set_status(status)
     else:
-        if "processing" in list_datasources_status:
-            status = "processing"
-        else:
-            status = "ready"
+        timeline.set_status(status)
+        timeline.searchindex.set_status(status)
 
-    timeline.set_status(status)
-    timeline.searchindex.set_status(status)
+    # Update description if there was a failure in ingestion.
+    if error_msg:
+        if timeline.datasources:
+            data_source = timeline.datasources[-1]
+            data_source.error_message = error_msg
+
     # Commit changes to database
     db_session.add(timeline)
     db_session.commit()
+
 
 
 def _set_datasource_status(timeline_id, file_path, status, error_message=None):
@@ -206,7 +217,7 @@ def _set_datasource_status(timeline_id, file_path, status, error_message=None):
             db_session.add(timeline)
             db_session.commit()
             _set_timeline_status(timeline_id)
-            _set_timeline_status(timeline_id)
+            _set_timeline_status(timeline_id, status, error_message)
             return
 
     raise KeyError(
