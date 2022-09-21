@@ -663,14 +663,12 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
 
     timeline = Timeline.query.get(timeline_id)
 
-    def get_index_datasources(datasources, file_path):
-        for i in enumerate(datasources):
-            if datasources[i].get_file_on_disk == file_path:
-                return i
-        return -1
+    datasource_id = -1
+    for i in enumerate(datasources):
+        if datasources[i].get_file_on_disk == file_path:
+            datasource_id = i
 
-    index_datasource = get_index_datasources(timeline.datasources, file_path)
-    timeline.datasources[index_datasource].set_total_file_events(
+    timeline.datasources[datasource_id].set_total_file_events(
         total_events_json["total"]
     )
     _set_datasource_status(timeline_id, file_path, "processing")
@@ -727,7 +725,6 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
         )
         return e.output
 
-    index_datasource = get_index_datasources(timeline.datasources, file_path)
     # Mark the searchindex and timelines as ready
     _set_datasource_status(timeline_id, file_path, "ready")
     return index_name
@@ -789,15 +786,12 @@ def run_csv_jsonl(
         pass
 
     timeline = Timeline.query.get(timeline_id)
+    datasource_id = -1
+    for i in enumerate(datasources):
+        if datasources[i].get_file_on_disk == file_path:
+            datasource_id = i
 
-    def get_index_datasources(datasources, file_path):
-        for i in enumarate(datasources):
-            if datasources[i].get_file_on_disk == file_path:
-                return i
-        return -1
-
-    index_datasource = get_index_datasources(timeline.datasources, file_path)
-    timeline.datasources[index_datasource].set_total_file_events(total_events)
+    timeline.datasources[datasource_id].set_total_file_events(total_events)
     _set_datasource_status(timeline_id, file_path, "processing")
     # Log information to Celery
     logger.info(
