@@ -213,7 +213,8 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 delimiter=delimiter,
             )
 
-        searchindex.set_status("processing")
+        if not timeline.datasources:
+            timeline.set_status("processing")
 
         if not timeline:
             timeline = Timeline.get_or_create(
