@@ -28,29 +28,29 @@ limitations under the License.
 
       <span style="font-size: 0.9em">Data Types ({{ dataTypes.length }})</span>
     </div>
-    <div v-show="expanded">
-      <v-divider></v-divider>
-      <v-simple-table dense>
-        <template v-slot:default>
-          <tbody>
-            <tr v-for="dataType in dataTypes" :key="dataType.data_type">
-              <td @click="search(dataType.data_type)">
-                <a>{{ dataType.data_type }}</a>
-              </td>
-              <td>{{ dataType.count | compactNumber }}</td>
-            </tr>
-          </tbody>
-        </template>
-      </v-simple-table>
-    </div>
+    <v-expand-transition>
+      <div v-show="expanded">
+        <v-divider></v-divider>
+        <v-simple-table dense>
+          <template v-slot:default>
+            <tbody>
+              <tr v-for="dataType in dataTypes" :key="dataType.data_type">
+                <td @click="search(dataType.data_type)">
+                  <a>{{ dataType.data_type }}</a>
+                </td>
+                <td>{{ dataType.count | compactNumber }}</td>
+              </tr>
+            </tbody>
+          </template>
+        </v-simple-table>
+      </div>
+    </v-expand-transition>
 
     <v-divider></v-divider>
   </div>
 </template>
 
 <script>
-import TsDataTypesTable from '../DataTypesTable.vue'
-
 import EventBus from '../../main'
 
 const defaultQueryFilter = () => {
@@ -65,8 +65,7 @@ const defaultQueryFilter = () => {
 }
 
 export default {
-  props: ['facet'],
-  components: { TsDataTypesTable },
+  props: [],
   data: function () {
     return {
       expanded: false,
@@ -82,7 +81,6 @@ export default {
   },
   methods: {
     search(dataType) {
-      console.log('do a search from side panel')
       let eventData = {}
       eventData.doSearch = true
       eventData.queryString = 'data_type:' + '"' + dataType + '"'

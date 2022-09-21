@@ -17,14 +17,55 @@ limitations under the License.
   <div>
     <!-- Left panel -->
     <v-navigation-drawer app permanent width="450" hide-overlay>
-      <v-toolbar dense flat>
+      <v-toolbar dense flat @click="showSketchMetadata = !showSketchMetadata" style="cursor: pointer">
         <v-avatar class="mt-2 ml-n4">
           <router-link to="/">
             <v-img src="/dist/timesketch-color.png" max-height="25" max-width="25" contain></v-img>
           </router-link>
         </v-avatar>
-        <span style="font-size: 1.1em">{{ sketch.name }}</span>
+        <span style="font-size: 1.1em"
+          >{{ sketch.name }}
+          <v-icon class="ml-1" v-if="!showSketchMetadata">mdi-chevron-right</v-icon>
+          <v-icon class="ml-1" v-else>mdi-chevron-down</v-icon>
+        </span>
       </v-toolbar>
+      <v-expand-transition>
+        <v-list v-show="showSketchMetadata" two-line>
+          <v-list-item>
+            <v-list-item-content>
+              <v-list-item-title> <strong>Created:</strong> {{ sketch.created_at | shortDateTime }} </v-list-item-title>
+              <v-list-item-subtitle>
+                <small>{{ sketch.created_at | timeSince }} by {{ sketch.user.username }}</small>
+              </v-list-item-subtitle>
+            </v-list-item-content>
+          </v-list-item>
+
+          <v-list-item>
+            <v-list-item-content>
+              <v-list-item-title>
+                <strong>Access: </strong>
+                <span v-if="meta.permissions.public">Public</span>
+                <span v-else>Restricted</span>
+              </v-list-item-title>
+              <v-list-item-subtitle>
+                <small v-if="meta.permissions.public">Visibly to all users on this server</small>
+                <small v-else>Only people with access can open</small>
+              </v-list-item-subtitle>
+            </v-list-item-content>
+          </v-list-item>
+
+          <v-list-item>
+            <v-list-item-content>
+              <v-list-item-title>
+                <strong>Shared with</strong>
+              </v-list-item-title>
+              <v-list-item-subtitle>
+                <small>People and groups with access</small>
+              </v-list-item-subtitle>
+            </v-list-item-content>
+          </v-list-item>
+        </v-list>
+      </v-expand-transition>
       <v-divider></v-divider>
 
       <ts-scenario :scenario="scenario"></ts-scenario>
@@ -52,6 +93,11 @@ export default {
     TsDataTypes,
     TsTags,
   },
+  data() {
+    return {
+      showSketchMetadata: false,
+    }
+  },
   created: function () {
     this.$store.dispatch('updateSketch', this.sketchId)
     this.$store.dispatch('updateSearchHistory', this.sketchId)
@@ -61,6 +107,9 @@ export default {
   computed: {
     sketch() {
       return this.$store.state.sketch
+    },
+    meta() {
+      return this.$store.state.meta
     },
     scenario() {
       return this.$store.state.scenario

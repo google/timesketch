@@ -28,20 +28,54 @@ limitations under the License.
         </div>
         <v-spacer></v-spacer>
         <v-btn small depressed v-on:click="switchUI"> Use the old UI </v-btn>
-        <v-btn v-if="!isRootPage" small depressed color="primary" class="ml-2"> Share </v-btn>
-        <v-tooltip right>
+        <v-btn v-if="!isRootPage" small depressed color="primary" class="ml-2">
+          <v-icon small left>mdi-account-multiple-plus</v-icon>
+          Share
+        </v-btn>
+        <v-avatar color="grey lighten-1" size="25" class="ml-3">
+          <span class="white--text">{{ currentUser.charAt(0).toUpperCase() }}</span>
+        </v-avatar>
+        <v-menu v-if="!isRootPage" offset-y>
           <template v-slot:activator="{ on, attrs }">
             <v-avatar>
-              <v-btn icon v-on:click="toggleTheme" v-bind="attrs" v-on="on">
-                <v-icon>mdi-brightness-6</v-icon>
+              <v-btn small icon v-bind="attrs" v-on="on">
+                <v-icon>mdi-dots-vertical</v-icon>
               </v-btn>
             </v-avatar>
           </template>
-          <span>Switch between light and dark theme</span>
-        </v-tooltip>
-        <v-avatar color="primary" size="25">
-          <span class="white--text">{{ currentUser.charAt(0).toUpperCase() }}</span>
-        </v-avatar>
+          <v-card>
+            <v-list>
+              <v-list-item-group color="primary">
+                <v-list-item v-on:click="toggleTheme">
+                  <v-list-item-icon>
+                    <v-icon>mdi-brightness-6</v-icon>
+                  </v-list-item-icon>
+                  <v-list-item-content>
+                    <v-list-item-title>Toggle theme</v-list-item-title>
+                  </v-list-item-content>
+                </v-list-item>
+
+                <v-list-item>
+                  <v-list-item-icon>
+                    <v-icon>mdi-archive</v-icon>
+                  </v-list-item-icon>
+                  <v-list-item-content>
+                    <v-list-item-title>Archive sketch</v-list-item-title>
+                  </v-list-item-content>
+                </v-list-item>
+
+                <v-list-item>
+                  <v-list-item-icon>
+                    <v-icon>mdi-export</v-icon>
+                  </v-list-item-icon>
+                  <v-list-item-content>
+                    <v-list-item-title>Export sketch</v-list-item-title>
+                  </v-list-item-content>
+                </v-list-item>
+              </v-list-item-group>
+            </v-list>
+          </v-card>
+        </v-menu>
       </v-toolbar>
       <v-divider></v-divider>
 

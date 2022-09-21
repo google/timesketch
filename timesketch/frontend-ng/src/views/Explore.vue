@@ -46,8 +46,8 @@ limitations under the License.
 
     <!-- Search and Filters -->
     <v-card flat class="pa-3">
-      <v-card class="d-flex align-start" outlined>
-        <v-sheet class="mt-1">
+      <v-card class="d-flex align-start mb-1" outlined>
+        <v-sheet class="mt-2">
           <ts-search-history-buttons @toggleSearchHistory="toggleSearchHistory()"></ts-search-history-buttons>
         </v-sheet>
 
@@ -63,6 +63,7 @@ limitations under the License.
               filled
               flat
               solo
+              class="pa-1"
               append-icon="mdi-magnify"
               id="tsSearchInput"
               @keyup.enter="search"
@@ -166,8 +167,8 @@ limitations under the License.
         </span>
       </v-chip-group>
 
-      <!-- Add manual event -->
-
+      <!-- TODO: Move this control to the timeline picker -->
+      <!-- Add manual event
       <span>
         <v-menu
           v-model="addManualEvent"
@@ -191,6 +192,7 @@ limitations under the License.
           ></ts-add-manual-event>
         </v-menu>
       </span>
+       -->
 
       <!-- Term filters -->
       <div v-if="filterChips.length">
@@ -282,7 +284,7 @@ limitations under the License.
         fixed-header
       >
         <template v-slot:top="{ pagination, options, updateOptions }">
-          <v-toolbar flat dense>
+          <v-toolbar dense flat>
             <div>
               <span class="mr-2"
                 ><small>{{ fromEvent }}-{{ toEvent }} of {{ totalHits }} events ({{ totalTime }}s)</small></span
@@ -402,7 +404,9 @@ limitations under the License.
               @update:options="updateOptions"
               :show-current-page="true"
               :items-per-page-options="[10, 40, 80, 100, 200, 500]"
+              items-per-page-text="Rows per page:"
               style="border: 0"
+              class="mr-n3"
             ></v-data-footer>
           </v-toolbar>
           <v-card v-if="showHistogram" outlined class="pa-2">

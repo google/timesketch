@@ -28,21 +28,23 @@ limitations under the License.
 
       <span style="font-size: 0.9em">Tags ({{ tags.length }})</span>
     </div>
-    <div v-show="expanded">
-      <v-divider></v-divider>
-      <v-simple-table dense>
-        <template v-slot:default>
-          <tbody>
-            <tr v-for="tag in tags" :key="tag.tag">
-              <td @click="search(tag.tag)">
-                <a>{{ tag.tag }}</a>
-              </td>
-              <td>{{ tag.count | compactNumber }}</td>
-            </tr>
-          </tbody>
-        </template>
-      </v-simple-table>
-    </div>
+    <v-expand-transition>
+      <div v-show="expanded">
+        <v-divider></v-divider>
+        <v-simple-table dense>
+          <template v-slot:default>
+            <tbody>
+              <tr v-for="tag in tags" :key="tag.tag">
+                <td @click="search(tag.tag)">
+                  <a>{{ tag.tag }}</a>
+                </td>
+                <td>{{ tag.count | compactNumber }}</td>
+              </tr>
+            </tbody>
+          </template>
+        </v-simple-table>
+      </div>
+    </v-expand-transition>
     <v-divider></v-divider>
   </div>
 </template>

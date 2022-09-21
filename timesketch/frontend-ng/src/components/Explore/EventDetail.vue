@@ -20,12 +20,6 @@ limitations under the License.
         <v-card outlined height="100%">
           <v-simple-table dense>
             <template v-slot:default>
-              <thead>
-                <tr>
-                  <th class="text-left">Attribute</th>
-                  <th class="text-left">Value</th>
-                </tr>
-              </thead>
               <tbody>
                 <tr v-for="(value, key) in fullEventFiltered" :key="key">
                   <td>{{ key }}</td>
@@ -50,7 +44,7 @@ limitations under the License.
               @mouseleave="unSelectComment()"
             >
               <v-list-item-avatar>
-                <v-avatar color="blue">
+                <v-avatar color="grey lighten-1">
                   <span class="white--text">{{ comment.user.username.charAt(0).toUpperCase() }}</span>
                 </v-avatar>
               </v-list-item-avatar>

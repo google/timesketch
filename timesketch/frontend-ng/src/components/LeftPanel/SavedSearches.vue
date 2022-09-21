@@ -28,33 +28,32 @@ limitations under the License.
 
       <span style="font-size: 0.9em">Saved Searches ({{ meta.views.length }})</span>
     </div>
-    <div v-show="expanded">
-      <v-divider></v-divider>
-      <v-simple-table dense>
-        <template v-slot:default>
-          <tbody>
-            <tr v-for="savedSearch in meta.views" :key="savedSearch.name">
-              <td>
-                <a @click="setView(savedSearch)">{{ savedSearch.name }}</a>
-              </td>
-            </tr>
-          </tbody>
-        </template>
-      </v-simple-table>
-    </div>
+    <v-expand-transition>
+      <div v-show="expanded">
+        <v-divider></v-divider>
+        <v-simple-table dense>
+          <template v-slot:default>
+            <tbody>
+              <tr v-for="savedSearch in meta.views" :key="savedSearch.name">
+                <td>
+                  <a @click="setView(savedSearch)">{{ savedSearch.name }}</a>
+                </td>
+              </tr>
+            </tbody>
+          </template>
+        </v-simple-table>
+      </div>
+    </v-expand-transition>
 
     <v-divider></v-divider>
   </div>
 </template>
 
 <script>
-import TsSavedSearchesTable from '../SavedSearchesTable.vue'
-
 import EventBus from '../../main'
 
 export default {
-  props: ['facet'],
-  components: { TsSavedSearchesTable },
+  props: [],
   data: function () {
     return {
       expanded: false,
@@ -70,7 +69,6 @@ export default {
   },
   methods: {
     setView: function (savedSearch) {
-      console.log(savedSearch)
       EventBus.$emit('setActiveView', savedSearch)
     },
   },
