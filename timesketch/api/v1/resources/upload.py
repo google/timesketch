@@ -116,58 +116,6 @@ class UploadFileResource(resources.ResourceMixin, Resource):
 
         return searchindex
 
-    def _get_total_events(self, file_path, file_extension):
-        """Returns the number of total events read in the file
-
-        Args:
-            file_path: the path of the plaso/csv/jsonl file.
-            file_extension: json/jsonl/csv/plaso
-
-        Returns:
-            Number of events in the file
-        """
-        total_events_json = None
-        if file_extension == "plaso":
-            try:
-                pinfo_path = current_app.config["PINFO_PATH"]
-            except KeyError:
-                pinfo_path = "pinfo.py"
-
-            cmd = [
-                pinfo_path,
-                "--output-format",
-                "json",
-                "--sections",
-                "events",
-                file_path,
-            ]
-
-            # Run pinfo.py
-            try:
-                total_events = subprocess.run(
-                    cmd, capture_output=True, check=True
-                ).stdout.decode("utf-8")
-                regex = 'parsers": (.+?})'
-                m = re.search(regex, total_events)
-                if m:
-                    total_events_json = json.loads(m.group(1))
-            except subprocess.CalledProcessError:
-                pass
-        elif file_extension in {"csv", "json", "jsonl"}:
-            # Run $ wc -l filepath
-            cmd = ["wc", "-l", file_path]
-            try:
-                total_events = (
-                    subprocess.run(cmd, capture_output=True, check=True)
-                    .stdout.decode("utf-8")
-                    .split(" ")[0]
-                )
-                total_events_json = {"total": total_events}
-            except subprocess.CalledProcessError:
-                pass
-
-        return total_events_json
-
     # pylint: disable=too-many-arguments
     def _upload_and_index(
         self,
@@ -276,9 +224,6 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 sketch=sketch,
                 user=current_user,
                 searchindex=searchindex,
-                total_events=str(
-                    json.dumps(self._get_total_events(file_path, file_extension))
-                ),
             )
 
         if not timeline:
@@ -314,7 +259,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             original_filename=original_filename,
             data_label=data_label,
         )
-
+        datasource.set_status_wrapper("processing")
         timeline.datasources.append(datasource)
         db_session.add(datasource)
         db_session.add(timeline)

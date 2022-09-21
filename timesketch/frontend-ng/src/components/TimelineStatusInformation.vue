@@ -14,60 +14,44 @@
           <strong>Created at: </strong>{{ timeline.created_at | shortDateTime }}
           <small>({{ timeline.created_at | timeSince }})</small>
         </li>
+        <li v-if="timelineStatus === 'processing'"><strong>Percentage Completed</strong> {{ percentage }} %</li>
+        <li v-if="timelineStatus === 'processing'"><strong>Remaining time:</strong> {{ remainingTime }}</li>
       </ul>
 
       <br /><br />
       <v-alert
-        v-for="datasource in timeline.datasources"
+        v-for="datasource in datasources"
         :key="datasource.id"
         colored-border
         border="left"
         elevation="1"
-        :type="timelineStatusColors()"
+        :type="datasourceStatusColors(datasource)"
       >
         <ul style="list-style-type: none">
-          <li v-if="timelineStatus === 'processing' || timelineStatus === 'ready'">
-            <strong>Events:</strong>
-            <ul>
-              <li v-for="(numberEvents, type) in totalEvents" :key="type">
-                <strong>{{ type }}</strong
-                >: {{ numberEvents | compactNumber }}
-              </li>
-            </ul>
-          </li>
-
-          <li v-if="timelineStatus === 'processing'">
-            <strong>Percentage Completed</strong> {{ indexedPercentage }} %
-          </li>
-          <li v-if="timelineStatus === 'processing'"><strong>Remaining time:</strong> {{ remainingTime }}</li>
-
-          <li v-if="timelineStatus === 'fail'">
+          <li><strong>Total File Events:</strong>{{ totalEventsDatasource(datasource.original_filename) }}</li>
+          <li v-if="datasource.status === 'fail'">
             <strong>Error message:</strong>
             <code v-if="datasource.error_message"> {{ datasource.error_message }}</code>
           </li>
 
-          <li v-if="timelineStatus !== 'processing'"><strong>Provider:</strong> {{ datasource.provider }}</li>
-          <li v-if="timelineStatus !== 'processing'"><strong>File on disk:</strong> {{ datasource.file_on_disk }}</li>
-          <li v-if="timelineStatus !== 'processing'">
-            <strong>File size:</strong> {{ datasource.file_size | compactBytes }}
-          </li>
-          <li v-if="timelineStatus !== 'processing'">
-            <strong>Original filename:</strong> {{ datasource.original_filename }}
-          </li>
-          <li v-if="timelineStatus !== 'processing'"><strong>Data label:</strong> {{ datasource.data_label }}</li>
+          <li><strong>Provider:</strong> {{ datasource.provider }}</li>
+          <li><strong>File on disk:</strong> {{ datasource.file_on_disk }}</li>
+          <li><strong>File size:</strong> {{ datasource.file_size | compactBytes }}</li>
+          <li><strong>Original filename:</strong> {{ datasource.original_filename }}</li>
+          <li><strong>Data label:</strong> {{ datasource.data_label }}</li>
+          <li><strong>Status:</strong> {{ datasource.status }}</li>
         </ul>
         <br />
       </v-alert>
+      <v-progress-linear
+        v-if="timelineStatus === 'processing'"
+        color="light-blue"
+        height="10"
+        :value="percentage"
+        striped
+      ></v-progress-linear>
     </v-card-text>
-    <v-progress-linear
-      v-if="timelineStatus === 'processing'"
-      color="light-blue"
-      height="10"
-      :value="indexedPercentage"
-      striped
-    ></v-progress-linear>
     <v-divider></v-divider>
-
     <v-card-actions>
       <v-spacer></v-spacer>
       <v-btn color="primary" text @click="$emit('closeDialog')"> Close </v-btn>
@@ -76,7 +60,7 @@
 </template>
 <script>
 export default {
-  props: ['timeline', 'indexedEvents', 'totalEvents', 'timelineStatus'],
+  props: ['timeline', 'indexedEvents', 'totalEvents', 'timelineStatus', 'datasources', 'percentage', 'remainingTime'],
   data() {
     return {}
   },
@@ -87,48 +71,23 @@ export default {
     sketch() {
       return this.$store.state.sketch
     },
-    indexedPercentage() {
-      let totalEvents = 1
-      if (this.totalEvents) {
-        totalEvents = this.totalEvents.total
-      }
-      let percentage = Math.min(Math.floor((this.indexedEvents / totalEvents) * 100), 100)
-      if (this.timelineStatus === 'ready') percentage = 100
-      return percentage
-    },
-    remainingTime() {
-      let t = new Date()
-      let tNow = t.getTime() / 1000
-      t = new Date(this.timeline.created_at)
-      let t0 = t.getTime() / 1000
-      let deltaNow = tNow - t0
-      let deltaX = ((100 - this.indexedPercentage) * deltaNow) / this.indexedPercentage
-      return this.secondsToString(Math.floor(deltaX))
-    },
-    datasourceErrors() {
-      return this.timeline.datasources.filter((datasource) => datasource.error_message)
-    },
   },
   methods: {
-    timelineStatusColors() {
-      if (this.timelineStatus === 'ready') {
+    datasourceStatusColors(datasource) {
+      if (datasource.status === 'ready' || datasource.status === null) {
         return 'info'
-      } else if (this.timelineStatus === 'processing') {
+      } else if (datasource.status === 'processing') {
         return 'warning'
       }
       // status = fail
       return 'error'
     },
-    secondsToString(d) {
-      d = Number(d)
-      var h = Math.floor(d / 3600)
-      var m = Math.floor((d % 3600) / 60)
-      var s = Math.floor((d % 3600) % 60)
-
-      var hDisplay = h > 0 ? h + (h === 1 ? ' hour, ' : ' hours, ') : ''
-      var mDisplay = m > 0 ? m + (m === 1 ? ' minute, ' : ' minutes, ') : ''
-      var sDisplay = s > 0 ? s + (s === 1 ? ' second' : ' seconds') : ''
-      return hDisplay + mDisplay + sDisplay
+    totalEventsDatasource(originalFilename) {
+      if (this.totalEvents) {
+        return this.totalEvents.find((x) => x.originalFilename === originalFilename).totalFileEvents
+      } else {
+        return this.timeline.datasources.find((x) => x.original_filename === originalFilename).total_file_events
+      }
     },
   },
 }

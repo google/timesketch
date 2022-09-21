@@ -50,6 +50,7 @@
           :totalEvents="totalEvents"
           :timelineStatus="timelineStatus"
           @closeDialog="closeDialogStatus"
+          :datasources="datasources"
         ></ts-timeline-status-information>
       </v-dialog>
     </td>
@@ -77,6 +78,7 @@ export default {
       indexedEvents: 0,
       totalEvents: null,
       dialogStatus: false,
+      datasources: [],
     }
   },
   computed: {
@@ -121,7 +123,6 @@ export default {
       ApiClient.getSketchTimeline(this.sketch.id, this.timeline.id)
         .then((response) => {
           this.timelineStatus = response.data.objects[0].status[0].status
-          console.log(this.timelineStatus)
           this.indexedEvents = response.data.meta.lines_indexed
           this.totalEvents = JSON.parse(response.data.objects[0].total_events)
           if (this.timelineStatus !== 'ready' && this.timelineStatus !== 'fail') {

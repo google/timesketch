@@ -106,6 +106,8 @@ class ResourceMixin(object):
         "error_message": fields.String,
         "created_at": fields.DateTime("iso8601"),
         "updated_at": fields.DateTime("iso8601"),
+        "total_file_events": fields.Integer,
+        "status": fields.Nested(status_fields),
     }
 
     timeline_fields = {
@@ -121,7 +123,6 @@ class ResourceMixin(object):
         "deleted": fields.Boolean,
         "created_at": fields.DateTime("iso8601"),
         "updated_at": fields.DateTime("iso8601"),
-        "total_events": fields.String,
     }
 
     analysis_fields = {

@@ -450,7 +450,7 @@ export default {
         }.bind(this),
       }
       ApiClient.uploadTimeline(formData, config)
-        .then((response) => {
+        .then(() => {
           this.clearFormData()
           this.percentCompleted = 0
           this.dialog = false

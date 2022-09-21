@@ -19,6 +19,7 @@ import os
 import logging
 import subprocess
 import traceback
+import re
 
 import codecs
 import io
@@ -631,6 +632,47 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
     logger.info(message.format(timeline_name, index_name, source_type))
 
     try:
+        pinfo_path = current_app.config["PINFO_PATH"]
+    except KeyError:
+        pinfo_path = "pinfo.py"
+
+    cmd = [
+        pinfo_path,
+        "--output-format",
+        "json",
+        "--sections",
+        "events",
+        file_path,
+    ]
+
+    total_events_json = {}
+    # Run pinfo.py
+    try:
+        total_events = subprocess.run(
+            cmd, capture_output=True, check=True
+        ).stdout.decode("utf-8")
+        regex = 'parsers": (.+?})'
+        m = re.search(regex, total_events)
+        if m:
+            total_events_json = json.loads(m.group(1))
+    except subprocess.CalledProcessError:
+        pass
+
+    timeline = Timeline.query.get(timeline_id)
+
+    def get_index_datasources(datasources, file_path):
+        for i in range(len(datasources)):
+            if datasources[i].get_file_on_disk == file_path:
+                return i
+        return -1
+
+    index_datasource = get_index_datasources(timeline.datasources, file_path)
+    timeline.datasources[index_datasource].set_total_file_events(
+        total_events_json["total"]
+    )
+    timeline.datasources[index_datasource].set_status_wrapper("processing")
+
+    try:
         psort_path = current_app.config["PSORT_PATH"]
     except KeyError:
         psort_path = "psort.py"
@@ -683,9 +725,10 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
         )
         return e.output
 
+    index_datasource = get_index_datasources(timeline.datasources, file_path)
+    timeline.datasources[index_datasource].set_status_wrapper("ready")
     # Mark the searchindex and timelines as ready
     _set_timeline_status(timeline_id, status="ready")
-
     return index_name
 
 

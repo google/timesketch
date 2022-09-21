@@ -49,13 +49,69 @@ limitations under the License.
               <v-list-item-subtitle>Status</v-list-item-subtitle>
             </v-list-item>
           </template>
-          <ts-timeline-status-information
-            :timeline="timeline"
-            :indexedEvents="indexedEvents"
-            :totalEvents="totalEvents"
-            :timelineStatus="timelineStatus"
-            @closeDialog="dialogStatus = false"
-          ></ts-timeline-status-information>
+          <v-card>
+            <v-app-bar flat dense>Detailed information for: {{ timeline.name }}</v-app-bar>
+            <v-card-text class="pa-5">
+              <ul style="list-style-type: none">
+                <li><strong>Opensearch index: </strong>{{ timeline.searchindex.index_name }}</li>
+                <li v-if="timelineStatus === 'processing' || timelineStatus === 'ready'">
+                  <strong>Number of events: </strong>
+                  {{ allIndexedEvents | compactNumber }}
+                </li>
+                <li><strong>Created by: </strong>{{ timeline.user.username }}</li>
+                <li>
+                  <strong>Created at: </strong>{{ timeline.created_at | shortDateTime }}
+                  <small>({{ timeline.created_at | timeSince }})</small>
+                </li>
+                <li v-if="timelineStatus === 'processing'">
+                  <strong>Percentage Completed</strong> {{ Math.floor(percentage) }} %
+                </li>
+                <li v-if="timelineStatus === 'processing'">
+                  <strong>Remaining time:</strong> {{ secondsToString(deltaRT) }}
+                </li>
+              </ul>
+              <br /><br />
+              <v-alert
+                v-for="datasource in datasources"
+                :key="datasource.id"
+                colored-border
+                border="left"
+                elevation="1"
+                :type="datasourceStatusColors(datasource)"
+              >
+                <ul style="list-style-type: none">
+                  <li>
+                    <strong>Total File Events:</strong
+                    >{{ totalEventsDatasource(datasource.file_on_disk) | compactNumber }}
+                  </li>
+                  <li v-if="datasource.status[0].status === 'fail'">
+                    <strong>Error message:</strong>
+                    <code v-if="datasource.error_message"> {{ datasource.error_message }}</code>
+                  </li>
+
+                  <li><strong>Provider:</strong> {{ datasource.provider }}</li>
+                  <li><strong>File on disk:</strong> {{ datasource.file_on_disk }}</li>
+                  <li><strong>File size:</strong> {{ datasource.file_size | compactBytes }}</li>
+                  <li><strong>Original filename:</strong> {{ datasource.original_filename }}</li>
+                  <li><strong>Data label:</strong> {{ datasource.data_label }}</li>
+                  <li><strong>Status:</strong> {{ datasource.status[0].status }}</li>
+                </ul>
+                <br />
+              </v-alert>
+              <v-progress-linear
+                v-if="timelineStatus === 'processing'"
+                color="light-blue"
+                height="10"
+                :value="Math.floor(percentage)"
+                striped
+              ></v-progress-linear>
+            </v-card-text>
+            <v-divider></v-divider>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn color="primary" text @click="dialogStatus = false"> Close </v-btn>
+            </v-card-actions>
+          </v-card>
         </v-dialog>
       </v-list>
     </v-card>
@@ -85,11 +141,12 @@ export default {
       showEditModal: false,
       showAnalyzerModal: false,
       isDarkTheme: false,
-      timelineStatus: null,
       autoRefresh: false,
-      indexedEvents: 0,
+      allIndexedEvents: 0, // all indexed events from ready and processed datasources
       totalEvents: null,
       dialogStatus: false,
+      datasources: [],
+      deltaIndexedEvents: [],
     }
   },
   computed: {
@@ -102,14 +159,52 @@ export default {
     sketch() {
       return this.$store.state.sketch
     },
-    percentageTimeline() {
-      if (this.timelineStatus === 'ready') return 100
-      let totalEvents = 1
-      if (this.totalEvents) {
-        totalEvents = this.totalEvents.total
+
+    timelineStatus() {
+      let datasources_status = this.datasources.map((x) => x.status[0].status)
+      if (datasources_status.every((status) => status === 'fail')) {
+        return 'fail'
       }
-      let percentage = Math.min(Math.floor((this.indexedEvents / totalEvents) * 100), 100) // percentage cannot be higher than 100
-      return percentage
+      if (datasources_status.some((status) => status === 'processing' || status === null)) {
+        return 'processing'
+      }
+      return 'ready'
+    },
+    IER() {
+      // IER = Indexed Events Rate
+      return this.deltaIndexedEvents.reduce((a, b) => a + b, 0) / Math.max(this.deltaIndexedEvents.length * 5, 1)
+    },
+    APE() {
+      // APE = All Processing Events
+      return this.datasources
+        .filter((x) => x.status[0].status === 'processing')
+        .map((x) => x.total_file_events)
+        .reduce((a, b) => a + b, 0)
+    },
+    t0() {
+      let listCreationDatasource = this.datasources
+        .filter((x) => x.status[0].status === 'processing')
+        .map((x) => {
+          let t = new Date(x.created_at)
+          return t.getTime() / 1000
+        })
+      return Math.min(...listCreationDatasource)
+    },
+    deltaTotal() {
+      // the total time to upload the processing datasource
+      if (this.IER === 0) return 0
+      return this.APE / this.IER
+    },
+    deltaRT() {
+      // delta Remaining Time
+      if (this.deltaTotal === 0) return 100000 // transitory situation
+      let t = new Date()
+      let tNow = t.getTime() / 1000
+      return Math.max(this.deltaTotal - (tNow - this.t0), 0)
+    },
+    percentage() {
+      if (this.IER === 0) return 0
+      return (1 - this.deltaRT / this.deltaTotal) * 100
     },
     iconStatus() {
       if (this.timelineStatus === 'ready') return 'mdi-check-circle'
@@ -159,7 +254,7 @@ export default {
           opacity = '100%'
         }
       } else if (this.timelineStatus === 'processing') {
-        p = this.percentageTimeline
+        p = this.percentage
       } else {
         backgroundColor = '#631c1c'
         textDecoration = 'line-through'
@@ -181,20 +276,47 @@ export default {
     fetchData() {
       ApiClient.getSketchTimeline(this.sketch.id, this.timeline.id)
         .then((response) => {
-          let timeline = response.data.objects[0]
-          this.timelineStatus = timeline.status[0].status
-          this.indexedEvents = response.data.meta.lines_indexed
-          this.totalEvents = JSON.parse(timeline.total_events)
+          this.datasources = response.data.objects[0].datasources
+          let tmpAllIndexedEvents = this.allIndexedEvents
+          this.allIndexedEvents = response.data.meta.lines_indexed
+          let deltaEvents = this.allIndexedEvents - tmpAllIndexedEvents
+          if (deltaEvents < 10000) {
+            // clean data: deltaEvents greater than 10K is related to Server "errors"
+            this.deltaIndexedEvents.push(deltaEvents) // difference of indexed events from one iteration to the other one
+          }
           if (this.timelineStatus !== 'ready' && this.timelineStatus !== 'fail') {
             this.autoRefresh = true
           } else {
             this.autoRefresh = false
             this.$store.dispatch('updateSketch', this.sketch.id).then(() => {
-              this.$emit('toggle', timeline)
+              this.$emit('toggle', response.data.objects[0])
             })
           }
         })
         .catch((e) => {})
+    },
+    secondsToString(d) {
+      d = Number(d)
+      var h = Math.floor(d / 3600)
+      var m = Math.floor((d % 3600) / 60)
+      var s = Math.floor((d % 3600) % 60)
+
+      var hDisplay = h > 0 ? h + (h === 1 ? ' hour, ' : ' hours, ') : ''
+      var mDisplay = m > 0 ? m + (m === 1 ? ' minute, ' : ' minutes, ') : ''
+      var sDisplay = s > 0 ? s + (s === 1 ? ' second' : ' seconds') : ''
+      return hDisplay + mDisplay + sDisplay
+    },
+    datasourceStatusColors(datasource) {
+      if (datasource.status[0].status === 'ready' || datasource.status === []) {
+        return 'info'
+      } else if (datasource.status[0].status === 'processing') {
+        return 'warning'
+      }
+      // status = fail
+      return 'error'
+    },
+    totalEventsDatasource(fileOnDisk) {
+      return this.datasources.find((x) => x.file_on_disk === fileOnDisk).total_file_events
     },
   },
   mounted() {
@@ -213,13 +335,14 @@ export default {
     this.initialColor = {
       hex: this.timeline.color,
     }
-    this.timelineStatus = this.timeline.status[0].status
-    if (this.timelineStatus !== 'ready' && this.timelineStatus !== 'fail') {
+    this.datasources = this.timeline.datasources
+    if (this.timelineStatus === 'processing') {
       this.autoRefresh = true
       this.fetchData()
     } else {
+      this.deltaIndexedEvents = []
       this.autoRefresh = false
-      this.indexedEvents = this.meta.stats_per_timeline[this.timeline.id]['count']
+      this.allIndexedEvents = this.meta.stats_per_timeline[this.timeline.id]['count']
     }
     this.newTimelineName = this.timeline.name
   },
@@ -239,6 +362,14 @@ export default {
       } else {
         clearInterval(this.t)
         this.t = false
+        this.deltaIndexedEvents = []
+      }
+    },
+    timeline() {
+      if (this.timeline.datasources.length > this.datasources.length) {
+        this.fetchData()
+      } else {
+        this.deltaIndexedEvents = []
       }
     },
   },
