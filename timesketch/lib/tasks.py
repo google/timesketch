@@ -172,35 +172,25 @@ def _set_timeline_status(timeline_id):
         timeline_id: Timeline ID.
     """
     timeline = Timeline.query.get(timeline_id)
-
     if not timeline:
         logger.warning("Cannot set status: No such timeline")
         return
 
-    # Check if there is at least one data source that hasn't failed
-    #   (i.e., with error_message null).
-    multiple_sources = any(not x.error_message for x in timeline.datasources)
+    list_datasources_status = [
+        datasource.get_status for datasource in timeline.datasources
+    ]
 
-    # check if error_msg is not null and status = fail
-    if error_msg and status == "fail":
-        timeline.set_status(status)
-        timeline.searchindex.set_status(status)
-
-    if multiple_sources:
-        timeline_status = timeline.get_status.status.lower()
-        if timeline_status != "process" and status != "fail":
-            timeline.set_status(status)
-            timeline.searchindex.set_status(status)
+    status = ""
+    if len(set(list_datasources_status)) == 1 and "fail" in list_datasources_status:
+        status = "fail"
     else:
-        timeline.set_status(status)
-        timeline.searchindex.set_status(status)
+        if "processing" in list_datasources_status:
+            status = "processing"
+        else:
+            status = "ready"
 
-    # Update description if there was a failure in ingestion.
-    if error_msg:
-        if timeline.datasources:
-            data_source = timeline.datasources[-1]
-            data_source.error_message = error_msg
-
+    timeline.set_status(status)
+    timeline.searchindex.set_status(status)
     # Commit changes to database
     db_session.add(timeline)
     db_session.commit()
@@ -209,31 +199,31 @@ def _set_timeline_status(timeline_id):
 def _set_datasource_status(timeline_id, file_path, status, error_message=None):
     timeline = Timeline.query.get(timeline_id)
     datasource_id = -1
-    for i, datasource in enumerate(timeline.datasources):
+    for datasource in timeline.datasources:
         if datasource.get_file_on_disk == file_path:
             datasource.set_status(status)
             if error_message:
                 datasource.set_error_message(error_message)
             db_session.add(timeline)
             db_session.commit()
-            _set_timeline_status(timeline_id, status, error_message)
+            _set_timeline_status(timeline_id)
             _set_timeline_status(timeline_id)
             return
 
     raise KeyError(
-        f"No datasource find in the timeline with the corresponding file_path: {file_path}"
+        f"No datasource find in the timeline with file_path: {file_path}"
     )
 
 
 def _set_datasource_total_events(timeline_id, file_path, total_events):
     timeline = Timeline.query.get(timeline_id)
     datasource_id = -1
-    for i, datasource in enumerate(timeline.datasources):
+    for datasource in timeline.datasources:
         if datasource.get_file_on_disk == file_path:
             datasource.set_total_file_events(total_events)
             return
     raise KeyError(
-        f"No datasource find in the timeline with the corresponding file_path: {file_path}"
+        f"No datasource find in the timeline with file_path: {file_path}"
     )
 
 
