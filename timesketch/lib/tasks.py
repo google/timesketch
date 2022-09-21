@@ -664,8 +664,8 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
     timeline = Timeline.query.get(timeline_id)
 
     datasource_id = -1
-    for i in enumerate(datasources):
-        if datasources[i].get_file_on_disk == file_path:
+    for i in enumerate(timeline.datasources):
+        if timeline.datasources[i].get_file_on_disk == file_path:
             datasource_id = i
 
     timeline.datasources[datasource_id].set_total_file_events(
@@ -787,8 +787,8 @@ def run_csv_jsonl(
 
     timeline = Timeline.query.get(timeline_id)
     datasource_id = -1
-    for i in enumerate(datasources):
-        if datasources[i].get_file_on_disk == file_path:
+    for i in enumerate(timeline.datasources):
+        if timeline.datasources[i].get_file_on_disk == file_path:
             datasource_id = i
 
     timeline.datasources[datasource_id].set_total_file_events(total_events)
