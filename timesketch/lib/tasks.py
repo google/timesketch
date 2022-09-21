@@ -198,7 +198,6 @@ def _set_timeline_status(timeline_id):
 
 def _set_datasource_status(timeline_id, file_path, status, error_message=None):
     timeline = Timeline.query.get(timeline_id)
-    datasource_id = -1
     for datasource in timeline.datasources:
         if datasource.get_file_on_disk == file_path:
             datasource.set_status(status)
@@ -217,7 +216,6 @@ def _set_datasource_status(timeline_id, file_path, status, error_message=None):
 
 def _set_datasource_total_events(timeline_id, file_path, total_events):
     timeline = Timeline.query.get(timeline_id)
-    datasource_id = -1
     for datasource in timeline.datasources:
         if datasource.get_file_on_disk == file_path:
             datasource.set_total_file_events(total_events)
