@@ -206,7 +206,6 @@ def _set_timeline_status(timeline_id, status, error_msg=None):
     db_session.commit()
 
 
-
 def _set_datasource_status(timeline_id, file_path, status, error_message=None):
     timeline = Timeline.query.get(timeline_id)
     for datasource in timeline.datasources:
@@ -216,13 +215,10 @@ def _set_datasource_status(timeline_id, file_path, status, error_message=None):
                 datasource.set_error_message(error_message)
             db_session.add(timeline)
             db_session.commit()
-            _set_timeline_status(timeline_id)
             _set_timeline_status(timeline_id, status, error_message)
             return
 
-    raise KeyError(
-        f"No datasource find in the timeline with file_path: {file_path}"
-    )
+    raise KeyError(f"No datasource find in the timeline with file_path: {file_path}")
 
 
 def _set_datasource_total_events(timeline_id, file_path, total_events):
@@ -231,9 +227,7 @@ def _set_datasource_total_events(timeline_id, file_path, total_events):
         if datasource.get_file_on_disk == file_path:
             datasource.set_total_file_events(total_events)
             return
-    raise KeyError(
-        f"No datasource find in the timeline with file_path: {file_path}"
-    )
+    raise KeyError(f"No datasource find in the timeline with file_path: {file_path}")
 
 
 def _get_index_task_class(file_extension):
