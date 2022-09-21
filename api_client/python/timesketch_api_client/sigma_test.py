@@ -60,7 +60,9 @@ class TimesketchSigmaTest(unittest.TestCase):
     @mock.patch("requests.Session", test_lib.mock_session)
     def setUp(self):
         """Setup test case."""
-        self.api_client = client.TimesketchApi("http://127.0.0.1", "test", "test")
+        self.api_client = client.TimesketchApi(
+            "http://127.0.0.1", "test", "test"
+        )
 
     def test_sigma_rule(self):
         """Test single Sigma rule."""
@@ -115,9 +117,9 @@ class TimesketchSigmaTest(unittest.TestCase):
         self.assertIn("high", rule.level)
         self.assertIn("foobar.com", rule.references[0])
 
-    def test_get_sigma_rule_by_text(self):
+    def test_parse_sigma_rule_by_text(self):
 
-        rule = self.api_client.get_sigma_rule_by_text(MOCK_SIGMA_RULE)
+        rule = self.api_client.parse_sigma_rule_by_text(MOCK_SIGMA_RULE)
 
         self.assertIsNotNone(rule)
         self.assertGreater(len(rule.attributes), 5)
