@@ -17,7 +17,7 @@ limitations under the License.
   <v-app id="app">
     <v-main>
       <!-- Top horizontal toolbar -->
-      <v-toolbar dense flat>
+      <v-toolbar flat>
         <div v-if="isRootPage">
           <v-avatar class="mt-2 ml-n4">
             <router-link to="/">
@@ -77,7 +77,6 @@ limitations under the License.
           </v-card>
         </v-menu>
       </v-toolbar>
-      <v-divider></v-divider>
 
       <!-- Main view -->
       <router-view></router-view>
