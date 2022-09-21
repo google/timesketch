@@ -64,6 +64,9 @@ from .resources.user import LoggedInUserResource
 from .resources.sigma import SigmaResource
 from .resources.sigma import SigmaListResource
 from .resources.sigma import SigmaByTextResource
+from .resources.sigma import SigmaRuleResource
+from .resources.sigma import SigmaRuleListResource
+from .resources.sigma import SigmaRuleByTextResource
 from .resources.graph import GraphListResource
 from .resources.graph import GraphResource
 from .resources.graph import GraphPluginListResource
@@ -141,9 +144,12 @@ API_ROUTES = [
     (GroupListResource, "/groups/"),
     (CollaboratorResource, "/sketches/<int:sketch_id>/collaborators/"),
     (VersionResource, "/version/"),
-    (SigmaListResource, "/sigma/"),
-    (SigmaResource, "/sigma/rule/<string:rule_uuid>/"),
-    (SigmaByTextResource, "/sigma/text/"),
+    (SigmaListResource, "/sigma/"), # TODO(jaegeral): deprecate this
+    (SigmaResource, "/sigma/rule/<string:rule_uuid>/"), # TODO: deprecate
+    (SigmaByTextResource, "/sigma/text/"), # TODO(jaegeral): deprecate this
+    (SigmaRuleListResource, "/sigmarule/"),
+    (SigmaRuleResource, "/sigmarule/<string:rule_uuid>/"),
+    (SigmaRuleByTextResource, "/sigmarule/text/"),
     (LoggedInUserResource, "/users/me/"),
     (GraphListResource, "/sketches/<int:sketch_id>/graphs/"),
     (GraphResource, "/sketches/<int:sketch_id>/graphs/<int:graph_id>/"),

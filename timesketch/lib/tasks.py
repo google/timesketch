@@ -221,7 +221,7 @@ def _get_index_task_class(file_extension):
     """
     if file_extension == "plaso":
         index_class = run_plaso
-    elif file_extension in ["csv", "jsonl"]:
+    elif file_extension in ["csv", "jsonl", "json"]:
         index_class = run_csv_jsonl
     else:
         raise KeyError("No task that supports {0:s}".format(file_extension))
@@ -271,7 +271,7 @@ def build_index_pipeline(
     sketch_analyzer_chain = None
     searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
 
-    if file_extension == "csv":
+    if file_extension in {"csv", "jsonl", "json"}:
         # passing the extra argument: headers_mapping
         index_task = index_task_class.s(
             file_path,
@@ -658,11 +658,11 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
 
     opensearch_username = current_app.config.get("OPENSEARCH_USER", "")
     if opensearch_username:
-        cmd.extend(["--elastic_user", opensearch_username])
+        cmd.extend(["--opensearch_user", opensearch_username])
 
     opensearch_password = current_app.config.get("OPENSEARCH_PASSWORD", "")
     if opensearch_password:
-        cmd.extend(["--elastic_password", opensearch_password])
+        cmd.extend(["--opensearch_password", opensearch_password])
 
     opensearch_ssl = current_app.config.get("OPENSEARCH_SSL", False)
     if opensearch_ssl:
@@ -727,6 +727,7 @@ def run_csv_jsonl(
     validators = {
         "csv": read_and_validate_csv,
         "jsonl": read_and_validate_jsonl,
+        "json": read_and_validate_jsonl,
     }
     read_and_validate = validators.get(source_type)
 
