@@ -513,8 +513,6 @@ import TsSearchDropdown from '../components/Explore/SearchDropdown'
 import TsBarChart from '../components/Explore/BarChart'
 import TsTimelinePicker from '../components/Explore/TimelinePicker'
 import TsFilterMenu from '../components/Explore/FilterMenu'
-import TsAddManualEvent from '../components/Explore/AddManualEvent'
-import TsScenario from '../components/Scenarios/Scenario'
 import TsEventDetail from '../components/Explore/EventDetail'
 
 import EventBus from '../main'
@@ -553,8 +551,6 @@ export default {
     TsBarChart,
     TsTimelinePicker,
     TsFilterMenu,
-    TsAddManualEvent,
-    TsScenario,
     TsEventDetail,
   },
   props: ['sketchId'],
@@ -648,9 +644,6 @@ export default {
     },
     meta() {
       return this.$store.state.meta
-    },
-    scenario() {
-      return this.$store.state.scenario
     },
     totalHits() {
       return this.eventList.meta.es_total_count_complete || 0
