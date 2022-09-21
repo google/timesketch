@@ -213,8 +213,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 delimiter=delimiter,
             )
 
-        if not timeline.datasources:
-            timeline.set_status("processing")
+        searchindex.set_status("processing")
 
         if not timeline:
             timeline = Timeline.get_or_create(
@@ -231,7 +230,8 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 "Unable to get or create a new Timeline object.",
             )
 
-        timeline.set_status("processing")
+        if not timeline.datasources:
+            timeline.set_status("processing")
 
         sketch.timelines.append(timeline)
 
