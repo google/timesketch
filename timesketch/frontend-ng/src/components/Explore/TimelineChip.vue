@@ -123,14 +123,10 @@ import Vue from 'vue'
 import _ from 'lodash'
 
 import EventBus from '../../main'
-import TsTimelineStatusInformation from '../TimelineStatusInformation'
 import ApiClient from '../../utils/RestApiClient'
 
 export default {
   props: ['timeline', 'eventsCount', 'isSelected', 'isEmptyState'],
-  components: {
-    TsTimelineStatusInformation,
-  },
   data() {
     return {
       initialColor: {},
@@ -147,6 +143,7 @@ export default {
       dialogStatus: false,
       datasources: [],
       deltaIndexedEvents: [],
+      timelineStatus: null,
     }
   },
   computed: {
@@ -158,17 +155,6 @@ export default {
     },
     sketch() {
       return this.$store.state.sketch
-    },
-
-    timelineStatus() {
-      let datasources_status = this.datasources.map((x) => x.status[0].status)
-      if (datasources_status.every((status) => status === 'fail')) {
-        return 'fail'
-      }
-      if (datasources_status.some((status) => status === 'processing' || status === null)) {
-        return 'processing'
-      }
-      return 'ready'
     },
     IER() {
       // IER = Indexed Events Rate
@@ -276,6 +262,7 @@ export default {
     fetchData() {
       ApiClient.getSketchTimeline(this.sketch.id, this.timeline.id)
         .then((response) => {
+          this.timelineStatus = response.data.objects[0].status[0].status
           this.datasources = response.data.objects[0].datasources
           let tmpAllIndexedEvents = this.allIndexedEvents
           this.allIndexedEvents = response.data.meta.lines_indexed
@@ -335,6 +322,7 @@ export default {
     this.initialColor = {
       hex: this.timeline.color,
     }
+    this.timelineStatus = this.timeline.status[0].status
     this.datasources = this.timeline.datasources
     if (this.timelineStatus === 'processing') {
       this.autoRefresh = true

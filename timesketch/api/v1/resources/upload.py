@@ -18,8 +18,6 @@ import logging
 import os
 import uuid
 import json
-import subprocess
-import re
 
 from flask import jsonify
 from flask import request
@@ -232,10 +230,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 "Unable to get or create a new Timeline object.",
             )
 
-        # If the timeline already existed and has associated data sources
-        # then we don't want to set the status to processing.
-        if not timeline.datasources:
-            timeline.set_status("processing")
+        timeline.set_status("processing")
 
         sketch.timelines.append(timeline)
 
@@ -259,7 +254,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             original_filename=original_filename,
             data_label=data_label,
         )
-        datasource.set_status_wrapper("processing")
+        datasource.set_status("processing")
         timeline.datasources.append(datasource)
         db_session.add(datasource)
         db_session.add(timeline)

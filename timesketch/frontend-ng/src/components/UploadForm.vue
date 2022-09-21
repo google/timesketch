@@ -438,8 +438,8 @@ export default {
       formData.append('sketch_id', this.$store.state.sketch.id)
       if (['csv', 'jsonl', 'json'].includes(this.extension)) {
         let hMapping = JSON.stringify(this.headersMapping)
-        formData.append('headersMapping', hMapping)
-        formData.append('delimiter', this.CSVDelimiter)
+        // formData.append('headersMapping', hMapping)
+        // formData.append('delimiter', this.CSVDelimiter)
       }
       let config = {
         headers: {

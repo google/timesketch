@@ -795,7 +795,7 @@ class DataSource(LabelMixin, StatusMixin, CommentMixin, BaseModel):
         data_label,
         error_message="",
         total_file_events=0,
-    ):
+    ):  # pylint: disable=too-many-arguments
         """Initialize the DataSource object.
 
         Args:
@@ -825,8 +825,9 @@ class DataSource(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     def set_total_file_events(self, total_file_events):
         self.total_file_events = total_file_events
         db_session.commit()
-    def set_status_wrapper(self, status):
-        self.set_status(status)
+
+    def set_error_message(self, error_message):
+        self.error_message = error_message
         db_session.commit()
 
     @property
@@ -836,6 +837,10 @@ class DataSource(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     @property
     def get_file_on_disk(self):
         return self.file_on_disk
+
+    @property
+    def get_status(self):
+        return self.status[0].status
 
 
 # Association table for the many-to-many relationship between SearchHistory
