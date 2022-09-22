@@ -22,7 +22,28 @@ limitations under the License.
             <template v-slot:default>
               <tbody>
                 <tr v-for="(value, key) in fullEventFiltered" :key="key">
-                  <td>{{ key }}</td>
+                  <td>
+                    {{ key }}
+                    <v-dialog v-if="key.includes('xml')" v-model="formatXMLString" width="1000">
+                      <template v-slot:activator="{ on, attrs }">
+                        <v-btn
+                          icon
+                          x-small
+                          style="cursor: pointer"
+                          v-bind="attrs"
+                          v-on="on"
+                          @click="formatXMLString = true"
+                        >
+                          <v-icon>mdi-xml</v-icon>
+                        </v-btn>
+                      </template>
+                      <ts-format-xml-string
+                        app
+                        @cancel="formatXMLString = false"
+                        :xmlString="value"
+                      ></ts-format-xml-string>
+                    </v-dialog>
+                  </td>
                   <td>{{ value }}</td>
                 </tr>
               </tbody>
@@ -111,8 +132,12 @@ limitations under the License.
 <script>
 import ApiClient from '../../utils/RestApiClient'
 import EventBus from '../../main'
+import TsFormatXmlString from './FormatXMLString.vue'
 
 export default {
+  components: {
+    TsFormatXmlString,
+  },
   props: ['event'],
   data() {
     return {
@@ -120,6 +145,7 @@ export default {
       comment: '',
       comments: [],
       selectedComment: null,
+      formatXMLString: false,
     }
   },
   computed: {
