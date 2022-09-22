@@ -781,7 +781,6 @@ export default {
       if (this.fromSavedSearch) {
         this.fromSavedSearch = false
       } else {
-        console.log('clean url')
         this.$router.push(this.$route.path)
       }
 
@@ -852,7 +851,6 @@ export default {
         .catch((e) => {})
     },
     setQueryAndFilter: function (searchEvent) {
-      console.log('set query in explore view')
       this.currentQueryString = searchEvent.queryString
       this.currentQueryFilter = searchEvent.queryFilter
       // Preserve user defined item count instead of resetting.
@@ -1232,7 +1230,6 @@ export default {
     EventBus.$off('setActiveView')
   },
   created: function () {
-    console.log('create explore')
     let doSearch = false
 
     this.params = {

@@ -16,18 +16,18 @@ limitations under the License.
 <template>
   <div>
     <!-- Left panel -->
-    <v-navigation-drawer app permanent width="450" hide-overlay>
-      <v-toolbar dense flat @click="showSketchMetadata = !showSketchMetadata" style="cursor: pointer">
+    <v-navigation-drawer app permanent :width="navigationDrawer.width" hide-overlay ref="drawer">
+      <v-toolbar flat>
         <v-avatar class="mt-2 ml-n4">
           <router-link to="/">
             <v-img src="/dist/timesketch-color.png" max-height="25" max-width="25" contain></v-img>
           </router-link>
         </v-avatar>
-        <span style="font-size: 1.1em"
+        <span @click="showSketchMetadata = !showSketchMetadata" style="font-size: 1.1em; cursor: pointer"
           >{{ sketch.name }}
-          <v-icon class="ml-1" v-if="!showSketchMetadata">mdi-chevron-right</v-icon>
-          <v-icon class="ml-1" v-else>mdi-chevron-down</v-icon>
         </span>
+        <v-spacer></v-spacer>
+        <v-icon @click="hideDrawer()">mdi-chevron-left</v-icon>
       </v-toolbar>
       <v-expand-transition>
         <v-list v-show="showSketchMetadata" two-line>
@@ -86,7 +86,7 @@ import TsDataTypes from '../components/LeftPanel/DataTypes'
 import TsTags from '../components/LeftPanel/Tags'
 
 export default {
-  props: ['sketchId'],
+  props: ['sketchId', 'showLeftPanel'],
   components: {
     TsScenario,
     TsSavedSearches,
@@ -96,6 +96,9 @@ export default {
   data() {
     return {
       showSketchMetadata: false,
+      navigationDrawer: {
+        width: 450,
+      },
     }
   },
   created: function () {
@@ -103,6 +106,12 @@ export default {
     this.$store.dispatch('updateSearchHistory', this.sketchId)
     this.$store.dispatch('updateScenario', this.sketchId)
     this.$store.dispatch('updateSigmaList', this.sketchId)
+  },
+  updated() {
+    this.$nextTick(function () {
+      this.setDrawerBorderStyle()
+      this.setDrawerResizeEvents()
+    })
   },
   computed: {
     sketch() {
@@ -115,12 +124,58 @@ export default {
       return this.$store.state.scenario
     },
   },
+  methods: {
+    hideDrawer() {
+      this.navigationDrawer.width = 0
+      this.$emit('hideLeftPanel')
+    },
+    setDrawerBorderStyle() {
+      let i = this.$refs.drawer.$el.querySelector('.v-navigation-drawer__border')
+      i.style.cursor = 'ew-resize'
+    },
+    setDrawerResizeEvents() {
+      const minSize = 1
+      const drawerElement = this.$refs.drawer.$el
+      const drawerBorder = drawerElement.querySelector('.v-navigation-drawer__border')
+      const direction = drawerElement.classList.contains('v-navigation-drawer--right') ? 'right' : 'left'
+      function resize(e) {
+        document.body.style.cursor = 'ew-resize'
+        let f = direction === 'right' ? document.body.scrollWidth - e.clientX : e.clientX
+        drawerElement.style.width = f + 'px'
+      }
+      drawerBorder.addEventListener(
+        'mousedown',
+        (e) => {
+          if (e.offsetX < minSize) {
+            drawerElement.style.transition = 'initial'
+            document.addEventListener('mousemove', resize, false)
+          }
+        },
+        false
+      )
+      document.addEventListener(
+        'mouseup',
+        () => {
+          drawerElement.style.transition = ''
+          this.navigationDrawer.width = drawerElement.style.width
+          document.body.style.cursor = ''
+          document.removeEventListener('mousemove', resize, false)
+        },
+        false
+      )
+    },
+  },
   watch: {
     sketch: function (newVal) {
       if (newVal.status[0].status === 'archived') {
         this.$router.push({ name: 'Overview', params: { sketchId: this.sketch.id } })
       }
       document.title = this.sketch.name
+    },
+    showLeftPanel: function (newVal) {
+      if (newVal === true) {
+        this.navigationDrawer.width = 450
+      }
     },
   },
 }

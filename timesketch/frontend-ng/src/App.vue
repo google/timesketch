@@ -18,6 +18,9 @@ limitations under the License.
     <v-main>
       <!-- Top horizontal toolbar -->
       <v-toolbar flat>
+        <v-btn icon v-if="!showLeftPanel" @click="showLeftPanel = true" class="ml-0">
+          <v-icon>mdi-menu</v-icon>
+        </v-btn>
         <div v-if="isRootPage">
           <v-avatar class="mt-2 ml-n4">
             <router-link to="/">
@@ -79,7 +82,7 @@ limitations under the License.
       </v-toolbar>
 
       <!-- Main view -->
-      <router-view></router-view>
+      <router-view @hideLeftPanel="showLeftPanel = false" :show-left-panel="showLeftPanel"></router-view>
     </v-main>
   </v-app>
 </template>
@@ -89,8 +92,7 @@ export default {
   name: 'app',
   data() {
     return {
-      drawer: true,
-      mini: false,
+      showLeftPanel: true,
     }
   },
   computed: {
