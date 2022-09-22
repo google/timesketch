@@ -14,40 +14,46 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div>
-    <v-row
+  <div v-if="meta.views.length">
+    <div
       style="cursor: pointer"
       @click="expanded = !expanded"
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+      class="pa-2"
     >
-      <v-col cols="1">
-        <v-icon class="ml-2" v-if="!expanded">mdi-chevron-right</v-icon>
-        <v-icon class="ml-2" v-else>mdi-chevron-down</v-icon>
-      </v-col>
-      <v-col cols="10">
-        <span style="font-size: 0.9em">{{ facet.display_name }}</span>
-      </v-col>
-    </v-row>
+      <span>
+        <v-icon v-if="!expanded">mdi-chevron-right</v-icon>
+        <v-icon v-else>mdi-chevron-down</v-icon>
+      </span>
 
+      <span style="font-size: 0.9em">Saved Searches ({{ meta.views.length }})</span>
+    </div>
     <v-expand-transition>
       <div v-show="expanded">
-        <v-divider class="mt-3"></v-divider>
-        <span style="font-size: 0.9em" v-for="question in facet.questions" :key="question.id">
-          <ts-question :question="question"></ts-question>
-        </span>
+        <v-divider></v-divider>
+        <v-simple-table dense>
+          <template v-slot:default>
+            <tbody>
+              <tr v-for="savedSearch in meta.views" :key="savedSearch.name">
+                <td>
+                  <a @click="setView(savedSearch)">{{ savedSearch.name }}</a>
+                </td>
+              </tr>
+            </tbody>
+          </template>
+        </v-simple-table>
       </div>
     </v-expand-transition>
-    <v-btn v-show="expanded" disabled small text color="primary" class="ml-1 mt-3 mb-2">+ Question</v-btn>
-    <v-divider class="mt-3"></v-divider>
+
+    <v-divider></v-divider>
   </div>
 </template>
 
 <script>
-import TsQuestion from './Question'
+import EventBus from '../../main'
 
 export default {
-  props: ['facet'],
-  components: { TsQuestion },
+  props: [],
   data: function () {
     return {
       expanded: false,
@@ -57,8 +63,15 @@ export default {
     sketch() {
       return this.$store.state.sketch
     },
+    meta() {
+      return this.$store.state.meta
+    },
   },
-  methods: {},
+  methods: {
+    setView: function (savedSearch) {
+      EventBus.$emit('setActiveView', savedSearch)
+    },
+  },
   created() {},
 }
 </script>
