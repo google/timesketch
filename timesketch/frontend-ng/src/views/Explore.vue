@@ -168,6 +168,7 @@ limitations under the License.
       </v-chip-group>
 
       <!-- TODO: Move this control to the timeline picker -->
+      <!-- https://github.com/google/timesketch/issues/2338 -->
       <!-- Add manual event
       <span>
         <v-menu
