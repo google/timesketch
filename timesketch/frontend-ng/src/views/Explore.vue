@@ -16,6 +16,7 @@ limitations under the License.
 <template>
   <v-container fluid>
     <!-- Right side menu -->
+    <!-- Placeholder at the moment. Keeping it here for quick developement later. -->
     <v-navigation-drawer v-if="showRightSidePanel" fixed right width="600" style="box-shadow: 0 10px 15px -3px #888">
       <template v-slot:prepend>
         <v-toolbar flat>
@@ -26,7 +27,7 @@ limitations under the License.
           </v-btn>
         </v-toolbar>
       </template>
-      <v-container> Content go here </v-container>
+      <v-container> TODO: Add content here </v-container>
     </v-navigation-drawer>
 
     <!-- Search and Filters -->
@@ -643,6 +644,7 @@ export default {
       addManualEvent: false,
       datetimeManualEvent: '', // datetime of an event used
       // TODO: Refactor this into a configurable option
+      // Issue: https://github.com/google/timesketch/issues/2339
       tagConfig: {
         good: { color: 'green', textColor: 'white', label: 'mdi-check-circle-outline' },
         bad: { color: 'red', textColor: 'white', label: 'mdi-alert-circle-outline' },
