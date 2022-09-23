@@ -15,33 +15,19 @@ limitations under the License.
 -->
 <template>
   <v-container fluid>
-    <!-- Right panel -->
-    <v-navigation-drawer
-      v-model="selectedEvents.length"
-      fixed
-      right
-      width="600"
-      style="box-shadow: 0 10px 15px -3px #888"
-    >
+    <!-- Right side menu -->
+    <!-- Placeholder at the moment. Keeping it here for quick developement later. -->
+    <v-navigation-drawer v-if="showRightSidePanel" fixed right width="600" style="box-shadow: 0 10px 15px -3px #888">
       <template v-slot:prepend>
         <v-toolbar flat>
-          <v-toolbar-title>{{ selectedEvents.length }} events selected</v-toolbar-title>
+          <v-toolbar-title>Right Side Panel</v-toolbar-title>
           <v-spacer></v-spacer>
-          <v-btn icon @click="selectedEvents = []">
+          <v-btn icon @click="showRightSidePanel = false">
             <v-icon>mdi-close</v-icon>
           </v-btn>
         </v-toolbar>
       </template>
-
-      <v-container>
-        <v-list>
-          <v-list-item v-for="(event, index) in selectedEvents" :key="index">
-            <v-list-item-content>
-              <v-list-item-title>{{ event._source.message }}</v-list-item-title>
-            </v-list-item-content>
-          </v-list-item>
-        </v-list>
-      </v-container>
+      <v-container> TODO: Add content here </v-container>
     </v-navigation-drawer>
 
     <!-- Search and Filters -->
@@ -320,9 +306,51 @@ limitations under the License.
                 <v-icon>mdi-chart-bar</v-icon>
               </v-btn>
 
-              <v-btn icon>
-                <v-icon>mdi-view-column-outline</v-icon>
-              </v-btn>
+              <v-dialog v-model="columnDialog" max-width="500px" scrollable>
+                <template v-slot:activator="{ on, attrs }">
+                  <v-btn icon v-bind="attrs" v-on="on">
+                    <v-icon>mdi-view-column-outline</v-icon>
+                  </v-btn>
+                </template>
+
+                <v-card height="50vh">
+                  <v-card-title>Select columns</v-card-title>
+
+                  <v-card-text>
+                    <v-text-field
+                      v-model="searchColumns"
+                      append-icon="mdi-magnify"
+                      label="Search"
+                      single-line
+                      hide-details
+                    ></v-text-field>
+                    <br />
+                    <v-data-table
+                      v-model="selectedFields"
+                      :headers="columnHeaders"
+                      :items="meta.mappings"
+                      :search="searchColumns"
+                      :hide-default-footer="true"
+                      item-key="field"
+                      disable-pagination
+                      show-select
+                      dense
+                      @input="updateSelectedFields"
+                    >
+                    </v-data-table>
+                  </v-card-text>
+
+                  <v-divider></v-divider>
+
+                  <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn color="primary" text @click="selectedFields = [{ field: 'message', type: 'text' }]">
+                      Reset
+                    </v-btn>
+                    <v-btn color="primary" text @click="columnDialog = false"> Close </v-btn>
+                  </v-card-actions>
+                </v-card>
+              </v-dialog>
 
               <v-menu offset-y :close-on-content-click="false">
                 <template v-slot:activator="{ on, attrs }">
@@ -392,6 +420,17 @@ limitations under the License.
                           </v-list-item-content>
                         </v-list-item>
                       </v-list-item-group>
+                      <v-list-item-group>
+                        <v-list-item :ripple="false">
+                          <v-list-item-action>
+                            <v-switch dense v-model="displayOptions.showTimelineName"></v-switch>
+                          </v-list-item-action>
+                          <v-list-item-content>
+                            <v-list-item-title>Timeline name</v-list-item-title>
+                            <v-list-item-subtitle>Show timeline name</v-list-item-subtitle>
+                          </v-list-item-content>
+                        </v-list-item>
+                      </v-list-item-group>
                     </v-list>
                   </v-list>
                 </v-card>
@@ -399,6 +438,7 @@ limitations under the License.
             </div>
 
             <v-spacer></v-spacer>
+
             <v-data-footer
               :pagination="pagination"
               :options="options"
@@ -433,9 +473,10 @@ limitations under the License.
                 class="ts-time-bubble-vertical-line ts-time-bubble-vertical-line-color"
                 v-bind:style="getTimeBubbleColor(item)"
               ></div>
-              <div class="ts-time-bubble ts-time-bubble-color">
+              <div class="ts-time-bubble ts-time-bubble-color" v-bind:style="getTimeBubbleColor(item)">
                 <h5>
-                  <b>{{ item.deltaDays | compactNumber }}</b> days
+                  <b>{{ item.deltaDays | compactNumber }}</b
+                  ><br />days
                 </h5>
               </div>
               <div
@@ -452,27 +493,46 @@ limitations under the License.
             {{ item._source.timestamp | formatTimestamp | toISO8601 }}
           </div>
         </template>
-
         <!-- Actions field -->
         <template v-slot:item.actions="{ item }">
-          <v-btn small icon>
-            <v-icon>mdi-star-outline</v-icon>
+          <v-btn small icon @click="toggleStar(item)">
+            <v-icon v-if="item._source.label.includes('__ts_star')" color="amber">mdi-star</v-icon>
+            <v-icon v-else>mdi-star-outline</v-icon>
           </v-btn>
-          <v-btn small icon>
-            <v-icon>mdi-tag-plus-outline</v-icon>
-          </v-btn>
+          <!-- Tag menu -->
+          <ts-event-tag-menu :event="item"></ts-event-tag-menu>
         </template>
 
-        <!-- Message field -->
-        <template v-slot:item._source.message="{ item }">
-          <span class="ts-event-field-container" style="cursor: pointer" @click="toggleDetailedEvent(item)">
-            <span class="ts-event-field-ellipsis">
+        <!-- Generic slot for any field type. Adds tags and emojis to the first column. -->
+        <template v-for="(field, index) in headers" v-slot:[getFieldName(field.text)]="{ item }">
+          <span
+            :key="field.text"
+            class="ts-event-field-container"
+            style="cursor: pointer"
+            @click="toggleDetailedEvent(item)"
+          >
+            <span :class="{ 'ts-event-field-ellipsis': field.text === 'message' }">
               <!-- Tags -->
-              <span v-if="displayOptions.showTags">
-                <v-chip small label outlined class="mr-2" v-for="tag in item._source.tag" :key="tag">{{ tag }}</v-chip>
+              <span v-if="displayOptions.showTags && index === 3">
+                <v-chip
+                  small
+                  class="mr-2"
+                  v-for="tag in item._source.tag"
+                  :key="tag"
+                  :color="tagColor(tag).color"
+                  :text-color="tagColor(tag).textColor"
+                >
+                  <v-icon v-if="tag in tagConfig" left small>{{ tagConfig[tag].label }}</v-icon>
+                  {{ tag }}</v-chip
+                >
+                <span v-for="label in item._source.label" :key="label">
+                  <v-chip v-if="!label.startsWith('__ts')" small outlined class="mr-2">
+                    {{ label }}
+                  </v-chip>
+                </span>
               </span>
               <!-- Emojis -->
-              <span v-if="displayOptions.showEmojis">
+              <span v-if="displayOptions.showEmojis && index === 0">
                 <span
                   class="mr-2"
                   v-for="emoji in item._source.__ts_emojis"
@@ -482,7 +542,7 @@ limitations under the License.
                   >{{ emoji }}
                 </span>
               </span>
-              <span>{{ item._source.message }}</span>
+              <span>{{ item._source[field.text] }}</span>
             </span>
           </span>
         </template>
@@ -515,6 +575,7 @@ import TsBarChart from '../components/Explore/BarChart'
 import TsTimelinePicker from '../components/Explore/TimelinePicker'
 import TsFilterMenu from '../components/Explore/FilterMenu'
 import TsEventDetail from '../components/Explore/EventDetail'
+import TsEventTagMenu from '../components/Explore/EventTagMenu.vue'
 
 import EventBus from '../main'
 import { None } from 'vega'
@@ -553,36 +614,15 @@ export default {
     TsTimelinePicker,
     TsFilterMenu,
     TsEventDetail,
+    TsEventTagMenu,
   },
   props: ['sketchId'],
   data() {
     return {
-      headers: [
-        { text: '', value: 'data-table-select' },
-
+      columnHeaders: [
         {
-          text: 'Datetime (UTC)',
-          align: 'start',
-          value: '_source.timestamp',
-          width: '230',
-        },
-        {
-          value: 'actions',
-          width: '88',
-        },
-        {
-          text: 'Message',
-          align: 'start',
-          value: '_source.message',
-          width: '100%',
-        },
-        {
-          value: '_source.comment',
-          align: 'end',
-        },
-        {
-          value: 'timeline_name',
-          align: 'end',
+          text: '',
+          value: 'field',
         },
       ],
       tableOptions: {
@@ -593,22 +633,30 @@ export default {
       leftDrawer: true,
       expandedRows: [],
       timeFilterMenu: false,
-      addManualEvent: false,
+      selectedFields: [{ field: 'message', type: 'text' }],
+      searchColumns: '',
+      columnDialog: false,
       saveSearchMenu: false,
       saveSearchFormName: '',
       fromSavedSearch: false,
+      selectedEventTags: [],
+      showRightSidePanel: false,
+      addManualEvent: false,
       datetimeManualEvent: '', // datetime of an event used
+      // TODO: Refactor this into a configurable option
+      // Issue: https://github.com/google/timesketch/issues/2339
+      tagConfig: {
+        good: { color: 'green', textColor: 'white', label: 'mdi-check-circle-outline' },
+        bad: { color: 'red', textColor: 'white', label: 'mdi-alert-circle-outline' },
+        suspicious: { color: 'orange', textColor: 'white', label: 'mdi-help-circle-outline' },
+      },
+
       // old stuff
       params: {},
-      showCreateViewModal: false,
-      showFilterCard: true,
-      showSearch: true,
       searchInProgress: false,
       currentPage: 1,
       contextEvent: false,
       originalContext: false,
-      isFullPage: true,
-      loadingComponent: null,
       showSearchDropdown: false,
       eventList: {
         meta: {},
@@ -616,15 +664,13 @@ export default {
       },
       currentQueryString: '',
       currentQueryFilter: defaultQueryFilter(),
-      selectedFields: [{ field: 'message', type: 'text' }],
-      selectedFieldsProxy: [],
-      expandFieldDropdown: false,
       selectedEvents: [],
       displayOptions: {
         isCompact: false,
         showTags: true,
         showEmojis: true,
         showMillis: false,
+        showTimelineName: true,
       },
       selectedLabels: [],
       showSearchHistory: false,
@@ -636,7 +682,6 @@ export default {
         y: 0,
       },
       minimizeRightSidePanel: false,
-      sidePanelTab: null,
     }
   },
   computed: {
@@ -676,6 +721,54 @@ export default {
     currentSearchNode() {
       return this.$store.state.currentSearchNode
     },
+    headers() {
+      let baseHeaders = [
+        {
+          text: '',
+          value: 'data-table-select',
+        },
+        {
+          text: 'Datetime (UTC)',
+          align: 'start',
+          value: '_source.timestamp',
+          width: '230',
+        },
+        {
+          value: 'actions',
+          width: '90',
+        },
+        {
+          value: '_source.comment',
+          align: 'end',
+        },
+      ]
+      let extraHeaders = []
+      this.selectedFields.forEach((field) => {
+        let header = {
+          text: field.field,
+          align: 'start',
+          value: '_source.' + field.field,
+        }
+        if (field.field === 'message') {
+          header.width = '100%'
+          extraHeaders.unshift(header)
+        } else {
+          extraHeaders.push(header)
+        }
+      })
+
+      // Extend the column headers from position 3 (after the actions column).
+      baseHeaders.splice(3, 0, ...extraHeaders)
+
+      // Add timeline name based on configuration
+      if (this.displayOptions.showTimelineName) {
+        baseHeaders.push({
+          value: 'timeline_name',
+          align: 'end',
+        })
+      }
+      return baseHeaders
+    },
     rightSidePanelWidth() {
       let width = '400'
       if (this.minimizeRightSidePanel) {
@@ -685,6 +778,15 @@ export default {
     },
   },
   methods: {
+    tagColor: function (tag) {
+      if (this.tagConfig[tag]) {
+        return this.tagConfig[tag]
+      }
+      return 'lightgrey'
+    },
+    getFieldName: function (field) {
+      return 'item._source.' + field
+    },
     addEventBtn: function (datetimeManualEvent) {
       this.datetimeManualEvent = datetimeManualEvent
       this.addManualEvent = true
@@ -876,7 +978,6 @@ export default {
           fileLink.setAttribute('download', fileName)
           document.body.appendChild(fileLink)
           fileLink.click()
-          this.loadingClose()
         })
         .catch((e) => {
           console.error(e)
@@ -1105,20 +1206,27 @@ export default {
     updateSelectedFields: function (value) {
       // If we haven't fetched the field before, do an new search.
       value.forEach((field) => {
-        if (!this.selectedFields.filter((e) => e.field === field.field).length > 0) {
+        if (!this.headers.filter((e) => e.field === field.field).length > 0) {
           this.search(true, true, true)
         }
       })
-      value.forEach((field) => {
-        this.selectedFields.push(field)
-      })
-      // Prevents tags from being displayed
-      this.selectedFieldsProxy = []
     },
     removeField: function (index) {
       this.selectedFields.splice(index, 1)
     },
-    toggleStar: function () {
+    toggleStar(event) {
+      if (event._source.label.includes('__ts_star')) {
+        event._source.label.splice(event._source.label.indexOf('__ts_star'), 1)
+      } else {
+        event._source.label.push('__ts_star')
+      }
+      ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', event, this.currentSearchNode)
+        .then((response) => {})
+        .catch((e) => {
+          console.error(e)
+        })
+    },
+    toggleMultipleStars: function () {
       let eventsToToggle = []
       Object.keys(this.selectedEvents).forEach((key, index) => {
         eventsToToggle.push(this.selectedEvents[key])
@@ -1128,22 +1236,6 @@ export default {
         .catch((e) => {})
 
       EventBus.$emit('toggleStar', this.selectedEvents)
-    },
-    changeSortOrder: function () {
-      if (this.currentQueryFilter.order === 'asc') {
-        this.currentQueryFilter.order = 'desc'
-      } else {
-        this.currentQueryFilter.order = 'asc'
-      }
-      this.search(true, true, true)
-    },
-    loadingOpen: function () {
-      this.loadingComponent = this.$buefy.loading.open({
-        container: this.isFullPage ? null : this.$refs.element.$el,
-      })
-    },
-    loadingClose: function () {
-      this.loadingComponent.close()
     },
     jumpInHistory: function (node) {
       this.currentQueryString = node.query_string

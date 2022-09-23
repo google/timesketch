@@ -28,14 +28,6 @@ limitations under the License.
             </v-card>
           </v-col>
         </v-row>
-        <v-row v-if="searchHistory.length">
-          <v-col>
-            <v-card outlined>
-              <v-app-bar flat dense> Search History </v-app-bar>
-              <ts-search-history-table></ts-search-history-table>
-            </v-card>
-          </v-col>
-        </v-row>
         <v-row v-if="meta.views.length">
           <v-col>
             <v-card outlined>
@@ -58,6 +50,14 @@ limitations under the License.
             <v-card outlined>
               <v-app-bar flat dense> Tags </v-app-bar>
               <ts-tags-table></ts-tags-table>
+            </v-card>
+          </v-col>
+        </v-row>
+        <v-row v-if="searchHistory.length">
+          <v-col>
+            <v-card outlined>
+              <v-app-bar flat dense> Search History </v-app-bar>
+              <ts-search-history-table></ts-search-history-table>
             </v-card>
           </v-col>
         </v-row>
