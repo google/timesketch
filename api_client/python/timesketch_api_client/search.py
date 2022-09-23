@@ -15,6 +15,7 @@
 import datetime
 import json
 import logging
+import re
 
 import pandas
 
@@ -232,11 +233,14 @@ class DateRangeChip(Chip):
     _DATE_FORMAT = "%Y-%m-%dT%H:%M:%S"
     _DATE_FORMAT_MICROSECONDS = "%Y-%m-%dT%H:%M:%S.%f"
 
+    _DATE_RE = r'^[0-9]{4}-[0-9]{1,2}-[0-9]{2}$'
+
     def __init__(self):
         """Initialize the date range."""
         super().__init__()
         self._start_date = None
         self._end_date = None
+        self._date_re = re.compile(self._DATE_RE)
 
     def add_end_time(self, end_time):
         """Add an end time to the range.
@@ -249,6 +253,11 @@ class DateRangeChip(Chip):
         """
         if end_time.endswith("Z"):
             end_time = end_time[:-1]
+
+        # Check for a whole day, YYYY-MM-DD.
+        if self._date_re.match(end_time):
+            end_time = f'{end_time}T23:59:59'
+
         try:
             dt = datetime.datetime.strptime(end_time, self._DATE_FORMAT_MICROSECONDS)
         except ValueError as exc:
@@ -274,6 +283,11 @@ class DateRangeChip(Chip):
         """
         if start_time.endswith("Z"):
             start_time = start_time[:-1]
+
+        # Check for a whole day, YYYY-MM-DD.
+        if self._date_re.match(start_time):
+            start_time = f'{start_time}T00:00:00'
+
         try:
             dt = datetime.datetime.strptime(start_time, self._DATE_FORMAT_MICROSECONDS)
         except ValueError as exc:
@@ -501,7 +515,7 @@ class Search(resource.SketchResource):
             "filter": query_filter,
             "dsl": self._query_dsl,
             "count": count,
-            "fields": self._return_fields,
+            "fields": self.return_fields,
             "enable_scroll": scrolling,
             "file_name": file_name,
         }
@@ -726,7 +740,11 @@ class Search(resource.SketchResource):
             if "fields" in filter_dict:
                 fields = filter_dict.pop("fields")
                 return_fields = [x.get("field") for x in fields]
-                self.return_fields = ",".join(return_fields)
+                self._return_fields = ",".join(return_fields)
+
+            indices = filter_dict.get("indices", [])
+            if indices:
+                self.indices = indices
 
             self.query_filter = filter_dict
         self._query_string = data.get("query_string", "")
@@ -745,7 +763,6 @@ class Search(resource.SketchResource):
     @indices.setter
     def indices(self, indices):
         """Make changes to the current set of indices."""
-
         if indices == "_all":
             self._indices = "_all"
             self.commit()
@@ -937,6 +954,11 @@ class Search(resource.SketchResource):
     @property
     def return_fields(self):
         """Property that returns the return_fields."""
+        if self._return_fields:
+            items = self._return_fields.split(",")
+            if "datetime" not in items:
+                items.append("datetime")
+            return ",".join(items)
         return self._return_fields
 
     @return_fields.setter
@@ -1082,7 +1104,7 @@ class Search(resource.SketchResource):
         timelines = {t.id: t.name for t in self._sketch.list_timelines()}
 
         return_field_list = []
-        return_fields = self._return_fields
+        return_fields = self.return_fields
         if return_fields:
             if return_fields.startswith("'"):
                 return_fields = return_fields[1:]

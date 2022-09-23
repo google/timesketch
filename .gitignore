@@ -7,6 +7,7 @@
 # Generic auto-generated build files
 *.pyc
 *.pyo
+**/.ipynb_checkpoints/
 
 # Ignore back-up files.
 *~
@@ -15,10 +16,10 @@
 /.eggs
 /.tox
 /__pycache__
-/build/
+**/build/
 /dependencies/
-/dist/
-/timesketch.egg-info
+**/dist/
+*.egg-info
 
 # Ignore frontend build related files
 node_modules
@@ -34,3 +35,4 @@ vagrant/*.log
 
 # Exclude .venv folder
 .venv/
+.vscode/*

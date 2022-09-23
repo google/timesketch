@@ -63,9 +63,21 @@ limitations under the License.
         </div>
       </b-table-column>
 
+      <b-table-column field="ts_use_in_analyzer" label="Use in Analyzer" v-slot="props" sortable>
+        <div @click="props.toggleDetails(props.row)" style="margin-top:5px;cursor:pointer;">
+          {{ props.row.ts_use_in_analyzer }}
+        </div>
+      </b-table-column>
+
       <b-table-column field="description" label="Description" v-slot="props" searchable>
         <div @click="props.toggleDetails(props.row)" style="margin-top:5px;cursor:pointer;">
           {{ props.row.description }}
+        </div>
+      </b-table-column>
+
+      <b-table-column field="author" label="Author" v-slot="props" searchable sortable>
+        <div @click="props.toggleDetails(props.row)" style="margin-top:5px;cursor:pointer;">
+          {{ props.row.author }}
         </div>
       </b-table-column>
 

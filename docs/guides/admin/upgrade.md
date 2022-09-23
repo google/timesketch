@@ -40,7 +40,7 @@ In case you don't get any response back from the `db current` command you'll nee
 root@<CONTAINER_ID>$ tsctl db history
 ```
 
-Find the lasat revision number you have upgraded the database too, and then issue
+Find the last revision number you have upgraded the database too, and then issue
 
 ```shell
 root@<CONTAINER_ID>$ tsctl db stamp <REVISION_ID>

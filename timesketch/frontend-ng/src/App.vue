@@ -15,42 +15,74 @@ limitations under the License.
 -->
 <template>
   <v-app id="app">
-    <v-app-bar app clipped-right flat :color="$vuetify.theme.dark ? '' : 'white'">
-      <v-img src="/dist/timesketch-color.png" max-height="30" max-width="30" contain></v-img>
-      <v-toolbar-title class="ml-3"> timesketch </v-toolbar-title>
-      <span v-if="sketch.name" class="ml-6" style="margin-top: 5px">
-        {{ sketch.name }}
-      </span>
-      <v-spacer></v-spacer>
+    <v-main>
+      <!-- Top horizontal toolbar -->
+      <v-toolbar flat>
+        <v-btn icon v-if="!showLeftPanel" @click="showLeftPanel = true" class="ml-0">
+          <v-icon>mdi-menu</v-icon>
+        </v-btn>
+        <div v-if="isRootPage">
+          <v-avatar class="mt-2 ml-n4">
+            <router-link to="/">
+              <v-img src="/dist/timesketch-color.png" max-height="25" max-width="25" contain></v-img>
+            </router-link>
+          </v-avatar>
+          <span style="font-size: 1.2em">timesketch</span>
+        </div>
+        <v-spacer></v-spacer>
+        <v-btn small depressed v-on:click="switchUI"> Use the old UI </v-btn>
+        <v-btn v-if="!isRootPage" small depressed color="primary" class="ml-2">
+          <v-icon small left>mdi-account-multiple-plus</v-icon>
+          Share
+        </v-btn>
+        <v-avatar color="grey lighten-1" size="25" class="ml-3">
+          <span class="white--text">{{ currentUser.charAt(0).toUpperCase() }}</span>
+        </v-avatar>
+        <v-menu v-if="!isRootPage" offset-y>
+          <template v-slot:activator="{ on, attrs }">
+            <v-avatar>
+              <v-btn small icon v-bind="attrs" v-on="on">
+                <v-icon>mdi-dots-vertical</v-icon>
+              </v-btn>
+            </v-avatar>
+          </template>
+          <v-card>
+            <v-list>
+              <v-list-item-group color="primary">
+                <v-list-item v-on:click="toggleTheme">
+                  <v-list-item-icon>
+                    <v-icon>mdi-brightness-6</v-icon>
+                  </v-list-item-icon>
+                  <v-list-item-content>
+                    <v-list-item-title>Toggle theme</v-list-item-title>
+                  </v-list-item-content>
+                </v-list-item>
 
-      <v-btn small depressed v-on:click="switchUI"> Use the old UI </v-btn>
+                <v-list-item>
+                  <v-list-item-icon>
+                    <v-icon>mdi-archive</v-icon>
+                  </v-list-item-icon>
+                  <v-list-item-content>
+                    <v-list-item-title>Archive sketch</v-list-item-title>
+                  </v-list-item-content>
+                </v-list-item>
 
-      <v-tooltip bottom>
-        <template v-slot:activator="{ on, attrs }">
-          <v-btn icon v-on:click="toggleTheme" v-bind="attrs" v-on="on">
-            <v-icon>mdi-brightness-6</v-icon>
-          </v-btn>
-        </template>
-        <span>Switch between light and dark theme</span>
-      </v-tooltip>
+                <v-list-item>
+                  <v-list-item-icon>
+                    <v-icon>mdi-export</v-icon>
+                  </v-list-item-icon>
+                  <v-list-item-content>
+                    <v-list-item-title>Export sketch</v-list-item-title>
+                  </v-list-item-content>
+                </v-list-item>
+              </v-list-item-group>
+            </v-list>
+          </v-card>
+        </v-menu>
+      </v-toolbar>
 
-      <v-avatar class="ml-3" color="orange" size="32">
-        <span class="white--text">jb</span>
-      </v-avatar>
-
-      <template v-slot:extension>
-        <v-tabs class="ml-2">
-          <v-tab :to="{ name: 'Overview' }" exact-path><v-icon left small>mdi-cube-outline</v-icon> Overview</v-tab>
-          <v-tab :to="{ name: 'Explore' }"><v-icon left small>mdi-magnify</v-icon> Explore </v-tab>
-          <v-tab disabled><v-icon left small>mdi-lan</v-icon> Graph </v-tab>
-          <v-tab disabled><v-icon left small>mdi-auto-fix</v-icon>Automation</v-tab>
-          <v-tab disabled><v-icon left small>mdi-head-lightbulb</v-icon>Intelligence</v-tab>
-        </v-tabs>
-      </template>
-    </v-app-bar>
-
-    <v-main class="mx-4">
-      <router-view></router-view>
+      <!-- Main view -->
+      <router-view @hideLeftPanel="showLeftPanel = false" :show-left-panel="showLeftPanel"></router-view>
     </v-main>
   </v-app>
 </template>
@@ -60,12 +92,18 @@ export default {
   name: 'app',
   data() {
     return {
-      drawer: true,
+      showLeftPanel: true,
     }
   },
   computed: {
     sketch() {
       return this.$store.state.sketch
+    },
+    currentUser() {
+      return this.$store.state.currentUser
+    },
+    isRootPage() {
+      return Object.keys(this.sketch).length === 0
     },
   },
   methods: {
@@ -80,23 +118,15 @@ export default {
   mounted() {
     const isDark = localStorage.getItem('isDarkTheme')
     if (isDark) {
-      if (isDark == 'true') {
+      if (isDark === 'true') {
         this.$vuetify.theme.dark = true
       } else {
         this.$vuetify.theme.dark = false
       }
     }
+    this.$store.dispatch('resetState', this.sketchId)
   },
 }
 </script>
 
-<style src="vue-multiselect/dist/vue-multiselect.min.css"></style>
-<style lang="scss">
-.v-toolbar__content,
-.v-toolbar__extension {
-  border-bottom: thin solid rgba(0, 0, 0, 0.12);
-}
-.v-tab {
-  text-transform: none !important;
-}
-</style>
+<style lang="scss"></style>

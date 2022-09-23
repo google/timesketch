@@ -74,8 +74,12 @@ class ApiDataFetcher(interface.DataFetcher):
 
         parameter_string = aggregation.parameters
         parameters = json.loads(parameter_string)
-        index = parameters.pop("index", None)
-        aggregator = agg_class(sketch_id=self._sketch_id, index=index)
+        parameter_index = parameters.pop("index", None)
+        indices, timeline_ids = self.get_indices_and_timelines(
+            parameter_index)
+        aggregator = agg_class(
+            sketch_id=self._sketch_id, indices=indices,
+            timeline_ids=timeline_ids)
 
         _ = parameters.pop("supported_charts", None)
         chart_color = parameters.pop("chart_color", "N/A")
@@ -129,8 +133,12 @@ class ApiDataFetcher(interface.DataFetcher):
             if not agg_class:
                 continue
 
-            index = aggregator_parameters.pop("index", None)
-            aggregator_obj = agg_class(sketch_id=self._sketch_id, index=index)
+            parameter_index = aggregator_parameters.pop("index", None)
+            indices, timeline_ids = self.get_indices_and_timelines(
+                parameter_index)
+            aggregator_obj = agg_class(
+                sketch_id=self._sketch_id,
+                indices=indices, timeline_ids=timeline_ids)
             chart_type = aggregator_parameters.pop("supported_charts", None)
             color = aggregator_parameters.pop("chart_color", "")
             chart_title = aggregator_parameters.pop("chart_title", None)
@@ -164,6 +172,31 @@ class ApiDataFetcher(interface.DataFetcher):
             "user": group.user,
         }
         return data
+
+    def get_indices_and_timelines(self, index_list):
+        """Returns a tuple with two lists from indices and timeline IDs.
+
+        Args:
+            index_list (list): A list of timeline IDs (int) and
+                indices (str).
+
+        Returns:
+            A tuple with two items, a list of indices and a list of
+            timeline IDs.
+        """
+        indices = []
+        timeline_ids = []
+
+        if isinstance(index_list, str):
+            index_list = index_list.split(',')
+
+        for index in index_list:
+            if isinstance(index, str):
+                indices.append(index)
+            if isinstance(index, int):
+                timeline_ids.append(index)
+
+        return indices, timeline_ids
 
     def get_view(self, view_dict):
         """Returns a data frame from a view dict.

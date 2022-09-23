@@ -1,4 +1,4 @@
-site_name: timesketch
+site_name: ""
 use_directory_urls: true
 extra_css:
   - assets/css/extra.css
@@ -11,26 +11,26 @@ markdown_extensions:
 
 nav:
   - Home: index.md
-  - Guides:
-      - Getting started: guides/getting-started.md
-      - User Guide:
-          - Uploading timelines: guides/user/upload-data.md
-          - Basic concepts: guides/user/basic-concepts.md
-          - Sketch overview: guides/user/sketch-overview.md
-          - Search query guide: guides/user/search-query-guide.md
-          - Command line client: guides/user/cli-client.md
-          - Interactive notebook: guides/user/notebook.md
-          - Import from JSON or CSV: guides/user/import-from-json-csv.md
-          - Use Sigma: guides/user/sigma.md
-          - Intelligence: guides/user/intelligence.md
-          - Analyzers:
-              - Tagger: guides/analyzers/tagger.md
-      - Admin Guide:
-          - Installing Timesketch: guides/admin/install.md
-          - Scaling and limits: guides/admin/scaling-and-limits.md
-          - Troubleshooting: guides/admin/troubleshooting.md
-          - Admin CLI: guides/admin/admin-cli.md
-          - Upgrade: guides/admin/upgrade.md
+  - Quickstart: guides/getting-started.md
+
+  - User Guide:
+      - Uploading timelines: guides/user/upload-data.md
+      - Basic concepts: guides/user/basic-concepts.md
+      - Sketch overview: guides/user/sketch-overview.md
+      - Search query guide: guides/user/search-query-guide.md
+      - Command line client: guides/user/cli-client.md
+      - Interactive notebook: guides/user/notebook.md
+      - Import from JSON or CSV: guides/user/import-from-json-csv.md
+      - Use Sigma: guides/user/sigma.md
+      - Intelligence: guides/user/intelligence.md
+      - Analyzers:
+          - Tagger: guides/analyzers/tagger.md
+  - Admin Guide:
+      - Installing Timesketch: guides/admin/install.md
+      - Scaling and limits: guides/admin/scaling-and-limits.md
+      - Troubleshooting: guides/admin/troubleshooting.md
+      - Admin CLI: guides/admin/admin-cli.md
+      - Upgrade: guides/admin/upgrade.md
   - Developers:
       - Getting started: developers/getting-started.md
       - Frontend development: developers/frontend-development.md
@@ -62,11 +62,12 @@ plugins:
 
 theme:
   name: material
-  logo: assets/images/timesketch-white.svg
+  logo: assets/images/timesketch-color-text.svg
   language: en
   features:
-    - navigation.tabs
     - navigation.sections
+    - navigation.expand
+    - navigation.tabs
 extra:
   social:
     - icon: fontawesome/brands/github
