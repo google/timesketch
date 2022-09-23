@@ -67,11 +67,12 @@ RestApiClient.interceptors.response.use(
 
 export default {
   // Sketch
-  getSketchList(scope, page, searchQuery) {
+  getSketchList(scope, page, perPage, searchQuery) {
     let params = {
       params: {
         scope: scope,
         page: page,
+        per_page: perPage,
         search_query: searchQuery,
       },
     }
@@ -140,6 +141,15 @@ export default {
   deleteSketchTimeline(sketchId, timelineId) {
     return RestApiClient.delete('/sketches/' + sketchId + /timelines/ + timelineId + '/')
   },
+  createEvent(sketchId, datetime, message, timestampDesc, attributes, config) {
+    let formData = {
+      date_string: datetime,
+      message: message,
+      timestamp_desc: timestampDesc,
+      attributes: attributes,
+    }
+    return RestApiClient.post('/sketches/' + sketchId + '/event/create/', formData, config)
+  },
   // Get details about an event
   getEvent(sketchId, searchindexId, eventId) {
     let params = {
@@ -159,6 +169,35 @@ export default {
       remove: remove,
     }
     return RestApiClient.post('/sketches/' + sketchId + '/event/annotate/', formData)
+  },
+  tagEvents(sketchId, events, tags) {
+    let formData = {
+      tag_string: JSON.stringify(tags),
+      events: events,
+      verbose: false,
+    }
+    return RestApiClient.post('/sketches/' + sketchId + '/event/tagging/', formData)
+  },
+  updateEventAnnotation(sketchId, annotationType, annotation, events, currentSearchNode) {
+    let formData = {
+      annotation: annotation,
+      annotation_type: annotationType,
+      events: events,
+      current_search_node_id: currentSearchNode.id,
+    }
+    return RestApiClient.put('/sketches/' + sketchId + '/event/annotate/', formData)
+  },
+  deleteEventAnnotation(sketchId, annotationType, annotationId, event, currentSearchNode) {
+    let params = {
+      params: {
+        annotation_id: annotationId,
+        annotation_type: annotationType,
+        event_id: event._id,
+        searchindex_id: event._index,
+        current_search_node_id: currentSearchNode.id,
+      },
+    }
+    return RestApiClient.delete('/sketches/' + sketchId + '/event/annotate/', params)
   },
   // Stories
   getStoryList(sketchId) {
@@ -336,5 +375,15 @@ export default {
       content: ruleText,
     }
     return RestApiClient.post('/sigma/text/', formData)
+  },
+  getScenarios() {
+    return RestApiClient.get('/scenarios/')
+  },
+  getSketchScenarios(sketchId) {
+    return RestApiClient.get('/sketches/' + sketchId + '/scenarios/')
+  },
+  addScenario(sketchId, scenarioName) {
+    let formData = { scenario_name: scenarioName }
+    return RestApiClient.post('/sketches/' + sketchId + '/scenarios/', formData)
   },
 }

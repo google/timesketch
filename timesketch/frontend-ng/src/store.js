@@ -24,6 +24,7 @@ const defaultState = (currentUser) => {
     sketch: {},
     meta: {},
     searchHistory: {},
+    scenario: { facets: [] },
     tags: [],
     dataTypes: [],
     count: 0,
@@ -45,6 +46,9 @@ export default new Vuex.Store({
     SET_SEARCH_HISTORY(state, payload) {
       Vue.set(state, 'searchHistory', payload.objects)
     },
+    SET_SCENARIO(state, payload) {
+      Vue.set(state, 'scenario', payload.objects[0][0])
+    },
     SET_TIMELINE_TAGS(state, payload) {
       let buckets = payload.objects[0]['field_bucket']['buckets']
       Vue.set(state, 'tags', buckets)
@@ -63,6 +67,12 @@ export default new Vuex.Store({
       Vue.set(state, 'sigmaRuleList', payload['objects'])
       Vue.set(state, 'sigmaRuleList_count', payload['meta']['rules_count'])
     },
+    SET_ACTIVE_USER(state, payload) {
+      ApiClient.getLoggedInUser().then((response) => {
+        let currentUser = response.data.objects[0].username
+        Vue.set(state, 'currentUser', currentUser)
+      })
+    },
     RESET_STATE(state, payload) {
       ApiClient.getLoggedInUser().then((response) => {
         let currentUser = response.data.objects[0].username
@@ -76,6 +86,7 @@ export default new Vuex.Store({
         .then((response) => {
           // console.log(response.data.objects[0].active_timelines[0].color)
           context.commit('SET_SKETCH', response.data)
+          context.commit('SET_ACTIVE_USER', response.data)
           context.dispatch('updateTimelineTags', sketchId)
           context.dispatch('updateDataTypes', sketchId)
         })
@@ -102,6 +113,16 @@ export default new Vuex.Store({
       return ApiClient.getSearchHistory(sketchId)
         .then((response) => {
           context.commit('SET_SEARCH_HISTORY', response.data)
+        })
+        .catch((e) => {})
+    },
+    updateScenario(context, sketchId) {
+      if (!sketchId) {
+        sketchId = context.state.sketch.id
+      }
+      return ApiClient.getSketchScenarios(sketchId)
+        .then((response) => {
+          context.commit('SET_SCENARIO', response.data)
         })
         .catch((e) => {})
     },

@@ -36,7 +36,7 @@ Follow the steps in the previous section to get dependencies installed.
 
 ### Tweak config files
 
-* In your `timesketch` docker container, edit `/etc/timesketch/config.yaml` and set `WTF_CSRF_ENABLED = False`.
+* In your `timesketch` docker container, edit `/etc/timesketch/timesketch.conf` and set `WTF_CSRF_ENABLED = False`.
 
 ### Start the VueJS development server
 

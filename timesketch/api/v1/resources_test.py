@@ -18,9 +18,10 @@ from __future__ import unicode_literals
 import json
 import mock
 
-from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
-from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
+from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
+from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
+from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.testlib import MockDataStore
 
@@ -73,7 +74,9 @@ class SketchResourceTest(BaseTest):
 
     resource_url = "/api/v1/sketches/1/"
 
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
     def test_sketch_resource(self):
         """Authenticated request to get a sketch."""
         self.login()
@@ -221,6 +224,7 @@ class ExploreResourceTest(BaseTest):
                     "timestamp_desc": "Content Modification Time",
                     "datetime": "2014-09-13T07:27:03+00:00",
                     "__ts_timeline_id": 1,
+                    "comment": ["test"],
                 },
                 "_score": "null",
                 "selected": False,
@@ -230,7 +234,9 @@ class ExploreResourceTest(BaseTest):
         ],
     }
 
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
     def test_search(self):
         """Authenticated request to query the datastore."""
         self.login()
@@ -253,7 +259,9 @@ class AggregationExploreResourceTest(BaseTest):
 
     resource_url = "/api/v1/sketches/1/aggregation/explore/"
 
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
     def test_heatmap_aggregation(self):
         """Authenticated request to get aggregation requests."""
         self.login()
@@ -282,20 +290,27 @@ class EventResourceTest(BaseTest):
             "message": "",
             "datetime": "2014-09-16T19:23:40+00:00",
             "__ts_timeline_id": 1,
+            "comment": ["test"],
         }
     }
 
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
     def test_get_event(self):
         """Authenticated request to get an event from the datastore."""
         self.login()
         response = self.client.get(
             self.resource_url + "?searchindex_id=test&event_id=test"
         )
-        self.assertDictContainsSubset(self.expected_response, response.json)
+        response_json = response.json
+        del response_json["meta"]
+        self.assertDictContainsSubset(self.expected_response, response_json)
         self.assert200(response)
 
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
     def test_invalid_index(self):
         """
         Authenticated request to get an event from the datastore, but in the
@@ -313,7 +328,9 @@ class EventAnnotationResourceTest(BaseTest):
 
     resource_url = "/api/v1/sketches/1/event/annotate/"
 
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
     def test_post_annotate_resource(self):
         """Authenticated request to create an annotation."""
         self.login()
@@ -356,11 +373,15 @@ class SearchIndexResourceTest(BaseTest):
 
     resource_url = "/api/v1/searchindices/"
 
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
     def test_post_create_searchindex(self):
         """Authenticated request to create a searchindex."""
         self.login()
-        data = dict(searchindex_name="test3", es_index_name="test3", public=False)
+        data = dict(
+            searchindex_name="test3", es_index_name="test3", public=False
+        )
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data),
@@ -426,33 +447,31 @@ class SigmaListResourceTest(BaseTest):
 
     resource_url = "/api/v1/sigma/"
     expected_response = {
-        "meta": {"current_user": "test1", "rules_count": 1},
+        "meta": {"rules_count": 1},
         "objects": [
             {
-                "author": "Alexander Jaeger",
-                "date": "2020/06/26",
-                "description": "Detects suspicious installation of ZMap",
-                "detection": {
-                    "condition": "keywords",
-                    "keywords": ["*apt-get install zmap*"],
+                'author': 'Alexander Jaeger',
+                'date': '2020/06/26',
+                'description': 'Detects suspicious installation of ZMap',
+                'detection': {
+                    'condition': 'keywords',
+                    'keywords': ['*apt-get install zmap*'],
                 },
-                "es_query": '(data_type:("shell:zsh:history" OR '
-                '"bash:history:command" OR '
-                '"apt:history:line" OR '
-                '"selinux:line") AND '
-                '"apt-get install zmap")',
-                "falsepositives": ["Unknown"],
-                "file_name": "lnx_susp_zmap.yml",
-                "file_relpath": "lnx_susp_zmap.yml",
-                "id": "5266a592-b793-11ea-b3de-0242ac130004",
-                "level": "high",
-                "logsource": {"product": "linux", "service": "shell"},
-                "modified": "2020/06/26",
-                "tags": ["attack.discovery", "attack.t1046"],
-                "references": [
-                    "https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html"  # pylint: disable=line-too-long
+                'es_query': '(data_type:("shell:zsh:history" OR "bash:history:command" OR "apt:history:line" OR "selinux:line") AND "apt-get install zmap")',  # pylint: disable=line-too-long
+                'falsepositives': ['Unknown'],
+                'file_name': 'lnx_susp_zmap.yml',
+                'file_relpath': 'lnx_susp_zmap.yml',
+                'id': '5266a592-b793-11ea-b3de-0242ac130004',
+                'level': 'high',
+                'logsource': {'product': 'linux', 'service': 'shell'},
+                'modified': '2020/06/26',
+                'references': [
+                    'https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html'  # pylint: disable=line-too-long
                 ],
-                "title": "Suspicious Installation of ZMap",
+                'tags': ['attack.discovery', 'attack.t1046'],
+                'title': 'Suspicious Installation of ZMap',
+                'ts_comment': 'Part of Timesketch repo',
+                'ts_use_in_analyzer': True,
             }
         ],
     }
@@ -460,16 +479,221 @@ class SigmaListResourceTest(BaseTest):
     def test_get_sigma_rule_list(self):
         self.login()
         response = self.client.get(self.resource_url)
-        data = json.loads(response.get_data(as_text=True))
-        print(data)
         self.assertDictContainsSubset(self.expected_response, response.json)
         self.assertIsNotNone(response)
 
 
-class SigmaByTextResourceTest(BaseTest):
-    """Test Sigma by text resource."""
+class SigmaRuleResourceTest(BaseTest):
+    """Test Sigma Rule resource."""
 
-    resource_url = "/api/v1/sigma/text/"
+    expected_response = {
+        "objects": {
+            "description": "Detects suspicious installation of bbbbbb",
+            "id": "5266a592-b793-11ea-b3de-bbbbbb",
+            "level": "high",
+            "logsource": {"product": "linux", "service": "shell"},
+            "title": "Suspicious Installation of bbbbbb",
+        }
+    }
+
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
+    def test_post_sigma_resource(self):
+        """Authenticated request to POST an sigma rule."""
+        MOCK_SIGMA_RULE = """
+title: Suspicious Installation of bbbbbb
+id: 5266a592-b793-11ea-b3de-bbbbbb
+description: Detects suspicious installation of bbbbbb
+references:
+    - https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html
+author: Alexander Jaeger
+date: 2020/06/26
+modified: 2022/06/12
+logsource:
+    product: linux
+    service: shell
+detection:
+    keywords:
+        # Generic suspicious commands
+        - '*apt-get install bbbbbb*'
+    condition: keywords
+falsepositives:
+    - Unknown
+level: high
+"""
+
+        self.login()
+
+        sigma = dict(
+            rule_uuid="5266a592-b793-11ea-b3de-bbbbbb",
+            title='Suspicious Installation of bbbbbb',
+            description='Detects suspicious installation of bbbbbb',
+            rule_yaml=MOCK_SIGMA_RULE,
+        )
+
+        # Create a first rule
+        response = self.client.post(
+            "/api/v1/sigmarule/",
+            data=json.dumps(sigma),
+            content_type="application/json",
+        )
+        self.assertIn('bbbbbb', response.json['objects'][0]["rule_uuid"])
+        self.assertIn(
+            'bbbbbb',
+            response.json['objects'][0]["description"],
+        )
+        self.assertIn(
+            'shell',
+            response.json['objects'][0]["rule_yaml"],
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+        # Now GET the ressources
+        response = self.client.get(
+            "/api/v1/sigmarule/5266a592-b793-11ea-b3de-bbbbbb/"
+        )
+
+        self.assertIsNotNone(response)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+        self.assertIn('bbbbbb', response.json['objects'][0]["rule_uuid"])
+        self.assertIn(
+            'bbbbbb',
+            response.json['objects'][0]["description"],
+        )
+        self.assertIn(
+            'shell',
+            response.json['objects'][0]["rule_yaml"],
+        )
+
+    def test_get_sigma_rule(self):
+        """Authenticated request to get an sigma rule."""
+        self.login()
+        response = self.client.get(
+            "/api/v1/sigmarule/5266a592-b793-11ea-b3de-0242ac130004"
+        )
+        self.assertIsNotNone(response)
+
+    def test_get_sigma_rule_that_does_not_exist(self):
+        """Fetch a Sigma rule that does not exist."""
+        self.login()
+        response = self.client.get("/api/v1/sigmarule/foobar/")
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_NOT_FOUND)
+
+    def test_put_sigma_rule(self):
+        """Authenticated request to update sigma rule."""
+        self.login()
+
+        sigma = dict(
+            rule_uuid="5266a592-b793-11ea-b3de-bbbbbb",
+            title='Suspicious Installation of bbbbbb',
+            description='Detects suspicious installation of bbbbbb',
+            rule_yaml="""
+title: Suspicious Installation of bbbbbb
+id: 5266a592-b793-11ea-b3de-bbbbbb
+description: Detects suspicious installation of bbbbbb
+references:
+    - https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html
+author: Alexander Jaeger
+date: 2020/06/26
+modified: 2022/06/12
+logsource:
+    product: linux
+    service: shell
+detection:
+    keywords:
+        # Generic suspicious commands
+        - '*apt-get install bbbbbb*'
+    condition: keywords
+falsepositives:
+    - Unknown
+level: high
+""",
+        )
+
+        # Create a first rule
+        response = self.client.post(
+            "/api/v1/sigmarule/",
+            data=json.dumps(sigma),
+            content_type="application/json",
+        )
+        self.assertIn('bbbbbb', response.json['objects'][0]["rule_uuid"])
+        self.assertIn(
+            'bbbbbb',
+            response.json['objects'][0]["description"],
+        )
+        self.assertIn(
+            'shell',
+            response.json['objects'][0]["rule_yaml"],
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+        response = self.client.put(
+            "/api/v1/sigmarule/5266a592-b793-11ea-b3de-bbbbbb/",
+            data=json.dumps(
+                dict(
+                    rule_uuid="5266a592-b793-11ea-b3de-bbbbbb",
+                    title='Suspicious Installation of cccccc',
+                    description='Detects suspicious installation of cccccc',
+                    rule_yaml="""
+title: Suspicious Installation of cccccc
+id: 5266a592-b793-11ea-b3de-bbbbbb
+description: Detects suspicious installation of cccccc
+references:
+    - https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html
+author: Alexander Jaeger
+date: 2020/06/26
+modified: 2022/06/12
+logsource:
+    product: linux
+    service: shell
+detection:
+    keywords:
+        # Generic suspicious commands
+        - '*apt-get install cccccc*'
+    condition: keywords
+falsepositives:
+    - Unknown
+level: high
+""",
+                )
+            ),
+            content_type="application/json",
+        )
+        self.assertIsNotNone(response)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+        self.assertIn('bbbbbb', response.json['objects'][0]["rule_uuid"])
+        self.assertIn(
+            'cccccc',
+            response.json['objects'][0]["rule_yaml"],
+        )
+
+        self.assertIn(
+            'cccccc',
+            response.json['objects'][0]["description"],
+        )
+        self.assertIn(
+            'cccccc',
+            response.json['objects'][0]["title"],
+        )
+
+
+class SigmaRuleListResourceTest(BaseTest):
+    """Test Sigma resource."""
+
+    def test_get_sigma_rule_list(self):
+        self.login()
+        response = self.client.get("/api/v1/sigmarule/")
+        self.assertIsNotNone(response)
+        self.assertEqual(
+            len(response.json["objects"]), response.json["meta"]["rules_count"]
+        )
+        rule = response.json["objects"][0]
+        self.assertIn("5266a592-b793-11ea-b3de-0242ac", rule["rule_uuid"])
+        self.assertIsNotNone(rule["created_at"])
+
+
+class SigmaRuleByTextResourceTest(BaseTest):
+    """Test SigmaRule by text resource."""
+
     correct_rule = """
         title: Installation of foobar
         id: bb1e0d1d-cd13-4b65-bf7e-69b4e740266b
@@ -526,7 +750,7 @@ class SigmaByTextResourceTest(BaseTest):
 
         data = dict(content=self.correct_rule)
         response = self.client.post(
-            self.resource_url,
+            "/api/v1/sigmarule/text/",
             data=json.dumps(data, ensure_ascii=False),
             content_type="application/json",
         )
@@ -535,10 +759,111 @@ class SigmaByTextResourceTest(BaseTest):
         self.assertDictContainsSubset(self.expected_response, response.json)
         self.assert200(response)
 
-        # wrong sigma rule
+    def test_get_non_existing_rule_by_text(self):
+        """Authenticated request to get an sigma rule by text with non parseable
+        yaml text."""
+        self.login()
         data = dict(content="foobar: asd")
         response = self.client.post(
-            self.resource_url,
+            "/api/v1/sigmarule/text/",
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        data = json.loads(response.get_data(as_text=True))
+
+        self.assertIn("Sigma parsing error generating rule", data["message"])
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
+
+    def test_get_rule_by_text_no_form_data(self):
+        """Authenticated request to get an sigma rule by text with no form
+        data"""
+        self.login()
+        response = self.client.post(
+            "/api/v1/sigmarule/text/",
+            data=json.dumps(dict(action="post")),
+            content_type="application/json",
+        )
+        data = json.loads(response.get_data(as_text=True))
+
+        self.assertIn("Missing value in the request", data["message"])
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
+
+
+class SigmaByTextResourceTest(BaseTest):
+    """DEPRECATED: Test Sigma by text resource."""
+
+    correct_rule = """
+        title: Installation of foobar
+        id: bb1e0d1d-cd13-4b65-bf7e-69b4e740266b
+        description: Detects suspicious installation of foobar
+        references:
+            - https://samle.com/foobar
+        author: Alexander Jaeger
+        date: 2020/12/10
+        modified: 2020/12/10
+        tags:
+            - attack.discovery
+            - attack.t1046
+        logsource:
+            product: linux
+            service: shell
+        detection:
+            keywords:
+                # Generic suspicious commands
+                - '*apt-get install foobar*'
+            condition: keywords
+        falsepositives:
+            - Unknown
+        level: high
+        """
+    expected_response = {
+        "meta": {},
+        "objects": [
+            {
+                "title": "Installation of foobar",
+                "id": "bb1e0d1d-cd13-4b65-bf7e-69b4e740266b",
+                "description": "Detects suspicious installation of foobar",
+                "references": ["https://samle.com/foobar"],
+                "author": "Alexander Jaeger",
+                "date": "2020/12/10",
+                "modified": "2020/12/10",
+                "tags": ["attack.discovery", "attack.t1046"],
+                "logsource": {"product": "linux", "service": "shell"},
+                "detection": {
+                    "keywords": ["*apt-get install foobar*"],
+                    "condition": "keywords",
+                },
+                "falsepositives": ["Unknown"],
+                "level": "high",
+                "es_query": '(data_type:("shell:zsh:history" OR "bash:history:command" OR "apt:history:line" OR "selinux:line") AND "apt-get install foobar")',  # pylint: disable=line-too-long
+                "file_name": "N/A",
+                "file_relpath": "N/A",
+            }
+        ],
+    }
+
+    def test_get_sigma_rule(self):
+        """DEPRECATED: Authenticated request to get an sigma rule by text."""
+        self.login()
+
+        data = dict(content=self.correct_rule)
+        response = self.client.post(
+            "/api/v1/sigma/text/",
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        self.assertIsNotNone(response)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+        self.assertDictContainsSubset(self.expected_response, response.json)
+        self.assert200(response)
+
+    def test_get_non_existing_rule_by_text(self):
+        """DEPRECATED: Authenticated request to get an sigma rule by text
+        with non parseable yaml text."""
+        self.login()
+        data = dict(content="foobar: asd")
+        response = self.client.post(
+            "/api/v1/sigma/text/",
             data=json.dumps(data, ensure_ascii=False),
             content_type="application/json",
         )
@@ -547,10 +872,13 @@ class SigmaByTextResourceTest(BaseTest):
         self.assertIn("No detection definitions found", data["message"])
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
 
-        # no content given
+    def test_get_rule_by_text_no_form_data(self):
+        """DEPRECATED: Authenticated request to get an sigma rule by text with
+        no form data"""
+        self.login()
         data = dict(action="post")
         response = self.client.post(
-            self.resource_url,
+            "/api/v1/sigma/text/",
             data=json.dumps(data, ensure_ascii=False),
             content_type="application/json",
         )
@@ -570,6 +898,7 @@ class IntelligenceResourceTest(BaseTest):
             "legit": {"class": "success", "weight": 10},
             "malware": {"class": "danger", "weight": 100},
             "suspicious": {"class": "warning", "weight": 50},
+            'regexes': {'^GROUPNAME': {'class': 'danger', 'weight': 100}},
         }
         self.login()
         response = self.client.get("/api/v1/intelligence/tagmetadata/")

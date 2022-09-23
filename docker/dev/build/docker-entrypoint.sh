@@ -16,8 +16,9 @@ if [ "$1" = 'timesketch' ]; then
   cp /usr/local/src/timesketch/data/generic.mappings /etc/timesketch/
   cp /usr/local/src/timesketch/data/ontology.yaml /etc/timesketch/
   cp /usr/local/src/timesketch/data/data_finder.yaml /etc/timesketch/
+  cp /usr/local/src/timesketch/data/bigquery_matcher.yaml /etc/timesketch/
   ln -s /usr/local/src/timesketch/data/sigma_config.yaml /etc/timesketch/sigma_config.yaml
-  ln -s /usr/local/src/timesketch/data/sigma_blocklist.csv /etc/timesketch/sigma_blocklist.csv
+  ln -s /usr/local/src/timesketch/data/sigma_rule_status.csv /etc/timesketch/sigma_rule_status.csv
   ln -s /usr/local/src/timesketch/data/sigma /etc/timesketch/
 
 
@@ -68,7 +69,7 @@ if [ "$1" = 'timesketch' ]; then
   echo "WTF_CSRF_ENABLED = False" >> /etc/timesketch/timesketch.conf
 
   # Add web user
-  tsctl add_user --username "${TIMESKETCH_USER}" --password "${TIMESKETCH_USER}"
+  tsctl create-user --password "${TIMESKETCH_USER}" "${TIMESKETCH_USER}"
 
   echo "Timesketch development server is ready!"
 

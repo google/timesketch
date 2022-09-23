@@ -8,19 +8,19 @@ ARG PPA_TRACK=stable
 RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    software-properties-common \
-    python3-pip \
-    python3-wheel \
-    python3-setuptools \
-    python3-psycopg2 \
-    git \
-    wget \
+  software-properties-common \
+  python3-pip \
+  python3-wheel \
+  python3-setuptools \
+  python3-psycopg2 \
+  git \
+  wget \
   && rm -rf /var/lib/apt/lists/*
 
 # Install Plaso
 RUN add-apt-repository -y ppa:gift/$PPA_TRACK
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    plaso-tools \
+  plaso-tools \
   && rm -rf /var/lib/apt/lists/*
 
 # Install Timesketch from master to get the latest code
@@ -31,7 +31,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 ADD . /tmp/timesketch
 RUN pip3 install -r /tmp/timesketch/requirements.txt
 RUN pip3 install /tmp/timesketch && pip3 install /tmp/timesketch/api_client/python && \
-    pip3 install /tmp/timesketch/importer_client/python
+  pip3 install /tmp/timesketch/importer_client/python
 
 # Copy Timesketch config files into /etc/timesketch
 RUN mkdir /etc/timesketch
@@ -43,8 +43,9 @@ RUN cp /tmp/timesketch/data/features.yaml /etc/timesketch/
 RUN cp /tmp/timesketch/data/plaso.mappings /etc/timesketch/
 RUN cp /tmp/timesketch/data/generic.mappings /etc/timesketch/
 RUN cp /tmp/timesketch/data/sigma_config.yaml /etc/timesketch/
-RUN cp /tmp/timesketch/data/sigma_blocklist.csv /etc/timesketch/
+RUN cp /tmp/timesketch/data/sigma_rule_status.csv /etc/timesketch/
 RUN cp /tmp/timesketch/data/data_finder.yaml /etc/timesketch/
+RUN cp /tmp/timesketch/data/bigquery_matcher.yaml /etc/timesketch/
 RUN cp -r /tmp/timesketch/data/sigma /etc/timesketch/sigma
 RUN chmod -R go+r /etc/timesketch
 

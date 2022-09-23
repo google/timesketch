@@ -22,45 +22,6 @@ limitations under the License.
     </ts-navbar-main>
 
     <ts-navbar-secondary currentAppContext="sketch" currentPage="intelligence"></ts-navbar-secondary>
-    <b-modal :active.sync="showEditModal">
-      <section class="box">
-        <h1 class="subtitle">Edit IOC</h1>
-        <b-field label="Edit IOC" label-position="on-border">
-          <b-input custom-class="ioc-input" type="textarea" v-model="editingIoc.ioc"></b-input>
-        </b-field>
-        <b-field grouped>
-          <b-field>
-            <b-select placeholder="IOC type" v-model="editingIoc.type" label="IOC type" label-position="on-border">
-              <option v-for="option in IOCTypes" :value="option.type" :key="option.type">
-                {{ option.type }}
-              </option>
-            </b-select>
-          </b-field>
-          <b-field>
-            <b-taginput
-              v-model="editingIoc.tags"
-              ellipsis
-              icon="label"
-              placeholder="Add a tag"
-              aria-close-label="Delete this tag"
-            >
-            </b-taginput>
-          </b-field>
-          <b-field grouped expanded position="is-right">
-            <p class="control">
-              <b-button type="is-primary" @click="saveIOC()">Save</b-button>
-            </p>
-            <p class="control">
-              <b-button @click="showEditModal = false">Cancel</b-button>
-            </p>
-          </b-field>
-        </b-field>
-        <b-field label="External reference (URI)">
-          <b-input v-model="editingIoc.externalURI"></b-input>
-        </b-field>
-      </section>
-    </b-modal>
-    <!-- End modal -->
 
     <!-- IOC table -->
     <section class="section" v-if="Object.keys(tagMetadata).length > 0">
@@ -69,7 +30,13 @@ limitations under the License.
           <div class="column">
             <div class="card">
               <div class="card-header">
-                <p class="card-header-title">Indicators of compromise</p>
+                <p class="card-header-title">
+                  Indicators of compromise
+                  <b-button @click="startIOCEdit(getNewIoc(), -1)" type="is-success" size="is-small" class="new-ioc">
+                    <i class="fas fa-plus-circle" aria-hidden="true"></i>
+                    Add new
+                  </b-button>
+                </p>
               </div>
               <div class="card-content">
                 <b-table v-if="intelligenceData.length > 0" :data="intelligenceData">
@@ -88,11 +55,11 @@ limitations under the License.
                     <span v-else>{{ props.row.externalURI }}</span>
                   </b-table-column>
 
-                  <b-table-column field="ioc" label="" v-slot="props" width="5em">
+                  <b-table-column field="ioc" label="" v-slot="props" width="10em">
                     <i
                       class="fas fa-copy"
                       style="cursor: pointer"
-                      title="Copy key"
+                      title="Copy IOC to clipboard."
                       v-clipboard:copy="props.row.ioc"
                       v-clipboard:success="notifyClipboardSuccess"
                     ></i>
@@ -103,6 +70,10 @@ limitations under the License.
                         title="Search sketch for all events containing this IOC."
                       ></i>
                     </router-link>
+                    <explore-preview
+                      style="margin-left: 10px"
+                      :searchQuery="generateOpenSearchQuery(props.row.ioc)['q']"
+                    ></explore-preview>
                   </b-table-column>
 
                   <b-table-column field="ioc" label="Indicator data" v-slot="props" sortable>
@@ -135,7 +106,7 @@ limitations under the License.
                       class="icon is-small"
                       style="cursor: pointer"
                       title="Edit IOC"
-                      @click="startIOCEdit(props.row)"
+                      @click="startIOCEdit(props.row, props.index)"
                       ><i class="fas fa-edit"></i>
                     </span>
                   </b-table-column>
@@ -251,14 +222,18 @@ import _ from 'lodash'
 import ApiClient from '../utils/RestApiClient'
 import { SnackbarProgrammatic as Snackbar } from 'buefy'
 import { IOCTypes } from '../utils/tagMetadata'
+import ExplorePreview from '../components/Common/ExplorePreview'
+import TsIocCompose from '../components/Common/TsIocCompose'
 
 export default {
+  components: { ExplorePreview },
   data() {
     return {
       sketchTags: [],
       tagInfo: {},
       tagMetadata: {},
       editingIoc: {},
+      isNew: false,
       showEditModal: false,
       IOCTypes: IOCTypes,
     }
@@ -270,6 +245,14 @@ export default {
         ApiClient.addSketchAttribute(this.sketch.id, 'intelligence', { data: data }, 'intelligence').then(() => {
           this.loadSketchAttributes()
         })
+      }
+    },
+    getNewIoc() {
+      return {
+        ioc: null,
+        type: 'other',
+        externalURI: null,
+        tags: [],
       }
     },
     getValidUrl(urlString) {
@@ -310,27 +293,45 @@ export default {
       this.tagInfo = {}
       for (var ioc of this.intelligenceData) {
         for (var tag of ioc.tags) {
-          if (!this.tagInfo[tag]) {
-            this.tagInfo[tag] = {
+          // deal with the case when tag is an object that is alread enriched.
+          var tagKey = null
+          if (typeof tag === 'object') {
+            tagKey = tag.name
+          } else {
+            tagKey = tag
+          }
+          if (!this.tagInfo[tagKey]) {
+            this.tagInfo[tagKey] = {
               count: 0,
               iocs: [],
               tag: this.enrichTag(tag),
             }
           }
-          this.tagInfo[tag].count++
-          this.tagInfo[tag].iocs.push(ioc.ioc)
+          this.tagInfo[tagKey].count++
+          this.tagInfo[tagKey].iocs.push(ioc.ioc)
         }
       }
     },
     getEnrichedTags(tags) {
-      return tags.map((tag) => this.enrichTag(tag)).sort((a, b) => b.weight - a.weight)
+      let enriched = tags.map((tag) => this.enrichTag(tag)).sort((a, b) => b.weight - a.weight)
+      console.log(enriched)
+      return enriched
     },
     enrichTag(tag) {
-      let tagInfo = { name: tag }
-      if (this.tagMetadata[tag]) {
-        return _.extend(tagInfo, this.tagMetadata[tag])
+      if (typeof tag === 'object') {
+        return tag
       } else {
-        return _.extend(tagInfo, this.tagMetadata.default)
+        let tagInfo = { name: tag }
+        if (this.tagMetadata[tag]) {
+          return _.extend(tagInfo, this.tagMetadata[tag])
+        } else {
+          for (var regex in this.tagMetadata['regexes']) {
+            if (tag.match(regex)) {
+              return _.extend(tagInfo, this.tagMetadata['regexes'][regex])
+            }
+          }
+          return _.extend(tagInfo, this.tagMetadata.default)
+        }
       }
     },
     // TODO: Use filter chips instead
@@ -340,20 +341,37 @@ export default {
     },
     generateOpenSearchQuery(value, field) {
       let query = `"${value}"`
+      // Escape special OpenSearch characters: \, [space]
+      query = query.replace(/[\\\s]/g, '\\$&')
       if (field !== undefined) {
         query = `${field}:${query}`
       }
       return { q: query }
     },
-    startIOCEdit(ioc) {
-      this.showEditModal = true
-      this.editingIoc = ioc
+    startIOCEdit(ioc, index) {
+      this.$buefy.modal.open({
+        parent: this,
+        component: TsIocCompose,
+        props: { value: ioc },
+        events: {
+          input: (value) => {
+            if (index === -1) {
+              this.intelligenceAttribute.value.data.push(value)
+            } else {
+              // Assigning a value to the array doesn't seem to trigger data refresh, we have to use splice
+              this.intelligenceAttribute.value.data.splice(index, 1, value)
+            }
+            this.saveIntelligence()
+          },
+        },
+      })
     },
-    saveIOC() {
+    saveIntelligence() {
+      // console.log(this.intelligenceAttribute.value)
       ApiClient.addSketchAttribute(this.sketch.id, 'intelligence', this.intelligenceAttribute.value, 'intelligence')
         .then(() => {
           Snackbar.open({
-            message: 'IOC successfully updated!',
+            message: 'Intelligence successfully updated!',
             type: 'is-success',
             position: 'is-top',
             actionText: 'Dismiss',
@@ -409,5 +427,12 @@ export default {
 .fa-question-circle {
   margin-left: 0.6em;
   opacity: 0.5;
+}
+
+.new-ioc i {
+  margin-right: 0.5em;
+}
+.new-ioc {
+  margin-left: 0.5em;
 }
 </style>

@@ -11,6 +11,25 @@ logsources:
     product: linux
     conditions:
       data_type: "fs:stat"
+  linux_network:
+    category: network_connection
+    product: linux
+    conditions:
+      data_type:
+        - "shell:zsh:history"
+        - "bash:history:command"
+        - "apt:history:line"
+        - "selinux:line"
+        - "syslog"
+  linux_process_creation:
+    category: process_creation
+    product: linux
+    conditions:
+      data_type:
+        - "shell:zsh:history"
+        - "bash:history:command"
+        - "apt:history:line"
+        - "selinux:line"
   sshd:
     service: sshd
     conditions:
@@ -80,11 +99,19 @@ logsources:
     conditions:
       data_type:
         - "fs:stat"
+        - "fs:mactime:line"
+        - "filesystem:santa:entry"
+        - "fs:bodyfile:entry"
   sysmon:
     service: sysmon
     conditions:
       source_name:
         - "Microsoft-Windows-Sysmon"
+  syslog:
+    service: syslog
+    conditions:
+      data_type:
+        - "syslog:line"
   # GCP
   gcp_audit:
     service: gcp.audit
@@ -226,6 +253,11 @@ logsources:
     rewrite:
       product: windows
       service: sysmon
+  ssh:
+    service: ssh
+    conditions:
+      data_type:
+        - "syslog:ssh:login"
 fieldmappings:
     EventID: event_identifier
     ComputerName: computer_name
@@ -313,3 +345,23 @@ fieldmappings:
     HostApplication: xml_string #96b9f619-aa91-478f-bacb-c3e50f8df575
     gcp.audit.method_name: methodName
     ParentImage: xml_string
+    Mutex: message
+    Value:
+      service=windefend: xml_string
+      default: Value
+    Provider_Name: xml_string
+    param1: #6c0a7755-6d31-44fa-80e1-133e57752680
+      product=windows: xml_string
+      default: param1
+    param2: #6c0a7755-6d31-44fa-80e1-133e57752680
+      product=windows: xml_string
+      default: param2
+    GrantedAccess: xml_string #aa35a627-33fb-4d04-a165-d33b4afca3e8
+    DestinationIp:
+      product=linux: message
+      product=windows: xml_string
+      default: message
+    Image: #42df45e7-e6e9-43b5-8f26-bec5b39cc239
+      product=linux: message
+      product=windows: xml_string
+      default: message

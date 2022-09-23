@@ -14,64 +14,24 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div>
-    <v-row>
-      <v-col cols="12">
-        <v-sheet outlined rounded>
-          <ts-sketch-list scope="recent"></ts-sketch-list>
-        </v-sheet>
-      </v-col>
-      <v-col cols="12">
-        <v-sheet outlined rounded>
-          <ts-sketch-list scope="user"></ts-sketch-list>
-        </v-sheet>
-      </v-col>
-    </v-row>
-  </div>
+  <v-container fluid pa-0>
+    <div class="pa-5">
+      <ts-sketch-list></ts-sketch-list>
+    </div>
+  </v-container>
 </template>
 
 <script>
+import TsSketchList from '../components/SketchList'
+
 export default {
-  components: {},
-  data() {
-    return {
-      showSketchCreateModal: false,
-      allSketches: [],
-      mySketches: [],
-      myArchivedSketches: [],
-      sharedSketches: [],
-      loading: true,
-      isFullPage: true,
-      loadingComponent: null,
-      searchQuery: '',
-      newSearchQuery: '',
-    }
-  },
-  computed: {
-    filteredList() {
-      return this.allSketches.filter((sketch) => {
-        return sketch.name.toLowerCase().includes(this.search.toLowerCase())
-      })
-    },
-  },
-  methods: {
-    loadingOpen: function () {
-      this.loading = true
-      this.loadingComponent = this.$buefy.loading.open({
-        container: this.isFullPage ? null : this.$refs.element.$el,
-      })
-    },
-    loadingClose: function () {
-      this.loading = false
-      this.loadingComponent.close()
-    },
-    search: function () {
-      this.newSearchQuery = this.searchQuery
-    },
-  },
+  components: { TsSketchList },
   created: function () {
     this.$store.dispatch('resetState')
     document.title = 'Timesketch'
   },
 }
 </script>
+<style lang="scss">
+$toolbar-content-padding-x: 0;
+</style>

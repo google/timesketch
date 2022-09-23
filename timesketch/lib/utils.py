@@ -91,26 +91,52 @@ def _scrub_special_tags(dict_obj):
             _ = dict_obj.pop(field)
 
 
-def _validate_csv_fields(mandatory_fields, data):
+def _validate_csv_fields(mandatory_fields, data, headers_mapping=None):
     """Validate parsed CSV fields against mandatory fields.
 
     Args:
         mandatory_fields: a list of fields that must be present.
         data: a DataFrame built from the ingested file.
-
+        headers_mapping: list of dicts containing:
+                         (i) target header we want to insert [key=target],
+                         (ii) sources header we want to rename/combine [key=source],
+                         (iii) def. value if we add a new column [key=default_value]
     Raises:
         RuntimeError: if there are missing fields.
     """
+
     mandatory_set = set(mandatory_fields)
     parsed_set = set(data.columns)
+    headers_missing = mandatory_set - parsed_set
 
-    if mandatory_set.issubset(parsed_set):
+    if headers_mapping:
+        check_mapping_errors(parsed_set, headers_mapping)
+        headers_mapping_set = set(m["target"] for m in headers_mapping)
+        headers_missing = headers_missing - headers_mapping_set
+    else:
+        headers_mapping_set = {}
+
+    if headers_missing:
+        headers_missing_string = ", ".join(list(headers_missing))
+    else:
         return
 
+    if headers_mapping_set:
+        headers_mapping_string = ", ".join(list(headers_mapping_set))
+    else:
+        headers_mapping_string = "None"
+
+    if parsed_set:
+        parset_set_string = ", ".join(list(parsed_set))
+    else:
+        parset_set_string = "None"
+
     raise RuntimeError(
-        "Missing fields in CSV header: {0:s}".format(
-            ",".join(list(mandatory_set.difference(parsed_set)))
-        )
+        f"Missing mandatory CSV headers."
+        f"Mandatory headers: {', '.join(list(mandatory_set))}"
+        f"Headers found in the file: {parset_set_string}"
+        f"Headers provided in the mapping: {headers_mapping_string}"
+        f"Headers missing: {headers_missing_string}"
     )
 
 
@@ -130,14 +156,111 @@ def validate_indices(indices, datastore):
     return [i for i in indices if datastore.client.indices.exists(index=i)]
 
 
-def read_and_validate_csv(file_handle, delimiter=",", mandatory_fields=None):
+def check_mapping_errors(headers, headers_mapping):
+    """Sanity check for headers mapping
+
+    Args:
+        csv_headers: list of headers found in the CSV file.
+        headers_mapping: list of dicts containing:
+                         (i) target header we want to insert [key=target],
+                         (ii) sources header we want to rename/combine [key=source],
+                         (iii) def. value if we add a new column [key=default_value]
+
+    Raises:
+        RuntimeError: if there are errors in the headers mapping.
+    """
+
+    # 1. Do the mapping only if the mandatory header is missing, and
+    # 2. When create a new column, need to set a default value
+    candidate_headers = []
+    for mapping in headers_mapping:
+        if mapping["target"] in headers:
+            raise RuntimeError(
+                "Headers mapping is wrong.\n"
+                "Mapping done only if the mandatory header is missing"
+            )
+        if mapping["source"]:
+            # 3. Check if any of the headers specified in headers mapping
+            # is in the headers list
+            for source in mapping["source"]:
+                if source not in headers:
+                    raise RuntimeError(
+                        f"Value specified in the headers mapping not found in the CSV\n"
+                        f"Headers mapping: {', '.join(mapping['source'])}\n"
+                        f"Sources column/s: {source}\n"
+                        f"All Headers: {', '.join(headers)}"
+                    )
+
+            # Update the headers list that we will substitute/rename
+            # we do this check only over the header column that will be renamed,
+            # i.e., when mapping["source"] has only 1 value
+            if len(mapping["source"]) == 1:
+                candidate_headers.append(mapping["source"][0])
+
+        else:
+            if not mapping["default_value"]:
+                raise RuntimeError(
+                    f"Headers mapping is wrong.\n"
+                    f"Error to create new column {mapping['target']}. "
+                    f"When create a new column, a default value must be assigned"
+                )
+    # 4. check if two or more mandatory headers are mapped
+    #    to the same exisiting header
+    if len(candidate_headers) != len(set(candidate_headers)):
+        raise RuntimeError(
+            "Headers mapping is wrong.\n"
+            "2 or more mandatory headers are "
+            "mapped to the same exisiting CSV headers"
+        )
+
+
+def rename_csv_headers(chunk, headers_mapping):
+    """ "Rename the headers of the dataframe
+
+    Args:
+        chunk: dataframe to be modified
+        headers_mapping: list of dicts containing:
+                         (i) target header we want to insert [key=target],
+                         (ii) sources header we want to rename/combine [key=source],
+                         (iii) def. value if we add a new column [key=default_value]
+
+    Returns: the dataframe with renamed headers
+    """
+    headers_mapping.sort(
+        key=lambda x: len(x["source"]) if x["source"] else 0, reverse=True
+    )
+    for mapping in headers_mapping:
+        if not mapping["source"]:
+            # create new column with a given default value
+            chunk[mapping["target"]] = mapping["default_value"]
+        elif len(mapping["source"]) > 1:
+            # concatanete multiple source headers into a new one
+            chunk[mapping["target"]] = ""
+            for column in mapping["source"]:
+                chunk[mapping["target"]] += (
+                    column + ":" + chunk[column].map(str) + " | "
+                )
+        else:
+            # just rename the header
+            chunk.rename(
+                columns={mapping["source"][0]: mapping["target"]}, inplace=True
+            )
+    return chunk
+
+
+def read_and_validate_csv(
+    file_handle, delimiter=",", mandatory_fields=None, headers_mapping=None
+):
     """Generator for reading a CSV file.
 
     Args:
         file_handle: a file-like object containing the CSV content.
         delimiter: character used as a field separator, default: ','
-        mandatory_fields: list of fields that must be present in the CSV header.
-
+        mandatory_fields: list of fields that must be present in the CSV header
+        headers_mapping: list of dicts containing:
+                         (i) target header we want to insert [key=target],
+                         (ii) sources header we want to rename/combine [key=source],
+                         (iii) def. value if we add a new column [key=default_value]
     Raises:
         RuntimeError: when there are missing fields.
         DataIngestionError: when there are issues with the data ingestion.
@@ -149,7 +272,8 @@ def read_and_validate_csv(file_handle, delimiter=",", mandatory_fields=None):
         delimiter = codecs.decode(delimiter, "utf8")
 
     header_reader = pandas.read_csv(file_handle, sep=delimiter, nrows=0)
-    _validate_csv_fields(mandatory_fields, header_reader)
+
+    _validate_csv_fields(mandatory_fields, header_reader, headers_mapping)
 
     if hasattr(file_handle, "seek"):
         file_handle.seek(0)
@@ -159,10 +283,14 @@ def read_and_validate_csv(file_handle, delimiter=",", mandatory_fields=None):
             file_handle, sep=delimiter, chunksize=DEFAULT_CHUNK_SIZE
         )
         for idx, chunk in enumerate(reader):
+            if headers_mapping:
+                # rename colunms according to the mapping
+                chunk = rename_csv_headers(chunk, headers_mapping)
+
             skipped_rows = chunk[chunk["datetime"].isnull()]
             if not skipped_rows.empty:
                 logger.warning(
-                    "{0} rows skipped since they were missing a datetime field "
+                    "{0} rows skipped since they were missing datetime field "
                     "or it was empty ".format(len(skipped_rows))
                 )
 
@@ -249,11 +377,74 @@ def read_and_validate_redline(file_handle):
         yield row_to_yield
 
 
-def read_and_validate_jsonl(file_handle):
+def rename_jsonl_headers(linedict, headers_mapping, lineno):
+    """Rename the headers of the dictionary
+
+    Args:
+        linedict: dictionary to be modified
+        headers_mapping: list of dicts containing:
+                         (i) target header we want to insert [key=target],
+                         (ii) sources header we want to rename/combine [key=source],
+                         (iii) def. value if we add a new column [key=default_value]
+        lineno: line of the JSONL file
+
+    Returns: the dictionary with renamed headers
+
+
+    """
+    headers_mapping.sort(
+        key=lambda x: len(x["source"]) if x["source"] else 0, reverse=True
+    )
+    ld_keys = linedict.keys()
+
+    # sanity check of the headers_mapping
+    check_mapping_errors(ld_keys, headers_mapping)
+
+    for mapping in headers_mapping:
+        if mapping["target"] not in ld_keys:
+            if mapping["source"]:
+                # mapping["source"] is not None
+                if len(mapping["source"]) == 1:
+                    # 1. rename header
+                    if mapping["source"][0] in ld_keys:
+                        linedict[mapping["target"]] = linedict.pop(mapping["source"][0])
+                    else:
+                        raise RuntimeError(
+                            f"Source mapping {mapping['source'][0]} not found in JSON\n"
+                            f"JSON line:\n{linedict}\n"
+                            f"Line no: {lineno}"
+                        )
+                else:
+                    # 2. combine headers
+                    linedict[mapping["target"]] = ""
+                    for source in mapping["source"]:
+                        if source in ld_keys:
+                            linedict[mapping["target"]] += f"{source} : "
+                            linedict[mapping["target"]] += f"{linedict[source]} |"
+                        else:
+                            raise RuntimeError(
+                                f"Source mapping {source} not found in JSON\n"
+                                f"JSON line:\n{linedict}\n"
+                                f"Line no: {lineno}"
+                            )
+            else:
+                # 3. create new entry with the default value
+                linedict[mapping["target"]] = mapping["default_value"]
+    return linedict
+
+
+def read_and_validate_jsonl(
+    file_handle, delimiter=None, headers_mapping=None
+):  # pylint: disable=unused-argument
     """Generator for reading a JSONL (json lines) file.
 
     Args:
         file_handle: a file-like object containing the CSV content.
+        delimiter: not used in this function
+        headers_mapping: list of dicts containing:
+                         (i) target header we want to insert [key=target],
+                         (ii) sources header we want to rename/combine [key=source],
+                         (iii) def. value if we add a new column [key=default_value]
 
     Raises:
         RuntimeError: if there are missing fields.
@@ -270,6 +461,8 @@ def read_and_validate_jsonl(file_handle):
         try:
             linedict = json.loads(line)
             ld_keys = linedict.keys()
+            if headers_mapping:
+                linedict = rename_jsonl_headers(linedict, headers_mapping, lineno)
             if "datetime" not in ld_keys and "timestamp" in ld_keys:
                 epoch = int(str(linedict["timestamp"])[:10])
                 dt = datetime.datetime.fromtimestamp(epoch)
@@ -279,6 +472,14 @@ def read_and_validate_jsonl(file_handle):
                     linedict["timestamp"] = int(
                         parser.parse(linedict["datetime"]).timestamp() * 1000000
                     )
+                # TODO: REcord this somewhere else and make available to the user.
+                except TypeError:
+                    logger.error(
+                        "Unable to parse timestamp, skipping line "
+                        "{0:d}".format(lineno),
+                        exc_info=True,
+                    )
+                    continue
                 except parser.ParserError:
                     logger.error(
                         "Unable to parse timestamp, skipping line "
@@ -290,9 +491,9 @@ def read_and_validate_jsonl(file_handle):
             missing_fields = [x for x in mandatory_fields if x not in linedict]
             if missing_fields:
                 raise RuntimeError(
-                    "Missing field(s) at line {0:n}: {1:s}".format(
-                        lineno, ",".join(missing_fields)
-                    )
+                    f"Missing field(s) at line {lineno}: {','.join(missing_fields)}\n"
+                    f"Line: {linedict}\n"
+                    f"Mapping: {headers_mapping}"
                 )
 
             if "tag" in linedict:

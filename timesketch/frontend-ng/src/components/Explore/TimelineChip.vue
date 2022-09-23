@@ -40,12 +40,6 @@ limitations under the License.
           <v-list-item-subtitle v-if="isSelected">Temporarily disabled</v-list-item-subtitle>
           <v-list-item-subtitle v-else>Re-enable</v-list-item-subtitle>
         </v-list-item>
-        <v-list-item @click="removeChip(chip)">
-          <v-list-item-action>
-            <v-icon>mdi-delete</v-icon>
-          </v-list-item-action>
-          <v-list-item-subtitle>Remove from sketch</v-list-item-subtitle>
-        </v-list-item>
       </v-list>
     </v-card>
   </v-menu>

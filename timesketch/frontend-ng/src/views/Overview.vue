@@ -14,88 +14,158 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-container class="mt-2">
-    <v-navigation-drawer app clipped permanent right width="400">
-      <template v-slot:prepend>
-        <v-list dense>
-          <v-card-title>Team</v-card-title>
-          <v-list-item>
-            <v-list-item-avatar>
-              <v-avatar class="ml-3" color="orange" size="32">
-                <span class="white--text">jb</span>
-              </v-avatar>
-            </v-list-item-avatar>
-            <v-list-item-content>
-              <v-list-item-title>John Doe</v-list-item-title>
-              <v-list-item-subtitle>Creator</v-list-item-subtitle>
-            </v-list-item-content>
-          </v-list-item>
-
-          <v-list-item>
-            <v-list-item-avatar>
-              <v-avatar class="ml-3" color="orange" size="32">
-                <span class="white--text">jb</span>
-              </v-avatar>
-            </v-list-item-avatar>
-            <v-list-item-content>
-              <v-list-item-title>Jane Doe</v-list-item-title>
-              <v-list-item-subtitle>Working on ...</v-list-item-subtitle>
-            </v-list-item-content>
-          </v-list-item>
-        </v-list>
-
-        <v-divider></v-divider>
-
-        <v-list dense>
-          <v-card-title>Timelines</v-card-title>
-
-          <v-list-item link v-for="timeline in sketch.active_timelines" :key="timeline.id">
-            <v-list-item-avatar rounded :color="'#' + timeline.color"> </v-list-item-avatar>
-            <v-list-item-content>
-              <v-list-item-title>{{ timeline.name }}</v-list-item-title>
-              <v-list-item-subtitle>
-                {{ timeline.color }}
-              </v-list-item-subtitle>
-            </v-list-item-content>
-            <v-list-item-action>
-              <v-btn icon>
-                <v-icon color="grey">mdi-information</v-icon>
-              </v-btn>
-            </v-list-item-action>
-            <v-list-item-action>
-              <v-btn icon>
-                <v-icon color="grey">mdi-dots-vertical</v-icon>
-              </v-btn>
-            </v-list-item-action>
-          </v-list-item>
-        </v-list>
-      </template>
-    </v-navigation-drawer>
-
+  <v-container fluid>
     <v-row>
-      <v-col cols="12">
-        <v-container>
-          <h3 class="mb-4">Summary</h3>
-          <p style="max-width: 800px">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean risus diam, dictum ut ultricies ac, aliquet
-            eget sem. Vestibulum mollis, est at euismod laoreet, nisi nibh mollis dolor, quis laoreet odio ipsum
-            volutpat leo. Curabitur vel convallis turpis. Fusce quam odio, viverra ac volutpat nec, gravida et purus.
-            Mauris scelerisque eleifend ligula eget laoreet. Etiam mattis massa ex. Sed ullamcorper hendrerit nunc,
-            sodales imperdiet odio bibendum eu. Mauris ornare quis mi sed facilisis.
-          </p>
-        </v-container>
+      <v-col cols="9">
+        <v-row>
+          <v-col>
+            <v-card outlined>
+              <v-app-bar flat dense> Timelines </v-app-bar>
+              <ts-timelines-table></ts-timelines-table>
+              <v-divider></v-divider>
+              <br />
+              <ts-upload-timeline-form></ts-upload-timeline-form>
+            </v-card>
+          </v-col>
+        </v-row>
+        <v-row v-if="meta.views.length">
+          <v-col>
+            <v-card outlined>
+              <v-app-bar flat dense> Saved Searches </v-app-bar>
+              <ts-saved-searches-table></ts-saved-searches-table>
+            </v-card>
+          </v-col>
+        </v-row>
+
+        <v-row v-if="dataTypes.length">
+          <v-col>
+            <v-card outlined>
+              <v-app-bar flat dense> Data Types </v-app-bar>
+              <ts-data-types-table></ts-data-types-table>
+            </v-card>
+          </v-col>
+        </v-row>
+        <v-row v-if="tags.length">
+          <v-col>
+            <v-card outlined>
+              <v-app-bar flat dense> Tags </v-app-bar>
+              <ts-tags-table></ts-tags-table>
+            </v-card>
+          </v-col>
+        </v-row>
+        <v-row v-if="searchHistory.length">
+          <v-col>
+            <v-card outlined>
+              <v-app-bar flat dense> Search History </v-app-bar>
+              <ts-search-history-table></ts-search-history-table>
+            </v-card>
+          </v-col>
+        </v-row>
+      </v-col>
+      <v-col cols="3">
+        <v-sheet>
+          <v-list two-line>
+            <v-subheader>SKETCH DETAILS</v-subheader>
+            <v-list-item>
+              <v-list-item-content>
+                <v-list-item-title>
+                  <strong>Created:</strong> {{ sketch.created_at | shortDateTime }}
+                </v-list-item-title>
+                <v-list-item-subtitle>
+                  <small>{{ sketch.created_at | timeSince }} by {{ sketch.user.username }}</small>
+                </v-list-item-subtitle>
+              </v-list-item-content>
+            </v-list-item>
+
+            <v-list-item>
+              <v-list-item-content>
+                <v-list-item-title>
+                  <strong>Access: </strong>
+                  <span v-if="meta.permissions.public">Public</span>
+                  <span v-else>Restricted</span>
+                </v-list-item-title>
+                <v-list-item-subtitle>
+                  <small v-if="meta.permissions.public">Visibly to all users on this server</small>
+                  <small v-else>Only people with access can open</small>
+                </v-list-item-subtitle>
+              </v-list-item-content>
+            </v-list-item>
+
+            <v-list-item>
+              <v-list-item-content>
+                <v-list-item-title>
+                  <strong>Shared with</strong>
+                </v-list-item-title>
+                <v-list-item-subtitle>
+                  <small>People and groups with access</small>
+                </v-list-item-subtitle>
+              </v-list-item-content>
+            </v-list-item>
+          </v-list>
+
+          <v-divider></v-divider>
+          <v-list>
+            <v-list-item-group color="primary">
+              <v-list-item>
+                <v-list-item-icon>
+                  <v-icon>mdi-square-edit-outline</v-icon>
+                </v-list-item-icon>
+                <v-list-item-content>
+                  <v-list-item-title>Rename sketch</v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+
+              <v-list-item>
+                <v-list-item-icon>
+                  <v-icon>mdi-account-multiple-plus</v-icon>
+                </v-list-item-icon>
+                <v-list-item-content>
+                  <v-list-item-title>Access control</v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+
+              <v-list-item>
+                <v-list-item-icon>
+                  <v-icon>mdi-archive</v-icon>
+                </v-list-item-icon>
+                <v-list-item-content>
+                  <v-list-item-title>Archive sketch</v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+
+              <v-list-item>
+                <v-list-item-icon>
+                  <v-icon>mdi-export</v-icon>
+                </v-list-item-icon>
+                <v-list-item-content>
+                  <v-list-item-title>Export sketch</v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+            </v-list-item-group>
+          </v-list>
+        </v-sheet>
       </v-col>
     </v-row>
   </v-container>
 </template>
 
 <script>
+import TsTimelinesTable from '../components/TimelinesTable'
+import TsDataTypesTable from '../components/DataTypesTable'
+import TsTagsTable from '../components/TagsTable'
+import TsSearchHistoryTable from '../components/SearchHistoryTable'
+import TsSavedSearchesTable from '../components/SavedSearchesTable'
 import ApiClient from '../utils/RestApiClient'
-//import TsSketchSummary from '../components/Overview/SketchSummary'
+import TsUploadTimelineForm from '../components/UploadForm'
 
 export default {
   components: {
-    //TsSketchSummary,
+    TsTimelinesTable,
+    TsDataTypesTable,
+    TsTagsTable,
+    TsSearchHistoryTable,
+    TsSavedSearchesTable,
+    TsUploadTimelineForm,
   },
   data() {
     return {
@@ -105,6 +175,12 @@ export default {
       isFullPage: true,
       loadingComponent: null,
       isArchived: false,
+      selectedItem: 1,
+      items: [
+        { text: 'Real-Time', icon: 'mdi-clock' },
+        { text: 'Audience', icon: 'mdi-account' },
+        { text: 'Conversions', icon: 'mdi-flag' },
+      ],
     }
   },
   computed: {
@@ -116,6 +192,15 @@ export default {
     },
     count() {
       return this.$store.state.count
+    },
+    dataTypes() {
+      return this.$store.state.dataTypes
+    },
+    tags() {
+      return this.$store.state.tags
+    },
+    searchHistory() {
+      return this.$store.state.searchHistory
     },
     shareTooltip: function () {
       let msg = ''
