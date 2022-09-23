@@ -5,7 +5,7 @@ import TsIOCMenu from '@/components/Common/TsIOCMenu.vue'
 
 const testIOCs = [
 
-    // We only want to pick up correclty formatted IP addresses
+    // We only want to pick up correctly formatted IP addresses
     {text: '127.0.0.1', type: 'ip'},
     {text: '127.0.0.01', type: 'other'},
     {text: '266.0.0.1', type: 'other'},
