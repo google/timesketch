@@ -27,20 +27,22 @@ limitations under the License.
         </v-menu>
       </div>
 
-      <div v-show="expanded">
-        <div style="font-size: 0.9em" class="pa-4">
-          <v-textarea disabled outlined flat hide-details auto-grow rows="3">
-            <template v-slot:prepend-inner>
-              <v-avatar color="grey" class="mt-n1" size="28"></v-avatar>
-            </template>
-          </v-textarea>
-          <v-card-actions class="pl-0">
-            <v-btn disabled x-small outlined color="primary"> Yes </v-btn>
-            <v-btn disabled x-small outlined color="primary"> No </v-btn>
-            <v-btn disabled x-small outlined color="primary"> Inconclusive </v-btn>
-          </v-card-actions>
+      <v-expand-transition>
+        <div v-show="expanded">
+          <div style="font-size: 0.9em" class="pa-4">
+            <v-textarea disabled outlined flat hide-details auto-grow rows="3">
+              <template v-slot:prepend-inner>
+                <v-avatar color="grey" class="mt-n1" size="28"></v-avatar>
+              </template>
+            </v-textarea>
+            <v-card-actions class="pl-0">
+              <v-btn disabled x-small outlined color="primary"> Yes </v-btn>
+              <v-btn disabled x-small outlined color="primary"> No </v-btn>
+              <v-btn disabled x-small outlined color="primary"> Inconclusive </v-btn>
+            </v-card-actions>
+          </div>
         </div>
-      </div>
+      </v-expand-transition>
 
       <v-divider></v-divider>
     </div>

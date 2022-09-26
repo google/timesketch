@@ -19,7 +19,6 @@ import VueRouter from 'vue-router'
 import Home from './views/Home'
 import Explore from './views/Explore'
 import Sketch from './views/Sketch'
-import Overview from './views/Overview'
 
 Vue.use(VueRouter)
 
@@ -38,7 +37,7 @@ const routes = [
       {
         path: '',
         name: 'Overview',
-        component: Overview,
+        redirect: { name: 'Explore' },
       },
       {
         path: 'explore',
