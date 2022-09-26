@@ -38,7 +38,7 @@ limitations under the License.
             {{ errorMessage }}
           </v-alert>
         </div>
-        <div v-if="extension === 'csv' || extension === 'jsonl' || extension === 'json'">
+        <div v-if="['csv', 'jsonl', 'json'].includes(extension)">
           <v-simple-table height="350px" v-if="headers.length > 0">
             <template v-slot:default>
               <thead>
@@ -147,7 +147,6 @@ limitations under the License.
           Cancel
         </v-btn>
         <v-btn v-if="fileName" color="yellow darken-1" text @click="clearFormData()"> Clear Form </v-btn>
-        <b-field class="file is-primary" :class="{ 'has-name': true }"> </b-field>
         <v-btn color="green darken-1" text @click="submitForm()" v-if="!(error.length > 0 || !fileName)">
           Submit
         </v-btn>
@@ -238,6 +237,9 @@ export default {
     },
     percentageFlag() {
       return this.percentCompleted > 0
+    },
+    sketch() {
+      return this.$store.state.sketch
     },
     headersTable() {
       /**
@@ -435,7 +437,7 @@ export default {
       formData.append('provider', 'WebUpload')
       formData.append('context', this.fileName)
       formData.append('total_file_size', this.form.file.size)
-      formData.append('sketch_id', this.$store.state.sketch.id)
+      formData.append('sketch_id', this.sketch.id)
       if (['csv', 'jsonl', 'json'].includes(this.extension)) {
         let hMapping = JSON.stringify(this.headersMapping)
         formData.append('headersMapping', hMapping)
@@ -454,7 +456,7 @@ export default {
           this.clearFormData()
           this.percentCompleted = 0
           this.dialog = false
-          this.$store.dispatch('updateSketch', this.$store.state.sketch.id)
+          this.$store.dispatch('updateSketch', this.sketch.id)
         })
         .catch((e) => {})
     },

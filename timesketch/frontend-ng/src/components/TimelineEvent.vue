@@ -1,58 +1,11 @@
 <template>
   <tr>
     <td>
-      <v-menu offset-y content-class="menu-with-gap">
-        <template v-slot:activator="{ on }">
-          <span v-on="on" style="cursor: pointer">
-            <v-avatar rounded :color="'#' + timeline.color" size="24" class="mr-2"> </v-avatar>
-            {{ timeline.name }}
-          </span>
-        </template>
-        <v-card width="300">
-          <v-list>
-            <v-list-item>
-              <v-list-item-action>
-                <v-icon>mdi-square-edit-outline</v-icon>
-              </v-list-item-action>
-              <v-list-item-subtitle>Rename timeline</v-list-item-subtitle>
-            </v-list-item>
-
-            <v-list-item>
-              <v-list-item-action>
-                <v-icon>mdi-magnify</v-icon>
-              </v-list-item-action>
-              <v-list-item-subtitle>
-                <router-link style="text-decoration: none" :to="{ name: 'Explore', query: { timeline: timeline.id } }">
-                  Explore this timeline
-                </router-link>
-              </v-list-item-subtitle>
-            </v-list-item>
-            <v-list-item @click="removeChip(chip)">
-              <v-list-item-action>
-                <v-icon>mdi-delete</v-icon>
-              </v-list-item-action>
-              <v-list-item-subtitle>Remove from sketch</v-list-item-subtitle>
-            </v-list-item>
-          </v-list>
-        </v-card>
-      </v-menu>
-    </td>
-    <td>
-      <v-dialog v-model="dialogStatus" width="600">
-        <template v-slot:activator="{ on, attrs }">
-          <small v-bind="attrs" v-on="on">
-            <v-icon>{{ iconStatus }}</v-icon>
-          </small>
-        </template>
-        <ts-timeline-status-information
-          :timeline="timeline"
-          :indexedEvents="indexedEvents"
-          :totalEvents="totalEvents"
-          :timelineStatus="timelineStatus"
-          @closeDialog="closeDialogStatus"
-          :datasources="datasources"
-        ></ts-timeline-status-information>
-      </v-dialog>
+      <ts-timeline-chip
+        :timeline="timeline"
+        :is-selected="true"
+        :events-count="0"
+      ></ts-timeline-chip>
     </td>
     <td>{{ indexedEvents | compactNumber }}</td>
     <td>{{ timeline.user.username }}</td>
@@ -64,12 +17,12 @@
 
 <script>
 import ApiClient from '../utils/RestApiClient'
-import TsTimelineStatusInformation from './TimelineStatusInformation'
+import TsTimelineChip from './Explore/TimelineChip'
 
 export default {
   props: ['timeline'],
   components: {
-    TsTimelineStatusInformation,
+    TsTimelineChip,
   },
   data() {
     return {

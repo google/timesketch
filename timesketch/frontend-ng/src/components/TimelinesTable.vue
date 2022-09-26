@@ -20,7 +20,6 @@ limitations under the License.
         <thead>
           <tr>
             <th class="text-left">Name</th>
-            <th class="text-left">Status</th>
             <th class="text-left">Events</th>
             <th class="text-left">Uploaded by</th>
             <th class="text-left">Created</th>

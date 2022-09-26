@@ -193,9 +193,9 @@ export default {
       return (1 - this.deltaRT / this.deltaTotal) * 100
     },
     iconStatus() {
-      if (this.timelineStatus === 'ready') return 'mdi-check-circle'
+      if (this.timelineStatus === 'ready') return 'mdi-information-outline'
       if (this.timelineStatus === 'processing') return 'mdi-circle-slice-7'
-      return 'mdi-alert-circle'
+      return 'mdi-alert-circle-outline'
     },
   },
   methods: {
