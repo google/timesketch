@@ -731,7 +731,7 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
         subprocess.check_output(cmd, stderr=subprocess.STDOUT, encoding="utf-8")
     except subprocess.CalledProcessError as e:
         # Mark the searchindex and timelines as failed and exit the task
-        _set_datasource_status(timeline_id, file_path, "fail", error_message=error_msg)
+        _set_datasource_status(timeline_id, file_path, "fail", error_message=e.output)
         _close_index(
             index_name=index_name, data_store=opensearch, timeline_id=timeline_id
         )
@@ -899,7 +899,7 @@ def run_csv_jsonl(
         )
 
     # Set status to ready when done
-    _set_datasource_status(timeline_id, file_path, "processing")
+    _set_datasource_status(timeline_id, file_path, "ready", error_message=error_msg)
 
     return index_name
 
