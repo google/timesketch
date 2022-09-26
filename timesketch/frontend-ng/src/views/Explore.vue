@@ -194,6 +194,21 @@ limitations under the License.
       </div>
     </v-card>
 
+    <ts-upload-timeline-form></ts-upload-timeline-form>&emsp;
+    <v-dialog v-model="addManualEvent" width="600">
+      <template v-slot:activator="{ on, attrs }">
+        <v-chip outlined v-bind="attrs" v-on="on">
+          <v-icon left small> mdi-braille </v-icon>
+          Add manual event
+        </v-chip>
+      </template>
+      <ts-add-manual-event
+        app
+        @cancel="addManualEvent = false"
+        :datetimeProp="datetimeManualEvent"
+      ></ts-add-manual-event>
+    </v-dialog>
+
     <!-- Search History -->
 
     <v-card v-show="showSearchHistory" outlined class="pa-3 mt-3">
@@ -575,7 +590,9 @@ import TsBarChart from '../components/Explore/BarChart'
 import TsTimelinePicker from '../components/Explore/TimelinePicker'
 import TsFilterMenu from '../components/Explore/FilterMenu'
 import TsEventDetail from '../components/Explore/EventDetail'
+import TsUploadTimelineForm from '../components/UploadForm'
 import TsEventTagMenu from '../components/Explore/EventTagMenu.vue'
+import TsAddManualEvent from '../components/Explore/AddManualEvent'
 
 import EventBus from '../main'
 import { None } from 'vega'
@@ -614,7 +631,9 @@ export default {
     TsTimelinePicker,
     TsFilterMenu,
     TsEventDetail,
+    TsUploadTimelineForm,
     TsEventTagMenu,
+    TsAddManualEvent,
   },
   props: ['sketchId'],
   data() {
@@ -845,11 +864,9 @@ export default {
       let isLegacy = this.meta.indices_metadata[event._index].is_legacy
       let timeline
       if (isLegacy) {
-        timeline = this.sketch.active_timelines.filter(
-          (timeline) => timeline.searchindex.index_name === event._index
-        )[0]
+        timeline = this.sketch.active_timelines.find((timeline) => timeline.searchindex.index_name === event._index)
       } else {
-        timeline = this.sketch.active_timelines.filter((timeline) => timeline.id === event._source.__ts_timeline_id)[0]
+        timeline = this.sketch.active_timelines.find((timeline) => timeline.id === event._source.__ts_timeline_id)
       }
       return timeline
     },
