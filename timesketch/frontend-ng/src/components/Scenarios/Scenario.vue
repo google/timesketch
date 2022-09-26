@@ -14,12 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div>
+  <div v-if="scenario.facets.length">
     <v-toolbar flat>
-      <v-toolbar-title style="font-size: 1em">{{ scenario.display_name }}</v-toolbar-title>
-      <v-spacer></v-spacer>
-      <v-icon v-if="!minimizePanel" @click="$emit('togglePanel')">mdi-chevron-left</v-icon>
-      <v-icon v-else @click="$emit('togglePanel')" style="margin-left: -5px">mdi-chevron-right</v-icon>
+      <v-toolbar-title style="font-size: 1em"
+        ><strong>{{ scenario.display_name }}</strong></v-toolbar-title
+      >
     </v-toolbar>
     <div v-show="!minimizePanel" class="mt-3">
       <div v-for="facet in scenario.facets" :key="facet.id">

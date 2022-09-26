@@ -713,11 +713,11 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
 
     opensearch_username = current_app.config.get("OPENSEARCH_USER", "")
     if opensearch_username:
-        cmd.extend(["--elastic_user", opensearch_username])
+        cmd.extend(["--opensearch_user", opensearch_username])
 
     opensearch_password = current_app.config.get("OPENSEARCH_PASSWORD", "")
     if opensearch_password:
-        cmd.extend(["--elastic_password", opensearch_password])
+        cmd.extend(["--opensearch_password", opensearch_password])
 
     opensearch_ssl = current_app.config.get("OPENSEARCH_SSL", False)
     if opensearch_ssl:

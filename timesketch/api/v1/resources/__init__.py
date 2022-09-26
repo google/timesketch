@@ -285,6 +285,18 @@ class ResourceMixin(object):
         "updated_at": fields.DateTime("iso8601"),
     }
 
+    sigmarule_fields = {
+        "id": fields.Integer,
+        "rule_uuid": fields.String,
+        "description": fields.String,
+        "title": fields.String,
+        "query_string": fields.String,
+        "user": fields.Nested(user_fields),
+        "rule_yaml": fields.String,
+        "created_at": fields.DateTime("iso8601"),
+        "updated_at": fields.DateTime("iso8601"),
+    }
+
     fields_registry = {
         "aggregation": aggregation_fields,
         "aggregationgroup": aggregation_group_fields,
@@ -306,6 +318,7 @@ class ResourceMixin(object):
         "investigative_question": question_fields,
         "facet": facet_fields,
         "scenario": scenario_fields,
+        "sigmarule": sigmarule_fields
     }
 
     @property

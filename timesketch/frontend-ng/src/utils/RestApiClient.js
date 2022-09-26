@@ -146,7 +146,7 @@ export default {
       date_string: datetime,
       message: message,
       timestamp_desc: timestampDesc,
-      attributes : attributes
+      attributes: attributes,
     }
     return RestApiClient.post('/sketches/' + sketchId + '/event/create/', formData, config)
   },
@@ -169,6 +169,14 @@ export default {
       remove: remove,
     }
     return RestApiClient.post('/sketches/' + sketchId + '/event/annotate/', formData)
+  },
+  tagEvents(sketchId, events, tags) {
+    let formData = {
+      tag_string: JSON.stringify(tags),
+      events: events,
+      verbose: false,
+    }
+    return RestApiClient.post('/sketches/' + sketchId + '/event/tagging/', formData)
   },
   updateEventAnnotation(sketchId, annotationType, annotation, events, currentSearchNode) {
     let formData = {
