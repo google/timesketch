@@ -210,11 +210,11 @@ def _set_datasource_status(timeline_id, file_path, status, error_message=None):
     raise KeyError(f"No datasource find in the timeline with file_path: {file_path}")
 
 
-def _set_datasource_total_events(timeline_id, file_path, total_events):
+def _set_datasource_total_events(timeline_id, file_path, total_file_events):
     timeline = Timeline.query.get(timeline_id)
     for datasource in timeline.datasources:
         if datasource.get_file_on_disk == file_path:
-            datasource.set_total_file_events(total_events)
+            datasource.set_total_file_events(total_file_events)
             return
     raise KeyError(f"No datasource find in the timeline with file_path: {file_path}")
 
@@ -657,19 +657,35 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
     ]
 
     total_events_json = {}
+    total_file_events = 0
     # Run pinfo.py
     try:
-        total_events = subprocess.run(
-            cmd, capture_output=True, check=True
-        ).stdout.decode("utf-8")
+        command = subprocess.run(cmd, capture_output=True, check=True)
+        total_events = command.stdout.decode("utf-8")
         regex = 'parsers": (.+?})'
         m = re.search(regex, total_events)
         if m:
             total_events_json = json.loads(m.group(1))
-    except subprocess.CalledProcessError:
-        pass
+            total_file_events = total_events_json["total"]
+    except subprocess.CalledProcessError as e:
+        error_msg = e.stderr.decode("utf-8")
+        _set_datasource_total_events(timeline_id, file_path, total_file_events=0)
+        _set_datasource_status(timeline_id, file_path, "fail", error_message=error_msg)
+        _close_index(
+            index_name=index_name, data_store=opensearch, timeline_id=timeline_id
+        )
+        raise
+    except Exception as e:  # pylint: disable=broad-except
+        # Mark the searchindex and timelines as failed and exit the task
+        error_msg = traceback.format_exc()
+        _set_datasource_status(timeline_id, file_path, "fail", error_message=error_msg)
+        logger.error("Error: {0!s}\n{1:s}".format(e, error_msg))
+        _close_index(
+            index_name=index_name, data_store=opensearch, timeline_id=timeline_id
+        )
+        return None
 
-    _set_datasource_total_events(timeline_id, file_path, total_events_json["total"])
+    _set_datasource_total_events(timeline_id, file_path, total_file_events)
     _set_datasource_status(timeline_id, file_path, "processing")
 
     try:

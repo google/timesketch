@@ -221,8 +221,8 @@ export default {
       return headers
     },
     extension() {
-      let extension = this.fileName.split('.')[1]
-      if (extension) return extension.toLowerCase()
+      let extension = this.fileName.split('.')
+      if (extension.length > 1) return extension[extension.length - 1].toLowerCase()
       else return null
     },
     numberRows() {
