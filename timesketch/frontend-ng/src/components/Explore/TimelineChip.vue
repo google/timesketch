@@ -276,7 +276,7 @@ export default {
           } else {
             this.autoRefresh = false
             this.$store.dispatch('updateSketch', this.sketch.id).then(() => {
-              if (this.timelineStatus == 'ready') this.$emit('toggle', response.data.objects[0])
+              if (this.timelineStatus === 'ready') this.$emit('toggle', response.data.objects[0])
             })
           }
         })
