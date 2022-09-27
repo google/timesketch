@@ -67,7 +67,7 @@ class TimesketchSigmaRuleTest(unittest.TestCase):
     def test_get_sigma_rule(self):
         """New:Test get single Sigma rule."""
 
-        rule = self.api_client.get_sigmarule_rule(
+        rule = self.api_client.get_sigmarule(
             rule_uuid="5266a592-b793-11ea-b3de-0242ac130004"
         )
         rule.from_rule_uuid("5266a592-b793-11ea-b3de-0242ac130004")

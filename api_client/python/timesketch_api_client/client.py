@@ -573,7 +573,8 @@ class TimesketchApi:
         self.credentials.credential.refresh(request)
 
     def list_sigma_rules(self, as_pandas=False):
-        """DEPRECATED: Get a list of sigma objects.
+        """DEPRECATED please use list_sigmarules instead:
+        Get a list of sigma objects.
 
         Args:
             as_pandas: Boolean indicating that the results will be returned
@@ -586,6 +587,7 @@ class TimesketchApi:
         Raises:
             ValueError: If no rules are found.
         """
+        logger.warning("Deprecated, please use list_sigmarules() instead")
         rules = []
         response = self.fetch_resource_data("sigma/")
 
@@ -605,7 +607,7 @@ class TimesketchApi:
             rules.append(index_obj)
         return rules
 
-    def list_sigmarules_rules(self, as_pandas=False):
+    def list_sigmarules(self, as_pandas=False):
         """Fetches Sigma rules from the database.
         Fetches all Sigma rules stored in the database on the system
         and returns a list of SigmaRule objects of the rules.
@@ -641,7 +643,7 @@ class TimesketchApi:
             rules.append(index_obj)
         return rules
 
-    def get_sigmarule_rule(self, rule_uuid):
+    def get_sigmarule(self, rule_uuid):
         """Fetches a single Sigma rule from the databse.
         Fetches a single Sigma rule selected by the `UUID`
 
@@ -656,7 +658,7 @@ class TimesketchApi:
 
         return sigma_obj
 
-    def parse_sigmarule_rule_by_text(self, rule_text):
+    def parse_sigmarule_by_text(self, rule_text):
         """Obtain a parsed Sigma rule by providing text.
 
         Will parse a provided text `rule_yaml`, parse it and return as SigmaRule
@@ -685,7 +687,7 @@ class TimesketchApi:
         return sigma_obj
 
     def get_sigma_rule(self, rule_uuid):
-        """DEPRECATED: Get a sigma rule.
+        """DEPRECATED please use get_sigmarule() instead: Get a sigma rule.
 
         Args:
             rule_uuid: UUID of the Sigma rule.
@@ -693,13 +695,16 @@ class TimesketchApi:
         Returns:
             Instance of a Sigma object.
         """
+        logger.warning("Deprecated, please use get_sigmarule() instead")
+
         sigma_obj = sigma.Sigma(api=self)
         sigma_obj.from_rule_uuid(rule_uuid)
 
         return sigma_obj
 
     def parse_sigma_rule_by_text(self, rule_text):
-        """DEPRECATED: Returns a Sigma Object based on a sigma rule text.
+        """DEPRECATED please use parse_sigmarule_by_text() instead:
+        Returns a Sigma Object based on a sigma rule text.
 
         Args:
             rule_text: Full Sigma rule text.
@@ -710,6 +715,10 @@ class TimesketchApi:
         Raises:
             ValueError: No Rule text given or issues parsing it.
         """
+        logger.warning(
+            "Deprecated, please use parse_sigmarule_by_text() instead"
+        )
+
         if not rule_text:
             raise ValueError("No rule text given.")
 

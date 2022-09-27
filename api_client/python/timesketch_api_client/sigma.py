@@ -187,7 +187,8 @@ class SigmaRule(resource.BaseResource):
 
 
 class Sigma(resource.BaseResource):
-    """DEPRECATED Timesketch sigma object.
+    """DEPRECATED use SigmaRule instead:
+    Timesketch sigma object.
 
     A sigma object in Timesketch is a collection of one or more rules.
 
@@ -202,6 +203,7 @@ class Sigma(resource.BaseResource):
             api: An instance of TimesketchApi object.
 
         """
+        logger.warning("Deprecated, use SigmaRule object instead")
         self._attr_dict = {}
         resource_uri = "sigma/"
         super().__init__(api=api, resource_uri=resource_uri)
