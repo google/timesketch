@@ -7,7 +7,7 @@ The Sigma analyzer is a Multi Analyzer. That means each Sigma rule will create a
 To make a rule be used in the Analyzer:
 
 - place it in a folder that is mentioned in the `SIGMA_RULES_FOLDERS=[]` section of `data/timesketch.conf`
-- go to the Sigma tab of a sketch and check the rule is parsed correctly and the corresponding `es_query` is accurate
+- go to the Sigma tab of a sketch and check the rule is parsed correctly and the corresponding `search_query` is accurate
 - add an entry in `sigma_rule_status.csv` with column `status` value: `good`
 - go again to the Sigma tab and open the details of that rule and check the value of `'ts_use_in_analyzer': True`
 
