@@ -17,7 +17,9 @@ class SigmaPlugin(interface.BaseAnalyzer):
 
     NAME = "sigma"
     DISPLAY_NAME = "Sigma"
-    DESCRIPTION = "Run pre-defined Sigma rules and tag matching events"
+    DESCRIPTION = (
+        "Run pre-defined Sigma rules (only stable) and tag matching events"
+    )
 
     def __init__(self, index_name, sketch_id, timeline_id=None, **kwargs):
         """Initialize The Sigma Analyzer.
@@ -98,33 +100,28 @@ class SigmaPlugin(interface.BaseAnalyzer):
         problem_strings = []
         output_strings = []
 
-        if rule.get("status", "experimental") != "stable":
-            problem_strings.append(
-                "{0:s} ignored because status not stable".format(rule_name)
+        tags_applied[rule.get("title")] = 0
+        try:
+            sigma_rule_counter += 1
+            tagged_events_counter = self.run_sigma_rule(
+                rule.get("search_query"),
+                rule.get("title"),
+                tag_list=rule.get("tags"),
             )
-        else:
-            tags_applied[rule.get("title")] = 0
-            try:
-                sigma_rule_counter += 1
-                tagged_events_counter = self.run_sigma_rule(
-                    rule.get("search_query"),
-                    rule.get("title"),
-                    tag_list=rule.get("tags"),
-                )
-                tags_applied[rule.get("title")] += tagged_events_counter
-            except:  # pylint: disable=bare-except
-                error_msg = "* {0:s} {1:s}".format(
-                    rule.get("title"), rule.get("id")
-                )
-                logger.error(
-                    error_msg,
-                    exc_info=True,
-                )
-                problem_strings.append(error_msg)
+            tags_applied[rule.get("title")] += tagged_events_counter
+        except:  # pylint: disable=bare-except
+            error_msg = "* {0:s} {1:s}".format(
+                rule.get("title"), rule.get("id")
+            )
+            logger.error(
+                error_msg,
+                exc_info=True,
+            )
+            problem_strings.append(error_msg)
 
-            output_strings.append(
-                f"{tagged_events_counter} events tagged for rule [{rule_name}]"
-            )
+        output_strings.append(
+            f"{tagged_events_counter} events tagged for rule [{rule_name}]"
+        )
 
         if len(problem_strings) > 0:
             output_strings.append("Problematic rule:")
@@ -182,7 +179,8 @@ class SigmaPlugin(interface.BaseAnalyzer):
         """
         sigma_rules = []
         for rule in ts_sigma_lib.get_all_sigma_rules():
-            sigma_rules.append({"rule": rule})
+            if rule.get("status", "experimental") == "stable":
+                sigma_rules.append({"rule": rule})
 
         return sigma_rules
 
