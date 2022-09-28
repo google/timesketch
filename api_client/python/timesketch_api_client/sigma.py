@@ -235,11 +235,6 @@ class Sigma(resource.BaseResource):
         return self.get_attribute("id")
 
     @property
-    def file_relpath(self):
-        """Returns the relative filepath of the rule."""
-        return self.get_attribute("file_relpath")
-
-    @property
     def rule_uuid(self):
         """Returns the rule id."""
         return self.get_attribute("id")

@@ -287,5 +287,4 @@ def parse_sigma_rule_by_text(rule_text, sigma_config=None):
 
     rule_return.update({"search_query": sigma_search_query})
     rule_return.update({"file_name": "N/A"})
-    rule_return.update({"file_relpath": "N/A"})
     return rule_return
