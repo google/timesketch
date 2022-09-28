@@ -13,6 +13,12 @@
 # limitations under the License.
 """CLI management tool."""
 
+import os
+import pathlib
+from re import search
+import yaml
+import json
+
 import click
 from flask.cli import FlaskGroup
 from sqlalchemy.exc import IntegrityError
@@ -24,6 +30,7 @@ from timesketch.models import drop_all
 from timesketch.models.user import Group
 from timesketch.models.user import User
 from timesketch.models.sketch import Sketch
+from timesketch.models.sketch import SearchTemplate
 
 
 @click.group(cls=FlaskGroup, create_app=create_app)
@@ -247,3 +254,51 @@ def remove_group_member(group_name, username):
         print("Removed user from group.")
     except ValueError:
         print("User is not a member of the group.")
+
+@cli.command(name="import-search-templates")
+@click.argument("path")
+def import_search_templates(path):
+    """Import search templates from filesystem path."""
+    file_paths = set()
+    supported_file_types = [".yml", ".yaml"]
+    for root, _, files in os.walk(path):
+        for file in files:
+            file_extension = pathlib.Path(file.lower()).suffix
+            if file_extension in supported_file_types:
+                file_paths.add(os.path.join(root, file))
+
+    for file_path in file_paths:
+        search_template_dict = None
+        with open(file_path, "r") as fh:
+            search_template_dict = yaml.safe_load(fh.read())
+
+        if search_template_dict:
+            print(f"Importing: {search_template_dict.get('short_name')}")
+            name = search_template_dict.get("display_name")
+            short_name = search_template_dict.get("short_name")
+            description = search_template_dict.get("description")
+            uuid = search_template_dict.get("id")
+            query_string = search_template_dict.get("query_string")
+            query_filter = search_template_dict.get("query_filter", {})
+            query_dsl = search_template_dict.get("query_dsl", {})
+            tags = search_template_dict.get("tags", [])
+
+            searchtemplate = SearchTemplate.query.filter_by(template_uuid=uuid).first()
+            if not searchtemplate:
+                searchtemplate = SearchTemplate(name=name, template_uuid=uuid)
+                db_session.add(searchtemplate)
+                db_session.commit()
+
+            searchtemplate.short_name = short_name
+            searchtemplate.description = description
+            searchtemplate.template_json = json.dumps(search_template_dict)
+            searchtemplate.query_string = query_string
+            searchtemplate.query_filter = json.dumps(query_filter)
+            searchtemplate.query_dsl = json.dumps(query_dsl)
+
+            if tags:
+                for tag in tags:
+                    searchtemplate.add_label(tag)
+
+            db_session.add(searchtemplate)
+            db_session.commit()
