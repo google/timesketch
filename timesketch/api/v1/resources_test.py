@@ -698,7 +698,6 @@ class SigmaRuleByTextResourceTest(BaseTest):
                 "level": "high",
                 "search_query": '(data_type:("shell:zsh:history" OR "bash:history:command" OR "apt:history:line" OR "selinux:line") AND "apt-get install foobar")',  # pylint: disable=line-too-long
                 "file_name": "N/A",
-                "file_relpath": "N/A",
             }
         ],
     }
@@ -796,7 +795,6 @@ class SigmaByTextResourceTest(BaseTest):
                 "level": "high",
                 "search_query": '(data_type:("shell:zsh:history" OR "bash:history:command" OR "apt:history:line" OR "selinux:line") AND "apt-get install foobar")',  # pylint: disable=line-too-long
                 "file_name": "N/A",
-                "file_relpath": "N/A",
             }
         ],
     }

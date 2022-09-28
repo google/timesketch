@@ -129,7 +129,6 @@ level: high
         self.assertions.assertIn("Unknown", rule.falsepositives[0])
         self.assertions.assertEqual(len(rule.logsource), 2)
         self.assertions.assertIn("2020/06/26", rule.modified)
-        self.assertions.assertIn("lnx_susp_zmap.yml", rule.file_relpath)
         self.assertions.assertIn("lnx_susp_zmap", rule.file_name)
         self.assertions.assertIn("high", rule.level)
         self.assertions.assertIn("rmusser.net", rule.references[0])

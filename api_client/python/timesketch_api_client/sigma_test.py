@@ -193,7 +193,6 @@ class TimesketchSigmaTest(unittest.TestCase):
         self.assertEqual(len(rule.detection), 2)
         self.assertEqual(len(rule.logsource), 2)
         self.assertIn("2020/06/26", rule.modified)
-        self.assertIn("/linux/syslog/foobar", rule.file_relpath)
         self.assertIn("lnx_susp_zmap", rule.file_name)
         self.assertIn("high", rule.level)
         self.assertIn("foobar.com", rule.references[0])
