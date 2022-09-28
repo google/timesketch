@@ -33,16 +33,20 @@ class SigmaPlugin(interface.BaseAnalyzer):
         self._rule = kwargs.get("rule")
         super().__init__(index_name, sketch_id, timeline_id=timeline_id)
 
-    def run_sigma_rule(self, query, rule_name, tag_list=None):
+    def run_sigma_rule(self, query, rule_title, tag_list=None):
         """Runs a sigma rule and applies the appropriate tags.
 
         This method is only intended to be called if the Status of a rule is
         stable
 
+        A Sigma rule can have no Tags, in that case this method will only add
+        the rule title to the matching events.
+
         Args:
             query: OpenSearch search query for events to tag.
-            rule_name: rule_name to apply to matching events.
-            tag_list: a list of additional tags to be added to the event(s)
+            rule_title: rule_name to apply to matching events.
+            tag_list(optional): List of additional tags to be added
+                to the event(s).
 
         Returns:
             int: number of events tagged.
@@ -56,7 +60,7 @@ class SigmaPlugin(interface.BaseAnalyzer):
         )
         for event in events:
             ts_sigma_rules = event.source.get("ts_sigma_rule", [])
-            ts_sigma_rules.append(rule_name)
+            ts_sigma_rules.append(rule_title)
             event.add_attributes({"ts_sigma_rule": list(set(ts_sigma_rules))})
             ts_ttp = event.source.get("ts_ttp", [])
             special_tags = []
@@ -88,7 +92,6 @@ class SigmaPlugin(interface.BaseAnalyzer):
             String with summary of the analyzer result.
         """
 
-        tags_applied = {}
         sigma_rule_counter = 0
         tagged_events_counter = 0
 
@@ -97,10 +100,8 @@ class SigmaPlugin(interface.BaseAnalyzer):
             logger.error("No  Sigma rule given.")
             return "Unable to run, no rule given to the analyzer"
         rule_name = rule.get("title", "N/A")
-        problem_strings = []
         output_strings = []
 
-        tags_applied[rule.get("title")] = 0
         try:
             sigma_rule_counter += 1
             tagged_events_counter = self.run_sigma_rule(
@@ -108,7 +109,6 @@ class SigmaPlugin(interface.BaseAnalyzer):
                 rule.get("title"),
                 tag_list=rule.get("tags"),
             )
-            tags_applied[rule.get("title")] += tagged_events_counter
         except:  # pylint: disable=bare-except
             error_msg = "* {0:s} {1:s}".format(
                 rule.get("title"), rule.get("id")
@@ -117,58 +117,13 @@ class SigmaPlugin(interface.BaseAnalyzer):
                 error_msg,
                 exc_info=True,
             )
-            problem_strings.append(error_msg)
+            return error_msg
 
         output_strings.append(
             f"{tagged_events_counter} events tagged for rule [{rule_name}]"
         )
 
-        if len(problem_strings) > 0:
-            output_strings.append("Problematic rule:")
-            output_strings.extend(problem_strings)
-
         return "\n".join(output_strings)
-
-    def add_sigma_match_view(self, sigma_rule_counter):
-        """Adds a view with the top 20 matching rules.
-
-        Args:
-            sigma_rule_counter number of matching rules
-
-        """
-        view = self.sketch.add_view(
-            view_name="Sigma Rule matches",
-            analyzer_name=self.NAME,
-            query_string='tag:"sigma*"',
-        )
-        agg_params = {
-            "field": "tag",
-            "limit": 20,
-            "index": [self.timeline_id],
-        }
-        agg_obj = self.sketch.add_aggregation(
-            name="Top 20 Sigma tags",
-            agg_name="field_bucket",
-            agg_params=agg_params,
-            view_id=view.id,
-            chart_type="hbarchart",
-            description="Created by the Sigma analyzer",
-        )
-
-        story = self.sketch.add_story("Sigma Rule hits")
-        story.add_text(utils.SIGMA_STORY_HEADER, skip_if_exists=True)
-
-        story.add_text(
-            "## Sigma Analyzer.\n\nThe Sigma "
-            "analyzer takes Events and matches them with Sigma rules."
-            "In this timeline the analyzer discovered {0:d} "
-            "Sigma tags.\n\nThis is a summary of "
-            "it's findings.".format(sigma_rule_counter)
-        )
-        story.add_text("The top 20 most commonly discovered tags were:")
-        story.add_aggregation(agg_obj)
-        story.add_text("And an overview of all the discovered search terms:")
-        story.add_view(view)
 
     @staticmethod
     def get_kwargs():
