@@ -3,8 +3,6 @@ from __future__ import unicode_literals
 
 import logging
 
-from timesketch.lib.analyzers import utils
-
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 import timesketch.lib.sigma_util as ts_sigma_lib
