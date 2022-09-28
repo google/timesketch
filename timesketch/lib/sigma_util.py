@@ -85,34 +85,6 @@ def get_sigma_config_file(config_file=None):
     return sigma_config
 
 
-def get_sigma_rules_path():
-    """Get Sigma rules paths.
-
-    Returns:
-        A list of strings to the Sigma rules
-
-    Raises:
-        NotImplementedError
-    """
-    logger.error("Deprecated, do not use this method")
-    raise NotImplementedError("Deprecated, do not use this method")
-
-
-@lru_cache(maxsize=10)
-def get_sigma_rules(rule_folder, sigma_config=None):
-    """DEPRECATED: Returns the Sigma rules for a folder including subfolders.
-    Args:
-        rule_folder: folder to be checked for rules
-        sigma_config: optional argument to pass a
-                sigma.configuration.SigmaConfiguration object
-
-    Raises:
-        NotImplementedError
-    """
-    logger.error("Deprecated, do not use this method")
-    raise NotImplementedError("Deprecated, do not use this method")
-
-
 def _enrich_sigma_rule_object(rule: SigmaRule):
     """Helper function: Returns an enriched Sigma object given a SigmaRule.
 
@@ -142,16 +114,13 @@ def _enrich_sigma_rule_object(rule: SigmaRule):
     return parsed_rule
 
 
-@lru_cache(maxsize=None)
 def get_all_sigma_rules():
-    """Returns all Sigma rules
+    """Returns all Sigma rules from database
 
     Returns:
         A array of Sigma rules
 
-    Raises:
-        ValueError: If SIGMA_RULES_FOLDERS is not found in the config file.
-            or the folders are not readabale.
+
     """
     sigma_rules = []
 
@@ -160,21 +129,6 @@ def get_all_sigma_rules():
         sigma_rules.append(_enrich_sigma_rule_object(rule=rule))
 
     return sigma_rules
-
-
-@lru_cache(maxsize=10)
-def get_sigma_rule(filepath, sigma_config=None):
-    """DEPRECATED: Returns a JSON represenation for a rule
-    Args:
-        filepath: path to the sigma rule to be parsed
-        sigma_config: optional argument to pass a
-                sigma.configuration.SigmaConfiguration object
-
-    Raises:
-        NotImplementedError
-    """
-    logger.error("Deprecated, do not use this method")
-    raise NotImplementedError("Deprecated, do not use this method")
 
 
 def _sanitize_query(sigma_rule_query: str) -> str:
@@ -227,53 +181,6 @@ def _sanitize_query(sigma_rule_query: str) -> str:
     sigma_rule_query = sigma_rule_query.replace('""', '"')
 
     return sigma_rule_query
-
-
-@lru_cache(maxsize=32)
-def get_sigma_rule_status_list(statuslist_path=None):
-    """DEPRECATED: Get a dataframe of sigma rules to ignore.
-
-    This includes filenames, paths, ids.
-
-    Args:
-        statuslist_path(str): Path to a status file.
-            The default value is None
-
-    Returns:
-        Pandas dataframe with status
-
-    Raises:
-        ValueError: Sigma status file is not readabale.
-    """
-    logger.error("Deprecated, do not use this method")
-    raise NotImplementedError("Deprecated, do not use this method")
-
-
-@lru_cache(maxsize=None)
-def get_sigma_rule_status_path(rule_status_path=None):
-    """DEPRECATED: Checks and returns the Sigma rule_status path.
-
-    This includes filenames, paths, ids.
-
-
-    Raises:
-        NotImplementedError:Not implemented.
-    """
-    logger.error("Deprecated, do not use this method")
-    raise NotImplementedError("Deprecated, do not use this method")
-
-
-@lru_cache(maxsize=None)
-def add_problematic_rule(filepath, rule_uuid=None, reason=None):
-    """DEPRECATED:Adds a problematic rule to the sigma_rule_status.csv.
-
-    Args:
-        filepath: path to the sigma rule that caused problems
-        rule_uuid: rule uuid
-        reason: optional reason why file is moved
-    """
-    logger.error("Deprecated, do not use this method")
-    raise NotImplementedError("Deprecated, do not use this method")
 
 
 def sanitize_incoming_sigma_rule_text(rule_text: string):
