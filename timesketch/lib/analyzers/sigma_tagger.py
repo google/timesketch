@@ -98,8 +98,6 @@ class SigmaPlugin(interface.BaseAnalyzer):
             logger.error("No  Sigma rule given.")
             return "Unable to run, no rule given to the analyzer"
         rule_name = rule.get("title", "N/A")
-        output_strings = []
-
         try:
             sigma_rule_counter += 1
             tagged_events_counter = self.run_sigma_rule(
@@ -117,11 +115,7 @@ class SigmaPlugin(interface.BaseAnalyzer):
             )
             return error_msg
 
-        output_strings.append(
-            f"{tagged_events_counter} events tagged for rule [{rule_name}]"
-        )
-
-        return "\n".join(output_strings)
+        return f"{tagged_events_counter} events tagged for rule [{rule_name}]"
 
     @staticmethod
     def get_kwargs():
