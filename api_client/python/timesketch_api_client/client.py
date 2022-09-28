@@ -678,7 +678,7 @@ class TimesketchApi:
                 raise RuntimeError("Unable to create a new Sigma Rule.")
 
         rule_uuid = objects[0]["id"]
-        return self.get_sigma_rule(rule_uuid)
+        return self.get_sigmarule(rule_uuid)
 
     def get_sigmarule(self, rule_uuid):
         """Fetches a single Sigma rule from the databse.
@@ -734,10 +734,7 @@ class TimesketchApi:
         """
         logger.warning("Deprecated, please use get_sigmarule() instead")
 
-        sigma_obj = sigma.Sigma(api=self)
-        sigma_obj.from_rule_uuid(rule_uuid)
-
-        return sigma_obj
+        return self.get_sigmarule(rule_uuid=rule_uuid)
 
     def parse_sigma_rule_by_text(self, rule_text):
         """DEPRECATED please use parse_sigmarule_by_text() instead:

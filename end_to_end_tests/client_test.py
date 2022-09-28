@@ -134,8 +134,33 @@ level: high
         self.assertions.assertIn("high", rule.level)
         self.assertions.assertIn("rmusser.net", rule.references[0])
 
-    def test_get_sigma_rule(self):
+    def test_get_sigmarule(self):
         """Client Sigma object tests."""
+
+        rule = self.api.create_sigmarule(
+            rule_yaml="""
+title: Suspicious Installation of bbbbbb
+id: 5266a592-b793-11ea-b3de-bbbbbb
+description: Detects suspicious installation of bbbbbb
+references:
+    - https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html
+author: Alexander Jaeger
+date: 2020/06/26
+modified: 2022/06/12
+logsource:
+    product: linux
+    service: shell
+detection:
+    keywords:
+        # Generic suspicious commands
+        - '*apt-get install bbbbbb*'
+    condition: keywords
+falsepositives:
+    - Unknown
+level: high
+"""
+        )
+        self.assertions.assertIsNotNone(rule)
 
         rule = self.api.get_sigmarule(
             rule_uuid="5266a592-b793-11ea-b3de-0242ac130004"

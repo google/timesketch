@@ -64,7 +64,7 @@ class TimesketchSigmaRuleTest(unittest.TestCase):
             "http://127.0.0.1", "test", "test"
         )
 
-    def test_get_sigma_rule(self):
+    def test_get_sigmarule(self):
         """New:Test get single Sigma rule."""
 
         rule = self.api_client.get_sigmarule(
