@@ -82,6 +82,32 @@ class ClientTest(interface.BaseEndToEndTest):
         data_source = data_sources[0]
         self.assertions.assertEqual(data_source.get("context", ""), context)
 
+    def test_create_sigma_rule(self):
+        """Create a Sigma rule in database"""
+        MOCK_SIGMA_RULE = """
+title: Suspicious Installation of bbbbbb
+id: 5266a592-b793-11ea-b3de-bbbbbb
+description: Detects suspicious installation of bbbbbb
+references:
+    - https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html
+author: Alexander Jaeger
+date: 2020/06/26
+modified: 2022/06/12
+logsource:
+    product: linux
+    service: shell
+detection:
+    keywords:
+        # Generic suspicious commands
+        - '*apt-get install bbbbbb*'
+    condition: keywords
+falsepositives:
+    - Unknown
+level: high
+"""
+        rule = self.api.create_sigmarule(rule_yaml=MOCK_SIGMA_RULE)
+        self.assertions.assertIsNotNone(rule)
+
     def test_sigma_list(self):
         """Client Sigma list tests."""
         rules = self.api.list_sigma_rules()
@@ -110,7 +136,8 @@ class ClientTest(interface.BaseEndToEndTest):
 
     def test_get_sigma_rule(self):
         """Client Sigma object tests."""
-        rule = self.api.get_sigma_rule(
+
+        rule = self.api.get_sigmarule(
             rule_uuid="5266a592-b793-11ea-b3de-0242ac130004"
         )
         rule.from_rule_uuid("5266a592-b793-11ea-b3de-0242ac130004")
@@ -122,13 +149,11 @@ class ClientTest(interface.BaseEndToEndTest):
         self.assertions.assertIn("Installation of ZMap", rule.title)
         self.assertions.assertIn("zmap", rule.search_query)
         self.assertions.assertIn("shell:zsh:history", rule.search_query)
-        self.assertions.assertIn("lnx_susp_zmap.yml", rule.file_relpath)
         self.assertions.assertIn("sigma/rule/5266a592", rule.resource_uri)
         self.assertions.assertIn("installation of ZMap", rule.description)
         self.assertions.assertIn("high", rule.level)
         self.assertions.assertEqual(len(rule.falsepositives), 1)
         self.assertions.assertIn("Unknown", rule.falsepositives[0])
-        self.assertions.assertIn("susp_zmap", rule.file_name)
         self.assertions.assertIn("2020/06/26", rule.date)
         self.assertions.assertIn("2020/06/26", rule.modified)
         self.assertions.assertIn("high", rule.level)

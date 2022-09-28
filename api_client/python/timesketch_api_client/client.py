@@ -643,6 +643,43 @@ class TimesketchApi:
             rules.append(index_obj)
         return rules
 
+    def create_sigmarule(self, rule_yaml):
+        """Adds a single Sigma rule to the database.
+
+        Adds a single Sigma rule to the database when `/sigmarule/` is called
+        with a POST request.
+
+        All attributes of the rule are taken by the `rule_yaml` value in the
+        POST request.
+
+        If no `rule_yaml` is found in the request, the method will fail as this
+        is required to parse the rule.
+
+        Args:
+            rule_yaml: YAML of the Sigma Rule.
+
+        Returns:
+            Instance of a Sigma object.
+        """
+
+        retry_count = 0
+        objects = None
+        while True:
+            resource_url = "{0:s}/sigmarule/".format(self.api_root)
+            form_data = {"rule_yaml": rule_yaml}
+            response = self.session.post(resource_url, json=form_data)
+            response_dict = error.get_response_json(response, logger)
+            objects = response_dict.get("objects")
+            if objects:
+                break
+            retry_count += 1
+
+            if retry_count >= self.DEFAULT_RETRY_COUNT:
+                raise RuntimeError("Unable to create a new Sigma Rule.")
+
+        rule_uuid = objects[0]["id"]
+        return self.get_sigma_rule(rule_uuid)
+
     def get_sigmarule(self, rule_uuid):
         """Fetches a single Sigma rule from the databse.
         Fetches a single Sigma rule selected by the `UUID`
