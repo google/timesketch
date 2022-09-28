@@ -8,13 +8,14 @@ from timesketch.lib.analyzers import utils
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 import timesketch.lib.sigma_util as ts_sigma_lib
+from timesketch.models.sigma import SigmaRule
 
 
 logger = logging.getLogger("timesketch.analyzers.sigma_tagger")
 
 
 class SigmaPlugin(interface.BaseAnalyzer):
-    """Analyzer for Sigma."""
+    """Analyzer for Sigma Rules."""
 
     NAME = "sigma"
     DISPLAY_NAME = "Sigma"
@@ -32,16 +33,16 @@ class SigmaPlugin(interface.BaseAnalyzer):
         self._rule = kwargs.get("rule")
         super().__init__(index_name, sketch_id, timeline_id=timeline_id)
 
-    def run_sigma_rule(
-        self, query, rule_name, tag_list=None, status_good=False
-    ):
+    def run_sigma_rule(self, query, rule_name, tag_list=None):
         """Runs a sigma rule and applies the appropriate tags.
+
+        This method is only intended to be called if the Status of a rule is
+        stable
 
         Args:
             query: OpenSearch search query for events to tag.
             rule_name: rule_name to apply to matching events.
             tag_list: a list of additional tags to be added to the event(s)
-            status_good (bool): rule status based on the sigma_rule_status csv
 
         Returns:
             int: number of events tagged.
@@ -57,26 +58,31 @@ class SigmaPlugin(interface.BaseAnalyzer):
             ts_sigma_rules = event.source.get("ts_sigma_rule", [])
             ts_sigma_rules.append(rule_name)
             event.add_attributes({"ts_sigma_rule": list(set(ts_sigma_rules))})
-            if status_good:
-                ts_ttp = event.source.get("ts_ttp", [])
-                special_tags = []
-                for tag in tag_list:
-                    # Special handling for sigma tags that TS considers TTPs
-                    # https://car.mitre.org and https://attack.mitre.org
-                    if tag.startswith(("attack.", "car.")):
-                        ts_ttp.append(tag)
-                        special_tags.append(tag)
-                # add the remaining tags as plain tags
-                tags_to_add = list(set(tag_list) - set(special_tags))
-                event.add_tags(tags_to_add)
-                if len(ts_ttp) > 0:
-                    event.add_attributes({"ts_ttp": list(set(ts_ttp))})
+            ts_ttp = event.source.get("ts_ttp", [])
+            special_tags = []
+            for tag in tag_list:
+                # Special handling for sigma tags that TS considers TTPs
+                # https://car.mitre.org and https://attack.mitre.org
+                if tag.startswith(("attack.", "car.")):
+                    ts_ttp.append(tag)
+                    special_tags.append(tag)
+            # add the remaining tags as plain tags
+            tags_to_add = list(set(tag_list) - set(special_tags))
+            event.add_tags(tags_to_add)
+            if len(ts_ttp) > 0:
+                event.add_attributes({"ts_ttp": list(set(ts_ttp))})
             event.commit()
             tagged_events_counter += 1
+
         return tagged_events_counter
 
     def run(self):
         """Entry point for the analyzer.
+
+        It will iterate over all Sigma rules of the Timesketch installation.
+
+        If a rule has a status other than `stable` it is not considered in
+        this analyzer.
 
         Returns:
             String with summary of the analyzer result.
@@ -94,31 +100,36 @@ class SigmaPlugin(interface.BaseAnalyzer):
         problem_strings = []
         output_strings = []
 
-        tags_applied[rule.get("file_name")] = 0
-        try:
-            sigma_rule_counter += 1
-            tagged_events_counter = self.run_sigma_rule(
-                rule.get("search_query"),
-                rule.get("file_name"),
-                tag_list=rule.get("tags"),
-                status_good=rule.get('ts_use_in_analyzer'),
+        if rule.get("status", "experimental") != "stable":
+            problem_strings.append(
+                "{0:s} ignored because status not stable".format(rule_name)
             )
-            tags_applied[rule.get("file_name")] += tagged_events_counter
-        except:  # pylint: disable=bare-except
-            logger.error(
-                "Problem with rule in file {0:s}: ".format(
-                    rule.get("file_name")
-                ),
-                exc_info=True,
-            )
-            problem_strings.append("* {0:s}".format(rule.get("file_name")))
+        else:
+            tags_applied[rule.get("title")] = 0
+            try:
+                sigma_rule_counter += 1
+                tagged_events_counter = self.run_sigma_rule(
+                    rule.get("search_query"),
+                    rule.get("title"),
+                    tag_list=rule.get("tags"),
+                )
+                tags_applied[rule.get("title")] += tagged_events_counter
+            except:  # pylint: disable=bare-except
+                error_msg = "* {0:s} {1:s}".format(
+                    rule.get("title"), rule.get("id")
+                )
+                logger.error(
+                    error_msg,
+                    exc_info=True,
+                )
+                problem_strings.append(error_msg)
 
-        output_strings.append(
-            f"{tagged_events_counter} events tagged for rule [{rule_name}]"
-        )
+            output_strings.append(
+                f"{tagged_events_counter} events tagged for rule [{rule_name}]"
+            )
 
         if len(problem_strings) > 0:
-            output_strings.append("Problematic rules:")
+            output_strings.append("Problematic rule:")
             output_strings.extend(problem_strings)
 
         return "\n".join(output_strings)
