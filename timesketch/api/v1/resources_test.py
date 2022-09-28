@@ -459,8 +459,8 @@ class SigmaListResourceTest(BaseTest):
                 },
                 'search_query': '(data_type:("shell:zsh:history" OR "bash:history:command" OR "apt:history:line" OR "selinux:line") AND "apt-get install zmap")',  # pylint: disable=line-too-long
                 'falsepositives': ['Unknown'],
-                'file_name': 'lnx_susp_zmap.yml',
-                'file_relpath': 'lnx_susp_zmap.yml',
+                'file_name': 'N/A',
+                'file_relpath': 'N/A',
                 'id': '5266a592-b793-11ea-b3de-0242ac130004',
                 'level': 'high',
                 'logsource': {'product': 'linux', 'service': 'shell'},

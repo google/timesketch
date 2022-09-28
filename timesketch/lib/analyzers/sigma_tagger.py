@@ -8,8 +8,6 @@ from timesketch.lib.analyzers import utils
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 import timesketch.lib.sigma_util as ts_sigma_lib
-from timesketch.models.sigma import SigmaRule
-
 
 logger = logging.getLogger("timesketch.analyzers.sigma_tagger")
 
