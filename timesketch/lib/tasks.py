@@ -27,6 +27,7 @@ import json
 import six
 import yaml
 
+from opensearchpy.exceptions import NotFoundError
 from opensearchpy.exceptions import RequestError
 from flask import current_app
 
@@ -137,6 +138,30 @@ def init_worker(**kwargs):
     url = celery.conf.get("SQLALCHEMY_DATABASE_URI")
     engine = create_engine(url)
     db_session.configure(bind=engine)
+
+
+def _close_index(index_name, data_store, timeline_id):
+    """Helper function to close an index if it is not used somewhere else.
+    Args:
+        index_name: String with the OpenSearch index name.
+        data_store: Instance of opensearch.OpenSearchDataStore.
+        timeline_id: ID of the timeline the index belongs to.
+    """
+    indices = SearchIndex.query.filter_by(index_name=index_name).all()
+    for index in indices:
+        for timeline in index.timelines:
+            if timeline.get_status.status in ("closed", "deleted", "archived"):
+                continue
+
+            if timeline.id != timeline_id:
+                return
+
+    try:
+        data_store.client.indices.close(index=index_name)
+    except NotFoundError:
+        logger.error(
+            "Unable to close index: {0:s} - index not " "found".format(index_name)
+        )
 
 
 def _set_timeline_status(timeline_id, status, error_msg=None):
