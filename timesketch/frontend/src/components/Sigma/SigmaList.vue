@@ -33,7 +33,6 @@ limitations under the License.
             v-model="editingRule.rule_yaml"></b-input>
         </b-field>
         <b-field grouped>
-          <p>Status: {{ editingRule.status }}</p>
           <b-field grouped expanded position="is-right">
             <p class="control">
               <b-button type="is-primary"
@@ -41,13 +40,7 @@ limitations under the License.
                 Parse
               </b-button>
             </p>
-            <b-select placeholder="Rule status" v-model="editingRule.status"
-              label="Rule status" label-position="on-border">
-              <option v-for="option in RuleStatus" :value="option"
-                :key="option">
-                {{ option }}
-              </option>
-            </b-select>
+
             <p class="control">
               <b-button type="is-primary" @click="addRule(editingRule)">
                 {{save_button_text}}
