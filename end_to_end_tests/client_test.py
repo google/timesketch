@@ -118,7 +118,7 @@ level: high
             "5266a592-b793-11ea-b3de-bbbbbb", rule.rule_uuid
         )
         self.assertions.assertIn("Installation of bbbbbb", rule.title)
-        self.assertions.assertIn("zmap", rule.search_query)
+        self.assertions.assertIn("bbbbbb", rule.search_query)
         self.assertions.assertIn("Alexander", rule.author)
         self.assertions.assertIn("2020/06/26", rule.date)
         self.assertions.assertIn("installation of bbbbbb", rule.description)
@@ -174,7 +174,7 @@ level: high
         self.assertions.assertIn("Installation of eeeee", rule.title)
         self.assertions.assertIn("eeeee", rule.search_query)
         self.assertions.assertIn("shell:zsh:history", rule.search_query)
-        self.assertions.assertIn("sigma/rule/5266a592", rule.resource_uri)
+        self.assertions.assertIn("sigmarule/5266a592", rule.resource_uri)
         self.assertions.assertIn("installation of eeeee", rule.description)
         self.assertions.assertIn("high", rule.level)
         self.assertions.assertEqual(len(rule.falsepositives), 1)
