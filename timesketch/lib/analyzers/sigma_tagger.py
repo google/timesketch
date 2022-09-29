@@ -33,7 +33,8 @@ class SigmaPlugin(interface.BaseAnalyzer):
         super().__init__(index_name, sketch_id, timeline_id=timeline_id)
 
     def run_sigma_rule(
-        self, query, rule_name, tag_list=None, status_good=False):
+        self, query, rule_name, tag_list=None, status_good=False
+    ):
         """Runs a sigma rule and applies the appropriate tags.
 
         Args:
@@ -97,7 +98,7 @@ class SigmaPlugin(interface.BaseAnalyzer):
         try:
             sigma_rule_counter += 1
             tagged_events_counter = self.run_sigma_rule(
-                rule.get("es_query"),
+                rule.get("search_query"),
                 rule.get("file_name"),
                 tag_list=rule.get("tags"),
                 status_good=rule.get('ts_use_in_analyzer'),
