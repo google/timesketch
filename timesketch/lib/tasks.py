@@ -27,7 +27,6 @@ import json
 import six
 import yaml
 
-from opensearchpy.exceptions import NotFoundError
 from opensearchpy.exceptions import RequestError
 from flask import current_app
 
