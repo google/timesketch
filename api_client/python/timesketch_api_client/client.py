@@ -677,7 +677,7 @@ class TimesketchApi:
             if retry_count >= self.DEFAULT_RETRY_COUNT:
                 raise RuntimeError("Unable to create a new Sigma Rule.")
 
-        rule_uuid = objects[0]["id"]
+        rule_uuid = objects[0]["rule_uuid"]
         return self.get_sigmarule(rule_uuid)
 
     def get_sigmarule(self, rule_uuid):

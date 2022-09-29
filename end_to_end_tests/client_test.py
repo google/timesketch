@@ -113,13 +113,15 @@ level: high
         rules = self.api.list_sigma_rules()
         self.assertions.assertGreaterEqual(len(rules), 1)
         rule = rules[0]
-        self.assertions.assertIn("b793-11ea-b3de-0242ac130004", rule.id)
-        self.assertions.assertIn("b793-11ea-b3de-0242ac130004", rule.rule_uuid)
-        self.assertions.assertIn("Installation of ZMap", rule.title)
+        self.assertions.assertIn("5266a592-b793-11ea-b3de-bbbbbb", rule.id)
+        self.assertions.assertIn(
+            "5266a592-b793-11ea-b3de-bbbbbb", rule.rule_uuid
+        )
+        self.assertions.assertIn("Installation of bbbbbb", rule.title)
         self.assertions.assertIn("zmap", rule.search_query)
         self.assertions.assertIn("Alexander", rule.author)
         self.assertions.assertIn("2020/06/26", rule.date)
-        self.assertions.assertIn("installation of ZMap", rule.description)
+        self.assertions.assertIn("installation of bbbbbb", rule.description)
         self.assertions.assertEqual(len(rule.detection), 2)
         self.assertions.assertEqual(
             '(data_type:("shell:zsh:history" OR "bash:history:command" OR "apt:history:line" OR "selinux:line") AND "apt-get install zmap")',  # pylint: disable=line-too-long
@@ -170,7 +172,7 @@ level: high
         self.assertions.assertIn("Alexander", rule.get_attribute("author"))
         self.assertions.assertIn("b793-11ea-b3de-eeeee", rule.id)
         self.assertions.assertIn("Installation of eeeee", rule.title)
-        self.assertions.assertIn("zmap", rule.search_query)
+        self.assertions.assertIn("eeeee", rule.search_query)
         self.assertions.assertIn("shell:zsh:history", rule.search_query)
         self.assertions.assertIn("sigma/rule/5266a592", rule.resource_uri)
         self.assertions.assertIn("installation of eeeee", rule.description)

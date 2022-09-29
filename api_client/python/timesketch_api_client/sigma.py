@@ -138,11 +138,11 @@ class SigmaRule(resource.BaseResource):
         for key, value in rule_dict.items():
             self.set_value(key, value)
 
-    def from_rule_uuid(self, rule_uuid: str):
+    def from_rule_uuid(self, rule_uuid):
         """Get a SigmaRule object from a rule UUID.
 
         Args:
-            rule_uuid(str): Id of the sigma rule.
+            rule_uuid: Id of the sigma rule.
 
         """
         self.resource_uri = f"sigmarule/{rule_uuid}"
@@ -151,7 +151,7 @@ class SigmaRule(resource.BaseResource):
         objects = self.data.get("objects")
         if not objects:
             error_msg = (
-                "Unable to parse Sigma rule {0:s} with given text".format(
+                "Unable to parse Sigma rule {0} with given text".format(
                     rule_uuid
                 )
             )
