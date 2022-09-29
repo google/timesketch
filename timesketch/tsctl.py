@@ -15,9 +15,9 @@
 
 import os
 import pathlib
-from re import search
-import yaml
 import json
+import yaml
+
 
 import click
 from flask.cli import FlaskGroup
@@ -254,6 +254,7 @@ def remove_group_member(group_name, username):
         print("Removed user from group.")
     except ValueError:
         print("User is not a member of the group.")
+
 
 @cli.command(name="import-search-templates")
 @click.argument("path")
