@@ -16,10 +16,21 @@ limitations under the License.
 <template>
   <v-dialog v-model="dialog" persistent max-width="1000">
     <template v-slot:activator="{ on, attrs }">
-      <v-btn small text v-bind="attrs" v-on="on"> <v-icon>mdi-plus</v-icon> Upload timeline </v-btn>
+      <v-chip outlined v-bind="attrs" v-on="on">
+        <v-icon left small> mdi-alarm-plus </v-icon>
+        New timeline
+      </v-chip>
     </template>
     <v-card>
       <v-container class="px-8">
+        <v-dialog v-model="percentageFlag" width="500">
+          <v-card>
+            <v-card-title class="text-h5 grey lighten-2"> Uploading the file... </v-card-title>
+            <v-progress-linear color="light-blue" height="10" :value="percentCompleted" striped></v-progress-linear>
+            <v-divider></v-divider>
+          </v-card>
+        </v-dialog>
+
         <v-card-title class="text-h5"> {{ title }} </v-card-title>
 
         <div v-if="error.length > 0">
@@ -133,11 +144,10 @@ limitations under the License.
             dialog = false
           "
         >
-          Close
+          Cancel
         </v-btn>
         <v-btn v-if="fileName" color="yellow darken-1" text @click="clearFormData()"> Clear Form </v-btn>
-
-        <v-btn color="green darken-1" text @click="submitForm()" :disabled="error.length > 0 || !fileName">
+        <v-btn color="green darken-1" text @click="submitForm()" v-if="!(error.length > 0 || !fileName)">
           Submit
         </v-btn>
       </v-card-actions>
@@ -192,9 +202,6 @@ export default {
     }
   },
   computed: {
-    sketch() {
-      return this.$store.state.sketch
-    },
     headers() {
       let headers = []
       if (this.extension === 'csv') {
@@ -227,6 +234,12 @@ export default {
       } else {
         return 0
       }
+    },
+    percentageFlag() {
+      return this.percentCompleted > 0
+    },
+    sketch() {
+      return this.$store.state.sketch
     },
     headersTable() {
       /**
@@ -348,11 +361,9 @@ export default {
     },
     changeCSVDelimiter: function (value) {
       this.CSVDelimiter = value
-      this.mandatoryHeaders = [
-        { name: 'datetime', columnsSelected: [] },
-        { name: 'message', columnsSelected: [] },
-        { name: 'timestamp_desc', columnsSelected: [] },
-      ]
+      for (let i = 0; i < this.mandatoryHeaders.length; i++) {
+        this.mandatoryHeaders[i]['columnsSelected'] = []
+      }
       this.headersMapping = []
       this.validateFile()
     },
@@ -409,11 +420,11 @@ export default {
       this.uploadedFiles = []
       this.title = 'Upload your Plaso/JSONL/CSV file'
       this.error = []
-      this.mandatoryHeaders = [
-        { name: 'datetime', columnsSelected: [] },
-        { name: 'message', columnsSelected: [] },
-        { name: 'timestamp_desc', columnsSelected: [] },
-      ]
+      this.percentCompleted = 0
+
+      for (let i = 0; i < this.mandatoryHeaders.length; i++) {
+        this.mandatoryHeaders[i]['columnsSelected'] = []
+      }
     },
     submitForm: function () {
       if (!this.validateFile()) {
@@ -441,10 +452,11 @@ export default {
         }.bind(this),
       }
       ApiClient.uploadTimeline(formData, config)
-        .then((response) => {
-          this.$store.dispatch('updateSketch', this.sketch.id)
+        .then(() => {
           this.clearFormData()
           this.percentCompleted = 0
+          this.dialog = false
+          this.$store.dispatch('updateSketch', this.sketch.id)
         })
         .catch((e) => {})
     },
@@ -531,7 +543,7 @@ export default {
       reader.readAsText(file.slice(0, 10000))
       reader.onloadend = function (e) {
         if (e.target.readyState === FileReader.DONE) {
-          /* 3a. Extract the headers from the JSON */
+          /* 3a. Extract the headers from the CSV */
           let data = e.target.result
           let rows = data.split('\n')
           let i = Math.min(vueJS.staticNumberRows, rows.length)

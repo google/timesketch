@@ -16,6 +16,7 @@
 from __future__ import unicode_literals
 
 import json
+import logging
 
 from flask import current_app
 from flask import url_for
@@ -41,6 +42,10 @@ from timesketch.models.annotations import CommentMixin
 from timesketch.models.annotations import StatusMixin
 from timesketch.models.annotations import GenericAttributeMixin
 from timesketch.lib.utils import random_color
+from timesketch.models import db_session
+
+
+logger = logging.getLogger("timesketch.sketch")
 
 
 class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, BaseModel):
@@ -207,7 +212,15 @@ class Timeline(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     analysis = relationship("Analysis", backref="timeline", lazy="select")
     datasources = relationship("DataSource", backref="timeline", lazy="select")
 
-    def __init__(self, name, user, sketch, searchindex, color=None, description=None):
+    def __init__(
+        self,
+        name,
+        user,
+        sketch,
+        searchindex,
+        color=None,
+        description=None,
+    ):
         """Initialize the Timeline object.
 
         Args:
@@ -768,6 +781,7 @@ class DataSource(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     original_filename = Column(UnicodeText())
     data_label = Column(UnicodeText())
     error_message = Column(UnicodeText())
+    total_file_events = Column(BigInteger())
 
     def __init__(
         self,
@@ -780,7 +794,8 @@ class DataSource(LabelMixin, StatusMixin, CommentMixin, BaseModel):
         original_filename,
         data_label,
         error_message="",
-    ):
+        total_file_events=0,
+    ):  # pylint: disable=too-many-arguments
         """Initialize the DataSource object.
 
         Args:
@@ -805,6 +820,27 @@ class DataSource(LabelMixin, StatusMixin, CommentMixin, BaseModel):
         self.original_filename = original_filename
         self.data_label = data_label
         self.error_message = error_message
+        self.total_file_events = total_file_events
+
+    def set_total_file_events(self, total_file_events):
+        self.total_file_events = total_file_events
+        db_session.commit()
+
+    def set_error_message(self, error_message):
+        self.error_message = error_message
+        db_session.commit()
+
+    @property
+    def get_total_file_events(self):
+        return self.total_file_events
+
+    @property
+    def get_file_on_disk(self):
+        return self.file_on_disk
+
+    @property
+    def get_status(self):
+        return self.status[0].status
 
 
 # Association table for the many-to-many relationship between SearchHistory
