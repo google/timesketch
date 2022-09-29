@@ -671,9 +671,6 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
         error_msg = e.stderr.decode("utf-8")
         _set_datasource_total_events(timeline_id, file_path, total_file_events=0)
         _set_datasource_status(timeline_id, file_path, "fail", error_message=error_msg)
-        _close_index(
-            index_name=index_name, data_store=opensearch, timeline_id=timeline_id
-        )
         raise
     except Exception as e:  # pylint: disable=broad-except
         # Mark the searchindex and timelines as failed and exit the task
