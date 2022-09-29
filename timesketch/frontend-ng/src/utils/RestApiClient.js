@@ -376,6 +376,12 @@ export default {
     }
     return RestApiClient.post('/sigma/text/', formData)
   },
+  getSearchTemplates() {
+    return RestApiClient.get('/searchtemplate/')
+  },
+  parseSearchTemplate(searchTemplateId, formData) {
+    return RestApiClient.post('/searchtemplate/' + searchTemplateId + '/parse/', formData)
+  },
   getScenarios() {
     return RestApiClient.get('/scenarios/')
   },

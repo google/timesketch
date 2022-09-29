@@ -73,6 +73,7 @@ limitations under the License.
       <ts-saved-searches></ts-saved-searches>
       <ts-data-types></ts-data-types>
       <ts-tags></ts-tags>
+      <ts-search-templates></ts-search-templates>
     </v-navigation-drawer>
 
     <router-view v-if="sketch.status"></router-view>
@@ -84,6 +85,7 @@ import TsScenario from '../components/Scenarios/Scenario'
 import TsSavedSearches from '../components/LeftPanel/SavedSearches'
 import TsDataTypes from '../components/LeftPanel/DataTypes'
 import TsTags from '../components/LeftPanel/Tags'
+import TsSearchTemplates from '../components/LeftPanel/SearchTemplates'
 
 export default {
   props: ['sketchId', 'showLeftPanel'],
@@ -92,6 +94,7 @@ export default {
     TsSavedSearches,
     TsDataTypes,
     TsTags,
+    TsSearchTemplates,
   },
   data() {
     return {

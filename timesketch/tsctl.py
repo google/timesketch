@@ -269,37 +269,44 @@ def import_search_templates(path):
                 file_paths.add(os.path.join(root, file))
 
     for file_path in file_paths:
-        search_template_dict = None
+        search_templates = None
         with open(file_path, "r") as fh:
-            search_template_dict = yaml.safe_load(fh.read())
+            search_templates = yaml.safe_load(fh.read())
 
-        if search_template_dict:
-            print(f"Importing: {search_template_dict.get('short_name')}")
-            name = search_template_dict.get("display_name")
-            short_name = search_template_dict.get("short_name")
-            description = search_template_dict.get("description")
-            uuid = search_template_dict.get("id")
-            query_string = search_template_dict.get("query_string")
-            query_filter = search_template_dict.get("query_filter", {})
-            query_dsl = search_template_dict.get("query_dsl", {})
-            tags = search_template_dict.get("tags", [])
+        if isinstance(search_templates, dict):
+            search_template_list = [search_template_list]
 
-            searchtemplate = SearchTemplate.query.filter_by(template_uuid=uuid).first()
-            if not searchtemplate:
-                searchtemplate = SearchTemplate(name=name, template_uuid=uuid)
+        if search_templates:
+            for search_template_dict in search_templates:
+                print(f"Importing: {search_template_dict.get('short_name')}")
+                name = search_template_dict.get("display_name")
+                short_name = search_template_dict.get("short_name")
+                description = search_template_dict.get("description")
+                uuid = search_template_dict.get("id")
+                query_string = search_template_dict.get("query_string")
+                query_filter = search_template_dict.get("query_filter", {})
+                query_dsl = search_template_dict.get("query_dsl", {})
+                tags = search_template_dict.get("tags", [])
+
+                searchtemplate = SearchTemplate.query.filter_by(
+                    template_uuid=uuid
+                ).first()
+                if not searchtemplate:
+                    searchtemplate = SearchTemplate(name=name, template_uuid=uuid)
+                    db_session.add(searchtemplate)
+                    db_session.commit()
+
+                searchtemplate.name = name
+                searchtemplate.short_name = short_name
+                searchtemplate.description = description
+                searchtemplate.template_json = json.dumps(search_template_dict)
+                searchtemplate.query_string = query_string
+                searchtemplate.query_filter = json.dumps(query_filter)
+                searchtemplate.query_dsl = json.dumps(query_dsl)
+
+                if tags:
+                    for tag in tags:
+                        searchtemplate.add_label(tag)
+
                 db_session.add(searchtemplate)
                 db_session.commit()
-
-            searchtemplate.short_name = short_name
-            searchtemplate.description = description
-            searchtemplate.template_json = json.dumps(search_template_dict)
-            searchtemplate.query_string = query_string
-            searchtemplate.query_filter = json.dumps(query_filter)
-            searchtemplate.query_dsl = json.dumps(query_dsl)
-
-            if tags:
-                for tag in tags:
-                    searchtemplate.add_label(tag)
-
-            db_session.add(searchtemplate)
-            db_session.commit()

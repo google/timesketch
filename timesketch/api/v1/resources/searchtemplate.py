@@ -84,7 +84,7 @@ class SearchTemplateParseResource(resources.ResourceMixin, Resource):
     """Resource to parse a search template query string using Jinja2 template."""
 
     @login_required
-    def get(self, searchtemplate_id):
+    def post(self, searchtemplate_id):
         """Parse the query string template with Jinja2.
 
         This resource take a form with parameters. These will be sent to the Jinja2
@@ -100,21 +100,19 @@ class SearchTemplateParseResource(resources.ResourceMixin, Resource):
         Returns:
             Search template in JSON (instance of flask.wrappers.Response)
         """
-        form = request.json
-        parameters = {}
-
-        if form:
-            parameters = form.get("parameters", {})
-
+        form = request.json or {}
         searchtemplate = SearchTemplate.query.get(searchtemplate_id)
         if not searchtemplate:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "Search template was not found")
 
         try:
             template = jinja2.Template(searchtemplate.query_string)
-            parsed_query_string = template.render(parameters)
+            parsed_query_string = template.render(form)
+            parsed_query_string = parsed_query_string.replace("/", "\/")
+            parsed_query_string = parsed_query_string.replace(".", "\.")
         except jinja2.exceptions.TemplateSyntaxError as e:
             abort(HTTP_STATUS_CODE_BAD_REQUEST, f"Search template syntax error: {e}")
+
         result_dict = {"query_string": parsed_query_string}
         return jsonify({"objects": [result_dict], "meta": {}})
 

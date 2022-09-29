@@ -26,7 +26,7 @@ limitations under the License.
         <v-icon v-else>mdi-chevron-down</v-icon>
       </span>
 
-      <span style="font-size: 0.9em">Data Types ({{ dataTypes.length }})</span>
+      <span>Data Types ({{ dataTypes.length }})</span>
     </div>
     <v-expand-transition>
       <div v-show="expanded">

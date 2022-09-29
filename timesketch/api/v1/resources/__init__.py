@@ -152,6 +152,7 @@ class ResourceMixin(object):
     searchtemplate_fields = {
         "id": fields.Integer,
         "name": fields.String,
+        "description": fields.String,
         "short_name": fields.String,
         "user": fields.Nested(user_fields),
         "query_string": fields.String,
@@ -321,7 +322,7 @@ class ResourceMixin(object):
         "investigative_question": question_fields,
         "facet": facet_fields,
         "scenario": scenario_fields,
-        "sigmarule": sigmarule_fields
+        "sigmarule": sigmarule_fields,
     }
 
     @property
