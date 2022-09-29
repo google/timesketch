@@ -153,7 +153,7 @@ logsource:
 detection:
     keywords:
         # Generic suspicious commands
-        - '*apt-get install eeeee*'
+        - '*apt-get install zmap*'
     condition: keywords
 falsepositives:
     - Unknown
@@ -172,7 +172,7 @@ level: high
         self.assertions.assertIn("Alexander", rule.get_attribute("author"))
         self.assertions.assertIn("b793-11ea-b3de-eeeee", rule.id)
         self.assertions.assertIn("Installation of eeeee", rule.title)
-        self.assertions.assertIn("eeeee", rule.search_query)
+        self.assertions.assertIn("zmap", rule.search_query)
         self.assertions.assertIn("shell:zsh:history", rule.search_query)
         self.assertions.assertIn("sigmarule/5266a592", rule.resource_uri)
         self.assertions.assertIn("installation of eeeee", rule.description)
