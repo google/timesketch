@@ -124,7 +124,7 @@ level: high
         self.assertions.assertIn("installation of bbbbbb", rule.description)
         self.assertions.assertEqual(len(rule.detection), 2)
         self.assertions.assertEqual(
-            '(data_type:("shell:zsh:history" OR "bash:history:command" OR "apt:history:line" OR "selinux:line") AND "apt-get install zmap")',  # pylint: disable=line-too-long
+            '(data_type:("shell:zsh:history" OR "bash:history:command" OR "apt:history:line" OR "selinux:line") AND "apt-get install bbbbbb")',  # pylint: disable=line-too-long
             rule.search_query,
         )
         self.assertions.assertIn("shell:zsh:history", rule.search_query)
