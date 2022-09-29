@@ -130,7 +130,7 @@ level: high
         self.assertions.assertIn("shell:zsh:history", rule.search_query)
         self.assertions.assertIn("Unknown", rule.falsepositives[0])
         self.assertions.assertEqual(len(rule.logsource), 2)
-        self.assertions.assertIn("2020/06/26", rule.modified)
+        self.assertions.assertIn("2022/06/12", rule.modified)
         self.assertions.assertIn("high", rule.level)
         self.assertions.assertIn("rmusser.net", rule.references[0])
 
