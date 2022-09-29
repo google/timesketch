@@ -105,7 +105,7 @@ class TestSigmaUtilLib(BaseTest):
         self.assertIsNotNone(rule)
         self.assertEqual(
             '(data_type:"windows:evtx:record" AND source_name:("Microsoft-Windows-Security-Auditing" OR "Microsoft-Windows-Eventlog") AND event_identifier:"4624" AND xml_string:"\\\\WmiPrvSE.exe")',  # pylint: disable=line-too-long
-            rule.get("es_query"),
+            rule.get("search_query"),
         )
 
     def test_get_rule_by_text_zmap_rule(self):
@@ -136,10 +136,10 @@ level: high
         )
 
         self.assertIsNotNone(rule)
-        self.assertIn("zmap", rule.get("es_query"))
+        self.assertIn("zmap", rule.get("search_query"))
         self.assertEqual(
             '(data_type:("shell:zsh:history" OR "bash:history:command" OR "apt:history:line" OR "selinux:line") AND "apt-get install zmap")',  # pylint: disable=line-too-long
-            rule.get("es_query"),
+            rule.get("search_query"),
         )
         self.assertIn("b793", rule.get("id"))
         self.assertIn("2020/06/26", rule.get("date"))
@@ -187,7 +187,7 @@ level: high
         self.assertIsNotNone(rule)
         self.assertEqual(
             '("Whitespace at" OR " beginning " OR " and extra text ")',
-            rule.get("es_query"),
+            rule.get("search_query"),
         )
 
     def test_get_rule_by_text_minimal_rule(self):
@@ -209,7 +209,7 @@ detection:
         self.assertIsNotNone(rule)
         self.assertEqual(
             '(data_type:"windows:evtx:record" AND " lorem ")',
-            rule.get("es_query"),
+            rule.get("search_query"),
         )
 
     def test_get_rule_by_text_count_condition_error(self):
@@ -281,7 +281,7 @@ detection:
         )
         self.assertEqual(
             r'("aaa:bbb" OR "ccc\:\:ddd")',
-            rule.get("es_query"),
+            rule.get("search_query"),
         )
 
     def test_get_rule_by_text_startswith_endswith_mixed(self):
@@ -383,7 +383,7 @@ level: medium
         )
         self.assertIn(
             'event_identifier:"10" AND (xml_string:"\\\\foobar.exe" AND xml_string:"10"',  # pylint: disable=line-too-long
-            rule.get("es_query"),
+            rule.get("search_query"),
         )
 
     def test_get_sigma_rule_by_text_missing_title(self):
@@ -434,7 +434,7 @@ detection:
 
         rule = sigma_util.get_sigma_rule(filepath)
         self.assertIsNotNone(rule)
-        self.assertIn("zmap", rule.get("es_query"))
+        self.assertIn("zmap", rule.get("search_query"))
         self.assertIn("b793", rule.get("id"))
 
         # temp write a file with content
@@ -455,7 +455,7 @@ detection:
 
         self.assertEqual(rule_by_file.get('id'), rule_by_text.get('id'))
         self.assertEqual(
-            rule_by_file.get('es_query'), rule_by_text.get('es_query')
+            rule_by_file.get('search_query'), rule_by_text.get('search_query')
         )
 
         # clean up
