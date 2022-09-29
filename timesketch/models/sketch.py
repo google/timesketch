@@ -18,8 +18,6 @@ from __future__ import unicode_literals
 import json
 import logging
 
-import jinja2
-
 from flask import current_app
 from flask import url_for
 
