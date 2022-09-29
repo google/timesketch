@@ -138,11 +138,11 @@ class SigmaRule(resource.BaseResource):
         for key, value in rule_dict.items():
             self.set_value(key, value)
 
-    def from_rule_uuid(self, rule_uuid):
+    def from_rule_uuid(self, rule_uuid: str):
         """Get a SigmaRule object from a rule UUID.
 
         Args:
-            rule_uuid: Id of the sigma rule.
+            rule_uuid(str): Id of the sigma rule.
 
         """
         self.resource_uri = f"sigmarule/{rule_uuid}"
