@@ -27,7 +27,7 @@ tags:
     -`
 
 // General last part of every Sigma rule:
-const Skeleton_Last = `falsepositives:
+const SkeletonLast = `falsepositives:
     - Unknown
 status: experimental // stable, test, experimental, deprecated, unsupported
 level: medium
@@ -41,133 +41,133 @@ const AwsText = `${SkeletonFirst}
 logsource:
     product: aws
     service: cloudtrail
-${Skeleton_Last}
+${SkeletonLast}
 `
 
 const AzureActivitylogsText = `${SkeletonFirst}
 logsource:
     product: azure
     service: activitylogs
-${Skeleton_Last}
+${SkeletonLast}
 `
 
 const AzureSigninlogsText = `${SkeletonFirst}
 logsource:
     product: azure
     service: signinlogs
-${Skeleton_Last}
+${SkeletonLast}
 `
 const GCPAuditlogsText = `${SkeletonFirst}
 logsource:
     product: gcp
     service: gcp.audit
-${Skeleton_Last}
+${SkeletonLast}
 `
 
-const Gworkspace_text = `${SkeletonFirst}
+const GworkspaceText = `${SkeletonFirst}
 logsource:
     product: google_workspace
     service: google_workspace.admin
-${Skeleton_Last}
+${SkeletonLast}
 `
 
-const Microsoft365_text = `${SkeletonFirst}
+const Microsoft365Text = `${SkeletonFirst}
 logsource:
     product: m365
     service: threat_management
-${Skeleton_Last}
+${SkeletonLast}
 `
 
 const Okta_text = `${SkeletonFirst}
 logsource:
     product: okta
     service: okta
-${Skeleton_Last}
+${SkeletonLast}
 `
 
 // LINUX:
-const Linux_file_create_text = `${SkeletonFirst}
+const LinuxFileCreateText = `${SkeletonFirst}
 logsource:
     category: file_create
     product: linux
-${Skeleton_Last}
+${SkeletonLast}
 `
 
-const Linux_network_connection_text = `${SkeletonFirst}
+const LinuxNetworkConnectionText = `${SkeletonFirst}
 logsource:
     category: network_connection
     product: linux
-${Skeleton_Last}
+${SkeletonLast}
 `
 
-const Linux_process_creation_text = `${SkeletonFirst}
+const LinuxProcessCreationText = `${SkeletonFirst}
 logsource:
     category: process_creation
     product: linux
-${Skeleton_Last}
+${SkeletonLast}
 `
 
-const Linux_any_logs_text = `${SkeletonFirst}
+const LinuxAnyLogsText = `${SkeletonFirst}
 logsource:
     product: linux
-${Skeleton_Last}
+${SkeletonLast}
 `
 
 const Linux_auditd_text = `${SkeletonFirst}
 logsource:
     category: auditd
     product: linux
-${Skeleton_Last}
+${SkeletonLast}
 `
 
 const Linux_clamav_text = `${SkeletonFirst}
 logsource:
     category: clamav
     product: linux
-${Skeleton_Last}
+${SkeletonLast}
 `
 const Linux_cron_text = `${SkeletonFirst}
 logsource:
     category: cron
     product: linux
-${Skeleton_Last}
+${SkeletonLast}
 `
 const Linux_guacamole_text = `${SkeletonFirst}
 logsource:
     category: guacamole
     product: linux
-${Skeleton_Last}
+${SkeletonLast}
 `
 const Linux_modsecurity_text = `${SkeletonFirst}
 logsource:
     category: modsecurity
     product: linux
-${Skeleton_Last}
+${SkeletonLast}
 `
 const Linux_sudo_text = `${SkeletonFirst}
 logsource:
     category: sudo
     product: linux
-${Skeleton_Last}
+${SkeletonLast}
 `
 const Linux_sshd_text = `${SkeletonFirst}
 logsource:
     category: sshd
     product: linux
-${Skeleton_Last}
+${SkeletonLast}
 `
 const Linux_syslog_text = `${SkeletonFirst}
 logsource:
     category: syslog
     product: linux
-${Skeleton_Last}
+${SkeletonLast}
 `
 
 const Linux_vsftpd_text = `${SkeletonFirst}
 logsource:
     category: vsftpd
     product: linux
-${Skeleton_Last}
+${SkeletonLast}
 `
 
 // MAC OS
@@ -175,371 +175,371 @@ const Macos_file_event_text = `${SkeletonFirst}
 logsource:
     category: file_event
     product: macos
-${Skeleton_Last}
+${SkeletonLast}
 `
 
 const Macos_process_creation_text = `${SkeletonFirst}
 logsource:
     category: process_creation
     product: macos
-${Skeleton_Last}
+${SkeletonLast}
 `
 
 const Windows_clipboard_capture_text = `${SkeletonFirst}
 logsource:
     category: clipboard_capture
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 
 const Windows_create_remote_thread_text = `${SkeletonFirst}
 logsource:
     category: create_remote_thread
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 
 const Windows_create_stream_hash_text = `${SkeletonFirst}
 logsource:
     category: create_stream_hash
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 
 const Windows_dns_query_text = `${SkeletonFirst}
 logsource:
     category: dns_query
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 
 const Windows_driver_load_text = `${SkeletonFirst}
 logsource:
     category: driver_load
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 
 const Windows_file_change_text = `${SkeletonFirst}
 logsource:
     category: file_change
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 
 const Windows_file_delete_text = `${SkeletonFirst}
 logsource:
     category: file_delete
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 
 const Windows_file_event_text = `${SkeletonFirst}
 logsource:
     category: file_event
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 
 const Windows_image_load_text = `${SkeletonFirst}
 logsource:
     category: image_load
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 
 const Windows_network_connection_text = `${SkeletonFirst}
 logsource:
     category: network_connection
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 
 const Windows_pipe_created_text = `${SkeletonFirst}
 logsource:
     category: pipe_created
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 
 const Windows_process_access_text = `${SkeletonFirst}
 logsource:
     category: process_access
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 
 const Windows_process_creation_text = `${SkeletonFirst}
 logsource:
     category: process_creation
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 
 const Windows_process_tampering_text = `${SkeletonFirst}
 logsource:
     category: process_tampering
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 
 const Windows_process_termination_text = `${SkeletonFirst}
 logsource:
     category: process_termination
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 
 const Windows_ps_classic_provider_start_text = `${SkeletonFirst}
 logsource:
     category: ps_classic_provider_start
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 
 const Windows_ps_classic_script_text = `${SkeletonFirst}
 logsource:
     category: ps_classic_script
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 
 const Windows_ps_classic_start_text = `${SkeletonFirst}
 logsource:
     category: ps_classic_start
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 
 const Windows_ps_module_text = `${SkeletonFirst}
 logsource:
     category: ps_module
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 
 const Windows_ps_script_text = `${SkeletonFirst}
 logsource:
     category: ps_script
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 
 const Windows_raw_access_thread_text = `${SkeletonFirst}
 logsource:
     category: raw_access_thread
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 
 const Windows_registry_add_text = `${SkeletonFirst}
 logsource:
     category: registry_add
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 
 const Windows_registry_delete_text = `${SkeletonFirst}
 logsource:
     category: registry_delete
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 
 const Windows_registry_event_text = `${SkeletonFirst}
 logsource:
     category: registry_event
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 
 const Windows_registry_rename_text = `${SkeletonFirst}
 logsource:
     category: registry_rename
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 
 const Windows_registry_set_text = `${SkeletonFirst}
 logsource:
     category: registry_set
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 
 const Windows_sysmon_error_text = `${SkeletonFirst}
 logsource:
     category: sysmon_error
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 
 const Windows_sysmon_status_text = `${SkeletonFirst}
 logsource:
     category: sysmon_status
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 
 const Windows_wmi_event_text = `${SkeletonFirst}
 logsource:
     category: wmi_event
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 
 const Windows_application_text = `${SkeletonFirst}
 logsource:
     service: application
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 
 const Windows_applocker_text = `${SkeletonFirst}
 logsource:
     service: applocker
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 
 const Windows_bitsclient_text = `${SkeletonFirst}
 logsource:
     service: bits-client
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 
 const Windows_codeintegrityoperational_text = `${SkeletonFirst}
 logsource:
     service: codeintegrity-operational
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 const Windows_dhcp_text = `${SkeletonFirst}
 logsource:
     service: dhcp
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 const Windows_dnsserver_text = `${SkeletonFirst}
 logsource:
     service:  dns-server
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 const Windows_driverframework_text = `${SkeletonFirst}
 logsource:
     service: driver-framework
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 const Windows_firewallas_text = `${SkeletonFirst}
 logsource:
     service: firewall-as
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 const Windows_ldap_debug_text = `${SkeletonFirst}
 logsource:
     service:  ldap_debug
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 const Windows_microsoftservicebusclient_text = `${SkeletonFirst}
 logsource:
     service: microsoft-servicebus-client
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 const Windows_msexchangemanagement_text = `${SkeletonFirst}
 logsource:
     service: msexchange-management
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 const Windows_ntlm_text = `${SkeletonFirst}
 logsource:
     service: ntlm
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 const Windows_powershell_text = `${SkeletonFirst}
 logsource:
     service: powershell
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 const Windows_powershellclassic_text = `${SkeletonFirst}
 logsource:
     service: powershell-classic
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 const Windows_printserviceadmin_text = `${SkeletonFirst}
 logsource:
     service: printservice-admin
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 const Windows_printserviceoperational_text = `${SkeletonFirst}
 logsource:
     service: printservice-operational
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 const Windows_security_text = `${SkeletonFirst}
 logsource:
     service: security
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 const Windows_securitymitigations_text = `${SkeletonFirst}
 logsource:
     service: security-mitigations
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 const Windows_smbclientsecurity_text = `${SkeletonFirst}
 logsource:
     service: smbclient-security
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 const Windows_sysmon_text = `${SkeletonFirst}
 logsource:
     service: sysmon
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 const Windows_system_text = `${SkeletonFirst}
 logsource:
     service: system
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 const Windows_taskscheduler_text = `${SkeletonFirst}
 logsource:
     service: taskscheduler
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 const Windows_terminalservices_text = `${SkeletonFirst}
 logsource:
     service: terminalservices
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 const Windows_windefend_text = `${SkeletonFirst}
 logsource:
     service: windefend
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 const Windows_wmi_text = `${SkeletonFirst}
 logsource:
     service: wmi
     product: windows
-${Skeleton_Last}
+${SkeletonLast}
 `
 
 const SigmaTemplates = [
@@ -547,13 +547,13 @@ const SigmaTemplates = [
     { "os": "Cloud: Azure_activitylogs", "text": AzureActivitylogsText },
     { "os": "Cloud: Azure_signinlogs", "text": AzureSigninlogsText },
     { "os": "Cloud: GCP Audit logs", "text": GCPAuditlogsText },
-    { "os": "Cloud: GWorkspace", "text": Gworkspace_text },
-    { "os": "Cloud: Microsoft 365", "text": Microsoft365_text },
+    { "os": "Cloud: GWorkspace", "text": GworkspaceText },
+    { "os": "Cloud: Microsoft 365", "text": Microsoft365Text },
     { "os": "Cloud: Okta", "text": Okta_text },
-    { "os": "Linux: File create", "text": Linux_file_create_text },
-    { "os": "Linux: Network connection", "text": Linux_network_connection_text },
-    { "os": "Linux: Process creation", "text": Linux_process_creation_text },
-    { "os": "Linux: Any logs", "text": Linux_any_logs_text },
+    { "os": "Linux: File create", "text": LinuxFileCreateText },
+    { "os": "Linux: Network connection", "text": LinuxNetworkConnectionText },
+    { "os": "Linux: Process creation", "text": LinuxProcessCreationText },
+    { "os": "Linux: Any logs", "text": LinuxAnyLogsText },
     { "os": "Linux: AuditD", "text": Linux_auditd_text },
     { "os": "Linux: ClamAV", "text": Linux_clamav_text },
     { "os": "Linux: CRON", "text": Linux_cron_text },
