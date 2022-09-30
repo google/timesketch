@@ -95,7 +95,7 @@ limitations under the License.
           style="margin-top:5px;cursor:pointer;">
           {{ props.row.status }} <span class="icon is-small"
             style="cursor: pointer"
-            title="Only stable will be used in Sigma Analyzer"><i
+            title="Only stable rules are used in the Sigma Analyzer"><i
               class="fas fa-info-circle"
               v-if="props.row.status != 'stable'"></i>
           </span>
