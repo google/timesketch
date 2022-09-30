@@ -20,22 +20,23 @@ limitations under the License.
       <section class="box">
         <h1 class="subtitle">{{save_button_text}} Sigma Rule</h1>
         <h2>Templates</h2>
-        <b-select placeholder="Templates" v-model="editingRule.rule_yaml"
-          label="Templates" label-position="on-border"
-          @change="templateSelected">
-          <option v-for="template in SigmaTemplates" :value="template.text"
-            :key="template.os">
-            {{ template.os }}
-          </option>
-        </b-select>
-        <p>Parsed rule Search query:
-          <b>{{ parsed['search_query'] }}</b>
-        </p>
-        Number of hits in this sketch:
-        <explore-preview style="margin-left: 10px"
-          :searchQuery="parsed['search_query']">
-        </explore-preview>
-        <!--<p>{{ problem_detector(parsed['search_query']) }}</p>-->
+        <div class="row">
+          <b-select placeholder="Templates" v-model="editingRule.rule_yaml"
+            label="Templates" label-position="on-border"
+            @change="templateSelected">
+            <option v-for="template in SigmaTemplates" :value="template.text"
+              :key="template.os">
+              {{ template.os }}
+            </option>
+          </b-select>
+          Parsed rule Search query:
+          <b><code>{{ parsed['search_query'] }}</code></b>
+          <explore-preview style="margin-left: 10px"
+            :searchQuery="parsed['search_query']">
+          </explore-preview>
+
+          <!--<p>{{ problem_detector(parsed['search_query']) }}</p>-->
+        </div>
         <b-field label="Edit Sigma Rule" label-position="on-border"
           style="margin-top: 25px;">
           <b-input custom-class="ioc-input" type="textarea" rows="25"
@@ -171,8 +172,6 @@ limitations under the License.
 import ApiClient from '../../utils/RestApiClient'
 import ExplorePreview from '../../components/Common/ExplorePreview'
 import { SnackbarProgrammatic as Snackbar } from 'buefy'
-
-import { logger } from 'vega'
 import { SigmaTemplates } from '@/utils/SigmaRuleTemplates'
 export default {
   components: { ExplorePreview },
@@ -230,7 +229,7 @@ export default {
     this.loadSketchTTP()
   },
   methods: {
-    problem_detector: function (search_query) {
+    problem_detector: function (search_query) {// eslint-disable-line
       let reason = "OK"
       if (!search_query.includes("data_type") || search_query.includes("source_name")) {
         reason = ("No data_type or source_name defined in the rule consider add field mappings in the sigma config file")
@@ -263,7 +262,7 @@ export default {
     },
     addRule: function (event) {
       this.parseSigma(this.editingRule.rule_yaml)
-      if (this.save_button_text == "Create") {
+      if (this.save_button_text === "Create") {
         ApiClient.getSigmaRuleByText(rule_yaml)
           .then(response => {
             let SigmaRule = response.data.objects[0]
@@ -273,7 +272,7 @@ export default {
           .catch(e => {
           })
       }
-      if (this.save_button_text == "Update") {
+      if (this.save_button_text === "Update") {
         // Only update the rule if the parsing was positive.
         ApiClient.getSigmaRuleByText(this.editingRule.rule_yaml)
           .then(response => {
