@@ -28,8 +28,17 @@ limitations under the License.
             {{ template.os }}
           </option>
         </b-select>
-        <b-field label="Edit Sigma Rule" label-position="on-border">
-          <b-input custom-class="ioc-input" type="textarea" rows="30"
+        <p>Parsed rule Search query:
+          <b>{{ parsed['search_query'] }}</b>
+        </p>
+        Number of hits in this sketch:
+        <explore-preview style="margin-left: 10px"
+          :searchQuery="parsed['search_query']">
+        </explore-preview>
+        <!--<p>{{ problem_detector(parsed['search_query']) }}</p>-->
+        <b-field label="Edit Sigma Rule" label-position="on-border"
+          style="margin-top: 25px;">
+          <b-input custom-class="ioc-input" type="textarea" rows="25"
             v-model="editingRule.rule_yaml"></b-input>
         </b-field>
         <b-field grouped>
@@ -51,10 +60,7 @@ limitations under the License.
             </p>
           </b-field>
         </b-field>
-        <p>Parsed rule Search query:
-          <b>{{ parsed['search_query'] }}</b>
-        </p>
-        <p>Data_type: {{data_type_present}}</p>
+
       </section>
     </b-modal>
     <!-- End modal -->
@@ -90,7 +96,12 @@ limitations under the License.
         searchable>
         <div @click="startRuleEdit(props.row)"
           style="margin-top:5px;cursor:pointer;">
-          {{ props.row.status }}
+          {{ props.row.status }} <span class="icon is-small"
+            style="cursor: pointer"
+            title="Only stable will be used in Sigma Analyzer"><i
+              class="fas fa-info-circle"
+              v-if="props.row.status != 'stable'"></i>
+          </span>
         </div>
       </b-table-column>
 
@@ -145,9 +156,6 @@ limitations under the License.
         </b-table-column>
         <b-table-column field="count" label="Events tagged" v-slot="props"
           sortable numeric>
-          {{ props.row.count }}
-
-
           <explore-preview style="margin-left: 10px"
             :searchQuery="props.row.ts_ttp">
           </explore-preview>
@@ -162,6 +170,8 @@ limitations under the License.
 <script>
 import ApiClient from '../../utils/RestApiClient'
 import ExplorePreview from '../../components/Common/ExplorePreview'
+import { SnackbarProgrammatic as Snackbar } from 'buefy'
+
 import { logger } from 'vega'
 import { SigmaTemplates } from '@/utils/SigmaRuleTemplates'
 export default {
@@ -223,10 +233,10 @@ export default {
     problem_detector: function (search_query) {
       let reason = "OK"
       if (!search_query.includes("data_type") || search_query.includes("source_name")) {
-        reason = ("No data_type or source_name defined in the rule")
+        reason = ("No data_type or source_name defined in the rule consider add field mappings in the sigma config file")
       }
       if (search_query.length < 10) {
-        reason.concat("Query seems very short.")
+        reason.concat("Query seems very short. It might return a lot of events and be to broad.")
       }
       return reason
     },
@@ -240,8 +250,15 @@ export default {
           let SigmaRule = response.data.objects[0]
           this.parsed = SigmaRule
           this.data_type_present = (SigmaRule['search_query'].includes("data_type") || SigmaRule['search_query'].includes("source_name"))
+
         })
         .catch(e => {
+          Snackbar.open({
+            message: 'Sigma rule parsing failed. See Browser console for more',
+            type: 'is-danger',
+            position: 'is-top',
+            indefinite: false,
+          })
         })
     },
     addRule: function (event) {
