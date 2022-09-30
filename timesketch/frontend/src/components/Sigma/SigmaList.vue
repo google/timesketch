@@ -20,27 +20,26 @@ limitations under the License.
       <section class="box">
         <h1 class="subtitle">{{save_button_text}} Sigma Rule</h1>
         <h2>Templates</h2>
-        <div class="row">
-          <b-select placeholder="Templates" v-model="editingRule.rule_yaml"
-            label="Templates" label-position="on-border"
-            @change="templateSelected">
-            <option v-for="template in SigmaTemplates" :value="template.text"
-              :key="template.os">
-              {{ template.os }}
-            </option>
-          </b-select>
-          Parsed rule Search query:
-          <b><code>{{ parsed['search_query'] }}</code></b>
-          <explore-preview style="margin-left: 10px"
-            :searchQuery="parsed['search_query']">
-          </explore-preview>
+        <b-select placeholder="Templates" v-model="editingRule.rule_yaml"
+          label="Templates" label-position="on-border"
+          @change="templateSelected">
+          <option v-for="template in SigmaTemplates" :value="template.text"
+            :key="template.os">
+            {{ template.os }}
+          </option>
+        </b-select>
+        Parsed rule Search query:
+        <b><code>{{ parsed['search_query'] }}</code></b>
+        <explore-preview style="margin-left: 10px"
+          :searchQuery="parsed['search_query']">
+        </explore-preview>
 
-          <!--<p>{{ problem_detector(parsed['search_query']) }}</p>-->
-        </div>
+        <!--<p>{{ problem_detector(parsed['search_query']) }}</p>-->
         <b-field label="Edit Sigma Rule" label-position="on-border"
           style="margin-top: 25px;">
           <b-input custom-class="ioc-input" type="textarea" rows="25"
-            v-model="editingRule.rule_yaml"></b-input>
+            v-model="editingRule.rule_yaml"
+            @input="parseSigma(editingRule.rule_yaml)"></b-input>
         </b-field>
         <b-field grouped>
           <b-field grouped expanded position="is-right">
