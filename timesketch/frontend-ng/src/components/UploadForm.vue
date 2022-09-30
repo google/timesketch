@@ -14,7 +14,21 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-dialog v-model="dialog" persistent max-width="1000">
+  <v-dialog v-model="dialog" persistent max-width="2000">
+    <v-file-input
+      v-show="false"
+      label="Plaso/CSV/JSONL file"
+      outlined
+      dense
+      clearable
+      multiple
+      show-size
+      truncate-length="15"
+      id="datafile"
+      v-model="uploadedFiles"
+      @change="setFile($event)"
+      @click:clear="clearFormData"
+    ></v-file-input>
     <template v-slot:activator="{ on, attrs }">
       <v-chip outlined v-bind="attrs" v-on="on">
         <v-icon left small> mdi-alarm-plus </v-icon>
@@ -38,7 +52,75 @@ limitations under the License.
             {{ errorMessage }}
           </v-alert>
         </div>
-        <div v-if="['csv', 'jsonl', 'json'].includes(extension)">
+
+        <div v-if="fileName">
+          <v-container class="mb-12">
+            <v-row>
+              <v-col>
+                <v-row align="center">
+                  <v-col cols="2">Selected File</v-col>
+                  <v-col cols="4"><v-icon>mdi-file</v-icon> {{ fileName }}</v-col>
+                  <v-col cols="3">
+                    <v-btn dense color="blue-grey" class="ma-2 white--text" @click="test()">
+                      Choose another a file
+                      <v-icon right dark> mdi-cloud-upload </v-icon>
+                    </v-btn></v-col
+                  >
+                </v-row>
+              </v-col>
+              <v-col>
+                <v-row>
+                  <v-col cols="2">Size</v-col>
+                  <v-col>{{ parseFloat(fileMetaData.Size).toFixed(2) }} MB </v-col>
+                </v-row>
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col>
+                <v-row align="center">
+                  <v-col cols="2">Timeline Name</v-col>
+                  <v-col cols="8"><v-text-field hide-details outlined v-model="form.name" dense></v-text-field></v-col>
+                </v-row>
+              </v-col>
+              <v-col cols="6">
+                <v-row>
+                  <v-col cols="2">Type</v-col>
+                  <v-col cols="">{{ extension }}</v-col>
+                </v-row>
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col>
+                <v-row v-if="extension === 'csv'" align="center">
+                  <v-col cols="2">CSV Delimiter</v-col>
+                  <v-col cols="8"
+                    ><v-select
+                      hide-details
+                      :items="delimitersList.map((d) => d.value)"
+                      v-model="CSVDelimiter"
+                      outlined
+                      dense
+                    ></v-select
+                  ></v-col>
+                </v-row>
+              </v-col>
+              <v-col>
+                <v-row>
+                  <v-col cols="2">Last Modified</v-col>
+                  <v-col cols="">{{ fileMetaData.LastDateModified }}</v-col>
+                </v-row>
+              </v-col>
+            </v-row>
+          </v-container>
+        </div>
+        <div v-else>
+          <v-btn type="file" color="blue-grey" class="ma-2 white--text" @click="test()">
+            Upload a file
+            <v-icon right dark> mdi-cloud-upload </v-icon>
+          </v-btn>
+        </div>
+
+        <div v-if="extension === 'csv' || extension === 'jsonl' || extension === 'json'">
           <v-simple-table height="350px" v-if="headers.length > 0">
             <template v-slot:default>
               <thead>
@@ -49,23 +131,32 @@ limitations under the License.
                     :style="mandatoryHeader.color"
                     class="text-left"
                   >
-                    <div v-if="missingHeaders.includes(mandatoryHeader.name)">
-                      <v-select
-                        :items="listHeadersSelectMenu"
-                        :label="mandatoryHeader.name"
-                        v-model="mandatoryHeaders.find((h) => h.name === mandatoryHeader.name).columnsSelected"
-                        multiple
-                        chips
-                        hint="Mapped to"
-                        persistent-hint
-                        @change="changeHeaderMapping($event, mandatoryHeader.name)"
-                      ></v-select>
-                    </div>
-                    <div v-else>
+                    <v-row v-if="missingHeaders.includes(mandatoryHeader.name)" align="center" justify="center">
+                      <v-col cols=""
+                        ><v-label class="mb-10">{{ mandatoryHeader.name }} </v-label></v-col
+                      >
+
+                      <v-col cols="">
+                        <v-icon>mdi-arrow-right-bold</v-icon>
+                      </v-col>
+                      <v-col cols="6">
+                        <v-select
+                          :items="listHeadersSelectMenu"
+                          label="Headers in your file"
+                          v-model="mandatoryHeaders.find((h) => h.name === mandatoryHeader.name).columnsSelected"
+                          multiple
+                          hide-details
+                          dense
+                          persistent-hint
+                          @change="changeHeaderMapping($event, mandatoryHeader.name)"
+                        ></v-select>
+                      </v-col>
+                    </v-row>
+                    <v-row v-else>
                       <span class="tag is-large" :style="mandatoryHeader.color">
                         <label>{{ mandatoryHeader.name }}</label>
                       </span>
-                    </div>
+                    </v-row>
                   </th>
                 </tr>
               </thead>
@@ -79,65 +170,13 @@ limitations under the License.
             </template>
           </v-simple-table>
         </div>
-        <div v-if="fileName">
-          <v-text-field label="Timeline Name" outlined v-model="form.name"></v-text-field>
-          <v-radio-group v-if="extension === 'csv'" v-model="CSVDelimiter">
-            <template v-slot:label>
-              <div>Choose <strong>CSV delimiter</strong></div>
-            </template>
-            <v-radio v-for="(v, key) in delimitersList" :value="v" @change="changeCSVDelimiter(v)" :key="key">
-              <template v-slot:label>
-                <div>{{ key }} ({{ v }})</div>
-              </template>
-            </v-radio>
-          </v-radio-group>
-
-          <v-list>
-            <v-list-group :value="true" prepend-icon="mdi-information">
-              <template v-slot:activator>
-                <v-list-item-content><strong>File Info</strong></v-list-item-content>
-              </template>
-              <v-simple-table height="100px">
-                <template v-slot:default>
-                  <thead>
-                    <tr>
-                      <th v-for="(value, key) in fileMetaData" :key="key" class="text-left">
-                        {{ key }}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td v-for="(value, key) in fileMetaData" :key="key" class="text-left">
-                        {{ value }}
-                      </td>
-                    </tr>
-                  </tbody>
-                </template>
-              </v-simple-table>
-            </v-list-group>
-          </v-list>
-        </div>
-        <div v-else>
-          <v-file-input
-            label="Plaso/CSV/JSONL file"
-            outlined
-            dense
-            clearable
-            multiple
-            show-size
-            truncate-length="15"
-            id="datafile"
-            v-model="uploadedFiles"
-            @change="setFile($event)"
-            @click:clear="clearFormData"
-          ></v-file-input>
-        </div>
       </v-container>
       <v-card-actions>
         <v-spacer></v-spacer>
         <v-btn
           color="red darken-1"
+          outlined
+          elevation="2"
           text
           @click="
             clearFormData()
@@ -146,20 +185,27 @@ limitations under the License.
         >
           Cancel
         </v-btn>
-        <v-btn v-if="fileName" color="yellow darken-1" text @click="clearFormData()"> Clear Form </v-btn>
-        <v-btn color="green darken-1" text @click="submitForm()" v-if="!(error.length > 0 || !fileName)">
-          Submit
+        <v-btn
+          elevation="2"
+          outlined
+          color="green darken-1"
+          text
+          @click="submitForm()"
+          v-if="!(error.length > 0 || !fileName)"
+        >
+          Submit and show timeline
         </v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
 </template>
-<script>
+  <script>
 import ApiClient from '../utils/RestApiClient'
 
 export default {
   data() {
     return {
+      alignments: ['start', 'center', 'end'],
       headersString: '', // headers string not formatted (used when changing CSV separator)
       valuesString: [],
       title: 'Upload your Plaso/CSV/JSONL file',
@@ -187,7 +233,11 @@ export default {
 
       CSVDelimiter: ',',
       infoMessage: '',
-      delimitersList: { Comma: ',', Semicolon: ';', Pipe: '|' },
+      delimitersList: [
+        { name: 'Comma (,)', value: ',' },
+        { name: 'Semicolon (;)', value: ';' },
+        { name: 'Pipe (|)', value: '|' },
+      ],
       showHelperFlag: false,
       showPreviewFlag: false,
       showAddColumnFlag: false,
@@ -336,6 +386,10 @@ export default {
     },
   },
   methods: {
+    test() {
+      this.clearFormData()
+      document.getElementById('datafile').click()
+    },
     showHelper() {
       // first hide the other menus
       this.showPreviewFlag = false
@@ -437,7 +491,7 @@ export default {
       formData.append('provider', 'WebUpload')
       formData.append('context', this.fileName)
       formData.append('total_file_size', this.form.file.size)
-      formData.append('sketch_id', this.sketch.id)
+      formData.append('sketch_id', this.$store.state.sketch.id)
       if (['csv', 'jsonl', 'json'].includes(this.extension)) {
         let hMapping = JSON.stringify(this.headersMapping)
         formData.append('headersMapping', hMapping)
@@ -452,11 +506,11 @@ export default {
         }.bind(this),
       }
       ApiClient.uploadTimeline(formData, config)
-        .then(() => {
+        .then((response) => {
           this.clearFormData()
           this.percentCompleted = 0
           this.dialog = false
-          this.$store.dispatch('updateSketch', this.sketch.id)
+          this.$store.dispatch('updateSketch', this.$store.state.sketch.id)
         })
         .catch((e) => {})
     },
@@ -497,7 +551,7 @@ export default {
       const bytesToMegaBytes = (bytes) => bytes / 1024 ** 2
       this.fileMetaData = {
         Name: fileList[0].name,
-        Size: bytesToMegaBytes(fileList[0].size) + ' MB',
+        Size: bytesToMegaBytes(fileList[0].size),
         LastDateModified: fileList[0].lastModifiedDate,
         Type: fileList[0].type,
       }
@@ -561,6 +615,15 @@ export default {
           }
         }
       }
+    },
+  },
+  watch: {
+    CSVDelimiter() {
+      for (let i = 0; i < this.mandatoryHeaders.length; i++) {
+        this.mandatoryHeaders[i]['columnsSelected'] = []
+      }
+      this.headersMapping = []
+      this.validateFile()
     },
   },
 }
