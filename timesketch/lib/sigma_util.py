@@ -83,8 +83,8 @@ def get_sigma_config_file(config_file=None):
 def _enrich_sigma_rule_object(rule: SigmaRule):
     """Helper function: Returns an enriched Sigma dict given a SigmaRule.
 
-    It will extract the `status`, `created_at` and `updated_at` and make them
-    a field.
+    It will add `status`, `created_at` and `updated_at` keys to the
+    dictionary.
 
     Args:
         rule: type SigmaRule.
