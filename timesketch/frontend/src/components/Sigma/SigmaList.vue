@@ -227,7 +227,7 @@ export default {
     this.loadSketchTTP()
   },
   methods: {
-    problem_detector: function (search_query) {// eslint-disable-line
+    problemDetector: function (searchQuery) {// eslint-disable-line
       let reason = "OK"
       if (!search_query.includes("data_type") || search_query.includes("source_name")) {
         reason = ("No data_type or source_name defined in the rule consider add field mappings in the sigma config file")
