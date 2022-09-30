@@ -37,7 +37,7 @@ class SigmaPlugin(interface.BaseAnalyzer):
         This method is only intended to be called if the Status of a rule is
         stable.
 
-        A Sigma rule can have no Tags, in that case this method will only add
+        A Sigma rule can have no tags, in that case this method will only add
         the rule title to the matching events.
 
         Args:
