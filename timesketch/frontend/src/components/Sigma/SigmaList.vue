@@ -357,7 +357,7 @@ export default {
       if (status === 'false') return "red"
       return "green";
     },
-    getRuleByUUID(RuleUuid) {
+    getRuleByUUID(ruleUuid) {
       if (Array.isArray(this.$store.state.sigmaRuleList)) {
         var result = this.$store.state.sigmaRuleList.filter(obj => {
           return obj.rule_uuid === RuleUuid
