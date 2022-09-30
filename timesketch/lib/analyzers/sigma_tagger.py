@@ -35,7 +35,7 @@ class SigmaPlugin(interface.BaseAnalyzer):
         """Runs a sigma rule and applies the appropriate tags.
 
         This method is only intended to be called if the Status of a rule is
-        stable
+        stable.
 
         A Sigma rule can have no Tags, in that case this method will only add
         the rule title to the matching events.
