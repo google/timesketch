@@ -110,7 +110,7 @@ def _enrich_sigma_rule_object(rule: SigmaRule):
 
 
 def get_all_sigma_rules():
-    """Returns all Sigma rules from database
+    """Returns all Sigma rules from the database.
 
     Returns:
         A array of Sigma rules
