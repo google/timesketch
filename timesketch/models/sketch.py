@@ -17,6 +17,7 @@ from __future__ import unicode_literals
 
 import json
 import logging
+from uuid import uuid4
 
 from flask import current_app
 from flask import url_for
@@ -31,7 +32,6 @@ from sqlalchemy import UnicodeText
 from sqlalchemy import Boolean
 from sqlalchemy import TIMESTAMP
 from sqlalchemy.orm import relationship
-
 from sqlalchemy.orm import backref
 from sqlalchemy.orm.collections import attribute_mapped_collection
 
@@ -279,6 +279,7 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, BaseModel)
     query_string = Column(UnicodeText())
     query_filter = Column(UnicodeText())
     query_dsl = Column(UnicodeText())
+    searchtemplate_json = Column(UnicodeText())
     user_id = Column(Integer, ForeignKey("user.id"))
     sketch_id = Column(Integer, ForeignKey("sketch.id"))
     searchtemplate_id = Column(Integer, ForeignKey("searchtemplate.id"))
@@ -295,6 +296,7 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, BaseModel)
         query_string=None,
         query_filter=None,
         query_dsl=None,
+        searchtemplate_json=None,
     ):
         """Initialize the View object.
 
@@ -307,6 +309,7 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, BaseModel)
             query_string: The query string
             query_filter: The filter to apply (JSON format as string)
             query_dsl: A query DSL document (JSON format as string)
+            searchtemplate_json: The search template used (JSON format as string)
         """
         super().__init__()
         self.name = name
@@ -317,6 +320,7 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, BaseModel)
         self.query_string = query_string
         self.query_filter = query_filter
         self.query_dsl = query_dsl
+        self.searchtemplate_json = searchtemplate_json
 
     def validate_filter(self, query_filter=None):
         """Validate the Query Filter.
@@ -368,35 +372,47 @@ class SearchTemplate(
     """Implements the Search Template model."""
 
     name = Column(Unicode(255))
+    short_name = Column(Unicode(255))
     description = Column(UnicodeText())
     query_string = Column(UnicodeText())
     query_filter = Column(UnicodeText())
     query_dsl = Column(UnicodeText())
+    template_uuid = Column(Unicode(255), unique=True)
+    template_json = Column(UnicodeText())
     user_id = Column(Integer, ForeignKey("user.id"))
     views = relationship("View", backref="searchtemplate", lazy="select")
 
     def __init__(
         self,
         name,
-        user,
+        user=None,
+        short_name=None,
         description=None,
         query_string=None,
         query_filter=None,
         query_dsl=None,
+        template_uuid=None,
+        template_json=None,
     ):
         """Initialize the Search Template object.
 
         Args:
-            name: The name of the timeline
+            name: The human readable name of the template
             user: A user (instance of timesketch.models.user.User)
+            short_name: The name of the template (snake case)
             description (str): Description of the search template
             query_string: The query string
             query_filter: The filter to apply (JSON format as string)
             query_dsl: A query DSL document (JSON format as string)
+            template_uuid: UUID of the template
+            template_json: Specification of the template (JSON format as string)
         """
         super().__init__()
         self.name = name
         self.user = user
+        if not short_name:
+            short_name = name.replace(" ", "_").lower()
+        self.short_name = short_name
         self.description = description
         self.query_string = query_string
         if not query_filter:
@@ -410,6 +426,10 @@ class SearchTemplate(
             query_filter = json.dumps(filter_template, ensure_ascii=False)
         self.query_filter = query_filter
         self.query_dsl = query_dsl
+        if not template_uuid:
+            template_uuid = str(uuid4())
+        self.template_uuid = template_uuid
+        self.template_json = template_json
 
 
 class Event(LabelMixin, StatusMixin, CommentMixin, BaseModel):

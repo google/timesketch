@@ -45,6 +45,7 @@ from .resources.information import VersionResource
 from .resources.view import ViewResource
 from .resources.view import ViewListResource
 from .resources.searchtemplate import SearchTemplateResource
+from .resources.searchtemplate import SearchTemplateParseResource
 from .resources.searchtemplate import SearchTemplateListResource
 from .resources.upload import UploadFileResource
 from .resources.task import TaskResource
@@ -124,6 +125,7 @@ API_ROUTES = [
     (ViewResource, "/sketches/<int:sketch_id>/views/<int:view_id>/"),
     (SearchTemplateListResource, "/searchtemplate/"),
     (SearchTemplateResource, "/searchtemplate/<int:searchtemplate_id>/"),
+    (SearchTemplateParseResource, "/searchtemplate/<int:searchtemplate_id>/parse/"),
     (UploadFileResource, "/upload/"),
     (TaskResource, "/tasks/"),
     (StoryListResource, "/sketches/<int:sketch_id>/stories/"),
@@ -142,9 +144,9 @@ API_ROUTES = [
     (GroupListResource, "/groups/"),
     (CollaboratorResource, "/sketches/<int:sketch_id>/collaborators/"),
     (VersionResource, "/version/"),
-    (SigmaListResource, "/sigma/"), # TODO(jaegeral): deprecate this
-    (SigmaResource, "/sigma/rule/<string:rule_uuid>/"), # TODO: deprecate
-    (SigmaByTextResource, "/sigma/text/"), # TODO(jaegeral): deprecate this
+    (SigmaListResource, "/sigma/"),  # TODO(jaegeral): deprecate this
+    (SigmaResource, "/sigma/rule/<string:rule_uuid>/"),  # TODO: deprecate
+    (SigmaByTextResource, "/sigma/text/"),  # TODO(jaegeral): deprecate this
     (SigmaRuleListResource, "/sigmarule/"),
     (SigmaRuleResource, "/sigmarule/<string:rule_uuid>/"),
     (SigmaRuleByTextResource, "/sigmarule/text/"),
