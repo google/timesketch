@@ -187,7 +187,7 @@ export default {
       analyses: [],
       SigmaTemplates: SigmaTemplates,
       RuleStatus: ["stable", "test", "experimental", "deprecated", "unsupported"],
-      text: ``,
+      text: '',
       parsed: '',
       data_type_present: false,
     }
