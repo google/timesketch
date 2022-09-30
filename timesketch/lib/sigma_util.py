@@ -119,8 +119,7 @@ def get_all_sigma_rules():
     """
     sigma_rules = []
 
-    all_sigma_rules = SigmaRule.query.all()
-    for rule in all_sigma_rules:
+    for rule in SigmaRule.query.all():
         sigma_rules.append(_enrich_sigma_rule_object(rule=rule))
 
     return sigma_rules
