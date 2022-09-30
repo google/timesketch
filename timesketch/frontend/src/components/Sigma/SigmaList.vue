@@ -353,7 +353,7 @@ export default {
         // of the form [{count: 0, tag: 'foo'}]
       })
     },
-    getColor(status) {
+    getColorFromStatus(status) {
       if (status === 'false') return "red"
       return "green";
     },
