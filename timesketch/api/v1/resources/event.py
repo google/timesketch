@@ -187,7 +187,7 @@ class EventCreateResource(resources.ResourceMixin, Resource):
         timeline = None
         try:
             # Create the index in OpenSearch (unless it already exists)
-            self.datastore.create_index(index_name=index_name, doc_type=event_type)
+            self.datastore.create_index(index_name=index_name)
 
             # Create the search index in the Timesketch database
             searchindex = SearchIndex.get_or_create(
@@ -325,10 +325,8 @@ class EventResource(resources.ResourceMixin, Resource):
                 comments.append(comment_dict)
 
         schema = {
-            'meta': {
-                'comments': sorted(comments, key=lambda d: d['created_at'])
-            },
-            'objects': result['_source']
+            "meta": {"comments": sorted(comments, key=lambda d: d["created_at"])},
+            "objects": result["_source"],
         }
         return jsonify(schema)
 

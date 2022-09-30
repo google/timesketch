@@ -755,14 +755,12 @@ class OpenSearchDataStore(object):
                 event = self.client.get(
                     index=searchindex_id,
                     id=event_id,
-                    doc_type="_all",
                     _source_exclude=["timesketch_label"],
                 )
             else:
                 event = self.client.get(
                     index=searchindex_id,
                     id=event_id,
-                    doc_type="_all",
                     _source_excludes=["timesketch_label"],
                 )
 
@@ -865,29 +863,22 @@ class OpenSearchDataStore(object):
                 source=script["source"], lang=script["lang"], params=script["params"]
             )
 
-        doc = self.client.get(index=searchindex_id, id=event_id, doc_type="_all")
+        doc = self.client.get(index=searchindex_id, id=event_id)
         try:
             doc["_source"]["timesketch_label"]
         except KeyError:
             doc = {"doc": {"timesketch_label": []}}
-            self.client.update(
-                index=searchindex_id, doc_type=event_type, id=event_id, body=doc
-            )
+            self.client.update(index=searchindex_id, id=event_id, body=doc)
 
-        self.client.update(
-            index=searchindex_id, id=event_id, doc_type=event_type, body=update_body
-        )
+        self.client.update(index=searchindex_id, id=event_id, body=update_body)
 
         return None
 
-    def create_index(
-        self, index_name=uuid4().hex, doc_type="generic_event", mappings=None
-    ):
+    def create_index(self, index_name=uuid4().hex, mappings=None):
         """Create index with Timesketch settings.
 
         Args:
             index_name: Name of the index. Default is a generated UUID.
-            doc_type: Name of the document type. Default id generic_event.
             mappings: Optional dict with the document mapping for OpenSearch.
 
         Returns:
@@ -904,10 +895,6 @@ class OpenSearchDataStore(object):
                 }
             }
 
-        # TODO: Remove when we deprecate OpenSearch version 6.x
-        if self.version.startswith("6"):
-            _document_mapping = {doc_type: _document_mapping}
-
         if not self.client.indices.exists(index_name):
             try:
                 self.client.indices.create(
@@ -922,7 +909,7 @@ class OpenSearchDataStore(object):
                     "({0:s} - {1:s})".format(index_name, str(index_exists))
                 )
 
-        return index_name, doc_type
+        return index_name
 
     def delete_index(self, index_name):
         """Delete OpenSearch index.

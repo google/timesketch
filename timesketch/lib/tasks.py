@@ -611,9 +611,7 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
     opensearch = OpenSearchDataStore(host=opensearch_server, port=opensearch_port)
 
     try:
-        opensearch.create_index(
-            index_name=index_name, doc_type=event_type, mappings=mappings
-        )
+        opensearch.create_index(index_name=index_name, mappings=mappings)
     except errors.DataIngestionError as e:
         _set_datasource_status(timeline_id, file_path, "fail", error_message=str(e))
         raise
@@ -819,9 +817,7 @@ def run_csv_jsonl(
     error_msg = ""
     error_count = 0
     try:
-        opensearch.create_index(
-            index_name=index_name, doc_type=event_type, mappings=mappings
-        )
+        opensearch.create_index(index_name=index_name, mappings=mappings)
         for event in read_and_validate(
             file_handle=file_handle,
             headers_mapping=headers_mapping,
