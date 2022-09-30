@@ -21,8 +21,7 @@ limitations under the License.
         <h1 class="subtitle">{{save_button_text}} Sigma Rule</h1>
         <h2>Templates</h2>
         <b-select placeholder="Templates" v-model="editingRule.rule_yaml"
-          label="Templates" label-position="on-border"
-          @change="templateSelected">
+          label="Templates" label-position="on-border">
           <option v-for="template in SigmaTemplates" :value="template.text"
             :key="template.os">
             {{ template.os }}
@@ -30,8 +29,7 @@ limitations under the License.
         </b-select>
         Parsed rule Search query:
         <b><code>{{ parsed['search_query'] }}</code></b>
-        <explore-preview style="margin-left: 10px"
-          :searchQuery="parsed['search_query']">
+        <explore-preview :searchQuery="parsed['search_query']">
         </explore-preview>
 
         <b-field label="Edit Sigma Rule" label-position="on-border"
@@ -126,15 +124,14 @@ limitations under the License.
         <span class="icon is-small" style="cursor: pointer" title="Edit Rule"
           @click="startRuleEdit(props.row)"><i class="fas fa-edit"></i>
         </span>
-        <span class="icon is-small" style="cursor: pointer"
-          title="Delete Rule" @click="deleteRule(props.row)"><i
-            class="fas fa-trash"></i>
+        <span class="icon is-small" style="cursor: pointer" title="Delete Rule"
+          @click="deleteRule(props.row)"><i class="fas fa-trash"></i>
         </span>
       </b-table-column>
       <b-table-column field="title" label="Search Query" v-slot="props">
         {{ props.row.search_query }}</b-table-column>
       <b-table-column field="title" label="Warnings" v-slot="props">
-        {{ problem_detector(props.row.search_query) }}</b-table-column>
+        {{ problemDetector(props.row.search_query) }}</b-table-column>
 
 
     </b-table>
@@ -186,10 +183,10 @@ export default {
       sketchTTP: [],
       analyses: [],
       SigmaTemplates: SigmaTemplates,
-      RuleStatus: ["stable", "test", "experimental", "deprecated", "unsupported"],
+      ruleStatus: ["stable", "test", "experimental", "deprecated", "unsupported"],
       text: '',
       parsed: '',
-      data_type_present: false,
+      dataTypePresent: false,
     }
   },
   computed: {
@@ -229,16 +226,13 @@ export default {
   methods: {
     problemDetector: function (searchQuery) {// eslint-disable-line
       let reason = "OK"
-      if (!search_query.includes("data_type") || search_query.includes("source_name")) {
+      if (!searchQuery.includes("data_type") || searchQuery.includes("source_name")) {
         reason = ("No data_type or source_name defined in the rule consider add field mappings in the sigma config file")
       }
-      if (search_query.length < 10) {
+      if (searchQuery.length < 10) {
         reason.concat("Query seems very short. It might return a lot of events and be to broad.")
       }
       return reason
-    },
-    templateSelected: function () {
-      // I am actually not sure what this is for, but it works.
     },
     parseSigma: function (rule_yaml) { // eslint-disable-line
       this.parsing_issues = []
@@ -246,7 +240,7 @@ export default {
         .then(response => {
           let SigmaRule = response.data.objects[0]
           this.parsed = SigmaRule
-          this.data_type_present = (SigmaRule['search_query'].includes("data_type") || SigmaRule['search_query'].includes("source_name"))
+          this.dataTypePresent = (SigmaRule['search_query'].includes("data_type") || SigmaRule['search_query'].includes("source_name"))
 
         })
         .catch(e => {
@@ -265,7 +259,7 @@ export default {
           .then(response => {
             let SigmaRule = response.data.objects[0]
             this.parsed = SigmaRule
-            this.data_type_present = (SigmaRule['search_query'].includes("data_type") || SigmaRule['search_query'].includes("source_name"))
+            this.dataTypePresent = (SigmaRule['search_query'].includes("data_type") || SigmaRule['search_query'].includes("source_name"))
             ApiClient.createSigmaRule(this.editingRule.rule_yaml).then(response => {
               location.reload();
               this.$buefy.notification.open({ message: 'Succesfully added Sigma rule!', type: 'is-success' })
@@ -292,7 +286,7 @@ export default {
             location.reload();
             this.$buefy.notification.open({ message: 'Succesfully modified Sigma rule!', type: 'is-success' })
             this.showEditModal = false
-            this.data_type_present = (SigmaRule['search_query'].includes("data_type") || SigmaRule['search_query'].includes("source_name"))
+            this.dataTypePresent = (SigmaRule['search_query'].includes("data_type") || SigmaRule['search_query'].includes("source_name"))
           })
           .catch(e => {
           })
