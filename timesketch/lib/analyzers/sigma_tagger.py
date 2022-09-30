@@ -126,7 +126,7 @@ class SigmaPlugin(interface.BaseAnalyzer):
         """
         sigma_rules = []
         for rule in ts_sigma_lib.get_all_sigma_rules():
-            if rule.get("status", "experimental") == "stable":
+            if rule.get("status") == "stable":
                 sigma_rules.append({"rule": rule})
 
         return sigma_rules
