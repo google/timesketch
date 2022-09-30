@@ -17,9 +17,12 @@ import json
 
 from flask import abort
 from flask import request
+from flask import jsonify
 from flask_restful import Resource
 from flask_login import current_user
 from flask_login import login_required
+
+import jinja2
 
 from timesketch.api.v1 import resources
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
@@ -48,14 +51,10 @@ class SearchTemplateResource(resources.ResourceMixin, Resource):
         """
         searchtemplate = SearchTemplate.query.get(searchtemplate_id)
 
-        meta = {"sketch_ids": []}
-        saved_searches = View.query.filter_by(searchtemplate=searchtemplate)
-        for saved_search in saved_searches:
-            meta["sketch_ids"].append(saved_search.id)
-
         if not searchtemplate:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "Search template was not found")
-        return self.to_json(searchtemplate, meta=meta)
+
+        return self.to_json(searchtemplate)
 
     @login_required
     def delete(self, searchtemplate_id):
@@ -79,6 +78,45 @@ class SearchTemplateResource(resources.ResourceMixin, Resource):
         db_session.commit()
 
         return HTTP_STATUS_CODE_OK
+
+
+class SearchTemplateParseResource(resources.ResourceMixin, Resource):
+    """Resource to parse a search template query string using Jinja2 template."""
+
+    @login_required
+    def get(self, searchtemplate_id):
+        """Parse the query string template with Jinja2.
+
+        This resource take a form with parameters. These will be sent to the Jinja2
+        parsing engine to format the query string template. Example:
+        {
+            "username": "user",
+            "hostname"" "hostname"
+        }
+
+        Args:
+            searchtemplate_id: Primary key for a search template database model
+
+        Returns:
+            Search template in JSON (instance of flask.wrappers.Response)
+        """
+        form = request.json
+        parameters = {}
+
+        if form:
+            parameters = form.get("parameters", {})
+
+        searchtemplate = SearchTemplate.query.get(searchtemplate_id)
+        if not searchtemplate:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "Search template was not found")
+
+        try:
+            template = jinja2.Template(searchtemplate.query_string)
+            parsed_query_string = template.render(parameters)
+        except jinja2.exceptions.TemplateSyntaxError as e:
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, f"Search template syntax error: {e}")
+        result_dict = {"query_string": parsed_query_string}
+        return jsonify({"objects": [result_dict], "meta": {}})
 
 
 class SearchTemplateListResource(resources.ResourceMixin, Resource):
