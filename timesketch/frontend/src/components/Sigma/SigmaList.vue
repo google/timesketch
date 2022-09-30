@@ -260,7 +260,8 @@ export default {
             this.parsed = SigmaRule
             this.dataTypePresent = (SigmaRule['search_query'].includes("data_type") || SigmaRule['search_query'].includes("source_name"))
             ApiClient.createSigmaRule(this.editingRule.rule_yaml).then(response => {
-              location.reload();
+              //location.reload();
+              // make that a nice reload
               this.$buefy.notification.open({ message: 'Succesfully added Sigma rule!', type: 'is-success' })
               this.showEditModal = false
             })
@@ -282,7 +283,8 @@ export default {
               .catch(e => {
                 console.error(e)
               })
-            location.reload();
+            // TODO: replace with a nicer reload
+            //location.reload();
             this.$buefy.notification.open({ message: 'Succesfully modified Sigma rule!', type: 'is-success' })
             this.showEditModal = false
             this.dataTypePresent = (SigmaRule['search_query'].includes("data_type") || SigmaRule['search_query'].includes("source_name"))
@@ -314,8 +316,8 @@ export default {
           })
         // TODO: remove the element from the array
       }
-      // instead of removing the element from the array gonna relad the page
-      location.reload();
+      // TODO: instead of removing the element from the array gonna relad the page
+      // location.reload();
     },
     generateOpenSearchQuery(value, field) {
       let query = `"${value}"`
@@ -352,14 +354,14 @@ export default {
     getRuleByUUID(ruleUuid) {
       if (Array.isArray(this.$store.state.sigmaRuleList)) {
         var result = this.$store.state.sigmaRuleList.filter(obj => {
-          return obj.rule_uuid === RuleUuid
+          return obj.rule_uuid === ruleUuid
         })
         return { result }
       } else {
         return {
           // If not found in the current installed rules
           result: [{
-            "rule_uuid": RuleUuid,
+            "rule_uuid": ruleUuid,
           }]
         }
       }
