@@ -814,7 +814,6 @@ class OpenSearchDataStore(object):
         self,
         searchindex_id,
         event_id,
-        event_type,
         sketch_id,
         user_id,
         label,
@@ -827,7 +826,6 @@ class OpenSearchDataStore(object):
         Args:
             searchindex_id: String of OpenSearch index id
             event_id: String of OpenSearch event id
-            event_type: String of OpenSearch document type
             sketch_id: Integer of sketch primary key
             user_id: Integer of user primary key
             label: String with the name of the label
@@ -928,7 +926,6 @@ class OpenSearchDataStore(object):
     def import_event(
         self,
         index_name,
-        event_type,
         event=None,
         event_id=None,
         flush_interval=DEFAULT_FLUSH_INTERVAL,
@@ -938,7 +935,6 @@ class OpenSearchDataStore(object):
 
         Args:
             index_name: Name of the index in OpenSearch
-            event_type: Type of event (e.g. plaso_event)
             event: Event dictionary
             event_id: Event OpenSearch ID
             flush_interval: Number of events to queue up before indexing
@@ -964,11 +960,6 @@ class OpenSearchDataStore(object):
                 }
             }
             update_header = {"update": {"_index": index_name, "_id": event_id}}
-
-            # TODO: Remove when we deprecate Elasticsearch version 6.x
-            if self.version.startswith("6"):
-                header["index"]["_type"] = event_type
-                update_header["update"]["_type"] = event_type
 
             if event_id:
                 # Event has "lang" defined if there is a script used for import.

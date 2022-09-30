@@ -576,8 +576,6 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
     if events:
         raise RuntimeError("Plaso uploads needs a file, not events.")
 
-    event_type = "generic_event"  # Document type for OpenSearch
-
     mappings = None
     mappings_file_path = current_app.config.get("PLASO_MAPPING_FILE", "")
     if os.path.isfile(mappings_file_path):
@@ -759,7 +757,6 @@ def run_csv_jsonl(
     else:
         file_handle = codecs.open(file_path, "r", encoding="utf-8", errors="replace")
 
-    event_type = "generic_event"  # Document type for OpenSearch
     validators = {
         "csv": read_and_validate_csv,
         "jsonl": read_and_validate_jsonl,
@@ -823,9 +820,7 @@ def run_csv_jsonl(
             headers_mapping=headers_mapping,
             delimiter=delimiter,
         ):
-            opensearch.import_event(
-                index_name, event_type, event, timeline_id=timeline_id
-            )
+            opensearch.import_event(index_name, event, timeline_id=timeline_id)
             final_counter += 1
 
         # Import the remaining events

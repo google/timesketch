@@ -85,7 +85,6 @@ def _tag_event(row, tag_dict, tags_to_add, datastore, flush_interval):
 
     datastore.import_event(
         index_name=row["_index"],
-        event_type=row["_type"],
         event_id=row["_id"],
         event={"tag": new_tags},
         flush_interval=flush_interval,
@@ -125,7 +124,6 @@ class EventCreateResource(resources.ResourceMixin, Resource):
 
         timeline_name = "sketch specific timeline"
         index_name_seed = "timesketch_{0:d}".format(sketch_id)
-        event_type = "user_created_event"
 
         date_string = form.get("date_string")
         if not date_string:
@@ -204,9 +202,7 @@ class EventCreateResource(resources.ResourceMixin, Resource):
             db_session.commit()
 
             if sketch and sketch.has_permission(current_user, "write"):
-                self.datastore.import_event(
-                    index_name, event_type, event, flush_interval=1
-                )
+                self.datastore.import_event(index_name, event, flush_interval=1)
 
                 timeline = Timeline.get_or_create(
                     name=searchindex.name,
@@ -537,7 +533,6 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
     HTTP Args (All optional. Used only for Delete request):
         searchindex_id: The datastore searchindex id as string
         event_id: The datastore event id as string
-        event_type: The datastore event type as string
         annotation_type: The annotation type (comment,label) as string
         annotation_id: The annotation id as integer
         currentSearchNode_id: The search node id as string
@@ -548,7 +543,6 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
         self.parser = reqparse.RequestParser()
         self.parser.add_argument("searchindex_id", type=str, required=False)
         self.parser.add_argument("event_id", type=str, required=False)
-        self.parser.add_argument("event_type", type=str, required=False)
         self.parser.add_argument("annotation_type", type=str, required=False)
         self.parser.add_argument("annotation_id", type=int, required=False)
         self.parser.add_argument("currentSearchNode_id", type=int, required=False)
@@ -626,7 +620,6 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
             searchindex_id = _event["_index"]
             searchindex = SearchIndex.query.filter_by(index_name=searchindex_id).first()
             event_id = _event["_id"]
-            event_type = _event["_type"]
 
             if searchindex_id not in indices:
                 abort(
@@ -653,7 +646,6 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                 self.datastore.set_label(
                     searchindex_id,
                     event_id,
-                    event_type,
                     sketch.id,
                     current_user.id,
                     "__ts_comment",
@@ -680,7 +672,6 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                 self.datastore.set_label(
                     searchindex_id,
                     event_id,
-                    event_type,
                     sketch.id,
                     current_user.id,
                     form.annotation.data,
@@ -822,7 +813,6 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
         annotation_id = args.get("annotation_id")
         event_id = args.get("event_id")
         searchindex_id = args.get("searchindex_id")
-        event_type = args.get("event_type")
 
         sketch = self._get_sketch(sketch_id)
 
@@ -865,7 +855,6 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                     self.datastore.set_label(
                         searchindex_id,
                         event_id,
-                        event_type,
                         sketch.id,
                         current_user.id,
                         "__ts_comment",
