@@ -126,7 +126,7 @@ limitations under the License.
         <span class="icon is-small" style="cursor: pointer" title="Edit Rule"
           @click="startRuleEdit(props.row)"><i class="fas fa-edit"></i>
         </span>
-        <span class="icon is-small delete-ioc" style="cursor: pointer"
+        <span class="icon is-small" style="cursor: pointer"
           title="Delete Rule" @click="deleteRule(props.row)"><i
             class="fas fa-trash"></i>
         </span>
