@@ -262,11 +262,19 @@ export default {
     addRule: function (event) {
       this.parseSigma(this.editingRule.rule_yaml)
       if (this.save_button_text === "Create") {
-        ApiClient.getSigmaRuleByText(rule_yaml)
+        ApiClient.getSigmaRuleByText(this.editingRule.rule_yaml)
           .then(response => {
             let SigmaRule = response.data.objects[0]
             this.parsed = SigmaRule
             this.data_type_present = (SigmaRule['search_query'].includes("data_type") || SigmaRule['search_query'].includes("source_name"))
+            ApiClient.createSigmaRule(this.editingRule.rule_yaml).then(response => {
+              location.reload();
+              this.$buefy.notification.open({ message: 'Succesfully added Sigma rule!', type: 'is-success' })
+              this.showEditModal = false
+            })
+              .catch(e => {
+                console.error(e)
+              })
           })
           .catch(e => {
           })
