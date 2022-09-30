@@ -129,7 +129,8 @@ limitations under the License.
         </span>
       </b-table-column>
       <b-table-column field="title" label="Search Query" v-slot="props">
-        {{ props.row.search_query }}</b-table-column>
+        <code>{{ props.row.search_query }}</code>
+      </b-table-column>
       <b-table-column field="title" label="Warnings" v-slot="props">
         {{ problemDetector(props.row.search_query) }}</b-table-column>
 
@@ -183,7 +184,6 @@ export default {
       sketchTTP: [],
       analyses: [],
       SigmaTemplates: SigmaTemplates,
-      ruleStatus: ["stable", "test", "experimental", "deprecated", "unsupported"],
       text: '',
       parsed: '',
       dataTypePresent: false,
@@ -253,7 +253,6 @@ export default {
         })
     },
     addRule: function (event) {
-      this.parseSigma(this.editingRule.rule_yaml)
       if (this.save_button_text === "Create") {
         ApiClient.getSigmaRuleByText(this.editingRule.rule_yaml)
           .then(response => {

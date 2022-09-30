@@ -113,44 +113,44 @@ logsource:
 ${SkeletonLast}
 `
 
-const Linux_auditd_text = `${SkeletonFirst}
+const LinuxAuditdText = `${SkeletonFirst}
 logsource:
     category: auditd
     product: linux
 ${SkeletonLast}
 `
 
-const Linux_clamav_text = `${SkeletonFirst}
+const LinuxClamavText = `${SkeletonFirst}
 logsource:
     category: clamav
     product: linux
 ${SkeletonLast}
 `
-const Linux_cron_text = `${SkeletonFirst}
+const LinuxCronText = `${SkeletonFirst}
 logsource:
     category: cron
     product: linux
 ${SkeletonLast}
 `
-const Linux_guacamole_text = `${SkeletonFirst}
+const LinuxGuacamoleText = `${SkeletonFirst}
 logsource:
     category: guacamole
     product: linux
 ${SkeletonLast}
 `
-const Linux_modsecurity_text = `${SkeletonFirst}
+const LinuxModsecurityText = `${SkeletonFirst}
 logsource:
     category: modsecurity
     product: linux
 ${SkeletonLast}
 `
-const Linux_sudo_text = `${SkeletonFirst}
+const LinuxSudoText = `${SkeletonFirst}
 logsource:
     category: sudo
     product: linux
 ${SkeletonLast}
 `
-const Linux_sshd_text = `${SkeletonFirst}
+const LinuxSshdText = `${SkeletonFirst}
 logsource:
     category: sshd
     product: linux
@@ -554,13 +554,13 @@ const SigmaTemplates = [
     { "os": "Linux: Network connection", "text": LinuxNetworkConnectionText },
     { "os": "Linux: Process creation", "text": LinuxProcessCreationText },
     { "os": "Linux: Any logs", "text": LinuxAnyLogsText },
-    { "os": "Linux: AuditD", "text": Linux_auditd_text },
-    { "os": "Linux: ClamAV", "text": Linux_clamav_text },
-    { "os": "Linux: CRON", "text": Linux_cron_text },
-    { "os": "Linux: Guacamole", "text": Linux_guacamole_text },
-    { "os": "Linux: Modseurity", "text": Linux_modsecurity_text },
-    { "os": "Linux: sudo", "text": Linux_sudo_text },
-    { "os": "Linux: sshd", "text": Linux_sshd_text },
+    { "os": "Linux: AuditD", "text": LinuxAuditdText },
+    { "os": "Linux: ClamAV", "text": LinuxClamavText },
+    { "os": "Linux: CRON", "text": LinuxCronText },
+    { "os": "Linux: Guacamole", "text": LinuxGuacamoleText },
+    { "os": "Linux: Modseurity", "text": LinuxModsecurityText },
+    { "os": "Linux: sudo", "text": LinuxSudoText },
+    { "os": "Linux: sshd", "text": LinuxSshdText },
     { "os": "Linux: syslog", "text": Linux_syslog_text },
     { "os": "Linux: VSFTPD", "text": Linux_vsftpd_text },
     { "os": "MacOS: file_event", "text": Macos_file_event_text },
