@@ -34,7 +34,6 @@ limitations under the License.
           :searchQuery="parsed['search_query']">
         </explore-preview>
 
-        <!--<p>{{ problem_detector(parsed['search_query']) }}</p>-->
         <b-field label="Edit Sigma Rule" label-position="on-border"
           style="margin-top: 25px;">
           <b-input custom-class="ioc-input" type="textarea" rows="25"
