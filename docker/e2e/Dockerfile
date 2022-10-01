@@ -8,30 +8,30 @@ ARG PPA_TRACK=stable
 RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-  software-properties-common \
-  python3-pip \
-  python3-wheel \
-  python3-setuptools \
-  python3-psycopg2 \
-  git \
-  wget \
-  && rm -rf /var/lib/apt/lists/*
+    software-properties-common \
+    python3-pip \
+    python3-wheel \
+    python3-setuptools \
+    python3-psycopg2 \
+    git \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install Plaso
 RUN add-apt-repository -y ppa:gift/$PPA_TRACK
 RUN apt-get update && apt-get install -y --no-install-recommends \
-  plaso-tools \
-  && rm -rf /var/lib/apt/lists/*
+    plaso-tools \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install Timesketch from master to get the latest code
-#RUN wget https://raw.githubusercontent.com/google/timesketch/master/requirements.txt
-#RUN pip3 install -r requirements.txt
+# RUN wget https://raw.githubusercontent.com/google/timesketch/master/requirements.txt
+# RUN pip3 install -r requirements.txt
 
 # Install timesketch from the current branch (In the context of CI platform)
 ADD . /tmp/timesketch
 RUN pip3 install -r /tmp/timesketch/requirements.txt
 RUN pip3 install /tmp/timesketch && pip3 install /tmp/timesketch/api_client/python && \
-  pip3 install /tmp/timesketch/importer_client/python
+    pip3 install /tmp/timesketch/importer_client/python
 
 # Copy Timesketch config files into /etc/timesketch
 RUN mkdir /etc/timesketch
@@ -48,6 +48,10 @@ RUN cp /tmp/timesketch/data/data_finder.yaml /etc/timesketch/
 RUN cp /tmp/timesketch/data/bigquery_matcher.yaml /etc/timesketch/
 RUN cp -r /tmp/timesketch/data/sigma /etc/timesketch/sigma
 RUN chmod -R go+r /etc/timesketch
+
+# Prevents Python from writing .pyc files
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED=1
 
 # Copy the entrypoint script into the container
 COPY docker/e2e/docker-entrypoint.sh /
