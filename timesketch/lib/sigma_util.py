@@ -302,14 +302,14 @@ def get_sigma_rule(filepath, sigma_config=None):
             add_problematic_rule(filepath, None, "yaml.parser.ParserError")
             return None
 
-        sigma_es_query = ""
+        search_query = ""
 
         assert parsed_sigma_rules is not None
 
         for sigma_rule in parsed_sigma_rules:
-            sigma_es_query = _sanitize_query(sigma_rule)
+            search_query = _sanitize_query(sigma_rule)
 
-        rule_return.update({"es_query": sigma_es_query})
+        rule_return.update({"search_query": search_query})
         rule_return.update({"file_name": os.path.basename(filepath)})
 
         # in case multiple folders are in the config, need to remove them
@@ -358,7 +358,7 @@ def _sanitize_query(sigma_rule_query: str) -> str:
     sigma_rule_query = sigma_rule_query.replace("(*", '("')
     sigma_rule_query = sigma_rule_query.replace(
         r"\*:", ""
-    )  # removes wildcard at the beginning of a rule es_query
+    )  # removes wildcard at the beginning of a rule search_query
 
     elements = re.split(r"\s+", sigma_rule_query)
     san = []
@@ -500,7 +500,7 @@ def sanitize_incoming_sigma_rule_text(rule_text: string):
 
 
 @lru_cache(maxsize=8)
-def get_sigma_rule_by_text(rule_text, sigma_config=None):
+def parse_sigma_rule_by_text(rule_text, sigma_config=None):
     """Returns a JSON represenation for a rule
 
     Args:
@@ -508,13 +508,20 @@ def get_sigma_rule_by_text(rule_text, sigma_config=None):
         sigma_config: config file object
 
     Returns:
-        Json representation of the parsed rule
+        JSON representation of the parsed rule
     Raises:
         sigma_exceptions.SigmaParseError: Issue with parsing the given rule
         yaml.parser.ParserError: Not a correct YAML text provided
         NotImplementedError: A feature in the provided Sigma rule is not
             implemented in Sigma for Timesketch
+        ValueError: If one of the following fiels are missing in the YAML file:
+            - title
+            - description
+        ValueError: If provided rule_text is not a string
     """
+
+    if not isinstance(rule_text, str):
+        raise ValueError("rule_text needs to be a string.")
 
     try:
         if isinstance(sigma_config, sigma_configuration.SigmaConfiguration):
@@ -561,12 +568,27 @@ def get_sigma_rule_by_text(rule_text, sigma_config=None):
 
     assert parsed_sigma_rules is not None
 
-    sigma_es_query = ""
+    sigma_search_query = ""
 
     for sigma_rule in parsed_sigma_rules:
-        sigma_es_query = _sanitize_query(sigma_rule)
+        sigma_search_query = _sanitize_query(sigma_rule)
 
-    rule_return.update({"es_query": sigma_es_query})
+    if not isinstance(rule_return.get("title"), str):
+        error_msg = "Missing value: 'title' from the YAML data."
+        logger.error(error_msg)
+        raise ValueError(error_msg)
+
+    if not isinstance(rule_return.get("description"), str):
+        error_msg = "Missing value: 'description' from the YAML data."
+        logger.error(error_msg)
+        raise ValueError(error_msg)
+
+    if not isinstance(rule_return.get("id"), str):
+        error_msg = "Missing value: 'id' from the YAML data."
+        logger.error(error_msg)
+        raise ValueError(error_msg)
+
+    rule_return.update({"search_query": sigma_search_query})
     rule_return.update({"file_name": "N/A"})
     rule_return.update({"file_relpath": "N/A"})
     return rule_return

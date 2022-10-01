@@ -187,7 +187,7 @@ Once you are happy with your rule, click `Parse` and the rule will be parsed as 
 
 This feature can be helpful if you want to test out field mapping.
 
-From the parse result you can copy the `es_query` value and paste it in a new window where you have the explore of a Sketch open.
+From the parse result you can copy the `search_query` value and paste it in a new window where you have the explore of a Sketch open.
 
 You need to remember to copy your rule when you are ready and create a new file on your Timesketch server to store the rule and make it available to others. The text from the compose area will be reset with each reload of the page.
 
@@ -317,7 +317,7 @@ The XXX here is the "problem" and you should note those rules. Once you note and
 from timesketch_api_client import config
 ts = config.get_client()
 rule = ts.get_sigma_rule("c0478ead-5336-46c2-bd5e-b4c84bc3a36e")
-print(rule.es_query)
+print(rule.search_query)
 ```
 
 Where the ID is the id of your problematic rule. This will hopefully give you more insight from the web server logs of what caused the problem. E.g.

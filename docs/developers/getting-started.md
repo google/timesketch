@@ -25,7 +25,7 @@ $ cd timesketch/docker/dev
 $ docker-compose up
 ```
 
-Wait a few mintues for the installation script to complete.
+Wait a few minutes for the installation script to complete.
 
 ```bash
 $ docker-compose logs timesketch

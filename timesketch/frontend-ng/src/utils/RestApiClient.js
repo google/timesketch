@@ -141,6 +141,15 @@ export default {
   deleteSketchTimeline(sketchId, timelineId) {
     return RestApiClient.delete('/sketches/' + sketchId + /timelines/ + timelineId + '/')
   },
+  createEvent(sketchId, datetime, message, timestampDesc, attributes, config) {
+    let formData = {
+      date_string: datetime,
+      message: message,
+      timestamp_desc: timestampDesc,
+      attributes: attributes,
+    }
+    return RestApiClient.post('/sketches/' + sketchId + '/event/create/', formData, config)
+  },
   // Get details about an event
   getEvent(sketchId, searchindexId, eventId) {
     let params = {
@@ -160,6 +169,14 @@ export default {
       remove: remove,
     }
     return RestApiClient.post('/sketches/' + sketchId + '/event/annotate/', formData)
+  },
+  tagEvents(sketchId, events, tags) {
+    let formData = {
+      tag_string: JSON.stringify(tags),
+      events: events,
+      verbose: false,
+    }
+    return RestApiClient.post('/sketches/' + sketchId + '/event/tagging/', formData)
   },
   updateEventAnnotation(sketchId, annotationType, annotation, events, currentSearchNode) {
     let formData = {

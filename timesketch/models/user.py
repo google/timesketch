@@ -66,6 +66,8 @@ class User(UserMixin, BaseModel):
     datasources = relationship("DataSource", backref="user", lazy="dynamic")
     aggregationgroups = relationship("AggregationGroup", backref="user", lazy="dynamic")
     my_groups = relationship("Group", backref="user", lazy="dynamic")
+    sigmarules = relationship("SigmaRule", backref="user", lazy="dynamic")
+
     groups = relationship(
         "Group", secondary=user_group, backref=backref("users", lazy="dynamic")
     )

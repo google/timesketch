@@ -293,32 +293,45 @@ export default {
       this.tagInfo = {}
       for (var ioc of this.intelligenceData) {
         for (var tag of ioc.tags) {
-          if (!this.tagInfo[tag]) {
-            this.tagInfo[tag] = {
+          // deal with the case when tag is an object that is alread enriched.
+          var tagKey = null
+          if (typeof tag === 'object') {
+            tagKey = tag.name
+          } else {
+            tagKey = tag
+          }
+          if (!this.tagInfo[tagKey]) {
+            this.tagInfo[tagKey] = {
               count: 0,
               iocs: [],
               tag: this.enrichTag(tag),
             }
           }
-          this.tagInfo[tag].count++
-          this.tagInfo[tag].iocs.push(ioc.ioc)
+          this.tagInfo[tagKey].count++
+          this.tagInfo[tagKey].iocs.push(ioc.ioc)
         }
       }
     },
     getEnrichedTags(tags) {
-      return tags.map((tag) => this.enrichTag(tag)).sort((a, b) => b.weight - a.weight)
+      let enriched = tags.map((tag) => this.enrichTag(tag)).sort((a, b) => b.weight - a.weight)
+      console.log(enriched)
+      return enriched
     },
     enrichTag(tag) {
-      let tagInfo = { name: tag }
-      if (this.tagMetadata[tag]) {
-        return _.extend(tagInfo, this.tagMetadata[tag])
+      if (typeof tag === 'object') {
+        return tag
       } else {
-        for (var regex in this.tagMetadata['regexes']) {
-          if (tag.match(regex)) {
-            return _.extend(tagInfo, this.tagMetadata['regexes'][regex])
+        let tagInfo = { name: tag }
+        if (this.tagMetadata[tag]) {
+          return _.extend(tagInfo, this.tagMetadata[tag])
+        } else {
+          for (var regex in this.tagMetadata['regexes']) {
+            if (tag.match(regex)) {
+              return _.extend(tagInfo, this.tagMetadata['regexes'][regex])
+            }
           }
+          return _.extend(tagInfo, this.tagMetadata.default)
         }
-        return _.extend(tagInfo, this.tagMetadata.default)
       }
     },
     // TODO: Use filter chips instead

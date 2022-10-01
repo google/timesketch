@@ -20,15 +20,30 @@ limitations under the License.
         <v-card outlined height="100%">
           <v-simple-table dense>
             <template v-slot:default>
-              <thead>
-                <tr>
-                  <th class="text-left">Attribute</th>
-                  <th class="text-left">Value</th>
-                </tr>
-              </thead>
               <tbody>
                 <tr v-for="(value, key) in fullEventFiltered" :key="key">
-                  <td>{{ key }}</td>
+                  <td>
+                    {{ key }}
+                    <v-dialog v-if="key.includes('xml')" v-model="formatXMLString" width="1000">
+                      <template v-slot:activator="{ on, attrs }">
+                        <v-btn
+                          icon
+                          x-small
+                          style="cursor: pointer"
+                          v-bind="attrs"
+                          v-on="on"
+                          @click="formatXMLString = true"
+                        >
+                          <v-icon>mdi-xml</v-icon>
+                        </v-btn>
+                      </template>
+                      <ts-format-xml-string
+                        app
+                        @cancel="formatXMLString = false"
+                        :xmlString="value"
+                      ></ts-format-xml-string>
+                    </v-dialog>
+                  </td>
                   <td>{{ value }}</td>
                 </tr>
               </tbody>
@@ -50,7 +65,7 @@ limitations under the License.
               @mouseleave="unSelectComment()"
             >
               <v-list-item-avatar>
-                <v-avatar color="orange">
+                <v-avatar color="grey lighten-1">
                   <span class="white--text">{{ comment.user.username.charAt(0).toUpperCase() }}</span>
                 </v-avatar>
               </v-list-item-avatar>
@@ -117,8 +132,12 @@ limitations under the License.
 <script>
 import ApiClient from '../../utils/RestApiClient'
 import EventBus from '../../main'
+import TsFormatXmlString from './FormatXMLString.vue'
 
 export default {
+  components: {
+    TsFormatXmlString,
+  },
   props: ['event'],
   data() {
     return {
@@ -126,6 +145,7 @@ export default {
       comment: '',
       comments: [],
       selectedComment: null,
+      formatXMLString: false,
     }
   },
   computed: {
