@@ -35,12 +35,11 @@ limitations under the License.
           <div class="mb-4" v-for="parameter in parameters" :key="parameter.name">
             <v-text-field
               v-model="params[parameter.name]"
-              :label="parameter.name"
               :hint="parameter.description"
+              :label="parameter.description"
               outlined
               dense
-              hide-details="auto"
-              clearable
+              hide-details
             >
             </v-text-field>
           </div>

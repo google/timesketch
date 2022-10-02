@@ -5,6 +5,8 @@ Revises: 180a387da650
 Create Date: 2022-09-27 14:01:27.620470
 
 """
+# This code is auto generated. Ignore linter errors.
+# pylint: skip-file
 
 # revision identifiers, used by Alembic.
 revision = "a3b082c9e6e9"

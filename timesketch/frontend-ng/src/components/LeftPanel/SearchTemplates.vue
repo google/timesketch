@@ -38,8 +38,7 @@ limitations under the License.
                 v-model="search"
                 clearable
                 hide-details
-                flat
-                filled
+                outlined
                 dense
                 prepend-inner-icon="mdi-magnify"
                 label="Search for a template.."
@@ -89,12 +88,9 @@ export default {
   created() {
     ApiClient.getSearchTemplates()
       .then((response) => {
-        console.log('FOOBAR', response.data)
         this.searchtemplates = response.data.objects[0]
       })
-      .catch((e) => {
-        console.log('ERROR', e)
-      })
+      .catch((e) => {})
   },
 }
 </script>
