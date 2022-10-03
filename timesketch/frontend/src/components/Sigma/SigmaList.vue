@@ -227,11 +227,6 @@ export default {
           })
         })
     }, 300),
-
-
-
-
-
     addRule: function (event) {
       if (this.save_button_text === "Create") {
         ApiClient.getSigmaRuleByText(this.editingRule.rule_yaml)
