@@ -41,13 +41,6 @@ limitations under the License.
         <b-field grouped>
           <b-field grouped expanded position="is-right">
             <p class="control">
-              <b-button type="is-primary"
-                @click="parseSigma(editingRule.rule_yaml)">
-                Parse
-              </b-button>
-            </p>
-
-            <p class="control">
               <b-button type="is-primary" @click="addRule(editingRule)">
                 {{save_button_text}}
               </b-button>
