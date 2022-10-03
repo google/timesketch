@@ -217,7 +217,8 @@ export default {
     this.loadSketchTTP()
   },
   methods: {
-    parseSigma: function (rule_yaml) { // eslint-disable-line
+    // Set debounce to 300ms if parseSigma is used.
+    parseSigma: _.debounce(function (rule_yaml) { // eslint-disable-line
       this.parsing_issues = []
       ApiClient.getSigmaRuleByText(rule_yaml)
         .then(response => {
@@ -232,7 +233,12 @@ export default {
             indefinite: false,
           })
         })
-    },
+    }, 300),
+
+
+
+
+
     addRule: function (event) {
       if (this.save_button_text === "Create") {
         ApiClient.getSigmaRuleByText(this.editingRule.rule_yaml)
