@@ -128,7 +128,6 @@ class Event(object):
         datastore: Instance of OpenSearchDataStore.
         sketch: Sketch ID or None if not provided.
         event_id: ID of the Event.
-        event_type: Document type in OpenSearch.
         index_name: The name of the OpenSearch index.
         source: Source document from OpenSearch.
     """
@@ -153,7 +152,6 @@ class Event(object):
 
         try:
             self.event_id = event["_id"]
-            self.event_type = event["_type"]
             self.index_name = event["_index"]
             self.timeline_id = event.get("_source", {}).get("__ts_timeline_id")
             self.source = event.get("_source", None)
@@ -185,7 +183,6 @@ class Event(object):
 
         self.datastore.import_event(
             self.index_name,
-            self.event_type,
             event_id=self.event_id,
             event=event_to_commit,
         )
@@ -215,7 +212,6 @@ class Event(object):
         updated_event = self.datastore.set_label(
             self.index_name,
             self.event_id,
-            self.event_type,
             self.sketch.id,
             user_id,
             label,
