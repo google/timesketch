@@ -15,9 +15,8 @@
 
 import os
 import pathlib
-from re import search
-import yaml
 import json
+import yaml
 
 import click
 from flask.cli import FlaskGroup
