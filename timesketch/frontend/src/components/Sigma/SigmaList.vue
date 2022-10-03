@@ -75,24 +75,21 @@ limitations under the License.
 
       <b-table-column field="title" label="Name" v-slot="props" sortable
         searchable>
-        <div @click="startRuleEdit(props.row)"
-          style="margin-top:5px;cursor:pointer;">
+        <div @click="startRuleEdit(props.row)" custom-class="margintop-pointer">
           {{ props.row.title }}
         </div>
       </b-table-column>
 
       <b-table-column field="author" label="Author" v-slot="props" searchable
         sortable>
-        <div @click="startRuleEdit(props.row)"
-          style="margin-top:5px;cursor:pointer;">
+        <div @click="startRuleEdit(props.row)" custom-class="margintop-pointer">
           {{ props.row.author }}
         </div>
 
       </b-table-column>
       <b-table-column field="status" label="Status" v-slot="props" sortable
         searchable>
-        <div @click="startRuleEdit(props.row)"
-          style="margin-top:5px;cursor:pointer;">
+        <div @click="startRuleEdit(props.row)" custom-class="margintop-pointer">
           {{ props.row.status }} <span class="icon is-small"
             style="cursor: pointer"
             title="Only stable rules are used in the Sigma Analyzer"><i
@@ -104,8 +101,7 @@ limitations under the License.
 
       <b-table-column field="title" label="Name" v-slot="props" sortable
         searchable>
-        <div @click="startRuleEdit(props.row)"
-          style="margin-top:5px;cursor:pointer;">
+        <div @click="startRuleEdit(props.row)" custom-class="margintop-pointer">
           {{ props.row.title }}
         </div>
       </b-table-column>
@@ -131,8 +127,6 @@ limitations under the License.
       <b-table-column field="title" label="Search Query" v-slot="props">
         <code>{{ props.row.search_query }}</code>
       </b-table-column>
-      <b-table-column field="title" label="Warnings" v-slot="props">
-        {{ problemDetector(props.row.search_query) }}</b-table-column>
 
 
     </b-table>
@@ -186,7 +180,6 @@ export default {
       SigmaTemplates: SigmaTemplates,
       text: '',
       parsed: '',
-      dataTypePresent: false,
     }
   },
   computed: {
@@ -224,24 +217,12 @@ export default {
     this.loadSketchTTP()
   },
   methods: {
-    problemDetector: function (searchQuery) {// eslint-disable-line
-      let reason = "OK"
-      if (!searchQuery.includes("data_type") || searchQuery.includes("source_name")) {
-        reason = ("No data_type or source_name defined in the rule consider add field mappings in the sigma config file")
-      }
-      if (searchQuery.length < 10) {
-        reason.concat("Query seems very short. It might return a lot of events and be to broad.")
-      }
-      return reason
-    },
     parseSigma: function (rule_yaml) { // eslint-disable-line
       this.parsing_issues = []
       ApiClient.getSigmaRuleByText(rule_yaml)
         .then(response => {
           let SigmaRule = response.data.objects[0]
           this.parsed = SigmaRule
-          this.dataTypePresent = (SigmaRule['search_query'].includes("data_type") || SigmaRule['search_query'].includes("source_name"))
-
         })
         .catch(e => {
           Snackbar.open({
@@ -258,12 +239,10 @@ export default {
           .then(response => {
             let SigmaRule = response.data.objects[0]
             this.parsed = SigmaRule
-            this.dataTypePresent = (SigmaRule['search_query'].includes("data_type") || SigmaRule['search_query'].includes("source_name"))
             ApiClient.createSigmaRule(this.editingRule.rule_yaml).then(response => {
-              //location.reload();
-              // make that a nice reload
               this.$buefy.notification.open({ message: 'Succesfully added Sigma rule!', type: 'is-success' })
               this.showEditModal = false
+              this.sigmaRuleList.push(response.data.objects[0])
             })
               .catch(e => {
                 console.error(e)
@@ -279,15 +258,17 @@ export default {
             let SigmaRule = response.data.objects[0]
             this.parsed = SigmaRule
             ApiClient.updateSigmaRule(this.editingRule.id, this.editingRule.rule_yaml)
-              .then(response => { })
+              .then(response => {
+                this.$store.state.sigmaRuleList = this.sigmaRuleList.filter(obj => {
+                  return obj.rule_uuid !== this.editingRule.rule_uuid
+                })
+                this.sigmaRuleList.push(response.data.objects[0])
+              })
               .catch(e => {
                 console.error(e)
               })
-            // TODO: replace with a nicer reload
-            //location.reload();
             this.$buefy.notification.open({ message: 'Succesfully modified Sigma rule!', type: 'is-success' })
             this.showEditModal = false
-            this.dataTypePresent = (SigmaRule['search_query'].includes("data_type") || SigmaRule['search_query'].includes("source_name"))
           })
           .catch(e => {
           })
@@ -310,14 +291,16 @@ export default {
     deleteRule(ioc) {
       if (confirm('Delete Rule?')) {
         ApiClient.deleteSigmaRule(ioc.rule_uuid)
-          .then(response => { })
+          .then(response => {
+            // remove element from Array
+            this.$store.state.sigmaRuleList = this.sigmaRuleList.filter(obj => {
+              return obj.rule_uuid !== ioc.rule_uuid
+            })
+          })
           .catch(e => {
             console.error(e)
           })
-        // TODO: remove the element from the array
       }
-      // TODO: instead of removing the element from the array gonna relad the page
-      // location.reload();
     },
     generateOpenSearchQuery(value, field) {
       let query = `"${value}"`
@@ -385,6 +368,11 @@ pre {
 
   .text-green {
     color: green;
+  }
+
+  .margintop-pointer {
+    margin-top: 5px;
+    cursor: pointer;
   }
 }
 </style>
