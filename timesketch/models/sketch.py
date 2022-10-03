@@ -19,8 +19,6 @@ import json
 import logging
 from uuid import uuid4
 
-import jinja2
-
 from flask import current_app
 from flask import url_for
 
@@ -36,8 +34,6 @@ from sqlalchemy import TIMESTAMP
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import backref
 from sqlalchemy.orm.collections import attribute_mapped_collection
-
-from uuid import uuid4
 
 from timesketch.models import BaseModel
 from timesketch.models.acl import AccessControlMixin
