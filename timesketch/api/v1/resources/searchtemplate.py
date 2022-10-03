@@ -108,7 +108,7 @@ class SearchTemplateParseResource(resources.ResourceMixin, Resource):
         try:
             template = jinja2.Template(searchtemplate.query_string)
             parsed_query_string = template.render(form)
-            parsed_query_string = parsed_query_string.replace("\/", "\\/")
+            parsed_query_string = parsed_query_string.replace("\\/", "\\/")
             parsed_query_string = parsed_query_string.replace(".", "\\.")
         except jinja2.exceptions.TemplateSyntaxError as e:
             abort(HTTP_STATUS_CODE_BAD_REQUEST, f"Search template syntax error: {e}")
