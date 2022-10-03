@@ -439,7 +439,7 @@ logsource:
     product: windows
 ${SkeletonLast}
 `
-const WindowsLdap_debugText = `${SkeletonFirst}
+const WindowsLdapDebugText = `${SkeletonFirst}
 logsource:
     service:  ldap_debug
     product: windows
@@ -602,7 +602,8 @@ const SigmaTemplates = [
     { "os": "Windows: dns-server", "text": WindowsDnsserverText },
     { "os": "Windows: driver-framework", "text": WindowsDriverframeworkText },
     { "os": "Windows: firewall-as", "text": WindowsFirewallasText },
-    { "os": "Windows: ldap_debug", "text": WindowsLdap_debugText },
+    { "os": "Windows: ldap_debug", "text": WindowsLdapDebugText },
+    { "os": "Windows: microsoft-servicebus-client", "text": WindowsMicrosoftservicebusclientText },
     { "os": "Windows: msexchange-management", "text": WindowsMsexchangemanagementText },
     { "os": "Windows: ntlm", "text": WindowsNtlmText },
     { "os": "Windows: powershell", "text": WindowsPowershellText },
