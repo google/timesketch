@@ -19,18 +19,29 @@ limitations under the License.
     <b-modal :active.sync="showEditModal">
       <section class="box">
         <h1 class="subtitle">{{save_button_text}} Sigma Rule</h1>
-        <h2>Templates</h2>
-        <b-select placeholder="Templates" v-model="editingRule.rule_yaml"
-          label="Templates" label-position="on-border">
-          <option v-for="template in SigmaTemplates" :value="template.text"
-            :key="template.os">
-            {{ template.os }}
-          </option>
-        </b-select>
-        Parsed rule Search query:
-        <b><code>{{ parsed['search_query'] }}</code></b>
-        <explore-preview :searchQuery="parsed['search_query']">
-        </explore-preview>
+        <div style="width: 100%;">
+          <div style="width: 50%; height: 80px; float: left;">
+            <h2>Templates</h2>
+            <b-select placeholder="Templates" v-model="editingRule.rule_yaml"
+              label="Templates" label-position="on-border">
+              <option v-for="template in SigmaTemplates" :value="template.text"
+                :key="template.os">
+                {{ template.os }}
+              </option>
+            </b-select>
+          </div>
+          <div style="margin-left: 50%; height: 80px;">
+            <div>Parsed rule Search query:
+              <b><code>{{ parsed['search_query'] }}</code></b>
+              <explore-preview :searchQuery="parsed['search_query']">
+              </explore-preview>
+            </div>
+
+            <div>Parsing Status: {{problemString}}</div>
+          </div>
+        </div>
+
+
 
         <b-field label="Edit Sigma Rule" label-position="on-border"
           style="margin-top: 25px;">
@@ -41,7 +52,8 @@ limitations under the License.
         <b-field grouped>
           <b-field grouped expanded position="is-right">
             <p class="control">
-              <b-button type="is-primary" @click="addRule(editingRule)">
+              <b-button :disabled="problemString.toLowerCase() !== 'ok'"
+                type="is-primary" @click="addOrUpdateRule(editingRule)">
                 {{save_button_text}}
               </b-button>
             </p>
@@ -84,7 +96,7 @@ limitations under the License.
         searchable>
         <div @click="startRuleEdit(props.row)" custom-class="margintop-pointer">
           {{ props.row.status }} <span class="icon is-small"
-            style="cursor: pointer"
+            custom-class="clickable"
             title="Only stable rules are used in the Sigma Analyzer"><i
               class="fas fa-info-circle"
               v-if="props.row.status != 'stable'"></i>
@@ -110,20 +122,17 @@ limitations under the License.
           :searchQuery="props.row.search_query">
         </explore-preview>
 
-        <span class="icon is-small" style="cursor: pointer" title="Edit Rule"
+        <span class="icon is-small" custom-class="clickable" title="Edit Rule"
           @click="startRuleEdit(props.row)"><i class="fas fa-edit"></i>
         </span>
-        <span class="icon is-small" style="cursor: pointer" title="Delete Rule"
+        <span class="icon is-small" custom-class="clickable" title="Delete Rule"
           @click="deleteRule(props.row)"><i class="fas fa-trash"></i>
         </span>
       </b-table-column>
       <b-table-column field="title" label="Search Query" v-slot="props">
         <code>{{ props.row.search_query }}</code>
       </b-table-column>
-
-
     </b-table>
-
     <div class="container is-fluid">
       <b-table v-if="sketchTTP.length > 0" :data="sketchTTP">
         <b-table-column field="search" label="" v-slot="props" width="1em">
@@ -132,7 +141,6 @@ limitations under the License.
             <i class="fas fa-search" aria-hidden="true"
               title="Search sketch for all events with this tag."></i>
           </router-link>
-
         </b-table-column>
 
         <b-table-column field="tag" label="TTP" v-slot="props" sortable>
@@ -169,10 +177,10 @@ export default {
       save_button_text: "Update", // false: update rule. true: create new in DB
       sketchTags: [],
       sketchTTP: [],
-      analyses: [],
       SigmaTemplates: SigmaTemplates,
       text: '',
       parsed: '',
+      problemString: 'Ok',
     }
   },
   computed: {
@@ -186,25 +194,6 @@ export default {
       return this.$store.state.meta
     },
   },
-  created() {
-    if (this.timeline) {
-      ApiClient.getSketchTimelineAnalysis(this.sketch.id, this.timeline.id)
-        .then(response => {
-          this.analyses = response.data.objects[0]
-        })
-        .catch(e => { })
-    }
-    // If no timeline was specified then loop over all of them
-    else {
-      this.sketch.timelines.forEach(timeline => {
-        ApiClient.getSketchTimelineAnalysis(this.sketch.id, timeline.id)
-          .then(response => {
-            this.analyses = this.analyses.concat(response.data.objects[0])
-          })
-          .catch(e => { })
-      })
-    }
-  },
   mounted() {
     this.loadSketchSigmaTags()
     this.loadSketchTTP()
@@ -212,62 +201,60 @@ export default {
   methods: {
     // Set debounce to 300ms if parseSigma is used.
     parseSigma: _.debounce(function (rule_yaml) { // eslint-disable-line
-      this.parsing_issues = []
+      this.problemString = ''
       ApiClient.getSigmaRuleByText(rule_yaml)
         .then(response => {
           let SigmaRule = response.data.objects[0]
           this.parsed = SigmaRule
+          this.problemString = 'OK'
         })
         .catch(e => {
+          this.problemString = 'Sigma rule parsing failed. See Browser console for more'
+          // need to set search_query it to something, to overwrite previous value
+          this.parsed['search_query'] = ''
           Snackbar.open({
-            message: 'Sigma rule parsing failed. See Browser console for more',
+            message: this.problemString,
             type: 'is-danger',
             position: 'is-top',
             indefinite: false,
           })
         })
     }, 300),
-    addRule: function (event) {
+    addOrUpdateRule: function (event) {
       if (this.save_button_text === "Create") {
-        ApiClient.getSigmaRuleByText(this.editingRule.rule_yaml)
-          .then(response => {
-            let SigmaRule = response.data.objects[0]
-            this.parsed = SigmaRule
-            ApiClient.createSigmaRule(this.editingRule.rule_yaml).then(response => {
-              this.$buefy.notification.open({ message: 'Succesfully added Sigma rule!', type: 'is-success' })
-              this.showEditModal = false
-              this.sigmaRuleList.push(response.data.objects[0])
-            })
-              .catch(e => {
-                console.error(e)
-              })
-          })
+        // use parseSigma() instead of the direct call here
+        this.parseSigma(this.editingRule.rule_yaml)
+        ApiClient.createSigmaRule(this.editingRule.rule_yaml).then(response => {
+          this.$buefy.notification.open({ message: 'Succesfully added Sigma rule!', type: 'is-success' })
+          this.showEditModal = false
+          this.sigmaRuleList.push(response.data.objects[0])
+        })
           .catch(e => {
+            this.problemString = 'Sigma rule creation failed. See Browser console for more'
+            Snackbar.open({
+              message: this.problemString,
+              type: 'is-danger',
+              position: 'is-top',
+              indefinite: false,
+            })
           })
       }
       if (this.save_button_text === "Update") {
         // Only update the rule if the parsing was positive.
-        ApiClient.getSigmaRuleByText(this.editingRule.rule_yaml)
+        this.parseSigma(this.editingRule.rule_yaml)
+        ApiClient.updateSigmaRule(this.editingRule.id, this.editingRule.rule_yaml)
           .then(response => {
-            let SigmaRule = response.data.objects[0]
-            this.parsed = SigmaRule
-            ApiClient.updateSigmaRule(this.editingRule.id, this.editingRule.rule_yaml)
-              .then(response => {
-                this.$store.state.sigmaRuleList = this.sigmaRuleList.filter(obj => {
-                  return obj.rule_uuid !== this.editingRule.rule_uuid
-                })
-                this.sigmaRuleList.push(response.data.objects[0])
-              })
-              .catch(e => {
-                console.error(e)
-              })
+            this.$store.state.sigmaRuleList = this.sigmaRuleList.filter(obj => {
+              return obj.rule_uuid !== this.editingRule.rule_uuid
+            })
+            this.sigmaRuleList.push(response.data.objects[0])
+            // do not close the the edit view in case there is an error
             this.$buefy.notification.open({ message: 'Succesfully modified Sigma rule!', type: 'is-success' })
             this.showEditModal = false
           })
           .catch(e => {
           })
       }
-      //
     },
     composeRule() {
       this.showEditModal = true
@@ -367,6 +354,10 @@ pre {
   .margintop-pointer {
     margin-top: 5px;
     cursor: pointer;
+  }
+
+  .clickable {
+    cursor: pointer
   }
 }
 </style>
