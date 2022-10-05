@@ -59,6 +59,7 @@ falsepositives:
 level: high
 """
 
+
 class TestConfig(object):
     """Config for the test environment."""
 
@@ -141,9 +142,7 @@ class MockDataStore(object):
         "_type": "plaso_event",
         "_source": {
             "__ts_timeline_id": 1,
-            "comment": [
-                "test"
-            ],
+            "comment": ["test"],
             "es_index": "",
             "es_id": "",
             "label": "",
@@ -248,7 +247,6 @@ class MockDataStore(object):
         self,
         searchindex_id,
         event_id,
-        event_type,
         sketch_id,
         user_id,
         label,
@@ -263,16 +261,13 @@ class MockDataStore(object):
         """Mock creating an index."""
         return
 
-    def import_event(
-        self, index_name, event_type, event=None, event_id=None, flush_interval=None
-    ):
+    def import_event(self, index_name, event=None, event_id=None, flush_interval=None):
         """Mock adding the event to OpenSearch, instead add the event
         to event_store.
         Args:
             flush_interval: Number of events to queue up before indexing. (This
             functionality is not supported.)
             index_name: Name of the index in MockOpenSearchIndices
-            event_type: Type of event (e.g. plaso_event)
             event: Event dictionary
             event_id: Event MockOpenSearchIndices ID
         """
@@ -284,7 +279,6 @@ class MockDataStore(object):
         new_event = {
             "_index": index_name,
             "_id": event_id,
-            "_type": event_type,
             "_source": event,
         }
         self.event_store[event_id] = new_event
@@ -556,9 +550,7 @@ class BaseTest(TestCase):
         self._commit_to_database(searchtemplate)
         return searchtemplate
 
-    def _create_sigma(
-        self, user, rule_yaml, rule_uuid, title, description
-    ):
+    def _create_sigma(self, user, rule_yaml, rule_uuid, title, description):
         """Create a sigma rule in the database.
         Args:
             user: A user (instance of timesketch.models.user.User)
@@ -574,7 +566,7 @@ class BaseTest(TestCase):
             rule_yaml=rule_yaml,
             rule_uuid=rule_uuid,
             title=title,
-            description=description
+            description=description,
         )
         self._commit_to_database(sigma)
         return sigma
@@ -627,10 +619,10 @@ class BaseTest(TestCase):
 
         self.sigma1 = self._create_sigma(
             user=self.user1,
-            rule_uuid='5266a592-b793-11ea-b3de-0242ac130004',
+            rule_uuid="5266a592-b793-11ea-b3de-0242ac130004",
             rule_yaml=SIGMA_RULE,
-            title='Suspicious Installation of Zenmap',
-            description='Detects suspicious installation of Zenmap'
+            title="Suspicious Installation of Zenmap",
+            description="Detects suspicious installation of Zenmap",
         )
 
     def tearDown(self):

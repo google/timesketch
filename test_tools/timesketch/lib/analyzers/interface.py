@@ -213,7 +213,6 @@ class Event(object):
         datastore: Instance of OpenSearchDatastore (mocked as None).
         sketch: Sketch ID or None if not provided.
         event_id: ID of the Event.
-        event_type: Document type in OpenSearch.
         index_name: The name of the OpenSearch index.
         source: Source document from OpenSearch.
         updates: A list of all changes made to an event, with each change
@@ -238,7 +237,6 @@ class Event(object):
         self.updates = []
 
         self.event_id = uuid.uuid4().hex
-        self.event_type = "mocked_event"
         self.index_name = "mocked_index"
         self.source = event
 
