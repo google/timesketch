@@ -207,7 +207,7 @@ export default {
           this.problemString = 'OK'
         })
         .catch(e => {
-          this.problemString = 'Sigma rule parsing failed. See Browser console for more.'
+          this.problemString = e.response.data.message
           // need to set search_query to something, to overwrite previous value
           this.parsed['search_query'] = 'PLEASE ADJUST RULE'
           Snackbar.open({
@@ -231,7 +231,7 @@ export default {
           this.sigmaRuleList.push(response.data.objects[0])
         })
           .catch(e => {
-            this.problemString = 'Sigma rule creation failed. See Browser console for more.'
+            this.problemString = this.problemString = e.response.data.message
             Snackbar.open({
               message: this.problemString,
               type: 'is-danger',
