@@ -40,9 +40,6 @@ limitations under the License.
             <div>Parsing Status: {{problemString}}</div>
           </div>
         </div>
-
-
-
         <b-field label="Edit Sigma Rule" label-position="on-border"
           style="margin-top: 25px;">
           <b-input custom-class="ioc-input" type="textarea" rows="25"
@@ -136,8 +133,9 @@ limitations under the License.
     <div class="container is-fluid">
       <b-table v-if="sketchTTP.length > 0" :data="sketchTTP">
         <b-table-column field="search" label="" v-slot="props" width="1em">
-          <router-link
-            :to="{ name: 'Explore', query: generateOpenSearchQuery(props.row.ts_ttp, 'ts_ttp') }">
+          <router-link :to="{
+          name: 'Explore',
+          query: generateOpenSearchQuery(props.row.ts_ttp, 'ts_ttp') }">
             <i class="fas fa-search" aria-hidden="true"
               title="Search sketch for all events with this tag."></i>
           </router-link>
@@ -209,9 +207,9 @@ export default {
           this.problemString = 'OK'
         })
         .catch(e => {
-          this.problemString = 'Sigma rule parsing failed. See Browser console for more'
-          // need to set search_query it to something, to overwrite previous value
-          this.parsed['search_query'] = ''
+          this.problemString = 'Sigma rule parsing failed. See Browser console for more.'
+          // need to set search_query to something, to overwrite previous value
+          this.parsed['search_query'] = 'PLEASE ADJUST RULE'
           Snackbar.open({
             message: this.problemString,
             type: 'is-danger',
@@ -225,12 +223,15 @@ export default {
         // use parseSigma() instead of the direct call here
         this.parseSigma(this.editingRule.rule_yaml)
         ApiClient.createSigmaRule(this.editingRule.rule_yaml).then(response => {
-          this.$buefy.notification.open({ message: 'Succesfully added Sigma rule!', type: 'is-success' })
+          this.$buefy.notification.open({
+            message: 'Succesfully added Sigma rule!',
+            type: 'is-success'
+          })
           this.showEditModal = false
           this.sigmaRuleList.push(response.data.objects[0])
         })
           .catch(e => {
-            this.problemString = 'Sigma rule creation failed. See Browser console for more'
+            this.problemString = 'Sigma rule creation failed. See Browser console for more.'
             Snackbar.open({
               message: this.problemString,
               type: 'is-danger',
@@ -249,7 +250,11 @@ export default {
             })
             this.sigmaRuleList.push(response.data.objects[0])
             // do not close the the edit view in case there is an error
-            this.$buefy.notification.open({ message: 'Succesfully modified Sigma rule!', type: 'is-success' })
+            this.$buefy.notification.open(
+              {
+                message: 'Succesfully modified Sigma rule!',
+                type: 'is-success'
+              })
             this.showEditModal = false
           })
           .catch(e => {
