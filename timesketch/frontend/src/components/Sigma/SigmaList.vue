@@ -101,13 +101,6 @@ limitations under the License.
         </div>
       </b-table-column>
 
-      <b-table-column field="title" label="Name" v-slot="props" sortable
-        searchable>
-        <div @click="startRuleEdit(props.row)" custom-class="margintop-pointer">
-          {{ props.row.title }}
-        </div>
-      </b-table-column>
-
       <b-table-column field="actions" label="Actions" v-slot="props">
         <router-link
           :to="{ name: 'Explore', query: { q: props.row.search_query } }">
@@ -125,9 +118,6 @@ limitations under the License.
         <span class="icon is-small" custom-class="clickable" title="Delete Rule"
           @click="deleteRule(props.row)"><i class="fas fa-trash"></i>
         </span>
-      </b-table-column>
-      <b-table-column field="title" label="Search Query" v-slot="props">
-        <code>{{ props.row.search_query }}</code>
       </b-table-column>
     </b-table>
     <div class="container is-fluid">
