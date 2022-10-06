@@ -451,7 +451,7 @@ aggregation.save()
 To get a Sigma rule that is stored on the server via uuid of the rule:
 
 ```python
-rule = ts.get_sigma_rule("5266a592-b793-11ea-b3de-0242ac130004")
+rule = ts.get_sigmarule("5266a592-b793-11ea-b3de-0242ac130004")
 ```
 
 Returns an object, where you can do something like that:
