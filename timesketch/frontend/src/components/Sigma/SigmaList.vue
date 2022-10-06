@@ -209,8 +209,6 @@ export default {
     }, 300),
     addOrUpdateRule: function (event) {
       if (this.save_button_text === "Create") {
-        // use parseSigma() instead of the direct call here
-        this.parseSigma(this.editingRule.rule_yaml)
         ApiClient.createSigmaRule(this.editingRule.rule_yaml).then(response => {
           this.$buefy.notification.open({
             message: 'Succesfully added Sigma rule!',
@@ -230,8 +228,6 @@ export default {
           })
       }
       if (this.save_button_text === "Update") {
-        // Only update the rule if the parsing was positive.
-        this.parseSigma(this.editingRule.rule_yaml)
         ApiClient.updateSigmaRule(this.editingRule.id, this.editingRule.rule_yaml)
           .then(response => {
             this.$store.state.sigmaRuleList = this.sigmaRuleList.filter(obj => {
