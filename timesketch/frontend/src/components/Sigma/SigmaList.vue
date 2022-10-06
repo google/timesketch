@@ -192,8 +192,7 @@ export default {
       this.problemString = ''
       ApiClient.getSigmaRuleByText(rule_yaml)
         .then(response => {
-          let SigmaRule = response.data.objects[0]
-          this.parsed = SigmaRule
+          this.parsed = response.data.objects[0]
           this.problemString = 'OK'
         })
         .catch(e => {
