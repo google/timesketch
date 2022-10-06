@@ -505,7 +505,6 @@ class EventAddAttributeResource(resources.ResourceMixin, Resource):
                     if new_attributes:
                         datastore.import_event(
                             index_name=request_event["_index"],
-                            event_type=request_event["_type"],
                             event_id=request_event_id,
                             event=new_attributes,
                         )
