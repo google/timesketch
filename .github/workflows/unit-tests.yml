@@ -7,10 +7,10 @@ on:
 jobs:
   # Test with PyPi installed packages
   PyPi:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
-        os: [ubuntu-20.04]
+        os: [ubuntu-22.04]
         python-version: [3.7, 3.8]
     steps:
       - uses: actions/checkout@v2
@@ -29,10 +29,10 @@ jobs:
 
   # Test the PPA build packages
   PPA:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
-        os: [ubuntu-20.04]
+        os: [ubuntu-22.04]
         python-version: [3.7, 3.8]
     steps:
       - uses: actions/checkout@v2
@@ -73,13 +73,13 @@ jobs:
 
   # Frontend tests (VueJS)
   VueJS:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     defaults:
       run:
         working-directory: timesketch/frontend
     strategy:
       matrix:
-        os: [ubuntu-20.04]
+        os: [ubuntu-22.04]
         node-version: ["12"]
     steps:
       - uses: actions/checkout@v2

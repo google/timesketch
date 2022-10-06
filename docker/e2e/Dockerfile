@@ -1,5 +1,5 @@
-# Use the official Docker Hub Ubuntu 20.04 base image
-FROM ubuntu:20.04
+# Use the official Docker Hub Ubuntu 22.04 base image
+FROM ubuntu:22.04
 
 ARG PPA_TRACK=stable
 
