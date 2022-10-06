@@ -354,8 +354,7 @@ class EventAddAttributeResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 "Request must be in JSON format."
             )
-        form = flask_request.json
-        events = form.get("events")
+        events = flask_request.json.get("events")
         if not events:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
@@ -411,11 +410,13 @@ class EventAddAttributeResource(resources.ResourceMixin, Resource):
     def post(self, sketch_id):
         """Handles POST requests to the resource.
 
+        Allows new attributes to be added to multiple events in one request.
+
         Args:
-            sketch_id: Integer primary key for a sketch database model
+            sketch_id: Integer primary key for a sketch database model.
 
         Returns:
-            An annotation in JSON (instance of flask.wrappers.Response)
+            An annotation in JSON (instance of flask.wrappers.Response).
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:

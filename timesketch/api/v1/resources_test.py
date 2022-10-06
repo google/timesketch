@@ -370,8 +370,8 @@ class EventAddAttributeResourceTest(BaseTest):
     @mock.patch(
         "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
     )
-    def test_events_json_validation(self):
-        """Test that an incorrectly formed request is handled."""
+    def test_events_json_missing_events(self):
+        """Test that a request without events is handled."""
         self.login()
 
         response = self.client.post(
@@ -382,6 +382,13 @@ class EventAddAttributeResourceTest(BaseTest):
         self.assertEqual(HTTP_STATUS_CODE_BAD_REQUEST, response.status_code)
         self.assertIn(b"Request must contain an events field.", response.data)
 
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
+    def test_events_json_events_type(self):
+        """Test that that the wrong type for events is handled."""
+        self.login()
+
         response = self.client.post(
             self.resource_url,
             json={
@@ -391,6 +398,13 @@ class EventAddAttributeResourceTest(BaseTest):
         self.assertEqual(HTTP_STATUS_CODE_BAD_REQUEST, response.status_code)
         self.assertIn(b"Events field must be a list.", response.data)
 
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
+    def test_events_json_max_events(self):
+        """Test that an event list larger than max events is handled."""
+        self.login()
+
         response = self.client.post(
             self.resource_url,
             json={
@@ -399,6 +413,13 @@ class EventAddAttributeResourceTest(BaseTest):
         )
         self.assertEqual(HTTP_STATUS_CODE_BAD_REQUEST, response.status_code)
         self.assertIn(b"Request exceeds maximum events", response.data)
+
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
+    def test_events_json_missing_id(self):
+        """Test that an event without an _id field is handled."""
+        self.login()
 
         response = self.client.post(
             self.resource_url,
@@ -410,6 +431,13 @@ class EventAddAttributeResourceTest(BaseTest):
         )
         self.assertEqual(HTTP_STATUS_CODE_BAD_REQUEST, response.status_code)
         self.assertIn(b"Event missing field _id.", response.data)
+
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
+    def test_events_json_attributes_type(self):
+        """Test that event attributes of the wrong type is handled."""
+        self.login()
 
         response = self.client.post(
             self.resource_url,
@@ -427,6 +455,13 @@ class EventAddAttributeResourceTest(BaseTest):
         self.assertEqual(HTTP_STATUS_CODE_BAD_REQUEST, response.status_code)
         self.assertIn(b"Attributes must be a list.", response.data)
 
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
+    def test_events_json_max_attributes(self):
+        """Test that too many attributes is handled."""
+        self.login()
+
         response = self.client.post(
             self.resource_url,
             json={
@@ -442,6 +477,13 @@ class EventAddAttributeResourceTest(BaseTest):
         )
         self.assertEqual(HTTP_STATUS_CODE_BAD_REQUEST, response.status_code)
         self.assertIn(b"Attributes for event exceeds maximum", response.data)
+
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
+    def test_events_json_attribute_fields(self):
+        """Test that an attribute with a missing field is handled."""
+        self.login()
 
         response = self.client.post(
             self.resource_url,
@@ -528,7 +570,7 @@ class EventAddAttributeResourceTest(BaseTest):
     @mock.patch(
         "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
     )
-    def test_add_invalid_attributes(self):
+    def test_add_existing_attributes(self):
         """Tests existing attributes cannot be overidden."""
         self.login()
 
@@ -554,6 +596,13 @@ class EventAddAttributeResourceTest(BaseTest):
             "Attribute 'exists' already exists for event_id '1'.",
             response.json["meta"]["errors"])
 
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
+    def test_add_invalid_attributes_underscore(self):
+        """Tests attributes beginning with an underscore cannot be added."""
+        self.login()
+
         response = self.client.post(
           self.resource_url,
           json={
@@ -575,6 +624,13 @@ class EventAddAttributeResourceTest(BaseTest):
         self.assertIn(
             "Attribute '_invalid' for event_id '1' invalid, cannot start with "
             "'_'", response.json["meta"]["errors"])
+
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
+    def test_add_invalid_attributes_disallowed_name(self):
+        """Tests attributes cannot be added with a disallowed name."""
+        self.login()
 
         response = self.client.post(
             self.resource_url,
