@@ -18,7 +18,6 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import datetime
-import os
 
 from sigma.parser import exceptions as sigma_exceptions
 
@@ -406,57 +405,3 @@ detection:
         with self.assertRaises(ValueError):
             sigma_util.get_sigma_config_file("/foo")
         self.assertIsNotNone(sigma_util.get_sigma_config_file())
-
-    def test_get_rule_status_file(self):
-        """Test getting sigma config file"""
-        self.assertRaises(
-            ValueError, sigma_util.get_sigma_rule_status_list, "/foo"
-        )
-        self.assertIsNotNone(sigma_util.get_sigma_config_file())
-        statuslist = sigma_util.get_sigma_rule_status_list()
-        self.assertEqual(
-            'bad',
-            statuslist[statuslist.values == 'deprecated']['status'].all(),
-        )
-        self.assertEqual(
-            'good',
-            statuslist[
-                statuslist.values
-                == 'windows/powershell/powershell_create_local_user.yml'
-            ]['status'].all(),
-        )
-        self.assertIsNotNone(False)
-
-    def test_get_sigma_rule(self):
-        """Test getting sigma rule from file"""
-
-        filepath = "./data/sigma/rules/lnx_susp_zmap.yml"
-
-        rule = sigma_util.get_sigma_rule(filepath)
-        self.assertIsNotNone(rule)
-        self.assertIn("zmap", rule.get("search_query"))
-        self.assertIn("b793", rule.get("id"))
-
-        # temp write a file with content
-
-        with open(
-            "./data/sigma/rules/temporary.yml", "w+", encoding='utf-8'
-        ) as f:
-            f.write(SIGMA_MOCK_RULE_TEST4)
-        self.assertNotEqual(0, os.stat(f.name).st_size)
-        self.assertIsNotNone(f)
-
-        rule_by_file = sigma_util.get_sigma_rule(f.name)
-
-        # Test that rule from file equals rule from text
-        rule_by_text = sigma_util.parse_sigma_rule_by_text(
-            SIGMA_MOCK_RULE_TEST4
-        )
-
-        self.assertEqual(rule_by_file.get('id'), rule_by_text.get('id'))
-        self.assertEqual(
-            rule_by_file.get('search_query'), rule_by_text.get('search_query')
-        )
-
-        # clean up
-        os.remove(f.name)
