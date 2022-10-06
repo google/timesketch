@@ -152,10 +152,13 @@ class ResourceMixin(object):
     searchtemplate_fields = {
         "id": fields.Integer,
         "name": fields.String,
+        "short_name": fields.String,
         "user": fields.Nested(user_fields),
         "query_string": fields.String,
         "query_filter": fields.String,
         "query_dsl": fields.String,
+        "template_uuid": fields.String,
+        "template_json": fields.String,
         "created_at": fields.DateTime("iso8601"),
         "updated_at": fields.DateTime("iso8601"),
     }

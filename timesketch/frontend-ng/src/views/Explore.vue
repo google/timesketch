@@ -516,6 +516,9 @@ limitations under the License.
           </v-btn>
           <!-- Tag menu -->
           <ts-event-tag-menu :event="item"></ts-event-tag-menu>
+          <v-btn small icon @click="addEventBtn(item._source.datetime)">
+            <v-icon>mdi-braille</v-icon>
+          </v-btn>
         </template>
 
         <!-- Generic slot for any field type. Adds tags and emojis to the first column. -->
