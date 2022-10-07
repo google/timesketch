@@ -99,7 +99,7 @@ class TermsAggregation(interface.BaseAggregator):
         start_time="",
         end_time="",
         order_field="count",
-        order_type='desc',
+        order_type="desc",
     ):
         """Run the aggregation.
 
