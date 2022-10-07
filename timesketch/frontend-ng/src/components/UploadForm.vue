@@ -14,89 +14,94 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-dialog v-model="dialog" persistent max-width="1000">
-    <template v-slot:activator="{ on, attrs }">
-      <v-chip outlined v-bind="attrs" v-on="on">
-        <v-icon left small> mdi-alarm-plus </v-icon>
-        New timeline
-      </v-chip>
-    </template>
-    <v-card>
-      <v-container class="px-8">
-        <v-dialog v-model="percentageFlag" width="500">
-          <v-card>
-            <v-card-title class="text-h5 grey lighten-2"> Uploading the file... </v-card-title>
-            <v-progress-linear color="light-blue" height="10" :value="percentCompleted" striped></v-progress-linear>
-            <v-divider></v-divider>
-          </v-card>
-        </v-dialog>
+  <span>
+    <v-dialog v-model="percentageFlag" persistent width="700">
+      <v-card flat class="pa-5">
+        Uploading..
+        <br /><br />
+        <v-progress-linear color="light-blue" height="25" :value="percentCompleted"
+          >{{ percentCompleted }}%</v-progress-linear
+        >
+        <v-divider></v-divider>
+      </v-card>
+    </v-dialog>
 
-        <v-card-title class="text-h5"> {{ title }} </v-card-title>
+    <v-dialog v-model="dialog" max-width="1000">
+      <template v-slot:activator="{ on, attrs }">
+        <v-btn small text rounded color="primary" v-bind="attrs" v-on="on">
+          <v-icon left small> mdi-plus </v-icon>
+          Add Timeline
+        </v-btn>
+      </template>
+      <v-card>
+        <v-container class="px-8">
+          <v-card-title class="text-h5"> {{ title }} </v-card-title>
 
-        <div v-if="error.length > 0">
-          <v-alert dense outlined type="error" v-for="(errorMessage, index) in error" :key="index">
-            {{ errorMessage }}
-          </v-alert>
-        </div>
-        <div v-if="['csv', 'jsonl', 'json'].includes(extension)">
-          <v-simple-table height="350px" v-if="headers.length > 0">
-            <template v-slot:default>
-              <thead>
-                <tr>
-                  <th
-                    v-for="mandatoryHeader in headersTable"
-                    :key="mandatoryHeader.name"
-                    :style="mandatoryHeader.color"
-                    class="text-left"
-                  >
-                    <div v-if="missingHeaders.includes(mandatoryHeader.name)">
-                      <v-select
-                        :items="listHeadersSelectMenu"
-                        :label="mandatoryHeader.name"
-                        v-model="mandatoryHeaders.find((h) => h.name === mandatoryHeader.name).columnsSelected"
-                        multiple
-                        chips
-                        hint="Mapped to"
-                        persistent-hint
-                        @change="changeHeaderMapping($event, mandatoryHeader.name)"
-                      ></v-select>
-                    </div>
-                    <div v-else>
-                      <span class="tag is-large" :style="mandatoryHeader.color">
-                        <label>{{ mandatoryHeader.name }}</label>
-                      </span>
-                    </div>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="i in numberRows" :key="i">
-                  <td v-for="mandatoryHeader in headersTable" :key="mandatoryHeader.name">
-                    {{ mandatoryHeader.values[i - 1] }}
-                  </td>
-                </tr>
-              </tbody>
-            </template>
-          </v-simple-table>
-        </div>
-        <div v-if="fileName">
-          <v-text-field label="Timeline Name" outlined v-model="form.name"></v-text-field>
-          <v-radio-group v-if="extension === 'csv'" v-model="CSVDelimiter">
-            <template v-slot:label>
-              <div>Choose <strong>CSV delimiter</strong></div>
-            </template>
-            <v-radio v-for="(v, key) in delimitersList" :value="v" @change="changeCSVDelimiter(v)" :key="key">
+          <div v-if="error.length > 0">
+            <v-alert outlined type="error" v-for="(errorMessage, index) in error" :key="index">
+              {{ errorMessage }}
+              <br /><br />
+              <div v-if="['csv', 'jsonl', 'json'].includes(extension)">
+                <v-simple-table v-if="headers.length > 0">
+                  <template v-slot:default>
+                    <thead>
+                      <tr>
+                        <th
+                          v-for="mandatoryHeader in headersTable"
+                          :key="mandatoryHeader.name"
+                          :style="mandatoryHeader.color"
+                          class="text-left"
+                        >
+                          <div v-if="missingHeaders.includes(mandatoryHeader.name)">
+                            <v-select
+                              :items="listHeadersSelectMenu"
+                              :label="mandatoryHeader.name"
+                              v-model="mandatoryHeaders.find((h) => h.name === mandatoryHeader.name).columnsSelected"
+                              multiple
+                              chips
+                              hint="Mapped to"
+                              persistent-hint
+                              @change="changeHeaderMapping($event, mandatoryHeader.name)"
+                            ></v-select>
+                          </div>
+                          <div v-else>
+                            <span class="tag is-large" :style="mandatoryHeader.color">
+                              <label>{{ mandatoryHeader.name }}</label>
+                            </span>
+                          </div>
+                        </th>
+                      </tr>
+                    </thead>
+                    <br />
+                    <strong>Preview</strong>
+                    <tbody>
+                      <tr v-for="i in numberRows" :key="i">
+                        <td v-for="mandatoryHeader in headersTable" :key="mandatoryHeader.name">
+                          {{ mandatoryHeader.values[i - 1] }}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </template>
+                </v-simple-table>
+              </div>
+            </v-alert>
+          </div>
+
+          <div v-if="fileName">
+            <v-text-field label="Timeline Name" outlined v-model="form.name"></v-text-field>
+            <v-radio-group v-if="extension === 'csv'" v-model="CSVDelimiter">
               <template v-slot:label>
-                <div>{{ key }} ({{ v }})</div>
+                <div>Choose <strong>CSV delimiter</strong></div>
               </template>
-            </v-radio>
-          </v-radio-group>
+              <v-radio v-for="(v, key) in delimitersList" :value="v" @change="changeCSVDelimiter(v)" :key="key">
+                <template v-slot:label>
+                  <div>{{ key }} ({{ v }})</div>
+                </template>
+              </v-radio>
+            </v-radio-group>
 
-          <v-list>
-            <v-list-group :value="true" prepend-icon="mdi-information">
-              <template v-slot:activator>
-                <v-list-item-content><strong>File Info</strong></v-list-item-content>
-              </template>
+            <v-list v-if="!percentageFlag">
+              File info
               <v-simple-table height="100px">
                 <template v-slot:default>
                   <thead>
@@ -115,44 +120,43 @@ limitations under the License.
                   </tbody>
                 </template>
               </v-simple-table>
-            </v-list-group>
-          </v-list>
-        </div>
-        <div v-else>
-          <v-file-input
-            label="Plaso/CSV/JSONL file"
-            outlined
-            dense
-            clearable
-            multiple
-            show-size
-            truncate-length="15"
-            id="datafile"
-            v-model="uploadedFiles"
-            @change="setFile($event)"
-            @click:clear="clearFormData"
-          ></v-file-input>
-        </div>
-      </v-container>
-      <v-card-actions>
-        <v-spacer></v-spacer>
-        <v-btn
-          color="red darken-1"
-          text
-          @click="
-            clearFormData()
-            dialog = false
-          "
-        >
-          Cancel
-        </v-btn>
-        <v-btn v-if="fileName" color="yellow darken-1" text @click="clearFormData()"> Clear Form </v-btn>
-        <v-btn color="green darken-1" text @click="submitForm()" v-if="!(error.length > 0 || !fileName)">
-          Submit
-        </v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
+            </v-list>
+          </div>
+
+          <div v-else>
+            <v-file-input
+              label="Plaso/CSV/JSONL file"
+              outlined
+              dense
+              clearable
+              multiple
+              show-size
+              truncate-length="15"
+              id="datafile"
+              v-model="uploadedFiles"
+              @change="setFile($event)"
+              @click:clear="clearFormData"
+            ></v-file-input>
+          </div>
+        </v-container>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn
+            color="primary"
+            text
+            @click="
+              clearFormData()
+              dialog = false
+            "
+          >
+            Cancel
+          </v-btn>
+          <v-btn v-if="fileName" color="primary" text @click="clearFormData()"> Select another file </v-btn>
+          <v-btn color="primary" text @click="submitForm()" v-if="!(error.length > 0 || !fileName)"> Submit </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+  </span>
 </template>
 <script>
 import ApiClient from '../utils/RestApiClient'
@@ -173,7 +177,6 @@ export default {
       mandatoryHeaders: [
         { name: 'datetime', columnsSelected: [] },
         { name: 'message', columnsSelected: [] },
-        { name: 'timestamp_desc', columnsSelected: [] },
       ],
       form: {
         name: '',
@@ -192,7 +195,7 @@ export default {
       showPreviewFlag: false,
       showAddColumnFlag: false,
       checkedHeaders: [],
-      staticNumberRows: 5,
+      staticNumberRows: 3,
       dialog: false,
       colors: [
         { name: 'red', value: 'background-color: #FEECF0; color:#CC0F35' },
@@ -451,11 +454,11 @@ export default {
           this.percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
         }.bind(this),
       }
+      this.dialog = false
       ApiClient.uploadTimeline(formData, config)
         .then(() => {
           this.clearFormData()
           this.percentCompleted = 0
-          this.dialog = false
           this.$store.dispatch('updateSketch', this.sketch.id)
         })
         .catch((e) => {})
@@ -498,8 +501,6 @@ export default {
       this.fileMetaData = {
         Name: fileList[0].name,
         Size: bytesToMegaBytes(fileList[0].size) + ' MB',
-        LastDateModified: fileList[0].lastModifiedDate,
-        Type: fileList[0].type,
       }
       let fileName = fileList[0].name
       this.headersMapping = []

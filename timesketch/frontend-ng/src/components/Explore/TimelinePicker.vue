@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-chip-group>
+  <span>
     <ts-timeline-chip
       v-for="timeline in allTimelines"
       :key="timeline.id + timeline.name"
@@ -26,7 +26,7 @@ limitations under the License.
       @save="save"
       @toggle="toggleTimeline"
     ></ts-timeline-chip>
-  </v-chip-group>
+  </span>
 </template>
 
 <script>
