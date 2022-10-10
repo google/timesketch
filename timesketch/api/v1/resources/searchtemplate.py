@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """SearchTemplate resources for version 1 of the Timesketch API."""
-
 import json
 
 from flask import abort
@@ -25,6 +24,7 @@ from flask_login import login_required
 import jinja2
 
 from timesketch.api.v1 import resources
+from timesketch.api.v1 import utils
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
@@ -87,8 +87,8 @@ class SearchTemplateParseResource(resources.ResourceMixin, Resource):
     def post(self, searchtemplate_id):
         """Parse the query string template with Jinja2.
 
-        This resource take a form with parameters. These will be sent to the Jinja2
-        parsing engine to format the query string template. Example:
+        This resource take a form with parameters to be parsed with the Jinja2
+        parsing engine in order to format the final query string template. Example:
         {
             "username": "user",
             "hostname"" "hostname"
@@ -98,7 +98,7 @@ class SearchTemplateParseResource(resources.ResourceMixin, Resource):
             searchtemplate_id: Primary key for a search template database model
 
         Returns:
-            Search template in JSON (instance of flask.wrappers.Response)
+            Parsed and sanitized search query string.
         """
         form = request.json or {}
         searchtemplate = SearchTemplate.query.get(searchtemplate_id)
@@ -107,14 +107,14 @@ class SearchTemplateParseResource(resources.ResourceMixin, Resource):
 
         try:
             template = jinja2.Template(searchtemplate.query_string)
-            parsed_query_string = template.render(form)
-            parsed_query_string = parsed_query_string.replace("\\/", "\\/")
-            parsed_query_string = parsed_query_string.replace(".", "\\.")
+            query_string = template.render(form)
         except jinja2.exceptions.TemplateSyntaxError as e:
             abort(HTTP_STATUS_CODE_BAD_REQUEST, f"Search template syntax error: {e}")
 
-        result_dict = {"query_string": parsed_query_string}
-        return jsonify({"objects": [result_dict], "meta": {}})
+        escaped_query_string = utils.escape_query_string(query_string)
+        return jsonify(
+            {"objects": [{"query_string": escaped_query_string}], "meta": {}}
+        )
 
 
 class SearchTemplateListResource(resources.ResourceMixin, Resource):
