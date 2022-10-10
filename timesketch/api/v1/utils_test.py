@@ -19,9 +19,6 @@ from timesketch.lib.testlib import BaseTest
 class TestApiUtils(BaseTest):
     """Tests for the functionality of the API utils."""
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     def test_escape_query_string(self):
         """Test escaping a search query string."""
         query_string_to_test = r"/foo/bar/test.txt c:\foo\bar"
