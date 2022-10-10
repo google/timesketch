@@ -15,25 +15,16 @@ limitations under the License.
 -->
 <template>
   <div>
-    <div
-      style="cursor: pointer"
-      @click="expanded = !expanded"
-      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
-      class="pa-2"
-    >
-      <span>
-        <v-icon v-if="!expanded">mdi-chevron-right</v-icon>
-        <v-icon v-else>mdi-chevron-down</v-icon>
-      </span>
-
-      <span>Search Templates ({{ searchtemplates.length }})</span>
+    <div class="pa-4" flat :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
+      <span style="cursor: pointer" @click="expanded = !expanded"
+        ><v-icon left>mdi-text-box-search-outline</v-icon> Search Templates ({{ searchtemplates.length }})</span
+      >
     </div>
     <v-expand-transition>
       <div v-show="expanded">
-        <v-divider></v-divider>
         <v-data-iterator :items="searchtemplates" :items-per-page.sync="itemsPerPage" :search="search">
           <template v-slot:header>
-            <v-toolbar class="mb-1 mt-3" flat>
+            <v-toolbar flat>
               <v-text-field
                 v-model="search"
                 clearable

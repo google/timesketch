@@ -15,23 +15,29 @@ limitations under the License.
 -->
 <template>
   <div>
-    <div v-if="parameters.length" class="pa-2 pl-4" @click="expanded = !expanded" style="cursor: pointer">
-      <v-menu open-on-hover offset-y :open-delay="1000" :close-on-content-click="false">
-        <template v-slot:activator="{ on, attrs }">
-          <a style="font-size: 0.9em" v-bind="attrs" v-on="on">{{ searchtemplate.name }}</a>
-        </template>
-        <v-card style="font-size: 0.9em" class="pa-3" width="400">
-          {{ searchtemplate.description }}
-        </v-card>
-      </v-menu>
-    </div>
-    <div v-else @click="search(searchtemplate.query_string)" class="pa-2 pl-4" style="cursor: pointer">
-      <a style="font-size: 0.9em" v-bind="attrs" v-on="on">{{ searchtemplate.name }}</a>
-    </div>
+    <v-row no-gutters class="pa-3" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
+      <div @click="expanded = !expanded" style="cursor: pointer; font-size: 0.9em">
+        <v-icon v-if="!expanded">mdi-chevron-right</v-icon>
+        <v-icon v-else>mdi-chevron-down</v-icon>
+        {{ searchtemplate.name }}
+      </div>
+      <v-spacer></v-spacer>
+      <div><v-icon>mdi-dots-vertical</v-icon></div>
+    </v-row>
 
     <v-expand-transition>
-      <div v-show="expanded">
-        <div style="font-size: 0.9em" class="pa-4 pt-3">
+      <div v-show="expanded" class="pa-4 pt-0">
+        <div style="font-size: 0.9em">
+          <ul>
+            <li>Description: {{ searchTemplateSpec.description }}</li>
+            <li>Author: {{ searchTemplateSpec.author }}</li>
+            <li>Date: {{ searchTemplateSpec.date }}</li>
+            <li>References: {{ searchTemplateSpec.references }}</li>
+          </ul>
+        </div>
+
+        <div v-if="parameters.length" class="pt-3">
+          <div class="mb-3"><strong class="mb-3">Required input parameters</strong></div>
           <div class="mb-4" v-for="parameter in parameters" :key="parameter.name">
             <v-text-field
               v-model="params[parameter.name]"
@@ -43,9 +49,17 @@ limitations under the License.
             >
             </v-text-field>
           </div>
+
           <v-card-actions class="pl-0 mt-n3">
-            <v-btn @click="parseQueryAndSearch()" small outlined color="primary" :disabled="!filledOut"> Search </v-btn>
+            <v-btn @click="parseQueryAndSearch()" small depressed color="primary" :disabled="!filledOut">
+              Search
+            </v-btn>
           </v-card-actions>
+        </div>
+        <div v-else class="mt-3">
+          <v-btn @click="search(searchtemplate.query_string)" small depressed color="primary" :disabled="!filledOut"
+            >Search</v-btn
+          >
         </div>
       </div>
     </v-expand-transition>
@@ -86,6 +100,9 @@ export default {
     filledOut() {
       return Object.keys(this.params).length === this.parameters.length
     },
+    searchTemplateSpec() {
+      return JSON.parse(this.searchtemplate.template_json)
+    },
   },
   methods: {
     search(queryString) {
@@ -109,4 +126,8 @@ export default {
 }
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.hover:hover {
+  background: red;
+}
+</style>
