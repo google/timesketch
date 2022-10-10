@@ -64,7 +64,7 @@ class TimesketchSigmaRuleTest(unittest.TestCase):
             "http://127.0.0.1", "test", "test"
         )
 
-    def test_get_sigma_rule(self):
+    def test_get_sigmarule(self):
         """New:Test get single Sigma rule."""
 
         rule = self.api_client.get_sigmarule(
@@ -110,8 +110,6 @@ class TimesketchSigmaRuleTest(unittest.TestCase):
         self.assertEqual(len(rule.detection), 2)
         self.assertEqual(len(rule.logsource), 2)
         self.assertIn("2020/06/26", rule.modified)
-        self.assertIn("/linux/syslog/foobar", rule.file_relpath)
-        self.assertIn("lnx_susp_zmap", rule.file_name)
         self.assertIn("high", rule.level)
         self.assertIn("foobar.com", rule.references[0])
 
@@ -124,13 +122,11 @@ class TimesketchSigmaRuleTest(unittest.TestCase):
         self.assertIn("zsh", rule.search_query)
         self.assertIn("Installation of foobar", rule.title)
         self.assertIn("", rule.id)
-        self.assertIn("", rule.file_relpath)
         self.assertIn("http://127.0.0.1/api/v1/sigma/text/", rule.resource_uri)
         self.assertIn("suspicious installation of foobar", rule.description)
         self.assertIn("high", rule.level)
         self.assertEqual(len(rule.falsepositives), 1)
         self.assertIn("Unknown", rule.falsepositives[0])
-        self.assertIn("N/A", rule.file_name)
         self.assertIn("Alexander", rule.author)
         self.assertIn("2020/12/10", rule.date)
         self.assertIn("2021/01/01", rule.modified)
@@ -163,13 +159,11 @@ class TimesketchSigmaTest(unittest.TestCase):
         self.assertEqual(rule.title, "Suspicious Installation of ZMap")
         self.assertIn("zmap", rule.search_query, "ES_Query does not match")
         self.assertIn("b793", rule.id)
-        self.assertIn("/syslog/foobar/", rule.file_relpath)
-        self.assertIn("sigma/rule/5266a592", rule.resource_uri)
+        self.assertIn("sigmarule/5266a592", rule.resource_uri)
         self.assertIn("suspicious installation of ZMap", rule.description)
         self.assertIn("high", rule.level)
         self.assertEqual(len(rule.falsepositives), 1)
         self.assertIn("Unknown", rule.falsepositives[0])
-        self.assertIn("susp_zmap", rule.file_name)
         self.assertIn("2020/06/26", rule.date)
         self.assertIn("2021/01/01", rule.modified)
         self.assertIn("high", rule.level)
@@ -196,8 +190,6 @@ class TimesketchSigmaTest(unittest.TestCase):
         self.assertEqual(len(rule.detection), 2)
         self.assertEqual(len(rule.logsource), 2)
         self.assertIn("2020/06/26", rule.modified)
-        self.assertIn("/linux/syslog/foobar", rule.file_relpath)
-        self.assertIn("lnx_susp_zmap", rule.file_name)
         self.assertIn("high", rule.level)
         self.assertIn("foobar.com", rule.references[0])
 
@@ -210,13 +202,11 @@ class TimesketchSigmaTest(unittest.TestCase):
         self.assertIn("zsh", rule.search_query)
         self.assertIn("Installation of foobar", rule.title)
         self.assertIn("", rule.id)
-        self.assertIn("", rule.file_relpath)
         self.assertIn("http://127.0.0.1/api/v1/sigma/text/", rule.resource_uri)
         self.assertIn("suspicious installation of foobar", rule.description)
         self.assertIn("high", rule.level)
         self.assertEqual(len(rule.falsepositives), 1)
         self.assertIn("Unknown", rule.falsepositives[0])
-        self.assertIn("N/A", rule.file_name)
         self.assertIn("Alexander", rule.author)
         self.assertIn("2020/12/10", rule.date)
         self.assertIn("2021/01/01", rule.modified)

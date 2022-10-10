@@ -576,8 +576,6 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
     if events:
         raise RuntimeError("Plaso uploads needs a file, not events.")
 
-    event_type = "generic_event"  # Document type for OpenSearch
-
     mappings = None
     mappings_file_path = current_app.config.get("PLASO_MAPPING_FILE", "")
     if os.path.isfile(mappings_file_path):
@@ -611,9 +609,7 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
     opensearch = OpenSearchDataStore(host=opensearch_server, port=opensearch_port)
 
     try:
-        opensearch.create_index(
-            index_name=index_name, doc_type=event_type, mappings=mappings
-        )
+        opensearch.create_index(index_name=index_name, mappings=mappings)
     except errors.DataIngestionError as e:
         _set_datasource_status(timeline_id, file_path, "fail", error_message=str(e))
         raise
@@ -761,7 +757,6 @@ def run_csv_jsonl(
     else:
         file_handle = codecs.open(file_path, "r", encoding="utf-8", errors="replace")
 
-    event_type = "generic_event"  # Document type for OpenSearch
     validators = {
         "csv": read_and_validate_csv,
         "jsonl": read_and_validate_jsonl,
@@ -819,17 +814,13 @@ def run_csv_jsonl(
     error_msg = ""
     error_count = 0
     try:
-        opensearch.create_index(
-            index_name=index_name, doc_type=event_type, mappings=mappings
-        )
+        opensearch.create_index(index_name=index_name, mappings=mappings)
         for event in read_and_validate(
             file_handle=file_handle,
             headers_mapping=headers_mapping,
             delimiter=delimiter,
         ):
-            opensearch.import_event(
-                index_name, event_type, event, timeline_id=timeline_id
-            )
+            opensearch.import_event(index_name, event, timeline_id=timeline_id)
             final_counter += 1
 
         # Import the remaining events

@@ -151,7 +151,7 @@ class SigmaRule(resource.BaseResource):
         objects = self.data.get("objects")
         if not objects:
             error_msg = (
-                "Unable to parse Sigma rule {0:s} with given text".format(
+                "Unable to parse Sigma rule {0} with given text".format(
                     rule_uuid
                 )
             )
@@ -233,11 +233,6 @@ class Sigma(resource.BaseResource):
     def id(self):
         """Returns the sigma rule id."""
         return self.get_attribute("id")
-
-    @property
-    def file_relpath(self):
-        """Returns the relative filepath of the rule."""
-        return self.get_attribute("file_relpath")
 
     @property
     def rule_uuid(self):
