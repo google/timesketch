@@ -95,7 +95,7 @@ def new_lsh_index(events, field, delimiters=None, num_perm=None, threshold=None)
     with lsh.insertion_session() as lsh_session:
         for event in events:
             # Insert minhash in LSH index.
-            key = (event.event_id, event.event_type, event.index_name)
+            key = (event.event_id, event.index_name)
             minhash = minhash_from_text(event.source[field], num_perm, delimiters)
             minhashes[key] = minhash
             lsh_session.insert(key, minhash)

@@ -573,7 +573,8 @@ class TimesketchApi:
         self.credentials.credential.refresh(request)
 
     def list_sigma_rules(self, as_pandas=False):
-        """Get a list of sigma objects.
+        """DEPRECATED please use list_sigmarules instead:
+        Get a list of sigma objects.
 
         Args:
             as_pandas: Boolean indicating that the results will be returned
@@ -586,6 +587,7 @@ class TimesketchApi:
         Raises:
             ValueError: If no rules are found.
         """
+        logger.warning("Deprecated, please use list_sigmarules() instead")
         rules = []
         response = self.fetch_resource_data("sigma/")
 
@@ -605,22 +607,99 @@ class TimesketchApi:
             rules.append(index_obj)
         return rules
 
-    def get_sigma_rule(self, rule_uuid):
-        """Get a sigma rule.
+    def list_sigmarules(self, as_pandas=False):
+        """Fetches Sigma rules from the database.
+        Fetches all Sigma rules stored in the database on the system
+        and returns a list of SigmaRule objects of the rules.
+
+        Args:
+            as_pandas: Boolean indicating that the results will be returned
+                as a Pandas DataFrame instead of a list of SigmaRuleObjects.
+
+        Returns:
+            - List of Sigme rule object instances
+            or
+            - a pandas Dataframe with all rules if as_pandas is True.
+
+        Raises:
+            ValueError: If no rules are found.
+        """
+        rules = []
+        response = self.fetch_resource_data("sigmarule/")
+
+        if not response:
+            raise ValueError("No rules found.")
+
+        if as_pandas:
+            return pandas.DataFrame.from_records(response.get("objects"))
+
+        for rule_dict in response["objects"]:
+            if not rule_dict:
+                raise ValueError("No rules found.")
+
+            index_obj = sigma.Sigma(api=self)
+            for key, value in rule_dict.items():
+                index_obj.set_value(key, value)
+            rules.append(index_obj)
+        return rules
+
+    def create_sigmarule(self, rule_yaml):
+        """Adds a single Sigma rule to the database.
+
+        Adds a single Sigma rule to the database when `/sigmarule/` is called
+        with a POST request.
+
+        All attributes of the rule are taken by the `rule_yaml` value in the
+        POST request.
+
+        If no `rule_yaml` is found in the request, the method will fail as this
+        is required to parse the rule.
+
+        Args:
+            rule_yaml: YAML of the Sigma Rule.
+
+        Returns:
+            Instance of a Sigma object.
+        """
+
+        retry_count = 0
+        objects = None
+        while True:
+            resource_url = "{0:s}/sigmarule/".format(self.api_root)
+            form_data = {"rule_yaml": rule_yaml}
+            response = self.session.post(resource_url, json=form_data)
+            response_dict = error.get_response_json(response, logger)
+            objects = response_dict.get("objects")
+            if objects:
+                break
+            retry_count += 1
+
+            if retry_count >= self.DEFAULT_RETRY_COUNT:
+                raise RuntimeError("Unable to create a new Sigma Rule.")
+
+        rule_uuid = objects[0]["rule_uuid"]
+        return self.get_sigmarule(rule_uuid)
+
+    def get_sigmarule(self, rule_uuid):
+        """Fetches a single Sigma rule from the databse.
+        Fetches a single Sigma rule selected by the `UUID`
 
         Args:
             rule_uuid: UUID of the Sigma rule.
 
         Returns:
-            Instance of a Sigma object.
+            Instance of a SigmaRule object.
         """
-        sigma_obj = sigma.Sigma(api=self)
+        sigma_obj = sigma.SigmaRule(api=self)
         sigma_obj.from_rule_uuid(rule_uuid)
 
         return sigma_obj
 
-    def parse_sigma_rule_by_text(self, rule_text):
-        """Returns a Sigma Object based on a sigma rule text.
+    def parse_sigmarule_by_text(self, rule_text):
+        """Obtain a parsed Sigma rule by providing text.
+
+        Will parse a provided text `rule_yaml`, parse it and return as SigmaRule
+        object.
 
         Args:
             rule_text: Full Sigma rule text.
@@ -631,6 +710,49 @@ class TimesketchApi:
         Raises:
             ValueError: No Rule text given or issues parsing it.
         """
+        if not rule_text:
+            raise ValueError("No rule text given.")
+
+        try:
+            sigma_obj = sigma.Sigma(api=self)
+            sigma_obj.from_text(rule_text)
+        except ValueError:
+            logger.error(
+                "Parsing Error, unable to parse the Sigma rule", exc_info=True
+            )
+
+        return sigma_obj
+
+    def get_sigma_rule(self, rule_uuid):
+        """DEPRECATED please use get_sigmarule() instead: Get a sigma rule.
+
+        Args:
+            rule_uuid: UUID of the Sigma rule.
+
+        Returns:
+            Instance of a Sigma object.
+        """
+        logger.warning("Deprecated, please use get_sigmarule() instead")
+
+        return self.get_sigmarule(rule_uuid=rule_uuid)
+
+    def parse_sigma_rule_by_text(self, rule_text):
+        """DEPRECATED please use parse_sigmarule_by_text() instead:
+        Returns a Sigma Object based on a sigma rule text.
+
+        Args:
+            rule_text: Full Sigma rule text.
+
+        Returns:
+            Instance of a Sigma object.
+
+        Raises:
+            ValueError: No Rule text given or issues parsing it.
+        """
+        logger.warning(
+            "Deprecated, please use parse_sigmarule_by_text() instead"
+        )
+
         if not rule_text:
             raise ValueError("No rule text given.")
 
