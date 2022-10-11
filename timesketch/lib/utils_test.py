@@ -24,6 +24,8 @@ from timesketch.lib.utils import random_color
 from timesketch.lib.utils import read_and_validate_csv
 from timesketch.lib.utils import check_mapping_errors
 from timesketch.lib.utils import _validate_csv_fields
+from timesketch.lib.utils import rename_jsonl_headers
+
 
 TEST_CSV = "test_tools/test_events/sigma_events.csv"
 ISO8601_REGEX = (
@@ -153,3 +155,48 @@ class TestUtils(BaseTest):
         with self.assertRaises(RuntimeError):
             # Call next to work around lazy generators.
             next(_validate_csv_fields(mandatory_fields, df_02))
+
+    def test_invalid_JSONL_file(self):
+        """Test for JSONL with missing keys in the dictionary wrt headers mapping"""
+        linedict = {"DT": "2011-11-11", "MSG": "this is a test"}
+        headers_mapping = [
+            {"target": "datetime", "source": ["DT"], "default_value": None},
+            {"target": "timestamp_desc", "source": None, "default_value": "test time"},
+            {"target": "message", "source": ["msg"], "default_value": None},
+        ]
+        lineno = 0
+        with self.assertRaises(RuntimeError):
+            # Call next to work around lazy generators.
+            next(rename_jsonl_headers(linedict, headers_mapping, lineno))
+
+        linedict = {"DT": "2011-11-11", "MSG": "this is a test", "ANOTHERMSG": "test2"}
+        headers_mapping = [
+            {"target": "datetime", "source": ["DT"], "default_value": None},
+            {"target": "timestamp_desc", "source": None, "default_value": "test time"},
+            {
+                "target": "message",
+                "source": ["MSG", "anothermsg"],
+                "default_value": None,
+            },
+        ]
+        lineno = 0
+        with self.assertRaises(RuntimeError):
+            # Call next to work around lazy generators.
+            next(rename_jsonl_headers(linedict, headers_mapping, lineno))
+
+    def test_valid_JSONL_file(self):
+        """Test valid JSONL with valid headers mapping"""
+        linedict = {"DT": "2011-11-11", "MSG": "this is a test", "ANOTHERMSG": "test2"}
+        lineno = 0
+        headers_mapping = [
+            {"target": "datetime", "source": ["DT"], "default_value": None},
+            {"target": "timestamp_desc", "source": None, "default_value": "test time"},
+            {
+                "target": "message",
+                "source": ["MSG", "ANOTHERMSG"],
+                "default_value": None,
+            },
+        ]
+        self.assertTrue(
+            isinstance(rename_jsonl_headers(linedict, headers_mapping, lineno), dict)
+        )

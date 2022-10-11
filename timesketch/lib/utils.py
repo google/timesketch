@@ -188,7 +188,7 @@ def check_mapping_errors(headers, headers_mapping):
                         f"Value specified in the headers mapping not found in the CSV\n"
                         f"Headers mapping: {', '.join(mapping['source'])}\n"
                         f"Sources column/s: {source}\n"
-                        f"CSV columns: {', '.join(headers)}"
+                        f"All Headers: {', '.join(headers)}"
                     )
 
             # Update the headers list that we will substitute/rename
@@ -214,7 +214,7 @@ def check_mapping_errors(headers, headers_mapping):
         )
 
 
-def rename_headers(chunk, headers_mapping):
+def rename_csv_headers(chunk, headers_mapping):
     """ "Rename the headers of the dataframe
 
     Args:
@@ -285,7 +285,7 @@ def read_and_validate_csv(
         for idx, chunk in enumerate(reader):
             if headers_mapping:
                 # rename colunms according to the mapping
-                chunk = rename_headers(chunk, headers_mapping)
+                chunk = rename_csv_headers(chunk, headers_mapping)
 
             skipped_rows = chunk[chunk["datetime"].isnull()]
             if not skipped_rows.empty:
@@ -377,13 +377,74 @@ def read_and_validate_redline(file_handle):
         yield row_to_yield
 
 
-def read_and_validate_jsonl(file_handle, **kwargs):  # pylint: disable=unused-argument
+def rename_jsonl_headers(linedict, headers_mapping, lineno):
+    """Rename the headers of the dictionary
+
+    Args:
+        linedict: dictionary to be modified
+        headers_mapping: list of dicts containing:
+                         (i) target header we want to insert [key=target],
+                         (ii) sources header we want to rename/combine [key=source],
+                         (iii) def. value if we add a new column [key=default_value]
+        lineno: line of the JSONL file
+
+    Returns: the dictionary with renamed headers
+
+
+    """
+    headers_mapping.sort(
+        key=lambda x: len(x["source"]) if x["source"] else 0, reverse=True
+    )
+    ld_keys = linedict.keys()
+
+    # sanity check of the headers_mapping
+    check_mapping_errors(ld_keys, headers_mapping)
+
+    for mapping in headers_mapping:
+        if mapping["target"] not in ld_keys:
+            if mapping["source"]:
+                # mapping["source"] is not None
+                if len(mapping["source"]) == 1:
+                    # 1. rename header
+                    if mapping["source"][0] in ld_keys:
+                        linedict[mapping["target"]] = linedict.pop(mapping["source"][0])
+                    else:
+                        raise RuntimeError(
+                            f"Source mapping {mapping['source'][0]} not found in JSON\n"
+                            f"JSON line:\n{linedict}\n"
+                            f"Line no: {lineno}"
+                        )
+                else:
+                    # 2. combine headers
+                    linedict[mapping["target"]] = ""
+                    for source in mapping["source"]:
+                        if source in ld_keys:
+                            linedict[mapping["target"]] += f"{source} : "
+                            linedict[mapping["target"]] += f"{linedict[source]} |"
+                        else:
+                            raise RuntimeError(
+                                f"Source mapping {source} not found in JSON\n"
+                                f"JSON line:\n{linedict}\n"
+                                f"Line no: {lineno}"
+                            )
+            else:
+                # 3. create new entry with the default value
+                linedict[mapping["target"]] = mapping["default_value"]
+    return linedict
+
+
+def read_and_validate_jsonl(
+    file_handle, delimiter=None, headers_mapping=None
+):  # pylint: disable=unused-argument
     """Generator for reading a JSONL (json lines) file.
 
     Args:
         file_handle: a file-like object containing the CSV content.
-        **kwargs: headers_mapping and delimiter are passed to
-                  this function but they are currently not used here
+        delimiter: not used in this function
+        headers_mapping: list of dicts containing:
+                         (i) target header we want to insert [key=target],
+                         (ii) sources header we want to rename/combine [key=source],
+                         (iii) def. value if we add a new column [key=default_value]
 
     Raises:
         RuntimeError: if there are missing fields.
@@ -400,6 +461,8 @@ def read_and_validate_jsonl(file_handle, **kwargs):  # pylint: disable=unused-ar
         try:
             linedict = json.loads(line)
             ld_keys = linedict.keys()
+            if headers_mapping:
+                linedict = rename_jsonl_headers(linedict, headers_mapping, lineno)
             if "datetime" not in ld_keys and "timestamp" in ld_keys:
                 epoch = int(str(linedict["timestamp"])[:10])
                 dt = datetime.datetime.fromtimestamp(epoch)
@@ -409,6 +472,14 @@ def read_and_validate_jsonl(file_handle, **kwargs):  # pylint: disable=unused-ar
                     linedict["timestamp"] = int(
                         parser.parse(linedict["datetime"]).timestamp() * 1000000
                     )
+                # TODO: REcord this somewhere else and make available to the user.
+                except TypeError:
+                    logger.error(
+                        "Unable to parse timestamp, skipping line "
+                        "{0:d}".format(lineno),
+                        exc_info=True,
+                    )
+                    continue
                 except parser.ParserError:
                     logger.error(
                         "Unable to parse timestamp, skipping line "
@@ -420,9 +491,9 @@ def read_and_validate_jsonl(file_handle, **kwargs):  # pylint: disable=unused-ar
             missing_fields = [x for x in mandatory_fields if x not in linedict]
             if missing_fields:
                 raise RuntimeError(
-                    "Missing field(s) at line {0:n}: {1:s}".format(
-                        lineno, ",".join(missing_fields)
-                    )
+                    f"Missing field(s) at line {lineno}: {','.join(missing_fields)}\n"
+                    f"Line: {linedict}\n"
+                    f"Mapping: {headers_mapping}"
                 )
 
             if "tag" in linedict:

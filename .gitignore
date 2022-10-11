@@ -7,6 +7,7 @@
 # Generic auto-generated build files
 *.pyc
 *.pyo
+**/.ipynb_checkpoints/
 
 # Ignore back-up files.
 *~
@@ -34,3 +35,4 @@ vagrant/*.log
 
 # Exclude .venv folder
 .venv/
+.vscode/*

@@ -542,9 +542,7 @@ def _create_eventObj(datastore, event_id, ts, source_attrs):
     if source_attrs:
         event["_source"].update(source_attrs)
 
-    datastore.import_event(
-        event["_index"], event["_type"], event["_source"], str(event_id)
-    )
+    datastore.import_event(event["_index"], event["_source"], str(event_id))
 
 
 if __name__ == "__main__":
