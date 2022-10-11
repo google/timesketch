@@ -365,4 +365,4 @@ def import_sigma_rules(path):
             # the JSON result here as it is added in the GET methods
             sigma_db_rule.query_string = sigma_rule.get("search_query")
         else:
-            print(f"Rule already imported: ", sigma_rule.get("title"))
+            print(f"Rule already imported: {sigma_rule.get('title')}")
