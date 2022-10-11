@@ -122,7 +122,7 @@ class EventCreateResource(resources.ResourceMixin, Resource):
         if not form:
             form = request.data
 
-        timeline_name = "sketch specific timeline"
+        timeline_name = "Manual events"
         index_name_seed = "timesketch_{0:d}".format(sketch_id)
 
         date_string = form.get("date_string")

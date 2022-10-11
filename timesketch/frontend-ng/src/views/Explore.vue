@@ -540,9 +540,9 @@ limitations under the License.
 
         <!-- Timeline name field -->
         <template v-slot:item.timeline_name="{ item }">
-          <v-chip label style="margin-top: 1px; margin-bottom: 1px; font-size: 0.9em">{{
-            getTimeline(item).name
-          }}</v-chip>
+          <v-chip label style="margin-top: 1px; margin-bottom: 1px; font-size: 0.8em">
+            <span class="timeline-name-ellipsis" style="width: 130px">{{ getTimeline(item).name }}</span></v-chip
+          >
         </template>
 
         <!-- Comment field -->

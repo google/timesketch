@@ -18,9 +18,9 @@ limitations under the License.
     <v-dialog v-if="timelineStatus === 'processing'" v-model="dialogStatus" width="600">
       <template v-slot:activator="{ on, attrs }">
         <v-chip v-on="on" :style="getTimelineStyle(timeline)" class="mr-2 mb-3">
-          {{ timeline.name }}
-          <span class="ml-3">
-            <v-progress-circular small indeterminate color="grey" :size="20" :width="2"></v-progress-circular>
+          <span class="timeline-name-ellipsis">{{ timeline.name }}</span>
+          <span class="ml-1">
+            <v-progress-circular small indeterminate color="grey" :size="20" :width="1"></v-progress-circular>
           </span>
         </v-chip>
       </template>
@@ -104,7 +104,8 @@ limitations under the License.
       <template v-slot:activator="{ on }">
         <v-chip v-on="on" :style="getTimelineStyle(timeline)" class="mr-2 mb-3">
           <v-icon v-if="timelineStatus === 'fail'" left color="red"> mdi-alert-circle-outline </v-icon>
-          {{ timeline.name }}
+          <span class="timeline-name-ellipsis">{{ timeline.name }}</span>
+
           <span v-if="timelineStatus === 'processing'" class="ml-3">
             <v-progress-circular small indeterminate color="grey" :size="20" :width="2"></v-progress-circular>
           </span>
@@ -144,7 +145,7 @@ limitations under the License.
               </v-list-item>
             </template>
             <v-card>
-              <v-app-bar flat dense>Detailed information for: {{ timeline.name }}</v-app-bar>
+              <v-app-bar flat dense>{{ timeline.name }}</v-app-bar>
               <div class="pa-3">
                 <ul style="list-style-type: none">
                   <li><strong>Opensearch index: </strong>{{ timeline.searchindex.index_name }}</li>
