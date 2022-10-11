@@ -58,7 +58,9 @@ def create_user(username, password=None):
 
     def get_password_from_prompt():
         """Get password from the command line prompt."""
-        first_password = click.prompt("Enter password", hide_input=True, type=str)
+        first_password = click.prompt(
+            "Enter password", hide_input=True, type=str
+        )
         second_password = click.prompt(
             "Enter password again", hide_input=True, type=str
         )
@@ -150,7 +152,9 @@ def grant_user(username, sketch_id):
     else:
         sketch.grant_permission(permission="read", user=user)
         sketch.grant_permission(permission="write", user=user)
-        print(f"User {username} added to the sketch {sketch.id} ({sketch.name})")
+        print(
+            f"User {username} added to the sketch {sketch.id} ({sketch.name})"
+        )
 
 
 @cli.command(name="version")
@@ -293,7 +297,9 @@ def import_search_templates(path):
                     template_uuid=uuid
                 ).first()
                 if not searchtemplate:
-                    searchtemplate = SearchTemplate(name=name, template_uuid=uuid)
+                    searchtemplate = SearchTemplate(
+                        name=name, template_uuid=uuid
+                    )
                     db_session.add(searchtemplate)
                     db_session.commit()
 
@@ -328,11 +334,15 @@ def import_sigma_rules(path):
     for file_path in file_paths:
         sigma_rule = None
         sigma_yaml = None
+
         with open(file_path, "r") as fh:
             try:
                 sigma_yaml = fh.read()
                 sigma_rule = sigma_util.parse_sigma_rule_by_text(sigma_yaml)
             except ValueError as e:
+                print(f"Sigma Rule Parsing error: {e}")
+                continue
+            except NotImplementedError as e:
                 print(f"Sigma Rule Parsing error: {e}")
                 continue
 
@@ -343,7 +353,9 @@ def import_sigma_rules(path):
 
         # Query rules to see if it already exist and exit if found
         rule_uuid = sigma_rule.get("id")
-        sigma_rule_from_db = SigmaRule.query.filter_by(rule_uuid=rule_uuid).first()
+        sigma_rule_from_db = SigmaRule.query.filter_by(
+            rule_uuid=rule_uuid
+        ).first()
         if sigma_rule_from_db:
             print(f"Rule {rule_uuid} is already imported")
             continue
@@ -366,3 +378,51 @@ def import_sigma_rules(path):
             sigma_db_rule.query_string = sigma_rule.get("search_query")
         else:
             print(f"Rule already imported: {sigma_rule.get('title')}")
+
+
+@cli.command(name="list-sigma-rules")
+def list_sigma_rules():
+    """List sigma rules"""
+
+    all_sigma_rules = SigmaRule.query.all()
+    for rule in all_sigma_rules:
+        print(f"{rule.rule_uuid} {rule.title}")
+
+
+@cli.command(name="remove-sigma-rule")
+@click.argument("rule_uuid")
+def remove_sigma_rule(rule_uuid):
+    """Deletes a Sigma rule from the database.
+
+    Deletes a single Sigma rule selected by the `uuid`
+    Args:
+        rule_uuid: UUID of the rule to be deleted.
+    """
+
+    rule = SigmaRule.query.filter_by(rule_uuid=rule_uuid).first()
+
+    if not rule:
+        error_msg = "No rule found with rule_uuid.{0!s}".format(rule_uuid)
+        print(error_msg)  # only needed in debug cases
+        return
+
+    print(f"Rule {rule_uuid} deleted")
+    db_session.delete(rule)
+    db_session.commit()
+
+
+@cli.command(name="remove-all-sigma-rules")
+def remove_all_sigma_rules():
+    """Deletes all Sigma rule from the database."""
+
+    if click.confirm("Do you really want to drop all the Sigma rules?"):
+        if click.confirm(
+            "Are you REALLLY sure you want to DROP ALL the Sigma rules?"
+        ):
+
+            all_sigma_rules = SigmaRule.query.all()
+            for rule in all_sigma_rules:
+                db_session.delete(rule)
+                db_session.commit()
+
+            print("All rules deleted")
