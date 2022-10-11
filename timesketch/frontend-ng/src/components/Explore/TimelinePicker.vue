@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-chip-group>
+  <span>
     <ts-timeline-chip
       v-for="timeline in allTimelines"
       :key="timeline.id + timeline.name"
@@ -26,7 +26,29 @@ limitations under the License.
       @save="save"
       @toggle="toggleTimeline"
     ></ts-timeline-chip>
-  </v-chip-group>
+    <v-btn
+      small
+      outlined
+      rounded
+      color="primary"
+      v-if="sketch.timelines.length > 20"
+      @click="showAll = !showAll"
+      class="mt-n3 mr-5"
+    >
+      <span v-if="showAll"> show less </span>
+      <span v-else> {{ sketch.timelines.length - 20 }} more.. </span>
+    </v-btn>
+    <span v-if="sketch.timelines.length > 5" style="position: relative; top: -5px">
+      <v-btn-toggle dense rounded>
+        <v-btn small outlined rounded color="primary" v-if="sketch.timelines.length > 5" @click="enableAllTimelines()">
+          Select all
+        </v-btn>
+        <v-btn small outlined rounded color="primary" v-if="sketch.timelines.length > 5" @click="disableAllTimelines()">
+          Unselect all
+        </v-btn>
+      </v-btn-toggle>
+    </span>
+  </span>
 </template>
 
 <script>
@@ -44,9 +66,13 @@ export default {
     allTimelines() {
       // Sort alphabetically based on timeline name.
       let timelines = [...this.sketch.timelines]
-      return timelines.sort(function (a, b) {
+      timelines = timelines.sort(function (a, b) {
         return a.name.localeCompare(b.name)
       })
+      if (!this.showAll) {
+        timelines = timelines.slice(0, 20)
+      }
+      return timelines
     },
     activeTimelines() {
       // Sort alphabetically based on timeline name.
@@ -64,6 +90,7 @@ export default {
       isDarkTheme: false,
       isLoading: false,
       selectedTimelines: [],
+      showAll: false,
     }
   },
   methods: {

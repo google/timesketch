@@ -254,7 +254,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             original_filename=original_filename,
             data_label=data_label,
         )
-        datasource.set_status("processing")
+        datasource.set_status("queueing")
         timeline.datasources.append(datasource)
         db_session.add(datasource)
         db_session.add(timeline)

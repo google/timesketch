@@ -77,17 +77,37 @@ limitations under the License.
       </v-card>
 
       <!-- Timeline picker -->
+      <v-sheet class="mb-4 mt-4">
+        <ts-timeline-picker
+          @updateSelectedTimelines="updateSelectedTimelines($event)"
+          :current-query-filter="currentQueryFilter"
+          :count-per-index="eventList.meta.count_per_index"
+          :count-per-timeline="eventList.meta.count_per_timeline"
+        ></ts-timeline-picker>
 
-      <ts-timeline-picker
-        @updateSelectedTimelines="updateSelectedTimelines($event)"
-        :current-query-filter="currentQueryFilter"
-        :count-per-index="eventList.meta.count_per_index"
-        :count-per-timeline="eventList.meta.count_per_timeline"
-      ></ts-timeline-picker>
+        <span style="position: relative; top: -5px">
+          <ts-upload-timeline-form></ts-upload-timeline-form>
+        </span>
+
+        <span style="position: relative; top: -5px">
+          <v-dialog v-model="addManualEvent" width="600">
+            <template v-slot:activator="{ on, attrs }">
+              <v-btn small text rounded color="primary" v-bind="attrs" v-on="on">
+                <v-icon left small> mdi-plus </v-icon>
+                Add manual event
+              </v-btn>
+            </template>
+            <ts-add-manual-event
+              app
+              @cancel="addManualEvent = false"
+              :datetimeProp="datetimeManualEvent"
+            ></ts-add-manual-event>
+          </v-dialog>
+        </span>
+      </v-sheet>
 
       <!-- Time filter chips -->
-
-      <v-chip-group>
+      <div class="mt-n3">
         <span v-for="(chip, index) in timeFilterChips" :key="index + chip.value">
           <v-menu offset-y content-class="menu-with-gap">
             <template v-slot:activator="{ on }">
@@ -142,44 +162,16 @@ limitations under the License.
             style="overflow: visible"
           >
             <template v-slot:activator="{ on, attrs }">
-              <v-chip outlined v-bind="attrs" v-on="on">
-                <v-icon left small> mdi-clock-plus-outline </v-icon>
+              <v-btn small text rounded color="primary" v-bind="attrs" v-on="on">
+                <v-icon left small> mdi-plus </v-icon>
                 Add timefilter
-              </v-chip>
+              </v-btn>
             </template>
 
             <ts-filter-menu app @cancel="timeFilterMenu = false" @addChip="addChip"></ts-filter-menu>
           </v-menu>
         </span>
-      </v-chip-group>
-
-      <!-- TODO: Move this control to the timeline picker -->
-      <!-- https://github.com/google/timesketch/issues/2338 -->
-      <!-- Add manual event
-      <span>
-        <v-menu
-          v-model="addManualEvent"
-          offset-y
-          :close-on-content-click="false"
-          :close-on-click="true"
-          content-class="menu-with-gap"
-          allow-overflow
-          style="overflow: visible"
-        >
-          <template v-slot:activator="{ on, attrs }">
-            <v-chip outlined v-bind="attrs" v-on="on">
-              <v-icon left small> mdi-braille </v-icon>
-              Add manual event
-            </v-chip>
-          </template>
-          <ts-add-manual-event
-            app
-            @cancel="addManualEvent = false"
-            :datetimeProp="datetimeManualEvent"
-          ></ts-add-manual-event>
-        </v-menu>
-      </span>
-       -->
+      </div>
 
       <!-- Term filters -->
       <div v-if="filterChips.length">
@@ -193,21 +185,6 @@ limitations under the License.
         </v-chip-group>
       </div>
     </v-card>
-
-    <ts-upload-timeline-form></ts-upload-timeline-form>&emsp;
-    <v-dialog v-model="addManualEvent" width="600">
-      <template v-slot:activator="{ on, attrs }">
-        <v-chip outlined v-bind="attrs" v-on="on">
-          <v-icon left small> mdi-braille </v-icon>
-          Add manual event
-        </v-chip>
-      </template>
-      <ts-add-manual-event
-        app
-        @cancel="addManualEvent = false"
-        :datetimeProp="datetimeManualEvent"
-      ></ts-add-manual-event>
-    </v-dialog>
 
     <!-- Search History -->
 
@@ -490,8 +467,7 @@ limitations under the License.
               ></div>
               <div class="ts-time-bubble ts-time-bubble-color" v-bind:style="getTimeBubbleColor(item)">
                 <h5>
-                  <b>{{ item.deltaDays | compactNumber }}</b
-                  ><br />days
+                  <b>{{ item.deltaDays | compactNumber }}</b> days
                 </h5>
               </div>
               <div
@@ -516,9 +492,6 @@ limitations under the License.
           </v-btn>
           <!-- Tag menu -->
           <ts-event-tag-menu :event="item"></ts-event-tag-menu>
-          <v-btn small icon @click="addEventBtn(item._source.datetime)">
-            <v-icon>mdi-braille</v-icon>
-          </v-btn>
         </template>
 
         <!-- Generic slot for any field type. Adds tags and emojis to the first column. -->
@@ -567,9 +540,9 @@ limitations under the License.
 
         <!-- Timeline name field -->
         <template v-slot:item.timeline_name="{ item }">
-          <v-chip label style="margin-top: 1px; margin-bottom: 1px; font-size: 0.9em">{{
-            getTimeline(item).name
-          }}</v-chip>
+          <v-chip label style="margin-top: 1px; margin-bottom: 1px; font-size: 0.8em">
+            <span class="timeline-name-ellipsis" style="width: 130px">{{ getTimeline(item).name }}</span></v-chip
+          >
         </template>
 
         <!-- Comment field -->
@@ -660,7 +633,6 @@ export default {
       columnDialog: false,
       saveSearchMenu: false,
       saveSearchFormName: '',
-      fromSavedSearch: false,
       selectedEventTags: [],
       showRightSidePanel: false,
       addManualEvent: false,
@@ -900,13 +872,6 @@ export default {
       }
     },
     search: function (emitEvent = true, resetPagination = true, incognito = false, parent = false) {
-      // Remove URL parameter if new search is executed after saved search
-      if (this.fromSavedSearch) {
-        this.fromSavedSearch = false
-      } else {
-        this.$router.push(this.$route.path)
-      }
-
       if (!this.currentQueryString) {
         return
       }
@@ -1006,7 +971,6 @@ export default {
     searchView: function (viewId) {
       this.selectedEvents = []
       this.showSearchDropdown = false
-      this.fromSavedSearch = true
 
       if (viewId !== parseInt(viewId, 10) && typeof viewId !== 'string') {
         viewId = viewId.id
@@ -1447,7 +1411,7 @@ export default {
 
 .ts-time-bubble {
   width: 150px;
-  height: 20px;
+  height: 30px;
   border-radius: 6px;
   position: relative;
   margin: 0 0 0 25px;
