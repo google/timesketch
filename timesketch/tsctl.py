@@ -24,12 +24,14 @@ from sqlalchemy.exc import IntegrityError
 
 from timesketch import version
 from timesketch.app import create_app
+from timesketch.lib import sigma_util
 from timesketch.models import db_session
 from timesketch.models import drop_all
 from timesketch.models.user import Group
 from timesketch.models.user import User
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import SearchTemplate
+from timesketch.models.sigma import SigmaRule
 
 
 @click.group(cls=FlaskGroup, create_app=create_app)
@@ -309,3 +311,58 @@ def import_search_templates(path):
 
                 db_session.add(searchtemplate)
                 db_session.commit()
+
+
+@cli.command(name="import-sigma-rules")
+@click.argument("path")
+def import_sigma_rules(path):
+    """Import sigma rules from filesystem path."""
+    file_paths = set()
+    supported_file_types = [".yml", ".yaml"]
+    for root, _, files in os.walk(path):
+        for file in files:
+            file_extension = pathlib.Path(file.lower()).suffix
+            if file_extension in supported_file_types:
+                file_paths.add(os.path.join(root, file))
+
+    for file_path in file_paths:
+        sigma_rule = None
+        sigma_yaml = None
+        with open(file_path, "r") as fh:
+            try:
+                sigma_yaml = fh.read()
+                sigma_rule = sigma_util.parse_sigma_rule_by_text(sigma_yaml)
+            except ValueError as e:
+                print(f"Sigma Rule Parsing error: {e}")
+                continue
+
+        print(f"Importing: {sigma_rule.get('title')}")
+
+        if not sigma_rule:
+            continue
+
+        # Query rules to see if it already exist and exit if found
+        rule_uuid = sigma_rule.get("id")
+        sigma_rule_from_db = SigmaRule.query.filter_by(rule_uuid=rule_uuid).first()
+        if sigma_rule_from_db:
+            print(f"Rule {rule_uuid} is already imported")
+            continue
+
+        sigma_db_rule = SigmaRule.query.filter_by(rule_uuid=rule_uuid).first()
+        if not sigma_db_rule:
+            sigma_db_rule = SigmaRule(
+                rule_uuid=rule_uuid,
+                rule_yaml=sigma_yaml,
+                description=sigma_rule.get("description"),
+                title=sigma_rule.get("title"),
+                user=None,
+            )
+            db_session.add(sigma_db_rule)
+            db_session.commit()
+
+            sigma_db_rule.set_status(sigma_rule.get("status", "experimental"))
+            # query string is not stored in the database but we attach it to
+            # the JSON result here as it is added in the GET methods
+            sigma_db_rule.query_string = sigma_rule.get("search_query")
+        else:
+            print(f"Rule already imported: ", sigma_rule.get("title"))
