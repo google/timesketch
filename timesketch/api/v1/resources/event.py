@@ -332,7 +332,7 @@ class EventAddAttributeResource(resources.ResourceMixin, Resource):
 
     EVENT_FIELDS = ["_id", "_type", "_index", "attributes"]
     ATTRIBUTE_FIELDS = ["attr_name", "attr_value"]
-    INVALID_ATTRIBUTES_NAMES = [
+    RESERVED_ATTRIBUTE_NAMES = [
         'datetime', 'timestamp', 'message', 'timestamp_desc']
 
     MAX_EVENTS = 100000
@@ -486,7 +486,7 @@ class EventAddAttributeResource(resources.ResourceMixin, Resource):
                             request_attribute["attr_value"])
 
                         if (request_attribute_name in
-                            self.INVALID_ATTRIBUTES_NAMES):
+                            self.RESERVED_ATTRIBUTE_NAMES):
                             info_dict["last_10_errors"].append(
                                 f"Cannot add '{request_attribute_name}' for "
                                 f"event_id '{request_event_id}', name not "

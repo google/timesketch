@@ -233,7 +233,7 @@ level: high
                     "attributes_added": 1,
                     "chunks_per_index": {old_event["_index"]: 1},
                     "error_count": 0,
-                    "errors": [],
+                    "last_10_errors": [],
                     "events_modified": 1
                 },
                 "objects": []
@@ -278,11 +278,11 @@ level: high
         self.assertions.assertIn(
             f"Attribute 'existing_attr' already exists for event_id "
             f"'{old_event['_id']}'.",
-            response['meta']['errors'])
+            response['meta']['last_10_errors'])
         self.assertions.assertIn(
             f"Cannot add 'message' for event_id '{old_event['_id']}', name not "
             f"allowed.",
-            response['meta']['errors'])
+            response['meta']['last_10_errors'])
 
         new_event = sketch.get_event(old_event["_id"], old_event["_index"])
         # Confirm attributes have not been changed.
