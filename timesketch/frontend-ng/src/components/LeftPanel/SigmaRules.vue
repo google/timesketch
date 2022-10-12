@@ -14,27 +14,34 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div v-if="tags.length">
+  <div>
     <div class="pa-4" flat :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
       <span style="cursor: pointer" @click="expanded = !expanded"
-        ><v-icon left>mdi-tag-multiple-outline</v-icon> Tags ({{ tags.length }})</span
+        ><v-icon left>mdi-sigma-lower</v-icon> Sigma Rules ({{ sigmaRules.length }})</span
       >
     </div>
-
     <v-expand-transition>
       <div v-show="expanded">
-        <v-divider></v-divider>
-        <v-row
-          no-gutters
-          v-for="tag in tags"
-          :key="tag.tag"
-          class="pa-3 pl-5"
-          :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
-        >
-          <div @click="search(tag.tag)" style="cursor: pointer; font-size: 0.9em">
-            <span>{{ tag.tag }} ({{ tag.count | compactNumber }})</span>
-          </div>
-        </v-row>
+        <v-data-iterator :items="sigmaRules" :items-per-page.sync="itemsPerPage" :search="search">
+          <template v-slot:header>
+            <v-toolbar flat>
+              <v-text-field
+                v-model="search"
+                clearable
+                hide-details
+                outlined
+                dense
+                prepend-inner-icon="mdi-magnify"
+                label="Search for a rule.."
+              ></v-text-field>
+            </v-toolbar>
+          </template>
+
+          <template v-slot:default="props">
+            <ts-sigma-rule v-for="sigmaRule in props.items" :key="sigmaRule.id" :sigma-rule="sigmaRule">
+            </ts-sigma-rule>
+          </template>
+        </v-data-iterator>
       </div>
     </v-expand-transition>
     <v-divider></v-divider>
@@ -42,24 +49,20 @@ limitations under the License.
 </template>
 
 <script>
-import EventBus from '../../main'
-
-const defaultQueryFilter = () => {
-  return {
-    from: 0,
-    terminate_after: 40,
-    size: 40,
-    indices: '_all',
-    order: 'asc',
-    chips: [],
-  }
-}
+import ApiClient from '../../utils/RestApiClient'
+import TsSigmaRule from './SigmaRule.vue'
 
 export default {
   props: [],
+  components: {
+    TsSigmaRule,
+  },
   data: function () {
     return {
+      sigmaRules: [],
       expanded: false,
+      itemsPerPage: 10,
+      search: '',
     }
   },
   computed: {
@@ -69,18 +72,13 @@ export default {
     meta() {
       return this.$store.state.meta
     },
-    tags() {
-      return this.$store.state.tags
-    },
   },
-  methods: {
-    search(tag) {
-      let eventData = {}
-      eventData.doSearch = true
-      eventData.queryString = 'tag:' + '"' + tag + '"'
-      eventData.queryFilter = defaultQueryFilter()
-      EventBus.$emit('setQueryAndFilter', eventData)
-    },
+  created() {
+    ApiClient.getSigmaList()
+      .then((response) => {
+        this.sigmaRules = response.data.objects
+      })
+      .catch((e) => {})
   },
 }
 </script>

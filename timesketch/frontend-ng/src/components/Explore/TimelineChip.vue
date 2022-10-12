@@ -14,116 +14,207 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-menu offset-y content-class="menu-with-gap">
-    <template v-slot:activator="{ on }">
-      <v-chip v-on="on" :style="getTimelineStyle(timeline)">
-        {{ timeline.name }}
-        <v-avatar right style="background-color: rgba(0, 0, 0, 0.1); font-size: 0.55em">
-          {{ eventsCount | compactNumber }}
-        </v-avatar>
-      </v-chip>
-    </template>
-    <v-card width="300">
-      <v-list>
-        <v-list-item v-if="timelineStatus === 'ready'">
-          <v-list-item-action>
-            <v-icon>mdi-square-edit-outline</v-icon>
-          </v-list-item-action>
-          <v-list-item-subtitle>Rename timeline</v-list-item-subtitle>
-        </v-list-item>
+  <span>
+    <v-dialog v-if="timelineStatus === 'processing'" v-model="dialogStatus" width="600">
+      <template v-slot:activator="{ on, attrs }">
+        <v-chip v-on="on" :style="getTimelineStyle(timeline)" class="mr-2 mb-3">
+          <span class="timeline-name-ellipsis">{{ timeline.name }}</span>
+          <span class="ml-1">
+            <v-progress-circular small indeterminate color="grey" :size="20" :width="1"></v-progress-circular>
+          </span>
+        </v-chip>
+      </template>
+      <v-card>
+        <v-app-bar flat dense>Importing events to timeline "{{ timeline.name }}"</v-app-bar>
+        <div class="pa-5">
+          <ul>
+            <li><strong>Opensearch index: </strong>{{ timeline.searchindex.index_name }}</li>
+            <li v-if="timelineStatus === 'processing' || timelineStatus === 'ready'">
+              <strong>Number of events: </strong>
+              {{ allIndexedEvents | compactNumber }}
+            </li>
+            <li><strong>Created by: </strong>{{ timeline.user.username }}</li>
+            <li>
+              <strong>Created at: </strong>{{ timeline.created_at | shortDateTime }}
+              <small>({{ timeline.created_at | timeSince }})</small>
+            </li>
+          </ul>
+          <br />
 
-        <v-list-item @click="$emit('toggle', timeline)" v-if="timelineStatus === 'ready'">
-          <v-list-item-action>
-            <v-icon v-if="isSelected">mdi-eye-off</v-icon>
-            <v-icon v-else>mdi-eye</v-icon>
-          </v-list-item-action>
-          <v-list-item-subtitle v-if="isSelected">Temporarily disabled</v-list-item-subtitle>
-          <v-list-item-subtitle v-else>Re-enable</v-list-item-subtitle>
-        </v-list-item>
-        <v-dialog v-model="dialogStatus" width="600">
-          <template v-slot:activator="{ on, attrs }">
-            <v-list-item v-bind="attrs" v-on="on">
-              <v-list-item-action>
-                <v-icon>{{ iconStatus }}</v-icon>
-              </v-list-item-action>
-              <v-list-item-subtitle>Status</v-list-item-subtitle>
-            </v-list-item>
-          </template>
-          <v-card>
-            <v-app-bar flat dense>Detailed information for: {{ timeline.name }}</v-app-bar>
-            <v-card-text class="pa-5">
-              <ul style="list-style-type: none">
-                <li><strong>Opensearch index: </strong>{{ timeline.searchindex.index_name }}</li>
-                <li v-if="timelineStatus === 'processing' || timelineStatus === 'ready'">
-                  <strong>Number of events: </strong>
-                  {{ allIndexedEvents | compactNumber }}
-                </li>
-                <li><strong>Created by: </strong>{{ timeline.user.username }}</li>
-                <li>
-                  <strong>Created at: </strong>{{ timeline.created_at | shortDateTime }}
-                  <small>({{ timeline.created_at | timeSince }})</small>
-                </li>
-                <li v-if="timelineStatus === 'processing'">
-                  <strong>Percentage Completed</strong> {{ Math.floor(percentage) }} %
-                </li>
-                <li v-if="timelineStatus === 'processing'">
-                  <strong>Remaining time:</strong> {{ secondsToString(deltaRT) }}
-                </li>
-              </ul>
-              <br /><br />
-              <v-alert
-                v-for="datasource in datasources"
-                :key="datasource.id"
-                colored-border
-                border="left"
-                elevation="1"
-                :type="datasourceStatusColors(datasource)"
-              >
-                <ul style="list-style-type: none">
-                  <li>
-                    <strong>Total File Events:</strong
-                    >{{ totalEventsDatasource(datasource.file_on_disk) | compactNumber }}
-                  </li>
-                  <li v-if="datasource.status[0].status === 'fail'">
-                    <strong>Error message:</strong>
-                    <code v-if="datasource.error_message"> {{ datasource.error_message }}</code>
-                  </li>
+          <div class="mb-3">{{ datasourcesProcessing.length }} datasource(s) in progress..</div>
+          <v-alert
+            v-for="datasource in datasourcesProcessing"
+            :key="datasource.id"
+            colored-border
+            border="left"
+            elevation="1"
+            :color="datasourceStatusColors(datasource)"
+          >
+            <ul>
+              <li><strong>Original filename:</strong> {{ datasource.original_filename }}</li>
+              <li><strong>File on disk:</strong> {{ datasource.file_on_disk }}</li>
+              <li><strong>File size:</strong> {{ datasource.file_size | compactBytes }}</li>
+              <li><strong>Provider:</strong> {{ datasource.provider }}</li>
+              <li v-if="datasource.data_label"><strong>Data label:</strong> {{ datasource.data_label }}</li>
+              <li><strong>Status:</strong> {{ datasource.status[0].status }}</li>
+              <li>
+                <strong>Total File Events:</strong>{{ totalEventsDatasource(datasource.file_on_disk) | compactNumber }}
+              </li>
+              <li v-if="datasource.status[0].status === 'fail'">
+                <strong>Error message:</strong>
+                <code v-if="datasource.error_message"> {{ datasource.error_message }}</code>
+              </li>
+            </ul>
+            <br />
+          </v-alert>
 
-                  <li><strong>Provider:</strong> {{ datasource.provider }}</li>
-                  <li><strong>File on disk:</strong> {{ datasource.file_on_disk }}</li>
-                  <li><strong>File size:</strong> {{ datasource.file_size | compactBytes }}</li>
-                  <li><strong>Original filename:</strong> {{ datasource.original_filename }}</li>
-                  <li><strong>Data label:</strong> {{ datasource.data_label }}</li>
-                  <li><strong>Status:</strong> {{ datasource.status[0].status }}</li>
-                </ul>
-                <br />
-              </v-alert>
-              <v-progress-linear
-                v-if="timelineStatus === 'processing'"
-                color="light-blue"
-                height="10"
-                :value="Math.floor(percentage)"
-                striped
-              ></v-progress-linear>
-            </v-card-text>
-            <v-divider></v-divider>
-            <v-card-actions>
-              <v-spacer></v-spacer>
-              <v-btn color="primary" text @click="dialogStatus = false"> Close </v-btn>
-            </v-card-actions>
+          <v-card outlined v-if="percentComplete > 0.1">
+            <v-card-title>{{ eventsPerSecond.slice(-1)[0] }} events/s</v-card-title>
+            <v-sparkline
+              :value="eventsPerSecond"
+              :gradient="sparkline.gradient"
+              :smooth="sparkline.radius || false"
+              :padding="sparkline.padding"
+              :line-width="sparkline.width"
+              :stroke-linecap="sparkline.lineCap"
+              :gradient-direction="sparkline.gradientDirection"
+              :fill="sparkline.fill"
+              :type="sparkline.type"
+              :auto-line-width="sparkline.autoLineWidth"
+              auto-draw
+            >
+            </v-sparkline>
+            <v-sheet class="py-4 px-3">
+              <v-progress-linear color="light-blue" height="25" :value="percentComplete" rounded>
+                {{ percentComplete }}% (complete {{ processingETA() }})
+              </v-progress-linear>
+            </v-sheet>
           </v-card>
-        </v-dialog>
-      </v-list>
-    </v-card>
-  </v-menu>
+          <v-card v-else outlined class="pa-3"> Waiting for processing to begin.. </v-card>
+        </div>
+        <v-divider></v-divider>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" text @click="dialogStatus = false"> Close </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <v-menu v-else offset-y content-class="menu-with-gap">
+      <template v-slot:activator="{ on }">
+        <v-chip v-on="on" :style="getTimelineStyle(timeline)" class="mr-2 mb-3">
+          <v-icon v-if="timelineStatus === 'fail'" left color="red"> mdi-alert-circle-outline </v-icon>
+          <span class="timeline-name-ellipsis">{{ timeline.name }}</span>
+
+          <span v-if="timelineStatus === 'processing'" class="ml-3">
+            <v-progress-circular small indeterminate color="grey" :size="20" :width="2"></v-progress-circular>
+          </span>
+          <v-avatar
+            v-if="timelineStatus === 'ready'"
+            right
+            style="background-color: rgba(0, 0, 0, 0.1); font-size: 0.55em"
+          >
+            {{ eventsCount | compactNumber }}
+          </v-avatar>
+        </v-chip>
+      </template>
+      <v-card flat width="300">
+        <v-list>
+          <v-list-item v-if="timelineStatus === 'ready'">
+            <v-list-item-action>
+              <v-icon>mdi-square-edit-outline</v-icon>
+            </v-list-item-action>
+            <v-list-item-subtitle>Rename timeline</v-list-item-subtitle>
+          </v-list-item>
+          <v-list-item @click="$emit('toggle', timeline)" v-if="timelineStatus === 'ready'">
+            <v-list-item-action>
+              <v-icon v-if="isSelected">mdi-eye-off</v-icon>
+              <v-icon v-else>mdi-eye</v-icon>
+            </v-list-item-action>
+            <v-list-item-subtitle v-if="isSelected">Temporarily disabled</v-list-item-subtitle>
+            <v-list-item-subtitle v-else>Re-enable</v-list-item-subtitle>
+          </v-list-item>
+
+          <v-dialog v-model="dialogStatus" width="600">
+            <template v-slot:activator="{ on, attrs }">
+              <v-list-item v-bind="attrs" v-on="on">
+                <v-list-item-action>
+                  <v-icon>{{ iconStatus }}</v-icon>
+                </v-list-item-action>
+                <v-list-item-subtitle>Data sources ({{ datasources.length }})</v-list-item-subtitle>
+              </v-list-item>
+            </template>
+            <v-card>
+              <v-app-bar flat dense>{{ timeline.name }}</v-app-bar>
+              <div class="pa-3">
+                <ul style="list-style-type: none">
+                  <li><strong>Opensearch index: </strong>{{ timeline.searchindex.index_name }}</li>
+                  <li v-if="timelineStatus === 'processing' || timelineStatus === 'ready'">
+                    <strong>Number of events: </strong>
+                    {{ allIndexedEvents | compactNumber }}
+                  </li>
+                  <li><strong>Created by: </strong>{{ timeline.user.username }}</li>
+                  <li>
+                    <strong>Created at: </strong>{{ timeline.created_at | shortDateTime }}
+                    <small>({{ timeline.created_at | timeSince }})</small>
+                  </li>
+                </ul>
+
+                <br />
+                {{ datasources.length }} data source(s) in this timeline <br /><br />
+                <v-alert
+                  v-for="datasource in datasources"
+                  :key="datasource.id"
+                  colored-border
+                  border="left"
+                  elevation="1"
+                  :color="datasourceStatusColors(datasource)"
+                >
+                  <ul style="list-style-type: none">
+                    <li><strong>Original filename:</strong> {{ datasource.original_filename }}</li>
+                    <li><strong>File on disk:</strong> {{ datasource.file_on_disk }}</li>
+                    <li><strong>File size:</strong> {{ datasource.file_size | compactBytes }}</li>
+                    <li><strong>Provider:</strong> {{ datasource.provider }}</li>
+                    <li v-if="datasource.data_label"><strong>Data label:</strong> {{ datasource.data_label }}</li>
+                    <li><strong>Status:</strong> {{ datasource.status[0].status }}</li>
+                    <li>
+                      <strong>Total File Events:</strong
+                      >{{ totalEventsDatasource(datasource.file_on_disk) | compactNumber }}
+                    </li>
+                    <li v-if="datasource.status[0].status === 'fail'">
+                      <strong>Error message:</strong>
+                      <code v-if="datasource.error_message"> {{ datasource.error_message }}</code>
+                    </li>
+                  </ul>
+                  <br />
+                </v-alert>
+              </div>
+              <v-card-actions>
+                <v-spacer></v-spacer>
+                <v-btn color="primary" text @click="dialogStatus = false"> Close </v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
+        </v-list>
+      </v-card>
+    </v-menu>
+  </span>
 </template>
 
 <script>
 import Vue from 'vue'
 import _ from 'lodash'
-
-import EventBus from '../../main'
+import dayjs from '@/plugins/dayjs'
 import ApiClient from '../../utils/RestApiClient'
+
+const gradients = [
+  ['#222'],
+  ['#42b3f4'],
+  ['red', 'orange', 'yellow'],
+  ['purple', 'violet'],
+  ['#00c6ff', '#F0F', '#FF0'],
+  ['#f72047', '#ffd200', '#1feaea'],
+]
 
 export default {
   props: ['timeline', 'eventsCount', 'isSelected', 'isEmptyState'],
@@ -136,14 +227,27 @@ export default {
       showInfoModal: false,
       showEditModal: false,
       showAnalyzerModal: false,
-      isDarkTheme: false,
       autoRefresh: false,
       allIndexedEvents: 0, // all indexed events from ready and processed datasources
       totalEvents: null,
       dialogStatus: false,
       datasources: [],
-      deltaIndexedEvents: [],
       timelineStatus: null,
+      eventsPerSecond: [],
+
+      sparkline: {
+        width: 2,
+        radius: 10,
+        padding: 8,
+        lineCap: 'round',
+        gradient: gradients[5],
+        gradientDirection: 'bottom',
+        gradients,
+        fill: false,
+        type: 'trend',
+        autoDrawDuration: 4000,
+        autoLineWidth: false,
+      },
     }
   },
   computed: {
@@ -153,44 +257,25 @@ export default {
     datasourceErrors() {
       return this.timeline.datasources.filter((datasource) => datasource.error_message)
     },
+    datasourcesProcessing() {
+      return this.datasources.filter(
+        (datasource) => datasource.status[0].status === 'processing' || datasource.status[0].status === 'queueing'
+      )
+    },
     sketch() {
       return this.$store.state.sketch
     },
-    IER() {
-      // IER = Indexed Events Rate
-      return this.deltaIndexedEvents.reduce((a, b) => a + b, 0) / Math.max(this.deltaIndexedEvents.length * 5, 1)
-    },
-    APE() {
-      // APE = All Processing Events
+    totalEventsToIndex() {
       return this.datasources
         .filter((x) => x.status[0].status === 'processing')
         .map((x) => x.total_file_events)
         .reduce((a, b) => a + b, 0)
     },
-    t0() {
-      let listCreationDatasource = this.datasources
-        .filter((x) => x.status[0].status === 'processing')
-        .map((x) => {
-          let t = new Date(x.created_at)
-          return t.getTime() / 1000
-        })
-      return Math.min(...listCreationDatasource)
+    secondsToComplete() {
+      return this.totalEventsToIndex / this.avarageEventsPerSecond()
     },
-    deltaTotal() {
-      // the total time to upload the processing datasource
-      if (this.IER === 0) return 0
-      return this.APE / this.IER
-    },
-    deltaRT() {
-      // delta Remaining Time
-      if (this.deltaTotal === 0) return 100000 // transitory situation
-      let t = new Date()
-      let tNow = t.getTime() / 1000
-      return Math.max(this.deltaTotal - (tNow - this.t0), 0)
-    },
-    percentage() {
-      if (this.IER === 0) return 0
-      return (1 - this.deltaRT / this.deltaTotal) * 100
+    percentComplete() {
+      return Math.floor((this.secondsSinceStart() / this.secondsToComplete) * 100) || 0
     },
     iconStatus() {
       if (this.timelineStatus === 'ready') return 'mdi-information-outline'
@@ -211,6 +296,26 @@ export default {
         this.$emit('remove', this.timeline)
       }
     },
+    secondsSinceStart() {
+      if (!this.datasourcesProcessing.length) {
+        return 0
+      }
+      let start = dayjs.utc(this.datasourcesProcessing[0].updated_at)
+      let end = dayjs.utc()
+      let diffSeconds = end.diff(start, 'second')
+      return diffSeconds
+    },
+    avarageEventsPerSecond() {
+      const sum = this.eventsPerSecond.reduce((a, b) => a + b, 0)
+      const avg = sum / this.eventsPerSecond.length || 0
+      return Math.floor(avg)
+    },
+    processingETA() {
+      let secondsLeft = this.secondsToComplete - this.secondsSinceStart()
+      let eta = dayjs().add(secondsLeft, 'second').fromNow()
+      return eta
+    },
+
     // Set debounce to 300ms if full Chrome colorpicker is used.
     updateColor: _.debounce(function (color) {
       this.newColor = color.hex
@@ -220,9 +325,6 @@ export default {
       Vue.set(this.timeline, 'color', this.newColor)
       this.$emit('save', this.timeline)
     }, 0),
-    toggleTheme: function () {
-      this.isDarkTheme = !this.isDarkTheme
-    },
     getTimelineStyle(timeline) {
       let backgroundColor = timeline.color
       let textDecoration = 'none'
@@ -239,11 +341,9 @@ export default {
         } else {
           opacity = '100%'
         }
-      } else if (this.timelineStatus === 'processing') {
-        p = this.percentage
       } else {
-        backgroundColor = '#631c1c'
-        textDecoration = 'line-through'
+        backgroundColor = '#f5f5f5'
+        opacity = '100%'
       }
       let bgColor = 'linear-gradient(90deg, ' + backgroundColor + ' ' + p + '%, #d2d2d2  0%) '
       if (this.$vuetify.theme.dark) {
@@ -264,13 +364,24 @@ export default {
         .then((response) => {
           this.timelineStatus = response.data.objects[0].status[0].status
           this.datasources = response.data.objects[0].datasources
+          // This is a naive approach and is misleading if there are multiple
+          // datasources importing at the same time, or multiple timelines importing to
+          // the same index.
+          //
+          // TODO: Add datasource ID to all events at import time like we do with
+          // timeline ID. This will give us the ability to calculate index progress per
+          // datasource, and also enable deletion of datasources from opensearch
+          // indices.
+          //
+          // Tracking in: https://github.com/google/timesketch/issues/2361
           let tmpAllIndexedEvents = this.allIndexedEvents
           this.allIndexedEvents = response.data.meta.lines_indexed
           let deltaEvents = this.allIndexedEvents - tmpAllIndexedEvents
-          if (deltaEvents < 10000) {
-            // clean data: deltaEvents greater than 10K is related to Server "errors"
-            this.deltaIndexedEvents.push(deltaEvents) // difference of indexed events from one iteration to the other one
+
+          if (deltaEvents < 10000 && deltaEvents > 0) {
+            this.eventsPerSecond.push(Math.floor(deltaEvents / 5))
           }
+
           if (this.timelineStatus !== 'ready' && this.timelineStatus !== 'fail') {
             this.autoRefresh = true
           } else {
@@ -280,23 +391,16 @@ export default {
             })
           }
         })
-        .catch((e) => {})
-    },
-    secondsToString(d) {
-      d = Number(d)
-      var h = Math.floor(d / 3600)
-      var m = Math.floor((d % 3600) / 60)
-      var s = Math.floor((d % 3600) % 60)
-
-      var hDisplay = h > 0 ? h + (h === 1 ? ' hour, ' : ' hours, ') : ''
-      var mDisplay = m > 0 ? m + (m === 1 ? ' minute, ' : ' minutes, ') : ''
-      var sDisplay = s > 0 ? s + (s === 1 ? ' second' : ' seconds') : ''
-      return hDisplay + mDisplay + sDisplay
+        .catch((e) => {
+          console.log(e)
+        })
     },
     datasourceStatusColors(datasource) {
       if (datasource.status[0].status === 'ready' || datasource.status === []) {
-        return 'info'
+        return 'success'
       } else if (datasource.status[0].status === 'processing') {
+        return 'info'
+      } else if (datasource.status[0].status === 'queueing') {
         return 'warning'
       }
       // status = fail
@@ -316,19 +420,16 @@ export default {
     })
   },
   created() {
-    this.isDarkTheme = localStorage.theme === 'dark'
-    EventBus.$on('isDarkTheme', this.toggleTheme)
-
     this.initialColor = {
       hex: this.timeline.color,
     }
+    // TODO: Move to computed
     this.timelineStatus = this.timeline.status[0].status
     this.datasources = this.timeline.datasources
+
     if (this.timelineStatus === 'processing') {
       this.autoRefresh = true
-      this.fetchData()
     } else {
-      this.deltaIndexedEvents = []
       this.autoRefresh = false
       this.allIndexedEvents = this.meta.stats_per_timeline[this.timeline.id]['count']
     }
@@ -350,14 +451,11 @@ export default {
       } else {
         clearInterval(this.t)
         this.t = false
-        this.deltaIndexedEvents = []
       }
     },
     timeline() {
       if (this.timeline.datasources.length > this.datasources.length) {
         this.fetchData()
-      } else {
-        this.deltaIndexedEvents = []
       }
     },
   },

@@ -18,19 +18,20 @@ import pathlib
 import json
 import yaml
 
-
 import click
 from flask.cli import FlaskGroup
 from sqlalchemy.exc import IntegrityError
 
 from timesketch import version
 from timesketch.app import create_app
+from timesketch.lib import sigma_util
 from timesketch.models import db_session
 from timesketch.models import drop_all
 from timesketch.models.user import Group
 from timesketch.models.user import User
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import SearchTemplate
+from timesketch.models.sigma import SigmaRule
 
 
 @click.group(cls=FlaskGroup, create_app=create_app)
@@ -269,37 +270,99 @@ def import_search_templates(path):
                 file_paths.add(os.path.join(root, file))
 
     for file_path in file_paths:
-        search_template_dict = None
+        search_templates = None
         with open(file_path, "r") as fh:
-            search_template_dict = yaml.safe_load(fh.read())
+            search_templates = yaml.safe_load(fh.read())
 
-        if search_template_dict:
-            print(f"Importing: {search_template_dict.get('short_name')}")
-            name = search_template_dict.get("display_name")
-            short_name = search_template_dict.get("short_name")
-            description = search_template_dict.get("description")
-            uuid = search_template_dict.get("id")
-            query_string = search_template_dict.get("query_string")
-            query_filter = search_template_dict.get("query_filter", {})
-            query_dsl = search_template_dict.get("query_dsl", {})
-            tags = search_template_dict.get("tags", [])
+        if isinstance(search_templates, dict):
+            search_template_list = [search_template_list]
 
-            searchtemplate = SearchTemplate.query.filter_by(template_uuid=uuid).first()
-            if not searchtemplate:
-                searchtemplate = SearchTemplate(name=name, template_uuid=uuid)
+        if search_templates:
+            for search_template_dict in search_templates:
+                print(f"Importing: {search_template_dict.get('short_name')}")
+                name = search_template_dict.get("display_name")
+                short_name = search_template_dict.get("short_name")
+                description = search_template_dict.get("description")
+                uuid = search_template_dict.get("id")
+                query_string = search_template_dict.get("query_string")
+                query_filter = search_template_dict.get("query_filter", {})
+                query_dsl = search_template_dict.get("query_dsl", {})
+                tags = search_template_dict.get("tags", [])
+
+                searchtemplate = SearchTemplate.query.filter_by(
+                    template_uuid=uuid
+                ).first()
+                if not searchtemplate:
+                    searchtemplate = SearchTemplate(name=name, template_uuid=uuid)
+                    db_session.add(searchtemplate)
+                    db_session.commit()
+
+                searchtemplate.name = name
+                searchtemplate.short_name = short_name
+                searchtemplate.description = description
+                searchtemplate.template_json = json.dumps(search_template_dict)
+                searchtemplate.query_string = query_string
+                searchtemplate.query_filter = json.dumps(query_filter)
+                searchtemplate.query_dsl = json.dumps(query_dsl)
+
+                if tags:
+                    for tag in tags:
+                        searchtemplate.add_label(tag)
+
                 db_session.add(searchtemplate)
                 db_session.commit()
 
-            searchtemplate.short_name = short_name
-            searchtemplate.description = description
-            searchtemplate.template_json = json.dumps(search_template_dict)
-            searchtemplate.query_string = query_string
-            searchtemplate.query_filter = json.dumps(query_filter)
-            searchtemplate.query_dsl = json.dumps(query_dsl)
 
-            if tags:
-                for tag in tags:
-                    searchtemplate.add_label(tag)
+@cli.command(name="import-sigma-rules")
+@click.argument("path")
+def import_sigma_rules(path):
+    """Import sigma rules from filesystem path."""
+    file_paths = set()
+    supported_file_types = [".yml", ".yaml"]
+    for root, _, files in os.walk(path):
+        for file in files:
+            file_extension = pathlib.Path(file.lower()).suffix
+            if file_extension in supported_file_types:
+                file_paths.add(os.path.join(root, file))
 
-            db_session.add(searchtemplate)
+    for file_path in file_paths:
+        sigma_rule = None
+        sigma_yaml = None
+        with open(file_path, "r") as fh:
+            try:
+                sigma_yaml = fh.read()
+                sigma_rule = sigma_util.parse_sigma_rule_by_text(sigma_yaml)
+            except ValueError as e:
+                print(f"Sigma Rule Parsing error: {e}")
+                continue
+
+        print(f"Importing: {sigma_rule.get('title')}")
+
+        if not sigma_rule:
+            continue
+
+        # Query rules to see if it already exist and exit if found
+        rule_uuid = sigma_rule.get("id")
+        sigma_rule_from_db = SigmaRule.query.filter_by(rule_uuid=rule_uuid).first()
+        if sigma_rule_from_db:
+            print(f"Rule {rule_uuid} is already imported")
+            continue
+
+        sigma_db_rule = SigmaRule.query.filter_by(rule_uuid=rule_uuid).first()
+        if not sigma_db_rule:
+            sigma_db_rule = SigmaRule(
+                rule_uuid=rule_uuid,
+                rule_yaml=sigma_yaml,
+                description=sigma_rule.get("description"),
+                title=sigma_rule.get("title"),
+                user=None,
+            )
+            db_session.add(sigma_db_rule)
             db_session.commit()
+
+            sigma_db_rule.set_status(sigma_rule.get("status", "experimental"))
+            # query string is not stored in the database but we attach it to
+            # the JSON result here as it is added in the GET methods
+            sigma_db_rule.query_string = sigma_rule.get("search_query")
+        else:
+            print(f"Rule already imported: {sigma_rule.get('title')}")
