@@ -426,3 +426,30 @@ def remove_all_sigma_rules():
                 db_session.commit()
 
             print("All rules deleted")
+
+
+@cli.command(name="export-sigma-rules")
+@click.argument("path")
+def export_sigma_rules(path):
+    """Export sigma rules to a filesystem path."""
+
+    if not os.path.isdir(path):
+        raise RuntimeError(
+            "The directory needs to exist, please create: "
+            "{0:s} first".format(path)
+        )
+
+    all_sigma_rules = SigmaRule.query.all()
+
+    n = 0
+
+    for rule in all_sigma_rules:
+        file_path = os.path.join(path, f"{rule.title}.yml")
+        if os.path.isfile(file_path):
+            print("File [{0:s}] already exists.".format(file_path))
+            continue
+
+        with open(file_path, "wb") as fw:
+            fw.write(rule.rule_yaml.encode('utf-8'))
+        n = n + 1
+    print(f"{n} Sigma rules exported")

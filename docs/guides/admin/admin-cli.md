@@ -246,9 +246,9 @@ Command:
 tsctl similarity_score
 ```
 
-## Sigma
+### Sigma
 
-### List Sigma rules
+#### List Sigma rules
 
 Lists all Sigma rules installed on a system
 
@@ -256,9 +256,9 @@ Lists all Sigma rules installed on a system
 tsctl list-sigma-rules
 ```
 
-### Add Sigma rules in a folder
+#### Add Sigma rules in a folder
 
-Will add all Sigma rules in a folder and its subfolders to the databse
+Will add all Sigma rules in a folder and its subfolders to the databse.
 
 ```shell
 tsctl import-sigma-rules sigma/rules/cloud/gcp/
@@ -269,7 +269,16 @@ Importing: Google Cloud Re-identifies Sensitive Information
 ...
 ```
 
-### Remove a Sigma rule
+#### Export Sigma rules
+
+Will export all Sigma rules to a folder.
+
+```shell
+tsctl export-sigma-rules ./test
+13 Sigma rules exported
+```
+
+#### Remove a Sigma rule
 
 This will remove a single Sigma rule from the databse
 
@@ -278,7 +287,7 @@ tsctl remove-sigma-rule 13f81a90-a69c-4fab-8f07-b5bb55416a9f
 Rule 13f81a90-a69c-4fab-8f07-b5bb55416a9f deleted
 ```
 
-### Drop all Sigma rules
+#### Drop all Sigma rules
 
 Will drop all Sigma rules from database.
 
