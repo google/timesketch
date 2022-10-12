@@ -15,14 +15,58 @@ limitations under the License.
 -->
 <template>
   <div>
-    <v-row no-gutters class="pa-3" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
-      <div @click="expanded = !expanded" style="cursor: pointer; font-size: 0.9em">
+    <v-row no-gutters class="pa-3"
+      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
+      <div @click="expanded = !expanded"
+        style="cursor: pointer; font-size: 0.9em">
         <v-icon v-if="!expanded">mdi-chevron-right</v-icon>
         <v-icon v-else>mdi-chevron-down</v-icon>
         {{ sigmaRule.title }}
       </div>
       <v-spacer></v-spacer>
-      <div><v-icon>mdi-dots-vertical</v-icon></div>
+      <div>
+        <v-menu offset-y>
+          <template v-slot:activator="{ on, attrs }">
+            <v-avatar>
+              <v-btn small icon v-bind="attrs" v-on="on">
+                <v-icon>mdi-dots-vertical</v-icon>
+              </v-btn>
+            </v-avatar>
+          </template>
+          <v-card>
+            <v-list>
+              <v-list-item-group color="primary">
+                <v-list-item v-on:click="editRule(sigmaRule.rule_uuid)">
+                  <v-list-item-icon>
+                    <v-icon>mdi-brightness-6</v-icon>
+                  </v-list-item-icon>
+                  <v-list-item-content>
+                    <v-list-item-title>Edit Rule</v-list-item-title>
+                  </v-list-item-content>
+                </v-list-item>
+
+                <v-list-item v-on:click="archiveRule(sigmaRule.rule_uuid)">
+                  <v-list-item-icon>
+                    <v-icon>mdi-archive</v-icon>
+                  </v-list-item-icon>
+                  <v-list-item-content>
+                    <v-list-item-title>Archive Rule</v-list-item-title>
+                  </v-list-item-content>
+                </v-list-item>
+
+                <v-list-item v-on:click="copyAndTweakRule(sigmaRule.rule_uuid)">
+                  <v-list-item-icon>
+                    <v-icon>mdi-export</v-icon>
+                  </v-list-item-icon>
+                  <v-list-item-content>
+                    <v-list-item-title>Copy and tweak rule</v-list-item-title>
+                  </v-list-item-content>
+                </v-list-item>
+              </v-list-item-group>
+            </v-list>
+          </v-card>
+        </v-menu>
+      </div>
     </v-row>
 
     <v-expand-transition>
@@ -42,10 +86,12 @@ limitations under the License.
                       </div>
                     </span>
                     <span v-else-if="k === 'falsepositives'">
-                      <v-chip v-for="tag in v" :key="tag" rounded x-small class="mr-2">{{ tag }}</v-chip>
+                      <v-chip v-for="tag in v" :key="tag" rounded x-small
+                        class="mr-2">{{ tag }}</v-chip>
                     </span>
                     <span v-else-if="k === 'tags'">
-                      <v-chip v-for="tag in v" :key="tag" rounded x-small class="mr-2">{{ tag }}</v-chip>
+                      <v-chip v-for="tag in v" :key="tag" rounded x-small
+                        class="mr-2">{{ tag }}</v-chip>
                     </span>
                     <span v-else>
                       {{ v }}
@@ -58,7 +104,8 @@ limitations under the License.
         </div>
 
         <div class="mt-3">
-          <v-btn @click="search(sigmaRule.search_query)" small depressed color="primary">Search</v-btn>
+          <v-btn @click="search(sigmaRule.search_query)" small depressed
+            color="primary">Search</v-btn>
         </div>
       </div>
     </v-expand-transition>
@@ -105,8 +152,19 @@ export default {
       console.log(eventData)
       EventBus.$emit('setQueryAndFilter', eventData)
     },
+    editRule(rule_uuid) {
+      console.log("Rule edit pressed: " + rule_uuid)
+    },
+    archiveRule(rule_uuid) {
+      console.log("Rule archive pressed: " + rule_uuid)
+    },
+    copyAndTweakRule(rule_uuid) {
+      console.log("Rule copy and tweak pressed: " + rule_uuid)
+    },
   },
 }
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+
+</style>
