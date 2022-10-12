@@ -348,7 +348,7 @@ class EventAddAttributeResourceTest(BaseTest):
                 "attributes_added": 2,
                 "chunks_per_index": {"1": 1},
                 "error_count": 0,
-                "errors": [],
+                "last_10_errors": [],
                 "events_modified": 2
             },
             "objects": []
@@ -594,7 +594,7 @@ class EventAddAttributeResourceTest(BaseTest):
         )
         self.assertIn(
             "Attribute 'exists' already exists for event_id '1'.",
-            response.json["meta"]["errors"])
+            response.json["meta"]["last_10_errors"])
 
     @mock.patch(
         "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
@@ -623,7 +623,7 @@ class EventAddAttributeResourceTest(BaseTest):
         )
         self.assertIn(
             "Attribute '_invalid' for event_id '1' invalid, cannot start with "
-            "'_'", response.json["meta"]["errors"])
+            "'_'", response.json["meta"]["last_10_errors"])
 
     @mock.patch(
         "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
@@ -652,7 +652,7 @@ class EventAddAttributeResourceTest(BaseTest):
         )
         self.assertIn(
             "Cannot add 'message' for event_id '1', name not allowed.",
-            response.json["meta"]["errors"])
+            response.json["meta"]["last_10_errors"])
 
 
 class EventAnnotationResourceTest(BaseTest):

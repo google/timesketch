@@ -416,12 +416,13 @@ class EventAddAttributeResource(resources.ResourceMixin, Resource):
             sketch_id: Integer primary key for a sketch database model.
 
         Returns:
-            An annotation in JSON (instance of flask.wrappers.Response).
+            A JSON instance of flask.wrappers.Response. Response metadata
+                includes metrics on events modified, attributes added, chunks
+                per index, number of errors and the last 10 errors.
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
-            msg = "No sketch found with this ID."
-            abort(HTTP_STATUS_CODE_NOT_FOUND, msg)
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
         if not sketch.has_permission(current_user, "write"):
             abort(
@@ -433,7 +434,7 @@ class EventAddAttributeResource(resources.ResourceMixin, Resource):
         datastore = self.datastore
 
         info_dict = {}
-        info_dict["errors"] = []
+        info_dict["last_10_errors"] = []
         info_dict["events_modified"] = 0
         info_dict["attributes_added"] = 0
 
@@ -486,17 +487,17 @@ class EventAddAttributeResource(resources.ResourceMixin, Resource):
 
                         if (request_attribute_name in
                             self.INVALID_ATTRIBUTES_NAMES):
-                            info_dict["errors"].append(
+                            info_dict["last_10_errors"].append(
                                 f"Cannot add '{request_attribute_name}' for "
                                 f"event_id '{request_event_id}', name not "
                                 f"allowed.")
                         elif request_attribute_name.startswith("_"):
-                            info_dict["errors"].append(
+                            info_dict["last_10_errors"].append(
                                 f"Attribute '{request_attribute_name}' for "
                                 f"event_id '{request_event_id}' invalid, "
                                 f"cannot start with '_'")
                         elif request_attribute_name in existing_attributes:
-                            info_dict["errors"].append(
+                            info_dict["last_10_errors"].append(
                                 f"Attribute '{request_attribute_name}' already "
                                 f"exists for event_id '{request_event_id}'.")
                         else:
@@ -513,9 +514,9 @@ class EventAddAttributeResource(resources.ResourceMixin, Resource):
                         info_dict["attributes_added"] += len(new_attributes)
 
         datastore.flush_queued_events()
-        info_dict["error_count"] = len(info_dict["errors"])
+        info_dict["error_count"] = len(info_dict["last_10_errors"])
         # Only return last 10 errors to prevent overly large responses.
-        info_dict["errors"] = info_dict["errors"][-10:]
+        info_dict["last_10_errors"] = info_dict["last_10_errors"][-10:]
         schema = {"meta": info_dict, "objects": []}
         response = jsonify(schema)
         response.status_code = HTTP_STATUS_CODE_OK
