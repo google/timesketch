@@ -29,6 +29,7 @@ jobs:
 
   # Test the PPA build packages
   PPA:
+    if: ${{ false }}  # disable until PPA packages has been fixed.
     runs-on: ubuntu-22.04
     strategy:
       matrix:

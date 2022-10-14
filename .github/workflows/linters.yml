@@ -6,7 +6,7 @@ on:
 
 jobs:
   PyLint:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
     strategy:
       matrix:
         os: [ubuntu-20.04, ubuntu-22.04]
@@ -36,7 +36,7 @@ jobs:
           for FILE in `git --no-pager diff origin/master --name-only --diff-filter=ACMR | grep \.py$`; do echo "Running pylint against ${FILE}"; pylint --rcfile=.pylintrc ${FILE}; done
 
   ESLint-frontend:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
     defaults:
       run:
         working-directory: ./timesketch/frontend
