@@ -5,7 +5,7 @@ import subprocess
 
 def run_python_tests():
     subprocess.check_call(
-        "pytest timesketch/ api_client/",
+        "python3 -m pytest timesketch/ api_client/",
         shell=True,
     )
 
