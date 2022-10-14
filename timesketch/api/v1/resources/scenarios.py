@@ -13,6 +13,7 @@
 # limitations under the License.
 """API for asking Timesketch scenarios for version 1 of the Timesketch API."""
 
+from encodings import search_function
 import logging
 import json
 
@@ -28,7 +29,7 @@ from timesketch.api.v1.utils import load_yaml_config
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.models import db_session
-from timesketch.models.sketch import Sketch
+from timesketch.models.sketch import SearchTemplate, Sketch
 from timesketch.models.sketch import Scenario
 from timesketch.models.sketch import Facet
 from timesketch.models.sketch import InvestigativeQuestion
@@ -136,6 +137,13 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
                     spec_json=json.dumps(question_dict),
                     user=current_user,
                 )
+                search_templates = question_dict.get("search_templates", [])
+                for template_uuid in search_templates:
+                    search_template = SearchTemplate.query.filter_by(
+                        template_uuid=template_uuid
+                    ).first()
+                    print("Adding: ", search_template.name)
+                    question.search_templates.append(search_template)
                 facet.questions.append(question)
 
         db_session.add(scenario)

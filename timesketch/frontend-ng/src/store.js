@@ -24,12 +24,17 @@ const defaultState = (currentUser) => {
     sketch: {},
     meta: {},
     searchHistory: {},
-    scenario: { facets: [] },
+    scenarios: [],
     tags: [],
     dataTypes: [],
     count: 0,
     currentSearchNode: null,
     currentUser: currentUser,
+    activeContext: {
+      scenario: null,
+      facet: null,
+      question: null
+    }
   }
 }
 
@@ -46,8 +51,8 @@ export default new Vuex.Store({
     SET_SEARCH_HISTORY(state, payload) {
       Vue.set(state, 'searchHistory', payload.objects)
     },
-    SET_SCENARIO(state, payload) {
-      Vue.set(state, 'scenario', payload.objects[0][0])
+    SET_SCENARIOS(state, payload) {
+      Vue.set(state, 'scenarios', payload.objects[0])
     },
     SET_TIMELINE_TAGS(state, payload) {
       let buckets = payload.objects[0]['field_bucket']['buckets']
@@ -72,6 +77,17 @@ export default new Vuex.Store({
         let currentUser = response.data.objects[0].username
         Vue.set(state, 'currentUser', currentUser)
       })
+    },
+    SET_ACTIVE_CONTEXT(state, payload) {
+      Vue.set(state, 'activeContext', payload)
+    },
+    CLEAR_ACTIVE_CONTEXT(state) {
+      let payload = {
+        scenario: null,
+        facet: null,
+        question: null
+      }
+      Vue.set(state, 'activeContext', payload)
     },
     RESET_STATE(state, payload) {
       ApiClient.getLoggedInUser().then((response) => {
@@ -116,13 +132,13 @@ export default new Vuex.Store({
         })
         .catch((e) => {})
     },
-    updateScenario(context, sketchId) {
+    updateScenarios(context, sketchId) {
       if (!sketchId) {
         sketchId = context.state.sketch.id
       }
       return ApiClient.getSketchScenarios(sketchId)
         .then((response) => {
-          context.commit('SET_SCENARIO', response.data)
+          context.commit('SET_SCENARIOS', response.data)
         })
         .catch((e) => {})
     },
@@ -164,6 +180,12 @@ export default new Vuex.Store({
           context.commit('SET_SIGMA_LIST', response.data)
         })
         .catch((e) => {})
+    },
+    setActiveContext(context, activeScenarioContext) {
+      context.commit('SET_ACTIVE_CONTEXT', activeScenarioContext)
+    },
+    clearActiveContext(context) {
+      context.commit('CLEAR_ACTIVE_CONTEXT')
     },
   },
 })

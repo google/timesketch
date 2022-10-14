@@ -15,17 +15,20 @@ limitations under the License.
 -->
 <template>
   <div v-if="scenario.facets.length">
-    <v-toolbar flat>
-      <v-toolbar-title style="font-size: 1em"
-        ><strong>{{ scenario.display_name }}</strong></v-toolbar-title
+    <div class="pa-4" flat :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
+      <span style="cursor: pointer" @click="expanded = !expanded"
+        ><v-icon left>mdi-clipboard-check-outline</v-icon> {{ scenario.display_name }}</span
       >
-    </v-toolbar>
-    <div v-show="!minimizePanel" class="mt-3">
-      <div v-for="facet in scenario.facets" :key="facet.id">
-        <ts-facet class="mt-3" :facet="facet"></ts-facet>
-      </div>
-      <v-btn disabled small text color="primary" class="ml-1 mt-3">+ Facet</v-btn>
     </div>
+
+    <v-expand-transition>
+      <div v-show="expanded">
+        <div v-for="facet in scenario.facets" :key="facet.id">
+          <ts-facet class="mt-3" :scenario="scenario" :facet="facet"></ts-facet>
+        </div>
+      </div>
+    </v-expand-transition>
+    <v-divider v-if="!expanded"></v-divider>
   </div>
 </template>
 
@@ -40,6 +43,7 @@ export default {
     return {
       activeQuestion: {},
       selectedItem: null,
+      expanded: false,
     }
   },
   computed: {

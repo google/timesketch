@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div>
+  <div v-if="sketch">
     <!-- Left panel -->
     <v-navigation-drawer app permanent :width="navigationDrawer.width" hide-overlay ref="drawer">
       <v-toolbar flat>
@@ -68,8 +68,9 @@ limitations under the License.
       </v-expand-transition>
       <v-divider></v-divider>
 
-      <ts-scenario :scenario="scenario"></ts-scenario>
-      <br />
+      <!--<v-btn @click="addScenario">Add scenario</v-btn>-->
+
+      <ts-scenario v-for="scenario in scenarios" :key="scenario.id" :scenario="scenario"></ts-scenario>
       <ts-saved-searches></ts-saved-searches>
       <ts-data-types></ts-data-types>
       <ts-tags></ts-tags>
@@ -82,6 +83,8 @@ limitations under the License.
 </template>
 
 <script>
+import ApiClient from '../utils/RestApiClient'
+
 import TsScenario from '../components/Scenarios/Scenario'
 import TsSavedSearches from '../components/LeftPanel/SavedSearches'
 import TsDataTypes from '../components/LeftPanel/DataTypes'
@@ -110,7 +113,7 @@ export default {
   created: function () {
     this.$store.dispatch('updateSketch', this.sketchId)
     this.$store.dispatch('updateSearchHistory', this.sketchId)
-    this.$store.dispatch('updateScenario', this.sketchId)
+    this.$store.dispatch('updateScenarios', this.sketchId)
     this.$store.dispatch('updateSigmaList', this.sketchId)
   },
   updated() {
@@ -126,11 +129,16 @@ export default {
     meta() {
       return this.$store.state.meta
     },
-    scenario() {
-      return this.$store.state.scenario
+    scenarios() {
+      return this.$store.state.scenarios
     },
   },
   methods: {
+    addScenario: function () {
+      ApiClient.addScenario(this.sketchId, 'compromise_assessment')
+        .then((response) => {})
+        .catch((e) => {})
+    },
     hideDrawer() {
       this.navigationDrawer.width = 0
       this.$emit('hideLeftPanel')

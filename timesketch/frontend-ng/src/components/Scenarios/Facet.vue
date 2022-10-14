@@ -15,11 +15,7 @@ limitations under the License.
 -->
 <template>
   <div>
-    <v-row
-      style="cursor: pointer"
-      @click="expanded = !expanded"
-      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
-    >
+    <v-row style="cursor: pointer" @click="toggleFacet()" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
       <v-col cols="1">
         <v-icon class="ml-2" v-if="!expanded">mdi-chevron-right</v-icon>
         <v-icon class="ml-2" v-else>mdi-chevron-down</v-icon>
@@ -32,12 +28,17 @@ limitations under the License.
     <v-expand-transition>
       <div v-show="expanded">
         <v-divider class="mt-3"></v-divider>
-        <span style="font-size: 0.9em" v-for="question in facet.questions" :key="question.id">
+        <span
+          @click="setActiveContext(question)"
+          style="font-size: 0.9em"
+          v-for="question in facet.questions"
+          :key="question.id"
+        >
           <ts-question :question="question"></ts-question>
         </span>
       </div>
     </v-expand-transition>
-    <v-btn v-show="expanded" disabled small text color="primary" class="ml-1 mt-3 mb-2">+ Question</v-btn>
+    <v-btn v-show="expanded" small text color="primary" class="ml-1 mt-3 mb-2">+ Add Question</v-btn>
     <v-divider class="mt-3"></v-divider>
   </div>
 </template>
@@ -46,7 +47,7 @@ limitations under the License.
 import TsQuestion from './Question'
 
 export default {
-  props: ['facet'],
+  props: ['scenario', 'facet'],
   components: { TsQuestion },
   data: function () {
     return {
@@ -58,7 +59,28 @@ export default {
       return this.$store.state.sketch
     },
   },
-  methods: {},
+  methods: {
+    toggleFacet: function () {
+      if (!this.expanded) {
+        this.setActiveContext()
+      } else {
+        if (this.$store.state.activeContext.facet != null) {
+          if (this.facet.id === this.$store.state.activeContext.facet.id) {
+            this.$store.dispatch('clearActiveContext')
+          }
+        }
+      }
+      this.expanded = !this.expanded
+    },
+    setActiveContext: function (question) {
+      let payload = {
+        scenario: this.scenario,
+        facet: this.facet,
+        question: question,
+      }
+      this.$store.dispatch('setActiveContext', payload)
+    },
+  },
   created() {},
 }
 </script>

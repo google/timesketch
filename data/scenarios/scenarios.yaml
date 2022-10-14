@@ -21,8 +21,6 @@ compromise_assessment:
   facets:
     - attacker_maintain_access
     - interference_with_protective_measures
-    - lateral_movement
-    - attacker_run_code
 
 exfil:
   display_name: Lorem Ipsum scenario

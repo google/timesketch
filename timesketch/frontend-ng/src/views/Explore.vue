@@ -31,7 +31,7 @@ limitations under the License.
     </v-navigation-drawer>
 
     <!-- Search and Filters -->
-    <v-card flat class="pa-3">
+    <v-card flat class="pa-3 pt-0 mt-n3" color="transparent">
       <v-card class="d-flex align-start mb-1" outlined>
         <v-sheet class="mt-2">
           <ts-search-history-buttons @toggleSearchHistory="toggleSearchHistory()"></ts-search-history-buttons>
@@ -77,7 +77,7 @@ limitations under the License.
       </v-card>
 
       <!-- Timeline picker -->
-      <v-sheet class="mb-4 mt-4">
+      <v-sheet class="mb-4 mt-4" color="transparent">
         <ts-timeline-picker
           @updateSelectedTimelines="updateSelectedTimelines($event)"
           :current-query-filter="currentQueryFilter"
