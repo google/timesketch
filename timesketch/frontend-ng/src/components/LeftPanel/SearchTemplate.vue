@@ -28,12 +28,33 @@ limitations under the License.
     <v-expand-transition>
       <div v-show="expanded" class="pa-4 pt-0">
         <div style="font-size: 0.9em">
-          <ul>
-            <li>Description: {{ searchTemplateSpec.description }}</li>
-            <li>Author: {{ searchTemplateSpec.author }}</li>
-            <li>Date: {{ searchTemplateSpec.date }}</li>
-            <li>References: {{ searchTemplateSpec.references }}</li>
-          </ul>
+          <v-simple-table dense>
+            <template v-slot:default>
+              <tbody>
+                <tr>
+                  <td><strong>Author</strong></td>
+                  <td>{{ searchTemplateSpec.author }}</td>
+                </tr>
+                <tr>
+                  <td><strong>Description</strong></td>
+                  <td>{{ searchTemplateSpec.description }}</td>
+                </tr>
+                <tr>
+                  <td><strong>Date</strong></td>
+                  <td>{{ searchTemplateSpec.date }}</td>
+                </tr>
+
+                <tr v-if="searchTemplateSpec.references.length">
+                  <td><strong>References</strong></td>
+                  <td>
+                    <div v-for="ref in searchTemplateSpec.references" :key="ref">
+                      <a :href="ref" target="new">{{ ref }}</a>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </template>
+          </v-simple-table>
         </div>
 
         <div v-if="parameters.length" class="pt-3">
@@ -122,12 +143,7 @@ export default {
         .catch((e) => {})
     },
   },
-  created() {},
 }
 </script>
 
-<style scoped lang="scss">
-.hover:hover {
-  background: red;
-}
-</style>
+<style scoped lang="scss"></style>

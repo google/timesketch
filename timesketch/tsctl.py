@@ -24,12 +24,14 @@ from sqlalchemy.exc import IntegrityError
 
 from timesketch import version
 from timesketch.app import create_app
+from timesketch.lib import sigma_util
 from timesketch.models import db_session
 from timesketch.models import drop_all
 from timesketch.models.user import Group
 from timesketch.models.user import User
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import SearchTemplate
+from timesketch.models.sigma import SigmaRule
 
 
 @click.group(cls=FlaskGroup, create_app=create_app)
@@ -56,7 +58,9 @@ def create_user(username, password=None):
 
     def get_password_from_prompt():
         """Get password from the command line prompt."""
-        first_password = click.prompt("Enter password", hide_input=True, type=str)
+        first_password = click.prompt(
+            "Enter password", hide_input=True, type=str
+        )
         second_password = click.prompt(
             "Enter password again", hide_input=True, type=str
         )
@@ -148,7 +152,9 @@ def grant_user(username, sketch_id):
     else:
         sketch.grant_permission(permission="read", user=user)
         sketch.grant_permission(permission="write", user=user)
-        print(f"User {username} added to the sketch {sketch.id} ({sketch.name})")
+        print(
+            f"User {username} added to the sketch {sketch.id} ({sketch.name})"
+        )
 
 
 @cli.command(name="version")
@@ -291,7 +297,9 @@ def import_search_templates(path):
                     template_uuid=uuid
                 ).first()
                 if not searchtemplate:
-                    searchtemplate = SearchTemplate(name=name, template_uuid=uuid)
+                    searchtemplate = SearchTemplate(
+                        name=name, template_uuid=uuid
+                    )
                     db_session.add(searchtemplate)
                     db_session.commit()
 
@@ -309,3 +317,139 @@ def import_search_templates(path):
 
                 db_session.add(searchtemplate)
                 db_session.commit()
+
+
+@cli.command(name="import-sigma-rules")
+@click.argument("path")
+def import_sigma_rules(path):
+    """Import sigma rules from filesystem path."""
+    file_paths = set()
+    supported_file_types = [".yml", ".yaml"]
+    for root, _, files in os.walk(path):
+        for file in files:
+            file_extension = pathlib.Path(file.lower()).suffix
+            if file_extension in supported_file_types:
+                file_paths.add(os.path.join(root, file))
+
+    for file_path in file_paths:
+        sigma_rule = None
+        sigma_yaml = None
+
+        with open(file_path, "r") as fh:
+            try:
+                sigma_yaml = fh.read()
+                sigma_rule = sigma_util.parse_sigma_rule_by_text(sigma_yaml)
+            except ValueError as e:
+                print(f"Sigma Rule Parsing error: {e}")
+                continue
+            except NotImplementedError as e:
+                print(f"Sigma Rule Parsing error: {e}")
+                continue
+
+        print(f"Importing: {sigma_rule.get('title')}")
+
+        if not sigma_rule:
+            continue
+
+        # Query rules to see if it already exist and exit if found
+        rule_uuid = sigma_rule.get("id")
+        sigma_rule_from_db = SigmaRule.query.filter_by(
+            rule_uuid=rule_uuid
+        ).first()
+        if sigma_rule_from_db:
+            print(f"Rule {rule_uuid} is already imported")
+            continue
+
+        sigma_db_rule = SigmaRule.query.filter_by(rule_uuid=rule_uuid).first()
+        if not sigma_db_rule:
+            sigma_db_rule = SigmaRule(
+                rule_uuid=rule_uuid,
+                rule_yaml=sigma_yaml,
+                description=sigma_rule.get("description"),
+                title=sigma_rule.get("title"),
+                user=None,
+            )
+            db_session.add(sigma_db_rule)
+            db_session.commit()
+
+            sigma_db_rule.set_status(sigma_rule.get("status", "experimental"))
+            # query string is not stored in the database but we attach it to
+            # the JSON result here as it is added in the GET methods
+            sigma_db_rule.query_string = sigma_rule.get("search_query")
+        else:
+            print(f"Rule already imported: {sigma_rule.get('title')}")
+
+
+@cli.command(name="list-sigma-rules")
+def list_sigma_rules():
+    """List sigma rules"""
+
+    all_sigma_rules = SigmaRule.query.all()
+    for rule in all_sigma_rules:
+        print(f"{rule.rule_uuid} {rule.title}")
+
+
+@cli.command(name="remove-sigma-rule")
+@click.argument("rule_uuid")
+def remove_sigma_rule(rule_uuid):
+    """Deletes a Sigma rule from the database.
+
+    Deletes a single Sigma rule selected by the `uuid`
+    Args:
+        rule_uuid: UUID of the rule to be deleted.
+    """
+
+    rule = SigmaRule.query.filter_by(rule_uuid=rule_uuid).first()
+
+    if not rule:
+        error_msg = "No rule found with rule_uuid.{0!s}".format(rule_uuid)
+        print(error_msg)  # only needed in debug cases
+        return
+
+    print(f"Rule {rule_uuid} deleted")
+    db_session.delete(rule)
+    db_session.commit()
+
+
+@cli.command(name="remove-all-sigma-rules")
+def remove_all_sigma_rules():
+    """Deletes all Sigma rule from the database."""
+
+    if click.confirm("Do you really want to drop all the Sigma rules?"):
+        if click.confirm(
+            "Are you REALLLY sure you want to DROP ALL the Sigma rules?"
+        ):
+
+            all_sigma_rules = SigmaRule.query.all()
+            for rule in all_sigma_rules:
+                db_session.delete(rule)
+                db_session.commit()
+
+            print("All rules deleted")
+
+
+@cli.command(name="export-sigma-rules")
+@click.argument("path")
+def export_sigma_rules(path):
+    """Export sigma rules to a filesystem path."""
+
+    if not os.path.isdir(path):
+        raise RuntimeError(
+            "The directory needs to exist, please create: "
+            "{0:s} first".format(path)
+        )
+
+    all_sigma_rules = SigmaRule.query.all()
+
+    n = 0
+
+    for rule in all_sigma_rules:
+        file_path = os.path.join(path, f"{rule.title}.yml")
+        if os.path.isfile(file_path):
+            print("File [{0:s}] already exists.".format(file_path))
+            continue
+
+        with open(file_path, "wb") as fw:
+            fw.write(rule.rule_yaml.encode('utf-8'))
+        n = n + 1
+    print(f"{n} Sigma rules exported")
