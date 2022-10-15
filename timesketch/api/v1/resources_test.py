@@ -74,9 +74,7 @@ class SketchResourceTest(BaseTest):
 
     resource_url = "/api/v1/sketches/1/"
 
-    @mock.patch(
-        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
-    )
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
     def test_sketch_resource(self):
         """Authenticated request to get a sketch."""
         self.login()
@@ -234,9 +232,7 @@ class ExploreResourceTest(BaseTest):
         ],
     }
 
-    @mock.patch(
-        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
-    )
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
     def test_search(self):
         """Authenticated request to query the datastore."""
         self.login()
@@ -259,9 +255,7 @@ class AggregationExploreResourceTest(BaseTest):
 
     resource_url = "/api/v1/sketches/1/aggregation/explore/"
 
-    @mock.patch(
-        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
-    )
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
     def test_heatmap_aggregation(self):
         """Authenticated request to get aggregation requests."""
         self.login()
@@ -294,9 +288,7 @@ class EventResourceTest(BaseTest):
         }
     }
 
-    @mock.patch(
-        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
-    )
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
     def test_get_event(self):
         """Authenticated request to get an event from the datastore."""
         self.login()
@@ -308,9 +300,7 @@ class EventResourceTest(BaseTest):
         self.assertDictContainsSubset(self.expected_response, response_json)
         self.assert200(response)
 
-    @mock.patch(
-        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
-    )
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
     def test_invalid_index(self):
         """
         Authenticated request to get an event from the datastore, but in the
@@ -328,9 +318,7 @@ class EventAnnotationResourceTest(BaseTest):
 
     resource_url = "/api/v1/sketches/1/event/annotate/"
 
-    @mock.patch(
-        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
-    )
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
     def test_post_annotate_resource(self):
         """Authenticated request to create an annotation."""
         self.login()
@@ -373,15 +361,11 @@ class SearchIndexResourceTest(BaseTest):
 
     resource_url = "/api/v1/searchindices/"
 
-    @mock.patch(
-        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
-    )
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
     def test_post_create_searchindex(self):
         """Authenticated request to create a searchindex."""
         self.login()
-        data = dict(
-            searchindex_name="test3", es_index_name="test3", public=False
-        )
+        data = dict(searchindex_name="test3", es_index_name="test3", public=False)
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data),
@@ -455,9 +439,7 @@ class SigmaRuleResourceTest(BaseTest):
         }
     }
 
-    @mock.patch(
-        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
-    )
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
     def test_post_sigma_resource(self):
         """Authenticated request to POST an sigma rule."""
         MOCK_SIGMA_RULE = """
@@ -486,8 +468,8 @@ level: high
 
         sigma = dict(
             rule_uuid="5266a592-b793-11ea-b3de-bbbbbb",
-            title='Suspicious Installation of bbbbbb',
-            description='Detects suspicious installation of bbbbbb',
+            title="Suspicious Installation of bbbbbb",
+            description="Detects suspicious installation of bbbbbb",
             rule_yaml=MOCK_SIGMA_RULE,
         )
 
@@ -497,31 +479,29 @@ level: high
             data=json.dumps(sigma),
             content_type="application/json",
         )
-        self.assertIn('bbbbbb', response.json['objects'][0]["rule_uuid"])
+        self.assertIn("bbbbbb", response.json["objects"][0]["rule_uuid"])
         self.assertIn(
-            'bbbbbb',
-            response.json['objects'][0]["description"],
+            "bbbbbb",
+            response.json["objects"][0]["description"],
         )
         self.assertIn(
-            'shell',
-            response.json['objects'][0]["rule_yaml"],
+            "shell",
+            response.json["objects"][0]["rule_yaml"],
         )
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
         # Now GET the ressources
-        response = self.client.get(
-            "/api/v1/sigmarule/5266a592-b793-11ea-b3de-bbbbbb/"
-        )
+        response = self.client.get("/api/v1/sigmarule/5266a592-b793-11ea-b3de-bbbbbb/")
 
         self.assertIsNotNone(response)
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
-        self.assertIn('bbbbbb', response.json['objects'][0]["rule_uuid"])
+        self.assertIn("bbbbbb", response.json["objects"][0]["rule_uuid"])
         self.assertIn(
-            'bbbbbb',
-            response.json['objects'][0]["description"],
+            "bbbbbb",
+            response.json["objects"][0]["description"],
         )
         self.assertIn(
-            'shell',
-            response.json['objects'][0]["rule_yaml"],
+            "shell",
+            response.json["objects"][0]["rule_yaml"],
         )
 
     def test_get_sigma_rule(self):
@@ -544,8 +524,8 @@ level: high
 
         sigma = dict(
             rule_uuid="5266a592-b793-11ea-b3de-bbbbbb",
-            title='Suspicious Installation of bbbbbb',
-            description='Detects suspicious installation of bbbbbb',
+            title="Suspicious Installation of bbbbbb",
+            description="Detects suspicious installation of bbbbbb",
             rule_yaml="""
 title: Suspicious Installation of bbbbbb
 id: 5266a592-b793-11ea-b3de-bbbbbb
@@ -575,14 +555,14 @@ level: high
             data=json.dumps(sigma),
             content_type="application/json",
         )
-        self.assertIn('bbbbbb', response.json['objects'][0]["rule_uuid"])
+        self.assertIn("bbbbbb", response.json["objects"][0]["rule_uuid"])
         self.assertIn(
-            'bbbbbb',
-            response.json['objects'][0]["description"],
+            "bbbbbb",
+            response.json["objects"][0]["description"],
         )
         self.assertIn(
-            'shell',
-            response.json['objects'][0]["rule_yaml"],
+            "shell",
+            response.json["objects"][0]["rule_yaml"],
         )
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
         response = self.client.put(
@@ -590,8 +570,8 @@ level: high
             data=json.dumps(
                 dict(
                     rule_uuid="5266a592-b793-11ea-b3de-bbbbbb",
-                    title='Suspicious Installation of cccccc',
-                    description='Detects suspicious installation of cccccc',
+                    title="Suspicious Installation of cccccc",
+                    description="Detects suspicious installation of cccccc",
                     rule_yaml="""
 title: Suspicious Installation of cccccc
 id: 5266a592-b793-11ea-b3de-bbbbbb
@@ -619,19 +599,19 @@ level: high
         )
         self.assertIsNotNone(response)
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
-        self.assertIn('bbbbbb', response.json['objects'][0]["rule_uuid"])
+        self.assertIn("bbbbbb", response.json["objects"][0]["rule_uuid"])
         self.assertIn(
-            'cccccc',
-            response.json['objects'][0]["rule_yaml"],
+            "cccccc",
+            response.json["objects"][0]["rule_yaml"],
         )
 
         self.assertIn(
-            'cccccc',
-            response.json['objects'][0]["description"],
+            "cccccc",
+            response.json["objects"][0]["description"],
         )
         self.assertIn(
-            'cccccc',
-            response.json['objects'][0]["title"],
+            "cccccc",
+            response.json["objects"][0]["title"],
         )
 
 
@@ -855,7 +835,7 @@ class IntelligenceResourceTest(BaseTest):
             "legit": {"class": "success", "weight": 10},
             "malware": {"class": "danger", "weight": 100},
             "suspicious": {"class": "warning", "weight": 50},
-            'regexes': {'^GROUPNAME': {'class': 'danger', 'weight': 100}},
+            "regexes": {"^GROUPNAME": {"class": "danger", "weight": 100}},
         }
         self.login()
         response = self.client.get("/api/v1/intelligence/tagmetadata/")

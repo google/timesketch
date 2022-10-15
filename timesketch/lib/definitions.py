@@ -31,13 +31,13 @@ MICROSECONDS_PER_SECOND = 1000000
 
 # _source fields for search and export functions
 DEFAULT_FIELDS = [
-    'datetime',
-    'timestamp',
-    'timestamp_desc',
-    '_index',
-    '__ts_timeline_id',
-    'message',
-    'comment',
+    "datetime",
+    "timestamp",
+    "timestamp_desc",
+    "_index",
+    "__ts_timeline_id",
+    "message",
+    "comment",
 ]
 DEFAULT_SOURCE_FIELDS = DEFAULT_FIELDS + [
     "timesketch_label",
