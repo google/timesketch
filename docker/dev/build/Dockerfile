@@ -1,5 +1,5 @@
-# Use the official Docker Hub Ubuntu 20.04 base image
-FROM ubuntu:20.04
+# Use the official Docker Hub Ubuntu base image
+FROM ubuntu:22.04
 
 ARG PPA_TRACK=stable
 
@@ -29,20 +29,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   && rm -rf /var/lib/apt/lists/*
 
 # Install NodeJS for frontend development
-RUN curl -sL https://deb.nodesource.com/setup_12.x -o nodesource_setup.sh
+RUN curl -sL https://deb.nodesource.com/setup_14.x -o nodesource_setup.sh
 RUN bash nodesource_setup.sh
 RUN apt-get update && apt-get install -y --no-install-recommends \
     nodejs \
   && rm -rf /var/lib/apt/lists/*
 
 # Install Yarn for frontend development
-RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
-RUN echo "deb https://dl.yarnpkg.com/debian/ stable main" > /etc/apt/sources.list.d/yarn.list
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    yarn \
-  && rm -rf /var/lib/apt/lists/*
+RUN npm install --global yarn
 
-# Install test dependencies for Timesketch
+# Install dependencies for Timesketch
 COPY ./requirements.txt /timesketch-requirements.txt
 RUN pip3 install -r /timesketch-requirements.txt
 
