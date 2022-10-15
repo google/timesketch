@@ -6,7 +6,7 @@ on:
 
 jobs:
   PyLint:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         os: [ubuntu-20.04, ubuntu-22.04]
@@ -19,8 +19,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
-        # Pin pip to pip==22.0.3 due to upstream bug in pip.
-        # TODO: Revisit and remove this when fixed upstream.
         run: |
           pip install -r test_requirements.txt
           pip install -r requirements.txt
@@ -33,7 +31,7 @@ jobs:
           for FILE in `git --no-pager diff origin/master --name-only --diff-filter=ACMR | grep \.py$`; do echo "Running pylint against ${FILE}"; pylint --rcfile=.pylintrc ${FILE}; done
 
   ESLint-frontend:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./timesketch/frontend
@@ -55,7 +53,7 @@ jobs:
           for FILE in `git --no-pager diff origin/master --name-only --diff-filter=ACMR | grep -e \.vue$ -e \.js$ | grep -v dist\/js | grep ^timesketch\/frontend\/ | sed s/'^timesketch\/frontend\/'/''/`; do echo "Running eslint against ${FILE}"; yarn run eslint ${FILE}; done
 
   ESLint-frontend-ng:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./timesketch/frontend-ng

@@ -7,7 +7,7 @@ on:
 jobs:
   # Backend tests (Python/Flask)
   Python:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         os: [ubuntu-20.04, ubuntu-22.04]
@@ -29,7 +29,7 @@ jobs:
 
   # Frontend tests (VueJS)
   VueJS:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: timesketch/frontend
