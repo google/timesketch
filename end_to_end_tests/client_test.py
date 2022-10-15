@@ -114,9 +114,7 @@ level: high
         self.assertions.assertGreaterEqual(len(rules), 1)
         rule = rules[0]
         self.assertions.assertIn("5266a592-b793-11ea-b3de-bbbbbb", rule.id)
-        self.assertions.assertIn(
-            "5266a592-b793-11ea-b3de-bbbbbb", rule.rule_uuid
-        )
+        self.assertions.assertIn("5266a592-b793-11ea-b3de-bbbbbb", rule.rule_uuid)
         self.assertions.assertIn("Installation of bbbbbb", rule.title)
         self.assertions.assertIn("bbbbbb", rule.search_query)
         self.assertions.assertIn("Alexander", rule.author)
@@ -162,9 +160,7 @@ level: high
         )
         self.assertions.assertIsNotNone(rule)
 
-        rule = self.api.get_sigmarule(
-            rule_uuid="5266a592-b793-11ea-b3de-eeeee"
-        )
+        rule = self.api.get_sigmarule(rule_uuid="5266a592-b793-11ea-b3de-eeeee")
         rule.from_rule_uuid("5266a592-b793-11ea-b3de-eeeee")
         self.assertions.assertGreater(len(rule.attributes), 5)
         self.assertions.assertIsNotNone(rule)
