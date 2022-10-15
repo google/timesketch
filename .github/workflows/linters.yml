@@ -30,6 +30,12 @@ jobs:
           git config pull.rebase false && git fetch -p origin master
           for FILE in `git --no-pager diff origin/master --name-only --diff-filter=ACMR | grep \.py$`; do echo "Running pylint against ${FILE}"; pylint --rcfile=.pylintrc ${FILE}; done
 
+  Black-formatter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: psf/black@stable
+
   ESLint-frontend:
     runs-on: ubuntu-latest
     defaults:
