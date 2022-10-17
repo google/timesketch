@@ -186,9 +186,7 @@ class TimesketchApi:
         if not csrf_token:
             return
 
-        session.headers.update(
-            {"x-csrftoken": csrf_token, "referer": self._host_uri}
-        )
+        session.headers.update({"x-csrftoken": csrf_token, "referer": self._host_uri})
 
     def _create_oauth_session(
         self,
@@ -253,27 +251,18 @@ class TimesketchApi:
         else:
             if not sys.stdout.isatty() or not sys.stdin.isatty():
                 msg = (
-                    'You will be asked to paste a token into this session to'
-                    'authenticate, but the session doesn\'t have a tty'
+                    "You will be asked to paste a token into this session to"
+                    "authenticate, but the session doesn't have a tty"
                 )
                 raise RuntimeError(msg)
 
             auth_url, _ = flow.authorization_url(prompt="select_account")
 
             if skip_open:
-                print(
-                    "Visit the following URL to authenticate: {0:s}".format(
-                        auth_url
-                    )
-                )
+                print("Visit the following URL to authenticate: {0:s}".format(auth_url))
             else:
-                open_browser = input(
-                    "Open the URL in a browser window? [y/N] "
-                )
-                if (
-                    open_browser.lower() == "y"
-                    or open_browser.lower() == "yes"
-                ):
+                open_browser = input("Open the URL in a browser window? [y/N] ")
+                if open_browser.lower() == "y" or open_browser.lower() == "yes":
                     webbrowser.open(auth_url)
                 else:
                     print(
@@ -460,9 +449,9 @@ class TimesketchApi:
                 "description": line.get("description", "N/A"),
             }
             for field_index, field in enumerate(line.get("fields", [])):
-                line_dict[
-                    "field_{0:d}_name".format(field_index + 1)
-                ] = field.get("name")
+                line_dict["field_{0:d}_name".format(field_index + 1)] = field.get(
+                    "name"
+                )
                 line_dict[
                     "field_{0:d}_description".format(field_index + 1)
                 ] = field.get("description")
@@ -537,9 +526,7 @@ class TimesketchApi:
             that were outstanding.
         """
         if job_id:
-            response = self.fetch_resource_data(
-                "tasks/?job_id={0:s}".format(job_id)
-            )
+            response = self.fetch_resource_data("tasks/?job_id={0:s}".format(job_id))
         else:
             response = self.fetch_resource_data("tasks/")
 
@@ -717,9 +704,7 @@ class TimesketchApi:
             sigma_obj = sigma.Sigma(api=self)
             sigma_obj.from_text(rule_text)
         except ValueError:
-            logger.error(
-                "Parsing Error, unable to parse the Sigma rule", exc_info=True
-            )
+            logger.error("Parsing Error, unable to parse the Sigma rule", exc_info=True)
 
         return sigma_obj
 
@@ -749,9 +734,7 @@ class TimesketchApi:
         Raises:
             ValueError: No Rule text given or issues parsing it.
         """
-        logger.warning(
-            "Deprecated, please use parse_sigmarule_by_text() instead"
-        )
+        logger.warning("Deprecated, please use parse_sigmarule_by_text() instead")
 
         if not rule_text:
             raise ValueError("No rule text given.")
@@ -760,8 +743,6 @@ class TimesketchApi:
             sigma_obj = sigma.Sigma(api=self)
             sigma_obj.from_text(rule_text)
         except ValueError:
-            logger.error(
-                "Parsing Error, unable to parse the Sigma rule", exc_info=True
-            )
+            logger.error("Parsing Error, unable to parse the Sigma rule", exc_info=True)
 
         return sigma_obj
