@@ -411,12 +411,8 @@ def mock_response(*args, **kwargs):
     # Register API endpoints to the correct mock response data.
     url_router = {
         "http://127.0.0.1": MockResponse(text_data=auth_text_data),
-        "http://127.0.0.1/api/v1/sketches/": MockResponse(
-            json_data=sketch_list_data
-        ),
-        "http://127.0.0.1/api/v1/sketches/1": MockResponse(
-            json_data=sketch_data
-        ),
+        "http://127.0.0.1/api/v1/sketches/": MockResponse(json_data=sketch_list_data),
+        "http://127.0.0.1/api/v1/sketches/1": MockResponse(json_data=sketch_data),
         "http://127.0.0.1/api/v1/sketches/1/event/?searchindex_id=test_index&event_id=test_event": MockResponse(  # pylint: disable=line-too-long
             json_data=event_data_1
         ),
@@ -454,9 +450,7 @@ def mock_response(*args, **kwargs):
         "http://127.0.0.1/api/v1/sigmarule/5266a592-b793-11ea-b3de-0242ac130004": MockResponse(  # pylint: disable=line-too-long
             json_data=sigmarule_individual
         ),
-        "http://127.0.0.1/api/v1/sigmarule/": MockResponse(
-            json_data=sigmarule_list
-        ),
+        "http://127.0.0.1/api/v1/sigmarule/": MockResponse(json_data=sigmarule_list),
         "http://127.0.0.1/api/v1/sigmarule/text/": MockResponse(
             json_data=sigmarule_text
         ),

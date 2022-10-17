@@ -72,9 +72,7 @@ class TestSigmaUtilLib(BaseTest):
 
         # test that the function does not break regular queries
         self.assertEqual(
-            sigma_util._sanitize_query(
-                "*mimikatz* OR *mimikatz.exe* OR *mimilib.dll*"
-            ),
+            sigma_util._sanitize_query("*mimikatz* OR *mimikatz.exe* OR *mimilib.dll*"),
             "*mimikatz* OR *mimikatz.exe* OR *mimilib.dll*",
         )
 
@@ -85,12 +83,10 @@ class TestSigmaUtilLib(BaseTest):
             '(xml_string.keyword:"\\foobar.exe" AND GrantedAccess.keyword:"10")'
         )
 
-        self.assertEqual(
-            test_3, r'(xml_string:"\foobar.exe" AND GrantedAccess:"10")'
-        )
+        self.assertEqual(test_3, r'(xml_string:"\foobar.exe" AND GrantedAccess:"10")')
 
         test_4 = sigma_util._sanitize_query(
-            '(xml_string:C:\\Program Files\\WindowsApps\\\" AND xml_string: "GamingServices.exe)'  # pylint: disable=line-too-long
+            '(xml_string:C:\\Program Files\\WindowsApps\\" AND xml_string: "GamingServices.exe)'  # pylint: disable=line-too-long
         )
         self.assertIsNotNone(test_4)
         # pylint: enable=protected-access
@@ -275,9 +271,7 @@ detection:
 """
         )
         self.assertIsNotNone(rule)
-        self.assertEqual(
-            "67b9a11a-03ae-490a-9156-9be9900aaaaa", rule.get("id")
-        )
+        self.assertEqual("67b9a11a-03ae-490a-9156-9be9900aaaaa", rule.get("id"))
         self.assertEqual(
             r'("aaa:bbb" OR "ccc\:\:ddd")',
             rule.get("search_query"),
@@ -377,9 +371,7 @@ level: medium
         )
 
         self.assertIsNotNone(rule)
-        self.assertEqual(
-            "5d2c62fe-3cbb-47c3-88e1-88ef73503a9f", rule.get("id")
-        )
+        self.assertEqual("5d2c62fe-3cbb-47c3-88e1-88ef73503a9f", rule.get("id"))
         self.assertIn(
             'event_identifier:"10" AND (xml_string:"\\\\foobar.exe" AND xml_string:"10"',  # pylint: disable=line-too-long
             rule.get("search_query"),

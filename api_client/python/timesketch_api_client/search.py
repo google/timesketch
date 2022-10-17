@@ -233,7 +233,7 @@ class DateRangeChip(Chip):
     _DATE_FORMAT = "%Y-%m-%dT%H:%M:%S"
     _DATE_FORMAT_MICROSECONDS = "%Y-%m-%dT%H:%M:%S.%f"
 
-    _DATE_RE = r'^[0-9]{4}-[0-9]{1,2}-[0-9]{2}$'
+    _DATE_RE = r"^[0-9]{4}-[0-9]{1,2}-[0-9]{2}$"
 
     def __init__(self):
         """Initialize the date range."""
@@ -256,7 +256,7 @@ class DateRangeChip(Chip):
 
         # Check for a whole day, YYYY-MM-DD.
         if self._date_re.match(end_time):
-            end_time = f'{end_time}T23:59:59'
+            end_time = f"{end_time}T23:59:59"
 
         try:
             dt = datetime.datetime.strptime(end_time, self._DATE_FORMAT_MICROSECONDS)
@@ -286,7 +286,7 @@ class DateRangeChip(Chip):
 
         # Check for a whole day, YYYY-MM-DD.
         if self._date_re.match(start_time):
-            start_time = f'{start_time}T00:00:00'
+            start_time = f"{start_time}T00:00:00"
 
         try:
             dt = datetime.datetime.strptime(start_time, self._DATE_FORMAT_MICROSECONDS)
