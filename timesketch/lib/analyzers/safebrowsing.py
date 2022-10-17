@@ -5,10 +5,10 @@ import fnmatch
 import logging
 import re
 
-import pkg_resources
 import requests
 from flask import current_app
 
+from timesketch.version import get_version as get_timesketch_version
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 
@@ -67,7 +67,7 @@ class SafeBrowsingSketchPlugin(interface.BaseAnalyzer):
 
         self._google_client_version = current_app.config.get(
             "SAFEBROWSING_CLIENT_VERSION",
-            pkg_resources.get_distribution("timesketch").version,
+            get_timesketch_version(),
         )
 
     def _is_url_allowlisted(self, url, allowlist):

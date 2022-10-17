@@ -110,10 +110,7 @@ def update_sketch_last_activity(sketch):
 
 
 def run_aggregator(
-    sketch_id,
-    aggregator_name,
-    aggregator_parameters=None,
-    indices=None
+    sketch_id, aggregator_name, aggregator_parameters=None, indices=None
 ):
     """Run an aggregator and return back results.
 
@@ -273,3 +270,24 @@ def load_yaml_config(config_parameter_name):
 
     with open(yaml_path, "r") as fh:
         return yaml.safe_load(fh)
+
+
+def escape_query_string(query_string):
+    """Escape a search query string to support Opensearch queries.
+
+    Args:
+        query_string: Opensearch query string.
+
+    Returns:
+        Query string with certain characters escaped.
+    """
+    escaped_query_string = query_string.translate(
+        str.maketrans(
+            {
+                "/": r"\/",
+                ".": r"\.",
+                "\\": r"\\",
+            }
+        )
+    )
+    return escaped_query_string
