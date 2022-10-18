@@ -22,6 +22,11 @@ limitations under the License.
         <v-icon v-if="!expanded">mdi-chevron-right</v-icon>
         <v-icon v-else>mdi-chevron-down</v-icon>
         {{ sigmaRule.title }}
+
+        <ts-sigma-rule-modification app @cancel="formatXMLString = false"
+          :rule_uuid="sigmaRule.rule_uuid">
+        </ts-sigma-rule-modification>
+
       </div>
       <v-spacer></v-spacer>
       <div>
@@ -115,6 +120,8 @@ limitations under the License.
 
 <script>
 import EventBus from '../../main'
+import TsSigmaRuleModification from '../Studio/SigmaRuleModification.vue'
+
 
 const defaultQueryFilter = () => {
   return {
@@ -128,6 +135,9 @@ const defaultQueryFilter = () => {
 }
 
 export default {
+  components: {
+    TsSigmaRuleModification,
+  },
   props: ['sigmaRule'],
   data: function () {
     return {
@@ -139,7 +149,7 @@ export default {
       return this.$store.state.sketch
     },
     sigmaRuleSummary() {
-      const fields = ['author', 'description', 'references', 'date', 'modified', 'falsepositives', 'level', 'tags']
+      const fields = ['author', 'description', 'references', 'date', 'modified', 'falsepositives', 'level', 'tags', 'rule_uuid']
       return Object.fromEntries(Object.entries(this.sigmaRule).filter(([key]) => fields.includes(key)))
     },
   },
