@@ -53,6 +53,7 @@ RestApiClient.interceptors.response.use(
         },
       })
     } else {
+      // TODO: Consider removing that if a global Error handling is established
       console.error(error.response.data)
       Snackbar.open({
         message: error.response.data.message,
