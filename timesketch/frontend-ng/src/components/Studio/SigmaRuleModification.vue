@@ -16,7 +16,7 @@ limitations under the License.
 <template>
     <v-card width="1000" style="overflow: initial">
         <v-container class="px-8">
-            <h1>Google Cloud Storage Buckets Mod</h1>
+            <h1>{{editingRule.title}}</h1>
             <v-chip rounded x-small class="mr-2"
                 :color="parsingStatusColors(problemString)">
                 {{problemString}}</v-chip>
@@ -30,12 +30,15 @@ limitations under the License.
                 v-model="rule_yaml" @input="parseSigma(rule_yaml)">
             </v-textarea>
             <div class="mt-3">
-                <v-btn @click="search(sigmaRule.search_query)" small depressed
-                    color="primary">Update Rule</v-btn>
+                <v-btn :disabled="problemString.toLowerCase() !== 'ok'"
+                    @click="addOrUpdateRule(rule_yaml)" small depressed
+                    color="primary">{{save_button_text}}</v-btn>
                 <v-btn @click="search(sigmaRule.search_query)" small depressed
                     color="secondary">Copy and tweak rule</v-btn>
                 <v-btn @click="search(sigmaRule.search_query)" small depressed
                     color="secondary">Cancel</v-btn>
+                <v-btn @click="deleteRule(rule_uuid)" small depressed
+                    color="secondary">Delete Rule</v-btn>
             </div>
             <h2>Hits</h2>
             TODO<br>
@@ -59,6 +62,7 @@ export default {
         return {
             editingRule: { "rule_yaml": "foobar" },
             problemString: 'OK',
+            save_button_text: "Update",
             rule_yaml: {},
         }
     },
@@ -72,7 +76,6 @@ export default {
         // Set debounce to 300ms if parseSigma is used.
         parseSigma: _.debounce(function (rule_yaml) { // eslint-disable-line
             this.problemString = ''
-            console.log("Currentl yaml: " + rule_yaml)
             ApiClient.getSigmaRuleByText(rule_yaml)
                 .then(response => {
                     console.log(response.data.objects[0])
@@ -90,12 +93,7 @@ export default {
         parsingStatusColors(datasource) {
             if (this.problemString === 'OK') {
                 return 'success'
-            } //else if (datasource.status[0].status === 'processing') {
-            //    return 'info'
-            //} else if (datasource.status[0].status === 'queueing') {
-            //    return 'warning'
-            //}
-            // status = fail
+            }
             return 'warning'
         },
         getRuleByUUID(ruleUuid) {
@@ -107,6 +105,60 @@ export default {
                 this.problemString = 'OK'
             })
             // TODO: show something if the rule uuid does not exist.
+        },
+        deleteRule(rule_uuid) {
+            if (confirm('Delete Rule?')) {
+                ApiClient.deleteSigmaRule(rule_uuid)
+                    .then(response => {
+                        console.log("Rule deleted: " + rule_uuid)
+                        // remove element from Array
+                        //this.$store.state.sigmaRuleList = this.sigmaRuleList.filter(obj => {
+                        //    return obj.rule_uuid !== ioc.rule_uuid
+                        //})
+                    })
+                    .catch(e => {
+                        console.error(e)
+                    })
+            }
+        },
+        addOrUpdateRule: function (event) {
+            if (this.save_button_text === "Create") {
+                ApiClient.createSigmaRule(this.rule_yaml).then(response => {
+                    this.$buefy.notification.open({
+                        message: 'Succesfully added Sigma rule!',
+                        type: 'is-success'
+                    })
+                    this.showEditModal = false
+                    this.sigmaRuleList.push(response.data.objects[0])
+                })
+                    .catch(e => {
+                        this.problemString = "Problem, please see console"
+                        Snackbar.open({
+                            message: this.problemString,
+                            type: 'is-danger',
+                            position: 'is-top',
+                            indefinite: false,
+                        })
+                    })
+            }
+            if (this.save_button_text === "Update") {
+                ApiClient.updateSigmaRule(this.editingRule.id, this.rule_yaml)
+                    .then(response => {
+                        this.$store.state.sigmaRuleList = this.sigmaRuleList.filter(obj => {
+                            return obj.rule_uuid !== this.editingRule.rule_uuid
+                        })
+                        this.sigmaRuleList.push(response.data.objects[0])
+                        // do not close the the edit view in case there is an error
+                        this.$buefy.notification.open(
+                            {
+                                message: 'Succesfully modified Sigma rule!',
+                                type: 'is-success'
+                            })
+                        this.showEditModal = false
+                    })
+                    .catch(e => {
+                    })
+            }
         },
     },
 }
