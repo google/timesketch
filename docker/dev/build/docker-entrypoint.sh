@@ -89,7 +89,6 @@ if [ "$1" = 'timesketch' ]; then
   tsctl import-sigma-rules /usr/local/src/sigma/rules/windows/powershell/powershell_script/posh_ps_invoke_obfuscation_via_use_mhsta.yml
   tsctl import-sigma-rules /usr/local/src/sigma/rules/windows/powershell/powershell_script/posh_ps_invoke_obfuscation_via_use_rundll32.yml
   tsctl import-sigma-rules /usr/local/src/sigma/rules/windows/powershell/powershell_script/posh_ps_invoke_obfuscation_via_var.yml
-  tsctl import-sigma-rules /usr/local/src/sigma/rules/windows/powershell/powershell_script/posh_ps_malicious_commandlets.yml
   tsctl import-sigma-rules /usr/local/src/sigma/rules/windows/powershell/powershell_script/posh_ps_nishang_malicious_commandlets.yml
   tsctl import-sigma-rules /usr/local/src/sigma/rules/windows/powershell/powershell_script/posh_ps_powerview_malicious_commandlets.yml
   tsctl import-sigma-rules /usr/local/src/sigma/rules/windows/powershell/powershell_script/posh_ps_shellintel_malicious_commandlets.yml
