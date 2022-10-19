@@ -71,6 +71,43 @@ if [ "$1" = 'timesketch' ]; then
   # Add web user
   tsctl create-user --password "${TIMESKETCH_USER}" "${TIMESKETCH_USER}"
 
+  # Add Sigma rules
+  git clone https://github.com/SigmaHQ/sigma /usr/local/src/sigma
+  tsctl import-sigma-rules /usr/local/src/sigma/rules/application/rpc_firewall/rpc_firewall_sharphound_recon_sessions.yml
+  tsctl import-sigma-rules /usr/local/src/sigma/rules/application/spring/appframework_spring_exceptions.yml
+  tsctl import-sigma-rules /usr/local/src/sigma/rules/application/sql/app_sqlinjection_errors.yml
+  tsctl import-sigma-rules /usr/local/src/sigma/rules/other/godmode_sigma_rule.yml
+  tsctl import-sigma-rules /usr/local/src/sigma/rules/windows/powershell/powershell_script/posh_ps_icmp_exfiltration.yml
+  tsctl import-sigma-rules /usr/local/src/sigma/rules/windows/powershell/powershell_script/posh_ps_invoke_obfuscation_clip.yml
+  tsctl import-sigma-rules /usr/local/src/sigma/rules/windows/powershell/powershell_script/posh_ps_invoke_obfuscation_obfuscated_iex.yml
+  tsctl import-sigma-rules /usr/local/src/sigma/rules/windows/powershell/powershell_script/posh_ps_invoke_obfuscation_stdin.yml
+  tsctl import-sigma-rules /usr/local/src/sigma/rules/windows/powershell/powershell_script/posh_ps_invoke_obfuscation_var.yml
+  tsctl import-sigma-rules /usr/local/src/sigma/rules/windows/powershell/powershell_script/posh_ps_invoke_obfuscation_via_compress.yml
+  tsctl import-sigma-rules /usr/local/src/sigma/rules/windows/powershell/powershell_script/posh_ps_invoke_obfuscation_via_rundll.yml
+  tsctl import-sigma-rules /usr/local/src/sigma/rules/windows/powershell/powershell_script/posh_ps_invoke_obfuscation_via_stdin.yml
+  tsctl import-sigma-rules /usr/local/src/sigma/rules/windows/powershell/powershell_script/posh_ps_invoke_obfuscation_via_use_clip.yml
+  tsctl import-sigma-rules /usr/local/src/sigma/rules/windows/powershell/powershell_script/posh_ps_invoke_obfuscation_via_use_mhsta.yml
+  tsctl import-sigma-rules /usr/local/src/sigma/rules/windows/powershell/powershell_script/posh_ps_invoke_obfuscation_via_use_rundll32.yml
+  tsctl import-sigma-rules /usr/local/src/sigma/rules/windows/powershell/powershell_script/posh_ps_invoke_obfuscation_via_var.yml
+  tsctl import-sigma-rules /usr/local/src/sigma/rules/windows/powershell/powershell_script/posh_ps_malicious_commandlets.yml
+  tsctl import-sigma-rules /usr/local/src/sigma/rules/windows/powershell/powershell_script/posh_ps_nishang_malicious_commandlets.yml
+  tsctl import-sigma-rules /usr/local/src/sigma/rules/windows/powershell/powershell_script/posh_ps_powerview_malicious_commandlets.yml
+  tsctl import-sigma-rules /usr/local/src/sigma/rules/windows/powershell/powershell_script/posh_ps_shellintel_malicious_commandlets.yml
+  tsctl import-sigma-rules /usr/local/src/sigma/rules/windows/powershell/powershell_script/posh_ps_malicious_keywords.yml
+  tsctl import-sigma-rules /usr/local/src/sigma/rules/windows/powershell/powershell_script/posh_ps_susp_keywords.yml
+  tsctl import-sigma-rules /usr/local/src/sigma/rules/windows/powershell/powershell_script/posh_ps_susp_ssl_keyword.yml
+  tsctl import-sigma-rules /usr/local/src/sigma/rules/windows/windefend/win_defender_disabled.yml
+  tsctl import-sigma-rules /usr/local/src/sigma/rules/windows/windefend/win_defender_alert_lsass_access.yml
+  tsctl import-sigma-rules /usr/local/src/sigma/rules/windows/windefend/win_defender_exclusions.yml
+  tsctl import-sigma-rules /usr/local/src/sigma/rules/windows/windefend/win_defender_psexec_wmi_asr.yml
+  tsctl import-sigma-rules /usr/local/src/sigma/rules/windows/windefend/win_defender_amsi_trigger.yml
+  tsctl import-sigma-rules /usr/local/src/sigma/rules/windows/windefend/win_defender_exploit_guard_tamper.yml
+  tsctl import-sigma-rules /usr/local/src/sigma/rules/windows/windefend/win_defender_tamper_protection_trigger.yml
+  tsctl import-sigma-rules /usr/local/src/sigma/rules/windows/windefend/win_defender_disabled.yml
+  tsctl import-sigma-rules /usr/local/src/sigma/rules/windows/windefend/win_defender_history_delete.yml
+  tsctl import-sigma-rules /usr/local/src/sigma/rules/windows/windefend/win_defender_threat.yml
+
+  # Wrap up things
   echo "Timesketch development server is ready!"
 
   # Sleep forever to keep the container running
