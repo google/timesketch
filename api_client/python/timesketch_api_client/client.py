@@ -62,7 +62,7 @@ class TimesketchApi:
     DEFAULT_OAUTH_TOKEN_URL = "https://oauth2.googleapis.com/token"
     DEFAULT_OAUTH_PROVIDER_URL = "https://www.googleapis.com/oauth2/v1/certs"
     DEFAULT_OAUTH_OOB_URL = "urn:ietf:wg:oauth:2.0:oob"
-    DEFAULT_OAUTH_LOCALHOST_URL = 'http://localhost'
+    DEFAULT_OAUTH_LOCALHOST_URL = "http://localhost"
     DEFAULT_OAUTH_API_CALLBACK = "/login/api_callback/"
 
     # Default retry count for operations that attempt a retry.
