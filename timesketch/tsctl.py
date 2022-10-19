@@ -13,7 +13,6 @@
 # limitations under the License.
 """CLI management tool."""
 
-from genericpath import isfile
 import os
 import pathlib
 import json
