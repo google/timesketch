@@ -49,7 +49,7 @@ class ScenarioTemplateListResource(resources.ResourceMixin, Resource):
             A list of JSON representations of the scenarios.
         """
         scenarios = load_yaml_config("SCENARIOS_PATH")
-        return jsonify(scenarios)
+        return jsonify({"objects": scenarios})
 
 
 class ScenarioListResource(resources.ResourceMixin, Resource):
@@ -103,7 +103,13 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
         questions = load_yaml_config("QUESTIONS_PATH")
 
         scenario_name = form.get("scenario_name")
-        scenario_dict = scenarios.get(scenario_name)
+        scenario_dict = next(
+            scenario
+            for scenario in scenarios
+            if scenario["short_name"] == scenario_name
+        )
+        print(scenario_dict)
+        # scenario_dict = scenarios.get(scenario_name)
 
         if not scenario_dict:
             abort(HTTP_STATUS_CODE_NOT_FOUND, f"No such scenario: {scenario_name}")
@@ -142,8 +148,9 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
                     search_template = SearchTemplate.query.filter_by(
                         template_uuid=template_uuid
                     ).first()
-                    print("Adding: ", search_template.name)
-                    question.search_templates.append(search_template)
+                    if search_template:
+                        print("Adding: ", search_template.name)
+                        question.search_templates.append(search_template)
                 facet.questions.append(question)
 
         db_session.add(scenario)

@@ -16,7 +16,7 @@ limitations under the License.
 <template>
   <div>
     <div class="pa-2 pl-4" @click="expanded = !expanded" style="cursor: pointer">
-      <span style="font-size: 1em">{{ question.display_name }}</span>
+      <a style="font-size: 1em">{{ question.display_name }}</a>
     </div>
 
     <v-expand-transition>

@@ -25,6 +25,7 @@ const defaultState = (currentUser) => {
     meta: {},
     searchHistory: {},
     scenarios: [],
+    scenarioTemplates: [],
     tags: [],
     dataTypes: [],
     count: 0,
@@ -53,6 +54,9 @@ export default new Vuex.Store({
     },
     SET_SCENARIOS(state, payload) {
       Vue.set(state, 'scenarios', payload.objects[0])
+    },
+    SET_SCENARIO_TEMPLATES(state, payload) {
+      Vue.set(state, 'scenarioTemplates', payload.objects)
     },
     SET_TIMELINE_TAGS(state, payload) {
       let buckets = payload.objects[0]['field_bucket']['buckets']
@@ -139,6 +143,13 @@ export default new Vuex.Store({
       return ApiClient.getSketchScenarios(sketchId)
         .then((response) => {
           context.commit('SET_SCENARIOS', response.data)
+        })
+        .catch((e) => {})
+    },
+    updateScenarioTemplates(context, sketchId) {
+      return ApiClient.getScenarios(sketchId)
+        .then((response) => {
+          context.commit('SET_SCENARIO_TEMPLATES', response.data)
         })
         .catch((e) => {})
     },

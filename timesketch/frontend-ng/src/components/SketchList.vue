@@ -15,24 +15,25 @@ limitations under the License.
 -->
 <template>
   <div>
-    <v-toolbar dense flat style="background: transparent">
-      <v-btn-toggle v-model="toggleStateButton" class="ml-n4">
-        <v-btn text small color="primary" @click="switchScope('user')"> My sketches </v-btn>
-        <v-btn text small color="primary" @click="switchScope('shared')"> Shared with me </v-btn>
-        <v-btn text small color="primary" @click="switchScope('recent')"> Recent </v-btn>
-      </v-btn-toggle>
-      <v-btn depressed small color="success" class="ml-3"> New sketch </v-btn>
-      <v-spacer></v-spacer>
+    <v-row no-gutters class="mt-5">
       <v-text-field
-        class="mr-n4"
-        solo
+        outlined
+        flat
+        dense
         hide-details
         single-line
         label="Search"
         prepend-inner-icon="mdi-magnify"
         @change="search"
       ></v-text-field>
-    </v-toolbar>
+      <v-spacer></v-spacer>
+      <v-btn-toggle dense group v-model="toggleStateButton">
+        <v-btn @click="switchScope('recent')"> Recent </v-btn>
+        <v-btn @click="switchScope('user')"> My sketches </v-btn>
+        <v-btn @click="switchScope('shared')"> Shared with me </v-btn>
+      </v-btn-toggle>
+    </v-row>
+
     <br />
     <v-data-table
       :headers="headers"
@@ -83,7 +84,7 @@ export default {
       options: {},
       loading: false,
       toggleStateButton: 0,
-      scope: 'user',
+      scope: 'recent',
       searchQuery: null,
     }
   },

@@ -15,13 +15,12 @@
 #                           require further manual analysis, etc.
 #
 # ------------------------------------------------------------------------
-compromise_assessment:
-  display_name: Compromise Assessment
-  description: Maecenas tristique sapien lorem, et vehicula ipsum vestibulum
+- short_name: "compromise_assessment"
+  display_name: "Compromise Assessment"
+  description: "Maecenas tristique sapien lorem, et vehicula ipsum vestibulum"
   facets:
     - attacker_maintain_access
     - interference_with_protective_measures
-
-exfil:
-  display_name: Lorem Ipsum scenario
-  description: Lorem ipsum dolor sit amet
+- short_name: "exfil"
+  display_name: "Exfil"
+  description: "Lorem ipsum dolor sit amet"

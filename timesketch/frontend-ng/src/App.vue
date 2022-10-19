@@ -40,7 +40,7 @@ limitations under the License.
           <v-icon small left>mdi-account-multiple-plus</v-icon>
           Share
         </v-btn>
-        <v-avatar color="grey lighten-1" size="25" class="ml-3">
+        <v-avatar v-if="currentUser" color="grey lighten-1" size="25" class="ml-3">
           <span class="white--text">{{ currentUser.charAt(0).toUpperCase() }}</span>
         </v-avatar>
         <v-menu v-if="!isRootPage" offset-y>
