@@ -248,7 +248,7 @@ class TimesketchApi:
             flow.redirect_uri = self.DEFAULT_OAUTH_OOB_URL
 
         if run_server:
-            _ = flow.run_local_server()
+            _ = flow.run_local_server(host="localhost", port=8080, open_browser=False)
         else:
             if not sys.stdout.isatty() or not sys.stdin.isatty():
                 msg = (
