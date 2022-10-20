@@ -332,7 +332,7 @@ class BaseAggregator(object):
 
         indices = self.indices
         if isinstance(indices, (list, tuple)):
-            indices = ','.join(indices)
+            indices = ",".join(indices)
 
         # Get the mapping for the field.
         try:
