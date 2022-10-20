@@ -18,7 +18,6 @@
 /__pycache__
 **/build/
 /dependencies/
-**/dist/
 *.egg-info
 
 # Ignore frontend build related files
