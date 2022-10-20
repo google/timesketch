@@ -56,11 +56,11 @@ limitations under the License.
               <li><strong>File size:</strong> {{ datasource.file_size | compactBytes }}</li>
               <li><strong>Provider:</strong> {{ datasource.provider }}</li>
               <li v-if="datasource.data_label"><strong>Data label:</strong> {{ datasource.data_label }}</li>
-              <li><strong>Status:</strong> {{ datasource.status[0].status }}</li>
+              <li><strong>Status:</strong> {{ dataSourceStatus(datasource) }}</li>
               <li>
                 <strong>Total File Events:</strong>{{ totalEventsDatasource(datasource.file_on_disk) | compactNumber }}
               </li>
-              <li v-if="datasource.status[0].status === 'fail'">
+              <li v-if="dataSourceStatus(datasource) === 'fail'">
                 <strong>Error message:</strong>
                 <code v-if="datasource.error_message"> {{ datasource.error_message }}</code>
               </li>
@@ -176,12 +176,12 @@ limitations under the License.
                     <li><strong>File size:</strong> {{ datasource.file_size | compactBytes }}</li>
                     <li><strong>Provider:</strong> {{ datasource.provider }}</li>
                     <li v-if="datasource.data_label"><strong>Data label:</strong> {{ datasource.data_label }}</li>
-                    <li><strong>Status:</strong> {{ datasource.status[0].status }}</li>
+                    <li><strong>Status:</strong> {{ dataSourceStatus(datasource) }}</li>
                     <li>
                       <strong>Total File Events:</strong
                       >{{ totalEventsDatasource(datasource.file_on_disk) | compactNumber }}
                     </li>
-                    <li v-if="datasource.status[0].status === 'fail'">
+                    <li v-if="dataSourceStatus(datasource) === 'fail'">
                       <strong>Error message:</strong>
                       <code v-if="datasource.error_message"> {{ datasource.error_message }}</code>
                     </li>
@@ -259,7 +259,8 @@ export default {
     },
     datasourcesProcessing() {
       return this.datasources.filter(
-        (datasource) => datasource.status[0].status === 'processing' || datasource.status[0].status === 'queueing'
+        (datasource) =>
+          this.dataSourceStatus(datasource) === 'processing' || this.dataSourceStatus(datasource) === 'queueing'
       )
     },
     sketch() {
@@ -267,7 +268,7 @@ export default {
     },
     totalEventsToIndex() {
       return this.datasources
-        .filter((x) => x.status[0].status === 'processing')
+        .filter((x) => this.dataSourceStatus(x) === 'processing')
         .map((x) => x.total_file_events)
         .reduce((a, b) => a + b, 0)
     },
@@ -395,7 +396,21 @@ export default {
           console.log(e)
         })
     },
+    dataSourceStatus(datasource) {
+      // Support legacy datasources that don't have a status set.
+      if (!datasource.status[0]) {
+        return 'ready'
+      }
+
+      return datasource.status[0].status
+    },
+
     datasourceStatusColors(datasource) {
+      // Support legacy datasources that don't have a status set.
+      if (!datasource.status[0]) {
+        return 'ready'
+      }
+
       if (datasource.status[0].status === 'ready' || datasource.status === []) {
         return 'success'
       } else if (datasource.status[0].status === 'processing') {
