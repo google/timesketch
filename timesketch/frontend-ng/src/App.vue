@@ -17,7 +17,7 @@ limitations under the License.
   <v-app id="app">
     <v-main>
       <!-- Top horizontal toolbar -->
-      <v-toolbar flat>
+      <v-toolbar flat color="transparent">
         <v-btn icon v-if="!showLeftPanel" @click="showLeftPanel = true" class="ml-0">
           <v-icon>mdi-menu</v-icon>
         </v-btn>
@@ -29,6 +29,11 @@ limitations under the License.
           </v-avatar>
           <span style="font-size: 1.2em">timesketch</span>
         </div>
+
+        <div v-if="activeContext.question" class="ml-2">
+          <strong>{{ activeContext.question.display_name }}</strong>
+        </div>
+
         <v-spacer></v-spacer>
         <v-btn small depressed v-on:click="switchUI"> Use the old UI </v-btn>
         <v-btn v-if="!isRootPage" small depressed color="primary" class="ml-2">
@@ -104,6 +109,9 @@ export default {
     },
     isRootPage() {
       return Object.keys(this.sketch).length === 0
+    },
+    activeContext() {
+      return this.$store.state.activeContext
     },
   },
   methods: {

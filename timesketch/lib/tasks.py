@@ -642,17 +642,16 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
         file_path,
     ]
 
-    total_events_json = {}
-    total_file_events = 0
     # Run pinfo.py
     try:
         command = subprocess.run(cmd, capture_output=True, check=True)
-        total_events = command.stdout.decode("utf-8")
-        regex = 'parsers": (.+?})'
-        m = re.search(regex, total_events)
-        if m:
-            total_events_json = json.loads(m.group(1))
-            total_file_events = total_events_json["total"]
+        storage_counters_json = command.stdout.decode("utf-8")
+        storage_counters = json.loads(re.sub(r"^{, ", r"{", storage_counters_json))
+        total_file_events = (
+            storage_counters.get("storage_counters", {}).get("parsers", {}).get("total")
+        )
+        if not total_file_events:
+            raise RuntimeError("Not able to get total event count from Plaso file.")
     except subprocess.CalledProcessError as e:
         error_msg = e.stderr.decode("utf-8")
         _set_datasource_total_events(timeline_id, file_path, total_file_events=0)

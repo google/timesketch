@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div>
+  <div v-if="sketch">
     <!-- Left panel -->
     <v-navigation-drawer app permanent :width="navigationDrawer.width" hide-overlay ref="drawer">
       <v-toolbar flat>
@@ -31,7 +31,7 @@ limitations under the License.
       </v-toolbar>
       <v-expand-transition>
         <v-list v-show="showSketchMetadata" two-line>
-          <v-list-item>
+          <v-list-item v-if="sketch.user">
             <v-list-item-content>
               <v-list-item-title> <strong>Created:</strong> {{ sketch.created_at | shortDateTime }} </v-list-item-title>
               <v-list-item-subtitle>
@@ -68,8 +68,50 @@ limitations under the License.
       </v-expand-transition>
       <v-divider></v-divider>
 
-      <ts-scenario :scenario="scenario"></ts-scenario>
-      <br />
+      <!-- Reusable dialog for adding a scenario -->
+      <ts-add-scenario-dialog :dialog.sync="dialog" @close-dialog="dialog = false" />
+
+      <div v-if="!scenarios && scenarioTemplates.length">
+        <div class="pa-4" flat :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
+          <span @click="addScenarioDialog" style="cursor: pointer"
+            ><v-icon left>mdi-plus</v-icon> Add Investigation Scenario</span
+          >
+        </div>
+        <v-divider></v-divider>
+      </div>
+
+      <ts-scenario v-for="scenario in scenarios" :key="scenario.id" :scenario="scenario">
+        <v-menu offset-y :close-on-content-click="true">
+          <template v-slot:activator="{ on, attrs }">
+            <v-btn small icon v-bind="attrs" v-on="on">
+              <v-icon>mdi-dots-vertical</v-icon>
+            </v-btn>
+          </template>
+          <v-card>
+            <v-list>
+              <v-list-item-group color="primary">
+                <v-list-item @click="addScenarioDialog">
+                  <v-list-item-icon>
+                    <v-icon>mdi-plus</v-icon>
+                  </v-list-item-icon>
+                  <v-list-item-content>
+                    <v-list-item-title>Add another scenario</v-list-item-title>
+                  </v-list-item-content>
+                </v-list-item>
+
+                <v-list-item>
+                  <v-list-item-icon>
+                    <v-icon>mdi-pencil</v-icon>
+                  </v-list-item-icon>
+                  <v-list-item-content>
+                    <v-list-item-title>Rename</v-list-item-title>
+                  </v-list-item-content>
+                </v-list-item>
+              </v-list-item-group>
+            </v-list>
+          </v-card>
+        </v-menu>
+      </ts-scenario>
       <ts-saved-searches></ts-saved-searches>
       <ts-data-types></ts-data-types>
       <ts-tags></ts-tags>
@@ -88,6 +130,7 @@ import TsDataTypes from '../components/LeftPanel/DataTypes'
 import TsTags from '../components/LeftPanel/Tags'
 import TsSearchTemplates from '../components/LeftPanel/SearchTemplates'
 import TsSigmaRules from '../components/LeftPanel/SigmaRules'
+import TsAddScenarioDialog from '../components/Scenarios/AddScenarioDialog'
 
 export default {
   props: ['sketchId', 'showLeftPanel'],
@@ -98,19 +141,23 @@ export default {
     TsTags,
     TsSearchTemplates,
     TsSigmaRules,
+    TsAddScenarioDialog,
   },
   data() {
     return {
       showSketchMetadata: false,
       navigationDrawer: {
-        width: 450,
+        width: 400,
       },
+      selectedScenario: null,
+      dialog: false,
     }
   },
   created: function () {
     this.$store.dispatch('updateSketch', this.sketchId)
     this.$store.dispatch('updateSearchHistory', this.sketchId)
-    this.$store.dispatch('updateScenario', this.sketchId)
+    this.$store.dispatch('updateScenarios', this.sketchId)
+    this.$store.dispatch('updateScenarioTemplates', this.sketchId)
     this.$store.dispatch('updateSigmaList', this.sketchId)
   },
   updated() {
@@ -126,11 +173,17 @@ export default {
     meta() {
       return this.$store.state.meta
     },
-    scenario() {
-      return this.$store.state.scenario
+    scenarios() {
+      return this.$store.state.scenarios
+    },
+    scenarioTemplates() {
+      return this.$store.state.scenarioTemplates
     },
   },
   methods: {
+    addScenarioDialog() {
+      this.dialog = true
+    },
     hideDrawer() {
       this.navigationDrawer.width = 0
       this.$emit('hideLeftPanel')
@@ -180,7 +233,7 @@ export default {
     },
     showLeftPanel: function (newVal) {
       if (newVal === true) {
-        this.navigationDrawer.width = 450
+        this.navigationDrawer.width = 400
       }
     },
   },
