@@ -815,6 +815,20 @@ class Sketch(resource.BaseResource):
                 if timeline_name.lower() == timeline_.name.lower():
                     return timeline_
         return None
+    
+    def get_intelligence_attribute(self):
+        """Returns a timeline object that is stored in the sketch.
+
+        Returns:
+            A list of dicts with indicators stored in the intelligence
+            attribute of the sketch.
+        """
+        if self.is_archived():
+            raise RuntimeError("Unable to get attributes on an archived sketch.")
+
+        intel_attribute = self.attributes.get('intelligence',
+                                                {}).get('value',
+                                                        {}).get('data', {})
 
     def list_stories(self):
         """Get a list of all stories that are attached to the sketch.
