@@ -108,8 +108,6 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
             for scenario in scenarios
             if scenario["short_name"] == scenario_name
         )
-        print(scenario_dict)
-        # scenario_dict = scenarios.get(scenario_name)
 
         if not scenario_dict:
             abort(HTTP_STATUS_CODE_NOT_FOUND, f"No such scenario: {scenario_name}")
