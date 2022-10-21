@@ -161,6 +161,7 @@ export default new Vuex.Store({
         aggregator_name: 'field_bucket',
         aggregator_parameters: {
           field: 'tag',
+          limit: '1000',
         },
       }
       return ApiClient.runAggregator(sketchId, formData)
@@ -177,6 +178,7 @@ export default new Vuex.Store({
         aggregator_name: 'field_bucket',
         aggregator_parameters: {
           field: 'data_type',
+          limit: '1000',
         },
       }
       return ApiClient.runAggregator(sketchId, formData)

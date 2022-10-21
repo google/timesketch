@@ -71,7 +71,7 @@ limitations under the License.
       <!-- Reusable dialog for adding a scenario -->
       <ts-add-scenario-dialog :dialog.sync="dialog" @close-dialog="dialog = false" />
 
-      <div v-if="!scenarios">
+      <div v-if="!scenarios && scenarioTemplates.length">
         <div class="pa-4" flat :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
           <span @click="addScenarioDialog" style="cursor: pointer"
             ><v-icon left>mdi-plus</v-icon> Add Investigation Scenario</span

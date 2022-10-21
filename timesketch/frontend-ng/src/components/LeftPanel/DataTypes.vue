@@ -23,18 +23,35 @@ limitations under the License.
 
     <v-expand-transition>
       <div v-show="expanded">
-        <v-divider></v-divider>
-        <v-row
-          no-gutters
-          v-for="dataType in dataTypes"
-          :key="dataType.data_type"
-          class="pa-3 pl-5"
-          :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
-        >
-          <div @click="search(dataType.data_type)" style="cursor: pointer; font-size: 0.9em">
-            <span>{{ dataType.data_type }} ({{ dataType.count | compactNumber }})</span>
-          </div>
-        </v-row>
+        <v-data-iterator :items="dataTypes" :items-per-page.sync="itemsPerPage" :search="search">
+          <template v-slot:header>
+            <v-toolbar flat>
+              <v-text-field
+                v-model="search"
+                clearable
+                hide-details
+                outlined
+                dense
+                prepend-inner-icon="mdi-magnify"
+                label="Search for a data type.."
+              ></v-text-field>
+            </v-toolbar>
+          </template>
+
+          <template v-slot:default="props">
+            <v-row
+              no-gutters
+              v-for="dataType in props.items"
+              :key="dataType.data_type"
+              class="pa-3 pl-5"
+              :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+            >
+              <div @click="setQueryAndFilter(dataType.data_type)" style="cursor: pointer; font-size: 0.9em">
+                <span>{{ dataType.data_type }} ({{ dataType.count | compactNumber }})</span>
+              </div>
+            </v-row>
+          </template>
+        </v-data-iterator>
       </div>
     </v-expand-transition>
 
@@ -61,6 +78,8 @@ export default {
   data: function () {
     return {
       expanded: false,
+      itemsPerPage: 10,
+      search: '',
     }
   },
   computed: {
@@ -72,7 +91,7 @@ export default {
     },
   },
   methods: {
-    search(dataType) {
+    setQueryAndFilter(dataType) {
       let eventData = {}
       eventData.doSearch = true
       eventData.queryString = 'data_type:' + '"' + dataType + '"'
