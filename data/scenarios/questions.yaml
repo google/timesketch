@@ -95,9 +95,6 @@ user_logged_in_win:
     - windows_login
   analyzers:
     - login
-  search_templates:
-    - 851b9ab7-e1a5-45c1-8f3b-9a0440e4e663
-    - dd659ff2-8c3e-45b7-be3d-d8c5ecb499d9
   answer_simple:
     must:
       - windows_login
