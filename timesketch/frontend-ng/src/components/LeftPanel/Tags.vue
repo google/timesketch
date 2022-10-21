@@ -15,34 +15,26 @@ limitations under the License.
 -->
 <template>
   <div v-if="tags.length">
-    <div
-      style="cursor: pointer"
-      @click="expanded = !expanded"
-      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
-      class="pa-2"
-    >
-      <span>
-        <v-icon v-if="!expanded">mdi-chevron-right</v-icon>
-        <v-icon v-else>mdi-chevron-down</v-icon>
-      </span>
-
-      <span style="font-size: 0.9em">Tags ({{ tags.length }})</span>
+    <div class="pa-4" flat :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
+      <span style="cursor: pointer" @click="expanded = !expanded"
+        ><v-icon left>mdi-tag-multiple-outline</v-icon> Tags ({{ tags.length }})</span
+      >
     </div>
+
     <v-expand-transition>
       <div v-show="expanded">
         <v-divider></v-divider>
-        <v-simple-table dense>
-          <template v-slot:default>
-            <tbody>
-              <tr v-for="tag in tags" :key="tag.tag">
-                <td @click="search(tag.tag)">
-                  <a>{{ tag.tag }}</a>
-                </td>
-                <td>{{ tag.count | compactNumber }}</td>
-              </tr>
-            </tbody>
-          </template>
-        </v-simple-table>
+        <v-row
+          no-gutters
+          v-for="tag in tags"
+          :key="tag.tag"
+          class="pa-3 pl-5"
+          :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+        >
+          <div @click="search(tag.tag)" style="cursor: pointer; font-size: 0.9em">
+            <span>{{ tag.tag }} ({{ tag.count | compactNumber }})</span>
+          </div>
+        </v-row>
       </div>
     </v-expand-transition>
     <v-divider></v-divider>

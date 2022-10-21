@@ -15,34 +15,26 @@ limitations under the License.
 -->
 <template>
   <div v-if="dataTypes.length">
-    <div
-      style="cursor: pointer"
-      @click="expanded = !expanded"
-      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
-      class="pa-2"
-    >
-      <span>
-        <v-icon v-if="!expanded">mdi-chevron-right</v-icon>
-        <v-icon v-else>mdi-chevron-down</v-icon>
-      </span>
-
-      <span style="font-size: 0.9em">Data Types ({{ dataTypes.length }})</span>
+    <div class="pa-4" flat :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
+      <span style="cursor: pointer" @click="expanded = !expanded"
+        ><v-icon left>mdi-database-outline</v-icon> Data Types ({{ dataTypes.length }})</span
+      >
     </div>
+
     <v-expand-transition>
       <div v-show="expanded">
         <v-divider></v-divider>
-        <v-simple-table dense>
-          <template v-slot:default>
-            <tbody>
-              <tr v-for="dataType in dataTypes" :key="dataType.data_type">
-                <td @click="search(dataType.data_type)">
-                  <a>{{ dataType.data_type }}</a>
-                </td>
-                <td>{{ dataType.count | compactNumber }}</td>
-              </tr>
-            </tbody>
-          </template>
-        </v-simple-table>
+        <v-row
+          no-gutters
+          v-for="dataType in dataTypes"
+          :key="dataType.data_type"
+          class="pa-3 pl-5"
+          :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+        >
+          <div @click="search(dataType.data_type)" style="cursor: pointer; font-size: 0.9em">
+            <span>{{ dataType.data_type }} ({{ dataType.count | compactNumber }})</span>
+          </div>
+        </v-row>
       </div>
     </v-expand-transition>
 

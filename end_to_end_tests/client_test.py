@@ -82,53 +82,101 @@ class ClientTest(interface.BaseEndToEndTest):
         data_source = data_sources[0]
         self.assertions.assertEqual(data_source.get("context", ""), context)
 
+    def test_create_sigma_rule(self):
+        """Create a Sigma rule in database"""
+        MOCK_SIGMA_RULE = """
+title: Suspicious Installation of bbbbbb
+id: 5266a592-b793-11ea-b3de-bbbbbb
+description: Detects suspicious installation of bbbbbb
+references:
+    - https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html
+author: Alexander Jaeger
+date: 2020/06/26
+modified: 2022/06/12
+logsource:
+    product: linux
+    service: shell
+detection:
+    keywords:
+        # Generic suspicious commands
+        - '*apt-get install bbbbbb*'
+    condition: keywords
+falsepositives:
+    - Unknown
+level: high
+"""
+        rule = self.api.create_sigmarule(rule_yaml=MOCK_SIGMA_RULE)
+        self.assertions.assertIsNotNone(rule)
+
     def test_sigma_list(self):
         """Client Sigma list tests."""
         rules = self.api.list_sigma_rules()
         self.assertions.assertGreaterEqual(len(rules), 1)
         rule = rules[0]
-        self.assertions.assertIn("b793-11ea-b3de-0242ac130004", rule.id)
-        self.assertions.assertIn("b793-11ea-b3de-0242ac130004", rule.rule_uuid)
-        self.assertions.assertIn("Installation of ZMap", rule.title)
-        self.assertions.assertIn("zmap", rule.es_query)
+        self.assertions.assertIn("5266a592-b793-11ea-b3de-bbbbbb", rule.id)
+        self.assertions.assertIn("5266a592-b793-11ea-b3de-bbbbbb", rule.rule_uuid)
+        self.assertions.assertIn("Installation of bbbbbb", rule.title)
+        self.assertions.assertIn("bbbbbb", rule.search_query)
         self.assertions.assertIn("Alexander", rule.author)
         self.assertions.assertIn("2020/06/26", rule.date)
-        self.assertions.assertIn("installation of ZMap", rule.description)
+        self.assertions.assertIn("installation of bbbbbb", rule.description)
         self.assertions.assertEqual(len(rule.detection), 2)
         self.assertions.assertEqual(
-            '(data_type:("shell:zsh:history" OR "bash:history:command" OR "apt:history:line" OR "selinux:line") AND "apt-get install zmap")',  # pylint: disable=line-too-long
-            rule.es_query,
+            '(data_type:("shell:zsh:history" OR "bash:history:command" OR "apt:history:line" OR "selinux:line") AND "apt-get install bbbbbb")',  # pylint: disable=line-too-long
+            rule.search_query,
         )
-        self.assertions.assertIn("shell:zsh:history", rule.es_query)
+        self.assertions.assertIn("shell:zsh:history", rule.search_query)
         self.assertions.assertIn("Unknown", rule.falsepositives[0])
         self.assertions.assertEqual(len(rule.logsource), 2)
-        self.assertions.assertIn("2020/06/26", rule.modified)
-        self.assertions.assertIn("lnx_susp_zmap.yml", rule.file_relpath)
-        self.assertions.assertIn("lnx_susp_zmap", rule.file_name)
+        self.assertions.assertIn("2022/06/12", rule.modified)
         self.assertions.assertIn("high", rule.level)
         self.assertions.assertIn("rmusser.net", rule.references[0])
 
-    def test_get_sigma_rule(self):
+    def test_get_sigmarule(self):
         """Client Sigma object tests."""
-        rule = self.api.get_sigma_rule(rule_uuid="5266a592-b793-11ea-b3de-0242ac130004")
-        rule.from_rule_uuid("5266a592-b793-11ea-b3de-0242ac130004")
+
+        rule = self.api.create_sigmarule(
+            rule_yaml="""
+title: Suspicious Installation of eeeee
+id: 5266a592-b793-11ea-b3de-eeeee
+description: Detects suspicious installation of eeeee
+references:
+    - https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html
+author: Alexander Jaeger
+date: 2020/06/26
+modified: 2022/06/12
+logsource:
+    product: linux
+    service: shell
+detection:
+    keywords:
+        # Generic suspicious commands
+        - '*apt-get install zmap*'
+    condition: keywords
+falsepositives:
+    - Unknown
+level: high
+"""
+        )
+        self.assertions.assertIsNotNone(rule)
+
+        rule = self.api.get_sigmarule(rule_uuid="5266a592-b793-11ea-b3de-eeeee")
+        rule.from_rule_uuid("5266a592-b793-11ea-b3de-eeeee")
         self.assertions.assertGreater(len(rule.attributes), 5)
         self.assertions.assertIsNotNone(rule)
         self.assertions.assertIn("Alexander", rule.author)
         self.assertions.assertIn("Alexander", rule.get_attribute("author"))
-        self.assertions.assertIn("b793-11ea-b3de-0242ac130004", rule.id)
-        self.assertions.assertIn("Installation of ZMap", rule.title)
-        self.assertions.assertIn("zmap", rule.es_query)
-        self.assertions.assertIn("shell:zsh:history", rule.es_query)
-        self.assertions.assertIn("lnx_susp_zmap.yml", rule.file_relpath)
-        self.assertions.assertIn("sigma/rule/5266a592", rule.resource_uri)
-        self.assertions.assertIn("installation of ZMap", rule.description)
+        self.assertions.assertIn("b793-11ea-b3de-eeeee", rule.id)
+        self.assertions.assertIn("Installation of eeeee", rule.title)
+        self.assertions.assertIn("zmap", rule.search_query)
+        self.assertions.assertIn("shell:zsh:history", rule.search_query)
+        self.assertions.assertIn("sigmarule/5266a592", rule.resource_uri)
+        self.assertions.assertIn("installation of eeeee", rule.description)
         self.assertions.assertIn("high", rule.level)
         self.assertions.assertEqual(len(rule.falsepositives), 1)
         self.assertions.assertIn("Unknown", rule.falsepositives[0])
-        self.assertions.assertIn("susp_zmap", rule.file_name)
         self.assertions.assertIn("2020/06/26", rule.date)
-        self.assertions.assertIn("2020/06/26", rule.modified)
+        self.assertions.assertIn("2022/06/12", rule.modified)
         self.assertions.assertIn("high", rule.level)
         self.assertions.assertIn("rmusser.net", rule.references[0])
         self.assertions.assertEqual(len(rule.detection), 2)
@@ -137,7 +185,7 @@ class ClientTest(interface.BaseEndToEndTest):
         # Test an actual query
         self.import_timeline("sigma_events.csv")
         search_obj = search.Search(self.sketch)
-        search_obj.query_string = rule.es_query
+        search_obj.query_string = rule.search_query
         data_frame = search_obj.table
         count = len(data_frame)
         self.assertions.assertEqual(count, 1)

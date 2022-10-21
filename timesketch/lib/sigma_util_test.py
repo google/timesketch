@@ -18,7 +18,6 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import datetime
-import os
 
 from sigma.parser import exceptions as sigma_exceptions
 
@@ -73,9 +72,7 @@ class TestSigmaUtilLib(BaseTest):
 
         # test that the function does not break regular queries
         self.assertEqual(
-            sigma_util._sanitize_query(
-                "*mimikatz* OR *mimikatz.exe* OR *mimilib.dll*"
-            ),
+            sigma_util._sanitize_query("*mimikatz* OR *mimikatz.exe* OR *mimilib.dll*"),
             "*mimikatz* OR *mimikatz.exe* OR *mimilib.dll*",
         )
 
@@ -86,12 +83,10 @@ class TestSigmaUtilLib(BaseTest):
             '(xml_string.keyword:"\\foobar.exe" AND GrantedAccess.keyword:"10")'
         )
 
-        self.assertEqual(
-            test_3, r'(xml_string:"\foobar.exe" AND GrantedAccess:"10")'
-        )
+        self.assertEqual(test_3, r'(xml_string:"\foobar.exe" AND GrantedAccess:"10")')
 
         test_4 = sigma_util._sanitize_query(
-            '(xml_string:C:\\Program Files\\WindowsApps\\\" AND xml_string: "GamingServices.exe)'  # pylint: disable=line-too-long
+            '(xml_string:C:\\Program Files\\WindowsApps\\" AND xml_string: "GamingServices.exe)'  # pylint: disable=line-too-long
         )
         self.assertIsNotNone(test_4)
         # pylint: enable=protected-access
@@ -105,7 +100,7 @@ class TestSigmaUtilLib(BaseTest):
         self.assertIsNotNone(rule)
         self.assertEqual(
             '(data_type:"windows:evtx:record" AND source_name:("Microsoft-Windows-Security-Auditing" OR "Microsoft-Windows-Eventlog") AND event_identifier:"4624" AND xml_string:"\\\\WmiPrvSE.exe")',  # pylint: disable=line-too-long
-            rule.get("es_query"),
+            rule.get("search_query"),
         )
 
     def test_get_rule_by_text_zmap_rule(self):
@@ -136,10 +131,10 @@ level: high
         )
 
         self.assertIsNotNone(rule)
-        self.assertIn("zmap", rule.get("es_query"))
+        self.assertIn("zmap", rule.get("search_query"))
         self.assertEqual(
             '(data_type:("shell:zsh:history" OR "bash:history:command" OR "apt:history:line" OR "selinux:line") AND "apt-get install zmap")',  # pylint: disable=line-too-long
-            rule.get("es_query"),
+            rule.get("search_query"),
         )
         self.assertIn("b793", rule.get("id"))
         self.assertIn("2020/06/26", rule.get("date"))
@@ -187,7 +182,7 @@ level: high
         self.assertIsNotNone(rule)
         self.assertEqual(
             '("Whitespace at" OR " beginning " OR " and extra text ")',
-            rule.get("es_query"),
+            rule.get("search_query"),
         )
 
     def test_get_rule_by_text_minimal_rule(self):
@@ -209,7 +204,7 @@ detection:
         self.assertIsNotNone(rule)
         self.assertEqual(
             '(data_type:"windows:evtx:record" AND " lorem ")',
-            rule.get("es_query"),
+            rule.get("search_query"),
         )
 
     def test_get_rule_by_text_count_condition_error(self):
@@ -276,12 +271,10 @@ detection:
 """
         )
         self.assertIsNotNone(rule)
-        self.assertEqual(
-            "67b9a11a-03ae-490a-9156-9be9900aaaaa", rule.get("id")
-        )
+        self.assertEqual("67b9a11a-03ae-490a-9156-9be9900aaaaa", rule.get("id"))
         self.assertEqual(
             r'("aaa:bbb" OR "ccc\:\:ddd")',
-            rule.get("es_query"),
+            rule.get("search_query"),
         )
 
     def test_get_rule_by_text_startswith_endswith_mixed(self):
@@ -378,12 +371,10 @@ level: medium
         )
 
         self.assertIsNotNone(rule)
-        self.assertEqual(
-            "5d2c62fe-3cbb-47c3-88e1-88ef73503a9f", rule.get("id")
-        )
+        self.assertEqual("5d2c62fe-3cbb-47c3-88e1-88ef73503a9f", rule.get("id"))
         self.assertIn(
             'event_identifier:"10" AND (xml_string:"\\\\foobar.exe" AND xml_string:"10"',  # pylint: disable=line-too-long
-            rule.get("es_query"),
+            rule.get("search_query"),
         )
 
     def test_get_sigma_rule_by_text_missing_title(self):
@@ -406,57 +397,3 @@ detection:
         with self.assertRaises(ValueError):
             sigma_util.get_sigma_config_file("/foo")
         self.assertIsNotNone(sigma_util.get_sigma_config_file())
-
-    def test_get_rule_status_file(self):
-        """Test getting sigma config file"""
-        self.assertRaises(
-            ValueError, sigma_util.get_sigma_rule_status_list, "/foo"
-        )
-        self.assertIsNotNone(sigma_util.get_sigma_config_file())
-        statuslist = sigma_util.get_sigma_rule_status_list()
-        self.assertEqual(
-            'bad',
-            statuslist[statuslist.values == 'deprecated']['status'].all(),
-        )
-        self.assertEqual(
-            'good',
-            statuslist[
-                statuslist.values
-                == 'windows/powershell/powershell_create_local_user.yml'
-            ]['status'].all(),
-        )
-        self.assertIsNotNone(False)
-
-    def test_get_sigma_rule(self):
-        """Test getting sigma rule from file"""
-
-        filepath = "./data/sigma/rules/lnx_susp_zmap.yml"
-
-        rule = sigma_util.get_sigma_rule(filepath)
-        self.assertIsNotNone(rule)
-        self.assertIn("zmap", rule.get("es_query"))
-        self.assertIn("b793", rule.get("id"))
-
-        # temp write a file with content
-
-        with open(
-            "./data/sigma/rules/temporary.yml", "w+", encoding='utf-8'
-        ) as f:
-            f.write(SIGMA_MOCK_RULE_TEST4)
-        self.assertNotEqual(0, os.stat(f.name).st_size)
-        self.assertIsNotNone(f)
-
-        rule_by_file = sigma_util.get_sigma_rule(f.name)
-
-        # Test that rule from file equals rule from text
-        rule_by_text = sigma_util.parse_sigma_rule_by_text(
-            SIGMA_MOCK_RULE_TEST4
-        )
-
-        self.assertEqual(rule_by_file.get('id'), rule_by_text.get('id'))
-        self.assertEqual(
-            rule_by_file.get('es_query'), rule_by_text.get('es_query')
-        )
-
-        # clean up
-        os.remove(f.name)

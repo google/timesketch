@@ -28,6 +28,10 @@ Timesketch is an open-source tool for collaborative forensic timeline analysis. 
 ![](https://github.com/google/timesketch/workflows/pipenv%20unittests/badge.svg)
 ![](https://github.com/google/timesketch/workflows/ppa%20unittests/badge.svg)
 
+## Changelog
+
+- [2022-09](changelog/2022-09)
+
 ---
 
 **Obligatory Fine Print**: This is not an official Google product (experimental or otherwise), it is just code that happens to be owned by Google.

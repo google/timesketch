@@ -53,6 +53,8 @@ RestApiClient.interceptors.response.use(
         },
       })
     } else {
+      // TODO: Consider removing that if a global Error handling is established
+      console.error(error.response.data)
       Snackbar.open({
         message: error.response.data.message,
         type: 'is-white',
@@ -375,6 +377,12 @@ export default {
       content: ruleText,
     }
     return RestApiClient.post('/sigma/text/', formData)
+  },
+  getSearchTemplates() {
+    return RestApiClient.get('/searchtemplate/')
+  },
+  parseSearchTemplate(searchTemplateId, formData) {
+    return RestApiClient.post('/searchtemplate/' + searchTemplateId + '/parse/', formData)
   },
   getScenarios() {
     return RestApiClient.get('/scenarios/')
