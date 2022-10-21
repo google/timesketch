@@ -41,6 +41,9 @@ nav:
           - Upload data via API: developers/api-upload-data.md
       - Analyzers:
           - Create an analyzer: developers/analyzer-development.md
+  - Changelog:
+    - changelog/2022-10.md
+    - changelog/2022-09.md
   - Community:
       - Resources: community/resources.md
       - Roadmap: community/roadmap.md
