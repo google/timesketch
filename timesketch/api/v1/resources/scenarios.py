@@ -13,7 +13,6 @@
 # limitations under the License.
 """API for asking Timesketch scenarios for version 1 of the Timesketch API."""
 
-from encodings import search_function
 import logging
 import json
 
