@@ -829,7 +829,7 @@ class Sketch(resource.BaseResource):
         intel_attribute = (
             self.attributes.get("intelligence", {}).get("value", {}).get("data", {})
         )
-        
+
         return intel_attribute
 
     def list_stories(self):
