@@ -100,6 +100,7 @@ class OpenSearchDataStore(object):
     """Implements the datastore."""
 
     DEFAULT_SIZE = 100
+    DEFAULT_FLUSH_INTERVAL = 1000
     DEFAULT_LIMIT = DEFAULT_SIZE  # Max events to return
     DEFAULT_FROM = 0
     DEFAULT_STREAM_LIMIT = 5000  # Max events to return when streaming results
@@ -131,7 +132,9 @@ class OpenSearchDataStore(object):
         self.client = OpenSearch([{"host": host, "port": port}], **parameters)
 
         # Number of events to queue up when bulk inserting events.
-        self.flush_interval = current_app.config.get("OPENSEARCH_FLUSH_INTERVAL", 1000)
+        self.flush_interval = current_app.config.get(
+            "OPENSEARCH_FLUSH_INTERVAL", self.DEFAULT_FLUSH_INTERVAL
+        )
         self.import_counter = Counter()
         self.import_events = []
         self.version = self.client.info().get("version").get("number")
