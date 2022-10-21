@@ -815,7 +815,7 @@ class Sketch(resource.BaseResource):
                 if timeline_name.lower() == timeline_.name.lower():
                     return timeline_
         return None
-    
+
     def get_intelligence_attribute(self):
         """Returns a timeline object that is stored in the sketch.
 
