@@ -28,7 +28,7 @@ from timesketch.api.v1.utils import load_yaml_config
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.models import db_session
-from timesketch.models.sketch import Sketch
+from timesketch.models.sketch import SearchTemplate, Sketch
 from timesketch.models.sketch import Scenario
 from timesketch.models.sketch import Facet
 from timesketch.models.sketch import InvestigativeQuestion
@@ -48,7 +48,7 @@ class ScenarioTemplateListResource(resources.ResourceMixin, Resource):
             A list of JSON representations of the scenarios.
         """
         scenarios = load_yaml_config("SCENARIOS_PATH")
-        return jsonify(scenarios)
+        return jsonify({"objects": scenarios})
 
 
 class ScenarioListResource(resources.ResourceMixin, Resource):
@@ -102,7 +102,11 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
         questions = load_yaml_config("QUESTIONS_PATH")
 
         scenario_name = form.get("scenario_name")
-        scenario_dict = scenarios.get(scenario_name)
+        scenario_dict = next(
+            scenario
+            for scenario in scenarios
+            if scenario["short_name"] == scenario_name
+        )
 
         if not scenario_dict:
             abort(HTTP_STATUS_CODE_NOT_FOUND, f"No such scenario: {scenario_name}")
@@ -136,6 +140,14 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
                     spec_json=json.dumps(question_dict),
                     user=current_user,
                 )
+                search_templates = question_dict.get("search_templates", [])
+                for template_uuid in search_templates:
+                    search_template = SearchTemplate.query.filter_by(
+                        template_uuid=template_uuid
+                    ).first()
+                    if search_template:
+                        print("Adding: ", search_template.name)
+                        question.search_templates.append(search_template)
                 facet.questions.append(question)
 
         db_session.add(scenario)
