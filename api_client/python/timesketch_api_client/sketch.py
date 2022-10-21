@@ -826,10 +826,10 @@ class Sketch(resource.BaseResource):
         if self.is_archived():
             raise RuntimeError("Unable to get attributes on an archived sketch.")
 
-        intel_attribute = self.attributes.get('intelligence',
-                                                {}).get('value',
-                                                        {}).get('data', {})
-
+        intel_attribute = (
+            self.attributes.get("intelligence", {}).get("value", {}).get("data", {})
+        )
+        
         return intel_attribute
 
     def list_stories(self):
