@@ -830,6 +830,8 @@ class Sketch(resource.BaseResource):
                                                 {}).get('value',
                                                         {}).get('data', {})
 
+        return intel_attribute
+
     def list_stories(self):
         """Get a list of all stories that are attached to the sketch.
 
