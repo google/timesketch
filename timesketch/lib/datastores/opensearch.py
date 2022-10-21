@@ -99,8 +99,6 @@ if (!removedLabel) {
 class OpenSearchDataStore(object):
     """Implements the datastore."""
 
-    # Number of events to queue up when bulk inserting events.
-    DEFAULT_FLUSH_INTERVAL = 1000
     DEFAULT_SIZE = 100
     DEFAULT_LIMIT = DEFAULT_SIZE  # Max events to return
     DEFAULT_FROM = 0
@@ -132,6 +130,8 @@ class OpenSearchDataStore(object):
 
         self.client = OpenSearch([{"host": host, "port": port}], **parameters)
 
+        # Number of events to queue up when bulk inserting events.
+        self.flush_interval = current_app.config.get("OPENSEARCH_FLUSH_INTERVAL", 1000)
         self.import_counter = Counter()
         self.import_events = []
         self.version = self.client.info().get("version").get("number")
@@ -928,7 +928,7 @@ class OpenSearchDataStore(object):
         index_name,
         event=None,
         event_id=None,
-        flush_interval=DEFAULT_FLUSH_INTERVAL,
+        flush_interval=None,
         timeline_id=None,
     ):
         """Add event to OpenSearch.
@@ -975,6 +975,9 @@ class OpenSearchDataStore(object):
             self.import_events.append(header)
             self.import_events.append(event)
             self.import_counter["events"] += 1
+
+            if not flush_interval:
+                flush_interval = self.flush_interval
 
             if self.import_counter["events"] % int(flush_interval) == 0:
                 _ = self.flush_queued_events()
