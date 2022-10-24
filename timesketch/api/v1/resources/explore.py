@@ -517,7 +517,7 @@ class SearchHistoryTreeResource(resources.ResourceMixin, Resource):
         # not build an unesessary big graph.
         root_node = last_node
         for _ in range(self.HISTORY_NODE_LIMIT):
-            if root_node is None:
+            if not root_node:
                 break
 
             if not root_node.parent:
