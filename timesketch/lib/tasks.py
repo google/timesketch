@@ -712,7 +712,7 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
     opensearch_flush_interval = current_app.config.get(
         "OPENSEARCH_FLUSH_INTERVAL", None
     )
-    if not opensearch_flush_interval:
+    if opensearch_flush_interval:
         cmd.extend(["--flush_interval", str(opensearch_flush_interval)])
 
     # Run psort.py
