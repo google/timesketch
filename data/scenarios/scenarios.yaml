@@ -17,7 +17,7 @@
 # ------------------------------------------------------------------------
 - short_name: "compromise_assessment"
   display_name: "Compromise Assessment"
-  description: "Maecenas tristique sapien lorem, et vehicula ipsum vestibulum"
+  description: "Initial triage of a compromised system."
   facets:
     - attacker_maintain_access
     - interference_with_protective_measures
