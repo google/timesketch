@@ -164,7 +164,6 @@ class YetiIndicators(interface.BaseAnalyzer):
             )
 
         all_iocs = intelligence_attribute['data'] + intelligence_items
-        print(all_iocs)
         self.sketch.add_sketch_attribute(
             'intelligence',
             [json.dumps({"data": all_iocs})],
