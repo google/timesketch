@@ -15,15 +15,9 @@
 #                           require further manual analysis, etc.
 #
 # ------------------------------------------------------------------------
-compromise_assessment:
-  display_name: Compromise Assessment
-  description: Maecenas tristique sapien lorem, et vehicula ipsum vestibulum
+- short_name: "compromise_assessment"
+  display_name: "Compromise Assessment"
+  description: "Initial triage of a compromised system."
   facets:
     - attacker_maintain_access
     - interference_with_protective_measures
-    - lateral_movement
-    - attacker_run_code
-
-exfil:
-  display_name: Lorem Ipsum scenario
-  description: Lorem ipsum dolor sit amet

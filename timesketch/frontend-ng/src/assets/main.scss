@@ -135,3 +135,10 @@ html {
 .dark-highlight {
   background-color: #555;
 }
+
+.timeline-name-ellipsis {
+  width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis
+}

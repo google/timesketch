@@ -18,6 +18,9 @@ import dayjs from '@/plugins/dayjs'
 export default {
   name: 'toISO8601',
   filter: function (timestampMillis) {
+    if (timestampMillis < 0) {
+      return 'No timestamp'
+    }
     return dayjs(timestampMillis).toISOString()
   },
 }

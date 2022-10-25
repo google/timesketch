@@ -23,7 +23,7 @@ This will show a table with all Sigma rules installed on a system. You can searc
 
 - Rule ID
 - Title
-- OpenSearch Search query (ES Query)
+- OpenSearch Search query
 - File Name
 - Tag
 
@@ -33,7 +33,7 @@ So if you want to search for ZMap related rules, you can search for `zma` in `Ti
 
 If you have run the Sigma Analyzer on a sketch and a rule has produced hits, the following fields will be added to the event:
 
-* `ts_sigma_rule` will store the rule name that produced hits on an event.
+* `ts_sigma_rule` will store the rule title that produced hits on an event.
 * `ts_ttp` if a rule had ATT&CK(r) tags added, they will be added to this array
 
 To query all rules that had Sigma rules matched in an analyzer run, query for:
@@ -41,13 +41,13 @@ To query all rules that had Sigma rules matched in an analyzer run, query for:
 
 E.g. an event might have the following attributes:
 ```
-ts_sigma_rule:[ "av_password_dumper.yml" ]
-ts_ttp:[ "attack.t1003.002", "attack.t1003.001", "attack.credential_access", "attack.t1558", "attack.t1003" ]
+ts_sigma_rule:[ "Suspicious Installation of ZMap" ]
+ts_ttp:[ "attack.discovery", "attack.t1046"]
 ```
 
-#### ES Query
+#### Search Query
 
-From that table, there are small icons to copy the values or explore the sketch with the given value. For example if you click the small lens icon next to the ES Query from the found rule `(data_type:("shell\:zsh\:history" OR "bash\:history\:command" OR "apt\:history\:line" OR "selinux\:line") AND "*apt\-get\ install\ zmap*")` it will open an explore view for this sketch with this query pre filled for you to explore the data.
+From that table, there are small icons to copy the values or explore the sketch with the given value. For example if you click the small lens icon next to the Search Query from the found rule `(data_type:("shell\:zsh\:history" OR "bash\:history\:command" OR "apt\:history\:line" OR "selinux\:line") AND "*apt\-get\ install\ zmap*")` it will open an explore view for this sketch with this query pre filled for you to explore the data.
 
 #### Rule ID
 
@@ -62,57 +62,7 @@ In this detail view all key and values of that rule that has been parsed by Time
 ### Install rules
 
 Timesketch deliberately does not provide a set of Sigma rules, as those would add complexity to maintain.
-To use the official community rules you can clone [github.com/Neo23x0/sigma](https://github.com/Neo23x0/sigma) to /data/sigma.
-This directory will not be caught by git.
-
-```shell
-cd data
-git clone https://github.com/Neo23x0/sigma
-```
-
-The rules then will be under
-
-```shell
-timesketch/data/sigma
-```
-
-### Sigma Rules sigma_rule_status file
-
-The `data/sigma_rule_status.csv` is where Timesketch maintains a list of rules. 
-Each rule can have one of the following status values: `good,bad,exploratory`.
-* `exploratoy` rules will be shown in the UI but ignored in the Analyzer. So this status can be used to test rules. By default each rule is considered `exploratory`. 
-* `good` rules will be used in the Sigma analyzer. 
-* `bad` will be ignored and not shown in the UI or used in the Sigma analyzer.
-
-It is good practice to add new rules in this file if they are tested and verified to not be compatible.
-
-Each method that reads Sigma rules from the a folder is checking if part of the full path of a rule is mentioned in the `data/sigma_rule_status.csv` file.
-
-For example a file at `/etc/timesketch/data/sigma/rules-unsupported/foo/bar.yml` would not be parsed as a line in `data/sigma_rule_status.csv` mentions:
-
-```
-/rules-unsupported/,bad,Sigma internal folder name,2021-11-19,
-```
-
-The header for that file are:
-
-```
-path,status,reason,last_checked,rule_id
-```
-
-### Sigma Rules
-
-The windows rules are stored in
-
-```shell
-timesketch/data/sigma/rules/windows
-```
-
-The linux rules are stored in
-
-```shell
-timesketch/data/sigma/rules/linux
-```
+To use the official community rules you can visit [github.com/Neo23x0/sigma](https://github.com/Neo23x0/sigma) and copy the rules you are interested in.
 
 ### Timesketch config file
 
@@ -121,13 +71,9 @@ There are multiple sigma related config variables in `timesketch.conf`.
 ```
 # Sigma Settings
 
-SIGMA_RULES_FOLDERS = ['/etc/timesketch/sigma/rules/']
 SIGMA_CONFIG = '/etc/timesketch/sigma_config.yaml'
 SIGMA_TAG_DELAY = 5
-SIGMA_BLOCKLIST_CSV = '/etc/timesketch/sigma_rule_status.csv'
 ```
-
-The `SIGMA_RULES_FOLDERS` points to the folder(s) where Sigma rules are stored. The folder is the local folder of the Timesketch server (celery worker and webserver). For a distributed system, mounting network shares is possible.
 
 `SIGMA_TAG_DELAY`can be used to throttle the Sigma analyzer. If Timesketch is running on a less powerful machine (or docker-dev) a sleep timer of 15 seconds will help avoid OpenSearch Search exceptions for to many requests to the ES backend in a to short timerange. For more powerful Timesketch installations, this value can be set to 0.
 
@@ -178,18 +124,18 @@ links and parse it via plaso
 
 - [github.com/sbousseaden/EVTX-ATTACK-SAMPLES](https://github.com/sbousseaden/EVTX-ATTACK-SAMPLES)
 - [github.com/sans-blue-team/DeepBlueCLI/evtx](https://github.com/sans-blue-team/DeepBlueCLI/evtx)
+- [github.com/jaegeral/timesketch-test-data](https://github.com/jaegeral/timesketch-test-data)
 
 ## Compose new rules
 
 In the Sigma Tab in a sketch there is a toggle called `Compose Sigma rule`.
 If turned on it will show a text area that takes the yaml text of a Sigma rule.
 Once you are happy with your rule, click `Parse` and the rule will be parsed as if it is installed on Timesketch.
+Press `Save` to store it in the database.
 
 This feature can be helpful if you want to test out field mapping.
 
-From the parse result you can copy the `es_query` value and paste it in a new window where you have the explore of a Sketch open.
-
-You need to remember to copy your rule when you are ready and create a new file on your Timesketch server to store the rule and make it available to others. The text from the compose area will be reset with each reload of the page.
+From the parse result you can copy the `search_query` value and paste it in a new window where you have the explore of a Sketch open.
 
 ### Best practices
 
@@ -263,6 +209,10 @@ Deploying rules that can not be parsed by Sigma can cause problems on analyst si
 as well as Timesketch operator side. The analyst might not be able to see
 the logs and the errors might only occur when running the analyzer.
 
+Use the Status of a Sigma rule to tell analysts and analyzers when to use a rule.
+
+TODO: Write down status mapping to analyzer
+
 This is why a standalone tool can be used from:
 
 ```shell
@@ -317,7 +267,7 @@ The XXX here is the "problem" and you should note those rules. Once you note and
 from timesketch_api_client import config
 ts = config.get_client()
 rule = ts.get_sigma_rule("c0478ead-5336-46c2-bd5e-b4c84bc3a36e")
-print(rule.es_query)
+print(rule.search_query)
 ```
 
 Where the ID is the id of your problematic rule. This will hopefully give you more insight from the web server logs of what caused the problem. E.g.

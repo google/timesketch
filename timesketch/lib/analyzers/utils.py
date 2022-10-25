@@ -280,7 +280,6 @@ def get_events_from_data_frame(frame, datastore):
         event_index = entry.get("_index")
         if not event_index:
             continue
-        event_type = entry.get("_type")
 
         source = entry.to_dict()
         _fix_np_nan(source, "__ts_emojis")
@@ -292,9 +291,7 @@ def get_events_from_data_frame(frame, datastore):
             datetime_string = datetime.to_pydatetime().isoformat()
             source["datetime"] = datetime_string
 
-        event_dict = dict(
-            _id=event_id, _type=event_type, _index=event_index, _source=source
-        )
+        event_dict = dict(_id=event_id, _index=event_index, _source=source)
         yield interface.Event(event_dict, datastore)
 
 

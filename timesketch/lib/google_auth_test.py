@@ -278,13 +278,13 @@ class TestGoogleCloudIAP(BaseTest):
         # in the header. Newer versions of PyJWT won't encode JWTs with this
         # configuration.
         test_jwt = (
-            b'eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsImtpZCI6ImlhcF8xMjM0In0.eyJzd'
-            b'WIiOiIxMjM0NTY3ODkwIiwiZW1haWwiOiJ0ZXN0QGV4YW1wbGUuY29tIiwiaGQiOi'
-            b'JleGFtcGxlLmNvbSIsImlhdCI6MTY1NzU5NDE4NSwiZXhwIjoxNjU3NTk0Nzg1LCJ'
-            b'hdWQiOiIvcHJvamVjdHMvMTIzNC9nbG9iYWwvYmFja2VuZFNlcnZpY2VzLzEyMzQi'
-            b'LCJpc3MiOiJodHRwczovL2Nsb3VkLmdvb2dsZS5jb20vaWFwIn0.s49RJ_Fhoaqpo'
-            b'GHfXTjEi5Ma373Zr69BU8rG3ZObNq0EJJXGgBq4E48LwaD_WMR4z3dMxv-UkcShmU'
-            b'3p6qnv7w'
+            b"eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsImtpZCI6ImlhcF8xMjM0In0.eyJzd"
+            b"WIiOiIxMjM0NTY3ODkwIiwiZW1haWwiOiJ0ZXN0QGV4YW1wbGUuY29tIiwiaGQiOi"
+            b"JleGFtcGxlLmNvbSIsImlhdCI6MTY1NzU5NDE4NSwiZXhwIjoxNjU3NTk0Nzg1LCJ"
+            b"hdWQiOiIvcHJvamVjdHMvMTIzNC9nbG9iYWwvYmFja2VuZFNlcnZpY2VzLzEyMzQi"
+            b"LCJpc3MiOiJodHRwczovL2Nsb3VkLmdvb2dsZS5jb20vaWFwIn0.s49RJ_Fhoaqpo"
+            b"GHfXTjEi5Ma373Zr69BU8rG3ZObNq0EJJXGgBq4E48LwaD_WMR4z3dMxv-UkcShmU"
+            b"3p6qnv7w"
         )
 
         public_key = get_public_key_for_jwt(test_jwt, IAP_PUBLIC_KEY_URL)

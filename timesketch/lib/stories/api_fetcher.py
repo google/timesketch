@@ -75,11 +75,10 @@ class ApiDataFetcher(interface.DataFetcher):
         parameter_string = aggregation.parameters
         parameters = json.loads(parameter_string)
         parameter_index = parameters.pop("index", None)
-        indices, timeline_ids = self.get_indices_and_timelines(
-            parameter_index)
+        indices, timeline_ids = self.get_indices_and_timelines(parameter_index)
         aggregator = agg_class(
-            sketch_id=self._sketch_id, indices=indices,
-            timeline_ids=timeline_ids)
+            sketch_id=self._sketch_id, indices=indices, timeline_ids=timeline_ids
+        )
 
         _ = parameters.pop("supported_charts", None)
         chart_color = parameters.pop("chart_color", "N/A")
@@ -134,11 +133,10 @@ class ApiDataFetcher(interface.DataFetcher):
                 continue
 
             parameter_index = aggregator_parameters.pop("index", None)
-            indices, timeline_ids = self.get_indices_and_timelines(
-                parameter_index)
+            indices, timeline_ids = self.get_indices_and_timelines(parameter_index)
             aggregator_obj = agg_class(
-                sketch_id=self._sketch_id,
-                indices=indices, timeline_ids=timeline_ids)
+                sketch_id=self._sketch_id, indices=indices, timeline_ids=timeline_ids
+            )
             chart_type = aggregator_parameters.pop("supported_charts", None)
             color = aggregator_parameters.pop("chart_color", "")
             chart_title = aggregator_parameters.pop("chart_title", None)
@@ -188,7 +186,7 @@ class ApiDataFetcher(interface.DataFetcher):
         timeline_ids = []
 
         if isinstance(index_list, str):
-            index_list = index_list.split(',')
+            index_list = index_list.split(",")
 
         for index in index_list:
             if isinstance(index, str):

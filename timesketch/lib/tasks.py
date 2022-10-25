@@ -19,6 +19,7 @@ import os
 import logging
 import subprocess
 import traceback
+import re
 
 import codecs
 import io
@@ -141,7 +142,6 @@ def init_worker(**kwargs):
 
 def _close_index(index_name, data_store, timeline_id):
     """Helper function to close an index if it is not used somewhere else.
-
     Args:
         index_name: String with the OpenSearch index name.
         data_store: Instance of opensearch.OpenSearchDataStore.
@@ -166,45 +166,56 @@ def _close_index(index_name, data_store, timeline_id):
 
 def _set_timeline_status(timeline_id, status, error_msg=None):
     """Helper function to set status for searchindex and all related timelines.
-
     Args:
         timeline_id: Timeline ID.
-        status: Status to set.
-        error_msg: Error message.
     """
     timeline = Timeline.query.get(timeline_id)
-
     if not timeline:
         logger.warning("Cannot set status: No such timeline")
         return
 
-    # Check if there is at least one data source that hasn't failed
-    #   (i.e., with error_message null).
-    multiple_sources = any(not x.error_message for x in timeline.datasources)
+    list_datasources_status = [
+        datasource.get_status for datasource in timeline.datasources
+    ]
 
-    # check if error_msg is not null and status = fail
-    if error_msg and status == "fail":
-        timeline.set_status(status)
-        timeline.searchindex.set_status(status)
-
-    if multiple_sources:
-        timeline_status = timeline.get_status.status.lower()
-        if timeline_status != "process" and status != "fail":
-            timeline.set_status(status)
-            timeline.searchindex.set_status(status)
+    status = ""
+    if len(set(list_datasources_status)) == 1 and "fail" in list_datasources_status:
+        status = "fail"
     else:
-        timeline.set_status(status)
-        timeline.searchindex.set_status(status)
+        if "processing" in list_datasources_status:
+            status = "processing"
+        else:
+            status = "ready"
 
-    # Update description if there was a failure in ingestion.
-    if error_msg:
-        if timeline.datasources:
-            data_source = timeline.datasources[-1]
-            data_source.error_message = error_msg
-
+    timeline.set_status(status)
+    timeline.searchindex.set_status(status)
     # Commit changes to database
     db_session.add(timeline)
     db_session.commit()
+
+
+def _set_datasource_status(timeline_id, file_path, status, error_message=None):
+    timeline = Timeline.query.get(timeline_id)
+    for datasource in timeline.datasources:
+        if datasource.get_file_on_disk == file_path:
+            datasource.set_status(status)
+            if error_message:
+                datasource.set_error_message(error_message)
+            db_session.add(timeline)
+            db_session.commit()
+            _set_timeline_status(timeline_id, status, error_message)
+            return
+
+    raise KeyError(f"No datasource find in the timeline with file_path: {file_path}")
+
+
+def _set_datasource_total_events(timeline_id, file_path, total_file_events):
+    timeline = Timeline.query.get(timeline_id)
+    for datasource in timeline.datasources:
+        if datasource.get_file_on_disk == file_path:
+            datasource.set_total_file_events(total_file_events)
+            return
+    raise KeyError(f"No datasource find in the timeline with file_path: {file_path}")
 
 
 def _get_index_task_class(file_extension):
@@ -221,7 +232,7 @@ def _get_index_task_class(file_extension):
     """
     if file_extension == "plaso":
         index_class = run_plaso
-    elif file_extension in ["csv", "jsonl"]:
+    elif file_extension in ["csv", "jsonl", "json"]:
         index_class = run_csv_jsonl
     else:
         raise KeyError("No task that supports {0:s}".format(file_extension))
@@ -271,7 +282,7 @@ def build_index_pipeline(
     sketch_analyzer_chain = None
     searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
 
-    if file_extension == "csv":
+    if file_extension in {"csv", "jsonl", "json"}:
         # passing the extra argument: headers_mapping
         index_task = index_task_class.s(
             file_path,
@@ -409,7 +420,7 @@ def build_sketch_analysis_pipeline(
                     analysis.id,
                     analyzer_name,
                     timeline_id=timeline_id,
-                    **kwargs
+                    **kwargs,
                 )
             )
 
@@ -565,8 +576,6 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
     if events:
         raise RuntimeError("Plaso uploads needs a file, not events.")
 
-    event_type = "generic_event"  # Document type for OpenSearch
-
     mappings = None
     mappings_file_path = current_app.config.get("PLASO_MAPPING_FILE", "")
     if os.path.isfile(mappings_file_path):
@@ -600,35 +609,63 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
     opensearch = OpenSearchDataStore(host=opensearch_server, port=opensearch_port)
 
     try:
-        opensearch.create_index(
-            index_name=index_name, doc_type=event_type, mappings=mappings
-        )
+        opensearch.create_index(index_name=index_name, mappings=mappings)
     except errors.DataIngestionError as e:
-        _set_timeline_status(timeline_id, status="fail", error_msg=str(e))
-        _close_index(
-            index_name=index_name, data_store=opensearch, timeline_id=timeline_id
-        )
+        _set_datasource_status(timeline_id, file_path, "fail", error_message=str(e))
         raise
 
     except (RuntimeError, ImportError, NameError, UnboundLocalError, RequestError) as e:
-        _set_timeline_status(timeline_id, status="fail", error_msg=str(e))
-        _close_index(
-            index_name=index_name, data_store=opensearch, timeline_id=timeline_id
-        )
+        _set_datasource_status(timeline_id, file_path, "fail", error_message=str(e))
         raise
 
     except Exception as e:  # pylint: disable=broad-except
         # Mark the searchindex and timelines as failed and exit the task
         error_msg = traceback.format_exc()
-        _set_timeline_status(timeline_id, status="fail", error_msg=error_msg)
+        _set_datasource_status(timeline_id, file_path, "fail", error_message=error_msg)
         logger.error("Error: {0!s}\n{1:s}".format(e, error_msg))
-        _close_index(
-            index_name=index_name, data_store=opensearch, timeline_id=timeline_id
-        )
         return None
 
     message = "Index timeline [{0:s}] to index [{1:s}] (source: {2:s})"
     logger.info(message.format(timeline_name, index_name, source_type))
+
+    try:
+        pinfo_path = current_app.config["PINFO_PATH"]
+    except KeyError:
+        pinfo_path = "pinfo.py"
+
+    cmd = [
+        pinfo_path,
+        "--output-format",
+        "json",
+        "--sections",
+        "events",
+        file_path,
+    ]
+
+    # Run pinfo.py
+    try:
+        command = subprocess.run(cmd, capture_output=True, check=True)
+        storage_counters_json = command.stdout.decode("utf-8")
+        storage_counters = json.loads(re.sub(r"^{, ", r"{", storage_counters_json))
+        total_file_events = (
+            storage_counters.get("storage_counters", {}).get("parsers", {}).get("total")
+        )
+        if not total_file_events:
+            raise RuntimeError("Not able to get total event count from Plaso file.")
+    except subprocess.CalledProcessError as e:
+        error_msg = e.stderr.decode("utf-8")
+        _set_datasource_total_events(timeline_id, file_path, total_file_events=0)
+        _set_datasource_status(timeline_id, file_path, "fail", error_message=error_msg)
+        raise
+    except Exception as e:  # pylint: disable=broad-except
+        # Mark the searchindex and timelines as failed and exit the task
+        error_msg = traceback.format_exc()
+        _set_datasource_status(timeline_id, file_path, "fail", error_message=error_msg)
+        logger.error("Error: {0!s}\n{1:s}".format(e, error_msg))
+        return None
+
+    _set_datasource_total_events(timeline_id, file_path, total_file_events)
+    _set_datasource_status(timeline_id, file_path, "processing")
 
     try:
         psort_path = current_app.config["PSORT_PATH"]
@@ -658,11 +695,11 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
 
     opensearch_username = current_app.config.get("OPENSEARCH_USER", "")
     if opensearch_username:
-        cmd.extend(["--elastic_user", opensearch_username])
+        cmd.extend(["--opensearch_user", opensearch_username])
 
     opensearch_password = current_app.config.get("OPENSEARCH_PASSWORD", "")
     if opensearch_password:
-        cmd.extend(["--elastic_password", opensearch_password])
+        cmd.extend(["--opensearch_password", opensearch_password])
 
     opensearch_ssl = current_app.config.get("OPENSEARCH_SSL", False)
     if opensearch_ssl:
@@ -672,20 +709,22 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
     if psort_memory is not None:
         cmd.extend(["--process_memory_limit", str(psort_memory)])
 
+    opensearch_flush_interval = current_app.config.get(
+        "OPENSEARCH_FLUSH_INTERVAL", None
+    )
+    if opensearch_flush_interval:
+        cmd.extend(["--flush_interval", str(opensearch_flush_interval)])
+
     # Run psort.py
     try:
         subprocess.check_output(cmd, stderr=subprocess.STDOUT, encoding="utf-8")
     except subprocess.CalledProcessError as e:
         # Mark the searchindex and timelines as failed and exit the task
-        _set_timeline_status(timeline_id, status="fail", error_msg=e.output)
-        _close_index(
-            index_name=index_name, data_store=opensearch, timeline_id=timeline_id
-        )
+        _set_datasource_status(timeline_id, file_path, "fail", error_message=e.output)
         return e.output
 
     # Mark the searchindex and timelines as ready
-    _set_timeline_status(timeline_id, status="ready")
-
+    _set_datasource_status(timeline_id, file_path, "ready")
     return index_name
 
 
@@ -723,13 +762,28 @@ def run_csv_jsonl(
     else:
         file_handle = codecs.open(file_path, "r", encoding="utf-8", errors="replace")
 
-    event_type = "generic_event"  # Document type for OpenSearch
     validators = {
         "csv": read_and_validate_csv,
         "jsonl": read_and_validate_jsonl,
+        "json": read_and_validate_jsonl,
     }
     read_and_validate = validators.get(source_type)
 
+    # get the number of total events by counting the line of the file
+    # Run $ wc -l filepath
+    cmd = ["wc", "-l", file_path]
+    total_events = 0
+    try:
+        total_events = (
+            subprocess.run(cmd, capture_output=True, check=True)
+            .stdout.decode("utf-8")
+            .split(" ")[0]
+        )
+    except subprocess.CalledProcessError:
+        pass
+
+    _set_datasource_total_events(timeline_id, file_path, total_events)
+    _set_datasource_status(timeline_id, file_path, "processing")
     # Log information to Celery
     logger.info(
         "Index timeline [{0:s}] to index [{1:s}] (source: {2:s})".format(
@@ -765,17 +819,13 @@ def run_csv_jsonl(
     error_msg = ""
     error_count = 0
     try:
-        opensearch.create_index(
-            index_name=index_name, doc_type=event_type, mappings=mappings
-        )
+        opensearch.create_index(index_name=index_name, mappings=mappings)
         for event in read_and_validate(
             file_handle=file_handle,
             headers_mapping=headers_mapping,
             delimiter=delimiter,
         ):
-            opensearch.import_event(
-                index_name, event_type, event, timeline_id=timeline_id
-            )
+            opensearch.import_event(index_name, event, timeline_id=timeline_id)
             final_counter += 1
 
         # Import the remaining events
@@ -789,26 +839,17 @@ def run_csv_jsonl(
         )
 
     except errors.DataIngestionError as e:
-        _set_timeline_status(timeline_id, status="fail", error_msg=str(e))
-        _close_index(
-            index_name=index_name, data_store=opensearch, timeline_id=timeline_id
-        )
+        _set_datasource_status(timeline_id, file_path, "fail", error_message=str(e))
         raise
 
     except (RuntimeError, ImportError, NameError, UnboundLocalError, RequestError) as e:
-        _set_timeline_status(timeline_id, status="fail", error_msg=str(e))
-        _close_index(
-            index_name=index_name, data_store=opensearch, timeline_id=timeline_id
-        )
+        _set_datasource_status(timeline_id, file_path, "fail", error_message=str(e))
         raise
 
     except Exception as e:  # pylint: disable=broad-except
         # Mark the searchindex and timelines as failed and exit the task
         error_msg = traceback.format_exc()
-        _set_timeline_status(timeline_id, status="fail", error_msg=error_msg)
-        _close_index(
-            index_name=index_name, data_store=opensearch, timeline_id=timeline_id
-        )
+        _set_datasource_status(timeline_id, file_path, "fail", error_message=error_msg)
         logger.error("Error: {0!s}\n{1:s}".format(e, error_msg))
         return None
 
@@ -830,7 +871,7 @@ def run_csv_jsonl(
         )
 
     # Set status to ready when done
-    _set_timeline_status(timeline_id, status="ready", error_msg=error_msg)
+    _set_datasource_status(timeline_id, file_path, "ready", error_message=error_msg)
 
     return index_name
 
