@@ -21,6 +21,3 @@
   facets:
     - attacker_maintain_access
     - interference_with_protective_measures
-- short_name: "exfil"
-  display_name: "Exfil"
-  description: "Lorem ipsum dolor sit amet"
