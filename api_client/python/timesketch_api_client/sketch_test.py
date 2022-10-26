@@ -60,7 +60,7 @@ class SketchTest(unittest.TestCase):
         attrs = [{"attr_name": "foo", "attr_value": "bar"}]
         events = [
             {"_id": "1", "_type": "_doc", "_index": "1", "attributes": attrs},
-            {"_id": "2", "_type": "_doc", "_index": "1", "attributes": attrs}
+            {"_id": "2", "_type": "_doc", "_index": "1", "attributes": attrs},
         ]
 
         expected_response = {
@@ -69,9 +69,9 @@ class SketchTest(unittest.TestCase):
                 "chunks_per_index": {"1": 1},
                 "error_count": 0,
                 "errors": [],
-                "events_modified": 2
+                "events_modified": 2,
             },
-            "objects": []
+            "objects": [],
         }
 
         response = self.sketch.add_event_attributes(events)
@@ -80,5 +80,5 @@ class SketchTest(unittest.TestCase):
     def test_add_event_attributes_invalid(self):
         """Confirm an exception is raised when events isn't a list."""
         events = {"_id": "1", "_type": "_doc", "index": "1", "attributes": []}
-        with self.assertRaisesRegex(ValueError, 'Events need to be a list.'):
+        with self.assertRaisesRegex(ValueError, "Events need to be a list."):
             self.sketch.add_event_attributes(events)

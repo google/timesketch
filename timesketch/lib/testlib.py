@@ -88,7 +88,9 @@ class MockOpenSearchClient(object):
         """Initialize the client."""
         self.indices = MockOpenSearchIndices()
 
-    def search(self, index, body, size=0, search_type=None):  # pylint: disable=unused-argument
+    def search(
+        self, index, body, size=0, search_type=None
+    ):  # pylint: disable=unused-argument
         """Mock a client search.
 
         Used for testing both aggregations and adding event attributes.
@@ -113,12 +115,16 @@ class MockOpenSearchClient(object):
                     },
                     "my_second_aggregation": {
                         "buckets": [
-                            {"foobar": 54, "second": "faranlegt", "third": "other text"},
+                            {
+                                "foobar": 54,
+                                "second": "faranlegt",
+                                "third": "other text",
+                            },
                             {"foobar": 42, "second": "asnalegt"},
                         ]
                     },
                 }
-            ]
+            ],
         }
         # pylint: enable=line-too-long
 
@@ -127,20 +133,16 @@ class MockOpenSearchClient(object):
                 "hits": [
                     {
                         "_id": "1",
-                        "_type":"_doc",
+                        "_type": "_doc",
                         "_index": "1",
-                        "_source": {
-                            "exists": "yes"
-                        }
+                        "_source": {"exists": "yes"},
                     },
                     {
                         "_id": "2",
-                        "_type":"_doc",
+                        "_type": "_doc",
                         "_index": "2",
-                        "_source": {
-                            "exists": "yes"
-                        }
-                    }
+                        "_source": {"exists": "yes"},
+                    },
                 ]
             }
         }

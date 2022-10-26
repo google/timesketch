@@ -1373,10 +1373,8 @@ class Sketch(resource.BaseResource):
         if not isinstance(events, list):
             raise ValueError("Events need to be a list.")
 
-        form_data = {
-            "events": events
-        }
-        resource_url = '{0:s}/sketches/{1:d}/event/attributes/'.format(
+        form_data = {"events": events}
+        resource_url = "{0:s}/sketches/{1:d}/event/attributes/".format(
             self.api.api_root, self.id
         )
         response = self.api.session.post(resource_url, json=form_data)

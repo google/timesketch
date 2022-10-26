@@ -196,8 +196,7 @@ level: high
     def test_add_event_attributes(self):
         """Tests adding attributes to an event."""
         sketch = self.api.create_sketch(name="Add event attributes test")
-        sketch.add_event(
-            "event message", "2020-01-01T00:00:00", "timestamp_desc")
+        sketch.add_event("event message", "2020-01-01T00:00:00", "timestamp_desc")
         # Wait for new timeline and event to be created
         time.sleep(1)
 
@@ -211,12 +210,7 @@ level: high
                 "_id": old_event["_id"],
                 "_index": old_event["_index"],
                 "_type": old_event["_type"],
-                "attributes": [
-                    {
-                        "attr_name": "foo",
-                        "attr_value": "bar"
-                    }
-                ]
+                "attributes": [{"attr_name": "foo", "attr_value": "bar"}],
             }
         ]
 
@@ -230,10 +224,10 @@ level: high
                     "chunks_per_index": {old_event["_index"]: 1},
                     "error_count": 0,
                     "last_10_errors": [],
-                    "events_modified": 1
+                    "events_modified": 1,
                 },
-                "objects": []
-            }
+                "objects": [],
+            },
         )
         self.assertions.assertIn("foo", new_event["objects"])
 
@@ -241,8 +235,11 @@ level: high
         """Tests adding invalid attributes to an event."""
         sketch = self.api.create_sketch(name="Add invalid attributes test")
         sketch.add_event(
-            "original message", "2020-01-01T00:00:00", "timestamp_desc",
-            attributes={"existing_attr": "original_value"})
+            "original message",
+            "2020-01-01T00:00:00",
+            "timestamp_desc",
+            attributes={"existing_attr": "original_value"},
+        )
         # Wait for new timeline and event to be created
         time.sleep(1)
 
@@ -257,15 +254,9 @@ level: high
                 "_index": old_event["_index"],
                 "_type": old_event["_type"],
                 "attributes": [
-                    {
-                        "attr_name": "existing_attr",
-                        "attr_value": "new_value"
-                    },
-                    {
-                        "attr_name": "message",
-                        "attr_value": "new message"
-                    }
-                ]
+                    {"attr_name": "existing_attr", "attr_value": "new_value"},
+                    {"attr_name": "message", "attr_value": "new message"},
+                ],
             }
         ]
 
@@ -274,18 +265,20 @@ level: high
         self.assertions.assertIn(
             f"Attribute 'existing_attr' already exists for event_id "
             f"'{old_event['_id']}'.",
-            response['meta']['last_10_errors'])
+            response["meta"]["last_10_errors"],
+        )
         self.assertions.assertIn(
             f"Cannot add 'message' for event_id '{old_event['_id']}', name not "
             f"allowed.",
-            response['meta']['last_10_errors'])
+            response["meta"]["last_10_errors"],
+        )
 
         new_event = sketch.get_event(old_event["_id"], old_event["_index"])
         # Confirm attributes have not been changed.
+        self.assertions.assertEqual(new_event["objects"]["message"], "original message")
         self.assertions.assertEqual(
-            new_event["objects"]["message"], "original message")
-        self.assertions.assertEqual(
-            new_event["objects"]["existing_attr"], "original_value")
+            new_event["objects"]["existing_attr"], "original_value"
+        )
 
 
 manager.EndToEndTestManager.register_test(ClientTest)

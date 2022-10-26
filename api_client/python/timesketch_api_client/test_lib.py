@@ -100,9 +100,9 @@ def mock_response(*args, **kwargs):
             "chunks_per_index": {"1": 1},
             "error_count": 0,
             "errors": [],
-            "events_modified": 2
+            "events_modified": 2,
         },
-        "objects": []
+        "objects": [],
     }
 
     sketch_data = {
