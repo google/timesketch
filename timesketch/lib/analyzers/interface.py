@@ -558,7 +558,7 @@ class Sketch(object):
         attributes = api_utils.get_sketch_attributes(self.sql_sketch)
         if name not in attributes:
             raise ValueError(f"Attribute {name} does not exist in sketch.")
-        return attributes[name]['value']
+        return attributes[name]["value"]
 
     def add_story(self, title):
         """Add a story to the Sketch.
