@@ -150,10 +150,8 @@ class SigmaRule(resource.BaseResource):
         self.lazyload_data(refresh_cache=True)
         objects = self.data.get("objects")
         if not objects:
-            error_msg = (
-                "Unable to parse Sigma rule {0} with given text".format(
-                    rule_uuid
-                )
+            error_msg = "Unable to parse Sigma rule {0} with given text".format(
+                rule_uuid
             )
             logger.error(error_msg)
             raise ValueError(error_msg)

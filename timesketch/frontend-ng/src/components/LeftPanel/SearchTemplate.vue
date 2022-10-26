@@ -43,7 +43,10 @@ limitations under the License.
                   <td><strong>Date</strong></td>
                   <td>{{ searchTemplateSpec.date }}</td>
                 </tr>
-
+                <tr>
+                  <td><strong>ID</strong></td>
+                  <td>{{ searchTemplateSpec.id }}</td>
+                </tr>
                 <tr v-if="searchTemplateSpec.references.length">
                   <td><strong>References</strong></td>
                   <td>

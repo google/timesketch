@@ -328,11 +328,15 @@ def import_sigma_rules(path):
     for file_path in file_paths:
         sigma_rule = None
         sigma_yaml = None
+
         with open(file_path, "r") as fh:
             try:
                 sigma_yaml = fh.read()
                 sigma_rule = sigma_util.parse_sigma_rule_by_text(sigma_yaml)
             except ValueError as e:
+                print(f"Sigma Rule Parsing error: {e}")
+                continue
+            except NotImplementedError as e:
                 print(f"Sigma Rule Parsing error: {e}")
                 continue
 
@@ -366,3 +370,75 @@ def import_sigma_rules(path):
             sigma_db_rule.query_string = sigma_rule.get("search_query")
         else:
             print(f"Rule already imported: {sigma_rule.get('title')}")
+
+
+@cli.command(name="list-sigma-rules")
+def list_sigma_rules():
+    """List sigma rules"""
+
+    all_sigma_rules = SigmaRule.query.all()
+    for rule in all_sigma_rules:
+        print(f"{rule.rule_uuid} {rule.title}")
+
+
+@cli.command(name="remove-sigma-rule")
+@click.argument("rule_uuid")
+def remove_sigma_rule(rule_uuid):
+    """Deletes a Sigma rule from the database.
+
+    Deletes a single Sigma rule selected by the `uuid`
+    Args:
+        rule_uuid: UUID of the rule to be deleted.
+    """
+
+    rule = SigmaRule.query.filter_by(rule_uuid=rule_uuid).first()
+
+    if not rule:
+        error_msg = "No rule found with rule_uuid.{0!s}".format(rule_uuid)
+        print(error_msg)  # only needed in debug cases
+        return
+
+    print(f"Rule {rule_uuid} deleted")
+    db_session.delete(rule)
+    db_session.commit()
+
+
+@cli.command(name="remove-all-sigma-rules")
+def remove_all_sigma_rules():
+    """Deletes all Sigma rule from the database."""
+
+    if click.confirm("Do you really want to drop all the Sigma rules?"):
+        if click.confirm("Are you REALLLY sure you want to DROP ALL the Sigma rules?"):
+
+            all_sigma_rules = SigmaRule.query.all()
+            for rule in all_sigma_rules:
+                db_session.delete(rule)
+                db_session.commit()
+
+            print("All rules deleted")
+
+
+@cli.command(name="export-sigma-rules")
+@click.argument("path")
+def export_sigma_rules(path):
+    """Export sigma rules to a filesystem path."""
+
+    if not os.path.isdir(path):
+        raise RuntimeError(
+            "The directory needs to exist, please create: " "{0:s} first".format(path)
+        )
+
+    all_sigma_rules = SigmaRule.query.all()
+
+    n = 0
+
+    for rule in all_sigma_rules:
+        file_path = os.path.join(path, f"{rule.title}.yml")
+        if os.path.isfile(file_path):
+            print("File [{0:s}] already exists.".format(file_path))
+            continue
+
+        with open(file_path, "wb") as fw:
+            fw.write(rule.rule_yaml.encode("utf-8"))
+        n = n + 1
+    print(f"{n} Sigma rules exported")

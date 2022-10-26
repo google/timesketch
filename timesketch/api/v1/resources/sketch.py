@@ -448,7 +448,7 @@ class SketchResource(resources.ResourceMixin, Resource):
             stats_per_timeline=stats_per_timeline,
             last_activity=utils.get_sketch_last_activity(sketch),
             sketch_labels=[label.label for label in sketch.labels],
-            filter_labels = self.datastore.get_filter_labels(sketch.id, sketch_indices),
+            filter_labels=self.datastore.get_filter_labels(sketch.id, sketch_indices),
         )
         return self.to_json(sketch, meta=meta)
 
