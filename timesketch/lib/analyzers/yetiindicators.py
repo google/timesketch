@@ -46,7 +46,7 @@ class YetiIndicators(interface.BaseAnalyzer):
           A list of JSON objects describing a Yeti object.
         """
         results = requests.post(
-            self.yeti_api_root + "/entities/{0:s}/neighbors/".format(entity_id),
+            f"{self.yeti_api_root}/entities/{entity_id}/neighbors/",
             headers={"X-Yeti-API": self.yeti_api_key},
         )
         if results.status_code != 200:
@@ -87,12 +87,12 @@ class YetiIndicators(interface.BaseAnalyzer):
         event.add_tags(tags)
         event.commit()
 
-        msg = 'Indicator match: "{0:s}" ({1:s})\n'.format(
-            indicator["name"], indicator["id"]
-        )
-        msg += "Related entities: {0!s}".format([n["name"] for n in neighbors])
-        event.add_comment(msg)
-        event.commit()
+        msg = f'Indicator match: "{indicator["name"]}" ({indicator["id"]})\n'
+        msg += f'Related entities: {[n["name"] for n in neighbors]}'
+        comments = set([c.comment for c in event.get_comments()])
+        if msg not in comments:
+            event.add_comment(msg)
+            event.commit()
 
     def run(self):
         """Entry point for the analyzer.
@@ -115,7 +115,7 @@ class YetiIndicators(interface.BaseAnalyzer):
         try:
             intelligence_attribute = self.sketch.get_sketch_attributes('intelligence')
             existing_refs = {ioc['externalURI'] for ioc in intelligence_attribute['data']}
-        except (ValueError):
+        except ValueError:
             print("Intelligence not set on sketch, will create from scratch.")
 
         intelligence_items = []
@@ -158,9 +158,9 @@ class YetiIndicators(interface.BaseAnalyzer):
         for entity in entities_found:
             name, _type = entity.split(":")
             self.sketch.add_view(
-                "Indicator matches for {0:s} ({1:s})".format(name, _type),
+                f"Indicator matches for {name} ({_type})",
                 self.NAME,
-                query_string='tag:"{0:s}"'.format(name),
+                query_string=f'tag:"{name}"'
             )
 
         all_iocs = intelligence_attribute['data'] + intelligence_items
@@ -170,9 +170,7 @@ class YetiIndicators(interface.BaseAnalyzer):
             ontology='intelligence',
             overwrite=True)
 
-        return "{0:d} events matched {1:d} new indicators. Found: {2:s}".format(
-            total_matches, len(new_indicators), ", ".join(entities_found)
-        )
+        return f"{total_matches} events matched {len(new_indicators)} new indicators. Found: {', '.join(entities_found)}"
 
 
 manager.AnalysisManager.register_analyzer(YetiIndicators)
