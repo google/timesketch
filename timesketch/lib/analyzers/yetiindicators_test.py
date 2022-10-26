@@ -62,7 +62,7 @@ class TestThreatintelPlugin(BaseTest):
 
         message = analyzer.run()
         self.assertEqual(
-            message, ("1 events matched 1 indicators.
+            message, ("1 events matched 1 indicators. "
                       "Found: Random incident:x-incident")
         )
         mock_get_indicators.assert_called_once()
