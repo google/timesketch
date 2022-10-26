@@ -67,7 +67,8 @@ class YetiIndicators(interface.BaseAnalyzer):
         if response.status_code != 200:
             raise RuntimeError(
                 f"Error {response.status_code} retrieving indicators from Yeti:"
-                + response.json())
+                + response.json()
+            )
         self.intel = {item["id"]: item for item in response.json()}
         for item in response.json():
             item["compiled_regexp"] = re.compile(item["pattern"])
@@ -109,12 +110,14 @@ class YetiIndicators(interface.BaseAnalyzer):
         total_matches = 0
         new_indicators = set()
 
-        intelligence_attribute = {'data': []}
+        intelligence_attribute = {"data": []}
         existing_refs = set()
 
         try:
-            intelligence_attribute = self.sketch.get_sketch_attributes('intelligence')
-            existing_refs = {ioc['externalURI'] for ioc in intelligence_attribute['data']}
+            intelligence_attribute = self.sketch.get_sketch_attributes("intelligence")
+            existing_refs = {
+                ioc["externalURI"] for ioc in intelligence_attribute["data"]
+            }
         except ValueError:
             print("Intelligence not set on sketch, will create from scratch.")
 
@@ -124,10 +127,8 @@ class YetiIndicators(interface.BaseAnalyzer):
 
             query_dsl = {
                 "query": {
-                    "regexp": {
-                        "message.keyword": ".*"+indicator["pattern"]+".*"
-                   }
-               }
+                    "regexp": {"message.keyword": ".*" + indicator["pattern"] + ".*"}
+                }
             }
 
             events = self.event_stream(query_dsl=query_dsl, return_fields=["message"])
@@ -142,14 +143,14 @@ class YetiIndicators(interface.BaseAnalyzer):
 
             uri = f"{self.yeti_web_root}/entities/indicator/{indicator['id']}"
             intel = {
-                'externalURI': uri,
-                'ioc': indicator['pattern'],
-                'tags': [n['name'] for n in neighbors],
-                'type': 'other'
+                "externalURI": uri,
+                "ioc": indicator["pattern"],
+                "tags": [n["name"] for n in neighbors],
+                "type": "other",
             }
             if uri not in existing_refs:
                 intelligence_items.append(intel)
-                existing_refs.add(indicator['id'])
+                existing_refs.add(indicator["id"])
             new_indicators.add(indicator["id"])
 
         if not total_matches:
@@ -160,15 +161,16 @@ class YetiIndicators(interface.BaseAnalyzer):
             self.sketch.add_view(
                 f"Indicator matches for {name} ({_type})",
                 self.NAME,
-                query_string=f'tag:"{name}"'
+                query_string=f'tag:"{name}"',
             )
 
-        all_iocs = intelligence_attribute['data'] + intelligence_items
+        all_iocs = intelligence_attribute["data"] + intelligence_items
         self.sketch.add_sketch_attribute(
-            'intelligence',
+            "intelligence",
             [json.dumps({"data": all_iocs})],
-            ontology='intelligence',
-            overwrite=True)
+            ontology="intelligence",
+            overwrite=True,
+        )
 
         return f"{total_matches} events matched {len(new_indicators)} new indicators. Found: {', '.join(entities_found)}"
 
