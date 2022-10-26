@@ -62,8 +62,8 @@ class TestThreatintelPlugin(BaseTest):
 
         message = analyzer.run()
         self.assertEqual(
-            message, ("1 events matched 1 indicators. "
-                      "Found: Random incident:x-incident")
+            message,
+            ("1 events matched 1 new indicators. Found: Random incident:x-incident"),
         )
         mock_get_indicators.assert_called_once()
         mock_get_neighbors.assert_called_once()
@@ -90,7 +90,7 @@ class TestThreatintelPlugin(BaseTest):
         message = analyzer.run()
         self.assertEqual(message, "No indicators were found in the timeline.")
         mock_get_indicators.assert_called_once()
-        mock_get_neighbors.assert_not_called()
+        mock_get_neighbors.asset_called_once()
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     def test_slug(self):
