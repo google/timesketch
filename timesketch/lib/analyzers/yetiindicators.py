@@ -90,7 +90,7 @@ class YetiIndicators(interface.BaseAnalyzer):
 
         msg = f'Indicator match: "{indicator["name"]}" ({indicator["id"]})\n'
         msg += f'Related entities: {[n["name"] for n in neighbors]}'
-        comments = set([c.comment for c in event.get_comments()])
+        comments = {c.comment for c in event.get_comments()}
         if msg not in comments:
             event.add_comment(msg)
             event.commit()
@@ -172,7 +172,10 @@ class YetiIndicators(interface.BaseAnalyzer):
             overwrite=True,
         )
 
-        return f"{total_matches} events matched {len(new_indicators)} new indicators. Found: {', '.join(entities_found)}"
+        return (
+            f"{total_matches} events matched {len(new_indicators)} "
+            f"new indicators. Found: {', '.join(entities_found)}"
+        )
 
 
 manager.AnalysisManager.register_analyzer(YetiIndicators)
