@@ -938,7 +938,11 @@ export default {
             this.branchParent = this.eventList.meta.search_node.id
           }
         })
-        .catch((e) => {})
+        .catch((e) => {
+          //this.errorSnackBar('Sorry, there was a problem fetching your search results. Please try again.')
+          this.errorSnackBar(e)
+          console.error(e)
+        })
     },
     setQueryAndFilter: function (searchEvent) {
       this.currentQueryString = searchEvent.queryString
