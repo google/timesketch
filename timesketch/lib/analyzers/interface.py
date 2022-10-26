@@ -308,6 +308,26 @@ class Event(object):
         db_session.commit()
         self.add_label(label="__ts_comment")
 
+    def get_comments(self):
+        """Get comments for event.
+
+        Returns:
+            List of comments.
+
+        Raises:
+            RuntimeError: if no sketch is present.
+        """
+        if not self.sketch:
+            raise RuntimeError("No sketch provided.")
+
+        searchindex = SearchIndex.query.filter_by(index_name=self.index_name).first()
+        db_event = SQLEvent.get_or_create(
+            sketch=self.sketch.sql_sketch,
+            searchindex=searchindex,
+            document_id=self.event_id,
+        )
+        return db_event.comments
+
     def add_human_readable(self, human_readable, analyzer_name, append=True):
         """Add a human readable string to event.
 
