@@ -51,18 +51,19 @@ class TestThreatintelPlugin(BaseTest):
     )
     def test_indicator_match(self, mock_get_indicators, mock_get_neighbors):
         """Test that ES queries for indicators are correctly built."""
-        sessionizer = yetiindicators.YetiIndicators("test_index", 1)
-        sessionizer.datastore.client = mock.Mock()
-        sessionizer.intel = MOCK_YETI_INTEL
+        analyzer = yetiindicators.YetiIndicators("test_index", 1)
+        analyzer.datastore.client = mock.Mock()
+        analyzer.intel = MOCK_YETI_INTEL
         mock_get_neighbors.return_value = MOCK_YETI_NEIGHBORS
 
         event = copy.deepcopy(MockDataStore.event_dict)
         event["_source"].update(MATCHING_DOMAIN_MESSAGE)
-        sessionizer.datastore.import_event("test_index", event["_source"], "0")
+        analyzer.datastore.import_event("test_index", event["_source"], "0")
 
-        message = sessionizer.run()
+        message = analyzer.run()
         self.assertEqual(
-            message, "1 events matched 1 indicators. [Random incident:x-incident]"
+            message,
+            ("1 events matched 1 new indicators. Found: Random incident:x-incident"),
         )
         mock_get_indicators.assert_called_once()
         mock_get_neighbors.assert_called_once()
@@ -77,25 +78,26 @@ class TestThreatintelPlugin(BaseTest):
     )
     def test_indicator_nomatch(self, mock_get_indicators, mock_get_neighbors):
         """Test that ES queries for indicators are correctly built."""
-        sessionizer = yetiindicators.YetiIndicators("test_index", 1)
-        sessionizer.datastore.client = mock.Mock()
-        sessionizer.intel = MOCK_YETI_INTEL
+        analyzer = yetiindicators.YetiIndicators("test_index", 1)
+        analyzer.datastore.client = mock.Mock()
+        analyzer.intel = MOCK_YETI_INTEL
         mock_get_neighbors.return_value = MOCK_YETI_NEIGHBORS
 
-        event = copy.deepcopy(MockDataStore.event_dict)
-        event["_source"].update(OK_DOMAIN_MESSAGE)
-        sessionizer.datastore.import_event("test_index", event["_source"], "0")
+        # event = copy.deepcopy(MockDataStore.event_dict)
+        # event["_source"].update(OK_DOMAIN_MESSAGE)
+        # analyzer.datastore.import_event("test_index", event["_source"], "0")
 
-        message = sessionizer.run()
+        message = analyzer.run()
         self.assertEqual(message, "No indicators were found in the timeline.")
         mock_get_indicators.assert_called_once()
-        mock_get_neighbors.assert_not_called()
+        mock_get_neighbors.asset_called_once()
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     def test_slug(self):
-        sessionizer = yetiindicators.YetiIndicators("test_index", 1)
+        analyzer = yetiindicators.YetiIndicators("test_index", 1)
         mock_event = mock.Mock()
-        sessionizer.mark_event(
+        mock_event.get_comments.return_value = []
+        analyzer.mark_event(
             MOCK_YETI_INTEL["x-regex--6ebc9344-1111-4d65-8bdd-b6dddf613068"],
             mock_event,
             MOCK_YETI_NEIGHBORS,
