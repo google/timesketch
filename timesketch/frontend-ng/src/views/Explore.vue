@@ -939,8 +939,7 @@ export default {
           }
         })
         .catch((e) => {
-          //this.errorSnackBar('Sorry, there was a problem fetching your search results. Please try again.')
-          this.errorSnackBar(e)
+          this.errorSnackBar('Sorry, there was a problem fetching your search results. Please try again.')
           console.error(e)
         })
     },
