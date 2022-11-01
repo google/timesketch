@@ -22,11 +22,9 @@ limitations under the License.
     <v-expand-transition>
       <div v-show="expanded">
         <div class="ma-2 mx-4 mb-4 mt-n1">
-          <v-expand-transition>
-            <div v-if="fullDescription">
-              <small>{{ question.description }} <a @click="fullDescription = !fullDescription">show less</a></small>
-            </div>
-          </v-expand-transition>
+          <div v-if="fullDescription">
+            <small>{{ question.description }} <a @click="fullDescription = !fullDescription">show less</a></small>
+          </div>
           <div v-if="!fullDescription">
             <span>
               <small>
@@ -48,28 +46,31 @@ limitations under the License.
           </div>
         </v-card>
 
-        <!-- Commented out until we have conclusion API implemented
         <div style="font-size: 0.9em" class="pa-4">
           <v-textarea
+            v-model="conclusionText"
             outlined
             flat
             hide-details
             auto-grow
-            rows="3"
-            placeholder="Add your conclusion"
+            rows="1"
+            placeholder="Add your conclusion..."
             style="font-size: 0.9em"
           >
             <template v-slot:prepend-inner>
               <v-avatar color="grey" class="mt-n2 mr-2" size="28"></v-avatar>
             </template>
           </v-textarea>
-          <v-card-actions class="pl-0">
-            <v-btn x-small outlined color="primary"> Yes </v-btn>
-            <v-btn x-small outlined color="primary"> No </v-btn>
-            <v-btn x-small outlined color="primary"> Inconclusive </v-btn>
-          </v-card-actions>
+          <v-expand-transition>
+            <div v-if="conclusionText">
+              <v-card-actions class="pr-0">
+                <v-spacer></v-spacer>
+                <v-btn small text @click="conclusionText = ''"> Cancel </v-btn>
+                <v-btn small text color="primary" @click="saveConclusion"> Save </v-btn>
+              </v-card-actions>
+            </div>
+          </v-expand-transition>
         </div>
-        -->
       </div>
     </v-expand-transition>
   </div>
@@ -87,6 +88,7 @@ export default {
     return {
       expanded: false,
       fullDescription: false,
+      conclusionText: '',
     }
   },
   computed: {
@@ -94,7 +96,9 @@ export default {
       return this.$store.state.sketch
     },
   },
-  methods: {},
+  methods: {
+    saveConclusion: function () {},
+  },
   created() {},
 }
 </script>
