@@ -62,6 +62,7 @@ class TimesketchApi:
     DEFAULT_OAUTH_TOKEN_URL = "https://oauth2.googleapis.com/token"
     DEFAULT_OAUTH_PROVIDER_URL = "https://www.googleapis.com/oauth2/v1/certs"
     DEFAULT_OAUTH_OOB_URL = "urn:ietf:wg:oauth:2.0:oob"
+    DEFAULT_OAUTH_LOCALHOST_URL = "http://localhost"
     DEFAULT_OAUTH_API_CALLBACK = "/login/api_callback/"
 
     # Default retry count for operations that attempt a retry.
@@ -193,6 +194,9 @@ class TimesketchApi:
         client_id="",
         client_secret="",
         client_secrets_file=None,
+        host="localhost",
+        port=8080,
+        open_browser=False,
         run_server=True,
         skip_open=False,
     ):
@@ -203,6 +207,10 @@ class TimesketchApi:
             client_secret: The OAUTH client secret if OAUTH is used.
             client_secrets_file: Path to the JSON file that contains the client
                 secrets, in the client_secrets format.
+            host: Host address the OAUTH web server will bind to.
+            port: Port the OAUTH web server will bind to.
+            open_browser: A boolean, if set to false (default) a browser window
+                will not be automatically opened.
             run_server: A boolean, if set to true (default) a web server is
                 run to catch the OAUTH request and response.
             skip_open: A booelan, if set to True (defaults to False) an
@@ -234,7 +242,7 @@ class TimesketchApi:
                     "auth_uri": self.DEFAULT_OAUTH_AUTH_URL,
                     "token_uri": self.DEFAULT_OAUTH_TOKEN_URL,
                     "auth_provider_x509_cert_url": provider_url,
-                    "redirect_uris": [self.DEFAULT_OAUTH_OOB_URL],
+                    "redirect_uris": [self.DEFAULT_OAUTH_LOCALHOST_URL],
                 },
             }
 
@@ -247,7 +255,7 @@ class TimesketchApi:
             flow.redirect_uri = self.DEFAULT_OAUTH_OOB_URL
 
         if run_server:
-            _ = flow.run_local_server()
+            _ = flow.run_local_server(host=host, port=port, open_browser=open_browser)
         else:
             if not sys.stdout.isatty() or not sys.stdin.isatty():
                 msg = (
