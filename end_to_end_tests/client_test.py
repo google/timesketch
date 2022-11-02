@@ -197,13 +197,18 @@ level: high
         """Tests adding attributes to an event."""
         sketch = self.api.create_sketch(name="Add event attributes test")
         sketch.add_event("event message", "2020-01-01T00:00:00", "timestamp_desc")
-        # Wait for new timeline and event to be created
-        time.sleep(1)
-
-        # Have to use search to get event_id
-        search_client = search.Search(sketch)
-        search_response = json.loads(search_client.json)
-        old_event = search_response["objects"][0]
+        
+        # Wait for new timeline and event to be created, retrying 5 times.
+        for _ in range(5):
+            search_client = search.Search(sketch)
+            search_response = json.loads(search_client.json)
+            objects = search_response.get("objects")
+            if objects:
+                old_event = search_response["objects"][0]
+                break
+            time.sleep(1)
+        else:
+            raise RuntimeError("Event creation failed for test.")
 
         events = [
             {
@@ -240,8 +245,18 @@ level: high
             "timestamp_desc",
             attributes={"existing_attr": "original_value"},
         )
-        # Wait for new timeline and event to be created
-        time.sleep(1)
+
+        # Wait for new timeline and event to be created, retrying 5 times.
+        for _ in range(5):
+            search_client = search.Search(sketch)
+            search_response = json.loads(search_client.json)
+            objects = search_response.get("objects")
+            if objects:
+                old_event = search_response["objects"][0]
+                break
+            time.sleep(1)
+        else:
+            raise RuntimeError("Event creation failed for test.")
 
         # Have to use search to get event_id
         search_client = search.Search(sketch)
