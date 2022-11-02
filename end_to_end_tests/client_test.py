@@ -197,7 +197,7 @@ level: high
         """Tests adding attributes to an event."""
         sketch = self.api.create_sketch(name="Add event attributes test")
         sketch.add_event("event message", "2020-01-01T00:00:00", "timestamp_desc")
-        
+
         # Wait for new timeline and event to be created, retrying 5 times.
         for _ in range(5):
             search_client = search.Search(sketch)
