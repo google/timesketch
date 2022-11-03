@@ -1358,6 +1358,29 @@ class Sketch(resource.BaseResource):
         response = self.api.session.post(resource_url, json=form_data)
         return error.get_response_json(response, logger)
 
+    def add_event_attributes(self, events):
+        """Add attributes to one or more events.
+
+        Args:
+            events: List of JSON objects representing events. Each event should
+              have an 'attributes' key with attributes to be added.
+        Returns:
+             A dict with the results of adding attributes.
+        """
+        if self.is_archived():
+            raise RuntimeError("Unable to add attributes to an archived sketch.")
+
+        if not isinstance(events, list):
+            raise ValueError("Events need to be a list.")
+
+        form_data = {"events": events}
+        resource_url = "{0:s}/sketches/{1:d}/event/attributes/".format(
+            self.api.api_root, self.id
+        )
+        response = self.api.session.post(resource_url, json=form_data)
+
+        return error.get_response_json(response, logger)
+
     def get_event(self, event_id, index_id):
         """Gets information about an event, including raw event and meta data.
 

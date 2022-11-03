@@ -565,6 +565,30 @@ Both will give you something like:
  'total_number_of_events_sent_by_client': 1}
 ```
 
+### Add Attributes to Events
+
+To add new attributes to event an event:
+
+```python
+# event_id and searchindex_id can be found by searching for the target event.
+
+event = [
+  {
+    '_id': event_id,
+    '_index': searchindex_id,
+    '_type': '_doc',
+    'attributes': [
+      {
+        'attr_name': 'an_attribute_name',
+        'attr_value': 'A new attribute value'
+      }
+    ]
+  }
+]
+sketch.add_event_attributes(events)
+```
+
+
 ## Other Options
 
 The sketch object can be used to do several other actions that are not documented in this first document, such as:

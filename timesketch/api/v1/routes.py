@@ -36,6 +36,7 @@ from .resources.event import EventResource
 from .resources.event import EventAnnotationResource
 from .resources.event import EventCreateResource
 from .resources.event import EventTaggingResource
+from .resources.event import EventAddAttributeResource
 from .resources.event import CountEventsResource
 from .resources.event import MarkEventsWithTimelineIdentifier
 from .resources.sketch import SketchResource
@@ -113,6 +114,7 @@ API_ROUTES = [
     (SearchHistoryResource, "/sketches/<int:sketch_id>/searchhistory/"),
     (SearchHistoryTreeResource, "/sketches/<int:sketch_id>/searchhistorytree/"),
     (EventResource, "/sketches/<int:sketch_id>/event/"),
+    (EventAddAttributeResource, "/sketches/<int:sketch_id>/event/attributes/"),
     (EventTaggingResource, "/sketches/<int:sketch_id>/event/tagging/"),
     (EventAnnotationResource, "/sketches/<int:sketch_id>/event/annotate/"),
     (EventCreateResource, "/sketches/<int:sketch_id>/event/create/"),
