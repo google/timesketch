@@ -61,7 +61,6 @@ class TimesketchApi:
     DEFAULT_OAUTH_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
     DEFAULT_OAUTH_TOKEN_URL = "https://oauth2.googleapis.com/token"
     DEFAULT_OAUTH_PROVIDER_URL = "https://www.googleapis.com/oauth2/v1/certs"
-    DEFAULT_OAUTH_OOB_URL = "urn:ietf:wg:oauth:2.0:oob"
     DEFAULT_OAUTH_LOCALHOST_URL = "http://localhost"
     DEFAULT_OAUTH_API_CALLBACK = "/login/api_callback/"
 
@@ -252,7 +251,7 @@ class TimesketchApi:
                 autogenerate_code_verifier=True,
             )
 
-            flow.redirect_uri = self.DEFAULT_OAUTH_OOB_URL
+            flow.redirect_uri = self.DEFAULT_OAUTH_LOCALHOST_URL
 
         if run_server:
             _ = flow.run_local_server(host=host, port=port, open_browser=open_browser)
