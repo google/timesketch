@@ -44,7 +44,14 @@ RestApiClient.interceptors.response.use(
     if (error.response.status === 500) {
       EventBus.$emit('errorSnackBar', 'Server side error. Please contact your server administrator for troubleshooting.')
     } else {
-      EventBus.$emit('errorSnackBar', error.response.data.message)
+      console.error(error.response.data)
+      Snackbar.open({
+        message: error.response.data.message,
+        type: 'is-white',
+        position: 'is-top',
+        actionText: 'Close',
+        duration: 7000,
+      })
     }
     return Promise.reject(error)
   }
