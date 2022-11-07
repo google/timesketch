@@ -20,13 +20,15 @@ limitations under the License.
             <v-chip rounded x-small class="mr-2"
                 :color="parsingStatusColors(problemString)">
                 {{ problemString }}</v-chip>
-            <div width="500">
-                <pre>{{ editingRule.search_query }}</pre>
-            </div>
+
             <v-alert colored-border border="left" elevation="1"
                 :color="parsingStatusColors(problemString)">
                 {{ problemString }}
             </v-alert>
+            <div width="500">
+                <b>Search Query:</b>
+                <pre>{{ editingRule.search_query }}</pre>
+            </div>
             <v-textarea label="Edit Sigma rule" outlined
                 :color="parsingStatusColors('foo')" rows="35"
                 v-model="rule_yaml" @input="parseSigma(rule_yaml)">
@@ -42,9 +44,6 @@ limitations under the License.
                 <v-btn @click="deleteRule(rule_uuid)" small depressed
                     color="secondary">Delete Rule</v-btn>
             </div>
-            <h2>Hits</h2>
-            TODO<br>
-
             <v-card-actions>
                 <v-spacer></v-spacer>
                 <v-btn text color="primary" @click="clearAndCancel"> Close
