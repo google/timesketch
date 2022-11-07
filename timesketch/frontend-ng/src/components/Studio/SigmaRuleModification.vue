@@ -29,6 +29,16 @@ limitations under the License.
                 <b>Search Query:</b>
                 <pre>{{ editingRule.search_query }}</pre>
             </div>
+            <div>
+                <b>Templates</b>
+                <select placeholder="Templates" v-model="rule_yaml"
+                    label="Templates" label-position="on-border">
+                    <option v-for="template in SigmaTemplates"
+                        :value="template.text" :key="template.os">
+                        {{ template.os }}
+                    </option>
+                </select>
+            </div>
             <v-textarea label="Edit Sigma rule" outlined
                 :color="parsingStatusColors('foo')" rows="35"
                 v-model="rule_yaml" @input="parseSigma(rule_yaml)">
@@ -44,6 +54,11 @@ limitations under the License.
                 <v-btn @click="deleteRule(rule_uuid)" small depressed
                     color="secondary">Delete Rule</v-btn>
             </div>
+            <div>
+                <pre>
+                {{ editingRule }}
+            </pre>
+            </div>
             <v-card-actions>
                 <v-spacer></v-spacer>
                 <v-btn text color="primary" @click="clearAndCancel"> Close
@@ -56,6 +71,8 @@ limitations under the License.
 <script>
 import { stringValue } from 'vega'
 import ApiClient from '../../utils/RestApiClient'
+import { SigmaTemplates } from '@/utils/SigmaRuleTemplates'
+
 
 export default {
     props: ['rule_uuid', 'sigmaRule'],
@@ -65,6 +82,7 @@ export default {
             problemString: 'OK',
             save_button_text: "Update",
             rule_yaml: {},
+            SigmaTemplates: SigmaTemplates,
         }
     },
     mounted() {
@@ -109,6 +127,7 @@ export default {
                 .catch(e => {
                     console.error(e)
                     this.save_button_text = "Create"
+                    this.rule_yaml = ""
                 })
             // TODO: show something if the rule uuid does not exist.
         },
