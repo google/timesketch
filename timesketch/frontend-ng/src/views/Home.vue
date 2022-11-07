@@ -18,6 +18,10 @@ limitations under the License.
     <div class="pa-5">
       <ts-sketch-list></ts-sketch-list>
     </div>
+    <div>Studio
+      <router-link style="text-decoration: none" to="/Studio">Studio
+      </router-link>
+    </div>
   </v-container>
 </template>
 

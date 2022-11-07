@@ -16,14 +16,16 @@ limitations under the License.
 <template>
     <v-card width="1000" style="overflow: initial">
         <v-container class="px-8">
-            <h1>{{editingRule.title}}</h1>
+            <h1>{{ editingRule.title }}</h1>
             <v-chip rounded x-small class="mr-2"
                 :color="parsingStatusColors(problemString)">
-                {{problemString}}</v-chip>
-            <pre>{{editingRule.search_query}}</pre>
+                {{ problemString }}</v-chip>
+            <div width="500">
+                <pre>{{ editingRule.search_query }}</pre>
+            </div>
             <v-alert colored-border border="left" elevation="1"
                 :color="parsingStatusColors(problemString)">
-                {{problemString}}
+                {{ problemString }}
             </v-alert>
             <v-textarea label="Edit Sigma rule" outlined
                 :color="parsingStatusColors('foo')" rows="35"
@@ -32,7 +34,7 @@ limitations under the License.
             <div class="mt-3">
                 <v-btn :disabled="problemString.toLowerCase() !== 'ok'"
                     @click="addOrUpdateRule(rule_yaml)" small depressed
-                    color="primary">{{save_button_text}}</v-btn>
+                    color="primary">{{ save_button_text }}</v-btn>
                 <v-btn @click="search(sigmaRule.search_query)" small depressed
                     color="secondary">Copy and tweak rule</v-btn>
                 <v-btn @click="search(sigmaRule.search_query)" small depressed
@@ -98,12 +100,17 @@ export default {
         },
         getRuleByUUID(ruleUuid) {
             console.log("getRuleByUUID" + ruleUuid)
-            ApiClient.getSigmaRuleResource(ruleUuid = ruleUuid).then(response => {
-                this.editingRule = response.data.objects[0]
-                this.rule_yaml = this.editingRule.rule_yaml
-                console.log("Found the rule + " + this.editingRule)
-                this.problemString = 'OK'
-            })
+            ApiClient.getSigmaRuleResource(ruleUuid = ruleUuid)
+                .then(response => {
+                    this.editingRule = response.data.objects[0]
+                    this.rule_yaml = this.editingRule.rule_yaml
+                    console.log("Found the rule + " + this.editingRule)
+                    this.problemString = 'OK'
+                })
+                .catch(e => {
+                    console.error(e)
+                    this.save_button_text = "Create"
+                })
             // TODO: show something if the rule uuid does not exist.
         },
         deleteRule(rule_uuid) {
@@ -165,5 +172,16 @@ export default {
 </script>
   
 <style scoped lang="scss">
-
+pre {
+    white-space: pre-wrap;
+    /* Since CSS 2.1 */
+    white-space: -moz-pre-wrap;
+    /* Mozilla, since 1999 */
+    white-space: -pre-wrap;
+    /* Opera 4-6 */
+    white-space: -o-pre-wrap;
+    /* Opera 7 */
+    word-wrap: break-word;
+    /* Internet Explorer 5.5+ */
+}
 </style>

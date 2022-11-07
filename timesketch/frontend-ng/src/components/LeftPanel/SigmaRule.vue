@@ -22,11 +22,6 @@ limitations under the License.
         <v-icon v-if="!expanded">mdi-chevron-right</v-icon>
         <v-icon v-else>mdi-chevron-down</v-icon>
         {{ sigmaRule.title }}
-
-        <ts-sigma-rule-modification app @cancel="formatXMLString = false"
-          :rule_uuid="sigmaRule.rule_uuid">
-        </ts-sigma-rule-modification>
-
       </div>
       <v-spacer></v-spacer>
       <div>
@@ -41,7 +36,9 @@ limitations under the License.
           <v-card>
             <v-list>
               <v-list-item-group color="primary">
-                <v-list-item v-on:click="editRule(sigmaRule.rule_uuid)">
+
+                <v-list-item
+                  :to="{ name: 'Studio', params: { id: sigmaRule.rule_uuid, type: 'sigma' } }">
                   <v-list-item-icon>
                     <v-icon>mdi-brightness-6</v-icon>
                   </v-list-item-icon>
@@ -49,7 +46,9 @@ limitations under the License.
                     <v-list-item-title>Edit Rule</v-list-item-title>
                   </v-list-item-content>
                 </v-list-item>
-
+                <!-- <router-link style="text-decoration: none" :to="{ name: 'Overview', params: { sketchId: item.id } }">{{
+          item.name
+        }}</router-link>-->
                 <v-list-item v-on:click="archiveRule(sigmaRule.rule_uuid)">
                   <v-list-item-icon>
                     <v-icon>mdi-archive</v-icon>
@@ -161,9 +160,6 @@ export default {
       eventData.queryFilter = defaultQueryFilter()
       console.log(eventData)
       EventBus.$emit('setQueryAndFilter', eventData)
-    },
-    editRule(rule_uuid) {
-      console.log("Rule edit pressed: " + rule_uuid)
     },
     archiveRule(rule_uuid) {
       console.log("Rule archive pressed: " + rule_uuid)

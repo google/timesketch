@@ -53,6 +53,7 @@ RestApiClient.interceptors.response.use(
         },
       })
     } else {
+      console.error(error.response.data)
       Snackbar.open({
         message: error.response.data.message,
         type: 'is-white',
@@ -391,5 +392,34 @@ export default {
   addScenario(sketchId, scenarioName) {
     let formData = { scenario_name: scenarioName }
     return RestApiClient.post('/sketches/' + sketchId + '/scenarios/', formData)
+  },
+  // SigmaRule (new rules file based)
+  getSigmaRuleList() {
+    return RestApiClient.get('/sigmarule/')
+  },
+  getSigmaRuleResource(ruleUuid) {
+    return RestApiClient.get('/sigmarule/' + ruleUuid + '/')
+  },
+  getSigmaRuleByText(ruleText) {
+    let formData = {
+      content: ruleText,
+    }
+    return RestApiClient.post('/sigmarule/text/', formData)
+  },
+  deleteSigmaRule(ruleUuid) {
+    return RestApiClient.delete('/sigmarule/' + ruleUuid + '/')
+  },
+  createSigmaRule(ruleText) {
+    let formData = {
+      rule_yaml: ruleText,
+    }
+    return RestApiClient.post('/sigmarule/', formData)
+  },
+  updateSigmaRule(id, ruleText) {
+    let formData = {
+      id: id,
+      rule_yaml: ruleText,
+    }
+    return RestApiClient.put('/sigmarule/' + id + '/', formData)
   },
 }
