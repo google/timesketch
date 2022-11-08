@@ -326,7 +326,6 @@ fieldmappings:
     TargetFilename:
       product=linux: filename
       default: xml_string
-    Image: xml_string # that is a value name that might be used in other queries as well. Ideally it would be something _all
     ImageLoaded: xml_string
     QueryName: xml_string
     TargetProcessAddress: xml_string
@@ -339,7 +338,7 @@ fieldmappings:
     Signed: xml_string
     ScriptBlockText: xml_string
     ContextInfo: xml_string
-    OriginalFileName: "xml_string:*OriginalFileName*"
+    OriginalFileName: xml_string # 80167ada-7a12-41ed-b8e9-aa47195c66a1
     Payload: xml_string
     HostName: xml_string #96b9f619-aa91-478f-bacb-c3e50f8df575
     HostApplication: xml_string #96b9f619-aa91-478f-bacb-c3e50f8df575

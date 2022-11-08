@@ -21,7 +21,7 @@ limitations under the License.
       >
     </div>
     <v-expand-transition>
-      <div v-show="expanded">
+      <div v-show="expanded && sigmaRules.length">
         <v-data-iterator :items="sigmaRules" :items-per-page.sync="itemsPerPage" :search="search">
           <template v-slot:header>
             <v-toolbar flat>

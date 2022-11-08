@@ -1156,7 +1156,7 @@ class Facet(LabelMixin, StatusMixin, CommentMixin, GenericAttributeMixin, BaseMo
         self.description = description
 
 
-# Association tables for the many-to-many relationship for a Question.
+# Association tables for the many-to-many relationship for a question conclusion.
 questionconclusion_story_association_table = Table(
     "investigativequestionconclusion_story",
     BaseModel.metadata,
@@ -1245,6 +1245,30 @@ class InvestigativeQuestionConclusion(LabelMixin, StatusMixin, CommentMixin, Bas
         self.automated = automated
 
 
+# Association tables for the many-to-many relationships for a question.
+question_searchtemplate_association_table = Table(
+    "investigativequestion_searchtemplate",
+    BaseModel.metadata,
+    Column(
+        "investigativequestion_id",
+        Integer,
+        ForeignKey("investigativequestion.id"),
+    ),
+    Column("searchtemplate_id", Integer, ForeignKey("searchtemplate.id")),
+)
+
+question_sigmarule_association_table = Table(
+    "investigativequestion_sigmarule",
+    BaseModel.metadata,
+    Column(
+        "investigativequestion_id",
+        Integer,
+        ForeignKey("investigativequestion.id"),
+    ),
+    Column("sigmarule_id", Integer, ForeignKey("sigmarule.id")),
+)
+
+
 class InvestigativeQuestion(
     LabelMixin, StatusMixin, CommentMixin, GenericAttributeMixin, BaseModel
 ):
@@ -1259,6 +1283,12 @@ class InvestigativeQuestion(
     user_id = Column(Integer, ForeignKey("user.id"))
     spec_json = Column(UnicodeText())
     facet_id = Column(Integer, ForeignKey("facet.id"))
+    search_templates = relationship(
+        "SearchTemplate", secondary=question_searchtemplate_association_table
+    )
+    sigma_rules = relationship(
+        "SigmaRule", secondary=question_sigmarule_association_table
+    )
     conclusions = relationship(
         "InvestigativeQuestionConclusion",
         backref="investigativequestion",
