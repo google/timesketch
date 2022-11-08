@@ -455,6 +455,6 @@ def export_sigma_rules(path):
             continue
 
         with open(file_path, "wb") as fw:
-            fw.write(rule.rule_yaml.encode('utf-8'))
+            fw.write(rule.rule_yaml.encode("utf-8"))
         n = n + 1
     print(f"{n} Sigma rules exported")
