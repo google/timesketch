@@ -35,6 +35,12 @@ const defaultState = (currentUser) => {
       scenario: null,
       facet: null,
       question: null
+    },
+    snackbar: {
+      active: false,
+      color: "",
+      message: "",
+      timeout: -1
     }
   }
 }
@@ -92,6 +98,9 @@ export default new Vuex.Store({
         question: null
       }
       Vue.set(state, 'activeContext', payload)
+    },
+    SET_SNACKBAR(state, snackbar) {
+      Vue.set(state, 'snackbar', snackbar)
     },
     RESET_STATE(state, payload) {
       ApiClient.getLoggedInUser().then((response) => {
@@ -200,5 +209,13 @@ export default new Vuex.Store({
     clearActiveContext(context) {
       context.commit('CLEAR_ACTIVE_CONTEXT')
     },
+    setSnackBar(context, snackbar) {
+      context.commit("SET_SNACKBAR", {
+        active: true,
+        color: snackbar.color,
+        message: snackbar.message,
+        timeout: snackbar.timeout
+      });
+    }
   },
 })

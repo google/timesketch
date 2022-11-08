@@ -19,6 +19,8 @@ import App from './App.vue'
 import router from './router'
 import store from './store'
 
+import '@/mixins/snackBar'
+
 // Third party
 import VueScrollTo from 'vue-scrollto'
 import Multiselect from 'vue-multiselect'
