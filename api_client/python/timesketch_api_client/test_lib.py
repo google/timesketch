@@ -94,6 +94,17 @@ def mock_response(*args, **kwargs):
         "objects": {},
     }
 
+    add_event_attribute_data = {
+        "meta": {
+            "attributes_added": 2,
+            "chunks_per_index": {"1": 1},
+            "error_count": 0,
+            "errors": [],
+            "events_modified": 2,
+        },
+        "objects": [],
+    }
+
     sketch_data = {
         "meta": {
             "views": [{"id": 1, "name": "test"}, {"id": 2, "name": "test"}],
@@ -415,6 +426,9 @@ def mock_response(*args, **kwargs):
         "http://127.0.0.1/api/v1/sketches/1": MockResponse(json_data=sketch_data),
         "http://127.0.0.1/api/v1/sketches/1/event/?searchindex_id=test_index&event_id=test_event": MockResponse(  # pylint: disable=line-too-long
             json_data=event_data_1
+        ),
+        "http://127.0.0.1/api/v1/sketches/1/event/attributes/": MockResponse(
+            json_data=add_event_attribute_data
         ),
         "http://127.0.0.1/api/v1/sketches/1/views/1/": MockResponse(
             json_data=view_data_1

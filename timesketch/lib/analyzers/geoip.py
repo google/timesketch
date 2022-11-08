@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# This geoip analyzer uses GeoLite2 data created by MaxMind,
+# available from https://maxmind.com
+
 """Sketch analyzer plugin for geolocating IP addresses."""
 
 import os
@@ -345,7 +348,7 @@ class MaxMindDbGeoIPAnalyzer(BaseGeoIpAnalyzer):
     DISPLAY_NAME = "Geolocate IP addresses (MaxMind Database based)"
     DESCRIPTION = (
         "Find the approximate geolocation of an IP address using "
-        + "a MaxMind GeoLite2 database"
+        "a MaxMind GeoLite2 database, available from https://maxmind.com"
     )
 
 
@@ -357,7 +360,7 @@ class MaxMindDbWebIPAnalyzer(BaseGeoIpAnalyzer):
     DISPLAY_NAME = "Geolocate IP addresses (MaxMind Web client based)"
     DESCRIPTION = (
         "Find the approximate geolocation of an IP address using "
-        + "a MaxMind GeoLite2 web client API"
+        "a MaxMind GeoLite2 web client API, available from https://maxmind.com"
     )
 
 

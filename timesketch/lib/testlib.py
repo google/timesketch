@@ -88,33 +88,68 @@ class MockOpenSearchClient(object):
         """Initialize the client."""
         self.indices = MockOpenSearchIndices()
 
-    def search(self, index, body, size):  # pylint: disable=unused-argument
-        """Mock a client search, used for aggregations."""
-        meta = {
-            "es_time": 23,
-            "es_total_count": 5621,
-            "timed_out": False,
-            "max_score": 0.0,
+    def search(
+        self, index, body, size=0, search_type=None
+    ):  # pylint: disable=unused-argument
+        """Mock a client search.
+
+        Used for testing both aggregations and adding event attributes.
+
+        """
+        # pylint: disable=line-too-long
+        aggregation_search_result = {
+            "meta": {
+                "es_time": 23,
+                "es_total_count": 5621,
+                "timed_out": False,
+                "max_score": 0.0,
+            },
+            "objects": [
+                {
+                    "my_aggregation": {
+                        "buckets": [
+                            {"foobar": 1, "second": "foobar"},
+                            {"foobar": 4, "second": "more stuff"},
+                            {"foobar": 532, "second": "hvernig hefurdu thad"},
+                        ]
+                    },
+                    "my_second_aggregation": {
+                        "buckets": [
+                            {
+                                "foobar": 54,
+                                "second": "faranlegt",
+                                "third": "other text",
+                            },
+                            {"foobar": 42, "second": "asnalegt"},
+                        ]
+                    },
+                }
+            ],
+        }
+        # pylint: enable=line-too-long
+
+        add_attributes_search_result = {
+            "hits": {
+                "hits": [
+                    {
+                        "_id": "1",
+                        "_type": "_doc",
+                        "_index": "1",
+                        "_source": {"exists": "yes"},
+                    },
+                    {
+                        "_id": "2",
+                        "_type": "_doc",
+                        "_index": "2",
+                        "_source": {"exists": "yes"},
+                    },
+                ]
+            }
         }
 
-        objects = [
-            {
-                "my_aggregation": {
-                    "buckets": [
-                        {"foobar": 1, "second": "foobar"},
-                        {"foobar": 4, "second": "more stuff"},
-                        {"foobar": 532, "second": "hvernig hefurdu thad"},
-                    ]
-                },
-                "my_second_aggregation": {
-                    "buckets": [
-                        {"foobar": 54, "second": "faranlegt", "third": "other text"},
-                        {"foobar": 42, "second": "asnalegt"},
-                    ]
-                },
-            }
-        ]
-        return {"meta": meta, "objects": objects}
+        if search_type == "query_then_fetch":
+            return add_attributes_search_result
+        return aggregation_search_result
 
 
 class MockOpenSearchIndices(object):
@@ -305,6 +340,9 @@ class MockDataStore(object):
     ):
         for i in range(len(self.event_store)):
             yield self.event_store[str(i)]
+
+    def flush_queued_events(self):
+        """No-op mock to flush_queued_events for the datastore."""
 
 
 class MockGraphDatabase(object):
