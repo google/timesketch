@@ -86,6 +86,8 @@ def create_app(config=None, v2=False):
             sys.exit()
     else:
         app.config.from_object(config)
+        
+    app.config.from_prefixed_env()
 
     # Make sure that SECRET_KEY is configured.
     if not app.config["SECRET_KEY"]:
