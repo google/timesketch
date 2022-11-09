@@ -16,29 +16,49 @@ limitations under the License.
 <template>
     <v-card width="1000" style="overflow: initial">
         <v-container class="px-8">
-            <h1>{{ editingRule.title }}</h1>
+            <h1>Rule title: {{ editingRule.title }}</h1>
             <v-chip rounded x-small class="mr-2"
                 :color="parsingStatusColors(problemString)">
                 {{ problemString }}</v-chip>
+            <div>
+                <div style="width:50%;display:inline-table;">
+                    <v-alert colored-border border="left" elevation="1"
+                        :color="parsingStatusColors(problemString)">
+                        {{ problemString }}
+                    </v-alert>
+                </div>
+                <div style="width:50%;display:inline-table;">
+                    <b>Templates: </b>
+                    <v-data-iterator :items="SigmaTemplates"
+                        :items-per-page.sync="itemsPerPage" :search="search">
+                        <template v-slot:header>
+                            <v-toolbar flat>
+                                <v-text-field v-model="search" clearable
+                                    hide-details outlined dense
+                                    prepend-inner-icon="mdi-magnify"
+                                    label="Search for a template..">
+                                </v-text-field>
+                            </v-toolbar>
+                        </template>
 
-            <v-alert colored-border border="left" elevation="1"
-                :color="parsingStatusColors(problemString)">
-                {{ problemString }}
-            </v-alert>
+                        <template v-slot:default="props">
+                            <v-row v-for="item in props.items" :key="item.name"
+                                cols="12" @click="rowClick(item.text)">
+                                <v-card>
+                                    {{ item.title }}
+                                    <v-divider></v-divider>
+                                </v-card>
+                            </v-row>
+                        </template>
+                    </v-data-iterator>
+                </div>
+            </div>
+
             <div width="500">
                 <b>Search Query:</b>
                 <pre>{{ editingRule.search_query }}</pre>
             </div>
-            <div>
-                <b>Templates</b>
-                <select placeholder="Templates" v-model="rule_yaml"
-                    label="Templates" label-position="on-border">
-                    <option v-for="template in SigmaTemplates"
-                        :value="template.text" :key="template.os">
-                        {{ template.os }}
-                    </option>
-                </select>
-            </div>
+
             <v-textarea label="Edit Sigma rule" outlined
                 :color="parsingStatusColors('foo')" rows="35"
                 v-model="rule_yaml" @input="parseSigma(rule_yaml)">
@@ -83,12 +103,18 @@ export default {
             save_button_text: "Update",
             rule_yaml: {},
             SigmaTemplates: SigmaTemplates,
+            itemsPerPage: 10,
+            search: '',
+
         }
     },
     mounted() {
         this.getRuleByUUID(this.rule_uuid)
     },
     methods: {
+        rowClick(text) {
+            this.rule_yaml = text
+        },
         clearAndCancel: function () {
             this.$emit('cancel')
         },

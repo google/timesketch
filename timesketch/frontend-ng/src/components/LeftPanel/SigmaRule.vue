@@ -46,9 +46,6 @@ limitations under the License.
                     <v-list-item-title>Edit Rule</v-list-item-title>
                   </v-list-item-content>
                 </v-list-item>
-                <!-- <router-link style="text-decoration: none" :to="{ name: 'Overview', params: { sketchId: item.id } }">{{
-          item.name
-        }}</router-link>-->
                 <v-list-item v-on:click="archiveRule(sigmaRule.rule_uuid)">
                   <v-list-item-icon>
                     <v-icon>mdi-archive</v-icon>
@@ -57,7 +54,14 @@ limitations under the License.
                     <v-list-item-title>Archive Rule</v-list-item-title>
                   </v-list-item-content>
                 </v-list-item>
-
+                <v-list-item v-on:click="deleteRule(sigmaRule.rule_uuid)">
+                  <v-list-item-icon>
+                    <v-icon>mdi-archive</v-icon>
+                  </v-list-item-icon>
+                  <v-list-item-content>
+                    <v-list-item-title>Delete Rule</v-list-item-title>
+                  </v-list-item-content>
+                </v-list-item>
                 <v-list-item v-on:click="copyAndTweakRule(sigmaRule.rule_uuid)">
                   <v-list-item-icon>
                     <v-icon>mdi-export</v-icon>
@@ -79,9 +83,9 @@ limitations under the License.
           <v-simple-table dense>
             <template v-slot:default>
               <tbody>
-                <tr v-for="(v, k) in sigmaRuleSummary" :key="v.id">
+                <tr v-for="(v, k) in sigmaRuleSummary" :key="v.rule_uuid">
                   <td>
-                    <strong>{{ k | capitalize }}</strong>
+                    <strong>{{ k }}</strong>
                   </td>
                   <td>
                     <span v-if="k === 'references'">
@@ -120,6 +124,7 @@ limitations under the License.
 <script>
 import EventBus from '../../main'
 import TsSigmaRuleModification from '../Studio/SigmaRuleModification.vue'
+import ApiClient from '../../utils/RestApiClient'
 
 
 const defaultQueryFilter = () => {
@@ -160,6 +165,21 @@ export default {
       eventData.queryFilter = defaultQueryFilter()
       console.log(eventData)
       EventBus.$emit('setQueryAndFilter', eventData)
+    },
+    deleteRule(rule_uuid) {
+      if (confirm('Delete Rule?')) {
+        ApiClient.deleteSigmaRule(rule_uuid)
+          .then(response => {
+            console.log("Rule deleted: " + rule_uuid)
+            // remove element from Array
+            //this.$store.state.sigmaRuleList = this.sigmaRuleList.filter(obj => {
+            //    return obj.rule_uuid !== ioc.rule_uuid
+            //})
+          })
+          .catch(e => {
+            console.error(e)
+          })
+      }
     },
     archiveRule(rule_uuid) {
       console.log("Rule archive pressed: " + rule_uuid)
