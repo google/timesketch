@@ -297,10 +297,19 @@ def validate_api_token():
     validated_email = token_json.get("email")
 
     # Check if the authenticating user is part of the allowed domains.
+    allowed_domains = set()
     hosted_domains = current_app.config.get("GOOGLE_OIDC_HOSTED_DOMAIN")
+    api_allowed_domains = current_app.config.get("GOOGLE_OIDC_API_ALLOWED_DOMAINS", [])
     if hosted_domains:
+        allowed_domains.add(hosted_domains)
+    if api_allowed_domains:
+        allowed_domains.update(api_allowed_domains)
+    # A list of allowed domains in lower case.
+    ALLOWED_DOMAINS = list(map(lambda x: x.lower(), allowed_domains))
+
+    if ALLOWED_DOMAINS:
         _, _, domain = validated_email.partition("@")
-        if domain.lower() != hosted_domains.lower():
+        if domain.lower() not in ALLOWED_DOMAINS:
             return abort(
                 HTTP_STATUS_CODE_UNAUTHORIZED,
                 "Domain {0:s} is not allowed to authenticate against this "
