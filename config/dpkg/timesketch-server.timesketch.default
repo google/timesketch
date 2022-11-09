@@ -107,6 +107,9 @@ GOOGLE_OIDC_CLIENT_SECRET = None
 # Limit access to a specific Google GSuite domain.
 GOOGLE_OIDC_HOSTED_DOMAIN = None
 
+# Additional Google GSuite domains allowed API access.
+GOOGLE_OIDC_API_ALLOWED_DOMAINS = None
+
 # If populated only these users (email addresses) will be able to login to
 # this server. This can be used when access should be limited to a specific
 # set of users.
