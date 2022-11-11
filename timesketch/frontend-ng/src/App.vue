@@ -15,6 +15,14 @@ limitations under the License.
 -->
 <template>
   <v-app id="app">
+    <!-- Global snackbar -->
+    <v-snackbar v-model="snackbar.active" :timeout="snackbar.timeout" :color="snackbar.color" top>
+      {{ snackbar.message }}
+      <template v-slot:action="{ attrs }">
+        <v-btn text v-bind="attrs" @click="snackbar.active = false"> Close </v-btn>
+      </template>
+    </v-snackbar>
+
     <v-main>
       <!-- Top horizontal toolbar -->
       <v-toolbar flat color="transparent">
@@ -41,7 +49,7 @@ limitations under the License.
           Share
         </v-btn>
         <v-avatar color="grey lighten-1" size="25" class="ml-3">
-          <span class="white--text">{{ currentUser.charAt(0).toUpperCase() }}</span>
+          <span class="white--text">{{ currentUser | capitalize }}</span>
         </v-avatar>
         <v-menu v-if="!isRootPage" offset-y>
           <template v-slot:activator="{ on, attrs }">
@@ -93,6 +101,8 @@ limitations under the License.
 </template>
 
 <script>
+import EventBus from './main'
+
 export default {
   name: 'app',
   data() {
@@ -113,6 +123,9 @@ export default {
     activeContext() {
       return this.$store.state.activeContext
     },
+    snackbar() {
+      return this.$store.state.snackbar
+    },
   },
   methods: {
     toggleTheme: function () {
@@ -122,8 +135,19 @@ export default {
     switchUI: function () {
       window.location.href = window.location.href.replace('/v2/', '/')
     },
+    setErrorSnackBar: function (message) {
+      const snackbar = {
+        message: message,
+        color: 'error',
+        timeout: 7000,
+      }
+      this.$store.dispatch('setSnackBar', snackbar)
+    },
   },
   mounted() {
+    // Listen on errors from REST API calls
+    EventBus.$on('errorSnackBar', this.setErrorSnackBar)
+
     const isDark = localStorage.getItem('isDarkTheme')
     if (isDark) {
       if (isDark === 'true') {
@@ -133,6 +157,9 @@ export default {
       }
     }
     this.$store.dispatch('resetState', this.sketchId)
+  },
+  beforeDestroy() {
+    EventBus.$off('errorSnackBar')
   },
 }
 </script>
