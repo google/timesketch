@@ -15,7 +15,14 @@ limitations under the License.
 -->
 <template>
   <div>
-    <v-row style="cursor: pointer" @click="toggleFacet()" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
+    <v-divider></v-divider>
+    <v-row
+      no-gutters
+      class="pa-3 pl-1"
+      style="cursor: pointer"
+      @click="toggleFacet()"
+      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+    >
       <v-col cols="1">
         <v-icon class="ml-2" v-if="!expanded">mdi-chevron-right</v-icon>
         <v-icon class="ml-2" v-else>mdi-chevron-down</v-icon>
@@ -27,7 +34,6 @@ limitations under the License.
 
     <v-expand-transition>
       <div v-show="expanded">
-        <v-divider class="mt-3"></v-divider>
         <span
           @click="setActiveContext(question)"
           style="font-size: 0.9em"
@@ -38,7 +44,6 @@ limitations under the License.
         </span>
       </div>
     </v-expand-transition>
-    <v-divider class="mt-3"></v-divider>
   </div>
 </template>
 
@@ -51,6 +56,7 @@ export default {
   data: function () {
     return {
       expanded: false,
+      isActive: false,
     }
   },
   computed: {
