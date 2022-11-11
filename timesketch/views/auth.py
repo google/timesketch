@@ -305,7 +305,7 @@ def validate_api_token():
     if api_allowed_domains:
         allowed_domains.update(api_allowed_domains)
     # A list of allowed domains in lower case.
-   ALLOWED_DOMAINS = [domain.lower() for domain in allowed_domains]
+    ALLOWED_DOMAINS = [domain.lower() for domain in allowed_domains]
 
     if ALLOWED_DOMAINS:
         _, _, domain = validated_email.partition("@")
