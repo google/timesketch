@@ -114,6 +114,7 @@ export default {
     methods: {
         rowClick(text) {
             this.rule_yaml = text
+            this.parseSigma(text)
         },
         clearAndCancel: function () {
             this.$emit('cancel')
