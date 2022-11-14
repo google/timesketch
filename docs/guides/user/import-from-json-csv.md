@@ -53,4 +53,4 @@ Similar to a CSV file, you can upload the JSONL file even if it does not have th
 
 To create a new timeline in Timesketch you need to upload it to the server.
 
-[See here for instructions to do so](/guides/user/upload-data/)
+[See here for instructions to do so](upload-data.md)
