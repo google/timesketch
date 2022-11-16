@@ -13,3 +13,5 @@
 # limitations under the License.
 """Contrib Analyzer module."""
 from timesketch.lib.analyzers.contrib import bigquery_matcher
+from timesketch.lib.analyzers.contrib import misp_analyzer
+from timesketch.lib.analyzers.contrib import hashlookup_analyzer
