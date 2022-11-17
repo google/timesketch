@@ -1,3 +1,5 @@
+"""Test for Hashlookup"""
+
 import mock
 
 from timesketch.lib.testlib import BaseTest
@@ -19,6 +21,7 @@ class TestHashlookup(BaseTest):
         }
 
     def hash_match(self):
+        """Compare Hashlookup reponse and timesketch event"""
         cp = 0
         if self.MATCHING_HASH['sha256_hash'] in self.HASHLOOKUP_DB:
             cp += 1
@@ -29,6 +32,7 @@ class TestHashlookup(BaseTest):
     #     "timesketch.lib.analyzers.contrib.hashlookup_analyzer." "HashlookupAnalyzer.get_hash_info"
     # )
     def test_hash_match(self):
+        """Test match"""
         message = self.hash_match()
         self.assertEqual(
             message,
@@ -40,6 +44,7 @@ class TestHashlookup(BaseTest):
     #     "timesketch.lib.analyzers.contrib.hashlookup_analyzer." "HashlookupAnalyzer.get_hash_info"
     # )
     def test_hash_nomatch(self):
+        """Test no match"""
         self.HASHLOOKUP_DB = []
         message = self.hash_match()
         self.assertEqual(

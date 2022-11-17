@@ -1,3 +1,5 @@
+"""Test for MISP"""
+
 import mock
 
 from timesketch.lib.testlib import BaseTest
@@ -60,6 +62,7 @@ class TestMisp(BaseTest):
         }
 
     def attr_match(self):
+        """Compare MISP reponse and timesketch event"""
         cp = 0
         for key in list(self.MATCHING_MISP.keys()):
             for attr in self.MISP_ATTR['response']['Attribute']:
@@ -74,6 +77,7 @@ class TestMisp(BaseTest):
     #     "timesketch.lib.analyzers.contrib.misp_analyzer." "MispAnalyzer.get_attr"
     # )
     def test_attr_match(self):
+        """Test match"""
         message = self.attr_match()
         self.assertEqual(
             message,
@@ -85,6 +89,7 @@ class TestMisp(BaseTest):
     #     "timesketch.lib.analyzers.contrib.misp_analyzer." "MispAnalyzer.get_attr"
     # )
     def test_attr_nomatch(self):
+        """Test no match"""
         self.MISP_ATTR = {"response": {"Attribute": []}}
         message = self.attr_match()
         self.assertEqual(

@@ -1,17 +1,20 @@
 """Index analyzer plugin for MISP."""
 
+import logging
 import ntpath
+import requests
 
 from flask import current_app
-import requests
+from timesketch.lib.analyzers import interface
+from timesketch.lib.analyzers import manager
+
+
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
-from timesketch.lib.analyzers import interface
-from timesketch.lib.analyzers import manager
 
-import logging
+
 
 logger = logging.getLogger("timesketch.analyzers.misp")
 
@@ -92,7 +95,10 @@ class MispAnalyzer(interface.BaseAnalyzer):
 
         msg = "Event that match files:   "
         for misp_attr in result:
-            msg += f"\"Event info\": \"{misp_attr['Event']['info']}\" - \"url\": {self.misp_url + '/events/view/' + misp_attr['Event']['id']}  || "
+            info = misp_attr['Event']['info']
+            id_event = misp_attr['Event']['id']
+            msg += f"\"Event info\": \"{info}\""
+            msg += f"- \"url\": {self.misp_url + '/events/view/' + id_event} || "
 
         event.add_comment(msg)
         event.add_tags([f"MISP-{attr}"])

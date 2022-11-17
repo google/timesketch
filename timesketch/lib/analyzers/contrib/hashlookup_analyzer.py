@@ -1,5 +1,7 @@
 """Index analyzer plugin for Hashlookup."""
 
+import logging
+
 from flask import current_app
 import requests
 
@@ -7,7 +9,6 @@ from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 from timesketch.lib import emojis
 
-import logging
 
 logger = logging.getLogger("timesketch.analyzers.hashlookup")
 
@@ -49,13 +50,13 @@ class HashlookupAnalyzer(interface.BaseAnalyzer):
         matcher_kwargs = [{"hashlookup_url": hashlookup_url}]
         return matcher_kwargs
 
-    def get_hash_info(self, hash):
+    def get_hash_info(self, hash_value):
         """Search event on Hashlookup.
 
         Returns:
             JSON of Hashlookup's results
         """
-        results = requests.get(f"{self.hashlookup_url}sha256/{hash}")
+        results = requests.get(f"{self.hashlookup_url}sha256/{hash_value}")
 
         if results.status_code != 200:
             return []
@@ -66,7 +67,7 @@ class HashlookupAnalyzer(interface.BaseAnalyzer):
 
         return results.json()
 
-    def mark_event(self, event, hash):
+    def mark_event(self, event, hash_value):
         """Annotate an event with data from Hashlookup
 
         Tags with validate emoji, adds a comment to the event.
@@ -77,14 +78,14 @@ class HashlookupAnalyzer(interface.BaseAnalyzer):
             query_string=('tag:"Hashlookup"'),
         )
 
-        event.add_comment(f"{self.hashlookup_url}sha256/{hash}")
+        event.add_comment(f"{self.hashlookup_url}sha256/{hash_value}")
 
         event.add_tags(["Hashlookup"])
         event.add_emojis([emojis.get_emoji("VALIDATE")])
         event.commit()
 
     def query_hashlookup(self, query, hash_type):
-        """ """
+        """Get event from timesketch, request Hashlookup and mark event."""
         events = self.event_stream(query_string=query, return_fields=[hash_type])
         for event in events:
             loc = event.source.get(hash_type)
