@@ -32,7 +32,6 @@ class HashlookupAnalyzer(interface.BaseAnalyzer):
         self.cp = 0
         self.request_list = list()
 
-
     @staticmethod
     def get_kwargs():
         """Get kwargs for the analyzer.
@@ -40,18 +39,15 @@ class HashlookupAnalyzer(interface.BaseAnalyzer):
         Returns:
             Info to connect to Hashlookup.
         """
-        
+
         hashlookup_url = current_app.config.get("HASHLOOKUP_URL")
 
         if not hashlookup_url:
             logger.error("Hashlookup conf not found")
             return []
 
-        matcher_kwargs = [
-            {"hashlookup_url": hashlookup_url}
-        ]
+        matcher_kwargs = [{"hashlookup_url": hashlookup_url}]
         return matcher_kwargs
-
 
     def get_hash_info(self, hash):
         """Search event on Hashlookup.
@@ -67,19 +63,19 @@ class HashlookupAnalyzer(interface.BaseAnalyzer):
             return []
 
         self.cp += 1
-        
+
         return results.json()
 
     def mark_event(self, event, hash):
-        """ Annotate an event with data from Hashlookup
+        """Annotate an event with data from Hashlookup
 
-        Tags with validate emoji, adds a comment to the event. 
+        Tags with validate emoji, adds a comment to the event.
         """
         self.sketch.add_view(
-                view_name="Hashlookup",
-                analyzer_name=self.NAME,
-                query_string=('tag:"Hashlookup"'),
-            )
+            view_name="Hashlookup",
+            analyzer_name=self.NAME,
+            query_string=('tag:"Hashlookup"'),
+        )
 
         event.add_comment(f"{self.hashlookup_url}sha256/{hash}")
 
@@ -88,8 +84,7 @@ class HashlookupAnalyzer(interface.BaseAnalyzer):
         event.commit()
 
     def query_hashlookup(self, query, hash_type):
-        """
-        """
+        """ """
         events = self.event_stream(query_string=query, return_fields=[hash_type])
         for event in events:
             loc = event.source.get(hash_type)
@@ -113,9 +108,7 @@ class HashlookupAnalyzer(interface.BaseAnalyzer):
         query_sha = 'sha256_hash:*'
         self.query_hashlookup(query_sha, 'sha256_hash')
 
-        return (
-            f"Hash Match: {self.cp}"
-        )
+        return f"Hash Match: {self.cp}"
 
 
 manager.AnalysisManager.register_analyzer(HashlookupAnalyzer)

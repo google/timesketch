@@ -59,7 +59,7 @@ class MispAnalyzer(interface.BaseAnalyzer):
 
     def get_attr(self, event, attr):
         """Search event on MISP.
-            
+
         Returns:
             List of matching MISP attibutes.
         """
@@ -81,7 +81,7 @@ class MispAnalyzer(interface.BaseAnalyzer):
 
     def mark_event(self, event, result, attr):
         """Anotate an event with data from MISP result.
-        
+
         Add a comment to the event.
         """
         self.sketch.add_view(
@@ -99,7 +99,7 @@ class MispAnalyzer(interface.BaseAnalyzer):
         event.commit()
 
     def query_misp(self, query, attr, timesketch_attr):
-        """ Get event from timesketch, request MISP and mark event. """
+        """Get event from timesketch, request MISP and mark event."""
         events = self.event_stream(query_string=query, return_fields=[timesketch_attr])
         for event in events:
             loc = event.source.get(timesketch_attr)
