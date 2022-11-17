@@ -60,7 +60,7 @@ class HashlookupAnalyzer(interface.BaseAnalyzer):
 
         if results.status_code != 200:
             return []
-        if 'message' in list(results.json().keys()):
+        if "message" in list(results.json().keys()):
             return []
 
         self.cp += 1
@@ -106,8 +106,8 @@ class HashlookupAnalyzer(interface.BaseAnalyzer):
         if not self.hashlookup_url:
             return "No Hashlookup configuration settings found, aborting."
 
-        query_sha = 'sha256_hash:*'
-        self.query_hashlookup(query_sha, 'sha256_hash')
+        query_sha = "sha256_hash:*"
+        self.query_hashlookup(query_sha, "sha256_hash")
 
         return f"Hash Match: {self.cp}"
 

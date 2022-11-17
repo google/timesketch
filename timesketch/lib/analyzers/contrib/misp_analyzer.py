@@ -9,13 +9,6 @@ from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 
 
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
-
-requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-
-
-
-
 logger = logging.getLogger("timesketch.analyzers.misp")
 
 
@@ -95,9 +88,9 @@ class MispAnalyzer(interface.BaseAnalyzer):
 
         msg = "Event that match files:   "
         for misp_attr in result:
-            info = misp_attr['Event']['info']
-            id_event = misp_attr['Event']['id']
-            msg += f"\"Event info\": \"{info}\""
+            info = misp_attr["Event"]["info"]
+            id_event = misp_attr["Event"]["id"]
+            msg += f'"Event info": "{info}"'
             msg += f"- \"url\": {self.misp_url + '/events/view/' + id_event} || "
 
         event.add_comment(msg)
@@ -109,10 +102,10 @@ class MispAnalyzer(interface.BaseAnalyzer):
         events = self.event_stream(query_string=query, return_fields=[timesketch_attr])
         for event in events:
             loc = event.source.get(timesketch_attr)
-            if attr == 'filename':
+            if attr == "filename":
                 loc = ntpath.basename(loc)
                 if not loc:
-                    head, loc = ntpath.split(event.source.get(timesketch_attr))
+                    _, loc = ntpath.split(event.source.get(timesketch_attr))
 
             if not loc in self.request_list:
                 result = self.get_attr(loc, attr)
@@ -130,17 +123,17 @@ class MispAnalyzer(interface.BaseAnalyzer):
         if not self.misp_url or not self.misp_api_key:
             return "No MISP configuration settings found, aborting."
 
-        query_sha = 'md5_hash:*'
-        self.query_misp(query_sha, 'md5', 'md5_hash')
+        query_sha = "md5_hash:*"
+        self.query_misp(query_sha, "md5", "md5_hash")
 
-        query_sha = 'sha1_hash:*'
-        self.query_misp(query_sha, 'sha1', 'sha1_hash')
+        query_sha = "sha1_hash:*"
+        self.query_misp(query_sha, "sha1", "sha1_hash")
 
-        query_sha = 'sha256_hash:*'
-        self.query_misp(query_sha, 'sha256', 'sha256_hash')
+        query_sha = "sha256_hash:*"
+        self.query_misp(query_sha, "sha256", "sha256_hash")
 
-        query = 'filename:*'
-        self.query_misp(query, 'filename', 'filename')
+        query = "filename:*"
+        self.query_misp(query, "filename", "filename")
 
         return f"MISP Match: {self.cp}"
 
