@@ -17,4 +17,5 @@ detection:
             - 'lsass.dmp'  # Attempt to dump the lsass process
             - 'powershell -nop -w hidden -encodedcommand' # often used to obfuscate powershell
             - 'vssadmin' # Attempt to work with volume shadow copies
+            - '.dmp full'  # Process dumping method apart from procdump
     condition: 1 of them
