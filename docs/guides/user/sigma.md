@@ -9,6 +9,8 @@ See description at the [Sigma Github repository](https://github.com/Neo23x0/sigm
 Since early 2020 Timesketch has Sigma support implemented. Sigma can be used as an analyzer.
 The other option is to use Sigma via the API and the API client or the Web interface.
 
+> Sigma in Timesketch should still be considered an Alpha version functionality with known performance and functionality issues.
+
 ### Web Interface
 
 Sigma rules are exposed to the Web Interface as part of a sketch.
@@ -29,7 +31,11 @@ This will show a table with all Sigma rules installed on a system. You can searc
 
 So if you want to search for ZMap related rules, you can search for `zma` in `Title, File Name` and it will show you the pre installed rule.
 
-#### Hits
+#### Analyzer
+
+The Sigma Analyzer will only take rules that have the status: `stable`. `Experimental`, `Deprecated` or similar marked rules are **not picked up** by the Analyzer.
+
+##### Hits
 
 If you have run the Sigma Analyzer on a sketch and a rule has produced hits, the following fields will be added to the event:
 
@@ -63,6 +69,35 @@ In this detail view all key and values of that rule that has been parsed by Time
 
 Timesketch deliberately does not provide a set of Sigma rules, as those would add complexity to maintain.
 To use the official community rules you can visit [github.com/Neo23x0/sigma](https://github.com/Neo23x0/sigma) and copy the rules you are interested in.
+
+#### Web
+
+In the past, Sigma rules where stored on disk, in 2022 this has been changed and Sigma rules are stored in the database.
+New rules can be added / modified via the Sigma Tab.
+
+![Sigma create rule](/assets/images/Sigma_create_rule.gif)
+
+#### tscl
+
+Sigma rules can also be added by the [admin-cli](../admin/admin-cli).
+
+
+```shell
+tsctl import-sigma-rules sigma/rules/cloud/gcp/
+Importing: Google Cloud Kubernetes RoleBinding
+Importing: Google Cloud Storage Buckets Modified or Deleted
+Importing: Google Cloud VPN Tunnel Modified or Deleted
+Importing: Google Cloud Re-identifies Sensitive Information
+...
+```
+
+#### Limitations
+
+It is **not** recommended to simply add all Sigma rules from e.g. [github.com/Neo23x0/sigma](https://github.com/Neo23x0/sigma).
+
+- Rules might have missing field mappings (see below) which will cause to broad queries
+- Rules might have to many `OR` & `AND` combinations that result in very compley OpenSearch queries. On a large index, such queries can cause Timeouts that can lead to stability problems of your Timesketch instance
+- To many rules marked as Stable could result in Sigma Analyzers running for hours or days, blocking other Analyzers
 
 ### Timesketch config file
 
@@ -203,47 +238,6 @@ The Sigma analyzer is designed to batch and throttle execution of queries which 
 
 If you can, define the haystack OpenSearch has to query. This can be achieved by adding a check for `data_type:"foosource"`.
 
-## Verify rules
-
-Deploying rules that can not be parsed by Sigma can cause problems on analyst side
-as well as Timesketch operator side. The analyst might not be able to see
-the logs and the errors might only occur when running the analyzer.
-
-Use the Status of a Sigma rule to tell analysts and analyzers when to use a rule.
-
-TODO: Write down status mapping to analyzer
-
-This is why a standalone tool can be used from:
-
-```shell
-test_tools/sigma_verify_rules.py
-```
-
-This tool takes the following options:
-
-```shell
-usage: sigma_verify_rules.py [-h] [--config_file PATH_TO_TEST_FILE]
-                             PATH_TO_RULES
-sigma_verify_rules.py: error: the following arguments are required: PATH_TO_RULES
-```
-
-And could be used like the following to verify your rules would work:
-
-```shell
-sigma_verify_rules.py --config_file ../data/sigma_config.yaml ../data/sigma/rules
-```
-
-If any rules in that folder is causing problems it will be shown:
-
-```shell
-sigma_verify_rules.py --config_file ../data/sigma_config.yaml ../timesketch/data/sigma/rules
-ERROR:root:reverse_shell.yaml Error generating rule in file ../timesketch/data/sigma/rules/linux/reverse_shell.yaml you should not use this rule in Timesketch: No condition found
-ERROR:root:recon_commands.yaml Error generating rule in file ../timesketch/data/sigma/rules/data/linux/recon_commands.yaml you should not use this rule in Timesketch: No condition found
-You should NOT import the following rules
-../timesketch/data/sigma/rules/linux/reverse_shell.yaml
-../timesketch/data/sigma/rules/linux/recon_commands.yaml
-```
-
 ## Troubleshooting
 
 ### How to find issues
@@ -294,8 +288,6 @@ Feel free to contribute for fun and fame, this is open source :) -> https://gith
 
 ### What to do with problematic rules
 
-To reduce load on the system it is recommended to not keep the problematic rules in the directory, as it will cause the exception every time the rules folders are parsed (a lot!).
-
-The parser is made to ignore "deprecated" folders. So you could move the problematic rules to your rules folder in a subfolder /deprecated/.
+Update the status of the rule to `deprecated`.
 
 If the rules do not contain any sensitive content, you could also open an issue in the timesketch project and or in the upstream sigma project and explain your issue (best case: provide your timesketch sigma config and the rule file so it can be verified).
