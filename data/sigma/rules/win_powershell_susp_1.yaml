@@ -8,7 +8,7 @@ date: 2022/11/17
 modified: 2022/11/17
 level: high
 detection:
-    # Different suspicious or malicious command line parameters
+    # Different suspicious or malicious powershell command line parameters
     selection_plain:
         CommandLine|contains:
             - ' -NoP '  # Often used in malicious PowerShell commands
