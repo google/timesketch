@@ -19,13 +19,15 @@ limitations under the License.
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
       <span style="cursor: pointer" @click="expanded = !expanded">
         <v-icon left>mdi-sigma-lower</v-icon> Sigma Rules ({{ sigmaRules.length
-        }})
+        }}) <v-btn @click="CreateNewRule()" small depressed color="green">
+          Create Rule</v-btn>
       </span>
     </div>
     <v-expand-transition>
       <div v-show="expanded">
         <v-data-iterator :items="sigmaRules" :items-per-page.sync="itemsPerPage"
           :search="search">
+
           <template v-slot:header>
             <v-toolbar flat>
               <v-text-field v-model="search" clearable hide-details outlined
@@ -35,11 +37,14 @@ limitations under the License.
           </template>
 
           <template v-slot:default="props">
-            <ts-sigma-rule v-for="sigmaRule in props.items" :key="sigmaRule.id"
-              :sigma-rule="sigmaRule">
+            <ts-sigma-rule v-for="sigmaRule in props.items"
+              :key="sigmaRule.rule_uuid" :sigma-rule="sigmaRule">
             </ts-sigma-rule>
           </template>
         </v-data-iterator>
+      </div>
+      <div>
+        <pre>{{ sigmaRules | pretty }}</pre>
       </div>
     </v-expand-transition>
     <v-divider></v-divider>
@@ -61,6 +66,12 @@ export default {
       expanded: false,
       itemsPerPage: 10,
       search: '',
+    }
+  },
+  methods: {
+    CreateNewRule(){
+      //this.$store.dispatch('updateSearchNode', this.selectedNode)
+      this.$router.push('/studio/sigma/'+crypto.randomUUID()); 
     }
   },
   computed: {

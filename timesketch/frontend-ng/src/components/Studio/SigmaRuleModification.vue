@@ -16,10 +16,11 @@ limitations under the License.
 <template>
     <v-card width="1000" style="overflow: initial">
         <v-container class="px-8">
-            <h1>Rule title: {{ editingRule.title }}</h1>
-            <v-chip rounded x-small class="mr-2"
-                :color="parsingStatusColors(problemString)">
-                {{ problemString }}</v-chip>
+            <h1>Rule title: {{ editingRule.title }} <v-chip rounded x-small
+                    class="mr-2" :color="parsingStatusColors(problemString)">
+                    {{ problemString }}</v-chip>
+            </h1>
+
             <div>
                 <div style="width:50%;display:inline-table;">
                     <v-alert colored-border border="left" elevation="1"
@@ -27,6 +28,35 @@ limitations under the License.
                         {{ problemString }}
                     </v-alert>
                 </div>
+
+                <v-autocomplete dense filled rounded :items="SigmaTemplates"
+                    @change="rowClick" item-text="title">
+
+                </v-autocomplete>
+                <!--
+                <v-autocomplete :items="SigmaTemplates" :search="search">
+                    <template v-slot:header>
+                        <v-toolbar flat>
+                            <v-text-field v-model="search" clearable
+                                hide-details outlined dense
+                                prepend-inner-icon="mdi-magnify"
+                                label="Search for a template..">
+                            </v-text-field>
+                        </v-toolbar>
+                    </template>
+
+                    <template v-slot:default="props">
+                        <v-row v-for="item in props.items" :key="item.name"
+                            cols="12" @click="rowClick(item.text)">
+                            <v-card>
+                                {{ item.title }}
+
+                            </v-card>
+                        </v-row>
+                    </template>
+                </v-autocomplete>
+                
+
                 <div style="width:50%;display:inline-table;">
                     <b>Templates: </b>
                     <v-data-iterator :items="SigmaTemplates"
@@ -46,17 +76,21 @@ limitations under the License.
                                 cols="12" @click="rowClick(item.text)">
                                 <v-card>
                                     {{ item.title }}
-                                    <v-divider></v-divider>
+
                                 </v-card>
                             </v-row>
                         </template>
                     </v-data-iterator>
-                </div>
+                   
+            </div> -->
             </div>
 
             <div width="500">
-                <b>Search Query:</b>
-                <pre>{{ editingRule.search_query }}</pre>
+                <v-alert colored-border border="left" elevation="1"
+                    :color="parsingStatusColors(problemString)">
+                    <b>Search Query:</b>
+                    {{ editingRule.search_query }}
+                </v-alert>
             </div>
 
             <v-textarea label="Edit Sigma rule" outlined
@@ -67,13 +101,19 @@ limitations under the License.
                 <v-btn :disabled="problemString.toLowerCase() !== 'ok'"
                     @click="addOrUpdateRule(rule_yaml)" small depressed
                     color="primary">{{ save_button_text }}</v-btn>
-                <v-btn @click="search(sigmaRule.search_query)" small depressed
-                    color="secondary">Copy and tweak rule</v-btn>
-                <v-btn @click="search(sigmaRule.search_query)" small depressed
-                    color="secondary">Cancel</v-btn>
+                <v-btn @click="cancel" small depressed color="secondary">Cancel
+                </v-btn>
                 <v-btn @click="deleteRule(rule_uuid)" small depressed
-                    color="secondary">Delete Rule</v-btn>
+                    color="red">Delete Rule</v-btn>
             </div>
+            <div>
+                <v-autocomplete dense filled rounded :items="SigmaTemplates"
+                    @change="rowClick" item-text="title">
+
+                </v-autocomplete>
+
+            </div>
+
             <div>
                 <pre>
                 {{ editingRule }}
@@ -98,23 +138,26 @@ export default {
     props: ['rule_uuid', 'sigmaRule'],
     data() {
         return {
-            editingRule: { "rule_yaml": "foobar" },
+            editingRule: { "rule_yaml": "foobar" }, // empty state
             problemString: 'OK',
             save_button_text: "Update",
             rule_yaml: {},
             SigmaTemplates: SigmaTemplates,
-            itemsPerPage: 10,
             search: '',
-
         }
     },
     mounted() {
         this.getRuleByUUID(this.rule_uuid)
     },
     methods: {
+        cancel() { this.$router.back() },
+
         rowClick(text) {
-            this.rule_yaml = text
-            this.parseSigma(text)
+            var matchingTemplate = this.SigmaTemplates.find(obj => {
+                return obj.title === text
+            });
+            this.rule_yaml = matchingTemplate.text
+            this.parseSigma(matchingTemplate.text)
         },
         clearAndCancel: function () {
             this.$emit('cancel')
@@ -143,7 +186,6 @@ export default {
             return 'warning'
         },
         getRuleByUUID(ruleUuid) {
-            console.log("getRuleByUUID" + ruleUuid)
             ApiClient.getSigmaRuleResource(ruleUuid = ruleUuid)
                 .then(response => {
                     this.editingRule = response.data.objects[0]
@@ -154,9 +196,21 @@ export default {
                 .catch(e => {
                     console.error(e)
                     this.save_button_text = "Create"
-                    this.rule_yaml = ""
+                    this.problemString = 'No Rule found, creating a new one'
+                    this.rule_yaml = `title: Foobar
+id: ${crypto.randomUUID()}
+description: Detects suspicious FOOBAR
+references:
+  - https://
+author: ${this.$store.state.currentUser}
+date: ${new Date(Date.now()).toLocaleString('en-ZA').split(',')[0]}
+modified: ${new Date(Date.now()).toLocaleString('en-ZA').split(',')[0]}
+status: experimental
+falsepositives: unknown
+level: informational
+tags:
+    -`
                 })
-            // TODO: show something if the rule uuid does not exist.
         },
         deleteRule(rule_uuid) {
             if (confirm('Delete Rule?')) {

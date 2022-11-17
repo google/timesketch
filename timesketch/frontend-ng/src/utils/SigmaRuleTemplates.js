@@ -23,6 +23,9 @@ references:
 author: 
 date: ${new Date(Date.now()).toLocaleString('en-ZA').split(',')[0]}
 modified: ${new Date(Date.now()).toLocaleString('en-ZA').split(',')[0]}
+status: experimental
+falsepositives: unknown
+level: informational
 tags:
     -`
 

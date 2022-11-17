@@ -79,11 +79,14 @@ limitations under the License.
 
     <v-expand-transition>
       <div v-show="expanded" class="pa-4 pt-0">
+        <!--<pre>{{ sigmaRule | pretty }}</pre>-->
+        {{ sigmaRuleSummary | pretty }}
         <div style="font-size: 0.9em" class="mt-2">
           <v-simple-table dense>
             <template v-slot:default>
+
               <tbody>
-                <tr v-for="(v, k) in sigmaRuleSummary" :key="v.rule_uuid">
+                <tr v-for="(v, k) in sigmaRuleSummary" :key="v.id">
                   <td>
                     <strong>{{ k }}</strong>
                   </td>
@@ -153,6 +156,8 @@ export default {
       return this.$store.state.sketch
     },
     sigmaRuleSummary() {
+      console.log("SummaryCalled +" + this.sigmaRule.rule_uuid)
+      //if this.sigmaRule === 'undefined'
       const fields = ['author', 'description', 'references', 'date', 'modified', 'falsepositives', 'level', 'tags', 'rule_uuid']
       return Object.fromEntries(Object.entries(this.sigmaRule).filter(([key]) => fields.includes(key)))
     },
