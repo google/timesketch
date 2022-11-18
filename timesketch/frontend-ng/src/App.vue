@@ -49,7 +49,7 @@ limitations under the License.
           Share
         </v-btn>
         <v-avatar color="grey lighten-1" size="25" class="ml-3">
-          <span class="white--text">{{ currentUser.charAt(0).toUpperCase() }}</span>
+          <span class="white--text">{{ currentUser | capitalize }}</span>
         </v-avatar>
         <v-menu v-if="!isRootPage" offset-y>
           <template v-slot:activator="{ on, attrs }">
