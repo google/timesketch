@@ -281,6 +281,11 @@ class Event(object):
         change = EVENT_CHANGE("ADD", "attribute", attributes)
         self._update_change(change)
 
+    def add_rich_attribute(self, attribute, analyzer_name):
+        serialized = attribute.serialize(source=f'analyzer:{analyzer_name}')
+        change = EVENT_CHANGE('ADD', 'attribute', serialized)
+        self._update_change(change)
+
     def add_label(self, label, toggle=False):
         """Add label to the Event.
 

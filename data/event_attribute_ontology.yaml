@@ -1,0 +1,21 @@
+# If you change this file to add an attribute type
+# please add the corresponding Python class to attributes.py.
+
+ip_address: string
+hostname: string
+url: string
+email_addres: string
+
+browser_search:
+  search_string: string
+  search_engine_name: string
+  search_engine_hostname: hostname
+
+geoip:
+  ip_address_latitude: float
+  ip_address_longitude: float
+
+feature_extraction:
+  email_address: email_address
+  found_account: string
+  url: url

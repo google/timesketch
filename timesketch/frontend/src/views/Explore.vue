@@ -477,6 +477,7 @@ limitations under the License.
               :display-options="displayOptions"
               @addChip="addChip($event)"
               @addLabel="updateLabelList($event)"
+              @setQueryAndFilter="setQueryAndFilter($event)"
               @searchContext="searchContext($event)"
             >
             </ts-sketch-explore-event-list>
