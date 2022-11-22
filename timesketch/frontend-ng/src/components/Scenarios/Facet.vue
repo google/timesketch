@@ -15,7 +15,6 @@ limitations under the License.
 -->
 <template>
   <div>
-    <v-divider></v-divider>
     <v-row
       no-gutters
       class="pa-3 pl-1"

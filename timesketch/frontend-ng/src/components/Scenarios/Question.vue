@@ -17,8 +17,10 @@ limitations under the License.
   <div>
     <v-row no-gutters class="pa-3" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
       <div @click="expanded = !expanded" style="cursor: pointer; font-size: 0.9em" class="ml-2">
+        <!--
         <v-icon v-if="!expanded">mdi-chevron-right</v-icon>
         <v-icon v-else>mdi-chevron-down</v-icon>
+        -->
         <span v-if="expanded">
           <strong>{{ question.display_name }}</strong>
         </span>

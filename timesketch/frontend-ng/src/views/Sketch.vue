@@ -142,13 +142,13 @@ limitations under the License.
         <!-- Reusable dialog for adding a scenario -->
         <ts-add-scenario-dialog :dialog.sync="dialog" @close-dialog="dialog = false" />
 
+        <v-subheader>DFIQ scenarios</v-subheader>
         <div v-if="!scenarios && scenarioTemplates.length">
           <div class="pa-4" flat :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
             <span @click="addScenarioDialog" style="cursor: pointer"
               ><v-icon left>mdi-plus</v-icon> Add Investigation Scenario</span
             >
           </div>
-          <v-divider></v-divider>
         </div>
 
         <ts-scenario v-for="scenario in scenarios" :key="scenario.id" :scenario="scenario">
@@ -183,6 +183,8 @@ limitations under the License.
             </v-card>
           </v-menu>
         </ts-scenario>
+
+        <v-subheader>Explore</v-subheader>
         <ts-saved-searches v-if="meta.views"></ts-saved-searches>
         <ts-data-types></ts-data-types>
         <ts-tags></ts-tags>
