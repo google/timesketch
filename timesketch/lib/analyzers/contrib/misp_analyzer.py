@@ -32,8 +32,8 @@ class MispAnalyzer(interface.BaseAnalyzer):
         super().__init__(index_name, sketch_id, timeline_id=timeline_id)
         self.misp_url = kwargs.get("misp_url")
         self.misp_api_key = kwargs.get("misp_api_key")
-        self.cp = 0
-        self.request_list = list()
+        self.total_event_counter = 0
+        self.request_set = set()
 
     @staticmethod
     def get_kwargs():
@@ -53,7 +53,7 @@ class MispAnalyzer(interface.BaseAnalyzer):
         matcher_kwargs = [{"misp_url": misp_url, "misp_api_key": misp_api_key}]
         return matcher_kwargs
 
-    def get_attr(self, event, attr):
+    def get_misp_attributes(self, event, attr):
         """Search event on MISP.
 
         Returns:
@@ -67,11 +67,16 @@ class MispAnalyzer(interface.BaseAnalyzer):
         )
 
         if results.status_code != 200:
+            logger.error("Error with MISP url.")
             return []
+        if "name" in results.json():
+            if "Authentication failed." in results.json()["name"]:
+                logger.error("Bad API key. Please change it.")
+                return []
         if not results.json()["response"]["Attribute"]:
             return []
 
-        self.cp += 1
+        self.total_event_counter += 1
 
         return results.json()["response"]["Attribute"]
 
@@ -80,11 +85,6 @@ class MispAnalyzer(interface.BaseAnalyzer):
 
         Add a comment to the event.
         """
-        self.sketch.add_view(
-            view_name="MISP known attribute",
-            analyzer_name=self.NAME,
-            query_string=('tag:"MISP"'),
-        )
 
         msg = "Event that match files:   "
         for misp_attr in result:
@@ -100,6 +100,7 @@ class MispAnalyzer(interface.BaseAnalyzer):
     def query_misp(self, query, attr, timesketch_attr):
         """Get event from timesketch, request MISP and mark event."""
         events = self.event_stream(query_string=query, return_fields=[timesketch_attr])
+        create_a_view = False
         for event in events:
             loc = event.source.get(timesketch_attr)
             if attr == "filename":
@@ -107,12 +108,21 @@ class MispAnalyzer(interface.BaseAnalyzer):
                 if not loc:
                     _, loc = ntpath.split(event.source.get(timesketch_attr))
 
-            if not loc in self.request_list:
-                result = self.get_attr(loc, attr)
+            if not loc in self.request_set:
+                result = self.get_misp_attributes(loc, attr)
                 if result:
+                    create_a_view = True
                     self.mark_event(event, result, attr)
+                self.request_set.add(loc)
+            else:
+                self.mark_event(event, result, attr)
 
-            self.request_list.append(loc)
+        if create_a_view:
+            self.sketch.add_view(
+                view_name="MISP known attribute",
+                analyzer_name=self.NAME,
+                query_string=('tag:"MISP"'),
+            )
 
     def run(self):
         """Entry point for the analyzer.
@@ -135,7 +145,7 @@ class MispAnalyzer(interface.BaseAnalyzer):
         query = "filename:*"
         self.query_misp(query, "filename", "filename")
 
-        return f"MISP Match: {self.cp}"
+        return f"MISP Match: {self.total_event_counter}"
 
 
 manager.AnalysisManager.register_analyzer(MispAnalyzer)
