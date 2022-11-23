@@ -34,6 +34,7 @@ class MispAnalyzer(interface.BaseAnalyzer):
         self.misp_api_key = kwargs.get("misp_api_key")
         self.total_event_counter = 0
         self.request_set = set()
+        self.result_dict = dict()
 
     @staticmethod
     def get_kwargs():
@@ -53,37 +54,49 @@ class MispAnalyzer(interface.BaseAnalyzer):
         matcher_kwargs = [{"misp_url": misp_url, "misp_api_key": misp_api_key}]
         return matcher_kwargs
 
-    def get_misp_attributes(self, event, attr):
+    def get_misp_attributes(self, value, attr):
         """Search event on MISP.
+
+        Args:
+            value:  Can be a valur for: sha1 - sha256 - md5 - filename.
+            attr:  type of the value.
 
         Returns:
             List of matching MISP attibutes.
         """
         results = requests.post(
             f"{self.misp_url}/attributes/restSearch/",
-            data={"returnFormat": "json", "value": event, "type": attr},
+            data={"returnFormat": "json", "value": value, "type": attr},
             headers={"Authorization": self.misp_api_key},
             verify=False,
         )
 
         if results.status_code != 200:
-            logger.error("Error with MISP url.")
+            msg_error = "Error with MISP query: Status code"
+            logger.error("{} {}".format(msg_error, results.status_code))
             return []
-        if "name" in results.json():
-            if "Authentication failed." in results.json()["name"]:
+        result_loc = results.json()
+        if "name" in result_loc:
+            if "Authentication failed." in result_loc["name"]:
                 logger.error("Bad API key. Please change it.")
                 return []
-        if not results.json()["response"]["Attribute"]:
+        if not result_loc["response"]["Attribute"]:
             return []
 
         self.total_event_counter += 1
 
-        return results.json()["response"]["Attribute"]
+        return result_loc["response"]["Attribute"]
 
     def mark_event(self, event, result, attr):
         """Anotate an event with data from MISP result.
 
         Add a comment to the event.
+
+        Args:
+            event:  The OpenSearch event object that contains type of value we search
+                    for and needs to be tagged or to add an attribute.
+            result:  Dictionnary with results from MISP.
+            attr:  type of the current value.
         """
 
         msg = "Event that match files:   "
@@ -98,7 +111,13 @@ class MispAnalyzer(interface.BaseAnalyzer):
         event.commit()
 
     def query_misp(self, query, attr, timesketch_attr):
-        """Get event from timesketch, request MISP and mark event."""
+        """Get event from timesketch, request MISP and mark event.
+
+        Args:
+            query:  Search for all events that contains 'timesketch_attr' value.
+            attr:  type of the current value.
+            timesketch_attr:  type of the current value in timesketch format.
+        """
         events = self.event_stream(query_string=query, return_fields=[timesketch_attr])
         create_a_view = False
         for event in events:
@@ -113,9 +132,12 @@ class MispAnalyzer(interface.BaseAnalyzer):
                 if result:
                     create_a_view = True
                     self.mark_event(event, result, attr)
+                    self.result_dict[f"{attr}:{loc}"] = result
+                else:
+                    self.result_dict[f"{attr}:{loc}"] = False
                 self.request_set.add(loc)
-            else:
-                self.mark_event(event, result, attr)
+            elif self.result_dict[f"{attr}:{loc}"]:
+                self.mark_event(event, self.result_dict[f"{attr}:{loc}"], attr)
 
         if create_a_view:
             self.sketch.add_view(

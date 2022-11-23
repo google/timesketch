@@ -32,6 +32,7 @@ class HashlookupAnalyzer(interface.BaseAnalyzer):
         self.hashlookup_url = kwargs.get("hashlookup_url")
         self.total_event_counter = 0
         self.request_set = set()
+        self.result_dict = dict()
 
     @staticmethod
     def get_kwargs():
@@ -53,25 +54,35 @@ class HashlookupAnalyzer(interface.BaseAnalyzer):
     def get_hash_info(self, hash_value):
         """Search event on Hashlookup.
 
+        Args:
+            hash_value:  hash value that will be check
+                         if it's a known one on hashlookup.
+
         Returns:
-            JSON of Hashlookup's results
+            JSON of Hashlookup's results.
         """
         results = requests.get(f"{self.hashlookup_url}sha256/{hash_value}")
 
-        if not "message" in results.json() and results.status_code != 200:
+        result_loc = results.json()
+        if not "message" in result_loc and results.status_code != 200:
             logger.error("Error with Hashlookup url")
             return []
-        if "message" in results.json():
+        if "message" in result_loc:
             return []
 
         self.total_event_counter += 1
 
-        return results.json()
+        return result_loc
 
     def mark_event(self, event, hash_value):
-        """Annotate an event with data from Hashlookup
+        """Annotate an event with data from Hashlookup.
 
         Tags with validate emoji, adds a comment to the event.
+
+        Args:
+            event:  The OpenSearch event object that contains this hash and needs
+                    to be tagged or to add an attribute.
+            hash_value:  A string of a sha256 hash value.
         """
 
         event.add_comment(f"{self.hashlookup_url}sha256/{hash_value}")
@@ -81,7 +92,12 @@ class HashlookupAnalyzer(interface.BaseAnalyzer):
         event.commit()
 
     def query_hashlookup(self, query, return_fields):
-        """Get event from timesketch, request Hashlookup and mark event."""
+        """Get event from timesketch, request Hashlookup and mark event.
+
+        Args:
+            query:  Search for all events that contains sha256 value.
+            return_fields:  Fields return with a matching event.
+        """
 
         events = self.event_stream(query_string=query, return_fields=return_fields)
         create_a_view = False
@@ -91,20 +107,12 @@ class HashlookupAnalyzer(interface.BaseAnalyzer):
                 if key in event.source.keys():
                     hash_value = event.source.get(key)
                     break
-            if not hash_value:
-                error_hash_counter += 1
-                logger.warning(
-                    "No matching field with a hash found in this event! "
-                    "-- Event Source: %s",
-                    str(event.source),
-                )
-                continue
 
             if len(hash_value) != 64:
                 logger.warning(
                     "The extracted hash does not match the required "
-                    "lenght (64) of a SHA256 hash. Skipping this "
-                    "event! Hash: %s - Lenght: %d",
+                    "length (64) of a SHA256 hash. Skipping this "
+                    "event! Hash: %s - Length: %d",
                     hash_value,
                     len(hash_value),
                 )
@@ -116,8 +124,11 @@ class HashlookupAnalyzer(interface.BaseAnalyzer):
                 if result:
                     create_a_view = True
                     self.mark_event(event, hash_value)
+                    self.result_dict[hash_value] = True
+                else:
+                    self.result_dict[hash_value] = False
                 self.request_set.add(hash_value)
-            else:
+            elif self.result_dict[hash_value]:
                 self.mark_event(event, hash_value)
 
         if create_a_view:
