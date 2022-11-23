@@ -16,7 +16,7 @@ limitations under the License.
 <template>
   <div>
     <v-row no-gutters class="pa-3" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
-      <div @click="expanded = !expanded" style="cursor: pointer; font-size: 0.9em" class="ml-2">
+      <div @click="expanded = !expanded" style="cursor: pointer; font-size: 0.9em" class="ml-1">
         <!--
         <v-icon v-if="!expanded">mdi-chevron-right</v-icon>
         <v-icon v-else>mdi-chevron-down</v-icon>
@@ -46,16 +46,12 @@ limitations under the License.
           </div>
         </div>
 
-        <v-card v-if="question.search_templates.length" flat outlined class="ma-2 mx-4 mb-6">
-          <v-system-bar dense flat> Get started </v-system-bar>
-          <div class="pa-3">
-            <ts-search-template
-              v-for="searchtemplate in question.search_templates"
-              :key="searchtemplate.id"
-              :searchtemplate="searchtemplate"
-            ></ts-search-template>
+        <div v-if="question.search_templates.length" flat class="ma-2 mx-4 mb-6">
+          <strong><small>Query suggestions</small></strong>
+          <div v-for="searchtemplate in question.search_templates" :key="searchtemplate.id" class="pa-1 mt-1">
+            <ts-search-template :searchtemplate="searchtemplate"></ts-search-template>
           </div>
-        </v-card>
+        </div>
 
         <div style="font-size: 0.9em" class="pa-4 pt-0">
           <v-textarea

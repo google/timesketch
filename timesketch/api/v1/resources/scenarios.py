@@ -181,3 +181,37 @@ class ScenarioResource(resources.ResourceMixin, Resource):
             abort(HTTP_STATUS_CODE_FORBIDDEN, "Scenario is not part of this sketch.")
 
         return self.to_json(scenario)
+
+    @login_required
+    def post(self, sketch_id, scenario_id):
+        """Handles POST request to the resource.
+
+        This resource creates a new scenario for a sketch based on a template.
+        Templates are defined in SCENARIOS_PATH.
+
+        Returns:
+            A JSON representation of the scenario.
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        scenario = Scenario.query.get(scenario_id)
+
+        if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
+        if not sketch.has_permission(current_user, "write"):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "User does not have write access controls on sketch",
+            )
+
+        if not scenario.sketch.id == sketch.id:
+            abort(HTTP_STATUS_CODE_FORBIDDEN, "Scenario is not part of this sketch.")
+
+        form = request.json
+        if not form:
+            form = request.data
+
+        scenario.display_name = form.get("scenario_name")
+        db_session.add(scenario)
+        db_session.commit()
+
+        return self.to_json(scenario)

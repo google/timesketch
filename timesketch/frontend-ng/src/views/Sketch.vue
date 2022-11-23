@@ -17,13 +17,13 @@ limitations under the License.
   <div v-if="sketch">
     <!-- Top horizontal toolbar -->
     <v-toolbar flat color="transparent">
-      <v-avatar v-if="!showLeftPanel" class="mt-2 ml-n1">
+      <v-avatar v-show="!showLeftPanel" class="mt-2 ml-n1">
         <router-link to="/">
           <v-img src="/dist/timesketch-color.png" max-height="25" max-width="25" contain></v-img>
         </router-link>
       </v-avatar>
 
-      <v-btn icon v-if="!showLeftPanel" @click="toggleLeftPanel" class="ml-n1">
+      <v-btn icon v-show="!showLeftPanel" @click="toggleLeftPanel" class="ml-n1">
         <v-icon>mdi-menu</v-icon>
       </v-btn>
 
@@ -85,7 +85,7 @@ limitations under the License.
 
     <!-- Left panel -->
     <v-navigation-drawer app permanent :width="navigationDrawer.width" hide-overlay ref="drawer">
-      <div v-if="showLeftPanel">
+      <div v-show="showLeftPanel">
         <v-toolbar flat>
           <v-avatar class="mt-2 ml-n3">
             <router-link to="/">
@@ -119,7 +119,7 @@ limitations under the License.
                   <span v-else>Restricted</span>
                 </v-list-item-title>
                 <v-list-item-subtitle>
-                  <small v-if="meta.permissions">Visibly to all users on this server</small>
+                  <small v-if="meta.permissions">Visible to all users on this server</small>
                   <small v-else>Only people with access can open</small>
                 </v-list-item-subtitle>
               </v-list-item-content>
@@ -142,54 +142,31 @@ limitations under the License.
         <!-- Reusable dialog for adding a scenario -->
         <ts-add-scenario-dialog :dialog.sync="dialog" @close-dialog="dialog = false" />
 
-        <v-subheader>DFIQ scenarios</v-subheader>
-        <div v-if="!scenarios && scenarioTemplates.length">
-          <div class="pa-4" flat :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
-            <span @click="addScenarioDialog" style="cursor: pointer"
-              ><v-icon left>mdi-plus</v-icon> Add Investigation Scenario</span
-            >
-          </div>
-        </div>
+        <v-tabs v-model="leftPanelTab" grow>
+          <v-tab v-for="item in leftPanelTabItems" :key="item"> {{ item }} </v-tab>
+        </v-tabs>
+        <v-divider class="mb-3"></v-divider>
 
-        <ts-scenario v-for="scenario in scenarios" :key="scenario.id" :scenario="scenario">
-          <v-menu offset-y :close-on-content-click="true">
-            <template v-slot:activator="{ on, attrs }">
-              <v-btn small icon v-bind="attrs" v-on="on">
-                <v-icon>mdi-dots-vertical</v-icon>
-              </v-btn>
-            </template>
-            <v-card>
-              <v-list>
-                <v-list-item-group color="primary">
-                  <v-list-item @click="addScenarioDialog">
-                    <v-list-item-icon>
-                      <v-icon>mdi-plus</v-icon>
-                    </v-list-item-icon>
-                    <v-list-item-content>
-                      <v-list-item-title>Add another scenario</v-list-item-title>
-                    </v-list-item-content>
-                  </v-list-item>
+        <v-tabs-items v-model="leftPanelTab">
+          <v-tab-item>
+            <div v-if="!scenarios && scenarioTemplates.length">
+              <div class="pa-4" flat :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
+                <span @click="addScenarioDialog" style="cursor: pointer"
+                  ><v-icon left>mdi-plus</v-icon> Add Investigation Scenario</span
+                >
+              </div>
+            </div>
 
-                  <v-list-item>
-                    <v-list-item-icon>
-                      <v-icon>mdi-pencil</v-icon>
-                    </v-list-item-icon>
-                    <v-list-item-content>
-                      <v-list-item-title>Rename</v-list-item-title>
-                    </v-list-item-content>
-                  </v-list-item>
-                </v-list-item-group>
-              </v-list>
-            </v-card>
-          </v-menu>
-        </ts-scenario>
-
-        <v-subheader>Explore</v-subheader>
-        <ts-saved-searches v-if="meta.views"></ts-saved-searches>
-        <ts-data-types></ts-data-types>
-        <ts-tags></ts-tags>
-        <ts-search-templates></ts-search-templates>
-        <ts-sigma-rules></ts-sigma-rules>
+            <ts-scenario v-for="scenario in scenarios" :key="scenario.id" :scenario="scenario"> </ts-scenario>
+          </v-tab-item>
+          <v-tab-item>
+            <ts-saved-searches v-if="meta.views"></ts-saved-searches>
+            <ts-data-types></ts-data-types>
+            <ts-tags></ts-tags>
+            <ts-search-templates></ts-search-templates>
+            <ts-sigma-rules></ts-sigma-rules>
+          </v-tab-item>
+        </v-tabs-items>
       </div>
     </v-navigation-drawer>
 
@@ -221,11 +198,15 @@ export default {
     return {
       showSketchMetadata: false,
       navigationDrawer: {
-        width: 400,
+        width: 430,
       },
       selectedScenario: null,
       dialog: false,
       showLeftPanel: true,
+      leftPanelTab: 0,
+      leftPanelTabItems: ['DFIQ', 'Explore'],
+      renameScenarioDialog: false,
+      newScenarioName: '',
     }
   },
   mounted: function () {
@@ -309,10 +290,9 @@ export default {
       )
     },
     toggleLeftPanel() {
-      console.log()
       this.showLeftPanel = !this.showLeftPanel
       if (this.showLeftPanel) {
-        this.navigationDrawer.width = 400
+        this.navigationDrawer.width = 430
       } else {
         this.navigationDrawer.width = 0
       }

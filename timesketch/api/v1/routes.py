@@ -76,6 +76,7 @@ from .resources.intelligence import TagMetadataResource
 
 from .resources.scenarios import ScenarioTemplateListResource
 from .resources.scenarios import ScenarioListResource
+from .resources.scenarios import ScenarioResource
 
 
 # Disable error for long line. Readability is more important than line
@@ -162,5 +163,6 @@ API_ROUTES = [
     (DataFinderResource, "/sketches/<int:sketch_id>/data/find/"),
     (ScenarioTemplateListResource, "/scenarios/"),
     (ScenarioListResource, "/sketches/<int:sketch_id>/scenarios/"),
+    (ScenarioResource, "/sketches/<int:sketch_id>/scenarios/<int:scenario_id>/"),
     (TagMetadataResource, "/intelligence/tagmetadata/"),
 ]

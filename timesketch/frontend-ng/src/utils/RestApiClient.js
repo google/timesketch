@@ -377,4 +377,9 @@ export default {
     let formData = { scenario_name: scenarioName }
     return RestApiClient.post('/sketches/' + sketchId + '/scenarios/', formData)
   },
+  renameScenario(sketchId, scenarioId, scenarioName) {
+    let formData = { scenario_name: scenarioName }
+    return RestApiClient.post('/sketches/' + sketchId + '/scenarios/' + scenarioId + '/', formData)
+  },
+
 }

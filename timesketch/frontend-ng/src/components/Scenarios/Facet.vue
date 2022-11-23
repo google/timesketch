@@ -22,13 +22,13 @@ limitations under the License.
       @click="toggleFacet()"
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
-      <v-col cols="1">
-        <v-icon class="ml-2" v-if="!expanded">mdi-chevron-right</v-icon>
-        <v-icon class="ml-2" v-else>mdi-chevron-down</v-icon>
-      </v-col>
-      <v-col cols="10">
-        <span style="font-size: 0.9em">{{ facet.display_name }}</span>
-      </v-col>
+      <v-icon class="ml-2" v-if="!expanded">mdi-chevron-right</v-icon>
+      <v-icon class="ml-2" v-else>mdi-chevron-down</v-icon>
+
+      <span style="font-size: 0.9em">{{ facet.display_name }}</span>
+
+      <v-spacer></v-spacer>
+      <v-chip x-small>0 / {{ facet.questions.length }}</v-chip>
     </v-row>
 
     <v-expand-transition>
