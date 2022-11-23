@@ -14,9 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-chip-group>
+  <span>
     <ts-timeline-chip
-      v-for="timeline in activeTimelines"
+      v-for="timeline in allTimelines"
       :key="timeline.id + timeline.name"
       :timeline="timeline"
       :is-selected="isSelected(timeline)"
@@ -26,7 +26,29 @@ limitations under the License.
       @save="save"
       @toggle="toggleTimeline"
     ></ts-timeline-chip>
-  </v-chip-group>
+    <v-btn
+      small
+      outlined
+      rounded
+      color="primary"
+      v-if="sketch.timelines.length > 20"
+      @click="showAll = !showAll"
+      class="mt-n3 mr-5"
+    >
+      <span v-if="showAll"> show less </span>
+      <span v-else> {{ sketch.timelines.length - 20 }} more.. </span>
+    </v-btn>
+    <span v-if="sketch.timelines.length > 5" style="position: relative; top: -5px">
+      <v-btn-toggle dense rounded>
+        <v-btn small outlined rounded color="primary" v-if="sketch.timelines.length > 5" @click="enableAllTimelines()">
+          Select all
+        </v-btn>
+        <v-btn small outlined rounded color="primary" v-if="sketch.timelines.length > 5" @click="disableAllTimelines()">
+          Unselect all
+        </v-btn>
+      </v-btn-toggle>
+    </span>
+  </span>
 </template>
 
 <script>
@@ -40,6 +62,17 @@ export default {
   computed: {
     sketch() {
       return this.$store.state.sketch
+    },
+    allTimelines() {
+      // Sort alphabetically based on timeline name.
+      let timelines = [...this.sketch.timelines]
+      timelines = timelines.sort(function (a, b) {
+        return a.name.localeCompare(b.name)
+      })
+      if (!this.showAll) {
+        timelines = timelines.slice(0, 20)
+      }
+      return timelines
     },
     activeTimelines() {
       // Sort alphabetically based on timeline name.
@@ -57,11 +90,12 @@ export default {
       isDarkTheme: false,
       isLoading: false,
       selectedTimelines: [],
+      showAll: false,
     }
   },
   methods: {
     isSelected(timeline) {
-      return this.selectedTimelines.includes(timeline)
+      return this.selectedTimelines.map((x) => x.id).includes(timeline.id)
     },
     getCount(timeline) {
       let count = 0
@@ -124,7 +158,7 @@ export default {
     },
     toggleTimeline(timeline) {
       let newArray = this.selectedTimelines.slice()
-      let timelineIdx = newArray.indexOf(timeline)
+      let timelineIdx = newArray.map((x) => x.id).indexOf(timeline.id)
       if (timelineIdx === -1) {
         newArray.push(timeline)
       } else {
@@ -160,7 +194,7 @@ export default {
   },
   created() {
     EventBus.$on('isDarkTheme', this.toggleTheme)
-    EventBus.$on('clearSearch', this.enableAllTimelines)
+    this.enableAllTimelines()
 
     if (this.currentQueryFilter.indices.includes('_all')) {
       this.selectedTimelines = this.activeTimelines

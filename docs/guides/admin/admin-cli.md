@@ -246,6 +246,60 @@ Command:
 tsctl similarity_score
 ```
 
+### Sigma
+
+#### List Sigma rules
+
+Lists all Sigma rules installed on a system
+
+```shell
+tsctl list-sigma-rules
+```
+
+#### Add Sigma rules in a folder
+
+Will add all Sigma rules in a folder and its subfolders to the databse.
+
+```shell
+tsctl import-sigma-rules sigma/rules/cloud/gcp/
+Importing: Google Cloud Kubernetes RoleBinding
+Importing: Google Cloud Storage Buckets Modified or Deleted
+Importing: Google Cloud VPN Tunnel Modified or Deleted
+Importing: Google Cloud Re-identifies Sensitive Information
+...
+```
+
+#### Export Sigma rules
+
+Will export all Sigma rules to a folder.
+
+```shell
+tsctl export-sigma-rules ./test
+13 Sigma rules exported
+```
+
+#### Remove a Sigma rule
+
+This will remove a single Sigma rule from the databse
+
+```shell
+tsctl remove-sigma-rule 13f81a90-a69c-4fab-8f07-b5bb55416a9f
+Rule 13f81a90-a69c-4fab-8f07-b5bb55416a9f deleted
+```
+
+#### Drop all Sigma rules
+
+Will drop all Sigma rules from database.
+
+Command:
+
+```shell
+tsctl remove-all-sigma-rules
+Do you really want to drop all the Sigma rules? [y/N]: y
+Are you REALLLY sure you want to DROP ALL the Sigma rules? [y/N]: y
+All rules deleted
+```
+
 ### Upgrade DB After Schema Change
 
 After changing the schema for the database a revision file needs to be generated.

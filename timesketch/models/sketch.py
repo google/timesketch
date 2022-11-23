@@ -16,6 +16,8 @@
 from __future__ import unicode_literals
 
 import json
+import logging
+from uuid import uuid4
 
 from flask import current_app
 from flask import url_for
@@ -30,7 +32,6 @@ from sqlalchemy import UnicodeText
 from sqlalchemy import Boolean
 from sqlalchemy import TIMESTAMP
 from sqlalchemy.orm import relationship
-
 from sqlalchemy.orm import backref
 from sqlalchemy.orm.collections import attribute_mapped_collection
 
@@ -41,6 +42,10 @@ from timesketch.models.annotations import CommentMixin
 from timesketch.models.annotations import StatusMixin
 from timesketch.models.annotations import GenericAttributeMixin
 from timesketch.lib.utils import random_color
+from timesketch.models import db_session
+
+
+logger = logging.getLogger("timesketch.sketch")
 
 
 class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, BaseModel):
@@ -207,7 +212,15 @@ class Timeline(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     analysis = relationship("Analysis", backref="timeline", lazy="select")
     datasources = relationship("DataSource", backref="timeline", lazy="select")
 
-    def __init__(self, name, user, sketch, searchindex, color=None, description=None):
+    def __init__(
+        self,
+        name,
+        user,
+        sketch,
+        searchindex,
+        color=None,
+        description=None,
+    ):
         """Initialize the Timeline object.
 
         Args:
@@ -266,6 +279,7 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, BaseModel)
     query_string = Column(UnicodeText())
     query_filter = Column(UnicodeText())
     query_dsl = Column(UnicodeText())
+    searchtemplate_json = Column(UnicodeText())
     user_id = Column(Integer, ForeignKey("user.id"))
     sketch_id = Column(Integer, ForeignKey("sketch.id"))
     searchtemplate_id = Column(Integer, ForeignKey("searchtemplate.id"))
@@ -282,6 +296,7 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, BaseModel)
         query_string=None,
         query_filter=None,
         query_dsl=None,
+        searchtemplate_json=None,
     ):
         """Initialize the View object.
 
@@ -294,6 +309,7 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, BaseModel)
             query_string: The query string
             query_filter: The filter to apply (JSON format as string)
             query_dsl: A query DSL document (JSON format as string)
+            searchtemplate_json: The search template used (JSON format as string)
         """
         super().__init__()
         self.name = name
@@ -304,6 +320,7 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, BaseModel)
         self.query_string = query_string
         self.query_filter = query_filter
         self.query_dsl = query_dsl
+        self.searchtemplate_json = searchtemplate_json
 
     def validate_filter(self, query_filter=None):
         """Validate the Query Filter.
@@ -355,35 +372,47 @@ class SearchTemplate(
     """Implements the Search Template model."""
 
     name = Column(Unicode(255))
+    short_name = Column(Unicode(255))
     description = Column(UnicodeText())
     query_string = Column(UnicodeText())
     query_filter = Column(UnicodeText())
     query_dsl = Column(UnicodeText())
+    template_uuid = Column(Unicode(255), unique=True)
+    template_json = Column(UnicodeText())
     user_id = Column(Integer, ForeignKey("user.id"))
     views = relationship("View", backref="searchtemplate", lazy="select")
 
     def __init__(
         self,
         name,
-        user,
+        user=None,
+        short_name=None,
         description=None,
         query_string=None,
         query_filter=None,
         query_dsl=None,
+        template_uuid=None,
+        template_json=None,
     ):
         """Initialize the Search Template object.
 
         Args:
-            name: The name of the timeline
+            name: The human readable name of the template
             user: A user (instance of timesketch.models.user.User)
+            short_name: The name of the template (snake case)
             description (str): Description of the search template
             query_string: The query string
             query_filter: The filter to apply (JSON format as string)
             query_dsl: A query DSL document (JSON format as string)
+            template_uuid: UUID of the template
+            template_json: Specification of the template (JSON format as string)
         """
         super().__init__()
         self.name = name
         self.user = user
+        if not short_name:
+            short_name = name.replace(" ", "_").lower()
+        self.short_name = short_name
         self.description = description
         self.query_string = query_string
         if not query_filter:
@@ -397,6 +426,10 @@ class SearchTemplate(
             query_filter = json.dumps(filter_template, ensure_ascii=False)
         self.query_filter = query_filter
         self.query_dsl = query_dsl
+        if not template_uuid:
+            template_uuid = str(uuid4())
+        self.template_uuid = template_uuid
+        self.template_json = template_json
 
 
 class Event(LabelMixin, StatusMixin, CommentMixin, BaseModel):
@@ -768,6 +801,7 @@ class DataSource(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     original_filename = Column(UnicodeText())
     data_label = Column(UnicodeText())
     error_message = Column(UnicodeText())
+    total_file_events = Column(BigInteger())
 
     def __init__(
         self,
@@ -780,7 +814,8 @@ class DataSource(LabelMixin, StatusMixin, CommentMixin, BaseModel):
         original_filename,
         data_label,
         error_message="",
-    ):
+        total_file_events=0,
+    ):  # pylint: disable=too-many-arguments
         """Initialize the DataSource object.
 
         Args:
@@ -805,6 +840,27 @@ class DataSource(LabelMixin, StatusMixin, CommentMixin, BaseModel):
         self.original_filename = original_filename
         self.data_label = data_label
         self.error_message = error_message
+        self.total_file_events = total_file_events
+
+    def set_total_file_events(self, total_file_events):
+        self.total_file_events = total_file_events
+        db_session.commit()
+
+    def set_error_message(self, error_message):
+        self.error_message = error_message
+        db_session.commit()
+
+    @property
+    def get_total_file_events(self):
+        return self.total_file_events
+
+    @property
+    def get_file_on_disk(self):
+        return self.file_on_disk
+
+    @property
+    def get_status(self):
+        return self.status[0].status
 
 
 # Association table for the many-to-many relationship between SearchHistory
@@ -953,7 +1009,7 @@ class FacetTimeFrame(BaseModel):
     """Implements the FacetTimeFrame model.
 
     A timeframe is used to set the scope for the facet. This information
-    is used when automatically generatae queries and other helper functions.
+    is used when automatically generate queries and other helper functions.
     """
 
     start_time = Column(TIMESTAMP(timezone=True))
@@ -1100,7 +1156,7 @@ class Facet(LabelMixin, StatusMixin, CommentMixin, GenericAttributeMixin, BaseMo
         self.description = description
 
 
-# Association tables for the many-to-many relationship for a Question.
+# Association tables for the many-to-many relationship for a question conclusion.
 questionconclusion_story_association_table = Table(
     "investigativequestionconclusion_story",
     BaseModel.metadata,
@@ -1189,6 +1245,30 @@ class InvestigativeQuestionConclusion(LabelMixin, StatusMixin, CommentMixin, Bas
         self.automated = automated
 
 
+# Association tables for the many-to-many relationships for a question.
+question_searchtemplate_association_table = Table(
+    "investigativequestion_searchtemplate",
+    BaseModel.metadata,
+    Column(
+        "investigativequestion_id",
+        Integer,
+        ForeignKey("investigativequestion.id"),
+    ),
+    Column("searchtemplate_id", Integer, ForeignKey("searchtemplate.id")),
+)
+
+question_sigmarule_association_table = Table(
+    "investigativequestion_sigmarule",
+    BaseModel.metadata,
+    Column(
+        "investigativequestion_id",
+        Integer,
+        ForeignKey("investigativequestion.id"),
+    ),
+    Column("sigmarule_id", Integer, ForeignKey("sigmarule.id")),
+)
+
+
 class InvestigativeQuestion(
     LabelMixin, StatusMixin, CommentMixin, GenericAttributeMixin, BaseModel
 ):
@@ -1203,6 +1283,12 @@ class InvestigativeQuestion(
     user_id = Column(Integer, ForeignKey("user.id"))
     spec_json = Column(UnicodeText())
     facet_id = Column(Integer, ForeignKey("facet.id"))
+    search_templates = relationship(
+        "SearchTemplate", secondary=question_searchtemplate_association_table
+    )
+    sigma_rules = relationship(
+        "SigmaRule", secondary=question_sigmarule_association_table
+    )
     conclusions = relationship(
         "InvestigativeQuestionConclusion",
         backref="investigativequestion",

@@ -36,6 +36,7 @@ from .resources.event import EventResource
 from .resources.event import EventAnnotationResource
 from .resources.event import EventCreateResource
 from .resources.event import EventTaggingResource
+from .resources.event import EventAddAttributeResource
 from .resources.event import CountEventsResource
 from .resources.event import MarkEventsWithTimelineIdentifier
 from .resources.sketch import SketchResource
@@ -45,6 +46,7 @@ from .resources.information import VersionResource
 from .resources.view import ViewResource
 from .resources.view import ViewListResource
 from .resources.searchtemplate import SearchTemplateResource
+from .resources.searchtemplate import SearchTemplateParseResource
 from .resources.searchtemplate import SearchTemplateListResource
 from .resources.upload import UploadFileResource
 from .resources.task import TaskResource
@@ -63,6 +65,9 @@ from .resources.user import LoggedInUserResource
 from .resources.sigma import SigmaResource
 from .resources.sigma import SigmaListResource
 from .resources.sigma import SigmaByTextResource
+from .resources.sigma import SigmaRuleResource
+from .resources.sigma import SigmaRuleListResource
+from .resources.sigma import SigmaRuleByTextResource
 from .resources.graph import GraphListResource
 from .resources.graph import GraphResource
 from .resources.graph import GraphPluginListResource
@@ -109,6 +114,7 @@ API_ROUTES = [
     (SearchHistoryResource, "/sketches/<int:sketch_id>/searchhistory/"),
     (SearchHistoryTreeResource, "/sketches/<int:sketch_id>/searchhistorytree/"),
     (EventResource, "/sketches/<int:sketch_id>/event/"),
+    (EventAddAttributeResource, "/sketches/<int:sketch_id>/event/attributes/"),
     (EventTaggingResource, "/sketches/<int:sketch_id>/event/tagging/"),
     (EventAnnotationResource, "/sketches/<int:sketch_id>/event/annotate/"),
     (EventCreateResource, "/sketches/<int:sketch_id>/event/create/"),
@@ -121,6 +127,7 @@ API_ROUTES = [
     (ViewResource, "/sketches/<int:sketch_id>/views/<int:view_id>/"),
     (SearchTemplateListResource, "/searchtemplate/"),
     (SearchTemplateResource, "/searchtemplate/<int:searchtemplate_id>/"),
+    (SearchTemplateParseResource, "/searchtemplate/<int:searchtemplate_id>/parse/"),
     (UploadFileResource, "/upload/"),
     (TaskResource, "/tasks/"),
     (StoryListResource, "/sketches/<int:sketch_id>/stories/"),
@@ -139,9 +146,12 @@ API_ROUTES = [
     (GroupListResource, "/groups/"),
     (CollaboratorResource, "/sketches/<int:sketch_id>/collaborators/"),
     (VersionResource, "/version/"),
-    (SigmaListResource, "/sigma/"),
-    (SigmaResource, "/sigma/rule/<string:rule_uuid>/"),
-    (SigmaByTextResource, "/sigma/text/"),
+    (SigmaListResource, "/sigma/"),  # TODO(jaegeral): deprecate this
+    (SigmaResource, "/sigma/rule/<string:rule_uuid>/"),  # TODO: deprecate
+    (SigmaByTextResource, "/sigma/text/"),  # TODO(jaegeral): deprecate this
+    (SigmaRuleListResource, "/sigmarule/"),
+    (SigmaRuleResource, "/sigmarule/<string:rule_uuid>/"),
+    (SigmaRuleByTextResource, "/sigmarule/text/"),
     (LoggedInUserResource, "/users/me/"),
     (GraphListResource, "/sketches/<int:sketch_id>/graphs/"),
     (GraphResource, "/sketches/<int:sketch_id>/graphs/<int:graph_id>/"),

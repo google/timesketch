@@ -451,7 +451,7 @@ aggregation.save()
 To get a Sigma rule that is stored on the server via uuid of the rule:
 
 ```python
-rule = ts.get_sigma_rule("5266a592-b793-11ea-b3de-0242ac130004")
+rule = ts.get_sigmarule("5266a592-b793-11ea-b3de-0242ac130004")
 ```
 
 Returns an object, where you can do something like that:
@@ -481,7 +481,7 @@ To get this:
   },
   'falsepositives': ['Unknown'],
   'level': 'high',
-  'es_query': '(data_type:("shell\\:zsh\\:history" OR "bash\\:history\\:command" OR "apt\\:history\\:line" OR "selinux\\:line") AND "*apt\\-get\\ install\\ zmap*")', 'file_name': 'lnx_susp_zmap'
+  'search_query': '(data_type:("shell\\:zsh\\:history" OR "bash\\:history\\:command" OR "apt\\:history\\:line" OR "selinux\\:line") AND "*apt\\-get\\ install\\ zmap*")', 'file_name': 'lnx_susp_zmap'
 }
 ```
 
@@ -564,6 +564,30 @@ Both will give you something like:
  'tags_applied': 1,
  'total_number_of_events_sent_by_client': 1}
 ```
+
+### Add Attributes to Events
+
+To add new attributes to event an event:
+
+```python
+# event_id and searchindex_id can be found by searching for the target event.
+
+event = [
+  {
+    '_id': event_id,
+    '_index': searchindex_id,
+    '_type': '_doc',
+    'attributes': [
+      {
+        'attr_name': 'an_attribute_name',
+        'attr_value': 'A new attribute value'
+      }
+    ]
+  }
+]
+sketch.add_event_attributes(events)
+```
+
 
 ## Other Options
 

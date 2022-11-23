@@ -26,7 +26,8 @@
 #
 # Each question consists of the following fields:
 #
-#                       -- metadata --
+#                           -- metadata --
+#
 #       display_name        Simple string that contains the display name that
 #                           be used in an UI to describe the question.
 #
@@ -34,7 +35,8 @@
 #                           question attempts to answer, whether it will
 #                           require further manual analysis, etc.
 #
-#                       -- data requirements --
+#                           -- data requirements --
+#
 #       data_sources        A list of data sources (as defined in the
 #                           data_finder.yaml configuration file) that
 #                           either need to be present, should not be
@@ -50,7 +52,9 @@
 #                           that is needed in order for the question to be
 #                           properly asked.
 #
-#                       -- context/enrichment --
+#
+#                           -- context/enrichment --
+#
 #       analyzers           A list of analyzers that will be run on the
 #                           dataset.
 #
@@ -60,7 +64,12 @@
 #       search_templates    A list of search templates that will assist the
 #                           analyst with answering the question.
 #
-#                       -- answers --
+#       sigma_rules         A list of sigma_rules that will enrich the sketch
+#                           with information to help the analyst answering the question.
+#
+#
+#                           -- answers --
+#
 #       answer_simple       If the answer can be simply derived from a search
 #                           in the dataset, an answer source can be defined.
 #                           It contains two section, a "must" or "must_not",

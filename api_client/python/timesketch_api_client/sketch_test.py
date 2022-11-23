@@ -50,8 +50,35 @@ class SketchTest(unittest.TestCase):
 
     def test_get_event(self):
         """Test to get event data."""
-        event_data = self.sketch.get_event(
-            event_id="test_event", index_id="test_index")
+        event_data = self.sketch.get_event(event_id="test_event", index_id="test_index")
         self.assertIsInstance(event_data, dict)
-        self.assertTrue('meta' in event_data)
-        self.assertTrue('comments' in event_data['meta'])
+        self.assertTrue("meta" in event_data)
+        self.assertTrue("comments" in event_data["meta"])
+
+    def test_add_event_attributes(self):
+        """Test to add event attributes."""
+        attrs = [{"attr_name": "foo", "attr_value": "bar"}]
+        events = [
+            {"_id": "1", "_type": "_doc", "_index": "1", "attributes": attrs},
+            {"_id": "2", "_type": "_doc", "_index": "1", "attributes": attrs},
+        ]
+
+        expected_response = {
+            "meta": {
+                "attributes_added": 2,
+                "chunks_per_index": {"1": 1},
+                "error_count": 0,
+                "errors": [],
+                "events_modified": 2,
+            },
+            "objects": [],
+        }
+
+        response = self.sketch.add_event_attributes(events)
+        self.assertEqual(response, expected_response)
+
+    def test_add_event_attributes_invalid(self):
+        """Confirm an exception is raised when events isn't a list."""
+        events = {"_id": "1", "_type": "_doc", "index": "1", "attributes": []}
+        with self.assertRaisesRegex(ValueError, "Events need to be a list."):
+            self.sketch.add_event_attributes(events)

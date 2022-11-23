@@ -17,7 +17,7 @@ import codecs
 import logging
 import os
 import uuid
-import json  # need to parse stringify json object into python dictionary
+import json
 
 from flask import jsonify
 from flask import request
@@ -38,6 +38,7 @@ from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import DataSource
+
 
 logger = logging.getLogger("timesketch.api_upload")
 
@@ -229,10 +230,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 "Unable to get or create a new Timeline object.",
             )
 
-        # If the timeline already existed and has associated data sources
-        # then we don't want to set the status to processing.
-        if not timeline.datasources:
-            timeline.set_status("processing")
+        timeline.set_status("processing")
 
         sketch.timelines.append(timeline)
 
@@ -256,7 +254,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             original_filename=original_filename,
             data_label=data_label,
         )
-
+        datasource.set_status("queueing")
         timeline.datasources.append(datasource)
         db_session.add(datasource)
         db_session.add(timeline)
@@ -285,11 +283,10 @@ class UploadFileResource(resources.ResourceMixin, Resource):
 
         if meta is None:
             meta = {}
-
         meta["task_id"] = task_id
         return self.to_json(timeline, status_code=HTTP_STATUS_CODE_CREATED, meta=meta)
 
-    def _upload_events(self, events, form, sketch, index_name):
+    def _upload_events(self, events, form, sketch, index_name, headers_mapping=None):
         """Upload a file like object.
 
         Args:
@@ -315,6 +312,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             form=form,
             data_label=data_label,
             enable_stream=form.get("enable_stream", False),
+            headers_mapping=headers_mapping,
         )
 
     def _upload_file(
@@ -475,6 +473,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
 
         # headers mapping: map between mandatory headers and new ones
         headers_mapping = json.loads(form.get("headersMapping", "{}")) or None
+
         delimiter = form.get("delimiter", ",")
 
         sketch_id = form.get("sketch_id", None)
@@ -529,5 +528,9 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             )
 
         return self._upload_events(
-            events=events, form=form, sketch=sketch, index_name=index_name
+            events=events,
+            form=form,
+            sketch=sketch,
+            index_name=index_name,
+            headers_mapping=headers_mapping,
         )

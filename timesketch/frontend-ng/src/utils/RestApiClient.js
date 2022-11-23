@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 import axios from 'axios'
-import { SnackbarProgrammatic as Snackbar } from 'buefy'
+import EventBus from '../main'
 
 const RestApiClient = axios.create({
   baseURL: process.env.NODE_ENV === 'development' ? '/api/v1' : '/v2/api/v1',
@@ -41,25 +41,10 @@ RestApiClient.interceptors.response.use(
     return response
   },
   function (error) {
-    if (error.response.data.message === 'The CSRF token has expired.') {
-      Snackbar.open({
-        message: error.response.data.message,
-        type: 'is-white',
-        position: 'is-top',
-        actionText: 'Refresh',
-        indefinite: true,
-        onAction: () => {
-          location.reload()
-        },
-      })
+    if (error.response.status === 500) {
+      EventBus.$emit('errorSnackBar', 'Server side error. Please contact your server administrator for troubleshooting.')
     } else {
-      Snackbar.open({
-        message: error.response.data.message,
-        type: 'is-white',
-        position: 'is-top',
-        actionText: 'Close',
-        duration: 7000,
-      })
+      EventBus.$emit('errorSnackBar', error.response.data.message)
     }
     return Promise.reject(error)
   }
@@ -141,6 +126,15 @@ export default {
   deleteSketchTimeline(sketchId, timelineId) {
     return RestApiClient.delete('/sketches/' + sketchId + /timelines/ + timelineId + '/')
   },
+  createEvent(sketchId, datetime, message, timestampDesc, attributes, config) {
+    let formData = {
+      date_string: datetime,
+      message: message,
+      timestamp_desc: timestampDesc,
+      attributes: attributes,
+    }
+    return RestApiClient.post('/sketches/' + sketchId + '/event/create/', formData, config)
+  },
   // Get details about an event
   getEvent(sketchId, searchindexId, eventId) {
     let params = {
@@ -160,6 +154,14 @@ export default {
       remove: remove,
     }
     return RestApiClient.post('/sketches/' + sketchId + '/event/annotate/', formData)
+  },
+  tagEvents(sketchId, events, tags) {
+    let formData = {
+      tag_string: JSON.stringify(tags),
+      events: events,
+      verbose: false,
+    }
+    return RestApiClient.post('/sketches/' + sketchId + '/event/tagging/', formData)
   },
   updateEventAnnotation(sketchId, annotationType, annotation, events, currentSearchNode) {
     let formData = {
@@ -358,6 +360,12 @@ export default {
       content: ruleText,
     }
     return RestApiClient.post('/sigma/text/', formData)
+  },
+  getSearchTemplates() {
+    return RestApiClient.get('/searchtemplate/')
+  },
+  parseSearchTemplate(searchTemplateId, formData) {
+    return RestApiClient.post('/searchtemplate/' + searchTemplateId + '/parse/', formData)
   },
   getScenarios() {
     return RestApiClient.get('/scenarios/')

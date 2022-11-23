@@ -12,16 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """SearchTemplate resources for version 1 of the Timesketch API."""
-
 import json
 
 from flask import abort
 from flask import request
+from flask import jsonify
 from flask_restful import Resource
 from flask_login import current_user
 from flask_login import login_required
 
+import jinja2
+
 from timesketch.api.v1 import resources
+from timesketch.api.v1 import utils
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
@@ -48,14 +51,10 @@ class SearchTemplateResource(resources.ResourceMixin, Resource):
         """
         searchtemplate = SearchTemplate.query.get(searchtemplate_id)
 
-        meta = {"sketch_ids": []}
-        saved_searches = View.query.filter_by(searchtemplate=searchtemplate)
-        for saved_search in saved_searches:
-            meta["sketch_ids"].append(saved_search.id)
-
         if not searchtemplate:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "Search template was not found")
-        return self.to_json(searchtemplate, meta=meta)
+
+        return self.to_json(searchtemplate)
 
     @login_required
     def delete(self, searchtemplate_id):
@@ -79,6 +78,43 @@ class SearchTemplateResource(resources.ResourceMixin, Resource):
         db_session.commit()
 
         return HTTP_STATUS_CODE_OK
+
+
+class SearchTemplateParseResource(resources.ResourceMixin, Resource):
+    """Resource to parse a search template query string using Jinja2 template."""
+
+    @login_required
+    def post(self, searchtemplate_id):
+        """Parse the query string template with Jinja2.
+
+        This resource take a form with parameters to be parsed with the Jinja2
+        parsing engine in order to format the final query string template. Example:
+        {
+            "username": "user",
+            "hostname"" "hostname"
+        }
+
+        Args:
+            searchtemplate_id: Primary key for a search template database model
+
+        Returns:
+            Parsed and sanitized search query string.
+        """
+        form = request.json or {}
+        searchtemplate = SearchTemplate.query.get(searchtemplate_id)
+        if not searchtemplate:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "Search template was not found")
+
+        try:
+            template = jinja2.Template(searchtemplate.query_string)
+            query_string = template.render(form)
+        except jinja2.exceptions.TemplateSyntaxError as e:
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, f"Search template syntax error: {e}")
+
+        escaped_query_string = utils.escape_query_string(query_string)
+        return jsonify(
+            {"objects": [{"query_string": escaped_query_string}], "meta": {}}
+        )
 
 
 class SearchTemplateListResource(resources.ResourceMixin, Resource):

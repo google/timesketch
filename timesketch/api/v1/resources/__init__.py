@@ -106,6 +106,8 @@ class ResourceMixin(object):
         "error_message": fields.String,
         "created_at": fields.DateTime("iso8601"),
         "updated_at": fields.DateTime("iso8601"),
+        "total_file_events": fields.Integer,
+        "status": fields.Nested(status_fields),
     }
 
     timeline_fields = {
@@ -150,10 +152,14 @@ class ResourceMixin(object):
     searchtemplate_fields = {
         "id": fields.Integer,
         "name": fields.String,
+        "description": fields.String,
+        "short_name": fields.String,
         "user": fields.Nested(user_fields),
         "query_string": fields.String,
         "query_filter": fields.String,
         "query_dsl": fields.String,
+        "template_uuid": fields.String,
+        "template_json": fields.String,
         "created_at": fields.DateTime("iso8601"),
         "updated_at": fields.DateTime("iso8601"),
     }
@@ -250,6 +256,7 @@ class ResourceMixin(object):
         "display_name": fields.String,
         "description": fields.String,
         "spec_json": fields.String,
+        "search_templates": fields.List(fields.Nested(searchtemplate_fields)),
         "user": fields.Nested(user_fields),
         "created_at": fields.DateTime("iso8601"),
         "updated_at": fields.DateTime("iso8601"),
@@ -283,6 +290,18 @@ class ResourceMixin(object):
         "updated_at": fields.DateTime("iso8601"),
     }
 
+    sigmarule_fields = {
+        "id": fields.Integer,
+        "rule_uuid": fields.String,
+        "description": fields.String,
+        "title": fields.String,
+        "query_string": fields.String,
+        "user": fields.Nested(user_fields),
+        "rule_yaml": fields.String,
+        "created_at": fields.DateTime("iso8601"),
+        "updated_at": fields.DateTime("iso8601"),
+    }
+
     fields_registry = {
         "aggregation": aggregation_fields,
         "aggregationgroup": aggregation_group_fields,
@@ -304,6 +323,7 @@ class ResourceMixin(object):
         "investigative_question": question_fields,
         "facet": facet_fields,
         "scenario": scenario_fields,
+        "sigmarule": sigmarule_fields,
     }
 
     @property

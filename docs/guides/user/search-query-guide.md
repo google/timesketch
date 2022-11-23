@@ -209,10 +209,11 @@ On “Views” page, you can quickly generate and add a view from a template to 
 
 Here are some common searches:
 
-| Description                  | Example Query                                                    |
-| ---------------------------- | ---------------------------------------------------------------- |
-| EventId 4624 and LogonType 5 | event_identifier:4624 AND "LogonType\">5</Data>"                 |
-| Windows File path            | "C:\\Users\\foobar\\Download\\folder\ whitespace\\filename.jpeg" |
+| Description                  | Example Query                                                    |Comment    |
+| ---------------------------- | ---------------------------------------------------------------- |------------|
+| EventId 4624 and LogonType 5 | event_identifier:4624 AND "LogonType\">5</Data>"                 | |
+| Windows File path            | "C:\\Users\\foobar\\Download\\folder\ whitespace\\filename.jpeg" ||
+| Events that have a value in a field that contains the name `*comm*`           | `_exists_:"*comm*"` | Can be very expensive search |
 
 ## Common questions
 
