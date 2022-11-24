@@ -1,0 +1,21 @@
+title: General suspicious keywords
+id: 9532df7b-ac88-4706-a764-9bbc9c2b2d5f
+description: Broad rule to detect common bad terms. Warning: Can be noisy
+status: stable
+references: 
+ - https://github.com/SigmaHQ/sigma/blob/master/other/godmode_sigma_rule.yml
+ - https://twitter.com/hela_luc/status/1592934231583621121
+author: Alexander Jaeger
+date: 2022/11/17
+modified: 2022/11/17
+level: high
+detection:
+    # Different suspicious or malicious command line parameters
+    selection_plain:
+        message:
+            - ' mimi'  # Mimikatz
+            - 'lsass.dmp'  # Attempt to dump the lsass process
+            - 'powershell -nop -w hidden -encodedcommand' # often used to obfuscate powershell
+            - 'vssadmin' # Attempt to work with volume shadow copies
+            - '.dmp full'  # Process dumping method apart from procdump
+    condition: 1 of them
