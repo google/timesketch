@@ -139,8 +139,39 @@ limitations under the License.
         </v-expand-transition>
         <v-divider></v-divider>
 
-        <!-- Reusable dialog for adding a scenario -->
-        <ts-add-scenario-dialog :dialog.sync="dialog" @close-dialog="dialog = false" />
+        <!-- Dialog for adding a scenario -->
+        <v-dialog v-model="dialog" max-width="500px">
+          <v-card>
+            <div class="pa-3">
+              <h3>Investigative Scenarios</h3>
+              <v-select
+                v-model="selectedScenario"
+                :items="scenarioTemplates"
+                item-text="display_name"
+                return-object
+                label="Select a scenario"
+                outlined
+                class="mt-3"
+              ></v-select>
+              <div v-if="selectedScenario">
+                {{ selectedScenario.description }}
+              </div>
+            </div>
+            <v-divider></v-divider>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn @click="dialog = false" color="primary" text> Close </v-btn>
+              <v-btn
+                :disabled="!selectedScenario"
+                @click="addScenario(selectedScenario.short_name)"
+                color="primary"
+                text
+              >
+                Add
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
 
         <v-tabs v-model="leftPanelTab" grow>
           <v-tab v-for="item in leftPanelTabItems" :key="item"> {{ item }} </v-tab>
@@ -159,7 +190,7 @@ limitations under the License.
 
             <v-row class="mt-0 px-2" flat>
               <v-col cols="6">
-                <v-btn text color="primary" @click="addScenarioDialog" style="cursor: pointer"
+                <v-btn text color="primary" @click="dialog = true" style="cursor: pointer"
                   ><v-icon left>mdi-plus</v-icon> Add Scenario</v-btn
                 >
               </v-col>
@@ -193,13 +224,14 @@ limitations under the License.
 </template>
 
 <script>
+import ApiClient from '../utils/RestApiClient'
+
 import TsScenario from '../components/Scenarios/Scenario'
 import TsSavedSearches from '../components/LeftPanel/SavedSearches'
 import TsDataTypes from '../components/LeftPanel/DataTypes'
 import TsTags from '../components/LeftPanel/Tags'
 import TsSearchTemplates from '../components/LeftPanel/SearchTemplates'
 import TsSigmaRules from '../components/LeftPanel/SigmaRules'
-import TsAddScenarioDialog from '../components/Scenarios/AddScenarioDialog'
 
 export default {
   props: ['sketchId'],
@@ -210,7 +242,6 @@ export default {
     TsTags,
     TsSearchTemplates,
     TsSigmaRules,
-    TsAddScenarioDialog,
   },
   data() {
     return {
@@ -262,9 +293,15 @@ export default {
       return this.$store.state.currentUser
     },
     activeScenarios() {
+      if (!this.scenarios) {
+        return []
+      }
       return this.scenarios.filter((scenario) => !scenario.status.length || scenario.status[0].status === 'active')
     },
     hiddenScenarios() {
+      if (!this.scenarios) {
+        return []
+      }
       return this.scenarios.filter((scenario) => scenario.status.length && scenario.status[0].status === 'hidden')
     },
   },
@@ -276,8 +313,13 @@ export default {
     switchUI: function () {
       window.location.href = window.location.href.replace('/v2/', '/')
     },
-    addScenarioDialog() {
-      this.dialog = true
+    addScenario: function (scenario) {
+      this.dialog = false
+      ApiClient.addScenario(this.sketch.id, scenario)
+        .then((response) => {
+          this.$store.dispatch('updateScenarios', this.sketch.id)
+        })
+        .catch((e) => {})
     },
     setDrawerBorderStyle() {
       let i = this.$refs.drawer.$el.querySelector('.v-navigation-drawer__border')
