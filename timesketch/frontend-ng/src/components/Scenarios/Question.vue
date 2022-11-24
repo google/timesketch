@@ -15,19 +15,20 @@ limitations under the License.
 -->
 <template>
   <div>
-    <v-row no-gutters class="pa-3" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
-      <div @click="expanded = !expanded" style="cursor: pointer; font-size: 0.9em" class="ml-1">
-        <!--
-        <v-icon v-if="!expanded">mdi-chevron-right</v-icon>
-        <v-icon v-else>mdi-chevron-down</v-icon>
-        -->
-        <span v-if="expanded">
-          <strong>{{ question.display_name }}</strong>
-        </span>
-        <span v-else>
-          {{ question.display_name }}
-        </span>
-      </div>
+    <v-row
+      no-gutters
+      class="pa-2 pl-4"
+      @click="expanded = !expanded"
+      style="cursor: pointer; font-size: 0.9em"
+      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+    >
+      <v-col cols="1">
+        <v-icon small v-if="!expanded">mdi-chevron-right</v-icon>
+        <v-icon small v-else>mdi-chevron-down</v-icon>
+      </v-col>
+      <v-col cols="11">
+        {{ question.display_name }}
+      </v-col>
     </v-row>
 
     <v-expand-transition>

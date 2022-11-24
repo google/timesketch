@@ -20,8 +20,10 @@ from flask import jsonify
 from flask import request
 from flask import abort
 from flask_restful import Resource
+from flask_restful import reqparse
 from flask_login import current_user
 from flask_login import login_required
+from sqlalchemy import not_
 
 from timesketch.api.v1 import resources
 from timesketch.api.v1.utils import load_yaml_config
@@ -54,6 +56,11 @@ class ScenarioTemplateListResource(resources.ResourceMixin, Resource):
 class ScenarioListResource(resources.ResourceMixin, Resource):
     """Resource for investigative scenarios."""
 
+    def __init__(self):
+        super().__init__()
+        self.parser = reqparse.RequestParser()
+        self.parser.add_argument("status", type=str, required=False, default="")
+
     @login_required
     def get(self, sketch_id):
         """Handles GET request to the resource.
@@ -61,6 +68,9 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
         Returns:
             A list of JSON representations of the scenarios.
         """
+        args = self.parser.parse_args()
+        filter_on_status = args.get("status")
+
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
@@ -70,8 +80,11 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
                 "User does not have write access controls on sketch",
             )
 
-        scenarios = Scenario.query.filter_by(sketch=sketch).all()
+        base_query = Scenario.query.filter_by(sketch=sketch)
+        if filter_on_status:
+            base_query = base_query.filter(Scenario.status.any(status=filter_on_status))
 
+        scenarios = base_query.order_by(Scenario.created_at.asc()).all()
         return self.to_json(scenarios)
 
     @login_required
@@ -107,13 +120,16 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
             for scenario in scenarios
             if scenario["short_name"] == scenario_name
         )
+        scenario_display_name = form.get(
+            "display_name", scenario_dict.get("display_name", "")
+        )
 
         if not scenario_dict:
             abort(HTTP_STATUS_CODE_NOT_FOUND, f"No such scenario: {scenario_name}")
 
         scenario = Scenario(
             name=scenario_name,
-            display_name=scenario_dict.get("display_name", ""),
+            display_name=scenario_display_name,
             description=scenario_dict.get("description", ""),
             spec_json=json.dumps(scenario_dict),
             sketch=sketch,
@@ -146,7 +162,6 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
                         template_uuid=template_uuid
                     ).first()
                     if search_template:
-                        print("Adding: ", search_template.name)
                         question.search_templates.append(search_template)
                 facet.questions.append(question)
 
@@ -213,5 +228,45 @@ class ScenarioResource(resources.ResourceMixin, Resource):
         scenario.display_name = form.get("scenario_name")
         db_session.add(scenario)
         db_session.commit()
+
+        return self.to_json(scenario)
+
+
+class ScenarioStatusResource(resources.ResourceMixin, Resource):
+    """Resource for investigative scenarios."""
+
+    @login_required
+    def post(self, sketch_id, scenario_id):
+        """Handles POST request to the resource.
+
+        This resource adds/changes the status for a scenario.
+
+        Returns:
+            A JSON representation of the updated scenario.
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        scenario = Scenario.query.get(scenario_id)
+
+        if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
+        if not sketch.has_permission(current_user, "write"):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "User does not have write access controls on sketch",
+            )
+
+        if not scenario.sketch.id == sketch.id:
+            abort(HTTP_STATUS_CODE_FORBIDDEN, "Scenario is not part of this sketch.")
+
+        form = request.json
+        if not form:
+            form = request.data
+
+        status = form.get("status")
+
+        if status:
+            scenario.set_status(status)
+            db_session.add(scenario)
+            db_session.commit()
 
         return self.to_json(scenario)

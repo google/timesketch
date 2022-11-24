@@ -146,25 +146,43 @@ limitations under the License.
           <v-tab v-for="item in leftPanelTabItems" :key="item"> {{ item }} </v-tab>
         </v-tabs>
         <v-divider class="mb-3"></v-divider>
-
         <v-tabs-items v-model="leftPanelTab">
-          <v-tab-item>
-            <div v-if="!scenarios && scenarioTemplates.length">
-              <div class="pa-4" flat :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
-                <span @click="addScenarioDialog" style="cursor: pointer"
-                  ><v-icon left>mdi-plus</v-icon> Add Investigation Scenario</span
-                >
-              </div>
-            </div>
-
-            <ts-scenario v-for="scenario in scenarios" :key="scenario.id" :scenario="scenario"> </ts-scenario>
-          </v-tab-item>
           <v-tab-item>
             <ts-saved-searches v-if="meta.views"></ts-saved-searches>
             <ts-data-types></ts-data-types>
             <ts-tags></ts-tags>
             <ts-search-templates></ts-search-templates>
             <ts-sigma-rules></ts-sigma-rules>
+          </v-tab-item>
+          <v-tab-item>
+            <ts-scenario v-for="scenario in activeScenarios" :key="scenario.id" :scenario="scenario"></ts-scenario>
+
+            <v-row class="mt-0 px-2" flat>
+              <v-col cols="6">
+                <v-btn text color="primary" @click="addScenarioDialog" style="cursor: pointer"
+                  ><v-icon left>mdi-plus</v-icon> Add Scenario</v-btn
+                >
+              </v-col>
+
+              <v-col cols="6" align="right">
+                <div
+                  v-if="hiddenScenarios.length"
+                  @click="showHidden = !showHidden"
+                  style="cursor: pointer"
+                  class="mt-1"
+                >
+                  <small
+                    ><span v-if="showHidden">Hide</span><span v-else>Show</span> hidden scenarios ({{
+                      hiddenScenarios.length
+                    }})</small
+                  >
+                </div>
+              </v-col>
+            </v-row>
+
+            <div v-show="showHidden">
+              <ts-scenario v-for="scenario in hiddenScenarios" :key="scenario.id" :scenario="scenario"></ts-scenario>
+            </div>
           </v-tab-item>
         </v-tabs-items>
       </div>
@@ -204,9 +222,10 @@ export default {
       dialog: false,
       showLeftPanel: true,
       leftPanelTab: 0,
-      leftPanelTabItems: ['DFIQ', 'Explore'],
+      leftPanelTabItems: ['Explore', 'Investigate'],
       renameScenarioDialog: false,
       newScenarioName: '',
+      showHidden: false,
     }
   },
   mounted: function () {
@@ -241,6 +260,12 @@ export default {
     },
     currentUser() {
       return this.$store.state.currentUser
+    },
+    activeScenarios() {
+      return this.scenarios.filter((scenario) => !scenario.status.length || scenario.status[0].status === 'active')
+    },
+    hiddenScenarios() {
+      return this.scenarios.filter((scenario) => scenario.status.length && scenario.status[0].status === 'hidden')
     },
   },
   methods: {
