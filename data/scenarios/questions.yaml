@@ -95,10 +95,6 @@ user_logged_in_win:
     - windows_login
   analyzers:
     - login
-  search_templates:
-    - 9155f9b9-5560-4671-a7ed-1da3b1a325c8
-    - c639840b-1b8e-4342-96d5-a1494dd3a617
-    - 1c15467c-e1dd-4a17-9524-946d933de5e2
   sigma_rules:
     -
   answer_simple:
