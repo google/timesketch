@@ -1,0 +1,20 @@
+title: General Powershell line suspiciousness
+id: 7d4282f2-7794-416b-b632-d27bc88c8585
+description: Broad rule to detect suspicious Powershell artifacts
+status: stable
+references: https://github.com/SigmaHQ/sigma/blob/master/other/godmode_sigma_rule.yml
+author: Alexander Jaeger
+date: 2022/11/17
+modified: 2022/11/17
+level: high
+detection:
+    # Different suspicious or malicious powershell command line parameters
+    selection_plain:
+        CommandLine|contains:
+            - ' -NoP '  # Often used in malicious PowerShell commands
+            - ' -W Hidden '  # Often used in malicious PowerShell commands
+            - ' -decode '  # Used with certutil
+            - ' /decode '  # Used with certutil
+            - '.downloadstring('  # PowerShell download command
+            - '.downloadfile('  # PowerShell download command
+    condition: 1 of them
