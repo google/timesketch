@@ -39,14 +39,6 @@ export default {
     return {}
   },
   computed: {
-    //sketch() {
-    //  return this.$store.state.sketch
-    //},
-
-    //isRootPage() {
-    //  return Object.keys(this.sketch).length === 0
-    //},
-
     snackbar() {
       return this.$store.state.snackbar
     },
@@ -73,7 +65,6 @@ export default {
         this.$vuetify.theme.dark = false
       }
     }
-    //this.$store.dispatch('resetState', this.sketchId)
   },
   beforeDestroy() {
     EventBus.$off('errorSnackBar')
