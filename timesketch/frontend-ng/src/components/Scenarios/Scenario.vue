@@ -117,9 +117,10 @@ export default {
       return JSON.parse(this.activeQuestion.spec_json)
     },
     is_hidden() {
-      if (this.scenario.status.length) {
-        return this.scenario.status[0].status === 'hidden'
+      if (!this.scenario.status.length) {
+        return false
       }
+      return this.scenario.status[0].status === 'hidden'
     },
   },
   methods: {
