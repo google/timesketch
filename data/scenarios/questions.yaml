@@ -95,12 +95,14 @@ user_logged_in_win:
     - windows_login
   analyzers:
     - login
+  sigma_rules:
+    -
   answer_simple:
     must:
       - windows_login
 
 user_downloaded_file:
-  display_name: Did user download a specific file?
+  display_name: What files were downloaded through a web browser to a computer?
   description: This question checks whether there is browser activity
     happening and during that activity a specific file got downloaded
     or is seen on the disk during the time period.
@@ -115,3 +117,4 @@ user_downloaded_file:
       - user_browser_activity
       - browser_download
       - browser_specific_file_download
+

@@ -25,6 +25,7 @@ const defaultState = (currentUser) => {
     meta: {},
     searchHistory: {},
     scenarios: [],
+    hiddenScenarios: [],
     scenarioTemplates: [],
     tags: [],
     dataTypes: [],

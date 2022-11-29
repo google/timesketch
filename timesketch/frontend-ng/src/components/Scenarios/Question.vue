@@ -15,18 +15,28 @@ limitations under the License.
 -->
 <template>
   <div>
-    <div class="pa-2 pl-4" @click="expanded = !expanded" style="cursor: pointer">
-      <a style="font-size: 1em">{{ question.display_name }}</a>
-    </div>
+    <v-row
+      no-gutters
+      class="pa-2 pl-4"
+      @click="expanded = !expanded"
+      style="cursor: pointer; font-size: 0.9em"
+      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+    >
+      <v-col cols="1">
+        <v-icon small v-if="!expanded">mdi-chevron-right</v-icon>
+        <v-icon small v-else>mdi-chevron-down</v-icon>
+      </v-col>
+      <v-col cols="11">
+        {{ question.display_name }}
+      </v-col>
+    </v-row>
 
     <v-expand-transition>
       <div v-show="expanded">
         <div class="ma-2 mx-4 mb-4 mt-n1">
-          <v-expand-transition>
-            <div v-if="fullDescription">
-              <small>{{ question.description }} <a @click="fullDescription = !fullDescription">show less</a></small>
-            </div>
-          </v-expand-transition>
+          <div v-if="fullDescription">
+            <small>{{ question.description }} <a @click="fullDescription = !fullDescription">show less</a></small>
+          </div>
           <div v-if="!fullDescription">
             <span>
               <small>
@@ -37,39 +47,38 @@ limitations under the License.
           </div>
         </div>
 
-        <v-card v-if="question.search_templates.length" flat outlined class="ma-2 mx-4 mb-6">
-          <v-system-bar dense flat> Get started </v-system-bar>
-          <div class="pa-3">
-            <ts-search-template
-              v-for="searchtemplate in question.search_templates"
-              :key="searchtemplate.id"
-              :searchtemplate="searchtemplate"
-            ></ts-search-template>
+        <div v-if="question.search_templates.length" flat class="ma-2 mx-4 mb-6">
+          <strong><small>Query suggestions</small></strong>
+          <div v-for="searchtemplate in question.search_templates" :key="searchtemplate.id" class="pa-1 mt-1">
+            <ts-search-template :searchtemplate="searchtemplate"></ts-search-template>
           </div>
-        </v-card>
+        </div>
 
-        <!-- Commented out until we have conclusion API implemented
-        <div style="font-size: 0.9em" class="pa-4">
+        <div style="font-size: 0.9em" class="pa-4 pt-0">
           <v-textarea
+            v-model="conclusionText"
             outlined
             flat
             hide-details
             auto-grow
-            rows="3"
-            placeholder="Add your conclusion"
+            rows="1"
+            placeholder="Add your conclusion..."
             style="font-size: 0.9em"
           >
             <template v-slot:prepend-inner>
               <v-avatar color="grey" class="mt-n2 mr-2" size="28"></v-avatar>
             </template>
           </v-textarea>
-          <v-card-actions class="pl-0">
-            <v-btn x-small outlined color="primary"> Yes </v-btn>
-            <v-btn x-small outlined color="primary"> No </v-btn>
-            <v-btn x-small outlined color="primary"> Inconclusive </v-btn>
-          </v-card-actions>
+          <v-expand-transition>
+            <div v-if="conclusionText">
+              <v-card-actions class="pr-0">
+                <v-spacer></v-spacer>
+                <v-btn small text @click="conclusionText = ''"> Cancel </v-btn>
+                <v-btn small text color="primary" @click="saveConclusion"> Save </v-btn>
+              </v-card-actions>
+            </div>
+          </v-expand-transition>
         </div>
-        -->
       </div>
     </v-expand-transition>
   </div>
@@ -87,6 +96,7 @@ export default {
     return {
       expanded: false,
       fullDescription: false,
+      conclusionText: '',
     }
   },
   computed: {
@@ -94,7 +104,9 @@ export default {
       return this.$store.state.sketch
     },
   },
-  methods: {},
+  methods: {
+    saveConclusion: function () {},
+  },
   created() {},
 }
 </script>

@@ -22,7 +22,6 @@ limitations under the License.
         {{ searchtemplate.name }}
       </div>
       <v-spacer></v-spacer>
-      <div><v-icon>mdi-dots-vertical</v-icon></div>
     </v-row>
 
     <v-expand-transition>
@@ -87,7 +86,6 @@ limitations under the License.
         </div>
       </div>
     </v-expand-transition>
-    <v-divider></v-divider>
   </div>
 </template>
 

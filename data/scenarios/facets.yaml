@@ -22,7 +22,7 @@
 #
 # ------------------------------------------------------------------------
 attacker_maintain_access:
-  display_name: Attacker maintained access?
+  display_name: Are there any signs of an attacker moving from the computer to another host?
   description: Are there any signs of an attacker moving from the computer to another host? (Lateral Movement)
   questions:
     - user_logged_in_win
