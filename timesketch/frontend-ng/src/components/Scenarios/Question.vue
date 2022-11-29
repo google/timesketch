@@ -85,6 +85,7 @@ limitations under the License.
 </template>
 
 <script>
+import ApiClient from '../../utils/RestApiClient'
 import TsSearchTemplate from '../LeftPanel/SearchTemplateCompact.vue'
 
 export default {
@@ -105,7 +106,11 @@ export default {
     },
   },
   methods: {
-    saveConclusion: function () {},
+    saveConclusion: function () {
+      ApiClient.saveQuestionConclusion(this.sketch.id, this.question.id, this.conclusionText)
+        .then((response) => {})
+        .catch((e) => {})
+    },
   },
   created() {},
 }

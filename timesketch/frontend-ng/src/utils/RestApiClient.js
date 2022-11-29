@@ -367,7 +367,7 @@ export default {
   parseSearchTemplate(searchTemplateId, formData) {
     return RestApiClient.post('/searchtemplate/' + searchTemplateId + '/parse/', formData)
   },
-  getScenarios() {
+  getScenarioTemplates() {
     return RestApiClient.get('/scenarios/')
   },
   getSketchScenarios(sketchId, status=null) {
@@ -390,5 +390,9 @@ export default {
   setScenarioStatus(sketchId, scenarioId, status) {
     let formData = { status: status }
     return RestApiClient.post('/sketches/' + sketchId + '/scenarios/' + scenarioId + '/status/', formData)
+  },
+  saveQuestionConclusion(sketchId, questionId, conclusionText) {
+    let formData = { conclusionText: conclusionText }
+    return RestApiClient.post('/sketches/' + sketchId + '/questions/' + questionId + '/', formData)
   },
 }
