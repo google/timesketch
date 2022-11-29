@@ -108,7 +108,6 @@ export default {
                 .then(response => {
                     console.log(response.data.objects[0])
                     if (!response.data.objects[0].author) {
-                        console.log("no author")
                         this.problemString = 'No Author given'
 
                     } else {
@@ -162,6 +161,8 @@ tags:
                 ApiClient.deleteSigmaRule(rule_uuid)
                     .then(response => {
                         console.log("Rule deleted: " + rule_uuid)
+                        this.$store.dispatch('updateSigmaList', this.sketchId)
+
                         // remove element from Array
                         //this.$store.state.sigmaRuleList = this.sigmaRuleList.filter(obj => {
                         //    return obj.rule_uuid !== ioc.rule_uuid
@@ -216,6 +217,8 @@ tags:
                         .catch(e => {
                         })
                 }
+                this.$store.dispatch('updateSigmaList', this.editingRule.id)
+
             }
         },
     },

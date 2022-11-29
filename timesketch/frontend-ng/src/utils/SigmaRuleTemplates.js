@@ -20,7 +20,7 @@ id: ${crypto.randomUUID()}
 description: Detects suspicious FOOBAR
 references:
   - https://
-author: 
+author: Timesketch
 date: ${new Date(Date.now()).toLocaleString('en-ZA').split(',')[0]}
 modified: ${new Date(Date.now()).toLocaleString('en-ZA').split(',')[0]}
 status: experimental
