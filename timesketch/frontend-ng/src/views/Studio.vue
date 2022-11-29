@@ -35,10 +35,9 @@ limitations under the License.
             <ts-data-types></ts-data-types>
             <ts-tags></ts-tags>
             <ts-search-templates></ts-search-templates>
-            Add Sigma rule
             <ts-sigma-rules></ts-sigma-rules>
         </v-navigation-drawer>
-        {{type}}
+        {{ type }}
         <ts-sigma-rule-modification app @cancel="formatXMLString = false"
             :rule_uuid="id" v-if="type === 'sigma'">
         </ts-sigma-rule-modification>

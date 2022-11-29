@@ -33,56 +33,6 @@ limitations under the License.
                     @change="rowClick" item-text="title">
 
                 </v-autocomplete>
-                <!--
-                <v-autocomplete :items="SigmaTemplates" :search="search">
-                    <template v-slot:header>
-                        <v-toolbar flat>
-                            <v-text-field v-model="search" clearable
-                                hide-details outlined dense
-                                prepend-inner-icon="mdi-magnify"
-                                label="Search for a template..">
-                            </v-text-field>
-                        </v-toolbar>
-                    </template>
-
-                    <template v-slot:default="props">
-                        <v-row v-for="item in props.items" :key="item.name"
-                            cols="12" @click="rowClick(item.text)">
-                            <v-card>
-                                {{ item.title }}
-
-                            </v-card>
-                        </v-row>
-                    </template>
-                </v-autocomplete>
-                
-
-                <div style="width:50%;display:inline-table;">
-                    <b>Templates: </b>
-                    <v-data-iterator :items="SigmaTemplates"
-                        :items-per-page.sync="itemsPerPage" :search="search">
-                        <template v-slot:header>
-                            <v-toolbar flat>
-                                <v-text-field v-model="search" clearable
-                                    hide-details outlined dense
-                                    prepend-inner-icon="mdi-magnify"
-                                    label="Search for a template..">
-                                </v-text-field>
-                            </v-toolbar>
-                        </template>
-
-                        <template v-slot:default="props">
-                            <v-row v-for="item in props.items" :key="item.name"
-                                cols="12" @click="rowClick(item.text)">
-                                <v-card>
-                                    {{ item.title }}
-
-                                </v-card>
-                            </v-row>
-                        </template>
-                    </v-data-iterator>
-                   
-            </div> -->
             </div>
 
             <div width="500">
@@ -106,24 +56,14 @@ limitations under the License.
                 <v-btn @click="deleteRule(rule_uuid)" small depressed
                     color="red">Delete Rule</v-btn>
             </div>
-            <div>
-                <v-autocomplete dense filled rounded :items="SigmaTemplates"
-                    @change="rowClick" item-text="title">
 
-                </v-autocomplete>
-
-            </div>
-
+            <!-- TODO: Remove before merging -->
             <div>
                 <pre>
                 {{ editingRule }}
             </pre>
             </div>
-            <v-card-actions>
-                <v-spacer></v-spacer>
-                <v-btn text color="primary" @click="clearAndCancel"> Close
-                </v-btn>
-            </v-card-actions>
+
         </v-container>
     </v-card>
 </template>
@@ -148,6 +88,8 @@ export default {
     },
     mounted() {
         this.getRuleByUUID(this.rule_uuid)
+        // even if the rule was stored, we want to double check the rule
+        this.parseSigma(this.rule_yaml)
     },
     methods: {
         cancel() { this.$router.back() },
@@ -159,17 +101,20 @@ export default {
             this.rule_yaml = matchingTemplate.text
             this.parseSigma(matchingTemplate.text)
         },
-        clearAndCancel: function () {
-            this.$emit('cancel')
-        },
         // Set debounce to 300ms if parseSigma is used.
         parseSigma: _.debounce(function (rule_yaml) { // eslint-disable-line
             this.problemString = ''
             ApiClient.getSigmaRuleByText(rule_yaml)
                 .then(response => {
                     console.log(response.data.objects[0])
-                    this.editingRule = response.data.objects[0]
-                    this.problemString = 'OK'
+                    if (!response.data.objects[0].author) {
+                        console.log("no author")
+                        this.problemString = 'No Author given'
+
+                    } else {
+                        this.editingRule = response.data.objects[0]
+                        this.problemString = 'OK'
+                    }
                 })
                 .catch(e => {
                     this.problemString = 'PROBLEM please see console'
@@ -228,42 +173,49 @@ tags:
             }
         },
         addOrUpdateRule: function (event) {
-            if (this.save_button_text === "Create") {
-                ApiClient.createSigmaRule(this.rule_yaml).then(response => {
-                    this.$buefy.notification.open({
-                        message: 'Succesfully added Sigma rule!',
-                        type: 'is-success'
-                    })
-                    this.showEditModal = false
-                    this.sigmaRuleList.push(response.data.objects[0])
-                })
-                    .catch(e => {
-                        this.problemString = "Problem, please see console"
-                        Snackbar.open({
-                            message: this.problemString,
-                            type: 'is-danger',
-                            position: 'is-top',
-                            indefinite: false,
-                        })
-                    })
+            if (this.problemString !== 'OK') {
+                // There seems still a parsing error, do not store them
+                console.error("Sigma parsing still has error, please fix")
             }
-            if (this.save_button_text === "Update") {
-                ApiClient.updateSigmaRule(this.editingRule.id, this.rule_yaml)
-                    .then(response => {
-                        this.$store.state.sigmaRuleList = this.sigmaRuleList.filter(obj => {
-                            return obj.rule_uuid !== this.editingRule.rule_uuid
+            else if (this.problemString === 'OK') {
+                if (this.save_button_text === "Create") {
+                    ApiClient.createSigmaRule(this.rule_yaml).then(response => {
+                        this.$buefy.notification.open({
+                            message: 'Succesfully added Sigma rule!',
+                            type: 'is-success'
                         })
-                        this.sigmaRuleList.push(response.data.objects[0])
-                        // do not close the the edit view in case there is an error
-                        this.$buefy.notification.open(
-                            {
-                                message: 'Succesfully modified Sigma rule!',
-                                type: 'is-success'
-                            })
                         this.showEditModal = false
+                        this.sigmaRuleList.push(response.data.objects[0])
+                        // TODO: Not sure how to force a reload of the left panel
                     })
-                    .catch(e => {
-                    })
+                        .catch(e => {
+                            this.problemString = "Problem, please see console"
+                            Snackbar.open({
+                                message: this.problemString,
+                                type: 'is-danger',
+                                position: 'is-top',
+                                indefinite: false,
+                            })
+                        })
+                }
+                if (this.save_button_text === "Update") {
+                    ApiClient.updateSigmaRule(this.editingRule.id, this.rule_yaml)
+                        .then(response => {
+                            this.$store.state.sigmaRuleList = this.sigmaRuleList.filter(obj => {
+                                return obj.rule_uuid !== this.editingRule.rule_uuid
+                            })
+                            this.sigmaRuleList.push(response.data.objects[0])
+                            // do not close the the edit view in case there is an error
+                            this.$buefy.notification.open(
+                                {
+                                    message: 'Succesfully modified Sigma rule!',
+                                    type: 'is-success'
+                                })
+                            this.showEditModal = false
+                        })
+                        .catch(e => {
+                        })
+                }
             }
         },
     },
