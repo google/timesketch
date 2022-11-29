@@ -62,7 +62,6 @@ export default {
   },
   data: function () {
     return {
-      sigmaRules: [],
       expanded: false,
       itemsPerPage: 10,
       search: '',
@@ -75,6 +74,9 @@ export default {
     }
   },
   computed: {
+    sigmaRules(){
+      return this.$store.state.sigmaRuleList
+    },
     sketch() {
       return this.$store.state.sketch
     },
@@ -83,11 +85,7 @@ export default {
     },
   },
   created() {
-    ApiClient.getSigmaRuleList()
-      .then((response) => {
-        this.sigmaRules = response.data.objects
-      })
-      .catch((e) => { })
+    this.$store.dispatch('updateSigmaList')
   },
 }
 </script>

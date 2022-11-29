@@ -79,7 +79,6 @@ limitations under the License.
 
     <v-expand-transition>
       <div v-show="expanded" class="pa-4 pt-0">
-        <!--<pre>{{ sigmaRule | pretty }}</pre>-->
         {{ sigmaRuleSummary | pretty }}
         <div style="font-size: 0.9em" class="mt-2">
           <v-simple-table dense>
@@ -176,14 +175,11 @@ export default {
         ApiClient.deleteSigmaRule(rule_uuid)
           .then(response => {
             console.log("Rule deleted: " + rule_uuid)
-            // remove element from Array
-            //this.$store.state.sigmaRuleList = this.sigmaRuleList.filter(obj => {
-            //    return obj.rule_uuid !== ioc.rule_uuid
-            //})
           })
           .catch(e => {
             console.error(e)
           })
+        this.$store.dispatch('updateSigmaList')
       }
     },
     archiveRule(rule_uuid) {

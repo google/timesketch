@@ -161,7 +161,7 @@ tags:
                 ApiClient.deleteSigmaRule(rule_uuid)
                     .then(response => {
                         console.log("Rule deleted: " + rule_uuid)
-                        this.$store.dispatch('updateSigmaList', this.sketchId)
+                        this.$store.dispatch('updateSigmaList')
 
                         // remove element from Array
                         //this.$store.state.sigmaRuleList = this.sigmaRuleList.filter(obj => {
@@ -187,7 +187,6 @@ tags:
                         })
                         this.showEditModal = false
                         this.sigmaRuleList.push(response.data.objects[0])
-                        // TODO: Not sure how to force a reload of the left panel
                     })
                         .catch(e => {
                             this.problemString = "Problem, please see console"
@@ -217,7 +216,7 @@ tags:
                         .catch(e => {
                         })
                 }
-                this.$store.dispatch('updateSigmaList', this.editingRule.id)
+                this.$store.dispatch('updateSigmaList')
 
             }
         },

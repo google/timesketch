@@ -82,7 +82,7 @@ export default {
         this.$store.dispatch('updateSketch', this.sketchId)
         this.$store.dispatch('updateSearchHistory', this.sketchId)
         this.$store.dispatch('updateScenario', this.sketchId)
-        this.$store.dispatch('updateSigmaList', this.sketchId)
+        this.$store.dispatch('updateSigmaList')
         document.title = 'Timesketch Studio'
     },
     updated() {

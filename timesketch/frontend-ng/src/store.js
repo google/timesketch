@@ -153,7 +153,7 @@ export default new Vuex.Store({
         .then((response) => {
           context.commit('SET_SCENARIOS', response.data)
         })
-        .catch((e) => {})
+        .catch((e) => { })
     },
     updateScenarioTemplates(context, sketchId) {
       return ApiClient.getScenarios(sketchId)
@@ -197,6 +197,7 @@ export default new Vuex.Store({
         .catch((e) => { })
     },
     updateSigmaList(context) {
+      console.log("update triggered")
       ApiClient.getSigmaRuleList()
         .then((response) => {
           context.commit('SET_SIGMA_LIST', response.data)
