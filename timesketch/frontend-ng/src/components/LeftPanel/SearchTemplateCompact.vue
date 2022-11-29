@@ -17,7 +17,7 @@ limitations under the License.
   <div>
     <v-row no-gutters>
       <div style="font-size: 0.9em">
-        <v-icon x-small class="mr-3">mdi-magnify</v-icon>
+        <v-icon x-small class="mr-1">mdi-magnify</v-icon>
         <a @click="search(searchtemplate.query_string)">{{ searchtemplate.name }}</a>
       </div>
     </v-row>

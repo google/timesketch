@@ -280,6 +280,7 @@ class ResourceMixin(object):
 
     scenario_fields = {
         "id": fields.Integer,
+        "status": fields.Nested(status_fields),
         "name": fields.String,
         "display_name": fields.String,
         "description": fields.String,
