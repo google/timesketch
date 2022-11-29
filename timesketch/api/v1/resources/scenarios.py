@@ -33,6 +33,7 @@ from timesketch.models.sketch import SearchTemplate, Sketch
 from timesketch.models.sketch import Scenario
 from timesketch.models.sketch import Facet
 from timesketch.models.sketch import InvestigativeQuestion
+from timesketch.models.sketch import InvestigativeQuestionConclusion
 
 
 logger = logging.getLogger("timesketch.scenario_api")
@@ -269,3 +270,42 @@ class ScenarioStatusResource(resources.ResourceMixin, Resource):
             db_session.commit()
 
         return self.to_json(scenario)
+
+
+class QuestionConclusionResource(resources.ResourceMixin, Resource):
+    """Resource for investigative question conclusion."""
+
+    @login_required
+    def post(self, sketch_id, question_id):
+        """Handles POST request to the resource.
+
+        Adds or edits a conclusion.
+
+        Returns:
+            A JSON representation of the question.
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        question = InvestigativeQuestion.query.get(question_id)
+
+        conclusion = InvestigativeQuestionConclusion.get_or_create(
+            user=current_user, investigativequestion=question
+        )
+        print(conclusion.id)
+
+        if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
+
+        if conclusion.user != current_user:
+            abort(HTTP_STATUS_CODE_FORBIDDEN, "User did not create this conclusion.")
+
+        form = request.json
+        if not form:
+            form = request.data
+
+        conclusion_text = form.get("conclusionText")
+        if conclusion_text:
+            conclusion.conclusion = conclusion_text
+            db_session.add(conclusion)
+            db_session.commit()
+
+        return self.to_json(conclusion)
