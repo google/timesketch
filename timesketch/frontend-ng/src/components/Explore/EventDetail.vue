@@ -66,7 +66,7 @@ limitations under the License.
             >
               <v-list-item-avatar>
                 <v-avatar color="grey lighten-1">
-                  <span class="white--text">{{ comment.user.username.charAt(0).toUpperCase() }}</span>
+                  <span class="white--text">{{ comment.user.username | initialLetter }}</span>
                 </v-avatar>
               </v-list-item-avatar>
 

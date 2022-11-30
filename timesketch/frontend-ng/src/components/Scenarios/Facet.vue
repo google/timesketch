@@ -31,7 +31,23 @@ limitations under the License.
       </v-col>
 
       <v-col cols="2" align="right">
-        <v-chip x-small>0 / {{ facet.questions.length }}</v-chip>
+        <v-chip
+          v-if="questionsWithConclusion.length === facet.questions.length"
+          x-small
+          color="green"
+          text-color="white"
+          >{{ questionsWithConclusion.length }} / {{ facet.questions.length }}</v-chip
+        >
+        <v-chip
+          v-if="questionsWithConclusion.length > 0 && questionsWithConclusion.length < facet.questions.length"
+          x-small
+          color="orange"
+          text-color="white"
+          >{{ questionsWithConclusion.length }} / {{ facet.questions.length }}</v-chip
+        >
+        <v-chip v-if="questionsWithConclusion.length === 0" x-small
+          >{{ questionsWithConclusion.length }} / {{ facet.questions.length }}</v-chip
+        >
       </v-col>
     </v-row>
 
@@ -65,6 +81,9 @@ export default {
   computed: {
     sketch() {
       return this.$store.state.sketch
+    },
+    questionsWithConclusion() {
+      return this.facet.questions.filter((question) => question.conclusions.length)
     },
   },
   methods: {

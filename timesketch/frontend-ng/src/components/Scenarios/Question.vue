@@ -23,11 +23,12 @@ limitations under the License.
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
       <v-col cols="1">
-        <v-icon small v-if="!expanded">mdi-chevron-right</v-icon>
-        <v-icon small v-else>mdi-chevron-down</v-icon>
+        <v-icon small v-if="question.conclusions.length" color="green">mdi-check-circle</v-icon>
+        <v-icon small v-else>mdi-check-circle-outline</v-icon>
       </v-col>
       <v-col cols="11">
-        {{ question.display_name }}
+        <strong v-if="!question.conclusions.length">{{ question.display_name }}</strong>
+        <span v-else>{{ question.display_name }}</span>
       </v-col>
     </v-row>
 
@@ -54,7 +55,15 @@ limitations under the License.
           </div>
         </div>
 
-        <div style="font-size: 0.9em" class="pa-4 pt-0">
+        <!-- Conclusions -->
+        <div class="ma-2 mx-4">
+          <strong><small>Conclusions</small></strong>
+        </div>
+        <v-card class="ma-2 mx-4 mb-4" outlined flat v-for="conclusion in question.conclusions" :key="conclusion.id">
+          <ts-question-conclusion :question="question" :conclusion="conclusion"></ts-question-conclusion>
+        </v-card>
+
+        <div v-if="!currentUserConclusion" style="font-size: 0.9em" class="pa-4 pt-0">
           <v-textarea
             v-model="conclusionText"
             outlined
@@ -66,7 +75,9 @@ limitations under the License.
             style="font-size: 0.9em"
           >
             <template v-slot:prepend-inner>
-              <v-avatar color="grey" class="mt-n2 mr-2" size="28"></v-avatar>
+              <v-avatar color="grey" class="mt-n2 mr-2" size="28">
+                <span class="white--text">{{ currentUser | initialLetter }}</span>
+              </v-avatar>
             </template>
           </v-textarea>
           <v-expand-transition>
@@ -86,12 +97,14 @@ limitations under the License.
 
 <script>
 import ApiClient from '../../utils/RestApiClient'
-import TsSearchTemplate from '../LeftPanel/SearchTemplateCompact.vue'
+import TsSearchTemplate from '../LeftPanel/SearchTemplateCompact'
+import TsQuestionConclusion from './QuestionConclusion'
 
 export default {
   props: ['question'],
   components: {
     TsSearchTemplate,
+    TsQuestionConclusion,
   },
   data: function () {
     return {
@@ -104,11 +117,20 @@ export default {
     sketch() {
       return this.$store.state.sketch
     },
+    currentUser() {
+      return this.$store.state.currentUser
+    },
+    currentUserConclusion() {
+      return this.question.conclusions.filter((conclusion) => conclusion.user.username === this.currentUser).length
+    },
   },
   methods: {
     saveConclusion: function () {
       ApiClient.saveQuestionConclusion(this.sketch.id, this.question.id, this.conclusionText)
-        .then((response) => {})
+        .then((response) => {
+          this.conclusionText = ''
+          this.$store.dispatch('updateScenarios', this.sketch.id)
+        })
         .catch((e) => {})
     },
   },

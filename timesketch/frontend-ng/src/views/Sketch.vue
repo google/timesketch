@@ -38,7 +38,7 @@ limitations under the License.
         Share
       </v-btn>
       <v-avatar color="grey lighten-1" size="25" class="ml-3">
-        <span class="white--text">{{ currentUser | capitalize }}</span>
+        <span class="white--text">{{ currentUser | initialLetter }}</span>
       </v-avatar>
       <v-menu offset-y>
         <template v-slot:activator="{ on, attrs }">
@@ -176,7 +176,7 @@ limitations under the License.
         <v-tabs v-model="leftPanelTab" grow>
           <v-tab v-for="item in leftPanelTabItems" :key="item"> {{ item }} </v-tab>
         </v-tabs>
-        <v-divider class="mb-3"></v-divider>
+        <v-divider class="pb-3"></v-divider>
         <v-tabs-items v-model="leftPanelTab">
           <v-tab-item>
             <ts-saved-searches v-if="meta.views"></ts-saved-searches>

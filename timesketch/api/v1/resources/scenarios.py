@@ -272,8 +272,28 @@ class ScenarioStatusResource(resources.ResourceMixin, Resource):
         return self.to_json(scenario)
 
 
-class QuestionConclusionResource(resources.ResourceMixin, Resource):
+class QuestionConclusionListResource(resources.ResourceMixin, Resource):
     """Resource for investigative question conclusion."""
+
+    @login_required
+    def get(self, sketch_id, question_id):
+        """Handles GET request to the resource.
+
+        Returns:
+            A list of JSON representations of the conclusions.
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        question = InvestigativeQuestion.query.get(question_id)
+
+        conclusions = InvestigativeQuestionConclusion.filter_by(
+            investigativequestion=question
+        ).all()
+
+        if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
+
+        print(conclusions)
+        # return self.to_json(conclusions)
 
     @login_required
     def post(self, sketch_id, question_id):
@@ -290,7 +310,6 @@ class QuestionConclusionResource(resources.ResourceMixin, Resource):
         conclusion = InvestigativeQuestionConclusion.get_or_create(
             user=current_user, investigativequestion=question
         )
-        print(conclusion.id)
 
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
