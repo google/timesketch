@@ -67,10 +67,9 @@ class HashlookupAnalyzer(interface.BaseAnalyzer):
         if not "message" in result_loc and results.status_code != 200:
             logger.error("Error with Hashlookup url")
             return []
+        # If message in result_loc then the hash is not find in Hashlookup
         if "message" in result_loc:
             return []
-
-        self.total_event_counter += 1
 
         return result_loc
 
@@ -122,6 +121,7 @@ class HashlookupAnalyzer(interface.BaseAnalyzer):
             if not hash_value in self.request_set:
                 result = self.get_hash_info(hash_value)
                 if result:
+                    self.total_event_counter += 1
                     create_a_view = True
                     self.mark_event(event, hash_value)
                     self.result_dict[hash_value] = True
@@ -129,6 +129,7 @@ class HashlookupAnalyzer(interface.BaseAnalyzer):
                     self.result_dict[hash_value] = False
                 self.request_set.add(hash_value)
             elif self.result_dict[hash_value]:
+                self.total_event_counter += 1
                 self.mark_event(event, hash_value)
 
         if create_a_view:

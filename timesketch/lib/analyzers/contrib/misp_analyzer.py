@@ -74,6 +74,7 @@ class MispAnalyzer(interface.BaseAnalyzer):
         if results.status_code != 200:
             msg_error = "Error with MISP query: Status code"
             logger.error("{} {}".format(msg_error, results.status_code))
+            # logger.error(f"{msg_error} {results.status_code}")
             return []
         result_loc = results.json()
         if "name" in result_loc:
@@ -82,8 +83,6 @@ class MispAnalyzer(interface.BaseAnalyzer):
                 return []
         if not result_loc["response"]["Attribute"]:
             return []
-
-        self.total_event_counter += 1
 
         return result_loc["response"]["Attribute"]
 
@@ -104,7 +103,7 @@ class MispAnalyzer(interface.BaseAnalyzer):
             info = misp_attr["Event"]["info"]
             id_event = misp_attr["Event"]["id"]
             msg += f'"Event info": "{info}"'
-            msg += f"- \"url\": {self.misp_url + '/events/view/' + id_event} || "
+            msg += f'- "url": {self.misp_url}/events/view/{id_event} || '
 
         event.add_comment(msg)
         event.add_tags([f"MISP-{attr}"])
@@ -122,28 +121,31 @@ class MispAnalyzer(interface.BaseAnalyzer):
         create_a_view = False
         for event in events:
             loc = event.source.get(timesketch_attr)
-            if attr == "filename":
-                loc = ntpath.basename(loc)
-                if not loc:
-                    _, loc = ntpath.split(event.source.get(timesketch_attr))
+            if loc:
+                if attr == "filename":
+                    loc = ntpath.basename(loc)
+                    if not loc:
+                        _, loc = ntpath.split(event.source.get(timesketch_attr))
 
-            if not loc in self.request_set:
-                result = self.get_misp_attributes(loc, attr)
-                if result:
-                    create_a_view = True
-                    self.mark_event(event, result, attr)
-                    self.result_dict[f"{attr}:{loc}"] = result
-                else:
-                    self.result_dict[f"{attr}:{loc}"] = False
-                self.request_set.add(loc)
-            elif self.result_dict[f"{attr}:{loc}"]:
-                self.mark_event(event, self.result_dict[f"{attr}:{loc}"], attr)
+                if not loc in self.request_set:
+                    result = self.get_misp_attributes(loc, attr)
+                    if result:
+                        self.total_event_counter += 1
+                        create_a_view = True
+                        self.mark_event(event, result, attr)
+                        self.result_dict[f"{attr}:{loc}"] = result
+                    else:
+                        self.result_dict[f"{attr}:{loc}"] = False
+                    self.request_set.add(loc)
+                elif self.result_dict[f"{attr}:{loc}"]:
+                    self.total_event_counter += 1
+                    self.mark_event(event, self.result_dict[f"{attr}:{loc}"], attr)
 
         if create_a_view:
             self.sketch.add_view(
                 view_name="MISP known attribute",
                 analyzer_name=self.NAME,
-                query_string=('tag:"MISP"'),
+                query_string='tag:"MISP"',
             )
 
     def run(self):
