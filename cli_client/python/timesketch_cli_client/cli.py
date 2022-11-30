@@ -118,7 +118,7 @@ def cli(ctx, sketch):
     It operates within the context of a sketch so you either need to
     provide an existing sketch or create a new one.
 
-    Basic options for editing the sketch is provided, e.g re-naming and
+    Basic options for editing the sketch is provided, e.g. re-naming and
     changing the description as well as archiving and exporting. For
     other actions not available in this CLI client the web client should be
     used.
