@@ -47,7 +47,6 @@ limitations under the License.
         </v-data-iterator>
       </div>
     </v-expand-transition>
-    <v-divider></v-divider>
   </div>
 </template>
 
@@ -80,7 +79,7 @@ export default {
     ApiClient.getSearchTemplates()
       .then((response) => {
         this.searchtemplates = response.data.objects[0]
-        if (typeof(this.searchtemplates) === 'undefined') {
+        if (typeof this.searchtemplates === 'undefined') {
           this.searchtemplates = []
         }
       })
