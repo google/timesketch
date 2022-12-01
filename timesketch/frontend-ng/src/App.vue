@@ -24,78 +24,8 @@ limitations under the License.
     </v-snackbar>
 
     <v-main>
-      <!-- Top horizontal toolbar -->
-      <v-toolbar flat color="transparent">
-        <v-btn icon v-if="!showLeftPanel" @click="showLeftPanel = true" class="ml-0">
-          <v-icon>mdi-menu</v-icon>
-        </v-btn>
-        <div v-if="isRootPage">
-          <v-avatar class="mt-2 ml-n4">
-            <router-link to="/">
-              <v-img src="/dist/timesketch-color.png" max-height="25" max-width="25" contain></v-img>
-            </router-link>
-          </v-avatar>
-          <span style="font-size: 1.2em">timesketch</span>
-        </div>
-
-        <div v-if="activeContext.question" class="ml-2">
-          <strong>{{ activeContext.question.display_name }}</strong>
-        </div>
-
-        <v-spacer></v-spacer>
-        <v-btn small depressed v-on:click="switchUI"> Use the old UI </v-btn>
-        <v-btn v-if="!isRootPage" small depressed color="primary" class="ml-2">
-          <v-icon small left>mdi-account-multiple-plus</v-icon>
-          Share
-        </v-btn>
-        <v-avatar color="grey lighten-1" size="25" class="ml-3">
-          <span class="white--text">{{ currentUser | capitalize }}</span>
-        </v-avatar>
-        <v-menu v-if="!isRootPage" offset-y>
-          <template v-slot:activator="{ on, attrs }">
-            <v-avatar>
-              <v-btn small icon v-bind="attrs" v-on="on">
-                <v-icon>mdi-dots-vertical</v-icon>
-              </v-btn>
-            </v-avatar>
-          </template>
-          <v-card>
-            <v-list>
-              <v-list-item-group color="primary">
-                <v-list-item v-on:click="toggleTheme">
-                  <v-list-item-icon>
-                    <v-icon>mdi-brightness-6</v-icon>
-                  </v-list-item-icon>
-                  <v-list-item-content>
-                    <v-list-item-title>Toggle theme</v-list-item-title>
-                  </v-list-item-content>
-                </v-list-item>
-
-                <v-list-item>
-                  <v-list-item-icon>
-                    <v-icon>mdi-archive</v-icon>
-                  </v-list-item-icon>
-                  <v-list-item-content>
-                    <v-list-item-title>Archive sketch</v-list-item-title>
-                  </v-list-item-content>
-                </v-list-item>
-
-                <v-list-item>
-                  <v-list-item-icon>
-                    <v-icon>mdi-export</v-icon>
-                  </v-list-item-icon>
-                  <v-list-item-content>
-                    <v-list-item-title>Export sketch</v-list-item-title>
-                  </v-list-item-content>
-                </v-list-item>
-              </v-list-item-group>
-            </v-list>
-          </v-card>
-        </v-menu>
-      </v-toolbar>
-
       <!-- Main view -->
-      <router-view @hideLeftPanel="showLeftPanel = false" :show-left-panel="showLeftPanel"></router-view>
+      <router-view></router-view>
     </v-main>
   </v-app>
 </template>
@@ -106,35 +36,14 @@ import EventBus from './main'
 export default {
   name: 'app',
   data() {
-    return {
-      showLeftPanel: true,
-    }
+    return {}
   },
   computed: {
-    sketch() {
-      return this.$store.state.sketch
-    },
-    currentUser() {
-      return this.$store.state.currentUser
-    },
-    isRootPage() {
-      return Object.keys(this.sketch).length === 0
-    },
-    activeContext() {
-      return this.$store.state.activeContext
-    },
     snackbar() {
       return this.$store.state.snackbar
     },
   },
   methods: {
-    toggleTheme: function () {
-      this.$vuetify.theme.dark = !this.$vuetify.theme.dark
-      localStorage.setItem('isDarkTheme', this.$vuetify.theme.dark.toString())
-    },
-    switchUI: function () {
-      window.location.href = window.location.href.replace('/v2/', '/')
-    },
     setErrorSnackBar: function (message) {
       const snackbar = {
         message: message,
@@ -156,7 +65,6 @@ export default {
         this.$vuetify.theme.dark = false
       }
     }
-    this.$store.dispatch('resetState', this.sketchId)
   },
   beforeDestroy() {
     EventBus.$off('errorSnackBar')
