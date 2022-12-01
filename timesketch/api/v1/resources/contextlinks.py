@@ -68,7 +68,8 @@ class ContextLinkConfigResource(resources.ResourceMixin, Resource):
                 except re.error:
                     logger.warning(
                         "Context link '{0:s}': 'validation_regex' is not a "
-                        "legitimate regex! Please check again.".format(item))
+                        "legitimate regex! Please check again.".format(item)
+                    )
                     check_ok = False
             else:
                 if not "validation_regex" in item_dict.keys():
@@ -91,15 +92,14 @@ class ContextLinkConfigResource(resources.ResourceMixin, Resource):
             if not check_ok:
                 logger.warning(
                     "Failed to load context link: '{0:s}'! Please check the "
-                    "mandatory fields and required format!".format(item))
+                    "mandatory fields and required format!".format(item)
+                )
                 continue
 
             # All checks clear. Restructure the output and append to the response.
             context_link_conf = copy.deepcopy(item_dict)
             del context_link_conf["match_fields"]
             for field in item_dict.get("match_fields"):
-                response.setdefault(field.lower(), []).append(
-                    context_link_conf)
+                response.setdefault(field.lower(), []).append(context_link_conf)
 
         return jsonify(response)
-    
