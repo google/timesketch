@@ -44,7 +44,7 @@ class ContextLinkConfigResource(resources.ResourceMixin, Resource):
             return jsonify(response)
 
         verification_results = []
-        
+
         # Check mandatory fields are correctly defined.
         for item in context_link_config:
             item_dict = context_link_config[item]
@@ -94,7 +94,7 @@ class ContextLinkConfigResource(resources.ResourceMixin, Resource):
                     verification_result += f" {check} = ok;"
                 else:
                     verification_result += f" {check} = FAILED;"
-            
+
             if "FAILED;" in verification_result:
                 verification_results.append(verification_result)
                 continue
@@ -104,7 +104,7 @@ class ContextLinkConfigResource(resources.ResourceMixin, Resource):
             del context_link_conf["match_fields"]
             for field in item_dict.get("match_fields"):
                 response.setdefault(field.lower(), []).append(context_link_conf)
-                
+
         if len(verification_results) > 0:
             logger.warning(str(verification_results))
 
