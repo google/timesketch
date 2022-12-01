@@ -1103,37 +1103,37 @@ class ContextLinksResourceTest(BaseTest):
     def test_get_context_links_config(self):
         """Authenticated request to get the context links configuration."""
 
-        expected_configuration= {
+        expected_configuration = {
             "hash": [
                 {
                     "short_name": "LookupOne",
                     "validation_regex": "/^[0-9a-f]{40}$|^[0-9a-f]{32}$/i",
                     "context_link": "https://lookupone.local/q=<ATTR_VALUE>",
-                    "redirect_warning": True
+                    "redirect_warning": True,
                 },
                 {
                     "short_name": "LookupTwo",
                     "validation_regex": "/^[0-9a-f]{64}$/i",
                     "context_link": "https://lookuptwo.local/q=<ATTR_VALUE>",
-                    "redirect_warning": False
-                }
+                    "redirect_warning": False,
+                },
             ],
             "sha256_hash": [
                 {
                     "short_name": "LookupTwo",
                     "validation_regex": "/^[0-9a-f]{64}$/i",
                     "context_link": "https://lookuptwo.local/q=<ATTR_VALUE>",
-                    "redirect_warning": False
-                }
+                    "redirect_warning": False,
+                },
             ],
             "url": [
                 {
                     "short_name": "LookupThree",
                     "validation_regex": "",
                     "context_link": "https://lookupthree.local/q=<ATTR_VALUE>",
-                    "redirect_warning": True
-                }
-            ]
+                    "redirect_warning": True,
+                },
+            ],
         }
         self.login()
         response = self.client.get("/api/v1/contextlinks/")
