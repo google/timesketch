@@ -41,59 +41,62 @@ class ContextLinkConfigResource(resources.ResourceMixin, Resource):
         response = {}
 
         if not context_link_config:
-            logger.warning("The config file 'data/context_links.yaml' is empty!")
             return jsonify(response)
 
+        verification_results = []
+        
         # Check mandatory fields are correctly defined.
         for item in context_link_config:
             item_dict = context_link_config[item]
 
-            check_ok = True
+            verification = {
+                "check_short_name": False,
+                "check_match_fields": False,
+                "check_validation_regex": False,
+                "check_context_link": False,
+                "check_redirect_warning": False
+            }
 
             # Verify that short_name is defined and type string
-            if not isinstance(item_dict.get("short_name"), str):
-                check_ok = False
+            if isinstance(item_dict.get("short_name"), str):
+                verification["check_short_name"] = True
 
             # Verify that match_fields is defined, has entries and is type list
             if isinstance(item_dict.get("match_fields"), list):
-                if not len(item_dict.get("match_fields")) > 0:
-                    check_ok = False
-            else:
-                check_ok = False
+                if len(item_dict.get("match_fields")) > 0:
+                    verification["check_match_fields"] = True
 
             # Verify that validation_regex is a valid regeular expression
             if isinstance(item_dict.get("validation_regex"), str):
                 try:
                     re.compile(item_dict.get("validation_regex"))
+                    verification["check_validation_regex"] = True
                 except re.error:
-                    logger.warning(
-                        "Context link '{0:s}': 'validation_regex' is not a "
-                        "legitimate regex! Please check again.".format(item)
-                    )
-                    check_ok = False
+                    pass
             else:
                 if not "validation_regex" in item_dict.keys():
                     item_dict["validation_regex"] = ""
-                else:
-                    check_ok = False
+                    verification["check_validation_regex"] = True
 
             # Verify that context_link is defined and a type string
             # Verify that context_link contains the replacment keyword for the value
             if isinstance(item_dict.get("context_link"), str):
-                if not "<ATTR_VALUE>" in item_dict.get("context_link"):
-                    check_ok = False
-            else:
-                check_ok = False
+                if "<ATTR_VALUE>" in item_dict.get("context_link"):
+                    verification["check_context_link"] = True
 
             # Verify that redirect_warning is defined and type bool
-            if not isinstance(item_dict.get("redirect_warning"), bool):
-                check_ok = False
+            if isinstance(item_dict.get("redirect_warning"), bool):
+                verification["check_redirect_warning"] = True
 
-            if not check_ok:
-                logger.warning(
-                    "Failed to load context link: '{0:s}'! Please check the "
-                    "mandatory fields and required format!".format(item)
-                )
+            verification_result = f"ContextLink '{item.upper()}':"
+            for check in verification:
+                if verification[check]:
+                    verification_result += f" {check} = ok;"
+                else:
+                    verification_result += f" {check} = FAILED;"
+            
+            if "FAILED;" in verification_result:
+                verification_results.append(verification_result)
                 continue
 
             # All checks clear. Restructure the output and append to the response.
@@ -101,5 +104,8 @@ class ContextLinkConfigResource(resources.ResourceMixin, Resource):
             del context_link_conf["match_fields"]
             for field in item_dict.get("match_fields"):
                 response.setdefault(field.lower(), []).append(context_link_conf)
+                
+        if len(verification_results) > 0:
+            logger.warning(str(verification_results))
 
         return jsonify(response)
