@@ -54,7 +54,7 @@ class ContextLinkConfigResource(resources.ResourceMixin, Resource):
                 "check_match_fields": False,
                 "check_validation_regex": False,
                 "check_context_link": False,
-                "check_redirect_warning": False
+                "check_redirect_warning": False,
             }
 
             # Verify that short_name is defined and type string
