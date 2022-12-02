@@ -15,35 +15,37 @@ limitations under the License.
 -->
 <template>
   <div>
-    <div class="pa-4" flat :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
-      <span style="cursor: pointer" @click="expanded = !expanded"
-        ><v-icon left>mdi-sigma-lower</v-icon> Sigma Rules ({{ sigmaRules.length }})</span
-      >
+    <div class="pa-4" flat
+      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
+      <v-btn @click="CreateNewRule()" small depressed color="green">
+        Create Rule</v-btn>
+      <span style="cursor: pointer" @click="expanded = !expanded">
+        <v-icon left>mdi-sigma-lower</v-icon> Sigma Rules ({{ sigmaRules.length
+        }})
+      </span>
     </div>
     <v-expand-transition>
-      <div v-show="expanded && sigmaRules.length">
-        <v-data-iterator :items="sigmaRules" :items-per-page.sync="itemsPerPage" :search="search">
+      <div v-show="expanded">
+        <v-data-iterator :items="sigmaRules" :items-per-page.sync="itemsPerPage"
+          :search="search">
+
           <template v-slot:header>
             <v-toolbar flat>
-              <v-text-field
-                v-model="search"
-                clearable
-                hide-details
-                outlined
-                dense
-                prepend-inner-icon="mdi-magnify"
-                label="Search for a rule.."
-              ></v-text-field>
+              <v-text-field v-model="search" clearable hide-details outlined
+                dense prepend-inner-icon="mdi-magnify"
+                label="Search for a rule.."></v-text-field>
             </v-toolbar>
           </template>
 
           <template v-slot:default="props">
-            <ts-sigma-rule v-for="sigmaRule in props.items" :key="sigmaRule.id" :sigma-rule="sigmaRule">
+            <ts-sigma-rule v-for="sigmaRule in props.items"
+              :key="sigmaRule.rule_uuid" :sigma-rule="sigmaRule">
             </ts-sigma-rule>
           </template>
         </v-data-iterator>
       </div>
     </v-expand-transition>
+    <v-divider></v-divider>
   </div>
 </template>
 
@@ -58,13 +60,22 @@ export default {
   },
   data: function () {
     return {
-      sigmaRules: [],
       expanded: false,
       itemsPerPage: 10,
       search: '',
     }
   },
+  methods: {
+    CreateNewRule() {
+      //this.$store.dispatch('updateSearchNode', this.selectedNode)
+      this.$router.go('/studio/sigma/' + crypto.randomUUID());
+
+    }
+  },
   computed: {
+    sigmaRules() {
+      return this.$store.state.sigmaRuleList
+    },
     sketch() {
       return this.$store.state.sketch
     },
@@ -73,11 +84,7 @@ export default {
     },
   },
   created() {
-    ApiClient.getSigmaList()
-      .then((response) => {
-        this.sigmaRules = response.data.objects
-      })
-      .catch((e) => {})
+    this.$store.dispatch('updateSigmaList')
   },
 }
 </script>

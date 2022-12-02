@@ -120,7 +120,7 @@ export default new Vuex.Store({
           context.dispatch('updateTimelineTags', sketchId)
           context.dispatch('updateDataTypes', sketchId)
         })
-        .catch((e) => {})
+        .catch((e) => { })
     },
     updateCount(context, sketchId) {
       // Count events for all timelines in the sketch
@@ -128,7 +128,7 @@ export default new Vuex.Store({
         .then((response) => {
           context.commit('SET_COUNT', response.data.meta.count)
         })
-        .catch((e) => {})
+        .catch((e) => { })
     },
     resetState(context) {
       context.commit('RESET_STATE')
@@ -144,7 +144,7 @@ export default new Vuex.Store({
         .then((response) => {
           context.commit('SET_SEARCH_HISTORY', response.data)
         })
-        .catch((e) => {})
+        .catch((e) => { })
     },
     updateScenarios(context, sketchId) {
       if (!sketchId) {
@@ -154,14 +154,14 @@ export default new Vuex.Store({
         .then((response) => {
           context.commit('SET_SCENARIOS', response.data)
         })
-        .catch((e) => {})
+        .catch((e) => { })
     },
     updateScenarioTemplates(context, sketchId) {
       return ApiClient.getScenarios(sketchId)
         .then((response) => {
           context.commit('SET_SCENARIO_TEMPLATES', response.data)
         })
-        .catch((e) => {})
+        .catch((e) => { })
     },
     updateTimelineTags(context, sketchId) {
       if (!context.state.sketch.active_timelines.length) {
@@ -178,7 +178,7 @@ export default new Vuex.Store({
         .then((response) => {
           context.commit('SET_TIMELINE_TAGS', response.data)
         })
-        .catch((e) => {})
+        .catch((e) => { })
     },
     updateDataTypes(context, sketchId) {
       if (!context.state.sketch.active_timelines.length) {
@@ -195,14 +195,14 @@ export default new Vuex.Store({
         .then((response) => {
           context.commit('SET_DATA_TYPES', response.data)
         })
-        .catch((e) => {})
+        .catch((e) => { })
     },
     updateSigmaList(context) {
-      ApiClient.getSigmaList()
+      ApiClient.getSigmaRuleList()
         .then((response) => {
           context.commit('SET_SIGMA_LIST', response.data)
         })
-        .catch((e) => {})
+        .catch((e) => { })
     },
     setActiveContext(context, activeScenarioContext) {
       context.commit('SET_ACTIVE_CONTEXT', activeScenarioContext)
