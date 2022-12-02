@@ -197,7 +197,6 @@ export default new Vuex.Store({
         .catch((e) => { })
     },
     updateSigmaList(context) {
-      console.log("update triggered")
       ApiClient.getSigmaRuleList()
         .then((response) => {
           context.commit('SET_SIGMA_LIST', response.data)

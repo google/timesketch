@@ -87,9 +87,8 @@ export default {
         }
     },
     mounted() {
-        this.getRuleByUUID(this.rule_uuid)
         // even if the rule was stored, we want to double check the rule
-        this.parseSigma(this.rule_yaml)
+        this.getRuleByUUID(this.rule_uuid)
     },
     methods: {
         cancel() { this.$router.back() },
@@ -109,7 +108,6 @@ export default {
                     console.log(response.data.objects[0])
                     if (!response.data.objects[0].author) {
                         this.problemString = 'No Author given'
-
                     } else {
                         this.editingRule = response.data.objects[0]
                         this.problemString = 'OK'
@@ -134,8 +132,8 @@ export default {
                 .then(response => {
                     this.editingRule = response.data.objects[0]
                     this.rule_yaml = this.editingRule.rule_yaml
-                    console.log("Found the rule + " + this.editingRule)
                     this.problemString = 'OK'
+                    this.parseSigma(this.rule_yaml)
                 })
                 .catch(e => {
                     console.error(e)
@@ -162,11 +160,6 @@ tags:
                     .then(response => {
                         console.log("Rule deleted: " + rule_uuid)
                         this.$store.dispatch('updateSigmaList')
-
-                        // remove element from Array
-                        //this.$store.state.sigmaRuleList = this.sigmaRuleList.filter(obj => {
-                        //    return obj.rule_uuid !== ioc.rule_uuid
-                        //})
                     })
                     .catch(e => {
                         console.error(e)
@@ -185,7 +178,6 @@ tags:
                             message: 'Succesfully added Sigma rule!',
                             type: 'is-success'
                         })
-                        this.showEditModal = false
                         this.sigmaRuleList.push(response.data.objects[0])
                     })
                         .catch(e => {
@@ -204,6 +196,7 @@ tags:
                             this.$store.state.sigmaRuleList = this.sigmaRuleList.filter(obj => {
                                 return obj.rule_uuid !== this.editingRule.rule_uuid
                             })
+                            console.log("rule updated")
                             this.sigmaRuleList.push(response.data.objects[0])
                             // do not close the the edit view in case there is an error
                             this.$buefy.notification.open(
@@ -211,13 +204,11 @@ tags:
                                     message: 'Succesfully modified Sigma rule!',
                                     type: 'is-success'
                                 })
-                            this.showEditModal = false
                         })
                         .catch(e => {
                         })
                 }
                 this.$store.dispatch('updateSigmaList')
-
             }
         },
     },

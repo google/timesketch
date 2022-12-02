@@ -79,13 +79,13 @@ limitations under the License.
 
     <v-expand-transition>
       <div v-show="expanded" class="pa-4 pt-0">
-        {{ sigmaRuleSummary | pretty }}
+        {{ sigmaRuleSummary }}
         <div style="font-size: 0.9em" class="mt-2">
           <v-simple-table dense>
             <template v-slot:default>
 
               <tbody>
-                <tr v-for="(v, k) in sigmaRuleSummary" :key="v.id">
+                <tr v-for="(v, k) in sigmaRuleSummary" :key="v.rule_uuid">
                   <td>
                     <strong>{{ k }}</strong>
                   </td>
@@ -96,8 +96,9 @@ limitations under the License.
                       </div>
                     </span>
                     <span v-else-if="k === 'falsepositives'">
-                      <v-chip v-for="tag in v" :key="tag" rounded x-small
-                        class="mr-2">{{ tag }}</v-chip>
+                      <v-chip v-for="falsepositive in v" :key="falsepositive"
+                        rounded x-small class="mr-2">{{ falsepositive
+                        }}</v-chip>
                     </span>
                     <span v-else-if="k === 'tags'">
                       <v-chip v-for="tag in v" :key="tag" rounded x-small
@@ -155,8 +156,6 @@ export default {
       return this.$store.state.sketch
     },
     sigmaRuleSummary() {
-      console.log("SummaryCalled +" + this.sigmaRule.rule_uuid)
-      //if this.sigmaRule === 'undefined'
       const fields = ['author', 'description', 'references', 'date', 'modified', 'falsepositives', 'level', 'tags', 'rule_uuid']
       return Object.fromEntries(Object.entries(this.sigmaRule).filter(([key]) => fields.includes(key)))
     },

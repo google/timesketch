@@ -43,9 +43,6 @@ limitations under the License.
           </template>
         </v-data-iterator>
       </div>
-      <div>
-        <pre>{{ sigmaRules | pretty }}</pre>
-      </div>
     </v-expand-transition>
     <v-divider></v-divider>
   </div>
