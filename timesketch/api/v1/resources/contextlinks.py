@@ -49,7 +49,6 @@ class ContextLinkConfigResource(resources.ResourceMixin, Resource):
             context_link_config = deepcopy(entry_dict)
             del context_link_config["match_fields"]
             for field in entry_dict.get("match_fields"):
-                response.setdefault(field.lower(), []).append(
-                    context_link_config)
+                response.setdefault(field.lower(), []).append(context_link_config)
 
         return jsonify(response)

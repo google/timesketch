@@ -499,6 +499,6 @@ def validate_context_links_conf(path):
     for entry in context_link_config:
         try:
             validate(instance=context_link_config[entry], schema=schema)
-            print(f"=> OK: \"{entry}\"")
+            print(f'=> OK: "{entry}"')
         except ValidationError as err:
-            print(f"=> ERROR: \"{entry}\" >> {err}\n")
+            print(f'=> ERROR: "{entry}" >> {err}\n')
