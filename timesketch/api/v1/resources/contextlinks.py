@@ -44,6 +44,9 @@ class ContextLinkConfigResource(resources.ResourceMixin, Resource):
         context_link_yaml = load_yaml_config("CONTEXT_LINKS_CONFIG_PATH")
 
         response = {}
+        if not context_link_yaml:
+            return jsonify(response)
+
         for entry in context_link_yaml:
             entry_dict = context_link_yaml[entry]
             context_link_config = deepcopy(entry_dict)
