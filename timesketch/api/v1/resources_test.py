@@ -1129,7 +1129,6 @@ class ContextLinksResourceTest(BaseTest):
             "url": [
                 {
                     "short_name": "LookupThree",
-                    "validation_regex": "",
                     "context_link": "https://lookupthree.local/q=<ATTR_VALUE>",
                     "redirect_warning": True,
                 },
