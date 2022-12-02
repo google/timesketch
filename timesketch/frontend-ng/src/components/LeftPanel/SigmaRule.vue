@@ -37,8 +37,7 @@ limitations under the License.
             <v-list>
               <v-list-item-group color="primary">
 
-                <v-list-item
-                  :to="{ name: 'Studio', params: { id: sigmaRule.rule_uuid, type: 'sigma' } }">
+                <v-list-item v-on:click="editRule(sigmaRule.rule_uuid)">
                   <v-list-item-icon>
                     <v-icon>mdi-brightness-6</v-icon>
                   </v-list-item-icon>
@@ -180,6 +179,10 @@ export default {
           })
         this.$store.dispatch('updateSigmaList')
       }
+    },
+    editRule(rule_uuid) {
+      this.$router.go('/studio/sigma/' + rule_uuid);
+
     },
     archiveRule(rule_uuid) {
       console.log("Rule archive pressed: " + rule_uuid)

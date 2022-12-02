@@ -17,10 +17,11 @@ limitations under the License.
   <div>
     <div class="pa-4" flat
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
+      <v-btn @click="CreateNewRule()" small depressed color="green">
+        Create Rule</v-btn>
       <span style="cursor: pointer" @click="expanded = !expanded">
         <v-icon left>mdi-sigma-lower</v-icon> Sigma Rules ({{ sigmaRules.length
-        }}) <v-btn @click="CreateNewRule()" small depressed color="green">
-          Create Rule</v-btn>
+        }})
       </span>
     </div>
     <v-expand-transition>
@@ -65,13 +66,14 @@ export default {
     }
   },
   methods: {
-    CreateNewRule(){
+    CreateNewRule() {
       //this.$store.dispatch('updateSearchNode', this.selectedNode)
-      this.$router.push('/studio/sigma/'+crypto.randomUUID()); 
+      this.$router.go('/studio/sigma/' + crypto.randomUUID());
+
     }
   },
   computed: {
-    sigmaRules(){
+    sigmaRules() {
       return this.$store.state.sigmaRuleList
     },
     sketch() {
