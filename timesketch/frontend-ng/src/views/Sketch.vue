@@ -265,6 +265,7 @@ export default {
       this.$store.dispatch('updateScenarios', this.sketchId)
       this.$store.dispatch('updateScenarioTemplates', this.sketchId)
       this.$store.dispatch('updateSigmaList', this.sketchId)
+      this.$store.dispatch('updateContextLinks', this.sketchId)
     })
   },
   updated() {
