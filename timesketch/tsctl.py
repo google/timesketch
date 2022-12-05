@@ -16,10 +16,10 @@
 import os
 import pathlib
 import json
+import subprocess
 import yaml
 
 import click
-import subprocess
 from flask.cli import FlaskGroup
 from sqlalchemy.exc import IntegrityError
 
@@ -33,8 +33,6 @@ from timesketch.models.user import User
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import SearchTemplate
 from timesketch.models.sigma import SigmaRule
-from timesketch.models.sketch import Timeline
-from timesketch.models.sketch import DataSource
 
 
 @click.group(cls=FlaskGroup, create_app=create_app)
@@ -455,7 +453,6 @@ def info():
     """Prints out the environment information for debugging purposes."""
     """Get Timesketch version"""
     print(f"Timesketch version: {version.get_version()}")
-    # print(f"Timesketch config file: {path}")
 
     """Get plaso version"""
     output = subprocess.check_output(["psort.py", "--version"])
@@ -469,7 +466,7 @@ def info():
     """Get installed npm version"""
     output = subprocess.check_output(["npm", "--version"])
     output_decoded = output.decode("utf-8")
-    print(f"npm version: {output_decoded} ")
+    print(f"npm version: {output_decoded}")
 
     """Get installed yarn version"""
     output = subprocess.check_output(["yarn", "--version"])
