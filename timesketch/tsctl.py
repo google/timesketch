@@ -22,6 +22,7 @@ import yaml
 import click
 from flask.cli import FlaskGroup
 from sqlalchemy.exc import IntegrityError
+from jsonschema import validate, ValidationError
 
 from timesketch import version
 from timesketch.app import create_app
@@ -480,3 +481,61 @@ def info():
     output = subprocess.check_output(["pip", "--version"])
     output_decoded = output.decode("utf-8")
     print(f"pip version: {output_decoded} ")
+
+@cli.command(name="validate-context-links-conf")
+@click.argument("path")
+def validate_context_links_conf(path):
+    """Validates the provided context link yaml configuration file."""
+
+    schema = {
+        "type": "object",
+        "properties": {
+            "context_link": {
+                "type": "string",
+                "pattern": "<ATTR_VALUE>",
+            },
+            "match_fields": {
+                "type": "array",
+                "minItems": 1,
+                "items": [
+                    {
+                        "type": "string",
+                    },
+                ],
+            },
+            "redirect_warning": {
+                "type": "boolean",
+            },
+            "short_name": {
+                "type": "string",
+                "minLength": 1,
+            },
+            "validation_regex": {
+                "type": "string",
+            },
+        },
+        "required": [
+            "context_link",
+            "match_fields",
+            "redirect_warning",
+            "short_name",
+        ],
+    }
+
+    if not os.path.isfile(path):
+        print(f"Cannot load the config file: {path} does not exist!")
+        return
+
+    with open(path, "r") as fh:
+        context_link_config = yaml.safe_load(fh)
+
+    if not context_link_config:
+        print("The provided config file is empty.")
+        return
+
+    for entry in context_link_config:
+        try:
+            validate(instance=context_link_config[entry], schema=schema)
+            print(f'=> OK: "{entry}"')
+        except ValidationError as err:
+            print(f'=> ERROR: "{entry}" >> {err}\n')

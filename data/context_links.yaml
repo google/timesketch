@@ -1,0 +1,46 @@
+# ------------------------------------------------------------------------
+#                       -- CONTEXT LINKS --
+# ------------------------------------------------------------------------
+#
+# This is a config file to define context links for event attributes.
+#
+# Each context link consists of the following fields:
+#
+#   context_link_name:
+#
+#       short_name:         Type: str | The name for the context link.
+#                           Will be displayed in the context link submenu.
+#
+#       match_fields:       Type: list[str] | List of field keys where
+#                           this context link should be available. Will
+#                           be checked as case insensitive!
+#
+#       validation_regex:   Type: str | OPTIONAL
+#                           A regex pattern that needs to be
+#                           matched by the field value to to make the
+#                           context link available. This can be used to
+#                           validate the format of a value (e.g. a hash).
+#
+#       context_link:       Type: str | The link that will be opened in a
+#                           new tab when the context link is clicked.
+#                           IMPORTANT: Add the placeholder "<ATTR_VALUE>"
+#                           where the attribute value should be inserted
+#                           into the link.
+#
+#        redirect_warning:   [TRUE]: If the context link is clicked it will
+#                                   open a pop-up dialog first that asks the
+#                                   user if they would like to proceed to
+#                                   the linked page. (Recommended for
+#                                   external pages.)
+#                           [FALSE]: The linked page will be opened without
+#                                    any pop-up. (Recommended for internal
+#                                    pages.)
+#
+# ------------------------------------------------------------------------
+## Virustotal Example:
+# virustotal_hash_lookup:
+#   short_name: 'VirusTotal'
+#   match_fields: ['hash', 'sha256_hash', 'sha256', 'sha1_hash', 'sha1', 'md5_hash', 'md5']
+#   validation_regex: '/^[0-9a-f]{64}$|^[0-9a-f]{40}$|^[0-9a-f]{32}$/i'
+#   context_link: 'https://www.virustotal.com/gui/search/<ATTR_VALUE>'
+#   redirect_warning: TRUE
