@@ -81,10 +81,7 @@ export default {
             search: '',
         }
     },
-    updated() {
-        console.log("foobar")
-        //this.getRuleByUUID(this.rule_uuid)
-    },
+
     mounted() {
         // even if the rule was stored, we want to double check the rule
         this.getRuleByUUID(this.rule_uuid)

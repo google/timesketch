@@ -45,12 +45,12 @@ limitations under the License.
                     <v-list-item-title>Edit Rule</v-list-item-title>
                   </v-list-item-content>
                 </v-list-item>
-                <v-list-item v-on:click="archiveRule(sigmaRule.rule_uuid)">
+                <v-list-item v-on:click="deactivateRule(sigmaRule.rule_uuid)">
                   <v-list-item-icon>
                     <v-icon>mdi-archive</v-icon>
                   </v-list-item-icon>
                   <v-list-item-content>
-                    <v-list-item-title>Archive Rule</v-list-item-title>
+                    <v-list-item-title>Deactivate Rule</v-list-item-title>
                   </v-list-item-content>
                 </v-list-item>
                 <v-list-item v-on:click="deleteRule(sigmaRule.rule_uuid)">
@@ -59,14 +59,6 @@ limitations under the License.
                   </v-list-item-icon>
                   <v-list-item-content>
                     <v-list-item-title>Delete Rule</v-list-item-title>
-                  </v-list-item-content>
-                </v-list-item>
-                <v-list-item v-on:click="copyAndTweakRule(sigmaRule.rule_uuid)">
-                  <v-list-item-icon>
-                    <v-icon>mdi-export</v-icon>
-                  </v-list-item-icon>
-                  <v-list-item-content>
-                    <v-list-item-title>Copy and tweak rule</v-list-item-title>
                   </v-list-item-content>
                 </v-list-item>
               </v-list-item-group>
@@ -180,6 +172,7 @@ export default {
           .catch(e => {
             console.error(e)
           })
+          // remove the router go here!!!
         this.$store.dispatch('updateSigmaList')
         this.$router.go('/studio/sigma/')
       }
@@ -194,11 +187,8 @@ export default {
         }
       });
     },
-    archiveRule(rule_uuid) {
+    deactivateRule(rule_uuid) {
       console.log("Rule archive pressed: " + rule_uuid)
-    },
-    copyAndTweakRule(rule_uuid) {
-      console.log("Rule copy and tweak pressed: " + rule_uuid)
     },
   },
 }
