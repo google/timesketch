@@ -445,40 +445,38 @@ def export_sigma_rules(path):
     print(f"{n} Sigma rules exported")
 
 
-"""Get various information about the environment that runs Timesketch."""
-
-
 @cli.command(name="info")
 def info():
-    """Prints out the environment information for debugging purposes."""
-    """Get Timesketch version"""
+    """Get various information about the environment that runs Timesketch."""
+
+    # Get Timesketch version
     print(f"Timesketch version: {version.get_version()}")
 
-    """Get plaso version"""
+    # Get plaso version
     output = subprocess.check_output(["psort.py", "--version"])
     print(output.decode("utf-8"))
 
-    """Get installed node version"""
+    # Get installed node version
     output = subprocess.check_output(["node", "--version"])
     output_decoded = output.decode("utf-8")
     print(f"Node version: {output_decoded} ")
 
-    """Get installed npm version"""
+    # Get installed npm version
     output = subprocess.check_output(["npm", "--version"])
     output_decoded = output.decode("utf-8")
     print(f"npm version: {output_decoded}")
 
-    """Get installed yarn version"""
+    # Get installed yarn version
     output = subprocess.check_output(["yarn", "--version"])
     output_decoded = output.decode("utf-8")
     print(f"yarn version: {output_decoded} ")
 
-    """Get installed python version"""
+    # Get installed python version
     output = subprocess.check_output(["python3", "--version"])
     output_decoded = output.decode("utf-8")
     print(f"Python version: {output_decoded} ")
 
-    """Get installed pip version"""
+    # Get installed pip version
     output = subprocess.check_output(["pip", "--version"])
     output_decoded = output.decode("utf-8")
     print(f"pip version: {output_decoded} ")
