@@ -14,6 +14,34 @@ Example
 tsctl runserver -c /etc/timesketch/timesketch.conf
 ```
 
+## version
+
+Displays the version of Timesketch installed on the system
+
+Example
+
+```shell
+tsctl version
+Timesketch version: 20210602
+```
+
+## info
+
+Displays various useful version information used on the system Timesketch is installed on.
+
+Example
+
+```shell
+tsctl info
+Timesketch version: 20210602
+plaso - psort version 20220930
+Node version: v14.20.1
+npm version: 6.14.17
+yarn version: 1.22.19
+Python version: Python 3.10.6
+pip version: pip 22.0.2 from /usr/lib/python3/dist-packages/pip (python 3.10)
+```
+
 ### User management
 
 #### Adding users
