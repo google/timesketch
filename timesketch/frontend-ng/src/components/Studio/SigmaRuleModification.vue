@@ -17,17 +17,12 @@ limitations under the License.
     <v-card width="1000" style="overflow: initial">
         <v-container class="px-8">
             <h1>Rule title: {{ editingRule.title }} <v-chip rounded x-small
-                    class="mr-2" :color="parsingStatusColors(problemString)">
-                    {{ problemString }}</v-chip>
+                    class="mr-2" :color="parsingStatusColors(ok_button_text)">
+                    {{ ok_button_text }}</v-chip>
             </h1>
 
             <div>
-                <div style="width:50%;display:inline-table;">
-                    <v-alert colored-border border="left" elevation="1"
-                        :color="parsingStatusColors(problemString)">
-                        {{ problemString }}
-                    </v-alert>
-                </div>
+
 
                 <v-autocomplete dense filled rounded :items="SigmaTemplates"
                     @change="rowClick" item-text="title">
@@ -37,7 +32,7 @@ limitations under the License.
 
             <div width="500">
                 <v-alert colored-border border="left" elevation="1"
-                    :color="parsingStatusColors(problemString)">
+                    :color="parsingStatusColors(ok_button_text)">
                     <b>Search Query:</b>
                     {{ editingRule.search_query }}
                 </v-alert>
@@ -48,7 +43,7 @@ limitations under the License.
                 v-model="rule_yaml" @input="parseSigma(rule_yaml)">
             </v-textarea>
             <div class="mt-3">
-                <v-btn :disabled="problemString.toLowerCase() !== 'ok'"
+                <v-btn :disabled="ok_button_text.toLowerCase() !== 'ok'"
                     @click="addOrUpdateRule(rule_yaml)" small depressed
                     color="primary">{{ save_button_text }}</v-btn>
                 <v-btn @click="cancel" small depressed color="secondary">Cancel
@@ -79,7 +74,7 @@ export default {
     data() {
         return {
             editingRule: { "rule_yaml": "foobar" }, // empty state
-            problemString: 'OK',
+            ok_button_text: 'OK',
             save_button_text: "Update",
             rule_yaml: {},
             SigmaTemplates: SigmaTemplates,
@@ -87,7 +82,8 @@ export default {
         }
     },
     updated() {
-        this.getRuleByUUID(this.rule_uuid)
+        console.log("foobar")
+        //this.getRuleByUUID(this.rule_uuid)
     },
     mounted() {
         // even if the rule was stored, we want to double check the rule
@@ -105,27 +101,25 @@ export default {
         },
         // Set debounce to 300ms if parseSigma is used.
         parseSigma: _.debounce(function (rule_yaml) { // eslint-disable-line
-            this.problemString = ''
             ApiClient.getSigmaRuleByText(rule_yaml)
                 .then(response => {
                     console.log(response.data.objects[0])
                     if (!response.data.objects[0].author) {
-                        this.problemString = 'No Author given'
+                        this.search_query = 'No Author given'
                     } else {
                         this.editingRule = response.data.objects[0]
-                        this.problemString = 'OK'
+                        this.ok_button_text = 'OK'
+
                     }
                 })
                 .catch(e => {
-                    this.problemString = 'PROBLEM please see console'
-                    //console.log(e.response.data.message)
-                    //this.problemString = e.response.data.message
+                    this.editingRule['search_query'] = e.response.data.message
                     // need to set search_query to something, to overwrite previous value
-                    this.editingRule['search_query'] = 'PLEASE ADJUST RULE'
+                    this.ok_button_text = 'ERROR'
                 })
         }, 300),
         parsingStatusColors(datasource) {
-            if (this.problemString === 'OK') {
+            if (this.ok_button_text === 'OK') {
                 return 'success'
             }
             return 'warning'
@@ -135,13 +129,13 @@ export default {
                 .then(response => {
                     this.editingRule = response.data.objects[0]
                     this.rule_yaml = this.editingRule.rule_yaml
-                    this.problemString = 'OK'
-                    this.parseSigma(this.rule_yaml)
+                    this.ok_button_text = 'OK'
                 })
                 .catch(e => {
                     console.error(e)
                     this.save_button_text = "Create"
-                    this.problemString = 'No Rule found, creating a new one'
+                    this.ok_button_text = 'Ok'
+                    this.editingRule['search_query'] = 'No Rule found, creating a new one'
                     this.rule_yaml = `title: Foobar
 id: ${crypto.randomUUID()}
 description: Detects suspicious FOOBAR
@@ -170,11 +164,11 @@ tags:
             }
         },
         addOrUpdateRule: function (event) {
-            if (this.problemString !== 'OK') {
+            if (this.ok_button_text !== 'OK') {
                 // There seems still a parsing error, do not store them
                 console.error("Sigma parsing still has error, please fix")
             }
-            else if (this.problemString === 'OK') {
+            else if (this.ok_button_text === 'OK') {
                 if (this.save_button_text === "Create") {
                     ApiClient.createSigmaRule(this.rule_yaml).then(response => {
                         this.$buefy.notification.open({
@@ -184,13 +178,7 @@ tags:
                         this.sigmaRuleList.push(response.data.objects[0])
                     })
                         .catch(e => {
-                            this.problemString = "Problem, please see console"
-                            Snackbar.open({
-                                message: this.problemString,
-                                type: 'is-danger',
-                                position: 'is-top',
-                                indefinite: false,
-                            })
+                            this.editingRule['search_query'] = e.response.data.message  // need to set search_query to something, to overwrite previous value
                         })
                 }
                 if (this.save_button_text === "Update") {
