@@ -713,7 +713,7 @@ class TimesketchApi:
         except ValueError:
             logger.error("Parsing Error, unable to parse the Sigma rule", exc_info=True)
 
-        return sigma_obj
+        return sigma_obj  # pytype: disable=name-error  # py310-upgrade
 
     def get_sigma_rule(self, rule_uuid):
         """DEPRECATED please use get_sigmarule() instead: Get a sigma rule.
@@ -752,4 +752,4 @@ class TimesketchApi:
         except ValueError:
             logger.error("Parsing Error, unable to parse the Sigma rule", exc_info=True)
 
-        return sigma_obj
+        return sigma_obj  # pytype: disable=name-error  # py310-upgrade

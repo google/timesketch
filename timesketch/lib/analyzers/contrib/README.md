@@ -1,7 +1,10 @@
 ## Community contributed analyzers
 
 This directory hosts community contributed analyzers. They are not maintained
-by the core Timesketch development team.
+by the core Timesketch development team. Code in `/contrib/` directories won't
+be taken into account in any end-to-end tests run by the core Timesketch 
+development team; it's up to contributors to make sure that their code is
+properly end-to-end tested.
 
 ### For developers
 
