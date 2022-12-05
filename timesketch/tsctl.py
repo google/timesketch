@@ -32,6 +32,8 @@ from timesketch.models.user import User
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import SearchTemplate
 from timesketch.models.sigma import SigmaRule
+from timesketch.models.sketch import Timeline
+from timesketch.models.sketch import DataSource
 
 
 @click.group(cls=FlaskGroup, create_app=create_app)
@@ -58,7 +60,9 @@ def create_user(username, password=None):
 
     def get_password_from_prompt():
         """Get password from the command line prompt."""
-        first_password = click.prompt("Enter password", hide_input=True, type=str)
+        first_password = click.prompt(
+            "Enter password", hide_input=True, type=str
+        )
         second_password = click.prompt(
             "Enter password again", hide_input=True, type=str
         )
@@ -150,7 +154,9 @@ def grant_user(username, sketch_id):
     else:
         sketch.grant_permission(permission="read", user=user)
         sketch.grant_permission(permission="write", user=user)
-        print(f"User {username} added to the sketch {sketch.id} ({sketch.name})")
+        print(
+            f"User {username} added to the sketch {sketch.id} ({sketch.name})"
+        )
 
 
 @cli.command(name="version")
@@ -293,7 +299,9 @@ def import_search_templates(path):
                     template_uuid=uuid
                 ).first()
                 if not searchtemplate:
-                    searchtemplate = SearchTemplate(name=name, template_uuid=uuid)
+                    searchtemplate = SearchTemplate(
+                        name=name, template_uuid=uuid
+                    )
                     db_session.add(searchtemplate)
                     db_session.commit()
 
@@ -347,7 +355,9 @@ def import_sigma_rules(path):
 
         # Query rules to see if it already exist and exit if found
         rule_uuid = sigma_rule.get("id")
-        sigma_rule_from_db = SigmaRule.query.filter_by(rule_uuid=rule_uuid).first()
+        sigma_rule_from_db = SigmaRule.query.filter_by(
+            rule_uuid=rule_uuid
+        ).first()
         if sigma_rule_from_db:
             print(f"Rule {rule_uuid} is already imported")
             continue
@@ -408,7 +418,9 @@ def remove_all_sigma_rules():
     """Deletes all Sigma rule from the database."""
 
     if click.confirm("Do you really want to drop all the Sigma rules?"):
-        if click.confirm("Are you REALLLY sure you want to DROP ALL the Sigma rules?"):
+        if click.confirm(
+            "Are you REALLLY sure you want to DROP ALL the Sigma rules?"
+        ):
 
             all_sigma_rules = SigmaRule.query.all()
             for rule in all_sigma_rules:
@@ -425,7 +437,8 @@ def export_sigma_rules(path):
 
     if not os.path.isdir(path):
         raise RuntimeError(
-            "The directory needs to exist, please create: " "{0:s} first".format(path)
+            "The directory needs to exist, please create: "
+            "{0:s} first".format(path)
         )
 
     all_sigma_rules = SigmaRule.query.all()
