@@ -22,6 +22,7 @@ import yaml
 import click
 from flask.cli import FlaskGroup
 from sqlalchemy.exc import IntegrityError
+from prettytable import PrettyTable
 from jsonschema import validate, ValidationError
 
 from timesketch import version
@@ -481,6 +482,65 @@ def info():
     output = subprocess.check_output(["pip", "--version"])
     output_decoded = output.decode("utf-8")
     print(f"pip version: {output_decoded} ")
+
+@cli.command(name="sketch-info")
+@click.argument("sketch_id")
+def sketch_info(sketch_id):
+    """Give information about a sketch."""
+    sketch = Sketch.query.filter_by(id=sketch_id).first()
+    if not sketch:
+        print("Sketch does not exist.")
+    else:
+        print(f"Sketch {sketch_id} Name: ({sketch.name})")
+
+        table = PrettyTable()
+        table.field_names = [
+            "searchindex_id",
+            "index_name",
+            "created_at",
+            "user_id",
+            "description",
+        ]
+
+        for t in sketch.active_timelines:
+            table.add_row(
+                [
+                    t.searchindex_id,
+                    t.searchindex.index_name,
+                    t.created_at,
+                    t.user_id,
+                    t.description,
+                ]
+            )
+
+        print(f"active_timelines:\n{table}")
+
+        print("Shared with:")
+        print("\tUsers: (user_id, username)")
+        for user in sketch.collaborators:
+            print(f"\t\t{user.id}: {user.username}")
+        print("\tGroups:")
+        for group in sketch.groups:
+            print(f"\t\t{group.display_name}")
+        sketch_labels = [label.label for label in sketch.labels]
+        print(f"Sketch Status: {sketch.get_status.status}")
+        print(f"Sketch is public: {bool(sketch.is_public)}")
+        sketch_labels = ([label.label for label in sketch.labels],)
+        print(f"Sketch Labels: {sketch_labels}")
+
+        status_table = PrettyTable()
+        status_table.field_names = [
+            "id",
+            "status",
+            "created_at",
+            "user_id",
+        ]
+        for status in sketch.status:
+            status_table.add_row(
+                [status.id, status.status, status.created_at, status.user_id]
+            )
+        print(f"Status:\n{status_table}")
+
 
 @cli.command(name="validate-context-links-conf")
 @click.argument("path")
