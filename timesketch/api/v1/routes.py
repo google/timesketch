@@ -73,6 +73,7 @@ from .resources.graph import GraphResource
 from .resources.graph import GraphPluginListResource
 from .resources.graph import GraphCacheResource
 from .resources.intelligence import TagMetadataResource
+from .resources.contextlinks import ContextLinkConfigResource
 
 from .resources.scenarios import ScenarioTemplateListResource
 from .resources.scenarios import ScenarioListResource
@@ -170,4 +171,5 @@ API_ROUTES = [
         "/sketches/<int:sketch_id>/scenarios/<int:scenario_id>/status/",
     ),
     (TagMetadataResource, "/intelligence/tagmetadata/"),
+    (ContextLinkConfigResource, "/contextlinks/"),
 ]
