@@ -16,6 +16,7 @@
 import os
 import pathlib
 import json
+import subprocess
 import yaml
 
 import click
@@ -444,6 +445,38 @@ def export_sigma_rules(path):
             fw.write(rule.rule_yaml.encode("utf-8"))
         n = n + 1
     print(f"{n} Sigma rules exported")
+
+
+@cli.command(name="info")
+def info():
+    """Get various information about the environment that runs Timesketch."""
+
+    # Get Timesketch version
+    print(f"Timesketch version: {version.get_version()}")
+
+    # Get plaso version
+    output = subprocess.check_output(["psort.py", "--version"])
+    print(output.decode("utf-8"))
+
+    # Get installed node version
+    output = subprocess.check_output(["node", "--version"]).decode("utf-8")
+    print(f"Node version: {output} ")
+
+    # Get installed npm version
+    output = subprocess.check_output(["npm", "--version"]).decode("utf-8")
+    print(f"npm version: {output}")
+
+    # Get installed yarn version
+    output = subprocess.check_output(["yarn", "--version"]).decode("utf-8")
+    print(f"yarn version: {output} ")
+
+    # Get installed python version
+    output = subprocess.check_output(["python3", "--version"]).decode("utf-8")
+    print(f"Python version: {output} ")
+
+    # Get installed pip version
+    output = subprocess.check_output(["pip", "--version"]).decode("utf-8")
+    print(f"pip version: {output} ")
 
 
 @cli.command(name="sketch-info")
