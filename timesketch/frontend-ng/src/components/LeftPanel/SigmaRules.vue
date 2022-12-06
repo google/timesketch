@@ -15,35 +15,33 @@ limitations under the License.
 -->
 <template>
   <div>
-    <div class="pa-4" flat
-      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
-
+    <div class="pa-4" flat :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
       <span style="cursor: pointer" @click="expanded = !expanded">
-        <v-icon left>mdi-sigma-lower</v-icon> Sigma Rules ({{ sigmaRules.length
-        }})
+        <v-icon left>mdi-sigma-lower</v-icon> Sigma Rules ({{ sigmaRules.length }})
       </span>
       <div>
-        <v-btn @click="CreateNewRule()" small depressed color="green">
-          Create Rule</v-btn>
+        <v-btn @click="CreateNewRule()" small depressed color="green"> Create Rule</v-btn>
       </div>
     </div>
     <v-expand-transition>
       <div v-show="expanded">
-
-        <v-data-iterator :items="sigmaRules" :items-per-page.sync="itemsPerPage"
-          :search="search">
-
+        <v-data-iterator :items="sigmaRules" :items-per-page.sync="itemsPerPage" :search="search">
           <template v-slot:header>
             <v-toolbar flat>
-              <v-text-field v-model="search" clearable hide-details outlined
-                dense prepend-inner-icon="mdi-magnify"
-                label="Search for a rule.."></v-text-field>
+              <v-text-field
+                v-model="search"
+                clearable
+                hide-details
+                outlined
+                dense
+                prepend-inner-icon="mdi-magnify"
+                label="Search for a rule.."
+              ></v-text-field>
             </v-toolbar>
           </template>
 
           <template v-slot:default="props">
-            <ts-sigma-rule v-for="sigmaRule in props.items"
-              :key="sigmaRule.rule_uuid" :sigma-rule="sigmaRule">
+            <ts-sigma-rule v-for="sigmaRule in props.items" :key="sigmaRule.rule_uuid" :sigma-rule="sigmaRule">
             </ts-sigma-rule>
           </template>
         </v-data-iterator>
@@ -54,7 +52,6 @@ limitations under the License.
 </template>
 
 <script>
-import ApiClient from '../../utils/RestApiClient'
 import TsSigmaRule from './SigmaRule.vue'
 
 export default {
@@ -71,8 +68,8 @@ export default {
   },
   methods: {
     CreateNewRule() {
-      this.$router.go('/studio/sigma/new');
-    }
+      this.$router.go('/studio/sigma/new')
+    },
   },
   computed: {
     sigmaRules() {
