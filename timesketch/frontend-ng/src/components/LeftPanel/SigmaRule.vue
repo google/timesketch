@@ -15,10 +15,8 @@ limitations under the License.
 -->
 <template>
   <div>
-    <v-row no-gutters class="pa-3"
-      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
-      <div @click="expanded = !expanded"
-        style="cursor: pointer; font-size: 0.9em">
+    <v-row no-gutters class="pa-3" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
+      <div @click="expanded = !expanded" style="cursor: pointer; font-size: 0.9em">
         <v-icon v-if="!expanded">mdi-chevron-right</v-icon>
         <v-icon v-else>mdi-chevron-down</v-icon>
         {{ sigmaRule.title }}
@@ -45,8 +43,7 @@ limitations under the License.
                     <v-list-item-title>Edit Rule</v-list-item-title>
                   </v-list-item-content>
                 </v-list-item>
-                <v-list-item
-                  v-on:click="deprecateSigmaRule(sigmaRule.rule_uuid)">
+                <v-list-item v-on:click="deprecateSigmaRule(sigmaRule.rule_uuid)">
                   <v-list-item-icon>
                     <v-icon>mdi-archive</v-icon>
                   </v-list-item-icon>
@@ -75,7 +72,6 @@ limitations under the License.
         <div style="font-size: 0.9em" class="mt-2">
           <v-simple-table dense>
             <template v-slot:default>
-
               <tbody>
                 <tr v-for="(v, k) in sigmaRuleSummary" :key="v.rule_uuid">
                   <td>
@@ -88,13 +84,12 @@ limitations under the License.
                       </div>
                     </span>
                     <span v-else-if="k === 'falsepositives'">
-                      <v-chip v-for="falsepositive in v" :key="falsepositive"
-                        rounded x-small class="mr-2">{{ falsepositive
-                        }}</v-chip>
+                      <v-chip v-for="falsepositive in v" :key="falsepositive" rounded x-small class="mr-2">{{
+                        falsepositive
+                      }}</v-chip>
                     </span>
                     <span v-else-if="k === 'tags'">
-                      <v-chip v-for="tag in v" :key="tag" rounded x-small
-                        class="mr-2">{{ tag }}</v-chip>
+                      <v-chip v-for="tag in v" :key="tag" rounded x-small class="mr-2">{{ tag }}</v-chip>
                     </span>
                     <span v-else>
                       {{ v }}
@@ -107,8 +102,7 @@ limitations under the License.
         </div>
 
         <div class="mt-3">
-          <v-btn @click="search(sigmaRule.search_query)" small depressed
-            color="primary">Search</v-btn>
+          <v-btn @click="search(sigmaRule.search_query)" small depressed color="primary">Search</v-btn>
         </div>
       </div>
       <div>
@@ -124,7 +118,6 @@ import EventBus from '../../main'
 import TsSigmaRuleModification from '../Studio/SigmaRuleModification.vue'
 import ApiClient from '../../utils/RestApiClient'
 
-
 const defaultQueryFilter = () => {
   return {
     from: 0,
@@ -137,9 +130,7 @@ const defaultQueryFilter = () => {
 }
 
 export default {
-  components: {
-    TsSigmaRuleModification,
-  },
+  components: {},
   props: ['sigmaRule'],
   data: function () {
     return {
@@ -151,7 +142,17 @@ export default {
       return this.$store.state.sketch
     },
     sigmaRuleSummary() {
-      const fields = ['author', 'description', 'references', 'date', 'modified', 'falsepositives', 'level', 'tags', 'rule_uuid']
+      const fields = [
+        'author',
+        'description',
+        'references',
+        'date',
+        'modified',
+        'falsepositives',
+        'level',
+        'tags',
+        'rule_uuid',
+      ]
       return Object.fromEntries(Object.entries(this.sigmaRule).filter(([key]) => fields.includes(key)))
     },
   },
@@ -164,13 +165,13 @@ export default {
       console.log(eventData)
       EventBus.$emit('setQueryAndFilter', eventData)
     },
-    deleteRule(rule_uuid) {
+    deleteRule(ruleUuid) {
       if (confirm('Delete Rule?')) {
-        ApiClient.deleteSigmaRule(rule_uuid)
-          .then(response => {
-            console.log("Rule deleted: " + rule_uuid)
+        ApiClient.deleteSigmaRule(ruleUuid)
+          .then((response) => {
+            console.log('Rule deleted: ' + ruleUuid)
           })
-          .catch(e => {
+          .catch((e) => {
             console.error(e)
           })
         // remove the router go here!!!
@@ -178,46 +179,43 @@ export default {
         this.$router.go('/studio/sigma/')
       }
     },
-    editRule(rule_uuid) {
-      // Navigate to the Sigma module with the specified rule_uuid
+    editRule(ruleUuid) {
+      // Navigate to the Sigma module with the specified ruleUuid
       this.$router.push({
         name: 'Studio',
         params: {
-          id: rule_uuid,
-          type: 'sigma'
-        }
-      });
+          id: ruleUuid,
+          type: 'sigma',
+        },
+      })
     },
-    deprecateSigmaRule(rule_uuid) {
+    deprecateSigmaRule(ruleUuid) {
       if (confirm('Archive Rule?')) {
-        //get the current Sigma rule yaml again
-        ApiClient.getSigmaRuleResource(rule_uuid = rule_uuid)
-                .then(response => {
-                    var editingRule = response.data.objects[0]
-                    const regex = /status:\s*(experimental|testing|stable)/g;
-                    var rule_yaml = editingRule.rule_yaml.replace(regex, 'status: deprecated')
-                    ApiClient.updateSigmaRule(rule_uuid, rule_yaml)
-                        .then(response => {
-                            console.log("Rule deprecated: " + rule_uuid)
-                            this.$store.dispatch('updateSigmaList')
-                            //display something in the snackbar
-                            EventBus.$emit('errorSnackBar',"Rule deprecated: " + rule_uuid)
-                        })
-                        .catch(e => {
-                            console.error(e)
-                        })
-                })
-                .catch(e => {
-                    console.error(e)
-                })
+        //  get the current Sigma rule yaml again
+        ApiClient.getSigmaRuleResource((rule_uuid = ruleUuid))
+          .then((response) => {
+            var editingRule = response.data.objects[0]
+            const regex = /status:\s*(experimental|testing|stable)/g
+            var rule_yaml = editingRule.rule_yaml.replace(regex, 'status: deprecated')
+            ApiClient.updateSigmaRule(ruleUuid, rule_yaml)
+              .then(() => {
+                console.log('Rule deprecated: ' + ruleUuid)
+                this.$store.dispatch('updateSigmaList')
+                EventBus.$emit('errorSnackBar', 'Rule deprecated: ' + ruleUuid)
+              })
+              .catch((e) => {
+                console.error(e)
+              })
+          })
+          .catch((e) => {
+            console.error(e)
+          })
         this.$store.dispatch('updateSigmaList')
       }
-
     },
   },
 }
 </script>
 
 <style scoped lang="scss">
-
 </style>
