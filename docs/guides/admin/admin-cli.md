@@ -532,3 +532,43 @@ All rules deleted
 tsctl provides a subcommand for starting an interactive Python shell with the Timesketch API client pre-initialized. This subcommand is called `shell`, and it allows you to access the Timesketch API and perform various operations using the Python interpreter.
 
 To use the `shell` subcommand, you would run `tsctl shell` followed by the desired options and arguments. For example, to start an interactive Python shell with the Timesketch API client pre-initialized, you could run the following command: `tsctl shell`.
+
+### Context Links Configuration
+
+We can use `tsctl` to test the yaml config file for the context link feature.
+This is especially useful if an entry that is added to the configuration file
+does not show up as a context link in the frontend.
+
+```
+tsctl validate-context-links-conf <PATH TO CONFIG FILE>
+```
+
+The default config can be found at `data/context_links.yaml` .
+
+The output will tell if there is a value not matching the schema requirements:
+
+**No error:** All entries in the configuration file match the schema requirements.
+```
+$ tsctl validate-context-links-conf ./context_links.yaml
+=> OK: "virustotal"
+=> OK: "unfurl"
+=> OK: "mseventid"
+=> OK: "urlhaus"
+```
+
+**With an error:** Here the validator tells us that there is an error with the
+replacement pattern in the `context_link` entry.
+```
+$ tsctl validate-context-links-conf ./context_links.yaml
+=> ERROR: "virustotal" >> 'https://www.virustotal.com/gui/search/<ATTR_VALUE' does not match '<ATTR_VALUE>'
+
+Failed validating 'pattern' in schema['properties']['context_link']:
+    {'pattern': '<ATTR_VALUE>', 'type': 'string'}
+
+On instance['context_link']:
+    'https://www.virustotal.com/gui/search/<ATTR_VALUE'
+
+=> OK: "unfurl"
+=> OK: "mseventid"
+=> OK: "urlhaus"
+```
