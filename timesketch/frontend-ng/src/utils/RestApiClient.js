@@ -355,25 +355,25 @@ export default {
   getSigmaRuleResource(ruleUuid) {
     return RestApiClient.get('/sigmarule/' + ruleUuid + '/')
   },
-  getSigmaRuleByText(ruleText) {
+  getSigmaRuleByText(rule_yaml) {
     let formData = {
-      content: ruleText,
+      content: rule_yaml,
     }
     return RestApiClient.post('/sigmarule/text/', formData)
   },
   deleteSigmaRule(ruleUuid) {
     return RestApiClient.delete('/sigmarule/' + ruleUuid + '/')
   },
-  createSigmaRule(ruleText) {
+  createSigmaRule(rule_yaml) {
     let formData = {
-      rule_yaml: ruleText,
+      rule_yaml: rule_yaml,
     }
     return RestApiClient.post('/sigmarule/', formData)
   },
-  updateSigmaRule(id, ruleText) {
+  updateSigmaRule(id, rule_yaml) {
     let formData = {
       id: id,
-      rule_yaml: ruleText,
+      rule_yaml: rule_yaml,
     }
     return RestApiClient.put('/sigmarule/' + id + '/', formData)
   },
