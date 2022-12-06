@@ -194,11 +194,14 @@ export default {
         ApiClient.getSigmaRuleResource(rule_uuid = rule_uuid)
                 .then(response => {
                     var editingRule = response.data.objects[0]
-                    var rule_yaml = editingRule.rule_yaml.replace(/status:\s*stable/g, 'status: deprecated')
+                    const regex = /status:\s*(experimental|testing|stable)/g;
+                    var rule_yaml = editingRule.rule_yaml.replace(regex, 'status: deprecated')
                     ApiClient.updateSigmaRule(rule_uuid, rule_yaml)
                         .then(response => {
                             console.log("Rule deprecated: " + rule_uuid)
                             this.$store.dispatch('updateSigmaList')
+                            //display something in the snackbar
+                            EventBus.$emit('errorSnackBar',"Rule deprecated: " + rule_uuid)
                         })
                         .catch(e => {
                             console.error(e)
