@@ -52,7 +52,14 @@ limitations under the License.
           >{{ save_button_text }}</v-btn
         >
         <v-btn @click="cancel" small depressed color="secondary">Cancel </v-btn>
-        <v-btn @click="deleteRule(rule_uuid)" small depressed color="red">Delete Rule</v-btn>
+        <v-btn
+          @click="deleteRule(rule_uuid)"
+          small
+          depressed
+          color="red"
+          :disabled="save_button_text.toLowerCase() == 'create'"
+          >Delete Rule</v-btn
+        >
       </div>
 
       <!-- TODO: Remove before merging -->
