@@ -106,7 +106,6 @@ export default {
                     } else {
                         this.editingRule = response.data.objects[0]
                         this.ok_button_text = 'OK'
-
                     }
                 })
                 .catch(e => {
@@ -184,7 +183,6 @@ tags:
                             this.$store.state.sigmaRuleList = this.sigmaRuleList.filter(obj => {
                                 return obj.rule_uuid !== this.editingRule.rule_uuid
                             })
-                            console.log("rule updated")
                             this.sigmaRuleList.push(response.data.objects[0])
                             // do not close the the edit view in case there is an error
                             this.$buefy.notification.open(

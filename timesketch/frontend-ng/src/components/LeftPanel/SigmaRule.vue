@@ -45,7 +45,8 @@ limitations under the License.
                     <v-list-item-title>Edit Rule</v-list-item-title>
                   </v-list-item-content>
                 </v-list-item>
-                <v-list-item v-on:click="deactivateRule(sigmaRule.rule_uuid)">
+                <v-list-item
+                  v-on:click="deprecateSigmaRule(sigmaRule.rule_uuid)">
                   <v-list-item-icon>
                     <v-icon>mdi-archive</v-icon>
                   </v-list-item-icon>
@@ -172,7 +173,7 @@ export default {
           .catch(e => {
             console.error(e)
           })
-          // remove the router go here!!!
+        // remove the router go here!!!
         this.$store.dispatch('updateSigmaList')
         this.$router.go('/studio/sigma/')
       }
@@ -187,8 +188,28 @@ export default {
         }
       });
     },
-    deactivateRule(rule_uuid) {
-      console.log("Rule archive pressed: " + rule_uuid)
+    deprecateSigmaRule(rule_uuid) {
+      if (confirm('Archive Rule?')) {
+        //get the current Sigma rule yaml again
+        ApiClient.getSigmaRuleResource(rule_uuid = rule_uuid)
+                .then(response => {
+                    var editingRule = response.data.objects[0]
+                    var rule_yaml = editingRule.rule_yaml.replace(/status:\s*stable/g, 'status: deprecated')
+                    ApiClient.updateSigmaRule(rule_uuid, rule_yaml)
+                        .then(response => {
+                            console.log("Rule deprecated: " + rule_uuid)
+                            this.$store.dispatch('updateSigmaList')
+                        })
+                        .catch(e => {
+                            console.error(e)
+                        })
+                })
+                .catch(e => {
+                    console.error(e)
+                })
+        this.$store.dispatch('updateSigmaList')
+      }
+
     },
   },
 }

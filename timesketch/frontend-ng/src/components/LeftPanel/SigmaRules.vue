@@ -71,9 +71,7 @@ export default {
   },
   methods: {
     CreateNewRule() {
-      //this.$store.dispatch('updateSearchNode', this.selectedNode)
-      this.$router.go('/studio/sigma/' + crypto.randomUUID());
-
+      this.$router.go('/studio/sigma/new');
     }
   },
   computed: {
