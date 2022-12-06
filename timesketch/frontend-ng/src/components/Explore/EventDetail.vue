@@ -37,7 +37,7 @@ limitations under the License.
                           v-on="on"
                           @click="formatXMLString = true"
                         >
-                          <v-tooltip top>
+                          <v-tooltip top close-delay=300 :open-on-click="false">
                             <template v-slot:activator="{ on }">
                               <v-icon
                                 v-on="on"
@@ -70,8 +70,7 @@ limitations under the License.
                           v-bind="attrs"
                           v-on="on"
                         >
-                          <!-- <v-icon x-small>mdi-magnify-expand</v-icon> -->
-                          <v-tooltip top>
+                          <v-tooltip top close-delay=300 :open-on-click="false">
                             <template v-slot:activator="{ on }">
                               <v-icon
                                 v-on="on"
