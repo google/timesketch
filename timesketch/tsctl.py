@@ -455,8 +455,11 @@ def info():
     print(f"Timesketch version: {version.get_version()}")
 
     # Get plaso version
-    output = subprocess.check_output(["psort.py", "--version"])
-    print(output.decode("utf-8"))
+    try:
+        output = subprocess.check_output(["psort.py", "--version"])
+        print(output.decode("utf-8"))
+    except FileNotFoundError:
+        print("psort.py not installed")
 
     # Get installed node version
     output = subprocess.check_output(["node", "--version"]).decode("utf-8")
