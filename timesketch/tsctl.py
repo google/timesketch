@@ -16,11 +16,14 @@
 import os
 import pathlib
 import json
+import subprocess
 import yaml
 
 import click
 from flask.cli import FlaskGroup
 from sqlalchemy.exc import IntegrityError
+from prettytable import PrettyTable
+from jsonschema import validate, ValidationError
 
 from timesketch import version
 from timesketch.app import create_app
@@ -442,3 +445,156 @@ def export_sigma_rules(path):
             fw.write(rule.rule_yaml.encode("utf-8"))
         n = n + 1
     print(f"{n} Sigma rules exported")
+
+
+@cli.command(name="info")
+def info():
+    """Get various information about the environment that runs Timesketch."""
+
+    # Get Timesketch version
+    print(f"Timesketch version: {version.get_version()}")
+
+    # Get plaso version
+    try:
+        output = subprocess.check_output(["psort.py", "--version"])
+        print(output.decode("utf-8"))
+    except FileNotFoundError:
+        print("psort.py not installed")
+
+    # Get installed node version
+    output = subprocess.check_output(["node", "--version"]).decode("utf-8")
+    print(f"Node version: {output} ")
+
+    # Get installed npm version
+    output = subprocess.check_output(["npm", "--version"]).decode("utf-8")
+    print(f"npm version: {output}")
+
+    # Get installed yarn version
+    output = subprocess.check_output(["yarn", "--version"]).decode("utf-8")
+    print(f"yarn version: {output} ")
+
+    # Get installed python version
+    output = subprocess.check_output(["python3", "--version"]).decode("utf-8")
+    print(f"Python version: {output} ")
+
+    # Get installed pip version
+    output = subprocess.check_output(["pip", "--version"]).decode("utf-8")
+    print(f"pip version: {output} ")
+
+
+@cli.command(name="sketch-info")
+@click.argument("sketch_id")
+def sketch_info(sketch_id):
+    """Give information about a sketch."""
+    sketch = Sketch.query.filter_by(id=sketch_id).first()
+    if not sketch:
+        print("Sketch does not exist.")
+    else:
+        print(f"Sketch {sketch_id} Name: ({sketch.name})")
+
+        table = PrettyTable()
+        table.field_names = [
+            "searchindex_id",
+            "index_name",
+            "created_at",
+            "user_id",
+            "description",
+        ]
+
+        for t in sketch.active_timelines:
+            table.add_row(
+                [
+                    t.searchindex_id,
+                    t.searchindex.index_name,
+                    t.created_at,
+                    t.user_id,
+                    t.description,
+                ]
+            )
+
+        print(f"active_timelines:\n{table}")
+
+        print("Shared with:")
+        print("\tUsers: (user_id, username)")
+        for user in sketch.collaborators:
+            print(f"\t\t{user.id}: {user.username}")
+        print("\tGroups:")
+        for group in sketch.groups:
+            print(f"\t\t{group.display_name}")
+        sketch_labels = [label.label for label in sketch.labels]
+        print(f"Sketch Status: {sketch.get_status.status}")
+        print(f"Sketch is public: {bool(sketch.is_public)}")
+        sketch_labels = ([label.label for label in sketch.labels],)
+        print(f"Sketch Labels: {sketch_labels}")
+
+        status_table = PrettyTable()
+        status_table.field_names = [
+            "id",
+            "status",
+            "created_at",
+            "user_id",
+        ]
+        for status in sketch.status:
+            status_table.add_row(
+                [status.id, status.status, status.created_at, status.user_id]
+            )
+        print(f"Status:\n{status_table}")
+
+
+@cli.command(name="validate-context-links-conf")
+@click.argument("path")
+def validate_context_links_conf(path):
+    """Validates the provided context link yaml configuration file."""
+
+    schema = {
+        "type": "object",
+        "properties": {
+            "context_link": {
+                "type": "string",
+                "pattern": "<ATTR_VALUE>",
+            },
+            "match_fields": {
+                "type": "array",
+                "minItems": 1,
+                "items": [
+                    {
+                        "type": "string",
+                    },
+                ],
+            },
+            "redirect_warning": {
+                "type": "boolean",
+            },
+            "short_name": {
+                "type": "string",
+                "minLength": 1,
+            },
+            "validation_regex": {
+                "type": "string",
+            },
+        },
+        "required": [
+            "context_link",
+            "match_fields",
+            "redirect_warning",
+            "short_name",
+        ],
+    }
+
+    if not os.path.isfile(path):
+        print(f"Cannot load the config file: {path} does not exist!")
+        return
+
+    with open(path, "r") as fh:
+        context_link_config = yaml.safe_load(fh)
+
+    if not context_link_config:
+        print("The provided config file is empty.")
+        return
+
+    for entry in context_link_config:
+        try:
+            validate(instance=context_link_config[entry], schema=schema)
+            print(f'=> OK: "{entry}"')
+        except ValidationError as err:
+            print(f'=> ERROR: "{entry}" >> {err}\n')

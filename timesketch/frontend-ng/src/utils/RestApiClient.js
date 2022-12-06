@@ -391,4 +391,7 @@ export default {
     let formData = { status: status }
     return RestApiClient.post('/sketches/' + sketchId + '/scenarios/' + scenarioId + '/status/', formData)
   },
+  getContextLinkConfig() {
+    return RestApiClient.get('/contextlinks/')
+  },
 }
