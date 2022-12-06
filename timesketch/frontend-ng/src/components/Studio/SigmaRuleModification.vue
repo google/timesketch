@@ -74,7 +74,6 @@ limitations under the License.
 </template>
   
 <script>
-import { stringValue } from 'vega'
 import ApiClient from '../../utils/RestApiClient'
 import { SigmaTemplates } from '@/utils/SigmaRuleTemplates'
 
