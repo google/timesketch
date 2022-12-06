@@ -115,7 +115,6 @@ limitations under the License.
 
 <script>
 import EventBus from '../../main'
-import TsSigmaRuleModification from '../Studio/SigmaRuleModification.vue'
 import ApiClient from '../../utils/RestApiClient'
 
 const defaultQueryFilter = () => {
@@ -192,12 +191,12 @@ export default {
     deprecateSigmaRule(ruleUuid) {
       if (confirm('Archive Rule?')) {
         //  get the current Sigma rule yaml again
-        ApiClient.getSigmaRuleResource((rule_uuid = ruleUuid))
+        ApiClient.getSigmaRuleResource(ruleUuid)
           .then((response) => {
             var editingRule = response.data.objects[0]
             const regex = /status:\s*(experimental|testing|stable)/g
-            var rule_yaml = editingRule.rule_yaml.replace(regex, 'status: deprecated')
-            ApiClient.updateSigmaRule(ruleUuid, rule_yaml)
+            var ruleYaml = editingRule.rule_yaml.replace(regex, 'status: deprecated')
+            ApiClient.updateSigmaRule(ruleUuid, ruleYaml)
               .then(() => {
                 console.log('Rule deprecated: ' + ruleUuid)
                 this.$store.dispatch('updateSigmaList')
