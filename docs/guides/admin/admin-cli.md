@@ -548,6 +548,7 @@ The default config can be found at `data/context_links.yaml` .
 The output will tell if there is a value not matching the schema requirements:
 
 **No error:** All entries in the configuration file match the schema requirements.
+
 ```
 $ tsctl validate-context-links-conf ./context_links.yaml
 => OK: "virustotal"
@@ -558,6 +559,7 @@ $ tsctl validate-context-links-conf ./context_links.yaml
 
 **With an error:** Here the validator tells us that there is an error with the
 replacement pattern in the `context_link` entry.
+
 ```
 $ tsctl validate-context-links-conf ./context_links.yaml
 => ERROR: "virustotal" >> 'https://www.virustotal.com/gui/search/<ATTR_VALUE' does not match '<ATTR_VALUE>'

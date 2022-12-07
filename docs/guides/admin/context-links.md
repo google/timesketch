@@ -1,10 +1,10 @@
 # Context Links
 
-This feature was introduced as part of [#2439](https://github.com/google/timesketch/issues/2439) and allows linking of specific event attributes and values to external lookup services for an easy analyst workflow.
+The context link feature allows for linking of specific event attributes and values to external lookup services for an easy analyst workflow.
 
 ## Demo
 
-![TS_ContextLinks_RedirectWarn](https://user-images.githubusercontent.com/99879757/205897124-00154a89-e58a-4cf0-a89e-ba3b4f3052d8.gif)
+![TS_ContextLinks_RedirectWarn](../../assets/images/TS_ContextLinks_RedirectWarn.gif)
 
 ## How-To configure
 
@@ -53,7 +53,7 @@ context_link_name:
 ### Test configuration
 
 If we want to test our configuration we can use the
-`tsctl validate-context-links-conf` > [here](https://github.com/google/timesketch/blob/master/docs/guides/admin/admin-cli.md#context-links).
+`tsctl validate-context-links-conf` > [here](https://timesketch.org/guides/admin/admin-cli/#context-links).
 
 ## Example entries
 
