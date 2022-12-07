@@ -23,7 +23,7 @@ import click
 from flask.cli import FlaskGroup
 from sqlalchemy.exc import IntegrityError
 from prettytable import PrettyTable
-from jsonschema import validate, ValidationError
+from jsonschema import validate, ValidationError, SchemaError
 
 from timesketch import version
 from timesketch.app import create_app
@@ -547,6 +547,7 @@ def validate_context_links_conf(path):
     """Validates the provided context link yaml configuration file."""
 
     schema = {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
             "context_link": {
@@ -596,5 +597,5 @@ def validate_context_links_conf(path):
         try:
             validate(instance=context_link_config[entry], schema=schema)
             print(f'=> OK: "{entry}"')
-        except ValidationError as err:
+        except (ValidationError, SchemaError) as err:
             print(f'=> ERROR: "{entry}" >> {err}\n')
