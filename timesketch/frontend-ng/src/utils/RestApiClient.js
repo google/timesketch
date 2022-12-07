@@ -367,6 +367,9 @@ export default {
   parseSearchTemplate(searchTemplateId, formData) {
     return RestApiClient.post('/searchtemplate/' + searchTemplateId + '/parse/', formData)
   },
+  getContextLinkConfig() {
+    return RestApiClient.get('/contextlinks/')
+  },
   getScenarioTemplates() {
     return RestApiClient.get('/scenarios/')
   },
@@ -397,5 +400,6 @@ export default {
   },
   deleteQuestionConclusion(sketchId, questionId, conclusionId) {
     return RestApiClient.delete('/sketches/' + sketchId + '/questions/' + questionId + '/conclusions/' + conclusionId + '/')
+
   },
 }
