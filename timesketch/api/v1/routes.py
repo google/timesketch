@@ -79,6 +79,7 @@ from .resources.scenarios import ScenarioListResource
 from .resources.scenarios import ScenarioResource
 from .resources.scenarios import ScenarioStatusResource
 from .resources.scenarios import QuestionConclusionListResource
+from .resources.scenarios import QuestionConclusionResource
 
 
 # Disable error for long line. Readability is more important than line
@@ -175,5 +176,9 @@ API_ROUTES = [
     (
         QuestionConclusionListResource,
         "/sketches/<int:sketch_id>/questions/<int:question_id>/",
+    ),
+    (
+        QuestionConclusionResource,
+        "/sketches/<int:sketch_id>/questions/<int:question_id>/conclusions/<int:conclusion_id>/",
     ),
 ]

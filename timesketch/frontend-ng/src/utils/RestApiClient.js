@@ -395,4 +395,7 @@ export default {
     let formData = { conclusionText: conclusionText }
     return RestApiClient.post('/sketches/' + sketchId + '/questions/' + questionId + '/', formData)
   },
+  deleteQuestionConclusion(sketchId, questionId, conclusionId) {
+    return RestApiClient.delete('/sketches/' + sketchId + '/questions/' + questionId + '/conclusions/' + conclusionId + '/')
+  },
 }

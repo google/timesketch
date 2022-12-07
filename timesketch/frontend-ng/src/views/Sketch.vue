@@ -176,8 +176,8 @@ limitations under the License.
         <v-tabs v-model="leftPanelTab" grow>
           <v-tab v-for="item in leftPanelTabItems" :key="item"> {{ item }} </v-tab>
         </v-tabs>
-        <v-divider class="pb-3"></v-divider>
-        <v-tabs-items v-model="leftPanelTab">
+        <v-divider></v-divider>
+        <v-tabs-items v-model="leftPanelTab" class="pt-4">
           <v-tab-item>
             <ts-saved-searches v-if="meta.views"></ts-saved-searches>
             <ts-data-types></ts-data-types>
@@ -187,7 +187,6 @@ limitations under the License.
           </v-tab-item>
           <v-tab-item>
             <ts-scenario v-for="scenario in activeScenarios" :key="scenario.id" :scenario="scenario"></ts-scenario>
-
             <v-row class="mt-0 px-2" flat>
               <v-col cols="6">
                 <v-btn text color="primary" @click="dialog = true" style="cursor: pointer"

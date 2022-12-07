@@ -292,8 +292,7 @@ class QuestionConclusionListResource(resources.ResourceMixin, Resource):
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
 
-        print(conclusions)
-        # return self.to_json(conclusions)
+        return self.to_json(conclusions)
 
     @login_required
     def post(self, sketch_id, question_id):
@@ -328,3 +327,39 @@ class QuestionConclusionListResource(resources.ResourceMixin, Resource):
             db_session.commit()
 
         return self.to_json(conclusion)
+
+
+class QuestionConclusionResource(resources.ResourceMixin, Resource):
+    """Resource for investigative question conclusion."""
+
+    @login_required
+    def delete(self, sketch_id, question_id, conclusion_id):
+        """Handles DELETE request to the resource.
+
+        Deletes a conclusion.
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        question = InvestigativeQuestion.query.get(question_id)
+        conclusion = InvestigativeQuestionConclusion.query.get(conclusion_id)
+
+        if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
+
+        if not question:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No question found with this ID")
+
+        if not conclusion:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No conclusion found with this ID")
+
+        if conclusion.investigativequestion != question:
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN, "Conclusion is not part of this question."
+            )
+
+        if conclusion.user != current_user:
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN, "You can only delete your own concluions."
+            )
+
+        db_session.delete(conclusion)
+        db_session.commit()

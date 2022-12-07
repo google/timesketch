@@ -15,25 +15,23 @@ limitations under the License.
 -->
 <template>
   <div>
-    <v-row
-      no-gutters
-      class="pa-2 pl-4"
+    <v-divider></v-divider>
+    <div
+      class="pa-2 pl-10"
       @click="expanded = !expanded"
       style="cursor: pointer; font-size: 0.9em"
-      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+      :class="[
+        $vuetify.theme.dark ? 'dark-hover' : 'light-hover',
+        !$vuetify.theme.dark && expanded ? 'light-highlight' : '',
+        $vuetify.theme.dark && expanded ? 'dark-highlight' : '',
+      ]"
     >
-      <v-col cols="1">
-        <v-icon small v-if="question.conclusions.length" color="green">mdi-check-circle</v-icon>
-        <v-icon small v-else>mdi-check-circle-outline</v-icon>
-      </v-col>
-      <v-col cols="11">
-        <strong v-if="!question.conclusions.length">{{ question.display_name }}</strong>
-        <span v-else>{{ question.display_name }}</span>
-      </v-col>
-    </v-row>
+      <strong v-if="!question.conclusions.length">{{ question.display_name }}</strong>
+      <span v-else>{{ question.display_name }}</span>
+    </div>
 
     <v-expand-transition>
-      <div v-show="expanded">
+      <div v-show="expanded" class="ml-6 mt-2">
         <div class="ma-2 mx-4 mb-4 mt-n1">
           <div v-if="fullDescription">
             <small>{{ question.description }} <a @click="fullDescription = !fullDescription">show less</a></small>
@@ -48,7 +46,8 @@ limitations under the License.
           </div>
         </div>
 
-        <div v-if="question.search_templates.length" flat class="ma-2 mx-4 mb-6">
+        <div v-if="question.search_templates.length" class="ma-2 mx-4 mb-3">
+          <v-icon x-small class="mr-1">mdi-magnify</v-icon>
           <strong><small>Query suggestions</small></strong>
           <div v-for="searchtemplate in question.search_templates" :key="searchtemplate.id" class="pa-1 mt-1">
             <ts-search-template :searchtemplate="searchtemplate"></ts-search-template>
@@ -56,13 +55,15 @@ limitations under the License.
         </div>
 
         <!-- Conclusions -->
-        <div class="ma-2 mx-4">
+        <div class="mb-3 mx-4">
+          <v-icon x-small class="mr-1">mdi-check-circle-outline</v-icon>
           <strong><small>Conclusions</small></strong>
+          <v-sheet outlined rounded class="mt-2" v-for="conclusion in question.conclusions" :key="conclusion.id">
+            <ts-question-conclusion :question="question" :conclusion="conclusion"></ts-question-conclusion>
+          </v-sheet>
         </div>
-        <v-card class="ma-2 mx-4 mb-4" outlined flat v-for="conclusion in question.conclusions" :key="conclusion.id">
-          <ts-question-conclusion :question="question" :conclusion="conclusion"></ts-question-conclusion>
-        </v-card>
 
+        <!-- Add new conclusion -->
         <div v-if="!currentUserConclusion" style="font-size: 0.9em" class="pa-4 pt-0">
           <v-textarea
             v-model="conclusionText"
