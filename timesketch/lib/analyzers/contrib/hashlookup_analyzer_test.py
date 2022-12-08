@@ -23,16 +23,14 @@ class TestHashlookup(BaseTest):
         current_app.config["HASHLOOKUP_URL"] = "blah"
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
-    @mock.patch(
-        "timesketch.lib.analyzers.contrib.hashlookup_analyzer."
-        "HashlookupAnalyzer.get_hash_info"
-    )
-    def test_hash_match(self, mock_get_hash_info):
+    @mock.patch("timesketch.lib.analyzers.contrib.hashlookup_analyzer." "requests.get")
+    def test_hash_match(self, mock_requests_get):
         """Test match"""
         analyzer = hashlookup_analyzer.HashlookupAnalyzer("test_index", 1)
         analyzer.hashlookup_url = "blah"
         analyzer.datastore.client = mock.Mock()
-        mock_get_hash_info.return_value = {"FileName": "test.txt"}
+        mock_requests_get.return_value.status_code = 200
+        mock_requests_get.return_value.json.return_value = {"FileName": "test.txt"}
 
         event = copy.deepcopy(MockDataStore.event_dict)
         event["_source"].update(MATCHING_HASH)
@@ -43,19 +41,17 @@ class TestHashlookup(BaseTest):
             message,
             ("Hashlookup Matches: 1"),
         )
-        mock_get_hash_info.assert_called_once()
+        mock_requests_get.assert_called_once()
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
-    @mock.patch(
-        "timesketch.lib.analyzers.contrib.hashlookup_analyzer."
-        "HashlookupAnalyzer.get_hash_info"
-    )
-    def test_hash_nomatch(self, mock_get_hash_info):
+    @mock.patch("timesketch.lib.analyzers.contrib.hashlookup_analyzer." "requests.get")
+    def test_hash_nomatch(self, mock_requests_get):
         """Test no match"""
         analyzer = hashlookup_analyzer.HashlookupAnalyzer("test_index", 1)
         analyzer.hashlookup_url = "blah"
         analyzer.datastore.client = mock.Mock()
-        mock_get_hash_info.return_value = []
+        mock_requests_get.return_value.status_code = 404
+        mock_requests_get.return_value.json.return_value = []
 
         event = copy.deepcopy(MockDataStore.event_dict)
         event["_source"].update(NO_MATCHING_HASH)
@@ -66,4 +62,4 @@ class TestHashlookup(BaseTest):
             message,
             ("Hashlookup Matches: 0"),
         )
-        mock_get_hash_info.assert_called_once()
+        mock_requests_get.assert_called_once()
