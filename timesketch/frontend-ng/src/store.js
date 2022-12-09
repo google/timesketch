@@ -25,6 +25,7 @@ const defaultState = (currentUser) => {
     meta: {},
     searchHistory: {},
     scenarios: [],
+    hiddenScenarios: [],
     scenarioTemplates: [],
     tags: [],
     dataTypes: [],
@@ -41,7 +42,8 @@ const defaultState = (currentUser) => {
       color: "",
       message: "",
       timeout: -1
-    }
+    },
+    contextLinkConf: {},
   }
 }
 
@@ -107,6 +109,9 @@ export default new Vuex.Store({
         let currentUser = response.data.objects[0].username
         Object.assign(state, defaultState(currentUser))
       })
+    },
+    SET_CONTEXT_LINKS(state, payload) {
+      Vue.set(state, 'contextLinkConf', payload)
     },
   },
   actions: {
@@ -216,6 +221,13 @@ export default new Vuex.Store({
         message: snackbar.message,
         timeout: snackbar.timeout
       });
-    }
+    },
+    updateContextLinks(context) {
+      ApiClient.getContextLinkConfig()
+        .then((response) => {
+          context.commit('SET_CONTEXT_LINKS', response.data)
+      })
+      .catch((e) => { })
+    },
   },
 })

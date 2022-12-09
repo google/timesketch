@@ -15,6 +15,45 @@ limitations under the License.
 -->
 <template>
   <div>
+    <!-- Top horizontal toolbar -->
+    <v-toolbar flat color="transparent">
+      <v-avatar class="mt-2 ml-n3">
+        <router-link to="/">
+          <v-img src="/dist/timesketch-color.png" max-height="25" max-width="25" contain></v-img>
+        </router-link>
+      </v-avatar>
+      <span style="font-size: 1.2em">timesketch</span>
+
+      <v-spacer></v-spacer>
+      <v-btn small depressed v-on:click="switchUI"> Use the old UI </v-btn>
+      <v-avatar color="grey lighten-1" size="25" class="ml-3">
+        <span class="white--text">{{ currentUser | capitalize }}</span>
+      </v-avatar>
+      <v-menu offset-y>
+        <template v-slot:activator="{ on, attrs }">
+          <v-avatar>
+            <v-btn small icon v-bind="attrs" v-on="on">
+              <v-icon>mdi-dots-vertical</v-icon>
+            </v-btn>
+          </v-avatar>
+        </template>
+        <v-card>
+          <v-list>
+            <v-list-item-group color="primary">
+              <v-list-item v-on:click="toggleTheme">
+                <v-list-item-icon>
+                  <v-icon>mdi-brightness-6</v-icon>
+                </v-list-item-icon>
+                <v-list-item-content>
+                  <v-list-item-title>Toggle theme</v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+            </v-list-item-group>
+          </v-list>
+        </v-card>
+      </v-menu>
+    </v-toolbar>
+
     <v-container fluid pa-0>
       <v-sheet class="pa-5" :color="$vuetify.theme.dark ? 'grey darken-4' : 'grey lighten-3'" min-height="200">
         <h2>Start new investigation</h2>
@@ -61,7 +100,19 @@ export default {
       scenarioTemplates: [],
     }
   },
+  computed: {
+    currentUser() {
+      return this.$store.state.currentUser
+    },
+  },
   methods: {
+    toggleTheme: function () {
+      this.$vuetify.theme.dark = !this.$vuetify.theme.dark
+      localStorage.setItem('isDarkTheme', this.$vuetify.theme.dark.toString())
+    },
+    switchUI: function () {
+      window.location.href = window.location.href.replace('/v2/', '/')
+    },
     clearFormData: function () {
       this.sketchForm.name = ''
     },
