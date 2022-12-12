@@ -15,8 +15,15 @@ limitations under the License.
 */
 
 // General first part of every Sigma rule:
+// try catch block if crypto.randomUUID is not supported
+try {
+    var rule_uuid = crypto.randomUUID()
+} catch (e) {
+    console.log('crypto.randomUUID() not supported, using a fixed value instead')
+    rule_uuid = '10a4fb8c-29d5-4eb6-905f-13d6a553d470'
+}
 const SkeletonFirst = `title: Foobar
-id: ${crypto.randomUUID()}
+id: ${rule_uuid}
 description: Detects suspicious FOOBAR
 references:
   - https://
