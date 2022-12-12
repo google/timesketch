@@ -38,14 +38,14 @@ limitations under the License.
         outlined
         :color="parsingStatusColors('foo')"
         rows="35"
-        v-model="rule_yaml"
-        @input="parseSigma(rule_yaml)"
+        v-model="ruleYaml"
+        @input="parseSigma(ruleYaml)"
       >
       </v-textarea>
       <div class="mt-3">
         <v-btn
           :disabled="ok_button_text.toLowerCase() !== 'ok'"
-          @click="addOrUpdateRule(rule_yaml)"
+          @click="addOrUpdateRule(ruleYaml)"
           small
           depressed
           color="primary"
@@ -76,15 +76,16 @@ limitations under the License.
 <script>
 import ApiClient from '../../utils/RestApiClient'
 import { SigmaTemplates } from '@/utils/SigmaRuleTemplates'
+import EventBus from '../../main'
 
 export default {
   props: ['rule_uuid', 'sigmaRule'],
   data() {
     return {
-      editingRule: { rule_yaml: 'foobar' }, // empty state
+      editingRule: { ruleYaml: 'foobar' }, // empty state
       ok_button_text: 'OK',
       save_button_text: 'Update',
-      rule_yaml: {},
+      ruleYaml: {},
       SigmaTemplates: SigmaTemplates,
       search: '',
     }
@@ -103,13 +104,13 @@ export default {
       var matchingTemplate = this.SigmaTemplates.find((obj) => {
         return obj.title === text
       })
-      this.rule_yaml = matchingTemplate.text
+      this.ruleYaml = matchingTemplate.text
       this.parseSigma(matchingTemplate.text)
     },
     // Set debounce to 300ms if parseSigma is used.
-    parseSigma: _.debounce(function (rule_yaml) {
+    parseSigma: _.debounce(function (ruleYaml) {
       // eslint-disable-line
-      ApiClient.getSigmaRuleByText(rule_yaml)
+      ApiClient.getSigmaRuleByText(ruleYaml)
         .then((response) => {
           console.log(response.data.objects[0])
           if (!response.data.objects[0].author) {
@@ -135,7 +136,7 @@ export default {
       ApiClient.getSigmaRuleResource((ruleUuid = ruleUuid))
         .then((response) => {
           this.editingRule = response.data.objects[0]
-          this.rule_yaml = this.editingRule.rule_yaml
+          this.ruleYaml = this.editingRule.rule_yaml // eslint-disable-line camelcase
           this.ok_button_text = 'OK'
         })
         .catch((e) => {
@@ -143,7 +144,7 @@ export default {
           this.save_button_text = 'Create'
           this.ok_button_text = 'Ok'
           this.editingRule['search_query'] = 'No Rule found, creating a new one'
-          this.rule_yaml = `title: Foobar
+          this.ruleYaml = `title: Foobar
 id: ${crypto.randomUUID()}
 description: Detects suspicious FOOBAR
 references:
@@ -177,7 +178,7 @@ tags:
         console.error('Sigma parsing still has error, please fix')
       } else if (this.ok_button_text === 'OK') {
         if (this.save_button_text === 'Create') {
-          ApiClient.createSigmaRule(this.rule_yaml)
+          ApiClient.createSigmaRule(this.ruleYaml)
             .then((response) => {
               // todo(jaegeral): make a nicer feedback to the user
               EventBus.$emit('errorSnackBar', 'Rule created: ' + rule_uuid)
@@ -189,7 +190,7 @@ tags:
             })
         }
         if (this.save_button_text === 'Update') {
-          ApiClient.updateSigmaRule(this.editingRule.id, this.rule_yaml)
+          ApiClient.updateSigmaRule(this.editingRule.id, this.ruleYaml)
             .then((response) => {
               this.$store.state.sigmaRuleList = this.sigmaRuleList.filter((obj) => {
                 return obj.rule_uuid !== this.editingRule.rule_uuid
