@@ -17,7 +17,7 @@ limitations under the License.
   <div>
     <div class="pa-4" flat :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
       <span style="cursor: pointer" @click="expanded = !expanded">
-        <v-icon left>mdi-sigma-lower</v-icon> Sigma Rules ({{ sigmaRules.length }})
+        <v-icon left>mdi-sigma-lower</v-icon> Sigma Rules ({{ ruleCount }})
       </span>
       <div>
         <v-btn @click="CreateNewRule()" small depressed color="green"> Create Rule</v-btn>
@@ -74,6 +74,14 @@ export default {
   computed: {
     sigmaRules() {
       return this.$store.state.sigmaRuleList
+    },
+    ruleCount() {
+      // to avoid undefined error if the list is not yet loaded or number is 0
+      if (this.$store.state.sigmaRuleList && this.$store.state.sigmaRuleList.length) {
+        return this.$store.state.sigmaRuleList.length
+      } else {
+        return 0
+      }
     },
     sketch() {
       return this.$store.state.sketch
