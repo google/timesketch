@@ -77,6 +77,7 @@ limitations under the License.
 import ApiClient from '../../utils/RestApiClient'
 import { SigmaTemplates } from '@/utils/SigmaRuleTemplates'
 import EventBus from '../../main'
+import _ from 'lodash'
 
 export default {
   props: ['rule_uuid', 'sigmaRule'],
