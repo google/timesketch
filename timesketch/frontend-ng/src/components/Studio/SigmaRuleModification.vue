@@ -133,7 +133,7 @@ export default {
       return 'warning'
     },
     getRuleByUUID(ruleUuid) {
-      ApiClient.getSigmaRuleResource((ruleUuid = ruleUuid))
+      ApiClient.getSigmaRuleResource(ruleUuid)
         .then((response) => {
           this.editingRule = response.data.objects[0]
           this.ruleYaml = this.editingRule.rule_yaml // eslint-disable-line camelcase
@@ -159,13 +159,13 @@ tags:
     -`
         })
     },
-    deleteRule(rule_uuid) {
+    deleteRule(ruleUuid) {
       if (confirm('Delete Rule?')) {
-        ApiClient.deleteSigmaRule(rule_uuid)
+        ApiClient.deleteSigmaRule(ruleUuid)
           .then((response) => {
-            console.log('Rule deleted: ' + rule_uuid)
+            console.log('Rule deleted: ' + ruleUuid)
             this.$store.dispatch('updateSigmaList')
-            EventBus.$emit('errorSnackBar', 'Rule deleted: ' + rule_uuid)
+            EventBus.$emit('errorSnackBar', 'Rule deleted: ' + ruleUuid)
           })
           .catch((e) => {
             console.error(e)
@@ -181,7 +181,7 @@ tags:
           ApiClient.createSigmaRule(this.ruleYaml)
             .then((response) => {
               // todo(jaegeral): make a nicer feedback to the user
-              EventBus.$emit('errorSnackBar', 'Rule created: ' + rule_uuid)
+              EventBus.$emit('errorSnackBar', 'Rule created: ' + this.editingRule.id)
               this.sigmaRuleList.push(response.data.objects[0])
               this.$store.dispatch('updateSigmaList')
             })
@@ -193,10 +193,10 @@ tags:
           ApiClient.updateSigmaRule(this.editingRule.id, this.ruleYaml)
             .then((response) => {
               this.$store.state.sigmaRuleList = this.sigmaRuleList.filter((obj) => {
-                return obj.rule_uuid !== this.editingRule.rule_uuid
+                return obj.rule_uuid !== this.editingRule.rule_uuid // eslint-disable-line camelcase
               })
               this.sigmaRuleList.push(response.data.objects[0])
-              EventBus.$emit('errorSnackBar', 'Rule updated: ' + rule_uuid)
+              EventBus.$emit('errorSnackBar', 'Rule updated: ' + this.editingRule.id)
             })
             .catch((e) => {})
         }
