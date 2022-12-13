@@ -13,10 +13,6 @@ hide:
 [Get Started](/guides/getting-started/){ .md-button .md-button--primary }
 
 <br>
-<!--
-<img style="border-radius:6px;" width="1000" alt="Screenshot 2021-03-05 at 14 28 40" src="https://user-images.githubusercontent.com/316362/110122005-5e584200-7dbf-11eb-8e3c-d73408ef2850.png">
--->
-
 <img style="border-radius:12px;border:1px solid #555" width="1000" alt="Timesketch screenshot" src="assets/images/screenshot-202212-dark.png">
 
 
