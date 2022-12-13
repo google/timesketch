@@ -118,6 +118,8 @@ http {
     }
 }
 ```
+**If you need to use a non-standard port** you can change the `proxy_set_header Host $host;` to `proxy_set_header Host $http_host;` instead.
+
 
 Make the certificate and key available to the Nginx Docker container. Edit timesketch/docker-compose.yml and mount /etc/letsencrypt:
 
