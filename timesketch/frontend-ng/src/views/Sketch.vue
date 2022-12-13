@@ -33,10 +33,18 @@ limitations under the License.
 
       <v-spacer></v-spacer>
       <v-btn small depressed v-on:click="switchUI"> Use the old UI </v-btn>
-      <v-btn small depressed color="primary" class="ml-2">
-        <v-icon small left>mdi-account-multiple-plus</v-icon>
-        Share
-      </v-btn>
+
+      <!-- Sharing dialog -->
+      <v-dialog v-model="shareDialog" width="600">
+        <template v-slot:activator="{ on, attrs }">
+          <v-btn small depressed color="primary" class="ml-2" v-bind="attrs" v-on="on">
+            <v-icon small left>mdi-account-multiple-plus</v-icon>
+            Share
+          </v-btn>
+        </template>
+        <ts-share-card></ts-share-card>
+      </v-dialog>
+
       <v-avatar color="grey lighten-1" size="25" class="ml-3">
         <span class="white--text">{{ currentUser | initialLetter }}</span>
       </v-avatar>
@@ -231,6 +239,7 @@ import TsDataTypes from '../components/LeftPanel/DataTypes'
 import TsTags from '../components/LeftPanel/Tags'
 import TsSearchTemplates from '../components/LeftPanel/SearchTemplates'
 import TsSigmaRules from '../components/LeftPanel/SigmaRules'
+import TsShareCard from '../components/ShareCard'
 
 export default {
   props: ['sketchId'],
@@ -241,6 +250,7 @@ export default {
     TsTags,
     TsSearchTemplates,
     TsSigmaRules,
+    TsShareCard,
   },
   data() {
     return {
