@@ -1,3 +1,7 @@
+---
+hide:
+  - footer
+---
 ## tsctl
 
 tsctl is a command-line tool for managing and interacting with a Timesketch instance. It allows users to create and delete sketches, add and remove data sources, manage users and groups, and perform various other tasks.

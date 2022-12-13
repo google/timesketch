@@ -1,3 +1,7 @@
+---
+hide:
+  - footer
+---
 ## Concepts
 
 Timesketch is built on multiple sketches, where one sketch is usually one case.

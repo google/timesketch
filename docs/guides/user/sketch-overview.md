@@ -1,3 +1,7 @@
+---
+hide:
+  - footer
+---
 # Sketches
 
 Sketches are a way to organize analysis of events across multiple timelines and increase data discoverability via search, targeted views, comments and stories.
@@ -22,7 +26,7 @@ A sketch consists of 5 tabs: “Overview”, “Explore”, “Stories”, "Attr
 
 **Attributes** tab shows the attributes of the sketch.
 
-**Intelligence** tab shows intelligence values added from the sketch. See [Intelligence](guides/user/intelligence.md)
+**Intelligence** tab shows intelligence values added from the sketch. See [Intelligence](intelligence.md)
 
 ## Sharing and access control
 After the sketch is created, you can share it with other users in the system. To do so, click ![Share](/assets/images/sharebutton.png) button. You will be presented with the following dialogue:
@@ -59,7 +63,7 @@ Implemented as a tree with support for branching, annotations and intuitive navi
 
 If you click on the "More" Button in the Sketch Overview, you get the following three options.
 
-![Sketch Overview more dialogue](/assets/images/SketchMore.png) 
+![Sketch Overview more dialogue](/assets/images/SketchMore.png)
 
 ### Delete
 
