@@ -1,3 +1,7 @@
+---
+hide:
+  - footer
+---
 ## Frontend development
 
 First we need to get an interactive shell to the container to install the frontend modules:
@@ -45,7 +49,7 @@ You need two shells:
 1. Start the main webserver (for serving the API etc) in the first shell:
 ```bash
 $ CONTAINER_ID="$(docker container list -f name=timesketch-dev -q)"
-$ docker exec -it $CONTAINER_ID gunicorn --reload -b 0.0.0.0:5000 --log-file - --timeout 600 -c /usr/local/src/timesketch/data/gunicorn_config.py timesketch.wsgi:application 
+$ docker exec -it $CONTAINER_ID gunicorn --reload -b 0.0.0.0:5000 --log-file - --timeout 600 -c /usr/local/src/timesketch/data/gunicorn_config.py timesketch.wsgi:application
 ```
 
 2. Start the development webserver in the second shell:
@@ -78,7 +82,7 @@ You need two shells:
 1. Start the main webserver (for serving the API etc) in the first shell:
 ```bash
 $ CONTAINER_ID="$(docker container list -f name=timesketch-dev -q)"
-$ docker exec -it $CONTAINER_ID gunicorn --reload -b 0.0.0.0:5000 --log-file - --timeout 600 -c /usr/local/src/timesketch/data/gunicorn_config.py timesketch.wsgi:application 
+$ docker exec -it $CONTAINER_ID gunicorn --reload -b 0.0.0.0:5000 --log-file - --timeout 600 -c /usr/local/src/timesketch/data/gunicorn_config.py timesketch.wsgi:application
 ```
 
 2. Start the development webserver in the second shell:

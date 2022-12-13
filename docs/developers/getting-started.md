@@ -1,3 +1,7 @@
+---
+hide:
+  - footer
+---
 # Getting started
 
 The supported environment for Timesketch development is Docker.
@@ -140,7 +144,7 @@ Before merging a pull request, we expect the code to be formatted in a certain m
 ### Formatting Python files
 
 We use `black` to format Python files. `black` is the uncompromising Python code formatter. There are two ways to use it:
-1. Manually from the command line: 
+1. Manually from the command line:
     * Install `black` following the official [black documentation](https://pypi.org/project/black/).
     * Format your file by running this command: `$ black path/to/python/file`
 2. Automatically from [VS Code](https://dev.to/adamlombard/how-to-use-the-black-python-code-formatter-in-vscode-3lo0):

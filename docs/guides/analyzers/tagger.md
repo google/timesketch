@@ -1,5 +1,7 @@
-## Tagger analyzer
-
+---
+hide:
+  - footer
+---
 The tagger analyzer tags events that match a specific search filter. Different
 searches and different tags can be specified in the `tags.yaml` file.
 

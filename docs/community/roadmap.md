@@ -1,3 +1,7 @@
+---
+hide:
+  - footer
+---
 # Overview
 
 This document will give a human readable view on the planned future for Timesketch.
