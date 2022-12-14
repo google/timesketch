@@ -739,7 +739,7 @@ export default {
         },
         {
           value: 'actions',
-          width: '90',
+          width: '120',
         },
         {
           value: '_source.comment',
