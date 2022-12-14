@@ -91,14 +91,22 @@ export default {
       search: '',
     }
   },
-  // find out if the rule_uuid was changed from a different place
   watch: {
     rule_uuid: function (newVal, oldVal) {
       this.getRuleByUUID(newVal)
     },
   },
   mounted() {
+    // check if router was called with sigma/new
+    if (this.rule_uuid === 'new') {
+      this.editingRule = {
+        title: 'New Sigma Rule',
+      }
+      this.save_button_text = 'Create'
+      this.ok_button_text = 'OK'
+    }
     // even if the rule was stored, we want to double check the rule
+
     this.getRuleByUUID(this.rule_uuid)
   },
   methods: {
