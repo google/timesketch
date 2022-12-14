@@ -486,22 +486,20 @@ limitations under the License.
         </template>
         <!-- Actions field -->
         <template v-slot:item.actions="{ item }">
-          <td width="10%">
-            <v-btn small icon @click="toggleStar(item)">
-              <v-icon v-if="item._source.label.includes('__ts_star')" color="amber">mdi-star</v-icon>
-              <v-icon v-else>mdi-star-outline</v-icon>
-            </v-btn>
-            <!-- Tag menu -->
-            <ts-event-tag-menu :event="item"></ts-event-tag-menu>
-            <v-btn icon small @click="copyEventUrlToClipboard(item)">
-              <v-tooltip top close-delay="300" :open-on-click="false">
-                <template v-slot:activator="{ on }">
-                  <v-icon v-on="on"> mdi-link </v-icon>
-                </template>
-                <span>Copy event URL to clipboard</span>
-              </v-tooltip>
-            </v-btn>
-          </td>
+          <v-btn small icon @click="toggleStar(item)">
+            <v-icon v-if="item._source.label.includes('__ts_star')" color="amber">mdi-star</v-icon>
+            <v-icon v-else>mdi-star-outline</v-icon>
+          </v-btn>
+          <!-- Tag menu -->
+          <ts-event-tag-menu :event="item"></ts-event-tag-menu>
+          <v-btn icon small @click="copyEventUrlToClipboard(item)">
+            <v-tooltip top close-delay="300" :open-on-click="false">
+              <template v-slot:activator="{ on }">
+                <v-icon v-on="on"> mdi-link </v-icon>
+              </template>
+              <span>Copy event URL to clipboard</span>
+            </v-tooltip>
+          </v-btn>
         </template>
 
         <!-- Generic slot for any field type. Adds tags and emojis to the first column. -->

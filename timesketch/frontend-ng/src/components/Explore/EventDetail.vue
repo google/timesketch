@@ -37,14 +37,9 @@ limitations under the License.
                           v-on="on"
                           @click="formatXMLString = true"
                         >
-                          <v-tooltip top close-delay=300 :open-on-click="false">
+                          <v-tooltip top close-delay="300" :open-on-click="false">
                             <template v-slot:activator="{ on }">
-                              <v-icon
-                                v-on="on"
-                                small
-                              >
-                                mdi-xml
-                              </v-icon>
+                              <v-icon v-on="on" small> mdi-xml </v-icon>
                             </template>
                             <span>Prettify XML</span>
                           </v-tooltip>
@@ -56,28 +51,12 @@ limitations under the License.
                         :xmlString="value"
                       ></ts-format-xml-string>
                     </v-dialog>
-                    <v-menu
-                      v-if="checkContextLinkDisplay(key, value)"
-                      offset-y
-                      transition="slide-y-transition"
-                    >
+                    <v-menu v-if="checkContextLinkDisplay(key, value)" offset-y transition="slide-y-transition">
                       <template v-slot:activator="{ on, attrs }">
-                        <v-btn
-                          icon
-                          color="primary"
-                          x-small
-                          style="cursor: pointer"
-                          v-bind="attrs"
-                          v-on="on"
-                        >
-                          <v-tooltip top close-delay=300 :open-on-click="false">
+                        <v-btn icon color="primary" x-small style="cursor: pointer" v-bind="attrs" v-on="on">
+                          <v-tooltip top close-delay="300" :open-on-click="false">
                             <template v-slot:activator="{ on }">
-                              <v-icon
-                                v-on="on"
-                                small
-                              >
-                                mdi-open-in-new
-                              </v-icon>
+                              <v-icon v-on="on" small> mdi-open-in-new </v-icon>
                             </template>
                             <span>Context Lookup</span>
                           </v-tooltip>
@@ -88,15 +67,13 @@ limitations under the License.
                           v-for="(item, index) in getContextLinkItems(key)"
                           :key="index"
                           style="cursor: pointer"
-                          @click.stop="contextLinkRedirect(key,item,value)"
+                          @click.stop="contextLinkRedirect(key, item, value)"
                         >
-                          <v-list-item-title v-if="getContextLinkRedirectState(key,item)" >{{ item }}</v-list-item-title>
-                          <v-list-item-title v-else >{{ item }}*</v-list-item-title>
-                          <v-dialog
-                            v-model="redirectWarnDialog"
-                            max-width="515"
-                            :retain-focus="false"
-                          >
+                          <v-list-item-title v-if="getContextLinkRedirectState(key, item)">{{
+                            item
+                          }}</v-list-item-title>
+                          <v-list-item-title v-else>{{ item }}*</v-list-item-title>
+                          <v-dialog v-model="redirectWarnDialog" max-width="515" :retain-focus="false">
                             <ts-link-redirect-warning
                               app
                               @cancel="redirectWarnDialog = false"
@@ -189,6 +166,21 @@ limitations under the License.
               <v-icon>mdi-send</v-icon>
             </v-btn>
           </v-card-actions>
+        </v-card>
+        <v-card>
+          <v-card outlined>
+            <v-toolbar dense flat>
+              <v-toolbar-title style="font-size: 1.2em">Actions</v-toolbar-title>
+            </v-toolbar>
+            <v-btn icon small @click="copyEventUrlToClipboard(item)">
+              <v-tooltip top close-delay="300" :open-on-click="false">
+                <template v-slot:activator="{ on }">
+                  <v-icon v-on="on"> mdi-link </v-icon>
+                </template>
+                <span>Copy event URL to clipboard</span>
+              </v-tooltip>
+            </v-btn>
+          </v-card>
         </v-card>
       </v-col>
     </v-row>
@@ -292,16 +284,19 @@ export default {
       changeComment.editable = enable
       this.comments.splice(commentIndex, 1, changeComment)
     },
-
     selectComment(comment) {
       this.selectedComment = comment
     },
     unSelectComment() {
       this.selectedComment = false
     },
+    copyEventUrlToClipboard() {
+      let eventUrl = window.location.origin + this.$route.path + '?q=_id:' + this.event._id
+      navigator.clipboard.writeText(eventUrl)
+    },
     getContextLinkItems(key) {
       let fieldConfList = this.contextLinkConf[key.toLowerCase()] ? this.contextLinkConf[key.toLowerCase()] : []
-      let shortNameList = fieldConfList.map(x => x.short_name)
+      let shortNameList = fieldConfList.map((x) => x.short_name)
       return shortNameList
     },
     checkContextLinkDisplay(key, value) {
@@ -309,17 +304,18 @@ export default {
       for (const confItem of fieldConfList) {
         if (confItem['validation_regex'] !== '' && confItem['validation_regex'] !== undefined) {
           let validationPattern = confItem['validation_regex']
-          let regexIdentifiers = validationPattern.slice(validationPattern.lastIndexOf('/')+1)
-          let regexPattern = validationPattern.slice(validationPattern.indexOf('/')+1, validationPattern.lastIndexOf('/'))
+          let regexIdentifiers = validationPattern.slice(validationPattern.lastIndexOf('/') + 1)
+          let regexPattern = validationPattern.slice(
+            validationPattern.indexOf('/') + 1,
+            validationPattern.lastIndexOf('/')
+          )
           let valueRegex = new RegExp(regexPattern, regexIdentifiers)
           if (valueRegex.test(value)) {
             return true
-          }
-          else {
+          } else {
             return false
           }
-        }
-        else {
+        } else {
           return true
         }
       }
@@ -333,8 +329,7 @@ export default {
             this.redirectWarnDialog = true
             this.contextValue = value
             this.contextUrl = confItem['context_link'].replace('<ATTR_VALUE>', encodeURIComponent(value))
-          }
-          else {
+          } else {
             // TODO verify if encodeURIComponent is sufficient sanitization here?
             window.open(confItem['context_link'].replace('<ATTR_VALUE>', encodeURIComponent(value)), '_blank')
             this.redirectWarnDialog = false
@@ -342,7 +337,7 @@ export default {
         }
       }
     },
-    getContextLinkRedirectState (key, item) {
+    getContextLinkRedirectState(key, item) {
       const fieldConfList = this.contextLinkConf[key.toLowerCase()] ? this.contextLinkConf[key.toLowerCase()] : []
       for (const confItem of fieldConfList) {
         if (confItem['short_name'] === item) {
