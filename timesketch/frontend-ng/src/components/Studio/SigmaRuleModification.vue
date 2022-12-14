@@ -91,7 +91,12 @@ export default {
       search: '',
     }
   },
-
+  // find out if the rule_uuid was changed from a different place
+  watch: {
+    rule_uuid: function (newVal, oldVal) {
+      this.getRuleByUUID(newVal)
+    },
+  },
   mounted() {
     // even if the rule was stored, we want to double check the rule
     this.getRuleByUUID(this.rule_uuid)
