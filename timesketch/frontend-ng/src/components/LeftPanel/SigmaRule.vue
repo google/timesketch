@@ -105,9 +105,6 @@ limitations under the License.
           <v-btn @click="search(sigmaRule.search_query)" small depressed color="primary">Search</v-btn>
         </div>
       </div>
-      <div>
-        <pre><!--{{ sigmaRule }}--></pre>
-      </div>
     </v-expand-transition>
     <v-divider></v-divider>
   </div>
@@ -173,9 +170,8 @@ export default {
           .catch((e) => {
             console.error(e)
           })
-        // remove the router go here!!!
         this.$store.dispatch('updateSigmaList')
-        this.$router.go('/studio/sigma/')
+        this.$router.go('/studio/sigma/new')
       }
     },
     editRule(ruleUuid) {

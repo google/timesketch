@@ -68,7 +68,7 @@ export default {
   },
   methods: {
     CreateNewRule() {
-      this.$router.go('/studio/sigma/new')
+      this.$router.push({ name: 'Studio', params: { type: 'sigma', id: 'new' } })
     },
   },
   computed: {
