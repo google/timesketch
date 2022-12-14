@@ -505,7 +505,6 @@ def sketch_info(sketch_id):
         print("Sketch does not exist.")
     else:
         print(f"Sketch {sketch_id} Name: ({sketch.name})")
-        # make a table without prettytable with the headers searchindex index created_at user_id description
 
         # define the table data
         table_data = [
@@ -556,7 +555,7 @@ def sketch_info(sketch_id):
             status_table.append(
                 [status.id, status.status, status.created_at, status.user_id]
             )
-        print(f"Status:")
+        print("Status:")
         print_table(status_table)
 
 
