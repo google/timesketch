@@ -22,7 +22,6 @@ import yaml
 import click
 from flask.cli import FlaskGroup
 from sqlalchemy.exc import IntegrityError
-from prettytable import PrettyTable
 from jsonschema import validate, ValidationError, SchemaError
 
 from timesketch import version
@@ -61,7 +60,9 @@ def create_user(username, password=None):
 
     def get_password_from_prompt():
         """Get password from the command line prompt."""
-        first_password = click.prompt("Enter password", hide_input=True, type=str)
+        first_password = click.prompt(
+            "Enter password", hide_input=True, type=str
+        )
         second_password = click.prompt(
             "Enter password again", hide_input=True, type=str
         )
@@ -153,7 +154,9 @@ def grant_user(username, sketch_id):
     else:
         sketch.grant_permission(permission="read", user=user)
         sketch.grant_permission(permission="write", user=user)
-        print(f"User {username} added to the sketch {sketch.id} ({sketch.name})")
+        print(
+            f"User {username} added to the sketch {sketch.id} ({sketch.name})"
+        )
 
 
 @cli.command(name="version")
@@ -296,7 +299,9 @@ def import_search_templates(path):
                     template_uuid=uuid
                 ).first()
                 if not searchtemplate:
-                    searchtemplate = SearchTemplate(name=name, template_uuid=uuid)
+                    searchtemplate = SearchTemplate(
+                        name=name, template_uuid=uuid
+                    )
                     db_session.add(searchtemplate)
                     db_session.commit()
 
@@ -350,7 +355,9 @@ def import_sigma_rules(path):
 
         # Query rules to see if it already exist and exit if found
         rule_uuid = sigma_rule.get("id")
-        sigma_rule_from_db = SigmaRule.query.filter_by(rule_uuid=rule_uuid).first()
+        sigma_rule_from_db = SigmaRule.query.filter_by(
+            rule_uuid=rule_uuid
+        ).first()
         if sigma_rule_from_db:
             print(f"Rule {rule_uuid} is already imported")
             continue
@@ -411,7 +418,9 @@ def remove_all_sigma_rules():
     """Deletes all Sigma rule from the database."""
 
     if click.confirm("Do you really want to drop all the Sigma rules?"):
-        if click.confirm("Are you REALLLY sure you want to DROP ALL the Sigma rules?"):
+        if click.confirm(
+            "Are you REALLLY sure you want to DROP ALL the Sigma rules?"
+        ):
 
             all_sigma_rules = SigmaRule.query.all()
             for rule in all_sigma_rules:
@@ -428,7 +437,8 @@ def export_sigma_rules(path):
 
     if not os.path.isdir(path):
         raise RuntimeError(
-            "The directory needs to exist, please create: " "{0:s} first".format(path)
+            "The directory needs to exist, please create: "
+            "{0:s} first".format(path)
         )
 
     all_sigma_rules = SigmaRule.query.all()
@@ -482,6 +492,21 @@ def info():
     print(f"pip version: {output} ")
 
 
+def print_table(table_data):
+    """Prints a table."""
+    # calculate the maximum length of each column
+    max_lengths = [0] * len(table_data[0])
+    for row in table_data:
+        for i, cell in enumerate(row):
+            max_lengths[i] = max(max_lengths[i], len(str(cell)))
+
+    # create the table
+    for row in table_data:
+        for i, cell in enumerate(row):
+            print(str(cell).ljust(max_lengths[i]), end=" ")
+        print()
+
+
 @cli.command(name="sketch-info")
 @click.argument("sketch_id")
 def sketch_info(sketch_id):
@@ -491,18 +516,21 @@ def sketch_info(sketch_id):
         print("Sketch does not exist.")
     else:
         print(f"Sketch {sketch_id} Name: ({sketch.name})")
+        # make a table without prettytable with the headers searchindex index created_at user_id description
 
-        table = PrettyTable()
-        table.field_names = [
-            "searchindex_id",
-            "index_name",
-            "created_at",
-            "user_id",
-            "description",
+        # define the table data
+        table_data = [
+            [
+                "searchindex_id",
+                "index_name",
+                "created_at",
+                "user_id",
+                "description",
+            ],
         ]
 
         for t in sketch.active_timelines:
-            table.add_row(
+            table_data.append(
                 [
                     t.searchindex_id,
                     t.searchindex.index_name,
@@ -512,7 +540,7 @@ def sketch_info(sketch_id):
                 ]
             )
 
-        print(f"active_timelines:\n{table}")
+        print_table(table_data)
 
         print("Shared with:")
         print("\tUsers: (user_id, username)")
@@ -527,18 +555,20 @@ def sketch_info(sketch_id):
         sketch_labels = ([label.label for label in sketch.labels],)
         print(f"Sketch Labels: {sketch_labels}")
 
-        status_table = PrettyTable()
-        status_table.field_names = [
-            "id",
-            "status",
-            "created_at",
-            "user_id",
+        status_table = [
+            [
+                "id",
+                "status",
+                "created_at",
+                "user_id",
+            ],
         ]
         for status in sketch.status:
-            status_table.add_row(
+            status_table.append(
                 [status.id, status.status, status.created_at, status.user_id]
             )
-        print(f"Status:\n{status_table}")
+        print(f"Status:")
+        print_table(status_table)
 
 
 @cli.command(name="validate-context-links-conf")
