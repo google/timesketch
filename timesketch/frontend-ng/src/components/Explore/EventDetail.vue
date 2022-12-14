@@ -27,7 +27,7 @@ limitations under the License.
               <span>Copy event URL to clipboard</span>
             </v-tooltip>
           </v-btn>
-          <v-btn icon small @click="copyEventAsJSON(event)">
+          <v-btn icon small @click="copyEventAsJSON()">
             <v-tooltip top close-delay="300" :open-on-click="false">
               <template v-slot:activator="{ on }">
                 <v-icon v-on="on"> mdi-content-copy </v-icon>
@@ -345,8 +345,8 @@ export default {
       }
       return false
     },
-    copyEventAsJSON(event) {
-      let eventJSON = JSON.stringify(event, null, 2)
+    copyEventAsJSON() {
+      let eventJSON = JSON.stringify(this.fullEvent, null, 3)
       navigator.clipboard.writeText(eventJSON)
     },
     searchContext: function (event) {
