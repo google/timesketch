@@ -16,6 +16,43 @@ limitations under the License.
 <template>
   <div>
     <v-row>
+      <v-card outlined height="100%">
+        Actions:
+        <v-btn-group>
+          <v-btn icon small @click="copyEventUrlToClipboard(event)">
+            <v-tooltip top close-delay="300" :open-on-click="false">
+              <template v-slot:activator="{ on }">
+                <v-icon v-on="on"> mdi-link </v-icon>
+              </template>
+              <span>Copy event URL to clipboard</span>
+            </v-tooltip>
+          </v-btn>
+          <v-btn icon small @click="copyEventAsJSON(event)">
+            <v-tooltip top close-delay="300" :open-on-click="false">
+              <template v-slot:activator="{ on }">
+                <v-icon v-on="on"> mdi-content-copy </v-icon>
+              </template>
+              <span>Copy event data as JSON to clipboard</span>
+            </v-tooltip>
+          </v-btn>
+          <v-btn small icon @click="toggleStar()">
+            <v-icon v-if="event._source.label.includes('__ts_star')" color="amber">mdi-star</v-icon>
+            <v-icon v-else>mdi-star-outline</v-icon>
+          </v-btn>
+          <ts-event-tag-menu :event="event"></ts-event-tag-menu>
+          <v-btn icon small @click="searchContext(event)">
+            <v-tooltip top close-delay="300" :open-on-click="false">
+              <template v-slot:activator="{ on }">
+                <v-icon v-on="on"> mdi-magnify </v-icon>
+              </template>
+              <span>Search +/- 5 min</span>
+            </v-tooltip>
+          </v-btn>
+        </v-btn-group>
+      </v-card>
+    </v-row>
+
+    <v-row>
       <v-col cols="8">
         <v-card outlined height="100%">
           <v-simple-table dense>
@@ -167,21 +204,6 @@ limitations under the License.
             </v-btn>
           </v-card-actions>
         </v-card>
-        <v-card>
-          <v-card outlined>
-            <v-toolbar dense flat>
-              <v-toolbar-title style="font-size: 1.2em">Actions</v-toolbar-title>
-            </v-toolbar>
-            <v-btn icon small @click="copyEventUrlToClipboard(item)">
-              <v-tooltip top close-delay="300" :open-on-click="false">
-                <template v-slot:activator="{ on }">
-                  <v-icon v-on="on"> mdi-link </v-icon>
-                </template>
-                <span>Copy event URL to clipboard</span>
-              </v-tooltip>
-            </v-btn>
-          </v-card>
-        </v-card>
       </v-col>
     </v-row>
     <br />
@@ -193,11 +215,13 @@ import ApiClient from '../../utils/RestApiClient'
 import EventBus from '../../main'
 import TsFormatXmlString from './FormatXMLString.vue'
 import TsLinkRedirectWarning from './LinkRedirectWarning.vue'
+import TsEventTagMenu from '../../components/Explore/EventTagMenu.vue'
 
 export default {
   components: {
     TsFormatXmlString,
     TsLinkRedirectWarning,
+    TsEventTagMenu,
   },
   props: ['event'],
   data() {
@@ -320,6 +344,13 @@ export default {
         }
       }
       return false
+    },
+    copyEventAsJSON(event) {
+      let eventJSON = JSON.stringify(event, null, 2)
+      navigator.clipboard.writeText(eventJSON)
+    },
+    searchContext: function (event) {
+      // TODO: not yet implemented
     },
     contextLinkRedirect(key, item, value) {
       const fieldConfList = this.contextLinkConf[key.toLowerCase()] ? this.contextLinkConf[key.toLowerCase()] : []
