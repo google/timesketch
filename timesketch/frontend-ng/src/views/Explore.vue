@@ -486,12 +486,22 @@ limitations under the License.
         </template>
         <!-- Actions field -->
         <template v-slot:item.actions="{ item }">
-          <v-btn small icon @click="toggleStar(item)">
-            <v-icon v-if="item._source.label.includes('__ts_star')" color="amber">mdi-star</v-icon>
-            <v-icon v-else>mdi-star-outline</v-icon>
-          </v-btn>
-          <!-- Tag menu -->
-          <ts-event-tag-menu :event="item"></ts-event-tag-menu>
+          <td width="10%">
+            <v-btn small icon @click="toggleStar(item)">
+              <v-icon v-if="item._source.label.includes('__ts_star')" color="amber">mdi-star</v-icon>
+              <v-icon v-else>mdi-star-outline</v-icon>
+            </v-btn>
+            <!-- Tag menu -->
+            <ts-event-tag-menu :event="item"></ts-event-tag-menu>
+            <v-btn icon small @click="copyEventUrlToClipboard(item)">
+              <v-tooltip top close-delay="300" :open-on-click="false">
+                <template v-slot:activator="{ on }">
+                  <v-icon v-on="on"> mdi-link </v-icon>
+                </template>
+                <span>Copy event URL to clipboard</span>
+              </v-tooltip>
+            </v-btn>
+          </td>
         </template>
 
         <!-- Generic slot for any field type. Adds tags and emojis to the first column. -->
@@ -1203,6 +1213,11 @@ export default {
     removeField: function (index) {
       this.selectedFields.splice(index, 1)
     },
+    copyEventUrlToClipboard(event) {
+      let eventUrl = window.location.origin + this.$route.path + '?q=_id:' + event._id
+      navigator.clipboard.writeText(eventUrl)
+    },
+
     toggleStar(event) {
       if (event._source.label.includes('__ts_star')) {
         event._source.label.splice(event._source.label.indexOf('__ts_star'), 1)
