@@ -102,7 +102,9 @@ limitations under the License.
         </div>
 
         <div class="mt-3">
-          <v-btn @click="search(sigmaRule.search_query)" small depressed color="primary">Search</v-btn>
+          <v-btn @click="search(sigmaRule.search_query)" small depressed color="primary" v-if="sketch.id !== undefined"
+            >Search</v-btn
+          >
         </div>
       </div>
     </v-expand-transition>
@@ -148,12 +150,19 @@ export default {
         'level',
         'tags',
         'rule_uuid',
+        'search_query',
       ]
       return Object.fromEntries(Object.entries(this.sigmaRule).filter(([key]) => fields.includes(key)))
     },
   },
   methods: {
     search(queryString) {
+      // if sketch.id is undefined, we are in the sigma list view and not searching
+      if (!this.sketch.id) {
+        return
+      }
+      console.log('Sketch' + this.sketch.id)
+      console.log('Search: ' + queryString)
       let eventData = {}
       eventData.doSearch = true
       eventData.queryString = queryString
