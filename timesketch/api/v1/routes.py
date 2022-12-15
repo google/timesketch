@@ -79,6 +79,8 @@ from .resources.scenarios import ScenarioTemplateListResource
 from .resources.scenarios import ScenarioListResource
 from .resources.scenarios import ScenarioResource
 from .resources.scenarios import ScenarioStatusResource
+from .resources.scenarios import QuestionConclusionListResource
+from .resources.scenarios import QuestionConclusionResource
 
 
 # Disable error for long line. Readability is more important than line
@@ -163,6 +165,9 @@ API_ROUTES = [
     (DataSourceListResource, "/sketches/<int:sketch_id>/datasource/"),
     (DataSourceResource, "/sketches/<int:sketch_id>/datasource/<int:datasource_id>/"),
     (DataFinderResource, "/sketches/<int:sketch_id>/data/find/"),
+    (TagMetadataResource, "/intelligence/tagmetadata/"),
+    (ContextLinkConfigResource, "/contextlinks/"),
+    # Scenarios
     (ScenarioTemplateListResource, "/scenarios/"),
     (ScenarioListResource, "/sketches/<int:sketch_id>/scenarios/"),
     (ScenarioResource, "/sketches/<int:sketch_id>/scenarios/<int:scenario_id>/"),
@@ -170,6 +175,12 @@ API_ROUTES = [
         ScenarioStatusResource,
         "/sketches/<int:sketch_id>/scenarios/<int:scenario_id>/status/",
     ),
-    (TagMetadataResource, "/intelligence/tagmetadata/"),
-    (ContextLinkConfigResource, "/contextlinks/"),
+    (
+        QuestionConclusionListResource,
+        "/sketches/<int:sketch_id>/questions/<int:question_id>/",
+    ),
+    (
+        QuestionConclusionResource,
+        "/sketches/<int:sketch_id>/questions/<int:question_id>/conclusions/<int:conclusion_id>/",
+    ),
 ]

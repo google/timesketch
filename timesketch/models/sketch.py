@@ -1229,7 +1229,7 @@ class InvestigativeQuestionConclusion(LabelMixin, StatusMixin, CommentMixin, Bas
         "Aggregation", secondary=questionconclusion_aggregation_association_table
     )
 
-    def __init__(self, conclusion, user, investigativequestion, automated=False):
+    def __init__(self, user, investigativequestion, conclusion=None, automated=False):
         """Initialize the QuestionConclusion object.
 
         Args:
@@ -1239,9 +1239,9 @@ class InvestigativeQuestionConclusion(LabelMixin, StatusMixin, CommentMixin, Bas
             automated (bool): Indicate if conclusion was automated
         """
         super().__init__()
-        self.conclusion = conclusion
         self.user = user
         self.investigativequestion = investigativequestion
+        self.conclusion = conclusion
         self.automated = automated
 
 
