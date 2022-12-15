@@ -178,14 +178,14 @@ limitations under the License.
         </v-tabs>
         <v-divider></v-divider>
         <v-tabs-items v-model="leftPanelTab" class="pt-4">
-          <v-tab-item>
+          <v-tab-item :transition="false">
             <ts-saved-searches v-if="meta.views"></ts-saved-searches>
             <ts-data-types></ts-data-types>
             <ts-tags></ts-tags>
             <ts-search-templates></ts-search-templates>
             <ts-sigma-rules></ts-sigma-rules>
           </v-tab-item>
-          <v-tab-item>
+          <v-tab-item :transition="false">
             <ts-scenario v-for="scenario in activeScenarios" :key="scenario.id" :scenario="scenario"></ts-scenario>
             <v-row class="mt-0 px-2" flat>
               <v-col cols="6">
