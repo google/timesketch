@@ -283,11 +283,12 @@ class QuestionConclusionListResource(resources.ResourceMixin, Resource):
             A list of JSON representations of the conclusions.
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
-
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
 
         question = InvestigativeQuestion.query.get(question_id)
+        if not question:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No question found with this ID")
 
         conclusions = InvestigativeQuestionConclusion.filter_by(
             investigativequestion=question
@@ -305,12 +306,10 @@ class QuestionConclusionListResource(resources.ResourceMixin, Resource):
             A JSON representation of the conclusion.
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
-
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
 
         question = InvestigativeQuestion.query.get(question_id)
-
         if not question:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No question found with this ID")
 
@@ -335,6 +334,41 @@ class QuestionConclusionListResource(resources.ResourceMixin, Resource):
 class QuestionConclusionResource(resources.ResourceMixin, Resource):
     """Resource for investigative question conclusion."""
 
+    def put(self, sketch_id, question_id, conclusion_id):
+        """Handles PUT request to the resource.
+
+        Edit a conclusion.
+
+        Returns:
+            A JSON representation of the conclusion.
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
+
+        question = InvestigativeQuestion.query.get(question_id)
+        if not question:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No question found with this ID")
+
+        conclusion = InvestigativeQuestionConclusion.get(conclusion_id)
+        if not conclusion:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No conclusion found with this ID")
+
+        if conclusion.user != current_user:
+            abort(HTTP_STATUS_CODE_FORBIDDEN, "You can only edit your own conclusion.")
+
+        form = request.json
+        if not form:
+            form = request.data
+
+        conclusion_text = form.get("conclusionText")
+        if conclusion_text:
+            conclusion.conclusion = conclusion_text
+            db_session.add(conclusion)
+            db_session.commit()
+
+        return self.to_json(conclusion)
+
     @login_required
     def delete(self, sketch_id, question_id, conclusion_id):
         """Handles DELETE request to the resource.
@@ -342,17 +376,14 @@ class QuestionConclusionResource(resources.ResourceMixin, Resource):
         Deletes a conclusion.
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
-
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
 
         question = InvestigativeQuestion.query.get(question_id)
-
         if not question:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No question found with this ID")
 
         conclusion = InvestigativeQuestionConclusion.query.get(conclusion_id)
-
         if not conclusion:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No conclusion found with this ID")
 
