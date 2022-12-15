@@ -283,14 +283,15 @@ class QuestionConclusionListResource(resources.ResourceMixin, Resource):
             A list of JSON representations of the conclusions.
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
+
+        if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
+
         question = InvestigativeQuestion.query.get(question_id)
 
         conclusions = InvestigativeQuestionConclusion.filter_by(
             investigativequestion=question
         ).all()
-
-        if not sketch:
-            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
 
         return self.to_json(conclusions)
 
@@ -301,20 +302,22 @@ class QuestionConclusionListResource(resources.ResourceMixin, Resource):
         Adds or edits a conclusion.
 
         Returns:
-            A JSON representation of the question.
+            A JSON representation of the conclusion.
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
-        question = InvestigativeQuestion.query.get(question_id)
-
-        conclusion = InvestigativeQuestionConclusion.get_or_create(
-            user=current_user, investigativequestion=question
-        )
 
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
 
-        if conclusion.user != current_user:
-            abort(HTTP_STATUS_CODE_FORBIDDEN, "User did not create this conclusion.")
+        question = InvestigativeQuestion.query.get(question_id)
+
+        if not question:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No question found with this ID")
+
+        # Create conclusion for the calling user if it doesn't exist.
+        conclusion = InvestigativeQuestionConclusion.get_or_create(
+            user=current_user, investigativequestion=question
+        )
 
         form = request.json
         if not form:
@@ -339,14 +342,16 @@ class QuestionConclusionResource(resources.ResourceMixin, Resource):
         Deletes a conclusion.
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
-        question = InvestigativeQuestion.query.get(question_id)
-        conclusion = InvestigativeQuestionConclusion.query.get(conclusion_id)
 
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
 
+        question = InvestigativeQuestion.query.get(question_id)
+
         if not question:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No question found with this ID")
+
+        conclusion = InvestigativeQuestionConclusion.query.get(conclusion_id)
 
         if not conclusion:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No conclusion found with this ID")
