@@ -161,7 +161,7 @@ export default {
       if (!this.sketch.id) {
         return
       }
-      console.log('Sketch' + this.sketch.id)
+      console.log('Sketch ID: ' + this.sketch.id)
       console.log('Search: ' + queryString)
       let eventData = {}
       eventData.doSearch = true
