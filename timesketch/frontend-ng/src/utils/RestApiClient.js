@@ -394,9 +394,13 @@ export default {
     let formData = { status: status }
     return RestApiClient.post('/sketches/' + sketchId + '/scenarios/' + scenarioId + '/status/', formData)
   },
-  saveQuestionConclusion(sketchId, questionId, conclusionText) {
+  createQuestionConclusion(sketchId, questionId, conclusionText) {
     let formData = { conclusionText: conclusionText }
     return RestApiClient.post('/sketches/' + sketchId + '/questions/' + questionId + '/', formData)
+  },
+  editQuestionConclusion(sketchId, questionId, conclusionId, conclusionText) {
+    let formData = { conclusionText: conclusionText }
+    return RestApiClient.put('/sketches/' + sketchId + '/questions/' + questionId + '/conclusions/' + conclusionId + '/', formData)
   },
   deleteQuestionConclusion(sketchId, questionId, conclusionId) {
     return RestApiClient.delete('/sketches/' + sketchId + '/questions/' + questionId + '/conclusions/' + conclusionId + '/')

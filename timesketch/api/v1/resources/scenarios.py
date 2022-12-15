@@ -350,7 +350,7 @@ class QuestionConclusionResource(resources.ResourceMixin, Resource):
         if not question:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No question found with this ID")
 
-        conclusion = InvestigativeQuestionConclusion.get(conclusion_id)
+        conclusion = InvestigativeQuestionConclusion.query.get(conclusion_id)
         if not conclusion:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No conclusion found with this ID")
 

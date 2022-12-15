@@ -86,7 +86,7 @@ limitations under the License.
               <v-card-actions class="pr-0">
                 <v-spacer></v-spacer>
                 <v-btn small text @click="conclusionText = ''"> Cancel </v-btn>
-                <v-btn small text color="primary" @click="saveConclusion"> Save </v-btn>
+                <v-btn small text color="primary" @click="createConclusion()"> Save </v-btn>
               </v-card-actions>
             </div>
           </v-expand-transition>
@@ -126,8 +126,8 @@ export default {
     },
   },
   methods: {
-    saveConclusion: function () {
-      ApiClient.saveQuestionConclusion(this.sketch.id, this.question.id, this.conclusionText)
+    createConclusion: function () {
+      ApiClient.createQuestionConclusion(this.sketch.id, this.question.id, this.conclusionText)
         .then((response) => {
           this.conclusionText = ''
           this.$store.dispatch('updateScenarios', this.sketch.id)

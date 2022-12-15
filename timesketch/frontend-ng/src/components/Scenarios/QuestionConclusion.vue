@@ -90,7 +90,7 @@ export default {
       this.editable = false
       this.showControls = false
       this.conclusion.conclusion = ''
-      ApiClient.saveQuestionConclusion(this.sketch.id, this.question.id, this.conclusionText)
+      ApiClient.editQuestionConclusion(this.sketch.id, this.question.id, this.conclusion.id, this.conclusionText)
         .then((response) => {
           this.$store.dispatch('updateScenarios', this.sketch.id).then(() => {
             this.loading = false
