@@ -81,11 +81,10 @@ export default {
     },
     ruleCount() {
       // to avoid undefined error if the list is not yet loaded or number is 0
-      if (this.$store.state.sigmaRuleList && this.$store.state.sigmaRuleList.length) {
-        return this.$store.state.sigmaRuleList.length
-      } else {
+      if (!this.$store.state.sigmaRuleList) {
         return 0
       }
+      return this.$store.state.sigmaRuleList.length
     },
     sketch() {
       return this.$store.state.sketch
