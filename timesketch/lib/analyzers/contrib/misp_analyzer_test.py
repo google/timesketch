@@ -36,16 +36,16 @@ class TestMisp(BaseTest):
 
     def setUp(self):
         super().setUp()
-        current_app.config["MISP_URL"] = "blah"
-        current_app.config["MISP_API_KEY"] = "blah"
+        current_app.config["MISP_URL"] = "https://test.com/"
+        current_app.config["MISP_API_KEY"] = "test"
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
-    @mock.patch("timesketch.lib.analyzers.contrib.misp_analyzer." "requests.post")
+    @mock.patch("requests.post")
     def test_attr_match(self, mock_requests_post):
         """Test match"""
         analyzer = misp_analyzer.MispAnalyzer("test_index", 1)
-        analyzer.misp_url = "blah"
-        analyzer.misp_api_key = "blah"
+        analyzer.misp_url = "https://test.com/"
+        analyzer.misp_api_key = "test"
         analyzer.datastore.client = mock.Mock()
         mock_requests_post.return_value.status_code = 200
         mock_requests_post.return_value.json.return_value = MISP_ATTR
@@ -59,15 +59,15 @@ class TestMisp(BaseTest):
             message,
             ("MISP Match: 1"),
         )
-        mock_requests_post.assert_called_once()
+        mock_requests_post.assert_called_with('https://test.com//attributes/restSearch/', data={'returnFormat': 'json', 'value': 'test.txt', 'type': 'filename'}, headers={'Authorization': 'test'}, verify=False)
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
-    @mock.patch("timesketch.lib.analyzers.contrib.misp_analyzer." "requests.post")
+    @mock.patch("requests.post")
     def test_attr_nomatch(self, mock_requests_post):
         """Test no match"""
         analyzer = misp_analyzer.MispAnalyzer("test_index", 1)
-        analyzer.misp_url = "blah"
-        analyzer.misp_api_key = "blah"
+        analyzer.misp_url = "https://test.com/"
+        analyzer.misp_api_key = "test"
         analyzer.datastore.client = mock.Mock()
         mock_requests_post.return_value.status_code = 200
         mock_requests_post.return_value.json.return_value = {
@@ -83,4 +83,4 @@ class TestMisp(BaseTest):
             message,
             ("MISP Match: 0"),
         )
-        mock_requests_post.assert_called_once()
+        mock_requests_post.assert_called_with('https://test.com//attributes/restSearch/', data={'returnFormat': 'json', 'value': 'test.txt', 'type': 'filename'}, headers={'Authorization': 'test'}, verify=False)

@@ -20,14 +20,14 @@ class TestHashlookup(BaseTest):
 
     def setUp(self):
         super().setUp()
-        current_app.config["HASHLOOKUP_URL"] = "blah"
+        current_app.config["HASHLOOKUP_URL"] = "https://test.com/"
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
-    @mock.patch("timesketch.lib.analyzers.contrib.hashlookup_analyzer." "requests.get")
+    @mock.patch("requests.get")
     def test_hash_match(self, mock_requests_get):
         """Test match"""
         analyzer = hashlookup_analyzer.HashlookupAnalyzer("test_index", 1)
-        analyzer.hashlookup_url = "blah"
+        analyzer.hashlookup_url = "https://test.com/"
         analyzer.datastore.client = mock.Mock()
         mock_requests_get.return_value.status_code = 200
         mock_requests_get.return_value.json.return_value = {"FileName": "test.txt"}
@@ -41,14 +41,14 @@ class TestHashlookup(BaseTest):
             message,
             ("Hashlookup Matches: 1"),
         )
-        mock_requests_get.assert_called_once()
+        mock_requests_get.assert_called_with('https://test.com/sha256/ac7233de5daa4ab262e2e751028f56a7e9d5b9e724624c1d55e8b070d8c3cd09')
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
-    @mock.patch("timesketch.lib.analyzers.contrib.hashlookup_analyzer." "requests.get")
+    @mock.patch("requests.get")
     def test_hash_nomatch(self, mock_requests_get):
         """Test no match"""
         analyzer = hashlookup_analyzer.HashlookupAnalyzer("test_index", 1)
-        analyzer.hashlookup_url = "blah"
+        analyzer.hashlookup_url = "https://test.com/"
         analyzer.datastore.client = mock.Mock()
         mock_requests_get.return_value.status_code = 404
         mock_requests_get.return_value.json.return_value = []
@@ -62,4 +62,4 @@ class TestHashlookup(BaseTest):
             message,
             ("Hashlookup Matches: 0"),
         )
-        mock_requests_get.assert_called_once()
+        mock_requests_get.assert_called_with('https://test.com/sha256/bc7233de5daa4ab262e2e751028f56a7e9d5b9e724624c1d55e8b070d8c3cd09')
