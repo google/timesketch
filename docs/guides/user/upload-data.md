@@ -1,3 +1,7 @@
+---
+hide:
+  - footer
+---
 # Upload Data to Timesketch
 
 There are several different ways to upload data to Timesketch. This document
