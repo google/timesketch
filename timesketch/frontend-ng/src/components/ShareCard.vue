@@ -14,14 +14,31 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-card>
-    <v-card-title>Share sketch</v-card-title>
-    <v-card-text>
-      <v-radio-group v-model="column" column>
-        <v-radio label="Private - Only you and selected users/groups can access this sketch" value="radio-1"></v-radio>
-        <v-radio label="Public - All users of the system can access this sketch" value="radio-2"></v-radio>
-      </v-radio-group>
-    </v-card-text>
+  <v-card class="pa-4">
+    <h2>Share "{{ sketch.name }}"</h2>
+    <br />
+    <v-autocomplete
+      v-model="usersToAdd"
+      :items="systemUsers"
+      outlined
+      single-line
+      chips
+      small-chips
+      hide-details
+      label="Add people and groups"
+    ></v-autocomplete>
+    <br />
+    People with access
+    <br />
+    General access
+    <v-select
+      hide-details
+      single-line
+      :items="items"
+      :label="currentAccess"
+      :prepend-icon="icon"
+      style="width: 150px"
+    ></v-select>
   </v-card>
 </template>
 
@@ -30,11 +47,58 @@ import ApiClient from '../utils/RestApiClient'
 
 export default {
   data() {
-    return {}
+    return {
+      items: ['Public', 'Restricted'],
+      systemUsers: [],
+      systemGroups: [],
+    }
+  },
+  computed: {
+    sketch() {
+      return this.$store.state.sketch
+    },
+    meta() {
+      return this.$store.state.meta
+    },
+    currentAccess() {
+      if (this.meta.permissions.public) {
+        return 'Public'
+      }
+      return 'Restricted'
+    },
+    icon() {
+      if (this.meta.permissions.public) {
+        return 'mdi-globe'
+      }
+      return 'mdi-earth'
+    },
   },
   methods: {},
+  mounted() {
+    ApiClient.getUsers()
+      .then((response) => {
+        response.data.objects[0].forEach((user) => {
+          this.systemUsers.push(user.username)
+        })
+      })
+      .catch((e) => {})
+    ApiClient.getGroups()
+      .then((response) => {
+        response.data.objects[0].forEach((group) => {
+          this.systemGroups.push(group.name)
+        })
+      })
+      .catch((e) => {})
+  },
 }
 </script>
 
 <!-- CSS scoped to this component only -->
-<style scoped lang="scss"></style>
+<style lang="scss">
+.v-text-field > .v-input__control > .v-input__slot:before {
+  border-style: none;
+}
+.v-text-field > .v-input__control > .v-input__slot:after {
+  border-style: none;
+}
+</style>

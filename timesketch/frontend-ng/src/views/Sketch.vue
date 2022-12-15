@@ -23,7 +23,7 @@ limitations under the License.
         </router-link>
       </v-avatar>
 
-      <v-btn icon v-show="!showLeftPanel" @click="toggleLeftPanel" class="ml-n1">
+      <v-btn icon v-show="!showLeftPanel" @click="toggleLeftPanel" class="ml-n1 mt-1">
         <v-icon>mdi-menu</v-icon>
       </v-btn>
 
