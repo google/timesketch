@@ -1,3 +1,7 @@
+---
+hide:
+  - footer
+---
 # Create timeline from JSONL or CSV file
 
 You can ingest timeline data from a JSONL or CSV file. You can have any number of attributes/columns as you wish but there are some mandatory fields that Timesketch needs in order to render the events in the UI.
@@ -19,11 +23,11 @@ In a few words, there are two different manners: using a drop down menu, or usin
 
 ![MappingFinished](https://user-images.githubusercontent.com/108743205/184672045-ab540bdb-b452-412e-9d49-63ef1d82ae49.png)
 
-* When choosing the mapping from the dropdown menu, you have two options: 
-    * Map the missing header with an existing field found in the CSV or JSONL, or 
+* When choosing the mapping from the dropdown menu, you have two options:
+    * Map the missing header with an existing field found in the CSV or JSONL, or
     * Instruct the server to create a new column with a default value specified by the user.
 For example, in the above figure, we mapped the `datetime` header to the `data_UtcTime` one. For the timestamp_desc field we decided to create a new column. The Server will interpret these mapping in this way: it will rename the CSV or JSONL header data_UtcTime into datetime, and it will create the timestamp_desc column with a default value “sysmon_event”.
-* When choosing the mapping from the checkboxes list, you can select multiple CSV headers that the server will combine into a single column named as the mandatory header. The server will not delete the selected columns. For example, in the above figure, we mapped the field `message` to 4 different headers. The server will create a new column named `message` where each row will contain the combination of the values of the selected fields. 
+* When choosing the mapping from the checkboxes list, you can select multiple CSV headers that the server will combine into a single column named as the mandatory header. The server will not delete the selected columns. For example, in the above figure, we mapped the field `message` to 4 different headers. The server will create a new column named `message` where each row will contain the combination of the values of the selected fields.
 
 ## Filename
 
@@ -36,7 +40,7 @@ You should provide the CSV header with the column names as the first line in the
     message,timestamp,datetime,timestamp_desc,extra_field_1,extra_field_2
     A message,1331698658276340,2015-07-24T19:01:01+00:00,Write time,foo,bar
     ...
-    
+
 Using the headers mapping functionality, you can still submit a CSV file without the mandatory fields. The uploaded file should have those headers whose semantic meaning is correlated to the ones of `message`, `datetime` and `timestamp_desc`.
 
 ## Example JSONL file

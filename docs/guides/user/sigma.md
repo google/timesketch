@@ -1,3 +1,7 @@
+---
+hide:
+  - footer
+---
 # Sigma
 
 ## What is Sigma

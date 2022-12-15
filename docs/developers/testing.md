@@ -1,3 +1,7 @@
+---
+hide:
+  - footer
+---
 ## Running tests
 
 The main entry point is `run_tests.py` in Timesketch root. Please note that for testing

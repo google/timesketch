@@ -1,3 +1,7 @@
+---
+hide:
+  - footer
+---
 # Timesketch Notebook
 
 The Timesketch notebook is a docker container that runs a customized version
@@ -97,7 +101,7 @@ To connect to a different server, few options are available:
 1. Copy ~/.timesketchrc and ~/.timesketch.token to the docker using `docker cp`.
 2. Run `ts_client = config.get_client(confirm_choices=True) and change all
 values as questions come up.
-3. Create a separate session using 
+3. Create a separate session using
 ```python
 ts_client = config.get_client(config_section='myserver')
 ```
