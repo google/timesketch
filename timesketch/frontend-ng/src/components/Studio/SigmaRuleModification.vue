@@ -18,7 +18,7 @@ limitations under the License.
     <v-container class="px-8">
       <h1>
         Rule title: {{ editingRule.title }}
-        <v-chip rounded x-small class="mr-2" :color="parsingStatusColors(ok_button_text)"> {{ ok_button_text }}</v-chip>
+        <v-chip rounded x-small class="mr-2" :color="statusColors(status_chip_text)"> {{ status_chip_text }}</v-chip>
       </h1>
 
       <div>
@@ -27,7 +27,7 @@ limitations under the License.
       </div>
 
       <div width="500">
-        <v-alert colored-border border="left" elevation="1" :color="parsingStatusColors(ok_button_text)">
+        <v-alert colored-border border="left" elevation="1" :color="statusColors(status_chip_text)">
           <b>Search Query:</b>
           {{ editingRule.search_query }}
         </v-alert>
@@ -36,7 +36,7 @@ limitations under the License.
       <v-textarea
         label="Edit Sigma rule"
         outlined
-        :color="parsingStatusColors('foo')"
+        :color="statusColors('Initial')"
         rows="35"
         v-model="ruleYaml"
         @input="parseSigma(ruleYaml)"
@@ -44,12 +44,12 @@ limitations under the License.
       </v-textarea>
       <div class="mt-3">
         <v-btn
-          :disabled="ok_button_text.toLowerCase() !== 'ok'"
+          :disabled="status_chip_text.toLowerCase() !== 'ok'"
           @click="addOrUpdateRule(ruleYaml)"
           small
           depressed
           color="primary"
-          >{{ save_button_text }}</v-btn
+          >{{ action_button_text }}</v-btn
         >
         <v-btn @click="cancel" small depressed color="secondary">Cancel </v-btn>
         <v-btn
@@ -57,7 +57,7 @@ limitations under the License.
           small
           depressed
           color="red"
-          :disabled="save_button_text.toLowerCase() == 'create'"
+          :disabled="action_button_text.toLowerCase() == 'create'"
           >Delete Rule</v-btn
         >
       </div>
@@ -75,7 +75,7 @@ limitations under the License.
   
 <script>
 import ApiClient from '../../utils/RestApiClient'
-import { SigmaTemplates } from '@/utils/SigmaRuleTemplates'
+import { SigmaTemplates, GeneralText } from '@/utils/SigmaRuleTemplates'
 import EventBus from '../../main'
 import _ from 'lodash'
 
@@ -84,8 +84,8 @@ export default {
   data() {
     return {
       editingRule: { ruleYaml: 'foobar' }, // empty state
-      ok_button_text: 'OK',
-      save_button_text: 'Update',
+      status_chip_text: 'OK',
+      action_button_text: 'Update',
       ruleYaml: {},
       SigmaTemplates: SigmaTemplates,
       search: '',
@@ -102,8 +102,8 @@ export default {
       this.editingRule = {
         title: 'New Sigma Rule',
       }
-      this.save_button_text = 'Create'
-      this.ok_button_text = 'OK'
+      this.action_button_text = 'Create'
+      this.status_chip_text = 'OK'
     }
     // even if the rule was stored, we want to double check the rule
 
@@ -126,22 +126,22 @@ export default {
       // eslint-disable-line
       ApiClient.getSigmaRuleByText(ruleYaml)
         .then((response) => {
-          console.log(response.data.objects[0])
-          if (!response.data.objects[0].author) {
+          var parsed_rule = response.data.objects[0]
+          if (!parsed_rule.author) {
             this.search_query = 'No Author given'
           } else {
-            this.editingRule = response.data.objects[0]
-            this.ok_button_text = 'OK'
+            this.editingRule = parsed_rule
+            this.status_chip_text = 'Ok'
           }
         })
         .catch((e) => {
           this.editingRule['search_query'] = e.response.data.message
           // need to set search_query to something, to overwrite previous value
-          this.ok_button_text = 'ERROR'
+          this.status_chip_text = 'ERROR'
         })
     }, 300),
-    parsingStatusColors(datasource) {
-      if (this.ok_button_text === 'OK') {
+    statusColors(datasource) {
+      if (this.status_chip_text.toLowerCase === 'ok') {
         return 'success'
       }
       return 'warning'
@@ -151,26 +151,14 @@ export default {
         .then((response) => {
           this.editingRule = response.data.objects[0]
           this.ruleYaml = this.editingRule.rule_yaml // eslint-disable-line camelcase
-          this.ok_button_text = 'OK'
+          this.status_chip_text = 'Ok'
         })
         .catch((e) => {
           console.error(e)
-          this.save_button_text = 'Create'
-          this.ok_button_text = 'OK'
+          this.action_button_text = 'Create'
+          this.status_chip_text = 'OK'
           this.editingRule['search_query'] = 'No Rule found, creating a new one'
-          this.ruleYaml = `title: Foobar
-id: ${crypto.randomUUID()}
-description: Detects suspicious FOOBAR
-references:
-  - https://
-author: ${this.$store.state.currentUser}
-date: ${new Date(Date.now()).toLocaleString('en-ZA').split(',')[0]}
-modified: ${new Date(Date.now()).toLocaleString('en-ZA').split(',')[0]}
-status: experimental
-falsepositives: unknown
-level: informational
-tags:
-    -`
+          this.ruleYaml = GeneralText
         })
     },
     deleteRule(ruleUuid) {
@@ -187,34 +175,33 @@ tags:
       }
     },
     addOrUpdateRule: function (event) {
-      if (this.ok_button_text !== 'OK') {
+      if (this.status_chip_text !== 'Ok') {
         // There seems still a parsing error, do not store them
         console.error('Sigma parsing still has error, please fix')
-      } else if (this.ok_button_text === 'OK') {
-        if (this.save_button_text === 'Create') {
+      } else if (this.status_chip_text === 'Ok') {
+        if (this.action_button_text === 'Create') {
           ApiClient.createSigmaRule(this.ruleYaml)
             .then((response) => {
-              // todo(jaegeral): make a nicer feedback to the user
-              EventBus.$emit('errorSnackBar', 'Rule created: ' + this.editingRule.id)
-              this.sigmaRuleList.push(response.data.objects[0])
               this.$store.dispatch('updateSigmaList')
+              EventBus.$emit('errorSnackBar', 'Rule created: ' + this.editingRule.id)
+              //this.sigmaRuleList.push(response.data.objects[0])
             })
             .catch((e) => {
               this.editingRule['search_query'] = e.response.data.message // need to set search_query to something, to overwrite previous value
             })
         }
-        if (this.save_button_text === 'Update') {
+        if (this.action_button_text === 'Update') {
           ApiClient.updateSigmaRule(this.editingRule.id, this.ruleYaml)
             .then((response) => {
-              this.$store.state.sigmaRuleList = this.sigmaRuleList.filter((obj) => {
-                return obj.rule_uuid !== this.editingRule.rule_uuid // eslint-disable-line camelcase
-              })
-              this.sigmaRuleList.push(response.data.objects[0])
+              //this.$store.state.sigmaRuleList = this.sigmaRuleList.filter((obj) => {
+              //  return obj.rule_uuid !== this.editingRule.rule_uuid // eslint-disable-line camelcase
+              //})
+              //this.sigmaRuleList.push(response.data.objects[0])
+              this.$store.dispatch('updateSigmaList')
               EventBus.$emit('errorSnackBar', 'Rule updated: ' + this.editingRule.id)
             })
             .catch((e) => {})
         }
-        this.$store.dispatch('updateSigmaList')
       }
     },
   },

@@ -542,7 +542,12 @@ logsource:
 ${SkeletonLast}
 `
 
+const GeneralText = `${SkeletonFirst}
+${SkeletonLast}
+`
+
 const SigmaTemplates = [
+    { "os": "General", "title": "General rule", "text": GeneralText },
     { "os": "Cloud", "title": "Cloud: AWS", "text": AwsText },
     { "os": "Cloud", "title": "Cloud: Azure_activitylogs", "text": AzureActivitylogsText },
     { "os": "Cloud", "title": "Cloud: Azure_signinlogs", "text": AzureSigninlogsText },
@@ -626,4 +631,4 @@ const SigmaTemplates = [
 ]
 
 
-export { SigmaTemplates }
+export { SigmaTemplates, GeneralText }

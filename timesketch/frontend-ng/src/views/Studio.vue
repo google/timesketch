@@ -46,59 +46,16 @@ export default {
       navigationDrawer: {
         width: 450,
       },
-      sketchId: 1, // TODO: this must be removed
     }
   },
   created: function () {
     this.$store.dispatch('updateSigmaList')
     document.title = 'Timesketch Studio'
   },
-  updated() {
-    this.$nextTick(function () {
-      this.setDrawerBorderStyle()
-      this.setDrawerResizeEvents()
-    })
-  },
+
   computed: {
     meta() {
       return this.$store.state.meta
-    },
-  },
-  methods: {
-    setDrawerBorderStyle() {
-      let i = this.$refs.drawer.$el.querySelector('.v-navigation-drawer__border')
-      i.style.cursor = 'ew-resize'
-    },
-    setDrawerResizeEvents() {
-      const minSize = 1
-      const drawerElement = this.$refs.drawer.$el
-      const drawerBorder = drawerElement.querySelector('.v-navigation-drawer__border')
-      const direction = drawerElement.classList.contains('v-navigation-drawer--right') ? 'right' : 'left'
-      function resize(e) {
-        document.body.style.cursor = 'ew-resize'
-        let f = direction === 'right' ? document.body.scrollWidth - e.clientX : e.clientX
-        drawerElement.style.width = f + 'px'
-      }
-      drawerBorder.addEventListener(
-        'mousedown',
-        (e) => {
-          if (e.offsetX < minSize) {
-            drawerElement.style.transition = 'initial'
-            document.addEventListener('mousemove', resize, false)
-          }
-        },
-        false
-      )
-      document.addEventListener(
-        'mouseup',
-        () => {
-          drawerElement.style.transition = ''
-          this.navigationDrawer.width = drawerElement.style.width
-          document.body.style.cursor = ''
-          document.removeEventListener('mousemove', resize, false)
-        },
-        false
-      )
     },
   },
   watch: {

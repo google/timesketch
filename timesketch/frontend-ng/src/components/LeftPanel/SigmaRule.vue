@@ -69,30 +69,30 @@ limitations under the License.
     <v-expand-transition>
       <div v-show="expanded" class="pa-4 pt-0">
         <!--{{ sigmaRuleSummary }}-->
-        <div style="font-size: 0.9em" class="mt-2">
+        <div class="mt-2">
           <v-simple-table dense>
             <template v-slot:default>
               <tbody>
-                <tr v-for="(v, k) in sigmaRuleSummary" :key="v.rule_uuid">
+                <tr v-for="(value, key) in sigmaRuleSummary" :key="value.rule_uuid">
                   <td>
-                    <strong>{{ k }}</strong>
+                    <strong>{{ key }}</strong>
                   </td>
                   <td>
-                    <span v-if="k === 'references'">
-                      <div v-for="ref in v" :key="ref">
+                    <span v-if="key === 'references'">
+                      <div v-for="ref in value" :key="ref">
                         <a :href="ref" target="new">{{ ref }}</a>
                       </div>
                     </span>
-                    <span v-else-if="k === 'falsepositives'">
-                      <v-chip v-for="falsepositive in v" :key="falsepositive" rounded x-small class="mr-2">{{
+                    <span v-else-if="key === 'falsepositives'">
+                      <v-chip v-for="falsepositive in value" :key="falsepositive" rounded x-small class="mr-2">{{
                         falsepositive
                       }}</v-chip>
                     </span>
-                    <span v-else-if="k === 'tags'">
-                      <v-chip v-for="tag in v" :key="tag" rounded x-small class="mr-2">{{ tag }}</v-chip>
+                    <span v-else-if="key === 'tags'">
+                      <v-chip v-for="tag in value" :key="tag" rounded x-small class="mr-2">{{ tag }}</v-chip>
                     </span>
                     <span v-else>
-                      {{ v }}
+                      {{ value }}
                     </span>
                   </td>
                 </tr>
@@ -180,7 +180,13 @@ export default {
             console.error(e)
           })
         this.$store.dispatch('updateSigmaList')
-        this.$router.go('/studio/sigma/new')
+        this.$router.push({
+          name: 'Studio',
+          params: {
+            id: 'new',
+            type: 'sigma',
+          },
+        })
       }
     },
     editRule(ruleUuid) {
@@ -194,7 +200,7 @@ export default {
       })
     },
     deprecateSigmaRule(ruleUuid) {
-      if (confirm('Archive Rule?')) {
+      if (confirm('Deprecate Rule?')) {
         //  get the current Sigma rule yaml again
         ApiClient.getSigmaRuleResource(ruleUuid)
           .then((response) => {
@@ -214,7 +220,6 @@ export default {
           .catch((e) => {
             console.error(e)
           })
-        this.$store.dispatch('updateSigmaList')
       }
     },
   },
