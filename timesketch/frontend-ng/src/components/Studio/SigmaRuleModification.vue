@@ -156,7 +156,7 @@ export default {
         .catch((e) => {
           console.error(e)
           this.save_button_text = 'Create'
-          this.ok_button_text = 'Ok'
+          this.ok_button_text = 'OK'
           this.editingRule['search_query'] = 'No Rule found, creating a new one'
           this.ruleYaml = `title: Foobar
 id: ${crypto.randomUUID()}
