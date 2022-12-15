@@ -15,8 +15,17 @@ limitations under the License.
 -->
 <template>
   <div>
-    <v-row no-gutters class="pa-4" flat :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
-      <span style="cursor: pointer" @click="expanded = !expanded">{{ scenario.display_name }}</span>
+    <v-row
+      no-gutters
+      style="cursor: pointer"
+      @click="expanded = !expanded"
+      class="pa-4"
+      flat
+      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+    >
+      <v-icon left>mdi-clipboard-check-outline</v-icon>
+      <span>{{ scenario.display_name }}</span>
+
       <v-spacer></v-spacer>
       <!-- Rename dialog -->
       <v-dialog v-model="renameDialog" max-width="500">
@@ -88,7 +97,8 @@ limitations under the License.
         </div>
       </div>
     </v-expand-transition>
-    <v-divider></v-divider>
+    <v-divider v-if="!expanded"></v-divider>
+    <br v-if="expanded" />
   </div>
 </template>
 
