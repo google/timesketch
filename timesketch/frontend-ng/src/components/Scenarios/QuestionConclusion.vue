@@ -99,6 +99,7 @@ export default {
           this.loading = false
           this.editable = true
           this.errorSnackBar(e)
+          console.error(e)
         })
     },
     editConclusion() {
