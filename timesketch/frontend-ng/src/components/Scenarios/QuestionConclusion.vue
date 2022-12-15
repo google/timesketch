@@ -89,14 +89,17 @@ export default {
       this.loading = true
       this.editable = false
       this.showControls = false
-      this.conclusion.conclusion = ''
       ApiClient.editQuestionConclusion(this.sketch.id, this.question.id, this.conclusion.id, this.conclusionText)
         .then((response) => {
           this.$store.dispatch('updateScenarios', this.sketch.id).then(() => {
             this.loading = false
           })
         })
-        .catch((e) => {})
+        .catch((e) => {
+          this.loading = false
+          this.editable = true
+          this.errorSnackBar(e)
+        })
     },
     editConclusion() {
       this.conclusionText = this.conclusion.conclusion
