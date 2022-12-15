@@ -39,7 +39,7 @@ limitations under the License.
             <v-card-actions>
               <v-spacer></v-spacer>
               <v-btn small text @click="editable = false"> Cancel </v-btn>
-              <v-btn small text color="primary" @click="saveConclusion()"> Save </v-btn>
+              <v-btn small text color="primary" @click="saveConclusion()" :disabled="!conclusionText"> Save </v-btn>
             </v-card-actions>
           </div>
           <div v-else style="max-width: 90%; font-size: 0.9em">{{ conclusion.conclusion }}</div>
