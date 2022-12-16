@@ -41,7 +41,8 @@ class TestHashlookup(BaseTest):
             message,
             ("Hashlookup Matches: 1"),
         )
-        mock_requests_get.assert_called_with('https://test.com/sha256/ac7233de5daa4ab262e2e751028f56a7e9d5b9e724624c1d55e8b070d8c3cd09')
+        url = f"https://test.com/sha256/{SHA256_HASH}"
+        mock_requests_get.assert_called_with(url)
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     @mock.patch("requests.get")
@@ -62,4 +63,5 @@ class TestHashlookup(BaseTest):
             message,
             ("Hashlookup Matches: 0"),
         )
-        mock_requests_get.assert_called_with('https://test.com/sha256/bc7233de5daa4ab262e2e751028f56a7e9d5b9e724624c1d55e8b070d8c3cd09')
+        url = f"https://test.com/sha256/{SHA256_N_HASH}"
+        mock_requests_get.assert_called_with(url)

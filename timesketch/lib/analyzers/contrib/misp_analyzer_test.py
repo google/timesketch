@@ -59,7 +59,12 @@ class TestMisp(BaseTest):
             message,
             ("MISP Match: 1"),
         )
-        mock_requests_post.assert_called_with('https://test.com//attributes/restSearch/', data={'returnFormat': 'json', 'value': 'test.txt', 'type': 'filename'}, headers={'Authorization': 'test'}, verify=False)
+        mock_requests_post.assert_called_with(
+            "https://test.com//attributes/restSearch/",
+            data={"returnFormat": "json", "value": "test.txt", "type": "filename"},
+            headers={"Authorization": "test"},
+            verify=False,
+        )
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     @mock.patch("requests.post")
@@ -83,4 +88,9 @@ class TestMisp(BaseTest):
             message,
             ("MISP Match: 0"),
         )
-        mock_requests_post.assert_called_with('https://test.com//attributes/restSearch/', data={'returnFormat': 'json', 'value': 'test.txt', 'type': 'filename'}, headers={'Authorization': 'test'}, verify=False)
+        mock_requests_post.assert_called_with(
+            "https://test.com//attributes/restSearch/",
+            data={"returnFormat": "json", "value": "test.txt", "type": "filename"},
+            headers={"Authorization": "test"},
+            verify=False,
+        )
