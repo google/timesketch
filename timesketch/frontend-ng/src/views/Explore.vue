@@ -243,7 +243,7 @@ limitations under the License.
     <v-card
       v-if="eventList.objects.length || (searchInProgress && this.currentQueryFilter.indices.length)"
       flat
-      class="mt-3"
+      class="mt-3 mx-3"
     >
       <v-data-table
         v-model="selectedEvents"

@@ -17,7 +17,7 @@ limitations under the License.
   <div v-if="sketch">
     <!-- Top horizontal toolbar -->
     <v-toolbar flat color="transparent">
-      <v-avatar v-show="!showLeftPanel" class="mt-2 ml-n1">
+      <v-avatar v-show="!showLeftPanel" class="ml-n1">
         <router-link to="/">
           <v-img src="/dist/timesketch-color.png" max-height="25" max-width="25" contain></v-img>
         </router-link>
@@ -87,7 +87,7 @@ limitations under the License.
     <v-navigation-drawer app permanent :width="navigationDrawer.width" hide-overlay ref="drawer">
       <div v-show="showLeftPanel">
         <v-toolbar flat>
-          <v-avatar class="mt-2 ml-n3">
+          <v-avatar class="ml-n3">
             <router-link to="/">
               <v-img src="/dist/timesketch-color.png" max-height="25" max-width="25" contain></v-img>
             </router-link>
