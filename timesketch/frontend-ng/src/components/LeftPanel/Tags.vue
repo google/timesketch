@@ -37,6 +37,7 @@ limitations under the License.
         </v-row>
       </div>
     </v-expand-transition>
+    <v-divider></v-divider>
   </div>
 </template>
 
