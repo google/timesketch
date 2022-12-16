@@ -1,3 +1,7 @@
+---
+hide:
+  - footer
+---
 Timesketch has a command line client (CLI) that is meant to be used to access the
 system from the terminal. It has many of the feature that the Web interface have
 including:

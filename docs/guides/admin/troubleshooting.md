@@ -1,3 +1,7 @@
+---
+hide:
+  - footer
+---
 ## Troubleshooting playbook
 
 - Is it only affecting one user?

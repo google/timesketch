@@ -250,6 +250,15 @@ class ResourceMixin(object):
         "updated_at": fields.DateTime("iso8601"),
     }
 
+    question_conclusion_fields = {
+        "id": fields.Integer,
+        "user": fields.Nested(user_fields),
+        "conclusion": fields.String,
+        "automated": fields.Boolean,
+        "created_at": fields.DateTime("iso8601"),
+        "updated_at": fields.DateTime("iso8601"),
+    }
+
     question_fields = {
         "id": fields.Integer,
         "name": fields.String,
@@ -258,6 +267,7 @@ class ResourceMixin(object):
         "spec_json": fields.String,
         "search_templates": fields.List(fields.Nested(searchtemplate_fields)),
         "user": fields.Nested(user_fields),
+        "conclusions": fields.List(fields.Nested(question_conclusion_fields)),
         "created_at": fields.DateTime("iso8601"),
         "updated_at": fields.DateTime("iso8601"),
     }
@@ -321,6 +331,7 @@ class ResourceMixin(object):
         "story": story_fields,
         "event_comment": comment_fields,
         "event_label": label_fields,
+        "investigativequestionconclusion": question_conclusion_fields,
         "investigative_question": question_fields,
         "facet": facet_fields,
         "scenario": scenario_fields,

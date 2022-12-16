@@ -161,7 +161,7 @@ export default new Vuex.Store({
         .catch((e) => {})
     },
     updateScenarioTemplates(context, sketchId) {
-      return ApiClient.getScenarios(sketchId)
+      return ApiClient.getScenarioTemplates(sketchId)
         .then((response) => {
           context.commit('SET_SCENARIO_TEMPLATES', response.data)
         })

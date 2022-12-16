@@ -1,5 +1,7 @@
-# Concept
-
+---
+hide:
+  - footer
+---
 The Sigma analyzer is a Multi Analyzer. That means each Sigma rule will create a dedicated celery job and provide results.
 
 ## Criteria to use a rule

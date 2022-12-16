@@ -27,7 +27,7 @@ limitations under the License.
       <v-spacer></v-spacer>
       <v-btn small depressed v-on:click="switchUI"> Use the old UI </v-btn>
       <v-avatar color="grey lighten-1" size="25" class="ml-3">
-        <span class="white--text">{{ currentUser | capitalize }}</span>
+        <span class="white--text">{{ currentUser | initialLetter }}</span>
       </v-avatar>
       <v-menu offset-y>
         <template v-slot:activator="{ on, attrs }">
@@ -129,7 +129,7 @@ export default {
   created: function () {
     this.$store.dispatch('resetState')
     document.title = 'Timesketch'
-    ApiClient.getScenarios()
+    ApiClient.getScenarioTemplates()
       .then((response) => {
         this.scenarioTemplates = response.data['objects']
       })
