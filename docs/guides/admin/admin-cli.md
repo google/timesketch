@@ -448,33 +448,25 @@ tsctl sketch-info
 Example:
 
 ```shell
-tsctl sketch-info 1
-Sketch 1 Name: (Sketch Title)
-active_timelines:
-+----------------+----------------------------------+----------------------------+---------+---------------------------------------+
-| searchindex_id |            index_name            |         created_at         | user_id |              description              |
-+----------------+----------------------------------+----------------------------+---------+---------------------------------------+
-|       1        | a17732074d8b492e934ef79910bfefa1 | 2022-10-21 15:06:52.849124 |    1    |     20200918_0417_DESKTOP-SDN1RPT     |
-|       3        | 88002da782f64061bf3703bc782b6006 | 2022-10-21 15:19:26.072964 |    1    |              all_packets              |
-|       1        | a17732074d8b492e934ef79910bfefa1 | 2022-10-21 15:28:55.474166 |    1    |     E01-DC01_20200918_0347_CDrive     |
-|       4        | 11d761cd266640d798e30bb897c8dd4e | 2022-10-21 15:32:15.060184 |    1    | autoruns-desktop-sdn1rpt_fresh_import |
-|       3        | 88002da782f64061bf3703bc782b6006 | 2022-10-31 10:15:12.316273 |    1    |              sigma_events             |
-|       3        | 88002da782f64061bf3703bc782b6006 | 2022-10-31 10:15:48.592320 |    1    |             sigma_events2             |
-+----------------+----------------------------------+----------------------------+---------+---------------------------------------+
+Sketch 1 Name: (aaa)
+searchindex_id index_name                       created_at                 user_id description
+1              a17732074d8b492e934ef79910bfefa1 2022-10-21 15:06:52.849124 1       20200918_0417_DESKTOP-SDN1RPT
+3              88002da782f64061bf3703bc782b6006 2022-10-21 15:19:26.072964 1       all_packets
+1              a17732074d8b492e934ef79910bfefa1 2022-10-21 15:28:55.474166 1       E01-DC01_20200918_0347_CDrive
+4              11d761cd266640d798e30bb897c8dd4e 2022-10-21 15:32:15.060184 1       autoruns-desktop-sdn1rpt_fresh_import
+3              88002da782f64061bf3703bc782b6006 2022-10-31 10:15:12.316273 1       sigma_events
+3              88002da782f64061bf3703bc782b6006 2022-10-31 10:15:48.592320 1       sigma_events2
 Shared with:
-	Users (user-id: username):
-		3: bar
-	Groups:
-		user-group
+    Users: (user_id, username)
+        3: bar
+    Groups:
+        user-group
 Sketch Status: new
 Sketch is public: True
 Sketch Labels: ([],)
 Status:
-+----+--------+----------------------------+---------+
-| id | status |         created_at         | user_id |
-+----+--------+----------------------------+---------+
-| 1  |  new   | 2022-10-21 15:04:59.935504 |   None  |
-+----+--------+----------------------------+---------+
+id status created_at                 user_id
+1  new    2022-10-21 15:04:59.935504 None
 ```
 
 ### Sigma
