@@ -22,7 +22,6 @@ import yaml
 import click
 from flask.cli import FlaskGroup
 from sqlalchemy.exc import IntegrityError
-from prettytable import PrettyTable
 from jsonschema import validate, ValidationError, SchemaError
 
 from timesketch import version
@@ -482,6 +481,21 @@ def info():
     print(f"pip version: {output} ")
 
 
+def print_table(table_data):
+    """Prints a table."""
+    # calculate the maximum length of each column
+    max_lengths = [0] * len(table_data[0])
+    for row in table_data:
+        for i, cell in enumerate(row):
+            max_lengths[i] = max(max_lengths[i], len(str(cell)))
+
+    # create the table
+    for row in table_data:
+        for i, cell in enumerate(row):
+            print(str(cell).ljust(max_lengths[i]), end=" ")
+        print()
+
+
 @cli.command(name="sketch-info")
 @click.argument("sketch_id")
 def sketch_info(sketch_id):
@@ -492,17 +506,19 @@ def sketch_info(sketch_id):
     else:
         print(f"Sketch {sketch_id} Name: ({sketch.name})")
 
-        table = PrettyTable()
-        table.field_names = [
-            "searchindex_id",
-            "index_name",
-            "created_at",
-            "user_id",
-            "description",
+        # define the table data
+        table_data = [
+            [
+                "searchindex_id",
+                "index_name",
+                "created_at",
+                "user_id",
+                "description",
+            ],
         ]
 
         for t in sketch.active_timelines:
-            table.add_row(
+            table_data.append(
                 [
                     t.searchindex_id,
                     t.searchindex.index_name,
@@ -512,7 +528,7 @@ def sketch_info(sketch_id):
                 ]
             )
 
-        print(f"active_timelines:\n{table}")
+        print_table(table_data)
 
         print("Shared with:")
         print("\tUsers: (user_id, username)")
@@ -527,18 +543,20 @@ def sketch_info(sketch_id):
         sketch_labels = ([label.label for label in sketch.labels],)
         print(f"Sketch Labels: {sketch_labels}")
 
-        status_table = PrettyTable()
-        status_table.field_names = [
-            "id",
-            "status",
-            "created_at",
-            "user_id",
+        status_table = [
+            [
+                "id",
+                "status",
+                "created_at",
+                "user_id",
+            ],
         ]
         for status in sketch.status:
-            status_table.add_row(
+            status_table.append(
                 [status.id, status.status, status.created_at, status.user_id]
             )
-        print(f"Status:\n{status_table}")
+        print("Status:")
+        print_table(status_table)
 
 
 @cli.command(name="validate-context-links-conf")
