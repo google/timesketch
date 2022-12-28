@@ -19,7 +19,6 @@ class MispAnalyzer(interface.BaseAnalyzer):
     DISPLAY_NAME = "MISP"
     DESCRIPTION = "Mark events using MISP"
 
-
     def __init__(self, index_name, sketch_id, timeline_id=None, **kwargs):
         """Initialize the Analyzer.
 
