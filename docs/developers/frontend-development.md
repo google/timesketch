@@ -2,7 +2,12 @@
 hide:
   - footer
 ---
-## Frontend development
+### Frontend (old) development dependencies
+
+When developing the frontend you use the VueJS frontend server. Changes will be picked up automatically
+as soon as a `.vue` file is saved without having to rebuild the frontend or even refresh your browser.
+
+If you develop a new feature, consider changing to `frontent-ng`, the old frontend is likely to be deprecated in 2023.
 
 First we need to get an interactive shell to the container to install the frontend modules:
 
@@ -31,18 +36,13 @@ This will create `node_modules/` folder from `package.json` in the frontend dire
 ! yarn install
 ```
 
-## Frontend development
-
-When developing the frontend you use the VueJS frontend server. Changes will be picked up automatically
-as soon as a `.vue` file is saved without having to rebuild the frontend or even refresh your browser.
-
-Follow the steps in the previous section to get dependencies installed.
-
-### Tweak config files
+### Tweak config file
 
 * In your `timesketch` docker container, edit `/etc/timesketch/timesketch.conf` and set `WTF_CSRF_ENABLED = False`.
 
 ### Start the VueJS development server
+
+Follow the steps in the previous section to get dependencies installed and the config file tweaked.
 
 You need two shells:
 
@@ -64,14 +64,12 @@ be instantly picked up.
 
 ## Frontend-ng developement
 
-## Frontend development
-
-When developing the frontend-ng you use the VueJS frontend server. Changes will be picked up automatically
+When developing the `frontend-ng` you use the VueJS frontend server. Changes will be picked up automatically
 as soon as a `.vue` file is saved without having to rebuild the frontend or even refresh your browser.
 
 Follow the steps in the previous section to get dependencies installed.
 
-### Tweak config files
+### Tweak config file
 
 * In your `timesketch` docker container, edit `/etc/timesketch/timesketch.conf` and set `WTF_CSRF_ENABLED = False`.
 
