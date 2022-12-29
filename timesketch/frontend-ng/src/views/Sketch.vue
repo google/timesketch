@@ -35,14 +35,14 @@ limitations under the License.
       <v-btn small depressed v-on:click="switchUI"> Use the old UI </v-btn>
 
       <!-- Sharing dialog -->
-      <v-dialog v-model="shareDialog" width="600">
+      <v-dialog v-model="shareDialog" width="500">
         <template v-slot:activator="{ on, attrs }">
           <v-btn small depressed color="primary" class="ml-2" v-bind="attrs" v-on="on">
             <v-icon small left>mdi-account-multiple-plus</v-icon>
             Share
           </v-btn>
         </template>
-        <ts-share-card></ts-share-card>
+        <ts-share-card @close-dialog="shareDialog = false"></ts-share-card>
       </v-dialog>
 
       <v-avatar color="grey lighten-1" size="25" class="ml-3">
@@ -123,23 +123,12 @@ limitations under the License.
               <v-list-item-content>
                 <v-list-item-title>
                   <strong>Access: </strong>
-                  <span v-if="meta.permissions">Public</span>
+                  <span v-if="meta.permissions.public">Public</span>
                   <span v-else>Restricted</span>
                 </v-list-item-title>
                 <v-list-item-subtitle>
-                  <small v-if="meta.permissions">Visible to all users on this server</small>
+                  <small v-if="meta.permissions.public">Visible to all users on this server</small>
                   <small v-else>Only people with access can open</small>
-                </v-list-item-subtitle>
-              </v-list-item-content>
-            </v-list-item>
-
-            <v-list-item>
-              <v-list-item-content>
-                <v-list-item-title>
-                  <strong>Shared with</strong>
-                </v-list-item-title>
-                <v-list-item-subtitle>
-                  <small>People and groups with access</small>
                 </v-list-item-subtitle>
               </v-list-item-content>
             </v-list-item>
@@ -148,7 +137,7 @@ limitations under the License.
         <v-divider></v-divider>
 
         <!-- Dialog for adding a scenario -->
-        <v-dialog v-model="dialog" max-width="500px">
+        <v-dialog v-model="scenarioDialog" max-width="500px">
           <v-card>
             <div class="pa-3">
               <h3>Investigative Scenarios</h3>
@@ -168,7 +157,7 @@ limitations under the License.
             <v-divider></v-divider>
             <v-card-actions>
               <v-spacer></v-spacer>
-              <v-btn @click="dialog = false" color="primary" text> Close </v-btn>
+              <v-btn @click="scenarioDialog = false" color="primary" text> Close </v-btn>
               <v-btn
                 :disabled="!selectedScenario"
                 @click="addScenario(selectedScenario.short_name)"
@@ -197,7 +186,7 @@ limitations under the License.
             <ts-scenario v-for="scenario in activeScenarios" :key="scenario.id" :scenario="scenario"></ts-scenario>
             <v-row class="mt-0 px-2" flat>
               <v-col cols="6">
-                <v-btn text color="primary" @click="dialog = true" style="cursor: pointer"
+                <v-btn text color="primary" @click="scenarioDialog = true" style="cursor: pointer"
                   ><v-icon left>mdi-plus</v-icon> Add Scenario</v-btn
                 >
               </v-col>
@@ -259,13 +248,14 @@ export default {
         width: 430,
       },
       selectedScenario: null,
-      dialog: false,
+      scenarioDialog: false,
       showLeftPanel: true,
       leftPanelTab: 0,
       leftPanelTabItems: ['Explore', 'Investigate'],
       renameScenarioDialog: false,
       newScenarioName: '',
       showHidden: false,
+      shareDialog: false,
     }
   },
   mounted: function () {
@@ -324,7 +314,7 @@ export default {
       window.location.href = window.location.href.replace('/v2/', '/')
     },
     addScenario: function (scenario) {
-      this.dialog = false
+      this.scenarioDialog = false
       ApiClient.addScenario(this.sketch.id, scenario)
         .then((response) => {
           this.$store.dispatch('updateScenarios', this.sketch.id)

@@ -186,7 +186,9 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
                 sketch.revoke_permission(permission=permission, group=group)
 
         public = form.get("public")
-        if public == "true":
+        # TODO: Remove string check. Non-pythonic check is needed because the old UI
+        # returns a string of true or false and not a boolean.
+        if public is True or public == "true":
             sketch.grant_permission(permission="read")
         else:
             sketch.revoke_permission(permission="read")

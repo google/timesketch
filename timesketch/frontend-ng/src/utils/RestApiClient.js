@@ -276,16 +276,28 @@ export default {
   getGroups() {
     return RestApiClient.get('/groups/')
   },
-  editCollaborators(sketchId, isPublic, usersToAdd, groupsToAdd, usersToRemove, groupsToRemove) {
+  grantSketchAccess(sketchId, usersToAdd, groupsToAdd) {
     let formData = {
-      public: isPublic,
       users: usersToAdd,
       groups: groupsToAdd,
+    }
+    return RestApiClient.post('/sketches/' + sketchId + /collaborators/, formData)
+  },
+  revokeSketchAccess(sketchId, usersToRemove, groupsToRemove) {
+    let formData = {
       remove_users: usersToRemove,
       remove_groups: groupsToRemove,
     }
     return RestApiClient.post('/sketches/' + sketchId + /collaborators/, formData)
   },
+  setSketchPublicAccess(sketchId, isPublic) {
+    let formData = {
+      public: isPublic,
+    }
+    console.log(formData)
+    return RestApiClient.post('/sketches/' + sketchId + /collaborators/, formData)
+  },
+
   getAnalyzers(sketchId) {
     return RestApiClient.get('/sketches/' + sketchId + '/analyzer/')
   },
