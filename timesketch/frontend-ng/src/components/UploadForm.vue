@@ -16,7 +16,7 @@ limitations under the License.
 <template>
   <span>
     <v-dialog v-model="percentageFlag" persistent width="700">
-      <v-card flat class="pa-5">
+      <v-card flat class="pa-4">
         Uploading..
         <br /><br />
         <v-progress-linear color="light-blue" height="25" :value="percentCompleted"
@@ -33,112 +33,112 @@ limitations under the License.
           Add Timeline
         </v-btn>
       </template>
-      <v-card>
-        <v-container class="px-8">
-          <v-card-title class="text-h5"> {{ title }} </v-card-title>
+      <v-card class="pa-4">
+        <h3>{{ title }}</h3>
+        <br />
 
-          <div v-if="error.length > 0">
-            <v-alert outlined type="error" v-for="(errorMessage, index) in error" :key="index">
-              {{ errorMessage }}
-              <br /><br />
-              <div v-if="['csv', 'jsonl', 'json'].includes(extension)">
-                <v-simple-table v-if="headers.length > 0">
-                  <template v-slot:default>
-                    <thead>
-                      <tr>
-                        <th
-                          v-for="mandatoryHeader in headersTable"
-                          :key="mandatoryHeader.name"
-                          :style="mandatoryHeader.color"
-                          class="text-left"
-                        >
-                          <div v-if="missingHeaders.includes(mandatoryHeader.name)">
-                            <v-select
-                              :items="listHeadersSelectMenu"
-                              :label="mandatoryHeader.name"
-                              v-model="mandatoryHeaders.find((h) => h.name === mandatoryHeader.name).columnsSelected"
-                              multiple
-                              chips
-                              hint="Mapped to"
-                              persistent-hint
-                              @change="changeHeaderMapping($event, mandatoryHeader.name)"
-                            ></v-select>
-                          </div>
-                          <div v-else>
-                            <span class="tag is-large" :style="mandatoryHeader.color">
-                              <label>{{ mandatoryHeader.name }}</label>
-                            </span>
-                          </div>
-                        </th>
-                      </tr>
-                    </thead>
-                    <br />
-                    <strong>Preview</strong>
-                    <tbody>
-                      <tr v-for="i in numberRows" :key="i">
-                        <td v-for="mandatoryHeader in headersTable" :key="mandatoryHeader.name">
-                          {{ mandatoryHeader.values[i - 1] }}
-                        </td>
-                      </tr>
-                    </tbody>
-                  </template>
-                </v-simple-table>
-              </div>
-            </v-alert>
-          </div>
-
-          <div v-if="fileName">
-            <v-text-field label="Timeline Name" outlined v-model="form.name"></v-text-field>
-            <v-radio-group v-if="extension === 'csv'" v-model="CSVDelimiter">
-              <template v-slot:label>
-                <div>Choose <strong>CSV delimiter</strong></div>
-              </template>
-              <v-radio v-for="(v, key) in delimitersList" :value="v" @change="changeCSVDelimiter(v)" :key="key">
-                <template v-slot:label>
-                  <div>{{ key }} ({{ v }})</div>
-                </template>
-              </v-radio>
-            </v-radio-group>
-
-            <v-list v-if="!percentageFlag">
-              File info
-              <v-simple-table height="100px">
+        <div v-if="error.length > 0">
+          <v-alert outlined type="error" v-for="(errorMessage, index) in error" :key="index">
+            {{ errorMessage }}
+            <br /><br />
+            <div v-if="['csv', 'jsonl', 'json'].includes(extension)">
+              <v-simple-table v-if="headers.length > 0">
                 <template v-slot:default>
                   <thead>
                     <tr>
-                      <th v-for="(value, key) in fileMetaData" :key="key" class="text-left">
-                        {{ key }}
+                      <th
+                        v-for="mandatoryHeader in headersTable"
+                        :key="mandatoryHeader.name"
+                        :style="mandatoryHeader.color"
+                        class="text-left"
+                      >
+                        <div v-if="missingHeaders.includes(mandatoryHeader.name)">
+                          <v-select
+                            :items="listHeadersSelectMenu"
+                            :label="mandatoryHeader.name"
+                            v-model="mandatoryHeaders.find((h) => h.name === mandatoryHeader.name).columnsSelected"
+                            multiple
+                            chips
+                            hint="Mapped to"
+                            persistent-hint
+                            @change="changeHeaderMapping($event, mandatoryHeader.name)"
+                          ></v-select>
+                        </div>
+                        <div v-else>
+                          <span class="tag is-large" :style="mandatoryHeader.color">
+                            <label>{{ mandatoryHeader.name }}</label>
+                          </span>
+                        </div>
                       </th>
                     </tr>
                   </thead>
+                  <br />
+                  <strong>Preview</strong>
                   <tbody>
-                    <tr>
-                      <td v-for="(value, key) in fileMetaData" :key="key" class="text-left">
-                        {{ value }}
+                    <tr v-for="i in numberRows" :key="i">
+                      <td v-for="mandatoryHeader in headersTable" :key="mandatoryHeader.name">
+                        {{ mandatoryHeader.values[i - 1] }}
                       </td>
                     </tr>
                   </tbody>
                 </template>
               </v-simple-table>
-            </v-list>
-          </div>
+            </div>
+          </v-alert>
+        </div>
 
-          <div v-else>
-            <v-file-input
-              label="Plaso/CSV/JSONL file"
-              outlined
-              dense
-              clearable
-              multiple
-              show-size
-              truncate-length="15"
-              id="datafile"
-              v-model="uploadedFiles"
-              @change="setFile($event)"
-              @click:clear="clearFormData"
-            ></v-file-input>
-          </div>
-        </v-container>
+        <div v-if="fileName">
+          <v-text-field label="Timeline Name" outlined v-model="form.name"></v-text-field>
+          <v-radio-group v-if="extension === 'csv'" v-model="CSVDelimiter">
+            <template v-slot:label>
+              <div>Choose <strong>CSV delimiter</strong></div>
+            </template>
+            <v-radio v-for="(v, key) in delimitersList" :value="v" @change="changeCSVDelimiter(v)" :key="key">
+              <template v-slot:label>
+                <div>{{ key }} ({{ v }})</div>
+              </template>
+            </v-radio>
+          </v-radio-group>
+
+          <v-list v-if="!percentageFlag">
+            File info
+            <v-simple-table height="100px">
+              <template v-slot:default>
+                <thead>
+                  <tr>
+                    <th v-for="(value, key) in fileMetaData" :key="key" class="text-left">
+                      {{ key }}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td v-for="(value, key) in fileMetaData" :key="key" class="text-left">
+                      {{ value }}
+                    </td>
+                  </tr>
+                </tbody>
+              </template>
+            </v-simple-table>
+          </v-list>
+        </div>
+
+        <div v-else>
+          <v-file-input
+            label="Plaso/CSV/JSONL file"
+            outlined
+            dense
+            clearable
+            multiple
+            show-size
+            truncate-length="15"
+            id="datafile"
+            v-model="uploadedFiles"
+            @change="setFile($event)"
+            @click:clear="clearFormData"
+          ></v-file-input>
+        </div>
+
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn

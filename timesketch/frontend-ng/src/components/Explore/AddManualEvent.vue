@@ -14,75 +14,74 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-card width="700" style="overflow: visible">
-    <v-container class="px-8">
-      <br />
-      <v-row>
-        <v-col cols="6">
-          <v-text-field
-            :value="datetime"
-            label="Datetime"
-            outlined
-            hide-details
-            v-on:click="showPicker = true"
-            v-model="datetime"
-          >
-          </v-text-field>
-        </v-col>
-      </v-row>
+  <v-card width="700" class="pa-4" style="overflow: visible">
+    <h3>Add a manual event</h3>
+    <br />
+    <v-row>
+      <v-col cols="6">
+        <v-text-field
+          :value="datetime"
+          label="Datetime"
+          outlined
+          hide-details
+          v-on:click="showPicker = true"
+          v-model="datetime"
+        >
+        </v-text-field>
+      </v-col>
+    </v-row>
 
-      <v-row v-if="showPicker">
-        <v-col cols="12">
-          <date-picker
-            v-model="dateFromPicker"
-            mode="dateTime"
-            ref="picker"
-            timezone="UTC"
-            :is-dark="$vuetify.theme.dark"
-            is24hr
-            is-date
-            is-expanded
-          ></date-picker>
-        </v-col>
-      </v-row>
+    <v-row v-if="showPicker">
+      <v-col cols="12">
+        <date-picker
+          v-model="dateFromPicker"
+          mode="dateTime"
+          ref="picker"
+          timezone="UTC"
+          :is-dark="$vuetify.theme.dark"
+          is24hr
+          is-date
+          is-expanded
+        ></date-picker>
+      </v-col>
+    </v-row>
 
-      <v-row>
-        <v-col cols="6">
-          <v-text-field :value="message" v-model="message" label="Message" outlined hide-details> </v-text-field>
-        </v-col>
-      </v-row>
+    <v-row>
+      <v-col cols="6">
+        <v-text-field :value="message" v-model="message" label="Message" outlined hide-details> </v-text-field>
+      </v-col>
+    </v-row>
 
-      <v-row>
-        <v-col cols="6">
-          <v-text-field
-            :value="timestampDesc"
-            label="Timestamp Description"
-            v-model="timestampDesc"
-            outlined
-            hide-details
-          >
-          </v-text-field>
-        </v-col>
-      </v-row>
+    <v-row>
+      <v-col cols="6">
+        <v-text-field
+          :value="timestampDesc"
+          label="Timestamp Description"
+          v-model="timestampDesc"
+          outlined
+          hide-details
+        >
+        </v-text-field>
+      </v-col>
+    </v-row>
 
-      <v-row v-for="(attribute, index) in attributes" :key="index">
-        <v-col cols="6">
-          <v-text-field label="Attribute Name" outlined hide-details v-model="attributes[index].name"> </v-text-field>
-        </v-col>
-        <v-col cols="6">
-          <v-text-field label="Attribute Value" outlined hide-details v-model="attributes[index].value"> </v-text-field>
-        </v-col>
-      </v-row>
+    <v-row v-for="(attribute, index) in attributes" :key="index">
+      <v-col cols="6">
+        <v-text-field label="Attribute Name" outlined hide-details v-model="attributes[index].name"> </v-text-field>
+      </v-col>
+      <v-col cols="6">
+        <v-text-field label="Attribute Value" outlined hide-details v-model="attributes[index].value"> </v-text-field>
+      </v-col>
+    </v-row>
 
-      <v-card-actions>
-        <v-spacer></v-spacer>
-        <v-btn text color="primary" @click="attributes.push({ name: '', value: '' })" :disabled="isDisabled">
-          Add Attribute
-        </v-btn>
-        <v-btn text color="primary" @click="clearAndCancel"> Cancel </v-btn>
-        <v-btn text color="primary" @click="submit"> Add Event </v-btn>
-      </v-card-actions>
-    </v-container>
+    <v-card-actions>
+      <v-spacer></v-spacer>
+      <v-btn text color="primary" @click="attributes.push({ name: '', value: '' })" :disabled="isDisabled">
+        Add Attribute
+      </v-btn>
+      <v-btn text color="primary" @click="clearAndCancel"> Cancel </v-btn>
+      <v-btn text color="primary" @click="submit"> Add Event </v-btn>
+    </v-card-actions>
   </v-card>
 </template>
 

@@ -120,12 +120,28 @@ limitations under the License.
       </template>
       <v-sheet flat width="320">
         <v-list>
-          <v-list-item v-if="timelineStatus === 'ready'">
-            <v-list-item-action>
-              <v-icon>mdi-square-edit-outline</v-icon>
-            </v-list-item-action>
-            <v-list-item-subtitle>Rename timeline</v-list-item-subtitle>
-          </v-list-item>
+          <v-dialog v-model="dialogRename" width="600">
+            <template v-slot:activator="{ on, attrs }">
+              <v-list-item v-bind="attrs" v-on="on">
+                <v-list-item-action>
+                  <v-icon>mdi-square-edit-outline</v-icon>
+                </v-list-item-action>
+                <v-list-item-subtitle>Rename timeline</v-list-item-subtitle>
+              </v-list-item>
+            </template>
+            <v-card class="pa-4">
+              <h3>Rename timeline</h3>
+              <br />
+              <v-text-field outlined dense autofocus v-model="newTimelineName" @focus="$event.target.select()">
+              </v-text-field>
+              <v-card-actions>
+                <v-spacer></v-spacer>
+                <v-btn color="primary" text @click="dialogRename = false"> Close </v-btn>
+                <v-btn color="primary" depressed @click="rename"> Save </v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
+
           <v-list-item @click="$emit('toggle', timeline)" v-if="timelineStatus === 'ready'">
             <v-list-item-action>
               <v-icon v-if="isSelected">mdi-eye-off</v-icon>
@@ -238,16 +254,15 @@ export default {
   props: ['timeline', 'eventsCount', 'isSelected', 'isEmptyState'],
   data() {
     return {
-      newTimelineName: '',
-      showEditModal: false,
       autoRefresh: false,
       allIndexedEvents: 0, // all indexed events from ready and processed datasources
       totalEvents: null,
       dialogStatus: false,
+      dialogRename: false,
       datasources: [],
       timelineStatus: null,
       eventsPerSecond: [],
-
+      newTimelineName: [...this.timeline.name],
       sparkline: {
         width: 2,
         radius: 10,
@@ -307,7 +322,7 @@ export default {
   },
   methods: {
     rename() {
-      this.showEditModal = false
+      this.dialogRename = false
       this.$emit('save', this.timeline, this.newTimelineName)
     },
     remove() {
