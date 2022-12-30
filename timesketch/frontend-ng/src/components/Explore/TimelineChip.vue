@@ -100,7 +100,7 @@ limitations under the License.
       </v-card>
     </v-dialog>
 
-    <v-menu v-else offset-y content-class="menu-with-gap">
+    <v-menu v-else offset-y :close-on-content-click="false" content-class="menu-with-gap">
       <template v-slot:activator="{ on }">
         <v-chip v-on="on" :style="getTimelineStyle(timeline)" class="mr-2 mb-3">
           <v-icon v-if="timelineStatus === 'fail'" left color="red"> mdi-alert-circle-outline </v-icon>
@@ -118,7 +118,7 @@ limitations under the License.
           </v-avatar>
         </v-chip>
       </template>
-      <v-card flat width="300">
+      <v-sheet flat width="320">
         <v-list>
           <v-list-item v-if="timelineStatus === 'ready'">
             <v-list-item-action>
@@ -196,7 +196,25 @@ limitations under the License.
             </v-card>
           </v-dialog>
         </v-list>
-      </v-card>
+        <div class="px-4">
+          <v-color-picker
+            @update:color="updateColor"
+            :value="timeline.color"
+            :show-swatches="!showCustomColorPicker"
+            :swatches="colorPickerSwatches"
+            :hide-canvas="!showCustomColorPicker"
+            :hide-sliders="!showCustomColorPicker"
+            hide-inputs
+            mode="hexa"
+            dot-size="15"
+          ></v-color-picker>
+          <v-btn text x-small class="mt-2" @click="showCustomColorPicker = !showCustomColorPicker">
+            <span v-if="showCustomColorPicker">Palette</span>
+            <span v-else>Custom color</span>
+          </v-btn>
+        </div>
+        <br />
+      </v-sheet>
     </v-menu>
   </span>
 </template>
@@ -220,13 +238,8 @@ export default {
   props: ['timeline', 'eventsCount', 'isSelected', 'isEmptyState'],
   data() {
     return {
-      initialColor: {},
-      newColor: '',
       newTimelineName: '',
-      colorPickerActive: false,
-      showInfoModal: false,
       showEditModal: false,
-      showAnalyzerModal: false,
       autoRefresh: false,
       allIndexedEvents: 0, // all indexed events from ready and processed datasources
       totalEvents: null,
@@ -248,6 +261,14 @@ export default {
         autoDrawDuration: 4000,
         autoLineWidth: false,
       },
+      showCustomColorPicker: false,
+      colorPickerSwatches: [
+        ['#5E75C2', '#BB77C4', '#FD7EAC'],
+        ['#FF9987', '#FFC66A', '#F9F871'],
+        ['#FFB5BC', '#97D788', '#9BC1AF'],
+        ['#FFC7A0', '#FFDF79', '#FFEAEF'],
+        ['#DEBBFF', '#9AB0FB', '#CFFBE2'],
+      ],
     }
   },
   computed: {
@@ -285,9 +306,6 @@ export default {
     },
   },
   methods: {
-    showColorPicker() {
-      this.$refs.colorPicker.click()
-    },
     rename() {
       this.showEditModal = false
       this.$emit('save', this.timeline, this.newTimelineName)
@@ -316,16 +334,11 @@ export default {
       let eta = dayjs().add(secondsLeft, 'second').fromNow()
       return eta
     },
-
-    // Set debounce to 300ms if full Chrome colorpicker is used.
+    // Set debounce to 300ms to limit requests to the server.
     updateColor: _.debounce(function (color) {
-      this.newColor = color.hex
-      if (this.newColor.startsWith('#')) {
-        this.newColor = this.newColor.substring(1)
-      }
-      Vue.set(this.timeline, 'color', this.newColor)
+      Vue.set(this.timeline, 'color', color.hex.substring(1))
       this.$emit('save', this.timeline)
-    }, 0),
+    }, 300),
     getTimelineStyle(timeline) {
       let backgroundColor = timeline.color
       let textDecoration = 'none'
@@ -425,19 +438,7 @@ export default {
       return this.datasources.find((x) => x.file_on_disk === fileOnDisk).total_file_events
     },
   },
-  mounted() {
-    // Hide color picker when clicked outside.
-    let self = this // it might look redundant, but removing it breaks things
-    window.addEventListener('click', function (e) {
-      if (!self.$el.contains(e.target)) {
-        self.colorPickerActive = false
-      }
-    })
-  },
   created() {
-    this.initialColor = {
-      hex: this.timeline.color,
-    }
     // TODO: Move to computed
     this.timelineStatus = this.timeline.status[0].status
     this.datasources = this.timeline.datasources
