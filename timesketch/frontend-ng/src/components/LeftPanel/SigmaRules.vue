@@ -18,10 +18,11 @@ limitations under the License.
     <div class="pa-4" flat :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
       <span style="cursor: pointer" @click="expanded = !expanded">
         <v-icon left>mdi-sigma-lower</v-icon> Sigma Rules ({{ ruleCount }})
+        <v-btn text rounded v-bind="attrs" v-on="on" @click="CreateNewRule()">
+          <v-icon> mdi-plus </v-icon>
+        </v-btn>
       </span>
-      <div>
-        <v-btn @click="CreateNewRule()" small depressed color="green"> Create Rule</v-btn>
-      </div>
+      <div></div>
     </div>
     <v-expand-transition>
       <div v-show="expanded">
