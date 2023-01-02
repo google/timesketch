@@ -18,12 +18,22 @@ limitations under the License.
     <v-container class="px-8">
       <h1>
         Rule title: {{ editingRule.title }}
-        <v-chip rounded x-small class="mr-2" :color="statusColors(status_chip_text)"> {{ status_chip_text }}</v-chip>
+        <v-chip rounded x-small class="mr-2" :color="statusColors(status_chip_text)">
+          <v-icon v-if="status_text.toLowerCase() !== 'ok'"> mdi-alert </v-icon>
+          <v-icon v-if="status_text.toLowerCase() === 'ok'"> mdi-check </v-icon>
+          {{ status_chip_text }}</v-chip
+        >
       </h1>
 
       <div>
         <v-autocomplete dense filled rounded :items="SigmaTemplates" @change="rowClick" item-text="title">
         </v-autocomplete>
+      </div>
+      <div width="500" v-if="status_text.toLowerCase() !== 'ok'">
+        <!-- only display if status_text is not empty -->
+        <v-alert colored-border border="left" elevation="1" :color="statusColors(status_chip_text)">
+          {{ status_text }}
+        </v-alert>
       </div>
 
       <div width="500">
@@ -36,9 +46,11 @@ limitations under the License.
       <v-textarea
         label="Edit Sigma rule"
         outlined
-        :color="statusColors('Initial')"
-        rows="35"
+        :color="statusColors(status_chip_text)"
+        autocomplete="email"
+        rows="25"
         v-model="ruleYaml"
+        background-color="lighten(statusColors(status_chip_text), 0.2)"
         @input="parseSigma(ruleYaml)"
       >
       </v-textarea>
@@ -61,14 +73,6 @@ limitations under the License.
           >Delete Rule</v-btn
         >
       </div>
-
-      <!-- TODO: Remove before merging -->
-      <div>
-        <pre>
-                {{ editingRule }}
-            </pre
-        >
-      </div>
     </v-container>
   </v-card>
 </template>
@@ -85,6 +89,7 @@ export default {
     return {
       editingRule: { ruleYaml: 'foobar' }, // empty state
       status_chip_text: 'OK',
+      status_text: 'OK',
       action_button_text: 'Update',
       ruleYaml: {},
       SigmaTemplates: SigmaTemplates,
@@ -128,20 +133,22 @@ export default {
         .then((response) => {
           var parsed_rule = response.data.objects[0]
           if (!parsed_rule.author) {
-            this.search_query = 'No Author given'
+            this.status_text = 'No Author given'
           } else {
             this.editingRule = parsed_rule
             this.status_chip_text = 'Ok'
+            this.status_text = 'Ok'
           }
         })
         .catch((e) => {
-          this.editingRule['search_query'] = e.response.data.message
+          //this.editingRule['search_query'] = e.response.data.message
+          this.status_text = e.response.data.message
           // need to set search_query to something, to overwrite previous value
           this.status_chip_text = 'ERROR'
         })
     }, 300),
-    statusColors(datasource) {
-      if (this.status_chip_text.toLowerCase === 'ok') {
+    statusColors() {
+      if (this.status_chip_text.toLowerCase() === 'ok' || this.status_text.toLowerCase() === 'ok') {
         return 'success'
       }
       return 'warning'
@@ -156,8 +163,8 @@ export default {
         .catch((e) => {
           console.error(e)
           this.action_button_text = 'Create'
-          this.status_chip_text = 'OK'
-          this.editingRule['search_query'] = 'No Rule found, creating a new one'
+          this.status_chip_text = 'Ok'
+          //this.editingRule['search_query'] = 'No Rule found, creating a new one'
           this.ruleYaml = GeneralText
         })
     },
