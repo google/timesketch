@@ -135,11 +135,11 @@ export default {
       // eslint-disable-line
       ApiClient.getSigmaRuleByText(ruleYaml)
         .then((response) => {
-          var parsed_rule = response.data.objects[0]
-          if (!parsed_rule.author) {
+          var parsedRule = response.data.objects[0]
+          if (!parsedRule.author) {
             this.status_text = 'No Author given'
           } else {
-            this.editingRule = parsed_rule
+            this.editingRule = parsedRule
             this.status_chip_text = 'Ok'
             this.status_text = 'Ok'
           }
