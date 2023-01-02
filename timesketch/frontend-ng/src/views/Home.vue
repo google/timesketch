@@ -62,7 +62,7 @@ limitations under the License.
             <template v-slot:activator="{ on, attrs }">
               <v-btn depressed small class="mr-5" color="primary" v-bind="attrs" v-on="on"> Blank sketch </v-btn>
             </template>
-            <v-card class="pa-3">
+            <v-card class="pa-4">
               <h3>New sketch</h3>
               <br />
               <v-text-field v-model="sketchForm.name" outlined dense placeholder="Name your sketch"> </v-text-field>

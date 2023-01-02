@@ -347,7 +347,7 @@ limitations under the License.
               <v-menu offset-y :close-on-content-click="false">
                 <template v-slot:activator="{ on, attrs }">
                   <v-btn icon v-bind="attrs" v-on="on">
-                    <v-icon>mdi-dots-vertical</v-icon>
+                    <v-icon>mdi-dots-horizontal</v-icon>
                   </v-btn>
                 </template>
 
