@@ -1,5 +1,5 @@
 <!--
-Copyright 2022 Google Inc. All rights reserved.
+Copyright 2023 Google Inc. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ limitations under the License.
     <div class="pa-4" flat :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
       <span style="cursor: pointer" @click="expanded = !expanded">
         <v-icon left>mdi-sigma-lower</v-icon> Sigma Rules ({{ ruleCount }})
-        <v-btn text rounded v-bind="attrs" v-on="on" @click="CreateNewRule()">
+        <v-btn text rounded @click="CreateNewRule()">
           <v-icon> mdi-plus </v-icon>
         </v-btn>
       </span>
