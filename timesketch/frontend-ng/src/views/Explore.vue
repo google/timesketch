@@ -467,7 +467,7 @@ limitations under the License.
 
             <!-- Time bubble -->
             <v-divider v-if="item.showDetails && item.deltaDays"></v-divider>
-            <div v-if="item.deltaDays > 0" class="ml-16">
+            <div v-if="item.deltaDays > 0" class="ml-7">
               <div
                 class="ts-time-bubble-vertical-line ts-time-bubble-vertical-line-color"
                 v-bind:style="getTimeBubbleColor(item)"
@@ -1426,11 +1426,11 @@ export default {
 }
 
 .ts-time-bubble {
-  width: 150px;
-  height: 30px;
+  width: 120px;
+  height: 20px;
   border-radius: 6px;
   position: relative;
-  margin: 0 0 0 25px;
+  margin: 0 0 0 35px;
   text-align: center;
   font-size: var(--font-size-small);
 }
