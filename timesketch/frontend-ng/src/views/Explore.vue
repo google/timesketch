@@ -557,8 +557,8 @@ limitations under the License.
 
         <!-- Comment field -->
         <template v-slot:item._source.comment="{ item }">
-          <v-badge :offset-y="16" bordered v-if="item._source.comment.length" :content="item._source.comment.length">
-            <v-icon @click="toggleDetailedEvent(item)"> mdi-comment-text-multiple-outline </v-icon>
+          <v-badge :offset-y="10" bordered v-if="item._source.comment.length" :content="item._source.comment.length">
+            <v-icon small @click="toggleDetailedEvent(item)"> mdi-comment-text-multiple-outline </v-icon>
           </v-badge>
         </template>
       </v-data-table>
@@ -743,7 +743,7 @@ export default {
         },
         {
           value: '_source.comment',
-          align: 'end',
+          width: '40',
         },
       ]
       let extraHeaders = []
