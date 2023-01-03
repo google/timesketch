@@ -243,7 +243,7 @@ limitations under the License.
     <v-card
       v-if="eventList.objects.length || (searchInProgress && this.currentQueryFilter.indices.length)"
       flat
-      class="mt-3 mx-3"
+      class="mt-3"
     >
       <v-data-table
         v-model="selectedEvents"
@@ -264,7 +264,7 @@ limitations under the License.
       >
         <template v-slot:top="{ pagination, options, updateOptions }">
           <v-toolbar dense flat>
-            <div>
+            <div v-if="!selectedEvents.length">
               <span class="mr-2"
                 ><small>{{ fromEvent }}-{{ toEvent }} of {{ totalHits }} events ({{ totalTime }}s)</small></span
               >
@@ -428,6 +428,13 @@ limitations under the License.
                 </v-card>
               </v-menu>
             </div>
+            <div v-else>
+              <small class="mr-2">Actions:</small>
+              <v-btn x-small outlined @click="toggleMultipleStars()">
+                <v-icon left color="amber">mdi-star</v-icon>
+                Toggle star
+              </v-btn>
+            </div>
 
             <v-spacer></v-spacer>
 
@@ -490,6 +497,7 @@ limitations under the License.
             <v-icon v-if="item._source.label.includes('__ts_star')" color="amber">mdi-star</v-icon>
             <v-icon v-else>mdi-star-outline</v-icon>
           </v-btn>
+
           <!-- Tag menu -->
           <ts-event-tag-menu :event="item"></ts-event-tag-menu>
         </template>
@@ -727,11 +735,11 @@ export default {
           text: 'Datetime (UTC)',
           align: 'start',
           value: '_source.timestamp',
-          width: '230',
+          width: '200',
         },
         {
           value: 'actions',
-          width: '90',
+          width: '70',
         },
         {
           value: '_source.comment',
@@ -753,7 +761,7 @@ export default {
         }
       })
 
-      // Extend the column headers from position 3 (after the actions column).
+      // Extend the column headers from position 3 (after the actions column).\
       baseHeaders.splice(3, 0, ...extraHeaders)
 
       // Add timeline name based on configuration
@@ -1216,15 +1224,18 @@ export default {
         })
     },
     toggleMultipleStars: function () {
-      let eventsToToggle = []
-      Object.keys(this.selectedEvents).forEach((key, index) => {
-        eventsToToggle.push(this.selectedEvents[key])
+      this.selectedEvents.forEach((event) => {
+        if (event._source.label.includes('__ts_star')) {
+          event._source.label.splice(event._source.label.indexOf('__ts_star'), 1)
+        } else {
+          event._source.label.push('__ts_star')
+        }
       })
-      ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', eventsToToggle, this.currentSearchNode)
-        .then((response) => {})
+      ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', this.selectedEvents, this.currentSearchNode)
+        .then((response) => {
+          this.selectedEvents = []
+        })
         .catch((e) => {})
-
-      EventBus.$emit('toggleStar', this.selectedEvents)
     },
     jumpInHistory: function (node) {
       this.currentQueryString = node.query_string
@@ -1445,5 +1456,21 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+// Adjust padding for event data table
+.v-data-table td,
+th {
+  padding: 0 10px 0 0 !important;
+}
+
+.v-data-table td:last-child,
+th:last-child {
+  padding: 0 !important;
+}
+
+.v-data-table td:first-child,
+th:first-child {
+  padding: 0 0 0 10px !important;
 }
 </style>
