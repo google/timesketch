@@ -27,7 +27,7 @@ limitations under the License.
       <v-spacer></v-spacer>
       <v-btn small depressed v-on:click="switchUI"> Use the old UI </v-btn>
       <v-avatar color="grey lighten-1" size="25" class="ml-3">
-        <span class="white--text">{{ currentUser | capitalize }}</span>
+        <span class="white--text">{{ currentUser | initialLetter }}</span>
       </v-avatar>
       <v-menu offset-y>
         <template v-slot:activator="{ on, attrs }">
@@ -48,6 +48,18 @@ limitations under the License.
                   <v-list-item-title>Toggle theme</v-list-item-title>
                 </v-list-item-content>
               </v-list-item>
+
+              <a href="/logout/" style="text-decoration: none; color: inherit">
+                <v-list-item>
+                  <v-list-item-icon>
+                    <v-icon>mdi-logout</v-icon>
+                  </v-list-item-icon>
+
+                  <v-list-item-content>
+                    <v-list-item-title>Logout</v-list-item-title>
+                  </v-list-item-content>
+                </v-list-item>
+              </a>
             </v-list-item-group>
           </v-list>
         </v-card>
@@ -62,7 +74,7 @@ limitations under the License.
             <template v-slot:activator="{ on, attrs }">
               <v-btn depressed small class="mr-5" color="primary" v-bind="attrs" v-on="on"> Blank sketch </v-btn>
             </template>
-            <v-card class="pa-3">
+            <v-card class="pa-4">
               <h3>New sketch</h3>
               <br />
               <v-text-field v-model="sketchForm.name" outlined dense placeholder="Name your sketch"> </v-text-field>
@@ -129,7 +141,7 @@ export default {
   created: function () {
     this.$store.dispatch('resetState')
     document.title = 'Timesketch'
-    ApiClient.getScenarios()
+    ApiClient.getScenarioTemplates()
       .then((response) => {
         this.scenarioTemplates = response.data['objects']
       })

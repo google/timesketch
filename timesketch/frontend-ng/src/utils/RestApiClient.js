@@ -384,7 +384,10 @@ export default {
   parseSearchTemplate(searchTemplateId, formData) {
     return RestApiClient.post('/searchtemplate/' + searchTemplateId + '/parse/', formData)
   },
-  getScenarios() {
+  getContextLinkConfig() {
+    return RestApiClient.get('/contextlinks/')
+  },
+  getScenarioTemplates() {
     return RestApiClient.get('/scenarios/')
   },
   getSketchScenarios(sketchId, status = null) {
@@ -408,7 +411,16 @@ export default {
     let formData = { status: status }
     return RestApiClient.post('/sketches/' + sketchId + '/scenarios/' + scenarioId + '/status/', formData)
   },
-  getContextLinkConfig() {
-    return RestApiClient.get('/contextlinks/')
+  createQuestionConclusion(sketchId, questionId, conclusionText) {
+    let formData = { conclusionText: conclusionText }
+    return RestApiClient.post('/sketches/' + sketchId + '/questions/' + questionId + '/', formData)
+  },
+  editQuestionConclusion(sketchId, questionId, conclusionId, conclusionText) {
+    let formData = { conclusionText: conclusionText }
+    return RestApiClient.put('/sketches/' + sketchId + '/questions/' + questionId + '/conclusions/' + conclusionId + '/', formData)
+  },
+  deleteQuestionConclusion(sketchId, questionId, conclusionId) {
+    return RestApiClient.delete('/sketches/' + sketchId + '/questions/' + questionId + '/conclusions/' + conclusionId + '/')
+
   },
 }

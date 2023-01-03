@@ -125,7 +125,15 @@ html {
 }
 
 .dark-hover:hover {
-  background-color: #555;
+  background-color: #303030;
+}
+
+.light-hover-on-highlight:hover {
+  background-color: #e6e6e6;
+}
+
+.dark-hover-on-highlight:hover {
+  background-color: #393838;
 }
 
 .light-highlight {
@@ -133,7 +141,7 @@ html {
 }
 
 .dark-highlight {
-  background-color: #555;
+  background-color: #303030;
 }
 
 .timeline-name-ellipsis {
@@ -141,4 +149,12 @@ html {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis
+}
+
+.theme--dark.v-navigation-drawer {
+  background-color: #1e1e1e;
+}
+
+.theme--dark.v-data-table tbody tr:hover:not(.v-data-table__expanded__content) {
+  background: #303030 !important;
 }

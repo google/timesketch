@@ -1,3 +1,7 @@
+---
+hide:
+  - footer
+---
 # Context Links
 
 The context link feature allows for linking of specific event attributes and values to external lookup services for an easy analyst workflow.

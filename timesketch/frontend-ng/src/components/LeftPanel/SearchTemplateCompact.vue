@@ -16,9 +16,16 @@ limitations under the License.
 <template>
   <div>
     <v-row no-gutters>
-      <div style="font-size: 0.9em">
-        <v-icon x-small class="mr-1">mdi-magnify</v-icon>
-        <a @click="search(searchtemplate.query_string)">{{ searchtemplate.name }}</a>
+      <div
+        style="width: 100%; border-radius: 4px; cursor: pointer"
+        class="px-2 mb-n1"
+        :class="[
+          $vuetify.theme.dark ? 'dark-highlight' : 'light-highlight',
+          $vuetify.theme.dark ? 'dark-hover-on-highlight' : 'light-hover-on-highlight',
+        ]"
+        @click="search(searchtemplate.query_string)"
+      >
+        <span style="font-size: 0.8em">{{ searchtemplate.name }}</span>
       </div>
     </v-row>
 
