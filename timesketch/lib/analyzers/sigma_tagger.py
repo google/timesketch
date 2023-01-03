@@ -15,7 +15,9 @@ class SigmaPlugin(interface.BaseAnalyzer):
 
     NAME = "sigma"
     DISPLAY_NAME = "Sigma"
-    DESCRIPTION = "Run pre-defined Sigma rules (only stable) and tag matching events"
+    DESCRIPTION = (
+        "Run pre-defined Sigma rules (only stable) and tag matching events"
+    )
 
     def __init__(self, index_name, sketch_id, timeline_id=None, **kwargs):
         """Initialize The Sigma Analyzer.
@@ -51,7 +53,9 @@ class SigmaPlugin(interface.BaseAnalyzer):
             tag_list = []
         return_fields = []
         tagged_events_counter = 0
-        events = self.event_stream(query_string=query, return_fields=return_fields)
+        events = self.event_stream(
+            query_string=query, return_fields=return_fields
+        )
         for event in events:
             ts_sigma_rules = event.source.get("ts_sigma_rule", [])
             ts_sigma_rules.append(rule_title)
@@ -92,6 +96,7 @@ class SigmaPlugin(interface.BaseAnalyzer):
         rule = self._rule
         if not rule:
             logger.error("No  Sigma rule given.")
+            # TODO(jaegeral): Consider removing this check and just return, as it is not possible to run the analyzer without a rule.
             return "Unable to run, no rule given to the analyzer"
         rule_name = rule.get("title", "N/A")
         try:
@@ -102,14 +107,16 @@ class SigmaPlugin(interface.BaseAnalyzer):
                 tag_list=rule.get("tags"),
             )
         except:  # pylint: disable=bare-except
-            error_msg = "* {0:s} {1:s}".format(rule.get("title"), rule.get("id"))
+            error_msg = "* {0:s} {1:s}".format(
+                rule.get("title"), rule.get("id")
+            )
             logger.error(
                 error_msg,
                 exc_info=True,
             )
             return error_msg
 
-        return f"{tagged_events_counter} events tagged for rule [{rule_name}]"
+        return f"{tagged_events_counter} events tagged for rule [{rule_name}] ({rule.get('id')})"
 
     @staticmethod
     def get_kwargs():

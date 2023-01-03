@@ -20,6 +20,8 @@ import subprocess
 import yaml
 
 import click
+import pandas as pd
+
 from flask.cli import FlaskGroup
 from sqlalchemy.exc import IntegrityError
 from jsonschema import validate, ValidationError, SchemaError
@@ -32,8 +34,10 @@ from timesketch.models import drop_all
 from timesketch.models.user import Group
 from timesketch.models.user import User
 from timesketch.models.sketch import Sketch
+from timesketch.models.sketch import Analysis
 from timesketch.models.sketch import SearchTemplate
 from timesketch.models.sigma import SigmaRule
+from timesketch.models.sketch import Timeline
 
 
 @click.group(cls=FlaskGroup, create_app=create_app)
@@ -60,7 +64,9 @@ def create_user(username, password=None):
 
     def get_password_from_prompt():
         """Get password from the command line prompt."""
-        first_password = click.prompt("Enter password", hide_input=True, type=str)
+        first_password = click.prompt(
+            "Enter password", hide_input=True, type=str
+        )
         second_password = click.prompt(
             "Enter password again", hide_input=True, type=str
         )
@@ -152,7 +158,9 @@ def grant_user(username, sketch_id):
     else:
         sketch.grant_permission(permission="read", user=user)
         sketch.grant_permission(permission="write", user=user)
-        print(f"User {username} added to the sketch {sketch.id} ({sketch.name})")
+        print(
+            f"User {username} added to the sketch {sketch.id} ({sketch.name})"
+        )
 
 
 @cli.command(name="version")
@@ -295,7 +303,9 @@ def import_search_templates(path):
                     template_uuid=uuid
                 ).first()
                 if not searchtemplate:
-                    searchtemplate = SearchTemplate(name=name, template_uuid=uuid)
+                    searchtemplate = SearchTemplate(
+                        name=name, template_uuid=uuid
+                    )
                     db_session.add(searchtemplate)
                     db_session.commit()
 
@@ -349,7 +359,9 @@ def import_sigma_rules(path):
 
         # Query rules to see if it already exist and exit if found
         rule_uuid = sigma_rule.get("id")
-        sigma_rule_from_db = SigmaRule.query.filter_by(rule_uuid=rule_uuid).first()
+        sigma_rule_from_db = SigmaRule.query.filter_by(
+            rule_uuid=rule_uuid
+        ).first()
         if sigma_rule_from_db:
             print(f"Rule {rule_uuid} is already imported")
             continue
@@ -410,7 +422,9 @@ def remove_all_sigma_rules():
     """Deletes all Sigma rule from the database."""
 
     if click.confirm("Do you really want to drop all the Sigma rules?"):
-        if click.confirm("Are you REALLLY sure you want to DROP ALL the Sigma rules?"):
+        if click.confirm(
+            "Are you REALLLY sure you want to DROP ALL the Sigma rules?"
+        ):
 
             all_sigma_rules = SigmaRule.query.all()
             for rule in all_sigma_rules:
@@ -427,7 +441,8 @@ def export_sigma_rules(path):
 
     if not os.path.isdir(path):
         raise RuntimeError(
-            "The directory needs to exist, please create: " "{0:s} first".format(path)
+            "The directory needs to exist, please create: "
+            "{0:s} first".format(path)
         )
 
     all_sigma_rules = SigmaRule.query.all()
@@ -617,3 +632,70 @@ def validate_context_links_conf(path):
             print(f'=> OK: "{entry}"')
         except (ValidationError, SchemaError) as err:
             print(f'=> ERROR: "{entry}" >> {err}\n')
+
+
+# Sigma analyzer stats cli command
+@cli.command(name="sigma-analyzer-stats")
+@click.option("--timeline_id", required=False)
+@click.option("--focus", required=False)
+@click.option("--rule_id", required=False)
+def sigma_stats(timeline_id, focus, rule_id):
+    """Prints sigma analyzer stats."""
+
+    if timeline_id:
+        timeline = Timeline.query.get(timeline_id)
+        if not timeline:
+            print("No timeline found with this ID.")
+            return
+        # analysis filter by timeline is timeline parameter and analyuer_name is sigma
+        analysis_history = Analysis.query.filter_by(
+            timeline=timeline, analyzer_name='sigma'
+        ).all()
+    else:
+        # analysis filter by analyzer_name is sigma
+        analysis_history = Analysis.query.filter_by(
+            analyzer_name='sigma'
+        ).all()
+
+    df = pd.DataFrame()
+    for analysis in analysis_history:
+        if analysis.analyzer_name == "sigma":
+            import re
+
+            # extract number of hits from result to a int so it could be sorted
+            matches = re.search(r'\d+(?=\s+events)', analysis.result)
+            numbers = 0
+            if matches:
+                numbers = int(matches.group())
+            new_row = pd.DataFrame(
+                [
+                    {
+                        "runtime": analysis.updated_at - analysis.created_at,
+                        "hits": numbers,
+                        "result": analysis.result,
+                        "analysis_id": analysis.id,
+                        "created_at": analysis.created_at,
+                    }
+                ]
+            )
+            df = pd.concat([df, new_row], ignore_index=True)
+
+    # make the runtime column to only display in minutes and cut away days etc.
+    df["runtime"] = df["runtime"].dt.seconds / 60
+
+    # if rule_id is given, filter the dataframe to only show the results with the rule_id in results from the dataframe
+    if rule_id:
+        df = df[df.result.str.contains(rule_id)]
+
+    # Sorting the dataframe depending on the paramters
+
+    if focus == "many_hits":
+        df = df.sort_values('hits', ascending=False)
+    elif focus == "long_runtime":
+        df = df.sort_values('runtime', ascending=False)
+    elif focus == "recent":
+        df = df.sort_values('created_at', ascending=False)
+    else:
+        df = df.sort_values('runtime', ascending=False)
+
+    print(df)
