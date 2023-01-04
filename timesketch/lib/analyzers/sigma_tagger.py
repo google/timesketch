@@ -92,7 +92,6 @@ class SigmaPlugin(interface.BaseAnalyzer):
         rule = self._rule
         if not rule:
             logger.error("No  Sigma rule given.")
-            # TODO(jaegeral): Consider removing this check and just return, as it is not possible to run the analyzer without a rule.
             return "Unable to run, no rule given to the analyzer"
         rule_name = rule.get("title", "N/A")
         try:
@@ -110,7 +109,7 @@ class SigmaPlugin(interface.BaseAnalyzer):
             )
             return error_msg
 
-        return f"{tagged_events_counter} events tagged for rule [{rule_name}] ({rule.get('id')})"
+        return f"{tagged_events_counter} events tagged for rule [{rule_name}] ({rule.get('id')})"  # pylint: disable=line-too-long
 
     @staticmethod
     def get_kwargs():
