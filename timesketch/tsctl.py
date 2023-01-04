@@ -16,9 +16,9 @@
 import os
 import pathlib
 import json
+import re
 import subprocess
 import yaml
-import re
 
 
 import click
