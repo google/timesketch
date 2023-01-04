@@ -18,6 +18,8 @@ import pathlib
 import json
 import subprocess
 import yaml
+import re
+
 
 import click
 import pandas as pd
@@ -641,7 +643,12 @@ def validate_context_links_conf(path):
     required=False,
     help="Search in result text. E.g. for a specific rule_id.",
 )
-def sigma_stats(analyzer_name, timeline_id, focus, result_text_search):
+@click.option(
+    "--limit",
+    required=False,
+    help="Limit the number of results.",
+)
+def sigma_stats(analyzer_name, timeline_id, focus, result_text_search, limit):
     """Prints sigma analyzer stats."""
 
     if timeline_id:
@@ -649,7 +656,6 @@ def sigma_stats(analyzer_name, timeline_id, focus, result_text_search):
         if not timeline:
             print("No timeline found with this ID.")
             return
-        # analysis filter by timeline is timeline parameter and analyuer_name is sigma
         analysis_history = Analysis.query.filter_by(
             timeline=timeline, analyzer_name=analyzer_name
         ).all()
@@ -661,11 +667,13 @@ def sigma_stats(analyzer_name, timeline_id, focus, result_text_search):
 
     df = pd.DataFrame()
     for analysis in analysis_history:
-        if analysis.analyzer_name == analyzer_name or analyzer_name == "all":
-            import re
+        if analysis.analyzer_name in [analyzer_name, "all"]:
 
             # extract number of hits from result to a int so it could be sorted
-            matches = re.search(r"\d+(?=\s+events)", analysis.result)
+            try:
+                matches = re.search(r"\d+(?=\s+events)", analysis.result)
+            except TypeError:
+                matches = 0
             numbers = 0
             if matches:
                 numbers = int(matches.group())
@@ -685,13 +693,12 @@ def sigma_stats(analyzer_name, timeline_id, focus, result_text_search):
     # make the runtime column to only display in minutes and cut away days etc.
     df["runtime"] = df["runtime"].dt.seconds / 60
 
-    # if rule_id is given, filter the dataframe to only show the results with the rule_id in results from the dataframe
     if result_text_search:
-        df = df[df.result.str.contains(result_text_search)]
+        df = df[df.result.str.contains(result_text_search, na=False)]
 
     # Sorting the dataframe depending on the paramters
 
-    if focus == "many_hits" or focus == "many-hits":
+    if focus in ["many_hits", "many-hits", "hits"]:
         df = df.sort_values("hits", ascending=False)
     elif focus == "long_runtime":
         df = df.sort_values("runtime", ascending=False)
@@ -699,6 +706,9 @@ def sigma_stats(analyzer_name, timeline_id, focus, result_text_search):
         df = df.sort_values("created_at", ascending=False)
     else:
         df = df.sort_values("runtime", ascending=False)
+
+    if limit:
+        df = df.head(int(limit))
 
     pd.options.display.max_colwidth = 500
     print(df)
