@@ -587,7 +587,7 @@ Example:
 tsctl analyzer-stats --help
 Usage: tsctl analyzer-stats [OPTIONS] ANALYZER_NAME
 
-  Prints sigma analyzer stats.
+  Prints analyzer stats.
 
 Options:
   --timeline_id TEXT         Timeline ID if the analyzer results should be
