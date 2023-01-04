@@ -683,7 +683,6 @@ def sigma_stats(analyzer_name, timeline_id, focus, result_text_search):
             df = pd.concat([df, new_row], ignore_index=True)
 
     # make the runtime column to only display in minutes and cut away days etc.
-    breakpoint()
     df["runtime"] = df["runtime"].dt.seconds / 60
 
     # if rule_id is given, filter the dataframe to only show the results with the rule_id in results from the dataframe
@@ -692,7 +691,7 @@ def sigma_stats(analyzer_name, timeline_id, focus, result_text_search):
 
     # Sorting the dataframe depending on the paramters
 
-    if focus == "many_hits":
+    if focus == "many_hits" or focus == "many-hits":
         df = df.sort_values("hits", ascending=False)
     elif focus == "long_runtime":
         df = df.sort_values("runtime", ascending=False)
