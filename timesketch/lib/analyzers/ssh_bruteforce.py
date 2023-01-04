@@ -111,7 +111,6 @@ class SSHBruteForcePlugin(interface.BaseAnalyzer):
         )
         return_fields = [
             'timestamp',
-            'datetime',
             'hostname',
             'pid',
             'message'
@@ -164,7 +163,8 @@ class SSHBruteForcePlugin(interface.BaseAnalyzer):
                     source_port = m.source_port
                 except pyparsing.ParseException as e:
                     if not str(e).startswith('Expected'):
-                        log.info('Error encountered parsing {}: {}'.format(event_message, e))
+                        log.info('Error encountered parsing {}: {}'.format(
+                                event_message, e))
                         continue
 
             ssh_event_data = SSHEventData()
