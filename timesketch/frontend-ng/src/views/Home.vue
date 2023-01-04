@@ -73,10 +73,6 @@ limitations under the License.
               </v-card-actions>
             </v-card>
           </v-dialog>
-          <v-divider vertical class="mr-5"></v-divider>
-          <v-btn v-for="scenario in scenarioTemplates" :key="scenario.short_name" depressed small outlined class="mr-5">
-            {{ scenario.display_name }}
-          </v-btn>
         </v-row>
       </v-sheet>
       <div class="pa-5">
