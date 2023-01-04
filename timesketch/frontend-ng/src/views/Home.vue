@@ -65,7 +65,8 @@ limitations under the License.
             <v-card class="pa-4">
               <h3>New sketch</h3>
               <br />
-              <v-text-field v-model="sketchForm.name" outlined dense placeholder="Name your sketch"> </v-text-field>
+              <v-text-field v-model="sketchForm.name" outlined dense placeholder="Name your sketch" autofocus>
+              </v-text-field>
               <v-card-actions>
                 <v-spacer></v-spacer>
                 <v-btn :disabled="!sketchForm.name" @click="createSketch()" color="primary" text> Create </v-btn>

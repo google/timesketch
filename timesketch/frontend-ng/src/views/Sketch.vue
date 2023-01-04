@@ -14,14 +14,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div v-if="sketch">
+  <div v-if="sketch" style="height: 30%">
     <!-- Top horizontal toolbar -->
     <v-toolbar flat color="transparent">
-      <v-avatar v-show="!showLeftPanel" class="ml-n1">
+      <v-avatar v-show="!showLeftPanel || !sketch.timelines.length" class="ml-n1">
         <router-link to="/">
           <v-img src="/dist/timesketch-color.png" max-height="25" max-width="25" contain></v-img>
         </router-link>
       </v-avatar>
+      <span v-if="!sketch.timelines.length" style="font-size: 1.1em">{{ sketch.name }} </span>
 
       <v-btn icon v-show="!showLeftPanel" @click="toggleLeftPanel" class="ml-n1">
         <v-icon>mdi-menu</v-icon>
@@ -83,142 +84,156 @@ limitations under the License.
       </v-menu>
     </v-toolbar>
 
-    <!-- Left panel -->
-    <v-navigation-drawer app permanent :width="navigationDrawer.width" hide-overlay ref="drawer">
-      <div v-show="showLeftPanel">
-        <v-toolbar flat>
-          <v-avatar class="ml-n3">
-            <router-link to="/">
-              <v-img src="/dist/timesketch-color.png" max-height="25" max-width="25" contain></v-img>
-            </router-link>
-          </v-avatar>
-          <span @click="showSketchMetadata = !showSketchMetadata" style="font-size: 1.1em; cursor: pointer"
-            >{{ sketch.name }}
-          </span>
-          <v-spacer></v-spacer>
-          <v-icon @click="toggleLeftPanel">mdi-chevron-left</v-icon>
-        </v-toolbar>
-        <v-expand-transition>
-          <v-list v-show="showSketchMetadata" two-line>
-            <v-list-item v-if="sketch.user">
-              <v-list-item-content>
-                <v-list-item-title>
-                  <strong>Created:</strong> {{ sketch.created_at | shortDateTime }}
-                </v-list-item-title>
-                <v-list-item-subtitle>
-                  <small>{{ sketch.created_at | timeSince }} by {{ sketch.user.username }}</small>
-                </v-list-item-subtitle>
-              </v-list-item-content>
-            </v-list-item>
+    <v-container v-if="!sketch.timelines.length" fill-height fluid>
+      <v-row align="center" justify="center">
+        <v-sheet class="pa-4">
+          <center>
+            <div style="font-size: 2em" class="mb-3">It's empty around here</div>
 
-            <v-list-item>
-              <v-list-item-content>
-                <v-list-item-title>
-                  <strong>Access: </strong>
-                  <span v-if="meta.permissions">Public</span>
-                  <span v-else>Restricted</span>
-                </v-list-item-title>
-                <v-list-item-subtitle>
-                  <small v-if="meta.permissions">Visible to all users on this server</small>
-                  <small v-else>Only people with access can open</small>
-                </v-list-item-subtitle>
-              </v-list-item-content>
-            </v-list-item>
+            <ts-upload-timeline-form btn-size="normal" btn-type="outlined"></ts-upload-timeline-form>
+          </center>
+        </v-sheet>
+      </v-row>
+    </v-container>
 
-            <v-list-item>
-              <v-list-item-content>
-                <v-list-item-title>
-                  <strong>Shared with</strong>
-                </v-list-item-title>
-                <v-list-item-subtitle>
-                  <small>People and groups with access</small>
-                </v-list-item-subtitle>
-              </v-list-item-content>
-            </v-list-item>
-          </v-list>
-        </v-expand-transition>
-        <v-divider></v-divider>
+    <div v-else>
+      <!-- Left panel -->
+      <v-navigation-drawer app permanent :width="navigationDrawer.width" hide-overlay ref="drawer">
+        <div v-show="showLeftPanel">
+          <v-toolbar flat>
+            <v-avatar class="ml-n3">
+              <router-link to="/">
+                <v-img src="/dist/timesketch-color.png" max-height="25" max-width="25" contain></v-img>
+              </router-link>
+            </v-avatar>
+            <span @click="showSketchMetadata = !showSketchMetadata" style="font-size: 1.1em; cursor: pointer"
+              >{{ sketch.name }}
+            </span>
+            <v-spacer></v-spacer>
+            <v-icon @click="toggleLeftPanel">mdi-chevron-left</v-icon>
+          </v-toolbar>
+          <v-expand-transition>
+            <v-list v-show="showSketchMetadata" two-line>
+              <v-list-item v-if="sketch.user">
+                <v-list-item-content>
+                  <v-list-item-title>
+                    <strong>Created:</strong> {{ sketch.created_at | shortDateTime }}
+                  </v-list-item-title>
+                  <v-list-item-subtitle>
+                    <small>{{ sketch.created_at | timeSince }} by {{ sketch.user.username }}</small>
+                  </v-list-item-subtitle>
+                </v-list-item-content>
+              </v-list-item>
 
-        <!-- Dialog for adding a scenario -->
-        <v-dialog v-model="dialog" max-width="500px">
-          <v-card>
-            <div class="pa-3">
-              <h3>Investigative Scenarios</h3>
-              <v-select
-                v-model="selectedScenario"
-                :items="scenarioTemplates"
-                item-text="display_name"
-                return-object
-                label="Select a scenario"
-                outlined
-                class="mt-3"
-              ></v-select>
-              <div v-if="selectedScenario">
-                {{ selectedScenario.description }}
-              </div>
-            </div>
-            <v-divider></v-divider>
-            <v-card-actions>
-              <v-spacer></v-spacer>
-              <v-btn @click="dialog = false" color="primary" text> Close </v-btn>
-              <v-btn
-                :disabled="!selectedScenario"
-                @click="addScenario(selectedScenario.short_name)"
-                color="primary"
-                text
-              >
-                Add
-              </v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-dialog>
+              <v-list-item>
+                <v-list-item-content>
+                  <v-list-item-title>
+                    <strong>Access: </strong>
+                    <span v-if="meta.permissions">Public</span>
+                    <span v-else>Restricted</span>
+                  </v-list-item-title>
+                  <v-list-item-subtitle>
+                    <small v-if="meta.permissions">Visible to all users on this server</small>
+                    <small v-else>Only people with access can open</small>
+                  </v-list-item-subtitle>
+                </v-list-item-content>
+              </v-list-item>
 
-        <v-tabs v-model="leftPanelTab" grow>
-          <v-tab v-for="item in leftPanelTabItems" :key="item"> {{ item }} </v-tab>
-        </v-tabs>
-        <v-divider></v-divider>
-        <v-tabs-items v-model="leftPanelTab" class="pt-4">
-          <v-tab-item :transition="false">
-            <ts-saved-searches v-if="meta.views"></ts-saved-searches>
-            <ts-data-types></ts-data-types>
-            <ts-tags></ts-tags>
-            <ts-search-templates></ts-search-templates>
-            <ts-sigma-rules></ts-sigma-rules>
-          </v-tab-item>
-          <v-tab-item :transition="false">
-            <ts-scenario v-for="scenario in activeScenarios" :key="scenario.id" :scenario="scenario"></ts-scenario>
-            <v-row class="mt-0 px-2" flat>
-              <v-col cols="6">
-                <v-btn text color="primary" @click="dialog = true" style="cursor: pointer"
-                  ><v-icon left>mdi-plus</v-icon> Add Scenario</v-btn
-                >
-              </v-col>
+              <v-list-item>
+                <v-list-item-content>
+                  <v-list-item-title>
+                    <strong>Shared with</strong>
+                  </v-list-item-title>
+                  <v-list-item-subtitle>
+                    <small>People and groups with access</small>
+                  </v-list-item-subtitle>
+                </v-list-item-content>
+              </v-list-item>
+            </v-list>
+          </v-expand-transition>
+          <v-divider></v-divider>
 
-              <v-col cols="6" align="right">
-                <div
-                  v-if="hiddenScenarios.length"
-                  @click="showHidden = !showHidden"
-                  style="cursor: pointer"
-                  class="mt-1"
-                >
-                  <small
-                    ><span v-if="showHidden">Hide</span><span v-else>Show</span> hidden scenarios ({{
-                      hiddenScenarios.length
-                    }})</small
-                  >
+          <!-- Dialog for adding a scenario -->
+          <v-dialog v-model="dialog" max-width="500px">
+            <v-card>
+              <div class="pa-3">
+                <h3>Investigative Scenarios</h3>
+                <v-select
+                  v-model="selectedScenario"
+                  :items="scenarioTemplates"
+                  item-text="display_name"
+                  return-object
+                  label="Select a scenario"
+                  outlined
+                  class="mt-3"
+                ></v-select>
+                <div v-if="selectedScenario">
+                  {{ selectedScenario.description }}
                 </div>
-              </v-col>
-            </v-row>
+              </div>
+              <v-divider></v-divider>
+              <v-card-actions>
+                <v-spacer></v-spacer>
+                <v-btn @click="dialog = false" color="primary" text> Close </v-btn>
+                <v-btn
+                  :disabled="!selectedScenario"
+                  @click="addScenario(selectedScenario.short_name)"
+                  color="primary"
+                  text
+                >
+                  Add
+                </v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
 
-            <div v-show="showHidden">
-              <ts-scenario v-for="scenario in hiddenScenarios" :key="scenario.id" :scenario="scenario"></ts-scenario>
-            </div>
-          </v-tab-item>
-        </v-tabs-items>
-      </div>
-    </v-navigation-drawer>
+          <v-tabs v-model="leftPanelTab" grow>
+            <v-tab v-for="item in leftPanelTabItems" :key="item"> {{ item }} </v-tab>
+          </v-tabs>
+          <v-divider></v-divider>
+          <v-tabs-items v-model="leftPanelTab" class="pt-4">
+            <v-tab-item :transition="false">
+              <ts-saved-searches v-if="meta.views"></ts-saved-searches>
+              <ts-data-types></ts-data-types>
+              <ts-tags></ts-tags>
+              <ts-search-templates></ts-search-templates>
+              <ts-sigma-rules></ts-sigma-rules>
+            </v-tab-item>
+            <v-tab-item :transition="false">
+              <ts-scenario v-for="scenario in activeScenarios" :key="scenario.id" :scenario="scenario"></ts-scenario>
+              <v-row class="mt-0 px-2" flat>
+                <v-col cols="6">
+                  <v-btn text color="primary" @click="dialog = true" style="cursor: pointer"
+                    ><v-icon left>mdi-plus</v-icon> Add Scenario</v-btn
+                  >
+                </v-col>
 
-    <router-view v-if="sketch.status"></router-view>
+                <v-col cols="6" align="right">
+                  <div
+                    v-if="hiddenScenarios.length"
+                    @click="showHidden = !showHidden"
+                    style="cursor: pointer"
+                    class="mt-1"
+                  >
+                    <small
+                      ><span v-if="showHidden">Hide</span><span v-else>Show</span> hidden scenarios ({{
+                        hiddenScenarios.length
+                      }})</small
+                    >
+                  </div>
+                </v-col>
+              </v-row>
+
+              <div v-show="showHidden">
+                <ts-scenario v-for="scenario in hiddenScenarios" :key="scenario.id" :scenario="scenario"></ts-scenario>
+              </div>
+            </v-tab-item>
+          </v-tabs-items>
+        </div>
+      </v-navigation-drawer>
+
+      <router-view v-if="sketch.status"></router-view>
+    </div>
   </div>
 </template>
 
@@ -231,6 +246,7 @@ import TsDataTypes from '../components/LeftPanel/DataTypes'
 import TsTags from '../components/LeftPanel/Tags'
 import TsSearchTemplates from '../components/LeftPanel/SearchTemplates'
 import TsSigmaRules from '../components/LeftPanel/SigmaRules'
+import TsUploadTimelineForm from '../components/UploadForm'
 
 export default {
   props: ['sketchId'],
@@ -241,6 +257,7 @@ export default {
     TsTags,
     TsSearchTemplates,
     TsSigmaRules,
+    TsUploadTimelineForm,
   },
   data() {
     return {
