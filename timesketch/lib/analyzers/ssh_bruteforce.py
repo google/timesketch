@@ -12,7 +12,7 @@ import pyparsing
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 
-log = logging.getLogger("ssh_bruteforce")
+log = logging.getLogger("timesketch.analyzers.ssh.bruteforce")
 
 
 class SSHEventData:
@@ -36,14 +36,15 @@ class SSHEventData:
         self.session_id = ""
 
     def calculate_session_id(self) -> None:
+        """Calculate pseduo session_id for SSH authentication event."""
         hash_data = (
             f"{self.date}|{self.hostname}|{self.username}|{self.source_ip}|"
             f"{self.source_port}"
         )
 
-        h = hashlib.new("sha256")
-        h.update(str.encode(hash_data))
-        self.session_id = h.hexdigest()
+        hasher = hashlib.new("sha256")
+        hasher.update(str.encode(hash_data))
+        self.session_id = hasher.hexdigest()
 
 
 class SSHBruteForcePlugin(interface.BaseAnalyzer):
@@ -121,68 +122,89 @@ class SSHBruteForcePlugin(interface.BaseAnalyzer):
         "disconnected": _DISCONNECT_GRAMMAR,
     }
 
+    # SSHD_KEYWORD_RE is regular expression is used to identify the interesting
+    # SSH authentication events to process.
+    #
+    # We are only interested in parsing Accepted, Failed, and Disconnected messages
+    # as specified in MESSAGE_GRAMMAR
+    SSHD_KEYWORD_RE = re.compile(r"\[sshd,\s+pid:\s+\d+\]\s+([^\s]+)\s+.*")
+
+    # IGNORE_ATTRIBUTE_ERROR holds the error messages that we can ignore
+    # while parsing event_message using SSHD_KEYWORD_RE.
+    IGNORE_ATTRIBUTE_ERROR = ["'NoneType' object has no attribute 'group'"]
+
     def run(self):
         """Entry point for the analyzer.
 
         Returns:
             String with summary of the analyzer result.
         """
-        query = (
+        query_string = (
             'data_type:"syslog:line" AND reporter:sshd AND'
             " (body:Accepted* OR body:Failed* OR body:Disconnected*)"
         )
         return_fields = ["timestamp", "hostname", "pid", "message"]
 
-        events = self.event_stream(query_string=query, return_fields=return_fields)
+        events = self.event_stream(
+            query_string=query_string, return_fields=return_fields
+        )
 
-        sshd_message_type_re = re.compile(r".*sshd\[\d+\]:\s+([^\s]+)\s+([^\s]+)\s.*")
-
+        # ssh_records holds the SSHEventData dictionaries.
+        # This will be used to create pandas dataframe.
         ssh_records = []
 
         for event in events:
-            event_timestamp = float(event.source.get("timestamp"))
+            event_timestamp = float(event.source.get("timestamp") / 1000000)
             event_hostname = event.source.get("hostname")
             event_pid = event.source.get("pid")
             event_message = event.source.get("message")
 
             try:
-                sshd_message_type = sshd_message_type_re.search(event_message).group(1)
-            except AttributeError:
-                log.info("Unable to get SSH message type {}".format(event_message))
-                continue
-            for message_type, message_grammar in self.MESSAGE_GRAMMAR.items():
-                if message_type.lower() != sshd_message_type.lower():
+                sshd_keyword = self.SSHD_KEYWORD_RE.search(event_message).group(1)
+            except AttributeError as exception:
+                if str(exception) in self.IGNORE_ATTRIBUTE_ERROR:
+                    log.debug("Ignoring event message {}".format(event_message))
                     continue
-                try:
-                    m = message_grammar.parse_string(event_message)
 
-                    if message_type.lower() == "accepted":
-                        event_type = "authentication"
-                        auth_result = "success"
-                    elif message_type.lower() == "failed":
-                        event_type = "authentication"
-                        auth_result = "failure"
-                    elif message_type.lower() == "disconnected":
-                        event_type = "disconnection"
-                        auth_result = ""
-                    else:
-                        event_type = "unknown"
-                        auth_result = ""
+                log.error("Error extracting ssh_keyword in {}".format(event_message))
+                continue
 
-                    # extract information from message grammar
-                    dt = datetime.utcfromtimestamp(event_timestamp)
-                    event_date = dt.strftime("%Y-%m-%d")
-                    event_time = dt.strftime("%H:%M:%S")
-                    auth_method = m.auth_method
-                    username = m.username
-                    source_ip = m.source_ip
-                    source_port = m.source_port
-                except pyparsing.ParseException as e:
-                    if not str(e).startswith("Expected"):
-                        log.info(
-                            "Error encountered parsing {}: {}".format(event_message, e)
-                        )
-                        continue
+            message_grammar = self.MESSAGE_GRAMMAR.get(sshd_keyword.lower()) or None
+            if not message_grammar:
+                log.debug("No grammar for event: {}".format(event_message))
+                continue
+
+            try:
+                parse_result = message_grammar.parseString(event_message)
+
+                if sshd_keyword.lower() == "accepted":
+                    event_type = "authentication"
+                    auth_result = "success"
+                elif sshd_keyword.lower() == "failed":
+                    event_type = "authentication"
+                    auth_result = "failure"
+                elif sshd_keyword.lower() == "disconnected":
+                    event_type = "disconnection"
+                    auth_result = ""
+                else:
+                    event_type = "unknown"
+                    auth_result = ""
+
+                # extract information from message grammar
+                event_dt = datetime.utcfromtimestamp(event_timestamp)
+                event_date = event_dt.strftime("%Y-%m-%d")
+                event_time = event_dt.strftime("%H:%M:%S")
+                auth_method = parse_result.auth_method
+                username = parse_result.username
+                source_ip = parse_result.source_ip
+                source_port = parse_result.source_port
+            except pyparsing.ParseException as exception:
+                log.error(
+                    "Error encountered while parsing {} as {}: {}".format(
+                        event_message, sshd_keyword, str(exception)
+                    )
+                )
+                continue
 
             ssh_event_data = SSHEventData()
             ssh_event_data.timestamp = event_timestamp
@@ -199,14 +221,17 @@ class SSHBruteForcePlugin(interface.BaseAnalyzer):
             ssh_event_data.source_port = source_port
 
             ssh_event_data.calculate_session_id()
-            ssh_records.append(ssh_event_data)
+            ssh_records.append(ssh_event_data.__dict__)
+        log.info(
+            "Total number of SSH authentication events: {}".format(len(ssh_records))
+        )
 
         df = pd.DataFrame(ssh_records)
         if df.empty:
             log.info("No SSH authentication events")
             return "No SSH authentication events"
 
-        return "No finding"
+        return "Total number of SSH authention events {}".format(len(ssh_records))
 
 
 manager.AnalysisManager.register_analyzer(SSHBruteForcePlugin)
