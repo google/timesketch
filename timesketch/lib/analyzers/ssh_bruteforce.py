@@ -58,10 +58,10 @@ class SSHBruteForcePlugin(interface.BaseAnalyzer):
     _AUTHENTICATION_METHOD = (
         pyparsing.Keyword("password") | pyparsing.Keyword("publickey")
     ).setResultsName("auth_method")
-    _USERNAME = pyparsing.Word(pyparsing.alphanums).setResultsName("username")
+    _USERNAME = pyparsing.Word(pyparsing.printables).setResultsName("username")
     _SOURCE_IP = pyparsing.Word(pyparsing.printables).setResultsName("source_ip")
     _SOURCE_PORT = pyparsing.Word(pyparsing.nums, max=5).setResultsName("source_port")
-    _PROTOCOL = pyparsing.Word(pyparsing.printables, max=4).setResultsName("protocol")
+    _PROTOCOL = pyparsing.Word(pyparsing.printables).setResultsName("protocol")
     _FINGERPRINT_TYPE = pyparsing.Word(pyparsing.alphanums).setResultsName(
         "fingerprint_type"
     )
