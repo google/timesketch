@@ -144,8 +144,8 @@ class Aggregation(resource.SketchResource):
             self._sketch.id, aggregation_id
         )
         self._resource_id = aggregation_id
-        resource_data = self.api.fetch_resource_data(resource_uri)
-        data = resource_data.get("objects", [None])[0]
+        self.resource_data = self.api.fetch_resource_data(resource_uri)
+        data = self.resource_data.get("objects", [None])[0]
         if not data:
             return
 
@@ -172,11 +172,6 @@ class Aggregation(resource.SketchResource):
         self._parameters = parameters
 
         self._username = data.get("user", {}).get("username", "System")
-        self.resource_data = self._run_aggregator(
-            aggregator_name=self.aggregator_name,
-            parameters=parameters,
-            chart_type=chart_type,
-        )
 
     # pylint: disable=arguments-differ
     def from_manual(self, aggregate_dsl, **kwargs):
@@ -289,34 +284,35 @@ class Aggregation(resource.SketchResource):
     def description(self):
         """Property that returns the description string."""
         data = self.resource_data
-        meta = data.get("meta", {})
-        return meta.get("description", "")
+        objects = data.get("objects", {})
+        return objects[0].get("description", "")
 
     @description.setter
     def description(self, description):
         """Set the description of an aggregation."""
-        if "meta" not in self.resource_data:
+        if self.resource_data and "objects" not in self.resource_data:
             return
-        meta = self.resource_data.get("meta")
-        meta["description"] = description
+        objects = self.resource_data.get("objects")
+        objects[0]["description"] = description
 
     @property
     def name(self):
         """Property that returns the name of the aggregation."""
         data = self.resource_data
-        meta = data.get("meta", {})
-        name = meta.get("name")
+        print(data)
+        objects = data.get("objects", {})
+        name = objects[0].get("name")
         if name:
             return name
-        return self.aggregator_name
+        return self.name
 
     @name.setter
     def name(self, name):
         """Set the name of the aggregation."""
-        if "meta" not in self.resource_data:
+        if self.resource_data and "objects" not in self.resource_data:
             return
-        meta = self.resource_data.get("meta")
-        meta["name"] = name
+        objects = self.resource_data.get("objects")
+        objects[0]["name"] = name
 
     def add_label(self, label):
         """Add a label to the aggregation.

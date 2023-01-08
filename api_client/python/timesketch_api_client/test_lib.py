@@ -419,6 +419,105 @@ def mock_response(*args, **kwargs):
         ],
     }
 
+    aggregation_data = {
+        "meta": {},
+        "objects": [
+            [
+                {
+                    "agg_type": "field_bucket",
+                    "aggregationgroup_id": 0,
+                    "chart_type": "barchart",
+                    "created_at": "2023-01-08T08:45:23.113454",
+                    "description": "Aggregating values of a particular field",
+                    "id": 1,
+                    "label_string": "",
+                    "name": "ip barchart",
+                    "parameters": "{\"supported_charts\": \"barchart\", \"field\": \"ip\", \"start_time\": \"\", \"end_time\": \"\", \"limit\": \"10\", \"index\": [1, 2]}",
+                    "updated_at": "2023-01-08T08:45:23.113454",
+                    "user": {
+                        "active": True,
+                        "admin": False,
+                        "groups": [],
+                        "username": "dev"
+                    }
+                },
+                {
+                    "agg_type": "field_bucket",
+                    "aggregationgroup_id": 0,
+                    "chart_type": "table",
+                    "created_at": "2023-01-08T08:46:24.871292",
+                    "description": "Aggregating values of a particular field",
+                    "id": 2,
+                    "label_string": "",
+                    "name": "domain table",
+                    "parameters": "{\"supported_charts\": \"table\", \"field\": \"domain\", \"start_time\": \"\", \"end_time\": \"\", \"limit\": \"10\", \"index\": [1, 2]}",
+                    "updated_at": "2023-01-08T08:46:24.871292",
+                    "user": {
+                        "active": True,
+                        "admin": False,
+                        "groups": [],
+                        "username": "dev"
+                    }
+                }
+            ]
+        ]
+    }
+
+    aggregation_1_data = {
+        "meta": {},
+        "objects": [
+            {
+                "agg_type": "field_bucket",
+                "aggregationgroup_id": 0,
+                "chart_type": "barchart",
+                "created_at": "2023-01-08T08:45:23.113454",
+                "description": "Aggregating values of a particular field",
+                "id": 1,
+                "label_string": "",
+                "name": "ip barchart",
+                "parameters": "{\"supported_charts\": \"barchart\", \"field\": \"ip\", \"start_time\": \"\", \"end_time\": \"\", \"limit\": \"10\", \"index\": [1, 2]}",
+                "updated_at": "2023-01-08T08:45:23.113454",
+                "user": {
+                    "active": True,
+                    "admin": False,
+                    "groups": [],
+                    "username": "dev"
+                }
+            }
+        ]
+    }
+
+    aggregation_2_data = {
+        "meta": {},
+        "objects": [
+            {
+                "agg_type": "field_bucket",
+                "aggregationgroup_id": 0,
+                "chart_type": "table",
+                "created_at": "2023-01-08T08:46:24.871292",
+                "description": "Aggregating values of a particular field",
+                "id": 2,
+                "label_string": "",
+                "name": "domain table",
+                "parameters": "{\"supported_charts\": \"table\", \"field\": \"domain\", \"start_time\": \"\", \"end_time\": \"\", \"limit\": \"10\", \"index\": [1, 2]}",
+                "updated_at": "2023-01-08T08:46:24.871292",
+                "user": {
+                    "active": True,
+                    "admin": False,
+                    "groups": [],
+                    "username": "dev"
+                }
+            }
+        ]
+    }
+
+    aggregation_group = {
+        "meta": {
+            "command": "list_groups"
+        },
+        "objects": []
+    }
+
     # Register API endpoints to the correct mock response data.
     url_router = {
         "http://127.0.0.1": MockResponse(text_data=auth_text_data),
@@ -468,6 +567,18 @@ def mock_response(*args, **kwargs):
         "http://127.0.0.1/api/v1/sigmarule/text/": MockResponse(
             json_data=sigmarule_text
         ),
+        "http://127.0.0.1/api/v1/sketches/1/aggregation/": MockResponse(
+            json_data=aggregation_data
+        ),
+        "http://127.0.0.1/api/v1/sketches/1/aggregation/1/": MockResponse(
+            json_data=aggregation_1_data
+        ),
+        "http://127.0.0.1/api/v1/sketches/1/aggregation/2/": MockResponse(
+            json_data=aggregation_2_data
+        ),
+        "http://127.0.0.1/api/v1/sketches/1/aggregation/group/": MockResponse(
+            json_data=aggregation_group
+        )
     }
 
     if kwargs.get("empty", False):
