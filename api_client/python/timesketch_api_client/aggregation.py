@@ -162,7 +162,6 @@ class Aggregation(resource.SketchResource):
         else:
             self._labels = []
 
-        chart_type = data.get("chart_type")
         param_string = data.get("parameters", "")
         if param_string:
             parameters = json.loads(param_string)
