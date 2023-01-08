@@ -88,6 +88,10 @@ class SketchTest(unittest.TestCase):
         aggregations = self.sketch.list_aggregations()
         self.assertEqual(len(aggregations), 2)
         self.assertEqual(aggregations[0].name, 'ip barchart')
-        self.assertEqual(aggregations[0].description, 'Aggregating values of a particular field')
+        self.assertEqual(
+            aggregations[0].description, 
+            'Aggregating values of a particular field')
         self.assertEqual(aggregations[1].name, 'domain table')
-        self.assertEqual(aggregations[1].description, 'Aggregating values of a particular field')
+        self.assertEqual(
+            aggregations[1].description, 
+            'Aggregating values of a particular field')
