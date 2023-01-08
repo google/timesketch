@@ -432,14 +432,14 @@ def mock_response(*args, **kwargs):
                     "id": 1,
                     "label_string": "",
                     "name": "ip barchart",
-                    "parameters": "{\"supported_charts\": \"barchart\", \"field\": \"ip\", \"start_time\": \"\", \"end_time\": \"\", \"limit\": \"10\", \"index\": [1, 2]}",
+                    "parameters": '{"supported_charts": "barchart", "field": "ip", "start_time": "", "end_time": "", "limit": "10", "index": [1, 2]}',
                     "updated_at": "2023-01-08T08:45:23.113454",
                     "user": {
                         "active": True,
                         "admin": False,
                         "groups": [],
-                        "username": "dev"
-                    }
+                        "username": "dev",
+                    },
                 },
                 {
                     "agg_type": "field_bucket",
@@ -450,17 +450,17 @@ def mock_response(*args, **kwargs):
                     "id": 2,
                     "label_string": "",
                     "name": "domain table",
-                    "parameters": "{\"supported_charts\": \"table\", \"field\": \"domain\", \"start_time\": \"\", \"end_time\": \"\", \"limit\": \"10\", \"index\": [1, 2]}",
+                    "parameters": '{"supported_charts": "table", "field": "domain", "start_time": "", "end_time": "", "limit": "10", "index": [1, 2]}',
                     "updated_at": "2023-01-08T08:46:24.871292",
                     "user": {
                         "active": True,
                         "admin": False,
                         "groups": [],
-                        "username": "dev"
-                    }
-                }
+                        "username": "dev",
+                    },
+                },
             ]
-        ]
+        ],
     }
 
     aggregation_1_data = {
@@ -475,16 +475,16 @@ def mock_response(*args, **kwargs):
                 "id": 1,
                 "label_string": "",
                 "name": "ip barchart",
-                "parameters": "{\"supported_charts\": \"barchart\", \"field\": \"ip\", \"start_time\": \"\", \"end_time\": \"\", \"limit\": \"10\", \"index\": [1, 2]}",
+                "parameters": '{"supported_charts": "barchart", "field": "ip", "start_time": "", "end_time": "", "limit": "10", "index": [1, 2]}',
                 "updated_at": "2023-01-08T08:45:23.113454",
                 "user": {
                     "active": True,
                     "admin": False,
                     "groups": [],
-                    "username": "dev"
-                }
+                    "username": "dev",
+                },
             }
-        ]
+        ],
     }
 
     aggregation_2_data = {
@@ -499,24 +499,19 @@ def mock_response(*args, **kwargs):
                 "id": 2,
                 "label_string": "",
                 "name": "domain table",
-                "parameters": "{\"supported_charts\": \"table\", \"field\": \"domain\", \"start_time\": \"\", \"end_time\": \"\", \"limit\": \"10\", \"index\": [1, 2]}",
+                "parameters": '{"supported_charts": "table", "field": "domain", "start_time": "", "end_time": "", "limit": "10", "index": [1, 2]}',
                 "updated_at": "2023-01-08T08:46:24.871292",
                 "user": {
                     "active": True,
                     "admin": False,
                     "groups": [],
-                    "username": "dev"
-                }
+                    "username": "dev",
+                },
             }
-        ]
+        ],
     }
 
-    aggregation_group = {
-        "meta": {
-            "command": "list_groups"
-        },
-        "objects": []
-    }
+    aggregation_group = {"meta": {"command": "list_groups"}, "objects": []}
 
     # Register API endpoints to the correct mock response data.
     url_router = {
@@ -578,7 +573,7 @@ def mock_response(*args, **kwargs):
         ),
         "http://127.0.0.1/api/v1/sketches/1/aggregation/group/": MockResponse(
             json_data=aggregation_group
-        )
+        ),
     }
 
     if kwargs.get("empty", False):
