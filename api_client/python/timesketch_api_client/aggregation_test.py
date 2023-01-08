@@ -29,7 +29,7 @@ class AggregationTest(unittest.TestCase):
         self.api_client = client.TimesketchApi(
             "http://127.0.0.1", "test", "test")
         self.sketch = self.api_client.get_sketch(1)
-    
+
     def test_created_at(self):
         """Tests the created_at property."""
         aggregation_obj = aggregation.Aggregation(self.sketch)
