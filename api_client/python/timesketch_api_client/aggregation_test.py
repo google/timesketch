@@ -20,7 +20,7 @@ from . import client
 from . import test_lib
 
 
-class GraphTest(unittest.TestCase):
+class AggregationTest(unittest.TestCase):
     """Test Graph object."""
 
     @mock.patch("requests.Session", test_lib.mock_session)
@@ -29,5 +29,10 @@ class GraphTest(unittest.TestCase):
         self.api_client = client.TimesketchApi(
             "http://127.0.0.1", "test", "test")
         self.sketch = self.api_client.get_sketch(1)
-
     
+    def test_created_at(self):
+        """Tests the created_at property."""
+        aggregation_obj = aggregation.Aggregation(self.sketch)
+        aggregation_obj.from_saved(1)
+        self.assertEqual(
+            aggregation_obj.created_at, '2023-01-08T08:45:23.113454')
