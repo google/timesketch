@@ -148,7 +148,7 @@ class Aggregation(resource.SketchResource):
         data = self.resource_data.get("objects", [None])[0]
         if not data:
             return
-        
+
         self.aggregator_name = data.get("agg_type")
         self.type = "stored"
 
