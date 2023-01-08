@@ -432,7 +432,11 @@ def mock_response(*args, **kwargs):
                     "id": 1,
                     "label_string": "",
                     "name": "ip barchart",
-                    "parameters": '{"supported_charts": "barchart", "field": "ip", "start_time": "", "end_time": "", "limit": "10", "index": [1, 2]}',
+                    "parameters": (
+                        '{"supported_charts": "barchart", '
+                        '"field": "ip", "start_time": "", "end_time": "", '
+                        '"limit": "10", "index": [1, 2]}'
+                    ),
                     "updated_at": "2023-01-08T08:45:23.113454",
                     "user": {
                         "active": True,
@@ -450,7 +454,11 @@ def mock_response(*args, **kwargs):
                     "id": 2,
                     "label_string": "",
                     "name": "domain table",
-                    "parameters": '{"supported_charts": "table", "field": "domain", "start_time": "", "end_time": "", "limit": "10", "index": [1, 2]}',
+                    "parameters": (
+                        '{"supported_charts": "table", "field": "domain", '
+                        '"start_time": "", "end_time": "", "limit": "10", '
+                        '"index": [1, 2]}'
+                    ),
                     "updated_at": "2023-01-08T08:46:24.871292",
                     "user": {
                         "active": True,
@@ -475,7 +483,11 @@ def mock_response(*args, **kwargs):
                 "id": 1,
                 "label_string": "",
                 "name": "ip barchart",
-                "parameters": '{"supported_charts": "barchart", "field": "ip", "start_time": "", "end_time": "", "limit": "10", "index": [1, 2]}',
+                "parameters": (
+                    '{"supported_charts": "barchart", "field": "ip", '
+                    '"start_time": "", "end_time": "", "limit": "10", '
+                    '"index": [1, 2]}'
+                ),
                 "updated_at": "2023-01-08T08:45:23.113454",
                 "user": {
                     "active": True,
@@ -499,7 +511,11 @@ def mock_response(*args, **kwargs):
                 "id": 2,
                 "label_string": "",
                 "name": "domain table",
-                "parameters": '{"supported_charts": "table", "field": "domain", "start_time": "", "end_time": "", "limit": "10", "index": [1, 2]}',
+                "parameters": (
+                    '{"supported_charts": "table", "field": "domain", '
+                    '"start_time": "", "end_time": "", "limit": "10", '
+                    '"index": [1, 2]}'
+                ),
                 "updated_at": "2023-01-08T08:46:24.871292",
                 "user": {
                     "active": True,
