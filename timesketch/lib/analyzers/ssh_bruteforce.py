@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 
 import hashlib
+import json
 import logging
 from datetime import datetime
 import re
@@ -11,6 +12,7 @@ import pyparsing
 
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
+from timesketch.lib.analyzers.auth import BruteForceAnalyzer
 
 log = logging.getLogger("timesketch.analyzers.ssh.bruteforce")
 
@@ -231,6 +233,11 @@ class SSHBruteForcePlugin(interface.BaseAnalyzer):
             log.info("No SSH authentication events")
             return "No SSH authentication events"
 
+        bfa = BruteForceAnalyzer()
+        result = bfa.run(df)
+        if result:
+            json_result = json.dumps(result, indent=4)
+            return str(json_result)
         return "Total number of SSH authention events {}".format(len(ssh_records))
 
 
