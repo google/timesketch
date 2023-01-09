@@ -25,6 +25,7 @@ const defaultState = (currentUser) => {
     meta: {},
     searchHistory: {},
     scenarios: [],
+    hiddenScenarios: [],
     scenarioTemplates: [],
     tags: [],
     dataTypes: [],
@@ -41,7 +42,8 @@ const defaultState = (currentUser) => {
       color: "",
       message: "",
       timeout: -1
-    }
+    },
+    contextLinkConf: {},
   }
 }
 
@@ -108,6 +110,9 @@ export default new Vuex.Store({
         Object.assign(state, defaultState(currentUser))
       })
     },
+    SET_CONTEXT_LINKS(state, payload) {
+      Vue.set(state, 'contextLinkConf', payload)
+    },
   },
   actions: {
     updateSketch(context, sketchId) {
@@ -156,7 +161,7 @@ export default new Vuex.Store({
         .catch((e) => {})
     },
     updateScenarioTemplates(context, sketchId) {
-      return ApiClient.getScenarios(sketchId)
+      return ApiClient.getScenarioTemplates(sketchId)
         .then((response) => {
           context.commit('SET_SCENARIO_TEMPLATES', response.data)
         })
@@ -216,6 +221,13 @@ export default new Vuex.Store({
         message: snackbar.message,
         timeout: snackbar.timeout
       });
-    }
+    },
+    updateContextLinks(context) {
+      ApiClient.getContextLinkConfig()
+        .then((response) => {
+          context.commit('SET_CONTEXT_LINKS', response.data)
+      })
+      .catch((e) => { })
+    },
   },
 })

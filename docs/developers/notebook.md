@@ -1,3 +1,7 @@
+---
+hide:
+  - footer
+---
 ## Using Notebook
 
 The development container contains a jupyter notebook environment to experiment

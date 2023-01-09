@@ -15,22 +15,90 @@ limitations under the License.
 -->
 <template>
   <div>
-    <v-row no-gutters class="pa-4" flat :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
-      <span style="cursor: pointer" @click="expanded = !expanded"
-        ><v-icon left>mdi-clipboard-check-outline</v-icon> {{ scenario.display_name }}</span
-      >
+    <v-row
+      no-gutters
+      style="cursor: pointer"
+      @click="expanded = !expanded"
+      class="pa-4"
+      flat
+      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+    >
+      <v-icon left>mdi-clipboard-check-outline</v-icon>
+      <span>{{ scenario.display_name }}</span>
+
       <v-spacer></v-spacer>
-      <slot></slot>
+      <!-- Rename dialog -->
+      <v-dialog v-model="renameDialog" max-width="500">
+        <v-card>
+          <v-card-title class="text-h5"> Rename scenario </v-card-title>
+          <v-card-text>
+            Use a custom name for the scenario.
+            <v-text-field v-model="newName"></v-text-field>
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="primary" text @click="renameDialog = false"> Cancel </v-btn>
+            <v-btn color="primary" text @click="renameScenario()"> Save </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+      <v-menu offset-y :close-on-content-click="true">
+        <template v-slot:activator="{ on, attrs }">
+          <v-btn small icon v-bind="attrs" v-on="on">
+            <v-icon>mdi-dots-vertical</v-icon>
+          </v-btn>
+        </template>
+        <v-card>
+          <v-list>
+            <v-list-item-group color="primary">
+              <v-list-item @click="copyScenario">
+                <v-list-item-icon>
+                  <v-icon>mdi-content-copy</v-icon>
+                </v-list-item-icon>
+                <v-list-item-content>
+                  <v-list-item-title>Make a copy</v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+
+              <v-list-item @click.stop="renameDialog = true">
+                <v-list-item-icon>
+                  <v-icon>mdi-pencil</v-icon>
+                </v-list-item-icon>
+                <v-list-item-content>
+                  <v-list-item-title>Rename</v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+              <v-list-item v-if="is_hidden" @click="setStatus('active')">
+                <v-list-item-icon>
+                  <v-icon>mdi-eye</v-icon>
+                </v-list-item-icon>
+                <v-list-item-content>
+                  <v-list-item-title>Reactivate</v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+              <v-list-item v-else @click="setStatus('hidden')">
+                <v-list-item-icon>
+                  <v-icon>mdi-eye-off</v-icon>
+                </v-list-item-icon>
+                <v-list-item-content>
+                  <v-list-item-title>Hide from list</v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+            </v-list-item-group>
+          </v-list>
+        </v-card>
+      </v-menu>
     </v-row>
 
     <v-expand-transition v-if="scenario.facets.length">
       <div v-show="expanded">
         <div v-for="facet in scenario.facets" :key="facet.id">
-          <ts-facet class="mt-3" :scenario="scenario" :facet="facet"></ts-facet>
+          <ts-facet :scenario="scenario" :facet="facet"></ts-facet>
         </div>
       </div>
     </v-expand-transition>
-    <v-divider></v-divider>
+    <v-divider v-if="!expanded"></v-divider>
+    <br v-if="expanded" />
   </div>
 </template>
 
@@ -39,13 +107,16 @@ import ApiClient from '../../utils/RestApiClient'
 import TsFacet from './Facet'
 
 export default {
-  props: ['scenario', 'minimizePanel'],
+  props: ['scenario'],
   components: { TsFacet },
   data: function () {
     return {
       activeQuestion: {},
       selectedItem: null,
       expanded: false,
+      renameDialog: false,
+      addScenarioDialog: false,
+      newName: this.scenario.display_name,
     }
   },
   computed: {
@@ -55,11 +126,35 @@ export default {
     activeQuestionSpec() {
       return JSON.parse(this.activeQuestion.spec_json)
     },
+    is_hidden() {
+      if (!this.scenario.status.length) {
+        return false
+      }
+      return this.scenario.status[0].status === 'hidden'
+    },
   },
   methods: {
-    addScenario: function () {
-      ApiClient.addScenario(this.sketch.id, 'compromise_assessment')
-        .then((response) => {})
+    renameScenario: function () {
+      this.renameDialog = false
+      ApiClient.renameScenario(this.sketch.id, this.scenario.id, this.newName)
+        .then((response) => {
+          this.$store.dispatch('updateScenarios', this.sketch.id)
+        })
+        .catch((e) => {})
+    },
+    copyScenario: function () {
+      let displayName = 'Copy of ' + this.scenario.display_name
+      ApiClient.addScenario(this.sketch.id, 'compromise_assessment', displayName)
+        .then((response) => {
+          this.$store.dispatch('updateScenarios', this.sketch.id)
+        })
+        .catch((e) => {})
+    },
+    setStatus: function (status) {
+      ApiClient.setScenarioStatus(this.sketch.id, this.scenario.id, status)
+        .then((response) => {
+          this.$store.dispatch('updateScenarios', this.sketch.id)
+        })
         .catch((e) => {})
     },
     setActiveQuestion: function (question) {

@@ -54,7 +54,6 @@ limitations under the License.
         </v-data-iterator>
       </div>
     </v-expand-transition>
-
     <v-divider></v-divider>
   </div>
 </template>

@@ -367,14 +367,43 @@ export default {
   parseSearchTemplate(searchTemplateId, formData) {
     return RestApiClient.post('/searchtemplate/' + searchTemplateId + '/parse/', formData)
   },
-  getScenarios() {
+  getContextLinkConfig() {
+    return RestApiClient.get('/contextlinks/')
+  },
+  getScenarioTemplates() {
     return RestApiClient.get('/scenarios/')
   },
-  getSketchScenarios(sketchId) {
-    return RestApiClient.get('/sketches/' + sketchId + '/scenarios/')
+  getSketchScenarios(sketchId, status=null) {
+    let params = {}
+    if (status) {
+      params.params = {
+        status: status,
+      }
+    }
+    return RestApiClient.get('/sketches/' + sketchId + '/scenarios/', params)
   },
-  addScenario(sketchId, scenarioName) {
-    let formData = { scenario_name: scenarioName }
+  addScenario(sketchId, scenarioName, displayName) {
+    let formData = { scenario_name: scenarioName, display_name: displayName }
     return RestApiClient.post('/sketches/' + sketchId + '/scenarios/', formData)
+  },
+  renameScenario(sketchId, scenarioId, scenarioName) {
+    let formData = { scenario_name: scenarioName }
+    return RestApiClient.post('/sketches/' + sketchId + '/scenarios/' + scenarioId + '/', formData)
+  },
+  setScenarioStatus(sketchId, scenarioId, status) {
+    let formData = { status: status }
+    return RestApiClient.post('/sketches/' + sketchId + '/scenarios/' + scenarioId + '/status/', formData)
+  },
+  createQuestionConclusion(sketchId, questionId, conclusionText) {
+    let formData = { conclusionText: conclusionText }
+    return RestApiClient.post('/sketches/' + sketchId + '/questions/' + questionId + '/', formData)
+  },
+  editQuestionConclusion(sketchId, questionId, conclusionId, conclusionText) {
+    let formData = { conclusionText: conclusionText }
+    return RestApiClient.put('/sketches/' + sketchId + '/questions/' + questionId + '/conclusions/' + conclusionId + '/', formData)
+  },
+  deleteQuestionConclusion(sketchId, questionId, conclusionId) {
+    return RestApiClient.delete('/sketches/' + sketchId + '/questions/' + questionId + '/conclusions/' + conclusionId + '/')
+
   },
 }

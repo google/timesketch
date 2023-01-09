@@ -1,3 +1,7 @@
+---
+hide:
+  - footer
+---
 # Intelligence
 
 Each sketch can have Intelligence items associated with it. This comes in the form of simple strings extracted from events,

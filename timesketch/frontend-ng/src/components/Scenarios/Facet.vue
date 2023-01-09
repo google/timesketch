@@ -15,19 +15,35 @@ limitations under the License.
 -->
 <template>
   <div>
-    <v-row style="cursor: pointer" @click="toggleFacet()" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
+    <v-row
+      no-gutters
+      class="pa-3 pl-1"
+      style="cursor: pointer"
+      @click="toggleFacet()"
+      :class="[$vuetify.theme.dark ? 'dark-hover' : 'light-hover']"
+    >
       <v-col cols="1">
-        <v-icon class="ml-2" v-if="!expanded">mdi-chevron-right</v-icon>
-        <v-icon class="ml-2" v-else>mdi-chevron-down</v-icon>
+        <v-icon class="ml-3" v-if="!expanded">mdi-chevron-right</v-icon>
+        <v-icon class="ml-3" v-else>mdi-chevron-down</v-icon>
       </v-col>
       <v-col cols="10">
-        <span style="font-size: 0.9em">{{ facet.display_name }}</span>
+        <span style="font-size: 0.9em">
+          <span v-if="notStarted || isActive"
+            ><strong>{{ facet.display_name }}</strong></span
+          >
+          <span v-else>{{ facet.display_name }}</span>
+        </span>
+      </v-col>
+
+      <v-col cols="1">
+        <div class="ml-1">
+          <small>{{ questionsWithConclusion.length }}/{{ facet.questions.length }} </small>
+        </div>
       </v-col>
     </v-row>
 
     <v-expand-transition>
       <div v-show="expanded">
-        <v-divider class="mt-3"></v-divider>
         <span
           @click="setActiveContext(question)"
           style="font-size: 0.9em"
@@ -38,7 +54,7 @@ limitations under the License.
         </span>
       </div>
     </v-expand-transition>
-    <v-divider class="mt-3"></v-divider>
+    <v-divider></v-divider>
   </div>
 </template>
 
@@ -56,6 +72,20 @@ export default {
   computed: {
     sketch() {
       return this.$store.state.sketch
+    },
+    questionsWithConclusion() {
+      return this.facet.questions.filter((question) => question.conclusions.length)
+    },
+    isActive() {
+      return (
+        this.questionsWithConclusion.length > 0 && this.questionsWithConclusion.length < this.facet.questions.length
+      )
+    },
+    isResolved() {
+      return this.questionsWithConclusion.length === this.facet.questions.length
+    },
+    notStarted() {
+      return this.questionsWithConclusion.length === 0
     },
   },
   methods: {

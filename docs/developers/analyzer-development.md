@@ -1,3 +1,7 @@
+---
+hide:
+  - footer
+---
 # Write analyzers in Timesketch
 
 ## Multi Analyzer
