@@ -123,7 +123,7 @@ class SSHBruteForcePlugin(interface.BaseAnalyzer):
     SSHD_KEYWORD_RE = re.compile(r"\s*([^\s]+)\s+.*")
 
     # IGNORE_ATTRIBUTE_ERROR holds the error messages that we can ignore
-    # while parsing event_message using SSHD_KEYWORD_RE.
+    # while parsing event_body using SSHD_KEYWORD_RE.
     IGNORE_ATTRIBUTE_ERROR = ["'NoneType' object has no attribute 'group'"]
 
     def run(self):
@@ -194,7 +194,7 @@ class SSHBruteForcePlugin(interface.BaseAnalyzer):
             except pyparsing.ParseException as exception:
                 log.error(
                     "Error encountered while parsing %s as %s: %s",
-                    event_message,
+                    event_body,
                     sshd_keyword,
                     str(exception),
                 )
