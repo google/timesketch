@@ -165,15 +165,15 @@ class SSHBruteForcePlugin(interface.BaseAnalyzer):
                 sshd_keyword = self.SSHD_KEYWORD_RE.search(event_message).group(1)
             except AttributeError as exception:
                 if str(exception) in self.IGNORE_ATTRIBUTE_ERROR:
-                    log.debug("Ignoring event message {}".format(event_message))
+                    log.debug("Ignoring event message %s", event_message)
                     continue
 
-                log.error("Error extracting ssh_keyword in {}".format(event_message))
+                log.error("Error extracting ssh_keyword in %s", event_message)
                 continue
 
             message_grammar = self.MESSAGE_GRAMMAR.get(sshd_keyword.lower()) or None
             if not message_grammar:
-                log.debug("No grammar for event: {}".format(event_message))
+                log.debug("No grammar for event: %s", event_message)
                 continue
 
             try:
@@ -202,9 +202,10 @@ class SSHBruteForcePlugin(interface.BaseAnalyzer):
                 source_port = parse_result.source_port
             except pyparsing.ParseException as exception:
                 log.error(
-                    "Error encountered while parsing {} as {}: {}".format(
-                        event_message, sshd_keyword, str(exception)
-                    )
+                    "Error encountered while parsing %s as %s: %s",
+                    event_message,
+                    sshd_keyword,
+                    str(exception),
                 )
                 continue
 
@@ -224,9 +225,7 @@ class SSHBruteForcePlugin(interface.BaseAnalyzer):
 
             ssh_event_data.calculate_session_id()
             ssh_records.append(ssh_event_data.__dict__)
-        log.info(
-            "Total number of SSH authentication events: {}".format(len(ssh_records))
-        )
+        log.info("Total number of SSH authentication events: %d", len(ssh_records))
 
         df = pd.DataFrame(ssh_records)
         if df.empty:
