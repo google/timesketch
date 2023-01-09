@@ -45,6 +45,7 @@ limitations under the License.
         v-model="ruleYaml"
         background-color="lighten(statusColors(status_chip_text), 0.2)"
         @input="parseSigma(ruleYaml)"
+        class="editSigmaRule"
       >
       </v-textarea>
 
@@ -216,6 +217,9 @@ export default {
 <style scoped lang="scss">
 .alertbox {
   width: 500;
+}
+.editSigmaRule {
+  font-family: monospace;
 }
 pre {
   white-space: pre-wrap;
