@@ -546,7 +546,7 @@ class BruteForceAnalyzer(AuthAnalyzer):
         """Generate analyzer output"""
 
         analyzer_output = {
-            "platform": "turbinia",
+            "platform": "timesketch",
             "analyzer_identifier": self.NAME,
             "analyzer_name": self.DISPLAY_NAME,
             "result_status": "failure",
