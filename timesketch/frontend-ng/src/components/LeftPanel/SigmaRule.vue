@@ -16,10 +16,11 @@ limitations under the License.
 <template>
   <div>
     <v-row no-gutters class="pa-3" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
-      <div @click="expanded = !expanded" style="cursor: pointer; font-size: 0.9em">
+      <div @click="expanded = !expanded" class="SigmaRuleTitle">
         <v-icon v-if="!expanded">mdi-chevron-right</v-icon>
         <v-icon v-else>mdi-chevron-down</v-icon>
         {{ sigmaRule.title }}
+        <v-chip rounded x-small class="mr-2">{{ sigmaRule.status }}</v-chip>
       </div>
       <v-spacer></v-spacer>
       <div>
@@ -144,6 +145,7 @@ export default {
         'author',
         'description',
         'references',
+        'status',
         'date',
         'modified',
         'falsepositives',
@@ -227,4 +229,8 @@ export default {
 </script>
 
 <style scoped lang="scss">
+.SigmaRuleTitle {
+  cursor: pointer;
+  font-size: 0.9em;
+}
 </style>
