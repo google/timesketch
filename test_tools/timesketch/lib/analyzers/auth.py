@@ -20,7 +20,7 @@ from typing import List
 import pandas as pd
 
 
-log = logging.getLogger("turbinia")
+log = logging.getLogger("timesketch.analyzers.auth")
 
 
 class AuthSummaryData:
