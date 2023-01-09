@@ -186,28 +186,23 @@ export default {
       }
     },
     addOrUpdateRule: function (event) {
-      if (this.status_chip_text !== 'Ok') {
-        // There seems still a parsing error, do not store them
-        console.error('Sigma parsing still has error, please fix')
-      } else if (this.status_chip_text === 'Ok') {
-        if (this.action_button_text.includes('Create')) {
-          ApiClient.createSigmaRule(this.ruleYaml)
-            .then((response) => {
-              this.$store.dispatch('updateSigmaList')
-              EventBus.$emit('errorSnackBar', 'Rule created: ' + this.editingRule.id)
-            })
-            .catch((e) => {
-              this.editingRule['search_query'] = e.response.data.message // need to set search_query to something, to overwrite previous value
-            })
-        }
-        if (this.action_button_text.includes('Update')) {
-          ApiClient.updateSigmaRule(this.editingRule.id, this.ruleYaml)
-            .then((response) => {
-              this.$store.dispatch('updateSigmaList')
-              EventBus.$emit('errorSnackBar', 'Rule updated: ' + this.editingRule.id)
-            })
-            .catch((e) => {})
-        }
+      if (this.action_button_text.includes('Create')) {
+        ApiClient.createSigmaRule(this.ruleYaml)
+          .then((response) => {
+            this.$store.dispatch('updateSigmaList')
+            EventBus.$emit('errorSnackBar', 'Rule created: ' + this.editingRule.id)
+          })
+          .catch((e) => {
+            this.editingRule['search_query'] = e.response.data.message // need to set search_query to something, to overwrite previous value
+          })
+      }
+      if (this.action_button_text.includes('Update')) {
+        ApiClient.updateSigmaRule(this.editingRule.id, this.ruleYaml)
+          .then((response) => {
+            this.$store.dispatch('updateSigmaList')
+            EventBus.$emit('errorSnackBar', 'Rule updated: ' + this.editingRule.id)
+          })
+          .catch((e) => {})
       }
     },
   },
