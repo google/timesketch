@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-card width="1000" style="overflow: initial">
+  <v-card>
     <v-container class="px-8">
       <h1>
         Rule title: {{ editingRule.title }}
@@ -29,7 +29,7 @@ limitations under the License.
         <v-autocomplete dense filled rounded :items="SigmaTemplates" @change="rowClick" item-text="title">
         </v-autocomplete>
       </div>
-      <div width="500" v-if="status_text.toLowerCase() !== 'ok'">
+      <div class="alertbox" v-if="status_text.toLowerCase() !== 'ok'">
         <!-- only display if status_text is not empty -->
         <v-alert dense type="warning">
           {{ status_text }}
@@ -48,7 +48,7 @@ limitations under the License.
       >
       </v-textarea>
 
-      <div width="500" v-if="status_text.toLowerCase() === 'ok'">
+      <div class="alertbox" v-if="status_text.toLowerCase() === 'ok'">
         <v-alert colored-border border="left" elevation="1" :color="statusColors(status_chip_text)">
           <b>Search Query:</b>
           {{ editingRule.search_query }}
@@ -214,6 +214,9 @@ export default {
 </script>
   
 <style scoped lang="scss">
+.alertbox {
+  width: 500;
+}
 pre {
   white-space: pre-wrap;
   /* Since CSS 2.1 */
