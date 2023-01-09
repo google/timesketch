@@ -71,10 +71,7 @@ class SSHBruteForcePlugin(interface.BaseAnalyzer):
 
     # Timesketch message field grammar
     _LOGIN_GRAMMAR = (
-        pyparsing.Literal("[sshd, pid:")
-        + _PID
-        + pyparsing.Literal("]")
-        + pyparsing.Literal("Accepted")
+        pyparsing.Literal("Accepted")
         + _AUTHENTICATION_METHOD
         + pyparsing.Literal("for")
         + _USERNAME
@@ -89,10 +86,7 @@ class SSHBruteForcePlugin(interface.BaseAnalyzer):
 
     # Timesketch message field grammar
     _FAILED_GRAMMER = (
-        pyparsing.Literal("[sshd, pid:")
-        + _PID
-        + pyparsing.Literal("]")
-        + pyparsing.Literal("Failed")
+        pyparsing.Literal("Failed")
         + _AUTHENTICATION_METHOD
         + pyparsing.Literal("for")
         + pyparsing.Optional(pyparsing.Literal("invalid") + pyparsing.Literal("user"))
@@ -106,10 +100,7 @@ class SSHBruteForcePlugin(interface.BaseAnalyzer):
 
     # Timesketch message field grammar
     _DISCONNECT_GRAMMAR = (
-        pyparsing.Literal("[sshd, pid:")
-        + _PID
-        + pyparsing.Literal("]")
-        + pyparsing.Literal("Disconnected")
+        pyparsing.Literal("Disconnected")
         + pyparsing.Literal("from")
         + pyparsing.Literal("user")
         + _USERNAME
@@ -129,7 +120,7 @@ class SSHBruteForcePlugin(interface.BaseAnalyzer):
     #
     # We are only interested in parsing Accepted, Failed, and Disconnected messages
     # as specified in MESSAGE_GRAMMAR
-    SSHD_KEYWORD_RE = re.compile(r"\[sshd,\s+pid:\s+\d+\]\s+([^\s]+)\s+.*")
+    SSHD_KEYWORD_RE = re.compile(r"\s*([^\s]+)\s+.*")
 
     # IGNORE_ATTRIBUTE_ERROR holds the error messages that we can ignore
     # while parsing event_message using SSHD_KEYWORD_RE.
@@ -145,7 +136,7 @@ class SSHBruteForcePlugin(interface.BaseAnalyzer):
             'data_type:"syslog:line" AND reporter:sshd AND'
             " (body:Accepted* OR body:Failed* OR body:Disconnected*)"
         )
-        return_fields = ["timestamp", "hostname", "pid", "message"]
+        return_fields = ["timestamp", "hostname", "pid", "body"]
 
         events = self.event_stream(
             query_string=query_string, return_fields=return_fields
@@ -159,25 +150,25 @@ class SSHBruteForcePlugin(interface.BaseAnalyzer):
             event_timestamp = float(event.source.get("timestamp") / 1000000)
             event_hostname = event.source.get("hostname")
             event_pid = event.source.get("pid")
-            event_message = event.source.get("message")
+            event_body = event.source.get("body")
 
             try:
-                sshd_keyword = self.SSHD_KEYWORD_RE.search(event_message).group(1)
+                sshd_keyword = self.SSHD_KEYWORD_RE.search(event_body).group(1)
             except AttributeError as exception:
                 if str(exception) in self.IGNORE_ATTRIBUTE_ERROR:
-                    log.debug("Ignoring event message %s", event_message)
+                    log.debug("Ignoring event message %s", event_body)
                     continue
 
-                log.error("Error extracting ssh_keyword in %s", event_message)
+                log.error("Error extracting ssh_keyword in %s", event_body)
                 continue
 
             message_grammar = self.MESSAGE_GRAMMAR.get(sshd_keyword.lower()) or None
             if not message_grammar:
-                log.debug("No grammar for event: %s", event_message)
+                log.debug("No grammar for event: %s", event_body)
                 continue
 
             try:
-                parse_result = message_grammar.parseString(event_message)
+                parse_result = message_grammar.parseString(event_body)
 
                 if sshd_keyword.lower() == "accepted":
                     event_type = "authentication"
