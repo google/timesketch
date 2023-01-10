@@ -68,7 +68,7 @@ export default {
     }
   },
   methods: {
-    CreateNewRule() {
+    createNewRule() {
       // avoid router push if route is already studio/sigma/new
       if (this.$route.name === 'Studio' && this.$route.params.type === 'sigma' && this.$route.params.id === 'new') {
         return
