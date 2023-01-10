@@ -36,7 +36,7 @@ limitations under the License.
             <v-list>
               <v-list-item-group color="primary">
                 <v-list-item>{{ sigmaRule.rule_uuid }}</v-list-item>
-                <v-list-item v-on:click="editRule(sigmaRule.rule_uuid)">
+                <v-list-item @click="editRule(sigmaRule.rule_uuid)">
                   <v-list-item-icon>
                     <v-icon>mdi-brightness-6</v-icon>
                   </v-list-item-icon>
