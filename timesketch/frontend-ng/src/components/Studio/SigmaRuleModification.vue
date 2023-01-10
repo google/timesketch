@@ -18,10 +18,10 @@ limitations under the License.
     <v-container class="px-8">
       <h1>
         Rule title: {{ editingRule.title }}
-        <v-chip rounded x-small class="mr-2" :color="statusColors(status_chip_text)">
+        <v-chip rounded x-small class="mr-2" :color="statusColors()">
           <v-icon v-if="isParsed"> mdi-check </v-icon>
           <v-icon v-else> mdi-alert </v-icon>
-          {{ status_chip_text }}</v-chip
+          Error</v-chip
         >
       </h1>
 
@@ -29,7 +29,6 @@ limitations under the License.
         <v-autocomplete dense filled rounded :items="SigmaTemplates" @change="selectTemplate" item-text="title">
         </v-autocomplete>
       </div>
-      <pre>{{ isParsed }}</pre>
       <div class="alertbox" v-if="!isParsed">
         <v-alert dense type="warning">
           {{ status_text }}
@@ -39,18 +38,18 @@ limitations under the License.
       <v-textarea
         label="Edit Sigma rule"
         outlined
-        :color="statusColors(status_chip_text)"
+        :color="statusColors()"
         autocomplete="email"
         rows="25"
         v-model="ruleYaml"
-        background-color="lighten(statusColors(status_chip_text), 0.2)"
+        background-color="statusColors()"
         @input="parseSigma(ruleYaml)"
         class="editSigmaRule"
       >
       </v-textarea>
 
       <div class="alertbox" v-if="isParsed">
-        <v-alert colored-border border="left" elevation="1" :color="statusColors(status_chip_text)">
+        <v-alert colored-border border="left" elevation="1" :color="statusColors()">
           <b>Search Query:</b>
           {{ editingRule.search_query }}
         </v-alert>
@@ -61,7 +60,7 @@ limitations under the License.
           action_button_text
         }}</v-btn>
         <div style="width: 20px; display: inline-block"></div>
-        <v-btn @click="cancel" small depressed color="secondary">Cancel </v-btn>
+        <v-btn @click="$router.back()" small depressed color="secondary">Cancel </v-btn>
         <!-- make 20 px space° -->
         <div style="width: 20px; display: inline-block"></div>
         <v-btn @click="deleteRule(rule_uuid)" small depressed color="red" :disabled="isNewRule">Delete Rule</v-btn>
@@ -107,15 +106,12 @@ export default {
       this.isUpdatingRule = false
       this.action_button_text = 'Create Rule'
       this.status_chip_text = 'OK'
+      this.parseSigma(this.editingRule.rule_yaml)
     }
 
     this.getRuleByUUID(this.rule_uuid)
   },
   methods: {
-    cancel() {
-      this.$router.back()
-    },
-
     selectTemplate(text) {
       var matchingTemplate = this.SigmaTemplates.find((obj) => {
         return obj.title === text
@@ -146,7 +142,7 @@ export default {
         })
     }, 300),
     statusColors() {
-      if (this.status_chip_text === 'ok' || this.status_text === 'ok') {
+      if (this.isParsed) {
         return 'success'
       }
       return 'warning'

@@ -18,10 +18,10 @@ limitations under the License.
     <div class="pa-4" flat :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
       <span style="cursor: pointer" @click="expanded = !expanded">
         <v-icon left>mdi-sigma-lower</v-icon> Sigma Rules ({{ ruleCount }})
-        <v-btn text rounded @click="CreateNewRule()">
-          <v-icon> mdi-plus </v-icon>
-        </v-btn>
       </span>
+      <router-link :to="{ name: 'Studio', params: { id: 'new', type: 'sigma' } }">
+        <v-icon>mdi-plus</v-icon></router-link
+      >
       <div></div>
     </div>
     <v-expand-transition>
@@ -66,15 +66,6 @@ export default {
       itemsPerPage: 10,
       search: '',
     }
-  },
-  methods: {
-    createNewRule() {
-      // avoid router push if route is already studio/sigma/new
-      if (this.$route.name === 'Studio' && this.$route.params.type === 'sigma' && this.$route.params.id === 'new') {
-        return
-      }
-      this.$router.push({ name: 'Studio', params: { type: 'sigma', id: 'new' } })
-    },
   },
   computed: {
     sigmaRules() {
