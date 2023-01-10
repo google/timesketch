@@ -135,7 +135,7 @@ class Aggregation(resource.SketchResource):
 
         return error.get_response_json(response, logger)
 
-    # pylint: disable=arguments-differ,arguments-renamed
+    # pylint: disable=arguments-differ
     def from_saved(self, aggregation_id):
         """Initialize the aggregation object from a saved aggregation.
 
