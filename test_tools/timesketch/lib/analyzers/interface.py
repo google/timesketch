@@ -557,7 +557,7 @@ class Sketch(object):
         self._context = context
 
 
-class BaseIndexAnalyzer(object):
+class BaseAnalyzer(object):
     """Base class for analyzers.
 
     Attributes:
@@ -716,7 +716,7 @@ class BaseIndexAnalyzer(object):
         self.datastore = context
 
 
-class BaseSketchAnalyzer(BaseIndexAnalyzer):
+class BaseSketchAnalyzer(BaseAnalyzer):
     """Base class for sketch analyzers.
 
     Attributes:
