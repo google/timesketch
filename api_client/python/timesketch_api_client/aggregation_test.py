@@ -41,7 +41,7 @@ class AggregationTest(unittest.TestCase):
         self.assertEqual(aggregation_obj._group_id, None)
         self.assertEqual(aggregation_obj._parameters, {})
         self.assertEqual(aggregation_obj._updated_at, "")
-        self.assertEqual(aggregation_obj.aggregator_name, "")
+        self.assertEqual(aggregation_obj._aggregator_name, "")
         self.assertEqual(aggregation_obj.chart_color, "")
         self.assertEqual(aggregation_obj.chart_title, "")
         self.assertEqual(aggregation_obj.search_id, None)
@@ -142,6 +142,14 @@ class AggregationTest(unittest.TestCase):
         aggregation_obj.from_saved(1)
         self.assertEqual(aggregation_obj.name, "ip barchart")
 
+    def test_aggregator_name(self):
+        """Tests the aggregator_name property."""
+        aggregation_obj = aggregation.Aggregation(self.sketch)
+        self.assertEqual(aggregation_obj.name, "")
+
+        aggregation_obj.from_saved(1)
+        self.assertEqual(aggregation_obj.name, "ip barchart")
+
     def test_add_label(self):
         """Test the add_label function."""
 
@@ -149,7 +157,7 @@ class AggregationTest(unittest.TestCase):
         """Tests the from_saved method."""
         aggregation_obj = aggregation.Aggregation(self.sketch)
         aggregation_obj.from_saved(2)
-        self.assertEqual(aggregation_obj.aggregator_name, "field_bucket")
+        self.assertEqual(aggregation_obj._aggregator_name, "field_bucket")
         self.assertEqual(aggregation_obj.chart_color, "")
         self.assertEqual(aggregation_obj.chart_type, "table")
         self.assertEqual(aggregation_obj.chart_title, "")
