@@ -135,7 +135,7 @@ class Aggregation(resource.SketchResource):
 
         return error.get_response_json(response, logger)
 
-    # pylint: disable=arguments-differ,arguments-renamed 
+    # pylint: disable=arguments-differ,arguments-renamed
     def from_saved(self, aggregation_id):
         """Initialize the aggregation object from a saved aggregation.
 
@@ -182,8 +182,7 @@ class Aggregation(resource.SketchResource):
             parameters=parameters,
             chart_type=chart_type,
         )
-        
-        
+
     # pylint: disable=arguments-differ
     def from_manual(self, aggregate_dsl, **kwargs):
         """Initialize the aggregation object by running an aggregation DSL.
@@ -318,9 +317,9 @@ class Aggregation(resource.SketchResource):
         if self._name:
             return self._name
         if not self.resource_data:
-            return ''
+            return ""
         objects = self.resource_data.get("objects", {})
-        name = objects[0].get("name", '')
+        name = objects[0].get("name", "")
         return name
 
     @name.setter
