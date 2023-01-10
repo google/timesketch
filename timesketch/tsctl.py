@@ -634,9 +634,9 @@ def validate_context_links_conf(path):
     help="Timeline ID if the analyzer results should be filtered by timeline.",
 )
 @click.option(
-    "--focus",
+    "--scope",
     required=False,
-    help="Focus on: [many_hits, long_runtime, recent]",
+    help="Scope on: [many_hits, long_runtime, recent]",
 )
 @click.option(
     "--result_text_search",
@@ -648,7 +648,7 @@ def validate_context_links_conf(path):
     required=False,
     help="Limit the number of results.",
 )
-def sigma_stats(analyzer_name, timeline_id, focus, result_text_search, limit):
+def sigma_stats(analyzer_name, timeline_id, scope, result_text_search, limit):
     """Prints sigma analyzer stats."""
 
     if timeline_id:
@@ -698,11 +698,11 @@ def sigma_stats(analyzer_name, timeline_id, focus, result_text_search, limit):
 
     # Sorting the dataframe depending on the paramters
 
-    if focus in ["many_hits", "many-hits", "hits"]:
+    if scope in ["many_hits", "many-hits", "hits"]:
         df = df.sort_values("hits", ascending=False)
-    elif focus == "long_runtime":
+    elif scope == "long_runtime":
         df = df.sort_values("runtime", ascending=False)
-    elif focus == "recent":
+    elif scope == "recent":
         df = df.sort_values("created_at", ascending=False)
     else:
         df = df.sort_values("runtime", ascending=False)

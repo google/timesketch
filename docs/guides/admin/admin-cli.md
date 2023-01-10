@@ -592,11 +592,11 @@ Usage: tsctl analyzer-stats [OPTIONS] ANALYZER_NAME
 Options:
   --timeline_id TEXT         Timeline ID if the analyzer results should be
                              filtered by timeline.
-  --focus TEXT               Focus on: [many_hits, long_runtime, recent]
+  --scope TEXT               Scope on: [many_hits, long_runtime, recent]
   --result_text_search TEXT  Search in result text. E.g. for a specific
                              rule_id.
   --help                     Show this message and exit.
-tsctl analyzer-stats sigma --focus many_hits --result_text_search 71a52
+tsctl analyzer-stats sigma --scope many_hits --result_text_search 71a52
      runtime  hits                                                                          result  analysis_id                 created_at
 36  0.083333  3657  3657 events tagged for rule [Scheduler] (71a5257c-222f-4898-a117-694d6c63457c)           51 2023-01-03 21:33:14.475700
 37  0.083333  3657  3657 events tagged for rule [Scheduler] (71a5257c-222f-4898-a117-694d6c63457c)           52 2023-01-03 21:33:40.477309
