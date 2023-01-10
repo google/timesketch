@@ -34,6 +34,7 @@ class Aggregation(resource.SketchResource):
         aggregator_name: name of the aggregator class used to
             generate the aggregation.
         chart_color: the color of the chart.
+        chart_title: the title of the chart
         chart_type: the type of chart that will be generated
             from this aggregation object.
         type: the type of aggregation object.
@@ -43,13 +44,15 @@ class Aggregation(resource.SketchResource):
 
     def __init__(self, sketch):
         self._created_at = ""
+        self._description = ""
+        self._group_id = None
+        self._name = ""
         self._parameters = {}
         self._updated_at = ""
-        self._group_id = None
         self.aggregator_name = ""
         self.chart_color = ""
-        self.chart_type = ""
         self.chart_title = ""
+        self.chart_type = ""
         self.search_id = None
         self.type = None
         resource_uri = "sketches/{0:d}/aggregation/explore/".format(sketch.id)
@@ -132,7 +135,7 @@ class Aggregation(resource.SketchResource):
 
         return error.get_response_json(response, logger)
 
-    # pylint: disable=arguments-differ
+    # pylint: disable=arguments-differ,arguments-renamed 
     def from_saved(self, aggregation_id):
         """Initialize the aggregation object from a saved aggregation.
 
@@ -150,6 +153,8 @@ class Aggregation(resource.SketchResource):
             return
 
         self.aggregator_name = data.get("agg_type")
+        self._name = data.get("name")
+        self._description = data.get("description")
         self.type = "stored"
 
         self._created_at = data.get("created_at", "")
@@ -162,6 +167,7 @@ class Aggregation(resource.SketchResource):
         else:
             self._labels = []
 
+        chart_type = data.get("chart_type")
         param_string = data.get("parameters", "")
         if param_string:
             parameters = json.loads(param_string)
@@ -171,7 +177,13 @@ class Aggregation(resource.SketchResource):
         self._parameters = parameters
 
         self._username = data.get("user", {}).get("username", "System")
-
+        self.resource_data = self._run_aggregator(
+            aggregator_name=self.aggregator_name,
+            parameters=parameters,
+            chart_type=chart_type,
+        )
+        
+        
     # pylint: disable=arguments-differ
     def from_manual(self, aggregate_dsl, **kwargs):
         """Initialize the aggregation object by running an aggregation DSL.
@@ -264,6 +276,8 @@ class Aggregation(resource.SketchResource):
             return self.chart_title
 
         data = self.lazyload_data()
+        if not data:
+            return ""
         meta = data.get("meta", {})
         self.chart_title = meta.get("vega_chart_title", "")
 
@@ -282,8 +296,12 @@ class Aggregation(resource.SketchResource):
     @property
     def description(self):
         """Property that returns the description string."""
-        data = self.resource_data
-        objects = data.get("objects", {})
+        if self._description:
+            return self._description
+
+        if not self.resource_data:
+            return ""
+        objects = self.resource_data.get("objects", {})
         return objects[0].get("description", "")
 
     @description.setter
@@ -297,13 +315,13 @@ class Aggregation(resource.SketchResource):
     @property
     def name(self):
         """Property that returns the name of the aggregation."""
-        data = self.resource_data
-        print(data)
-        objects = data.get("objects", {})
-        name = objects[0].get("name")
-        if name:
-            return name
-        return self.name
+        if self._name:
+            return self._name
+        if not self.resource_data:
+            return ''
+        objects = self.resource_data.get("objects", {})
+        name = objects[0].get("name", '')
+        return name
 
     @name.setter
     def name(self, name):
