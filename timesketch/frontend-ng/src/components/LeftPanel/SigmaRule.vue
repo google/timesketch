@@ -35,14 +35,13 @@ limitations under the License.
           <v-card>
             <v-list>
               <v-list-item-group color="primary">
-                <v-list-item>{{ sigmaRule.rule_uuid }}</v-list-item>
-                <v-list-item @click="editRule(sigmaRule.rule_uuid)">
+                <v-list-item>
                   <v-list-item-icon>
                     <v-icon>mdi-brightness-6</v-icon>
                   </v-list-item-icon>
-                  <v-list-item-content>
-                    <v-list-item-title>Edit Rule</v-list-item-title>
-                  </v-list-item-content>
+                  <router-link :to="{ name: 'Studio', params: { id: sigmaRule.rule_uuid, type: 'sigma' } }"
+                    >Edit Rule</router-link
+                  >
                 </v-list-item>
                 <v-list-item v-on:click="deprecateSigmaRule(sigmaRule.rule_uuid)">
                   <v-list-item-icon>
@@ -163,8 +162,6 @@ export default {
       if (!this.sketch.id) {
         return
       }
-      console.log('Sketch ID: ' + this.sketch.id)
-      console.log('Search: ' + queryString)
       let eventData = {}
       eventData.doSearch = true
       eventData.queryString = queryString
@@ -177,29 +174,19 @@ export default {
         ApiClient.deleteSigmaRule(ruleUuid)
           .then((response) => {
             console.log('Rule deleted: ' + ruleUuid)
+            this.$store.dispatch('updateSigmaList')
+            this.$router.push({
+              name: 'Studio',
+              params: {
+                id: 'new',
+                type: 'sigma',
+              },
+            })
           })
           .catch((e) => {
             console.error(e)
           })
-        this.$store.dispatch('updateSigmaList')
-        this.$router.push({
-          name: 'Studio',
-          params: {
-            id: 'new',
-            type: 'sigma',
-          },
-        })
       }
-    },
-    editRule(ruleUuid) {
-      // Navigate to the Sigma module with the specified ruleUuid
-      this.$router.push({
-        name: 'Studio',
-        params: {
-          id: ruleUuid,
-          type: 'sigma',
-        },
-      })
     },
     deprecateSigmaRule(ruleUuid) {
       if (confirm('Deprecate Rule?')) {

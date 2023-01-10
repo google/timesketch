@@ -19,18 +19,18 @@ limitations under the License.
       <h1>
         Rule title: {{ editingRule.title }}
         <v-chip rounded x-small class="mr-2" :color="statusColors(status_chip_text)">
-          <v-icon v-if="status_text.toLowerCase() !== 'ok'"> mdi-alert </v-icon>
-          <v-icon v-if="status_text.toLowerCase() === 'ok'"> mdi-check </v-icon>
+          <v-icon v-if="isParsed"> mdi-check </v-icon>
+          <v-icon v-else> mdi-alert </v-icon>
           {{ status_chip_text }}</v-chip
         >
       </h1>
 
       <div>
-        <v-autocomplete dense filled rounded :items="SigmaTemplates" @change="rowClick" item-text="title">
+        <v-autocomplete dense filled rounded :items="SigmaTemplates" @change="selectTemplate" item-text="title">
         </v-autocomplete>
       </div>
-      <div class="alertbox" v-if="status_text.toLowerCase() !== 'ok'">
-        <!-- only display if status_text is not empty -->
+      <pre>{{ isParsed }}</pre>
+      <div class="alertbox" v-if="!isParsed">
         <v-alert dense type="warning">
           {{ status_text }}
         </v-alert>
@@ -49,7 +49,7 @@ limitations under the License.
       >
       </v-textarea>
 
-      <div class="alertbox" v-if="status_text.toLowerCase() === 'ok'">
+      <div class="alertbox" v-if="isParsed">
         <v-alert colored-border border="left" elevation="1" :color="statusColors(status_chip_text)">
           <b>Search Query:</b>
           {{ editingRule.search_query }}
@@ -57,26 +57,14 @@ limitations under the License.
       </div>
 
       <div class="mt-3">
-        <v-btn
-          :disabled="status_chip_text.toLowerCase() !== 'ok'"
-          @click="addOrUpdateRule(ruleYaml)"
-          small
-          depressed
-          color="primary"
-          >{{ action_button_text }}</v-btn
-        >
+        <v-btn :disabled="!isParsed" @click="addOrUpdateRule(ruleYaml)" small depressed color="primary">{{
+          action_button_text
+        }}</v-btn>
         <div style="width: 20px; display: inline-block"></div>
         <v-btn @click="cancel" small depressed color="secondary">Cancel </v-btn>
         <!-- make 20 px space° -->
         <div style="width: 20px; display: inline-block"></div>
-        <v-btn
-          @click="deleteRule(rule_uuid)"
-          small
-          depressed
-          color="red"
-          :disabled="action_button_text.toLowerCase() == 'create'"
-          >Delete Rule</v-btn
-        >
+        <v-btn @click="deleteRule(rule_uuid)" small depressed color="red" :disabled="isNewRule">Delete Rule</v-btn>
       </div>
     </v-container>
   </v-card>
@@ -94,11 +82,14 @@ export default {
     return {
       editingRule: { ruleYaml: 'foobar' }, // empty state
       status_chip_text: 'OK',
-      status_text: 'OK',
+      status_text: '',
       action_button_text: 'Update Rule',
       ruleYaml: {},
       SigmaTemplates: SigmaTemplates,
       search: '',
+      isNewRule: false,
+      isUpdatingRule: false,
+      isParsed: false,
     }
   },
   watch: {
@@ -112,10 +103,11 @@ export default {
       this.editingRule = {
         title: 'New Sigma Rule',
       }
+      this.isNewRule = true
+      this.isUpdatingRule = false
       this.action_button_text = 'Create Rule'
       this.status_chip_text = 'OK'
     }
-    // even if the rule was stored, we want to double check the rule
 
     this.getRuleByUUID(this.rule_uuid)
   },
@@ -124,7 +116,7 @@ export default {
       this.$router.back()
     },
 
-    rowClick(text) {
+    selectTemplate(text) {
       var matchingTemplate = this.SigmaTemplates.find((obj) => {
         return obj.title === text
       })
@@ -139,21 +131,22 @@ export default {
           var parsedRule = response.data.objects[0]
           if (!parsedRule.author) {
             this.status_text = 'No Author given'
+            this.isParsed = false
           } else {
             this.editingRule = parsedRule
+            this.isParsed = true
             this.status_chip_text = 'Ok'
-            this.status_text = 'Ok'
+            this.status_text = ''
           }
         })
         .catch((e) => {
-          // this.editingRule['search_query'] = e.response.data.message
           this.status_text = e.response.data.message
-          // need to set search_query to something, to overwrite previous value
+          this.isParsed = false
           this.status_chip_text = 'ERROR'
         })
     }, 300),
     statusColors() {
-      if (this.status_chip_text.toLowerCase() === 'ok' || this.status_text.toLowerCase() === 'ok') {
+      if (this.status_chip_text === 'ok' || this.status_text === 'ok') {
         return 'success'
       }
       return 'warning'
@@ -168,7 +161,7 @@ export default {
         .catch((e) => {
           console.error(e)
           this.action_button_text = 'Create Rule'
-          this.status_chip_text = 'Ok'
+          this.isParsed = false
           this.ruleYaml = GeneralText
         })
     },
@@ -186,17 +179,17 @@ export default {
       }
     },
     addOrUpdateRule: function (event) {
-      if (this.action_button_text.includes('Create')) {
+      if (this.isNewRule) {
         ApiClient.createSigmaRule(this.ruleYaml)
           .then((response) => {
             this.$store.dispatch('updateSigmaList')
             EventBus.$emit('errorSnackBar', 'Rule created: ' + this.editingRule.id)
           })
           .catch((e) => {
-            this.editingRule['search_query'] = e.response.data.message // need to set search_query to something, to overwrite previous value
+            console.error(e)
           })
       }
-      if (this.action_button_text.includes('Update')) {
+      if (this.isUpdatingRule) {
         ApiClient.updateSigmaRule(this.editingRule.id, this.ruleYaml)
           .then((response) => {
             this.$store.dispatch('updateSigmaList')
