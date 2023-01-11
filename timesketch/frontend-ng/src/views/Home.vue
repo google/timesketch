@@ -48,6 +48,18 @@ limitations under the License.
                   <v-list-item-title>Toggle theme</v-list-item-title>
                 </v-list-item-content>
               </v-list-item>
+
+              <a href="/logout/" style="text-decoration: none; color: inherit">
+                <v-list-item>
+                  <v-list-item-icon>
+                    <v-icon>mdi-logout</v-icon>
+                  </v-list-item-icon>
+
+                  <v-list-item-content>
+                    <v-list-item-title>Logout</v-list-item-title>
+                  </v-list-item-content>
+                </v-list-item>
+              </a>
             </v-list-item-group>
           </v-list>
         </v-card>
