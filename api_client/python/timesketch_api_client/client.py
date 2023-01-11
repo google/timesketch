@@ -566,41 +566,6 @@ class TimesketchApi:
         request = google.auth.transport.requests.Request()
         self.credentials.credential.refresh(request)
 
-    def list_sigma_rules(self, as_pandas=False):
-        """DEPRECATED please use list_sigmarules instead:
-        Get a list of sigma objects.
-
-        Args:
-            as_pandas: Boolean indicating that the results will be returned
-                as a Pandas DataFrame instead of a list of dicts.
-
-        Returns:
-            List of Sigme rule object instances or a pandas Dataframe with all
-            rules if as_pandas is True.
-
-        Raises:
-            ValueError: If no rules are found.
-        """
-        logger.warning("Deprecated, please use list_sigmarules() instead")
-        rules = []
-        response = self.fetch_resource_data("sigma/")
-
-        if not response:
-            raise ValueError("No rules found.")
-
-        if as_pandas:
-            return pandas.DataFrame.from_records(response.get("objects"))
-
-        for rule_dict in response["objects"]:
-            if not rule_dict:
-                raise ValueError("No rules found.")
-
-            index_obj = sigma.Sigma(api=self)
-            for key, value in rule_dict.items():
-                index_obj.set_value(key, value)
-            rules.append(index_obj)
-        return rules
-
     def list_sigmarules(self, as_pandas=False):
         """Fetches Sigma rules from the database.
         Fetches all Sigma rules stored in the database on the system
