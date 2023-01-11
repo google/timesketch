@@ -85,6 +85,18 @@ limitations under the License.
                   <v-list-item-title>Export sketch</v-list-item-title>
                 </v-list-item-content>
               </v-list-item>
+
+              <a href="/logout/" style="text-decoration: none; color: inherit">
+                <v-list-item>
+                  <v-list-item-icon>
+                    <v-icon>mdi-logout</v-icon>
+                  </v-list-item-icon>
+
+                  <v-list-item-content>
+                    <v-list-item-title>Logout</v-list-item-title>
+                  </v-list-item-content>
+                </v-list-item>
+              </a>
             </v-list-item-group>
           </v-list>
         </v-card>
@@ -95,44 +107,62 @@ limitations under the License.
     <v-navigation-drawer app permanent :width="navigationDrawer.width" hide-overlay ref="drawer">
       <div v-show="showLeftPanel">
         <v-toolbar flat>
-          <v-avatar class="ml-n3">
+          <v-avatar class="ml-n3 mt-1">
             <router-link to="/">
               <v-img src="/dist/timesketch-color.png" max-height="25" max-width="25" contain></v-img>
             </router-link>
           </v-avatar>
-          <span @click="showSketchMetadata = !showSketchMetadata" style="font-size: 1.1em; cursor: pointer"
-            >{{ sketch.name }}
-          </span>
+          <div
+            @click="showSketchMetadata = !showSketchMetadata"
+            style="font-size: 1.1em; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis"
+            :title="sketch.name"
+          >
+            {{ sketch.name }}
+          </div>
           <v-spacer></v-spacer>
           <v-icon @click="toggleLeftPanel">mdi-chevron-left</v-icon>
         </v-toolbar>
         <v-expand-transition>
-          <v-list v-show="showSketchMetadata" two-line>
-            <v-list-item v-if="sketch.user">
-              <v-list-item-content>
-                <v-list-item-title>
-                  <strong>Created:</strong> {{ sketch.created_at | shortDateTime }}
-                </v-list-item-title>
-                <v-list-item-subtitle>
-                  <small>{{ sketch.created_at | timeSince }} by {{ sketch.user.username }}</small>
-                </v-list-item-subtitle>
-              </v-list-item-content>
-            </v-list-item>
+          <div class="px-4" v-show="showSketchMetadata">
+            <v-dialog v-model="renameSketchDialog" width="600">
+              <template v-slot:activator="{ on, attrs }">
+                <v-btn small outlined depressed color="primary" v-bind="attrs" v-on="on">
+                  <v-icon left> mdi-pencil </v-icon>
+                  Rename</v-btn
+                >
+              </template>
+              <v-card class="pa-4">
+                <ts-rename-sketch @close="renameSketchDialog = false"></ts-rename-sketch>
+              </v-card>
+            </v-dialog>
 
-            <v-list-item>
-              <v-list-item-content>
-                <v-list-item-title>
-                  <strong>Access: </strong>
-                  <span v-if="meta.permissions.public">Public</span>
-                  <span v-else>Restricted</span>
-                </v-list-item-title>
-                <v-list-item-subtitle>
-                  <small v-if="meta.permissions.public">Visible to all users on this server</small>
-                  <small v-else>Only people with access can open</small>
-                </v-list-item-subtitle>
-              </v-list-item-content>
-            </v-list-item>
-          </v-list>
+            <v-list class="mx-n4" two-line>
+              <v-list-item v-if="sketch.user">
+                <v-list-item-content>
+                  <v-list-item-title>
+                    <strong>Created:</strong> {{ sketch.created_at | shortDateTime }}
+                  </v-list-item-title>
+                  <v-list-item-subtitle>
+                    <small>{{ sketch.created_at | timeSince }} by {{ sketch.user.username }}</small>
+                  </v-list-item-subtitle>
+                </v-list-item-content>
+              </v-list-item>
+
+              <v-list-item>
+                <v-list-item-content>
+                  <v-list-item-title>
+                    <strong>Access: </strong>
+                    <span v-if="meta.permissions.public">Public</span>
+                    <span v-else>Restricted</span>
+                  </v-list-item-title>
+                  <v-list-item-subtitle>
+                    <small v-if="meta.permissions.public">Visible to all users on this server</small>
+                    <small v-else>Only people with access can open</small>
+                  </v-list-item-subtitle>
+                </v-list-item-content>
+              </v-list-item>
+            </v-list>
+          </div>
         </v-expand-transition>
         <v-divider></v-divider>
 
@@ -229,6 +259,7 @@ import TsTags from '../components/LeftPanel/Tags'
 import TsSearchTemplates from '../components/LeftPanel/SearchTemplates'
 import TsSigmaRules from '../components/LeftPanel/SigmaRules'
 import TsShareCard from '../components/ShareCard'
+import TsRenameSketch from '../components/RenameSketch'
 
 export default {
   props: ['sketchId'],
@@ -240,6 +271,7 @@ export default {
     TsSearchTemplates,
     TsSigmaRules,
     TsShareCard,
+    TsRenameSketch,
   },
   data() {
     return {
@@ -252,8 +284,7 @@ export default {
       showLeftPanel: true,
       leftPanelTab: 0,
       leftPanelTabItems: ['Explore', 'Investigate'],
-      renameScenarioDialog: false,
-      newScenarioName: '',
+      renameSketchDialog: false,
       showHidden: false,
       shareDialog: false,
     }
