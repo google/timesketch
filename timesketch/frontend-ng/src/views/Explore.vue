@@ -123,12 +123,26 @@ limitations under the License.
             </template>
             <v-card>
               <v-list>
-                <v-list-item>
-                  <v-list-item-action>
-                    <v-icon>mdi-square-edit-outline</v-icon>
-                  </v-list-item-action>
-                  <v-list-item-subtitle>Edit filter</v-list-item-subtitle>
-                </v-list-item>
+                <!-- Edit timefilter menu -->
+                <v-menu
+                  offset-y
+                  :close-on-content-click="false"
+                  :close-on-click="true"
+                  nudge-top="70"
+                  content-class="menu-with-gap"
+                  allow-overflow
+                  style="overflow: visible"
+                >
+                  <template v-slot:activator="{ on, attrs }">
+                    <v-list-item v-bind="attrs" v-on="on">
+                      <v-list-item-action>
+                        <v-icon>mdi-square-edit-outline</v-icon>
+                      </v-list-item-action>
+                      <v-list-item-subtitle>Edit filter</v-list-item-subtitle>
+                    </v-list-item>
+                  </template>
+                  <ts-filter-menu app :selected-chip="chip" @updateChip="updateChip($event, chip)"></ts-filter-menu>
+                </v-menu>
 
                 <v-list-item @click="toggleChip(chip)">
                   <v-list-item-action>
@@ -654,7 +668,6 @@ export default {
         bad: { color: 'red', textColor: 'white', label: 'mdi-alert-circle-outline' },
         suspicious: { color: 'orange', textColor: 'white', label: 'mdi-help-circle-outline' },
       },
-
       // old stuff
       params: {},
       searchInProgress: false,
