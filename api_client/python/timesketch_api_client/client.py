@@ -186,7 +186,9 @@ class TimesketchApi:
         if not csrf_token:
             return
 
-        session.headers.update({"x-csrftoken": csrf_token, "referer": self._host_uri})
+        session.headers.update(
+            {"x-csrftoken": csrf_token, "referer": self._host_uri}
+        )
 
     def _create_oauth_session(
         self,
@@ -254,7 +256,9 @@ class TimesketchApi:
             flow.redirect_uri = self.DEFAULT_OAUTH_LOCALHOST_URL
 
         if run_server:
-            _ = flow.run_local_server(host=host, port=port, open_browser=open_browser)
+            _ = flow.run_local_server(
+                host=host, port=port, open_browser=open_browser
+            )
         else:
             if not sys.stdout.isatty() or not sys.stdin.isatty():
                 msg = (
@@ -266,10 +270,19 @@ class TimesketchApi:
             auth_url, _ = flow.authorization_url(prompt="select_account")
 
             if skip_open:
-                print("Visit the following URL to authenticate: {0:s}".format(auth_url))
+                print(
+                    "Visit the following URL to authenticate: {0:s}".format(
+                        auth_url
+                    )
+                )
             else:
-                open_browser = input("Open the URL in a browser window? [y/N] ")
-                if open_browser.lower() == "y" or open_browser.lower() == "yes":
+                open_browser = input(
+                    "Open the URL in a browser window? [y/N] "
+                )
+                if (
+                    open_browser.lower() == "y"
+                    or open_browser.lower() == "yes"
+                ):
                     webbrowser.open(auth_url)
                 else:
                     print(
@@ -456,9 +469,9 @@ class TimesketchApi:
                 "description": line.get("description", "N/A"),
             }
             for field_index, field in enumerate(line.get("fields", [])):
-                line_dict["field_{0:d}_name".format(field_index + 1)] = field.get(
-                    "name"
-                )
+                line_dict[
+                    "field_{0:d}_name".format(field_index + 1)
+                ] = field.get("name")
                 line_dict[
                     "field_{0:d}_description".format(field_index + 1)
                 ] = field.get("description")
@@ -533,7 +546,9 @@ class TimesketchApi:
             that were outstanding.
         """
         if job_id:
-            response = self.fetch_resource_data("tasks/?job_id={0:s}".format(job_id))
+            response = self.fetch_resource_data(
+                "tasks/?job_id={0:s}".format(job_id)
+            )
         else:
             response = self.fetch_resource_data("tasks/")
 
@@ -565,41 +580,6 @@ class TimesketchApi:
             return
         request = google.auth.transport.requests.Request()
         self.credentials.credential.refresh(request)
-
-    def list_sigma_rules(self, as_pandas=False):
-        """DEPRECATED please use list_sigmarules instead:
-        Get a list of sigma objects.
-
-        Args:
-            as_pandas: Boolean indicating that the results will be returned
-                as a Pandas DataFrame instead of a list of dicts.
-
-        Returns:
-            List of Sigme rule object instances or a pandas Dataframe with all
-            rules if as_pandas is True.
-
-        Raises:
-            ValueError: If no rules are found.
-        """
-        logger.warning("Deprecated, please use list_sigmarules() instead")
-        rules = []
-        response = self.fetch_resource_data("sigma/")
-
-        if not response:
-            raise ValueError("No rules found.")
-
-        if as_pandas:
-            return pandas.DataFrame.from_records(response.get("objects"))
-
-        for rule_dict in response["objects"]:
-            if not rule_dict:
-                raise ValueError("No rules found.")
-
-            index_obj = sigma.Sigma(api=self)
-            for key, value in rule_dict.items():
-                index_obj.set_value(key, value)
-            rules.append(index_obj)
-        return rules
 
     def list_sigmarules(self, as_pandas=False):
         """Fetches Sigma rules from the database.
@@ -711,45 +691,8 @@ class TimesketchApi:
             sigma_obj = sigma.Sigma(api=self)
             sigma_obj.from_text(rule_text)
         except ValueError:
-            logger.error("Parsing Error, unable to parse the Sigma rule", exc_info=True)
-
-        return sigma_obj  # pytype: disable=name-error  # py310-upgrade
-
-    def get_sigma_rule(self, rule_uuid):
-        """DEPRECATED please use get_sigmarule() instead: Get a sigma rule.
-
-        Args:
-            rule_uuid: UUID of the Sigma rule.
-
-        Returns:
-            Instance of a Sigma object.
-        """
-        logger.warning("Deprecated, please use get_sigmarule() instead")
-
-        return self.get_sigmarule(rule_uuid=rule_uuid)
-
-    def parse_sigma_rule_by_text(self, rule_text):
-        """DEPRECATED please use parse_sigmarule_by_text() instead:
-        Returns a Sigma Object based on a sigma rule text.
-
-        Args:
-            rule_text: Full Sigma rule text.
-
-        Returns:
-            Instance of a Sigma object.
-
-        Raises:
-            ValueError: No Rule text given or issues parsing it.
-        """
-        logger.warning("Deprecated, please use parse_sigmarule_by_text() instead")
-
-        if not rule_text:
-            raise ValueError("No rule text given.")
-
-        try:
-            sigma_obj = sigma.Sigma(api=self)
-            sigma_obj.from_text(rule_text)
-        except ValueError:
-            logger.error("Parsing Error, unable to parse the Sigma rule", exc_info=True)
+            logger.error(
+                "Parsing Error, unable to parse the Sigma rule", exc_info=True
+            )
 
         return sigma_obj  # pytype: disable=name-error  # py310-upgrade
