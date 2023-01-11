@@ -6,6 +6,7 @@ import hashlib
 import logging
 from datetime import datetime
 import re
+from typing import List
 import pandas as pd
 import pyparsing
 
@@ -20,6 +21,7 @@ class SSHEventData:
     """SSH authentication event."""
 
     def __init__(self):
+        self.event_id = ""  # OpenSearch event_id
         self.timestamp = 0
         self.date = "1970-01-01"
         self.time = "00:00:00"
@@ -130,6 +132,37 @@ class SSHBruteForcePlugin(interface.BaseAnalyzer):
     # while parsing event_body using SSHD_KEYWORD_RE.
     IGNORE_ATTRIBUTE_ERROR = ["'NoneType' object has no attribute 'group'"]
 
+    def anotate_events(self, events: List, df: pd.DataFrame, report: dict) -> None:
+        """Anotate matching events"""
+        event_ids = []
+        try:
+            for attribute in report["attributes"]:
+                brute_force_logins = attribute["brute_force_logins"]
+                for login in brute_force_logins:
+                    df1 = df[df["session_id"] == login["session_id"]]
+                    for _, row in df1.iterrows():
+                        event_ids.append(row["event_id"])
+        except KeyError as exception:
+            log.error("[%s] Missing expected key: %s", self.NAME, str(exception))
+            return
+
+        if not event_ids:
+            log.info("[%s] No events to annotate", self.NAME)
+            return
+        log.info(
+            "[%s] %d events to annotate: [%s]",
+            self.NAME,
+            len(event_ids),
+            " ".join(event_ids),
+        )
+
+        for event in events:
+            if event.event_id in event_ids:
+                log.debug("[%s] Anotating event id %s", self.NAME, event.event_id)
+                event.add_label("ssh_bruteforce")
+                event.add_star()
+                event.commit()
+
     def run(self):
         """Entry point for the analyzer.
 
@@ -213,6 +246,7 @@ class SSHBruteForcePlugin(interface.BaseAnalyzer):
                 continue
 
             ssh_event_data = SSHEventData()
+            ssh_event_data.event_id = event.event_id
             ssh_event_data.timestamp = event_timestamp
             ssh_event_data.date = event_date
             ssh_event_data.time = event_time
@@ -242,11 +276,16 @@ class SSHBruteForcePlugin(interface.BaseAnalyzer):
 
         bfa = BruteForceAnalyzer()
         result = bfa.run(df)
-        if result:
-            return str(result["result_markdown"])
-        return "No verdict. Total number of SSH authention events {}".format(
-            len(ssh_records)
+        if not result:
+            return "No verdict. Total number of SSH authention events {}".format(
+                len(ssh_records)
+            )
+
+        events = self.event_stream(
+            query_string=query_string, return_fields=return_fields
         )
+        self.anotate_events(events=events, df=df, report=result)
+        return str(result["result_markdown"])
 
 
 manager.AnalysisManager.register_analyzer(SSHBruteForcePlugin)
