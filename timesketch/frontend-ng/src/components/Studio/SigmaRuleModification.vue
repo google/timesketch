@@ -19,7 +19,7 @@ limitations under the License.
       <h1>
         Rule title: {{ editingRule.title }}
         <v-chip rounded x-small class="mr-2" :color="statusColors()">
-          <v-icon v-if="isParsed"> mdi-check </v-icon>
+          <v-icon v-if="isParsingSuccesful"> mdi-check </v-icon>
           <v-icon v-else> mdi-alert </v-icon>
           Error</v-chip
         >
@@ -29,7 +29,7 @@ limitations under the License.
         <v-autocomplete dense filled rounded :items="SigmaTemplates" @change="selectTemplate" item-text="title">
         </v-autocomplete>
       </div>
-      <div class="alertbox" v-if="!isParsed">
+      <div class="alertbox" v-if="!isParsingSuccesful">
         <v-alert dense type="warning">
           {{ status_text }}
         </v-alert>
@@ -48,7 +48,7 @@ limitations under the License.
       >
       </v-textarea>
 
-      <div class="alertbox" v-if="isParsed">
+      <div class="alertbox" v-if="isParsingSuccesful">
         <v-alert colored-border border="left" elevation="1" :color="statusColors()">
           <b>Search Query:</b>
           {{ editingRule.search_query }}
@@ -56,7 +56,7 @@ limitations under the License.
       </div>
 
       <div class="mt-3">
-        <v-btn :disabled="!isParsed" @click="addOrUpdateRule(ruleYaml)" small depressed color="primary">
+        <v-btn :disabled="!isParsingSuccesful" @click="addOrUpdateRule(ruleYaml)" small depressed color="primary">
           {{ isNewRule ? 'Create Rule' : 'Update Rule' }}
         </v-btn>
         <div style="width: 20px; display: inline-block"></div>
@@ -87,7 +87,7 @@ export default {
       search: '',
       isNewRule: false,
       isUpdatingRule: false,
-      isParsed: false,
+      isParsingSuccesful: false,
     }
   },
   watch: {
@@ -125,22 +125,22 @@ export default {
           var parsedRule = response.data.objects[0]
           if (!parsedRule.author) {
             this.status_text = 'No Author given'
-            this.isParsed = false
+            this.isParsingSuccesful = false
           } else {
             this.editingRule = parsedRule
-            this.isParsed = true
+            this.isParsingSuccesful = true
             this.status_chip_text = 'Ok'
             this.status_text = ''
           }
         })
         .catch((e) => {
           this.status_text = e.response.data.message
-          this.isParsed = false
+          this.isParsingSuccesful = false
           this.status_chip_text = 'ERROR'
         })
     }, 300),
     statusColors() {
-      if (this.isParsed) {
+      if (this.isParsingSuccesful) {
         return 'success'
       }
       return 'warning'
@@ -153,11 +153,11 @@ export default {
           this.status_chip_text = 'Ok'
           this.isNewRule = false
           this.isUpdatingRule = true
-          this.isParsed = true
+          this.isParsingSuccesful = true
         })
         .catch((e) => {
           console.error(e)
-          this.isParsed = false
+          this.isParsingSuccesful = false
           this.isNewRule = true
           this.isUpdatingRule = false
           this.ruleYaml = defaultSigmaPlaceholder
