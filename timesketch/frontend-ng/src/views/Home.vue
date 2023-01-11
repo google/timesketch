@@ -94,24 +94,6 @@ limitations under the License.
         <h2>Your recent work</h2>
         <ts-sketch-list></ts-sketch-list>
       </div>
-      <div class="pa-5">
-        <h2>Sigma Studio</h2>
-        <p>
-          Sigma Studio is a web-based editor for the Sigma rule format. It allows you to create, edit, and test Sigma
-          rules without having to install any software on your computer.
-          <a href="/studio/sigma/new" style="text-decoration: none; color: inherit">
-            <v-list-item>
-              <v-list-item-icon>
-                <v-icon>mdi-creation</v-icon>
-              </v-list-item-icon>
-
-              <v-list-item-content>
-                <v-list-item-title>Studio</v-list-item-title>
-              </v-list-item-content>
-            </v-list-item>
-          </a>
-        </p>
-      </div>
     </v-container>
   </div>
 </template>
