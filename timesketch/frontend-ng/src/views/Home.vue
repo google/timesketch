@@ -48,6 +48,18 @@ limitations under the License.
                   <v-list-item-title>Toggle theme</v-list-item-title>
                 </v-list-item-content>
               </v-list-item>
+
+              <a href="/logout/" style="text-decoration: none; color: inherit">
+                <v-list-item>
+                  <v-list-item-icon>
+                    <v-icon>mdi-logout</v-icon>
+                  </v-list-item-icon>
+
+                  <v-list-item-content>
+                    <v-list-item-title>Logout</v-list-item-title>
+                  </v-list-item-content>
+                </v-list-item>
+              </a>
             </v-list-item-group>
           </v-list>
         </v-card>
@@ -62,20 +74,17 @@ limitations under the License.
             <template v-slot:activator="{ on, attrs }">
               <v-btn depressed small class="mr-5" color="primary" v-bind="attrs" v-on="on"> Blank sketch </v-btn>
             </template>
-            <v-card class="pa-3">
+            <v-card class="pa-4">
               <h3>New sketch</h3>
               <br />
-              <v-text-field v-model="sketchForm.name" outlined dense placeholder="Name your sketch"> </v-text-field>
+              <v-text-field v-model="sketchForm.name" outlined dense placeholder="Name your sketch" autofocus>
+              </v-text-field>
               <v-card-actions>
                 <v-spacer></v-spacer>
                 <v-btn :disabled="!sketchForm.name" @click="createSketch()" color="primary" text> Create </v-btn>
               </v-card-actions>
             </v-card>
           </v-dialog>
-          <v-divider vertical class="mr-5"></v-divider>
-          <v-btn v-for="scenario in scenarioTemplates" :key="scenario.short_name" depressed small outlined class="mr-5">
-            {{ scenario.display_name }}
-          </v-btn>
         </v-row>
       </v-sheet>
       <div class="pa-5">
