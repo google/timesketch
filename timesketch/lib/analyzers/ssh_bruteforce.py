@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 
 
 import hashlib
-import json
 import logging
 from datetime import datetime
 import re
@@ -52,7 +51,7 @@ class SSHEventData:
 class SSHBruteForcePlugin(interface.BaseAnalyzer):
     """Analyzer for SSH authentication"""
 
-    NAME = "ssh_brute_force"
+    NAME = "SSHBruteForcePlugin"
     DISPLAY_NAME = "SSH Brute Force Analyzer"
     DESCRIPTION = "Analyzer for successful SSH brute force login"
 
@@ -86,7 +85,12 @@ class SSHBruteForcePlugin(interface.BaseAnalyzer):
 
     # Timesketch message field grammar
     _FAILED_GRAMMER = (
-        pyparsing.Literal("Failed")
+        pyparsing.Optional(
+            pyparsing.Literal("[")
+            + pyparsing.Word(pyparsing.nums)
+            + pyparsing.Literal("]:")
+        )
+        + pyparsing.Literal("Failed")
         + _AUTHENTICATION_METHOD
         + pyparsing.Literal("for")
         + pyparsing.Optional(pyparsing.Literal("invalid") + pyparsing.Literal("user"))
@@ -133,8 +137,8 @@ class SSHBruteForcePlugin(interface.BaseAnalyzer):
             String with summary of the analyzer result.
         """
         query_string = (
-            'data_type:"syslog:line" AND reporter:sshd AND'
-            " (body:Accepted* OR body:Failed* OR body:Disconnected*)"
+            "reporter:sshd AND (body:*Accepted* OR body:*Failed*"
+            " OR (body:*Disconnected* AND NOT body:*preauth*))"
         )
         return_fields = ["timestamp", "hostname", "pid", "body"]
 
@@ -152,19 +156,26 @@ class SSHBruteForcePlugin(interface.BaseAnalyzer):
             event_pid = event.source.get("pid")
             event_body = event.source.get("body")
 
+            # Wer are not parsing the body if it contains disconnect message for
+            # preauth disconnection
+            if "Disconnected" in event_body and "[preauth]" in event_body:
+                continue
+
             try:
                 sshd_keyword = self.SSHD_KEYWORD_RE.search(event_body).group(1)
             except AttributeError as exception:
                 if str(exception) in self.IGNORE_ATTRIBUTE_ERROR:
-                    log.debug("Ignoring event message %s", event_body)
+                    log.debug("[%s] Ignoring event: %s", self.NAME, event_body)
                     continue
 
-                log.error("Error extracting ssh_keyword in %s", event_body)
+                log.error(
+                    "[%s] Error extracting ssh keyword in %s", self.NAME, event_body
+                )
                 continue
 
             message_grammar = self.MESSAGE_GRAMMAR.get(sshd_keyword.lower()) or None
             if not message_grammar:
-                log.debug("No grammar for event: %s", event_body)
+                log.debug("[%s] No grammar for event: %s", self.NAME, event_body)
                 continue
 
             try:
@@ -193,7 +204,8 @@ class SSHBruteForcePlugin(interface.BaseAnalyzer):
                 source_port = parse_result.source_port
             except pyparsing.ParseException as exception:
                 log.error(
-                    "Error encountered while parsing %s as %s: %s",
+                    "[%s] Error encountered while parsing %s as %s: %s",
+                    self.NAME,
                     event_body,
                     sshd_keyword,
                     str(exception),
@@ -216,19 +228,25 @@ class SSHBruteForcePlugin(interface.BaseAnalyzer):
 
             ssh_event_data.calculate_session_id()
             ssh_records.append(ssh_event_data.__dict__)
-        log.info("Total number of SSH authentication events: %d", len(ssh_records))
+
+        log.info(
+            "[%s] Total number of SSH authentication events: %d",
+            self.NAME,
+            len(ssh_records),
+        )
 
         df = pd.DataFrame(ssh_records)
         if df.empty:
-            log.info("No SSH authentication events")
+            log.info("[%s] No SSH authentication events", self.NAME)
             return "No SSH authentication events"
 
         bfa = BruteForceAnalyzer()
         result = bfa.run(df)
         if result:
-            json_result = json.dumps(result, indent=4)
-            return str(json_result)
-        return "Total number of SSH authention events {}".format(len(ssh_records))
+            return str(result["result_markdown"])
+        return "No verdict. Total number of SSH authention events {}".format(
+            len(ssh_records)
+        )
 
 
 manager.AnalysisManager.register_analyzer(SSHBruteForcePlugin)
