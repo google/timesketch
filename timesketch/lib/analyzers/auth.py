@@ -16,7 +16,6 @@
 
 import logging
 from datetime import datetime
-import math
 from typing import List
 import pandas as pd
 
@@ -409,11 +408,9 @@ class BruteForceAnalyzer(AuthAnalyzer):
             # Successful login timestamp
             login_ts = row["timestamp"]
 
-            end_timestamp_min = math.ceil(login_ts / 60) * 60
-
             # Time boundary for authentication events check
-            start_timestamp = end_timestamp_min - self.BRUTE_FORCE_WINDOW
-            end_timestamp = end_timestamp_min  # login_ts
+            start_timestamp = login_ts - self.BRUTE_FORCE_WINDOW
+            end_timestamp = login_ts
             log.info(
                 "[%s] Checking brute force from %s between %s and %s",
                 self.NAME,
@@ -439,10 +436,11 @@ class BruteForceAnalyzer(AuthAnalyzer):
                 )
             except KeyError:
                 log.info(
-                    "[%s] No successful login events for %s."
-                    " Setting success_count to zero",
+                    "[%s] No successful login events from %s before successful "
+                    "login at %s.",
                     self.NAME,
                     source_ip,
+                    self.human_timestamp(login_ts),
                 )
                 success_count = 0
 
@@ -458,14 +456,15 @@ class BruteForceAnalyzer(AuthAnalyzer):
                 failed_count = 0
 
             log.debug(
-                "[%s] Login events distribution from %s: successful %d, failure %d",
+                "[%s] Login events distribution from %s before successful "
+                "login: successful %d, failure %d",
                 self.NAME,
                 source_ip,
                 success_count,
                 failed_count,
             )
 
-            if success_count > 0 and failed_count >= self.BRUTE_FORCE_MIN_FAILED_EVENT:
+            if success_count == 0 and failed_count >= self.BRUTE_FORCE_MIN_FAILED_EVENT:
                 # TODO(rmaskey): Evaluate event timestamps
                 row_session_id = row.get("session_id") or ""
                 row_domain = row.get("domain")
