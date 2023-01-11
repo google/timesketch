@@ -86,7 +86,7 @@ limitations under the License.
         ></ts-timeline-picker>
 
         <span style="position: relative; top: -5px">
-          <ts-upload-timeline-form></ts-upload-timeline-form>
+          <ts-upload-timeline-form btn-type="small"></ts-upload-timeline-form>
         </span>
 
         <span style="position: relative; top: -5px">
