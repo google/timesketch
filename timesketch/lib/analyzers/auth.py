@@ -346,8 +346,7 @@ class AuthAnalyzer:
                 self.name,
                 str(exception),
             )
-        finally:
-            return login_session
+        return login_session
 
 
 class BruteForceAnalyzer(AuthAnalyzer):
