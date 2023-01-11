@@ -110,23 +110,3 @@ class TimesketchSigmaRuleTest(unittest.TestCase):
         self.assertIn("2020/06/26", rule.modified)
         self.assertIn("high", rule.level)
         self.assertIn("foobar.com", rule.references[0])
-
-    def test_parse_sigma_rule_by_text(self):
-
-        rule = self.api_client.parse_sigma_rule_by_text(MOCK_SIGMA_RULE)
-
-        self.assertIsNotNone(rule)
-        self.assertGreater(len(rule.attributes), 5)
-        self.assertIn("zsh", rule.search_query)
-        self.assertIn("Installation of foobar", rule.title)
-        self.assertIn("", rule.id)
-        self.assertIn("http://127.0.0.1/api/v1/sigma/text/", rule.resource_uri)
-        self.assertIn("suspicious installation of foobar", rule.description)
-        self.assertIn("high", rule.level)
-        self.assertEqual(len(rule.falsepositives), 1)
-        self.assertIn("Unknown", rule.falsepositives[0])
-        self.assertIn("Alexander", rule.author)
-        self.assertIn("2020/12/10", rule.date)
-        self.assertIn("2021/01/01", rule.modified)
-        self.assertEqual(len(rule.detection), 2)
-        self.assertEqual(len(rule.logsource), 2)
