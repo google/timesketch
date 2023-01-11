@@ -74,7 +74,9 @@ class SketchResourceTest(BaseTest):
 
     resource_url = "/api/v1/sketches/1/"
 
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
     def test_sketch_resource(self):
         """Authenticated request to get a sketch."""
         self.login()
@@ -232,7 +234,9 @@ class ExploreResourceTest(BaseTest):
         ],
     }
 
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
     def test_search(self):
         """Authenticated request to query the datastore."""
         self.login()
@@ -255,7 +259,9 @@ class AggregationExploreResourceTest(BaseTest):
 
     resource_url = "/api/v1/sketches/1/aggregation/explore/"
 
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
     def test_heatmap_aggregation(self):
         """Authenticated request to get aggregation requests."""
         self.login()
@@ -288,7 +294,9 @@ class EventResourceTest(BaseTest):
         }
     }
 
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
     def test_get_event(self):
         """Authenticated request to get an event from the datastore."""
         self.login()
@@ -300,7 +308,9 @@ class EventResourceTest(BaseTest):
         self.assertDictContainsSubset(self.expected_response, response_json)
         self.assert200(response)
 
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
     def test_invalid_index(self):
         """
         Authenticated request to get an event from the datastore, but in the
@@ -318,7 +328,9 @@ class EventAddAttributeResourceTest(BaseTest):
 
     resource_url = "/api/v1/sketches/1/event/attributes/"
 
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
     def test_add_attributes(self):
         """Test add attributes with a well formed request."""
         self.login()
@@ -326,8 +338,18 @@ class EventAddAttributeResourceTest(BaseTest):
         attrs = [{"attr_name": "foo", "attr_value": "bar"}]
         events = {
             "events": [
-                {"_id": "1", "_type": "_doc", "_index": "1", "attributes": attrs},
-                {"_id": "2", "_type": "_doc", "_index": "1", "attributes": attrs},
+                {
+                    "_id": "1",
+                    "_type": "_doc",
+                    "_index": "1",
+                    "attributes": attrs,
+                },
+                {
+                    "_id": "2",
+                    "_type": "_doc",
+                    "_index": "1",
+                    "attributes": attrs,
+                },
             ]
         }
 
@@ -345,7 +367,9 @@ class EventAddAttributeResourceTest(BaseTest):
         response = self.client.post(self.resource_url, json=events)
         self.assertEqual(expected_response, response.json)
 
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
     def test_incorrect_content_type(self):
         """Test that a content-type other than application/json is handled."""
         self.login()
@@ -353,7 +377,9 @@ class EventAddAttributeResourceTest(BaseTest):
         self.assertEqual(400, response.status_code)
         self.assertIn(b"Request must be in JSON format.", response.data)
 
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
     def test_events_json_missing_events(self):
         """Test that a request without events is handled."""
         self.login()
@@ -362,25 +388,35 @@ class EventAddAttributeResourceTest(BaseTest):
         self.assertEqual(HTTP_STATUS_CODE_BAD_REQUEST, response.status_code)
         self.assertIn(b"Request must contain an events field.", response.data)
 
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
     def test_events_json_events_type(self):
         """Test that that the wrong type for events is handled."""
         self.login()
 
-        response = self.client.post(self.resource_url, json={"events": "a string"})
+        response = self.client.post(
+            self.resource_url, json={"events": "a string"}
+        )
         self.assertEqual(HTTP_STATUS_CODE_BAD_REQUEST, response.status_code)
         self.assertIn(b"Events field must be a list.", response.data)
 
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
     def test_events_json_max_events(self):
         """Test that an event list larger than max events is handled."""
         self.login()
 
-        response = self.client.post(self.resource_url, json={"events": ["a"] * 100001})
+        response = self.client.post(
+            self.resource_url, json={"events": ["a"] * 100001}
+        )
         self.assertEqual(HTTP_STATUS_CODE_BAD_REQUEST, response.status_code)
         self.assertIn(b"Request exceeds maximum events", response.data)
 
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
     def test_events_json_missing_id(self):
         """Test that an event without an _id field is handled."""
         self.login()
@@ -389,7 +425,9 @@ class EventAddAttributeResourceTest(BaseTest):
         self.assertEqual(HTTP_STATUS_CODE_BAD_REQUEST, response.status_code)
         self.assertIn(b"Event missing field _id.", response.data)
 
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
     def test_events_json_attributes_type(self):
         """Test that event attributes of the wrong type is handled."""
         self.login()
@@ -410,7 +448,9 @@ class EventAddAttributeResourceTest(BaseTest):
         self.assertEqual(HTTP_STATUS_CODE_BAD_REQUEST, response.status_code)
         self.assertIn(b"Attributes must be a list.", response.data)
 
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
     def test_events_json_max_attributes(self):
         """Test that too many attributes is handled."""
         self.login()
@@ -431,7 +471,9 @@ class EventAddAttributeResourceTest(BaseTest):
         self.assertEqual(HTTP_STATUS_CODE_BAD_REQUEST, response.status_code)
         self.assertIn(b"Attributes for event exceeds maximum", response.data)
 
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
     def test_events_json_attribute_fields(self):
         """Test that an attribute with a missing field is handled."""
         self.login()
@@ -452,7 +494,9 @@ class EventAddAttributeResourceTest(BaseTest):
         self.assertEqual(HTTP_STATUS_CODE_BAD_REQUEST, response.status_code)
         self.assertIn(b"Attribute missing field", response.data)
 
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
     def test_chunk_calculation(self):
         """Tests that chunks are properly calculated."""
         self.login()
@@ -464,7 +508,12 @@ class EventAddAttributeResourceTest(BaseTest):
             self.resource_url,
             json={
                 "events": [
-                    {"_id": "1", "_type": "_doc", "_index": "1", "attributes": attrs}
+                    {
+                        "_id": "1",
+                        "_type": "_doc",
+                        "_index": "1",
+                        "attributes": attrs,
+                    }
                 ]
                 * 1000
             },
@@ -476,7 +525,12 @@ class EventAddAttributeResourceTest(BaseTest):
             self.resource_url,
             json={
                 "events": [
-                    {"_id": "1", "_type": "_doc", "_index": "1", "attributes": attrs}
+                    {
+                        "_id": "1",
+                        "_type": "_doc",
+                        "_index": "1",
+                        "attributes": attrs,
+                    }
                 ]
                 * 1001
             },
@@ -488,14 +542,28 @@ class EventAddAttributeResourceTest(BaseTest):
             self.resource_url,
             json={
                 "events": [
-                    {"_id": "1", "_type": "_doc", "_index": "1", "attributes": attrs},
-                    {"_id": "1", "_type": "_doc", "_index": "2", "attributes": attrs},
+                    {
+                        "_id": "1",
+                        "_type": "_doc",
+                        "_index": "1",
+                        "attributes": attrs,
+                    },
+                    {
+                        "_id": "1",
+                        "_type": "_doc",
+                        "_index": "2",
+                        "attributes": attrs,
+                    },
                 ]
             },
         )
-        self.assertEqual({"1": 1, "2": 1}, response.json["meta"]["chunks_per_index"])
+        self.assertEqual(
+            {"1": 1, "2": 1}, response.json["meta"]["chunks_per_index"]
+        )
 
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
     def test_add_existing_attributes(self):
         """Tests existing attributes cannot be overidden."""
         self.login()
@@ -508,7 +576,9 @@ class EventAddAttributeResourceTest(BaseTest):
                         "_id": "1",
                         "_type": "_doc",
                         "_index": "1",
-                        "attributes": [{"attr_name": "exists", "attr_value": "yes"}],
+                        "attributes": [
+                            {"attr_name": "exists", "attr_value": "yes"}
+                        ],
                     }
                 ]
             },
@@ -518,7 +588,9 @@ class EventAddAttributeResourceTest(BaseTest):
             response.json["meta"]["last_10_errors"],
         )
 
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
     def test_add_invalid_attributes_underscore(self):
         """Tests attributes beginning with an underscore cannot be added."""
         self.login()
@@ -531,17 +603,22 @@ class EventAddAttributeResourceTest(BaseTest):
                         "_id": "1",
                         "_type": "_doc",
                         "_index": "1",
-                        "attributes": [{"attr_name": "_invalid", "attr_value": "yes"}],
+                        "attributes": [
+                            {"attr_name": "_invalid", "attr_value": "yes"}
+                        ],
                     }
                 ]
             },
         )
         self.assertIn(
-            "Attribute '_invalid' for event_id '1' invalid, cannot start with " "'_'",
+            "Attribute '_invalid' for event_id '1' invalid, cannot start with "
+            "'_'",
             response.json["meta"]["last_10_errors"],
         )
 
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
     def test_add_invalid_attributes_disallowed_name(self):
         """Tests attributes cannot be added with a disallowed name."""
         self.login()
@@ -554,7 +631,9 @@ class EventAddAttributeResourceTest(BaseTest):
                         "_id": "1",
                         "_type": "_doc",
                         "_index": "1",
-                        "attributes": [{"attr_name": "message", "attr_value": "yes"}],
+                        "attributes": [
+                            {"attr_name": "message", "attr_value": "yes"}
+                        ],
                     }
                 ]
             },
@@ -570,7 +649,9 @@ class EventAnnotationResourceTest(BaseTest):
 
     resource_url = "/api/v1/sketches/1/event/annotate/"
 
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
     def test_post_annotate_resource(self):
         """Authenticated request to create an annotation."""
         self.login()
@@ -613,11 +694,15 @@ class SearchIndexResourceTest(BaseTest):
 
     resource_url = "/api/v1/searchindices/"
 
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
     def test_post_create_searchindex(self):
         """Authenticated request to create a searchindex."""
         self.login()
-        data = dict(searchindex_name="test3", es_index_name="test3", public=False)
+        data = dict(
+            searchindex_name="test3", es_index_name="test3", public=False
+        )
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data),
@@ -655,29 +740,6 @@ class TimelineListResourceTest(BaseTest):
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
 
 
-class SigmaResourceTest(BaseTest):
-    """Test Sigma resource."""
-
-    resource_url = "/api/v1/sigma/rule/"
-    expected_response = {
-        "objects": {
-            "description": "Detects suspicious installation of ZMap",
-            "id": "5266a592-b793-11ea-b3de-0242ac130004",
-            "level": "high",
-            "logsource": {"product": "linux", "service": "shell"},
-            "title": "Suspicious Installation of ZMap",
-        }
-    }
-
-    def test_get_sigma_rule(self):
-        """Authenticated request to get an sigma rule."""
-        self.login()
-        response = self.client.get(
-            self.resource_url + "5266a592-b793-11ea-b3de-0242ac130004"
-        )
-        self.assertIsNotNone(response)
-
-
 class SigmaRuleResourceTest(BaseTest):
     """Test Sigma Rule resource."""
 
@@ -691,7 +753,9 @@ class SigmaRuleResourceTest(BaseTest):
         }
     }
 
-    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch(
+        "timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore
+    )
     def test_post_sigma_resource(self):
         """Authenticated request to POST an sigma rule."""
         MOCK_SIGMA_RULE = """
@@ -742,7 +806,9 @@ level: high
         )
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
         # Now GET the ressources
-        response = self.client.get("/api/v1/sigmarule/5266a592-b793-11ea-b3de-bbbbbb/")
+        response = self.client.get(
+            "/api/v1/sigmarule/5266a592-b793-11ea-b3de-bbbbbb/"
+        )
 
         self.assertIsNotNone(response)
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
@@ -976,104 +1042,6 @@ class SigmaRuleByTextResourceTest(BaseTest):
         data = json.loads(response.get_data(as_text=True))
 
         self.assertIn("Missing value in the request", data["message"])
-        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
-
-
-class SigmaByTextResourceTest(BaseTest):
-    """DEPRECATED: Test Sigma by text resource."""
-
-    correct_rule = """
-        title: Installation of foobar
-        id: bb1e0d1d-cd13-4b65-bf7e-69b4e740266b
-        description: Detects suspicious installation of foobar
-        references:
-            - https://samle.com/foobar
-        author: Alexander Jaeger
-        date: 2020/12/10
-        modified: 2020/12/10
-        tags:
-            - attack.discovery
-            - attack.t1046
-        logsource:
-            product: linux
-            service: shell
-        detection:
-            keywords:
-                # Generic suspicious commands
-                - '*apt-get install foobar*'
-            condition: keywords
-        falsepositives:
-            - Unknown
-        level: high
-        """
-    expected_response = {
-        "meta": {},
-        "objects": [
-            {
-                "title": "Installation of foobar",
-                "id": "bb1e0d1d-cd13-4b65-bf7e-69b4e740266b",
-                "description": "Detects suspicious installation of foobar",
-                "references": ["https://samle.com/foobar"],
-                "author": "Alexander Jaeger",
-                "date": "2020/12/10",
-                "modified": "2020/12/10",
-                "tags": ["attack.discovery", "attack.t1046"],
-                "logsource": {"product": "linux", "service": "shell"},
-                "detection": {
-                    "keywords": ["*apt-get install foobar*"],
-                    "condition": "keywords",
-                },
-                "falsepositives": ["Unknown"],
-                "level": "high",
-                "search_query": '(data_type:("shell:zsh:history" OR "bash:history:command" OR "apt:history:line" OR "selinux:line") AND "apt-get install foobar")',  # pylint: disable=line-too-long
-                "file_name": "N/A",
-            }
-        ],
-    }
-
-    def test_get_sigma_rule(self):
-        """DEPRECATED: Authenticated request to get an sigma rule by text."""
-        self.login()
-
-        data = dict(content=self.correct_rule)
-        response = self.client.post(
-            "/api/v1/sigma/text/",
-            data=json.dumps(data, ensure_ascii=False),
-            content_type="application/json",
-        )
-        self.assertIsNotNone(response)
-        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
-        self.assertDictContainsSubset(self.expected_response, response.json)
-        self.assert200(response)
-
-    def test_get_non_existing_rule_by_text(self):
-        """DEPRECATED: Authenticated request to get an sigma rule by text
-        with non parseable yaml text."""
-        self.login()
-        data = dict(content="foobar: asd")
-        response = self.client.post(
-            "/api/v1/sigma/text/",
-            data=json.dumps(data, ensure_ascii=False),
-            content_type="application/json",
-        )
-        data = json.loads(response.get_data(as_text=True))
-
-        self.assertIn("No detection definitions found", data["message"])
-        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
-
-    def test_get_rule_by_text_no_form_data(self):
-        """DEPRECATED: Authenticated request to get an sigma rule by text with
-        no form data"""
-        self.login()
-        data = dict(action="post")
-        response = self.client.post(
-            "/api/v1/sigma/text/",
-            data=json.dumps(data, ensure_ascii=False),
-            content_type="application/json",
-        )
-        data = json.loads(response.get_data(as_text=True))
-
-        self.assertIn("Missing values from the request", data["message"])
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
 
 

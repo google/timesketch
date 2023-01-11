@@ -63,7 +63,9 @@ def _enrich_sigma_rule_object(rule: SigmaRule):
     parsed_rule["created_at"] = str(rule.created_at)
     parsed_rule["updated_at"] = str(rule.updated_at)
     parsed_rule["title"] = parsed_rule.get("title", rule.title)
-    parsed_rule["description"] = parsed_rule.get("description", rule.description)
+    parsed_rule["description"] = parsed_rule.get(
+        "description", rule.description
+    )
     parsed_rule["rule_yaml"] = rule.rule_yaml
 
     # via StatusMixin, values according to:
@@ -71,152 +73,6 @@ def _enrich_sigma_rule_object(rule: SigmaRule):
     parsed_rule["status"] = rule.get_status.status
 
     return parsed_rule
-
-
-# TODO(jaegeral): deprecate this class
-class SigmaListResource(resources.ResourceMixin, Resource):
-    """DEPRECATED: Resource to get list of Sigma rules.
-
-    Will be removed as part of
-    https://github.com/google/timesketch/issues/2301.
-
-    """
-
-    @login_required
-    def get(self):
-        """Handles GET request to the resource.
-        Returns:
-            Dict of sigma rules
-        """
-        sigma_rules = []
-
-        try:
-            sigma_rules = ts_sigma_lib.get_all_sigma_rules()
-
-        except ValueError as e:
-            logger.error(
-                "OS Error, unable to get the path to the Sigma rules",
-                exc_info=True,
-            )
-            abort(HTTP_STATUS_CODE_NOT_FOUND, f"Value Error, {e}")
-        # TODO: idea for meta: add a list of folders that have been parsed
-        meta = {"rules_count": len(sigma_rules)}
-        return jsonify({"objects": sigma_rules, "meta": meta})
-
-
-# TODO(jaegeral): deprecate this class
-class SigmaResource(resources.ResourceMixin, Resource):
-    """DEPRECATED: Resource to get a Sigma rule.
-
-    Will be removed as part of
-    https://github.com/google/timesketch/issues/2301.
-    """
-
-    @login_required
-    def get(self, rule_uuid):
-        """DEPRECATED: Handles GET request to the resource.
-        Args:
-            rule_uuid: UUID of the sigma rule
-        Returns:
-            JSON sigma rule
-        """
-        return_rule = None
-        try:
-            sigma_rules = ts_sigma_lib.get_all_sigma_rules()
-
-        except ValueError as e:
-            logger.error(
-                "OS Error, unable to get the path to the Sigma rules",
-                exc_info=True,
-            )
-            abort(HTTP_STATUS_CODE_NOT_FOUND, f"ValueError {e}")
-        for rule in sigma_rules:
-            if rule is not None:
-                if rule_uuid == rule.get("id"):
-                    return_rule = rule
-
-        if return_rule is None:
-            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sigma rule found with this ID.")
-
-        meta = {
-            "current_user": current_user.username,
-            "rules_count": len(sigma_rules),
-        }
-        return jsonify({"objects": [return_rule], "meta": meta})
-
-
-# TODO(jaegeral): deprecate this class
-class SigmaByTextResource(resources.ResourceMixin, Resource):
-    """DEPRECATED: Resource to get a Sigma rule by text.
-
-    Will be removed as part of
-    https://github.com/google/timesketch/issues/2301.
-
-    """
-
-    @login_required
-    def post(self):
-        """Handles POST request to the resource.
-        Returns:
-            JSON sigma rule
-        """
-
-        form = request.json
-        if not form:
-            form = request.data
-
-        content = form.get("content")
-        if not content:
-            return abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                "Missing values from the request.",
-            )
-
-        try:
-            sigma_rule = ts_sigma_lib.parse_sigma_rule_by_text(content)
-
-        except ValueError:
-            logger.error(
-                "Sigma Parsing error with the user provided rule",
-                exc_info=True,
-            )
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                "Error unable to parse the provided Sigma rule",
-            )
-
-        except NotImplementedError as exception:
-            logger.error(
-                "Sigma Parsing error: Feature in the rule provided "
-                " is not implemented in this backend",
-                exc_info=True,
-            )
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                "Sigma Parsing error: Feature in the rule provided "
-                " is not implemented in this backend: {0!s}".format(exception),
-            )
-
-        except sigma_exceptions.SigmaParseError as exception:
-            logger.error("Sigma Parsing error: unknown error", exc_info=True)
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                "Sigma parsing error generating rule  with error: {0!s}".format(
-                    exception
-                ),
-            )
-
-        except yaml.parser.ParserError as exception:
-            logger.error(
-                "Sigma Parsing error: an invalid yml file has been provided",
-                exc_info=True,
-            )
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                "Sigma parsing error: invalid YAML provided: {0!s}".format(exception),
-            )
-
-        return jsonify({"objects": [sigma_rule], "meta": {}})
 
 
 class SigmaRuleListResource(resources.ResourceMixin, Resource):
@@ -285,9 +141,13 @@ class SigmaRuleListResource(resources.ResourceMixin, Resource):
         rule_uuid = parsed_rule.get("id")
 
         # Query rules to see if it already exist and exit if found
-        sigma_rule_from_db = SigmaRule.query.filter_by(rule_uuid=rule_uuid).first()
+        sigma_rule_from_db = SigmaRule.query.filter_by(
+            rule_uuid=rule_uuid
+        ).first()
         if sigma_rule_from_db:
-            error_msg = "Rule {0!s} was already found in the database".format(rule_uuid)
+            error_msg = "Rule {0!s} was already found in the database".format(
+                rule_uuid
+            )
             logger.debug(error_msg)
             abort(HTTP_STATUS_CODE_FORBIDDEN, error_msg)
 
@@ -412,12 +272,16 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
         if not rule_yaml:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                "Error parsing Sigma rule {0!s}: no YAML provided".format(rule_uuid),
+                "Error parsing Sigma rule {0!s}: no YAML provided".format(
+                    rule_uuid
+                ),
             )
         try:
             parsed_rule = ts_sigma_lib.parse_sigma_rule_by_text(rule_yaml)
         except ValueError as e:
-            error_msg = "Error parsing Sigma rule {0!s}: {1!s}".format(rule_uuid, e)
+            error_msg = "Error parsing Sigma rule {0!s}: {1!s}".format(
+                rule_uuid, e
+            )
             abort(HTTP_STATUS_CODE_BAD_REQUEST, error_msg)
 
         if rule_uuid != parsed_rule.get("id"):
@@ -428,17 +292,23 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
                 ),
             )
 
-        sigma_rule_from_db = SigmaRule.query.filter_by(rule_uuid=rule_uuid).first()
+        sigma_rule_from_db = SigmaRule.query.filter_by(
+            rule_uuid=rule_uuid
+        ).first()
 
         if not sigma_rule_from_db:
-            error_msg = "Sigma rule with UUID: {0!s} not found".format(rule_uuid)
+            error_msg = "Sigma rule with UUID: {0!s} not found".format(
+                rule_uuid
+            )
             logger.error(error_msg)
             abort(HTTP_STATUS_CODE_NOT_FOUND, error_msg)
 
         sigma_rule_from_db.rule_yaml = rule_yaml
         sigma_rule_from_db.title = parsed_rule.get("title")
         sigma_rule_from_db.description = parsed_rule.get("description")
-        sigma_rule_from_db.set_status(parsed_rule.get("status", "experimental"))
+        sigma_rule_from_db.set_status(
+            parsed_rule.get("status", "experimental")
+        )
 
         try:
             db_session.add(sigma_rule_from_db)
@@ -451,7 +321,9 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
                 error_msg,
             )
 
-        return self.to_json(sigma_rule_from_db, status_code=HTTP_STATUS_CODE_OK)
+        return self.to_json(
+            sigma_rule_from_db, status_code=HTTP_STATUS_CODE_OK
+        )
 
 
 class SigmaRuleByTextResource(resources.ResourceMixin, Resource):
@@ -478,8 +350,10 @@ class SigmaRuleByTextResource(resources.ResourceMixin, Resource):
         try:
             sigma_rule = ts_sigma_lib.parse_sigma_rule_by_text(content)
         except ValueError as e:
-            error_msg = "Sigma rule Parsing error with provided rule {0!s}".format(
-                str(e)
+            error_msg = (
+                "Sigma rule Parsing error with provided rule {0!s}".format(
+                    str(e)
+                )
             )
             logger.error(
                 error_msg,
@@ -514,7 +388,9 @@ class SigmaRuleByTextResource(resources.ResourceMixin, Resource):
             )
 
         except yaml.parser.ParserError as e:
-            error_msg = "Sigma parsing error: invalid YAML provided {0!s}".format(e)
+            error_msg = (
+                "Sigma parsing error: invalid YAML provided {0!s}".format(e)
+            )
             logger.error(
                 error_msg,
                 exc_info=True,
