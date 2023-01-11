@@ -360,7 +360,7 @@ export default {
   getSearchHistoryTree(sketchId) {
     return RestApiClient.get('/sketches/' + sketchId + /searchhistorytree/)
   },
-  // Sigma
+  // Sigma this will be changed in a different PR that migrates the sigma module
   getSigmaList() {
     return RestApiClient.get('/sigma/')
   },
@@ -385,7 +385,7 @@ export default {
   getScenarioTemplates() {
     return RestApiClient.get('/scenarios/')
   },
-  getSketchScenarios(sketchId, status=null) {
+  getSketchScenarios(sketchId, status = null) {
     let params = {}
     if (status) {
       params.params = {
