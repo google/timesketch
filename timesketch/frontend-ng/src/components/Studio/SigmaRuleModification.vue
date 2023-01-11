@@ -56,9 +56,9 @@ limitations under the License.
       </div>
 
       <div class="mt-3">
-        <v-btn :disabled="!isParsed" @click="addOrUpdateRule(ruleYaml)" small depressed color="primary">{{
-          action_button_text
-        }}</v-btn>
+        <v-btn :disabled="!isParsed" @click="addOrUpdateRule(ruleYaml)" small depressed color="primary">
+          {{ isNewRule ? 'Create Rule' : 'Update Rule' }}
+        </v-btn>
         <div style="width: 20px; display: inline-block"></div>
         <v-btn @click="$router.back()" small depressed color="secondary">Cancel </v-btn>
         <!-- make 20 px space° -->
@@ -71,7 +71,7 @@ limitations under the License.
   
 <script>
 import ApiClient from '../../utils/RestApiClient'
-import { SigmaTemplates, GeneralText } from '@/utils/SigmaRuleTemplates'
+import { SigmaTemplates, defaultSigmaPlaceholder } from '@/utils/SigmaRuleTemplates'
 import EventBus from '../../main'
 import _ from 'lodash'
 
@@ -82,7 +82,6 @@ export default {
       editingRule: { ruleYaml: 'foobar' }, // empty state
       status_chip_text: 'OK',
       status_text: '',
-      action_button_text: 'Update Rule',
       ruleYaml: {},
       SigmaTemplates: SigmaTemplates,
       search: '',
@@ -104,7 +103,6 @@ export default {
       }
       this.isNewRule = true
       this.isUpdatingRule = false
-      this.action_button_text = 'Create Rule'
       this.status_chip_text = 'OK'
       this.parseSigma(this.editingRule.rule_yaml)
     }
@@ -153,12 +151,16 @@ export default {
           this.editingRule = response.data.objects[0]
           this.ruleYaml = this.editingRule.rule_yaml // eslint-disable-line camelcase
           this.status_chip_text = 'Ok'
+          this.isNewRule = false
+          this.isUpdatingRule = true
+          this.isParsed = true
         })
         .catch((e) => {
           console.error(e)
-          this.action_button_text = 'Create Rule'
           this.isParsed = false
-          this.ruleYaml = GeneralText
+          this.isNewRule = true
+          this.isUpdatingRule = false
+          this.ruleYaml = defaultSigmaPlaceholder
         })
     },
     deleteRule(ruleUuid) {

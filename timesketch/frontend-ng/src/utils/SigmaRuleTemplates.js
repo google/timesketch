@@ -542,12 +542,12 @@ logsource:
 ${SkeletonLast}
 `
 
-const GeneralText = `${SkeletonFirst}
+const defaultSigmaPlaceholder = `${SkeletonFirst}
 ${SkeletonLast}
 `
 
 const SigmaTemplates = [
-    { "os": "General", "title": "General rule", "text": GeneralText },
+    { "os": "General", "title": "Default template", "text": defaultSigmaPlaceholder },
     { "os": "Cloud", "title": "Cloud: AWS", "text": AwsText },
     { "os": "Cloud", "title": "Cloud: Azure_activitylogs", "text": AzureActivitylogsText },
     { "os": "Cloud", "title": "Cloud: Azure_signinlogs", "text": AzureSigninlogsText },
@@ -631,4 +631,4 @@ const SigmaTemplates = [
 ]
 
 
-export { SigmaTemplates, GeneralText }
+export { SigmaTemplates, defaultSigmaPlaceholder }
