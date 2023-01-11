@@ -16,7 +16,7 @@ limitations under the License.
 */
 import Vue from 'vue'
 
-const defaultTimeout = 7000
+const defaultTimeout = 5000
 const defaultSnackBar = {
     "message": "",
     "color": "info",
