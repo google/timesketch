@@ -16,6 +16,7 @@
 
 import logging
 from datetime import datetime
+import math
 from typing import List
 import pandas as pd
 
@@ -138,7 +139,7 @@ class AuthAnalyzer:
         # matches the required fields
         column_list = df.columns.tolist()
         if not self.check_required_fields(column_list):
-            log.error("Dataframe does not match required columns")
+            log.error("[%s] Dataframe does not match required columns", self.name)
             return False
 
         df.fillna("", inplace=True)
@@ -158,7 +159,7 @@ class AuthAnalyzer:
 
         for req_field in self.REQUIRED_ATTRIBUTES:
             if req_field not in fields:
-                log.error("Missing required field %s", req_field)
+                log.error("[%s] Missing required field %s", self.name, req_field)
                 return False
         return True
 
@@ -173,13 +174,13 @@ class AuthAnalyzer:
         """
 
         if self.df.empty:
-            log.info("Source dataframe is empty")
+            log.info("[%s] Source dataframe is empty", self.name)
             return {}
         df = self.df
 
         df1 = df[df["source_ip"] == source_ip]
         if df1.empty:
-            log.info("%s: no data for source ip", source_ip)
+            log.info("[%s] No data for source ip %s", self.name, source_ip)
             return {}
         return self.get_auth_summary(df1=df1, summary_type="source_ip", value=source_ip)
 
@@ -194,13 +195,13 @@ class AuthAnalyzer:
           dict: user summary information as dictionary
         """
         if self.df.empty:
-            log.info("Source dataframe is empty")
+            log.info("[%s] Source dataframe is empty", self.name)
             return {}
         df = self.df
 
         df1 = df[(df["domain"] == domain) & (df["username"] == username)]
         if df1.empty:
-            log.info("User summary dataframe is empty")
+            log.info("[%s] User summary dataframe is empty", self.name)
             return {}
 
         df1.sort_values(by="timestamp", ascending=True)
@@ -227,7 +228,7 @@ class AuthAnalyzer:
             summary.domain = domain
             summary.username = username
         else:
-            log.error("Unsupported summary_type value %s", summary_type)
+            log.error("[%s] Unsupported summary_type value %s", self.name, summary_type)
             return summary
 
         # First and last time the brute forcing IP address was observed
@@ -313,7 +314,7 @@ class AuthAnalyzer:
         }
 
         if self.df.empty:
-            log.debug("Source dataframe is empty")
+            log.debug("[%s] Source dataframe is empty", self.name)
             return login_session
         df = self.df
         try:
@@ -336,12 +337,14 @@ class AuthAnalyzer:
             login_session["session_duration"] = session_duration
         except KeyError as exception:
             log.error(
-                "Session duration calculation failed due to key error: %s",
+                "[%s] Session duration calculation failed due to key error: %s",
+                self.name,
                 str(exception),
             )
         except IndexError as exception:
             log.error(
-                "Session duration calculation failed due to index error: %s",
+                "[%s] Session duration calculation failed due to index error: %s",
+                self.name,
                 str(exception),
             )
         finally:
@@ -393,6 +396,7 @@ class BruteForceAnalyzer(AuthAnalyzer):
         success_df = source_df[source_df["auth_result"] == "success"]
         if success_df.empty:
             log.info("[%s] No successful login data for %s", self.NAME, source_ip)
+            # print("[%s] No successful login data for %s", self.NAME, source_ip)
             return {}
 
         # Same IP address can perform multiple brute force attempts
@@ -405,9 +409,11 @@ class BruteForceAnalyzer(AuthAnalyzer):
             # Successful login timestamp
             login_ts = row["timestamp"]
 
+            end_timestamp_min = math.ceil(login_ts / 60) * 60
+
             # Time boundary for authentication events check
-            start_timestamp = login_ts - self.BRUTE_FORCE_WINDOW
-            end_timestamp = login_ts
+            start_timestamp = end_timestamp_min - self.BRUTE_FORCE_WINDOW
+            end_timestamp = end_timestamp_min  # login_ts
             log.info(
                 "[%s] Checking brute force from %s between %s and %s",
                 self.NAME,
@@ -425,6 +431,12 @@ class BruteForceAnalyzer(AuthAnalyzer):
 
             try:
                 success_count = df2["success"]
+                log.debug(
+                    "[%s] Success count for %s is %d",
+                    self.NAME,
+                    source_ip,
+                    success_count,
+                )
             except KeyError:
                 log.info(
                     "[%s] No successful login events for %s."
@@ -453,7 +465,7 @@ class BruteForceAnalyzer(AuthAnalyzer):
                 failed_count,
             )
 
-            if success_count == 0 and failed_count >= self.BRUTE_FORCE_MIN_FAILED_EVENT:
+            if success_count > 0 and failed_count >= self.BRUTE_FORCE_MIN_FAILED_EVENT:
                 # TODO(rmaskey): Evaluate event timestamps
                 row_session_id = row.get("session_id") or ""
                 row_domain = row.get("domain")
@@ -513,6 +525,7 @@ class BruteForceAnalyzer(AuthAnalyzer):
                 domain,
                 username,
             )
+
             if user_account in checked_user_accounts:
                 log.debug(
                     "[%s] Skipping user account %s. User account already checked",
