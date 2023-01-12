@@ -314,7 +314,7 @@ export default {
     },
     getEnrichedTags(tags) {
       let enriched = tags.map((tag) => this.enrichTag(tag)).sort((a, b) => b.weight - a.weight)
-      console.log(enriched)
+      // console.log(enriched)
       return enriched
     },
     enrichTag(tag) {
