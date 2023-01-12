@@ -19,16 +19,16 @@ EXPECTED_MESSAGE = """## Brute Force Analysis
 
 ### Brute Force from 192.168.40.25
 
-- Successful brute force from 192.168.40.25 as admin at 2023-01-11 03:43:34 (duration=5)
+- Successful brute force from 192.168.40.25 as admin at 2023-01-10 16:43:34 (duration=5)
 
 #### IP Summaries
 
 - Source IP: 192.168.40.25
-- Brute forcing IP first seen: 2023-01-11 03:40:14
-- Brute forcing IP last seen: 2023-01-11 03:43:39
+- Brute forcing IP first seen: 2023-01-10 16:40:14
+- Brute forcing IP last seen: 2023-01-10 16:43:39
 - First successful login for brute forcing IP
     - IP: 192.168.40.25
-    - Login timestamp: 2023-01-11 03:43:34
+    - Login timestamp: 2023-01-10 16:43:34
     - Username: admin
 - Total successful login from IP: 1
 - Total failed login attempts: 200
