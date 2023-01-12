@@ -60,7 +60,9 @@ class TimesketchSigmaRuleTest(unittest.TestCase):
     @mock.patch("requests.Session", test_lib.mock_session)
     def setUp(self):
         """Setup test case."""
-        self.api_client = client.TimesketchApi("http://127.0.0.1", "test", "test")
+        self.api_client = client.TimesketchApi(
+            "http://127.0.0.1", "test", "test"
+        )
 
     def test_get_sigmarule(self):
         """New:Test get single Sigma rule."""
@@ -92,7 +94,7 @@ class TimesketchSigmaRuleTest(unittest.TestCase):
     def test_sigma_rules(self):
         """Testing the Sigma rules list"""
 
-        rules = self.api_client.list_sigma_rules()
+        rules = self.api_client.list_sigmarules()
         self.assertIsNotNone(rules)
         self.assertEqual(len(rules), 2)
         rule = rules[0]
