@@ -19,13 +19,14 @@ limitations under the License.
       <span style="cursor: pointer" @click="expanded = !expanded">
         <v-icon left>mdi-sigma-lower</v-icon> Sigma Rules ({{ ruleCount }})
       </span>
-
-      <router-link :to="{ name: 'Studio', params: { id: 'new', type: 'sigma' } }" style="text-decoration: none">
-        <v-icon>mdi-plus</v-icon></router-link
-      >
+      <span style="float: right">
+        <router-link :to="{ name: 'Studio', params: { id: 'new', type: 'sigma' } }" style="text-decoration: none">
+          <v-icon>mdi-plus</v-icon></router-link
+        >
+      </span>
     </div>
     <v-expand-transition>
-      <div v-show="expanded">
+      <div v-show="expanded" v-if="ruleCount > 0">
         <v-data-iterator :items="sigmaRules" :items-per-page.sync="itemsPerPage" :search="search">
           <template v-slot:header>
             <v-toolbar flat>
