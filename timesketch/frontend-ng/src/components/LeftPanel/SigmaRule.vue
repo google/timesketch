@@ -39,11 +39,13 @@ limitations under the License.
                   <v-list-item-icon>
                     <v-icon>mdi-brightness-6</v-icon>
                   </v-list-item-icon>
-                  <router-link
-                    :to="{ name: 'Studio', params: { id: sigmaRule.rule_uuid, type: 'sigma' } }"
-                    style="text-decoration: none"
-                    >Edit Rule</router-link
-                  >
+                  <div>
+                    <router-link
+                      :to="{ name: 'Studio', params: { id: sigmaRule.rule_uuid, type: 'sigma' } }"
+                      style="text-decoration: none; color: black"
+                      >Edit Rule</router-link
+                    >
+                  </div>
                 </v-list-item>
                 <v-list-item v-on:click="deprecateSigmaRule(sigmaRule.rule_uuid)">
                   <v-list-item-icon>
@@ -55,7 +57,7 @@ limitations under the License.
                 </v-list-item>
                 <v-list-item v-on:click="deleteRule(sigmaRule.rule_uuid)">
                   <v-list-item-icon>
-                    <v-icon>mdi-archive</v-icon>
+                    <v-icon>mdi-delete</v-icon>
                   </v-list-item-icon>
                   <v-list-item-content>
                     <v-list-item-title>Delete Rule</v-list-item-title>
