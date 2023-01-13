@@ -19,7 +19,7 @@ limitations under the License.
           <router-link to="/">
             <v-img src="/dist/timesketch-color.png" max-height="25" max-width="25" contain></v-img>
           </router-link> </v-avatar
-        ><span style="font-size: 1.2em">Studio</span>
+        ><span style="font-size: 1.1em">Studio</span>
         <v-spacer></v-spacer>
       </v-toolbar>
       <v-divider></v-divider>
