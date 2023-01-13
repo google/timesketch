@@ -20,7 +20,7 @@ limitations under the License.
       <v-chip rounded x-small class="mr-2" :color="statusColors()">
         <v-icon v-if="isParsingSuccesful" x-small> mdi-check </v-icon>
         <v-icon v-else x-small> mdi-alert </v-icon>
-        Error</v-chip
+        {{ status_chip_text }}</v-chip
       >
     </h2>
 
@@ -106,13 +106,14 @@ export default {
       }
       this.isNewRule = true
       this.isUpdatingRule = false
-      this.status_chip_text = 'OK'
-      this.ruleYaml = defaultSigmaPlaceholder
+      this.status_chip_text = 'Ok'
+      this.isParsingSuccesful = true
+      this.ruleYamlTextArea = defaultSigmaPlaceholder
       this.editingRule.rule_yaml = defaultSigmaPlaceholder
       this.parseSigma(this.editingRule.rule_yaml)
+    } else {
+      this.getRuleByUUID(this.rule_uuid)
     }
-
-    this.getRuleByUUID(this.rule_uuid)
   },
   methods: {
     selectTemplate(text) {
@@ -153,6 +154,9 @@ export default {
       return 'error'
     },
     getRuleByUUID(ruleUuid) {
+      if (ruleUuid === 'new') {
+        return
+      }
       ApiClient.getSigmaRuleResource(ruleUuid)
         .then((response) => {
           this.editingRule = response.data.objects[0]
