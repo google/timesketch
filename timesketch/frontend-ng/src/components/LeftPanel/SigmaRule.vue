@@ -34,7 +34,7 @@ limitations under the License.
           </template>
           <v-card>
             <v-list>
-              <v-list-item-group color="primary">
+              <v-list-item-group>
                 <v-list-item v-on:click="editSigmaRule(sigmaRule.rule_uuid)">
                   <v-list-item-icon>
                     <v-icon>mdi-brightness-6</v-icon>

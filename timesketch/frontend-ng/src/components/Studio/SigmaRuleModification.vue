@@ -15,19 +15,27 @@ limitations under the License.
 -->
 <template>
   <v-container class="px-8">
-    <h2>
+    <strong>
       {{ editingRule.title }}
       <v-chip rounded x-small class="mr-2" :color="statusColors()">
         <v-icon v-if="isParsingSuccesful" x-small> mdi-check </v-icon>
         <v-icon v-else x-small> mdi-alert </v-icon>
         {{ status_chip_text }}</v-chip
       >
-    </h2>
-
-    <div>
-      <v-autocomplete dense filled rounded :items="SigmaTemplates" @change="selectTemplate" item-text="title">
-      </v-autocomplete>
-    </div>
+    </strong>
+    <v-row>
+      <v-col cols="4">
+        <v-autocomplete
+          dense
+          outlined
+          :items="SigmaTemplates"
+          @change="selectTemplate"
+          item-text="title"
+          label="Choose template"
+        >
+        </v-autocomplete>
+      </v-col>
+    </v-row>
     <div class="alertbox" v-if="!isParsingSuccesful">
       <v-alert dense type="error" outlined>
         {{ status_text }}
@@ -48,10 +56,10 @@ limitations under the License.
     </v-textarea>
 
     <div class="alertbox" v-if="isParsingSuccesful">
-      <v-alert colored-border border="left" elevation="1" :color="statusColors()">
-        <b>Search Query:</b>
+      <!--<v-alert colored-border border="left" elevation="1" :color="statusColors()">-->
+      <h3>Preview opensearch query:</h3>
         {{ editingRule.search_query }}
-      </v-alert>
+      </div>
     </div>
 
     <div class="mt-3">
@@ -60,9 +68,8 @@ limitations under the License.
       </v-btn>
       <div style="width: 20px; display: inline-block"></div>
       <v-btn @click="$router.back()" small depressed color="secondary">Cancel </v-btn>
-      <!-- make 20 px space° -->
       <div style="width: 20px; display: inline-block"></div>
-      <v-btn @click="deleteRule(rule_uuid)" small depressed color="red" :disabled="isNewRule">Delete Rule</v-btn>
+      <v-btn @click="deleteRule(rule_uuid)" small depressed color="red" :disabled="isNewRule"><v-icon>mdi-delete</v-icon></v-btn>
     </div>
   </v-container>
 </template>
@@ -77,7 +84,7 @@ export default {
   props: ['rule_uuid', 'sigmaRule'],
   data() {
     return {
-      editingRule: { ruleYaml: 'foobar' }, // empty state
+      editingRule: { ruleYaml: defaultSigmaPlaceholder }, // empty state
       status_chip_text: 'OK',
       status_text: '',
       ruleYamlTextArea: {},
@@ -94,12 +101,9 @@ export default {
     },
   },
   loaded() {
-    console.log('loaded')
     this.parseSigma(this.editingRule.rule_yaml)
   },
   mounted() {
-    console.log('mounted with' + this.rule_uuid)
-    // check if router was called with sigma/new
     if (this.rule_uuid === 'new') {
       this.editingRule = {
         title: 'New Sigma Rule',

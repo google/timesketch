@@ -68,8 +68,8 @@ export default {
   },
   methods: {
     createNewSigmaRule() {
-      //check current router location
-      if (this.$route.params.id == 'new') {
+      // check current router location
+      if (this.$route.params.id === 'new') {
         return
       }
       this.$router.push({
