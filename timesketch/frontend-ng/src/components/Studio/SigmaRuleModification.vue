@@ -98,7 +98,7 @@ export default {
     this.parseSigma(this.editingRule.rule_yaml)
   },
   mounted() {
-    console.log('mounted')
+    console.log('mounted with' + this.rule_uuid)
     // check if router was called with sigma/new
     if (this.rule_uuid === 'new') {
       this.editingRule = {
@@ -126,7 +126,6 @@ export default {
     // Set debounce to 300ms if parseSigma is used.
     parseSigma: _.debounce(function (ruleYaml) {
       console.log('parseSigma with ' + ruleYaml)
-      console.log('maybe use insted ' + this.editingRule.rule_yaml)
       // eslint-disable-line
       ApiClient.getSigmaRuleByText(ruleYaml)
         .then((response) => {
@@ -189,7 +188,7 @@ export default {
     },
     addOrUpdateRule: function (event) {
       if (this.isNewRule) {
-        ApiClient.createSigmaRule(this.ruleYaml)
+        ApiClient.createSigmaRule(this.ruleYamlTextArea)
           .then((response) => {
             this.$store.dispatch('updateSigmaList')
             EventBus.$emit('errorSnackBar', 'Rule created: ' + this.editingRule.id)
@@ -199,7 +198,7 @@ export default {
           })
       }
       if (this.isUpdatingRule) {
-        ApiClient.updateSigmaRule(this.editingRule.id, this.ruleYaml)
+        ApiClient.updateSigmaRule(this.editingRule.id, this.ruleYamlTextArea)
           .then((response) => {
             this.$store.dispatch('updateSigmaList')
             EventBus.$emit('successSnackBar', 'Rule updated: ' + this.editingRule.id)

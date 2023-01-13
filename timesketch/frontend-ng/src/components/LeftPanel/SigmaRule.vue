@@ -35,17 +35,13 @@ limitations under the License.
           <v-card>
             <v-list>
               <v-list-item-group color="primary">
-                <v-list-item>
+                <v-list-item v-on:click="editSigmaRule(sigmaRule.rule_uuid)">
                   <v-list-item-icon>
                     <v-icon>mdi-brightness-6</v-icon>
                   </v-list-item-icon>
-                  <div>
-                    <router-link
-                      :to="{ name: 'Studio', params: { id: sigmaRule.rule_uuid, type: 'sigma' } }"
-                      style="text-decoration: none; color: black"
-                      >Edit Rule</router-link
-                    >
-                  </div>
+                  <v-list-item-content>
+                    <v-list-item-title>Edit Rule</v-list-item-title>
+                  </v-list-item-content>
                 </v-list-item>
                 <v-list-item v-on:click="deprecateSigmaRule(sigmaRule.rule_uuid)">
                   <v-list-item-icon>
@@ -172,6 +168,15 @@ export default {
       eventData.queryFilter = defaultQueryFilter()
       console.log(eventData)
       EventBus.$emit('setQueryAndFilter', eventData)
+    },
+    editSigmaRule(ruleUuid) {
+      this.$router.push({
+        name: 'Studio',
+        params: {
+          id: ruleUuid,
+          type: 'sigma',
+        },
+      })
     },
     deleteRule(ruleUuid) {
       if (confirm('Delete Rule?')) {

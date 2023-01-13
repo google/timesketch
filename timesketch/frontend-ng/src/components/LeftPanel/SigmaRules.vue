@@ -20,9 +20,7 @@ limitations under the License.
         <v-icon left>mdi-sigma-lower</v-icon> Sigma Rules ({{ ruleCount }})
       </span>
       <span style="float: right">
-        <router-link :to="{ name: 'Studio', params: { id: 'new', type: 'sigma' } }" style="text-decoration: none">
-          <v-icon>mdi-plus</v-icon></router-link
-        >
+        <v-icon v-on:click="createNewSigmaRule()">mdi-plus</v-icon>
       </span>
     </div>
     <v-expand-transition>
@@ -67,6 +65,21 @@ export default {
       itemsPerPage: 10,
       search: '',
     }
+  },
+  methods: {
+    createNewSigmaRule() {
+      //check current router location
+      if (this.$route.params.id == 'new') {
+        return
+      }
+      this.$router.push({
+        name: 'Studio',
+        params: {
+          id: 'new',
+          type: 'sigma',
+        },
+      })
+    },
   },
   computed: {
     sigmaRules() {
