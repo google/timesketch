@@ -29,7 +29,7 @@ limitations under the License.
       </v-autocomplete>
     </div>
     <div class="alertbox" v-if="!isParsingSuccesful">
-      <v-alert dense type="error">
+      <v-alert dense type="error" outlined>
         {{ status_text }}
       </v-alert>
     </div>
