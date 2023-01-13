@@ -14,59 +14,57 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-card>
-    <v-container class="px-8">
-      <h1>
-        Rule title: {{ editingRule.title }}
-        <v-chip rounded x-small class="mr-2" :color="statusColors()">
-          <v-icon v-if="isParsingSuccesful"> mdi-check </v-icon>
-          <v-icon v-else> mdi-alert </v-icon>
-          Error</v-chip
-        >
-      </h1>
-
-      <div>
-        <v-autocomplete dense filled rounded :items="SigmaTemplates" @change="selectTemplate" item-text="title">
-        </v-autocomplete>
-      </div>
-      <div class="alertbox" v-if="!isParsingSuccesful">
-        <v-alert dense type="warning">
-          {{ status_text }}
-        </v-alert>
-      </div>
-
-      <v-textarea
-        label="Edit Sigma rule"
-        outlined
-        :color="statusColors()"
-        autocomplete="email"
-        rows="25"
-        v-model="ruleYaml"
-        background-color="statusColors()"
-        @input="parseSigma(ruleYaml)"
-        class="editSigmaRule"
+  <v-container class="px-8">
+    <h2>
+      {{ editingRule.title }}
+      <v-chip rounded x-small class="mr-2" :color="statusColors()">
+        <v-icon v-if="isParsingSuccesful" x-small> mdi-check </v-icon>
+        <v-icon v-else x-small> mdi-alert </v-icon>
+        Error</v-chip
       >
-      </v-textarea>
+    </h2>
 
-      <div class="alertbox" v-if="isParsingSuccesful">
-        <v-alert colored-border border="left" elevation="1" :color="statusColors()">
-          <b>Search Query:</b>
-          {{ editingRule.search_query }}
-        </v-alert>
-      </div>
+    <div>
+      <v-autocomplete dense filled rounded :items="SigmaTemplates" @change="selectTemplate" item-text="title">
+      </v-autocomplete>
+    </div>
+    <div class="alertbox" v-if="!isParsingSuccesful">
+      <v-alert dense type="error">
+        {{ status_text }}
+      </v-alert>
+    </div>
 
-      <div class="mt-3">
-        <v-btn :disabled="!isParsingSuccesful" @click="addOrUpdateRule(ruleYaml)" small depressed color="primary">
-          {{ isNewRule ? 'Create Rule' : 'Update Rule' }}
-        </v-btn>
-        <div style="width: 20px; display: inline-block"></div>
-        <v-btn @click="$router.back()" small depressed color="secondary">Cancel </v-btn>
-        <!-- make 20 px space° -->
-        <div style="width: 20px; display: inline-block"></div>
-        <v-btn @click="deleteRule(rule_uuid)" small depressed color="red" :disabled="isNewRule">Delete Rule</v-btn>
-      </div>
-    </v-container>
-  </v-card>
+    <v-textarea
+      label="Edit Sigma rule"
+      outlined
+      :color="statusColors()"
+      autocomplete="email"
+      rows="25"
+      v-model="ruleYamlTextArea"
+      background-color="statusColors()"
+      @input="parseSigma(ruleYamlTextArea)"
+      class="editSigmaRule"
+    >
+    </v-textarea>
+
+    <div class="alertbox" v-if="isParsingSuccesful">
+      <v-alert colored-border border="left" elevation="1" :color="statusColors()">
+        <b>Search Query:</b>
+        {{ editingRule.search_query }}
+      </v-alert>
+    </div>
+
+    <div class="mt-3">
+      <v-btn :disabled="!isParsingSuccesful" @click="addOrUpdateRule(ruleYamlTextArea)" small depressed color="primary">
+        {{ isNewRule ? 'Create Rule' : 'Update Rule' }}
+      </v-btn>
+      <div style="width: 20px; display: inline-block"></div>
+      <v-btn @click="$router.back()" small depressed color="secondary">Cancel </v-btn>
+      <!-- make 20 px space° -->
+      <div style="width: 20px; display: inline-block"></div>
+      <v-btn @click="deleteRule(rule_uuid)" small depressed color="red" :disabled="isNewRule">Delete Rule</v-btn>
+    </div>
+  </v-container>
 </template>
   
 <script>
@@ -82,7 +80,7 @@ export default {
       editingRule: { ruleYaml: 'foobar' }, // empty state
       status_chip_text: 'OK',
       status_text: '',
-      ruleYaml: {},
+      ruleYamlTextArea: {},
       SigmaTemplates: SigmaTemplates,
       search: '',
       isNewRule: false,
@@ -95,7 +93,12 @@ export default {
       this.getRuleByUUID(newVal)
     },
   },
+  loaded() {
+    console.log('loaded')
+    this.parseSigma(this.editingRule.rule_yaml)
+  },
   mounted() {
+    console.log('mounted')
     // check if router was called with sigma/new
     if (this.rule_uuid === 'new') {
       this.editingRule = {
@@ -104,6 +107,8 @@ export default {
       this.isNewRule = true
       this.isUpdatingRule = false
       this.status_chip_text = 'OK'
+      this.ruleYaml = defaultSigmaPlaceholder
+      this.editingRule.rule_yaml = defaultSigmaPlaceholder
       this.parseSigma(this.editingRule.rule_yaml)
     }
 
@@ -114,11 +119,13 @@ export default {
       var matchingTemplate = this.SigmaTemplates.find((obj) => {
         return obj.title === text
       })
-      this.ruleYaml = matchingTemplate.text
+      this.ruleYamlTextArea = matchingTemplate.text
       this.parseSigma(matchingTemplate.text)
     },
     // Set debounce to 300ms if parseSigma is used.
     parseSigma: _.debounce(function (ruleYaml) {
+      console.log('parseSigma with ' + ruleYaml)
+      console.log('maybe use insted ' + this.editingRule.rule_yaml)
       // eslint-disable-line
       ApiClient.getSigmaRuleByText(ruleYaml)
         .then((response) => {
@@ -143,13 +150,13 @@ export default {
       if (this.isParsingSuccesful) {
         return 'success'
       }
-      return 'warning'
+      return 'error'
     },
     getRuleByUUID(ruleUuid) {
       ApiClient.getSigmaRuleResource(ruleUuid)
         .then((response) => {
           this.editingRule = response.data.objects[0]
-          this.ruleYaml = this.editingRule.rule_yaml // eslint-disable-line camelcase
+          this.ruleYamlTextArea = this.editingRule.rule_yaml // eslint-disable-line camelcase
           this.status_chip_text = 'Ok'
           this.isNewRule = false
           this.isUpdatingRule = true
@@ -160,7 +167,7 @@ export default {
           this.isParsingSuccesful = false
           this.isNewRule = true
           this.isUpdatingRule = false
-          this.ruleYaml = defaultSigmaPlaceholder
+          this.ruleYamlTextArea = defaultSigmaPlaceholder
         })
     },
     deleteRule(ruleUuid) {
@@ -191,7 +198,7 @@ export default {
         ApiClient.updateSigmaRule(this.editingRule.id, this.ruleYaml)
           .then((response) => {
             this.$store.dispatch('updateSigmaList')
-            EventBus.$emit('errorSnackBar', 'Rule updated: ' + this.editingRule.id)
+            EventBus.$emit('successSnackBar', 'Rule updated: ' + this.editingRule.id)
           })
           .catch((e) => {})
       }

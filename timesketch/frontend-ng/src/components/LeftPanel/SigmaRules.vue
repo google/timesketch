@@ -19,10 +19,10 @@ limitations under the License.
       <span style="cursor: pointer" @click="expanded = !expanded">
         <v-icon left>mdi-sigma-lower</v-icon> Sigma Rules ({{ ruleCount }})
       </span>
-      <router-link :to="{ name: 'Studio', params: { id: 'new', type: 'sigma' } }">
+
+      <router-link :to="{ name: 'Studio', params: { id: 'new', type: 'sigma' } }" style="text-decoration: none">
         <v-icon>mdi-plus</v-icon></router-link
       >
-      <div></div>
     </div>
     <v-expand-transition>
       <div v-show="expanded">

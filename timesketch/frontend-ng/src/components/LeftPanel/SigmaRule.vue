@@ -39,7 +39,9 @@ limitations under the License.
                   <v-list-item-icon>
                     <v-icon>mdi-brightness-6</v-icon>
                   </v-list-item-icon>
-                  <router-link :to="{ name: 'Studio', params: { id: sigmaRule.rule_uuid, type: 'sigma' } }"
+                  <router-link
+                    :to="{ name: 'Studio', params: { id: sigmaRule.rule_uuid, type: 'sigma' } }"
+                    style="text-decoration: none"
                     >Edit Rule</router-link
                   >
                 </v-list-item>

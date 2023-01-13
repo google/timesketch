@@ -14,12 +14,12 @@ limitations under the License.
   <div>
     <!-- Left panel -->
     <v-navigation-drawer app permanent :width="navigationDrawer.width" hide-overlay ref="drawer">
-      <v-toolbar flat>
-        <v-avatar class="mt-2 ml-n4">
+      <v-toolbar flat color="transparent">
+        <v-avatar class="ml-n1">
           <router-link to="/">
             <v-img src="/dist/timesketch-color.png" max-height="25" max-width="25" contain></v-img>
           </router-link> </v-avatar
-        ><b>Studio</b>
+        ><span style="font-size: 1.2em">Studio</span>
         <v-spacer></v-spacer>
       </v-toolbar>
       <v-divider></v-divider>
