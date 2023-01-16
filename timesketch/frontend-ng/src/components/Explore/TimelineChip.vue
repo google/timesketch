@@ -119,7 +119,7 @@ limitations under the License.
         </v-chip>
       </template>
       <v-card flat width="300">
-        <v-list>
+        <v-list dense>
           <v-list-item v-if="timelineStatus === 'ready'">
             <v-list-item-action>
               <v-icon>mdi-square-edit-outline</v-icon>
@@ -195,6 +195,16 @@ limitations under the License.
               </v-card-actions>
             </v-card>
           </v-dialog>
+          <v-list-item
+            v-if="timelineStatus === 'ready'"
+            :to="{ name: 'Analyse', params: { sketchId: sketch.id  } }"
+            style="cursor: pointer"
+            >
+            <v-list-item-action>
+              <v-icon>mdi-auto-fix</v-icon>
+            </v-list-item-action>
+            <v-list-item-subtitle>Run Analyzers</v-list-item-subtitle>
+          </v-list-item>
         </v-list>
       </v-card>
     </v-menu>
