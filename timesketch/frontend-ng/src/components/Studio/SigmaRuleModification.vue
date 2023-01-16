@@ -58,8 +58,7 @@ limitations under the License.
     <div class="alertbox" v-if="isParsingSuccesful">
       <!--<v-alert colored-border border="left" elevation="1" :color="statusColors()">-->
       <h3>Preview opensearch query:</h3>
-        {{ editingRule.search_query }}
-      </div>
+      {{ editingRule.search_query }}
     </div>
 
     <div class="mt-3">
@@ -67,17 +66,11 @@ limitations under the License.
         {{ isNewRule ? 'Create Rule' : 'Update Rule' }}
       </v-btn>
       <div style="width: 20px; display: inline-block"></div>
-      <v-btn
-            color="primary"
-            text
-            @click="
-              $router.back()
-            "
-          >
-            Cancel
-          </v-btn>
+      <v-btn color="primary" text @click="$router.back()"> Cancel </v-btn>
       <div style="width: 20px; display: inline-block"></div>
-      <v-btn @click="deleteRule(rule_uuid)" small text color="primary" :disabled="isNewRule"><v-icon>mdi-delete</v-icon></v-btn>
+      <v-btn @click="deleteRule(rule_uuid)" small text color="primary" :disabled="isNewRule"
+        ><v-icon>mdi-delete</v-icon></v-btn
+      >
     </div>
   </v-container>
 </template>
