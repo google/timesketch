@@ -27,7 +27,6 @@ limitations under the License.
     </v-navigation-drawer>
     <ts-sigma-rule-modification app @cancel="formatXMLString = false" :rule_uuid="id" v-if="type === 'sigma'">
     </ts-sigma-rule-modification>
-    <ts-search-template-modification app :id="id" v-if="type === 'searchtemplate'"> </ts-search-template-modification>
   </div>
 </template>
 
@@ -35,7 +34,7 @@ limitations under the License.
 import TsSigmaRules from '../components/LeftPanel/SigmaRules'
 import TsSigmaRuleModification from '../components/Studio/SigmaRuleModification.vue'
 export default {
-  props: ['showLeftPanel', 'id', 'type'],
+  props: ['id', 'type'],
   components: {
     TsSigmaRules,
     TsSigmaRuleModification,
@@ -51,19 +50,6 @@ export default {
   created: function () {
     this.$store.dispatch('updateSigmaList')
     document.title = 'Timesketch Studio'
-  },
-
-  computed: {
-    meta() {
-      return this.$store.state.meta
-    },
-  },
-  watch: {
-    showLeftPanel: function (newVal) {
-      if (newVal === true) {
-        this.navigationDrawer.width = 450
-      }
-    },
   },
 }
 </script>
