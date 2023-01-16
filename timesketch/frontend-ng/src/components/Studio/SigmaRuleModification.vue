@@ -67,9 +67,17 @@ limitations under the License.
         {{ isNewRule ? 'Create Rule' : 'Update Rule' }}
       </v-btn>
       <div style="width: 20px; display: inline-block"></div>
-      <v-btn @click="$router.back()" small depressed color="secondary">Cancel </v-btn>
+      <v-btn
+            color="primary"
+            text
+            @click="
+              $router.back()
+            "
+          >
+            Cancel
+          </v-btn>
       <div style="width: 20px; display: inline-block"></div>
-      <v-btn @click="deleteRule(rule_uuid)" small depressed color="red" :disabled="isNewRule"><v-icon>mdi-delete</v-icon></v-btn>
+      <v-btn @click="deleteRule(rule_uuid)" small text color="primary" :disabled="isNewRule"><v-icon>mdi-delete</v-icon></v-btn>
     </div>
   </v-container>
 </template>
