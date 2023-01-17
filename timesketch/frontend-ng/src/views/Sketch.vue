@@ -317,15 +317,6 @@ export default {
         this.setDrawerBorderStyle()
         this.setDrawerResizeEvents()
       })
-
-      //this.setDrawerBorderStyle()
-      //this.setDrawerResizeEvents()
-    })
-  },
-  updated() {
-    this.$nextTick(function () {
-      //this.setDrawerBorderStyle()
-      //this.setDrawerResizeEvents()
     })
   },
   computed: {
