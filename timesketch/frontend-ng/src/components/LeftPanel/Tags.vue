@@ -34,7 +34,7 @@ limitations under the License.
           :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
         >
           <div @click="searchForLabel(label.label)" style="cursor: pointer; font-size: 0.9em">
-            <v-icon v-if="label.label === '__ts_star'" left small color="amber darken-2">mdi-star</v-icon>
+            <v-icon v-if="label.label === '__ts_star'" left small color="amber">mdi-star</v-icon>
             <v-icon v-if="label.label === '__ts_comment'" left small>mdi-comment-multiple-outline</v-icon>
 
             <span

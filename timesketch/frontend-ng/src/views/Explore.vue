@@ -191,8 +191,8 @@ limitations under the License.
       <div v-if="filterChips.length">
         <v-chip-group>
           <span v-for="(chip, index) in filterChips" :key="index + chip.value">
-            <v-chip small close @click:close="removeChip(chip)">
-              <v-icon v-if="chip.value === '__ts_star'" left small color="amber darken-2">mdi-star</v-icon>
+            <v-chip small outlined close @click:close="removeChip(chip)">
+              <v-icon v-if="chip.value === '__ts_star'" left small color="amber">mdi-star</v-icon>
               <v-icon v-if="chip.value === '__ts_comment'" left small>mdi-comment-multiple-outline</v-icon>
               {{ chip.value | formatLabelText }}
             </v-chip>
