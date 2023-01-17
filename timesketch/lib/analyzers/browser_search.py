@@ -90,7 +90,7 @@ class BrowserSearchSketchPlugin(interface.BaseAnalyzer):
                 "LinkedIn",
                 re.compile(r"linkedin\.com/search"),
                 "_extract_search_query_from_url",
-                "keywords"
+                "keywords",
             ),
             (
                 "Yahoo",
