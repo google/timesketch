@@ -17,7 +17,9 @@ limitations under the License.
   <div v-if="sigmaRules.length">
     <div class="pa-4" flat :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
       <span style="cursor: pointer" @click="expanded = !expanded"
-        ><v-icon left>mdi-sigma-lower</v-icon> Sigma Rules ({{ sigmaRules.length }})</span
+        ><v-icon left>mdi-sigma-lower</v-icon> Sigma Rules (<small
+          ><strong>{{ sigmaRules.length }}</strong></small
+        >)</span
       >
     </div>
     <v-expand-transition>
