@@ -38,7 +38,7 @@ limitations under the License.
           </v-toolbar>
         </v-col>
       </v-row>
-      <v-row align="left">
+      <v-row>
         <v-col>
           <!-- Middle panel -->
           <ts-sigma-rule-modification app @cancel="formatXMLString = false" :rule_uuid="id" v-if="type === 'sigma'">
@@ -65,6 +65,11 @@ export default {
         width: 450,
       },
     }
+  },
+  computed: {
+    currentUser() {
+      return this.$store.getters.currentUser
+    },
   },
   created: function () {
     this.$store.dispatch('updateSigmaList')

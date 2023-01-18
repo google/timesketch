@@ -102,9 +102,11 @@ export default {
     },
   },
   loaded() {
+    console.log('loaded')
     this.parseSigma(this.editingRule.rule_yaml)
   },
   mounted() {
+    console.log('mounted')
     if (this.rule_uuid === 'new') {
       this.editingRule = {
         title: 'New Sigma Rule',
@@ -130,7 +132,6 @@ export default {
     },
     // Set debounce to 300ms if parseSigma is used.
     parseSigma: _.debounce(function (ruleYaml) {
-      console.log('parseSigma with ' + ruleYaml)
       // eslint-disable-line
       ApiClient.getSigmaRuleByText(ruleYaml)
         .then((response) => {
@@ -176,6 +177,7 @@ export default {
           this.isNewRule = true
           this.isUpdatingRule = false
           this.ruleYamlTextArea = defaultSigmaPlaceholder
+          this.parseSigma(this.ruleYamlTextArea)
         })
     },
     deleteRule(ruleUuid) {
