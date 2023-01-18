@@ -25,8 +25,27 @@ limitations under the License.
       <v-divider></v-divider>
       <ts-sigma-rules></ts-sigma-rules>
     </v-navigation-drawer>
-    <ts-sigma-rule-modification app @cancel="formatXMLString = false" :rule_uuid="id" v-if="type === 'sigma'">
-    </ts-sigma-rule-modification>
+
+    <v-container fluid>
+      <v-row style="height: 64px">
+        <v-col>
+          <!-- Top horizontal toolbar -->
+          <v-toolbar flat color="transparent">
+            <v-spacer></v-spacer>
+            <v-avatar color="grey lighten-1" size="25" class="ml-3">
+              <span class="white--text">{{ currentUser | initialLetter }}</span>
+            </v-avatar>
+          </v-toolbar>
+        </v-col>
+      </v-row>
+      <v-row align="left">
+        <v-col>
+          <!-- Middle panel -->
+          <ts-sigma-rule-modification app @cancel="formatXMLString = false" :rule_uuid="id" v-if="type === 'sigma'">
+          </ts-sigma-rule-modification>
+        </v-col>
+      </v-row>
+    </v-container>
   </div>
 </template>
 
