@@ -12,9 +12,9 @@ limitations under the License.
 */
 
 // General first part of every Sigma rule:
-const SkeletonFirst = `title: Foobar
+const SkeletonFirst = `title: SigmeRuleTemplateTitle
 id: ${crypto.randomUUID()}
-description: Detects suspicious FOOBAR
+description: Detects suspicious activity
 references:
   - https://
 author: Timesketch

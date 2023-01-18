@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-container class="px-8">
+  <v-container fluid>
     <strong>
       {{ editingRule.title }}
       <v-chip rounded x-small class="mr-2" :color="statusColors()">
@@ -55,12 +55,6 @@ limitations under the License.
     >
     </v-textarea>
 
-    <div class="alertbox" v-if="isParsingSuccesful">
-      <!--<v-alert colored-border border="left" elevation="1" :color="statusColors()">-->
-      <h3>Preview opensearch query:</h3>
-      {{ editingRule.search_query }}
-    </div>
-
     <div class="mt-3">
       <v-btn :disabled="!isParsingSuccesful" @click="addOrUpdateRule(ruleYamlTextArea)" small depressed color="primary">
         {{ isNewRule ? 'Create Rule' : 'Update Rule' }}
@@ -71,6 +65,12 @@ limitations under the License.
       <v-btn @click="deleteRule(rule_uuid)" small text color="primary" :disabled="isNewRule"
         ><v-icon>mdi-delete</v-icon></v-btn
       >
+    </div>
+
+    <div class="alertbox" v-if="isParsingSuccesful">
+      <!--<v-alert colored-border border="left" elevation="1" :color="statusColors()">-->
+      <h3>Preview opensearch query:</h3>
+      {{ editingRule.search_query }}
     </div>
   </v-container>
 </template>
@@ -221,6 +221,7 @@ export default {
 }
 .editSigmaRule {
   font-family: monospace;
+  font-size: 13px;
 }
 pre {
   white-space: pre-wrap;

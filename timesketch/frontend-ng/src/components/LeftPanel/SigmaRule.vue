@@ -15,29 +15,26 @@ limitations under the License.
 -->
 <template>
   <div>
-    <v-row no-gutters class="pa-3" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
-      <div @click="expanded = !expanded" class="SigmaRuleTitle">
+    <v-row no-gutters class="pa-2" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
+      <div @click="expanded = !expanded" style="cursor: pointer; font-size: 0.9em">
         <v-icon v-if="!expanded">mdi-chevron-right</v-icon>
         <v-icon v-else>mdi-chevron-down</v-icon>
-        {{ sigmaRule.title }}
-        <v-chip rounded x-small class="mr-2">{{ sigmaRule.status }}</v-chip>
+        {{ sigmaRule.title }}<v-chip rounded x-small class="mr-2">{{ sigmaRule.status }}</v-chip>
       </div>
       <v-spacer></v-spacer>
       <div>
-        <v-menu offset-y>
+        <v-menu>
           <template v-slot:activator="{ on, attrs }">
-            <v-avatar>
-              <v-btn small icon v-bind="attrs" v-on="on">
-                <v-icon>mdi-dots-vertical</v-icon>
-              </v-btn>
-            </v-avatar>
+            <v-btn small icon v-bind="attrs" v-on="on">
+              <v-icon>mdi-dots-vertical</v-icon>
+            </v-btn>
           </template>
           <v-card>
             <v-list>
               <v-list-item-group>
                 <v-list-item v-on:click="editSigmaRule(sigmaRule.rule_uuid)">
                   <v-list-item-icon>
-                    <v-icon>mdi-brightness-6</v-icon>
+                    <v-icon>mdi-application-edit </v-icon>
                   </v-list-item-icon>
                   <v-list-item-content>
                     <v-list-item-title>Edit Rule</v-list-item-title>
@@ -48,7 +45,7 @@ limitations under the License.
                     <v-icon>mdi-archive</v-icon>
                   </v-list-item-icon>
                   <v-list-item-content>
-                    <v-list-item-title>Deactivate Rule</v-list-item-title>
+                    <v-list-item-title>Deprecate Rule</v-list-item-title>
                   </v-list-item-content>
                 </v-list-item>
                 <v-list-item v-on:click="deleteRule(sigmaRule.rule_uuid)">
