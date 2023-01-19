@@ -15,27 +15,28 @@ limitations under the License.
 -->
 <template>
   <v-container fluid>
-    <strong>
-      {{ editingRule.title }}
-      <v-chip rounded x-small class="mr-2" :color="statusColors()">
-        <v-icon v-if="isParsingSuccesful" x-small> mdi-check </v-icon>
-        <v-icon v-else x-small> mdi-alert </v-icon>
-        {{ status_chip_text }}</v-chip
-      >
-    </strong>
-    <v-row>
-      <v-col cols="4">
-        <v-autocomplete
-          dense
-          outlined
-          :items="SigmaTemplates"
-          @change="selectTemplate"
-          item-text="title"
-          label="Choose template"
+    <v-container fluid style="margin-bottom: 5px; margin-top: -15px">
+      <strong>
+        {{ editingRule.title }}
+        <v-chip rounded x-small class="mr-2" :color="statusColors()">
+          <v-icon v-if="isParsingSuccesful" x-small> mdi-check </v-icon>
+          <v-icon v-else x-small> mdi-alert </v-icon>
+          {{ status_chip_text }}</v-chip
         >
-        </v-autocomplete>
-      </v-col>
-    </v-row>
+      </strong>
+    </v-container>
+    <v-container fluid style="margin: 0px; padding: 0px; width: 50%">
+      <v-autocomplete
+        align="left"
+        dense
+        outlined
+        :items="SigmaTemplates"
+        @change="selectTemplate"
+        item-text="title"
+        label="Choose template"
+      >
+      </v-autocomplete>
+    </v-container>
     <div class="alertbox" v-if="!isParsingSuccesful">
       <v-alert dense type="error" outlined>
         {{ status_text }}
