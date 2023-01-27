@@ -15,7 +15,10 @@ limitations under the License.
 -->
 <template>
   <v-container fluid>
-    <v-card outlined class="mt-n3">
+    <v-btn class="mt-n1" text color="primary" style="cursor: pointer"
+      ><v-icon left>mdi-plus</v-icon> Add Indicator</v-btn
+    >
+    <v-card outlined class="mt-3 mx-3">
       <v-data-table :headers="headers" :items="intelligenceData" :items-per-page="40">
         <template v-slot:item.externalURI="{ item }">
           <v-icon v-if="item.externalURI" x-small>mdi-open-in-new</v-icon>
@@ -60,12 +63,8 @@ export default {
   data: function () {
     return {
       headers: [
-        {
-          text: 'Indicator type',
-          align: 'start',
-          value: 'type',
-        },
-        { text: 'Indicator data', value: 'ioc' },
+        { text: 'Indicator data', value: 'ioc', align: 'start' },
+        { text: 'Indicator type', value: 'type' },
         { text: 'Tags', value: 'tags' },
         { text: 'External reference', value: 'externalURI' },
       ],
