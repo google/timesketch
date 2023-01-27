@@ -227,6 +227,7 @@ limitations under the License.
           <ts-tags></ts-tags>
           <ts-search-templates></ts-search-templates>
           <ts-sigma-rules></ts-sigma-rules>
+          <ts-intelligence></ts-intelligence>
         </v-tab-item>
         <v-tab-item :transition="false">
           <ts-scenario v-for="scenario in activeScenarios" :key="scenario.id" :scenario="scenario"></ts-scenario>
@@ -254,8 +255,7 @@ limitations under the License.
         </v-tab-item>
       </v-tabs-items>
     </v-navigation-drawer>
-
-    <router-view v-if="sketch.status && hasTimelines"></router-view>
+    <router-view v-if="sketch.status && hasTimelines" @setTitle="(title) => (this.title = title)"></router-view>
   </div>
 </template>
 
@@ -268,6 +268,7 @@ import TsDataTypes from '../components/LeftPanel/DataTypes'
 import TsTags from '../components/LeftPanel/Tags'
 import TsSearchTemplates from '../components/LeftPanel/SearchTemplates'
 import TsSigmaRules from '../components/LeftPanel/SigmaRules'
+import TsIntelligence from '../components/LeftPanel/Intelligence'
 import TsUploadTimelineForm from '../components/UploadForm'
 import TsShareCard from '../components/ShareCard'
 import TsRenameSketch from '../components/RenameSketch'
@@ -284,6 +285,7 @@ export default {
     TsUploadTimelineForm,
     TsShareCard,
     TsRenameSketch,
+    TsIntelligence,
   },
   data() {
     return {

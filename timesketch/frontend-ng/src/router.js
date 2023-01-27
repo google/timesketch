@@ -18,6 +18,8 @@ import VueRouter from 'vue-router'
 
 import Home from './views/Home'
 import Explore from './views/Explore'
+import Intelligence from './views/Intelligence'
+import Canvas from './views/Canvas'
 import Sketch from './views/Sketch'
 
 Vue.use(VueRouter)
@@ -42,7 +44,14 @@ const routes = [
       {
         path: 'explore',
         name: 'Explore',
-        component: Explore,
+        component: Canvas,
+        props: true,
+      },
+
+      {
+        path: 'intelligence',
+        name: 'Intelligence',
+        component: Canvas,
         props: true,
       },
     ],
