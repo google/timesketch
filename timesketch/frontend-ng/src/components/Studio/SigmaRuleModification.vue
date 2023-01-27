@@ -99,7 +99,20 @@ export default {
   },
   watch: {
     rule_uuid: function (newVal, oldVal) {
-      this.getRuleByUUID(newVal)
+      if (newVal === 'new') {
+        this.editingRule = {
+          title: 'New Sigma Rule',
+        }
+        this.isNewRule = true
+        this.isUpdatingRule = false
+        this.status_chip_text = 'Ok'
+        this.isParsingSuccesful = true
+        this.ruleYamlTextArea = defaultSigmaPlaceholder
+        this.editingRule.rule_yaml = defaultSigmaPlaceholder
+        this.parseSigma(this.editingRule.rule_yaml)
+      } else {
+        this.getRuleByUUID(newVal)
+      }
     },
   },
   loaded() {
