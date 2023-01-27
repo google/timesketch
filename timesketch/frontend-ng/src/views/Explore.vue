@@ -123,12 +123,26 @@ limitations under the License.
             </template>
             <v-card>
               <v-list>
-                <v-list-item>
-                  <v-list-item-action>
-                    <v-icon>mdi-square-edit-outline</v-icon>
-                  </v-list-item-action>
-                  <v-list-item-subtitle>Edit filter</v-list-item-subtitle>
-                </v-list-item>
+                <!-- Edit timefilter menu -->
+                <v-menu
+                  offset-y
+                  :close-on-content-click="false"
+                  :close-on-click="true"
+                  nudge-top="70"
+                  content-class="menu-with-gap"
+                  allow-overflow
+                  style="overflow: visible"
+                >
+                  <template v-slot:activator="{ on, attrs }">
+                    <v-list-item v-bind="attrs" v-on="on">
+                      <v-list-item-action>
+                        <v-icon>mdi-square-edit-outline</v-icon>
+                      </v-list-item-action>
+                      <v-list-item-subtitle>Edit filter</v-list-item-subtitle>
+                    </v-list-item>
+                  </template>
+                  <ts-filter-menu app :selected-chip="chip" @updateChip="updateChip($event, chip)"></ts-filter-menu>
+                </v-menu>
 
                 <v-list-item @click="toggleChip(chip)">
                   <v-list-item-action>
@@ -177,7 +191,9 @@ limitations under the License.
       <div v-if="filterChips.length">
         <v-chip-group>
           <span v-for="(chip, index) in filterChips" :key="index + chip.value">
-            <v-chip>
+            <v-chip small outlined close @click:close="removeChip(chip)">
+              <v-icon v-if="chip.value === '__ts_star'" left small color="amber">mdi-star</v-icon>
+              <v-icon v-if="chip.value === '__ts_comment'" left small>mdi-comment-multiple-outline</v-icon>
               {{ chip.value | formatLabelText }}
             </v-chip>
             <v-btn v-if="index + 1 < timeFilterChips.length" icon small style="margin-top: 2px" class="mr-2">AND</v-btn>
@@ -654,7 +670,6 @@ export default {
         bad: { color: 'red', textColor: 'white', label: 'mdi-alert-circle-outline' },
         suspicious: { color: 'orange', textColor: 'white', label: 'mdi-help-circle-outline' },
       },
-
       // old stuff
       params: {},
       searchInProgress: false,
