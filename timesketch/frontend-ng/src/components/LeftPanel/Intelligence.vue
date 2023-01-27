@@ -30,8 +30,16 @@ limitations under the License.
       >
       <v-spacer></v-spacer>
 
-      <v-btn @click.stop="$router.push({ name: 'Intelligence', params: { sketchId: sketch.id } })" small depressed
-        >Manage</v-btn
+      <v-btn
+        v-if="expanded"
+        small
+        depressed
+        color="primary"
+        outlined
+        @click.stop="$router.push({ name: 'Intelligence', params: { sketchId: sketch.id } })"
+      >
+        <v-icon small left>mdi-pencil</v-icon>
+        Manage</v-btn
       >
     </v-row>
 
@@ -39,39 +47,57 @@ limitations under the License.
       <div v-show="expanded">
         <v-divider></v-divider>
 
-        <v-tabs grow>
-          <v-tab
-            >Tags (<small>{{ Object.keys(tagInfo).length }}</small
-            >)</v-tab
-          >
+        <v-tabs grow v-model="tabs">
           <v-tab
             >Indicators (<small>{{ intelligenceData.length }}</small
             >)</v-tab
           >
+          <v-tab
+            >Tags (<small>{{ Object.keys(tagInfo).length }}</small
+            >)</v-tab
+          >
         </v-tabs>
-        <v-simple-table>
-          <template v-slot:default>
-            <thead>
-              <tr>
-                <th class="text-left">Tag</th>
-                <th class="text-left">IOCs</th>
-                <th class="text-left">Weight</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(tag, index) in tagInfo" :key="index">
-                <td>
-                  <v-chip small @click="searchForIOC(tag)" style="cursor: pointer">{{ tag.tag.name }}</v-chip>
-                </td>
-                <td>{{ tag.iocs.length }}</td>
-                <td>{{ tag.tag.weight }}</td>
-              </tr>
-            </tbody>
-          </template>
-        </v-simple-table>
+        <v-tabs-items v-model="tabs">
+          <v-tab-item :transition="false">
+            <v-data-table :headers="indicatorHeaders" :items="intelligenceData" :items-per-page="10">
+              <template v-slot:item.ioc="{ item }">
+                <span v-if="item.type === 'hash_sha256'" :title="item.ioc">
+                  <pre>{{ item.ioc.substring(0, 8) }}...{{ item.ioc.substring(item.ioc.length - 8) }}</pre>
+                </span>
+                <span v-else>
+                  {{ item.ioc }}
+                </span>
+              </template>
+
+              <template v-slot:item.type="{ item }">
+                <small>{{ item.type }}</small>
+              </template>
+
+              <template v-slot:item.actions="{ item }">
+                <v-icon small>mdi-magnify</v-icon>
+              </template>
+            </v-data-table>
+          </v-tab-item>
+          <v-tab-item :transition="false">
+            <v-data-table :headers="tagHeaders" :items="Object.values(tagInfo)" :items-per-page="10">
+              <template v-slot:item.tag="{ item }">
+                <v-chip small @click="searchForIOC(item)" style="cursor: pointer">{{ item.tag.name }}</v-chip>
+              </template>
+              <template v-slot:item.iocs="{ item }">
+                <small :title="item.iocs">{{ item.iocs.length }}</small>
+              </template>
+              <template v-slot:item.weight="{ item }">
+                <small>{{ item.tag.weight }}</small>
+              </template>
+            </v-data-table>
+          </v-tab-item>
+        </v-tabs-items>
       </div>
     </v-expand-transition>
     <v-divider></v-divider>
+    <v-btn small v-if="expanded" text class="mt-2 ml-2" color="primary" style="cursor: pointer"
+      ><v-icon small left>mdi-plus</v-icon> Add Indicator</v-btn
+    >
   </div>
 </template>
 
@@ -97,6 +123,17 @@ export default {
       expanded: false,
       tagInfo: {},
       tagMetadata: {},
+      tabs: null,
+      indicatorHeaders: [
+        { text: 'Indicator', value: 'ioc', align: 'start' },
+        { text: 'Type', value: 'type' },
+        { value: 'actions' },
+      ],
+      tagHeaders: [
+        { text: 'Tag', value: 'tag', align: 'start' },
+        { text: 'Indicators', value: 'iocs' },
+        { text: 'Weight', value: 'weight' },
+      ],
     }
   },
   computed: {
