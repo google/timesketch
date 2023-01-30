@@ -192,8 +192,7 @@ export default {
       }
     },
     deprecateSigmaRule(ruleUuid) {
-      // this method is not really deprecating the rule, but for lack of better
-      // words, it is changing the status to deprecated. This means the rule
+      // Rules with a "deprecated" status means the rule
       // will not be picked up by the Sigma analyzer.
       if (confirm('Deprecate Rule?')) {
         //  get the current Sigma rule yaml again
