@@ -16,6 +16,10 @@ limitations under the License.
 <template>
   <v-container fluid>
     <v-container fluid style="margin-bottom: 5px; margin-top: -79px">
+      <!-- This is a very hacky way to move the whole content to the top,
+      there is currently no global solution to get that depending on the context
+      TODO(jaegeral): find a better solution with jbn
+      -->
       <strong>
         {{ editingRule.title }}
         <v-chip rounded x-small class="ml-2" :color="statusColors()">
