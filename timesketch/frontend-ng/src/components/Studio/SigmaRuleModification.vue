@@ -153,7 +153,7 @@ export default {
         .then((response) => {
           var parsedRule = response.data.objects[0]
           if (!parsedRule.author) {
-            this.status_text = 'No Author given'
+            this.status_text = 'No author specified'
             this.isParsingSuccesful = false
           } else {
             this.editingRule = parsedRule
