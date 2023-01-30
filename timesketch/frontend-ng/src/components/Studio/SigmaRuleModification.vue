@@ -68,8 +68,7 @@ limitations under the License.
       <v-btn color="primary" text @click="$router.back()"> Cancel </v-btn>
       <div style="width: 10px; display: inline-block"></div>
       <v-btn @click="deleteRule(rule_uuid)" small text color="primary" :disabled="isNewRule"
-        ><v-icon>mdi-delete</v-icon></v-btn
-      >
+        ><v-icon>mdi-delete</v-icon></v-btn>
     </div>
 
     <div class="alertbox" v-if="isParsingSuccesful">
