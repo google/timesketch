@@ -15,10 +15,10 @@ limitations under the License.
 -->
 <template>
   <v-container fluid>
-    <v-container fluid style="margin-bottom: 5px; margin-top: -15px">
+    <v-container fluid style="margin-bottom: 5px; margin-top: -79px">
       <strong>
         {{ editingRule.title }}
-        <v-chip rounded x-small class="mr-2" :color="statusColors()">
+        <v-chip rounded x-small class="ml-2" :color="statusColors()">
           <v-icon v-if="isParsingSuccesful" x-small> mdi-check </v-icon>
           <v-icon v-else x-small> mdi-alert </v-icon>
           {{ status_chip_text }}</v-chip
@@ -48,7 +48,7 @@ limitations under the License.
       outlined
       :color="statusColors()"
       autocomplete="email"
-      rows="25"
+      rows="20"
       v-model="ruleYamlTextArea"
       background-color="statusColors()"
       @input="parseSigma(ruleYamlTextArea)"
@@ -56,13 +56,13 @@ limitations under the License.
     >
     </v-textarea>
 
-    <div class="mt-3">
+    <div>
       <v-btn :disabled="!isParsingSuccesful" @click="addOrUpdateRule(ruleYamlTextArea)" small depressed color="primary">
         {{ isNewRule ? 'Create Rule' : 'Update Rule' }}
       </v-btn>
-      <div style="width: 20px; display: inline-block"></div>
+      <div style="width: 10px; display: inline-block"></div>
       <v-btn color="primary" text @click="$router.back()"> Cancel </v-btn>
-      <div style="width: 20px; display: inline-block"></div>
+      <div style="width: 10px; display: inline-block"></div>
       <v-btn @click="deleteRule(rule_uuid)" small text color="primary" :disabled="isNewRule"
         ><v-icon>mdi-delete</v-icon></v-btn
       >
@@ -71,7 +71,7 @@ limitations under the License.
     <div class="alertbox" v-if="isParsingSuccesful">
       <!--<v-alert colored-border border="left" elevation="1" :color="statusColors()">-->
       <h3>Preview opensearch query:</h3>
-      {{ editingRule.search_query }}
+      <pre>{{ editingRule.search_query }}</pre>
     </div>
   </v-container>
 </template>
@@ -234,6 +234,7 @@ export default {
 <style scoped lang="scss">
 .alertbox {
   width: 500;
+  padding-top: 20px;
 }
 .editSigmaRule {
   font-family: monospace;

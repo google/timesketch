@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div v-if="sigmaRules.length">
+  <div v-if="ruleCount > 0">
     <div class="pa-4" flat :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
       <span style="cursor: pointer" @click="expanded = !expanded">
         <v-icon left>mdi-sigma-lower</v-icon> Sigma Rules ({{ ruleCount }})
@@ -69,6 +69,7 @@ export default {
   methods: {
     createNewSigmaRule() {
       // check current router location
+      console.log(this.$route.params.id + 'create Sigma rule')
       if (this.$route.params.id === 'new') {
         return
       }
@@ -100,6 +101,7 @@ export default {
     },
   },
   created() {
+    console.log('SigmaRules created')
     this.$store.dispatch('updateSigmaList')
   },
 }

@@ -19,7 +19,7 @@ limitations under the License.
       <div @click="expanded = !expanded" style="cursor: pointer; font-size: 0.9em">
         <v-icon v-if="!expanded">mdi-chevron-right</v-icon>
         <v-icon v-else>mdi-chevron-down</v-icon>
-        {{ sigmaRule.title }}<v-chip rounded x-small class="mr-2">{{ sigmaRule.status }}</v-chip>
+        {{ sigmaRule.title }}<v-chip rounded x-small class="ml-2">{{ sigmaRule.status }}</v-chip>
       </div>
       <v-spacer></v-spacer>
       <div>
@@ -34,7 +34,7 @@ limitations under the License.
               <v-list-item-group>
                 <v-list-item v-on:click="editSigmaRule(sigmaRule.rule_uuid)">
                   <v-list-item-icon>
-                    <v-icon>mdi-application-edit </v-icon>
+                    <v-icon>mdi-pencil </v-icon>
                   </v-list-item-icon>
                   <v-list-item-content>
                     <v-list-item-title>Edit Rule</v-list-item-title>
@@ -45,7 +45,7 @@ limitations under the License.
                     <v-icon>mdi-archive</v-icon>
                   </v-list-item-icon>
                   <v-list-item-content>
-                    <v-list-item-title>Deprecate Rule</v-list-item-title>
+                    <v-list-item-title>Do not use the rule in Sigma analyzer</v-list-item-title>
                   </v-list-item-content>
                 </v-list-item>
                 <v-list-item v-on:click="deleteRule(sigmaRule.rule_uuid)">
@@ -85,6 +85,7 @@ limitations under the License.
                         falsepositive
                       }}</v-chip>
                     </span>
+
                     <span v-else-if="key === 'tags'">
                       <v-chip v-for="tag in value" :key="tag" rounded x-small class="mr-2">{{ tag }}</v-chip>
                     </span>
@@ -167,6 +168,7 @@ export default {
       EventBus.$emit('setQueryAndFilter', eventData)
     },
     editSigmaRule(ruleUuid) {
+      console.log('Edit Rule: ' + ruleUuid)
       this.$router.push({
         name: 'Studio',
         params: {
@@ -195,6 +197,9 @@ export default {
       }
     },
     deprecateSigmaRule(ruleUuid) {
+      // this method is not really deprecating the rule, but for lack of better
+      // words, it is changing the status to deprecated. This means the rule
+      // will not be picked up by the Sigma analyzer.
       if (confirm('Deprecate Rule?')) {
         //  get the current Sigma rule yaml again
         ApiClient.getSigmaRuleResource(ruleUuid)
