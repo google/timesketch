@@ -106,7 +106,7 @@ export default {
         this.editingRule = {
           title: 'New Sigma Rule',
         }
-        resetComponent()
+        this.resetComponent()
       } else {
         this.getRuleByUUID(newVal)
       }
@@ -120,7 +120,7 @@ export default {
       this.editingRule = {
         title: 'New Sigma Rule',
       }
-      resetComponent()
+      this.resetComponent()
     } else {
       this.getRuleByUUID(this.rule_uuid)
     }
