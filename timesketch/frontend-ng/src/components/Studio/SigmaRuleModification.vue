@@ -235,7 +235,7 @@ export default {
   
 <style scoped lang="scss">
 .alertbox {
-  width: 500;
+  width: 500px;
   padding-top: 20px;
 }
 .editSigmaRule {
