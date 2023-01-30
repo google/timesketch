@@ -54,7 +54,7 @@ limitations under the License.
       autocomplete="email"
       rows="20"
       v-model="ruleYamlTextArea"
-      background-color="statusColors()"
+      :background-color="statusColors()"
       @input="parseSigma(ruleYamlTextArea)"
       class="editSigmaRule"
     >
