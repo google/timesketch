@@ -69,9 +69,9 @@ limitations under the License.
     </div>
 
     <div class="alertbox" v-if="isParsingSuccesful">
-      <!--<v-alert colored-border border="left" elevation="1" :color="statusColors()">-->
       <h3>Preview opensearch query:</h3>
       <pre>{{ editingRule.search_query }}</pre>
+      <!-- TODO: This should become a global class how to nicely highlight a query -->
     </div>
   </v-container>
 </template>
@@ -116,11 +116,9 @@ export default {
     },
   },
   loaded() {
-    console.log('loaded')
     this.parseSigma(this.editingRule.rule_yaml)
   },
   mounted() {
-    console.log('mounted')
     if (this.rule_uuid === 'new') {
       this.editingRule = {
         title: 'New Sigma Rule',
