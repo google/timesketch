@@ -101,7 +101,6 @@ export default {
     },
   },
   created() {
-    console.log('SigmaRules created')
     this.$store.dispatch('updateSigmaList')
   },
 }

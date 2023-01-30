@@ -161,10 +161,6 @@ export default {
   },
   methods: {
     search(queryString) {
-      // if sketch.id is undefined, we are in the sigma list view and not searching
-      if (!this.sketch.id) {
-        return
-      }
       let eventData = {}
       eventData.doSearch = true
       eventData.queryString = queryString

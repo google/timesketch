@@ -25,7 +25,7 @@ limitations under the License.
         <v-chip rounded x-small class="ml-2" :color="statusColors()">
           <v-icon v-if="isParsingSuccesful" x-small> mdi-check </v-icon>
           <v-icon v-else x-small> mdi-alert </v-icon>
-          {{ status_chip_text }}</v-chip
+          {{ isParsingSuccesful ? 'OK' : 'ERROR' }}</v-chip
         >
       </strong>
     </v-container>
@@ -68,7 +68,8 @@ limitations under the License.
       <v-btn color="primary" text @click="$router.back()"> Cancel </v-btn>
       <div style="width: 10px; display: inline-block"></div>
       <v-btn @click="deleteRule(rule_uuid)" small text color="primary" :disabled="isNewRule"
-        ><v-icon>mdi-delete</v-icon></v-btn>
+        ><v-icon>mdi-delete</v-icon></v-btn
+      >
     </div>
 
     <div class="alertbox" v-if="isParsingSuccesful">
@@ -90,7 +91,6 @@ export default {
   data() {
     return {
       editingRule: { ruleYaml: defaultSigmaPlaceholder }, // empty state
-      status_chip_text: 'OK',
       status_text: '',
       ruleYamlTextArea: {},
       SigmaTemplates: SigmaTemplates,
@@ -106,13 +106,7 @@ export default {
         this.editingRule = {
           title: 'New Sigma Rule',
         }
-        this.isNewRule = true
-        this.isUpdatingRule = false
-        this.status_chip_text = 'Ok'
-        this.isParsingSuccesful = true
-        this.ruleYamlTextArea = defaultSigmaPlaceholder
-        this.editingRule.rule_yaml = defaultSigmaPlaceholder
-        this.parseSigma(this.editingRule.rule_yaml)
+        resetComponent()
       } else {
         this.getRuleByUUID(newVal)
       }
@@ -126,18 +120,23 @@ export default {
       this.editingRule = {
         title: 'New Sigma Rule',
       }
-      this.isNewRule = true
-      this.isUpdatingRule = false
-      this.status_chip_text = 'Ok'
-      this.isParsingSuccesful = true
-      this.ruleYamlTextArea = defaultSigmaPlaceholder
-      this.editingRule.rule_yaml = defaultSigmaPlaceholder
-      this.parseSigma(this.editingRule.rule_yaml)
+      resetComponent()
     } else {
       this.getRuleByUUID(this.rule_uuid)
     }
   },
   methods: {
+    resetComponent() {
+      this.editingRule = {
+        title: 'New Sigma Rule',
+      }
+      this.isNewRule = true
+      this.isUpdatingRule = false
+      this.isParsingSuccesful = true
+      this.ruleYamlTextArea = defaultSigmaPlaceholder
+      this.editingRule.rule_yaml = defaultSigmaPlaceholder
+      this.parseSigma(this.editingRule.rule_yaml)
+    },
     selectTemplate(text) {
       var matchingTemplate = this.SigmaTemplates.find((obj) => {
         return obj.title === text
@@ -157,14 +156,12 @@ export default {
           } else {
             this.editingRule = parsedRule
             this.isParsingSuccesful = true
-            this.status_chip_text = 'Ok'
             this.status_text = ''
           }
         })
         .catch((e) => {
           this.status_text = e.response.data.message
           this.isParsingSuccesful = false
-          this.status_chip_text = 'ERROR'
         })
     }, 300),
     statusColors() {
@@ -181,7 +178,6 @@ export default {
         .then((response) => {
           this.editingRule = response.data.objects[0]
           this.ruleYamlTextArea = this.editingRule.rule_yaml // eslint-disable-line camelcase
-          this.status_chip_text = 'Ok'
           this.isNewRule = false
           this.isUpdatingRule = true
           this.isParsingSuccesful = true
