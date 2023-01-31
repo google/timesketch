@@ -85,7 +85,7 @@ limitations under the License.
                       }}</v-chip>
                     </span>
 
-                    <span v-else-if="key === 'tags'">
+                    <span v-else-if="key === 'tags' && value.length > 0">
                       <v-chip v-for="tag in value" :key="tag" rounded x-small class="mr-2">{{ tag }}</v-chip>
                     </span>
                     <span v-else>
