@@ -18,9 +18,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   && rm -rf /var/lib/apt/lists/*
 
 # Install Timesketch
-RUN wget https://raw.githubusercontent.com/google/timesketch/master/requirements.txt
+RUN wget https://raw.githubusercontent.com/hnhdev/timesketch/master/requirements.txt
 RUN pip3 install -r requirements.txt
-RUN pip3 install https://github.com/google/timesketch/archive/master.zip
+RUN pip3 install https://github.com/hnhdev/timesketch/archive/master.zip
 
 # Install Plaso
 RUN add-apt-repository -y ppa:gift/$PPA_TRACK
