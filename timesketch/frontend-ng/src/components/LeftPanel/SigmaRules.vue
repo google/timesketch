@@ -19,7 +19,7 @@ limitations under the License.
       <span style="cursor: pointer" @click="expanded = !expanded">
         <v-icon left>mdi-sigma-lower</v-icon> Sigma Rules ({{ ruleCount }})
       </span>
-      <span style="float: right">
+      <span style="float: right" v-if="expanded">
         <v-icon v-on:click="createNewSigmaRule()">mdi-plus</v-icon>
       </span>
     </div>
