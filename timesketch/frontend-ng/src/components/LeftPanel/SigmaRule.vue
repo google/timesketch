@@ -72,12 +72,11 @@ limitations under the License.
 
     <v-expand-transition>
       <div v-show="expanded" class="pa-4 pt-0">
-        <!--{{ sigmaRuleSummary }}-->
         <div class="mt-2">
           <v-simple-table dense>
             <template v-slot:default>
               <tbody>
-                <tr v-for="(value, key) in sigmaRuleSummary" :key="value.rule_uuid">
+                <tr v-for="(value, key) in sigmaRuleSummary" :key="key">
                   <td>
                     <strong>{{ key }}</strong>
                   </td>
@@ -93,7 +92,7 @@ limitations under the License.
                       }}</v-chip>
                     </span>
 
-                    <span v-else-if="key === 'tags' && value.length > 0">
+                    <span v-else-if="key === 'tags' && value">
                       <v-chip v-for="tag in value" :key="tag" rounded x-small class="mr-2">{{ tag }}</v-chip>
                     </span>
                     <span v-else>

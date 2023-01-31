@@ -145,7 +145,10 @@ export default {
       ApiClient.getSigmaRuleByText(ruleYaml)
         .then((response) => {
           var parsedRule = response.data.objects[0]
-          if (!parsedRule.author) {
+          if (parsedRule.tags.length > 0 && parsedRule.tags[0] == null) {
+            this.status_text = 'Please specify at least one tag if you use the tags field'
+            this.isParsingSuccesful = false
+          } else if (!parsedRule.author) {
             this.status_text = 'No author specified'
             this.isParsingSuccesful = false
           } else {
@@ -161,7 +164,7 @@ export default {
         })
     }, 300),
     getRuleByUUID(ruleUuid) {
-      if (ruleUuid === 'new') {
+      if (ruleUuid === 'new' || ruleUuid === undefined) {
         return
       }
       ApiClient.getSigmaRuleResource(ruleUuid)
