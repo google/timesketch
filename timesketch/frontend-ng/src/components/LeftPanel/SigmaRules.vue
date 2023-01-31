@@ -61,7 +61,7 @@ export default {
   },
   data: function () {
     return {
-      expanded: true,
+      expanded: false,
       itemsPerPage: 10,
       search: '',
     }

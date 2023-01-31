@@ -73,13 +73,9 @@ limitations under the License.
           </v-toolbar>
         </v-col>
       </v-row>
-      <v-row>
-        <v-col>
           <!-- Middle panel -->
           <ts-sigma-rule-modification app @cancel="formatXMLString = false" :rule_uuid="id" v-if="type === 'sigma'">
           </ts-sigma-rule-modification>
-        </v-col>
-      </v-row>
     </v-container>
   </div>
 </template>
@@ -98,17 +94,10 @@ export default {
       this.$vuetify.theme.dark = !this.$vuetify.theme.dark
     },
   },
-  data() {
-    return {
-      showSketchMetadata: false,
-      navigationDrawer: {
-        width: 450,
-      },
-    }
   },
   computed: {
     currentUser() {
-      return this.$store.getters.currentUser
+      return this.$store.state.currentUser
     },
   },
   created: function () {
