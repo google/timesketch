@@ -73,9 +73,9 @@ limitations under the License.
           </v-toolbar>
         </v-col>
       </v-row>
-          <!-- Middle panel -->
-          <ts-sigma-rule-modification app @cancel="formatXMLString = false" :rule_uuid="id" v-if="type === 'sigma'">
-          </ts-sigma-rule-modification>
+      <!-- Middle panel -->
+      <ts-sigma-rule-modification app @cancel="formatXMLString = false" :rule_uuid="id" v-if="type === 'sigma'">
+      </ts-sigma-rule-modification>
     </v-container>
   </div>
 </template>
@@ -93,7 +93,6 @@ export default {
     toggleTheme() {
       this.$vuetify.theme.dark = !this.$vuetify.theme.dark
     },
-  },
   },
   computed: {
     currentUser() {

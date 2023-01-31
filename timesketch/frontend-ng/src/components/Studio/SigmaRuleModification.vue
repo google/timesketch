@@ -15,7 +15,7 @@ limitations under the License.
 -->
 <template>
   <v-container fluid>
-    <v-container fluid style="margin-bottom: 5px; margin-top: -79px">
+    <div style="margin-bottom: 15px; margin-top: -45px">
       <!-- This is a very hacky way to move the whole content to the top,
       there is currently no global solution to get that depending on the context
       TODO(jaegeral): find a better solution with jbn
@@ -28,8 +28,8 @@ limitations under the License.
           {{ isParsingSuccesful ? 'OK' : 'ERROR' }}</v-chip
         >
       </strong>
-    </v-container>
-    <v-container fluid style="margin: 0px; padding: 0px; width: 50%">
+    </div>
+    <div style="width: 250px">
       <v-autocomplete
         align="left"
         dense
@@ -40,7 +40,7 @@ limitations under the License.
         label="Choose template"
       >
       </v-autocomplete>
-    </v-container>
+    </div>
     <div class="alertbox" v-if="!isParsingSuccesful">
       <v-alert dense type="error" outlined>
         {{ status_text }}
@@ -114,9 +114,6 @@ export default {
   },
   mounted() {
     if (this.rule_uuid === 'new') {
-      this.editingRule = {
-        title: 'New Sigma Rule',
-      }
       this.resetComponent()
     } else {
       this.getRuleByUUID(this.rule_uuid)
@@ -133,6 +130,7 @@ export default {
       this.ruleYamlTextArea = defaultSigmaPlaceholder
       this.editingRule.rule_yaml = defaultSigmaPlaceholder
       this.parseSigma(this.editingRule.rule_yaml)
+      this.rule_uuid = this.editingRule.rule_uuid
     },
     selectTemplate(text) {
       var matchingTemplate = this.SigmaTemplates.find((obj) => {
@@ -152,6 +150,7 @@ export default {
             this.isParsingSuccesful = false
           } else {
             this.editingRule = parsedRule
+            this.rule_uuid = parsedRule.uuid
             this.isParsingSuccesful = true
             this.status_text = ''
           }
@@ -186,7 +185,6 @@ export default {
       if (confirm('Delete Rule?')) {
         ApiClient.deleteSigmaRule(ruleUuid)
           .then((response) => {
-            console.log('Rule deleted: ' + ruleUuid)
             this.$store.dispatch('updateSigmaList')
             EventBus.$emit('errorSnackBar', 'Rule deleted: ' + ruleUuid)
           })

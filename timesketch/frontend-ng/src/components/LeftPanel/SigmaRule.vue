@@ -159,14 +159,12 @@ export default {
       eventData.doSearch = true
       eventData.queryString = queryString
       eventData.queryFilter = defaultQueryFilter()
-      console.log(eventData)
       EventBus.$emit('setQueryAndFilter', eventData)
     },
     deleteRule(ruleUuid) {
       if (confirm('Delete Rule?')) {
         ApiClient.deleteSigmaRule(ruleUuid)
           .then((response) => {
-            console.log('Rule deleted: ' + ruleUuid)
             this.$store.dispatch('updateSigmaList')
             this.$router.push({
               name: 'Studio',
@@ -193,7 +191,6 @@ export default {
             var ruleYaml = editingRule.rule_yaml.replace(regex, 'status: deprecated')
             ApiClient.updateSigmaRule(ruleUuid, ruleYaml)
               .then(() => {
-                console.log('Rule deprecated: ' + ruleUuid)
                 this.$store.dispatch('updateSigmaList')
                 EventBus.$emit('errorSnackBar', 'Rule deprecated: ' + ruleUuid)
               })
