@@ -69,7 +69,6 @@ export default {
   methods: {
     createNewSigmaRule() {
       // check current router location
-      console.log(this.$route.params.id + 'create Sigma rule')
       if (this.$route.params.id === 'new') {
         return
       }
