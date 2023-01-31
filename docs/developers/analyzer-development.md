@@ -6,14 +6,17 @@ hide:
 
 ## Overview
 
-This guide provides all steps to get you started with building a new Timesketch analyzer.
+This guide provides all steps to get you started with building a new Timesketch
+analyzer.
 
 ## Background
 
 Timesketch analyzers are programs that run when new data is indexed, e.g. when
 you upload a new plaso storage file or when adding an existing index to a
-sketch. You have access to a simple API that makes searching, commenting,
-tagging etc easy. Everything you can do in the UI you can do programmatically.
+sketch. They can also be triggered manaully for a specific timeline from the
+Analyzer tab in the UI after the index is finished.
+You have access to a simple API that makes searching, commenting, tagging etc
+easy. Everything you can do in the UI you can do programmatically.
 
 ## Analyzers
 
@@ -118,9 +121,8 @@ to get everything up and running.
 
 ### 2) Generate the necessary analyzer templates
 
-Alright, you got your development environment up, great! The first thing we are
-going to do is installing and running the l2t scaffolder to generate the
-necessary files.
+The first thing we are going to do is installing and running the l2t scaffolder
+to generate the necessary files.
 
 **Install the scaffolder**
 
@@ -162,7 +164,8 @@ timesketch chosen.
 Path to the project root: .
 Path [.] set as the project path.
 
-Name of the module to be generated. This can be something like "foobar sqlite" or "event analytics".
+Name of the module to be generated. This can be something like "foobar sqlite"
+or "event analytics".
 
 This will be used for class name generation and file name prefixes.
 Module Name: best_analyzer
@@ -302,18 +305,24 @@ It’s time to address the TODOs in the analyzer file.
 ### Metadata
 
 Add a `DISPLAY_NAME` and `DESCRIPTION` for your analyzer in the top of the
-class. This information will be used to list the analyzer on the "Analyzer" tab in Timesketch. Make sure it describes what the analyzer does and should be used for, since this is the information that analysts have at hand to decide which analyzer to run on their timeline.
+class. This information will be used to list the analyzer on the "Analyzer"
+tab in Timesketch. Make sure it describes what the analyzer does and should be
+used for, since this is the information that analysts have at hand to decide
+which analyzer to run on their timeline.
 
 ### The search query
 
-The analyzer works on the results of a query that needs to be defined in the `best_analyzer.py` file.
+The analyzer works on the results of a query that needs to be defined in
+the `best_analyzer.py` file.
 
 ```python
    # TODO: Add Opensearch query to get the events you need.
    query = ''
 ```
 
-The more specific a query is the faster can the analyzer iterate through the results. So it is recommended to upload some test data in a new sketch and tweak the search query to find an optimal result that will be used in the analyzer.
+The more specific a query is the faster can the analyzer iterate through the
+results. So it is recommended to upload some test data in a new sketch and tweak
+ the search query to find an optimal result that will be used in the analyzer.
 
 ### Return field
 
@@ -324,26 +333,43 @@ analyzer.
 
 ### Analyzer logic
 
-The analyzer template provides a list with available functions to interact with the sketch. Per default it will run the search query and get all resulting events that can be iterated.
+The analyzer template provides a list with available functions to interact with
+the sketch. Per default it will run the search query and get all resulting
+events that can be iterated.
 
 ```python
    for event in events:
        # Analyzer logic starts here
 ```
 
-At this point you can use everything that python offers to work with the event data.
+At this point you can use everything that python offers to work with the
+event data.
 
 ### Return message
 
 The `run()` method will return a string that will be visible in the background
 worker logs and also as the result message on the analyzer tab in Timesketch.
-We recommend including all information relevant to an analyst executing this analyser. E.g. a verdict by the analyzer or information about what tags, comments or stars have been added.
+We recommend including all information relevant to an analyst executing this
+analyser. E.g. a verdict by the analyzer or information about what tags,
+comments or stars have been added.
+
+## Multi Analyzer
+
+When you develop an analyzer that would benefit from creating smaller sub-jobs,
+you should use Multi Analyzer.
+
+For example The Sigma analyzer is such a Multi Analyzer. That means, the Sigma
+analyzer is calling `get_kwargs()` from [sigma_tagger.py](https://github.com/google/timesketch/blob/master/timesketch/lib/analyzers/sigma_tagger.py).
+That will return a list of all Sigma rules installed on the instance. The Main
+celery job then spawns one celery job per Sigma rule that can run in parallel
+or serial depending on the celery config and sizing of the Timesketch instance.
 
 ## Community contributed analyzers
 
 This is currently an experiment and subject to rapid change!
 
-`timesketch/lib/analyzers/contrib` hosts community contributed analyzers. They are not maintained
+`timesketch/lib/analyzers/contrib` hosts community contributed analyzers.
+They are not maintained
 by the core Timesketch development team.
 
 Please read `timesketch/lib/analyzers/contrib/README.md` for more information.
