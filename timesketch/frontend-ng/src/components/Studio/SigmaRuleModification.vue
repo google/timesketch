@@ -22,7 +22,7 @@ limitations under the License.
       -->
       <strong>
         {{ editingRule.title }}
-        <v-chip rounded x-small class="ml-2" :color="statusColors()">
+        <v-chip rounded x-small class="ml-2" :color="this.isParsingSuccesful ? 'success' : 'warning'">
           <v-icon v-if="isParsingSuccesful" x-small> mdi-check </v-icon>
           <v-icon v-else x-small> mdi-alert </v-icon>
           {{ isParsingSuccesful ? 'OK' : 'ERROR' }}</v-chip
@@ -50,11 +50,10 @@ limitations under the License.
     <v-textarea
       label="Edit Sigma rule"
       outlined
-      :color="statusColors()"
+      :color="this.isParsingSuccesful ? 'success' : 'warning'"
       autocomplete="email"
-      rows="20"
+      rows="23"
       v-model="ruleYamlTextArea"
-      :background-color="statusColors()"
       @input="parseSigma(ruleYamlTextArea)"
       class="editSigmaRule"
     >
@@ -64,10 +63,8 @@ limitations under the License.
       <v-btn :disabled="!isParsingSuccesful" @click="addOrUpdateRule(ruleYamlTextArea)" small depressed color="primary">
         {{ isNewRule ? 'Create Rule' : 'Update Rule' }}
       </v-btn>
-      <div style="width: 10px; display: inline-block"></div>
-      <v-btn color="primary" text @click="$router.back()"> Cancel </v-btn>
-      <div style="width: 10px; display: inline-block"></div>
-      <v-btn @click="deleteRule(rule_uuid)" small text color="primary" :disabled="isNewRule"
+      <v-btn color="primary" text @click="$router.back()" style="margin-left: 10px"> Cancel </v-btn>
+      <v-btn style="margin-left: 10px" @click="deleteRule(rule_uuid)" small text color="primary" :disabled="isNewRule"
         ><v-icon>mdi-delete</v-icon></v-btn
       >
     </div>
@@ -164,12 +161,6 @@ export default {
           this.isParsingSuccesful = false
         })
     }, 300),
-    statusColors() {
-      if (this.isParsingSuccesful) {
-        return 'success'
-      }
-      return 'error'
-    },
     getRuleByUUID(ruleUuid) {
       if (ruleUuid === 'new') {
         return
