@@ -42,19 +42,23 @@ timesketch-dev         | User dev created/updated
 timesketch-dev         | Timesketch development server is ready!
 ```
 
-Add a user to your Timesketch server (this will add a user `dev` with password `dev`)
+Per default a user `dev` with password `dev` is created for you. If you want to add additional users to your Timesketch server, run the following command:
 
 ```bash
-$ docker-compose exec timesketch tsctl create-user dev --password dev
-User dev created/updated
+$ docker-compose exec timesketch tsctl create-user <USER> --password <PW>
+User <USER> created/updated
 ```
 
-Now, start the `gunicon` server that will serve the Timsketch WSGI app
+### Web server
+
+Now, start the `gunicon` server that will serve the Timsketch WSGI app.
+
+To make this task easier, we recommend using the `timesketch/contrib/tsdev.sh` script.
 
 In one shell:
 
 ```bash
-$ docker-compose exec timesketch gunicorn --reload -b 0.0.0.0:5000 --log-file - --timeout 120 timesketch.wsgi:application
+$ ./tsdev.sh web
 [2021-05-25 16:36:32 +0000] [94] [INFO] Starting gunicorn 19.10.0
 [2021-05-25 16:36:32 +0000] [94] [INFO] Listening at: http://0.0.0.0:5000 (94)
 [2021-05-25 16:36:32 +0000] [94] [INFO] Using worker: sync
@@ -65,7 +69,7 @@ $ docker-compose exec timesketch gunicorn --reload -b 0.0.0.0:5000 --log-file - 
 ```
 
 By now, you should be able to point your browser to `http://localhost:5000/` and log in with
-the username and password combination you specified earlier. Any changes to Python files
+the username and password combination you specified earlier (or `dev:dev` by default). Any changes to Python files
 (e.g. in the `timesketch/api/v1` directory tree) will be picked up automatically.
 
 ### Celery workers
@@ -76,10 +80,12 @@ are not picked up by the Gunicorn servers but by **Celery workers**.
 If you're planning to work on those (or even just import timelines into your Timesketch instance), you'll need to launch
 a Celery worker, and re-launch it every time you bring changes to its code.
 
+You can use `timesketch/contrib/tsdev.sh` for this task as well.
+
 In a new shell, run the following:
 
 ```bash
-$ docker-compose exec timesketch celery -A timesketch.lib.tasks worker --loglevel info
+$ ./tsdev.sh celery
 ```
 
 ### Restarting
@@ -88,9 +94,28 @@ To restart the webserver and celery workers, stop the execution. Depending on yo
 Then start them both as outlined before with:
 
 ```bash
-$ docker-compose exec timesketch gunicorn --reload -b 0.0.0.0:5000 --log-file - --timeout 120 timesketch.wsgi:application
-$ docker-compose exec timesketch celery -A timesketch.lib.tasks worker --loglevel info
+$ ./tsdev.sh web
+$ ./tsdev.sh celery
 ```
+
+### frontend-ng UI development
+
+For development on the new `frontend-ng` UI, you need to install some dependencies once and start the new frontend.
+
+We recommend using the `timesketch/contrib/tsdev.sh` script for this task as well.
+
+Install frontend-ng dependencies:
+```bash
+./tsdev.sh vue-install-deps frontend-ng
+```
+
+Start the new frondend-ng:
+```
+./tsdev.sh vue-dev frontend-ng
+```
+
+Point your browser to `http://localhost:5001/` to access the new frontend UI.
+All changes to the `timesketch/frontend-ng/` path will be automatically build and loaded in the new frontend.
 
 ## API development
 
