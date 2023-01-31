@@ -18,7 +18,7 @@ import VueRouter from 'vue-router'
 
 import Home from './views/Home'
 import Explore from './views/Explore'
-import Intelligence from './views/Intelligence'
+import Intelligence from './views/ThreatIntelligence'
 import Canvas from './views/Canvas'
 import Sketch from './views/Sketch'
 

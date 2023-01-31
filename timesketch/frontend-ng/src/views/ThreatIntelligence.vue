@@ -44,7 +44,6 @@ limitations under the License.
 </template>
 
 <script>
-import ApiClient from '../utils/RestApiClient'
 import EventBus from '../main'
 
 const defaultQueryFilter = () => {

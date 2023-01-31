@@ -26,7 +26,7 @@ limitations under the License.
 
 <script>
 import Explore from './Explore'
-import Intelligence from './Intelligence'
+import Intelligence from './ThreatIntelligence'
 
 export default {
   components: {

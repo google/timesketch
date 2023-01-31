@@ -36,11 +36,11 @@ limitations under the License.
         depressed
         color="primary"
         outlined
-        @click.stop="$router.push({ name: 'Intelligence', params: { sketchId: sketch.id } })"
-      >
-        <v-icon small left>mdi-pencil</v-icon>
-        Manage</v-btn
-      >
+        :to="{ name: 'Intelligence', params: { sketchId: sketch.id } }"
+        @click.stop="">
+          <v-icon small left>mdi-pencil</v-icon>
+          Manage</v-btn</v-btn
+        >
     </v-row>
 
     <v-expand-transition>
@@ -59,10 +59,10 @@ limitations under the License.
         </v-tabs>
         <v-tabs-items v-model="tabs">
           <v-tab-item :transition="false">
-            <v-data-table :headers="indicatorHeaders" :items="intelligenceData" :items-per-page="10">
+            <v-data-table dense :headers="indicatorHeaders" :items="intelligenceData" :items-per-page="10">
               <template v-slot:item.ioc="{ item }">
                 <span v-if="item.type === 'hash_sha256'" :title="item.ioc">
-                  <pre>{{ item.ioc.substring(0, 8) }}...{{ item.ioc.substring(item.ioc.length - 8) }}</pre>
+                  <span>{{ item.ioc.substring(0, 8) }}...{{ item.ioc.substring(item.ioc.length - 8) }}</span>
                 </span>
                 <span v-else>
                   {{ item.ioc }}
@@ -74,20 +74,27 @@ limitations under the License.
               </template>
 
               <template v-slot:item.actions="{ item }">
-                <v-icon small>mdi-magnify</v-icon>
+                <v-btn icon small @click="generateSearchQuery(item.ioc)">
+                  <v-icon small>mdi-magnify</v-icon>
+                </v-btn>
               </template>
             </v-data-table>
           </v-tab-item>
           <v-tab-item :transition="false">
-            <v-data-table :headers="tagHeaders" :items="Object.values(tagInfo)" :items-per-page="10">
+            <v-data-table dense :headers="tagHeaders" :items="Object.values(tagInfo)" :items-per-page="10">
               <template v-slot:item.tag="{ item }">
-                <v-chip small @click="searchForIOC(item)" style="cursor: pointer">{{ item.tag.name }}</v-chip>
+                <v-chip x-small @click="searchForIOC(item)">{{ item.tag.name }}</v-chip>
               </template>
               <template v-slot:item.iocs="{ item }">
                 <small :title="item.iocs">{{ item.iocs.length }}</small>
               </template>
               <template v-slot:item.weight="{ item }">
                 <small>{{ item.tag.weight }}</small>
+              </template>
+              <template v-slot:item.actions="{ item }">
+                <v-btn icon small @click="searchForIOC(item)">
+                <v-icon small>mdi-magnify</v-icon>
+                </v-btn>
               </template>
             </v-data-table>
           </v-tab-item>
@@ -133,6 +140,7 @@ export default {
         { text: 'Tag', value: 'tag', align: 'start' },
         { text: 'Indicators', value: 'iocs' },
         { text: 'Weight', value: 'weight' },
+        { value: 'actions' },
       ],
     }
   },
@@ -202,6 +210,19 @@ export default {
           return _.extend(tagInfo, this.tagMetadata.default)
         }
       }
+    },
+    generateSearchQuery(value, field) {
+      let query = `"${value}"`
+      // Escape special OpenSearch characters: \, [space]
+      query = query.replace(/[\\\s]/g, '\\$&')
+      if (field !== undefined) {
+        query = `${field}:${query}`
+      }
+      let eventData = {}
+      eventData.doSearch = true
+      eventData.queryString = query
+      eventData.queryFilter = defaultQueryFilter()
+      EventBus.$emit('setQueryAndFilter', eventData)
     },
     searchForIOC(tag) {
       let opensearchQuery = tag.iocs.map((v) => `"${v}"`).reduce((a, b) => `${a} OR ${b}`)
