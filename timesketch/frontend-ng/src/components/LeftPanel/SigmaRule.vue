@@ -45,6 +45,15 @@ limitations under the License.
                   </v-list-item-content>
                 </v-list-item>
 
+                <v-list-item v-on:click="editSigmaRule(sigmaRule.rule_uuid)">
+                  <v-list-item-icon>
+                    <v-icon>mdi-archive</v-icon>
+                  </v-list-item-icon>
+                  <v-list-item-content>
+                    <v-list-item-title>EditRule with function</v-list-item-title>
+                  </v-list-item-content>
+                </v-list-item>
+
                 <v-list-item v-on:click="deprecateSigmaRule(sigmaRule.rule_uuid)">
                   <v-list-item-icon>
                     <v-icon>mdi-archive</v-icon>
@@ -160,6 +169,16 @@ export default {
     },
   },
   methods: {
+    editSigmaRule(ruleUuid) {
+      console.log('Edit Rule: ' + ruleUuid)
+      this.$router.push({
+        name: 'Studio',
+        params: {
+          id: ruleUuid,
+          type: 'sigma',
+        },
+      })
+    },
     search(queryString) {
       let eventData = {}
       eventData.doSearch = true
