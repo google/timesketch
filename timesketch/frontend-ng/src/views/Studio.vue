@@ -26,7 +26,7 @@ limitations under the License.
       <ts-sigma-rules></ts-sigma-rules>
     </v-navigation-drawer>
 
-<v-toolbar flat color="transparent">
+    <v-toolbar flat color="transparent">
       <v-spacer></v-spacer>
       <v-avatar color="grey lighten-1" size="25" class="ml-3">
         <span class="white--text">{{ currentUser | initialLetter }}</span>
@@ -67,10 +67,9 @@ limitations under the License.
         </v-card>
       </v-menu>
     </v-toolbar>
-      <!-- Middle panel -->
-      <ts-sigma-rule-modification app @cancel="formatXMLString = false" :rule_uuid="id" v-if="type === 'sigma'">
-      </ts-sigma-rule-modification>
-    </v-container>
+    <!-- Middle panel -->
+    <ts-sigma-rule-modification app @cancel="formatXMLString = false" :rule_uuid="id" v-if="type === 'sigma'">
+    </ts-sigma-rule-modification>
   </div>
 </template>
 
