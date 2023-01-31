@@ -38,6 +38,14 @@ limitations under the License.
                   </v-list-item-icon>
                   <v-list-item-content> Edit Rule </v-list-item-content>
                 </v-list-item>
+                <v-list-item v-on:click="downloadSigmaRule(sigmaRule.rule_uuid)">
+                  <v-list-item-icon>
+                    <v-icon>mdi-download</v-icon>
+                  </v-list-item-icon>
+                  <v-list-item-content>
+                    <v-list-item-title>Download Rule</v-list-item-title>
+                  </v-list-item-content>
+                </v-list-item>
 
                 <v-list-item v-on:click="deprecateSigmaRule(sigmaRule.rule_uuid)">
                   <v-list-item-icon>
@@ -202,6 +210,20 @@ export default {
             console.error(e)
           })
       }
+    },
+    downloadSigmaRule(ruleUuid) {
+      ApiClient.getSigmaRuleResource(ruleUuid)
+        .then((response) => {
+          var editingRule = response.data.objects[0]
+          var blob = new Blob([editingRule.rule_yaml], { type: 'text/plain' })
+          var link = document.createElement('a')
+          link.href = window.URL.createObjectURL(blob)
+          link.download = editingRule.title + '.yml'
+          link.click()
+        })
+        .catch((e) => {
+          console.error(e)
+        })
     },
   },
 }
