@@ -51,24 +51,6 @@ limitations under the License.
                 </v-list-item-content>
               </v-list-item>
 
-              <v-list-item>
-                <v-list-item-icon>
-                  <v-icon>mdi-archive</v-icon>
-                </v-list-item-icon>
-                <v-list-item-content>
-                  <v-list-item-title>Archive sketch</v-list-item-title>
-                </v-list-item-content>
-              </v-list-item>
-
-              <v-list-item>
-                <v-list-item-icon>
-                  <v-icon>mdi-export</v-icon>
-                </v-list-item-icon>
-                <v-list-item-content>
-                  <v-list-item-title>Export sketch</v-list-item-title>
-                </v-list-item-content>
-              </v-list-item>
-
               <a href="/logout/" style="text-decoration: none; color: inherit">
                 <v-list-item>
                   <v-list-item-icon>
