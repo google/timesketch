@@ -59,7 +59,7 @@ limitations under the License.
                     <v-icon>mdi-archive</v-icon>
                   </v-list-item-icon>
                   <v-list-item-content>
-                    <v-list-item-title>Do not use the rule in Sigma analyzer</v-list-item-title>
+                    <v-list-item-title>Deprecated Sigma rules will not be used in the Sigma analyzer</v-list-item-title>
                   </v-list-item-content>
                 </v-list-item>
                 <v-list-item v-on:click="deleteRule(sigmaRule.rule_uuid)">
