@@ -21,6 +21,7 @@ import Explore from './views/Explore'
 import Intelligence from './views/ThreatIntelligence'
 import Canvas from './views/Canvas'
 import Sketch from './views/Sketch'
+import Studio from './views/Studio'
 
 Vue.use(VueRouter)
 
@@ -55,6 +56,12 @@ const routes = [
         props: true,
       },
     ],
+  },
+  {
+    name: 'Studio',
+    path: '/studio/:type/:id',
+    component: Studio,
+    props: true,
   },
 ]
 
