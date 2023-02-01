@@ -15,16 +15,16 @@ limitations under the License.
 -->
 <template>
   <v-container fluid>
-    <div style="margin-bottom: 15px; margin-top: -45px">
+    <div style="margin-bottom: 20px; margin-top: -55px">
       <!-- This is a very hacky way to move the whole content to the top,
       there is currently no global solution to get that depending on the context
       TODO(jaegeral): find a better solution with jbn
       -->
       <strong>
         {{ editingRule.title }}
-        <v-chip rounded x-small class="ml-2" :color="this.isParsingSuccesful ? 'success' : 'warning'">
-          <v-icon v-if="isParsingSuccesful" x-small> mdi-check </v-icon>
-          <v-icon v-else x-small> mdi-alert </v-icon>
+        <v-chip rounded x-small class="ml-2" :color="this.isParsingSuccesful ? 'success' : 'error'">
+          <v-icon v-if="isParsingSuccesful" x-small left> mdi-check </v-icon>
+          <v-icon v-else x-small left> mdi-alert </v-icon>
           {{ isParsingSuccesful ? 'OK' : 'ERROR' }}</v-chip
         >
       </strong>
@@ -50,27 +50,28 @@ limitations under the License.
     <v-textarea
       label="Edit Sigma rule"
       outlined
-      :color="this.isParsingSuccesful ? 'success' : 'warning'"
+      :color="this.isParsingSuccesful ? 'success' : 'error'"
       autocomplete="email"
       rows="23"
       v-model="ruleYamlTextArea"
       @input="parseSigma(ruleYamlTextArea)"
       class="editSigmaRule"
+      hide-details
     >
     </v-textarea>
 
-    <div>
+    <div class="mt-2">
       <v-btn :disabled="!isParsingSuccesful" @click="addOrUpdateRule(ruleYamlTextArea)" small depressed color="primary">
         {{ isNewRule ? 'Create Rule' : 'Update Rule' }}
       </v-btn>
       <v-btn color="primary" text @click="$router.back()" style="margin-left: 10px"> Cancel </v-btn>
-      <v-btn style="margin-left: 10px" @click="deleteRule(rule_uuid)" small text color="primary" :disabled="isNewRule"
+      <v-btn v-show="!isNewRule" @click="deleteRule(rule_uuid)" small text color="error darken-2"
         ><v-icon>mdi-delete</v-icon></v-btn
       >
     </div>
 
-    <div class="alertbox" v-if="isParsingSuccesful">
-      <h3>Preview opensearch query:</h3>
+    <div v-if="isParsingSuccesful" class="mt-5">
+      <strong>Preview opensearch query:</strong>
       <pre>{{ editingRule.search_query }}</pre>
       <!-- TODO: This should become a global class how to nicely highlight a query -->
     </div>
@@ -221,10 +222,6 @@ export default {
 </script>
   
 <style scoped lang="scss">
-.alertbox {
-  width: 500px;
-  padding-top: 20px;
-}
 .editSigmaRule {
   font-family: monospace;
   font-size: 13px;
