@@ -12,7 +12,7 @@ limitations under the License.
 */
 
 // General first part of every Sigma rule:
-const SkeletonFirst = `title: SigmeRuleTemplateTitle
+const SkeletonFirst = `title: SigmaRuleTemplateTitle
 id: ${crypto.randomUUID()}
 description: Detects suspicious activity
 references:
