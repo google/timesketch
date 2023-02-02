@@ -23,7 +23,7 @@ limitations under the License.
       >
     </div>
     <v-expand-transition>
-      <div v-show="expanded" v-if="searchtemplates.length">
+      <div v-show="expanded && searchtemplates.length">
         <v-data-iterator :items="searchtemplates" :items-per-page.sync="itemsPerPage" :search="search">
           <template v-slot:header>
             <v-toolbar flat>
