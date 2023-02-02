@@ -289,7 +289,7 @@ export default {
     return {
       showSketchMetadata: false,
       navigationDrawer: {
-        width: 430,
+        width: 370,
       },
       selectedScenario: null,
       scenarioDialog: false,
@@ -309,7 +309,7 @@ export default {
       this.$store.dispatch('updateSearchHistory', this.sketchId)
       this.$store.dispatch('updateScenarios', this.sketchId)
       this.$store.dispatch('updateScenarioTemplates', this.sketchId)
-      this.$store.dispatch('updateSigmaList', this.sketchId)
+      //this.$store.dispatch('updateSigmaList', this.sketchId)
       this.$store.dispatch('updateContextLinks')
       this.loadingSketch = false
       this.showLeftPanel = true
@@ -408,7 +408,7 @@ export default {
     toggleLeftPanel() {
       this.showLeftPanel = !this.showLeftPanel
       if (this.showLeftPanel) {
-        this.navigationDrawer.width = 430
+        this.navigationDrawer.width = 370
       } else {
         this.navigationDrawer.width = 0
       }

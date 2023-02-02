@@ -23,7 +23,7 @@ limitations under the License.
         <v-spacer></v-spacer>
       </v-toolbar>
       <v-divider></v-divider>
-      <ts-sigma-rules></ts-sigma-rules>
+      <ts-sigma-rules start-expanded></ts-sigma-rules>
     </v-navigation-drawer>
 
     <v-toolbar flat color="transparent">

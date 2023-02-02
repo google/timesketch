@@ -14,20 +14,32 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div>
-    <div class="pa-4" flat :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
-      <span style="cursor: pointer" @click="expanded = !expanded">
-        <v-icon left>mdi-sigma-lower</v-icon> Sigma Rules ({{ ruleCount }})
-      </span>
-      <span style="float: right" v-if="expanded">
-        <v-icon v-on:click="createNewSigmaRule()">mdi-plus</v-icon>
-      </span>
-    </div>
+  <div v-if="ruleCount > 0">
+    <v-row
+      no-gutters
+      style="cursor: pointer"
+      class="pa-4"
+      flat
+      @click="expanded = !expanded"
+      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+    >
+      <v-col cols="11">
+        <v-icon left>mdi-sigma-lower</v-icon> Sigma Rules (<small
+          ><strong>{{ ruleCount }}</strong></small
+        >)
+      </v-col>
+      <v-col cols="1">
+        <v-btn small icon>
+          <v-icon v-if="expanded" v-on:click="createNewSigmaRule()">mdi-plus</v-icon>
+        </v-btn>
+      </v-col>
+    </v-row>
+
     <v-expand-transition>
-      <div v-show="expanded" v-if="ruleCount > 0">
+      <div v-show="expanded">
         <v-data-iterator :items="sigmaRules" :items-per-page.sync="itemsPerPage" :search="search">
           <template v-slot:header>
-            <v-toolbar flat>
+            <v-toolbar flat v-if="ruleCount > itemsPerPage">
               <v-text-field
                 v-model="search"
                 clearable
@@ -55,13 +67,15 @@ limitations under the License.
 import TsSigmaRule from './SigmaRule.vue'
 
 export default {
-  props: [],
+  props: {
+    startExpanded: Boolean,
+  },
   components: {
     TsSigmaRule,
   },
   data: function () {
     return {
-      expanded: false,
+      expanded: this.startExpanded,
       itemsPerPage: 10,
       search: '',
     }

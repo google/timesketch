@@ -130,9 +130,9 @@ API_ROUTES = [
     (ViewListResource, "/sketches/<int:sketch_id>/views/"),
     (AttributeResource, "/sketches/<int:sketch_id>/attribute/"),
     (ViewResource, "/sketches/<int:sketch_id>/views/<int:view_id>/"),
-    (SearchTemplateListResource, "/searchtemplate/"),
-    (SearchTemplateResource, "/searchtemplate/<int:searchtemplate_id>/"),
-    (SearchTemplateParseResource, "/searchtemplate/<int:searchtemplate_id>/parse/"),
+    (SearchTemplateListResource, "/searchtemplates/"),
+    (SearchTemplateResource, "/searchtemplates/<int:searchtemplate_id>/"),
+    (SearchTemplateParseResource, "/searchtemplates/<int:searchtemplate_id>/parse/"),
     (UploadFileResource, "/upload/"),
     (TaskResource, "/tasks/"),
     (StoryListResource, "/sketches/<int:sketch_id>/stories/"),
@@ -154,9 +154,9 @@ API_ROUTES = [
     (SigmaListResource, "/sigma/"),  # TODO(jaegeral): deprecate this
     (SigmaResource, "/sigma/rule/<string:rule_uuid>/"),  # TODO: deprecate
     (SigmaByTextResource, "/sigma/text/"),  # TODO(jaegeral): deprecate this
-    (SigmaRuleListResource, "/sigmarule/"),
-    (SigmaRuleResource, "/sigmarule/<string:rule_uuid>/"),
-    (SigmaRuleByTextResource, "/sigmarule/text/"),
+    (SigmaRuleListResource, "/sigmarules/"),
+    (SigmaRuleResource, "/sigmarules/<string:rule_uuid>/"),
+    (SigmaRuleByTextResource, "/sigmarules/text/"),
     (LoggedInUserResource, "/users/me/"),
     (GraphListResource, "/sketches/<int:sketch_id>/graphs/"),
     (GraphResource, "/sketches/<int:sketch_id>/graphs/<int:graph_id>/"),
