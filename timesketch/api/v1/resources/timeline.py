@@ -104,42 +104,46 @@ class TimelineListResource(resources.ResourceMixin, Resource):
                 "Unable to create a timeline using a deleted search index",
             )
 
+        """Removed timeline_id defenition since it malfunctioned when multiple
+        timelines were created within a sketch. First sketch would be correct
+        but the second timeline would inherit the id from searchindex_id. This 
+        would prevent the creation of a second timeline"""
+
+        return_code = HTTP_STATUS_CODE_CREATED
+        timeline_name = form.get("timeline_name", searchindex.name)
+        timeline = Timeline(
+            name=timeline_name,
+            description=searchindex.description,
+            sketch=sketch,
+            user=current_user,
+            searchindex=searchindex,
+        )
+        sketch.timelines.append(timeline)
+        labels_to_prevent_deletion = current_app.config.get(
+            "LABELS_TO_PREVENT_DELETION", []
+        )
+
+        for label in sketch.get_labels:
+            if label not in labels_to_prevent_deletion:
+                continue
+            timeline.add_label(label)
+            searchindex.add_label(label)
+
+        # Set status to ready so the timeline can be queried.
+        timeline.set_status("ready")
+
+        db_session.add(timeline)
+        db_session.commit()
+
+        """Implemented timeline_id definition below since the below function
+        requires the timeline_id value. Beware that the second timeline_id will
+        still be incorrect as it would be above. This way the below implementation
+        does not completely break."""
         timeline_id = [
             t.searchindex.id
             for t in sketch.timelines
             if t.searchindex.id == searchindex_id
         ]
-
-        if not timeline_id:
-            return_code = HTTP_STATUS_CODE_CREATED
-            timeline_name = form.get("timeline_name", searchindex.name)
-            timeline = Timeline(
-                name=timeline_name,
-                description=searchindex.description,
-                sketch=sketch,
-                user=current_user,
-                searchindex=searchindex,
-            )
-            sketch.timelines.append(timeline)
-            labels_to_prevent_deletion = current_app.config.get(
-                "LABELS_TO_PREVENT_DELETION", []
-            )
-
-            for label in sketch.get_labels:
-                if label not in labels_to_prevent_deletion:
-                    continue
-                timeline.add_label(label)
-                searchindex.add_label(label)
-
-            # Set status to ready so the timeline can be queried.
-            timeline.set_status("ready")
-
-            db_session.add(timeline)
-            db_session.commit()
-        else:
-            metadata["created"] = False
-            return_code = HTTP_STATUS_CODE_OK
-            timeline = Timeline.query.get(timeline_id)
 
         # Run sketch analyzers when timeline is added. Import here to avoid
         # circular imports.

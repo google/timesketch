@@ -1165,24 +1165,44 @@ class MarkEventsWithTimelineIdentifier(resources.ResourceMixin, Resource):
                 "sketch ID ({1:d})".format(sketch.id, timeline.sketch.id),
             )
 
-        query_dsl = {
-            "script": {
-                "source": (
-                    f"ctx._source.__ts_timeline_id={timeline_id};"
-                    f"ctx._source.timesketch_label=[];"
-                ),
-                "lang": "painless",
-            },
-            "query": {
-                "bool": {
-                    "must_not": {
-                        "exists": {
-                            "field": "__ts_timeline_id",
+        """If timeline_filter_id exists, excecute query_dsl with timeline_filter_id 
+        condition otherwise resume normal function"""
+        timeline_filter_id = form.get("timeline_filter_id")
+        if timeline_filter_id is not None:
+            query_dsl = {
+                "script": {
+                    "source": (
+                        f"ctx._source.__ts_timeline_id={timeline_id};"
+                        f"ctx._source.timesketch_label=[];"
+                    ),
+                    "lang": "painless",
+                },
+                "query": {
+                    "bool": {
+                        "filter": {"term": {"timeline_filter_id": timeline_filter_id}},
+                        "must_not": {"exists": {"field": "__ts_timeline_id"}},
+                    }
+                },
+            }
+        else:
+            query_dsl = {
+                "script": {
+                    "source": (
+                        f"ctx._source.__ts_timeline_id={timeline_id};"
+                        f"ctx._source.timesketch_label=[];"
+                    ),
+                    "lang": "painless",
+                },
+                "query": {
+                    "bool": {
+                        "must_not": {
+                            "exists": {
+                                "field": "__ts_timeline_id",
+                            }
                         }
                     }
-                }
-            },
-        }
+                },
+            }
         # pylint: disable=unexpected-keyword-arg
         self.datastore.client.update_by_query(
             body=query_dsl,
