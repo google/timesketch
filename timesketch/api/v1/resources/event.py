@@ -1170,7 +1170,7 @@ class MarkEventsWithTimelineIdentifier(resources.ResourceMixin, Resource):
                 },
                 "query": {
                     "bool": {
-                        "filter": {"term": {"timeline_filter_id": timeline_filter_id}},
+                        "filter": {"term": {"__timeline_id": f"timeline_filter_id"}},
                         "must_not": {"exists": {"field": "__ts_timeline_id"}},
                     }
                 },

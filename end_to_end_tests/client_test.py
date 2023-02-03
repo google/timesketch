@@ -99,7 +99,7 @@ class ClientTest(interface.BaseEndToEndTest):
             )
             # Verify amount of events in timeline
             search_obj = search.Search(new_sketch)
-            search_obj.query_string = f"__timeline_id:{i} OR __ts_timeline_id:{i}"
+            search_obj.query_string = f"__timeline_id:{i}"
             self.assertions.assertEqual(len(search_obj.table), 1)
 
         data_sources = timeline.data_sources
