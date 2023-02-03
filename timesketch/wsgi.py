@@ -51,6 +51,7 @@ if os.environ.get("prometheus_multiproc_dir"):
     logger.info("Metrics server enabled")
     GunicornPrometheusMetrics(application, group_by="endpoint")
 
+
 # pylint: disable=unused-argument
 @application.teardown_appcontext
 def shutdown_session(exception=None):

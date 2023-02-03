@@ -112,7 +112,6 @@ class TimesketchSigmaRuleTest(unittest.TestCase):
         self.assertIn("foobar.com", rule.references[0])
 
     def test_parse_sigma_rule_by_text(self):
-
         rule = self.api_client.parse_sigma_rule_by_text(MOCK_SIGMA_RULE)
 
         self.assertIsNotNone(rule)
@@ -190,7 +189,6 @@ class TimesketchSigmaTest(unittest.TestCase):
         self.assertIn("foobar.com", rule.references[0])
 
     def test_parse_sigma_rule_by_text(self):
-
         rule = self.api_client.parse_sigma_rule_by_text(MOCK_SIGMA_RULE)
 
         self.assertIsNotNone(rule)
