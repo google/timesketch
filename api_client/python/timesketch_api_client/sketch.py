@@ -1734,8 +1734,8 @@ class Sketch(resource.BaseResource):
             raise ValueError("Timeline name needs to be provided.")
 
         # Step 1: Make sure the index doesn't exist already.
-        """ If a timeline identifier is used this step is skipped
-        otherwise no more than one timeline can be created from an index """
+        # This step is skipped if a timeline filter identifier is applied
+        # otherwise an index can not be used for multiple timelines.
         if timeline_filter_id is None:
             for index_obj in self.api.list_searchindices():
                 if index_obj is None:
