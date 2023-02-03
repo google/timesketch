@@ -179,7 +179,7 @@ Let's look at an example:
 
 ```
 
-## A file, CSV, PLASO or JSONL.
+## A file, CSV, PLASO or JSONL
 
 Files can also be added using the importer. That is files that are
 supported by Timesketch. These would be CSV, JSONL (JSON lines) and
@@ -233,7 +233,7 @@ def action():
     streamer.add_excel_file('~/Downloads/SomeRandomDocument.xlsx')
 ```
 
-## Import Data Already Ingested into OpenSearch.
+## Import Data Already Ingested into OpenSearch
 
 You may have other mechanism to ingest data into OpenSearch, like an ELK stack or
 some manual scripts that ingest the data. Since the data is already in OpenSearch
@@ -248,24 +248,24 @@ multiple factors._
 The data that is ingested needs to have few fields already set before it can be
 ingested into Timesketch:
 
- - message
- - datetime
- - timestamp
- - timestamp_desc
- 
- The datetime field also needs to be mapped as a date, not a text string.
- 
- A sample code on how to ingest data into Timesketch that is already in OpenSearch:
- 
+- message
+- datetime
+- timestamp
+- timestamp_desc
+
+The datetime field also needs to be mapped as a date, not a text string.
+
+A sample code on how to ingest data into Timesketch that is already in OpenSearch:
+
 - Method 1 - generate a timeline from a index in OpenSearch
 - Method 2 - generate a timeline from a index in OpenSearch, that contains documents
   from multiple timelines filtered using the field `__timeline_id`
 
- ```python
- from timesketch_api_client import config
- 
- ts_client = config.get_client()
- sketch = ts_client.get_sketch(SKETCH_ID)
+```python
+from timesketch_api_client import config
+
+ts_client = config.get_client()
+sketch = ts_client.get_sketch(SKETCH_ID)
  
 # Method 1 - Single timeline from a single index
 sketch.generate_timeline_from_es_index(
@@ -282,4 +282,5 @@ sketch.generate_timeline_from_es_index(
     timeline_filter_id="1"
     provider='My Custom Ingestion Script',
     context='python my_custom_script.py --ingest',
- )
+)
+```

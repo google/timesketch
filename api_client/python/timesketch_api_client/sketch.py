@@ -41,8 +41,8 @@ class Sketch(resource.BaseResource):
 
     # Add in necessary fields in data ingested via a different mechanism.
     _NECESSARY_DATA_FIELDS = frozenset(
-+        ["timestamp", "timestamp_desc", "datetime", "message"]
-+    )
+        ["timestamp", "timestamp_desc", "datetime", "message"]
+    )
 
     def __init__(self, sketch_id, api, sketch_name=None):
         """Initializes the Sketch object.
@@ -1814,6 +1814,7 @@ class Sketch(resource.BaseResource):
             name=timeline_dict["name"],
             searchindex=timeline_dict["searchindex"]["index_name"],
         )
+
         # Step 5: Add the timeline ID into the dataset.
         resource_url = f"{self.api.api_root}/sketches/{self.id}/event/add_timeline_id/"
         form_data = {
