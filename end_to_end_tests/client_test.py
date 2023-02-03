@@ -95,7 +95,7 @@ class ClientTest(interface.BaseEndToEndTest):
 
         for i in range(0, 3):
             self.assertions.assertEqual(
-                multi_timeline[i].name, f"Ingested Via Mechanism - {i+1}"
+                multi_timeline[i].name, f"Ingested Via Mechanism - {i}"
             )
             # Verify amount of events in timeline
             search_obj = search.Search(new_sketch)
