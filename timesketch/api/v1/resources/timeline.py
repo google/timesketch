@@ -17,29 +17,24 @@ import codecs
 import json
 import logging
 import uuid
-import six
 
 import opensearchpy
-from flask import request
-from flask import abort
-from flask import current_app
+import six
+from flask import abort, current_app, request
+from flask_login import current_user, login_required
 from flask_restful import Resource
-from flask_login import login_required
-from flask_login import current_user
 
-from timesketch.api.v1 import resources
-from timesketch.api.v1 import utils
+from timesketch.api.v1 import resources, utils
 from timesketch.lib import forms
-from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
-from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
-from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
-from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
-from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
+from timesketch.lib.definitions import (
+    HTTP_STATUS_CODE_BAD_REQUEST,
+    HTTP_STATUS_CODE_CREATED,
+    HTTP_STATUS_CODE_FORBIDDEN,
+    HTTP_STATUS_CODE_NOT_FOUND,
+    HTTP_STATUS_CODE_OK,
+)
 from timesketch.models import db_session
-from timesketch.models.sketch import SearchIndex
-from timesketch.models.sketch import Sketch
-from timesketch.models.sketch import Timeline
-
+from timesketch.models.sketch import SearchIndex, Sketch, Timeline
 
 logger = logging.getLogger("timesketch.timeline_api")
 
@@ -104,12 +99,6 @@ class TimelineListResource(resources.ResourceMixin, Resource):
                 "Unable to create a timeline using a deleted search index",
             )
 
-        """Removed timeline_id defenition since it malfunctioned when multiple
-        timelines were created within a sketch. First sketch would be correct
-        but the second timeline would inherit the id from searchindex_id. This 
-        would prevent the creation of a second timeline"""
-
-        return_code = HTTP_STATUS_CODE_CREATED
         timeline_name = form.get("timeline_name", searchindex.name)
         timeline = Timeline(
             name=timeline_name,
@@ -134,16 +123,7 @@ class TimelineListResource(resources.ResourceMixin, Resource):
 
         db_session.add(timeline)
         db_session.commit()
-
-        """Implemented timeline_id definition below since the below function
-        requires the timeline_id value. Beware that the second timeline_id will
-        still be incorrect as it would be above. This way the below implementation
-        does not completely break."""
-        timeline_id = [
-            t.searchindex.id
-            for t in sketch.timelines
-            if t.searchindex.id == searchindex_id
-        ]
+        return_code = HTTP_STATUS_CODE_CREATED
 
         # Run sketch analyzers when timeline is added. Import here to avoid
         # circular imports.
@@ -153,7 +133,7 @@ class TimelineListResource(resources.ResourceMixin, Resource):
             from timesketch.lib import tasks
 
             sketch_analyzer_group, _ = tasks.build_sketch_analysis_pipeline(
-                sketch_id, searchindex_id, current_user.id, timeline_id=timeline_id
+                sketch_id, searchindex_id, current_user.id, timeline_id=timeline.id
             )
             if sketch_analyzer_group:
                 pipeline = (
