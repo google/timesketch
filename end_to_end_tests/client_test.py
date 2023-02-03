@@ -63,7 +63,7 @@ class ClientTest(interface.BaseEndToEndTest):
             filename="evtx_direct.csv", index_name=single_index_name
         )
         self.import_directly_to_opensearch(
-            filename="sigma_events-multiple.jsonl", index_name=multiple_index
+            filename="sigma_events_multiple.jsonl", index_name=multiple_index
         )
 
         new_sketch = self.api.create_sketch(
