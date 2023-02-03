@@ -17,29 +17,24 @@ import codecs
 import json
 import logging
 import uuid
-import six
 
 import opensearchpy
-from flask import request
-from flask import abort
-from flask import current_app
+import six
+from flask import abort, current_app, request
+from flask_login import current_user, login_required
 from flask_restful import Resource
-from flask_login import login_required
-from flask_login import current_user
 
-from timesketch.api.v1 import resources
-from timesketch.api.v1 import utils
+from timesketch.api.v1 import resources, utils
 from timesketch.lib import forms
-from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
-from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
-from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
-from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
-from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
+from timesketch.lib.definitions import (
+    HTTP_STATUS_CODE_BAD_REQUEST,
+    HTTP_STATUS_CODE_CREATED,
+    HTTP_STATUS_CODE_FORBIDDEN,
+    HTTP_STATUS_CODE_NOT_FOUND,
+    HTTP_STATUS_CODE_OK,
+)
 from timesketch.models import db_session
-from timesketch.models.sketch import SearchIndex
-from timesketch.models.sketch import Sketch
-from timesketch.models.sketch import Timeline
-
+from timesketch.models.sketch import SearchIndex, Sketch, Timeline
 
 logger = logging.getLogger("timesketch.timeline_api")
 
@@ -104,42 +99,31 @@ class TimelineListResource(resources.ResourceMixin, Resource):
                 "Unable to create a timeline using a deleted search index",
             )
 
-        timeline_id = [
-            t.searchindex.id
-            for t in sketch.timelines
-            if t.searchindex.id == searchindex_id
-        ]
+        timeline_name = form.get("timeline_name", searchindex.name)
+        timeline = Timeline(
+            name=timeline_name,
+            description=searchindex.description,
+            sketch=sketch,
+            user=current_user,
+            searchindex=searchindex,
+        )
+        sketch.timelines.append(timeline)
+        labels_to_prevent_deletion = current_app.config.get(
+            "LABELS_TO_PREVENT_DELETION", []
+        )
 
-        if not timeline_id:
-            return_code = HTTP_STATUS_CODE_CREATED
-            timeline_name = form.get("timeline_name", searchindex.name)
-            timeline = Timeline(
-                name=timeline_name,
-                description=searchindex.description,
-                sketch=sketch,
-                user=current_user,
-                searchindex=searchindex,
-            )
-            sketch.timelines.append(timeline)
-            labels_to_prevent_deletion = current_app.config.get(
-                "LABELS_TO_PREVENT_DELETION", []
-            )
+        for label in sketch.get_labels:
+            if label not in labels_to_prevent_deletion:
+                continue
+            timeline.add_label(label)
+            searchindex.add_label(label)
 
-            for label in sketch.get_labels:
-                if label not in labels_to_prevent_deletion:
-                    continue
-                timeline.add_label(label)
-                searchindex.add_label(label)
+        # Set status to ready so the timeline can be queried.
+        timeline.set_status("ready")
 
-            # Set status to ready so the timeline can be queried.
-            timeline.set_status("ready")
-
-            db_session.add(timeline)
-            db_session.commit()
-        else:
-            metadata["created"] = False
-            return_code = HTTP_STATUS_CODE_OK
-            timeline = Timeline.query.get(timeline_id)
+        db_session.add(timeline)
+        db_session.commit()
+        return_code = HTTP_STATUS_CODE_CREATED
 
         # Run sketch analyzers when timeline is added. Import here to avoid
         # circular imports.
@@ -149,7 +133,7 @@ class TimelineListResource(resources.ResourceMixin, Resource):
             from timesketch.lib import tasks
 
             sketch_analyzer_group, _ = tasks.build_sketch_analysis_pipeline(
-                sketch_id, searchindex_id, current_user.id, timeline_id=timeline_id
+                sketch_id, searchindex_id, current_user.id, timeline_id=timeline.id
             )
             if sketch_analyzer_group:
                 pipeline = (

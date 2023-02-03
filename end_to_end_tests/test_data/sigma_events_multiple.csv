@@ -1,0 +1,4 @@
+"__timeline_id","message","timestamp","datetime","timestamp_desc","extra_field_1","command","data_type","display_name","filename","packages","parser"
+"0","A message","123456789","2015-07-24T19:01:01+00:00","Write time","foo","","","","","",""
+"1","Another message","123456790","2015-07-24T19:01:02+00:00","Write time","bar","","","","","",""
+"2","Yet more messages","123456791","2015-07-24T19:01:03+00:00","Write time","baz","","","","","",""
