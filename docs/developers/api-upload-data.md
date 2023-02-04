@@ -179,7 +179,7 @@ Let's look at an example:
 
 ```
 
-## A file, CSV, PLASO or JSONL
+## A file, CSV, PLASO or JSONL.
 
 Files can also be added using the importer. That is files that are
 supported by Timesketch. These would be CSV, JSONL (JSON lines) and
@@ -233,7 +233,7 @@ def action():
     streamer.add_excel_file('~/Downloads/SomeRandomDocument.xlsx')
 ```
 
-## Import Data Already Ingested into OpenSearch
+## Import Data Already Ingested into OpenSearch.
 
 You may have other mechanism to ingest data into OpenSearch, like an ELK stack or
 some manual scripts that ingest the data. Since the data is already in OpenSearch
