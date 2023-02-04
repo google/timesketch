@@ -248,24 +248,38 @@ multiple factors._
 The data that is ingested needs to have few fields already set before it can be
 ingested into Timesketch:
 
-- message
-- timestamp
-- datetime
+ - message
+ - datetime
+ - timestamp
+ - timestamp_desc
+ 
+ The datetime field also needs to be mapped as a date, not a text string.
+ 
+ A sample code on how to ingest data into Timesketch that is already in OpenSearch:
+ 
+- Method 1 - generate a timeline from a index in OpenSearch
+- Method 2 - generate a timeline from a index in OpenSearch, that contains documents
+  from multiple timelines filtered using the field `__timeline_id`
 
-The datetime field also needs to be mapped as a date, not a text string.
-
-A sample code on how to ingest data into Timesketch that is already in OpenSearch:
-
-```python
-from timesketch_api_client import config
-
-ts_client = config.get_client()
-sketch = ts_client.get_sketch(SKETCH_ID)
-
+ ```python
+ from timesketch_api_client import config
+ 
+ ts_client = config.get_client()
+ sketch = ts_client.get_sketch(SKETCH_ID)
+ 
+# Method 1 - Single timeline from a single index
 sketch.generate_timeline_from_es_index(
-    index_name=OPENSEARCH_INDEX_NAME,
+    es_index_name=OPENSEARCH_INDEX_NAME,
     name=TIMELINE_NAME,
     provider='My Custom Ingestion Script',
     context='python my_custom_script.py --ingest',
 )
-```
+
+# Method 2 - Multiple timelines from a single index
+sketch.generate_timeline_from_es_index(
+    es_index_name=OPENSEARCH_INDEX_NAME,
+    name=TIMELINE_NAME,
+    timeline_filter_id="1"
+    provider='My Custom Ingestion Script',
+    context='python my_custom_script.py --ingest',
+ )
