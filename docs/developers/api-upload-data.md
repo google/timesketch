@@ -279,7 +279,7 @@ sketch.generate_timeline_from_es_index(
 sketch.generate_timeline_from_es_index(
     es_index_name=OPENSEARCH_INDEX_NAME,
     name=TIMELINE_NAME,
-    timeline_filter_id="1"
+    timeline_filter_id="1",
     provider='My Custom Ingestion Script',
     context='python my_custom_script.py --ingest',
 )
