@@ -78,7 +78,7 @@ class ClientTest(interface.BaseEndToEndTest):
             context=context,
         )
         multi_timeline = []
-        for i in range(0, 3):
+        for i in range(3):
             multi_timeline.append(
                 new_sketch.generate_timeline_from_es_index(
                     es_index_name=multiple_index,
