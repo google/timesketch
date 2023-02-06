@@ -18,8 +18,7 @@ import time
 
 from timesketch_api_client import search
 
-from . import interface
-from . import manager
+from . import interface, manager
 
 
 class ClientTest(interface.BaseEndToEndTest):
@@ -57,10 +56,14 @@ class ClientTest(interface.BaseEndToEndTest):
 
     def test_direct_opensearch(self):
         """Test injecting data into OpenSearch directly."""
-        index_name = "direct_testing"
+        single_index_name = "direct_testing"
+        multiple_index = "index-multiple"
 
         self.import_directly_to_opensearch(
-            filename="evtx_direct.csv", index_name=index_name
+            filename="evtx_direct.csv", index_name=single_index_name
+        )
+        self.import_directly_to_opensearch(
+            filename="sigma_events_multiple.csv", index_name=multiple_index
         )
 
         new_sketch = self.api.create_sketch(
@@ -68,17 +71,36 @@ class ClientTest(interface.BaseEndToEndTest):
         )
 
         context = "e2e - > test_direct_opensearch"
-        timeline_name = "Ingested Via Mechanism"
         timeline = new_sketch.generate_timeline_from_es_index(
-            es_index_name=index_name,
-            name=timeline_name,
+            es_index_name=single_index_name,
+            name="Ingested Via Mechanism",
             provider="end_to_end_testing_platform",
             context=context,
         )
+        multi_timeline = []
+        for i in range(0, 3):
+            multi_timeline.append(
+                new_sketch.generate_timeline_from_es_index(
+                    es_index_name=multiple_index,
+                    name=f"Ingested Via Mechanism - {i}",
+                    provider="end_to_end_testing_platform",
+                    context=context,
+                    timeline_filter_id=i,
+                )
+            )
 
         _ = new_sketch.lazyload_data(refresh_cache=True)
-        self.assertions.assertEqual(len(new_sketch.list_timelines()), 1)
-        self.assertions.assertEqual(timeline.name, timeline_name)
+        self.assertions.assertEqual(len(new_sketch.list_timelines()), 4)
+        self.assertions.assertEqual(timeline.name, "Ingested Via Mechanism")
+
+        for i in range(0, 3):
+            self.assertions.assertEqual(
+                multi_timeline[i].name, f"Ingested Via Mechanism - {i}"
+            )
+            # Verify amount of events in timeline
+            search_obj = search.Search(new_sketch)
+            search_obj.query_string = f"__ts_timeline_filter_id:{i}"
+            self.assertions.assertEqual(len(search_obj.table), 1)
 
         data_sources = timeline.data_sources
         self.assertions.assertEqual(len(data_sources), 1)

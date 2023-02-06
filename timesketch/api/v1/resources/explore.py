@@ -277,8 +277,10 @@ class ExploreResource(resources.ResourceMixin, Resource):
         except KeyError:
             pass
 
-        # Total count for query regardless of returned results.
-        count_total_complete = sum(count_per_index.values())
+        # Total count for query that matches the timelines
+        # Documents that match the query but are not part of a timeline
+        # are not counted
+        count_total_complete = sum(count_per_timeline.values())
 
         comments = {}
         if "comment" in return_fields:
