@@ -412,6 +412,7 @@ detection:
         """Test getting sigma rule by text"""
         rule = sigma_util.parse_sigma_rule_by_text(
             r"""
+title: WMI Login
 id: 5af54681-df95-4c26-854f-2565e13cfab0
 status: stable
 description: Detection of logins performed with WMI
