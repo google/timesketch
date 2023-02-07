@@ -71,23 +71,26 @@ class TestSigmaUtilLib(BaseTest):
         self.assertEqual(sigma_util._sanitize_query("*foo bar*"), '"foo bar"')
 
     def test_sanitize_rule_string_multiple_or(self):
-        # test that the function does not break regular queries
+        """test that the function does not break regular queries"""
         self.assertEqual(
             sigma_util._sanitize_query("*mimikatz* OR *mimikatz.exe* OR *mimilib.dll*"),
             "*mimikatz* OR *mimikatz.exe* OR *mimilib.dll*",
         )
 
     def test_sanitize_rule_string_multiple_colon(self):
+        """Test sanitization of query with multiple colons and asterisks"""
         test_2 = sigma_util._sanitize_query("(*a:b* OR *c::d*)")
         self.assertEqual(test_2, r'("a:b" OR "c\:\:d")')
 
     def test_sanitize_rule_string_with_dotkeyword(self):
+        """Test sanitization of query with .keyword in them"""
         test_3 = sigma_util._sanitize_query(
             '(xml_string.keyword:"\\foobar.exe" AND GrantedAccess.keyword:"10")'
         )
         self.assertEqual(test_3, r'(xml_string:"\foobar.exe" AND GrantedAccess:"10")')
 
     def test_sanitize_rule_string_with_double_quotes(self):
+        """Test sanitization of query with double quotes in the query"""
         test_4 = sigma_util._sanitize_query(
             '(xml_string:C:\\Program Files\\WindowsApps\\" AND xml_string: "GamingServices.exe)'  # pylint: disable=line-too-long
         )
