@@ -237,7 +237,6 @@ def parse_sigma_rule_by_text(rule_text, sigma_config=None):
         rule_yaml_data = yaml.safe_load_all(rule_text)
 
         for doc in rule_yaml_data:
-
             parser = sigma_collection.SigmaCollectionParser(
                 str(doc), sigma_conf_obj, None
             )

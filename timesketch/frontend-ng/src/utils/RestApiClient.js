@@ -276,16 +276,28 @@ export default {
   getGroups() {
     return RestApiClient.get('/groups/')
   },
-  editCollaborators(sketchId, isPublic, usersToAdd, groupsToAdd, usersToRemove, groupsToRemove) {
+  grantSketchAccess(sketchId, usersToAdd, groupsToAdd) {
     let formData = {
-      public: isPublic,
       users: usersToAdd,
       groups: groupsToAdd,
+    }
+    return RestApiClient.post('/sketches/' + sketchId + /collaborators/, formData)
+  },
+  revokeSketchAccess(sketchId, usersToRemove, groupsToRemove) {
+    let formData = {
       remove_users: usersToRemove,
       remove_groups: groupsToRemove,
     }
     return RestApiClient.post('/sketches/' + sketchId + /collaborators/, formData)
   },
+  setSketchPublicAccess(sketchId, isPublic) {
+    let formData = {
+      public: isPublic,
+    }
+    console.log(formData)
+    return RestApiClient.post('/sketches/' + sketchId + /collaborators/, formData)
+  },
+
   getAnalyzers(sketchId) {
     return RestApiClient.get('/sketches/' + sketchId + '/analyzer/')
   },
@@ -348,19 +360,36 @@ export default {
   getSearchHistoryTree(sketchId) {
     return RestApiClient.get('/sketches/' + sketchId + /searchhistorytree/)
   },
-  // Sigma
-  getSigmaList() {
-    return RestApiClient.get('/sigma/')
+  // SigmaRule (new rules file based)
+  getSigmaRuleList() {
+    return RestApiClient.get('/sigmarule/')
   },
-  getSigmaResource(ruleUuid) {
-    return RestApiClient.get('/sigma/rule/' + ruleUuid + '/')
+  getSigmaRuleResource(ruleUuid) {
+    return RestApiClient.get('/sigmarule/' + ruleUuid + '/')
   },
-  getSigmaByText(ruleText) {
+  getSigmaRuleByText(ruleYaml) {
     let formData = {
-      content: ruleText,
+      content: ruleYaml,
     }
-    return RestApiClient.post('/sigma/text/', formData)
+    return RestApiClient.post('/sigmarule/text/', formData)
   },
+  deleteSigmaRule(ruleUuid) {
+    return RestApiClient.delete('/sigmarule/' + ruleUuid + '/')
+  },
+  createSigmaRule(ruleYaml) {
+    let formData = {
+      rule_yaml: ruleYaml,
+    }
+    return RestApiClient.post('/sigmarule/', formData)
+  },
+  updateSigmaRule(id, ruleYaml) {
+    let formData = {
+      id: id,
+      rule_yaml: ruleYaml,
+    }
+    return RestApiClient.put('/sigmarule/' + id + '/', formData)
+  },
+  // SearchTemplates
   getSearchTemplates() {
     return RestApiClient.get('/searchtemplate/')
   },
@@ -373,7 +402,7 @@ export default {
   getScenarioTemplates() {
     return RestApiClient.get('/scenarios/')
   },
-  getSketchScenarios(sketchId, status=null) {
+  getSketchScenarios(sketchId, status = null) {
     let params = {}
     if (status) {
       params.params = {
