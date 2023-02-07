@@ -411,7 +411,6 @@ def remove_all_sigma_rules():
 
     if click.confirm("Do you really want to drop all the Sigma rules?"):
         if click.confirm("Are you REALLLY sure you want to DROP ALL the Sigma rules?"):
-
             all_sigma_rules = SigmaRule.query.all()
             for rule in all_sigma_rules:
                 db_session.delete(rule)
