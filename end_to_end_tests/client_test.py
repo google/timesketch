@@ -111,9 +111,9 @@ level: high
         rule = self.api.create_sigmarule(rule_yaml=MOCK_SIGMA_RULE)
         self.assertions.assertIsNotNone(rule)
 
-    def test_sigma_list(self):
+    def test_sigmarule_list(self):
         """Client Sigma list tests."""
-        rules = self.api.list_sigma_rules()
+        rules = self.api.list_sigmarules()
         self.assertions.assertGreaterEqual(len(rules), 1)
         rule = rules[0]
         self.assertions.assertIn("5266a592-b793-11ea-b3de-bbbbbb", rule.id)
