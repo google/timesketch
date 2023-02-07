@@ -70,9 +70,7 @@ def get_sigma_config_file(config_file=None):
         sigma_config_file = config_file_read.read()
 
     try:
-        sigma_config = sigma_configuration.SigmaConfiguration(
-            sigma_config_file
-        )
+        sigma_config = sigma_configuration.SigmaConfiguration(sigma_config_file)
     except SigmaConfigParseError:
         logger.error("Parsing error with {0:s}".format(sigma_config_file))
         raise
@@ -97,9 +95,7 @@ def _enrich_sigma_rule_object(rule: SigmaRule):
     parsed_rule["created_at"] = str(rule.created_at)
     parsed_rule["updated_at"] = str(rule.updated_at)
     parsed_rule["title"] = parsed_rule.get("title", rule.title)
-    parsed_rule["description"] = parsed_rule.get(
-        "description", rule.description
-    )
+    parsed_rule["description"] = parsed_rule.get("description", rule.description)
     parsed_rule["rule_yaml"] = rule.rule_yaml
 
     # via StatusMixin, values according to:
@@ -230,9 +226,7 @@ def parse_sigma_rule_by_text(rule_text, sigma_config=None):
         logger.error("Problem reading the Sigma config", exc_info=True)
         raise ValueError("Problem reading the Sigma config") from e
 
-    sigma_backend = sigma_es.ElasticsearchQuerystringBackend(
-        sigma_conf_obj, {}
-    )
+    sigma_backend = sigma_es.ElasticsearchQuerystringBackend(sigma_conf_obj, {})
 
     rule_text = sanitize_incoming_sigma_rule_text(rule_text)
 
