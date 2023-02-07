@@ -70,21 +70,24 @@ class TestSigmaUtilLib(BaseTest):
         )
         self.assertEqual(sigma_util._sanitize_query("*foo bar*"), '"foo bar"')
 
+    def test_sanitize_rule_string_multiple_or(self):
         # test that the function does not break regular queries
         self.assertEqual(
             sigma_util._sanitize_query("*mimikatz* OR *mimikatz.exe* OR *mimilib.dll*"),
             "*mimikatz* OR *mimikatz.exe* OR *mimilib.dll*",
         )
 
+    def test_sanitize_rule_string_multiple_colon(self):
         test_2 = sigma_util._sanitize_query("(*a:b* OR *c::d*)")
         self.assertEqual(test_2, r'("a:b" OR "c\:\:d")')
 
+    def test_sanitize_rule_string_with_dotkeyword(self):
         test_3 = sigma_util._sanitize_query(
             '(xml_string.keyword:"\\foobar.exe" AND GrantedAccess.keyword:"10")'
         )
-
         self.assertEqual(test_3, r'(xml_string:"\foobar.exe" AND GrantedAccess:"10")')
 
+    def test_sanitize_rule_string_with_double_quotes(self):
         test_4 = sigma_util._sanitize_query(
             '(xml_string:C:\\Program Files\\WindowsApps\\" AND xml_string: "GamingServices.exe)'  # pylint: disable=line-too-long
         )
@@ -397,3 +400,23 @@ detection:
         with self.assertRaises(ValueError):
             sigma_util.get_sigma_config_file("/foo")
         self.assertIsNotNone(sigma_util.get_sigma_config_file())
+
+    def test_get_sigmarule_by_text_first_term(self):
+        """Test getting sigma rule by text"""
+        rule = sigma_util.parse_sigma_rule_by_text(
+            r"""
+id: 5af54681-df95-4c26-854f-2565e13cfab0
+status: stable
+description: Detection of logins performed with WMI
+detection:
+    star:
+        star:
+            - '*stararoundterm*'
+    quote:
+        quote:
+            - 'quote'
+    condition:
+        (1 of star) and (1 of quote)
+"""
+        )
+        self.assertIsNotNone(rule)
