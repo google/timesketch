@@ -326,8 +326,18 @@ class EventAddAttributeResourceTest(BaseTest):
         attrs = [{"attr_name": "foo", "attr_value": "bar"}]
         events = {
             "events": [
-                {"_id": "1", "_type": "_doc", "_index": "1", "attributes": attrs},
-                {"_id": "2", "_type": "_doc", "_index": "1", "attributes": attrs},
+                {
+                    "_id": "1",
+                    "_type": "_doc",
+                    "_index": "1",
+                    "attributes": attrs,
+                },
+                {
+                    "_id": "2",
+                    "_type": "_doc",
+                    "_index": "1",
+                    "attributes": attrs,
+                },
             ]
         }
 
@@ -464,7 +474,12 @@ class EventAddAttributeResourceTest(BaseTest):
             self.resource_url,
             json={
                 "events": [
-                    {"_id": "1", "_type": "_doc", "_index": "1", "attributes": attrs}
+                    {
+                        "_id": "1",
+                        "_type": "_doc",
+                        "_index": "1",
+                        "attributes": attrs,
+                    }
                 ]
                 * 1000
             },
@@ -476,7 +491,12 @@ class EventAddAttributeResourceTest(BaseTest):
             self.resource_url,
             json={
                 "events": [
-                    {"_id": "1", "_type": "_doc", "_index": "1", "attributes": attrs}
+                    {
+                        "_id": "1",
+                        "_type": "_doc",
+                        "_index": "1",
+                        "attributes": attrs,
+                    }
                 ]
                 * 1001
             },
@@ -488,8 +508,18 @@ class EventAddAttributeResourceTest(BaseTest):
             self.resource_url,
             json={
                 "events": [
-                    {"_id": "1", "_type": "_doc", "_index": "1", "attributes": attrs},
-                    {"_id": "1", "_type": "_doc", "_index": "2", "attributes": attrs},
+                    {
+                        "_id": "1",
+                        "_type": "_doc",
+                        "_index": "1",
+                        "attributes": attrs,
+                    },
+                    {
+                        "_id": "1",
+                        "_type": "_doc",
+                        "_index": "2",
+                        "attributes": attrs,
+                    },
                 ]
             },
         )
@@ -653,29 +683,6 @@ class TimelineListResourceTest(BaseTest):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
-
-
-class SigmaResourceTest(BaseTest):
-    """Test Sigma resource."""
-
-    resource_url = "/api/v1/sigma/rule/"
-    expected_response = {
-        "objects": {
-            "description": "Detects suspicious installation of ZMap",
-            "id": "5266a592-b793-11ea-b3de-0242ac130004",
-            "level": "high",
-            "logsource": {"product": "linux", "service": "shell"},
-            "title": "Suspicious Installation of ZMap",
-        }
-    }
-
-    def test_get_sigma_rule(self):
-        """Authenticated request to get an sigma rule."""
-        self.login()
-        response = self.client.get(
-            self.resource_url + "5266a592-b793-11ea-b3de-0242ac130004"
-        )
-        self.assertIsNotNone(response)
 
 
 class SigmaRuleResourceTest(BaseTest):
@@ -976,104 +983,6 @@ class SigmaRuleByTextResourceTest(BaseTest):
         data = json.loads(response.get_data(as_text=True))
 
         self.assertIn("Missing value in the request", data["message"])
-        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
-
-
-class SigmaByTextResourceTest(BaseTest):
-    """DEPRECATED: Test Sigma by text resource."""
-
-    correct_rule = """
-        title: Installation of foobar
-        id: bb1e0d1d-cd13-4b65-bf7e-69b4e740266b
-        description: Detects suspicious installation of foobar
-        references:
-            - https://samle.com/foobar
-        author: Alexander Jaeger
-        date: 2020/12/10
-        modified: 2020/12/10
-        tags:
-            - attack.discovery
-            - attack.t1046
-        logsource:
-            product: linux
-            service: shell
-        detection:
-            keywords:
-                # Generic suspicious commands
-                - '*apt-get install foobar*'
-            condition: keywords
-        falsepositives:
-            - Unknown
-        level: high
-        """
-    expected_response = {
-        "meta": {},
-        "objects": [
-            {
-                "title": "Installation of foobar",
-                "id": "bb1e0d1d-cd13-4b65-bf7e-69b4e740266b",
-                "description": "Detects suspicious installation of foobar",
-                "references": ["https://samle.com/foobar"],
-                "author": "Alexander Jaeger",
-                "date": "2020/12/10",
-                "modified": "2020/12/10",
-                "tags": ["attack.discovery", "attack.t1046"],
-                "logsource": {"product": "linux", "service": "shell"},
-                "detection": {
-                    "keywords": ["*apt-get install foobar*"],
-                    "condition": "keywords",
-                },
-                "falsepositives": ["Unknown"],
-                "level": "high",
-                "search_query": '(data_type:("shell:zsh:history" OR "bash:history:command" OR "apt:history:line" OR "selinux:line") AND "apt-get install foobar")',  # pylint: disable=line-too-long
-                "file_name": "N/A",
-            }
-        ],
-    }
-
-    def test_get_sigma_rule(self):
-        """DEPRECATED: Authenticated request to get an sigma rule by text."""
-        self.login()
-
-        data = dict(content=self.correct_rule)
-        response = self.client.post(
-            "/api/v1/sigma/text/",
-            data=json.dumps(data, ensure_ascii=False),
-            content_type="application/json",
-        )
-        self.assertIsNotNone(response)
-        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
-        self.assertDictContainsSubset(self.expected_response, response.json)
-        self.assert200(response)
-
-    def test_get_non_existing_rule_by_text(self):
-        """DEPRECATED: Authenticated request to get an sigma rule by text
-        with non parseable yaml text."""
-        self.login()
-        data = dict(content="foobar: asd")
-        response = self.client.post(
-            "/api/v1/sigma/text/",
-            data=json.dumps(data, ensure_ascii=False),
-            content_type="application/json",
-        )
-        data = json.loads(response.get_data(as_text=True))
-
-        self.assertIn("No detection definitions found", data["message"])
-        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
-
-    def test_get_rule_by_text_no_form_data(self):
-        """DEPRECATED: Authenticated request to get an sigma rule by text with
-        no form data"""
-        self.login()
-        data = dict(action="post")
-        response = self.client.post(
-            "/api/v1/sigma/text/",
-            data=json.dumps(data, ensure_ascii=False),
-            content_type="application/json",
-        )
-        data = json.loads(response.get_data(as_text=True))
-
-        self.assertIn("Missing values from the request", data["message"])
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
 
 
