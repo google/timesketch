@@ -110,4 +110,3 @@ class TimesketchSigmaRuleTest(unittest.TestCase):
         self.assertIn("2020/06/26", rule.modified)
         self.assertIn("high", rule.level)
         self.assertIn("foobar.com", rule.references[0])
-
