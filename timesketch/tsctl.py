@@ -667,7 +667,6 @@ def sigma_stats(analyzer_name, timeline_id, scope, result_text_search, limit):
     df = pd.DataFrame()
     for analysis in analysis_history:
         if analysis.analyzer_name in [analyzer_name, "all"]:
-
             # extract number of hits from result to a int so it could be sorted
             try:
                 matches = re.search(r"\d+(?=\s+events)", analysis.result)
