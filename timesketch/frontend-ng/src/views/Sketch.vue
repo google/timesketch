@@ -227,7 +227,7 @@ limitations under the License.
           <ts-tags></ts-tags>
           <ts-search-templates></ts-search-templates>
           <ts-sigma-rules></ts-sigma-rules>
-            <ts-analyser-results></ts-analyser-results>
+          <ts-analyser-results></ts-analyser-results>
         </v-tab-item>
         <v-tab-item :transition="false">
           <ts-scenario v-for="scenario in activeScenarios" :key="scenario.id" :scenario="scenario"></ts-scenario>
@@ -269,6 +269,10 @@ import TsDataTypes from '../components/LeftPanel/DataTypes'
 import TsTags from '../components/LeftPanel/Tags'
 import TsSearchTemplates from '../components/LeftPanel/SearchTemplates'
 import TsSigmaRules from '../components/LeftPanel/SigmaRules'
+import TsUploadTimelineForm from '../components/UploadForm'
+import TsShareCard from '../components/ShareCard'
+import TsRenameSketch from '../components/RenameSketch'
+import TsAnalyserResults from '../components/LeftPanel/AnalyserResults.vue'
 
 export default {
   props: ['sketchId'],
@@ -279,6 +283,10 @@ export default {
     TsTags,
     TsSearchTemplates,
     TsSigmaRules,
+    TsUploadTimelineForm,
+    TsShareCard,
+    TsRenameSketch,
+    TsAnalyserResults,
   },
   data() {
     return {
