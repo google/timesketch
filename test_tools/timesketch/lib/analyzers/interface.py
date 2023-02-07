@@ -654,7 +654,6 @@ class BaseAnalyzer(object):
             )
 
         with codecs.open(self._file_name, encoding="utf-8", errors="replace") as fh:
-
             if file_extension == "csv":
                 reader = csv.DictReader(fh)
                 for row in reader:
