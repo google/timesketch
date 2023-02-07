@@ -72,6 +72,7 @@ class TestSigmaUtilLib(BaseTest):
 
     def test_sanitize_rule_string_multiple_or(self):
         """test that the function does not break regular queries"""
+        # pylint: disable=protected-access
         self.assertEqual(
             sigma_util._sanitize_query("*mimikatz* OR *mimikatz.exe* OR *mimilib.dll*"),
             "*mimikatz* OR *mimikatz.exe* OR *mimilib.dll*",
@@ -79,11 +80,13 @@ class TestSigmaUtilLib(BaseTest):
 
     def test_sanitize_rule_string_multiple_colon(self):
         """Test sanitization of query with multiple colons and asterisks"""
+        # pylint: disable=protected-access
         test_2 = sigma_util._sanitize_query("(*a:b* OR *c::d*)")
         self.assertEqual(test_2, r'("a:b" OR "c\:\:d")')
 
     def test_sanitize_rule_string_with_dotkeyword(self):
         """Test sanitization of query with .keyword in them"""
+        # pylint: disable=protected-access
         test_3 = sigma_util._sanitize_query(
             '(xml_string.keyword:"\\foobar.exe" AND GrantedAccess.keyword:"10")'
         )
@@ -91,6 +94,7 @@ class TestSigmaUtilLib(BaseTest):
 
     def test_sanitize_rule_string_with_double_quotes(self):
         """Test sanitization of query with double quotes in the query"""
+        # pylint: disable=protected-access
         test_4 = sigma_util._sanitize_query(
             '(xml_string:C:\\Program Files\\WindowsApps\\" AND xml_string: "GamingServices.exe)'  # pylint: disable=line-too-long
         )
