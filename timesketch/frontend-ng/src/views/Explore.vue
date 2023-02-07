@@ -507,6 +507,7 @@ limitations under the License.
             {{ item._source.timestamp | formatTimestamp | toISO8601 }}
           </div>
         </template>
+
         <!-- Actions field -->
         <template v-slot:item.actions="{ item }">
           <v-btn small icon @click="toggleStar(item)">
@@ -516,6 +517,11 @@ limitations under the License.
 
           <!-- Tag menu -->
           <ts-event-tag-menu :event="item"></ts-event-tag-menu>
+
+          <!-- Action sub-menu -->
+          <v-btn small icon>
+            <v-icon>mdi-dots-vertical</v-icon>
+          </v-btn>
         </template>
 
         <!-- Generic slot for any field type. Adds tags and emojis to the first column. -->
@@ -747,14 +753,14 @@ export default {
           value: 'data-table-select',
         },
         {
+          value: 'actions',
+          width: '90',
+        },
+        {
           text: 'Datetime (UTC)',
           align: 'start',
           value: '_source.timestamp',
           width: '200',
-        },
-        {
-          value: 'actions',
-          width: '70',
         },
         {
           value: '_source.comment',
