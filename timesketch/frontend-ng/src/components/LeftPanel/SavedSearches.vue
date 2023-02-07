@@ -17,7 +17,9 @@ limitations under the License.
   <div v-if="meta.views.length">
     <div class="pa-4" flat :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
       <span style="cursor: pointer" @click="expanded = !expanded"
-        ><v-icon left>mdi-content-save-outline</v-icon>Saved Searches ({{ meta.views.length }})</span
+        ><v-icon left>mdi-content-save-outline</v-icon>Saved Searches (<small
+          ><strong>{{ meta.views.length }}</strong></small
+        >)</span
       >
     </div>
 
@@ -28,7 +30,7 @@ limitations under the License.
           no-gutters
           v-for="savedSearch in meta.views"
           :key="savedSearch.name"
-          class="pa-3 pl-5"
+          class="pa-2 pl-5"
           :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
         >
           <div @click="setView(savedSearch)" style="cursor: pointer; font-size: 0.9em">{{ savedSearch.name }}</div>

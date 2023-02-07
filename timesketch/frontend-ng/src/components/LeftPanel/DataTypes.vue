@@ -17,7 +17,9 @@ limitations under the License.
   <div v-if="dataTypes.length">
     <div class="pa-4" flat :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
       <span style="cursor: pointer" @click="expanded = !expanded"
-        ><v-icon left>mdi-database-outline</v-icon> Data Types ({{ dataTypes.length }})</span
+        ><v-icon left>mdi-database-outline</v-icon> Data Types (<small
+          ><strong>{{ dataTypes.length }}</strong></small
+        >)</span
       >
     </div>
 
@@ -43,11 +45,15 @@ limitations under the License.
               no-gutters
               v-for="dataType in props.items"
               :key="dataType.data_type"
-              class="pa-3 pl-5"
+              class="pa-2 pl-5"
               :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
             >
               <div @click="setQueryAndFilter(dataType.data_type)" style="cursor: pointer; font-size: 0.9em">
-                <span>{{ dataType.data_type }} ({{ dataType.count | compactNumber }})</span>
+                <span
+                  >{{ dataType.data_type }} (<small
+                    ><strong>{{ dataType.count | compactNumber }}</strong></small
+                  >)</span
+                >
               </div>
             </v-row>
           </template>

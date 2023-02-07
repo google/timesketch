@@ -20,6 +20,7 @@ import Home from './views/Home'
 import Explore from './views/Explore'
 import Sketch from './views/Sketch'
 import Analyse from './views/Analyze'
+import Studio from './views/Studio'
 
 Vue.use(VueRouter)
 
@@ -53,6 +54,12 @@ const routes = [
         props: true,
       },
     ],
+  },
+  {
+    name: 'Studio',
+    path: '/studio/:type/:id',
+    component: Studio,
+    props: true,
   },
 ]
 

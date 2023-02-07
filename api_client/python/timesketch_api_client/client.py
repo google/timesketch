@@ -569,15 +569,12 @@ class TimesketchApi:
     def list_sigma_rules(self, as_pandas=False):
         """DEPRECATED please use list_sigmarules instead:
         Get a list of sigma objects.
-
         Args:
             as_pandas: Boolean indicating that the results will be returned
                 as a Pandas DataFrame instead of a list of dicts.
-
         Returns:
             List of Sigme rule object instances or a pandas Dataframe with all
             rules if as_pandas is True.
-
         Raises:
             ValueError: If no rules are found.
         """
