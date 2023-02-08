@@ -37,10 +37,10 @@ limitations under the License.
         color="primary"
         outlined
         :to="{ name: 'Intelligence', params: { sketchId: sketch.id } }"
-        @click.stop="">
-          <v-icon small left>mdi-pencil</v-icon>
-          Manage</v-btn</v-btn
-        >
+        @click.stop=""
+      >
+        <v-icon small left>mdi-pencil</v-icon>Manage
+      </v-btn>
     </v-row>
 
     <v-expand-transition>
@@ -93,7 +93,7 @@ limitations under the License.
               </template>
               <template v-slot:item.actions="{ item }">
                 <v-btn icon small @click="searchForIOC(item)">
-                <v-icon small>mdi-magnify</v-icon>
+                  <v-icon small>mdi-magnify</v-icon>
                 </v-btn>
               </template>
             </v-data-table>
@@ -106,6 +106,7 @@ limitations under the License.
 </template>
 
 <script>
+import _ from 'lodash'
 import ApiClient from '../../utils/RestApiClient'
 import EventBus from '../../main'
 
