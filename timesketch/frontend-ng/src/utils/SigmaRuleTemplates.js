@@ -31,7 +31,7 @@ status: experimental
 falsepositives: unknown
 level: informational
 tags:
-    -`
+    - attack.defense_evasion`
 
 // General last part of every Sigma rule:
 const SkeletonLast = `falsepositives:
