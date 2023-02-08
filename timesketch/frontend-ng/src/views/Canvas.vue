@@ -19,19 +19,19 @@ limitations under the License.
       <explore :sketch-id="sketchId"></explore>
     </div>
     <div v-show="currentRouteName === 'Intelligence'">
-      <intelligence :sketch-id="sketchId"></intelligence>
+      <threat-intel :sketch-id="sketchId"></threat-intel>
     </div>
   </div>
 </template>
 
 <script>
 import Explore from './Explore'
-import Intelligence from './ThreatIntelligence'
+import ThreatIntel from './ThreatIntel'
 
 export default {
   components: {
     Explore,
-    Intelligence,
+    ThreatIntel,
   },
   props: ['sketchId'],
   computed: {

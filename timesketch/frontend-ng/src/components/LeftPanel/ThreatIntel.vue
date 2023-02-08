@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div v-if="intelligenceData.length">
+  <div>
     <v-row
       no-gutters
       style="cursor: pointer"
@@ -102,9 +102,6 @@ limitations under the License.
       </div>
     </v-expand-transition>
     <v-divider></v-divider>
-    <v-btn small v-if="expanded" text class="mt-2 ml-2" color="primary" style="cursor: pointer"
-      ><v-icon small left>mdi-plus</v-icon> Add Indicator</v-btn
-    >
   </div>
 </template>
 
