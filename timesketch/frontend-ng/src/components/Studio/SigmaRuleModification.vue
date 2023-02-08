@@ -131,7 +131,6 @@ export default {
       this.ruleYamlTextArea = defaultSigmaPlaceholder
       this.editingRule.rule_yaml = defaultSigmaPlaceholder
       this.parseSigma(this.editingRule.rule_yaml)
-      this.rule_uuid = this.editingRule.rule_uuid
     },
     selectTemplate(text) {
       var matchingTemplate = this.SigmaTemplates.find((obj) => {
@@ -154,7 +153,6 @@ export default {
             this.isParsingSuccesful = false
           } else {
             this.editingRule = parsedRule
-            this.rule_uuid = parsedRule.uuid
             this.isParsingSuccesful = true
             this.status_text = ''
           }

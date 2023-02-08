@@ -346,22 +346,6 @@ export default {
   getSearchHistoryTree(sketchId) {
     return RestApiClient.get('/sketches/' + sketchId + /searchhistorytree/)
   },
-  // Sigma (to be deprecated)
-  getSigmaList() {
-    // deprecated
-    return RestApiClient.get('/sigma/')
-  },
-  getSigmaResource(ruleUuid) {
-    // deprecated
-    return RestApiClient.get('/sigma/rule/' + ruleUuid + '/')
-  },
-  getSigmaByText(ruleText) {
-    // deprecated
-    let formData = {
-      content: ruleText,
-    }
-    return RestApiClient.post('/sigma/text/', formData)
-  },
   // SigmaRule (new rules file based)
   getSigmaRuleList() {
     return RestApiClient.get('/sigmarule/')
