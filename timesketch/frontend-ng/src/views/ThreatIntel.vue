@@ -134,7 +134,6 @@ export default {
     },
     intelligenceData() {
       return this.intelligenceAttribute.value.data.map((x, idx) => ({ ...x, index: idx }))
-      //return this.intelligenceAttribute.value.data
     },
   },
   methods: {
