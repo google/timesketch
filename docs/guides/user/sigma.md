@@ -75,7 +75,7 @@ Visit
 https://$TIMESKETCH/v2/studio/sigma/new
 ```
 
-![Sigma create rule](/assets/images/Sigma_create_rule.gif)
+![Sigma create rule](/assets/images/Sigma_create_rule_new.gif)
 
 There are some [best practices](#Compose-new-rules) to compose new Sigma rules.
 
