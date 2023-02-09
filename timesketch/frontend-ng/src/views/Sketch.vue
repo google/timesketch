@@ -309,7 +309,6 @@ export default {
       this.$store.dispatch('updateSearchHistory', this.sketchId)
       this.$store.dispatch('updateScenarios', this.sketchId)
       this.$store.dispatch('updateScenarioTemplates', this.sketchId)
-      //this.$store.dispatch('updateSigmaList', this.sketchId)
       this.$store.dispatch('updateContextLinks')
       this.loadingSketch = false
       this.showLeftPanel = true
