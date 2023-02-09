@@ -136,12 +136,6 @@ API_ROUTES = [
     (ViewListResource, "/sketches/<int:sketch_id>/views/"),
     (AttributeResource, "/sketches/<int:sketch_id>/attribute/"),
     (ViewResource, "/sketches/<int:sketch_id>/views/<int:view_id>/"),
-    # Kept for backwards compatibiliuty with the old UI.
-    # TODO: Remove when old UI has been deprecated.
-    (SearchTemplateListResource, "/searchtemplate/"),
-    (SearchTemplateResource, "/searchtemplate/<int:searchtemplate_id>/"),
-    (SearchTemplateParseResource, "/searchtemplate/<int:searchtemplate_id>/parse/"),
-    ###
     (SearchTemplateListResource, "/searchtemplates/"),
     (SearchTemplateResource, "/searchtemplates/<int:searchtemplate_id>/"),
     (SearchTemplateParseResource, "/searchtemplates/<int:searchtemplate_id>/parse/"),
@@ -166,12 +160,6 @@ API_ROUTES = [
     (GroupListResource, "/groups/"),
     (CollaboratorResource, "/sketches/<int:sketch_id>/collaborators/"),
     (VersionResource, "/version/"),
-    # Kept for backwards compatibiliuty with the old UI.
-    # TODO: Remove when old UI has been deprecated.
-    (SigmaRuleListResource, "/sigmarules/"),
-    (SigmaRuleResource, "/sigmarules/<string:rule_uuid>/"),
-    (SigmaRuleByTextResource, "/sigmarules/text/"),
-    ###
     (SigmaRuleListResource, "/sigmarules/"),
     (SigmaRuleResource, "/sigmarules/<string:rule_uuid>/"),
     (SigmaRuleByTextResource, "/sigmarules/text/"),
