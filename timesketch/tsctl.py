@@ -400,7 +400,7 @@ def list_sigma_rules(columns):
                     relevant_data.append(rule.__getattribute__(column))
                 except AttributeError:
                     print(f"Column {column} not found in SigmaRule")
-                    return f"Column {column} not found in SigmaRule"
+                    return
         table_data.append([relevant_data])
 
     print_table(table_data)
