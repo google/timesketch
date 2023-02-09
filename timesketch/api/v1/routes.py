@@ -62,9 +62,6 @@ from .resources.user import UserListResource
 from .resources.user import GroupListResource
 from .resources.user import CollaboratorResource
 from .resources.user import LoggedInUserResource
-from .resources.sigma import SigmaResource
-from .resources.sigma import SigmaListResource
-from .resources.sigma import SigmaByTextResource
 from .resources.sigma import SigmaRuleResource
 from .resources.sigma import SigmaRuleListResource
 from .resources.sigma import SigmaRuleByTextResource
@@ -108,8 +105,14 @@ API_ROUTES = [
         AggregationGroupResource,
         "/sketches/<int:sketch_id>/aggregation/group/<int:group_id>/",
     ),
-    (AggregationGroupListResource, "/sketches/<int:sketch_id>/aggregation/group/"),
-    (AggregationExploreResource, "/sketches/<int:sketch_id>/aggregation/explore/"),
+    (
+        AggregationGroupListResource,
+        "/sketches/<int:sketch_id>/aggregation/group/",
+    ),
+    (
+        AggregationExploreResource,
+        "/sketches/<int:sketch_id>/aggregation/explore/",
+    ),
     (AggregationInfoResource, "/aggregation/info/"),
     (
         AggregationResource,
@@ -117,7 +120,10 @@ API_ROUTES = [
     ),
     (ExploreResource, "/sketches/<int:sketch_id>/explore/"),
     (SearchHistoryResource, "/sketches/<int:sketch_id>/searchhistory/"),
-    (SearchHistoryTreeResource, "/sketches/<int:sketch_id>/searchhistorytree/"),
+    (
+        SearchHistoryTreeResource,
+        "/sketches/<int:sketch_id>/searchhistorytree/",
+    ),
     (EventResource, "/sketches/<int:sketch_id>/event/"),
     (EventAddAttributeResource, "/sketches/<int:sketch_id>/event/attributes/"),
     (EventTaggingResource, "/sketches/<int:sketch_id>/event/tagging/"),
@@ -140,7 +146,10 @@ API_ROUTES = [
     (QueryResource, "/sketches/<int:sketch_id>/explore/query/"),
     (CountEventsResource, "/sketches/<int:sketch_id>/count/"),
     (TimelineListResource, "/sketches/<int:sketch_id>/timelines/"),
-    (TimelineResource, "/sketches/<int:sketch_id>/timelines/<int:timeline_id>/"),
+    (
+        TimelineResource,
+        "/sketches/<int:sketch_id>/timelines/<int:timeline_id>/",
+    ),
     (SearchIndexListResource, "/searchindices/"),
     (SearchIndexResource, "/searchindices/<int:searchindex_id>/"),
     (
@@ -151,26 +160,29 @@ API_ROUTES = [
     (GroupListResource, "/groups/"),
     (CollaboratorResource, "/sketches/<int:sketch_id>/collaborators/"),
     (VersionResource, "/version/"),
-    (SigmaListResource, "/sigma/"),  # TODO(jaegeral): deprecate this
-    (SigmaResource, "/sigma/rule/<string:rule_uuid>/"),  # TODO: deprecate
-    (SigmaByTextResource, "/sigma/text/"),  # TODO(jaegeral): deprecate this
-    (SigmaRuleListResource, "/sigmarules/"),
-    (SigmaRuleResource, "/sigmarules/<string:rule_uuid>/"),
-    (SigmaRuleByTextResource, "/sigmarules/text/"),
+    (SigmaRuleListResource, "/sigmarule/"),
+    (SigmaRuleResource, "/sigmarule/<string:rule_uuid>/"),
+    (SigmaRuleByTextResource, "/sigmarule/text/"),
     (LoggedInUserResource, "/users/me/"),
     (GraphListResource, "/sketches/<int:sketch_id>/graphs/"),
     (GraphResource, "/sketches/<int:sketch_id>/graphs/<int:graph_id>/"),
     (GraphPluginListResource, "/graphs/"),
     (GraphCacheResource, "/sketches/<int:sketch_id>/graph/"),
     (DataSourceListResource, "/sketches/<int:sketch_id>/datasource/"),
-    (DataSourceResource, "/sketches/<int:sketch_id>/datasource/<int:datasource_id>/"),
+    (
+        DataSourceResource,
+        "/sketches/<int:sketch_id>/datasource/<int:datasource_id>/",
+    ),
     (DataFinderResource, "/sketches/<int:sketch_id>/data/find/"),
     (TagMetadataResource, "/intelligence/tagmetadata/"),
     (ContextLinkConfigResource, "/contextlinks/"),
     # Scenarios
     (ScenarioTemplateListResource, "/scenarios/"),
     (ScenarioListResource, "/sketches/<int:sketch_id>/scenarios/"),
-    (ScenarioResource, "/sketches/<int:sketch_id>/scenarios/<int:scenario_id>/"),
+    (
+        ScenarioResource,
+        "/sketches/<int:sketch_id>/scenarios/<int:scenario_id>/",
+    ),
     (
         ScenarioStatusResource,
         "/sketches/<int:sketch_id>/scenarios/<int:scenario_id>/status/",

@@ -319,7 +319,6 @@ class BaseGeoIpAnalyzer(interface.BaseAnalyzer):
 
             for ip_address_field, events in ip_address_fields.items():
                 for event in events:
-
                     new_attributes = {}
                     if latitude and longitude:
                         new_attributes[f"{ip_address_field}_latitude"] = latitude
@@ -341,7 +340,6 @@ class BaseGeoIpAnalyzer(interface.BaseAnalyzer):
 
 
 class MaxMindDbGeoIPAnalyzer(BaseGeoIpAnalyzer):
-
     GEOIP_CLIENT = MaxMindGeoDbClient
 
     NAME = "geo_ip_maxmind_db"
@@ -353,7 +351,6 @@ class MaxMindDbGeoIPAnalyzer(BaseGeoIpAnalyzer):
 
 
 class MaxMindDbWebIPAnalyzer(BaseGeoIpAnalyzer):
-
     GEOIP_CLIENT = MaxMindGeoWebClient
 
     NAME = "geo_ip_maxmind_web"

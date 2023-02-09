@@ -11,9 +11,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+try {
+    var ruleUuid = crypto.randomUUID()
+} catch (e) {
+    console.log('crypto.randomUUID() not supported, using a fixed value instead')
+    ruleUuid = '10a4fb8c-29d5-4eb6-905f-13d6a553d470'
+}
+
 // General first part of every Sigma rule:
 const SkeletonFirst = `title: SigmaRuleTemplateTitle
-id: ${crypto.randomUUID()}
+id: ${ruleUuid}
 description: Detects suspicious activity
 references:
   - https://
@@ -24,7 +31,7 @@ status: experimental
 falsepositives: unknown
 level: informational
 tags:
-    -`
+    - attack.defense_evasion`
 
 // General last part of every Sigma rule:
 const SkeletonLast = `falsepositives:
