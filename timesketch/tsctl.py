@@ -375,17 +375,20 @@ def import_sigma_rules(path):
 
 
 @cli.command(name="list-sigma-rules")
-@click.option("--columns", default="rule_uuid,title",required=False,help="Comma separated list of columns to show")
+@click.option(
+    "--columns",
+    default="rule_uuid,title",
+    required=False,
+    help="Comma separated list of columns to show",
+)
 def list_sigma_rules(columns):
     """List sigma rules"""
 
     all_sigma_rules = SigmaRule.query.all()
-    
+
     table_data = [
-            [
-                columns
-            ],
-        ]
+        [columns],
+    ]
 
     for rule in all_sigma_rules:
         relevant_data = []
@@ -398,11 +401,7 @@ def list_sigma_rules(columns):
                 except AttributeError:
                     print(f"Column {column} not found in SigmaRule")
                     return f"Column {column} not found in SigmaRule"
-        table_data.append(
-            [
-                relevant_data
-            ]
-        )
+        table_data.append([relevant_data])
 
     print_table(table_data)
 
