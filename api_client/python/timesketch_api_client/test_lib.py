@@ -461,11 +461,11 @@ def mock_response(*args, **kwargs):
         "http://127.0.0.1/api/v1/sigma/text/": MockResponse(
             json_data=sigma_rule_text_mock
         ),
-        "http://127.0.0.1/api/v1/sigmarule/5266a592-b793-11ea-b3de-0242ac130004": MockResponse(  # pylint: disable=line-too-long
+        "http://127.0.0.1/api/v1/sigmarules/5266a592-b793-11ea-b3de-0242ac130004": MockResponse(  # pylint: disable=line-too-long
             json_data=sigmarule_individual
         ),
-        "http://127.0.0.1/api/v1/sigmarule/": MockResponse(json_data=sigmarule_list),
-        "http://127.0.0.1/api/v1/sigmarule/text/": MockResponse(
+        "http://127.0.0.1/api/v1/sigmarules/": MockResponse(json_data=sigmarule_list),
+        "http://127.0.0.1/api/v1/sigmarules/text/": MockResponse(
             json_data=sigmarule_text
         ),
     }
