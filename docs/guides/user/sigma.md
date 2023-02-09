@@ -35,6 +35,8 @@ This will show a list on the left with all Sigma rules installed on a system. Yo
 
 So if you want to search for ZMap related rules, you can search for `zma` and it will show you the pre installed rule.
 
+![Sigma studio](../assets/images/sigma_studio.png)
+
 #### Analyzer
 
 The Sigma Analyzer will only take rules that have the status: `stable`. `Experimental`, `Deprecated` or similar marked rules are **not picked up** by the Analyzer.
@@ -75,7 +77,7 @@ Visit
 https://$TIMESKETCH/v2/studio/sigma/new
 ```
 
-![Sigma create rule](/assets/images/Sigma_create_rule.gif)
+![Sigma create rule](/assets/images/Sigma_create_rule_new.gif)
 
 There are some [best practices](#Compose-new-rules) to compose new Sigma rules.
 
