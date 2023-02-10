@@ -355,7 +355,7 @@ import TsSketchStoryList from '../components/Stories/StoryList'
 import TsUploadTimelineForm from '../components/Common/UploadForm'
 import TsSketchTimelinesManage from './Timelines'
 import TsShareForm from '../components/Overview/ShareForm'
-import TsGraphList from '../components/Graph/GraphList'
+import TsGraphList from '../components/Home/Graph/GraphList'
 import TsDropdown from '../components/Common/Dropdown'
 
 export default {

@@ -254,10 +254,10 @@ limitations under the License.
 <script>
 import spread from 'cytoscape-spread'
 import dagre from 'cytoscape-dagre'
-import ApiClient from '../../utils/RestApiClient'
-import TsEventListCompact from '../Explore/EventListCompact'
-import TsDropdown from '../Common/Dropdown'
-import EventBus from '../../main'
+import ApiClient from '../../../utils/RestApiClient'
+import TsEventListCompact from '../../Explore/EventListCompact'
+import TsDropdown from '../../Common/Dropdown'
+import EventBus from '../../../main'
 import _ from 'lodash'
 
 export default {

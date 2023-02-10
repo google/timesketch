@@ -28,7 +28,7 @@ limitations under the License.
 </template>
 
 <script>
-import TsGraph from '../components/Graph/Graph'
+import TsGraph from '../components/Home/Graph/Graph'
 
 export default {
   components: { TsGraph },

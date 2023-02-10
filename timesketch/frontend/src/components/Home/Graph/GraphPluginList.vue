@@ -32,7 +32,7 @@ limitations under the License.
 </template>
 
 <script>
-import ApiClient from '../../utils/RestApiClient'
+import ApiClient from '../../../utils/RestApiClient'
 
 export default {
   data() {

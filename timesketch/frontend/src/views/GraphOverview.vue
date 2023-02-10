@@ -42,8 +42,8 @@ limitations under the License.
 </template>
 
 <script>
-import TsGraphList from '../components/Graph/GraphList'
-import TsGraphPluginList from '../components/Graph/GraphPluginList'
+import TsGraphList from '../components/Home/Graph/GraphList'
+import TsGraphPluginList from '../components/Home/Graph/GraphPluginList'
 
 export default {
   props: ['sketchId'],
