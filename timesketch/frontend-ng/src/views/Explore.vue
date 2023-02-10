@@ -501,13 +501,6 @@ limitations under the License.
           </td>
         </template>
 
-        <!-- Datetime field with action buttons -->
-        <template v-slot:item._source.timestamp="{ item }">
-          <div v-bind:style="getTimelineColor(item)" class="datetime-table-cell">
-            {{ item._source.timestamp | formatTimestamp | toISO8601 }}
-          </div>
-        </template>
-
         <!-- Actions field -->
         <template v-slot:item.actions="{ item }">
           <v-btn small icon @click="toggleStar(item)">
@@ -519,9 +512,14 @@ limitations under the License.
           <ts-event-tag-menu :event="item"></ts-event-tag-menu>
 
           <!-- Action sub-menu -->
-          <v-btn small icon>
-            <v-icon>mdi-dots-vertical</v-icon>
-          </v-btn>
+          <ts-event-action-menu :event="item"></ts-event-action-menu>
+        </template>
+
+        <!-- Datetime field with action buttons -->
+        <template v-slot:item._source.timestamp="{ item }">
+          <div v-bind:style="getTimelineColor(item)" class="datetime-table-cell">
+            {{ item._source.timestamp | formatTimestamp | toISO8601 }}
+          </div>
         </template>
 
         <!-- Generic slot for any field type. Adds tags and emojis to the first column. -->
@@ -600,6 +598,7 @@ import TsFilterMenu from '../components/Explore/FilterMenu'
 import TsEventDetail from '../components/Explore/EventDetail'
 import TsUploadTimelineForm from '../components/UploadForm'
 import TsEventTagMenu from '../components/Explore/EventTagMenu.vue'
+import TsEventActionMenu from '../components/Explore/EventActionMenu.vue'
 import TsAddManualEvent from '../components/Explore/AddManualEvent'
 
 import EventBus from '../main'
@@ -642,6 +641,7 @@ export default {
     TsUploadTimelineForm,
     TsEventTagMenu,
     TsAddManualEvent,
+    TsEventActionMenu,
   },
   props: ['sketchId'],
   data() {
@@ -754,7 +754,7 @@ export default {
         },
         {
           value: 'actions',
-          width: '90',
+          width: '100',
         },
         {
           text: 'Datetime (UTC)',
