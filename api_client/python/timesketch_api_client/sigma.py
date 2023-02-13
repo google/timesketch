@@ -39,7 +39,7 @@ class SigmaRule(resource.BaseResource):
 
         """
         self._attr_dict = {}
-        resource_uri = "sigmarule/"
+        resource_uri = "sigmarules/"
         super().__init__(api=api, resource_uri=resource_uri)
 
     @property
@@ -145,7 +145,7 @@ class SigmaRule(resource.BaseResource):
             rule_uuid: Id of the sigma rule.
 
         """
-        self.resource_uri = f"sigmarule/{rule_uuid}"
+        self.resource_uri = f"sigmarules/{rule_uuid}"
 
         self.lazyload_data(refresh_cache=True)
         objects = self.data.get("objects")
@@ -168,7 +168,7 @@ class SigmaRule(resource.BaseResource):
         Raises:
             ValueError: If rule could not be parsed.
         """
-        self.resource_uri = "{0:s}/sigmarule/text/".format(self.api.api_root)
+        self.resource_uri = "{0:s}/sigmarules/text/".format(self.api.api_root)
         data = {"title": "Get_Sigma_by_text", "content": rule_text}
         response = self.api.session.post(self.resource_uri, json=data)
         response_dict = error.get_response_json(response, logger)
