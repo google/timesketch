@@ -204,7 +204,7 @@ limitations under the License.
 
     <!-- Search History -->
 
-    <v-card v-show="showSearchHistory" outlined class="pa-3 mt-3">
+    <v-card v-show="showSearchHistory" outlined class="pa-3 mt-3 mx-3">
       <v-toolbar elevation="0" dense>
         <v-toolbar-title>Search history</v-toolbar-title>
         <v-spacer></v-spacer>
@@ -259,7 +259,7 @@ limitations under the License.
     <v-card
       v-if="eventList.objects.length || (searchInProgress && this.currentQueryFilter.indices.length)"
       flat
-      class="mt-3"
+      class="mt-5"
     >
       <v-data-table
         v-model="selectedEvents"
@@ -465,7 +465,7 @@ limitations under the License.
               class="mr-n3"
             ></v-data-footer>
           </v-toolbar>
-          <v-card v-if="showHistogram" outlined class="pa-2">
+          <v-card v-if="showHistogram" outlined class="pa-2 mx-3 mt-4 mb-4">
             <ts-bar-chart
               :chart-data="eventList.meta.count_over_time"
               @addChip="addChipFromHistogram($event)"

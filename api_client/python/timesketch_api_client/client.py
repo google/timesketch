@@ -584,7 +584,7 @@ class TimesketchApi:
             ValueError: If no rules are found.
         """
         rules = []
-        response = self.fetch_resource_data("sigmarule/")
+        response = self.fetch_resource_data("sigmarules/")
 
         if not response:
             raise ValueError("No rules found.")
@@ -605,7 +605,7 @@ class TimesketchApi:
     def create_sigmarule(self, rule_yaml):
         """Adds a single Sigma rule to the database.
 
-        Adds a single Sigma rule to the database when `/sigmarule/` is called
+        Adds a single Sigma rule to the database when `/sigmarules/` is called
         with a POST request.
 
         All attributes of the rule are taken by the `rule_yaml` value in the
@@ -624,7 +624,7 @@ class TimesketchApi:
         retry_count = 0
         objects = None
         while True:
-            resource_url = "{0:s}/sigmarule/".format(self.api_root)
+            resource_url = "{0:s}/sigmarules/".format(self.api_root)
             form_data = {"rule_yaml": rule_yaml}
             response = self.session.post(resource_url, json=form_data)
             response_dict = error.get_response_json(response, logger)
