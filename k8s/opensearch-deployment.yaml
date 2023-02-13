@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose.yml
+    kompose.version: 1.26.0 (40646f47)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: opensearch
+  name: opensearch
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: opensearch
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert -f docker-compose.yml
+        kompose.version: 1.26.0 (40646f47)
+      creationTimestamp: null
+      labels:
+        io.kompose.service: opensearch
+    spec:
+      containers:
+        - env:
+            - name: DISABLE_INSTALL_DEMO_CONFIG
+              value: "true"
+            - name: DISABLE_SECURITY_PLUGIN
+              value: "true"
+            - name: OPENSEARCH_JAVA_OPTS
+              value: -Xmsg -Xmxg
+            - name: TAKE_FILE_OWNERSHIP
+              value: "1"
+            - name: discovery.type
+              value: single-node
+          image: 'opensearchproject/opensearch:'
+          name: opensearch
+          resources: {}
+          volumeMounts:
+            - mountPath: /usr/share/opensearch/data/
+              name: opensearch-claim0
+      restartPolicy: Always
+      volumes:
+        - name: opensearch-claim0
+          persistentVolumeClaim:
+            claimName: opensearch-claim0
+status: {}
