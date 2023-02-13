@@ -107,3 +107,13 @@ export default {
   created() {},
 }
 </script>
+
+<style scoped lang="scss">
+.v-text-field ::v-deep input {
+  font-size: 0.9em;
+}
+
+.v-text-field ::v-deep label {
+  font-size: 0.9em;
+}
+</style>
