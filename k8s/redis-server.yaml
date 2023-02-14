@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-server
+  labels:
+    app: redis-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis-server
+  template:
+    metadata:
+      labels:
+        app: redis-server
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        - name: init-filestore
+          image: busybox:1.28
+          command: ["sh", "-c", "echo never > /host-sys/kernel/mm/transparent_hugepage/enabled"]
+          volumeMounts:
+            - mountPath: /mnt/timesketchvolume
+              name: timesketchvolume
+            - mountPath: /host-sys
+              name: host-sys
+      containers:
+        - name: redis
+          image: "docker.io/redis:latest"
+          args: ["--appendonly", "yes", "--save", "30", "1", "--client-output-buffer-limit", "pubsub", "268435456", "67108864", "0"]
+          workingDir: /mnt/timesketchvolume/redis
+          resources:
+            requests:
+              cpu: 2000m
+              memory: 2000Mi
+            limits:
+              cpu: 4000m
+              memory: 8000Mi 
+          ports:
+            - containerPort: 6379
+          volumeMounts:
+            - mountPath: /mnt/timesketchvolume
+              name: timesketchvolume
+          securityContext:
+            readOnlyRootFilesystem: true
+      volumes:
+        - name: timesketchvolume
+          persistentVolumeClaim:
+            claimName: timesketchvolume-claim
+            readOnly: false
+        - name: host-sys
+          hostPath:
+            path: /sys
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  labels:
+    app: redis-server
+spec:
+  ports:
+  - port: 6379
+    targetPort: 6379
+  selector:
+    app: redis-server

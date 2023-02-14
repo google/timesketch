@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres-server
+  template:
+    metadata:
+      labels:
+        app: postgres-server
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:latest
+          env:
+            - name: POSTGRES_USER
+              value: postgres
+            - name: POSTGRES_PASSWORD
+              value: timesketch
+          volumeMounts:
+            - mountPath: /mnt/timesketchvolume/postgresql
+              name: timesketchvolume
+              subPath: data
+          ports:
+            - containerPort: 5432
+          resources:
+            requests:
+              cpu: 2000m
+              memory: 2000Mi
+            limits:
+              cpu: 4000m
+              memory: 8000Mi
+      volumes:
+        - name: timesketchvolume
+          persistentVolumeClaim:
+            claimName: timesketchvolume-claim
+            readOnly: false
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-server
+  labels:
+    app: postgres-server
+spec:
+  ports:
+    - port: 5432
+      targetPort: 5432
+  selector:
+    app: postgres-server

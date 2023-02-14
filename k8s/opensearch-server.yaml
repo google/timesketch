@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: opensearch-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: opensearch-server
+  template:
+    metadata:
+      labels:
+        app: opensearch-server
+    spec:
+      securityContext:
+        fsGroup: 1000
+      initContainers:
+      - name: opensearch-init
+        image: busybox:latest
+        volumeMounts:
+          - mountPath: /usr/share/opensearch/data
+            name: timesketchvolume
+        securityContext:
+          privileged: true
+        command: ['sh', '-c', "chown -R 1000:1000 /usr/share/opensearch/data; sysctl -w vm.max_map_count=262144; sysctl -p"]
+      containers:
+        - name: opensearch
+          image: opensearchproject/opensearch:latest
+          env:
+            - name: DISABLE_INSTALL_DEMO_CONFIG
+              value: "true"
+            - name: DISABLE_SECURITY_PLUGIN
+              value: "true"
+            - name: OPENSEARCH_JAVA_OPTS
+              value: "-Xms32g -Xmx32g"
+            - name: TAKE_FILE_OWNERSHIP
+              value: "1"
+            - name: discovery.type
+              value: single-node
+          volumeMounts:
+            - mountPath: /usr/share/opensearch/data
+              name: timesketchvolume
+          ports:
+            - containerPort: 9200
+          resources:
+            requests:
+              cpu: 8000m
+              memory: 32Gi
+            limits:
+              cpu: 12000m
+              memory: 64Gi
+
+      volumes:
+        - name: timesketchvolume
+          persistentVolumeClaim:
+            claimName: timesketchvolume-claim
+            readOnly: false
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: opensearch-server
+  labels:
+    app: opensearch-server
+spec:
+  ports:
+    - port: 9200
+      targetPort: 9200
+  selector:
+    app: opensearch-server
