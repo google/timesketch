@@ -204,7 +204,7 @@ limitations under the License.
 
     <!-- Search History -->
 
-    <v-card v-show="showSearchHistory" outlined class="pa-3 mt-3">
+    <v-card v-show="showSearchHistory" outlined class="pa-3 mt-3 mx-3">
       <v-toolbar elevation="0" dense>
         <v-toolbar-title>Search history</v-toolbar-title>
         <v-spacer></v-spacer>
@@ -259,7 +259,7 @@ limitations under the License.
     <v-card
       v-if="eventList.objects.length || (searchInProgress && this.currentQueryFilter.indices.length)"
       flat
-      class="mt-3"
+      class="mt-5"
     >
       <v-data-table
         v-model="selectedEvents"
@@ -465,7 +465,7 @@ limitations under the License.
               class="mr-n3"
             ></v-data-footer>
           </v-toolbar>
-          <v-card v-if="showHistogram" outlined class="pa-2">
+          <v-card v-if="showHistogram" outlined class="pa-2 mx-3 mt-4 mb-4">
             <ts-bar-chart
               :chart-data="eventList.meta.count_over_time"
               @addChip="addChipFromHistogram($event)"
@@ -501,12 +501,6 @@ limitations under the License.
           </td>
         </template>
 
-        <!-- Datetime field with action buttons -->
-        <template v-slot:item._source.timestamp="{ item }">
-          <div v-bind:style="getTimelineColor(item)" class="datetime-table-cell">
-            {{ item._source.timestamp | formatTimestamp | toISO8601 }}
-          </div>
-        </template>
         <!-- Actions field -->
         <template v-slot:item.actions="{ item }">
           <v-btn small icon @click="toggleStar(item)">
@@ -516,6 +510,16 @@ limitations under the License.
 
           <!-- Tag menu -->
           <ts-event-tag-menu :event="item"></ts-event-tag-menu>
+
+          <!-- Action sub-menu -->
+          <ts-event-action-menu :event="item"></ts-event-action-menu>
+        </template>
+
+        <!-- Datetime field with action buttons -->
+        <template v-slot:item._source.timestamp="{ item }">
+          <div v-bind:style="getTimelineColor(item)" class="datetime-table-cell">
+            {{ item._source.timestamp | formatTimestamp | toISO8601 }}
+          </div>
         </template>
 
         <!-- Generic slot for any field type. Adds tags and emojis to the first column. -->
@@ -594,6 +598,7 @@ import TsFilterMenu from '../components/Explore/FilterMenu'
 import TsEventDetail from '../components/Explore/EventDetail'
 import TsUploadTimelineForm from '../components/UploadForm'
 import TsEventTagMenu from '../components/Explore/EventTagMenu.vue'
+import TsEventActionMenu from '../components/Explore/EventActionMenu.vue'
 import TsAddManualEvent from '../components/Explore/AddManualEvent'
 
 import EventBus from '../main'
@@ -636,6 +641,7 @@ export default {
     TsUploadTimelineForm,
     TsEventTagMenu,
     TsAddManualEvent,
+    TsEventActionMenu,
   },
   props: ['sketchId'],
   data() {
@@ -747,14 +753,14 @@ export default {
           value: 'data-table-select',
         },
         {
+          value: 'actions',
+          width: '100',
+        },
+        {
           text: 'Datetime (UTC)',
           align: 'start',
           value: '_source.timestamp',
           width: '200',
-        },
-        {
-          value: 'actions',
-          width: '70',
         },
         {
           value: '_source.comment',

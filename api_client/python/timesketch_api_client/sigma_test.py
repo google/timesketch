@@ -77,7 +77,7 @@ class TimesketchSigmaRuleTest(unittest.TestCase):
         self.assertEqual(rule.title, "Suspicious Installation of ZMap")
         self.assertIn("zmap", rule.search_query, "ES_Query does not match")
         self.assertIn("b793", rule.id)
-        self.assertIn("sigmarule/5266a592", rule.resource_uri)
+        self.assertIn("sigmarules/5266a592", rule.resource_uri)
         self.assertIn("suspicious installation of ZMap", rule.description)
         self.assertIn("high", rule.level)
         self.assertEqual(len(rule.falsepositives), 1)
@@ -92,7 +92,7 @@ class TimesketchSigmaRuleTest(unittest.TestCase):
     def test_sigma_rules(self):
         """Testing the Sigma rules list"""
 
-        rules = self.api_client.list_sigma_rules()
+        rules = self.api_client.list_sigmarules()
         self.assertIsNotNone(rules)
         self.assertEqual(len(rules), 2)
         rule = rules[0]
@@ -110,99 +110,3 @@ class TimesketchSigmaRuleTest(unittest.TestCase):
         self.assertIn("2020/06/26", rule.modified)
         self.assertIn("high", rule.level)
         self.assertIn("foobar.com", rule.references[0])
-
-    def test_parse_sigma_rule_by_text(self):
-        rule = self.api_client.parse_sigma_rule_by_text(MOCK_SIGMA_RULE)
-
-        self.assertIsNotNone(rule)
-        self.assertGreater(len(rule.attributes), 5)
-        self.assertIn("zsh", rule.search_query)
-        self.assertIn("Installation of foobar", rule.title)
-        self.assertIn("", rule.id)
-        self.assertIn("http://127.0.0.1/api/v1/sigma/text/", rule.resource_uri)
-        self.assertIn("suspicious installation of foobar", rule.description)
-        self.assertIn("high", rule.level)
-        self.assertEqual(len(rule.falsepositives), 1)
-        self.assertIn("Unknown", rule.falsepositives[0])
-        self.assertIn("Alexander", rule.author)
-        self.assertIn("2020/12/10", rule.date)
-        self.assertIn("2021/01/01", rule.modified)
-        self.assertEqual(len(rule.detection), 2)
-        self.assertEqual(len(rule.logsource), 2)
-
-
-class TimesketchSigmaTest(unittest.TestCase):
-    """DEPRECATED: Test Sigma."""
-
-    @mock.patch("requests.Session", test_lib.mock_session)
-    def setUp(self):
-        """Setup test case."""
-        self.api_client = client.TimesketchApi("http://127.0.0.1", "test", "test")
-
-    def test_sigma_rule(self):
-        """DEPRECATED: Test single Sigma rule."""
-
-        rule = self.api_client.get_sigma_rule(
-            rule_uuid="5266a592-b793-11ea-b3de-0242ac130004"
-        )
-        rule.from_rule_uuid("5266a592-b793-11ea-b3de-0242ac130004")
-        self.assertGreater(len(rule.attributes), 5)
-        self.assertIsNotNone(rule)
-        self.assertIn("Alexander", rule.author)
-        self.assertIn("Alexander", rule.get_attribute("author"))
-        self.assertEqual(rule.id, "5266a592-b793-11ea-b3de-0242ac130004")
-        self.assertEqual(rule.title, "Suspicious Installation of ZMap")
-        self.assertIn("zmap", rule.search_query, "ES_Query does not match")
-        self.assertIn("b793", rule.id)
-        self.assertIn("sigmarule/5266a592", rule.resource_uri)
-        self.assertIn("suspicious installation of ZMap", rule.description)
-        self.assertIn("high", rule.level)
-        self.assertEqual(len(rule.falsepositives), 1)
-        self.assertIn("Unknown", rule.falsepositives[0])
-        self.assertIn("2020/06/26", rule.date)
-        self.assertIn("2021/01/01", rule.modified)
-        self.assertIn("high", rule.level)
-        self.assertIn("foobar.com", rule.references[0])
-        self.assertEqual(len(rule.detection), 2)
-        self.assertEqual(len(rule.logsource), 2)
-
-    def test_sigma_rules(self):
-        """DEPRECATED: Testing the Sigma rules list"""
-
-        rules = self.api_client.list_sigma_rules()
-        self.assertIsNotNone(rules)
-        self.assertEqual(len(rules), 2)
-        rule = rules[0]
-        self.assertEqual(rule.title, "Suspicious Installation of ZMap")
-        self.assertIn("zmap", rule.search_query, "ES_Query does not match")
-        self.assertIn("b793", rule.id)
-        self.assertIn("Alexander", rule.author)
-        self.assertIn("2020/06/26", rule.date)
-        self.assertIn("installation of ZMap", rule.description)
-        self.assertEqual(len(rule.detection), 2)
-        self.assertIn("zmap*", rule.search_query)
-        self.assertIn("Unknown", rule.falsepositives[0])
-        self.assertEqual(len(rule.detection), 2)
-        self.assertEqual(len(rule.logsource), 2)
-        self.assertIn("2020/06/26", rule.modified)
-        self.assertIn("high", rule.level)
-        self.assertIn("foobar.com", rule.references[0])
-
-    def test_parse_sigma_rule_by_text(self):
-        rule = self.api_client.parse_sigma_rule_by_text(MOCK_SIGMA_RULE)
-
-        self.assertIsNotNone(rule)
-        self.assertGreater(len(rule.attributes), 5)
-        self.assertIn("zsh", rule.search_query)
-        self.assertIn("Installation of foobar", rule.title)
-        self.assertIn("", rule.id)
-        self.assertIn("http://127.0.0.1/api/v1/sigma/text/", rule.resource_uri)
-        self.assertIn("suspicious installation of foobar", rule.description)
-        self.assertIn("high", rule.level)
-        self.assertEqual(len(rule.falsepositives), 1)
-        self.assertIn("Unknown", rule.falsepositives[0])
-        self.assertIn("Alexander", rule.author)
-        self.assertIn("2020/12/10", rule.date)
-        self.assertIn("2021/01/01", rule.modified)
-        self.assertEqual(len(rule.detection), 2)
-        self.assertEqual(len(rule.logsource), 2)

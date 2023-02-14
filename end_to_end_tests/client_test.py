@@ -111,9 +111,9 @@ level: high
         rule = self.api.create_sigmarule(rule_yaml=MOCK_SIGMA_RULE)
         self.assertions.assertIsNotNone(rule)
 
-    def test_sigma_list(self):
+    def test_sigmarule_list(self):
         """Client Sigma list tests."""
-        rules = self.api.list_sigma_rules()
+        rules = self.api.list_sigmarules()
         self.assertions.assertGreaterEqual(len(rules), 1)
         rule = rules[0]
         self.assertions.assertIn("5266a592-b793-11ea-b3de-bbbbbb", rule.id)
@@ -173,7 +173,7 @@ level: high
         self.assertions.assertIn("Installation of eeeee", rule.title)
         self.assertions.assertIn("zmap", rule.search_query)
         self.assertions.assertIn("shell:zsh:history", rule.search_query)
-        self.assertions.assertIn("sigmarule/5266a592", rule.resource_uri)
+        self.assertions.assertIn("sigmarules/5266a592", rule.resource_uri)
         self.assertions.assertIn("installation of eeeee", rule.description)
         self.assertions.assertIn("high", rule.level)
         self.assertions.assertEqual(len(rule.falsepositives), 1)
