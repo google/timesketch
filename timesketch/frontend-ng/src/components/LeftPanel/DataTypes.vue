@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div v-if="dataTypes.length">
+  <div>
     <div class="pa-4" flat :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
       <span style="cursor: pointer" @click="expanded = !expanded"
         ><v-icon left>mdi-database-outline</v-icon> Data Types (<small
@@ -26,7 +26,7 @@ limitations under the License.
     <v-expand-transition>
       <div v-show="expanded">
         <v-data-iterator :items="dataTypes" :items-per-page.sync="itemsPerPage" :search="search">
-          <template v-slot:header>
+          <template v-slot:header v-if="dataTypes.length > itemsPerPage">
             <v-toolbar flat>
               <v-text-field
                 v-model="search"
