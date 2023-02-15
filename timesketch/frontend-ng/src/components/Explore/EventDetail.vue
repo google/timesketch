@@ -21,11 +21,46 @@ limitations under the License.
           <v-simple-table dense>
             <template v-slot:default>
               <tbody>
-                <tr v-for="(value, key) in fullEventFiltered" :key="key">
+                <tr v-for="(value, key) in fullEventFiltered" :key="key" @mouseover="c_key = key" @mouseleave="c_key = -1">
+                  <!-- Event field name actions -->
+                  <td v-if="key == c_key" class="text-right">
+
+                    <!-- Copy field name -->
+                    <v-btn
+                      icon
+                      x-small
+                      style="cursor: pointer"
+                      @click="copyToClipboard(key)"
+                      class="pr-1"
+                    >
+                      <v-icon small>mdi-content-copy</v-icon>
+                    </v-btn>
+
+                  </td>
+                  <td v-else>
+                    <div class="px-3"></div>
+                  </td>
+
+                  <!-- Event field name -->
                   <td>
                     {{ key }}
                   </td>
-                  <td v-if="key.includes('xml') || checkContextLinkDisplay(key, value)" class="px-0">
+
+                  <!-- Event field value action icons -->
+                  <td v-if="key.includes('xml') || checkContextLinkDisplay(key, value) || (key == c_key)" class="text-right pr-1">
+
+                    <!-- Copy event value -->
+                    <v-btn
+                      icon
+                      x-small
+                      style="cursor: pointer"
+                      @click="copyToClipboard(value)"
+                      v-show="key == c_key"
+                    >
+                      <v-icon small>mdi-content-copy</v-icon>
+                    </v-btn>
+
+                    <!-- XML prettify dialog -->
                     <v-dialog v-if="key.includes('xml')" v-model="formatXMLString" width="1000">
                       <template v-slot:activator="{ on, attrs }">
                         <v-btn
@@ -39,10 +74,7 @@ limitations under the License.
                         >
                           <v-tooltip top close-delay=300 :open-on-click="false">
                             <template v-slot:activator="{ on }">
-                              <v-icon
-                                v-on="on"
-                                small
-                              >
+                              <v-icon v-on="on" small>
                                 mdi-xml
                               </v-icon>
                             </template>
@@ -56,6 +88,8 @@ limitations under the License.
                         :xmlString="value"
                       ></ts-format-xml-string>
                     </v-dialog>
+
+                    <!-- Context link submenu -->
                     <v-menu
                       v-if="checkContextLinkDisplay(key, value)"
                       offset-y
@@ -72,10 +106,7 @@ limitations under the License.
                         >
                           <v-tooltip top close-delay=300 :open-on-click="false">
                             <template v-slot:activator="{ on }">
-                              <v-icon
-                                v-on="on"
-                                small
-                              >
+                              <v-icon v-on="on" small>
                                 mdi-open-in-new
                               </v-icon>
                             </template>
@@ -107,8 +138,13 @@ limitations under the License.
                         </v-list-item>
                       </v-list>
                     </v-menu>
+
                   </td>
-                  <td v-else class="px-4"></td>
+                  <td v-else>
+                    <div class="px-5"></div>
+                  </td>
+
+                  <!-- Event field value -->
                   <td width="100%" class="pl-0">
                     {{ value }}
                   </td>
@@ -218,6 +254,7 @@ export default {
       redirectWarnDialog: false,
       contextUrl: '',
       contextValue: '',
+      c_key: -1,
     }
   },
   computed: {
@@ -348,6 +385,15 @@ export default {
         if (confItem['short_name'] === item) {
           return confItem['redirect_warning']
         }
+      }
+    },
+    copyToClipboard (content) {
+      try {
+        navigator.clipboard.writeText(content)
+        this.infoSnackBar('copied')
+      } catch (error) {
+        this.errorSnackBar('Failed copying to the clipboard!')
+        console.error(error)
       }
     },
   },
