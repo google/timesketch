@@ -144,6 +144,19 @@ html {
   background-color: #303030;
 }
 
+.light-info-card {
+  background-color: rgba(33, 150, 243, .1);
+  color: #333;
+  border-radius: 6px;
+}
+
+.dark-info-card {
+  background-color: rgba(33, 150, 243, .1);
+  color:#fff;
+  border-radius: 6px;
+  border:1px solid rgba(33, 150, 243, 0.3);
+}
+
 .timeline-name-ellipsis {
   width: 200px;
   white-space: nowrap;
