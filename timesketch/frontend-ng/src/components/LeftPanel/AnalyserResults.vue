@@ -1,5 +1,5 @@
 <!--
-Copyright 2022 Google Inc. All rights reserved.
+Copyright 2023 Google Inc. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ limitations under the License.
     </div>
     <v-expand-transition>
       <div v-if="analyzerResults.length > 0" v-show="expanded">
-        Here are some results!
+        <!-- TODO: issue#2565 -->
         <!-- <ts-analyser-result></ts-analyser-result> -->
       </div>
       <div v-else v-show="expanded" class="text-center">
