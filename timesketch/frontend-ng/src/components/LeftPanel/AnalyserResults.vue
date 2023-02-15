@@ -17,7 +17,8 @@ limitations under the License.
   <div>
     <div class="pa-4" flat :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
       <span style="cursor: pointer" @click="expanded = !expanded">
-        <v-icon left>mdi-auto-fix</v-icon> Analyzer Results ({{ analyzerResults.length }})
+        <v-icon left>mdi-auto-fix</v-icon> Analyzer Results
+        (<small><strong>{{ analyzerResults.length }}</strong></small>)
       </span>
       <v-btn
         :to="{ name: 'Analyse', params: { sketchId: sketch.id } }"
@@ -38,16 +39,32 @@ limitations under the License.
         Here are some results!
         <!-- <ts-analyser-result></ts-analyser-result> -->
       </div>
-      <div v-else v-show="expanded">
-        No results yet! Sketch: {{ sketch.id }}
-        <v-img
-          contain
-          max-height=110
-          max-width=280
-          src="../../assets/no_analyzer_results.png"
-        ></v-img>
+      <div v-else v-show="expanded" class="text-center">
+        <span>No analyzers run, yet.</span>
+        <div class="my-6 text-center">
+          <v-img
+            class="mx-auto"
+            src="/dist/no_analyzer_results.png"
+            alt="No analyzer results yet"
+            max-width="200"
+            contain
+          ></v-img>
+        </div>
+        <v-btn
+          :to="{ name: 'Analyse', params: { sketchId: sketch.id } }"
+          plain
+          color="primary"
+          x-small
+          center
+          text
+          style="cursor: pointer"
+          class="mb-3"
+        >
+        + Run Analyzer
+      </v-btn>
       </div>
     </v-expand-transition>
+    <v-divider></v-divider>
   </div>
 </template>
 
