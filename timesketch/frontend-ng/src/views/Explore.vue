@@ -86,7 +86,7 @@ limitations under the License.
         ></ts-timeline-picker>
 
         <span style="position: relative; top: -5px">
-          <ts-upload-timeline-form></ts-upload-timeline-form>
+          <ts-upload-timeline-form btn-type="small"></ts-upload-timeline-form>
         </span>
 
         <span style="position: relative; top: -5px">
@@ -123,12 +123,26 @@ limitations under the License.
             </template>
             <v-card>
               <v-list>
-                <v-list-item>
-                  <v-list-item-action>
-                    <v-icon>mdi-square-edit-outline</v-icon>
-                  </v-list-item-action>
-                  <v-list-item-subtitle>Edit filter</v-list-item-subtitle>
-                </v-list-item>
+                <!-- Edit timefilter menu -->
+                <v-menu
+                  offset-y
+                  :close-on-content-click="false"
+                  :close-on-click="true"
+                  nudge-top="70"
+                  content-class="menu-with-gap"
+                  allow-overflow
+                  style="overflow: visible"
+                >
+                  <template v-slot:activator="{ on, attrs }">
+                    <v-list-item v-bind="attrs" v-on="on">
+                      <v-list-item-action>
+                        <v-icon>mdi-square-edit-outline</v-icon>
+                      </v-list-item-action>
+                      <v-list-item-subtitle>Edit filter</v-list-item-subtitle>
+                    </v-list-item>
+                  </template>
+                  <ts-filter-menu app :selected-chip="chip" @updateChip="updateChip($event, chip)"></ts-filter-menu>
+                </v-menu>
 
                 <v-list-item @click="toggleChip(chip)">
                   <v-list-item-action>
@@ -177,7 +191,9 @@ limitations under the License.
       <div v-if="filterChips.length">
         <v-chip-group>
           <span v-for="(chip, index) in filterChips" :key="index + chip.value">
-            <v-chip>
+            <v-chip small outlined close @click:close="removeChip(chip)">
+              <v-icon v-if="chip.value === '__ts_star'" left small color="amber">mdi-star</v-icon>
+              <v-icon v-if="chip.value === '__ts_comment'" left small>mdi-comment-multiple-outline</v-icon>
               {{ chip.value | formatLabelText }}
             </v-chip>
             <v-btn v-if="index + 1 < timeFilterChips.length" icon small style="margin-top: 2px" class="mr-2">AND</v-btn>
@@ -188,7 +204,7 @@ limitations under the License.
 
     <!-- Search History -->
 
-    <v-card v-show="showSearchHistory" outlined class="pa-3 mt-3">
+    <v-card v-show="showSearchHistory" outlined class="pa-3 mt-3 mx-3">
       <v-toolbar elevation="0" dense>
         <v-toolbar-title>Search history</v-toolbar-title>
         <v-spacer></v-spacer>
@@ -243,7 +259,7 @@ limitations under the License.
     <v-card
       v-if="eventList.objects.length || (searchInProgress && this.currentQueryFilter.indices.length)"
       flat
-      class="mt-3 mx-3"
+      class="mt-5"
     >
       <v-data-table
         v-model="selectedEvents"
@@ -264,7 +280,7 @@ limitations under the License.
       >
         <template v-slot:top="{ pagination, options, updateOptions }">
           <v-toolbar dense flat>
-            <div>
+            <div v-if="!selectedEvents.length">
               <span class="mr-2"
                 ><small>{{ fromEvent }}-{{ toEvent }} of {{ totalHits }} events ({{ totalTime }}s)</small></span
               >
@@ -428,6 +444,13 @@ limitations under the License.
                 </v-card>
               </v-menu>
             </div>
+            <div v-else>
+              <small class="mr-2">Actions:</small>
+              <v-btn x-small outlined @click="toggleMultipleStars()">
+                <v-icon left color="amber">mdi-star</v-icon>
+                Toggle star
+              </v-btn>
+            </div>
 
             <v-spacer></v-spacer>
 
@@ -442,7 +465,7 @@ limitations under the License.
               class="mr-n3"
             ></v-data-footer>
           </v-toolbar>
-          <v-card v-if="showHistogram" outlined class="pa-2">
+          <v-card v-if="showHistogram" outlined class="pa-2 mx-3 mt-4 mb-4">
             <ts-bar-chart
               :chart-data="eventList.meta.count_over_time"
               @addChip="addChipFromHistogram($event)"
@@ -460,7 +483,7 @@ limitations under the License.
 
             <!-- Time bubble -->
             <v-divider v-if="item.showDetails && item.deltaDays"></v-divider>
-            <div v-if="item.deltaDays > 0" class="ml-16">
+            <div v-if="item.deltaDays > 0" class="ml-7">
               <div
                 class="ts-time-bubble-vertical-line ts-time-bubble-vertical-line-color"
                 v-bind:style="getTimeBubbleColor(item)"
@@ -478,20 +501,25 @@ limitations under the License.
           </td>
         </template>
 
-        <!-- Datetime field with action buttons -->
-        <template v-slot:item._source.timestamp="{ item }">
-          <div v-bind:style="getTimelineColor(item)" class="datetime-table-cell">
-            {{ item._source.timestamp | formatTimestamp | toISO8601 }}
-          </div>
-        </template>
         <!-- Actions field -->
         <template v-slot:item.actions="{ item }">
           <v-btn small icon @click="toggleStar(item)">
             <v-icon v-if="item._source.label.includes('__ts_star')" color="amber">mdi-star</v-icon>
             <v-icon v-else>mdi-star-outline</v-icon>
           </v-btn>
+
           <!-- Tag menu -->
           <ts-event-tag-menu :event="item"></ts-event-tag-menu>
+
+          <!-- Action sub-menu -->
+          <ts-event-action-menu :event="item"></ts-event-action-menu>
+        </template>
+
+        <!-- Datetime field with action buttons -->
+        <template v-slot:item._source.timestamp="{ item }">
+          <div v-bind:style="getTimelineColor(item)" class="datetime-table-cell">
+            {{ item._source.timestamp | formatTimestamp | toISO8601 }}
+          </div>
         </template>
 
         <!-- Generic slot for any field type. Adds tags and emojis to the first column. -->
@@ -549,8 +577,8 @@ limitations under the License.
 
         <!-- Comment field -->
         <template v-slot:item._source.comment="{ item }">
-          <v-badge :offset-y="16" bordered v-if="item._source.comment.length" :content="item._source.comment.length">
-            <v-icon @click="toggleDetailedEvent(item)"> mdi-comment-text-multiple-outline </v-icon>
+          <v-badge :offset-y="10" bordered v-if="item._source.comment.length" :content="item._source.comment.length">
+            <v-icon small @click="toggleDetailedEvent(item)"> mdi-comment-text-multiple-outline </v-icon>
           </v-badge>
         </template>
       </v-data-table>
@@ -570,6 +598,7 @@ import TsFilterMenu from '../components/Explore/FilterMenu'
 import TsEventDetail from '../components/Explore/EventDetail'
 import TsUploadTimelineForm from '../components/UploadForm'
 import TsEventTagMenu from '../components/Explore/EventTagMenu.vue'
+import TsEventActionMenu from '../components/Explore/EventActionMenu.vue'
 import TsAddManualEvent from '../components/Explore/AddManualEvent'
 
 import EventBus from '../main'
@@ -612,6 +641,7 @@ export default {
     TsUploadTimelineForm,
     TsEventTagMenu,
     TsAddManualEvent,
+    TsEventActionMenu,
   },
   props: ['sketchId'],
   data() {
@@ -646,7 +676,6 @@ export default {
         bad: { color: 'red', textColor: 'white', label: 'mdi-alert-circle-outline' },
         suspicious: { color: 'orange', textColor: 'white', label: 'mdi-help-circle-outline' },
       },
-
       // old stuff
       params: {},
       searchInProgress: false,
@@ -724,18 +753,18 @@ export default {
           value: 'data-table-select',
         },
         {
+          value: 'actions',
+          width: '100',
+        },
+        {
           text: 'Datetime (UTC)',
           align: 'start',
           value: '_source.timestamp',
-          width: '230',
-        },
-        {
-          value: 'actions',
-          width: '90',
+          width: '200',
         },
         {
           value: '_source.comment',
-          align: 'end',
+          width: '40',
         },
       ]
       let extraHeaders = []
@@ -753,7 +782,7 @@ export default {
         }
       })
 
-      // Extend the column headers from position 3 (after the actions column).
+      // Extend the column headers from position 3 (after the actions column).\
       baseHeaders.splice(3, 0, ...extraHeaders)
 
       // Add timeline name based on configuration
@@ -1216,15 +1245,18 @@ export default {
         })
     },
     toggleMultipleStars: function () {
-      let eventsToToggle = []
-      Object.keys(this.selectedEvents).forEach((key, index) => {
-        eventsToToggle.push(this.selectedEvents[key])
+      this.selectedEvents.forEach((event) => {
+        if (event._source.label.includes('__ts_star')) {
+          event._source.label.splice(event._source.label.indexOf('__ts_star'), 1)
+        } else {
+          event._source.label.push('__ts_star')
+        }
       })
-      ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', eventsToToggle, this.currentSearchNode)
-        .then((response) => {})
+      ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', this.selectedEvents, this.currentSearchNode)
+        .then((response) => {
+          this.selectedEvents = []
+        })
         .catch((e) => {})
-
-      EventBus.$emit('toggleStar', this.selectedEvents)
     },
     jumpInHistory: function (node) {
       this.currentQueryString = node.query_string
@@ -1415,11 +1447,11 @@ export default {
 }
 
 .ts-time-bubble {
-  width: 150px;
-  height: 30px;
+  width: 120px;
+  height: 20px;
   border-radius: 6px;
   position: relative;
-  margin: 0 0 0 25px;
+  margin: 0 0 0 35px;
   text-align: center;
   font-size: var(--font-size-small);
 }
@@ -1445,5 +1477,21 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+// Adjust padding for event data table
+.v-data-table td,
+th {
+  padding: 0 10px 0 0 !important;
+}
+
+.v-data-table td:last-child,
+th:last-child {
+  padding: 0 !important;
+}
+
+.v-data-table td:first-child,
+th:first-child {
+  padding: 0 0 0 10px !important;
 }
 </style>

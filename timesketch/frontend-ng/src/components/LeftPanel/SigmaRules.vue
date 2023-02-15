@@ -1,5 +1,5 @@
 <!--
-Copyright 2022 Google Inc. All rights reserved.
+Copyright 2023 Google Inc. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,17 +14,32 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div>
-    <div class="pa-4" flat :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
-      <span style="cursor: pointer" @click="expanded = !expanded"
-        ><v-icon left>mdi-sigma-lower</v-icon> Sigma Rules ({{ sigmaRules.length }})</span
-      >
-    </div>
+  <div v-if="ruleCount > 0">
+    <v-row
+      no-gutters
+      style="cursor: pointer"
+      class="pa-4"
+      flat
+      @click="expanded = !expanded"
+      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+    >
+      <v-col cols="11">
+        <v-icon left>mdi-sigma-lower</v-icon> Sigma Rules (<small
+          ><strong>{{ ruleCount }}</strong></small
+        >)
+      </v-col>
+      <v-col cols="1">
+        <v-btn small icon>
+          <v-icon v-if="expanded" v-on:click="createNewSigmaRule()">mdi-plus</v-icon>
+        </v-btn>
+      </v-col>
+    </v-row>
+
     <v-expand-transition>
-      <div v-show="expanded && sigmaRules.length">
+      <div v-show="expanded">
         <v-data-iterator :items="sigmaRules" :items-per-page.sync="itemsPerPage" :search="search">
           <template v-slot:header>
-            <v-toolbar flat>
+            <v-toolbar flat v-if="ruleCount > itemsPerPage">
               <v-text-field
                 v-model="search"
                 clearable
@@ -38,7 +53,7 @@ limitations under the License.
           </template>
 
           <template v-slot:default="props">
-            <ts-sigma-rule v-for="sigmaRule in props.items" :key="sigmaRule.id" :sigma-rule="sigmaRule">
+            <ts-sigma-rule v-for="sigmaRule in props.items" :key="sigmaRule.rule_uuid" :sigma-rule="sigmaRule">
             </ts-sigma-rule>
           </template>
         </v-data-iterator>
@@ -49,23 +64,48 @@ limitations under the License.
 </template>
 
 <script>
-import ApiClient from '../../utils/RestApiClient'
 import TsSigmaRule from './SigmaRule.vue'
 
 export default {
-  props: [],
+  props: {
+    startExpanded: Boolean,
+  },
   components: {
     TsSigmaRule,
   },
   data: function () {
     return {
-      sigmaRules: [],
-      expanded: false,
+      expanded: this.startExpanded,
       itemsPerPage: 10,
       search: '',
     }
   },
+  methods: {
+    createNewSigmaRule() {
+      // check current router location
+      if (this.$route.params.id === 'new') {
+        return
+      }
+      this.$router.push({
+        name: 'Studio',
+        params: {
+          id: 'new',
+          type: 'sigma',
+        },
+      })
+    },
+  },
   computed: {
+    sigmaRules() {
+      return this.$store.state.sigmaRuleList
+    },
+    ruleCount() {
+      // to avoid undefined error if the list is not yet loaded or number is 0
+      if (!this.$store.state.sigmaRuleList) {
+        return 0
+      }
+      return this.$store.state.sigmaRuleList.length
+    },
     sketch() {
       return this.$store.state.sketch
     },
@@ -74,11 +114,17 @@ export default {
     },
   },
   created() {
-    ApiClient.getSigmaList()
-      .then((response) => {
-        this.sigmaRules = response.data.objects
-      })
-      .catch((e) => {})
+    this.$store.dispatch('updateSigmaList')
   },
 }
 </script>
+
+<style scoped lang="scss">
+.v-text-field ::v-deep input {
+  font-size: 0.9em;
+}
+
+.v-text-field ::v-deep label {
+  font-size: 0.9em;
+}
+</style>

@@ -15,7 +15,7 @@ limitations under the License.
 -->
 <template>
   <div>
-    <v-row no-gutters class="pa-3" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
+    <v-row no-gutters class="pa-2" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
       <div @click="expanded = !expanded" style="cursor: pointer; font-size: 0.9em">
         <v-icon v-if="!expanded">mdi-chevron-right</v-icon>
         <v-icon v-else>mdi-chevron-down</v-icon>
@@ -86,6 +86,7 @@ limitations under the License.
         </div>
       </div>
     </v-expand-transition>
+    <v-divider></v-divider>
   </div>
 </template>
 

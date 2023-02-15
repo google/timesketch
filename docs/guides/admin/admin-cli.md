@@ -479,6 +479,16 @@ Lists all Sigma rules installed on a system
 tsctl list-sigma-rules
 ```
 
+```bash
+tsctl list-sigma-rules --columns=rule_uuid,title,status
+rule_uuid,title,status
+['8c10509b-9ba5-4387-bf6c-e347931b646f', 'SigmaRuleTemplateTitledddd', 'experimental']
+['5266a592-b793-11ea-b3de-0242ac130004', 'Suspicious Installation of Zenmap', 'experimental']
+['e5684ad6-5824-4680-9cc5-e8f0babd77bb', 'Foobar', 'experimental']
+tsctl list-sigma-rules --columns=rule_uuid,title,status | grep experimental | wc -l
+3
+```
+
 #### Add Sigma rules in a folder
 
 Will add all Sigma rules in a folder and its subfolders to the databse.

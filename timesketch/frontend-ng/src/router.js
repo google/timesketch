@@ -19,6 +19,7 @@ import VueRouter from 'vue-router'
 import Home from './views/Home'
 import Explore from './views/Explore'
 import Sketch from './views/Sketch'
+import Studio from './views/Studio'
 
 Vue.use(VueRouter)
 
@@ -46,6 +47,12 @@ const routes = [
         props: true,
       },
     ],
+  },
+  {
+    name: 'Studio',
+    path: '/studio/:type/:id',
+    component: Studio,
+    props: true,
   },
 ]
 
