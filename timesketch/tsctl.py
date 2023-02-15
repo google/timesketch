@@ -66,7 +66,9 @@ def create_user(username, password=None):
 
     def get_password_from_prompt():
         """Get password from the command line prompt."""
-        first_password = click.prompt("Enter password", hide_input=True, type=str)
+        first_password = click.prompt(
+            "Enter password", hide_input=True, type=str
+        )
         second_password = click.prompt(
             "Enter password again", hide_input=True, type=str
         )
@@ -158,7 +160,9 @@ def grant_user(username, sketch_id):
     else:
         sketch.grant_permission(permission="read", user=user)
         sketch.grant_permission(permission="write", user=user)
-        print(f"User {username} added to the sketch {sketch.id} ({sketch.name})")
+        print(
+            f"User {username} added to the sketch {sketch.id} ({sketch.name})"
+        )
 
 
 @cli.command(name="version")
@@ -301,7 +305,9 @@ def import_search_templates(path):
                     template_uuid=uuid
                 ).first()
                 if not searchtemplate:
-                    searchtemplate = SearchTemplate(name=name, template_uuid=uuid)
+                    searchtemplate = SearchTemplate(
+                        name=name, template_uuid=uuid
+                    )
                     db_session.add(searchtemplate)
                     db_session.commit()
 
@@ -355,7 +361,9 @@ def import_sigma_rules(path):
 
         # Query rules to see if it already exist and exit if found
         rule_uuid = sigma_rule.get("id")
-        sigma_rule_from_db = SigmaRule.query.filter_by(rule_uuid=rule_uuid).first()
+        sigma_rule_from_db = SigmaRule.query.filter_by(
+            rule_uuid=rule_uuid
+        ).first()
         if sigma_rule_from_db:
             print(f"Rule {rule_uuid} is already imported")
             continue
@@ -439,7 +447,9 @@ def remove_all_sigma_rules():
     """Deletes all Sigma rule from the database."""
 
     if click.confirm("Do you really want to drop all the Sigma rules?"):
-        if click.confirm("Are you REALLLY sure you want to DROP ALL the Sigma rules?"):
+        if click.confirm(
+            "Are you REALLLY sure you want to DROP ALL the Sigma rules?"
+        ):
             all_sigma_rules = SigmaRule.query.all()
             for rule in all_sigma_rules:
                 db_session.delete(rule)
@@ -455,7 +465,8 @@ def export_sigma_rules(path):
 
     if not os.path.isdir(path):
         raise RuntimeError(
-            "The directory needs to exist, please create: " "{0:s} first".format(path)
+            "The directory needs to exist, please create: "
+            "{0:s} first".format(path)
         )
 
     all_sigma_rules = SigmaRule.query.all()
@@ -674,7 +685,9 @@ def validate_context_links_conf(path):
     required=False,
     help="Limit the number of results.",
 )
-def analyzer_stats(analyzer_name, timeline_id, scope, result_text_search, limit):
+def analyzer_stats(
+    analyzer_name, timeline_id, scope, result_text_search, limit
+):
     """Prints analyzer stats."""
 
     if timeline_id:
@@ -683,7 +696,9 @@ def analyzer_stats(analyzer_name, timeline_id, scope, result_text_search, limit)
             print("No timeline found with this ID.")
             return
         if analyzer_name == "all":
-            analysis_history = Analysis.query.filter_by(timeline=timeline).all()
+            analysis_history = Analysis.query.filter_by(
+                timeline=timeline
+            ).all()
         else:
             analysis_history = Analysis.query.filter_by(
                 timeline=timeline, analyzer_name=analyzer_name
@@ -692,7 +707,9 @@ def analyzer_stats(analyzer_name, timeline_id, scope, result_text_search, limit)
         analysis_history = Analysis.query.filter_by().all()
     else:
         # analysis filter by analyzer_name
-        analysis_history = Analysis.query.filter_by(analyzer_name=analyzer_name).all()
+        analysis_history = Analysis.query.filter_by(
+            analyzer_name=analyzer_name
+        ).all()
 
     df = pd.DataFrame()
     for analysis in analysis_history:
@@ -717,10 +734,6 @@ def analyzer_stats(analyzer_name, timeline_id, scope, result_text_search, limit)
         )
         df = pd.concat([df, new_row], ignore_index=True)
 
-    # remove hits column if analyzer_name is not sigma
-    if analyzer_name != "sigma":
-        df = df.drop(columns=["hits"])
-
     if df.empty:
         print("No Analyzer runs found!")
         return
@@ -734,7 +747,11 @@ def analyzer_stats(analyzer_name, timeline_id, scope, result_text_search, limit)
     # Sorting the dataframe depending on the paramters
 
     if scope in ["many_hits", "many-hits", "hits"]:
-        df = df.sort_values("hits", ascending=False)
+        if analyzer_name == "sigma":
+            df = df.sort_values("hits", ascending=False)
+        else:
+            print("Sorting by hits is only possible for sigma analyzer.")
+            df = df.sort_values("runtime", ascending=False)
     elif scope == "long_runtime":
         df = df.sort_values("runtime", ascending=False)
     elif scope == "recent":
@@ -744,6 +761,10 @@ def analyzer_stats(analyzer_name, timeline_id, scope, result_text_search, limit)
 
     if limit:
         df = df.head(int(limit))
+
+    # remove hits column if analyzer_name is not sigma
+    if analyzer_name != "sigma":
+        df = df.drop(columns=["hits"])
 
     pd.options.display.max_colwidth = 500
     print(df)
