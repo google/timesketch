@@ -16,7 +16,7 @@ limitations under the License.
 <template>
   <v-menu v-model="showMenu" offset-x :close-on-content-click="false">
     <template v-slot:activator="{ on, attrs }">
-      <v-icon v-bind="attrs" v-on="on" class="ml-2">mdi-tag-plus-outline</v-icon>
+      <v-icon v-bind="attrs" v-on="on">mdi-tag-plus-outline</v-icon>
     </template>
 
     <v-card min-width="500px" class="mx-auto">
