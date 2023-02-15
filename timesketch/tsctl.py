@@ -697,6 +697,8 @@ def analyzer_stats(analyzer_name, timeline_id, scope, result_text_search, limit)
     df = pd.DataFrame()
     for analysis in analysis_history:
         # extract number of hits from result to a int so it could be sorted
+        # TODO: make this more generic as the number of events might only
+        # be a part of the result string in Sigma analyzers
         try:
             matches = int(re.search(r"\d+(?=\s+events)", analysis.result))
         except TypeError:
@@ -707,9 +709,9 @@ def analyzer_stats(analyzer_name, timeline_id, scope, result_text_search, limit)
                     "runtime": analysis.updated_at - analysis.created_at,
                     "hits": matches,
                     "timeline_id": analysis.timeline_id,
-                    "result": analysis.result,
                     "analysis_id": analysis.id,
                     "created_at": analysis.created_at,
+                    "result": analysis.result,
                 }
             ]
         )
