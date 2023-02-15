@@ -38,5 +38,12 @@ Vue.mixin({
             snackbar.color = "error"
             this.$store.dispatch('setSnackBar', snackbar)
         },
+        infoSnackBar(message) {
+          let snackbar = defaultSnackBar
+          snackbar.message = message
+          snackbar.color = "info"
+          snackbar.timeout = 2000
+          this.$store.dispatch('setSnackBar', snackbar)
+      },
     }
 })
