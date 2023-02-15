@@ -106,7 +106,7 @@ limitations under the License.
           <div
             v-dragscroll
             class="pa-md-4 no-scrollbars"
-            style="overflow: scroll; white-space: nowrap; max-height: 500px; min-height: 500px"
+            style="overflow: scroll; white-space: nowrap; max-height: 500px; min-height: 100px"
           >
             <ts-search-history-tree
               @node-click="jumpInHistory"
