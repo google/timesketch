@@ -27,16 +27,14 @@ limitations under the License.
 export default {
   props: [],
   data: function () {
-    return {
-    }
+    return {}
   },
   computed: {
     sketch() {
       return this.$store.state.sketch
     },
   },
-  methods: {
-  },
+  methods: {},
 }
 </script>
 

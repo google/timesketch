@@ -17,23 +17,20 @@ limitations under the License.
   <v-container fluid>
     <!-- Search and Filters -->
     <v-card flat class="pa-3 pt-0 mt-n3" color="transparent">
-      <v-btn
-        :to="{ name: 'Overview', params: { sketchId: sketchId } }"
-        color="primary"
-        plain
-        text
-      >
+      <v-btn :to="{ name: 'Overview', params: { sketchId: sketchId } }" color="primary" plain text>
         &lt;&lt; back to explore
       </v-btn>
       <v-divider></v-divider>
       <div>
         <!-- TODO: https://github.com/google/timesketch/issues/2560 -->
-        TODO: <a href="https://github.com/google/timesketch/issues/2560">Issue#2560</a> add the timeline selection component.
+        TODO: <a href="https://github.com/google/timesketch/issues/2560">Issue#2560</a> add the timeline selection
+        component.
       </div>
       <v-divider></v-divider>
       <div>
         <!-- TODO: https://github.com/google/timesketch/issues/2562 -->
-        TODO: <a href="https://github.com/google/timesketch/issues/2562">Issue#2562</a> add the analyzer listing component.
+        TODO: <a href="https://github.com/google/timesketch/issues/2562">Issue#2562</a> add the analyzer listing
+        component.
       </div>
       <v-divider></v-divider>
     </v-card>
@@ -41,28 +38,21 @@ limitations under the License.
 </template>
 
 <script>
-  export default {
-    directives: {
+export default {
+  directives: {},
+  components: {},
+  props: ['sketchId'],
+  data() {
+    return {}
+  },
+  computed: {
+    sketch() {
+      return this.$store.state.sketch
     },
-    components: {
-
+    meta() {
+      return this.$store.state.meta
     },
-    props: ['sketchId'],
-    data() {
-      return {
-      }
-    },
-    computed: {
-      sketch() {
-        return this.$store.state.sketch
-      },
-      meta() {
-        return this.$store.state.meta
-      },
-
-    },
-    methods: {
-
-    },
-  }
-  </script>
+  },
+  methods: {},
+}
+</script>

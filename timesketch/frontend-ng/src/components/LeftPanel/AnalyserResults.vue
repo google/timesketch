@@ -17,8 +17,9 @@ limitations under the License.
   <div>
     <div class="pa-4" flat :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
       <span style="cursor: pointer" @click="expanded = !expanded">
-        <v-icon left>mdi-auto-fix</v-icon> Analyzer Results
-        (<small><strong>{{ analyzerResults.length }}</strong></small>)
+        <v-icon left>mdi-auto-fix</v-icon> Analyzer Results (<small
+          ><strong>{{ analyzerResults.length }}</strong></small
+        >)
       </span>
       <v-btn
         :to="{ name: 'Analyse', params: { sketchId: sketch.id } }"
@@ -60,8 +61,8 @@ limitations under the License.
           style="cursor: pointer"
           class="mb-3"
         >
-        + Run Analyzer
-      </v-btn>
+          + Run Analyzer
+        </v-btn>
       </div>
     </v-expand-transition>
     <v-divider></v-divider>
@@ -90,7 +91,6 @@ export default {
       return this.$store.state.meta
     },
   },
-  created() {
-  },
+  created() {},
 }
 </script>
