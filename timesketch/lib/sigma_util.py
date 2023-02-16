@@ -151,7 +151,7 @@ def _sanitize_query(sigma_rule_query: str) -> str:
 
     # split sigma_rule_query by AND
 
-    sigma_rule_query = sigma_rule_query.replace(" * OR", ' " OR')
+    """sigma_rule_query = sigma_rule_query.replace(" * OR", ' " OR')
     sigma_rule_query = sigma_rule_query.replace(" * AND", ' " AND')
     sigma_rule_query = sigma_rule_query.replace("OR * ", 'OR " ')
     sigma_rule_query = sigma_rule_query.replace("AND * ", 'AND " ')
@@ -159,7 +159,7 @@ def _sanitize_query(sigma_rule_query: str) -> str:
     sigma_rule_query = sigma_rule_query.replace(" *)", ' ")')
     sigma_rule_query = sigma_rule_query.replace("*)", '")')
     sigma_rule_query = sigma_rule_query.replace("(*", '("')
-
+    """
     elements = re.split(r"\s+", sigma_rule_query)
     san = []
     for el in elements:

@@ -82,7 +82,7 @@ class TestSigmaUtilLib(BaseTest):
         """Test sanitization of query with multiple colons and asterisks"""
         # pylint: disable=protected-access
         test_2 = sigma_util._sanitize_query("(*a:b* OR *c::d*)")
-        self.assertEqual(test_2, r'("a:b" OR "c\:\:d")')
+        self.assertEqual(test_2, r"(*a:b* OR *c\:\:d*)")
 
     def test_sanitize_rule_string_with_dotkeyword(self):
         """Test sanitization of query with .keyword in them"""
@@ -283,7 +283,7 @@ detection:
         self.assertIsNotNone(rule)
         self.assertEqual("67b9a11a-03ae-490a-9156-9be9900aaaaa", rule.get("id"))
         self.assertEqual(
-            r'("aaa:bbb" OR "ccc\:\:ddd")',
+            r"(*aaa:bbb* OR *ccc\:\:ddd*)",
             rule.get("search_query"),
         )
 
@@ -457,6 +457,6 @@ detection:
         )
         self.assertIsNotNone(rule)
         self.assertEqual(
-            r'("onlyoneterm" OR "two words" OR "completely new mot")',
+            r'(*onlyoneterm* OR "two words" OR "completely new mot")',
             rule.get("search_query"),
         )
