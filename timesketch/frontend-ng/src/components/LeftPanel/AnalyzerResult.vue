@@ -22,7 +22,6 @@ limitations under the License.
 </template>
 
 <script>
-// import EventBus from '../../main'
 
 export default {
   props: [],

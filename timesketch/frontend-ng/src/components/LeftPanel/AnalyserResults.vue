@@ -38,7 +38,7 @@ limitations under the License.
     <v-expand-transition>
       <div v-if="analyzerResults.length > 0" v-show="expanded">
         <!-- TODO: issue#2565 -->
-        <!-- <ts-analyser-result></ts-analyser-result> -->
+        <ts-analyser-result></ts-analyser-result>
       </div>
       <div v-else v-show="expanded" class="text-center">
         <span>No analyzers run, yet.</span>
@@ -70,12 +70,12 @@ limitations under the License.
 </template>
 
 <script>
-// import TsAnalyserResult from './AnalyzerResult.vue'
+import TsAnalyserResult from './AnalyzerResult.vue'
 
 export default {
   props: [],
   components: {
-    // TsAnalyserResult,
+    TsAnalyserResult,
   },
   data: function () {
     return {
