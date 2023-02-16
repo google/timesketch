@@ -119,7 +119,7 @@ limitations under the License.
         </v-chip>
       </template>
       <v-sheet flat width="320">
-        <v-list>
+        <v-list dense>
           <v-dialog v-model="dialogRename" width="600">
             <template v-slot:activator="{ on, attrs }">
               <v-list-item v-bind="attrs" v-on="on">
@@ -211,6 +211,16 @@ limitations under the License.
               </v-card-actions>
             </v-card>
           </v-dialog>
+          <v-list-item
+            v-if="timelineStatus === 'ready'"
+            :to="{ name: 'Analyse', params: { sketchId: sketch.id  } }"
+            style="cursor: pointer"
+            >
+            <v-list-item-action>
+              <v-icon>mdi-auto-fix</v-icon>
+            </v-list-item-action>
+            <v-list-item-subtitle>Run Analyzers</v-list-item-subtitle>
+          </v-list-item>
         </v-list>
         <div class="px-4">
           <v-color-picker

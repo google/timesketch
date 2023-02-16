@@ -30,10 +30,6 @@ limitations under the License.
         <v-icon>mdi-menu</v-icon>
       </v-btn>
 
-      <div v-if="activeContext.question" class="ml-2">
-        <strong>{{ activeContext.question.display_name }}</strong>
-      </div>
-
       <v-spacer></v-spacer>
       <v-btn small depressed v-on:click="switchUI"> Use the old UI </v-btn>
 
@@ -227,6 +223,7 @@ limitations under the License.
           <ts-tags></ts-tags>
           <ts-search-templates></ts-search-templates>
           <ts-sigma-rules></ts-sigma-rules>
+          <ts-analyser-results></ts-analyser-results>
         </v-tab-item>
         <v-tab-item :transition="false">
           <ts-scenario v-for="scenario in activeScenarios" :key="scenario.id" :scenario="scenario"></ts-scenario>
@@ -271,6 +268,7 @@ import TsSigmaRules from '../components/LeftPanel/SigmaRules'
 import TsUploadTimelineForm from '../components/UploadForm'
 import TsShareCard from '../components/ShareCard'
 import TsRenameSketch from '../components/RenameSketch'
+import TsAnalyserResults from '../components/LeftPanel/AnalyserResults.vue'
 
 export default {
   props: ['sketchId'],
@@ -284,6 +282,7 @@ export default {
     TsUploadTimelineForm,
     TsShareCard,
     TsRenameSketch,
+    TsAnalyserResults,
   },
   data() {
     return {
@@ -330,9 +329,6 @@ export default {
     },
     scenarioTemplates() {
       return this.$store.state.scenarioTemplates
-    },
-    activeContext() {
-      return this.$store.state.activeContext
     },
     currentUser() {
       return this.$store.state.currentUser

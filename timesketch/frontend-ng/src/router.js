@@ -19,6 +19,7 @@ import VueRouter from 'vue-router'
 import Home from './views/Home'
 import Explore from './views/Explore'
 import Sketch from './views/Sketch'
+import Analyse from './views/Analyze'
 import Studio from './views/Studio'
 
 Vue.use(VueRouter)
@@ -44,6 +45,12 @@ const routes = [
         path: 'explore',
         name: 'Explore',
         component: Explore,
+        props: true,
+      },
+      {
+        path: 'analyze',
+        name: 'Analyse',
+        component: Analyse,
         props: true,
       },
     ],
