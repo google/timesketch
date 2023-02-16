@@ -30,10 +30,6 @@ limitations under the License.
         <v-icon>mdi-menu</v-icon>
       </v-btn>
 
-      <div v-if="activeContext.question" class="ml-2">
-        <strong>{{ activeContext.question.display_name }}</strong>
-      </div>
-
       <v-spacer></v-spacer>
       <v-btn small depressed v-on:click="switchUI"> Use the old UI </v-btn>
 
@@ -333,9 +329,6 @@ export default {
     },
     scenarioTemplates() {
       return this.$store.state.scenarioTemplates
-    },
-    activeContext() {
-      return this.$store.state.activeContext
     },
     currentUser() {
       return this.$store.state.currentUser
