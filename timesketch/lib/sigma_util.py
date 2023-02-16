@@ -145,6 +145,12 @@ def _sanitize_query(sigma_rule_query: str) -> str:
     # if one is found split it up into elements seperated by space
     # and go backwards to the next star
 
+    sigma_rule_query = sigma_rule_query.replace(
+        r"\*:", ""
+    )  # removes wildcard at the beginning of a rule search_query
+
+    # split sigma_rule_query by AND
+
     sigma_rule_query = sigma_rule_query.replace(" * OR", ' " OR')
     sigma_rule_query = sigma_rule_query.replace(" * AND", ' " AND')
     sigma_rule_query = sigma_rule_query.replace("OR * ", 'OR " ')
@@ -153,9 +159,6 @@ def _sanitize_query(sigma_rule_query: str) -> str:
     sigma_rule_query = sigma_rule_query.replace(" *)", ' ")')
     sigma_rule_query = sigma_rule_query.replace("*)", '")')
     sigma_rule_query = sigma_rule_query.replace("(*", '("')
-    sigma_rule_query = sigma_rule_query.replace(
-        r"\*:", ""
-    )  # removes wildcard at the beginning of a rule search_query
 
     elements = re.split(r"\s+", sigma_rule_query)
     san = []
