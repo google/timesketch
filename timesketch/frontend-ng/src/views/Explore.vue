@@ -260,6 +260,22 @@ limitations under the License.
       </div>
     </div>
 
+    <!-- rounded vue element that goes over everything showing the shortcut help -->
+    <v-overlay v-if="showShortcutHelp" width="auto" v-model="dialog">
+      <template
+        >Control N: Next page<br />
+        Control P: Previous page<br />
+        Control T: Toggle Search History<br />
+        Control H: Toggle Shortcut help<br />
+      </template>
+    </v-overlay>
+    <!-- some invisible buttons that are used to trigger the shortcuts -->
+    <button v-shortkey="['ctrl', 'n']" @shortkey="nextpage()"></button>
+    <button v-shortkey="['ctrl', 'p']" @shortkey="previouspage()"></button>
+    <button v-shortkey="['ctrl', 't']" @shortkey="toggleSearchHistory()"></button>
+    <button v-shortkey="['ctrl', 'h']" @shortkey="toggleshowShortcutHelp()"></button>
+    <button v-shortkey="['ctrl', 'm']" @shortkey="addManualEvent()"></button>
+
     <!-- Eventlist -->
     <v-card
       v-if="(!eventList.objects.length && !searchInProgress) || !this.currentQueryFilter.indices.length"
@@ -686,6 +702,7 @@ export default {
       saveSearchFormName: '',
       selectedEventTags: [],
       showRightSidePanel: false,
+      showShortcutHelp: false,
       addManualEvent: false,
       datetimeManualEvent: '', // datetime of an event used
       // TODO: Refactor this into a configurable option
@@ -1221,6 +1238,20 @@ export default {
     updateLabelList: function (label) {
       if (this.meta.filter_labels.indexOf(label) === -1) {
         this.meta.filter_labels.push(label)
+      }
+    },
+    toggleshowShortcutHelp: function () {
+      this.showShortcutHelp = !this.showShortcutHelp
+    },
+    nextpage(event) {
+      this.tableOptions.page++
+      this.paginate()
+    },
+    previouspage(event) {
+      // decrease page number if the datable only if page is greater than 1
+      if (this.tableOptions.page > 1) {
+        this.tableOptions.page--
+        this.paginate()
       }
     },
     paginate: function () {

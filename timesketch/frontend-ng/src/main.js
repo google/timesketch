@@ -45,6 +45,7 @@ Vue.use(VueCytoscape)
 Vue.use(VueClipboard)
 Vue.use(VueScrollTo)
 Vue.component('multiselect', Multiselect)
+Vue.use(require('vue-shortkey'))
 
 // Disable warning during development
 Vue.config.productionTip = false
