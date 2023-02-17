@@ -38,7 +38,7 @@ limitations under the License.
           <span class="mr-2">
             <small>{{ nodes.length }} nodes and {{ edges.length }} edges</small>
           </span>
-          <v-dialog v-if="edgeQuery" v-model="saveSelectionDialog" width="500">
+          <v-dialog v-if="edgeQuery" v-model="saveGraphDialog" width="500">
             <template v-slot:activator="{ on, attrs }">
               <v-btn icon v-bind="attrs" v-on="on">
                 <v-icon>mdi-content-save-outline</v-icon>
@@ -107,20 +107,16 @@ export default {
   components: {},
   data: function () {
     return {
-      showTimeline: false,
-      saveSelectionDialog: false,
+      saveGraphDialog: false,
       showTimelineView: false,
       minimizeTimelineView: false,
-      // imported
       showGraph: true,
       isLoading: false,
       filterString: '',
       graphs: {},
-      savedGraphs: [], // check
       currentGraph: '',
       currentGraphCache: {},
       currentGraphCacheConfig: {},
-      selectedGraphs: [], // check
       fadeOpacity: 7,
       elements: [],
       edgeQuery: '',
