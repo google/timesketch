@@ -26,17 +26,22 @@ limitations under the License.
     <div v-show="currentRouteName === 'Intelligence'">
       <threat-intel :sketch-id="sketchId"></threat-intel>
     </div>
+    <div v-show="currentRouteName === 'Graph'">
+      <graph></graph>
+    </div>
   </div>
 </template>
 
 <script>
 import Explore from './Explore'
 import ThreatIntel from './ThreatIntel'
+import Graph from './Graph'
 
 export default {
   components: {
     Explore,
     ThreatIntel,
+    Graph,
   },
   props: ['sketchId'],
   computed: {

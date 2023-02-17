@@ -47,10 +47,15 @@ const routes = [
         component: Canvas,
         props: true,
       },
-
       {
         path: 'intelligence',
         name: 'Intelligence',
+        component: Canvas,
+        props: true,
+      },
+      {
+        path: 'graph',
+        name: 'Graph',
         component: Canvas,
         props: true,
       },
