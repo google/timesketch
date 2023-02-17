@@ -83,7 +83,7 @@ limitations under the License.
           </v-btn>
         </v-toolbar>
         <v-expand-transition>
-          <v-card-text class="pa-4" style="height: 40vh" v-show="!minimizeTimelineView">
+          <v-card-text class="pa-4" style="height: 30vh" v-show="!minimizeTimelineView">
             <div v-if="!minimizeTimelineView">
               <!-- TODO: Replace with compact eventlist -->
               {{ edgeQuery }}
