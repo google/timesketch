@@ -41,7 +41,7 @@ spec:
             - mountPath: /usr/share/opensearch/data
               name: timesketchvolume
           ports:
-            - containerPort: 9200
+            - containerPort: 9300
           resources:
             requests:
               cpu: 8000m
@@ -64,7 +64,7 @@ metadata:
     app: opensearch-server
 spec:
   ports:
-    - port: 9200
-      targetPort: 9200
+    - port: 9300
+      targetPort: 9300
   selector:
     app: opensearch-server
