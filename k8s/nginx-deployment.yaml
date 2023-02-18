@@ -1,42 +1,52 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
-    kompose.cmd: kompose convert -f docker-compose.yml
-    kompose.version: 1.26.0 (40646f47)
-  creationTimestamp: null
-  labels:
-    io.kompose.service: nginx
   name: nginx
 spec:
   replicas: 1
   selector:
     matchLabels:
-      io.kompose.service: nginx
-  strategy:
-    type: Recreate
+      app: nginx
   template:
     metadata:
-      annotations:
-        kompose.cmd: kompose convert -f docker-compose.yml
-        kompose.version: 1.26.0 (40646f47)
-      creationTimestamp: null
       labels:
-        io.kompose.service: nginx
+        app: nginx
     spec:
       containers:
-        - image: 'nginx:'
-          name: nginx
+        - name: nginx
+          image: nginx:latest
+          volumeMounts:
+            - mountPath: /mnt/timesketchvolume/
+              name: timesketchvolume
+            - mountPath: /etc/nginx
+              name: nginx-conf
           ports:
             - containerPort: 80
-            - containerPort: 443
-          resources: {}
-          volumeMounts:
-            - mountPath: /etc/nginx/nginx.conf
-              name: nginx-claim0
-      restartPolicy: Always
+          resources:
+            requests:
+              cpu: 2000m
+              memory: 2000Mi
+            limits:
+              cpu: 4000m
+              memory: 8000Mi
       volumes:
-        - name: nginx-claim0
+        - name: timesketchvolume
           persistentVolumeClaim:
-            claimName: nginx-claim0
-status: {}
+            claimName: timesketchvolume-claim
+            readOnly: false
+        - name: nginx-conf
+          configMap:
+            name: nginx-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx
+  labels:
+    app: nginx
+spec:
+  ports:
+    - port: 80
+      targetPort: 80
+  selector:
+    app: nginx
