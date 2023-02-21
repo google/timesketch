@@ -38,9 +38,26 @@ limitations under the License.
           <span class="mr-2">
             <small>{{ nodes.length }} nodes and {{ edges.length }} edges</small>
           </span>
-          <v-dialog v-if="edgeQuery" v-model="saveGraphDialog" width="500">
+          <v-menu
+            v-model="graphSettingsMenu"
+            offset-y
+            :close-on-content-click="false"
+            :close-on-click="true"
+            content-class="menu-with-gap"
+          >
             <template v-slot:activator="{ on, attrs }">
               <v-btn icon v-bind="attrs" v-on="on">
+                <v-icon> mdi-eye-outline </v-icon>
+              </v-btn>
+            </template>
+
+            <v-card class="pa-4" width="500" height="200">
+              <v-slider v-model="fadeOpacity" @change="changeOpacity" :max="100" :min="10" hide-details> </v-slider>
+            </v-card>
+          </v-menu>
+          <v-dialog v-model="saveGraphDialog" width="500">
+            <template v-slot:activator="{ on, attrs }">
+              <v-btn icon :disabled="!edgeQuery" v-bind="attrs" v-on="on">
                 <v-icon>mdi-content-save-outline</v-icon>
               </v-btn>
             </template>
@@ -445,6 +462,18 @@ export default {
 
       // Run the layout to render the graph elements.
       cy.layout(this.config.layout).run()
+    },
+    changeOpacity: function () {
+      if (!this.cy) {
+        return
+      }
+      this.cy
+        .style()
+        .selector('.faded')
+        .style({
+          opacity: this.fadeOpacity / 100,
+        })
+        .update()
     },
     setTheme: function () {
       if (this.$vuetify.theme.dark) {
