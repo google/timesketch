@@ -38,6 +38,7 @@ limitations under the License.
           <span class="mr-2">
             <small>{{ nodes.length }} nodes and {{ edges.length }} edges</small>
           </span>
+          <!-- Graph settings menu -->
           <v-menu
             v-model="graphSettingsMenu"
             offset-y
@@ -46,18 +47,44 @@ limitations under the License.
             content-class="menu-with-gap"
           >
             <template v-slot:activator="{ on, attrs }">
-              <v-btn icon v-bind="attrs" v-on="on">
-                <v-icon> mdi-eye-outline </v-icon>
+              <v-btn icon v-bind="attrs" v-on="on" :disabled="!currentGraph" title="Graph settings">
+                <v-icon> mdi-cog-outline </v-icon>
               </v-btn>
             </template>
 
-            <v-card class="pa-4" width="500" height="200">
-              <v-slider v-model="fadeOpacity" @change="changeOpacity" :max="100" :min="10" hide-details> </v-slider>
+            <v-card class="pa-4 pt-5" width="600">
+              <h5>Layout type</h5>
+              <v-radio-group row v-model="layoutName">
+                <v-radio
+                  v-for="layout in layouts"
+                  :key="layout"
+                  :label="layout"
+                  :value="layout"
+                  @click="buildGraph(currentGraph)"
+                ></v-radio>
+              </v-radio-group>
+
+              <h5>Edge style</h5>
+              <v-radio-group row v-model="edgeStyle">
+                <v-radio
+                  v-for="edge in edgeStyles"
+                  :key="edge"
+                  :label="edge"
+                  :value="edge"
+                  @click="buildGraph(currentGraph)"
+                ></v-radio>
+              </v-radio-group>
+
+              <h5>Transparency for unselected elements</h5>
+              <v-slider v-model="fadeOpacity" @change="changeOpacity" :max="100" :min="0" thumb-label>
+                <template v-slot:thumb-label="{ value }"> {{ value }}% </template>
+              </v-slider>
             </v-card>
           </v-menu>
+          <!-- Save graph dialog -->
           <v-dialog v-model="saveGraphDialog" width="500">
             <template v-slot:activator="{ on, attrs }">
-              <v-btn icon :disabled="!edgeQuery" v-bind="attrs" v-on="on">
+              <v-btn icon :disabled="!edgeQuery" v-bind="attrs" v-on="on" title="Save selected graph">
                 <v-icon>mdi-content-save-outline</v-icon>
               </v-btn>
             </template>
@@ -65,6 +92,18 @@ limitations under the License.
               <v-card-title> Save Selection </v-card-title>
             </v-card>
           </v-dialog>
+          <v-btn
+            icon
+            title="Refresh graph"
+            v-on:click="buildGraph({ name: currentGraph }, true)"
+            :disabled="!currentGraph"
+          >
+            <v-icon>mdi-refresh</v-icon>
+          </v-btn>
+
+          <v-btn icon v-on:click="cy.fit()" :disabled="!currentGraph" title="Fit to canvas">
+            <v-icon>mdi-fit-to-page-outline</v-icon>
+          </v-btn>
         </div>
       </v-toolbar>
     </v-card>
@@ -97,6 +136,9 @@ limitations under the License.
           <v-btn icon>
             <v-icon v-if="!minimizeTimelineView" @click="minimizeTimelineView = true">mdi-window-minimize</v-icon>
             <v-icon v-if="minimizeTimelineView" @click="minimizeTimelineView = false">mdi-window-maximize</v-icon>
+          </v-btn>
+          <v-btn icon @click="showTimelineView = false">
+            <v-icon>mdi-window-close</v-icon>
           </v-btn>
         </v-toolbar>
         <v-expand-transition>

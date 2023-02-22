@@ -24,7 +24,7 @@ limitations under the License.
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
       <span
-        ><v-icon left>mdi-family-tree</v-icon> Graphs (<small><strong>n/a</strong></small
+        ><v-icon left>mdi-source-branch</v-icon> Graphs (<small><strong>n/a</strong></small
         >)</span
       >
     </v-row>
