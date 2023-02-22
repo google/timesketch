@@ -59,11 +59,10 @@ limitations under the License.
           <v-tab-item :transition="false">
             <v-data-table dense :headers="indicatorHeaders" :items="intelligenceData" :items-per-page="10">
               <template v-slot:item.ioc="{ item }">
-                <span v-if="item.type === 'hash_sha256'" :title="item.ioc">
-                  <span>{{ item.ioc.substring(0, 8) }}...{{ item.ioc.substring(item.ioc.length - 8) }}</span>
-                </span>
-                <span v-else>
-                  {{ item.ioc }}
+                <span :title="item.ioc">
+                  <div style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">
+                    {{ item.ioc }}
+                  </div>
                 </span>
               </template>
 
