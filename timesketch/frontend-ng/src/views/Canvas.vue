@@ -13,6 +13,11 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -->
+
+<!--
+ Canvas is a routing component to keep views alive and to support communication between
+ them via Eventbus.
+-->
 <template>
   <div>
     <div v-show="currentRouteName === 'Explore'">

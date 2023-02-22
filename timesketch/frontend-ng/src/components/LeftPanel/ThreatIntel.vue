@@ -48,14 +48,12 @@ limitations under the License.
         <v-divider></v-divider>
 
         <v-tabs grow v-model="tabs">
-          <v-tab
-            >Indicators (<small>{{ intelligenceData.length }}</small
-            >)</v-tab
-          >
-          <v-tab
-            >Tags (<small>{{ Object.keys(tagInfo).length }}</small
-            >)</v-tab
-          >
+          <v-tab>
+            Indicators (<small> {{ intelligenceData.length }} </small>)
+          </v-tab>
+          <v-tab>
+            Tags (<small>{{ Object.keys(tagInfo).length }} </small>)
+          </v-tab>
         </v-tabs>
         <v-tabs-items v-model="tabs">
           <v-tab-item :transition="false">
