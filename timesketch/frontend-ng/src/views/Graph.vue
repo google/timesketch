@@ -89,24 +89,43 @@ limitations under the License.
               </v-btn>
             </template>
             <v-card>
-              <v-card-title> Save Selection </v-card-title>
+              <v-card-title> Save selected elements </v-card-title>
+              <v-card-text>
+                <v-text-field outlined v-model="saveAsName" required placeholder="Name your graph"></v-text-field>
+              </v-card-text>
+              <v-card-actions>
+                <v-spacer></v-spacer>
+                <v-btn color="primary" text @click="saveSearchMenu = false"> Cancel </v-btn>
+                <v-btn color="primary" text @click="saveGraph" :disabled="!saveAsName"> Save </v-btn>
+              </v-card-actions>
             </v-card>
           </v-dialog>
+
+          <v-btn icon v-on:click="cy.fit()" :disabled="!currentGraph" title="Fit to canvas">
+            <v-icon>mdi-fit-to-page-outline</v-icon>
+          </v-btn>
+        </div>
+        <v-spacer></v-spacer>
+        <div v-if="Object.keys(currentGraphCache).length">
+          <i>Generated {{ currentGraphCache.updated_at | timeSince }}</i>
           <v-btn
             icon
+            class="ml-1"
             title="Refresh graph"
             v-on:click="buildGraph({ name: currentGraph }, true)"
             :disabled="!currentGraph"
           >
             <v-icon>mdi-refresh</v-icon>
           </v-btn>
-
-          <v-btn icon v-on:click="cy.fit()" :disabled="!currentGraph" title="Fit to canvas">
-            <v-icon>mdi-fit-to-page-outline</v-icon>
-          </v-btn>
         </div>
       </v-toolbar>
     </v-card>
+
+    <div v-if="isLoading" class="pa-4">
+      <v-progress-linear indeterminate color="primary"></v-progress-linear>
+    </div>
+
+    <v-card flat class="pa-4" v-if="!elements.length && !isLoading"> No data to generate graph </v-card>
 
     <div style="height: 85vh" ref="graphContainer">
       <cytoscape
@@ -121,6 +140,7 @@ limitations under the License.
       </cytoscape>
     </div>
 
+    <!-- Event list for selected edges -->
     <v-bottom-sheet
       hide-overlay
       persistent
@@ -167,6 +187,7 @@ export default {
   data: function () {
     return {
       saveGraphDialog: false,
+      graphSettingsMenu: false,
       showTimelineView: false,
       minimizeTimelineView: false,
       showGraph: true,
@@ -332,6 +353,14 @@ export default {
         this.showTimelineView = false
       }
     },
+    setSavedGraph: function (graphId) {
+      this.showTimelineView = false
+      if (this.$route.name !== 'Graph') {
+        this.$router.push({ name: 'Graph', params: { graph: graphPlugin } })
+      }
+      this.buildSavedGraph(graphId)
+    },
+
     setGraphPlugin: function (graphPlugin) {
       this.showTimelineView = false
       if (this.$route.name !== 'Graph') {
@@ -340,6 +369,49 @@ export default {
       this.buildGraph(graphPlugin)
     },
 
+    buildSavedGraph: function (savedGraph) {
+      this.config.layout.name = 'preset'
+      this.currentGraph = savedGraph.name
+      this.currentGraphCache = {}
+      this.showGraph = false
+      this.elements = []
+      this.loadingTimeout = setTimeout(() => {
+        if (!this.elements.length) {
+          this.isLoading = true
+        }
+      }, 600)
+      this.edgeQuery = ''
+
+      let graphId = ''
+      if (typeof savedGraph === 'object') {
+        graphId = savedGraph.id
+      } else {
+        graphId = savedGraph
+      }
+      ApiClient.getSavedGraph(this.sketch.id, graphId)
+        .then((response) => {
+          this.currentGraph = response.data['objects'][0].name
+          let elements = JSON.parse(response.data['objects'][0].graph_elements)
+          let nodes = elements.filter((ele) => ele.group === 'nodes')
+          let edges = elements.filter((ele) => ele.group === 'edges')
+          let orderedElements = []
+          nodes.forEach((node) => {
+            node.selected = false
+            orderedElements.push(node)
+          })
+          edges.forEach((edge) => {
+            edge.selected = false
+            orderedElements.push(edge)
+          })
+          clearTimeout(this.loadingTimeout)
+          this.elements = orderedElements
+          this.showGraph = true
+          this.isLoading = false
+        })
+        .catch((e) => {
+          console.error(e)
+        })
+    },
     buildGraph: function (graphPlugin, refresh = false) {
       this.config.layout.name = this.layoutName
 
@@ -354,11 +426,7 @@ export default {
 
       this.showGraph = false
       this.elements = []
-      this.loadingTimeout = setTimeout(() => {
-        if (!this.elements.length) {
-          this.isLoading = true
-        }
-      }, 600)
+      this.isLoading = true
       this.edgeQuery = ''
       let currentIndices = []
       let timelineIds = []
@@ -404,7 +472,20 @@ export default {
           console.error(e)
         })
     },
-
+    saveGraph: function () {
+      let selected = this.cy.filter(':selected')
+      let neighborhood = this.buildNeighborhood(selected)
+      let elements = neighborhood.jsons()
+      this.showGraph = false
+      this.elements = elements
+      this.currentGraph = this.saveAsName
+      this.showGraph = true
+      ApiClient.saveGraph(this.sketch.id, this.saveAsName, elements).then((response) => {
+        //let savedGraph = response.data['objects'][0]
+      })
+      this.saveAsName = ''
+      this.saveGraphDialog = false
+    },
     filterGraphByInput: function () {
       // Unselect all events to remove any potential left over
       this.cy.elements().unselect()
@@ -547,6 +628,21 @@ export default {
       }, 250)
     )
     EventBus.$on('setGraphPlugin', this.setGraphPlugin)
+    EventBus.$on('setSavedGraph', this.setSavedGraph)
+
+    this.params = {
+      graphId: this.$route.query.graph,
+      pluginName: this.$route.query.plugin,
+      timelineId: this.$route.query.timeline,
+    }
+
+    if (this.params.graphId) {
+      this.buildSavedGraph(this.params.graphId)
+    }
+
+    if (this.params.pluginName) {
+      this.buildGraph(this.params.pluginName)
+    }
   },
   watch: {
     '$vuetify.theme.dark'() {

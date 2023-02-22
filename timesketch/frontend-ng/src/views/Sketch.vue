@@ -222,9 +222,9 @@ limitations under the License.
           <ts-data-types></ts-data-types>
           <ts-tags></ts-tags>
           <ts-search-templates></ts-search-templates>
+          <ts-graphs></ts-graphs>
           <ts-sigma-rules></ts-sigma-rules>
           <ts-intelligence></ts-intelligence>
-          <ts-graphs></ts-graphs>
         </v-tab-item>
         <v-tab-item :transition="false">
           <ts-scenario v-for="scenario in activeScenarios" :key="scenario.id" :scenario="scenario"></ts-scenario>
@@ -266,7 +266,7 @@ import TsTags from '../components/LeftPanel/Tags'
 import TsSearchTemplates from '../components/LeftPanel/SearchTemplates'
 import TsSigmaRules from '../components/LeftPanel/SigmaRules'
 import TsIntelligence from '../components/LeftPanel/ThreatIntel'
-import TsGraphs from '../components/LeftPanel/Graph'
+import TsGraphs from '../components/LeftPanel/Graphs'
 import TsUploadTimelineForm from '../components/UploadForm'
 import TsShareCard from '../components/ShareCard'
 import TsRenameSketch from '../components/RenameSketch'
