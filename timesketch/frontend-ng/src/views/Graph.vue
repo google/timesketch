@@ -356,7 +356,7 @@ export default {
     setSavedGraph: function (graphId) {
       this.showTimelineView = false
       if (this.$route.name !== 'Graph') {
-        this.$router.push({ name: 'Graph', params: { graph: graphPlugin } })
+        this.$router.push({ name: 'Graph', params: { graph: graphId } })
       }
       this.buildSavedGraph(graphId)
     },
