@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: timesketchvolume-claim
+spec:
+  accessModes:
+  - ReadWriteMany
+  storageClassName: ""
+  volumeName: timesketchvolume
+  resources:
+    requests:
+      storage: 1T
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: timesketchvolume
+spec:
+  capacity:
+    storage: 1T
+  accessModes:
+  - ReadWriteMany
+  nfs:
+    path: /timesketchvolume
+    server: <IP_ADDRESS>
