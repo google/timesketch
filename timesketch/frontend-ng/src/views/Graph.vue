@@ -141,6 +141,7 @@ limitations under the License.
     </div>
 
     <!-- Event list for selected edges -->
+    <!-- Note: Disabled until eventlist component has been developed. -->
     <v-bottom-sheet
       hide-overlay
       persistent
@@ -151,7 +152,6 @@ limitations under the License.
     >
       <v-card>
         <v-toolbar dense flat>
-          <v-toolbar-title> Timeline </v-toolbar-title>
           <v-spacer></v-spacer>
           <v-btn icon>
             <v-icon v-if="!minimizeTimelineView" @click="minimizeTimelineView = true">mdi-window-minimize</v-icon>
@@ -164,8 +164,7 @@ limitations under the License.
         <v-expand-transition>
           <v-card-text class="pa-4" style="height: 30vh" v-show="!minimizeTimelineView">
             <div v-if="!minimizeTimelineView">
-              <!-- TODO: Replace with compact eventlist -->
-              {{ edgeQuery }}
+              <!-- TODO: Add eventlist component -->
             </div>
           </v-card-text>
         </v-expand-transition>
@@ -183,11 +182,11 @@ import _ from 'lodash'
 
 export default {
   props: ['graphId'],
-  components: {},
   data: function () {
     return {
       saveGraphDialog: false,
       graphSettingsMenu: false,
+
       showTimelineView: false,
       minimizeTimelineView: false,
       showGraph: true,
@@ -345,9 +344,6 @@ export default {
     },
   },
   methods: {
-    toggleTimelineView: function () {
-      this.showTimelineView = !this.showTimelineView
-    },
     closeTimelineView: function () {
       if (this.$route.name != 'Graph') {
         this.showTimelineView = false
@@ -500,7 +496,8 @@ export default {
     filterGraphBySelection: function (event) {
       let selected = this.cy.filter(':selected')
       this.showNeighborhood(selected)
-      this.showTimelineView = true
+      // Disabled until eventlist component is developed.
+      // this.showTimelineView = true
     },
 
     unSelectAllElements: function (event) {
@@ -556,7 +553,6 @@ export default {
       })
       this.edgeQuery = queryDsl
     },
-
     resizeCanvas: function () {
       let canvasHeight = this.$refs.graphContainer.clientHeight - 50
       let canvasWidth = this.$refs.graphContainer.clientWidth
@@ -647,6 +643,10 @@ export default {
   watch: {
     '$vuetify.theme.dark'() {
       this.setTheme()
+    },
+    edgeQuery: function (newVal) {
+      // Placeholder until eventlist comonent is developed.
+      return
     },
   },
 }
