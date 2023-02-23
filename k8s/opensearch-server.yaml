@@ -12,16 +12,13 @@ spec:
       labels:
         app: opensearch-server
     spec:
-      securityContext:
-        fsGroup: 1000
+      serviceAccountName: timesketch
       initContainers:
       - name: opensearch-init
         image: busybox:latest
         volumeMounts:
           - mountPath: /usr/share/opensearch/data
             name: timesketchvolume
-        securityContext:
-          privileged: true
         command: ['sh', '-c', "chown -R 1000:1000 /usr/share/opensearch/data; sysctl -w vm.max_map_count=262144; sysctl -p"]
       containers:
         - name: opensearch
@@ -41,7 +38,7 @@ spec:
             - mountPath: /usr/share/opensearch/data
               name: timesketchvolume
           ports:
-            - containerPort: 9300
+            - containerPort: 9200
           resources:
             requests:
               cpu: 8000m
@@ -64,7 +61,7 @@ metadata:
     app: opensearch-server
 spec:
   ports:
-    - port: 9300
-      targetPort: 9300
+    - port: 9200
+      targetPort: 9200
   selector:
     app: opensearch-server

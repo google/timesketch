@@ -14,7 +14,7 @@ spec:
       labels:
         app: redis-server
     spec:
-      automountServiceAccountToken: false
+      serviceAccountName: timesketch
       securityContext:
         seccompProfile:
           type: RuntimeDefault

@@ -12,6 +12,7 @@ spec:
       labels:
         app: postgres-server
     spec:
+      serviceAccountName: timesketch
       containers:
         - name: postgres
           image: postgres:latest

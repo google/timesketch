@@ -17,6 +17,7 @@ spec:
       labels:
         app: timesketch-web-v2
     spec:
+      serviceAccountName: timesketch
       containers:
         - name: timesketch-web-v2
           image: us-docker.pkg.dev/osdfir-registry/timesketch/timesketch:latest
@@ -27,9 +28,12 @@ spec:
               name: timesketchvolume
             - mountPath: /etc/timesketch/
               name: timesketch-conf
+            - mountPath: /etc/timesketch/scenarios
+              name: scenarios-conf
+            - mountPath: /etc/timesketch/sigma/rules
+              name: sigma-conf
           ports:
             - containerPort: 5000
-            - containerPort: 9200
           resources: 
             requests:
               cpu: 2000m
@@ -45,16 +49,24 @@ spec:
         - name: timesketch-conf
           configMap:
             name: timesketch-config
+        - name: scenarios-conf
+          configMap:
+            name: scenarios-config
+        - name: sigma-conf
+          configMap:
+            name: sigma-config
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: timesketch-web-v2
   labels:
-    app: timesketch-web-v2
+    app: timesketch-web-v2 
 spec:
+  type: ClusterIP
   ports:
     - port: 5000
       targetPort: 5000
+      protocol: TCP
   selector:
     app: timesketch-web-v2

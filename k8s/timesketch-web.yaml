@@ -17,6 +17,7 @@ spec:
       labels:
         app: timesketch-web
     spec:
+      serviceAccountName: timesketch
       containers:
         - name: timesketch-web
           image: us-docker.pkg.dev/osdfir-registry/timesketch/timesketch:latest
@@ -27,9 +28,12 @@ spec:
               name: timesketchvolume
             - mountPath: /etc/timesketch/
               name: timesketch-conf
+            - mountPath: /etc/timesketch/scenarios
+              name: scenarios-conf
+            - mountPath: /etc/timesketch/sigma/rules
+              name: sigma-conf
           ports:
             - containerPort: 5000
-            - containerPort: 9200
           resources: 
             requests:
               cpu: 2000m
@@ -45,6 +49,12 @@ spec:
         - name: timesketch-conf
           configMap:
             name: timesketch-config
+        - name: scenarios-conf
+          configMap:
+            name: scenarios-config
+        - name: sigma-conf
+          configMap:
+            name: sigma-config
 ---
 apiVersion: v1
 kind: Service
@@ -52,9 +62,14 @@ metadata:
   name: timesketch-web
   labels:
     app: timesketch-web
+  annotations:
+    cloud.google.com/neg: '{"ingress": true}'
+    cloud.google.com/backend-config: '{"ports": {"5000":"timesketch-neg-healthcheck"}}'
 spec:
+  type: ClusterIP
   ports:
     - port: 5000
       targetPort: 5000
+      protocol: TCP
   selector:
     app: timesketch-web

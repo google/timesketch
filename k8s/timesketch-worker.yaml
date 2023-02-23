@@ -17,6 +17,7 @@ spec:
       labels:
         app: timesketch-worker
     spec:
+      serviceAccountName: timesketch
       containers:
         - name: timesketch-worker
           image: us-docker.pkg.dev/osdfir-registry/timesketch/timesketch:latest
@@ -30,9 +31,12 @@ spec:
               name: timesketchvolume
             - mountPath: /etc/timesketch/
               name: timesketch-conf
+            - mountPath: /etc/timesketch/scenarios
+              name: scenarios-conf
+            - mountPath: /etc/timesketch/sigma/rules
+              name: sigma-conf
           ports:
-            - containerPort: 5000
-            - containerPort: 9200
+            - containerPort: 5000 
           resources: 
             requests:
               cpu: 2000m
@@ -48,3 +52,9 @@ spec:
         - name: timesketch-conf
           configMap:
             name: timesketch-config
+        - name: scenarios-conf
+          configMap:
+            name: scenarios-config
+        - name: sigma-conf
+          configMap:
+            name: sigma-config
