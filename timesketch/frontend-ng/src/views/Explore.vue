@@ -852,8 +852,8 @@ export default {
       return 'item._source.' + field
     },
     createContextFilter: function (start, end, focus) {
-      //this method creates a context filter that has a start and end time
-      //on top of it it has a focus time that is in the middle of the context filter
+      // this method creates a context filter that has a start and end time
+      // on top of it it has a focus time that is in the middle of the context filter
 
       // exit if start is not before end
       if (start > end) {
@@ -870,26 +870,26 @@ export default {
         console.error('start, focus and end should be positive numbers')
         return
       }
-      let start_iso = new Date(this.$options.filters.formatTimestamp(start)).toISOString()
-      let end_iso = new Date(this.$options.filters.formatTimestamp(end)).toISOString()
-      let focus_iso = new Date(this.$options.filters.formatTimestamp(focus)).toISOString()
-      console.log('start: ' + start_iso + ' focus ' + focus_iso + ' end ' + end_iso)
+      let startIso = new Date(this.$options.filters.formatTimestamp(start)).toISOString()
+      let endIso = new Date(this.$options.filters.formatTimestamp(end)).toISOString()
+      let focusIso = new Date(this.$options.filters.formatTimestamp(focus)).toISOString()
+      console.log('start: ' + startIso + ' focus ' + focusIso + ' end ' + endIso)
 
       // creating the chip for the context filter
       let chip = {
         type: 'datetime_range',
         field: '',
         operator: 'must',
-        value: start_iso + ',' + end_iso,
+        value: startIso + ',' + endIso,
         active: true,
       }
       this.addChip(chip)
-      this.focusTime = focus_iso
+      this.focusTime = focusIso
       // TODO: Remove that
       this.showHistogram = true
     },
     goToTime: function (time) {
-      //time = '2019-12-07T09:02:54.631Z'
+      // time = '2019-12-07T09:02:54.631Z' TODO remove this
       console.log('go to time', time)
       // convert time to timestamp
       let timestamp = new Date(time).getTime()
@@ -935,7 +935,7 @@ export default {
       formData['incognito'] = true
 
       this.search()
-      //this.goToPage(59944)
+      // this.goToPage(59944)
 
       /*ApiClient.search(this.sketchId, formData)
         .then((response) => {
@@ -1132,7 +1132,7 @@ export default {
             this.$store.dispatch('updateSearchHistory')
             this.branchParent = this.eventList.meta.search_node.id
           }
-          if (this.focusTime != None) {
+          if (this.focusTime !== None) {
             // calculate on which page this timestamp is
             console.log('focusTime found after search: ' + this.focusTime)
             this.goToTime(this.focusTime)
