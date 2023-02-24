@@ -17,7 +17,7 @@ import Vue from 'vue'
 import VueRouter from 'vue-router'
 
 import Home from './views/Home'
-import Explore from './views/Explore'
+import Canvas from './views/Canvas'
 import Sketch from './views/Sketch'
 import Analyse from './views/Analyze'
 import Studio from './views/Studio'
@@ -44,7 +44,14 @@ const routes = [
       {
         path: 'explore',
         name: 'Explore',
-        component: Explore,
+        component: Canvas,
+        props: true,
+      },
+
+      {
+        path: 'intelligence',
+        name: 'Intelligence',
+        component: Canvas,
         props: true,
       },
       {
