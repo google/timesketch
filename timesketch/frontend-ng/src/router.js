@@ -19,7 +19,6 @@ import VueRouter from 'vue-router'
 import Home from './views/Home'
 import Canvas from './views/Canvas'
 import Sketch from './views/Sketch'
-import Analyse from './views/Analyze'
 import Studio from './views/Studio'
 
 Vue.use(VueRouter)
