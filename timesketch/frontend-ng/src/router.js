@@ -56,8 +56,8 @@ const routes = [
       },
       {
         path: 'analyze',
-        name: 'Analyse',
-        component: Analyse,
+        name: 'Analyze',
+        component: Canvas,
         props: true,
       },
     ],

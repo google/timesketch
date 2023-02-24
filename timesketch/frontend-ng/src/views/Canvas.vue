@@ -26,17 +26,22 @@ limitations under the License.
     <div v-show="currentRouteName === 'Intelligence'">
       <threat-intel :sketch-id="sketchId"></threat-intel>
     </div>
+    <div v-show="currentRouteName === 'Analyze'">
+      <analyze :sketch-id="sketchId"></analyze>
+    </div>
   </div>
 </template>
 
 <script>
 import Explore from './Explore'
 import ThreatIntel from './ThreatIntel'
+import Analyze from './Analyze.vue'
 
 export default {
   components: {
     Explore,
     ThreatIntel,
+    Analyze,
   },
   props: ['sketchId'],
   computed: {
