@@ -22,7 +22,7 @@ limitations under the License.
         >)
       </span>
       <v-btn
-        :to="{ name: 'Analyse', params: { sketchId: sketch.id } }"
+        :to="{ name: 'Analyze', params: { sketchId: sketch.id } }"
         plain
         color="primary"
         x-small
