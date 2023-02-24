@@ -29,6 +29,19 @@ limitations under the License.
       </v-row>
 
       <v-row>
+        <v-col cols="12">
+          <v-btn class="mr-2" small depressed @click="getDateRangeAround(1)">+-1 min</v-btn>
+          <v-btn class="mr-2" small depressed @click="getDateRangeAround(60)">+- 1 hour</v-btn>
+          <v-btn class="mr-2" small depressed @click="getDateRangeAround(1440)">+- 1 day</v-btn>
+          <v-btn class="mr-2" small depressed @click="getDateRangeAround(10080)">+- 1 week</v-btn>
+        </v-col>
+        <v-col cols="6">
+          <v-text-field :value="focusTime" label="Focus Time" outlined hide-details v-on:change="setFocusTime">
+          </v-text-field>
+        </v-col>
+      </v-row>
+
+      <v-row>
         <v-col cols="6">
           <v-text-field
             :value="formatStartTime"
@@ -96,6 +109,7 @@ export default {
       },
       filterTab: null,
       showPicker: false,
+      focusTime: '',
     }
   },
   computed: {
@@ -145,6 +159,19 @@ export default {
       this.$emit('cancel')
 
       return { start: now, end: then }
+    },
+    getDateRangeAround: function (num) {
+      let start = dayjs.utc(this.focusTime).subtract(num, 'minutes')
+      let end = dayjs.utc(this.focusTime).add(num, 'minutes')
+      this.range.start = start.toISOString()
+      this.range.end = end.toISOString()
+    },
+    setFocusTime: function (newDateTime) {
+      if (!newDateTime) {
+        this.focusTime = ''
+        return
+      }
+      this.focusTime = dayjs.utc(newDateTime).toISOString()
     },
     setStartTime: function (newDateTime) {
       if (!newDateTime) {

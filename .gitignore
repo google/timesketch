@@ -35,3 +35,5 @@ vagrant/*.log
 # Exclude .venv folder
 .venv/
 .vscode/*
+timesketch/frontend-ng/dist/index.js
+timesketch/frontend-ng/dist/login.js

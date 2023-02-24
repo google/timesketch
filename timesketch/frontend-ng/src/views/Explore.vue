@@ -259,7 +259,6 @@ limitations under the License.
         </p>
       </div>
     </div>
-
     <!-- Eventlist -->
     <v-card
       v-if="(!eventList.objects.length && !searchInProgress) || !this.currentQueryFilter.indices.length"
@@ -527,6 +526,23 @@ limitations under the License.
             <v-icon v-else>mdi-star-outline</v-icon>
           </v-btn>
 
+          <!-- this is only temporary -->
+          <v-btn
+            small
+            icon
+            @click="
+              createContextFilter(
+                // +- 12 hours
+                item._source.timestamp - 43200000000,
+                //item._source.timestamp - 50000,
+                item._source.timestamp + 43200000000,
+                item._source.timestamp
+              )
+            "
+          >
+            <v-icon>mdi-launch</v-icon>
+          </v-btn>
+          {{ focusTime }}
           <!-- Tag menu -->
           <ts-event-tag-menu :event="item"></ts-event-tag-menu>
 
@@ -675,6 +691,7 @@ export default {
         itemsPerPage: 40,
       },
       currentItemsPerPage: 40,
+      focusTime: None,
       drawer: false,
       leftDrawer: true,
       expandedRows: [],
@@ -834,6 +851,133 @@ export default {
     getFieldName: function (field) {
       return 'item._source.' + field
     },
+    createContextFilter: function (start, end, focus) {
+      //this method creates a context filter that has a start and end time
+      //on top of it it has a focus time that is in the middle of the context filter
+
+      // exit if start is not before end
+      if (start > end) {
+        // swap start and end
+        let temp = start
+        start = end
+        end = temp
+      }
+      if (focus < start || focus > end) {
+        console.error('focus should be between start and end')
+        return
+      }
+      if (start <= 0 || focus <= 0 || end <= 0) {
+        console.error('start, focus and end should be positive numbers')
+        return
+      }
+      let start_iso = new Date(this.$options.filters.formatTimestamp(start)).toISOString()
+      let end_iso = new Date(this.$options.filters.formatTimestamp(end)).toISOString()
+      let focus_iso = new Date(this.$options.filters.formatTimestamp(focus)).toISOString()
+      console.log('start: ' + start_iso + ' focus ' + focus_iso + ' end ' + end_iso)
+
+      // creating the chip for the context filter
+      let chip = {
+        type: 'datetime_range',
+        field: '',
+        operator: 'must',
+        value: start_iso + ',' + end_iso,
+        active: true,
+      }
+      this.addChip(chip)
+      this.focusTime = focus_iso
+      // TODO: Remove that
+      this.showHistogram = true
+    },
+    goToTime: function (time) {
+      //time = '2019-12-07T09:02:54.631Z'
+      console.log('go to time', time)
+      // convert time to timestamp
+      let timestamp = new Date(time).getTime()
+      console.log(this.eventList.meta.count_over_time.data)
+      // what is the type of this.eventList.meta.count_over_time.data
+      console.log(typeof this.eventList.meta.count_over_time.data.length)
+
+      // create a timestamp that is 10 minutes after the timestamp
+      let timestampPlusOne = timestamp + 3000000
+
+      let timestampminusfiveminutes = timestamp - 3000000
+      console.log(
+        'timestTimestampUpperLimit: ' + timestampPlusOne + ' timestampminusfiveminutes ' + timestampminusfiveminutes
+      )
+
+      // how many events are displayed per page
+      // TODO: Remove that
+      console.log('Query filter size ' + this.currentQueryFilter.size)
+      console.log('Event list size ' + this.eventList.objects.length)
+      console.log('this total hits ' + this.totalHits)
+      console.log('Current Page:' + this.currentPage)
+      // how many events are after the given timestamp
+      // Prepare the search query
+      let timestamp1899 = new Date('2300-12-30T00:00:00.000Z').getTime()
+      let timerangeChipToTheEnd = {
+        type: 'datetime_range',
+        value: timestamp + ',' + timestamp1899,
+      }
+      // empty the current query filter for debugging
+
+      let timerangeChiptimestampplusonesecond = {
+        type: 'datetime_range',
+        value: timestampminusfiveminutes + ',' + timestampPlusOne,
+        active: true,
+      }
+
+      // add the timerange chip to the current query filter
+      this.currentQueryFilter.chips.push(timerangeChiptimestampplusonesecond)
+      let formData = {
+        query: this.currentQueryString,
+        filter: this.currentQueryFilter,
+      }
+      formData['incognito'] = true
+
+      this.search()
+      //this.goToPage(59944)
+
+      /*ApiClient.search(this.sketchId, formData)
+        .then((response) => {
+          let after_events = response.data.meta.es_total_count_complete
+
+          // actually execute the search
+          this.eventList.objects = response.data.objects
+          this.eventList.meta = response.data.meta
+          this.searchInProgress = false
+
+          //this.addTimeBubbles()
+
+          console.log('events after the event ' + response.data.meta.es_total_count_complete)
+          //console.log('events before the event' + this.totalHits - response.data.meta.es_total_count_complete)
+
+          let pages_before_timestamp = Math.floor(after_events / this.currentQueryFilter.size)
+
+          console.log('very likely go to page: ' + pages_before_timestamp)
+          //this.currentQueryFilter.chips.pop()
+          this.goToPage(3)
+        })
+        .catch((e) => {
+          this.errorSnackBar('Sorry, there was a problem fetching your search results. Please try again.')
+          console.error(e)
+        })
+        */
+      // remove the chip again
+    },
+    // method for go to specific page
+    goToPage: function (page) {
+      console.log('go to page: ' + page)
+      // set table limit
+      //page = 20
+      this.tableOptions.page = page
+      this.paginate()
+    },
+    // TODO: This is a temporary solution to get the current page number.
+    getPageForTimestamp: function (timestamp) {
+      console.log('get page for timestamp: ' + timestamp)
+      let index = this.eventList.meta.console.log(index)
+      return Math.floor(index / this.currentQueryFilter.size)
+    },
     addEventBtn: function (datetimeManualEvent) {
       this.datetimeManualEvent = datetimeManualEvent
       this.addManualEvent = true
@@ -987,6 +1131,13 @@ export default {
             EventBus.$emit('createBranch', this.eventList.meta.search_node)
             this.$store.dispatch('updateSearchHistory')
             this.branchParent = this.eventList.meta.search_node.id
+          }
+          if (this.focusTime != None) {
+            // calculate on which page this timestamp is
+            console.log('focusTime found after search: ' + this.focusTime)
+            this.goToTime(this.focusTime)
+            // remove focus time again
+            this.focusTime = None
           }
         })
         .catch((e) => {
@@ -1166,6 +1317,8 @@ export default {
     addChip: function (chip) {
       // Legacy views don't support chips so we need to add an array in order
       // to upgrade the view to the new filter system.
+      // TODO remove this debugging line
+      console.log('addChip', chip)
       if (!this.currentQueryFilter.chips) {
         this.currentQueryFilter.chips = []
       }
@@ -1173,6 +1326,7 @@ export default {
       this.search()
     },
     addChipFromHistogram: function (chip) {
+      console.log('addChipFromHistogram', chip)
       if (!this.currentQueryFilter.chips) {
         this.currentQueryFilter.chips = []
       }
@@ -1230,12 +1384,17 @@ export default {
         this.currentPage = 1
         this.currentItemsPerPage = this.tableOptions.itemsPerPage
         this.currentQueryFilter.size = this.tableOptions.itemsPerPage
-        this.search(true, true, true)
+        this.search((emitEvent = true), (resetPagination = true), (incognito = true))
         return
       }
       // To avoid double search request exit early if this is the first search for this
       // search session.
       if (this.currentPage === this.tableOptions.page) {
+        return
+      }
+      // return if the event number is greater than 10000
+      // https://opensearch.org/docs/2.4/opensearch/search/paginate/
+      if (this.tableOptions.page * this.tableOptions.itemsPerPage > 10000) {
         return
       }
       this.currentQueryFilter.from =
