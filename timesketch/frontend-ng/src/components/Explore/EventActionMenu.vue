@@ -16,7 +16,7 @@ limitations under the License.
 <template>
   <v-menu v-model="showMenu" offset-y transition="slide-y-transition">
     <template v-slot:activator="{ on, attrs }">
-      <v-icon v-bind="attrs" v-on="on" class="ml-2">mdi-dots-vertical</v-icon>
+      <v-icon v-bind="attrs" v-on="on" class="ml-1">mdi-dots-vertical</v-icon>
     </template>
     <v-list dense class="mx-auto">
       <v-list-item style="cursor: pointer" @click="copyEventUrlToClipboard()">
