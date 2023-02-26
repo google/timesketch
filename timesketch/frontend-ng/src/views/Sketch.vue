@@ -30,9 +30,9 @@ limitations under the License.
         <v-icon>mdi-menu</v-icon>
       </v-btn>
 
-      <v-btn v-show="currentRouteName !== 'Explore'" :to="{ name: 'Explore', params: { sketchId: sketchId } }" small depressed class="left mr-2">
+      <v-btn v-show="currentRouteName !== 'Explore'" :to="{ name: 'Explore', params: { sketchId: sketchId } }" color="primary" small text class="ml-3">
         <v-icon small left>mdi-step-backward</v-icon>
-        explore session
+        explore
       </v-btn>
       <v-spacer></v-spacer>
       <v-btn small depressed v-on:click="switchUI"> Use the old UI </v-btn>
