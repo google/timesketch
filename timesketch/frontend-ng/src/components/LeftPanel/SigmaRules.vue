@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div v-if="ruleCount > 0">
+  <div>
     <v-row
       no-gutters
       style="cursor: pointer"

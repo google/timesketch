@@ -17,36 +17,19 @@ limitations under the License.
   <div>
     <v-divider></v-divider>
     <div
-      class="pa-2 pl-10"
+      class="pa-2 pl-3"
       @click="expanded = !expanded"
       style="cursor: pointer; font-size: 0.9em"
-      :class="[
-        $vuetify.theme.dark ? 'dark-hover' : 'light-hover',
-        !$vuetify.theme.dark && expanded ? 'light-highlight' : '',
-        $vuetify.theme.dark && expanded ? 'dark-highlight' : '',
-      ]"
+      :class="[$vuetify.theme.dark ? 'dark-hover' : 'light-hover']"
     >
       <strong v-if="!question.conclusions.length">{{ question.display_name }}</strong>
       <span v-else>{{ question.display_name }}</span>
     </div>
 
     <v-expand-transition>
-      <div v-show="expanded" class="ml-6 mt-2">
-        <div class="ma-2 mx-4 mb-4 mt-n1">
-          <div v-if="fullDescription">
-            <small>{{ question.description }} <a @click="fullDescription = !fullDescription">show less</a></small>
-          </div>
-          <div v-if="!fullDescription">
-            <span>
-              <small>
-                {{ question.description.slice(0, 100) }}...
-                <a @click="fullDescription = !fullDescription">show more</a>
-              </small>
-            </span>
-          </div>
-        </div>
-
-        <div v-if="question.search_templates.length" class="ma-2 mx-4 mb-3">
+      <div v-show="expanded">
+        <!-- Query suggestions -->
+        <div v-if="question.search_templates.length" class="ma-2 mb-3">
           <v-icon x-small class="mr-1">mdi-magnify</v-icon>
           <strong><small>Query suggestions</small></strong>
           <div v-for="searchtemplate in question.search_templates" :key="searchtemplate.id" class="pa-1 mt-1">
