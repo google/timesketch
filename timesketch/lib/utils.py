@@ -284,7 +284,7 @@ def read_and_validate_csv(
         )
         for idx, chunk in enumerate(reader):
             if headers_mapping:
-                # rename colunms according to the mapping
+                # rename columns according to the mapping
                 chunk = rename_csv_headers(chunk, headers_mapping)
 
             skipped_rows = chunk[chunk["datetime"].isnull()]
@@ -299,6 +299,9 @@ def read_and_validate_csv(
                 # Lines with unrecognized datetime format will result in "NaT"
                 # (not available) as its value and the event row will be
                 # dropped in the next line
+                logger.debug(
+                    "Current chunk datetime format: %s", chunk["datetime"]
+                )
                 chunk["datetime"] = pandas.to_datetime(
                     chunk["datetime"], errors="coerce"
                 )
@@ -313,15 +316,26 @@ def read_and_validate_csv(
                             idx * reader.chunksize + num_chunk_rows,
                         )
                     )
-                chunk["timestamp"] = chunk["datetime"].dt.strftime("%s%f").astype(int)
+                # convert datetime to timestamp in the entire chunk
+                chunk["timestamp_calculated"] = (
+                    chunk["datetime"].dt.strftime("%s%f").astype(int)
+                )
+
                 chunk["datetime"] = (
                     chunk["datetime"].apply(Timestamp.isoformat).astype(str)
                 )
+
+                # if chunk["timestamp"] and chunk["timestamp_calculated"] are
+                # to far away, error out
+
+                # if chunk["timestamp"] and chunk["datetime"] are to far away, error out
+                # convert timestamp to datetime
             except ValueError:
                 logger.warning(
                     "Rows {0} to {1} skipped due to malformed "
                     "datetime values ".format(
-                        idx * reader.chunksize, idx * reader.chunksize + chunk.shape[0]
+                        idx * reader.chunksize,
+                        idx * reader.chunksize + chunk.shape[0],
                     )
                 )
                 continue
@@ -332,6 +346,28 @@ def read_and_validate_csv(
                 _scrub_special_tags(row)
                 # Remove all NAN values from the pandas.Series.
                 row.dropna(inplace=True)
+                MAX_TIMESTAMP_DIFFERENCE = 1000000
+                # check datetime plausibility
+                if "timestamp" in row and "timestamp_calculated" in row:
+                    if (
+                        abs(row["timestamp"] - row["timestamp_calculated"])
+                        > MAX_TIMESTAMP_DIFFERENCE
+                    ):
+                        logger.warning(
+                            "Timestamp difference between timestamp_calculated "
+                            "and timestamp is too big, re-calculating datetime based on timestamp"
+                        )
+
+                        # calculate offset between timestamp and timestamp_calculated
+                        # if offset is to large, use timestamp_calculated instead
+                        row["datetime"] = Timestamp(
+                            row["timestamp"] * 1000
+                        ).isoformat()
+                        # remove timestamp_calculated that was only needed temporarily
+                        del row["timestamp_calculated"]
+
+                        # TODO: Consider to remove the datetime column as well
+
                 yield row.to_dict()
     except (pandas.errors.EmptyDataError, pandas.errors.ParserError) as e:
         error_string = "Unable to read file, with error: {0!s}".format(e)
@@ -350,9 +386,14 @@ def read_and_validate_redline(file_handle):
     """
 
     csv.register_dialect(
-        "redlineDialect", delimiter=",", quoting=csv.QUOTE_ALL, skipinitialspace=True
+        "redlineDialect",
+        delimiter=",",
+        quoting=csv.QUOTE_ALL,
+        skipinitialspace=True,
     )
-    reader = pandas.read_csv(file_handle, delimiter=",", dialect="redlineDialect")
+    reader = pandas.read_csv(
+        file_handle, delimiter=",", dialect="redlineDialect"
+    )
 
     _validate_csv_fields(REDLINE_FIELDS, reader)
     for row in reader:
@@ -407,7 +448,9 @@ def rename_jsonl_headers(linedict, headers_mapping, lineno):
                 if len(mapping["source"]) == 1:
                     # 1. rename header
                     if mapping["source"][0] in ld_keys:
-                        linedict[mapping["target"]] = linedict.pop(mapping["source"][0])
+                        linedict[mapping["target"]] = linedict.pop(
+                            mapping["source"][0]
+                        )
                     else:
                         raise RuntimeError(
                             f"Source mapping {mapping['source'][0]} not found in JSON\n"
@@ -420,7 +463,9 @@ def rename_jsonl_headers(linedict, headers_mapping, lineno):
                     for source in mapping["source"]:
                         if source in ld_keys:
                             linedict[mapping["target"]] += f"{source} : "
-                            linedict[mapping["target"]] += f"{linedict[source]} |"
+                            linedict[
+                                mapping["target"]
+                            ] += f"{linedict[source]} |"
                         else:
                             raise RuntimeError(
                                 f"Source mapping {source} not found in JSON\n"
@@ -462,7 +507,9 @@ def read_and_validate_jsonl(
             linedict = json.loads(line)
             ld_keys = linedict.keys()
             if headers_mapping:
-                linedict = rename_jsonl_headers(linedict, headers_mapping, lineno)
+                linedict = rename_jsonl_headers(
+                    linedict, headers_mapping, lineno
+                )
             if "datetime" not in ld_keys and "timestamp" in ld_keys:
                 epoch = int(str(linedict["timestamp"])[:10])
                 dt = datetime.datetime.fromtimestamp(epoch)
@@ -470,7 +517,8 @@ def read_and_validate_jsonl(
             if "timestamp" not in ld_keys and "datetime" in ld_keys:
                 try:
                     linedict["timestamp"] = int(
-                        parser.parse(linedict["datetime"]).timestamp() * 1000000
+                        parser.parse(linedict["datetime"]).timestamp()
+                        * 1000000
                     )
                 # TODO: REcord this somewhere else and make available to the user.
                 except TypeError:
@@ -497,13 +545,17 @@ def read_and_validate_jsonl(
                 )
 
             if "tag" in linedict:
-                linedict["tag"] = [x for x in _parse_tag_field(linedict["tag"]) if x]
+                linedict["tag"] = [
+                    x for x in _parse_tag_field(linedict["tag"]) if x
+                ]
             _scrub_special_tags(linedict)
             yield linedict
 
         except ValueError as e:
             raise errors.DataIngestionError(
-                "Error parsing JSON at line {0:n}: {1:s}".format(lineno, str(e))
+                "Error parsing JSON at line {0:n}: {1:s}".format(
+                    lineno, str(e)
+                )
             )
 
 
@@ -554,7 +606,10 @@ def get_validated_indices(indices, sketch):
                         timelines.add(timeline_id)
                         indices.append(index)
 
-                    if isinstance(item, str) and item.lower() == timeline_name.lower():
+                    if (
+                        isinstance(item, str)
+                        and item.lower() == timeline_name.lower()
+                    ):
                         timelines.add(timeline_id)
                         indices.append(index)
 
@@ -577,7 +632,9 @@ def send_email(subject, body, to_username, use_html=False):
     email_enabled = current_app.config.get("ENABLE_EMAIL_NOTIFICATIONS")
     email_domain = current_app.config.get("EMAIL_DOMAIN")
     email_smtp_server = current_app.config.get("EMAIL_SMTP_SERVER")
-    email_from_user = current_app.config.get("EMAIL_FROM_ADDRESS", "timesketch")
+    email_from_user = current_app.config.get(
+        "EMAIL_FROM_ADDRESS", "timesketch"
+    )
     email_user_whitelist = current_app.config.get("EMAIL_USER_WHITELIST", [])
 
     if not email_enabled:
