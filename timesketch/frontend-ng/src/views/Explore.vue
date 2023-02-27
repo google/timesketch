@@ -302,6 +302,7 @@ limitations under the License.
               <span class="mr-2"
                 ><small>{{ fromEvent }}-{{ toEvent }} of {{ totalHits }} events ({{ totalTime }}s)</small></span
               >
+              <v-btn color="primary" text @click="goToTime('2022-06-28T15:38:33.000Z')"> Jump to time </v-btn>
 
               <v-dialog v-model="saveSearchMenu" width="500">
                 <template v-slot:activator="{ on, attrs }">
@@ -384,7 +385,6 @@ limitations under the License.
                     <v-icon>mdi-dots-horizontal</v-icon>
                   </v-btn>
                 </template>
-
                 <v-card outlined max-width="475" class="mx-auto">
                   <v-list subheader two-line flat dense>
                     <v-subheader>Density</v-subheader>
@@ -914,10 +914,10 @@ export default {
       // how many events are after the given timestamp
       // Prepare the search query
       let timestamp1899 = new Date('2300-12-30T00:00:00.000Z').getTime()
-      let timerangeChipToTheEnd = {
+      /* let timerangeChipToTheEnd = {
         type: 'datetime_range',
         value: timestamp + ',' + timestamp1899,
-      }
+      } */
       // empty the current query filter for debugging
 
       let timerangeChiptimestampplusonesecond = {
@@ -937,7 +937,7 @@ export default {
       this.search()
       // this.goToPage(59944)
 
-      /*ApiClient.search(this.sketchId, formData)
+      /* ApiClient.search(this.sketchId, formData)
         .then((response) => {
           let after_events = response.data.meta.es_total_count_complete
 
@@ -968,7 +968,7 @@ export default {
     goToPage: function (page) {
       console.log('go to page: ' + page)
       // set table limit
-      //page = 20
+      // page = 20
       this.tableOptions.page = page
       this.paginate()
     },
