@@ -109,7 +109,7 @@ class SigmaPlugin(interface.BaseAnalyzer):
             )
             return error_msg
 
-        return f"{tagged_events_counter} events tagged for rule [{rule_name}]"
+        return f"{tagged_events_counter} events tagged for rule [{rule_name}] ({rule.get('id')})"  # pylint: disable=line-too-long
 
     @staticmethod
     def get_kwargs():
