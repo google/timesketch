@@ -294,7 +294,6 @@ export default {
     let formData = {
       public: isPublic,
     }
-    console.log(formData)
     return RestApiClient.post('/sketches/' + sketchId + /collaborators/, formData)
   },
 
@@ -362,39 +361,39 @@ export default {
   },
   // SigmaRule (new rules file based)
   getSigmaRuleList() {
-    return RestApiClient.get('/sigmarule/')
+    return RestApiClient.get('/sigmarules/')
   },
   getSigmaRuleResource(ruleUuid) {
-    return RestApiClient.get('/sigmarule/' + ruleUuid + '/')
+    return RestApiClient.get('/sigmarules/' + ruleUuid + '/')
   },
   getSigmaRuleByText(ruleYaml) {
     let formData = {
       content: ruleYaml,
     }
-    return RestApiClient.post('/sigmarule/text/', formData)
+    return RestApiClient.post('/sigmarules/text/', formData)
   },
   deleteSigmaRule(ruleUuid) {
-    return RestApiClient.delete('/sigmarule/' + ruleUuid + '/')
+    return RestApiClient.delete('/sigmarules/' + ruleUuid + '/')
   },
   createSigmaRule(ruleYaml) {
     let formData = {
       rule_yaml: ruleYaml,
     }
-    return RestApiClient.post('/sigmarule/', formData)
+    return RestApiClient.post('/sigmarules/', formData)
   },
   updateSigmaRule(id, ruleYaml) {
     let formData = {
       id: id,
       rule_yaml: ruleYaml,
     }
-    return RestApiClient.put('/sigmarule/' + id + '/', formData)
+    return RestApiClient.put('/sigmarules/' + id + '/', formData)
   },
   // SearchTemplates
   getSearchTemplates() {
-    return RestApiClient.get('/searchtemplate/')
+    return RestApiClient.get('/searchtemplates/')
   },
   parseSearchTemplate(searchTemplateId, formData) {
-    return RestApiClient.post('/searchtemplate/' + searchTemplateId + '/parse/', formData)
+    return RestApiClient.post('/searchtemplates/' + searchTemplateId + '/parse/', formData)
   },
   getContextLinkConfig() {
     return RestApiClient.get('/contextlinks/')
@@ -435,4 +434,7 @@ export default {
     return RestApiClient.delete('/sketches/' + sketchId + '/questions/' + questionId + '/conclusions/' + conclusionId + '/')
 
   },
+  getTagMetadata() {
+    return RestApiClient.get('/intelligence/tagmetadata/')
+  }
 }

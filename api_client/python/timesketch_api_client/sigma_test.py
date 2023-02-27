@@ -77,7 +77,7 @@ class TimesketchSigmaRuleTest(unittest.TestCase):
         self.assertEqual(rule.title, "Suspicious Installation of ZMap")
         self.assertIn("zmap", rule.search_query, "ES_Query does not match")
         self.assertIn("b793", rule.id)
-        self.assertIn("sigmarule/5266a592", rule.resource_uri)
+        self.assertIn("sigmarules/5266a592", rule.resource_uri)
         self.assertIn("suspicious installation of ZMap", rule.description)
         self.assertIn("high", rule.level)
         self.assertEqual(len(rule.falsepositives), 1)
