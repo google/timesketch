@@ -16,11 +16,12 @@ limitations under the License.
 <template>
   <div>
     <div class="pa-4" flat :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
-      <span style="cursor: pointer" @click="expanded = !expanded"
-        ><v-icon left>mdi-database-outline</v-icon> Data Types (<small
-          ><strong>{{ dataTypes.length }}</strong></small
-        >)</span
-      >
+      <span style="cursor: pointer" @click="expanded = !expanded">
+        <v-icon left>mdi-database-outline</v-icon> Data Types
+      </span>
+      <span class="float-right mr-2">
+        <small><strong>{{ dataTypes.length }}</strong></small>
+      </span>
     </div>
 
     <v-expand-transition>

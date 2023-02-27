@@ -287,7 +287,7 @@ export default {
     return {
       showSketchMetadata: false,
       navigationDrawer: {
-        width: 370,
+        width: 375,
       },
       selectedScenario: null,
       scenarioDialog: false,
