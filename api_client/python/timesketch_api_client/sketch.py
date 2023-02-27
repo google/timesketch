@@ -900,7 +900,7 @@ class Sketch(resource.BaseResource):
         Returns:
             List of searchtemplate.SearchTemplate object instances.
         """
-        response = self.api.fetch_resource_data("searchtemplate/")
+        response = self.api.fetch_resource_data("searchtemplates/")
         objects = response.get("objects", [])
         if not objects:
             return []

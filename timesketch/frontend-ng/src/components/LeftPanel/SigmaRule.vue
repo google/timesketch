@@ -15,59 +15,60 @@ limitations under the License.
 -->
 <template>
   <div>
-    <v-row no-gutters class="pa-2" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
-      <div @click="expanded = !expanded" style="cursor: pointer; font-size: 0.9em">
+    <v-row
+      no-gutters
+      class="pa-2 pr-4"
+      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+      @click="expanded = !expanded"
+      style="cursor: pointer; font-size: 0.9em"
+    >
+      <v-col cols="11">
         <v-icon v-if="!expanded">mdi-chevron-right</v-icon>
         <v-icon v-else>mdi-chevron-down</v-icon>
         {{ sigmaRule.title }}<v-chip rounded x-small class="ml-2">{{ sigmaRule.status }}</v-chip>
-      </div>
-      <v-spacer></v-spacer>
-      <div>
-        <v-menu>
+      </v-col>
+
+      <v-col cols="1">
+        <v-menu offset-y>
           <template v-slot:activator="{ on, attrs }">
             <v-btn small icon v-bind="attrs" v-on="on">
               <v-icon>mdi-dots-vertical</v-icon>
             </v-btn>
           </template>
           <v-card>
-            <v-list>
+            <v-list dense>
               <v-list-item-group>
                 <v-list-item :to="{ name: 'Studio', params: { type: 'sigma', id: sigmaRule.rule_uuid } }">
                   <v-list-item-icon>
-                    <v-icon>mdi-pencil</v-icon>
+                    <v-icon small>mdi-pencil</v-icon>
                   </v-list-item-icon>
-                  <v-list-item-content> Edit Rule </v-list-item-content>
+                  <v-list-item-title>Edit Rule</v-list-item-title>
                 </v-list-item>
                 <v-list-item v-on:click="downloadSigmaRule(sigmaRule.rule_uuid)">
                   <v-list-item-icon>
-                    <v-icon>mdi-download</v-icon>
+                    <v-icon small>mdi-download</v-icon>
                   </v-list-item-icon>
-                  <v-list-item-content>
-                    <v-list-item-title>Download Rule</v-list-item-title>
-                  </v-list-item-content>
+                  <v-list-item-title>Download Rule</v-list-item-title>
                 </v-list-item>
 
                 <v-list-item v-on:click="deprecateSigmaRule(sigmaRule.rule_uuid)">
                   <v-list-item-icon>
-                    <v-icon>mdi-archive</v-icon>
+                    <v-icon small>mdi-flash-off-outline</v-icon>
                   </v-list-item-icon>
-                  <v-list-item-content>
-                    <v-list-item-title>Deprecated Sigma rules will not be used in the Sigma analyzer</v-list-item-title>
-                  </v-list-item-content>
+
+                  <v-list-item-title>Disable from analyzer</v-list-item-title>
                 </v-list-item>
                 <v-list-item v-on:click="deleteRule(sigmaRule.rule_uuid)">
                   <v-list-item-icon>
-                    <v-icon>mdi-delete</v-icon>
+                    <v-icon small>mdi-delete</v-icon>
                   </v-list-item-icon>
-                  <v-list-item-content>
-                    <v-list-item-title>Delete Rule</v-list-item-title>
-                  </v-list-item-content>
+                  <v-list-item-title>Delete Rule</v-list-item-title>
                 </v-list-item>
               </v-list-item-group>
             </v-list>
           </v-card>
         </v-menu>
-      </div>
+      </v-col>
     </v-row>
 
     <v-expand-transition>

@@ -167,7 +167,7 @@ class ViewResourceTest(BaseTest):
 class SearchTemplateResourceTest(BaseTest):
     """Test Search template resource."""
 
-    resource_url = "/api/v1/searchtemplate/1/"
+    resource_url = "/api/v1/searchtemplates/1/"
 
     def test_searchtemplate_resource(self):
         """Authenticated request to get a search template."""
@@ -180,7 +180,7 @@ class SearchTemplateResourceTest(BaseTest):
     def test_invalid_searchtemplate(self):
         """Authenticated request to get a non existing search template."""
         self.login()
-        response = self.client.get("/api/v1/searchtemplate/2/")
+        response = self.client.get("/api/v1/searchtemplates/2/")
         self.assert404(response)
 
 
@@ -734,7 +734,7 @@ level: high
 
         # Create a first rule
         response = self.client.post(
-            "/api/v1/sigmarule/",
+            "/api/v1/sigmarules/",
             data=json.dumps(sigma),
             content_type="application/json",
         )
@@ -749,7 +749,7 @@ level: high
         )
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
         # Now GET the ressources
-        response = self.client.get("/api/v1/sigmarule/5266a592-b793-11ea-b3de-bbbbbb/")
+        response = self.client.get("/api/v1/sigmarules/5266a592-b793-11ea-b3de-bbbbbb/")
 
         self.assertIsNotNone(response)
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
@@ -767,14 +767,14 @@ level: high
         """Authenticated request to get an sigma rule."""
         self.login()
         response = self.client.get(
-            "/api/v1/sigmarule/5266a592-b793-11ea-b3de-0242ac130004"
+            "/api/v1/sigmarules/5266a592-b793-11ea-b3de-0242ac130004"
         )
         self.assertIsNotNone(response)
 
     def test_get_sigma_rule_that_does_not_exist(self):
         """Fetch a Sigma rule that does not exist."""
         self.login()
-        response = self.client.get("/api/v1/sigmarule/foobar/")
+        response = self.client.get("/api/v1/sigmarules/foobar/")
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_NOT_FOUND)
 
     def test_put_sigma_rule(self):
@@ -810,7 +810,7 @@ level: high
 
         # Create a first rule
         response = self.client.post(
-            "/api/v1/sigmarule/",
+            "/api/v1/sigmarules/",
             data=json.dumps(sigma),
             content_type="application/json",
         )
@@ -825,7 +825,7 @@ level: high
         )
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
         response = self.client.put(
-            "/api/v1/sigmarule/5266a592-b793-11ea-b3de-bbbbbb/",
+            "/api/v1/sigmarules/5266a592-b793-11ea-b3de-bbbbbb/",
             data=json.dumps(
                 dict(
                     rule_uuid="5266a592-b793-11ea-b3de-bbbbbb",
@@ -879,7 +879,7 @@ class SigmaRuleListResourceTest(BaseTest):
 
     def test_get_sigma_rule_list(self):
         self.login()
-        response = self.client.get("/api/v1/sigmarule/")
+        response = self.client.get("/api/v1/sigmarules/")
         self.assertIsNotNone(response)
         self.assertEqual(
             len(response.json["objects"]), response.json["meta"]["rules_count"]
@@ -947,7 +947,7 @@ class SigmaRuleByTextResourceTest(BaseTest):
 
         data = dict(content=self.correct_rule)
         response = self.client.post(
-            "/api/v1/sigmarule/text/",
+            "/api/v1/sigmarules/text/",
             data=json.dumps(data, ensure_ascii=False),
             content_type="application/json",
         )
@@ -962,7 +962,7 @@ class SigmaRuleByTextResourceTest(BaseTest):
         self.login()
         data = dict(content="foobar: asd")
         response = self.client.post(
-            "/api/v1/sigmarule/text/",
+            "/api/v1/sigmarules/text/",
             data=json.dumps(data, ensure_ascii=False),
             content_type="application/json",
         )
@@ -976,7 +976,7 @@ class SigmaRuleByTextResourceTest(BaseTest):
         data"""
         self.login()
         response = self.client.post(
-            "/api/v1/sigmarule/text/",
+            "/api/v1/sigmarules/text/",
             data=json.dumps(dict(action="post")),
             content_type="application/json",
         )

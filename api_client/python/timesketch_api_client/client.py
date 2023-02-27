@@ -363,10 +363,25 @@ class TimesketchApi:
 
         Returns:
             Dictionary with the response data.
+
+        Raises:
+            RuntimeError: If response could not be JSON-decoded after
+                DEFAULT_RETRY_COUNT attempts.
         """
         resource_url = "{0:s}/{1:s}".format(self.api_root, resource_uri)
         response = self.session.get(resource_url, params=params)
-        return error.get_response_json(response, logger)
+
+        retry_count = 0
+        while True:
+            result = error.get_response_json(response, logger)
+            # Any dict with content is good enough for us to return.
+            if result:
+                return result
+            retry_count += 1
+            if retry_count >= self.DEFAULT_RETRY_COUNT:
+                raise RuntimeError(
+                    f"Unable to fetch JSON resource data. Response: {str(result)}"
+                )
 
     def create_sketch(self, name, description=None):
         """Create a new sketch.
@@ -377,6 +392,10 @@ class TimesketchApi:
 
         Returns:
             Instance of a Sketch object.
+
+        Raises:
+            RuntimeError: If response does not contain an 'objects' key after
+                DEFAULT_RETRY_COUNT attempts.
         """
         if not description:
             description = name
@@ -584,7 +603,7 @@ class TimesketchApi:
             ValueError: If no rules are found.
         """
         rules = []
-        response = self.fetch_resource_data("sigmarule/")
+        response = self.fetch_resource_data("sigmarules/")
 
         if not response:
             raise ValueError("No rules found.")
@@ -605,7 +624,7 @@ class TimesketchApi:
     def create_sigmarule(self, rule_yaml):
         """Adds a single Sigma rule to the database.
 
-        Adds a single Sigma rule to the database when `/sigmarule/` is called
+        Adds a single Sigma rule to the database when `/sigmarules/` is called
         with a POST request.
 
         All attributes of the rule are taken by the `rule_yaml` value in the
@@ -624,7 +643,7 @@ class TimesketchApi:
         retry_count = 0
         objects = None
         while True:
-            resource_url = "{0:s}/sigmarule/".format(self.api_root)
+            resource_url = "{0:s}/sigmarules/".format(self.api_root)
             form_data = {"rule_yaml": rule_yaml}
             response = self.session.post(resource_url, json=form_data)
             response_dict = error.get_response_json(response, logger)

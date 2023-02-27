@@ -479,6 +479,16 @@ Lists all Sigma rules installed on a system
 tsctl list-sigma-rules
 ```
 
+```bash
+tsctl list-sigma-rules --columns=rule_uuid,title,status
+rule_uuid,title,status
+['8c10509b-9ba5-4387-bf6c-e347931b646f', 'SigmaRuleTemplateTitledddd', 'experimental']
+['5266a592-b793-11ea-b3de-0242ac130004', 'Suspicious Installation of Zenmap', 'experimental']
+['e5684ad6-5824-4680-9cc5-e8f0babd77bb', 'Foobar', 'experimental']
+tsctl list-sigma-rules --columns=rule_uuid,title,status | grep experimental | wc -l
+3
+```
+
 #### Add Sigma rules in a folder
 
 Will add all Sigma rules in a folder and its subfolders to the databse.
@@ -569,4 +579,46 @@ On instance['context_link']:
 => OK: "unfurl"
 => OK: "mseventid"
 => OK: "urlhaus"
+```
+
+### Analyzer-stats
+
+`tsctl`offers a method called `analyzer-stats` to display various information about analyzer runs of the past.
+
+To use the `analyzer-stats` subcommand, you would run `tsctl analyzer-stats` followed by the desired options and arguments.
+
+```shell
+tsctl analyzer-stats
+```
+
+Example:
+
+```shell
+tsctl analyzer-stats --help
+Usage: tsctl analyzer-stats [OPTIONS] ANALYZER_NAME
+
+  Prints analyzer stats.
+
+Options:
+  --timeline_id TEXT         Timeline ID if the analyzer results should be
+                             filtered by timeline.
+  --scope TEXT               Scope on: [many_hits, long_runtime, recent]
+  --result_text_search TEXT  Search in result text. E.g. for a specific
+                             rule_id.
+  --help                     Show this message and exit.
+tsctl analyzer-stats sigma --scope many_hits --result_text_search 71a52
+     runtime  hits                                                                          result  analysis_id                 created_at
+36  0.083333  3657  3657 events tagged for rule [Scheduler] (71a5257c-222f-4898-a117-694d6c63457c)           51 2023-01-03 21:33:14.475700
+37  0.083333  3657  3657 events tagged for rule [Scheduler] (71a5257c-222f-4898-a117-694d6c63457c)           52 2023-01-03 21:33:40.477309
+39  0.083333  2344  2344 events tagged for rule [Scheduler] (71a5257c-222f-4898-a117-694d6c63457c)           54 2023-01-03 21:33:40.594573
+38  0.000000   145   145 events tagged for rule [Scheduler] (71a5257c-222f-4898-a117-694d6c63457c)           55 2023-01-03 21:33:40.626931
+47  0.100000   145   145 events tagged for rule [Scheduler] (71a5257c-222f-4898-a117-694d6c63457c)           61 2023-01-04 17:09:04.078641
+40  0.000000     0     0 events tagged for rule [Scheduler] (71a5257c-222f-4898-a117-694d6c63457c)           53 2023-01-03 21:33:40.521002
+41  0.000000     0     0 events tagged for rule [Scheduler] (71a5257c-222f-4898-a117-694d6c63457c)           56 2023-01-03 21:33:40.658743
+42  0.000000     0     0 events tagged for rule [Scheduler] (71a5257c-222f-4898-a117-694d6c63457c)           57 2023-01-03 21:33:40.696942
+43  2.800000     0                                * Scheduler 71a5257c-222f-4898-a117-694d6c63457c           58 2023-01-04 17:09:03.751176
+44  2.816667     0                                * Scheduler 71a5257c-222f-4898-a117-694d6c63457c           62 2023-01-04 17:09:04.112822
+45  2.833333     0                                * Scheduler 71a5257c-222f-4898-a117-694d6c63457c           60 2023-01-04 17:09:04.046003
+46  2.833333     0                                * Scheduler 71a5257c-222f-4898-a117-694d6c63457c           59 2023-01-04 17:09:04.014973
+48  2.750000     0                                * Scheduler 71a5257c-222f-4898-a117-694d6c63457c           63 2023-01-04 17:09:04.148185
 ```
