@@ -26,8 +26,27 @@ limitations under the License.
 
     <v-expand-transition>
       <div v-show="expanded">
-        <v-data-iterator :items="dataTypes" :items-per-page.sync="itemsPerPage" :search="search">
-          <template v-slot:header v-if="dataTypes.length > itemsPerPage">
+        <v-data-iterator v-if="dataTypes.length <= itemsPerPage" :items="dataTypes" hide-default-footer>
+          <template v-slot:default="props">
+            <v-row
+              no-gutters
+              v-for="dataType in props.items"
+              :key="dataType.data_type"
+              class="pa-2 pl-5"
+              :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+            >
+              <div @click="setQueryAndFilter(dataType.data_type)" style="cursor: pointer; font-size: 0.9em">
+                <span
+                  >{{ dataType.data_type }} (<small
+                    ><strong>{{ dataType.count | compactNumber }}</strong></small
+                  >)</span
+                >
+              </div>
+            </v-row>
+          </template>
+        </v-data-iterator>
+        <v-data-iterator v-else :items="dataTypes" :items-per-page.sync="itemsPerPage" :search="search">
+          <template v-slot:header>
             <v-toolbar flat>
               <v-text-field
                 v-model="search"
