@@ -76,6 +76,48 @@ limitations under the License.
         </v-menu>
       </v-card>
 
+      <!-- Search History -->
+      <div class="mt-4">
+        <v-card v-show="showSearchHistory" outlined>
+          <v-toolbar dense flat>
+            <v-toolbar-title>Search history</v-toolbar-title>
+            <v-spacer></v-spacer>
+            <v-slider
+              v-model="zoomLevel"
+              thumb-label
+              ticks
+              append-icon="mdi-magnify-plus-outline"
+              prepend-icon="mdi-magnify-minus-outline"
+              min="0.1"
+              max="1"
+              step="0.1"
+              class="mt-6"
+            >
+              <template v-slot:thumb-label="{ value }"> {{ value * 100 }}% </template>
+            </v-slider>
+
+            <v-btn icon @click="showSearchHistory = false" class="ml-4">
+              <v-icon>mdi-close</v-icon>
+            </v-btn>
+          </v-toolbar>
+
+          <v-divider></v-divider>
+
+          <div
+            v-dragscroll
+            class="pa-md-4 no-scrollbars"
+            style="overflow: scroll; white-space: nowrap; max-height: 500px; min-height: 100px"
+          >
+            <ts-search-history-tree
+              @node-click="jumpInHistory"
+              :show-history="showSearchHistory"
+              v-bind:style="{ transform: 'scale(' + zoomLevel + ')' }"
+              style="transform-origin: top left"
+            ></ts-search-history-tree>
+          </div>
+        </v-card>
+      </div>
+
       <!-- Timeline picker -->
       <v-sheet class="mb-4 mt-4" color="transparent">
         <ts-timeline-picker
@@ -202,44 +244,21 @@ limitations under the License.
       </div>
     </v-card>
 
-    <!-- Search History -->
-
-    <v-card v-show="showSearchHistory" outlined class="pa-3 mt-3 mx-3">
-      <v-toolbar elevation="0" dense>
-        <v-toolbar-title>Search history</v-toolbar-title>
-        <v-spacer></v-spacer>
-
-        <v-slider
-          v-model="zoomLevel"
-          thumb-label
-          ticks
-          append-icon="mdi-magnify-plus-outline"
-          prepend-icon="mdi-magnify-minus-outline"
-          min="0.1"
-          max="1"
-          step="0.1"
-          class="mt-6"
-        >
-          <template v-slot:thumb-label="{ value }"> {{ value * 100 }}% </template>
-        </v-slider>
-
-        <v-btn icon @click="showSearchHistory = false" class="ml-4">
-          <v-icon>mdi-close</v-icon>
-        </v-btn>
-      </v-toolbar>
-      <div
-        v-dragscroll
-        class="pa-md-4 no-scrollbars"
-        style="overflow: scroll; white-space: nowrap; max-height: 500px; min-height: 500px"
-      >
-        <ts-search-history-tree
-          @node-click="jumpInHistory"
-          :show-history="showSearchHistory"
-          v-bind:style="{ transform: 'scale(' + zoomLevel + ')' }"
-          style="transform-origin: top left"
-        ></ts-search-history-tree>
+    <!-- DFIQ context -->
+    <div class="mt-3 mx-3">
+      <div :class="[$vuetify.theme.dark ? 'dark-info-card' : 'light-info-card']" v-if="activeContext.question">
+        <v-toolbar dense flat color="transparent">
+          <h4>{{ activeContext.question.display_name }}</h4>
+          <v-spacer></v-spacer>
+          <v-btn small icon @click="$store.dispatch('clearActiveContext')" class="mr-1">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </v-toolbar>
+        <p class="mt-1 pb-4 px-4" style="font-size: 0.9em">
+          {{ activeContext.question.description }}
+        </p>
       </div>
-    </v-card>
+    </div>
 
     <!-- Eventlist -->
     <v-card
@@ -259,7 +278,7 @@ limitations under the License.
     <v-card
       v-if="eventList.objects.length || (searchInProgress && this.currentQueryFilter.indices.length)"
       flat
-      class="mt-5"
+      class="mt-5 mx-3"
     >
       <v-data-table
         v-model="selectedEvents"
@@ -746,6 +765,9 @@ export default {
     currentSearchNode() {
       return this.$store.state.currentSearchNode
     },
+    activeContext() {
+      return this.$store.state.activeContext
+    },
     headers() {
       let baseHeaders = [
         {
@@ -754,7 +776,7 @@ export default {
         },
         {
           value: 'actions',
-          width: '100',
+          width: '105',
         },
         {
           text: 'Datetime (UTC)',
@@ -973,6 +995,9 @@ export default {
         })
     },
     setQueryAndFilter: function (searchEvent) {
+      if (this.$route.name !== 'Explore') {
+        this.$router.push({ name: 'Explore', params: { sketchId: this.sketch.id } })
+      }
       this.currentQueryString = searchEvent.queryString
       this.currentQueryFilter = searchEvent.queryFilter
       // Preserve user defined item count instead of resetting.
@@ -1448,10 +1473,10 @@ export default {
 
 .ts-time-bubble {
   width: 120px;
-  height: 20px;
-  border-radius: 6px;
+  height: 25px;
+  border-radius: 20px;
   position: relative;
-  margin: 0 0 0 35px;
+  margin: 0 0 0 136px;
   text-align: center;
   font-size: var(--font-size-small);
 }
@@ -1468,7 +1493,7 @@ export default {
 .ts-time-bubble-vertical-line {
   width: 2px;
   height: 15px;
-  margin: 0 0 0 95px;
+  margin: 0 0 0 194px;
   background-color: #f5f5f5;
 }
 
