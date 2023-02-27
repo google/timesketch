@@ -380,7 +380,8 @@ class TimesketchApi:
             retry_count += 1
             if retry_count >= self.DEFAULT_RETRY_COUNT:
                 raise RuntimeError(
-                    f"Unable to fetch JSON resource data. Response: {str(result)}")
+                    f"Unable to fetch JSON resource data. Response: {str(result)}"
+                )
 
     def create_sketch(self, name, description=None):
         """Create a new sketch.
