@@ -434,4 +434,7 @@ export default {
     return RestApiClient.delete('/sketches/' + sketchId + '/questions/' + questionId + '/conclusions/' + conclusionId + '/')
 
   },
+  getTagMetadata() {
+    return RestApiClient.get('/intelligence/tagmetadata/')
+  }
 }
