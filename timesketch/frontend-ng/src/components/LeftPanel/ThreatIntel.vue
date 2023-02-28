@@ -15,7 +15,7 @@ limitations under the License.
 -->
 <template>
   <div>
-    <v-row
+    <div
       no-gutters
       style="cursor: pointer"
       class="pa-4"
@@ -23,25 +23,26 @@ limitations under the License.
       @click="expanded = !expanded"
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
-      <span
-        ><v-icon left>mdi-shield-search</v-icon> Threat Intelligence (<small
-          ><strong>{{ intelligenceData.length }}</strong></small
-        >)</span
-      >
-      <v-spacer></v-spacer>
-
+      <span>
+        <v-icon left>mdi-shield-search</v-icon> Threat Intelligence
+      </span>
       <v-btn
         v-if="expanded"
         small
-        depressed
         color="primary"
-        outlined
+        text
+        class="ml-1"
         :to="{ name: 'Intelligence', params: { sketchId: sketch.id } }"
         @click.stop=""
       >
         <v-icon small left>mdi-pencil</v-icon>Manage
       </v-btn>
-    </v-row>
+      <span class="float-right mr-2">
+        <small><strong>{{ intelligenceData.length }}</strong></small>
+      </span>
+
+
+    </div>
 
     <v-expand-transition>
       <div v-show="expanded">
@@ -57,7 +58,26 @@ limitations under the License.
         </v-tabs>
         <v-tabs-items v-model="tabs">
           <v-tab-item :transition="false">
-            <v-data-table dense :headers="indicatorHeaders" :items="intelligenceData" :items-per-page="10">
+            <v-data-table v-if="intelligenceData.length >= 10" dense :headers="indicatorHeaders" :items="intelligenceData" :items-per-page="10">
+              <template v-slot:item.ioc="{ item }">
+                <span :title="item.ioc">
+                  <div style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">
+                    {{ item.ioc }}
+                  </div>
+                </span>
+              </template>
+
+              <template v-slot:item.type="{ item }">
+                <small>{{ item.type }}</small>
+              </template>
+
+              <template v-slot:item.actions="{ item }">
+                <v-btn icon small @click="generateSearchQuery(item.ioc)">
+                  <v-icon small>mdi-magnify</v-icon>
+                </v-btn>
+              </template>
+            </v-data-table>
+            <v-data-table v-else dense :headers="indicatorHeaders" :items="intelligenceData" hide-default-footer>
               <template v-slot:item.ioc="{ item }">
                 <span :title="item.ioc">
                   <div style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">
