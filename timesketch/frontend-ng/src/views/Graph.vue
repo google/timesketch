@@ -337,15 +337,15 @@ export default {
       return this.$store.state.meta
     },
     nodes() {
-      return this.elements.filter((el) => el.group == 'nodes')
+      return this.elements.filter((el) => el.group === 'nodes')
     },
     edges() {
-      return this.elements.filter((el) => el.group == 'edges')
+      return this.elements.filter((el) => el.group === 'edges')
     },
   },
   methods: {
     closeTimelineView: function () {
-      if (this.$route.name != 'Graph') {
+      if (this.$route.name !== 'Graph') {
         this.showTimelineView = false
       }
     },
@@ -476,9 +476,12 @@ export default {
       this.elements = elements
       this.currentGraph = this.saveAsName
       this.showGraph = true
-      ApiClient.saveGraph(this.sketch.id, this.saveAsName, elements).then((response) => {
-        //let savedGraph = response.data['objects'][0]
-      })
+      ApiClient.saveGraph(this.sketch.id, this.saveAsName, elements)
+        .then((response) => {})
+        .catch((e) => {
+          this.errorSnackBar('Unable to save graph')
+          console.error(e)
+        })
       this.saveAsName = ''
       this.saveGraphDialog = false
     },
@@ -645,8 +648,7 @@ export default {
       this.setTheme()
     },
     edgeQuery: function (newVal) {
-      // Placeholder until eventlist comonent is developed.
-      return
+      // Placeholder until eventlist component is developed.
     },
   },
 }

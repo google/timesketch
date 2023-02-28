@@ -23,11 +23,13 @@ limitations under the License.
       @click="expanded = !expanded"
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
-      <span
-        ><v-icon left>mdi-source-branch</v-icon> Graphs (<small
-          ><strong>{{ graphs.length + savedGraphs.length }} </strong></small
-        >)</span
-      >
+      <span> <v-icon left>mdi-source-branch</v-icon> Graphs </span>
+      <v-spacer></v-spacer>
+      <span class="mr-2">
+        <small
+          ><strong>{{ graphs.length + savedGraphs.length }}</strong></small
+        >
+      </span>
     </v-row>
 
     <v-expand-transition>
