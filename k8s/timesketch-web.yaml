@@ -21,11 +21,19 @@ spec:
       containers:
         - name: timesketch-web
           image: us-docker.pkg.dev/osdfir-registry/timesketch/timesketch:latest
-          command: ["sh", "-c", "mkdir /var/log/timesketch && ./docker-entrypoint.sh timesketch-web"]
-          #command: ["sh", "-c", "sleep 3600"]
+          command: ["sh", "-c", "./docker-entrypoint.sh timesketch-web"]
+          env:
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+                apiVersion: v1
           volumeMounts:
             - mountPath: /mnt/timesketchvolume
               name: timesketchvolume
+            - mountPath: /var/log/timesketch
+              name: timesketchvolume
+              subPathExpr: logs/$(POD_NAME)
             - mountPath: /etc/timesketch/
               name: timesketch-conf
             - mountPath: /etc/timesketch/scenarios

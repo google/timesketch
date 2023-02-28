@@ -21,14 +21,21 @@ spec:
       containers:
         - name: timesketch-worker
           image: us-docker.pkg.dev/osdfir-registry/timesketch/timesketch:latest
-          command: ["sh", "-c", "mkdir /var/log/timesketch && ./docker-entrypoint.sh timesketch-worker"]
-          #command: ["sh", "-c", "sleep 3600"]
+          command: ["sh", "-c", "./docker-entrypoint.sh timesketch-worker"]
           env:
-            - name: WORKER_LOG_LEVEL
-              value: 'DEBUG'
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+                apiVersion: v1
+          - name: WORKER_LOG_LEVEL
+            value: 'DEBUG'
           volumeMounts:
             - mountPath: /mnt/timesketchvolume
               name: timesketchvolume
+            - mountPath: /var/log/timesketch
+              name: timesketchvolume
+              subPathExpr: logs/$(POD_NAME)
             - mountPath: /etc/timesketch/
               name: timesketch-conf
             - mountPath: /etc/timesketch/scenarios
