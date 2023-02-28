@@ -300,7 +300,6 @@ def read_and_validate_csv(
                 # Lines with unrecognized datetime format will result in "NaT"
                 # (not available) as its value and the event row will be
                 # dropped in the next line
-                logger.debug("Current chunk datetime format: %s", chunk["datetime"])
                 chunk["datetime"] = pandas.to_datetime(
                     chunk["datetime"], errors="coerce"
                 )
@@ -339,7 +338,7 @@ def read_and_validate_csv(
                 MAX_TIMESTAMP_DIFFERENCE = 100000  # 100 seconds
                 # check datetime plausibility
                 if "timestamp" in row and "datetime" in row:
-                    # if timestamp and datetime are both present, check if they are consistent
+                    # if timestamp and datetime are both present,
                     # calculate timestamp difference between the both
                     # convert row datetime to timestamp
 
@@ -353,7 +352,8 @@ def read_and_validate_csv(
                     ):
                         error_string = (
                             "Timestamp difference between {0!s} "
-                            "and {1!s} is too big {2!s}, re-calculating datetime based on timestamp"
+                            "and {1!s} is too big {2!s}, "
+                            "re-calculating datetime based on timestamp"
                         ).format(
                             row["timestamp"],
                             timestamp_calculated,
@@ -361,7 +361,8 @@ def read_and_validate_csv(
                         )
                         logger.warning(error_string)
 
-                        # create row datetime based on timestamp in format %Y-%m-%dT%H:%M:%S%z
+                        # create row datetime based on timestamp
+                        # in format %Y-%m-%dT%H:%M:%S%z
                         # most of our timestamps are provided in UTC
                         row["datetime"] = Timestamp(
                             row["timestamp"] * 1000, tz="UTC"
