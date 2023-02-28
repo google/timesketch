@@ -125,17 +125,13 @@ class TestUtils(BaseTest):
                 "default_value": None,
             },
         ]
-        self.assertIs(
-            check_mapping_errors(current_headers, valid_mapping_1), None
-        )
+        self.assertIs(check_mapping_errors(current_headers, valid_mapping_1), None)
 
         valid_mapping_2 = [
             {"target": "datetime", "source": ["DT"], "default_value": None},
             {"target": "timestamp_desc", "source": None, "default_value": "a"},
         ]
-        self.assertIs(
-            check_mapping_errors(current_headers, valid_mapping_2), None
-        )
+        self.assertIs(check_mapping_errors(current_headers, valid_mapping_2), None)
 
         current_headers = ["DT", "last_access", "TD", "file_path"]
         valid_mapping_3 = [
@@ -147,9 +143,7 @@ class TestUtils(BaseTest):
                 "default_value": None,
             },
         ]
-        self.assertIs(
-            check_mapping_errors(current_headers, valid_mapping_3), None
-        )
+        self.assertIs(check_mapping_errors(current_headers, valid_mapping_3), None)
 
         current_headers = ["DT", "last_access", "TD", "file_path", "T_desc"]
         valid_mapping_4 = [
@@ -165,9 +159,7 @@ class TestUtils(BaseTest):
                 "default_value": None,
             },
         ]
-        self.assertIs(
-            check_mapping_errors(current_headers, valid_mapping_4), None
-        )
+        self.assertIs(check_mapping_errors(current_headers, valid_mapping_4), None)
 
     def test_invalid_CSV_file(self):
         """Test for CSV with missing mandatory headers without mapping"""
@@ -179,9 +171,7 @@ class TestUtils(BaseTest):
             # Call next to work around lazy generators.
             next(_validate_csv_fields(mandatory_fields, df_01))
 
-        df_02 = pd.DataFrame(
-            {"datetime": ["test"], "MSG": ["test"], "TD": ["test"]}
-        )
+        df_02 = pd.DataFrame({"datetime": ["test"], "MSG": ["test"], "TD": ["test"]})
         with self.assertRaises(RuntimeError):
             # Call next to work around lazy generators.
             next(_validate_csv_fields(mandatory_fields, df_02))
@@ -267,7 +257,5 @@ class TestUtils(BaseTest):
             },
         ]
         self.assertTrue(
-            isinstance(
-                rename_jsonl_headers(linedict, headers_mapping, lineno), dict
-            )
+            isinstance(rename_jsonl_headers(linedict, headers_mapping, lineno), dict)
         )
