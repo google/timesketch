@@ -1,18 +1,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: redis-server
+  name: redis
   labels:
-    app: redis-server
+    app: redis
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: redis-server
+      app: redis
   template:
     metadata:
       labels:
-        app: redis-server
+        app: redis
     spec:
       serviceAccountName: timesketch
       securityContext:
@@ -60,10 +60,10 @@ kind: Service
 metadata:
   name: redis
   labels:
-    app: redis-server
+    app: redis
 spec:
   ports:
   - port: 6379
     targetPort: 6379
   selector:
-    app: redis-server
+    app: redis

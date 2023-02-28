@@ -1,16 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: opensearch-server
+  name: opensearch
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: opensearch-server
+      app: opensearch
   template:
     metadata:
       labels:
-        app: opensearch-server
+        app: opensearch
     spec:
       serviceAccountName: timesketch
       initContainers:
@@ -56,12 +56,12 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: opensearch-server
+  name: opensearch
   labels:
-    app: opensearch-server
+    app: opensearch
 spec:
   ports:
     - port: 9200
       targetPort: 9200
   selector:
-    app: opensearch-server
+    app: opensearch

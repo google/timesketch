@@ -124,21 +124,37 @@ FILESTORE_IP=$(gcloud -q --project $DEVSHELL_PROJECT_ID filestore instances desc
 #echo -n "* Setting default config parameters.."
 POSTGRES_USER="timesketch"
 POSTGRES_PASSWORD="$(echo $RANDOM | md5sum | head -c 32; echo;)"
-POSTGRES_ADDRESS="postgres-server.default.svc.cluster.local"
+POSTGRES_ADDRESS="postgres.default.svc.cluster.local"
 POSTGRES_PORT=5432
 SECRET_KEY="$(echo $RANDOM | md5sum | head -c 32; echo;)"
-OPENSEARCH_ADDRESS="opensearch-server.default.svc.cluster.local"
+OPENSEARCH_ADDRESS="opensearch.default.svc.cluster.local"
 OPENSEARCH_PORT=9200
 REDIS_ADDRESS="redis.default.svc.cluster.local"
 REDIS_PORT=6379
 GITHUB_BASE_URL="https://raw.githubusercontent.com/google/timesketch/master"
 
-# Create dirs
-mkdir -p timesketch
-
-# cp files
+# Create k8s dir
 mkdir -p k8s
+
+# TODO(wyassine): Once merged remove copy files locally to pull from github repo
 cp ../k8s/* ./k8s
+
+# Fetch Timesketch k8s deployment files
+# echo -n "* Fetching k8s deployment files.."
+# curl -s $GITHUB_BASE_URL/k8s/opensearch.yaml > k8s/opensearch.yaml
+# curl -s $GITHUB_BASE_URL/k8s/postgres.yaml > k8s/postgres.yaml
+# curl -s $GITHUB_BASE_URL/k8s/redis.yaml > k8s/redis.yaml
+# curl -s $GITHUB_BASE_URL/k8s/opensearch.yaml > k8s/opensearch.yaml
+# curl -s $GITHUB_BASE_URL/k8s/timesketch-ingress.yaml > k8s/timesketch-ingress.yaml
+# curl -s $GITHUB_BASE_URL/k8s/timesketch-service-account.yaml > k8s/timesketch-service-account.yaml
+# curl -s $GITHUB_BASE_URL/k8s/timesketch-volume-filestore.yaml > k8s/timesketch-volume-filestore.yaml
+# curl -s $GITHUB_BASE_URL/k8s/timesketch-web-v2.yaml > k8s/timesketch-web-v2.yaml
+# curl -s $GITHUB_BASE_URL/k8s/timesketch-web.yaml > k8s/timesketch-web.yaml
+# curl -s $GITHUB_BASE_URL/k8s/timesketch-worker.yaml > k8s/timesketch-worker.yaml
+# echo "OK"
+
+# Create config dir
+mkdir -p timesketch
 
 # Fetch default Timesketch config files
 echo -n "* Fetching configuration files.."
@@ -172,4 +188,5 @@ sed -i 's#^CELERY_RESULT_BACKEND =.*#CELERY_RESULT_BACKEND = \x27redis://'$REDIS
 sed -i 's#postgresql://<USERNAME>:<PASSWORD>@localhost#postgresql://'$POSTGRES_USER':'$POSTGRES_PASSWORD'@'$POSTGRES_ADDRESS':'$POSTGRES_PORT'#' timesketch/timesketch.conf
 
 echo "OK"
-echo "* Installation done."
+
+echo "* Timesketch deployment complete."
