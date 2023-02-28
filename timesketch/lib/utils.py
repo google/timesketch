@@ -25,7 +25,6 @@ import random
 import smtplib
 import time
 import codecs
-import numpy
 
 import pandas
 import six
