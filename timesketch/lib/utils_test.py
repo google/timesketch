@@ -193,7 +193,7 @@ class TestUtils(BaseTest):
         )
 
         # put all rows in an array
-        data = [row for row in data_generator]
+        data = list(data_generator)
         self.assertIsNotNone(data)
         self.assertIsNotNone(data[0]["datetime"])
         self.assertEqual(data[0]["datetime"], "2022-11-10T05:07:28+00:00")
