@@ -24,12 +24,16 @@ limitations under the License.
           <v-img src="/dist/timesketch-color.png" max-height="25" max-width="25" contain></v-img>
         </router-link>
       </v-avatar>
-      <span v-if="!hasTimelines" style="font-size: 1.1em">{{ sketch.name }} </span>
+      <span v-show="!showLeftPanel && !loadingSketch" class="mr-1" style="font-size: 1.1em">{{ sketch.name }} </span>
 
       <v-btn icon v-show="!showLeftPanel && !loadingSketch" @click="toggleLeftPanel" class="ml-n1">
         <v-icon>mdi-menu</v-icon>
       </v-btn>
 
+      <v-btn v-show="currentRouteName !== 'Explore'" :to="{ name: 'Explore', params: { sketchId: sketchId } }" color="primary" small text class="ml-3">
+        <v-icon small left>mdi-arrow-left</v-icon>
+        back to explore
+      </v-btn>
       <v-spacer></v-spacer>
       <v-btn small depressed v-on:click="switchUI"> Use the old UI </v-btn>
 
@@ -287,7 +291,7 @@ export default {
     return {
       showSketchMetadata: false,
       navigationDrawer: {
-        width: 370,
+        width: 400,
       },
       selectedScenario: null,
       scenarioDialog: false,
@@ -346,6 +350,9 @@ export default {
     },
     hasTimelines() {
       return this.sketch.timelines && this.sketch.timelines.length
+    },
+    currentRouteName() {
+      return this.$route.name
     },
   },
   methods: {
