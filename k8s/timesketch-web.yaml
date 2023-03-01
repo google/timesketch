@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: timesketch-web
+  namespace: timesketch
   labels:
     app: timesketch-web
 spec:
@@ -58,6 +59,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: timesketch-web
+  namespace: timesketch
   labels:
     app: timesketch-web
   annotations:

@@ -104,7 +104,7 @@ else
   echo "--no-cluster specified. Authenticating to pre-existing cluster $CLUSTER_NAME"
 fi
 
-# Create the filestore instance.
+# Create the Filestore instance.
 if [[ "$*" != *--no-filestore* ]] ; then  
   echo "Enabling GCP Filestore API"
   gcloud -q --project $DEVSHELL_PROJECT_ID services enable file.googleapis.com
@@ -114,16 +114,16 @@ else
   echo "Using pre existing Filestore instance $FILESTORE_NAME with capacity $FILESTORE_CAPACITY"
 fi
 
-# Timesketch configuration
+# Timesketch default configuration
 echo -n "* Setting default config parameters.."
 POSTGRES_USER="timesketch"
 POSTGRES_PASSWORD="$(echo $RANDOM | md5sum | head -c 32; echo;)"
-POSTGRES_ADDRESS="postgres.default.svc.cluster.local"
+POSTGRES_ADDRESS="postgres.timesketch.svc.cluster.local"
 POSTGRES_PORT=5432
 SECRET_KEY="$(echo $RANDOM | md5sum | head -c 32; echo;)"
-OPENSEARCH_ADDRESS="opensearch.default.svc.cluster.local"
+OPENSEARCH_ADDRESS="opensearch.timesketch.svc.cluster.local"
 OPENSEARCH_PORT=9200
-REDIS_ADDRESS="redis.default.svc.cluster.local"
+REDIS_ADDRESS="redis.timesketch.svc.cluster.local"
 REDIS_PORT=6379
 GITHUB_BASE_URL="https://raw.githubusercontent.com/google/timesketch/master"
 echo "OK"
@@ -140,6 +140,7 @@ cp ../k8s/* ./k8s
 # curl -s $GITHUB_BASE_URL/k8s/postgres.yaml > k8s/postgres.yaml
 # curl -s $GITHUB_BASE_URL/k8s/redis.yaml > k8s/redis.yaml
 # curl -s $GITHUB_BASE_URL/k8s/opensearch.yaml > k8s/opensearch.yaml
+# curl -s $GITHUB_BASE_URL/k8s/timesketch-namespace.yaml > k8s/timesketch-namespace.yaml
 # curl -s $GITHUB_BASE_URL/k8s/timesketch-ingress.yaml > k8s/timesketch-ingress.yaml
 # curl -s $GITHUB_BASE_URL/k8s/timesketch-service-account.yaml > k8s/timesketch-service-account.yaml
 # curl -s $GITHUB_BASE_URL/k8s/timesketch-volume-filestore.yaml > k8s/timesketch-volume-filestore.yaml
@@ -167,6 +168,7 @@ curl -s $GITHUB_BASE_URL/data/sigma_rule_status.csv > timesketch/sigma_rule_stat
 curl -s $GITHUB_BASE_URL/data/sigma/rules/lnx_susp_zmap.yml > timesketch/lnx_susp_zmap.yml
 echo "OK"
 
+# Set up secret
 sed -i 's#SECRET_KEY = \x27\x3CKEY_GOES_HERE\x3E\x27#SECRET_KEY = \x27'$SECRET_KEY'\x27#' timesketch/timesketch.conf
 
 # Set up the Elastic connection
@@ -181,18 +183,21 @@ sed -i 's#^CELERY_RESULT_BACKEND =.*#CELERY_RESULT_BACKEND = \x27redis://'$REDIS
 
 # Set up the Postgres connection
 sed -i 's#postgresql://<USERNAME>:<PASSWORD>@localhost#postgresql://'$POSTGRES_USER':'$POSTGRES_PASSWORD'@'$POSTGRES_ADDRESS':'$POSTGRES_PORT'#' timesketch/timesketch.conf
-
-# Grab Filestore IP
-FILESTORE_IP=$(gcloud -q --project $DEVSHELL_PROJECT_ID filestore instances describe $FILESTORE_NAME --zone=$CLUSTER_ZONE --format='value(networks.ipAddresses)' --flatten="networks[].ipAddresses[]")
-
-# Update K8s configurations
 sed -i "s/value: postgres/value: $POSTGRES_PASSWORD/g" k8s/postgres.yaml
-sed -i -e "s/<IP_ADDRESS>/$FILESTORE_IP/g" k8s/timesketch-volume-filestore.yaml
 
-# Authenticate to cluster
+# Set up Filestore connection
+FILESTORE_IP=$(gcloud -q --project $DEVSHELL_PROJECT_ID filestore instances describe $FILESTORE_NAME --zone=$CLUSTER_ZONE --format='value(networks.ipAddresses)' --flatten="networks[].ipAddresses[]")
+sed -i -e "s/<IP_ADDRESS>/$FILESTORE_IP/g" k8s/timesketch-volume-filestore.yaml
+sed -i -e "s/timesketchvolume/$FILESTORE_NAME/g" k8s/timesketch-volume-filestore.yaml k8s/timesketch-web.yaml k8s/timesketch-web-v2.yaml k8s/timesketch-worker.yaml k8s/redis.yaml k8s/postgres.yaml k8s/opensearch.yaml
+sed -i -e "s/storage: .*/storage: $FILESTORE_CAPACITY/g" k8s/timesketch-volume-filestore.yaml
+
+# Authenticate to cluster and deploy k8s files
 echo -n "* Deploying k8s files.."
 gcloud -q --project $DEVSHELL_PROJECT_ID container clusters get-credentials $CLUSTER_NAME --zone $CLUSTER_ZONE
-kubectl create configmap timesketch-config --from-file=timesketch/
+kubectl create -f k8s/timesketch-namespace.yaml
+kubectl config set-context --current --namespace=timesketch
+kubectl create configmap timesketch-config -n timesketch --from-file=timesketch/
+kubectl create -f k8s/timesketch-service-account.yaml
 kubectl create -f k8s/timesketch-volume-filestore.yaml
 kubectl create -f k8s/postgres.yaml
 kubectl rollout status -w deployment/postgres
@@ -206,14 +211,14 @@ kubectl create -f k8s/timesketch-worker.yaml
 kubectl rollout status -w deployment/timesketch-web
 echo "OK"
 
-
+# Create timesketch user
 read -p "Would you like to create a new timesketch user? [Y/n] (default:no)" CREATE_USER
 
 if [ "$CREATE_USER" != "${CREATE_USER#[Yy]}" ] ;then
   read -p "Please provide a new username: " NEWUSERNAME
 
   if [ ! -z "$NEWUSERNAME" ] ;then
-    kubectl exec --stdin --tty deployment/timesketch-web -- tsctl create-user timesketch
+    kubectl exec --stdin --tty deployment/timesketch-web -n timesketch -- tsctl create-user timesketch
   fi
 fi
 
