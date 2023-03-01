@@ -104,9 +104,6 @@ else
   echo "--no-cluster specified. Authenticating to pre-existing cluster $CLUSTER_NAME"
 fi
 
-# Authenticate to cluster
-gcloud -q --project $DEVSHELL_PROJECT_ID container clusters get-credentials $CLUSTER_NAME --zone $CLUSTER_ZONE
-
 # Create the filestore instance.
 if [[ "$*" != *--no-filestore* ]] ; then  
   echo "Enabling GCP Filestore API"
@@ -119,7 +116,7 @@ fi
 
 # Timesketch configuration
 echo -n "* Setting default config parameters.."
-POSTGRES_USER="timesketch"
+POSTGRES_USER="postgres"
 POSTGRES_PASSWORD="$(echo $RANDOM | md5sum | head -c 32; echo;)"
 POSTGRES_ADDRESS="postgres.default.svc.cluster.local"
 POSTGRES_PORT=5432
@@ -194,18 +191,18 @@ sed -i -e "s/<IP_ADDRESS>/$FILESTORE_IP/g" k8s/timesketch-volume-filestore.yaml
 
 # Authenticate to cluster
 echo -n "* Deploying k8s files.."
-gcloud -q --project $DEVSHELL_PROJECT_ID container clusters get-credentials $CLUSTER_NAME --zone $ZONE
+gcloud -q --project $DEVSHELL_PROJECT_ID container clusters get-credentials $CLUSTER_NAME --zone $CLUSTER_ZONE
 kubectl create configmap timesketch-config --from-file=timesketch/
-kubectl create -f timesketch-volume-filestore.yaml
-kubectl create -f redis.yaml
+kubectl create -f k8s/timesketch-volume-filestore.yaml
+kubectl create -f k8s/redis.yaml
 kubectl rollout status -w deployment/redis
-kubectl create -f postgres.yaml
+kubectl create -f k8s/postgres.yaml
 kubectl rollout status -w deployment/postgres
-kubectl create -f opensearch.yaml
+kubectl create -f k8s/opensearch.yaml
 kubectl rollout status -w deployment/opensearch
-kubectl create -f timesketch-web.yaml
-kubectl create -f timesketch-web-v2.yaml
-kubectl create -f timesketch-worker.yaml
+kubectl create -f k8s/timesketch-web.yaml
+kubectl create -f k8s/timesketch-web-v2.yaml
+kubectl create -f k8s/timesketch-worker.yaml
 echo "OK"
 
 echo "Timesketch GKE was succesfully deployed!"

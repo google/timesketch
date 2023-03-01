@@ -38,10 +38,6 @@ spec:
               subPathExpr: logs/$(POD_NAME)
             - mountPath: /etc/timesketch/
               name: timesketch-conf
-            - mountPath: /etc/timesketch/scenarios
-              name: scenarios-conf
-            - mountPath: /etc/timesketch/sigma/rules
-              name: sigma-conf
           ports:
             - containerPort: 5000 
           resources: 
@@ -59,9 +55,3 @@ spec:
         - name: timesketch-conf
           configMap:
             name: timesketch-config
-        - name: scenarios-conf
-          configMap:
-            name: scenarios-config
-        - name: sigma-conf
-          configMap:
-            name: sigma-config
