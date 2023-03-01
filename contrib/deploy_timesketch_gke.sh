@@ -203,7 +203,19 @@ kubectl rollout status -w deployment/redis
 kubectl create -f k8s/timesketch-web.yaml
 kubectl create -f k8s/timesketch-web-v2.yaml
 kubectl create -f k8s/timesketch-worker.yaml
+kubectl rollout status -w deployment/timesketch-web
 echo "OK"
 
+
+read -p "Would you like to create a new timesketch user? [Y/n] (default:no)" CREATE_USER
+
+if [ "$CREATE_USER" != "${CREATE_USER#[Yy]}" ] ;then
+  read -p "Please provide a new username: " NEWUSERNAME
+
+  if [ ! -z "$NEWUSERNAME" ] ;then
+    kubectl exec --stdin --tty deployment/timesketch-web -- tsctl create-user timesketch
+  fi
+fi
+
 echo "Timesketch GKE was succesfully deployed!"
-echo "Authenticate via: gcloud container clusters get-credentials $CLUSTER_NAME --zone $ZONE" 
+echo "Authenticate via: gcloud container clusters get-credentials $CLUSTER_NAME --zone $CLUSTER_ZONE" 
