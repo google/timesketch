@@ -222,4 +222,4 @@ if [ "$CREATE_USER" != "${CREATE_USER#[Yy]}" ] ;then
   fi
 fi
 
-echo "Timesketch GKE was succesfully deployed!"
+echo "Timesketch was succesfully deployed to GKE!"
