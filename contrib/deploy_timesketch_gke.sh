@@ -116,7 +116,7 @@ fi
 
 # Timesketch configuration
 echo -n "* Setting default config parameters.."
-POSTGRES_USER="postgres"
+POSTGRES_USER="timesketch"
 POSTGRES_PASSWORD="$(echo $RANDOM | md5sum | head -c 32; echo;)"
 POSTGRES_ADDRESS="postgres.default.svc.cluster.local"
 POSTGRES_PORT=5432
@@ -186,7 +186,7 @@ sed -i 's#postgresql://<USERNAME>:<PASSWORD>@localhost#postgresql://'$POSTGRES_U
 FILESTORE_IP=$(gcloud -q --project $DEVSHELL_PROJECT_ID filestore instances describe $FILESTORE_NAME --zone=$CLUSTER_ZONE --format='value(networks.ipAddresses)' --flatten="networks[].ipAddresses[]")
 
 # Update K8s configurations
-sed -i "s/value: timesketch/value: $POSTGRES_PASSWORD/g" k8s/postgres.yaml
+sed -i "s/value: postgres/value: $POSTGRES_PASSWORD/g" k8s/postgres.yaml
 sed -i -e "s/<IP_ADDRESS>/$FILESTORE_IP/g" k8s/timesketch-volume-filestore.yaml
 
 # Authenticate to cluster
@@ -194,12 +194,12 @@ echo -n "* Deploying k8s files.."
 gcloud -q --project $DEVSHELL_PROJECT_ID container clusters get-credentials $CLUSTER_NAME --zone $CLUSTER_ZONE
 kubectl create configmap timesketch-config --from-file=timesketch/
 kubectl create -f k8s/timesketch-volume-filestore.yaml
-kubectl create -f k8s/redis.yaml
-kubectl rollout status -w deployment/redis
 kubectl create -f k8s/postgres.yaml
 kubectl rollout status -w deployment/postgres
 kubectl create -f k8s/opensearch.yaml
 kubectl rollout status -w deployment/opensearch
+kubectl create -f k8s/redis.yaml
+kubectl rollout status -w deployment/redis
 kubectl create -f k8s/timesketch-web.yaml
 kubectl create -f k8s/timesketch-web-v2.yaml
 kubectl create -f k8s/timesketch-worker.yaml

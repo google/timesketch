@@ -18,9 +18,9 @@ spec:
           image: postgres:latest
           env:
             - name: POSTGRES_USER
-              value: postgres
-            - name: POSTGRES_PASSWORD
               value: timesketch
+            - name: POSTGRES_PASSWORD
+              value: postgres
           volumeMounts:
             - mountPath: /mnt/timesketchvolume/postgresql
               name: timesketchvolume
