@@ -2,7 +2,6 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: timesketchvolume-claim
-  namespace: timesketch
 spec:
   accessModes:
   - ReadWriteMany
@@ -16,7 +15,6 @@ apiVersion: v1
 kind: PersistentVolume
 metadata:
   name: timesketchvolume
-  namespace: timesketch
 spec:
   capacity:
     storage: 1T
