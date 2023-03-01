@@ -117,11 +117,8 @@ else
   echo "Using pre existing Filestore instance $FILESTORE_NAME with capacity $FILESTORE_CAPACITY"
 fi
 
-# Grab Filestore IP
-FILESTORE_IP=$(gcloud -q --project $DEVSHELL_PROJECT_ID filestore instances describe $FILESTORE_NAME --zone=$CLUSTER_ZONE --format='value(networks.ipAddresses)' --flatten="networks[].ipAddresses[]")
-
 # Timesketch configuration
-#echo -n "* Setting default config parameters.."
+echo -n "* Setting default config parameters.."
 POSTGRES_USER="timesketch"
 POSTGRES_PASSWORD="$(echo $RANDOM | md5sum | head -c 32; echo;)"
 POSTGRES_ADDRESS="postgres.default.svc.cluster.local"
@@ -132,6 +129,7 @@ OPENSEARCH_PORT=9200
 REDIS_ADDRESS="redis.default.svc.cluster.local"
 REDIS_PORT=6379
 GITHUB_BASE_URL="https://raw.githubusercontent.com/google/timesketch/master"
+echo "OK"
 
 # Create k8s dir
 mkdir -p k8s
@@ -187,6 +185,28 @@ sed -i 's#^CELERY_RESULT_BACKEND =.*#CELERY_RESULT_BACKEND = \x27redis://'$REDIS
 # Set up the Postgres connection
 sed -i 's#postgresql://<USERNAME>:<PASSWORD>@localhost#postgresql://'$POSTGRES_USER':'$POSTGRES_PASSWORD'@'$POSTGRES_ADDRESS':'$POSTGRES_PORT'#' timesketch/timesketch.conf
 
+# Grab Filestore IP
+FILESTORE_IP=$(gcloud -q --project $DEVSHELL_PROJECT_ID filestore instances describe $FILESTORE_NAME --zone=$CLUSTER_ZONE --format='value(networks.ipAddresses)' --flatten="networks[].ipAddresses[]")
+
+# Update K8s configurations
+sed -i "s/value: timesketch/value: $POSTGRES_PASSWORD/g" k8s/postgres.yaml
+sed -i -e "s/<IP_ADDRESS>/$FILESTORE_IP/g" k8s/timesketch-volume-filestore.yaml
+
+# Authenticate to cluster
+echo -n "* Deploying k8s files.."
+gcloud -q --project $DEVSHELL_PROJECT_ID container clusters get-credentials $CLUSTER_NAME --zone $ZONE
+kubectl create configmap timesketch-config --from-file=timesketch/
+kubectl create -f timesketch-volume-filestore.yaml
+kubectl create -f redis.yaml
+kubectl rollout status -w deployment/redis
+kubectl create -f postgres.yaml
+kubectl rollout status -w deployment/postgres
+kubectl create -f opensearch.yaml
+kubectl rollout status -w deployment/opensearch
+kubectl create -f timesketch-web.yaml
+kubectl create -f timesketch-web-v2.yaml
+kubectl create -f timesketch-worker.yaml
 echo "OK"
 
-echo "* Timesketch deployment complete."
+echo "Timesketch GKE was succesfully deployed!"
+echo "Authenticate via: gcloud container clusters get-credentials $CLUSTER_NAME --zone $ZONE" 
