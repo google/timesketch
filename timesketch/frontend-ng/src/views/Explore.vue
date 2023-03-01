@@ -1012,6 +1012,9 @@ export default {
         })
     },
     setQueryAndFilter: function (searchEvent) {
+      if (this.$route.name !== 'Explore') {
+        this.$router.push({ name: 'Explore', params: { sketchId: this.sketch.id } })
+      }
       this.currentQueryString = searchEvent.queryString
       this.currentQueryFilter = searchEvent.queryFilter
       // Preserve user defined item count instead of resetting.
