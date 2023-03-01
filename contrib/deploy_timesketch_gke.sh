@@ -194,7 +194,7 @@ sed -i -e "s/storage: .*/storage: $FILESTORE_CAPACITY/g" k8s/timesketch-volume-f
 # Authenticate to cluster and deploy k8s files
 echo -n "* Deploying k8s files.."
 gcloud -q --project $DEVSHELL_PROJECT_ID container clusters get-credentials $CLUSTER_NAME --zone $CLUSTER_ZONE
-#kubectl create -f k8s/timesketch-namespace.yaml
+kubectl create -f k8s/timesketch-namespace.yaml
 kubectl config set-context --current --namespace=timesketch
 kubectl create configmap timesketch-config -n timesketch --from-file=timesketch/
 kubectl create -f k8s/timesketch-service-account.yaml
@@ -223,4 +223,3 @@ if [ "$CREATE_USER" != "${CREATE_USER#[Yy]}" ] ;then
 fi
 
 echo "Timesketch GKE was succesfully deployed!"
-echo "Authenticate via: gcloud container clusters get-credentials $CLUSTER_NAME --zone $CLUSTER_ZONE" 

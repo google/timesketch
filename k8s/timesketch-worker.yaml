@@ -13,7 +13,7 @@ spec:
   template:
     metadata:
       annotations:
-        prometheus.io/port: "9200"
+        prometheus.io/port: "9090"
         prometheus.io/scrape: "true"
       labels:
         app: timesketch-worker
