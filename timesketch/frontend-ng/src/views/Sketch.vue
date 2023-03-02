@@ -24,16 +24,16 @@ limitations under the License.
           <v-img src="/dist/timesketch-color.png" max-height="25" max-width="25" contain></v-img>
         </router-link>
       </v-avatar>
-      <span v-if="!hasTimelines" style="font-size: 1.1em">{{ sketch.name }} </span>
+      <span v-show="!showLeftPanel && !loadingSketch" class="mr-1" style="font-size: 1.1em">{{ sketch.name }} </span>
 
       <v-btn icon v-show="!showLeftPanel && !loadingSketch" @click="toggleLeftPanel" class="ml-n1">
         <v-icon>mdi-menu</v-icon>
       </v-btn>
 
-      <div v-if="activeContext.question" class="ml-2">
-        <strong>{{ activeContext.question.display_name }}</strong>
-      </div>
-
+      <v-btn v-show="currentRouteName !== 'Explore'" :to="{ name: 'Explore', params: { sketchId: sketchId } }" color="primary" small text class="ml-3">
+        <v-icon small left>mdi-arrow-left</v-icon>
+        back to explore
+      </v-btn>
       <v-spacer></v-spacer>
       <v-btn small depressed v-on:click="switchUI"> Use the old UI </v-btn>
 
@@ -227,6 +227,7 @@ limitations under the License.
           <ts-tags></ts-tags>
           <ts-search-templates></ts-search-templates>
           <ts-sigma-rules></ts-sigma-rules>
+          <ts-intelligence></ts-intelligence>
         </v-tab-item>
         <v-tab-item :transition="false">
           <ts-scenario v-for="scenario in activeScenarios" :key="scenario.id" :scenario="scenario"></ts-scenario>
@@ -254,8 +255,7 @@ limitations under the License.
         </v-tab-item>
       </v-tabs-items>
     </v-navigation-drawer>
-
-    <router-view v-if="sketch.status && hasTimelines"></router-view>
+    <router-view v-if="sketch.status && hasTimelines" @setTitle="(title) => (this.title = title)"></router-view>
   </div>
 </template>
 
@@ -268,6 +268,7 @@ import TsDataTypes from '../components/LeftPanel/DataTypes'
 import TsTags from '../components/LeftPanel/Tags'
 import TsSearchTemplates from '../components/LeftPanel/SearchTemplates'
 import TsSigmaRules from '../components/LeftPanel/SigmaRules'
+import TsIntelligence from '../components/LeftPanel/ThreatIntel'
 import TsUploadTimelineForm from '../components/UploadForm'
 import TsShareCard from '../components/ShareCard'
 import TsRenameSketch from '../components/RenameSketch'
@@ -284,12 +285,13 @@ export default {
     TsUploadTimelineForm,
     TsShareCard,
     TsRenameSketch,
+    TsIntelligence,
   },
   data() {
     return {
       showSketchMetadata: false,
       navigationDrawer: {
-        width: 370,
+        width: 400,
       },
       selectedScenario: null,
       scenarioDialog: false,
@@ -331,9 +333,6 @@ export default {
     scenarioTemplates() {
       return this.$store.state.scenarioTemplates
     },
-    activeContext() {
-      return this.$store.state.activeContext
-    },
     currentUser() {
       return this.$store.state.currentUser
     },
@@ -351,6 +350,9 @@ export default {
     },
     hasTimelines() {
       return this.sketch.timelines && this.sketch.timelines.length
+    },
+    currentRouteName() {
+      return this.$route.name
     },
   },
   methods: {
