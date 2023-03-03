@@ -298,7 +298,7 @@ export default {
     return {
       showSketchMetadata: false,
       navigationDrawer: {
-        width: 370,
+        width: 400,
       },
       selectedScenario: null,
       scenarioDialog: false,
@@ -416,7 +416,7 @@ export default {
     toggleLeftPanel() {
       this.showLeftPanel = !this.showLeftPanel
       if (this.showLeftPanel) {
-        this.navigationDrawer.width = 370
+        this.navigationDrawer.width = 400
       } else {
         this.navigationDrawer.width = 0
       }
