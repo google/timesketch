@@ -844,6 +844,8 @@ export default {
         let resetPagination = newQueryRequest['resetPagination'] || true
         let incognito = newQueryRequest['incognito'] || false
         let parent = newQueryRequest['parent'] || false
+        // Set additional fields. This is used when loading filter from a saved search.
+        this.selectedFields = this.currentQueryFilter.fields
         this.search(resetPagination, incognito, parent)
       },
       deep: true,
@@ -854,6 +856,8 @@ export default {
       this.currentQueryString = this.queryRequest.queryString
       this.currentQueryFilter = { ...this.queryRequest.queryFilter }
       this.currentQueryDsl = { ...this.queryRequest.queryDsl }
+      // Set additional fields. This is used when loading filter from a saved search.
+      this.selectedFields = this.currentQueryFilter.fields
       this.search()
     }
   },
