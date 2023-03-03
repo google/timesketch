@@ -227,7 +227,7 @@ limitations under the License.
         <v-tab v-for="item in leftPanelTabItems" :key="item"> {{ item }} </v-tab>
       </v-tabs>
       <v-divider></v-divider>
-      <v-tabs-items v-model="leftPanelTab" class="pt-4">
+      <v-tabs-items v-model="leftPanelTab">
         <v-tab-item :transition="false">
           <ts-saved-searches v-if="meta.views"></ts-saved-searches>
           <ts-data-types></ts-data-types>
@@ -421,7 +421,7 @@ export default {
     toggleLeftPanel() {
       this.showLeftPanel = !this.showLeftPanel
       if (this.showLeftPanel) {
-        this.navigationDrawer.width = 370
+        this.navigationDrawer.width = 400
       } else {
         this.navigationDrawer.width = 0
       }
