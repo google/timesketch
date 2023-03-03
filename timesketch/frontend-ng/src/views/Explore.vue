@@ -281,10 +281,9 @@ limitations under the License.
       </v-card>
     </v-dialog>
 
-    <!-- some invisible buttons that are used to trigger the shortcuts -->
+    <!-- one button is needed to activate the Shortcuthelp -->
 
     <button v-shortkey="['ctrl', 'h']" @shortkey="toggleshowShortcutHelp()"></button>
-    <button></button>
 
     <!-- Eventlist -->
     <v-card
