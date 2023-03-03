@@ -260,31 +260,31 @@ limitations under the License.
       </div>
     </div>
 
-    <!-- rounded vue element that goes over everything showing the shortcut help -->
-    <v-overlay width="auto" v-model="dialog" v-if="showShortcutHelp">
+    <!-- write a v-dialog here that shows the shortcut help -->
+    <v-dialog v-model="showShortcutHelp" width="700" style="overflow: visible">
       <v-card width="700" style="overflow: visible" hover="true">
-        <v-container :class="[$vuetify.theme.dark ? 'dark-highlight' : 'light-highlight']">
-          <v-row>Control N: Next page</v-row>
-          <v-row>Control P: Previous page</v-row>
-          <v-row>Control T: Toggle Search History</v-row>
-          <v-row>Control H: Toggle Shortcut help</v-row>
-          <v-row>Control M: Add manual event</v-row>
-          <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn text color="primary" @click="toggleshowShortcutHelp()"> Close </v-btn>
-          </v-card-actions>
-        </v-container>
+        <v-card-title> Keyboard Shortcut help </v-card-title>
+
+        <v-card-text v-shortkey="['ctrl', 'n']" @shortkey="nextpage()"> Control N: Next page </v-card-text>
+
+        <v-card-text v-shortkey="['ctrl', 'p']" @shortkey="previouspage()"> Control P: Previous page </v-card-text>
+
+        <v-card-text v-shortkey="['ctrl', 't']" @shortkey="toggleSearchHistory()">
+          Control T: Toggle Search History
+        </v-card-text>
+        <v-card-text> Control H: Toggle Shortcut help </v-card-text>
+        <v-card-text v-shortkey="['ctrl', 'm']" @shortkey="addEventBtn()"> Control M: Add manual event </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn text color="primary" @click="toggleshowShortcutHelp">Close</v-btn>
+        </v-card-actions>
       </v-card>
-    </v-overlay>
+    </v-dialog>
 
     <!-- some invisible buttons that are used to trigger the shortcuts -->
-    <button v-shortkey="['ctrl', 'n']" @shortkey="nextpage()"></button>
-    <button v-shortkey="['ctrl', 'arrowright']" @shortkey="nextpage()"></button>
-    <button v-shortkey="['ctrl', 'p']" @shortkey="previouspage()"></button>
-    <button v-shortkey="['ctrl', 'arrowleft']" @shortkey="nextpage()"></button>
-    <button v-shortkey="['ctrl', 't']" @shortkey="toggleSearchHistory()"></button>
+
     <button v-shortkey="['ctrl', 'h']" @shortkey="toggleshowShortcutHelp()"></button>
-    <button v-shortkey="['ctrl', 'm']" @shortkey="addManualEvent()"></button>
+    <button></button>
 
     <!-- Eventlist -->
     <v-card
