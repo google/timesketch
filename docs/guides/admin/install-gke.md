@@ -1,21 +1,15 @@
 # Install Timesketch GKE
 
-## Introduction
+This guide will help you install Timesketch to [Google Kubernetes Engine (GKE)](https://cloud.google.com/kubernetes-engine).
 
-In this guide, you will learn how to deploy Timesketch using
-[Google Kubernetes Engine (GKE)](https://cloud.google.com/kubernetes-engine).
+It will help you provision a new GKE Cluster, a GCP Filestore instance to centrally store logs and output to, and then deploy Timesketch to the cluster which can be accessed through port-forwarding the service to your local machine.
 
-At the end of this guide, you will have a newly provisioned GKE cluster, a GCP
-Filestore instance to store logs and output, and lastly Timesketch locally
-running within the cluster.
-
-### Prerequisites
+**You will need**
 
 - A Google Cloud Account and a project to work from
 - The ability to create GCP resources
-- `gcloud` and `kubectl` locally installed
 
-### This guide will setup the following services in GKE
+**This guide setup the following services in GKE**
 
 - Timesketch web/api server
 - Timesketch importer/analysis worker
@@ -24,11 +18,23 @@ running within the cluster.
 - Redis key-value database (for worker processes)
 - Optionally deployable ingress for external access
 
+**NOTE**: Given that Timesketch K8s is a relatively new feature, this guide will set up a single node OpenSearch cluster until further testing is done. Please be aware of any performance dips this may cause as you scale out Timesketch.
+
 ## Deployment
 
-This section covers the steps for deploying a Timesketch GKE environment.
+Please follow these steps to deploy Timesketch to GKE.
 
-### 1. Download the helper script
+### 1. Install Google Cloud SDK
+
+Follow the official installation instructions to [install the gcloud CLI](https://cloud.google.com/sdk/docs/install).
+
+Then make sure to install kubectl as well
+
+```shell
+gcloud components install kubectl
+```
+
+### 2. Start the installation
 
 We have created a helper script to get you started with all necessary configuration.
 Download the script here:
@@ -43,13 +49,13 @@ chmod 755 deploy_timesketch_gke.sh
 Once downloaded, review the deployment script's cluster configuration section
 and update the default values if necessary based on cluster requirements.
 
-### 2. Authenticate to GCP project
+#### Authenticate to GCP project
 
 ```shell
 gcloud config set project <PROJECT-ID>
 ```
 
-### 3. Run the deployment script
+#### Run the deployment script
 
 ```shell
  ./deploy_timesketch_gke.sh
@@ -57,25 +63,25 @@ gcloud config set project <PROJECT-ID>
 
 **Note this script will create a new GKE cluster and GCP Filestore instance then deploy Timesketch to the cluster.**
 
-#### Using existing cluster or filestore instance
+Congrats, you have successfully deployed Timesketch into GKE!
+
+#### Optional: using existing cluster or filestore instance
 
 To use a pre existing cluster or filestore instance you can specify the
 `--no-cluster` and/or `--no-filestore` flags. Please ensure you have the cluster
 or filestore instance created prior and the default cluster values updated to the
 correct names.
 
-Congrats, you have successfully deployed Timesketch into GKE!
-
 ### Networks listed
 
 The following ports will be exposed as part of deployment:
 
-- 5000 - Timesketch API and Web UI
-- 9200 - Opensearch
-- 5432 - Postgres
-- 6379 - Redis
+- 5000 - The Timesketch API and Web UI service
+- 9200 - The Opensearch service
+- 5432 - The Postgres service
+- 6379 - The Redis service
 
-## Connecting to Timesketch
+### Connecting to Timesketch
 
 - Connect to the cluster:
 
@@ -94,3 +100,25 @@ kubectl port-forward service/timesketch-web 5000:5000
 ```
 http://localhost:5000
 ```
+
+#### Interacting with the Timesketch CLI
+
+- Connect to the cluster:
+
+```
+gcloud container clusters get-credentials <CLUSTER_NAME> --zone <ZONE> --project <PROJECT_NAME>
+```
+
+- Get a list of running pods:
+
+```
+kubectl get pods
+```
+
+- Identify the pod named `timesketch-web-*` and exec into it via:
+
+```
+kubectl exec --stdin --tty [CONTAINER-NAME] -- bash
+```
+
+- You may now interact with Timesketch via `tsctl`
