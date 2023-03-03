@@ -477,7 +477,10 @@ export default {
       this.currentGraph = this.saveAsName
       this.showGraph = true
       ApiClient.saveGraph(this.sketch.id, this.saveAsName, elements)
-        .then((response) => {})
+        .then((response) => {
+          this.$store.dispatch('updateSavedGraphs', this.sketch.id)
+          this.$router.push({ name: 'Graph', query: { graph: response.data.objects[0].id } })
+        })
         .catch((e) => {
           this.errorSnackBar('Unable to save graph')
           console.error(e)
@@ -490,7 +493,9 @@ export default {
       this.cy.elements().unselect()
 
       // This is the collection of matched nodes/edges
-      let selected = this.cy.elements().filter((ele) => ele.data('label').toLowerCase().includes(this.filterString))
+      let selected = this.cy
+        .elements()
+        .filter((ele) => ele.data('label').toLowerCase().includes(this.filterString.toLowerCase()))
 
       // Build the neighborhood
       this.showNeighborhood(selected)
@@ -642,6 +647,10 @@ export default {
     if (this.params.pluginName) {
       this.buildGraph(this.params.pluginName)
     }
+  },
+  beforeDestroy() {
+    EventBus.$off('setGraphPlugin')
+    EventBus.$off('setSavedGraph')
   },
   watch: {
     '$vuetify.theme.dark'() {

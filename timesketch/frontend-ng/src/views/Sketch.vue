@@ -30,7 +30,14 @@ limitations under the License.
         <v-icon>mdi-menu</v-icon>
       </v-btn>
 
-      <v-btn v-show="currentRouteName !== 'Explore'" :to="{ name: 'Explore', params: { sketchId: sketchId } }" color="primary" small text class="ml-3">
+      <v-btn
+        v-show="currentRouteName !== 'Explore'"
+        :to="{ name: 'Explore', params: { sketchId: sketchId } }"
+        color="primary"
+        small
+        text
+        class="ml-3"
+      >
         <v-icon small left>mdi-arrow-left</v-icon>
         back to explore
       </v-btn>
@@ -314,6 +321,8 @@ export default {
       this.$store.dispatch('updateSearchHistory', this.sketchId)
       this.$store.dispatch('updateScenarios', this.sketchId)
       this.$store.dispatch('updateScenarioTemplates', this.sketchId)
+      this.$store.dispatch('updateSavedGraphs', this.sketchId)
+      this.$store.dispatch('updateGraphPlugins')
       this.$store.dispatch('updateContextLinks')
       this.loadingSketch = false
       this.showLeftPanel = true

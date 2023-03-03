@@ -35,40 +35,38 @@ limitations under the License.
     <v-expand-transition>
       <div v-show="expanded">
         <!-- Saved graphs -->
-        <v-row
-          no-gutters
+        <router-link
           v-for="graph in savedGraphs"
           :key="graph.id"
-          class="pa-2 pl-5"
-          :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+          :to="{ name: 'Graph', query: { graph: graph.id } }"
+          style="cursor: pointer; font-size: 0.9em; text-decoration: none"
         >
-          <router-link
-            :to="{ name: 'Graph', query: { graph: graph.id } }"
-            style="cursor: pointer; font-size: 0.9em; text-decoration: none"
+          <v-row
+            no-gutters
+            @click="setSavedGraph(graph.id)"
+            class="pa-2 pl-5"
+            :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
           >
-            <span :class="$vuetify.theme.dark ? 'dark-font' : 'light-font'" @click="setSavedGraph(graph.id)">{{
-              graph.name
-            }}</span>
-          </router-link>
-        </v-row>
+            <span :class="$vuetify.theme.dark ? 'dark-font' : 'light-font'">{{ graph.name }}</span>
+          </v-row>
+        </router-link>
 
         <!-- Graph plugins -->
-        <v-row
-          no-gutters
+        <router-link
           v-for="graph in graphs"
           :key="graph.name"
-          class="pa-2 pl-5"
-          :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+          :to="{ name: 'Graph', query: { plugin: graph.name } }"
+          style="cursor: pointer; font-size: 0.9em; text-decoration: none"
         >
-          <router-link
-            :to="{ name: 'Graph', query: { plugin: graph.name } }"
-            style="cursor: pointer; font-size: 0.9em; text-decoration: none"
+          <v-row
+            no-gutters
+            @click="setGraphPlugin(graph)"
+            class="pa-2 pl-5"
+            :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
           >
-            <span :class="$vuetify.theme.dark ? 'dark-font' : 'light-font'" @click="setGraphPlugin(graph)">{{
-              graph.display_name
-            }}</span>
-          </router-link>
-        </v-row>
+            <span :class="$vuetify.theme.dark ? 'dark-font' : 'light-font'">{{ graph.display_name }}</span>
+          </v-row>
+        </router-link>
       </div>
     </v-expand-transition>
     <v-divider></v-divider>
@@ -76,7 +74,6 @@ limitations under the License.
 </template>
 
 <script>
-import ApiClient from '../../utils/RestApiClient'
 import EventBus from '../../main'
 
 export default {
@@ -84,8 +81,6 @@ export default {
   data: function () {
     return {
       expanded: false,
-      graphs: [],
-      savedGraphs: [],
     }
   },
   computed: {
@@ -95,6 +90,12 @@ export default {
     meta() {
       return this.$store.state.meta
     },
+    graphs() {
+      return this.$store.state.graphPlugins
+    },
+    savedGraphs() {
+      return this.$store.state.savedGraphs
+    },
   },
   methods: {
     setGraphPlugin(graph) {
@@ -103,22 +104,6 @@ export default {
     setSavedGraph(graphId) {
       EventBus.$emit('setSavedGraph', graphId)
     },
-  },
-  created() {
-    ApiClient.getGraphPluginList()
-      .then((response) => {
-        this.graphs = response.data
-      })
-      .catch((e) => {
-        console.error(e)
-      })
-    ApiClient.getSavedGraphList(this.sketch.id)
-      .then((response) => {
-        this.savedGraphs = response.data.objects[0]
-      })
-      .catch((e) => {
-        console.error(e)
-      })
   },
 }
 </script>
