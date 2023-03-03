@@ -245,9 +245,9 @@ limitations under the License.
     </v-card>
 
     <!-- DFIQ context -->
-    <div class="mt-3 mx-3">
-      <div :class="[$vuetify.theme.dark ? 'dark-info-card' : 'light-info-card']" v-if="activeContext.question">
-        <v-toolbar dense flat color="transparent">
+    <div class="mt-3 mx-3" :class="[$vuetify.theme.dark ? 'dark-info-card' : 'light-info-card']">
+      <div v-if="activeContext.question">
+        <v-toolbar dense flat>
           <h4>{{ activeContext.question.display_name }}</h4>
           <v-spacer></v-spacer>
           <v-btn small icon @click="$store.dispatch('clearActiveContext')" class="mr-1">
@@ -261,17 +261,27 @@ limitations under the License.
     </div>
 
     <!-- rounded vue element that goes over everything showing the shortcut help -->
-    <v-overlay v-if="showShortcutHelp" width="auto" v-model="dialog">
-      <template
-        >Control N: Next page<br />
-        Control P: Previous page<br />
-        Control T: Toggle Search History<br />
-        Control H: Toggle Shortcut help<br />
-      </template>
+    <v-overlay width="auto" v-model="dialog" v-if="showShortcutHelp">
+      <v-card width="700" style="overflow: visible" hover="true">
+        <v-container :class="[$vuetify.theme.dark ? 'dark-highlight' : 'light-highlight']">
+          <v-row>Control N: Next page</v-row>
+          <v-row>Control P: Previous page</v-row>
+          <v-row>Control T: Toggle Search History</v-row>
+          <v-row>Control H: Toggle Shortcut help</v-row>
+          <v-row>Control M: Add manual event</v-row>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn text color="primary" @click="toggleshowShortcutHelp()"> Close </v-btn>
+          </v-card-actions>
+        </v-container>
+      </v-card>
     </v-overlay>
+
     <!-- some invisible buttons that are used to trigger the shortcuts -->
     <button v-shortkey="['ctrl', 'n']" @shortkey="nextpage()"></button>
+    <button v-shortkey="['ctrl', 'arrowright']" @shortkey="nextpage()"></button>
     <button v-shortkey="['ctrl', 'p']" @shortkey="previouspage()"></button>
+    <button v-shortkey="['ctrl', 'arrowleft']" @shortkey="nextpage()"></button>
     <button v-shortkey="['ctrl', 't']" @shortkey="toggleSearchHistory()"></button>
     <button v-shortkey="['ctrl', 'h']" @shortkey="toggleshowShortcutHelp()"></button>
     <button v-shortkey="['ctrl', 'm']" @shortkey="addManualEvent()"></button>
