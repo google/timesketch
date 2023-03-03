@@ -9,14 +9,13 @@ It will help you provision a new GKE Cluster, a GCP Filestore instance to centra
 - A Google Cloud Account and a project to work from
 - The ability to create GCP resources
 
-**This guide setup the following services in GKE**
+**This guide will expose the following ports and services internally in GKE**
 
-- Timesketch web/api server
-- Timesketch importer/analysis worker
-- PostgreSQL database
-- OpenSearch single-node cluster
-- Redis key-value database (for worker processes)
-- Optionally deployable ingress for external access
+- 5000 - Timesketch web/api server
+- 5000 - Timesketch importer/analysis worker
+- 5432 - PostgreSQL database
+- 9200 - OpenSearch single-node cluster
+- 6379 - Redis key-value database (for worker processes)
 
 **NOTE**: Given that Timesketch K8s is a relatively new feature, this guide will set up a single node OpenSearch cluster until further testing is done. Please be aware of any performance dips this may cause as you scale out Timesketch.
 
@@ -44,6 +43,8 @@ curl -s -O https://raw.githubusercontent.com/google/timesketch/master/contrib/de
 chmod 755 deploy_timesketch_gke.sh
 ```
 
+**Note by default this script will provision a new GKE cluster and Filestore instance then deploy Timesketch to the cluster.**
+
 #### Review default cluster values
 
 Once downloaded, review the deployment script's cluster configuration section
@@ -61,25 +62,14 @@ gcloud config set project <PROJECT-ID>
  ./deploy_timesketch_gke.sh
 ```
 
-**Note this script will create a new GKE cluster and GCP Filestore instance then deploy Timesketch to the cluster.**
+**Congrats, you have successfully deployed Timesketch into GKE!**
 
-Congrats, you have successfully deployed Timesketch into GKE!
-
-#### Optional: using existing cluster or filestore instance
+#### Using existing cluster or filestore instance (optional)
 
 To use a pre existing cluster or filestore instance you can specify the
 `--no-cluster` and/or `--no-filestore` flags. Please ensure you have the cluster
 or filestore instance created prior and the default cluster values updated to the
 correct names.
-
-### Networks listed
-
-The following ports will be exposed as part of deployment:
-
-- 5000 - The Timesketch API and Web UI service
-- 9200 - The Opensearch service
-- 5432 - The Postgres service
-- 6379 - The Redis service
 
 ### Connecting to Timesketch
 
