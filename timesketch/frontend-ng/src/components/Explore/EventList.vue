@@ -407,7 +407,7 @@ export default {
   props: {
     queryRequest: {
       type: Object,
-      default: {},
+      default: () => {},
     },
     itemsPerPage: {
       type: Number,
