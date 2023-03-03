@@ -529,7 +529,7 @@ export default {
         }
       })
 
-      // Extend the column headers from position 3 (after the actions column).\
+      // Extend the column headers from position 3 (after the actions column)
       baseHeaders.splice(3, 0, ...extraHeaders)
 
       // Add timeline name based on configuration
