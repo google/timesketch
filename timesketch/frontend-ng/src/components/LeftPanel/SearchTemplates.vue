@@ -16,11 +16,12 @@ limitations under the License.
 <template>
   <div>
     <div class="pa-4" flat :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
-      <span style="cursor: pointer" @click="expanded = !expanded"
-        ><v-icon left>mdi-text-box-search-outline</v-icon> Search Templates (<small
-          ><strong>{{ searchtemplates.length }}</strong></small
-        >)</span
-      >
+      <span style="cursor: pointer" @click="expanded = !expanded">
+        <v-icon left>mdi-text-box-search-outline</v-icon> Search Templates
+      </span>
+      <span class="float-right mr-2">
+        <small><strong>{{ searchtemplates.length }}</strong></small>
+      </span>
     </div>
     <v-expand-transition>
       <div v-show="expanded && searchtemplates.length">
