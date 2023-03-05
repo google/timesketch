@@ -15,10 +15,7 @@ limitations under the License.
 -->
 <template>
   <div>
-    <div
-      v-if="(!eventList.objects.length && !searchInProgress) || !this.currentQueryFilter.indices.length"
-      class="ml-3"
-    >
+    <div v-if="!eventList.objects.length && !searchInProgress" class="ml-3">
       <p>
         Your search <span v-if="currentQueryString">"{{ currentQueryString }}"</span> did not match any events.
       </p>
@@ -27,7 +24,7 @@ limitations under the License.
       <li>Try more general keywords.</li>
       <li>Try fewer keywords.</li>
     </div>
-    <div v-if="eventList.objects.length || (searchInProgress && this.currentQueryFilter.indices.length)">
+    <div v-if="eventList.objects.length || searchInProgress">
       <v-data-table
         v-model="selectedEvents"
         :headers="headers"
@@ -41,7 +38,7 @@ limitations under the License.
         show-select
         disable-filtering
         disable-sort
-        :hide-default-footer="totalHits < 11"
+        :hide-default-footer="totalHits < 11 || disablePagination"
         :expanded="expandedRows"
         :dense="displayOptions.isCompact"
         fixed-header
@@ -53,7 +50,7 @@ limitations under the License.
                 <small>{{ fromEvent }}-{{ toEvent }} of {{ totalHits }} events ({{ totalTime }}s)</small>
               </span>
 
-              <v-dialog v-model="saveSearchMenu" width="500">
+              <v-dialog v-model="saveSearchMenu" v-if="!disableSaveSearch" width="500">
                 <template v-slot:activator="{ on, attrs }">
                   <v-btn icon v-bind="attrs" v-on="on">
                     <v-icon>mdi-content-save-outline</v-icon>
@@ -78,11 +75,11 @@ limitations under the License.
                 </v-card>
               </v-dialog>
 
-              <v-btn icon @click="showHistogram = !showHistogram">
+              <v-btn icon @click="showHistogram = !showHistogram" v-if="!disableHistogram">
                 <v-icon>mdi-chart-bar</v-icon>
               </v-btn>
 
-              <v-dialog v-model="columnDialog" max-width="500px" scrollable>
+              <v-dialog v-model="columnDialog" v-if="!disableColumns" max-width="500px" scrollable>
                 <template v-slot:activator="{ on, attrs }">
                   <v-btn icon v-bind="attrs" v-on="on">
                     <v-icon>mdi-view-column-outline</v-icon>
@@ -128,7 +125,7 @@ limitations under the License.
                 </v-card>
               </v-dialog>
 
-              <v-menu offset-y :close-on-content-click="false">
+              <v-menu v-if="!disableSettings" offset-y :close-on-content-click="false">
                 <template v-slot:activator="{ on, attrs }">
                   <v-btn icon v-bind="attrs" v-on="on">
                     <v-icon>mdi-dots-horizontal</v-icon>
@@ -223,7 +220,7 @@ limitations under the License.
             <v-spacer></v-spacer>
 
             <v-data-footer
-              v-if="totalHits > 11"
+              v-if="totalHits > 11 && !disablePagination"
               :pagination="pagination"
               :options="options"
               @update:options="updateOptions"
@@ -234,24 +231,22 @@ limitations under the License.
               class="mr-n3"
             ></v-data-footer>
           </v-toolbar>
-          <div class="pa-2 mx-2 mt-2 mb-4">
-            <v-card v-if="showHistogram" outlined>
-              <v-toolbar dense flat color="transparent">
-                <v-spacer></v-spacer>
-                <v-btn v-if="timeFilterChips.length" text color="primary" @click="removeChips(timeFilterChips)">
-                  reset
-                </v-btn>
 
-                <v-btn icon @click="showHistogram = false">
-                  <v-icon>mdi-close</v-icon>
-                </v-btn>
-              </v-toolbar>
-              <ts-bar-chart
-                :chart-data="eventList.meta.count_over_time"
-                @addChip="addChipFromHistogram($event)"
-              ></ts-bar-chart>
-            </v-card>
-          </div>
+          <v-card v-if="showHistogram" outlined class="my-3">
+            <v-toolbar dense flat color="transparent">
+              <v-spacer></v-spacer>
+              <v-btn v-if="timeFilterChips.length" text color="primary" @click="removeChips(timeFilterChips)">
+                reset
+              </v-btn>
+              <v-btn icon @click="showHistogram = false">
+                <v-icon>mdi-close</v-icon>
+              </v-btn>
+            </v-toolbar>
+            <ts-bar-chart
+              :chart-data="eventList.meta.count_over_time"
+              @addChip="addChipFromHistogram($event)"
+            ></ts-bar-chart>
+          </v-card>
         </template>
 
         <!-- Event details -->
@@ -381,7 +376,7 @@ const defaultQueryFilter = () => {
     from: 0,
     terminate_after: 40,
     size: 40,
-    indices: [],
+    indices: ['_all'],
     order: 'asc',
     chips: [],
   }
@@ -412,6 +407,26 @@ export default {
     itemsPerPage: {
       type: Number,
       default: 40,
+    },
+    disableSaveSearch: {
+      type: Boolean,
+      default: false,
+    },
+    disableHistogram: {
+      type: Boolean,
+      default: false,
+    },
+    disableColumns: {
+      type: Boolean,
+      default: false,
+    },
+    disableSettings: {
+      type: Boolean,
+      default: false,
+    },
+    disablePagination: {
+      type: Boolean,
+      default: false,
     },
   },
   data() {
@@ -835,12 +850,17 @@ export default {
     },
     queryRequest: {
       handler(newQueryRequest, oldqueryRequest) {
+        // Return early if there is no change to the current request.
         if (newQueryRequest === oldqueryRequest) {
           return
         }
-        this.currentQueryString = newQueryRequest.queryString
-        this.currentQueryFilter = newQueryRequest.queryFilter
-        this.currentQueryDsl = newQueryRequest.queryDsl
+        // Return early if this isn't a new request.
+        if (!newQueryRequest) {
+          return
+        }
+        this.currentQueryString = newQueryRequest.queryString || ''
+        this.currentQueryFilter = newQueryRequest.queryFilter || defaultQueryFilter()
+        this.currentQueryDsl = newQueryRequest.queryDsl || null
         let resetPagination = newQueryRequest['resetPagination'] || true
         let incognito = newQueryRequest['incognito'] || false
         let parent = newQueryRequest['parent'] || false
@@ -856,9 +876,9 @@ export default {
   created() {
     if (Object.keys(this.queryRequest).length) {
       this.currentQueryString = this.queryRequest.queryString
-      this.currentQueryFilter = { ...this.queryRequest.queryFilter }
+      this.currentQueryFilter = { ...this.queryRequest.queryFilter } || defaultQueryFilter()
       this.currentQueryDsl = { ...this.queryRequest.queryDsl }
-      // Set additional fields. This is used when loading filter from a saved search.
+      // Set additional fields when loading filter from a saved search.
       if (this.currentQueryFilter.fields) {
         this.selectedFields = this.currentQueryFilter.fields
       }
