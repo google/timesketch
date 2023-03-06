@@ -26,7 +26,6 @@ limitations under the License.
 
     <v-expand-transition>
       <div v-show="expanded">
-        <v-divider></v-divider>
         <v-row
           no-gutters
           v-for="savedSearch in meta.views"
