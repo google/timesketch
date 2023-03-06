@@ -199,11 +199,6 @@ class OpenSearchDataStore(object):
         Returns:
             OpenSearch query DSL as a dictionary.
         """
-        # Remove any aggregation coming from user supplied Query DSL.
-        # We have no way to display this data in a good way today.
-        if query_dsl.get("aggregations", None):
-            del query_dsl["aggregations"]
-
         if not timeline_ids:
             return query_dsl
 
