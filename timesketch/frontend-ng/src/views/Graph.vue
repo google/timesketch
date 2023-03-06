@@ -187,17 +187,6 @@ import _ from 'lodash'
 
 import TsEventList from '../components/Explore/EventList'
 
-const defaultQueryFilter = () => {
-  return {
-    from: 0,
-    terminate_after: 40,
-    size: 40,
-    indices: ['_all'],
-    order: 'asc',
-    chips: [],
-  }
-}
-
 export default {
   props: ['graphId'],
   components: {
@@ -222,7 +211,14 @@ export default {
       selectedEdgesCount: 0,
       edgeQuery: '',
       maxEvents: 40,
-      queryFilter: defaultQueryFilter(),
+      queryFilter: {
+        from: 0,
+        terminate_after: 40,
+        size: this.maxEvents,
+        indices: ['_all'],
+        order: 'asc',
+        chips: [],
+      },
       saveAsName: '',
       layouts: ['spread', 'dagre', 'circle', 'concentric', 'breadthfirst'],
       layoutName: 'spread',
@@ -369,7 +365,6 @@ export default {
       if (!this.edgeQuery) {
         return
       }
-      this.queryFilter.size = this.maxEvents
       return { queryDsl: this.edgeQuery, queryFilter: this.queryFilter }
     },
   },
