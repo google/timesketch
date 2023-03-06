@@ -168,10 +168,8 @@ limitations under the License.
           <v-card-text :style="{ height: timelineViewHeight + 'vh' }" v-show="!minimizeTimelineView">
             <ts-event-list
               :query-request="queryRequest"
-              :items-per-page="500"
+              :items-per-page="maxEvents"
               disable-save-search
-              disable-histogram
-              disable-pagination
             ></ts-event-list>
           </v-card-text>
         </v-expand-transition>
@@ -188,6 +186,17 @@ import dagre from 'cytoscape-dagre'
 import _ from 'lodash'
 
 import TsEventList from '../components/Explore/EventList'
+
+const defaultQueryFilter = () => {
+  return {
+    from: 0,
+    terminate_after: 40,
+    size: 40,
+    indices: ['_all'],
+    order: 'asc',
+    chips: [],
+  }
+}
 
 export default {
   props: ['graphId'],
@@ -212,7 +221,8 @@ export default {
       elements: [],
       selectedEdgesCount: 0,
       edgeQuery: '',
-      maxEvents: 500,
+      maxEvents: 40,
+      queryFilter: defaultQueryFilter(),
       saveAsName: '',
       layouts: ['spread', 'dagre', 'circle', 'concentric', 'breadthfirst'],
       layoutName: 'spread',
@@ -359,7 +369,8 @@ export default {
       if (!this.edgeQuery) {
         return
       }
-      return { queryDsl: this.edgeQuery }
+      this.queryFilter.size = this.maxEvents
+      return { queryDsl: this.edgeQuery, queryFilter: this.queryFilter }
     },
   },
   methods: {
@@ -580,7 +591,6 @@ export default {
             should: [],
           },
         },
-        size: this.maxEvents,
       }
       neighborhood.forEach((element) => {
         if (element.group() === 'edges') {
