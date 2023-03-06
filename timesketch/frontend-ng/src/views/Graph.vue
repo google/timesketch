@@ -52,7 +52,7 @@ limitations under the License.
               </v-card-text>
               <v-card-actions>
                 <v-spacer></v-spacer>
-                <v-btn color="primary" text @click="saveSearchMenu = false"> Cancel </v-btn>
+                <v-btn color="primary" text @click="saveGraphDialog = false"> Cancel </v-btn>
                 <v-btn color="primary" text @click="saveGraph" :disabled="!saveAsName"> Save </v-btn>
               </v-card-actions>
             </v-card>
