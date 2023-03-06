@@ -233,6 +233,7 @@ limitations under the License.
           <ts-data-types></ts-data-types>
           <ts-tags></ts-tags>
           <ts-search-templates></ts-search-templates>
+          <ts-stories></ts-stories>
           <ts-graphs></ts-graphs>
           <ts-sigma-rules></ts-sigma-rules>
           <ts-intelligence></ts-intelligence>
@@ -278,6 +279,7 @@ import TsSearchTemplates from '../components/LeftPanel/SearchTemplates'
 import TsSigmaRules from '../components/LeftPanel/SigmaRules'
 import TsIntelligence from '../components/LeftPanel/ThreatIntel'
 import TsGraphs from '../components/LeftPanel/Graphs'
+import TsStories from '../components/LeftPanel/Stories'
 import TsUploadTimelineForm from '../components/UploadForm'
 import TsShareCard from '../components/ShareCard'
 import TsRenameSketch from '../components/RenameSketch'
@@ -296,6 +298,7 @@ export default {
     TsRenameSketch,
     TsIntelligence,
     TsGraphs,
+    TsStories,
   },
   data() {
     return {
