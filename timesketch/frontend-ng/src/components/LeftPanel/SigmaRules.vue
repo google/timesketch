@@ -15,7 +15,7 @@ limitations under the License.
 -->
 <template>
   <div>
-    <v-row
+    <div
       no-gutters
       style="cursor: pointer"
       class="pa-4"
@@ -23,23 +23,35 @@ limitations under the License.
       @click="expanded = !expanded"
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
-      <v-col cols="11">
-        <v-icon left>mdi-sigma-lower</v-icon> Sigma Rules (<small
-          ><strong>{{ ruleCount }}</strong></small
-        >)
-      </v-col>
-      <v-col cols="1">
-        <v-btn small icon>
-          <v-icon v-if="expanded" v-on:click="createNewSigmaRule()">mdi-plus</v-icon>
-        </v-btn>
-      </v-col>
-    </v-row>
+      <span>
+        <v-icon left>mdi-sigma-lower</v-icon> Sigma Rules
+      </span>
+      <v-btn
+        v-if="expanded"
+        small
+        color="primary"
+        text
+        class="ml-1"
+        :to="{ name: 'Studio', params: { id: 'new', type: 'sigma' } }"
+        @click.stop=""
+      >
+        <v-icon small left>mdi-plus</v-icon>New Rule
+      </v-btn>
+      <span class="float-right mr-2">
+        <small><strong>{{ ruleCount }}</strong></small>
+      </span>
+    </div>
 
     <v-expand-transition>
       <div v-show="expanded">
-        <v-data-iterator :items="sigmaRules" :items-per-page.sync="itemsPerPage" :search="search">
+        <v-data-iterator v-if="ruleCount <= itemsPerPage" :items="sigmaRules" hide-default-footer>
+          <template v-slot:default="props">
+            <ts-sigma-rule v-for="sigmaRule in props.items" :key="sigmaRule.rule_uuid" :sigma-rule="sigmaRule" />
+          </template>
+        </v-data-iterator>
+        <v-data-iterator v-else :items="sigmaRules" :items-per-page.sync="itemsPerPage" :search="search">
           <template v-slot:header>
-            <v-toolbar flat v-if="ruleCount > itemsPerPage">
+            <v-toolbar flat>
               <v-text-field
                 v-model="search"
                 clearable
@@ -53,8 +65,7 @@ limitations under the License.
           </template>
 
           <template v-slot:default="props">
-            <ts-sigma-rule v-for="sigmaRule in props.items" :key="sigmaRule.rule_uuid" :sigma-rule="sigmaRule">
-            </ts-sigma-rule>
+            <ts-sigma-rule v-for="sigmaRule in props.items" :key="sigmaRule.rule_uuid" :sigma-rule="sigmaRule"/>
           </template>
         </v-data-iterator>
       </div>
@@ -81,19 +92,6 @@ export default {
     }
   },
   methods: {
-    createNewSigmaRule() {
-      // check current router location
-      if (this.$route.params.id === 'new') {
-        return
-      }
-      this.$router.push({
-        name: 'Studio',
-        params: {
-          id: 'new',
-          type: 'sigma',
-        },
-      })
-    },
   },
   computed: {
     sigmaRules() {
