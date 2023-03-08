@@ -15,25 +15,33 @@ limitations under the License.
 -->
 <template>
   <div>
-    <div class="pa-4" flat :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
-      <span style="cursor: pointer" @click="expanded = !expanded">
-        <v-icon left>mdi-auto-fix</v-icon> Analyzer Results (<small
-          ><strong>{{ analyzerResults.length }}</strong></small
-        >)
+    <div
+      no-gutters
+      class="pa-4"
+      style="cursor: pointer"
+      flat
+      @click="expanded = !expanded"
+      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+    >
+      <span>
+        <v-icon left>mdi-auto-fix</v-icon> Analyzer Results
       </span>
       <v-btn
+        v-if="expanded"
         :to="{ name: 'Analyze', params: { sketchId: sketch.id } }"
-        plain
+        small
         color="primary"
-        x-small
-        right
-        absolute
+        left
         text
-        class="mt-1"
-        style="cursor: pointer"
+        class="ml-1"
+        @click.stop=""
       >
         + Run Analyzer
       </v-btn>
+      <span class="float-right mr-2">
+        <small><strong>{{ analyzerResults.length }}</strong></small>
+      </span>
+
     </div>
     <v-expand-transition>
       <div v-if="analyzerResults.length > 0" v-show="expanded">
@@ -41,24 +49,23 @@ limitations under the License.
         <ts-analyser-result></ts-analyser-result>
       </div>
       <div v-else v-show="expanded" class="text-center">
-        <span>No analyzers run, yet.</span>
         <div class="my-6 text-center">
           <v-img
-            class="mx-auto"
+            class="mx-auto mb-2"
             src="/dist/no_analyzer_results.png"
             alt="No analyzer results yet"
             max-width="200"
             contain
           ></v-img>
+          <span>No analyzers run, yet.</span>
         </div>
         <v-btn
-          :to="{ name: 'Analyse', params: { sketchId: sketch.id } }"
+          :to="{ name: 'Analyze', params: { sketchId: sketch.id } }"
           plain
           color="primary"
-          x-small
+          small
           center
           text
-          style="cursor: pointer"
           class="mb-3"
         >
           + Run Analyzer

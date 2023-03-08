@@ -17,9 +17,6 @@ limitations under the License.
   <v-container fluid>
     <!-- Search and Filters -->
     <v-card flat class="pa-3 pt-0 mt-n3" color="transparent">
-      <v-btn :to="{ name: 'Overview', params: { sketchId: sketchId } }" color="primary" plain text>
-        &lt;&lt; back to explore
-      </v-btn>
       <v-divider></v-divider>
       <div>
         <!-- TODO: https://github.com/google/timesketch/issues/2560 -->
