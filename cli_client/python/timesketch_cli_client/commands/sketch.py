@@ -82,7 +82,9 @@ def add_event(ctx, message, date, attributes, timestamp_desc="Timecketh-cli"):
     if attributes:
         attributes = attributes.split(",")
         attributes = [attribute.split("=") for attribute in attributes]
-        attributes = {key: value for key, value in attributes}
+        attributes = {
+            key: value for key, value in attributes
+        }  # pylint: disable=unnecessary-comprehension
     if not attributes:
         attributes = {}
     sketch.add_event(
