@@ -43,7 +43,9 @@ def describe_sketch(ctx):
 @sketch_group.command("create")
 @click.option("--name", required=True, help="Name of the sketch.")
 @click.option(
-    "--description", required=False, help="Description of the sketch (optional)"
+    "--description",
+    required=False,
+    help="Description of the sketch (optional)",
 )
 @click.pass_context
 def create_sketch(ctx, name, description):
@@ -53,3 +55,40 @@ def create_sketch(ctx, name, description):
         description = name
     sketch = api_client.create_sketch(name=name, description=description)
     click.echo(f"Sketch created: {sketch.name}")
+
+
+@sketch_group.command("add_event")
+@click.option("--message", required=True, help="Message of the event.")
+@click.option(
+    "--date",
+    required=True,
+    help="Date of the event (ISO 8601). Example: 2023-03-08T10:59:24+00:00",
+)
+@click.option(
+    "--attributes",
+    required=False,
+    help="Attributes of the event. Example: key1=value1,key2=value2",
+)
+@click.option(
+    "--timestamp_desc",
+    required=False,
+    help="Timestamp description of the event.",
+)
+@click.pass_context
+def add_event(ctx, message, date, attributes, timestamp_desc="Timecketh-cli"):
+    """Add an event to the sketch."""
+    sketch = ctx.obj.sketch
+
+    if attributes:
+        attributes = attributes.split(",")
+        attributes = [attribute.split("=") for attribute in attributes]
+        attributes = {key: value for key, value in attributes}
+    if not attributes:
+        attributes = {}
+    sketch.add_event(
+        message=message,
+        date=date,
+        timestamp_desc=timestamp_desc,
+        attributes=attributes,
+    )
+    click.echo(f"Event added to sketch: {sketch.name}")
