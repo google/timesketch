@@ -24,12 +24,23 @@ limitations under the License.
           <v-img src="/dist/timesketch-color.png" max-height="25" max-width="25" contain></v-img>
         </router-link>
       </v-avatar>
-      <span v-if="!hasTimelines" style="font-size: 1.1em">{{ sketch.name }} </span>
+      <span v-show="!showLeftPanel && !loadingSketch" class="mr-1" style="font-size: 1.1em">{{ sketch.name }} </span>
 
       <v-btn icon v-show="!showLeftPanel && !loadingSketch" @click="toggleLeftPanel" class="ml-n1">
         <v-icon>mdi-menu</v-icon>
       </v-btn>
 
+      <v-btn
+        v-show="currentRouteName !== 'Explore'"
+        :to="{ name: 'Explore', params: { sketchId: sketchId } }"
+        color="primary"
+        small
+        text
+        class="ml-3"
+      >
+        <v-icon small left>mdi-arrow-left</v-icon>
+        back to explore
+      </v-btn>
       <v-spacer></v-spacer>
       <v-btn small depressed v-on:click="switchUI"> Use the old UI </v-btn>
 
@@ -216,12 +227,13 @@ limitations under the License.
         <v-tab v-for="item in leftPanelTabItems" :key="item"> {{ item }} </v-tab>
       </v-tabs>
       <v-divider></v-divider>
-      <v-tabs-items v-model="leftPanelTab" class="pt-4">
+      <v-tabs-items v-model="leftPanelTab">
         <v-tab-item :transition="false">
           <ts-saved-searches v-if="meta.views"></ts-saved-searches>
           <ts-data-types></ts-data-types>
           <ts-tags></ts-tags>
           <ts-search-templates></ts-search-templates>
+          <ts-graphs></ts-graphs>
           <ts-sigma-rules></ts-sigma-rules>
           <ts-intelligence></ts-intelligence>
         </v-tab-item>
@@ -265,6 +277,7 @@ import TsTags from '../components/LeftPanel/Tags'
 import TsSearchTemplates from '../components/LeftPanel/SearchTemplates'
 import TsSigmaRules from '../components/LeftPanel/SigmaRules'
 import TsIntelligence from '../components/LeftPanel/ThreatIntel'
+import TsGraphs from '../components/LeftPanel/Graphs'
 import TsUploadTimelineForm from '../components/UploadForm'
 import TsShareCard from '../components/ShareCard'
 import TsRenameSketch from '../components/RenameSketch'
@@ -282,12 +295,13 @@ export default {
     TsShareCard,
     TsRenameSketch,
     TsIntelligence,
+    TsGraphs,
   },
   data() {
     return {
       showSketchMetadata: false,
       navigationDrawer: {
-        width: 370,
+        width: 400,
       },
       selectedScenario: null,
       scenarioDialog: false,
@@ -307,6 +321,8 @@ export default {
       this.$store.dispatch('updateSearchHistory', this.sketchId)
       this.$store.dispatch('updateScenarios', this.sketchId)
       this.$store.dispatch('updateScenarioTemplates', this.sketchId)
+      this.$store.dispatch('updateSavedGraphs', this.sketchId)
+      this.$store.dispatch('updateGraphPlugins')
       this.$store.dispatch('updateContextLinks')
       this.loadingSketch = false
       this.showLeftPanel = true
@@ -346,6 +362,9 @@ export default {
     },
     hasTimelines() {
       return this.sketch.timelines && this.sketch.timelines.length
+    },
+    currentRouteName() {
+      return this.$route.name
     },
   },
   methods: {
@@ -402,7 +421,7 @@ export default {
     toggleLeftPanel() {
       this.showLeftPanel = !this.showLeftPanel
       if (this.showLeftPanel) {
-        this.navigationDrawer.width = 370
+        this.navigationDrawer.width = 400
       } else {
         this.navigationDrawer.width = 0
       }
