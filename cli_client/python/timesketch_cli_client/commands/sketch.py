@@ -71,26 +71,27 @@ def create_sketch(ctx, name, description):
 )
 @click.option(
     "--timestamp_desc",
-    required=False,
+    required=True,
     help="Timestamp description of the event.",
 )
 @click.pass_context
-def add_event(ctx, message, date, attributes, timestamp_desc="Timecketh-cli"):
+def add_event(ctx, message, date, attributes, timestamp_desc):
     """Add an event to the sketch."""
     sketch = ctx.obj.sketch
 
     if attributes:
-        attributes = attributes.split(",")
-        attributes = [attribute.split("=") for attribute in attributes]
-        attributes = {
-            key: value for key, value in attributes
-        }  # pylint: disable=unnecessary-comprehension
-    if not attributes:
-        attributes = {}
+        attributes_comma_split = attributes.split(",")
+        attributes_dict = {}
+        for attribute in attributes_comma_split:
+            key, value = attribute.split("=")
+            attributes_dict[key] = value
+    if not attributes_dict:
+        attributes_dict = {}
     sketch.add_event(
         message=message,
         date=date,
         timestamp_desc=timestamp_desc,
-        attributes=attributes,
+        attributes=attributes_dict,
     )
+    # TODO (jaegeral): Add more details to the output (e.g. event id, which is currently not passed back by the API).
     click.echo(f"Event added to sketch: {sketch.name}")
