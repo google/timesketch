@@ -43,3 +43,14 @@ class TimelinesTest(unittest.TestCase):
         runner = CliRunner()
         result = runner.invoke(timelines_group, ["describe", "1"], obj=self.ctx)
         assert result.output == "Name: test\nIndex: test\n"
+
+    def test_add_event_tag(self):
+        """Test to add a tag to an event."""
+        runner = CliRunner()
+        result = runner.invoke(
+            timelines_group,
+            ["event-add-tag", "--event_id", "1", "--tag", "test", "1"],
+            obj=self.ctx,
+        )
+        print(result.output)
+        assert "Tag test added to event 1" in result.output
