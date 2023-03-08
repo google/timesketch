@@ -93,5 +93,6 @@ def add_event(ctx, message, date, attributes, timestamp_desc):
         timestamp_desc=timestamp_desc,
         attributes=attributes_dict,
     )
-    # TODO (jaegeral): Add more details to the output (e.g. event id, which is currently not passed back by the API).
+    # TODO (jaegeral): Add more details to the output (e.g. event id, which
+    # is currently not passed back by the API).
     click.echo(f"Event added to sketch: {sketch.name}")
