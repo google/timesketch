@@ -52,3 +52,27 @@ def describe_timeline(ctx, timeline_id):
         return
     click.echo(f"Name: {timeline.name}")
     click.echo(f"Index: {timeline.index_name}")
+
+
+@timelines_group.command("event-add-tag")
+@click.argument("timeline_id", type=int, required=False)
+@click.option("--event_id", required=True, help="ID of the event.")
+@click.option("--tag", required=True, help="Tag to add to the event.")
+@click.pass_context
+def event_add_tag(ctx, timeline_id, event_id, tag):
+    """Add a tag to an event."""
+    sketch = ctx.obj.sketch
+    timeline = sketch.get_timeline(timeline_id=timeline_id)
+    if not timeline:
+        click.echo("No such timeline")
+        return
+    events2 = [
+        {
+            "_id": event_id,
+            "_index": timeline.index_name,
+            "_type": "generic_event",
+        }
+    ]
+    tags = [tag]
+    sketch.label_events(events2, tags)
+    click.echo(f"Tag {tag} added to event {event_id}")
