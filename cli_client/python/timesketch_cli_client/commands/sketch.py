@@ -78,15 +78,14 @@ def create_sketch(ctx, name, description):
 def add_event(ctx, message, date, attributes, timestamp_desc):
     """Add an event to the sketch."""
     sketch = ctx.obj.sketch
-
+    attributes_dict = {}
     if attributes:
         attributes_comma_split = attributes.split(",")
-        attributes_dict = {}
+
         for attribute in attributes_comma_split:
             key, value = attribute.split("=")
             attributes_dict[key] = value
-    if not attributes_dict:
-        attributes_dict = {}
+
     sketch.add_event(
         message=message,
         date=date,
