@@ -92,3 +92,36 @@ def event_add_tags(ctx, timeline_id, event_id, tags, output):
         click.echo(return_value)
     else:
         click.echo(f"Tags {tags_list} added to event {event_id}")
+
+
+@timelines_group.command("event-add-comment")
+@click.argument("timeline_id", type=int, required=False)
+@click.option("--event_id", required=True, help="ID of the event.")
+@click.option(
+    "--comment",
+    required=True,
+    help="Comment to add to the event.",
+)
+@click.option(
+    "--output-format",
+    "output",
+    required=False,
+    help="Set output format (overrides global setting)",
+)
+@click.pass_context
+def event_add_comment(ctx, timeline_id, event_id, comment, output):
+    """Add comment to an event."""
+    sketch = ctx.obj.sketch
+    timeline = sketch.get_timeline(timeline_id=timeline_id)
+    if not timeline:
+        click.echo("No such timeline")
+        return
+    return_value = sketch.comment_event(event_id, timeline.index_name, comment)
+    click.echo(return_value)
+    if return_value is None:
+        click.echo("No tags where added to the event.")
+        return
+    if output == "json":
+        click.echo(return_value)
+    else:
+        click.echo(f"Comment {comment} added to event {event_id}")

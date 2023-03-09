@@ -96,3 +96,59 @@ class TimelinesTest(unittest.TestCase):
             in result.output
         )
         # pylint: enable=line-too-long
+
+    def test_add_event_comment_json(self):
+        """Test to add a comment to an event."""
+        runner = CliRunner()
+        result = runner.invoke(
+            timelines_group,
+            [
+                "event-add-comment",
+                "--event_id",
+                "1",
+                "--comment",
+                "test foobar",
+                "1",
+                "--output-format",
+                "json",
+            ],
+            obj=self.ctx,
+        )
+        expected_output = {
+            "meta": {},
+            "objects": [
+                [
+                    {
+                        "comment": "comment1 foobar",
+                        "created_at": "2023-03-09T13:37:58.395855",
+                        "id": 1,
+                        "updated_at": "2023-03-09T13:37:58.395855",
+                        "user": {
+                            "active": True,
+                            "admin": True,
+                            "groups": [],
+                            "username": "testuser",
+                        },
+                    }
+                ]
+            ],
+        }
+        assert str(expected_output) in result.output
+
+    def test_add_event_comment(self):
+        """Test to add a comment to an event and output as json."""
+        runner = CliRunner()
+        result = runner.invoke(
+            timelines_group,
+            [
+                "event-add-comment",
+                "--event_id",
+                "1",
+                "--comment",
+                "test foobar",
+                "1",
+            ],
+            obj=self.ctx,
+        )
+        expected_output = "Comment test foobar added to event 1"
+        assert expected_output in result.output
