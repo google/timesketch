@@ -22,13 +22,14 @@ from tabulate import tabulate
 from timesketch_api_client import search
 
 
-def format_output(search_obj, output_format, show_headers):
+def format_output(search_obj, output_format, show_headers, verbose):
     """Format search result output.
 
     Args:
         search_obj: API Search object.
         output_format: The format to use.
         show_headers: Boolean indicating if header row should be displayed.
+        verbose: Boolean indicating if verbose output should be displayed.
 
     Returns:
         Search results in the requested output format.
@@ -40,17 +41,20 @@ def format_output(search_obj, output_format, show_headers):
     if "label" not in search_obj.return_fields:
         dataframe = dataframe.drop(columns=["label"], errors="ignore")
 
-    # Remove internal OpenSeearch columns
-    dataframe = dataframe.drop(
-        columns=["__ts_timeline_id", "_id", "_index", "_source", "_type"],
-        errors="ignore",
-    )
+    if not verbose:
+        # Remove internal OpenSearch columns
+        dataframe = dataframe.drop(
+            columns=["__ts_timeline_id", "_id", "_index", "_source", "_type"],
+            errors="ignore",
+        )
 
     result = None
     if output_format == "text":
         result = dataframe.to_string(index=False, header=show_headers)
     elif output_format == "csv":
         result = dataframe.to_csv(index=False, header=show_headers)
+    elif output_format == "json":
+        result = dataframe.to_json(orient="records", lines=True)
     elif output_format == "tabular":
         if show_headers:
             result = tabulate(
@@ -63,7 +67,7 @@ def format_output(search_obj, output_format, show_headers):
 
 
 def describe_query(search_obj):
-    """Print details of a search query nd filter."""
+    """Print details of a search query and filter."""
     filter_pretty = json.dumps(search_obj.query_filter, indent=2)
     click.echo(f"Query string: {search_obj.query_string}")
     click.echo(f"Return fields: {search_obj.return_fields}")
@@ -72,10 +76,16 @@ def describe_query(search_obj):
 
 @click.command("search")
 @click.option(
-    "--query", "-q", default="*", help="Search query in OpenSearch query string format"
+    "--query",
+    "-q",
+    default="*",
+    help="Search query in OpenSearch query string format",
 )
 @click.option(
-    "--time", "times", multiple=True, help="Datetime filter (e.g. 2020-01-01T12:00)"
+    "--time",
+    "times",
+    multiple=True,
+    help="Datetime filter (e.g. 2020-01-01T12:00)",
 )
 @click.option(
     "--time-range",
@@ -91,16 +101,26 @@ def describe_query(search_obj):
     help="Toggle header information (default is to show)",
 )
 @click.option(
-    "--output-format", "output", help="Set output format (overrides global setting)"
+    "--output-format",
+    "output",
+    help="Set output format (overrides global setting). This query supports JSON as output format.",
 )
 @click.option(
-    "--return-fields", "return_fields", default="", help="What event fields to show"
+    "--return-fields",
+    "return_fields",
+    default="",
+    help="What event fields to show",
 )
 @click.option(
-    "--order", default="asc", help="Order the output (asc/desc) based on the time field"
+    "--order",
+    default="asc",
+    help="Order the output (asc/desc) based on the time field",
 )
 @click.option(
-    "--limit", type=int, default=40, help="Limit amount of events to show (default: 40)"
+    "--limit",
+    type=int,
+    default=40,
+    help="Limit amount of events to show (default: 40)",
 )
 @click.option("--saved-search", type=int, help="Query and filter from saved search")
 @click.option(
@@ -108,6 +128,12 @@ def describe_query(search_obj):
     is_flag=True,
     default=False,
     help="Show the query and filter then exit",
+)
+@click.option(
+    "--verbose",
+    is_flag=True,
+    default=False,
+    help="Show all columns including Timesketch internal ones",
 )
 @click.pass_context
 # pylint: disable=too-many-arguments
@@ -124,6 +150,7 @@ def search_group(
     limit,
     saved_search,
     describe,
+    verbose,
 ):
     """Search and explore."""
     sketch = ctx.obj.sketch
@@ -143,7 +170,10 @@ def search_group(
         if describe:
             describe_query(search_obj)
             return
-        click.echo(format_output(search_obj, output_format, header), nl=new_line)
+        click.echo(
+            format_output(search_obj, output_format, header, verbose),
+            nl=new_line,
+        )
         return
 
     # Construct the query from flags.
@@ -201,7 +231,7 @@ def search_group(
         describe_query(search_obj)
         return
 
-    click.echo(format_output(search_obj, output_format, header), nl=new_line)
+    click.echo(format_output(search_obj, output_format, header, verbose), nl=new_line)
 
 
 @click.group("saved-searches")
