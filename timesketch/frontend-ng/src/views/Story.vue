@@ -156,9 +156,10 @@ limitations under the License.
 
 <script>
 import ApiClient from '../utils/RestApiClient'
-import { marked } from 'marked'
-import DOMPurify from 'dompurify'
 import EventBus from '../main'
+import DOMPurify from 'dompurify'
+import { marked } from 'marked'
+import _ from 'lodash'
 
 import TsEventList from '../components/Explore/EventList'
 
