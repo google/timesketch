@@ -66,7 +66,7 @@ def event_add_tag(ctx, timeline_id, event_id, tag):
     if not timeline:
         click.echo("No such timeline")
         return
-    events2 = [
+    events = [
         {
             "_id": event_id,
             "_index": timeline.index_name,
@@ -74,5 +74,5 @@ def event_add_tag(ctx, timeline_id, event_id, tag):
         }
     ]
     tags = [tag]
-    sketch.label_events(events2, tags)
+    sketch.label_events(events, tags)
     click.echo(f"Tag {tag} added to event {event_id}")
