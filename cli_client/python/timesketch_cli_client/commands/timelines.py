@@ -54,13 +54,23 @@ def describe_timeline(ctx, timeline_id):
     click.echo(f"Index: {timeline.index_name}")
 
 
-@timelines_group.command("event-add-tag")
+@timelines_group.command("event-add-tags")
 @click.argument("timeline_id", type=int, required=False)
 @click.option("--event_id", required=True, help="ID of the event.")
-@click.option("--tag", required=True, help="Tag to add to the event.")
+@click.option(
+    "--tags",
+    required=True,
+    help="Comma seperated list of Tags to add to the event.",
+)
+@click.option(
+    "--output-format",
+    "output",
+    required=False,
+    help="Set output format (overrides global setting)",
+)
 @click.pass_context
-def event_add_tag(ctx, timeline_id, event_id, tag):
-    """Add a tag to an event."""
+def event_add_tags(ctx, timeline_id, event_id, tags, output):
+    """Add tags to an event."""
     sketch = ctx.obj.sketch
     timeline = sketch.get_timeline(timeline_id=timeline_id)
     if not timeline:
@@ -73,6 +83,9 @@ def event_add_tag(ctx, timeline_id, event_id, tag):
             "_type": "generic_event",
         }
     ]
-    tags = [tag]
-    sketch.label_events(events, tags)
-    click.echo(f"Tag {tag} added to event {event_id}")
+    tags_list = tags.split(",")
+    return_value = sketch.tag_events(events, tags_list)
+    if output == "json":
+        click.echo(return_value)
+    else:
+        click.echo(f"Tags {tags_list} added to event {event_id}")
