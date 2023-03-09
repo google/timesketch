@@ -92,3 +92,45 @@ def event_add_tags(ctx, timeline_id, event_id, tags, output):
         click.echo(return_value)
     else:
         click.echo(f"Tags {tags_list} added to event {event_id}")
+
+
+@timelines_group.command("event-add-labels")
+@click.argument("timeline_id", type=int, required=False)
+@click.option("--event_id", required=True, help="ID of the event.")
+@click.option(
+    "--labels",
+    required=True,
+    help="Comma seperated list of Labels to add to the event.",
+)
+@click.option(
+    "--output-format",
+    "output",
+    required=False,
+    help="Set output format (overrides global setting)",
+)
+@click.pass_context
+def event_add_labels(ctx, timeline_id, event_id, labels, output):
+    """Add labels to an event."""
+    sketch = ctx.obj.sketch
+    timeline = sketch.get_timeline(timeline_id=timeline_id)
+    if not timeline:
+        click.echo("No such timeline")
+        return
+    events = [
+        {
+            "_id": event_id,
+            "_index": timeline.index_name,
+            "_type": "generic_event",
+        }
+    ]
+    labels_list = labels.split(",")
+    # label_events only takes one label per call, so we need to loop
+    for label in labels_list:
+        return_value = sketch.label_events(events, label)
+        if return_value is None:
+            click.echo("No labels where added to the event.")
+            return
+        if output == "json":
+            click.echo(return_value)
+        else:
+            click.echo(f"Tags {labels_list} added to event {event_id}")
