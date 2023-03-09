@@ -95,11 +95,14 @@ def mock_response(*args, **kwargs):
     }
 
     add_event_attribute_data = {
-        "events_processed_by_api": 1,
-        "number_of_events_passed_to_api": 1,
-        "number_of_events_with_added_tags": 1,
-        "tags_applied": 2,
-        "total_number_of_events_sent_by_client": 2,
+        "meta": {
+            "attributes_added": 2,
+            "chunks_per_index": {"1": 1},
+            "error_count": 0,
+            "errors": [],
+            "events_modified": 2,
+        },
+        "objects": [],
     }
 
     add_event_tag_data = {
