@@ -374,6 +374,8 @@ export default {
     toggleTheme: function () {
       this.$vuetify.theme.dark = !this.$vuetify.theme.dark
       localStorage.setItem('isDarkTheme', this.$vuetify.theme.dark.toString())
+      let element = document.body
+      element.dataset.theme = this.$vuetify.theme.dark ? 'dark' : 'light'
     },
     switchUI: function () {
       window.location.href = window.location.href.replace('/v2/', '/')

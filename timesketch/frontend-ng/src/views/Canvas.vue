@@ -30,7 +30,7 @@ limitations under the License.
       <graph></graph>
     </div>
     <div v-show="currentRouteName === 'Story'">
-      <story></story>
+      <story :story-id="storyId"></story>
     </div>
   </div>
 </template>
@@ -42,6 +42,7 @@ import Graph from './Graph'
 import Story from './Story'
 
 export default {
+  props: ['sketchId', 'storyId'],
   components: {
     Explore,
     ThreatIntel,
@@ -49,7 +50,6 @@ export default {
     Story,
   },
 
-  Storyprops: ['sketchId'],
   computed: {
     currentRouteName() {
       return this.$route.name
