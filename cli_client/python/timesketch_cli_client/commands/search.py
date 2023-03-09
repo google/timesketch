@@ -103,7 +103,7 @@ def describe_query(search_obj):
 @click.option(
     "--output-format",
     "output",
-    help="Set output format (overrides global setting). This query supports JSON as output format.",
+    help="Set output format [csv,tabular,text,json] (overrides global setting).",
 )
 @click.option(
     "--return-fields",
