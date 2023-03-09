@@ -85,6 +85,9 @@ def event_add_tags(ctx, timeline_id, event_id, tags, output):
     ]
     tags_list = tags.split(",")
     return_value = sketch.tag_events(events, tags_list)
+    if return_value is None:
+        click.echo("No tags where added to the event.")
+        return
     if output == "json":
         click.echo(return_value)
     else:

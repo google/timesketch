@@ -49,8 +49,44 @@ class TimelinesTest(unittest.TestCase):
         runner = CliRunner()
         result = runner.invoke(
             timelines_group,
-            ["event-add-tag", "--event_id", "1", "--tag", "test", "1"],
+            ["event-add-tags", "--event_id", "1", "--tags", "test", "1"],
             obj=self.ctx,
         )
-        print(result.output)
-        assert "Tag test added to event 1" in result.output
+        assert "Tags ['test'] added to event 1" in result.output
+
+    def test_add_event_tags(self):
+        """Test to add multiple tags to an event."""
+        runner = CliRunner()
+        result = runner.invoke(
+            timelines_group,
+            [
+                "event-add-tags",
+                "--event_id",
+                "1",
+                "--tags",
+                "test1,test2",
+                "1",
+            ],
+            obj=self.ctx,
+        )
+
+        assert "Tags ['test1', 'test2'] added to event 1" in result.output
+
+    def test_add_event_tags_json(self):
+        """Test to add multiple tags to an event and output as json."""
+        runner = CliRunner()
+        result = runner.invoke(
+            timelines_group,
+            [
+                "event-add-tags",
+                "--event_id",
+                "1",
+                "--tags",
+                "test1,test2",
+                "1",
+                "--output-format",
+                "json",
+            ],
+            obj=self.ctx,
+        )
+        assert "{'total_number_of_events_sent_by_client': 1}" in result.output
