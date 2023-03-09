@@ -24,6 +24,10 @@ limitations under the License.
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
       <span> <v-icon left>mdi-book-open-outline</v-icon> Stories </span>
+      <v-btn v-if="expanded" small color="primary" text class="ml-1" @click="createStory()" @click.stop="">
+        <v-icon small left>mdi-plus</v-icon>New Story
+      </v-btn>
+
       <v-spacer></v-spacer>
       <span class="mr-2">
         <small
@@ -51,6 +55,8 @@ limitations under the License.
 </template>
 
 <script>
+import ApiClient from '../../utils/RestApiClient'
+
 export default {
   props: [],
   data: function () {
@@ -66,6 +72,18 @@ export default {
       return this.$store.state.meta
     },
   },
-  methods: {},
+  methods: {
+    createStory() {
+      let title = 'Untitled story'
+      let content = ''
+      ApiClient.createStory(title, content, this.sketch.id)
+        .then((response) => {
+          let newStoryId = response.data.objects[0].id
+          this.$router.push({ name: 'Story', params: { storyId: newStoryId } })
+          this.$store.dispatch('updateSketch', this.sketch.id)
+        })
+        .catch((e) => {})
+    },
+  },
 }
 </script>

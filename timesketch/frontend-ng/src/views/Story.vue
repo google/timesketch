@@ -15,13 +15,33 @@ limitations under the License.
 -->
 <template>
   <v-container fluid>
-    <h3 class="mx-7">{{ title }}</h3>
+    <v-dialog v-model="renameStoryDialog" width="600">
+      <v-card class="pa-4">
+        <h3>Rename story</h3>
+        <br />
+        <v-text-field outlined dense autofocus v-model="titleDraft" @focus="$event.target.select()"> </v-text-field>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" text @click="renameStoryDialog = false"> Cancel </v-btn>
+          <v-btn color="primary" depressed @click="rename()"> Save </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <v-hover v-slot="{ hover }">
+      <v-toolbar dense flat class="mt-n3" color="transparent">
+        <v-toolbar-title class="mx-3">{{ title }}</v-toolbar-title>
+        <v-btn v-if="hover" icon small @click="renameStoryDialog = true">
+          <v-icon small>mdi-pencil</v-icon>
+        </v-btn>
+      </v-toolbar>
+    </v-hover>
     <div class="mx-3 pa-4">
       <div v-for="(block, index) in blocks" :key="index">
         <!-- Text block -->
         <div v-if="!block.componentName">
           <v-hover v-slot="{ hover }">
-            <div @dblclick="editTextBlock(block)" @keydown.esc="block.edit = false">
+            <div @dblclick="editTextBlock(block)" @keydown.esc="block.edit = false" style="min-height: 30px">
               <v-card outlined class="float-right px-2" v-if="hover && !block.edit">
                 <v-btn icon small @click="editTextBlock(block)"><v-icon small>mdi-pencil</v-icon></v-btn>
                 <v-btn icon small @click="deleteBlock(index)"><v-icon small>mdi-trash-can-outline</v-icon></v-btn>
@@ -31,7 +51,7 @@ limitations under the License.
               <div class="markdown-body" v-if="!block.edit" v-html="toHtml(block.content)"></div>
 
               <!-- Edit markdown content. Work will be stored as draft until saved. -->
-              <v-card v-if="block.edit" flat outlined>
+              <v-card v-if="block.edit" flat outlined class="mb-2">
                 <v-toolbar flat dense>
                   <v-tabs v-model="block.currentTab">
                     <v-tab>Edit</v-tab>
@@ -99,7 +119,7 @@ limitations under the License.
 
         <!-- Add controls to add new blocks to the page -->
         <v-hover v-slot="{ hover }">
-          <div class="mb-2 mt-2">
+          <div class="mb-2">
             <div :class="{ hidden: !hover && !block.isActive && hasContent }">
               <!-- Text block -->
               <v-btn v-if="hasContent" class="mr-2" rounded outlined small @click="addTextBlock(index)">
@@ -165,7 +185,9 @@ export default {
   data: function () {
     return {
       title: '',
+      titleDraft: '',
       blocks: [],
+      renameStoryDialog: false,
     }
   },
   computed: {
@@ -193,8 +215,8 @@ export default {
       ApiClient.getStory(this.sketch.id, this.storyId)
         .then((response) => {
           this.title = response.data.objects[0].title
+          this.titleDraft = this.title
           let content = response.data.objects[0].content
-          let blocks
           if (content === '[]') {
             this.blocks = [defaultBlock()]
           } else {
@@ -212,10 +234,10 @@ export default {
     },
     formatBlocks(blocks) {
       // Format block to support backwards compatibility for old style blocks
-      let componentCompatibility = componentCompatibility()
+      let compat = componentCompatibility()
       blocks.forEach((block) => {
-        if (block.componentName in componentCompatibility) {
-          block.componentName = componentCompatibility[block.componentName]
+        if (block.componentName in compat) {
+          block.componentName = compat[block.componentName]
         }
       })
       return blocks
@@ -284,8 +306,15 @@ export default {
       })
       let content = JSON.stringify(this.blocks)
       ApiClient.updateStory(this.title, content, this.sketch.id, this.storyId)
-        .then((response) => {})
+        .then((response) => {
+          this.$store.dispatch('updateSketch', this.sketch.id)
+        })
         .catch((e) => {})
+    },
+    rename() {
+      this.renameStoryDialog = false
+      this.title = this.titleDraft
+      this.save()
     },
   },
   mounted() {
