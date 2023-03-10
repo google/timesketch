@@ -27,12 +27,7 @@ def list_sketches(ctx):
     """List all sketches."""
     api_client = ctx.obj.api
     for sketch in api_client.list_sketches():
-        # print the json object if output format is json
-        if ctx.obj.output_format == "json":
-            click.echo(api_client.list_sketches(as_).to_json())
-            continue
-        else:
-            click.echo(f"{sketch.id} {sketch.name}")
+        click.echo(f"{sketch.id} {sketch.name}")
 
 
 @sketch_group.command("describe")
