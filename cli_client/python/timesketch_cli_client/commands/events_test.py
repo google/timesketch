@@ -33,7 +33,7 @@ class EventsTest(unittest.TestCase):
         self.ctx = test_lib.get_cli_context()
 
     def test_add_event_wrong_param(self):
-        """Test to add a tag to an event."""
+        """Test to add a tag to an event with wrong parameters."""
         runner = CliRunner()
         result = runner.invoke(
             events_group,
