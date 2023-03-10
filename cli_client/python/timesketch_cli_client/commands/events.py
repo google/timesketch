@@ -54,7 +54,7 @@ def annotate(ctx, timeline_id, event_id, tag, comment, output):
         output = ctx.obj.output_format
     timeline = sketch.get_timeline(timeline_id=timeline_id)
     if not timeline:
-        click.echo("No such timeline")
+        click.echo("No such timeline.")
         return
 
     if not tag and not comment:
