@@ -27,11 +27,11 @@ def events_group():
 @click.option("--timeline-id", type=int, required=True)
 @click.option("--event-id", required=True, help="ID of the event.")
 @click.option(
-    "--tags",
+    "--tag",
     required=False,
     help="Comma seperated list of Tags to add to the event.",
 )
-@click.option("--comments", required=False, help="Comment to add to the event.")
+@click.option("--comment", required=False, help="Comment to add to the event.")
 @click.option(
     "--output-format",
     "output",
@@ -39,12 +39,12 @@ def events_group():
     help="Set output format (overrides global setting)",
 )
 @click.pass_context
-def annotate(ctx, timeline_id, event_id, tags, comments, output):
+def annotate(ctx, timeline_id, event_id, tag, comment, output):
     """Annotate to an event.
 
-    This can be used to add tags and comments to an event.
+    This can be used to add tags and comment to an event.
 
-    If neither tags or comments are specified, the command will return the
+    If neither tag or comment are specified, the command will return the
     current annotations for the event.
     """
     sketch = ctx.obj.sketch
@@ -64,13 +64,13 @@ def annotate(ctx, timeline_id, event_id, tags, comments, output):
         }
     ]
 
-    if comments:
-        comment_list = comments.split(",")
+    if comment:
+        comment_list = comment.split(",")
         for comment in comment_list:
             sketch.comment_event(event_id, timeline.index_name, comment)
 
-    if tags:
-        tags_list = tags.split(",")
+    if tag:
+        tags_list = tag.split(",")
         sketch.tag_events(events, tags_list)
 
     return_value = sketch.get_event(event_id, timeline.index_name)

@@ -37,7 +37,7 @@ class EventsTest(unittest.TestCase):
         runner = CliRunner()
         result = runner.invoke(
             events_group,
-            ["annotate", "--event_id", "1", "--tags", "test", "1"],
+            ["annotate", "--event_id", "1", "--tag", "test", "1"],
             obj=self.ctx,
         )
         assert (
@@ -50,7 +50,7 @@ class EventsTest(unittest.TestCase):
         runner = CliRunner()
         result = runner.invoke(
             events_group,
-            ["annotate", "--event-id", "1", "--tags", "test", "1"],
+            ["annotate", "--event-id", "1", "--tag", "test", "1"],
             obj=self.ctx,
         )
         assert "Error: Missing option '--timeline-id'." in result.output
@@ -64,7 +64,7 @@ class EventsTest(unittest.TestCase):
                 "annotate",
                 "--event-id",
                 "1",
-                "--comment",
+                "--comments",
                 "test foobar",
                 "--timeline-id",
                 "1",
@@ -72,5 +72,5 @@ class EventsTest(unittest.TestCase):
             obj=self.ctx,
         )
 
-        expected_output = "No such option: --comment Did you mean --comments?"
+        expected_output = "No such option: --comments Did you mean --comment?"
         assert expected_output in result.output
