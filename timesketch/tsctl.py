@@ -183,6 +183,7 @@ def list_sketches():
     """List all sketches."""
     sketches = Sketch.query.all()
     for sketch in sketches:
+        assert isinstance(sketch, Sketch)
         status = sketch.get_status.status
         if status == "deleted":
             continue
@@ -327,6 +328,10 @@ def import_sigma_rules(path):
     """Import sigma rules from filesystem path."""
     file_paths = set()
     supported_file_types = [".yml", ".yaml"]
+
+    if os.path.isfile(path):
+        file_paths.add(path)
+
     for root, _, files in os.walk(path):
         for file in files:
             file_extension = pathlib.Path(file.lower()).suffix
