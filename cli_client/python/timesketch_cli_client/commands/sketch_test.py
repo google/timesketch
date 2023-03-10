@@ -47,7 +47,7 @@ class SketchTest(unittest.TestCase):
     def test_failed_add_event(self):
         """Test to add an event to a sketch with an error."""
         runner = CliRunner()
-        result = runner.invoke(sketch_group, ["add_event"], obj=self.ctx)
+        result = runner.invoke(sketch_group, ["add-event"], obj=self.ctx)
         assert "Error: Missing option '--message'" in result.output
 
     def test_add_event(self):
@@ -56,12 +56,12 @@ class SketchTest(unittest.TestCase):
         result = runner.invoke(
             sketch_group,
             [
-                "add_event",
+                "add-event",
                 "--message",
                 "test message",
                 "--date",
                 "2023-03-04T11:31:12",
-                "--timestamp_desc",
+                "--timestamp-desc",
                 "test",
             ],
             obj=self.ctx,

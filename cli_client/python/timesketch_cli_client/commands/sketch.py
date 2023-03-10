@@ -57,7 +57,7 @@ def create_sketch(ctx, name, description):
     click.echo(f"Sketch created: {sketch.name}")
 
 
-@sketch_group.command("add_event")
+@sketch_group.command("add-event")
 @click.option("--message", required=True, help="Message of the event.")
 @click.option(
     "--date",
@@ -70,7 +70,7 @@ def create_sketch(ctx, name, description):
     help="Attributes of the event. Example: key1=value1,key2=value2",
 )
 @click.option(
-    "--timestamp_desc",
+    "--timestamp-desc",
     required=True,
     help="Timestamp description of the event.",
 )
@@ -94,4 +94,5 @@ def add_event(ctx, message, date, attributes, timestamp_desc):
     )
     # TODO (jaegeral): Add more details to the output (e.g. event id, which
     # is currently not passed back by the API).
+    # TODO (jaegeral): Respect user output preferences
     click.echo(f"Event added to sketch: {sketch.name}")
