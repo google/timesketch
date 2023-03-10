@@ -57,7 +57,7 @@ def annotate(ctx, timeline_id, event_id, tag, comment, output):
         click.echo("No such timeline")
         return
 
-    if not tag or not comment:
+    if not tag and not comment:
         click.echo("No tag or comment specified.")
         return
 
