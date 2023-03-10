@@ -32,6 +32,7 @@ def events_group():
     help="Comma seperated list of Tags to add to the event.",
 )
 @click.option("--comment", required=False, help="Comment to add to the event.")
+# TODO(jaegeral): Make this part of the root command as we do with sketch-id
 @click.option(
     "--output-format",
     "output",
@@ -56,6 +57,10 @@ def annotate(ctx, timeline_id, event_id, tag, comment, output):
         click.echo("No such timeline")
         return
 
+    if not tag or not comment:
+        click.echo("No tag or comment specified.")
+        return
+
     events = [
         {
             "_id": event_id,
@@ -66,8 +71,8 @@ def annotate(ctx, timeline_id, event_id, tag, comment, output):
 
     if comment:
         comment_list = comment.split(",")
-        for comment in comment_list:
-            sketch.comment_event(event_id, timeline.index_name, comment)
+        for single_comment in comment_list:
+            sketch.comment_event(event_id, timeline.index_name, single_comment)
 
     if tag:
         tags_list = tag.split(",")
