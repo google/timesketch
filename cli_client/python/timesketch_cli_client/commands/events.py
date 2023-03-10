@@ -78,10 +78,16 @@ def annotate(ctx, timeline_id, event_id, tag, comment, output):
         tags_list = tag.split(",")
         sketch.tag_events(events, tags_list)
 
-    return_value = sketch.get_event(event_id, timeline.index_name)
+    try:
+        return_value = sketch.get_event(event_id, timeline.index_name)
+        if return_value is None:
+            click.echo("No such event")
+            sys.exit(1)
+    except KeyError:
+        click.echo("No such event")
+        sys.exit(1)
 
     if output == "json":
         click.echo(return_value)
     else:
         click.echo(yaml.dump(return_value))
-    sys.exit(0)

@@ -74,3 +74,70 @@ class EventsTest(unittest.TestCase):
 
         expected_output = "No such option: --comments Did you mean --comment?"
         assert expected_output in result.output
+
+    def test_add_event_tag(self):
+        """Test to add a tag to an event."""
+        runner = CliRunner()
+        result = runner.invoke(
+            events_group,
+            [
+                "annotate",
+                "--event-id",
+                "1",
+                "--timeline-id",
+                "1",
+                "--tag",
+                "test",
+                "--output-format",
+                "json",
+            ],
+            obj=self.ctx,
+        )
+        breakpoint()
+        print(result.output)
+        print(result.exception)
+        print(result.exit_code)
+        assert "['test']" in result.output
+
+    # todo: Fix the remaining tests here
+
+    def test_add_event_tags(self):
+        """Test to add multiple tags to an event."""
+        runner = CliRunner()
+        result = runner.invoke(
+            events_group,
+            [
+                "annotate",
+                "--event-id",
+                "1",
+                "--tag",
+                "test1,test2",
+                "--timeline-id",
+                "1",
+            ],
+            obj=self.ctx,
+        )
+
+        assert 0 is result.exit_code
+
+    def test_add_event_tags_json(self):
+        """Test to add multiple tags to an event and output as json."""
+        runner = CliRunner()
+        result = runner.invoke(
+            events_group,
+            [
+                "annotate",
+                "--event-id",
+                "1",
+                "--tag",
+                "test1,test2",
+                "--timeline-id",
+                "1",
+                "--output-format",
+                "json",
+            ],
+            obj=self.ctx,
+        )
+
+        assert "No such event" in result.output
+        assert 1 is result.exit_code
