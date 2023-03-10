@@ -13,8 +13,8 @@
 # limitations under the License.
 """Commands for timelines."""
 
-import click
 import sys
+import click
 import yaml
 
 
