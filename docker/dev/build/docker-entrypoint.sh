@@ -73,6 +73,14 @@ if [ "$1" = 'timesketch' ]; then
   # Add web user
   tsctl create-user --password "${TIMESKETCH_USER}" "${TIMESKETCH_USER}"
 
+  # Add Sigma rules
+  git clone https://github.com/SigmaHQ/sigma /usr/local/src/sigma
+  # for each line in sigma_rules.txt execute the command
+  for line in $(cat sigma_rules.txt); do
+    tsctl import-sigma-rules $line
+  done
+
+  # Wrap up things
   echo "Timesketch development server is ready!"
 
   # Sleep forever to keep the container running
