@@ -43,7 +43,7 @@ def events_group():
 def annotate(ctx, timeline_id, event_id, tag, comment, output):
     """Annotate to an event.
 
-    This can be used to add tags and comment to an event.
+    This can be used to add tags and comments to an event.
 
     If neither tag or comment are specified, the command will return the
     current annotations for the event.
