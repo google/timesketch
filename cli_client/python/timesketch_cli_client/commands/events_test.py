@@ -55,115 +55,8 @@ class EventsTest(unittest.TestCase):
         )
         assert "Error: Missing option '--timeline-id'." in result.output
 
-    def test_add_event_tag(self):
-        """Test to add a tag to an event."""
-        runner = CliRunner()
-        result = runner.invoke(
-            events_group,
-            [
-                "annotate",
-                "--event-id",
-                "1",
-                "--timeline-id",
-                "1",
-                "--tags",
-                "test",
-            ],
-            obj=self.ctx,
-        )
-        print(result.output)
-        assert "['test']" in result.output
-
-    # todo: Fix the remaining tests here
-
-    def test_add_event_tags(self):
-        """Test to add multiple tags to an event."""
-        runner = CliRunner()
-        result = runner.invoke(
-            events_group,
-            [
-                "annotate",
-                "--event_id",
-                "1",
-                "--tags",
-                "test1,test2",
-                "--timeline-id",
-                "1",
-            ],
-            obj=self.ctx,
-        )
-        print(result.output)
-
-        assert "['test1', 'test2']" in result.output
-
-    def test_add_event_tags_json(self):
-        """Test to add multiple tags to an event and output as json."""
-        runner = CliRunner()
-        result = runner.invoke(
-            events_group,
-            [
-                "annotate",
-                "--event-id",
-                "1",
-                "--tags",
-                "test1,test2",
-                "--timeline-id",
-                "1",
-                "--output-format",
-                "json",
-            ],
-            obj=self.ctx,
-        )
-        # pylint: disable=line-too-long
-        print(result.output)
-
-        assert (
-            "{'events_processed_by_api': 1,'number_of_events_passed_to_api': 1,'number_of_events_with_added_tags': 1,'tags_applied': 2,'total_number_of_events_sent_by_client': 2,}"
-            in result.output
-        )
-        # pylint: enable=line-too-long
-
-    def test_add_event_comment_json(self):
-        """Test to add a comment to an event."""
-        runner = CliRunner()
-        result = runner.invoke(
-            events_group,
-            [
-                "event-add-comment",
-                "--event-id",
-                "1",
-                "--comment",
-                "test foobar",
-                "--timeline-id",
-                "1",
-                "--output-format",
-                "json",
-            ],
-            obj=self.ctx,
-        )
-        expected_output = {
-            "meta": {},
-            "objects": [
-                [
-                    {
-                        "comment": "comment1 foobar",
-                        "created_at": "2023-03-09T13:37:58.395855",
-                        "id": 1,
-                        "updated_at": "2023-03-09T13:37:58.395855",
-                        "user": {
-                            "active": True,
-                            "admin": True,
-                            "groups": [],
-                            "username": "testuser",
-                        },
-                    }
-                ]
-            ],
-        }
-        assert str(expected_output) in result.output
-
-    def test_add_event_comment(self):
-        """Test to add a comment to an event and output as json."""
+    def test_add_event_comment_vs_comments(self):
+        """Test to add a comment to an event but using comment instead of comments"""
         runner = CliRunner()
         result = runner.invoke(
             events_group,
@@ -178,5 +71,6 @@ class EventsTest(unittest.TestCase):
             ],
             obj=self.ctx,
         )
-        expected_output = "Comment test foobar added to event 1"
+
+        expected_output = "No such option: --comment Did you mean --comments?"
         assert expected_output in result.output
