@@ -29,6 +29,9 @@ limitations under the License.
     <div v-show="currentRouteName === 'Graph'">
       <graph></graph>
     </div>
+    <div v-show="currentRouteName === 'Story'">
+      <story :sketch-id="sketchId" :story-id="storyId"></story>
+    </div>
   </div>
 </template>
 
@@ -36,14 +39,17 @@ limitations under the License.
 import Explore from './Explore'
 import ThreatIntel from './ThreatIntel'
 import Graph from './Graph'
+import Story from './Story'
 
 export default {
+  props: ['sketchId', 'storyId'],
   components: {
     Explore,
     ThreatIntel,
     Graph,
+    Story,
   },
-  props: ['sketchId'],
+
   computed: {
     currentRouteName() {
       return this.$route.name

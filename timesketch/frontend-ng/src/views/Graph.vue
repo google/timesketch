@@ -603,7 +603,11 @@ export default {
       this.edgeQuery = queryDsl
     },
     resizeCanvas: function () {
-      let canvasHeight = this.$refs.graphContainer.clientHeight - 50
+      // Exit early if the current page is not Graph
+      if (this.$route.name !== 'Graph') {
+        return
+      }
+      let canvasHeight = this.$refs.graphContainer.clientHeight
       let canvasWidth = this.$refs.graphContainer.clientWidth
       let canvas = document.getElementById('cytoscape-div')
       canvas.style.minHeight = canvasHeight + 'px'
@@ -696,9 +700,6 @@ export default {
   watch: {
     '$vuetify.theme.dark'() {
       this.setTheme()
-    },
-    edgeQuery: function (newVal) {
-      // Placeholder until eventlist component is developed.
     },
   },
 }
