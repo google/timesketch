@@ -259,11 +259,20 @@ export default {
       // Backwards compatibility for old style TsViewEventList props
       if (block.componentName === 'TsEventList' || block.componentName === 'TsViewEventList') {
         const EVENTS_PER_PAGE = 10
-        let queryFilter = JSON.parse(block.componentProps.view.filter)
+        let queryString = block.componentProps.view.query
+        let queryFilter = block.componentProps.view.filter
         let queryRequest = {}
+
+        // Make sure there is a query filter present
+        if (!queryFilter || queryFilter === undefined) {
+          queryFilter = {}
+        } else {
+          queryFilter = JSON.parse(queryFilter)
+        }
+
         queryFilter.size = EVENTS_PER_PAGE
         queryFilter.terminate_after = EVENTS_PER_PAGE
-        queryRequest['queryString'] = block.componentProps.view.query
+        queryRequest['queryString'] = queryString
         queryRequest['queryFilter'] = queryFilter
         queryRequest['incognito'] = true
         return {
