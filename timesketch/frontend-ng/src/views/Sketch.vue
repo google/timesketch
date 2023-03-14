@@ -233,8 +233,8 @@ limitations under the License.
           <ts-data-types></ts-data-types>
           <ts-tags></ts-tags>
           <ts-search-templates></ts-search-templates>
-          <ts-stories></ts-stories>
           <ts-graphs></ts-graphs>
+          <ts-stories></ts-stories>
           <ts-sigma-rules></ts-sigma-rules>
           <ts-intelligence></ts-intelligence>
         </v-tab-item>

@@ -30,7 +30,7 @@ limitations under the License.
 
     <v-hover v-slot="{ hover }">
       <v-toolbar dense flat class="mt-n3" color="transparent">
-        <v-toolbar-title class="mx-3">{{ title }}</v-toolbar-title>
+        <v-toolbar-title @dblclick="renameStoryDialog = true" class="mx-3"> {{ title }}</v-toolbar-title>
         <v-btn v-if="hover" icon small @click="renameStoryDialog = true">
           <v-icon small>mdi-pencil</v-icon>
         </v-btn>
@@ -95,25 +95,32 @@ limitations under the License.
         <div v-if="block.componentName">
           <v-hover v-slot="{ hover }">
             <!-- Saved Searches -->
-            <v-card v-if="block.componentName === 'TsEventList'" outlined class="mb-2">
-              <v-toolbar dense flat>
-                <router-link
-                  style="cursor: pointer; text-decoration: none"
-                  :to="{ name: 'Explore', query: { view: block.componentProps.view.id } }"
-                >
-                  <span @click="setActiveView(block.componentProps.view)">{{ block.componentProps.view.name }}</span>
-                </router-link>
+            <div>
+              <v-card v-if="block.componentName === 'TsEventList'" outlined class="mb-2">
+                <v-toolbar dense flat>
+                  <router-link
+                    style="cursor: pointer; text-decoration: none"
+                    :to="{ name: 'Explore', query: { view: block.componentProps.view.id } }"
+                  >
+                    <span @click="setActiveView(block.componentProps.view)">{{ block.componentProps.view.name }}</span>
+                  </router-link>
 
-                <v-spacer></v-spacer>
-                <v-btn icon v-if="hover" @click="deleteBlock(index)">
-                  <v-icon small>mdi-trash-can-outline</v-icon>
-                </v-btn>
-              </v-toolbar>
-              <v-divider></v-divider>
-              <v-card-text>
-                <component :is="block.componentName" v-bind="formatComponentProps(block)"></component>
-              </v-card-text>
-            </v-card>
+                  <v-spacer></v-spacer>
+                  <v-btn icon v-if="hover" @click="deleteBlock(index)">
+                    <v-icon small>mdi-trash-can-outline</v-icon>
+                  </v-btn>
+                </v-toolbar>
+                <v-divider></v-divider>
+                <v-card-text>
+                  <component :is="block.componentName" v-bind="formatComponentProps(block)"></component>
+                </v-card-text>
+              </v-card>
+              <v-card v-if="block.componentName === 'TsAggregationGroupCompact'" outlined class="mb-2">
+                <v-toolbar dense flat>{{ block.componentProps.aggregation_group.name }}</v-toolbar>
+                <v-divider></v-divider>
+                <v-card-text>Aggregations are not yet supported</v-card-text>
+              </v-card>
+            </div>
           </v-hover>
         </div>
 
@@ -129,7 +136,7 @@ limitations under the License.
               <!-- Saved Search selector -->
               <v-menu offset-y v-model="block.isActive">
                 <template v-slot:activator="{ on, attrs }">
-                  <v-btn rounded outlined small v-bind="attrs" v-on="on">
+                  <v-btn rounded outlined small :disabled="!meta.views.length" v-bind="attrs" v-on="on">
                     <v-icon left small>mdi-plus</v-icon>
                     Saved Search
                   </v-btn>
@@ -181,7 +188,7 @@ const componentCompatibility = () => {
 }
 
 export default {
-  props: ['storyId'],
+  props: ['sketchId', 'storyId'],
   components: { TsEventList },
   data: function () {
     return {
@@ -213,7 +220,7 @@ export default {
       block.draft = e
     }, 300),
     fetchStory() {
-      ApiClient.getStory(this.sketch.id, this.storyId)
+      ApiClient.getStory(this.sketchId, this.storyId)
         .then((response) => {
           this.title = response.data.objects[0].title
           this.titleDraft = this.title
@@ -297,6 +304,7 @@ export default {
       EventBus.$emit('setActiveView', savedSearch)
     },
     save() {
+      let content
       this.blocks.forEach(function (block) {
         block.isActive = false
         block.edit = false
@@ -305,10 +313,15 @@ export default {
           block.draft = ''
         }
       })
-      let content = JSON.stringify(this.blocks)
-      ApiClient.updateStory(this.title, content, this.sketch.id, this.storyId)
+      if (!this.hasContent) {
+        content = JSON.stringify([])
+        this.blocks = [defaultBlock()]
+      } else {
+        content = JSON.stringify(this.blocks)
+      }
+      ApiClient.updateStory(this.title, content, this.sketchId, this.storyId)
         .then((response) => {
-          this.$store.dispatch('updateSketch', this.sketch.id)
+          this.$store.dispatch('updateSketch', this.sketchId)
         })
         .catch((e) => {})
     },
@@ -319,7 +332,9 @@ export default {
     },
   },
   mounted() {
-    this.fetchStory()
+    if (this.storyId) {
+      this.fetchStory()
+    }
   },
   watch: {
     storyId: function (newVal) {

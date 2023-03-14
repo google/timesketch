@@ -30,7 +30,7 @@ limitations under the License.
       <graph></graph>
     </div>
     <div v-show="currentRouteName === 'Story'">
-      <story :story-id="storyId"></story>
+      <story :sketch-id="sketchId" :story-id="storyId"></story>
     </div>
   </div>
 </template>
