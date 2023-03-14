@@ -120,6 +120,11 @@ limitations under the License.
                 <v-divider></v-divider>
                 <v-card-text>Aggregations are not yet supported</v-card-text>
               </v-card>
+              <v-card v-if="block.componentName === 'TsAggregationCompact'" outlined class="mb-2">
+                <v-toolbar dense flat>{{ block.componentProps.aggregation.name }}</v-toolbar>
+                <v-divider></v-divider>
+                <v-card-text>Aggregations are not yet supported</v-card-text>
+              </v-card>
             </div>
           </v-hover>
         </div>
