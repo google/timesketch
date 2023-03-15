@@ -15,7 +15,6 @@
 
 import sys
 import click
-import json
 
 
 @click.group("events")
