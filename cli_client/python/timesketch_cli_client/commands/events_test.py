@@ -93,7 +93,6 @@ class EventsTest(unittest.TestCase):
             ],
             obj=self.ctx,
         )
-        breakpoint()
         print(result.output)
         print(result.exception)
         print(result.exit_code)
