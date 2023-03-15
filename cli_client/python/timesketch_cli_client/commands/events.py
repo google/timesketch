@@ -49,7 +49,7 @@ def annotate(ctx, timeline_id, event_id, tag, comment, output):
     current annotations for the event.
     """
     sketch = ctx.obj.sketch
-    # if no output format is specified, use the global one
+    # If no output format is specified, use the global one.
     if not output:
         output = ctx.obj.output_format
     timeline = sketch.get_timeline(timeline_id=timeline_id)
@@ -81,10 +81,10 @@ def annotate(ctx, timeline_id, event_id, tag, comment, output):
     try:
         return_value = sketch.get_event(event_id, timeline.index_name)
         if return_value is None:
-            click.echo("No such event")
+            click.echo("No such event.")
             sys.exit(1)
     except KeyError:
-        click.echo("No such event")
+        click.echo("No such event.")
         sys.exit(1)
 
     if output == "json":
