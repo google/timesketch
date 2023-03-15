@@ -17,7 +17,7 @@ limitations under the License.
   <div>
     <v-row
       no-gutters
-      style="cursor: pointer"
+      :style="!(meta.stories && meta.stories.length) ? '' : 'cursor: pointer'"
       class="pa-4"
       flat
       @click="expanded = !expanded"

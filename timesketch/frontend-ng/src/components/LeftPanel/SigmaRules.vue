@@ -17,7 +17,7 @@ limitations under the License.
   <div>
     <div
       no-gutters
-      style="cursor: pointer"
+      :style="!(sigmaRules && sigmaRules.length) ? '' : 'cursor: pointer'"
       class="pa-4"
       flat
       @click="expanded = !expanded"
