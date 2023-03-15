@@ -58,6 +58,13 @@ const routes = [
         component: Canvas,
         props: true,
       },
+      {
+        path: 'story/:storyId',
+        name: 'Story',
+        component: Canvas,
+        props: true,
+      },
+
     ],
   },
   {
