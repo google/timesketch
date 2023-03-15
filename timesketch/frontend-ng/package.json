@@ -21,6 +21,7 @@
     "cytoscape-dagre": "^2.3.1",
     "cytoscape-spread": "^3.0.0",
     "dayjs": "^1.10.7",
+    "dompurify": "^3.0.1",
     "eslint-config-prettier": "^8.3.0",
     "lodash": "^4.17.11",
     "marked": ">=2.0.0",

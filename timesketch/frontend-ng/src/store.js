@@ -27,6 +27,8 @@ const defaultState = (currentUser) => {
     scenarios: [],
     hiddenScenarios: [],
     scenarioTemplates: [],
+    graphPlugins: [],
+    savedGraphs: [],
     tags: [],
     dataTypes: [],
     count: 0,
@@ -101,6 +103,12 @@ export default new Vuex.Store({
       }
       Vue.set(state, 'activeContext', payload)
     },
+    SET_GRAPH_PLUGINS(state, payload) {
+      Vue.set(state, 'graphPlugins', payload)
+    },
+    SET_SAVED_GRAPHS(state, payload) {
+      Vue.set(state, 'savedGraphs', payload.objects[0] || [])
+    },
     SET_SNACKBAR(state, snackbar) {
       Vue.set(state, 'snackbar', snackbar)
     },
@@ -118,7 +126,6 @@ export default new Vuex.Store({
     updateSketch(context, sketchId) {
       return ApiClient.getSketch(sketchId)
         .then((response) => {
-          // console.log(response.data.objects[0].active_timelines[0].color)
           context.commit('SET_SKETCH', response.data)
           context.commit('SET_ACTIVE_USER', response.data)
           context.dispatch('updateTimelineTags', sketchId)
@@ -229,5 +236,24 @@ export default new Vuex.Store({
       })
       .catch((e) => { })
     },
-  },
+    updateGraphPlugins(context) {
+      ApiClient.getGraphPluginList()
+        .then((response) => {
+          context.commit('SET_GRAPH_PLUGINS', response.data)
+        })
+        .catch((e) => { })
+    },
+    updateSavedGraphs(context, sketchId) {
+      if (!sketchId) {
+        sketchId = context.state.sketch.id
+      }
+      ApiClient.getSavedGraphList(sketchId)
+        .then((response) => {
+        context.commit('SET_SAVED_GRAPHS', response.data)
+      })
+      .catch((e) => {
+        console.error(e)
+      })
+    },
+  }
 })

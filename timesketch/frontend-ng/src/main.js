@@ -30,6 +30,7 @@ import VueClipboard from 'vue-clipboard2'
 import vuetify from '@/plugins/vuetify' // path to vuetify export
 
 require('./assets/main.scss')
+require('./assets/markdown.scss')
 require('./utils/RegisterAppComponents')
 require('./utils/RegisterAppFilters')
 

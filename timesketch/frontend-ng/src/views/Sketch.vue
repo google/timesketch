@@ -30,7 +30,14 @@ limitations under the License.
         <v-icon>mdi-menu</v-icon>
       </v-btn>
 
-      <v-btn v-show="currentRouteName !== 'Explore'" :to="{ name: 'Explore', params: { sketchId: sketchId } }" color="primary" small text class="ml-3">
+      <v-btn
+        v-show="currentRouteName !== 'Explore'"
+        :to="{ name: 'Explore', params: { sketchId: sketchId } }"
+        color="primary"
+        small
+        text
+        class="ml-3"
+      >
         <v-icon small left>mdi-arrow-left</v-icon>
         back to explore
       </v-btn>
@@ -220,12 +227,14 @@ limitations under the License.
         <v-tab v-for="item in leftPanelTabItems" :key="item"> {{ item }} </v-tab>
       </v-tabs>
       <v-divider></v-divider>
-      <v-tabs-items v-model="leftPanelTab" class="pt-4">
+      <v-tabs-items v-model="leftPanelTab">
         <v-tab-item :transition="false">
           <ts-saved-searches v-if="meta.views"></ts-saved-searches>
           <ts-data-types></ts-data-types>
           <ts-tags></ts-tags>
           <ts-search-templates></ts-search-templates>
+          <ts-graphs></ts-graphs>
+          <ts-stories></ts-stories>
           <ts-sigma-rules></ts-sigma-rules>
           <ts-intelligence></ts-intelligence>
         </v-tab-item>
@@ -269,6 +278,8 @@ import TsTags from '../components/LeftPanel/Tags'
 import TsSearchTemplates from '../components/LeftPanel/SearchTemplates'
 import TsSigmaRules from '../components/LeftPanel/SigmaRules'
 import TsIntelligence from '../components/LeftPanel/ThreatIntel'
+import TsGraphs from '../components/LeftPanel/Graphs'
+import TsStories from '../components/LeftPanel/Stories'
 import TsUploadTimelineForm from '../components/UploadForm'
 import TsShareCard from '../components/ShareCard'
 import TsRenameSketch from '../components/RenameSketch'
@@ -286,6 +297,8 @@ export default {
     TsShareCard,
     TsRenameSketch,
     TsIntelligence,
+    TsGraphs,
+    TsStories,
   },
   data() {
     return {
@@ -311,6 +324,8 @@ export default {
       this.$store.dispatch('updateSearchHistory', this.sketchId)
       this.$store.dispatch('updateScenarios', this.sketchId)
       this.$store.dispatch('updateScenarioTemplates', this.sketchId)
+      this.$store.dispatch('updateSavedGraphs', this.sketchId)
+      this.$store.dispatch('updateGraphPlugins')
       this.$store.dispatch('updateContextLinks')
       this.loadingSketch = false
       this.showLeftPanel = true
@@ -359,6 +374,8 @@ export default {
     toggleTheme: function () {
       this.$vuetify.theme.dark = !this.$vuetify.theme.dark
       localStorage.setItem('isDarkTheme', this.$vuetify.theme.dark.toString())
+      let element = document.body
+      element.dataset.theme = this.$vuetify.theme.dark ? 'dark' : 'light'
     },
     switchUI: function () {
       window.location.href = window.location.href.replace('/v2/', '/')
@@ -409,7 +426,7 @@ export default {
     toggleLeftPanel() {
       this.showLeftPanel = !this.showLeftPanel
       if (this.showLeftPanel) {
-        this.navigationDrawer.width = 370
+        this.navigationDrawer.width = 400
       } else {
         this.navigationDrawer.width = 0
       }
