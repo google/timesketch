@@ -259,8 +259,8 @@ export default {
       // Backwards compatibility for old style TsViewEventList props
       if (block.componentName === 'TsEventList' || block.componentName === 'TsViewEventList') {
         const EVENTS_PER_PAGE = 10
-        let queryString = block.componentProps.view.query
-        let queryFilter = block.componentProps.view.filter
+        let queryString = block.componentProps.view.query_string
+        let queryFilter = block.componentProps.view.query_filter
         let queryRequest = {}
 
         // Make sure there is a query filter present
