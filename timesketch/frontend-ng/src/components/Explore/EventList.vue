@@ -851,7 +851,7 @@ export default {
     queryRequest: {
       handler(newQueryRequest, oldqueryRequest) {
         // Return early if there is no change to the current request.
-        if (newQueryRequest === oldqueryRequest) {
+        if (JSON.stringify(newQueryRequest) === JSON.stringify(oldqueryRequest)) {
           return
         }
         // Return early if this isn't a new request.
