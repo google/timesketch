@@ -192,8 +192,8 @@ export default new Vuex.Store({
             if (missing) {
               buckets.push({ tag: payload.tag, count: payload.num })
             } else {
-              let tag_index = buckets.findIndex(tag => tag.tag === payload.tag)
-              buckets[tag_index].count += payload.num
+              let tagIndex = buckets.findIndex(tag => tag.tag === payload.tag)
+              buckets[tagIndex].count += payload.num
             }
           }
           context.commit('SET_TIMELINE_TAGS', buckets)
