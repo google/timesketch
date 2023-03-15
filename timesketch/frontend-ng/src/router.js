@@ -59,7 +59,7 @@ const routes = [
         props: true,
       },
       {
-        path: 'analyze',
+        path: 'analyzers',
         name: 'Analyze',
         component: Canvas,
         props: true,
