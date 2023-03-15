@@ -24,7 +24,15 @@ limitations under the License.
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
       <span> <v-icon left>mdi-book-open-outline</v-icon> Stories </span>
-      <v-btn v-if="expanded" small color="primary" text class="ml-1" @click="createStory()" @click.stop="">
+      <v-btn
+        v-if="expanded || !meta.stories.length"
+        small
+        color="primary"
+        text
+        class="ml-1"
+        @click="createStory()"
+        @click.stop=""
+      >
         <v-icon small left>mdi-plus</v-icon>New Story
       </v-btn>
 
@@ -37,7 +45,7 @@ limitations under the License.
     </v-row>
 
     <v-expand-transition>
-      <div v-show="expanded">
+      <div v-show="expanded && meta.stories.length">
         <router-link
           v-for="story in meta.stories"
           :key="story.id"
