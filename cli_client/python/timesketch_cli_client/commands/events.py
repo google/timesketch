@@ -15,7 +15,7 @@
 
 import sys
 import click
-import yaml
+import json
 
 
 @click.group("events")
@@ -87,7 +87,6 @@ def annotate(ctx, timeline_id, event_id, tag, comment, output):
         click.echo("No such event.")
         sys.exit(1)
 
-    if output == "json":
-        click.echo(return_value)
-    else:
-        click.echo(yaml.dump(return_value))
+    # TODO: At the moment json is only really supported here. Add more options
+    # as needed (like YAML).
+    click.echo(return_value)
