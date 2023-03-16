@@ -344,7 +344,6 @@ def read_and_validate_csv(
                     timestamp_calculated = int(
                         pandas.Timestamp(row["datetime"]).value / 1000
                     )
-
                     if (
                         abs(row["timestamp"] - timestamp_calculated)
                         > MAX_TIMESTAMP_DIFFERENCE
@@ -384,9 +383,7 @@ def read_and_validate_redline(file_handle):
         quoting=csv.QUOTE_ALL,
         skipinitialspace=True,
     )
-    reader = pandas.read_csv(
-        file_handle, delimiter=",", dialect="redlineDialect"
-    )
+    reader = pandas.read_csv(file_handle, delimiter=",", dialect="redlineDialect")
 
     _validate_csv_fields(REDLINE_FIELDS, reader)
     for row in reader:
@@ -441,9 +438,7 @@ def rename_jsonl_headers(linedict, headers_mapping, lineno):
                 if len(mapping["source"]) == 1:
                     # 1. rename header
                     if mapping["source"][0] in ld_keys:
-                        linedict[mapping["target"]] = linedict.pop(
-                            mapping["source"][0]
-                        )
+                        linedict[mapping["target"]] = linedict.pop(mapping["source"][0])
                     else:
                         raise RuntimeError(
                             f"Source mapping {mapping['source'][0]} not found in JSON\n"
@@ -456,9 +451,7 @@ def rename_jsonl_headers(linedict, headers_mapping, lineno):
                     for source in mapping["source"]:
                         if source in ld_keys:
                             linedict[mapping["target"]] += f"{source} : "
-                            linedict[
-                                mapping["target"]
-                            ] += f"{linedict[source]} |"
+                            linedict[mapping["target"]] += f"{linedict[source]} |"
                         else:
                             raise RuntimeError(
                                 f"Source mapping {source} not found in JSON\n"
@@ -500,9 +493,7 @@ def read_and_validate_jsonl(
             linedict = json.loads(line)
             ld_keys = linedict.keys()
             if headers_mapping:
-                linedict = rename_jsonl_headers(
-                    linedict, headers_mapping, lineno
-                )
+                linedict = rename_jsonl_headers(linedict, headers_mapping, lineno)
             if "datetime" not in ld_keys and "timestamp" in ld_keys:
                 epoch = int(str(linedict["timestamp"])[:10])
                 dt = datetime.datetime.fromtimestamp(epoch)
@@ -510,8 +501,7 @@ def read_and_validate_jsonl(
             if "timestamp" not in ld_keys and "datetime" in ld_keys:
                 try:
                     linedict["timestamp"] = int(
-                        parser.parse(linedict["datetime"]).timestamp()
-                        * 1000000
+                        parser.parse(linedict["datetime"]).timestamp() * 1000000
                     )
                 # TODO: REcord this somewhere else and make available to the user.
                 except TypeError:
@@ -538,17 +528,13 @@ def read_and_validate_jsonl(
                 )
 
             if "tag" in linedict:
-                linedict["tag"] = [
-                    x for x in _parse_tag_field(linedict["tag"]) if x
-                ]
+                linedict["tag"] = [x for x in _parse_tag_field(linedict["tag"]) if x]
             _scrub_special_tags(linedict)
             yield linedict
 
         except ValueError as e:
             raise errors.DataIngestionError(
-                "Error parsing JSON at line {0:n}: {1:s}".format(
-                    lineno, str(e)
-                )
+                "Error parsing JSON at line {0:n}: {1:s}".format(lineno, str(e))
             )
 
 
@@ -599,10 +585,7 @@ def get_validated_indices(indices, sketch):
                         timelines.add(timeline_id)
                         indices.append(index)
 
-                    if (
-                        isinstance(item, str)
-                        and item.lower() == timeline_name.lower()
-                    ):
+                    if isinstance(item, str) and item.lower() == timeline_name.lower():
                         timelines.add(timeline_id)
                         indices.append(index)
 
@@ -625,9 +608,7 @@ def send_email(subject, body, to_username, use_html=False):
     email_enabled = current_app.config.get("ENABLE_EMAIL_NOTIFICATIONS")
     email_domain = current_app.config.get("EMAIL_DOMAIN")
     email_smtp_server = current_app.config.get("EMAIL_SMTP_SERVER")
-    email_from_user = current_app.config.get(
-        "EMAIL_FROM_ADDRESS", "timesketch"
-    )
+    email_from_user = current_app.config.get("EMAIL_FROM_ADDRESS", "timesketch")
     email_user_whitelist = current_app.config.get("EMAIL_USER_WHITELIST", [])
 
     if not email_enabled:

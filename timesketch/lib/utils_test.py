@@ -179,10 +179,12 @@ class TestUtils(BaseTest):
 
     def test_datetime_parsing_csv_file(self):
         """Test for parsing datetime values in CSV file"""
-        self.assertRaises(
-            DataIngestionError,
-            read_and_validate_csv("test_tools/test_events/validate_date_events.csv"),
-        )
+
+        with self.assertRaises(DataIngestionError):
+            # Call next to work around lazy generators.
+            next(
+                read_and_validate_csv("test_tools/test_events/validate_date_events.csv")
+            )
 
     def test_invalid_JSONL_file(self):
         """Test for JSONL with missing keys in the dictionary wrt headers mapping"""
