@@ -25,7 +25,7 @@ from timesketch.lib.utils import read_and_validate_csv
 from timesketch.lib.utils import check_mapping_errors
 from timesketch.lib.utils import _validate_csv_fields
 from timesketch.lib.utils import rename_jsonl_headers
-from timesketch.lib.errors import DataIngestionError 
+from timesketch.lib.errors import DataIngestionError
 
 
 TEST_CSV = "test_tools/test_events/sigma_events.csv"
@@ -179,10 +179,10 @@ class TestUtils(BaseTest):
 
     def test_datetime_parsing_csv_file(self):
         """Test for parsing datetime values in CSV file"""
-        self.assertRaises(DataIngestionError,read_and_validate_csv(
-                "test_tools/test_events/validate_date_events.csv"
-            ))
-        
+        self.assertRaises(
+            DataIngestionError,
+            read_and_validate_csv("test_tools/test_events/validate_date_events.csv"),
+        )
 
     def test_invalid_JSONL_file(self):
         """Test for JSONL with missing keys in the dictionary wrt headers mapping"""
