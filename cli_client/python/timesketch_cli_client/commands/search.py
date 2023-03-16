@@ -22,14 +22,14 @@ from tabulate import tabulate
 from timesketch_api_client import search
 
 
-def format_output(search_obj, output_format, show_headers, verbose):
+def format_output(search_obj, output_format, show_headers, show_internal_columns):
     """Format search result output.
 
     Args:
         search_obj: API Search object.
         output_format: The format to use (text, csv, json, jsonl, tabular).
         show_headers: Boolean indicating if header row should be displayed.
-        verbose: Boolean indicating if verbose output should be displayed.
+        show_internal_columns: Boolean indicating if internal columns should be displayed.
 
     Returns:
         Search results in the requested output format.
@@ -41,7 +41,7 @@ def format_output(search_obj, output_format, show_headers, verbose):
     if "label" not in search_obj.return_fields:
         dataframe = dataframe.drop(columns=["label"], errors="ignore")
 
-    if not verbose:
+    if not show_internal_columns:
         # Remove internal OpenSearch columns
         dataframe = dataframe.drop(
             columns=["__ts_timeline_id", "_id", "_index", "_source", "_type"],
@@ -132,7 +132,7 @@ def describe_query(search_obj):
     help="Show the query and filter then exit",
 )
 @click.option(
-    "--verbose",
+    "--show-internal-columns",
     is_flag=True,
     default=False,
     help="Show all columns including Timesketch internal ones",
@@ -152,7 +152,7 @@ def search_group(
     limit,
     saved_search,
     describe,
-    verbose,
+    show_internal_columns,
 ):
     """Search and explore."""
     sketch = ctx.obj.sketch
@@ -173,7 +173,7 @@ def search_group(
             describe_query(search_obj)
             return
         click.echo(
-            format_output(search_obj, output_format, header, verbose),
+            format_output(search_obj, output_format, header, show_internal_columns),
             nl=new_line,
         )
         return
@@ -233,7 +233,10 @@ def search_group(
         describe_query(search_obj)
         return
 
-    click.echo(format_output(search_obj, output_format, header, verbose), nl=new_line)
+    click.echo(
+        format_output(search_obj, output_format, header, show_internal_columns),
+        nl=new_line,
+    )
 
 
 @click.group("saved-searches")
