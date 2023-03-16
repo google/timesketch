@@ -27,7 +27,7 @@ def format_output(search_obj, output_format, show_headers, verbose):
 
     Args:
         search_obj: API Search object.
-        output_format: The format to use.
+        output_format: The format to use (text, csv, json, jsonl, tabular).
         show_headers: Boolean indicating if header row should be displayed.
         verbose: Boolean indicating if verbose output should be displayed.
 
@@ -54,6 +54,8 @@ def format_output(search_obj, output_format, show_headers, verbose):
     elif output_format == "csv":
         result = dataframe.to_csv(index=False, header=show_headers)
     elif output_format == "json":
+        result = dataframe.to_json(orient="records", lines=False)
+    elif output_format == "jsonl":
         result = dataframe.to_json(orient="records", lines=True)
     elif output_format == "tabular":
         if show_headers:
