@@ -36,7 +36,7 @@ def events_group():
     "--output-format",
     "output",
     required=False,
-    help="Set output format (overrides global setting)",
+    help="Set output format (overrides global setting).",
 )
 @click.pass_context
 def annotate(ctx, timeline_id, event_id, tag, comment, output):
