@@ -70,7 +70,7 @@ def annotate(ctx, timeline_id, event_id, tag, comment, output):
 
     if comment:
         comments = comment.split(",")
-        for comment in comment_list:
+        for comment in comments:
             sketch.comment_event(event_id, timeline.index_name, comment)
 
     if tag:
