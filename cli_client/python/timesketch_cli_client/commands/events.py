@@ -28,7 +28,7 @@ def events_group():
 @click.option(
     "--tag",
     required=False,
-    help="Comma seperated list of Tags to add to the event.",
+    help="Comma separated list of Tags to add to the event.",
 )
 @click.option("--comment", required=False, help="Comment to add to the event.")
 # TODO(jaegeral): Make this part of the root command as we do with sketch-id
@@ -70,8 +70,8 @@ def annotate(ctx, timeline_id, event_id, tag, comment, output):
 
     if comment:
         comments = comment.split(",")
-        for comment in comments:
-            sketch.comment_event(event_id, timeline.index_name, comment)
+        for comm in comments:
+            sketch.comment_event(event_id, timeline.index_name, comm)
 
     if tag:
         tags = tag.split(",")
