@@ -205,12 +205,12 @@ def check_mapping_errors(headers, headers_mapping):
                     f"When create a new column, a default value must be assigned"
                 )
     # 4. check if two or more mandatory headers are mapped
-    #    to the same exisiting header
+    #    to the same existing header
     if len(candidate_headers) != len(set(candidate_headers)):
         raise RuntimeError(
             "Headers mapping is wrong.\n"
             "2 or more mandatory headers are "
-            "mapped to the same exisiting CSV headers"
+            "mapped to the same existing CSV headers"
         )
 
 
