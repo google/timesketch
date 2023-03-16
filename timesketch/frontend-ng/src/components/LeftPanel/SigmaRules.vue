@@ -23,7 +23,7 @@ limitations under the License.
       @click="expanded = !expanded"
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
-      <span><v-icon left>mdi-sigma-lower</v-icon>Sigma Rules</span>
+      <span> <v-icon left>mdi-sigma-lower</v-icon> Sigma Rules </span>
       <v-btn
         v-if="expanded || (sigmaRules && !sigmaRules.length)"
         small
