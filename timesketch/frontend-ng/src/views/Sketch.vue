@@ -234,6 +234,7 @@ limitations under the License.
           <ts-tags></ts-tags>
           <ts-search-templates></ts-search-templates>
           <ts-graphs></ts-graphs>
+          <ts-stories></ts-stories>
           <ts-sigma-rules></ts-sigma-rules>
           <ts-intelligence></ts-intelligence>
         </v-tab-item>
@@ -278,6 +279,7 @@ import TsSearchTemplates from '../components/LeftPanel/SearchTemplates'
 import TsSigmaRules from '../components/LeftPanel/SigmaRules'
 import TsIntelligence from '../components/LeftPanel/ThreatIntel'
 import TsGraphs from '../components/LeftPanel/Graphs'
+import TsStories from '../components/LeftPanel/Stories'
 import TsUploadTimelineForm from '../components/UploadForm'
 import TsShareCard from '../components/ShareCard'
 import TsRenameSketch from '../components/RenameSketch'
@@ -296,6 +298,7 @@ export default {
     TsRenameSketch,
     TsIntelligence,
     TsGraphs,
+    TsStories,
   },
   data() {
     return {
@@ -371,6 +374,8 @@ export default {
     toggleTheme: function () {
       this.$vuetify.theme.dark = !this.$vuetify.theme.dark
       localStorage.setItem('isDarkTheme', this.$vuetify.theme.dark.toString())
+      let element = document.body
+      element.dataset.theme = this.$vuetify.theme.dark ? 'dark' : 'light'
     },
     switchUI: function () {
       window.location.href = window.location.href.replace('/v2/', '/')
