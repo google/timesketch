@@ -337,9 +337,6 @@ def read_and_validate_csv(
                 MAX_TIMESTAMP_DIFFERENCE = 100000  # 100 seconds
                 # check datetime plausibility
                 if "timestamp" in row and "datetime" in row:
-                    # if timestamp and datetime are both present,
-                    # calculate timestamp difference between the both
-                    # convert row datetime to timestamp
 
                     timestamp_calculated = int(
                         pandas.Timestamp(row["datetime"]).value / 1000
