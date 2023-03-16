@@ -29,7 +29,8 @@ def format_output(search_obj, output_format, show_headers, show_internal_columns
         search_obj: API Search object.
         output_format: The format to use (text, csv, json, jsonl, tabular).
         show_headers: Boolean indicating if header row should be displayed.
-        show_internal_columns: Boolean indicating if internal columns should be displayed.
+        show_internal_columns: Boolean indicating if internal columns should
+        be displayed.
 
     Returns:
         Search results in the requested output format.
