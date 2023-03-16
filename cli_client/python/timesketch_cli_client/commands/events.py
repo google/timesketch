@@ -69,13 +69,13 @@ def annotate(ctx, timeline_id, event_id, tag, comment, output):
     ]
 
     if comment:
-        comment_list = comment.split(",")
-        for single_comment in comment_list:
-            sketch.comment_event(event_id, timeline.index_name, single_comment)
+        comments = comment.split(",")
+        for comment in comment_list:
+            sketch.comment_event(event_id, timeline.index_name, comment)
 
     if tag:
-        tags_list = tag.split(",")
-        sketch.tag_events(events, tags_list)
+        tags = tag.split(",")
+        sketch.tag_events(events, tags)
 
     try:
         return_value = sketch.get_event(event_id, timeline.index_name)
