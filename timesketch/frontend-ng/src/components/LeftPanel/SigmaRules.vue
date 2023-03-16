@@ -23,9 +23,9 @@ limitations under the License.
       @click="expanded = !expanded"
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
-      <span> <v-icon left>mdi-sigma-lower</v-icon> Sigma Rules </span>
+      <span><v-icon left>mdi-sigma-lower</v-icon>Sigma Rules</span>
       <v-btn
-        v-if="expanded || !(sigmaRules && sigmaRules.length)"
+        v-if="expanded || (sigmaRules && !sigmaRules.length)"
         small
         color="primary"
         text
@@ -36,7 +36,8 @@ limitations under the License.
         <v-icon small left>mdi-plus</v-icon>New Rule
       </v-btn>
       <span class="float-right mr-2">
-        <small
+        <v-progress-circular v-if="isLoading" :size="12" :width="1" indeterminate></v-progress-circular>
+        <small v-else
           ><strong>{{ ruleCount }}</strong></small
         >
       </span>
@@ -111,8 +112,11 @@ export default {
     meta() {
       return this.$store.state.meta
     },
+    isLoading() {
+      return !this.sigmaRules
+    },
   },
-  created() {
+  mounted() {
     this.$store.dispatch('updateSigmaList')
   },
 }

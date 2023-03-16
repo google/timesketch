@@ -58,6 +58,9 @@ def _enrich_sigma_rule_object(rule: SigmaRule):
     Returns:
         Enriched Sigma dict.
     """
+    import time
+
+    time.sleep(2)
     parsed_rule = ts_sigma_lib.parse_sigma_rule_by_text(rule.rule_yaml)
     parsed_rule["rule_uuid"] = parsed_rule.get("id", rule.rule_uuid)
     parsed_rule["created_at"] = str(rule.created_at)
