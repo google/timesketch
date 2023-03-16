@@ -56,21 +56,23 @@ limitations under the License.
                     <v-icon>mdi-content-save-outline</v-icon>
                   </v-btn>
                 </template>
-
-                <v-card>
-                  <v-card-title> Save Search </v-card-title>
-
-                  <v-card-text>
-                    <v-text-field v-model="saveSearchFormName" required placeholder="Name your saved search">
-                    </v-text-field>
-                  </v-card-text>
-
-                  <v-divider></v-divider>
-
+                <v-card class="pa-4">
+                  <h3>Save Search</h3>
+                  <br />
+                  <v-text-field
+                    v-model="saveSearchFormName"
+                    required
+                    placeholder="Name your saved search"
+                    outlined
+                    dense
+                    autofocus
+                    @focus="$event.target.select()"
+                  >
+                  </v-text-field>
                   <v-card-actions>
                     <v-spacer></v-spacer>
-                    <v-btn color="primary" text @click="saveSearchMenu = false"> Cancel </v-btn>
-                    <v-btn color="primary" text @click="saveSearch" :disabled="!saveSearchFormName"> Save </v-btn>
+                    <v-btn text @click="saveSearchMenu = false"> Cancel </v-btn>
+                    <v-btn color="primary" depressed @click="saveSearch" :disabled="!saveSearchFormName"> Save </v-btn>
                   </v-card-actions>
                 </v-card>
               </v-dialog>
@@ -851,7 +853,7 @@ export default {
     queryRequest: {
       handler(newQueryRequest, oldqueryRequest) {
         // Return early if there is no change to the current request.
-        if (newQueryRequest === oldqueryRequest) {
+        if (JSON.stringify(newQueryRequest) === JSON.stringify(oldqueryRequest)) {
           return
         }
         // Return early if this isn't a new request.

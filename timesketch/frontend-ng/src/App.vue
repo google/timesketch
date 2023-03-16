@@ -65,6 +65,8 @@ export default {
         this.$vuetify.theme.dark = false
       }
     }
+    let element = document.body
+    element.dataset.theme = this.$vuetify.theme.dark ? 'dark' : 'light'
   },
   beforeDestroy() {
     EventBus.$off('errorSnackBar')
