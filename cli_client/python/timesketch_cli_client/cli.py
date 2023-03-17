@@ -27,6 +27,7 @@ from timesketch_cli_client.commands import search
 from timesketch_cli_client.commands import sketch as sketch_command
 from timesketch_cli_client.commands import timelines
 from timesketch_cli_client.commands import events
+from timesketch_cli_client.commands import sigma
 
 from .definitions import DEFAULT_OUTPUT_FORMAT
 from .version import get_version
@@ -73,9 +74,13 @@ class TimesketchCli(object):
         sketch_from_config = self.config_assistant.get_config("sketch")
 
         if self.sketch_from_flag:
-            active_sketch = self.api.get_sketch(sketch_id=int(self.sketch_from_flag))
+            active_sketch = self.api.get_sketch(
+                sketch_id=int(self.sketch_from_flag)
+            )
         elif sketch_from_config:
-            active_sketch = self.api.get_sketch(sketch_id=int(sketch_from_config))
+            active_sketch = self.api.get_sketch(
+                sketch_id=int(sketch_from_config)
+            )
 
         if not active_sketch:
             click.echo(
@@ -138,6 +143,7 @@ cli.add_command(analyze.analysis_group)
 cli.add_command(sketch_command.sketch_group)
 cli.add_command(importer.importer)
 cli.add_command(events.events_group)
+cli.add_command(sigma.sigma_group)
 
 
 # pylint: disable=no-value-for-parameter
