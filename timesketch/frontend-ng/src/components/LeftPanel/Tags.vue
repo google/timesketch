@@ -20,7 +20,9 @@ limitations under the License.
         <v-icon left>mdi-tag-multiple-outline</v-icon> Tags
       </span>
       <span class="float-right mr-2">
-        <small><strong>{{ tags.length }}</strong></small>
+        <small
+          ><strong>{{ tags.length }}</strong></small
+        >
       </span>
     </div>
 

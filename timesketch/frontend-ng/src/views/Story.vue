@@ -22,7 +22,7 @@ limitations under the License.
         <v-text-field outlined dense autofocus v-model="titleDraft" @focus="$event.target.select()"> </v-text-field>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="primary" text @click="renameStoryDialog = false"> Cancel </v-btn>
+          <v-btn text @click="renameStoryDialog = false"> Cancel </v-btn>
           <v-btn color="primary" depressed @click="rename()"> Save </v-btn>
         </v-card-actions>
       </v-card>
@@ -259,8 +259,8 @@ export default {
       // Backwards compatibility for old style TsViewEventList props
       if (block.componentName === 'TsEventList' || block.componentName === 'TsViewEventList') {
         const EVENTS_PER_PAGE = 10
-        let queryString = block.componentProps.view.query
-        let queryFilter = block.componentProps.view.filter
+        let queryString = block.componentProps.view.query_string
+        let queryFilter = block.componentProps.view.query_filter
         let queryRequest = {}
 
         // Make sure there is a query filter present

@@ -194,7 +194,6 @@ export default {
   },
   created() {
     EventBus.$on('isDarkTheme', this.toggleTheme)
-    this.enableAllTimelines()
 
     if (this.currentQueryFilter.indices.includes('_all')) {
       this.selectedTimelines = this.activeTimelines
