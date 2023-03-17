@@ -20,11 +20,9 @@ limitations under the License.
       <v-btn :to="{ name: 'Overview', params: { sketchId: sketchId } }" color="primary" plain text>
         &lt;&lt; back to explore
       </v-btn>
-      <v-divider></v-divider>
       <div>
-        <!-- TODO: https://github.com/google/timesketch/issues/2560 -->
-        TODO: <a href="https://github.com/google/timesketch/issues/2560">Issue#2560</a> add the timeline selection
-        component.
+        <ts-analyzer-search></ts-analyzer-search>
+
       </div>
       <v-divider></v-divider>
       <div>
@@ -38,9 +36,13 @@ limitations under the License.
 </template>
 
 <script>
+import TsAnalyzerSearch from '../components/Analyzer/AnalyzerSearch'
+
 export default {
   directives: {},
-  components: {},
+  components: {
+    TsAnalyzerSearch
+  },
   props: ['sketchId'],
   data() {
     return {}
