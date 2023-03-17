@@ -16,10 +16,14 @@
 import os
 import pathlib
 import json
+import re
 import subprocess
 import yaml
 
+
 import click
+import pandas as pd
+
 from flask.cli import FlaskGroup
 from sqlalchemy.exc import IntegrityError
 from jsonschema import validate, ValidationError, SchemaError
@@ -32,8 +36,10 @@ from timesketch.models import drop_all
 from timesketch.models.user import Group
 from timesketch.models.user import User
 from timesketch.models.sketch import Sketch
+from timesketch.models.sketch import Analysis
 from timesketch.models.sketch import SearchTemplate
 from timesketch.models.sigma import SigmaRule
+from timesketch.models.sketch import Timeline
 
 
 @click.group(cls=FlaskGroup, create_app=create_app)
@@ -177,6 +183,7 @@ def list_sketches():
     """List all sketches."""
     sketches = Sketch.query.all()
     for sketch in sketches:
+        assert isinstance(sketch, Sketch)
         status = sketch.get_status.status
         if status == "deleted":
             continue
@@ -321,6 +328,10 @@ def import_sigma_rules(path):
     """Import sigma rules from filesystem path."""
     file_paths = set()
     supported_file_types = [".yml", ".yaml"]
+
+    if os.path.isfile(path):
+        file_paths.add(path)
+
     for root, _, files in os.walk(path):
         for file in files:
             file_extension = pathlib.Path(file.lower()).suffix
@@ -639,3 +650,109 @@ def validate_context_links_conf(path):
             print(f'=> OK: "{entry}"')
         except (ValidationError, SchemaError) as err:
             print(f'=> ERROR: "{entry}" >> {err}\n')
+
+
+# Analyzer stats cli command
+@cli.command(name="analyzer-stats")
+@click.argument(
+    "analyzer_name",
+    required=False,
+    default="all",
+)
+@click.option(
+    "--timeline_id",
+    required=False,
+    help="Timeline ID if the analyzer results should be filtered by timeline.",
+)
+@click.option(
+    "--scope",
+    required=False,
+    help="Scope on: [many_hits, long_runtime, recent]",
+)
+@click.option(
+    "--result_text_search",
+    required=False,
+    help="Search in result text. E.g. for a specific rule_id.",
+)
+@click.option(
+    "--limit",
+    required=False,
+    help="Limit the number of results.",
+)
+def analyzer_stats(analyzer_name, timeline_id, scope, result_text_search, limit):
+    """Prints analyzer stats."""
+
+    if timeline_id:
+        timeline = Timeline.query.get(timeline_id)
+        if not timeline:
+            print("No timeline found with this ID.")
+            return
+        if analyzer_name == "all":
+            analysis_history = Analysis.query.filter_by(timeline=timeline).all()
+        else:
+            analysis_history = Analysis.query.filter_by(
+                timeline=timeline, analyzer_name=analyzer_name
+            ).all()
+    elif analyzer_name == "all":
+        analysis_history = Analysis.query.filter_by().all()
+    else:
+        # analysis filter by analyzer_name
+        analysis_history = Analysis.query.filter_by(analyzer_name=analyzer_name).all()
+
+    df = pd.DataFrame()
+    for analysis in analysis_history:
+        # extract number of hits from result to a int so it could be sorted
+        # TODO: make this more generic as the number of events might only
+        # be a part of the result string in Sigma analyzers
+        try:
+            matches = int(re.search(r"\d+(?=\s+events)", analysis.result))
+        except TypeError:
+            matches = 0
+        new_row = pd.DataFrame(
+            [
+                {
+                    "runtime": analysis.updated_at - analysis.created_at,
+                    "hits": matches,
+                    "timeline_id": analysis.timeline_id,
+                    "analysis_id": analysis.id,
+                    "created_at": analysis.created_at,
+                    "result": analysis.result,
+                }
+            ]
+        )
+        df = pd.concat([df, new_row], ignore_index=True)
+
+    if df.empty:
+        print("No Analyzer runs found!")
+        return
+
+    # make the runtime column to only display in minutes and cut away days etc.
+    df["runtime"] = df["runtime"].dt.seconds / 60
+
+    if result_text_search:
+        df = df[df.result.str.contains(result_text_search, na=False)]
+
+    # Sorting the dataframe depending on the paramters
+
+    if scope in ["many_hits", "many-hits", "hits"]:
+        if analyzer_name == "sigma":
+            df = df.sort_values("hits", ascending=False)
+        else:
+            print("Sorting by hits is only possible for sigma analyzer.")
+            df = df.sort_values("runtime", ascending=False)
+    elif scope == "long_runtime":
+        df = df.sort_values("runtime", ascending=False)
+    elif scope == "recent":
+        df = df.sort_values("created_at", ascending=False)
+    else:
+        df = df.sort_values("runtime", ascending=False)
+
+    if limit:
+        df = df.head(int(limit))
+
+    # remove hits column if analyzer_name is not sigma
+    if analyzer_name != "sigma":
+        df = df.drop(columns=["hits"])
+
+    pd.options.display.max_colwidth = 500
+    print(df)

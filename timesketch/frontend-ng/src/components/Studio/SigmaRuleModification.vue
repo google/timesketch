@@ -77,15 +77,14 @@ limitations under the License.
     </div>
   </v-container>
 </template>
-  
+
 <script>
 import ApiClient from '../../utils/RestApiClient'
 import { SigmaTemplates, defaultSigmaPlaceholder } from '@/utils/SigmaRuleTemplates'
-import EventBus from '../../main'
 import _ from 'lodash'
 
 export default {
-  props: ['rule_uuid', 'sigmaRule'],
+  props: ['rule_uuid', 'sigmaRule', 'event'],
   data() {
     return {
       editingRule: { ruleYaml: defaultSigmaPlaceholder }, // empty state
@@ -188,9 +187,10 @@ export default {
         ApiClient.deleteSigmaRule(ruleUuid)
           .then((response) => {
             this.$store.dispatch('updateSigmaList')
-            EventBus.$emit('errorSnackBar', 'Rule deleted: ' + ruleUuid)
+            this.successSnackBar('Rule deleted!')
           })
           .catch((e) => {
+            this.errorSnackBar('Error deleting rule: ' + ruleUuid)
             console.error(e)
           })
       }
@@ -200,9 +200,10 @@ export default {
         ApiClient.createSigmaRule(this.ruleYamlTextArea)
           .then((response) => {
             this.$store.dispatch('updateSigmaList')
-            EventBus.$emit('errorSnackBar', 'Rule created: ' + this.editingRule.id)
+            this.successSnackBar('Rule created: ' + this.editingRule.title)
           })
           .catch((e) => {
+            this.errorSnackBar('Error creating rule: ' + this.editingRule.title)
             console.error(e)
           })
       }
@@ -210,15 +211,18 @@ export default {
         ApiClient.updateSigmaRule(this.editingRule.id, this.ruleYamlTextArea)
           .then((response) => {
             this.$store.dispatch('updateSigmaList')
-            EventBus.$emit('successSnackBar', 'Rule updated: ' + this.editingRule.id)
+            this.successSnackBar('Rule updated: ' + this.editingRule.title)
           })
-          .catch((e) => {})
+          .catch((e) => {
+            this.errorSnackBar('Error updating rule: ' + this.editingRule.title)
+            console.error(e)
+          })
       }
     },
   },
 }
 </script>
-  
+
 <style scoped lang="scss">
 .editSigmaRule {
   font-family: monospace;

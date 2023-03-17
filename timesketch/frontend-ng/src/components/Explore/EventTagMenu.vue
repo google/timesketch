@@ -16,7 +16,7 @@ limitations under the License.
 <template>
   <v-menu v-model="showMenu" offset-x :close-on-content-click="false">
     <template v-slot:activator="{ on, attrs }">
-      <v-icon v-bind="attrs" v-on="on">mdi-tag-plus-outline</v-icon>
+      <v-icon v-bind="attrs" v-on="on" class="ml-1">mdi-tag-plus-outline</v-icon>
     </template>
 
     <v-card min-width="500px" class="mx-auto">
@@ -91,7 +91,9 @@ export default {
         if (this.event._source.tag.indexOf(tag) === -1) {
           this.event._source.tag.push(tag)
           ApiClient.tagEvents(this.sketch.id, [this.event], [tag])
-            .then((response) => {})
+            .then((response) => {
+              this.$store.dispatch('updateTimelineTags', { sketchId: this.sketch.id, tag: tag, num: 1 })
+            })
             .catch((e) => {
               console.error('Cannot tag event')
             })

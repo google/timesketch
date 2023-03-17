@@ -14,18 +14,20 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div v-if="tags.length">
+  <div>
     <div class="pa-4" flat :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
-      <span style="cursor: pointer" @click="expanded = !expanded"
-        ><v-icon left>mdi-tag-multiple-outline</v-icon> Tags (<small
+      <span style="cursor: pointer" @click="expanded = !expanded">
+        <v-icon left>mdi-tag-multiple-outline</v-icon> Tags
+      </span>
+      <span class="float-right mr-2">
+        <small
           ><strong>{{ tags.length }}</strong></small
-        >)</span
-      >
+        >
+      </span>
     </div>
 
     <v-expand-transition>
-      <div v-show="expanded">
-        <v-divider></v-divider>
+      <div v-show="expanded && tags.length">
         <v-row
           no-gutters
           v-for="label in labels"

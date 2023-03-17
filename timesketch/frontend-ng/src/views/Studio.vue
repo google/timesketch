@@ -13,7 +13,7 @@ limitations under the License.
 <template>
   <div>
     <!-- Left panel -->
-    <v-navigation-drawer app permanent width="450" hide-overlay ref="drawer">
+    <v-navigation-drawer app permanent width="370" hide-overlay ref="drawer">
       <v-toolbar flat color="transparent">
         <v-avatar class="ml-n1">
           <router-link to="/">
@@ -23,7 +23,7 @@ limitations under the License.
         <v-spacer></v-spacer>
       </v-toolbar>
       <v-divider></v-divider>
-      <ts-sigma-rules></ts-sigma-rules>
+      <ts-sigma-rules start-expanded></ts-sigma-rules>
     </v-navigation-drawer>
 
     <v-toolbar flat color="transparent">

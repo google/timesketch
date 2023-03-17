@@ -15,36 +15,62 @@ limitations under the License.
 -->
 <template>
   <div>
-    <div class="pa-4" flat :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
-      <span style="cursor: pointer" @click="expanded = !expanded">
-        <v-icon left>mdi-sigma-lower</v-icon> Sigma Rules ({{ ruleCount }})
-      </span>
-      <span style="float: right" v-if="expanded">
-        <v-icon v-on:click="createNewSigmaRule()">mdi-plus</v-icon>
+    <div
+      no-gutters
+      :style="!(sigmaRules && sigmaRules.length) ? '' : 'cursor: pointer'"
+      class="pa-4"
+      flat
+      @click="expanded = !expanded"
+      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+    >
+      <span> <v-icon left>mdi-sigma-lower</v-icon> Sigma Rules </span>
+      <v-btn
+        v-if="expanded || (sigmaRules && !sigmaRules.length)"
+        small
+        color="primary"
+        text
+        class="ml-1"
+        :to="{ name: 'Studio', params: { id: 'new', type: 'sigma' } }"
+        @click.stop=""
+      >
+        <v-icon small left>mdi-plus</v-icon>New Rule
+      </v-btn>
+      <span class="float-right mr-2">
+        <v-progress-circular v-if="isLoading" :size="12" :width="1" indeterminate></v-progress-circular>
+        <small v-else
+          ><strong>{{ ruleCount }}</strong></small
+        >
       </span>
     </div>
-    <v-expand-transition>
-      <div v-show="expanded" v-if="ruleCount > 0">
-        <v-data-iterator :items="sigmaRules" :items-per-page.sync="itemsPerPage" :search="search">
-          <template v-slot:header>
-            <v-toolbar flat>
-              <v-text-field
-                v-model="search"
-                clearable
-                hide-details
-                outlined
-                dense
-                prepend-inner-icon="mdi-magnify"
-                label="Search for a rule.."
-              ></v-text-field>
-            </v-toolbar>
-          </template>
 
-          <template v-slot:default="props">
-            <ts-sigma-rule v-for="sigmaRule in props.items" :key="sigmaRule.rule_uuid" :sigma-rule="sigmaRule">
-            </ts-sigma-rule>
-          </template>
-        </v-data-iterator>
+    <v-expand-transition>
+      <div v-show="expanded">
+        <div v-if="sigmaRules && sigmaRules.length">
+          <v-data-iterator v-if="ruleCount <= itemsPerPage" :items="sigmaRules" hide-default-footer>
+            <template v-slot:default="props">
+              <ts-sigma-rule v-for="sigmaRule in props.items" :key="sigmaRule.rule_uuid" :sigma-rule="sigmaRule" />
+            </template>
+          </v-data-iterator>
+          <v-data-iterator v-else :items="sigmaRules" :items-per-page.sync="itemsPerPage" :search="search">
+            <template v-slot:header>
+              <v-toolbar flat>
+                <v-text-field
+                  v-model="search"
+                  clearable
+                  hide-details
+                  outlined
+                  dense
+                  prepend-inner-icon="mdi-magnify"
+                  label="Search for a rule.."
+                ></v-text-field>
+              </v-toolbar>
+            </template>
+
+            <template v-slot:default="props">
+              <ts-sigma-rule v-for="sigmaRule in props.items" :key="sigmaRule.rule_uuid" :sigma-rule="sigmaRule" />
+            </template>
+          </v-data-iterator>
+        </div>
       </div>
     </v-expand-transition>
     <v-divider></v-divider>
@@ -55,32 +81,20 @@ limitations under the License.
 import TsSigmaRule from './SigmaRule.vue'
 
 export default {
-  props: [],
+  props: {
+    startExpanded: Boolean,
+  },
   components: {
     TsSigmaRule,
   },
   data: function () {
     return {
-      expanded: false,
+      expanded: this.startExpanded,
       itemsPerPage: 10,
       search: '',
     }
   },
-  methods: {
-    createNewSigmaRule() {
-      // check current router location
-      if (this.$route.params.id === 'new') {
-        return
-      }
-      this.$router.push({
-        name: 'Studio',
-        params: {
-          id: 'new',
-          type: 'sigma',
-        },
-      })
-    },
-  },
+  methods: {},
   computed: {
     sigmaRules() {
       return this.$store.state.sigmaRuleList
@@ -98,9 +112,22 @@ export default {
     meta() {
       return this.$store.state.meta
     },
+    isLoading() {
+      return !this.sigmaRules
+    },
   },
-  created() {
+  mounted() {
     this.$store.dispatch('updateSigmaList')
   },
 }
 </script>
+
+<style scoped lang="scss">
+.v-text-field ::v-deep input {
+  font-size: 0.9em;
+}
+
+.v-text-field ::v-deep label {
+  font-size: 0.9em;
+}
+</style>
