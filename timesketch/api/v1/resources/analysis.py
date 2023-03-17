@@ -78,112 +78,6 @@ class AnalysisResource(resources.ResourceMixin, Resource):
         return self.to_json(analysis_history)
 
 
-class AnalyzerSessionListResource(resources.ResourceMixin, Resource):
-    """Resource to get all analyzer sessions for a given sketch."""
-
-    @login_required
-    def get(self, sketch_id):
-      """Handles GET request to the resource.
-
-      Returns:
-          A list of analyzer sessions and their timelines in JSON (instance of flask.wrappers.Response)
-      """
-      sketch = Sketch.query.get_with_acl(sketch_id)
-
-      if not sketch:
-          abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
-
-      if not sketch.has_permission(current_user, "read"):
-          abort(
-              HTTP_STATUS_CODE_FORBIDDEN, "User does not have read access to sketch"
-          )
-
-      # Get general available analyzers. Returns a list of dict entries
-      available_analyzers = AnalyzerRunResource.get(self, sketch_id)
-
-      sketch_analyzer_sessions = sketch.analysissessions
-
-      analyzer_sessions_list = []
-
-      for session in sketch_analyzer_sessions:
-          for analysis in session.analyses:
-              analyzer_name_short = analysis.name
-              analyzer_name = analysis.name
-              # Get the full name from the analyzer list. Fall back to the short name
-              for analyzer in available_analyzers:
-                  if analyzer["name"] == analysis.name:
-                      analyzer_name = analyzer["display_name"]
-                      break
-              # Check if there is already and entry in the results for this analyzer
-              analyzer_exists = False
-              for analyzer in analyzer_sessions_list:
-                  if analyzer["analyzer_name_short"] == analyzer_name_short:
-                      # TODO: Check if timeline is already in the list and update if las_run is newer
-                      analyzer["timelines"].append({
-                          "last_run": analysis.created_at,
-                          "analyzer_verdict": analysis.result,
-                          "timeline_id": analysis.timeline.id,
-                          "timeline_name": analysis.timeline.name,
-                          "timeline_color": "#"+analysis.timeline.color,
-                          "analyzer_status": analysis.status[0].status,
-                      })
-                      analyzer_exists = True
-                      break
-              if not analyzer_exists:
-                  analyzer_sessions_list.append({
-                      "analyzer_name": analyzer_name,
-                      "analyzer_name_short": analyzer_name_short,
-                      "timelines": [{
-                          "last_run": analysis.created_at,
-                          "analyzer_verdict": analysis.result,
-                          "timeline_id": analysis.timeline.id,
-                          "timeline_name": analysis.timeline.name,
-                          "timeline_color": "#"+analysis.timeline.color,
-                          "analyzer_status": analysis.status[0].status,
-                      }]
-                  })
-
-      return jsonify(analyzer_sessions_list)
-
-      # final data schema:
-      # schema = [
-      #   {
-      #     "analyzer_name": "Windows logon/logoff events", // get name and description from AnalyzerRunResource.get()
-      #     "analyzer_name_short": "login",
-      #     "timelines": [ // only return the last run for a timeline
-      #       {
-      #         "last_run": "Mon, 13 Mar 2023 15:18:51 GMT", // from analyzer.created_at
-      #         "analyzer_verdict": "Total number of login events processed: 2840 and logoff events: 646",
-      #         "timeline_id": 2,
-      #         "timeline_name": "WinSecurityLog_2022",
-      #         "timeline_color": "79F3EF",
-      #         "analyzer_status": "DONE"
-      #       }
-      #     ]
-      #   },
-      #   {
-      #     "analyzer_name": "Feature extractor",
-      #     "analyzer_name_short": "feature_extraction",
-      #     "timelines": [ // except for multi analyzers like feature extractor and sigma
-      #       {
-      #         "analyzerLastRun": "Mon, 13 Mar 2023 15:19:00 GMT",
-      #         "analyzerVerdict": "Feature extraction [ssh_client_password_ipv4_addresses] extracted 0 features.",
-      #         "timelineId": 1,
-      #         "timelineName": "test_firefox_evidence",
-      #         "analyzer_status": "DONE"
-      #       },
-      #       {
-      #         "analyzerLastRun": "Mon, 13 Mar 2023 15:18:59 GMT",
-      #         "analyzerVerdict": "Feature extraction [gmail_accounts] extracted 0 features.",
-      #         "timelineId": 1,
-      #         "timelineName": "test_firefox_evidence",
-      #         "analyzer_status": "DONE"
-      #       }
-      #     ]
-      #   }
-      # ]
-
-
 class AnalyzerSessionActiveListResource(resources.ResourceMixin, Resource):
     """Resource to get active analyzer sessions."""
 
@@ -273,11 +167,17 @@ class AnalyzerRunResource(resources.ResourceMixin, Resource):
         analyzers = analyzer_manager.AnalysisManager.get_analyzers()
         analyzers_detail = []
         for analyzer_name, analyzer_class in analyzers:
+            # TODO: update the multi_analyzer detection logic for edgecases
+            # where analyzers are using custom parameters (e.g. misp)
+            multi = False
+            if len(analyzer_class.get_kwargs()) > 0:
+                multi = True
             analyzers_detail.append(
                 {
                     "name": analyzer_name,
                     "display_name": analyzer_class.DISPLAY_NAME,
                     "description": analyzer_class.DESCRIPTION,
+                    "is_multi": multi,
                 }
             )
 

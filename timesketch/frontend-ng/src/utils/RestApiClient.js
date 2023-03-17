@@ -105,9 +105,6 @@ export default {
   getSketchTimeline(sketchId, timelineId) {
     return RestApiClient.get('/sketches/' + sketchId + '/timelines/' + timelineId + '/')
   },
-  getSketchAnalysisSessions(sketchId) {
-    return RestApiClient.get('/sketches/' + sketchId + '/analyzer/sessions/')
-  },
   getSketchTimelineAnalysis(sketchId, timelineId) {
     return RestApiClient.get('/sketches/' + sketchId + '/timelines/' + timelineId + '/analysis/')
   },

@@ -23,7 +23,7 @@ limitations under the License.
       class="pa-3 pl-1"
       style="cursor: pointer"
       @click="expanded = !expanded"
-      :class="[$vuetify.theme.dark ? 'dark-hover' : 'light-hover']"
+      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
       <v-col cols="1" class="pl-1">
         <v-icon v-if="!expanded">mdi-chevron-right</v-icon>
@@ -31,7 +31,7 @@ limitations under the License.
       </v-col>
       <v-col cols="10">
         <span style="font-size: 0.9em">
-          {{ analyzer.analyzer_name }}
+          {{ analyzer.analyzer_display_name }}
         </span>
       </v-col>
 
@@ -44,24 +44,13 @@ limitations under the License.
 
     <v-expand-transition>
       <div v-show="expanded">
-        <v-card
+        <span
+          style="font-size: 0.9em"
           v-for="timeline in analyzer.timelines"
           :key="timeline.id"
-          density="compact"
-          width="94%"
-          class="ml-2 my-1"
-          rounded="xl"
-          outlined
-          hover
         >
-        <v-icon :color="timeline.timeline_color">mdi-circle</v-icon>
-        <span class="ml-1" style="font-size: 0.9em">{{ timeline.timeline_name }}</span>
-        <v-icon
-            class="float-right mt-1 mr-1"
-            color="#696B69"
-            small
-          >mdi-information-outline</v-icon>
-        </v-card>
+          <ts-analyzer-result-timeline :timeline="timeline" :isMulti="analyzer.analyzer_is_multi"></ts-analyzer-result-timeline>
+        </span>
       </div>
     </v-expand-transition>
     <v-divider></v-divider>
@@ -69,9 +58,13 @@ limitations under the License.
 </template>
 
 <script>
+import TsAnalyzerResultTimeline from './AnalyzerResultTimeline.vue'
 
 export default {
   props: ['analyzer'],
+  components: {
+    TsAnalyzerResultTimeline,
+  },
   data: function () {
     return {
       expanded: false,

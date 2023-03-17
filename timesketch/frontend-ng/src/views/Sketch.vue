@@ -327,6 +327,8 @@ export default {
       this.$store.dispatch('updateSavedGraphs', this.sketchId)
       this.$store.dispatch('updateGraphPlugins')
       this.$store.dispatch('updateContextLinks')
+      this.$store.dispatch('updateAnalyzerList', this.sketchId)
+      this.$store.dispatch('updateAnalysesList', this.sketchId)
       this.loadingSketch = false
       this.showLeftPanel = true
       this.$nextTick(function () {

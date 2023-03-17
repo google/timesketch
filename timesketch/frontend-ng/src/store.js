@@ -46,6 +46,8 @@ const defaultState = (currentUser) => {
       timeout: -1
     },
     contextLinkConf: {},
+    sketchAnalyzerList: {},
+    sketchAnalysesList: [],
   }
 }
 
@@ -120,6 +122,12 @@ export default new Vuex.Store({
     },
     SET_CONTEXT_LINKS(state, payload) {
       Vue.set(state, 'contextLinkConf', payload)
+    },
+    SET_ANALYZERS(state, payload) {
+      Vue.set(state, 'sketchAnalyzerList', payload)
+    },
+    SET_ANALYSES_LIST(state, payload) {
+      Vue.set(state, 'sketchAnalysesList', payload)
     },
   },
   actions: {
@@ -254,6 +262,99 @@ export default new Vuex.Store({
       .catch((e) => {
         console.error(e)
       })
+    },
+    updateAnalyzerList(context, sketchId) {
+      if (!sketchId) {
+        sketchId = context.state.sketch.id
+      }
+      ApiClient.getAnalyzers(sketchId).then((response) => {
+        let analyzerList = {}
+        if (response.data !== undefined) {
+          response.data.forEach((analyzer) => {
+            analyzerList[analyzer.name] = analyzer
+          })
+        }
+        context.commit('SET_ANALYZERS', analyzerList)
+      }).catch((e) => {
+        console.log(e)
+      })
+    },
+    updateAnalysesList(context, sketchId) {
+      if (!sketchId) {
+        sketchId = context.state.sketch.id
+      }
+      let analyses = []
+      context.state.sketch.timelines.forEach(timeline => {
+        ApiClient.getSketchTimelineAnalysis(sketchId, timeline.id)
+        .then(response => {
+          if (response.data.objects[0] !== undefined) {
+            // massage data to fit the result list needs
+            response.data.objects[0].forEach((analysis) => {
+              let analyzerExists = false
+              analyses.every((analyzer) => {
+                if (analyzer.analyzer_name === analysis.analyzer_name) {
+                  analyzerExists = true
+                  // analyzer already exists in the list
+                  let timelineExists = false
+                  analyzer.timelines.every((timeline) => {
+                    // timeline already exists in the list
+                    if (timeline.id === analysis.timeline.id) {
+                      timelineExists = true
+                      // check if the analysis is newer than the one in the list
+                      if (analysis.created_at > timeline.created_at) {
+                        timeline.created_at = analysis.created_at
+                        timeline.result = analysis.result
+                        timeline.status = analysis.status[0].status
+                      }
+                      return false
+                    }
+                    return true
+                  })
+                  if (!timelineExists) {
+                    // timeline did not exist so add it
+                    let output = {
+                      id: analysis.timeline.id,
+                      name: analysis.timeline.name,
+                      color: '#'+analysis.timeline.color,
+                      result: analysis.result,
+                      status: analysis.status[0].status,
+                      created_at: analysis.created_at
+                    }
+                    analyzer.timelines.push(output)
+                  }
+                  return false
+                }
+                return true
+              })
+              if (!analyzerExists) {
+                // analyzer did not exist so add it
+                let output = {
+                  analyzer_name: analysis.analyzer_name,
+                  analyzer_display_name: context.state.sketchAnalyzerList[analysis.analyzer_name].display_name,
+                  analyzer_is_multi: context.state.sketchAnalyzerList[analysis.analyzer_name].is_multi,
+                  timelines: [
+                    {
+                      id: analysis.timeline.id,
+                      name: analysis.timeline.name,
+                      color: '#'+analysis.timeline.color,
+                      result: analysis.result,
+                      status: analysis.status[0].status,
+                      created_at: analysis.created_at
+                    },
+                  ],
+                }
+                analyses.push(output)
+              }
+            })
+          }
+        })
+        .catch(e => {
+          console.error(e)
+        })
+      })
+      context.commit('SET_ANALYSES_LIST', analyses)
+      // console.log("store analyzer results")
+      // console.log(context.state.analyses)
     },
   }
 })

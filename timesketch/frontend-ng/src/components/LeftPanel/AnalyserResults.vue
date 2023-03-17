@@ -18,7 +18,7 @@ limitations under the License.
     <div
       no-gutters
       class="pa-4"
-      style="cursor: pointer"
+      :style="!(sketchAnalysesList.length) ? '' : 'cursor: pointer'"
       flat
       @click="expanded = !expanded"
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
@@ -27,7 +27,7 @@ limitations under the License.
         <v-icon left>mdi-auto-fix</v-icon> Analyzer Results
       </span>
       <v-btn
-        v-if="expanded"
+        v-if="expanded || !(sketchAnalysesList.length)"
         :to="{ name: 'Analyze', params: { sketchId: sketch.id } }"
         small
         color="primary"
@@ -39,43 +39,20 @@ limitations under the License.
         + Run Analyzer
       </v-btn>
       <span class="float-right mr-2">
-        <small><strong>{{ numberOfFinishedAnalyzerSessions }}</strong></small>
+        <small><strong>{{ sketchAnalysesList.length }}</strong></small>
       </span>
 
     </div>
     <v-expand-transition>
       <div v-show="expanded">
-        <div v-if="numberOfFinishedAnalyzerSessions > 0">
+        <div v-if="sketchAnalysesList.length > 0">
           <!-- TODO: issue#2565 -->
-          <!-- Using data-iterator to be able to filter entries later on! -->
-          <v-data-iterator :items="analyzerSessionsList" hide-default-footer>
+          <!-- Add a severity and timeline filter here. -->
+          <v-data-iterator :items="sketchAnalysesList" hide-default-footer>
             <template v-slot:default="props">
-              <ts-analyser-result v-for="analyzer in props.items" :key="analyzer.analyzer_name_short" :analyzer="analyzer" />
+              <ts-analyser-result v-for="analyzer in props.items" :key="analyzer.analyzer_name" :analyzer="analyzer" />
             </template>
           </v-data-iterator>
-        </div>
-        <div v-else class="text-center">
-          <div class="my-6 text-center">
-            <v-img
-              class="mx-auto mb-2"
-              src="/dist/no_analyzer_results.png"
-              alt="No analyzer results yet"
-              max-width="200"
-              contain
-            ></v-img>
-            <span>No analyzers run, yet.</span>
-          </div>
-          <v-btn
-            :to="{ name: 'Analyze', params: { sketchId: sketch.id } }"
-            plain
-            color="primary"
-            small
-            center
-            text
-            class="mb-3"
-          >
-            + Run Analyzer
-          </v-btn>
         </div>
       </div>
     </v-expand-transition>
@@ -84,7 +61,7 @@ limitations under the License.
 </template>
 
 <script>
-import RestApiClient from '../../utils/RestApiClient'
+// import RestApiClient from '../../utils/RestApiClient'
 import TsAnalyserResult from './AnalyzerResult.vue'
 
 export default {
@@ -94,12 +71,13 @@ export default {
   },
   data: function () {
     return {
-      numberOfFinishedAnalyzerSessions: 0,
       expanded: false,
-      analyzerSessionsList: [],
+      analyses: [],
+      analyzerList: {},
     }
   },
   methods: {
+    // TODO: Have an automatic poll for new analyzers running when they are triggered.
   },
   computed: {
     sketch() {
@@ -108,16 +86,14 @@ export default {
     meta() {
       return this.$store.state.meta
     },
+    sketchAnalyzerList() {
+      return this.$store.state.sketchAnalyzerList
+    },
+    sketchAnalysesList() {
+      return this.$store.state.sketchAnalysesList
+    },
   },
   created() {
-    // TODO: Research how to do the polling and updating of the analyzer status in vue using the store
-    RestApiClient.getSketchAnalysisSessions(this.sketch.id)
-      .then((response) => {
-        this.analyzerSessionsList = response.data
-        this.numberOfFinishedAnalyzerSessions = response.data.length
-      }).catch((error) => {
-        console.log(error)
-      })
   },
 }
 </script>

@@ -24,7 +24,6 @@ from .resources.aggregation import AggregationResource
 from .resources.analysis import AnalysisResource
 from .resources.analysis import AnalyzerRunResource
 from .resources.analysis import AnalyzerSessionActiveListResource
-from .resources.analysis import AnalyzerSessionListResource
 from .resources.analysis import AnalyzerSessionResource
 from .resources.attribute import AttributeResource
 from .resources.explore import ExploreResource
@@ -96,10 +95,6 @@ API_ROUTES = [
     (
         AnalyzerSessionActiveListResource,
         "/sketches/<int:sketch_id>/analyzer/sessions/active/",
-    ),
-    (
-        AnalyzerSessionListResource,
-        "/sketches/<int:sketch_id>/analyzer/sessions/",
     ),
     (
         AnalyzerSessionResource,
