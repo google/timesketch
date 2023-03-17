@@ -205,12 +205,12 @@ def check_mapping_errors(headers, headers_mapping):
                     f"When create a new column, a default value must be assigned"
                 )
     # 4. check if two or more mandatory headers are mapped
-    #    to the same exisiting header
+    #    to the same existing header
     if len(candidate_headers) != len(set(candidate_headers)):
         raise RuntimeError(
             "Headers mapping is wrong.\n"
             "2 or more mandatory headers are "
-            "mapped to the same exisiting CSV headers"
+            "mapped to the same existing CSV headers"
         )
 
 
@@ -284,7 +284,7 @@ def read_and_validate_csv(
         )
         for idx, chunk in enumerate(reader):
             if headers_mapping:
-                # rename colunms according to the mapping
+                # rename columns according to the mapping
                 chunk = rename_csv_headers(chunk, headers_mapping)
 
             skipped_rows = chunk[chunk["datetime"].isnull()]
@@ -313,15 +313,17 @@ def read_and_validate_csv(
                             idx * reader.chunksize + num_chunk_rows,
                         )
                     )
-                chunk["timestamp"] = chunk["datetime"].dt.strftime("%s%f").astype(int)
+
                 chunk["datetime"] = (
                     chunk["datetime"].apply(Timestamp.isoformat).astype(str)
                 )
+
             except ValueError:
                 logger.warning(
                     "Rows {0} to {1} skipped due to malformed "
                     "datetime values ".format(
-                        idx * reader.chunksize, idx * reader.chunksize + chunk.shape[0]
+                        idx * reader.chunksize,
+                        idx * reader.chunksize + chunk.shape[0],
                     )
                 )
                 continue
@@ -332,6 +334,28 @@ def read_and_validate_csv(
                 _scrub_special_tags(row)
                 # Remove all NAN values from the pandas.Series.
                 row.dropna(inplace=True)
+                MAX_TIMESTAMP_DIFFERENCE = 100000  # 100 seconds
+                # check datetime plausibility
+                if "timestamp" in row and "datetime" in row:
+                    timestamp_calculated = int(
+                        pandas.Timestamp(row["datetime"]).value / 1000
+                    )
+                    if (
+                        abs(row["timestamp"] - timestamp_calculated)
+                        > MAX_TIMESTAMP_DIFFERENCE
+                    ):
+                        error_string = (
+                            "Timestamp difference between {0!s} "
+                            "and {1!s} is too big {2!s}, "
+                            "aborting ingestion."
+                        ).format(
+                            row["timestamp"],
+                            timestamp_calculated,
+                            abs(row["timestamp"] - timestamp_calculated),
+                        )
+                        logger.error(error_string)
+                        raise errors.DataIngestionError(error_string)
+
                 yield row.to_dict()
     except (pandas.errors.EmptyDataError, pandas.errors.ParserError) as e:
         error_string = "Unable to read file, with error: {0!s}".format(e)
@@ -350,7 +374,10 @@ def read_and_validate_redline(file_handle):
     """
 
     csv.register_dialect(
-        "redlineDialect", delimiter=",", quoting=csv.QUOTE_ALL, skipinitialspace=True
+        "redlineDialect",
+        delimiter=",",
+        quoting=csv.QUOTE_ALL,
+        skipinitialspace=True,
     )
     reader = pandas.read_csv(file_handle, delimiter=",", dialect="redlineDialect")
 

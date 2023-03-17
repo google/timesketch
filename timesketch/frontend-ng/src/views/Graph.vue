@@ -45,15 +45,22 @@ limitations under the License.
                 <v-icon>mdi-content-save-outline</v-icon>
               </v-btn>
             </template>
-            <v-card>
-              <v-card-title> Save selected elements </v-card-title>
-              <v-card-text>
-                <v-text-field outlined v-model="saveAsName" required placeholder="Name your graph"></v-text-field>
-              </v-card-text>
+            <v-card class="pa-4">
+              <h3>Save selected elements</h3>
+              <br />
+              <v-text-field
+                v-model="saveAsName"
+                required
+                placeholder="Name your graph"
+                outlined
+                dense
+                autofocus
+                @focus="$event.target.select()"
+              ></v-text-field>
               <v-card-actions>
                 <v-spacer></v-spacer>
-                <v-btn color="primary" text @click="saveGraphDialog = false"> Cancel </v-btn>
-                <v-btn color="primary" text @click="saveGraph" :disabled="!saveAsName"> Save </v-btn>
+                <v-btn text @click="saveGraphDialog = false"> Cancel </v-btn>
+                <v-btn color="primary" depressed @click="saveGraph" :disabled="!saveAsName"> Save </v-btn>
               </v-card-actions>
             </v-card>
           </v-dialog>

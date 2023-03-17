@@ -124,6 +124,26 @@ def mock_response(*args, **kwargs):
         ],
     }
 
+    add_event_comment_data = {
+        "meta": {},
+        "objects": [
+            [
+                {
+                    "comment": "comment1 foobar",
+                    "created_at": "2023-03-09T13:37:58.395855",
+                    "id": 1,
+                    "updated_at": "2023-03-09T13:37:58.395855",
+                    "user": {
+                        "active": True,
+                        "admin": True,
+                        "groups": [],
+                        "username": "testuser",
+                    },
+                }
+            ]
+        ],
+    }
+
     sketch_data = {
         "meta": {
             "views": [{"id": 1, "name": "test"}, {"id": 2, "name": "test"}],
@@ -451,6 +471,9 @@ def mock_response(*args, **kwargs):
         ),
         "http://127.0.0.1/api/v1/sketches/1/event/tagging/": MockResponse(
             json_data=add_event_tag_data
+        ),
+        "http://127.0.0.1/api/v1/sketches/1/event/annotate/": MockResponse(
+            json_data=add_event_comment_data
         ),
         "http://127.0.0.1/api/v1/sketches/1/views/1/": MockResponse(
             json_data=view_data_1
