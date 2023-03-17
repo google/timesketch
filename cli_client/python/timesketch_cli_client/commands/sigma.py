@@ -46,10 +46,6 @@ def list_sigmarules(ctx, output):
     elif output == "csv":
         click.echo(sigma_rules.to_csv())
     elif output == "text":
-        click.echo(
-            sigma_rules.to_string(index=False, columns=["rule_uuid", "title"])
-        )
+        click.echo(sigma_rules.to_string(index=False, columns=["rule_uuid", "title"]))
     else:
-        click.echo(
-            sigma_rules.to_string(index=False, columns=["rule_uuid", "title"])
-        )
+        click.echo(sigma_rules.to_string(index=False, columns=["rule_uuid", "title"]))
