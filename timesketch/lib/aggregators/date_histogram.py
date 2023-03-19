@@ -165,9 +165,9 @@ class DateHistogramAggregation(interface.BaseAggregator):
         """Returns the Vega-Lite spec encoding."""
         if supported_charts == "heatmap":
             return self._get_heatmap_encoding()
-        elif supported_charts == "histogram":
+        if supported_charts == "histogram":
             return self._get_date_histogram_encoding()
-        elif supported_charts == "table":
+        if supported_charts == "table":
             return self._get_table_encoding()
         return None
 
@@ -232,8 +232,10 @@ class DateHistogramAggregation(interface.BaseAggregator):
             raise ValueError("Missing field and/or field_query_string.")
 
         self.field = field
+        # pylint: disable=attribute-defined-outside-init
         self.field_query_string = field_query_string
         self.interval = supported_intervals
+        # pylint: enable=attribute-defined-outside-init
 
         encoding = self._get_vega_encoding(supported_charts)
 
