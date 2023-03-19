@@ -33,23 +33,9 @@ class DateHistogramAggregation(interface.BaseAggregator):
     DISPLAY_NAME = "Date Histogram Aggregation"
     DESCRIPTION = "Aggregates values of a field into a time interval bucket."
 
-    SUPPORTED_CHARTS = frozenset(
-        [
-            "heatmap",
-            "date_histogram",
-            "table"
-        ]
-    )
+    SUPPORTED_CHARTS = frozenset(["heatmap", "date_histogram", "table"])
 
-    SUPPORTED_INTERVALS = frozenset(
-        [
-            "year",
-            "month",
-            "day",
-            "day_of_week",
-            "hour"
-        ]
-    )
+    SUPPORTED_INTERVALS = frozenset(["year", "month", "day", "day_of_week", "hour"])
 
     FORM_FIELDS = [
         {
@@ -86,8 +72,7 @@ class DateHistogramAggregation(interface.BaseAggregator):
             "type": "ts-dynamic-form-datetime-input",
             "name": "start_time",
             "label": (
-                "ISO formatted timestamp for the start time "
-                "of the aggregated data"
+                "ISO formatted timestamp for the start time " "of the aggregated data"
             ),
             "placeholder": "Enter a start date for the aggregation",
             "default_value": "",
@@ -104,75 +89,57 @@ class DateHistogramAggregation(interface.BaseAggregator):
     ]
 
     _BASE_VEGA_ENCODING = {
-        "x": {
-            "field": "",
-            "type": "ordinal"
-        },
-        "y": {
-            "field": "",
-            "type": "ordinal"
-        },
+        "x": {"field": "", "type": "ordinal"},
+        "y": {"field": "", "type": "ordinal"},
         "color": {
             "field": "count",
             "type": "quantitative",
-            "scale": {
-                "scheme": "blues"
-            }
+            "scale": {"scheme": "blues"},
         },
         "tooltip": [
-            {
-                "field": "",
-                "type": "ordinal"
-            },
-            {
-                "field": "count",
-                "type": "quantitative"
-            },
+            {"field": "", "type": "ordinal"},
+            {"field": "count", "type": "quantitative"},
         ],
     }
 
     _QUERY_TEMPLATE = {
-        "query": {
-            "bool": {
-                "must": []
-            }
-        },
+        "query": {"bool": {"must": []}},
         "aggs": {
             "aggregation": {
                 "date_histogram": {
                     "field": "datetime",
-                    #"interval": "TODO"
+                    # "interval": "TODO"
                 }
             }
-        }
+        },
     }
 
     @property
     def chart_title(self):
         """Returns a title for the chart."""
         if self.field:
-            return f'Date History Aggregation for {self.field}'
+            return f"Date History Aggregation for {self.field}"
         return "Date History Aggregation"
 
     def _get_heatmap_encoding(self):
         """Returns the heatmap Vega-Lite spec encoding."""
         encoding = copy.deepcopy(self._BASE_VEGA_ENCODING)
 
-        if self.interval == 'month':
+        if self.interval == "month":
             encoding["x"]["field"] = "year"
             encoding["x"]["title"] = "Year"
             encoding["y"]["field"] = "month"
             encoding["y"]["title"] = "month"
-            encoding["tooltip"][0]['field'] = "month"
+            encoding["tooltip"][0]["field"] = "month"
             encoding["tooltip"][0]["title"] = "Month"
-        elif self.interval == 'day':
+        elif self.interval == "day":
             encoding["x"]["timeUnit"] = "utcyearmonth"
             encoding["x"]["title"] = "Year"
             encoding["y"]["timeUnit"] = "date"
             encoding["y"]["title"] = "Day of Month"
             encoding["tooltip"][0]["timeUnit"] = "utcyearmonthdate"
             encoding["tooltip"][0]["title"] = "Date"
-        elif self.interval == 'hour':
+        elif self.interval == "hour":
             encoding["x"]["timeUnit"] = "utcyearmonthdate"
             encoding["x"]["title"] = "Date"
             encoding["y"]["timeUnit"] = "hours"
@@ -196,55 +163,40 @@ class DateHistogramAggregation(interface.BaseAggregator):
 
     def _get_vega_encoding(self, supported_charts):
         """Returns the Vega-Lite spec encoding."""
-        if supported_charts == 'heatmap':
+        if supported_charts == "heatmap":
             return self._get_heatmap_encoding()
-        elif supported_charts == 'histogram':
+        elif supported_charts == "histogram":
             return self._get_date_histogram_encoding()
-        elif supported_charts == 'table':
+        elif supported_charts == "table":
             return self._get_table_encoding()
         return None
 
-    def _get_histogram_aggregation_spec(self, start_time, end_time, limit=10):
-        # create the aggregation specification.
+    def _get_histogram_aggregation_spec(self, start_time, end_time):
+        """Returns the aggregation specification."""
         formatted_field_name = self.format_field_by_type(self.field)
-        if self.field_query_string == '*':
+        if self.field_query_string == "*":
             formatted_field_query_string = self.field_query_string
         else:
             formatted_field_query_string = f'"{self.field_query_string}"'
         query = f"{formatted_field_name}:{formatted_field_query_string}"
         aggregation_spec = copy.deepcopy(self._QUERY_TEMPLATE)
-        aggregation_spec["query"]["bool"]["must"].append({
-            "query_string": {
-                "query": query
-            }
-        })
-        aggregation_spec[
-            "aggs"]["aggregation"]["date_histogram"]["interval"] = self.interval
+        aggregation_spec["query"]["bool"]["must"].append(
+            {"query_string": {"query": query}}
+        )
+        aggregation_spec["aggs"]["aggregation"]["date_histogram"][
+            "interval"
+        ] = self.interval
         aggregation_spec["aggs"]["datetime_cardinality"] = {
-            "cardinality":  {
-                "field": "datetime"
-            }
+            "cardinality": {"field": "datetime"}
         }
 
-        aggregation_spec["aggs"]["datetime_min"] = {
-            "min":  {
-                "field": "datetime"
-            }
-        }
-        aggregation_spec["aggs"]["datetime_max"] = {
-            "max":  {
-                "field": "datetime"
-            }
-        }
+        aggregation_spec["aggs"]["datetime_min"] = {"min": {"field": "datetime"}}
+        aggregation_spec["aggs"]["datetime_max"] = {"max": {"field": "datetime"}}
         aggregation_spec["aggs"]["value_cardinality"] = {
-            "cardinality":  {
-                "field": formatted_field_name
-            }
+            "cardinality": {"field": formatted_field_name}
         }
         aggregation_spec["aggs"]["value_count"] = {
-            "value_count":  {
-                "field": formatted_field_name
-            }
+            "value_count": {"field": formatted_field_name}
         }
         aggregation_spec = self._add_query_to_aggregation_spec(
             aggregation_spec, start_time, end_time
@@ -260,7 +212,7 @@ class DateHistogramAggregation(interface.BaseAggregator):
         supported_intervals="day",
         supported_charts="heatmap",
         start_time="",
-        end_time=""
+        end_time="",
     ):
         """Runs the date_histogram aggregator.
 
@@ -277,7 +229,7 @@ class DateHistogramAggregation(interface.BaseAggregator):
             interface.AggregationResult: the aggreation result.
         """
         if not field or not field_query_string:
-          raise ValueError('Missing field and/or field_query_string.')
+            raise ValueError("Missing field and/or field_query_string.")
 
         self.field = field
         self.field_query_string = field_query_string
@@ -286,7 +238,8 @@ class DateHistogramAggregation(interface.BaseAggregator):
         encoding = self._get_vega_encoding(supported_charts)
 
         histogram_aggregation_spec = self._get_histogram_aggregation_spec(
-            start_time, end_time)
+            start_time, end_time
+        )
 
         response = self.opensearch_aggregation(histogram_aggregation_spec)
         aggregations = response.get("aggregations", {})
@@ -298,7 +251,7 @@ class DateHistogramAggregation(interface.BaseAggregator):
             if bucket["doc_count"] == 0:
                 continue
 
-            dt = datetime.utcfromtimestamp(bucket["key"]/1000)
+            dt = datetime.utcfromtimestamp(bucket["key"] / 1000)
 
             value = {
                 "timestamp": bucket["key"],
@@ -323,7 +276,7 @@ class DateHistogramAggregation(interface.BaseAggregator):
             values=[values],
             chart_type=supported_charts,
             sketch_url=self._sketch_url,
-            field=field
+            field=field,
         )
 
 

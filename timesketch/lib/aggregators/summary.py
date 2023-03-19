@@ -94,7 +94,7 @@ class SummaryAggregation(interface.BaseAggregator):
         start_time="",
         end_time="",
         most_common_limit=10,
-        rare_value_document_limit=5
+        rare_value_document_limit=5,
     ):
         """Runs the SummaryAggregation aggregator.
 
@@ -117,10 +117,10 @@ class SummaryAggregation(interface.BaseAggregator):
         self.field_query_string = field_query_string
         formatted_field_name = self.format_field_by_type(field)
 
-        if field_query_string == '*':
-          formatted_field_query_string = field_query_string
+        if field_query_string == "*":
+            formatted_field_query_string = field_query_string
         else:
-          formatted_field_query_string = f'"{field_query_string}"'
+            formatted_field_query_string = f'"{field_query_string}"'
 
         query_string = f"{formatted_field_name}:{formatted_field_query_string}"
         aggregation_spec = {
@@ -128,9 +128,7 @@ class SummaryAggregation(interface.BaseAggregator):
                 "bool": {
                     "must": [
                         {
-                            "query_string": {
-                                "query": query_string
-                            },
+                            "query_string": {"query": query_string},
                         }
                     ]
                 }
@@ -140,10 +138,7 @@ class SummaryAggregation(interface.BaseAggregator):
                     "histogram": {
                         "script": "doc['datetime'].value.getMonthOfYear()",
                         "interval": 1,
-                        "extended_bounds": {
-                          "min": 1,
-                          "max": 12
-                        },
+                        "extended_bounds": {"min": 1, "max": 12},
                         "min_doc_count": 0,
                     }
                 },
@@ -151,10 +146,7 @@ class SummaryAggregation(interface.BaseAggregator):
                     "histogram": {
                         "script": "doc['datetime'].value.getDayOfWeek()",
                         "interval": 1,
-                        "extended_bounds": {
-                          "min": 0,
-                          "max": 7
-                        },
+                        "extended_bounds": {"min": 0, "max": 7},
                         "min_doc_count": 0,
                     }
                 },
@@ -162,83 +154,43 @@ class SummaryAggregation(interface.BaseAggregator):
                     "histogram": {
                         "script": "doc['datetime'].value.getHourOfDay()",
                         "interval": 1,
-                        "extended_bounds": {
-                          "min": 0,
-                          "max": 23
-                        },
+                        "extended_bounds": {"min": 0, "max": 23},
                         "min_doc_count": 0,
                     }
                 },
-                "datetime_percentiles": {
-                    "percentiles": {
-                        "field": "datetime"
-                    }
-                },
-                "datetime_min": {
-                    "min": {
-                        "field": "datetime"
-                    }
-                },
-                "datetime_max": {
-                    "max": {
-                        "field": "datetime"
-                    }
-                },
-                "value_cardinality": {
-                    "cardinality": {
-                        "field": formatted_field_name
-                    }
-                },
-                "value_count": {
-                    "value_count": {
-                        "field": formatted_field_name
-                    }
-                },
+                "datetime_percentiles": {"percentiles": {"field": "datetime"}},
+                "datetime_min": {"min": {"field": "datetime"}},
+                "datetime_max": {"max": {"field": "datetime"}},
+                "value_cardinality": {"cardinality": {"field": formatted_field_name}},
+                "value_count": {"value_count": {"field": formatted_field_name}},
                 "all_values": {
                     "global": {},
                     "aggs": {
-                        "datetime_min": {
-                            "min": {
-                                "field": "datetime"
-                            }
-                        },
-                        "datetime_max": {
-                            "max": {
-                                "field": "datetime"
-                            }
-                        },
+                        "datetime_min": {"min": {"field": "datetime"}},
+                        "datetime_max": {"max": {"field": "datetime"}},
                         "field_cardinality": {
-                            "cardinality":  {
-                                "field": formatted_field_name
-                            }
+                            "cardinality": {"field": formatted_field_name}
                         },
-                        "field_count": {
-                            "value_count":  {
-                                "field": formatted_field_name
-                            }
-                        },
+                        "field_count": {"value_count": {"field": formatted_field_name}},
                         "top_terms": {
                             "terms": {
                                 "field": formatted_field_name,
-                                "size": most_common_limit
+                                "size": most_common_limit,
                             }
                         },
                         "rare_terms": {
                             "rare_terms": {
                                 "field": formatted_field_name,
-                                "max_doc_count": rare_value_document_limit
+                                "max_doc_count": rare_value_document_limit,
                             }
-                        }
-                    }
-                }
-
-            }
+                        },
+                    },
+                },
+            },
         }
 
         # TODO: break down aggregation into timelines
-        self._add_query_to_aggregation_spec(
-            aggregation_spec, start_time, end_time
-        )
+        self._add_query_to_aggregation_spec(aggregation_spec, start_time, end_time)
 
         response = self.opensearch_aggregation(aggregation_spec)
         aggregations = response.get("aggregations", {})
@@ -247,7 +199,7 @@ class SummaryAggregation(interface.BaseAggregator):
             values=[aggregations],
             chart_type=None,
             sketch_url=self._sketch_url,
-            field=field
+            field=field,
         )
 
 
