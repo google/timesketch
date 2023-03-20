@@ -316,7 +316,7 @@ limitations under the License.
 
     <!-- one button is needed to activate the Shortcuthelp -->
 
-    <button v-shortkey="['ctrl', , 'shift', 'h']" @shortkey="toggleshowShortcutHelp()"></button>
+    <button v-show="false" v-shortkey="['ctrl', , 'shift', 'h']" @shortkey="toggleshowShortcutHelp()"></button>
 
     <!-- Eventlist -->
     <v-card flat class="mt-5 mx-3">
