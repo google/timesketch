@@ -67,7 +67,7 @@ limitations under the License.
               <v-card-text>
                 <!-- {{  this.valueEventCount }} -->
                 <apexchart
-                  height="150px"
+                  height="250px"
                   :options="this.donutChartOptions"
                   :series="this.donutChartSeries"
                 ></apexchart>
@@ -87,8 +87,8 @@ limitations under the License.
                   </v-btn>
                 </v-btn-toggle>
                 <apexchart
-                  height="250px"
-                  :options="intervalChartOptions"
+                  height="400px"
+                  :options="this.intervalChartOptions"
                   :series="this.intervalChartSeries"
                 ></apexchart>
               </v-card-text>
@@ -128,6 +128,20 @@ limitations under the License.
                 </v-card-text>
               </v-card>
             </v-col>
+            <v-col align="center">
+            <v-card>
+              <v-card-title>
+                Value event heatmap
+              </v-card-title>
+              <v-card-text>
+                <apexchart
+                  height="400px"
+                  :options="this.intervalHeatmapOptions"
+                  :series="this.intervalHeatmapSeries"
+                ></apexchart>
+              </v-card-text>
+            </v-card>
+          </v-col>
         </v-row>
       </v-container>
     </v-card-text>
@@ -191,6 +205,8 @@ export default {
       return this.distributionIntervals[this.selectedDistributionIntervalIndex]
     },
     intervalChartOptions() {
+      if (this.stats === undefined) return []
+
       let categories = []
       if (this.selectedDistributionInterval === "Year") {
         categories = []
@@ -219,6 +235,8 @@ export default {
       }
     },
     intervalChartSeries() {
+      if (this.stats === undefined) return []
+
       let data = []
 
       switch (this.selectedDistributionInterval) {
@@ -289,11 +307,11 @@ export default {
       return this.stats.value_count.value
     },
     commonValues() {
-      if (this.stats === undefined) return null
+      if (this.stats === undefined) return []
       return this.stats.all_values.top_terms.buckets
     },
     rareValues() {
-      if (this.stats === undefined) return null
+      if (this.stats === undefined) return []
       return this.stats.all_values.rare_terms.buckets
     },
     donutChartOptions() {
@@ -312,6 +330,40 @@ export default {
     },
     minEvent: function() { return this.raw_data[0] },
     maxEvent: function() { return this.raw_data[this.raw_data.length - 1] },
+    intervalHeatmapOptions() {
+      return {
+        chart: {
+          type: 'heatmap',
+        },
+        colors: ["#008FFB"],
+        tooltip: {
+          enabled: true,
+          x: { show: true },
+        },
+        xaxis: {
+          labels: { show: true, hideOverlappingLabels: true },
+          tickPlacement: "between",
+        },
+      }
+    },
+    intervalHeatmapSeries() {
+      let series = []
+
+      if (this.stats === undefined) return series
+
+      for (let day of Array.from({ length: 7}).keys()) {
+        let daySeries = []
+        console.log(day)
+        for (let hour of Array.from({ length: 24}).keys()) {
+          const count = this.stats.hour_of_week_histogram.buckets[day*24 + hour].doc_count
+          console.log(day, hour, count)
+          daySeries.push({x: this.hoursOfDay[hour], y: count})
+        }
+        series.push({ 'name': this.daysOfWeek[day], 'data': daySeries})
+      }
+      console.log(series)
+      return series
+    },
   },
   watch: {
     eventKey (value, oldValue) {
