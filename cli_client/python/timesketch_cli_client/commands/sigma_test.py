@@ -41,3 +41,14 @@ class SigmaTest(unittest.TestCase):
             obj=self.ctx,
         )
         assert 1 is result.exit_code
+
+    def test_describe_sigmarules_missing_rule_uuid(self):
+        """Test to describe Sigma rules."""
+        runner = CliRunner()
+        result = runner.invoke(
+            sigma_group,
+            ["describe"],
+            obj=self.ctx,
+        )
+        assert 2 is result.exit_code
+        assert "Error: Missing option '--rule-uuid'." in result.output
