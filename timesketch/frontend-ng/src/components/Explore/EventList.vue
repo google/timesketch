@@ -77,6 +77,10 @@ limitations under the License.
                 </v-card>
               </v-dialog>
 
+              <!-- Shortcuts -->
+              <button v-show="false" v-shortkey="['ctrl', , 'shift', 'n']" @shortkey="nextpage()"></button>
+              <button v-show="false" v-shortkey="['ctrl', 'shift', 'p']" @shortkey="previouspage()"></button>
+
               <v-btn icon @click="showHistogram = !showHistogram" v-if="!disableHistogram">
                 <v-icon>mdi-chart-bar</v-icon>
               </v-btn>
@@ -841,6 +845,18 @@ export default {
           this.$router.push({ name: 'Explore', query: { view: newView.id } })
         })
         .catch((e) => {})
+    },
+    nextpage(event) {
+      this.tableOptions.page++
+      console.log(this.tableOptions.page)
+      this.paginate()
+    },
+    previouspage(event) {
+      // decrease page number if the datable only if page is greater than 1
+      if (this.tableOptions.page > 1) {
+        this.tableOptions.page--
+        this.paginate()
+      }
     },
   },
   watch: {

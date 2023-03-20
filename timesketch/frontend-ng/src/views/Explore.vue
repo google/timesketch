@@ -265,7 +265,7 @@ limitations under the License.
       <v-card width="700" style="overflow: visible">
         <v-card-title> Keyboard Shortcut help </v-card-title>
 
-        <v-card-text v-shortkey="['ctrl', 'shift', 'n']" @shortkey="nextpage()"
+        <v-card-text
           ><v-btn style="text-transform: unset; cursor: unset" :ripple="false" x-small density="compact"> Ctrl </v-btn>
           +
           <v-btn style="text-transform: unset; cursor: unset" :ripple="false" x-small density="compact"> Shift </v-btn>
@@ -274,7 +274,7 @@ limitations under the License.
           = Next page</v-card-text
         >
 
-        <v-card-text v-shortkey="['ctrl', 'shift', 'p']" @shortkey="previouspage()">
+        <v-card-text>
           <v-btn style="text-transform: unset; cursor: unset" :ripple="false" x-small density="compact"> Ctrl </v-btn>
           +
           <v-btn style="text-transform: unset; cursor: unset" :ripple="false" x-small density="compact"> Shift </v-btn>
@@ -428,6 +428,10 @@ export default {
       this.countPerTimeline = count
     },
     toggleSearchHistory: function () {
+      // show only when current router name is explore
+      if (this.$route.name !== 'Explore') {
+        return
+      }
       this.showSearchHistory = !this.showSearchHistory
       if (this.showSearchHistory) {
         this.triggerScrollTo()
@@ -647,17 +651,6 @@ export default {
     },
     toggleshowShortcutHelp: function () {
       this.showShortcutHelp = !this.showShortcutHelp
-    },
-    nextpage(event) {
-      this.tableOptions.page++
-      this.paginate()
-    },
-    previouspage(event) {
-      // decrease page number if the datable only if page is greater than 1
-      if (this.tableOptions.page > 1) {
-        this.tableOptions.page--
-        this.paginate()
-      }
     },
     paginate: function () {
       // Reset pagination if number of pages per page changes.
