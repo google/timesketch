@@ -262,7 +262,7 @@ limitations under the License.
 
     <!-- write a v-dialog here that shows the shortcut help -->
     <v-dialog v-model="showShortcutHelp" width="700" style="overflow: visible">
-      <v-card width="700" style="overflow: visible" hover="true">
+      <v-card width="700" style="overflow: visible">
         <v-card-title> Keyboard Shortcut help </v-card-title>
 
         <v-card-text v-shortkey="['ctrl', 'n']" @shortkey="nextpage()"> Control N: Next page </v-card-text>
