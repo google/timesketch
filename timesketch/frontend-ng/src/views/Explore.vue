@@ -270,7 +270,7 @@ limitations under the License.
           +
           <v-btn style="text-transform: unset; cursor: unset" :ripple="false" x-small density="compact"> Shift </v-btn>
           +
-          <v-btn style="text-transform: unset; cursor: unset" :ripple="false" x-small density="compact"> n </v-btn>
+          <v-btn style="text-transform: unset; cursor: unset" :ripple="false" x-small density="compact"> N </v-btn>
           = Next page</v-card-text
         >
 
@@ -279,7 +279,7 @@ limitations under the License.
           +
           <v-btn style="text-transform: unset; cursor: unset" :ripple="false" x-small density="compact"> Shift </v-btn>
           +
-          <v-btn style="text-transform: unset; cursor: unset" :ripple="false" x-small density="compact"> p </v-btn>
+          <v-btn style="text-transform: unset; cursor: unset" :ripple="false" x-small density="compact"> P </v-btn>
           = Previous page
         </v-card-text>
 
@@ -288,7 +288,7 @@ limitations under the License.
           +
           <v-btn style="text-transform: unset; cursor: unset" :ripple="false" x-small density="compact"> Shift </v-btn>
           +
-          <v-btn style="text-transform: unset; cursor: unset" :ripple="false" x-small density="compact"> t </v-btn>
+          <v-btn style="text-transform: unset; cursor: unset" :ripple="false" x-small density="compact"> T </v-btn>
           = Toggle Search History
         </v-card-text>
         <v-card-text>
@@ -296,7 +296,7 @@ limitations under the License.
           +
           <v-btn style="text-transform: unset; cursor: unset" :ripple="false" x-small density="compact"> Shift </v-btn>
           +
-          <v-btn style="text-transform: unset; cursor: unset" :ripple="false" x-small density="compact"> h </v-btn>
+          <v-btn style="text-transform: unset; cursor: unset" :ripple="false" x-small density="compact"> H </v-btn>
           = Toggle Shortcut help
         </v-card-text>
         <v-card-text v-shortkey="['ctrl', 'shift', 'm']" @shortkey="toggleAddManualEvent()">
@@ -304,7 +304,7 @@ limitations under the License.
           +
           <v-btn style="text-transform: unset; cursor: unset" :ripple="false" x-small density="compact"> Shift </v-btn>
           +
-          <v-btn style="text-transform: unset; cursor: unset" :ripple="false" x-small density="compact"> m </v-btn>
+          <v-btn style="text-transform: unset; cursor: unset" :ripple="false" x-small density="compact"> M </v-btn>
           = Add manual event
         </v-card-text>
         <v-card-actions>
