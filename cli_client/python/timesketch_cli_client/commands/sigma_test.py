@@ -29,7 +29,7 @@ class SigmaTest(unittest.TestCase):
 
     @mock.patch("requests.Session", api_test_lib.mock_session)
     def setUp(self):
-        """Setp test case."""
+        """Setup test case."""
         self.ctx = test_lib.get_cli_context()
 
     def test_list_sigmarules(self):
