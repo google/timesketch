@@ -170,7 +170,10 @@ class SummaryAggregation(interface.BaseAggregator):
                 },
                 "hour_of_week_histogram": {
                     "histogram": {
-                        "script": "doc['datetime'].value.getDayOfWeek()*24 + doc['datetime'].value.getHourOfDay()",
+                        "script": (
+                            "doc['datetime'].value.getDayOfWeek()*24 + "
+                            "doc['datetime'].value.getHourOfDay()"
+                        ),
                         "interval": 1,
                         "extended_bounds": {"min": 0, "max": 167},
                         "min_doc_count": 0,
