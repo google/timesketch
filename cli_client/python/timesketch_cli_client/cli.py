@@ -74,13 +74,9 @@ class TimesketchCli(object):
         sketch_from_config = self.config_assistant.get_config("sketch")
 
         if self.sketch_from_flag:
-            active_sketch = self.api.get_sketch(
-                sketch_id=int(self.sketch_from_flag)
-            )
+            active_sketch = self.api.get_sketch(sketch_id=int(self.sketch_from_flag))
         elif sketch_from_config:
-            active_sketch = self.api.get_sketch(
-                sketch_id=int(sketch_from_config)
-            )
+            active_sketch = self.api.get_sketch(sketch_id=int(sketch_from_config))
 
         if not active_sketch:
             click.echo(
