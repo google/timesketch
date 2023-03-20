@@ -1,0 +1,347 @@
+<!--
+Copyright 2023 Google Inc. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<template>
+  <v-card class="mx-auto">
+    <v-card-text>
+      <v-toolbar flat>
+        <v-toolbar-title>
+          <div class="font-weight-bold text-h5">Event Data Analytics</div>
+          <div class="font-weight-bold text-h6">Field: {{ eventKey }} | Value: {{ eventValue }}</div>
+        </v-toolbar-title>
+      </v-toolbar>
+
+      <v-container fluid>
+        <v-row justify="center">
+          <v-col>
+            <v-card>
+              <v-card-title>
+                General statistics
+              </v-card-title>
+              <v-card-text>
+                <ul>
+                  <li>Total number of events: {{ this.docCount }}</li>
+                  <ul>
+                    <li>Min date: {{ this.fieldDateTimeMinimum }}</li>
+                    <li>Max date: {{ this.fieldDateTimeMaximum }}</li>
+                  </ul>
+                </ul>
+                <br>
+                <ul>
+                  <li>Selected Field: {{  this.eventKey }}</li>
+                  <ul>
+                    <li>Count: {{ this.fieldValueCount }}</li>
+                    <li>Unique: {{ this.fieldCardinality }}</li>
+                  </ul>
+                </ul>
+                <br>
+                <ul>
+                  <li>Selected Value: {{  this.eventValue }}</li>
+                  <ul>
+                    <li>Count: {{ this.valueEventCount }}</li>
+                    <li>Min date: {{ this.valueDateTimeMinimum }}</li>
+                    <li>Max date: {{ this.valueDateTimeMaximum }}</li>
+                  </ul>
+                </ul>
+
+              </v-card-text>
+            </v-card>
+          </v-col>
+          <v-col align="center">
+            <v-card>
+              <v-card-title>
+                Value as a percentage of {{ this.eventKey }} events
+              </v-card-title>
+              <v-card-text>
+                <!-- {{  this.valueEventCount }} -->
+                <apexchart
+                  height="150px"
+                  :options="this.donutChartOptions"
+                  :series="this.donutChartSeries"
+                ></apexchart>
+              </v-card-text>
+            </v-card>
+          </v-col>
+
+          <v-col align="center">
+            <v-card>
+              <v-card-title>
+                Value event distribution by {{ this.distributionIntervals[this.selectedDistributionIntervalIndex] }}
+              </v-card-title>
+              <v-card-text>
+                <v-btn-toggle mandatory v-model="selectedDistributionIntervalIndex">
+                  <v-btn v-for="interval in this.distributionIntervals" :key="interval" small>
+                    {{ interval }}
+                  </v-btn>
+                </v-btn-toggle>
+                <apexchart
+                  height="250px"
+                  :options="intervalChartOptions"
+                  :series="this.intervalChartSeries"
+                ></apexchart>
+              </v-card-text>
+            </v-card>
+          </v-col>
+        </v-row>
+        <v-row>
+            <v-col align="center">
+              <v-card>
+                <v-card-title>
+                  Top {{ Math.min(10, this.commonValues.length) }} {{ this.eventKey }} values (out of {{ this.fieldCardinality }})
+                </v-card-title>
+                <v-card-text>
+                  <v-data-table
+                    :headers="termHeaders"
+                    :items="commonValues"
+                    :items-per-page="10"
+                    dense
+                  >
+                  </v-data-table>
+                </v-card-text>
+              </v-card>
+            </v-col>
+            <v-col align="center">
+              <v-card>
+                <v-card-title>
+                  Rare {{ this.eventKey }} values (max count of 5)
+                </v-card-title>
+                <v-card-text>
+                  <v-data-table
+                    :headers="termHeaders"
+                    :items="rareValues"
+                    :items-per-page="10"
+                    dense
+                  >
+                  </v-data-table>
+                </v-card-text>
+              </v-card>
+            </v-col>
+        </v-row>
+      </v-container>
+    </v-card-text>
+  </v-card>
+</template>
+
+<script>
+import Apexchart from 'vue-apexcharts'
+import ApiClient from '../../utils/RestApiClient'
+
+export default {
+  components: {
+    Apexchart
+  },
+  props: [
+    'eventKey',
+    'eventValue',
+    'eventTimestamp',
+    'eventTimestampDesc',
+    'sketchId'
+  ],
+  data() {
+    return {
+      distributionIntervals: [
+        "Year",
+        "Month",
+        "Day",
+        "Hour",
+      ],
+      selectedDistributionIntervalIndex: 0,
+      raw_data: [],
+      monthsOfYear: [
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+      ],
+      daysOfWeek: [
+        "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
+      ],
+      hoursOfDay: [
+          "00:00", "01:00", "02:00", "03:00", "04:00", "05:00", "06:00", "07:00",
+          "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00",
+          "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00"
+      ],
+      stats: undefined,
+      termHeaders: [
+        {
+          text: 'Term',
+          sortable: true,
+          value: 'key'
+        },
+        {
+          text: 'Count',
+          sortable: true,
+          value: 'doc_count'
+        },
+      ],
+    }
+  },
+  computed: {
+    selectedDistributionInterval() {
+      return this.distributionIntervals[this.selectedDistributionIntervalIndex]
+    },
+    intervalChartOptions() {
+      let categories = []
+      if (this.selectedDistributionInterval === "Year") {
+        categories = []
+        for (const entry of this.stats.year_histogram.buckets) {
+          categories.push(entry.key)
+        }
+      } else if (this.selectedDistributionInterval === "Month") {
+        categories = this.monthsOfYear
+      } else if (this.selectedDistributionInterval === "Day") {
+        categories = this.daysOfWeek
+      } else if (this.selectedDistributionInterval === "Hour") {
+        categories = this.hoursOfDay
+      }
+
+      return {
+        chart: {
+          type: 'bar',
+        },
+        xaxis: {
+          labels: {
+            show: true,
+            hideOverlappingLabels: true
+          },
+          categories: categories
+        },
+      }
+    },
+    intervalChartSeries() {
+      let data = []
+
+      switch (this.selectedDistributionInterval) {
+        case "Year":
+          data = Array(this.stats.year_histogram.length).fill(0)
+          for (const [index, entry] of this.stats.year_histogram.buckets.entries()) {
+            data[index] = entry.doc_count
+          }
+          break
+        case "Month":
+          data = Array(12).fill(0)
+          for (const entry of this.stats.month_histogram.buckets) {
+            data[entry.key - 1] = entry.doc_count
+          }
+          break
+        case "Day":
+          data = Array(7).fill(0)
+          for (const entry of this.stats.day_histogram.buckets) {
+            data[entry.key] = entry.doc_count
+          }
+          break
+        case "Hour":
+          data = Array(24).fill(0)
+          for (const entry of this.stats.hour_histogram.buckets) {
+            data[entry.key] = entry.doc_count
+          }
+          break
+        default:
+          break
+      }
+      return [
+        {
+          name: 'Events by ' + this.selectedDistributionInterval,
+          data: data
+        }
+      ]
+    },
+    fieldCardinality() {
+      if (this.stats === undefined) return null
+      return this.stats.all_values.field_cardinality.value
+    },
+    docCount() {
+      if (this.stats === undefined) return null
+      return this.stats.all_values.doc_count
+    },
+    fieldDateTimeMinimum() {
+      if (this.stats === undefined) return null
+      return this.stats.all_values.datetime_min.value_as_string
+    },
+    fieldDateTimeMaximum() {
+      if (this.stats === undefined) return null
+      return this.stats.all_values.datetime_max.value_as_string
+    },
+    valueDateTimeMinimum() {
+      if (this.stats === undefined) return null
+      return this.stats.datetime_min.value_as_string
+    },
+    valueDateTimeMaximum() {
+      if (this.stats === undefined) return null
+      return this.stats.datetime_max.value_as_string
+    },
+    fieldValueCount() {
+      if (this.stats === undefined) return null
+      return this.stats.all_values.field_count.value
+    },
+    valueEventCount() {
+      if (this.stats === undefined) return null
+      return this.stats.value_count.value
+    },
+    commonValues() {
+      if (this.stats === undefined) return null
+      return this.stats.all_values.top_terms.buckets
+    },
+    rareValues() {
+      if (this.stats === undefined) return null
+      return this.stats.all_values.rare_terms.buckets
+    },
+    donutChartOptions() {
+      return {
+        chart: {
+          type: 'donut'
+        },
+        dataLabels: {
+          enabled: true
+        },
+        labels: [this.eventValue, 'Other ' + this.eventKey],
+      }
+    },
+    donutChartSeries() {
+      return [this.valueEventCount, this.fieldValueCount - this.valueEventCount]
+    },
+    minEvent: function() { return this.raw_data[0] },
+    maxEvent: function() { return this.raw_data[this.raw_data.length - 1] },
+  },
+  watch: {
+    eventKey (value, oldValue) {
+      if (value !== oldValue) {
+          this.loadSummaryData()
+        }
+    },
+    eventValue (value, oldValue){
+      if (value !== oldValue) {
+          this.loadSummaryData()
+        }
+    },
+  },
+  methods: {
+    loadSummaryData: function() {
+      this.stats = undefined
+      this.raw_data = {}
+      ApiClient.runAggregator(this.sketchId, {
+        aggregator_name: 'field_summary',
+        aggregator_parameters: {
+          field: this.eventKey,
+          field_query_string: this.eventValue
+        }
+      }).then((response) => {
+        this.stats = response.data.objects[0].field_summary.buckets[0]
+      })
+    },
+  },
+  mounted() {
+    this.loadSummaryData()
+  }
+}
+</script>

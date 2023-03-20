@@ -137,6 +137,13 @@ class SummaryAggregation(interface.BaseAggregator):
                 }
             },
             "aggs": {
+                "year_histogram": {
+                    "histogram": {
+                        "script": "doc['datetime'].value.getYear()",
+                        "interval": 1,
+                        "min_doc_count": 0,
+                    }
+                },
                 "month_histogram": {
                     "histogram": {
                         "script": "doc['datetime'].value.getMonthOfYear()",
@@ -158,6 +165,14 @@ class SummaryAggregation(interface.BaseAggregator):
                         "script": "doc['datetime'].value.getHourOfDay()",
                         "interval": 1,
                         "extended_bounds": {"min": 0, "max": 23},
+                        "min_doc_count": 0,
+                    }
+                },
+                "hour_of_week_histogram": {
+                    "histogram": {
+                        "script": "doc['datetime'].value.getDayOfWeek()*24 + doc['datetime'].value.getHourOfDay()",
+                        "interval": 1,
+                        "extended_bounds": {"min": 0, "max": 167},
                         "min_doc_count": 0,
                     }
                 },
