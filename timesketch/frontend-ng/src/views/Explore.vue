@@ -261,8 +261,8 @@ limitations under the License.
     </div>
 
     <!-- write a v-dialog here that shows the shortcut help -->
-    <v-dialog v-model="showShortcutHelp" width="700" style="overflow: visible">
-      <v-card width="700" style="overflow: visible">
+    <v-dialog v-model="showShortcutHelp" width="350" style="overflow: visible">
+      <v-card width="350" style="overflow: visible">
         <v-card-title> Keyboard Shortcut help </v-card-title>
 
         <v-card-text
