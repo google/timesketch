@@ -847,11 +847,16 @@ export default {
         .catch((e) => {})
     },
     nextpage(event) {
+      if (this.$route.name !== 'Explore') {
+        return
+      }
       this.tableOptions.page++
-      console.log(this.tableOptions.page)
       this.paginate()
     },
     previouspage(event) {
+      if (this.$route.name !== 'Explore') {
+        return
+      }
       // decrease page number if the datable only if page is greater than 1
       if (this.tableOptions.page > 1) {
         this.tableOptions.page--

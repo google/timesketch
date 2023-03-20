@@ -299,7 +299,7 @@ limitations under the License.
           <v-btn style="text-transform: unset; cursor: unset" :ripple="false" x-small density="compact"> h </v-btn>
           = Toggle Shortcut help
         </v-card-text>
-        <v-card-text v-shortkey="['ctrl', 'shift', 'm']" @shortkey="addEventBtn()">
+        <v-card-text v-shortkey="['ctrl', 'shift', 'm']" @shortkey="toggleAddManualEvent()">
           <v-btn style="text-transform: unset; cursor: unset" :ripple="false" x-small density="compact"> Ctrl </v-btn>
           +
           <v-btn style="text-transform: unset; cursor: unset" :ripple="false" x-small density="compact"> Shift </v-btn>
@@ -649,7 +649,16 @@ export default {
         this.meta.filter_labels.push(label)
       }
     },
+    toggleAddManualEvent: function () {
+      if (this.$route.name !== 'Explore') {
+        return
+      }
+      this.addManualEvent = !this.addManualEvent
+    },
     toggleshowShortcutHelp: function () {
+      if (this.$route.name !== 'Explore') {
+        return
+      }
       this.showShortcutHelp = !this.showShortcutHelp
     },
     paginate: function () {
