@@ -16,7 +16,7 @@ limitations under the License.
 <template>
   <v-container fluid>
     <!-- Right side menu -->
-    <!-- Placeholder at the moment. Keeping it here for quick developement later. -->
+    <!-- Placeholder at the moment. Keeping it here for quick development later. -->
     <v-navigation-drawer v-if="showRightSidePanel" fixed right width="600" style="box-shadow: 0 10px 15px -3px #888">
       <template v-slot:prepend>
         <v-toolbar flat>
@@ -245,9 +245,9 @@ limitations under the License.
     </v-card>
 
     <!-- DFIQ context -->
-    <div class="mt-3 mx-3" :class="[$vuetify.theme.dark ? 'dark-info-card' : 'light-info-card']">
-      <div v-if="activeContext.question">
-        <v-toolbar dense flat>
+    <div class="mt-3 mx-3">
+      <div :class="[$vuetify.theme.dark ? 'dark-info-card' : 'light-info-card']" v-if="activeContext.question">
+        <v-toolbar dense flat color="transparent">
           <h4>{{ activeContext.question.display_name }}</h4>
           <v-spacer></v-spacer>
           <v-btn small icon @click="$store.dispatch('clearActiveContext')" class="mr-1">
