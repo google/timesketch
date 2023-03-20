@@ -265,22 +265,28 @@ limitations under the License.
       <v-card width="700" style="overflow: visible">
         <v-card-title> Keyboard Shortcut help </v-card-title>
 
-        <v-card-text v-shortkey="['ctrl', 'n']" @shortkey="nextpage()"
+        <v-card-text v-shortkey="['ctrl', 'shift', 'n']" @shortkey="nextpage()"
           ><v-btn style="text-transform: unset; cursor: unset" :ripple="false" x-small density="compact"> Ctrl </v-btn>
+          +
+          <v-btn style="text-transform: unset; cursor: unset" :ripple="false" x-small density="compact"> Shift </v-btn>
           +
           <v-btn style="text-transform: unset; cursor: unset" :ripple="false" x-small density="compact"> n </v-btn>
           = Next page</v-card-text
         >
 
-        <v-card-text v-shortkey="['ctrl', 'p']" @shortkey="previouspage()">
+        <v-card-text v-shortkey="['ctrl', 'shift', 'p']" @shortkey="previouspage()">
           <v-btn style="text-transform: unset; cursor: unset" :ripple="false" x-small density="compact"> Ctrl </v-btn>
+          +
+          <v-btn style="text-transform: unset; cursor: unset" :ripple="false" x-small density="compact"> Shift </v-btn>
           +
           <v-btn style="text-transform: unset; cursor: unset" :ripple="false" x-small density="compact"> p </v-btn>
           = Previous page
         </v-card-text>
 
-        <v-card-text v-shortkey="['ctrl', 't']" @shortkey="toggleSearchHistory()">
+        <v-card-text v-shortkey="['ctrl', 'shift', 't']" @shortkey="toggleSearchHistory()">
           <v-btn style="text-transform: unset; cursor: unset" :ripple="false" x-small density="compact"> Ctrl </v-btn>
+          +
+          <v-btn style="text-transform: unset; cursor: unset" :ripple="false" x-small density="compact"> Shift </v-btn>
           +
           <v-btn style="text-transform: unset; cursor: unset" :ripple="false" x-small density="compact"> t </v-btn>
           = Toggle Search History
@@ -288,11 +294,15 @@ limitations under the License.
         <v-card-text>
           <v-btn style="text-transform: unset; cursor: unset" :ripple="false" x-small density="compact"> Ctrl </v-btn>
           +
+          <v-btn style="text-transform: unset; cursor: unset" :ripple="false" x-small density="compact"> Shift </v-btn>
+          +
           <v-btn style="text-transform: unset; cursor: unset" :ripple="false" x-small density="compact"> h </v-btn>
           = Toggle Shortcut help
         </v-card-text>
-        <v-card-text v-shortkey="['ctrl', 'm']" @shortkey="addEventBtn()">
+        <v-card-text v-shortkey="['ctrl', 'shift', 'm']" @shortkey="addEventBtn()">
           <v-btn style="text-transform: unset; cursor: unset" :ripple="false" x-small density="compact"> Ctrl </v-btn>
+          +
+          <v-btn style="text-transform: unset; cursor: unset" :ripple="false" x-small density="compact"> Shift </v-btn>
           +
           <v-btn style="text-transform: unset; cursor: unset" :ripple="false" x-small density="compact"> m </v-btn>
           = Add manual event
@@ -306,7 +316,7 @@ limitations under the License.
 
     <!-- one button is needed to activate the Shortcuthelp -->
 
-    <button v-shortkey="['ctrl', 'h']" @shortkey="toggleshowShortcutHelp()"></button>
+    <button v-shortkey="['ctrl', , 'shift', 'h']" @shortkey="toggleshowShortcutHelp()"></button>
 
     <!-- Eventlist -->
     <v-card flat class="mt-5 mx-3">
