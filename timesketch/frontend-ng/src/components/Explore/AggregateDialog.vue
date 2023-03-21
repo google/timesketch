@@ -136,12 +136,17 @@ limitations under the License.
             <v-col align="center">
             <v-card height="500px" :loading="!statsReady">
               <v-card-title>
-                Event distribution by hour/day of week
+                Recent &nbsp;<span style="font-family: monospace">{{ eventValue }}</span>&nbsp;events around {{ this.eventDateTime }}
               </v-card-title>
               <v-card-subtitle>
                 Selected value:&nbsp;<span style="font-family: monospace">{{ eventValue }}</span>&nbsp;
               </v-card-subtitle>
               <v-card-text v-if="statsReady">
+                <v-btn-toggle mandatory v-model="selectedRecentEventsIndex">
+                  <v-btn v-for="interval in this.recentIntervals" :key="interval" small>
+                    {{ interval }}
+                  </v-btn>
+                </v-btn-toggle>
                 <apexchart
                   height="400px"
                   :options="this.intervalHeatmapOptions"
@@ -178,8 +183,17 @@ export default {
         "Month",
         "Day",
         "Hour",
+        "Day of Week"
+      ],
+      recentIntervals: [
+        "± 5 years",
+        "± 6 months",
+        "± 7 days",
+        "± 12 hours",
+        "± 60 minutes"
       ],
       selectedDistributionIntervalIndex: 0,
+      selectedRecentEventsIndex: 0,
       raw_data: [],
       monthsOfYear: [
         "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -210,6 +224,9 @@ export default {
     }
   },
   computed: {
+    eventDateTime() {
+      return new Date(this.eventTimestamp/1000).toISOString()
+    },
     selectedDistributionInterval() {
       return this.distributionIntervals[this.selectedDistributionIntervalIndex]
     },
@@ -232,8 +249,9 @@ export default {
         categories = this.daysOfWeek
       } else if (this.selectedDistributionInterval === "Hour") {
         categories = this.hoursOfDay
+      } else if (this.selectedDistributionInterval === "Day of Week") {
+        return this.intervalHeatmapOptions
       }
-
       return {
         chart: {
           type: 'bar',
@@ -277,6 +295,8 @@ export default {
             data[entry.key] = entry.doc_count
           }
           break
+        case "Day of Week":
+          return this.intervalHeatmapSeries
         default:
           break
       }
@@ -356,6 +376,7 @@ export default {
         xaxis: {
           labels: { show: true, hideOverlappingLabels: true },
           tickPlacement: "between",
+          categories: this.hoursOfDay,
         },
       }
     },
