@@ -1,3 +1,7 @@
+---
+hide:
+  - footer
+---
 # Timesketch Summit 2021
 
 On **March 10th 2021 16:00 - 21:00 UTC** the first Timesketch summit will

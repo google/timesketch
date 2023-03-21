@@ -20,16 +20,134 @@ limitations under the License.
         <v-card outlined height="100%">
           <v-simple-table dense>
             <template v-slot:default>
-              <thead>
-                <tr>
-                  <th class="text-left">Attribute</th>
-                  <th class="text-left">Value</th>
-                </tr>
-              </thead>
               <tbody>
-                <tr v-for="(value, key) in fullEventFiltered" :key="key">
-                  <td>{{ key }}</td>
-                  <td>{{ value }}</td>
+                <tr v-for="(value, key) in fullEventFiltered" :key="key" @mouseover="c_key = key" @mouseleave="c_key = -1">
+                  <!-- Event field name actions -->
+                  <td v-if="key == c_key" class="text-right">
+
+                    <!-- Copy field name -->
+                    <v-btn
+                      icon
+                      x-small
+                      style="cursor: pointer"
+                      @click="copyToClipboard(key)"
+                      class="pr-1"
+                    >
+                      <v-icon small>mdi-content-copy</v-icon>
+                    </v-btn>
+
+                  </td>
+                  <td v-else>
+                    <div class="px-3"></div>
+                  </td>
+
+                  <!-- Event field name -->
+                  <td>
+                    {{ key }}
+                  </td>
+
+                  <!-- Event field value action icons -->
+                  <td v-if="key.includes('xml') || checkContextLinkDisplay(key, value) || (key == c_key)" class="text-right pr-1">
+
+                    <!-- Copy event value -->
+                    <v-btn
+                      icon
+                      x-small
+                      style="cursor: pointer"
+                      @click="copyToClipboard(value)"
+                      v-show="key == c_key"
+                    >
+                      <v-icon small>mdi-content-copy</v-icon>
+                    </v-btn>
+
+                    <!-- XML prettify dialog -->
+                    <v-dialog v-if="key.includes('xml')" v-model="formatXMLString" width="1000">
+                      <template v-slot:activator="{ on, attrs }">
+                        <v-btn
+                          icon
+                          color="primary"
+                          x-small
+                          style="cursor: pointer"
+                          v-bind="attrs"
+                          v-on="on"
+                          @click="formatXMLString = true"
+                        >
+                          <v-tooltip top close-delay=300 :open-on-click="false">
+                            <template v-slot:activator="{ on }">
+                              <v-icon v-on="on" small>
+                                mdi-xml
+                              </v-icon>
+                            </template>
+                            <span>Prettify XML</span>
+                          </v-tooltip>
+                        </v-btn>
+                      </template>
+                      <ts-format-xml-string
+                        app
+                        @cancel="formatXMLString = false"
+                        :xmlString="value"
+                      ></ts-format-xml-string>
+                    </v-dialog>
+
+                    <!-- Context link submenu -->
+                    <v-menu
+                      v-if="checkContextLinkDisplay(key, value)"
+                      offset-y
+                      transition="slide-y-transition"
+                    >
+                      <template v-slot:activator="{ on, attrs }">
+                        <v-btn
+                          icon
+                          color="primary"
+                          x-small
+                          style="cursor: pointer"
+                          v-bind="attrs"
+                          v-on="on"
+                        >
+                          <v-tooltip top close-delay=300 :open-on-click="false">
+                            <template v-slot:activator="{ on }">
+                              <v-icon v-on="on" small>
+                                mdi-open-in-new
+                              </v-icon>
+                            </template>
+                            <span>Context Lookup</span>
+                          </v-tooltip>
+                        </v-btn>
+                      </template>
+                      <v-list dense>
+                        <v-list-item
+                          v-for="(item, index) in getContextLinkItems(key)"
+                          :key="index"
+                          style="cursor: pointer"
+                          @click.stop="contextLinkRedirect(key,item,value)"
+                        >
+                          <v-list-item-title v-if="getContextLinkRedirectState(key,item)" >{{ item }}</v-list-item-title>
+                          <v-list-item-title v-else >{{ item }}*</v-list-item-title>
+                          <v-dialog
+                            v-model="redirectWarnDialog"
+                            max-width="515"
+                            :retain-focus="false"
+                          >
+                            <ts-link-redirect-warning
+                              app
+                              @cancel="redirectWarnDialog = false"
+                              :context-value="contextValue"
+                              :context-url="contextUrl"
+                            ></ts-link-redirect-warning>
+                          </v-dialog>
+                        </v-list-item>
+                      </v-list>
+                    </v-menu>
+
+                  </td>
+                  <td v-else>
+                    <div class="px-5"></div>
+                  </td>
+
+                  <!-- Event field value -->
+                  <td width="100%" class="pl-0">
+                    {{ value }}
+                  </td>
                 </tr>
               </tbody>
             </template>
@@ -50,8 +168,8 @@ limitations under the License.
               @mouseleave="unSelectComment()"
             >
               <v-list-item-avatar>
-                <v-avatar color="orange">
-                  <span class="white--text">{{ comment.user.username.charAt(0).toUpperCase() }}</span>
+                <v-avatar color="grey lighten-1">
+                  <span class="white--text">{{ comment.user.username | initialLetter }}</span>
                 </v-avatar>
               </v-list-item-avatar>
 
@@ -117,8 +235,14 @@ limitations under the License.
 <script>
 import ApiClient from '../../utils/RestApiClient'
 import EventBus from '../../main'
+import TsFormatXmlString from './FormatXMLString.vue'
+import TsLinkRedirectWarning from './LinkRedirectWarning.vue'
 
 export default {
+  components: {
+    TsFormatXmlString,
+    TsLinkRedirectWarning,
+  },
   props: ['event'],
   data() {
     return {
@@ -126,6 +250,11 @@ export default {
       comment: '',
       comments: [],
       selectedComment: null,
+      formatXMLString: false,
+      redirectWarnDialog: false,
+      contextUrl: '',
+      contextValue: '',
+      c_key: -1,
     }
   },
   computed: {
@@ -149,6 +278,9 @@ export default {
         }
       })
       return this.fullEvent
+    },
+    contextLinkConf() {
+      return this.$store.state.contextLinkConf
     },
   },
   methods: {
@@ -203,6 +335,66 @@ export default {
     },
     unSelectComment() {
       this.selectedComment = false
+    },
+    getContextLinkItems(key) {
+      let fieldConfList = this.contextLinkConf[key.toLowerCase()] ? this.contextLinkConf[key.toLowerCase()] : []
+      let shortNameList = fieldConfList.map(x => x.short_name)
+      return shortNameList
+    },
+    checkContextLinkDisplay(key, value) {
+      const fieldConfList = this.contextLinkConf[key.toLowerCase()] ? this.contextLinkConf[key.toLowerCase()] : []
+      for (const confItem of fieldConfList) {
+        if (confItem['validation_regex'] !== '' && confItem['validation_regex'] !== undefined) {
+          let validationPattern = confItem['validation_regex']
+          let regexIdentifiers = validationPattern.slice(validationPattern.lastIndexOf('/')+1)
+          let regexPattern = validationPattern.slice(validationPattern.indexOf('/')+1, validationPattern.lastIndexOf('/'))
+          let valueRegex = new RegExp(regexPattern, regexIdentifiers)
+          if (valueRegex.test(value)) {
+            return true
+          }
+          else {
+            return false
+          }
+        }
+        else {
+          return true
+        }
+      }
+      return false
+    },
+    contextLinkRedirect(key, item, value) {
+      const fieldConfList = this.contextLinkConf[key.toLowerCase()] ? this.contextLinkConf[key.toLowerCase()] : []
+      for (const confItem of fieldConfList) {
+        if (confItem['short_name'] === item) {
+          if (confItem['redirect_warning']) {
+            this.redirectWarnDialog = true
+            this.contextValue = value
+            this.contextUrl = confItem['context_link'].replace('<ATTR_VALUE>', encodeURIComponent(value))
+          }
+          else {
+            // TODO verify if encodeURIComponent is sufficient sanitization here?
+            window.open(confItem['context_link'].replace('<ATTR_VALUE>', encodeURIComponent(value)), '_blank')
+            this.redirectWarnDialog = false
+          }
+        }
+      }
+    },
+    getContextLinkRedirectState (key, item) {
+      const fieldConfList = this.contextLinkConf[key.toLowerCase()] ? this.contextLinkConf[key.toLowerCase()] : []
+      for (const confItem of fieldConfList) {
+        if (confItem['short_name'] === item) {
+          return confItem['redirect_warning']
+        }
+      }
+    },
+    copyToClipboard (content) {
+      try {
+        navigator.clipboard.writeText(content)
+        this.infoSnackBar('copied')
+      } catch (error) {
+        this.errorSnackBar('Failed copying to the clipboard!')
+        console.error(error)
+      }
     },
   },
   created: function () {

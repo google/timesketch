@@ -85,7 +85,6 @@ def _tag_event(row, tag_dict, tags_to_add, datastore, flush_interval):
 
     datastore.import_event(
         index_name=row["_index"],
-        event_type=row["_type"],
         event_id=row["_id"],
         event={"tag": new_tags},
         flush_interval=flush_interval,
@@ -123,9 +122,8 @@ class EventCreateResource(resources.ResourceMixin, Resource):
         if not form:
             form = request.data
 
-        timeline_name = "sketch specific timeline"
+        timeline_name = "Manual events"
         index_name_seed = "timesketch_{0:d}".format(sketch_id)
-        event_type = "user_created_event"
 
         date_string = form.get("date_string")
         if not date_string:
@@ -187,7 +185,7 @@ class EventCreateResource(resources.ResourceMixin, Resource):
         timeline = None
         try:
             # Create the index in OpenSearch (unless it already exists)
-            self.datastore.create_index(index_name=index_name, doc_type=event_type)
+            self.datastore.create_index(index_name=index_name)
 
             # Create the search index in the Timesketch database
             searchindex = SearchIndex.get_or_create(
@@ -204,9 +202,7 @@ class EventCreateResource(resources.ResourceMixin, Resource):
             db_session.commit()
 
             if sketch and sketch.has_permission(current_user, "write"):
-                self.datastore.import_event(
-                    index_name, event_type, event, flush_interval=1
-                )
+                self.datastore.import_event(index_name, event, flush_interval=1)
 
                 timeline = Timeline.get_or_create(
                     name=searchindex.name,
@@ -325,12 +321,191 @@ class EventResource(resources.ResourceMixin, Resource):
                 comments.append(comment_dict)
 
         schema = {
-            'meta': {
-                'comments': sorted(comments, key=lambda d: d['created_at'])
-            },
-            'objects': result['_source']
+            "meta": {"comments": sorted(comments, key=lambda d: d["created_at"])},
+            "objects": result["_source"],
         }
         return jsonify(schema)
+
+
+class EventAddAttributeResource(resources.ResourceMixin, Resource):
+    """Resource to add attributes to events."""
+
+    EVENT_FIELDS = ["_id", "_type", "_index", "attributes"]
+    ATTRIBUTE_FIELDS = ["attr_name", "attr_value"]
+    RESERVED_ATTRIBUTE_NAMES = ["datetime", "timestamp", "message", "timestamp_desc"]
+
+    MAX_EVENTS = 100000
+    MAX_ATTRIBUTES = 10
+    EVENT_CHUNK_SIZE = 1000
+
+    def _parse_request(self, flask_request):
+        """Validate and parse a POST request to add attributes.
+
+        Args:
+            flask_request (flask.Request): The unmodified request object.
+
+        Returns:
+            A dict with searchindex IDs as keys and the associated events as
+                values.
+        """
+        if not flask_request.is_json:
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, "Request must be in JSON format.")
+        events = flask_request.json.get("events")
+        if not events:
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, "Request must contain an events field.")
+        if not isinstance(events, list):
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, "Events field must be a list.")
+        if len(events) > self.MAX_EVENTS:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                f"Request exceeds maximum events to process {self.MAX_EVENTS}",
+            )
+
+        events_by_index = {}
+        for event in events:
+            for field in self.EVENT_FIELDS:
+                if field not in event:
+                    abort(HTTP_STATUS_CODE_BAD_REQUEST, f"Event missing field {field}.")
+
+            attributes = event.get("attributes")
+            if not isinstance(attributes, list):
+                abort(HTTP_STATUS_CODE_BAD_REQUEST, "Attributes must be a list.")
+            if len(attributes) > self.MAX_ATTRIBUTES:
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    f"Attributes for event exceeds maximum " f"{self.MAX_ATTRIBUTES}",
+                )
+            for attribute in attributes:
+                for field in self.ATTRIBUTE_FIELDS:
+                    if field not in attribute:
+                        abort(
+                            HTTP_STATUS_CODE_BAD_REQUEST,
+                            f"Attribute missing field {field}.",
+                        )
+
+            if event["_index"] not in events_by_index:
+                events_by_index[event["_index"]] = []
+            events_by_index[event["_index"]].append(event)
+
+        return events_by_index
+
+    @login_required
+    def post(self, sketch_id):
+        """Handles POST requests to the resource.
+
+        Allows new attributes to be added to multiple events in one request.
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model.
+
+        Returns:
+            A JSON instance of flask.wrappers.Response. Response metadata
+                includes metrics on events modified, attributes added, chunks
+                per index, number of errors and the last 10 errors.
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
+
+        if not sketch.has_permission(current_user, "write"):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                ("User does not have sufficient access rights to modify a " "sketch."),
+            )
+
+        datastore = self.datastore
+
+        info_dict = {}
+        info_dict["last_10_errors"] = []
+        info_dict["events_modified"] = 0
+        info_dict["attributes_added"] = 0
+
+        events_by_index = self._parse_request(request)
+        info_dict["chunks_per_index"] = {index: [] for index in list(events_by_index)}
+
+        for index, events in events_by_index.items():
+            chunks = []
+            for i in range(0, len(events), self.EVENT_CHUNK_SIZE):
+                chunks.append(events[i : i + self.EVENT_CHUNK_SIZE])
+            info_dict["chunks_per_index"][index] = len(chunks)
+
+            for chunk in chunks:
+                should_list = [{"match": {"_id": event["_id"]}} for event in chunk]
+                query_body = {"query": {"bool": {"should": should_list}}}
+                # Adding a small buffer to make sure all results are captured.
+                size = len(should_list) + 100
+                query_body["size"] = size
+                query_body["terminate_after"] = size
+
+                # pylint: disable=unexpected-keyword-arg
+                eventid_search = datastore.client.search(
+                    body=json.dumps(query_body),
+                    index=[index],
+                    search_type="query_then_fetch",
+                )
+                # pylint: enable=unexpected-keyword-arg
+                existing_events = eventid_search["hits"]["hits"]
+                existing_events_dict = {
+                    event["_id"]: event for event in existing_events
+                }
+
+                for request_event in chunk:
+                    request_event_id = request_event["_id"]
+                    if request_event_id not in existing_events_dict:
+                        info_dict["errors"].append(
+                            f"Event ID {request_event_id} not found."
+                        )
+                        continue
+
+                    request_attributes = request_event["attributes"]
+                    existing_attributes = existing_events_dict[request_event_id][
+                        "_source"
+                    ]
+                    new_attributes = {}
+
+                    for request_attribute in request_attributes:
+                        request_attribute_name = request_attribute["attr_name"]
+                        request_attribute_value = request_attribute["attr_value"]
+
+                        if request_attribute_name in self.RESERVED_ATTRIBUTE_NAMES:
+                            info_dict["last_10_errors"].append(
+                                f"Cannot add '{request_attribute_name}' for "
+                                f"event_id '{request_event_id}', name not "
+                                f"allowed."
+                            )
+                        elif request_attribute_name.startswith("_"):
+                            info_dict["last_10_errors"].append(
+                                f"Attribute '{request_attribute_name}' for "
+                                f"event_id '{request_event_id}' invalid, "
+                                f"cannot start with '_'"
+                            )
+                        elif request_attribute_name in existing_attributes:
+                            info_dict["last_10_errors"].append(
+                                f"Attribute '{request_attribute_name}' already "
+                                f"exists for event_id '{request_event_id}'."
+                            )
+                        else:
+                            new_attributes[
+                                request_attribute_name
+                            ] = request_attribute_value
+
+                    if new_attributes:
+                        datastore.import_event(
+                            index_name=request_event["_index"],
+                            event_id=request_event_id,
+                            event=new_attributes,
+                        )
+                        info_dict["events_modified"] += 1
+                        info_dict["attributes_added"] += len(new_attributes)
+
+        datastore.flush_queued_events()
+        info_dict["error_count"] = len(info_dict["last_10_errors"])
+        # Only return last 10 errors to prevent overly large responses.
+        info_dict["last_10_errors"] = info_dict["last_10_errors"][-10:]
+        schema = {"meta": info_dict, "objects": []}
+        response = jsonify(schema)
+        response.status_code = HTTP_STATUS_CODE_OK
+        return response
 
 
 class EventTaggingResource(resources.ResourceMixin, Resource):
@@ -539,7 +714,6 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
     HTTP Args (All optional. Used only for Delete request):
         searchindex_id: The datastore searchindex id as string
         event_id: The datastore event id as string
-        event_type: The datastore event type as string
         annotation_type: The annotation type (comment,label) as string
         annotation_id: The annotation id as integer
         currentSearchNode_id: The search node id as string
@@ -550,7 +724,6 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
         self.parser = reqparse.RequestParser()
         self.parser.add_argument("searchindex_id", type=str, required=False)
         self.parser.add_argument("event_id", type=str, required=False)
-        self.parser.add_argument("event_type", type=str, required=False)
         self.parser.add_argument("annotation_type", type=str, required=False)
         self.parser.add_argument("annotation_id", type=int, required=False)
         self.parser.add_argument("currentSearchNode_id", type=int, required=False)
@@ -628,7 +801,6 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
             searchindex_id = _event["_index"]
             searchindex = SearchIndex.query.filter_by(index_name=searchindex_id).first()
             event_id = _event["_id"]
-            event_type = _event["_type"]
 
             if searchindex_id not in indices:
                 abort(
@@ -655,7 +827,6 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                 self.datastore.set_label(
                     searchindex_id,
                     event_id,
-                    event_type,
                     sketch.id,
                     current_user.id,
                     "__ts_comment",
@@ -682,7 +853,6 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                 self.datastore.set_label(
                     searchindex_id,
                     event_id,
-                    event_type,
                     sketch.id,
                     current_user.id,
                     form.annotation.data,
@@ -824,7 +994,6 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
         annotation_id = args.get("annotation_id")
         event_id = args.get("event_id")
         searchindex_id = args.get("searchindex_id")
-        event_type = args.get("event_type")
 
         sketch = self._get_sketch(sketch_id)
 
@@ -847,7 +1016,6 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
             )
 
         if "comment" in annotation_type:
-
             # Retrive the comment attached to the event bases on the comment
             # id supplied in the request
             comment = event.get_comment(annotation_id)
@@ -867,7 +1035,6 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                     self.datastore.set_label(
                         searchindex_id,
                         event_id,
-                        event_type,
                         sketch.id,
                         current_user.id,
                         "__ts_comment",

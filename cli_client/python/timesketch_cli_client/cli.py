@@ -26,6 +26,7 @@ from timesketch_cli_client.commands import importer
 from timesketch_cli_client.commands import search
 from timesketch_cli_client.commands import sketch as sketch_command
 from timesketch_cli_client.commands import timelines
+from timesketch_cli_client.commands import events
 
 from .definitions import DEFAULT_OUTPUT_FORMAT
 from .version import get_version
@@ -118,7 +119,7 @@ def cli(ctx, sketch):
     It operates within the context of a sketch so you either need to
     provide an existing sketch or create a new one.
 
-    Basic options for editing the sketch is provided, e.g re-naming and
+    Basic options for editing the sketch is provided, e.g. re-naming and
     changing the description as well as archiving and exporting. For
     other actions not available in this CLI client the web client should be
     used.
@@ -136,6 +137,7 @@ cli.add_command(search.saved_searches_group)
 cli.add_command(analyze.analysis_group)
 cli.add_command(sketch_command.sketch_group)
 cli.add_command(importer.importer)
+cli.add_command(events.events_group)
 
 
 # pylint: disable=no-value-for-parameter

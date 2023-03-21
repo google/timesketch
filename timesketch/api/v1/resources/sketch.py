@@ -114,7 +114,7 @@ class SketchListResource(resources.ResourceMixin, Resource):
             views = (
                 View.query.filter_by(user=current_user, name="")
                 .order_by(View.updated_at.desc())
-                .limit(3)
+                .limit(10)
             )
             sketches = [view.sketch for view in views]
             total_items = len(sketches)
@@ -423,7 +423,6 @@ class SketchResource(resources.ResourceMixin, Resource):
                 "updated_at": story.updated_at,
             }
             stories.append(story)
-
         meta = dict(
             aggregators=aggregators,
             views=views,
@@ -448,8 +447,8 @@ class SketchResource(resources.ResourceMixin, Resource):
             indices_metadata=indices_metadata,
             stats_per_timeline=stats_per_timeline,
             last_activity=utils.get_sketch_last_activity(sketch),
-            filter_labels=self.datastore.get_filter_labels(sketch.id, sketch_indices),
             sketch_labels=[label.label for label in sketch.labels],
+            filter_labels=self.datastore.get_filter_labels(sketch.id, sketch_indices),
         )
         return self.to_json(sketch, meta=meta)
 

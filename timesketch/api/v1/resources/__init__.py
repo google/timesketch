@@ -106,6 +106,8 @@ class ResourceMixin(object):
         "error_message": fields.String,
         "created_at": fields.DateTime("iso8601"),
         "updated_at": fields.DateTime("iso8601"),
+        "total_file_events": fields.Integer,
+        "status": fields.Nested(status_fields),
     }
 
     timeline_fields = {
@@ -150,10 +152,14 @@ class ResourceMixin(object):
     searchtemplate_fields = {
         "id": fields.Integer,
         "name": fields.String,
+        "description": fields.String,
+        "short_name": fields.String,
         "user": fields.Nested(user_fields),
         "query_string": fields.String,
         "query_filter": fields.String,
         "query_dsl": fields.String,
+        "template_uuid": fields.String,
+        "template_json": fields.String,
         "created_at": fields.DateTime("iso8601"),
         "updated_at": fields.DateTime("iso8601"),
     }
@@ -244,13 +250,24 @@ class ResourceMixin(object):
         "updated_at": fields.DateTime("iso8601"),
     }
 
+    question_conclusion_fields = {
+        "id": fields.Integer,
+        "user": fields.Nested(user_fields),
+        "conclusion": fields.String,
+        "automated": fields.Boolean,
+        "created_at": fields.DateTime("iso8601"),
+        "updated_at": fields.DateTime("iso8601"),
+    }
+
     question_fields = {
         "id": fields.Integer,
         "name": fields.String,
         "display_name": fields.String,
         "description": fields.String,
         "spec_json": fields.String,
+        "search_templates": fields.List(fields.Nested(searchtemplate_fields)),
         "user": fields.Nested(user_fields),
+        "conclusions": fields.List(fields.Nested(question_conclusion_fields)),
         "created_at": fields.DateTime("iso8601"),
         "updated_at": fields.DateTime("iso8601"),
     }
@@ -273,12 +290,25 @@ class ResourceMixin(object):
 
     scenario_fields = {
         "id": fields.Integer,
+        "status": fields.Nested(status_fields),
         "name": fields.String,
         "display_name": fields.String,
         "description": fields.String,
         "spec_json": fields.String,
         "user": fields.Nested(user_fields),
         "facets": fields.List(fields.Nested(facet_fields)),
+        "created_at": fields.DateTime("iso8601"),
+        "updated_at": fields.DateTime("iso8601"),
+    }
+
+    sigmarule_fields = {
+        "id": fields.Integer,
+        "rule_uuid": fields.String,
+        "description": fields.String,
+        "title": fields.String,
+        "query_string": fields.String,
+        "user": fields.Nested(user_fields),
+        "rule_yaml": fields.String,
         "created_at": fields.DateTime("iso8601"),
         "updated_at": fields.DateTime("iso8601"),
     }
@@ -301,9 +331,11 @@ class ResourceMixin(object):
         "story": story_fields,
         "event_comment": comment_fields,
         "event_label": label_fields,
+        "investigativequestionconclusion": question_conclusion_fields,
         "investigative_question": question_fields,
         "facet": facet_fields,
         "scenario": scenario_fields,
+        "sigmarule": sigmarule_fields,
     }
 
     @property

@@ -352,7 +352,7 @@ class Timeline(resource.BaseResource):
         return status
 
     def add_timeline_label(self, label):
-        """Add a label to the timelinne.
+        """Add a label to the timeline.
 
         Args:
             label (str): A string with the label to add to the timeline.

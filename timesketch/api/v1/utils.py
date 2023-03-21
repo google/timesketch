@@ -109,7 +109,9 @@ def update_sketch_last_activity(sketch):
     db_session.commit()
 
 
-def run_aggregator(sketch_id, aggregator_name, aggregator_parameters=None, index=None):
+def run_aggregator(
+    sketch_id, aggregator_name, aggregator_parameters=None, indices=None
+):
     """Run an aggregator and return back results.
 
     Args:
@@ -117,7 +119,7 @@ def run_aggregator(sketch_id, aggregator_name, aggregator_parameters=None, index
         aggregator_name (str): the name of the aggregator class to run.
         aggregator_parameters (dict): dict containing the parameters used
             for running the aggregator.
-        index (list): the list of OpenSearch index names to use.
+        indices (list): the list of OpenSearch index names to use.
 
     Returns:
         Tuple[Object, Dict]: a tuple containing the aggregator result object
@@ -130,7 +132,7 @@ def run_aggregator(sketch_id, aggregator_name, aggregator_parameters=None, index
     if not aggregator_parameters:
         aggregator_parameters = {}
 
-    aggregator = agg_class(sketch_id=sketch_id, index=index)
+    aggregator = agg_class(sketch_id=sketch_id, indices=indices)
 
     chart_type = aggregator_parameters.pop("supported_charts", None)
     chart_color = aggregator_parameters.pop("chart_color", "")
@@ -268,3 +270,24 @@ def load_yaml_config(config_parameter_name):
 
     with open(yaml_path, "r") as fh:
         return yaml.safe_load(fh)
+
+
+def escape_query_string(query_string):
+    """Escape a search query string to support Opensearch queries.
+
+    Args:
+        query_string: Opensearch query string.
+
+    Returns:
+        Query string with certain characters escaped.
+    """
+    escaped_query_string = query_string.translate(
+        str.maketrans(
+            {
+                "/": r"\/",
+                ".": r"\.",
+                "\\": r"\\",
+            }
+        )
+    )
+    return escaped_query_string

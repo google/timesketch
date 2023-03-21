@@ -23,6 +23,7 @@ METRICS_HTTP_PORT = os.environ.get("TIMESKETCH_METRICS_PORT", 8080)
 METRICS_DB_DIR = os.environ.get("prometheus_multiproc_dir", None)
 METRICS_ENABLED = METRICS_DB_DIR
 
+
 # Reference: https://github.com/rycus86/prometheus_flask_exporter#wsgi
 # pylint: disable=unused-argument
 def when_ready(server):

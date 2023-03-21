@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 import axios from 'axios'
-import { SnackbarProgrammatic as Snackbar } from 'buefy'
+import EventBus from '../main'
 
 const RestApiClient = axios.create({
   baseURL: process.env.NODE_ENV === 'development' ? '/api/v1' : '/v2/api/v1',
@@ -41,25 +41,10 @@ RestApiClient.interceptors.response.use(
     return response
   },
   function (error) {
-    if (error.response.data.message === 'The CSRF token has expired.') {
-      Snackbar.open({
-        message: error.response.data.message,
-        type: 'is-white',
-        position: 'is-top',
-        actionText: 'Refresh',
-        indefinite: true,
-        onAction: () => {
-          location.reload()
-        },
-      })
+    if (error.response.status === 500) {
+      EventBus.$emit('errorSnackBar', 'Server side error. Please contact your server administrator for troubleshooting.')
     } else {
-      Snackbar.open({
-        message: error.response.data.message,
-        type: 'is-white',
-        position: 'is-top',
-        actionText: 'Close',
-        duration: 7000,
-      })
+      EventBus.$emit('errorSnackBar', error.response.data.message)
     }
     return Promise.reject(error)
   }
@@ -67,11 +52,12 @@ RestApiClient.interceptors.response.use(
 
 export default {
   // Sketch
-  getSketchList(scope, page, searchQuery) {
+  getSketchList(scope, page, perPage, searchQuery) {
     let params = {
       params: {
         scope: scope,
         page: page,
+        per_page: perPage,
         search_query: searchQuery,
       },
     }
@@ -140,6 +126,15 @@ export default {
   deleteSketchTimeline(sketchId, timelineId) {
     return RestApiClient.delete('/sketches/' + sketchId + /timelines/ + timelineId + '/')
   },
+  createEvent(sketchId, datetime, message, timestampDesc, attributes, config) {
+    let formData = {
+      date_string: datetime,
+      message: message,
+      timestamp_desc: timestampDesc,
+      attributes: attributes,
+    }
+    return RestApiClient.post('/sketches/' + sketchId + '/event/create/', formData, config)
+  },
   // Get details about an event
   getEvent(sketchId, searchindexId, eventId) {
     let params = {
@@ -159,6 +154,14 @@ export default {
       remove: remove,
     }
     return RestApiClient.post('/sketches/' + sketchId + '/event/annotate/', formData)
+  },
+  tagEvents(sketchId, events, tags) {
+    let formData = {
+      tag_string: JSON.stringify(tags),
+      events: events,
+      verbose: false,
+    }
+    return RestApiClient.post('/sketches/' + sketchId + '/event/tagging/', formData)
   },
   updateEventAnnotation(sketchId, annotationType, annotation, events, currentSearchNode) {
     let formData = {
@@ -273,16 +276,27 @@ export default {
   getGroups() {
     return RestApiClient.get('/groups/')
   },
-  editCollaborators(sketchId, isPublic, usersToAdd, groupsToAdd, usersToRemove, groupsToRemove) {
+  grantSketchAccess(sketchId, usersToAdd, groupsToAdd) {
     let formData = {
-      public: isPublic,
       users: usersToAdd,
       groups: groupsToAdd,
+    }
+    return RestApiClient.post('/sketches/' + sketchId + /collaborators/, formData)
+  },
+  revokeSketchAccess(sketchId, usersToRemove, groupsToRemove) {
+    let formData = {
       remove_users: usersToRemove,
       remove_groups: groupsToRemove,
     }
     return RestApiClient.post('/sketches/' + sketchId + /collaborators/, formData)
   },
+  setSketchPublicAccess(sketchId, isPublic) {
+    let formData = {
+      public: isPublic,
+    }
+    return RestApiClient.post('/sketches/' + sketchId + /collaborators/, formData)
+  },
+
   getAnalyzers(sketchId) {
     return RestApiClient.get('/sketches/' + sketchId + '/analyzer/')
   },
@@ -345,17 +359,82 @@ export default {
   getSearchHistoryTree(sketchId) {
     return RestApiClient.get('/sketches/' + sketchId + /searchhistorytree/)
   },
-  // Sigma
-  getSigmaList() {
-    return RestApiClient.get('/sigma/')
+  // SigmaRule (new rules file based)
+  getSigmaRuleList() {
+    return RestApiClient.get('/sigmarules/')
   },
-  getSigmaResource(ruleUuid) {
-    return RestApiClient.get('/sigma/rule/' + ruleUuid + '/')
+  getSigmaRuleResource(ruleUuid) {
+    return RestApiClient.get('/sigmarules/' + ruleUuid + '/')
   },
-  getSigmaByText(ruleText) {
+  getSigmaRuleByText(ruleYaml) {
     let formData = {
-      content: ruleText,
+      content: ruleYaml,
     }
-    return RestApiClient.post('/sigma/text/', formData)
+    return RestApiClient.post('/sigmarules/text/', formData)
   },
+  deleteSigmaRule(ruleUuid) {
+    return RestApiClient.delete('/sigmarules/' + ruleUuid + '/')
+  },
+  createSigmaRule(ruleYaml) {
+    let formData = {
+      rule_yaml: ruleYaml,
+    }
+    return RestApiClient.post('/sigmarules/', formData)
+  },
+  updateSigmaRule(id, ruleYaml) {
+    let formData = {
+      id: id,
+      rule_yaml: ruleYaml,
+    }
+    return RestApiClient.put('/sigmarules/' + id + '/', formData)
+  },
+  // SearchTemplates
+  getSearchTemplates() {
+    return RestApiClient.get('/searchtemplates/')
+  },
+  parseSearchTemplate(searchTemplateId, formData) {
+    return RestApiClient.post('/searchtemplates/' + searchTemplateId + '/parse/', formData)
+  },
+  getContextLinkConfig() {
+    return RestApiClient.get('/contextlinks/')
+  },
+  getScenarioTemplates() {
+    return RestApiClient.get('/scenarios/')
+  },
+  getSketchScenarios(sketchId, status = null) {
+    let params = {}
+    if (status) {
+      params.params = {
+        status: status,
+      }
+    }
+    return RestApiClient.get('/sketches/' + sketchId + '/scenarios/', params)
+  },
+  addScenario(sketchId, scenarioName, displayName) {
+    let formData = { scenario_name: scenarioName, display_name: displayName }
+    return RestApiClient.post('/sketches/' + sketchId + '/scenarios/', formData)
+  },
+  renameScenario(sketchId, scenarioId, scenarioName) {
+    let formData = { scenario_name: scenarioName }
+    return RestApiClient.post('/sketches/' + sketchId + '/scenarios/' + scenarioId + '/', formData)
+  },
+  setScenarioStatus(sketchId, scenarioId, status) {
+    let formData = { status: status }
+    return RestApiClient.post('/sketches/' + sketchId + '/scenarios/' + scenarioId + '/status/', formData)
+  },
+  createQuestionConclusion(sketchId, questionId, conclusionText) {
+    let formData = { conclusionText: conclusionText }
+    return RestApiClient.post('/sketches/' + sketchId + '/questions/' + questionId + '/', formData)
+  },
+  editQuestionConclusion(sketchId, questionId, conclusionId, conclusionText) {
+    let formData = { conclusionText: conclusionText }
+    return RestApiClient.put('/sketches/' + sketchId + '/questions/' + questionId + '/conclusions/' + conclusionId + '/', formData)
+  },
+  deleteQuestionConclusion(sketchId, questionId, conclusionId) {
+    return RestApiClient.delete('/sketches/' + sketchId + '/questions/' + questionId + '/conclusions/' + conclusionId + '/')
+
+  },
+  getTagMetadata() {
+    return RestApiClient.get('/intelligence/tagmetadata/')
+  }
 }

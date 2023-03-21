@@ -22,10 +22,10 @@ from . import error
 logger = logging.getLogger("timesketch_api.sigma")
 
 
-class Sigma(resource.BaseResource):
-    """Timesketch sigma object.
+class SigmaRule(resource.BaseResource):
+    """Timesketch SigmaRule object.
 
-    A sigma object in Timesketch is a collection of one or more rules.
+    A SigmaRule object in Timesketch is a collection of one or more rules.
 
     Attributes:
         rule_uuid: The ID of the rule.
@@ -39,7 +39,7 @@ class Sigma(resource.BaseResource):
 
         """
         self._attr_dict = {}
-        resource_uri = "sigma/"
+        resource_uri = "sigmarules/"
         super().__init__(api=api, resource_uri=resource_uri)
 
     @property
@@ -54,34 +54,24 @@ class Sigma(resource.BaseResource):
         return self._attr_dict.get(key, "")
 
     @property
-    def es_query(self):
-        """Returns the ElasticSearch query."""
-        return self.get_attribute("es_query")
+    def search_query(self):
+        """Returns the Search query."""
+        return self.get_attribute("search_query")
 
     @property
     def title(self):
-        """Returns the sigma rule title."""
+        """Returns the Sigma rule title."""
         return self.get_attribute("title")
 
     @property
     def id(self):
-        """Returns the sigma rule id."""
+        """Returns the Sigma rule id."""
         return self.get_attribute("id")
-
-    @property
-    def file_relpath(self):
-        """Returns the relative filepath of the rule."""
-        return self.get_attribute("file_relpath")
 
     @property
     def rule_uuid(self):
         """Returns the rule id."""
         return self.get_attribute("id")
-
-    @property
-    def file_name(self):
-        """Returns the rule filename."""
-        return self.get_attribute("file_name")
 
     @property
     def description(self):
@@ -128,6 +118,11 @@ class Sigma(resource.BaseResource):
         """Returns the rule references."""
         return self.get_attribute("references")
 
+    @property
+    def status(self):
+        """Returns the rule status."""
+        return self.get_attribute("status")
+
     def set_value(self, key, value):
         """Sets the value for a given key
 
@@ -144,41 +139,45 @@ class Sigma(resource.BaseResource):
             self.set_value(key, value)
 
     def from_rule_uuid(self, rule_uuid):
-        """Get a Sigma object from a rule uuid.
+        """Get a SigmaRule object from a rule UUID.
 
         Args:
             rule_uuid: Id of the sigma rule.
 
         """
-        self.resource_uri = f"sigma/rule/{rule_uuid}"
+        self.resource_uri = f"sigmarules/{rule_uuid}"
 
         self.lazyload_data(refresh_cache=True)
         objects = self.data.get("objects")
         if not objects:
-            logger.error("Unable to parse rule with given text")
-            raise ValueError("No rules found.")
+            error_msg = "Unable to parse Sigma rule {0} with given text".format(
+                rule_uuid
+            )
+            logger.error(error_msg)
+            raise ValueError(error_msg)
         rule_dict = objects[0]
         for key, value in rule_dict.items():
             self.set_value(key, value)
 
     def from_text(self, rule_text):
-        """Get a Sigma object from a rule text.
+        """Obtain a parsed Sigma rule by providing text.
 
         Args:
             rule_text: Rule text to be parsed.
 
         Raises:
-            ValueError: If no response was given
+            ValueError: If rule could not be parsed.
         """
-        self.resource_uri = "{0:s}/sigma/text/".format(self.api.api_root)
+        self.resource_uri = "{0:s}/sigmarules/text/".format(self.api.api_root)
         data = {"title": "Get_Sigma_by_text", "content": rule_text}
         response = self.api.session.post(self.resource_uri, json=data)
         response_dict = error.get_response_json(response, logger)
 
         objects = response_dict.get("objects")
         if not objects:
-            logger.warning("Unable to parse rule with given text")
-            raise ValueError("No rules found.")
+            error_msg = "Sigma rule Parsing error with provided rule"
+            logger.warning(error_msg)
+            raise ValueError(error_msg)
 
         rule_dict = objects[0]
         for key, value in rule_dict.items():

@@ -24,6 +24,7 @@ import requests
 
 # pylint: disable=redefined-builtin
 from requests.exceptions import ConnectionError
+from urllib3.exceptions import InsecureRequestWarning
 import webbrowser
 
 # pylint: disable-msg=import-error
@@ -61,7 +62,7 @@ class TimesketchApi:
     DEFAULT_OAUTH_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
     DEFAULT_OAUTH_TOKEN_URL = "https://oauth2.googleapis.com/token"
     DEFAULT_OAUTH_PROVIDER_URL = "https://www.googleapis.com/oauth2/v1/certs"
-    DEFAULT_OAUTH_OOB_URL = "urn:ietf:wg:oauth:2.0:oob"
+    DEFAULT_OAUTH_LOCALHOST_URL = "http://localhost"
     DEFAULT_OAUTH_API_CALLBACK = "/login/api_callback/"
 
     # Default retry count for operations that attempt a retry.
@@ -193,6 +194,9 @@ class TimesketchApi:
         client_id="",
         client_secret="",
         client_secrets_file=None,
+        host="localhost",
+        port=8080,
+        open_browser=False,
         run_server=True,
         skip_open=False,
     ):
@@ -203,6 +207,10 @@ class TimesketchApi:
             client_secret: The OAUTH client secret if OAUTH is used.
             client_secrets_file: Path to the JSON file that contains the client
                 secrets, in the client_secrets format.
+            host: Host address the OAUTH web server will bind to.
+            port: Port the OAUTH web server will bind to.
+            open_browser: A boolean, if set to false (default) a browser window
+                will not be automatically opened.
             run_server: A boolean, if set to true (default) a web server is
                 run to catch the OAUTH request and response.
             skip_open: A booelan, if set to True (defaults to False) an
@@ -234,22 +242,26 @@ class TimesketchApi:
                     "auth_uri": self.DEFAULT_OAUTH_AUTH_URL,
                     "token_uri": self.DEFAULT_OAUTH_TOKEN_URL,
                     "auth_provider_x509_cert_url": provider_url,
-                    "redirect_uris": [self.DEFAULT_OAUTH_OOB_URL],
+                    "redirect_uris": [self.DEFAULT_OAUTH_LOCALHOST_URL],
                 },
             }
 
             flow = googleauth_flow.InstalledAppFlow.from_client_config(
-                client_config, self.DEFAULT_OAUTH_SCOPE, autogenerate_code_verifier=True
+                client_config,
+                self.DEFAULT_OAUTH_SCOPE,
+                autogenerate_code_verifier=True,
             )
 
-            flow.redirect_uri = self.DEFAULT_OAUTH_OOB_URL
+            flow.redirect_uri = self.DEFAULT_OAUTH_LOCALHOST_URL
 
         if run_server:
-            _ = flow.run_local_server()
+            _ = flow.run_local_server(host=host, port=port, open_browser=open_browser)
         else:
             if not sys.stdout.isatty() or not sys.stdin.isatty():
-                msg = ('You will be asked to paste a token into this session to'
-                    'authenticate, but the session doesn\'t have a tty')
+                msg = (
+                    "You will be asked to paste a token into this session to"
+                    "authenticate, but the session doesn't have a tty"
+                )
                 raise RuntimeError(msg)
 
             auth_url, _ = flow.authorization_url(prompt="select_account")
@@ -335,6 +347,8 @@ class TimesketchApi:
         # SSL Cert verification is turned on by default.
         if not verify:
             session.verify = False
+            # disable warnings, since user actively decided to set verify to false
+            requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
         # Get and set CSRF token and authenticate the session if appropriate.
         self._set_csrf_token(session)
@@ -352,10 +366,25 @@ class TimesketchApi:
 
         Returns:
             Dictionary with the response data.
+
+        Raises:
+            RuntimeError: If response could not be JSON-decoded after
+                DEFAULT_RETRY_COUNT attempts.
         """
         resource_url = "{0:s}/{1:s}".format(self.api_root, resource_uri)
         response = self.session.get(resource_url, params=params)
-        return error.get_response_json(response, logger)
+
+        retry_count = 0
+        while True:
+            result = error.get_response_json(response, logger)
+            # Any dict with content is good enough for us to return.
+            if result:
+                return result
+            retry_count += 1
+            if retry_count >= self.DEFAULT_RETRY_COUNT:
+                raise RuntimeError(
+                    f"Unable to fetch JSON resource data. Response: {str(result)}"
+                )
 
     def create_sketch(self, name, description=None):
         """Create a new sketch.
@@ -366,6 +395,10 @@ class TimesketchApi:
 
         Returns:
             Instance of a Sketch object.
+
+        Raises:
+            RuntimeError: If response does not contain an 'objects' key after
+                DEFAULT_RETRY_COUNT attempts.
         """
         if not description:
             description = name
@@ -555,22 +588,25 @@ class TimesketchApi:
         request = google.auth.transport.requests.Request()
         self.credentials.credential.refresh(request)
 
-    def list_sigma_rules(self, as_pandas=False):
-        """Get a list of sigma objects.
+    def list_sigmarules(self, as_pandas=False):
+        """Fetches Sigma rules from the database.
+        Fetches all Sigma rules stored in the database on the system
+        and returns a list of SigmaRule objects of the rules.
 
         Args:
             as_pandas: Boolean indicating that the results will be returned
-                as a Pandas DataFrame instead of a list of dicts.
+                as a Pandas DataFrame instead of a list of SigmaRuleObjects.
 
         Returns:
-            List of Sigme rule object instances or a pandas Dataframe with all
-            rules if as_pandas is True.
+            - List of Sigme rule object instances
+            or
+            - a pandas Dataframe with all rules if as_pandas is True.
 
         Raises:
             ValueError: If no rules are found.
         """
         rules = []
-        response = self.fetch_resource_data("sigma/")
+        response = self.fetch_resource_data("sigmarules/")
 
         if not response:
             raise ValueError("No rules found.")
@@ -582,28 +618,69 @@ class TimesketchApi:
             if not rule_dict:
                 raise ValueError("No rules found.")
 
-            index_obj = sigma.Sigma(api=self)
+            index_obj = sigma.SigmaRule(api=self)
             for key, value in rule_dict.items():
                 index_obj.set_value(key, value)
             rules.append(index_obj)
         return rules
 
-    def get_sigma_rule(self, rule_uuid):
-        """Get a sigma rule.
+    def create_sigmarule(self, rule_yaml):
+        """Adds a single Sigma rule to the database.
+
+        Adds a single Sigma rule to the database when `/sigmarules/` is called
+        with a POST request.
+
+        All attributes of the rule are taken by the `rule_yaml` value in the
+        POST request.
+
+        If no `rule_yaml` is found in the request, the method will fail as this
+        is required to parse the rule.
+
+        Args:
+            rule_yaml: YAML of the Sigma Rule.
+
+        Returns:
+            Instance of a Sigma object.
+        """
+
+        retry_count = 0
+        objects = None
+        while True:
+            resource_url = "{0:s}/sigmarules/".format(self.api_root)
+            form_data = {"rule_yaml": rule_yaml}
+            response = self.session.post(resource_url, json=form_data)
+            response_dict = error.get_response_json(response, logger)
+            objects = response_dict.get("objects")
+            if objects:
+                break
+            retry_count += 1
+
+            if retry_count >= self.DEFAULT_RETRY_COUNT:
+                raise RuntimeError("Unable to create a new Sigma Rule.")
+
+        rule_uuid = objects[0]["rule_uuid"]
+        return self.get_sigmarule(rule_uuid)
+
+    def get_sigmarule(self, rule_uuid):
+        """Fetches a single Sigma rule from the databse.
+        Fetches a single Sigma rule selected by the `UUID`
 
         Args:
             rule_uuid: UUID of the Sigma rule.
 
         Returns:
-            Instance of a Sigma object.
+            Instance of a SigmaRule object.
         """
-        sigma_obj = sigma.Sigma(api=self)
+        sigma_obj = sigma.SigmaRule(api=self)
         sigma_obj.from_rule_uuid(rule_uuid)
 
         return sigma_obj
 
-    def get_sigma_rule_by_text(self, rule_text):
-        """Returns a Sigma Object based on a sigma rule text.
+    def parse_sigmarule_by_text(self, rule_text):
+        """Obtain a parsed Sigma rule by providing text.
+
+        Will parse a provided text `rule_yaml`, parse it and return as SigmaRule
+        object.
 
         Args:
             rule_text: Full Sigma rule text.
@@ -623,4 +700,4 @@ class TimesketchApi:
         except ValueError:
             logger.error("Parsing Error, unable to parse the Sigma rule", exc_info=True)
 
-        return sigma_obj
+        return sigma_obj  # pytype: disable=name-error  # py310-upgrade

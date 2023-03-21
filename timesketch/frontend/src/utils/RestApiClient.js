@@ -37,10 +37,10 @@ const RestApiBlobClient = axios.create({
 
 // Show message on errors.
 RestApiClient.interceptors.response.use(
-  function(response) {
+  function (response) {
     return response
   },
-  function(error) {
+  function (error) {
     if (error.response.data.message === 'The CSRF token has expired.') {
       Snackbar.open({
         message: error.response.data.message,
@@ -346,18 +346,34 @@ export default {
   getSearchHistoryTree(sketchId) {
     return RestApiClient.get('/sketches/' + sketchId + /searchhistorytree/)
   },
-  // Sigma
-  getSigmaList() {
-    return RestApiClient.get('/sigma/')
+  // SigmaRule (new rules file based)
+  getSigmaRuleList() {
+    return RestApiClient.get('/sigmarules/')
   },
-  getSigmaResource(ruleUuid) {
-    return RestApiClient.get('/sigma/rule/' + ruleUuid + '/')
+  getSigmaRuleResource(ruleUuid) {
+    return RestApiClient.get('/sigmarules/' + ruleUuid + '/')
   },
-  getSigmaByText(ruleText) {
+  getSigmaRuleByText(ruleText) {
     let formData = {
       content: ruleText,
     }
-    return RestApiClient.post('/sigma/text/', formData)
+    return RestApiClient.post('/sigmarules/text/', formData)
+  },
+  deleteSigmaRule(ruleUuid) {
+    return RestApiClient.delete('/sigmarules/' + ruleUuid + '/')
+  },
+  createSigmaRule(ruleText) {
+    let formData = {
+      rule_yaml: ruleText,
+    }
+    return RestApiClient.post('/sigmarules/', formData)
+  },
+  updateSigmaRule(id, ruleText) {
+    let formData = {
+      id: id,
+      rule_yaml: ruleText,
+    }
+    return RestApiClient.put('/sigmarules/' + id + '/', formData)
   },
   getTagMetadata() {
     return RestApiClient.get('/intelligence/tagmetadata/')

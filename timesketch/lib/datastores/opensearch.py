@@ -99,9 +99,8 @@ if (!removedLabel) {
 class OpenSearchDataStore(object):
     """Implements the datastore."""
 
-    # Number of events to queue up when bulk inserting events.
-    DEFAULT_FLUSH_INTERVAL = 1000
     DEFAULT_SIZE = 100
+    DEFAULT_FLUSH_INTERVAL = 1000
     DEFAULT_LIMIT = DEFAULT_SIZE  # Max events to return
     DEFAULT_FROM = 0
     DEFAULT_STREAM_LIMIT = 5000  # Max events to return when streaming results
@@ -132,8 +131,13 @@ class OpenSearchDataStore(object):
 
         self.client = OpenSearch([{"host": host, "port": port}], **parameters)
 
+        # Number of events to queue up when bulk inserting events.
+        self.flush_interval = current_app.config.get(
+            "OPENSEARCH_FLUSH_INTERVAL", self.DEFAULT_FLUSH_INTERVAL
+        )
         self.import_counter = Counter()
         self.import_events = []
+        self.version = self.client.info().get("version").get("number")
         self._request_timeout = current_app.config.get(
             "TIMEOUT_FOR_EVENT_IMPORT", self.DEFAULT_EVENT_IMPORT_TIMEOUT
         )
@@ -195,11 +199,6 @@ class OpenSearchDataStore(object):
         Returns:
             OpenSearch query DSL as a dictionary.
         """
-        # Remove any aggregation coming from user supplied Query DSL.
-        # We have no way to display this data in a good way today.
-        if query_dsl.get("aggregations", None):
-            del query_dsl["aggregations"]
-
         if not timeline_ids:
             return query_dsl
 
@@ -322,6 +321,27 @@ class OpenSearchDataStore(object):
 
             if not query_dsl:
                 query_dsl = {}
+
+            if query_filter:
+                # Pagination
+                if query_filter.get("from", None):
+                    query_dsl["from"] = query_filter["from"]
+
+                # Number of events to return
+                if query_filter.get("size", None):
+                    query_dsl["size"] = query_filter["size"]
+
+            if aggregations:
+                # post_filter happens after aggregation so we need to move the
+                # filter to the query instead.
+                if query_dsl.get("post_filter", None):
+                    query_dsl["query"]["bool"]["filter"] = query_dsl["post_filter"]
+                    query_dsl.pop("post_filter", None)
+                query_dsl["aggregations"] = aggregations
+
+            # Make sure we are sorting.
+            if not query_dsl.get("sort", None):
+                query_dsl["sort"] = {"datetime": query_filter.get("order", "asc")}
 
             return self._build_query_dsl(query_dsl, timeline_ids)
 
@@ -754,14 +774,12 @@ class OpenSearchDataStore(object):
                 event = self.client.get(
                     index=searchindex_id,
                     id=event_id,
-                    doc_type="_all",
                     _source_exclude=["timesketch_label"],
                 )
             else:
                 event = self.client.get(
                     index=searchindex_id,
                     id=event_id,
-                    doc_type="_all",
                     _source_excludes=["timesketch_label"],
                 )
 
@@ -815,7 +833,6 @@ class OpenSearchDataStore(object):
         self,
         searchindex_id,
         event_id,
-        event_type,
         sketch_id,
         user_id,
         label,
@@ -828,7 +845,6 @@ class OpenSearchDataStore(object):
         Args:
             searchindex_id: String of OpenSearch index id
             event_id: String of OpenSearch event id
-            event_type: String of OpenSearch document type
             sketch_id: Integer of sketch primary key
             user_id: Integer of user primary key
             label: String with the name of the label
@@ -864,29 +880,22 @@ class OpenSearchDataStore(object):
                 source=script["source"], lang=script["lang"], params=script["params"]
             )
 
-        doc = self.client.get(index=searchindex_id, id=event_id, doc_type="_all")
+        doc = self.client.get(index=searchindex_id, id=event_id)
         try:
             doc["_source"]["timesketch_label"]
         except KeyError:
             doc = {"doc": {"timesketch_label": []}}
-            self.client.update(
-                index=searchindex_id, doc_type=event_type, id=event_id, body=doc
-            )
+            self.client.update(index=searchindex_id, id=event_id, body=doc)
 
-        self.client.update(
-            index=searchindex_id, id=event_id, doc_type=event_type, body=update_body
-        )
+        self.client.update(index=searchindex_id, id=event_id, body=update_body)
 
         return None
 
-    def create_index(
-        self, index_name=uuid4().hex, doc_type="generic_event", mappings=None
-    ):
+    def create_index(self, index_name=uuid4().hex, mappings=None):
         """Create index with Timesketch settings.
 
         Args:
             index_name: Name of the index. Default is a generated UUID.
-            doc_type: Name of the document type. Default id generic_event.
             mappings: Optional dict with the document mapping for OpenSearch.
 
         Returns:
@@ -903,10 +912,6 @@ class OpenSearchDataStore(object):
                 }
             }
 
-        # TODO: Remove when we deprecate OpenSearch version 6.x
-        if self.version.startswith("6"):
-            _document_mapping = {doc_type: _document_mapping}
-
         if not self.client.indices.exists(index_name):
             try:
                 self.client.indices.create(
@@ -921,7 +926,7 @@ class OpenSearchDataStore(object):
                     "({0:s} - {1:s})".format(index_name, str(index_exists))
                 )
 
-        return index_name, doc_type
+        return index_name
 
     def delete_index(self, index_name):
         """Delete OpenSearch index.
@@ -940,17 +945,15 @@ class OpenSearchDataStore(object):
     def import_event(
         self,
         index_name,
-        event_type,
         event=None,
         event_id=None,
-        flush_interval=DEFAULT_FLUSH_INTERVAL,
+        flush_interval=None,
         timeline_id=None,
     ):
         """Add event to OpenSearch.
 
         Args:
             index_name: Name of the index in OpenSearch
-            event_type: Type of event (e.g. plaso_event)
             event: Event dictionary
             event_id: Event OpenSearch ID
             flush_interval: Number of events to queue up before indexing
@@ -977,11 +980,6 @@ class OpenSearchDataStore(object):
             }
             update_header = {"update": {"_index": index_name, "_id": event_id}}
 
-            # TODO: Remove when we deprecate Elasticsearch version 6.x
-            if self.version.startswith("6"):
-                header["index"]["_type"] = event_type
-                update_header["update"]["_type"] = event_type
-
             if event_id:
                 # Event has "lang" defined if there is a script used for import.
                 if event.get("lang"):
@@ -996,6 +994,9 @@ class OpenSearchDataStore(object):
             self.import_events.append(header)
             self.import_events.append(event)
             self.import_counter["events"] += 1
+
+            if not flush_interval:
+                flush_interval = self.flush_interval
 
             if self.import_counter["events"] % int(flush_interval) == 0:
                 _ = self.flush_queued_events()
@@ -1105,13 +1106,3 @@ class OpenSearchDataStore(object):
 
         self.import_events = []
         return return_dict
-
-    @property
-    def version(self):
-        """Get OpenSearch version.
-
-        Returns:
-          Version number as a string.
-        """
-        version_info = self.client.info().get("version")
-        return version_info.get("number")

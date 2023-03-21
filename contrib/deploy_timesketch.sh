@@ -15,6 +15,12 @@
 
 set -e
 
+START_CONTAINER=
+
+if [ "$1" == "--start-container" ]; then
+    START_CONTAINER=yes
+fi
+
 # Exit early if run as non-root user.
 if [ "$EUID" -ne 0 ]; then
   echo "ERROR: This script need to run as root."
@@ -85,10 +91,11 @@ curl -s $GITHUB_BASE_URL/data/plaso.mappings > timesketch/etc/timesketch/plaso.m
 curl -s $GITHUB_BASE_URL/data/generic.mappings > timesketch/etc/timesketch/generic.mappings
 curl -s $GITHUB_BASE_URL/data/features.yaml > timesketch/etc/timesketch/features.yaml
 curl -s $GITHUB_BASE_URL/data/ontology.yaml > timesketch/etc/timesketch/ontology.yaml
+curl -s $GITHUB_BASE_URL/data/sigma_rule_status.csv > timesketch/etc/timesketch/sigma_rule_status.csv
 curl -s $GITHUB_BASE_URL/data/tags.yaml > timesketch/etc/timesketch/tags.yaml
 curl -s $GITHUB_BASE_URL/data/intelligence_tag_metadata.yaml > timesketch/etc/timesketch/intelligence_tag_metadata.yaml
 curl -s $GITHUB_BASE_URL/data/sigma_config.yaml > timesketch/etc/timesketch/sigma_config.yaml
-curl -s $GITHUB_BASE_URL/data/sigma_blocklist.csv > timesketch/etc/timesketch/sigma_blocklist.csv
+curl -s $GITHUB_BASE_URL/data/sigma_rule_status.csv > timesketch/etc/timesketch/sigma_rule_status.csv
 curl -s $GITHUB_BASE_URL/data/sigma/rules/lnx_susp_zmap.yml > timesketch/etc/timesketch/sigma/rules/lnx_susp_zmap.yml
 curl -s $GITHUB_BASE_URL/contrib/nginx.conf > timesketch/etc/nginx.conf
 echo "OK"
@@ -118,14 +125,41 @@ ln -s ./config.env ./timesketch/.env
 echo "OK"
 echo "* Installation done."
 
-echo
-echo "Start the system:"
-echo "1. cd timesketch"
-echo "2. docker-compose up -d"
-echo "3. docker-compose exec timesketch-web tsctl create-user <USERNAME>"
-echo
-echo "WARNING: The server is running without encryption."
-echo "Follow the instructions to enable SSL to secure the communications:"
-echo "https://github.com/google/timesketch/blob/master/docs/Installation.md"
-echo
-echo
+if [ -z $START_CONTAINER ]; then
+  read -p "Would you like to start the containers? [Y/n] (default:no)" START_CONTAINER
+fi
+
+if [ "$START_CONTAINER" != "${START_CONTAINER#[Yy]}" ] ;then # this grammar (the #[] operator) means that the variable $start_cnt where any Y or y in 1st position will be dropped if they exist.
+  cd timesketch
+  docker-compose up -d
+else
+  echo
+  echo "You have chosen not to start the containers,"
+  echo "if you wish to do so later, you can start timesketch container as below"
+  echo
+  echo "Start the system:"
+  echo "1. cd timesketch"
+  echo "2. docker-compose up -d"
+  echo "3. docker-compose exec timesketch-web tsctl create-user <USERNAME>"
+  echo
+  echo "WARNING: The server is running without encryption."
+  echo "Follow the instructions to enable SSL to secure the communications:"
+  echo "https://github.com/google/timesketch/blob/master/docs/Installation.md"
+  echo
+  echo
+  exit 1
+fi
+
+read -p "Would you like to create a new timesketch user? [Y/n] (default:no)" CREATE_USER
+
+if [ "$CREATE_USER" != "${CREATE_USER#[Yy]}" ] ;then
+  read -p "Please provide a new username: " NEWUSERNAME
+
+  if [ ! -z "$NEWUSERNAME" ] ;then
+    until [ "`docker inspect -f {{.State.Health.Status}} timesketch-web`"=="healthy" ]; do
+      sleep 1;
+    done;
+
+    docker-compose exec timesketch-web tsctl create-user "$NEWUSERNAME" && echo "user created"
+  fi
+fi

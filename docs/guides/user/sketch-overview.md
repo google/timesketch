@@ -1,3 +1,7 @@
+---
+hide:
+  - footer
+---
 # Sketches
 
 Sketches are a way to organize analysis of events across multiple timelines and increase data discoverability via search, targeted views, comments and stories.
@@ -8,6 +12,8 @@ To create a new sketch, click “New Sketch” button on the tool’s homepage. 
 Now you need to add timelines to your new sketch. To do so, you can click “Import Timeline” and upload a file in Plaso, CSV or JSONL formats. More details about importing timelines are in chapter “Importing timelines”
 
 Alternatively, you can go to “Timelines” tab and select from all available timelines.
+
+![Empty state](../assets/images/empty_state_sketch.png)
 
 ## Navigating a sketch
 A sketch consists of 5 tabs: “Overview”, “Explore”, “Stories”, "Attributes", "Intelligence".
@@ -22,7 +28,7 @@ A sketch consists of 5 tabs: “Overview”, “Explore”, “Stories”, "Attr
 
 **Attributes** tab shows the attributes of the sketch.
 
-**Intelligence** tab shows intelligence values added from the sketch. See [Intelligence](guides/user/intelligence.md)
+**Intelligence** tab shows intelligence values added from the sketch. See [Intelligence](intelligence.md)
 
 ## Sharing and access control
 After the sketch is created, you can share it with other users in the system. To do so, click ![Share](/assets/images/sharebutton.png) button. You will be presented with the following dialogue:
@@ -38,6 +44,8 @@ You can share the sketch with users, groups of users, make it available to all u
 **Views** allows quick access to saved views and creation of new views
 
 **Timerange** allows to control the timerange of shown events.
+
+![Timefilter](../assets/images/timefilter.png)
 
 **Filter** Add a filter, e.g. to show only starred events
 
@@ -59,7 +67,7 @@ Implemented as a tree with support for branching, annotations and intuitive navi
 
 If you click on the "More" Button in the Sketch Overview, you get the following three options.
 
-![Sketch Overview more dialogue](/assets/images/SketchMore.png) 
+![Sketch Overview more dialogue](/assets/images/SketchMore.png)
 
 ### Delete
 

@@ -80,7 +80,7 @@ class TestTaggerPlugin(BaseTest):
             "message": "Dummy message",
         }
 
-        datastore.import_event("blah", "blah", source_attributes, "0")
+        datastore.import_event("blah", source_attributes, "0")
         message = analyzer.run()
         self.assertEqual(analyzer.tagged_events["0"]["tags"], ["dummyTag"])
         self.assertEqual(message, "1 events tagged for [dummy_tagger]")
@@ -115,9 +115,9 @@ class TestTaggerPlugin(BaseTest):
             "source_long": "",
             "message": "This event should not be tagged.",
         }
-        datastore.import_event("blah", "blah", source_attributes.copy(), "0")
+        datastore.import_event("blah", source_attributes.copy(), "0")
         source_attributes["message"] = "This exist1 event should be tagged."
-        datastore.import_event("blah", "blah", source_attributes.copy(), "1")
+        datastore.import_event("blah", source_attributes.copy(), "1")
 
         message = analyzer.run()
 
@@ -159,7 +159,7 @@ class TestTaggerPlugin(BaseTest):
             "yara_match": "rule1 rule2",
         }
 
-        datastore.import_event("blah", "blah", source_attributes, "0")
+        datastore.import_event("blah", source_attributes, "0")
         message = analyzer.run()
         self.assertEqual(
             sorted(analyzer.tagged_events["0"]["tags"]),

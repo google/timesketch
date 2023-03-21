@@ -43,7 +43,9 @@ def describe_sketch(ctx):
 @sketch_group.command("create")
 @click.option("--name", required=True, help="Name of the sketch.")
 @click.option(
-    "--description", required=False, help="Description of the sketch (optional)"
+    "--description",
+    required=False,
+    help="Description of the sketch (optional).",
 )
 @click.pass_context
 def create_sketch(ctx, name, description):

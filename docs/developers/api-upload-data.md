@@ -1,3 +1,7 @@
+---
+hide:
+  - footer
+---
 # Create Timeline From Other Sources
 
 Not all data comes in a good [CSV or JSONL

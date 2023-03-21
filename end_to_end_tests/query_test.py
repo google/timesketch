@@ -84,7 +84,8 @@ class QueryTest(interface.BaseEndToEndTest):
         if search_obj is None:
             raise RuntimeError("Unable to find the saved search.")
         self.assertions.assertEqual(
-            saved_search.return_fields, "computer_name,data_type,strings,user_sid"
+            saved_search.return_fields,
+            "computer_name,data_type,strings,user_sid,datetime",
         )
 
         self.assertions.assertEqual(

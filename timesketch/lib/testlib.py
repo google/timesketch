@@ -35,6 +35,29 @@ from timesketch.models.sketch import SearchTemplate
 from timesketch.models.sketch import View
 from timesketch.models.sketch import Event
 from timesketch.models.sketch import Story
+from timesketch.models.sigma import SigmaRule
+
+SIGMA_RULE = """
+title: Suspicious Installation of Zenmap
+id: 5266a592-b793-11ea-b3de-0242ac130004
+description: Detects suspicious installation of Zenmap
+references:
+    - https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html
+author: Alexander Jaeger
+date: 2020/06/26
+modified: 2021/01/01
+logsource:
+    product: linux
+    service: shell
+detection:
+    keywords:
+        # Generic suspicious commands
+        - '*apt-get install zmap*'
+    condition: keywords
+falsepositives:
+    - Unknown
+level: high
+"""
 
 
 class TestConfig(object):
@@ -56,6 +79,7 @@ class TestConfig(object):
     SIMILARITY_DATA_TYPES = []
     SIGMA_RULES_FOLDERS = ["./data/sigma/rules/"]
     INTELLIGENCE_TAG_METADATA = "./data/intelligence_tag_metadata.yaml"
+    CONTEXT_LINKS_CONFIG_PATH = "./test_tools/test_events/mock_context_links.yaml"
 
 
 class MockOpenSearchClient(object):
@@ -65,33 +89,68 @@ class MockOpenSearchClient(object):
         """Initialize the client."""
         self.indices = MockOpenSearchIndices()
 
-    def search(self, index, body, size):  # pylint: disable=unused-argument
-        """Mock a client search, used for aggregations."""
-        meta = {
-            "es_time": 23,
-            "es_total_count": 5621,
-            "timed_out": False,
-            "max_score": 0.0,
+    def search(
+        self, index, body, size=0, search_type=None
+    ):  # pylint: disable=unused-argument
+        """Mock a client search.
+
+        Used for testing both aggregations and adding event attributes.
+
+        """
+        # pylint: disable=line-too-long
+        aggregation_search_result = {
+            "meta": {
+                "es_time": 23,
+                "es_total_count": 5621,
+                "timed_out": False,
+                "max_score": 0.0,
+            },
+            "objects": [
+                {
+                    "my_aggregation": {
+                        "buckets": [
+                            {"foobar": 1, "second": "foobar"},
+                            {"foobar": 4, "second": "more stuff"},
+                            {"foobar": 532, "second": "hvernig hefurdu thad"},
+                        ]
+                    },
+                    "my_second_aggregation": {
+                        "buckets": [
+                            {
+                                "foobar": 54,
+                                "second": "faranlegt",
+                                "third": "other text",
+                            },
+                            {"foobar": 42, "second": "asnalegt"},
+                        ]
+                    },
+                }
+            ],
+        }
+        # pylint: enable=line-too-long
+
+        add_attributes_search_result = {
+            "hits": {
+                "hits": [
+                    {
+                        "_id": "1",
+                        "_type": "_doc",
+                        "_index": "1",
+                        "_source": {"exists": "yes"},
+                    },
+                    {
+                        "_id": "2",
+                        "_type": "_doc",
+                        "_index": "2",
+                        "_source": {"exists": "yes"},
+                    },
+                ]
+            }
         }
 
-        objects = [
-            {
-                "my_aggregation": {
-                    "buckets": [
-                        {"foobar": 1, "second": "foobar"},
-                        {"foobar": 4, "second": "more stuff"},
-                        {"foobar": 532, "second": "hvernig hefurdu thad"},
-                    ]
-                },
-                "my_second_aggregation": {
-                    "buckets": [
-                        {"foobar": 54, "second": "faranlegt", "third": "other text"},
-                        {"foobar": 42, "second": "asnalegt"},
-                    ]
-                },
-            }
-        ]
-        return {"meta": meta, "objects": objects}
+        if search_type == "query_then_fetch":
+            return add_attributes_search_result
+        return aggregation_search_result
 
 
 class MockOpenSearchIndices(object):
@@ -119,9 +178,7 @@ class MockDataStore(object):
         "_type": "plaso_event",
         "_source": {
             "__ts_timeline_id": 1,
-            "comment": [
-                "test"
-            ],
+            "comment": ["test"],
             "es_index": "",
             "es_id": "",
             "label": "",
@@ -226,7 +283,6 @@ class MockDataStore(object):
         self,
         searchindex_id,
         event_id,
-        event_type,
         sketch_id,
         user_id,
         label,
@@ -241,16 +297,13 @@ class MockDataStore(object):
         """Mock creating an index."""
         return
 
-    def import_event(
-        self, index_name, event_type, event=None, event_id=None, flush_interval=None
-    ):
+    def import_event(self, index_name, event=None, event_id=None, flush_interval=None):
         """Mock adding the event to OpenSearch, instead add the event
         to event_store.
         Args:
             flush_interval: Number of events to queue up before indexing. (This
             functionality is not supported.)
             index_name: Name of the index in MockOpenSearchIndices
-            event_type: Type of event (e.g. plaso_event)
             event: Event dictionary
             event_id: Event MockOpenSearchIndices ID
         """
@@ -262,7 +315,6 @@ class MockDataStore(object):
         new_event = {
             "_index": index_name,
             "_id": event_id,
-            "_type": event_type,
             "_source": event,
         }
         self.event_store[event_id] = new_event
@@ -289,6 +341,9 @@ class MockDataStore(object):
     ):
         for i in range(len(self.event_store)):
             yield self.event_store[str(i)]
+
+    def flush_queued_events(self):
+        """No-op mock to flush_queued_events for the datastore."""
 
 
 class MockGraphDatabase(object):
@@ -534,6 +589,27 @@ class BaseTest(TestCase):
         self._commit_to_database(searchtemplate)
         return searchtemplate
 
+    def _create_sigma(self, user, rule_yaml, rule_uuid, title, description):
+        """Create a sigma rule in the database.
+        Args:
+            user: A user (instance of timesketch.models.user.User)
+            rule_yaml: yaml content of the rule
+            rule_uuid: rule uuid of the rule
+            title: Title for the rule
+            description: description of the rule
+        Returns:
+            A Sigma Rule (timesketch.models.sigma.SigmaRule)
+        """
+        sigma = SigmaRule(
+            user=user,
+            rule_yaml=rule_yaml,
+            rule_uuid=rule_uuid,
+            title=title,
+            description=description,
+        )
+        self._commit_to_database(sigma)
+        return sigma
+
     def setUp(self):
         """Setup the test database."""
         init_db()
@@ -579,6 +655,14 @@ class BaseTest(TestCase):
         )
 
         self.story = self._create_story(sketch=self.sketch1, user=self.user1)
+
+        self.sigma1 = self._create_sigma(
+            user=self.user1,
+            rule_uuid="5266a592-b793-11ea-b3de-0242ac130004",
+            rule_yaml=SIGMA_RULE,
+            title="Suspicious Installation of Zenmap",
+            description="Detects suspicious installation of Zenmap",
+        )
 
     def tearDown(self):
         """Tear down the test database."""

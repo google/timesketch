@@ -1,3 +1,7 @@
+---
+hide:
+  - footer
+---
 # API Client
 
 The API client is a set of Python libraries that can be used to interact with the REST API of Timesketch from notebooks or scripts. It takes
@@ -81,8 +85,8 @@ An example of that would be:
 host_uri = https://myprodtimesketch.corp.com
 username = myselfandirene
 verify = True
-client_id = 
-client_secret = 
+client_id =
+client_secret =
 auth_mode = userpass
 cred_key = <redacted>
 
@@ -90,8 +94,8 @@ cred_key = <redacted>
 host_uri = http://localhost:5000
 username = dev
 verify = True
-client_id = 
-client_secret = 
+client_id =
+client_secret =
 auth_mode = userpass
 cred_key = <redacted>
 token_file_path = /home/myselfandirene/.timesketch.dev.token
@@ -129,7 +133,7 @@ Following scopes are available:
 
 - recent: Get list of sketches that the user has actively searched in.
 - shared: Get sketches that can be accessed
-- admin: Get all sketches if the user is an admin 
+- admin: Get all sketches if the user is an admin
 - archived: get archived sketches
 - search: pass additional search query
 
@@ -451,7 +455,7 @@ aggregation.save()
 To get a Sigma rule that is stored on the server via uuid of the rule:
 
 ```python
-rule = ts.get_sigma_rule("5266a592-b793-11ea-b3de-0242ac130004")
+rule = ts.get_sigmarule("5266a592-b793-11ea-b3de-0242ac130004")
 ```
 
 Returns an object, where you can do something like that:
@@ -481,7 +485,7 @@ To get this:
   },
   'falsepositives': ['Unknown'],
   'level': 'high',
-  'es_query': '(data_type:("shell\\:zsh\\:history" OR "bash\\:history\\:command" OR "apt\\:history\\:line" OR "selinux\\:line") AND "*apt\\-get\\ install\\ zmap*")', 'file_name': 'lnx_susp_zmap'
+  'search_query': '(data_type:("shell\\:zsh\\:history" OR "bash\\:history\\:command" OR "apt\\:history\\:line" OR "selinux\\:line") AND "*apt\\-get\\ install\\ zmap*")', 'file_name': 'lnx_susp_zmap'
 }
 ```
 
@@ -512,7 +516,7 @@ message = "foobar"
 date = "2020-08-06T12:48:06.994188Z"
 timestamp_desc = "Test_description"
 
-# Attributes: A dict of extra attributes to add to the event.  
+# Attributes: A dict of extra attributes to add to the event.
 attributes = {"a": "alpha", "o": "omega", "g": "gamma"}
 
 # Tags: A list of strings to include as tags.
@@ -557,13 +561,37 @@ sketch.tag_events(events2, tags)
 Both will give you something like:
 
 ```python
- 
+
 {'events_processed_by_api': 1,
  'number_of_events_passed_to_api': 1,
  'number_of_events_with_added_tags': 1,
  'tags_applied': 1,
  'total_number_of_events_sent_by_client': 1}
 ```
+
+### Add Attributes to Events
+
+To add new attributes to event an event:
+
+```python
+# event_id and searchindex_id can be found by searching for the target event.
+
+event = [
+  {
+    '_id': event_id,
+    '_index': searchindex_id,
+    '_type': '_doc',
+    'attributes': [
+      {
+        'attr_name': 'an_attribute_name',
+        'attr_value': 'A new attribute value'
+      }
+    ]
+  }
+]
+sketch.add_event_attributes(events)
+```
+
 
 ## Other Options
 

@@ -17,9 +17,9 @@ import Vue from 'vue'
 import VueRouter from 'vue-router'
 
 import Home from './views/Home'
-import Explore from './views/Explore'
+import Canvas from './views/Canvas'
 import Sketch from './views/Sketch'
-import Overview from './views/Overview'
+import Studio from './views/Studio'
 
 Vue.use(VueRouter)
 
@@ -38,15 +38,40 @@ const routes = [
       {
         path: '',
         name: 'Overview',
-        component: Overview,
+        redirect: { name: 'Explore' },
       },
       {
         path: 'explore',
         name: 'Explore',
-        component: Explore,
+        component: Canvas,
         props: true,
       },
+      {
+        path: 'intelligence',
+        name: 'Intelligence',
+        component: Canvas,
+        props: true,
+      },
+      {
+        path: 'graph',
+        name: 'Graph',
+        component: Canvas,
+        props: true,
+      },
+      {
+        path: 'story/:storyId',
+        name: 'Story',
+        component: Canvas,
+        props: true,
+      },
+
     ],
+  },
+  {
+    name: 'Studio',
+    path: '/studio/:type/:id',
+    component: Studio,
+    props: true,
   },
 ]
 
