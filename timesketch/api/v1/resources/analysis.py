@@ -153,7 +153,11 @@ class AnalyzerRunResource(resources.ResourceMixin, Resource):
         """Handles GET request to the resource.
 
         Returns:
-            A list of all available analyzer names.
+            A list of dicts with all available analyzers with the following fields:
+              * name: Short name of the analyzer
+              * display_name: Display name of the analyzer for the UI
+              * description: Description of the analyzer provided in the class
+              * is_multi: Boolean indicating if the analyzer is a multi analyzer
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:

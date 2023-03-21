@@ -18,7 +18,7 @@ limitations under the License.
     <div
       no-gutters
       class="pa-4"
-      :style="!(sketchAnalysesList.length) ? '' : 'cursor: pointer'"
+      :style="!(analyzerResults.length) ? '' : 'cursor: pointer'"
       flat
       @click="expanded = !expanded"
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
@@ -27,7 +27,7 @@ limitations under the License.
         <v-icon left>mdi-auto-fix</v-icon> Analyzer Results
       </span>
       <v-btn
-        v-if="expanded || !(sketchAnalysesList.length)"
+        v-if="expanded || !(analyzerResults.length)"
         :to="{ name: 'Analyze', params: { sketchId: sketch.id } }"
         small
         color="primary"
@@ -39,16 +39,42 @@ limitations under the License.
         + Run Analyzer
       </v-btn>
       <span class="float-right mr-2">
-        <small><strong>{{ sketchAnalysesList.length }}</strong></small>
+        <v-progress-circular
+          v-if="!analyzerResultsReady"
+          :size="20"
+          :width="2"
+          indeterminate
+          color="primary"
+        ></v-progress-circular>
+        <small v-else><strong>{{ analyzerResults.length }}</strong></small>
       </span>
 
     </div>
     <v-expand-transition>
       <div v-show="expanded">
-        <div v-if="sketchAnalysesList.length > 0">
+        <div v-if="analyzerResults.length > 0">
           <!-- TODO: issue#2565 -->
           <!-- Add a severity and timeline filter here. -->
-          <v-data-iterator :items="sketchAnalysesList" hide-default-footer>
+          <v-data-iterato v-if="analyzerResults.length <= 10" :items="analyzerResults" hide-default-footer disable-pagination>
+            <template v-slot:default="props">
+              <ts-analyser-result v-for="analyzer in props.items" :key="analyzer.analyzer_name" :analyzer="analyzer" />
+            </template>
+          </v-data-iterato>
+          <v-data-iterator v-else :items="analyzerResults" hide-default-footer disable-pagination :search="search">
+            <template v-slot:header>
+              <v-toolbar flat height="45">
+                <v-text-field
+                  prepend-inner-icon="mdi-filter-variant"
+                  v-model="search"
+                  clearable
+                  hide-details
+                  outlined
+                  dense
+                  label="Filter analyzers"
+                ></v-text-field>
+              </v-toolbar>
+            </template>
+
             <template v-slot:default="props">
               <ts-analyser-result v-for="analyzer in props.items" :key="analyzer.analyzer_name" :analyzer="analyzer" />
             </template>
@@ -61,7 +87,6 @@ limitations under the License.
 </template>
 
 <script>
-// import RestApiClient from '../../utils/RestApiClient'
 import TsAnalyserResult from './AnalyzerResult.vue'
 
 export default {
@@ -72,13 +97,12 @@ export default {
   data: function () {
     return {
       expanded: false,
-      analyses: [],
-      analyzerList: {},
+      analyzerResultsReady: false,
+      analyzerResults: [],
+      search: '',
     }
   },
-  methods: {
-    // TODO: Have an automatic poll for new analyzers running when they are triggered.
-  },
+  // TODO: Have an automatic poll for new analyzers running when they are triggered.
   computed: {
     sketch() {
       return this.$store.state.sketch
@@ -86,14 +110,13 @@ export default {
     meta() {
       return this.$store.state.meta
     },
-    sketchAnalyzerList() {
-      return this.$store.state.sketchAnalyzerList
-    },
-    sketchAnalysesList() {
-      return this.$store.state.sketchAnalysesList
-    },
+    // sketchAnalyzerList() {
+    //   return this.$store.state.sketchAnalyzerList
+    // },
   },
-  created() {
+  mounted() {
+    this.analyzerResults = this.$store.state.analyzerResults
+    this.analyzerResultsReady = true
   },
 }
 </script>

@@ -49,7 +49,7 @@ limitations under the License.
           v-for="timeline in analyzer.timelines"
           :key="timeline.id"
         >
-          <ts-analyzer-result-timeline :timeline="timeline" :isMulti="analyzer.analyzer_is_multi"></ts-analyzer-result-timeline>
+          <ts-analyzer-result-timeline :timeline="timeline" :isMultiAnalyzer="analyzer.analyzer_is_multi"></ts-analyzer-result-timeline>
         </span>
       </div>
     </v-expand-transition>

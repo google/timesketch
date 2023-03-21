@@ -27,7 +27,7 @@ limitations under the License.
         {{ timeline.name }}
         <v-tooltip top>
           <template v-slot:activator="{ on }">
-            <v-btn v-show="!isMulti" text x-small icon v-on="on" class="ml-1">
+            <v-btn v-show="!isMultiAnalyzer" text x-small icon v-on="on" class="ml-1">
               <v-icon small color="#696B69">mdi-information-outline</v-icon>
             </v-btn>
           </template>
@@ -36,7 +36,7 @@ limitations under the License.
     </div>
 
     <v-expand-transition>
-      <div v-if="!isMulti" v-show="expanded" class="mb-1 ml-2 mr-4">
+      <div v-if="!isMultiAnalyzer" v-show="expanded" class="mb-1 ml-2 mr-4">
         <v-simple-table dense>
           <tbody :style="expanded ? 'background-color: #EEEEEE' : ''">
             <tr>
@@ -83,7 +83,7 @@ limitations under the License.
 <script>
 
 export default {
-  props: ['timeline', 'isMulti'],
+  props: ['timeline', 'isMultiAnalyzer'],
   data: function () {
     return {
       expanded: false,

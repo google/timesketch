@@ -47,7 +47,7 @@ const defaultState = (currentUser) => {
     },
     contextLinkConf: {},
     sketchAnalyzerList: {},
-    sketchAnalysesList: [],
+    analyzerResults: [],
   }
 }
 
@@ -127,7 +127,7 @@ export default new Vuex.Store({
       Vue.set(state, 'sketchAnalyzerList', payload)
     },
     SET_ANALYSES_LIST(state, payload) {
-      Vue.set(state, 'sketchAnalysesList', payload)
+      Vue.set(state, 'analyzerResults', payload)
     },
   },
   actions: {
@@ -279,7 +279,7 @@ export default new Vuex.Store({
         console.log(e)
       })
     },
-    updateAnalysesList(context, sketchId) {
+    updateAnalyzerResults(context, sketchId) {
       if (!sketchId) {
         sketchId = context.state.sketch.id
       }
