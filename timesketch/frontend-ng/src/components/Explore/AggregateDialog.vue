@@ -190,7 +190,6 @@ export default {
         "± 6 months",
         "± 7 days",
         "± 6 hours",
-        //"± 60 minutes"
       ],
       recentHistogramLabels: [],
       recentHistogramSeries: [],
