@@ -15,28 +15,35 @@ limitations under the License.
 -->
 <template>
   <div>
-    <div class="pa-4" flat :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
-      <span style="cursor: pointer" @click="expanded = !expanded">
-        <v-icon left>mdi-content-save-outline</v-icon>Saved Searches
-      </span>
-      <span class="float-right mr-2">
+    <v-row
+      no-gutters
+      :style="meta.views && meta.views.length ? 'cursor: pointer' : ''"
+      class="pa-4"
+      flat
+      @click="expanded = !expanded"
+      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+    >
+      <span> <v-icon left>mdi-content-save-outline</v-icon> Saved Searches </span>
+      <v-spacer></v-spacer>
+      <span class="mr-2">
         <small
           ><strong>{{ meta.views.length }}</strong></small
         >
       </span>
-    </div>
+    </v-row>
 
     <v-expand-transition>
       <div v-show="expanded">
-        <v-row
-          no-gutters
+        <div
           v-for="savedSearch in meta.views"
           :key="savedSearch.name"
-          class="pa-2 pl-5"
-          :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+          @click="setView(savedSearch)"
+          style="cursor: pointer; font-size: 0.9em"
         >
-          <div @click="setView(savedSearch)" style="cursor: pointer; font-size: 0.9em">{{ savedSearch.name }}</div>
-        </v-row>
+          <v-row no-gutters class="pa-2 pl-5" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">{{
+            savedSearch.name
+          }}</v-row>
+        </div>
       </div>
     </v-expand-transition>
     <v-divider></v-divider>
