@@ -30,13 +30,13 @@ limitations under the License.
 
     <v-hover v-slot="{ hover }">
       <v-toolbar dense flat class="mt-n3" color="transparent">
-        <v-toolbar-title @dblclick="renameStoryDialog = true" class="mx-3"> {{ title }}</v-toolbar-title>
+        <v-toolbar-title @dblclick="renameStoryDialog = true"> {{ title }}</v-toolbar-title>
         <v-btn v-if="hover" icon small @click="renameStoryDialog = true">
           <v-icon small>mdi-pencil</v-icon>
         </v-btn>
       </v-toolbar>
     </v-hover>
-    <div class="mx-3 pa-4">
+    <div class="pa-4">
       <div v-for="(block, index) in blocks" :key="index">
         <!-- Text block -->
         <div v-if="!block.componentName">
