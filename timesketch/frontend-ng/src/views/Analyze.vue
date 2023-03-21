@@ -22,9 +22,7 @@ limitations under the License.
       </v-btn>
       <v-divider></v-divider>
       <div>
-        <!-- TODO: https://github.com/google/timesketch/issues/2560 -->
-        TODO: <a href="https://github.com/google/timesketch/issues/2560">Issue#2560</a> add the timeline selection
-        component.
+        <ts-analyzer-list></ts-analyzer-list>
       </div>
       <v-divider></v-divider>
       <div>
@@ -38,9 +36,12 @@ limitations under the License.
 </template>
 
 <script>
+import TsAnalyzerList from '../components/Analyzer/AnalyzerList'
 export default {
   directives: {},
-  components: {},
+  components: {
+    TsAnalyzerList,
+  },
   props: ['sketchId'],
   data() {
     return {}
