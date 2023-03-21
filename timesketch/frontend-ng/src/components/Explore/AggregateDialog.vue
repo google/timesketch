@@ -136,7 +136,7 @@ limitations under the License.
             <v-col align="center">
             <v-card height="500px" :loading="!dataReady">
               <v-card-title>
-                Surrounding events  
+                Surrounding events
               </v-card-title>
               <v-card-subtitle>
                 Selected value:&nbsp;<span style="font-family: monospace">{{ eventValue }}</span>&nbsp; Selected datetime: {{ this.eventDateTime }}
@@ -148,7 +148,7 @@ limitations under the License.
                   </v-btn>
                 </v-btn-toggle>
                 <apexchart
-                  height="400px"
+                  height="350px"
                   :options="this.recentHistogramOptions"
                   :series="this.recentHistogramSeries"
                 ></apexchart>
@@ -183,7 +183,7 @@ export default {
         "Month",
         "Day",
         "Hour",
-        "Day of Week"
+        "Hour-Day"
       ],
       recentIntervals: [
         "± 5 years",
@@ -235,7 +235,7 @@ export default {
     },
     selectedRecentEvents() {
       return this.recentIntervals[this.selectedRecentEventsIndex]
-    },  
+    },
     intervalChartOptions() {
       if (this.stats === undefined) return  {
         chart: {
@@ -255,7 +255,7 @@ export default {
         categories = this.daysOfWeek
       } else if (this.selectedDistributionInterval === "Hour") {
         categories = this.hoursOfDay
-      } else if (this.selectedDistributionInterval === "Day of Week") {
+      } else if (this.selectedDistributionInterval === "Hour-Day") {
         return this.intervalHeatmapOptions
       }
       return {
@@ -301,7 +301,7 @@ export default {
             data[entry.key] = entry.doc_count
           }
           break
-        case "Day of Week":
+        case "Hour-Day":
           return this.intervalHeatmapSeries
         default:
           break
@@ -362,8 +362,8 @@ export default {
           enabled: true
         },
         labels: [
-          this.eventValue + ' (' + this.valueEventCount + ')', 
-          'Other ' + this.eventKey + ' (' + 
+          this.eventValue + ' (' + this.valueEventCount + ')',
+          'Other ' + this.eventKey + ' (' +
             (this.fieldValueCount - this.valueEventCount) + ')'
         ],
         legend: {
@@ -421,7 +421,7 @@ export default {
         },
         xaxis: {
           labels: {
-            show: false,
+            show: true,
             hideOverlappingLabels: true
           },
           categories: this.recentHistogramLabels
