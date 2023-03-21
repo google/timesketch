@@ -15,103 +15,8 @@ limitations under the License.
 -->
 <template>
   <div v-if="sketch" style="height: 30%">
+    <!-- Progress indicator when loading sketch data -->
     <v-progress-linear v-if="loadingSketch" indeterminate color="primary"></v-progress-linear>
-
-    <!-- Top horizontal toolbar -->
-    <v-toolbar flat color="transparent">
-      <v-avatar v-show="!showLeftPanel || !hasTimelines" class="ml-n3 mt-1">
-        <router-link to="/">
-          <v-img src="/dist/timesketch-color.png" max-height="25" max-width="25" contain></v-img>
-        </router-link>
-      </v-avatar>
-      <span v-show="!showLeftPanel && !loadingSketch" class="mr-1" style="font-size: 1.1em">{{ sketch.name }} </span>
-
-      <v-btn icon v-show="!showLeftPanel && !loadingSketch" @click="toggleLeftPanel" class="ml-n1">
-        <v-icon>mdi-menu</v-icon>
-      </v-btn>
-
-      <v-btn
-        v-show="currentRouteName !== 'Explore'"
-        :to="{ name: 'Explore', params: { sketchId: sketchId } }"
-        color="primary"
-        small
-        text
-        class="ml-3"
-      >
-        <v-icon small left>mdi-arrow-left</v-icon>
-        back to explore
-      </v-btn>
-      <v-spacer></v-spacer>
-      <v-btn small depressed v-on:click="switchUI"> Use the old UI </v-btn>
-
-      <!-- Sharing dialog -->
-      <v-dialog v-model="shareDialog" width="500">
-        <template v-slot:activator="{ on, attrs }">
-          <v-btn small depressed color="primary" class="ml-2" v-bind="attrs" v-on="on">
-            <v-icon small left>mdi-account-multiple-plus</v-icon>
-            Share
-          </v-btn>
-        </template>
-        <ts-share-card @close-dialog="shareDialog = false"></ts-share-card>
-      </v-dialog>
-
-      <v-avatar color="grey lighten-1" size="25" class="ml-3">
-        <span class="white--text">{{ currentUser | initialLetter }}</span>
-      </v-avatar>
-      <v-menu offset-y>
-        <template v-slot:activator="{ on, attrs }">
-          <v-avatar>
-            <v-btn small icon v-bind="attrs" v-on="on">
-              <v-icon>mdi-dots-vertical</v-icon>
-            </v-btn>
-          </v-avatar>
-        </template>
-        <v-card>
-          <v-list>
-            <v-list-item-group color="primary">
-              <v-list-item v-on:click="toggleTheme">
-                <v-list-item-icon>
-                  <v-icon>mdi-brightness-6</v-icon>
-                </v-list-item-icon>
-                <v-list-item-content>
-                  <v-list-item-title>Toggle theme</v-list-item-title>
-                </v-list-item-content>
-              </v-list-item>
-
-              <v-list-item>
-                <v-list-item-icon>
-                  <v-icon>mdi-archive</v-icon>
-                </v-list-item-icon>
-                <v-list-item-content>
-                  <v-list-item-title>Archive sketch</v-list-item-title>
-                </v-list-item-content>
-              </v-list-item>
-
-              <v-list-item>
-                <v-list-item-icon>
-                  <v-icon>mdi-export</v-icon>
-                </v-list-item-icon>
-                <v-list-item-content>
-                  <v-list-item-title>Export sketch</v-list-item-title>
-                </v-list-item-content>
-              </v-list-item>
-
-              <a href="/logout/" style="text-decoration: none; color: inherit">
-                <v-list-item>
-                  <v-list-item-icon>
-                    <v-icon>mdi-logout</v-icon>
-                  </v-list-item-icon>
-
-                  <v-list-item-content>
-                    <v-list-item-title>Logout</v-list-item-title>
-                  </v-list-item-content>
-                </v-list-item>
-              </a>
-            </v-list-item-group>
-          </v-list>
-        </v-card>
-      </v-menu>
-    </v-toolbar>
 
     <!-- Empty state -->
     <v-container v-if="!hasTimelines && !loadingSketch" fill-height fluid>
@@ -140,6 +45,7 @@ limitations under the License.
             <v-img src="/dist/timesketch-color.png" max-height="25" max-width="25" contain></v-img>
           </router-link>
         </v-avatar>
+
         <div
           @click="showSketchMetadata = !showSketchMetadata"
           style="font-size: 1.1em; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis"
@@ -147,6 +53,7 @@ limitations under the License.
         >
           {{ sketch.name }}
         </div>
+
         <v-spacer></v-spacer>
         <v-icon @click="toggleLeftPanel">mdi-chevron-left</v-icon>
       </v-toolbar>
@@ -264,6 +171,104 @@ limitations under the License.
         </v-tab-item>
       </v-tabs-items>
     </v-navigation-drawer>
+
+    <!-- Top horizontal toolbar -->
+    <v-app-bar app hide-on-scroll clipped flat :color="$vuetify.theme.dark ? '#121212' : 'white'">
+      <v-btn icon v-show="!showLeftPanel && !loadingSketch" @click="toggleLeftPanel" class="ml-n1">
+        <v-icon>mdi-menu</v-icon>
+      </v-btn>
+
+      <v-avatar v-show="!showLeftPanel || !hasTimelines" class="ml-n2 mt-1">
+        <router-link to="/">
+          <v-img src="/dist/timesketch-color.png" max-height="25" max-width="25" contain></v-img>
+        </router-link>
+      </v-avatar>
+
+      <span v-if="!showLeftPanel || !hasTimelines" style="font-size: 1.1em">{{ sketch.name }} </span>
+
+      <v-btn
+        v-show="currentRouteName !== 'Explore'"
+        :to="{ name: 'Explore', params: { sketchId: sketchId } }"
+        small
+        depressed
+        class="ml-2"
+      >
+        <v-icon small left>mdi-arrow-left</v-icon>
+        back to explore
+      </v-btn>
+      <v-spacer></v-spacer>
+      <v-btn small depressed v-on:click="switchUI"> Use the old UI </v-btn>
+
+      <!-- Sharing dialog -->
+      <v-dialog v-model="shareDialog" width="500">
+        <template v-slot:activator="{ on, attrs }">
+          <v-btn small depressed color="primary" class="ml-2" v-bind="attrs" v-on="on">
+            <v-icon small left>mdi-account-multiple-plus</v-icon>
+            Share
+          </v-btn>
+        </template>
+        <ts-share-card @close-dialog="shareDialog = false"></ts-share-card>
+      </v-dialog>
+
+      <v-avatar color="grey lighten-1" size="25" class="ml-3">
+        <span class="white--text">{{ currentUser | initialLetter }}</span>
+      </v-avatar>
+      <v-menu offset-y>
+        <template v-slot:activator="{ on, attrs }">
+          <v-avatar>
+            <v-btn small icon v-bind="attrs" v-on="on">
+              <v-icon>mdi-dots-vertical</v-icon>
+            </v-btn>
+          </v-avatar>
+        </template>
+        <v-card>
+          <v-list>
+            <v-list-item-group color="primary">
+              <v-list-item v-on:click="toggleTheme">
+                <v-list-item-icon>
+                  <v-icon>mdi-brightness-6</v-icon>
+                </v-list-item-icon>
+                <v-list-item-content>
+                  <v-list-item-title>Toggle theme</v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+
+              <v-list-item>
+                <v-list-item-icon>
+                  <v-icon>mdi-archive</v-icon>
+                </v-list-item-icon>
+                <v-list-item-content>
+                  <v-list-item-title>Archive sketch</v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+
+              <v-list-item>
+                <v-list-item-icon>
+                  <v-icon>mdi-export</v-icon>
+                </v-list-item-icon>
+                <v-list-item-content>
+                  <v-list-item-title>Export sketch</v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+
+              <a href="/logout/" style="text-decoration: none; color: inherit">
+                <v-list-item>
+                  <v-list-item-icon>
+                    <v-icon>mdi-logout</v-icon>
+                  </v-list-item-icon>
+
+                  <v-list-item-content>
+                    <v-list-item-title>Logout</v-list-item-title>
+                  </v-list-item-content>
+                </v-list-item>
+              </a>
+            </v-list-item-group>
+          </v-list>
+        </v-card>
+      </v-menu>
+    </v-app-bar>
+
+    <!-- Canvas (main) view -->
     <router-view v-if="sketch.status && hasTimelines" @setTitle="(title) => (this.title = title)"></router-view>
   </div>
 </template>
@@ -304,7 +309,7 @@ export default {
     return {
       showSketchMetadata: false,
       navigationDrawer: {
-        width: 400,
+        width: 410,
       },
       selectedScenario: null,
       scenarioDialog: false,
@@ -426,7 +431,7 @@ export default {
     toggleLeftPanel() {
       this.showLeftPanel = !this.showLeftPanel
       if (this.showLeftPanel) {
-        this.navigationDrawer.width = 400
+        this.navigationDrawer.width = 410
       } else {
         this.navigationDrawer.width = 0
       }
