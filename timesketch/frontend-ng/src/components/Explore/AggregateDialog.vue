@@ -268,7 +268,7 @@ export default {
         case "Day":
           data = Array(7).fill(0)
           for (const entry of this.stats.day_histogram.buckets) {
-            data[entry.key] = entry.doc_count
+            data[entry.key - 1] = entry.doc_count
           }
           break
         case "Hour":
