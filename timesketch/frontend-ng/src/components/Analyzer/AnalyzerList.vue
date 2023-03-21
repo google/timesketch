@@ -52,6 +52,7 @@ export default {
           <th class="text-left">
             Description
           </th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
@@ -61,6 +62,12 @@ export default {
         >
           <td>{{ analyzer.display_name}}</td>
           <td>{{ analyzer.description }}</td>
+          <td>
+            <v-btn small depressed color="primary" class="mr-2">
+              <v-icon small left>mdi-auto-fix</v-icon>
+              Run Alayzer
+            </v-btn>
+          </td>
         </tr>
       </tbody>
     </template>
