@@ -21,7 +21,7 @@ limitations under the License.
         &lt;&lt; back to explore
       </v-btn>
       <div>
-        <ts-analyzer-search></ts-analyzer-search>
+        <ts-timeline-search></ts-timeline-search>
 
       </div>
       <v-divider></v-divider>
@@ -36,12 +36,12 @@ limitations under the License.
 </template>
 
 <script>
-import TsAnalyzerSearch from '../components/Analyzer/AnalyzerSearch'
+import TsTimelineSearch from '../components/Analyzer/TimelineSearch'
 
 export default {
   directives: {},
   components: {
-    TsAnalyzerSearch
+    TsTimelineSearch
   },
   props: ['sketchId'],
   data() {

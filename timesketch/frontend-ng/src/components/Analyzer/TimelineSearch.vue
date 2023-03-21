@@ -15,12 +15,10 @@ limitations under the License.
 -->
 
 <script>
-import TsSearchDropdown from '../Explore/SearchDropdown'
 import TsTimelineChip from '../Analyzer/TimelineChip'
 
 export default {
   components:{
-    TsSearchDropdown,
     TsTimelineChip,
   },
   data() {
