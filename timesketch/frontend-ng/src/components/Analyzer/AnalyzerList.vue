@@ -15,13 +15,9 @@ limitations under the License.
 -->
 
 <script>
-import TsTimelineChip from '../Analyzer/TimelineChip'
 import ApiClient from '../../utils/RestApiClient'
 
 export default {
-  components:{
-    TsTimelineChip,
-  },
   data() {
     return {
       availableAnalyzers: [],
