@@ -27,7 +27,6 @@ export default {
   data() {
     return {
       selectedTimelines: [],
-      availableAnalyzers: [],
     }
   },
   computed: {
@@ -48,72 +47,42 @@ export default {
       );
     },
   },
-  async created () {
-    this.availableAnalyzers = (await ApiClient.getAnalyzers(this.sketch.id)).data;
-  }
-
 }
 </script>
 
 <template>
-  <div>
-    <v-autocomplete
-      v-model="selectedTimelines"
-      :items="allTimelines"
-      outlined
-      dense
-      chips
-      label="Timelines"
-      item-text="name"
-      item-value="name"
-      multiple
-    >
-      <template v-slot:selection="data">
-        <span class="chip">
-          <ts-timeline-chip
-            :timeline="data.item"
-            :close="true"
-            @click:close="remove(data.item)"
-          ></ts-timeline-chip>
-        </span>
-      </template>
-      <template v-slot:item="data">
-        <v-list-item-content>
-          <div>
-              <ts-timeline-chip
-                :timeline="data.item"
-                :close="selectedTimelines.includes(data.item.name)"
-                @click:close="remove(data.item)"
-              ></ts-timeline-chip>
-          </div>
-        </v-list-item-content>
-      </template>
-    </v-autocomplete>
-
-    <v-simple-table>
-      <template v-slot:default>
-        <thead>
-          <tr>
-            <th class="text-left">
-              Name
-            </th>
-            <th class="text-left">
-              Description
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="analyzer in availableAnalyzers"
-            :key="analyzer.name"
-          >
-            <td>{{ analyzer.display_name}}</td>
-            <td>{{ analyzer.description }}</td>
-          </tr>
-        </tbody>
-      </template>
-    </v-simple-table>
-  </div>
+  <v-autocomplete
+    v-model="selectedTimelines"
+    :items="allTimelines"
+    outlined
+    dense
+    chips
+    label="Timelines"
+    item-text="name"
+    item-value="name"
+    multiple
+  >
+    <template v-slot:selection="data">
+      <span class="chip">
+        <ts-timeline-chip
+          :timeline="data.item"
+          :close="true"
+          @click:close="remove(data.item)"
+        ></ts-timeline-chip>
+      </span>
+    </template>
+    <template v-slot:item="data">
+      <v-list-item-content>
+        <div>
+            <ts-timeline-chip
+              :timeline="data.item"
+              :close="selectedTimelines.includes(data.item.name)"
+              @click:close="remove(data.item)"
+            ></ts-timeline-chip>
+        </div>
+      </v-list-item-content>
+    </template>
+  </v-autocomplete>
 </template>
 
 <style scoped lang="scss">
