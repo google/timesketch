@@ -18,7 +18,7 @@ limitations under the License.
     <v-card-title>
       <span class="headline">Event Data Analytics</span>
       <v-spacer></v-spacer>
-      <v-btn icon>
+      <v-btn icon @click="clearAndCancel">
         <v-icon>mdi-close</v-icon>
       </v-btn>
     </v-card-title>
@@ -134,14 +134,14 @@ limitations under the License.
               </v-card>
             </v-col>
             <v-col align="center">
-            <v-card height="500px" :loading="!statsReady">
+            <v-card height="500px" :loading="!dataReady">
               <v-card-title>
-                Recent &nbsp;<span style="font-family: monospace">{{ eventValue }}</span>&nbsp;events around {{ this.eventDateTime }}
+                Surrounding events  
               </v-card-title>
               <v-card-subtitle>
-                Selected value:&nbsp;<span style="font-family: monospace">{{ eventValue }}</span>&nbsp;
+                Selected value:&nbsp;<span style="font-family: monospace">{{ eventValue }}</span>&nbsp; Selected datetime: {{ this.eventDateTime }}
               </v-card-subtitle>
-              <v-card-text v-if="statsReady">
+              <v-card-text v-if="dataReady">
                 <v-btn-toggle mandatory v-model="selectedRecentEventsIndex">
                   <v-btn v-for="interval in this.recentIntervals" :key="interval" small>
                     {{ interval }}
@@ -149,8 +149,8 @@ limitations under the License.
                 </v-btn-toggle>
                 <apexchart
                   height="400px"
-                  :options="this.intervalHeatmapOptions"
-                  :series="this.intervalHeatmapSeries"
+                  :options="this.recentHistogramOptions"
+                  :series="this.recentHistogramSeries"
                 ></apexchart>
               </v-card-text>
             </v-card>
@@ -189,12 +189,15 @@ export default {
         "± 5 years",
         "± 6 months",
         "± 7 days",
-        "± 12 hours",
-        "± 60 minutes"
+        "± 6 hours",
+        //"± 60 minutes"
       ],
+      recentHistogramLabels: [],
+      recentHistogramSeries: [],
       selectedDistributionIntervalIndex: 0,
       selectedRecentEventsIndex: 0,
-      raw_data: [],
+      dataReady: false,
+      data: [],
       monthsOfYear: [
         "Jan", "Feb", "Mar", "Apr", "May", "Jun",
         "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
@@ -230,6 +233,9 @@ export default {
     selectedDistributionInterval() {
       return this.distributionIntervals[this.selectedDistributionIntervalIndex]
     },
+    selectedRecentEvents() {
+      return this.recentIntervals[this.selectedRecentEventsIndex]
+    },  
     intervalChartOptions() {
       if (this.stats === undefined) return  {
         chart: {
@@ -355,7 +361,14 @@ export default {
         dataLabels: {
           enabled: true
         },
-        labels: [this.eventValue + ' (' + this.valueEventCount + ')', 'Other ' + this.eventKey + ' (' + (this.fieldValueCount - this.valueEventCount) + ')'],
+        labels: [
+          this.eventValue + ' (' + this.valueEventCount + ')', 
+          'Other ' + this.eventKey + ' (' + 
+            (this.fieldValueCount - this.valueEventCount) + ')'
+        ],
+        legend: {
+          position: 'bottom'
+        },
       }
     },
     donutChartSeries() {
@@ -395,24 +408,50 @@ export default {
       }
       return series
     },
+    recentHistogramOptions() {
+      if (!this.dataReady) return  {
+        chart: {
+          type: 'bar',
+        },
+      }
+
+      return {
+        chart: {
+          type: 'bar',
+        },
+        xaxis: {
+          labels: {
+            show: false,
+            hideOverlappingLabels: true
+          },
+          categories: this.recentHistogramLabels
+        },
+      }
+    },
   },
   watch: {
     eventKey (value, oldValue) {
       if (value !== oldValue) {
           this.loadSummaryData()
+          this.loadAggregationData()
         }
     },
     eventValue (value, oldValue){
       if (value !== oldValue) {
           this.loadSummaryData()
+          this.loadAggregationData()
         }
     },
+    selectedRecentEvents (value, oldValue) {
+      if (value !== oldValue) {
+        this.loadAggregationData()
+      }
+    }
   },
   methods: {
     loadSummaryData: function() {
-      this.statsReader = false
+      this.statsReady = false
       this.stats = undefined
-      this.raw_data = {}
       ApiClient.runAggregator(this.sketchId, {
         aggregator_name: 'field_summary',
         aggregator_parameters: {
@@ -424,9 +463,76 @@ export default {
         this.statsReady = true
       })
     },
+    loadAggregationData: function() {
+      this.dataReady = false
+      this.data = []
+
+      const currentDateTime = new Date(this.eventTimestamp/1000)
+      let startTime, endTime
+      let supportedIntervals
+
+      switch (this.selectedRecentEvents) {
+        case "± 5 years":
+          startTime = new Date(this.eventTimestamp/1000)
+          startTime.setUTCFullYear(currentDateTime.getUTCFullYear() - 5)
+          endTime = new Date(this.eventTimestamp/1000)
+          endTime.setUTCFullYear(currentDateTime.getUTCFullYear() + 5)
+          supportedIntervals = "year"
+          break
+        case "± 6 months":
+          startTime = new Date(this.eventTimestamp/1000)
+          startTime.setUTCMonth(currentDateTime.getUTCMonth() - 6)
+          endTime = new Date(this.eventTimestamp/1000)
+          endTime.setUTCMonth(currentDateTime.getUTCMonth() + 6)
+          supportedIntervals = "month"
+          break
+        case "± 7 days":
+          startTime = new Date(this.eventTimestamp/1000)
+          startTime.setUTCDate(currentDateTime.getUTCDate() - 7)
+          endTime = new Date(this.eventTimestamp/1000)
+          endTime.setUTCDate(currentDateTime.getUTCDate() + 7)
+          supportedIntervals = "day"
+          break
+        case "± 6 hours":
+          startTime = new Date(this.eventTimestamp/1000)
+          startTime.setUTCHours(currentDateTime.getUTCHours() - 6)
+          endTime = new Date(this.eventTimestamp/1000)
+          endTime.setUTCHours(currentDateTime.getUTCHours() + 6)
+          supportedIntervals = "hour"
+          break
+        default:
+          return
+      }
+      ApiClient.runAggregator(this.sketchId, {
+        aggregator_name: 'date_histogram',
+        aggregator_parameters: {
+          field: this.eventKey,
+          field_query_string: this.eventValue,
+          supported_intervals: supportedIntervals,
+          start_time: startTime.toISOString().slice(0, -1),
+          end_time: endTime.toISOString().slice(0, -1),
+        }
+      }).then((response) => {
+        this.data = response.data.objects[0].date_histogram.buckets[0]
+        this.recentHistogramSeries = [{
+          data: [],
+          name: 'Events'
+        }]
+        this.recentHistogramLabels = []
+        for (const [index, entry] of response.data.objects[0].date_histogram.buckets[0].entries()) {
+          this.recentHistogramSeries[0].data[index] = entry.count
+          this.recentHistogramLabels[index] = entry.datetime.slice(0, -5)
+        }
+        this.dataReady = true
+      })
+    },
+    clearAndCancel: function() {
+      this.$emit('cancel')
+    },
   },
   mounted() {
     this.loadSummaryData()
+    this.loadAggregationData()
   }
 }
 </script>
