@@ -15,18 +15,21 @@ limitations under the License.
 -->
 <template>
   <v-card class="mx-auto">
+    <v-card-title>
+      <span class="headline">Event Data Analytics</span>
+      <v-spacer></v-spacer>
+      <v-btn icon>
+        <v-icon>mdi-close</v-icon>
+      </v-btn>
+    </v-card-title>
+    <v-card-subtitle>
+      <span class="text-h6">Field:&nbsp;<span style="font-family: monospace">{{ eventKey }}</span> | Value: &nbsp;<span style="font-family: monospace">{{ eventValue }}</span></span>
+    </v-card-subtitle>
     <v-card-text>
-      <v-toolbar flat>
-        <v-toolbar-title>
-          <div class="font-weight-bold text-h5">Event Data Analytics</div>
-          <div class="font-weight-bold text-h6">Field: {{ eventKey }} | Value: {{ eventValue }}</div>
-        </v-toolbar-title>
-      </v-toolbar>
-
       <v-container fluid>
         <v-row justify="center">
           <v-col>
-            <v-card>
+            <v-card height="450px" :loading="!statsReady">
               <v-card-title>
                 General statistics
               </v-card-title>
@@ -40,7 +43,7 @@ limitations under the License.
                 </ul>
                 <br>
                 <ul>
-                  <li>Selected Field: {{  this.eventKey }}</li>
+                  <li>Selected Field:&nbsp;<span style="font-family: monospace">{{  this.eventKey }}</span></li>
                   <ul>
                     <li>Count: {{ this.fieldValueCount }}</li>
                     <li>Unique: {{ this.fieldCardinality }}</li>
@@ -48,7 +51,7 @@ limitations under the License.
                 </ul>
                 <br>
                 <ul>
-                  <li>Selected Value: {{  this.eventValue }}</li>
+                  <li>Selected Value:&nbsp;<span style="font-family: monospace">{{  this.eventValue }}</span></li>
                   <ul>
                     <li>Count: {{ this.valueEventCount }}</li>
                     <li>Min date: {{ this.valueDateTimeMinimum }}</li>
@@ -60,12 +63,11 @@ limitations under the License.
             </v-card>
           </v-col>
           <v-col align="center">
-            <v-card>
+            <v-card height="450px" :loading="!statsReady">
               <v-card-title>
-                Value as a percentage of {{ this.eventKey }} events
+                Count of &nbsp;<span style="font-family: monospace">{{ eventValue }}</span>&nbsp; as a percentage of &nbsp;<span style="font-family: monospace">{{ eventKey }}</span>&nbsp; events
               </v-card-title>
-              <v-card-text>
-                <!-- {{  this.valueEventCount }} -->
+              <v-card-text v-if="statsReady">
                 <apexchart
                   height="250px"
                   :options="this.donutChartOptions"
@@ -76,18 +78,21 @@ limitations under the License.
           </v-col>
 
           <v-col align="center">
-            <v-card>
+            <v-card height="450px" :loading="!statsReady">
               <v-card-title>
-                Value event distribution by {{ this.distributionIntervals[this.selectedDistributionIntervalIndex] }}
+                Event distribution by {{ this.distributionIntervals[this.selectedDistributionIntervalIndex] }}
               </v-card-title>
-              <v-card-text>
+              <v-card-subtitle>
+                Selected value:&nbsp;<span style="font-family: monospace">{{ eventValue }}</span>&nbsp;
+              </v-card-subtitle>
+              <v-card-text v-if="statsReady">
                 <v-btn-toggle mandatory v-model="selectedDistributionIntervalIndex">
                   <v-btn v-for="interval in this.distributionIntervals" :key="interval" small>
                     {{ interval }}
                   </v-btn>
                 </v-btn-toggle>
                 <apexchart
-                  height="400px"
+                  height="300px"
                   :options="this.intervalChartOptions"
                   :series="this.intervalChartSeries"
                 ></apexchart>
@@ -97,9 +102,9 @@ limitations under the License.
         </v-row>
         <v-row>
             <v-col align="center">
-              <v-card>
+              <v-card height="500px" :loading="!statsReady">
                 <v-card-title>
-                  Top {{ Math.min(10, this.commonValues.length) }} {{ this.eventKey }} values (out of {{ this.fieldCardinality }})
+                  Top {{ Math.min(10, this.commonValues.length) }} &nbsp;<span style="font-family: monospace">{{ eventKey }}</span>&nbsp; values (out of {{ this.fieldCardinality }})
                 </v-card-title>
                 <v-card-text>
                   <v-data-table
@@ -113,9 +118,9 @@ limitations under the License.
               </v-card>
             </v-col>
             <v-col align="center">
-              <v-card>
+              <v-card height="500px" :loading="!statsReady">
                 <v-card-title>
-                  Rare {{ this.eventKey }} values (max count of 5)
+                  Rare &nbsp;<span style="font-family: monospace">{{ eventKey }}</span>&nbsp; values (max count of 5)
                 </v-card-title>
                 <v-card-text>
                   <v-data-table
@@ -129,11 +134,14 @@ limitations under the License.
               </v-card>
             </v-col>
             <v-col align="center">
-            <v-card>
+            <v-card height="500px" :loading="!statsReady">
               <v-card-title>
-                Value event heatmap
+                Event distribution by hour/day of week
               </v-card-title>
-              <v-card-text>
+              <v-card-subtitle>
+                Selected value:&nbsp;<span style="font-family: monospace">{{ eventValue }}</span>&nbsp;
+              </v-card-subtitle>
+              <v-card-text v-if="statsReady">
                 <apexchart
                   height="400px"
                   :options="this.intervalHeatmapOptions"
@@ -186,6 +194,7 @@ export default {
           "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00"
       ],
       stats: undefined,
+      statsReady: false,
       termHeaders: [
         {
           text: 'Term',
@@ -205,7 +214,11 @@ export default {
       return this.distributionIntervals[this.selectedDistributionIntervalIndex]
     },
     intervalChartOptions() {
-      if (this.stats === undefined) return []
+      if (this.stats === undefined) return  {
+        chart: {
+          type: 'bar',
+        },
+      }
 
       let categories = []
       if (this.selectedDistributionInterval === "Year") {
@@ -322,7 +335,7 @@ export default {
         dataLabels: {
           enabled: true
         },
-        labels: [this.eventValue, 'Other ' + this.eventKey],
+        labels: [this.eventValue + ' (' + this.valueEventCount + ')', 'Other ' + this.eventKey + ' (' + (this.fieldValueCount - this.valueEventCount) + ')'],
       }
     },
     donutChartSeries() {
@@ -353,15 +366,12 @@ export default {
 
       for (let day of Array.from({ length: 7}).keys()) {
         let daySeries = []
-        console.log(day)
         for (let hour of Array.from({ length: 24}).keys()) {
           const count = this.stats.hour_of_week_histogram.buckets[day*24 + hour].doc_count
-          console.log(day, hour, count)
           daySeries.push({x: this.hoursOfDay[hour], y: count})
         }
         series.push({ 'name': this.daysOfWeek[day], 'data': daySeries})
       }
-      console.log(series)
       return series
     },
   },
@@ -379,6 +389,7 @@ export default {
   },
   methods: {
     loadSummaryData: function() {
+      this.statsReader = false
       this.stats = undefined
       this.raw_data = {}
       ApiClient.runAggregator(this.sketchId, {
@@ -389,6 +400,7 @@ export default {
         }
       }).then((response) => {
         this.stats = response.data.objects[0].field_summary.buckets[0]
+        this.statsReady = true
       })
     },
   },

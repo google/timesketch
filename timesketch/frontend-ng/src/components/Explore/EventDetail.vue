@@ -27,6 +27,15 @@ limitations under the License.
 
                     <!-- Copy field name -->
                     <v-btn
+                      v-if="(key == c_key) && key != '' && !ignoredAggregatorFields.has(key)"
+                      @click.stop="loadAggregation(key, value)"
+                      icon
+                      x-small
+                      class="mr-1"
+                    >
+                      <v-icon>mdi-chart-bar</v-icon>
+                    </v-btn>
+                    <v-btn
                       icon
                       x-small
                       style="cursor: pointer"
@@ -34,14 +43,6 @@ limitations under the License.
                       class="pr-1"
                     >
                       <v-icon small>mdi-content-copy</v-icon>
-                    </v-btn>
-                    <v-btn
-                      v-if="(key == c_key) && key != '' && !ignoredAggregatorFields.has(key)"
-                      @click.stop="loadAggregation(key, value)"
-                      icon
-                      x-small
-                    >
-                      <v-icon>mdi-chart-bar</v-icon>
                     </v-btn>
                   </td>
 
