@@ -27,7 +27,7 @@ def sigma_group():
     "--output-format",
     "output",
     required=False,
-    help="Set output format (overrides global setting).",
+    help="Set output format [json, csv, text](overrides global setting).",
 )
 @click.pass_context
 def list_sigmarules(ctx, output):
@@ -62,7 +62,7 @@ def list_sigmarules(ctx, output):
     "--output-format",
     "output",
     required=False,
-    help="Set output format (overrides global setting).",
+    help="Set output format [json, text] (overrides global setting).",
 )
 @click.pass_context
 def describe_sigmarule(ctx, rule_uuid, output):
