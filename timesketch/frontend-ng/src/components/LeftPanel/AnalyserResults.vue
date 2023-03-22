@@ -16,10 +16,8 @@ limitations under the License.
 <template>
   <div>
     <div
-      no-gutters
       class="pa-4"
       :style="!(analyzerResults.length) ? '' : 'cursor: pointer'"
-      flat
       @click="expanded = !expanded"
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
@@ -46,7 +44,7 @@ limitations under the License.
           indeterminate
           color="primary"
         ></v-progress-circular>
-        <small v-else><strong>{{ analyzerResults.length }}</strong></small>
+        <small v-if="analyzerResultsReady"><strong>{{ analyzerResults.length }}</strong></small>
       </span>
 
     </div>
@@ -55,11 +53,11 @@ limitations under the License.
         <div v-if="analyzerResults.length > 0">
           <!-- TODO: issue#2565 -->
           <!-- Add a severity and timeline filter here. -->
-          <v-data-iterato v-if="analyzerResults.length <= 10" :items="analyzerResults" hide-default-footer disable-pagination>
+          <v-data-iterator v-if="analyzerResults.length <= 10" :items="analyzerResults" hide-default-footer disable-pagination>
             <template v-slot:default="props">
               <ts-analyser-result v-for="analyzer in props.items" :key="analyzer.analyzer_name" :analyzer="analyzer" />
             </template>
-          </v-data-iterato>
+          </v-data-iterator>
           <v-data-iterator v-else :items="analyzerResults" hide-default-footer disable-pagination :search="search">
             <template v-slot:header>
               <v-toolbar flat height="45">
@@ -87,6 +85,7 @@ limitations under the License.
 </template>
 
 <script>
+import ApiClient from '../../utils/RestApiClient'
 import TsAnalyserResult from './AnalyzerResult.vue'
 
 export default {
@@ -110,13 +109,83 @@ export default {
     meta() {
       return this.$store.state.meta
     },
-    // sketchAnalyzerList() {
-    //   return this.$store.state.sketchAnalyzerList
-    // },
+    analyzerList() {
+      return this.$store.state.sketchAnalyzerList
+    },
   },
   mounted() {
-    this.analyzerResults = this.$store.state.analyzerResults
-    this.analyzerResultsReady = true
+    let analyzerResults = []
+    this.sketch.timelines.forEach(timeline => {
+      ApiClient.getSketchTimelineAnalysis(this.sketch.id, timeline.id)
+      .then(response => {
+        if (response.data.objects[0] !== undefined) {
+          // massage data to fit the result list needs
+          response.data.objects[0].forEach((analysis) => {
+            let analyzerExists = false
+            analyzerResults.every((analyzer) => {
+              if (analyzer.analyzer_name === analysis.analyzer_name) {
+                analyzerExists = true
+                // analyzer already exists in the list
+                let timelineExists = false
+                analyzer.timelines.every((timeline) => {
+                  // timeline already exists in the list
+                  if (timeline.id === analysis.timeline.id) {
+                    timelineExists = true
+                    // check if the analysis is newer than the one in the list
+                    if (analysis.created_at > timeline.created_at) {
+                      timeline.created_at = analysis.created_at
+                      timeline.result = analysis.result
+                      timeline.status = analysis.status[0].status
+                    }
+                    return false
+                  }
+                  return true
+                })
+                if (!timelineExists) {
+                  // timeline did not exist so add it
+                  let output = {
+                    id: analysis.timeline.id,
+                    name: analysis.timeline.name,
+                    color: '#'+analysis.timeline.color,
+                    result: analysis.result,
+                    status: analysis.status[0].status,
+                    created_at: analysis.created_at
+                  }
+                  analyzer.timelines.push(output)
+                }
+                return false
+              }
+              return true
+            })
+            if (!analyzerExists) {
+              // analyzer did not exist so add it
+              let output = {
+                analyzer_name: analysis.analyzer_name,
+                analyzer_display_name: this.analyzerList[analysis.analyzer_name].display_name,
+                analyzer_is_multi: this.analyzerList[analysis.analyzer_name].is_multi,
+                timelines: [
+                  {
+                    id: analysis.timeline.id,
+                    name: analysis.timeline.name,
+                    color: '#'+analysis.timeline.color,
+                    result: analysis.result,
+                    status: analysis.status[0].status,
+                    created_at: analysis.created_at
+                  },
+                ],
+              }
+              analyzerResults.push(output)
+            }
+          })
+        }
+
+      })
+      .catch(e => {
+        console.error(e)
+      })
+      this.analyzerResults = analyzerResults
+      this.analyzerResultsReady = true
+    })
   },
 }
 </script>

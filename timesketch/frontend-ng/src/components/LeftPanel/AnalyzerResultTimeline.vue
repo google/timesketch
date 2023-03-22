@@ -15,31 +15,45 @@ limitations under the License.
 -->
 
 <template>
-  <div :style="expanded ? 'background-color: #EEEEEE' : ''">
+  <div :class="$vuetify.theme.dark ? (expanded ? 'dark-hover dark-bg' :'dark-hover') : (expanded ? 'light-hover light-bg' : 'light-hover')">
     <v-divider></v-divider>
     <div
       class="pa-2 pl-3"
       style="cursor: pointer"
       @click="expanded = !expanded"
-      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+      :class="$vuetify.theme.dark ? (expanded ? 'dark-hover dark-bg' :'dark-hover') : (expanded ? 'light-hover light-bg' : 'light-hover')"
     >
         <v-icon class="mr-2" :color="timeline.color">mdi-circle</v-icon>
         {{ timeline.name }}
         <v-tooltip top>
           <template v-slot:activator="{ on }">
-            <v-btn v-show="!isMultiAnalyzer" text x-small icon v-on="on" class="ml-1">
+            <v-btn
+              v-show="!isMultiAnalyzer"
+              text
+              x-small
+              icon
+              v-on="on"
+              class="ml-1"
+              :ripple="false"
+            >
               <v-icon small color="#696B69">mdi-information-outline</v-icon>
             </v-btn>
           </template>
           <span>Severity: Note</span>
         </v-tooltip>
-    </div>
+      </div>
 
     <v-expand-transition>
-      <div v-if="!isMultiAnalyzer" v-show="expanded" class="mb-1 ml-2 mr-4">
-        <v-simple-table dense>
-          <tbody :style="expanded ? 'background-color: #EEEEEE' : ''">
-            <tr>
+      <div
+        v-if="!isMultiAnalyzer"
+        v-show="expanded"
+        :class="$vuetify.theme.dark ? (expanded ? 'dark-hover dark-bg' :'dark-hover') : (expanded ? 'light-hover light-bg' : 'light-hover')"
+      >
+        <v-simple-table dense class="ml-2">
+          <tbody
+            :class="$vuetify.theme.dark ? (expanded ? 'dark-hover dark-bg' :'dark-hover') : (expanded ? 'light-hover light-bg' : 'light-hover')"
+          >
+            <tr class="pr-3">
               <td width="80" style="border: none">
                 <strong>Verdict:</strong>
               </td>
@@ -72,7 +86,7 @@ limitations under the License.
           </tbody>
         </v-simple-table>
       </div>
-      <div v-else v-show="expanded" class="mb-1 ml-2 mr-4">
+      <div v-else v-show="expanded" class="ml-3 pb-1 mr-2">
         <v-icon>mdi-alert-octagon-outline</v-icon>
         <span class="ml-1">Showing multi analyzer results is not supported in the new UI yet. Please visit the old UI to see these results.</span>
       </div>
@@ -99,3 +113,12 @@ export default {
   },
 }
 </script>
+
+<style scoped lang="scss">
+.dark-bg {
+  background-color: #303030;
+}
+.light-bg {
+  background-color: #F6F6F6;
+}
+</style>
