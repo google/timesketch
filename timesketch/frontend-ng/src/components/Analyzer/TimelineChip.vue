@@ -1,6 +1,5 @@
-
 <!--
-Copyright 2021 Google Inc. All rights reserved.
+Copyright 2023 Google Inc. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -54,7 +53,6 @@ export default {
 }
 </script>
 
-<!-- CSS scoped to this component only -->
 <style scoped lang="scss">
 .timeline-chip {
   text-decoration: 'none';
@@ -64,9 +62,6 @@ export default {
   filter: grayscale(25%);
   color: #333333;
 }
-
-</style>
-<style lang="scss">
 .timeline-chip .theme--dark.v-icon{
   color: #333333;
 }
