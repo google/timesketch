@@ -20,7 +20,7 @@ limitations under the License.
     outlined
     dense
     chips
-    label="Timelines"
+    label="Select timelines for analysis"
     item-text="name"
     item-value="name"
     multiple
@@ -84,13 +84,10 @@ export default {
 </script>
 
 <style>
-<style>
 .center-label-height .v-input__prepend-inner, .center-label-height .v-input__append-inner {
   margin-top: 22px !important;
 }
 .center-label-height .v-label {
   margin-top: 7px !important;
 }
-</style>
-
 </style>
