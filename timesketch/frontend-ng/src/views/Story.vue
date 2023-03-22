@@ -131,7 +131,7 @@ limitations under the License.
 
         <!-- Add controls to add new blocks to the page -->
         <v-hover v-slot="{ hover }">
-          <div class="mb-2">
+          <div class="mb-2 mt-2">
             <div :class="{ hidden: !hover && !block.isActive && hasContent }">
               <!-- Text block -->
               <v-btn v-if="hasContent" class="mr-2" rounded outlined small @click="addTextBlock(index)">
@@ -259,8 +259,8 @@ export default {
       // Backwards compatibility for old style TsViewEventList props
       if (block.componentName === 'TsEventList' || block.componentName === 'TsViewEventList') {
         const EVENTS_PER_PAGE = 10
-        let queryString = block.componentProps.view.query_string
-        let queryFilter = block.componentProps.view.query_filter
+        let queryString = block.componentProps.view.query_string || block.componentProps.view.query
+        let queryFilter = block.componentProps.view.query_filter || block.componentProps.view.filter
         let queryRequest = {}
 
         // Make sure there is a query filter present
@@ -300,10 +300,12 @@ export default {
       this.save()
     },
     editTextBlock(block) {
-      block.draft = block.content
-      if (!block.edit) {
-        block.edit = !block.edit
+      if (block.edit) {
+        return
+      } else {
+        block.edit = true
       }
+      block.draft = block.content
     },
     deleteBlock(index) {
       if (confirm('Delete block?')) {
