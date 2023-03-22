@@ -1,5 +1,5 @@
 <!--
-Copyright 2021 Google Inc. All rights reserved.
+Copyright 2023 Google Inc. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -13,40 +13,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -->
-
-<script>
-import TsTimelineChip from '../Analyzer/TimelineChip'
-
-export default {
-  components:{
-    TsTimelineChip,
-  },
-  data() {
-    return {
-      selectedTimelines: [],
-    }
-  },
-  computed: {
-    sketch() {
-      return this.$store.state.sketch
-    },
-    allTimelines() {
-      // Sort alphabetically based on timeline name.
-      let timelines = [...this.sketch.timelines]
-      timelines.sort((a, b) => a.name.localeCompare(b.name))
-      return timelines;
-    },
-
-  },
-  methods: {
-    remove (timeline) {
-      this.selectedTimelines = this.selectedTimelines.filter(tl => tl!== timeline.name);
-    },
-  },
-
-}
-</script>
-
 <template>
   <v-autocomplete
     v-model="selectedTimelines"
@@ -83,10 +49,35 @@ export default {
 
 </template>
 
-<style scoped lang="scss">
-.chip {
-  margin: 10px 5px;
-  margin-left: 0;
-}
+<script>
+import TsTimelineChip from '../Analyzer/TimelineChip'
 
-</style>
+export default {
+  components:{
+    TsTimelineChip,
+  },
+  data() {
+    return {
+      selectedTimelines: [],
+    }
+  },
+  computed: {
+    sketch() {
+      return this.$store.state.sketch
+    },
+    allTimelines() {
+      // Sort alphabetically based on timeline name.
+      let timelines = [...this.sketch.timelines]
+      timelines.sort((a, b) => a.name.localeCompare(b.name))
+      return timelines;
+    },
+
+  },
+  methods: {
+    remove (timeline) {
+      this.selectedTimelines = this.selectedTimelines.filter(tl => tl!== timeline.name);
+    },
+  },
+
+}
+</script>
