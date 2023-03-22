@@ -16,28 +16,25 @@ limitations under the License.
 <template>
   <div>
     <div
-      no-gutters
       :style="!(sigmaRules && sigmaRules.length) ? '' : 'cursor: pointer'"
       class="pa-4"
-      flat
       @click="expanded = !expanded"
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
       <span> <v-icon left>mdi-sigma-lower</v-icon> Sigma Rules </span>
+
       <v-btn
         v-if="expanded || (sigmaRules && !sigmaRules.length)"
-        small
-        color="primary"
-        text
-        class="ml-1"
+        icon
+        class="float-right mt-n1"
         :to="{ name: 'Studio', params: { id: 'new', type: 'sigma' } }"
         @click.stop=""
       >
-        <v-icon small left>mdi-plus</v-icon>New Rule
+        <v-icon>mdi-plus</v-icon>
       </v-btn>
-      <span class="float-right mr-2">
+      <span v-if="!expanded" class="float-right" style="margin-right: 14px">
         <v-progress-circular v-if="isLoading" :size="12" :width="1" indeterminate></v-progress-circular>
-        <small v-else
+        <small v-if="sigmaRules && sigmaRules.length"
           ><strong>{{ ruleCount }}</strong></small
         >
       </span>

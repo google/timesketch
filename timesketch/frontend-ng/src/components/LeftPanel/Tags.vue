@@ -15,22 +15,20 @@ limitations under the License.
 -->
 <template>
   <div>
-    <v-row
-      no-gutters
+    <div
       :style="tags && tags.length ? 'cursor: pointer' : ''"
       class="pa-4"
-      flat
       @click="expanded = !expanded"
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
       <span> <v-icon left>mdi-tag-multiple-outline</v-icon> Tags </span>
-      <v-spacer></v-spacer>
-      <span class="mr-2">
+
+      <span class="float-right" style="margin-right: 14px">
         <small
           ><strong>{{ tags.length }}</strong></small
         >
       </span>
-    </v-row>
+    </div>
 
     <v-expand-transition>
       <div v-show="expanded && tags.length">

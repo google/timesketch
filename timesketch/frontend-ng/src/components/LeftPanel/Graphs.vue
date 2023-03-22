@@ -15,22 +15,20 @@ limitations under the License.
 -->
 <template>
   <div>
-    <v-row
-      no-gutters
+    <div
       style="cursor: pointer"
       class="pa-4"
-      flat
       @click="expanded = !expanded"
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
       <span> <v-icon left>mdi-source-branch</v-icon> Graphs </span>
-      <v-spacer></v-spacer>
-      <span class="mr-2">
+
+      <span class="float-right" style="margin-right: 14px">
         <small
           ><strong>{{ graphs.length + savedGraphs.length }}</strong></small
         >
       </span>
-    </v-row>
+    </div>
 
     <v-expand-transition>
       <div v-show="expanded">
