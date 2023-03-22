@@ -17,18 +17,12 @@ limitations under the License.
   <v-container fluid>
     <!-- Search and Filters -->
     <v-card flat class="pa-3 pt-0 mt-n3" color="transparent">
-      <v-btn :to="{ name: 'Overview', params: { sketchId: sketchId } }" color="primary" plain text>
-        &lt;&lt; back to explore
-      </v-btn>
-      <v-divider></v-divider>
-      <div>
-        <ts-analyzer-list></ts-analyzer-list>
+      <div class="mt-2">
+        <ts-timeline-search></ts-timeline-search>
       </div>
       <v-divider></v-divider>
       <div>
-        <!-- TODO: https://github.com/google/timesketch/issues/2562 -->
-        TODO: <a href="https://github.com/google/timesketch/issues/2562">Issue#2562</a> add the analyzer listing
-        component.
+        <ts-analyzer-list></ts-analyzer-list>
       </div>
       <v-divider></v-divider>
     </v-card>
@@ -36,11 +30,13 @@ limitations under the License.
 </template>
 
 <script>
+import TsTimelineSearch from '../components/Analyzer/TimelineSearch'
 import TsAnalyzerList from '../components/Analyzer/AnalyzerList'
+
 export default {
-  directives: {},
   components: {
-    TsAnalyzerList,
+    TsTimelineSearch,
+    TsAnalyzerList
   },
   props: ['sketchId'],
   data() {
@@ -54,6 +50,5 @@ export default {
       return this.$store.state.meta
     },
   },
-  methods: {},
 }
 </script>
