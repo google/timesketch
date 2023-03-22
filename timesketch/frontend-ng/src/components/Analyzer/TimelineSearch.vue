@@ -24,6 +24,7 @@ limitations under the License.
     item-text="name"
     item-value="name"
     multiple
+    class="center-label-height"
   >
     <template v-slot:selection="data">
       <span class="my-2">
@@ -83,13 +84,13 @@ export default {
 </script>
 
 <style>
-.v-input__prepend-inner {
+<style>
+.center-label-height .v-input__prepend-inner, .center-label-height .v-input__append-inner {
   margin-top: 22px !important;
 }
-.v-label {
+.center-label-height .v-label {
   margin-top: 7px !important;
 }
-.v-input__append-inner {
-  margin-top: 22px !important;
-}
+</style>
+
 </style>
