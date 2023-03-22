@@ -26,7 +26,7 @@ limitations under the License.
     multiple
   >
     <template v-slot:selection="data">
-      <span class="chip">
+      <span class="my-2">
         <ts-timeline-chip
           :timeline="data.item"
           :close="true"
