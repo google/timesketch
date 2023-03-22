@@ -81,3 +81,15 @@ export default {
 
 }
 </script>
+
+<style>
+.v-input__prepend-inner {
+  margin-top: 22px !important;
+}
+.v-label {
+  margin-top: 7px !important;
+}
+.v-input__append-inner {
+  margin-top: 22px !important;
+}
+</style>
