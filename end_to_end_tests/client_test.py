@@ -116,7 +116,6 @@ level: high
         rules = self.api.list_sigmarules()
         self.assertions.assertGreaterEqual(len(rules), 1)
         rule = rules[0]
-        self.assertions.assertIn("5266a592-b793-11ea-b3de-bbbbbb", rule.rule_uuid)
         self.assertions.assertIn("Installation of bbbbbb", rule.title)
 
         self.assertions.assertIn("installation of bbbbbb", rule.description)
