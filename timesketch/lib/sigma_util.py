@@ -86,7 +86,8 @@ def _enrich_sigma_rule_object(rule: SigmaRule, parse_yaml: bool = False):
 
     Args:
         rule: type SigmaRule.
-        parse_yaml: type bool. If set to True, the rule will be parsed from the yaml (slower).
+        parse_yaml: type bool. If set to True, the rule will be parsed from
+            the yaml (slower).
 
     Returns:
         Enriched Sigma dict.
