@@ -1,7 +1,7 @@
 # Use the official Docker Hub Ubuntu base image
 FROM ubuntu:22.04
 
-ARG PLASO_PPA_TRACK
+ARG PLASO_PPA_TRACK=stable
 
 # Prevent needing to configure debian packages, stopping the setup of
 # the docker container.
