@@ -216,7 +216,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No rule found with this ID.")
         return_rule = []
 
-        return_rule.append(_enrich_sigma_rule_object(rule=rule))
+        return_rule.append(_enrich_sigma_rule_object(rule=rule, parse_yaml=True))
 
         return jsonify({"objects": return_rule, "meta": {}})
 
