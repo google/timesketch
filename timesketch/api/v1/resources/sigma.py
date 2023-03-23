@@ -46,7 +46,7 @@ from timesketch.models import db_session
 logger = logging.getLogger("timesketch.api.sigma")
 
 
-def _enrich_sigma_rule_object(rule: SigmaRule):
+def _enrich_sigma_rule_object(rule: SigmaRule, parse_yaml: bool = False):
     """Helper function: Returns an enriched Sigma object given a SigmaRule.
 
     It will extract the `status`, `created_at` and `updated_at` and make them
@@ -54,11 +54,19 @@ def _enrich_sigma_rule_object(rule: SigmaRule):
 
     Args:
         rule: type SigmaRule.
+        parse_yaml: type bool. If set to True, the rule will be parsed from the yaml (slower).
 
     Returns:
         Enriched Sigma dict.
     """
-    parsed_rule = ts_sigma_lib.parse_sigma_rule_by_text(rule.rule_yaml)
+    parsed_rule = {}
+
+    # Parsing the yaml file takes a lot of time, per default, we do not need
+    # that information, so we only parse it if we need it.
+
+    if parse_yaml:
+        parsed_rule = ts_sigma_lib.parse_sigma_rule_by_text(rule.rule_yaml)
+
     parsed_rule["rule_uuid"] = parsed_rule.get("id", rule.rule_uuid)
     parsed_rule["created_at"] = str(rule.created_at)
     parsed_rule["updated_at"] = str(rule.updated_at)
@@ -91,7 +99,7 @@ class SigmaRuleListResource(resources.ResourceMixin, Resource):
 
         all_sigma_rules = SigmaRule.query.all()
         for rule in all_sigma_rules:
-            sigma_rules.append(_enrich_sigma_rule_object(rule=rule))
+            sigma_rules.append(_enrich_sigma_rule_object(rule=rule, parse_yaml=False))
 
         meta = {"rules_count": len(sigma_rules)}
         return jsonify({"objects": sigma_rules, "meta": meta})
@@ -106,14 +114,14 @@ class SigmaRuleListResource(resources.ResourceMixin, Resource):
         All attributes of the rule are taken by the `rule_yaml` value in the
         POST request.
 
-        If no `rule_yaml` is found in the reuqest, the method will fail as this
+        If no `rule_yaml` is found in the request, the method will fail as this
         is required to parse the rule.
 
         Remark: To update a rule, use `PUT`instead.
 
         Returns:
             Sigma rule object and HTTP status 200 code indicating
-            whether operation was sucessful.
+            whether operation was successful.
             HTTP Error code 400 if no `rule_yaml` is provided or a parsing
                 error occurs.
             HTTP Error code 400 if rule_uuid does not match id in the YAML.
@@ -177,7 +185,7 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
 
     @login_required
     def get(self, rule_uuid):
-        """Fetches a single Sigma rule from the databse.
+        """Fetches a single Sigma rule from the database.
 
         Fetches a single Sigma rule selected by the `UUID` in
         `/sigmarule/<string:rule_uuid>/` and returns a JSON represantion of the
