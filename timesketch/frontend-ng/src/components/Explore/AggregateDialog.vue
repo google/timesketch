@@ -14,62 +14,130 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-card class="mx-auto">
-    <v-card-title>
-      <span class="headline">Event Data Analytics</span>
+  <v-card class="mx-auto" >
+    <v-toolbar dense flat>
+      <strong>Event Data Analytics</strong>
       <v-spacer></v-spacer>
       <v-btn icon @click="clearAndCancel">
         <v-icon>mdi-close</v-icon>
       </v-btn>
-    </v-card-title>
-    <v-card-subtitle>
-      <span class="text-h6">Field:&nbsp;<span style="font-family: monospace">{{ eventKey }}</span> | Value: &nbsp;<span style="font-family: monospace">{{ eventValue }}</span></span>
-    </v-card-subtitle>
+    </v-toolbar>
     <v-card-text>
       <v-container fluid>
         <v-row justify="center">
           <v-col>
-            <v-card height="450px" :loading="!statsReady">
+            <v-card outlined height="145px" :loading="!statsReady">
               <v-card-title>
-                General statistics
+                Sketch statistics
               </v-card-title>
-              <v-card-text>
-                <ul>
-                  <li>Total number of events: {{ this.docCount }}</li>
-                  <ul>
-                    <li>Min date: {{ this.fieldDateTimeMinimum }}</li>
-                    <li>Max date: {{ this.fieldDateTimeMaximum }}</li>
-                  </ul>
-                </ul>
-                <br>
-                <ul>
-                  <li>Selected Field:&nbsp;<span style="font-family: monospace">{{  this.eventKey }}</span></li>
-                  <ul>
-                    <li>Count: {{ this.fieldValueCount }}</li>
-                    <li>Unique: {{ this.fieldCardinality }}</li>
-                  </ul>
-                </ul>
-                <br>
-                <ul>
-                  <li>Selected Value:&nbsp;<span style="font-family: monospace">{{  this.eventValue }}</span></li>
-                  <ul>
-                    <li>Count: {{ this.valueEventCount }}</li>
-                    <li>Min date: {{ this.valueDateTimeMinimum }}</li>
-                    <li>Max date: {{ this.valueDateTimeMaximum }}</li>
-                  </ul>
-                </ul>
-
-              </v-card-text>
+              <v-simple-table dense v-if="statsReady" class="px-2 mt-n4">
+                <tbody>
+                  <tr>
+                    <td width="200px">Total number of events</td>
+                    <td><strong>{{ this.docCount }}</strong></td>
+                  </tr>
+                  <tr>
+                    <td width="200px">First event</td>
+                    <td><strong>{{ this.fieldDateTimeMinimum }}</strong></td>
+                  </tr>
+                  <tr>
+                    <td width="200px">Last event</td>
+                    <td><strong>{{ this.fieldDateTimeMaximum }}</strong></td>
+                  </tr>
+                </tbody>
+              </v-simple-table>
+            </v-card>
+            <v-card outlined height="145px" :loading="!statsReady" class="mt-1">
+              <v-card-title>
+                Field statistics
+              </v-card-title>
+              <v-simple-table dense v-if="statsReady" class="px-2 mt-n4">
+                <tbody>
+                  <tr>
+                    <td width="200px">Field name</td>
+                    <td><span style="font-family: monospace">{{ this.eventKey }}</span></td>
+                  </tr>
+                  <tr>
+                    <td width="200px">Total number of events</td>
+                    <td><strong>{{ this.fieldValueCount }}</strong></td>
+                  </tr>
+                  <tr>
+                    <td width="200px">Number of unique values</td>
+                    <td><strong>{{ this.fieldCardinality }}</strong></td>
+                  </tr>
+                </tbody>
+              </v-simple-table>
+            </v-card>
+            <v-card outlined height="180px" :loading="!statsReady" class="mt-1">
+              <v-card-title>
+                Value statistics
+              </v-card-title>
+              <v-simple-table dense v-if="statsReady" class="px-2 mt-n4">
+                <tbody>
+                  <tr>
+                    <td width="200px">Field value</td>
+                    <td><span style="font-family: monospace">{{ this.eventValue }}</span></td>
+                  </tr>
+                  <tr>
+                    <td width="200px">Total number of events</td>
+                    <td><strong>{{ this.valueEventCount }}</strong></td>
+                  </tr>
+                  <tr>
+                    <td width="200px">First event</td>
+                    <td><strong>{{ this.valueDateTimeMinimum }}</strong></td>
+                  </tr>
+                  <tr>
+                    <td width="200px">Last event</td>
+                    <td><strong>{{ this.valueDateTimeMaximum }}</strong></td>
+                  </tr>
+                </tbody>
+              </v-simple-table>
             </v-card>
           </v-col>
           <v-col align="center">
-            <v-card height="450px" :loading="!statsReady">
+              <v-card outlined height="480px" :loading="!statsReady">
+                <v-card-title>
+                  Top {{ Math.min(10, this.commonValues.length) }} &nbsp;<span style="font-family: monospace">{{ eventKey }}</span>&nbsp; values (out of {{ this.fieldCardinality }})
+                </v-card-title>
+                <v-card-text>
+                  <v-data-table
+                    :headers="termHeaders"
+                    :items="commonValues"
+                    :items-per-page="10"
+                    :hide-default-footer="(commonValues.length <= 10)"
+                    dense
+                  >
+                  </v-data-table>
+                </v-card-text>
+              </v-card>
+            </v-col>
+            <v-col align="center">
+              <v-card outlined height="480px" :loading="!statsReady">
+                <v-card-title>
+                  Rare &nbsp;<span style="font-family: monospace">{{ eventKey }}</span>&nbsp; values (max count of 5)
+                </v-card-title>
+                <v-card-text>
+                  <v-data-table
+                    :headers="termHeaders"
+                    :items="rareValues"
+                    :items-per-page="10"
+                    :hide-default-footer="(rareValues.length <= 10)"
+                    dense
+                  >
+                  </v-data-table>
+                </v-card-text>
+              </v-card>
+            </v-col>
+        </v-row>
+        <v-row>
+          <v-col align="center">
+            <v-card outlined height="480px" :loading="!statsReady">
               <v-card-title>
-                Count of &nbsp;<span style="font-family: monospace">{{ eventValue }}</span>&nbsp; as a percentage of &nbsp;<span style="font-family: monospace">{{ eventKey }}</span>&nbsp; events
+                Count of value as a percentage of &nbsp;<span style="font-family: monospace">{{ eventKey }}</span>&nbsp; events
               </v-card-title>
               <v-card-text v-if="statsReady">
                 <apexchart
-                  height="250px"
+                  height="350px"
                   :options="this.donutChartOptions"
                   :series="this.donutChartSeries"
                 ></apexchart>
@@ -78,7 +146,7 @@ limitations under the License.
           </v-col>
 
           <v-col align="center">
-            <v-card height="450px" :loading="!statsReady">
+            <v-card outlined height="480px" :loading="!statsReady">
               <v-card-title>
                 Event distribution by {{ this.distributionIntervals[this.selectedDistributionIntervalIndex] }}
               </v-card-title>
@@ -92,49 +160,16 @@ limitations under the License.
                   </v-btn>
                 </v-btn-toggle>
                 <apexchart
-                  height="300px"
+                  height="350px"
                   :options="this.intervalChartOptions"
                   :series="this.intervalChartSeries"
                 ></apexchart>
               </v-card-text>
             </v-card>
           </v-col>
-        </v-row>
-        <v-row>
+
             <v-col align="center">
-              <v-card height="500px" :loading="!statsReady">
-                <v-card-title>
-                  Top {{ Math.min(10, this.commonValues.length) }} &nbsp;<span style="font-family: monospace">{{ eventKey }}</span>&nbsp; values (out of {{ this.fieldCardinality }})
-                </v-card-title>
-                <v-card-text>
-                  <v-data-table
-                    :headers="termHeaders"
-                    :items="commonValues"
-                    :items-per-page="10"
-                    dense
-                  >
-                  </v-data-table>
-                </v-card-text>
-              </v-card>
-            </v-col>
-            <v-col align="center">
-              <v-card height="500px" :loading="!statsReady">
-                <v-card-title>
-                  Rare &nbsp;<span style="font-family: monospace">{{ eventKey }}</span>&nbsp; values (max count of 5)
-                </v-card-title>
-                <v-card-text>
-                  <v-data-table
-                    :headers="termHeaders"
-                    :items="rareValues"
-                    :items-per-page="10"
-                    dense
-                  >
-                  </v-data-table>
-                </v-card-text>
-              </v-card>
-            </v-col>
-            <v-col align="center">
-            <v-card height="500px" :loading="!dataReady">
+            <v-card outlined height="480" :loading="!dataReady">
               <v-card-title>
                 Surrounding events
               </v-card-title>
@@ -174,7 +209,6 @@ export default {
     'eventValue',
     'eventTimestamp',
     'eventTimestampDesc',
-    'sketchId'
   ],
   data() {
     return {
@@ -194,7 +228,7 @@ export default {
       recentHistogramLabels: [],
       recentHistogramSeries: [],
       selectedDistributionIntervalIndex: 0,
-      selectedRecentEventsIndex: 0,
+      selectedRecentEventsIndex: 2,
       dataReady: false,
       data: [],
       monthsOfYear: [
@@ -226,6 +260,9 @@ export default {
     }
   },
   computed: {
+    sketch() {
+      return this.$store.state.sketch
+    },
     eventDateTime() {
       return new Date(this.eventTimestamp/1000).toISOString()
     },
@@ -451,7 +488,7 @@ export default {
     loadSummaryData: function() {
       this.statsReady = false
       this.stats = undefined
-      ApiClient.runAggregator(this.sketchId, {
+      ApiClient.runAggregator(this.sketch.id, {
         aggregator_name: 'field_summary',
         aggregator_parameters: {
           field: this.eventKey,
@@ -502,7 +539,7 @@ export default {
         default:
           return
       }
-      ApiClient.runAggregator(this.sketchId, {
+      ApiClient.runAggregator(this.sketch.id, {
         aggregator_name: 'date_histogram',
         aggregator_parameters: {
           field: this.eventKey,
@@ -512,12 +549,14 @@ export default {
           end_time: endTime.toISOString().slice(0, -1),
         }
       }).then((response) => {
+        console.log(response)
         this.data = response.data.objects[0].date_histogram.buckets[0]
         this.recentHistogramSeries = [{
           data: [],
           name: 'Events'
         }]
         this.recentHistogramLabels = []
+
         for (const [index, entry] of response.data.objects[0].date_histogram.buckets[0].entries()) {
           this.recentHistogramSeries[0].data[index] = entry.count
           this.recentHistogramLabels[index] = entry.datetime.slice(0, -5)

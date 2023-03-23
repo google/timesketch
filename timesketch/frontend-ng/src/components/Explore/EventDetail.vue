@@ -28,7 +28,7 @@ limitations under the License.
                     <!-- Copy field name -->
                     <v-btn
                       v-if="(key == c_key) && key != '' && !ignoredAggregatorFields.has(key)"
-                      @click.stop="loadAggregation(key, value)"    
+                      @click.stop="loadAggregation(key, value)"
                       icon
                       x-small
                       class="mr-1"
@@ -239,14 +239,13 @@ limitations under the License.
     </v-row>
     <v-dialog
       v-model="aggregatorDialog"
-      @click:outside="$event => this.aggregatorDialog = false"  
+      @click:outside="$event => this.aggregatorDialog = false"
     >
       <ts-aggregate-dialog
         :eventKey="eventKey"
         :eventValue="eventValue"
         :eventTimestamp="eventTimestamp"
         :eventTimestampDesc="eventTimestampDesc"
-        :sketchId="this.sketch.id"
         @cancel=" aggregatorDialog = false">
       </ts-aggregate-dialog>
     </v-dialog>
