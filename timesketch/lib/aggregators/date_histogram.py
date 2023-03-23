@@ -186,15 +186,12 @@ class DateHistogramAggregation(interface.BaseAggregator):
         aggregation_spec["aggs"]["aggregation"]["date_histogram"][
             "interval"
         ] = self.interval
-        aggregation_spec["aggs"]["aggregation"]["date_histogram"][
-            "missing"
-        ] = 0
-        aggregation_spec["aggs"]["aggregation"]["date_histogram"][
-            "min_doc_count"
-        ] = 0
-        aggregation_spec["aggs"]["aggregation"]["date_histogram"][
-            "extended_bounds"
-        ] = {"min": start_time, "max": end_time}
+        aggregation_spec["aggs"]["aggregation"]["date_histogram"]["missing"] = 0
+        aggregation_spec["aggs"]["aggregation"]["date_histogram"]["min_doc_count"] = 0
+        aggregation_spec["aggs"]["aggregation"]["date_histogram"]["extended_bounds"] = {
+            "min": start_time,
+            "max": end_time,
+        }
 
         aggregation_spec["aggs"]["datetime_cardinality"] = {
             "cardinality": {"field": "datetime"}
