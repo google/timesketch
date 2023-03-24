@@ -27,7 +27,7 @@ limitations under the License.
       </thead>
       <tbody>
         <tr
-          v-for="analyzer in sortedAnalyzers()"
+          v-for="analyzer in analyzerList"
           :key="analyzer.name"
         >
         <td>
@@ -45,29 +45,23 @@ limitations under the License.
 </template>
 
 <script>
+import ApiClient from '../../utils/RestApiClient'
+
 export default {
   data() {
     return {
+      analyzerList: []
     }
+  },
+  async created () {
+    // Sort alphabetically based on analyzer display_name
+    this.analyzerList = (await ApiClient.getAnalyzers(this.sketch.id)).data.sort(
+      (a, b) => a.display_name.localeCompare(b.display_name)
+    );
   },
   computed: {
     sketch() {
       return this.$store.state.sketch;
-    },
-    analyzerList() {
-        return this.$store.state.sketchAnalyzerList;
-    },
-  },
-  methods: {
-    // Sort alphabetically based on analyzer display_name
-    sortedAnalyzers() {
-      let unsortedAnalyzerList = []
-      for (let analyzer in this.analyzerList) {
-        unsortedAnalyzerList.push(this.analyzerList[analyzer])
-      }
-      let sortedAnalyzerList = [...unsortedAnalyzerList]
-      sortedAnalyzerList.sort((a, b) => a.display_name.localeCompare(b.display_name))
-      return sortedAnalyzerList
     },
   },
 }
