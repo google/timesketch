@@ -27,8 +27,6 @@ limitations under the License.
       v-model="selectedTimelines"
       :items="allTimelines"
       outlined
-      dense
-      chips
       label="Select timelines for analysis"
       item-text="name"
       item-value="name"
@@ -36,13 +34,11 @@ limitations under the License.
       class="center-label-height"
     >
       <template v-slot:selection="data">
-        <span class="my-2">
-          <ts-timeline-chip
-            :timeline="data.item"
-            :close="true"
-            @click:close="remove(data.item)"
-          ></ts-timeline-chip>
-        </span>
+        <ts-timeline-chip
+          :timeline="data.item"
+          :close="true"
+          @click:close="remove(data.item)"
+        ></ts-timeline-chip>
       </template>
       <template v-slot:item="data">
         <v-list-item-content>
@@ -88,7 +84,7 @@ export default {
       this.selectedTimelines = this.selectedTimelines.filter(tl => tl!== timeline.name);
     },
     selectAll () {
-      this.selectedTimelines = [...this.allTimelines];
+      this.selectedTimelines = [...this.allTimelines.map(tl => tl.name)];
     },
     unselectAll () {
       this.selectedTimelines = [];
@@ -99,10 +95,12 @@ export default {
 </script>
 
 <style>
-.center-label-height .v-input__prepend-inner, .center-label-height .v-input__append-inner {
-  margin-top: 22px !important;
-}
-.center-label-height .v-label {
-  margin-top: 7px !important;
-}
+  /*
+    Enforce a centered positioning of the append-icon. We can remove this once
+    Vuetify provides a clean way of centering it.
+  */
+  .v-text-field--enclosed .v-input__append-inner {
+    margin-top: auto !important;
+    margin-bottom: auto !important;
+  }
 </style>
