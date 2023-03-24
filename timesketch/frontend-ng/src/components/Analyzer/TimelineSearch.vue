@@ -14,40 +14,49 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-autocomplete
-    v-model="selectedTimelines"
-    :items="allTimelines"
-    outlined
-    dense
-    chips
-    label="Select timelines for analysis"
-    item-text="name"
-    item-value="name"
-    multiple
-    class="center-label-height"
-  >
-    <template v-slot:selection="data">
-      <span class="my-2">
-        <ts-timeline-chip
-          :timeline="data.item"
-          :close="true"
-          @click:close="remove(data.item)"
-        ></ts-timeline-chip>
-      </span>
-    </template>
-    <template v-slot:item="data">
-      <v-list-item-content>
-        <div>
-            <ts-timeline-chip
-              :timeline="data.item"
-              :close="selectedTimelines.includes(data.item.name)"
-              @click:close="remove(data.item)"
-            ></ts-timeline-chip>
-        </div>
-      </v-list-item-content>
-    </template>
-  </v-autocomplete>
-
+  <div>
+    <v-btn-toggle dense rounded class="mb-2">
+      <v-btn small outlined rounded color="primary" @click="selectAll()">
+        Select all
+      </v-btn>
+      <v-btn small outlined rounded color="primary" @click="unselectAll()">
+        Unselect all
+      </v-btn>
+    </v-btn-toggle>
+    <v-autocomplete
+      v-model="selectedTimelines"
+      :items="allTimelines"
+      outlined
+      dense
+      chips
+      label="Select timelines for analysis"
+      item-text="name"
+      item-value="name"
+      multiple
+      class="center-label-height"
+    >
+      <template v-slot:selection="data">
+        <span class="my-2">
+          <ts-timeline-chip
+            :timeline="data.item"
+            :close="true"
+            @click:close="remove(data.item)"
+          ></ts-timeline-chip>
+        </span>
+      </template>
+      <template v-slot:item="data">
+        <v-list-item-content>
+          <div>
+              <ts-timeline-chip
+                :timeline="data.item"
+                :close="selectedTimelines.includes(data.item.name)"
+                @click:close="remove(data.item)"
+              ></ts-timeline-chip>
+          </div>
+        </v-list-item-content>
+      </template>
+    </v-autocomplete>
+  </div>
 </template>
 
 <script>
@@ -77,6 +86,12 @@ export default {
   methods: {
     remove (timeline) {
       this.selectedTimelines = this.selectedTimelines.filter(tl => tl!== timeline.name);
+    },
+    selectAll () {
+      this.selectedTimelines = [...this.allTimelines];
+    },
+    unselectAll () {
+      this.selectedTimelines = [];
     },
   },
 
