@@ -238,6 +238,7 @@ limitations under the License.
       </v-col>
     </v-row>
     <v-dialog
+      scrollable
       v-model="aggregatorDialog"
       @click:outside="$event => this.aggregatorDialog = false"
     >
