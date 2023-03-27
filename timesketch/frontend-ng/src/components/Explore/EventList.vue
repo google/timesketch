@@ -302,7 +302,7 @@ limitations under the License.
 
         <!-- Generic slot for any field type. Adds tags and emojis to the first column. -->
         <template v-for="(field, index) in headers" v-slot:[getFieldName(field.text)]="{ item }">
-          <span
+          <div
             :key="field.text"
             class="ts-event-field-container"
             style="cursor: pointer"
@@ -341,7 +341,7 @@ limitations under the License.
               </span>
               <span>{{ item._source[field.text] }}</span>
             </span>
-          </span>
+          </div>
         </template>
 
         <!-- Timeline name field -->
@@ -894,6 +894,7 @@ export default {
 .ts-event-field-container {
   position: relative;
   max-width: 100%;
+  height: 100%;
   padding: 0 !important;
   display: -webkit-flex;
   display: -moz-flex;
@@ -912,9 +913,9 @@ export default {
   max-width: 100%;
   min-width: 0;
   width: 100%;
-  top: 0;
+  top: 50%;
+  transform: translateY(-50%);
   left: 0;
-  margin-top: -10px;
 }
 
 .v-data-table__expanded.v-data-table__expanded__content {
