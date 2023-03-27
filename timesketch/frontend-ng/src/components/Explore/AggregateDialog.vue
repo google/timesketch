@@ -30,7 +30,7 @@ limitations under the License.
       <v-container fluid >
         <v-row justify="center">
           <v-col>
-            <v-card outlined height="150px" :loading="!statsReady">
+            <v-card outlined height="147px" :loading="!statsReady">
               <v-card-title>
                 Sketch statistics
               </v-card-title>
@@ -51,7 +51,7 @@ limitations under the License.
                 </tbody>
               </v-simple-table>
             </v-card>
-            <v-card outlined height="150px" :loading="!statsReady" class="mt-1">
+            <v-card outlined height="147px" :loading="!statsReady" class="mt-1">
               <v-card-title>
                 Field statistics
               </v-card-title>
