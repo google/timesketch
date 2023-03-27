@@ -39,7 +39,7 @@ def sigma_group():
 @click.option(
     "--columns",
     default="rule_uuid,title",
-    help="Comma separated list of columns to show. (default is to show rule_uuid,title)",
+    help="Comma separated list of columns to show. (default: rule_uuid,title)",
 )
 @click.pass_context
 def list_sigmarules(ctx, output, header, columns):
