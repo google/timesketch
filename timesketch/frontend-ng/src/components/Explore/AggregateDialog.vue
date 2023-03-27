@@ -18,15 +18,19 @@ limitations under the License.
     <v-toolbar dense flat>
       <strong>Event Data Analytics</strong>
       <v-spacer></v-spacer>
+        &nbsp;&nbsp;<v-chip outlined>Selected field:&nbsp;<span style="font-family: monospace">{{ this.eventKey }}</span></v-chip>
+        &nbsp;&nbsp;<v-chip outlined>Selected value:&nbsp;<span style="font-family: monospace">{{ this.eventValue }}</span></v-chip>
+        &nbsp;&nbsp;<v-chip outlined>Selected datetime:&nbsp;<span style="font-family: monospace">{{ this.eventDateTime }}</span></v-chip>
+      <v-spacer></v-spacer>
       <v-btn icon @click="clearAndCancel">
         <v-icon>mdi-close</v-icon>
       </v-btn>
     </v-toolbar>
     <v-card-text>
-      <v-container fluid>
+      <v-container fluid >
         <v-row justify="center">
           <v-col>
-            <v-card outlined height="145px" :loading="!statsReady">
+            <v-card outlined height="150px" :loading="!statsReady">
               <v-card-title>
                 Sketch statistics
               </v-card-title>
@@ -47,7 +51,7 @@ limitations under the License.
                 </tbody>
               </v-simple-table>
             </v-card>
-            <v-card outlined height="145px" :loading="!statsReady" class="mt-1">
+            <v-card outlined height="150px" :loading="!statsReady" class="mt-1">
               <v-card-title>
                 Field statistics
               </v-card-title>
@@ -97,7 +101,17 @@ limitations under the License.
           <v-col align="center">
               <v-card outlined height="480px" :loading="!statsReady">
                 <v-card-title>
-                  Top {{ Math.min(10, this.commonValues.length) }} &nbsp;<span style="font-family: monospace">{{ eventKey }}</span>&nbsp; values (out of {{ this.fieldCardinality }})
+                  Top {{ Math.min(10, this.commonValues.length) }} &nbsp;<span style="font-family: monospace">{{ eventKey }}</span>&nbsp; values
+                  <v-spacer></v-spacer>
+                  <v-tooltip bottom>
+                    <template v-slot:activator="{ on }">
+                      <v-icon color="primary" v-on="on">mdi-information-outline</v-icon>
+                    </template>
+                    <span>The top {{ Math.min(10, this.commonValues.length) }} most common 
+                      &nbsp;<span style="font-family: monospace">{{ eventKey }}</span>&nbsp; values
+                      (out of {{ this.fieldCardinality }} unique values).
+                    </span>
+                  </v-tooltip>
                 </v-card-title>
                 <v-card-text>
                   <v-data-table
@@ -114,7 +128,16 @@ limitations under the License.
             <v-col align="center">
               <v-card outlined height="480px" :loading="!statsReady">
                 <v-card-title>
-                  Rare &nbsp;<span style="font-family: monospace">{{ eventKey }}</span>&nbsp; values (max count of 5)
+                  Rare &nbsp;<span style="font-family: monospace">{{ eventKey }}</span>&nbsp; values
+                  <v-spacer></v-spacer>
+                  <v-tooltip bottom>
+                    <template v-slot:activator="{ on }">
+                      <v-icon color="primary" v-on="on">mdi-information-outline</v-icon>
+                    </template>
+                    <span>Rare &nbsp;<span style="font-family: monospace">{{ eventKey }}</span>&nbsp;
+                      events that have a maximum event count of 5
+                    </span>
+                  </v-tooltip>
                 </v-card-title>
                 <v-card-text>
                   <v-data-table
@@ -133,7 +156,16 @@ limitations under the License.
           <v-col align="center">
             <v-card outlined height="480px" :loading="!statsReady">
               <v-card-title>
-                Count of value as a percentage of &nbsp;<span style="font-family: monospace">{{ eventKey }}</span>&nbsp; events
+                Percentage of &nbsp;<span style="font-family: monospace">{{ eventKey }}</span>&nbsp; events
+                <v-spacer></v-spacer>
+                <v-tooltip bottom>
+                  <template v-slot:activator="{ on }">
+                    <v-icon color="primary" v-on="on">mdi-information-outline</v-icon>
+                  </template>
+                  <span>Shows the ratio of &nbsp;<span style="font-family: monospace">{{ eventValue }}</span>&nbsp;
+                    events to other &nbsp;<span style="font-family: monospace">{{ eventKey }}</span>&nbsp; events.
+                  </span>
+                </v-tooltip>
               </v-card-title>
               <v-card-text v-if="statsReady">
                 <apexchart
@@ -149,10 +181,17 @@ limitations under the License.
             <v-card outlined height="480px" :loading="!statsReady">
               <v-card-title>
                 Event distribution by {{ this.distributionIntervals[this.selectedDistributionIntervalIndex] }}
+                <v-spacer></v-spacer>
+                <v-tooltip bottom>
+                  <template v-slot:activator="{ on }">
+                    <v-icon color="primary" v-on="on">mdi-information-outline</v-icon>
+                  </template>
+                  <span>Shows the distribution of &nbsp;<span style="font-family: monospace">{{ eventValue }}</span>&nbsp; 
+                    events in the sketch based on the {{ this.distributionIntervals[this.selectedDistributionIntervalIndex] }}
+                    of the datetime.
+                  </span>
+                </v-tooltip>
               </v-card-title>
-              <v-card-subtitle>
-                Selected value:&nbsp;<span style="font-family: monospace">{{ eventValue }}</span>&nbsp;
-              </v-card-subtitle>
               <v-card-text v-if="statsReady">
                 <v-btn-toggle mandatory v-model="selectedDistributionIntervalIndex">
                   <v-btn v-for="interval in this.distributionIntervals" :key="interval" small>
@@ -172,10 +211,17 @@ limitations under the License.
             <v-card outlined height="480" :loading="!dataReady">
               <v-card-title>
                 Surrounding events
+                <v-spacer></v-spacer>
+                <v-tooltip bottom>
+                  <template v-slot:activator="{ on }">
+                    <v-icon color="primary" v-on="on">mdi-information-outline</v-icon>
+                  </template>
+                  <span>Shows the distribution of &nbsp;<span style="font-family: monospace">{{ eventValue }}</span>&nbsp;
+                    events that are {{ this.recentIntervals[this.selectedRecentEventsIndex] }} of 
+                    &nbsp;<span style="font-family: monospace">{{ eventDateTime }}</span>&nbsp;
+                  </span>
+                </v-tooltip>
               </v-card-title>
-              <v-card-subtitle>
-                Selected value:&nbsp;<span style="font-family: monospace">{{ eventValue }}</span>&nbsp; Selected datetime: {{ this.eventDateTime }}
-              </v-card-subtitle>
               <v-card-text v-if="dataReady">
                 <v-btn-toggle mandatory v-model="selectedRecentEventsIndex">
                   <v-btn v-for="interval in this.recentIntervals" :key="interval" small>
@@ -217,7 +263,7 @@ export default {
         "Month",
         "Day",
         "Hour",
-        "Hour-Day"
+        "Hour-Day",
       ],
       recentIntervals: [
         "± 5 years",
