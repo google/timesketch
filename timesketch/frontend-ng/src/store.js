@@ -122,7 +122,7 @@ export default new Vuex.Store({
     SET_CONTEXT_LINKS(state, payload) {
       Vue.set(state, 'contextLinkConf', payload)
     },
-    SET_ANALYZERS(state, payload) {
+    SET_ANALYZER_LIST(state, payload) {
       Vue.set(state, 'sketchAnalyzerList', payload)
     },
   },
@@ -270,7 +270,7 @@ export default new Vuex.Store({
             analyzerList[analyzer.name] = analyzer
           })
         }
-        context.commit('SET_ANALYZERS', analyzerList)
+        context.commit('SET_ANALYZER_LIST', analyzerList)
       }).catch((e) => {
         console.log(e)
       })
