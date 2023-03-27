@@ -17,8 +17,8 @@ limitations under the License.
   <div>
     <div
       class="pa-4"
-      style="!(analyzerResults.length) ? '' : 'cursor: pointer'"
-      flat
+      :style="!(analyzerResults.length) ? '' : 'cursor: pointer'"
+      @click="expanded = !expanded"
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
       <span>
@@ -31,7 +31,6 @@ limitations under the License.
         color="primary"
         left
         text
-        class="ml-1"
         @click.stop=""
       >
         + Run Analyzer
@@ -40,14 +39,13 @@ limitations under the License.
         <v-progress-circular
           v-if="!analyzerResultsReady"
           :size="20"
-          :width="2"
+          :width="1"
           indeterminate
           color="primary"
         ></v-progress-circular>
-        <small v-if="analyzerResultsReady"><strong>{{ analyzerResults.length }}</strong></small>
+        <small class="ml-1" v-if="analyzerResultsReady"><strong>{{ totalNumberOfAnalyzerResults }}</strong></small>
       </span>
     </div>
-
     <v-expand-transition>
       <div v-show="expanded">
         <div v-if="analyzerResults.length > 0">
@@ -85,6 +83,7 @@ limitations under the License.
 </template>
 
 <script>
+import ApiClient from '../../utils/RestApiClient'
 import TsAnalyzerResult from './AnalyzerResult.vue'
 
 export default {
@@ -111,10 +110,91 @@ export default {
     analyzerList() {
       return this.$store.state.sketchAnalyzerList
     },
+    totalNumberOfAnalyzerResults() {
+      let counter = 0
+      this.analyzerResults.forEach((analyzer) => {
+        counter += analyzer.timelines.length
+      })
+      return counter
+    },
   },
   methods: {
-    // TODO: issue#2565 collect & process analyzer results.
+    getAnalyzerResults() {
+      let analyzerResults = []
+      this.sketch.timelines.forEach(timeline => {
+        ApiClient.getSketchTimelineAnalysis(this.sketch.id, timeline.id)
+        .then(response => {
+          if (response.data.objects[0] !== undefined) {
+            // massage data to fit the result list needs
+            response.data.objects[0].forEach((analysis) => {
+              let analyzerExists = false
+              analyzerResults.every((analyzer) => {
+                if (analyzer.analyzer_name === analysis.analyzer_name) {
+                  analyzerExists = true
+                  // analyzer already exists in the list
+                  let timelineExists = false
+                  analyzer.timelines.every((timeline) => {
+                    // timeline already exists in the list
+                    if (timeline.id === analysis.timeline.id) {
+                      timelineExists = true
+                      // check if the analysis is newer than the one in the list
+                      if (analysis.created_at > timeline.created_at) {
+                        timeline.created_at = analysis.created_at
+                        timeline.result = analysis.result
+                        timeline.status = analysis.status[0].status
+                      }
+                      return false
+                    }
+                    return true
+                  })
+                  if (!timelineExists) {
+                    // timeline did not exist so add it
+                    let output = {
+                      id: analysis.timeline.id,
+                      name: analysis.timeline.name,
+                      color: '#'+analysis.timeline.color,
+                      result: analysis.result,
+                      status: analysis.status[0].status,
+                      created_at: analysis.created_at
+                    }
+                    analyzer.timelines.push(output)
+                  }
+                  return false
+                }
+                return true
+              })
+              if (!analyzerExists) {
+                // analyzer did not exist so add it
+                let output = {
+                  analyzer_name: analysis.analyzer_name,
+                  analyzer_display_name: this.analyzerList[analysis.analyzer_name].display_name,
+                  analyzer_is_multi: this.analyzerList[analysis.analyzer_name].is_multi,
+                  timelines: [
+                    {
+                      id: analysis.timeline.id,
+                      name: analysis.timeline.name,
+                      color: '#'+analysis.timeline.color,
+                      result: analysis.result,
+                      status: analysis.status[0].status,
+                      created_at: analysis.created_at
+                    },
+                  ],
+                }
+                analyzerResults.push(output)
+              }
+            })
+          }
+        })
+        .catch(e => {
+          console.error(e)
+        })
+        this.analyzerResults = analyzerResults
+        this.analyzerResultsReady = true
+      })
+    },
   },
-  created() {},
+  mounted() {
+    this.getAnalyzerResults()
+  },
 }
 </script>
