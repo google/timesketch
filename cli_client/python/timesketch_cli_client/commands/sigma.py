@@ -29,10 +29,28 @@ def sigma_group():
     required=False,
     help="Set output format [json, csv, text](overrides global setting).",
 )
+# add a option for header or no header
+@click.option(
+    "--header/--no-header",
+    default=True,
+    help="Include header in output. (default is to show header))",
+)
+# add option for columns
+@click.option(
+    "--columns",
+    default="rule_uuid,title",
+    help="Comma separated list of columns to show. (default is to show rule_uuid,title)",
+)
 @click.pass_context
-def list_sigmarules(ctx, output):
+def list_sigmarules(ctx, output, header, columns):
     """List all sigma rules."""
     api_client = ctx.obj.api
+
+    if not columns:
+        columns = "rule_uuid,title"
+
+    columns = columns.split(",")
+
     if not output:
         output = ctx.obj.output_format
     try:
@@ -43,12 +61,16 @@ def list_sigmarules(ctx, output):
 
     if output == "json":
         click.echo(sigma_rules.to_json(orient="records"))
+    elif output == "jsonl":
+        click.echo(sigma_rules.to_json(orient="records", lines=True))
     elif output == "csv":
-        click.echo(sigma_rules.to_csv())
+        click.echo(sigma_rules.to_csv(header=header))
     elif output == "text":
-        click.echo(sigma_rules.to_string(index=False, columns=["rule_uuid", "title"]))
+        click.echo(
+            sigma_rules.to_string(index=header, columns=columns),
+        )
     else:
-        click.echo(sigma_rules.to_string(index=False, columns=["rule_uuid", "title"]))
+        click.echo(sigma_rules.to_string(index=header, columns=columns))
 
 
 @sigma_group.command("describe")
