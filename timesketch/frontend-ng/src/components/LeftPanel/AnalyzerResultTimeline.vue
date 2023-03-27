@@ -19,29 +19,29 @@ limitations under the License.
     <v-divider></v-divider>
     <div
       class="pa-2 pl-3"
-      style="cursor: pointer"
+      style="cursor: pointer; display: flex; align-items: center;"
       @click="expanded = !expanded"
       :class="$vuetify.theme.dark ? (expanded ? 'dark-hover dark-bg' :'dark-hover') : (expanded ? 'light-hover light-bg' : 'light-hover')"
     >
-        <v-icon class="mr-2" :color="timeline.color">mdi-circle</v-icon>
-        {{ timeline.name }}
-        <v-tooltip top>
-          <template v-slot:activator="{ on }">
-            <v-btn
-              v-show="!isMultiAnalyzer"
-              text
-              x-small
-              icon
-              v-on="on"
-              class="ml-1"
-              :ripple="false"
-            >
-              <v-icon small color="#696B69">mdi-information-outline</v-icon>
-            </v-btn>
-          </template>
-          <span>Severity: Note</span>
-        </v-tooltip>
-      </div>
+      <v-icon class="mr-2" :color="timeline.color">mdi-circle</v-icon>
+      <span>{{ timeline.name }}</span>
+      <v-tooltip top>
+        <template v-slot:activator="{ on }">
+          <v-btn
+            v-show="!isMultiAnalyzer"
+            text
+            x-small
+            icon
+            v-on="on"
+            class="ml-1"
+            :ripple="false"
+          >
+            <v-icon small color="#696B69">mdi-information-outline</v-icon>
+          </v-btn>
+        </template>
+        <span>Severity: Note</span>
+      </v-tooltip>
+    </div>
 
     <v-expand-transition>
       <div
