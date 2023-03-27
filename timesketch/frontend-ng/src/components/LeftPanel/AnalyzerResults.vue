@@ -53,7 +53,7 @@ limitations under the License.
           <!-- Add a severity and timeline filter here. -->
           <v-data-iterator v-if="analyzerResults.length <= 10" :items="analyzerResults" hide-default-footer disable-pagination>
             <template v-slot:default="props">
-              <ts-analyser-result v-for="analyzer in props.items" :key="analyzer.analyzer_name" :analyzer="analyzer" />
+              <ts-analyzer-result v-for="analyzer in props.items" :key="analyzer.analyzer_name" :analyzer="analyzer" />
             </template>
           </v-data-iterator>
           <v-data-iterator v-else :items="analyzerResults" hide-default-footer disable-pagination :search="search">
