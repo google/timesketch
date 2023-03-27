@@ -213,7 +213,7 @@ limitations under the License.
           </v-dialog>
           <v-list-item
             v-if="timelineStatus === 'ready'"
-            :to="{ name: 'Analyse', params: { sketchId: sketch.id  } }"
+            :to="{ name: 'Analyze', params: { sketchId: sketch.id  } }"
             style="cursor: pointer"
             >
             <v-list-item-action>
