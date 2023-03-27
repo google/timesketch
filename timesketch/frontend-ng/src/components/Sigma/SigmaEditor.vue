@@ -34,13 +34,15 @@ limitations under the License.
     >
     </v-autocomplete>
 
-    <v-alert type="error" outlined dense v-if="!isParsingSuccesful && status_text">
-      {{ status_text }}
-    </v-alert>
-    <v-alert type="success" v-else outlined dense>
-      Preview:
-      <span style="font-family: monospace">{{ editingRule.search_query }}</span>
-    </v-alert>
+    <div v-if="editingRule.search_query">
+      <v-alert type="error" outlined dense v-if="!isParsingSuccesful && status_text">
+        {{ status_text }}
+      </v-alert>
+      <v-alert type="success" v-else outlined dense>
+        Preview:
+        <span style="font-family: monospace">{{ editingRule.search_query }}</span>
+      </v-alert>
+    </div>
 
     <v-card outlined>
       <v-textarea
@@ -50,6 +52,7 @@ limitations under the License.
         hide-details
         rows="25"
         autofocus
+        placeholder="Get started by choosing a template above.."
         @input="parseSigma(ruleYamlTextArea)"
         :color="this.isParsingSuccesful ? 'success' : 'error'"
         class="editSigmaRule"
@@ -57,7 +60,7 @@ limitations under the License.
       </v-textarea>
       <v-divider></v-divider>
       <v-card-actions>
-        <v-btn :disabled="!isParsingSuccesful" @click="saveRule(ruleYamlTextArea)" text color="primary"> Save </v-btn>
+        <v-btn :disabled="!isParsingSuccesful" @click="saveRule()" text color="primary"> Save </v-btn>
         <v-btn text :to="{ name: 'Explore' }" style="margin-left: 10px"> Cancel </v-btn>
       </v-card-actions>
     </v-card>
@@ -78,20 +81,15 @@ export default {
   },
   data() {
     return {
-      editingRule: { ruleYaml: defaultSigmaPlaceholder }, // empty state
+      editingRule: {},
       status_text: '',
-      ruleYamlTextArea: {},
+      ruleYamlTextArea: '',
       SigmaTemplates: SigmaTemplates,
       search: '',
       isParsingSuccesful: false,
     }
   },
   methods: {
-    resetComponent() {
-      this.ruleYamlTextArea = defaultSigmaPlaceholder
-      this.editingRule.rule_yaml = defaultSigmaPlaceholder
-      this.parseSigma(this.editingRule.rule_yaml)
-    },
     selectTemplate(text) {
       var matchingTemplate = this.SigmaTemplates.find((obj) => {
         return obj.title === text
@@ -100,6 +98,10 @@ export default {
       this.parseSigma(matchingTemplate.text)
     },
     parseSigma: _.debounce(function (ruleYaml) {
+      if (!ruleYaml) {
+        this.editingRule.search_query = ''
+        return
+      }
       ApiClient.getSigmaRuleByText(ruleYaml)
         .then((response) => {
           var parsedRule = response.data.objects[0]
@@ -150,7 +152,7 @@ export default {
           })
       }
     },
-    saveRule: function (event) {
+    saveRule: function () {
       // Create new rule
       if (!this.ruleId) {
         ApiClient.createSigmaRule(this.ruleYamlTextArea)
@@ -177,18 +179,15 @@ export default {
     },
   },
   mounted() {
-    if (!this.ruleId) {
-      this.resetComponent()
-    } else {
+    if (this.ruleId) {
       this.getRuleByUUID(this.ruleId)
     }
   },
   watch: {
     ruleId: function (newRuleId) {
-      if (!newRuleId) {
-        this.resetComponent()
+      if (newRuleId) {
+        this.getRuleByUUID(newRuleId)
       }
-      this.getRuleByUUID(newRuleId)
     },
   },
 }
