@@ -1,3 +1,7 @@
+---
+hide:
+  - footer
+---
 # Search within timeline
 
 ## Search queries
@@ -92,7 +96,7 @@ Below are syntax elements and example regular expressions
    </td>
   </tr>
   <tr>
-   <td><code>"?"</code> 
+   <td><code>"?"</code>
    </td>
    <td>Zero-or-one
    </td>
@@ -177,7 +181,7 @@ Below are syntax elements and example regular expressions
 | Dates after            | datetime:[2021-08-31 TO *]                               |
 | Either side of a range | datetime:[* TO 2021-08-29] OR datetime:[2021-08-31 TO *] |
 
-Now that we can handle dates in the query bar, we can start building more complex queries.  
+Now that we can handle dates in the query bar, we can start building more complex queries.
 This query will find all the potential Remote Desktop event log entries in the given date range.
 
 `data_type:"windows:evtx:record" AND event_identifier:4624 AND xml_string:"/LogonType\"\>3/" AND datetime:[2021-08-29 TO 2021-08-31]`

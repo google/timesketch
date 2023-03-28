@@ -14,27 +14,39 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div v-if="meta.views.length">
-    <div class="pa-4" flat :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
-      <span style="cursor: pointer" @click="expanded = !expanded"
-        ><v-icon left>mdi-content-save-outline</v-icon>Saved Searches ({{ meta.views.length }})</span
-      >
-    </div>
+  <div>
+    <v-row
+      no-gutters
+      :style="meta.views && meta.views.length ? 'cursor: pointer' : ''"
+      class="pa-4"
+      flat
+      @click="expanded = !expanded"
+      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+    >
+      <span> <v-icon left>mdi-content-save-outline</v-icon> Saved Searches </span>
+      <v-spacer></v-spacer>
+      <span class="mr-2">
+        <small
+          ><strong>{{ meta.views.length }}</strong></small
+        >
+      </span>
+    </v-row>
 
     <v-expand-transition>
       <div v-show="expanded">
-        <v-divider></v-divider>
-        <v-row
-          no-gutters
+        <div
           v-for="savedSearch in meta.views"
           :key="savedSearch.name"
-          class="pa-3 pl-5"
-          :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+          @click="setView(savedSearch)"
+          style="cursor: pointer; font-size: 0.9em"
         >
-          <div @click="setView(savedSearch)" style="cursor: pointer; font-size: 0.9em">{{ savedSearch.name }}</div>
-        </v-row>
+          <v-row no-gutters class="pa-2 pl-5" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">{{
+            savedSearch.name
+          }}</v-row>
+        </div>
       </div>
     </v-expand-transition>
+    <v-divider></v-divider>
   </div>
 </template>
 

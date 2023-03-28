@@ -20,6 +20,8 @@ if [ "$1" = 'timesketch' ]; then
   ln -s /usr/local/src/timesketch/data/sigma_config.yaml /etc/timesketch/sigma_config.yaml
   ln -s /usr/local/src/timesketch/data/sigma_rule_status.csv /etc/timesketch/sigma_rule_status.csv
   ln -s /usr/local/src/timesketch/data/sigma /etc/timesketch/
+  ln -s /usr/local/src/timesketch/data/scenarios /etc/timesketch/
+  ln -s /usr/local/src/timesketch/data/context_links.yaml /etc/timesketch/context_links.yaml
 
 
   # Set SECRET_KEY in /etc/timesketch/timesketch.conf if it isn't already set
@@ -71,6 +73,14 @@ if [ "$1" = 'timesketch' ]; then
   # Add web user
   tsctl create-user --password "${TIMESKETCH_USER}" "${TIMESKETCH_USER}"
 
+  # Add Sigma rules
+  git clone https://github.com/SigmaHQ/sigma /usr/local/src/sigma
+  # for each line in sigma_rules.txt execute the command
+  for line in $(cat sigma_rules.txt); do
+    tsctl import-sigma-rules $line
+  done
+
+  # Wrap up things
   echo "Timesketch development server is ready!"
 
   # Sleep forever to keep the container running

@@ -16,7 +16,7 @@ limitations under the License.
 */
 import Vue from 'vue'
 
-const defaultTimeout = 7000
+const defaultTimeout = 5000
 const defaultSnackBar = {
     "message": "",
     "color": "info",
@@ -38,5 +38,12 @@ Vue.mixin({
             snackbar.color = "error"
             this.$store.dispatch('setSnackBar', snackbar)
         },
+        infoSnackBar(message) {
+          let snackbar = defaultSnackBar
+          snackbar.message = message
+          snackbar.color = "info"
+          snackbar.timeout = 2000
+          this.$store.dispatch('setSnackBar', snackbar)
+      },
     }
 })

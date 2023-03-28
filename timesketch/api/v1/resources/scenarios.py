@@ -33,6 +33,7 @@ from timesketch.models.sketch import SearchTemplate, Sketch
 from timesketch.models.sketch import Scenario
 from timesketch.models.sketch import Facet
 from timesketch.models.sketch import InvestigativeQuestion
+from timesketch.models.sketch import InvestigativeQuestionConclusion
 
 
 logger = logging.getLogger("timesketch.scenario_api")
@@ -269,3 +270,132 @@ class ScenarioStatusResource(resources.ResourceMixin, Resource):
             db_session.commit()
 
         return self.to_json(scenario)
+
+
+class QuestionConclusionListResource(resources.ResourceMixin, Resource):
+    """Resource for investigative question conclusion."""
+
+    @login_required
+    def get(self, sketch_id, question_id):
+        """Handles GET request to the resource.
+
+        Returns:
+            A list of JSON representations of the conclusions.
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
+
+        question = InvestigativeQuestion.query.get(question_id)
+        if not question:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No question found with this ID")
+
+        conclusions = InvestigativeQuestionConclusion.filter_by(
+            investigativequestion=question
+        ).all()
+
+        return self.to_json(conclusions)
+
+    @login_required
+    def post(self, sketch_id, question_id):
+        """Handles POST request to the resource.
+
+        Adds or edits a conclusion.
+
+        Returns:
+            A JSON representation of the conclusion.
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
+
+        question = InvestigativeQuestion.query.get(question_id)
+        if not question:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No question found with this ID")
+
+        # Create conclusion for the calling user if it doesn't exist.
+        conclusion = InvestigativeQuestionConclusion.get_or_create(
+            user=current_user, investigativequestion=question
+        )
+
+        form = request.json
+        if not form:
+            form = request.data
+
+        conclusion_text = form.get("conclusionText")
+        if conclusion_text:
+            conclusion.conclusion = conclusion_text
+            db_session.add(conclusion)
+            db_session.commit()
+
+        return self.to_json(conclusion)
+
+
+class QuestionConclusionResource(resources.ResourceMixin, Resource):
+    """Resource for investigative question conclusion."""
+
+    def put(self, sketch_id, question_id, conclusion_id):
+        """Handles PUT request to the resource.
+
+        Edit a conclusion.
+
+        Returns:
+            A JSON representation of the conclusion.
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
+
+        question = InvestigativeQuestion.query.get(question_id)
+        if not question:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No question found with this ID")
+
+        conclusion = InvestigativeQuestionConclusion.query.get(conclusion_id)
+        if not conclusion:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No conclusion found with this ID")
+
+        if conclusion.user != current_user:
+            abort(HTTP_STATUS_CODE_FORBIDDEN, "You can only edit your own conclusion.")
+
+        form = request.json
+        if not form:
+            form = request.data
+
+        conclusion_text = form.get("conclusionText")
+        if conclusion_text:
+            conclusion.conclusion = conclusion_text
+            db_session.add(conclusion)
+            db_session.commit()
+
+        return self.to_json(conclusion)
+
+    @login_required
+    def delete(self, sketch_id, question_id, conclusion_id):
+        """Handles DELETE request to the resource.
+
+        Deletes a conclusion.
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
+
+        question = InvestigativeQuestion.query.get(question_id)
+        if not question:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No question found with this ID")
+
+        conclusion = InvestigativeQuestionConclusion.query.get(conclusion_id)
+        if not conclusion:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No conclusion found with this ID")
+
+        if conclusion.investigativequestion != question:
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN, "Conclusion is not part of this question."
+            )
+
+        if conclusion.user != current_user:
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN, "You can only delete your own concluions."
+            )
+
+        db_session.delete(conclusion)
+        db_session.commit()

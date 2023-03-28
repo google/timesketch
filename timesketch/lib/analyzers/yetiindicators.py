@@ -124,7 +124,6 @@ class YetiIndicators(interface.BaseAnalyzer):
         intelligence_items = []
 
         for _id, indicator in self.intel.items():
-
             query_dsl = {
                 "query": {
                     "regexp": {"message.keyword": ".*" + indicator["pattern"] + ".*"}

@@ -16,11 +16,17 @@
 import os
 import pathlib
 import json
+import re
+import subprocess
 import yaml
 
+
 import click
+import pandas as pd
+
 from flask.cli import FlaskGroup
 from sqlalchemy.exc import IntegrityError
+from jsonschema import validate, ValidationError, SchemaError
 
 from timesketch import version
 from timesketch.app import create_app
@@ -30,8 +36,10 @@ from timesketch.models import drop_all
 from timesketch.models.user import Group
 from timesketch.models.user import User
 from timesketch.models.sketch import Sketch
+from timesketch.models.sketch import Analysis
 from timesketch.models.sketch import SearchTemplate
 from timesketch.models.sigma import SigmaRule
+from timesketch.models.sketch import Timeline
 
 
 @click.group(cls=FlaskGroup, create_app=create_app)
@@ -175,6 +183,7 @@ def list_sketches():
     """List all sketches."""
     sketches = Sketch.query.all()
     for sketch in sketches:
+        assert isinstance(sketch, Sketch)
         status = sketch.get_status.status
         if status == "deleted":
             continue
@@ -319,6 +328,10 @@ def import_sigma_rules(path):
     """Import sigma rules from filesystem path."""
     file_paths = set()
     supported_file_types = [".yml", ".yaml"]
+
+    if os.path.isfile(path):
+        file_paths.add(path)
+
     for root, _, files in os.walk(path):
         for file in files:
             file_extension = pathlib.Path(file.lower()).suffix
@@ -373,12 +386,35 @@ def import_sigma_rules(path):
 
 
 @cli.command(name="list-sigma-rules")
-def list_sigma_rules():
+@click.option(
+    "--columns",
+    default="rule_uuid,title",
+    required=False,
+    help="Comma separated list of columns to show",
+)
+def list_sigma_rules(columns):
     """List sigma rules"""
 
     all_sigma_rules = SigmaRule.query.all()
+
+    table_data = [
+        [columns],
+    ]
+
     for rule in all_sigma_rules:
-        print(f"{rule.rule_uuid} {rule.title}")
+        relevant_data = []
+        for column in columns.split(","):
+            if column == "status":
+                relevant_data.append(rule.get_status.status)
+            else:
+                try:
+                    relevant_data.append(rule.__getattribute__(column))
+                except AttributeError:
+                    print(f"Column {column} not found in SigmaRule")
+                    return
+        table_data.append([relevant_data])
+
+    print_table(table_data)
 
 
 @cli.command(name="remove-sigma-rule")
@@ -409,7 +445,6 @@ def remove_all_sigma_rules():
 
     if click.confirm("Do you really want to drop all the Sigma rules?"):
         if click.confirm("Are you REALLLY sure you want to DROP ALL the Sigma rules?"):
-
             all_sigma_rules = SigmaRule.query.all()
             for rule in all_sigma_rules:
                 db_session.delete(rule)
@@ -442,3 +477,282 @@ def export_sigma_rules(path):
             fw.write(rule.rule_yaml.encode("utf-8"))
         n = n + 1
     print(f"{n} Sigma rules exported")
+
+
+@cli.command(name="info")
+def info():
+    """Get various information about the environment that runs Timesketch."""
+
+    # Get Timesketch version
+    print(f"Timesketch version: {version.get_version()}")
+
+    # Get plaso version
+    try:
+        output = subprocess.check_output(["psort.py", "--version"])
+        print(output.decode("utf-8"))
+    except FileNotFoundError:
+        print("psort.py not installed")
+
+    # Get installed node version
+    output = subprocess.check_output(["node", "--version"]).decode("utf-8")
+    print(f"Node version: {output} ")
+
+    # Get installed npm version
+    output = subprocess.check_output(["npm", "--version"]).decode("utf-8")
+    print(f"npm version: {output}")
+
+    # Get installed yarn version
+    output = subprocess.check_output(["yarn", "--version"]).decode("utf-8")
+    print(f"yarn version: {output} ")
+
+    # Get installed python version
+    output = subprocess.check_output(["python3", "--version"]).decode("utf-8")
+    print(f"Python version: {output} ")
+
+    # Get installed pip version
+    output = subprocess.check_output(["pip", "--version"]).decode("utf-8")
+    print(f"pip version: {output} ")
+
+
+def print_table(table_data):
+    """Prints a table."""
+    # calculate the maximum length of each column
+    max_lengths = [0] * len(table_data[0])
+    for row in table_data:
+        for i, cell in enumerate(row):
+            max_lengths[i] = max(max_lengths[i], len(str(cell)))
+
+    # create the table
+    for row in table_data:
+        for i, cell in enumerate(row):
+            print(str(cell).ljust(max_lengths[i]), end=" ")
+        print()
+
+
+@cli.command(name="sketch-info")
+@click.argument("sketch_id")
+def sketch_info(sketch_id):
+    """Give information about a sketch."""
+    sketch = Sketch.query.filter_by(id=sketch_id).first()
+    if not sketch:
+        print("Sketch does not exist.")
+    else:
+        print(f"Sketch {sketch_id} Name: ({sketch.name})")
+
+        # define the table data
+        table_data = [
+            [
+                "searchindex_id",
+                "index_name",
+                "created_at",
+                "user_id",
+                "description",
+            ],
+        ]
+
+        for t in sketch.active_timelines:
+            table_data.append(
+                [
+                    t.searchindex_id,
+                    t.searchindex.index_name,
+                    t.created_at,
+                    t.user_id,
+                    t.description,
+                ]
+            )
+
+        print_table(table_data)
+
+        print("Shared with:")
+        print("\tUsers: (user_id, username)")
+        for user in sketch.collaborators:
+            print(f"\t\t{user.id}: {user.username}")
+        print("\tGroups:")
+        for group in sketch.groups:
+            print(f"\t\t{group.display_name}")
+        sketch_labels = [label.label for label in sketch.labels]
+        print(f"Sketch Status: {sketch.get_status.status}")
+        print(f"Sketch is public: {bool(sketch.is_public)}")
+        sketch_labels = ([label.label for label in sketch.labels],)
+        print(f"Sketch Labels: {sketch_labels}")
+
+        status_table = [
+            [
+                "id",
+                "status",
+                "created_at",
+                "user_id",
+            ],
+        ]
+        for status in sketch.status:
+            status_table.append(
+                [status.id, status.status, status.created_at, status.user_id]
+            )
+        print("Status:")
+        print_table(status_table)
+
+
+@cli.command(name="validate-context-links-conf")
+@click.argument("path")
+def validate_context_links_conf(path):
+    """Validates the provided context link yaml configuration file."""
+
+    schema = {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+            "context_link": {
+                "type": "string",
+                "pattern": "<ATTR_VALUE>",
+            },
+            "match_fields": {
+                "type": "array",
+                "minItems": 1,
+                "items": [
+                    {
+                        "type": "string",
+                    },
+                ],
+            },
+            "redirect_warning": {
+                "type": "boolean",
+            },
+            "short_name": {
+                "type": "string",
+                "minLength": 1,
+            },
+            "validation_regex": {
+                "type": "string",
+            },
+        },
+        "required": [
+            "context_link",
+            "match_fields",
+            "redirect_warning",
+            "short_name",
+        ],
+    }
+
+    if not os.path.isfile(path):
+        print(f"Cannot load the config file: {path} does not exist!")
+        return
+
+    with open(path, "r") as fh:
+        context_link_config = yaml.safe_load(fh)
+
+    if not context_link_config:
+        print("The provided config file is empty.")
+        return
+
+    for entry in context_link_config:
+        try:
+            validate(instance=context_link_config[entry], schema=schema)
+            print(f'=> OK: "{entry}"')
+        except (ValidationError, SchemaError) as err:
+            print(f'=> ERROR: "{entry}" >> {err}\n')
+
+
+# Analyzer stats cli command
+@cli.command(name="analyzer-stats")
+@click.argument(
+    "analyzer_name",
+    required=False,
+    default="all",
+)
+@click.option(
+    "--timeline_id",
+    required=False,
+    help="Timeline ID if the analyzer results should be filtered by timeline.",
+)
+@click.option(
+    "--scope",
+    required=False,
+    help="Scope on: [many_hits, long_runtime, recent]",
+)
+@click.option(
+    "--result_text_search",
+    required=False,
+    help="Search in result text. E.g. for a specific rule_id.",
+)
+@click.option(
+    "--limit",
+    required=False,
+    help="Limit the number of results.",
+)
+def analyzer_stats(analyzer_name, timeline_id, scope, result_text_search, limit):
+    """Prints analyzer stats."""
+
+    if timeline_id:
+        timeline = Timeline.query.get(timeline_id)
+        if not timeline:
+            print("No timeline found with this ID.")
+            return
+        if analyzer_name == "all":
+            analysis_history = Analysis.query.filter_by(timeline=timeline).all()
+        else:
+            analysis_history = Analysis.query.filter_by(
+                timeline=timeline, analyzer_name=analyzer_name
+            ).all()
+    elif analyzer_name == "all":
+        analysis_history = Analysis.query.filter_by().all()
+    else:
+        # analysis filter by analyzer_name
+        analysis_history = Analysis.query.filter_by(analyzer_name=analyzer_name).all()
+
+    df = pd.DataFrame()
+    for analysis in analysis_history:
+        # extract number of hits from result to a int so it could be sorted
+        # TODO: make this more generic as the number of events might only
+        # be a part of the result string in Sigma analyzers
+        try:
+            matches = int(re.search(r"\d+(?=\s+events)", analysis.result))
+        except TypeError:
+            matches = 0
+        new_row = pd.DataFrame(
+            [
+                {
+                    "runtime": analysis.updated_at - analysis.created_at,
+                    "hits": matches,
+                    "timeline_id": analysis.timeline_id,
+                    "analysis_id": analysis.id,
+                    "created_at": analysis.created_at,
+                    "result": analysis.result,
+                }
+            ]
+        )
+        df = pd.concat([df, new_row], ignore_index=True)
+
+    if df.empty:
+        print("No Analyzer runs found!")
+        return
+
+    # make the runtime column to only display in minutes and cut away days etc.
+    df["runtime"] = df["runtime"].dt.seconds / 60
+
+    if result_text_search:
+        df = df[df.result.str.contains(result_text_search, na=False)]
+
+    # Sorting the dataframe depending on the paramters
+
+    if scope in ["many_hits", "many-hits", "hits"]:
+        if analyzer_name == "sigma":
+            df = df.sort_values("hits", ascending=False)
+        else:
+            print("Sorting by hits is only possible for sigma analyzer.")
+            df = df.sort_values("runtime", ascending=False)
+    elif scope == "long_runtime":
+        df = df.sort_values("runtime", ascending=False)
+    elif scope == "recent":
+        df = df.sort_values("created_at", ascending=False)
+    else:
+        df = df.sort_values("runtime", ascending=False)
+
+    if limit:
+        df = df.head(int(limit))
+
+    # remove hits column if analyzer_name is not sigma
+    if analyzer_name != "sigma":
+        df = df.drop(columns=["hits"])
+
+    pd.options.display.max_colwidth = 500
+    print(df)
