@@ -30,8 +30,8 @@ limitations under the License.
     <v-card-text>
       <v-container fluid >
         <v-row justify="center">
-          <v-col>
-            <v-card outlined height="147px" :loading="!statsReady">
+          <v-col class="pt-0">
+            <v-card outlined height="146px" :loading="!statsReady">
               <v-card-title>
                 Sketch statistics
               </v-card-title>
