@@ -445,7 +445,7 @@ export default {
           enabled: true
         },
         labels: [
-          this.eventValue + ' (' + this.valueEventCount + ')',
+          this.truncateValue(this.eventValue)  + ' (' + this.valueEventCount + ')',
           'Other ' + this.eventKey + ' (' +
             (this.fieldValueCount - this.valueEventCount) + ')'
         ],
