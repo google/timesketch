@@ -25,16 +25,15 @@ limitations under the License.
 
       <v-btn
         v-if="expanded || (sigmaRules && !sigmaRules.length)"
-        small
-        color="primary"
+        icon
         text
-        class="ml-1"
+        class="float-right mt-n1 mr-n1"
         :to="{ name: 'SigmaNewRule', params: { sketchId: sketch.id } }"
         @click.stop=""
       >
         <v-icon>mdi-plus</v-icon>
       </v-btn>
-      <span v-if="!expanded" class="float-right" style="margin-right: 14px">
+      <span v-if="!expanded" class="float-right" style="margin-right: 10px">
         <v-progress-circular v-if="isLoading" :size="12" :width="1" indeterminate></v-progress-circular>
         <small v-if="sigmaRules && sigmaRules.length"
           ><strong>{{ ruleCount }}</strong></small

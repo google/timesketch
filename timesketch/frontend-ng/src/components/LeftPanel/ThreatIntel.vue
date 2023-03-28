@@ -44,7 +44,7 @@ limitations under the License.
         <v-icon small>mdi-pencil</v-icon>
       </v-btn>
 
-      <span v-if="!expanded" class="float-right" style="margin-right: 14px">
+      <span v-if="!expanded" class="float-right" style="margin-right: 10px">
         <small v-if="intelligenceData && intelligenceData.length"
           ><strong>{{ intelligenceData.length }}</strong></small
         >

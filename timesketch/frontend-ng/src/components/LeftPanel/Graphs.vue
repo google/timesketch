@@ -23,7 +23,7 @@ limitations under the License.
     >
       <span> <v-icon left>mdi-source-branch</v-icon> Graphs </span>
 
-      <span class="float-right" style="margin-right: 14px">
+      <span class="float-right" style="margin-right: 10px">
         <small
           ><strong>{{ graphs.length + savedGraphs.length }}</strong></small
         >

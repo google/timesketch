@@ -22,7 +22,7 @@ limitations under the License.
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
       <span> <v-icon left>mdi-database-outline</v-icon> Data Types </span>
-      <span class="float-right" style="margin-right: 14px">
+      <span class="float-right" style="margin-right: 10px">
         <small
           ><strong>{{ dataTypes.length }}</strong></small
         >

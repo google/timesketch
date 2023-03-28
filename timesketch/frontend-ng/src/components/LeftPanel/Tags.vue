@@ -23,7 +23,7 @@ limitations under the License.
     >
       <span> <v-icon left>mdi-tag-multiple-outline</v-icon> Tags </span>
 
-      <span class="float-right" style="margin-right: 14px">
+      <span class="float-right" style="margin-right: 10px">
         <small
           ><strong>{{ tags.length }}</strong></small
         >
