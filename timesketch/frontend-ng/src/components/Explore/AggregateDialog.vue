@@ -17,10 +17,11 @@ limitations under the License.
   <v-card class="mx-auto" >
     <v-toolbar dense flat>
       <h3 class="ml-6" style="white-space: nowrap;">Event Data Analytics</h3>
-      <v-spacer></v-spacer>
-        &nbsp;&nbsp;<v-chip outlined>Selected field:&nbsp;<span style="font-family: monospace">{{ this.eventKey }}</span></v-chip>
-        &nbsp;&nbsp;<v-chip outlined>Selected value:&nbsp;<span style="font-family: monospace">{{ this.eventValue }}</span></v-chip>
-        &nbsp;&nbsp;<v-chip outlined>Selected datetime:&nbsp;<span style="font-family: monospace">{{ this.eventDateTime }}</span></v-chip>
+      <div>
+        <v-chip outlined class="ml-2">Field:&nbsp;<span style="font-family: monospace">{{ this.eventKey }}</span></v-chip>
+        <v-chip outlined class="ml-2">Value:&nbsp;<span style="font-family: monospace">{{ this.truncateValue(this.eventValue)  }}</span></v-chip>
+        <v-chip outlined class="ml-2">Event datetime:&nbsp;<span style="font-family: monospace">{{ this.eventDateTime }}</span></v-chip>
+      </div>
       <v-spacer></v-spacer>
       <v-btn icon @click="clearAndCancel">
         <v-icon>mdi-close</v-icon>
