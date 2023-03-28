@@ -163,8 +163,8 @@ limitations under the License.
                   <template v-slot:activator="{ on }">
                     <v-icon color="primary" v-on="on">mdi-information-outline</v-icon>
                   </template>
-                  <span>Shows the ratio of &nbsp;<span style="font-family: monospace">{{ eventValue }}</span>&nbsp;
-                    events to other &nbsp;<span style="font-family: monospace">{{ eventKey }}</span>&nbsp; events.
+                  <span>Shows the ratio of <span style="font-family: monospace">{{ this.truncateValue(eventValue) }}</span>
+                    events to other <span style="font-family: monospace">{{ eventKey }}</span> events.
                   </span>
                 </v-tooltip>
               </v-card-title>
