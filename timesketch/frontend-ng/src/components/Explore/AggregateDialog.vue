@@ -217,9 +217,9 @@ limitations under the License.
                   <template v-slot:activator="{ on }">
                     <v-icon color="primary" v-on="on">mdi-information-outline</v-icon>
                   </template>
-                  <span>Shows the distribution of &nbsp;<span style="font-family: monospace">{{ eventValue }}</span>&nbsp;
-                    events that are {{ this.recentIntervals[this.selectedRecentEventsIndex] }} of 
-                    &nbsp;<span style="font-family: monospace">{{ eventDateTime }}</span>&nbsp;
+                  <span>Shows the distribution of <span style="font-family: monospace">{{ this.truncateValue(eventValue) }}</span>
+                    events that are {{ this.recentIntervals[this.selectedRecentEventsIndex] }} of
+                    <span style="font-family: monospace">{{ eventDateTime }}</span>
                   </span>
                 </v-tooltip>
               </v-card-title>
