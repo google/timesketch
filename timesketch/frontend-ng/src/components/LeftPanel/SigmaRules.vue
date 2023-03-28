@@ -25,9 +25,11 @@ limitations under the License.
 
       <v-btn
         v-if="expanded || (sigmaRules && !sigmaRules.length)"
-        icon
-        class="float-right mt-n1"
-        :to="{ name: 'Studio', params: { id: 'new', type: 'sigma' } }"
+        small
+        color="primary"
+        text
+        class="ml-1"
+        :to="{ name: 'SigmaNewRule', params: { sketchId: sketch.id } }"
         @click.stop=""
       >
         <v-icon>mdi-plus</v-icon>
