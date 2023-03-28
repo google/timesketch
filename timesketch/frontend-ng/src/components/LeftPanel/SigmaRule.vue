@@ -38,7 +38,7 @@ limitations under the License.
           <v-card>
             <v-list dense>
               <v-list-item-group>
-                <v-list-item :to="{ name: 'Studio', params: { type: 'sigma', id: sigmaRule.rule_uuid } }">
+                <v-list-item :to="{ name: 'SigmaEditRule', params: { ruleId: sigmaRule.rule_uuid } }">
                   <v-list-item-icon>
                     <v-icon small>mdi-pencil</v-icon>
                   </v-list-item-icon>
