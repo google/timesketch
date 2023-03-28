@@ -187,7 +187,7 @@ limitations under the License.
                   <template v-slot:activator="{ on }">
                     <v-icon color="primary" v-on="on">mdi-information-outline</v-icon>
                   </template>
-                  <span>Shows the distribution of &nbsp;<span style="font-family: monospace">{{ eventValue }}</span>&nbsp; 
+                  <span>Shows the distribution of <span style="font-family: monospace">{{ this.truncateValue(eventValue) }}</span>
                     events in the sketch based on the {{ this.distributionIntervals[this.selectedDistributionIntervalIndex] }}
                     of the datetime.
                   </span>
