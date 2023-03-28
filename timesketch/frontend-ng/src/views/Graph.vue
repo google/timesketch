@@ -38,6 +38,36 @@ limitations under the License.
           <span class="mr-2">
             <small>{{ nodes.length }} nodes and {{ edges.length }} edges</small>
           </span>
+          <!-- Save graph dialog -->
+          <v-dialog v-model="saveGraphDialog" width="500">
+            <template v-slot:activator="{ on, attrs }">
+              <v-btn icon :disabled="!edgeQuery" v-bind="attrs" v-on="on" title="Save selected graph">
+                <v-icon>mdi-content-save-outline</v-icon>
+              </v-btn>
+            </template>
+            <v-card class="pa-4">
+              <h3>Save selected elements</h3>
+              <br />
+              <v-text-field
+                v-model="saveAsName"
+                required
+                placeholder="Name your graph"
+                outlined
+                dense
+                autofocus
+                @focus="$event.target.select()"
+              ></v-text-field>
+              <v-card-actions>
+                <v-spacer></v-spacer>
+                <v-btn text @click="saveGraphDialog = false"> Cancel </v-btn>
+                <v-btn color="primary" depressed @click="saveGraph" :disabled="!saveAsName"> Save </v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
+
+          <v-btn icon v-on:click="cy.fit()" :disabled="!currentGraph" title="Fit to canvas">
+            <v-icon>mdi-fit-to-page-outline</v-icon>
+          </v-btn>
           <!-- Graph settings menu -->
           <v-menu
             v-model="graphSettingsMenu"
@@ -81,29 +111,6 @@ limitations under the License.
               </v-slider>
             </v-card>
           </v-menu>
-          <!-- Save graph dialog -->
-          <v-dialog v-model="saveGraphDialog" width="500">
-            <template v-slot:activator="{ on, attrs }">
-              <v-btn icon :disabled="!edgeQuery" v-bind="attrs" v-on="on" title="Save selected graph">
-                <v-icon>mdi-content-save-outline</v-icon>
-              </v-btn>
-            </template>
-            <v-card>
-              <v-card-title> Save selected elements </v-card-title>
-              <v-card-text>
-                <v-text-field outlined v-model="saveAsName" required placeholder="Name your graph"></v-text-field>
-              </v-card-text>
-              <v-card-actions>
-                <v-spacer></v-spacer>
-                <v-btn color="primary" text @click="saveSearchMenu = false"> Cancel </v-btn>
-                <v-btn color="primary" text @click="saveGraph" :disabled="!saveAsName"> Save </v-btn>
-              </v-card-actions>
-            </v-card>
-          </v-dialog>
-
-          <v-btn icon v-on:click="cy.fit()" :disabled="!currentGraph" title="Fit to canvas">
-            <v-icon>mdi-fit-to-page-outline</v-icon>
-          </v-btn>
         </div>
         <v-spacer></v-spacer>
         <div v-if="Object.keys(currentGraphCache).length">
@@ -141,7 +148,6 @@ limitations under the License.
     </div>
 
     <!-- Event list for selected edges -->
-    <!-- Note: Disabled until eventlist component has been developed. -->
     <v-bottom-sheet
       hide-overlay
       persistent
@@ -152,20 +158,26 @@ limitations under the License.
     >
       <v-card>
         <v-toolbar dense flat>
+          <strong>Timeline for {{ selectedEdgesCount }} selected edge(s)</strong>
           <v-spacer></v-spacer>
-          <v-btn icon>
-            <v-icon v-if="!minimizeTimelineView" @click="minimizeTimelineView = true">mdi-window-minimize</v-icon>
-            <v-icon v-if="minimizeTimelineView" @click="minimizeTimelineView = false">mdi-window-maximize</v-icon>
+          <v-btn icon :disabled="timelineViewHeight > 40" @click="increaseTimelineViewHeight()">
+            <v-icon>mdi-chevron-up</v-icon>
+          </v-btn>
+          <v-btn icon :disabled="timelineViewHeight === 0" @click="decreaseTimelineViewHeight()">
+            <v-icon>mdi-chevron-down</v-icon>
           </v-btn>
           <v-btn icon @click="showTimelineView = false">
-            <v-icon>mdi-window-close</v-icon>
+            <v-icon>mdi-close</v-icon>
           </v-btn>
         </v-toolbar>
+        <v-divider></v-divider>
         <v-expand-transition>
-          <v-card-text class="pa-4" style="height: 30vh" v-show="!minimizeTimelineView">
-            <div v-if="!minimizeTimelineView">
-              <!-- TODO: Add eventlist component -->
-            </div>
+          <v-card-text :style="{ height: timelineViewHeight + 'vh' }" v-show="!minimizeTimelineView">
+            <ts-event-list
+              :query-request="queryRequest"
+              :items-per-page="maxEvents"
+              disable-save-search
+            ></ts-event-list>
           </v-card-text>
         </v-expand-transition>
       </v-card>
@@ -180,14 +192,19 @@ import spread from 'cytoscape-spread'
 import dagre from 'cytoscape-dagre'
 import _ from 'lodash'
 
+import TsEventList from '../components/Explore/EventList'
+
 export default {
   props: ['graphId'],
+  components: {
+    TsEventList,
+  },
   data: function () {
     return {
       saveGraphDialog: false,
       graphSettingsMenu: false,
-
       showTimelineView: false,
+      timelineViewHeight: 40,
       minimizeTimelineView: false,
       showGraph: true,
       isLoading: false,
@@ -198,8 +215,17 @@ export default {
       currentGraphCacheConfig: {},
       fadeOpacity: 7,
       elements: [],
+      selectedEdgesCount: 0,
       edgeQuery: '',
-      maxEvents: 500,
+      maxEvents: 40,
+      queryFilter: {
+        from: 0,
+        terminate_after: 40,
+        size: this.maxEvents,
+        indices: ['_all'],
+        order: 'asc',
+        chips: [],
+      },
       saveAsName: '',
       layouts: ['spread', 'dagre', 'circle', 'concentric', 'breadthfirst'],
       layoutName: 'spread',
@@ -342,8 +368,30 @@ export default {
     edges() {
       return this.elements.filter((el) => el.group === 'edges')
     },
+    queryRequest() {
+      if (!this.edgeQuery) {
+        return
+      }
+      return { queryDsl: this.edgeQuery, queryFilter: this.queryFilter }
+    },
   },
   methods: {
+    increaseTimelineViewHeight: function () {
+      this.minimizeTimelineView = false
+      if (this.timelineViewHeight > 70) {
+        return
+      }
+      this.timelineViewHeight += 30
+    },
+    decreaseTimelineViewHeight: function () {
+      this.minimizeTimelineView = false
+      if (this.timelineViewHeight < 50) {
+        this.minimizeTimelineView = true
+        this.timelineViewHeight = 0
+        return
+      }
+      this.timelineViewHeight -= 30
+    },
     closeTimelineView: function () {
       if (this.$route.name !== 'Graph') {
         this.showTimelineView = false
@@ -504,14 +552,14 @@ export default {
     filterGraphBySelection: function (event) {
       let selected = this.cy.filter(':selected')
       this.showNeighborhood(selected)
-      // Disabled until eventlist component is developed.
-      // this.showTimelineView = true
+      this.showTimelineView = true
     },
 
     unSelectAllElements: function (event) {
       this.cy.elements().removeClass('faded')
       this.edgeQuery = null
       this.showTimelineView = false
+      this.selectedEdgesCount = 0
     },
 
     buildNeighborhood: function (selected) {
@@ -545,11 +593,11 @@ export default {
             should: [],
           },
         },
-        size: this.maxEvents,
       }
       neighborhood.forEach((element) => {
         if (element.group() === 'edges') {
           Object.keys(element.data().events).forEach((index) => {
+            this.selectedEdgesCount++
             let boolMustQuery = {
               bool: {
                 must: [{ ids: { values: element.data().events[index] } }, { term: { _index: { value: index } } }],
@@ -562,7 +610,11 @@ export default {
       this.edgeQuery = queryDsl
     },
     resizeCanvas: function () {
-      let canvasHeight = this.$refs.graphContainer.clientHeight - 50
+      // Exit early if the current page is not Graph
+      if (this.$route.name !== 'Graph') {
+        return
+      }
+      let canvasHeight = this.$refs.graphContainer.clientHeight
       let canvasWidth = this.$refs.graphContainer.clientWidth
       let canvas = document.getElementById('cytoscape-div')
       canvas.style.minHeight = canvasHeight + 'px'
@@ -655,9 +707,6 @@ export default {
   watch: {
     '$vuetify.theme.dark'() {
       this.setTheme()
-    },
-    edgeQuery: function (newVal) {
-      // Placeholder until eventlist component is developed.
     },
   },
 }
