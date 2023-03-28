@@ -43,7 +43,7 @@ limitations under the License.
                   </tr>
                   <tr>
                     <td width="200px">First event</td>
-                    <td><strong>{{ this.fieldDateTimeMinimum }}</strong></td>
+                    <td style="white-space: nowrap;"><strong>{{ this.fieldDateTimeMinimum }}</strong></td>
                   </tr>
                   <tr>
                     <td width="200px">Last event</td>
