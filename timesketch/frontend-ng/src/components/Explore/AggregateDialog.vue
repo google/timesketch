@@ -532,6 +532,15 @@ export default {
     }
   },
   methods: {
+    truncateValue(value) {
+      if (value.length > 45) {
+        return value.substring(0, 45).trim() + '...'
+      }
+      return value
+    },
+    formatNumber(number) {
+      return new Intl.NumberFormat().format(number)
+    },
     loadSummaryData: function() {
       this.statsReady = false
       this.stats = undefined
