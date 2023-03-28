@@ -19,7 +19,7 @@ limitations under the License.
       no-gutters
       class="pa-2 pr-4"
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
-      @click="expanded = !expanded"
+      @click="getSigmaRuleResource(sigmaRule.rule_uuid)"
       style="cursor: pointer; font-size: 0.9em"
     >
       <v-col cols="11">
@@ -38,7 +38,7 @@ limitations under the License.
           <v-card>
             <v-list dense>
               <v-list-item-group>
-                <v-list-item :to="{ name: 'Studio', params: { type: 'sigma', id: sigmaRule.rule_uuid } }">
+                <v-list-item :to="{ name: 'SigmaEditRule', params: { ruleId: sigmaRule.rule_uuid } }">
                   <v-list-item-icon>
                     <v-icon small>mdi-pencil</v-icon>
                   </v-list-item-icon>
@@ -107,7 +107,12 @@ limitations under the License.
         </div>
 
         <div class="mt-3">
-          <v-btn @click="search(sigmaRule.search_query)" small depressed color="primary" v-if="sketch.id !== undefined"
+          <v-btn
+            @click="search(detailedSigmaRule.search_query)"
+            small
+            depressed
+            color="primary"
+            v-if="sketch.id !== undefined"
             >Search</v-btn
           >
         </div>
@@ -138,6 +143,7 @@ export default {
   data: function () {
     return {
       expanded: false,
+      detailedSigmaRule: [],
     }
   },
   computed: {
@@ -158,7 +164,7 @@ export default {
         'rule_uuid',
         'search_query',
       ]
-      return Object.fromEntries(Object.entries(this.sigmaRule).filter(([key]) => fields.includes(key)))
+      return Object.fromEntries(Object.entries(this.detailedSigmaRule).filter(([key]) => fields.includes(key)))
     },
   },
   methods: {
@@ -186,6 +192,16 @@ export default {
             console.error(e)
           })
       }
+    },
+    getSigmaRuleResource(ruleUuid) {
+      ApiClient.getSigmaRuleResource(ruleUuid)
+        .then((response) => {
+          this.detailedSigmaRule = response.data.objects[0]
+          this.expanded = !this.expanded
+        })
+        .catch((e) => {
+          console.error(e)
+        })
     },
     deprecateSigmaRule(ruleUuid) {
       // Rules with a "deprecated" status means the rule

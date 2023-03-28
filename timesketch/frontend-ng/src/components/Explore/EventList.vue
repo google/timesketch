@@ -56,21 +56,23 @@ limitations under the License.
                     <v-icon>mdi-content-save-outline</v-icon>
                   </v-btn>
                 </template>
-
-                <v-card>
-                  <v-card-title> Save Search </v-card-title>
-
-                  <v-card-text>
-                    <v-text-field v-model="saveSearchFormName" required placeholder="Name your saved search">
-                    </v-text-field>
-                  </v-card-text>
-
-                  <v-divider></v-divider>
-
+                <v-card class="pa-4">
+                  <h3>Save Search</h3>
+                  <br />
+                  <v-text-field
+                    v-model="saveSearchFormName"
+                    required
+                    placeholder="Name your saved search"
+                    outlined
+                    dense
+                    autofocus
+                    @focus="$event.target.select()"
+                  >
+                  </v-text-field>
                   <v-card-actions>
                     <v-spacer></v-spacer>
-                    <v-btn color="primary" text @click="saveSearchMenu = false"> Cancel </v-btn>
-                    <v-btn color="primary" text @click="saveSearch" :disabled="!saveSearchFormName"> Save </v-btn>
+                    <v-btn text @click="saveSearchMenu = false"> Cancel </v-btn>
+                    <v-btn color="primary" depressed @click="saveSearch" :disabled="!saveSearchFormName"> Save </v-btn>
                   </v-card-actions>
                 </v-card>
               </v-dialog>
@@ -300,7 +302,7 @@ limitations under the License.
 
         <!-- Generic slot for any field type. Adds tags and emojis to the first column. -->
         <template v-for="(field, index) in headers" v-slot:[getFieldName(field.text)]="{ item }">
-          <span
+          <div
             :key="field.text"
             class="ts-event-field-container"
             style="cursor: pointer"
@@ -339,7 +341,7 @@ limitations under the License.
               </span>
               <span>{{ item._source[field.text] }}</span>
             </span>
-          </span>
+          </div>
         </template>
 
         <!-- Timeline name field -->
@@ -851,7 +853,7 @@ export default {
     queryRequest: {
       handler(newQueryRequest, oldqueryRequest) {
         // Return early if there is no change to the current request.
-        if (newQueryRequest === oldqueryRequest) {
+        if (JSON.stringify(newQueryRequest) === JSON.stringify(oldqueryRequest)) {
           return
         }
         // Return early if this isn't a new request.
@@ -892,6 +894,7 @@ export default {
 .ts-event-field-container {
   position: relative;
   max-width: 100%;
+  height: 100%;
   padding: 0 !important;
   display: -webkit-flex;
   display: -moz-flex;
@@ -910,9 +913,9 @@ export default {
   max-width: 100%;
   min-width: 0;
   width: 100%;
-  top: 0;
+  top: 50%;
+  transform: translateY(-50%);
   left: 0;
-  margin-top: -10px;
 }
 
 .v-data-table__expanded.v-data-table__expanded__content {
