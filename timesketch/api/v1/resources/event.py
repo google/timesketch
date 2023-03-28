@@ -1016,7 +1016,6 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
             )
 
         if "comment" in annotation_type:
-
             # Retrive the comment attached to the event bases on the comment
             # id supplied in the request
             comment = event.get_comment(annotation_id)

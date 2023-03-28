@@ -76,13 +76,55 @@ limitations under the License.
         </v-menu>
       </v-card>
 
+      <!-- Search History -->
+      <div class="mt-4">
+        <v-card v-show="showSearchHistory" outlined>
+          <v-toolbar dense flat>
+            <v-toolbar-title>Search history</v-toolbar-title>
+            <v-spacer></v-spacer>
+            <v-slider
+              v-model="zoomLevel"
+              thumb-label
+              ticks
+              append-icon="mdi-magnify-plus-outline"
+              prepend-icon="mdi-magnify-minus-outline"
+              min="0.1"
+              max="1"
+              step="0.1"
+              class="mt-6"
+            >
+              <template v-slot:thumb-label="{ value }"> {{ value * 100 }}% </template>
+            </v-slider>
+
+            <v-btn icon @click="showSearchHistory = false" class="ml-4">
+              <v-icon>mdi-close</v-icon>
+            </v-btn>
+          </v-toolbar>
+
+          <v-divider></v-divider>
+
+          <div
+            v-dragscroll
+            class="pa-md-4 no-scrollbars"
+            style="overflow: scroll; white-space: nowrap; max-height: 500px; min-height: 100px"
+          >
+            <ts-search-history-tree
+              @node-click="jumpInHistory"
+              :show-history="showSearchHistory"
+              v-bind:style="{ transform: 'scale(' + zoomLevel + ')' }"
+              style="transform-origin: top left"
+            ></ts-search-history-tree>
+          </div>
+        </v-card>
+      </div>
+
       <!-- Timeline picker -->
       <v-sheet class="mb-4 mt-4" color="transparent">
         <ts-timeline-picker
           @updateSelectedTimelines="updateSelectedTimelines($event)"
           :current-query-filter="currentQueryFilter"
-          :count-per-index="eventList.meta.count_per_index"
-          :count-per-timeline="eventList.meta.count_per_timeline"
+          :count-per-index="countPerIndex"
+          :count-per-timeline="countPerTimeline"
         ></ts-timeline-picker>
 
         <span style="position: relative; top: -5px">
@@ -123,12 +165,26 @@ limitations under the License.
             </template>
             <v-card>
               <v-list>
-                <v-list-item>
-                  <v-list-item-action>
-                    <v-icon>mdi-square-edit-outline</v-icon>
-                  </v-list-item-action>
-                  <v-list-item-subtitle>Edit filter</v-list-item-subtitle>
-                </v-list-item>
+                <!-- Edit timefilter menu -->
+                <v-menu
+                  offset-y
+                  :close-on-content-click="false"
+                  :close-on-click="true"
+                  nudge-top="70"
+                  content-class="menu-with-gap"
+                  allow-overflow
+                  style="overflow: visible"
+                >
+                  <template v-slot:activator="{ on, attrs }">
+                    <v-list-item v-bind="attrs" v-on="on">
+                      <v-list-item-action>
+                        <v-icon>mdi-square-edit-outline</v-icon>
+                      </v-list-item-action>
+                      <v-list-item-subtitle>Edit filter</v-list-item-subtitle>
+                    </v-list-item>
+                  </template>
+                  <ts-filter-menu app :selected-chip="chip" @updateChip="updateChip($event, chip)"></ts-filter-menu>
+                </v-menu>
 
                 <v-list-item @click="toggleChip(chip)">
                   <v-list-item-action>
@@ -177,7 +233,9 @@ limitations under the License.
       <div v-if="filterChips.length">
         <v-chip-group>
           <span v-for="(chip, index) in filterChips" :key="index + chip.value">
-            <v-chip>
+            <v-chip small outlined close @click:close="removeChip(chip)">
+              <v-icon v-if="chip.value === '__ts_star'" left small color="amber">mdi-star</v-icon>
+              <v-icon v-if="chip.value === '__ts_comment'" left small>mdi-comment-multiple-outline</v-icon>
               {{ chip.value | formatLabelText }}
             </v-chip>
             <v-btn v-if="index + 1 < timeFilterChips.length" icon small style="margin-top: 2px" class="mr-2">AND</v-btn>
@@ -186,404 +244,47 @@ limitations under the License.
       </div>
     </v-card>
 
-    <!-- Search History -->
-
-    <v-card v-show="showSearchHistory" outlined class="pa-3 mt-3">
-      <v-toolbar elevation="0" dense>
-        <v-toolbar-title>Search history</v-toolbar-title>
-        <v-spacer></v-spacer>
-
-        <v-slider
-          v-model="zoomLevel"
-          thumb-label
-          ticks
-          append-icon="mdi-magnify-plus-outline"
-          prepend-icon="mdi-magnify-minus-outline"
-          min="0.1"
-          max="1"
-          step="0.1"
-          class="mt-6"
-        >
-          <template v-slot:thumb-label="{ value }"> {{ value * 100 }}% </template>
-        </v-slider>
-
-        <v-btn icon @click="showSearchHistory = false" class="ml-4">
-          <v-icon>mdi-close</v-icon>
-        </v-btn>
-      </v-toolbar>
-      <div
-        v-dragscroll
-        class="pa-md-4 no-scrollbars"
-        style="overflow: scroll; white-space: nowrap; max-height: 500px; min-height: 500px"
-      >
-        <ts-search-history-tree
-          @node-click="jumpInHistory"
-          :show-history="showSearchHistory"
-          v-bind:style="{ transform: 'scale(' + zoomLevel + ')' }"
-          style="transform-origin: top left"
-        ></ts-search-history-tree>
+    <!-- DFIQ context -->
+    <div class="mt-3 mx-3">
+      <div :class="[$vuetify.theme.dark ? 'dark-info-card' : 'light-info-card']" v-if="activeContext.question">
+        <v-toolbar dense flat color="transparent">
+          <h4>{{ activeContext.question.display_name }}</h4>
+          <v-spacer></v-spacer>
+          <v-btn small icon @click="$store.dispatch('clearActiveContext')" class="mr-1">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </v-toolbar>
+        <p class="mt-1 pb-4 px-4" style="font-size: 0.9em">
+          {{ activeContext.question.description }}
+        </p>
       </div>
-    </v-card>
+    </div>
 
     <!-- Eventlist -->
-    <v-card
-      v-if="(!eventList.objects.length && !searchInProgress) || !this.currentQueryFilter.indices.length"
-      outlined
-      class="pa-3 mt-3 mx-3"
-    >
-      <p>
-        Your search <span v-if="currentQueryString">"{{ currentQueryString }}"</span> did not match any events.
-      </p>
-      <p>Suggestions:</p>
-      <li>Try different keywords.</li>
-      <li>Try more general keywords.</li>
-      <li>Try fewer keywords.</li>
-    </v-card>
-
-    <v-card
-      v-if="eventList.objects.length || (searchInProgress && this.currentQueryFilter.indices.length)"
-      flat
-      class="mt-3"
-    >
-      <v-data-table
-        v-model="selectedEvents"
-        :headers="headers"
-        :items="eventList.objects"
-        :footer-props="{ 'items-per-page-options': [10, 40, 80, 100, 200, 500], 'show-current-page': true }"
-        :loading="searchInProgress"
-        :options.sync="tableOptions"
-        :server-items-length="totalHits"
-        item-key="_id"
-        loading-text="Searching... Please wait"
-        show-select
-        disable-filtering
-        disable-sort
-        :expanded="expandedRows"
-        :dense="displayOptions.isCompact"
-        fixed-header
-      >
-        <template v-slot:top="{ pagination, options, updateOptions }">
-          <v-toolbar dense flat>
-            <div v-if="!selectedEvents.length">
-              <span class="mr-2"
-                ><small>{{ fromEvent }}-{{ toEvent }} of {{ totalHits }} events ({{ totalTime }}s)</small></span
-              >
-
-              <v-dialog v-model="saveSearchMenu" width="500">
-                <template v-slot:activator="{ on, attrs }">
-                  <v-btn icon v-bind="attrs" v-on="on">
-                    <v-icon>mdi-content-save-outline</v-icon>
-                  </v-btn>
-                </template>
-
-                <v-card>
-                  <v-card-title> Save Search </v-card-title>
-
-                  <v-card-text>
-                    <v-text-field v-model="saveSearchFormName" required placeholder="Name your saved search">
-                    </v-text-field>
-                  </v-card-text>
-
-                  <v-divider></v-divider>
-
-                  <v-card-actions>
-                    <v-spacer></v-spacer>
-                    <v-btn color="primary" text @click="saveSearchMenu = false"> Cancel </v-btn>
-                    <v-btn color="primary" text @click="saveSearch" :disabled="!saveSearchFormName"> Save </v-btn>
-                  </v-card-actions>
-                </v-card>
-              </v-dialog>
-
-              <v-btn icon @click="showHistogram = !showHistogram">
-                <v-icon>mdi-chart-bar</v-icon>
-              </v-btn>
-
-              <v-dialog v-model="columnDialog" max-width="500px" scrollable>
-                <template v-slot:activator="{ on, attrs }">
-                  <v-btn icon v-bind="attrs" v-on="on">
-                    <v-icon>mdi-view-column-outline</v-icon>
-                  </v-btn>
-                </template>
-
-                <v-card height="50vh">
-                  <v-card-title>Select columns</v-card-title>
-
-                  <v-card-text>
-                    <v-text-field
-                      v-model="searchColumns"
-                      append-icon="mdi-magnify"
-                      label="Search"
-                      single-line
-                      hide-details
-                    ></v-text-field>
-                    <br />
-                    <v-data-table
-                      v-model="selectedFields"
-                      :headers="columnHeaders"
-                      :items="meta.mappings"
-                      :search="searchColumns"
-                      :hide-default-footer="true"
-                      item-key="field"
-                      disable-pagination
-                      show-select
-                      dense
-                      @input="updateSelectedFields"
-                    >
-                    </v-data-table>
-                  </v-card-text>
-
-                  <v-divider></v-divider>
-
-                  <v-card-actions>
-                    <v-spacer></v-spacer>
-                    <v-btn color="primary" text @click="selectedFields = [{ field: 'message', type: 'text' }]">
-                      Reset
-                    </v-btn>
-                    <v-btn color="primary" text @click="columnDialog = false"> Close </v-btn>
-                  </v-card-actions>
-                </v-card>
-              </v-dialog>
-
-              <v-menu offset-y :close-on-content-click="false">
-                <template v-slot:activator="{ on, attrs }">
-                  <v-btn icon v-bind="attrs" v-on="on">
-                    <v-icon>mdi-dots-horizontal</v-icon>
-                  </v-btn>
-                </template>
-
-                <v-card outlined max-width="475" class="mx-auto">
-                  <v-list subheader two-line flat dense>
-                    <v-subheader>Density</v-subheader>
-
-                    <v-list-item-group>
-                      <v-list-item :ripple="false">
-                        <template>
-                          <v-list-item-action>
-                            <v-radio-group v-model="displayOptions.isCompact">
-                              <v-radio :value="false"></v-radio>
-                            </v-radio-group>
-                          </v-list-item-action>
-
-                          <v-list-item-content>
-                            <v-list-item-title>Comfortable</v-list-item-title>
-                            <v-list-item-subtitle>More space between rows</v-list-item-subtitle>
-                          </v-list-item-content>
-                        </template>
-                      </v-list-item>
-
-                      <v-list-item :ripple="false">
-                        <template>
-                          <v-list-item-action>
-                            <v-radio-group v-model="displayOptions.isCompact">
-                              <v-radio :value="true"></v-radio>
-                            </v-radio-group>
-                          </v-list-item-action>
-
-                          <v-list-item-content>
-                            <v-list-item-title>Compact</v-list-item-title>
-                            <v-list-item-subtitle>Less space between rows</v-list-item-subtitle>
-                          </v-list-item-content>
-                        </template>
-                      </v-list-item>
-                    </v-list-item-group>
-                    <v-divider></v-divider>
-
-                    <v-list subheader two-line flat>
-                      <v-subheader>Misc</v-subheader>
-                      <v-list-item-group>
-                        <v-list-item :ripple="false">
-                          <v-list-item-action>
-                            <v-switch dense color="" v-model="displayOptions.showTags"></v-switch>
-                          </v-list-item-action>
-                          <v-list-item-content>
-                            <v-list-item-title>Tags</v-list-item-title>
-                            <v-list-item-subtitle>Show tags</v-list-item-subtitle>
-                          </v-list-item-content>
-                        </v-list-item>
-                      </v-list-item-group>
-                      <v-list-item-group>
-                        <v-list-item :ripple="false">
-                          <v-list-item-action>
-                            <v-switch dense v-model="displayOptions.showEmojis"></v-switch>
-                          </v-list-item-action>
-                          <v-list-item-content>
-                            <v-list-item-title>Emojis</v-list-item-title>
-                            <v-list-item-subtitle>Show emojis</v-list-item-subtitle>
-                          </v-list-item-content>
-                        </v-list-item>
-                      </v-list-item-group>
-                      <v-list-item-group>
-                        <v-list-item :ripple="false">
-                          <v-list-item-action>
-                            <v-switch dense v-model="displayOptions.showTimelineName"></v-switch>
-                          </v-list-item-action>
-                          <v-list-item-content>
-                            <v-list-item-title>Timeline name</v-list-item-title>
-                            <v-list-item-subtitle>Show timeline name</v-list-item-subtitle>
-                          </v-list-item-content>
-                        </v-list-item>
-                      </v-list-item-group>
-                    </v-list>
-                  </v-list>
-                </v-card>
-              </v-menu>
-            </div>
-            <div v-else>
-              <small class="mr-2">Actions:</small>
-              <v-btn x-small outlined @click="toggleMultipleStars()">
-                <v-icon left color="amber">mdi-star</v-icon>
-                Toggle star
-              </v-btn>
-            </div>
-
-            <v-spacer></v-spacer>
-
-            <v-data-footer
-              :pagination="pagination"
-              :options="options"
-              @update:options="updateOptions"
-              :show-current-page="true"
-              :items-per-page-options="[10, 40, 80, 100, 200, 500]"
-              items-per-page-text="Rows per page:"
-              style="border: 0"
-              class="mr-n3"
-            ></v-data-footer>
-          </v-toolbar>
-          <v-card v-if="showHistogram" outlined class="pa-2">
-            <ts-bar-chart
-              :chart-data="eventList.meta.count_over_time"
-              @addChip="addChipFromHistogram($event)"
-            ></ts-bar-chart>
-          </v-card>
-        </template>
-
-        <!-- Event details -->
-        <template v-slot:expanded-item="{ headers, item }">
-          <td :colspan="headers.length">
-            <!-- Details -->
-            <v-container v-if="item.showDetails" fluid class="mt-4">
-              <ts-event-detail :event="item"></ts-event-detail>
-            </v-container>
-
-            <!-- Time bubble -->
-            <v-divider v-if="item.showDetails && item.deltaDays"></v-divider>
-            <div v-if="item.deltaDays > 0" class="ml-7">
-              <div
-                class="ts-time-bubble-vertical-line ts-time-bubble-vertical-line-color"
-                v-bind:style="getTimeBubbleColor(item)"
-              ></div>
-              <div class="ts-time-bubble ts-time-bubble-color" v-bind:style="getTimeBubbleColor(item)">
-                <h5>
-                  <b>{{ item.deltaDays | compactNumber }}</b> days
-                </h5>
-              </div>
-              <div
-                class="ts-time-bubble-vertical-line ts-time-bubble-vertical-line-color"
-                v-bind:style="getTimeBubbleColor(item)"
-              ></div>
-            </div>
-          </td>
-        </template>
-
-        <!-- Datetime field with action buttons -->
-        <template v-slot:item._source.timestamp="{ item }">
-          <div v-bind:style="getTimelineColor(item)" class="datetime-table-cell">
-            {{ item._source.timestamp | formatTimestamp | toISO8601 }}
-          </div>
-        </template>
-        <!-- Actions field -->
-        <template v-slot:item.actions="{ item }">
-          <v-btn small icon @click="toggleStar(item)">
-            <v-icon v-if="item._source.label.includes('__ts_star')" color="amber">mdi-star</v-icon>
-            <v-icon v-else>mdi-star-outline</v-icon>
-          </v-btn>
-
-          <!-- Tag menu -->
-          <ts-event-tag-menu :event="item"></ts-event-tag-menu>
-        </template>
-
-        <!-- Generic slot for any field type. Adds tags and emojis to the first column. -->
-        <template v-for="(field, index) in headers" v-slot:[getFieldName(field.text)]="{ item }">
-          <span
-            :key="field.text"
-            class="ts-event-field-container"
-            style="cursor: pointer"
-            @click="toggleDetailedEvent(item)"
-          >
-            <span :class="{ 'ts-event-field-ellipsis': field.text === 'message' }">
-              <!-- Tags -->
-              <span v-if="displayOptions.showTags && index === 3">
-                <v-chip
-                  small
-                  class="mr-2"
-                  v-for="tag in item._source.tag"
-                  :key="tag"
-                  :color="tagColor(tag).color"
-                  :text-color="tagColor(tag).textColor"
-                >
-                  <v-icon v-if="tag in tagConfig" left small>{{ tagConfig[tag].label }}</v-icon>
-                  {{ tag }}</v-chip
-                >
-                <span v-for="label in item._source.label" :key="label">
-                  <v-chip v-if="!label.startsWith('__ts')" small outlined class="mr-2">
-                    {{ label }}
-                  </v-chip>
-                </span>
-              </span>
-              <!-- Emojis -->
-              <span v-if="displayOptions.showEmojis && index === 0">
-                <span
-                  class="mr-2"
-                  v-for="emoji in item._source.__ts_emojis"
-                  :key="emoji"
-                  v-html="emoji"
-                  :title="meta.emojis[emoji]"
-                  >{{ emoji }}
-                </span>
-              </span>
-              <span>{{ item._source[field.text] }}</span>
-            </span>
-          </span>
-        </template>
-
-        <!-- Timeline name field -->
-        <template v-slot:item.timeline_name="{ item }">
-          <v-chip label style="margin-top: 1px; margin-bottom: 1px; font-size: 0.8em">
-            <span class="timeline-name-ellipsis" style="width: 130px; text-align: center">{{
-              getTimeline(item).name
-            }}</span></v-chip
-          >
-        </template>
-
-        <!-- Comment field -->
-        <template v-slot:item._source.comment="{ item }">
-          <v-badge :offset-y="10" bordered v-if="item._source.comment.length" :content="item._source.comment.length">
-            <v-icon small @click="toggleDetailedEvent(item)"> mdi-comment-text-multiple-outline </v-icon>
-          </v-badge>
-        </template>
-      </v-data-table>
+    <v-card flat class="mt-5 mx-3">
+      <ts-event-list
+        :query-request="activeQueryRequest"
+        @countPerIndex="updateCountPerIndex($event)"
+        @countPerTimeline="updateCountPerTimeline($event)"
+      ></ts-event-list>
     </v-card>
   </v-container>
 </template>
 
 <script>
 import ApiClient from '../utils/RestApiClient'
+import EventBus from '../main'
+
+import { dragscroll } from 'vue-dragscroll'
 
 import TsSearchHistoryTree from '../components/Explore/SearchHistoryTree'
 import TsSearchHistoryButtons from '../components/Explore/SearchHistoryButtons'
 import TsSearchDropdown from '../components/Explore/SearchDropdown'
-import TsBarChart from '../components/Explore/BarChart'
 import TsTimelinePicker from '../components/Explore/TimelinePicker'
 import TsFilterMenu from '../components/Explore/FilterMenu'
-import TsEventDetail from '../components/Explore/EventDetail'
 import TsUploadTimelineForm from '../components/UploadForm'
-import TsEventTagMenu from '../components/Explore/EventTagMenu.vue'
 import TsAddManualEvent from '../components/Explore/AddManualEvent'
-
-import EventBus from '../main'
-import { None } from 'vega'
-
-import { dragscroll } from 'vue-dragscroll'
+import TsEventList from '../components/Explore/EventList'
 
 const defaultQueryFilter = () => {
   return {
@@ -596,15 +297,6 @@ const defaultQueryFilter = () => {
   }
 }
 
-const emptyEventList = () => {
-  return {
-    meta: {
-      count_per_index: {},
-    },
-    objects: [],
-  }
-}
-
 export default {
   directives: {
     dragscroll,
@@ -613,79 +305,37 @@ export default {
     TsSearchHistoryTree,
     TsSearchHistoryButtons,
     TsSearchDropdown,
-    TsBarChart,
     TsTimelinePicker,
     TsFilterMenu,
-    TsEventDetail,
     TsUploadTimelineForm,
-    TsEventTagMenu,
     TsAddManualEvent,
+    TsEventList,
   },
   props: ['sketchId'],
   data() {
     return {
-      columnHeaders: [
-        {
-          text: '',
-          value: 'field',
-        },
-      ],
-      tableOptions: {
-        itemsPerPage: 40,
-      },
+      countPerIndex: {},
+      countPerTimeline: {},
       currentItemsPerPage: 40,
-      drawer: false,
-      leftDrawer: true,
-      expandedRows: [],
       timeFilterMenu: false,
       selectedFields: [{ field: 'message', type: 'text' }],
-      searchColumns: '',
-      columnDialog: false,
-      saveSearchMenu: false,
-      saveSearchFormName: '',
-      selectedEventTags: [],
       showRightSidePanel: false,
       addManualEvent: false,
-      datetimeManualEvent: '', // datetime of an event used
-      // TODO: Refactor this into a configurable option
-      // Issue: https://github.com/google/timesketch/issues/2339
-      tagConfig: {
-        good: { color: 'green', textColor: 'white', label: 'mdi-check-circle-outline' },
-        bad: { color: 'red', textColor: 'white', label: 'mdi-alert-circle-outline' },
-        suspicious: { color: 'orange', textColor: 'white', label: 'mdi-help-circle-outline' },
-      },
-
-      // old stuff
+      datetimeManualEvent: '',
       params: {},
-      searchInProgress: false,
-      currentPage: 1,
       contextEvent: false,
       originalContext: false,
       showSearchDropdown: false,
-      eventList: {
-        meta: {},
-        objects: [],
-      },
+      activeQueryRequest: {},
       currentQueryString: '',
       currentQueryFilter: defaultQueryFilter(),
-      selectedEvents: [],
-      displayOptions: {
-        isCompact: false,
-        showTags: true,
-        showEmojis: true,
-        showMillis: false,
-        showTimelineName: true,
-      },
       selectedLabels: [],
       showSearchHistory: false,
-      showHistogram: false,
-      branchParent: None,
       zoomLevel: 0.7,
       zoomOrigin: {
         x: 0,
         y: 0,
       },
-      minimizeRightSidePanel: false,
     }
   },
   computed: {
@@ -694,24 +344,6 @@ export default {
     },
     meta() {
       return this.$store.state.meta
-    },
-    totalHits() {
-      return this.eventList.meta.es_total_count_complete || 0
-    },
-    totalTime() {
-      return this.eventList.meta.es_time / 1000 || 0
-    },
-    fromEvent() {
-      return this.currentQueryFilter.from || 1
-    },
-    toEvent() {
-      if (this.totalHits < this.currentQueryFilter.size) {
-        return
-      }
-      return parseInt(this.currentQueryFilter.from) + parseInt(this.currentQueryFilter.size)
-    },
-    numSelectedEvents() {
-      return this.selectedEvents.length
     },
     filterChips: function () {
       return this.currentQueryFilter.chips.filter((chip) => chip.type === 'label' || chip.type === 'term')
@@ -725,75 +357,16 @@ export default {
     currentSearchNode() {
       return this.$store.state.currentSearchNode
     },
-    headers() {
-      let baseHeaders = [
-        {
-          text: '',
-          value: 'data-table-select',
-        },
-        {
-          text: 'Datetime (UTC)',
-          align: 'start',
-          value: '_source.timestamp',
-          width: '200',
-        },
-        {
-          value: 'actions',
-          width: '70',
-        },
-        {
-          value: '_source.comment',
-          width: '40',
-        },
-      ]
-      let extraHeaders = []
-      this.selectedFields.forEach((field) => {
-        let header = {
-          text: field.field,
-          align: 'start',
-          value: '_source.' + field.field,
-        }
-        if (field.field === 'message') {
-          header.width = '100%'
-          extraHeaders.unshift(header)
-        } else {
-          extraHeaders.push(header)
-        }
-      })
-
-      // Extend the column headers from position 3 (after the actions column).\
-      baseHeaders.splice(3, 0, ...extraHeaders)
-
-      // Add timeline name based on configuration
-      if (this.displayOptions.showTimelineName) {
-        baseHeaders.push({
-          value: 'timeline_name',
-          align: 'end',
-        })
-      }
-      return baseHeaders
-    },
-    rightSidePanelWidth() {
-      let width = '400'
-      if (this.minimizeRightSidePanel) {
-        width = '50'
-      }
-      return width
+    activeContext() {
+      return this.$store.state.activeContext
     },
   },
   methods: {
-    tagColor: function (tag) {
-      if (this.tagConfig[tag]) {
-        return this.tagConfig[tag]
-      }
-      return 'lightgrey'
+    updateCountPerIndex: function (count) {
+      this.countPerIndex = count
     },
-    getFieldName: function (field) {
-      return 'item._source.' + field
-    },
-    addEventBtn: function (datetimeManualEvent) {
-      this.datetimeManualEvent = datetimeManualEvent
-      this.addManualEvent = true
+    updateCountPerTimeline: function (count) {
+      this.countPerTimeline = count
     },
     toggleSearchHistory: function () {
       this.showSearchHistory = !this.showSearchHistory
@@ -801,157 +374,10 @@ export default {
         this.triggerScrollTo()
       }
     },
-    toggleDetailedEvent: function (row) {
-      let index = this.expandedRows.findIndex((x) => x._id === row._id)
-      if (this.expandedRows.some((event) => event._id === row._id)) {
-        if (row.showDetails) {
-          row['showDetails'] = false
-          this.expandedRows.splice(index, 1)
-        } else {
-          row['showDetails'] = true
-          this.expandedRows.splice(index, 1)
-          this.expandedRows.push(row)
-          return
-        }
-
-        if (row.deltaDays) {
-          this.expandedRows.splice(index, 1)
-          this.expandedRows.push(row)
-        }
-      } else {
-        row['showDetails'] = true
-        this.expandedRows.push(row)
-      }
-    },
-    addTimeBubbles: function () {
-      this.expandedRows = []
-      this.eventList.objects.forEach((event, index) => {
-        if (index < 1) {
-          return
-        }
-        let prevEvent = this.eventList.objects[index - 1]
-        let timestampMillis = this.$options.filters.formatTimestamp(event._source.timestamp)
-        let prevTimestampMillis = this.$options.filters.formatTimestamp(prevEvent._source.timestamp)
-        let timestamp = Math.floor(timestampMillis / 1000)
-        let prevTimestamp = Math.floor(prevTimestampMillis / 1000)
-        let delta = Math.floor(timestamp - prevTimestamp)
-        if (this.order === 'desc') {
-          delta = Math.floor(prevTimestamp - timestamp)
-        }
-        let deltaDays = Math.floor(delta / 60 / 60 / 24)
-        if (deltaDays > 0) {
-          prevEvent['deltaDays'] = deltaDays
-          this.expandedRows.push(prevEvent)
-        }
-      })
-    },
-    getTimeline: function (event) {
-      let isLegacy = this.meta.indices_metadata[event._index].is_legacy
-      let timeline
-      if (isLegacy) {
-        timeline = this.sketch.active_timelines.find((timeline) => timeline.searchindex.index_name === event._index)
-      } else {
-        timeline = this.sketch.active_timelines.find((timeline) => timeline.id === event._source.__ts_timeline_id)
-      }
-      return timeline
-    },
-    getTimelineColor(event) {
-      let timeline = this.getTimeline(event)
-      let backgroundColor = timeline.color
-      if (!backgroundColor.startsWith('#')) {
-        backgroundColor = '#' + backgroundColor
-      }
-      if (this.$vuetify.theme.dark) {
-        return {
-          'background-color': backgroundColor,
-          filter: 'grayscale(25%)',
-          color: '#333',
-        }
-      }
-      return {
-        'background-color': backgroundColor,
-      }
-    },
-    getTimeBubbleColor() {
-      let backgroundColor = '#f5f5f5'
-      if (this.$vuetify.theme.dark) {
-        backgroundColor = '#333'
-      }
-      return {
-        'background-color': backgroundColor,
-      }
-    },
-    search: function (emitEvent = true, resetPagination = true, incognito = false, parent = false) {
-      if (!this.currentQueryString) {
-        return
-      }
-      this.searchInProgress = true
-
-      if (this.contextEvent) {
-        // Scroll to the context box in the UI
-        this.$scrollTo('#context', 200, { offset: -300 })
-      }
-
-      this.selectedEvents = []
-      this.eventList = emptyEventList()
-
-      if (resetPagination) {
-        // TODO: Can we keep position of the pagination when changing page size?
-        // We need to calculate the new position in the page range and it is not
-        // trivial with the current pagination UI component we use.
-        this.currentQueryFilter.from = 0
-      }
-
-      // Update with selected fields
-      this.currentQueryFilter.fields = this.selectedFields
-
-      let formData = {
-        query: this.currentQueryString,
-        filter: this.currentQueryFilter,
-      }
-
-      // Search history
-      if (incognito) {
-        formData['incognito'] = true
-      }
-
-      if (parent) {
-        formData['parent'] = parent
-      }
-
-      if (parent && incognito) {
-        this.branchParent = parent
-      }
-
-      if (this.branchParent) {
-        formData['parent'] = this.branchParent
-      }
-
-      if (emitEvent) {
-        EventBus.$emit('newSearch')
-        this.showSearchDropdown = false
-      }
-
-      ApiClient.search(this.sketchId, formData)
-        .then((response) => {
-          this.eventList.objects = response.data.objects
-          this.eventList.meta = response.data.meta
-          this.searchInProgress = false
-
-          this.addTimeBubbles()
-
-          if (!incognito) {
-            EventBus.$emit('createBranch', this.eventList.meta.search_node)
-            this.$store.dispatch('updateSearchHistory')
-            this.branchParent = this.eventList.meta.search_node.id
-          }
-        })
-        .catch((e) => {
-          this.errorSnackBar('Sorry, there was a problem fetching your search results. Please try again.')
-          console.error(e)
-        })
-    },
     setQueryAndFilter: function (searchEvent) {
+      if (this.$route.name !== 'Explore') {
+        this.$router.push({ name: 'Explore', params: { sketchId: this.sketch.id } })
+      }
       this.currentQueryString = searchEvent.queryString
       this.currentQueryFilter = searchEvent.queryFilter
       // Preserve user defined item count instead of resetting.
@@ -961,28 +387,17 @@ export default {
         this.search()
       }
     },
-    exportSearchResult: function () {
-      let formData = {
-        query: this.currentQueryString,
-        filter: this.currentQueryFilter,
-        file_name: 'export.zip',
-      }
-      ApiClient.exportSearchResult(this.sketchId, formData)
-        .then((response) => {
-          let fileURL = window.URL.createObjectURL(new Blob([response.data]))
-          let fileLink = document.createElement('a')
-          let fileName = 'export.zip'
-          fileLink.href = fileURL
-          fileLink.setAttribute('download', fileName)
-          document.body.appendChild(fileLink)
-          fileLink.click()
-        })
-        .catch((e) => {
-          console.error(e)
-        })
+    search: function (resetPagination = true, incognito = false, parent = false) {
+      let queryRequest = {}
+      queryRequest['queryString'] = this.currentQueryString
+      queryRequest['queryFilter'] = this.currentQueryFilter
+      queryRequest['resetPagination'] = resetPagination
+      queryRequest['incognito'] = incognito
+      queryRequest['parent'] = parent
+      this.activeQueryRequest = queryRequest
+      this.showSearchDropdown = false
     },
     searchView: function (viewId) {
-      this.selectedEvents = []
       this.showSearchDropdown = false
 
       if (viewId !== parseInt(viewId, 10) && typeof viewId !== 'string') {
@@ -1019,7 +434,7 @@ export default {
             }
           }
           this.contextEvent = false
-          this.search(false)
+          this.search()
         })
         .catch((e) => {})
     },
@@ -1065,7 +480,6 @@ export default {
         this.currentQueryFilter.indices = [this.contextEvent._source.__ts_timeline_id]
       }
       this.currentQueryFilter.size = numContextEvents
-
       this.search()
     },
     removeContext: function () {
@@ -1086,13 +500,6 @@ export default {
       })
       this.currentQueryFilter.indices = selected
       this.search()
-    },
-    clearSearch: function () {
-      this.currentQueryString = ''
-      this.currentQueryFilter = defaultQueryFilter()
-      this.currentQueryFilter.indices = '_all'
-      this.eventList = emptyEventList()
-      this.$router.replace({ query: null })
     },
     toggleChip: function (chip) {
       // Treat undefined as active to support old chip formats.
@@ -1140,7 +547,6 @@ export default {
       })
       this.addChip(chip)
     },
-
     toggleLabelChip: function (labelName) {
       let chip = {
         field: '',
@@ -1180,63 +586,6 @@ export default {
         this.meta.filter_labels.push(label)
       }
     },
-    paginate: function () {
-      // Reset pagination if number of pages per page changes.
-      if (this.tableOptions.itemsPerPage !== this.currentItemsPerPage) {
-        this.tableOptions.page = 1
-        this.currentPage = 1
-        this.currentItemsPerPage = this.tableOptions.itemsPerPage
-        this.currentQueryFilter.size = this.tableOptions.itemsPerPage
-        this.search(true, true, true)
-        return
-      }
-      // To avoid double search request exit early if this is the first search for this
-      // search session.
-      if (this.currentPage === this.tableOptions.page) {
-        return
-      }
-      this.currentQueryFilter.from =
-        this.tableOptions.page * this.currentQueryFilter.size - this.currentQueryFilter.size
-      this.currentPage = this.tableOptions.page
-      this.search(true, false, true)
-    },
-    updateSelectedFields: function (value) {
-      // If we haven't fetched the field before, do an new search.
-      value.forEach((field) => {
-        if (!this.headers.filter((e) => e.field === field.field).length > 0) {
-          this.search(true, true, true)
-        }
-      })
-    },
-    removeField: function (index) {
-      this.selectedFields.splice(index, 1)
-    },
-    toggleStar(event) {
-      if (event._source.label.includes('__ts_star')) {
-        event._source.label.splice(event._source.label.indexOf('__ts_star'), 1)
-      } else {
-        event._source.label.push('__ts_star')
-      }
-      ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', event, this.currentSearchNode)
-        .then((response) => {})
-        .catch((e) => {
-          console.error(e)
-        })
-    },
-    toggleMultipleStars: function () {
-      this.selectedEvents.forEach((event) => {
-        if (event._source.label.includes('__ts_star')) {
-          event._source.label.splice(event._source.label.indexOf('__ts_star'), 1)
-        } else {
-          event._source.label.push('__ts_star')
-        }
-      })
-      ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', this.selectedEvents, this.currentSearchNode)
-        .then((response) => {
-          this.selectedEvents = []
-        })
-        .catch((e) => {})
-    },
     jumpInHistory: function (node) {
       this.currentQueryString = node.query_string
       this.currentQueryFilter = JSON.parse(node.query_filter)
@@ -1265,7 +614,7 @@ export default {
         }
       }
       this.contextEvent = false
-      this.search(false, true, true, node.id)
+      this.search(true, true, node.id)
     },
     triggerScrollTo: function () {
       EventBus.$emit('triggerScrollTo')
@@ -1291,30 +640,9 @@ export default {
         this.showSearchDropdown = false
       }
     },
-    saveSearch: function () {
-      ApiClient.createView(this.sketchId, this.saveSearchFormName, this.currentQueryString, this.currentQueryFilter)
-        .then((response) => {
-          this.saveSearchFormName = ''
-          this.saveSearchMenu = false
-          let newView = response.data.objects[0]
-          this.$store.state.meta.views.push(newView)
-          this.$router.push({ name: 'Explore', query: { view: newView.id } })
-        })
-        .catch((e) => {})
-    },
-  },
-
-  watch: {
-    tableOptions: {
-      handler() {
-        this.paginate()
-      },
-      deep: true,
-    },
   },
   mounted() {
     this.$refs.searchInput.focus()
-    // Setup listeners
     EventBus.$on('setQueryAndFilter', this.setQueryAndFilter)
     EventBus.$on('setActiveView', this.searchView)
   },
@@ -1393,84 +721,5 @@ export default {
 .no-scrollbars {
   -ms-overflow-style: none;
   scrollbar-width: none;
-}
-
-.ts-event-field-container {
-  position: relative;
-  max-width: 100%;
-  padding: 0 !important;
-  display: -webkit-flex;
-  display: -moz-flex;
-  display: flex;
-  vertical-align: text-bottom !important;
-}
-
-.ts-event-field-ellipsis {
-  position: absolute;
-  white-space: nowrap;
-  overflow-y: visible;
-  overflow-x: hidden;
-  text-overflow: ellipsis;
-  -ms-text-overflow: ellipsis;
-  -o-text-overflow: ellipsis;
-  max-width: 100%;
-  min-width: 0;
-  width: 100%;
-  top: 0;
-  left: 0;
-  margin-top: -10px;
-}
-
-.v-data-table__expanded.v-data-table__expanded__content {
-  box-shadow: none !important;
-}
-
-.ts-time-bubble {
-  width: 120px;
-  height: 20px;
-  border-radius: 6px;
-  position: relative;
-  margin: 0 0 0 35px;
-  text-align: center;
-  font-size: var(--font-size-small);
-}
-
-.ts-time-bubble h5 {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  margin: 0;
-  opacity: 70%;
-}
-
-.ts-time-bubble-vertical-line {
-  width: 2px;
-  height: 15px;
-  margin: 0 0 0 95px;
-  background-color: #f5f5f5;
-}
-
-.datetime-table-cell {
-  height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-// Adjust padding for event data table
-.v-data-table td,
-th {
-  padding: 0 10px 0 0 !important;
-}
-
-.v-data-table td:last-child,
-th:last-child {
-  padding: 0 !important;
-}
-
-.v-data-table td:first-child,
-th:first-child {
-  padding: 0 0 0 10px !important;
 }
 </style>

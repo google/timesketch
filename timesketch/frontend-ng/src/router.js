@@ -17,7 +17,7 @@ import Vue from 'vue'
 import VueRouter from 'vue-router'
 
 import Home from './views/Home'
-import Explore from './views/Explore'
+import Canvas from './views/Canvas'
 import Sketch from './views/Sketch'
 
 Vue.use(VueRouter)
@@ -42,9 +42,55 @@ const routes = [
       {
         path: 'explore',
         name: 'Explore',
-        component: Explore,
+        component: Canvas,
         props: true,
       },
+      {
+        path: 'intelligence',
+        name: 'Intelligence',
+        component: Canvas,
+        props: true,
+      },
+      {
+        path: 'sigma',
+        component: Canvas,
+        props: true,
+        children: [
+          {
+            path: 'new',
+            name: 'SigmaNewRule',
+            component: Canvas,
+            props: true,
+          },
+          {
+            path: 'edit/:ruleId',
+            name: 'SigmaEditRule',
+            component: Canvas,
+            props: true,
+          },
+
+        ]
+      },
+      {
+        path: 'sigma/edit',
+        name: 'SigmaEdit',
+        component: Canvas,
+        props: true,
+      },
+
+      {
+        path: 'graph',
+        name: 'Graph',
+        component: Canvas,
+        props: true,
+      },
+      {
+        path: 'story/:storyId',
+        name: 'Story',
+        component: Canvas,
+        props: true,
+      },
+
     ],
   },
 ]

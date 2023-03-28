@@ -28,69 +28,6 @@ limitations under the License.
         <span style="font-size: 0.8em">{{ searchtemplate.name }}</span>
       </div>
     </v-row>
-
-    <v-expand-transition>
-      <div v-show="expanded" class="pa-4 pt-0">
-        <div style="font-size: 0.9em">
-          <v-simple-table dense>
-            <template v-slot:default>
-              <tbody>
-                <tr>
-                  <td><strong>Author</strong></td>
-                  <td>{{ searchTemplateSpec.author }}</td>
-                </tr>
-                <tr>
-                  <td><strong>Description</strong></td>
-                  <td>{{ searchTemplateSpec.description }}</td>
-                </tr>
-                <tr>
-                  <td><strong>Date</strong></td>
-                  <td>{{ searchTemplateSpec.date }}</td>
-                </tr>
-                <tr>
-                  <td><strong>ID</strong></td>
-                  <td>{{ searchTemplateSpec.id }}</td>
-                </tr>
-                <tr v-if="searchTemplateSpec.references.length">
-                  <td><strong>References</strong></td>
-                  <td>
-                    <div v-for="ref in searchTemplateSpec.references" :key="ref">
-                      <a :href="ref" target="new">{{ ref }}</a>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </template>
-          </v-simple-table>
-        </div>
-
-        <div v-if="parameters.length" class="pt-3">
-          <div class="mb-3"><strong class="mb-3">Required input parameters</strong></div>
-          <div class="mb-4" v-for="parameter in parameters" :key="parameter.name">
-            <v-text-field
-              v-model="params[parameter.name]"
-              :hint="parameter.description"
-              :label="parameter.description"
-              outlined
-              dense
-              hide-details
-            >
-            </v-text-field>
-          </div>
-
-          <v-card-actions class="pl-0 mt-n3">
-            <v-btn @click="parseQueryAndSearch()" small depressed color="primary" :disabled="!filledOut">
-              Search
-            </v-btn>
-          </v-card-actions>
-        </div>
-        <div v-else class="mt-3">
-          <v-btn @click="search(searchtemplate.query_string)" small depressed color="primary" :disabled="!filledOut"
-            >Search</v-btn
-          >
-        </div>
-      </div>
-    </v-expand-transition>
   </div>
 </template>
 
@@ -113,7 +50,6 @@ export default {
   props: ['searchtemplate'],
   data: function () {
     return {
-      expanded: false,
       params: {},
     }
   },
