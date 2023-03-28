@@ -16,7 +16,7 @@ limitations under the License.
 <template>
   <v-card class="mx-auto" >
     <v-toolbar dense flat>
-      <strong>Event Data Analytics</strong>
+      <h3 class="ml-6" style="white-space: nowrap;">Event Data Analytics</h3>
       <v-spacer></v-spacer>
         &nbsp;&nbsp;<v-chip outlined>Selected field:&nbsp;<span style="font-family: monospace">{{ this.eventKey }}</span></v-chip>
         &nbsp;&nbsp;<v-chip outlined>Selected value:&nbsp;<span style="font-family: monospace">{{ this.eventValue }}</span></v-chip>
