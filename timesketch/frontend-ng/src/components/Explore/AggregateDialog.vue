@@ -39,7 +39,7 @@ limitations under the License.
                 <tbody>
                   <tr>
                     <td width="200px">Total number of events</td>
-                    <td><strong>{{ this.docCount }}</strong></td>
+                    <td><strong>{{ this.formatNumber(this.docCount) }}</strong></td>
                   </tr>
                   <tr>
                     <td width="200px">First event</td>
