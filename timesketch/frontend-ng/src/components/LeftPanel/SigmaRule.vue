@@ -17,15 +17,18 @@ limitations under the License.
   <div>
     <v-row
       no-gutters
-      class="pa-2 pr-4"
+      class="pa-3 pl-1"
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
       @click="getSigmaRuleResource(sigmaRule.rule_uuid)"
       style="cursor: pointer; font-size: 0.9em"
     >
-      <v-col cols="11">
+      <v-col cols="1" class="pl-1">
         <v-icon v-if="!expanded">mdi-chevron-right</v-icon>
         <v-icon v-else>mdi-chevron-down</v-icon>
-        {{ sigmaRule.title }}<v-chip rounded x-small class="ml-2">{{ sigmaRule.status }}</v-chip>
+      </v-col>
+
+      <v-col cols="10">
+        {{ sigmaRule.title }}
       </v-col>
 
       <v-col cols="1">
