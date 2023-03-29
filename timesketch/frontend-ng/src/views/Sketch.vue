@@ -139,11 +139,11 @@ limitations under the License.
           <ts-saved-searches v-if="meta.views"></ts-saved-searches>
           <ts-data-types></ts-data-types>
           <ts-tags></ts-tags>
-          <ts-search-templates></ts-search-templates>
           <ts-graphs></ts-graphs>
           <ts-stories></ts-stories>
-          <ts-sigma-rules></ts-sigma-rules>
           <ts-intelligence></ts-intelligence>
+          <ts-search-templates></ts-search-templates>
+          <ts-sigma-rules></ts-sigma-rules>
         </v-tab-item>
         <v-tab-item :transition="false">
           <ts-scenario v-for="scenario in activeScenarios" :key="scenario.id" :scenario="scenario"></ts-scenario>
