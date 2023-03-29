@@ -30,7 +30,7 @@ limitations under the License.
         color="primary"
         text
         class="ml-1"
-        :to="{ name: 'Studio', params: { id: 'new', type: 'sigma' } }"
+        :to="{ name: 'SigmaNewRule', params: { sketchId: sketch.id } }"
         @click.stop=""
       >
         <v-icon small left>mdi-plus</v-icon>New Rule
