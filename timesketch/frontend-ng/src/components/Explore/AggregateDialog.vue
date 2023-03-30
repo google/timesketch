@@ -52,7 +52,7 @@ limitations under the License.
                 </tbody>
               </v-simple-table>
             </v-card>
-            <v-card outlined height="147px" :loading="!statsReady" class="mt-1">
+            <v-card outlined height="146px" :loading="!statsReady" class="mt-1">
               <v-card-title>
                 Field statistics
               </v-card-title>
