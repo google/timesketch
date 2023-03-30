@@ -766,6 +766,7 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
         schema = {"meta": tag_dict, "objects": []}
         response = jsonify(schema)
         response.status_code = HTTP_STATUS_CODE_OK
+        print(response.json)
         return response
 
     @login_required
