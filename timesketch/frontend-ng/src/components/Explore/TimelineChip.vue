@@ -216,7 +216,6 @@ limitations under the License.
             :to="{ name: 'Analyze', params: { sketchId: sketch.id  } }"
             style="cursor: pointer"
             >
-            <!-- TODO: Find a way to close the menu when clicked on run analyzers! -->
             <v-list-item-action>
               <v-icon>mdi-auto-fix</v-icon>
             </v-list-item-action>
