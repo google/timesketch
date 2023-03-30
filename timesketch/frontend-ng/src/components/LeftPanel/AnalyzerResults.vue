@@ -120,6 +120,7 @@ export default {
         try {
           const response = await ApiClient.getSketchTimelineAnalysis(this.sketch.id, timeline.id);
           let analyzerSessions = response.data.objects[0]
+          if (!analyzerSessions) continue
           analyzerSessions.forEach((session) => {
             if (!perAnalyzer[session.analyzer_name]) {
               // the analyzer is not yet in the results: create new entry
