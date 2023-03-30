@@ -100,7 +100,7 @@ limitations under the License.
       </v-card>
     </v-dialog>
 
-    <v-menu v-else offset-y :close-on-content-click="false" content-class="menu-with-gap">
+    <v-menu v-else offset-y :close-on-content-click="false" content-class="menu-with-gap" ref="timelineChipMenuRef">
       <template v-slot:activator="{ on }">
         <v-chip v-on="on" :style="getTimelineStyle(timeline)" class="mr-2 mb-3">
           <v-icon v-if="timelineStatus === 'fail'" left color="red"> mdi-alert-circle-outline </v-icon>
@@ -211,16 +211,19 @@ limitations under the License.
               </v-card-actions>
             </v-card>
           </v-dialog>
+
           <v-list-item
             v-if="timelineStatus === 'ready'"
             :to="{ name: 'Analyze', params: { sketchId: sketch.id  } }"
             style="cursor: pointer"
+            @click="$refs.timelineChipMenuRef.isActive = false"
             >
             <v-list-item-action>
               <v-icon>mdi-auto-fix</v-icon>
             </v-list-item-action>
             <v-list-item-subtitle>Run Analyzers</v-list-item-subtitle>
           </v-list-item>
+
         </v-list>
         <div class="px-4">
           <v-color-picker

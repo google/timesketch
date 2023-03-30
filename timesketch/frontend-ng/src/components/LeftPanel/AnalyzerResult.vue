@@ -18,23 +18,57 @@ limitations under the License.
   <div>
     <!-- TODO: issue #2565 -->
     <!-- https://github.com/google/timesketch/issues/2565 -->
+    <v-row
+      no-gutters
+      class="pa-3 pl-1"
+      style="cursor: pointer"
+      @click="expanded = !expanded"
+      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+    >
+      <v-col cols="1" class="pl-1">
+        <v-icon v-if="!expanded">mdi-chevron-right</v-icon>
+        <v-icon v-else>mdi-chevron-down</v-icon>
+      </v-col>
+      <v-col cols="10">
+        <span style="font-size: 0.9em">
+          {{ analyzer.data.analyzerInfo.display_name }}
+        </span>
+      </v-col>
+
+      <v-col cols="1">
+        <div class="ml-3">
+          <small>{{ Object.keys(analyzer.data.timelines).length }} </small>
+        </div>
+      </v-col>
+    </v-row>
+
+    <v-expand-transition>
+      <div v-show="expanded">
+        <span
+          style="font-size: 0.9em"
+          v-for="timeline in analyzer.data.timelines"
+          :key="timeline.id"
+        >
+          <ts-analyzer-result-timeline :timeline="timeline" :isMultiAnalyzer="analyzer.data.analyzerInfo.is_multi"></ts-analyzer-result-timeline>
+        </span>
+      </div>
+    </v-expand-transition>
+    <v-divider></v-divider>
   </div>
 </template>
 
 <script>
+import TsAnalyzerResultTimeline from './AnalyzerResultTimeline.vue'
 
 export default {
-  props: [],
+  props: ['analyzer'],
+  components: {
+    TsAnalyzerResultTimeline,
+  },
   data: function () {
-    return {}
+    return {
+      expanded: false,
+    }
   },
-  computed: {
-    sketch() {
-      return this.$store.state.sketch
-    },
-  },
-  methods: {},
 }
 </script>
-
-<style scoped lang="scss"></style>

@@ -17,8 +17,8 @@ limitations under the License.
   <div>
     <div
       class="pa-4"
-      style="!(analyzerResults.length) ? '' : 'cursor: pointer'"
-      flat
+      :style="!(analyzerResults.length) ? '' : 'cursor: pointer'"
+      @click="expanded = !expanded"
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
       <span>
@@ -31,7 +31,6 @@ limitations under the License.
         color="primary"
         left
         text
-        class="ml-1"
         @click.stop=""
       >
         + Run Analyzer
@@ -40,14 +39,13 @@ limitations under the License.
         <v-progress-circular
           v-if="!analyzerResultsReady"
           :size="20"
-          :width="2"
+          :width="1"
           indeterminate
           color="primary"
         ></v-progress-circular>
-        <small v-if="analyzerResultsReady"><strong>{{ analyzerResults.length }}</strong></small>
+        <small class="ml-1" v-if="analyzerResultsReady"><strong>{{ analyzerResultdCounter }}</strong></small>
       </span>
     </div>
-
     <v-expand-transition>
       <div v-show="expanded">
         <div v-if="analyzerResults.length > 0">
@@ -55,7 +53,7 @@ limitations under the License.
           <!-- Add a severity and timeline filter here. -->
           <v-data-iterator v-if="analyzerResults.length <= 10" :items="analyzerResults" hide-default-footer disable-pagination>
             <template v-slot:default="props">
-              <ts-analyser-result v-for="analyzer in props.items" :key="analyzer.analyzer_name" :analyzer="analyzer" />
+              <ts-analyzer-result v-for="analyzer in props.items" :key="analyzer.analyzerName" :analyzer="analyzer" />
             </template>
           </v-data-iterator>
           <v-data-iterator v-else :items="analyzerResults" hide-default-footer disable-pagination :search="search">
@@ -74,7 +72,7 @@ limitations under the License.
             </template>
 
             <template v-slot:default="props">
-              <ts-analyzer-result v-for="analyzer in props.items" :key="analyzer.analyzer_name" :analyzer="analyzer" />
+              <ts-analyzer-result v-for="analyzer in props.items" :key="analyzer.analyzerName" :analyzer="analyzer" />
             </template>
           </v-data-iterator>
         </div>
@@ -85,6 +83,7 @@ limitations under the License.
 </template>
 
 <script>
+import ApiClient from '../../utils/RestApiClient'
 import TsAnalyzerResult from './AnalyzerResult.vue'
 
 export default {
@@ -95,9 +94,10 @@ export default {
   data: function () {
     return {
       expanded: false,
+      search: '',
       analyzerResultsReady: false,
       analyzerResults: [],
-      search: '',
+      analyzerResultsCounter: 0,
     }
   },
   // TODO: Have an automatic poll for new analyzers running when they are triggered.
@@ -113,8 +113,64 @@ export default {
     },
   },
   methods: {
-    // TODO: issue#2565 collect & process analyzer results.
+    async updateAnalyzerResultsData() {
+      let perAnalyzer = {}
+      let resultCounter = 0
+      for (const timeline of this.sketch.timelines) {
+        try {
+          const response = await ApiClient.getSketchTimelineAnalysis(this.sketch.id, timeline.id);
+          let analyzerSessions = response.data.objects[0]
+          if (!analyzerSessions) continue
+          analyzerSessions.forEach((session) => {
+            if (!perAnalyzer[session.analyzer_name]) {
+              // the analyzer is not yet in the results: create new entry
+              perAnalyzer[session.analyzer_name] = {
+                timelines: {},
+                analyzerInfo: {
+                  name: session.analyzer_name,
+                  description: this.analyzerList[session.analyzer_name].description,
+                  is_multi: this.analyzerList[session.analyzer_name].is_multi,
+                  display_name: this.analyzerList[session.analyzer_name].display_name,
+                }
+              }
+            }
+
+            if (!perAnalyzer[session.analyzer_name].timelines[session.timeline.name]) {
+              // this timeline is not yet in the results for this analyzer: add it
+              perAnalyzer[session.analyzer_name].timelines[session.timeline.name] = {
+                id: session.timeline.id,
+                name: session.timeline.name,
+                color: session.timeline.color,
+                verdict: session.result,
+                created_at: session.created_at,
+                last_analysissession_id: session.analysissession_id,
+                analysis_status: session.status[0].status,
+              }
+              resultCounter += 1
+            }
+
+            if (perAnalyzer[session.analyzer_name].timelines[session.timeline.name].last_analysissession_id < session.analysissession_id) {
+              // this timeline is already in the results for this analyzer but check if the session is newer and update it
+              perAnalyzer[session.analyzer_name].timelines[session.timeline.name].created_at = session.created_at
+              perAnalyzer[session.analyzer_name].timelines[session.timeline.name].verdict = session.result
+              perAnalyzer[session.analyzer_name].timelines[session.timeline.name].last_analysissession_id = session.analysissession_id
+              perAnalyzer[session.analyzer_name].timelines[session.timeline.name].status = session.status[0].status
+            }
+          })
+        } catch(e) {
+          console.error(e)
+        }
+      }
+      // for now sort the results in alphabetical order. In the future this will be sorted by verdict severity.
+      let sortedAnalyzerList = [...Object.entries(perAnalyzer).map(([analyzerName, data]) => ({analyzerName, data}))]
+      sortedAnalyzerList.sort((a, b) => a.data.analyzerInfo.display_name.localeCompare(b.data.analyzerInfo.display_name))
+      this.analyzerResults = sortedAnalyzerList
+      this.analyzerResultdCounter = resultCounter
+      this.analyzerResultsReady = true
+    }
   },
-  created() {},
+  mounted() {
+    this.updateAnalyzerResultsData()
+  },
 }
 </script>
