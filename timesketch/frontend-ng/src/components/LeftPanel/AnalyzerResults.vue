@@ -43,7 +43,7 @@ limitations under the License.
           indeterminate
           color="primary"
         ></v-progress-circular>
-        <small class="ml-1" v-if="analyzerResultsReady"><strong>{{ totalNumberOfAnalyzerResults }}</strong></small>
+        <small class="ml-1" v-if="analyzerResultsReady"><strong>{{ analyzerResultdCounter }}</strong></small>
       </span>
     </div>
     <v-expand-transition>
@@ -53,7 +53,7 @@ limitations under the License.
           <!-- Add a severity and timeline filter here. -->
           <v-data-iterator v-if="analyzerResults.length <= 10" :items="analyzerResults" hide-default-footer disable-pagination>
             <template v-slot:default="props">
-              <ts-analyzer-result v-for="analyzer in props.items" :key="analyzer.analyzer_name" :analyzer="analyzer" />
+              <ts-analyzer-result v-for="analyzer in props.items" :key="analyzer.analyzerName" :analyzer="analyzer" />
             </template>
           </v-data-iterator>
           <v-data-iterator v-else :items="analyzerResults" hide-default-footer disable-pagination :search="search">
@@ -72,7 +72,7 @@ limitations under the License.
             </template>
 
             <template v-slot:default="props">
-              <ts-analyzer-result v-for="analyzer in props.items" :key="analyzer.analyzer_name" :analyzer="analyzer" />
+              <ts-analyzer-result v-for="analyzer in props.items" :key="analyzer.analyzerName" :analyzer="analyzer" />
             </template>
           </v-data-iterator>
         </div>
@@ -94,9 +94,10 @@ export default {
   data: function () {
     return {
       expanded: false,
+      search: '',
       analyzerResultsReady: false,
       analyzerResults: [],
-      search: '',
+      analyzerResultsCounter: 0,
     }
   },
   // TODO: Have an automatic poll for new analyzers running when they are triggered.
@@ -110,91 +111,65 @@ export default {
     analyzerList() {
       return this.$store.state.sketchAnalyzerList
     },
-    totalNumberOfAnalyzerResults() {
-      let counter = 0
-      this.analyzerResults.forEach((analyzer) => {
-        counter += analyzer.timelines.length
-      })
-      return counter
-    },
   },
   methods: {
-    getAnalyzerResults() {
-      let analyzerResults = []
-      this.sketch.timelines.forEach(timeline => {
-        ApiClient.getSketchTimelineAnalysis(this.sketch.id, timeline.id)
-        .then(response => {
-          if (response.data.objects[0] !== undefined) {
-            // massage data to fit the result list needs
-            response.data.objects[0].forEach((analysis) => {
-              let analyzerExists = false
-              analyzerResults.every((analyzer) => {
-                if (analyzer.analyzer_name === analysis.analyzer_name) {
-                  analyzerExists = true
-                  // analyzer already exists in the list
-                  let timelineExists = false
-                  analyzer.timelines.every((timeline) => {
-                    // timeline already exists in the list
-                    if (timeline.id === analysis.timeline.id) {
-                      timelineExists = true
-                      // check if the analysis is newer than the one in the list
-                      if (analysis.created_at > timeline.created_at) {
-                        timeline.created_at = analysis.created_at
-                        timeline.result = analysis.result
-                        timeline.status = analysis.status[0].status
-                      }
-                      return false
-                    }
-                    return true
-                  })
-                  if (!timelineExists) {
-                    // timeline did not exist so add it
-                    let output = {
-                      id: analysis.timeline.id,
-                      name: analysis.timeline.name,
-                      color: '#'+analysis.timeline.color,
-                      result: analysis.result,
-                      status: analysis.status[0].status,
-                      created_at: analysis.created_at
-                    }
-                    analyzer.timelines.push(output)
-                  }
-                  return false
+    async updateAnalyzerResultsData() {
+      let perAnalyzer = {}
+      let resultCounter = 0
+      for (const timeline of this.sketch.timelines) {
+        try {
+          const response = await ApiClient.getSketchTimelineAnalysis(this.sketch.id, timeline.id);
+          let analyzerSessions = response.data.objects[0]
+          analyzerSessions.forEach((session) => {
+            if (!perAnalyzer[session.analyzer_name]) {
+              // the analyzer is not yet in the results: create new entry
+              perAnalyzer[session.analyzer_name] = {
+                timelines: {},
+                analyzerInfo: {
+                  name: session.analyzer_name,
+                  description: this.analyzerList[session.analyzer_name].description,
+                  is_multi: this.analyzerList[session.analyzer_name].is_multi,
+                  display_name: this.analyzerList[session.analyzer_name].display_name,
                 }
-                return true
-              })
-              if (!analyzerExists) {
-                // analyzer did not exist so add it
-                let output = {
-                  analyzer_name: analysis.analyzer_name,
-                  analyzer_display_name: this.analyzerList[analysis.analyzer_name].display_name,
-                  analyzer_is_multi: this.analyzerList[analysis.analyzer_name].is_multi,
-                  timelines: [
-                    {
-                      id: analysis.timeline.id,
-                      name: analysis.timeline.name,
-                      color: '#'+analysis.timeline.color,
-                      result: analysis.result,
-                      status: analysis.status[0].status,
-                      created_at: analysis.created_at
-                    },
-                  ],
-                }
-                analyzerResults.push(output)
               }
-            })
-          }
-        })
-        .catch(e => {
+            }
+
+            if (!perAnalyzer[session.analyzer_name].timelines[session.timeline.name]) {
+              // this timeline is not yet in the results for this analyzer: add it
+              perAnalyzer[session.analyzer_name].timelines[session.timeline.name] = {
+                id: session.timeline.id,
+                name: session.timeline.name,
+                color: session.timeline.color,
+                verdict: session.result,
+                created_at: session.created_at,
+                last_analysissession_id: session.analysissession_id,
+                analysis_status: session.status[0].status,
+              }
+              resultCounter += 1
+            }
+
+            if (perAnalyzer[session.analyzer_name].timelines[session.timeline.name].last_analysissession_id < session.analysissession_id) {
+              // this timeline is already in the results for this analyzer but check if the session is newer and update it
+              perAnalyzer[session.analyzer_name].timelines[session.timeline.name].created_at = session.created_at
+              perAnalyzer[session.analyzer_name].timelines[session.timeline.name].verdict = session.result
+              perAnalyzer[session.analyzer_name].timelines[session.timeline.name].last_analysissession_id = session.analysissession_id
+              perAnalyzer[session.analyzer_name].timelines[session.timeline.name].status = session.status[0].status
+            }
+          })
+        } catch(e) {
           console.error(e)
-        })
-        this.analyzerResults = analyzerResults
-        this.analyzerResultsReady = true
-      })
-    },
+        }
+      }
+      // for now sort the results in alphabetical order. In the future this will be sorted by verdict severity.
+      let sortedAnalyzerList = [...Object.entries(perAnalyzer).map(([analyzerName, data]) => ({analyzerName, data}))]
+      sortedAnalyzerList.sort((a, b) => a.data.analyzerInfo.display_name.localeCompare(b.data.analyzerInfo.display_name))
+      this.analyzerResults = sortedAnalyzerList
+      this.analyzerResultdCounter = resultCounter
+      this.analyzerResultsReady = true
+    }
   },
   mounted() {
-    this.getAnalyzerResults()
+    this.updateAnalyzerResultsData()
   },
 }
 </script>

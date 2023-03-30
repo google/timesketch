@@ -13,7 +13,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -->
-
 <template>
   <div :class="$vuetify.theme.dark ? (expanded ? 'dark-hover dark-bg' :'dark-hover') : (expanded ? 'light-hover light-bg' : 'light-hover')">
     <v-divider></v-divider>
@@ -23,7 +22,7 @@ limitations under the License.
       @click="expanded = !expanded"
       :class="$vuetify.theme.dark ? (expanded ? 'dark-hover dark-bg' :'dark-hover') : (expanded ? 'light-hover light-bg' : 'light-hover')"
     >
-      <v-icon class="mr-2" :color="timeline.color">mdi-circle</v-icon>
+      <v-icon class="mr-2" :color="'#'+timeline.color">mdi-circle</v-icon>
       <span>{{ timeline.name }}</span>
       <v-tooltip top>
         <template v-slot:activator="{ on }">
@@ -59,7 +58,7 @@ limitations under the License.
               </td>
               <td style="border: none">
                 <span>
-                  {{ timeline.result }}
+                  {{ timeline.verdict }}
                 </span>
               </td>
             </tr>
@@ -79,7 +78,7 @@ limitations under the License.
               </td>
               <td style="border: none">
                 <span>
-                  {{ timeline.status }}
+                  {{ timeline.analysis_status }}
                 </span>
               </td>
             </tr>
@@ -102,14 +101,6 @@ export default {
     return {
       expanded: false,
     }
-  },
-  computed: {
-    sketch() {
-      return this.$store.state.sketch
-    },
-  },
-  methods: {
-
   },
 }
 </script>

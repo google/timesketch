@@ -31,13 +31,13 @@ limitations under the License.
       </v-col>
       <v-col cols="10">
         <span style="font-size: 0.9em">
-          {{ analyzer.analyzer_display_name }}
+          {{ analyzer.data.analyzerInfo.display_name }}
         </span>
       </v-col>
 
       <v-col cols="1">
         <div class="ml-3">
-          <small>{{ analyzer.timelines.length }} </small>
+          <small>{{ Object.keys(analyzer.data.timelines).length }} </small>
         </div>
       </v-col>
     </v-row>
@@ -46,10 +46,10 @@ limitations under the License.
       <div v-show="expanded">
         <span
           style="font-size: 0.9em"
-          v-for="timeline in analyzer.timelines"
+          v-for="timeline in analyzer.data.timelines"
           :key="timeline.id"
         >
-          <ts-analyzer-result-timeline :timeline="timeline" :isMultiAnalyzer="analyzer.analyzer_is_multi"></ts-analyzer-result-timeline>
+          <ts-analyzer-result-timeline :timeline="timeline" :isMultiAnalyzer="analyzer.data.analyzerInfo.is_multi"></ts-analyzer-result-timeline>
         </span>
       </div>
     </v-expand-transition>
@@ -70,11 +70,5 @@ export default {
       expanded: false,
     }
   },
-  computed: {
-    sketch() {
-      return this.$store.state.sketch
-    },
-  },
-  methods: {},
 }
 </script>
