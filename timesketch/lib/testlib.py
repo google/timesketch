@@ -90,7 +90,7 @@ class MockOpenSearchClient(object):
         self.indices = MockOpenSearchIndices()
 
     def search(
-        self, index, body, size=0, search_type=None
+        self, index, body, size=0, search_type=None, _source_include=None
     ):  # pylint: disable=unused-argument
         """Mock a client search.
 
@@ -172,6 +172,8 @@ class MockOpenSearchIndices(object):
 class MockDataStore(object):
     """A mock implementation of a Datastore."""
 
+    DEFAULT_FLUSH_INTERVAL = 1000
+
     event_dict = {
         "_index": [],
         "_id": "adc123",
@@ -200,8 +202,16 @@ class MockDataStore(object):
                         "timestamp": 1410593222543942,
                         "message": "Test event",
                         "timesketch_label": [
-                            {"user_id": 1, "name": "__ts_star", "sketch_id": 1},
-                            {"user_id": 2, "name": "__ts_star", "sketch_id": 99},
+                            {
+                                "user_id": 1,
+                                "name": "__ts_star",
+                                "sketch_id": 1,
+                            },
+                            {
+                                "user_id": 2,
+                                "name": "__ts_star",
+                                "sketch_id": 99,
+                            },
                         ],
                         "timestamp_desc": "Content Modification Time",
                         "datetime": "2014-09-13T07:27:03+00:00",
@@ -257,6 +267,37 @@ class MockDataStore(object):
             A dictionary with event data.
         """
         return self.event_dict
+
+    def add_tags(self, searchindex_id, event_id, tags):
+        """Mock adding a tag to an event.
+
+        Args:
+            searchindex_id: String of OpenSearch index id
+            event_id: String of OpenSearch event id
+            tags: List of tags to add
+        """
+
+        event_dict = event_dict = {
+            "_index": [],
+            "_id": "adc123",
+            "_type": "plaso_event",
+            "_source": {
+                "__ts_timeline_id": 1,
+                "comment": ["test"],
+                "es_index": "",
+                "es_id": "",
+                "label": "",
+                "tag": [tags],
+                "timestamp": 1410895419859714,
+                "timestamp_desc": "",
+                "datetime": "2014-09-16T19:23:40+00:00",
+                "source_short": "",
+                "source_long": "",
+                "message": "",
+            },
+        }
+
+        return event_dict
 
     @staticmethod
     def count(indices):
@@ -584,7 +625,10 @@ class BaseTest(TestCase):
             A search template (timesketch.models.sketch.SearchTemplate)
         """
         searchtemplate = SearchTemplate(
-            name=name, query_string=name, query_filter=json.dumps(dict()), user=user
+            name=name,
+            query_string=name,
+            query_filter=json.dumps(dict()),
+            user=user,
         )
         self._commit_to_database(searchtemplate)
         return searchtemplate
