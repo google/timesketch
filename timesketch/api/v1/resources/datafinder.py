@@ -74,7 +74,7 @@ class DataFinderResource(resources.ResourceMixin, Resource):
         if not rule_names:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                "Need a list of rule names to be able to start the " "data discovery.",
+                "Need a list of rule names to be able to start the data discovery.",
             )
 
         if not isinstance(rule_names, (list, tuple)):
