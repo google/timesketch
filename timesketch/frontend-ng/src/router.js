@@ -19,7 +19,6 @@ import VueRouter from 'vue-router'
 import Home from './views/Home'
 import Canvas from './views/Canvas'
 import Sketch from './views/Sketch'
-import Studio from './views/Studio'
 
 Vue.use(VueRouter)
 
@@ -53,8 +52,41 @@ const routes = [
         props: true,
       },
       {
+        path: 'sigma',
+        component: Canvas,
+        props: true,
+        children: [
+          {
+            path: 'new',
+            name: 'SigmaNewRule',
+            component: Canvas,
+            props: true,
+          },
+          {
+            path: 'edit/:ruleId',
+            name: 'SigmaEditRule',
+            component: Canvas,
+            props: true,
+          },
+
+        ]
+      },
+      {
+        path: 'sigma/edit',
+        name: 'SigmaEdit',
+        component: Canvas,
+        props: true,
+      },
+
+      {
         path: 'graph',
         name: 'Graph',
+        component: Canvas,
+        props: true,
+      },
+      {
+        path: 'story/:storyId',
+        name: 'Story',
         component: Canvas,
         props: true,
       },
@@ -65,12 +97,6 @@ const routes = [
         props: true,
       },
     ],
-  },
-  {
-    name: 'Studio',
-    path: '/studio/:type/:id',
-    component: Studio,
-    props: true,
   },
 ]
 

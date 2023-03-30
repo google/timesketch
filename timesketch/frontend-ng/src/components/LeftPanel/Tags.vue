@@ -15,51 +15,53 @@ limitations under the License.
 -->
 <template>
   <div>
-    <div class="pa-4" flat :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
-      <span style="cursor: pointer" @click="expanded = !expanded">
-        <v-icon left>mdi-tag-multiple-outline</v-icon> Tags
-      </span>
-      <span class="float-right mr-2">
-        <small><strong>{{ tags.length }}</strong></small>
+    <div
+      :style="tags && tags.length ? 'cursor: pointer' : ''"
+      class="pa-4"
+      @click="expanded = !expanded"
+      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+    >
+      <span> <v-icon left>mdi-tag-multiple-outline</v-icon> Tags </span>
+
+      <span class="float-right" style="margin-right: 10px">
+        <small
+          ><strong>{{ tags.length }}</strong></small
+        >
       </span>
     </div>
 
     <v-expand-transition>
       <div v-show="expanded && tags.length">
-        <v-row
-          no-gutters
+        <div
           v-for="label in labels"
           :key="label.label"
-          class="pa-2 pl-5"
-          :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+          @click="searchForLabel(label.label)"
+          style="cursor: pointer; font-size: 0.9em"
         >
-          <div @click="searchForLabel(label.label)" style="cursor: pointer; font-size: 0.9em">
+          <v-row no-gutters class="pa-2 pl-5" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
             <v-icon v-if="label.label === '__ts_star'" left small color="amber">mdi-star</v-icon>
             <v-icon v-if="label.label === '__ts_comment'" left small>mdi-comment-multiple-outline</v-icon>
-
-            <span
-              >{{ label.label | formatLabelText }} (<small
+            <span>
+              {{ label.label | formatLabelText }} (<small
                 ><strong>{{ label.count | compactNumber }}</strong></small
-              >)</span
-            >
-          </div>
-        </v-row>
-
-        <v-row
-          no-gutters
+              >)
+            </span>
+          </v-row>
+        </div>
+        <div
           v-for="tag in tags"
           :key="tag.tag"
-          class="pa-2 pl-5"
-          :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+          @click="searchForTag(tag.tag)"
+          style="cursor: pointer; font-size: 0.9em"
         >
-          <div @click="searchForTag(tag.tag)" style="cursor: pointer; font-size: 0.9em">
+          <v-row no-gutters class="pa-2 pl-5" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
             <span
               >{{ tag.tag }} (<small
                 ><strong>{{ tag.count | compactNumber }}</strong></small
               >)</span
             >
-          </div>
-        </v-row>
+          </v-row>
+        </div>
       </div>
     </v-expand-transition>
     <v-divider></v-divider>
