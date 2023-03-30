@@ -30,7 +30,7 @@ limitations under the License.
     <v-card-text>
       <v-container fluid >
         <v-row justify="center">
-          <v-col class="pt-0">
+          <v-col>
             <v-card outlined height="146px" :loading="!statsReady">
               <v-card-title>
                 Sketch statistics
@@ -108,7 +108,7 @@ limitations under the License.
                     <template v-slot:activator="{ on }">
                       <v-icon color="primary" v-on="on">mdi-information-outline</v-icon>
                     </template>
-                    <span>The top {{ Math.min(10, this.commonValues.length) }} most common 
+                    <span>The top {{ Math.min(10, this.commonValues.length) }} most common
                       &nbsp;<span style="font-family: monospace">{{ eventKey }}</span>&nbsp; values
                       (out of {{ this.fieldCardinality }} unique values).
                     </span>
