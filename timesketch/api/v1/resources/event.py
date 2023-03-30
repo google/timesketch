@@ -76,16 +76,24 @@ def _untag_event(row, tag_dict, tags_to_remove, datastore, flush_interval):
         if isinstance(tag, (list, tuple)):
             existing_tags = set(tag)
 
-        new_tags = list(set(existing_tags) - set(tags_to_remove))
+        if set(existing_tags) == set(tags_to_remove):
+            new_tags = []
+        else:
+            # create a new list where the set of tags are the existing tags
+            new_tags = list(set(existing_tags) - set(tags_to_remove))
     else:
         new_tags = []
 
     if set(existing_tags) != set(new_tags):
-        tag_dict["events_updated_by_api"] += 1
-        datastore.import_event(row["event_id"], row["index_name"], {"tag": new_tags})
+        datastore.import_event(
+            index_name=row["_index"],
+            event_id=row["_id"],
+            event={"tag": new_tags},
+            flush_interval=flush_interval,
+        )
 
-        if tag_dict["events_updated_by_api"] % flush_interval == 0:
-            datastore.flush_queued_events()
+    tag_dict["tags_applied"] += len(new_tags)
+    tag_dict["number_of_events_with_added_tags"] += 1
 
 
 def _tag_event(row, tag_dict, tags_to_add, datastore, flush_interval):
