@@ -22,6 +22,35 @@ def events_group():
     """Manage event."""
 
 
+@events_group.command("remove_tag")
+@click.option("--timeline-id", type=int, required=True)
+@click.option("--event-id", required=True, help="ID of the event.")
+@click.option(
+    "--tag",
+    required=True,
+    help="Comma separated list of Tags to remove from the event.",
+)
+@click.pass_context
+def remove_tag(ctx, timeline_id, event_id, tag):
+    """Remove a tag from an event."""
+    sketch = ctx.obj.sketch
+    timeline = sketch.get_timeline(timeline_id=timeline_id)
+    if not timeline:
+        click.echo("No such timeline.")
+        return
+
+    events = [
+        {
+            "_id": event_id,
+            "_index": timeline.index_name,
+            "_type": "generic_event",
+        }
+    ]
+
+    tags = tag.split(",")
+    sketch.untag_events(events, tags)
+
+
 @events_group.command("annotate")
 @click.option("--timeline-id", type=int, required=True)
 @click.option("--event-id", required=True, help="ID of the event.")
