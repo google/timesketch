@@ -20,7 +20,7 @@ pandas==1.5.0
 PyJWT==1.7.1
 python_dateutil==2.8.1
 PyYAML==5.4.1
-redis==3.5.3
+redis==4.4.4
 requests==2.25.1
 sigmatools==0.19.1 ; python_version > '3.4'
 six==1.12.0
