@@ -41,7 +41,7 @@ if ! command -v docker; then
 fi
 
 # Exit early if docker compose is not installed.
-if ! docker compose; then
+if ! docker compose &>/dev/null; then
   echo "ERROR: docker-compose-plugin is not installed."
   exit 1
 fi
