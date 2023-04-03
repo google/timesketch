@@ -1127,9 +1127,7 @@ class Sketch(resource.BaseResource):
             )
 
         if not timeline_id and not timeline_name:
-            return (
-                "Unable to run analyzer, need to define either timeline ID or name"
-            )
+            return "Unable to run analyzer, need to define either timeline ID or name"
 
         if timeline_name:
             sketch = self.lazyload_data(refresh_cache=True)
