@@ -16,7 +16,22 @@ limitations under the License.
 <template>
   <div :class="$vuetify.theme.dark ? (expanded ? 'dark-hover dark-bg' :'dark-hover') : (expanded ? 'light-hover light-bg' : 'light-hover')">
     <v-divider></v-divider>
+    <div v-if="timeline.analysis_status == 'PENDING' || timeline.analysis_status == 'STARTED'"
+      class="pa-2 pl-3"
+      style="display: flex; align-items: center;"
+      :class="$vuetify.theme.dark ? (expanded ? 'dark-hover dark-bg' :'dark-hover') : (expanded ? 'light-hover light-bg' : 'light-hover')"
+    >
+      <v-icon class="mr-2" :color="'#'+timeline.color">mdi-circle</v-icon>
+      <span class="mr-2" style="color:grey">{{ timeline.name }}</span>
+      <v-progress-circular
+          :size="20"
+          :width="1"
+          indeterminate
+          color="primary"
+        ></v-progress-circular>
+    </div>
     <div
+      v-else
       class="pa-2 pl-3"
       style="cursor: pointer; display: flex; align-items: center;"
       @click="expanded = !expanded"
@@ -24,22 +39,42 @@ limitations under the License.
     >
       <v-icon class="mr-2" :color="'#'+timeline.color">mdi-circle</v-icon>
       <span>{{ timeline.name }}</span>
-      <v-tooltip top>
-        <template v-slot:activator="{ on }">
-          <v-btn
-            v-show="!isMultiAnalyzer"
-            text
-            x-small
-            icon
-            v-on="on"
-            class="ml-1"
-            :ripple="false"
-          >
-            <v-icon small color="#696B69">mdi-information-outline</v-icon>
-          </v-btn>
-        </template>
-        <span>Severity: Note</span>
-      </v-tooltip>
+      <div v-if="timeline.analysis_status == 'ERROR'">
+        <v-tooltip top>
+          <template v-slot:activator="{ on }">
+            <v-btn
+              text
+              x-small
+              icon
+              v-on="on"
+              class="ml-1"
+              :ripple="false"
+            >
+              <v-icon small class="ml-1">mdi-alert</v-icon>
+            </v-btn>
+          </template>
+          <span>Analyzer Error</span>
+        </v-tooltip>
+      </div>
+      <div v-else>
+        <v-tooltip top>
+          <template v-slot:activator="{ on }">
+            <v-btn
+              v-show="!isMultiAnalyzer"
+              text
+              x-small
+              icon
+              v-on="on"
+              class="ml-1"
+              :ripple="false"
+            >
+              <v-icon small color="#696B69">mdi-information-outline</v-icon>
+            </v-btn>
+          </template>
+          <!-- For now severity: note is the default until we have implemented the new analyzer output design -->
+          <span>Severity: Note</span>
+        </v-tooltip>
+      </div>
     </div>
 
     <v-expand-transition>
@@ -54,7 +89,8 @@ limitations under the License.
           >
             <tr class="pr-3">
               <td width="80" style="border: none">
-                <strong>Verdict:</strong>
+                <strong v-if="timeline.analysis_status == 'ERROR'">Error:</strong>
+                <strong v-else>Verdict:</strong>
               </td>
               <td style="border: none">
                 <span>

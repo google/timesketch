@@ -18,11 +18,11 @@ limitations under the License.
     <!-- Search and Filters -->
     <v-card flat class="pa-3 pt-0 mt-n3" color="transparent">
       <div class="mt-2">
-        <ts-timeline-search></ts-timeline-search>
+        <ts-timeline-search @selectedTimelines="timelineSelection = $event"></ts-timeline-search>
       </div>
       <v-divider></v-divider>
       <div>
-        <ts-analyzer-list></ts-analyzer-list>
+        <ts-analyzer-list :timelineSelection="timelineSelection"></ts-analyzer-list>
       </div>
       <v-divider></v-divider>
     </v-card>
@@ -36,11 +36,13 @@ import TsAnalyzerList from '../components/Analyzer/AnalyzerList'
 export default {
   components: {
     TsTimelineSearch,
-    TsAnalyzerList
+    TsAnalyzerList,
   },
   props: ['sketchId'],
   data() {
-    return {}
+    return {
+      timelineSelection: [],
+    }
   },
   computed: {
     sketch() {

@@ -15,21 +15,21 @@ limitations under the License.
 -->
 <template>
   <div>
-    <v-btn-toggle dense rounded class="mb-2">
-      <v-btn small outlined rounded color="primary" @click="selectAll()">
-        Select all
-      </v-btn>
-      <v-btn small outlined rounded color="primary" @click="unselectAll()">
-        Unselect all
-      </v-btn>
-    </v-btn-toggle>
+    <v-btn small text color="primary" @click="selectAll()" class="mb-1">
+      <v-icon left small>mdi-plus</v-icon>
+      <span>Select all</span>
+    </v-btn>
+    <v-btn small text color="primary" @click="unselectAll()" class="mb-1">
+      <v-icon left small>mdi-minus</v-icon>
+      <span>Unselect all</span>
+    </v-btn>
     <v-autocomplete
       v-model="selectedTimelines"
       :items="allTimelines"
       outlined
       label="Select timelines for analysis"
       item-text="name"
-      item-value="name"
+      item-value="id"
       multiple
       class="center-label-height"
     >
@@ -45,7 +45,7 @@ limitations under the License.
           <div>
               <ts-timeline-chip
                 :timeline="data.item"
-                :close="selectedTimelines.includes(data.item.name)"
+                :close="selectedTimelines.includes(data.item.id)"
                 @click:close="remove(data.item)"
               ></ts-timeline-chip>
           </div>
@@ -75,16 +75,25 @@ export default {
       // Sort alphabetically based on timeline name.
       let timelines = [...this.sketch.timelines]
       timelines.sort((a, b) => a.name.localeCompare(b.name))
+      // console.log(timelines)
       return timelines;
     },
-
+  },
+  watch: {
+    // add a watcher for selectedTimelines that emits the value to the parent
+    selectedTimelines:  {
+      handler: function (selection) {
+        this.$emit('selectedTimelines', selection)
+      },
+      deep: true
+    }
   },
   methods: {
     remove (timeline) {
-      this.selectedTimelines = this.selectedTimelines.filter(tl => tl!== timeline.name);
+      this.selectedTimelines = this.selectedTimelines.filter(tl => tl!== timeline.id);
     },
     selectAll () {
-      this.selectedTimelines = [...this.allTimelines.map(tl => tl.name)];
+      this.selectedTimelines = [...this.allTimelines.map(tl => tl.id)];
     },
     unselectAll () {
       this.selectedTimelines = [];

@@ -10,7 +10,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -->
-
 <template>
   <v-simple-table>
     <template v-slot:default>
@@ -27,17 +26,29 @@ limitations under the License.
       </thead>
       <tbody>
         <tr
-          v-for="analyzer in sortedAnalyzers()"
-          :key="analyzer.name"
+          v-for="analyzer in sortedAnalyzerList"
+          :key="analyzer.analyzerName"
         >
-        <td>
-            <v-btn small depressed text color="primary">
-              <v-icon small left>mdi-auto-fix</v-icon>
-              Run Alayzer
-            </v-btn>
+          <td>
+            <v-tooltip right open-delay="500">
+              <template v-slot:activator="{ on }">
+                <div v-on="on" class="d-inline-block">
+                  <v-btn
+                    icon
+                    color="primary"
+                    :disabled="(timelineSelection.length > 0) ? false : true"
+                    @click="runAnalyzer(analyzer.analyzerName)"
+                  >
+                    <v-icon>mdi-play-circle-outline</v-icon>
+                  </v-btn>
+                </div>
+              </template>
+              <span v-if="timelineSelection.length > 0">Run analyzer: {{ analyzer.info.display_name }}</span>
+              <span v-else>Please select a timeline above first.</span>
+            </v-tooltip>
           </td>
-          <td>{{ analyzer.display_name}}</td>
-          <td>{{ analyzer.description }}</td>
+          <td>{{ analyzer.info.display_name}}</td>
+          <td>{{ analyzer.info.description }}</td>
         </tr>
       </tbody>
     </template>
@@ -45,7 +56,11 @@ limitations under the License.
 </template>
 
 <script>
+import ApiClient from '../../utils/RestApiClient'
+import EventBus from '../../main'
+
 export default {
+  props: ['timelineSelection'],
   data() {
     return {
     }
@@ -57,18 +72,30 @@ export default {
     analyzerList() {
         return this.$store.state.sketchAnalyzerList;
     },
+    sortedAnalyzerList() {
+      let unsortedAnalyzerList = Object.entries(this.analyzerList).map(([analyzerName, info]) => ({analyzerName, info}))
+      let sortedAnalyzerList = [...unsortedAnalyzerList]
+      sortedAnalyzerList.sort((a, b) => a.info.display_name.localeCompare(b.info.display_name))
+      return sortedAnalyzerList
+    }
   },
   methods: {
-    // Sort alphabetically based on analyzer display_name
-    sortedAnalyzers() {
-      let unsortedAnalyzerList = []
-      for (let analyzer in this.analyzerList) {
-        unsortedAnalyzerList.push(this.analyzerList[analyzer])
-      }
-      let sortedAnalyzerList = [...unsortedAnalyzerList]
-      sortedAnalyzerList.sort((a, b) => a.display_name.localeCompare(b.display_name))
-      return sortedAnalyzerList
+    runAnalyzer(analyzerName) {
+      ApiClient.runAnalyzers(this.sketch.id,  this.timelineSelection, [analyzerName])
+        .then((response) => {
+          let sessionIds = []
+          for (let sessions of response.data.objects[0]) {
+            sessionIds.push(sessions.id)
+          }
+          this.triggeredAnalyzerRuns(sessionIds)
+        })
+        .catch((error) => {
+          console.log(error)
+        })
     },
+    triggeredAnalyzerRuns(data) {
+      EventBus.$emit('triggeredAnalyzerRuns', data)
+    }
   },
 }
 </script>
