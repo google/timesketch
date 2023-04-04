@@ -151,7 +151,7 @@ limitations under the License.
           <v-row class="mt-0 px-2" flat>
             <v-col cols="12">
               <v-card v-if="!Object.keys(scenarioTemplates).length" flat class="pa-4"
-                >No scenarios available yet.</v-card
+                >No scenarios available yet. Contact your server admin to add scenarios to this server.</v-card
               >
               <v-btn v-else text color="primary" @click="scenarioDialog = true" style="cursor: pointer"
                 ><v-icon left>mdi-plus</v-icon> Add Scenario</v-btn
