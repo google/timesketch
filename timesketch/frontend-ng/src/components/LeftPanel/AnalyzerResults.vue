@@ -25,15 +25,14 @@ limitations under the License.
         <v-icon left>mdi-auto-fix</v-icon> Analyzer Results
       </span>
       <v-btn
-        v-if="expanded || !(analyzerResults.length)"
-        :to="{ name: 'Analyze', params: { sketchId: sketch.id } }"
-        small
-        color="primary"
-        left
+        v-if="expanded || (analyzerResults && !analyzerResults.length && analyzerResultsReady)"
+        icon
         text
+        class="float-right mt-n1 mr-n1"
+        :to="{ name: 'Analyze', params: { sketchId: sketch.id, analyzerTimelineId: undefined } }"
         @click.stop=""
       >
-        + Run Analyzer
+        <v-icon>mdi-plus</v-icon>
       </v-btn>
       <span class="float-right mr-2">
         <v-progress-circular
@@ -43,7 +42,7 @@ limitations under the License.
           indeterminate
           color="primary"
         ></v-progress-circular>
-        <small class="ml-1" v-if="analyzerResultsReady"><strong>{{ resultCounter }}</strong></small>
+        <small class="ml-1" v-if="!expanded && (analyzerResults && analyzerResults.length && analyzerResultsReady)"><strong>{{ resultCounter }}</strong></small>
       </span>
     </div>
     <v-expand-transition>

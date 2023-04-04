@@ -62,6 +62,7 @@ export default {
   components:{
     TsTimelineChip,
   },
+  props: ['analyzerTimelineId'],
   data() {
     return {
       selectedTimelines: [],
@@ -86,7 +87,13 @@ export default {
         this.$emit('selectedTimelines', selection)
       },
       deep: true
-    }
+    },
+    analyzerTimelineId: {
+      handler: function (id) {
+        if (id) this.selectedTimelines.push(id)
+        if (!id) this.selectedTimelines = []
+      },
+    },
   },
   methods: {
     remove (timeline) {

@@ -214,7 +214,7 @@ limitations under the License.
 
           <v-list-item
             v-if="timelineStatus === 'ready'"
-            :to="{ name: 'Analyze', params: { sketchId: sketch.id  } }"
+            :to="{ name: 'Analyze', params: { sketchId: sketch.id, analyzerTimelineId: timeline.id } }"
             style="cursor: pointer"
             @click="$refs.timelineChipMenuRef.isActive = false"
             >

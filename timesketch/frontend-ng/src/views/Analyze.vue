@@ -15,10 +15,9 @@ limitations under the License.
 -->
 <template>
   <v-container fluid>
-    <!-- Search and Filters -->
     <v-card flat class="pa-3 pt-0 mt-n3" color="transparent">
       <div class="mt-2">
-        <ts-timeline-search @selectedTimelines="timelineSelection = $event"></ts-timeline-search>
+        <ts-timeline-search :analyzer-timeline-id="analyzerTimelineId" @selectedTimelines="timelineSelection = $event"></ts-timeline-search>
       </div>
       <v-divider></v-divider>
       <div>
@@ -38,7 +37,7 @@ export default {
     TsTimelineSearch,
     TsAnalyzerList,
   },
-  props: ['sketchId'],
+  props: ['sketchId', 'analyzerTimelineId'],
   data() {
     return {
       timelineSelection: [],
