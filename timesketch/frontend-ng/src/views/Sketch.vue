@@ -144,6 +144,7 @@ limitations under the License.
           <ts-intelligence></ts-intelligence>
           <ts-search-templates></ts-search-templates>
           <ts-sigma-rules></ts-sigma-rules>
+          <ts-analyzer-results></ts-analyzer-results>
         </v-tab-item>
         <v-tab-item :transition="false">
           <ts-scenario v-for="scenario in activeScenarios" :key="scenario.id" :scenario="scenario"></ts-scenario>
@@ -291,6 +292,7 @@ import TsStories from '../components/LeftPanel/Stories'
 import TsUploadTimelineForm from '../components/UploadForm'
 import TsShareCard from '../components/ShareCard'
 import TsRenameSketch from '../components/RenameSketch'
+import TsAnalyzerResults from '../components/LeftPanel/AnalyzerResults.vue'
 
 export default {
   props: ['sketchId'],
@@ -307,6 +309,7 @@ export default {
     TsIntelligence,
     TsGraphs,
     TsStories,
+    TsAnalyzerResults,
   },
   data() {
     return {
@@ -335,6 +338,7 @@ export default {
       this.$store.dispatch('updateSavedGraphs', this.sketchId)
       this.$store.dispatch('updateGraphPlugins')
       this.$store.dispatch('updateContextLinks')
+      this.$store.dispatch('updateAnalyzerList', this.sketchId)
       this.loadingSketch = false
       this.showLeftPanel = true
       this.$nextTick(function () {
