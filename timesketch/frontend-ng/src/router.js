@@ -90,7 +90,12 @@ const routes = [
         component: Canvas,
         props: true,
       },
-
+      {
+        path: 'analyzers',
+        name: 'Analyze',
+        component: Canvas,
+        props: true,
+      },
     ],
   },
 ]
