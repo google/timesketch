@@ -53,7 +53,7 @@ module.exports = {
     },
     login: {
       // entry for the page
-      entry: 'src/main.js',
+      entry: 'src/login.js',
       // the source template
       template: 'public/login.html',
       // output as dist/index.html
