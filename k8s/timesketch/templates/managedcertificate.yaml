@@ -1,0 +1,10 @@
+{{- if .Values.ingress.enabled -}}
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: timesketch-loadbalancer-managed-ssl
+  namespace: timesketch
+spec:
+  domains: 
+    - {{ required "A valid .Values.ingress.domain entry is required!" .Values.ingress.domain }}
+{{- end }}

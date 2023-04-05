@@ -1,0 +1,17 @@
+{{- if .Values.ingress.enabled -}}
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: timesketch-neg-healthcheck
+  namespace: timesketch
+spec:
+  timeoutSec: 300
+  healthCheck:
+    checkIntervalSec: 5
+    timeoutSec: 5
+    healthyThreshold: 2
+    unhealthyThreshold: 2
+    type: HTTP
+    requestPath: /login/
+    port: 5000
+{{- end }}
