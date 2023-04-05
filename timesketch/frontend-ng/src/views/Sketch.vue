@@ -390,7 +390,7 @@ export default {
       element.dataset.theme = this.$vuetify.theme.dark ? 'dark' : 'light'
     },
     switchUI: function () {
-      window.location.href = window.location.href.replace('/v2/', '/')
+      window.location.href = window.location.href.replace('/sketch/', '/legacy/sketch/')
     },
     addScenario: function (scenario) {
       this.scenarioDialog = false
