@@ -791,13 +791,16 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
                 ("User does not have sufficient access rights to " "modify a sketch."),
             )
 
-        form = request.json
+        form = request.json  # form is not supported in a DELETE type
         tag_dict = {
             "events_processed_by_api": 0,
             "number_of_events_with_added_tags": 0,
             "tags_applied": 0,
         }
         datastore = self.datastore
+
+        # Retrieve request arguments
+        # args = self.parser.parse_args()
 
         try:
             tags_to_remove = json.loads(form.get("tag_string", ""))

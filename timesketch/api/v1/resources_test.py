@@ -334,7 +334,8 @@ class EventResourceTest(BaseTest):
 
     @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
     def test_add_tag_no_event_id(self):
-        """Authenticated request to add a tag to an event but the _id field is missing."""
+        """Authenticated request to add a tag to an event
+        but the _id field is missing."""
         self.login()
         tags = ["fooobar"]
 
