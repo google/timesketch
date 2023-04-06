@@ -14,13 +14,13 @@ services:
 
   # Temporary service while the V2 UI is in the testing phase.
   # TODO: Remove when V2 is the default.
-  timesketch-web-v2:
-    container_name: timesketch-web-v2
+  timesketch-web-legacy:
+    container_name: timesketch-web-legacy
     image: us-docker.pkg.dev/osdfir-registry/timesketch/timesketch:${TIMESKETCH_VERSION}
     environment:
       - NUM_WSGI_WORKERS=${NUM_WSGI_WORKERS}
     restart: always
-    command: timesketch-web-v2
+    command: timesketch-web-legacy
     volumes:
       - ./etc/timesketch:/etc/timesketch/
       - ./upload:/usr/share/timesketch/upload/
@@ -83,4 +83,4 @@ services:
       - ${NGINX_HTTPS_PORT}:443
     volumes:
       - ${NGINX_CONFIG_PATH}:/etc/nginx/nginx.conf
- 
+

@@ -144,12 +144,16 @@ limitations under the License.
           <ts-intelligence></ts-intelligence>
           <ts-search-templates></ts-search-templates>
           <ts-sigma-rules></ts-sigma-rules>
+          <ts-analyzer-results></ts-analyzer-results>
         </v-tab-item>
         <v-tab-item :transition="false">
           <ts-scenario v-for="scenario in activeScenarios" :key="scenario.id" :scenario="scenario"></ts-scenario>
           <v-row class="mt-0 px-2" flat>
-            <v-col cols="6">
-              <v-btn text color="primary" @click="scenarioDialog = true" style="cursor: pointer"
+            <v-col cols="12">
+              <v-card v-if="!Object.keys(scenarioTemplates).length" flat class="pa-4"
+                >No scenarios available yet. Contact your server admin to add scenarios to this server.</v-card
+              >
+              <v-btn v-else text color="primary" @click="scenarioDialog = true" style="cursor: pointer"
                 ><v-icon left>mdi-plus</v-icon> Add Scenario</v-btn
               >
             </v-col>
@@ -288,6 +292,7 @@ import TsStories from '../components/LeftPanel/Stories'
 import TsUploadTimelineForm from '../components/UploadForm'
 import TsShareCard from '../components/ShareCard'
 import TsRenameSketch from '../components/RenameSketch'
+import TsAnalyzerResults from '../components/LeftPanel/AnalyzerResults.vue'
 
 export default {
   props: ['sketchId'],
@@ -304,6 +309,7 @@ export default {
     TsIntelligence,
     TsGraphs,
     TsStories,
+    TsAnalyzerResults,
   },
   data() {
     return {
@@ -332,6 +338,7 @@ export default {
       this.$store.dispatch('updateSavedGraphs', this.sketchId)
       this.$store.dispatch('updateGraphPlugins')
       this.$store.dispatch('updateContextLinks')
+      this.$store.dispatch('updateAnalyzerList', this.sketchId)
       this.loadingSketch = false
       this.showLeftPanel = true
       this.$nextTick(function () {
@@ -383,7 +390,7 @@ export default {
       element.dataset.theme = this.$vuetify.theme.dark ? 'dark' : 'light'
     },
     switchUI: function () {
-      window.location.href = window.location.href.replace('/v2/', '/')
+      window.location.href = window.location.href.replace('/sketch/', '/legacy/sketch/')
     },
     addScenario: function (scenario) {
       this.scenarioDialog = false
