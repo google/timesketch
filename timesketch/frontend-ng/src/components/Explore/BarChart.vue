@@ -32,7 +32,7 @@ export default {
         chart: {
           type: 'bar',
           zoom: {
-            enabled: true,
+            enabled: false,
             type: 'x',
             autoScaleYaxis: true,
           },

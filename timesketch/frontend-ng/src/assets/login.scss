@@ -1,0 +1,85 @@
+html,
+body {
+    font-family: 'Roboto';
+    display: flex;
+    height: 100%;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    background-color: #2196F3;
+}
+
+.card {
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+    border-radius: 10px;
+    padding: 40px;
+    width: 400px;
+	height: 300px;
+    background-color: white;
+}
+
+input {
+	display: block;
+	box-sizing: border-box;
+	width: 100%;
+	outline: none;
+	border: none;
+	border-radius: 10px;
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	appearance: none;
+}
+
+.input {
+	padding: 10px;
+	border-width: 1px;
+	border-style: solid;
+	border-color: lightgray;
+	background-color: white;
+	margin-bottom: 1em;
+
+	&:focus {
+		border-color: gray;
+	}
+
+	&::placeholder {
+		color: gray;
+	}
+}
+
+.login-button {
+	background-color: #2196F3;
+	color: white;
+	border-radius: 10px;
+	padding: 10px;
+	width: 100%;
+}
+
+.logo-container {
+	margin-bottom: 30px;
+	height: 50px;
+}
+
+.logo-image-container {
+	float: left;
+	margin-top: 5px;
+}
+
+.logo-image {
+	vertical-align: middle;
+	width: 35px;
+}
+
+.logo-text-container {
+	float: left;
+	margin-left: 10px;
+}
+
+.logo-text-header {
+	font-size: 1.5em;
+	font-weight: bold;
+}
+
+.logo-text-subheader {
+	font-size: 0.8em;
+}

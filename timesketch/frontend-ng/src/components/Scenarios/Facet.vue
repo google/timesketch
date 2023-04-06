@@ -22,9 +22,9 @@ limitations under the License.
       @click="toggleFacet()"
       :class="[$vuetify.theme.dark ? 'dark-hover' : 'light-hover']"
     >
-      <v-col cols="1">
-        <v-icon class="ml-3" v-if="!expanded">mdi-chevron-right</v-icon>
-        <v-icon class="ml-3" v-else>mdi-chevron-down</v-icon>
+      <v-col cols="1" class="pl-1">
+        <v-icon v-if="!expanded">mdi-chevron-right</v-icon>
+        <v-icon v-else>mdi-chevron-down</v-icon>
       </v-col>
       <v-col cols="10">
         <span style="font-size: 0.9em">

@@ -199,11 +199,6 @@ class OpenSearchDataStore(object):
         Returns:
             OpenSearch query DSL as a dictionary.
         """
-        # Remove any aggregation coming from user supplied Query DSL.
-        # We have no way to display this data in a good way today.
-        if query_dsl.get("aggregations", None):
-            del query_dsl["aggregations"]
-
         if not timeline_ids:
             return query_dsl
 
@@ -326,6 +321,27 @@ class OpenSearchDataStore(object):
 
             if not query_dsl:
                 query_dsl = {}
+
+            if query_filter:
+                # Pagination
+                if query_filter.get("from", None):
+                    query_dsl["from"] = query_filter["from"]
+
+                # Number of events to return
+                if query_filter.get("size", None):
+                    query_dsl["size"] = query_filter["size"]
+
+            if aggregations:
+                # post_filter happens after aggregation so we need to move the
+                # filter to the query instead.
+                if query_dsl.get("post_filter", None):
+                    query_dsl["query"]["bool"]["filter"] = query_dsl["post_filter"]
+                    query_dsl.pop("post_filter", None)
+                query_dsl["aggregations"] = aggregations
+
+            # Make sure we are sorting.
+            if not query_dsl.get("sort", None):
+                query_dsl["sort"] = {"datetime": query_filter.get("order", "asc")}
 
             return self._build_query_dsl(query_dsl, timeline_ids)
 

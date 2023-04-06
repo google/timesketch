@@ -67,7 +67,27 @@ be instantly picked up.
 When developing the `frontend-ng` you use the VueJS frontend server. Changes will be picked up automatically
 as soon as a `.vue` file is saved without having to rebuild the frontend or even refresh your browser.
 
-Follow the steps in the previous section to get dependencies installed.
+### Install dependencies
+
+Inside the container shell go to the Timesketch frontend-ng directory.
+
+```bash
+! cd /usr/local/src/timesketch/timesketch/frontend-ng
+```
+
+Note that this directory in the container is mounted as volume from your local repo and mirrors changes to your local repo.
+
+Install node dependencies
+
+```bash
+! npm install
+```
+
+This will create `node_modules/` folder from `package.json` in the frontend directory.
+
+```bash
+! yarn install
+```
 
 ### Tweak config file
 

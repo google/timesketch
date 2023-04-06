@@ -14,14 +14,22 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div v-if="searchtemplates.length">
-    <div class="pa-4" flat :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
-      <span style="cursor: pointer" @click="expanded = !expanded"
-        ><v-icon left>mdi-text-box-search-outline</v-icon> Search Templates ({{ searchtemplates.length }})</span
-      >
+  <div>
+    <div
+      :style="searchtemplates && searchtemplates.length ? 'cursor: pointer' : ''"
+      class="pa-4"
+      @click="expanded = !expanded"
+      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+    >
+      <span> <v-icon left>mdi-text-box-search-outline</v-icon> Search Templates </span>
+      <span class="float-right" style="margin-right: 10px">
+        <small
+          ><strong>{{ searchtemplates.length }}</strong></small
+        >
+      </span>
     </div>
     <v-expand-transition>
-      <div v-show="expanded">
+      <div v-show="expanded && searchtemplates.length">
         <v-data-iterator :items="searchtemplates" :items-per-page.sync="itemsPerPage" :search="search">
           <template v-slot:header>
             <v-toolbar flat>
@@ -88,3 +96,13 @@ export default {
   },
 }
 </script>
+
+<style scoped lang="scss">
+.v-text-field ::v-deep input {
+  font-size: 0.9em;
+}
+
+.v-text-field ::v-deep label {
+  font-size: 0.9em;
+}
+</style>

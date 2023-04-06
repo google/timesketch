@@ -1,7 +1,7 @@
 # Use the official Docker Hub Ubuntu base image
 FROM ubuntu:22.04
 
-ARG PPA_TRACK=stable
+ARG PLASO_PPA_TRACK=stable
 
 # Prevent needing to configure debian packages, stopping the setup of
 # the docker container.
@@ -19,7 +19,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   && rm -rf /var/lib/apt/lists/*
 
 # Install Plaso
-RUN add-apt-repository -y ppa:gift/$PPA_TRACK
+RUN add-apt-repository -y ppa:gift/$PLASO_PPA_TRACK
 RUN apt-get update && apt-get install -y --no-install-recommends \
   plaso-tools \
   && rm -rf /var/lib/apt/lists/*
@@ -43,7 +43,6 @@ RUN cp /tmp/timesketch/data/sigma_config.yaml /etc/timesketch/
 RUN cp /tmp/timesketch/data/sigma_rule_status.csv /etc/timesketch/
 RUN cp /tmp/timesketch/data/data_finder.yaml /etc/timesketch/
 RUN cp /tmp/timesketch/data/bigquery_matcher.yaml /etc/timesketch/
-RUN cp -r /tmp/timesketch/data/sigma /etc/timesketch/sigma
 RUN chmod -R go+r /etc/timesketch
 
 # Copy the entrypoint script into the container

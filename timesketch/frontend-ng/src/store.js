@@ -27,6 +27,8 @@ const defaultState = (currentUser) => {
     scenarios: [],
     hiddenScenarios: [],
     scenarioTemplates: [],
+    graphPlugins: [],
+    savedGraphs: [],
     tags: [],
     dataTypes: [],
     count: 0,
@@ -44,6 +46,7 @@ const defaultState = (currentUser) => {
       timeout: -1
     },
     contextLinkConf: {},
+    sketchAnalyzerList: {},
   }
 }
 
@@ -66,8 +69,7 @@ export default new Vuex.Store({
     SET_SCENARIO_TEMPLATES(state, payload) {
       Vue.set(state, 'scenarioTemplates', payload.objects)
     },
-    SET_TIMELINE_TAGS(state, payload) {
-      let buckets = payload.objects[0]['field_bucket']['buckets']
+    SET_TIMELINE_TAGS(state, buckets) {
       Vue.set(state, 'tags', buckets)
     },
     SET_DATA_TYPES(state, payload) {
@@ -101,6 +103,12 @@ export default new Vuex.Store({
       }
       Vue.set(state, 'activeContext', payload)
     },
+    SET_GRAPH_PLUGINS(state, payload) {
+      Vue.set(state, 'graphPlugins', payload)
+    },
+    SET_SAVED_GRAPHS(state, payload) {
+      Vue.set(state, 'savedGraphs', payload.objects[0] || [])
+    },
     SET_SNACKBAR(state, snackbar) {
       Vue.set(state, 'snackbar', snackbar)
     },
@@ -113,18 +121,20 @@ export default new Vuex.Store({
     SET_CONTEXT_LINKS(state, payload) {
       Vue.set(state, 'contextLinkConf', payload)
     },
+    SET_ANALYZER_LIST(state, payload) {
+      Vue.set(state, 'sketchAnalyzerList', payload)
+    },
   },
   actions: {
     updateSketch(context, sketchId) {
       return ApiClient.getSketch(sketchId)
         .then((response) => {
-          // console.log(response.data.objects[0].active_timelines[0].color)
           context.commit('SET_SKETCH', response.data)
           context.commit('SET_ACTIVE_USER', response.data)
-          context.dispatch('updateTimelineTags', sketchId)
+          context.dispatch('updateTimelineTags', { sketchId: sketchId })
           context.dispatch('updateDataTypes', sketchId)
         })
-        .catch((e) => {})
+        .catch((e) => { })
     },
     updateCount(context, sketchId) {
       // Count events for all timelines in the sketch
@@ -132,7 +142,7 @@ export default new Vuex.Store({
         .then((response) => {
           context.commit('SET_COUNT', response.data.meta.count)
         })
-        .catch((e) => {})
+        .catch((e) => { })
     },
     resetState(context) {
       context.commit('RESET_STATE')
@@ -148,7 +158,7 @@ export default new Vuex.Store({
         .then((response) => {
           context.commit('SET_SEARCH_HISTORY', response.data)
         })
-        .catch((e) => {})
+        .catch((e) => { })
     },
     updateScenarios(context, sketchId) {
       if (!sketchId) {
@@ -158,16 +168,16 @@ export default new Vuex.Store({
         .then((response) => {
           context.commit('SET_SCENARIOS', response.data)
         })
-        .catch((e) => {})
+        .catch((e) => { })
     },
     updateScenarioTemplates(context, sketchId) {
       return ApiClient.getScenarioTemplates(sketchId)
         .then((response) => {
           context.commit('SET_SCENARIO_TEMPLATES', response.data)
         })
-        .catch((e) => {})
+        .catch((e) => { })
     },
-    updateTimelineTags(context, sketchId) {
+    updateTimelineTags(context, payload) {
       if (!context.state.sketch.active_timelines.length) {
         return
       }
@@ -178,11 +188,21 @@ export default new Vuex.Store({
           limit: '1000',
         },
       }
-      return ApiClient.runAggregator(sketchId, formData)
+      return ApiClient.runAggregator(payload.sketchId, formData)
         .then((response) => {
-          context.commit('SET_TIMELINE_TAGS', response.data)
+          let buckets = response.data.objects[0]['field_bucket']['buckets']
+          if (payload.tag && payload.num) {
+            let missing = buckets.find(tag => tag.tag === payload.tag) === undefined
+            if (missing) {
+              buckets.push({ tag: payload.tag, count: payload.num })
+            } else {
+              let tagIndex = buckets.findIndex(tag => tag.tag === payload.tag)
+              buckets[tagIndex].count += payload.num
+            }
+          }
+          context.commit('SET_TIMELINE_TAGS', buckets)
         })
-        .catch((e) => {})
+        .catch((e) => { })
     },
     updateDataTypes(context, sketchId) {
       if (!context.state.sketch.active_timelines.length) {
@@ -199,14 +219,14 @@ export default new Vuex.Store({
         .then((response) => {
           context.commit('SET_DATA_TYPES', response.data)
         })
-        .catch((e) => {})
+        .catch((e) => { })
     },
     updateSigmaList(context) {
-      ApiClient.getSigmaList()
+      ApiClient.getSigmaRuleList()
         .then((response) => {
           context.commit('SET_SIGMA_LIST', response.data)
         })
-        .catch((e) => {})
+        .catch((e) => { })
     },
     setActiveContext(context, activeScenarioContext) {
       context.commit('SET_ACTIVE_CONTEXT', activeScenarioContext)
@@ -229,5 +249,40 @@ export default new Vuex.Store({
       })
       .catch((e) => { })
     },
-  },
+    updateGraphPlugins(context) {
+      ApiClient.getGraphPluginList()
+        .then((response) => {
+          context.commit('SET_GRAPH_PLUGINS', response.data)
+        })
+        .catch((e) => { })
+    },
+    updateSavedGraphs(context, sketchId) {
+      if (!sketchId) {
+        sketchId = context.state.sketch.id
+      }
+      ApiClient.getSavedGraphList(sketchId)
+        .then((response) => {
+        context.commit('SET_SAVED_GRAPHS', response.data)
+      })
+      .catch((e) => {
+        console.error(e)
+      })
+    },
+    updateAnalyzerList(context, sketchId) {
+      if (!sketchId) {
+        sketchId = context.state.sketch.id
+      }
+      ApiClient.getAnalyzers(sketchId).then((response) => {
+        let analyzerList = {}
+        if (response.data !== undefined) {
+          response.data.forEach((analyzer) => {
+            analyzerList[analyzer.name] = analyzer
+          })
+        }
+        context.commit('SET_ANALYZER_LIST', analyzerList)
+      }).catch((e) => {
+        console.log(e)
+      })
+    },
+  }
 })

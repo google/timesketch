@@ -17,7 +17,7 @@ import axios from 'axios'
 import EventBus from '../main'
 
 const RestApiClient = axios.create({
-  baseURL: process.env.NODE_ENV === 'development' ? '/api/v1' : '/v2/api/v1',
+  baseURL: '/api/v1',
   headers: {
     common: {
       'X-CSRFToken': document.getElementsByTagName('meta')[0]['content'],
@@ -26,7 +26,7 @@ const RestApiClient = axios.create({
 })
 
 const RestApiBlobClient = axios.create({
-  baseURL: process.env.NODE_ENV === 'development' ? '/api/v1' : '/v2/api/v1',
+  baseURL: '/api/v1',
   responseType: 'blob',
   headers: {
     common: {
@@ -294,7 +294,6 @@ export default {
     let formData = {
       public: isPublic,
     }
-    console.log(formData)
     return RestApiClient.post('/sketches/' + sketchId + /collaborators/, formData)
   },
 
@@ -360,24 +359,41 @@ export default {
   getSearchHistoryTree(sketchId) {
     return RestApiClient.get('/sketches/' + sketchId + /searchhistorytree/)
   },
-  // Sigma
-  getSigmaList() {
-    return RestApiClient.get('/sigma/')
+  // SigmaRule (new rules file based)
+  getSigmaRuleList() {
+    return RestApiClient.get('/sigmarules/')
   },
-  getSigmaResource(ruleUuid) {
-    return RestApiClient.get('/sigma/rule/' + ruleUuid + '/')
+  getSigmaRuleResource(ruleUuid) {
+    return RestApiClient.get('/sigmarules/' + ruleUuid + '/')
   },
-  getSigmaByText(ruleText) {
+  getSigmaRuleByText(ruleYaml) {
     let formData = {
-      content: ruleText,
+      content: ruleYaml,
     }
-    return RestApiClient.post('/sigma/text/', formData)
+    return RestApiClient.post('/sigmarules/text/', formData)
   },
+  deleteSigmaRule(ruleUuid) {
+    return RestApiClient.delete('/sigmarules/' + ruleUuid + '/')
+  },
+  createSigmaRule(ruleYaml) {
+    let formData = {
+      rule_yaml: ruleYaml,
+    }
+    return RestApiClient.post('/sigmarules/', formData)
+  },
+  updateSigmaRule(id, ruleYaml) {
+    let formData = {
+      id: id,
+      rule_yaml: ruleYaml,
+    }
+    return RestApiClient.put('/sigmarules/' + id + '/', formData)
+  },
+  // SearchTemplates
   getSearchTemplates() {
-    return RestApiClient.get('/searchtemplate/')
+    return RestApiClient.get('/searchtemplates/')
   },
   parseSearchTemplate(searchTemplateId, formData) {
-    return RestApiClient.post('/searchtemplate/' + searchTemplateId + '/parse/', formData)
+    return RestApiClient.post('/searchtemplates/' + searchTemplateId + '/parse/', formData)
   },
   getContextLinkConfig() {
     return RestApiClient.get('/contextlinks/')
@@ -385,7 +401,7 @@ export default {
   getScenarioTemplates() {
     return RestApiClient.get('/scenarios/')
   },
-  getSketchScenarios(sketchId, status=null) {
+  getSketchScenarios(sketchId, status = null) {
     let params = {}
     if (status) {
       params.params = {
@@ -418,4 +434,7 @@ export default {
     return RestApiClient.delete('/sketches/' + sketchId + '/questions/' + questionId + '/conclusions/' + conclusionId + '/')
 
   },
+  getTagMetadata() {
+    return RestApiClient.get('/intelligence/tagmetadata/')
+  }
 }
