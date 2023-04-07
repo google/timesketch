@@ -1,43 +1,53 @@
+# -*- coding: utf-8 -*-
+# Copyright 2023 Google Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#            http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 """Tests for SSHBruteForcePlugin"""
 
 from __future__ import unicode_literals
 
 from datetime import datetime, timezone
+
+import json
 import logging
+import textwrap
+
 import mock
 
+from timesketch.lib.analyzers.sequence_sessionizer_test import _create_eventObj
 from timesketch.lib.analyzers.ssh_bruteforce import SSHBruteForcePlugin
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.testlib import MockDataStore
 
-from timesketch.lib.analyzers.sequence_sessionizer_test import _create_eventObj
-
-log = logging.getLogger("timesketch.analyzers.ssh.bruteforce")
+log = logging.getLogger("timesketch")
 log.setLevel(logging.DEBUG)
 
-EXPECTED_MESSAGE = """## Brute Force Analysis
+EXPECTED_MESSAGE = textwrap.dedent(
+    """
+    #### Brute Force Analyzer
 
-### Brute Force from 192.168.40.25
+    ##### Brute Force Summary for 192.168.40.25
+    - Successful brute force on 2023-01-10 16:43:34 as admin
 
-- Successful brute force from 192.168.40.25 as admin at 2023-01-10 16:43:34 (duration=5)
+    ###### 192.168.40.25 Summary
+    - IP first seen on 2023-01-10 16:40:14
+    - IP last seen on 2023-01-10 16:43:39
+    - First successful auth on 2023-01-10 16:43:34
+    - First successful source IP: 192.168.40.25
+    - First successful username: admin
 
-#### IP Summaries
-
-- Source IP: 192.168.40.25
-- Brute forcing IP first seen: 2023-01-10 16:40:14
-- Brute forcing IP last seen: 2023-01-10 16:43:39
-- First successful login for brute forcing IP
-    - IP: 192.168.40.25
-    - Login timestamp: 2023-01-10 16:43:34
-    - Username: admin
-- Total successful login from IP: 1
-- Total failed login attempts: 200
-- IP addresses that successfully logged in: 192.168.40.25
-- Usernames that successfully logged in: admin
-- Total number of unique username attempted: 1
-- Top 10 username attempted
-    - admin: 202
-"""
+    ###### Top Usernames
+    - admin: 202""")
 
 
 class TestSSHBruteForcePlugin(BaseTest):
@@ -56,7 +66,11 @@ class TestSSHBruteForcePlugin(BaseTest):
         _create_mock_event(datastore)
 
         message = plugin.run()
-        self.assertEqual(message, EXPECTED_MESSAGE)
+        json_message = json.loads(message)
+
+        _expected_message = "1 brute force from 192.168.40.25"
+        self.assertEqual(_expected_message, json_message["result_summary"])
+        self.assertEqual(EXPECTED_MESSAGE, json_message["result_markdown"])
 
 
 def _create_mock_event(datastore):

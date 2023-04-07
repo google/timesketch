@@ -1,24 +1,66 @@
+# -*- coding: utf-8 -*-
+# Copyright 2023 Google Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#            http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 """Sketch analyzer plugin for SSH authentication."""
+
 from __future__ import unicode_literals
 
+from datetime import datetime
+from typing import List
 
 import hashlib
 import logging
-from datetime import datetime
 import re
-from typing import List
+
 import pandas as pd
 import pyparsing
 
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
+from timesketch.lib.analyzers.analyzer_output import AnalyzerOutput
+from timesketch.lib.analyzers.auth import AuthAnalyzerException
 from timesketch.lib.analyzers.auth import BruteForceAnalyzer
 
-log = logging.getLogger("timesketch.analyzers.ssh.bruteforce")
+log = logging.getLogger("timesketch")
 
 
 class SSHEventData:
-    """SSH authentication event."""
+    """SSH authentication event.
+
+    Attributes:
+        event_id (str): OpenSearch internal ID.
+        timestamp (str): Event timestamp in Unix seconds.
+        date (str): Event date in the format yyyy-mm-dd.
+        time (str): Event time in the format HH:MM:SS.
+        hostname (str): Hostname of the system.
+        pid (int): Process ID of the SSH process.
+        event_key (str): Event key of SSH event i.e. accepted, failed,
+                disconnected.
+        event_type (str): SSH event type i.e. authentication or disconnection.
+        auth_method (str): SSH authentication method. Valid values are password
+                or publickey.
+        domain (str): Not used for SSHEventData. The field is required by
+                AuthAnalyzer.
+        username (str): Username that authenticated to SSH service.
+        source_ip (str): Source IP of the device that initiated authentication.
+        source_port (str): Source port of the device that initiated
+                authentication.
+        source_hostname (str): Not used for SSH. This field is required by
+                AuthAnalyzer.
+        session_id (str): Pseudo session ID created for tracking logon/logoff
+                events.
+    """
 
     def __init__(self):
         self.event_id = ""  # OpenSearch event_id
@@ -39,7 +81,7 @@ class SSHEventData:
         self.session_id = ""
 
     def calculate_session_id(self) -> None:
-        """Calculate pseduo session_id for SSH authentication event."""
+        """Calculates pseudo session_id for SSH authentication event."""
         hash_data = (
             f"{self.date}|{self.hostname}|{self.username}|{self.source_ip}|"
             f"{self.source_port}"
@@ -62,13 +104,16 @@ class SSHBruteForcePlugin(interface.BaseAnalyzer):
         pyparsing.Keyword("password") | pyparsing.Keyword("publickey")
     ).setResultsName("auth_method")
     _USERNAME = pyparsing.Word(pyparsing.printables).setResultsName("username")
-    _SOURCE_IP = pyparsing.Word(pyparsing.printables).setResultsName("source_ip")
-    _SOURCE_PORT = pyparsing.Word(pyparsing.nums, max=5).setResultsName("source_port")
+    _SOURCE_IP = pyparsing.Word(pyparsing.printables).setResultsName(
+            "source_ip")
+    _SOURCE_PORT = pyparsing.Word(pyparsing.nums, max=5).setResultsName(
+            "source_port")
     _PROTOCOL = pyparsing.Word(pyparsing.printables).setResultsName("protocol")
     _FINGERPRINT_TYPE = pyparsing.Word(pyparsing.alphanums).setResultsName(
-        "fingerprint_type"
+            "fingerprint_type"
     )
-    _FINGERPRINT = pyparsing.Word(pyparsing.printables).setResultsName("fingerprint")
+    _FINGERPRINT = pyparsing.Word(pyparsing.printables).setResultsName(
+            "fingerprint")
 
     # Timesketch message field grammar
     _LOGIN_GRAMMAR = (
@@ -81,7 +126,9 @@ class SSHBruteForcePlugin(interface.BaseAnalyzer):
         + pyparsing.Literal("port")
         + _SOURCE_PORT
         + _PROTOCOL
-        + pyparsing.Optional(pyparsing.Literal(":") + _FINGERPRINT_TYPE + _FINGERPRINT)
+        + pyparsing.Optional(pyparsing.Literal(":")
+                             + _FINGERPRINT_TYPE
+                             + _FINGERPRINT)
         + pyparsing.StringEnd()
     )
 
@@ -95,7 +142,8 @@ class SSHBruteForcePlugin(interface.BaseAnalyzer):
         + pyparsing.Literal("Failed")
         + _AUTHENTICATION_METHOD
         + pyparsing.Literal("for")
-        + pyparsing.Optional(pyparsing.Literal("invalid") + pyparsing.Literal("user"))
+        + pyparsing.Optional(pyparsing.Literal("invalid")
+                             + pyparsing.Literal("user"))
         + _USERNAME
         + pyparsing.Literal("from")
         + _SOURCE_IP
@@ -124,27 +172,55 @@ class SSHBruteForcePlugin(interface.BaseAnalyzer):
     # SSHD_KEYWORD_RE is regular expression is used to identify the interesting
     # SSH authentication events to process.
     #
-    # We are only interested in parsing Accepted, Failed, and Disconnected messages
-    # as specified in MESSAGE_GRAMMAR
+    # We are only interested in parsing Accepted, Failed, and Disconnected
+    # messages as specified in MESSAGE_GRAMMAR
     SSHD_KEYWORD_RE = re.compile(r"\s*([^\s]+)\s+.*")
 
     # IGNORE_ATTRIBUTE_ERROR holds the error messages that we can ignore
     # while parsing event_body using SSHD_KEYWORD_RE.
     IGNORE_ATTRIBUTE_ERROR = ["'NoneType' object has no attribute 'group'"]
 
-    def anotate_events(self, events: List, df: pd.DataFrame, report: dict) -> None:
-        """Anotate matching events"""
+    def annotate_events(self, events: List, df: pd.DataFrame,
+                       output: AnalyzerOutput) -> None:
+        """Annotate matching events.
+
+        Args:
+            events (List[]): OpenSearch events.
+            df (pd.DataFrame): Pandas dataframe of the events.
+            output (AnalyzerOutput): Output of brute force analyzer.
+        """
         event_ids = []
+
+        if df.empty:
+            log.info("[%s] Dataframe is empty", self.NAME)
+            return None
+
+        if not output:
+            log.info("[%s] Analyzer output is None")
+            return
+
+        if not output.attributes:
+            log.info("[%s] No output attributes")
+            return None
+
         try:
-            for attribute in report["attributes"]:
-                brute_force_logins = attribute["brute_force_logins"]
-                for login in brute_force_logins:
-                    df1 = df[df["session_id"] == login["session_id"]]
-                    for _, row in df1.iterrows():
-                        event_ids.append(row["event_id"])
+            for authdatasummary in output.attributes:
+                bruteforce_logins = authdatasummary.brute_forces
+                if not bruteforce_logins:
+                    continue
+
+                for login in bruteforce_logins:
+                    login_session_df = df[df["session_id"] == login.session_id]
+                    if login_session_df.empty:
+                        continue
+
+                    for _, row in login_session_df.iterrows():
+                        event_id = row.get("event_id", None)
+                        if event_id:
+                            event_ids.append(event_id)
         except KeyError as exception:
             log.error("[%s] Missing expected key: %s", self.NAME, str(exception))
-            return
+            return None
 
         if not event_ids:
             log.info("[%s] No events to annotate", self.NAME)
@@ -156,9 +232,12 @@ class SSHBruteForcePlugin(interface.BaseAnalyzer):
             " ".join(event_ids),
         )
 
+        if not event_ids:
+            return
+
         for event in events:
             if event.event_id in event_ids:
-                log.debug("[%s] Anotating event id %s", self.NAME, event.event_id)
+                log.debug("[%s] Annotating event id %s", self.NAME, event.event_id)
                 event.add_label("ssh_bruteforce")
                 event.add_star()
                 event.commit()
@@ -189,7 +268,7 @@ class SSHBruteForcePlugin(interface.BaseAnalyzer):
             event_pid = event.source.get("pid")
             event_body = event.source.get("body")
 
-            # Wer are not parsing the body if it contains disconnect message for
+            # We are not parsing the body if it contains disconnect message for
             # preauth disconnection
             if "Disconnected" in event_body and "[preauth]" in event_body:
                 continue
@@ -202,8 +281,8 @@ class SSHBruteForcePlugin(interface.BaseAnalyzer):
                     continue
 
                 log.error(
-                    "[%s] Error extracting ssh keyword in %s", self.NAME, event_body
-                )
+                    "[%s] Error extracting ssh keyword in %s", self.NAME,
+                    event_body)
                 continue
 
             message_grammar = self.MESSAGE_GRAMMAR.get(sshd_keyword.lower()) or None
@@ -274,18 +353,21 @@ class SSHBruteForcePlugin(interface.BaseAnalyzer):
             log.info("[%s] No SSH authentication events", self.NAME)
             return "No SSH authentication events"
 
-        bfa = BruteForceAnalyzer()
-        result = bfa.run(df)
-        if not result:
-            return "No verdict. Total number of SSH authention events {}".format(
-                len(ssh_records)
-            )
+        try:
+            bfa = BruteForceAnalyzer()
+            result = bfa.run(df)
+            if not result:
+                return (f"No verdict. Total number of SSH authentication events"
+                        f" {len(ssh_records)}")
 
-        events = self.event_stream(
-            query_string=query_string, return_fields=return_fields
-        )
-        self.anotate_events(events=events, df=df, report=result)
-        return str(result["result_markdown"])
+            events = self.event_stream(
+                query_string=query_string, return_fields=return_fields
+            )
+            self.annotate_events(events=events, df=df, output=result)
+            return str(result)
+        except AuthAnalyzerException as e:
+            log.error("[%s] Error analyzing data. %s", self.NAME, str(e))
+            return f"No verdict. Error encountered processing data. {str(e)}"
 
 
 manager.AnalysisManager.register_analyzer(SSHBruteForcePlugin)
