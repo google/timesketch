@@ -29,6 +29,7 @@ import pyparsing
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 from timesketch.lib.analyzers.analyzer_output import AnalyzerOutput
+from timesketch.lib.analyzers.analyzer_output import AnalyzerOutputException
 from timesketch.lib.analyzers.auth import AuthAnalyzerException
 from timesketch.lib.analyzers.auth import BruteForceAnalyzer
 
@@ -193,7 +194,7 @@ class SSHBruteForcePlugin(interface.BaseAnalyzer):
 
         if df.empty:
             log.info("[%s] Dataframe is empty", self.NAME)
-            return None
+            return
 
         if not output:
             log.info("[%s] Analyzer output is None")
@@ -201,7 +202,7 @@ class SSHBruteForcePlugin(interface.BaseAnalyzer):
 
         if not output.attributes:
             log.info("[%s] No output attributes")
-            return None
+            return
 
         try:
             for authdatasummary in output.attributes:
@@ -220,7 +221,7 @@ class SSHBruteForcePlugin(interface.BaseAnalyzer):
                             event_ids.append(event_id)
         except KeyError as exception:
             log.error("[%s] Missing expected key: %s", self.NAME, str(exception))
-            return None
+            return
 
         if not event_ids:
             log.info("[%s] No events to annotate", self.NAME)
@@ -365,7 +366,7 @@ class SSHBruteForcePlugin(interface.BaseAnalyzer):
             )
             self.annotate_events(events=events, df=df, output=result)
             return str(result)
-        except AuthAnalyzerException as e:
+        except (AuthAnalyzerException, AnalyzerOutputException) as e:
             log.error("[%s] Error analyzing data. %s", self.NAME, str(e))
             return f"No verdict. Error encountered processing data. {str(e)}"
 
