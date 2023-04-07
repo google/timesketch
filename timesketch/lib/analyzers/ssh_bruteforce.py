@@ -105,16 +105,13 @@ class SSHBruteForcePlugin(interface.BaseAnalyzer):
         pyparsing.Keyword("password") | pyparsing.Keyword("publickey")
     ).setResultsName("auth_method")
     _USERNAME = pyparsing.Word(pyparsing.printables).setResultsName("username")
-    _SOURCE_IP = pyparsing.Word(pyparsing.printables).setResultsName(
-            "source_ip")
-    _SOURCE_PORT = pyparsing.Word(pyparsing.nums, max=5).setResultsName(
-            "source_port")
+    _SOURCE_IP = pyparsing.Word(pyparsing.printables).setResultsName("source_ip")
+    _SOURCE_PORT = pyparsing.Word(pyparsing.nums, max=5).setResultsName("source_port")
     _PROTOCOL = pyparsing.Word(pyparsing.printables).setResultsName("protocol")
     _FINGERPRINT_TYPE = pyparsing.Word(pyparsing.alphanums).setResultsName(
-            "fingerprint_type"
+        "fingerprint_type"
     )
-    _FINGERPRINT = pyparsing.Word(pyparsing.printables).setResultsName(
-            "fingerprint")
+    _FINGERPRINT = pyparsing.Word(pyparsing.printables).setResultsName("fingerprint")
 
     # Timesketch message field grammar
     _LOGIN_GRAMMAR = (
@@ -127,9 +124,7 @@ class SSHBruteForcePlugin(interface.BaseAnalyzer):
         + pyparsing.Literal("port")
         + _SOURCE_PORT
         + _PROTOCOL
-        + pyparsing.Optional(pyparsing.Literal(":")
-                             + _FINGERPRINT_TYPE
-                             + _FINGERPRINT)
+        + pyparsing.Optional(pyparsing.Literal(":") + _FINGERPRINT_TYPE + _FINGERPRINT)
         + pyparsing.StringEnd()
     )
 
@@ -143,8 +138,7 @@ class SSHBruteForcePlugin(interface.BaseAnalyzer):
         + pyparsing.Literal("Failed")
         + _AUTHENTICATION_METHOD
         + pyparsing.Literal("for")
-        + pyparsing.Optional(pyparsing.Literal("invalid")
-                             + pyparsing.Literal("user"))
+        + pyparsing.Optional(pyparsing.Literal("invalid") + pyparsing.Literal("user"))
         + _USERNAME
         + pyparsing.Literal("from")
         + _SOURCE_IP
@@ -181,8 +175,9 @@ class SSHBruteForcePlugin(interface.BaseAnalyzer):
     # while parsing event_body using SSHD_KEYWORD_RE.
     IGNORE_ATTRIBUTE_ERROR = ["'NoneType' object has no attribute 'group'"]
 
-    def annotate_events(self, events: List, df: pd.DataFrame,
-                       output: AnalyzerOutput) -> None:
+    def annotate_events(
+        self, events: List, df: pd.DataFrame, output: AnalyzerOutput
+    ) -> None:
         """Annotate matching events.
 
         Args:
@@ -282,8 +277,8 @@ class SSHBruteForcePlugin(interface.BaseAnalyzer):
                     continue
 
                 log.error(
-                    "[%s] Error extracting ssh keyword in %s", self.NAME,
-                    event_body)
+                    "[%s] Error extracting ssh keyword in %s", self.NAME, event_body
+                )
                 continue
 
             message_grammar = self.MESSAGE_GRAMMAR.get(sshd_keyword.lower()) or None
@@ -358,8 +353,10 @@ class SSHBruteForcePlugin(interface.BaseAnalyzer):
             bfa = BruteForceAnalyzer()
             result = bfa.run(df)
             if not result:
-                return (f"No verdict. Total number of SSH authentication events"
-                        f" {len(ssh_records)}")
+                return (
+                    f"No verdict. Total number of SSH authentication events"
+                    f" {len(ssh_records)}"
+                )
 
             events = self.event_stream(
                 query_string=query_string, return_fields=return_fields

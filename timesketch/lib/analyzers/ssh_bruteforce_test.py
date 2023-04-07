@@ -47,7 +47,8 @@ EXPECTED_MESSAGE = textwrap.dedent(
     - First successful username: admin
 
     ###### Top Usernames
-    - admin: 202""")
+    - admin: 202"""
+)
 
 
 class TestSSHBruteForcePlugin(BaseTest):

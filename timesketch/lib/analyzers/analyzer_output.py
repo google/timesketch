@@ -28,6 +28,7 @@ class Priority(IntEnum):
     Priorities can be anything in the range of 0-100, where 0 is the highest
     priority.
     """
+
     LOW = 80
     MEDIUM = 50
     HIGH = 20
@@ -63,13 +64,13 @@ class AnalyzerOutput:
             raise AnalyzerOutputException("Analyzer name is empty")
 
         if self.result_status.lower() not in ["success", "failed"]:
-            raise AnalyzerOutputException(
-                f"Unknown result status {self.result_status}")
+            raise AnalyzerOutputException(f"Unknown result status {self.result_status}")
 
         priority_list = ["CRITICAL", "HIGH", "MEDIUM", "LOW"]
         if self.result_priority.upper() not in priority_list:
             raise AnalyzerOutputException(
-                    f"Unknown result priority value {self.result_priority}")
+                f"Unknown result priority value {self.result_priority}"
+            )
 
         if not self.result_summary:
             raise AnalyzerOutputException("Result summary is empty")

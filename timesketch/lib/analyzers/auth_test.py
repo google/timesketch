@@ -30,6 +30,7 @@ from timesketch.lib.analyzers.auth import LoginRecord
 log = logging.getLogger("timesketch")
 log.setLevel(logging.DEBUG)
 
+
 def load_test_dataframe() -> pd.DataFrame:
     """Loads SSH log file and returns dataframe."""
     log_file = os.path.join("test_data", "secure.csv")
@@ -50,43 +51,38 @@ class TestAuthAnalyzer(unittest.TestCase):
         "first_seen": 1664739900,
         "last_seen": 1665252640,
         "first_auth": {
-                "timestamp": 1665252633,
-                "session_id":
-                        "7b45adc5a3d14261800c1782719f647b81b3b8013836f30893f23202b592e"
-                        "000",
-                "session_duration": 7,
-                "source_ip": "192.168.140.67",
-                "source_hostname": "",
-                "source_port": 49206,
-                "domain": "",
-                "username": "admin"
+            "timestamp": 1665252633,
+            "session_id": "7b45adc5a3d14261800c1782719f647b81b3b8013836f30893f23202b592e"
+            "000",
+            "session_duration": 7,
+            "source_ip": "192.168.140.67",
+            "source_hostname": "",
+            "source_port": 49206,
+            "domain": "",
+            "username": "admin",
         },
         "brute_forces": [],
-        "successful_logins": [{
+        "successful_logins": [
+            {
                 "timestamp": 1665252633,
-                "session_id":
-                        "7b45adc5a3d14261800c1782719f647b81b3b8013836f30893f23202b592e"
-                        "000",
+                "session_id": "7b45adc5a3d14261800c1782719f647b81b3b8013836f30893f23202b592e"
+                "000",
                 "session_duration": 7,
                 "source_ip": "192.168.140.67",
                 "source_hostname": "",
                 "source_port": 49206,
                 "domain": "",
-                "username": "admin"
-        }],
+                "username": "admin",
+            }
+        ],
         "success_source_ip_list": ["192.168.140.67"],
         "success_username_list": ["admin"],
         "total_success_events": 1,
         "total_failed_events": 27594,
         "distinct_source_ip_count": 1,
         "distinct_username_count": 2,
-        "top_source_ips": {
-                "192.168.140.67": 5204
-        },
-        "top_usernames": {
-                "root": 5173,
-                "admin": 31
-        }
+        "top_source_ips": {"192.168.140.67": 5204},
+        "top_usernames": {"root": 5173, "admin": 31},
     }
 
     EXPECTED_USER_SUMMARY = {
@@ -97,54 +93,49 @@ class TestAuthAnalyzer(unittest.TestCase):
         "first_seen": 1664739446,
         "last_seen": 1665252676,
         "first_auth": {
-                "timestamp": 1664739446,
-                "session_id":
-                        "271a92c99d59549e5b74212dda7a770fa80e219474764897c475f1320b419"
-                        "20a",
-                "session_duration": -1,
-                "source_ip": "172.30.151.71",
-                "source_hostname": "",
-                "source_port": 58419,
-                "domain": "",
-                "username": "kadmin"
+            "timestamp": 1664739446,
+            "session_id": "271a92c99d59549e5b74212dda7a770fa80e219474764897c475f1320b419"
+            "20a",
+            "session_duration": -1,
+            "source_ip": "172.30.151.71",
+            "source_hostname": "",
+            "source_port": 58419,
+            "domain": "",
+            "username": "kadmin",
         },
         "brute_forces": [],
-        "successful_logins": [{
+        "successful_logins": [
+            {
                 "timestamp": 1664739446,
-                "session_id":
-                        "271a92c99d59549e5b74212dda7a770fa80e219474764897c475f1320b419"
-                        "20a",
+                "session_id": "271a92c99d59549e5b74212dda7a770fa80e219474764897c475f1320b419"
+                "20a",
                 "session_duration": -1,
                 "source_ip": "172.30.151.71",
                 "source_hostname": "",
                 "source_port": 58419,
                 "domain": "",
-                "username": "kadmin"
-        }, {
+                "username": "kadmin",
+            },
+            {
                 "timestamp": 1665252676,
-                "session_id":
-                        "1b45c307539bff6a44b039d99dc11bbe5e9ea9473f316b964aa26ec176064"
-                        "ea0",
+                "session_id": "1b45c307539bff6a44b039d99dc11bbe5e9ea9473f316b964aa26ec176064"
+                "ea0",
                 "session_duration": -1,
                 "source_ip": "172.30.151.91",
                 "source_hostname": "",
                 "source_port": 50188,
                 "domain": "",
-                "username": "kadmin"
-        }],
+                "username": "kadmin",
+            },
+        ],
         "success_source_ip_list": ["172.30.151.71", "172.30.151.91"],
         "success_username_list": ["kadmin"],
         "total_success_events": 2,
         "total_failed_events": 0,
         "distinct_source_ip_count": 2,
         "distinct_username_count": 1,
-        "top_source_ips": {
-                "172.30.151.71": 1,
-                "172.30.151.91": 1
-        },
-        "top_usernames": {
-                "kadmin": 2
-        }
+        "top_source_ips": {"172.30.151.71": 1, "172.30.151.91": 1},
+        "top_usernames": {"kadmin": 2},
     }
 
     EXPECTED_AUTH_SUMMARY_3 = {
@@ -155,43 +146,38 @@ class TestAuthAnalyzer(unittest.TestCase):
         "first_seen": 1664739900,
         "last_seen": 1665252640,
         "first_auth": {
-                "timestamp": 1665252633,
-                "session_id":
-                        "7b45adc5a3d14261800c1782719f647b81b3b8013836f30893f23202b592e"
-                        "000",
-                "session_duration": 7,
-                "source_ip": "192.168.140.67",
-                "source_hostname": "",
-                "source_port": 49206,
-                "domain": "",
-                "username": "admin"
+            "timestamp": 1665252633,
+            "session_id": "7b45adc5a3d14261800c1782719f647b81b3b8013836f30893f23202b592e"
+            "000",
+            "session_duration": 7,
+            "source_ip": "192.168.140.67",
+            "source_hostname": "",
+            "source_port": 49206,
+            "domain": "",
+            "username": "admin",
         },
         "brute_forces": [],
-        "successful_logins": [{
-            "timestamp": 1665252633,
-                "session_id":
-                        "7b45adc5a3d14261800c1782719f647b81b3b8013836f30893f23202b592e"
-                        "000",
+        "successful_logins": [
+            {
+                "timestamp": 1665252633,
+                "session_id": "7b45adc5a3d14261800c1782719f647b81b3b8013836f30893f23202b592e"
+                "000",
                 "session_duration": 7,
                 "source_ip": "192.168.140.67",
                 "source_hostname": "",
                 "source_port": 49206,
                 "domain": "",
-                "username": "admin"
-        }],
+                "username": "admin",
+            }
+        ],
         "success_source_ip_list": ["192.168.140.67"],
         "success_username_list": ["admin"],
         "total_success_events": 1,
         "total_failed_events": 27594,
         "distinct_source_ip_count": 1,
         "distinct_username_count": 2,
-        "top_source_ips": {
-                "192.168.140.67": 5204
-        },
-        "top_usernames": {
-                "root": 5173,
-                "admin": 31
-        }
+        "top_source_ips": {"192.168.140.67": 5204},
+        "top_usernames": {"root": 5173, "admin": 31},
     }
 
     EXPECTED_AUTH_SUMMARY_4 = {
@@ -202,54 +188,49 @@ class TestAuthAnalyzer(unittest.TestCase):
         "first_seen": 1664739446,
         "last_seen": 1665252676,
         "first_auth": {
-                "timestamp": 1664739446,
-                "session_id":
-                        "271a92c99d59549e5b74212dda7a770fa80e219474764897c475f1320b419"
-                        "20a",
-                "session_duration": -1,
-                "source_ip": "172.30.151.71",
-                "source_hostname": "",
-                "source_port": 58419,
-                "domain": "",
-                "username": "kadmin"
+            "timestamp": 1664739446,
+            "session_id": "271a92c99d59549e5b74212dda7a770fa80e219474764897c475f1320b419"
+            "20a",
+            "session_duration": -1,
+            "source_ip": "172.30.151.71",
+            "source_hostname": "",
+            "source_port": 58419,
+            "domain": "",
+            "username": "kadmin",
         },
         "brute_forces": [],
-        "successful_logins": [{
+        "successful_logins": [
+            {
                 "timestamp": 1664739446,
-                "session_id":
-                        "271a92c99d59549e5b74212dda7a770fa80e219474764897c475f1320b419"
-                        "20a",
+                "session_id": "271a92c99d59549e5b74212dda7a770fa80e219474764897c475f1320b419"
+                "20a",
                 "session_duration": -1,
                 "source_ip": "172.30.151.71",
                 "source_hostname": "",
                 "source_port": 58419,
                 "domain": "",
-                "username": "kadmin"
-        }, {
+                "username": "kadmin",
+            },
+            {
                 "timestamp": 1665252676,
-                "session_id":
-                        "1b45c307539bff6a44b039d99dc11bbe5e9ea9473f316b964aa26ec176064"
-                        "ea0",
+                "session_id": "1b45c307539bff6a44b039d99dc11bbe5e9ea9473f316b964aa26ec176064"
+                "ea0",
                 "session_duration": -1,
                 "source_ip": "172.30.151.91",
                 "source_hostname": "",
                 "source_port": 50188,
                 "domain": "",
-                "username": "kadmin"
-        }],
+                "username": "kadmin",
+            },
+        ],
         "success_source_ip_list": ["172.30.151.91", "172.30.151.71"],
         "success_username_list": ["kadmin"],
         "total_success_events": 2,
         "total_failed_events": 0,
         "distinct_source_ip_count": 2,
         "distinct_username_count": 1,
-        "top_source_ips": {
-                "172.30.151.71": 1,
-                "172.30.151.91": 1
-        },
-        "top_usernames": {
-                "kadmin": 2
-        }
+        "top_source_ips": {"172.30.151.71": 1, "172.30.151.91": 1},
+        "top_usernames": {"kadmin": 2},
     }
 
     EMPTY_LOGIN_SESSION = {
@@ -264,37 +245,54 @@ class TestAuthAnalyzer(unittest.TestCase):
 
     EXPECTED_LOGIN_SESSION = {
         "timestamp": 1665252633,
-        "session_id":
-                "7b45adc5a3d14261800c1782719f647b81b3b8013836f30893f23202b592e000",
+        "session_id": "7b45adc5a3d14261800c1782719f647b81b3b8013836f30893f23202b592e000",
         "source_hostname": "",
         "session_duration": 7,
-            "source_ip": "192.168.140.67",
-            "source_port": 49206,
-            "domain": "",
-            "username": "admin"
+        "source_ip": "192.168.140.67",
+        "source_port": 49206,
+        "domain": "",
+        "username": "admin",
     }
 
     def setUp(self):
         self.analyzer = AuthAnalyzer(
-                name="analyzer.auth", display_name="Auth Analyzer",
-                description="Authentication analyzer")
+            name="analyzer.auth",
+            display_name="Auth Analyzer",
+            description="Authentication analyzer",
+        )
 
     def test_check_required_fields(self):
         """Test check_required_fields method."""
         # Test 1: Does not meet required fields.
         print("[+] Testing missing required fields")
         missing_fields = [
-                "timestamp", "event_type", "auth_method", "auth_result", "hostname",
-                "source_ip", "source_port", "source_hostname", "domain", "username"
+            "timestamp",
+            "event_type",
+            "auth_method",
+            "auth_result",
+            "hostname",
+            "source_ip",
+            "source_port",
+            "source_hostname",
+            "domain",
+            "username",
         ]
         self.assertFalse(self.analyzer.check_required_fields(missing_fields))
 
         # Test 2: Meets required fields
         print("[+] Testing valid fields")
         valid_fields = [
-                "timestamp", "event_type", "auth_method", "auth_result", "hostname",
-                "source_ip", "source_port", "source_hostname", "domain", "username",
-                "session_id"
+            "timestamp",
+            "event_type",
+            "auth_method",
+            "auth_result",
+            "hostname",
+            "source_ip",
+            "source_port",
+            "source_hostname",
+            "domain",
+            "username",
+            "session_id",
         ]
         self.assertTrue(self.analyzer.check_required_fields(valid_fields))
 
@@ -306,24 +304,30 @@ class TestAuthAnalyzer(unittest.TestCase):
 
         print("[+] Testing empty session_id")
         session_duration = self.analyzer.session_duration(
-                session_id="", timestamp=12345678)
+            session_id="", timestamp=12345678
+        )
         self.assertEqual(session_duration, -1)
 
         print("[+] Testing invalid session_id")
         session_duration = self.analyzer.session_duration(
-                session_id="invalid", timestamp=123456789)
+            session_id="invalid", timestamp=123456789
+        )
         self.assertEqual(session_duration, -1)
 
         print("[+] Testing valid session_id and invalid timestamp")
         session_duration = self.analyzer.session_duration(
-                session_id="7b45adc5a3d14261800c1782719f647b81b3b8013836f30893f23202"
-                "b592e000", timestamp=None)
+            session_id="7b45adc5a3d14261800c1782719f647b81b3b8013836f30893f23202"
+            "b592e000",
+            timestamp=None,
+        )
         self.assertEqual(session_duration, -1)
 
         print("[+] Testing valid session_id and timestamp")
         session_duration = self.analyzer.session_duration(
-                session_id="7b45adc5a3d14261800c1782719f647b81b3b8013836f30893f23202"
-                "b592e000", timestamp=1665252633)
+            session_id="7b45adc5a3d14261800c1782719f647b81b3b8013836f30893f23202"
+            "b592e000",
+            timestamp=1665252633,
+        )
         self.assertEqual(session_duration, 7)
 
     def test_get_ip_summary(self):
@@ -357,8 +361,7 @@ class TestAuthAnalyzer(unittest.TestCase):
         print("[+] Testing empty dataframe")
         df = pd.DataFrame()
         self.analyzer.set_dataframe(df)
-        summary = self.analyzer.get_user_summary(
-                domain="", username="gametogenesis")
+        summary = self.analyzer.get_user_summary(domain="", username="gametogenesis")
         self.assertIsNone(summary)
 
         # Dataframe for the rest of the tests
@@ -376,7 +379,8 @@ class TestAuthAnalyzer(unittest.TestCase):
         self.assertIsNotNone(summary)
         user_summary = summary.to_dict()
         self.assertEqual(
-                user_summary["first_auth"], self.EXPECTED_USER_SUMMARY["first_auth"])
+            user_summary["first_auth"], self.EXPECTED_USER_SUMMARY["first_auth"]
+        )
 
     def test_get_auth_summary(self):
         """Test get_auth_summary method."""
@@ -407,8 +411,8 @@ class TestAuthAnalyzer(unittest.TestCase):
         print("[+] Testing valid source_type username")
         summary = self.analyzer.get_auth_summary(df, "username", "kadmin")
         self.assertDictEqual(
-                summary.to_dict()["first_auth"],
-                self.EXPECTED_AUTH_SUMMARY_4["first_auth"])
+            summary.to_dict()["first_auth"], self.EXPECTED_AUTH_SUMMARY_4["first_auth"]
+        )
 
     def test_to_useraccount(self):
         """Test to_useraccount method."""
@@ -420,8 +424,7 @@ class TestAuthAnalyzer(unittest.TestCase):
 
         # Test 2: Non-empty domain and username
         print("[+] Testing username and domain")
-        useraccount = self.analyzer.to_useraccount(
-                domain="example", username="admin")
+        useraccount = self.analyzer.to_useraccount(domain="example", username="admin")
         self.assertEqual(useraccount, "example\\admin")
 
     def test_from_useraccount(self):
@@ -468,16 +471,22 @@ class TestAuthAnalyzer(unittest.TestCase):
         # Test 2: Checking for non-existent parameter values
         print("[+] Testing non-existent value of the parameters")
         login_session = self.analyzer.get_login_session(
-                source_ip="100.100.100.100", domain="", username="gametogenesis",
-                session_id="kurbtwhfwq")
+            source_ip="100.100.100.100",
+            domain="",
+            username="gametogenesis",
+            session_id="kurbtwhfwq",
+        )
         self.assertIsNone(login_session)
 
         # Test 3: Checking a valid session
         print("[+] Testing valid login session")
         login_session = self.analyzer.get_login_session(
-                source_ip="192.168.140.67", domain="", username="admin",
-                session_id="7b45adc5a3d14261800c1782719f647b81b3b8013836f30893f23202b5"
-                "92e000")
+            source_ip="192.168.140.67",
+            domain="",
+            username="admin",
+            session_id="7b45adc5a3d14261800c1782719f647b81b3b8013836f30893f23202b5"
+            "92e000",
+        )
         self.assertDictEqual(login_session.__dict__, self.EXPECTED_LOGIN_SESSION)
 
 
@@ -508,9 +517,12 @@ class TestBruteForceAnalyzer(unittest.TestCase):
         authdatasummary.top_usernames["admin"] = 31
 
         login = LoginRecord(
-                source_ip="192.168.140.67", domain="", username="admin",
-                session_id="7b45adc5a3d14261800c1782719f647b81b3b8013836f30893f23202"
-                "b592e000")
+            source_ip="192.168.140.67",
+            domain="",
+            username="admin",
+            session_id="7b45adc5a3d14261800c1782719f647b81b3b8013836f30893f23202"
+            "b592e000",
+        )
         login.timestamp = 1665252633
         login.session_duration = 7
         login.source_port = 49206
@@ -528,11 +540,11 @@ class TestBruteForceAnalyzer(unittest.TestCase):
                 AnalyzerOutput: Expected AnalyzerOutput object.
         """
         output = AnalyzerOutput(
-                analyzer_id="bruteforce.auth.analyzer",
-                analyzer_name="Brute Force Analyzer")
+            analyzer_id="bruteforce.auth.analyzer", analyzer_name="Brute Force Analyzer"
+        )
         output.result_summary = "1 brute force from 192.168.140.67"
         output.result_markdown = textwrap.dedent(
-                """
+            """
                 #### Brute Force Analyzer
 
                 ##### Brute Force Summary for 192.168.140.67
@@ -547,7 +559,8 @@ class TestBruteForceAnalyzer(unittest.TestCase):
 
                 ###### Top Usernames
                 - root: 5173
-                - admin: 31""")
+                - admin: 31"""
+        )
         output.attributes = self._authsummarydata()
         return output
 
