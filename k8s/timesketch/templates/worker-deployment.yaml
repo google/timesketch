@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name:  {{ include "timesketch.fullname" . }}
+  name:  {{ include "timesketch.fullname" . }}-worker
   namespace: {{ .Release.Namespace | quote }}
   labels:
     app.kubernetes.io/component: worker
@@ -44,8 +44,6 @@ spec:
             - mountPath: /var/log/timesketch
               name: timesketchvolume
               subPathExpr: logs/$(POD_NAME)
-            - mountPath: /etc/timesketch/
-              name: timesketch-conf
           ports:
             - containerPort: {{ .Values.service.port }}
           resources:
@@ -55,6 +53,8 @@ spec:
           persistentVolumeClaim:
             claimName: {{ .Values.persistence.name }}-claim
             readOnly: false
-        - name: timesketch-conf
+        - name: timesketch-init
           configMap:
-            name: timesketch-config
+            name: {{ include "timesketch.fullname" . }}-init-configmap
+            defaultMode: 0744
+

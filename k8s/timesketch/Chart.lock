@@ -8,5 +8,14 @@ dependencies:
 - name: opensearch
   repository: https://opensearch-project.github.io/helm-charts/
   version: 2.11.3
-digest: sha256:8e03c6b21556637f4ad04d715dd4de5a46326fd5bf148c78ff1f21e266167a8e
-generated: "2023-04-03T20:59:49.16375565Z"
+- name: oauth2-proxy
+  repository: https://charts.bitnami.com/bitnami
+  version: 3.4.10
+- name: cert-manager
+  repository: https://charts.bitnami.com/bitnami
+  version: 0.9.5
+- name: external-dns
+  repository: https://charts.bitnami.com/bitnami
+  version: 6.17.0
+digest: sha256:fe20e19b5434364195191ec5f92a69383758e033ade4c3019b47da73427446c2
+generated: "2023-04-07T18:04:12.252158302Z"

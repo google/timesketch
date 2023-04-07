@@ -25,27 +25,42 @@ spec:
       serviceAccountName: {{ include "timesketch.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      initContainers:
+        - name: init-timesketch
+          image: busybox
+          command: ['sh', '-c', '/init/init-timesketch.sh']
+          volumeMounts:
+            - mountPath: /init
+              name: init-timesketch
+            - mountPath: /etc/timesketch
+              name: timesketchvolume
+              subPath: configs
       containers:
         - name: frontend
           securityContext:
               {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["sh", "-c", "./docker-entrypoint.sh timesketch-web-v2"]
+          command: ["sh", "-c", "sleep 3600"]
           env:
             - name: POD_NAME
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
                   apiVersion: v1
+            - name: REDIS_CONF
+              value: {{ include "timesketch.redis.ConnectionUrl" . }}
           volumeMounts:
             - mountPath: /mnt/timesketchvolume
               name: timesketchvolume
             - mountPath: /var/log/timesketch
               name: timesketchvolume
               subPathExpr: logs/$(POD_NAME)
-            - mountPath: /etc/timesketch/
-              name: timesketch-conf
+            - mountPath: /etc/timesketch
+              name: timesketchvolume
+              subPath: configs
+            - mountPath: /init
+              name: init-timesketch
           ports:
             - containerPort: {{ .Values.service.port }}
           resources:
@@ -55,6 +70,7 @@ spec:
           persistentVolumeClaim:
             claimName: {{ .Values.persistence.name }}-claim
             readOnly: false
-        - name: timesketch-conf
+        - name: init-timesketch
           configMap:
-            name: timesketch-config
+            name: {{ include "timesketch.fullname" . }}-init-configmap
+            defaultMode: 0744

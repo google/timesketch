@@ -62,6 +62,13 @@ Create the name of the service account to use
 {{- end }}
 
 {{/*
+Compute the redis url if not set explicitly.
+*/}}
+{{- define "timesketch.configmap.name" -}}
+{{- printf "redis://%s-master:%.0f" (include "timesketch.redis.fullname" .) .Values.redis.master.service.ports.redis -}}
+{{- end -}}
+
+{{/*
 Redis subcharts fullname
 */}}
 {{- define "timesketch.redis.fullname" -}}
@@ -75,7 +82,7 @@ Redis subcharts fullname
 {{/*
 Compute the redis url if not set explicitly.
 */}}
-{{- define "timesketch.redis.StandaloneUrl" -}}
+{{- define "timesketch.redis.ConnectionUrl" -}}
 {{- if .Values.redis.enabled -}}
 {{- printf "redis://%s-master:%.0f" (include "timesketch.redis.fullname" .) .Values.redis.master.service.ports.redis -}}
 {{- else -}}

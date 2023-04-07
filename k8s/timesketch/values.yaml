@@ -81,6 +81,17 @@ opensearch:
 
 redis:
   enabled: true
+  auth:
+    enabled: false
 
 postgresql:
+  enabled: false
+
+oauth2-proxy:
+  enabled: false
+
+cert-manager:
+  enabled: false
+
+external-dns:
   enabled: false
