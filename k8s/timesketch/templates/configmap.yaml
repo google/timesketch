@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "timesketch.fullname" . }}-init-configmap
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "timesketch.labels" . | nindent 4 }}
+data:
+  init-timesketch.sh: |
+    #!/bin/sh
+
+    echo -n "* Fetching configuration files.." 
+    GITHUB_BASE_URL="https://raw.githubusercontent.com/google/timesketch/master"
+    mkdir -p /etc/timesketch
+    # Fetch default Timesketch config files
+    wget $GITHUB_BASE_URL/data/timesketch.conf -O /etc/timesketch/timesketch.conf
+    wget $GITHUB_BASE_URL/data/tags.yaml -O /etc/timesketch/tags.yaml
+    wget $GITHUB_BASE_URL/data/plaso.mappings -O /etc/timesketch/plaso.mappings
+    wget $GITHUB_BASE_URL/data/generic.mappings -O /etc/timesketch/generic.mappings
+    wget $GITHUB_BASE_URL/data/features.yaml -O /etc/timesketch/features.yaml
+    wget $GITHUB_BASE_URL/data/ontology.yaml -O /etc/timesketch/ontology.yaml
+    wget $GITHUB_BASE_URL/data/sigma_rule_status.csv -O /etc/timesketch/sigma_rule_status.csv
+    wget $GITHUB_BASE_URL/data/tags.yaml -O /etc/timesketch/tags.yaml
+    wget $GITHUB_BASE_URL/data/intelligence_tag_metadata.yaml -O /etc/timesketch/intelligence_tag_metadata.yaml
+    wget $GITHUB_BASE_URL/data/sigma_config.yaml -O /etc/timesketch/sigma_config.yaml
+    wget $GITHUB_BASE_URL/data/sigma_rule_status.csv -O /etc/timesketch/sigma_rule_status.csv
+    wget $GITHUB_BASE_URL/data/sigma/rules/lnx_susp_zmap.yml -O /etc/timesketch/lnx_susp_zmap.yml
+    echo "OK"
+    
+    cd /etc/timesketch
+    sed -i 's#^CELERY_BROKER_URL =.*#CELERY_BROKER_URL = $REDIS_CONF#' timesketch.conf
+    sed -i 's#^CELERY_RESULT_BACKEND =.*#CELERY_RESULT_BACKEND = $REDIS_CONF#' timesketch.conf
+
+    # Set up secret
+    # sed -i 's#SECRET_KEY = \x27\x3CKEY_GOES_HERE\x3E\x27#SECRET_KEY = \x27'$SECRET_KEY'\x27#' timesketch/timesketch.conf
+
+    # Set up the Elastic connection
+    # sed -i 's#^OPENSEARCH_HOST = \x27127.0.0.1\x27#OPENSEARCH_HOST = \x27'$OPENSEARCH_ADDRESS'\x27#' timesketch/timesketch.conf
+
+    # Set up the Redis connection
+    # sed -i 's#^UPLOAD_ENABLED = False#UPLOAD_ENABLED = True#' timesketch/timesketch.conf
+    # sed -i 's#^UPLOAD_FOLDER = \x27/tmp\x27#UPLOAD_FOLDER = \x27/mnt/'$FILESTORE_NAME'/upload\x27#' timesketch/timesketch.conf
+
+    # sed -i 's#^CELERY_BROKER_URL =.*#CELERY_BROKER_URL = \x27redis://'$REDIS_ADDRESS':'$REDIS_PORT'\x27#' timesketch/timesketch.conf
+    # sed -i 's#^CELERY_RESULT_BACKEND =.*#CELERY_RESULT_BACKEND = \x27redis://'$REDIS_ADDRESS':'$REDIS_PORT'\x27#' timesketch/timesketch.conf
+
+    # Set up the Postgres connection
+    # sed -i 's#postgresql://<USERNAME>:<PASSWORD>@localhost#postgresql://'$POSTGRES_USER':'$POSTGRES_PASSWORD'@'$POSTGRES_ADDRESS':'$POSTGRES_PORT'#' timesketch/timesketch.conf
