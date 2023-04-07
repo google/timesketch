@@ -52,7 +52,8 @@ class TestAuthAnalyzer(unittest.TestCase):
         "last_seen": 1665252640,
         "first_auth": {
             "timestamp": 1665252633,
-            "session_id": "7b45adc5a3d14261800c1782719f647b81b3b8013836f30893f23202b592e"
+            "session_id": "7b45adc5a3d14261800c1782719f647b81b3b8013836f30893f"
+            "23202b592e"
             "000",
             "session_duration": 7,
             "source_ip": "192.168.140.67",
@@ -65,7 +66,8 @@ class TestAuthAnalyzer(unittest.TestCase):
         "successful_logins": [
             {
                 "timestamp": 1665252633,
-                "session_id": "7b45adc5a3d14261800c1782719f647b81b3b8013836f30893f23202b592e"
+                "session_id": "7b45adc5a3d14261800c1782719f647b81b3b8013836f30"
+                "893f23202b592e"
                 "000",
                 "session_duration": 7,
                 "source_ip": "192.168.140.67",
@@ -94,7 +96,8 @@ class TestAuthAnalyzer(unittest.TestCase):
         "last_seen": 1665252676,
         "first_auth": {
             "timestamp": 1664739446,
-            "session_id": "271a92c99d59549e5b74212dda7a770fa80e219474764897c475f1320b419"
+            "session_id": "271a92c99d59549e5b74212dda7a770fa80e219474764897c47"
+            "5f1320b419"
             "20a",
             "session_duration": -1,
             "source_ip": "172.30.151.71",
@@ -107,7 +110,8 @@ class TestAuthAnalyzer(unittest.TestCase):
         "successful_logins": [
             {
                 "timestamp": 1664739446,
-                "session_id": "271a92c99d59549e5b74212dda7a770fa80e219474764897c475f1320b419"
+                "session_id": "271a92c99d59549e5b74212dda7a770fa80e21947476489"
+                "7c475f1320b419"
                 "20a",
                 "session_duration": -1,
                 "source_ip": "172.30.151.71",
@@ -118,7 +122,8 @@ class TestAuthAnalyzer(unittest.TestCase):
             },
             {
                 "timestamp": 1665252676,
-                "session_id": "1b45c307539bff6a44b039d99dc11bbe5e9ea9473f316b964aa26ec176064"
+                "session_id": "1b45c307539bff6a44b039d99dc11bbe5e9ea9473f316b9"
+                "64aa26ec176064"
                 "ea0",
                 "session_duration": -1,
                 "source_ip": "172.30.151.91",
@@ -147,7 +152,8 @@ class TestAuthAnalyzer(unittest.TestCase):
         "last_seen": 1665252640,
         "first_auth": {
             "timestamp": 1665252633,
-            "session_id": "7b45adc5a3d14261800c1782719f647b81b3b8013836f30893f23202b592e"
+            "session_id": "7b45adc5a3d14261800c1782719f647b81b3b8013836f30893f"
+            "23202b592e"
             "000",
             "session_duration": 7,
             "source_ip": "192.168.140.67",
@@ -160,7 +166,8 @@ class TestAuthAnalyzer(unittest.TestCase):
         "successful_logins": [
             {
                 "timestamp": 1665252633,
-                "session_id": "7b45adc5a3d14261800c1782719f647b81b3b8013836f30893f23202b592e"
+                "session_id": "7b45adc5a3d14261800c1782719f647b81b3b8013836f30"
+                "893f23202b592e"
                 "000",
                 "session_duration": 7,
                 "source_ip": "192.168.140.67",
@@ -189,7 +196,8 @@ class TestAuthAnalyzer(unittest.TestCase):
         "last_seen": 1665252676,
         "first_auth": {
             "timestamp": 1664739446,
-            "session_id": "271a92c99d59549e5b74212dda7a770fa80e219474764897c475f1320b419"
+            "session_id": "271a92c99d59549e5b74212dda7a770fa80e219474764897c47"
+            "5f1320b419"
             "20a",
             "session_duration": -1,
             "source_ip": "172.30.151.71",
@@ -202,7 +210,8 @@ class TestAuthAnalyzer(unittest.TestCase):
         "successful_logins": [
             {
                 "timestamp": 1664739446,
-                "session_id": "271a92c99d59549e5b74212dda7a770fa80e219474764897c475f1320b419"
+                "session_id": "271a92c99d59549e5b74212dda7a770fa80e21947476489"
+                "7c475f1320b419"
                 "20a",
                 "session_duration": -1,
                 "source_ip": "172.30.151.71",
@@ -213,7 +222,8 @@ class TestAuthAnalyzer(unittest.TestCase):
             },
             {
                 "timestamp": 1665252676,
-                "session_id": "1b45c307539bff6a44b039d99dc11bbe5e9ea9473f316b964aa26ec176064"
+                "session_id": "1b45c307539bff6a44b039d99dc11bbe5e9ea9473f316b9"
+                "64aa26ec176064"
                 "ea0",
                 "session_duration": -1,
                 "source_ip": "172.30.151.91",
@@ -245,7 +255,8 @@ class TestAuthAnalyzer(unittest.TestCase):
 
     EXPECTED_LOGIN_SESSION = {
         "timestamp": 1665252633,
-        "session_id": "7b45adc5a3d14261800c1782719f647b81b3b8013836f30893f23202b592e000",
+        "session_id": "7b45adc5a3d14261800c1782719f647b81b3b8013836f30893f232"
+        "02b592e000",
         "source_hostname": "",
         "session_duration": 7,
         "source_ip": "192.168.140.67",
@@ -316,16 +327,16 @@ class TestAuthAnalyzer(unittest.TestCase):
 
         print("[+] Testing valid session_id and invalid timestamp")
         session_duration = self.analyzer.session_duration(
-            session_id="7b45adc5a3d14261800c1782719f647b81b3b8013836f30893f23202"
-            "b592e000",
+            session_id="7b45adc5a3d14261800c1782719f647b81b3b8013836f30893f232"
+            "02b592e000",
             timestamp=None,
         )
         self.assertEqual(session_duration, -1)
 
         print("[+] Testing valid session_id and timestamp")
         session_duration = self.analyzer.session_duration(
-            session_id="7b45adc5a3d14261800c1782719f647b81b3b8013836f30893f23202"
-            "b592e000",
+            session_id="7b45adc5a3d14261800c1782719f647b81b3b8013836f30893f232"
+            "02b592e000",
             timestamp=1665252633,
         )
         self.assertEqual(session_duration, 7)
@@ -484,8 +495,8 @@ class TestAuthAnalyzer(unittest.TestCase):
             source_ip="192.168.140.67",
             domain="",
             username="admin",
-            session_id="7b45adc5a3d14261800c1782719f647b81b3b8013836f30893f23202b5"
-            "92e000",
+            session_id="7b45adc5a3d14261800c1782719f647b81b3b8013836f30893f232"
+            "02b592e000",
         )
         self.assertDictEqual(login_session.__dict__, self.EXPECTED_LOGIN_SESSION)
 
@@ -520,8 +531,8 @@ class TestBruteForceAnalyzer(unittest.TestCase):
             source_ip="192.168.140.67",
             domain="",
             username="admin",
-            session_id="7b45adc5a3d14261800c1782719f647b81b3b8013836f30893f23202"
-            "b592e000",
+            session_id="7b45adc5a3d14261800c1782719f647b81b3b8013836f30893f232"
+            "02b592e000",
         )
         login.timestamp = 1665252633
         login.session_duration = 7
