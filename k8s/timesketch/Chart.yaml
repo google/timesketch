@@ -24,12 +24,15 @@ version: 0.1.0
 appVersion: "1.16.0"
 
 dependencies:
-- name: postgresql
+- condition: postgresql.enabled
+  name: postgresql
   version: 12.2.7
   repository: https://charts.bitnami.com/bitnami
-- name: redis
+- condition: redis.enabled
+  name: redis
   version: 17.9.3
   repository: https://charts.bitnami.com/bitnami
-- name: opensearch
+- condition: opensearch.enabled
+  name: opensearch
   version: 2.11.3
   repository: https://opensearch-project.github.io/helm-charts/

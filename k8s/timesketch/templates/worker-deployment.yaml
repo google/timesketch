@@ -1,36 +1,43 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: timesketch-worker
-  namespace: timesketch
+  name:  {{ include "timesketch.fullname" . }}
+  namespace: {{ .Release.Namespace | quote }}
   labels:
-    app: timesketch-worker
+    app.kubernetes.io/component: worker
+    {{- include "timesketch.labels" . | nindent 4 }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: timesketch-worker
+      app.kubernetes.io/component: worker
+      {{- include "timesketch.selectorLabels" . | nindent 6 }}
   template:
     metadata:
+      {{- with .Values.podAnnotations }}
       annotations:
-        prometheus.io/port: "9090"
-        prometheus.io/scrape: "true"
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       labels:
-        app: timesketch-worker
+        app.kubernetes.io/component: worker
+        {{- include "timesketch.selectorLabels" . | nindent 8 }}
     spec:
-      serviceAccountName: timesketch
+      serviceAccountName: {{ include "timesketch.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
-        - name: timesketch-worker
-          image: us-docker.pkg.dev/osdfir-registry/timesketch/timesketch:latest
+        - name: worker
+          securityContext:
+              {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["sh", "-c", "./docker-entrypoint.sh timesketch-worker"]
           env:
-          - name: POD_NAME
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.name
-                apiVersion: v1
-          - name: WORKER_LOG_LEVEL
-            value: 'DEBUG'
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+                  apiVersion: v1
           volumeMounts:
             - mountPath: /mnt/timesketchvolume
               name: timesketchvolume
@@ -40,18 +47,13 @@ spec:
             - mountPath: /etc/timesketch/
               name: timesketch-conf
           ports:
-            - containerPort: 5000 
-          resources: 
-            requests:
-              cpu: 2000m
-              memory: 4000Mi
-            limits:
-              cpu: 8000m
-              memory: 16000Mi
+            - containerPort: {{ .Values.service.port }}
+          resources:
+            {{- toYaml .Values.resources.worker | nindent 12 }}
       volumes:
         - name: timesketchvolume
           persistentVolumeClaim:
-            claimName: "{{ .Values.persistence.name }}-claim"
+            claimName: {{ .Values.persistence.name }}-claim
             readOnly: false
         - name: timesketch-conf
           configMap:

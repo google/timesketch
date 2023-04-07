@@ -6,13 +6,17 @@ replicaCount: 1
 
 persistence:
   name: timesketchvolume
-  size: 2T
+  size: 1T
 
 image:
-  repository: timesketch
+  repository: us-docker.pkg.dev/osdfir-registry/timesketch/timesketch
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "latest"
+  tag: latest
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
 
 serviceAccount:
   # Specifies whether a service account should be created
@@ -23,11 +27,47 @@ serviceAccount:
   # If not set and create is true, a name is generated using the fullname template
   name: "timesketch"
 
+podAnnotations: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 5000
+
 ingress:
   enabled: false
   domain: ""
 
+resources:
+  frontend:
+    limits:
+      cpu: 8000m
+      memory: 16000Mi
+    requests:
+      cpu: 2000m
+      memory: 4000Mi
+  worker:
+    limits:
+      cpu: 8000m
+      memory: 16000Mi
+    requests:
+      cpu: 2000m
+      memory: 4000Mi
+
+
+# Third Party Configuration
 opensearch:
+  enabled: false
   replicas: 3
   sysctlInit:
     enabled: true
@@ -38,3 +78,9 @@ opensearch:
     requests:
       cpu: 8000m
       memory: 32Gi
+
+redis:
+  enabled: true
+
+postgresql:
+  enabled: false

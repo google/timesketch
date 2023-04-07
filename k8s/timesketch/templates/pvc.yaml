@@ -2,7 +2,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: "{{ .Values.persistence.name }}-claim"
-  namespace: timesketch
+  namespace: {{ .Release.Namespace | quote }}
 spec:
   accessModes:
     - ReadWriteMany
