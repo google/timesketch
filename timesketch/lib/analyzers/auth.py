@@ -635,7 +635,12 @@ class AuthAnalyzer:
 
 
 class BruteForceAnalyzer(AuthAnalyzer):
-    """Analyzer for brute force authentication."""
+    """Analyzer for brute force authentication.
+
+    Attributes:
+        success_threshold (int): Number of successful login events in brute
+            force analysis window.
+    """
 
     NAME = "bruteforce.auth.analyzer"
     DISPLAY_NAME = "Brute Force Analyzer"
@@ -660,6 +665,16 @@ class BruteForceAnalyzer(AuthAnalyzer):
     def __init__(self):
         """Initialize brute force analyzer."""
         super().__init__(self.NAME, self.DISPLAY_NAME, self.DESCRIPTION)
+        self.success_threshold = 1
+
+    def set_success_threshold(self, threshold: int = 1) -> None:
+        """Sets success threshold value.
+
+        Args:
+            threshold (int): Number of successful login events in brute
+                force analysis window.
+        """
+        self.success_threshold = threshold
 
     def login_analysis(self, source_ip: str) -> AuthSummaryData:
         """Performs brute force analysis for the given source IP.
@@ -755,35 +770,26 @@ class BruteForceAnalyzer(AuthAnalyzer):
             # the most recent login. For a bruteforce login, success_count MUST
             #  be one and failed_count MUST be greater than equal to
             # BRUTE_FORCE_MIN_FAILED_EVENT.
-            #
-            # This code block checks for condition that does not meet brute force
-            # requirements.
-            if success_count != 1 or failed_count < self.BRUTE_FORCE_MIN_FAILED_EVENT:
-                log.debug(
-                    "[%s] Brute force threshold not met. success_count: %d, "
-                    "failed_count: %d",
-                    self.NAME,
-                    success_count,
-                    failed_count,
+            if (
+                0 <= success_count <= self.success_threshold
+                and failed_count >= self.BRUTE_FORCE_MIN_FAILED_EVENT
+            ):
+                if not authsummarydata:
+                    authsummarydata = self.get_ip_summary(source_ip=source_ip)
+
+                # Collect information related to successful brute force
+                row_domain = row.get("domain", "")
+                row_username = row.get("username", "")
+                row_session_id = row.get("session_id", "")
+
+                login_record = self.get_login_session(
+                    source_ip=source_ip,
+                    domain=row_domain,
+                    username=row_username,
+                    session_id=row_session_id,
                 )
-                continue
 
-            if not authsummarydata:
-                authsummarydata = self.get_ip_summary(source_ip=source_ip)
-
-            # Collect information related to successful brute force
-            row_domain = row.get("domain", "")
-            row_username = row.get("username", "")
-            row_session_id = row.get("session_id", "")
-
-            login_record = self.get_login_session(
-                source_ip=source_ip,
-                domain=row_domain,
-                username=row_username,
-                session_id=row_session_id,
-            )
-
-            authsummarydata.brute_forces.append(login_record)
+                authsummarydata.brute_forces.append(login_record)
 
         return authsummarydata
 
@@ -887,7 +893,10 @@ class BruteForceAnalyzer(AuthAnalyzer):
         output.result_priority = priority.name
         output.attributes = summaries
 
-        output.validate()
+        try:
+            output.validate()
+        except AuthAnalyzerException as e:
+            log.error("Error validating output. %s", str(e))
         return output
 
     def run(self, df: pd.DataFrame) -> AnalyzerOutput:
