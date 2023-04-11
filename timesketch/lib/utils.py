@@ -297,6 +297,13 @@ def read_and_validate_csv(
                     "or it was empty ".format(len(skipped_rows))
                 )
 
+            rows_missing_timestamp = chunk[chunk["timestamp"].isnull()]
+            if not rows_missing_timestamp.empty:
+                logger.warning(
+                    "{0} rows with missing timestamp field "
+                    "or it was empty ".format(len(rows_missing_timestamp))
+                )
+
             # Normalize datetime to ISO 8601 format if it's not the case.
             try:
                 # Lines with unrecognized datetime format will result in "NaT"
@@ -306,6 +313,8 @@ def read_and_validate_csv(
                     chunk["datetime"], errors="coerce"
                 )
                 num_chunk_rows = chunk.shape[0]
+
+                # remove rows with missing datetime
                 chunk.dropna(subset=["datetime"], inplace=True)
                 if len(chunk) < num_chunk_rows:
                     logger.warning(
@@ -358,11 +367,7 @@ def read_and_validate_csv(
                         )
                         logger.error(error_string)
                         raise errors.DataIngestionError(error_string)
-                # else if timestamp is not present, use datetime to calculate it
-                elif "datetime" in row:
-                    # make a warning that the timestamp value is missing in the row
-                    logger.warning("Timestamp value is missing in row")
-
+                elif not "timestamp" in row:
                     row["timestamp"] = int(
                         pandas.Timestamp(row["datetime"]).value / 1000
                     )
