@@ -201,7 +201,7 @@ class TestUtils(BaseTest):
                 )
             )
             self.assertIn(
-                "WARNING:timesketch.utils:1 rows skipped since they were missing datetime field or it was empty ",# pylint: disable=line-too-long
+                "WARNING:timesketch.utils:1 rows skipped since they were missing datetime field or it was empty ",  # pylint: disable=line-too-long
                 log.output,
             )
 
