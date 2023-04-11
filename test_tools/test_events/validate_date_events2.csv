@@ -1,0 +1,3 @@
+"message","datetime","timestamp","timestamp_desc","data_type"
+No timestamp,2022-07-24T19:01:01+00:00,,"Time Logged","This event has no timestamp"
+No datetime,,1668056848119860,Time Logged,This event has no datetime value

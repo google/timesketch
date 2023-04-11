@@ -287,6 +287,9 @@ def read_and_validate_csv(
                 # rename columns according to the mapping
                 chunk = rename_csv_headers(chunk, headers_mapping)
 
+            # Check if the datetime field is present and not empty.
+            # TODO(jaegeral): Do we really want to skip rows with empty datetime
+            # we could also calculate the datetime from timestamp if present.
             skipped_rows = chunk[chunk["datetime"].isnull()]
             if not skipped_rows.empty:
                 logger.warning(
@@ -355,6 +358,14 @@ def read_and_validate_csv(
                         )
                         logger.error(error_string)
                         raise errors.DataIngestionError(error_string)
+                # else if timestamp is not present, use datetime to calculate it
+                elif "datetime" in row:
+                    # make a warning that the timestamp value is missing in the row
+                    logger.warning("Timestamp value is missing in row")
+
+                    row["timestamp"] = int(
+                        pandas.Timestamp(row["datetime"]).value / 1000
+                    )
 
                 yield row.to_dict()
     except (pandas.errors.EmptyDataError, pandas.errors.ParserError) as e:
