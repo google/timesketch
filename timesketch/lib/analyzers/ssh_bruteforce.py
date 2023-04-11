@@ -175,6 +175,21 @@ class SSHBruteForcePlugin(interface.BaseAnalyzer):
     # while parsing event_body using SSHD_KEYWORD_RE.
     IGNORE_ATTRIBUTE_ERROR = ["'NoneType' object has no attribute 'group'"]
 
+    def _empty_analyzer_output(self, message: str = "") -> str:
+        """Returns empty analyzer output.
+
+        Args:
+            message (str): Message to include in the summary field.
+        """
+        output = AnalyzerOutput(
+            analyzer_id="analyzer.bruteforce.ssh", analyzer_name=self.NAME
+        )
+        output.result_status = "Failed"
+        output.result_priority = "LOW"
+        output.result_summary = message
+
+        return str(output)
+
     def annotate_events(
         self, events: List, df: pd.DataFrame, output: AnalyzerOutput
     ) -> None:
@@ -347,15 +362,15 @@ class SSHBruteForcePlugin(interface.BaseAnalyzer):
         df = pd.DataFrame(ssh_records)
         if df.empty:
             log.info("[%s] No SSH authentication events", self.NAME)
-            return "No SSH authentication events"
+            return self._empty_analyzer_output(message="No SSH authentication events.")
 
         try:
             bfa = BruteForceAnalyzer()
             result = bfa.run(df)
             if not result:
-                return (
-                    f"No verdict. Total number of SSH authentication events"
-                    f" {len(ssh_records)}"
+                return self._empty_analyzer_output(
+                    message="No verdict from the analyzer for "
+                    f"{len(ssh_records)} SSH authentication events"
                 )
 
             events = self.event_stream(
@@ -365,7 +380,9 @@ class SSHBruteForcePlugin(interface.BaseAnalyzer):
             return str(result)
         except (AuthAnalyzerException, AnalyzerOutputException) as e:
             log.error("[%s] Error analyzing data. %s", self.NAME, str(e))
-            return f"No verdict. Error encountered processing data. {str(e)}"
+            return self._empty_analyzer_output(
+                message="Error encountered processing data."
+            )
 
 
 manager.AnalysisManager.register_analyzer(SSHBruteForcePlugin)
