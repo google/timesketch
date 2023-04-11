@@ -314,7 +314,6 @@ def read_and_validate_csv(
                 )
                 num_chunk_rows = chunk.shape[0]
 
-                # remove rows with missing datetime
                 chunk.dropna(subset=["datetime"], inplace=True)
                 if len(chunk) < num_chunk_rows:
                     logger.warning(
@@ -367,7 +366,7 @@ def read_and_validate_csv(
                         )
                         logger.error(error_string)
                         raise errors.DataIngestionError(error_string)
-                elif not "timestamp" in row:
+                if not "timestamp" in row:
                     row["timestamp"] = int(
                         pandas.Timestamp(row["datetime"]).value / 1000
                     )
