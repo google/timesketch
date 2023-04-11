@@ -287,11 +287,21 @@ def read_and_validate_csv(
                 # rename columns according to the mapping
                 chunk = rename_csv_headers(chunk, headers_mapping)
 
+            # Check if the datetime field is present and not empty.
+            # TODO(jaegeral): Do we really want to skip rows with empty datetime
+            # we could also calculate the datetime from timestamp if present.
             skipped_rows = chunk[chunk["datetime"].isnull()]
             if not skipped_rows.empty:
                 logger.warning(
                     "{0} rows skipped since they were missing datetime field "
                     "or it was empty ".format(len(skipped_rows))
+                )
+
+            rows_missing_timestamp = chunk[chunk["timestamp"].isnull()]
+            if not rows_missing_timestamp.empty:
+                logger.warning(
+                    "{0} rows with missing timestamp field "
+                    "or it was empty ".format(len(rows_missing_timestamp))
                 )
 
             # Normalize datetime to ISO 8601 format if it's not the case.
@@ -303,6 +313,7 @@ def read_and_validate_csv(
                     chunk["datetime"], errors="coerce"
                 )
                 num_chunk_rows = chunk.shape[0]
+
                 chunk.dropna(subset=["datetime"], inplace=True)
                 if len(chunk) < num_chunk_rows:
                     logger.warning(
@@ -334,7 +345,7 @@ def read_and_validate_csv(
                 _scrub_special_tags(row)
                 # Remove all NAN values from the pandas.Series.
                 row.dropna(inplace=True)
-                MAX_TIMESTAMP_DIFFERENCE = 100000  # 100 seconds
+                MAX_TIMESTAMP_DIFFERENCE = 1000  # 1 second
                 # check datetime plausibility
                 if "timestamp" in row and "datetime" in row:
                     timestamp_calculated = int(
@@ -355,6 +366,10 @@ def read_and_validate_csv(
                         )
                         logger.error(error_string)
                         raise errors.DataIngestionError(error_string)
+                if not "timestamp" in row:
+                    row["timestamp"] = int(
+                        pandas.Timestamp(row["datetime"]).value / 1000
+                    )
 
                 yield row.to_dict()
     except (pandas.errors.EmptyDataError, pandas.errors.ParserError) as e:
