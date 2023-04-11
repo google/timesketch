@@ -636,7 +636,12 @@ class AuthAnalyzer:
 
 
 class BruteForceAnalyzer(AuthAnalyzer):
-    """Analyzer for brute force authentication."""
+    """Analyzer for brute force authentication.
+
+    Attributes:
+        success_threshold (int): Number of successful login events in brute
+            force analysis window.
+    """
 
     NAME = "bruteforce.auth.analyzer"
     DISPLAY_NAME = "Brute Force Analyzer"
@@ -663,8 +668,13 @@ class BruteForceAnalyzer(AuthAnalyzer):
         super().__init__(self.NAME, self.DISPLAY_NAME, self.DESCRIPTION)
         self.success_threshold = 1
 
-    def set_success_threshold(self, threshold: int) -> None:
-        """Setting success threshold."""
+    def set_success_threshold(self, threshold: int = 1) -> None:
+        """Sets success threshold value.
+
+        Args:
+            threshold (int): Number of successful login events in brute
+                force analysis window.
+        """
         self.success_threshold = threshold
 
     def login_analysis(self, source_ip: str) -> AuthSummaryData:
@@ -762,8 +772,7 @@ class BruteForceAnalyzer(AuthAnalyzer):
             #  be one and failed_count MUST be greater than equal to
             # BRUTE_FORCE_MIN_FAILED_EVENT.
             if (
-                success_count > 0
-                and success_count <= self.success_threshold
+                0 <= success_count <= self.success_threshold
                 and failed_count >= self.BRUTE_FORCE_MIN_FAILED_EVENT
             ):
                 if not authsummarydata:
@@ -887,7 +896,10 @@ class BruteForceAnalyzer(AuthAnalyzer):
         output.result_priority = priority.name
         output.attributes = summaries
 
-        output.validate()
+        try:
+            output.validate()
+        except AuthAnalyzerException as e:
+            log.error("Error validating output. %s", str(e))
         return output
 
     def run(self, df: pd.DataFrame) -> AnalyzerOutput:
