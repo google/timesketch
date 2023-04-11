@@ -210,7 +210,6 @@ class TestUtils(BaseTest):
                 log.output,
             )
 
-
     def test_invalid_JSONL_file(self):
         """Test for JSONL with missing keys in the dictionary wrt headers mapping"""
         linedict = {"DT": "2011-11-11", "MSG": "this is a test"}
