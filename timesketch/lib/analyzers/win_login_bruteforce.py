@@ -89,7 +89,7 @@ class WindowsLoginBruteForcePlugin(interface.BaseAnalyzer):
             AnalyzerOutput: AnalyzerOutput object with empty values.
         """
         output = AnalyzerOutput(
-            analyzer_id="analyzer.auth.windows",
+            analyzer_id="analyzer.bruteforce.windows",
             analyzer_name="Windows BruteForce Analyzer",
         )
         output.result_status = "Failed"
@@ -180,7 +180,7 @@ class WindowsLoginBruteForcePlugin(interface.BaseAnalyzer):
                         continue
 
                     for _, row in login_session_df.iterrows():
-                        event_id = row.get("event_Id" or None)
+                        event_id = row.get("event_id" or None)
                         if event_id:
                             event_ids.append(event_id)
         except KeyError as exception:
@@ -190,19 +190,41 @@ class WindowsLoginBruteForcePlugin(interface.BaseAnalyzer):
         if not event_ids:
             log.info("[%s] No OpenSearch event IDs to annotate", self.NAME)
             return
+        log.info("[%s] Annotating %d events", self.NAME, len(event_ids))
 
+        # Only annotate matching events.
         query_string = ""
         for event_id in event_ids:
             if not query_string:
-                query_string = f"_id: {event_id}"
+                query_string = f"_id:{event_id}"
             else:
-                query_string += f" OR _id: {event_id}"
+                query_string += f" OR _id:{event_id}"
+        log.debug("[%s] Annotation query string %s", self.NAME, query_string)
 
-        events = self.event_stream(query_string, ["record_number"])
-        for event in events:
-            event.add_label("windows_bruteforce")
-            event.add_star()
-            event.commit()
+        return_fields = ["timestamp", "computer_name", "event_identifier"]
+
+        if not query_string:
+            log.info("[%s] No query string to run", self.NAME)
+            return
+
+        try:
+            annotation_events = self.event_stream(
+                query_string=query_string, return_fields=return_fields
+            )
+            if not annotation_events:
+                log.info("[%s] No events for query.", self.NAME)
+                return
+
+            for event in annotation_events:
+                event.add_label("windows_bruteforce")
+                event.add_star()
+                event.commit()
+        except ValueError as exception:
+            log.error(
+                "[%s] Value error encountered getting events. %s",
+                self.NAME,
+                str(exception),
+            )
 
     def run(self):
         """Entry point for the analyzer.
@@ -210,7 +232,11 @@ class WindowsLoginBruteForcePlugin(interface.BaseAnalyzer):
         Returns:
             str: Analyzer output as string.
         """
-        query_string = "source_name:Microsoft-Windows-Security-Auditing AND (event_identifier:4624 OR event_identifier:4625 OR event_identifier:4634)"
+        query_string = (
+            "source_name:Microsoft-Windows-Security-Auditing AND "
+            "(event_identifier:4624 OR event_identifier:4625 "
+            "OR event_identifier:4634)"
+        )
         return_fields = ["timestamp", "computer_name", "event_identifier", "xml_string"]
 
         events = self.event_stream(
@@ -239,7 +265,7 @@ class WindowsLoginBruteForcePlugin(interface.BaseAnalyzer):
                 )
                 continue
 
-            if _event_identifier != 4624 and _event_identifier != 4625:
+            if _event_identifier not in [4624, 4625, 4634]:
                 log.error("[%s] Error getting event ID.", self.NAME)
                 continue
 
