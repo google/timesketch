@@ -346,7 +346,7 @@ def read_and_validate_csv(
                 _scrub_special_tags(row)
                 # Remove all NAN values from the pandas.Series.
                 row.dropna(inplace=True)
-                MAX_TIMESTAMP_DIFFERENCE = 100000  # 100 seconds
+                MAX_TIMESTAMP_DIFFERENCE = 1000  # 1 second
                 # check datetime plausibility
                 if "timestamp" in row and "datetime" in row:
                     timestamp_calculated = int(
