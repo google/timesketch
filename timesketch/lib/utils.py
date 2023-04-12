@@ -267,12 +267,13 @@ def read_and_validate_csv(
     """
     if not mandatory_fields:
         mandatory_fields = TIMESKETCH_FIELDS
+
     # Ensures delimiter is a string.
     if not isinstance(delimiter, six.text_type):
         delimiter = codecs.decode(delimiter, "utf8")
 
+    # Ensure that required headers are present
     header_reader = pandas.read_csv(file_handle, sep=delimiter, nrows=0)
-
     _validate_csv_fields(mandatory_fields, header_reader, headers_mapping)
 
     if hasattr(file_handle, "seek"):
@@ -297,15 +298,8 @@ def read_and_validate_csv(
                     "or it was empty ".format(len(skipped_rows))
                 )
 
-            rows_missing_timestamp = chunk[chunk["timestamp"].isnull()]
-            if not rows_missing_timestamp.empty:
-                logger.warning(
-                    "{0} rows with missing timestamp field "
-                    "or it was empty ".format(len(rows_missing_timestamp))
-                )
-
-            # Normalize datetime to ISO 8601 format if it's not the case.
             try:
+                # Normalize datetime to ISO 8601 format if it's not the case.
                 # Lines with unrecognized datetime format will result in "NaT"
                 # (not available) as its value and the event row will be
                 # dropped in the next line
@@ -338,15 +332,18 @@ def read_and_validate_csv(
                     )
                 )
                 continue
+
             if "tag" in chunk:
                 chunk["tag"] = chunk["tag"].apply(_parse_tag_field)
 
             for _, row in chunk.iterrows():
                 _scrub_special_tags(row)
+
                 # Remove all NAN values from the pandas.Series.
                 row.dropna(inplace=True)
                 MAX_TIMESTAMP_DIFFERENCE = 1000  # 1 second
-                # check datetime plausibility
+
+                # Check datetime plausibility
                 if "timestamp" in row and "datetime" in row:
                     timestamp_calculated = int(
                         pandas.Timestamp(row["datetime"]).value / 1000
@@ -366,6 +363,7 @@ def read_and_validate_csv(
                         )
                         logger.error(error_string)
                         raise errors.DataIngestionError(error_string)
+
                 if not "timestamp" in row:
                     row["timestamp"] = int(
                         pandas.Timestamp(row["datetime"]).value / 1000
