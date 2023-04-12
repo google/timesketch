@@ -205,10 +205,22 @@ class TestUtils(BaseTest):
                 log.output,
             )
 
-            self.assertIn(
-                "WARNING:timesketch.utils:2 rows with missing timestamp field or it was empty ",  # pylint: disable=line-too-long
-                log.output,
-            )
+        # Test that a timestamp is generated if missing.
+        expected_output = {
+            "message": "No timestamp",
+            "datetime": "2022-07-24T19:01:01+00:00",
+            "timestamp_desc": "Time Logged",
+            "data_type": "This event has no timestamp",
+            "timestamp": 1658689261000000,
+        }
+        self.assertDictEqual(
+            next(
+                read_and_validate_csv(
+                    "test_tools/test_events/validate_date_events_missing_timestamp.csv"
+                )
+            ),
+            expected_output,
+        )
 
     def test_invalid_JSONL_file(self):
         """Test for JSONL with missing keys in the dictionary wrt headers mapping"""
