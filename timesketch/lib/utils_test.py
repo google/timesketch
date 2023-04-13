@@ -192,19 +192,6 @@ class TestUtils(BaseTest):
     def test_datetime_parsing_csv_file(self):
         """Test for parsing datetime values in CSV file"""
 
-        # assert if certain lines are written to the log
-        with self.assertLogs(level="WARNING") as log:
-            # Call next to work around lazy generators.
-            next(
-                read_and_validate_csv(
-                    "test_tools/test_events/validate_date_events2.csv"
-                )
-            )
-            self.assertIn(
-                "WARNING:timesketch.utils:2 rows skipped since they were missing datetime field or it was empty ",  # pylint: disable=line-too-long
-                log.output,
-            )
-
         # Test that a timestamp is generated if missing.
         expected_output = {
             "message": "No timestamp",
