@@ -62,30 +62,55 @@ Create the name of the service account to use
 {{- end }}
 
 {{/*
-Compute the redis url if not set explicitly.
+Redis subcharts connection url
 */}}
-{{- define "timesketch.configmap.name" -}}
-{{- printf "redis://%s-master:%.0f" (include "timesketch.redis.fullname" .) .Values.redis.master.service.ports.redis -}}
+{{- define "timesketch.redis.url" -}}
+{{- if .Values.redis.enabled -}}
+{{- $name := include "common.names.fullname" (dict "Chart" (dict "Name" "redis") "Release" .Release "Values" .Values.redis) -}}
+{{- $port := .Values.redis.master.service.ports.redis -}}
+{{- if .Values.redis.auth.enabled -}}
+{{- printf "redis://default:'$REDIS_PASSWORD'@%s-master:%.0f" $name $port -}}
+{{- else -}}
+{{- printf "redis://%s-master:%.0f" $name $port -}}
+{{- end -}}
+{{- else -}}
+{{ fail "Attempting to use Redis, but the subchart is not enabled. This will lead to misconfiguration" }}
+{{- end -}}
 {{- end -}}
 
 {{/*
-Redis subcharts fullname
+Postgresql subcharts connection url
 */}}
-{{- define "timesketch.redis.fullname" -}}
-{{- if .Values.redis.enabled -}}
-{{- include "common.names.fullname" (dict "Chart" (dict "Name" "redis") "Release" .Release "Values" .Values.redis) -}}
+{{- define "timesketch.postgresql.url" -}}
+{{- if .Values.postgresql.enabled -}}
+{{- $name := include "common.names.fullname" (dict "Chart" (dict "Name" "postgresql") "Release" .Release "Values" .Values.postgresql) -}}
+{{- $port := .Values.postgresql.primary.service.ports.postgresql -}}
+{{- $username := .Values.postgresql.auth.username -}}
+{{- $database := .Values.postgresql.auth.database -}}
+{{- printf "postgresql://%s:'$POSTGRES_PASSWORD'@%s:%.0f/%s" $username $name $port $database -}}
 {{- else -}}
-{{ fail "attempting to use redis subcharts fullname, even though the subchart is not enabled. This will lead to misconfiguration" }}
+{{ fail "Attempting to use Postgresql, but the subchart is not enabled. This will lead to misconfiguration" }}
 {{- end -}}
 {{- end -}}
 
 {{/*
-Compute the redis url if not set explicitly.
+Opensearch subcharts host name
 */}}
-{{- define "timesketch.redis.ConnectionUrl" -}}
-{{- if .Values.redis.enabled -}}
-{{- printf "redis://%s-master:%.0f" (include "timesketch.redis.fullname" .) .Values.redis.master.service.ports.redis -}}
+{{- define "timesketch.opensearch.host" -}}
+{{- if .Values.opensearch.enabled -}}
+{{- printf "%s" .Values.opensearch.masterService -}}
 {{- else -}}
-{{ fail "please set sessionStorage.redis.standalone.connectionUrl or enable the redis subchart via redis.enabled" }}
+{{ fail "Attempting to use Opensearch, but the subchart is not enabled. This will lead to misconfiguration" }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Opensearch subcharts port
+*/}}
+{{- define "timesketch.opensearch.port" -}}
+{{- if .Values.opensearch.enabled -}}
+{{- printf "%.0f" .Values.opensearch.httpPort -}}
+{{- else -}}
+{{ fail "Attempting to use Opensearch, but the subchart is not enabled. This will lead to misconfiguration" }}
 {{- end -}}
 {{- end -}}

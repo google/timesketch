@@ -64,14 +64,14 @@ resources:
       cpu: 2000m
       memory: 4000Mi
 
-
 # Third Party Configuration
 opensearch:
-  enabled: false
+  enabled: true
   replicas: 3
   sysctlInit:
     enabled: true
   opensearchJavaOpts: "-Xms32g -Xmx32g"
+  httpPort: 9200
   persistence:
     size: 1Ti
   resources:
@@ -81,11 +81,14 @@ opensearch:
 
 redis:
   enabled: true
-  auth:
+  sentinel:
     enabled: false
 
 postgresql:
-  enabled: false
+  enabled: true
+  auth:
+    username: "postgres"
+    database: "timesketch"
 
 oauth2-proxy:
   enabled: false

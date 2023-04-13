@@ -29,6 +29,21 @@ spec:
         - name: init-timesketch
           image: busybox
           command: ['sh', '-c', '/init/init-timesketch.sh']
+          env:
+            {{- if and .Values.redis.enabled .Values.redis.auth.enabled}}
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "redis.secretName" .Subcharts.redis }}
+                  key: {{ include "redis.secretPasswordKey" .Subcharts.redis }}
+            {{- end }}
+            {{- if .Values.postgresql.enabled }}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "postgresql.secretName" .Subcharts.postgresql }}
+                  key: {{ include "postgresql.adminPasswordKey" .Subcharts.postgresql }}
+            {{- end }}
           volumeMounts:
             - mountPath: /init
               name: init-timesketch
@@ -41,15 +56,13 @@ spec:
               {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["sh", "-c", "sleep 3600"]
+          command: ["sh", "-c", "./docker-entrypoint.sh timesketch-web"]
           env:
             - name: POD_NAME
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
                   apiVersion: v1
-            - name: REDIS_CONF
-              value: {{ include "timesketch.redis.ConnectionUrl" . }}
           volumeMounts:
             - mountPath: /mnt/timesketchvolume
               name: timesketchvolume
@@ -59,8 +72,6 @@ spec:
             - mountPath: /etc/timesketch
               name: timesketchvolume
               subPath: configs
-            - mountPath: /init
-              name: init-timesketch
           ports:
             - containerPort: {{ .Values.service.port }}
           resources:
