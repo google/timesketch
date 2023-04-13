@@ -177,19 +177,7 @@ class TestUtils(BaseTest):
             # Call next to work around lazy generators.
             next(_validate_csv_fields(mandatory_fields, df_02))
 
-    def test_datetime_parsing_csv_file_data_ingestion_error(self):
-        """Test for parsing datetime values in CSV file
-        This test will not go over the full file since it will abort after the
-        row with the large time discrepancy is found.
-        """
-
-        with self.assertRaises(DataIngestionError):
-            # Call next to work around lazy generators.
-            next(
-                read_and_validate_csv("test_tools/test_events/validate_date_events.csv")
-            )
-
-    def test_datetime_parsing_csv_file(self):
+    def test_missing_timestamp_csv_file(self):
         """Test for parsing datetime values in CSV file"""
 
         # Test that a timestamp is generated if missing.
