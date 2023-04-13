@@ -177,14 +177,50 @@ class TestUtils(BaseTest):
             # Call next to work around lazy generators.
             next(_validate_csv_fields(mandatory_fields, df_02))
 
-    def test_datetime_parsing_csv_file(self):
-        """Test for parsing datetime values in CSV file"""
+    def test_datetime_parsing_csv_file_data_ingestion_error(self):
+        """Test for parsing datetime values in CSV file
+        This test will not go over the full file since it will abort after the
+        row with the large time discrepancy is found.
+        """
 
         with self.assertRaises(DataIngestionError):
             # Call next to work around lazy generators.
             next(
                 read_and_validate_csv("test_tools/test_events/validate_date_events.csv")
             )
+
+    def test_datetime_parsing_csv_file(self):
+        """Test for parsing datetime values in CSV file"""
+
+        # assert if certain lines are written to the log
+        with self.assertLogs(level="WARNING") as log:
+            # Call next to work around lazy generators.
+            next(
+                read_and_validate_csv(
+                    "test_tools/test_events/validate_date_events2.csv"
+                )
+            )
+            self.assertIn(
+                "WARNING:timesketch.utils:2 rows skipped since they were missing datetime field or it was empty ",  # pylint: disable=line-too-long
+                log.output,
+            )
+
+        # Test that a timestamp is generated if missing.
+        expected_output = {
+            "message": "No timestamp",
+            "datetime": "2022-07-24T19:01:01+00:00",
+            "timestamp_desc": "Time Logged",
+            "data_type": "This event has no timestamp",
+            "timestamp": 1658689261000000,
+        }
+        self.assertDictEqual(
+            next(
+                read_and_validate_csv(
+                    "test_tools/test_events/validate_date_events_missing_timestamp.csv"
+                )
+            ),
+            expected_output,
+        )
 
     def test_invalid_JSONL_file(self):
         """Test for JSONL with missing keys in the dictionary wrt headers mapping"""
