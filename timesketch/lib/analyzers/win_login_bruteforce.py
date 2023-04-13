@@ -80,9 +80,9 @@ class WindowsLoginBruteForcePlugin(interface.BaseAnalyzer):
     DESCRIPTION = "Windows login brute force analyzer"
 
     # We are interested in the following successful logon types.
-    SUCESS_LOGON_TYPE = [2, 3, 10]
+    BRUTEFORCE_LOGON_TYPE = [2, 3, 10]
 
-    def _empty_analyzer_output(self) -> str:
+    def _empty_analyzer_output(self, status: str = "Failed", message: str = "") -> str:
         """Returns empty analyzer output.
 
         Returns:
@@ -92,13 +92,14 @@ class WindowsLoginBruteForcePlugin(interface.BaseAnalyzer):
             analyzer_id="analyzer.bruteforce.windows",
             analyzer_name="Windows BruteForce Analyzer",
         )
-        output.result_status = "Failed"
+
         output.result_priority = "LOW"
-        output.result_summary = "Analyzer failed"
+        output.result_status = status
+        output.result_summary = message
 
         return str(output)
 
-    def _parse_xml_string(self, xml_string: str) -> WindowsLoginEventData:
+    def parse_xml_string(self, xml_string: str) -> WindowsLoginEventData:
         """Parses Windows authentication event XML data.
 
         Args:
@@ -137,14 +138,15 @@ class WindowsLoginBruteForcePlugin(interface.BaseAnalyzer):
                 elif key == "IpAddress":
                     winlogineventdata.source_ip = child.text
                 elif key == "IpPort":
-                    if child.text == "-":
-                        winlogineventdata.source_port = ""
-                    else:
-                        winlogineventdata.source_port = child.text or ""
+                    try:
+                        winlogineventdata.source_port = int(child.text)
+                    except ValueError:
+                        winlogineventdata.source_port = 0
             except KeyError as exception:
                 log.error("[%s] Key name not found. %s", self.NAME, str(exception))
                 continue
 
+        log.info("event data %s", str(winlogineventdata.__dict__))
         return winlogineventdata
 
     def annotate_events(self, df: pd.DataFrame, output: AnalyzerOutput) -> None:
@@ -226,7 +228,7 @@ class WindowsLoginBruteForcePlugin(interface.BaseAnalyzer):
                 str(exception),
             )
 
-    def run(self):
+    def run(self) -> str:
         """Entry point for the analyzer.
 
         Returns:
@@ -239,63 +241,94 @@ class WindowsLoginBruteForcePlugin(interface.BaseAnalyzer):
         )
         return_fields = ["timestamp", "computer_name", "event_identifier", "xml_string"]
 
-        events = self.event_stream(
-            query_string=query_string, return_fields=return_fields
-        )
+        events = None
+        try:
+            events = self.event_stream(
+                query_string=query_string, return_fields=return_fields
+            )
+        except KeyError as exception:
+            log.error(
+                "[%s] Error getting events from OpenSearch. %s",
+                self.NAME,
+                str(exception),
+            )
+            return self._empty_analyzer_output(
+                status="Failed", message="Failed getting events from OpenSearch"
+            )
+        if not events:
+            return self._empty_analyzer_output(
+                status="Success", message="No events matching the query"
+            )
 
         # windows_login_events is a list of WindowsLoginEventData dictionary
         windows_login_events = []
 
         for event in events:
-            _timestamp = int(event.source.get("timestamp" or 0))
-            _hostname = event.source.get("computer_name" or "")
             _event_identifier = int(event.source.get("event_identifier" or 0))
-            _xml_string = event.source.get("xml_string" or "")
+            # We only want to process events related to authentication.
+            if _event_identifier not in [4624, 4625, 4634]:
+                log.error("[%s] Error getting event ID.", self.NAME)
+                continue
 
-            # Basic validation before we proceed further
+            # Extracted field validation before parsing xml_string
+            # Using the timestamp extracted by Plaso
+            _timestamp = int(event.source.get("timestamp" or 0))
             if not _timestamp:
                 log.error(
                     "[%s] Error getting timestamp from OpenSearch event.", self.NAME
                 )
                 continue
 
+            _hostname = event.source.get("computer_name" or "")
             if not _hostname:
                 log.error(
                     "[%s] Error getting computer name from OpenSearch event.", self.NAME
                 )
                 continue
 
-            if _event_identifier not in [4624, 4625, 4634]:
-                log.error("[%s] Error getting event ID.", self.NAME)
-                continue
-
+            _xml_string = event.source.get("xml_string" or "")
             if not _xml_string:
                 log.error(
                     "[%s] Error getting xml_string from OpenSearch event.", self.NAME
                 )
                 continue
 
-            windows_login_event = self._parse_xml_string(_xml_string)
+            # Note; _parse_xml_string always returns WindowsLoginEventData
+            windows_login_event = self.parse_xml_string(_xml_string)
             if not windows_login_event:
                 log.error("[%s] Error parsing xml_string.", self.NAME)
                 continue
             windows_login_event.eid = _event_identifier
 
-            # Updating the fields need for brute force analysis
+            # Updating the fields needed for brute force analysis
             windows_login_event.event_id = event.event_id
             windows_login_event.timestamp = int(_timestamp / 1000000)
             windows_login_event.hostname = _hostname
+
+            # We are assuming authenticaiton to be password-based authenticaiton
+            # TODO(rmaskey): Set appropriate authentication method.
             windows_login_event.auth_method = "password"
 
             if _event_identifier == 4624:
                 windows_login_event.event_type = "authentication"
                 windows_login_event.auth_result = "success"
 
-                if windows_login_event.logon_type not in self.SUCESS_LOGON_TYPE:
+                # We only want to analyze events relevant for brute force logons
+                # LogonType 2 - Local interactive logon
+                # LogonType 3 - Network logon
+                # LogonType 10 - Remote interactive logon (RDP)
+                if windows_login_event.logon_type not in self.BRUTEFORCE_LOGON_TYPE:
                     continue
             elif _event_identifier == 4625:
                 windows_login_event.event_type = "authentication"
                 windows_login_event.auth_result = "failure"
+
+                # We only want to analyze events relevant for brute force logons
+                # LogonType 2 - Local interactive logon
+                # LogonType 3 - Network logon
+                # LogonType 10 - Remote interactive logon (RDP)
+                if windows_login_event.logon_type not in self.BRUTEFORCE_LOGON_TYPE:
+                    continue
             elif _event_identifier == 4634:
                 windows_login_event.event_type = "disconnection"
 
@@ -310,16 +343,27 @@ class WindowsLoginBruteForcePlugin(interface.BaseAnalyzer):
         df = pd.DataFrame(windows_login_events)
         if df.empty:
             log.info("[%s] No dataframe for Windows authentication events.", self.NAME)
-            return self._empty_analyzer_output()
+            return self._empty_analyzer_output(
+                status="Success",
+                message="No dataframe for Windows authentication events.",
+            )
 
         # run brute force analyzer
         try:
             bfa = BruteForceAnalyzer()
+
+            # NOTE: Setting threshold to 2 due to duplicate events.
             bfa.set_success_threshold(2)
             output = bfa.run(df)
             if not output:
                 log.info("[%s] No analyzer output.", self.NAME)
-                return self._empty_analyzer_output()
+                return self._empty_analyzer_output(
+                    status="Failed",
+                    message="No output from brute force analyzer",
+                )
+
+            output.analyzer_identifier = "analyzer.bruteforce.windows"
+            output.analyzer_name = "Windows BruteForce Analyzer"
 
             self.annotate_events(df, output)
 
@@ -330,7 +374,9 @@ class WindowsLoginBruteForcePlugin(interface.BaseAnalyzer):
                 self.NAME,
                 str(exception),
             )
-            return self._empty_analyzer_output()
+            return self._empty_analyzer_output(
+                status="Failed", message="Unable to run analyzer."
+            )
 
 
 manager.AnalysisManager.register_analyzer(WindowsLoginBruteForcePlugin)

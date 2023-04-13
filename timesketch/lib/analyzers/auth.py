@@ -18,7 +18,6 @@ from datetime import datetime, timezone
 from typing import List, Tuple
 
 import copy
-import hashlib
 import logging
 
 import pandas as pd
@@ -942,6 +941,4 @@ class BruteForceAnalyzer(AuthAnalyzer):
                 continue
             reports.append(report)
 
-        if not reports:
-            return None
         return self.generate_analyzer_output(summaries=reports, analyzer_success=True)
