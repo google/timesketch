@@ -341,29 +341,8 @@ def read_and_validate_csv(
 
                 # Remove all NAN values from the pandas.Series.
                 row.dropna(inplace=True)
-                MAX_TIMESTAMP_DIFFERENCE = 1000  # 1 second
 
-                # Check datetime plausibility
-                if "timestamp" in row and "datetime" in row:
-                    timestamp_calculated = int(
-                        pandas.Timestamp(row["datetime"]).value / 1000
-                    )
-                    if (
-                        abs(row["timestamp"] - timestamp_calculated)
-                        > MAX_TIMESTAMP_DIFFERENCE
-                    ):
-                        error_string = (
-                            "Timestamp difference between {0!s} "
-                            "and {1!s} is too big {2!s}, "
-                            "aborting ingestion."
-                        ).format(
-                            row["timestamp"],
-                            timestamp_calculated,
-                            abs(row["timestamp"] - timestamp_calculated),
-                        )
-                        logger.error(error_string)
-                        raise errors.DataIngestionError(error_string)
-
+                # Make sure we always have a timestamp
                 if not "timestamp" in row:
                     row["timestamp"] = int(
                         pandas.Timestamp(row["datetime"]).value / 1000

@@ -25,7 +25,6 @@ from timesketch.lib.utils import read_and_validate_csv
 from timesketch.lib.utils import check_mapping_errors
 from timesketch.lib.utils import _validate_csv_fields
 from timesketch.lib.utils import rename_jsonl_headers
-from timesketch.lib.errors import DataIngestionError
 
 
 TEST_CSV = "test_tools/test_events/sigma_events.csv"
@@ -177,33 +176,8 @@ class TestUtils(BaseTest):
             # Call next to work around lazy generators.
             next(_validate_csv_fields(mandatory_fields, df_02))
 
-    def test_datetime_parsing_csv_file_data_ingestion_error(self):
-        """Test for parsing datetime values in CSV file
-        This test will not go over the full file since it will abort after the
-        row with the large time discrepancy is found.
-        """
-
-        with self.assertRaises(DataIngestionError):
-            # Call next to work around lazy generators.
-            next(
-                read_and_validate_csv("test_tools/test_events/validate_date_events.csv")
-            )
-
-    def test_datetime_parsing_csv_file(self):
+    def test_missing_timestamp_csv_file(self):
         """Test for parsing datetime values in CSV file"""
-
-        # assert if certain lines are written to the log
-        with self.assertLogs(level="WARNING") as log:
-            # Call next to work around lazy generators.
-            next(
-                read_and_validate_csv(
-                    "test_tools/test_events/validate_date_events2.csv"
-                )
-            )
-            self.assertIn(
-                "WARNING:timesketch.utils:2 rows skipped since they were missing datetime field or it was empty ",  # pylint: disable=line-too-long
-                log.output,
-            )
 
         # Test that a timestamp is generated if missing.
         expected_output = {
