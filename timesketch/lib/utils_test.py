@@ -25,7 +25,6 @@ from timesketch.lib.utils import read_and_validate_csv
 from timesketch.lib.utils import check_mapping_errors
 from timesketch.lib.utils import _validate_csv_fields
 from timesketch.lib.utils import rename_jsonl_headers
-from timesketch.lib.errors import DataIngestionError
 
 
 TEST_CSV = "test_tools/test_events/sigma_events.csv"
