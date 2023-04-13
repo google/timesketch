@@ -47,4 +47,4 @@ data:
 
     # Set up upload folder
     sed -i 's#^UPLOAD_ENABLED = False#UPLOAD_ENABLED = True#' timesketch.conf
-    # sed -i 's#^UPLOAD_FOLDER =.*#UPLOAD_FOLDER = \x27/mnt/'$FILESTORE_NAME'/upload\x27#' timesketch.conf
+    sed -i 's#^UPLOAD_FOLDER =.*#UPLOAD_FOLDER =  "{{ .Values.persistence.mountPath }}/upload"#' timesketch.conf

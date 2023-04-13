@@ -30,6 +30,14 @@ Create chart name and version as used by the chart label.
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
+
+{{/*
+Create persistence volume claim name.
+*/}}
+{{- define "timesketch.pvc.name" -}}
+{{- printf "%s-%s" .Values.persistence.name "claim" }}
+{{- end }}
+
 {{/*
 Common labels
 */}}
@@ -111,6 +119,6 @@ Opensearch subcharts port
 {{- if .Values.opensearch.enabled -}}
 {{- printf "%.0f" .Values.opensearch.httpPort -}}
 {{- else -}}
-{{ fail "Attempting to use Opensearch, but the subchart is not enabled. This will lead to misconfiguration" }}
+{{ printf "Attempting to use Opensearch, but the subchart is not enabled. This will lead to misconfiguration" }}
 {{- end -}}
 {{- end -}}

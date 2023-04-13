@@ -41,7 +41,7 @@ spec:
             - name: WORKER_LOG_LEVEL
               value: "DEBUG"
           volumeMounts:
-            - mountPath: /mnt/timesketchvolume
+            - mountPath: {{ .Values.persistence.mountPath }}
               name: timesketchvolume
             - mountPath: /var/log/timesketch
               name: timesketchvolume
@@ -56,10 +56,22 @@ spec:
       volumes:
         - name: timesketchvolume
           persistentVolumeClaim:
-            claimName: {{ .Values.persistence.name }}-claim
+            claimName: {{ include "timesketch.pvc.name"  . }}
             readOnly: false
         - name: timesketch-init
           configMap:
             name: {{ include "timesketch.fullname" . }}-init-configmap
             defaultMode: 0744
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
 

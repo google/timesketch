@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: "{{ .Values.persistence.name }}-claim"
+  name: {{ include "timesketch.pvc.name"  . }}
   namespace: {{ .Release.Namespace | quote }}
 spec:
   accessModes:

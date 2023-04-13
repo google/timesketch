@@ -64,7 +64,7 @@ spec:
                   fieldPath: metadata.name
                   apiVersion: v1
           volumeMounts:
-            - mountPath: /mnt/timesketchvolume
+            - mountPath: {{ .Values.persistence.mountPath }}
               name: timesketchvolume
             - mountPath: /var/log/timesketch
               name: timesketchvolume
@@ -85,3 +85,15 @@ spec:
           configMap:
             name: {{ include "timesketch.fullname" . }}-init-configmap
             defaultMode: 0744
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

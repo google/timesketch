@@ -1,54 +1,81 @@
-# Default values for timesketch.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
-
-replicaCount: 1
-
-persistence:
-  name: timesketchvolume
-  size: 1T
-
+## Timesketch Helm Chart
+## Please use this Helm chart for deploying Timesketch to a Kubernetes environment.
+##
+## Timesketch Docker image parameters
+##
 image:
+  ## @param repository
+  ##
   repository: us-docker.pkg.dev/osdfir-registry/timesketch/timesketch
+  ## @param pullPolicy
+  ##
   pullPolicy: IfNotPresent
-  # Overrides the image tag whose default is the chart appVersion.
+  ## @param tag Overrides the image tag whose default is the chart appVersion.
+  ##
   tag: latest
-
-imagePullSecrets: []
+  ## @ param imagePullSecrets
+  ## e.g.
+  ## imagePullSecrets:
+  ##   - myRegistryKeySecretName
+  ##
+  imagePullSecrets: []
+## @param replicaCount
+##
+replicaCount: 1
+## @param nameOverride
+##
 nameOverride: ""
+## @param fullnameOverride
+##
 fullnameOverride: ""
-
+## Timesketch service account parameters
+##
 serviceAccount:
-  # Specifies whether a service account should be created
+  ## @param create Specifies whether a service account should be created
+  ##
   create: true
-  # Annotations to add to the service account
+  ## @param annotations Annotations to add to the service account
+  ##
   annotations: {}
-  # The name of the service account to use.
-  # If not set and create is true, a name is generated using the fullname template
+  ## @param name The name of the service account to use.
+  ## If not set and create is true, a name is generated using the fullname template
+  ##
   name: "timesketch"
-
-podAnnotations: {}
-
-podSecurityContext: {}
-  # fsGroup: 2000
-
-securityContext: {}
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
-
+## Timesketch service parameters
+##
 service:
+  ## @param type
+  ##
   type: ClusterIP
+  ## @param port
+  ##
   port: 5000
-
+## Timesketch ingress parameters
+##
 ingress:
+  ## @param enabled
+  ##
   enabled: false
+  ## @param domain
+  ##
   domain: ""
-
+## Timesketch persistence storage parameters
+##
+persistence:
+  ## @param name
+  ##
+  name: timesketchvolume
+  ## @param size
+  ##
+  size: 1T
+  ## @param mountPath
+  ##
+  mountPath: /mnt/timesketchvolume
+## Timesketch resources parameters
+##
 resources:
+  ## @param frontend.limits
+  ## @param frontend.requests
   frontend:
     limits:
       cpu: 8000m
@@ -56,6 +83,8 @@ resources:
     requests:
       cpu: 2000m
       memory: 4000Mi
+  ## @param worker.limits
+  ## @param worker.requests
   worker:
     limits:
       cpu: 8000m
@@ -63,38 +92,161 @@ resources:
     requests:
       cpu: 2000m
       memory: 4000Mi
-
-# Third Party Configuration
+## @param podAnnotations
+##
+podAnnotations: {}
+## @param podSecurityContext
+## e.g.
+## fsgroup: 2000
+##
+podSecurityContext: {}
+## @param SecurityContext
+## e.g.
+## capabilities
+##   drop:
+##   - ALL
+## readOnlyRootFilesystem: true
+## runAsNonRoot: true
+## runAsUser: 1000
+securityContext: {}
+## @param nodeSelector
+##
+nodeSelector: {}
+## @param tolerations
+##
+tolerations: []
+## @param affinity
+##
+affinity: {}
+## @section Third Party Configuration
+## This section contains all the main configuration for third party dependencies
+## Timesketch requires to run.
+##
+## Open Search Configuration
+##
 opensearch:
+  ## @param enabled 
+  ##
   enabled: true
+  ## @param replicas is whether to enable the Opensearch Helm deployment
+  ##
   replicas: 3
+  ## @param sysctlInit.enabled
+  ##
   sysctlInit:
     enabled: true
+  ## @param opensearchJavaOpts
+  ## 
   opensearchJavaOpts: "-Xms32g -Xmx32g"
+  ## @param httpPort
+  ##
   httpPort: 9200
+  ## @param persistence.size
+  ##
   persistence:
     size: 1Ti
+  ## @param resources.requests.cpu
+  ## @param resources.requests.memory
+  ##
   resources:
     requests:
       cpu: 8000m
       memory: 32Gi
-
+## Redis Configuration
+##
 redis:
+  ## @param enabled
+  ##
   enabled: true
+  ## @param sentinel.enabled
+  ##
   sentinel:
     enabled: false
-
+  ## Master Redis Service configuration
+  ##
+  master:
+    ## @param count
+    ##
+    count: 1
+    ## @param persistence.size
+    ##
+    persistence:
+      size: 8Gi
+    ## @param resources.requests The requested resources for the Redis master containers
+    ## @param resources.limits The resources limits for the Redis master containers
+    ##
+    resources:
+      requests:
+        cpu: 4000m
+        memory: 8Gi
+      limits:
+        cpu: 8000m
+        memory: 16Gi
+  replica:
+    ## @param replicaCount
+    ##
+    replicaCount: 3
+    ## @param persistence.size
+    ##
+    persistence:
+      size: 8Gi
+    ## @param resources.requests The requested resources for the Redis replica containers
+    ## @param resources.limits The resources limits for the Redis replica containers
+    ##
+    resources:
+      requests:
+        cpu: 4000m
+        memory: 8Gi
+      limits:
+        cpu: 8000m
+        memory: 16Gi 
+## Postgres Configuration
+##
 postgresql:
+  ## @param enabled
+  ##
   enabled: true
+  ## PostgreSQL Authentication parameters
+  ##
   auth:
+    ## @param auth.username 
+    ##
     username: "postgres"
+    ## @param auth.postgresPassword Password for the "postgres" admin user. Ignored if `auth.existingSecret` is provided
+    ##
     database: "timesketch"
-
-oauth2-proxy:
-  enabled: false
-
-cert-manager:
-  enabled: false
-
-external-dns:
-  enabled: false
+  ## PostgreSQL Primary parameters
+  ##
+  primary:
+    ## PostgreSQL Primary persistence configuration
+    ##
+    persistence:
+      ## @param primary.persistence.size
+      ##
+      size: 8Gi
+    ## PostgreSQL Primary resource requests and limits
+    ## @param primary.resources.limits The resources limits for the PostgreSQL Primary containers
+    ## @param primary.resources.requests.memory The requested memory for the PostgreSQL Primary containers
+    ## @param primary.resources.requests.cpu The requested cpu for the PostgreSQL Primary containers
+    ##
+    resources:
+      limits: {}
+      requests:
+        memory: 256Mi
+        cpu: 250m
+  ## PostgreSQL read only replica parameters (only used when `architecture` is set to `replication`)
+  ## 
+  readReplicas:
+    ## @param readReplicas.replicaCount Number of PostgreSQL read only replicas
+    ##
+    replicaCount: 1
+    ## PostgreSQL read only resource requests and limits
+    ## @param readReplicas.resources.limits The resources limits for the PostgreSQL read only containers
+    ## @param readReplicas.resources.requests.memory The requested memory for the PostgreSQL read only containers
+    ## @param readReplicas.resources.requests.cpu The requested cpu for the PostgreSQL read only containers
+    ##
+    resources:
+      limits: {}
+      requests:
+        memory: 256Mi
+        cpu: 250m
