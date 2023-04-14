@@ -1277,6 +1277,11 @@ class InvestigativeQuestion(
     user_id = Column(Integer, ForeignKey("user.id"))
     spec_json = Column(UnicodeText())
     facet_id = Column(Integer, ForeignKey("facet.id"))
+    approaches = relationship(
+        "InvestigativeQuestionApproach",
+        backref="investigativequestion",
+        lazy="select",
+    )
     conclusions = relationship(
         "InvestigativeQuestionConclusion",
         backref="investigativequestion",
