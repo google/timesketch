@@ -14,8 +14,6 @@
 # limitations under the License.
 """Tests for SSHBruteForcePlugin"""
 
-from __future__ import unicode_literals
-
 from datetime import datetime, timezone
 
 import json

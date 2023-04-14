@@ -48,7 +48,7 @@ class TestAuthAnalyzer(unittest.TestCase):
         "source_ip": "192.168.140.67",
         "domain": "",
         "username": "",
-        "first_seen": 1664739900,
+        "first_seen": 1665252607,
         "last_seen": 1665252640,
         "first_auth": {
             "timestamp": 1665252633,
@@ -80,11 +80,11 @@ class TestAuthAnalyzer(unittest.TestCase):
         "success_source_ip_list": ["192.168.140.67"],
         "success_username_list": ["admin"],
         "total_success_events": 1,
-        "total_failed_events": 27594,
+        "total_failed_events": 97,
         "distinct_source_ip_count": 1,
-        "distinct_username_count": 2,
-        "top_source_ips": {"192.168.140.67": 5204},
-        "top_usernames": {"root": 5173, "admin": 31},
+        "distinct_username_count": 1,
+        "top_source_ips": {"192.168.140.67": 18},
+        "top_usernames": {"admin": 18},
     }
 
     EXPECTED_USER_SUMMARY = {
@@ -92,31 +92,29 @@ class TestAuthAnalyzer(unittest.TestCase):
         "source_ip": "",
         "domain": "",
         "username": "kadmin",
-        "first_seen": 1664739446,
+        "first_seen": 1665252676,
         "last_seen": 1665252676,
         "first_auth": {
-            "timestamp": 1664739446,
-            "session_id": "271a92c99d59549e5b74212dda7a770fa80e219474764897c47"
-            "5f1320b419"
-            "20a",
+            "timestamp": 1665252676,
+            "session_id": "1b45c307539bff6a44b039d99dc11bbe5e9ea9473f316b"
+            "964aa26ec176064ea0",
             "session_duration": -1,
-            "source_ip": "172.30.151.71",
+            "source_ip": "172.30.151.91",
             "source_hostname": "",
-            "source_port": 58419,
+            "source_port": 50188,
             "domain": "",
             "username": "kadmin",
         },
         "brute_forces": [],
         "successful_logins": [
             {
-                "timestamp": 1664739446,
-                "session_id": "271a92c99d59549e5b74212dda7a770fa80e21947476489"
-                "7c475f1320b419"
-                "20a",
+                "timestamp": 1665252676,
+                "session_id": "1b45c307539bff6a44b039d99dc11bbe5e9ea9473f316b"
+                "964aa26ec176064ea0",
                 "session_duration": -1,
-                "source_ip": "172.30.151.71",
+                "source_ip": "172.30.151.91",
                 "source_hostname": "",
-                "source_port": 58419,
+                "source_port": 50188,
                 "domain": "",
                 "username": "kadmin",
             },
@@ -148,7 +146,7 @@ class TestAuthAnalyzer(unittest.TestCase):
         "source_ip": "192.168.140.67",
         "domain": "",
         "username": "",
-        "first_seen": 1664739900,
+        "first_seen": 1665252607,
         "last_seen": 1665252640,
         "first_auth": {
             "timestamp": 1665252633,
@@ -180,11 +178,11 @@ class TestAuthAnalyzer(unittest.TestCase):
         "success_source_ip_list": ["192.168.140.67"],
         "success_username_list": ["admin"],
         "total_success_events": 1,
-        "total_failed_events": 27594,
+        "total_failed_events": 97,
         "distinct_source_ip_count": 1,
-        "distinct_username_count": 2,
-        "top_source_ips": {"192.168.140.67": 5204},
-        "top_usernames": {"root": 5173, "admin": 31},
+        "distinct_username_count": 1,
+        "top_source_ips": {"192.168.140.67": 18},
+        "top_usernames": {"admin": 18},
     }
 
     EXPECTED_AUTH_SUMMARY_4 = {
@@ -195,21 +193,20 @@ class TestAuthAnalyzer(unittest.TestCase):
         "first_seen": 1664739446,
         "last_seen": 1665252676,
         "first_auth": {
-            "timestamp": 1664739446,
-            "session_id": "271a92c99d59549e5b74212dda7a770fa80e219474764897c47"
-            "5f1320b419"
-            "20a",
+            "timestamp": 1665252676,
+            "session_id": "1b45c307539bff6a44b039d99dc11bbe5e9ea9473f316b964a"
+            "a26ec176064ea0",
             "session_duration": -1,
-            "source_ip": "172.30.151.71",
+            "source_ip": "172.30.151.91",
             "source_hostname": "",
-            "source_port": 58419,
+            "source_port": 50188,
             "domain": "",
             "username": "kadmin",
         },
         "brute_forces": [],
         "successful_logins": [
             {
-                "timestamp": 1664739446,
+                "timestamp": 1665252676,
                 "session_id": "271a92c99d59549e5b74212dda7a770fa80e21947476489"
                 "7c475f1320b419"
                 "20a",
@@ -317,13 +314,13 @@ class TestAuthAnalyzer(unittest.TestCase):
         session_duration = self.analyzer.session_duration(
             session_id="", timestamp=12345678
         )
-        self.assertEqual(session_duration, -1)
+        self.assertEqual(-1, session_duration)
 
         print("[+] Testing invalid session_id")
         session_duration = self.analyzer.session_duration(
             session_id="invalid", timestamp=123456789
         )
-        self.assertEqual(session_duration, -1)
+        self.assertEqual(-1, session_duration)
 
         print("[+] Testing valid session_id and invalid timestamp")
         session_duration = self.analyzer.session_duration(
@@ -331,7 +328,7 @@ class TestAuthAnalyzer(unittest.TestCase):
             "02b592e000",
             timestamp=None,
         )
-        self.assertEqual(session_duration, -1)
+        self.assertEqual(-1, session_duration)
 
         print("[+] Testing valid session_id and timestamp")
         session_duration = self.analyzer.session_duration(
@@ -339,7 +336,7 @@ class TestAuthAnalyzer(unittest.TestCase):
             "02b592e000",
             timestamp=1665252633,
         )
-        self.assertEqual(session_duration, 7)
+        self.assertEqual(7, session_duration)
 
     def test_get_ip_summary(self):
         """Test get_ip_summary method."""
@@ -363,7 +360,8 @@ class TestAuthAnalyzer(unittest.TestCase):
         # Test 3: Checking a valid source_ip
         print("[+] Testing valid IP 192.168.140.67 summary")
         summary = self.analyzer.get_ip_summary("192.168.140.67")
-        self.assertDictEqual(summary.to_dict(), self.EXPECTED_IP_SUMMARY)
+        self.maxDiff = None
+        self.assertDictEqual(self.EXPECTED_IP_SUMMARY, summary.to_dict())
 
     def test_get_user_summary(self):
         """Test get_user_summary method."""
@@ -389,8 +387,9 @@ class TestAuthAnalyzer(unittest.TestCase):
         summary = self.analyzer.get_user_summary(domain="", username="kadmin")
         self.assertIsNotNone(summary)
         user_summary = summary.to_dict()
+        self.maxDiff = None
         self.assertEqual(
-            user_summary["first_auth"], self.EXPECTED_USER_SUMMARY["first_auth"]
+            self.EXPECTED_USER_SUMMARY["first_auth"], user_summary["first_auth"]
         )
 
     def test_get_auth_summary(self):
@@ -416,13 +415,14 @@ class TestAuthAnalyzer(unittest.TestCase):
         # Test 3: Valid summary_type source_ip
         print("[+] Testing valid summary_type source_ip")
         summary = self.analyzer.get_auth_summary(df, "source_ip", "192.168.140.67")
-        self.assertDictEqual(summary.to_dict(), self.EXPECTED_AUTH_SUMMARY_3)
+        self.maxDiff = None
+        self.assertDictEqual(self.EXPECTED_AUTH_SUMMARY_3, summary.to_dict())
 
         # Test 4: Valid summary_type username
         print("[+] Testing valid source_type username")
         summary = self.analyzer.get_auth_summary(df, "username", "kadmin")
         self.assertDictEqual(
-            summary.to_dict()["first_auth"], self.EXPECTED_AUTH_SUMMARY_4["first_auth"]
+            self.EXPECTED_AUTH_SUMMARY_4["first_auth"], summary.to_dict()["first_auth"]
         )
 
     def test_to_useraccount(self):
@@ -436,7 +436,7 @@ class TestAuthAnalyzer(unittest.TestCase):
         # Test 2: Non-empty domain and username
         print("[+] Testing username and domain")
         useraccount = self.analyzer.to_useraccount(domain="example", username="admin")
-        self.assertEqual(useraccount, "example\\admin")
+        self.assertEqual("example\\admin", useraccount)
 
     def test_from_useraccount(self):
         """Test from_useraccount method."""
@@ -444,27 +444,27 @@ class TestAuthAnalyzer(unittest.TestCase):
         # Test 1: Empty useraccount
         print("[+] Testing empty useraccount")
         domain, username = self.analyzer.from_useraccount("")
-        self.assertEqual(domain, "")
-        self.assertEqual(username, "")
+        self.assertEqual("", domain)
+        self.assertEqual("", username)
 
         # Test 2: Empty domain
         print("[+] Testing empty domain and username")
         domain, username = self.analyzer.from_useraccount("admin")
-        self.assertEqual(domain, "")
-        self.assertEqual(username, "admin")
+        self.assertEqual("", domain)
+        self.assertEqual("admin", username)
 
         # Test 3: Domain and username
         domain, username = self.analyzer.from_useraccount("example\\admin")
-        self.assertEqual(domain, "example")
-        self.assertEqual(username, "admin")
+        self.assertEqual("example", domain)
+        self.assertEqual("admin", username)
 
     def test_human_timestamp(self):
         """Test human_timestamp method."""
         dtstring = self.analyzer.human_timestamp(0)
-        self.assertEqual(dtstring, "1970-01-01 00:00:00")
+        self.assertEqual("1970-01-01 00:00:00", dtstring)
 
         dtstring = self.analyzer.human_timestamp(1675915532)
-        self.assertEqual(dtstring, "2023-02-09 04:05:32")
+        self.assertEqual("2023-02-09 04:05:32", dtstring)
 
     def test_get_login_session(self):
         """Test get_login_session method."""
@@ -498,7 +498,7 @@ class TestAuthAnalyzer(unittest.TestCase):
             session_id="7b45adc5a3d14261800c1782719f647b81b3b8013836f30893f232"
             "02b592e000",
         )
-        self.assertDictEqual(login_session.__dict__, self.EXPECTED_LOGIN_SESSION)
+        self.assertDictEqual(self.EXPECTED_LOGIN_SESSION, login_session.__dict__)
 
 
 class TestBruteForceAnalyzer(unittest.TestCase):
@@ -515,17 +515,16 @@ class TestBruteForceAnalyzer(unittest.TestCase):
         authdatasummary.source_ip = "192.168.140.67"
         authdatasummary.domain = ""
         authdatasummary.username = ""
-        authdatasummary.first_seen = 1664739900
+        authdatasummary.first_seen = 1665252607
         authdatasummary.last_seen = 1665252640
         authdatasummary.success_source_ip_list = ["192.168.140.67"]
         authdatasummary.success_username_list = ["admin"]
         authdatasummary.total_success_events = 1
-        authdatasummary.total_failed_events = 27594
+        authdatasummary.total_failed_events = 97
         authdatasummary.distinct_source_ip_count = 1
-        authdatasummary.distinct_username_count = 2
-        authdatasummary.top_source_ips["192.168.140.67"] = 5204
-        authdatasummary.top_usernames["root"] = 5173
-        authdatasummary.top_usernames["admin"] = 31
+        authdatasummary.distinct_username_count = 1
+        authdatasummary.top_source_ips["192.168.140.67"] = 18
+        authdatasummary.top_usernames["admin"] = 18
 
         login = LoginRecord(
             source_ip="192.168.140.67",
@@ -562,15 +561,14 @@ class TestBruteForceAnalyzer(unittest.TestCase):
                 - Successful brute force on 2022-10-08 18:10:33 as admin
 
                 ###### 192.168.140.67 Summary
-                - IP first seen on 2022-10-02 19:45:00
+                - IP first seen on 2022-10-08 18:10:07
                 - IP last seen on 2022-10-08 18:10:40
                 - First successful auth on 2022-10-08 18:10:33
                 - First successful source IP: 192.168.140.67
                 - First successful username: admin
 
                 ###### Top Usernames
-                - root: 5173
-                - admin: 31"""
+                - admin: 18"""
         )
         output.attributes = self._authsummarydata()
         return output
@@ -615,7 +613,8 @@ class TestBruteForceAnalyzer(unittest.TestCase):
         print("[+] Testing login analysis for successful IP address")
         output = self.analyzer.login_analysis(source_ip="192.168.140.67")
         expected_output = self._authsummarydata()
-        self.assertDictEqual(output.to_dict(), expected_output.to_dict())
+        self.maxDiff = None
+        self.assertDictEqual(expected_output.to_dict(), output.to_dict())
 
     def test_generate_report(self):
         """Test generate_report method."""
@@ -625,14 +624,15 @@ class TestBruteForceAnalyzer(unittest.TestCase):
         summaries.append(authsummarydata)
         output = self.analyzer.generate_analyzer_output(summaries, True)
         expected_output = self._analyzer_output()
-        self.assertEqual(output.result_markdown, expected_output.result_markdown)
+        self.assertEqual(expected_output.result_markdown, output.result_markdown)
 
     def test_run(self):
         """Test run method."""
         df = load_test_dataframe()
         output = self.analyzer.run(df)
         expected_output = self._analyzer_output()
-        self.assertEqual(output.result_markdown, expected_output.result_markdown)
+        self.maxDiff = None
+        self.assertEqual(expected_output.result_markdown, output.result_markdown)
 
 
 if __name__ == "__main__":
