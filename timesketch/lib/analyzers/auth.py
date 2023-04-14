@@ -830,6 +830,8 @@ class BruteForceAnalyzer(AuthAnalyzer):
 
         priority = Priority.LOW
 
+        # TODO(rmaskey): Dedup the bruteforce LoginRecord.
+        # On Windows, duplicate bruteforce detected.
         for summary in summaries:
             result_summaries.append(
                 f"{len(summary.brute_forces)} brute force from {summary.source_ip}"
@@ -939,6 +941,4 @@ class BruteForceAnalyzer(AuthAnalyzer):
                 continue
             reports.append(report)
 
-        if not reports:
-            return None
         return self.generate_analyzer_output(summaries=reports, analyzer_success=True)
