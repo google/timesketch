@@ -55,7 +55,14 @@ limitations under the License.
               <ts-analyzer-result v-for="analyzer in props.items" :key="analyzer.analyzerName" :analyzer="analyzer" />
             </template>
           </v-data-iterator>
-          <v-data-iterator v-else :items="analyzerResults" hide-default-footer disable-pagination :search="search">
+          <v-data-iterator
+            v-else
+            :items="analyzerResults"
+            hide-default-footer
+            disable-pagination
+            :search="search"
+            :custom-filter="filterByDisplayName"
+          >
             <template v-slot:header>
               <v-toolbar flat height="45">
                 <v-text-field
@@ -217,6 +224,12 @@ export default {
         if (this.activeAnalyzerQueue.indexOf(sessionId) === -1) this.activeAnalyzerQueue.push(sessionId)
       })
     },
+    filterByDisplayName(items, search) {
+      const searchStr = (search || '').toLowerCase();
+      return items && items.filter(item =>
+        item.data.analyzerInfo.display_name.toLowerCase().indexOf(searchStr) !== -1
+      );
+    }
   },
   mounted() {
     EventBus.$on('triggeredAnalyzerRuns', this.triggeredAnalyzerRuns)
