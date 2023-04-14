@@ -74,9 +74,10 @@ export default {
     },
     allTimelines() {
       // Sort alphabetically based on timeline name.
-      let timelines = [...this.sketch.timelines]
+      const timelines = [...this.sketch.timelines].filter(
+        tl => tl.status[0].status !== 'fail'
+      );
       timelines.sort((a, b) => a.name.localeCompare(b.name))
-      // console.log(timelines)
       return timelines;
     },
   },
