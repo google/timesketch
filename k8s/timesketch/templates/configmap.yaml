@@ -13,7 +13,7 @@ data:
     set -e
 
     # Create timesketch config directory
-    mkdir -p /etc/timesketch
+    mkdir -p /etc/timesketch /etc/timesketch/scenarios /etc/timesketch/upload
     cd /etc/timesketch
 
     echo -n "* Fetching configuration files.." 
@@ -29,6 +29,12 @@ data:
     wget $GITHUB_BASE_URL/data/intelligence_tag_metadata.yaml -O intelligence_tag_metadata.yaml
     wget $GITHUB_BASE_URL/data/sigma_config.yaml -O sigma_config.yaml
     wget $GITHUB_BASE_URL/data/sigma/rules/lnx_susp_zmap.yml -O lnx_susp_zmap.yml
+    wget $GITHUB_BASE_URL/data/intelligence_tag_metadata.yaml -O intelligence_tag_metadata.yaml
+    wget $GITHUB_BASE_URL/data/context_links.yaml -O context_links.yaml
+    wget $GITHUB_BASE_URL/data/scenarios/facets.yaml -O scenarios/facets.yaml
+    wget $GITHUB_BASE_URL/data/scenarios/questions.yaml -O scenarios/questions.yaml
+    wget $GITHUB_BASE_URL/data/scenarios/scenarios.yaml -O scenarios/scenarios.yaml
+    
     echo "OK"
 
     # Set up the Redis connection

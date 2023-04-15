@@ -125,10 +125,24 @@ affinity: {}
 ## Open Search Configuration
 ##
 opensearch:
-  ## @param enabled 
+  ## @param enabled is whether to enable the Opensearch Helm deployment 
   ##
   enabled: true
-  ## @param replicas is whether to enable the Opensearch Helm deployment
+  ## @param config.opensearch.yml
+  ##
+  config:
+    opensearch.yml: |
+      plugins:
+        security:
+          allow_unsafe_democertificates: false
+  ## @param extraEnvs
+  ##
+  extraEnvs:
+    - name: DISABLE_INSTALL_DEMO_CONFIG
+      value: "true"
+    - name: DISABLE_SECURITY_PLUGIN
+      value: "true"
+  ## @param replicas
   ##
   replicas: 3
   ## @param sysctlInit.enabled
@@ -185,7 +199,7 @@ redis:
   replica:
     ## @param replicaCount
     ##
-    replicaCount: 3
+    replicaCount: 1
     ## @param persistence.size
     ##
     persistence:
