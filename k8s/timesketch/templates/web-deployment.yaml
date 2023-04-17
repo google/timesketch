@@ -30,9 +30,10 @@ spec:
           image: busybox
           command: ['sh', '-c', '/init/init-timesketch.sh']
           env:
-            {{- if and .Values.redis.enabled .Values.redis.auth.enabled}}
+            {{- if and .Values.redis.enabled .Values.redis.auth.enabled }}
             - name: REDIS_PASSWORD
               valueFrom:
+                # Referencing from charts/redis/templates/_helpers.tpl
                 secretKeyRef:
                   name: {{ include "redis.secretName" .Subcharts.redis }}
                   key: {{ include "redis.secretPasswordKey" .Subcharts.redis }}
@@ -40,6 +41,7 @@ spec:
             {{- if .Values.postgresql.enabled }}
             - name: POSTGRES_PASSWORD
               valueFrom:
+                # Referencing from charts/postgresql/templates/_helpers.tpl
                 secretKeyRef:
                   name: {{ include "postgresql.secretName" .Subcharts.postgresql }}
                   key: {{ include "postgresql.adminPasswordKey" .Subcharts.postgresql }}
@@ -64,8 +66,11 @@ spec:
                   fieldPath: metadata.name
                   apiVersion: v1
           volumeMounts:
-            - mountPath: {{ .Values.persistence.mountPath }}
+            - mountPath: {{ .Values.persistence.mountPath | quote }}
               name: timesketchvolume
+            - mountPath: {{ (include "timesketch.uploadPath" .) | quote }}
+              name: timesketchvolume
+              subPath: uploads
             - mountPath: /var/log/timesketch
               name: timesketchvolume
               subPathExpr: logs/$(POD_NAME)
@@ -75,7 +80,7 @@ spec:
           ports:
             - containerPort: {{ .Values.service.port }}
           resources:
-            {{- toYaml .Values.resources.frontend | nindent 12 }}
+            {{- toYaml .Values.frontend.resources | nindent 12 }}
       volumes:
         - name: timesketchvolume
           persistentVolumeClaim:

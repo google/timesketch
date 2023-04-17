@@ -13,7 +13,7 @@ data:
     set -e
 
     # Create timesketch config directory
-    mkdir -p /etc/timesketch /etc/timesketch/scenarios /etc/timesketch/upload
+    mkdir -p /etc/timesketch /etc/timesketch/scenarios
     cd /etc/timesketch
 
     echo -n "* Fetching configuration files.." 
@@ -53,4 +53,4 @@ data:
 
     # Set up upload folder
     sed -i 's#^UPLOAD_ENABLED = False#UPLOAD_ENABLED = True#' timesketch.conf
-    sed -i 's#^UPLOAD_FOLDER =.*#UPLOAD_FOLDER =  "{{ .Values.persistence.mountPath }}/upload"#' timesketch.conf
+    sed -i 's#^UPLOAD_FOLDER =.*#UPLOAD_FOLDER =  {{ (include "timesketch.uploadPath" .) | quote }}#' timesketch.conf

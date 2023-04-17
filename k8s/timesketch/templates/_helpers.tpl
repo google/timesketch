@@ -39,6 +39,13 @@ Create persistence volume claim name.
 {{- end }}
 
 {{/*
+Create persistence volume claim name.
+*/}}
+{{- define "timesketch.uploadPath" -}}
+{{- printf "%s/%s" .Values.persistence.name "upload" }}
+{{- end }}
+
+{{/*
 Common labels
 */}}
 {{- define "timesketch.labels" -}}

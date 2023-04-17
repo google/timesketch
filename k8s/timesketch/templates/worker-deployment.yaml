@@ -41,8 +41,11 @@ spec:
             - name: WORKER_LOG_LEVEL
               value: "DEBUG"
           volumeMounts:
-            - mountPath: {{ .Values.persistence.mountPath }}
+            - mountPath: {{ .Values.persistence.mountPath | quote }}
               name: timesketchvolume
+            - mountPath: {{ (include "timesketch.uploadPath" .) | quote }}
+              name: timesketchvolume
+              subPath: uploads
             - mountPath: /var/log/timesketch
               name: timesketchvolume
               subPathExpr: logs/$(POD_NAME)
@@ -52,7 +55,7 @@ spec:
           ports:
             - containerPort: {{ .Values.service.port }}
           resources:
-            {{- toYaml .Values.resources.worker | nindent 12 }}
+            {{- toYaml .Values.worker.resources | nindent 12 }}
       volumes:
         - name: timesketchvolume
           persistentVolumeClaim:

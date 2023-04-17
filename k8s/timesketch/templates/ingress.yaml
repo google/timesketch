@@ -2,8 +2,10 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: timesketch-ingress
-  namespace: timesketch
+  name:  {{ include "timesketch.fullname" . }}-ingress
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "timesketch.labels" . | nindent 4 }}
   annotations:
     kubernetes.io/ingress.global-static-ip-name: "timesketch-webapps"
     networking.gke.io/managed-certificates: timesketch-loadbalancer-managed-ssl

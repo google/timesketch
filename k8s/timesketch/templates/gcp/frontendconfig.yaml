@@ -1,0 +1,10 @@
+{{- if and (.Values.ingress.enabled) (eq .Values.ingress.className "gce") }}
+apiVersion: networking.gke.io/v1beta1
+kind: FrontendConfig
+metadata:
+  name: {{ include "timesketch.fullname" . }}-frontend-config
+  namespace: {{ .Release.Namespace | quote }}
+spec:
+  redirectToHttps:
+    enabled: true
+{{- end }}

@@ -19,9 +19,6 @@ image:
   ##   - myRegistryKeySecretName
   ##
   imagePullSecrets: []
-## @param replicaCount
-##
-replicaCount: 1
 ## @param nameOverride
 ##
 nameOverride: ""
@@ -41,6 +38,54 @@ serviceAccount:
   ## If not set and create is true, a name is generated using the fullname template
   ##
   name: "timesketch"
+## Timesketch persistence storage parameters
+##
+persistence:
+  ## @param persistence.name
+  ##
+  name: timesketchvolume
+  ## @param persistence.size
+  ##
+  size: 1T
+  ## @param persistence.storageClass PVC Storage Class for Timesketch volume
+  ## If default, storageClassName: <storageClass>, which enables GCP Filestore
+  ## If set to "-", storageClassName: "", which disables dynamic provisioning
+  ## If undefined or set to null, no storageClassName spec is
+  ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+  ##   GKE, AWS & OpenStack)
+  ## ref https://kubernetes.io/docs/concepts/storage/dynamic-provisioning/#using-dynamic-provisioning
+  ## 
+  storageClass: standard-rwx
+  ## @param persistence.accessModes PVC Access Mode for Timesketch volume
+  ## Access mode may need to be updated based on the StorageClass
+  ## ref https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes
+  ## 
+  accessModes:
+    - ReadWriteMany
+  ## @param mountPath
+  ##
+  mountPath: /mnt/timesketchvolume
+## Timesketch ingress parameters
+##
+ingress:
+  ## @param ingress.enabled
+  ##
+  enabled: false
+  ## @param ingress.domain
+  ##
+  domain: ""
+  ## @param ingress.className
+  ##
+  className: "gce"
+  ## @param
+  ##
+  gcp:
+    ## @param ingress.gcp.managedCertificates
+    ##
+    managedCertificates: false
+    ## @param ingress.gcp.staticIPName
+    ##
+    staticIPName: ""
 ## Timesketch service parameters
 ##
 service:
@@ -50,48 +95,38 @@ service:
   ## @param port
   ##
   port: 5000
-## Timesketch ingress parameters
+## Timesketch frontend configuration
 ##
-ingress:
-  ## @param enabled
+frontend:
+  ## Frontend resource requests and limits
+  ## @param frontend.resources.requests.cpu The requested cpu for the frontend container
+  ## @param frontend.resources.requests.memory The requested memory for the frontend container
+  ## @param frontend.resources.limits.cpu The resources cpu limits for the frontend container
+  ## @param frontend.resources.limits.memory The resources memory limits for the frontend container
   ##
-  enabled: false
-  ## @param domain
-  ##
-  domain: ""
-## Timesketch persistence storage parameters
-##
-persistence:
-  ## @param name
-  ##
-  name: timesketchvolume
-  ## @param size
-  ##
-  size: 1T
-  ## @param mountPath
-  ##
-  mountPath: /mnt/timesketchvolume
-## Timesketch resources parameters
-##
-resources:
-  ## @param frontend.limits
-  ## @param frontend.requests
-  frontend:
-    limits:
-      cpu: 8000m
-      memory: 16000Mi
+  resources:
     requests:
       cpu: 2000m
       memory: 4000Mi
-  ## @param worker.limits
-  ## @param worker.requests
-  worker:
     limits:
       cpu: 8000m
       memory: 16000Mi
+## Timesketch worker configuration
+##
+worker:
+  ## Frontend resource requests and limits
+  ## @param worker.resources.requests.cpu The requested cpu for the worker container
+  ## @param worker.resources.requests.memory The requested memory for the worker container
+  ## @param worker.resources.limits.cpu The resources cpu limits for the worker container
+  ## @param worker.resources.limits.memory The resources memory limits for the worker container
+  ##
+  resources:
     requests:
       cpu: 2000m
       memory: 4000Mi
+    limits:
+      cpu: 8000m
+      memory: 16000Mi
 ## @param podAnnotations
 ##
 podAnnotations: {}
@@ -159,8 +194,9 @@ opensearch:
   ##
   persistence:
     size: 1Ti
-  ## @param resources.requests.cpu
-  ## @param resources.requests.memory
+  ## Opensearch resource requests
+  ## @param opensearch.resources.requests.cpu The requested cpu for the Redis master containers
+  ## @param opensearch.resources.requests.memory The requested memory for the Redis master containers 
   ##
   resources:
     requests:
@@ -186,8 +222,11 @@ redis:
     ##
     persistence:
       size: 8Gi
-    ## @param resources.requests The requested resources for the Redis master containers
-    ## @param resources.limits The resources limits for the Redis master containers
+    ## Redis master resource requests and limits
+    ## @param redis.master.resources.requests.cpu The requested cpu for the Redis master containers
+    ## @param redis.master.resources.requests.memory The requested memory for the Redis master containers 
+    ## @param redis.master.resources.limits.cpu The resources cpu limits for the Redis master containers
+    ## @param redis.master.resources.limits.memory The resources memory limits for the Redis master containers
     ##
     resources:
       requests:
@@ -204,8 +243,11 @@ redis:
     ##
     persistence:
       size: 8Gi
-    ## @param resources.requests The requested resources for the Redis replica containers
-    ## @param resources.limits The resources limits for the Redis replica containers
+    ## Redis Replica resource requests and limits
+    ## @param redis.replica.resources.requests.cpu The requested cpu for the Redis replica containers
+    ## @param redis.replica.resources.requests.memory The requested memory for the Redis replica containers 
+    ## @param redis.replica.resources.limits.cpu The resources cpu limits for the Redis replica containers
+    ## @param redis.replica.resources.limits.memory The resources memory limits for the Redis replica containers
     ##
     resources:
       requests:
@@ -239,15 +281,15 @@ postgresql:
       ##
       size: 8Gi
     ## PostgreSQL Primary resource requests and limits
-    ## @param primary.resources.limits The resources limits for the PostgreSQL Primary containers
-    ## @param primary.resources.requests.memory The requested memory for the PostgreSQL Primary containers
-    ## @param primary.resources.requests.cpu The requested cpu for the PostgreSQL Primary containers
+    ## @param postgresql.primary.resources.requests.cpu The requested cpu for the PostgreSQL Primary containers
+    ## @param postgresql.primary.resources.requests.memory The requested memory for the PostgreSQL Primary containers
+    ## @param postgresql.primary.resources.limits The resources limits for the PostgreSQL Primary containers
     ##
     resources:
-      limits: {}
       requests:
-        memory: 256Mi
         cpu: 250m
+        memory: 256Mi
+      limits: {}
   ## PostgreSQL read only replica parameters (only used when `architecture` is set to `replication`)
   ## 
   readReplicas:
@@ -255,12 +297,12 @@ postgresql:
     ##
     replicaCount: 1
     ## PostgreSQL read only resource requests and limits
-    ## @param readReplicas.resources.limits The resources limits for the PostgreSQL read only containers
-    ## @param readReplicas.resources.requests.memory The requested memory for the PostgreSQL read only containers
-    ## @param readReplicas.resources.requests.cpu The requested cpu for the PostgreSQL read only containers
+    ## @param postgresql.readReplicas.resources.requests.cpu The requested cpu for the PostgreSQL read only containers
+    ## @param postgresql.readReplicas.resources.requests.memory The requested memory for the PostgreSQL read only containers
+    ## @param postgresql.readReplicas.resources.limits The resources limits for the PostgreSQL read only containers
     ##
     resources:
-      limits: {}
       requests:
-        memory: 256Mi
         cpu: 250m
+        memory: 256Mi
+      limits: {}
