@@ -360,7 +360,7 @@ class EventResourceTest(BaseTest):
             "meta": {
                 "events_processed_by_api": 1,
                 "number_of_events_passed_to_api": 1,
-                "number_of_events_with_added_tags": 1,
+                "number_of_events_with_modified_tags": 1,
                 "tags_applied": 2,
             },
             "objects": [],

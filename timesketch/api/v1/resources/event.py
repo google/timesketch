@@ -53,51 +53,9 @@ from timesketch.models.sketch import SearchHistory
 logger = logging.getLogger("timesketch.event_api")
 
 
-def _untag_event(row, tag_dict, tags_to_remove, datastore, flush_interval):
-    """Untag each event from a dataframe with tags.
-
-    Args:
-        row (np.Series): a single row of data with existing tags and
-            information about the event in order to be able to remove
-            tags from it.
-        tag_dict (dict): a dict that contains information to be returned
-            by the API call to the user.
-        tags_to_remove (list[str]): a list of strings of tags to remove
-            from each event.
-        datastore (opensearch.OpenSearchDataStore): the datastore object.
-        flush_interval (int): the number of events to import before a bulk
-            update is done with the datastore.
-    """
-    tag_dict["events_processed_by_api"] += 1
-    existing_tags = set()
-
-    if "tag" in row:
-        tag = row["tag"]
-        if isinstance(tag, (list, tuple)):
-            existing_tags = set(tag)
-
-        if set(existing_tags) == set(tags_to_remove):
-            new_tags = []
-        else:
-            # create a new list where the set of tags are the existing tags
-            new_tags = list(set(existing_tags) - set(tags_to_remove))
-    else:
-        new_tags = []
-
-    if set(existing_tags) != set(new_tags):
-        datastore.import_event(
-            index_name=row["_index"],
-            event_id=row["_id"],
-            event={"tag": new_tags},
-            flush_interval=flush_interval,
-        )
-
-    tag_dict["tags_applied"] += len(new_tags)
-    tag_dict["number_of_events_with_removed_tags"] += 1
-
-
-def _tag_event(row, tag_dict, tags_to_add, datastore, flush_interval):
-    """Tag each event from a dataframe with tags.
+# have a variable that decides if to tag or untag events
+def _tag_untag_event(row, tag_dict, tags_to_modify, datastore, flush_interval, tag):
+    """Tag or untag each event from a dataframe with tags.
 
     Args:
         row (np.Series): a single row of data with existing tags and
@@ -105,13 +63,14 @@ def _tag_event(row, tag_dict, tags_to_add, datastore, flush_interval):
             tags to it.
         tag_dict (dict): a dict that contains information to be returned
             by the API call to the user.
-        tags_to_add (list[str]): a list of strings of tags to add to each
-            event.
+        tags_to_modify (list[str]): a list of strings of tags to remove
+            or add on each event.
         datastore (opensearch.OpenSearchDataStore): the datastore object.
         flush_interval (int): the number of events to import before a bulk
             update is done with the datastore.
+        tag (bool): a boolean that decides if to tag or untag events.
+                TODO(jaegeral): Find a better name for this boolean.
     """
-    logger.error("Tagging event {0!s}".format(row["_id"]))
 
     tag_dict["events_processed_by_api"] += 1
     existing_tags = set()
@@ -121,13 +80,18 @@ def _tag_event(row, tag_dict, tags_to_add, datastore, flush_interval):
         if isinstance(tag, (list, tuple)):
             existing_tags = set(tag)
 
-        new_tags = list(set().union(existing_tags, set(tags_to_add)))
+        if tag:
+            new_tags = list(set().union(existing_tags, set(tags_to_modify)))
+        else:  # if action is to remove tags
+            new_tags = list(set(existing_tags) - set(tags_to_modify))
     else:
-        new_tags = tags_to_add
+        new_tags = tags_to_modify
 
+    # no action needed if the tags are the same
     if set(existing_tags) == set(new_tags):
         return
 
+    # write the new tags to the datastore
     datastore.import_event(
         index_name=row["_index"],
         event_id=row["_id"],
@@ -136,7 +100,7 @@ def _tag_event(row, tag_dict, tags_to_add, datastore, flush_interval):
     )
 
     tag_dict["tags_applied"] += len(new_tags)
-    tag_dict["number_of_events_with_added_tags"] += 1
+    tag_dict["number_of_events_with_modified_tags"] += 1
 
 
 class EventCreateResource(resources.ResourceMixin, Resource):
@@ -607,7 +571,7 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
 
         tag_dict = {
             "events_processed_by_api": 0,
-            "number_of_events_with_added_tags": 0,
+            "number_of_events_with_modified_tags": 0,
             "tags_applied": 0,
         }
         datastore = self.datastore
@@ -750,12 +714,13 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
         else:
             flush_interval = datastore.DEFAULT_FLUSH_INTERVAL
         _ = event_df.apply(
-            _tag_event,
+            _tag_untag_event,
             axis=1,
             tag_dict=tag_dict,
-            tags_to_add=tags_to_add,
+            tags_to_modify=tags_to_add,
             datastore=datastore,
             flush_interval=flush_interval,
+            tag=True,  # add tags
         )
         datastore.flush_queued_events()
 
@@ -773,7 +738,7 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
 
     @login_required
     def delete(self, sketch_id):
-        """Handles delete request of tags.
+        """Handles delete request of tags to remove them from an event.
 
         Args:
             sketch_id: Integer primary key for a sketch database model
@@ -796,16 +761,12 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
                 ("User does not have sufficient access rights to " "modify a sketch."),
             )
 
-        form = request.json  # form is not supported in a DELETE type
+        form = request.json
         tag_dict = {
             "events_processed_by_api": 0,
             "number_of_events_with_removed_tags": 0,
             "tags_applied": 0,
         }
-        datastore = self.datastore
-
-        # Retrieve request arguments
-        # args = self.parser.parse_args()
 
         try:
             tags_to_remove = json.loads(form.get("tag_string", ""))
@@ -857,6 +818,8 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
         tag_dict["number_of_events_passed_to_api"] = event_size
 
         errors = []
+
+        datastore = self.datastore
 
         for _index in event_df["_index"].unique():
             index_slice = event_df[event_df["_index"] == _index]
@@ -920,12 +883,13 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
         else:
             flush_interval = datastore.DEFAULT_FLUSH_INTERVAL
         _ = event_df.apply(
-            _untag_event,  # actual action to remove items from tag list
+            _tag_untag_event,  # actual action to remove items from tag list
             axis=1,
             tag_dict=tag_dict,
-            tags_to_remove=tags_to_remove,
+            tags_to_modify=tags_to_remove,
             datastore=datastore,
             flush_interval=flush_interval,
+            tag=False,
         )
         datastore.flush_queued_events()
 

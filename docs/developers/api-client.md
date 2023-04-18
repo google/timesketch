@@ -564,7 +564,7 @@ Both will give you something like:
 
 {'events_processed_by_api': 1,
  'number_of_events_passed_to_api': 1,
- 'number_of_events_with_added_tags': 1,
+ 'number_of_events_with_modified_tags': 1,
  'tags_applied': 1,
  'total_number_of_events_sent_by_client': 1}
 ```
