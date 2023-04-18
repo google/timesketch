@@ -118,9 +118,9 @@ class EventCreateResource(resources.ResourceMixin, Resource):
             An annotation in JSON (instance of flask.wrappers.Response)
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
+
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
-
         if not sketch.has_permission(current_user, "write"):
             abort(
                 HTTP_STATUS_CODE_FORBIDDEN,
@@ -764,7 +764,7 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
         form = request.json
         tag_dict = {
             "events_processed_by_api": 0,
-            "number_of_events_with_removed_tags": 0,
+            "number_of_events_with_modified_tags": 0,
             "tags_applied": 0,
         }
 

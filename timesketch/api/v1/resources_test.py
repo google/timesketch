@@ -396,10 +396,35 @@ class EventResourceTest(BaseTest):
             self.resource_url + "?searchindex_id=test&event_id=test"
         )
 
+        expected_response = {
+            "meta": {
+                "events_processed_by_api": 1,
+                "number_of_events_passed_to_api": 1,
+                "number_of_events_with_modified_tags": 1,
+                "tags_applied": 2,
+            },
+            "objects": [],
+        }
+
+        json_value = {
+            "tag_string": '["foobar1", "foobar2"]',
+            "events": [
+                {
+                    "_id": "test",
+                    "_index": "testindex",
+                    "_type": "generic_event",
+                }
+            ],
+            "verbose": False,
+        }
+
         response = self.client.delete(
-            self.resource_url + "?searchindex_id=test&event_id=test&tag=test"
+            "/api/v1/sketches/1/event/tagging/",
+            json=json_value,
+            content_type="application/json",
         )
         self.assert200(response)
+        self.assertEqual(expected_response, response.json)
 
 
 class EventAddAttributeResourceTest(BaseTest):
