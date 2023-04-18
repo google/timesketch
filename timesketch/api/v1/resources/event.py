@@ -93,7 +93,7 @@ def _untag_event(row, tag_dict, tags_to_remove, datastore, flush_interval):
         )
 
     tag_dict["tags_applied"] += len(new_tags)
-    tag_dict["number_of_events_with_added_tags"] += 1
+    tag_dict["number_of_events_with_removed_tags"] += 1
 
 
 def _tag_event(row, tag_dict, tags_to_add, datastore, flush_interval):
@@ -111,6 +111,8 @@ def _tag_event(row, tag_dict, tags_to_add, datastore, flush_interval):
         flush_interval (int): the number of events to import before a bulk
             update is done with the datastore.
     """
+    logger.error("Tagging event {0!s}".format(row["_id"]))
+
     tag_dict["events_processed_by_api"] += 1
     existing_tags = set()
 
@@ -777,8 +779,11 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
             sketch_id: Integer primary key for a sketch database model
 
         Returns:
-            A HTTP 200 if the tag was successfully deleted and HTTP 400
-            otherwise
+            A HTTP 200 if the tag was successfully deleted
+            A HTTP 403 if the user does not have sufficient permissions
+            A HTTP 404 if the sketch or tag does not exist
+            A HTTP 400 if provided data is not a list
+            A HTTP 400 otherwise
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
@@ -794,7 +799,7 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
         form = request.json  # form is not supported in a DELETE type
         tag_dict = {
             "events_processed_by_api": 0,
-            "number_of_events_with_added_tags": 0,
+            "number_of_events_with_removed_tags": 0,
             "tags_applied": 0,
         }
         datastore = self.datastore
@@ -853,18 +858,9 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
 
         errors = []
 
-        verbose = form.get("verbose", False)
-        if verbose:
-            tag_dict["number_of_indices"] = len(event_df["_index"].unique())
-            time_tag_gathering_start = time.time()
-
         for _index in event_df["_index"].unique():
             index_slice = event_df[event_df["_index"] == _index]
             index_size = index_slice.shape[0]
-
-            if verbose:
-                tag_dict.setdefault("index_count", {})
-                tag_dict["index_count"][_index] = index_size
 
             if index_size <= self.EVENT_CHUNK_SIZE:
                 chunks = 1
@@ -919,22 +915,6 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
         if tag_df.shape[0]:
             event_df = event_df.merge(tag_df, on="_id", how="left")
 
-        if verbose:
-            tag_dict["time_to_gather_tags"] = time.time() - time_tag_gathering_start
-            tag_dict["number_of_events"] = len(events)
-
-            if tag_df.shape[0]:
-                tag_dict["number_of_events_in_tag_frame"] = tag_df.shape[0]
-
-            if "tag" in event_df:
-                current_tag_events = event_df[~event_df["tag"].isna()].shape[0]
-                tag_dict["number_of_events_with_tags"] = current_tag_events
-            else:
-                tag_dict["number_of_events_with_tags"] = 0
-
-            tag_dict["tags_to_remove"] = tags_to_remove
-            time_tag_start = time.time()
-
         if event_size > datastore.DEFAULT_FLUSH_INTERVAL:
             flush_interval = self.BUFFER_SIZE_FOR_ES_BULK_UPDATES
         else:
@@ -948,9 +928,6 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
             flush_interval=flush_interval,
         )
         datastore.flush_queued_events()
-
-        if verbose:
-            tag_dict["time_to_removetag"] = time.time() - time_tag_start
 
         if errors:
             tag_dict["errors"] = errors
