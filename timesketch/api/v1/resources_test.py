@@ -312,6 +312,120 @@ class EventResourceTest(BaseTest):
         )
         self.assert400(response_400)
 
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_add_tag_missing_tag_param(self):
+        """Authenticated request to add a tag to an event but no tag field is given."""
+        self.login()
+        response1 = self.client.get(
+            self.resource_url + "?searchindex_id=test&event_id=test"
+        )
+
+        response2 = self.client.post(
+            "/api/v1/sketches/1/event/tagging/",
+            json={
+                "searchindex_id": "test",
+                "event_id": "test",
+            },
+            content_type="application/json",
+        )
+
+        self.assert200(response1)
+        self.assert400(response2)
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_add_tag_no_event_id(self):
+        """Authenticated request to add a tag to an event
+        but the _id field is missing."""
+        self.login()
+        tags = ["fooobar"]
+
+        response = self.client.post(
+            "/api/v1/sketches/1/event/tagging/",
+            json={
+                "searchindex_id": "test",
+                "tag_string": json.dumps(tags),
+            },
+            content_type="application/json",
+        )
+
+        self.assert400(response)
+        self.assertIn("Events need to have a [_id]", response.json["message"])
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_add_tag(self):
+        """Authenticated request to add a tag to an event."""
+        self.login()
+
+        expected_response = {
+            "meta": {
+                "events_processed_by_api": 1,
+                "number_of_events_passed_to_api": 1,
+                "number_of_events_with_modified_tags": 1,
+                "tags_applied": 2,
+            },
+            "objects": [],
+        }
+
+        json_value = {
+            "tag_string": '["foobar1", "foobar2"]',
+            "events": [
+                {
+                    "_id": "test",
+                    "_index": "testindex",
+                    "_type": "generic_event",
+                }
+            ],
+            "verbose": False,
+        }
+
+        response = self.client.post(
+            "/api/v1/sketches/1/event/tagging/",
+            json=json_value,
+            content_type="application/json",
+        )
+
+        self.assert200(response)
+        self.assertEqual(expected_response, response.json)
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_remove_tag(self):
+        """Authenticated request to remove a tag from an event."""
+        self.login()
+
+        response = self.client.get(
+            self.resource_url + "?searchindex_id=test&event_id=test"
+        )
+
+        expected_response = {
+            "meta": {
+                "events_processed_by_api": 1,
+                "number_of_events_passed_to_api": 1,
+                "number_of_events_with_modified_tags": 1,
+                "tags_applied": 2,
+            },
+            "objects": [],
+        }
+
+        json_value = {
+            "tag_string": '["foobar1", "foobar2"]',
+            "events": [
+                {
+                    "_id": "test",
+                    "_index": "testindex",
+                    "_type": "generic_event",
+                }
+            ],
+            "verbose": False,
+        }
+
+        response = self.client.delete(
+            "/api/v1/sketches/1/event/tagging/",
+            json=json_value,
+            content_type="application/json",
+        )
+        self.assert200(response)
+        self.assertEqual(expected_response, response.json)
+
 
 class EventAddAttributeResourceTest(BaseTest):
     """Test EventAddAttributeResource."""
@@ -527,7 +641,7 @@ class EventAddAttributeResourceTest(BaseTest):
 
     @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
     def test_add_existing_attributes(self):
-        """Tests existing attributes cannot be overidden."""
+        """Tests existing attributes cannot be overridden."""
         self.login()
 
         response = self.client.post(
@@ -748,7 +862,7 @@ level: high
             response.json["objects"][0]["rule_yaml"],
         )
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
-        # Now GET the ressources
+        # Now GET the resources
         response = self.client.get("/api/v1/sigmarules/5266a592-b793-11ea-b3de-bbbbbb/")
 
         self.assertIsNotNone(response)
@@ -897,7 +1011,7 @@ class SigmaRuleByTextResourceTest(BaseTest):
         id: bb1e0d1d-cd13-4b65-bf7e-69b4e740266b
         description: Detects suspicious installation of foobar
         references:
-            - https://samle.com/foobar
+            - https://sample.com/foobar
         author: Alexander Jaeger
         date: 2020/12/10
         modified: 2020/12/10
@@ -923,7 +1037,7 @@ class SigmaRuleByTextResourceTest(BaseTest):
                 "title": "Installation of foobar",
                 "id": "bb1e0d1d-cd13-4b65-bf7e-69b4e740266b",
                 "description": "Detects suspicious installation of foobar",
-                "references": ["https://samle.com/foobar"],
+                "references": ["https://sample.com/foobar"],
                 "author": "Alexander Jaeger",
                 "date": "2020/12/10",
                 "modified": "2020/12/10",
