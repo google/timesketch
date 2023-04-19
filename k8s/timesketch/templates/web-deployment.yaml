@@ -66,8 +66,6 @@ spec:
                   fieldPath: metadata.name
                   apiVersion: v1
           volumeMounts:
-            - mountPath: {{ .Values.persistence.mountPath | quote }}
-              name: timesketchvolume
             - mountPath: {{ (include "timesketch.uploadPath" .) | quote }}
               name: timesketchvolume
               subPath: uploads

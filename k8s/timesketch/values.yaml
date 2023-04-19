@@ -1,50 +1,55 @@
 ## Timesketch Helm Chart
 ## Please use this Helm chart for deploying Timesketch to a Kubernetes environment.
 ##
-## Timesketch Docker image parameters
+## @section Timesketch configuration
+## The following section covers configuration parameters for Timesketch
+##
+## Timesketch image configuration
 ##
 image:
-  ## @param repository
+  ## @param image.repository Timesketch image repository
   ##
   repository: us-docker.pkg.dev/osdfir-registry/timesketch/timesketch
-  ## @param pullPolicy
+  ## @param image.pullPolicy Timesketch image pull policy
+  ## ref https://kubernetes.io/docs/concepts/containers/images/#image-pull-policy
   ##
   pullPolicy: IfNotPresent
-  ## @param tag Overrides the image tag whose default is the chart appVersion.
+  ## @param image.tag Overrides the image tag whose default is the chart appVersion.
   ##
   tag: latest
-  ## @ param imagePullSecrets
+  ## @param image.imagePullSecrets
+  ## ref https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
   ## e.g.
   ## imagePullSecrets:
   ##   - myRegistryKeySecretName
   ##
   imagePullSecrets: []
-## @param nameOverride
+## @param nameOverride String to partially override names.fullname
 ##
 nameOverride: ""
-## @param fullnameOverride
+## @param fullnameOverride String to fully override names.fullname
 ##
 fullnameOverride: ""
 ## Timesketch service account parameters
 ##
 serviceAccount:
-  ## @param create Specifies whether a service account should be created
+  ## @param serviceAccount.create Specifies whether a service account should be created
   ##
   create: true
-  ## @param annotations Annotations to add to the service account
+  ## @param serviceAccount.annotations Annotations to add to the service account
   ##
   annotations: {}
-  ## @param name The name of the service account to use.
+  ## @param serviceAccount.name The name of the service account to use
   ## If not set and create is true, a name is generated using the fullname template
   ##
   name: "timesketch"
 ## Timesketch persistence storage parameters
 ##
 persistence:
-  ## @param persistence.name
+  ## @param persistence.name Timesketch persistent volume name
   ##
   name: timesketchvolume
-  ## @param persistence.size
+  ## @param persistence.size Timesketch persistent volume size
   ##
   size: 1T
   ## @param persistence.storageClass PVC Storage Class for Timesketch volume
@@ -62,37 +67,41 @@ persistence:
   ## 
   accessModes:
     - ReadWriteMany
-  ## @param mountPath
-  ##
-  mountPath: /mnt/timesketchvolume
 ## Timesketch ingress parameters
 ##
 ingress:
-  ## @param ingress.enabled
+  ## @param ingress.enabled Enable the Timesketch loadbalancer for external access
   ##
   enabled: false
-  ## @param ingress.domain
+  ## @param ingress.host The domain name Timesketch will be hosted under
+  ## Please ensure this value is set when enabling Ingress. If using "gce" for
+  ## ingress.className, please ensure you have a DNS record set for the IP address
+  ## registered under ingress.gcp.staticIPName 
   ##
-  domain: ""
-  ## @param ingress.className
+  host: ""
+  ## @param ingress.className IngressClass that will be be used to implement the Ingress
+  ## ref https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/
   ##
   className: "gce"
-  ## @param
+  ## GCP ingress configuration
   ##
   gcp:
-    ## @param ingress.gcp.managedCertificates
+    ## @param ingress.gcp.managedCertificates Enabled GCP managed certificates for your domain
+    ## ref https://cloud.google.com/load-balancing/docs/ssl-certificates/google-managed-certs
     ##
     managedCertificates: false
-    ## @param ingress.gcp.staticIPName
+    ## @param ingress.gcp.staticIPName Name of the static IP address you reserved in GCP
+    ## This is required when using "gce" in ingress.className
+    ## ref https://cloud.google.com/compute/docs/ip-addresses/reserve-static-external-ip-address
     ##
     staticIPName: ""
 ## Timesketch service parameters
 ##
 service:
-  ## @param type
+  ## @param service.type Timesketch service type
   ##
   type: ClusterIP
-  ## @param port
+  ## @param service.port Timesketch service port
   ##
   port: 5000
 ## Timesketch frontend configuration
@@ -127,15 +136,20 @@ worker:
     limits:
       cpu: 8000m
       memory: 16000Mi
-## @param podAnnotations
+## @param podAnnotations Extra annotations for the Timesketch deployment
+## ref https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
 ##
 podAnnotations: {}
-## @param podSecurityContext
+## @param podSecurityContext PodSecurityContext holds pod-level security attributes and common container settings.
+## Some fields are also present in container.securityContext. Field values of container.securityContext take precedence over field values of PodSecurityContext
+## ref https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#podsecuritycontext-v1-core
 ## e.g.
 ## fsgroup: 2000
 ##
 podSecurityContext: {}
-## @param SecurityContext
+## @param SecurityContext SecurityContext holds security configuration that will be applied to a container.
+## Some fields are present in both SecurityContext and PodSecurityContext. When both are set, the values in SecurityContext take precedence.
+## ref https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#securitycontext-v1-core
 ## e.g.
 ## capabilities
 ##   drop:
@@ -143,56 +157,68 @@ podSecurityContext: {}
 ## readOnlyRootFilesystem: true
 ## runAsNonRoot: true
 ## runAsUser: 1000
+##
 securityContext: {}
-## @param nodeSelector
+## @param nodeSelector Node labels for Timesketch pods assignment
+## ref: https://kubernetes.io/docs/user-guide/node-selection/
 ##
 nodeSelector: {}
-## @param tolerations
+## @param tolerations Tolerations for Timesketch pods assignment
+## ref https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
 ##
 tolerations: []
-## @param affinity
+## @param affinity Affinity for Timesketch pods assignment
+## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
 ##
 affinity: {}
 ## @section Third Party Configuration
 ## This section contains all the main configuration for third party dependencies
 ## Timesketch requires to run.
 ##
-## Open Search Configuration
+## @section Opensearch Configuration Parameters 
 ##
 opensearch:
-  ## @param enabled is whether to enable the Opensearch Helm deployment 
+  ## @param opensearch.enabled Enables the Opensearch deployment
   ##
   enabled: true
-  ## @param config.opensearch.yml
+  ## @param opensearch.config.opensearch.yml The Opensearch configuration file
+  ## Values must be YAML literal style scalar / YAML multiline string.
+  ## <filename>: |
+  ##   <formatted-value(s)>
   ##
   config:
     opensearch.yml: |
       plugins:
         security:
           allow_unsafe_democertificates: false
-  ## @param extraEnvs
+  ## @param opensearch.extraEnvs Exra environment variables to add to the Opensearch Deployment.
+  ## IMPORTANT: Removing the environment variables below will cause the deployment to fail without
+  ## additional configuration.
   ##
   extraEnvs:
     - name: DISABLE_INSTALL_DEMO_CONFIG
       value: "true"
     - name: DISABLE_SECURITY_PLUGIN
       value: "true"
-  ## @param replicas
+  ## @param opensearch.replicas Number of Opensearch instances to deploy
   ##
   replicas: 3
-  ## @param sysctlInit.enabled
+  ## @param opensearch.sysctlInit.enabled Sets optimal sysctl's through privileged initContainer.
   ##
   sysctlInit:
     enabled: true
-  ## @param opensearchJavaOpts
+  ## @param opensearchJavaOpts Sets the size of the Opensearch Java heap
+  ## It is recommended to use half the system's available ram
   ## 
   opensearchJavaOpts: "-Xms32g -Xmx32g"
-  ## @param httpPort
+  ## @param httpPort Opensearch service port
   ##
   httpPort: 9200
-  ## @param persistence.size
+  ## Opensearch persistence configuration
   ##
   persistence:
+    ## @param opensearch.persistence.size Persistent Volume size
+    ##
     size: 1Ti
   ## Opensearch resource requests
   ## @param opensearch.resources.requests.cpu The requested cpu for the Redis master containers
@@ -202,25 +228,39 @@ opensearch:
     requests:
       cpu: 8000m
       memory: 32Gi
-## Redis Configuration
+## @section Redis configuration parameters
+## Redis is deployed with Auth enabled by default.
 ##
 redis:
-  ## @param enabled
+  ## @param redis.enabled enabled Enables the Redis deployment
   ##
   enabled: true
-  ## @param sentinel.enabled
+  ## @param redis.sentinel.enabled Enables Redis Sentinel on Redis pods.
+  ## IMPORTANT: This has not been tested for Timesketch so would leave this disabled.
   ##
   sentinel:
     enabled: false
   ## Master Redis Service configuration
   ##
   master:
-    ## @param count
+    ## @param redis.master.count Number of Redis master instances to deploy (experimental, requires additional configuration)
     ##
     count: 1
-    ## @param persistence.size
+    ## Redis master service parameters
+    ##
+    service:
+      ## @param redis.master.service.type Redis master service type
+      ##
+      type: ClusterIP
+      ## @param redis.master.service.ports.redis Redis master service port
+      ##
+      ports:
+        redis: 6379
+    ## Redis master persistence configuration
     ##
     persistence:
+      ## @param redis.master.persistence.size Persistent Volume size
+      ##
       size: 8Gi
     ## Redis master resource requests and limits
     ## @param redis.master.resources.requests.cpu The requested cpu for the Redis master containers
@@ -235,13 +275,27 @@ redis:
       limits:
         cpu: 8000m
         memory: 16Gi
+  ## Redis replicas configuration parameters
+  ##
   replica:
-    ## @param replicaCount
+    ## @param redis.replica.replicaCount Number of Redis replicas to deploy
     ##
-    replicaCount: 1
-    ## @param persistence.size
+    replicaCount: 3
+    ## Redis replicas service parameters
+    ##
+    service:
+      ## @param redis.replica.service.type Redis replicas service type
+      ##
+      type: ClusterIP
+      ## @param redis.replica.service.ports.redis Redis replicas service port
+      ##
+      ports:
+        redis: 6379
+    ## Redis replicas persistence configuration
     ##
     persistence:
+      ## @param redis.replica.persistence.size Persistent Volume size
+      ##
       size: 8Gi
     ## Redis Replica resource requests and limits
     ## @param redis.replica.resources.requests.cpu The requested cpu for the Redis replica containers
@@ -256,28 +310,42 @@ redis:
       limits:
         cpu: 8000m
         memory: 16Gi 
-## Postgres Configuration
+## @section Postgresql configuration parameters
+## Postgresql is deployed with Auth enabled by default.
 ##
 postgresql:
-  ## @param enabled
+  ## @param postgresql.enabled enabled Enables the Postgresql deployment
   ##
   enabled: true
+  ## @param postgresql.architecture PostgreSQL architecture (`standalone` or `replication`)
+  ##
+  architecture: standalone
   ## PostgreSQL Authentication parameters
   ##
   auth:
-    ## @param auth.username 
+    ## @param postgresql.auth.username Name for a custom user to create
     ##
     username: "postgres"
-    ## @param auth.postgresPassword Password for the "postgres" admin user. Ignored if `auth.existingSecret` is provided
+    ## @param postgresql.auth.database Name for a custom database to create (overrides `auth.database`)
     ##
     database: "timesketch"
-  ## PostgreSQL Primary parameters
+  ## PostgreSQL Primary configuration parameters
   ##
   primary:
+    ## PostgreSQL Primary service configuration parameters
+    ##
+    service:
+      ## @param postgresql.primary.service.type PostgreSQL primary service type
+      ## 
+      type: ClusterIP
+      ## @param postgresql.primary.service.ports.postgresql PostgreSQL primary service port
+      ##
+      ports:
+        postgresql: 5432
     ## PostgreSQL Primary persistence configuration
     ##
     persistence:
-      ## @param primary.persistence.size
+      ## @param postgresql.primary.persistence.size Persistent Volume size
       ##
       size: 8Gi
     ## PostgreSQL Primary resource requests and limits
@@ -293,9 +361,23 @@ postgresql:
   ## PostgreSQL read only replica parameters (only used when `architecture` is set to `replication`)
   ## 
   readReplicas:
-    ## @param readReplicas.replicaCount Number of PostgreSQL read only replicas
+    ## @param postgresql.readReplicas.replicaCount Number of PostgreSQL read only replicas
     ##
     replicaCount: 1
+    ## PostgreSQL read only service configuration
+    ##
+    service:
+      ## @param postgresql.readReplicas.service.type PostgreSQL read replicas service type
+      ## 
+      type: ClusterIP
+      ## @param postgresql.readReplicas.service.ports.postgresql PostgreSQL read replicas service port
+      ##
+      ports:
+        postgresql: 5432
+    persistence:
+      ## @param postgresql.readReplicas.persistence.size Persistent Volume size
+      ##
+      size: 8Gi
     ## PostgreSQL read only resource requests and limits
     ## @param postgresql.readReplicas.resources.requests.cpu The requested cpu for the PostgreSQL read only containers
     ## @param postgresql.readReplicas.resources.requests.memory The requested memory for the PostgreSQL read only containers

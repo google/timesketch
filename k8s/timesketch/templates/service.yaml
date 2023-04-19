@@ -8,7 +8,7 @@ metadata:
   {{- if and (.Values.ingress.enabled) ( eq .Values.ingress.className "gce") }}
   annotations:
     cloud.google.com/neg: '{"ingress": true}'
-    cloud.google.com/backend-config: '{"ports": {"5000":"timesketch-neg-healthcheck"}}'
+    cloud.google.com/backend-config: '{"ports": {"{{ .Values.service.port }}":"{{ include "timesketch.fullname" . }}-backend-config"}}'
   {{- end }}
 spec:
   type: {{ .Values.service.type }}

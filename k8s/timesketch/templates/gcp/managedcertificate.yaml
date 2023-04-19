@@ -6,5 +6,5 @@ metadata:
   namespace: {{ .Release.Namespace | quote }}
 spec:
   domains: 
-    - {{ required "A valid .Values.ingress.domain entry is required!" .Values.ingress.domain }}
+    - {{ required "A valid .Values.ingress.host entry is required!" .Values.ingress.host }}
 {{- end }}
