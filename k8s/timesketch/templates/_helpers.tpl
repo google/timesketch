@@ -30,7 +30,6 @@ Create chart name and version as used by the chart label.
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
-
 {{/*
 Create persistence volume claim name.
 */}}
@@ -39,7 +38,7 @@ Create persistence volume claim name.
 {{- end }}
 
 {{/*
-Create persistence volume claim name.
+Create the upload path.
 */}}
 {{- define "timesketch.uploadPath" -}}
 {{- printf "/mnt/%s/upload" .Values.persistence.name }}

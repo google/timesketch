@@ -1,5 +1,5 @@
 ## Timesketch Helm Chart
-## Please use this Helm chart for deploying Timesketch to a Kubernetes environment.
+## Please use this Helm chart for deploying Timesketch to a Kubernetes environment
 ##
 ## @section Timesketch configuration
 ## The following section covers configuration parameters for Timesketch
@@ -14,7 +14,7 @@ image:
   ## ref https://kubernetes.io/docs/concepts/containers/images/#image-pull-policy
   ##
   pullPolicy: IfNotPresent
-  ## @param image.tag Overrides the image tag whose default is the chart appVersion.
+  ## @param image.tag Overrides the image tag whose default is the chart appVersion
   ##
   tag: latest
   ## @param image.imagePullSecrets
@@ -54,6 +54,8 @@ persistence:
   size: 1T
   ## @param persistence.storageClass PVC Storage Class for Timesketch volume
   ## If default, storageClassName: <storageClass>, which enables GCP Filestore
+  ##   when using the Filestore CSI Driver
+  ##   ref https://cloud.google.com/kubernetes-engine/docs/how-to/persistent-volumes/filestore-csi-driver#access
   ## If set to "-", storageClassName: "", which disables dynamic provisioning
   ## If undefined or set to null, no storageClassName spec is
   ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
@@ -76,7 +78,7 @@ ingress:
   ## @param ingress.host The domain name Timesketch will be hosted under
   ## Please ensure this value is set when enabling Ingress. If using "gce" for
   ## ingress.className, please ensure you have a DNS record set for the IP address
-  ## registered under ingress.gcp.staticIPName 
+  ## registered under ingress.gcp.staticIPName
   ##
   host: ""
   ## @param ingress.className IngressClass that will be be used to implement the Ingress
@@ -140,15 +142,15 @@ worker:
 ## ref https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
 ##
 podAnnotations: {}
-## @param podSecurityContext PodSecurityContext holds pod-level security attributes and common container settings.
+## @param podSecurityContext PodSecurityContext holds pod-level security attributes and common container settings
 ## Some fields are also present in container.securityContext. Field values of container.securityContext take precedence over field values of PodSecurityContext
 ## ref https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#podsecuritycontext-v1-core
 ## e.g.
 ## fsgroup: 2000
 ##
 podSecurityContext: {}
-## @param SecurityContext SecurityContext holds security configuration that will be applied to a container.
-## Some fields are present in both SecurityContext and PodSecurityContext. When both are set, the values in SecurityContext take precedence.
+## @param SecurityContext SecurityContext holds security configuration that will be applied to a container
+## Some fields are present in both SecurityContext and PodSecurityContext. When both are set, the values in SecurityContext take precedence
 ## ref https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#securitycontext-v1-core
 ## e.g.
 ## capabilities
@@ -173,16 +175,19 @@ tolerations: []
 affinity: {}
 ## @section Third Party Configuration
 ## This section contains all the main configuration for third party dependencies
-## Timesketch requires to run.
+## Timesketch requires to run
 ##
-## @section Opensearch Configuration Parameters 
+## Opensearch Configuration Parameters
+## IMPORTANT: The Opensearch Security Plugin / TLS has not yet been configured by default
+## ref on steps required https://opensearch.org/docs/1.1/security-plugin/configuration/index/
+## To see a full list of available values, run helm show values charts/opensearch*
 ##
 opensearch:
   ## @param opensearch.enabled Enables the Opensearch deployment
   ##
   enabled: true
   ## @param opensearch.config.opensearch.yml The Opensearch configuration file
-  ## Values must be YAML literal style scalar / YAML multiline string.
+  ## Values must be YAML literal style scalar / YAML multiline string
   ## <filename>: |
   ##   <formatted-value(s)>
   ##
@@ -191,9 +196,9 @@ opensearch:
       plugins:
         security:
           allow_unsafe_democertificates: false
-  ## @param opensearch.extraEnvs Exra environment variables to add to the Opensearch Deployment.
+  ## @param opensearch.extraEnvs Exra environment variables to add to the Opensearch Deployment
   ## IMPORTANT: Removing the environment variables below will cause the deployment to fail without
-  ## additional configuration.
+  ## additional configuration
   ##
   extraEnvs:
     - name: DISABLE_INSTALL_DEMO_CONFIG
@@ -203,12 +208,12 @@ opensearch:
   ## @param opensearch.replicas Number of Opensearch instances to deploy
   ##
   replicas: 3
-  ## @param opensearch.sysctlInit.enabled Sets optimal sysctl's through privileged initContainer.
+  ## @param opensearch.sysctlInit.enabled Sets optimal sysctl's through privileged initContainer
   ##
   sysctlInit:
     enabled: true
   ## @param opensearchJavaOpts Sets the size of the Opensearch Java heap
-  ## It is recommended to use half the system's available ram
+  ## It is recommended to use at least half the system's available ram
   ## 
   opensearchJavaOpts: "-Xms32g -Xmx32g"
   ## @param httpPort Opensearch service port
@@ -229,14 +234,15 @@ opensearch:
       cpu: 8000m
       memory: 32Gi
 ## @section Redis configuration parameters
-## Redis is deployed with Auth enabled by default.
+## IMPORTANT: Redis is deployed with Auth enabled by default
+## To see a full list of available values, run helm show values charts/redis*
 ##
 redis:
   ## @param redis.enabled enabled Enables the Redis deployment
   ##
   enabled: true
-  ## @param redis.sentinel.enabled Enables Redis Sentinel on Redis pods.
-  ## IMPORTANT: This has not been tested for Timesketch so would leave this disabled.
+  ## @param redis.sentinel.enabled Enables Redis Sentinel on Redis pods
+  ## IMPORTANT: This has not been tested for Timesketch so would leave this disabled
   ##
   sentinel:
     enabled: false
@@ -311,7 +317,8 @@ redis:
         cpu: 8000m
         memory: 16Gi 
 ## @section Postgresql configuration parameters
-## Postgresql is deployed with Auth enabled by default.
+## IMPORTANT: Postgresql is deployed with Auth enabled by default
+## To see a full list of available values, run helm show values charts/postgresql*
 ##
 postgresql:
   ## @param postgresql.enabled enabled Enables the Postgresql deployment
@@ -323,10 +330,10 @@ postgresql:
   ## PostgreSQL Authentication parameters
   ##
   auth:
-    ## @param postgresql.auth.username Name for a custom user to create
+    ## @param postgresql.auth.username Name for a custom PostgreSQL user to create
     ##
     username: "postgres"
-    ## @param postgresql.auth.database Name for a custom database to create (overrides `auth.database`)
+    ## @param postgresql.auth.database Name for a custom PostgreSQL database to create (overrides `auth.database`)
     ##
     database: "timesketch"
   ## PostgreSQL Primary configuration parameters

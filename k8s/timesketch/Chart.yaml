@@ -26,6 +26,7 @@ maintainers:
 sources:
 - https://github.com/google/turbinia
 - https://timesketch.org/
+icon: https://raw.githubusercontent.com/google/timesketch/master/timesketch/frontend-ng/dist/timesketch-color.png
 appVersion: "20210224"
 annotations:
   category: Security
