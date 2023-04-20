@@ -235,6 +235,16 @@ def mock_response(*args, **kwargs):
         ],
     }
 
+    two_line_timeline_data = {
+        "meta": {
+            "es_time" :12, 
+        },
+        "objects": [
+            {"message": "A message","timestamp": 123456789,"datetime": "2015-07-24T19:01:01+00:00","timestamp_desc": "Write time","extra_field_1": "foo"},
+            {"message": "Another message","timestamp": 123456790,"datetime": "2015-07-24T19:01:02+00:00","timestamp_desc": "Write time","extra_field_1": "bar"}
+        ],
+    }
+
     empty_data = {"meta": {"es_time": 0}, "objects": []}
 
     story_list_data = {"meta": {"es_time": 23}, "objects": [[{"id": 1}]]}
@@ -486,6 +496,9 @@ def mock_response(*args, **kwargs):
         ),
         "http://127.0.0.1/api/v1/sketches/1/timelines/2/": MockResponse(
             json_data=more_timeline_data
+        ),
+         "http://127.0.0.1/api/v1/sketches/1/timelines/1/": MockResponse(
+            json_data=two_line_timeline_data
         ),
         "http://127.0.0.1/api/v1/sketches/1/explore/": MockResponse(
             json_data=timeline_data
