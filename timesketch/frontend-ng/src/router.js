@@ -90,13 +90,17 @@ const routes = [
         component: Canvas,
         props: true,
       },
-
+      {
+        path: 'analyzers',
+        name: 'Analyze',
+        component: Canvas,
+        props: true,
+      },
     ],
   },
 ]
 
 export default new VueRouter({
   mode: 'history',
-  base: process.env.NODE_ENV === 'development' ? '/' : '/v2/',
   routes,
 })

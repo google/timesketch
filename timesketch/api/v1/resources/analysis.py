@@ -79,7 +79,7 @@ class AnalysisResource(resources.ResourceMixin, Resource):
 
 
 class AnalyzerSessionActiveListResource(resources.ResourceMixin, Resource):
-    """Resource to get analyzer session."""
+    """Resource to get active analyzer sessions."""
 
     @login_required
     def get(self, sketch_id):
@@ -153,7 +153,11 @@ class AnalyzerRunResource(resources.ResourceMixin, Resource):
         """Handles GET request to the resource.
 
         Returns:
-            A list of all available analyzer names.
+            A list of dicts with all available analyzers with the following fields:
+              * name: Short name of the analyzer
+              * display_name: Display name of the analyzer for the UI
+              * description: Description of the analyzer provided in the class
+              * is_multi: Boolean indicating if the analyzer is a multi analyzer
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
@@ -167,11 +171,17 @@ class AnalyzerRunResource(resources.ResourceMixin, Resource):
         analyzers = analyzer_manager.AnalysisManager.get_analyzers()
         analyzers_detail = []
         for analyzer_name, analyzer_class in analyzers:
+            # TODO: update the multi_analyzer detection logic for edgecases
+            # where analyzers are using custom parameters (e.g. misp)
+            multi = False
+            if len(analyzer_class.get_kwargs()) > 0:
+                multi = True
             analyzers_detail.append(
                 {
                     "name": analyzer_name,
                     "display_name": analyzer_class.DISPLAY_NAME,
                     "description": analyzer_class.DESCRIPTION,
+                    "is_multi": multi,
                 }
             )
 
