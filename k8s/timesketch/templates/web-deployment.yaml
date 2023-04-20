@@ -14,9 +14,10 @@ spec:
       {{- include "timesketch.selectorLabels" . | nindent 6 }}
   template:
     metadata:
-      {{- with .Values.podAnnotations }}
+      {{- if .Values.metrics.enabled }} 
       annotations:
-        {{- toYaml . | nindent 8 }}
+        prometheus.io/port: {{ .Values.metrics.port | quote }}
+        prometheus.io/scrape: "true"
       {{- end }}
       labels:
         app.kubernetes.io/component: frontend
@@ -24,7 +25,7 @@ spec:
     spec:
       serviceAccountName: {{ include "timesketch.serviceAccountName" . }}
       securityContext:
-        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+        {{- toYaml .Values.frontend.podSecurityContext | nindent 8 }}
       initContainers:
         - name: init-timesketch
           image: busybox
@@ -55,7 +56,7 @@ spec:
       containers:
         - name: frontend
           securityContext:
-              {{- toYaml .Values.securityContext | nindent 12 }}
+              {{- toYaml .Values.frontend.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["sh", "-c", "./docker-entrypoint.sh timesketch-web"]
@@ -76,6 +77,9 @@ spec:
               name: timesketchvolume
               subPath: configs
           ports:
+            {{- if .Values.metrics.enabled }}
+            - containerPort: {{ .Values.metrics.port }}
+            {{- end }}
             - containerPort: {{ .Values.service.port }}
           resources:
             {{- toYaml .Values.frontend.resources | nindent 12 }}
@@ -88,15 +92,15 @@ spec:
           configMap:
             name: {{ include "timesketch.fullname" . }}-init-configmap
             defaultMode: 0744
-      {{- with .Values.nodeSelector }}
+      {{- with .Values.frontend.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.affinity }}
+      {{- with .Values.frontend.affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.tolerations }}
+      {{- with .Values.frontend.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}

@@ -1,0 +1,17 @@
+{{- if .Values.metrics.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "timesketch.fullname" . }}-frontend-metrics
+  labels:
+    {{- include "timesketch.labels" . | nindent 4 }}
+spec:
+  ports:
+    - port: {{ .Values.metrics.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/component: frontend
+    {{- include "timesketch.selectorLabels" . | nindent 4 }}
+{{- end }}

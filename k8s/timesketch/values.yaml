@@ -24,6 +24,100 @@ image:
   ##   - myRegistryKeySecretName
   ##
   imagePullSecrets: []
+## Timesketch frontend configuration
+##
+frontend:
+  ## @param podSecurityContext frontend.PodSecurityContext holds pod-level security attributes and common frontend container settings
+  ## Some fields are also present in container.securityContext. Field values of container.securityContext take precedence over field values of PodSecurityContext
+  ## ref https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#podsecuritycontext-v1-core
+  ## e.g.
+  ## fsgroup: 2000
+  ##
+  podSecurityContext: {}
+  ## @param SecurityContext frontend.SecurityContext holds security configuration that will be applied to the frontend container
+  ## Some fields are present in both SecurityContext and PodSecurityContext. When both are set, the values in SecurityContext take precedence
+  ## ref https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#securitycontext-v1-core
+  ## e.g.
+  ## capabilities
+  ##   drop:
+  ##   - ALL
+  ## readOnlyRootFilesystem: true
+  ## runAsNonRoot: true
+  ## runAsUser: 1000
+  ##
+  securityContext: {}
+  ## Frontend resource requests and limits
+  ## @param frontend.resources.requests.cpu The requested cpu for the frontend container
+  ## @param frontend.resources.requests.memory The requested memory for the frontend container
+  ## @param frontend.resources.limits.cpu The resources cpu limits for the frontend container
+  ## @param frontend.resources.limits.memory The resources memory limits for the frontend container
+  ##
+  resources:
+    requests:
+      cpu: 2000m
+      memory: 4000Mi
+    limits:
+      cpu: 8000m
+      memory: 16000Mi
+  ## @param frontend.nodeSelector Node labels for Timesketch frontend pods assignment
+  ## ref: https://kubernetes.io/docs/user-guide/node-selection/
+  ##
+  nodeSelector: {}
+  ## @param frontend.tolerations Tolerations for Timesketch frontend pods assignment
+  ## ref https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
+  ##
+  tolerations: []
+  ## @param frontend.affinity Affinity for Timesketch frontend pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+  ##
+  affinity: {}
+## Timesketch worker configuration
+##
+worker:
+  ## @param podSecurityContext worker.PodSecurityContext holds pod-level security attributes and common worker container settings
+  ## Some fields are also present in container.securityContext. Field values of container.securityContext take precedence over field values of PodSecurityContext
+  ## ref https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#podsecuritycontext-v1-core
+  ## e.g.
+  ## fsgroup: 2000
+  ##
+  podSecurityContext: {}
+  ## @param SecurityContext worker.SecurityContext holds security configuration that will be applied to the worker container
+  ## Some fields are present in both SecurityContext and PodSecurityContext. When both are set, the values in SecurityContext take precedence
+  ## ref https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#securitycontext-v1-core
+  ## e.g.
+  ## capabilities
+  ##   drop:
+  ##   - ALL
+  ## readOnlyRootFilesystem: true
+  ## runAsNonRoot: true
+  ## runAsUser: 1000
+  ##
+  securityContext: {}
+  ## Worker resource requests and limits
+  ## @param worker.resources.requests.cpu The requested cpu for the worker container
+  ## @param worker.resources.requests.memory The requested memory for the worker container
+  ## @param worker.resources.limits.cpu The resources cpu limits for the worker container
+  ## @param worker.resources.limits.memory The resources memory limits for the worker container
+  ##
+  resources:
+    requests:
+      cpu: 2000m
+      memory: 4000Mi
+    limits:
+      cpu: 8000m
+      memory: 16000Mi
+  ## @param worker.nodeSelector Node labels for Timesketch worker pods assignment
+  ## ref: https://kubernetes.io/docs/user-guide/node-selection/
+  ##
+  nodeSelector: {}
+  ## @param worker.tolerations Tolerations for Timesketch worker pods assignment
+  ## ref https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
+  ##
+  tolerations: []
+  ## @param worker.affinity Affinity for Timesketch worker pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+  ##
+  affinity: {}
 ## @param nameOverride String to partially override names.fullname
 ##
 nameOverride: ""
@@ -43,6 +137,26 @@ serviceAccount:
   ## If not set and create is true, a name is generated using the fullname template
   ##
   name: "timesketch"
+## Timesketch service parameters
+##
+service:
+  ## @param service.type Timesketch service type
+  ##
+  type: ClusterIP
+  ## @param service.port Timesketch service port
+  ##
+  port: 5000
+## Timesketch metrics parameters
+## IMPORTANT: Timesketch utilizes Prometheus to scrape metrics through annotations
+## Please ensure the Prometheus server is also installed to the cluster for metrics to scrape properly
+##
+metrics:
+  ## @param metrics.enabled Enables metrics scraping
+  ##
+  enabled: true
+  ## @param metrics.port Port to scrape metrics from
+  ##
+  port: 9200
 ## Timesketch persistence storage parameters
 ##
 persistence:
@@ -97,82 +211,6 @@ ingress:
     ## ref https://cloud.google.com/compute/docs/ip-addresses/reserve-static-external-ip-address
     ##
     staticIPName: ""
-## Timesketch service parameters
-##
-service:
-  ## @param service.type Timesketch service type
-  ##
-  type: ClusterIP
-  ## @param service.port Timesketch service port
-  ##
-  port: 5000
-## Timesketch frontend configuration
-##
-frontend:
-  ## Frontend resource requests and limits
-  ## @param frontend.resources.requests.cpu The requested cpu for the frontend container
-  ## @param frontend.resources.requests.memory The requested memory for the frontend container
-  ## @param frontend.resources.limits.cpu The resources cpu limits for the frontend container
-  ## @param frontend.resources.limits.memory The resources memory limits for the frontend container
-  ##
-  resources:
-    requests:
-      cpu: 2000m
-      memory: 4000Mi
-    limits:
-      cpu: 8000m
-      memory: 16000Mi
-## Timesketch worker configuration
-##
-worker:
-  ## Frontend resource requests and limits
-  ## @param worker.resources.requests.cpu The requested cpu for the worker container
-  ## @param worker.resources.requests.memory The requested memory for the worker container
-  ## @param worker.resources.limits.cpu The resources cpu limits for the worker container
-  ## @param worker.resources.limits.memory The resources memory limits for the worker container
-  ##
-  resources:
-    requests:
-      cpu: 2000m
-      memory: 4000Mi
-    limits:
-      cpu: 8000m
-      memory: 16000Mi
-## @param podAnnotations Extra annotations for the Timesketch deployment
-## ref https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
-##
-podAnnotations: {}
-## @param podSecurityContext PodSecurityContext holds pod-level security attributes and common container settings
-## Some fields are also present in container.securityContext. Field values of container.securityContext take precedence over field values of PodSecurityContext
-## ref https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#podsecuritycontext-v1-core
-## e.g.
-## fsgroup: 2000
-##
-podSecurityContext: {}
-## @param SecurityContext SecurityContext holds security configuration that will be applied to a container
-## Some fields are present in both SecurityContext and PodSecurityContext. When both are set, the values in SecurityContext take precedence
-## ref https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#securitycontext-v1-core
-## e.g.
-## capabilities
-##   drop:
-##   - ALL
-## readOnlyRootFilesystem: true
-## runAsNonRoot: true
-## runAsUser: 1000
-##
-securityContext: {}
-## @param nodeSelector Node labels for Timesketch pods assignment
-## ref: https://kubernetes.io/docs/user-guide/node-selection/
-##
-nodeSelector: {}
-## @param tolerations Tolerations for Timesketch pods assignment
-## ref https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
-##
-tolerations: []
-## @param affinity Affinity for Timesketch pods assignment
-## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
-##
-affinity: {}
 ## @section Third Party Configuration
 ## This section contains all the main configuration for third party dependencies
 ## Timesketch requires to run
