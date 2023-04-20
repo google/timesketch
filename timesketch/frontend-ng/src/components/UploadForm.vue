@@ -446,10 +446,17 @@ export default {
       formData.append('context', this.fileName)
       formData.append('total_file_size', this.form.file.size)
       formData.append('sketch_id', this.sketch.id)
-      if (['csv', 'jsonl', 'json'].includes(this.extension)) {
+      if (['csv', 'json'].includes(this.extension)) {
         let hMapping = JSON.stringify(this.headersMapping)
         formData.append('headersMapping', hMapping)
         formData.append('delimiter', this.CSVDelimiter)
+      }
+      else if (this.extension == 'jsonl') {
+        if (this.parse.num_lines() < 3) {
+          this.extractJSONLHeader();
+          const hMapping = JSON.parse(this.headersMapping)
+          formData.append('headersMapping', hMapping)
+        }
       }
       let config = {
         headers: {
@@ -519,6 +526,12 @@ export default {
         this.extractCSVHeader()
       } else if (['json', 'jsonl'].includes(this.extension)) {
         this.extractJSONLHeader()
+        if (this.extension == 'jsonl') {
+          let num_lines = this.parse().num_lines()
+          if (num_lines < 3){
+            this.validateFile()
+          }
+        }
       } else {
         this.validateFile()
       }
