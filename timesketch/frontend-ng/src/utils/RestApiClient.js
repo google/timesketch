@@ -17,7 +17,7 @@ import axios from 'axios'
 import EventBus from '../main'
 
 const RestApiClient = axios.create({
-  baseURL: process.env.NODE_ENV === 'development' ? '/api/v1' : '/v2/api/v1',
+  baseURL: '/api/v1',
   headers: {
     common: {
       'X-CSRFToken': document.getElementsByTagName('meta')[0]['content'],
@@ -26,7 +26,7 @@ const RestApiClient = axios.create({
 })
 
 const RestApiBlobClient = axios.create({
-  baseURL: process.env.NODE_ENV === 'development' ? '/api/v1' : '/v2/api/v1',
+  baseURL: '/api/v1',
   responseType: 'blob',
   headers: {
     common: {

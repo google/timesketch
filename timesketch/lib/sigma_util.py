@@ -78,7 +78,7 @@ def get_sigma_config_file(config_file=None):
     return sigma_config
 
 
-def _enrich_sigma_rule_object(rule: SigmaRule, parse_yaml: bool = False):
+def enrich_sigma_rule_object(rule: SigmaRule, parse_yaml: bool = False):
     """Helper function: Returns an enriched Sigma object given a SigmaRule.
 
     It will extract the `status`, `created_at` and `updated_at` and make them
@@ -125,7 +125,7 @@ def get_all_sigma_rules():
     sigma_rules = []
 
     for rule in SigmaRule.query.all():
-        sigma_rules.append(_enrich_sigma_rule_object(rule=rule, parse_yaml=False))
+        sigma_rules.append(enrich_sigma_rule_object(rule=rule, parse_yaml=False))
 
     return sigma_rules
 
