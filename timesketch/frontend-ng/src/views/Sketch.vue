@@ -30,6 +30,62 @@ limitations under the License.
       </v-row>
     </v-container>
 
+    <!-- Context search -->
+    <v-dialog scrollable v-model="showTimelineViewDialog">
+      <v-card height="90vh">
+        <v-toolbar dense flat>
+          <strong>Context search {{ contextTimeWindowSeconds }} +/- seconds</strong>
+          <v-spacer></v-spacer>
+          <v-slider
+            v-model="contextTimeWindowSeconds"
+            @end="updateContextQuery()"
+            min="0"
+            max="600"
+            step="1"
+            class="mt-6"
+          >
+          </v-slider>
+        </v-toolbar>
+        <v-divider></v-divider>
+        <v-expand-transition>
+          <v-card-text style="height: 100%">
+            <ts-event-list :query-request="queryRequest" :highlight-event="currentContextEvent._id"></ts-event-list>
+          </v-card-text>
+        </v-expand-transition>
+      </v-card>
+    </v-dialog>
+
+    <v-bottom-sheet
+      hide-overlay
+      persistent
+      no-click-animation
+      v-model="showTimelineView"
+      @click:outside="showTimelineView = false"
+      scrollable
+    >
+      <v-card>
+        <v-toolbar dense flat>
+          <strong>Context search {{ contextStartTime }} {{ contextEndTime }}</strong>
+          <v-spacer></v-spacer>
+          <v-btn icon :disabled="timelineViewHeight > 40" @click="increaseTimelineViewHeight()">
+            <v-icon>mdi-chevron-up</v-icon>
+          </v-btn>
+          <v-btn icon :disabled="timelineViewHeight === 0" @click="decreaseTimelineViewHeight()">
+            <v-icon>mdi-chevron-down</v-icon>
+          </v-btn>
+          <v-btn icon @click="showTimelineView = false">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </v-toolbar>
+        <v-divider></v-divider>
+        <v-expand-transition>
+          <v-card-text :style="{ height: timelineViewHeight + 'vh' }" v-show="!minimizeTimelineView">
+            <ts-event-list :query-request="queryRequest" :highlight-event="currentContextEvent._id"></ts-event-list>
+          </v-card-text>
+        </v-expand-transition>
+      </v-card>
+    </v-bottom-sheet>
+
     <!-- Left panel -->
     <v-navigation-drawer
       v-if="showLeftPanel && hasTimelines"
@@ -279,6 +335,8 @@ limitations under the License.
 
 <script>
 import ApiClient from '../utils/RestApiClient'
+import EventBus from '../main'
+import dayjs from '@/plugins/dayjs'
 
 import TsScenario from '../components/Scenarios/Scenario'
 import TsSavedSearches from '../components/LeftPanel/SavedSearches'
@@ -293,6 +351,7 @@ import TsUploadTimelineForm from '../components/UploadForm'
 import TsShareCard from '../components/ShareCard'
 import TsRenameSketch from '../components/RenameSketch'
 import TsAnalyzerResults from '../components/LeftPanel/AnalyzerResults.vue'
+import TsEventList from '../components/Explore/EventList'
 
 export default {
   props: ['sketchId'],
@@ -310,6 +369,7 @@ export default {
     TsGraphs,
     TsStories,
     TsAnalyzerResults,
+    TsEventList,
   },
   data() {
     return {
@@ -326,9 +386,19 @@ export default {
       showHidden: false,
       shareDialog: false,
       loadingSketch: false,
+      // Context
+      timelineViewHeight: 60,
+      showTimelineView: false,
+      showTimelineViewDialog: false,
+      currentContextEvent: {},
+      minimizeTimelineView: false,
+      queryRequest: {},
+      contextStartTime: null,
+      contextEndTime: null,
+      contextTimeWindowSeconds: 300,
     }
   },
-  mounted: function () {
+  mounted() {
     this.loadingSketch = true
     this.showLeftPanel = false
     this.$store.dispatch('updateSketch', this.sketchId).then(() => {
@@ -346,6 +416,12 @@ export default {
         this.setDrawerResizeEvents()
       })
     })
+    EventBus.$on('showContextWindow', this.showContextWindow)
+    EventBus.$on('showContextWindowDialog', this.showContextWindowDialog)
+  },
+  beforeDestroy() {
+    EventBus.$off('showContextWindow')
+    EventBus.$off('showContextWindowDialog')
   },
   computed: {
     sketch() {
@@ -383,6 +459,62 @@ export default {
     },
   },
   methods: {
+    generateContextQuery(event) {
+      let timestampMillis = this.$options.filters.formatTimestamp(event._source.timestamp)
+      this.contextStartTime = dayjs.utc(timestampMillis).subtract(this.contextTimeWindowSeconds, 'second')
+      this.contextEndTime = dayjs.utc(timestampMillis).add(this.contextTimeWindowSeconds, 'second')
+      let startChip = {
+        field: '',
+        value: this.contextStartTime.toISOString() + ',' + this.contextEndTime.toISOString(),
+        type: 'datetime_range',
+        operator: 'must',
+        active: true,
+      }
+      let queryFilter = {
+        from: 0,
+        terminate_after: 40,
+        size: 40,
+        indices: ['_all'],
+        order: 'asc',
+        chips: [startChip],
+      }
+      let queryRequest = { queryString: '*', queryFilter: queryFilter }
+      return queryRequest
+    },
+    updateContextQuery(event) {
+      this.queryRequest = this.generateContextQuery(this.currentContextEvent)
+    },
+    showContextWindow(event) {
+      this.currentContextEvent = event
+      this.queryRequest = this.generateContextQuery(event)
+      this.showTimelineView = true
+    },
+    showContextWindowDialog(event) {
+      this.currentContextEvent = event
+      this.queryRequest = this.generateContextQuery(event)
+      this.showTimelineViewDialog = true
+    },
+    increaseTimelineViewHeight: function () {
+      this.minimizeTimelineView = false
+      if (this.timelineViewHeight > 70) {
+        return
+      }
+      this.timelineViewHeight += 30
+    },
+    decreaseTimelineViewHeight: function () {
+      this.minimizeTimelineView = false
+      if (this.timelineViewHeight < 50) {
+        this.minimizeTimelineView = true
+        this.timelineViewHeight = 0
+        return
+      }
+      this.timelineViewHeight -= 30
+    },
+    closeTimelineView: function () {
+      this.minimizeTimelineView = true
+      this.timelineViewHeight = 0
+    },
+
     toggleTheme: function () {
       this.$vuetify.theme.dark = !this.$vuetify.theme.dark
       localStorage.setItem('isDarkTheme', this.$vuetify.theme.dark.toString())

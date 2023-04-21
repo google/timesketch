@@ -14,23 +14,34 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-menu v-model="showMenu" offset-y transition="slide-y-transition">
-    <template v-slot:activator="{ on, attrs }">
-      <v-icon v-bind="attrs" v-on="on" class="ml-1">mdi-dots-vertical</v-icon>
-    </template>
-    <v-list dense class="mx-auto">
-      <v-list-item style="cursor: pointer" @click="copyEventUrlToClipboard()">
-        <v-list-item-title> <v-icon>mdi-link-variant</v-icon> Copy link to event </v-list-item-title>
-      </v-list-item>
-      <v-list-item style="cursor: pointer" @click="copyEventAsJSON()">
-        <v-list-item-title> <v-icon>mdi-code-json</v-icon> Copy event data as JSON </v-list-item-title>
-      </v-list-item>
-    </v-list>
-  </v-menu>
+  <span>
+    <v-menu v-model="showMenu" offset-y transition="slide-y-transition">
+      <template v-slot:activator="{ on, attrs }">
+        <v-icon v-bind="attrs" v-on="on" class="ml-1">mdi-dots-vertical</v-icon>
+      </template>
+      <v-list dense class="mx-auto">
+        <v-list-item style="cursor: pointer" @click="copyEventUrlToClipboard()">
+          <v-list-item-title> <v-icon>mdi-link-variant</v-icon> Copy link to event </v-list-item-title>
+        </v-list-item>
+        <v-list-item style="cursor: pointer" @click="copyEventAsJSON()">
+          <v-list-item-title> <v-icon>mdi-code-json</v-icon> Copy event data as JSON </v-list-item-title>
+        </v-list-item>
+        <v-list-item style="cursor: pointer" @click="showContextWindow()">
+          <v-list-item-title>
+            <v-icon>mdi-magnify-plus-outline</v-icon> Context search (bottom sheet)
+          </v-list-item-title>
+        </v-list-item>
+        <v-list-item style="cursor: pointer" @click="showContextWindowDialog()">
+          <v-list-item-title> <v-icon>mdi-magnify-plus-outline</v-icon> Context search (dialog) </v-list-item-title>
+        </v-list-item>
+      </v-list>
+    </v-menu>
+  </span>
 </template>
 
 <script>
 import ApiClient from '../../utils/RestApiClient'
+import EventBus from '../../main'
 
 export default {
   props: ['event'],
@@ -46,6 +57,12 @@ export default {
     },
   },
   methods: {
+    showContextWindow() {
+      EventBus.$emit('showContextWindow', this.event)
+    },
+    showContextWindowDialog() {
+      EventBus.$emit('showContextWindowDialog', this.event)
+    },
     copyEventAsJSON() {
       ApiClient.getEvent(this.sketch.id, this.event._index, this.event._id)
         .then((response) => {
