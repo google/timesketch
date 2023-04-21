@@ -33,9 +33,9 @@ data:
     wget $GITHUB_BASE_URL/data/sigma/rules/lnx_susp_zmap.yml -O lnx_susp_zmap.yml
     wget $GITHUB_BASE_URL/data/intelligence_tag_metadata.yaml -O intelligence_tag_metadata.yaml
     wget $GITHUB_BASE_URL/data/context_links.yaml -O context_links.yaml
-    wget $GITHUB_BASE_URL/data/scenarios/facets.yaml -O scenarios/facets.yaml
-    wget $GITHUB_BASE_URL/data/scenarios/questions.yaml -O scenarios/questions.yaml
-    wget $GITHUB_BASE_URL/data/scenarios/scenarios.yaml -O scenarios/scenarios.yaml
+    wget $GITHUB_BASE_URL/data/scenarios/facets.yaml -O facets.yaml
+    wget $GITHUB_BASE_URL/data/scenarios/questions.yaml -O questions.yaml
+    wget $GITHUB_BASE_URL/data/scenarios/scenarios.yaml -O scenarios.yaml
     echo "OK"
     {{- end}}
 
