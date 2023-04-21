@@ -268,7 +268,7 @@ export default {
 
 <style scoped lang="scss">
 .v-progress-circular {
-  font-size: 12px
+  font-size: 12px;
 }
 </style>
 
