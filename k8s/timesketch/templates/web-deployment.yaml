@@ -1,3 +1,4 @@
+{{- $globconfigs := .Files.Glob "configs/*" }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -14,11 +15,13 @@ spec:
       {{- include "timesketch.selectorLabels" . | nindent 6 }}
   template:
     metadata:
-      {{- if .Values.metrics.enabled }} 
       annotations:
+        # Have Deployment restart after each upgrade
+        roll: {{ randAlphaNum 5 | quote }}
+        {{- if .Values.metrics.enabled }} 
         prometheus.io/port: {{ .Values.metrics.port | quote }}
         prometheus.io/scrape: "true"
-      {{- end }}
+        {{- end }}
       labels:
         app.kubernetes.io/component: frontend
         {{- include "timesketch.selectorLabels" . | nindent 8 }}
@@ -27,32 +30,7 @@ spec:
       securityContext:
         {{- toYaml .Values.frontend.podSecurityContext | nindent 8 }}
       initContainers:
-        - name: init-timesketch
-          image: busybox
-          command: ['sh', '-c', '/init/init-timesketch.sh']
-          env:
-            {{- if and .Values.redis.enabled .Values.redis.auth.enabled }}
-            - name: REDIS_PASSWORD
-              valueFrom:
-                # Referencing from charts/redis/templates/_helpers.tpl
-                secretKeyRef:
-                  name: {{ include "redis.secretName" .Subcharts.redis }}
-                  key: {{ include "redis.secretPasswordKey" .Subcharts.redis }}
-            {{- end }}
-            {{- if .Values.postgresql.enabled }}
-            - name: POSTGRES_PASSWORD
-              valueFrom:
-                # Referencing from charts/postgresql/templates/_helpers.tpl
-                secretKeyRef:
-                  name: {{ include "postgresql.secretName" .Subcharts.postgresql }}
-                  key: {{ include "postgresql.adminPasswordKey" .Subcharts.postgresql }}
-            {{- end }}
-          volumeMounts:
-            - mountPath: /init
-              name: init-timesketch
-            - mountPath: /etc/timesketch
-              name: timesketchvolume
-              subPath: configs
+      {{- include "timesketch.initContainer" . | nindent 8 }}
       containers:
         - name: frontend
           securityContext:
@@ -74,8 +52,7 @@ spec:
               name: timesketchvolume
               subPathExpr: logs/$(POD_NAME)
             - mountPath: /etc/timesketch
-              name: timesketchvolume
-              subPath: configs
+              name: timesketch-configs
           ports:
             {{- if .Values.metrics.enabled }}
             - containerPort: {{ .Values.metrics.port }}
@@ -92,6 +69,13 @@ spec:
           configMap:
             name: {{ include "timesketch.fullname" . }}-init-configmap
             defaultMode: 0744
+        - name: timesketch-configs
+          emptyDir: {}
+        {{- if $globconfigs }}
+        - name: uploaded-configs
+          configMap:
+            name: {{ include "timesketch.fullname" . }}-configmap
+        {{- end }}
       {{- with .Values.frontend.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

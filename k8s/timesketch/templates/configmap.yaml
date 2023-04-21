@@ -1,56 +1,12 @@
+{{- $globconfigs := .Files.Glob "configs/*" }}
+{{- if $globconfigs }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "timesketch.fullname" . }}-init-configmap
+  name: {{ include "timesketch.fullname" . }}-configmap
   namespace: {{ .Release.Namespace | quote }}
   labels:
     {{- include "timesketch.labels" . | nindent 4 }}
 data:
-  init-timesketch.sh: |
-    #!/bin/sh
-
-    set -o posix
-    set -e
-
-    # Create timesketch config directory
-    mkdir -p /etc/timesketch /etc/timesketch/scenarios
-    cd /etc/timesketch
-
-    echo -n "* Fetching configuration files.." 
-    GITHUB_BASE_URL="https://raw.githubusercontent.com/google/timesketch/master"
-    # Fetch default Timesketch config files
-    wget $GITHUB_BASE_URL/data/timesketch.conf -O timesketch.conf
-    wget $GITHUB_BASE_URL/data/tags.yaml -O tags.yaml
-    wget $GITHUB_BASE_URL/data/plaso.mappings -O plaso.mappings
-    wget $GITHUB_BASE_URL/data/generic.mappings -O generic.mappings
-    wget $GITHUB_BASE_URL/data/features.yaml -O features.yaml
-    wget $GITHUB_BASE_URL/data/ontology.yaml -O ontology.yaml
-    wget $GITHUB_BASE_URL/data/sigma_rule_status.csv -O sigma_rule_status.csv
-    wget $GITHUB_BASE_URL/data/intelligence_tag_metadata.yaml -O intelligence_tag_metadata.yaml
-    wget $GITHUB_BASE_URL/data/sigma_config.yaml -O sigma_config.yaml
-    wget $GITHUB_BASE_URL/data/sigma/rules/lnx_susp_zmap.yml -O lnx_susp_zmap.yml
-    wget $GITHUB_BASE_URL/data/intelligence_tag_metadata.yaml -O intelligence_tag_metadata.yaml
-    wget $GITHUB_BASE_URL/data/context_links.yaml -O context_links.yaml
-    wget $GITHUB_BASE_URL/data/scenarios/facets.yaml -O scenarios/facets.yaml
-    wget $GITHUB_BASE_URL/data/scenarios/questions.yaml -O scenarios/questions.yaml
-    wget $GITHUB_BASE_URL/data/scenarios/scenarios.yaml -O scenarios/scenarios.yaml
-    
-    echo "OK"
-
-    # Set up the Redis connection
-    sed -i 's#^CELERY_BROKER_URL =.*#CELERY_BROKER_URL = {{ (include "timesketch.redis.url" .) | quote }}#' timesketch.conf
-    sed -i 's#^CELERY_RESULT_BACKEND =.*#CELERY_RESULT_BACKEND = {{ (include "timesketch.redis.url" .) | quote }}#' timesketch.conf
-
-    # Set up the Postgresql connection
-    sed -i 's#postgresql://<USERNAME>:<PASSWORD>@localhost/timesketch#{{ include "timesketch.postgresql.url" . }}#' timesketch.conf
-
-    # Set up the Opensearch connection
-    sed -i 's#^OPENSEARCH_HOST =.*#OPENSEARCH_HOST = {{ (include "timesketch.opensearch.host" .) | quote }}#' timesketch.conf
-
-    # Set up secret
-    SECRET="$(< /dev/urandom tr -dc A-Za-z0-9 | head -c 32 ; echo)"
-    sed -i 's#SECRET_KEY =.*#SECRET_KEY = "'$SECRET'"#' timesketch.conf
-
-    # Set up upload folder
-    sed -i 's#^UPLOAD_ENABLED = False#UPLOAD_ENABLED = True#' timesketch.conf
-    sed -i 's#^UPLOAD_FOLDER =.*#UPLOAD_FOLDER =  {{ (include "timesketch.uploadPath" .) | quote }}#' timesketch.conf
+{{ ($globconfigs).AsConfig | indent 2 }}
+{{- end }}

@@ -271,6 +271,10 @@ opensearch:
     requests:
       cpu: 8000m
       memory: 32Gi
+  ## @param opensearch.nodeSelector Node labels for Opensearch pods assignment
+  ## ref: https://kubernetes.io/docs/user-guide/node-selection/
+  ##
+  nodeSelector: {}
 ## @section Redis configuration parameters
 ## IMPORTANT: Redis is deployed with Auth enabled by default
 ## To see a full list of available values, run helm show values charts/redis*

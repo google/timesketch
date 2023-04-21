@@ -1,3 +1,4 @@
+{{- $globconfigs := .Files.Glob "configs/*" }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -14,11 +15,13 @@ spec:
       {{- include "timesketch.selectorLabels" . | nindent 6 }}
   template:
     metadata:
-      {{- if .Values.metrics.enabled }} 
       annotations:
+        # Have Deployment restart after each upgrade
+        roll: {{ randAlphaNum 5 | quote }}
+        {{- if .Values.metrics.enabled }} 
         prometheus.io/port: {{ .Values.metrics.port | quote }}
         prometheus.io/scrape: "true"
-      {{- end }}
+        {{- end }}
       labels:
         app.kubernetes.io/component: worker
         {{- include "timesketch.selectorLabels" . | nindent 8 }}
@@ -26,6 +29,8 @@ spec:
       serviceAccountName: {{ include "timesketch.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.worker.podSecurityContext | nindent 8 }}
+      initContainers:
+      {{- include "timesketch.initContainer" . | nindent 8 }}
       containers:
         - name: worker
           securityContext:
@@ -49,8 +54,7 @@ spec:
               name: timesketchvolume
               subPathExpr: logs/$(POD_NAME)
             - mountPath: /etc/timesketch
-              name: timesketchvolume
-              subPath: configs
+              name: timesketch-configs
           ports:
             {{- if .Values.metrics.enabled }}
             - containerPort: {{ .Values.metrics.port }}
@@ -63,10 +67,17 @@ spec:
           persistentVolumeClaim:
             claimName: {{ include "timesketch.pvc.name"  . }}
             readOnly: false
-        - name: timesketch-init
+        - name: init-timesketch
           configMap:
             name: {{ include "timesketch.fullname" . }}-init-configmap
             defaultMode: 0744
+        - name: timesketch-configs
+          emptyDir: {}
+        {{- if $globconfigs }}
+        - name: uploaded-configs
+          configMap:
+            name: {{ include "timesketch.fullname" . }}-configmap
+        {{- end }}
       {{- with .Values.worker.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
