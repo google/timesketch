@@ -37,11 +37,12 @@ limitations under the License.
       <span class="float-right mr-2">
         <v-progress-circular
           v-if="!analyzerResultsReady || activeAnalyzerQueue.length > 0"
-          :size="20"
-          :width="1"
+          :size="25"
+          :width="2"
           indeterminate
           color="primary"
-        ></v-progress-circular>
+          :value="activeAnalyzerDisplayCount"
+        >{{ activeAnalyzerDisplayCount }}</v-progress-circular>
         <small class="ml-1" v-if="!expanded && (analyzerResults && analyzerResults.length && analyzerResultsReady)"><strong>{{ resultCounter }}</strong></small>
       </span>
     </div>
@@ -129,6 +130,9 @@ export default {
       }
       return counter
     },
+    activeAnalyzerDisplayCount() {
+      return this.activeAnalyzerQueue.length > 0 ? this.activeAnalyzerQueue.length : '';
+    }
   },
   methods: {
     async initializeAnalyzerResults() {
@@ -265,3 +269,10 @@ export default {
   },
 }
 </script>
+
+<style scoped lang="scss">
+.v-progress-circular {
+  font-size: 12px;
+}
+</style>
+
