@@ -62,7 +62,7 @@ limitations under the License.
             hide-default-footer
             disable-pagination
             :search="search"
-            :custom-filter="filterByDisplayName"
+            :custom-filter="filterAnalyzers"
           >
             <template v-slot:header>
               <v-toolbar flat height="45">
@@ -228,11 +228,15 @@ export default {
         if (this.activeAnalyzerQueue.indexOf(sessionId) === -1) this.activeAnalyzerQueue.push(sessionId)
       })
     },
-    filterByDisplayName(items, search) {
+    filterAnalyzers(items, search) {
       const searchStr = (search || '').toLowerCase();
-      return items && items.filter(item =>
-        item.data.analyzerInfo.display_name.toLowerCase().indexOf(searchStr) !== -1
-      );
+      return items && items.filter(item => {
+        const displayNameMatches = item.data.analyzerInfo.display_name.toLowerCase().indexOf(searchStr) !== -1;
+        const timelineNameMatches = Object.keys(item.data.timelines).find(
+          timelineName => timelineName.indexOf(searchStr) !== -1
+        );
+        return displayNameMatches || timelineNameMatches;
+      });
     }
   },
   mounted() {
