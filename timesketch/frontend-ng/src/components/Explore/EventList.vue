@@ -853,13 +853,13 @@ export default {
     queryRequest: {
       handler(newQueryRequest, oldqueryRequest) {
         // Return early if this isn't a new request.
-        if (!newQueryRequest) {
+        if (newQueryRequest === oldqueryRequest || !newQueryRequest) {
           return
         }
         this.currentQueryString = newQueryRequest.queryString || ''
         this.currentQueryFilter = newQueryRequest.queryFilter || defaultQueryFilter()
         this.currentQueryDsl = newQueryRequest.queryDsl || null
-        let resetPagination = newQueryRequest['resetPagination'] || true
+        let resetPagination = newQueryRequest['resetPagination'] || false
         let incognito = newQueryRequest['incognito'] || false
         let parent = newQueryRequest['parent'] || false
         // Set additional fields. This is used when loading filter from a saved search.
