@@ -20,6 +20,7 @@ import json
 import logging
 import math
 import time
+from typing import Literal
 import six
 
 import dateutil
@@ -35,7 +36,6 @@ from flask_restful import reqparse
 from flask_login import login_required
 from flask_login import current_user
 
-from typing import Literal
 
 from timesketch.api.v1 import resources
 from timesketch.lib import forms
