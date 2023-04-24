@@ -17,13 +17,11 @@ limitations under the License.
   <div>
     <div
       class="pa-4"
-      :style="!(analyzerResults.length) ? '' : 'cursor: pointer'"
+      :style="!analyzerResults.length ? '' : 'cursor: pointer'"
       @click="expanded = !expanded"
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
-      <span>
-        <v-icon left>mdi-auto-fix</v-icon> Analyzer Results
-      </span>
+      <span> <v-icon left>mdi-auto-fix</v-icon> Analyzer Results </span>
       <v-btn
         v-if="expanded || (analyzerResults && !analyzerResults.length && analyzerResultsReady)"
         icon
@@ -34,16 +32,20 @@ limitations under the License.
       >
         <v-icon>mdi-plus</v-icon>
       </v-btn>
-      <span class="float-right mr-2">
+      <span class="float-right" style="margin-right: 3px">
         <v-progress-circular
           v-if="!analyzerResultsReady || activeAnalyzerQueue.length > 0"
-          :size="25"
-          :width="2"
+          :size="24"
+          :width="1"
           indeterminate
-          color="primary"
           :value="activeAnalyzerDisplayCount"
-        >{{ activeAnalyzerDisplayCount }}</v-progress-circular>
-        <small class="ml-1" v-if="!expanded && (analyzerResults && analyzerResults.length && analyzerResultsReady)"><strong>{{ resultCounter }}</strong></small>
+          >{{ activeAnalyzerDisplayCount }}</v-progress-circular
+        >
+      </span>
+      <span class="float-right" style="margin-right: 10px">
+        <small class="ml-3" v-if="!expanded && analyzerResults && analyzerResults.length && analyzerResultsReady"
+          ><strong>{{ resultCounter }}</strong></small
+        >
       </span>
     </div>
     <v-expand-transition>
@@ -51,7 +53,12 @@ limitations under the License.
         <div v-if="analyzerResults.length > 0">
           <!-- TODO: issue#2565 -->
           <!-- Add a severity and timeline filter here. -->
-          <v-data-iterator v-if="analyzerResults.length <= 10" :items="analyzerResults" hide-default-footer disable-pagination>
+          <v-data-iterator
+            v-if="analyzerResults.length <= 10"
+            :items="analyzerResults"
+            hide-default-footer
+            disable-pagination
+          >
             <template v-slot:default="props">
               <ts-analyzer-result v-for="analyzer in props.items" :key="analyzer.analyzerName" :analyzer="analyzer" />
             </template>
@@ -123,7 +130,10 @@ export default {
       let counter = 0
       for (const analzyer of this.analyzerResults) {
         for (const timeline in analzyer.data.timelines) {
-          if (analzyer.data.timelines[timeline].analysis_status === 'DONE' || analzyer.data.timelines[timeline].analysis_status === 'ERROR') {
+          if (
+            analzyer.data.timelines[timeline].analysis_status === 'DONE' ||
+            analzyer.data.timelines[timeline].analysis_status === 'ERROR'
+          ) {
             counter += 1
           }
         }
@@ -131,14 +141,14 @@ export default {
       return counter
     },
     activeAnalyzerDisplayCount() {
-      return this.activeAnalyzerQueue.length > 0 ? this.activeAnalyzerQueue.length : '';
-    }
+      return this.activeAnalyzerQueue.length > 0 ? this.activeAnalyzerQueue.length : ''
+    },
   },
   methods: {
     async initializeAnalyzerResults() {
       let sketchAnalyzerSessions = []
       for (const timeline of this.sketch.timelines) {
-        const response = await ApiClient.getSketchTimelineAnalysis(this.sketch.id, timeline.id);
+        const response = await ApiClient.getSketchTimelineAnalysis(this.sketch.id, timeline.id)
         let analyzerSessions = response.data.objects[0]
         if (!analyzerSessions) continue
         sketchAnalyzerSessions = sketchAnalyzerSessions.concat(analyzerSessions)
@@ -158,7 +168,7 @@ export default {
                 description: this.analyzerList[session.analyzer_name].description,
                 is_multi: this.analyzerList[session.analyzer_name].is_multi,
                 display_name: this.analyzerList[session.analyzer_name].display_name,
-              }
+              },
             }
           }
 
@@ -175,17 +185,23 @@ export default {
             }
           }
 
-          if (perAnalyzer[session.analyzer_name].timelines[session.timeline.name].last_analysissession_id < session.analysissession_id) {
+          if (
+            perAnalyzer[session.analyzer_name].timelines[session.timeline.name].last_analysissession_id <
+            session.analysissession_id
+          ) {
             // this timeline is already in the results for this analyzer but check if the session is newer and update it
             perAnalyzer[session.analyzer_name].timelines[session.timeline.name].created_at = session.created_at
             perAnalyzer[session.analyzer_name].timelines[session.timeline.name].verdict = session.result
-            perAnalyzer[session.analyzer_name].timelines[session.timeline.name].last_analysissession_id = session.analysissession_id
-            perAnalyzer[session.analyzer_name].timelines[session.timeline.name].analysis_status = session.status[0].status
+            perAnalyzer[session.analyzer_name].timelines[session.timeline.name].last_analysissession_id =
+              session.analysissession_id
+            perAnalyzer[session.analyzer_name].timelines[session.timeline.name].analysis_status =
+              session.status[0].status
           }
 
           if (session.status[0].status === 'PENDING' || session.status[0].status === 'STARTED') {
             // if the session is PENDING or STARTED, add the session to the queue (if not there yet)
-            if (this.activeAnalyzerQueue.indexOf(session.analysissession_id) === -1) this.activeAnalyzerQueue.push(session.analysissession_id)
+            if (this.activeAnalyzerQueue.indexOf(session.analysissession_id) === -1)
+              this.activeAnalyzerQueue.push(session.analysissession_id)
           }
           if (session.status[0].status === 'DONE' || session.status[0].status === 'ERROR') {
             // if the session is DONE or ERROR, remove it from the queue
@@ -193,14 +209,16 @@ export default {
             if (index > -1) this.activeAnalyzerQueue.splice(index, 1)
           }
         }
-      } catch(e) {
+      } catch (e) {
         console.error(e)
       }
 
       // for now sort the results in alphabetical order. In the future this will be sorted by verdict severity.
       this.analyzerResultsData = perAnalyzer
-      let sortedAnalyzerList = [...Object.entries(perAnalyzer).map(([analyzerName, data]) => ({analyzerName, data}))]
-      sortedAnalyzerList.sort((a, b) => a.data.analyzerInfo.display_name.localeCompare(b.data.analyzerInfo.display_name))
+      let sortedAnalyzerList = [...Object.entries(perAnalyzer).map(([analyzerName, data]) => ({ analyzerName, data }))]
+      sortedAnalyzerList.sort((a, b) =>
+        a.data.analyzerInfo.display_name.localeCompare(b.data.analyzerInfo.display_name)
+      )
       this.analyzerResults = sortedAnalyzerList
       this.analyzerResultsReady = true
     },
@@ -208,7 +226,7 @@ export default {
       const response = await ApiClient.getActiveAnalyzerSessions(this.sketch.id)
       let activeSessions = response.data.objects[0]['sessions']
       if (activeSessions) {
-        activeSessions.forEach(sessionId => {
+        activeSessions.forEach((sessionId) => {
           if (this.activeAnalyzerQueue.indexOf(sessionId) === -1) this.activeAnalyzerQueue.push(sessionId)
         })
       }
@@ -224,20 +242,23 @@ export default {
       this.updateAnalyzerResultsData(activeAnalyzerSessionData)
     },
     triggeredAnalyzerRuns: function (data) {
-      data.forEach(sessionId => {
+      data.forEach((sessionId) => {
         if (this.activeAnalyzerQueue.indexOf(sessionId) === -1) this.activeAnalyzerQueue.push(sessionId)
       })
     },
     filterAnalyzers(items, search) {
-      const searchStr = (search || '').toLowerCase();
-      return items && items.filter(item => {
-        const displayNameMatches = item.data.analyzerInfo.display_name.toLowerCase().indexOf(searchStr) !== -1;
-        const timelineNameMatches = Object.keys(item.data.timelines).find(
-          timelineName => timelineName.indexOf(searchStr) !== -1
-        );
-        return displayNameMatches || timelineNameMatches;
-      });
-    }
+      const searchStr = (search || '').toLowerCase()
+      return (
+        items &&
+        items.filter((item) => {
+          const displayNameMatches = item.data.analyzerInfo.display_name.toLowerCase().indexOf(searchStr) !== -1
+          const timelineNameMatches = Object.keys(item.data.timelines).find(
+            (timelineName) => timelineName.indexOf(searchStr) !== -1
+          )
+          return displayNameMatches || timelineNameMatches
+        })
+      )
+    },
   },
   mounted() {
     EventBus.$on('triggeredAnalyzerRuns', this.triggeredAnalyzerRuns)
@@ -251,19 +272,21 @@ export default {
   watch: {
     activeAnalyzerQueue: function (sessionQueue) {
       if (sessionQueue.length > 0 && !this.interval) {
-        this.interval = setInterval(function() {
-          if (sessionQueue.length > 0) {
-            // fetch data for sessions in the queue
-            this.fetchAnalyzerSessionData()
-            // update active session queue
-            this.fetchActiveSessions()
-          } else {
-            // the queue is empty so stop the interval
-            clearInterval(this.interval)
-            this.interval = false
-          }
-        }.bind(this),
-        5000)
+        this.interval = setInterval(
+          function () {
+            if (sessionQueue.length > 0) {
+              // fetch data for sessions in the queue
+              this.fetchAnalyzerSessionData()
+              // update active session queue
+              this.fetchActiveSessions()
+            } else {
+              // the queue is empty so stop the interval
+              clearInterval(this.interval)
+              this.interval = false
+            }
+          }.bind(this),
+          5000
+        )
       }
     },
   },
