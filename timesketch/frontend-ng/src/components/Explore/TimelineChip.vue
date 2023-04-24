@@ -54,7 +54,9 @@ limitations under the License.
               <li><strong>Original filename:</strong> {{ datasource.original_filename }}</li>
               <li><strong>File on disk:</strong> {{ datasource.file_on_disk }}</li>
               <li><strong>File size:</strong> {{ datasource.file_size | compactBytes }}</li>
+              <li><strong>Uploaded by:</strong> {{ datasource.user.username }}</li>
               <li><strong>Provider:</strong> {{ datasource.provider }}</li>
+              <li><strong>Context:</strong> {{ datasource.context }}</li>
               <li v-if="datasource.data_label"><strong>Data label:</strong> {{ datasource.data_label }}</li>
               <li><strong>Status:</strong> {{ dataSourceStatus(datasource) }}</li>
               <li>
@@ -190,7 +192,9 @@ limitations under the License.
                     <li><strong>Original filename:</strong> {{ datasource.original_filename }}</li>
                     <li><strong>File on disk:</strong> {{ datasource.file_on_disk }}</li>
                     <li><strong>File size:</strong> {{ datasource.file_size | compactBytes }}</li>
+                    <li><strong>Uploaded by:</strong> {{ datasource.user.username }}</li>
                     <li><strong>Provider:</strong> {{ datasource.provider }}</li>
+                    <li><strong>Context:</strong> {{ datasource.context }}</li>
                     <li v-if="datasource.data_label"><strong>Data label:</strong> {{ datasource.data_label }}</li>
                     <li><strong>Status:</strong> {{ dataSourceStatus(datasource) }}</li>
                     <li>
@@ -217,13 +221,12 @@ limitations under the License.
             :to="{ name: 'Analyze', params: { sketchId: sketch.id, analyzerTimelineId: timeline.id } }"
             style="cursor: pointer"
             @click="$refs.timelineChipMenuRef.isActive = false"
-            >
+          >
             <v-list-item-action>
               <v-icon>mdi-auto-fix</v-icon>
             </v-list-item-action>
             <v-list-item-subtitle>Run Analyzers</v-list-item-subtitle>
           </v-list-item>
-
         </v-list>
         <div class="px-4">
           <v-color-picker
