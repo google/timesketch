@@ -35,6 +35,8 @@ from flask_restful import reqparse
 from flask_login import login_required
 from flask_login import current_user
 
+from typing import Literal
+
 from timesketch.api.v1 import resources
 from timesketch.lib import forms
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
@@ -53,7 +55,14 @@ from timesketch.models.sketch import SearchHistory
 logger = logging.getLogger("timesketch.event_api")
 
 
-def _tag_untag_event(row, tag_dict, tags_to_modify, datastore, flush_interval, tag):
+def _tag_untag_event(
+    row,
+    tag_dict,
+    tags_to_modify,
+    datastore,
+    flush_interval,
+    tag_action: Literal["add", "remove"],
+):
     """Tag or untag each event from a dataframe with tags.
 
     Args:
@@ -67,8 +76,8 @@ def _tag_untag_event(row, tag_dict, tags_to_modify, datastore, flush_interval, t
         datastore (opensearch.OpenSearchDataStore): the datastore object.
         flush_interval (int): the number of events to import before a bulk
             update is done with the datastore.
-        tag (bool): a boolean that decides if to tag or untag events.
-                TODO(jaegeral): Find a better name for this boolean.
+        tag_action (string literal): decides if to tag or untag events.
+            Possible values are "add" and "remove".
     """
 
     tag_dict["events_processed_by_api"] += 1
@@ -79,7 +88,7 @@ def _tag_untag_event(row, tag_dict, tags_to_modify, datastore, flush_interval, t
         if isinstance(tag, (list, tuple)):
             existing_tags = set(tag)
 
-        if tag:
+        if tag_action == "add":
             new_tags = list(set().union(existing_tags, set(tags_to_modify)))
         else:  # if action is to remove tags
             new_tags = list(set(existing_tags) - set(tags_to_modify))
@@ -719,7 +728,7 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
             tags_to_modify=tags_to_add,
             datastore=datastore,
             flush_interval=flush_interval,
-            tag=True,  # add tags
+            tag_action="add",  # add tags
         )
         datastore.flush_queued_events()
 
@@ -887,7 +896,7 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
             tags_to_modify=tags_to_remove,
             datastore=datastore,
             flush_interval=flush_interval,
-            tag=False,
+            tag_action="remove",
         )
         datastore.flush_queued_events()
 
