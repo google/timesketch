@@ -30,9 +30,21 @@ limitations under the License.
       </v-row>
     </v-container>
 
+    <!-- Archived state -->
+    <v-container v-if="isArchived && !loadingSketch" fill-height fluid>
+      <v-row align="center" justify="center">
+        <v-sheet class="pa-4">
+          <center>
+            <div style="font-size: 2em" class="mb-3">This sketch is archived</div>
+            <v-btn outlined color="primary" @click="unArchiveSketch()"> Bring it back </v-btn>
+          </center>
+        </v-sheet>
+      </v-row>
+    </v-container>
+
     <!-- Left panel -->
     <v-navigation-drawer
-      v-if="showLeftPanel && hasTimelines"
+      v-if="showLeftPanel && hasTimelines && !isArchived"
       app
       permanent
       :width="navigationDrawer.width"
@@ -182,13 +194,13 @@ limitations under the License.
         <v-icon>mdi-menu</v-icon>
       </v-btn>
 
-      <v-avatar v-show="!showLeftPanel || !hasTimelines" class="ml-n2 mt-1">
+      <v-avatar v-show="!showLeftPanel || !hasTimelines || isArchived" class="ml-n2 mt-1">
         <router-link to="/">
           <v-img src="/dist/timesketch-color.png" max-height="25" max-width="25" contain></v-img>
         </router-link>
       </v-avatar>
 
-      <span v-if="!showLeftPanel || !hasTimelines" style="font-size: 1.1em">{{ sketch.name }} </span>
+      <span v-if="!showLeftPanel || !hasTimelines || isArchived" style="font-size: 1.1em">{{ sketch.name }} </span>
 
       <v-btn
         v-show="currentRouteName !== 'Explore'"
@@ -237,21 +249,12 @@ limitations under the License.
                 </v-list-item-content>
               </v-list-item>
 
-              <v-list-item>
+              <v-list-item @click="archiveSketch()">
                 <v-list-item-icon>
                   <v-icon>mdi-archive</v-icon>
                 </v-list-item-icon>
                 <v-list-item-content>
                   <v-list-item-title>Archive sketch</v-list-item-title>
-                </v-list-item-content>
-              </v-list-item>
-
-              <v-list-item>
-                <v-list-item-icon>
-                  <v-icon>mdi-export</v-icon>
-                </v-list-item-icon>
-                <v-list-item-content>
-                  <v-list-item-title>Export sketch</v-list-item-title>
                 </v-list-item-content>
               </v-list-item>
 
@@ -273,7 +276,10 @@ limitations under the License.
     </v-app-bar>
 
     <!-- Canvas (main) view -->
-    <router-view v-if="sketch.status && hasTimelines" @setTitle="(title) => (this.title = title)"></router-view>
+    <router-view
+      v-if="sketch.status && hasTimelines && !isArchived"
+      @setTitle="(title) => (this.title = title)"
+    ></router-view>
   </div>
 </template>
 
@@ -354,6 +360,12 @@ export default {
     meta() {
       return this.$store.state.meta
     },
+    isArchived() {
+      if (!this.sketch.status || !this.sketch.status.length) {
+        return false
+      }
+      return this.sketch.status[0].status === 'archived'
+    },
     scenarios() {
       return this.$store.state.scenarios
     },
@@ -383,6 +395,30 @@ export default {
     },
   },
   methods: {
+    archiveSketch: function () {
+      this.loadingSketch = true
+      ApiClient.archiveSketch(this.sketch.id)
+        .then((response) => {
+          this.$store.dispatch('updateSketch', this.sketch.id).then(() => {
+            this.loadingSketch = false
+          })
+        })
+        .catch((e) => {
+          console.error(e)
+        })
+    },
+    unArchiveSketch: function () {
+      this.loadingSketch = true
+      ApiClient.unArchiveSketch(this.sketch.id)
+        .then((response) => {
+          this.$store.dispatch('updateSketch', this.sketch.id).then(() => {
+            this.loadingSketch = false
+          })
+        })
+        .catch((e) => {
+          console.error(e)
+        })
+    },
     toggleTheme: function () {
       this.$vuetify.theme.dark = !this.$vuetify.theme.dark
       localStorage.setItem('isDarkTheme', this.$vuetify.theme.dark.toString())
@@ -401,10 +437,16 @@ export default {
         .catch((e) => {})
     },
     setDrawerBorderStyle() {
+      if (!this.$refs.drawer) {
+        return
+      }
       let i = this.$refs.drawer.$el.querySelector('.v-navigation-drawer__border')
       i.style.cursor = 'ew-resize'
     },
     setDrawerResizeEvents() {
+      if (!this.$refs.drawer) {
+        return
+      }
       const minSize = 1
       const drawerElement = this.$refs.drawer.$el
       const drawerBorder = drawerElement.querySelector('.v-navigation-drawer__border')
@@ -442,14 +484,6 @@ export default {
       } else {
         this.navigationDrawer.width = 0
       }
-    },
-  },
-  watch: {
-    sketch: function (newVal) {
-      if (newVal.status[0].status === 'archived') {
-        this.$router.push({ name: 'Overview', params: { sketchId: this.sketch.id } })
-      }
-      document.title = this.sketch.name
     },
   },
 }
