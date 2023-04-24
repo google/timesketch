@@ -65,8 +65,17 @@ limitations under the License.
     >
       <v-card>
         <v-toolbar dense flat>
-          <strong>Context search {{ contextStartTime }} {{ contextEndTime }}</strong>
+          <strong>Context search {{ contextTimeWindowSeconds }} +/- seconds</strong>
           <v-spacer></v-spacer>
+          <v-slider
+            v-model="contextTimeWindowSeconds"
+            @end="updateContextQuery()"
+            min="0"
+            max="600"
+            step="1"
+            class="mt-6"
+          >
+          </v-slider>
           <v-btn icon :disabled="timelineViewHeight > 40" @click="increaseTimelineViewHeight()">
             <v-icon>mdi-chevron-up</v-icon>
           </v-btn>
