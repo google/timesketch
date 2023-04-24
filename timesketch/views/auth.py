@@ -66,13 +66,14 @@ SCOPES = [
 def login():
     """Handler for the login page view.
 
-    There are three ways of authentication.
-    1) Google Cloud Identity-Aware Proxy.
-    2) If Single Sign On (SSO) is enabled in the configuration and the
+    There are four ways of authentication.
+    1) Google OpenID connect.
+    2) Google Cloud Identity-Aware Proxy.
+    3) If Single Sign On (SSO) is enabled in the configuration and the
        environment variable is present, e.g. REMOTE_USER then the system will
        get or create the user object and setup a session for the user.
-    3) Local authentication is used if SSO login is not enabled. This will
-       authenticate the user against the local user database.
+    4) Local authentication is used if SSO login is not enabled. This will
+       authenticate the user against the local user database
 
     Returns:
         Redirect if authentication is successful or template with context
@@ -81,6 +82,8 @@ def login():
     # Google OpenID Connect authentication.
     if current_app.config.get("GOOGLE_OIDC_ENABLED", False):
         hosted_domain = current_app.config.get("GOOGLE_OIDC_HOSTED_DOMAIN")
+        # Save the next URL parameter in the session for redirect after login.
+        session["next"] = request.args.get("next", "/")
         return redirect(get_oauth2_authorize_url(hosted_domain))
 
     # Google Identity-Aware Proxy authentication (using JSON Web Tokens)
@@ -181,6 +184,8 @@ def validate_api_token():
     Returns:
         A simple page indicating the user is authenticated.
     """
+    ALLOWED_CLIENT_IDS = []
+
     try:
         token = oauth2.rfc6749.tokens.get_token_from_header(request)
     except AttributeError:
@@ -193,11 +198,26 @@ def validate_api_token():
     if not id_token:
         return abort(HTTP_STATUS_CODE_UNAUTHORIZED, "No ID token supplied.")
 
-    client_id = current_app.config.get("GOOGLE_OIDC_API_CLIENT_ID")
-    if not client_id:
+    client_ids = set()
+    primary_client_id = current_app.config.get("GOOGLE_OIDC_CLIENT_ID")
+    legacy_api_client_id = current_app.config.get("GOOGLE_OIDC_API_CLIENT_ID")
+    api_client_ids = current_app.config.get("GOOGLE_OIDC_API_CLIENT_IDS", [])
+
+    if primary_client_id:
+        client_ids.add(primary_client_id)
+
+    if legacy_api_client_id:
+        client_ids.add(legacy_api_client_id)
+
+    if api_client_ids:
+        client_ids.update(api_client_ids)
+
+    ALLOWED_CLIENT_IDS = list(client_ids)
+
+    if not ALLOWED_CLIENT_IDS:
         return abort(
             HTTP_STATUS_CODE_BAD_REQUEST,
-            "No OIDC API client ID defined in the configuration file.",
+            "No OIDC client IDs defined in the configuration file.",
         )
 
     # Authenticating session, see more details here:
@@ -259,7 +279,7 @@ def validate_api_token():
         )
 
     read_client_id = token_json.get("aud", "")
-    if read_client_id != client_id:
+    if read_client_id not in ALLOWED_CLIENT_IDS:
         return abort(
             HTTP_STATUS_CODE_UNAUTHORIZED,
             "Client ID {0:s} does not match server configuration for "
@@ -277,10 +297,19 @@ def validate_api_token():
     validated_email = token_json.get("email")
 
     # Check if the authenticating user is part of the allowed domains.
+    allowed_domains = set()
     hosted_domains = current_app.config.get("GOOGLE_OIDC_HOSTED_DOMAIN")
+    api_allowed_domains = current_app.config.get("GOOGLE_OIDC_API_ALLOWED_DOMAINS", [])
     if hosted_domains:
+        allowed_domains.add(hosted_domains)
+    if api_allowed_domains:
+        allowed_domains.update(api_allowed_domains)
+    # A list of allowed domains in lower case.
+    ALLOWED_DOMAINS = [domain.lower() for domain in allowed_domains]
+
+    if ALLOWED_DOMAINS:
         _, _, domain = validated_email.partition("@")
-        if domain.lower() != hosted_domains.lower():
+        if domain.lower() not in ALLOWED_DOMAINS:
             return abort(
                 HTTP_STATUS_CODE_UNAUTHORIZED,
                 "Domain {0:s} is not allowed to authenticate against this "
@@ -392,6 +421,6 @@ def google_openid_connect():
 
     # Log the user in and setup the session.
     if current_user.is_authenticated:
-        return redirect(request.args.get("next") or "/")
+        return redirect(session.get("next", "/"))
 
     return abort(HTTP_STATUS_CODE_BAD_REQUEST, "User is not authenticated.")

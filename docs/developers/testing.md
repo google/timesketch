@@ -1,4 +1,8 @@
-## Running tests and linters
+---
+hide:
+  - footer
+---
+## Running tests
 
 The main entry point is `run_tests.py` in Timesketch root. Please note that for testing
 and linting python/frontend code in your local environment you need respectively python/
@@ -46,7 +50,7 @@ Or all in one:
 $ sudo docker exec -it $CONTAINER_ID nosetests /usr/local/src/timesketch/timesketch/lib/emojis_test.py -v
 ```
 
-### Writing unittests
+## Writing unittests
 
 It is recommended to write unittests as much as possible.
 
@@ -55,6 +59,20 @@ Test files in Timesketch have the naming convention `_test.py` and are stored ne
 The unittests for the api client can use `mock` to emulate responses from the server. The mocked answers are written in: `api_client/python/timesketch_api_client/test_lib.py`.
 
 To introduce a new API endpoint to be tested, the endpoint needs to be registered in the `url_router` section in `/api_client/python/timesketch_api_client/test_lib.py` and the response needs to be defined in the same file.
+
+## Debugging tests
+
+To debug tests, simply add the following at the point of interest:
+
+```python
+breakpoint()
+```
+
+And then within the docker container execute
+
+```shell
+! nosetests /usr/local/src/timesketchtimesketch/lib/emojis_test.py -s -pdb
+```
 
 ## end2end tests
 
@@ -101,3 +119,16 @@ or run the following outside of the container:
 ```bash
 $ sudo docker exec -it $CONTAINER_ID python3 /usr/local/src/timesketch/end_to_end_tests/tools/run_in_container.py
 ```
+
+## Linting / Code format
+
+The project has a certain code style / code format across the project. The main settings are stored in `.pylintrc`. When creating a Pull Request, one of the things automation checks is correct linting. Pull Request with failed pylint checks can not be accepted.
+
+To check linting on a single file, run the following in your docker container:
+
+```bash
+! apt-get update
+! apt-get install pylint==2.6.0
+! pylint /usr/local/src/timesketch/timesketch/  --rcfile .pylintrc -v
+```
+

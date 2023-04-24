@@ -15,63 +15,135 @@ limitations under the License.
 -->
 <template>
   <div>
-    <v-row>
-      <v-col cols="12">
-        <v-sheet outlined rounded>
-          <ts-sketch-list scope="recent"></ts-sketch-list>
-        </v-sheet>
-      </v-col>
-      <v-col cols="12">
-        <v-sheet outlined rounded>
-          <ts-sketch-list scope="user"></ts-sketch-list>
-        </v-sheet>
-      </v-col>
-    </v-row>
+    <!-- Top horizontal toolbar -->
+    <v-toolbar flat color="transparent">
+      <v-avatar class="mt-2 ml-n3">
+        <router-link to="/">
+          <v-img src="/dist/timesketch-color.png" max-height="25" max-width="25" contain></v-img>
+        </router-link>
+      </v-avatar>
+      <span style="font-size: 1.2em">timesketch</span>
+
+      <v-spacer></v-spacer>
+      <v-btn small depressed v-on:click="switchUI"> Use the old UI </v-btn>
+      <v-avatar color="grey lighten-1" size="25" class="ml-3">
+        <span class="white--text">{{ currentUser | initialLetter }}</span>
+      </v-avatar>
+      <v-menu offset-y>
+        <template v-slot:activator="{ on, attrs }">
+          <v-avatar>
+            <v-btn small icon v-bind="attrs" v-on="on">
+              <v-icon>mdi-dots-vertical</v-icon>
+            </v-btn>
+          </v-avatar>
+        </template>
+        <v-card>
+          <v-list>
+            <v-list-item-group color="primary">
+              <v-list-item v-on:click="toggleTheme">
+                <v-list-item-icon>
+                  <v-icon>mdi-brightness-6</v-icon>
+                </v-list-item-icon>
+                <v-list-item-content>
+                  <v-list-item-title>Toggle theme</v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+
+              <a href="/logout/" style="text-decoration: none; color: inherit">
+                <v-list-item>
+                  <v-list-item-icon>
+                    <v-icon>mdi-logout</v-icon>
+                  </v-list-item-icon>
+
+                  <v-list-item-content>
+                    <v-list-item-title>Logout</v-list-item-title>
+                  </v-list-item-content>
+                </v-list-item>
+              </a>
+            </v-list-item-group>
+          </v-list>
+        </v-card>
+      </v-menu>
+    </v-toolbar>
+
+    <v-container fluid pa-0>
+      <v-sheet class="pa-5" :color="$vuetify.theme.dark ? 'grey darken-4' : 'grey lighten-3'" min-height="200">
+        <h2>Start new investigation</h2>
+        <v-row no-gutters class="mt-5">
+          <v-dialog width="500">
+            <template v-slot:activator="{ on, attrs }">
+              <v-btn depressed small class="mr-5" color="primary" v-bind="attrs" v-on="on"> Blank sketch </v-btn>
+            </template>
+            <v-card class="pa-4">
+              <h3>New sketch</h3>
+              <br />
+              <v-text-field v-model="sketchForm.name" outlined dense placeholder="Name your sketch" autofocus>
+              </v-text-field>
+              <v-card-actions>
+                <v-spacer></v-spacer>
+                <v-btn :disabled="!sketchForm.name" @click="createSketch()" color="primary" text> Create </v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
+        </v-row>
+      </v-sheet>
+      <div class="pa-5">
+        <h2>Your recent work</h2>
+        <ts-sketch-list></ts-sketch-list>
+      </div>
+    </v-container>
   </div>
 </template>
 
 <script>
+import ApiClient from '../utils/RestApiClient'
+import TsSketchList from '../components/SketchList'
+
 export default {
-  components: {},
+  components: { TsSketchList },
   data() {
     return {
-      showSketchCreateModal: false,
-      allSketches: [],
-      mySketches: [],
-      myArchivedSketches: [],
-      sharedSketches: [],
-      loading: true,
-      isFullPage: true,
-      loadingComponent: null,
-      searchQuery: '',
-      newSearchQuery: '',
+      sketchForm: {
+        name: '',
+      },
+      scenarioTemplates: [],
     }
   },
   computed: {
-    filteredList() {
-      return this.allSketches.filter((sketch) => {
-        return sketch.name.toLowerCase().includes(this.search.toLowerCase())
-      })
+    currentUser() {
+      return this.$store.state.currentUser
     },
   },
   methods: {
-    loadingOpen: function () {
-      this.loading = true
-      this.loadingComponent = this.$buefy.loading.open({
-        container: this.isFullPage ? null : this.$refs.element.$el,
-      })
+    toggleTheme: function () {
+      this.$vuetify.theme.dark = !this.$vuetify.theme.dark
+      localStorage.setItem('isDarkTheme', this.$vuetify.theme.dark.toString())
     },
-    loadingClose: function () {
-      this.loading = false
-      this.loadingComponent.close()
+    switchUI: function () {
+      window.location.href = '/legacy/'
     },
-    search: function () {
-      this.newSearchQuery = this.searchQuery
+    clearFormData: function () {
+      this.sketchForm.name = ''
+    },
+    createSketch: function () {
+      ApiClient.createSketch(this.sketchForm)
+        .then((response) => {
+          let newSketchId = response.data.objects[0].id
+          this.clearFormData()
+          this.$router.push({ name: 'Overview', params: { sketchId: newSketchId } })
+        })
+        .catch((e) => {})
     },
   },
   created: function () {
     this.$store.dispatch('resetState')
     document.title = 'Timesketch'
+    ApiClient.getScenarioTemplates()
+      .then((response) => {
+        this.scenarioTemplates = response.data['objects']
+      })
+      .catch((e) => {})
   },
 }
 </script>
+<style lang="scss"></style>

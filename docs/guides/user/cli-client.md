@@ -1,3 +1,7 @@
+---
+hide:
+  - footer
+---
 Timesketch has a command line client (CLI) that is meant to be used to access the
 system from the terminal. It has many of the feature that the Web interface have
 including:
@@ -10,7 +14,7 @@ including:
 
 ## Installing
 
-The CLI client is available as a packag on PyPi. To install, simply:
+The CLI client is available as a package on PyPi. To install, simply:
 
 ```
 pip3 install timesketch-cli-client
@@ -19,7 +23,7 @@ pip3 install timesketch-cli-client
 ## Basic usage
 
 The command line program is called `timesketch`. To see the help menu you can
-invoke without ay parameters alternativly issue `timesketch --help`.
+invoke without ay parameters alternatively issue `timesketch --help`.
 
 ```
 $ timesketch
@@ -58,7 +62,7 @@ Commands:
 #### Default sketch
 
 The program need to know what sketch you are working in. You can either specify it
-with the `--sketch` flag on all invocations, or you can configure it globaly:
+with the `--sketch` flag on all invocations, or you can configure it globally:
 
 ```
 timesketch config set sketch <ID of your sketch>
@@ -93,7 +97,7 @@ Options:
   --time-range TEXT...    Datetime range filter (e.g: 2020-01-01 2020-02-01)
   --label TEXT            Filter events with label
   --header / --no-header  Toggle header information (default is to show)
-  --output-format TEXT    Set output format (overtttrides global setting)
+  --output-format TEXT    Set output format (overrides global setting)
   --return-fields TEXT    What event fields to show
   --order TEXT            Order the output (asc/desc) based on the time field
   --limit INTEGER         Limit amount of events to show (default: 40)

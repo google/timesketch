@@ -119,3 +119,67 @@ html {
 .search-dropdown {
   margin-top: 15px;
 }
+
+.light-font {
+  color: #333
+}
+
+.dark-font {
+  color: #fff
+}
+
+.light-hover:hover {
+  background-color: #f5f5f5;
+}
+
+.dark-hover:hover {
+  background-color: #303030;
+}
+
+.light-hover-on-highlight:hover {
+  background-color: #e6e6e6;
+}
+
+.dark-hover-on-highlight:hover {
+  background-color: #393838;
+}
+
+.light-highlight {
+  background-color: #f5f5f5;
+}
+
+.dark-highlight {
+  background-color: #303030;
+}
+
+.light-info-card {
+  background-color: rgba(33, 150, 243, .1);
+  color: #333;
+  border-radius: 6px;
+}
+
+.dark-info-card {
+  background-color: rgba(33, 150, 243, .1);
+  color:#fff;
+  border-radius: 6px;
+  border:1px solid rgba(33, 150, 243, 0.3);
+}
+
+.timeline-name-ellipsis {
+  width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis
+}
+
+.theme--dark.v-navigation-drawer {
+  background-color: #1e1e1e;
+}
+
+.theme--dark.v-data-table tbody tr:hover:not(.v-data-table__expanded__content) {
+  background: #303030 !important;
+}
+
+.v-card--link:before {
+  background: none;
+}

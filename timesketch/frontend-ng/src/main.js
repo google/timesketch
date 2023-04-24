@@ -19,6 +19,8 @@ import App from './App.vue'
 import router from './router'
 import store from './store'
 
+import '@/mixins/snackBar'
+
 // Third party
 import VueScrollTo from 'vue-scrollto'
 import Multiselect from 'vue-multiselect'
@@ -28,6 +30,7 @@ import VueClipboard from 'vue-clipboard2'
 import vuetify from '@/plugins/vuetify' // path to vuetify export
 
 require('./assets/main.scss')
+require('./assets/markdown.scss')
 require('./utils/RegisterAppComponents')
 require('./utils/RegisterAppFilters')
 

@@ -19,6 +19,15 @@ class TestSigmaPlugin(BaseTest):
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     def test_analyzer(self):
         """Test analyzer."""
-        # TODO: Add more tests
 
         _ = sigma_tagger.RulesSigmaPlugin(sketch_id=1, index_name=self.test_index)
+
+    # Mock the OpenSearch datastore.
+    @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
+    def test_get_kwargs(self):
+        analyzer_init = sigma_tagger.RulesSigmaPlugin(
+            sketch_id=1, index_name=self.test_index
+        )
+        rules = analyzer_init.get_kwargs()
+        self.assertIsNotNone(rules)
+        self.assertGreaterEqual(len(rules), 0)

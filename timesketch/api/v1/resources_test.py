@@ -18,9 +18,10 @@ from __future__ import unicode_literals
 import json
 import mock
 
-from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
-from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
+from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
+from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
+from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.testlib import MockDataStore
 
@@ -166,7 +167,7 @@ class ViewResourceTest(BaseTest):
 class SearchTemplateResourceTest(BaseTest):
     """Test Search template resource."""
 
-    resource_url = "/api/v1/searchtemplate/1/"
+    resource_url = "/api/v1/searchtemplates/1/"
 
     def test_searchtemplate_resource(self):
         """Authenticated request to get a search template."""
@@ -179,7 +180,7 @@ class SearchTemplateResourceTest(BaseTest):
     def test_invalid_searchtemplate(self):
         """Authenticated request to get a non existing search template."""
         self.login()
-        response = self.client.get("/api/v1/searchtemplate/2/")
+        response = self.client.get("/api/v1/searchtemplates/2/")
         self.assert404(response)
 
 
@@ -221,6 +222,7 @@ class ExploreResourceTest(BaseTest):
                     "timestamp_desc": "Content Modification Time",
                     "datetime": "2014-09-13T07:27:03+00:00",
                     "__ts_timeline_id": 1,
+                    "comment": ["test"],
                 },
                 "_score": "null",
                 "selected": False,
@@ -282,6 +284,7 @@ class EventResourceTest(BaseTest):
             "message": "",
             "datetime": "2014-09-16T19:23:40+00:00",
             "__ts_timeline_id": 1,
+            "comment": ["test"],
         }
     }
 
@@ -292,7 +295,9 @@ class EventResourceTest(BaseTest):
         response = self.client.get(
             self.resource_url + "?searchindex_id=test&event_id=test"
         )
-        self.assertDictContainsSubset(self.expected_response, response.json)
+        response_json = response.json
+        del response_json["meta"]
+        self.assertDictContainsSubset(self.expected_response, response_json)
         self.assert200(response)
 
     @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
@@ -306,6 +311,288 @@ class EventResourceTest(BaseTest):
             self.resource_url + "?searchindex_id=wrong_index&event_id=test"
         )
         self.assert400(response_400)
+
+
+class EventAddAttributeResourceTest(BaseTest):
+    """Test EventAddAttributeResource."""
+
+    resource_url = "/api/v1/sketches/1/event/attributes/"
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_add_attributes(self):
+        """Test add attributes with a well formed request."""
+        self.login()
+
+        attrs = [{"attr_name": "foo", "attr_value": "bar"}]
+        events = {
+            "events": [
+                {
+                    "_id": "1",
+                    "_type": "_doc",
+                    "_index": "1",
+                    "attributes": attrs,
+                },
+                {
+                    "_id": "2",
+                    "_type": "_doc",
+                    "_index": "1",
+                    "attributes": attrs,
+                },
+            ]
+        }
+
+        expected_response = {
+            "meta": {
+                "attributes_added": 2,
+                "chunks_per_index": {"1": 1},
+                "error_count": 0,
+                "last_10_errors": [],
+                "events_modified": 2,
+            },
+            "objects": [],
+        }
+
+        response = self.client.post(self.resource_url, json=events)
+        self.assertEqual(expected_response, response.json)
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_incorrect_content_type(self):
+        """Test that a content-type other than application/json is handled."""
+        self.login()
+        response = self.client.post(self.resource_url)
+        self.assertEqual(400, response.status_code)
+        self.assertIn(b"Request must be in JSON format.", response.data)
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_events_json_missing_events(self):
+        """Test that a request without events is handled."""
+        self.login()
+
+        response = self.client.post(self.resource_url, json={"events": []})
+        self.assertEqual(HTTP_STATUS_CODE_BAD_REQUEST, response.status_code)
+        self.assertIn(b"Request must contain an events field.", response.data)
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_events_json_events_type(self):
+        """Test that that the wrong type for events is handled."""
+        self.login()
+
+        response = self.client.post(self.resource_url, json={"events": "a string"})
+        self.assertEqual(HTTP_STATUS_CODE_BAD_REQUEST, response.status_code)
+        self.assertIn(b"Events field must be a list.", response.data)
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_events_json_max_events(self):
+        """Test that an event list larger than max events is handled."""
+        self.login()
+
+        response = self.client.post(self.resource_url, json={"events": ["a"] * 100001})
+        self.assertEqual(HTTP_STATUS_CODE_BAD_REQUEST, response.status_code)
+        self.assertIn(b"Request exceeds maximum events", response.data)
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_events_json_missing_id(self):
+        """Test that an event without an _id field is handled."""
+        self.login()
+
+        response = self.client.post(self.resource_url, json={"events": [{}]})
+        self.assertEqual(HTTP_STATUS_CODE_BAD_REQUEST, response.status_code)
+        self.assertIn(b"Event missing field _id.", response.data)
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_events_json_attributes_type(self):
+        """Test that event attributes of the wrong type is handled."""
+        self.login()
+
+        response = self.client.post(
+            self.resource_url,
+            json={
+                "events": [
+                    {
+                        "_id": "1",
+                        "_index": "1",
+                        "_type": "_doc",
+                        "attributes": "a string",
+                    }
+                ]
+            },
+        )
+        self.assertEqual(HTTP_STATUS_CODE_BAD_REQUEST, response.status_code)
+        self.assertIn(b"Attributes must be a list.", response.data)
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_events_json_max_attributes(self):
+        """Test that too many attributes is handled."""
+        self.login()
+
+        response = self.client.post(
+            self.resource_url,
+            json={
+                "events": [
+                    {
+                        "_id": "1",
+                        "_index": "1",
+                        "_type": "_doc",
+                        "attributes": ["a"] * 11,
+                    }
+                ]
+            },
+        )
+        self.assertEqual(HTTP_STATUS_CODE_BAD_REQUEST, response.status_code)
+        self.assertIn(b"Attributes for event exceeds maximum", response.data)
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_events_json_attribute_fields(self):
+        """Test that an attribute with a missing field is handled."""
+        self.login()
+
+        response = self.client.post(
+            self.resource_url,
+            json={
+                "events": [
+                    {
+                        "_id": "1",
+                        "_index": "1",
+                        "_type": "_doc",
+                        "attributes": [{"attr_name": "abc"}],
+                    }
+                ]
+            },
+        )
+        self.assertEqual(HTTP_STATUS_CODE_BAD_REQUEST, response.status_code)
+        self.assertIn(b"Attribute missing field", response.data)
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_chunk_calculation(self):
+        """Tests that chunks are properly calculated."""
+        self.login()
+
+        attrs = [{"attr_name": "foo", "attr_value": "bar"}]
+
+        # One chunk when event count is the same as chunk size.
+        response = self.client.post(
+            self.resource_url,
+            json={
+                "events": [
+                    {
+                        "_id": "1",
+                        "_type": "_doc",
+                        "_index": "1",
+                        "attributes": attrs,
+                    }
+                ]
+                * 1000
+            },
+        )
+        self.assertEqual({"1": 1}, response.json["meta"]["chunks_per_index"])
+
+        # Two chunks when event count is chunk size + 1.
+        response = self.client.post(
+            self.resource_url,
+            json={
+                "events": [
+                    {
+                        "_id": "1",
+                        "_type": "_doc",
+                        "_index": "1",
+                        "attributes": attrs,
+                    }
+                ]
+                * 1001
+            },
+        )
+        self.assertEqual({"1": 2}, response.json["meta"]["chunks_per_index"])
+
+        # Chunk per index with multiple indexes.
+        response = self.client.post(
+            self.resource_url,
+            json={
+                "events": [
+                    {
+                        "_id": "1",
+                        "_type": "_doc",
+                        "_index": "1",
+                        "attributes": attrs,
+                    },
+                    {
+                        "_id": "1",
+                        "_type": "_doc",
+                        "_index": "2",
+                        "attributes": attrs,
+                    },
+                ]
+            },
+        )
+        self.assertEqual({"1": 1, "2": 1}, response.json["meta"]["chunks_per_index"])
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_add_existing_attributes(self):
+        """Tests existing attributes cannot be overidden."""
+        self.login()
+
+        response = self.client.post(
+            self.resource_url,
+            json={
+                "events": [
+                    {
+                        "_id": "1",
+                        "_type": "_doc",
+                        "_index": "1",
+                        "attributes": [{"attr_name": "exists", "attr_value": "yes"}],
+                    }
+                ]
+            },
+        )
+        self.assertIn(
+            "Attribute 'exists' already exists for event_id '1'.",
+            response.json["meta"]["last_10_errors"],
+        )
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_add_invalid_attributes_underscore(self):
+        """Tests attributes beginning with an underscore cannot be added."""
+        self.login()
+
+        response = self.client.post(
+            self.resource_url,
+            json={
+                "events": [
+                    {
+                        "_id": "1",
+                        "_type": "_doc",
+                        "_index": "1",
+                        "attributes": [{"attr_name": "_invalid", "attr_value": "yes"}],
+                    }
+                ]
+            },
+        )
+        self.assertIn(
+            "Attribute '_invalid' for event_id '1' invalid, cannot start with " "'_'",
+            response.json["meta"]["last_10_errors"],
+        )
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_add_invalid_attributes_disallowed_name(self):
+        """Tests attributes cannot be added with a disallowed name."""
+        self.login()
+
+        response = self.client.post(
+            self.resource_url,
+            json={
+                "events": [
+                    {
+                        "_id": "1",
+                        "_type": "_doc",
+                        "_index": "1",
+                        "attributes": [{"attr_name": "message", "attr_value": "yes"}],
+                    }
+                ]
+            },
+        )
+        self.assertIn(
+            "Cannot add 'message' for event_id '1', name not allowed.",
+            response.json["meta"]["last_10_errors"],
+        )
 
 
 class EventAnnotationResourceTest(BaseTest):
@@ -398,78 +685,213 @@ class TimelineListResourceTest(BaseTest):
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
 
 
-class SigmaResourceTest(BaseTest):
-    """Test Sigma resource."""
+class SigmaRuleResourceTest(BaseTest):
+    """Test Sigma Rule resource."""
 
-    resource_url = "/api/v1/sigma/rule/"
     expected_response = {
         "objects": {
-            "description": "Detects suspicious installation of ZMap",
-            "id": "5266a592-b793-11ea-b3de-0242ac130004",
+            "description": "Detects suspicious installation of bbbbbb",
+            "id": "5266a592-b793-11ea-b3de-bbbbbb",
             "level": "high",
             "logsource": {"product": "linux", "service": "shell"},
-            "title": "Suspicious Installation of ZMap",
+            "title": "Suspicious Installation of bbbbbb",
         }
     }
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_post_sigma_resource(self):
+        """Authenticated request to POST an sigma rule."""
+        MOCK_SIGMA_RULE = """
+title: Suspicious Installation of bbbbbb
+id: 5266a592-b793-11ea-b3de-bbbbbb
+description: Detects suspicious installation of bbbbbb
+references:
+    - https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html
+author: Alexander Jaeger
+date: 2020/06/26
+modified: 2022/06/12
+logsource:
+    product: linux
+    service: shell
+detection:
+    keywords:
+        # Generic suspicious commands
+        - '*apt-get install bbbbbb*'
+    condition: keywords
+falsepositives:
+    - Unknown
+level: high
+"""
+
+        self.login()
+
+        sigma = dict(
+            rule_uuid="5266a592-b793-11ea-b3de-bbbbbb",
+            title="Suspicious Installation of bbbbbb",
+            description="Detects suspicious installation of bbbbbb",
+            rule_yaml=MOCK_SIGMA_RULE,
+        )
+
+        # Create a first rule
+        response = self.client.post(
+            "/api/v1/sigmarules/",
+            data=json.dumps(sigma),
+            content_type="application/json",
+        )
+        self.assertIn("bbbbbb", response.json["objects"][0]["rule_uuid"])
+        self.assertIn(
+            "bbbbbb",
+            response.json["objects"][0]["description"],
+        )
+        self.assertIn(
+            "shell",
+            response.json["objects"][0]["rule_yaml"],
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+        # Now GET the ressources
+        response = self.client.get("/api/v1/sigmarules/5266a592-b793-11ea-b3de-bbbbbb/")
+
+        self.assertIsNotNone(response)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+        self.assertIn("bbbbbb", response.json["objects"][0]["rule_uuid"])
+        self.assertIn(
+            "bbbbbb",
+            response.json["objects"][0]["description"],
+        )
+        self.assertIn(
+            "shell",
+            response.json["objects"][0]["rule_yaml"],
+        )
 
     def test_get_sigma_rule(self):
         """Authenticated request to get an sigma rule."""
         self.login()
         response = self.client.get(
-            self.resource_url + "5266a592-b793-11ea-b3de-0242ac130004"
+            "/api/v1/sigmarules/5266a592-b793-11ea-b3de-0242ac130004"
         )
         self.assertIsNotNone(response)
 
+    def test_get_sigma_rule_that_does_not_exist(self):
+        """Fetch a Sigma rule that does not exist."""
+        self.login()
+        response = self.client.get("/api/v1/sigmarules/foobar/")
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_NOT_FOUND)
 
-class SigmaListResourceTest(BaseTest):
+    def test_put_sigma_rule(self):
+        """Authenticated request to update sigma rule."""
+        self.login()
+
+        sigma = dict(
+            rule_uuid="5266a592-b793-11ea-b3de-bbbbbb",
+            title="Suspicious Installation of bbbbbb",
+            description="Detects suspicious installation of bbbbbb",
+            rule_yaml="""
+title: Suspicious Installation of bbbbbb
+id: 5266a592-b793-11ea-b3de-bbbbbb
+description: Detects suspicious installation of bbbbbb
+references:
+    - https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html
+author: Alexander Jaeger
+date: 2020/06/26
+modified: 2022/06/12
+logsource:
+    product: linux
+    service: shell
+detection:
+    keywords:
+        # Generic suspicious commands
+        - '*apt-get install bbbbbb*'
+    condition: keywords
+falsepositives:
+    - Unknown
+level: high
+""",
+        )
+
+        # Create a first rule
+        response = self.client.post(
+            "/api/v1/sigmarules/",
+            data=json.dumps(sigma),
+            content_type="application/json",
+        )
+        self.assertIn("bbbbbb", response.json["objects"][0]["rule_uuid"])
+        self.assertIn(
+            "bbbbbb",
+            response.json["objects"][0]["description"],
+        )
+        self.assertIn(
+            "shell",
+            response.json["objects"][0]["rule_yaml"],
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+        response = self.client.put(
+            "/api/v1/sigmarules/5266a592-b793-11ea-b3de-bbbbbb/",
+            data=json.dumps(
+                dict(
+                    rule_uuid="5266a592-b793-11ea-b3de-bbbbbb",
+                    title="Suspicious Installation of cccccc",
+                    description="Detects suspicious installation of cccccc",
+                    rule_yaml="""
+title: Suspicious Installation of cccccc
+id: 5266a592-b793-11ea-b3de-bbbbbb
+description: Detects suspicious installation of cccccc
+references:
+    - https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html
+author: Alexander Jaeger
+date: 2020/06/26
+modified: 2022/06/12
+logsource:
+    product: linux
+    service: shell
+detection:
+    keywords:
+        # Generic suspicious commands
+        - '*apt-get install cccccc*'
+    condition: keywords
+falsepositives:
+    - Unknown
+level: high
+""",
+                )
+            ),
+            content_type="application/json",
+        )
+        self.assertIsNotNone(response)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+        self.assertIn("bbbbbb", response.json["objects"][0]["rule_uuid"])
+        self.assertIn(
+            "cccccc",
+            response.json["objects"][0]["rule_yaml"],
+        )
+
+        self.assertIn(
+            "cccccc",
+            response.json["objects"][0]["description"],
+        )
+        self.assertIn(
+            "cccccc",
+            response.json["objects"][0]["title"],
+        )
+
+
+class SigmaRuleListResourceTest(BaseTest):
     """Test Sigma resource."""
-
-    resource_url = "/api/v1/sigma/"
-    expected_response = {
-        "meta": {"current_user": "test1", "rules_count": 1},
-        "objects": [
-            {
-                "author": "Alexander Jaeger",
-                "date": "2020/06/26",
-                "description": "Detects suspicious installation of ZMap",
-                "detection": {
-                    "condition": "keywords",
-                    "keywords": ["*apt-get install zmap*"],
-                },
-                "es_query": '(data_type:("shell:zsh:history" OR '
-                '"bash:history:command" OR '
-                '"apt:history:line" OR '
-                '"selinux:line") AND '
-                '"apt-get install zmap")',
-                "falsepositives": ["Unknown"],
-                "file_name": "lnx_susp_zmap.yml",
-                "file_relpath": "lnx_susp_zmap.yml",
-                "id": "5266a592-b793-11ea-b3de-0242ac130004",
-                "level": "high",
-                "logsource": {"product": "linux", "service": "shell"},
-                "modified": "2020/06/26",
-                "tags": ["attack.discovery", "attack.t1046"],
-                "references": [
-                    "https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html"  # pylint: disable=line-too-long
-                ],
-                "title": "Suspicious Installation of ZMap",
-            }
-        ],
-    }
 
     def test_get_sigma_rule_list(self):
         self.login()
-        response = self.client.get(self.resource_url)
-        data = json.loads(response.get_data(as_text=True))
-        print(data)
-        self.assertDictContainsSubset(self.expected_response, response.json)
+        response = self.client.get("/api/v1/sigmarules/")
         self.assertIsNotNone(response)
+        self.assertEqual(
+            len(response.json["objects"]), response.json["meta"]["rules_count"]
+        )
+        rule = response.json["objects"][0]
+        self.assertIn("5266a592-b793-11ea-b3de-0242ac", rule["rule_uuid"])
+        self.assertIsNotNone(rule["created_at"])
 
 
-class SigmaByTextResourceTest(BaseTest):
-    """Test Sigma by text resource."""
+class SigmaRuleByTextResourceTest(BaseTest):
+    """Test SigmaRule by text resource."""
 
-    resource_url = "/api/v1/sigma/text/"
     correct_rule = """
         title: Installation of foobar
         id: bb1e0d1d-cd13-4b65-bf7e-69b4e740266b
@@ -513,9 +935,8 @@ class SigmaByTextResourceTest(BaseTest):
                 },
                 "falsepositives": ["Unknown"],
                 "level": "high",
-                "es_query": '(data_type:("shell:zsh:history" OR "bash:history:command" OR "apt:history:line" OR "selinux:line") AND "apt-get install foobar")',  # pylint: disable=line-too-long
+                "search_query": '(data_type:("shell:zsh:history" OR "bash:history:command" OR "apt:history:line" OR "selinux:line") AND "apt-get install foobar")',  # pylint: disable=line-too-long
                 "file_name": "N/A",
-                "file_relpath": "N/A",
             }
         ],
     }
@@ -526,7 +947,7 @@ class SigmaByTextResourceTest(BaseTest):
 
         data = dict(content=self.correct_rule)
         response = self.client.post(
-            self.resource_url,
+            "/api/v1/sigmarules/text/",
             data=json.dumps(data, ensure_ascii=False),
             content_type="application/json",
         )
@@ -535,28 +956,33 @@ class SigmaByTextResourceTest(BaseTest):
         self.assertDictContainsSubset(self.expected_response, response.json)
         self.assert200(response)
 
-        # wrong sigma rule
+    def test_get_non_existing_rule_by_text(self):
+        """Authenticated request to get an sigma rule by text with non parseable
+        yaml text."""
+        self.login()
         data = dict(content="foobar: asd")
         response = self.client.post(
-            self.resource_url,
+            "/api/v1/sigmarules/text/",
             data=json.dumps(data, ensure_ascii=False),
             content_type="application/json",
         )
         data = json.loads(response.get_data(as_text=True))
 
-        self.assertIn("No detection definitions found", data["message"])
+        self.assertIn("Sigma parsing error generating rule", data["message"])
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
 
-        # no content given
-        data = dict(action="post")
+    def test_get_rule_by_text_no_form_data(self):
+        """Authenticated request to get an sigma rule by text with no form
+        data"""
+        self.login()
         response = self.client.post(
-            self.resource_url,
-            data=json.dumps(data, ensure_ascii=False),
+            "/api/v1/sigmarules/text/",
+            data=json.dumps(dict(action="post")),
             content_type="application/json",
         )
         data = json.loads(response.get_data(as_text=True))
 
-        self.assertIn("Missing values from the request", data["message"])
+        self.assertIn("Missing value in the request", data["message"])
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
 
 
@@ -570,6 +996,7 @@ class IntelligenceResourceTest(BaseTest):
             "legit": {"class": "success", "weight": 10},
             "malware": {"class": "danger", "weight": 100},
             "suspicious": {"class": "warning", "weight": 50},
+            "regexes": {"^GROUPNAME": {"class": "danger", "weight": 100}},
         }
         self.login()
         response = self.client.get("/api/v1/intelligence/tagmetadata/")
@@ -577,3 +1004,48 @@ class IntelligenceResourceTest(BaseTest):
         self.assertIsNotNone(response)
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
         self.assertEqual(data, expected_tag_metadata)
+
+
+class ContextLinksResourceTest(BaseTest):
+    """Test Context Links resources."""
+
+    def test_get_context_links_config(self):
+        """Authenticated request to get the context links configuration."""
+
+        expected_configuration = {
+            "hash": [
+                {
+                    "short_name": "LookupOne",
+                    "validation_regex": "/^[0-9a-f]{40}$|^[0-9a-f]{32}$/i",
+                    "context_link": "https://lookupone.local/q=<ATTR_VALUE>",
+                    "redirect_warning": True,
+                },
+                {
+                    "short_name": "LookupTwo",
+                    "validation_regex": "/^[0-9a-f]{64}$/i",
+                    "context_link": "https://lookuptwo.local/q=<ATTR_VALUE>",
+                    "redirect_warning": False,
+                },
+            ],
+            "sha256_hash": [
+                {
+                    "short_name": "LookupTwo",
+                    "validation_regex": "/^[0-9a-f]{64}$/i",
+                    "context_link": "https://lookuptwo.local/q=<ATTR_VALUE>",
+                    "redirect_warning": False,
+                },
+            ],
+            "url": [
+                {
+                    "short_name": "LookupThree",
+                    "context_link": "https://lookupthree.local/q=<ATTR_VALUE>",
+                    "redirect_warning": True,
+                },
+            ],
+        }
+        self.login()
+        response = self.client.get("/api/v1/contextlinks/")
+        data = json.loads(response.get_data(as_text=True))
+        self.assertIsNotNone(response)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+        self.assertDictEqual(data, expected_configuration)

@@ -198,9 +198,7 @@ def _create_eventObj(datastore, event_id, ts, source_attrs=None):
     if source_attrs:
         event["_source"].update(source_attrs)
 
-    datastore.import_event(
-        event["_index"], event["_type"], event["_source"], str(event_id)
-    )
+    datastore.import_event(event["_index"], event["_source"], str(event_id))
 
 
 def check_surrounding_events(TestClass, datastore, threshold_ids, session_type):

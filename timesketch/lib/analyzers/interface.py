@@ -29,6 +29,8 @@ from flask import current_app
 
 import pandas
 
+from timesketch.api.v1 import utils as api_utils
+
 from timesketch.lib import definitions
 from timesketch.lib.datastores.opensearch import OpenSearchDataStore
 from timesketch.models import db_session
@@ -128,7 +130,6 @@ class Event(object):
         datastore: Instance of OpenSearchDataStore.
         sketch: Sketch ID or None if not provided.
         event_id: ID of the Event.
-        event_type: Document type in OpenSearch.
         index_name: The name of the OpenSearch index.
         source: Source document from OpenSearch.
     """
@@ -153,7 +154,6 @@ class Event(object):
 
         try:
             self.event_id = event["_id"]
-            self.event_type = event["_type"]
             self.index_name = event["_index"]
             self.timeline_id = event.get("_source", {}).get("__ts_timeline_id")
             self.source = event.get("_source", None)
@@ -185,7 +185,6 @@ class Event(object):
 
         self.datastore.import_event(
             self.index_name,
-            self.event_type,
             event_id=self.event_id,
             event=event_to_commit,
         )
@@ -215,7 +214,6 @@ class Event(object):
         updated_event = self.datastore.set_label(
             self.index_name,
             self.event_id,
-            self.event_type,
             self.sketch.id,
             user_id,
             label,
@@ -309,6 +307,26 @@ class Event(object):
         db_session.add(db_event)
         db_session.commit()
         self.add_label(label="__ts_comment")
+
+    def get_comments(self):
+        """Get comments for event.
+
+        Returns:
+            List of comments.
+
+        Raises:
+            RuntimeError: if no sketch is present.
+        """
+        if not self.sketch:
+            raise RuntimeError("No sketch provided.")
+
+        searchindex = SearchIndex.query.filter_by(index_name=self.index_name).first()
+        db_event = SQLEvent.get_or_create(
+            sketch=self.sketch.sql_sketch,
+            searchindex=searchindex,
+            document_id=self.event_id,
+        )
+        return db_event.comments
 
     def add_human_readable(self, human_readable, analyzer_name, append=True):
         """Add a human readable string to event.
@@ -492,7 +510,7 @@ class Sketch(object):
         db_session.commit()
         return view
 
-    def add_sketch_attribute(self, name, values, ontology="text"):
+    def add_sketch_attribute(self, name, values, ontology="text", overwrite=False):
         """Add an attribute to the sketch.
 
         Args:
@@ -501,6 +519,8 @@ class Sketch(object):
                 attribute.
             ontology (str): Ontology of the attribute, matches with
                 data/ontology.yaml.
+            overwrite (bool): If True and the attribute already exists,
+                overwrite it.
         """
         # Check first whether the attribute already exists.
         attribute = Attribute.query.filter_by(name=name, sketch=self.sql_sketch).first()
@@ -512,17 +532,33 @@ class Sketch(object):
             db_session.add(attribute)
             db_session.commit()
 
+        if overwrite:
+            attribute.values = []
+
         for value in values:
             attribute_value = AttributeValue(
                 user=None, attribute=attribute, value=value
             )
-
             attribute.values.append(attribute_value)
             db_session.add(attribute_value)
             db_session.commit()
 
         db_session.add(attribute)
         db_session.commit()
+
+    def get_sketch_attributes(self, name):
+        """Get attributes from a sketch.
+
+        Args:
+            name (str): The name of the attribute.
+
+        Returns:
+            The value of the sketch attribute.
+        """
+        attributes = api_utils.get_sketch_attributes(self.sql_sketch)
+        if name not in attributes:
+            raise ValueError(f"Attribute {name} does not exist in sketch.")
+        return attributes[name]["value"]
 
     def add_story(self, title):
         """Add a story to the Sketch.

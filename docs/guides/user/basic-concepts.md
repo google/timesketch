@@ -1,3 +1,7 @@
+---
+hide:
+  - footer
+---
 ## Concepts
 
 Timesketch is built on multiple sketches, where one sketch is usually one case.
@@ -26,7 +30,7 @@ This feature is currently not implemented in the Web UI. But you can add events 
 
 ## Add a comment
 
-You can comment events in your sketch. The comments are safed in your sketch, that means if you add a timeline to multiple sketches, the comments are only shown in the one sketch you made the comments.
+You can comment events in your sketch. The comments are saved in your sketch, that means if you add a timeline to multiple sketches, the comments are only shown in the one sketch you made the comments.
 
 ## Star an event
 
@@ -38,7 +42,7 @@ Views are saved search queries. Those can either be created by the User, by API 
 
 To create a view from the Web Ui, click the _Save as view_ button on the top right of the Search fields in the Explore Tab of a sketch.
 
-## Insights / Aggegations
+## Insights / Aggregations
 
 The _Insights_ functionality in a sketch gives the opportunity to run aggregations on the events in a sketch.
 
@@ -152,6 +156,25 @@ It will also tell in a story:
 The browser time frame analyzer discovers browser events that occurred outside of the typical browsing window of this browser history.
 
 The analyzer determines the activity hours by finding the frequency of browsing events per hour, and then discovering the longest block of most active hours before proceeding with flagging all events outside of that time period. This information can be used by other analyzers or by manually looking for other activity within the inactive time period to find unusual actions.
+
+#### BigQuery Matcher Analyzer
+
+The BigQuery Matcher allows tagging events that match indicators in a BigQuery table.
+
+An example could be tagging events that have a `sha256_hash` field that matches indicators stored in a BigQuery table. You can configure this by adding the following matcher into `bigquery_matcher.yaml`:
+
+```
+sha256_matcher:
+    event_field_name: sha256_hash
+    bq_project: 'my_google_project'
+    bq_query: 'SELECT DISTINCT hash FROM project.dataset.table_with_hashes WHERE hash IN UNNEST(@sha256_hash)'
+    tags: ['bigquery-sha256-match']
+    emojis: ['SKULL']
+```
+
+Any Timesketch event that has a `sha256_hash` field that matches the `hash` column value in the BigQuery table `table_with_hashes` will be tagged with `bigquery-sha256-match` and a skull emoji is added to the event.
+
+Note that Timesketch must be able to authenticate to BigQuery and have access to the tables. You can read more about setting up authentication in the relevant [Google Cloud documentation](https://cloud.google.com/docs/authentication/production).
 
 #### Chain analyzer
 

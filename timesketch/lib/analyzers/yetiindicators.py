@@ -1,6 +1,6 @@
 """Index analyzer plugin for Yeti indicators."""
-from __future__ import unicode_literals
 
+import json
 import re
 
 from flask import current_app
@@ -31,6 +31,8 @@ class YetiIndicators(interface.BaseAnalyzer):
         super().__init__(index_name, sketch_id, timeline_id=timeline_id)
         self.intel = {}
         self.yeti_api_root = current_app.config.get("YETI_API_ROOT")
+        self.yeti_web_root = current_app.config.get("YETI_API_ROOT")
+        self.yeti_web_root.replace("/api", "")
         self.yeti_api_key = current_app.config.get("YETI_API_KEY")
 
     def get_neighbors(self, entity_id):
@@ -44,7 +46,7 @@ class YetiIndicators(interface.BaseAnalyzer):
           A list of JSON objects describing a Yeti object.
         """
         results = requests.post(
-            self.yeti_api_root + "/entities/{0:s}/neighbors/".format(entity_id),
+            f"{self.yeti_api_root}/entities/{entity_id}/neighbors/",
             headers={"X-Yeti-API": self.yeti_api_key},
         )
         if results.status_code != 200:
@@ -57,15 +59,18 @@ class YetiIndicators(interface.BaseAnalyzer):
 
     def get_indicators(self, indicator_type):
         """Populates the intel attribute with entities from Yeti."""
-        results = requests.post(
+        response = requests.post(
             self.yeti_api_root + "/indicators/filter/",
             json={"name": "", "type": indicator_type},
             headers={"X-Yeti-API": self.yeti_api_key},
         )
-        if results.status_code != 200:
-            return
-        self.intel = {item["id"]: item for item in results.json()}
-        for item in results.json():
+        if response.status_code != 200:
+            raise RuntimeError(
+                f"Error {response.status_code} retrieving indicators from Yeti:"
+                + response.json()
+            )
+        self.intel = {item["id"]: item for item in response.json()}
+        for item in response.json():
             item["compiled_regexp"] = re.compile(item["pattern"])
             self.intel[item["id"]] = item
 
@@ -83,12 +88,12 @@ class YetiIndicators(interface.BaseAnalyzer):
         event.add_tags(tags)
         event.commit()
 
-        msg = 'Indicator match: "{0:s}" ({1:s})\n'.format(
-            indicator["name"], indicator["id"]
-        )
-        msg += "Related entities: {0!s}".format([n["name"] for n in neighbors])
-        event.add_comment(msg)
-        event.commit()
+        msg = f'Indicator match: "{indicator["name"]}" ({indicator["id"]})\n'
+        msg += f'Related entities: {[n["name"] for n in neighbors]}'
+        comments = {c.comment for c in event.get_comments()}
+        if msg not in comments:
+            event.add_comment(msg)
+            event.commit()
 
     def run(self):
         """Entry point for the analyzer.
@@ -102,20 +107,50 @@ class YetiIndicators(interface.BaseAnalyzer):
         self.get_indicators("x-regex")
 
         entities_found = set()
-
-        events = self.event_stream(query_string="*", return_fields=["message"])
         total_matches = 0
-        matching_indicators = set()
-        for event in events:
-            for _id, indicator in self.intel.items():
-                regexp = indicator["compiled_regexp"]
-                if regexp.search(event.source["message"]):
-                    total_matches += 1
-                    matching_indicators.add(indicator["id"])
-                    neighbors = self.get_neighbors(indicator["id"])
-                    self.mark_event(indicator, event, neighbors)
-                    for n in neighbors:
-                        entities_found.add("{0:s}:{1:s}".format(n["name"], n["type"]))
+        new_indicators = set()
+
+        intelligence_attribute = {"data": []}
+        existing_refs = set()
+
+        try:
+            intelligence_attribute = self.sketch.get_sketch_attributes("intelligence")
+            existing_refs = {
+                ioc["externalURI"] for ioc in intelligence_attribute["data"]
+            }
+        except ValueError:
+            print("Intelligence not set on sketch, will create from scratch.")
+
+        intelligence_items = []
+
+        for _id, indicator in self.intel.items():
+            query_dsl = {
+                "query": {
+                    "regexp": {"message.keyword": ".*" + indicator["pattern"] + ".*"}
+                }
+            }
+
+            events = self.event_stream(query_dsl=query_dsl, return_fields=["message"])
+            neighbors = self.get_neighbors(indicator["id"])
+
+            for event in events:
+                total_matches += 1
+                self.mark_event(indicator, event, neighbors)
+
+            for n in neighbors:
+                entities_found.add(f"{n['name']}:{n['type']}")
+
+            uri = f"{self.yeti_web_root}/entities/indicator/{indicator['id']}"
+            intel = {
+                "externalURI": uri,
+                "ioc": indicator["pattern"],
+                "tags": [n["name"] for n in neighbors],
+                "type": "other",
+            }
+            if uri not in existing_refs:
+                intelligence_items.append(intel)
+                existing_refs.add(indicator["id"])
+            new_indicators.add(indicator["id"])
 
         if not total_matches:
             return "No indicators were found in the timeline."
@@ -123,12 +158,22 @@ class YetiIndicators(interface.BaseAnalyzer):
         for entity in entities_found:
             name, _type = entity.split(":")
             self.sketch.add_view(
-                "Indicator matches for {0:s} ({1:s})".format(name, _type),
+                f"Indicator matches for {name} ({_type})",
                 self.NAME,
-                query_string='tag:"{0:s}"'.format(name),
+                query_string=f'tag:"{name}"',
             )
-        return "{0:d} events matched {1:d} indicators. [{2:s}]".format(
-            total_matches, len(matching_indicators), ", ".join(entities_found)
+
+        all_iocs = intelligence_attribute["data"] + intelligence_items
+        self.sketch.add_sketch_attribute(
+            "intelligence",
+            [json.dumps({"data": all_iocs})],
+            ontology="intelligence",
+            overwrite=True,
+        )
+
+        return (
+            f"{total_matches} events matched {len(new_indicators)} "
+            f"new indicators. Found: {', '.join(entities_found)}"
         )
 
 

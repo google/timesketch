@@ -1,3 +1,7 @@
+---
+hide:
+  - footer
+---
 # Upgrade an existing installation
 
 When upgrading Timesketch you might need to migrate the database to use the latest database schema. This is how you do that.
@@ -25,7 +29,7 @@ $ docker-compose exec timesketch-web /bin/bash
 ```
 
 While connected to the container:
-    
+
 ```shell
 root@<CONTAINER_ID>$ git clone https://github.com/google/timesketch.git
 root@<CONTAINER_ID>$ cd timesketch/timesketch
@@ -40,7 +44,7 @@ In case you don't get any response back from the `db current` command you'll nee
 root@<CONTAINER_ID>$ tsctl db history
 ```
 
-Find the lasat revision number you have upgraded the database too, and then issue
+Find the last revision number you have upgraded the database too, and then issue
 
 ```shell
 root@<CONTAINER_ID>$ tsctl db stamp <REVISION_ID>
@@ -49,7 +53,7 @@ root@<CONTAINER_ID>$ tsctl db stamp <REVISION_ID>
 And now you are ready to upgrade.
 
 ```shell
-root@<CONTAINER_ID>$ tsctl db upgrade 
+root@<CONTAINER_ID>$ tsctl db upgrade
 ```
 
 ## Upgrade timesketch

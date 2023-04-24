@@ -33,7 +33,7 @@ services:
 
   opensearch:
     container_name: opensearch
-    image: opensearchproject/opensearch:latest
+    image: opensearchproject/opensearch:1.3.2
     restart: always
     environment:
       - discovery.type=single-node
@@ -83,21 +83,4 @@ services:
     ports:
       - 127.0.0.1:9090:9090
     command: --config.file=/etc/prometheus/prometheus.yml
-  grafana:
-    container_name: grafana
-    image: "grafana/grafana:latest"
-    volumes:
-      - ./grafana/provisioning:/etc/grafana/provisioning
-      - ./grafana/dashboards:/etc/grafana/dashboards
-    environment:
-      - GF_SECURITY_ADMIN_USER=dev
-      - GF_SECURITY_ADMIN_PASSWORD=dev
-      - GF_SECURITY_DISABLE_GRAVATAR=true
-      - GF_AUTH_ANONYMOUS_ENABLED=true
-      - GF_USERS_AUTO_ASSIGN_ORG_ROLE=Viewer
-      - GF_ANALYTICS_REPORTING_ENABLED=false
-      - GF_ANALYTICS_CHECK_FOR_UPDATES=false
-      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/dashboards/timesketch.json
-    restart: always
-    ports:
-      - 127.0.0.1:3000:3000
+

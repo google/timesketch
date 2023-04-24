@@ -1,3 +1,7 @@
+---
+hide:
+  - footer
+---
 # Search within timeline
 
 ## Search queries
@@ -92,7 +96,7 @@ Below are syntax elements and example regular expressions
    </td>
   </tr>
   <tr>
-   <td><code>"?"</code> 
+   <td><code>"?"</code>
    </td>
    <td>Zero-or-one
    </td>
@@ -177,7 +181,7 @@ Below are syntax elements and example regular expressions
 | Dates after            | datetime:[2021-08-31 TO *]                               |
 | Either side of a range | datetime:[* TO 2021-08-29] OR datetime:[2021-08-31 TO *] |
 
-Now that we can handle dates in the query bar, we can start building more complex queries.  
+Now that we can handle dates in the query bar, we can start building more complex queries.
 This query will find all the potential Remote Desktop event log entries in the given date range.
 
 `data_type:"windows:evtx:record" AND event_identifier:4624 AND xml_string:"/LogonType\"\>3/" AND datetime:[2021-08-29 TO 2021-08-31]`
@@ -209,10 +213,11 @@ On “Views” page, you can quickly generate and add a view from a template to 
 
 Here are some common searches:
 
-| Description                  | Example Query                                                    |
-| ---------------------------- | ---------------------------------------------------------------- |
-| EventId 4624 and LogonType 5 | event_identifier:4624 AND "LogonType\">5</Data>"                 |
-| Windows File path            | "C:\\Users\\foobar\\Download\\folder\ whitespace\\filename.jpeg" |
+| Description                  | Example Query                                                    |Comment    |
+| ---------------------------- | ---------------------------------------------------------------- |------------|
+| EventId 4624 and LogonType 5 | event_identifier:4624 AND "LogonType\">5</Data>"                 | |
+| Windows File path            | "C:\\Users\\foobar\\Download\\folder\ whitespace\\filename.jpeg" ||
+| Events that have a value in a field that contains the name `*comm*`           | `_exists_:"*comm*"` | Can be very expensive search |
 
 ## Common questions
 

@@ -24,11 +24,29 @@ const defaultState = (currentUser) => {
     sketch: {},
     meta: {},
     searchHistory: {},
+    scenarios: [],
+    hiddenScenarios: [],
+    scenarioTemplates: [],
+    graphPlugins: [],
+    savedGraphs: [],
     tags: [],
     dataTypes: [],
     count: 0,
     currentSearchNode: null,
     currentUser: currentUser,
+    activeContext: {
+      scenario: null,
+      facet: null,
+      question: null
+    },
+    snackbar: {
+      active: false,
+      color: "",
+      message: "",
+      timeout: -1
+    },
+    contextLinkConf: {},
+    sketchAnalyzerList: {},
   }
 }
 
@@ -45,8 +63,13 @@ export default new Vuex.Store({
     SET_SEARCH_HISTORY(state, payload) {
       Vue.set(state, 'searchHistory', payload.objects)
     },
-    SET_TIMELINE_TAGS(state, payload) {
-      let buckets = payload.objects[0]['field_bucket']['buckets']
+    SET_SCENARIOS(state, payload) {
+      Vue.set(state, 'scenarios', payload.objects[0])
+    },
+    SET_SCENARIO_TEMPLATES(state, payload) {
+      Vue.set(state, 'scenarioTemplates', payload.objects)
+    },
+    SET_TIMELINE_TAGS(state, buckets) {
       Vue.set(state, 'tags', buckets)
     },
     SET_DATA_TYPES(state, payload) {
@@ -63,23 +86,55 @@ export default new Vuex.Store({
       Vue.set(state, 'sigmaRuleList', payload['objects'])
       Vue.set(state, 'sigmaRuleList_count', payload['meta']['rules_count'])
     },
+    SET_ACTIVE_USER(state, payload) {
+      ApiClient.getLoggedInUser().then((response) => {
+        let currentUser = response.data.objects[0].username
+        Vue.set(state, 'currentUser', currentUser)
+      })
+    },
+    SET_ACTIVE_CONTEXT(state, payload) {
+      Vue.set(state, 'activeContext', payload)
+    },
+    CLEAR_ACTIVE_CONTEXT(state) {
+      let payload = {
+        scenario: null,
+        facet: null,
+        question: null
+      }
+      Vue.set(state, 'activeContext', payload)
+    },
+    SET_GRAPH_PLUGINS(state, payload) {
+      Vue.set(state, 'graphPlugins', payload)
+    },
+    SET_SAVED_GRAPHS(state, payload) {
+      Vue.set(state, 'savedGraphs', payload.objects[0] || [])
+    },
+    SET_SNACKBAR(state, snackbar) {
+      Vue.set(state, 'snackbar', snackbar)
+    },
     RESET_STATE(state, payload) {
       ApiClient.getLoggedInUser().then((response) => {
         let currentUser = response.data.objects[0].username
         Object.assign(state, defaultState(currentUser))
       })
     },
+    SET_CONTEXT_LINKS(state, payload) {
+      Vue.set(state, 'contextLinkConf', payload)
+    },
+    SET_ANALYZER_LIST(state, payload) {
+      Vue.set(state, 'sketchAnalyzerList', payload)
+    },
   },
   actions: {
     updateSketch(context, sketchId) {
       return ApiClient.getSketch(sketchId)
         .then((response) => {
-          // console.log(response.data.objects[0].active_timelines[0].color)
           context.commit('SET_SKETCH', response.data)
-          context.dispatch('updateTimelineTags', sketchId)
+          context.commit('SET_ACTIVE_USER', response.data)
+          context.dispatch('updateTimelineTags', { sketchId: sketchId })
           context.dispatch('updateDataTypes', sketchId)
         })
-        .catch((e) => {})
+        .catch((e) => { })
     },
     updateCount(context, sketchId) {
       // Count events for all timelines in the sketch
@@ -87,7 +142,7 @@ export default new Vuex.Store({
         .then((response) => {
           context.commit('SET_COUNT', response.data.meta.count)
         })
-        .catch((e) => {})
+        .catch((e) => { })
     },
     resetState(context) {
       context.commit('RESET_STATE')
@@ -103,9 +158,26 @@ export default new Vuex.Store({
         .then((response) => {
           context.commit('SET_SEARCH_HISTORY', response.data)
         })
-        .catch((e) => {})
+        .catch((e) => { })
     },
-    updateTimelineTags(context, sketchId) {
+    updateScenarios(context, sketchId) {
+      if (!sketchId) {
+        sketchId = context.state.sketch.id
+      }
+      return ApiClient.getSketchScenarios(sketchId)
+        .then((response) => {
+          context.commit('SET_SCENARIOS', response.data)
+        })
+        .catch((e) => { })
+    },
+    updateScenarioTemplates(context, sketchId) {
+      return ApiClient.getScenarioTemplates(sketchId)
+        .then((response) => {
+          context.commit('SET_SCENARIO_TEMPLATES', response.data)
+        })
+        .catch((e) => { })
+    },
+    updateTimelineTags(context, payload) {
       if (!context.state.sketch.active_timelines.length) {
         return
       }
@@ -113,13 +185,24 @@ export default new Vuex.Store({
         aggregator_name: 'field_bucket',
         aggregator_parameters: {
           field: 'tag',
+          limit: '1000',
         },
       }
-      return ApiClient.runAggregator(sketchId, formData)
+      return ApiClient.runAggregator(payload.sketchId, formData)
         .then((response) => {
-          context.commit('SET_TIMELINE_TAGS', response.data)
+          let buckets = response.data.objects[0]['field_bucket']['buckets']
+          if (payload.tag && payload.num) {
+            let missing = buckets.find(tag => tag.tag === payload.tag) === undefined
+            if (missing) {
+              buckets.push({ tag: payload.tag, count: payload.num })
+            } else {
+              let tagIndex = buckets.findIndex(tag => tag.tag === payload.tag)
+              buckets[tagIndex].count += payload.num
+            }
+          }
+          context.commit('SET_TIMELINE_TAGS', buckets)
         })
-        .catch((e) => {})
+        .catch((e) => { })
     },
     updateDataTypes(context, sketchId) {
       if (!context.state.sketch.active_timelines.length) {
@@ -129,20 +212,77 @@ export default new Vuex.Store({
         aggregator_name: 'field_bucket',
         aggregator_parameters: {
           field: 'data_type',
+          limit: '1000',
         },
       }
       return ApiClient.runAggregator(sketchId, formData)
         .then((response) => {
           context.commit('SET_DATA_TYPES', response.data)
         })
-        .catch((e) => {})
+        .catch((e) => { })
     },
     updateSigmaList(context) {
-      ApiClient.getSigmaList()
+      ApiClient.getSigmaRuleList()
         .then((response) => {
           context.commit('SET_SIGMA_LIST', response.data)
         })
-        .catch((e) => {})
+        .catch((e) => { })
     },
-  },
+    setActiveContext(context, activeScenarioContext) {
+      context.commit('SET_ACTIVE_CONTEXT', activeScenarioContext)
+    },
+    clearActiveContext(context) {
+      context.commit('CLEAR_ACTIVE_CONTEXT')
+    },
+    setSnackBar(context, snackbar) {
+      context.commit("SET_SNACKBAR", {
+        active: true,
+        color: snackbar.color,
+        message: snackbar.message,
+        timeout: snackbar.timeout
+      });
+    },
+    updateContextLinks(context) {
+      ApiClient.getContextLinkConfig()
+        .then((response) => {
+          context.commit('SET_CONTEXT_LINKS', response.data)
+      })
+      .catch((e) => { })
+    },
+    updateGraphPlugins(context) {
+      ApiClient.getGraphPluginList()
+        .then((response) => {
+          context.commit('SET_GRAPH_PLUGINS', response.data)
+        })
+        .catch((e) => { })
+    },
+    updateSavedGraphs(context, sketchId) {
+      if (!sketchId) {
+        sketchId = context.state.sketch.id
+      }
+      ApiClient.getSavedGraphList(sketchId)
+        .then((response) => {
+        context.commit('SET_SAVED_GRAPHS', response.data)
+      })
+      .catch((e) => {
+        console.error(e)
+      })
+    },
+    updateAnalyzerList(context, sketchId) {
+      if (!sketchId) {
+        sketchId = context.state.sketch.id
+      }
+      ApiClient.getAnalyzers(sketchId).then((response) => {
+        let analyzerList = {}
+        if (response.data !== undefined) {
+          response.data.forEach((analyzer) => {
+            analyzerList[analyzer.name] = analyzer
+          })
+        }
+        context.commit('SET_ANALYZER_LIST', analyzerList)
+      }).catch((e) => {
+        console.log(e)
+      })
+    },
+  }
 })

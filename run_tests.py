@@ -1,72 +1,17 @@
 #!/usr/bin/env python
-"""Main entry point for running tests and linters."""
-from __future__ import print_function
-from __future__ import unicode_literals
-
+"""Main entry point for running tests."""
 import subprocess
-import argparse
 
 
-def run_python_tests(coverage=False):
-    try:
-        if coverage:
-            subprocess.check_call(
-                (
-                    "nosetests --with-coverage"
-                    " --cover-package=timesketch_api_client,"
-                    "timesketch_import_client,timesketch"
-                    " api_client/python/ timesketch/"
-                    " cli_client/python/"
-                ),
-                shell=True,
-            )
-        else:
-            subprocess.check_call(
-                [
-                    "nosetests",
-                    "-x",
-                    "-s",
-                    "timesketch/",
-                    "api_client/python/",
-                    "importer_client/python",
-                    "cli_client/python/",
-                ]
-            )
-    finally:
-        subprocess.check_call(["rm", "-f", ".coverage"])
-
-
-def run_python(args):
-    if not args.no_tests:
-        run_python_tests(coverage=args.coverage)
-
-
-def parse_cli_args(args=None):
-    """Parse command-line arguments to this script.
-
-    Args:
-        args: List of cli arguments not including program name
-
-    Returns:
-        Instance of argparse.Namespace with the following boolean attributes:
-        py, js, selenium, full, no_tests, coverage
-
-    Raises:
-        SystemExit if arguments are invalid or --help is present.
-    """
-    p = argparse.ArgumentParser(description="Run Python unit tests and linters.")
-    p.add_argument(
-        "--no-tests", action="store_true", help="Skip tests, run only linters."
+def run_python_tests():
+    subprocess.check_call(
+        "python3 -m pytest timesketch/ api_client/",
+        shell=True,
     )
-    p.add_argument(
-        "--coverage", action="store_true", help="Print code coverage report."
-    )
-    return p.parse_args(args)
 
 
 def main():
-    args = parse_cli_args()
-    run_python(args)
+    run_python_tests()
 
 
 main()

@@ -213,7 +213,6 @@ class Event(object):
         datastore: Instance of OpenSearchDatastore (mocked as None).
         sketch: Sketch ID or None if not provided.
         event_id: ID of the Event.
-        event_type: Document type in OpenSearch.
         index_name: The name of the OpenSearch index.
         source: Source document from OpenSearch.
         updates: A list of all changes made to an event, with each change
@@ -238,7 +237,6 @@ class Event(object):
         self.updates = []
 
         self.event_id = uuid.uuid4().hex
-        self.event_type = "mocked_event"
         self.index_name = "mocked_index"
         self.source = event
 
@@ -559,7 +557,7 @@ class Sketch(object):
         self._context = context
 
 
-class BaseIndexAnalyzer(object):
+class BaseAnalyzer(object):
     """Base class for analyzers.
 
     Attributes:
@@ -656,7 +654,6 @@ class BaseIndexAnalyzer(object):
             )
 
         with codecs.open(self._file_name, encoding="utf-8", errors="replace") as fh:
-
             if file_extension == "csv":
                 reader = csv.DictReader(fh)
                 for row in reader:
@@ -718,7 +715,7 @@ class BaseIndexAnalyzer(object):
         self.datastore = context
 
 
-class BaseSketchAnalyzer(BaseIndexAnalyzer):
+class BaseSketchAnalyzer(BaseAnalyzer):
     """Base class for sketch analyzers.
 
     Attributes:

@@ -88,9 +88,7 @@ class SearchIndexListResource(resources.ResourceMixin, Resource):
             datastore = self.datastore
 
             if not datastore.client.indices.exists(index=es_index_name):
-                self.datastore.create_index(
-                    index_name=es_index_name, doc_type="generic_event"
-                )
+                self.datastore.create_index(index_name=es_index_name)
 
             db_session.add(searchindex)
             db_session.commit()

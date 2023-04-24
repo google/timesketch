@@ -1,3 +1,7 @@
+---
+hide:
+  - footer
+---
 # Sizing and limitations
 
 Timesketch is designed to scale.
@@ -80,7 +84,7 @@ OpenSearch
 Docker: Timesketch Worker
 
 timesketch-3:
-OpenSearch 
+OpenSearch
 Docker: Timesketch Worker
 ```
 
