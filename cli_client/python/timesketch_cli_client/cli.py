@@ -80,7 +80,8 @@ class TimesketchCli(object):
         if not active_sketch:
             click.echo(
                 "ERROR: You need to specify a sketch, either with a "
-                "flag (--sketch <SKETCH ID>) or update the config."
+                "flag (--sketch <SKETCH ID>) in front of your command or update"
+                " the config."
             )
             sys.exit(1)
 
@@ -110,7 +111,12 @@ class TimesketchCli(object):
 
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
 @click.version_option(version=get_version(), prog_name="Timesketch CLI")
-@click.option("--sketch", type=int, default=None, help="Sketch to work in.")
+@click.option(
+    "--sketch",
+    type=int,
+    default=None,
+    help="Sketch to work in. This parameter needs to be proviced either by flag or config. If both are provided, the flag takes precedence. The flag needs to be provided before the command.",
+)
 @click.pass_context
 def cli(ctx, sketch):
     """Timesketch CLI client.
