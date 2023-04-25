@@ -17,7 +17,7 @@ To install the Timesketch chart:
 
 To pull the Timesketch chart locally:
 
-  helm pull timesketch --repo https://timesketch-charts.storage.googleapis.com
+  helm pull timesketch --repo https://timesketch-charts.storage.googleapis.com --untar
 
 To install the Timesketch chart from a local repo:
 
