@@ -650,9 +650,17 @@ export default {
       }
     },
     search: function (resetPagination = true, incognito = false, parent = false) {
+      // Exit early if there are no indices selected.
+      if (this.currentQueryFilter.indices && !this.currentQueryFilter.indices.length) {
+        this.eventList = emptyEventList()
+        return
+      }
+
+      // Exit early if there is no query string or DSL provided.
       if (!this.currentQueryString && !this.currentQueryDsl) {
         return
       }
+
       this.searchInProgress = true
       this.selectedEvents = []
       this.eventList = emptyEventList()
