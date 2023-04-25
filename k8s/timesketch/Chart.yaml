@@ -21,8 +21,8 @@ dependencies:
   version: 2.11.3
   repository: https://opensearch-project.github.io/helm-charts/
 maintainers:
-  - name: wyassine
-  - name: Google DFIR
+  - name: wajihyassine
+  - name: berggren
 sources:
 - https://github.com/google/turbinia
 - https://timesketch.org/
