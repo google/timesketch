@@ -8,7 +8,11 @@ To learn more about the release, try:
   $ helm get all {{ .Release.Name }}
 
 To connect to the Timesketch URL, run:
-  $ export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app.kubernetes.io/name={{ include "timesketch.name" . }},app.kubernetes.io/instance={{ .Release.Name }}" -o jsonpath="{.items[0].metadata.name}") 
-  $ export CONTAINER_PORT=$(kubectl get pod --namespace {{ .Release.Namespace }} $POD_NAME -o jsonpath="{.spec.containers[0].ports[0].containerPort}")
-  $ kubectl --namespace {{ .Release.Namespace }} port-forward $POD_NAME 8080:$CONTAINER_PORT
-  $ echo "Visit http://127.0.0.1:8080 to access Timesketch"
+
+  $ kubectl --namespace {{ .Release.Namespace }} port-forward service/{{ include "timesketch.fullname" . }} {{ .Values.service.port }}:{{ .Values.service.port }}
+  $ echo "Visit http://127.0.0.1:{{ .Values.service.port }} to access Timesketch"
+
+To create a Timesketch user, run:
+  
+  $ kubectl --namespace {{ .Release.Namespace }} exec -it deployment/my-timesketch -- bash
+  $ tsctl create-user <TIMESKETCH_USER>
