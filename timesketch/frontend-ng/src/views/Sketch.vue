@@ -31,30 +31,6 @@ limitations under the License.
     </v-container>
 
     <!-- Context search -->
-    <v-dialog scrollable v-model="showTimelineViewDialog">
-      <v-card height="90vh">
-        <v-toolbar dense flat>
-          <strong>Context search {{ contextTimeWindowSeconds }} +/- seconds</strong>
-          <v-spacer></v-spacer>
-          <v-slider
-            v-model="contextTimeWindowSeconds"
-            @end="updateContextQuery()"
-            min="0"
-            max="600"
-            step="1"
-            class="mt-6"
-          >
-          </v-slider>
-        </v-toolbar>
-        <v-divider></v-divider>
-        <v-expand-transition>
-          <v-card-text style="height: 100%">
-            <ts-event-list :query-request="queryRequest" :highlight-event="currentContextEvent._id"></ts-event-list>
-          </v-card-text>
-        </v-expand-transition>
-      </v-card>
-    </v-dialog>
-
     <v-bottom-sheet
       hide-overlay
       persistent
@@ -65,17 +41,23 @@ limitations under the License.
     >
       <v-card>
         <v-toolbar dense flat>
-          <strong>Context search {{ contextTimeWindowSeconds }} +/- seconds</strong>
+          <strong>Context search</strong>
+          <v-btn-toggle v-model="contextTimeWindowSeconds" class="ml-10" rounded>
+            <v-btn
+              v-for="duration in [1, 5, 10, 60, 300, 600, 1800, 3600]"
+              :key="duration"
+              :value="duration"
+              small
+              outlined
+              @click="updateContextQuery(duration)"
+            >
+              {{ duration | formatSeconds }}
+            </v-btn>
+          </v-btn-toggle>
+          <v-btn small text class="ml-5" @click="contextToSearch()">Replace search</v-btn>
+
           <v-spacer></v-spacer>
-          <v-slider
-            v-model="contextTimeWindowSeconds"
-            @end="updateContextQuery()"
-            min="0"
-            max="600"
-            step="1"
-            class="mt-6"
-          >
-          </v-slider>
+
           <v-btn icon :disabled="timelineViewHeight > 40" @click="increaseTimelineViewHeight()">
             <v-icon>mdi-chevron-up</v-icon>
           </v-btn>
@@ -398,7 +380,6 @@ export default {
       // Context
       timelineViewHeight: 60,
       showTimelineView: false,
-      showTimelineViewDialog: false,
       currentContextEvent: {},
       minimizeTimelineView: false,
       queryRequest: {},
@@ -426,11 +407,9 @@ export default {
       })
     })
     EventBus.$on('showContextWindow', this.showContextWindow)
-    EventBus.$on('showContextWindowDialog', this.showContextWindowDialog)
   },
   beforeDestroy() {
     EventBus.$off('showContextWindow')
-    EventBus.$off('showContextWindowDialog')
   },
   computed: {
     sketch() {
@@ -490,18 +469,20 @@ export default {
       let queryRequest = { queryString: '*', queryFilter: queryFilter }
       return queryRequest
     },
-    updateContextQuery(event) {
+    updateContextQuery(duration) {
+      this.contextTimeWindowSeconds = duration
       this.queryRequest = this.generateContextQuery(this.currentContextEvent)
+    },
+    contextToSearch() {
+      let queryRequest = this.generateContextQuery(this.currentContextEvent)
+      queryRequest.doSearch = true
+      EventBus.$emit('setQueryAndFilter', queryRequest)
+      this.showTimelineView = false
     },
     showContextWindow(event) {
       this.currentContextEvent = event
       this.queryRequest = this.generateContextQuery(event)
       this.showTimelineView = true
-    },
-    showContextWindowDialog(event) {
-      this.currentContextEvent = event
-      this.queryRequest = this.generateContextQuery(event)
-      this.showTimelineViewDialog = true
     },
     increaseTimelineViewHeight: function () {
       this.minimizeTimelineView = false

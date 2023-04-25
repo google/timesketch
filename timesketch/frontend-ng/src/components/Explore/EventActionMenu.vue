@@ -27,12 +27,7 @@ limitations under the License.
           <v-list-item-title> <v-icon>mdi-code-json</v-icon> Copy event data as JSON </v-list-item-title>
         </v-list-item>
         <v-list-item style="cursor: pointer" @click="showContextWindow()">
-          <v-list-item-title>
-            <v-icon>mdi-magnify-plus-outline</v-icon> Context search (bottom sheet)
-          </v-list-item-title>
-        </v-list-item>
-        <v-list-item style="cursor: pointer" @click="showContextWindowDialog()">
-          <v-list-item-title> <v-icon>mdi-magnify-plus-outline</v-icon> Context search (dialog) </v-list-item-title>
+          <v-list-item-title> <v-icon>mdi-magnify-plus-outline</v-icon> Context search </v-list-item-title>
         </v-list-item>
       </v-list>
     </v-menu>
@@ -59,9 +54,6 @@ export default {
   methods: {
     showContextWindow() {
       EventBus.$emit('showContextWindow', this.event)
-    },
-    showContextWindowDialog() {
-      EventBus.$emit('showContextWindowDialog', this.event)
     },
     copyEventAsJSON() {
       ApiClient.getEvent(this.sketch.id, this.event._index, this.event._id)
