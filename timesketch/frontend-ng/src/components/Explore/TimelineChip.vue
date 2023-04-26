@@ -217,13 +217,12 @@ limitations under the License.
             :to="{ name: 'Analyze', params: { sketchId: sketch.id, analyzerTimelineId: timeline.id } }"
             style="cursor: pointer"
             @click="$refs.timelineChipMenuRef.isActive = false"
-            >
+          >
             <v-list-item-action>
               <v-icon>mdi-auto-fix</v-icon>
             </v-list-item-action>
             <v-list-item-subtitle>Run Analyzers</v-list-item-subtitle>
           </v-list-item>
-
         </v-list>
         <div class="px-4">
           <v-color-picker
@@ -470,12 +469,15 @@ export default {
     // TODO: Move to computed
     this.timelineStatus = this.timeline.status[0].status
     this.datasources = this.timeline.datasources
+    let timelineStat = this.meta.stats_per_timeline[this.timeline.id]
 
     if (this.timelineStatus === 'processing') {
       this.autoRefresh = true
     } else {
       this.autoRefresh = false
-      this.allIndexedEvents = this.meta.stats_per_timeline[this.timeline.id]['count']
+      if (timelineStat) {
+        this.allIndexedEvents = timelineStat['count']
+      }
     }
     this.newTimelineName = this.timeline.name
   },
