@@ -267,9 +267,9 @@ limitations under the License.
                 v-bind:style="getTimeBubbleColor(item)"
               ></div>
               <div class="ts-time-bubble ts-time-bubble-color" v-bind:style="getTimeBubbleColor(item)">
-                <h5>
+                <div class="ts-time-bubble-text">
                   <b>{{ item.deltaDays | compactNumber }}</b> days
-                </h5>
+                </div>
               </div>
               <div
                 class="ts-time-bubble-vertical-line ts-time-bubble-vertical-line-color"
@@ -852,18 +852,14 @@ export default {
     },
     queryRequest: {
       handler(newQueryRequest, oldqueryRequest) {
-        // Return early if there is no change to the current request.
-        if (JSON.stringify(newQueryRequest) === JSON.stringify(oldqueryRequest)) {
-          return
-        }
         // Return early if this isn't a new request.
-        if (!newQueryRequest) {
+        if (newQueryRequest === oldqueryRequest || !newQueryRequest) {
           return
         }
         this.currentQueryString = newQueryRequest.queryString || ''
         this.currentQueryFilter = newQueryRequest.queryFilter || defaultQueryFilter()
         this.currentQueryDsl = newQueryRequest.queryDsl || null
-        let resetPagination = newQueryRequest['resetPagination'] || true
+        let resetPagination = newQueryRequest['resetPagination'] || false
         let incognito = newQueryRequest['incognito'] || false
         let parent = newQueryRequest['parent'] || false
         // Set additional fields. This is used when loading filter from a saved search.
@@ -932,13 +928,9 @@ export default {
   font-size: var(--font-size-small);
 }
 
-.ts-time-bubble h5 {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  margin: 0;
-  opacity: 70%;
+.ts-time-bubble-text {
+  font-size: 0.8em;
+  padding-top: 4px;
 }
 
 .ts-time-bubble-vertical-line {

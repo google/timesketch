@@ -46,6 +46,7 @@ const defaultState = (currentUser) => {
       timeout: -1
     },
     contextLinkConf: {},
+    sketchAnalyzerList: {},
   }
 }
 
@@ -119,6 +120,9 @@ export default new Vuex.Store({
     },
     SET_CONTEXT_LINKS(state, payload) {
       Vue.set(state, 'contextLinkConf', payload)
+    },
+    SET_ANALYZER_LIST(state, payload) {
+      Vue.set(state, 'sketchAnalyzerList', payload)
     },
   },
   actions: {
@@ -262,6 +266,22 @@ export default new Vuex.Store({
       })
       .catch((e) => {
         console.error(e)
+      })
+    },
+    updateAnalyzerList(context, sketchId) {
+      if (!sketchId) {
+        sketchId = context.state.sketch.id
+      }
+      ApiClient.getAnalyzers(sketchId).then((response) => {
+        let analyzerList = {}
+        if (response.data !== undefined) {
+          response.data.forEach((analyzer) => {
+            analyzerList[analyzer.name] = analyzer
+          })
+        }
+        context.commit('SET_ANALYZER_LIST', analyzerList)
+      }).catch((e) => {
+        console.log(e)
       })
     },
   }

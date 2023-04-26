@@ -93,40 +93,38 @@ limitations under the License.
 
         <!-- Interactive data components -->
         <div v-if="block.componentName">
-          <v-hover v-slot="{ hover }">
-            <!-- Saved Searches -->
-            <div>
-              <v-card v-if="block.componentName === 'TsEventList'" outlined class="mb-2">
-                <v-toolbar dense flat>
-                  <router-link
-                    style="cursor: pointer; text-decoration: none"
-                    :to="{ name: 'Explore', query: { view: block.componentProps.view.id } }"
-                  >
-                    <span @click="setActiveView(block.componentProps.view)">{{ block.componentProps.view.name }}</span>
-                  </router-link>
+          <!-- Saved Searches -->
+          <div>
+            <v-card v-if="block.componentName === 'TsEventList'" outlined class="mb-2">
+              <v-toolbar dense flat>
+                <router-link
+                  style="cursor: pointer; text-decoration: none"
+                  :to="{ name: 'Explore', query: { view: block.componentProps.view.id } }"
+                >
+                  <span @click="setActiveView(block.componentProps.view)">{{ block.componentProps.view.name }}</span>
+                </router-link>
 
-                  <v-spacer></v-spacer>
-                  <v-btn icon v-if="hover" @click="deleteBlock(index)">
-                    <v-icon small>mdi-trash-can-outline</v-icon>
-                  </v-btn>
-                </v-toolbar>
-                <v-divider></v-divider>
-                <v-card-text>
-                  <component :is="block.componentName" v-bind="formatComponentProps(block)"></component>
-                </v-card-text>
-              </v-card>
-              <v-card v-if="block.componentName === 'TsAggregationGroupCompact'" outlined class="mb-2">
-                <v-toolbar dense flat>{{ block.componentProps.aggregation_group.name }}</v-toolbar>
-                <v-divider></v-divider>
-                <v-card-text>Aggregations are not yet supported</v-card-text>
-              </v-card>
-              <v-card v-if="block.componentName === 'TsAggregationCompact'" outlined class="mb-2">
-                <v-toolbar dense flat>{{ block.componentProps.aggregation.name }}</v-toolbar>
-                <v-divider></v-divider>
-                <v-card-text>Aggregations are not yet supported</v-card-text>
-              </v-card>
-            </div>
-          </v-hover>
+                <v-spacer></v-spacer>
+                <v-btn icon @click="deleteBlock(index)">
+                  <v-icon small>mdi-trash-can-outline</v-icon>
+                </v-btn>
+              </v-toolbar>
+              <v-divider></v-divider>
+              <v-card-text>
+                <component :is="block.componentName" v-bind="formatComponentProps(block)"></component>
+              </v-card-text>
+            </v-card>
+            <v-card v-if="block.componentName === 'TsAggregationGroupCompact'" outlined class="mb-2">
+              <v-toolbar dense flat>{{ block.componentProps.aggregation_group.name }}</v-toolbar>
+              <v-divider></v-divider>
+              <v-card-text>Aggregations are not yet supported</v-card-text>
+            </v-card>
+            <v-card v-if="block.componentName === 'TsAggregationCompact'" outlined class="mb-2">
+              <v-toolbar dense flat>{{ block.componentProps.aggregation.name }}</v-toolbar>
+              <v-divider></v-divider>
+              <v-card-text>Aggregations are not yet supported</v-card-text>
+            </v-card>
+          </div>
         </div>
 
         <!-- Add controls to add new blocks to the page -->
