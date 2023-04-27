@@ -1,10 +1,7 @@
 ## Timesketch Helm Chart
 ## Please use this Helm chart for deploying Timesketch to a Kubernetes environment
 ##
-## @section Timesketch configuration
-## The following section covers configuration parameters for Timesketch
-##
-## Timesketch image configuration
+## @section Timesketch image configuration
 ##
 image:
   ## @param image.repository Timesketch image repository
@@ -17,24 +14,34 @@ image:
   ## @param image.tag Overrides the image tag whose default is the chart appVersion
   ##
   tag: latest
-  ## @param image.imagePullSecrets
+  ## @param image.imagePullSecrets Specify secrets if pulling from a private repository
   ## ref https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
   ## e.g.
   ## imagePullSecrets:
   ##   - myRegistryKeySecretName
   ##
   imagePullSecrets: []
-## Timesketch frontend configuration
+## @section Timesketch Configuration Parameters
+## ref: https://github.com/google/timesketch/blob/master/data/timesketch.conf
+## 
+config:
+  ## @param config.override Overrides the default Timesketch configs to instead use a user specified directory if present on the root directory of the Helm chart
+  ## to retrieve the config files from. Please ensure the appropriate configs are in the directory else Timesketch
+  ## may not run properly. To see which config files are required, review the tools/download-timesketch-configs.sh
+  ## script packaged along with this Helm chart.
+  ##
+  override: configs/*
+## @section Timesketch Frontend Configuration
 ##
 frontend:
-  ## @param podSecurityContext frontend.PodSecurityContext holds pod-level security attributes and common frontend container settings
+  ## @param frontend.podSecurityContext Holds pod-level security attributes and common frontend container settings
   ## Some fields are also present in container.securityContext. Field values of container.securityContext take precedence over field values of PodSecurityContext
   ## ref https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#podsecuritycontext-v1-core
   ## e.g.
   ## fsgroup: 2000
   ##
   podSecurityContext: {}
-  ## @param SecurityContext frontend.SecurityContext holds security configuration that will be applied to the frontend container
+  ## @param frontend.securityContext Holds security configuration that will be applied to the frontend container
   ## Some fields are present in both SecurityContext and PodSecurityContext. When both are set, the values in SecurityContext take precedence
   ## ref https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#securitycontext-v1-core
   ## e.g.
@@ -47,10 +54,10 @@ frontend:
   ##
   securityContext: {}
   ## Frontend resource requests and limits
-  ## @param frontend.resources.requests.cpu The requested cpu for the frontend container
-  ## @param frontend.resources.requests.memory The requested memory for the frontend container
-  ## @param frontend.resources.limits.cpu The resources cpu limits for the frontend container
-  ## @param frontend.resources.limits.memory The resources memory limits for the frontend container
+  ## @param frontend.resources.requests.cpu Requested cpu for the frontend container
+  ## @param frontend.resources.requests.memory Requested memory for the frontend container
+  ## @param frontend.resources.limits.cpu Resource cpu limits for the frontend container
+  ## @param frontend.resources.limits.memory Resource memory limits for the frontend container
   ##
   resources:
     requests:
@@ -71,17 +78,17 @@ frontend:
   ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
   ##
   affinity: {}
-## Timesketch worker configuration
+## @section Timesketch Worker Configuration
 ##
 worker:
-  ## @param podSecurityContext worker.PodSecurityContext holds pod-level security attributes and common worker container settings
+  ## @param worker.podSecurityContext Holds pod-level security attributes and common worker container settings
   ## Some fields are also present in container.securityContext. Field values of container.securityContext take precedence over field values of PodSecurityContext
   ## ref https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#podsecuritycontext-v1-core
   ## e.g.
   ## fsgroup: 2000
   ##
   podSecurityContext: {}
-  ## @param SecurityContext worker.SecurityContext holds security configuration that will be applied to the worker container
+  ## @param worker.securityContext Holds security configuration that will be applied to the worker container
   ## Some fields are present in both SecurityContext and PodSecurityContext. When both are set, the values in SecurityContext take precedence
   ## ref https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#securitycontext-v1-core
   ## e.g.
@@ -94,10 +101,10 @@ worker:
   ##
   securityContext: {}
   ## Worker resource requests and limits
-  ## @param worker.resources.requests.cpu The requested cpu for the worker container
-  ## @param worker.resources.requests.memory The requested memory for the worker container
-  ## @param worker.resources.limits.cpu The resources cpu limits for the worker container
-  ## @param worker.resources.limits.memory The resources memory limits for the worker container
+  ## @param worker.resources.requests.cpu Requested cpu for the worker container
+  ## @param worker.resources.requests.memory Requested memory for the worker container
+  ## @param worker.resources.limits.cpu Resource cpu limits for the worker container
+  ## @param worker.resources.limits.memory Resource memory limits for the worker container
   ##
   resources:
     requests:
@@ -118,23 +125,14 @@ worker:
   ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
   ##
   affinity: {}
-## Timesketch configuration parameters
-## ref: https://github.com/google/turbinia/blob/master/turbinia/config/turbinia_config_tmpl.py
-## 
-config:
-  ## @param config.override Overrides the default Timesketch configs to instead use a user specified directory
-  ## to retrieve the config files from. Please ensure the appropriate configs are in the directory else Timesketch
-  ## may not run properly. To see which config files are required, review the tools/download-timesketch-configs.sh
-  ## script packaged along with this Helm chart.
-  ##
-  override: configs/*
+## @section Common Parameters
 ## @param nameOverride String to partially override names.fullname
 ##
 nameOverride: ""
 ## @param fullnameOverride String to fully override names.fullname
 ##
 fullnameOverride: ""
-## Timesketch service account parameters
+## Service Account Parameters
 ##
 serviceAccount:
   ## @param serviceAccount.create Specifies whether a service account should be created
@@ -147,7 +145,7 @@ serviceAccount:
   ## If not set and create is true, a name is generated using the fullname template
   ##
   name: "timesketch"
-## Timesketch service parameters
+## Service Parameters
 ##
 service:
   ## @param service.type Timesketch service type
@@ -156,7 +154,7 @@ service:
   ## @param service.port Timesketch service port
   ##
   port: 5000
-## Timesketch metrics parameters
+## Metrics Parameters
 ## IMPORTANT: Timesketch utilizes Prometheus to scrape metrics through annotations
 ## Please ensure the Prometheus server is also installed to the cluster for metrics to scrape properly
 ##
@@ -167,7 +165,7 @@ metrics:
   ## @param metrics.port Port to scrape metrics from
   ##
   port: 9200
-## Timesketch persistence storage parameters
+## Persistence Storage Parameters
 ##
 persistence:
   ## @param persistence.name Timesketch persistent volume name
@@ -193,13 +191,13 @@ persistence:
   ## 
   accessModes:
     - ReadWriteMany
-## Timesketch ingress parameters
+## Ingress Parameters
 ##
 ingress:
   ## @param ingress.enabled Enable the Timesketch loadbalancer for external access
   ##
   enabled: false
-  ## @param ingress.host The domain name Timesketch will be hosted under
+  ## @param ingress.host Domain name Timesketch will be hosted under
   ## Please ensure this value is set when enabling Ingress. If using "gce" for
   ## ingress.className, please ensure you have a DNS record set for the IP address
   ## registered under ingress.gcp.staticIPName
@@ -212,12 +210,11 @@ ingress:
   ## GCP ingress configuration
   ##
   gcp:
-    ## @param ingress.gcp.managedCertificates Enabled GCP managed certificates for your domain
+    ## @param ingress.gcp.managedCertificates Enables GCP managed certificates for your domain
     ## ref https://cloud.google.com/load-balancing/docs/ssl-certificates/google-managed-certs
     ##
     managedCertificates: false
-    ## @param ingress.gcp.staticIPName Name of the static IP address you reserved in GCP
-    ## This is required when using "gce" in ingress.className
+    ## @param ingress.gcp.staticIPName Name of the static IP address you reserved in GCP. Required when using "gce" in ingress.className
     ## ref https://cloud.google.com/compute/docs/ip-addresses/reserve-static-external-ip-address
     ##
     staticIPName: ""
@@ -225,7 +222,7 @@ ingress:
 ## This section contains all the main configuration for third party dependencies
 ## Timesketch requires to run
 ##
-## Opensearch Configuration Parameters
+## @section Opensearch Configuration Parameters
 ## IMPORTANT: The Opensearch Security Plugin / TLS has not yet been configured by default
 ## ref on steps required https://opensearch.org/docs/1.1/security-plugin/configuration/index/
 ## To see a full list of available values, run helm show values charts/opensearch*
@@ -234,7 +231,7 @@ opensearch:
   ## @param opensearch.enabled Enables the Opensearch deployment
   ##
   enabled: true
-  ## @param opensearch.config.opensearch.yml The Opensearch configuration file
+  ## @param opensearch.config.opensearch.yml Opensearch configuration file. Can be appended for additional configuration options
   ## Values must be YAML literal style scalar / YAML multiline string
   ## <filename>: |
   ##   <formatted-value(s)>
@@ -244,14 +241,22 @@ opensearch:
       plugins:
         security:
           allow_unsafe_democertificates: false
-  ## @param opensearch.extraEnvs Exra environment variables to add to the Opensearch Deployment
   ## IMPORTANT: Removing the environment variables below will cause the deployment to fail without
   ## additional configuration
   ##
   extraEnvs:
+    ## @param opensearch.extraEnvs[0].name Environment variable to disable Opensearch Demo config
+    ##
     - name: DISABLE_INSTALL_DEMO_CONFIG
+    ## @param opensearch.extraEnvs[0].value Disables Opensearch Demo config
+    ##
       value: "true"
+    ## @param opensearch.extraEnvs[1].name Environment variable to disable Opensearch Security plugin given that
+    ## certificates were not setup as part of this deployment
+    ##
     - name: DISABLE_SECURITY_PLUGIN
+    ## @param opensearch.extraEnvs[1].value Disables Opensearch Security plugin
+    ##
       value: "true"
   ## @param opensearch.replicas Number of Opensearch instances to deploy
   ##
@@ -260,22 +265,22 @@ opensearch:
   ##
   sysctlInit:
     enabled: true
-  ## @param opensearchJavaOpts Sets the size of the Opensearch Java heap
+  ## @param opensearch.opensearchJavaOpts Sets the size of the Opensearch Java heap
   ## It is recommended to use at least half the system's available ram
   ## 
   opensearchJavaOpts: "-Xms32g -Xmx32g"
-  ## @param httpPort Opensearch service port
+  ## @param opensearch.httpPort Opensearch service port
   ##
   httpPort: 9200
   ## Opensearch persistence configuration
   ##
   persistence:
-    ## @param opensearch.persistence.size Persistent Volume size
+    ## @param opensearch.persistence.size Opensearch Persistent Volume size. A persistent volume would be created for each Opensearch replica running
     ##
     size: 1Ti
   ## Opensearch resource requests
-  ## @param opensearch.resources.requests.cpu The requested cpu for the Redis master containers
-  ## @param opensearch.resources.requests.memory The requested memory for the Redis master containers 
+  ## @param opensearch.resources.requests.cpu Requested cpu for the Opensearch containers
+  ## @param opensearch.resources.requests.memory Requested memory for the Opensearch containers 
   ##
   resources:
     requests:
@@ -285,12 +290,12 @@ opensearch:
   ## ref: https://kubernetes.io/docs/user-guide/node-selection/
   ##
   nodeSelector: {}
-## @section Redis configuration parameters
+## @section Redis Configuration Parameters
 ## IMPORTANT: Redis is deployed with Auth enabled by default
 ## To see a full list of available values, run helm show values charts/redis*
 ##
 redis:
-  ## @param redis.enabled enabled Enables the Redis deployment
+  ## @param redis.enabled Enables the Redis deployment
   ##
   enabled: true
   ## @param redis.sentinel.enabled Enables Redis Sentinel on Redis pods
@@ -317,14 +322,14 @@ redis:
     ## Redis master persistence configuration
     ##
     persistence:
-      ## @param redis.master.persistence.size Persistent Volume size
+      ## @param redis.master.persistence.size Redis master Persistent Volume size
       ##
       size: 8Gi
     ## Redis master resource requests and limits
-    ## @param redis.master.resources.requests.cpu The requested cpu for the Redis master containers
-    ## @param redis.master.resources.requests.memory The requested memory for the Redis master containers 
-    ## @param redis.master.resources.limits.cpu The resources cpu limits for the Redis master containers
-    ## @param redis.master.resources.limits.memory The resources memory limits for the Redis master containers
+    ## @param redis.master.resources.requests.cpu Requested cpu for the Redis master containers
+    ## @param redis.master.resources.requests.memory Requested memory for the Redis master containers 
+    ## @param redis.master.resources.limits.cpu Resource cpu limits for the Redis master containers
+    ## @param redis.master.resources.limits.memory Resource memory limits for the Redis master containers
     ##
     resources:
       requests:
@@ -352,14 +357,14 @@ redis:
     ## Redis replicas persistence configuration
     ##
     persistence:
-      ## @param redis.replica.persistence.size Persistent Volume size
+      ## @param redis.replica.persistence.size Redis replica Persistent Volume size
       ##
       size: 8Gi
     ## Redis Replica resource requests and limits
-    ## @param redis.replica.resources.requests.cpu The requested cpu for the Redis replica containers
-    ## @param redis.replica.resources.requests.memory The requested memory for the Redis replica containers 
-    ## @param redis.replica.resources.limits.cpu The resources cpu limits for the Redis replica containers
-    ## @param redis.replica.resources.limits.memory The resources memory limits for the Redis replica containers
+    ## @param redis.replica.resources.requests.cpu Requested cpu for the Redis replica containers
+    ## @param redis.replica.resources.requests.memory Requested memory for the Redis replica containers 
+    ## @param redis.replica.resources.limits.cpu Resource cpu limits for the Redis replica containers
+    ## @param redis.replica.resources.limits.memory Resource memory limits for the Redis replica containers
     ##
     resources:
       requests:
@@ -368,12 +373,12 @@ redis:
       limits:
         cpu: 8000m
         memory: 16Gi 
-## @section Postgresql configuration parameters
+## @section Postgresql Configuration Parameters
 ## IMPORTANT: Postgresql is deployed with Auth enabled by default
 ## To see a full list of available values, run helm show values charts/postgresql*
 ##
 postgresql:
-  ## @param postgresql.enabled enabled Enables the Postgresql deployment
+  ## @param postgresql.enabled Enables the Postgresql deployment
   ##
   enabled: true
   ## @param postgresql.architecture PostgreSQL architecture (`standalone` or `replication`)
@@ -404,13 +409,13 @@ postgresql:
     ## PostgreSQL Primary persistence configuration
     ##
     persistence:
-      ## @param postgresql.primary.persistence.size Persistent Volume size
+      ## @param postgresql.primary.persistence.size PostgreSQL Persistent Volume size
       ##
       size: 8Gi
     ## PostgreSQL Primary resource requests and limits
-    ## @param postgresql.primary.resources.requests.cpu The requested cpu for the PostgreSQL Primary containers
-    ## @param postgresql.primary.resources.requests.memory The requested memory for the PostgreSQL Primary containers
-    ## @param postgresql.primary.resources.limits The resources limits for the PostgreSQL Primary containers
+    ## @param postgresql.primary.resources.requests.cpu Requested cpu for the PostgreSQL Primary containers
+    ## @param postgresql.primary.resources.requests.memory Requested memory for the PostgreSQL Primary containers
+    ## @param postgresql.primary.resources.limits Resource limits for the PostgreSQL Primary containers
     ##
     resources:
       requests:
@@ -434,13 +439,13 @@ postgresql:
       ports:
         postgresql: 5432
     persistence:
-      ## @param postgresql.readReplicas.persistence.size Persistent Volume size
+      ## @param postgresql.readReplicas.persistence.size PostgreSQL Persistent Volume size
       ##
       size: 8Gi
     ## PostgreSQL read only resource requests and limits
-    ## @param postgresql.readReplicas.resources.requests.cpu The requested cpu for the PostgreSQL read only containers
-    ## @param postgresql.readReplicas.resources.requests.memory The requested memory for the PostgreSQL read only containers
-    ## @param postgresql.readReplicas.resources.limits The resources limits for the PostgreSQL read only containers
+    ## @param postgresql.readReplicas.resources.requests.cpu Requested cpu for the PostgreSQL read only containers
+    ## @param postgresql.readReplicas.resources.requests.memory Requested memory for the PostgreSQL read only containers
+    ## @param postgresql.readReplicas.resources.limits Resource limits for the PostgreSQL read only containers
     ##
     resources:
       requests:
