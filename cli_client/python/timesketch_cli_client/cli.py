@@ -115,9 +115,7 @@ class TimesketchCli(object):
     "--sketch",
     type=int,
     default=None,
-    help="Sketch to work in. This parameter needs to be provided either by flag"
-    " or config. If both are provided, the flag takes precedence. The flag "
-    "needs to be provided before the command.",
+    help="Sketch to work in. Parameter needs to be provided either by flag",
 )
 @click.pass_context
 def cli(ctx, sketch):
