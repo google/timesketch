@@ -236,16 +236,33 @@ Persistent Volume Claims are used to keep the data across deployments. By defaul
 deploy a GCP Filestore server, similar to a NFS share. The `persistent.StorageClass` value can be updated to automatically
 provision storage for other providers such as AWS and minikube, but this has yet to be tested. See the [Parameters](#parameters) section to configure the PVC or to disable persistence.
 
-To upgrade storage capacity for your provisioned instance, run:
+To install the Timesketch chart with more storage capacity, run:
 ```console
 helm install my-release \
     --set persistence.size=10T
     oci://us-docker.pkg.dev/osdfir-registry/osdfir-charts/timesketch
 ```
 
-The above command updates Timesketch persistent size to 10 Terabytes.
+The above command installs the Timesketch chart with a persistent volume size of 10 Terabytes.
+
+## Upgrading
+
+If you need to upgrade an existing release to update a value in, such as
+persistent volume size or upgrading to a new release, you can run 
+[helm upgrade](https://helm.sh/docs/helm/helm_upgrade/). For example,
+e, to set a new release and upgrade storage capacity, run:
+```
+helm upgrade my-release \
+    --set image.tag=latest
+    --set persistence.size=10T
+```
+
+The above command upgrades an existing release named `my-release` updating the
+image tag to `latest` and increasing persistent volume size of an existing volume
+to 10 Terabytes
 
 ## Troubleshooting
+
 There is a known issue causing PostgreSQL authentication to fail. This occurs 
 when you `delete` the deployed Helm chart and then redeploy the Chart without
 removing the existing PVCs. When redeploying, please ensure to delete the underlying 
