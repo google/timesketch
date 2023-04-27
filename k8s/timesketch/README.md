@@ -1,5 +1,5 @@
 <!--- app-name: Timesketch -->
-# Timesketch
+# Timesketch Helm Chart
 
 A Helm chart for Timesketch. Timesketch is an open-source tool for collaborative forensic timeline analysis. Using sketches you and your collaborators can easily organize your timelines and analyze them all at the same time. Add meaning to your raw data with rich annotations, comments, tags and stars.
 
@@ -31,7 +31,7 @@ helm install my-release oci://us-docker.pkg.dev/osdfir-registry/osdfir-charts/ti
 
 To pull the chart locally:
 ```console
-helm pull my-release oci://us-docker.pkg.dev/osdfir-registry/osdfir-charts/timesketch
+helm pull oci://us-docker.pkg.dev/osdfir-registry/osdfir-charts/timesketch
 ```
 
 To install the chart from a local repo with the release name `my-release`:
