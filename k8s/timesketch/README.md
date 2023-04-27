@@ -251,7 +251,7 @@ If you need to upgrade an existing release to update a value in, such as
 persistent volume size or upgrading to a new release, you can run 
 [helm upgrade](https://helm.sh/docs/helm/helm_upgrade/). For example,
 e, to set a new release and upgrade storage capacity, run:
-```
+```console
 helm upgrade my-release \
     --set image.tag=latest
     --set persistence.size=10T
