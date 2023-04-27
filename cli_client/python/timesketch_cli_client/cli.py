@@ -79,10 +79,9 @@ class TimesketchCli(object):
 
         if not active_sketch:
             click.echo(
-                "ERROR: You need to specify a sketch, either with a "
-                "flag (--sketch <SKETCH ID>) in front of your command "
-                "or update the config."
+                "ERROR: You need to specify a sketch, either with a flag (--sketch <SKETCH ID>) in front of your command or update the config."  # pylint: disable=line-too-long
             )
+
             sys.exit(1)
 
         # Make sure we have access to the sketch.
