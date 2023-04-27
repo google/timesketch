@@ -87,11 +87,15 @@ export default {
         tagsToAdd = [tagsToAdd]
       }
 
+      if (!this.event._source.hasOwnProperty('tag')) {
+        this.$set(this.event._source, 'tag', [])
+      }
+
       tagsToAdd.forEach((tag) => {
         if (this.event._source.tag.indexOf(tag) === -1) {
-          this.event._source.tag.push(tag)
           ApiClient.tagEvents(this.sketch.id, [this.event], [tag])
             .then((response) => {
+              this.event._source.tag.push(tag)
               this.$store.dispatch('updateTimelineTags', { sketchId: this.sketch.id, tag: tag, num: 1 })
             })
             .catch((e) => {

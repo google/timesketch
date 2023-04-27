@@ -37,11 +37,12 @@ limitations under the License.
       <span class="float-right mr-2">
         <v-progress-circular
           v-if="!analyzerResultsReady || activeAnalyzerQueue.length > 0"
-          :size="20"
-          :width="1"
+          :size="25"
+          :width="2"
           indeterminate
           color="primary"
-        ></v-progress-circular>
+          :value="activeAnalyzerDisplayCount"
+        >{{ activeAnalyzerDisplayCount }}</v-progress-circular>
         <small class="ml-1" v-if="!expanded && (analyzerResults && analyzerResults.length && analyzerResultsReady)"><strong>{{ resultCounter }}</strong></small>
       </span>
     </div>
@@ -61,7 +62,7 @@ limitations under the License.
             hide-default-footer
             disable-pagination
             :search="search"
-            :custom-filter="filterByDisplayName"
+            :custom-filter="filterAnalyzers"
           >
             <template v-slot:header>
               <v-toolbar flat height="45">
@@ -129,6 +130,9 @@ export default {
       }
       return counter
     },
+    activeAnalyzerDisplayCount() {
+      return this.activeAnalyzerQueue.length > 0 ? this.activeAnalyzerQueue.length : '';
+    }
   },
   methods: {
     async initializeAnalyzerResults() {
@@ -224,11 +228,15 @@ export default {
         if (this.activeAnalyzerQueue.indexOf(sessionId) === -1) this.activeAnalyzerQueue.push(sessionId)
       })
     },
-    filterByDisplayName(items, search) {
+    filterAnalyzers(items, search) {
       const searchStr = (search || '').toLowerCase();
-      return items && items.filter(item =>
-        item.data.analyzerInfo.display_name.toLowerCase().indexOf(searchStr) !== -1
-      );
+      return items && items.filter(item => {
+        const displayNameMatches = item.data.analyzerInfo.display_name.toLowerCase().indexOf(searchStr) !== -1;
+        const timelineNameMatches = Object.keys(item.data.timelines).find(
+          timelineName => timelineName.indexOf(searchStr) !== -1
+        );
+        return displayNameMatches || timelineNameMatches;
+      });
     }
   },
   mounted() {
@@ -261,3 +269,10 @@ export default {
   },
 }
 </script>
+
+<style scoped lang="scss">
+.v-progress-circular {
+  font-size: 12px;
+}
+</style>
+
