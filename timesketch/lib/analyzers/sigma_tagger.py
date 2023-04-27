@@ -98,11 +98,11 @@ class SigmaPlugin(interface.BaseAnalyzer):
             sigma_rule_counter += 1
             tagged_events_counter = self.run_sigma_rule(
                 rule.get("search_query"),
-                rule.get("title"),
+                rule_name,
                 tag_list=rule.get("tags"),
             )
         except:  # pylint: disable=bare-except
-            error_msg = "* {0:s} {1:s}".format(rule.get("title"), rule.get("id"))
+            error_msg = "* {0:s} {1:s}".format(rule_name, rule.get("id"))
             logger.error(
                 error_msg,
                 exc_info=True,
@@ -119,7 +119,7 @@ class SigmaPlugin(interface.BaseAnalyzer):
             sigma_rules All Sigma rules
         """
         sigma_rules = []
-        for rule in ts_sigma_lib.get_all_sigma_rules():
+        for rule in ts_sigma_lib.get_all_sigma_rules(parse_yaml=True):
             if rule.get("status") == "stable":
                 sigma_rules.append({"rule": rule})
 
