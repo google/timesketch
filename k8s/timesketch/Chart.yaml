@@ -24,7 +24,7 @@ maintainers:
   - name: wajihyassine
   - name: berggren
 sources:
-- https://github.com/google/turbinia
+- https://github.com/google/timesketch
 - https://timesketch.org/
 icon: https://raw.githubusercontent.com/google/timesketch/master/timesketch/frontend-ng/dist/timesketch-color.png
 appVersion: "20210224"

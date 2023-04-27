@@ -4,7 +4,7 @@ this file has been created which then applies to both the Timesketch Web and
 Worker pod upon startup.
 */}}
 {{- define "timesketch.initContainer" -}}
-{{- $globconfigs := .Files.Glob "configs/*" -}}
+{{- $userconfigs := .Files.Glob .Values.config.override }}
 - name: init-timesketch
   image: busybox
   command: ['sh', '-c', '/init/init-timesketch.sh']
@@ -35,7 +35,7 @@ Worker pod upon startup.
       name: init-timesketch
     - mountPath: /etc/timesketch
       name: timesketch-configs
-    {{- if $globconfigs }}
+    {{- if $userconfigs }}
     - mountPath: /tmp/timesketch
       name: uploaded-configs
     {{- end }}

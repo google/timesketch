@@ -1,4 +1,4 @@
-{{- $globconfigs := .Files.Glob "configs/*" }}
+{{- $userconfigs := .Files.Glob .Values.config.override }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -73,7 +73,7 @@ spec:
             defaultMode: 0744
         - name: timesketch-configs
           emptyDir: {}
-        {{- if $globconfigs }}
+        {{- if $userconfigs }}
         - name: uploaded-configs
           configMap:
             name: {{ include "timesketch.fullname" . }}-configmap

@@ -1,5 +1,5 @@
-{{- $globconfigs := .Files.Glob "configs/*" }}
-{{- if $globconfigs }}
+{{- $userconfigs := .Files.Glob .Values.config.override }}
+{{- if $userconfigs }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -8,5 +8,5 @@ metadata:
   labels:
     {{- include "timesketch.labels" . | nindent 4 }}
 data:
-{{ ($globconfigs).AsConfig | indent 2 }}
+{{ ($userconfigs).AsConfig | indent 2 }}
 {{- end }}

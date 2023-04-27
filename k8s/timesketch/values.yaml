@@ -118,6 +118,16 @@ worker:
   ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
   ##
   affinity: {}
+## Timesketch configuration parameters
+## ref: https://github.com/google/turbinia/blob/master/turbinia/config/turbinia_config_tmpl.py
+## 
+config:
+  ## @param config.override Overrides the default Timesketch configs to instead use a user specified directory
+  ## to retrieve the config files from. Please ensure the appropriate configs are in the directory else Timesketch
+  ## may not run properly. To see which config files are required, review the tools/download-timesketch-configs.sh
+  ## script packaged along with this Helm chart.
+  ##
+  override: configs/*
 ## @param nameOverride String to partially override names.fullname
 ##
 nameOverride: ""

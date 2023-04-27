@@ -14,8 +14,8 @@ data:
     mkdir -p /etc/timesketch
     cd /etc/timesketch
 
-    {{- $globconfigs := .Files.Glob "configs/*" }}
-    {{- if $globconfigs }}
+    {{- $userconfigs := .Files.Glob .Values.config.override }}
+    {{- if $userconfigs }}
     cp /tmp/timesketch/* /etc/timesketch/
     {{- else }}
     echo -n "* Fetching configuration files.." 
