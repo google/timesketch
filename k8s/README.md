@@ -14,6 +14,8 @@ your raw data with rich annotations, comments, tags and stars.
 ```console
 helm install my-release oci://us-docker.pkg.dev/osdfir-registry/osdfir-charts/timesketch
 ```
+> **Tip**: To quickly get started with your own local Kubernetes cluster, see 
+install docs for [minikube](https://minikube.sigs.k8s.io/docs/start/).
 
 ## Introduction
 
