@@ -1,10 +1,14 @@
 <!--- app-name: Timesketch -->
 # Timesketch Helm Chart
 
-A Helm chart for Timesketch. Timesketch is an open-source tool for collaborative forensic timeline analysis. Using sketches you and your collaborators can easily organize your timelines and analyze them all at the same time. Add meaning to your raw data with rich annotations, comments, tags and stars.
+A Helm chart for Timesketch. Timesketch is an open-source tool for collaborative 
+forensic timeline analysis. Using sketches you and your collaborators can easily 
+organize your timelines and analyze them all at the same time. Add meaning to 
+your raw data with rich annotations, comments, tags and stars.
 
 [Overview of Timesketch](http://www.timesketch.org)
 
+[Chart Source Code](https://github.com/google/osdfir-infrastructure)
 ## TL;DR
 
 ```console
@@ -39,9 +43,42 @@ To install the chart from a local repo with the release name `my-release`:
 helm install my-release ../timesketch
 ```
 
-The install command deploys Timesketch on the Kubernetes cluster in the default configuration. The [Parameters](#parameters) section lists the parameters that can be configured during installation.
+The install command deploys Timesketch on the Kubernetes cluster in the default 
+configuration without any resources defined. This is so we can increase the 
+chances our chart runs on environments with little resources, such as Minikube. 
+The [Parameters](#parameters) section lists the parameters that can be configured 
+during installation or see [Installating for Production](#installing-for-production) 
+for a recommended production installation.
 
-> **Tip**:  You can override the default Timesketch configuration by placing a `configs/` directory containing the user-provided configs at the root of the Helm chart. When choosing this option, be sure to pull and install the Helm chart locally.
+> **Tip**:  You can override the default Timesketch configuration by placing a 
+`configs/` directory containing the user-provided configs at the root of the 
+Helm chart. When choosing this option, pull and install the Helm chart locally.
+
+## Installing for Production
+
+Pull the chart locally and review the `values.production.yaml` file for a list 
+of values that will be overridden as part of this installation. 
+```console
+helm pull oci://us-docker.pkg.dev/osdfir-registry/osdfir-charts/timesketch
+```
+
+Install the chart providing both the original values and the production values 
+with a release name `my-release`:
+```console
+helm install my-release ../timesketch -f values.yaml -f values-production.yaml
+```
+
+To upgrade an existing release name `my-release` using production values, run:
+```console
+helm upgrade my-release -f values-production.yaml
+```
+
+Installing or upgrading a Timesketch deployment with `values-production.yaml` 
+file will override a subset of values in the `values.yaml` file with a recommended
+set of resources and replica pods needed for a production Timesketch installation
+and deploys a GCP Filestore persistent volume for shared storage. For non GCP 
+installations, please update the `persistence.storageClass` value with a 
+storageClass supported by your provider.
 
 ## Uninstalling the Chart
 
@@ -75,37 +112,35 @@ kubectl delete pvc -l release=my-release
 
 ### Timesketch Configuration Parameters
 
-| Name              | Description                                                                                                                           | Value       |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
-| `config.override` | Overrides the default Timesketch configs to instead use a user specified directory if present on the root directory of the Helm chart | `configs/*` |
+| Name                | Description                                                                                                                           | Value       |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| `config.override`   | Overrides the default Timesketch configs to instead use a user specified directory if present on the root directory of the Helm chart | `configs/*` |
+| `config.createUser` | Creates a default Timesketch user that can be used to login to Timesketch after deployment                                            | `true`      |
 
 ### Timesketch Frontend Configuration
 
-| Name                                 | Description                                                                 | Value     |
-| ------------------------------------ | --------------------------------------------------------------------------- | --------- |
-| `frontend.podSecurityContext`        | Holds pod-level security attributes and common frontend container settings  | `{}`      |
-| `frontend.securityContext`           | Holds security configuration that will be applied to the frontend container | `{}`      |
-| `frontend.resources.requests.cpu`    | Requested cpu for the frontend container                                    | `2000m`   |
-| `frontend.resources.requests.memory` | Requested memory for the frontend container                                 | `4000Mi`  |
-| `frontend.resources.limits.cpu`      | Resource cpu limits for the frontend container                              | `8000m`   |
-| `frontend.resources.limits.memory`   | Resource memory limits for the frontend container                           | `16000Mi` |
-| `frontend.nodeSelector`              | Node labels for Timesketch frontend pods assignment                         | `{}`      |
-| `frontend.tolerations`               | Tolerations for Timesketch frontend pods assignment                         | `[]`      |
-| `frontend.affinity`                  | Affinity for Timesketch frontend pods assignment                            | `{}`      |
+| Name                          | Description                                                                 | Value |
+| ----------------------------- | --------------------------------------------------------------------------- | ----- |
+| `frontend.podSecurityContext` | Holds pod-level security attributes and common frontend container settings  | `{}`  |
+| `frontend.securityContext`    | Holds security configuration that will be applied to the frontend container | `{}`  |
+| `frontend.resources.limits`   | The resources limits for the frontend container                             | `{}`  |
+| `frontend.resources.requests` | The requested resources for the frontend container                          | `{}`  |
+| `frontend.nodeSelector`       | Node labels for Timesketch frontend pods assignment                         | `{}`  |
+| `frontend.tolerations`        | Tolerations for Timesketch frontend pods assignment                         | `[]`  |
+| `frontend.affinity`           | Affinity for Timesketch frontend pods assignment                            | `{}`  |
 
 ### Timesketch Worker Configuration
 
-| Name                               | Description                                                               | Value     |
-| ---------------------------------- | ------------------------------------------------------------------------- | --------- |
-| `worker.podSecurityContext`        | Holds pod-level security attributes and common worker container settings  | `{}`      |
-| `worker.securityContext`           | Holds security configuration that will be applied to the worker container | `{}`      |
-| `worker.resources.requests.cpu`    | Requested cpu for the worker container                                    | `2000m`   |
-| `worker.resources.requests.memory` | Requested memory for the worker container                                 | `4000Mi`  |
-| `worker.resources.limits.cpu`      | Resource cpu limits for the worker container                              | `8000m`   |
-| `worker.resources.limits.memory`   | Resource memory limits for the worker container                           | `16000Mi` |
-| `worker.nodeSelector`              | Node labels for Timesketch worker pods assignment                         | `{}`      |
-| `worker.tolerations`               | Tolerations for Timesketch worker pods assignment                         | `[]`      |
-| `worker.affinity`                  | Affinity for Timesketch worker pods assignment                            | `{}`      |
+| Name                               | Description                                                               | Value   |
+| ---------------------------------- | ------------------------------------------------------------------------- | ------- |
+| `worker.podSecurityContext`        | Holds pod-level security attributes and common worker container settings  | `{}`    |
+| `worker.securityContext`           | Holds security configuration that will be applied to the worker container | `{}`    |
+| `worker.resources.limits`          | The resources limits for the worker container                             | `{}`    |
+| `worker.resources.requests.cpu`    | The requested cpu for the worker container                                | `250m`  |
+| `worker.resources.requests.memory` | The requested memory for the worker container                             | `256Mi` |
+| `worker.nodeSelector`              | Node labels for Timesketch worker pods assignment                         | `{}`    |
+| `worker.tolerations`               | Tolerations for Timesketch worker pods assignment                         | `[]`    |
+| `worker.affinity`                  | Affinity for Timesketch worker pods assignment                            | `{}`    |
 
 ### Common Parameters
 
@@ -121,9 +156,9 @@ kubectl delete pvc -l release=my-release
 | `metrics.enabled`                 | Enables metrics scraping                                                                          | `true`              |
 | `metrics.port`                    | Port to scrape metrics from                                                                       | `9200`              |
 | `persistence.name`                | Timesketch persistent volume name                                                                 | `timesketchvolume`  |
-| `persistence.size`                | Timesketch persistent volume size                                                                 | `1T`                |
-| `persistence.storageClass`        | PVC Storage Class for Timesketch volume                                                           | `standard-rwx`      |
-| `persistence.accessModes`         | PVC Access Mode for Timesketch volume                                                             | `["ReadWriteMany"]` |
+| `persistence.size`                | Timesketch persistent volume size                                                                 | `8Gi`               |
+| `persistence.storageClass`        | PVC Storage Class for Timesketch volume                                                           | `""`                |
+| `persistence.accessModes`         | PVC Access Mode for Timesketch volume                                                             | `["ReadWriteOnce"]` |
 | `ingress.enabled`                 | Enable the Timesketch loadbalancer for external access                                            | `false`             |
 | `ingress.host`                    | Domain name Timesketch will be hosted under                                                       | `""`                |
 | `ingress.className`               | IngressClass that will be be used to implement the Ingress                                        | `gce`               |
@@ -135,67 +170,60 @@ kubectl delete pvc -l release=my-release
 
 ### Opensearch Configuration Parameters
 
-| Name                                   | Description                                                                                                 | Value                                                                                    |
-| -------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `opensearch.enabled`                   | Enables the Opensearch deployment                                                                           | `true`                                                                                   |
-| `opensearch.config.opensearch.yml`     | Opensearch configuration file. Can be appended for additional configuration options                         | `{"opensearch.yml":"plugins:\n  security:\n    allow_unsafe_democertificates: false\n"}` |
-| `opensearch.extraEnvs[0].name`         | Environment variable to disable Opensearch Demo config                                                      | `DISABLE_INSTALL_DEMO_CONFIG`                                                            |
-| `opensearch.extraEnvs[0].value`        | Disables Opensearch Demo config                                                                             | `true`                                                                                   |
-| `opensearch.extraEnvs[1].name`         | Environment variable to disable Opensearch Security plugin given that                                       | `DISABLE_SECURITY_PLUGIN`                                                                |
-| `opensearch.extraEnvs[1].value`        | Disables Opensearch Security plugin                                                                         | `true`                                                                                   |
-| `opensearch.replicas`                  | Number of Opensearch instances to deploy                                                                    | `3`                                                                                      |
-| `opensearch.sysctlInit.enabled`        | Sets optimal sysctl's through privileged initContainer                                                      | `true`                                                                                   |
-| `opensearch.opensearchJavaOpts`        | Sets the size of the Opensearch Java heap                                                                   | `-Xms32g -Xmx32g`                                                                        |
-| `opensearch.httpPort`                  | Opensearch service port                                                                                     | `9200`                                                                                   |
-| `opensearch.persistence.size`          | Opensearch Persistent Volume size. A persistent volume would be created for each Opensearch replica running | `1Ti`                                                                                    |
-| `opensearch.resources.requests.cpu`    | Requested cpu for the Opensearch containers                                                                 | `8000m`                                                                                  |
-| `opensearch.resources.requests.memory` | Requested memory for the Opensearch containers                                                              | `32Gi`                                                                                   |
-| `opensearch.nodeSelector`              | Node labels for Opensearch pods assignment                                                                  | `{}`                                                                                     |
+| Name                               | Description                                                                                                 | Value                                                                                    |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `opensearch.enabled`               | Enables the Opensearch deployment                                                                           | `true`                                                                                   |
+| `opensearch.config.opensearch.yml` | Opensearch configuration file. Can be appended for additional configuration options                         | `{"opensearch.yml":"plugins:\n  security:\n    allow_unsafe_democertificates: false\n"}` |
+| `opensearch.extraEnvs[0].name`     | Environment variable to disable Opensearch Demo config                                                      | `DISABLE_INSTALL_DEMO_CONFIG`                                                            |
+| `opensearch.extraEnvs[0].value`    | Disables Opensearch Demo config                                                                             | `true`                                                                                   |
+| `opensearch.extraEnvs[1].name`     | Environment variable to disable Opensearch Security plugin given that                                       | `DISABLE_SECURITY_PLUGIN`                                                                |
+| `opensearch.extraEnvs[1].value`    | Disables Opensearch Security plugin                                                                         | `true`                                                                                   |
+| `opensearch.replicas`              | Number of Opensearch instances to deploy                                                                    | `1`                                                                                      |
+| `opensearch.sysctlInit.enabled`    | Sets optimal sysctl's through privileged initContainer                                                      | `false`                                                                                  |
+| `opensearch.opensearchJavaOpts`    | Sets the size of the Opensearch Java heap                                                                   | `-Xmx512M -Xms512M`                                                                      |
+| `opensearch.httpPort`              | Opensearch service port                                                                                     | `9200`                                                                                   |
+| `opensearch.persistence.size`      | Opensearch Persistent Volume size. A persistent volume would be created for each Opensearch replica running | `8Gi`                                                                                    |
+| `opensearch.resources.requests`    | Requested resources for the Opensearch containers                                                           | `{}`                                                                                     |
+| `opensearch.nodeSelector`          | Node labels for Opensearch pods assignment                                                                  | `{}`                                                                                     |
 
 ### Redis Configuration Parameters
 
-| Name                                      | Description                                                                                  | Value       |
-| ----------------------------------------- | -------------------------------------------------------------------------------------------- | ----------- |
-| `redis.enabled`                           | Enables the Redis deployment                                                                 | `true`      |
-| `redis.sentinel.enabled`                  | Enables Redis Sentinel on Redis pods                                                         | `false`     |
-| `redis.master.count`                      | Number of Redis master instances to deploy (experimental, requires additional configuration) | `1`         |
-| `redis.master.service.type`               | Redis master service type                                                                    | `ClusterIP` |
-| `redis.master.service.ports.redis`        | Redis master service port                                                                    | `6379`      |
-| `redis.master.persistence.size`           | Redis master Persistent Volume size                                                          | `8Gi`       |
-| `redis.master.resources.requests.cpu`     | Requested cpu for the Redis master containers                                                | `4000m`     |
-| `redis.master.resources.requests.memory`  | Requested memory for the Redis master containers                                             | `8Gi`       |
-| `redis.master.resources.limits.cpu`       | Resource cpu limits for the Redis master containers                                          | `8000m`     |
-| `redis.master.resources.limits.memory`    | Resource memory limits for the Redis master containers                                       | `16Gi`      |
-| `redis.replica.replicaCount`              | Number of Redis replicas to deploy                                                           | `3`         |
-| `redis.replica.service.type`              | Redis replicas service type                                                                  | `ClusterIP` |
-| `redis.replica.service.ports.redis`       | Redis replicas service port                                                                  | `6379`      |
-| `redis.replica.persistence.size`          | Redis replica Persistent Volume size                                                         | `8Gi`       |
-| `redis.replica.resources.requests.cpu`    | Requested cpu for the Redis replica containers                                               | `4000m`     |
-| `redis.replica.resources.requests.memory` | Requested memory for the Redis replica containers                                            | `8Gi`       |
-| `redis.replica.resources.limits.cpu`      | Resource cpu limits for the Redis replica containers                                         | `8000m`     |
-| `redis.replica.resources.limits.memory`   | Resource memory limits for the Redis replica containers                                      | `16Gi`      |
+| Name                                | Description                                                                                  | Value       |
+| ----------------------------------- | -------------------------------------------------------------------------------------------- | ----------- |
+| `redis.enabled`                     | Enables the Redis deployment                                                                 | `true`      |
+| `redis.sentinel.enabled`            | Enables Redis Sentinel on Redis pods                                                         | `false`     |
+| `redis.master.count`                | Number of Redis master instances to deploy (experimental, requires additional configuration) | `1`         |
+| `redis.master.service.type`         | Redis master service type                                                                    | `ClusterIP` |
+| `redis.master.service.ports.redis`  | Redis master service port                                                                    | `6379`      |
+| `redis.master.persistence.size`     | Redis master Persistent Volume size                                                          | `8Gi`       |
+| `redis.master.resources.limits`     | The resources limits for the Redis master containers                                         | `{}`        |
+| `redis.master.resources.requests`   | The requested resources for the Redis master containers                                      | `{}`        |
+| `redis.replica.replicaCount`        | Number of Redis replicas to deploy                                                           | `0`         |
+| `redis.replica.service.type`        | Redis replicas service type                                                                  | `ClusterIP` |
+| `redis.replica.service.ports.redis` | Redis replicas service port                                                                  | `6379`      |
+| `redis.replica.persistence.size`    | Redis replica Persistent Volume size                                                         | `8Gi`       |
+| `redis.replica.resources.limits`    | The resources limits for the Redis replica containers                                        | `{}`        |
+| `redis.replica.resources.requests`  | The requested resources for the Redis replica containers                                     | `{}`        |
 
 ### Postgresql Configuration Parameters
 
-| Name                                                | Description                                                                 | Value        |
-| --------------------------------------------------- | --------------------------------------------------------------------------- | ------------ |
-| `postgresql.enabled`                                | Enables the Postgresql deployment                                           | `true`       |
-| `postgresql.architecture`                           | PostgreSQL architecture (`standalone` or `replication`)                     | `standalone` |
-| `postgresql.auth.username`                          | Name for a custom PostgreSQL user to create                                 | `postgres`   |
-| `postgresql.auth.database`                          | Name for a custom PostgreSQL database to create (overrides `auth.database`) | `timesketch` |
-| `postgresql.primary.service.type`                   | PostgreSQL primary service type                                             | `ClusterIP`  |
-| `postgresql.primary.service.ports.postgresql`       | PostgreSQL primary service port                                             | `5432`       |
-| `postgresql.primary.persistence.size`               | PostgreSQL Persistent Volume size                                           | `8Gi`        |
-| `postgresql.primary.resources.requests.cpu`         | Requested cpu for the PostgreSQL Primary containers                         | `250m`       |
-| `postgresql.primary.resources.requests.memory`      | Requested memory for the PostgreSQL Primary containers                      | `256Mi`      |
-| `postgresql.primary.resources.limits`               | Resource limits for the PostgreSQL Primary containers                       | `{}`         |
-| `postgresql.readReplicas.replicaCount`              | Number of PostgreSQL read only replicas                                     | `1`          |
-| `postgresql.readReplicas.service.type`              | PostgreSQL read replicas service type                                       | `ClusterIP`  |
-| `postgresql.readReplicas.service.ports.postgresql`  | PostgreSQL read replicas service port                                       | `5432`       |
-| `postgresql.readReplicas.persistence.size`          | PostgreSQL Persistent Volume size                                           | `8Gi`        |
-| `postgresql.readReplicas.resources.requests.cpu`    | Requested cpu for the PostgreSQL read only containers                       | `250m`       |
-| `postgresql.readReplicas.resources.requests.memory` | Requested memory for the PostgreSQL read only containers                    | `256Mi`      |
-| `postgresql.readReplicas.resources.limits`          | Resource limits for the PostgreSQL read only containers                     | `{}`         |
+| Name                                               | Description                                                                 | Value        |
+| -------------------------------------------------- | --------------------------------------------------------------------------- | ------------ |
+| `postgresql.enabled`                               | Enables the Postgresql deployment                                           | `true`       |
+| `postgresql.architecture`                          | PostgreSQL architecture (`standalone` or `replication`)                     | `standalone` |
+| `postgresql.auth.username`                         | Name for a custom PostgreSQL user to create                                 | `postgres`   |
+| `postgresql.auth.database`                         | Name for a custom PostgreSQL database to create (overrides `auth.database`) | `timesketch` |
+| `postgresql.primary.service.type`                  | PostgreSQL primary service type                                             | `ClusterIP`  |
+| `postgresql.primary.service.ports.postgresql`      | PostgreSQL primary service port                                             | `5432`       |
+| `postgresql.primary.persistence.size`              | PostgreSQL Persistent Volume size                                           | `8Gi`        |
+| `postgresql.primary.resources.limits`              | The resources limits for the PostgreSQL primary containers                  | `{}`         |
+| `postgresql.primary.resources.requests`            | The requested resources for the PostgreSQL primary containers               | `{}`         |
+| `postgresql.readReplicas.replicaCount`             | Number of PostgreSQL read only replicas                                     | `0`          |
+| `postgresql.readReplicas.service.type`             | PostgreSQL read replicas service type                                       | `ClusterIP`  |
+| `postgresql.readReplicas.service.ports.postgresql` | PostgreSQL read replicas service port                                       | `5432`       |
+| `postgresql.readReplicas.persistence.size`         | PostgreSQL Persistent Volume size                                           | `8Gi`        |
+| `postgresql.readReplicas.resources.limits`         | The resources limits for the PostgreSQL read only containers                | `{}`         |
+| `postgresql.readReplicas.resources.requests`       | The requested resources for the PostgreSQL read only containers             | `{}`         |
 
 Specify each parameter using the --set key=value[,key=value] argument to helm install. For example,
 
@@ -232,9 +260,7 @@ helm install my-release -f newvalues.yaml oci://us-docker.pkg.dev/osdfir-registr
 The Timesketch deployment stores data at the `/mnt/timesketchvolume` path of the container and stores configuration files
 at the `/etc/timesketch` path of the container. 
 
-Persistent Volume Claims are used to keep the data across deployments. By default the Timesketch deployment attempts to
-deploy a GCP Filestore server, similar to a NFS share. The `persistent.StorageClass` value can be updated to automatically
-provision storage for other providers such as AWS and minikube, but this has yet to be tested. See the [Parameters](#parameters) section to configure the PVC or to disable persistence.
+Persistent Volume Claims are used to keep the data across deployments. By default the Timesketch deployment attempts to use dynamic persistent volume provisioning to automatically configure storage, but the `persistent.storageClass` value can be updated to a storageClass supported by your provider. See the [Parameters](#parameters) section to configure the PVC or to disable persistence.
 
 To install the Timesketch chart with more storage capacity, run:
 ```console
