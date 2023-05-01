@@ -4,7 +4,7 @@ celery==5.2.2
 cryptography==3.3.2
 datasketch==1.5.0
 opensearch-py==1.0.0
-Flask==2.0.3
+Flask==2.3.2
 flask_bcrypt==0.7.1
 flask_login==0.4.1
 flask_migrate==2.5.2
