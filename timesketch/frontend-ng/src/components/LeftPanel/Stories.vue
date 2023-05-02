@@ -28,7 +28,7 @@ limitations under the License.
         icon
         v-if="expanded || !meta.stories.length"
         text
-        class="float-right mt-n1"
+        class="float-right mt-n1 mr-n1"
         @click="createStory()"
         @click.stop=""
       >
