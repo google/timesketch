@@ -290,7 +290,7 @@ limitations under the License.
           <ts-event-tag-menu :event="item"></ts-event-tag-menu>
 
           <!-- Action sub-menu -->
-          <ts-event-action-menu :event="item"></ts-event-action-menu>
+          <ts-event-action-menu :event="item" @showContextWindow="showContextWindow($event)"></ts-event-action-menu>
         </template>
 
         <!-- Datetime field with action buttons -->
@@ -308,7 +308,12 @@ limitations under the License.
             style="cursor: pointer"
             @click="toggleDetailedEvent(item)"
           >
-            <span :class="{ 'ts-event-field-ellipsis': field.text === 'message' }">
+            <span
+              :class="{
+                'ts-event-field-ellipsis': field.text === 'message',
+                'ts-event-field-highlight': item._id === highlightEvent,
+              }"
+            >
               <!-- Tags -->
               <span v-if="displayOptions.showTags && index === 3">
                 <v-chip
@@ -429,6 +434,10 @@ export default {
     disablePagination: {
       type: Boolean,
       default: false,
+    },
+    highlightEvent: {
+      type: String,
+      default: '',
     },
   },
   data() {
@@ -920,6 +929,11 @@ export default {
   top: 50%;
   transform: translateY(-50%);
   left: 0;
+}
+
+.ts-event-field-highlight {
+  font-weight: bold;
+  color: red;
 }
 
 .v-data-table__expanded.v-data-table__expanded__content {
