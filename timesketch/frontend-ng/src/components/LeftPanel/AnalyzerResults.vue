@@ -34,13 +34,27 @@ limitations under the License.
       </v-btn>
       <span class="float-right" style="margin-right: 3px">
         <v-progress-circular
-          v-if="!analyzerResultsReady || activeAnalyzerQueue.length > 0"
+          v-if="!analyzerResultsReady || (activeAnalyzerQueue.length > 0 && !activeAnalyzerTimeoutTriggered)"
           :size="24"
           :width="1"
           indeterminate
           :value="activeAnalyzerDisplayCount"
           >{{ activeAnalyzerDisplayCount }}</v-progress-circular
         >
+        <v-tooltip v-if="activeAnalyzerTimeoutTriggered" top>
+          <template v-slot:activator="{ on }">
+            <v-btn
+              v-on="on"
+              small
+              icon
+              @click.stop=""
+              @click="triggeredAnalyzerRuns(activeAnalyzerQueue)"
+            >
+              <v-icon small>mdi-reload-alert</v-icon>
+            </v-btn>
+          </template>
+          <span>analyzer status check timeout, click to reload</span>
+        </v-tooltip>
       </span>
       <span class="float-right" style="margin-right: 10px">
         <small class="ml-3" v-if="!expanded && analyzerResults && analyzerResults.length && analyzerResultsReady"
@@ -114,6 +128,10 @@ export default {
       analyzerResults: [],
       analyzerResultsData: {},
       activeAnalyzerQueue: [],
+      activeAnalyzerInterval: 15000,
+      activeAnalyzerTimeout: 300000,
+      activeAnalyzerTimeoutTriggered: false,
+      activeAnalyzerTimerStart: null,
     }
   },
   computed: {
@@ -233,15 +251,18 @@ export default {
     },
     async fetchAnalyzerSessionData() {
       let activeAnalyzerSessionData = []
-      for (const sessionId of this.activeAnalyzerQueue) {
-        const response = await ApiClient.getAnalyzerSession(this.sketch.id, sessionId)
-        let analyzerSession = response.data.objects[0]
-        if (!analyzerSession) continue
-        activeAnalyzerSessionData.push(...analyzerSession['analyses'])
-      }
+      await this.activeAnalyzerQueue.forEach((sessionId) => {
+        ApiClient.getAnalyzerSession(this.sketch.id, sessionId).then((response) => {
+          let analyzerSession = response.data.objects[0]
+          if (!analyzerSession) return
+          activeAnalyzerSessionData.push(...analyzerSession['analyses'])
+        })
+      })
       this.updateAnalyzerResultsData(activeAnalyzerSessionData)
     },
     triggeredAnalyzerRuns: function (data) {
+      console.log('triggeredAnalyzerRuns')
+      this.activeAnalyzerTimerStart = Date.now()
       data.forEach((sessionId) => {
         if (this.activeAnalyzerQueue.indexOf(sessionId) === -1) this.activeAnalyzerQueue.push(sessionId)
       })
@@ -263,6 +284,7 @@ export default {
   mounted() {
     EventBus.$on('triggeredAnalyzerRuns', this.triggeredAnalyzerRuns)
     this.initializeAnalyzerResults()
+    this.activeAnalyzerTimerStart = Date.now()
   },
   beforeDestroy() {
     EventBus.$off('triggeredAnalyzerRuns')
@@ -274,18 +296,30 @@ export default {
       if (sessionQueue.length > 0 && !this.interval) {
         this.interval = setInterval(
           function () {
-            if (sessionQueue.length > 0) {
-              // fetch data for sessions in the queue
-              this.fetchAnalyzerSessionData()
-              // update active session queue
-              this.fetchActiveSessions()
-            } else {
+            if (sessionQueue.length === 0) {
               // the queue is empty so stop the interval
               clearInterval(this.interval)
+              this.activeAnalyzerTimerStart = null
               this.interval = false
+              return
             }
+            // check timeout
+            if (this.activeAnalyzerTimerStart !== null && (Date.now() - this.activeAnalyzerTimerStart > this.activeAnalyzerTimeout)) {
+              clearInterval(this.interval)
+              this.interval = false
+              this.activeAnalyzerTimerStart = null
+              this.activeAnalyzerTimeoutTriggered = true
+              return
+            }
+            // set dynamic interval
+            if (sessionQueue.length >= 10) this.activeAnalyzerInterval = 30000
+            if (sessionQueue.length >= 50) this.activeAnalyzerInterval = 60000
+            // fetch data for sessions in the queue
+            this.fetchAnalyzerSessionData()
+            // update active session queue
+            this.fetchActiveSessions()
           }.bind(this),
-          5000
+          this.activeAnalyzerInterval
         )
       }
     },
