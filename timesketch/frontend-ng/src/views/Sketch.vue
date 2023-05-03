@@ -459,7 +459,6 @@ export default {
     },
   },
   methods: {
-<<<<<<< HEAD
     archiveSketch: function () {
       this.loadingSketch = true
       ApiClient.archiveSketch(this.sketch.id)
@@ -484,7 +483,6 @@ export default {
           console.error(e)
         })
     },
-=======
     generateContextQuery(event) {
       let timestampMillis = this.$options.filters.formatTimestamp(event._source.timestamp)
       this.contextStartTime = dayjs.utc(timestampMillis).subtract(this.contextTimeWindowSeconds, 'second')
@@ -543,7 +541,6 @@ export default {
       this.timelineViewHeight = 0
     },
 
->>>>>>> master
     toggleTheme: function () {
       this.$vuetify.theme.dark = !this.$vuetify.theme.dark
       localStorage.setItem('isDarkTheme', this.$vuetify.theme.dark.toString())
