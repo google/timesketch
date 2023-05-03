@@ -223,6 +223,41 @@ limitations under the License.
             </v-list-item-action>
             <v-list-item-subtitle>Run Analyzers</v-list-item-subtitle>
           </v-list-item>
+
+          <v-list-item style="cursor: pointer" @click="deleteConfirmation = true">
+            <v-list-item-action>
+              <v-icon>mdi-trash-can-outline</v-icon>
+            </v-list-item-action>
+            <v-list-item-subtitle>Delete Timeline</v-list-item-subtitle>
+          </v-list-item>
+          <v-dialog v-model="deleteConfirmation" max-width="500">
+            <v-card>
+              <v-card-title>
+                <v-icon color="red" class="mr-2 ml-n3">mdi-alert-octagon-outline</v-icon> Delete Timeline?
+              </v-card-title>
+              <v-card-text>
+                <ul style="list-style-type: none">
+                  <li><strong>Name: </strong>{{ timeline.name }}</li>
+                  <li><strong>Status: </strong>{{ timelineStatus }}</li>
+                  <li><strong>Opensearch index: </strong>{{ timeline.searchindex.index_name }}</li>
+                  <li v-if="timelineStatus === 'processing' || timelineStatus === 'ready'">
+                    <strong>Number of events: </strong>
+                    {{ allIndexedEvents | compactNumber }}
+                  </li>
+                  <li><strong>Created by: </strong>{{ timeline.user.username }}</li>
+                  <li>
+                    <strong>Created at: </strong>{{ timeline.created_at | shortDateTime }}
+                    <small>({{ timeline.created_at | timeSince }})</small>
+                  </li>
+                </ul>
+              </v-card-text>
+              <v-card-actions>
+                <v-btn color="primary" text @click="deleteConfirmation = false"> cancel </v-btn>
+                <v-spacer></v-spacer>
+                <v-btn color="primary" text @click="remove()"> delete </v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
         </v-list>
         <div class="px-4">
           <v-color-picker
@@ -296,6 +331,7 @@ export default {
         ['#FFC7A0', '#FFDF79', '#FFEAEF'],
         ['#DEBBFF', '#9AB0FB', '#CFFBE2'],
       ],
+      deleteConfirmation: false,
     }
   },
   computed: {
@@ -338,9 +374,9 @@ export default {
       this.$emit('save', this.timeline, this.newTimelineName)
     },
     remove() {
-      if (confirm('Delete the timeline?')) {
-        this.$emit('remove', this.timeline)
-      }
+      this.$emit('remove', this.timeline)
+      this.deleteConfirmation = false
+      this.successSnackBar('Timeline deleted')
     },
     secondsSinceStart() {
       if (!this.datasourcesProcessing.length) {

@@ -24,7 +24,7 @@
     "dompurify": "^3.0.1",
     "eslint-config-prettier": "^8.3.0",
     "lodash": "^4.17.11",
-    "marked": ">=2.0.0",
+    "marked": ">=2.0.0 <5.0.0",
     "moment": "^2.24.0",
     "v-calendar": "^2.4.0",
     "vega": "^5.4.0",
