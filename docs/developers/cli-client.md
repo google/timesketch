@@ -227,6 +227,26 @@ Then it will also show up in `timesketch -h`.
 
 If you handle errors, catch exceptions, consider setting the corresponding exit code instead of returning an error message.
 
+### Error: No such option: --sketch
+
+If you try to run a command without a sketch defined in the config and then using the parameter like:
+
+```bash
+timesketch timelines --sketch 1
+Usage: timesketch timelines [OPTIONS] COMMAND [ARGS]...
+Try 'timesketch timelines -h' for help.
+
+Error: No such option: --sketch
+```
+
+The correct way of using the sketch parameter is:
+
+```bash
+timesketch --sketch 1 timelines
+1 2k_random_events_time_distributed
+2 2k_random_events_time_distributed_fixed_datetime
+```
+
 ## Pull requests
 
 If you create a pull request for a new / adjusted CLI command, please include
