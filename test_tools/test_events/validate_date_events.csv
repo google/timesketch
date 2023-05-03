@@ -1,3 +1,0 @@
-"message","datetime","timestamp","timestamp_desc","data_type"
-78Vh3h7,2022-11-10T05-07-28+00:00,1668056848119860,Time Logged,This event has a wrong formatted datetime notice the - instead of : in the datetime
-Time offset large,2022-11-09T05-07-28+00:00,1668056848119860,Time Logged,This event has a to large time offset betweeen datetime and timestamp

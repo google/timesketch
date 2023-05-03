@@ -30,6 +30,53 @@ limitations under the License.
       </v-row>
     </v-container>
 
+    <!-- Context search -->
+    <v-bottom-sheet
+      hide-overlay
+      persistent
+      no-click-animation
+      v-model="showTimelineView"
+      @click:outside="showTimelineView = false"
+      scrollable
+    >
+      <v-card>
+        <v-toolbar dense flat>
+          <strong>Context search</strong>
+          <v-btn-toggle v-model="contextTimeWindowSeconds" class="ml-10" rounded>
+            <v-btn
+              v-for="duration in [1, 5, 10, 60, 300, 600, 1800, 3600]"
+              :key="duration"
+              :value="duration"
+              small
+              outlined
+              @click="updateContextQuery(duration)"
+            >
+              {{ duration | formatSeconds }}
+            </v-btn>
+          </v-btn-toggle>
+          <v-btn small text class="ml-5" @click="contextToSearch()">Replace search</v-btn>
+
+          <v-spacer></v-spacer>
+
+          <v-btn icon :disabled="timelineViewHeight > 40" @click="increaseTimelineViewHeight()">
+            <v-icon>mdi-chevron-up</v-icon>
+          </v-btn>
+          <v-btn icon :disabled="timelineViewHeight === 0" @click="decreaseTimelineViewHeight()">
+            <v-icon>mdi-chevron-down</v-icon>
+          </v-btn>
+          <v-btn icon @click="showTimelineView = false">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </v-toolbar>
+        <v-divider></v-divider>
+        <v-expand-transition>
+          <v-card-text :style="{ height: timelineViewHeight + 'vh' }" v-show="!minimizeTimelineView">
+            <ts-event-list :query-request="queryRequest" :highlight-event="currentContextEvent._id"></ts-event-list>
+          </v-card-text>
+        </v-expand-transition>
+      </v-card>
+    </v-bottom-sheet>
+
     <!-- Left panel -->
     <v-navigation-drawer
       v-if="showLeftPanel && hasTimelines"
@@ -139,17 +186,21 @@ limitations under the License.
           <ts-saved-searches v-if="meta.views"></ts-saved-searches>
           <ts-data-types></ts-data-types>
           <ts-tags></ts-tags>
-          <ts-search-templates></ts-search-templates>
           <ts-graphs></ts-graphs>
           <ts-stories></ts-stories>
-          <ts-sigma-rules></ts-sigma-rules>
           <ts-intelligence></ts-intelligence>
+          <ts-search-templates></ts-search-templates>
+          <ts-sigma-rules></ts-sigma-rules>
+          <ts-analyzer-results></ts-analyzer-results>
         </v-tab-item>
         <v-tab-item :transition="false">
           <ts-scenario v-for="scenario in activeScenarios" :key="scenario.id" :scenario="scenario"></ts-scenario>
           <v-row class="mt-0 px-2" flat>
-            <v-col cols="6">
-              <v-btn text color="primary" @click="scenarioDialog = true" style="cursor: pointer"
+            <v-col cols="12">
+              <v-card v-if="!Object.keys(scenarioTemplates).length" flat class="pa-4"
+                >No scenarios available yet. Contact your server admin to add scenarios to this server.</v-card
+              >
+              <v-btn v-else text color="primary" @click="scenarioDialog = true" style="cursor: pointer"
                 ><v-icon left>mdi-plus</v-icon> Add Scenario</v-btn
               >
             </v-col>
@@ -275,6 +326,8 @@ limitations under the License.
 
 <script>
 import ApiClient from '../utils/RestApiClient'
+import EventBus from '../main'
+import dayjs from '@/plugins/dayjs'
 
 import TsScenario from '../components/Scenarios/Scenario'
 import TsSavedSearches from '../components/LeftPanel/SavedSearches'
@@ -288,6 +341,8 @@ import TsStories from '../components/LeftPanel/Stories'
 import TsUploadTimelineForm from '../components/UploadForm'
 import TsShareCard from '../components/ShareCard'
 import TsRenameSketch from '../components/RenameSketch'
+import TsAnalyzerResults from '../components/LeftPanel/AnalyzerResults.vue'
+import TsEventList from '../components/Explore/EventList'
 
 export default {
   props: ['sketchId'],
@@ -304,6 +359,8 @@ export default {
     TsIntelligence,
     TsGraphs,
     TsStories,
+    TsAnalyzerResults,
+    TsEventList,
   },
   data() {
     return {
@@ -320,9 +377,18 @@ export default {
       showHidden: false,
       shareDialog: false,
       loadingSketch: false,
+      // Context
+      timelineViewHeight: 60,
+      showTimelineView: false,
+      currentContextEvent: {},
+      minimizeTimelineView: false,
+      queryRequest: {},
+      contextStartTime: null,
+      contextEndTime: null,
+      contextTimeWindowSeconds: 300,
     }
   },
-  mounted: function () {
+  mounted() {
     this.loadingSketch = true
     this.showLeftPanel = false
     this.$store.dispatch('updateSketch', this.sketchId).then(() => {
@@ -332,6 +398,7 @@ export default {
       this.$store.dispatch('updateSavedGraphs', this.sketchId)
       this.$store.dispatch('updateGraphPlugins')
       this.$store.dispatch('updateContextLinks')
+      this.$store.dispatch('updateAnalyzerList', this.sketchId)
       this.loadingSketch = false
       this.showLeftPanel = true
       this.$nextTick(function () {
@@ -339,6 +406,10 @@ export default {
         this.setDrawerResizeEvents()
       })
     })
+    EventBus.$on('showContextWindow', this.showContextWindow)
+  },
+  beforeDestroy() {
+    EventBus.$off('showContextWindow')
   },
   computed: {
     sketch() {
@@ -376,6 +447,64 @@ export default {
     },
   },
   methods: {
+    generateContextQuery(event) {
+      let timestampMillis = this.$options.filters.formatTimestamp(event._source.timestamp)
+      this.contextStartTime = dayjs.utc(timestampMillis).subtract(this.contextTimeWindowSeconds, 'second')
+      this.contextEndTime = dayjs.utc(timestampMillis).add(this.contextTimeWindowSeconds, 'second')
+      let startChip = {
+        field: '',
+        value: this.contextStartTime.toISOString() + ',' + this.contextEndTime.toISOString(),
+        type: 'datetime_range',
+        operator: 'must',
+        active: true,
+      }
+      let queryFilter = {
+        from: 0,
+        terminate_after: 40,
+        size: 40,
+        indices: ['_all'],
+        order: 'asc',
+        chips: [startChip],
+      }
+      let queryRequest = { queryString: '*', queryFilter: queryFilter }
+      return queryRequest
+    },
+    updateContextQuery(duration) {
+      this.contextTimeWindowSeconds = duration
+      this.queryRequest = this.generateContextQuery(this.currentContextEvent)
+    },
+    contextToSearch() {
+      let queryRequest = this.generateContextQuery(this.currentContextEvent)
+      queryRequest.doSearch = true
+      EventBus.$emit('setQueryAndFilter', queryRequest)
+      this.showTimelineView = false
+    },
+    showContextWindow(event) {
+      this.currentContextEvent = event
+      this.queryRequest = this.generateContextQuery(event)
+      this.showTimelineView = true
+    },
+    increaseTimelineViewHeight: function () {
+      this.minimizeTimelineView = false
+      if (this.timelineViewHeight > 70) {
+        return
+      }
+      this.timelineViewHeight += 30
+    },
+    decreaseTimelineViewHeight: function () {
+      this.minimizeTimelineView = false
+      if (this.timelineViewHeight < 50) {
+        this.minimizeTimelineView = true
+        this.timelineViewHeight = 0
+        return
+      }
+      this.timelineViewHeight -= 30
+    },
+    closeTimelineView: function () {
+      this.minimizeTimelineView = true
+      this.timelineViewHeight = 0
+    },
+
     toggleTheme: function () {
       this.$vuetify.theme.dark = !this.$vuetify.theme.dark
       localStorage.setItem('isDarkTheme', this.$vuetify.theme.dark.toString())
@@ -383,7 +512,7 @@ export default {
       element.dataset.theme = this.$vuetify.theme.dark ? 'dark' : 'light'
     },
     switchUI: function () {
-      window.location.href = window.location.href.replace('/v2/', '/')
+      window.location.href = window.location.href.replace('/sketch/', '/legacy/sketch/')
     },
     addScenario: function (scenario) {
       this.scenarioDialog = false

@@ -267,12 +267,13 @@ def read_and_validate_csv(
     """
     if not mandatory_fields:
         mandatory_fields = TIMESKETCH_FIELDS
+
     # Ensures delimiter is a string.
     if not isinstance(delimiter, six.text_type):
         delimiter = codecs.decode(delimiter, "utf8")
 
+    # Ensure that required headers are present
     header_reader = pandas.read_csv(file_handle, sep=delimiter, nrows=0)
-
     _validate_csv_fields(mandatory_fields, header_reader, headers_mapping)
 
     if hasattr(file_handle, "seek"):
@@ -287,6 +288,9 @@ def read_and_validate_csv(
                 # rename columns according to the mapping
                 chunk = rename_csv_headers(chunk, headers_mapping)
 
+            # Check if the datetime field is present and not empty.
+            # TODO(jaegeral): Do we really want to skip rows with empty datetime
+            # we could also calculate the datetime from timestamp if present.
             skipped_rows = chunk[chunk["datetime"].isnull()]
             if not skipped_rows.empty:
                 logger.warning(
@@ -294,8 +298,8 @@ def read_and_validate_csv(
                     "or it was empty ".format(len(skipped_rows))
                 )
 
-            # Normalize datetime to ISO 8601 format if it's not the case.
             try:
+                # Normalize datetime to ISO 8601 format if it's not the case.
                 # Lines with unrecognized datetime format will result in "NaT"
                 # (not available) as its value and the event row will be
                 # dropped in the next line
@@ -303,6 +307,7 @@ def read_and_validate_csv(
                     chunk["datetime"], errors="coerce"
                 )
                 num_chunk_rows = chunk.shape[0]
+
                 chunk.dropna(subset=["datetime"], inplace=True)
                 if len(chunk) < num_chunk_rows:
                     logger.warning(
@@ -327,34 +332,21 @@ def read_and_validate_csv(
                     )
                 )
                 continue
+
             if "tag" in chunk:
                 chunk["tag"] = chunk["tag"].apply(_parse_tag_field)
 
             for _, row in chunk.iterrows():
                 _scrub_special_tags(row)
+
                 # Remove all NAN values from the pandas.Series.
                 row.dropna(inplace=True)
-                MAX_TIMESTAMP_DIFFERENCE = 100000  # 100 seconds
-                # check datetime plausibility
-                if "timestamp" in row and "datetime" in row:
-                    timestamp_calculated = int(
+
+                # Make sure we always have a timestamp
+                if not "timestamp" in row:
+                    row["timestamp"] = int(
                         pandas.Timestamp(row["datetime"]).value / 1000
                     )
-                    if (
-                        abs(row["timestamp"] - timestamp_calculated)
-                        > MAX_TIMESTAMP_DIFFERENCE
-                    ):
-                        error_string = (
-                            "Timestamp difference between {0!s} "
-                            "and {1!s} is too big {2!s}, "
-                            "aborting ingestion."
-                        ).format(
-                            row["timestamp"],
-                            timestamp_calculated,
-                            abs(row["timestamp"] - timestamp_calculated),
-                        )
-                        logger.error(error_string)
-                        raise errors.DataIngestionError(error_string)
 
                 yield row.to_dict()
     except (pandas.errors.EmptyDataError, pandas.errors.ParserError) as e:

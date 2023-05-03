@@ -15,22 +15,19 @@ limitations under the License.
 -->
 <template>
   <div>
-    <v-row
-      no-gutters
+    <div
       :style="meta.views && meta.views.length ? 'cursor: pointer' : ''"
       class="pa-4"
-      flat
       @click="expanded = !expanded"
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
       <span> <v-icon left>mdi-content-save-outline</v-icon> Saved Searches </span>
-      <v-spacer></v-spacer>
-      <span class="mr-2">
+      <span class="float-right" style="margin-right: 10px">
         <small
           ><strong>{{ meta.views.length }}</strong></small
         >
       </span>
-    </v-row>
+    </div>
 
     <v-expand-transition>
       <div v-show="expanded">
