@@ -54,7 +54,9 @@ limitations under the License.
               <li><strong>Original filename:</strong> {{ datasource.original_filename }}</li>
               <li><strong>File on disk:</strong> {{ datasource.file_on_disk }}</li>
               <li><strong>File size:</strong> {{ datasource.file_size | compactBytes }}</li>
+              <li><strong>Uploaded by:</strong> {{ datasource.user.username }}</li>
               <li><strong>Provider:</strong> {{ datasource.provider }}</li>
+              <li><strong>Context:</strong> {{ datasource.context }}</li>
               <li v-if="datasource.data_label"><strong>Data label:</strong> {{ datasource.data_label }}</li>
               <li><strong>Status:</strong> {{ dataSourceStatus(datasource) }}</li>
               <li>
@@ -190,7 +192,9 @@ limitations under the License.
                     <li><strong>Original filename:</strong> {{ datasource.original_filename }}</li>
                     <li><strong>File on disk:</strong> {{ datasource.file_on_disk }}</li>
                     <li><strong>File size:</strong> {{ datasource.file_size | compactBytes }}</li>
+                    <li><strong>Uploaded by:</strong> {{ datasource.user.username }}</li>
                     <li><strong>Provider:</strong> {{ datasource.provider }}</li>
+                    <li><strong>Context:</strong> {{ datasource.context }}</li>
                     <li v-if="datasource.data_label"><strong>Data label:</strong> {{ datasource.data_label }}</li>
                     <li><strong>Status:</strong> {{ dataSourceStatus(datasource) }}</li>
                     <li>
@@ -217,26 +221,20 @@ limitations under the License.
             :to="{ name: 'Analyze', params: { sketchId: sketch.id, analyzerTimelineId: timeline.id } }"
             style="cursor: pointer"
             @click="$refs.timelineChipMenuRef.isActive = false"
-            >
+          >
             <v-list-item-action>
               <v-icon>mdi-auto-fix</v-icon>
             </v-list-item-action>
             <v-list-item-subtitle>Run Analyzers</v-list-item-subtitle>
           </v-list-item>
 
-          <v-list-item
-            style="cursor: pointer"
-            @click="deleteConfirmation = true"
-            >
+          <v-list-item style="cursor: pointer" @click="deleteConfirmation = true">
             <v-list-item-action>
               <v-icon>mdi-trash-can-outline</v-icon>
             </v-list-item-action>
             <v-list-item-subtitle>Delete Timeline</v-list-item-subtitle>
           </v-list-item>
-          <v-dialog
-            v-model="deleteConfirmation"
-            max-width="500"
-          >
+          <v-dialog v-model="deleteConfirmation" max-width="500">
             <v-card>
               <v-card-title>
                 <v-icon color="red" class="mr-2 ml-n3">mdi-alert-octagon-outline</v-icon> Delete Timeline?
@@ -258,25 +256,12 @@ limitations under the License.
                 </ul>
               </v-card-text>
               <v-card-actions>
-                <v-btn
-                  color="primary"
-                  text
-                  @click="deleteConfirmation = false"
-                >
-                  cancel
-                </v-btn>
+                <v-btn color="primary" text @click="deleteConfirmation = false"> cancel </v-btn>
                 <v-spacer></v-spacer>
-                <v-btn
-                  color="primary"
-                  text
-                  @click="remove()"
-                >
-                  delete
-                </v-btn>
+                <v-btn color="primary" text @click="remove()"> delete </v-btn>
               </v-card-actions>
             </v-card>
           </v-dialog>
-
         </v-list>
         <div class="px-4">
           <v-color-picker
@@ -393,9 +378,9 @@ export default {
       this.$emit('save', this.timeline, this.newTimelineName)
     },
     remove() {
-        this.$emit('remove', this.timeline)
-        this.deleteConfirmation = false
-        this.successSnackBar('Timeline deleted')
+      this.$emit('remove', this.timeline)
+      this.deleteConfirmation = false
+      this.successSnackBar('Timeline deleted')
     },
     secondsSinceStart() {
       if (!this.datasourcesProcessing.length) {
