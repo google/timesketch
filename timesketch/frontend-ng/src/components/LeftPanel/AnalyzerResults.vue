@@ -243,29 +243,33 @@ export default {
     async fetchActiveSessions() {
       const response = await ApiClient.getActiveAnalyzerSessions(this.sketch.id)
       let activeSessions = response.data.objects[0]['sessions']
-      if (activeSessions) {
+      if (activeSessions.length > 0) {
         activeSessions.forEach((sessionId) => {
           if (this.activeAnalyzerQueue.indexOf(sessionId) === -1) this.activeAnalyzerQueue.push(sessionId)
         })
+      } else {
+        this.activeAnalyzerQueue = []
       }
     },
     async fetchAnalyzerSessionData() {
       let activeAnalyzerSessionData = []
-      await this.activeAnalyzerQueue.forEach((sessionId) => {
-        ApiClient.getAnalyzerSession(this.sketch.id, sessionId).then((response) => {
+
+      const promises = this.activeAnalyzerQueue.map((sessionId) => {
+        return ApiClient.getAnalyzerSession(this.sketch.id, sessionId).then((response) => {
           let analyzerSession = response.data.objects[0]
           if (!analyzerSession) return
           activeAnalyzerSessionData.push(...analyzerSession['analyses'])
         })
       })
+      await Promise.all(promises)
       this.updateAnalyzerResultsData(activeAnalyzerSessionData)
     },
     triggeredAnalyzerRuns: function (data) {
-      console.log('triggeredAnalyzerRuns')
       this.activeAnalyzerTimerStart = Date.now()
       data.forEach((sessionId) => {
         if (this.activeAnalyzerQueue.indexOf(sessionId) === -1) this.activeAnalyzerQueue.push(sessionId)
       })
+      this.fetchAnalyzerSessionData()
     },
     filterAnalyzers(items, search) {
       const searchStr = (search || '').toLowerCase()
@@ -296,7 +300,7 @@ export default {
       if (sessionQueue.length > 0 && !this.interval) {
         this.interval = setInterval(
           function () {
-            if (sessionQueue.length === 0) {
+            if (sessionQueue.length === 0 || this.activeAnalyzerQueue.length === 0) {
               // the queue is empty so stop the interval
               clearInterval(this.interval)
               this.activeAnalyzerTimerStart = null
