@@ -141,7 +141,6 @@ def add_event(ctx, message, date, attributes, timestamp_desc, output):
 
     # TODO (jaegeral): Add more details to the output (e.g. event id, which
     # is currently not passed back by the API).
-    # TODO (jaegeral): Respect user output preferences
     if output == "json":
         click.echo(f"{return_value}")
     else:
