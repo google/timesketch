@@ -146,4 +146,3 @@ def add_event(ctx, message, date, attributes, timestamp_desc, output):
         click.echo(f"{return_value}")
     else:
         click.echo(f"Event added to sketch: {sketch.name}")
-
