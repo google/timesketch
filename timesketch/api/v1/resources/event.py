@@ -1291,9 +1291,9 @@ class EventTagResource(resources.ResourceMixin, Resource):
             sketch_id: Integer primary key for a sketch database model
             in request form:
                 events: list of events to remove tags from with the following values:
-                    _id: the event id
-                    _index: the searchindex id or
-                    _searchindex_name: the searchindex name
+                    _id: the event id (e.g. k8P1MYcBkeTGnypeeKJL)
+                    _index: the searchindex name (e.g. 56093e2566164c50bdf973643543571b) or
+                    searchindex_id: the searchindex id (e.g. 4)
                 tags: list of tags to remove from events
 
 
