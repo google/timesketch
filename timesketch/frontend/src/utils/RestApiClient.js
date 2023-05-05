@@ -17,7 +17,7 @@ import axios from 'axios'
 import { SnackbarProgrammatic as Snackbar } from 'buefy'
 
 const RestApiClient = axios.create({
-  baseURL: '/api/v1',
+  baseURL: process.env.NODE_ENV === 'development' ? '/api/v1' : '/legacy/api/v1',
   headers: {
     common: {
       'X-CSRFToken': document.getElementsByTagName('meta')[0]['content'],
@@ -26,7 +26,7 @@ const RestApiClient = axios.create({
 })
 
 const RestApiBlobClient = axios.create({
-  baseURL: '/api/v1',
+  baseURL: process.env.NODE_ENV === 'development' ? '/api/v1' : '/legacy/api/v1',
   responseType: 'blob',
   headers: {
     common: {
