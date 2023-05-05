@@ -1285,20 +1285,26 @@ class EventTagResource(resources.ResourceMixin, Resource):
     @login_required
     def delete(self, sketch_id):
         """
-        Remove tags from a list of events (max 500).
+        Remove tags (max 500) from a list of events (max 500).
 
         Args:
             sketch_id: Integer primary key for a sketch database model
             in request form:
                 events: list of events to remove tags from
                 tags: list of tags to remove from events
+                searchindex_id: the searchindex id or
+                searchindex_name: the searchindex name
 
         Returns:
-            A JSON object with the event ID and the tag ID (instance of
-            flask.wrappers.Response)
+            HTTP_STATUS_CODE_OK if successful
 
         Raises:
             HTTP_STATUS_CODE_NOT_FOUND: if sketch or event does not exist
+            HTTP_STATUS_CODE_BAD_REQUEST: if the request is malformed, e.g.
+                events or tags are not lists or the number of events or tags
+                exceeds the maximum allowed
+            HTTP_STATUS_CODE_FORBIDDEN: if the user does not have write access
+                to the sketch
         """
 
         sketch = Sketch.query.get_with_acl(sketch_id)
