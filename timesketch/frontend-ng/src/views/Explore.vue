@@ -51,8 +51,9 @@ limitations under the License.
               solo
               class="pa-1"
               append-icon="mdi-magnify"
+              @click:append="search()"
               id="tsSearchInput"
-              @keyup.enter="search"
+              @keyup.enter="search()"
               @click="showSearchDropdown = true"
               ref="searchInput"
               v-bind="attrs"
