@@ -156,7 +156,7 @@ class SummaryAggregation(interface.BaseAggregator):
                     "histogram": {
                         "script": "doc['datetime'].value.getDayOfWeek()",
                         "interval": 1,
-                        "extended_bounds": {"min": 0, "max": 7},
+                        "extended_bounds": {"min": 0, "max": 6},
                         "min_doc_count": 0,
                     }
                 },

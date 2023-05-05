@@ -146,6 +146,9 @@ limitations under the License.
                     :items="rareValues"
                     :items-per-page="10"
                     :hide-default-footer="(rareValues.length <= 10)"
+                    :footer-props="{
+                      disableItemsPerPage: true
+                    }"
                     dense
                   >
                   </v-data-table>
@@ -375,7 +378,7 @@ export default {
         case "Day":
           data = Array(7).fill(0)
           for (const entry of this.stats.day_histogram.buckets) {
-            data[entry.key - 1] = entry.doc_count
+            data[entry.key] = entry.doc_count
           }
           break
         case "Hour":
