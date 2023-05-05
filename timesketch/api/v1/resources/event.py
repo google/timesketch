@@ -1301,8 +1301,6 @@ class EventTagResource(resources.ResourceMixin, Resource):
             HTTP_STATUS_CODE_NOT_FOUND: if sketch or event does not exist
         """
 
-        logger.error("TAG remove method called", exc_info=True)
-
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
@@ -1328,7 +1326,6 @@ class EventTagResource(resources.ResourceMixin, Resource):
                 "request".format(self.MAX_EVENTS_TO_TAG),
             )
 
-        # The API is agnostic and can take both here
         searchindex_id = form.get("searchindex_id")
         searchindex_name = form.get("searchindex_name")
 
