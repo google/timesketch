@@ -1260,14 +1260,14 @@ class EventTagResource(resources.ResourceMixin, Resource):
     MAX_TAGS_PER_REQUEST = 500
 
     @login_required
-    def post(self, sketch_id, event_id):
+    # pylint: disable=unused-argument
+    def post(self, sketch_id):
         """Add a list of tags to events.
 
         Not yet implemented.
 
         Args:
             sketch_id: Integer primary key for a sketch database model
-            event_id: Integer primary key for an event database model
 
         Returns:
             A JSON object with the event ID and the tag ID (instance of
