@@ -1292,8 +1292,10 @@ class EventTagResource(resources.ResourceMixin, Resource):
             in request form:
                 events: list of events to remove tags from with the following values:
                     _id: the event id (e.g. k8P1MYcBkeTGnypeeKJL)
-                    _index: the searchindex name (e.g. 56093e2566164c50bdf973643543571b) or
-                    searchindex_id: the searchindex id (e.g. 4)
+                    _index: the searchindex name
+                        (e.g. 56093e2566164c50bdf973643543571b)
+                    searchindex_id: the searchindex id (e.g. 4) instead of
+                        providing _index
                 tags: list of tags to remove from events
 
 
