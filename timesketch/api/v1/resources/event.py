@@ -1350,8 +1350,7 @@ class EventTagResource(resources.ResourceMixin, Resource):
         for _event in events:
             # every event entry can have a dedicated searchindex_id or searchindex_name
             searchindex_id = _event.get("searchindex_id", None)
-            searchindex_name = _event.get("_searchindex_name", None)
-            searchindex_name = _event.get("_index")
+            searchindex_name = _event.get("_index", None)
 
             if not (searchindex_id or searchindex_name):
                 abort(
