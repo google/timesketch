@@ -1290,10 +1290,12 @@ class EventTagResource(resources.ResourceMixin, Resource):
         Args:
             sketch_id: Integer primary key for a sketch database model
             in request form:
-                events: list of events to remove tags from
+                events: list of events to remove tags from with the following values:
+                    _id: the event id
+                    _index: the searchindex id or
+                    _searchindex_name: the searchindex name
                 tags: list of tags to remove from events
-                searchindex_id: the searchindex id or
-                searchindex_name: the searchindex name
+
 
         Returns:
             HTTP_STATUS_CODE_OK if successful
@@ -1332,36 +1334,6 @@ class EventTagResource(resources.ResourceMixin, Resource):
                 "request".format(self.MAX_EVENTS_TO_TAG),
             )
 
-        searchindex_id = form.get("searchindex_id")
-        searchindex_name = form.get("searchindex_name")
-
-        if not (searchindex_id or searchindex_name):
-            abort(
-                HTTP_STATUS_CODE_NOT_FOUND,
-                "No search index information supplied.",
-            )
-
-        searchindex = None
-        # in both cases we are flexible, no matter what was supplied
-        if searchindex_name:
-            searchindex = SearchIndex.query.filter_by(
-                index_name=searchindex_name
-            ).first()
-        elif searchindex_id:
-            searchindex = SearchIndex.query.get(searchindex_id)
-
-        if not searchindex:
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                "Unable to find the Search index.",
-            )
-
-        if searchindex.get_status.status == "deleted":
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                "Unable to query event on a closed search index.",
-            )
-
         tags = form.get("tags", [])
         if not isinstance(tags, list):
             abort(HTTP_STATUS_CODE_BAD_REQUEST, "Tags need to be a list")
@@ -1376,6 +1348,37 @@ class EventTagResource(resources.ResourceMixin, Resource):
         datastore = self.datastore
 
         for _event in events:
+            # every event entry can have a dedicated searchindex_id or searchindex_name
+            searchindex_id = _event.get("_searchindex_id")
+            searchindex_name = _event.get("_searchindex_name")
+
+            if not (searchindex_id or searchindex_name):
+                abort(
+                    HTTP_STATUS_CODE_NOT_FOUND,
+                    "No search index information supplied.",
+                )
+
+            searchindex = None
+            # in both cases we are flexible, no matter what was supplied
+            if searchindex_name:
+                searchindex = SearchIndex.query.filter_by(
+                    index_name=searchindex_name
+                ).first()
+            elif searchindex_id:
+                searchindex = SearchIndex.query.get(searchindex_id)
+
+            if not searchindex:
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    "Unable to find the Search index.",
+                )
+
+            if searchindex.get_status.status == "deleted":
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    "Unable to query event on a closed search index.",
+                )
+
             result = self.datastore.get_event(searchindex.index_name, _event.get("_id"))
             if not result:
                 logger.warning(
