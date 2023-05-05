@@ -77,17 +77,14 @@ export default {
       return 'lightgrey'
     },
     removeTag(item, tag) {
-      console.log('DEMO: removeTag', item, tag)
-      item._source.tag.splice(item._source.tag.indexOf(tag), 1) // DEMO only
-      this.$store.dispatch('updateTimelineTags', { sketchId: this.sketch.id, tag: tag, num: -1 }) // DEMO only
-      // ApiClient.untagEvents(this.sketch.id, [item], [tag])
-      //   .then((response) => {
-      //     item._source.tag.splice(item._source.tag.indexOf(tag), 1)
-      //     this.$store.dispatch('updateTimelineTags', { sketchId: this.sketch.id, tag: tag, num: -1 })
-      //   })
-      //   .catch((e) => {
-      //     console.error(e)
-      //   })
+      ApiClient.untagEvents(this.sketch.id, [item], [tag])
+        .then((response) => {
+          item._source.tag.splice(item._source.tag.indexOf(tag), 1)
+          this.$store.dispatch('updateTimelineTags', { sketchId: this.sketch.id, tag: tag, num: -1 })
+        })
+        .catch((e) => {
+          console.error(e)
+        })
     },
   },
 }

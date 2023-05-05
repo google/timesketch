@@ -163,6 +163,13 @@ export default {
     }
     return RestApiClient.post('/sketches/' + sketchId + '/event/tagging/', formData)
   },
+  untagEvents(sketchId, events, tags) {
+    let formData = {
+      tags: tags,
+      events: events,
+    }
+    return RestApiClient.delete('/sketches/' + sketchId + '/event/tag/', { data: formData })
+  },
   updateEventAnnotation(sketchId, annotationType, annotation, events, currentSearchNode) {
     let formData = {
       annotation: annotation,

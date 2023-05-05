@@ -144,17 +144,14 @@ export default {
       }
     },
     removeTags(tag) {
-      console.log('DEMO: removeTag', this.event, tag)
-      this.event._source.tag.splice(this.event._source.tag.indexOf(tag), 1) // DEMO only
-      this.$store.dispatch('updateTimelineTags', { sketchId: this.sketch.id, tag: tag, num: -1 }) // DEMO only
-      // ApiClient.untagEvents(this.sketch.id, [this.event], [tag])
-      //   .then((response) => {
-      //     this.event._source.tag.splice(this.event._source.tag.indexOf(tag), 1)
-      //     this.$store.dispatch('updateTimelineTags', { sketchId: this.sketch.id, tag: tag, num: -1 })
-      //   })
-      //   .catch((e) => {
-      //     console.error(e)
-      //   })
+      ApiClient.untagEvents(this.sketch.id, [this.event], [tag])
+        .then((response) => {
+          this.event._source.tag.splice(this.event._source.tag.indexOf(tag), 1)
+          this.$store.dispatch('updateTimelineTags', { sketchId: this.sketch.id, tag: tag, num: -1 })
+        })
+        .catch((e) => {
+          console.error(e)
+        })
     },
     addTags: function (tagToAdd) {
       if (!this.event._source.hasOwnProperty('tag')) {
