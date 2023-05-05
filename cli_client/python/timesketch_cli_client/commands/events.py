@@ -138,7 +138,7 @@ def add_event(ctx, message, date, attributes, timestamp_desc, output):
     except ValueError as e:
         click.echo(f"Problem adding event to sketch: {e}")
         sys.exit(1)
-    
+
     # TODO (jaegeral): Add more details to the output (e.g. event id, which
     # is currently not passed back by the API).
     # TODO (jaegeral): Respect user output preferences
@@ -146,4 +146,4 @@ def add_event(ctx, message, date, attributes, timestamp_desc, output):
         click.echo(f"{return_value}")
     else:
         click.echo(f"Event added to sketch: {sketch.name}")
-    
+
