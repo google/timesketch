@@ -32,8 +32,16 @@ limitations under the License.
           <td>
             <v-tooltip right open-delay="500">
               <template v-slot:activator="{ on }">
-                <div v-on="on" class="d-inline-block">
+                <div v-on="on" class="d-inline-block d-flex justify-center pr-4">
+                  <v-progress-circular
+                    v-if="isActive(analyzer.analyzerName)"
+                    :size="20"
+                    :width="2"
+                    indeterminate
+                    color="primary"
+                  ></v-progress-circular>
                   <v-btn
+                    v-if="!isActive(analyzer.analyzerName)"
                     icon
                     color="primary"
                     :disabled="(timelineSelection.length > 0) ? false : true"
@@ -72,6 +80,9 @@ export default {
     analyzerList() {
         return this.$store.state.sketchAnalyzerList;
     },
+    activeAnalyzers() {
+        return this.$store.state.activeAnalyzers;
+    },
     sortedAnalyzerList() {
       let unsortedAnalyzerList = Object.entries(this.analyzerList).map(([analyzerName, info]) => ({analyzerName, info}))
       let sortedAnalyzerList = [...unsortedAnalyzerList]
@@ -80,7 +91,11 @@ export default {
     }
   },
   methods: {
+    isActive(analyzerName) {
+      return this.activeAnalyzers.indexOf(analyzerName) !== -1;
+    },
     runAnalyzer(analyzerName) {
+      this.$store.dispatch('addActiveAnalyzers', [analyzerName]);
       ApiClient.runAnalyzers(this.sketch.id,  this.timelineSelection, [analyzerName])
         .then((response) => {
           let sessionIds = []
