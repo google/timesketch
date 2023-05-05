@@ -1386,7 +1386,13 @@ class EventTagResource(resources.ResourceMixin, Resource):
                     _event.get("_id"),
                     searchindex.index_name,
                 )
-                continue
+                abort(
+                    HTTP_STATUS_CODE_NOT_FOUND,
+                    "Unable to find event {0:s} in index {1:s} to untag".format(
+                        _event.get("_id"), searchindex.index_name
+                    ),
+                )
+
             existing_tags = result.get("_source").get("tag", [])
 
             new_tags = list(set(existing_tags) - set(tags))
