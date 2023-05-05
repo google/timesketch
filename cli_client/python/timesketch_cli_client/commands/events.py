@@ -135,13 +135,15 @@ def add_event(ctx, message, date, attributes, timestamp_desc, output):
             timestamp_desc=timestamp_desc,
             attributes=attributes_dict,
         )
-        # TODO (jaegeral): Add more details to the output (e.g. event id, which
-        # is currently not passed back by the API).
-        # TODO (jaegeral): Respect user output preferences
-        if output == "json":
-            click.echo(f"{return_value}")
-        else:
-            click.echo(f"Event added to sketch: {sketch.name}")
     except ValueError as e:
         click.echo(f"Problem adding event to sketch: {e}")
         sys.exit(1)
+    
+    # TODO (jaegeral): Add more details to the output (e.g. event id, which
+    # is currently not passed back by the API).
+    # TODO (jaegeral): Respect user output preferences
+    if output == "json":
+        click.echo(f"{return_value}")
+    else:
+        click.echo(f"Event added to sketch: {sketch.name}")
+    

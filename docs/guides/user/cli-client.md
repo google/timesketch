@@ -152,6 +152,10 @@ Results
 
 This feature allows users to add events to their Timesketch account using the `events add` command. The command takes three arguments: `message, date, timestamp-desc` and an optional field for `attributes`. The message is a short description of the event, the date is the date and time the event occured, and the attributes are a list of key-value pairs that will be associated with the event.
 
+`timestamp_desc` is a field that is used to describe the timestamp of an event. This field can be helpful for providing context about the event, such as the type of event or the source of the data.
+
+For example, you could use the `timestamp_desc` field to specify that an event is a "Windows Sysmon event" or a "Netflow event." This information can be helpful for quickly identifying and understanding the events in a timeline.
+
 For example, the following command would add an event to the Timesketch `timesketch events add --message "foobar-message" --date 2023-03-04T11:31:12 --timestamp-desc "test" --attributes key=value,key2=value2`:
 
 This new feature makes it easy to add events to Timesketch from the command line, which can be helpful for automating tasks or for quickly adding events when you don't have access to the Timesketch web interface.
