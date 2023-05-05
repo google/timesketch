@@ -1372,11 +1372,6 @@ class EventTagResource(resources.ResourceMixin, Resource):
 
         datastore = self.datastore
 
-        tag_dict = {
-            "events_processed_by_api": 0,
-            "number_of_events_with_modified_tags": 0,
-        }
-
         for _event in events:
             result = self.datastore.get_event(searchindex.index_name, _event.get("_id"))
             if not result:
@@ -1386,7 +1381,6 @@ class EventTagResource(resources.ResourceMixin, Resource):
                     searchindex.index_name,
                 )
                 continue
-            tag_dict["events_processed_by_api"] += 1
             existing_tags = result.get("_source").get("tag", [])
 
             new_tags = list(set(existing_tags) - set(tags))
@@ -1401,10 +1395,6 @@ class EventTagResource(resources.ResourceMixin, Resource):
                 event={"tag": new_tags},
                 flush_interval=datastore.DEFAULT_FLUSH_INTERVAL,
             )
-            tag_dict["number_of_events_with_modified_tags"] += 1
             datastore.flush_queued_events()
 
-        schema = {"meta": tag_dict, "objects": []}
-        response = jsonify(schema)
-        response.status_code = HTTP_STATUS_CODE_OK
-        return response
+        return HTTP_STATUS_CODE_OK
