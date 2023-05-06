@@ -19,7 +19,7 @@ limitations under the License.
       <v-icon v-bind="attrs" v-on="on" class="ml-1">mdi-tag-plus-outline</v-icon>
     </template>
 
-    <v-card min-width="500px" class="mx-auto" max-width="500px" min-height="300px">
+    <v-card min-width="500px" class="mx-auto" max-width="500px" min-height="260px">
       <v-btn class="float-right mr-1 mt-1" icon @click="showMenu = false">
         <v-icon>mdi-close</v-icon>
       </v-btn>
@@ -31,26 +31,29 @@ limitations under the License.
             :key="tag.tag"
             :color="tag.color"
             :text-color="tag.textColor"
+            :disabled="assignedTags.includes(tag.tag) ? true : false"
             class="text-center"
             small
-            :close="showClose(tag.tag)"
             @click="addTags(tag.tag)"
-            @click:close="removeTags(tag.tag)"
+            @click.stop="showMenu = false"
           >
             <v-icon small left> {{ tag.label }} </v-icon>
             {{ tag.tag }}
           </v-chip>
         </v-chip-group>
-        <strong>Custom tags</strong>
+        <strong>Assigned tags</strong>
         <v-chip-group column>
           <v-chip
-            v-for="tag in customSelectedTags"
+            v-for="tag in assignedTags"
             :key="tag"
+            :color="getQuickTag(tag) ? getQuickTag(tag).color : ''"
+            :text-color="getQuickTag(tag) ? getQuickTag(tag).textColor : ''"
             class="text-center"
             small
             close
             @click:close="removeTags(tag)"
           >
+            <v-icon v-if="getQuickTag(tag)" small left>{{ getQuickTag(tag).label }}</v-icon>
             {{ tag }}
           </v-chip>
         </v-chip-group>
@@ -116,32 +119,22 @@ export default {
     tags() {
       return this.$store.state.tags.map((tag) => tag.tag)
     },
-    customSelectedTags() {
+    assignedTags() {
       if (!this.event._source.tag) return []
-      // returns all custom tags that are applied to an event without the quick tags
-      if (this.event._source.tag.length === 0) return []
-      let customSelectedTags = this.tags.filter((tag) => tag !== 'bad' && tag !== 'suspicious' && tag !== 'good')
-      customSelectedTags = customSelectedTags.filter((tag) => this.event._source.tag.includes(tag))
-      customSelectedTags.sort((a, b) => { return a.localeCompare(b)})
-      return customSelectedTags
+      return this.event._source.tag
     },
     customTags() {
       if (!this.event._source.tag) return []
       // returns all custom tags available for a sketch without the ones that are already applied to an event
-      let customTags = this.tags.filter((tag) => tag !== 'bad' && tag !== 'suspicious' && tag !== 'good')
-      customTags = customTags.filter((tag) => !this.customSelectedTags.includes(tag))
+      let customTags = this.tags.filter((tag) => !this.getQuickTag(tag))
+      customTags = customTags.filter((tag) => !this.assignedTags.includes(tag))
       customTags.sort((a, b) => { return a.localeCompare(b)})
       return customTags
     },
   },
   methods: {
-    showClose(tag) {
-      if (!this.event._source.tag) return false
-      if (this.event._source.tag.indexOf(tag) !== -1) {
-        return true
-      } else {
-         return false
-      }
+    getQuickTag(tag) {
+      return this.quickTags.find((el) => el.tag === tag)
     },
     removeTags(tag) {
       ApiClient.untagEvents(this.sketch.id, [this.event], [tag])
@@ -170,7 +163,7 @@ export default {
           this.$store.dispatch('updateTimelineTags', { sketchId: this.sketch.id, tag: tagToAdd, num: 1 })
         })
         .catch((e) => {
-          console.error('Cannot tag event')
+          console.error('Cannot tag event! Error:' + e)
         })
       this.$nextTick(() => {
         this.selectedTags = null

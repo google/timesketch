@@ -12,19 +12,21 @@ limitations under the License.
 -->
 <template>
   <span>
-    <v-chip
-      small
-      class="mr-1"
-      v-for="tag in sortedTags"
-      :close="showDetails ? true : false"
-      @click:close="removeTag(item, tag)"
-      :key="tag"
-      :color="tagColor(tag).color"
-      :text-color="tagColor(tag).textColor"
-    >
-      <v-icon v-if="tag in tagConfig" left small>{{ tagConfig[tag].label }}</v-icon>
-      {{ tag }}
-    </v-chip>
+    <span v-for="tag in sortedTags" :key="tag">
+      <v-hover v-slot="{ hover }">
+        <v-chip
+          small
+          class="mr-1"
+          :close="hover ? true : false"
+          @click:close="removeTag(item, tag)"
+          :color="tagColor(tag).color"
+          :text-color="tagColor(tag).textColor"
+        >
+          <v-icon v-if="tag in tagConfig" left small>{{ tagConfig[tag].label }}</v-icon>
+          {{ tag }}
+        </v-chip>
+      </v-hover>
+    </span>
     <span v-for="label in item._source.label" :key="label">
       <v-chip v-if="!label.startsWith('__ts')" small outlined class="mr-2">
         {{ label }}
@@ -43,9 +45,10 @@ export default {
     },
     sortedTags() {
       if (!this.item._source.tag) return []
-      // place "bad", "suspicious" and "good" tags first in the array, sort the rest alphabetically
+      // place quickTags first in the array, sort the rest alphabetically
       let tags = this.item._source.tag
       tags.sort((a, b) => {
+        // TODO: refactor when quickTags become configurable.
         if (a === 'bad') {
           return -1
         }
