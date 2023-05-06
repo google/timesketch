@@ -128,8 +128,8 @@ export default {
       analyzerResults: [],
       analyzerResultsData: {},
       activeAnalyzerQueue: [],
-      activeAnalyzerInterval: 15000,
-      activeAnalyzerTimeout: 300000,
+      activeAnalyzerInterval: 15000, // milliseconds
+      activeAnalyzerTimeout: 300000, // milliseconds
       activeAnalyzerTimeoutTriggered: false,
       activeAnalyzerTimerStart: null,
     }
@@ -307,7 +307,8 @@ export default {
               this.interval = false
               return
             }
-            // check timeout
+            // check if the timeout of the interval has been reached.
+            // This prevents the analyzer frontwend from checking stuck anayzers indefinetly.
             if (this.activeAnalyzerTimerStart !== null && (Date.now() - this.activeAnalyzerTimerStart > this.activeAnalyzerTimeout)) {
               clearInterval(this.interval)
               this.interval = false
@@ -316,8 +317,9 @@ export default {
               return
             }
             // set dynamic interval
-            if (sessionQueue.length >= 10) this.activeAnalyzerInterval = 30000
-            if (sessionQueue.length >= 50) this.activeAnalyzerInterval = 60000
+            // TODO: this is a stopgap solution before we rewrite the backend API to support single requests.
+            if (sessionQueue.length >= 10) this.activeAnalyzerInterval = 30000 // milliseconds
+            if (sessionQueue.length >= 50) this.activeAnalyzerInterval = 60000 // milliseconds
             // fetch data for sessions in the queue
             this.fetchAnalyzerSessionData()
             // update active session queue
