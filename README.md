@@ -24,27 +24,16 @@ Timesketch is an open-source tool for collaborative forensic timeline analysis. 
 
 <img width="1801" alt="Screenshot 2021-03-05 at 14 29 46" src="https://user-images.githubusercontent.com/316362/110122085-75972f80-7dbf-11eb-87aa-5dc64628392b.png">
 
-## Getting started
 
-#### Installation
-* [Install Timesketch](docs/guides/admin/install.md)
 
-#### Adding timelines
-* [Upload data](docs/guides/user/import-from-json-csv.md)
-
-#### Using Timesketch
-* [Users guide](docs/guides/user/basic-concepts.md)
-
-#### Adding a Notebook Container
-* [Installation](docs/guides/user/notebook.md)
-
-## Community
-* [Community guide](docs/community/resources.md)
-
-## Contributing
-* [Prerequisites](CONTRIBUTING.md)
-* [Developers guide](docs/developers/getting-started.md)
-
+| Action | Guide |
+|--------|-------|
+| Installation | [Install Timesketch](docs/guides/admin/install.md) |
+| Adding timelines | [Upload data](docs/guides/user/import-from-json-csv.md) |
+| Using Timesketch | [User's guide](docs/guides/user/basic-concepts.md) |
+| Adding a Notebook Container | [Installation](docs/guides/user/notebook.md) |
+| Community | [Community guide](docs/community/resources.md) |
+| Contributing | [Prerequisites](CONTRIBUTING.md)<br>[Developer's guide](docs/developers/getting-started.md) |
 ---
 
 ##### Obligatory Fine Print
