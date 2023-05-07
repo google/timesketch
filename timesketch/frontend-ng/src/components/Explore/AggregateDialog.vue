@@ -182,7 +182,7 @@ limitations under the License.
           </v-col>
 
           <v-col align="center">
-            <v-card outlined height="480px" :loading="!statsReady">
+            <v-card outlined height="480px" :loading="!eventDistributionReady">
               <v-card-title>
                 Event distribution by {{ this.distributionIntervals[this.selectedDistributionIntervalIndex] }}
                 <v-spacer></v-spacer>
@@ -295,6 +295,8 @@ export default {
       ],
       stats: undefined,
       statsReady: false,
+      eventDistributionReady: false,
+      eventDistributionData: undefined,
       termHeaders: [
         {
           text: 'Term',
@@ -323,7 +325,7 @@ export default {
       return this.recentIntervals[this.selectedRecentEventsIndex]
     },
     intervalChartOptions() {
-      if (this.stats === undefined) return  {
+      if (this.eventDistributionData === undefined) return  {
         chart: {
           type: 'bar',
         },
@@ -332,7 +334,7 @@ export default {
       let categories = []
       if (this.selectedDistributionInterval === "Year") {
         categories = []
-        for (const entry of this.stats.year_histogram.buckets) {
+        for (const entry of this.eventDistributionData.year_histogram.buckets) {
           categories.push(entry.key)
         }
       } else if (this.selectedDistributionInterval === "Month") {
@@ -358,32 +360,32 @@ export default {
       }
     },
     intervalChartSeries() {
-      if (this.stats === undefined) return []
+      if (this.eventDistributionData === undefined) return []
 
       let data = []
 
       switch (this.selectedDistributionInterval) {
         case "Year":
-          data = Array(this.stats.year_histogram.length).fill(0)
-          for (const [index, entry] of this.stats.year_histogram.buckets.entries()) {
+          data = Array(this.eventDistributionData.year_histogram.length).fill(0)
+          for (const [index, entry] of this.eventDistributionData.year_histogram.buckets.entries()) {
             data[index] = entry.doc_count
           }
           break
         case "Month":
           data = Array(12).fill(0)
-          for (const entry of this.stats.month_histogram.buckets) {
+          for (const entry of this.eventDistributionData.month_histogram.buckets) {
             data[entry.key - 1] = entry.doc_count
           }
           break
         case "Day":
           data = Array(7).fill(0)
-          for (const entry of this.stats.day_histogram.buckets) {
+          for (const entry of this.eventDistributionData.day_histogram.buckets) {
             data[entry.key] = entry.doc_count
           }
           break
         case "Hour":
           data = Array(24).fill(0)
-          for (const entry of this.stats.hour_histogram.buckets) {
+          for (const entry of this.eventDistributionData.hour_histogram.buckets) {
             data[entry.key] = entry.doc_count
           }
           break
@@ -482,12 +484,12 @@ export default {
     intervalHeatmapSeries() {
       let series = []
 
-      if (this.stats === undefined) return series
+      if (this.eventDistributionData === undefined) return series
 
       for (let day of Array.from({ length: 7}).keys()) {
         let daySeries = []
         for (let hour of Array.from({ length: 24}).keys()) {
-          const count = this.stats.hour_of_week_histogram.buckets[day*24 + hour].doc_count
+          const count = this.eventDistributionData.hour_of_week_histogram.buckets[day*24 + hour].doc_count
           daySeries.push({x: this.hoursOfDay[hour], y: count})
         }
         series.push({ 'name': this.daysOfWeek[day], 'data': daySeries})
@@ -518,15 +520,22 @@ export default {
   watch: {
     eventKey (value, oldValue) {
       if (value !== oldValue) {
-          this.loadSummaryData()
-          this.loadAggregationData()
-        }
+        this.loadSummaryData()
+        this.loadEventDistribution()
+        this.loadAggregationData()
+      }
     },
-    eventValue (value, oldValue){
+    eventValue (value, oldValue) {
       if (value !== oldValue) {
-          this.loadSummaryData()
-          this.loadAggregationData()
-        }
+        this.loadSummaryData()
+        this.loadEventDistribution()
+        this.loadAggregationData()
+      }
+    },
+    selectedDistributionInterval (value, oldValue) {
+      if (value !== oldValue) {
+        this.loadEventDistribution()
+      }
     },
     selectedRecentEvents (value, oldValue) {
       if (value !== oldValue) {
@@ -556,6 +565,20 @@ export default {
       }).then((response) => {
         this.stats = response.data.objects[0].field_summary.buckets[0]
         this.statsReady = true
+      })
+    },
+    loadEventDistribution: function() {
+      this.eventDistributionReady = false
+      this.eventDistributionData = []
+      ApiClient.runAggregator(this.sketch.id, {
+        aggregator_name: 'datefield_summary',
+        aggregator_parameters: {
+          field: this.eventKey,
+          date_interval: this.selectedDistributionInterval
+        }
+      }).then((response) => {
+        this.eventDistributionData = response.data.objects[0].datefield_summary.buckets[0]
+        this.eventDistributionReady = true
       })
     },
     loadAggregationData: function() {
@@ -608,7 +631,6 @@ export default {
           end_time: endTime.toISOString().slice(0, -1),
         }
       }).then((response) => {
-        console.log(response)
         this.data = response.data.objects[0].date_histogram.buckets[0]
         this.recentHistogramSeries = [{
           data: [],
@@ -629,6 +651,7 @@ export default {
   },
   mounted() {
     this.loadSummaryData()
+    this.loadEventDistribution()
     this.loadAggregationData()
   }
 }
