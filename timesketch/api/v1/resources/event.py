@@ -1250,7 +1250,7 @@ class MarkEventsWithTimelineIdentifier(resources.ResourceMixin, Resource):
         return HTTP_STATUS_CODE_OK
 
 
-class EventTagResource(resources.ResourceMixin, Resource):
+class EventUnTagResource(resources.ResourceMixin, Resource):
     """Resource to add / remove a tag to an event."""
 
     # The maximum number of events to tag in a single request.
@@ -1260,30 +1260,7 @@ class EventTagResource(resources.ResourceMixin, Resource):
     MAX_TAGS_PER_REQUEST = 500
 
     @login_required
-    # pylint: disable=unused-argument
     def post(self, sketch_id):
-        """Add a list of tags to events.
-
-        Not yet implemented.
-
-        Args:
-            sketch_id: Integer primary key for a sketch database model
-
-        Returns:
-            A JSON object with the event ID and the tag ID (instance of
-            flask.wrappers.Response)
-
-        Raises:
-            HTTP_STATUS_CODE_NOT_FOUND: if sketch or event does not exist
-            HTTP_STATUS_CODE_NOT_IMPLEMENTED: if the method is not implemented
-        """
-        abort(
-            501,  # HTTP_STATUS_CODE_NOT_IMPLEMENTED
-            ("Method not yet implemented. Please use EventTaggingResource instead."),
-        )
-
-    @login_required
-    def delete(self, sketch_id):
         """
         Remove tags (max 500) from a list of events (max 500).
 
@@ -1383,16 +1360,10 @@ class EventTagResource(resources.ResourceMixin, Resource):
 
             result = self.datastore.get_event(searchindex.index_name, _event.get("_id"))
             if not result:
-                logger.warning(
+                logger.debug(
                     "Unable to find event %s in index %s to untag",
                     _event.get("_id"),
                     searchindex.index_name,
-                )
-                abort(
-                    HTTP_STATUS_CODE_NOT_FOUND,
-                    "Unable to find event {0:s} in index {1:s} to untag".format(
-                        _event.get("_id"), searchindex.index_name
-                    ),
                 )
 
             existing_tags = result.get("_source").get("tag", [])
@@ -1409,6 +1380,7 @@ class EventTagResource(resources.ResourceMixin, Resource):
                 event={"tag": new_tags},
                 flush_interval=datastore.DEFAULT_FLUSH_INTERVAL,
             )
-            datastore.flush_queued_events()
+
+        datastore.flush_queued_events()
 
         return HTTP_STATUS_CODE_OK
