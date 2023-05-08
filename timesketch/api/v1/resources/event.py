@@ -1296,7 +1296,7 @@ class EventTagResource(resources.ResourceMixin, Resource):
                         (e.g. 56093e2566164c50bdf973643543571b)
                     searchindex_id: the searchindex id (e.g. 4) instead of
                         providing _index
-                tags: list of tags to remove from events
+                tags_to_remove: list of tags to remove from events
 
 
         Returns:
@@ -1336,11 +1336,11 @@ class EventTagResource(resources.ResourceMixin, Resource):
                 "request".format(self.MAX_EVENTS_TO_TAG),
             )
 
-        tags = form.get("tags", [])
-        if not isinstance(tags, list):
+        tags_to_remove = form.get("tags_to_remove", [])
+        if not isinstance(tags_to_remove, list):
             abort(HTTP_STATUS_CODE_BAD_REQUEST, "Tags need to be a list")
 
-        if len(tags) > self.MAX_TAGS_PER_REQUEST:
+        if len(tags_to_remove) > self.MAX_TAGS_PER_REQUEST:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 "Cannot untag more than {0:d} tags in a single "
