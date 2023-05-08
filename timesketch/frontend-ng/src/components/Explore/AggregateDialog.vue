@@ -259,6 +259,7 @@ export default {
     'eventValue',
     'eventTimestamp',
     'eventTimestampDesc',
+    'reloadData',
   ],
   data() {
     return {
@@ -518,15 +519,9 @@ export default {
     },
   },
   watch: {
-    eventKey (value, oldValue) {
-      if (value !== oldValue) {
-        this.loadSummaryData()
-        this.loadEventDistribution()
-        this.loadAggregationData()
-      }
-    },
-    eventValue (value, oldValue) {
-      if (value !== oldValue) {
+    reloadData (value, oldValue) {
+      console.log(value, oldValue)
+      if (value === true) {
         this.loadSummaryData()
         this.loadEventDistribution()
         this.loadAggregationData()
