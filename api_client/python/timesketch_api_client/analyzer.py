@@ -111,7 +111,8 @@ class AnalyzerResult(resource.BaseResource):
         for entry in self._get_status_data():
             return_strings.append(
                 "[{0:s}] = {1:s}".format(
-                    entry.get("name", "No Name"), entry.get("log", "No recorded logs.")
+                    entry.get("name", "No Name"),
+                    entry.get("log", "No recorded logs."),
                 )
             )
         return "\n".join(return_strings)
@@ -149,7 +150,8 @@ class AnalyzerResult(resource.BaseResource):
         for entry in self._get_status_data():
             return_strings.append(
                 "[{0:s}] = {1:s}".format(
-                    entry.get("name", "No Name"), entry.get("status", "Unknown.")
+                    entry.get("name", "No Name"),
+                    entry.get("status", "Unknown."),
                 )
             )
         return "\n".join(return_strings)

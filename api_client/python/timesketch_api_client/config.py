@@ -425,7 +425,9 @@ def get_client(
     assistant = ConfigAssistant()
     try:
         assistant.load_config_file(
-            config_path, section=config_section, load_cli_config=load_cli_config
+            config_path,
+            section=config_section,
+            load_cli_config=load_cli_config,
         )
         if config_dict:
             assistant.load_config_dict(config_dict)
