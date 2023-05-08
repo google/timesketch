@@ -520,7 +520,6 @@ export default {
   },
   watch: {
     reloadData (value, oldValue) {
-      console.log(value, oldValue)
       if (value === true) {
         this.loadSummaryData()
         this.loadEventDistribution()
