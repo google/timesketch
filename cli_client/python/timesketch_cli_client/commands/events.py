@@ -91,6 +91,61 @@ def annotate(ctx, timeline_id, event_id, tag, comment, output):
     click.echo(return_value)
 
 
+@events_group.command("add")
+@click.option("--message", required=True, help="Message of the event.")
+@click.option(
+    "--date",
+    required=True,
+    help="Date of the event (ISO 8601). Example: 2023-03-08T10:59:24+00:00",
+)
+@click.option(
+    "--attributes",
+    required=False,
+    help="Attributes of the event. Example: key1=value1,key2=value2",
+)
+@click.option(
+    "--timestamp-desc",
+    required=True,
+    help="Timestamp description of the event.",
+)
+@click.option(
+    "--output-format",
+    "output",
+    required=False,
+    help="Set output format (overrides global setting).",
+)
+@click.pass_context
+def add_event(ctx, message, date, attributes, timestamp_desc, output):
+    """Add an event to the sketch."""
+    sketch = ctx.obj.sketch
+    if not output:
+        output = ctx.obj.output_format
+
+    attributes_dict = {}
+    if attributes:
+        attributes_comma_split = attributes.split(",")
+
+        for attribute in attributes_comma_split:
+            key, value = attribute.split("=")
+            attributes_dict[key] = value
+    try:
+        return_value = sketch.add_event(
+            message=message,
+            date=date,
+            timestamp_desc=timestamp_desc,
+            attributes=attributes_dict,
+        )
+    except ValueError as e:
+        click.echo(f"Problem adding event to sketch: {e}")
+        sys.exit(1)
+
+    # TODO (jaegeral): Add more details to the output (e.g. event id, which
+    # is currently not passed back by the API).
+    if output == "json":
+        click.echo(f"{return_value}")
+    else:
+        click.echo(f"Event added to sketch: {sketch.name}")
+
 @events_group.command("remove_tag")
 @click.option("--timeline-id", type=int, required=True)
 @click.option("--event-id", required=True, help="ID of the event.")
