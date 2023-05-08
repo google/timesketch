@@ -15,6 +15,7 @@ limitations under the License.
     <span v-for="tag in sortedTags" :key="tag">
       <v-hover v-slot="{ hover }">
         <v-chip
+          :style="hover ? '' : 'padding-right: 32px'"
           small
           class="mr-1"
           :close="hover ? true : false"
