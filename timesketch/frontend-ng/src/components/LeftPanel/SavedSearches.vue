@@ -48,15 +48,15 @@ limitations under the License.
                     <v-icon small>mdi-dots-vertical</v-icon>
                   </v-btn>
                 </template>
-                <v-card>
-                  <v-list dense class="mx-auto">
-                    <v-list-item style="cursor: pointer" @click="copySavedSearchUrlToClipboard(savedSearch.id)">
-                      <v-list-item-title>
-                        <v-icon>mdi-link-variant</v-icon> Copy link to this search
-                      </v-list-item-title>
-                    </v-list-item>
-                  </v-list>
-                </v-card>
+
+                <v-list dense class="mx-auto">
+                  <v-list-item style="cursor: pointer" @click="copySavedSearchUrlToClipboard(savedSearch.id)">
+                    <v-list-item-icon>
+                      <v-icon small>mdi-link-variant</v-icon>
+                    </v-list-item-icon>
+                    <v-list-item-title>Copy link to this search </v-list-item-title>
+                  </v-list-item>
+                </v-list>
               </v-menu>
             </v-col>
           </v-row>
