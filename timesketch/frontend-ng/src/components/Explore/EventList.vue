@@ -315,23 +315,8 @@ limitations under the License.
               }"
             >
               <!-- Tags -->
-              <span v-if="displayOptions.showTags && index === 3">
-                <v-chip
-                  small
-                  class="mr-2"
-                  v-for="tag in item._source.tag"
-                  :key="tag"
-                  :color="tagColor(tag).color"
-                  :text-color="tagColor(tag).textColor"
-                >
-                  <v-icon v-if="tag in tagConfig" left small>{{ tagConfig[tag].label }}</v-icon>
-                  {{ tag }}</v-chip
-                >
-                <span v-for="label in item._source.label" :key="label">
-                  <v-chip v-if="!label.startsWith('__ts')" small outlined class="mr-2">
-                    {{ label }}
-                  </v-chip>
-                </span>
+              <span v-if="displayOptions.showTags && index === 3 && ('tag' in item._source ? (item._source.tag.length > 0) : false )">
+                <ts-event-tags :item="item" :tagConfig="tagConfig" :showDetails="item.showDetails"></ts-event-tags>
               </span>
               <!-- Emojis -->
               <span v-if="displayOptions.showEmojis && index === 0">
@@ -377,6 +362,7 @@ import TsBarChart from './BarChart'
 import TsEventDetail from './EventDetail'
 import TsEventTagMenu from './EventTagMenu.vue'
 import TsEventActionMenu from './EventActionMenu.vue'
+import TsEventTags from './EventTags.vue'
 
 const defaultQueryFilter = () => {
   return {
@@ -405,6 +391,7 @@ export default {
     TsEventDetail,
     TsEventTagMenu,
     TsEventActionMenu,
+    TsEventTags
   },
   props: {
     queryRequest: {
@@ -569,12 +556,6 @@ export default {
     },
   },
   methods: {
-    tagColor: function (tag) {
-      if (this.tagConfig[tag]) {
-        return this.tagConfig[tag]
-      }
-      return 'lightgrey'
-    },
     getFieldName: function (field) {
       return 'item._source.' + field
     },
