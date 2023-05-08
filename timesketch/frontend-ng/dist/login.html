@@ -1,18 +1,1 @@
-<!DOCTYPE html><html lang=en><head><meta name=csrf-token content="{{ csrf_token() }}"><meta charset=utf-8><meta http-equiv=X-UA-Compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1"><link rel=icon href=/v2/dist/favicon.ico><title>Timesketch</title><style>html,
-        body {
-            display: flex;
-            height: 100%;
-            width: 100%;
-            align-items: center;
-            justify-content: center;
-        }
-        .card.is-wide {
-            width: 520px;
-            height: 350px;
-            padding-top:30px;
-        }
-        .card.has-text-centered,
-        .card-content {
-            justify-content: center;
-            align-items: center;
-        }</style><link href=/v2/dist/css/chunk-common.eef05fa1.css rel=preload as=style><link href=/v2/dist/css/chunk-vendors.67ae6ed2.css rel=preload as=style><link href=/v2/dist/js/chunk-common.921edcb1.js rel=preload as=script><link href=/v2/dist/js/chunk-vendors.b77e9bec.js rel=preload as=script><link href=/v2/dist/js/login.a6eb9619.js rel=preload as=script><link href=/v2/dist/css/chunk-vendors.67ae6ed2.css rel=stylesheet><link href=/v2/dist/css/chunk-common.eef05fa1.css rel=stylesheet></head><body class=login-page><div class=columns><div class=column><div class="card is-wide has-text-centered"><div class=card-content><div class=content><div><img src=/v2/dist/timesketch-color.png style=width:40px;><div style="font-size: 1.5em;">time<b>sketch</b></div><div style="font-size: 0.8em;">Digital Forensic Timeline Analysis</div></div><br><form method=post style="width:50%;margin-left: auto; margin-right: auto;"><div class=field><div class=control><input type=text class=input name=username placeholder=Username style=text-align:center;></div></div><div class=field><div class=control><input type=password class=input name=password placeholder=Password style=text-align:center;></div></div><div class=field><div class="control has-text-centered"><button type=submit class="button is-rounded is-wide is-info" style=width:100%;>Sign in</button></div></div>{{ form.csrf_token }}</form></div></div></div></div></div><script src=/v2/dist/js/chunk-vendors.b77e9bec.js></script><script src=/v2/dist/js/chunk-common.921edcb1.js></script><script src=/v2/dist/js/login.a6eb9619.js></script></body></html>
+<!DOCTYPE html><html lang=en><head><meta name=csrf-token content="{{ csrf_token() }}"><meta charset=utf-8><meta http-equiv=X-UA-Compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1"><link rel=icon href=/dist/favicon.ico><link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel=stylesheet><title>Timesketch</title><link href=/dist/css/chunk-vendors.69f98187.css rel=preload as=style><link href=/dist/css/login.5d50b378.css rel=preload as=style><link href=/dist/js/chunk-vendors.8011d188.js rel=preload as=script><link href=/dist/js/login.fc00c6ee.js rel=preload as=script><link href=/dist/css/chunk-vendors.69f98187.css rel=stylesheet><link href=/dist/css/login.5d50b378.css rel=stylesheet></head><body><div class=card><div class=logo-container><div class=logo-image-container><img class=logo-image src=/dist/timesketch-color.png></div><div class=logo-text-container><div class=logo-text-header>timesketch</div><div class=logo-text-subheader>Digital Forensics Timeline Analysis</div></div></div><form method=post><input type=text class=input name=username placeholder=Username> <input type=password class=input name=password placeholder=Password> <button type=submit class=login-button>Sign in</button> {{ form.csrf_token }}</form></div><script src=/dist/js/chunk-vendors.8011d188.js></script><script src=/dist/js/login.fc00c6ee.js></script></body></html>

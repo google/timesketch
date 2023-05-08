@@ -655,6 +655,9 @@ export default {
         .update()
     },
     setTheme: function () {
+      if (!this.cy) {
+        return
+      }
       if (this.$vuetify.theme.dark) {
         this.cy
           .style()

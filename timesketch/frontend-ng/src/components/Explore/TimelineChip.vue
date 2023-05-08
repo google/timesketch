@@ -54,7 +54,9 @@ limitations under the License.
               <li><strong>Original filename:</strong> {{ datasource.original_filename }}</li>
               <li><strong>File on disk:</strong> {{ datasource.file_on_disk }}</li>
               <li><strong>File size:</strong> {{ datasource.file_size | compactBytes }}</li>
+              <li><strong>Uploaded by:</strong> {{ datasource.user.username }}</li>
               <li><strong>Provider:</strong> {{ datasource.provider }}</li>
+              <li><strong>Context:</strong> {{ datasource.context }}</li>
               <li v-if="datasource.data_label"><strong>Data label:</strong> {{ datasource.data_label }}</li>
               <li><strong>Status:</strong> {{ dataSourceStatus(datasource) }}</li>
               <li>
@@ -100,7 +102,7 @@ limitations under the License.
       </v-card>
     </v-dialog>
 
-    <v-menu v-else offset-y :close-on-content-click="false" content-class="menu-with-gap">
+    <v-menu v-else offset-y :close-on-content-click="false" content-class="menu-with-gap" ref="timelineChipMenuRef">
       <template v-slot:activator="{ on }">
         <v-chip v-on="on" :style="getTimelineStyle(timeline)" class="mr-2 mb-3">
           <v-icon v-if="timelineStatus === 'fail'" left color="red"> mdi-alert-circle-outline </v-icon>
@@ -119,7 +121,7 @@ limitations under the License.
         </v-chip>
       </template>
       <v-sheet flat width="320">
-        <v-list>
+        <v-list dense>
           <v-dialog v-model="dialogRename" width="600">
             <template v-slot:activator="{ on, attrs }">
               <v-list-item v-bind="attrs" v-on="on">
@@ -190,7 +192,9 @@ limitations under the License.
                     <li><strong>Original filename:</strong> {{ datasource.original_filename }}</li>
                     <li><strong>File on disk:</strong> {{ datasource.file_on_disk }}</li>
                     <li><strong>File size:</strong> {{ datasource.file_size | compactBytes }}</li>
+                    <li><strong>Uploaded by:</strong> {{ datasource.user.username }}</li>
                     <li><strong>Provider:</strong> {{ datasource.provider }}</li>
+                    <li><strong>Context:</strong> {{ datasource.context }}</li>
                     <li v-if="datasource.data_label"><strong>Data label:</strong> {{ datasource.data_label }}</li>
                     <li><strong>Status:</strong> {{ dataSourceStatus(datasource) }}</li>
                     <li>
@@ -208,6 +212,53 @@ limitations under the License.
               <v-card-actions>
                 <v-spacer></v-spacer>
                 <v-btn color="primary" text @click="dialogStatus = false"> Close </v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
+
+          <v-list-item
+            v-if="timelineStatus === 'ready'"
+            :to="{ name: 'Analyze', params: { sketchId: sketch.id, analyzerTimelineId: timeline.id } }"
+            style="cursor: pointer"
+            @click="$refs.timelineChipMenuRef.isActive = false"
+          >
+            <v-list-item-action>
+              <v-icon>mdi-auto-fix</v-icon>
+            </v-list-item-action>
+            <v-list-item-subtitle>Run Analyzers</v-list-item-subtitle>
+          </v-list-item>
+
+          <v-list-item style="cursor: pointer" @click="deleteConfirmation = true">
+            <v-list-item-action>
+              <v-icon>mdi-trash-can-outline</v-icon>
+            </v-list-item-action>
+            <v-list-item-subtitle>Delete Timeline</v-list-item-subtitle>
+          </v-list-item>
+          <v-dialog v-model="deleteConfirmation" max-width="500">
+            <v-card>
+              <v-card-title>
+                <v-icon color="red" class="mr-2 ml-n3">mdi-alert-octagon-outline</v-icon> Delete Timeline?
+              </v-card-title>
+              <v-card-text>
+                <ul style="list-style-type: none">
+                  <li><strong>Name: </strong>{{ timeline.name }}</li>
+                  <li><strong>Status: </strong>{{ timelineStatus }}</li>
+                  <li><strong>Opensearch index: </strong>{{ timeline.searchindex.index_name }}</li>
+                  <li v-if="timelineStatus === 'processing' || timelineStatus === 'ready'">
+                    <strong>Number of events: </strong>
+                    {{ allIndexedEvents | compactNumber }}
+                  </li>
+                  <li><strong>Created by: </strong>{{ timeline.user.username }}</li>
+                  <li>
+                    <strong>Created at: </strong>{{ timeline.created_at | shortDateTime }}
+                    <small>({{ timeline.created_at | timeSince }})</small>
+                  </li>
+                </ul>
+              </v-card-text>
+              <v-card-actions>
+                <v-btn color="primary" text @click="deleteConfirmation = false"> cancel </v-btn>
+                <v-spacer></v-spacer>
+                <v-btn color="primary" text @click="remove()"> delete </v-btn>
               </v-card-actions>
             </v-card>
           </v-dialog>
@@ -284,6 +335,7 @@ export default {
         ['#FFC7A0', '#FFDF79', '#FFEAEF'],
         ['#DEBBFF', '#9AB0FB', '#CFFBE2'],
       ],
+      deleteConfirmation: false,
     }
   },
   computed: {
@@ -326,9 +378,9 @@ export default {
       this.$emit('save', this.timeline, this.newTimelineName)
     },
     remove() {
-      if (confirm('Delete the timeline?')) {
-        this.$emit('remove', this.timeline)
-      }
+      this.$emit('remove', this.timeline)
+      this.deleteConfirmation = false
+      this.successSnackBar('Timeline deleted')
     },
     secondsSinceStart() {
       if (!this.datasourcesProcessing.length) {
@@ -457,12 +509,15 @@ export default {
     // TODO: Move to computed
     this.timelineStatus = this.timeline.status[0].status
     this.datasources = this.timeline.datasources
+    let timelineStat = this.meta.stats_per_timeline[this.timeline.id]
 
     if (this.timelineStatus === 'processing') {
       this.autoRefresh = true
     } else {
       this.autoRefresh = false
-      this.allIndexedEvents = this.meta.stats_per_timeline[this.timeline.id]['count']
+      if (timelineStat) {
+        this.allIndexedEvents = timelineStat['count']
+      }
     }
     this.newTimelineName = this.timeline.name
   },

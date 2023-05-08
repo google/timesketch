@@ -19,7 +19,10 @@ limitations under the License.
       <v-icon v-bind="attrs" v-on="on" class="ml-1">mdi-tag-plus-outline</v-icon>
     </template>
 
-    <v-card min-width="500px" class="mx-auto">
+    <v-card min-width="500px" class="mx-auto" max-width="500px" min-height="260px">
+      <v-btn class="float-right mr-1 mt-1" icon @click="showMenu = false">
+        <v-icon>mdi-close</v-icon>
+      </v-btn>
       <v-card-text>
         <strong>Quick tags</strong>
         <v-chip-group>
@@ -28,29 +31,64 @@ limitations under the License.
             :key="tag.tag"
             :color="tag.color"
             :text-color="tag.textColor"
+            :disabled="assignedTags.includes(tag.tag) ? true : false"
             class="text-center"
             small
             @click="addTags(tag.tag)"
+            @click.stop="showMenu = false"
           >
             <v-icon small left> {{ tag.label }} </v-icon>
-            {{ tag.tag }}</v-chip
+            {{ tag.tag }}
+          </v-chip>
+        </v-chip-group>
+        <strong>Assigned tags</strong>
+        <v-chip-group column>
+          <v-chip
+            v-for="tag in assignedTags"
+            :key="tag"
+            :color="getQuickTag(tag) ? getQuickTag(tag).color : ''"
+            :text-color="getQuickTag(tag) ? getQuickTag(tag).textColor : ''"
+            class="text-center"
+            small
+            close
+            @click:close="removeTags(tag)"
           >
+            <v-icon v-if="getQuickTag(tag)" small left>{{ getQuickTag(tag).label }}</v-icon>
+            {{ tag }}
+          </v-chip>
         </v-chip-group>
         <br />
         <v-combobox
           v-model="selectedTags"
-          :items="tags"
-          label="Add tags.."
-          outlined
-          chips
+          :hide-no-data="!search"
+          :items="customTags"
+          :search-input.sync="search"
+          hide-selected
+          label="Add tags ..."
           small-chips
-          multiple
-        ></v-combobox>
+          outlined
+          @change="addTags(selectedTags)"
+        >
+          <template v-slot:no-data>
+            <v-list-item>
+              <span class="subheading">Create new tag: </span>
+              <v-chip
+                class="ml-1"
+                small
+              >
+                {{ search }}
+              </v-chip>
+            </v-list-item>
+          </template>
+          <template v-slot:item="{ item }">
+            <v-chip
+              small
+            >
+              {{ item }}
+            </v-chip>
+          </template>
+        </v-combobox>
       </v-card-text>
-      <v-card-actions>
-        <v-spacer></v-spacer>
-        <v-btn text @click="addTags(selectedTags)">Save</v-btn>
-      </v-card-actions>
     </v-card>
   </v-menu>
 </template>
@@ -64,13 +102,14 @@ export default {
     return {
       showMenu: false,
       listItems: [],
-      selectedTags: [],
+      selectedTags: null,
       // TODO: Refactor this into a configurable option
       quickTags: [
         { tag: 'bad', color: 'red', textColor: 'white', label: 'mdi-alert-circle-outline' },
         { tag: 'suspicious', color: 'orange', textColor: 'white', label: 'mdi-help-circle-outline' },
         { tag: 'good', color: 'green', textColor: 'white', label: 'mdi-check-circle-outline' },
       ],
+      search: null,
     }
   },
   computed: {
@@ -80,26 +119,55 @@ export default {
     tags() {
       return this.$store.state.tags.map((tag) => tag.tag)
     },
+    assignedTags() {
+      if (!this.event._source.tag) return []
+      return this.event._source.tag
+    },
+    customTags() {
+      if (!this.event._source.tag) return []
+      // returns all custom tags available for a sketch without the ones that are already applied to an event
+      let customTags = this.tags.filter((tag) => !this.getQuickTag(tag))
+      customTags = customTags.filter((tag) => !this.assignedTags.includes(tag))
+      customTags.sort((a, b) => { return a.localeCompare(b)})
+      return customTags
+    },
   },
   methods: {
-    addTags: function (tagsToAdd) {
-      if (!Array.isArray(tagsToAdd)) {
-        tagsToAdd = [tagsToAdd]
+    getQuickTag(tag) {
+      return this.quickTags.find((el) => el.tag === tag)
+    },
+    removeTags(tag) {
+      ApiClient.untagEvents(this.sketch.id, [this.event], [tag])
+        .then((response) => {
+          this.event._source.tag.splice(this.event._source.tag.indexOf(tag), 1)
+          this.$store.dispatch('updateTimelineTags', { sketchId: this.sketch.id, tag: tag, num: -1 })
+        })
+        .catch((e) => {
+          console.error(e)
+        })
+    },
+    addTags: function (tagToAdd) {
+      if (!this.event._source.hasOwnProperty('tag')) {
+        this.$set(this.event._source, 'tag', [])
       }
 
-      tagsToAdd.forEach((tag) => {
-        if (this.event._source.tag.indexOf(tag) === -1) {
-          this.event._source.tag.push(tag)
-          ApiClient.tagEvents(this.sketch.id, [this.event], [tag])
-            .then((response) => {
-              this.$store.dispatch('updateTimelineTags', { sketchId: this.sketch.id, tag: tag, num: 1 })
-            })
-            .catch((e) => {
-              console.error('Cannot tag event')
-            })
+      for (const tag of tagToAdd) {
+        if (this.event._source.tag.indexOf(tag) !== -1) {
+          tagToAdd.splice(tagToAdd.indexOf(tag), 1)
         }
-        this.selectedTags = []
-        this.showMenu = false
+      }
+
+      ApiClient.tagEvents(this.sketch.id, [this.event], [tagToAdd])
+        .then((response) => {
+          this.$set(this.event._source.tag, this.event._source.tag.length, tagToAdd)
+          this.$store.dispatch('updateTimelineTags', { sketchId: this.sketch.id, tag: tagToAdd, num: 1 })
+        })
+        .catch((e) => {
+          console.error('Cannot tag event! Error:' + e)
+        })
+      this.$nextTick(() => {
+        this.selectedTags = null
+        this.search = null
       })
     },
   },
