@@ -129,10 +129,8 @@ def tag_mod(ctx, timeline_id, event_id, tag):
     if tag:
         # if tag is a string with commas, make it a list
         if "," in tag:
-            tag = tag.split(",")
-            for _tag in tag:
-                return_value = sketch.untag_event(event_id, timeline.index_name, _tag)
-                click.echo(return_value)
+            tags = tag.split(",")
+            return_value = sketch.untag_events([event_id], timeline.index_name, tags)
         else:
             return_value = sketch.untag_event(event_id, timeline.index_name, tag)
             click.echo(return_value)
