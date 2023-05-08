@@ -22,6 +22,7 @@ from flask import jsonify
 from flask import request
 from flask import abort
 from flask_restful import Resource
+from flask_restful import reqparse
 from flask_login import login_required
 from flask_login import current_user
 
@@ -81,6 +82,11 @@ class AnalysisResource(resources.ResourceMixin, Resource):
 class AnalyzerSessionActiveListResource(resources.ResourceMixin, Resource):
     """Resource to get active analyzer sessions."""
 
+    def __init__(self):
+        super().__init__()
+        self.parser = reqparse.RequestParser()
+        self.parser.add_argument("include_details", type=str, required=False)
+
     @login_required
     def get(self, sketch_id):
         """Handles GET request to the resource.
@@ -98,14 +104,27 @@ class AnalyzerSessionActiveListResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_FORBIDDEN, "User does not have read access to sketch"
             )
 
+        # Retrive request argument
+        args = self.parser.parse_args()
+        include_details = False
+        if args.get("include_details"):
+            if args.get("include_details").lower() == "true":
+                include_details = True
+
         counter = collections.Counter(PENDING=0, STARTED=0, ERROR=0, DONE=0)
         session_ids = set()
+        detailed_sessions = [] if include_details else False
 
         active_sessions = sketch.get_active_analysis_sessions()
         for session in active_sessions:
+            if include_details:
+                detailed_sessions.append(self.to_json(session).get_json())
             session_ids.add(session.id)
             for analysis in session.analyses:
                 counter[analysis.get_status.status] += 1
+
+        if detailed_sessions:
+            detailed_sessions = list(detailed_sessions)
 
         schema = {
             "objects": [
@@ -114,6 +133,7 @@ class AnalyzerSessionActiveListResource(resources.ResourceMixin, Resource):
                     "total_sessions": len(active_sessions),
                     "tasks_status_count": counter,
                     "sessions": list(session_ids),
+                    "detailed_sessions": detailed_sessions,
                 }
             ]
         }

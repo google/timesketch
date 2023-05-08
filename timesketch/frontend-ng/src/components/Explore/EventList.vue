@@ -836,7 +836,6 @@ export default {
           this.saveSearchMenu = false
           let newView = response.data.objects[0]
           this.$store.state.meta.views.push(newView)
-          this.$router.push({ name: 'Explore', query: { view: newView.id } })
         })
         .catch((e) => {})
     },
