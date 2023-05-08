@@ -65,7 +65,7 @@ limitations under the License.
             </v-card>
           </v-dialog>
 
-          <v-btn icon v-on:click="cy.fit()" :disabled="!currentGraph" title="Fit to canvas">
+          <v-btn icon v-on:click="resizeCanvas()" :disabled="!currentGraph" title="Fit to canvas">
             <v-icon>mdi-fit-to-page-outline</v-icon>
           </v-btn>
           <!-- Graph settings menu -->
