@@ -1397,7 +1397,7 @@ class EventTagResource(resources.ResourceMixin, Resource):
 
             existing_tags = result.get("_source").get("tag", [])
 
-            new_tags = list(set(existing_tags) - set(tags))
+            new_tags = list(set(existing_tags) - set(tags_to_remove))
 
             if existing_tags == new_tags:
                 continue
