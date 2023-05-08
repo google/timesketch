@@ -227,8 +227,7 @@ class DateSummaryAggregator(interface.BaseAggregator):
     def chart_title(self):
         """Returns a title for the chart."""
         if self.field:
-            return 'Date field summary aggregations for "{0:s}"'.format(
-                self.field)
+            return 'Date field summary aggregations for "{0:s}"'.format(self.field)
         return "Date field summary aggregations for an unknown field."
 
     # pylint: disable=arguments-differ
@@ -238,7 +237,7 @@ class DateSummaryAggregator(interface.BaseAggregator):
         field_query_string="*",
         start_time="",
         end_time="",
-        date_interval="year"
+        date_interval="year",
     ):
         """Runs the SummaryAggregation aggregator.
 
@@ -283,20 +282,19 @@ class DateSummaryAggregator(interface.BaseAggregator):
                     ]
                 }
             },
-            "aggs": {
-            }
+            "aggs": {},
         }
 
-        if date_interval == 'Year':
-            aggregation_spec['aggs']['year_histogram'] = {
+        if date_interval == "Year":
+            aggregation_spec["aggs"]["year_histogram"] = {
                 "histogram": {
                     "script": "doc['datetime'].value.getYear()",
                     "interval": 1,
                     "min_doc_count": 0,
                 }
             }
-        elif date_interval == 'Month':
-            aggregation_spec['aggs']['month_histogram'] = {
+        elif date_interval == "Month":
+            aggregation_spec["aggs"]["month_histogram"] = {
                 "histogram": {
                     "script": "doc['datetime'].value.getMonthOfYear()",
                     "interval": 1,
@@ -304,8 +302,8 @@ class DateSummaryAggregator(interface.BaseAggregator):
                     "min_doc_count": 0,
                 }
             }
-        elif date_interval == 'Day':
-            aggregation_spec['aggs']['day_histogram'] = {
+        elif date_interval == "Day":
+            aggregation_spec["aggs"]["day_histogram"] = {
                 "histogram": {
                     "script": "doc['datetime'].value.getDayOfWeek()",
                     "interval": 1,
@@ -313,8 +311,8 @@ class DateSummaryAggregator(interface.BaseAggregator):
                     "min_doc_count": 0,
                 }
             }
-        elif date_interval == 'Hour':
-            aggregation_spec['aggs']['hour_histogram'] = {
+        elif date_interval == "Hour":
+            aggregation_spec["aggs"]["hour_histogram"] = {
                 "histogram": {
                     "script": "doc['datetime'].value.getHourOfDay()",
                     "interval": 1,
@@ -322,8 +320,8 @@ class DateSummaryAggregator(interface.BaseAggregator):
                     "min_doc_count": 0,
                 }
             }
-        elif date_interval == 'Hour-Day':
-            aggregation_spec['aggs']['hour_of_week_histogram'] = {
+        elif date_interval == "Hour-Day":
+            aggregation_spec["aggs"]["hour_of_week_histogram"] = {
                 "histogram": {
                     "script": (
                         "doc['datetime'].value.getDayOfWeek()*24 + "
