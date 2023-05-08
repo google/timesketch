@@ -146,6 +146,7 @@ def add_event(ctx, message, date, attributes, timestamp_desc, output):
     else:
         click.echo(f"Event added to sketch: {sketch.name}")
 
+
 @events_group.command("remove_tag")
 @click.option("--timeline-id", type=int, required=True)
 @click.option("--event-id", required=True, help="ID of the event.")
