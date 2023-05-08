@@ -218,8 +218,9 @@ export default {
 
           if (session.status[0].status === 'PENDING' || session.status[0].status === 'STARTED') {
             // if the session is PENDING or STARTED, add the session to the queue (if not there yet)
-            if (this.activeAnalyzerQueue.indexOf(session.analysissession_id) === -1)
+            if (this.activeAnalyzerQueue.indexOf(session.analysissession_id) === -1) {
               this.activeAnalyzerQueue.push(session.analysissession_id)
+            }
           }
           if (session.status[0].status === 'DONE' || session.status[0].status === 'ERROR') {
             // if the session is DONE or ERROR, remove it from the queue
@@ -240,36 +241,28 @@ export default {
       this.analyzerResults = sortedAnalyzerList
       this.analyzerResultsReady = true
     },
-    async fetchActiveSessions() {
-      const response = await ApiClient.getActiveAnalyzerSessions(this.sketch.id)
-      let activeSessions = response.data.objects[0]['sessions']
-      if (activeSessions.length > 0) {
-        activeSessions.forEach((sessionId) => {
-          if (this.activeAnalyzerQueue.indexOf(sessionId) === -1) this.activeAnalyzerQueue.push(sessionId)
-        })
-      } else {
-        this.activeAnalyzerQueue = []
-      }
-    },
-    async fetchAnalyzerSessionData() {
-      let activeAnalyzerSessionData = []
-
-      const promises = this.activeAnalyzerQueue.map((sessionId) => {
-        return ApiClient.getAnalyzerSession(this.sketch.id, sessionId).then((response) => {
-          let analyzerSession = response.data.objects[0]
-          if (!analyzerSession) return
-          activeAnalyzerSessionData.push(...analyzerSession['analyses'])
-        })
+    fetchActiveAnalyzerSessions() {
+      ApiClient.getActiveAnalyzerSessions(this.sketch.id).then((response) => {
+        const activeSessionsDetailed = response.data.objects[0].detailed_sessions
+        this.activeAnalyzerQueue = response.data.objects[0].sessions
+        let activeAnalyzerSessionData = []
+        if (activeSessionsDetailed.length > 0) {
+          for (const session of activeSessionsDetailed) {
+            activeAnalyzerSessionData.push(...session.objects[0]['analyses'])
+          }
+        }
+        this.updateAnalyzerResultsData(activeAnalyzerSessionData)
+      }).catch((error) => {
+        console.error(error)
       })
-      await Promise.all(promises)
-      this.updateAnalyzerResultsData(activeAnalyzerSessionData)
+
     },
     triggeredAnalyzerRuns: function (data) {
       this.activeAnalyzerTimerStart = Date.now()
       data.forEach((sessionId) => {
         if (this.activeAnalyzerQueue.indexOf(sessionId) === -1) this.activeAnalyzerQueue.push(sessionId)
       })
-      this.fetchAnalyzerSessionData()
+      this.fetchActiveAnalyzerSessions()
     },
     filterAnalyzers(items, search) {
       const searchStr = (search || '').toLowerCase()
@@ -316,14 +309,8 @@ export default {
               this.activeAnalyzerTimeoutTriggered = true
               return
             }
-            // set dynamic interval
-            // TODO: this is a stopgap solution before we rewrite the backend API to support single requests.
-            if (sessionQueue.length >= 10) this.activeAnalyzerInterval = 30000 // milliseconds
-            if (sessionQueue.length >= 50) this.activeAnalyzerInterval = 60000 // milliseconds
-            // fetch data for sessions in the queue
-            this.fetchAnalyzerSessionData()
-            // update active session queue
-            this.fetchActiveSessions()
+            // fetch active analyzer sessions
+            this.fetchActiveAnalyzerSessions()
           }.bind(this),
           this.activeAnalyzerInterval
         )
