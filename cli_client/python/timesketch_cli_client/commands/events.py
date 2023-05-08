@@ -89,3 +89,59 @@ def annotate(ctx, timeline_id, event_id, tag, comment, output):
     # TODO: At the moment json is only really supported here. Add more options
     # as needed (like YAML).
     click.echo(return_value)
+
+
+@events_group.command("remove_tag")
+@click.option("--timeline-id", type=int, required=True)
+@click.option("--event-id", required=True, help="ID of the event.")
+@click.option(
+    "--tag",
+    required=False,
+    help="Tag to remove from the event.",
+)
+@click.pass_context
+def tag_mod(ctx, timeline_id, event_id, tag):
+    """Remove a Tag from a event.
+
+    This can be used to remove a tag from an event.
+
+    If no tag is specified, the command will return the
+    current tags for the event.
+
+    Args:
+        ctx: Click context object.
+        timeline_id: The ID of the timeline.
+        event_id: The ID of the event.
+        tag: The tag to remove from the event.
+
+    Returns:
+        HTTP response from the API server.
+
+    Raises:
+        KeyError: If the event does not exist.
+    """
+    sketch = ctx.obj.sketch
+    timeline = sketch.get_timeline(timeline_id=timeline_id)
+    if not timeline:
+        click.echo("No such timeline.")
+        return
+
+    if tag:
+        # if tag is a string with commas, make it a list
+        if "," in tag:
+            tag = tag.split(",")
+            for _tag in tag:
+                return_value = sketch.untag_event(event_id, timeline.index_name, _tag)
+                click.echo(return_value)
+        else:
+            return_value = sketch.untag_event(event_id, timeline.index_name, tag)
+            click.echo(return_value)
+    else:  # just get the event
+        try:
+            return_value = sketch.get_event(event_id, timeline.index_name)
+            if return_value is None:
+                click.echo("No such event.")
+                sys.exit(1)
+        except KeyError:
+            click.echo("No such event.")
+            sys.exit(1)
