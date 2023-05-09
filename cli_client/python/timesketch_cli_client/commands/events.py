@@ -172,6 +172,7 @@ def tag_mod(ctx, timeline_id, event_id, tag):
 
     Returns:
         HTTP response from the API server.
+        A list of tags for the event.
 
     Raises:
         KeyError: If the event does not exist.
@@ -190,6 +191,8 @@ def tag_mod(ctx, timeline_id, event_id, tag):
         else:
             return_value = sketch.untag_event(event_id, timeline.index_name, tag)
             click.echo(return_value)
+        return_value = sketch.untag_event(event_id, timeline.index_name, tag)
+        click.echo(return_value)
     else:  # just get the event
         try:
             return_value = sketch.get_event(event_id, timeline.index_name)

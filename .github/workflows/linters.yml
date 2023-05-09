@@ -13,7 +13,7 @@ jobs:
         python-version: ['3.8', '3.10']
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
@@ -25,6 +25,14 @@ jobs:
           pip install -e .
           pip install -e api_client/python
           pip install -e importer_client/python
+          echo "Foobarrrrrrrrrrrrrrrrrrr"
+          which pylint
+          pylint --version
+          echo "updating pythonpath again"
+          PYTHONPATH=.
+          which pylint
+          pylint --version
+          pip freeze
       - name: Run pylint
         run: |
           git config pull.rebase false && git fetch -p origin master
