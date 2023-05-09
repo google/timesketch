@@ -20,9 +20,12 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
+          PYTHONPATH=.
           pip install -r test_requirements.txt
           pip install -r requirements.txt
           pip install -e .
+      - name: Install local dependencies
+        run: |
           pip install -e api_client/python
           pip install -e importer_client/python
           echo "Foobarrrrrrrrrrrrrrrrrrr"
@@ -30,7 +33,6 @@ jobs:
           pylint --version
           python -m pip list
           echo "updating pythonpath again"
-          PYTHONPATH=.
           which pylint
           pylint --version
           pip freeze
