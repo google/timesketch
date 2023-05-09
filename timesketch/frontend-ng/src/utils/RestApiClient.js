@@ -318,7 +318,12 @@ export default {
     return RestApiClient.get('/sketches/' + sketchId + '/analyzer/sessions/' + sessionId + '/')
   },
   getActiveAnalyzerSessions(sketchId) {
-    return RestApiClient.get('/sketches/' + sketchId + '/analyzer/sessions/active/')
+    let params = {
+      params: {
+        include_details: "true",
+      },
+    }
+    return RestApiClient.get('/sketches/' + sketchId + '/analyzer/sessions/active/', params)
   },
   getLoggedInUser() {
     return RestApiClient.get('/users/me/')
