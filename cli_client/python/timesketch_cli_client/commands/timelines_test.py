@@ -35,6 +35,7 @@ class TimelinesTest(unittest.TestCase):
     def test_list_timelines(self):
         """Test to list timelines."""
         runner = CliRunner()
+        print("test")
         result = runner.invoke(timelines_group, ["list"], obj=self.ctx)
         assert result.output == "1 test\n2 test\n"
 
