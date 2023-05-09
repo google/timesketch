@@ -17,6 +17,7 @@ import unittest
 import mock
 
 from click.testing import CliRunner
+
 # pylint: disable=import-error
 from timesketch_api_client import test_lib as api_test_lib
 
