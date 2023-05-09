@@ -326,7 +326,7 @@ export default {
       return this.recentIntervals[this.selectedRecentEventsIndex]
     },
     intervalChartOptions() {
-      if (this.eventDistributionData === undefined) return  {
+      if (this.eventDistributionData === undefined || !this.eventDistributionReady) return  {
         chart: {
           type: 'bar',
         },
@@ -361,7 +361,7 @@ export default {
       }
     },
     intervalChartSeries() {
-      if (this.eventDistributionData === undefined) return []
+      if (this.eventDistributionData === undefined || !this.eventDistributionReady) return []
 
       let data = []
 
