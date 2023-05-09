@@ -19,7 +19,10 @@ import sys
 import click
 from tabulate import tabulate
 
-from timesketch_api_client import search
+# pylint: disable=import-error
+from timesketch_api_client import test_lib as api_test_lib
+
+# pylint: enable=import-error
 
 
 def format_output(search_obj, output_format, show_headers, show_internal_columns):
