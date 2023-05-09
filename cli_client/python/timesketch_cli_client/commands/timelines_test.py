@@ -18,7 +18,7 @@ import mock
 
 from click.testing import CliRunner
 
-from api_client import test_lib as api_test_lib
+from timesketch_api_client import test_lib as api_test_lib
 
 from .. import test_lib
 from .timelines import timelines_group
