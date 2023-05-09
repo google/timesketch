@@ -11,7 +11,7 @@ It is possible to install Timesketch without docker but we strongly encourage us
 **You will need**
 
 - Machine with Ubuntu 20.04 installed.
-- At least 8GB RAM, but more the better.
+- At least 8GB RAM, but the more the better.
 - Optional: Domain name registered and configure for the machine if you want to setup SSL for the webserver.
 
 **This guide setup the following services**

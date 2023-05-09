@@ -211,7 +211,11 @@ class Aggregation(resource.SketchResource):
         self.resource_data = error.get_response_json(response, logger)
 
     def from_aggregator_run(
-        self, aggregator_name, aggregator_parameters, search_id=None, chart_type=None
+        self,
+        aggregator_name,
+        aggregator_parameters,
+        search_id=None,
+        chart_type=None,
     ):
         """Initialize the aggregation object by running an aggregator class.
 

@@ -205,12 +205,12 @@ def check_mapping_errors(headers, headers_mapping):
                     f"When create a new column, a default value must be assigned"
                 )
     # 4. check if two or more mandatory headers are mapped
-    #    to the same exisiting header
+    #    to the same existing header
     if len(candidate_headers) != len(set(candidate_headers)):
         raise RuntimeError(
             "Headers mapping is wrong.\n"
             "2 or more mandatory headers are "
-            "mapped to the same exisiting CSV headers"
+            "mapped to the same existing CSV headers"
         )
 
 
@@ -267,12 +267,13 @@ def read_and_validate_csv(
     """
     if not mandatory_fields:
         mandatory_fields = TIMESKETCH_FIELDS
+
     # Ensures delimiter is a string.
     if not isinstance(delimiter, six.text_type):
         delimiter = codecs.decode(delimiter, "utf8")
 
+    # Ensure that required headers are present
     header_reader = pandas.read_csv(file_handle, sep=delimiter, nrows=0)
-
     _validate_csv_fields(mandatory_fields, header_reader, headers_mapping)
 
     if hasattr(file_handle, "seek"):
@@ -284,9 +285,12 @@ def read_and_validate_csv(
         )
         for idx, chunk in enumerate(reader):
             if headers_mapping:
-                # rename colunms according to the mapping
+                # rename columns according to the mapping
                 chunk = rename_csv_headers(chunk, headers_mapping)
 
+            # Check if the datetime field is present and not empty.
+            # TODO(jaegeral): Do we really want to skip rows with empty datetime
+            # we could also calculate the datetime from timestamp if present.
             skipped_rows = chunk[chunk["datetime"].isnull()]
             if not skipped_rows.empty:
                 logger.warning(
@@ -294,8 +298,8 @@ def read_and_validate_csv(
                     "or it was empty ".format(len(skipped_rows))
                 )
 
-            # Normalize datetime to ISO 8601 format if it's not the case.
             try:
+                # Normalize datetime to ISO 8601 format if it's not the case.
                 # Lines with unrecognized datetime format will result in "NaT"
                 # (not available) as its value and the event row will be
                 # dropped in the next line
@@ -303,6 +307,7 @@ def read_and_validate_csv(
                     chunk["datetime"], errors="coerce"
                 )
                 num_chunk_rows = chunk.shape[0]
+
                 chunk.dropna(subset=["datetime"], inplace=True)
                 if len(chunk) < num_chunk_rows:
                     logger.warning(
@@ -313,25 +318,36 @@ def read_and_validate_csv(
                             idx * reader.chunksize + num_chunk_rows,
                         )
                     )
-                chunk["timestamp"] = chunk["datetime"].dt.strftime("%s%f").astype(int)
+
                 chunk["datetime"] = (
                     chunk["datetime"].apply(Timestamp.isoformat).astype(str)
                 )
+
             except ValueError:
                 logger.warning(
                     "Rows {0} to {1} skipped due to malformed "
                     "datetime values ".format(
-                        idx * reader.chunksize, idx * reader.chunksize + chunk.shape[0]
+                        idx * reader.chunksize,
+                        idx * reader.chunksize + chunk.shape[0],
                     )
                 )
                 continue
+
             if "tag" in chunk:
                 chunk["tag"] = chunk["tag"].apply(_parse_tag_field)
 
             for _, row in chunk.iterrows():
                 _scrub_special_tags(row)
+
                 # Remove all NAN values from the pandas.Series.
                 row.dropna(inplace=True)
+
+                # Make sure we always have a timestamp
+                if not "timestamp" in row:
+                    row["timestamp"] = int(
+                        pandas.Timestamp(row["datetime"]).value / 1000
+                    )
+
                 yield row.to_dict()
     except (pandas.errors.EmptyDataError, pandas.errors.ParserError) as e:
         error_string = "Unable to read file, with error: {0!s}".format(e)
@@ -350,7 +366,10 @@ def read_and_validate_redline(file_handle):
     """
 
     csv.register_dialect(
-        "redlineDialect", delimiter=",", quoting=csv.QUOTE_ALL, skipinitialspace=True
+        "redlineDialect",
+        delimiter=",",
+        quoting=csv.QUOTE_ALL,
+        skipinitialspace=True,
     )
     reader = pandas.read_csv(file_handle, delimiter=",", dialect="redlineDialect")
 

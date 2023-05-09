@@ -78,20 +78,30 @@ def get_sigma_config_file(config_file=None):
     return sigma_config
 
 
-def _enrich_sigma_rule_object(rule: SigmaRule):
-    """Helper function: Returns an enriched Sigma dict given a SigmaRule.
+def enrich_sigma_rule_object(rule: SigmaRule, parse_yaml: bool = False):
+    """Helper function: Returns an enriched Sigma object given a SigmaRule.
 
-    It will add `status`, `created_at` and `updated_at` keys to the
-    dictionary.
+    It will extract the `status`, `created_at` and `updated_at` and make them
+    a field.
 
     Args:
         rule: type SigmaRule.
+        parse_yaml: type bool. If set to True, the rule will be parsed from
+            the yaml (slower).
 
     Returns:
         Enriched Sigma dict.
     """
-    parsed_rule = parse_sigma_rule_by_text(rule.rule_yaml)
+    parsed_rule = {}
+
+    # Parsing the yaml file takes a lot of time, per default, we do not need
+    # that information, so we only parse it if we need it.
+
+    if parse_yaml:
+        parsed_rule = parse_sigma_rule_by_text(rule.rule_yaml)
+
     parsed_rule["rule_uuid"] = parsed_rule.get("id", rule.rule_uuid)
+    parsed_rule["id"] = parsed_rule.get("id", rule.rule_uuid)
     parsed_rule["created_at"] = str(rule.created_at)
     parsed_rule["updated_at"] = str(rule.updated_at)
     parsed_rule["title"] = parsed_rule.get("title", rule.title)
@@ -105,9 +115,12 @@ def _enrich_sigma_rule_object(rule: SigmaRule):
     return parsed_rule
 
 
-def get_all_sigma_rules():
+def get_all_sigma_rules(parse_yaml: bool = False):
     """Returns all Sigma rules from the database.
 
+    Args:
+        parse_yaml: type bool. If set to True, the rule will be parsed from
+            the yaml (slower).
     Returns:
         A array of Sigma rules
 
@@ -116,7 +129,7 @@ def get_all_sigma_rules():
     sigma_rules = []
 
     for rule in SigmaRule.query.all():
-        sigma_rules.append(_enrich_sigma_rule_object(rule=rule))
+        sigma_rules.append(enrich_sigma_rule_object(rule=rule, parse_yaml=parse_yaml))
 
     return sigma_rules
 
@@ -142,7 +155,7 @@ def _sanitize_query(sigma_rule_query: str) -> str:
     # TODO: Improve the whitespace handling
     # https://github.com/google/timesketch/issues/2007
     # check if there is a ' * '
-    # if one is found split it up into elements seperated by space
+    # if one is found split it up into elements separated by space
     # and go backwards to the next star
 
     sigma_rule_query = sigma_rule_query.replace(" * OR", ' " OR')
@@ -174,7 +187,7 @@ def _sanitize_query(sigma_rule_query: str) -> str:
 
 
 def sanitize_incoming_sigma_rule_text(rule_text: string):
-    """Removes things that are not supportd in Timesketch
+    """Removes things that are not supported in Timesketch
     right now as early as possible
 
     Args:
@@ -193,7 +206,7 @@ def sanitize_incoming_sigma_rule_text(rule_text: string):
 
 @lru_cache(maxsize=8)
 def parse_sigma_rule_by_text(rule_text, sigma_config=None):
-    """Returns a JSON represenation for a rule
+    """Returns a JSON representation for a rule
 
     Args:
         rule_text: Text of the sigma rule to be parsed
@@ -206,7 +219,7 @@ def parse_sigma_rule_by_text(rule_text, sigma_config=None):
         yaml.parser.ParserError: Not a correct YAML text provided
         NotImplementedError: A feature in the provided Sigma rule is not
             implemented in Sigma for Timesketch
-        ValueError: If one of the following fiels are missing in the YAML file:
+        ValueError: If one of the following fields are missing in the YAML file:
             - title
             - description
         ValueError: If provided rule_text is not a string

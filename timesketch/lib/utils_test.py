@@ -75,7 +75,11 @@ class TestUtils(BaseTest):
 
         invalid_mapping_1 = [
             {"target": "datetime", "source": ["DT"], "default_value": None},
-            {"target": "timestamp_desc", "source": ["No."], "default_value": None},
+            {
+                "target": "timestamp_desc",
+                "source": ["No."],
+                "default_value": None,
+            },
             {"target": "message", "source": ["Source"], "default_value": None},
         ]
         # column message already exists
@@ -98,7 +102,11 @@ class TestUtils(BaseTest):
 
         invalid_mapping_3 = [
             {"target": "datetime", "source": ["DT"], "default_value": None},
-            {"target": "timestamp_desc", "source": ["DT"], "default_value": None},
+            {
+                "target": "timestamp_desc",
+                "source": ["DT"],
+                "default_value": None,
+            },
         ]
         # 2 mandatory headers point to the same existing one
         with self.assertRaises(RuntimeError):
@@ -111,7 +119,11 @@ class TestUtils(BaseTest):
 
         valid_mapping_1 = [
             {"target": "datetime", "source": ["DT"], "default_value": None},
-            {"target": "timestamp_desc", "source": ["TD"], "default_value": None},
+            {
+                "target": "timestamp_desc",
+                "source": ["TD"],
+                "default_value": None,
+            },
         ]
         self.assertIs(check_mapping_errors(current_headers, valid_mapping_1), None)
 
@@ -125,14 +137,22 @@ class TestUtils(BaseTest):
         valid_mapping_3 = [
             {"target": "datetime", "source": ["DT"], "default_value": None},
             {"target": "timestamp_desc", "source": None, "default_value": "a"},
-            {"target": "message", "source": ["TD", "file_path"], "default_value": None},
+            {
+                "target": "message",
+                "source": ["TD", "file_path"],
+                "default_value": None,
+            },
         ]
         self.assertIs(check_mapping_errors(current_headers, valid_mapping_3), None)
 
         current_headers = ["DT", "last_access", "TD", "file_path", "T_desc"]
         valid_mapping_4 = [
             {"target": "datetime", "source": ["DT"], "default_value": None},
-            {"target": "timestamp_desc", "source": ["T_desc"], "default_value": None},
+            {
+                "target": "timestamp_desc",
+                "source": ["T_desc"],
+                "default_value": None,
+            },
             {
                 "target": "message",
                 "source": ["T_desc", "file_path"],
@@ -156,12 +176,36 @@ class TestUtils(BaseTest):
             # Call next to work around lazy generators.
             next(_validate_csv_fields(mandatory_fields, df_02))
 
+    def test_missing_timestamp_csv_file(self):
+        """Test for parsing datetime values in CSV file"""
+
+        # Test that a timestamp is generated if missing.
+        expected_output = {
+            "message": "No timestamp",
+            "datetime": "2022-07-24T19:01:01+00:00",
+            "timestamp_desc": "Time Logged",
+            "data_type": "This event has no timestamp",
+            "timestamp": 1658689261000000,
+        }
+        self.assertDictEqual(
+            next(
+                read_and_validate_csv(
+                    "test_tools/test_events/validate_date_events_missing_timestamp.csv"
+                )
+            ),
+            expected_output,
+        )
+
     def test_invalid_JSONL_file(self):
         """Test for JSONL with missing keys in the dictionary wrt headers mapping"""
         linedict = {"DT": "2011-11-11", "MSG": "this is a test"}
         headers_mapping = [
             {"target": "datetime", "source": ["DT"], "default_value": None},
-            {"target": "timestamp_desc", "source": None, "default_value": "test time"},
+            {
+                "target": "timestamp_desc",
+                "source": None,
+                "default_value": "test time",
+            },
             {"target": "message", "source": ["msg"], "default_value": None},
         ]
         lineno = 0
@@ -169,10 +213,18 @@ class TestUtils(BaseTest):
             # Call next to work around lazy generators.
             next(rename_jsonl_headers(linedict, headers_mapping, lineno))
 
-        linedict = {"DT": "2011-11-11", "MSG": "this is a test", "ANOTHERMSG": "test2"}
+        linedict = {
+            "DT": "2011-11-11",
+            "MSG": "this is a test",
+            "ANOTHERMSG": "test2",
+        }
         headers_mapping = [
             {"target": "datetime", "source": ["DT"], "default_value": None},
-            {"target": "timestamp_desc", "source": None, "default_value": "test time"},
+            {
+                "target": "timestamp_desc",
+                "source": None,
+                "default_value": "test time",
+            },
             {
                 "target": "message",
                 "source": ["MSG", "anothermsg"],
@@ -186,11 +238,19 @@ class TestUtils(BaseTest):
 
     def test_valid_JSONL_file(self):
         """Test valid JSONL with valid headers mapping"""
-        linedict = {"DT": "2011-11-11", "MSG": "this is a test", "ANOTHERMSG": "test2"}
+        linedict = {
+            "DT": "2011-11-11",
+            "MSG": "this is a test",
+            "ANOTHERMSG": "test2",
+        }
         lineno = 0
         headers_mapping = [
             {"target": "datetime", "source": ["DT"], "default_value": None},
-            {"target": "timestamp_desc", "source": None, "default_value": "test time"},
+            {
+                "target": "timestamp_desc",
+                "source": None,
+                "default_value": "test time",
+            },
             {
                 "target": "message",
                 "source": ["MSG", "ANOTHERMSG"],

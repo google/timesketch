@@ -24,6 +24,7 @@ import requests
 
 # pylint: disable=redefined-builtin
 from requests.exceptions import ConnectionError
+from urllib3.exceptions import InsecureRequestWarning
 import webbrowser
 
 # pylint: disable-msg=import-error
@@ -346,6 +347,8 @@ class TimesketchApi:
         # SSL Cert verification is turned on by default.
         if not verify:
             session.verify = False
+            # disable warnings, since user actively decided to set verify to false
+            requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
         # Get and set CSRF token and authenticate the session if appropriate.
         self._set_csrf_token(session)
@@ -363,10 +366,25 @@ class TimesketchApi:
 
         Returns:
             Dictionary with the response data.
+
+        Raises:
+            RuntimeError: If response could not be JSON-decoded after
+                DEFAULT_RETRY_COUNT attempts.
         """
         resource_url = "{0:s}/{1:s}".format(self.api_root, resource_uri)
         response = self.session.get(resource_url, params=params)
-        return error.get_response_json(response, logger)
+
+        retry_count = 0
+        while True:
+            result = error.get_response_json(response, logger)
+            # Any dict with content is good enough for us to return.
+            if result:
+                return result
+            retry_count += 1
+            if retry_count >= self.DEFAULT_RETRY_COUNT:
+                raise RuntimeError(
+                    f"Unable to fetch JSON resource data. Response: {str(result)}"
+                )
 
     def create_sketch(self, name, description=None):
         """Create a new sketch.
@@ -377,6 +395,10 @@ class TimesketchApi:
 
         Returns:
             Instance of a Sketch object.
+
+        Raises:
+            RuntimeError: If response does not contain an 'objects' key after
+                DEFAULT_RETRY_COUNT attempts.
         """
         if not description:
             description = name
@@ -640,7 +662,7 @@ class TimesketchApi:
         return self.get_sigmarule(rule_uuid)
 
     def get_sigmarule(self, rule_uuid):
-        """Fetches a single Sigma rule from the databse.
+        """Fetches a single Sigma rule from the database.
         Fetches a single Sigma rule selected by the `UUID`
 
         Args:

@@ -35,14 +35,14 @@ def list_timelines(ctx):
 
 
 @timelines_group.command("describe")
-@click.argument("timeline_id", type=int, required=False)
+@click.argument("timeline-id", type=int, required=False)
 @click.pass_context
 def describe_timeline(ctx, timeline_id):
     """Show details for a timeline.
 
     Args:
         ctx: Click CLI context object.
-        timeline_id: Timeline ID from argument.
+        timeline-id: Timeline ID from argument.
     """
     sketch = ctx.obj.sketch
     # TODO (berggren): Add more details to the output, e.g. the data_sources

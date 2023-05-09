@@ -14,49 +14,63 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div v-if="ruleCount > 0">
-    <v-row
-      no-gutters
-      style="cursor: pointer"
+  <div>
+    <div
+      :style="!(sigmaRules && sigmaRules.length) ? '' : 'cursor: pointer'"
       class="pa-4"
-      flat
       @click="expanded = !expanded"
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
-      <v-col cols="11">
-        <v-icon left>mdi-sigma-lower</v-icon> Sigma Rules (<small
+      <span> <v-icon left>mdi-sigma-lower</v-icon> Sigma Rules </span>
+
+      <v-btn
+        v-if="expanded || (sigmaRules && !sigmaRules.length)"
+        icon
+        text
+        class="float-right mt-n1 mr-n1"
+        :to="{ name: 'SigmaNewRule', params: { sketchId: sketch.id } }"
+        @click.stop=""
+      >
+        <v-icon>mdi-plus</v-icon>
+      </v-btn>
+      <span v-if="!expanded" class="float-right" style="margin-right: 3px">
+        <v-progress-circular v-if="isLoading" :size="24" :width="1" indeterminate></v-progress-circular>
+      </span>
+      <span v-if="!expanded" class="float-right" style="margin-right: 10px">
+        <small v-if="sigmaRules && sigmaRules.length"
           ><strong>{{ ruleCount }}</strong></small
-        >)
-      </v-col>
-      <v-col cols="1">
-        <v-btn small icon>
-          <v-icon v-if="expanded" v-on:click="createNewSigmaRule()">mdi-plus</v-icon>
-        </v-btn>
-      </v-col>
-    </v-row>
+        >
+      </span>
+    </div>
 
     <v-expand-transition>
       <div v-show="expanded">
-        <v-data-iterator :items="sigmaRules" :items-per-page.sync="itemsPerPage" :search="search">
-          <template v-slot:header>
-            <v-toolbar flat v-if="ruleCount > itemsPerPage">
-              <v-text-field
-                v-model="search"
-                clearable
-                hide-details
-                outlined
-                dense
-                prepend-inner-icon="mdi-magnify"
-                label="Search for a rule.."
-              ></v-text-field>
-            </v-toolbar>
-          </template>
+        <div v-if="sigmaRules && sigmaRules.length">
+          <v-data-iterator v-if="ruleCount <= itemsPerPage" :items="sigmaRules" hide-default-footer>
+            <template v-slot:default="props">
+              <ts-sigma-rule v-for="sigmaRule in props.items" :key="sigmaRule.rule_uuid" :sigma-rule="sigmaRule" />
+            </template>
+          </v-data-iterator>
+          <v-data-iterator v-else :items="sigmaRules" :items-per-page.sync="itemsPerPage" :search="search">
+            <template v-slot:header>
+              <v-toolbar flat>
+                <v-text-field
+                  v-model="search"
+                  clearable
+                  hide-details
+                  outlined
+                  dense
+                  prepend-inner-icon="mdi-magnify"
+                  label="Search for a rule.."
+                ></v-text-field>
+              </v-toolbar>
+            </template>
 
-          <template v-slot:default="props">
-            <ts-sigma-rule v-for="sigmaRule in props.items" :key="sigmaRule.rule_uuid" :sigma-rule="sigmaRule">
-            </ts-sigma-rule>
-          </template>
-        </v-data-iterator>
+            <template v-slot:default="props">
+              <ts-sigma-rule v-for="sigmaRule in props.items" :key="sigmaRule.rule_uuid" :sigma-rule="sigmaRule" />
+            </template>
+          </v-data-iterator>
+        </div>
       </div>
     </v-expand-transition>
     <v-divider></v-divider>
@@ -80,21 +94,7 @@ export default {
       search: '',
     }
   },
-  methods: {
-    createNewSigmaRule() {
-      // check current router location
-      if (this.$route.params.id === 'new') {
-        return
-      }
-      this.$router.push({
-        name: 'Studio',
-        params: {
-          id: 'new',
-          type: 'sigma',
-        },
-      })
-    },
-  },
+  methods: {},
   computed: {
     sigmaRules() {
       return this.$store.state.sigmaRuleList
@@ -112,8 +112,11 @@ export default {
     meta() {
       return this.$store.state.meta
     },
+    isLoading() {
+      return !this.sigmaRules
+    },
   },
-  created() {
+  mounted() {
     this.$store.dispatch('updateSigmaList')
   },
 }

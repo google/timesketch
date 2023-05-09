@@ -14,19 +14,30 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div v-if="dataTypes.length">
-    <div class="pa-4" flat :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
-      <span style="cursor: pointer" @click="expanded = !expanded"
-        ><v-icon left>mdi-database-outline</v-icon> Data Types (<small
+  <div>
+    <div
+      :style="dataTypes && dataTypes.length ? 'cursor: pointer' : ''"
+      class="pa-4"
+      @click="expanded = !expanded"
+      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+    >
+      <span> <v-icon left>mdi-database-outline</v-icon> Data Types </span>
+      <span class="float-right" style="margin-right: 10px">
+        <small
           ><strong>{{ dataTypes.length }}</strong></small
-        >)</span
-      >
+        >
+      </span>
     </div>
 
     <v-expand-transition>
-      <div v-show="expanded">
-        <v-data-iterator :items="dataTypes" :items-per-page.sync="itemsPerPage" :search="search">
-          <template v-slot:header>
+      <div v-show="expanded && dataTypes.length">
+        <v-data-iterator
+          :items="dataTypes"
+          :items-per-page.sync="itemsPerPage"
+          :search="search"
+          :hide-default-footer="dataTypes.length <= itemsPerPage"
+        >
+          <template v-slot:header v-if="dataTypes.length > itemsPerPage">
             <v-toolbar flat>
               <v-text-field
                 v-model="search"
@@ -41,21 +52,20 @@ limitations under the License.
           </template>
 
           <template v-slot:default="props">
-            <v-row
-              no-gutters
+            <div
               v-for="dataType in props.items"
               :key="dataType.data_type"
-              class="pa-2 pl-5"
-              :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+              @click="setQueryAndFilter(dataType.data_type)"
+              style="cursor: pointer; font-size: 0.9em"
             >
-              <div @click="setQueryAndFilter(dataType.data_type)" style="cursor: pointer; font-size: 0.9em">
+              <v-row no-gutters class="pa-2 pl-5" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
                 <span
                   >{{ dataType.data_type }} (<small
                     ><strong>{{ dataType.count | compactNumber }}</strong></small
                   >)</span
                 >
-              </div>
-            </v-row>
+              </v-row>
+            </div>
           </template>
         </v-data-iterator>
       </div>

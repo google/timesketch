@@ -21,11 +21,55 @@ limitations under the License.
           <v-simple-table dense>
             <template v-slot:default>
               <tbody>
-                <tr v-for="(value, key) in fullEventFiltered" :key="key">
+                <tr v-for="(value, key) in fullEventFiltered" :key="key" @mouseover="c_key = key" @mouseleave="c_key = -1">
+                  <!-- Event field name actions -->
+                  <td v-if="key == c_key" class="text-right">
+
+                    <!-- Copy field name -->
+                    <v-btn
+                      v-if="(key == c_key) && key != '' && !ignoredAggregatorFields.has(key)"
+                      @click.stop="loadAggregation(key, value)"
+                      icon
+                      x-small
+                      class="mr-1"
+                    >
+                      <v-icon>mdi-chart-bar</v-icon>
+                    </v-btn>
+                    <v-btn
+                      icon
+                      x-small
+                      style="cursor: pointer"
+                      @click="copyToClipboard(key)"
+                      class="pr-1"
+                    >
+                      <v-icon small>mdi-content-copy</v-icon>
+                    </v-btn>
+                  </td>
+
+                  <td v-else>
+                    <div class="px-6"></div>
+                  </td>
+
+                  <!-- Event field name -->
                   <td>
                     {{ key }}
                   </td>
-                  <td v-if="key.includes('xml') || checkContextLinkDisplay(key, value)" class="px-0">
+
+                  <!-- Event field value action icons -->
+                  <td v-if="key.includes('xml') || checkContextLinkDisplay(key, value) || (key == c_key)" class="text-right pr-1">
+
+                    <!-- Copy event value -->
+                    <v-btn
+                      icon
+                      x-small
+                      style="cursor: pointer"
+                      @click="copyToClipboard(value)"
+                      v-show="key == c_key"
+                    >
+                      <v-icon small>mdi-content-copy</v-icon>
+                    </v-btn>
+
+                    <!-- XML prettify dialog -->
                     <v-dialog v-if="key.includes('xml')" v-model="formatXMLString" width="1000">
                       <template v-slot:activator="{ on, attrs }">
                         <v-btn
@@ -39,10 +83,7 @@ limitations under the License.
                         >
                           <v-tooltip top close-delay=300 :open-on-click="false">
                             <template v-slot:activator="{ on }">
-                              <v-icon
-                                v-on="on"
-                                small
-                              >
+                              <v-icon v-on="on" small>
                                 mdi-xml
                               </v-icon>
                             </template>
@@ -56,6 +97,8 @@ limitations under the License.
                         :xmlString="value"
                       ></ts-format-xml-string>
                     </v-dialog>
+
+                    <!-- Context link submenu -->
                     <v-menu
                       v-if="checkContextLinkDisplay(key, value)"
                       offset-y
@@ -72,10 +115,7 @@ limitations under the License.
                         >
                           <v-tooltip top close-delay=300 :open-on-click="false">
                             <template v-slot:activator="{ on }">
-                              <v-icon
-                                v-on="on"
-                                small
-                              >
+                              <v-icon v-on="on" small>
                                 mdi-open-in-new
                               </v-icon>
                             </template>
@@ -107,8 +147,13 @@ limitations under the License.
                         </v-list-item>
                       </v-list>
                     </v-menu>
+
                   </td>
-                  <td v-else class="px-4"></td>
+                  <td v-else>
+                    <div class="px-5"></div>
+                  </td>
+
+                  <!-- Event field value -->
                   <td width="100%" class="pl-0">
                     {{ value }}
                   </td>
@@ -192,6 +237,19 @@ limitations under the License.
         </v-card>
       </v-col>
     </v-row>
+    <v-dialog
+      scrollable
+      v-model="aggregatorDialog"
+      @click:outside="$event => this.aggregatorDialog = false"
+    >
+      <ts-aggregate-dialog
+        :eventKey="eventKey"
+        :eventValue="eventValue"
+        :eventTimestamp="eventTimestamp"
+        :eventTimestampDesc="eventTimestampDesc"
+        @cancel=" aggregatorDialog = false">
+      </ts-aggregate-dialog>
+    </v-dialog>
     <br />
   </div>
 </template>
@@ -199,11 +257,13 @@ limitations under the License.
 <script>
 import ApiClient from '../../utils/RestApiClient'
 import EventBus from '../../main'
+import TsAggregateDialog from './AggregateDialog.vue'
 import TsFormatXmlString from './FormatXMLString.vue'
 import TsLinkRedirectWarning from './LinkRedirectWarning.vue'
 
 export default {
   components: {
+    TsAggregateDialog,
     TsFormatXmlString,
     TsLinkRedirectWarning,
   },
@@ -214,10 +274,27 @@ export default {
       comment: '',
       comments: [],
       selectedComment: null,
+      aggregatorDialog: false,
+      ignoredAggregatorFields: new Set(
+          [
+              'datetime',
+              'message',
+              'path_spec',
+              'strings',
+              'timestamp',
+              'timestamp_desc',
+              'xml_string'
+          ]
+      ),
+      eventKey: '',
+      eventValue: '',
+      eventTimestamp: 0,
+      eventTimestampDesc: '',
       formatXMLString: false,
       redirectWarnDialog: false,
       contextUrl: '',
       contextValue: '',
+      c_key: -1,
     }
   },
   computed: {
@@ -254,6 +331,8 @@ export default {
         .then((response) => {
           this.fullEvent = response.data.objects
           this.comments = response.data.meta.comments
+          this.eventTimestamp = response.data.objects.timestamp
+          this.eventTimestampDesc = response.data.objects.timestamp_desc
         })
         .catch((e) => {})
     },
@@ -348,6 +427,20 @@ export default {
         if (confItem['short_name'] === item) {
           return confItem['redirect_warning']
         }
+      }
+    },
+    loadAggregation(eventKey, eventValue, eventTimestamp) {
+      this.eventKey = eventKey
+      this.eventValue = eventValue
+      this.aggregatorDialog = true
+    },
+    copyToClipboard (content) {
+      try {
+        navigator.clipboard.writeText(content)
+        this.infoSnackBar('copied')
+      } catch (error) {
+        this.errorSnackBar('Failed copying to the clipboard!')
+        console.error(error)
       }
     },
   },

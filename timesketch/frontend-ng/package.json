@@ -21,9 +21,10 @@
     "cytoscape-dagre": "^2.3.1",
     "cytoscape-spread": "^3.0.0",
     "dayjs": "^1.10.7",
+    "dompurify": "^3.0.1",
     "eslint-config-prettier": "^8.3.0",
     "lodash": "^4.17.11",
-    "marked": ">=2.0.0",
+    "marked": ">=2.0.0 <5.0.0",
     "moment": "^2.24.0",
     "v-calendar": "^2.4.0",
     "vega": "^5.4.0",
@@ -42,7 +43,6 @@
     "vue-text-highlight": "^2.0.10",
     "vuetify": "^2.5.14",
     "vuex": "^3.1.0"
-
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "^3.4.0",

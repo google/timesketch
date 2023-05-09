@@ -29,7 +29,7 @@ class SigmaPlugin(interface.BaseAnalyzer):
         self._rule = kwargs.get("rule")
         super().__init__(index_name, sketch_id, timeline_id=timeline_id)
 
-    def run_sigma_rule(self, query, rule_title, tag_list=None):
+    def run_sigma_rule(self, query, rule_title, tag_list=None, rule_id=None):
         """Runs a sigma rule and applies the tags from the rule.
 
         This method is only intended to be called if the Status of a rule is
@@ -43,6 +43,7 @@ class SigmaPlugin(interface.BaseAnalyzer):
             rule_title: rule_name to apply to matching events.
             tag_list(optional): List of additional tags to be added
                 to the event(s).
+            rule_id(optional): rule_id to apply to matching events.
 
         Returns:
             int: number of events tagged.
@@ -55,6 +56,8 @@ class SigmaPlugin(interface.BaseAnalyzer):
         for event in events:
             ts_sigma_rules = event.source.get("ts_sigma_rule", [])
             ts_sigma_rules.append(rule_title)
+            if rule_id:
+                ts_sigma_rules.append(rule_id)
             event.add_attributes({"ts_sigma_rule": list(set(ts_sigma_rules))})
             ts_ttp = event.source.get("ts_ttp", [])
             special_tags = []
@@ -98,18 +101,19 @@ class SigmaPlugin(interface.BaseAnalyzer):
             sigma_rule_counter += 1
             tagged_events_counter = self.run_sigma_rule(
                 rule.get("search_query"),
-                rule.get("title"),
+                rule_name,
                 tag_list=rule.get("tags"),
+                rule_id=rule.get("id"),
             )
         except:  # pylint: disable=bare-except
-            error_msg = "* {0:s} {1:s}".format(rule.get("title"), rule.get("id"))
+            error_msg = "* {0:s} {1:s}".format(rule_name, rule.get("id"))
             logger.error(
                 error_msg,
                 exc_info=True,
             )
             return error_msg
 
-        return f"{tagged_events_counter} events tagged for rule [{rule_name}]"
+        return f"{tagged_events_counter} events tagged for rule [{rule_name}] ({rule.get('id')})"  # pylint: disable=line-too-long
 
     @staticmethod
     def get_kwargs():
@@ -119,7 +123,7 @@ class SigmaPlugin(interface.BaseAnalyzer):
             sigma_rules All Sigma rules
         """
         sigma_rules = []
-        for rule in ts_sigma_lib.get_all_sigma_rules():
+        for rule in ts_sigma_lib.get_all_sigma_rules(parse_yaml=True):
             if rule.get("status") == "stable":
                 sigma_rules.append({"rule": rule})
 

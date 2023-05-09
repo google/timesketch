@@ -274,6 +274,13 @@ class ConfigAssistant:
         for name, value in timesketch_config.items():
             self.set_config(name, value)
 
+        # verify is expected to be a boolean but will be read from file as string
+        # therefore, we need to overwrite it here
+        if self.get_config("verify") == "False":
+            self.set_config("verify", False)
+        else:
+            self.set_config("verify", True)
+
         if load_cli_config:
             if "cli" not in config.sections():
                 # Set default CLI config section
@@ -418,7 +425,9 @@ def get_client(
     assistant = ConfigAssistant()
     try:
         assistant.load_config_file(
-            config_path, section=config_section, load_cli_config=load_cli_config
+            config_path,
+            section=config_section,
+            load_cli_config=load_cli_config,
         )
         if config_dict:
             assistant.load_config_dict(config_dict)
