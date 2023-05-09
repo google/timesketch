@@ -28,6 +28,7 @@ jobs:
           echo "Foobarrrrrrrrrrrrrrrrrrr"
           which pylint
           pylint --version
+          python -m pip list
           echo "updating pythonpath again"
           PYTHONPATH=.
           which pylint
