@@ -568,6 +568,31 @@ Both will give you something like:
  'tags_applied': 1,
  'total_number_of_events_sent_by_client': 1}
 ```
+### Remove tags from Events
+
+`untag_event`and `untag_events` in the context of a sketch.
+
+`untag_event(self, event_id: str, index, tag: str):` - Untags the specified tag from the event with the specified ID.
+`untag_events(self, events, tags_to_remove: list):` - Untags the specified tag from all of the events with the specified IDs.
+
+Example code:
+
+```python
+
+import timesketch_api_client
+
+Create a client
+client = timesketch_api_client.TimesketchAPIClient()
+sketch = client.get_sketch(1)
+
+# Get the event ID
+event_id = "k8P1MYcBkeTGnypeeKJL"
+
+# Untag the event
+sketch.untag_event(event_id, "foobar")
+```
+
+> Note the maximum of events passed via API is 500. The maximum number of tags to be removed in one API call is also 500.
 
 ### Add Attributes to Events
 

@@ -49,6 +49,7 @@ Options:
 Commands:
   analyze         Analyze timelines.
   config          Configuration for this CLI tool.
+  events          Manage events
   import          Import timeline.
   saved-searches  Managed saved searches.
   search          Search and explore.
@@ -150,7 +151,7 @@ Results
 
 ### Add manual events
 
-This feature allows users to add events to their Timesketch account using the `events add` command. The command takes three arguments: `message, date, timestamp-desc` and an optional field for `attributes`. The message is a short description of the event, the date is the date and time the event occured, and the attributes are a list of key-value pairs that will be associated with the event.
+This feature allows users to add events to their Timesketch account using the `events add` command. The command takes three arguments: `message, date, timestamp-desc` and an optional field for `attributes`. The message is a short description of the event, the date is the date and time the event occurred, and the attributes are a list of key-value pairs that will be associated with the event.
 
 `timestamp_desc` is a field that is used to describe the timestamp of an event. This field can be helpful for providing context about the event, such as the type of event or the source of the data.
 
@@ -165,4 +166,22 @@ It can also be called with a output format `json` like following.
 ```timesketch events add --message "foobar-message" --date 2023-03-04T11:31:12 --timestamp-desc "test" --output-format json
 {'meta': {}, 'objects': [{'color': 'F37991', 'created_at': '2023-03-08T12:46:24.472587', 'datasources': [], 'deleted': None, 'description': 'internal timeline for user-created events', 'id': 19, 'label_string': '', 'name': 'Manual events', 'searchindex': {'created_at': '2023-03-08T12:46:24.047640', 'deleted': None, 'description': 'internal timeline for user-created events', 'id': 9, 'index_name': '49a318b0ba17867fd71b50903774a0c8', 'label_string': '', 'name': 'Manual events', 'status': [{'created_at': '2023-03-17T09:35:03.202520', 'id': 87, 'status': 'ready', 'updated_at': '2023-03-17T09:35:03.202520'}], 'updated_at': '2023-03-08T12:46:24.047640', 'user': {'active': True, 'admin': True, 'groups': [], 'username': 'dev'}}, 'status': [{'created_at': '2023-03-17T09:35:03.233973', 'id': 79, 'status': 'ready', 'updated_at': '2023-03-17T09:35:03.233973'}], 'updated_at': '2023-03-08T12:46:24.472587', 'user': {'active': True, 'admin': True, 'groups': [], 'username': 'dev'}}]}
 Event added to sketch: timefocus test
+```
+
+### Remove tag(s)
+
+The command `events remove_tag` takes a list of tags as its argument and removes those tags from the event. For example, the following command would remove the tags "suspicious" and "foobar333" from the event with the ID "k8P1MYcBkeTGnypeeKJL".
+
+```bash
+timesketch events remove_tag --timeline-id 4 --event-id k8P1MYcBkeTGnypeeKJL --tag foobar333
+200
+```
+
+If called without `--tag` parameter, the client will show the current event details to make it easier to find the ones to remove.
+
+It is also possible to provide a comma separated list of tags to remove. The following command will remove both tags `foobar333`and `fooba123`.
+
+```bash
+timesketch events remove_tag --timeline-id 4 --event-id k8P1MYcBkeTGnypeeKJL --tag foobar333,fooba123
+200
 ```
