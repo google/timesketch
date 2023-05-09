@@ -18,7 +18,9 @@ import click
 
 from requests.exceptions import ConnectionError as RequestConnectionError
 
+# pylint: disable=import-error
 from timesketch_api_client import config as timesketch_config
+# pylint: enable=import-error
 
 from timesketch_cli_client.commands import analyze
 from timesketch_cli_client.commands import config
