@@ -16,7 +16,7 @@ limitations under the License.
 <template>
   <v-container fluid>
     <!-- Cytoscape container -->
-    <div style="height: 85vh" ref="graphContainer">
+    <div ref="graphContainer">
       <ts-cytoscape
         v-if="currentGraphPlugin || currentSavedGraph"
         :graph-plugin-name="currentGraphPlugin"

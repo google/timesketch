@@ -397,6 +397,9 @@ export default {
       this.timelineViewHeight -= 30
     },
     buildSavedGraph: function (savedGraph) {
+      // Remove existing elements to clean up the canvas.
+      this.cy.elements().remove()
+
       this.isLoading = true
       this.config.layout.name = 'preset'
       this.currentGraph = savedGraph.name
@@ -435,6 +438,9 @@ export default {
         })
     },
     buildGraph: function (graphPlugin, refresh = false) {
+      // Remove existing elements to clean up the canvas.
+      this.cy.elements().remove()
+
       this.isLoading = true
       this.showTimelineView = false
       this.config.layout.name = this.layoutName
