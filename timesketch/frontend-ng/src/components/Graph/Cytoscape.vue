@@ -114,7 +114,9 @@ limitations under the License.
         </div>
         <v-spacer></v-spacer>
         <div v-if="Object.keys(currentGraphCache).length">
-          <i>Generated {{ currentGraphCache.updated_at | timeSince }}</i>
+          <i
+            ><small>Generated {{ currentGraphCache.updated_at | timeSince }}</small></i
+          >
           <v-btn
             icon
             class="ml-1"
