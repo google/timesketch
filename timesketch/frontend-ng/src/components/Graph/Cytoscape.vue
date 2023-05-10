@@ -172,10 +172,10 @@ limitations under the License.
 
 <script>
 import ApiClient from '../../utils/RestApiClient'
+import EventBus from '../../main'
 import cytoscape from 'cytoscape'
 import spread from 'cytoscape-spread'
 import dagre from 'cytoscape-dagre'
-import _ from 'lodash'
 
 import TsEventList from '../Explore/EventList'
 
@@ -600,6 +600,7 @@ export default {
       if (!this.$refs.graphContainer) {
         return
       }
+
       let canvasHeight = this.$refs.graphContainer.clientHeight
       let canvasWidth = this.$refs.graphContainer.clientWidth
       let canvas = this.$refs.cy
@@ -609,6 +610,11 @@ export default {
       canvas.style.width = canvasWidth + 'px'
       this.cy.resize()
       this.cy.fit()
+    },
+    resizeCanvasWithDelay: function () {
+      this.resizeTimeout = setTimeout(() => {
+        this.resizeCanvas()
+      }, 250)
     },
     changeOpacity: function () {
       if (!this.cy) {
@@ -648,12 +654,8 @@ export default {
     },
   },
   mounted() {
-    window.addEventListener(
-      'resize',
-      _.debounce(() => {
-        this.resizeCanvas()
-      }, 250)
-    )
+    window.addEventListener('resize', this.resizeCanvasWithDelay)
+    EventBus.$on('toggleLeftPanel', this.resizeCanvasWithDelay)
 
     // Setup Cytoscape instance
     this.cy = cytoscape({
@@ -669,14 +671,15 @@ export default {
     })
 
     if (this.graphPluginName) {
-      console.log('building graph (mounted)', this.graphPluginName)
       this.buildGraph(this.graphPluginName)
     }
 
     if (this.savedGraphId) {
-      console.log('building saved graph (mounted)', this.savedGraphId)
       this.buildSavedGraph(this.savedGraphId)
     }
+  },
+  beforeDestroy() {
+    EventBus.$off('toggleLeftPanel')
   },
   watch: {
     '$vuetify.theme.dark'() {

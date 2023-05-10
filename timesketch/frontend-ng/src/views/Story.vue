@@ -390,7 +390,7 @@ export default {
       let newIndex = index + 1
       let newBlock = defaultBlock()
       newBlock.componentName = 'TsCytoscapePlugin'
-      newBlock.componentProps = { graphPluginName: graphPlugin.name, canvasHeight: '400px', disableZoom: true }
+      newBlock.componentProps = { graphPluginName: graphPlugin.name, canvasHeight: '500px', disableZoom: true }
       this.blocks.splice(newIndex, 0, newBlock)
       this.save()
     },
