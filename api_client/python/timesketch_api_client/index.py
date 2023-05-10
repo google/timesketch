@@ -112,7 +112,7 @@ class SearchIndex(resource.BaseResource):
             OpenSearch index name as string.
         """
         index_data = self._get_object_dict()
-        return index_data.get("index_name", "unkown index name")
+        return index_data.get("index_name", "unknown index name")
 
     @property
     def status(self):
