@@ -352,6 +352,7 @@ export default {
           type: 'bar',
         },
         xaxis: {
+          tickAmount: 12,
           labels: {
             show: true,
             hideOverlappingLabels: true
