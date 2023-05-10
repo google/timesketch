@@ -378,7 +378,7 @@ export default {
       if (!this.edgeQuery) {
         return
       }
-      return { queryDsl: this.edgeQuery, queryFilter: this.queryFilter }
+      return { queryDsl: this.edgeQuery, queryFilter: this.queryFilter, incognito: true }
     },
   },
   methods: {
@@ -537,8 +537,8 @@ export default {
         .elements()
         .filter((ele) => ele.data('label').toLowerCase().includes(this.filterString.toLowerCase()))
 
-      // Build the neighborhood
-      this.showNeighborhood(selected)
+      // Build the neighborhood (without fetching edge events)
+      this.showNeighborhood(selected, false)
     },
     filterGraphBySelection: function (event) {
       let selected = this.cy.filter(':selected')
@@ -562,7 +562,7 @@ export default {
 
       return neighborhood
     },
-    showNeighborhood: function (selected) {
+    showNeighborhood: function (selected, fetchEvents = true) {
       let neighborhood = this.buildNeighborhood(selected)
 
       if (selected.length === 0) {
@@ -575,6 +575,11 @@ export default {
       neighborhood.removeClass('faded')
 
       // Build Opensearch query DSL to fetch edge events.
+      // Exit early if edge events are not requested.
+      if (!fetchEvents) {
+        return
+      }
+
       let queryDsl = {
         query: {
           bool: {
@@ -691,14 +696,12 @@ export default {
       if (!this.graphPluginName) {
         return
       }
-      console.log('building graph', this.graphPluginName)
       this.buildGraph(this.graphPluginName)
     },
     savedGraphId() {
       if (!this.savedGraphId) {
         return
       }
-      console.log('building saved graph', this.savedGraphId)
       this.buildSavedGraph(this.savedGraphId)
     },
     $route(to, from) {
