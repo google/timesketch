@@ -58,7 +58,7 @@ limitations under the License.
         >
           <v-row
             no-gutters
-            @click="setGraphPlugin(graph)"
+            @click="setGraphPlugin(graph.name)"
             class="pa-2 pl-5"
             :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
           >

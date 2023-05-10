@@ -663,10 +663,12 @@ export default {
     })
 
     if (this.graphPluginName) {
+      console.log('building graph (mounted)', this.graphPluginName)
       this.buildGraph(this.graphPluginName)
     }
 
     if (this.savedGraphId) {
+      console.log('building saved graph (mounted)', this.savedGraphId)
       this.buildSavedGraph(this.savedGraphId)
     }
   },
@@ -678,12 +680,14 @@ export default {
       if (!this.graphPluginName) {
         return
       }
+      console.log('building graph', this.graphPluginName)
       this.buildGraph(this.graphPluginName)
     },
     savedGraphId() {
       if (!this.savedGraphId) {
         return
       }
+      console.log('building saved graph', this.savedGraphId)
       this.buildSavedGraph(this.savedGraphId)
     },
     $route(to, from) {

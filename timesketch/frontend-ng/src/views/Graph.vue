@@ -21,7 +21,7 @@ limitations under the License.
         v-if="currentGraphPlugin || currentSavedGraph"
         :graph-plugin-name="currentGraphPlugin"
         :saved-graph-id="currentSavedGraph"
-        canvas-height="85vh"
+        canvas-height="80vh"
       ></ts-cytoscape>
     </div>
   </v-container>
@@ -58,12 +58,12 @@ export default {
       this.currentGraphPlugin = null
       this.currentSavedGraph = graphId
     },
-    setGraphPlugin: function (graphPlugin) {
+    setGraphPlugin: function (graphPluginName) {
       if (this.$route.name !== 'Graph') {
-        this.$router.push({ name: 'Graph', params: { graphPlugin: graphPlugin.name } })
+        this.$router.push({ name: 'Graph', params: { graphPlugin: graphPluginName } })
       }
       this.currentSavedGraph = null
-      this.currentGraphPlugin = graphPlugin.name
+      this.currentGraphPlugin = graphPluginName
     },
   },
   mounted() {
@@ -77,7 +77,7 @@ export default {
     }
 
     if (this.params.graphId) {
-      this.setSavedGraph(this.params.graphId)
+      this.setSavedGraph(Number(this.params.graphId))
     }
 
     if (this.params.pluginName) {
