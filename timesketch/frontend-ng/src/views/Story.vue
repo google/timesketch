@@ -222,11 +222,13 @@ limitations under the License.
                 <v-card width="475">
                   <v-list>
                     <v-list-item-group color="primary">
+                      <v-subheader>Saved Graphs</v-subheader>
                       <v-list-item v-for="savedGraph in savedGraphs" :key="savedGraph.id">
                         <v-list-item-content @click="addSavedGraphBlock(savedGraph, index)">
                           {{ savedGraph.name }}
                         </v-list-item-content>
                       </v-list-item>
+                      <v-subheader>Plugins</v-subheader>
                       <v-list-item v-for="graphPlugin in graphPlugins" :key="graphPlugin.name">
                         <v-list-item-content @click="addGraphPluginBlock(graphPlugin, index)">
                           {{ graphPlugin.name }}
