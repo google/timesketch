@@ -19,7 +19,10 @@ import sys
 import click
 from tabulate import tabulate
 
+# pylint: disable=import-error
 from timesketch_api_client import search
+
+# pylint: enable=import-error
 
 
 def format_output(search_obj, output_format, show_headers, show_internal_columns):
@@ -170,6 +173,8 @@ def search_group(
     # Construct query from saved search and return early.
     if saved_search:
         search_obj.from_saved(saved_search)
+        if limit:
+            search_obj.max_entries = limit
         if describe:
             describe_query(search_obj)
             return

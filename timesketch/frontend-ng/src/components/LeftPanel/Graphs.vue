@@ -31,8 +31,9 @@ limitations under the License.
     </div>
 
     <v-expand-transition>
-      <div v-show="expanded">
+      <div v-show="expanded" class="pb-2">
         <!-- Saved graphs -->
+        <v-subheader>Saved Graphs</v-subheader>
         <router-link
           v-for="graph in savedGraphs"
           :key="graph.id"
@@ -50,6 +51,7 @@ limitations under the License.
         </router-link>
 
         <!-- Graph plugins -->
+        <v-subheader>Plugins</v-subheader>
         <router-link
           v-for="graph in graphs"
           :key="graph.name"
@@ -58,7 +60,7 @@ limitations under the License.
         >
           <v-row
             no-gutters
-            @click="setGraphPlugin(graph)"
+            @click="setGraphPlugin(graph.name)"
             class="pa-2 pl-5"
             :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
           >

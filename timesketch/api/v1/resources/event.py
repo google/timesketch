@@ -222,7 +222,10 @@ class EventCreateResource(resources.ResourceMixin, Resource):
         # TODO: Can this be narrowed down, both in terms of the scope it
         # applies to, as well as not to catch a generic exception.
         except Exception as e:  # pylint: disable=broad-except
-            abort(HTTP_STATUS_CODE_BAD_REQUEST, "Failed to add event ({0!s})".format(e))
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                "Failed to add event ({0!s})".format(e),
+            )
 
         # Return Timeline if it was created.
         # pylint: disable=no-else-return
@@ -272,7 +275,8 @@ class EventResource(resources.ResourceMixin, Resource):
         searchindex = SearchIndex.query.filter_by(index_name=searchindex_id).first()
         if not searchindex:
             abort(
-                HTTP_STATUS_CODE_BAD_REQUEST, "Search index not found for this event."
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                "Search index not found for this event.",
             )
         if searchindex.get_status.status == "deleted":
             abort(
@@ -332,7 +336,12 @@ class EventAddAttributeResource(resources.ResourceMixin, Resource):
 
     EVENT_FIELDS = ["_id", "_type", "_index", "attributes"]
     ATTRIBUTE_FIELDS = ["attr_name", "attr_value"]
-    RESERVED_ATTRIBUTE_NAMES = ["datetime", "timestamp", "message", "timestamp_desc"]
+    RESERVED_ATTRIBUTE_NAMES = [
+        "datetime",
+        "timestamp",
+        "message",
+        "timestamp_desc",
+    ]
 
     MAX_EVENTS = 100000
     MAX_ATTRIBUTES = 10
@@ -352,7 +361,10 @@ class EventAddAttributeResource(resources.ResourceMixin, Resource):
             abort(HTTP_STATUS_CODE_BAD_REQUEST, "Request must be in JSON format.")
         events = flask_request.json.get("events")
         if not events:
-            abort(HTTP_STATUS_CODE_BAD_REQUEST, "Request must contain an events field.")
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                "Request must contain an events field.",
+            )
         if not isinstance(events, list):
             abort(HTTP_STATUS_CODE_BAD_REQUEST, "Events field must be a list.")
         if len(events) > self.MAX_EVENTS:
@@ -365,7 +377,10 @@ class EventAddAttributeResource(resources.ResourceMixin, Resource):
         for event in events:
             for field in self.EVENT_FIELDS:
                 if field not in event:
-                    abort(HTTP_STATUS_CODE_BAD_REQUEST, f"Event missing field {field}.")
+                    abort(
+                        HTTP_STATUS_CODE_BAD_REQUEST,
+                        f"Event missing field {field}.",
+                    )
 
             attributes = event.get("attributes")
             if not isinstance(attributes, list):
@@ -564,7 +579,10 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
             abort(HTTP_STATUS_CODE_BAD_REQUEST, "Tags need to be a list")
 
         if not all(isinstance(x, str) for x in tags_to_add):
-            abort(HTTP_STATUS_CODE_BAD_REQUEST, "Tags need to be a list of strings")
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                "Tags need to be a list of strings",
+            )
 
         events = form.get("events", [])
         event_df = pd.DataFrame(events)
@@ -760,11 +778,20 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
         """
         current_search_node = SearchHistory.query.get(current_search_node_id)
         if not current_search_node:
-            abort(HTTP_STATUS_CODE_NOT_FOUND, "No search history found with this ID")
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                "No search history found with this ID",
+            )
         if not current_search_node.sketch == sketch:
-            abort(HTTP_STATUS_CODE_BAD_REQUEST, "Wrong sketch for this search history")
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                "Wrong sketch for this search history",
+            )
         if not current_search_node.user == current_user:
-            abort(HTTP_STATUS_CODE_BAD_REQUEST, "Wrong user for this search history")
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                "Wrong user for this search history",
+            )
         return current_search_node
 
     @login_required
@@ -904,7 +931,7 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
             if t.get_status.status.lower() == "ready"
         ]
 
-        # Retriving events list submitted in the request
+        # Retrieving events list submitted in the request
         events = form.events.raw_data
 
         # Loop through all events supplied and update the annotation on each
@@ -923,7 +950,7 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                     "of indices".format(searchindex_id),
                 )
 
-            # Retrive the event from the SQL database based on the event_id
+            # Retrieve the event from the SQL database based on the event_id
             # supplied in the request
             event = Event.query.filter_by(
                 sketch=sketch, searchindex=searchindex, document_id=event_id
@@ -935,13 +962,13 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                     "No event found with the id: " "{0!s}".format(event_id),
                 )
 
-            # Retrive annotation type supplied in the request
+            # Retrieve annotation type supplied in the request
             annotation_type = form.annotation_type.data
-            # Retrive the modified annotation supplied in the request
+            # Retrieve the modified annotation supplied in the request
             annotation = form.annotation.data
 
             if "comment" in annotation_type:
-                # Retrive the comment attached to the event bases on the comment
+                # Retrieve the comment attached to the event bases on the comment
                 # id supplied in the request
                 comment = event.get_comment(annotation["id"])
                 if not comment:
@@ -954,7 +981,8 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                 # Make sure the current user is the owner of the comment
                 if comment.user != current_user:
                     abort(
-                        HTTP_STATUS_CODE_FORBIDDEN, "User is not owner of the comment."
+                        HTTP_STATUS_CODE_FORBIDDEN,
+                        "User is not owner of the comment.",
                     )
 
                 # Update the comment with the new value
@@ -963,7 +991,10 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                 )
 
                 if not annotation:
-                    abort(HTTP_STATUS_CODE_BAD_REQUEST, "Update operation unsuccessful")
+                    abort(
+                        HTTP_STATUS_CODE_BAD_REQUEST,
+                        "Update operation unsuccessful",
+                    )
 
                 updated_annotations.append(annotation)
             else:
@@ -988,7 +1019,7 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
             otherwise
         """
 
-        # Retrive request arguments
+        # Retrieve request arguments
         args = self.parser.parse_args()
         annotation_type = args.get("annotation_type")
         annotation_id = args.get("annotation_id")
@@ -1003,7 +1034,7 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
             current_search_node = self._get_current_search_node(_search_node_id, sketch)
         searchindex = SearchIndex.query.filter_by(index_name=searchindex_id).first()
 
-        # Retrive the event from the SQL database based on the event_id
+        # Retrieve the event from the SQL database based on the event_id
         # supplied in the request
         event = Event.query.filter_by(
             sketch=sketch, searchindex=searchindex, document_id=event_id
@@ -1016,7 +1047,7 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
             )
 
         if "comment" in annotation_type:
-            # Retrive the comment attached to the event bases on the comment
+            # Retrieve the comment attached to the event bases on the comment
             # id supplied in the request
             comment = event.get_comment(annotation_id)
             if not comment:
@@ -1027,7 +1058,10 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
 
             # Make sure the current user is the owner of the comment
             if comment.user != current_user:
-                abort(HTTP_STATUS_CODE_FORBIDDEN, "User is not owner of the comment.")
+                abort(
+                    HTTP_STATUS_CODE_FORBIDDEN,
+                    "User is not owner of the comment.",
+                )
 
             if event.remove_comment(annotation_id):
                 # Remove label __ts_comment if the event has no more comments
@@ -1123,7 +1157,10 @@ class MarkEventsWithTimelineIdentifier(resources.ResourceMixin, Resource):
         searchindex_name = form.get("searchindex_name")
 
         if not (searchindex_id or searchindex_name):
-            abort(HTTP_STATUS_CODE_NOT_FOUND, "No search index information supplied.")
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                "No search index information supplied.",
+            )
 
         searchindex = None
         if searchindex_name:
@@ -1134,7 +1171,10 @@ class MarkEventsWithTimelineIdentifier(resources.ResourceMixin, Resource):
             searchindex = SearchIndex.query.get(searchindex_id)
 
         if not searchindex:
-            abort(HTTP_STATUS_CODE_BAD_REQUEST, "Unable to find the Search index.")
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                "Unable to find the Search index.",
+            )
 
         if searchindex.get_status.status == "deleted":
             abort(
@@ -1206,5 +1246,141 @@ class MarkEventsWithTimelineIdentifier(resources.ResourceMixin, Resource):
             body={"properties": {"timesketch_label": mapping_update}},
             index=searchindex.index_name,
         )
+
+        return HTTP_STATUS_CODE_OK
+
+
+class EventUnTagResource(resources.ResourceMixin, Resource):
+    """Resource to add / remove a tag to an event."""
+
+    # The maximum number of events to tag in a single request.
+    MAX_EVENTS_TO_TAG = 500
+
+    # The maximum number of tags in a single request.
+    MAX_TAGS_PER_REQUEST = 500
+
+    @login_required
+    def post(self, sketch_id):
+        """
+        Remove tags (max 500) from a list of events (max 500).
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+            in request form:
+                events: list of events to remove tags from with the following values:
+                    _id: the event id (e.g. k8P1MYcBkeTGnypeeKJL)
+                    _index: the searchindex name
+                        (e.g. 56093e2566164c50bdf973643543571b)
+                    searchindex_id: the searchindex id (e.g. 4) instead of
+                        providing _index
+                tags_to_remove: list of tags to remove from events
+
+
+        Returns:
+            HTTP_STATUS_CODE_OK if successful
+
+        Raises:
+            HTTP_STATUS_CODE_NOT_FOUND: if sketch or event does not exist
+            HTTP_STATUS_CODE_BAD_REQUEST: if the request is malformed, e.g.
+                events or tags are not lists or the number of events or tags
+                exceeds the maximum allowed
+            HTTP_STATUS_CODE_FORBIDDEN: if the user does not have write access
+                to the sketch
+        """
+
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
+
+        if not sketch.has_permission(current_user, "write"):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "User does not have write access controls on sketch.",
+            )
+
+        form = request.json
+        if not form:
+            form = request.data
+
+        events = form.get("events", [])
+        if not isinstance(events, list):
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, "Events need to be a list")
+
+        if len(events) > self.MAX_EVENTS_TO_TAG:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                "Cannot untag more than {0:d} events in a single "
+                "request".format(self.MAX_EVENTS_TO_TAG),
+            )
+
+        tags_to_remove = form.get("tags_to_remove", [])
+        if not isinstance(tags_to_remove, list):
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, "Tags need to be a list")
+
+        if len(tags_to_remove) > self.MAX_TAGS_PER_REQUEST:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                "Cannot untag more than {0:d} tags in a single "
+                "request".format(self.MAX_TAGS_PER_REQUEST),
+            )
+
+        datastore = self.datastore
+
+        for _event in events:
+            # every event entry can have a dedicated searchindex_id or searchindex_name
+            searchindex_id = _event.get("searchindex_id", None)
+            searchindex_name = _event.get("_index", None)
+
+            if not (searchindex_id or searchindex_name):
+                abort(
+                    HTTP_STATUS_CODE_NOT_FOUND,
+                    "No search index information supplied.",
+                )
+
+            searchindex = None
+            # in both cases we are flexible, no matter what was supplied
+            if searchindex_name:
+                searchindex = SearchIndex.query.filter_by(
+                    index_name=searchindex_name
+                ).first()
+            elif searchindex_id:
+                searchindex = SearchIndex.query.get(searchindex_id)
+
+            if not searchindex:
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    "Unable to find the Search index.",
+                )
+
+            if searchindex.get_status.status == "deleted":
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    "Unable to query event on a closed search index.",
+                )
+
+            result = self.datastore.get_event(searchindex.index_name, _event.get("_id"))
+            if not result:
+                logger.debug(
+                    "Unable to find event %s in index %s to untag",
+                    _event.get("_id"),
+                    searchindex.index_name,
+                )
+
+            existing_tags = result.get("_source").get("tag", [])
+
+            new_tags = list(set(existing_tags) - set(tags_to_remove))
+
+            if existing_tags == new_tags:
+                continue
+
+            # write the new tags to the datastore
+            datastore.import_event(
+                index_name=searchindex.index_name,
+                event_id=_event.get("_id"),
+                event={"tag": new_tags},
+                flush_interval=datastore.DEFAULT_FLUSH_INTERVAL,
+            )
+
+        datastore.flush_queued_events()
 
         return HTTP_STATUS_CODE_OK
