@@ -606,6 +606,7 @@ export default {
       } else {
         this.navigationDrawer.width = 0
       }
+      EventBus.$emit('toggleLeftPanel')
     },
   },
 }
