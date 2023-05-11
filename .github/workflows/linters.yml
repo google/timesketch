@@ -37,11 +37,11 @@ jobs:
           pylint --version
           pip freeze
           echo "running pylint manually"
-          pylint cli_client/python/timesketch_cli_client/commands/search.py
+          pylint cli_client/python/timesketch_cli_client/commands/timelines_test.py
           echo "running pylint manually finished"
       - name: Run pylint
         run: |
-          git config pull.rebase false && git fetch -p origin master
+          # git config pull.rebase false && git fetch -p origin master
           for FILE in `git --no-pager diff origin/master --name-only --diff-filter=ACMR | grep \.py$`; do echo "Running pylint against ${FILE}"; pylint --rcfile=.pylintrc ${FILE}; done
 
   Black-formatter:
