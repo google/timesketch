@@ -28,6 +28,7 @@ jobs:
         run: |
           pip install -e api_client/python
           pip install -e importer_client/python
+          # some debugging checks
           echo "Foobarrrrrrrrrrrrrrrrrrr"
           which pylint
           pylint --version
@@ -39,11 +40,12 @@ jobs:
           PYTHONPATH=.
           echo "running pylint manually"
           echo $PYTHONPATH
-          PYTHONPATH=. pylint -v --rcfile=.pylintrc cli_client/python/timesketch_cli_client/
+          #PYTHONPATH=. pylint -v --rcfile=.pylintrc cli_client/python/timesketch_cli_client/
           echo "running pylint manually finished"
+          # end of debugging checks
       - name: Run pylint
         run: |
-          # git config pull.rebase false && git fetch -p origin master
+          git config pull.rebase false && git fetch -p origin master
           for FILE in `git --no-pager diff origin/master --name-only --diff-filter=ACMR | grep \.py$`; do echo "Running pylint against ${FILE}"; PYTHONPATH=. pylint --rcfile=.pylintrc ${FILE}; done
 
   Black-formatter:
