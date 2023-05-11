@@ -25,6 +25,7 @@ jobs:
           pip install -e .
       - name: Install local dependencies
         run: |
+          export SETUPTOOLS_ENABLE_FEATURES="legacy-editable"
           pip install -e api_client/python
           pip install -e importer_client/python
           # some debugging checks
