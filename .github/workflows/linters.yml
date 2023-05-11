@@ -22,6 +22,7 @@ jobs:
         run: |
           pip install -r test_requirements.txt
           pip install -r requirements.txt
+          export SETUPTOOLS_ENABLE_FEATURES="legacy-editable"
           pip install -e .
           pip install -e api_client/python
           pip install -e importer_client/python
