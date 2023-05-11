@@ -20,7 +20,6 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
-          PYTHONPATH=.
           pip install -r test_requirements.txt
           pip install -r requirements.txt
           pip install -e .
@@ -37,11 +36,6 @@ jobs:
           which pylint
           pylint --version
           pip freeze
-          PYTHONPATH=.
-          echo "running pylint manually"
-          echo $PYTHONPATH
-          #PYTHONPATH=. pylint -v --rcfile=.pylintrc cli_client/python/timesketch_cli_client/
-          echo "running pylint manually finished"
           # end of debugging checks
       - name: Run pylint
         run: |
