@@ -38,12 +38,13 @@ jobs:
           pip freeze
           PYTHONPATH=.
           echo "running pylint manually"
+          echo $PYTHONPATH
           PYTHONPATH=. pylint -v cli_client/python/timesketch_cli_client/commands/timelines_test.py
           echo "running pylint manually finished"
       - name: Run pylint
         run: |
           # git config pull.rebase false && git fetch -p origin master
-          for FILE in `git --no-pager diff origin/master --name-only --diff-filter=ACMR | grep \.py$`; do echo "Running pylint against ${FILE}"; pylint --rcfile=.pylintrc ${FILE}; done
+          for FILE in `git --no-pager diff origin/master --name-only --diff-filter=ACMR | grep \.py$`; do echo "Running pylint against ${FILE}"; PYTHONPATH=. pylint --rcfile=.pylintrc ${FILE}; done
 
   Black-formatter:
     runs-on: ubuntu-latest
