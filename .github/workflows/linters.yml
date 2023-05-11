@@ -36,6 +36,7 @@ jobs:
           which pylint
           pylint --version
           pip freeze
+          PYTHONPATH=.
           echo "running pylint manually"
           pylint -v cli_client/python/timesketch_cli_client/commands/timelines_test.py
           echo "running pylint manually finished"
