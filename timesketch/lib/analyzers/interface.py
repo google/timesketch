@@ -1179,7 +1179,7 @@ class AnalyzerOutput:
         analyzer_identifier (str): [Required] Unique analyzer identifier.
         analyzer_name (str): [Required] Analyzer display name.
         result_status (str): [Required] Analyzer result status.
-            Valid values are success, no-findings, error.
+            Valid values are success or error.
         dfiq_question_id (str): [Optional] Digital Forensics Investigative
             Question (DFIQ) questions ID.
         dfiq_question_conclusion (str): [Optional] DFQI questions answer/
