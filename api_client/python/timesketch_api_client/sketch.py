@@ -408,7 +408,9 @@ class Sketch(resource.BaseResource):
 
         search_obj = search.Search(sketch=self)
         search_obj.from_manual(
-            query_string=query_string, query_dsl=query_dsl, query_filter=query_filter
+            query_string=query_string,
+            query_dsl=query_dsl,
+            query_filter=query_filter,
         )
         search_obj.name = name
         search_obj.save()
@@ -459,7 +461,11 @@ class Sketch(resource.BaseResource):
         return error.check_return_status(response, logger)
 
     def add_to_acl(
-        self, user_list=None, group_list=None, make_public=False, permissions=None
+        self,
+        user_list=None,
+        group_list=None,
+        make_public=False,
+        permissions=None,
     ):
         """Add users or groups to the sketch ACL.
 
@@ -857,7 +863,9 @@ class Sketch(resource.BaseResource):
         for story_dict in stories:
             story_list.append(
                 story.Story(
-                    story_id=story_dict.get("id", -1), sketch=self, api=self.api
+                    story_id=story_dict.get("id", -1),
+                    sketch=self,
+                    api=self.api,
                 )
             )
         return story_list
@@ -1089,7 +1097,11 @@ class Sketch(resource.BaseResource):
         return error.get_response_json(response, logger)
 
     def run_analyzer(
-        self, analyzer_name, analyzer_kwargs=None, timeline_id=None, timeline_name=None
+        self,
+        analyzer_name,
+        analyzer_kwargs=None,
+        timeline_id=None,
+        timeline_name=None,
     ):
         """Run an analyzer on a timeline.
 
@@ -1167,7 +1179,11 @@ class Sketch(resource.BaseResource):
         )
 
     def remove_acl(
-        self, user_list=None, group_list=None, remove_public=False, permissions=None
+        self,
+        user_list=None,
+        group_list=None,
+        remove_public=False,
+        permissions=None,
     ):
         """Remove users or groups to the sketch ACL.
 
@@ -1291,13 +1307,19 @@ class Sketch(resource.BaseResource):
 
         aggregation_obj = aggregation.Aggregation(sketch=self)
         aggregation_obj.from_aggregator_run(
-            aggregator_name=aggregator_name, aggregator_parameters=aggregator_parameters
+            aggregator_name=aggregator_name,
+            aggregator_parameters=aggregator_parameters,
         )
 
         return aggregation_obj
 
     def store_aggregation(
-        self, name, description, aggregator_name, aggregator_parameters, chart_type=""
+        self,
+        name,
+        description,
+        aggregator_name,
+        aggregator_parameters,
+        chart_type="",
     ):
         """Store an aggregation in the sketch.
 
@@ -1350,7 +1372,11 @@ class Sketch(resource.BaseResource):
         form_data = {
             "annotation": comment_text,
             "annotation_type": "comment",
-            "events": {"_id": event_id, "_index": index, "_type": "generic_event"},
+            "events": {
+                "_id": event_id,
+                "_index": index,
+                "_type": "generic_event",
+            },
         }
         resource_url = "{0:s}/sketches/{1:d}/event/annotate/".format(
             self.api.api_root, self.id
@@ -1424,6 +1450,72 @@ class Sketch(resource.BaseResource):
             "events": events,
         }
         resource_url = "{0:s}/sketches/{1:d}/event/annotate/".format(
+            self.api.api_root, self.id
+        )
+        response = self.api.session.post(resource_url, json=form_data)
+        return error.get_response_json(response, logger)
+
+    def untag_events(self, events, tags_to_remove: list):
+        """Removes a list of tags from a list of events.
+
+        The upper limit is 500 (events or tags) based on the API.
+
+        Args:
+            events: events dict. Must have the structure:
+                "events": [
+                {
+                    "_id": event_id,
+                    "_index": index,
+                }
+            tags_to_remove: list of tags to remove
+
+        Returns:
+            HTTP response object.
+        """
+        if self.is_archived():
+            raise RuntimeError("Unable to untag events in an archived sketch.")
+
+        form_data = {
+            "tags_to_remove": tags_to_remove,
+            "events": events,
+        }
+        resource_url = "{0:s}/sketches/{1:d}/event/untag/".format(
+            self.api.api_root, self.id
+        )
+        response = self.api.session.post(resource_url, json=form_data)
+        return error.get_response_json(response, logger)
+
+    def untag_event(self, event_id: str, index, tag: str):
+        """Removes a tag from an event.
+
+        This method can be used if just one events needs to be untagged.
+
+        Note if called multiple times in a loop it is more efficient to use
+        the untag_events method.
+
+        To remove a list of tags from a list of tags, use a different method.
+
+        Args:
+            event_id: id of the event
+            index: The OpenSearch index name
+            tag: tag to remove
+
+        Returns:
+            HTTP response object.
+        """
+        if self.is_archived():
+            raise RuntimeError("Unable to untag events in an archived sketch.")
+
+        form_data = {
+            "tags_to_remove": [tag],
+            "events": [
+                {
+                    "_id": event_id,
+                    "_index": index,
+                }
+            ],
+        }
+        resource_url = "{0:s}/sketches/{1:d}/event/untag/".format(
             self.api.api_root, self.id
         )
         response = self.api.session.post(resource_url, json=form_data)
@@ -1687,7 +1779,9 @@ class Sketch(resource.BaseResource):
         status = error.check_return_status(response, logger)
         if not status:
             error.error_message(
-                response, message="Failed exporting the sketch", error=RuntimeError
+                response,
+                message="Failed exporting the sketch",
+                error=RuntimeError,
             )
 
         with open(file_path, "wb") as fw:
@@ -1759,7 +1853,9 @@ class Sketch(resource.BaseResource):
 
         if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
             error.error_message(
-                response, message="Error creating searchindex", error=ValueError
+                response,
+                message="Error creating searchindex",
+                error=ValueError,
             )
 
         response_dict = error.get_response_json(response, logger)
@@ -1797,7 +1893,9 @@ class Sketch(resource.BaseResource):
 
         if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
             error.error_message(
-                response, message="Error creating a timeline object", error=ValueError
+                response,
+                message="Error creating a timeline object",
+                error=ValueError,
             )
 
         response_dict = error.get_response_json(response, logger)
@@ -1843,7 +1941,9 @@ class Sketch(resource.BaseResource):
         response = self.api.session.post(resource_url, json=form_data)
         if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
             error.error_message(
-                response, message="Error creating a datasource object", error=ValueError
+                response,
+                message="Error creating a datasource object",
+                error=ValueError,
             )
 
         _ = error.get_response_json(response, logger)

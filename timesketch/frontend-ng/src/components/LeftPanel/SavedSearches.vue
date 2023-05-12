@@ -30,16 +30,36 @@ limitations under the License.
     </div>
 
     <v-expand-transition>
-      <div v-show="expanded">
+      <div v-show="expanded" class="pb-2">
         <div
           v-for="savedSearch in meta.views"
           :key="savedSearch.name"
           @click="setView(savedSearch)"
           style="cursor: pointer; font-size: 0.9em"
         >
-          <v-row no-gutters class="pa-2 pl-5" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">{{
-            savedSearch.name
-          }}</v-row>
+          <v-row no-gutters class="py-1 pl-5 pr-3" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
+            <v-col cols="11"
+              ><div class="mt-1">{{ savedSearch.name }}</div></v-col
+            >
+            <v-col cols="1">
+              <v-menu offset-y>
+                <template v-slot:activator="{ on, attrs }">
+                  <v-btn small icon v-bind="attrs" v-on="on">
+                    <v-icon small>mdi-dots-vertical</v-icon>
+                  </v-btn>
+                </template>
+
+                <v-list dense class="mx-auto">
+                  <v-list-item style="cursor: pointer" @click="copySavedSearchUrlToClipboard(savedSearch.id)">
+                    <v-list-item-icon>
+                      <v-icon small>mdi-link-variant</v-icon>
+                    </v-list-item-icon>
+                    <v-list-item-title>Copy link to this search </v-list-item-title>
+                  </v-list-item>
+                </v-list>
+              </v-menu>
+            </v-col>
+          </v-row>
         </div>
       </div>
     </v-expand-transition>
@@ -68,6 +88,16 @@ export default {
   methods: {
     setView: function (savedSearch) {
       EventBus.$emit('setActiveView', savedSearch)
+    },
+    copySavedSearchUrlToClipboard(savedSearchId) {
+      try {
+        let searchUrl = window.location.origin + this.$route.path + '?view=' + savedSearchId
+        navigator.clipboard.writeText(searchUrl)
+        this.infoSnackBar('Event URL copied to clipboard')
+      } catch (error) {
+        this.errorSnackBar('Failed to load Event URL into the clipboard')
+        console.error(error)
+      }
     },
   },
   created() {},

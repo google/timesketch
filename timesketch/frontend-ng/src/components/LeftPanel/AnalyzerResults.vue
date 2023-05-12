@@ -34,13 +34,27 @@ limitations under the License.
       </v-btn>
       <span class="float-right" style="margin-right: 3px">
         <v-progress-circular
-          v-if="!analyzerResultsReady || activeAnalyzerSessionQueue.length > 0"
+          v-if="!analyzerResultsReady || (activeAnalyzerSessionQueue.length > 0 && !activeAnalyzerTimeoutTriggered)"
           :size="24"
           :width="1"
           indeterminate
           :value="activeAnalyzerDisplayCount"
           >{{ activeAnalyzerDisplayCount }}</v-progress-circular
         >
+        <v-tooltip v-if="activeAnalyzerTimeoutTriggered" top>
+          <template v-slot:activator="{ on }">
+            <v-btn
+              v-on="on"
+              small
+              icon
+              @click.stop=""
+              @click="triggeredAnalyzerRuns(activeAnalyzerQueue)"
+            >
+              <v-icon small>mdi-reload-alert</v-icon>
+            </v-btn>
+          </template>
+          <span>analyzer status check timeout, click to reload</span>
+        </v-tooltip>
       </span>
       <span class="float-right" style="margin-right: 10px">
         <small class="ml-3" v-if="!expanded && analyzerResults && analyzerResults.length && analyzerResultsReady"
@@ -114,6 +128,10 @@ export default {
       analyzerResults: [],
       analyzerResultsData: {},
       activeAnalyzerSessionQueue: [],
+      activeAnalyzerInterval: 15000, // milliseconds
+      activeAnalyzerTimeout: 300000, // milliseconds
+      activeAnalyzerTimeoutTriggered: false,
+      activeAnalyzerTimerStart: null,
     }
   },
   computed: {
@@ -204,10 +222,6 @@ export default {
             if (this.activeAnalyzerSessionQueue.indexOf(session.analysissession_id) === -1) {
               this.activeAnalyzerSessionQueue.push(session.analysissession_id)
             }
-            if (!activeAnalyzerTimelines[session.analyzer_name]) {
-              activeAnalyzerTimelines[session.analyzer_name] = []
-            }
-            activeAnalyzerTimelines[session.analyzer_name].push(session.timeline.name)
           }
           if (session.status[0].status === 'DONE' || session.status[0].status === 'ERROR') {
             // if the session is DONE or ERROR, remove it from the queue
@@ -229,29 +243,28 @@ export default {
       this.analyzerResults = sortedAnalyzerList
       this.analyzerResultsReady = true
     },
-    async fetchActiveSessions() {
-      const response = await ApiClient.getActiveAnalyzerSessions(this.sketch.id)
-      let activeSessions = response.data.objects[0]['sessions']
-      if (activeSessions) {
-        activeSessions.forEach((sessionId) => {
-          if (this.activeAnalyzerSessionQueue.indexOf(sessionId) === -1) this.activeAnalyzerSessionQueue.push(sessionId)
-        })
-      }
-    },
-    async fetchAnalyzerSessionData() {
-      let activeAnalyzerSessionData = []
-      for (const sessionId of this.activeAnalyzerSessionQueue) {
-        const response = await ApiClient.getAnalyzerSession(this.sketch.id, sessionId)
-        let analyzerSession = response.data.objects[0]
-        if (!analyzerSession) continue
-        activeAnalyzerSessionData.push(...analyzerSession['analyses'])
-      }
-      this.updateAnalyzerResultsData(activeAnalyzerSessionData)
+    fetchActiveAnalyzerSessions() {
+      ApiClient.getActiveAnalyzerSessions(this.sketch.id).then((response) => {
+        const activeSessionsDetailed = response.data.objects[0].detailed_sessions
+        this.activeAnalyzerQueue = response.data.objects[0].sessions
+        let activeAnalyzerSessionData = []
+        if (activeSessionsDetailed.length > 0) {
+          for (const session of activeSessionsDetailed) {
+            activeAnalyzerSessionData.push(...session.objects[0]['analyses'])
+          }
+        }
+        this.updateAnalyzerResultsData(activeAnalyzerSessionData)
+      }).catch((error) => {
+        console.error(error)
+      })
+
     },
     triggeredAnalyzerRuns: function (data) {
+      this.activeAnalyzerTimerStart = Date.now()
       data.forEach((sessionId) => {
         if (this.activeAnalyzerSessionQueue.indexOf(sessionId) === -1) this.activeAnalyzerSessionQueue.push(sessionId)
       })
+      this.fetchActiveAnalyzerSessions()
     },
     filterAnalyzers(items, search) {
       const searchStr = (search || '').toLowerCase()
@@ -270,6 +283,7 @@ export default {
   mounted() {
     EventBus.$on('triggeredAnalyzerRuns', this.triggeredAnalyzerRuns)
     this.initializeAnalyzerResults()
+    this.activeAnalyzerTimerStart = Date.now()
   },
   beforeDestroy() {
     EventBus.$off('triggeredAnalyzerRuns')
@@ -281,18 +295,26 @@ export default {
       if (sessionQueue.length > 0 && !this.interval) {
         this.interval = setInterval(
           function () {
-            if (sessionQueue.length > 0) {
-              // fetch data for sessions in the queue
-              this.fetchAnalyzerSessionData()
-              // update active session queue
-              this.fetchActiveSessions()
-            } else {
+            if (sessionQueue.length === 0 || this.activeAnalyzerQueue.length === 0) {
               // the queue is empty so stop the interval
               clearInterval(this.interval)
+              this.activeAnalyzerTimerStart = null
               this.interval = false
+              return
             }
+            // check if the timeout of the interval has been reached.
+            // This prevents the analyzer frontwend from checking stuck anayzers indefinetly.
+            if (this.activeAnalyzerTimerStart !== null && (Date.now() - this.activeAnalyzerTimerStart > this.activeAnalyzerTimeout)) {
+              clearInterval(this.interval)
+              this.interval = false
+              this.activeAnalyzerTimerStart = null
+              this.activeAnalyzerTimeoutTriggered = true
+              return
+            }
+            // fetch active analyzer sessions
+            this.fetchActiveAnalyzerSessions()
           }.bind(this),
-          5000
+          this.activeAnalyzerInterval
         )
       }
     },
