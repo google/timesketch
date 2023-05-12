@@ -23,6 +23,8 @@ import random
 import time
 import traceback
 
+from enum import IntEnum
+
 import yaml
 
 import opensearchpy
@@ -1164,6 +1166,19 @@ class BaseAnalyzer:
     def run(self):
         """Entry point for the analyzer."""
         raise NotImplementedError
+
+
+class Priority(IntEnum):
+    """Reporting priority enum to store common values.
+
+    Priorities can be anything in the range of 0-100, where 0 is the highest
+    priority.
+    """
+
+    NOTE = 100
+    LOW = 80
+    MEDIUM = 50
+    HIGH = 20
 
 
 class AnalyzerOutputException(Exception):
