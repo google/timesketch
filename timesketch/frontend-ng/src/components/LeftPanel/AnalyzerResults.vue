@@ -48,7 +48,7 @@ limitations under the License.
               small
               icon
               @click.stop=""
-              @click="triggeredAnalyzerRuns(activeAnalyzerQueue)"
+              @click="triggeredAnalyzerRuns(activeAnalyzerSessionQueue)"
             >
               <v-icon small>mdi-reload-alert</v-icon>
             </v-btn>
@@ -246,7 +246,7 @@ export default {
     fetchActiveAnalyzerSessions() {
       ApiClient.getActiveAnalyzerSessions(this.sketch.id).then((response) => {
         const activeSessionsDetailed = response.data.objects[0].detailed_sessions
-        this.activeAnalyzerQueue = response.data.objects[0].sessions
+        this.activeAnalyzerSessionQueue = response.data.objects[0].sessions
         let activeAnalyzerSessionData = []
         if (activeSessionsDetailed.length > 0) {
           for (const session of activeSessionsDetailed) {
@@ -295,7 +295,7 @@ export default {
       if (sessionQueue.length > 0 && !this.interval) {
         this.interval = setInterval(
           function () {
-            if (sessionQueue.length === 0 || this.activeAnalyzerQueue.length === 0) {
+            if (sessionQueue.length === 0 || this.activeAnalyzerSessionQueue.length === 0) {
               // the queue is empty so stop the interval
               clearInterval(this.interval)
               this.activeAnalyzerTimerStart = null
