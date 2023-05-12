@@ -34,7 +34,7 @@ limitations under the License.
       </v-btn>
       <span class="float-right" style="margin-right: 3px">
         <v-progress-circular
-          v-if="!analyzerResultsReady || activeAnalyzerQueue.length > 0"
+          v-if="!analyzerResultsReady || activeAnalyzerSessionQueue.length > 0"
           :size="24"
           :width="1"
           indeterminate
@@ -157,7 +157,7 @@ export default {
     },
     updateAnalyzerResultsData(analyzerSessions) {
       let perAnalyzer = this.analyzerResultsData
-      const activeAnalyzers = new Set();
+      const activeAnalyzerTimelines = {}
       try {
         for (const session of analyzerSessions) {
           if (!perAnalyzer[session.analyzer_name]) {
@@ -202,9 +202,12 @@ export default {
           if (session.status[0].status === 'PENDING' || session.status[0].status === 'STARTED') {
             // if the session is PENDING or STARTED, add the session to the queue (if not there yet)
             if (this.activeAnalyzerSessionQueue.indexOf(session.analysissession_id) === -1) {
-              this.activeAnalyzerSessionQueue.push(session.analysissession_id);
+              this.activeAnalyzerSessionQueue.push(session.analysissession_id)
             }
-            activeAnalyzers.add(session.analyzer_name);
+            if (!activeAnalyzerTimelines[session.analyzer_name]) {
+              activeAnalyzerTimelines[session.analyzer_name] = []
+            }
+            activeAnalyzerTimelines[session.analyzer_name].push(session.timeline.name)
           }
           if (session.status[0].status === 'DONE' || session.status[0].status === 'ERROR') {
             // if the session is DONE or ERROR, remove it from the queue
@@ -218,7 +221,7 @@ export default {
 
       // for now sort the results in alphabetical order. In the future this will be sorted by verdict severity.
       this.analyzerResultsData = perAnalyzer
-      this.$store.dispatch('updateActiveAnalyzers', [...activeAnalyzers]);
+      this.$store.dispatch('updateActiveAnalyzerTimelines', activeAnalyzerTimelines)
       let sortedAnalyzerList = [...Object.entries(perAnalyzer).map(([analyzerName, data]) => ({ analyzerName, data }))]
       sortedAnalyzerList.sort((a, b) =>
         a.data.analyzerInfo.display_name.localeCompare(b.data.analyzerInfo.display_name)

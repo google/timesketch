@@ -48,6 +48,7 @@ const defaultState = (currentUser) => {
     contextLinkConf: {},
     sketchAnalyzerList: {},
     activeAnalyzers: [],
+    activeAnalyzerTimelines: {},
   }
 }
 
@@ -125,14 +126,15 @@ export default new Vuex.Store({
     SET_ANALYZER_LIST(state, payload) {
       Vue.set(state, 'sketchAnalyzerList', payload)
     },
-    SET_ACTIVE_ANALYZERS(state, payload) {
-      Vue.set(state, 'activeAnalyzers', payload)
+    SET_ACTIVE_ANALYZER_TIMELINES(state, payload) {
+      Vue.set(state, 'activeAnalyzerTimelines', payload)
     },
-    ADD_ACTIVE_ANALYZERS(state, payload) {
-      const uniqueAnalyzerList = [
-        ...new Set([...state.activeAnalyzers, ...payload])
-      ];
-      Vue.set(state, 'activeAnalyzers', uniqueAnalyzerList);
+    ADD_ACTIVE_ANALYZER_TIMELINES(state, payload) {
+      const freshActiveAnalyzerTimelines = {
+        ...state.activeAnalyzerTimelines,
+        [payload.analyzerName]: payload.timelineIds,
+      }
+      Vue.set(state, 'activeAnalyzerTimelines', freshActiveAnalyzerTimelines)
     },
   },
   actions: {
@@ -294,11 +296,11 @@ export default new Vuex.Store({
         console.log(e)
       })
     },
-    updateActiveAnalyzers(context, analyzerNames) {
-      context.commit('SET_ACTIVE_ANALYZERS', analyzerNames);
+    updateActiveAnalyzerTimelines(context, analyzerTimelines) {
+      context.commit('SET_ACTIVE_ANALYZER_TIMELINES', analyzerTimelines);
     },
-    addActiveAnalyzers(context, analyzerNames) {
-      context.commit('ADD_ACTIVE_ANALYZERS', analyzerNames);
+    addActiveAnalyzerTimelines(context, singleAnalyzerTimelines) {
+      context.commit('ADD_ACTIVE_ANALYZER_TIMELINES', singleAnalyzerTimelines);
     },
   }
 })

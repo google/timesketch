@@ -37,9 +37,12 @@ limitations under the License.
                     v-if="isActive(analyzer.analyzerName)"
                     :size="20"
                     :width="2"
+                    :value="activeTimelinesCount(analyzer.analyzerName)"
                     indeterminate
                     color="primary"
-                  ></v-progress-circular>
+                  >
+                    {{ activeTimelinesCount(analyzer.analyzerName)}}
+                  </v-progress-circular>
                   <v-btn
                     v-if="!isActive(analyzer.analyzerName)"
                     icon
@@ -80,8 +83,8 @@ export default {
     analyzerList() {
         return this.$store.state.sketchAnalyzerList;
     },
-    activeAnalyzers() {
-        return this.$store.state.activeAnalyzers;
+    activeAnalyzerTimelines() {
+        return this.$store.state.activeAnalyzerTimelines
     },
     sortedAnalyzerList() {
       let unsortedAnalyzerList = Object.entries(this.analyzerList).map(([analyzerName, info]) => ({analyzerName, info}))
@@ -92,10 +95,17 @@ export default {
   },
   methods: {
     isActive(analyzerName) {
-      return this.activeAnalyzers.indexOf(analyzerName) !== -1;
+      return this.activeTimelinesCount(analyzerName) > 0
+    },
+    activeTimelinesCount(analyzerName) {
+      const timelines = this.activeAnalyzerTimelines[analyzerName]
+      return timelines ? timelines.length : 0
     },
     runAnalyzer(analyzerName) {
-      this.$store.dispatch('addActiveAnalyzers', [analyzerName]);
+      this.$store.dispatch('addActiveAnalyzerTimelines', {
+        analyzerName,
+        timelineIds: this.timelineSelection,
+      })
       ApiClient.runAnalyzers(this.sketch.id,  this.timelineSelection, [analyzerName])
         .then((response) => {
           let sessionIds = []
