@@ -1192,7 +1192,7 @@ class AnalyzerOutput:
             analyzer finding in a markdown format.
         references (List[str]): [Optional] A list of references about the
             analyzer or the issue the analyzer attempts to address.
-        attributes (dict): [Optional] A list of object that holds the
+        result_attributes (dict): [Optional] A dict of key : value pairs that holds additional
             finding details.
         timesketch_instance (str): [Required] The Timesketch instance URL.
         sketch_id (int): [Required] The Timesketch sketch ID for this analyzer.
