@@ -47,7 +47,6 @@ const defaultState = (currentUser) => {
     },
     contextLinkConf: {},
     sketchAnalyzerList: {},
-    activeAnalyzers: [],
     activeAnalyzerTimelines: {},
   }
 }
