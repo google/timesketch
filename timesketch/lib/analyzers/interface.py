@@ -1224,7 +1224,7 @@ class AnalyzerOutput:
         self.result_summary = ""
         self.result_markdown = ""
         self.references = []
-        self.attributes = {}
+        self.result_attributes = {}
         self.timesketch_instance = timesketch_instance
         self.sketch_id = sketch_id
         self.timeline_id = timeline_id
