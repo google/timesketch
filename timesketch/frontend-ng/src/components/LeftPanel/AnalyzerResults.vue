@@ -141,7 +141,7 @@ export default {
       return counter
     },
     activeAnalyzerDisplayCount() {
-      return this.activeAnalyzerSessionQueue.length > 0 ? this.activeAnalyzerSessionQueue.length : '';
+      return this.activeAnalyzerSessionQueue.length > 0 ? this.activeAnalyzerSessionQueue.length : ''
     },
   },
   methods: {
