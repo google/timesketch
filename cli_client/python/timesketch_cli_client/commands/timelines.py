@@ -58,9 +58,8 @@ def describe_timeline(ctx, timeline_id, output):
     if not timeline:
         click.echo("No such timeline")
         return
+    timeline.lazyload_data()
     if output == "json":
-        # Trigger to fetch the whole details of the timeline
-        timeline.status  # pylint: disable=pointless-statement
         click.echo(f"{timeline.resource_data}")
         return
 
