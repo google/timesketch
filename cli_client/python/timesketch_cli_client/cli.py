@@ -18,7 +18,10 @@ import click
 
 from requests.exceptions import ConnectionError as RequestConnectionError
 
+# pylint: disable=import-error
 from timesketch_api_client import config as timesketch_config
+
+# pylint: enable=import-error
 
 from timesketch_cli_client.commands import analyze
 from timesketch_cli_client.commands import config
@@ -27,6 +30,7 @@ from timesketch_cli_client.commands import search
 from timesketch_cli_client.commands import sketch as sketch_command
 from timesketch_cli_client.commands import timelines
 from timesketch_cli_client.commands import events
+from timesketch_cli_client.commands import sigma
 
 from .definitions import DEFAULT_OUTPUT_FORMAT
 from .version import get_version
@@ -138,6 +142,7 @@ cli.add_command(analyze.analysis_group)
 cli.add_command(sketch_command.sketch_group)
 cli.add_command(importer.importer)
 cli.add_command(events.events_group)
+cli.add_command(sigma.sigma_group)
 
 
 # pylint: disable=no-value-for-parameter
