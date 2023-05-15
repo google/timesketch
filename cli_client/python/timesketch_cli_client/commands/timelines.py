@@ -62,6 +62,8 @@ def describe_timeline(ctx, timeline_id, output):
     if output == "json":
         click.echo(f"{timeline.resource_data}")
         return
+    elif output != "text":
+        click.echo(f"Unsupported output format: {output}")
 
     click.echo(f"Name: {timeline.name}")
     click.echo(f"Index: {timeline.index_name}")
