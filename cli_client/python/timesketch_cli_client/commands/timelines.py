@@ -40,7 +40,7 @@ def list_timelines(ctx):
     "--output-format",
     "output",
     required=False,
-    help="Set output format (overrides global setting).",
+    help="Set output format [json, text (default)] (overrides global setting).",
 )
 @click.pass_context
 def describe_timeline(ctx, timeline_id, output):
