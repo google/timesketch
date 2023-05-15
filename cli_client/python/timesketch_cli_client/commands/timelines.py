@@ -59,7 +59,7 @@ def describe_timeline(ctx, timeline_id, output):
         click.echo("No such timeline")
         return
     if output == "json":
-        status = timeline.status  # Trigger to fetch the whole details of the timeline
+        timeline.status  # Trigger to fetch the whole details of the timeline
         click.echo(f"{timeline.resource_data}")
         return
 
