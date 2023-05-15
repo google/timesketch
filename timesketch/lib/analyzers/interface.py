@@ -1180,10 +1180,6 @@ class AnalyzerOutput:
         analyzer_name (str): [Required] Analyzer display name.
         result_status (str): [Required] Analyzer result status.
             Valid values are success or error.
-        dfiq_question_id (str): [Optional] Digital Forensics Investigative
-            Question (DFIQ) questions ID.
-        dfiq_question_conclusion (str): [Optional] DFQI questions answer/
-            conclusion.
         result_priority (str): [Required] Priority of the result based on the
             analysis findings. Valid values are NOTE (default), LOW, MEDIUM, HIGH.
         result_summary (str): [Required] A summary statement of the analyzer
@@ -1192,8 +1188,8 @@ class AnalyzerOutput:
             analyzer finding in a markdown format.
         references (List[str]): [Optional] A list of references about the
             analyzer or the issue the analyzer attempts to address.
-        result_attributes (dict): [Optional] A dict of key : value pairs that holds additional
-            finding details.
+        result_attributes (dict): [Optional] A dict of key : value pairs that holds
+            additional finding details.
         timesketch_instance (str): [Required] The Timesketch instance URL.
         sketch_id (int): [Required] The Timesketch sketch ID for this analyzer.
         timeline_id (int): [Required] The Timesketch timeline ID for this analyzer.
@@ -1218,8 +1214,6 @@ class AnalyzerOutput:
         self.analyzer_identifier = analyzer_identifier
         self.analyzer_name = analyzer_name
         self.result_status = ""  # TODO: link to analyzer status/error?
-        self.dfiq_question_id = ""
-        self.dfiq_question_conclusion = ""
         self.result_priority = "NOTE"
         self.result_summary = ""
         self.result_markdown = ""
@@ -1247,8 +1241,6 @@ class AnalyzerOutput:
                     "type": "string",
                     "enum": ["SUCCESS", "NO-FINDINGS", "ERROR"],
                 },
-                "dfiq_question_id": {"type": "string", "minLength": 1},
-                "dfiq_question_conclusion": {"type": "string", "minLength": 1},
                 "result_priority": {
                     "type": "string",
                     "default": "NOTE",
@@ -1321,12 +1313,6 @@ class AnalyzerOutput:
         }
 
         # add optional fields if they are not empty
-        if self.dfiq_question_id and self.dfiq_question_id != "":
-            output["dfiq_question_id"] = self.dfiq_question_id
-
-        if self.dfiq_question_conclusion and self.dfiq_question_conclusion != "":
-            output["dfiq_question_conclusion"] = self.dfiq_question_conclusion
-
         if self.result_markdown and self.result_markdown != "":
             output["result_markdown"] = self.result_markdown
 
