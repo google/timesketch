@@ -40,7 +40,7 @@ def list_timelines(ctx):
     "--output-format",
     "output",
     required=False,
-    help="Set output format [json, text (default)] (overrides global setting).",
+    help="Set output format [json, text] (overrides global setting).",
 )
 @click.pass_context
 def describe_timeline(ctx, timeline_id, output):
@@ -63,7 +63,7 @@ def describe_timeline(ctx, timeline_id, output):
         click.echo(f"{timeline.resource_data}")
         return
     elif output != "text":
-        click.echo(f"Unsupported output format: {output}")
+        click.echo(f"Unsupported output format: {output} using text instead")
 
     click.echo(f"Name: {timeline.name}")
     click.echo(f"Index: {timeline.index_name}")
