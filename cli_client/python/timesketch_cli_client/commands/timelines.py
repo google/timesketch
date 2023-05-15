@@ -49,7 +49,7 @@ def describe_timeline(ctx, timeline_id, output):
     Args:
         ctx: Click CLI context object.
         timeline-id: Timeline ID from argument.
-        output-format: Output format to use.
+        output-format: Output format to use. Available values: 'json' or 'text'
     """
     sketch = ctx.obj.sketch
     if not output:
