@@ -11,17 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Tests for timelines command."""
+"""Tests for events command."""
 
 import unittest
 import mock
 
 from click.testing import CliRunner
 
-# pylint: disable=import-error
 from timesketch_api_client import test_lib as api_test_lib
 
-# pylint: enable=import-error
 
 from .. import test_lib
 from .events import events_group
