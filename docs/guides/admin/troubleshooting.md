@@ -2,6 +2,16 @@
 hide:
   - footer
 ---
+## Opening bug / getting support
+
+Please provide as much detailed information as possible, keep in mind that:
+
+* we cannot fix errors based on vague descriptions;
+* we cannot look into your thoughts or on your systems;
+* we cannot easily isolate errors if you keep changing your test environment.
+
+If you report a bug or ask for help in Slack, please provide as much information as possible, error messsages, log lines, stacktraces, screenshots, videos etc.
+
 ## Troubleshooting playbook
 
 - Is it only affecting one user?
