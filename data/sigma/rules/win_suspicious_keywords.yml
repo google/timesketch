@@ -1,8 +1,8 @@
 title: General suspicious keywords
 id: 9532df7b-ac88-4706-a764-9bbc9c2b2d5f
-description: Broad rule to detect common bad terms. Warning: Can be noisy
+description: 'Broad rule to detect common bad terms. Warning: Can be noisy'
 status: stable
-references: 
+references:
  - https://github.com/SigmaHQ/sigma/blob/master/other/godmode_sigma_rule.yml
  - https://twitter.com/hela_luc/status/1592934231583621121
 author: Alexander Jaeger
