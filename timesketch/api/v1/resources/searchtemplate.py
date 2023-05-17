@@ -148,6 +148,14 @@ class SearchTemplateListResource(resources.ResourceMixin, Resource):
         Returns:
             View in JSON (instance of flask.wrappers.Response)
         """
+        # Disable adding search templates from the API. This is not supported yet and
+        # can only be done by the server admin using the YAML format.
+        # TODO: Remove this when support is added for template reviews and tooling.
+        abort(
+            HTTP_STATUS_CODE_BAD_REQUEST,
+            "Unable to save template. Please contact server admin to add using YAML",
+        )
+
         form = request.json
         if not form:
             form = request.data

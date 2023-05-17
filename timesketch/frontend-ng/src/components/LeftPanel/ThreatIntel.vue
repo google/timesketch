@@ -22,12 +22,17 @@ limitations under the License.
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
       <span> <v-icon left>mdi-shield-search</v-icon> Threat Intelligence </span>
-      <v-btn icon class="float-right mt-n1" v-if="intelligenceData && !intelligenceData.length" @click="addIndicator()">
+      <v-btn
+        icon
+        class="float-right mt-n1 mr-n1"
+        v-if="intelligenceData && !intelligenceData.length"
+        @click="addIndicator()"
+      >
         <v-icon>mdi-plus</v-icon>
       </v-btn>
       <v-btn
         icon
-        class="float-right mt-n1"
+        class="float-right mt-n1 mr-n1"
         v-if="expanded && intelligenceData && intelligenceData.length"
         @click="addIndicator()"
         @click.stop=""
