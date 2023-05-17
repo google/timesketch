@@ -21,12 +21,6 @@ import store from './store'
 
 import '@/mixins/snackBar'
 
-// Third party
-import VueScrollTo from 'vue-scrollto'
-import Multiselect from 'vue-multiselect'
-import VueCytoscape from 'vue-cytoscape'
-import VueClipboard from 'vue-clipboard2'
-
 import vuetify from '@/plugins/vuetify' // path to vuetify export
 
 require('./assets/main.scss')
@@ -47,6 +41,7 @@ Vue.use(VueClipboard)
 Vue.use(VueScrollTo)
 Vue.component('multiselect', Multiselect)
 Vue.use(require('vue-shortkey'))
+
 
 // Disable warning during development
 Vue.config.productionTip = false

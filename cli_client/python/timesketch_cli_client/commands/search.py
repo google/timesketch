@@ -170,6 +170,8 @@ def search_group(
     # Construct query from saved search and return early.
     if saved_search:
         search_obj.from_saved(saved_search)
+        if limit:
+            search_obj.max_entries = limit
         if describe:
             describe_query(search_obj)
             return

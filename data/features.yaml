@@ -144,3 +144,123 @@ ssh_client_password_ipv4_addresses:
         store_as: 'client_ip'
         re: '^\[sshd, pid: \d+\] (?:Accepted|Failed) (?:password|publickey) for \w+ 
           from ((?:[0-9]{1,3}\.){3}[0-9]{1,3}) port \d+'
+
+ssh_disconnected_username:
+        query_string: 'reporter:"sshd"'
+        attribute: 'body'
+        store_as: 'username'
+        re: '^Disconnected\s+from user (?P<username>[^\s]+) [^\s]+ port \d+$'
+
+ssh_disconnected_ip_address:
+        query_string: 'reporter:"sshd"'
+        attribute: 'body'
+        store_as: 'ip_address'
+        re: '^Disconnected from user [^\s]+ (?P<ip_address>[^\s]+) port \d+$'
+
+ssh_disconnected_port:
+        query_string: 'reporter:"sshd"'
+        attribute: 'body'
+        store_as: 'port'
+        re: '^Disconnected from user [^\s]+ [^\s]+ port (?P<port>\d+)$'
+
+ssh_failed_username:
+        query_string: 'reporter:"sshd"'
+        attribute: 'body'
+        store_as: 'username'
+        re: '^Failed password for (?:invalid user)?\s*(?P<username>[^\s]+) from [^\s]+ port \d+ ssh\d'
+
+ssh_failed_ip_address:
+        query_string: 'reporter:"sshd"'
+        attribute: 'body'
+        store_as: 'ip_address'
+        re: '^Failed password for (?:invalid user)?\s*[^\s]+ from (?P<ip_address>[^\s]+) port \d+ ssh\d'
+
+ssh_failed_port:
+        query_string: 'reporter:"sshd"'
+        attribute: 'body'
+        store_as: 'port'
+        re: '^Failed password for (?:invalid user)?\s*[^\s]+ from [^\s]+ port (?P<port>\d+) ssh\d'
+
+ssh_failed_method:
+        query_string: 'reporter:"sshd"'
+        attribute: 'body'
+        store_as: 'authentication_method'
+        re: '^Failed (?P<authentication_method>[^\s]+) for .*ssh\d'
+        
+win_login_subject_username:
+        query_string: 'source_name:Microsoft-Windows-Security-Auditing AND (event_identifier:4624 OR event_identifier:4625)'
+        attribute: 'xml_string'
+        store_as: 'subject_username'
+        re: '.*"SubjectUserName">(?P<subject_username>[^<]+)</Data>'
+
+win_login_subject_domain:
+        query_string: 'source_name:Microsoft-Windows-Security-Auditing AND (event_identifier:4624 OR event_identifier:4625)'
+        attribute: 'xml_string'
+        store_as: 'subject_domain'
+        re: '.*"SubjectDomainName">(?P<subject_domain>[^<]+)</Data>'
+
+win_login_subject_logon_id:
+        query_string: 'source_name:Microsoft-Windows-Security-Auditing AND (event_identifier:4624 OR event_identifier:4625)'
+        attribute: 'xml_string'
+        store_as: 'subject_logon_id'
+        re: '.*"SubjectLogonId">(?P<subject_logon_id>[^<]+)</Data>'
+
+win_login_username:
+        query_string: 'source_name:Microsoft-Windows-Security-Auditing AND (event_identifier:4624 OR event_identifier:4625)'
+        attribute: 'xml_string'
+        store_as: 'username'
+        re: '.*"TargetUserName">(?P<username>[^<]+)</Data>'
+
+win_login_domain:
+        query_string: 'source_name:Microsoft-Windows-Security-Auditing AND (event_identifier:4624 OR event_identifier:4625)'
+        attribute: 'xml_string'
+        store_as: 'domain'
+        re: '.*"TargetDomainName">(?P<domain>[^<]+)</Data>'
+
+win_login_logon_id:
+        query_string: 'source_name:Microsoft-Windows-Security-Auditing AND (event_identifier:4624 OR event_identifier:4625)'
+        attribute: 'xml_string'
+        store_as: 'logon_id'
+        re: '.*"TargetLogonId">(?P<logon_id>[^<]+)</Data>'
+
+win_login_logon_type:
+        query_string: 'source_name:Microsoft-Windows-Security-Auditing AND (event_identifier:4624 OR event_identifier:4625)'
+        attribute: 'xml_string'
+        store_as: 'logon_type'
+        re: '.*"LogonType">(?P<logon_type>[^<]+)</Data>'
+
+win_login_logon_process_name:
+        query_string: 'source_name:Microsoft-Windows-Security-Auditing AND (event_identifier:4624 OR event_identifier:4625)'
+        attribute: 'xml_string'
+        store_as: 'logon_process_name'
+        re: '.*"LogonProcessName">(?P<logon_process_name>[^<]+)</Data>'
+
+win_login_workstation_name:
+        query_string: 'source_name:Microsoft-Windows-Security-Auditing AND (event_identifier:4624 OR event_identifier:4625)'
+        attribute: 'xml_string'
+        store_as: 'workstation_name'
+        re: '.*"WorkstationName">(?P<workstation_name>[^<]+)</Data>'
+
+win_login_process_id:
+        query_string: 'source_name:Microsoft-Windows-Security-Auditing AND (event_identifier:4624 OR event_identifier:4625)'
+        attribute: 'xml_string'
+        store_as: 'process_id'
+        re: '.*"ProcessId">(?P<process_id>[^<]+)</Data>'
+
+win_login_process_name:
+        query_string: 'source_name:Microsoft-Windows-Security-Auditing AND (event_identifier:4624 OR event_identifier:4625)'
+        attribute: 'xml_string'
+        store_as: 'process_name'
+        re: '.*"ProcessName">(?P<process_name>[^<]+)</Data>'
+        
+win_login_ip_address:
+        query_string: 'source_name:Microsoft-Windows-Security-Auditing AND (event_identifier:4624 OR event_identifier:4625)'
+        attribute: 'xml_string'
+        store_as: 'ip_address'
+        re: '.*"IpAddress">(?P<ip_address>[^<]+)</Data>'
+
+win_login_port:
+        query_string: 'source_name:Microsoft-Windows-Security-Auditing AND (event_identifier:4624 OR event_identifier:4625)'
+        attribute: 'xml_string'
+        store_as: 'port'
+        re: '.*"IpPort">(?P<port>[^<]+)</Data>'
