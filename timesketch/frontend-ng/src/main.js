@@ -36,10 +36,6 @@ export default EventBus
 
 // Third party
 Vue.use(require('vue-moment'))
-Vue.use(VueCytoscape)
-Vue.use(VueClipboard)
-Vue.use(VueScrollTo)
-Vue.component('multiselect', Multiselect)
 Vue.use(require('vue-shortkey'))
 
 
