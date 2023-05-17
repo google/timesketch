@@ -38,6 +38,9 @@ limitations under the License.
     <div v-show="currentRouteName === 'Story'">
       <story :sketch-id="sketchId" :story-id="storyId"></story>
     </div>
+    <div v-show="currentRouteName === 'Analyze'">
+      <analyze :sketch-id="sketchId" :analyzer-timeline-id="analyzerTimelineId"></analyze>
+    </div>
   </div>
 </template>
 
@@ -47,15 +50,17 @@ import ThreatIntel from './ThreatIntel'
 import Sigma from './Sigma'
 import Graph from './Graph'
 import Story from './Story'
+import Analyze from './Analyze.vue'
 
 export default {
-  props: ['sketchId', 'storyId', 'ruleId'],
+  props: ['sketchId', 'storyId', 'ruleId', 'analyzerTimelineId'],
   components: {
     Explore,
     ThreatIntel,
     Sigma,
     Graph,
     Story,
+    Analyze,
   },
   computed: {
     currentRouteName() {

@@ -17,7 +17,7 @@ import axios from 'axios'
 import EventBus from '../main'
 
 const RestApiClient = axios.create({
-  baseURL: process.env.NODE_ENV === 'development' ? '/api/v1' : '/v2/api/v1',
+  baseURL: '/api/v1',
   headers: {
     common: {
       'X-CSRFToken': document.getElementsByTagName('meta')[0]['content'],
@@ -26,7 +26,7 @@ const RestApiClient = axios.create({
 })
 
 const RestApiBlobClient = axios.create({
-  baseURL: process.env.NODE_ENV === 'development' ? '/api/v1' : '/v2/api/v1',
+  baseURL: '/api/v1',
   responseType: 'blob',
   headers: {
     common: {
@@ -162,6 +162,13 @@ export default {
       verbose: false,
     }
     return RestApiClient.post('/sketches/' + sketchId + '/event/tagging/', formData)
+  },
+  untagEvents(sketchId, events, tags) {
+    let formData = {
+      tags_to_remove: tags,
+      events: events,
+    }
+    return RestApiClient.post('/sketches/' + sketchId + '/event/untag/', formData)
   },
   updateEventAnnotation(sketchId, annotationType, annotation, events, currentSearchNode) {
     let formData = {
@@ -311,7 +318,12 @@ export default {
     return RestApiClient.get('/sketches/' + sketchId + '/analyzer/sessions/' + sessionId + '/')
   },
   getActiveAnalyzerSessions(sketchId) {
-    return RestApiClient.get('/sketches/' + sketchId + '/analyzer/sessions/active/')
+    let params = {
+      params: {
+        include_details: "true",
+      },
+    }
+    return RestApiClient.get('/sketches/' + sketchId + '/analyzer/sessions/active/', params)
   },
   getLoggedInUser() {
     return RestApiClient.get('/users/me/')
