@@ -21,7 +21,7 @@ PyJWT==1.7.1
 python_dateutil==2.8.1
 PyYAML==5.4.1
 redis==3.5.3
-requests==2.25.1
+requests==2.31.0
 sigmatools==0.19.1 ; python_version > '3.4'
 six==1.12.0
 SQLAlchemy==1.3.12
