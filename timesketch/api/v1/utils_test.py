@@ -25,3 +25,44 @@ class TestApiUtils(BaseTest):
         expected_output = r"\/foo\/bar\/test\.txt c:\\foo\\bar"
         escaped_query_string = utils.escape_query_string(query_string_to_test)
         self.assertEqual(escaped_query_string, expected_output)
+
+    def test_valid_index_name(self):
+        """Test valid index name."""
+        valid_index_name = "a89933473b2a48948beee2c7e870209f"
+        self.assertTrue(utils.is_valid_index_name(valid_index_name))
+
+    def test_invalid_index_name(self):
+        """Test invalid index name."""
+        invalid_index_name = "/invalid/index/name"
+        self.assertFalse(utils.is_valid_index_name(invalid_index_name))
+
+    def test_invalid_upload_path(self):
+        """Test invalid upload path.
+
+        Resulting path should be a concatenation of the two paths anchored at the
+        base path.
+        """
+        base_path = "/tmp"
+        user_supplied_index_name = "/foo/bar/test.txt"
+        expected_path = "/tmp/foo/bar/test.txt"
+        resulting_path = utils.format_upload_path(base_path, user_supplied_index_name)
+        self.assertEqual(resulting_path, expected_path)
+
+    def test_valid_upload_path(self):
+        """Test valid upload path.
+
+        Resulting path should be a concatenation of the two paths anchored at the
+        base path.
+        """
+        base_path = "/tmp"
+        user_supplied_index_name = "a89933473b2a48948beee2c7e870209f"
+        expected_path = "/tmp/a89933473b2a48948beee2c7e870209f"
+        resulting_path = utils.format_upload_path(base_path, user_supplied_index_name)
+        self.assertEqual(resulting_path, expected_path)
+
+    def test_relative_base_upload_path(self):
+        """Test invalid base upload path."""
+        base_path = "tmp"
+        user_supplied_index_name = "a89933473b2a48948beee2c7e870209f"
+        with self.assertRaises(ValueError):
+            utils.format_upload_path(base_path, user_supplied_index_name)
