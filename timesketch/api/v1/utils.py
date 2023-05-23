@@ -16,9 +16,9 @@ import logging
 import json
 import time
 import os
-import yaml
 import pathlib
 import re
+import yaml
 
 from flask import abort
 from flask import jsonify
