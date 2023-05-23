@@ -16,10 +16,8 @@
 import codecs
 import logging
 import os
-import re
 import uuid
 import json
-import pathlib
 
 from flask import jsonify
 from flask import request
