@@ -304,7 +304,7 @@ def is_valid_index_name(index_name):
     Returns:
         A boolean indicating whether the index name is valid or not.
     """
-    regex = re.compile("[0-9a-f]{32}\Z", re.I)
+    regex = re.compile(r"[0-9a-f]{32}", re.I)
     match = regex.match(index_name)
     return bool(match)
 
