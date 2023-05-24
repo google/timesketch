@@ -247,6 +247,7 @@ limitations under the License.
         :eventValue="eventValue"
         :eventTimestamp="eventTimestamp"
         :eventTimestampDesc="eventTimestampDesc"
+        :reloadData="aggregatorDialog"
         @cancel=" aggregatorDialog = false">
       </ts-aggregate-dialog>
     </v-dialog>
@@ -429,7 +430,7 @@ export default {
         }
       }
     },
-    loadAggregation(eventKey, eventValue, eventTimestamp) {
+    loadAggregation(eventKey, eventValue) {
       this.eventKey = eventKey
       this.eventValue = eventValue
       this.aggregatorDialog = true
