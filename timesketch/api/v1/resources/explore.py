@@ -442,7 +442,7 @@ class SearchHistoryResource(resources.ResourceMixin, Resource):
     def __init__(self):
         super().__init__()
         self.parser = reqparse.RequestParser()
-        self.parser.add_argument("limit", type=int, required=False)
+        self.parser.add_argument("limit", type=int, required=False, location="args")
 
     @login_required
     def get(self, sketch_id):

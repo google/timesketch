@@ -59,7 +59,9 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
     def __init__(self):
         super().__init__()
         self.parser = reqparse.RequestParser()
-        self.parser.add_argument("status", type=str, required=False, default="")
+        self.parser.add_argument(
+            "status", type=str, required=False, default="", location="args"
+        )
 
     @login_required
     def get(self, sketch_id):
@@ -70,7 +72,6 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
         """
         args = self.parser.parse_args()
         filter_on_status = args.get("status")
-
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
