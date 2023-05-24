@@ -290,7 +290,7 @@ limitations under the License.
           <ts-event-tag-menu :event="item"></ts-event-tag-menu>
 
           <!-- Action sub-menu -->
-          <ts-event-action-menu :event="item"></ts-event-action-menu>
+          <ts-event-action-menu :event="item" @showContextWindow="showContextWindow($event)"></ts-event-action-menu>
         </template>
 
         <!-- Datetime field with action buttons -->
@@ -308,25 +308,15 @@ limitations under the License.
             style="cursor: pointer"
             @click="toggleDetailedEvent(item)"
           >
-            <span :class="{ 'ts-event-field-ellipsis': field.text === 'message' }">
+            <span
+              :class="{
+                'ts-event-field-ellipsis': field.text === 'message',
+                'ts-event-field-highlight': item._id === highlightEvent,
+              }"
+            >
               <!-- Tags -->
-              <span v-if="displayOptions.showTags && index === 3">
-                <v-chip
-                  small
-                  class="mr-2"
-                  v-for="tag in item._source.tag"
-                  :key="tag"
-                  :color="tagColor(tag).color"
-                  :text-color="tagColor(tag).textColor"
-                >
-                  <v-icon v-if="tag in tagConfig" left small>{{ tagConfig[tag].label }}</v-icon>
-                  {{ tag }}</v-chip
-                >
-                <span v-for="label in item._source.label" :key="label">
-                  <v-chip v-if="!label.startsWith('__ts')" small outlined class="mr-2">
-                    {{ label }}
-                  </v-chip>
-                </span>
+              <span v-if="displayOptions.showTags && index === 3 && ('tag' in item._source ? (item._source.tag.length > 0) : false )">
+                <ts-event-tags :item="item" :tagConfig="tagConfig" :showDetails="item.showDetails"></ts-event-tags>
               </span>
               <!-- Emojis -->
               <span v-if="displayOptions.showEmojis && index === 0">
@@ -372,6 +362,7 @@ import TsBarChart from './BarChart'
 import TsEventDetail from './EventDetail'
 import TsEventTagMenu from './EventTagMenu.vue'
 import TsEventActionMenu from './EventActionMenu.vue'
+import TsEventTags from './EventTags.vue'
 
 const defaultQueryFilter = () => {
   return {
@@ -400,6 +391,7 @@ export default {
     TsEventDetail,
     TsEventTagMenu,
     TsEventActionMenu,
+    TsEventTags
   },
   props: {
     queryRequest: {
@@ -429,6 +421,10 @@ export default {
     disablePagination: {
       type: Boolean,
       default: false,
+    },
+    highlightEvent: {
+      type: String,
+      default: '',
     },
   },
   data() {
@@ -560,12 +556,6 @@ export default {
     },
   },
   methods: {
-    tagColor: function (tag) {
-      if (this.tagConfig[tag]) {
-        return this.tagConfig[tag]
-      }
-      return 'lightgrey'
-    },
     getFieldName: function (field) {
       return 'item._source.' + field
     },
@@ -650,9 +640,17 @@ export default {
       }
     },
     search: function (resetPagination = true, incognito = false, parent = false) {
+      // Exit early if there are no indices selected.
+      if (this.currentQueryFilter.indices && !this.currentQueryFilter.indices.length) {
+        this.eventList = emptyEventList()
+        return
+      }
+
+      // Exit early if there is no query string or DSL provided.
       if (!this.currentQueryString && !this.currentQueryDsl) {
         return
       }
+
       this.searchInProgress = true
       this.selectedEvents = []
       this.eventList = emptyEventList()
@@ -838,7 +836,6 @@ export default {
           this.saveSearchMenu = false
           let newView = response.data.objects[0]
           this.$store.state.meta.views.push(newView)
-          this.$router.push({ name: 'Explore', query: { view: newView.id } })
         })
         .catch((e) => {})
     },
@@ -912,6 +909,11 @@ export default {
   top: 50%;
   transform: translateY(-50%);
   left: 0;
+}
+
+.ts-event-field-highlight {
+  font-weight: bold;
+  color: red;
 }
 
 .v-data-table__expanded.v-data-table__expanded__content {

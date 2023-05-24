@@ -16,7 +16,9 @@
 /.eggs
 /.tox
 /__pycache__
-**/build/
+api_client/python/build/
+cli_client/python/build/
+importer_client/python/build/
 /dependencies/
 *.egg-info
 

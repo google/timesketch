@@ -163,6 +163,13 @@ export default {
     }
     return RestApiClient.post('/sketches/' + sketchId + '/event/tagging/', formData)
   },
+  untagEvents(sketchId, events, tags) {
+    let formData = {
+      tags_to_remove: tags,
+      events: events,
+    }
+    return RestApiClient.post('/sketches/' + sketchId + '/event/untag/', formData)
+  },
   updateEventAnnotation(sketchId, annotationType, annotation, events, currentSearchNode) {
     let formData = {
       annotation: annotation,
@@ -311,7 +318,12 @@ export default {
     return RestApiClient.get('/sketches/' + sketchId + '/analyzer/sessions/' + sessionId + '/')
   },
   getActiveAnalyzerSessions(sketchId) {
-    return RestApiClient.get('/sketches/' + sketchId + '/analyzer/sessions/active/')
+    let params = {
+      params: {
+        include_details: "true",
+      },
+    }
+    return RestApiClient.get('/sketches/' + sketchId + '/analyzer/sessions/active/', params)
   },
   getLoggedInUser() {
     return RestApiClient.get('/users/me/')
