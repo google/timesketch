@@ -111,7 +111,7 @@ class AccessControlMixin(object):
             dict(
                 __tablename__="%s_accesscontrolentry" % self.__tablename__,
                 parent_id=Column(Integer, ForeignKey("%s.id" % self.__tablename__)),
-                parent=relationship(self),
+                parent=relationship(self, viewonly=True),
             ),
         )
         return relationship(self.AccessControlEntry)
