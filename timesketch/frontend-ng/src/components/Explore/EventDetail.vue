@@ -27,6 +27,15 @@ limitations under the License.
 
                     <!-- Copy field name -->
                     <v-btn
+                      v-if="(key == c_key) && key != '' && !ignoredAggregatorFields.has(key)"
+                      @click.stop="loadAggregation(key, value)"
+                      icon
+                      x-small
+                      class="mr-1"
+                    >
+                      <v-icon>mdi-chart-bar</v-icon>
+                    </v-btn>
+                    <v-btn
                       icon
                       x-small
                       style="cursor: pointer"
@@ -35,10 +44,10 @@ limitations under the License.
                     >
                       <v-icon small>mdi-content-copy</v-icon>
                     </v-btn>
-
                   </td>
+
                   <td v-else>
-                    <div class="px-3"></div>
+                    <div class="px-6"></div>
                   </td>
 
                   <!-- Event field name -->
@@ -228,6 +237,20 @@ limitations under the License.
         </v-card>
       </v-col>
     </v-row>
+    <v-dialog
+      scrollable
+      v-model="aggregatorDialog"
+      @click:outside="$event => this.aggregatorDialog = false"
+    >
+      <ts-aggregate-dialog
+        :eventKey="eventKey"
+        :eventValue="eventValue"
+        :eventTimestamp="eventTimestamp"
+        :eventTimestampDesc="eventTimestampDesc"
+        :reloadData="aggregatorDialog"
+        @cancel=" aggregatorDialog = false">
+      </ts-aggregate-dialog>
+    </v-dialog>
     <br />
   </div>
 </template>
@@ -235,11 +258,13 @@ limitations under the License.
 <script>
 import ApiClient from '../../utils/RestApiClient'
 import EventBus from '../../main'
+import TsAggregateDialog from './AggregateDialog.vue'
 import TsFormatXmlString from './FormatXMLString.vue'
 import TsLinkRedirectWarning from './LinkRedirectWarning.vue'
 
 export default {
   components: {
+    TsAggregateDialog,
     TsFormatXmlString,
     TsLinkRedirectWarning,
   },
@@ -250,6 +275,22 @@ export default {
       comment: '',
       comments: [],
       selectedComment: null,
+      aggregatorDialog: false,
+      ignoredAggregatorFields: new Set(
+          [
+              'datetime',
+              'message',
+              'path_spec',
+              'strings',
+              'timestamp',
+              'timestamp_desc',
+              'xml_string'
+          ]
+      ),
+      eventKey: '',
+      eventValue: '',
+      eventTimestamp: 0,
+      eventTimestampDesc: '',
       formatXMLString: false,
       redirectWarnDialog: false,
       contextUrl: '',
@@ -291,6 +332,8 @@ export default {
         .then((response) => {
           this.fullEvent = response.data.objects
           this.comments = response.data.meta.comments
+          this.eventTimestamp = response.data.objects.timestamp
+          this.eventTimestampDesc = response.data.objects.timestamp_desc
         })
         .catch((e) => {})
     },
@@ -386,6 +429,11 @@ export default {
           return confItem['redirect_warning']
         }
       }
+    },
+    loadAggregation(eventKey, eventValue) {
+      this.eventKey = eventKey
+      this.eventValue = eventValue
+      this.aggregatorDialog = true
     },
     copyToClipboard (content) {
       try {

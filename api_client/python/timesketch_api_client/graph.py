@@ -321,7 +321,7 @@ class Graph(resource.SketchResource):
         objects = data.get("objects")
         if not objects:
             logger.warning(
-                "Unable to load saved graph with ID: %d, " "are you sure it exists?",
+                "Unable to load saved graph with ID: %d, are you sure it exists?",
                 graph_id,
             )
         graph_dict = objects[0]

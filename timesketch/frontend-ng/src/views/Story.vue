@@ -93,55 +93,109 @@ limitations under the License.
 
         <!-- Interactive data components -->
         <div v-if="block.componentName">
-          <v-hover v-slot="{ hover }">
-            <!-- Saved Searches -->
-            <div>
-              <v-card v-if="block.componentName === 'TsEventList'" outlined class="mb-2">
-                <v-toolbar dense flat>
-                  <router-link
-                    style="cursor: pointer; text-decoration: none"
-                    :to="{ name: 'Explore', query: { view: block.componentProps.view.id } }"
-                  >
-                    <span @click="setActiveView(block.componentProps.view)">{{ block.componentProps.view.name }}</span>
-                  </router-link>
+          <!-- Saved Searches -->
+          <div>
+            <v-card v-if="block.componentName === 'TsEventList'" outlined class="mb-2">
+              <v-toolbar dense flat>
+                <router-link
+                  style="cursor: pointer; text-decoration: none"
+                  :to="{ name: 'Explore', query: { view: block.componentProps.view.id } }"
+                >
+                  <span @click="setActiveView(block.componentProps.view)">{{ block.componentProps.view.name }}</span>
+                </router-link>
 
-                  <v-spacer></v-spacer>
-                  <v-btn icon v-if="hover" @click="deleteBlock(index)">
-                    <v-icon small>mdi-trash-can-outline</v-icon>
-                  </v-btn>
-                </v-toolbar>
-                <v-divider></v-divider>
-                <v-card-text>
-                  <component :is="block.componentName" v-bind="formatComponentProps(block)"></component>
-                </v-card-text>
-              </v-card>
-              <v-card v-if="block.componentName === 'TsAggregationGroupCompact'" outlined class="mb-2">
-                <v-toolbar dense flat>{{ block.componentProps.aggregation_group.name }}</v-toolbar>
-                <v-divider></v-divider>
-                <v-card-text>Aggregations are not yet supported</v-card-text>
-              </v-card>
-              <v-card v-if="block.componentName === 'TsAggregationCompact'" outlined class="mb-2">
-                <v-toolbar dense flat>{{ block.componentProps.aggregation.name }}</v-toolbar>
-                <v-divider></v-divider>
-                <v-card-text>Aggregations are not yet supported</v-card-text>
-              </v-card>
-            </div>
-          </v-hover>
+                <v-spacer></v-spacer>
+                <v-btn icon @click="deleteBlock(index)">
+                  <v-icon small>mdi-trash-can-outline</v-icon>
+                </v-btn>
+              </v-toolbar>
+              <v-divider></v-divider>
+              <v-card-text>
+                <component :is="block.componentName" v-bind="formatComponentProps(block)"></component>
+              </v-card-text>
+            </v-card>
+            <v-card v-if="block.componentName === 'TsAggregationGroupCompact'" outlined class="mb-2">
+              <v-toolbar dense flat
+                >{{ block.componentProps.aggregation_group.name }}
+                <v-spacer></v-spacer>
+                <v-btn icon @click="deleteBlock(index)">
+                  <v-icon small>mdi-trash-can-outline</v-icon>
+                </v-btn>
+              </v-toolbar>
+              <v-divider></v-divider>
+              <v-card-text>Aggregations are not yet supported</v-card-text>
+            </v-card>
+            <v-card v-if="block.componentName === 'TsAggregationCompact'" outlined class="mb-2">
+              <v-toolbar dense flat
+                >{{ block.componentProps.aggregation.name }}
+                <v-spacer></v-spacer>
+                <v-btn icon @click="deleteBlock(index)">
+                  <v-icon small>mdi-trash-can-outline</v-icon>
+                </v-btn>
+              </v-toolbar>
+              <v-divider></v-divider>
+              <v-card-text>Aggregations are not yet supported</v-card-text>
+            </v-card>
+            <v-card v-if="block.componentName === 'TsCytoscapePlugin'" outlined class="mb-2">
+              <v-toolbar dense flat>
+                <router-link
+                  style="cursor: pointer; text-decoration: none"
+                  :to="{ name: 'Graph', query: { plugin: block.componentProps.graphPluginName } }"
+                >
+                  <span @click="setActiveGraph(block.componentProps.graphPluginName)">{{
+                    block.componentProps.graphPluginName
+                  }}</span>
+                </router-link>
+
+                <v-spacer></v-spacer>
+                <v-btn icon @click="deleteBlock(index)">
+                  <v-icon small>mdi-trash-can-outline</v-icon>
+                </v-btn>
+              </v-toolbar>
+              <v-divider></v-divider>
+              <v-card-text>
+                <component :is="'TsCytoscape'" v-bind="formatComponentProps(block)"></component>
+              </v-card-text>
+            </v-card>
+            <v-card v-if="block.componentName === 'TsCytoscapeSavedGraph'" outlined class="mb-2">
+              <v-toolbar dense flat>
+                <router-link
+                  style="cursor: pointer; text-decoration: none"
+                  :to="{ name: 'Graph', query: { graph: block.componentProps.graph } }"
+                >
+                  <span @click="setActiveGraph(block.componentProps.savedGraphId)">{{ block.graphName }}</span>
+                </router-link>
+
+                <v-spacer></v-spacer>
+                <v-btn icon @click="deleteBlock(index)">
+                  <v-icon small>mdi-trash-can-outline</v-icon>
+                </v-btn>
+              </v-toolbar>
+              <v-divider></v-divider>
+              <v-card-text>
+                <component :is="'TsCytoscape'" v-bind="formatComponentProps(block)"></component>
+              </v-card-text>
+            </v-card>
+          </div>
         </div>
 
         <!-- Add controls to add new blocks to the page -->
         <v-hover v-slot="{ hover }">
           <div class="mb-2 mt-2">
-            <div :class="{ hidden: !hover && !block.isActive && hasContent }">
+            <div
+              :class="{
+                hidden: !hover && !block.isActive && !block.showGraphMenu && !block.showSavedSearchMenu && hasContent,
+              }"
+            >
               <!-- Text block -->
               <v-btn v-if="hasContent" class="mr-2" rounded outlined small @click="addTextBlock(index)">
                 <v-icon left small>mdi-plus</v-icon>
                 Text
               </v-btn>
               <!-- Saved Search selector -->
-              <v-menu offset-y v-model="block.isActive">
+              <v-menu offset-y v-model="block.showSavedSearchMenu">
                 <template v-slot:activator="{ on, attrs }">
-                  <v-btn rounded outlined small :disabled="!meta.views.length" v-bind="attrs" v-on="on">
+                  <v-btn class="mr-2" rounded outlined small :disabled="!meta.views.length" v-bind="attrs" v-on="on">
                     <v-icon left small>mdi-plus</v-icon>
                     Saved Search
                   </v-btn>
@@ -152,6 +206,32 @@ limitations under the License.
                       <v-list-item v-for="savedSearch in meta.views" :key="savedSearch.id">
                         <v-list-item-content @click="addEventListBlock(savedSearch, index)">
                           {{ savedSearch.name }}
+                        </v-list-item-content>
+                      </v-list-item>
+                    </v-list-item-group>
+                  </v-list>
+                </v-card>
+              </v-menu>
+              <v-menu offset-y v-model="block.showGraphMenu">
+                <template v-slot:activator="{ on, attrs }">
+                  <v-btn rounded outlined small :disabled="!graphPlugins.length" v-bind="attrs" v-on="on">
+                    <v-icon left small>mdi-plus</v-icon>
+                    Graphs
+                  </v-btn>
+                </template>
+                <v-card width="475">
+                  <v-list>
+                    <v-list-item-group color="primary">
+                      <v-subheader>Saved Graphs</v-subheader>
+                      <v-list-item v-for="savedGraph in savedGraphs" :key="savedGraph.id">
+                        <v-list-item-content @click="addSavedGraphBlock(savedGraph, index)">
+                          {{ savedGraph.name }}
+                        </v-list-item-content>
+                      </v-list-item>
+                      <v-subheader>Plugins</v-subheader>
+                      <v-list-item v-for="graphPlugin in graphPlugins" :key="graphPlugin.name">
+                        <v-list-item-content @click="addGraphPluginBlock(graphPlugin, index)">
+                          {{ graphPlugin.name }}
                         </v-list-item-content>
                       </v-list-item>
                     </v-list-item-group>
@@ -174,6 +254,7 @@ import { marked } from 'marked'
 import _ from 'lodash'
 
 import TsEventList from '../components/Explore/EventList'
+import TsCytoscape from '../components/Graph/Cytoscape'
 
 const defaultBlock = () => {
   return {
@@ -183,6 +264,8 @@ const defaultBlock = () => {
     draft: '',
     edit: true,
     isActive: false,
+    showGraphMenu: false,
+    showSavedSearchMenu: false,
   }
 }
 
@@ -194,7 +277,7 @@ const componentCompatibility = () => {
 
 export default {
   props: ['sketchId', 'storyId'],
-  components: { TsEventList },
+  components: { TsEventList, TsCytoscape },
   data: function () {
     return {
       title: '',
@@ -218,6 +301,12 @@ export default {
         return false
       }
       return true
+    },
+    graphPlugins() {
+      return this.$store.state.graphPlugins
+    },
+    savedGraphs() {
+      return this.$store.state.savedGraphs
     },
   },
   methods: {
@@ -299,6 +388,23 @@ export default {
       this.blocks.splice(newIndex, 0, newBlock)
       this.save()
     },
+    addGraphPluginBlock(graphPlugin, index) {
+      let newIndex = index + 1
+      let newBlock = defaultBlock()
+      newBlock.componentName = 'TsCytoscapePlugin'
+      newBlock.componentProps = { graphPluginName: graphPlugin.name, canvasHeight: '500px', disableZoom: true }
+      this.blocks.splice(newIndex, 0, newBlock)
+      this.save()
+    },
+    addSavedGraphBlock(savedGraph, index) {
+      let newIndex = index + 1
+      let newBlock = defaultBlock()
+      newBlock.componentName = 'TsCytoscapeSavedGraph'
+      newBlock.componentProps = { savedGraphId: savedGraph.id, canvasHeight: '400px', disableZoom: true }
+      newBlock.graphName = savedGraph.name
+      this.blocks.splice(newIndex, 0, newBlock)
+      this.save()
+    },
     editTextBlock(block) {
       if (block.edit) {
         return
@@ -319,10 +425,19 @@ export default {
     setActiveView: function (savedSearch) {
       EventBus.$emit('setActiveView', savedSearch)
     },
+    setActiveGraph: function (graph) {
+      if (typeof graph === 'string') {
+        EventBus.$emit('setGraphPlugin', graph)
+      } else if (typeof graph === 'number') {
+        EventBus.$emit('setSavedGraph', graph)
+      }
+    },
     save() {
       let content
       this.blocks.forEach(function (block) {
         block.isActive = false
+        block.showGraphMenu = false
+        block.showSavedSearchMenu = false
         block.edit = false
         if (block.draft) {
           block.content = block.draft

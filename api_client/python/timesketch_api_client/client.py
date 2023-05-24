@@ -662,7 +662,7 @@ class TimesketchApi:
         return self.get_sigmarule(rule_uuid)
 
     def get_sigmarule(self, rule_uuid):
-        """Fetches a single Sigma rule from the databse.
+        """Fetches a single Sigma rule from the database.
         Fetches a single Sigma rule selected by the `UUID`
 
         Args:

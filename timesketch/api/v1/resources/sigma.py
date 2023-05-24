@@ -46,42 +46,6 @@ from timesketch.models import db_session
 logger = logging.getLogger("timesketch.api.sigma")
 
 
-def _enrich_sigma_rule_object(rule: SigmaRule, parse_yaml: bool = False):
-    """Helper function: Returns an enriched Sigma object given a SigmaRule.
-
-    It will extract the `status`, `created_at` and `updated_at` and make them
-    a field.
-
-    Args:
-        rule: type SigmaRule.
-        parse_yaml: type bool. If set to True, the rule will be parsed from
-         the yaml (slower).
-
-    Returns:
-        Enriched Sigma dict.
-    """
-    parsed_rule = {}
-
-    # Parsing the yaml file takes a lot of time, per default, we do not need
-    # that information, so we only parse it if we need it.
-
-    if parse_yaml:
-        parsed_rule = ts_sigma_lib.parse_sigma_rule_by_text(rule.rule_yaml)
-
-    parsed_rule["rule_uuid"] = parsed_rule.get("id", rule.rule_uuid)
-    parsed_rule["created_at"] = str(rule.created_at)
-    parsed_rule["updated_at"] = str(rule.updated_at)
-    parsed_rule["title"] = parsed_rule.get("title", rule.title)
-    parsed_rule["description"] = parsed_rule.get("description", rule.description)
-    parsed_rule["rule_yaml"] = rule.rule_yaml
-
-    # via StatusMixin, values according to:
-    # https://github.com/SigmaHQ/sigma/wiki/Specification#status-optional
-    parsed_rule["status"] = rule.get_status.status
-
-    return parsed_rule
-
-
 class SigmaRuleListResource(resources.ResourceMixin, Resource):
     """Resource to get list of all SigmaRules."""
 
@@ -100,7 +64,9 @@ class SigmaRuleListResource(resources.ResourceMixin, Resource):
 
         all_sigma_rules = SigmaRule.query.all()
         for rule in all_sigma_rules:
-            sigma_rules.append(_enrich_sigma_rule_object(rule=rule, parse_yaml=False))
+            sigma_rules.append(
+                ts_sigma_lib.enrich_sigma_rule_object(rule=rule, parse_yaml=False)
+            )
 
         meta = {"rules_count": len(sigma_rules)}
         return jsonify({"objects": sigma_rules, "meta": meta})
@@ -217,7 +183,9 @@ class SigmaRuleResource(resources.ResourceMixin, Resource):
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No rule found with this ID.")
         return_rule = []
 
-        return_rule.append(_enrich_sigma_rule_object(rule=rule, parse_yaml=True))
+        return_rule.append(
+            ts_sigma_lib.enrich_sigma_rule_object(rule=rule, parse_yaml=True)
+        )
 
         return jsonify({"objects": return_rule, "meta": {}})
 

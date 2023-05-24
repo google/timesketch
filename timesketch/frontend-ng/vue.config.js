@@ -16,7 +16,7 @@ limitations under the License.
 
 module.exports = {
   lintOnSave: false,
-  publicPath: process.env.NODE_ENV === 'development' ? '/' : '/v2/dist/',
+  publicPath: process.env.NODE_ENV === 'development' ? '/' : '/dist/',
   configureWebpack: (config) => {
     config.watchOptions = {
       aggregateTimeout: 500,
@@ -53,7 +53,7 @@ module.exports = {
     },
     login: {
       // entry for the page
-      entry: 'src/main.js',
+      entry: 'src/login.js',
       // the source template
       template: 'public/login.html',
       // output as dist/index.html
