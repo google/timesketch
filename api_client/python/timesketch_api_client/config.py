@@ -241,7 +241,7 @@ class ConfigAssistant:
         if config_file_path:
             if not os.path.isfile(config_file_path):
                 error_msg = (
-                    "Unable to load config file, file {0:s} does not " "exist."
+                    "Unable to load config file, file {0:s} does not exist."
                 ).format(config_file_path)
                 logger.error(error_msg)
                 raise IOError(error_msg)

@@ -573,7 +573,7 @@ class Search(resource.SketchResource):
         )
         if self._total_elastic_size != total_count:
             logger.info(
-                "%d results were returned, but " "%d records matched the search query",
+                "%d results were returned, but %d records matched the search query",
                 total_count,
                 self._total_elastic_size,
             )

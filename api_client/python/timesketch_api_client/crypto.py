@@ -158,7 +158,7 @@ class CredentialStorage:
                     password = bytes(password, "utf-8")
             except KeyError as exc:
                 raise IOError(
-                    "Not able to determine encryption key from " "config."
+                    "Not able to determine encryption key from config."
                 ) from exc
         else:
             raise IOError(

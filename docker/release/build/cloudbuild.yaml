@@ -1,0 +1,18 @@
+# Google Cloud Build configuration for Turbinia server release
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      [
+        "build",
+        "-t",
+        "us-docker.pkg.dev/osdfir-registry/timesketch/timesketch:$TAG_NAME",
+        "--build-arg",
+        "RELEASE_TAG=${TAG_NAME}",
+        "-f",
+        "docker/release/build/Dockerfile-release",
+        ".",
+      ]
+    timeout: 2400s
+timeout: 2400s
+images:
+  - us-docker.pkg.dev/osdfir-registry/timesketch/timesketch:$TAG_NAME
