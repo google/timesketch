@@ -37,7 +37,8 @@ EXPECTED_IP_SUMMARY = {
     "last_seen": 1672097360,
     "first_auth": {
         "timestamp": 1672097359,
-        "session_id": "6d652a46d9ddf7ebc4cade9b36a2ff1a0819180ea353c63438b5e5d02a1991db",
+        "session_id": "6d652a46d9ddf7ebc4cade9b36a2ff1a0819180ea353c63438b5e5d0"
+        "2a1991db",
         "session_duration": 1,
         "source_ip": "192.168.140.67",
         "source_hostname": "",
@@ -49,7 +50,8 @@ EXPECTED_IP_SUMMARY = {
     "successful_logins": [
         {
             "timestamp": 1672097359,
-            "session_id": "6d652a46d9ddf7ebc4cade9b36a2ff1a0819180ea353c63438b5e5d02a1991db",
+            "session_id": "6d652a46d9ddf7ebc4cade9b36a2ff1a0819180ea353c63438b5e5d0"
+            "2a1991db",
             "session_duration": 1,
             "source_ip": "192.168.140.67",
             "source_hostname": "",
@@ -77,7 +79,8 @@ EXPECTED_USER_SUMMARY = {
     "last_seen": 1672097360,
     "first_auth": {
         "timestamp": 1672097359,
-        "session_id": "6d652a46d9ddf7ebc4cade9b36a2ff1a0819180ea353c63438b5e5d02a1991db",
+        "session_id": "6d652a46d9ddf7ebc4cade9b36a2ff1a0819180ea353c63438b5e5d0"
+        "2a1991db",
         "session_duration": 1,
         "source_ip": "192.168.140.67",
         "source_hostname": "",
@@ -89,7 +92,8 @@ EXPECTED_USER_SUMMARY = {
     "successful_logins": [
         {
             "timestamp": 1672097359,
-            "session_id": "6d652a46d9ddf7ebc4cade9b36a2ff1a0819180ea353c63438b5e5d02a1991db",
+            "session_id": "6d652a46d9ddf7ebc4cade9b36a2ff1a0819180ea353c63438b5e5d0"
+            "2a1991db",
             "session_duration": 1,
             "source_ip": "192.168.140.67",
             "source_hostname": "",
@@ -120,7 +124,8 @@ EXPECTED_AUTH_SUMMARY_3 = {
     "last_seen": 1672097360,
     "first_auth": {
         "timestamp": 1672097359,
-        "session_id": "6d652a46d9ddf7ebc4cade9b36a2ff1a0819180ea353c63438b5e5d02a1991db",
+        "session_id": "6d652a46d9ddf7ebc4cade9b36a2ff1a0819180ea353c63438b5e5d0"
+        "2a1991db",
         "session_duration": 1,
         "source_ip": "192.168.140.67",
         "source_hostname": "",
@@ -132,7 +137,8 @@ EXPECTED_AUTH_SUMMARY_3 = {
     "successful_logins": [
         {
             "timestamp": 1672097359,
-            "session_id": "6d652a46d9ddf7ebc4cade9b36a2ff1a0819180ea353c63438b5e5d02a1991db",
+            "session_id": "6d652a46d9ddf7ebc4cade9b36a2ff1a0819180ea353c63438b5e5d0"
+            "2a1991db",
             "session_duration": 1,
             "source_ip": "192.168.140.67",
             "source_hostname": "",
@@ -160,7 +166,8 @@ EXPECTED_AUTH_SUMMARY_4 = {
     "last_seen": 1672097360,
     "first_auth": {
         "timestamp": 1672097359,
-        "session_id": "6d652a46d9ddf7ebc4cade9b36a2ff1a0819180ea353c63438b5e5d02a1991db",
+        "session_id": "6d652a46d9ddf7ebc4cade9b36a2ff1a0819180ea353c63438b5e5d0"
+        "2a1991db",
         "session_duration": 1,
         "source_ip": "192.168.140.67",
         "source_hostname": "",
@@ -172,7 +179,8 @@ EXPECTED_AUTH_SUMMARY_4 = {
     "successful_logins": [
         {
             "timestamp": 1672097359,
-            "session_id": "6d652a46d9ddf7ebc4cade9b36a2ff1a0819180ea353c63438b5e5d02a1991db",
+            "session_id": "6d652a46d9ddf7ebc4cade9b36a2ff1a0819180ea353c63438b5e5d0"
+            "2a1991db",
             "session_duration": 1,
             "source_ip": "192.168.140.67",
             "source_hostname": "",
@@ -269,14 +277,16 @@ class TestBaseAuthenticationAnalyzer(BaseTest):
 
         # Testing valid session ID and invalid timestamp
         session_duration = self.analyzer.calculate_session_duration(
-            session_id="6d652a46d9ddf7ebc4cade9b36a2ff1a0819180ea353c63438b5e5d02a1991db",
+            session_id="6d652a46d9ddf7ebc4cade9b36a2ff1a0819180ea353c63438b5e5d0"
+            "2a1991db",
             timestamp=None,
         )
         self.assertEqual(-1, session_duration)
 
         # Testing valid session_id and timestamp
         session_duration = self.analyzer.calculate_session_duration(
-            session_id="6d652a46d9ddf7ebc4cade9b36a2ff1a0819180ea353c63438b5e5d02a1991db",
+            session_id="6d652a46d9ddf7ebc4cade9b36a2ff1a0819180ea353c63438b5e5d0"
+            "2a1991db",
             timestamp=1672097359,
         )
         self.assertEqual(1, session_duration)
@@ -403,7 +413,8 @@ class TestBruteForceAnalyzer(BaseTest):
             source_ip="192.168.140.67",
             username="admin",
             domain="",
-            session_id="6d652a46d9ddf7ebc4cade9b36a2ff1a0819180ea353c63438b5e5d02a1991db",
+            session_id="6d652a46d9ddf7ebc4cade9b36a2ff1a0819180ea353c63438b5e5d0"
+            "2a1991db",
         )
         login.timestamp = 1672097359
         login.source_port = 58300
@@ -607,14 +618,6 @@ def mock_authentication_events() -> List[dict]:
     event_id = 0
     timestamp = 1672097149681987
 
-    """
-    for i in range(0, len(events)):
-        events[i]["event_id"] = event_id
-        events[i]["timestamp"] = int(timestamp / 1000000)
-
-        event_id += 1
-        timestamp += 1000000
-    """
     for i, _ in enumerate(events):
         events[i]["event_id"] = event_id
         events[i]["timestamp"] = int(timestamp / 1000000)
