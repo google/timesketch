@@ -21,10 +21,9 @@ import pandas as pd
 
 from flask import current_app
 
-from timesketch.lib.analyzers.interface import BaseAnalyzer
+from timesketch.lib.analyzers.interface import BaseAnalyzer, AnalyzerOutput
 from timesketch.lib.analyzers import manager
-from timesketch.lib.analyzers.interface import AnalyzerOutput
-from timesketch.lib.analyzers.authentication.interface import BruteForceAnalyzer
+from timesketch.lib.analyzers.authentication.utils import BruteForceAnalyzer
 
 log = logging.getLogger("timesketch")
 
@@ -74,14 +73,23 @@ class SSHEventData:
         self.session_id = hasher.hexdigest()
 
 
-class SSHBruteForceAnalyzer(BaseAnalyzer, BruteForceAnalyzer):
+class SSHBruteForceAnalyzer(BaseAnalyzer):
     """Class for SSH authentication analysis."""
 
     NAME = "SSHBruteForceAnalyzer"
     DISPLAY_NAME = "SSH Brute Force Analyzer"
-    DESCRIPTION = (
-        "SSH brute force analyzer that checks for login/logoff and session duration"
-    )
+    DESCRIPTION = "SSH brute force analyzer that checks for login/logoff and session duration in ssh auth logs."
+
+    # The time duration before a successful login to evaluate for brute force activity.
+    BRUTE_FORCE_WINDOW = 3600
+
+    # The minimum number of failed events that must occur to be considered for brute
+    # force activity.
+    BRUTE_FORCE_MIN_FAILED_EVENT = 20
+
+    # The minimum duration where an attacker accessed the host after a successful
+    # brute force login would be considered as an interactive access.
+    BRUTE_FORCE_MIN_ACCESS_WINDOW = 300
 
     DEPENDENCIES = frozenset(["feature_extraction"])
 
@@ -102,16 +110,20 @@ class SSHBruteForceAnalyzer(BaseAnalyzer, BruteForceAnalyzer):
         "body",
     ]
 
-    def __init__(
-        self, index_name: str, sketch_id: int, timeline_id: int = None
-    ) -> None:
-        super().__init__(index_name, sketch_id, timeline_id)
-        self._timesketch_instance = current_app.config.get(
-            "EXTERNAL_HOST_URL", "https://localhost"
-        )
-        self._index = index_name
-        self._sketch_id = sketch_id or 0
-        self._timeline_id = timeline_id or 0
+    # Create a BruteForceAnalyzer instance to handle the auth data analysis
+    brute_force_analyzer = BruteForceAnalyzer(
+        BRUTE_FORCE_WINDOW, BRUTE_FORCE_MIN_FAILED_EVENT, BRUTE_FORCE_MIN_ACCESS_WINDOW
+    )
+
+    def __init__(self, index_name, sketch_id, timeline_id=None):
+        """Initialize The Sketch Analyzer.
+
+        Args:
+            index_name: Opensearch index name
+            sketch_id: Sketch ID
+        """
+        self.index_name = index_name
+        super().__init__(index_name, sketch_id, timeline_id=timeline_id)
 
     def run(self):
         """Entry point for the analyzer."""
@@ -164,13 +176,8 @@ class SSHBruteForceAnalyzer(BaseAnalyzer, BruteForceAnalyzer):
             records.append(event_data.__dict__)
 
         # Log the number of SSH authentication events processed
-        log.info("[%s] %d SSH authentication events processed", self.NAME, len(records))
-
-        # Setting analyzer metadata
-        self.set_analyzer_metadata(
-            timesketch_instance=self._timesketch_instance,
-            sketch_id=self._sketch_id,
-            timeline_id=self._timeline_id,
+        log.debug(
+            "[%s] %d SSH authentication events processed", self.NAME, len(records)
         )
 
         # Create a Pandas DataFrame from the list of records
@@ -178,26 +185,31 @@ class SSHBruteForceAnalyzer(BaseAnalyzer, BruteForceAnalyzer):
 
         # Check if the DataFrame is empty
         if df.empty:
-            log.info("[%s] No SSH authentication events", self.NAME)
-            return self.generate_empty_analyzer_output(
-                message="No SSH authentication events"
-            )
+            log.debug("[%s] No SSH authentication events", self.NAME)
+            self.output.result_summary = "No SSH authentication events"
+            self.output.result_priority = "NOTE"
+            self.output.result_status = "SUCCESS"
+            return str(self.output)
 
         # Add required columns to the dataframe and set the dataframe
         df["domain"] = ""
         df["source_hostname"] = ""
-        self.set_dataframe(df)
+        self.brute_force_analyzer.set_dataframe(df)
 
         # Set brute force threshold for SSH
-        self.set_success_threshold(threshold=1)
+        self.brute_force_analyzer.set_success_threshold(threshold=1)
 
         # Check if the output is empty
-        output = self.start_bruteforce_analysis()
-        if not output:
-            output = self.generate_empty_analyzer_output(
-                message=f"No verdict for {len(records)} SSH authenticaiton events."
+        result = self.brute_force_analyzer.start_bruteforce_analysis(self.output)
+        if isinstance(result, AnalyzerOutput):
+            self.output = result
+        else:
+            self.output.result_summary = (
+                f"No verdict for {len(records)} SSH authenticaiton events."
             )
-            return str(output)
+            self.output.result_priority = "NOTE"
+            self.output.result_status = "SUCCESS"
+            return str(self.output)
 
         # Annotate the bruteforce events
         events = self.event_stream(
@@ -205,52 +217,48 @@ class SSHBruteForceAnalyzer(BaseAnalyzer, BruteForceAnalyzer):
         )
 
         try:
-            self.annotate_events(events=events, output=output)
+            self.annotate_events(events=events)
         except (ValueError, TypeError) as e:
             log.error("[%s] Unable to annotate. %s", self.NAME, str(e))
 
         # TODO(rmaskey): Have a better way to handle result_attributes
         # result_attributes is a dict containing list of objects and not required for
         # user readable output.
-        output.result_attributes = {}
-        return str(output)
+        self.output.result_attributes = {}
+        return str(self.output)
 
-    def annotate_events(self, events: List, output: AnalyzerOutput) -> None:
+    def annotate_events(self, events) -> None:
         """Annotates the matching events.
 
         Args:
-            evnets (List): OpenSearch events.
-            output (AnalyzerOutput): Output of the analyzer.
+            evnets (Generator): OpenSearch events.
         """
-
-        if self.df.empty:
-            raise ValueError("dataframe is empty")
 
         if not events:
             raise ValueError("events is empty")
 
-        if not output:
+        if not self.output:
             raise ValueError("AnalyzerOutput is none")
 
-        if not isinstance(output, AnalyzerOutput):
+        if not isinstance(self.output, AnalyzerOutput):
             raise TypeError("Param output is not of type AnalyzerOutput")
 
         # We want to check result_attributes is set and have "bruteforce" attribute
-        if not output.result_attributes:
-            log.info("[%s] No result_attributes to annotate", self.NAME)
+        if not self.output.result_attributes:
+            log.debug("[%s] No result_attributes to annotate", self.NAME)
             return
 
         if (
-            not isinstance(output.result_attributes, dict)
-            or "bruteforce" not in output.result_attributes
+            not isinstance(self.output.result_attributes, dict)
+            or "bruteforce" not in self.output.result_attributes
         ):
-            log.info("[%s] No bruteforce attributes in result_attributes", self.NAME)
+            log.debug("[%s] No bruteforce attributes in result_attributes", self.NAME)
             return
 
         # Generate the event IDs for tagging
         event_ids = []
 
-        for authsummary in output.result_attributes["bruteforce"]:
+        for authsummary in self.output.result_attributes["bruteforce"]:
             log.debug(
                 "[%s] Checking annotation for %s", self.NAME, authsummary.source_ip
             )
@@ -264,7 +272,9 @@ class SSHBruteForceAnalyzer(BaseAnalyzer, BruteForceAnalyzer):
                 continue
 
             for login in authsummary.summary["bruteforce"]:
-                session_df = self.df[self.df["session_id"] == login.session_id]
+                session_df = self.brute_force_analyzer.df[
+                    self.brute_force_analyzer.df["session_id"] == login.session_id
+                ]
                 if session_df.empty:
                     log.debug(
                         "[%s] No session ID %s in dataframe",
@@ -279,14 +289,14 @@ class SSHBruteForceAnalyzer(BaseAnalyzer, BruteForceAnalyzer):
                         event_ids.append(event_id)
 
         if not event_ids:
-            log.info("[%s] No events to annotate", self.NAME)
+            log.debug("[%s] No events to annotate", self.NAME)
             return
 
-        log.info("[%s] Annotating %d events", self.NAME, len(event_ids))
+        log.debug("[%s] Annotating %d events", self.NAME, len(event_ids))
         for event in events:
             if event.event_id in event_ids:
                 log.debug("[%s] Annotating event ID %s", self.NAME, event.event_id)
-                event.add_label("ssh_bruteforce")
+                event.add_tags(["ssh_bruteforce"])
                 event.add_star()
                 event.commit()
 
