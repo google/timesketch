@@ -221,7 +221,7 @@ class SSHBruteForceAnalyzer(BaseAnalyzer):
         except (ValueError, TypeError) as e:
             log.error("[%s] Unable to annotate. %s", self.NAME, str(e))
 
-        # TODO(rmaskey): Have a better way to handle result_attributes
+        # TODO(#2771): Have a better way to handle result_attributes
         # result_attributes is a dict containing list of objects and not required for
         # user readable output.
         self.output.result_attributes = {}
