@@ -15,12 +15,13 @@
 
 import hashlib
 import logging
+import textwrap
 import pandas as pd
 
 
 from timesketch.lib.analyzers.interface import BaseAnalyzer, AnalyzerOutput
 from timesketch.lib.analyzers import manager
-from timesketch.lib.analyzers.authentication.utils import BruteForceAnalyzer
+from timesketch.lib.analyzers.authentication.utils import BruteForceUtils
 
 log = logging.getLogger("timesketch")
 
@@ -40,9 +41,10 @@ class SSHEventData:
         source_ip (str): IP address in the authentication event.
         source_port (str): Source port in the authentication event.
         username (str): Username in the authentication event.
+        session_id (str): Pseduo session ID calulated from log line.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize class."""
 
         self.event_id = ""
@@ -57,7 +59,7 @@ class SSHEventData:
         self.username = ""
         self.session_id = ""
 
-    def calculate_session_id(self):
+    def calculate_session_id(self) -> None:
         """Calculates pseudo session ID for SSH authentication event."""
 
         session_id_data = (
@@ -75,9 +77,13 @@ class SSHBruteForceAnalyzer(BaseAnalyzer):
 
     NAME = "SSHBruteForceAnalyzer"
     DISPLAY_NAME = "SSH Brute Force Analyzer"
-    DESCRIPTION = (
-        "SSH brute force analyzer that checks for login/logoff and session"
-        " duration in ssh auth logs."
+    DESCRIPTION = textwrap.dedent(
+        """SSH brute force authentication analysis. It checks for multiple failed
+         authentication events before a successful authentication.
+
+        The following thresholds are used in the analyzer:
+            - Minimum number of failed events: 20
+            - Brute force window before successful login event: 3600 seconds"""
     )
 
     # The time duration before a successful login to evaluate for brute force activity.
@@ -111,22 +117,27 @@ class SSHBruteForceAnalyzer(BaseAnalyzer):
     ]
 
     # Create a BruteForceAnalyzer instance to handle the auth data analysis
-    brute_force_analyzer = BruteForceAnalyzer(
+    brute_force_analyzer = BruteForceUtils(
         BRUTE_FORCE_WINDOW, BRUTE_FORCE_MIN_FAILED_EVENT, BRUTE_FORCE_MIN_ACCESS_WINDOW
     )
 
-    def __init__(self, index_name, sketch_id, timeline_id=None):
+    def __init__(self, index_name, sketch_id, timeline_id=None) -> None:
         """Initialize The Sketch Analyzer.
 
         Args:
             index_name: Opensearch index name
             sketch_id: Sketch ID
+            timeline_id: Timeline ID
         """
         self.index_name = index_name
         super().__init__(index_name, sketch_id, timeline_id=timeline_id)
 
-    def run(self):
-        """Entry point for the analyzer."""
+    def run(self) -> str:
+        """Entry point for the analyzer.
+
+        Returns:
+            str: Returns AnalyzerOutput as a string.
+        """
 
         # Store a list of SSHEventData
         records = []
@@ -194,7 +205,11 @@ class SSHBruteForceAnalyzer(BaseAnalyzer):
         # Add required columns to the dataframe and set the dataframe
         df["domain"] = ""
         df["source_hostname"] = ""
-        self.brute_force_analyzer.set_dataframe(df)
+
+        try:
+            self.brute_force_analyzer.set_dataframe(df)
+        except (AttributeError, TypeError) as exception:
+            raise exception
 
         # Set brute force threshold for SSH
         self.brute_force_analyzer.set_success_threshold(threshold=1)
@@ -221,7 +236,7 @@ class SSHBruteForceAnalyzer(BaseAnalyzer):
         except (ValueError, TypeError) as e:
             log.error("[%s] Unable to annotate. %s", self.NAME, str(e))
 
-        # TODO(#2771): Have a better way to handle result_attributes
+        # TODO(rmaskey): Have a better way to handle result_attributes
         # result_attributes is a dict containing list of objects and not required for
         # user readable output.
         self.output.result_attributes = {}
@@ -231,7 +246,11 @@ class SSHBruteForceAnalyzer(BaseAnalyzer):
         """Annotates the matching events.
 
         Args:
-            evnets (Generator): OpenSearch events.
+            events (Generator): OpenSearch events.
+
+        Raises:
+            ValueError: If required values are empty.
+            TypeError: If the required type is not matched.
         """
 
         if not events:

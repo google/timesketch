@@ -26,8 +26,8 @@ import pandas as pd
 from timesketch.lib.analyzers.interface import AnalyzerOutput
 from timesketch.lib.analyzers.authentication.utils import AuthSummary
 from timesketch.lib.analyzers.authentication.utils import LoginRecord
-from timesketch.lib.analyzers.authentication.utils import BaseAuthenticationAnalyzer
-from timesketch.lib.analyzers.authentication.utils import BruteForceAnalyzer
+from timesketch.lib.analyzers.authentication.utils import BaseAuthenticationUtils
+from timesketch.lib.analyzers.authentication.utils import BruteForceUtils
 from timesketch.lib.testlib import BaseTest
 
 log = logging.getLogger(__name__)
@@ -36,7 +36,11 @@ log.addHandler(logging.StreamHandler(sys.stdout))
 
 
 def load_test_dataframe() -> pd.DataFrame:
-    """Loads SSH log file and returns dataframe."""
+    """Loads SSH log file and returns dataframe.
+
+    Returns:
+        pd.DataFrame: A dataframe containing mock events.
+    """
 
     return pd.DataFrame(mock_authentication_events())
 
@@ -240,12 +244,12 @@ EXPECTED_LOGIN_SESSION = {
 class TestBaseAuthenticationAnalyzer(BaseTest):
     """Class for testing BasicAuthenticationAnalyzer."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         df = load_test_dataframe()
-        self.analyzer = BaseAuthenticationAnalyzer()
+        self.analyzer = BaseAuthenticationUtils()
         self.analyzer.set_dataframe(df)
 
-    def test_check_required_fields(self):
+    def test_check_required_fields(self) -> None:
         """Tests check_required_fields method."""
 
         # Testing missing fields
@@ -273,7 +277,7 @@ class TestBaseAuthenticationAnalyzer(BaseTest):
         ]
         self.assertTrue(self.analyzer.check_required_fields(fields))
 
-    def test_calculate_session_duration(self):
+    def test_calculate_session_duration(self) -> None:
         """Tests calculate_session_duration."""
 
         # Testing empty session ID
@@ -304,7 +308,7 @@ class TestBaseAuthenticationAnalyzer(BaseTest):
         )
         self.assertEqual(1, session_duration)
 
-    def test_get_ip_summary(self):
+    def test_get_ip_summary(self) -> None:
         """Test get_ip_summary method."""
 
         # Testing empty dataframe
@@ -319,7 +323,7 @@ class TestBaseAuthenticationAnalyzer(BaseTest):
         authsummary = self.analyzer.get_ip_summary("192.168.140.67")
         self.assertDictEqual(EXPECTED_IP_SUMMARY, authsummary.to_dict())
 
-    def test_get_user_summary(self):
+    def test_get_user_summary(self) -> None:
         """Test get_user_summary method."""
 
         # Testing empty dataframe
@@ -337,7 +341,7 @@ class TestBaseAuthenticationAnalyzer(BaseTest):
         self.assertIsNotNone(authsummary)
         self.assertDictEqual(EXPECTED_USER_SUMMARY, authsummary.to_dict())
 
-    def test_get_authsummary(self):
+    def test_get_authsummary(self) -> None:
         """Test get_authsummary method."""
 
         # Testing empty dataframe
@@ -358,7 +362,7 @@ class TestBaseAuthenticationAnalyzer(BaseTest):
         authsummary = self.analyzer.get_authsummary(df, "username", "admin")
         self.assertDictEqual(EXPECTED_AUTH_SUMMARY_4, authsummary.to_dict())
 
-    def test_to_useraccount(self):
+    def test_to_useraccount(self) -> None:
         """Test to_useraccount method."""
 
         # Testing empty domain and username
@@ -369,7 +373,7 @@ class TestBaseAuthenticationAnalyzer(BaseTest):
         useraccount = self.analyzer.to_useraccount(username="admin", domain="example")
         self.assertEqual("example/admin", useraccount)
 
-    def test_from_useraccount(self):
+    def test_from_useraccount(self) -> None:
         """Test from_useraccount method."""
 
         # Testing empty useraccount
@@ -390,8 +394,10 @@ class TestBaseAuthenticationAnalyzer(BaseTest):
 class TestBruteForceAnalyzer(BaseTest):
     """Class for testing BruteForceAnalzyer."""
 
-    def setUp(self):
-        self.analyzer = BruteForceAnalyzer()
+    def setUp(self) -> None:
+        """Setups test class."""
+
+        self.analyzer = BruteForceUtils()
         self.analyzer.analyzer_metadata = {
             "timesketch_instance": "http://localhost",
             "sketch_id": 1,
@@ -401,7 +407,11 @@ class TestBruteForceAnalyzer(BaseTest):
         self.analyzer.set_dataframe(df)
 
     def _create_analyzer_output(self) -> AnalyzerOutput:
-        """Creates and returns analyzer output."""
+        """Creates and returns analyzer output.
+
+        Returns:
+            AnalyzerOutput: Returns an empty analyzer output.
+        """
 
         output = AnalyzerOutput(
             analyzer_identifier="BruteForceAnalyzer",
@@ -413,7 +423,11 @@ class TestBruteForceAnalyzer(BaseTest):
         return output
 
     def _create_authsummary(self) -> AuthSummary:
-        """Creates and reutrns authsummaries."""
+        """Creates and reutrns authsummaries.
+
+        Returns:
+            AuthSummary: Returns an object of AuthSummary.
+        """
 
         # Create successful login entry
         login = LoginRecord(
@@ -451,7 +465,11 @@ class TestBruteForceAnalyzer(BaseTest):
         return authsummary
 
     def _create_authsummaries(self) -> List[AuthSummary]:
-        """Creates and returns a list of AuthSummary."""
+        """Creates and returns a list of AuthSummary.
+
+        Returns:
+            List[AuthSummary]: A list of AuthSummary.
+        """
 
         authsummaries = []
         authsummary = self._create_authsummary()
@@ -460,7 +478,11 @@ class TestBruteForceAnalyzer(BaseTest):
         return authsummaries
 
     def _mock_empty_analyzer_output(self) -> AnalyzerOutput:
-        """Mock an empty analyzer output"""
+        """Mock an empty analyzer output.
+
+        Returns:
+            AnalyzerOutput: An object of class AnalyzerOutput.
+        """
 
         output = self._create_analyzer_output()
         output.result_priority = "NOTE"
@@ -471,7 +493,11 @@ class TestBruteForceAnalyzer(BaseTest):
         return output
 
     def _mock_analyzer_output(self) -> AnalyzerOutput:
-        """Mocks a valid analyzer output"""
+        """Mocks a valid analyzer output.
+
+        Returns:
+            AnalyzerOutput: An object of class AnalyzerOutput.
+        """
 
         output = self._create_analyzer_output()
         output.result_priority = "HIGH"
@@ -497,7 +523,7 @@ class TestBruteForceAnalyzer(BaseTest):
 
         return output
 
-    def test_generate_analyzer_output(self):
+    def test_generate_analyzer_output(self) -> None:
         """Tests generate_analyzer_output method."""
 
         test_output = self._create_analyzer_output()
@@ -532,7 +558,7 @@ class TestBruteForceAnalyzer(BaseTest):
 
         self.assertDictEqual(expected_output.__dict__, output.__dict__)
 
-    def test_ip_bruteforce_check(self):
+    def test_ip_bruteforce_check(self) -> None:
         """Tests ip_bruteforce_check method."""
 
         # Testing non-existing IP
@@ -553,7 +579,7 @@ class TestBruteForceAnalyzer(BaseTest):
 
         self.assertDictEqual(expected_authsummary.to_dict(), authsummary.to_dict())
 
-    def test_start_bruteforce_analysis(self):
+    def test_start_bruteforce_analysis(self) -> None:
         """Tests start_bruteforce_analysis method."""
 
         expected_output = self._mock_analyzer_output()
@@ -566,7 +592,11 @@ class TestBruteForceAnalyzer(BaseTest):
 
 
 def mock_authentication_events() -> List[dict]:
-    """Mock authentication events."""
+    """Mock authentication events.
+
+    Returns:
+        List[dict]: A list of dictionary containing mock authentication events.
+    """
 
     events = []
 
@@ -628,7 +658,15 @@ def mock_authentication_events() -> List[dict]:
 
 
 def create_authentication_events(config: dict, count: int = 200) -> List[dict]:
-    """Creates authentication events."""
+    """Creates authentication events.
+
+    Args:
+        config (dict): A dictionary containing SSH event data.
+        count (int): Indicates the number of authentication events to generate.
+
+    Returns:
+        List[dict]: A list of dictionary containing authentication events.
+    """
 
     events = []
 
@@ -659,7 +697,17 @@ def create_authentication_events(config: dict, count: int = 200) -> List[dict]:
 def calculate_session_id(
     hostname: str, username: str, source_ip: str, source_port: int
 ) -> str:
-    """Creates pseudo session ID for SSH"""
+    """Creates pseudo session ID for SSH.
+
+    Args:
+        hostname (str): Hostname of the system.
+        username (str): Username in authentication event.
+        source_ip (str): IP address initiating authentication.
+        source_port (int): The source port used in authentication.
+
+    Returns:
+        str: A string containing pseudo session ID.
+    """
 
     session_id_data = f"{hostname}|{username}|{source_ip}|{source_port}"
 

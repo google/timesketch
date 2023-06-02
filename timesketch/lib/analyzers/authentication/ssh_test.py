@@ -33,13 +33,13 @@ class TestSSHBruteForceAnalyzer(BaseTest):
     """Class for testing SSHBruteForceAnalyzer."""
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.analyzer = SSHBruteForceAnalyzer(
             index_name="test_index", sketch_id=1, timeline_id=1
         )
 
-    def test_run(self):
+    def test_run(self) -> None:
         """Tests run method."""
 
         self.analyzer.datastore.client = mock.Mock()
@@ -51,7 +51,7 @@ class TestSSHBruteForceAnalyzer(BaseTest):
         output = self.analyzer.run()
         self.assertDictEqual(json.loads(expected_output), json.loads(output))
 
-    def test_run_no_bruteforce(self):
+    def test_run_no_bruteforce(self) -> None:
         """Tests run method."""
 
         self.analyzer.datastore.client = mock.Mock()
@@ -65,7 +65,11 @@ class TestSSHBruteForceAnalyzer(BaseTest):
 
 
 def _create_mock_events(datastore, count: int = 200) -> None:
-    """Creates mock TimeSketch events."""
+    """Creates mock TimeSketch events.
+
+    Args:
+        count (int): Number of events to generate.
+    """
 
     start = 58320
     end = int(start + count)
@@ -119,8 +123,12 @@ def _create_mock_events(datastore, count: int = 200) -> None:
     print("events registered ", event_id)
 
 
-def _create_analyzer_output_json():
-    """Creates expected analyzer output"""
+def _create_analyzer_output_json() -> str:
+    """Creates expected analyzer output
+
+    Returns:
+        str: AnalyzerOutput as a string.
+    """
 
     output = AnalyzerOutput(
         analyzer_identifier="SSHBruteForceAnalyzer",
@@ -154,8 +162,12 @@ def _create_analyzer_output_json():
     return str(output)
 
 
-def _create_no_bruteforce_analyzer_output_json():
-    """Creates expected analyzer output"""
+def _create_no_bruteforce_analyzer_output_json() -> str:
+    """Creates expected analyzer output
+
+    Returns:
+        str: AnalyzerOutput as a string.
+    """
 
     output = AnalyzerOutput(
         analyzer_identifier="SSHBruteForceAnalyzer",
