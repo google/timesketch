@@ -170,11 +170,10 @@ class AuthSummary:
 
 
 class BaseAuthenticationUtils:
-    """Base authentication analyzer class.
+    """Base authentication utils class.
 
     Attributes:
         df (pd.DataFrame): A dataframe containing authentication events.
-        analyzer_metadata (dict): A dictionary containing AnalyzerOutput metadata.
     """
 
     REQUIRED_FIELDS = [
@@ -188,11 +187,10 @@ class BaseAuthenticationUtils:
         "session_id",
     ]
 
-    def __init__(self, **kwargs) -> None:
+    def __init__(self) -> None:
         """Initialize analyzer."""
 
         self.df = pd.DataFrame()
-        self.analyzer_metadata = kwargs
 
     def set_dataframe(self, df: pd.DataFrame) -> None:
         """Set base class datafame.
@@ -351,8 +349,8 @@ class BaseAuthenticationUtils:
                 domain.
 
         Returns:
-            AuthSummary: Authentication summary for the given username and domain or
-             None.
+            AuthSummary: Authentication summary for the given username and domain.
+            None: Returns None if checks fail.
         """
 
         if self.df.empty:
@@ -388,7 +386,8 @@ class BaseAuthenticationUtils:
             summary_value (str): The value of the column to filter the dataframe.
 
         Returns:
-            AuthSummary: AuthSummary or None for given filter value or None.
+            AuthSummary: AuthSummary or None for given filter value.
+            None: Returns None if checks fail.
 
         Raises:
             ValueError: If params provided to the function are empty.
@@ -515,8 +514,9 @@ class BaseAuthenticationUtils:
             useraccount (str): Useraccount information <domain>/<username>
 
         Returns:
-            username (str): Authenticating user name.
-            domain (str): Authentication user domain.
+            Tuple[username (str), domain (str)]:
+                username (str): Authenticating user name.
+                domain (str): Authentication user domain.
 
         Raises:
             ValueError: If error encountered access splitted value.
@@ -553,7 +553,8 @@ class BaseAuthenticationUtils:
             domain (str): The domain name of the user that logged in.
 
         Returns:
-            LoginRecord: A LoginRecord object for a login event or None.
+            LoginRecord: A LoginRecord object for a login event.
+            None: Returns None if checks fail.
         """
 
         if self.df.empty:
@@ -634,8 +635,15 @@ class BruteForceUtils(BaseAuthenticationUtils):
     """Class for BruteForceUtils.
 
     Attributes:
-        success_threshold (int); A number of successful events to confirm successful
+        success_threshold (int): A number of successful events to confirm successful
             brute force activity.
+        brute_force_window (int): The time duration before a successful login to
+            evaluate for brute force activity.
+        brute_force_min_failed_event (int): The minimum number of failed events
+            that must occur to be considered for brute force activity.
+        brute_force_min_access_window (int): The minimum duration where an attacker
+            accessed the host after a successful brute force login would be
+            considered as an interactive access.
     """
 
     # The time duration before a successful login to evaluate for brute force activity.
@@ -655,7 +663,7 @@ class BruteForceUtils(BaseAuthenticationUtils):
         brute_force_min_failed_event: int = 20,
         brute_force_min_access_window: int = 300,
     ) -> None:
-        """Initialize analyzer.
+        """Initialize BruteForceUtils class.
 
         Args:
             brute_force_window (int): Duration of brute force window to check.
@@ -688,7 +696,8 @@ class BruteForceUtils(BaseAuthenticationUtils):
 
         Returns:
             AnalyzerOutput: An AnalyzerOutput object containing brute force analyzer
-                output or None.
+                output.
+            None: Returns None if checks fail.
         """
 
         df = self.df
@@ -729,7 +738,8 @@ class BruteForceUtils(BaseAuthenticationUtils):
             source_ip (str): Perform bruteforce checks from the IP address.
 
         Returns:
-            AuthSummary: Authentication summary for IP address or None.
+            AuthSummary: Authentication summary for IP address.
+            None: Returns None if checks fail.
         """
 
         if not source_ip:
@@ -854,7 +864,8 @@ class BruteForceUtils(BaseAuthenticationUtils):
 
         Returns:
             AnalyzerOutput: An AnalyzerOutput object containing brute for analyzer
-                output or NOne if authsummaries is emtpy.
+                output.
+            None: Returns None if authsummaries is emtpy.
         """
 
         if not authsummaries and not isinstance(authsummaries, list):
@@ -887,15 +898,6 @@ class BruteForceUtils(BaseAuthenticationUtils):
             result_summaries.append(
                 f"{len(authsummaries)} brute force from {authsummary.source_ip}"
             )
-
-            # Checking for potential keyboard activity
-            # for login in authsummary.successful_logins:
-            #    if login.session_duration >= self.BRUTE_FORCE_MIN_ACCESS_WINDOW:
-            #        output.result_priority = "HIGH"
-
-            # markdown_summaries.append(
-            #    f"\n### Brute Force Summary for {authsummary.source_ip}"
-            # )
 
             bruteforce_logins = authsummary.summary.get("bruteforce", None)
             if not bruteforce_logins:
