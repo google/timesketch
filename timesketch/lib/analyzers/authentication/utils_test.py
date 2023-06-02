@@ -503,14 +503,20 @@ class TestBruteForceAnalyzer(BaseTest):
         test_output = self._create_analyzer_output()
 
         # Testing unset authsummaries
-        self.assertIsNone(self.analyzer.generate_analyzer_output(authsummaries=None, output=test_output))
+        self.assertIsNone(
+            self.analyzer.generate_analyzer_output(
+                authsummaries=None, output=test_output
+            )
+        )
 
         # Testing empty authsummaries
         expected_output = self._mock_empty_analyzer_output()
 
         # Generate output and set result_attributes to empty dict
         # We don't want to compare it.
-        output = self.analyzer.generate_analyzer_output(authsummaries=[], output=test_output)
+        output = self.analyzer.generate_analyzer_output(
+            authsummaries=[], output=test_output
+        )
         output.result_attributes = {}
 
         self.assertDictEqual(expected_output.__dict__, output.__dict__)
@@ -520,7 +526,9 @@ class TestBruteForceAnalyzer(BaseTest):
         authsummaries = self._create_authsummaries()
         expected_output.result_attributes = {"bruteforce": authsummaries}
 
-        output = self.analyzer.generate_analyzer_output(authsummaries=authsummaries, output=test_output)
+        output = self.analyzer.generate_analyzer_output(
+            authsummaries=authsummaries, output=test_output
+        )
 
         self.assertDictEqual(expected_output.__dict__, output.__dict__)
 

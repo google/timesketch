@@ -13,13 +13,10 @@
 # limitations under the License.
 """Analyzers for SSH authentication events."""
 
-from typing import List
-
 import hashlib
 import logging
 import pandas as pd
 
-from flask import current_app
 
 from timesketch.lib.analyzers.interface import BaseAnalyzer, AnalyzerOutput
 from timesketch.lib.analyzers import manager
@@ -78,7 +75,10 @@ class SSHBruteForceAnalyzer(BaseAnalyzer):
 
     NAME = "SSHBruteForceAnalyzer"
     DISPLAY_NAME = "SSH Brute Force Analyzer"
-    DESCRIPTION = "SSH brute force analyzer that checks for login/logoff and session duration in ssh auth logs."
+    DESCRIPTION = (
+        "SSH brute force analyzer that checks for login/logoff and session"
+        " duration in ssh auth logs."
+    )
 
     # The time duration before a successful login to evaluate for brute force activity.
     BRUTE_FORCE_WINDOW = 3600

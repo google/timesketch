@@ -35,7 +35,9 @@ class TestSSHBruteForceAnalyzer(BaseTest):
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     def setUp(self):
         super().setUp()
-        self.analyzer = SSHBruteForceAnalyzer(index_name="test_index", sketch_id=1)
+        self.analyzer = SSHBruteForceAnalyzer(
+            index_name="test_index", sketch_id=1, timeline_id=1
+        )
 
     def test_run(self):
         """Tests run method."""
@@ -125,7 +127,7 @@ def _create_analyzer_output_json():
         analyzer_name="SSH Brute Force Analyzer",
         timesketch_instance="https://localhost",
         sketch_id=1,
-        timeline_id=0,
+        timeline_id=1,
     )
 
     output.result_priority = "HIGH"
@@ -160,7 +162,7 @@ def _create_no_bruteforce_analyzer_output_json():
         analyzer_name="SSH Brute Force Analyzer",
         timesketch_instance="https://localhost",
         sketch_id=1,
-        timeline_id=0,
+        timeline_id=1,
     )
 
     output.result_priority = "NOTE"

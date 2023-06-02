@@ -267,7 +267,8 @@ class BaseAuthenticationAnalyzer:
 
         if not session_id or timestamp == 0:
             log.debug(
-                "[BaseAuthenticationAnalyzer] Session ID (%s) or timestamp (%d) is empty",
+                "[BaseAuthenticationAnalyzer] Session ID (%s) or timestamp (%d) is"
+                " empty",
                 session_id,
                 timestamp,
             )
@@ -287,7 +288,8 @@ class BaseAuthenticationAnalyzer:
             ].iloc[0]["timestamp"]
         except (KeyError, ValueError, IndexError) as e:
             log.error(
-                "[BaseAuthenticationAnalyzer] Error getting session start timestamp for session ID %s. %s",
+                "[BaseAuthenticationAnalyzer] Error getting session start timestamp for"
+                " session ID %s. %s",
                 session_id,
                 str(e),
             )
@@ -302,7 +304,8 @@ class BaseAuthenticationAnalyzer:
             ].iloc[0]["timestamp"]
         except (KeyError, ValueError, IndexError) as e:
             log.error(
-                "[BaseAuthenticationAnalyzer] Error getting session end timestamp for session ID %s. %s",
+                "[BaseAuthenticationAnalyzer] Error getting session end timestamp for"
+                " session ID %s. %s",
                 session_id,
                 str(e),
             )
@@ -526,7 +529,8 @@ class BaseAuthenticationAnalyzer:
             return username, domain
         except ValueError as e:
             log.error(
-                "[BaseAuthenticationAnalyzer] Failed converting useraccount to username and domain. %s",
+                "[BaseAuthenticationAnalyzer] Failed converting useraccount to"
+                " username and domain. %s",
                 str(e),
             )
             return "unknown", "unknown"
@@ -560,7 +564,8 @@ class BaseAuthenticationAnalyzer:
         ]
         if ip_df.empty:
             log.debug(
-                "[BaseAuthenticationAnalyzer] No dataframe for IP: %s, session_id %s, domain %s, username %s",
+                "[BaseAuthenticationAnalyzer] No dataframe for IP: %s, session_id %s,"
+                " domain %s, username %s",
                 source_ip,
                 session_id,
                 domain,
@@ -594,7 +599,8 @@ class BaseAuthenticationAnalyzer:
                 logoff_timestamp = int(logoff_df.iloc[0]["timestamp"])
             except (IndexError, KeyError, ValueError) as e:
                 log.debug(
-                    "[BaseAuthenticationAnalyzer] Error encountered getting logoff timestamp. %s",
+                    "[BaseAuthenticationAnalyzer] Error encountered getting logoff"
+                    " timestamp. %s",
                     str(e),
                 )
 
