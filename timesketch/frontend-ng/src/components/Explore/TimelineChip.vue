@@ -104,20 +104,42 @@ limitations under the License.
 
     <v-menu v-else offset-y :close-on-content-click="false" content-class="menu-with-gap" ref="timelineChipMenuRef">
       <template v-slot:activator="{ on }">
-        <v-chip v-on="on" :style="getTimelineStyle(timeline)" class="mr-2 mb-3">
-          <v-icon v-if="timelineStatus === 'fail'" left color="red"> mdi-alert-circle-outline </v-icon>
-          <span class="timeline-name-ellipsis">{{ timeline.name }}</span>
+        <v-chip  @click="toggleTimeline()" :style="getTimelineStyle(timeline)" class="mr-2 mb-3 pr-1 timeline-chip" >
+          <v-icon v-if="timelineFailed" left color="red"> mdi-alert-circle-outline </v-icon>
+          <v-icon v-if="!timelineFailed" left :color="timelineChipColor"> mdi-circle </v-icon>
 
-          <span v-if="timelineStatus === 'processing'" class="ml-3">
+          <v-tooltip bottom>
+            <template v-slot:activator="{ on: onTooltip, attrs }">
+              <span class="timeline-name-ellipsis" :class="{ disabled: !isSelected && timelineStatus === 'ready'}"
+              v-bind="attrs"
+              v-on="onTooltip"
+              >{{ timeline.name }}</span>
+            </template>
+            <span>{{ timeline.name }}</span>
+          </v-tooltip>
+
+          <span
+            v-if="timelineStatus === 'processing'"
+            class="ml-3"
+          >
             <v-progress-circular small indeterminate color="grey" :size="20" :width="2"></v-progress-circular>
           </span>
-          <v-avatar
-            v-if="timelineStatus === 'ready'"
-            right
-            style="background-color: rgba(0, 0, 0, 0.1); font-size: 0.55em"
+
+          <v-chip
+            class="events-count"
+            :color="$vuetify.theme.dark ? 'grey' : '#fff'"
+            small
           >
             {{ eventsCount | compactNumber }}
-          </v-avatar>
+          </v-chip>
+          <v-btn
+            class="ma-1"
+            small
+            icon
+            v-on="on"
+          >
+            <v-icon> mdi-dots-vertical </v-icon>
+          </v-btn>
         </v-chip>
       </template>
       <v-sheet flat width="320">
@@ -371,6 +393,15 @@ export default {
       if (this.timelineStatus === 'processing') return 'mdi-circle-slice-7'
       return 'mdi-alert-circle-outline'
     },
+    timelineFailed() {
+      return this.timelineStatus === 'fail';
+    },
+    timelineChipColor() {
+      if (this.timelineStatus === 'ready' && !this.isSelected) {
+        return 'grey'
+      }
+      return '#' + this.timeline.color
+    }
   },
   methods: {
     rename() {
@@ -401,43 +432,20 @@ export default {
       let eta = dayjs().add(secondsLeft, 'second').fromNow()
       return eta
     },
+    toggleTimeline() {
+      if (!this.timelineFailed) {
+        this.$emit('toggle', this.timeline)
+      }
+    },
     // Set debounce to 300ms to limit requests to the server.
     updateColor: _.debounce(function (color) {
       Vue.set(this.timeline, 'color', color.hex.substring(1))
       this.$emit('save', this.timeline)
     }, 300),
     getTimelineStyle(timeline) {
-      let backgroundColor = timeline.color
-      let textDecoration = 'none'
-      let opacity = '50%'
-      let p = 100
-      if (!backgroundColor.startsWith('#')) {
-        backgroundColor = '#' + backgroundColor
-      }
-      if (this.timelineStatus === 'ready') {
-        // Grey out the index if it is not selected.
-        if (!this.isSelected) {
-          backgroundColor = '#d2d2d2'
-          textDecoration = 'line-through'
-        } else {
-          opacity = '100%'
-        }
-      } else {
-        backgroundColor = '#f5f5f5'
-        opacity = '100%'
-      }
-      let bgColor = 'linear-gradient(90deg, ' + backgroundColor + ' ' + p + '%, #d2d2d2  0%) '
-      if (this.$vuetify.theme.dark) {
-        return {
-          background: bgColor,
-          filter: 'grayscale(25%)',
-          color: '#333',
-        }
-      }
+      const greyOut = (this.timelineStatus === 'ready' && !this.isSelected)
       return {
-        background: bgColor,
-        'text-decoration': textDecoration,
-        opacity: opacity,
+        opacity: greyOut ? '50%':'100%',
       }
     },
     fetchData() {
@@ -549,4 +557,14 @@ export default {
 </script>
 
 <!-- CSS scoped to this component only -->
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.theme--dark {
+  .events-count {
+    color: black;
+  }
+}
+
+.disabled {
+  text-decoration: line-through;
+}
+</style>
