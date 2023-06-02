@@ -24,10 +24,10 @@ import pandas as pd
 
 
 from timesketch.lib.analyzers.interface import AnalyzerOutput
-from timesketch.lib.analyzers.authentication.interface import AuthSummary
-from timesketch.lib.analyzers.authentication.interface import LoginRecord
-from timesketch.lib.analyzers.authentication.interface import BaseAuthenticationAnalyzer
-from timesketch.lib.analyzers.authentication.interface import BruteForceAnalyzer
+from timesketch.lib.analyzers.authentication.utils import AuthSummary
+from timesketch.lib.analyzers.authentication.utils import LoginRecord
+from timesketch.lib.analyzers.authentication.utils import BaseAuthenticationAnalyzer
+from timesketch.lib.analyzers.authentication.utils import BruteForceAnalyzer
 from timesketch.lib.testlib import BaseTest
 
 log = logging.getLogger(__name__)
@@ -403,18 +403,12 @@ class TestBruteForceAnalyzer(BaseTest):
     def _create_analyzer_output(self) -> AnalyzerOutput:
         """Creates and returns analyzer output."""
 
-        (
-            timesketch_instance,
-            sketch_id,
-            timeline_id,
-        ) = self.analyzer.get_analyzer_metadata()
-
         output = AnalyzerOutput(
             analyzer_identifier="BruteForceAnalyzer",
             analyzer_name="Brute Force Analyzer",
-            timesketch_instance=timesketch_instance,
-            sketch_id=sketch_id,
-            timeline_id=timeline_id,
+            timesketch_instance="http://localhost",
+            sketch_id=1,
+            timeline_id=1,
         )
         return output
 
@@ -465,23 +459,6 @@ class TestBruteForceAnalyzer(BaseTest):
 
         return authsummaries
 
-    def test_generate_empty_analyzer_output(self):
-        """Tests generate_empty_analyzer_output method."""
-
-        message = "No data to process"
-
-        # Building expected output
-        expected_output = self._create_analyzer_output()
-        expected_output.result_priority = "NOTE"
-        expected_output.result_status = "SUCCESS"
-        expected_output.result_summary = message
-
-        output = self.analyzer.generate_empty_analyzer_output(
-            message=message, success_status=True
-        )
-
-        self.assertDictEqual(expected_output.__dict__, output.__dict__)
-
     def _mock_empty_analyzer_output(self) -> AnalyzerOutput:
         """Mock an empty analyzer output"""
 
@@ -523,15 +500,17 @@ class TestBruteForceAnalyzer(BaseTest):
     def test_generate_analyzer_output(self):
         """Tests generate_analyzer_output method."""
 
+        test_output = self._create_analyzer_output()
+
         # Testing unset authsummaries
-        self.assertIsNone(self.analyzer.generate_analyzer_output(authsummaries=None))
+        self.assertIsNone(self.analyzer.generate_analyzer_output(authsummaries=None, output=test_output))
 
         # Testing empty authsummaries
         expected_output = self._mock_empty_analyzer_output()
 
         # Generate output and set result_attributes to empty dict
         # We don't want to compare it.
-        output = self.analyzer.generate_analyzer_output(authsummaries=[])
+        output = self.analyzer.generate_analyzer_output(authsummaries=[], output=test_output)
         output.result_attributes = {}
 
         self.assertDictEqual(expected_output.__dict__, output.__dict__)
@@ -541,7 +520,7 @@ class TestBruteForceAnalyzer(BaseTest):
         authsummaries = self._create_authsummaries()
         expected_output.result_attributes = {"bruteforce": authsummaries}
 
-        output = self.analyzer.generate_analyzer_output(authsummaries=authsummaries)
+        output = self.analyzer.generate_analyzer_output(authsummaries=authsummaries, output=test_output)
 
         self.assertDictEqual(expected_output.__dict__, output.__dict__)
 
@@ -572,7 +551,7 @@ class TestBruteForceAnalyzer(BaseTest):
         expected_output = self._mock_analyzer_output()
 
         # Generate analyzer output and set result_attributes to empty dict
-        output = self.analyzer.start_bruteforce_analysis()
+        output = self.analyzer.start_bruteforce_analysis(self._create_analyzer_output())
         output.result_attributes = {}
 
         self.assertDictEqual(expected_output.to_json(), output.to_json())

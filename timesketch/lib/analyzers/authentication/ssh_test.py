@@ -36,11 +36,6 @@ class TestSSHBruteForceAnalyzer(BaseTest):
     def setUp(self):
         super().setUp()
         self.analyzer = SSHBruteForceAnalyzer(index_name="test_index", sketch_id=1)
-        self.analyzer.analyzer_metadata = {
-            "timesketch_instance": "https://localhost",
-            "sketch_id": 1,
-            "timeline_id": 1,
-        }
 
     def test_run(self):
         """Tests run method."""

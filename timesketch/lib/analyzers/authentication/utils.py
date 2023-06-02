@@ -175,10 +175,6 @@ class BaseAuthenticationAnalyzer:
         analyzer_metadata (dict): A dictionary containing AnalyzerOutput metadata.
     """
 
-    NAME = ""
-    DISPLAY_NAME = ""
-    DESCRIPTION = ""
-
     REQUIRED_FIELDS = [
         "timestamp",
         "source_ip",
@@ -221,8 +217,7 @@ class BaseAuthenticationAnalyzer:
                 "object",
             ]:
                 log.error(
-                    "[%s] Column %s has invalid data type %s",
-                    self.NAME,
+                    "[BaseAuthenticationAnalyzer] Column %s has invalid data type %s",
                     column,
                     df[column].dtype.name,
                 )
@@ -238,51 +233,6 @@ class BaseAuthenticationAnalyzer:
 
         return True
 
-    def set_analyzer_metadata(
-        self, timesketch_instance: str, sketch_id: int, timeline_id: int
-    ) -> None:
-        """Stores analyzer output metadata in analyzer_metadata.
-
-        Args:
-            timesketch_instance (str): Timesketch instance.
-            sketch_id (int): Timesketch sketch ID.
-            timeline_id (int): Timesketch timeline ID.
-        """
-
-        if not isinstance(timesketch_instance, str):
-            raise ValueError("timesketch_instance must be a string value")
-
-        if not isinstance(sketch_id, int):
-            raise ValueError("sketch_id must be an integer value")
-
-        if not isinstance(timeline_id, int):
-            raise ValueError("timeline_id must be an integer value")
-
-        self.analyzer_metadata = {
-            "timesketch_instance": timesketch_instance,
-            "sketch_id": sketch_id,
-            "timeline_id": timeline_id,
-        }
-
-    def get_analyzer_metadata(self) -> Tuple[str, int, int]:
-        """Returns analyzer output metadata.
-
-        Returns:
-            Tuple[str, int, int]: timesketch instance, sketch_id, timeline_id.
-        """
-
-        timesketch_instance = self.analyzer_metadata.get("timesketch_instance", None)
-        sketch_id = self.analyzer_metadata.get("sketch_id", None)
-        timeline_id = self.analyzer_metadata.get("timeline_id", None)
-
-        if sketch_id:
-            sketch_id = int(sketch_id)
-
-        if timeline_id:
-            timeline_id = int(timeline_id)
-
-        return timesketch_instance, sketch_id, timeline_id
-
     def check_required_fields(self, fields: List[str]) -> bool:
         """Checks the required fields.
 
@@ -295,7 +245,10 @@ class BaseAuthenticationAnalyzer:
 
         missing_fields = set(self.REQUIRED_FIELDS) - set(fields)
         if missing_fields:
-            log.error("[%s] Missing required fields %s.", self.NAME, missing_fields)
+            log.error(
+                "[BaseAuthenticationAnalyzer] Missing required fields %s.",
+                missing_fields,
+            )
             return False
         return True
 
@@ -313,16 +266,15 @@ class BaseAuthenticationAnalyzer:
         """
 
         if not session_id or timestamp == 0:
-            log.info(
-                "[%s] Session ID (%s) or timestamp (%d) is empty",
-                self.NAME,
+            log.debug(
+                "[BaseAuthenticationAnalyzer] Session ID (%s) or timestamp (%d) is empty",
                 session_id,
                 timestamp,
             )
             return -1
 
         if self.df.empty:
-            log.info("[%s] Dataframe is empty", self.NAME)
+            log.debug("[BaseAuthenticationAnalyzer] Dataframe is empty")
             return -1
         df = self.df
 
@@ -335,8 +287,7 @@ class BaseAuthenticationAnalyzer:
             ].iloc[0]["timestamp"]
         except (KeyError, ValueError, IndexError) as e:
             log.error(
-                "[%s] Error getting session start timestamp for session ID %s. %s",
-                self.NAME,
+                "[BaseAuthenticationAnalyzer] Error getting session start timestamp for session ID %s. %s",
                 session_id,
                 str(e),
             )
@@ -351,8 +302,7 @@ class BaseAuthenticationAnalyzer:
             ].iloc[0]["timestamp"]
         except (KeyError, ValueError, IndexError) as e:
             log.error(
-                "[%s] Error getting session end timestamp for session ID %s. %s",
-                self.NAME,
+                "[BaseAuthenticationAnalyzer] Error getting session end timestamp for session ID %s. %s",
                 session_id,
                 str(e),
             )
@@ -360,7 +310,7 @@ class BaseAuthenticationAnalyzer:
 
         return int(session_end_timestamp - session_start_timestamp)
 
-    def get_ip_summary(self, source_ip: str) -> AuthSummary:
+    def get_ip_summary(self, source_ip: str) -> Optional[AuthSummary]:
         """Gets AuthSummary for source IP.
 
         Args:
@@ -371,21 +321,23 @@ class BaseAuthenticationAnalyzer:
         """
 
         if self.df.empty:
-            log.info("[%s] Dataframe is empty", self.NAME)
+            log.debug("[BaseAuthenticationAnalyzer] Dataframe is empty")
             return None
 
         # Find all events for IP address
         df = self.df
         ip_df = df[df["source_ip"] == source_ip]
         if ip_df.empty:
-            log.info("[%s] No data for the IP %s", self.NAME, source_ip)
+            log.debug("[BaseAuthenticationAnalyzer] No data for the IP %s", source_ip)
             return None
 
         return self.get_authsummary(
             df=ip_df, summary_type="source_ip", summary_value=source_ip
         )
 
-    def get_user_summary(self, username: str, domain: str = "") -> AuthSummary:
+    def get_user_summary(
+        self, username: str, domain: str = ""
+    ) -> Optional[AuthSummary]:
         """Generate AuthSummary for username.
 
         Args:
@@ -399,13 +351,19 @@ class BaseAuthenticationAnalyzer:
         """
 
         if self.df.empty:
-            log.info("[%s] Dataframe for %s/%s is empty", self.NAME, domain, username)
+            log.debug(
+                "[BaseAuthenticationAnalyzer] Dataframe for %s/%s is empty",
+                domain,
+                username,
+            )
             return None
         df = self.df
 
         user_df = df[(df["username"] == username) & (df["domain"] == domain)]
         if user_df.empty:
-            log.info("[%s] No data for %s/%s", self.NAME, domain, username)
+            log.debug(
+                "[BaseAuthenticationAnalyzer] No data for %s/%s", domain, username
+            )
             return None
 
         user_df = user_df.sort_values(by="timestamp", ascending=True)
@@ -431,7 +389,7 @@ class BaseAuthenticationAnalyzer:
         """
 
         if df.empty:
-            log.info("[%s] Dataframe is empty", self.NAME)
+            log.debug("[BaseAuthenticationAnalyzer] Dataframe is empty")
             return None
 
         if not summary_type:
@@ -442,7 +400,11 @@ class BaseAuthenticationAnalyzer:
 
         summary_df = df[df[summary_type] == summary_value]
         if summary_df.empty:
-            log.info("[%s] No data for %s=%s", self.NAME, summary_type, summary_value)
+            log.debug(
+                "[BaseAuthenticationAnalyzer] No data for %s=%s",
+                summary_type,
+                summary_value,
+            )
             return None
         summary_df = summary_df.sort_values(by="timestamp", ascending=True)
 
@@ -454,9 +416,8 @@ class BaseAuthenticationAnalyzer:
         elif summary_type == "username":
             authsummary.username = summary_value
         else:
-            log.info(
-                "[%s] Unsupported summary_type %s and value %s",
-                self.NAME,
+            log.debug(
+                "[BaseAuthenticationAnalyzer] Unsupported summary_type %s and value %s",
                 summary_type,
                 summary_value,
             )
@@ -470,9 +431,8 @@ class BaseAuthenticationAnalyzer:
         success_df = summary_df[summary_df["authentication_result"] == "success"]
         success_df = success_df.reset_index()
         if success_df.empty:
-            log.info(
-                "[%s] No successful events for %s: %s",
-                self.NAME,
+            log.debug(
+                "[BaseAuthenticationAnalyzer] No successful events for %s: %s",
                 summary_type,
                 summary_value,
             )
@@ -566,15 +526,14 @@ class BaseAuthenticationAnalyzer:
             return username, domain
         except ValueError as e:
             log.error(
-                "[%s] Failed converting useraccount to username and domain. %s",
-                self.NAME,
+                "[BaseAuthenticationAnalyzer] Failed converting useraccount to username and domain. %s",
                 str(e),
             )
             return "unknown", "unknown"
 
     def get_login_record(
         self, source_ip: str, session_id: str, username: str, domain: str
-    ) -> LoginRecord:
+    ) -> Optional[LoginRecord]:
         """Returns LoginRecord
 
         Args:
@@ -588,7 +547,7 @@ class BaseAuthenticationAnalyzer:
         """
 
         if self.df.empty:
-            log.debug("[%s] Dataframe is empty", self.NAME)
+            log.debug("[BaseAuthenticationAnalyzer] Dataframe is empty")
             return None
 
         df = self.df
@@ -601,8 +560,7 @@ class BaseAuthenticationAnalyzer:
         ]
         if ip_df.empty:
             log.debug(
-                "[%s] No dataframe for IP: %s, session_id %s, domain %s, username %s",
-                self.NAME,
+                "[BaseAuthenticationAnalyzer] No dataframe for IP: %s, session_id %s, domain %s, username %s",
                 source_ip,
                 session_id,
                 domain,
@@ -613,8 +571,7 @@ class BaseAuthenticationAnalyzer:
         login_df = ip_df[ip_df["authentication_result"] == "success"]
         if login_df.empty:
             log.debug(
-                "[%s] No data for IP %s and session ID %s",
-                self.NAME,
+                "[BaseAuthenticationAnalyzer] No data for IP %s and session ID %s",
                 source_ip,
                 session_id,
             )
@@ -636,9 +593,8 @@ class BaseAuthenticationAnalyzer:
             try:
                 logoff_timestamp = int(logoff_df.iloc[0]["timestamp"])
             except (IndexError, KeyError, ValueError) as e:
-                log.info(
-                    "[%s] Error encountered getting logoff timestamp. %s",
-                    self.NAME,
+                log.debug(
+                    "[BaseAuthenticationAnalyzer] Error encountered getting logoff timestamp. %s",
                     str(e),
                 )
 
@@ -654,8 +610,7 @@ class BaseAuthenticationAnalyzer:
             login_record.session_duration = logoff_timestamp - login_timestamp
 
         log.debug(
-            "[%s] Login session duration for %s is %d",
-            self.NAME,
+            "[BaseAuthenticationAnalyzer] Login session duration for %s is %d",
             login_record.session_id,
             login_record.session_duration,
         )
@@ -671,10 +626,6 @@ class BruteForceAnalyzer(BaseAuthenticationAnalyzer):
             brute force activity.
     """
 
-    NAME = "BruteForceAnalyzer"
-    DISPLAY_NAME = "Brute Force Analyzer"
-    DESCRIPTION = ""
-
     # The time duration before a successful login to evaluate for brute force activity.
     BRUTE_FORCE_WINDOW = 3600
 
@@ -686,11 +637,19 @@ class BruteForceAnalyzer(BaseAuthenticationAnalyzer):
     # brute force login would be considered as an interactive access.
     BRUTE_FORCE_MIN_ACCESS_WINDOW = 300
 
-    def __init__(self):
+    def __init__(
+        self,
+        brute_force_window: int = 3600,
+        brute_force_min_failed_event: int = 20,
+        brute_force_min_access_window: int = 300,
+    ):
         """Initialize analyzer"""
 
         super().__init__()
         self.success_threshold = 1
+        self.BRUTE_FORCE_WINDOW = brute_force_window
+        self.BRUTE_FORCE_MIN_FAILED_EVENT = brute_force_min_failed_event
+        self.BRUTE_FORCE_MIN_ACCESS_WINDOW = brute_force_min_access_window
 
     def set_success_threshold(self, threshold: int = 1) -> None:
         """Set a successful threshold.
@@ -702,7 +661,9 @@ class BruteForceAnalyzer(BaseAuthenticationAnalyzer):
 
         self.success_threshold = threshold
 
-    def start_bruteforce_analysis(self) -> AnalyzerOutput:
+    def start_bruteforce_analysis(
+        self, output: AnalyzerOutput
+    ) -> Optional[AnalyzerOutput]:
         """Starts brute force analysis
 
         Returns:
@@ -721,25 +682,29 @@ class BruteForceAnalyzer(BaseAuthenticationAnalyzer):
             ].unique()
         except KeyError as e:
             log.error(
-                "[%s] Missing required fields in dataframe. %s", self.NAME, str(e)
+                "[BruteForceAnalyzer] Missing required fields in dataframe. %s", str(e)
             )
             return None
 
         # Store list of AuthSummary
         authsummaries = []
         for source_ip in success_ips:
-            log.info("[%s] Checking bruteforce activity from %s", self.NAME, source_ip)
+            log.debug(
+                "[BruteForceAnalyzer] Checking bruteforce activity from %s", source_ip
+            )
             authsummary = self.ip_bruteforce_check(source_ip=source_ip)
 
             if not authsummary:
-                log.debug("[%s] No bruteforce activity from %s", self.NAME, source_ip)
+                log.debug(
+                    "[BruteForceAnalyzer] No bruteforce activity from %s", source_ip
+                )
                 continue
 
             authsummaries.append(authsummary)
 
-        return self.generate_analyzer_output(authsummaries=authsummaries)
+        return self.generate_analyzer_output(authsummaries=authsummaries, output=output)
 
-    def ip_bruteforce_check(self, source_ip: str) -> AuthSummary:
+    def ip_bruteforce_check(self, source_ip: str) -> Optional[AuthSummary]:
         """Checks bruteforce activity for a given IP.
 
         Args:
@@ -750,25 +715,26 @@ class BruteForceAnalyzer(BaseAuthenticationAnalyzer):
         """
 
         if not source_ip:
-            log.info("[%s] IP address not provided", self.NAME)
+            log.debug("[BruteForceAnalyzer] IP address not provided")
             return None
 
         if self.df.empty:
-            log.info("[%s] Dataframe is empty", self.NAME)
+            log.debug("[BruteForceAnalyzer] Dataframe is empty")
             return None
         df = self.df
 
         # Get the dataframe for the given IP address
         ip_df = df[df["source_ip"] == source_ip]
         if ip_df.empty:
-            log.info("[%s] No records for %s in dataframe", self.NAME, source_ip)
+            log.debug("[BruteForceAnalyzer] No records for %s in dataframe", source_ip)
             return None
 
         # Get the successful events for the given IP address
         success_df = ip_df[ip_df["authentication_result"] == "success"]
         if success_df.empty:
-            log.info(
-                "[%s] No successful authentication events for %s", self.NAME, source_ip
+            log.debug(
+                "[BruteForceAnalyzer] No successful authentication events for %s",
+                source_ip,
             )
             return None
 
@@ -780,7 +746,8 @@ class BruteForceAnalyzer(BaseAuthenticationAnalyzer):
 
             if login_ts == 0:
                 log.warning(
-                    "[%s] Unable to get timestamp for session %s", self.NAME, session_id
+                    "[BruteForceAnalyzer] Unable to get timestamp for session %s",
+                    session_id,
                 )
                 continue
 
@@ -796,8 +763,7 @@ class BruteForceAnalyzer(BaseAuthenticationAnalyzer):
             ]
 
             log.debug(
-                "[%s] %d records for %s between %s and %s",
-                self.NAME,
+                "[BruteForceAnalyzer] %d records for %s between %s and %s",
                 len(bruteforce_window_df.index),
                 source_ip,
                 human_timestamp(bruteforce_window_start),
@@ -820,8 +786,7 @@ class BruteForceAnalyzer(BaseAuthenticationAnalyzer):
                 ].index
             )
             log.debug(
-                "[%s] success_count: %d, failure_count: %d for %s",
-                self.NAME,
+                "[BruteForceAnalyzer] success_count: %d, failure_count: %d for %s",
                 success_count,
                 failure_count,
                 source_ip,
@@ -842,7 +807,7 @@ class BruteForceAnalyzer(BaseAuthenticationAnalyzer):
                     bruteforce_logins.append(login)
 
         if not bruteforce_logins:
-            log.info("[%s] No brute force activity from %s", self.NAME, source_ip)
+            log.debug("[BruteForceAnalyzer] No brute force activity from %s", source_ip)
             return None
 
         # Get authentication summary for the given IP address and update it to include
@@ -850,7 +815,8 @@ class BruteForceAnalyzer(BaseAuthenticationAnalyzer):
         authsummary = self.get_ip_summary(source_ip=source_ip)
         if not authsummary:
             log.error(
-                "[%s] Unable to get authentication summary for %s", self.NAME, source_ip
+                "[BruteForceAnalyzer] Unable to get authentication summary for %s",
+                source_ip,
             )
             return None
 
@@ -861,8 +827,8 @@ class BruteForceAnalyzer(BaseAuthenticationAnalyzer):
         return authsummary
 
     def generate_analyzer_output(
-        self, authsummaries: List[AuthSummary]
-    ) -> AnalyzerOutput:
+        self, authsummaries: List[AuthSummary], output: AnalyzerOutput
+    ) -> Optional[AnalyzerOutput]:
         """Generates analyzer output.
 
         Args:
@@ -875,16 +841,6 @@ class BruteForceAnalyzer(BaseAuthenticationAnalyzer):
 
         if not authsummaries and not isinstance(authsummaries, list):
             return None
-
-        timesketch_instance, sketch_id, timeline_id = self.get_analyzer_metadata()
-
-        output = AnalyzerOutput(
-            analyzer_identifier=self.NAME,
-            analyzer_name=self.DISPLAY_NAME,
-            timesketch_instance=timesketch_instance,
-            sketch_id=sketch_id,
-            timeline_id=timeline_id,
-        )
 
         authsummaries_count = len(authsummaries)
         if authsummaries_count == 0:
@@ -977,38 +933,5 @@ class BruteForceAnalyzer(BaseAuthenticationAnalyzer):
 
         output.result_status = "SUCCESS"
         output.result_attributes = {"bruteforce": authsummaries}
-
-        return output
-
-    def generate_empty_analyzer_output(
-        self, message: str, success_status: bool = False
-    ) -> AnalyzerOutput:
-        """Generates empty analyzer output
-
-        Args:
-            message (str): A message for empty analyzer output.
-            success_status (bool): Generate empty analyzer output with SUCCESS or
-                ERROR status.
-
-        Returns:
-            AnalyzerOutput: An AnalyzerOutput object without valid AuthSummary.
-        """
-
-        timesketch_instance, sketch_id, timeline_id = self.get_analyzer_metadata()
-
-        output = AnalyzerOutput(
-            analyzer_identifier=self.NAME,
-            analyzer_name=self.DISPLAY_NAME,
-            timesketch_instance=timesketch_instance,
-            sketch_id=sketch_id,
-            timeline_id=timeline_id,
-        )
-
-        output.result_priority = "NOTE"
-        output.result_status = "ERROR"
-        output.result_summary = message
-
-        if success_status:
-            output.result_status = "SUCCESS"
 
         return output
