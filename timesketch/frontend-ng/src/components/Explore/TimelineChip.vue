@@ -400,7 +400,10 @@ export default {
       if (this.timelineStatus === 'ready' && !this.isSelected) {
         return 'grey'
       }
-      return '#' + this.timeline.color
+      if (!this.timeline.color.startsWith('#')) {
+        return '#' + this.timeline.color
+      }
+      return this.timeline.color
     }
   },
   methods: {
