@@ -75,17 +75,6 @@ class SSHEventData:
 class SSHBruteForceAnalyzer(BaseAnalyzer):
     """Class for SSH authentication analysis."""
 
-    NAME = "SSHBruteForceAnalyzer"
-    DISPLAY_NAME = "SSH Brute Force Analyzer"
-    DESCRIPTION = textwrap.dedent(
-        """SSH brute force authentication analysis. It checks for multiple failed
-         authentication events before a successful authentication.
-
-        The following thresholds are used in the analyzer:
-            - Minimum number of failed events: 20
-            - Brute force window before successful login event: 3600 seconds"""
-    )
-
     # The time duration before a successful login to evaluate for brute force activity.
     BRUTE_FORCE_WINDOW = 3600
 
@@ -97,6 +86,18 @@ class SSHBruteForceAnalyzer(BaseAnalyzer):
     # brute force login would be considered as an interactive access.
     BRUTE_FORCE_MIN_ACCESS_WINDOW = 300
 
+    NAME = "SSHBruteForceAnalyzer"
+    DISPLAY_NAME = "SSH Brute Force Analyzer"
+    DESCRIPTION = textwrap.dedent(
+        """SSH brute force authentication analysis. It checks for multiple failed
+         authentication events before a successful authentication.
+
+        The following thresholds are used in the analyzer:
+            - Minimum number of failed events: {0}
+            - Brute force window before successful login event: {1}
+            seconds""".format(BRUTE_FORCE_MIN_FAILED_EVENT, BRUTE_FORCE_WINDOW)
+    )
+    
     DEPENDENCIES = frozenset(["feature_extraction"])
 
     SEARCH_QUERY = (
