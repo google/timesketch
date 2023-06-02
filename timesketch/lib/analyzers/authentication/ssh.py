@@ -99,7 +99,7 @@ class SSHBruteForceAnalyzer(BaseAnalyzer):
             BRUTE_FORCE_MIN_FAILED_EVENT, BRUTE_FORCE_WINDOW
         )
     )
-    
+
     DEPENDENCIES = frozenset(["feature_extraction"])
 
     SEARCH_QUERY = (
