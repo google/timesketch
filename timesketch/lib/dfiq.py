@@ -1,3 +1,18 @@
+# Copyright 2023 Google Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""DFIQ support library."""
+
 import os
 import yaml
 import json
@@ -52,34 +67,39 @@ class Approach(Component):
 
     def __init__(self, dfiq_id, name, description, tags, view):
         """Initializes the approach."""
-        super().__init__(dfiq_id, name, description, tags, [dfiq_id.split(".")[0]])
-        self.templates = self.get_analysis_provider(view)
+        self._parent_ids = [dfiq_id.split(".")[0]]
+        self._view = view
+        super().__init__(dfiq_id, name, description, tags, self._parent_ids)
 
-    def get_analysis_provider(self, view):
-        """Returns the analysis provider of the approach.
+    def _get_timesketch_analyses(self):
+        """Returns the Timesketch analysis provider of the approach.
+
+        An approach can have multiple processors, each with a Timesketch analysis
+        section. This function returns all Timesketch analysis sections regardless of
+        the processor.
 
         Returns:
-            A list of analysis templates.
+            A list of Timesketch analysis approaches.
         """
-        analysis = []
-        for processor in view["processors"]:
-            if "timesketch" in processor["analysis"]:
+        timesketch_analyses = []
+        for processor in self._view.get("processors", []):
+            if "timesketch" in processor.get("analysis", {}):
                 provider = processor["analysis"]["timesketch"]
-                for template in provider:
-                    analysis.append(template)
-        return analysis
+                for analysis in provider:
+                    timesketch_analyses.append(analysis)
+        return timesketch_analyses
 
     @property
     def search_templates(self):
         """Returns the search templates of the approach.
 
         Returns:
-            A list of search templates.
+            A list of Timesketch search templates.
         """
         return [
-            template
-            for template in self.templates
-            if template["type"] == "searchtemplate"
+            analysis
+            for analysis in self._get_timesketch_analyses()
+            if analysis["type"] == "searchtemplate"
         ]
 
 

@@ -1,0 +1,8 @@
+display_name: Test Facet
+description: Test Facet
+type: facet
+id: F1001
+tags:
+  - test
+parent_ids:
+ - S1001

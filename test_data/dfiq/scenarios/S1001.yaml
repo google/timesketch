@@ -1,0 +1,6 @@
+display_name: Test Scenario
+description: Test Scenario
+type: scenario
+id: S1001
+tags:
+  - test
