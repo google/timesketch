@@ -298,7 +298,7 @@ class BaseGeoIpAnalyzer(interface.BaseAnalyzer):
             response = client.ip2geo(ip_address)
 
             if not response:
-              continue
+                continue
 
             try:
                 iso_code, latitude, longitude, country_name, city_name = response
