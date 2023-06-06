@@ -422,8 +422,8 @@ export default {
     }
     return RestApiClient.get('/sketches/' + sketchId + '/scenarios/', params)
   },
-  addScenario(sketchId, scenarioName, displayName) {
-    let formData = { scenario_name: scenarioName, display_name: displayName }
+  addScenario(sketchId, scenarioId, displayName) {
+    let formData = { scenario_id: scenarioId, display_name: displayName }
     return RestApiClient.post('/sketches/' + sketchId + '/scenarios/', formData)
   },
   renameScenario(sketchId, scenarioId, scenarioName) {

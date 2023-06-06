@@ -289,8 +289,7 @@ def import_search_templates(path):
         if search_templates:
             for search_template_dict in search_templates:
                 print(f"Importing: {search_template_dict.get('short_name')}")
-                name = search_template_dict.get("display_name")
-                short_name = search_template_dict.get("short_name")
+                display_name = search_template_dict.get("display_name")
                 description = search_template_dict.get("description")
                 uuid = search_template_dict.get("id")
                 query_string = search_template_dict.get("query_string")
@@ -302,12 +301,13 @@ def import_search_templates(path):
                     template_uuid=uuid
                 ).first()
                 if not searchtemplate:
-                    searchtemplate = SearchTemplate(name=name, template_uuid=uuid)
+                    searchtemplate = SearchTemplate(
+                        name=display_name, template_uuid=uuid
+                    )
                     db_session.add(searchtemplate)
                     db_session.commit()
 
-                searchtemplate.name = name
-                searchtemplate.short_name = short_name
+                searchtemplate.name = display_name
                 searchtemplate.description = description
                 searchtemplate.template_json = json.dumps(search_template_dict)
                 searchtemplate.query_string = query_string

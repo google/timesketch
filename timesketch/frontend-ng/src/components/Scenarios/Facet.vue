@@ -54,6 +54,7 @@ limitations under the License.
         </span>
       </div>
     </v-expand-transition>
+    <div v-show="expanded" class="mt-3"></div>
     <v-divider></v-divider>
   </div>
 </template>

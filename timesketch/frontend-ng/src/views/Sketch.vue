@@ -168,7 +168,7 @@ limitations under the License.
             <v-select
               v-model="selectedScenario"
               :items="scenarioTemplates"
-              item-text="display_name"
+              item-text="name"
               return-object
               label="Select a scenario"
               outlined
@@ -182,7 +182,7 @@ limitations under the License.
           <v-card-actions>
             <v-spacer></v-spacer>
             <v-btn @click="scenarioDialog = false" color="primary" text> Close </v-btn>
-            <v-btn :disabled="!selectedScenario" @click="addScenario(selectedScenario.short_name)" color="primary" text>
+            <v-btn :disabled="!selectedScenario" @click="addScenario(selectedScenario.id)" color="primary" text>
               Add
             </v-btn>
           </v-card-actions>
@@ -208,7 +208,7 @@ limitations under the License.
         <v-tab-item :transition="false">
           <ts-scenario v-for="scenario in activeScenarios" :key="scenario.id" :scenario="scenario"></ts-scenario>
           <v-row class="mt-0 px-2" flat>
-            <v-col cols="12">
+            <v-col cols="6">
               <v-card v-if="!Object.keys(scenarioTemplates).length" flat class="pa-4"
                 >No scenarios available yet. Contact your server admin to add scenarios to this server.</v-card
               >
@@ -217,7 +217,7 @@ limitations under the License.
               >
             </v-col>
 
-            <v-col cols="6" align="right">
+            <v-col cols="6">
               <div v-if="hiddenScenarios.length" @click="showHidden = !showHidden" style="cursor: pointer" class="mt-1">
                 <small
                   ><span v-if="showHidden">Hide</span><span v-else>Show</span> hidden scenarios ({{
@@ -550,9 +550,9 @@ export default {
     switchUI: function () {
       window.location.href = window.location.href.replace('/sketch/', '/legacy/sketch/')
     },
-    addScenario: function (scenario) {
+    addScenario: function (scenario_id) {
       this.scenarioDialog = false
-      ApiClient.addScenario(this.sketch.id, scenario)
+      ApiClient.addScenario(this.sketch.id, scenario_id)
         .then((response) => {
           this.$store.dispatch('updateScenarios', this.sketch.id)
         })

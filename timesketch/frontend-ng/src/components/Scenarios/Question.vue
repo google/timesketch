@@ -15,39 +15,35 @@ limitations under the License.
 -->
 <template>
   <div>
-    <v-divider></v-divider>
-    <div
-      class="pa-2 pl-3"
-      @click="expanded = !expanded"
-      style="cursor: pointer; font-size: 0.9em"
-      :class="[$vuetify.theme.dark ? 'dark-hover' : 'light-hover']"
-    >
-      <strong v-if="!question.conclusions.length">{{ question.display_name }}</strong>
-      <span v-else>{{ question.display_name }}</span>
+    <div class="pl-6" @click="expanded = !expanded" style="cursor: pointer; font-size: 0.9em">
+      <div :class="[$vuetify.theme.dark ? 'dark-hover' : 'light-hover']" class="pa-2 mr-3" style="border-radius: 6px">
+        <strong v-if="!question.conclusions.length">{{ question.display_name }}</strong>
+        <span v-else>{{ question.display_name }}</span>
+      </div>
     </div>
 
     <v-expand-transition>
       <div v-show="expanded">
         <!-- Query suggestions -->
-        <div v-if="question.search_templates.length" class="ma-2 mb-3">
+        <div class="pa-2 pl-9">
           <v-icon x-small class="mr-1">mdi-magnify</v-icon>
           <strong><small>Query suggestions</small></strong>
-          <div v-for="searchtemplate in question.search_templates" :key="searchtemplate.id" class="pa-1 mt-1">
+          <div v-for="searchtemplate in searchTemplates" :key="searchtemplate.id" class="pa-1 mt-1">
             <ts-search-template :searchtemplate="searchtemplate"></ts-search-template>
           </div>
         </div>
 
         <!-- Conclusions -->
-        <div class="mb-3 mx-4">
+        <div class="mb-3 pl-9">
           <v-icon x-small class="mr-1">mdi-check-circle-outline</v-icon>
           <strong><small>Conclusions</small></strong>
-          <v-sheet outlined rounded class="mt-2" v-for="conclusion in question.conclusions" :key="conclusion.id">
+          <v-sheet outlined rounded class="mt-2 mr-3" v-for="conclusion in question.conclusions" :key="conclusion.id">
             <ts-question-conclusion :question="question" :conclusion="conclusion"></ts-question-conclusion>
           </v-sheet>
         </div>
 
         <!-- Add new conclusion -->
-        <div v-if="!currentUserConclusion" style="font-size: 0.9em" class="pa-4 pt-0">
+        <div v-if="!currentUserConclusion" style="font-size: 0.9em" class="pb-2 pl-9 mr-3">
           <v-textarea
             v-model="conclusionText"
             outlined
@@ -103,6 +99,9 @@ export default {
     },
     currentUser() {
       return this.$store.state.currentUser
+    },
+    searchTemplates() {
+      return this.question.approaches.map((approach) => approach.search_templates).flat()
     },
     currentUserConclusion() {
       return this.question.conclusions.filter((conclusion) => conclusion.user.username === this.currentUser).length
