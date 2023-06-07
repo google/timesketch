@@ -550,9 +550,9 @@ export default {
     switchUI: function () {
       window.location.href = window.location.href.replace('/sketch/', '/legacy/sketch/')
     },
-    addScenario: function (scenario_id) {
+    addScenario: function (scenarioId) {
       this.scenarioDialog = false
-      ApiClient.addScenario(this.sketch.id, scenario_id)
+      ApiClient.addScenario(this.sketch.id, scenarioId)
         .then((response) => {
           this.$store.dispatch('updateScenarios', this.sketch.id)
         })
