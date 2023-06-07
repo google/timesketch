@@ -136,7 +136,7 @@ class BaseEndToEndTest(object):
             [{"host": OPENSEARCH_HOST, "port": OPENSEARCH_PORT}], http_compress=True
         )
 
-        df = pd.read_csv(file_path, error_bad_lines=False)
+        df = pd.read_csv(file_path, on_bad_lines="skip")
         if "datetime" in df:
             df["datetime"] = pd.to_datetime(df["datetime"])
 
