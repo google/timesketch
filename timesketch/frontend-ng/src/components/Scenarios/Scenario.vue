@@ -144,9 +144,9 @@ export default {
         })
         .catch((e) => {})
     },
-    copyScenario: function (scenario_id) {
+    copyScenario: function (scenarioId) {
       let displayName = 'Copy of ' + this.scenario.display_name
-      ApiClient.addScenario(this.sketch.id, scenario_id, displayName)
+      ApiClient.addScenario(this.sketch.id, scenarioId, displayName)
         .then((response) => {
           this.$store.dispatch('updateScenarios', this.sketch.id)
         })
