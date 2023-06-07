@@ -14,8 +14,8 @@
 """DFIQ support library."""
 
 import os
-import yaml
 import json
+import yaml
 
 import networkx as nx
 
@@ -242,7 +242,7 @@ class DFIQ:
                 yaml_object.get("description"),
                 yaml_object.get("tags"),
             )
-        elif yaml_object["type"] == "facet":
+        if yaml_object["type"] == "facet":
             return Facet(
                 yaml_object["id"],
                 yaml_object["display_name"],
@@ -250,7 +250,7 @@ class DFIQ:
                 yaml_object.get("tags"),
                 yaml_object.get("parent_ids"),
             )
-        elif yaml_object["type"] == "question":
+        if yaml_object["type"] == "question":
             return Question(
                 yaml_object["id"],
                 yaml_object["display_name"],
@@ -258,7 +258,7 @@ class DFIQ:
                 yaml_object.get("tags"),
                 yaml_object.get("parent_ids"),
             )
-        elif yaml_object["type"] == "approach":
+        if yaml_object["type"] == "approach":
             return Approach(
                 yaml_object["id"],
                 yaml_object["display_name"],
