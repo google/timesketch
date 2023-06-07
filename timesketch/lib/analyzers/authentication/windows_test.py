@@ -73,11 +73,28 @@ class TestWindowsLoginBruteForceAnalyzer(BaseTest):
     def _create_mock_events(self, datastore) -> None:
         """Creates mock Windows authentication events."""
 
+        config = {
+            "computer_name": "WIN-EFPSBTQIU5K",
+            "username": "Administrator",
+            "domain": "WIN-EFPSBTQIU5K",
+            "ip_address": "192.168.40.25",
+            "port": 46658,
+            "workstation_name": "kali",
+            "logon_type": 3,
+            "logon_id": 0x00000000005C338A,
+        }
+
         events = []
 
-        events.extend(self._create_failed_events(count=200))
-        events.extend(self._create_success_events(count=1))
-        events.extend(self._create_logout_events(count=1))
+        events.extend(self._create_failed_events(config=config, count=200))
+        events.extend(self._create_success_events(config=config, count=1))
+        events.extend(self._create_logout_events(config=config, count=1))
+
+        config["ip_address"] = "192.168.100.112"
+        config["logon_id"] = 0x00000000006C339A
+        events.extend(self._create_failed_events(config=config, count=200))
+        events.extend(self._create_success_events(config=config, count=1))
+        events.extend(self._create_logout_events(config=config, count=1))
 
         log.debug("Total number of mock events %d", len(events))
 
@@ -92,11 +109,23 @@ class TestWindowsLoginBruteForceAnalyzer(BaseTest):
     def _create_mock_benign_events(self, datastore) -> None:
         """Creates mock Windows authentication events."""
 
+        config = {
+            "computer_name": "WIN-EFPSBTQIU5K",
+            "username": "Administrator",
+            "domain": "WIN-EFPSBTQIU5K",
+            "ip_address": "192.168.40.25",
+            "port": 46658,
+            "workstation_name": "kali",
+            "logon_type": 3,
+            "logon_id": 0x00000000005C338A,
+        }
+
         events = []
-        events.extend(self._create_success_events(count=5))
-        events.extend(self._create_failed_events(count=20))
-        events.extend(self._create_success_events(count=1))
-        events.extend(self._create_logout_events(count=1))
+
+        events.extend(self._create_success_events(config=config, count=5))
+        events.extend(self._create_failed_events(config=config, count=20))
+        events.extend(self._create_success_events(config=config, count=1))
+        events.extend(self._create_logout_events(config=config, count=1))
 
         log.debug("Total number of mock events %d", len(events))
 
@@ -108,72 +137,66 @@ class TestWindowsLoginBruteForceAnalyzer(BaseTest):
             event_id += 1
             timestamp += 1000000
 
-    def _create_failed_events(self, count=200) -> List[dict]:
+    def _create_failed_events(self, config: dict, count=200) -> List[dict]:
         """Creates mock Windows failed login TimeSketch events.
 
         Returns:
             List[dict]: A list of dictionary containing failed login events.
         """
 
-        port = 46658
-
         return [
             {
                 "source_name": "Microsoft-Windows-Security-Auditing",
                 "event_identifier": 4625,
-                "computer_name": "WIN-EFPSBTQIU5K",
-                "username": "Administrator",
-                "domain": "",
-                "ip_address": "192.168.40.25",
-                "port": port + i,
-                "logon_type": 3,
-                "workstation_name": "\\\\192.168.40.25",
+                "computer_name": config.get("computer_name"),
+                "username": config.get("username"),
+                "domain": config.get("domain"),
+                "ip_address": config.get("ip_address"),
+                "port": config.get("port") + i,
+                "logon_type": config.get("logon_type"),
+                "workstation_name": f"\\\\{config.get('workstation_name')}",
             }
             for i in range(0, count)
         ]
 
-    def _create_success_events(self, count=1) -> List[dict]:
+    def _create_success_events(self, config: dict, count=1) -> List[dict]:
         """Creates mock Windows successful login TimeSketch events.
 
         Returns:
             List[dict]: A list of dictionary containing successful login events.
         """
 
-        logon_id = 0x00000000005C338A
-
         return [
             {
                 "source_name": "Microsoft-Windows-Security-Auditing",
                 "event_identifier": 4624,
-                "computer_name": "WIN-EFPSBTQIU5K",
-                "username": "Administrator",
-                "domain": "WIN-EFPSBTQIU5K",
-                "ip_address": "192.168.40.25",
+                "computer_name": config.get("computer_name"),
+                "username": config.get("username"),
+                "domain": config.get("domain"),
+                "ip_address": config.get("ip_address"),
                 "port": 0,
-                "logon_id": f"{(logon_id + i):016x}",
-                "logon_type": 3,
-                "workstation_name": "kali",
+                "logon_id": f"{(config.get('logon_id') + i):016x}",
+                "logon_type": config.get("logon_type"),
+                "workstation_name": config.get("workstation_name"),
             }
             for i in range(0, count)
         ]
 
-    def _create_logout_events(self, count=1) -> List[dict]:
+    def _create_logout_events(self, config: dict, count=1) -> List[dict]:
         """Creates mock Windows logout TimeSketch events.
 
         Returns:
             List[dict]: A list of dictionary containing logoff events.
         """
 
-        logon_id = 0x00000000005C338A
-
         return [
             {
                 "source_name": "Microsoft-Windows-Security-Auditing",
                 "event_identifier": 4634,
-                "computer_name": "WIN-EFPSBTQIU5K",
-                "username": "Administrator",
-                "logon_id": f"{(logon_id + i):016x}",
-                "logon_type": 3,
+                "computer_name": config.get("computer_name"),
+                "username": config.get("username"),
+                "logon_id": f"{(config.get('logon_id') + i):016x}",
+                "logon_type": config.get("logon_type"),
             }
             for i in range(0, count)
         ]
@@ -195,7 +218,9 @@ class TestWindowsLoginBruteForceAnalyzer(BaseTest):
 
         output.result_priority = "HIGH"
         output.result_status = "SUCCESS"
-        output.result_summary = "1 brute force from 192.168.40.25"
+        output.result_summary = (
+            "1 brute force from 192.168.40.25, 1 brute force from 192.168.100.112"
+        )
         output.result_markdown = textwrap.dedent(
             """
             ### Brute Force Analyzer
@@ -208,6 +233,19 @@ class TestWindowsLoginBruteForceAnalyzer(BaseTest):
             - IP last seen on 2022-12-26T23:29:09Z
             - First successful authentication on 2022-12-26T23:29:09Z
             - First successful login from 192.168.40.25
+            - First successful login as Administrator
+
+            #### Top Usernames
+            - Administrator: 201
+
+            ### Brute Force Summary for 192.168.100.112
+            - Successful brute force on 2022-12-26T23:32:31Z as Administrator
+
+            #### 192.168.100.112 Summary
+            - IP first seen on 2022-12-26T23:29:11Z
+            - IP last seen on 2022-12-26T23:32:31Z
+            - First successful authentication on 2022-12-26T23:32:31Z
+            - First successful login from 192.168.100.112
             - First successful login as Administrator
 
             #### Top Usernames
