@@ -18,6 +18,7 @@ from timesketch.lib import dfiq
 
 TEST_DATA_DIR = "./test_data/dfiq/"
 
+
 class TestDFIQ(BaseTest):
     """Tests for the DFIQ support library."""
 
@@ -42,9 +43,9 @@ class TestDFIQ(BaseTest):
         """Test that the DFIQ approach is loaded correctly."""
         approach = self.dfiq.components.get("Q1001.01")
         expected_content = {
-            'description': 'Test SearchTemplate',
-            'type': 'searchtemplate',
-            'value': '770754f3-2419-4a6c-ba45-ec9dbd3240ce'
+            "description": "Test SearchTemplate",
+            "type": "searchtemplate",
+            "value": "770754f3-2419-4a6c-ba45-ec9dbd3240ce",
         }
         self.assertIsInstance(approach.search_templates, list)
         self.assertEqual(len(approach.search_templates), 1)
@@ -62,6 +63,6 @@ class TestDFIQ(BaseTest):
             self.assertEqual(list(self.dfiq.graph.nodes)[idx], component_name)
         for edge in self.dfiq.graph.edges:
             self.assertIsInstance(edge, tuple)
-        expected_edges = [('S1001', 'F1001'), ('F1001', 'Q1001'), ('Q1001', 'Q1001.01')]
+        expected_edges = [("S1001", "F1001"), ("F1001", "Q1001"), ("Q1001", "Q1001.01")]
         for idx, edge in enumerate(expected_edges):
             self.assertEqual(list(self.dfiq.graph.edges)[idx], edge)
