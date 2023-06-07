@@ -181,7 +181,14 @@ class WindowsLoginBruteForceAnalyzer(BaseAnalyzer):
             event_data.source_hostname = event.source.get("workstation_name")
             event_data.session_id = event.source.get("logon_id")
             event_data.eid = event.source.get("event_identifier")
-            event_data.logon_type = event.source.get("logon_type")
+
+            # Handle events without logon_type
+            try:
+                event_data.logon_type = event.source.get("logon_type")
+            except (ValueError, TypeError) as e:
+                log.warning("[%s] Unknown value for logon_type. %s", self.NAME, str(e))
+                event_data.logon_type = 0
+
             event_data.logon_id = event.source.get("logon_id")
             event_data.pid = event.source.get("process_id") or 0
             event_data.process_name = event.source.get("process_name")
