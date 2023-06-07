@@ -233,7 +233,7 @@ class DFIQ:
         """Converts a YAML object to a DFIQ component.
 
         Returns:
-            A DFIQ component.
+            A DFIQ component if the YAML object is valid, otherwise None.
         """
         if yaml_object["type"] == "scenario":
             return Scenario(
@@ -266,6 +266,7 @@ class DFIQ:
                 yaml_object.get("tags"),
                 yaml_object.get("view"),
             )
+        return None
 
     def _load_yaml_files_by_type(self, dfiq_type, yaml_data_path=None):
         """Loads YAML files by type.
