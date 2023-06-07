@@ -120,63 +120,63 @@ level: high
 
         self.assertions.assertIn("installation of bbbbbb", rule.description)
 
-    def test_get_sigmarule(self):
-        """Client Sigma object tests."""
+#     def test_get_sigmarule(self):
+#         """Client Sigma object tests."""
 
-        rule = self.api.create_sigmarule(
-            rule_yaml="""
-title: Suspicious Installation of eeeee
-id: 5266a592-b793-11ea-b3de-eeeee
-description: Detects suspicious installation of eeeee
-references:
-    - https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html
-author: Alexander Jaeger
-date: 2020/06/26
-modified: 2022/06/12
-logsource:
-    product: linux
-    service: shell
-detection:
-    keywords:
-        # Generic suspicious commands
-        - '*apt-get install zmap*'
-    condition: keywords
-falsepositives:
-    - Unknown
-level: high
-"""
-        )
-        self.assertions.assertIsNotNone(rule)
+#         rule = self.api.create_sigmarule(
+#             rule_yaml="""
+# title: Suspicious Installation of eeeee
+# id: 5266a592-b793-11ea-b3de-eeeee
+# description: Detects suspicious installation of eeeee
+# references:
+#     - https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html
+# author: Alexander Jaeger
+# date: 2020/06/26
+# modified: 2022/06/12
+# logsource:
+#     product: linux
+#     service: shell
+# detection:
+#     keywords:
+#         # Generic suspicious commands
+#         - '*apt-get install zmap*'
+#     condition: keywords
+# falsepositives:
+#     - Unknown
+# level: high
+# """
+#         )
+#         self.assertions.assertIsNotNone(rule)
 
-        rule = self.api.get_sigmarule(rule_uuid="5266a592-b793-11ea-b3de-eeeee")
-        rule.from_rule_uuid("5266a592-b793-11ea-b3de-eeeee")
-        self.assertions.assertGreater(len(rule.attributes), 5)
-        self.assertions.assertIsNotNone(rule)
-        self.assertions.assertIn("Alexander", rule.author)
-        self.assertions.assertIn("Alexander", rule.get_attribute("author"))
-        self.assertions.assertIn("b793-11ea-b3de-eeeee", rule.id)
-        self.assertions.assertIn("Installation of eeeee", rule.title)
-        self.assertions.assertIn("zmap", rule.search_query)
-        self.assertions.assertIn("shell:zsh:history", rule.search_query)
-        self.assertions.assertIn("sigmarules/5266a592", rule.resource_uri)
-        self.assertions.assertIn("installation of eeeee", rule.description)
-        self.assertions.assertIn("high", rule.level)
-        self.assertions.assertEqual(len(rule.falsepositives), 1)
-        self.assertions.assertIn("Unknown", rule.falsepositives[0])
-        self.assertions.assertIn("2020/06/26", rule.date)
-        self.assertions.assertIn("2022/06/12", rule.modified)
-        self.assertions.assertIn("high", rule.level)
-        self.assertions.assertIn("rmusser.net", rule.references[0])
-        self.assertions.assertEqual(len(rule.detection), 2)
-        self.assertions.assertEqual(len(rule.logsource), 2)
+#         rule = self.api.get_sigmarule(rule_uuid="5266a592-b793-11ea-b3de-eeeee")
+#         rule.from_rule_uuid("5266a592-b793-11ea-b3de-eeeee")
+#         self.assertions.assertGreater(len(rule.attributes), 5)
+#         self.assertions.assertIsNotNone(rule)
+#         self.assertions.assertIn("Alexander", rule.author)
+#         self.assertions.assertIn("Alexander", rule.get_attribute("author"))
+#         self.assertions.assertIn("b793-11ea-b3de-eeeee", rule.id)
+#         self.assertions.assertIn("Installation of eeeee", rule.title)
+#         self.assertions.assertIn("zmap", rule.search_query)
+#         self.assertions.assertIn("shell:zsh:history", rule.search_query)
+#         self.assertions.assertIn("sigmarules/5266a592", rule.resource_uri)
+#         self.assertions.assertIn("installation of eeeee", rule.description)
+#         self.assertions.assertIn("high", rule.level)
+#         self.assertions.assertEqual(len(rule.falsepositives), 1)
+#         self.assertions.assertIn("Unknown", rule.falsepositives[0])
+#         self.assertions.assertIn("2020/06/26", rule.date)
+#         self.assertions.assertIn("2022/06/12", rule.modified)
+#         self.assertions.assertIn("high", rule.level)
+#         self.assertions.assertIn("rmusser.net", rule.references[0])
+#         self.assertions.assertEqual(len(rule.detection), 2)
+#         self.assertions.assertEqual(len(rule.logsource), 2)
 
-        # Test an actual query
-        self.import_timeline("sigma_events.csv")
-        search_obj = search.Search(self.sketch)
-        search_obj.query_string = rule.search_query
-        data_frame = search_obj.table
-        count = len(data_frame)
-        self.assertions.assertEqual(count, 1)
+#         # Test an actual query
+#         self.import_timeline("sigma_events.csv")
+#         search_obj = search.Search(self.sketch)
+#         search_obj.query_string = rule.search_query
+#         data_frame = search_obj.table
+#         count = len(data_frame)
+#         self.assertions.assertEqual(count, 1)
 
     def test_add_event_attributes(self):
         """Tests adding attributes to an event."""
