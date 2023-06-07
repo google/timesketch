@@ -895,13 +895,13 @@ class BruteForceUtils(BaseAuthenticationUtils):
         markdown_summaries = []
 
         for authsummary in authsummaries:
-            result_summaries.append(
-                f"{len(authsummaries)} brute force from {authsummary.source_ip}"
-            )
-
             bruteforce_logins = authsummary.summary.get("bruteforce", None)
             if not bruteforce_logins:
                 continue
+
+            result_summaries.append(
+                f"{len(bruteforce_logins)} brute force from {authsummary.source_ip}"
+            )
 
             markdown_summaries.append(
                 f"\n### Brute Force Summary for {authsummary.source_ip}"
