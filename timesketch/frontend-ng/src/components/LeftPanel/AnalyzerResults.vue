@@ -196,7 +196,7 @@ export default {
                 timelines: {},
                 analyzerInfo: {
                   name: session.analyzer_name,
-                  description: 'Issue#2738 - No description available.',
+                  description: 'No description available.',
                   is_multi: false,
                   display_name: session.analyzer_name,
                 },
