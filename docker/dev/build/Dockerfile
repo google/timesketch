@@ -20,6 +20,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-wheel \
     python3-setuptools \
     python3-psycopg2 \
+    tzdata \
   && rm -rf /var/lib/apt/lists/*
 
 # Install Plaso
