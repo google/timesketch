@@ -40,9 +40,9 @@ if ! command -v docker; then
   exit 1
 fi
 
-# Exit early if docker-compose is not installed.
-if ! command -v docker-compose; then
-  echo "ERROR: docker-compose is not installed."
+# Exit early if docker compose is not installed.
+if ! docker compose &>/dev/null; then
+  echo "ERROR: docker-compose-plugin is not installed."
   exit 1
 fi
 
@@ -131,7 +131,7 @@ fi
 
 if [ "$START_CONTAINER" != "${START_CONTAINER#[Yy]}" ] ;then # this grammar (the #[] operator) means that the variable $start_cnt where any Y or y in 1st position will be dropped if they exist.
   cd timesketch
-  docker-compose up -d
+  docker compose up -d
 else
   echo
   echo "You have chosen not to start the containers,"
@@ -139,8 +139,8 @@ else
   echo
   echo "Start the system:"
   echo "1. cd timesketch"
-  echo "2. docker-compose up -d"
-  echo "3. docker-compose exec timesketch-web tsctl create-user <USERNAME>"
+  echo "2. docker compose up -d"
+  echo "3. docker compose exec timesketch-web tsctl create-user <USERNAME>"
   echo
   echo "WARNING: The server is running without encryption."
   echo "Follow the instructions to enable SSL to secure the communications:"
@@ -160,6 +160,6 @@ if [ "$CREATE_USER" != "${CREATE_USER#[Yy]}" ] ;then
       sleep 1;
     done;
 
-    docker-compose exec timesketch-web tsctl create-user "$NEWUSERNAME" && echo "user created"
+    docker compose exec timesketch-web tsctl create-user "$NEWUSERNAME" && echo "user created"
   fi
 fi
