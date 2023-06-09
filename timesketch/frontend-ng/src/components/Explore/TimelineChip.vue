@@ -104,42 +104,48 @@ limitations under the License.
 
     <v-menu v-else offset-y :close-on-content-click="false" content-class="menu-with-gap" ref="timelineChipMenuRef">
       <template v-slot:activator="{ on }">
-        <v-chip  @click="toggleTimeline()" :style="getTimelineStyle(timeline)" class="mr-2 mb-3 pr-1 timeline-chip" >
-          <v-icon v-if="timelineFailed" left color="red"> mdi-alert-circle-outline </v-icon>
-          <v-icon v-if="!timelineFailed" left :color="timelineChipColor"> mdi-circle </v-icon>
+        <v-chip @click="toggleTimeline()" :style="getTimelineStyle(timeline)" class="mr-2 mb-3 pr-1 timeline-chip">
+          <div class="chip-content">
 
-          <v-tooltip bottom>
-            <template v-slot:activator="{ on: onTooltip, attrs }">
-              <span class="timeline-name-ellipsis" :class="{ disabled: !isSelected && timelineStatus === 'ready'}"
-              v-bind="attrs"
-              v-on="onTooltip"
-              >{{ timeline.name }}</span>
-            </template>
-            <span>{{ timeline.name }}</span>
-          </v-tooltip>
+            <v-icon v-if="timelineFailed" left color="red" size="x-large"> mdi-alert-circle-outline </v-icon>
+            <v-icon v-if="!timelineFailed" left :color="timelineChipColor" size="xx-large" class="ml-n3"> mdi-circle </v-icon>
 
-          <span
-            v-if="timelineStatus === 'processing'"
-            class="ml-3"
-          >
-            <v-progress-circular small indeterminate color="grey" :size="20" :width="2"></v-progress-circular>
-          </span>
+            <v-tooltip bottom :disabled="timeline.name.length < 30" open-delay="300">
+              <template v-slot:activator="{ on: onTooltip, attrs }">
+                <span class="timeline-name-ellipsis" :class="{ disabled: !isSelected && timelineStatus === 'ready'}"
+                v-bind="attrs"
+                v-on="onTooltip"
+                >{{ timeline.name }}</span>
+              </template>
+              <span>{{ timeline.name }}</span>
+            </v-tooltip>
 
-          <v-chip
-            class="events-count"
-            :color="$vuetify.theme.dark ? 'grey' : '#fff'"
-            small
-          >
-            {{ eventsCount | compactNumber }}
-          </v-chip>
-          <v-btn
-            class="ma-1"
-            small
-            icon
-            v-on="on"
-          >
-            <v-icon> mdi-dots-vertical </v-icon>
-          </v-btn>
+            <span class="right">
+              <span
+                v-if="timelineStatus === 'processing'"
+                class="ml-3"
+              >
+                <v-progress-circular small indeterminate color="grey" :size="20" :width="2"></v-progress-circular>
+              </span>
+
+              <v-chip
+                v-if="!timelineFailed"
+                class="events-count"
+                :color="$vuetify.theme.dark ? 'grey' : '#fff'"
+                small
+              >
+                {{ eventsCount | compactNumber }}
+              </v-chip>
+              <v-btn
+                class="ma-1"
+                small
+                icon
+                v-on="on"
+              >
+                <v-icon> mdi-dots-vertical </v-icon>
+              </v-btn>
+            </span>
+          </div>
         </v-chip>
       </template>
       <v-sheet flat width="320">
@@ -397,9 +403,6 @@ export default {
       return this.timelineStatus === 'fail';
     },
     timelineChipColor() {
-      if (this.timelineStatus === 'ready' && !this.isSelected) {
-        return 'grey'
-      }
       if (!this.timeline.color.startsWith('#')) {
         return '#' + this.timeline.color
       }
@@ -561,6 +564,23 @@ export default {
 
 <!-- CSS scoped to this component only -->
 <style scoped lang="scss">
+
+.timeline-chip {
+
+  .right{
+    margin-left: auto;
+  }
+
+  .chip-content {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    width: 300px;
+  }
+}
+
+
 .theme--dark {
   .events-count {
     color: black;
