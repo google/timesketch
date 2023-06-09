@@ -284,12 +284,6 @@ class AnalyzerRunResource(resources.ResourceMixin, Resource):
             if not timeline:
                 continue
             if not timeline.status[0].status == "ready":
-                logger.warning(
-                    'Timeline "{0:d}" is in status "{1:s}". Analyzer cannot be '
-                    'run if the status is not "ready". Skipping timeline!'.format(
-                        timeline.id, timeline.status[0].status
-                    )
-                )
                 continue
             searchindex_id = timeline.searchindex.id
             searchindex_name = timeline.searchindex.index_name
