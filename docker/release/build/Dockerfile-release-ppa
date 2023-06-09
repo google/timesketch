@@ -14,7 +14,7 @@ RUN apt-get -y update
 RUN apt-get -y upgrade
 
 # Install dependencies
-RUN apt-get -y install ca-certificates lsb-release locales python3-psycopg2
+RUN apt-get -y install ca-certificates lsb-release locales python3-psycopg2 tzdata
 
 # Install Plaso
 RUN apt-get -y install plaso-tools
