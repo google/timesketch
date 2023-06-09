@@ -458,6 +458,188 @@ def mock_response(*args, **kwargs):
         ],
     }
 
+    aggregation_data = {
+        "meta": {},
+        "objects": [
+            [
+                {
+                    "agg_type": "field_bucket",
+                    "aggregationgroup_id": 0,
+                    "chart_type": "barchart",
+                    "created_at": "2023-01-08T08:45:23.113454",
+                    "description": "Aggregating values of a particular field",
+                    "id": 1,
+                    "label_string": "",
+                    "name": "ip barchart",
+                    "parameters": (
+                        '{"supported_charts": "barchart", '
+                        '"field": "ip", "start_time": "", "end_time": "", '
+                        '"limit": "10", "index": [1, 2]}'
+                    ),
+                    "updated_at": "2023-01-08T08:45:23.113454",
+                    "user": {
+                        "active": True,
+                        "admin": False,
+                        "groups": [],
+                        "username": "dev",
+                    },
+                },
+                {
+                    "agg_type": "field_bucket",
+                    "aggregationgroup_id": 0,
+                    "chart_type": "table",
+                    "created_at": "2023-01-08T08:46:24.871292",
+                    "description": "Aggregating values of a particular field",
+                    "id": 2,
+                    "label_string": "",
+                    "name": "domain table",
+                    "parameters": (
+                        '{"supported_charts": "table", "field": "domain", '
+                        '"start_time": "", "end_time": "", "limit": "10", '
+                        '"index": [1, 2]}'
+                    ),
+                    "updated_at": "2023-01-08T08:46:24.871292",
+                    "user": {
+                        "active": True,
+                        "admin": False,
+                        "groups": [],
+                        "username": "dev",
+                    },
+                },
+            ]
+        ],
+    }
+
+    aggregation_1_data = {
+        "meta": {},
+        "objects": [
+            {
+                "agg_type": "field_bucket",
+                "aggregationgroup_id": 0,
+                "chart_type": "barchart",
+                "created_at": "2023-01-08T08:45:23.113454",
+                "description": "Aggregating values of a particular field",
+                "id": 1,
+                "label_string": "",
+                "name": "ip barchart",
+                "parameters": (
+                    '{"supported_charts": "barchart", "field": "ip", '
+                    '"start_time": "", "end_time": "", "limit": "10", '
+                    '"index": [1, 2]}'
+                ),
+                "updated_at": "2023-01-08T08:45:23.113454",
+                "user": {
+                    "active": True,
+                    "admin": False,
+                    "groups": [],
+                    "username": "dev",
+                },
+            }
+        ],
+    }
+
+    aggregation_2_data = {
+        "meta": {},
+        "objects": [
+            {
+                "agg_type": "field_bucket",
+                "aggregationgroup_id": 0,
+                "chart_type": "table",
+                "created_at": "2023-01-08T08:46:24.871292",
+                "description": "Aggregating values of a particular field",
+                "id": 2,
+                "label_string": "",
+                "name": "domain table",
+                "parameters": (
+                    '{"supported_charts": "table", "field": "domain", '
+                    '"start_time": "", "end_time": "", "limit": "10", '
+                    '"index": [1, 2]}'
+                ),
+                "updated_at": "2023-01-08T08:46:24.871292",
+                "user": {
+                    "active": True,
+                    "admin": False,
+                    "groups": [],
+                    "username": "dev",
+                },
+            }
+        ],
+    }
+
+    aggregation_chart_data = {
+        "meta": {
+            "chart_type": "barchart",
+            "description": "Aggregating values of a particular field",
+            "es_time": 0.01930856704711914,
+            "method": "aggregator_run",
+            "name": "field_bucket",
+            "vega_chart_title": "Top results for an unknown field",
+            "vega_spec": {
+                "$schema": "https://vega.github.io/schema/vega-lite/v4.8.1.json",
+                "config": {"view": {"continuousHeight": 300, "continuousWidth": 400}},
+                "data": {"name": "data-4e004a0d2e426361c7096c1d456fe9f0"},
+                "datasets": {
+                    "data-4e004a0d2e426361c7096c1d456fe9f0": [
+                        {"count": 125, "ip": "1.1.1.1"},
+                        {"count": 108, "ip": "1.1.1.2"},
+                        {"count": 97, "ip": "1.1.1.3"},
+                        {"count": 95, "ip": "1.1.1.4"},
+                        {"count": 87, "ip": "1.1.1.5"},
+                        {"count": 84, "ip": "1.1.1.6"},
+                        {"count": 82, "ip": "1.1.1.7"},
+                        {"count": 82, "ip": "1.1.1.8"},
+                        {"count": 51, "ip": "1.1.1.9"},
+                        {"count": 51, "ip": "1.1.1.10"},
+                    ]
+                },
+                "encoding": {
+                    "href": {"field": "url", "type": "nominal"},
+                    "tooltip": [
+                        {"field": "ip", "type": "nominal"},
+                        {"field": "count", "type": "quantitative"},
+                    ],
+                    "x": {
+                        "field": "ip",
+                        "sort": {"field": "count", "op": "sum", "order": "descending"},
+                        "type": "nominal",
+                    },
+                    "y": {"field": "count", "type": "quantitative"},
+                },
+                "mark": {"strokeWidth": 0.3, "type": "bar"},
+                "title": "Top results for an unknown field",
+                "transform": [
+                    {
+                        "as": "url",
+                        "calculate": (
+                            "((('/sketch/1/explore?q=ip:\"' + datum.ip) + "
+                            "'\" ') + '')"
+                        ),
+                    }
+                ],
+            },
+        },
+        "objects": [
+            {
+                "field_bucket": {
+                    "buckets": [
+                        {"count": 125, "ip": "1.1.1.1"},
+                        {"count": 108, "ip": "1.1.1.2"},
+                        {"count": 97, "ip": "1.1.1.3"},
+                        {"count": 95, "ip": "1.1.1.4"},
+                        {"count": 87, "ip": "1.1.1.5"},
+                        {"count": 84, "ip": "1.1.1.6"},
+                        {"count": 82, "ip": "1.1.1.7"},
+                        {"count": 82, "ip": "1.1.1.8"},
+                        {"count": 51, "ip": "1.1.1.9"},
+                        {"count": 51, "ip": "1.1.1.10"},
+                    ]
+                }
+            }
+        ],
+    }
+
+    aggregation_group = {"meta": {"command": "list_groups"}, "objects": []}
+
     # Register API endpoints to the correct mock response data.
     url_router = {
         "http://127.0.0.1": MockResponse(text_data=auth_text_data),
@@ -512,6 +694,21 @@ def mock_response(*args, **kwargs):
         "http://127.0.0.1/api/v1/sigmarules/": MockResponse(json_data=sigmarule_list),
         "http://127.0.0.1/api/v1/sigmarules/text/": MockResponse(
             json_data=sigmarule_text
+        ),
+        "http://127.0.0.1/api/v1/sketches/1/aggregation/": MockResponse(
+            json_data=aggregation_data
+        ),
+        "http://127.0.0.1/api/v1/sketches/1/aggregation/1/": MockResponse(
+            json_data=aggregation_1_data
+        ),
+        "http://127.0.0.1/api/v1/sketches/1/aggregation/2/": MockResponse(
+            json_data=aggregation_2_data
+        ),
+        "http://127.0.0.1/api/v1/sketches/1/aggregation/group/": MockResponse(
+            json_data=aggregation_group
+        ),
+        "http://127.0.0.1/api/v1/sketches/1/aggregation/explore/": MockResponse(
+            json_data=aggregation_chart_data
         ),
     }
 
