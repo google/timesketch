@@ -283,6 +283,8 @@ class AnalyzerRunResource(resources.ResourceMixin, Resource):
             timeline = Timeline.query.get(timeline_id)
             if not timeline:
                 continue
+            if not timeline.status[0].status == "ready":
+                continue
             searchindex_id = timeline.searchindex.id
             searchindex_name = timeline.searchindex.index_name
 
