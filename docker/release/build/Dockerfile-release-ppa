@@ -1,0 +1,32 @@
+# Use the official Docker Hub Ubuntu base image
+FROM ubuntu:22.04
+
+ARG PPA_TRACK=stable
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get -y update
+RUN apt-get -y install apt-transport-https apt-utils gpg-agent
+RUN apt-get -y install libterm-readline-gnu-perl software-properties-common
+RUN add-apt-repository -y ppa:gift/$PPA_TRACK
+
+RUN apt-get -y update
+RUN apt-get -y upgrade
+
+# Install dependencies
+RUN apt-get -y install ca-certificates lsb-release locales python3-psycopg2 tzdata
+
+# Install Plaso
+RUN apt-get -y install plaso-tools
+
+# Install Timesketch
+RUN apt-get -y install timesketch-server
+
+# Clean up apt-get cache files
+RUN apt-get clean && rm -rf /var/cache/apt/* /var/lib/apt/lists/*
+
+# Set terminal to UTF-8 by default
+RUN locale-gen en_US.UTF-8
+RUN update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
+ENV LANG en_US.UTF-8
+ENV LC_ALL en_US.UTF-8
