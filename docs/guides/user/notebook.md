@@ -14,7 +14,7 @@ The notebook is a docker container, so the first step is to make sure that
 [docker is installed](https://docs.docker.com/engine/install/).
 
 If you did not install the docker desktop app you may also need to install
-`docker-compose`, please follow the instructions
+`docker-compose-plugin`, please follow the instructions
 [here](https://docs.docker.com/compose/install/) (the version that is often
 included in your source repo might be too old to properly setup the container).
 
@@ -42,12 +42,12 @@ to be readable and writeable by a user with uid/gid 1000:1000 (if this is run
 on a Windows system the `FOLDER_PATH` can be set to something like
 `C:\My Folder\`)
 
-Once the file has been saved, docker-compose can be used to pull and start
+Once the file has been saved, docker compose can be used to pull and start
 the container:
 
 ```shell
-$ sudo docker-compose pull
-$ sudo docker-compose up -d
+$ sudo docker compose pull
+$ sudo docker compose up -d
 ```
 
 The docker compose command will download the latest build and deploy the
@@ -77,9 +77,9 @@ $ sudo docker container logs notebook
 To update the container, use:
 
 ```shell
-$ sudo docker-compose pull
-$ sudo docker-compose stop
-$ sudo docker-compose up -d
+$ sudo docker compose pull
+$ sudo docker compose stop
+$ sudo docker compose up -d
 ```
 
 ## Docker Desktop

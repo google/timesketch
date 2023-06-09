@@ -25,7 +25,7 @@ $ cd /<PATH TO TIMESKETCH INSTALLATION>
 Have you backed up your database..? good. Let's upgrade the schema. First connect to the timesketch-web container:
 
 ```shell
-$ docker-compose exec timesketch-web /bin/bash
+$ docker compose exec timesketch-web /bin/bash
 ```
 
 While connected to the container:
@@ -60,7 +60,7 @@ root@<CONTAINER_ID>$ tsctl db upgrade
 Exit from the container (CTRL-D), then pull new versions of the docker images and upgrade Timesketch:
 
 ```shell
-$ docker-compose pull
-$ docker-compose down
-$ docker-compose up -d
+$ docker compose pull
+$ docker compose down
+$ docker compose up -d
 ```
