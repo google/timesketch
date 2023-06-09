@@ -155,7 +155,7 @@ class EventCreateResource(resources.ResourceMixin, Resource):
         if not isinstance(attributes, dict):
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                "Unable to add an event where the attributes are not a " "dict object.",
+                "Unable to add an event where the attributes are not a dict object.",
             )
 
         event.update(attributes)
@@ -164,13 +164,13 @@ class EventCreateResource(resources.ResourceMixin, Resource):
         if not isinstance(tag, list):
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                "Unable to add an event where the tags are not a " "list of strings.",
+                "Unable to add an event where the tags are not a list of strings.",
             )
 
         if tag and any(not isinstance(x, str) for x in tag):
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                "Unable to add an event where the tags are not a " "list of strings.",
+                "Unable to add an event where the tags are not a list of strings.",
             )
 
         event["tag"] = tag
@@ -246,8 +246,12 @@ class EventResource(resources.ResourceMixin, Resource):
     def __init__(self):
         super().__init__()
         self.parser = reqparse.RequestParser()
-        self.parser.add_argument("searchindex_id", type=six.text_type, required=True)
-        self.parser.add_argument("event_id", type=six.text_type, required=True)
+        self.parser.add_argument(
+            "searchindex_id", type=six.text_type, required=True, location="args"
+        )
+        self.parser.add_argument(
+            "event_id", type=six.text_type, required=True, location="args"
+        )
 
     @login_required
     def get(self, sketch_id):
@@ -388,7 +392,7 @@ class EventAddAttributeResource(resources.ResourceMixin, Resource):
             if len(attributes) > self.MAX_ATTRIBUTES:
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
-                    f"Attributes for event exceeds maximum " f"{self.MAX_ATTRIBUTES}",
+                    f"Attributes for event exceeds maximum {self.MAX_ATTRIBUTES}",
                 )
             for attribute in attributes:
                 for field in self.ATTRIBUTE_FIELDS:
@@ -425,7 +429,7 @@ class EventAddAttributeResource(resources.ResourceMixin, Resource):
         if not sketch.has_permission(current_user, "write"):
             abort(
                 HTTP_STATUS_CODE_FORBIDDEN,
-                ("User does not have sufficient access rights to modify a " "sketch."),
+                ("User does not have sufficient access rights to modify a sketch."),
             )
 
         datastore = self.datastore
@@ -553,7 +557,7 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
         if not sketch.has_permission(current_user, "write"):
             abort(
                 HTTP_STATUS_CODE_FORBIDDEN,
-                ("User does not have sufficient access rights to " "modify a sketch."),
+                ("User does not have sufficient access rights to modify a sketch."),
             )
 
         form = request.json
@@ -740,11 +744,19 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
     def __init__(self):
         super().__init__()
         self.parser = reqparse.RequestParser()
-        self.parser.add_argument("searchindex_id", type=str, required=False)
-        self.parser.add_argument("event_id", type=str, required=False)
-        self.parser.add_argument("annotation_type", type=str, required=False)
-        self.parser.add_argument("annotation_id", type=int, required=False)
-        self.parser.add_argument("currentSearchNode_id", type=int, required=False)
+        self.parser.add_argument(
+            "searchindex_id", type=str, required=False, location="args"
+        )
+        self.parser.add_argument("event_id", type=str, required=False, location="args")
+        self.parser.add_argument(
+            "annotation_type", type=str, required=False, location="args"
+        )
+        self.parser.add_argument(
+            "annotation_id", type=int, required=False, location="args"
+        )
+        self.parser.add_argument(
+            "currentSearchNode_id", type=int, required=False, location="args"
+        )
 
     def _get_sketch(self, sketch_id):
         """Helper function: Returns Sketch object givin a sketch id.

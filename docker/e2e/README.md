@@ -26,7 +26,7 @@ Follow the official instructions [here](https://www.elastic.co/guide/en/elastics
 
 ```shell
 cd docker/e2e
-sudo docker-compose up
+sudo docker compose up
 ```
 
 ## Access Timesketch

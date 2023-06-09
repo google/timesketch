@@ -86,6 +86,10 @@ def create_app(config=None, legacy_ui=False):
     else:
         app.config.from_object(config)
 
+    # Load config values from environment variables.
+    # See: https://flask.palletsprojects.com/en/2.3.x/config/
+    app.config.from_prefixed_env()
+
     # Make sure that SECRET_KEY is configured.
     if not app.config["SECRET_KEY"]:
         sys.stderr.write(
