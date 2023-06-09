@@ -179,3 +179,7 @@ html {
 .theme--dark.v-data-table tbody tr:hover:not(.v-data-table__expanded__content) {
   background: #303030 !important;
 }
+
+.v-card--link:before {
+  background: none;
+}

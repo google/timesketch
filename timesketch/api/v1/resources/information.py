@@ -14,6 +14,7 @@
 """Information API for version 1 of the Timesketch API."""
 
 from flask import jsonify
+from flask import current_app
 from flask_restful import Resource
 from flask_login import login_required
 
@@ -32,7 +33,13 @@ class VersionResource(resources.ResourceMixin, Resource):
         Returns:
             JSON object including version info
         """
-        schema = {"meta": {"version": version.get_version()}, "objects": []}
+        schema = {
+            "meta": {
+                "version": version.get_version(),
+                "plaso_version": current_app.config.get("PLASO_VERSION", "N/A"),
+            },
+            "objects": [],
+        }
         response = jsonify(schema)
         response.status_code = HTTP_STATUS_CODE_OK
         return response

@@ -14,27 +14,53 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div v-if="meta.views.length">
-    <div class="pa-4" flat :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
-      <span style="cursor: pointer" @click="expanded = !expanded">
-        <v-icon left>mdi-content-save-outline</v-icon>Saved Searches
-      </span>
-      <span class="float-right mr-2">
-        <small><strong>{{ meta.views.length }}</strong></small>
+  <div>
+    <div
+      :style="meta.views && meta.views.length ? 'cursor: pointer' : ''"
+      class="pa-4"
+      @click="expanded = !expanded"
+      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+    >
+      <span> <v-icon left>mdi-content-save-outline</v-icon> Saved Searches </span>
+      <span class="float-right" style="margin-right: 10px">
+        <small
+          ><strong>{{ meta.views.length }}</strong></small
+        >
       </span>
     </div>
 
     <v-expand-transition>
-      <div v-show="expanded">
-        <v-row
-          no-gutters
+      <div v-show="expanded" class="pb-2">
+        <div
           v-for="savedSearch in meta.views"
           :key="savedSearch.name"
-          class="pa-2 pl-5"
-          :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+          @click="setView(savedSearch)"
+          style="cursor: pointer; font-size: 0.9em"
         >
-          <div @click="setView(savedSearch)" style="cursor: pointer; font-size: 0.9em">{{ savedSearch.name }}</div>
-        </v-row>
+          <v-row no-gutters class="py-1 pl-5 pr-3" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
+            <v-col cols="11"
+              ><div class="mt-1">{{ savedSearch.name }}</div></v-col
+            >
+            <v-col cols="1">
+              <v-menu offset-y>
+                <template v-slot:activator="{ on, attrs }">
+                  <v-btn small icon v-bind="attrs" v-on="on">
+                    <v-icon small>mdi-dots-vertical</v-icon>
+                  </v-btn>
+                </template>
+
+                <v-list dense class="mx-auto">
+                  <v-list-item style="cursor: pointer" @click="copySavedSearchUrlToClipboard(savedSearch.id)">
+                    <v-list-item-icon>
+                      <v-icon small>mdi-link-variant</v-icon>
+                    </v-list-item-icon>
+                    <v-list-item-title>Copy link to this search </v-list-item-title>
+                  </v-list-item>
+                </v-list>
+              </v-menu>
+            </v-col>
+          </v-row>
+        </div>
       </div>
     </v-expand-transition>
     <v-divider></v-divider>
@@ -62,6 +88,16 @@ export default {
   methods: {
     setView: function (savedSearch) {
       EventBus.$emit('setActiveView', savedSearch)
+    },
+    copySavedSearchUrlToClipboard(savedSearchId) {
+      try {
+        let searchUrl = window.location.origin + this.$route.path + '?view=' + savedSearchId
+        navigator.clipboard.writeText(searchUrl)
+        this.infoSnackBar('Event URL copied to clipboard')
+      } catch (error) {
+        this.errorSnackBar('Failed to load Event URL into the clipboard')
+        console.error(error)
+      }
     },
   },
   created() {},

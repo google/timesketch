@@ -1,7 +1,7 @@
 # Use the official Docker Hub Ubuntu base image
 FROM ubuntu:22.04
 
-ARG PPA_TRACK=stable
+ARG PLASO_PPA_TRACK=stable
 
 # Prevent needing to configure debian packages, stopping the setup of
 # the docker container.
@@ -16,10 +16,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   gpg-agent \
   git \
   wget \
+  tzdata \
   && rm -rf /var/lib/apt/lists/*
 
 # Install Plaso
-RUN add-apt-repository -y ppa:gift/$PPA_TRACK
+RUN add-apt-repository -y ppa:gift/$PLASO_PPA_TRACK
 RUN apt-get update && apt-get install -y --no-install-recommends \
   plaso-tools \
   && rm -rf /var/lib/apt/lists/*

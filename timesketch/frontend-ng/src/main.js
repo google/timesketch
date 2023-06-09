@@ -21,15 +21,10 @@ import store from './store'
 
 import '@/mixins/snackBar'
 
-// Third party
-import VueScrollTo from 'vue-scrollto'
-import Multiselect from 'vue-multiselect'
-import VueCytoscape from 'vue-cytoscape'
-import VueClipboard from 'vue-clipboard2'
-
 import vuetify from '@/plugins/vuetify' // path to vuetify export
 
 require('./assets/main.scss')
+require('./assets/markdown.scss')
 require('./utils/RegisterAppComponents')
 require('./utils/RegisterAppFilters')
 
@@ -41,10 +36,6 @@ export default EventBus
 
 // Third party
 Vue.use(require('vue-moment'))
-Vue.use(VueCytoscape)
-Vue.use(VueClipboard)
-Vue.use(VueScrollTo)
-Vue.component('multiselect', Multiselect)
 
 // Disable warning during development
 Vue.config.productionTip = false

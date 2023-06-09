@@ -51,8 +51,9 @@ limitations under the License.
               solo
               class="pa-1"
               append-icon="mdi-magnify"
+              @click:append="search()"
               id="tsSearchInput"
-              @keyup.enter="search"
+              @keyup.enter="search()"
               @click="showSearchDropdown = true"
               ref="searchInput"
               v-bind="attrs"
@@ -400,10 +401,14 @@ export default {
     searchView: function (viewId) {
       this.showSearchDropdown = false
 
+      if (this.$route.name !== 'Explore') {
+        this.$router.push({ name: 'Explore', params: { sketchId: this.sketch.id } })
+      }
+
       if (viewId !== parseInt(viewId, 10) && typeof viewId !== 'string') {
         viewId = viewId.id
-        this.$router.push({ name: 'Explore', query: { view: viewId } })
       }
+
       ApiClient.getView(this.sketchId, viewId)
         .then((response) => {
           let view = response.data.objects[0]

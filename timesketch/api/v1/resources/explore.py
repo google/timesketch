@@ -221,7 +221,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
                 fh.seek(0)
                 zip_file.writestr("query_results.csv", fh.read())
             file_object.seek(0)
-            return send_file(file_object, mimetype="zip", attachment_filename=file_name)
+            return send_file(file_object, mimetype="zip", download_name=file_name)
 
         if scroll_id:
             # pylint: disable=unexpected-keyword-arg
@@ -442,7 +442,7 @@ class SearchHistoryResource(resources.ResourceMixin, Resource):
     def __init__(self):
         super().__init__()
         self.parser = reqparse.RequestParser()
-        self.parser.add_argument("limit", type=int, required=False)
+        self.parser.add_argument("limit", type=int, required=False, location="args")
 
     @login_required
     def get(self, sketch_id):

@@ -15,78 +15,47 @@ limitations under the License.
 -->
 <template>
   <div>
-    <v-row no-gutters class="pa-2" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
-      <div @click="expanded = !expanded" style="cursor: pointer; font-size: 0.9em">
-        <v-icon v-if="!expanded">mdi-chevron-right</v-icon>
-        <v-icon v-else>mdi-chevron-down</v-icon>
-        {{ searchtemplate.name }}
-      </div>
-      <v-spacer></v-spacer>
+    <v-row
+      v-if="!parameters.length"
+      @click="search(searchtemplate.query_string)"
+      style="cursor: pointer; font-size: 0.9em"
+      no-gutters
+      class="pa-2 pl-5"
+      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+    >
+      {{ searchtemplate.name }}
+    </v-row>
+
+    <v-row
+      v-else
+      @click="expanded = !expanded"
+      style="cursor: pointer; font-size: 0.9em"
+      no-gutters
+      class="pa-2 pl-5"
+      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+    >
+      {{ searchtemplate.name }}
     </v-row>
 
     <v-expand-transition>
-      <div v-show="expanded" class="pa-4 pt-0">
-        <div style="font-size: 0.9em">
-          <v-simple-table dense>
-            <template v-slot:default>
-              <tbody>
-                <tr>
-                  <td><strong>Author</strong></td>
-                  <td>{{ searchTemplateSpec.author }}</td>
-                </tr>
-                <tr>
-                  <td><strong>Description</strong></td>
-                  <td>{{ searchTemplateSpec.description }}</td>
-                </tr>
-                <tr>
-                  <td><strong>Date</strong></td>
-                  <td>{{ searchTemplateSpec.date }}</td>
-                </tr>
-                <tr>
-                  <td><strong>ID</strong></td>
-                  <td>{{ searchTemplateSpec.id }}</td>
-                </tr>
-                <tr v-if="searchTemplateSpec.references.length">
-                  <td><strong>References</strong></td>
-                  <td>
-                    <div v-for="ref in searchTemplateSpec.references" :key="ref">
-                      <a :href="ref" target="new">{{ ref }}</a>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </template>
-          </v-simple-table>
-        </div>
-
-        <div v-if="parameters.length" class="pt-3">
-          <div class="mb-3"><strong class="mb-3">Required input parameters</strong></div>
-          <div class="mb-4" v-for="parameter in parameters" :key="parameter.name">
-            <v-text-field
-              v-model="params[parameter.name]"
-              :hint="parameter.description"
-              :label="parameter.description"
-              outlined
-              dense
-              hide-details
-            >
-            </v-text-field>
-          </div>
-
-          <v-card-actions class="pl-0 mt-n3">
-            <v-btn @click="parseQueryAndSearch()" small depressed color="primary" :disabled="!filledOut">
-              Search
-            </v-btn>
-          </v-card-actions>
-        </div>
-        <div v-else class="mt-3">
-          <v-btn @click="search(searchtemplate.query_string)" small depressed color="primary" :disabled="!filledOut"
-            >Search</v-btn
+      <div v-show="expanded" class="px-4">
+        <div class="mt-2" v-for="parameter in parameters" :key="parameter.name">
+          <v-text-field
+            v-model="params[parameter.name]"
+            :hint="parameter.description"
+            :label="parameter.description"
+            outlined
+            dense
+            hide-details
           >
+          </v-text-field>
         </div>
+
+        <v-card-actions class="pl-0">
+          <v-btn @click="parseQueryAndSearch()" small depressed color="primary" :disabled="!filledOut"> Search </v-btn>
+        </v-card-actions>
       </div>
     </v-expand-transition>
-    <v-divider></v-divider>
   </div>
 </template>
 

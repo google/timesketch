@@ -36,6 +36,7 @@ from .resources.event import EventResource
 from .resources.event import EventAnnotationResource
 from .resources.event import EventCreateResource
 from .resources.event import EventTaggingResource
+from .resources.event import EventUnTagResource
 from .resources.event import EventAddAttributeResource
 from .resources.event import CountEventsResource
 from .resources.event import MarkEventsWithTimelineIdentifier
@@ -127,6 +128,7 @@ API_ROUTES = [
     (EventResource, "/sketches/<int:sketch_id>/event/"),
     (EventAddAttributeResource, "/sketches/<int:sketch_id>/event/attributes/"),
     (EventTaggingResource, "/sketches/<int:sketch_id>/event/tagging/"),
+    (EventUnTagResource, "/sketches/<int:sketch_id>/event/untag/"),
     (EventAnnotationResource, "/sketches/<int:sketch_id>/event/annotate/"),
     (EventCreateResource, "/sketches/<int:sketch_id>/event/create/"),
     (
@@ -138,7 +140,10 @@ API_ROUTES = [
     (ViewResource, "/sketches/<int:sketch_id>/views/<int:view_id>/"),
     (SearchTemplateListResource, "/searchtemplates/"),
     (SearchTemplateResource, "/searchtemplates/<int:searchtemplate_id>/"),
-    (SearchTemplateParseResource, "/searchtemplates/<int:searchtemplate_id>/parse/"),
+    (
+        SearchTemplateParseResource,
+        "/searchtemplates/<int:searchtemplate_id>/parse/",
+    ),
     (UploadFileResource, "/upload/"),
     (TaskResource, "/tasks/"),
     (StoryListResource, "/sketches/<int:sketch_id>/stories/"),

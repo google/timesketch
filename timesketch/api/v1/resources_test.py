@@ -527,7 +527,7 @@ class EventAddAttributeResourceTest(BaseTest):
 
     @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
     def test_add_existing_attributes(self):
-        """Tests existing attributes cannot be overidden."""
+        """Tests existing attributes cannot be overridden."""
         self.login()
 
         response = self.client.post(
@@ -748,7 +748,7 @@ level: high
             response.json["objects"][0]["rule_yaml"],
         )
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
-        # Now GET the ressources
+        # Now GET the resources
         response = self.client.get("/api/v1/sigmarules/5266a592-b793-11ea-b3de-bbbbbb/")
 
         self.assertIsNotNone(response)
@@ -897,7 +897,7 @@ class SigmaRuleByTextResourceTest(BaseTest):
         id: bb1e0d1d-cd13-4b65-bf7e-69b4e740266b
         description: Detects suspicious installation of foobar
         references:
-            - https://samle.com/foobar
+            - https://sample.com/foobar
         author: Alexander Jaeger
         date: 2020/12/10
         modified: 2020/12/10
@@ -923,7 +923,7 @@ class SigmaRuleByTextResourceTest(BaseTest):
                 "title": "Installation of foobar",
                 "id": "bb1e0d1d-cd13-4b65-bf7e-69b4e740266b",
                 "description": "Detects suspicious installation of foobar",
-                "references": ["https://samle.com/foobar"],
+                "references": ["https://sample.com/foobar"],
                 "author": "Alexander Jaeger",
                 "date": "2020/12/10",
                 "modified": "2020/12/10",

@@ -42,7 +42,7 @@ def configure_logger_debug():
     logging.basicConfig()
     logger.setLevel(logging.DEBUG)
     logger_formatter = logging.Formatter(
-        "[%(asctime)s] %(name)s/%(levelname)s %(message)s " "<%(module)s/%(funcName)s>"
+        "[%(asctime)s] %(name)s/%(levelname)s %(message)s <%(module)s/%(funcName)s>"
     )
     for handler in logger.parent.handlers:
         handler.setFormatter(logger_formatter)
@@ -414,7 +414,7 @@ def main(args=None):
         type=int,
         default=0,
         dest="entry_threshold",
-        help=("How many entries should be buffered up before being " "sent to server."),
+        help=("How many entries should be buffered up before being sent to server."),
     )
 
     config_group.add_argument(

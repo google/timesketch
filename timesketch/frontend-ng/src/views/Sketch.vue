@@ -15,103 +15,8 @@ limitations under the License.
 -->
 <template>
   <div v-if="sketch" style="height: 30%">
+    <!-- Progress indicator when loading sketch data -->
     <v-progress-linear v-if="loadingSketch" indeterminate color="primary"></v-progress-linear>
-
-    <!-- Top horizontal toolbar -->
-    <v-toolbar flat color="transparent">
-      <v-avatar v-show="!showLeftPanel || !hasTimelines" class="ml-n3 mt-1">
-        <router-link to="/">
-          <v-img src="/dist/timesketch-color.png" max-height="25" max-width="25" contain></v-img>
-        </router-link>
-      </v-avatar>
-      <span v-show="!showLeftPanel && !loadingSketch" class="mr-1" style="font-size: 1.1em">{{ sketch.name }} </span>
-
-      <v-btn icon v-show="!showLeftPanel && !loadingSketch" @click="toggleLeftPanel" class="ml-n1">
-        <v-icon>mdi-menu</v-icon>
-      </v-btn>
-
-      <v-btn
-        v-show="currentRouteName !== 'Explore'"
-        :to="{ name: 'Explore', params: { sketchId: sketchId } }"
-        color="primary"
-        small
-        text
-        class="ml-3"
-      >
-        <v-icon small left>mdi-arrow-left</v-icon>
-        back to explore
-      </v-btn>
-      <v-spacer></v-spacer>
-      <v-btn small depressed v-on:click="switchUI"> Use the old UI </v-btn>
-
-      <!-- Sharing dialog -->
-      <v-dialog v-model="shareDialog" width="500">
-        <template v-slot:activator="{ on, attrs }">
-          <v-btn small depressed color="primary" class="ml-2" v-bind="attrs" v-on="on">
-            <v-icon small left>mdi-account-multiple-plus</v-icon>
-            Share
-          </v-btn>
-        </template>
-        <ts-share-card @close-dialog="shareDialog = false"></ts-share-card>
-      </v-dialog>
-
-      <v-avatar color="grey lighten-1" size="25" class="ml-3">
-        <span class="white--text">{{ currentUser | initialLetter }}</span>
-      </v-avatar>
-      <v-menu offset-y>
-        <template v-slot:activator="{ on, attrs }">
-          <v-avatar>
-            <v-btn small icon v-bind="attrs" v-on="on">
-              <v-icon>mdi-dots-vertical</v-icon>
-            </v-btn>
-          </v-avatar>
-        </template>
-        <v-card>
-          <v-list>
-            <v-list-item-group color="primary">
-              <v-list-item v-on:click="toggleTheme">
-                <v-list-item-icon>
-                  <v-icon>mdi-brightness-6</v-icon>
-                </v-list-item-icon>
-                <v-list-item-content>
-                  <v-list-item-title>Toggle theme</v-list-item-title>
-                </v-list-item-content>
-              </v-list-item>
-
-              <v-list-item>
-                <v-list-item-icon>
-                  <v-icon>mdi-archive</v-icon>
-                </v-list-item-icon>
-                <v-list-item-content>
-                  <v-list-item-title>Archive sketch</v-list-item-title>
-                </v-list-item-content>
-              </v-list-item>
-
-              <v-list-item>
-                <v-list-item-icon>
-                  <v-icon>mdi-export</v-icon>
-                </v-list-item-icon>
-                <v-list-item-content>
-                  <v-list-item-title>Export sketch</v-list-item-title>
-                </v-list-item-content>
-              </v-list-item>
-
-              <a href="/logout/" style="text-decoration: none; color: inherit">
-                <v-list-item>
-                  <v-list-item-icon>
-                    <v-icon>mdi-logout</v-icon>
-                  </v-list-item-icon>
-
-                  <v-list-item-content>
-                    <v-list-item-title>Logout</v-list-item-title>
-                  </v-list-item-content>
-                </v-list-item>
-              </a>
-            </v-list-item-group>
-          </v-list>
-        </v-card>
-      </v-menu>
-    </v-toolbar>
 
     <!-- Empty state -->
     <v-container v-if="!hasTimelines && !loadingSketch" fill-height fluid>
@@ -125,9 +30,68 @@ limitations under the License.
       </v-row>
     </v-container>
 
+    <!-- Archived state -->
+    <v-container v-if="isArchived && !loadingSketch" fill-height fluid>
+      <v-row align="center" justify="center">
+        <v-sheet class="pa-4">
+          <center>
+            <div style="font-size: 2em" class="mb-3">This sketch is archived</div>
+            <v-btn outlined color="primary" @click="unArchiveSketch()"> Bring it back </v-btn>
+          </center>
+        </v-sheet>
+      </v-row>
+    </v-container>
+
+    <!-- Context search -->
+    <v-bottom-sheet
+      hide-overlay
+      persistent
+      no-click-animation
+      v-model="showTimelineView"
+      @click:outside="showTimelineView = false"
+      scrollable
+    >
+      <v-card>
+        <v-toolbar dense flat>
+          <strong>Context search</strong>
+          <v-btn-toggle v-model="contextTimeWindowSeconds" class="ml-10" rounded>
+            <v-btn
+              v-for="duration in [1, 5, 10, 60, 300, 600, 1800, 3600]"
+              :key="duration"
+              :value="duration"
+              small
+              outlined
+              @click="updateContextQuery(duration)"
+            >
+              {{ duration | formatSeconds }}
+            </v-btn>
+          </v-btn-toggle>
+          <v-btn small text class="ml-5" @click="contextToSearch()">Replace search</v-btn>
+
+          <v-spacer></v-spacer>
+
+          <v-btn icon :disabled="timelineViewHeight > 40" @click="increaseTimelineViewHeight()">
+            <v-icon>mdi-chevron-up</v-icon>
+          </v-btn>
+          <v-btn icon :disabled="timelineViewHeight === 0" @click="decreaseTimelineViewHeight()">
+            <v-icon>mdi-chevron-down</v-icon>
+          </v-btn>
+          <v-btn icon @click="showTimelineView = false">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </v-toolbar>
+        <v-divider></v-divider>
+        <v-expand-transition>
+          <v-card-text :style="{ height: timelineViewHeight + 'vh' }" v-show="!minimizeTimelineView">
+            <ts-event-list :query-request="queryRequest" :highlight-event="currentContextEvent._id"></ts-event-list>
+          </v-card-text>
+        </v-expand-transition>
+      </v-card>
+    </v-bottom-sheet>
+
     <!-- Left panel -->
     <v-navigation-drawer
-      v-if="showLeftPanel && hasTimelines"
+      v-if="showLeftPanel && hasTimelines && !isArchived"
       app
       permanent
       :width="navigationDrawer.width"
@@ -140,6 +104,7 @@ limitations under the License.
             <v-img src="/dist/timesketch-color.png" max-height="25" max-width="25" contain></v-img>
           </router-link>
         </v-avatar>
+
         <div
           @click="showSketchMetadata = !showSketchMetadata"
           style="font-size: 1.1em; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis"
@@ -147,6 +112,7 @@ limitations under the License.
         >
           {{ sketch.name }}
         </div>
+
         <v-spacer></v-spacer>
         <v-icon @click="toggleLeftPanel">mdi-chevron-left</v-icon>
       </v-toolbar>
@@ -232,16 +198,21 @@ limitations under the License.
           <ts-saved-searches v-if="meta.views"></ts-saved-searches>
           <ts-data-types></ts-data-types>
           <ts-tags></ts-tags>
-          <ts-search-templates></ts-search-templates>
           <ts-graphs></ts-graphs>
-          <ts-sigma-rules></ts-sigma-rules>
+          <ts-stories></ts-stories>
           <ts-intelligence></ts-intelligence>
+          <ts-search-templates></ts-search-templates>
+          <ts-sigma-rules></ts-sigma-rules>
+          <ts-analyzer-results></ts-analyzer-results>
         </v-tab-item>
         <v-tab-item :transition="false">
           <ts-scenario v-for="scenario in activeScenarios" :key="scenario.id" :scenario="scenario"></ts-scenario>
           <v-row class="mt-0 px-2" flat>
-            <v-col cols="6">
-              <v-btn text color="primary" @click="scenarioDialog = true" style="cursor: pointer"
+            <v-col cols="12">
+              <v-card v-if="!Object.keys(scenarioTemplates).length" flat class="pa-4"
+                >No scenarios available yet. Contact your server admin to add scenarios to this server.</v-card
+              >
+              <v-btn v-else text color="primary" @click="scenarioDialog = true" style="cursor: pointer"
                 ><v-icon left>mdi-plus</v-icon> Add Scenario</v-btn
               >
             </v-col>
@@ -263,12 +234,106 @@ limitations under the License.
         </v-tab-item>
       </v-tabs-items>
     </v-navigation-drawer>
-    <router-view v-if="sketch.status && hasTimelines" @setTitle="(title) => (this.title = title)"></router-view>
+
+    <!-- Top horizontal toolbar -->
+    <v-app-bar app hide-on-scroll clipped flat :color="$vuetify.theme.dark ? '#121212' : 'white'">
+      <v-btn icon v-show="!showLeftPanel && !loadingSketch" @click="toggleLeftPanel" class="ml-n1">
+        <v-icon>mdi-menu</v-icon>
+      </v-btn>
+
+      <v-avatar v-show="!showLeftPanel || !hasTimelines || isArchived" class="ml-n2 mt-1">
+        <router-link to="/">
+          <v-img src="/dist/timesketch-color.png" max-height="25" max-width="25" contain></v-img>
+        </router-link>
+      </v-avatar>
+
+      <span v-if="!showLeftPanel || !hasTimelines || isArchived" style="font-size: 1.1em">{{ sketch.name }} </span>
+
+      <v-btn
+        v-show="currentRouteName !== 'Explore'"
+        :to="{ name: 'Explore', params: { sketchId: sketchId } }"
+        small
+        depressed
+        class="ml-2"
+      >
+        <v-icon small left>mdi-arrow-left</v-icon>
+        back to explore
+      </v-btn>
+      <v-spacer></v-spacer>
+      <v-btn small depressed v-on:click="switchUI"> Use the old UI </v-btn>
+
+      <!-- Sharing dialog -->
+      <v-dialog v-model="shareDialog" width="500">
+        <template v-slot:activator="{ on, attrs }">
+          <v-btn small depressed color="primary" class="ml-2" v-bind="attrs" v-on="on">
+            <v-icon small left>mdi-account-multiple-plus</v-icon>
+            Share
+          </v-btn>
+        </template>
+        <ts-share-card @close-dialog="shareDialog = false"></ts-share-card>
+      </v-dialog>
+
+      <v-avatar color="grey lighten-1" size="25" class="ml-3">
+        <span class="white--text">{{ currentUser | initialLetter }}</span>
+      </v-avatar>
+      <v-menu offset-y>
+        <template v-slot:activator="{ on, attrs }">
+          <v-avatar>
+            <v-btn small icon v-bind="attrs" v-on="on">
+              <v-icon>mdi-dots-vertical</v-icon>
+            </v-btn>
+          </v-avatar>
+        </template>
+        <v-card>
+          <v-list>
+            <v-list-item-group color="primary">
+              <v-list-item v-on:click="toggleTheme">
+                <v-list-item-icon>
+                  <v-icon>mdi-brightness-6</v-icon>
+                </v-list-item-icon>
+                <v-list-item-content>
+                  <v-list-item-title>Toggle theme</v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+
+              <v-list-item @click="archiveSketch()">
+                <v-list-item-icon>
+                  <v-icon>mdi-archive</v-icon>
+                </v-list-item-icon>
+                <v-list-item-content>
+                  <v-list-item-title>Archive sketch</v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+
+              <a href="/logout/" style="text-decoration: none; color: inherit">
+                <v-list-item>
+                  <v-list-item-icon>
+                    <v-icon>mdi-logout</v-icon>
+                  </v-list-item-icon>
+
+                  <v-list-item-content>
+                    <v-list-item-title>Logout</v-list-item-title>
+                  </v-list-item-content>
+                </v-list-item>
+              </a>
+            </v-list-item-group>
+          </v-list>
+        </v-card>
+      </v-menu>
+    </v-app-bar>
+
+    <!-- Canvas (main) view -->
+    <router-view
+      v-if="sketch.status && hasTimelines && !isArchived"
+      @setTitle="(title) => (this.title = title)"
+    ></router-view>
   </div>
 </template>
 
 <script>
 import ApiClient from '../utils/RestApiClient'
+import EventBus from '../main'
+import dayjs from '@/plugins/dayjs'
 
 import TsScenario from '../components/Scenarios/Scenario'
 import TsSavedSearches from '../components/LeftPanel/SavedSearches'
@@ -278,9 +343,12 @@ import TsSearchTemplates from '../components/LeftPanel/SearchTemplates'
 import TsSigmaRules from '../components/LeftPanel/SigmaRules'
 import TsIntelligence from '../components/LeftPanel/ThreatIntel'
 import TsGraphs from '../components/LeftPanel/Graphs'
+import TsStories from '../components/LeftPanel/Stories'
 import TsUploadTimelineForm from '../components/UploadForm'
 import TsShareCard from '../components/ShareCard'
 import TsRenameSketch from '../components/RenameSketch'
+import TsAnalyzerResults from '../components/LeftPanel/AnalyzerResults.vue'
+import TsEventList from '../components/Explore/EventList'
 
 export default {
   props: ['sketchId'],
@@ -296,12 +364,15 @@ export default {
     TsRenameSketch,
     TsIntelligence,
     TsGraphs,
+    TsStories,
+    TsAnalyzerResults,
+    TsEventList,
   },
   data() {
     return {
       showSketchMetadata: false,
       navigationDrawer: {
-        width: 400,
+        width: 410,
       },
       selectedScenario: null,
       scenarioDialog: false,
@@ -312,9 +383,18 @@ export default {
       showHidden: false,
       shareDialog: false,
       loadingSketch: false,
+      // Context
+      timelineViewHeight: 60,
+      showTimelineView: false,
+      currentContextEvent: {},
+      minimizeTimelineView: false,
+      queryRequest: {},
+      contextStartTime: null,
+      contextEndTime: null,
+      contextTimeWindowSeconds: 300,
     }
   },
-  mounted: function () {
+  mounted() {
     this.loadingSketch = true
     this.showLeftPanel = false
     this.$store.dispatch('updateSketch', this.sketchId).then(() => {
@@ -324,6 +404,7 @@ export default {
       this.$store.dispatch('updateSavedGraphs', this.sketchId)
       this.$store.dispatch('updateGraphPlugins')
       this.$store.dispatch('updateContextLinks')
+      this.$store.dispatch('updateAnalyzerList', this.sketchId)
       this.loadingSketch = false
       this.showLeftPanel = true
       this.$nextTick(function () {
@@ -331,6 +412,10 @@ export default {
         this.setDrawerResizeEvents()
       })
     })
+    EventBus.$on('showContextWindow', this.showContextWindow)
+  },
+  beforeDestroy() {
+    EventBus.$off('showContextWindow')
   },
   computed: {
     sketch() {
@@ -338,6 +423,12 @@ export default {
     },
     meta() {
       return this.$store.state.meta
+    },
+    isArchived() {
+      if (!this.sketch.status || !this.sketch.status.length) {
+        return false
+      }
+      return this.sketch.status[0].status === 'archived'
     },
     scenarios() {
       return this.$store.state.scenarios
@@ -368,12 +459,96 @@ export default {
     },
   },
   methods: {
+    archiveSketch: function () {
+      this.loadingSketch = true
+      ApiClient.archiveSketch(this.sketch.id)
+        .then((response) => {
+          this.$store.dispatch('updateSketch', this.sketch.id).then(() => {
+            this.loadingSketch = false
+          })
+        })
+        .catch((e) => {
+          console.error(e)
+        })
+    },
+    unArchiveSketch: function () {
+      this.loadingSketch = true
+      ApiClient.unArchiveSketch(this.sketch.id)
+        .then((response) => {
+          this.$store.dispatch('updateSketch', this.sketch.id).then(() => {
+            this.loadingSketch = false
+          })
+        })
+        .catch((e) => {
+          console.error(e)
+        })
+    },
+    generateContextQuery(event) {
+      let timestampMillis = this.$options.filters.formatTimestamp(event._source.timestamp)
+      this.contextStartTime = dayjs.utc(timestampMillis).subtract(this.contextTimeWindowSeconds, 'second')
+      this.contextEndTime = dayjs.utc(timestampMillis).add(this.contextTimeWindowSeconds, 'second')
+      let startChip = {
+        field: '',
+        value: this.contextStartTime.toISOString() + ',' + this.contextEndTime.toISOString(),
+        type: 'datetime_range',
+        operator: 'must',
+        active: true,
+      }
+      let queryFilter = {
+        from: 0,
+        terminate_after: 40,
+        size: 40,
+        indices: ['_all'],
+        order: 'asc',
+        chips: [startChip],
+      }
+      let queryRequest = { queryString: '*', queryFilter: queryFilter }
+      return queryRequest
+    },
+    updateContextQuery(duration) {
+      this.contextTimeWindowSeconds = duration
+      this.queryRequest = this.generateContextQuery(this.currentContextEvent)
+    },
+    contextToSearch() {
+      let queryRequest = this.generateContextQuery(this.currentContextEvent)
+      queryRequest.doSearch = true
+      EventBus.$emit('setQueryAndFilter', queryRequest)
+      this.showTimelineView = false
+    },
+    showContextWindow(event) {
+      this.currentContextEvent = event
+      this.queryRequest = this.generateContextQuery(event)
+      this.showTimelineView = true
+    },
+    increaseTimelineViewHeight: function () {
+      this.minimizeTimelineView = false
+      if (this.timelineViewHeight > 70) {
+        return
+      }
+      this.timelineViewHeight += 30
+    },
+    decreaseTimelineViewHeight: function () {
+      this.minimizeTimelineView = false
+      if (this.timelineViewHeight < 50) {
+        this.minimizeTimelineView = true
+        this.timelineViewHeight = 0
+        return
+      }
+      this.timelineViewHeight -= 30
+    },
+    closeTimelineView: function () {
+      this.minimizeTimelineView = true
+      this.timelineViewHeight = 0
+    },
+
     toggleTheme: function () {
       this.$vuetify.theme.dark = !this.$vuetify.theme.dark
       localStorage.setItem('isDarkTheme', this.$vuetify.theme.dark.toString())
+      let element = document.body
+      element.dataset.theme = this.$vuetify.theme.dark ? 'dark' : 'light'
     },
     switchUI: function () {
-      window.location.href = window.location.href.replace('/v2/', '/')
+      window.location.href = window.location.href.replace('/sketch/', '/legacy/sketch/')
     },
     addScenario: function (scenario) {
       this.scenarioDialog = false
@@ -384,10 +559,16 @@ export default {
         .catch((e) => {})
     },
     setDrawerBorderStyle() {
+      if (!this.$refs.drawer) {
+        return
+      }
       let i = this.$refs.drawer.$el.querySelector('.v-navigation-drawer__border')
       i.style.cursor = 'ew-resize'
     },
     setDrawerResizeEvents() {
+      if (!this.$refs.drawer) {
+        return
+      }
       const minSize = 1
       const drawerElement = this.$refs.drawer.$el
       const drawerBorder = drawerElement.querySelector('.v-navigation-drawer__border')
@@ -421,18 +602,11 @@ export default {
     toggleLeftPanel() {
       this.showLeftPanel = !this.showLeftPanel
       if (this.showLeftPanel) {
-        this.navigationDrawer.width = 400
+        this.navigationDrawer.width = 410
       } else {
         this.navigationDrawer.width = 0
       }
-    },
-  },
-  watch: {
-    sketch: function (newVal) {
-      if (newVal.status[0].status === 'archived') {
-        this.$router.push({ name: 'Overview', params: { sketchId: this.sketch.id } })
-      }
-      document.title = this.sketch.name
+      EventBus.$emit('toggleLeftPanel')
     },
   },
 }

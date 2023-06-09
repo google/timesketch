@@ -38,26 +38,25 @@ from timesketch.views.auth import auth_views
 from timesketch.views.spa import spa_views
 
 
-def create_app(config=None, v2=False):
+def create_app(config=None, legacy_ui=False):
     """Create the Flask app instance that is used throughout the application.
 
     Args:
         config: Path to configuration file as a string or an object with config
         directives.
-        v2: Temporary flag to indicate to serve the new UI.
-            TODO: Remove this when the old UI has been deprecated.
+        legacy_ui: Temporary flag to indicate to serve the old UI.
+            TODO: Remove this when the old UI has been removed.
 
     Returns:
         Application object (instance of flask.Flask).
     """
-    template_folder = "frontend/dist"
-    static_folder = "frontend/dist"
+    template_folder = "frontend-ng/dist"
+    static_folder = "frontend-ng/dist"
 
-    # Serve the new UI.
-    # This is still experimental and will be broken and have missing features.
-    if v2:
-        template_folder = "frontend-ng/dist"
-        static_folder = "frontend-ng/dist"
+    # Serve the old UI.
+    if legacy_ui:
+        template_folder = "frontend/dist"
+        static_folder = "frontend/dist"
 
     app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
 
@@ -86,6 +85,10 @@ def create_app(config=None, v2=False):
             sys.exit()
     else:
         app.config.from_object(config)
+
+    # Load config values from environment variables.
+    # See: https://flask.palletsprojects.com/en/2.3.x/config/
+    app.config.from_prefixed_env()
 
     # Make sure that SECRET_KEY is configured.
     if not app.config["SECRET_KEY"]:

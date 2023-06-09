@@ -16,106 +16,126 @@ limitations under the License.
 <template>
   <div>
     <div
-      no-gutters
-      style="cursor: pointer"
+      :style="!(intelligenceData && intelligenceData.length) ? '' : 'cursor: pointer'"
       class="pa-4"
-      flat
       @click="expanded = !expanded"
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
-      <span>
-        <v-icon left>mdi-shield-search</v-icon> Threat Intelligence
-      </span>
+      <span> <v-icon left>mdi-shield-search</v-icon> Threat Intelligence </span>
       <v-btn
-        v-if="expanded"
-        small
-        color="primary"
-        text
-        class="ml-1"
+        icon
+        class="float-right mt-n1 mr-n1"
+        v-if="intelligenceData && !intelligenceData.length"
+        @click="addIndicator()"
+      >
+        <v-icon>mdi-plus</v-icon>
+      </v-btn>
+      <v-btn
+        icon
+        class="float-right mt-n1 mr-n1"
+        v-if="expanded && intelligenceData && intelligenceData.length"
+        @click="addIndicator()"
+        @click.stop=""
+      >
+        <v-icon>mdi-plus</v-icon>
+      </v-btn>
+      <v-btn
+        v-if="expanded && intelligenceData && intelligenceData.length"
+        icon
+        class="float-right mt-n1"
         :to="{ name: 'Intelligence', params: { sketchId: sketch.id } }"
         @click.stop=""
       >
-        <v-icon small left>mdi-pencil</v-icon>Manage
+        <v-icon small>mdi-pencil</v-icon>
       </v-btn>
-      <span class="float-right mr-2">
-        <small><strong>{{ intelligenceData.length }}</strong></small>
+
+      <span v-if="!expanded" class="float-right" style="margin-right: 10px">
+        <small v-if="intelligenceData && intelligenceData.length"
+          ><strong>{{ intelligenceData.length }}</strong></small
+        >
       </span>
-
-
     </div>
 
     <v-expand-transition>
       <div v-show="expanded">
-        <v-divider></v-divider>
+        <div v-if="intelligenceData && intelligenceData.length">
+          <v-divider></v-divider>
 
-        <v-tabs grow v-model="tabs">
-          <v-tab>
-            Indicators (<small> {{ intelligenceData.length }} </small>)
-          </v-tab>
-          <v-tab>
-            Tags (<small>{{ Object.keys(tagInfo).length }} </small>)
-          </v-tab>
-        </v-tabs>
-        <v-tabs-items v-model="tabs">
-          <v-tab-item :transition="false">
-            <v-data-table v-if="intelligenceData.length >= 10" dense :headers="indicatorHeaders" :items="intelligenceData" :items-per-page="10">
-              <template v-slot:item.ioc="{ item }">
-                <span :title="item.ioc">
-                  <div style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">
-                    {{ item.ioc }}
-                  </div>
-                </span>
-              </template>
+          <v-tabs grow v-model="tabs">
+            <v-tab>
+              Indicators (<small> {{ intelligenceData.length }} </small>)
+            </v-tab>
+            <v-tab>
+              Tags (<small>{{ Object.keys(tagInfo).length }} </small>)
+            </v-tab>
+          </v-tabs>
+          <v-tabs-items v-model="tabs">
+            <v-tab-item :transition="false">
+              <v-data-table
+                v-if="intelligenceData.length >= 10"
+                dense
+                :headers="indicatorHeaders"
+                :items="intelligenceData"
+                :items-per-page="10"
+              >
+                <template v-slot:item.ioc="{ item }">
+                  <span :title="item.ioc">
+                    <div style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">
+                      {{ item.ioc }}
+                    </div>
+                  </span>
+                </template>
 
-              <template v-slot:item.type="{ item }">
-                <small>{{ item.type }}</small>
-              </template>
+                <template v-slot:item.type="{ item }">
+                  <small>{{ item.type }}</small>
+                </template>
 
-              <template v-slot:item.actions="{ item }">
-                <v-btn icon small @click="generateSearchQuery(item.ioc)">
-                  <v-icon small>mdi-magnify</v-icon>
-                </v-btn>
-              </template>
-            </v-data-table>
-            <v-data-table v-else dense :headers="indicatorHeaders" :items="intelligenceData" hide-default-footer>
-              <template v-slot:item.ioc="{ item }">
-                <span :title="item.ioc">
-                  <div style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">
-                    {{ item.ioc }}
-                  </div>
-                </span>
-              </template>
+                <template v-slot:item.actions="{ item }">
+                  <v-btn icon small @click="generateSearchQuery(item.ioc)">
+                    <v-icon small>mdi-magnify</v-icon>
+                  </v-btn>
+                </template>
+              </v-data-table>
+              <v-data-table v-else dense :headers="indicatorHeaders" :items="intelligenceData" hide-default-footer>
+                <template v-slot:item.ioc="{ item }">
+                  <span :title="item.ioc">
+                    <div style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">
+                      {{ item.ioc }}
+                    </div>
+                  </span>
+                </template>
 
-              <template v-slot:item.type="{ item }">
-                <small>{{ item.type }}</small>
-              </template>
+                <template v-slot:item.type="{ item }">
+                  <small>{{ item.type }}</small>
+                </template>
 
-              <template v-slot:item.actions="{ item }">
-                <v-btn icon small @click="generateSearchQuery(item.ioc)">
-                  <v-icon small>mdi-magnify</v-icon>
-                </v-btn>
-              </template>
-            </v-data-table>
-          </v-tab-item>
-          <v-tab-item :transition="false">
-            <v-data-table dense :headers="tagHeaders" :items="Object.values(tagInfo)" :items-per-page="10">
-              <template v-slot:item.tag="{ item }">
-                <v-chip x-small @click="searchForIOC(item)">{{ item.tag.name }}</v-chip>
-              </template>
-              <template v-slot:item.iocs="{ item }">
-                <small :title="item.iocs">{{ item.iocs.length }}</small>
-              </template>
-              <template v-slot:item.weight="{ item }">
-                <small>{{ item.tag.weight }}</small>
-              </template>
-              <template v-slot:item.actions="{ item }">
-                <v-btn icon small @click="searchForIOC(item)">
-                  <v-icon small>mdi-magnify</v-icon>
-                </v-btn>
-              </template>
-            </v-data-table>
-          </v-tab-item>
-        </v-tabs-items>
+                <template v-slot:item.actions="{ item }">
+                  <v-btn icon small @click="generateSearchQuery(item.ioc)">
+                    <v-icon small>mdi-magnify</v-icon>
+                  </v-btn>
+                </template>
+              </v-data-table>
+            </v-tab-item>
+            <v-tab-item :transition="false">
+              <v-data-table dense :headers="tagHeaders" :items="Object.values(tagInfo)" :items-per-page="10">
+                <template v-slot:item.tag="{ item }">
+                  <v-chip x-small @click="searchForIOC(item)">{{ item.tag.name }}</v-chip>
+                </template>
+                <template v-slot:item.iocs="{ item }">
+                  <small :title="item.iocs">{{ item.iocs.length }}</small>
+                </template>
+                <template v-slot:item.weight="{ item }">
+                  <small>{{ item.tag.weight }}</small>
+                </template>
+                <template v-slot:item.actions="{ item }">
+                  <v-btn icon small @click="searchForIOC(item)">
+                    <v-icon small>mdi-magnify</v-icon>
+                  </v-btn>
+                </template>
+              </v-data-table>
+            </v-tab-item>
+          </v-tabs-items>
+        </div>
       </div>
     </v-expand-transition>
     <v-divider></v-divider>
@@ -246,6 +266,9 @@ export default {
       eventData.queryString = opensearchQuery
       eventData.queryFilter = defaultQueryFilter()
       EventBus.$emit('setQueryAndFilter', eventData)
+    },
+    addIndicator() {
+      EventBus.$emit('addIndicator')
     },
   },
   mounted() {

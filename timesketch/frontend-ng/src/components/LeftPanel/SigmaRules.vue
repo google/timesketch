@@ -16,58 +16,61 @@ limitations under the License.
 <template>
   <div>
     <div
-      no-gutters
-      style="cursor: pointer"
+      :style="!(sigmaRules && sigmaRules.length) ? '' : 'cursor: pointer'"
       class="pa-4"
-      flat
       @click="expanded = !expanded"
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
-      <span>
-        <v-icon left>mdi-sigma-lower</v-icon> Sigma Rules
-      </span>
+      <span> <v-icon left>mdi-sigma-lower</v-icon> Sigma Rules </span>
+
       <v-btn
-        v-if="expanded"
-        small
-        color="primary"
+        v-if="expanded || (sigmaRules && !sigmaRules.length)"
+        icon
         text
-        class="ml-1"
-        :to="{ name: 'Studio', params: { id: 'new', type: 'sigma' } }"
+        class="float-right mt-n1 mr-n1"
+        :to="{ name: 'SigmaNewRule', params: { sketchId: sketch.id } }"
         @click.stop=""
       >
-        <v-icon small left>mdi-plus</v-icon>New Rule
+        <v-icon>mdi-plus</v-icon>
       </v-btn>
-      <span class="float-right mr-2">
-        <small><strong>{{ ruleCount }}</strong></small>
+      <span v-if="!expanded" class="float-right" style="margin-right: 3px">
+        <v-progress-circular v-if="isLoading" :size="24" :width="1" indeterminate></v-progress-circular>
+      </span>
+      <span v-if="!expanded" class="float-right" style="margin-right: 10px">
+        <small v-if="sigmaRules && sigmaRules.length"
+          ><strong>{{ ruleCount }}</strong></small
+        >
       </span>
     </div>
 
     <v-expand-transition>
       <div v-show="expanded">
-        <v-data-iterator v-if="ruleCount <= itemsPerPage" :items="sigmaRules" hide-default-footer>
-          <template v-slot:default="props">
-            <ts-sigma-rule v-for="sigmaRule in props.items" :key="sigmaRule.rule_uuid" :sigma-rule="sigmaRule" />
-          </template>
-        </v-data-iterator>
-        <v-data-iterator v-else :items="sigmaRules" :items-per-page.sync="itemsPerPage" :search="search">
-          <template v-slot:header>
-            <v-toolbar flat>
-              <v-text-field
-                v-model="search"
-                clearable
-                hide-details
-                outlined
-                dense
-                prepend-inner-icon="mdi-magnify"
-                label="Search for a rule.."
-              ></v-text-field>
-            </v-toolbar>
-          </template>
+        <div v-if="sigmaRules && sigmaRules.length">
+          <v-data-iterator v-if="ruleCount <= itemsPerPage" :items="sigmaRules" hide-default-footer>
+            <template v-slot:default="props">
+              <ts-sigma-rule v-for="sigmaRule in props.items" :key="sigmaRule.rule_uuid" :sigma-rule="sigmaRule" />
+            </template>
+          </v-data-iterator>
+          <v-data-iterator v-else :items="sigmaRules" :items-per-page.sync="itemsPerPage" :search="search">
+            <template v-slot:header>
+              <v-toolbar flat>
+                <v-text-field
+                  v-model="search"
+                  clearable
+                  hide-details
+                  outlined
+                  dense
+                  prepend-inner-icon="mdi-magnify"
+                  label="Search for a rule.."
+                ></v-text-field>
+              </v-toolbar>
+            </template>
 
-          <template v-slot:default="props">
-            <ts-sigma-rule v-for="sigmaRule in props.items" :key="sigmaRule.rule_uuid" :sigma-rule="sigmaRule"/>
-          </template>
-        </v-data-iterator>
+            <template v-slot:default="props">
+              <ts-sigma-rule v-for="sigmaRule in props.items" :key="sigmaRule.rule_uuid" :sigma-rule="sigmaRule" />
+            </template>
+          </v-data-iterator>
+        </div>
       </div>
     </v-expand-transition>
     <v-divider></v-divider>
@@ -91,8 +94,7 @@ export default {
       search: '',
     }
   },
-  methods: {
-  },
+  methods: {},
   computed: {
     sigmaRules() {
       return this.$store.state.sigmaRuleList
@@ -110,8 +112,11 @@ export default {
     meta() {
       return this.$store.state.meta
     },
+    isLoading() {
+      return !this.sigmaRules
+    },
   },
-  created() {
+  mounted() {
     this.$store.dispatch('updateSigmaList')
   },
 }

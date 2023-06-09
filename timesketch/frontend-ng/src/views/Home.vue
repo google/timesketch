@@ -120,7 +120,7 @@ export default {
       localStorage.setItem('isDarkTheme', this.$vuetify.theme.dark.toString())
     },
     switchUI: function () {
-      window.location.href = window.location.href.replace('/v2/', '/')
+      window.location.href = '/legacy/'
     },
     clearFormData: function () {
       this.sketchForm.name = ''

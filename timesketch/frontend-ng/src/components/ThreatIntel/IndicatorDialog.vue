@@ -33,8 +33,8 @@ limitations under the License.
       <v-text-field outlined label="External reference (optional)" v-model="newIndicator.externalURI"> </v-text-field>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn color="primary" text @click="closeDialog()"> Cancel </v-btn>
-        <v-btn color="primary" text :disabled="!newIndicator.ioc" @click="saveIndicator"> Save </v-btn>
+        <v-btn text @click="closeDialog()"> Cancel </v-btn>
+        <v-btn color="primary" depressed :disabled="!newIndicator.ioc" @click="saveIndicator"> Save </v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>

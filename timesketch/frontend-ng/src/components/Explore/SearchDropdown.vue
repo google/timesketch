@@ -55,7 +55,7 @@ limitations under the License.
       </v-col>
       <v-divider vertical></v-divider>
 
-      <v-col cols="4">
+      <v-col v-if="matches.labels.length || matches.tags.length" cols="4">
         <h5 class="mt-3 ml-5">Tags</h5>
         <v-list dense style="height: 500px" class="overflow-y-auto" :class="scrollbarTheme">
           <v-list-item

@@ -35,60 +35,53 @@ def list_timelines(ctx):
 
 
 @timelines_group.command("describe")
-@click.argument("timeline_id", type=int, required=False)
-@click.pass_context
-def describe_timeline(ctx, timeline_id):
-    """Show details for a timeline.
-
-    Args:
-        ctx: Click CLI context object.
-        timeline_id: Timeline ID from argument.
-    """
-    sketch = ctx.obj.sketch
-    # TODO (berggren): Add more details to the output, e.g. the data_sources
-    timeline = sketch.get_timeline(timeline_id=timeline_id)
-    if not timeline:
-        click.echo("No such timeline")
-        return
-    click.echo(f"Name: {timeline.name}")
-    click.echo(f"Index: {timeline.index_name}")
-
-
-@timelines_group.command("event-add-tags")
-@click.argument("timeline_id", type=int, required=False)
-@click.option("--event_id", required=True, help="ID of the event.")
-@click.option(
-    "--tags",
-    required=True,
-    help="Comma seperated list of Tags to add to the event.",
-)
+@click.argument("timeline-id", type=int, required=False)
 @click.option(
     "--output-format",
     "output",
     required=False,
-    help="Set output format (overrides global setting)",
+    help="Set output format [json, text] (overrides global setting).",
 )
 @click.pass_context
-def event_add_tags(ctx, timeline_id, event_id, tags, output):
-    """Add tags to an event."""
+def describe_timeline(ctx, timeline_id, output):
+    """Show details for a timeline.
+
+    Args:
+        ctx: Click CLI context object.
+        timeline-id: Timeline ID from argument.
+        output-format: Output format to use. Available values: 'json' or 'text'
+    """
     sketch = ctx.obj.sketch
+    if not output:
+        output = ctx.obj.output_format
     timeline = sketch.get_timeline(timeline_id=timeline_id)
     if not timeline:
         click.echo("No such timeline")
         return
-    events = [
-        {
-            "_id": event_id,
-            "_index": timeline.index_name,
-            "_type": "generic_event",
-        }
-    ]
-    tags_list = tags.split(",")
-    return_value = sketch.tag_events(events, tags_list)
-    if return_value is None:
-        click.echo("No tags where added to the event.")
-        return
+    timeline.lazyload_data()
     if output == "json":
-        click.echo(return_value)
-    else:
-        click.echo(f"Tags {tags_list} added to event {event_id}")
+        click.echo(f"{timeline.resource_data}")
+        return
+    if output != "text":
+        click.echo(f'Unsupported output format: "{output}" - using "text" instead')
+
+    click.echo(f"Name: {timeline.name}")
+    click.echo(f"Index: {timeline.index_name}")
+    click.echo(f"Status: {timeline.status}")
+    lines_indexed = timeline.resource_data.get("meta").get("lines_indexed", 0)
+    click.echo(f"Event count: {lines_indexed or 0}")
+
+    for timeline_object in timeline.resource_data.get("objects", None):
+        name = timeline_object.get("name", "no name")
+        created = timeline_object.get("created_at", 0)
+        click.echo(f"Name: {name}")
+        click.echo(f"Created: {created}")
+        click.echo("Datasources:")
+        for datasource in timeline_object.get("datasources", []):
+            error_message = datasource.get("error_message", None)
+            original_filename = datasource.get("original_filename", None)
+            file_on_disk = datasource.get("file_on_disk", None)
+
+            click.echo(f"\tOriginal filename: {original_filename}")
+            click.echo(f"\tFile on disk: {file_on_disk}")
+            click.echo(f"\tError: {error_message}")

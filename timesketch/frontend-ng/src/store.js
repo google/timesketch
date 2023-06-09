@@ -46,6 +46,7 @@ const defaultState = (currentUser) => {
       timeout: -1
     },
     contextLinkConf: {},
+    sketchAnalyzerList: {},
   }
 }
 
@@ -68,8 +69,7 @@ export default new Vuex.Store({
     SET_SCENARIO_TEMPLATES(state, payload) {
       Vue.set(state, 'scenarioTemplates', payload.objects)
     },
-    SET_TIMELINE_TAGS(state, payload) {
-      let buckets = payload.objects[0]['field_bucket']['buckets']
+    SET_TIMELINE_TAGS(state, buckets) {
       Vue.set(state, 'tags', buckets)
     },
     SET_DATA_TYPES(state, payload) {
@@ -121,6 +121,9 @@ export default new Vuex.Store({
     SET_CONTEXT_LINKS(state, payload) {
       Vue.set(state, 'contextLinkConf', payload)
     },
+    SET_ANALYZER_LIST(state, payload) {
+      Vue.set(state, 'sketchAnalyzerList', payload)
+    },
   },
   actions: {
     updateSketch(context, sketchId) {
@@ -128,7 +131,7 @@ export default new Vuex.Store({
         .then((response) => {
           context.commit('SET_SKETCH', response.data)
           context.commit('SET_ACTIVE_USER', response.data)
-          context.dispatch('updateTimelineTags', sketchId)
+          context.dispatch('updateTimelineTags', { sketchId: sketchId })
           context.dispatch('updateDataTypes', sketchId)
         })
         .catch((e) => { })
@@ -174,7 +177,7 @@ export default new Vuex.Store({
         })
         .catch((e) => { })
     },
-    updateTimelineTags(context, sketchId) {
+    updateTimelineTags(context, payload) {
       if (!context.state.sketch.active_timelines.length) {
         return
       }
@@ -185,9 +188,19 @@ export default new Vuex.Store({
           limit: '1000',
         },
       }
-      return ApiClient.runAggregator(sketchId, formData)
+      return ApiClient.runAggregator(payload.sketchId, formData)
         .then((response) => {
-          context.commit('SET_TIMELINE_TAGS', response.data)
+          let buckets = response.data.objects[0]['field_bucket']['buckets']
+          if (payload.tag && payload.num) {
+            let missing = buckets.find(tag => tag.tag === payload.tag) === undefined
+            if (missing) {
+              buckets.push({ tag: payload.tag, count: payload.num })
+            } else {
+              let tagIndex = buckets.findIndex(tag => tag.tag === payload.tag)
+              buckets[tagIndex].count += payload.num
+            }
+          }
+          context.commit('SET_TIMELINE_TAGS', buckets)
         })
         .catch((e) => { })
     },
@@ -253,6 +266,22 @@ export default new Vuex.Store({
       })
       .catch((e) => {
         console.error(e)
+      })
+    },
+    updateAnalyzerList(context, sketchId) {
+      if (!sketchId) {
+        sketchId = context.state.sketch.id
+      }
+      ApiClient.getAnalyzers(sketchId).then((response) => {
+        let analyzerList = {}
+        if (response.data !== undefined) {
+          response.data.forEach((analyzer) => {
+            analyzerList[analyzer.name] = analyzer
+          })
+        }
+        context.commit('SET_ANALYZER_LIST', analyzerList)
+      }).catch((e) => {
+        console.log(e)
       })
     },
   }
