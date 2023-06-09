@@ -16,6 +16,8 @@ import logging
 import json
 import time
 import os
+import pathlib
+import re
 import yaml
 
 from flask import abort
@@ -291,3 +293,40 @@ def escape_query_string(query_string):
         )
     )
     return escaped_query_string
+
+
+def is_valid_index_name(index_name):
+    """Validate index name.
+
+    Args:
+        index_name: string with the index name in uuid.uuid4.hex format.
+
+    Returns:
+        A boolean indicating whether the index name is valid or not.
+    """
+    regex = re.compile(r"[0-9a-f]{32}", re.I)
+    match = regex.match(index_name)
+    return bool(match)
+
+
+def format_upload_path(upload_path, index_name):
+    """Format upload path.
+
+    Args:
+        upload_path: string with the upload path.
+        index_name: string with the index name in uuid.uuid4.hex format.
+
+    Returns:
+        A string with the formatted upload path.
+    """
+    base_path = pathlib.Path(upload_path)
+    index_name_path = pathlib.Path(index_name)
+    if not base_path.is_absolute():
+        raise ValueError("Upload path must be absolute")
+
+    if not index_name_path.is_absolute():
+        full_path = base_path / index_name_path
+        return full_path.as_posix()
+
+    full_path = base_path / index_name_path.relative_to(base_path.anchor)
+    return full_path.as_posix()

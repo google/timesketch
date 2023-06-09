@@ -246,8 +246,12 @@ class EventResource(resources.ResourceMixin, Resource):
     def __init__(self):
         super().__init__()
         self.parser = reqparse.RequestParser()
-        self.parser.add_argument("searchindex_id", type=six.text_type, required=True)
-        self.parser.add_argument("event_id", type=six.text_type, required=True)
+        self.parser.add_argument(
+            "searchindex_id", type=six.text_type, required=True, location="args"
+        )
+        self.parser.add_argument(
+            "event_id", type=six.text_type, required=True, location="args"
+        )
 
     @login_required
     def get(self, sketch_id):
@@ -740,11 +744,19 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
     def __init__(self):
         super().__init__()
         self.parser = reqparse.RequestParser()
-        self.parser.add_argument("searchindex_id", type=str, required=False)
-        self.parser.add_argument("event_id", type=str, required=False)
-        self.parser.add_argument("annotation_type", type=str, required=False)
-        self.parser.add_argument("annotation_id", type=int, required=False)
-        self.parser.add_argument("currentSearchNode_id", type=int, required=False)
+        self.parser.add_argument(
+            "searchindex_id", type=str, required=False, location="args"
+        )
+        self.parser.add_argument("event_id", type=str, required=False, location="args")
+        self.parser.add_argument(
+            "annotation_type", type=str, required=False, location="args"
+        )
+        self.parser.add_argument(
+            "annotation_id", type=int, required=False, location="args"
+        )
+        self.parser.add_argument(
+            "currentSearchNode_id", type=int, required=False, location="args"
+        )
 
     def _get_sketch(self, sketch_id):
         """Helper function: Returns Sketch object givin a sketch id.

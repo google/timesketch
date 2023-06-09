@@ -297,6 +297,9 @@ class BaseGeoIpAnalyzer(interface.BaseAnalyzer):
         for ip_address, ip_address_fields in ip_addresses.items():
             response = client.ip2geo(ip_address)
 
+            if not response:
+                continue
+
             try:
                 iso_code, latitude, longitude, country_name, city_name = response
             except ValueError:
