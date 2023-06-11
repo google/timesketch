@@ -97,15 +97,15 @@ class WindowsLoginBruteForceAnalyzer(BaseAnalyzer):
     NAME = "WindowsBruteForceAnalyser"
     DISPLAY_NAME = "Windows Login Brute Force Analyzer"
     DESCRIPTION = textwrap.dedent(
-        """Windows login brute force analysis for logon types 2, 3, and 10. It checks
+        f"""Windows login brute force analysis for logon types 2, 3, and 10. It checks
         for multiple failed login events followed by success a login event.
 
         The analyzer uses the following threshold values to determine a successful
         brute force activity.
-            - {0} seconds brute force windows before a successful login.
-            - {1} failed login events in the brute force window""".format(
-            BRUTE_FORCE_WINDOW, BRUTE_FORCE_MIN_FAILED_EVENT
-        )
+            - {BRUTE_FORCE_WINDOW} seconds brute force windows before a successful
+             login.
+            - {BRUTE_FORCE_MIN_FAILED_EVENT} failed login events in the brute force
+             window"""
     )
 
     DEPENDENCIES = frozenset(["feature_extraction"])
@@ -154,6 +154,10 @@ class WindowsLoginBruteForceAnalyzer(BaseAnalyzer):
 
         Returns:
             str: Analyzer output as string.
+
+        Raises:
+            TypeError: If logon_type is None.
+            ValueError: If logon_type is not numeric value.
         """
 
         # Store a list of WindowsLoginEventData
@@ -184,13 +188,13 @@ class WindowsLoginBruteForceAnalyzer(BaseAnalyzer):
 
             # Handle events without logon_type
             try:
-                event_data.logon_type = event.source.get("logon_type")
+                event_data.logon_type = int(event.source.get("logon_type"))
             except (ValueError, TypeError) as e:
                 log.warning("[%s] Unknown value for logon_type. %s", self.NAME, str(e))
                 event_data.logon_type = 0
 
             event_data.logon_id = event.source.get("logon_id")
-            event_data.pid = event.source.get("process_id") or 0
+            event_data.pid = event.source.get("process_id", 0)
             event_data.process_name = event.source.get("process_name")
 
             # Interpret the event data and extract required data
