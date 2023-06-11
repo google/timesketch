@@ -8,7 +8,7 @@ NOTE: It is not recommended to try to run on a system with less than 8 GB of RAM
 ### Start a developer version of docker containers in this directory
 
 ```
-docker-compose up -d
+docker compose up -d
 ```
 
 The provided container definition runs Timesketch in development mode as a volume from your cloned repo. Any changes you make will appear in Timesketch automatically.
@@ -53,7 +53,7 @@ You can also access a metrics dashboard at http://127.0.0.1:3000/
 
 ### Non-interactive
 
-Running the following as a script after `docker-compose up -d` will bring up the development environment in the background for you.
+Running the following as a script after `docker compose up -d` will bring up the development environment in the background for you.
 ```
 export CONTAINER_ID="$(docker container list -f name=timesketch-dev -q)"
 docker exec $CONTAINER_ID celery -A timesketch.lib.tasks worker --loglevel info
