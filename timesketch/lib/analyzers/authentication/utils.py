@@ -24,7 +24,6 @@ import pandas as pd
 from timesketch.lib.analyzers.interface import AnalyzerOutput
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def human_timestamp(timestamp: int) -> str:
