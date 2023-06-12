@@ -27,13 +27,13 @@ Start a shell, change to the `timesketch/docker/dev` directory
 ```bash
 $ git clone timesketch
 $ cd timesketch/docker/dev
-$ docker-compose up
+$ docker compose up
 ```
 
 Wait a few minutes for the installation script to complete.
 
 ```bash
-$ docker-compose logs timesketch
+$ docker compose logs timesketch
 Attaching to timesketch-dev
 timesketch-dev         | Obtaining file:///usr/local/src/timesketch
 timesketch-dev         | Installing collected packages: timesketch
@@ -47,7 +47,7 @@ Per default a user `dev` with password `dev` is created for you. If you want to
 add additional users to your Timesketch server, run the following command:
 
 ```bash
-$ docker-compose exec timesketch tsctl create-user <USER> --password <PW>
+$ docker compose exec timesketch tsctl create-user <USER> --password <PW>
 User <USER> created/updated
 ```
 
@@ -67,7 +67,7 @@ In one shell:
 OR
 
 ```bash
-$ docker-compose exec timesketch gunicorn --reload -b 0.0.0.0:5000 --log-file - --timeout 120 timesketch.wsgi:application
+$ docker compose exec timesketch gunicorn --reload -b 0.0.0.0:5000 --log-file - --timeout 120 timesketch.wsgi:application
 [2021-05-25 16:36:32 +0000] [94] [INFO] Starting gunicorn 19.10.0
 [2021-05-25 16:36:32 +0000] [94] [INFO] Listening at: http://0.0.0.0:5000 (94)
 [2021-05-25 16:36:32 +0000] [94] [INFO] Using worker: sync
@@ -103,7 +103,7 @@ $ ./tsdev.sh celery
 OR
 
 ```bash
-$ docker-compose exec timesketch celery -A timesketch.lib.tasks worker --loglevel info
+$ docker compose exec timesketch celery -A timesketch.lib.tasks worker --loglevel info
 ```
 
 ### Restarting
@@ -120,8 +120,8 @@ $ ./tsdev.sh celery
 OR
 
 ```bash
-$ docker-compose exec timesketch gunicorn --reload -b 0.0.0.0:5000 --log-file - --timeout 120 timesketch.wsgi:application
-$ docker-compose exec timesketch celery -A timesketch.lib.tasks worker --loglevel info
+$ docker compose exec timesketch gunicorn --reload -b 0.0.0.0:5000 --log-file - --timeout 120 timesketch.wsgi:application
+$ docker compose exec timesketch celery -A timesketch.lib.tasks worker --loglevel info
 ```
 
 ### frontend-ng UI development
