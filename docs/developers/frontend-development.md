@@ -12,8 +12,8 @@ If you develop a new feature, consider changing to `frontent-ng`, the old fronte
 First we need to get an interactive shell to the container to install the frontend modules:
 
 ```bash
-$ docker-compose exec timesketch yarn install --cwd=/usr/local/src/timesketch/timesketch/frontend
-$ docker-compose exec timesketch yarn run --cwd=/usr/local/src/timesketch/timesketch/frontend build --mode development --watch
+$ docker compose exec timesketch yarn install --cwd=/usr/local/src/timesketch/timesketch/frontend
+$ docker compose exec timesketch yarn run --cwd=/usr/local/src/timesketch/timesketch/frontend build --mode development --watch
 ```
 
 Then inside the container shell go to the Timesketch frontend directory.
@@ -55,7 +55,7 @@ $ docker exec -it $CONTAINER_ID gunicorn --reload -b 0.0.0.0:5000 --log-file - -
 2. Start the development webserver in the second shell:
 ```bash
 $ CONTAINER_ID="$(docker container list -f name=timesketch-dev -q)"
-$ docker-compose exec timesketch yarn run --cwd=/usr/local/src/timesketch/timesketch/frontend serve
+$ docker compose exec timesketch yarn run --cwd=/usr/local/src/timesketch/timesketch/frontend serve
 ```
 
 This will spawn a listener on port `5001`. Point your browser to `http://localhost:5001/login`, login with your
@@ -106,7 +106,7 @@ $ docker exec -it $CONTAINER_ID gunicorn --reload -b 0.0.0.0:5000 --log-file - -
 2. Start the development webserver in the second shell:
 ```bash
 $ CONTAINER_ID="$(docker container list -f name=timesketch-dev -q)"
-$ docker-compose exec timesketch yarn run --cwd=/usr/local/src/timesketch/timesketch/frontend-ng serve
+$ docker compose exec timesketch yarn run --cwd=/usr/local/src/timesketch/timesketch/frontend-ng serve
 ```
 
 This will spawn a listener on port `5001`. Point your browser to `http://localhost:5001/login`, login with your
