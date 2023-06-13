@@ -107,7 +107,7 @@ limitations under the License.
         <v-chip @click="toggleTimeline()" :style="getTimelineStyle(timeline)" class="mr-2 mb-3 pr-1 timeline-chip">
           <div class="chip-content">
 
-            <v-icon v-if="timelineFailed" left color="red" size="x-large"> mdi-alert-circle-outline </v-icon>
+            <v-icon v-if="timelineFailed" @click="dialogStatus = true" left color="red" size="x-large"> mdi-alert-circle-outline </v-icon>
             <v-icon v-if="!timelineFailed" left :color="timelineChipColor" size="xx-large" class="ml-n3"> mdi-circle </v-icon>
 
             <v-tooltip bottom :disabled="timeline.name.length < 30" open-delay="300">
@@ -156,7 +156,7 @@ limitations under the License.
                 <v-list-item-action>
                   <v-icon>mdi-square-edit-outline</v-icon>
                 </v-list-item-action>
-                <v-list-item-subtitle>Rename timeline</v-list-item-subtitle>
+                <v-list-item-subtitle>Rename</v-list-item-subtitle>
               </v-list-item>
             </template>
             <v-card class="pa-4">
@@ -185,7 +185,7 @@ limitations under the License.
             <template v-slot:activator="{ on, attrs }">
               <v-list-item v-bind="attrs" v-on="on">
                 <v-list-item-action>
-                  <v-icon>{{ iconStatus }}</v-icon>
+                  <v-icon :color="iconStatus === 'mdi-alert-circle-outline' ? 'red' : ''">{{ iconStatus }}</v-icon>
                 </v-list-item-action>
                 <v-list-item-subtitle>Data sources ({{ datasources.length }})</v-list-item-subtitle>
               </v-list-item>
@@ -260,7 +260,7 @@ limitations under the License.
             <v-list-item-action>
               <v-icon>mdi-trash-can-outline</v-icon>
             </v-list-item-action>
-            <v-list-item-subtitle>Delete Timeline</v-list-item-subtitle>
+            <v-list-item-subtitle>Delete</v-list-item-subtitle>
           </v-list-item>
           <v-dialog v-model="deleteConfirmation" max-width="500">
             <v-card>
@@ -291,7 +291,7 @@ limitations under the License.
             </v-card>
           </v-dialog>
         </v-list>
-        <div class="px-4">
+        <div v-if="!timelineFailed" class="px-4">
           <v-color-picker
             @update:color="updateColor"
             :value="timeline.color"
