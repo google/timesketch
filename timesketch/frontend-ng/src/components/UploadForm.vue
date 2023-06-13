@@ -551,7 +551,7 @@ export default {
         if (e.target.readyState === FileReader.DONE) {
           /* 3a. Extract the headers from the CSV */
           let data = e.target.result
-          let rows = data.split('\n')
+          let rows = data.split('\n').filter((jsonlLine) => jsonlLine !== '')
           let i = Math.min(vueJS.staticNumberRows, rows.length)
           try {
             vueJS.headersString = JSON.parse(rows[0])
