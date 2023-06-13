@@ -329,7 +329,7 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
 
         file_object.seek(0)
         return send_file(
-            file_object, mimetype="zip", attachment_filename="timesketch_export.zip"
+            file_object, mimetype="zip", download_name="timesketch_export.zip"
         )
 
     def _export_view(self, view, sketch, zip_file):

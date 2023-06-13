@@ -46,6 +46,7 @@ nav:
       - Analyzers:
           - Create an analyzer: developers/analyzer-development.md
   - Changelog:
+    - changelog/index.md
     - changelog/2023-05.md
     - changelog/2023-03.md
     - changelog/2023-02.md

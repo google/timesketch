@@ -163,7 +163,7 @@ class LabelMixin(object):
                 parent_id=Column(
                     Integer, ForeignKey("{0:s}.id".format(self.__tablename__))
                 ),
-                parent=relationship(self),
+                parent=relationship(self, viewonly=True),
             ),
         )
         return relationship(self.Label)
@@ -266,7 +266,7 @@ class CommentMixin(object):
                 parent_id=Column(
                     Integer, ForeignKey("{0:s}.id".format(self.__tablename__))
                 ),
-                parent=relationship(self),
+                parent=relationship(self, viewonly=True),
             ),
         )
         return relationship(self.Comment)
@@ -346,7 +346,7 @@ class StatusMixin(object):
                 parent_id=Column(
                     Integer, ForeignKey("{0:s}.id".format(self.__tablename__))
                 ),
-                parent=relationship(self),
+                parent=relationship(self, viewonly=True),
             ),
         )
         return relationship(self.Status)
@@ -405,7 +405,7 @@ class GenericAttributeMixin(object):
                 parent_id=Column(
                     Integer, ForeignKey("{0:s}.id".format(self.__tablename__))
                 ),
-                parent=relationship(self),
+                parent=relationship(self, viewonly=True),
             ),
         )
         return relationship(self.GenericAttribute)

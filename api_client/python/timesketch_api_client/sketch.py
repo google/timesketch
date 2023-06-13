@@ -453,7 +453,7 @@ class Sketch(resource.BaseResource):
         """Deletes the sketch."""
         if self.is_archived():
             raise RuntimeError(
-                "Unable to delete an archived sketch, first " "unarchive then delete."
+                "Unable to delete an archived sketch, first unarchive then delete."
             )
 
         resource_url = "{0:s}/sketches/{1:d}/".format(self.api.api_root, self.id)
@@ -1139,9 +1139,7 @@ class Sketch(resource.BaseResource):
             )
 
         if not timeline_id and not timeline_name:
-            return (
-                "Unable to run analyzer, need to define either " "timeline ID or name"
-            )
+            return "Unable to run analyzer, need to define either timeline ID or name"
 
         if timeline_name:
             sketch = self.lazyload_data(refresh_cache=True)
@@ -1902,7 +1900,7 @@ class Sketch(resource.BaseResource):
         objects = response_dict.get("objects")
         if not objects:
             raise ValueError(
-                "Unable to create a Timeline, try again or file an " "issue on GitHub."
+                "Unable to create a Timeline, try again or file an issue on GitHub."
             )
 
         timeline_dict = objects[0]

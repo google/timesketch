@@ -980,17 +980,28 @@ class Scenario(LabelMixin, StatusMixin, CommentMixin, GenericAttributeMixin, Bas
     display_name = Column(UnicodeText())
     description = Column(UnicodeText())
     summary = Column(UnicodeText())
+    dfiq_identifier = Column(UnicodeText())
     spec_json = Column(UnicodeText())
     sketch_id = Column(Integer, ForeignKey("sketch.id"))
     user_id = Column(Integer, ForeignKey("user.id"))
     facets = relationship("Facet", backref="scenario", lazy="select")
 
-    def __init__(self, name, display_name, sketch, user, spec_json, description=None):
+    def __init__(
+        self,
+        name,
+        display_name,
+        dfiq_identifier,
+        sketch,
+        user,
+        spec_json,
+        description=None,
+    ):
         """Initialize the Scenario object.
 
         Args:
             name (str): The name of the scenario
             display_name (str): The display name of the scenario
+            dfiq_identifier (str): DFIQ identifier for scenario
             sketch (timesketch.models.sketch.Sketch): A sketch
             user (timesketch.models.user.User): A user
             spec_json (str): Scenario specification from YAML
@@ -999,6 +1010,7 @@ class Scenario(LabelMixin, StatusMixin, CommentMixin, GenericAttributeMixin, Bas
         super().__init__()
         self.name = name
         self.display_name = display_name
+        self.dfiq_identifier = dfiq_identifier
         self.sketch = sketch
         self.user = user
         self.spec_json = spec_json
@@ -1129,6 +1141,7 @@ class Facet(LabelMixin, StatusMixin, CommentMixin, GenericAttributeMixin, BaseMo
     name = Column(UnicodeText())
     display_name = Column(UnicodeText())
     description = Column(UnicodeText())
+    dfiq_identifier = Column(UnicodeText())
     spec_json = Column(UnicodeText())
     user_id = Column(Integer, ForeignKey("user.id"))
     scenario_id = Column(Integer, ForeignKey("scenario.id"))
@@ -1137,12 +1150,15 @@ class Facet(LabelMixin, StatusMixin, CommentMixin, GenericAttributeMixin, BaseMo
     questions = relationship("InvestigativeQuestion", backref="facet", lazy="select")
     conclusions = relationship("FacetConclusion", backref="facet", lazy="select")
 
-    def __init__(self, name, display_name, user, spec_json, description=None):
+    def __init__(
+        self, name, display_name, dfiq_identifier, user, spec_json, description=None
+    ):
         """Initialize the Facet object.
 
         Args:
             name (str): The name of the investigation
             display_name (str): The display name of the investigation
+            dfiq_identifier (str): DFIQ identifier for facet
             user (User): A userinvestigationconclusion
             scenario (Scenario): The Scenario this investigation belongs to
             spec_json (str): Investigation specification
@@ -1151,6 +1167,7 @@ class Facet(LabelMixin, StatusMixin, CommentMixin, GenericAttributeMixin, BaseMo
         super().__init__()
         self.name = name
         self.display_name = display_name
+        self.dfiq_identifier = dfiq_identifier
         self.user = user
         self.spec_json = spec_json
         self.description = description
@@ -1245,30 +1262,6 @@ class InvestigativeQuestionConclusion(LabelMixin, StatusMixin, CommentMixin, Bas
         self.automated = automated
 
 
-# Association tables for the many-to-many relationships for a question.
-question_searchtemplate_association_table = Table(
-    "investigativequestion_searchtemplate",
-    BaseModel.metadata,
-    Column(
-        "investigativequestion_id",
-        Integer,
-        ForeignKey("investigativequestion.id"),
-    ),
-    Column("searchtemplate_id", Integer, ForeignKey("searchtemplate.id")),
-)
-
-question_sigmarule_association_table = Table(
-    "investigativequestion_sigmarule",
-    BaseModel.metadata,
-    Column(
-        "investigativequestion_id",
-        Integer,
-        ForeignKey("investigativequestion.id"),
-    ),
-    Column("sigmarule_id", Integer, ForeignKey("sigmarule.id")),
-)
-
-
 class InvestigativeQuestion(
     LabelMixin, StatusMixin, CommentMixin, GenericAttributeMixin, BaseModel
 ):
@@ -1280,14 +1273,14 @@ class InvestigativeQuestion(
     name = Column(UnicodeText())
     display_name = Column(UnicodeText())
     description = Column(UnicodeText())
+    dfiq_identifier = Column(UnicodeText())
     user_id = Column(Integer, ForeignKey("user.id"))
     spec_json = Column(UnicodeText())
     facet_id = Column(Integer, ForeignKey("facet.id"))
-    search_templates = relationship(
-        "SearchTemplate", secondary=question_searchtemplate_association_table
-    )
-    sigma_rules = relationship(
-        "SigmaRule", secondary=question_sigmarule_association_table
+    approaches = relationship(
+        "InvestigativeQuestionApproach",
+        backref="investigativequestion",
+        lazy="select",
     )
     conclusions = relationship(
         "InvestigativeQuestionConclusion",
@@ -1295,12 +1288,15 @@ class InvestigativeQuestion(
         lazy="select",
     )
 
-    def __init__(self, name, display_name, user, spec_json, description=None):
+    def __init__(
+        self, name, display_name, dfiq_identifier, user, spec_json, description=None
+    ):
         """Initialize the InvestigativeQuestion object.
 
         Args:
             name (str): The name of the question
             display_name (str): The display name of the question
+            dfiq_identifier (str): DFIQ identifier for question
             user (timesketch.models.user.User): A user
             spec_json (str): Question specification
             description (str): Description of the question
@@ -1308,6 +1304,75 @@ class InvestigativeQuestion(
         super().__init__()
         self.name = name
         self.display_name = display_name
+        self.dfiq_identifier = dfiq_identifier
+        self.user = user
+        self.spec_json = spec_json
+        self.description = description
+
+
+# Association tables for the many-to-many relationships for an approach.
+approach_searchtemplate_association_table = Table(
+    "investigativequestionapproach_searchtemplate",
+    BaseModel.metadata,
+    Column(
+        "investigativequestionapproach_id",
+        Integer,
+        ForeignKey("investigativequestionapproach.id"),
+    ),
+    Column("searchtemplate_id", Integer, ForeignKey("searchtemplate.id")),
+)
+
+approach_sigmarule_association_table = Table(
+    "investigativequestionapproach_sigmarule",
+    BaseModel.metadata,
+    Column(
+        "investigativequestionapproach_id",
+        Integer,
+        ForeignKey("investigativequestionapproach.id"),
+    ),
+    Column("sigmarule_id", Integer, ForeignKey("sigmarule.id")),
+)
+
+
+class InvestigativeQuestionApproach(
+    LabelMixin, StatusMixin, CommentMixin, GenericAttributeMixin, BaseModel
+):
+    """Implements the Investigative Question Approach model.
+
+    An approach is the smallest component of an investigation.
+    """
+
+    name = Column(UnicodeText())
+    display_name = Column(UnicodeText())
+    description = Column(UnicodeText())
+    dfiq_identifier = Column(UnicodeText())
+    user_id = Column(Integer, ForeignKey("user.id"))
+    spec_json = Column(UnicodeText())
+    investigativequestion_id = Column(Integer, ForeignKey("investigativequestion.id"))
+    search_templates = relationship(
+        "SearchTemplate", secondary=approach_searchtemplate_association_table
+    )
+    sigma_rules = relationship(
+        "SigmaRule", secondary=approach_sigmarule_association_table
+    )
+
+    def __init__(
+        self, name, display_name, dfiq_identifier, user, spec_json, description=None
+    ):
+        """Initialize the InvestigativeQuestion object.
+
+        Args:
+            name (str): The name of the question
+            display_name (str): The display name of the question
+            dfiq_identifier (str): DFIQ identifier for approach
+            user (timesketch.models.user.User): A user
+            spec_json (str): Question specification
+            description (str): Description of the question
+        """
+        super().__init__()
+        self.name = name
+        self.display_name = display_name
+        self.dfiq_identifier = dfiq_identifier
         self.user = user
         self.spec_json = spec_json
         self.description = description

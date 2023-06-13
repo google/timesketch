@@ -14,33 +14,47 @@
 """API for asking Timesketch scenarios for version 1 of the Timesketch API."""
 
 import logging
-import json
 
 from flask import jsonify
 from flask import request
 from flask import abort
+from flask import current_app
 from flask_restful import Resource
 from flask_restful import reqparse
 from flask_login import current_user
 from flask_login import login_required
 
 from timesketch.api.v1 import resources
-from timesketch.api.v1.utils import load_yaml_config
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
+from timesketch.lib.dfiq import DFIQ
 from timesketch.models import db_session
 from timesketch.models.sketch import SearchTemplate, Sketch
 from timesketch.models.sketch import Scenario
 from timesketch.models.sketch import Facet
 from timesketch.models.sketch import InvestigativeQuestion
+from timesketch.models.sketch import InvestigativeQuestionApproach
 from timesketch.models.sketch import InvestigativeQuestionConclusion
 
 
 logger = logging.getLogger("timesketch.scenario_api")
 
 
+def load_dfiq_from_config():
+    """Create DFIQ object from config.
+
+    Returns:
+        DFIQ object or None if no DFIQ_PATH is configured.
+    """
+    dfiq_path = current_app.config.get("DFIQ_PATH")
+    if not dfiq_path:
+        logger.error("No DFIQ_PATH configured")
+        return None
+    return DFIQ(dfiq_path)
+
+
 class ScenarioTemplateListResource(resources.ResourceMixin, Resource):
-    """Resource for investigative scenarios."""
+    """List all scenarios available."""
 
     @login_required
     def get(self):
@@ -49,17 +63,23 @@ class ScenarioTemplateListResource(resources.ResourceMixin, Resource):
         Returns:
             A list of JSON representations of the scenarios.
         """
-        scenarios = load_yaml_config("SCENARIOS_PATH")
+        dfiq = load_dfiq_from_config()
+        if not dfiq:
+            return jsonify({"objects": []})
+
+        scenarios = [scenario.__dict__ for scenario in dfiq.scenarios]
         return jsonify({"objects": scenarios})
 
 
 class ScenarioListResource(resources.ResourceMixin, Resource):
-    """Resource for investigative scenarios."""
+    """List scenarios for a sketch."""
 
     def __init__(self):
         super().__init__()
         self.parser = reqparse.RequestParser()
-        self.parser.add_argument("status", type=str, required=False, default="")
+        self.parser.add_argument(
+            "status", type=str, required=False, default="", location="args"
+        )
 
     @login_required
     def get(self, sketch_id):
@@ -70,7 +90,6 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
         """
         args = self.parser.parse_args()
         filter_on_status = args.get("status")
-
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
@@ -91,8 +110,7 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
     def post(self, sketch_id):
         """Handles POST request to the resource.
 
-        This resource creates a new scenario for a sketch based on a template.
-        Templates are defined in SCENARIOS_PATH.
+        This resource creates a new scenario for a sketch based on a DFIQ template.
 
         Returns:
             A JSON representation of the scenario.
@@ -106,69 +124,102 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
                 "User does not have write access controls on sketch",
             )
 
+        dfiq = load_dfiq_from_config()
+        if not dfiq:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "DFIQ is not configured on this server")
+
         form = request.json
         if not form:
             form = request.data
 
-        scenarios = load_yaml_config("SCENARIOS_PATH")
-        facets = load_yaml_config("FACETS_PATH")
-        questions = load_yaml_config("QUESTIONS_PATH")
+        scenario_id = form.get("scenario_id")
+        display_name = form.get("display_name")
 
-        scenario_name = form.get("scenario_name")
-        scenario_dict = next(
-            scenario
-            for scenario in scenarios
-            if scenario["short_name"] == scenario_name
+        scenario = next(
+            (scenario for scenario in dfiq.scenarios if scenario.id == scenario_id),
+            None,
         )
-        scenario_display_name = form.get(
-            "display_name", scenario_dict.get("display_name", "")
-        )
+        if not scenario:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, f"No such scenario: {scenario_id}")
 
-        if not scenario_dict:
-            abort(HTTP_STATUS_CODE_NOT_FOUND, f"No such scenario: {scenario_name}")
+        if not display_name:
+            display_name = scenario.name
 
-        scenario = Scenario(
-            name=scenario_name,
-            display_name=scenario_display_name,
-            description=scenario_dict.get("description", ""),
-            spec_json=json.dumps(scenario_dict),
+        scenario_sql = Scenario(
+            dfiq_identifier=scenario.id,
+            name=scenario.name,
+            display_name=display_name,
+            description=scenario.description,
+            spec_json=scenario.to_json(),
             sketch=sketch,
             user=current_user,
         )
 
-        for facet_name in scenario_dict.get("facets", []):
-            facet_dict = facets.get(facet_name)
-            facet = Facet(
-                name=facet_name,
-                display_name=facet_dict.get("display_name", ""),
-                description=facet_dict.get("description", ""),
-                spec_json=json.dumps(facet_dict),
+        for facet_id in scenario.facets:
+            facet = next(
+                (facet for facet in dfiq.facets if facet.id == facet_id),
+                None,
+            )
+            facet_sql = Facet(
+                dfiq_identifier=facet.id,
+                name=facet.name,
+                display_name=facet.name,
+                description=facet.description,
+                spec_json=facet.to_json(),
                 user=current_user,
             )
-            scenario.facets.append(facet)
+            scenario_sql.facets.append(facet_sql)
 
-            for question_name in facet_dict.get("questions", []):
-                question_dict = questions.get(question_name)
-                question = InvestigativeQuestion(
-                    name=question_name,
-                    display_name=question_dict.get("display_name", ""),
-                    description=question_dict.get("description", ""),
-                    spec_json=json.dumps(question_dict),
+            for question_id in facet.questions:
+                question = next(
+                    (
+                        question
+                        for question in dfiq.questions
+                        if question.id == question_id
+                    ),
+                    None,
+                )
+                question_sql = InvestigativeQuestion(
+                    dfiq_identifier=question.id,
+                    name=question.name,
+                    display_name=question.name,
+                    description=question.description,
+                    spec_json=question.to_json(),
                     user=current_user,
                 )
-                search_templates = question_dict.get("search_templates", [])
-                for template_uuid in search_templates:
-                    search_template = SearchTemplate.query.filter_by(
-                        template_uuid=template_uuid
-                    ).first()
-                    if search_template:
-                        question.search_templates.append(search_template)
-                facet.questions.append(question)
+                facet_sql.questions.append(question_sql)
 
-        db_session.add(scenario)
+                for approach_id in question.approaches:
+                    approach = next(
+                        (
+                            approach
+                            for approach in dfiq.approaches
+                            if approach.id == approach_id
+                        ),
+                        None,
+                    )
+                    approach_sql = InvestigativeQuestionApproach(
+                        dfiq_identifier=approach.id,
+                        name=approach.name,
+                        display_name=approach.name,
+                        description=approach.description.get("details", ""),
+                        spec_json=approach.to_json(),
+                        user=current_user,
+                    )
+
+                    for search_template in approach.search_templates:
+                        search_template_sql = SearchTemplate.query.filter_by(
+                            template_uuid=search_template["value"]
+                        ).first()
+                        if search_template_sql:
+                            approach_sql.search_templates.append(search_template_sql)
+
+                    question_sql.approaches.append(approach_sql)
+
+        db_session.add(scenario_sql)
         db_session.commit()
 
-        return self.to_json(scenario)
+        return self.to_json(scenario_sql)
 
 
 class ScenarioResource(resources.ResourceMixin, Resource):
@@ -202,7 +253,7 @@ class ScenarioResource(resources.ResourceMixin, Resource):
         """Handles POST request to the resource.
 
         This resource creates a new scenario for a sketch based on a template.
-        Templates are defined in SCENARIOS_PATH.
+        Templates are defined in DFIQ.
 
         Returns:
             A JSON representation of the scenario.

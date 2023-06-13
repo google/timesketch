@@ -168,7 +168,7 @@ limitations under the License.
             <v-select
               v-model="selectedScenario"
               :items="scenarioTemplates"
-              item-text="display_name"
+              item-text="name"
               return-object
               label="Select a scenario"
               outlined
@@ -182,7 +182,7 @@ limitations under the License.
           <v-card-actions>
             <v-spacer></v-spacer>
             <v-btn @click="scenarioDialog = false" color="primary" text> Close </v-btn>
-            <v-btn :disabled="!selectedScenario" @click="addScenario(selectedScenario.short_name)" color="primary" text>
+            <v-btn :disabled="!selectedScenario" @click="addScenario(selectedScenario.id)" color="primary" text>
               Add
             </v-btn>
           </v-card-actions>
@@ -217,7 +217,7 @@ limitations under the License.
               >
             </v-col>
 
-            <v-col cols="6" align="right">
+            <v-col cols="6">
               <div v-if="hiddenScenarios.length" @click="showHidden = !showHidden" style="cursor: pointer" class="mt-1">
                 <small
                   ><span v-if="showHidden">Hide</span><span v-else>Show</span> hidden scenarios ({{
@@ -550,9 +550,9 @@ export default {
     switchUI: function () {
       window.location.href = window.location.href.replace('/sketch/', '/legacy/sketch/')
     },
-    addScenario: function (scenario) {
+    addScenario: function (scenarioId) {
       this.scenarioDialog = false
-      ApiClient.addScenario(this.sketch.id, scenario)
+      ApiClient.addScenario(this.sketch.id, scenarioId)
         .then((response) => {
           this.$store.dispatch('updateScenarios', this.sketch.id)
         })
