@@ -116,8 +116,6 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
             A JSON representation of the scenario.
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
-        dfiq = load_dfiq_from_config()
-
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
         if not sketch.has_permission(current_user, "write"):
@@ -125,6 +123,8 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_FORBIDDEN,
                 "User does not have write access controls on sketch",
             )
+
+        dfiq = load_dfiq_from_config()
         if not dfiq:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "DFIQ is not configured on this server")
 

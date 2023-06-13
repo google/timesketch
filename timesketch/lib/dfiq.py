@@ -281,9 +281,12 @@ class DFIQ:
         if not yaml_data_path:
             yaml_data_path = self.yaml_data_path
         component_dict = {}
-        dfiq_files = os.listdir(
-            os.path.join(yaml_data_path, self.plural_map.get(dfiq_type))
-        )
+        try:
+            dfiq_files = os.listdir(
+                os.path.join(yaml_data_path, self.plural_map.get(dfiq_type))
+            )
+        except FileNotFoundError:
+            return component_dict
         for dfiq_file in dfiq_files:
             if dfiq_file.endswith("-template.yaml"):
                 continue
