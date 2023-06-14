@@ -273,7 +273,7 @@ class WindowsLoginBruteForceAnalyzer(BaseAnalyzer):
         else:
             log.debug("[%s] No analyzer output", self.NAME)
             self.output.result_summary = (
-                f"No verdict for {len(records)} Windows " "authentication events"
+                f"No verdict for {len(records)} Windows authentication events"
             )
             self.output.result_priority = "NOTE"
             self.output.result_status = "SUCCESS"
