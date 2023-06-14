@@ -190,7 +190,7 @@ class WindowsLoginBruteForceAnalyzer(BaseAnalyzer):
             try:
                 event_data.logon_type = int(event.source.get("logon_type"))
             except (ValueError, TypeError) as e:
-                log.warning("[%s] Unknown value for logon_type. %s", self.NAME, str(e))
+                log.debug("[%s] Unknown value for logon_type. %s", self.NAME, str(e))
                 event_data.logon_type = 0
 
             event_data.logon_id = event.source.get("logon_id")
