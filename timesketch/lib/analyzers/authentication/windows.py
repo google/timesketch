@@ -287,7 +287,7 @@ class WindowsLoginBruteForceAnalyzer(BaseAnalyzer):
         try:
             self.annotate_events(events=events)
         except (ValueError, TypeError) as e:
-            log.error("[%s] Unable to annotate. %s", self.NAME, str(e))
+            log.debug("[%s] Unable to annotate. %s", self.NAME, str(e))
 
         # TODO(rmaskey): Have a better way to handle result_attributes
         # result_attributes is a dict containing list of objects and not required for
