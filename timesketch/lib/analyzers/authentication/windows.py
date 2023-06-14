@@ -372,7 +372,7 @@ class WindowsLoginBruteForceAnalyzer(BaseAnalyzer):
         for event in events:
             if event.event_id in event_ids:
                 log.debug("[%s] Annotating event ID %s", self.NAME, event.event_id)
-                event.add_label("windows_bruteforce")
+                event.add_tags(["windows_bruteforce"])
                 event.add_star()
                 event.commit()
 
