@@ -1,0 +1,18 @@
+display_name: Test Approach
+description:
+  summary: Test Approach
+  details: Test Approach
+  references:
+    - https://www.example.com
+type: approach
+id: Q1001.01
+tags:
+ - test
+view:
+  processors:
+    - name: plaso
+      analysis:
+        timesketch:
+          - description: Test SearchTemplate
+            type: searchtemplate
+            value: 770754f3-2419-4a6c-ba45-ec9dbd3240ce

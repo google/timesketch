@@ -179,14 +179,28 @@ export default {
         for (const session of analyzerSessions) {
           if (!perAnalyzer[session.analyzer_name]) {
             // the analyzer is not yet in the results: create new entry
-            perAnalyzer[session.analyzer_name] = {
-              timelines: {},
-              analyzerInfo: {
-                name: session.analyzer_name,
-                description: this.analyzerList[session.analyzer_name].description,
-                is_multi: this.analyzerList[session.analyzer_name].is_multi,
-                display_name: this.analyzerList[session.analyzer_name].display_name,
-              },
+            // There is an edge case where the analyzer is not in the analyzer list.
+            // If this happens, fall back to the analyzer short name. Tracked in issue#2738
+            if (this.analyzerList[session.analyzer_name]) {
+              perAnalyzer[session.analyzer_name] = {
+                timelines: {},
+                analyzerInfo: {
+                  name: session.analyzer_name,
+                  description: this.analyzerList[session.analyzer_name].description,
+                  is_multi: this.analyzerList[session.analyzer_name].is_multi,
+                  display_name: this.analyzerList[session.analyzer_name].display_name,
+                },
+              }
+            } else {
+              perAnalyzer[session.analyzer_name] = {
+                timelines: {},
+                analyzerInfo: {
+                  name: session.analyzer_name,
+                  description: 'No description available.',
+                  is_multi: false,
+                  display_name: session.analyzer_name,
+                },
+              }
             }
           }
 
