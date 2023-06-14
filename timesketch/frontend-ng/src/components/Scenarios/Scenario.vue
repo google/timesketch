@@ -52,7 +52,7 @@ limitations under the License.
           <v-card>
             <v-list dense>
               <v-list-item-group color="primary">
-                <v-list-item @click="copyScenario">
+                <v-list-item @click="copyScenario(scenario.dfiq_identifier)">
                   <v-list-item-icon>
                     <v-icon small>mdi-content-copy</v-icon>
                   </v-list-item-icon>
@@ -144,9 +144,9 @@ export default {
         })
         .catch((e) => {})
     },
-    copyScenario: function () {
+    copyScenario: function (scenarioId) {
       let displayName = 'Copy of ' + this.scenario.display_name
-      ApiClient.addScenario(this.sketch.id, 'compromise_assessment', displayName)
+      ApiClient.addScenario(this.sketch.id, scenarioId, displayName)
         .then((response) => {
           this.$store.dispatch('updateScenarios', this.sketch.id)
         })
