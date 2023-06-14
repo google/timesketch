@@ -104,7 +104,13 @@ limitations under the License.
 
     <v-menu v-else offset-y :close-on-content-click="false" content-class="menu-with-gap" ref="timelineChipMenuRef">
       <template v-slot:activator="{ on }">
-        <v-chip @click="toggleTimeline()" :style="getTimelineStyle(timeline)" class="mr-2 mb-3 pr-1 timeline-chip">
+        <v-chip
+          @click="toggleTimeline()"
+          :style="getTimelineStyle(timeline)"
+          class="mr-2 mb-3 pr-1 timeline-chip"
+          :class="{failed: timelineFailed}"
+          :ripple="!timelineFailed"
+        >
           <div class="chip-content">
 
             <v-icon v-if="timelineFailed" @click="dialogStatus = true" left color="red" size="x-large"> mdi-alert-circle-outline </v-icon>
@@ -580,6 +586,13 @@ export default {
   }
 }
 
+.v-chip.timeline-chip.failed {
+  cursor: auto;
+}
+
+.v-chip.timeline-chip.failed:hover:before {
+  opacity: 0;
+}
 
 .theme--dark {
   .events-count {
