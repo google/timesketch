@@ -14,3 +14,4 @@
 """Authentication Analyzer modules."""
 
 from timesketch.lib.analyzers.authentication import ssh
+from timesketch.lib.analyzers.authentication import windows
