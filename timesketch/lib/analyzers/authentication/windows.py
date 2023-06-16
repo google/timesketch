@@ -375,6 +375,7 @@ class WindowsLoginBruteForceAnalyzer(BaseAnalyzer):
                 event.add_tags(["windows_bruteforce"])
                 event.add_star()
                 event.commit()
+        self.output.platform_meta_data["created_tags"] = ["windows_bruteforce"]
 
 
 manager.AnalysisManager.register_analyzer(WindowsLoginBruteForceAnalyzer)
