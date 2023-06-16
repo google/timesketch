@@ -1273,7 +1273,7 @@ class AnalyzerOutput:
                             "type": "array",
                             "items": [{"type": "integer"}],
                         },
-                        "saved_graphs" : {
+                        "saved_graphs": {
                             "type": "array",
                             "items": [
                                 {"type": ["integer", "string"]},

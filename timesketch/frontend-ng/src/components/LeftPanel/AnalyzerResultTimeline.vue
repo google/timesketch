@@ -429,6 +429,6 @@ export default {
   background-color: #303030;
 }
 .light-bg {
-  background-color: #f6f6f6;
+  background-color: #F6F6F6;
 }
 </style>
