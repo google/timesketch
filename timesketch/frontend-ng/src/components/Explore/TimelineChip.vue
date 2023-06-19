@@ -104,20 +104,54 @@ limitations under the License.
 
     <v-menu v-else offset-y :close-on-content-click="false" content-class="menu-with-gap" ref="timelineChipMenuRef">
       <template v-slot:activator="{ on }">
-        <v-chip v-on="on" :style="getTimelineStyle(timeline)" class="mr-2 mb-3">
-          <v-icon v-if="timelineStatus === 'fail'" left color="red"> mdi-alert-circle-outline </v-icon>
-          <span class="timeline-name-ellipsis">{{ timeline.name }}</span>
+        <v-chip
+          @click="toggleTimeline()"
+          :style="getTimelineStyle(timeline)"
+          class="mr-2 mb-3 pr-1 timeline-chip"
+          :class="{failed: timelineFailed}"
+          :ripple="!timelineFailed"
+        >
+          <div class="chip-content">
 
-          <span v-if="timelineStatus === 'processing'" class="ml-3">
-            <v-progress-circular small indeterminate color="grey" :size="20" :width="2"></v-progress-circular>
-          </span>
-          <v-avatar
-            v-if="timelineStatus === 'ready'"
-            right
-            style="background-color: rgba(0, 0, 0, 0.1); font-size: 0.55em"
-          >
-            {{ eventsCount | compactNumber }}
-          </v-avatar>
+            <v-icon v-if="timelineFailed" @click="dialogStatus = true" left color="red" size="x-large"> mdi-alert-circle-outline </v-icon>
+            <v-icon v-if="!timelineFailed" left :color="timelineChipColor" size="xx-large" class="ml-n3"> mdi-circle </v-icon>
+
+            <v-tooltip bottom :disabled="timeline.name.length < 30" open-delay="300">
+              <template v-slot:activator="{ on: onTooltip, attrs }">
+                <span class="timeline-name-ellipsis" :class="{ disabled: !isSelected && timelineStatus === 'ready'}"
+                v-bind="attrs"
+                v-on="onTooltip"
+                >{{ timeline.name }}</span>
+              </template>
+              <span>{{ timeline.name }}</span>
+            </v-tooltip>
+
+            <span class="right">
+              <span
+                v-if="timelineStatus === 'processing'"
+                class="ml-3"
+              >
+                <v-progress-circular small indeterminate color="grey" :size="20" :width="2"></v-progress-circular>
+              </span>
+
+              <v-chip
+                v-if="!timelineFailed"
+                class="events-count"
+                :color="$vuetify.theme.dark ? 'grey' : '#fff'"
+                small
+              >
+                {{ eventsCount | compactNumber }}
+              </v-chip>
+              <v-btn
+                class="ma-1"
+                small
+                icon
+                v-on="on"
+              >
+                <v-icon> mdi-dots-vertical </v-icon>
+              </v-btn>
+            </span>
+          </div>
         </v-chip>
       </template>
       <v-sheet flat width="320">
@@ -128,7 +162,7 @@ limitations under the License.
                 <v-list-item-action>
                   <v-icon>mdi-square-edit-outline</v-icon>
                 </v-list-item-action>
-                <v-list-item-subtitle>Rename timeline</v-list-item-subtitle>
+                <v-list-item-subtitle>Rename</v-list-item-subtitle>
               </v-list-item>
             </template>
             <v-card class="pa-4">
@@ -157,7 +191,7 @@ limitations under the License.
             <template v-slot:activator="{ on, attrs }">
               <v-list-item v-bind="attrs" v-on="on">
                 <v-list-item-action>
-                  <v-icon>{{ iconStatus }}</v-icon>
+                  <v-icon :color="iconStatus === 'mdi-alert-circle-outline' ? 'red' : ''">{{ iconStatus }}</v-icon>
                 </v-list-item-action>
                 <v-list-item-subtitle>Data sources ({{ datasources.length }})</v-list-item-subtitle>
               </v-list-item>
@@ -232,7 +266,7 @@ limitations under the License.
             <v-list-item-action>
               <v-icon>mdi-trash-can-outline</v-icon>
             </v-list-item-action>
-            <v-list-item-subtitle>Delete Timeline</v-list-item-subtitle>
+            <v-list-item-subtitle>Delete</v-list-item-subtitle>
           </v-list-item>
           <v-dialog v-model="deleteConfirmation" max-width="500">
             <v-card>
@@ -263,7 +297,7 @@ limitations under the License.
             </v-card>
           </v-dialog>
         </v-list>
-        <div class="px-4">
+        <div v-if="!timelineFailed" class="px-4">
           <v-color-picker
             @update:color="updateColor"
             :value="timeline.color"
@@ -371,6 +405,15 @@ export default {
       if (this.timelineStatus === 'processing') return 'mdi-circle-slice-7'
       return 'mdi-alert-circle-outline'
     },
+    timelineFailed() {
+      return this.timelineStatus === 'fail';
+    },
+    timelineChipColor() {
+      if (!this.timeline.color.startsWith('#')) {
+        return '#' + this.timeline.color
+      }
+      return this.timeline.color
+    }
   },
   methods: {
     rename() {
@@ -401,43 +444,20 @@ export default {
       let eta = dayjs().add(secondsLeft, 'second').fromNow()
       return eta
     },
+    toggleTimeline() {
+      if (!this.timelineFailed) {
+        this.$emit('toggle', this.timeline)
+      }
+    },
     // Set debounce to 300ms to limit requests to the server.
     updateColor: _.debounce(function (color) {
       Vue.set(this.timeline, 'color', color.hex.substring(1))
       this.$emit('save', this.timeline)
     }, 300),
     getTimelineStyle(timeline) {
-      let backgroundColor = timeline.color
-      let textDecoration = 'none'
-      let opacity = '50%'
-      let p = 100
-      if (!backgroundColor.startsWith('#')) {
-        backgroundColor = '#' + backgroundColor
-      }
-      if (this.timelineStatus === 'ready') {
-        // Grey out the index if it is not selected.
-        if (!this.isSelected) {
-          backgroundColor = '#d2d2d2'
-          textDecoration = 'line-through'
-        } else {
-          opacity = '100%'
-        }
-      } else {
-        backgroundColor = '#f5f5f5'
-        opacity = '100%'
-      }
-      let bgColor = 'linear-gradient(90deg, ' + backgroundColor + ' ' + p + '%, #d2d2d2  0%) '
-      if (this.$vuetify.theme.dark) {
-        return {
-          background: bgColor,
-          filter: 'grayscale(25%)',
-          color: '#333',
-        }
-      }
+      const greyOut = (this.timelineStatus === 'ready' && !this.isSelected)
       return {
-        background: bgColor,
-        'text-decoration': textDecoration,
-        opacity: opacity,
+        opacity: greyOut ? '50%':'100%',
       }
     },
     fetchData() {
@@ -549,4 +569,38 @@ export default {
 </script>
 
 <!-- CSS scoped to this component only -->
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+
+.timeline-chip {
+
+  .right{
+    margin-left: auto;
+  }
+
+  .chip-content {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    width: 300px;
+  }
+}
+
+.v-chip.timeline-chip.failed {
+  cursor: auto;
+}
+
+.v-chip.timeline-chip.failed:hover:before {
+  opacity: 0;
+}
+
+.theme--dark {
+  .events-count {
+    color: black;
+  }
+}
+
+.disabled {
+  text-decoration: line-through;
+}
+</style>
