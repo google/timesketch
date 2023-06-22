@@ -251,6 +251,7 @@ class TestWindowsLoginBruteForceAnalyzer(BaseTest):
             #### Top Usernames
             - Administrator: 201"""
         )
+        output.platform_meta_data["created_tags"] = ["windows_bruteforce"]
 
         return str(output)
 
