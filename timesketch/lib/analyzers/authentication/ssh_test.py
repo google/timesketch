@@ -158,6 +158,7 @@ def _create_analyzer_output_json() -> str:
         #### Top Usernames
         - admin: 202"""
     )
+    output.platform_meta_data["created_tags"] = ["ssh_bruteforce"]
 
     return str(output)
 
