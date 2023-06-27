@@ -121,7 +121,7 @@ limitations under the License.
           >
             <tr class="pr-3">
               <td width="105" style="border: none">
-                <strong>Result:</strong>
+                <strong>Summary:</strong>
               </td>
               <td style="border: none">
                 <span>
@@ -176,7 +176,7 @@ limitations under the License.
             </tr>
             <tr v-if="Object.keys(getAnalyzerOutputMetaData).length !== 0">
               <td colspan="2" style="border: none">
-                <strong>Connected Events</strong>
+                <strong>Result artifacts</strong>
               </td>
             </tr>
             <tr v-for="(item, key) in getAnalyzerOutputMetaData" :key="key">
@@ -188,7 +188,7 @@ limitations under the License.
                   {{ view.name }}
                 </v-chip>
               </td>
-              <td style="border: none" v-if="key === 'Stories'">
+              <td style="border: none" v-if="key === 'Story'">
                 <router-link
                   v-for="story in item"
                   :key="story.id"
@@ -248,7 +248,7 @@ limitations under the License.
             <tr class="pr-3">
               <td width="80" style="border: none">
                 <strong v-if="timeline.analysis_status === 'ERROR'">Error:</strong>
-                <strong v-else>Result:</strong>
+                <strong v-else>Summary:</strong>
               </td>
               <td style="border: none">
                 <span>
@@ -333,11 +333,11 @@ export default {
           }
         }
         if (this.verboseAnalyzerOutput.platform_meta_data.saved_stories !== undefined) {
-          metaData['Stories'] = []
+          metaData['Story'] = []
           for (const id of this.verboseAnalyzerOutput.platform_meta_data.saved_stories) {
             let storie = this.meta.stories.find((storie) => storie.id === id)
             if (storie !== undefined) {
-              metaData['Stories'].push(storie)
+              metaData['Story'].push(storie)
             }
           }
         }
