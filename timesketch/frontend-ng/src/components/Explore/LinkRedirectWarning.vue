@@ -17,11 +17,15 @@ limitations under the License.
         <span class="text-h6 ml-2">External redirect warning!</span>
       </v-card-title>
       <v-card-text>
-        <div>
-          This action will open the link below in a new tab! Do you really 
+        <div v-if="contextValue" class="mb-2">
+          This action will open the link below in a new tab! Do you really
           want to send the following value to this external service?
         </div>
-        <div>
+        <div v-else class="mb-2">
+          This action will open the link below in a new tab! Do you really
+          want to visit this external website?
+        </div>
+        <div v-if="contextValue">
           <b>Value:</b><br/>
           <code class="code">
             {{ contextValue }}
@@ -33,7 +37,7 @@ limitations under the License.
             {{ contextUrl }}
           </code>
         </div>
-  
+
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
@@ -56,7 +60,7 @@ limitations under the License.
       </v-card-actions>
     </v-card>
   </template>
-  
+
   <script>
   export default {
     props: ['contextValue', 'contextUrl' ],
@@ -67,5 +71,5 @@ limitations under the License.
     },
   }
   </script>
-  
+
   <style scoped lang="scss"></style>
