@@ -246,18 +246,12 @@ limitations under the License.
     </v-card>
 
     <!-- DFIQ context -->
-    <div class="mt-3 mx-3">
-      <div :class="[$vuetify.theme.dark ? 'dark-info-card' : 'light-info-card']" v-if="activeContext.question">
-        <v-toolbar dense flat color="transparent">
-          <h4>{{ activeContext.question.display_name }}</h4>
-          <v-spacer></v-spacer>
-          <v-btn small icon @click="$store.dispatch('clearActiveContext')" class="mr-1">
-            <v-icon>mdi-close</v-icon>
-          </v-btn>
-        </v-toolbar>
-        <p class="mt-1 pb-4 px-4" style="font-size: 0.9em">
-          {{ activeContext.question.description }}
-        </p>
+    <div class="mt-3 mx-2">
+      <div v-if="activeContext.question" class="pb-4 px-4">
+        <small style="opacity: 70%"
+          >{{ activeContext.scenario.display_name }} > {{ activeContext.facet.display_name }}</small
+        >
+        <h3>{{ activeContext.question.display_name }}</h3>
       </div>
     </div>
 

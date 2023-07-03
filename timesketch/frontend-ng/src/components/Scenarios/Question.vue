@@ -15,35 +15,59 @@ limitations under the License.
 -->
 <template>
   <div>
-    <div class="pl-6" @click="expanded = !expanded" style="cursor: pointer; font-size: 0.9em">
-      <div :class="[$vuetify.theme.dark ? 'dark-hover' : 'light-hover']" class="pa-2 mr-3" style="border-radius: 6px">
-        <strong v-if="!question.conclusions.length">{{ question.display_name }}</strong>
-        <span v-else>{{ question.display_name }}</span>
-      </div>
-    </div>
+    <v-row
+      no-gutters
+      class="pa-2 pl-5"
+      style="cursor: pointer; font-size: 0.9em"
+      @click="expanded = !expanded"
+      :class="
+        $vuetify.theme.dark
+          ? expanded
+            ? 'dark-highlight-selected'
+            : 'dark-hover'
+          : expanded
+          ? 'light-highlight-selected'
+          : 'light-hover'
+      "
+    >
+      <span>{{ question.display_name }}</span>
+    </v-row>
 
     <v-expand-transition>
-      <div v-show="expanded">
+      <div
+        v-show="expanded"
+        :class="
+          $vuetify.theme.dark
+            ? expanded
+              ? 'dark-highlight'
+              : 'dark-hover'
+            : expanded
+            ? 'light-highlight'
+            : 'light-hover'
+        "
+        class="pb-1"
+      >
         <!-- Query suggestions -->
-        <div class="pa-2 pl-9">
-          <v-icon x-small class="mr-1">mdi-magnify</v-icon>
-          <strong><small>Query suggestions</small></strong>
-          <div v-for="searchtemplate in searchTemplates" :key="searchtemplate.id" class="pa-1 mt-1">
-            <ts-search-template :searchtemplate="searchtemplate"></ts-search-template>
-          </div>
+        <div class="pt-2 pl-5">
+          <small>Suggested queries:</small>
+          <v-chip-group column>
+            <ts-search-template
+              v-for="searchtemplate in searchTemplates"
+              :key="searchtemplate.id"
+              :searchtemplate="searchtemplate"
+            ></ts-search-template>
+          </v-chip-group>
         </div>
 
         <!-- Conclusions -->
-        <div class="mb-3 pl-9">
-          <v-icon x-small class="mr-1">mdi-check-circle-outline</v-icon>
-          <strong><small>Conclusions</small></strong>
+        <div class="mb-3 pl-5">
           <v-sheet outlined rounded class="mt-2 mr-3" v-for="conclusion in question.conclusions" :key="conclusion.id">
             <ts-question-conclusion :question="question" :conclusion="conclusion"></ts-question-conclusion>
           </v-sheet>
         </div>
 
         <!-- Add new conclusion -->
-        <div v-if="!currentUserConclusion" style="font-size: 0.9em" class="pb-2 pl-9 mr-3">
+        <div v-if="!currentUserConclusion" style="font-size: 0.9em" class="pb-4 mr-3 pl-5">
           <v-textarea
             v-model="conclusionText"
             outlined
@@ -127,5 +151,11 @@ export default {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.dark-bg {
+  background-color: #303030;
+}
+.light-bg {
+  background-color: #f6f6f6;
 }
 </style>

@@ -21,7 +21,15 @@ limitations under the License.
       @click="expanded = !expanded"
       class="pa-4"
       flat
-      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+      :class="
+        $vuetify.theme.dark
+          ? expanded
+            ? 'dark-highlight'
+            : 'dark-hover'
+          : expanded
+          ? 'light-highlight'
+          : 'light-hover'
+      "
     >
       <v-col cols="11">
         <v-icon left>mdi-clipboard-check-outline</v-icon>
@@ -45,7 +53,7 @@ limitations under the License.
         </v-dialog>
         <v-menu offset-y :close-on-content-click="true">
           <template v-slot:activator="{ on, attrs }">
-            <v-btn small icon v-bind="attrs" v-on="on">
+            <v-btn class="ml-1" small icon v-bind="attrs" v-on="on">
               <v-icon>mdi-dots-vertical</v-icon>
             </v-btn>
           </template>
