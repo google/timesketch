@@ -125,7 +125,7 @@ limitations under the License.
               </td>
               <td style="border: none">
                 <span>
-                  {{ verboseAnalyzerOutput.result_summary }}
+                  {{ verboseAnalyzerOutput.result_summary ? verboseAnalyzerOutput.result_summary : 'loading...' }}
                 </span>
               </td>
             </tr>
@@ -135,7 +135,7 @@ limitations under the License.
               </td>
               <td style="border: none">
                 <span>
-                  {{ verboseAnalyzerOutput.result_priority }}
+                  {{ verboseAnalyzerOutput.result_priority ? verboseAnalyzerOutput.result_priority : 'loading...' }}
                 </span>
               </td>
             </tr>
@@ -170,7 +170,7 @@ limitations under the License.
               </td>
               <td style="border: none">
                 <span>
-                  {{ verboseAnalyzerOutput.result_status }}
+                  {{ verboseAnalyzerOutput.result_status ? verboseAnalyzerOutput.result_status : 'loading...' }}
                 </span>
               </td>
             </tr>
@@ -429,6 +429,6 @@ export default {
   background-color: #303030;
 }
 .light-bg {
-  background-color: #F6F6F6;
+  background-color: #f6f6f6;
 }
 </style>

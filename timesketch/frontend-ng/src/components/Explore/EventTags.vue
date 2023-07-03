@@ -16,7 +16,6 @@ limitations under the License.
       <v-chip
         small
         class="mr-1"
-        :close="hover ? true : false"
         :color="tagColor(tag).color"
         :text-color="tagColor(tag).textColor"
       >
