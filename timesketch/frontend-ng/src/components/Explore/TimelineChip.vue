@@ -108,16 +108,14 @@ limitations under the License.
           @click="toggleTimeline()"
           :style="getTimelineStyle(timeline)"
           class="mr-2 mb-3 pr-1 timeline-chip"
-          :class="{ failed: timelineFailed }"
+          :class="[{ failed: timelineFailed }, $vuetify.theme.dark ? 'dark-highlight' : 'light-highlight']"
           :ripple="!timelineFailed"
         >
           <div class="chip-content">
             <v-icon v-if="timelineFailed" @click="dialogStatus = true" left color="red" size="x-large">
               mdi-alert-circle-outline
             </v-icon>
-            <v-icon v-if="!timelineFailed" left :color="timelineChipColor" size="xx-large" class="ml-n3">
-              mdi-circle
-            </v-icon>
+            <v-icon v-if="!timelineFailed" left :color="timelineChipColor" size="x-large"> mdi-circle </v-icon>
 
             <v-tooltip bottom :disabled="timeline.name.length < 30" open-delay="300">
               <template v-slot:activator="{ on: onTooltip, attrs }">
@@ -137,10 +135,10 @@ limitations under the License.
                 <v-progress-circular small indeterminate color="grey" :size="20" :width="2"></v-progress-circular>
               </span>
 
-              <v-chip v-if="!timelineFailed" class="events-count" :color="$vuetify.theme.dark ? 'grey' : '#fff'" small>
+              <span v-if="!timelineFailed" class="events-count" x-small>
                 {{ eventsCount | compactNumber }}
-              </v-chip>
-              <v-btn class="ma-1" small icon v-on="on">
+              </span>
+              <v-btn class="ma-1" x-small icon v-on="on">
                 <v-icon> mdi-dots-vertical </v-icon>
               </v-btn>
             </span>
@@ -457,6 +455,7 @@ export default {
       const greyOut = this.timelineStatus === 'ready' && !this.isSelected
       return {
         opacity: greyOut ? '50%' : '100%',
+        backgroundColor: this.$vuetify.theme.dark ? '#303030' : '#f5f5f5',
       }
     },
     fetchData() {
@@ -591,10 +590,8 @@ export default {
   opacity: 0;
 }
 
-.theme--dark {
-  .events-count {
-    color: black;
-  }
+.events-count {
+  font-size: 0.8em;
 }
 
 .disabled {

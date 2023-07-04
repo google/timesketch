@@ -30,7 +30,7 @@ limitations under the License.
     </div>
 
     <v-expand-transition>
-      <div v-show="expanded" class="pb-2">
+      <div v-show="expanded && meta.views.length">
         <div
           v-for="savedSearch in meta.views"
           :key="savedSearch.name"
