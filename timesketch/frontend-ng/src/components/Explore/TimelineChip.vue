@@ -187,7 +187,7 @@ limitations under the License.
             <v-list-item-subtitle>Unselect other timelines</v-list-item-subtitle>
           </v-list-item>
 
-          <v-dialog v-model="dialogStatus" width="600">
+          <v-dialog v-model="dialogStatus" width="800">
             <template v-slot:activator="{ on, attrs }">
               <v-list-item v-bind="attrs" v-on="on">
                 <v-list-item-action>
@@ -217,7 +217,8 @@ limitations under the License.
                   v-for="datasource in datasources"
                   :key="datasource.id"
                   outlined
-                  :type="datasourceStatusColors(datasource)"
+                  text
+                  :color="datasourceStatusColors(datasource)"
                   class="ma-5"
                 >
                   <ul style="list-style-type: none">
@@ -230,7 +231,7 @@ limitations under the License.
                     <li v-if="datasource.data_label"><strong>Data label:</strong> {{ datasource.data_label }}</li>
                     <li><strong>Status:</strong> {{ dataSourceStatus(datasource) }}</li>
                     <li>
-                      <strong>Total File Events:</strong
+                      <strong>Total File Events: </strong
                       >{{ totalEventsDatasource(datasource.file_on_disk) | compactNumber }}
                     </li>
                     <li v-if="dataSourceStatus(datasource) === 'fail'">
@@ -240,6 +241,7 @@ limitations under the License.
                   </ul>
                 </v-alert>
               </div>
+              <v-divider></v-divider>
               <v-card-actions>
                 <v-spacer></v-spacer>
                 <v-btn color="primary" text @click="dialogStatus = false"> Close </v-btn>

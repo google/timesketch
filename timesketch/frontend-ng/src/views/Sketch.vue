@@ -304,6 +304,15 @@ limitations under the License.
                 </v-list-item-content>
               </v-list-item>
 
+              <v-list-item @click="renameSketchDialog = true">
+                <v-list-item-icon>
+                  <v-icon>mdi-pencil</v-icon>
+                </v-list-item-icon>
+                <v-list-item-content>
+                  <v-list-item-title>Rename sketch</v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+
               <v-list-item @click="archiveSketch()">
                 <v-list-item-icon>
                   <v-icon>mdi-archive</v-icon>
