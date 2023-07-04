@@ -1,1 +1,2 @@
 This PR finds a way to executive the equivalent filter provided when importing into Timesketch so it's easy to output just the Windows event log Creation events and filter to a time range that we need.
+.
