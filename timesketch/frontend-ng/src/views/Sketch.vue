@@ -100,7 +100,7 @@ limitations under the License.
     >
       <v-toolbar flat>
         <v-avatar class="ml-n3 mt-1">
-          <router-link to="/">
+          <router-link :to="{ name: 'Home' }">
             <v-img src="/dist/timesketch-color.png" max-height="25" max-width="25" contain></v-img>
           </router-link>
         </v-avatar>
@@ -236,7 +236,7 @@ limitations under the License.
     </v-navigation-drawer>
 
     <!-- Top horizontal toolbar -->
-    <v-app-bar app hide-on-scroll clipped flat :color="$vuetify.theme.dark ? '#121212' : 'white'">
+    <v-app-bar v-if="!loadingSketch" app hide-on-scroll clipped flat :color="$vuetify.theme.dark ? '#121212' : 'white'">
       <v-btn icon v-show="!showLeftPanel && !loadingSketch" @click="toggleLeftPanel" class="ml-n1">
         <v-icon>mdi-menu</v-icon>
       </v-btn>
