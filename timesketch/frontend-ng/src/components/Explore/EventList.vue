@@ -24,6 +24,23 @@ limitations under the License.
       <li>Try more general keywords.</li>
       <li>Try fewer keywords.</li>
     </div>
+
+    <div v-if="highlightEvent" class="mt-4">
+      <strong>Showing context for event:</strong>
+      <v-sheet class="d-flex flex-wrap mt-1 mb-5">
+        <v-sheet class="flex-1-0">
+          <span style="width: 200px" v-bind:style="getTimelineColor(highlightEvent)" class="datetime-table-cell pa-2">
+            {{ highlightEvent._source.timestamp | formatTimestamp | toISO8601 }}
+          </span>
+        </v-sheet>
+
+        <v-sheet class="">
+          <span class="datetime-table-cell pa-2">
+            {{ highlightEvent._source.message }}
+          </span>
+        </v-sheet>
+      </v-sheet>
+    </div>
     <div v-if="eventList.objects.length || searchInProgress">
       <v-data-table
         v-model="selectedEvents"
@@ -311,11 +328,17 @@ limitations under the License.
             <span
               :class="{
                 'ts-event-field-ellipsis': field.text === 'message',
-                'ts-event-field-highlight': item._id === highlightEvent,
+                'ts-event-field-highlight': item._id === highlightEventId,
               }"
             >
               <!-- Tags -->
-              <span v-if="displayOptions.showTags && index === 3 && ('tag' in item._source ? (item._source.tag.length > 0) : false )">
+              <span
+                v-if="
+                  displayOptions.showTags &&
+                  index === 3 &&
+                  ('tag' in item._source ? item._source.tag.length > 0 : false)
+                "
+              >
                 <ts-event-tags :item="item" :tagConfig="tagConfig" :showDetails="item.showDetails"></ts-event-tags>
               </span>
               <!-- Emojis -->
@@ -391,7 +414,7 @@ export default {
     TsEventDetail,
     TsEventTagMenu,
     TsEventActionMenu,
-    TsEventTags
+    TsEventTags,
   },
   props: {
     queryRequest: {
@@ -423,8 +446,8 @@ export default {
       default: false,
     },
     highlightEvent: {
-      type: String,
-      default: '',
+      type: Object,
+      default: () => {},
     },
   },
   data() {
@@ -477,6 +500,12 @@ export default {
     },
     meta() {
       return this.$store.state.meta
+    },
+    highlightEventId() {
+      if (this.highlightEvent) {
+        return this.highlightEvent._id
+      }
+      return null
     },
     totalHits() {
       if (this.eventList.meta.es_total_count > 0 && this.eventList.meta.es_total_count_complete === 0) {
