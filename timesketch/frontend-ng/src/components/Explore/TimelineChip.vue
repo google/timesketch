@@ -115,7 +115,7 @@ limitations under the License.
             <v-icon v-if="timelineFailed" @click="dialogStatus = true" left color="red" size="x-large">
               mdi-alert-circle-outline
             </v-icon>
-            <v-icon v-if="!timelineFailed" left :color="timelineChipColor" size="x-large"> mdi-circle </v-icon>
+            <v-icon v-if="!timelineFailed" left :color="timelineChipColor" size="26" class="ml-n2"> mdi-circle </v-icon>
 
             <v-tooltip bottom :disabled="timeline.name.length < 30" open-delay="300">
               <template v-slot:activator="{ on: onTooltip, attrs }">
@@ -157,19 +157,21 @@ limitations under the License.
               </v-list-item>
             </template>
             <v-card class="pa-4">
-              <h3>Rename timeline</h3>
-              <br />
-              <v-text-field outlined dense autofocus v-model="newTimelineName" @focus="$event.target.select()">
-              </v-text-field>
-              <v-card-actions>
-                <v-spacer></v-spacer>
-                <v-btn color="primary" text @click="dialogRename = false"> Close </v-btn>
-                <v-btn color="primary" depressed @click="rename"> Save </v-btn>
-              </v-card-actions>
+              <v-form @submit.prevent="rename()">
+                <h3>Rename timeline</h3>
+                <br />
+                <v-text-field outlined dense autofocus v-model="newTimelineName" @focus="$event.target.select()">
+                </v-text-field>
+                <v-card-actions>
+                  <v-spacer></v-spacer>
+                  <v-btn text @click="dialogRename = false"> Cancel </v-btn>
+                  <v-btn color="primary" text @click="rename()"> Save </v-btn>
+                </v-card-actions>
+              </v-form>
             </v-card>
           </v-dialog>
 
-          <v-list-item @click="$emit('toggle', timeline)" v-if="timelineStatus === 'ready'">
+          <v-list-item v-if="timelineStatus === 'ready'" @click="$emit('toggle', timeline)">
             <v-list-item-action>
               <v-icon v-if="isSelected">mdi-eye-off</v-icon>
               <v-icon v-else>mdi-eye</v-icon>
@@ -178,7 +180,14 @@ limitations under the License.
             <v-list-item-subtitle v-else>Re-enable</v-list-item-subtitle>
           </v-list-item>
 
-          <v-dialog v-model="dialogStatus" width="600">
+          <v-list-item v-if="timelineStatus === 'ready'" @click="$emit('disableAllOtherTimelines', timeline)">
+            <v-list-item-action>
+              <v-icon>mdi-checkbox-marked-circle-minus-outline</v-icon>
+            </v-list-item-action>
+            <v-list-item-subtitle>Unselect other timelines</v-list-item-subtitle>
+          </v-list-item>
+
+          <v-dialog v-model="dialogStatus" width="800">
             <template v-slot:activator="{ on, attrs }">
               <v-list-item v-bind="attrs" v-on="on">
                 <v-list-item-action>
@@ -188,9 +197,9 @@ limitations under the License.
               </v-list-item>
             </template>
             <v-card>
-              <v-app-bar flat dense>{{ timeline.name }}</v-app-bar>
-              <div class="pa-3">
+              <div class="pa-4">
                 <ul style="list-style-type: none">
+                  <li><strong>Timeline name: </strong>{{ timeline.name }}</li>
                   <li><strong>Opensearch index: </strong>{{ timeline.searchindex.index_name }}</li>
                   <li v-if="timelineStatus === 'processing' || timelineStatus === 'ready'">
                     <strong>Number of events: </strong>
@@ -201,17 +210,16 @@ limitations under the License.
                     <strong>Created at: </strong>{{ timeline.created_at | shortDateTime }}
                     <small>({{ timeline.created_at | timeSince }})</small>
                   </li>
+                  <li><strong>Number of datasources: </strong>{{ datasources.length }}</li>
                 </ul>
 
-                <br />
-                {{ datasources.length }} data source(s) in this timeline <br /><br />
                 <v-alert
                   v-for="datasource in datasources"
                   :key="datasource.id"
-                  colored-border
-                  border="left"
-                  elevation="1"
+                  outlined
+                  text
                   :color="datasourceStatusColors(datasource)"
+                  class="ma-5"
                 >
                   <ul style="list-style-type: none">
                     <li><strong>Original filename:</strong> {{ datasource.original_filename }}</li>
@@ -223,7 +231,7 @@ limitations under the License.
                     <li v-if="datasource.data_label"><strong>Data label:</strong> {{ datasource.data_label }}</li>
                     <li><strong>Status:</strong> {{ dataSourceStatus(datasource) }}</li>
                     <li>
-                      <strong>Total File Events:</strong
+                      <strong>Total File Events: </strong
                       >{{ totalEventsDatasource(datasource.file_on_disk) | compactNumber }}
                     </li>
                     <li v-if="dataSourceStatus(datasource) === 'fail'">
@@ -231,9 +239,9 @@ limitations under the License.
                       <code v-if="datasource.error_message"> {{ datasource.error_message }}</code>
                     </li>
                   </ul>
-                  <br />
                 </v-alert>
               </div>
+              <v-divider></v-divider>
               <v-card-actions>
                 <v-spacer></v-spacer>
                 <v-btn color="primary" text @click="dialogStatus = false"> Close </v-btn>
