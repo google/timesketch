@@ -14,6 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
+  <v-chip small outlined @click="search(searchtemplate.query_string)">
+    {{ searchtemplate.name }}
+  </v-chip>
+  <!--
   <div>
     <v-row no-gutters>
       <div
@@ -29,6 +33,7 @@ limitations under the License.
       </div>
     </v-row>
   </div>
+  -->
 </template>
 
 <script>

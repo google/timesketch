@@ -46,10 +46,9 @@ limitations under the License.
               placeholder="Search"
               single-line
               dense
-              filled
               flat
               solo
-              class="pa-1"
+              class="pa-2"
               append-icon="mdi-magnify"
               @click:append="search()"
               id="tsSearchInput"
