@@ -1,0 +1,5 @@
+Support psort filters when ingesting into Timesketch
+Some hosts produce very large plaso data sets. So, I need a psort filter I can use that will output just the Windows event log Creation events and also filter to a time range of interest. This works great for psort output to CSV.
+Here is an example of a psort filter that will narrow down those 18 million events to under 2 million. This is what I'd like to replicate with timesketch_importer or a similar option.
+psort.py --output-time-zone 'UTC' -o dynamic -w dc-triage.csv dc-triage.plaso "(((parser == 'winevtx') and (timestamp_desc == 'Creation Time')) or (parser != 'winevtx')) and ( date > datetime('2021-02-01T00:00:00'))"
+  We call psort in the background worker, and we can pass in arguments to the command. We can add a filter argument and let the user (timesketch_importer for example) set that. This should replicate exactly what you do with normal CSV output.
