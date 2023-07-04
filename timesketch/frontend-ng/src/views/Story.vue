@@ -19,12 +19,14 @@ limitations under the License.
       <v-card class="pa-4">
         <h3>Rename story</h3>
         <br />
-        <v-text-field outlined dense autofocus v-model="titleDraft" @focus="$event.target.select()"> </v-text-field>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn text @click="renameStoryDialog = false"> Cancel </v-btn>
-          <v-btn color="primary" depressed @click="rename()"> Save </v-btn>
-        </v-card-actions>
+        <v-form @submit.prevent="rename()">
+          <v-text-field outlined dense autofocus v-model="titleDraft" @focus="$event.target.select()"> </v-text-field>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn text @click="renameStoryDialog = false"> Cancel </v-btn>
+            <v-btn color="primary" text @click="rename()"> Save </v-btn>
+          </v-card-actions>
+        </v-form>
       </v-card>
     </v-dialog>
 

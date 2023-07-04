@@ -128,11 +128,11 @@ limitations under the License.
           :count-per-timeline="countPerTimeline"
         ></ts-timeline-picker>
 
-        <span style="position: relative; top: -5px">
+        <span style="position: relative">
           <ts-upload-timeline-form btn-type="small"></ts-upload-timeline-form>
         </span>
 
-        <span style="position: relative; top: -5px">
+        <span style="position: relative">
           <v-dialog v-model="addManualEvent" width="600">
             <template v-slot:activator="{ on, attrs }">
               <v-btn small text rounded color="primary" v-bind="attrs" v-on="on">
@@ -220,7 +220,7 @@ limitations under the License.
           >
             <template v-slot:activator="{ on, attrs }">
               <v-btn small text rounded color="primary" v-bind="attrs" v-on="on">
-                <v-icon left small> mdi-plus </v-icon>
+                <v-icon left small> mdi-clock-plus-outline </v-icon>
                 Add timefilter
               </v-btn>
             </template>

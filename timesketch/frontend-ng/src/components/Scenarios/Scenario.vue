@@ -30,17 +30,17 @@ limitations under the License.
       <v-col cols="1">
         <!-- Rename dialog -->
         <v-dialog v-model="renameDialog" max-width="500">
-          <v-card>
-            <v-card-title class="text-h5"> Rename scenario </v-card-title>
-            <v-card-text>
-              Use a custom name for the scenario.
-              <v-text-field v-model="newName"></v-text-field>
-            </v-card-text>
-            <v-card-actions>
-              <v-spacer></v-spacer>
-              <v-btn color="primary" text @click="renameDialog = false"> Cancel </v-btn>
-              <v-btn color="primary" text @click="renameScenario()"> Save </v-btn>
-            </v-card-actions>
+          <v-card class="pa-4">
+            <v-form @submit.prevent="renameScenario()">
+              <h3>Rename scenario</h3>
+              <br />
+              <v-text-field outlined dense autofocus v-model="newName" @focus="$event.target.select()"></v-text-field>
+              <v-card-actions>
+                <v-spacer></v-spacer>
+                <v-btn text @click="renameDialog = false"> Cancel </v-btn>
+                <v-btn color="primary" text @click="renameScenario()"> Save </v-btn>
+              </v-card-actions>
+            </v-form>
           </v-card>
         </v-dialog>
         <v-menu offset-y :close-on-content-click="true">

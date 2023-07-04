@@ -108,46 +108,39 @@ limitations under the License.
           @click="toggleTimeline()"
           :style="getTimelineStyle(timeline)"
           class="mr-2 mb-3 pr-1 timeline-chip"
-          :class="{failed: timelineFailed}"
+          :class="{ failed: timelineFailed }"
           :ripple="!timelineFailed"
         >
           <div class="chip-content">
-
-            <v-icon v-if="timelineFailed" @click="dialogStatus = true" left color="red" size="x-large"> mdi-alert-circle-outline </v-icon>
-            <v-icon v-if="!timelineFailed" left :color="timelineChipColor" size="xx-large" class="ml-n3"> mdi-circle </v-icon>
+            <v-icon v-if="timelineFailed" @click="dialogStatus = true" left color="red" size="x-large">
+              mdi-alert-circle-outline
+            </v-icon>
+            <v-icon v-if="!timelineFailed" left :color="timelineChipColor" size="xx-large" class="ml-n3">
+              mdi-circle
+            </v-icon>
 
             <v-tooltip bottom :disabled="timeline.name.length < 30" open-delay="300">
               <template v-slot:activator="{ on: onTooltip, attrs }">
-                <span class="timeline-name-ellipsis" :class="{ disabled: !isSelected && timelineStatus === 'ready'}"
-                v-bind="attrs"
-                v-on="onTooltip"
-                >{{ timeline.name }}</span>
+                <span
+                  class="timeline-name-ellipsis"
+                  :class="{ disabled: !isSelected && timelineStatus === 'ready' }"
+                  v-bind="attrs"
+                  v-on="onTooltip"
+                  >{{ timeline.name }}</span
+                >
               </template>
               <span>{{ timeline.name }}</span>
             </v-tooltip>
 
             <span class="right">
-              <span
-                v-if="timelineStatus === 'processing'"
-                class="ml-3"
-              >
+              <span v-if="timelineStatus === 'processing'" class="ml-3">
                 <v-progress-circular small indeterminate color="grey" :size="20" :width="2"></v-progress-circular>
               </span>
 
-              <v-chip
-                v-if="!timelineFailed"
-                class="events-count"
-                :color="$vuetify.theme.dark ? 'grey' : '#fff'"
-                small
-              >
+              <v-chip v-if="!timelineFailed" class="events-count" :color="$vuetify.theme.dark ? 'grey' : '#fff'" small>
                 {{ eventsCount | compactNumber }}
               </v-chip>
-              <v-btn
-                class="ma-1"
-                small
-                icon
-                v-on="on"
-              >
+              <v-btn class="ma-1" small icon v-on="on">
                 <v-icon> mdi-dots-vertical </v-icon>
               </v-btn>
             </span>
@@ -166,25 +159,34 @@ limitations under the License.
               </v-list-item>
             </template>
             <v-card class="pa-4">
-              <h3>Rename timeline</h3>
-              <br />
-              <v-text-field outlined dense autofocus v-model="newTimelineName" @focus="$event.target.select()">
-              </v-text-field>
-              <v-card-actions>
-                <v-spacer></v-spacer>
-                <v-btn color="primary" text @click="dialogRename = false"> Close </v-btn>
-                <v-btn color="primary" depressed @click="rename"> Save </v-btn>
-              </v-card-actions>
+              <v-form @submit.prevent="rename()">
+                <h3>Rename timeline</h3>
+                <br />
+                <v-text-field outlined dense autofocus v-model="newTimelineName" @focus="$event.target.select()">
+                </v-text-field>
+                <v-card-actions>
+                  <v-spacer></v-spacer>
+                  <v-btn text @click="dialogRename = false"> Cancel </v-btn>
+                  <v-btn color="primary" text @click="rename()"> Save </v-btn>
+                </v-card-actions>
+              </v-form>
             </v-card>
           </v-dialog>
 
-          <v-list-item @click="$emit('toggle', timeline)" v-if="timelineStatus === 'ready'">
+          <v-list-item v-if="timelineStatus === 'ready'" @click="$emit('toggle', timeline)">
             <v-list-item-action>
               <v-icon v-if="isSelected">mdi-eye-off</v-icon>
               <v-icon v-else>mdi-eye</v-icon>
             </v-list-item-action>
             <v-list-item-subtitle v-if="isSelected">Temporarily disabled</v-list-item-subtitle>
             <v-list-item-subtitle v-else>Re-enable</v-list-item-subtitle>
+          </v-list-item>
+
+          <v-list-item v-if="timelineStatus === 'ready'" @click="$emit('disableAllOtherTimelines', timeline)">
+            <v-list-item-action>
+              <v-icon>mdi-checkbox-marked-circle-minus-outline</v-icon>
+            </v-list-item-action>
+            <v-list-item-subtitle>Unselect other timelines</v-list-item-subtitle>
           </v-list-item>
 
           <v-dialog v-model="dialogStatus" width="600">
@@ -197,9 +199,9 @@ limitations under the License.
               </v-list-item>
             </template>
             <v-card>
-              <v-app-bar flat dense>{{ timeline.name }}</v-app-bar>
-              <div class="pa-3">
+              <div class="pa-4">
                 <ul style="list-style-type: none">
+                  <li><strong>Timeline name: </strong>{{ timeline.name }}</li>
                   <li><strong>Opensearch index: </strong>{{ timeline.searchindex.index_name }}</li>
                   <li v-if="timelineStatus === 'processing' || timelineStatus === 'ready'">
                     <strong>Number of events: </strong>
@@ -210,17 +212,15 @@ limitations under the License.
                     <strong>Created at: </strong>{{ timeline.created_at | shortDateTime }}
                     <small>({{ timeline.created_at | timeSince }})</small>
                   </li>
+                  <li><strong>Number of datasources: </strong>{{ datasources.length }}</li>
                 </ul>
 
-                <br />
-                {{ datasources.length }} data source(s) in this timeline <br /><br />
                 <v-alert
                   v-for="datasource in datasources"
                   :key="datasource.id"
-                  colored-border
-                  border="left"
-                  elevation="1"
-                  :color="datasourceStatusColors(datasource)"
+                  outlined
+                  :type="datasourceStatusColors(datasource)"
+                  class="ma-5"
                 >
                   <ul style="list-style-type: none">
                     <li><strong>Original filename:</strong> {{ datasource.original_filename }}</li>
@@ -240,7 +240,6 @@ limitations under the License.
                       <code v-if="datasource.error_message"> {{ datasource.error_message }}</code>
                     </li>
                   </ul>
-                  <br />
                 </v-alert>
               </div>
               <v-card-actions>
@@ -406,14 +405,14 @@ export default {
       return 'mdi-alert-circle-outline'
     },
     timelineFailed() {
-      return this.timelineStatus === 'fail';
+      return this.timelineStatus === 'fail'
     },
     timelineChipColor() {
       if (!this.timeline.color.startsWith('#')) {
         return '#' + this.timeline.color
       }
       return this.timeline.color
-    }
+    },
   },
   methods: {
     rename() {
@@ -455,9 +454,9 @@ export default {
       this.$emit('save', this.timeline)
     }, 300),
     getTimelineStyle(timeline) {
-      const greyOut = (this.timelineStatus === 'ready' && !this.isSelected)
+      const greyOut = this.timelineStatus === 'ready' && !this.isSelected
       return {
-        opacity: greyOut ? '50%':'100%',
+        opacity: greyOut ? '50%' : '100%',
       }
     },
     fetchData() {
@@ -570,10 +569,8 @@ export default {
 
 <!-- CSS scoped to this component only -->
 <style scoped lang="scss">
-
 .timeline-chip {
-
-  .right{
+  .right {
     margin-left: auto;
   }
 

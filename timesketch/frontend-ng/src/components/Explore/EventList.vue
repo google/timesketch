@@ -72,7 +72,7 @@ limitations under the License.
                   <v-card-actions>
                     <v-spacer></v-spacer>
                     <v-btn text @click="saveSearchMenu = false"> Cancel </v-btn>
-                    <v-btn color="primary" depressed @click="saveSearch" :disabled="!saveSearchFormName"> Save </v-btn>
+                    <v-btn text color="primary" @click="saveSearch" :disabled="!saveSearchFormName"> Save </v-btn>
                   </v-card-actions>
                 </v-card>
               </v-dialog>
@@ -119,10 +119,8 @@ limitations under the License.
 
                   <v-card-actions>
                     <v-spacer></v-spacer>
-                    <v-btn color="primary" text @click="selectedFields = [{ field: 'message', type: 'text' }]">
-                      Reset
-                    </v-btn>
-                    <v-btn color="primary" text @click="columnDialog = false"> Close </v-btn>
+                    <v-btn text @click="selectedFields = [{ field: 'message', type: 'text' }]"> Reset </v-btn>
+                    <v-btn text color="primary" @click="columnDialog = false"> Set columns </v-btn>
                   </v-card-actions>
                 </v-card>
               </v-dialog>
@@ -315,7 +313,13 @@ limitations under the License.
               }"
             >
               <!-- Tags -->
-              <span v-if="displayOptions.showTags && index === 3 && ('tag' in item._source ? (item._source.tag.length > 0) : false )">
+              <span
+                v-if="
+                  displayOptions.showTags &&
+                  index === 3 &&
+                  ('tag' in item._source ? item._source.tag.length > 0 : false)
+                "
+              >
                 <ts-event-tags :item="item" :tagConfig="tagConfig" :showDetails="item.showDetails"></ts-event-tags>
               </span>
               <!-- Emojis -->
@@ -391,7 +395,7 @@ export default {
     TsEventDetail,
     TsEventTagMenu,
     TsEventActionMenu,
-    TsEventTags
+    TsEventTags,
   },
   props: {
     queryRequest: {
