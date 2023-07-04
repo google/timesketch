@@ -115,7 +115,7 @@ limitations under the License.
             <v-icon v-if="timelineFailed" @click="dialogStatus = true" left color="red" size="x-large">
               mdi-alert-circle-outline
             </v-icon>
-            <v-icon v-if="!timelineFailed" left :color="timelineChipColor" size="x-large"> mdi-circle </v-icon>
+            <v-icon v-if="!timelineFailed" left :color="timelineChipColor" size="26" class="ml-n2"> mdi-circle </v-icon>
 
             <v-tooltip bottom :disabled="timeline.name.length < 30" open-delay="300">
               <template v-slot:activator="{ on: onTooltip, attrs }">
