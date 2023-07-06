@@ -72,7 +72,7 @@ limitations under the License.
 
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn text color="primary" @click="clearAndCancel"> Cancel </v-btn>
+        <v-btn text @click="clearAndCancel"> Cancel </v-btn>
         <v-btn text color="primary" @click="submit()"> Add filter </v-btn>
       </v-card-actions>
     </v-container>

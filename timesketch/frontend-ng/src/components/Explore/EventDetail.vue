@@ -21,13 +21,17 @@ limitations under the License.
           <v-simple-table dense>
             <template v-slot:default>
               <tbody>
-                <tr v-for="(value, key) in fullEventFiltered" :key="key" @mouseover="c_key = key" @mouseleave="c_key = -1">
+                <tr
+                  v-for="(value, key) in fullEventFiltered"
+                  :key="key"
+                  @mouseover="c_key = key"
+                  @mouseleave="c_key = -1"
+                >
                   <!-- Event field name actions -->
                   <td v-if="key == c_key" class="text-right">
-
                     <!-- Copy field name -->
                     <v-btn
-                      v-if="(key == c_key) && key != '' && !ignoredAggregatorFields.has(key)"
+                      v-if="key == c_key && key != '' && !ignoredAggregatorFields.has(key)"
                       @click.stop="loadAggregation(key, value)"
                       icon
                       x-small
@@ -35,13 +39,7 @@ limitations under the License.
                     >
                       <v-icon>mdi-chart-bar</v-icon>
                     </v-btn>
-                    <v-btn
-                      icon
-                      x-small
-                      style="cursor: pointer"
-                      @click="copyToClipboard(key)"
-                      class="pr-1"
-                    >
+                    <v-btn icon x-small style="cursor: pointer" @click="copyToClipboard(key)" class="pr-1">
                       <v-icon small>mdi-content-copy</v-icon>
                     </v-btn>
                   </td>
@@ -56,21 +54,17 @@ limitations under the License.
                   </td>
 
                   <!-- Event field value action icons -->
-                  <td v-if="key.includes('xml') || checkContextLinkDisplay(key, value) || (key == c_key)" class="text-right pr-1">
-
+                  <td
+                    v-if="key.includes('xml') || checkContextLinkDisplay(key, value) || key == c_key"
+                    class="text-right pr-1"
+                  >
                     <!-- Copy event value -->
-                    <v-btn
-                      icon
-                      x-small
-                      style="cursor: pointer"
-                      @click="copyToClipboard(value)"
-                      v-show="key == c_key"
-                    >
+                    <v-btn icon x-small style="cursor: pointer" @click="copyToClipboard(value)" v-show="key == c_key">
                       <v-icon small>mdi-content-copy</v-icon>
                     </v-btn>
 
                     <!-- XML prettify dialog -->
-                    <v-dialog v-if="key.includes('xml')" v-model="formatXMLString" width="1000">
+                    <v-dialog v-if="key.includes('xml')" v-model="formatXMLString">
                       <template v-slot:activator="{ on, attrs }">
                         <v-btn
                           icon
@@ -81,43 +75,24 @@ limitations under the License.
                           v-on="on"
                           @click="formatXMLString = true"
                         >
-                          <v-tooltip top close-delay=300 :open-on-click="false">
+                          <v-tooltip top close-delay="300" :open-on-click="false">
                             <template v-slot:activator="{ on }">
-                              <v-icon v-on="on" small>
-                                mdi-xml
-                              </v-icon>
+                              <v-icon v-on="on" small> mdi-xml </v-icon>
                             </template>
                             <span>Prettify XML</span>
                           </v-tooltip>
                         </v-btn>
                       </template>
-                      <ts-format-xml-string
-                        app
-                        @cancel="formatXMLString = false"
-                        :xmlString="value"
-                      ></ts-format-xml-string>
+                      <ts-format-xml-string @close="formatXMLString = false" :xmlString="value"></ts-format-xml-string>
                     </v-dialog>
 
                     <!-- Context link submenu -->
-                    <v-menu
-                      v-if="checkContextLinkDisplay(key, value)"
-                      offset-y
-                      transition="slide-y-transition"
-                    >
+                    <v-menu v-if="checkContextLinkDisplay(key, value)" offset-y transition="slide-y-transition">
                       <template v-slot:activator="{ on, attrs }">
-                        <v-btn
-                          icon
-                          color="primary"
-                          x-small
-                          style="cursor: pointer"
-                          v-bind="attrs"
-                          v-on="on"
-                        >
-                          <v-tooltip top close-delay=300 :open-on-click="false">
+                        <v-btn icon color="primary" x-small style="cursor: pointer" v-bind="attrs" v-on="on">
+                          <v-tooltip top close-delay="300" :open-on-click="false">
                             <template v-slot:activator="{ on }">
-                              <v-icon v-on="on" small>
-                                mdi-open-in-new
-                              </v-icon>
+                              <v-icon v-on="on" small> mdi-open-in-new </v-icon>
                             </template>
                             <span>Context Lookup</span>
                           </v-tooltip>
@@ -128,15 +103,13 @@ limitations under the License.
                           v-for="(item, index) in getContextLinkItems(key)"
                           :key="index"
                           style="cursor: pointer"
-                          @click.stop="contextLinkRedirect(key,item,value)"
+                          @click.stop="contextLinkRedirect(key, item, value)"
                         >
-                          <v-list-item-title v-if="getContextLinkRedirectState(key,item)" >{{ item }}</v-list-item-title>
-                          <v-list-item-title v-else >{{ item }}*</v-list-item-title>
-                          <v-dialog
-                            v-model="redirectWarnDialog"
-                            max-width="515"
-                            :retain-focus="false"
-                          >
+                          <v-list-item-title v-if="getContextLinkRedirectState(key, item)">{{
+                            item
+                          }}</v-list-item-title>
+                          <v-list-item-title v-else>{{ item }}*</v-list-item-title>
+                          <v-dialog v-model="redirectWarnDialog" max-width="515" :retain-focus="false">
                             <ts-link-redirect-warning
                               app
                               @cancel="redirectWarnDialog = false"
@@ -147,7 +120,6 @@ limitations under the License.
                         </v-list-item>
                       </v-list>
                     </v-menu>
-
                   </td>
                   <td v-else>
                     <div class="px-5"></div>
@@ -237,18 +209,15 @@ limitations under the License.
         </v-card>
       </v-col>
     </v-row>
-    <v-dialog
-      scrollable
-      v-model="aggregatorDialog"
-      @click:outside="$event => this.aggregatorDialog = false"
-    >
+    <v-dialog scrollable v-model="aggregatorDialog" @click:outside="($event) => (this.aggregatorDialog = false)">
       <ts-aggregate-dialog
         :eventKey="eventKey"
         :eventValue="eventValue"
         :eventTimestamp="eventTimestamp"
         :eventTimestampDesc="eventTimestampDesc"
         :reloadData="aggregatorDialog"
-        @cancel=" aggregatorDialog = false">
+        @cancel="aggregatorDialog = false"
+      >
       </ts-aggregate-dialog>
     </v-dialog>
     <br />
@@ -276,17 +245,15 @@ export default {
       comments: [],
       selectedComment: null,
       aggregatorDialog: false,
-      ignoredAggregatorFields: new Set(
-          [
-              'datetime',
-              'message',
-              'path_spec',
-              'strings',
-              'timestamp',
-              'timestamp_desc',
-              'xml_string'
-          ]
-      ),
+      ignoredAggregatorFields: new Set([
+        'datetime',
+        'message',
+        'path_spec',
+        'strings',
+        'timestamp',
+        'timestamp_desc',
+        'xml_string',
+      ]),
       eventKey: '',
       eventValue: '',
       eventTimestamp: 0,
@@ -381,7 +348,7 @@ export default {
     },
     getContextLinkItems(key) {
       let fieldConfList = this.contextLinkConf[key.toLowerCase()] ? this.contextLinkConf[key.toLowerCase()] : []
-      let shortNameList = fieldConfList.map(x => x.short_name)
+      let shortNameList = fieldConfList.map((x) => x.short_name)
       return shortNameList
     },
     checkContextLinkDisplay(key, value) {
@@ -389,17 +356,18 @@ export default {
       for (const confItem of fieldConfList) {
         if (confItem['validation_regex'] !== '' && confItem['validation_regex'] !== undefined) {
           let validationPattern = confItem['validation_regex']
-          let regexIdentifiers = validationPattern.slice(validationPattern.lastIndexOf('/')+1)
-          let regexPattern = validationPattern.slice(validationPattern.indexOf('/')+1, validationPattern.lastIndexOf('/'))
+          let regexIdentifiers = validationPattern.slice(validationPattern.lastIndexOf('/') + 1)
+          let regexPattern = validationPattern.slice(
+            validationPattern.indexOf('/') + 1,
+            validationPattern.lastIndexOf('/')
+          )
           let valueRegex = new RegExp(regexPattern, regexIdentifiers)
           if (valueRegex.test(value)) {
             return true
-          }
-          else {
+          } else {
             return false
           }
-        }
-        else {
+        } else {
           return true
         }
       }
@@ -413,8 +381,7 @@ export default {
             this.redirectWarnDialog = true
             this.contextValue = value
             this.contextUrl = confItem['context_link'].replace('<ATTR_VALUE>', encodeURIComponent(value))
-          }
-          else {
+          } else {
             // TODO verify if encodeURIComponent is sufficient sanitization here?
             window.open(confItem['context_link'].replace('<ATTR_VALUE>', encodeURIComponent(value)), '_blank')
             this.redirectWarnDialog = false
@@ -422,7 +389,7 @@ export default {
         }
       }
     },
-    getContextLinkRedirectState (key, item) {
+    getContextLinkRedirectState(key, item) {
       const fieldConfList = this.contextLinkConf[key.toLowerCase()] ? this.contextLinkConf[key.toLowerCase()] : []
       for (const confItem of fieldConfList) {
         if (confItem['short_name'] === item) {
@@ -435,7 +402,7 @@ export default {
       this.eventValue = eventValue
       this.aggregatorDialog = true
     },
-    copyToClipboard (content) {
+    copyToClipboard(content) {
       try {
         navigator.clipboard.writeText(content)
         this.infoSnackBar('copied')
