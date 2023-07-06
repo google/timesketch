@@ -44,6 +44,8 @@ Usage: timesketch [OPTIONS] COMMAND [ARGS]...
 Options:
   --version         Show the version and exit.
   --sketch INTEGER  Sketch to work in.
+  --output-format TEXT  Set output format [json, text, tabular, csv]
+                        (overrides global setting).
   -h, --help        Show this message and exit.
 
 Commands:
@@ -79,6 +81,12 @@ Example:
 
 ```
 timesketch config set output csv
+```
+
+The output format can also be set in CLI with the following flag:
+
+```
+timesketch --output-format text [YOURCOMMAND]
 ```
 
 ## Search
