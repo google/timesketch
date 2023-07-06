@@ -102,6 +102,7 @@ limitations under the License.
 
     <v-expand-transition v-if="scenario.facets.length">
       <div v-show="expanded">
+        <v-divider></v-divider>
         <div v-for="facet in scenario.facets" :key="facet.id">
           <ts-facet :scenario="scenario" :facet="facet"></ts-facet>
         </div>

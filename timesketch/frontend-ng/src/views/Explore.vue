@@ -245,20 +245,26 @@ limitations under the License.
     </v-card>
 
     <!-- DFIQ context -->
-    <div class="mt-3 mx-3">
-      <div :class="[$vuetify.theme.dark ? 'dark-info-card' : 'light-info-card']" v-if="activeContext.question">
-        <v-toolbar dense flat color="transparent">
-          <h4>{{ activeContext.question.display_name }}</h4>
-          <v-spacer></v-spacer>
-          <v-btn small icon @click="$store.dispatch('clearActiveContext')" class="mr-1">
-            <v-icon>mdi-close</v-icon>
-          </v-btn>
-        </v-toolbar>
-        <p class="mt-1 pb-4 px-4" style="font-size: 0.9em">
-          {{ activeContext.question.description }}
-        </p>
+    <v-card outlined class="mt-3 mx-3" v-if="activeContext.question">
+      <v-toolbar dense flat>
+        <strong>{{ activeContext.question.display_name }}</strong>
+        <v-spacer></v-spacer>
+        <v-btn small icon @click="$store.dispatch('clearActiveContext')" class="mr-1">
+          <v-icon>mdi-close</v-icon>
+        </v-btn>
+      </v-toolbar>
+      <v-divider></v-divider>
+      <div class="pa-4" style="font-size: 0.9em">
+        {{ activeContext.question.description }}
+        <v-chip-group column>
+          <ts-search-template
+            v-for="searchtemplate in searchTemplates"
+            :key="searchtemplate.id"
+            :searchtemplate="searchtemplate"
+          ></ts-search-template>
+        </v-chip-group>
       </div>
-    </div>
+    </v-card>
 
     <!-- Eventlist -->
     <v-card flat class="mt-5 mx-3">

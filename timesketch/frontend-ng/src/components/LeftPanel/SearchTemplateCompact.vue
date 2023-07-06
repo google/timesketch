@@ -14,26 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-chip small outlined @click="search(searchtemplate.query_string)">
+  <v-chip small @click="search(searchtemplate.query_string)">
     {{ searchtemplate.name }}
   </v-chip>
-  <!--
-  <div>
-    <v-row no-gutters>
-      <div
-        style="width: 100%; border-radius: 4px; cursor: pointer"
-        class="px-2 mb-n1"
-        :class="[
-          $vuetify.theme.dark ? 'dark-highlight' : 'light-highlight',
-          $vuetify.theme.dark ? 'dark-hover-on-highlight' : 'light-hover-on-highlight',
-        ]"
-        @click="search(searchtemplate.query_string)"
-      >
-        <span style="font-size: 0.8em">{{ searchtemplate.name }}</span>
-      </div>
-    </v-row>
-  </div>
-  -->
 </template>
 
 <script>

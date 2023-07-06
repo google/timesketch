@@ -30,7 +30,10 @@ limitations under the License.
           : 'light-hover'
       "
     >
-      <span>{{ question.display_name }}</span>
+      <span v-if="expanded"
+        ><strong>{{ question.display_name }}</strong></span
+      >
+      <span v-else>{{ question.display_name }}</span>
     </v-row>
 
     <v-expand-transition>
@@ -49,14 +52,17 @@ limitations under the License.
       >
         <!-- Query suggestions -->
         <div class="pt-2 pl-5">
-          <small>Suggested queries:</small>
-          <v-chip-group column>
-            <ts-search-template
-              v-for="searchtemplate in searchTemplates"
-              :key="searchtemplate.id"
-              :searchtemplate="searchtemplate"
-            ></ts-search-template>
-          </v-chip-group>
+          <div v-if="searchTemplates.length">
+            <small><strong>Suggested queries</strong></small>
+            <v-chip-group column>
+              <ts-search-template
+                v-for="searchtemplate in searchTemplates"
+                :key="searchtemplate.id"
+                :searchtemplate="searchtemplate"
+              ></ts-search-template>
+            </v-chip-group>
+          </div>
+          <div v-else><small>No suggested queries available</small></div>
         </div>
 
         <!-- Conclusions -->
@@ -67,9 +73,16 @@ limitations under the License.
         </div>
 
         <!-- Add new conclusion -->
+
         <div v-if="!currentUserConclusion" style="font-size: 0.9em" class="pb-4 mr-3 pl-5">
+          <v-btn x-small text color="primary" @click="addConclusion = !addConclusion" class="ml-n3">
+            <v-icon x-small>mdi-plus</v-icon>
+            Add conclusion
+          </v-btn>
           <v-textarea
+            v-if="addConclusion"
             v-model="conclusionText"
+            class="mt-3"
             outlined
             flat
             hide-details
@@ -84,15 +97,21 @@ limitations under the License.
               </v-avatar>
             </template>
           </v-textarea>
-          <v-expand-transition>
-            <div v-if="conclusionText">
-              <v-card-actions class="pr-0">
-                <v-spacer></v-spacer>
-                <v-btn small text @click="conclusionText = ''"> Cancel </v-btn>
-                <v-btn small text color="primary" @click="createConclusion()"> Save </v-btn>
-              </v-card-actions>
-            </div>
-          </v-expand-transition>
+
+          <v-card-actions v-if="addConclusion" class="pr-0">
+            <v-spacer></v-spacer>
+            <v-btn
+              small
+              text
+              @click="
+                conclusionText = ''
+                addConclusion = false
+              "
+            >
+              Cancel
+            </v-btn>
+            <v-btn small text color="primary" @click="createConclusion()" :disabled="!conclusionText"> Save </v-btn>
+          </v-card-actions>
         </div>
       </div>
     </v-expand-transition>
@@ -115,6 +134,7 @@ export default {
       expanded: false,
       fullDescription: false,
       conclusionText: '',
+      addConclusion: false,
     }
   },
   computed: {
