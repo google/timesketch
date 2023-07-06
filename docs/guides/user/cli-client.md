@@ -136,6 +136,43 @@ List all available analyzers:
 timesketch analyze list
 ```
 
+To get information about analyzers available in the Timesketch instance the command `timesketch analyze list` can be used.
+If no sketch is defined in the config yet, it can also be passed as an argument, e.g.:
+
+```bash
+timesketch --sketch 1 analyze list --output-format tabular
+Name	Display Name	Is Multi
+login	Windows logon/logoff events	False
+ntfs_timestomp	NTFS timestomp detection	False
+chain	Chain linked events	False
+tagger	Tagger	True
+ssh_sessionizer	SSH sessions	False
+sigma	Sigma	False
+ssh_bruteforce_sessionizer	SSH bruteforce	False
+evtx_gap	EVTX gap	False
+hashr_lookup	hashR lookup	False
+domain	Domain	False
+web_activity_sessionizer	Web activity sessions	False
+similarity_scorer	Similarity Scorer	False
+sessionizer	Time based sessions	False
+safebrowsing	Google Safe Browsing	False
+gcp_servicekey	Google Compute Engine actions	False
+win_crash	Windows application crashes	False
+browser_timeframe	Browser timeframe	False
+gcp_logging	Google Cloud Logging Analyzer	False
+misp_analyzer	MISP	False
+hashlookup_analyzer	Hashlookup	False
+feature_extraction	Feature extractor	True
+geo_ip_maxmind_db	Geolocate IP addresses (MaxMind Database based)	False
+sshbruteforceanalyzer	SSH Brute Force Analyzer	False
+phishy_domains	Phishy domains	False
+geo_ip_maxmind_web	Geolocate IP addresses (MaxMind Web client based)	False
+yetiindicators	Yeti threat intel indicators	False
+account_finder	Account finder	False
+browser_search	Browser search terms	False
+windowsbruteforceanalyser	Windows Login Brute Force Analyzer	False
+```
+
 Run a specific analyzer. In this example the `domain` analyzer on timeline 1:
 
 ```
