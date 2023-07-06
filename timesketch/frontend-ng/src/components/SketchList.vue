@@ -21,6 +21,7 @@ limitations under the License.
           <v-btn style="border-radius: 6px" @click="switchScope('recent')"> Recent </v-btn>
           <v-btn style="border-radius: 6px" @click="switchScope('user')"> My sketches </v-btn>
           <v-btn style="border-radius: 6px" @click="switchScope('shared')"> Shared with me </v-btn>
+          <v-btn style="border-radius: 6px" @click="switchScope('archived')"> Archived </v-btn>
         </v-btn-toggle>
       </v-col>
       <v-col cols="3">

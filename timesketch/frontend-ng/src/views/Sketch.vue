@@ -322,6 +322,15 @@ limitations under the License.
                 </v-list-item-content>
               </v-list-item>
 
+              <v-list-item v-if="meta.permissions && meta.permissions.delete" @click="deleteSketch()">
+                <v-list-item-icon>
+                  <v-icon>mdi-trash-can-outline</v-icon>
+                </v-list-item-icon>
+                <v-list-item-content>
+                  <v-list-item-title>Delete sketch</v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+
               <a href="/logout/" style="text-decoration: none; color: inherit">
                 <v-list-item>
                   <v-list-item-icon>
@@ -499,6 +508,17 @@ export default {
         .catch((e) => {
           console.error(e)
         })
+    },
+    deleteSketch: function () {
+      if (confirm('Are you sure you want to delete the sketch?')) {
+        ApiClient.deleteSketch(this.sketch.id)
+          .then((response) => {
+            this.$router.push({ name: 'Home' })
+          })
+          .catch((e) => {
+            console.error(e)
+          })
+      }
     },
     generateContextQuery(event) {
       let timestampMillis = this.$options.filters.formatTimestamp(event._source.timestamp)
