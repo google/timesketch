@@ -322,7 +322,7 @@ limitations under the License.
                 </v-list-item-content>
               </v-list-item>
 
-              <v-list-item v-if="meta.permissions.delete" @click="deleteSketch()">
+              <v-list-item v-if="meta.permissions && meta.permissions.delete" @click="deleteSketch()">
                 <v-list-item-icon>
                   <v-icon>mdi-trash-can-outline</v-icon>
                 </v-list-item-icon>
