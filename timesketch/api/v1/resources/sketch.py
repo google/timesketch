@@ -130,7 +130,11 @@ class SketchListResource(resources.ResourceMixin, Resource):
                 .order_by(View.updated_at.desc())
                 .limit(10)
             )
-            sketches = [view.sketch for view in views]
+            sketches = [
+                view.sketch
+                for view in views
+                if view.sketch.get_status.status != "deleted"
+            ]
             total_items = len(sketches)
         elif scope == "admin":
             if not current_user.admin:
