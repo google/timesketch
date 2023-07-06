@@ -245,26 +245,7 @@ limitations under the License.
     </v-card>
 
     <!-- DFIQ context -->
-    <v-card outlined class="mt-3 mx-3" v-if="activeContext.question">
-      <v-toolbar dense flat>
-        <strong>{{ activeContext.question.display_name }}</strong>
-        <v-spacer></v-spacer>
-        <v-btn small icon @click="$store.dispatch('clearActiveContext')" class="mr-1">
-          <v-icon>mdi-close</v-icon>
-        </v-btn>
-      </v-toolbar>
-      <v-divider></v-divider>
-      <div class="pa-4" style="font-size: 0.9em">
-        {{ activeContext.question.description }}
-        <v-chip-group column>
-          <ts-search-template
-            v-for="searchtemplate in searchTemplates"
-            :key="searchtemplate.id"
-            :searchtemplate="searchtemplate"
-          ></ts-search-template>
-        </v-chip-group>
-      </div>
-    </v-card>
+    <ts-context-card v-if="activeContext.question"></ts-context-card>
 
     <!-- Eventlist -->
     <v-card flat class="mt-5 mx-3">
@@ -291,6 +272,7 @@ import TsFilterMenu from '../components/Explore/FilterMenu'
 import TsUploadTimelineForm from '../components/UploadForm'
 import TsAddManualEvent from '../components/Explore/AddManualEvent'
 import TsEventList from '../components/Explore/EventList'
+import TsContextCard from '../components/Scenarios/ContextCard'
 
 const defaultQueryFilter = () => {
   return {
@@ -316,6 +298,7 @@ export default {
     TsUploadTimelineForm,
     TsAddManualEvent,
     TsEventList,
+    TsContextCard,
   },
   props: ['sketchId'],
   data() {
