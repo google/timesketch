@@ -14,17 +14,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-card width="1000" style="overflow: initial">
-    <v-container class="px-8">
-      <v-alert border="top" colored-border type="info" elevation="2"> XML viewer </v-alert>
-      <v-alert colored-border :color="'success'" border="left" elevation="1">
-        <pre lang="xml">{{ xmlString }}</pre>
-      </v-alert>
-      <v-card-actions>
-        <v-spacer></v-spacer>
-        <v-btn text color="primary" @click="clearAndCancel"> Close </v-btn>
-      </v-card-actions>
-    </v-container>
+  <v-card>
+    <div class="pa-8">
+      <pre lang="xml" style="font-size: 0.9em">{{ xmlString }}</pre>
+    </div>
+    <v-divider></v-divider>
+    <v-card-actions>
+      <v-spacer></v-spacer>
+      <v-btn text color="primary" @click="close()"> Close </v-btn>
+    </v-card-actions>
   </v-card>
 </template>
 
@@ -32,8 +30,8 @@ limitations under the License.
 export default {
   props: ['xmlString'],
   methods: {
-    clearAndCancel: function () {
-      this.$emit('cancel')
+    close: function () {
+      this.$emit('close')
     },
   },
 }
