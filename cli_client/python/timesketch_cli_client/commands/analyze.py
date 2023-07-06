@@ -89,7 +89,7 @@ def run_analyzer(ctx, analyzer_name, timeline_id):
     "--output-format",
     "output",
     required=False,
-    help="Set output format [json, text] (overrides global setting).",
+    help="Set output format [json, text, tabular] (overrides global setting).",
 )
 @click.pass_context
 def list_analyzers(ctx, output):
@@ -97,14 +97,15 @@ def list_analyzers(ctx, output):
 
     Args:
         ctx: Click CLI context object.
-        output-format: Output format to use. Available values: 'json','text' or 'tabular'
+        output-format: Output format to use. Available values:
+            'json','text' or 'tabular'
     """
     sketch = ctx.obj.sketch
     if not output:
         output = ctx.obj.output_format
     # Show header row if output is tabular
     if output == "tabular":
-        click.echo(f"Name\tDisplay Name\tIs Multi")
+        click.echo("Name\tDisplay Name\tIs Multi")
 
     for analyzer in sketch.list_available_analyzers():
         if output == "json":
@@ -112,8 +113,9 @@ def list_analyzers(ctx, output):
             continue
         elif output == "tabular":
             click.echo(
-                f"{analyzer.get('name')}\t{analyzer.get('display_name')}\t{analyzer.get('is_multi')}"
+                f"{analyzer.get('name')}\t"
+                f"{analyzer.get('display_name')}\t"
+                f"{analyzer.get('is_multi')}"
             )
             continue
-        else:
-            click.echo(analyzer.get("name"))
+        click.echo(analyzer.get("name"))
