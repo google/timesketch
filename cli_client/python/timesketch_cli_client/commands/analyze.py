@@ -111,7 +111,7 @@ def list_analyzers(ctx, output):
         if output == "json":
             click.echo(f"{analyzer}")
             continue
-        elif output == "tabular":
+        if output == "tabular":
             click.echo(
                 f"{analyzer.get('name')}\t"
                 f"{analyzer.get('display_name')}\t"
