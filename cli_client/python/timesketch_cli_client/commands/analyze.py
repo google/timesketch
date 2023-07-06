@@ -107,10 +107,12 @@ def list_analyzers(ctx, output):
     if output == "tabular":
         click.echo("Name\tDisplay Name\tIs Multi")
 
-    for analyzer in sketch.list_available_analyzers():
-        if output == "json":
-            click.echo(f"{analyzer}")
-            continue
+    analyzers = sketch.list_available_analyzers()
+    if output == "json":
+        click.echo(f"{analyzers}")
+        return
+
+    for analyzer in analyzers:
         if output == "tabular":
             click.echo(
                 f"{analyzer.get('name')}\t"
