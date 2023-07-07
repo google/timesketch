@@ -148,7 +148,7 @@ To get information about analyzers available in the Timesketch instance the comm
 If no sketch is defined in the config yet, it can also be passed as an argument, e.g.:
 
 ```bash
-timesketch --sketch 1 analyze list --output-format tabular
+timesketch --output-format tabular --sketch 1 analyze list 
 Name	Display Name	Is Multi
 login	Windows logon/logoff events	False
 ntfs_timestomp	NTFS timestomp detection	False
