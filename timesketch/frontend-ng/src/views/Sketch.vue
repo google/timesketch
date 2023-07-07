@@ -189,7 +189,7 @@ limitations under the License.
         <v-tab-item :transition="false">
           <ts-scenario v-for="scenario in activeScenarios" :key="scenario.id" :scenario="scenario"></ts-scenario>
           <v-row class="mt-0 px-2" flat>
-            <v-col cols="12">
+            <v-col cols="6">
               <v-card v-if="!Object.keys(scenarioTemplates).length" flat class="pa-4"
                 >No scenarios available yet. Contact your server admin to add scenarios to this server.</v-card
               >
@@ -199,17 +199,24 @@ limitations under the License.
             </v-col>
 
             <v-col cols="6">
-              <div v-if="hiddenScenarios.length" @click="showHidden = !showHidden" style="cursor: pointer" class="mt-1">
+              <v-btn
+                small
+                text
+                color="primary"
+                v-if="hiddenScenarios.length"
+                @click="showHidden = !showHidden"
+                class="mt-1"
+              >
                 <small
                   ><span v-if="showHidden">Hide</span><span v-else>Show</span> hidden scenarios ({{
                     hiddenScenarios.length
                   }})</small
                 >
-              </div>
+              </v-btn>
             </v-col>
           </v-row>
 
-          <div v-show="showHidden">
+          <div v-if="showHidden">
             <ts-scenario v-for="scenario in hiddenScenarios" :key="scenario.id" :scenario="scenario"></ts-scenario>
           </div>
         </v-tab-item>

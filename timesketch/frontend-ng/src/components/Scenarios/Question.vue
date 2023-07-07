@@ -53,7 +53,7 @@ limitations under the License.
         <!-- Query suggestions -->
         <div class="pt-2 pl-5">
           <div v-if="searchTemplates.length || opensearchQueries.length">
-            <small><strong>Suggested queries</strong></small>
+            <small>Suggested queries</small>
             <v-chip-group column>
               <ts-search-chip
                 v-for="searchtemplate in searchTemplates"
@@ -139,6 +139,7 @@ export default {
       fullDescription: false,
       conclusionText: '',
       addConclusion: false,
+      opensearchQueries: [],
     }
   },
   computed: {
@@ -151,19 +152,12 @@ export default {
     searchTemplates() {
       return this.question.approaches.map((approach) => approach.search_templates).flat()
     },
-    opensearchQueries() {
-      return this.question.approaches
-        .map((approach) => JSON.parse(approach.spec_json))
-        .map((approach) => approach._view.processors)
-        .map((processor) => processor[0].analysis.timesketch)
-        .filter((analysis) => analysis.type === 'opensearch-query')
-    },
     currentUserConclusion() {
       return this.question.conclusions.filter((conclusion) => conclusion.user.username === this.currentUser).length
     },
   },
   methods: {
-    createConclusion: function () {
+    createConclusion() {
       ApiClient.createQuestionConclusion(this.sketch.id, this.question.id, this.conclusionText)
         .then((response) => {
           this.conclusionText = ''
@@ -171,8 +165,22 @@ export default {
         })
         .catch((e) => {})
     },
+    getSuggestedQueries() {
+      let analyses = this.question.approaches
+        .map((approach) => JSON.parse(approach.spec_json))
+        .map((approach) => approach._view.processors)
+        .map((processor) => processor[0].analysis.timesketch)
+        .flat()
+      this.opensearchQueries = analyses.filter((analysis) => analysis.type === 'opensearch-query')
+    },
   },
-  created() {},
+  watch: {
+    expanded: function (isExpanded) {
+      if (!isExpanded) return
+      if (this.opensearchQueries.length) return
+      this.getSuggestedQueries()
+    },
+  },
 }
 </script>
 
