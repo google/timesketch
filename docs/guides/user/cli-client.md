@@ -106,7 +106,6 @@ Options:
   --time-range TEXT...    Datetime range filter (e.g: 2020-01-01 2020-02-01)
   --label TEXT            Filter events with label
   --header / --no-header  Toggle header information (default is to show)
-  --output-format TEXT    Set output format (overrides global setting)
   --return-fields TEXT    What event fields to show
   --order TEXT            Order the output (asc/desc) based on the time field
   --limit INTEGER         Limit amount of events to show (default: 40)
@@ -148,7 +147,7 @@ To get information about analyzers available in the Timesketch instance the comm
 If no sketch is defined in the config yet, it can also be passed as an argument, e.g.:
 
 ```bash
-timesketch --sketch 1 analyze list --output-format tabular
+timesketch --output-format tabular --sketch 1 analyze list 
 Name	Display Name	Is Multi
 login	Windows logon/logoff events	False
 ntfs_timestomp	NTFS timestomp detection	False
@@ -208,7 +207,7 @@ This new feature makes it easy to add events to Timesketch from the command line
 
 It can also be called with a output format `json` like following.
 
-```timesketch events add --message "foobar-message" --date 2023-03-04T11:31:12 --timestamp-desc "test" --output-format json
+```timesketch --output-format json events add --message "foobar-message" --date 2023-03-04T11:31:12 --timestamp-desc "test" 
 {'meta': {}, 'objects': [{'color': 'F37991', 'created_at': '2023-03-08T12:46:24.472587', 'datasources': [], 'deleted': None, 'description': 'internal timeline for user-created events', 'id': 19, 'label_string': '', 'name': 'Manual events', 'searchindex': {'created_at': '2023-03-08T12:46:24.047640', 'deleted': None, 'description': 'internal timeline for user-created events', 'id': 9, 'index_name': '49a318b0ba17867fd71b50903774a0c8', 'label_string': '', 'name': 'Manual events', 'status': [{'created_at': '2023-03-17T09:35:03.202520', 'id': 87, 'status': 'ready', 'updated_at': '2023-03-17T09:35:03.202520'}], 'updated_at': '2023-03-08T12:46:24.047640', 'user': {'active': True, 'admin': True, 'groups': [], 'username': 'dev'}}, 'status': [{'created_at': '2023-03-17T09:35:03.233973', 'id': 79, 'status': 'ready', 'updated_at': '2023-03-17T09:35:03.233973'}], 'updated_at': '2023-03-08T12:46:24.472587', 'user': {'active': True, 'admin': True, 'groups': [], 'username': 'dev'}}]}
 Event added to sketch: timefocus test
 ```

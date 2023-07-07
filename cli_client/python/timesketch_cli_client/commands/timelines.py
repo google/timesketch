@@ -36,24 +36,16 @@ def list_timelines(ctx):
 
 @timelines_group.command("describe")
 @click.argument("timeline-id", type=int, required=False)
-@click.option(
-    "--output-format",
-    "output",
-    required=False,
-    help="Set output format [json, text] (overrides global setting).",
-)
 @click.pass_context
-def describe_timeline(ctx, timeline_id, output):
+def describe_timeline(ctx, timeline_id):
     """Show details for a timeline.
 
     Args:
         ctx: Click CLI context object.
         timeline-id: Timeline ID from argument.
-        output-format: Output format to use. Available values: 'json' or 'text'
     """
     sketch = ctx.obj.sketch
-    if not output:
-        output = ctx.obj.output_format
+    output = ctx.obj.output_format
     timeline = sketch.get_timeline(timeline_id=timeline_id)
     if not timeline:
         click.echo("No such timeline")
