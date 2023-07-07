@@ -53,14 +53,15 @@ limitations under the License.
         <span
           @click="setActiveContext(question)"
           style="font-size: 0.9em"
-          v-for="question in facet.questions"
+          v-for="(question, index) in facet.questions"
           :key="question.id"
         >
           <ts-question :question="question"></ts-question>
+          <v-divider v-if="index != facet.questions.length - 1"></v-divider>
         </span>
       </div>
     </v-expand-transition>
-    <div v-show="expanded" class="mt-3"></div>
+    <div v-show="expanded"></div>
     <v-divider></v-divider>
   </div>
 </template>

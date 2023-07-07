@@ -245,20 +245,7 @@ limitations under the License.
     </v-card>
 
     <!-- DFIQ context -->
-    <div class="mt-3 mx-3">
-      <div :class="[$vuetify.theme.dark ? 'dark-info-card' : 'light-info-card']" v-if="activeContext.question">
-        <v-toolbar dense flat color="transparent">
-          <h4>{{ activeContext.question.display_name }}</h4>
-          <v-spacer></v-spacer>
-          <v-btn small icon @click="$store.dispatch('clearActiveContext')" class="mr-1">
-            <v-icon>mdi-close</v-icon>
-          </v-btn>
-        </v-toolbar>
-        <p class="mt-1 pb-4 px-4" style="font-size: 0.9em">
-          {{ activeContext.question.description }}
-        </p>
-      </div>
-    </div>
+    <ts-scenario-context-card v-if="activeContext.question"></ts-scenario-context-card>
 
     <!-- Eventlist -->
     <v-card flat class="mt-5 mx-3">
@@ -285,6 +272,7 @@ import TsFilterMenu from '../components/Explore/FilterMenu'
 import TsUploadTimelineForm from '../components/UploadForm'
 import TsAddManualEvent from '../components/Explore/AddManualEvent'
 import TsEventList from '../components/Explore/EventList'
+import TsScenarioContextCard from '../components/Scenarios/ContextCard'
 
 const defaultQueryFilter = () => {
   return {
@@ -310,6 +298,7 @@ export default {
     TsUploadTimelineForm,
     TsAddManualEvent,
     TsEventList,
+    TsScenarioContextCard,
   },
   props: ['sketchId'],
   data() {
