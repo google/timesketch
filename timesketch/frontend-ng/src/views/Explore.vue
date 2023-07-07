@@ -245,7 +245,7 @@ limitations under the License.
     </v-card>
 
     <!-- DFIQ context -->
-    <ts-context-card v-if="activeContext.question"></ts-context-card>
+    <ts-scenario-context-card v-if="activeContext.question"></ts-scenario-context-card>
 
     <!-- Eventlist -->
     <v-card flat class="mt-5 mx-3">
@@ -272,7 +272,7 @@ import TsFilterMenu from '../components/Explore/FilterMenu'
 import TsUploadTimelineForm from '../components/UploadForm'
 import TsAddManualEvent from '../components/Explore/AddManualEvent'
 import TsEventList from '../components/Explore/EventList'
-import TsContextCard from '../components/Scenarios/ContextCard'
+import TsScenarioContextCard from '../components/Scenarios/ScenarioContextCard'
 
 const defaultQueryFilter = () => {
   return {
@@ -298,7 +298,7 @@ export default {
     TsUploadTimelineForm,
     TsAddManualEvent,
     TsEventList,
-    TsContextCard,
+    TsScenarioContextCard,
   },
   props: ['sketchId'],
   data() {

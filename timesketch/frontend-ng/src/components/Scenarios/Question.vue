@@ -52,14 +52,19 @@ limitations under the License.
       >
         <!-- Query suggestions -->
         <div class="pt-2 pl-5">
-          <div v-if="searchTemplates.length">
+          <div v-if="searchTemplates.length || opensearchQueries.length">
             <small><strong>Suggested queries</strong></small>
             <v-chip-group column>
-              <ts-search-template
+              <ts-search-chip
                 v-for="searchtemplate in searchTemplates"
                 :key="searchtemplate.id"
-                :searchtemplate="searchtemplate"
-              ></ts-search-template>
+                :searchchip="searchtemplate"
+              ></ts-search-chip>
+              <ts-search-chip
+                v-for="opensearchQuery in opensearchQueries"
+                :key="opensearchQuery.value"
+                :searchchip="opensearchQuery"
+              ></ts-search-chip>
             </v-chip-group>
           </div>
           <div v-else><small>No suggested queries available</small></div>
@@ -73,9 +78,8 @@ limitations under the License.
         </div>
 
         <!-- Add new conclusion -->
-
         <div v-if="!currentUserConclusion" style="font-size: 0.9em" class="pb-4 mr-3 pl-5">
-          <v-btn x-small text color="primary" @click="addConclusion = !addConclusion" class="ml-n3">
+          <v-btn x-small text color="primary" @click="addConclusion = !addConclusion">
             <v-icon x-small>mdi-plus</v-icon>
             Add conclusion
           </v-btn>
@@ -120,13 +124,13 @@ limitations under the License.
 
 <script>
 import ApiClient from '../../utils/RestApiClient'
-import TsSearchTemplate from '../LeftPanel/SearchTemplateCompact'
+import TsSearchChip from './SearchChip'
 import TsQuestionConclusion from './QuestionConclusion'
 
 export default {
   props: ['question'],
   components: {
-    TsSearchTemplate,
+    TsSearchChip,
     TsQuestionConclusion,
   },
   data: function () {
@@ -146,6 +150,13 @@ export default {
     },
     searchTemplates() {
       return this.question.approaches.map((approach) => approach.search_templates).flat()
+    },
+    opensearchQueries() {
+      return this.question.approaches
+        .map((approach) => JSON.parse(approach.spec_json))
+        .map((approach) => approach._view.processors)
+        .map((processor) => processor[0].analysis.timesketch)
+        .filter((analysis) => analysis.type === 'opensearch-query')
     },
     currentUserConclusion() {
       return this.question.conclusions.filter((conclusion) => conclusion.user.username === this.currentUser).length

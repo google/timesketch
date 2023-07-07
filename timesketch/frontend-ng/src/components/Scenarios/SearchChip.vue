@@ -1,5 +1,5 @@
 <!--
-Copyright 2022 Google Inc. All rights reserved.
+Copyright 2023 Google Inc. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,13 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-chip small @click="search(searchtemplate.query_string)">
-    {{ searchtemplate.name }}
+  <v-chip x-small @click="search(queryString)">
+    {{ displayName }}
   </v-chip>
 </template>
 
 <script>
-import ApiClient from '../../utils/RestApiClient'
 import EventBus from '../../main'
 
 const defaultQueryFilter = () => {
@@ -35,24 +34,13 @@ const defaultQueryFilter = () => {
 }
 
 export default {
-  props: ['searchtemplate'],
-  data: function () {
-    return {
-      params: {},
-    }
-  },
+  props: ['searchchip'],
   computed: {
-    sketch() {
-      return this.$store.state.sketch
+    displayName() {
+      return this.searchchip.name || this.searchchip.description
     },
-    parameters() {
-      return JSON.parse(this.searchtemplate.template_json).parameters
-    },
-    filledOut() {
-      return Object.keys(this.params).length === this.parameters.length
-    },
-    searchTemplateSpec() {
-      return JSON.parse(this.searchtemplate.template_json)
+    queryString() {
+      return this.searchchip.query_string || this.searchchip.value
     },
   },
   methods: {
@@ -63,17 +51,6 @@ export default {
       eventData.queryFilter = defaultQueryFilter()
       EventBus.$emit('setQueryAndFilter', eventData)
     },
-    parseQueryAndSearch() {
-      let queryString
-      ApiClient.parseSearchTemplate(this.searchtemplate.id, this.params)
-        .then((response) => {
-          queryString = response.data.objects[0].query_string
-          this.search(queryString)
-        })
-        .catch((e) => {})
-    },
   },
 }
 </script>
-
-<style scoped lang="scss"></style>
