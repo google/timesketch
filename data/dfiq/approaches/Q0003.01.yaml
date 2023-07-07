@@ -1,0 +1,18 @@
+display_name: PsExec execution from filesystem events
+description:
+  summary:
+  details:
+  references:
+    -
+type: approach
+id: Q0003.01
+tags:
+ - windows
+view:
+  processors:
+    - name: plaso
+      analysis:
+        timesketch:
+          - description: PsExec executions from prefetch
+            type: opensearch-query
+            value: 'data_type:"windows:prefetch:execution" AND psexec\.exe*'

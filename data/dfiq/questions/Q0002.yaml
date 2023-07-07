@@ -1,0 +1,13 @@
+display_name: Which network shares has been mapped?
+description: |
+  Mapped network shares are a way to access files and folders on other computers
+  on a network as if they were local drives. This can be useful for sharing files and
+  folders between users and computers, or for accessing files and folders that are
+  stored on a central server. Mapped network shares can be used to move laterally within
+  a network.
+type: question
+id: Q0002
+tags:
+  - windows
+parent_ids:
+  - F0001

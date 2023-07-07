@@ -1,0 +1,18 @@
+display_name: Has there been any executions of PsExec?
+description: |
+  PsExec is a command-line tool that allows you to execute commands on remote computers.
+  It is part of the Sysinternals suite of tools, which are a collection of free and
+  open-source utilities for Windows system administration.
+
+  It works by establishing a remote connection to the target computer and then executing
+  the specified command. The command can be anything that you would normally run on a local
+  computer, such as a batch file, a PowerShell script, or a simple command-line instruction.
+
+  PsExec can be used to move from one computer to another on a network. This can be
+  done by using PsExec to execute a command on the target computer.
+type: question
+id: Q0003
+tags:
+  - windows
+parent_ids:
+  - F0002
