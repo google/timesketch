@@ -28,27 +28,27 @@ over at osdfir blog.
 1. Add the information to connect to your hashR database in the
 [timesketch.conf](https://github.com/google/timesketch/blob/master/data/timesketch.conf#L235)
 at the `#-- hashR integration --#` section.
-```
-#-- hashR integration --#
-# https://github.com/google/hashr
-# Uncomment and fill this section if you want to use the hashR lookup analyzer.
-# Provide hashR postgres database connection information below:
-HASHR_DB_USER = 'hashRuser'
-HASHR_DB_PW = 'xxxxxxxxxxxxxxxxx'
-HASHR_DB_ADDR = '127.0.0.1'
-HASHR_DB_PORT = '5432'
-HASHR_DB_NAME = 'hashr'
+    ```
+    #-- hashR integration --#
+    # https://github.com/google/hashr
+    # Uncomment and fill this section if you want to use the hashR lookup analyzer.
+    # Provide hashR postgres database connection information below:
+    HASHR_DB_USER = 'hashRuser'
+    HASHR_DB_PW = 'xxxxxxxxxxxxxxxxx'
+    HASHR_DB_ADDR = '127.0.0.1'
+    HASHR_DB_PORT = '5432'
+    HASHR_DB_NAME = 'hashr'
 
-# The total number of unique hashes that are checked against the database is
-# split into multiple batches. This number defines how many unique hashes are
-# checked per query. 50000 is the default value.
-HASHR_QUERY_BATCH_SIZE = '50000'
+    # The total number of unique hashes that are checked against the database is
+    # split into multiple batches. This number defines how many unique hashes are
+    # checked per query. 50000 is the default value.
+    HASHR_QUERY_BATCH_SIZE = '50000'
 
-# Set as True if you want to add the source of the hash ([repo:imagename]) as
-# an attribute to the event. WARNING: This will increase the processing time
-# of the analyzer!
-HASHR_ADD_SOURCE_ATTRIBUTE = True
-```
+    # Set as True if you want to add the source of the hash ([repo:imagename]) as
+    # an attribute to the event. WARNING: This will increase the processing time
+    # of the analyzer!
+    HASHR_ADD_SOURCE_ATTRIBUTE = True
+    ```
 
 1. Restart your timesketch instance to load the new configuration.
 
