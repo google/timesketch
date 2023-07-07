@@ -480,7 +480,7 @@ class TestHashRLookup(BaseTest):
             "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
         ]
 
-        expected_result_message = json.dumps(
+        expected_result_message_one = json.dumps(
             {
                 "platform": "timesketch",
                 "analyzer_identifier": "hashr_lookup",
@@ -493,6 +493,24 @@ class TestHashRLookup(BaseTest):
                     "sketch_id": 1,
                     "timeline_id": 1,
                     "created_tags": ["zerobyte-file", "known-hash"],
+                },
+                "result_markdown": "Found a total of 13 events that contain a sha256 hash value\n* 6 / 11 unique hashes known in hashR\n* 6 events tagged\n* 1 entries were tagged as zerobyte files\n* 2 events raised an error",
+            }
+        )
+
+        expected_result_message_two = json.dumps(
+            {
+                "platform": "timesketch",
+                "analyzer_identifier": "hashr_lookup",
+                "analyzer_name": "hashR lookup",
+                "result_status": "SUCCESS",
+                "result_priority": "NOTE",
+                "result_summary": "Found a total of 13 events that contain a sha256 hash value - 6 / 11 unique hashes known in hashR - 6 events tagged - 1 entries were tagged as zerobyte files - 2 events raised an error",
+                "platform_meta_data": {
+                    "timesketch_instance": "https://localhost",
+                    "sketch_id": 1,
+                    "timeline_id": 1,
+                    "created_tags": ["known-hash", "zerobyte-file"],
                 },
                 "result_markdown": "Found a total of 13 events that contain a sha256 hash value\n* 6 / 11 unique hashes known in hashR\n* 6 events tagged\n* 1 entries were tagged as zerobyte files\n* 2 events raised an error",
             }
@@ -515,7 +533,9 @@ class TestHashRLookup(BaseTest):
         analyzer.add_source_attribute = False
         analyzer.unique_known_hash_counter = 5
         result_message = analyzer.run()
-        self.assertEqual(result_message, expected_result_message)
+        self.assertIn(
+            result_message, [expected_result_message_one, expected_result_message_two]
+        )
         mock_warning.assert_any_call(
             self.logger,
             "The extracted hash does not match the required lenght (64) of "
