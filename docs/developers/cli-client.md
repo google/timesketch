@@ -78,22 +78,10 @@ The common output formats are:
 * json
 * jsonl
 
-Most command should have the following option:
+In the code have the following to retrieve the output_format from the context:
 
 ```python
-@click.option(
-    "--output-format",
-    "output",
-    required=False,
-    help="Set output format [json, csv, text](overrides global setting).",
-)
-```
-
-And in the code have the following check so if no output format is given to the specific command it is taken from the congif file:
-
-```python
-if not output:
-        output = ctx.obj.output_format
+    output = ctx.obj.output_format
 ```
 
 And when data is about to be put out:
