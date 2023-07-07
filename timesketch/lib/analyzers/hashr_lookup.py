@@ -98,7 +98,6 @@ class HashRLookup(interface.BaseAnalyzer):
                 db_string_redacted,
             )
             self.hashr_conn = db
-            # return True
         except sqla.exc.OperationalError as err:
             msg = (
                 "Connection to the hashR postgres database failed! "
@@ -111,23 +110,23 @@ class HashRLookup(interface.BaseAnalyzer):
             sys.tracebacklimit = 0
             raise Exception(msg) from err
 
-        try:
-            meta_data = sqla.MetaData(bind=self.hashr_conn)
-            sqla.MetaData.reflect(meta_data)
-            samples_table = meta_data.tables["samples"]
-            sources_table = meta_data.tables["sources"]
-            samples_sources_table = meta_data.tables["samples_sources"]
-        except (sqla.exc.NoSuchTableError, KeyError) as err:
+        # Check if the required tables are present in the hashR database
+        meta_data = sqla.MetaData(bind=self.hashr_conn)
+        sqla.MetaData.reflect(meta_data)
+        if not all(
+            table_name in meta_data.tables
+            for table_name in ["samples", "sources", "samples_sources"]
+        ):
             msg = (
                 "Could not find the required tables in the hashR database! "
-                "Please ensure you have populated your hashR database using the "
-                "most recent hashR project version!"
-                "-- Error message: %s",
-                str(err),
+                "Please ensure you have populated your hashR database using "
+                "the most recent hashR project version!"
+                "Required tables: samples, sources, samples_sources",
             )
             logger.error(msg)
             sys.tracebacklimit = 0
-            raise Exception(msg) from err
+            raise Exception(msg) from KeyError
+
         return True
 
     def batch_hashes(self, hash_list, batch_size=DEFAULT_BATCH_SIZE):
@@ -312,10 +311,13 @@ class HashRLookup(interface.BaseAnalyzer):
             hash_events_dict.setdefault(hash_value, []).append(event)
 
         if len(hash_events_dict) <= 0:
-            return (
+            self.output.result_status = "SUCCESS"
+            self.output.result_priority = "NOTE"
+            self.output.result_summary = (
                 f'The selected timeline "{self.timeline_name}" does not contain'
                 " any fields with a sha256 hash."
             )
+            return str(self.output)
 
         logger.debug(
             "Found %d unique hashes in %d events.",
