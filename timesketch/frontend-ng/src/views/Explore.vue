@@ -272,7 +272,7 @@ import TsFilterMenu from '../components/Explore/FilterMenu'
 import TsUploadTimelineForm from '../components/UploadForm'
 import TsAddManualEvent from '../components/Explore/AddManualEvent'
 import TsEventList from '../components/Explore/EventList'
-import TsScenarioContextCard from '../components/Scenarios/ScenarioContextCard'
+import TsScenarioContextCard from '../components/Scenarios/ContextCard'
 
 const defaultQueryFilter = () => {
   return {
