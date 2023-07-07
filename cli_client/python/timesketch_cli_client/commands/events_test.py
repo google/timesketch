@@ -82,6 +82,8 @@ class EventsTest(unittest.TestCase):
         result = runner.invoke(
             events_group,
             [
+                "--output-format",
+                "json",
                 "annotate",
                 "--event-id",
                 "1",
@@ -89,8 +91,6 @@ class EventsTest(unittest.TestCase):
                 "1",
                 "--tag",
                 "test",
-                "--output-format",
-                "json",
             ],
             obj=self.ctx,
         )
@@ -126,6 +126,8 @@ class EventsTest(unittest.TestCase):
         result = runner.invoke(
             events_group,
             [
+                "--output-format",
+                "json",
                 "annotate",
                 "--event-id",
                 "1",
@@ -133,8 +135,6 @@ class EventsTest(unittest.TestCase):
                 "test1,test2",
                 "--timeline-id",
                 "1",
-                "--output-format",
-                "json",
             ],
             obj=self.ctx,
         )
