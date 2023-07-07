@@ -54,7 +54,7 @@ limitations under the License.
         <div class="pt-2 pl-5">
           <div v-if="searchTemplates.length || opensearchQueries.length">
             <small>Suggested queries</small>
-            <v-chip-group column>
+            <v-chip-group column active-class="primary">
               <ts-search-chip
                 v-for="searchtemplate in searchTemplates"
                 :key="searchtemplate.id"
