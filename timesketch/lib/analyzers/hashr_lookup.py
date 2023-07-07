@@ -314,8 +314,7 @@ class HashRLookup(interface.BaseAnalyzer):
             self.output.result_status = "SUCCESS"
             self.output.result_priority = "NOTE"
             self.output.result_summary = (
-                f'The selected timeline "{self.timeline_name}" does not contain'
-                " any fields with a sha256 hash."
+                "This timeline does not contain any fields with a sha256 hash."
             )
             return str(self.output)
 
