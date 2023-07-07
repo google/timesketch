@@ -1,0 +1,19 @@
+display_name: Has there been any remote executions via WMI?
+description: |
+  WMI, or Windows Management Instrumentation, is a set of tools and APIs that allow you to manage
+  Windows computers remotely. WMIC, or Windows Management Instrumentation Command-line, is a
+  command-line tool that allows you to interact with WMI.
+
+  WMI can be used for a variety of purposes, including getting information about Windows computers,
+  Managing Windows computers and Automating tasks on Windows computers.
+
+  WMI can be used for lateral movement between computers in a few ways. First, an attacker who
+  has gained access to a computer on a network can use WMIC to execute commands on other computers
+  on the network. This can be done by using the wmic command with the /node switch and the name
+  of the target computer.
+type: question
+id: Q0006
+tags:
+  - windows
+parent_ids:
+  - F0002
