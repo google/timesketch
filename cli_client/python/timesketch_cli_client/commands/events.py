@@ -31,15 +31,8 @@ def events_group():
     help="Comma separated list of Tags to add to the event.",
 )
 @click.option("--comment", required=False, help="Comment to add to the event.")
-# TODO(jaegeral): Make this part of the root command as we do with sketch-id
-@click.option(
-    "--output-format",
-    "output",
-    required=False,
-    help="Set output format (overrides global setting).",
-)
 @click.pass_context
-def annotate(ctx, timeline_id, event_id, tag, comment, output):
+def annotate(ctx, timeline_id, event_id, tag, comment):
     """Annotate to an event.
 
     This can be used to add tags and comments to an event.
@@ -48,9 +41,6 @@ def annotate(ctx, timeline_id, event_id, tag, comment, output):
     current annotations for the event.
     """
     sketch = ctx.obj.sketch
-    # If no output format is specified, use the global one.
-    if not output:
-        output = ctx.obj.output_format
     timeline = sketch.get_timeline(timeline_id=timeline_id)
     if not timeline:
         click.echo("No such timeline.")
@@ -108,18 +98,11 @@ def annotate(ctx, timeline_id, event_id, tag, comment, output):
     required=True,
     help="Timestamp description of the event.",
 )
-@click.option(
-    "--output-format",
-    "output",
-    required=False,
-    help="Set output format (overrides global setting).",
-)
 @click.pass_context
-def add_event(ctx, message, date, attributes, timestamp_desc, output):
+def add_event(ctx, message, date, attributes, timestamp_desc):
     """Add an event to the sketch."""
     sketch = ctx.obj.sketch
-    if not output:
-        output = ctx.obj.output_format
+    output = ctx.obj.output_format
 
     attributes_dict = {}
     if attributes:

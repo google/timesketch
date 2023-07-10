@@ -21,7 +21,15 @@ limitations under the License.
       @click="expanded = !expanded"
       class="pa-4"
       flat
-      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+      :class="
+        $vuetify.theme.dark
+          ? expanded
+            ? 'dark-highlight'
+            : 'dark-hover'
+          : expanded
+          ? 'light-highlight'
+          : 'light-hover'
+      "
     >
       <v-col cols="11">
         <v-icon left>mdi-clipboard-check-outline</v-icon>
@@ -30,22 +38,22 @@ limitations under the License.
       <v-col cols="1">
         <!-- Rename dialog -->
         <v-dialog v-model="renameDialog" max-width="500">
-          <v-card>
-            <v-card-title class="text-h5"> Rename scenario </v-card-title>
-            <v-card-text>
-              Use a custom name for the scenario.
-              <v-text-field v-model="newName"></v-text-field>
-            </v-card-text>
-            <v-card-actions>
-              <v-spacer></v-spacer>
-              <v-btn color="primary" text @click="renameDialog = false"> Cancel </v-btn>
-              <v-btn color="primary" text @click="renameScenario()"> Save </v-btn>
-            </v-card-actions>
+          <v-card class="pa-4">
+            <v-form @submit.prevent="renameScenario()">
+              <h3>Rename scenario</h3>
+              <br />
+              <v-text-field outlined dense autofocus v-model="newName" @focus="$event.target.select()"></v-text-field>
+              <v-card-actions>
+                <v-spacer></v-spacer>
+                <v-btn text @click="renameDialog = false"> Cancel </v-btn>
+                <v-btn color="primary" text @click="renameScenario()"> Save </v-btn>
+              </v-card-actions>
+            </v-form>
           </v-card>
         </v-dialog>
         <v-menu offset-y :close-on-content-click="true">
           <template v-slot:activator="{ on, attrs }">
-            <v-btn small icon v-bind="attrs" v-on="on">
+            <v-btn class="ml-1" small icon v-bind="attrs" v-on="on">
               <v-icon>mdi-dots-vertical</v-icon>
             </v-btn>
           </template>
@@ -93,7 +101,8 @@ limitations under the License.
     </v-row>
 
     <v-expand-transition v-if="scenario.facets.length">
-      <div v-show="expanded">
+      <div v-if="expanded">
+        <v-divider></v-divider>
         <div v-for="facet in scenario.facets" :key="facet.id">
           <ts-facet :scenario="scenario" :facet="facet"></ts-facet>
         </div>

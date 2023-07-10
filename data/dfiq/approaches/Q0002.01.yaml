@@ -1,0 +1,24 @@
+display_name: Map Network Shares from Windows Event Logs
+description:
+  summary:
+  details:
+  references:
+    -
+type: approach
+id: Q0002.01
+tags:
+ - windows
+view:
+  data:
+    - type: artifact
+      value: WindowsEventLogs
+  processors:
+    - name: plaso
+      options:
+        - type: parsers
+          value: winevtx
+      analysis:
+        timesketch:
+          - description: Map Network share with net.exe
+            type: opensearch-query
+            value: 'data_type:"windows:prefetch:execution" AND net\.exe*'

@@ -44,18 +44,28 @@ class TimesketchCli(object):
     Attributes:
         sketch_from_flag: Sketch ID if provided by flag
         config_assistant: Instance of ConfigAssistant
+        output_format_from_flag: Output format to use
     """
 
-    def __init__(self, api_client=None, sketch_from_flag=None, conf_file=""):
+    def __init__(
+        self,
+        api_client=None,
+        sketch_from_flag=None,
+        conf_file="",
+        output_format_from_flag=None,
+    ):
         """Initialize the state object.
 
         Args:
             sketch_from_flag: Sketch ID if provided by flag.
+            conf_file: Path to the config file.
+            output_format_from_flag: Output format to use.
         """
         self.cached_api_client = api_client
         self.cached_config_assistant = None
         self.conf_file = conf_file
         self.sketch_from_flag = sketch_from_flag
+        self.output_format_from_flag = output_format_from_flag
 
     @property
     def config_assistant(self):
@@ -132,13 +142,23 @@ class TimesketchCli(object):
 
     @property
     def output_format(self):
-        """Get the configured output format, or the default format if missing.
+        """Get the output format
+        The priority is:
+            * output_format set via flag
+            * output_format set via config file
+            * or the default format if missing.
 
         Returns:
             Output format as a string.
         """
-        output_format = self.config_assistant.get_config("output_format")
-        if not output_format:
+        if self.output_format_from_flag:
+            output_format = self.output_format_from_flag
+            self.config_assistant.set_config("output", output_format)
+            self.config_assistant.save_config()
+            return output_format
+        try:
+            output_format = self.config_assistant.get_config("output")
+        except KeyError:  # in case value does not exist in the config file
             self.config_assistant.set_config("output", DEFAULT_OUTPUT_FORMAT)
             self.config_assistant.save_config()
             output_format = DEFAULT_OUTPUT_FORMAT
@@ -147,8 +167,14 @@ class TimesketchCli(object):
 
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
 @click.option("--sketch", type=int, default=None, help="Sketch to work in.")
+@click.option(
+    "--output-format",
+    "output",
+    required=False,
+    help="Set output format [json, text, tabular, csv] (overrides global setting).",
+)
 @click.pass_context
-def cli(ctx, sketch):
+def cli(ctx, sketch, output):
     """Timesketch CLI client.
 
     This tool provides similar features as the web client does.
@@ -162,7 +188,7 @@ def cli(ctx, sketch):
 
     For detailed help on each command, run  <command> --help
     """
-    ctx.obj = TimesketchCli(sketch_from_flag=sketch)
+    ctx.obj = TimesketchCli(sketch_from_flag=sketch, output_format_from_flag=output)
 
 
 # Register all commands.

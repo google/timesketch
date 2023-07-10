@@ -24,7 +24,6 @@ import pandas as pd
 from timesketch.lib.analyzers.interface import AnalyzerOutput
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def human_timestamp(timestamp: int) -> str:
@@ -244,7 +243,7 @@ class BaseAuthenticationUtils:
 
         missing_fields = set(self.REQUIRED_FIELDS) - set(fields)
         if missing_fields:
-            log.error(
+            log.debug(
                 "[BaseAuthenticationUtils] Missing required fields %s.",
                 missing_fields,
             )
@@ -286,7 +285,7 @@ class BaseAuthenticationUtils:
                 & (df["timestamp"] >= timestamp)
             ].iloc[0]["timestamp"]
         except (KeyError, ValueError, IndexError) as e:
-            log.error(
+            log.debug(
                 "[BaseAuthenticationUtils] Error getting session start timestamp for"
                 " session ID %s. %s",
                 session_id,
@@ -302,7 +301,7 @@ class BaseAuthenticationUtils:
                 & (df["timestamp"] >= timestamp)
             ].iloc[0]["timestamp"]
         except (KeyError, ValueError, IndexError) as e:
-            log.error(
+            log.debug(
                 "[BaseAuthenticationUtils] Error getting session end timestamp for"
                 " session ID %s. %s",
                 session_id,
@@ -534,7 +533,7 @@ class BaseAuthenticationUtils:
             username = values[1].strip()
             return username, domain
         except ValueError as e:
-            log.error(
+            log.debug(
                 "[BaseAuthenticationUtils] Failed converting useraccount to"
                 " username and domain. %s",
                 str(e),
@@ -596,7 +595,7 @@ class BaseAuthenticationUtils:
             login_timestamp = int(login_df.iloc[0]["timestamp"])
             source_port = int(login_df.iloc[0]["source_port"])
         except (IndexError, KeyError) as e:
-            log.error("Unable to get login_timestamp or source_port. %s", str(e))
+            log.debug("Unable to get login_timestamp or source_port. %s", str(e))
             return None
 
         logoff_timestamp = 0
@@ -710,7 +709,7 @@ class BruteForceUtils(BaseAuthenticationUtils):
                 "source_ip"
             ].unique()
         except KeyError as e:
-            log.error(
+            log.debug(
                 "[BruteForceUtils] Missing required fields in dataframe. %s", str(e)
             )
             return None
@@ -842,7 +841,7 @@ class BruteForceUtils(BaseAuthenticationUtils):
         # brute force logins.
         authsummary = self.get_ip_summary(source_ip=source_ip)
         if not authsummary:
-            log.error(
+            log.debug(
                 "[BruteForceUtils] Unable to get authentication summary for %s",
                 source_ip,
             )
@@ -895,13 +894,13 @@ class BruteForceUtils(BaseAuthenticationUtils):
         markdown_summaries = []
 
         for authsummary in authsummaries:
-            result_summaries.append(
-                f"{len(authsummaries)} brute force from {authsummary.source_ip}"
-            )
-
             bruteforce_logins = authsummary.summary.get("bruteforce", None)
             if not bruteforce_logins:
                 continue
+
+            result_summaries.append(
+                f"{len(bruteforce_logins)} brute force from {authsummary.source_ip}"
+            )
 
             markdown_summaries.append(
                 f"\n### Brute Force Summary for {authsummary.source_ip}"

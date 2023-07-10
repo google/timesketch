@@ -91,7 +91,26 @@ def list_analyzers(ctx):
 
     Args:
         ctx: Click CLI context object.
+        output-format: Output format to use. Available values:
+            'json','text' or 'tabular'
     """
     sketch = ctx.obj.sketch
-    for analyzer in sketch.list_available_analyzers():
+    output = ctx.obj.output_format
+    # Show header row if output is tabular
+    if output == "tabular":
+        click.echo("Name\tDisplay Name\tIs Multi")
+
+    analyzers = sketch.list_available_analyzers()
+    if output == "json":
+        click.echo(f"{analyzers}")
+        return
+
+    for analyzer in analyzers:
+        if output == "tabular":
+            click.echo(
+                f"{analyzer.get('name')}\t"
+                f"{analyzer.get('display_name')}\t"
+                f"{analyzer.get('is_multi')}"
+            )
+            continue
         click.echo(analyzer.get("name"))

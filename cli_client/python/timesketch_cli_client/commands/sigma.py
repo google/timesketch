@@ -23,12 +23,6 @@ def sigma_group():
 
 
 @sigma_group.command("list")
-@click.option(
-    "--output-format",
-    "output",
-    required=False,
-    help="Set output format [json, csv, text](overrides global setting).",
-)
 # add a option for header or no header
 @click.option(
     "--header/--no-header",
@@ -42,7 +36,7 @@ def sigma_group():
     help="Comma separated list of columns to show. (default: rule_uuid,title)",
 )
 @click.pass_context
-def list_sigmarules(ctx, output, header, columns):
+def list_sigmarules(ctx, header, columns):
     """List all sigma rules."""
     api_client = ctx.obj.api
 
@@ -51,8 +45,7 @@ def list_sigmarules(ctx, output, header, columns):
 
     columns = columns.split(",")
 
-    if not output:
-        output = ctx.obj.output_format
+    output = ctx.obj.output_format
     try:
         sigma_rules = api_client.list_sigmarules(as_pandas=True)
     except ValueError as e:
@@ -80,18 +73,11 @@ def list_sigmarules(ctx, output, header, columns):
     required=True,
     help="UUID of the sigma rule.",
 )
-@click.option(
-    "--output-format",
-    "output",
-    required=False,
-    help="Set output format [json, text] (overrides global setting).",
-)
 @click.pass_context
-def describe_sigmarule(ctx, rule_uuid, output):
+def describe_sigmarule(ctx, rule_uuid):
     """Describe a sigma rule."""
     api_client = ctx.obj.api
-    if not output:
-        output = ctx.obj.output_format
+    output = ctx.obj.output_format
     try:
         sigma_rule = api_client.get_sigmarule(rule_uuid)
     except ValueError as e:

@@ -1,0 +1,8 @@
+display_name: Remote Access
+description: Remote access can indicate lateral movements.
+type: facet
+id: F0001
+tags:
+  - windows
+parent_ids:
+ - S0001

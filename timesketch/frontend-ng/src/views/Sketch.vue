@@ -83,11 +83,18 @@ limitations under the License.
         <v-divider></v-divider>
         <v-expand-transition>
           <v-card-text :style="{ height: timelineViewHeight + 'vh' }" v-show="!minimizeTimelineView">
-            <ts-event-list :query-request="queryRequest" :highlight-event="currentContextEvent._id"></ts-event-list>
+            <ts-event-list :query-request="queryRequest" :highlight-event="currentContextEvent"></ts-event-list>
           </v-card-text>
         </v-expand-transition>
       </v-card>
     </v-bottom-sheet>
+
+    <!-- Rename sketch dialog -->
+    <v-dialog v-model="renameSketchDialog" width="600">
+      <v-card class="pa-4">
+        <ts-rename-sketch @close="renameSketchDialog = false"></ts-rename-sketch>
+      </v-card>
+    </v-dialog>
 
     <!-- Left panel -->
     <v-navigation-drawer
@@ -100,64 +107,38 @@ limitations under the License.
     >
       <v-toolbar flat>
         <v-avatar class="ml-n3 mt-1">
-          <router-link to="/">
+          <router-link :to="{ name: 'Home' }">
             <v-img src="/dist/timesketch-color.png" max-height="25" max-width="25" contain></v-img>
           </router-link>
         </v-avatar>
 
-        <div
-          @click="showSketchMetadata = !showSketchMetadata"
-          style="font-size: 1.1em; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis"
-          :title="sketch.name"
-        >
-          {{ sketch.name }}
-        </div>
+        <v-hover v-slot="{ hover }">
+          <div class="d-flex flex-wrap">
+            <div
+              class="flex-1-0"
+              @dblclick="renameSketchDialog = true"
+              style="
+                font-size: 1.1em;
+                cursor: pointer;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 300px;
+              "
+              :title="sketch.name"
+            >
+              {{ sketch.name }}
+            </div>
+            <div>
+              <v-icon small class="ml-1" v-if="hover" @click="renameSketchDialog = true">mdi-pencil</v-icon>
+            </div>
+          </div>
+        </v-hover>
 
         <v-spacer></v-spacer>
         <v-icon @click="toggleLeftPanel">mdi-chevron-left</v-icon>
       </v-toolbar>
-      <v-expand-transition>
-        <div class="px-4" v-show="showSketchMetadata">
-          <v-dialog v-model="renameSketchDialog" width="600">
-            <template v-slot:activator="{ on, attrs }">
-              <v-btn small outlined depressed color="primary" v-bind="attrs" v-on="on">
-                <v-icon left> mdi-pencil </v-icon>
-                Rename</v-btn
-              >
-            </template>
-            <v-card class="pa-4">
-              <ts-rename-sketch @close="renameSketchDialog = false"></ts-rename-sketch>
-            </v-card>
-          </v-dialog>
 
-          <v-list class="mx-n4" two-line>
-            <v-list-item v-if="sketch.user">
-              <v-list-item-content>
-                <v-list-item-title>
-                  <strong>Created:</strong> {{ sketch.created_at | shortDateTime }}
-                </v-list-item-title>
-                <v-list-item-subtitle>
-                  <small>{{ sketch.created_at | timeSince }} by {{ sketch.user.username }}</small>
-                </v-list-item-subtitle>
-              </v-list-item-content>
-            </v-list-item>
-
-            <v-list-item>
-              <v-list-item-content>
-                <v-list-item-title>
-                  <strong>Access: </strong>
-                  <span v-if="meta.permissions && meta.permissions.public">Public</span>
-                  <span v-else>Restricted</span>
-                </v-list-item-title>
-                <v-list-item-subtitle>
-                  <small v-if="meta.permissions && meta.permissions.public">Visible to all users on this server</small>
-                  <small v-else>Only people with access can open</small>
-                </v-list-item-subtitle>
-              </v-list-item-content>
-            </v-list-item>
-          </v-list>
-        </div>
-      </v-expand-transition>
       <v-divider></v-divider>
 
       <!-- Dialog for adding a scenario -->
@@ -181,8 +162,8 @@ limitations under the License.
           <v-divider></v-divider>
           <v-card-actions>
             <v-spacer></v-spacer>
-            <v-btn @click="scenarioDialog = false" color="primary" text> Close </v-btn>
-            <v-btn :disabled="!selectedScenario" @click="addScenario(selectedScenario.id)" color="primary" text>
+            <v-btn @click="scenarioDialog = false" text> Cancel </v-btn>
+            <v-btn text color="primary" :disabled="!selectedScenario" @click="addScenario(selectedScenario.id)">
               Add
             </v-btn>
           </v-card-actions>
@@ -208,7 +189,7 @@ limitations under the License.
         <v-tab-item :transition="false">
           <ts-scenario v-for="scenario in activeScenarios" :key="scenario.id" :scenario="scenario"></ts-scenario>
           <v-row class="mt-0 px-2" flat>
-            <v-col cols="12">
+            <v-col cols="6">
               <v-card v-if="!Object.keys(scenarioTemplates).length" flat class="pa-4"
                 >No scenarios available yet. Contact your server admin to add scenarios to this server.</v-card
               >
@@ -218,17 +199,24 @@ limitations under the License.
             </v-col>
 
             <v-col cols="6">
-              <div v-if="hiddenScenarios.length" @click="showHidden = !showHidden" style="cursor: pointer" class="mt-1">
+              <v-btn
+                small
+                text
+                color="primary"
+                v-if="hiddenScenarios.length"
+                @click="showHidden = !showHidden"
+                class="mt-1"
+              >
                 <small
                   ><span v-if="showHidden">Hide</span><span v-else>Show</span> hidden scenarios ({{
                     hiddenScenarios.length
                   }})</small
                 >
-              </div>
+              </v-btn>
             </v-col>
           </v-row>
 
-          <div v-show="showHidden">
+          <div v-if="showHidden">
             <ts-scenario v-for="scenario in hiddenScenarios" :key="scenario.id" :scenario="scenario"></ts-scenario>
           </div>
         </v-tab-item>
@@ -236,7 +224,7 @@ limitations under the License.
     </v-navigation-drawer>
 
     <!-- Top horizontal toolbar -->
-    <v-app-bar app hide-on-scroll clipped flat :color="$vuetify.theme.dark ? '#121212' : 'white'">
+    <v-app-bar v-if="!loadingSketch" app hide-on-scroll clipped flat :color="$vuetify.theme.dark ? '#121212' : 'white'">
       <v-btn icon v-show="!showLeftPanel && !loadingSketch" @click="toggleLeftPanel" class="ml-n1">
         <v-icon>mdi-menu</v-icon>
       </v-btn>
@@ -285,6 +273,33 @@ limitations under the License.
           </v-avatar>
         </template>
         <v-card>
+          <v-list two-line>
+            <v-list-item v-if="sketch.user">
+              <v-list-item-content>
+                <v-list-item-title>
+                  <strong>Created:</strong> {{ sketch.created_at | shortDateTime }}
+                </v-list-item-title>
+                <v-list-item-subtitle>
+                  <small>{{ sketch.created_at | timeSince }} by {{ sketch.user.username }}</small>
+                </v-list-item-subtitle>
+              </v-list-item-content>
+            </v-list-item>
+
+            <v-list-item>
+              <v-list-item-content>
+                <v-list-item-title>
+                  <strong>Access: </strong>
+                  <span v-if="meta.permissions && meta.permissions.public">Public</span>
+                  <span v-else>Restricted</span>
+                </v-list-item-title>
+                <v-list-item-subtitle>
+                  <small v-if="meta.permissions && meta.permissions.public">Visible to all users on this server</small>
+                  <small v-else>Only people with access can open</small>
+                </v-list-item-subtitle>
+              </v-list-item-content>
+            </v-list-item>
+          </v-list>
+
           <v-list>
             <v-list-item-group color="primary">
               <v-list-item v-on:click="toggleTheme">
@@ -296,12 +311,30 @@ limitations under the License.
                 </v-list-item-content>
               </v-list-item>
 
+              <v-list-item @click="renameSketchDialog = true">
+                <v-list-item-icon>
+                  <v-icon>mdi-pencil</v-icon>
+                </v-list-item-icon>
+                <v-list-item-content>
+                  <v-list-item-title>Rename sketch</v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+
               <v-list-item @click="archiveSketch()">
                 <v-list-item-icon>
                   <v-icon>mdi-archive</v-icon>
                 </v-list-item-icon>
                 <v-list-item-content>
                   <v-list-item-title>Archive sketch</v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+
+              <v-list-item v-if="meta.permissions && meta.permissions.delete" @click="deleteSketch()">
+                <v-list-item-icon>
+                  <v-icon>mdi-trash-can-outline</v-icon>
+                </v-list-item-icon>
+                <v-list-item-content>
+                  <v-list-item-title>Delete sketch</v-list-item-title>
                 </v-list-item-content>
               </v-list-item>
 
@@ -482,6 +515,17 @@ export default {
         .catch((e) => {
           console.error(e)
         })
+    },
+    deleteSketch: function () {
+      if (confirm('Are you sure you want to delete the sketch?')) {
+        ApiClient.deleteSketch(this.sketch.id)
+          .then((response) => {
+            this.$router.push({ name: 'Home' })
+          })
+          .catch((e) => {
+            console.error(e)
+          })
+      }
     },
     generateContextQuery(event) {
       let timestampMillis = this.$options.filters.formatTimestamp(event._source.timestamp)

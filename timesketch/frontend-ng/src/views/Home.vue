@@ -70,19 +70,22 @@ limitations under the License.
       <v-sheet class="pa-5" :color="$vuetify.theme.dark ? 'grey darken-4' : 'grey lighten-3'" min-height="200">
         <h2>Start new investigation</h2>
         <v-row no-gutters class="mt-5">
-          <v-dialog width="500">
+          <v-dialog v-model="createSketchDialog" width="500">
             <template v-slot:activator="{ on, attrs }">
               <v-btn depressed small class="mr-5" color="primary" v-bind="attrs" v-on="on"> Blank sketch </v-btn>
             </template>
             <v-card class="pa-4">
               <h3>New sketch</h3>
               <br />
-              <v-text-field v-model="sketchForm.name" outlined dense placeholder="Name your sketch" autofocus>
-              </v-text-field>
-              <v-card-actions>
-                <v-spacer></v-spacer>
-                <v-btn :disabled="!sketchForm.name" @click="createSketch()" color="primary" text> Create </v-btn>
-              </v-card-actions>
+              <v-form @submit.prevent="createSketch()">
+                <v-text-field v-model="sketchForm.name" outlined dense placeholder="Name your sketch" autofocus>
+                </v-text-field>
+                <v-card-actions>
+                  <v-spacer></v-spacer>
+                  <v-btn text @click="createSketchDialog = false"> Cancel </v-btn>
+                  <v-btn :disabled="!sketchForm.name" @click="createSketch()" color="primary" text> Create </v-btn>
+                </v-card-actions>
+              </v-form>
             </v-card>
           </v-dialog>
         </v-row>
@@ -106,6 +109,7 @@ export default {
       sketchForm: {
         name: '',
       },
+      createSketchDialog: false,
       scenarioTemplates: [],
     }
   },
