@@ -69,6 +69,7 @@ limitations under the License.
 <script>
 import ApiClient from '../../utils/RestApiClient'
 import EventBus from '../../main'
+import { fetchAndUpdateActiveAnalyses, updateActiveAnalyses } from '../../services/analyzerService.js';
 
 export default {
   props: ['timelineSelection'],
@@ -83,8 +84,15 @@ export default {
     analyzerList() {
         return this.$store.state.sketchAnalyzerList;
     },
-    activeAnalyzerTimelines() {
-        return this.$store.state.activeAnalyzerTimelines
+    activeAnalyzerTimelinesMap() {
+        const byAnalyzerMap = new Map();
+        for (const analysis of this.$store.state.activeAnalyses) {
+          if (!byAnalyzerMap.has(analysis.analyzer_name)) {
+            byAnalyzerMap.set(analysis.analyzer_name, new Set());
+          }
+          byAnalyzerMap.get(analysis.analyzer_name).add(analysis.timeline.id);
+        }
+        return byAnalyzerMap;
     },
     sortedAnalyzerList() {
       let unsortedAnalyzerList = Object.entries(this.analyzerList).map(([analyzerName, info]) => ({analyzerName, info}))
@@ -98,29 +106,24 @@ export default {
       return this.activeTimelinesCount(analyzerName) > 0
     },
     activeTimelinesCount(analyzerName) {
-      const timelines = this.activeAnalyzerTimelines[analyzerName]
-      return timelines ? timelines.length : 0
+      const timelinesSet = this.activeAnalyzerTimelinesMap.get(analyzerName)
+      return timelinesSet ? timelinesSet.size : 0
     },
     runAnalyzer(analyzerName) {
-      this.$store.dispatch('addActiveAnalyzerTimelines', {
-        analyzerName,
-        timelineIds: this.timelineSelection,
-      })
       ApiClient.runAnalyzers(this.sketch.id,  this.timelineSelection, [analyzerName])
         .then((response) => {
+          let analyses = [];
           let sessionIds = []
-          for (let sessions of response.data.objects[0]) {
-            sessionIds.push(sessions.id)
+          for (let session of response.data.objects[0]) {
+            sessionIds.push(session.id)
+            analyses = analyses.concat(session.analyses)
           }
-          this.triggeredAnalyzerRuns(sessionIds)
+          this.$store.dispatch('addActiveAnalyses', analyses)
         })
         .catch((error) => {
           console.log(error)
         })
     },
-    triggeredAnalyzerRuns(data) {
-      EventBus.$emit('triggeredAnalyzerRuns', data)
-    }
   },
 }
 </script>
