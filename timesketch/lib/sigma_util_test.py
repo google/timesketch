@@ -432,8 +432,7 @@ detection:
     def test_sigmarule_by_text_three_words(self):
         """
         Testing the different terms in a Sigma rule and how each is treated.
-        This test was started because of
-        https://github.com/google/timesketch/issues/2550
+        Reference: https://github.com/google/timesketch/issues/2550
         """
         rule = sigma_util.parse_sigma_rule_by_text(
             r"""
