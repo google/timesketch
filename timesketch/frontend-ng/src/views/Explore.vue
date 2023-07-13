@@ -65,6 +65,7 @@ limitations under the License.
             v-click-outside="onClickOutside"
             :selected-labels="selectedLabels"
             :query-string="currentQueryString"
+            :query-filter="currentQueryFilter"
             @setActiveView="searchView"
             @addChip="addChip"
             @updateLabelChips="updateLabelChips()"
@@ -279,7 +280,7 @@ const defaultQueryFilter = () => {
     from: 0,
     terminate_after: 40,
     size: 40,
-    indices: [],
+    indices: '_all',
     order: 'asc',
     chips: [],
   }
@@ -368,7 +369,20 @@ export default {
         this.$router.push({ name: 'Explore', params: { sketchId: this.sketch.id } })
       }
       this.currentQueryString = searchEvent.queryString
+
+      // Preserve user defined filter instead of resetting.
+      if (!searchEvent.queryFilter) {
+        searchEvent.queryFilter = this.currentQueryFilter
+      }
       this.currentQueryFilter = searchEvent.queryFilter
+      // TODO: Change how we handle chips in the future. This is temporary until we have
+      // a new filter solution for chips beyond only star and comment chips.
+      this.currentQueryFilter.chips = []
+
+      if (searchEvent.chip) {
+        this.currentQueryFilter.chips.push(searchEvent.chip)
+      }
+
       // Preserve user defined item count instead of resetting.
       this.currentQueryFilter.size = this.currentItemsPerPage
       this.currentQueryFilter.terminate_after = this.currentItemsPerPage

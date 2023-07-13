@@ -94,17 +94,6 @@ limitations under the License.
 </template>
 
 <script>
-const defaultQueryFilter = () => {
-  return {
-    from: 0,
-    terminate_after: 40,
-    size: 40,
-    indices: '_all',
-    order: 'asc',
-    chips: [],
-  }
-}
-
 export default {
   props: ['selectedLabels', 'queryString'],
   computed: {
@@ -165,7 +154,6 @@ export default {
       let eventData = {}
       eventData.doSearch = true
       eventData.queryString = '*'
-      eventData.queryFilter = defaultQueryFilter()
       let chip = {
         field: '',
         value: label,
@@ -173,21 +161,19 @@ export default {
         operator: 'must',
         active: true,
       }
-      eventData.queryFilter.chips.push(chip)
+      eventData.chip = chip
       this.$emit('setQueryAndFilter', eventData)
     },
     searchForTag(tag) {
       let eventData = {}
       eventData.doSearch = true
       eventData.queryString = 'tag:' + tag
-      eventData.queryFilter = defaultQueryFilter()
       this.$emit('setQueryAndFilter', eventData)
     },
     searchForDataType(dataType) {
       let eventData = {}
       eventData.doSearch = true
       eventData.queryString = 'data_type:' + '"' + dataType + '"'
-      eventData.queryFilter = defaultQueryFilter()
       this.$emit('setQueryAndFilter', eventData)
     },
     searchForField(field) {
@@ -201,7 +187,6 @@ export default {
       }
       eventData.doSearch = false
       eventData.queryString = separator + field + ':'
-      eventData.queryFilter = defaultQueryFilter()
       this.$emit('setQueryAndFilter', eventData)
     },
   },
