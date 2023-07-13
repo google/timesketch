@@ -218,55 +218,29 @@ def _set_datasource_total_events(timeline_id, file_path, total_file_events):
     raise KeyError(f"No datasource find in the timeline with file_path: {file_path}")
 
 
-def _get_index_task_class(file_extension):
-    """Get correct index task function for the supplied file type.
-
-    Args:
-        file_extension (str): File type based on filename extension.
-
-    Returns:
-        A task function.
-
-    Raises:
-        KeyError if no task class can be found.
-    """
-    if file_extension == "plaso":
-        index_class = run_plaso
-    elif file_extension in ["csv", "jsonl", "json"]:
-        index_class = run_csv_jsonl
-    else:
-        raise KeyError("No task that supports {0:s}".format(file_extension))
-    return index_class
 
 
 def build_index_pipeline(
-    file_path="",
-    events="",
-    timeline_name="",
-    index_name="",
-    file_extension="",
-    sketch_id=None,
-    only_index=False,
-    timeline_id=None,
-    headers_mapping=None,
-    delimiter=",",
-):
+        event_filter=None, events='', file_extension='', file_path='',
+        index_name='', only_index=False, sketch_id=None, timeline_id=None,
+        timeline_name=''):
     """Build a pipeline for index and analysis.
 
     Args:
-        file_path: The full path to a file to upload, either a file_path or
-            or events need to be defined.
+        event_filter: Event filter to pass to psort.
         events: String with the event data, either file_path or events
             needs to be defined.
-        timeline_name: Name of the timeline to create.
-        index_name: Name of the index to index to.
         file_extension: The file extension of the file.
-        sketch_id: The ID of the sketch to analyze.
+        file_path: The full path to a file to upload, either a file_path or
+            or events need to be defined.
+        index_name: Name of the index to index to.
         only_index: If set to true then only indexing tasks are run, not
             analyzers. This is to be used when uploading data in chunks,
             we don't want to run the analyzers until all chunks have been
             uploaded.
+        sketch_id: The ID of the sketch to analyze.
         timeline_id: Optional ID of the timeline object this data belongs to.
+        timeline_name: Name of the timeline to create.
         headers_mapping: list of dicts containing:
                          (i) target header we want to replace [key=target],
                          (ii) source header we want to insert [key=source], and
@@ -275,10 +249,16 @@ def build_index_pipeline(
     Returns:
         Celery chain with indexing task (or single indexing task) and analyzer
         task group.
+
+    Raises:
+        RuntimeError: if no file path or events were specified.
     """
+
     if not (file_path or events):
         raise RuntimeError("Unable to upload data, missing either a file or events.")
-    index_task_class = _get_index_task_class(file_extension)
+    if file_extension not in ('csv', 'jsonl', 'plaso'):
+        raise KeyError('No task that supports {0:s}'.format(file_extension))
+
     sketch_analyzer_chain = None
     searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
 
@@ -542,29 +522,33 @@ def run_sketch_analyzer(
 
 
 @celery.task(track_started=True, base=SqlAlchemyTask)
-def run_plaso(file_path, events, timeline_name, index_name, source_type, timeline_id):
-    """Create a Celery task for processing Plaso storage file.
+def run_plaso(
+        file_path, event_filter, timeline_name, index_name, source_type,
+        timeline_id):
+        """Create a Celery task for processing Plaso storage file.
 
     Args:
         file_path: Path to the plaso file on disk.
-        events: String with event data, invalid for plaso files.
+        event_filter: Event filter to pass to psort.
         timeline_name: Name of the Timesketch timeline.
         index_name: Name of the datastore index.
         source_type: Type of file, csv or jsonl.
         timeline_id: ID of the timeline object this data belongs to.
 
-    Raises:
-        RuntimeError: If the function is called using events, plaso
-            is not installed or is of unsupported version.
+
     Returns:
         Name (str) of the index.
+
+    Raises:
+        RuntimeError: If Plaso is not installed or is of unsupported version.
     """
     if not plaso:
         raise RuntimeError(
             ("Plaso isn't installed, " "unable to continue processing plaso files.")
         )
 
-    plaso_version = int(plaso.__version__)
+    #plaso_version = int(plaso.__version__)
+    plaso_version = int(plaso.__version__, 10)
     if plaso_version <= PLASO_MINIMUM_VERSION:
         raise RuntimeError(
             "Plaso version is out of date (version {0:d}, please upgrade to a "
@@ -573,8 +557,6 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
             )
         )
 
-    if events:
-        raise RuntimeError("Plaso uploads needs a file, not events.")
 
     mappings = None
     mappings_file_path = current_app.config.get("PLASO_MAPPING_FILE", "")
@@ -672,19 +654,22 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
     except KeyError:
         psort_path = "psort.py"
 
+    condition="(((parser == 'winevtx') and (timestamp_desc == 'Creation Time')) or (parser != 'winevtx')) and ( date > datetime('2021-02-01T00:00:00'))"
     cmd = [
         psort_path,
-        "-o",
-        "opensearch_ts",
+        '--output-time-zone',
+        'UTC',
+        '-o',
+        'dynamic',
+        '-w',
         file_path,
-        "--server",
-        opensearch_server,
-        "--port",
-        str(opensearch_port),
-        "--status_view",
-        "none",
-        "--index_name",
-        index_name,
+        condition,
+        '--port',
+        str(elastic_port),
+        '--status_view',
+        'none',
+        '--index_name',
+        index_name
     ]
 
     if mappings_file_path:
@@ -708,6 +693,12 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
     psort_memory = current_app.config.get("PLASO_UPPER_MEMORY_LIMIT", None)
     if psort_memory is not None:
         cmd.extend(["--process_memory_limit", str(psort_memory)])
+
+    cmd.append(file_path)
+
+    if event_filter:
+        cmd.append(event_filter)
+
 
     opensearch_flush_interval = current_app.config.get(
         "OPENSEARCH_FLUSH_INTERVAL", None

@@ -26,8 +26,9 @@ import uuid
 import numpy
 import pandas
 
-from timesketch_api_client import timeline
+#from timesketch_api_client import timeline
 from timesketch_api_client import definitions
+from timesketch_api_client import timeline
 from timesketch_import_client import utils
 
 logger = logging.getLogger("timesketch_importer.importer")
@@ -62,6 +63,7 @@ class ImportStreamer(object):
         self._data_lines = []
         self._data_type = None
         self._datetime_field = None
+        self._event_filter = None
         self._format_string = None
         self._index = ""
         self._last_response = None
@@ -397,6 +399,9 @@ class ImportStreamer(object):
             "provider": self._provider,
             "data_label": self._data_label,
         }
+        if self._event_filter:
+            data['event_filter'] = self._event_filter
+
         if self._index:
             data["index_name"] = self._index
 
@@ -618,7 +623,7 @@ class ImportStreamer(object):
         self.add_data_frame(data_frame)
 
     def add_file(self, filepath, delimiter=","):
-        """Add a CSV, JSONL or a PLASO file to the buffer.
+        """Add a CSV, JSONL or a Plaso storage file to the buffer.
 
         Args:
             filepath: the path to the file to add.
@@ -774,6 +779,9 @@ class ImportStreamer(object):
     def set_entry_threshold(self, threshold):
         """Set the threshold for number of entries per chunk."""
         self._threshold_entry = threshold
+    def set_event_filter(self, event_filter):
+        """Set the event filter to pass to psort."""
+        self._event_filter = event_filter
 
     def set_filesize_threshold(self, threshold):
         """Set the threshold for file size per chunk."""
@@ -848,14 +856,15 @@ class ImportStreamer(object):
             logger.warning("No timeline ID has been stored as of yet.")
             return None
 
-        timeline_obj = timeline.Timeline(
+        #timeline_obj = timeline.Timeline(
+        return timeline.Timeline(
             timeline_id=self._timeline_id,
             sketch_id=self._sketch.id,
             api=self._sketch.api,
             name=self._timeline_name,
             searchindex=self._index,
         )
-        return timeline_obj
+        #return timeline_obj
 
     def __enter__(self):
         """Make it possible to use "with" statement."""
