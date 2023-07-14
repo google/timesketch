@@ -14,6 +14,7 @@
 """Commands for sketches."""
 
 import click
+from tabulate import tabulate
 
 
 @click.group("sketch")
@@ -35,9 +36,22 @@ def list_sketches(ctx):
 def describe_sketch(ctx):
     """Show info about the active sketch."""
     sketch = ctx.obj.sketch
-    # TODO (berggren): Add more details to the output.
+    output = ctx.obj.output_format
+
+    if output == "json":
+        click.echo(sketch.__dict__)
+        return
     click.echo(f"Name: {sketch.name}")
     click.echo(f"Description: {sketch.description}")
+    click.echo(f"Status: {sketch.status}")
+    result = tabulate(
+        sketch.attributes_table,
+        headers="keys",
+        tablefmt="psql",
+        showindex=True,
+    )
+    click.echo("Sketch Attributes:")
+    click.echo(result)
 
 
 @sketch_group.command("create")
