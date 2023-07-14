@@ -230,10 +230,10 @@ limitations under the License.
       </div>
 
       <!-- Term filters -->
-      <div v-if="filterChips.length">
-        <v-chip-group>
+      <div v-if="filterChips.length" class="mt-1">
+        <v-chip-group column>
           <span v-for="(chip, index) in filterChips" :key="index + chip.value">
-            <v-chip small outlined close @click:close="removeChip(chip)">
+            <v-chip outlined close close-icon="mdi-close" @click:close="removeChip(chip)">
               <v-icon v-if="chip.value === '__ts_star'" left small color="amber">mdi-star</v-icon>
               <v-icon v-if="chip.value === '__ts_comment'" left small>mdi-comment-multiple-outline</v-icon>
               {{ chip.value | formatLabelText }}
@@ -279,7 +279,7 @@ const defaultQueryFilter = () => {
     from: 0,
     terminate_after: 40,
     size: 40,
-    indices: [],
+    indices: '_all',
     order: 'asc',
     chips: [],
   }
@@ -368,7 +368,22 @@ export default {
         this.$router.push({ name: 'Explore', params: { sketchId: this.sketch.id } })
       }
       this.currentQueryString = searchEvent.queryString
+
+      // Preserve user defined filter instead of resetting, if it exist.
+      if (!searchEvent.queryFilter) {
+        searchEvent.queryFilter = this.currentQueryFilter
+      }
       this.currentQueryFilter = searchEvent.queryFilter
+
+      // Add any chips from the search event and make sure they are not in the
+      // current filter already. E.g. don't add a star filter twice.
+      if (searchEvent.chip) {
+        const chipExist = this.currentQueryFilter.chips.find((chip) => chip.value === searchEvent.chip.value)
+        if (!chipExist) {
+          this.currentQueryFilter.chips.push(searchEvent.chip)
+        }
+      }
+
       // Preserve user defined item count instead of resetting.
       this.currentQueryFilter.size = this.currentItemsPerPage
       this.currentQueryFilter.terminate_after = this.currentItemsPerPage
