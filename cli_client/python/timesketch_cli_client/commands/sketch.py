@@ -13,8 +13,8 @@
 # limitations under the License.
 """Commands for sketches."""
 
-import click
 import json
+import click
 
 
 @click.group("sketch")
