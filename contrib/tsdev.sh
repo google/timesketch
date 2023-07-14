@@ -19,4 +19,9 @@ elif [ $1 == "shell" ]; then
   docker exec -it $CONTAINER_ID /bin/bash
 elif [ $1 == "logs" ]; then
   docker logs -f $CONTAINER_ID
+elif [ $1 == "build_api_cli" ]; then
+    docker exec -w '/usr/local/src/timesketch/cli_client/python' -it $CONTAINER_ID python3 setup.py build
+    docker exec -w '/usr/local/src/timesketch/cli_client/python' -it $CONTAINER_ID python3 setup.py install
+    docker exec -w '/usr/local/src/timesketch/api_client/python' -it $CONTAINER_ID python3 setup.py build
+    docker exec -w '/usr/local/src/timesketch/api_client/python' -it $CONTAINER_ID python3 setup.py install
 fi

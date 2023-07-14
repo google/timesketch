@@ -24,6 +24,23 @@ limitations under the License.
       <li>Try more general keywords.</li>
       <li>Try fewer keywords.</li>
     </div>
+
+    <div v-if="highlightEvent" class="mt-4">
+      <strong>Showing context for event:</strong>
+      <v-sheet class="d-flex flex-wrap mt-1 mb-5">
+        <v-sheet class="flex-1-0">
+          <span style="width: 200px" v-bind:style="getTimelineColor(highlightEvent)" class="datetime-table-cell pa-2">
+            {{ highlightEvent._source.timestamp | formatTimestamp | toISO8601 }}
+          </span>
+        </v-sheet>
+
+        <v-sheet class="">
+          <span class="datetime-table-cell pa-2">
+            {{ highlightEvent._source.message }}
+          </span>
+        </v-sheet>
+      </v-sheet>
+    </div>
     <div v-if="eventList.objects.length || searchInProgress">
       <v-data-table
         v-model="selectedEvents"
@@ -72,7 +89,7 @@ limitations under the License.
                   <v-card-actions>
                     <v-spacer></v-spacer>
                     <v-btn text @click="saveSearchMenu = false"> Cancel </v-btn>
-                    <v-btn color="primary" depressed @click="saveSearch" :disabled="!saveSearchFormName"> Save </v-btn>
+                    <v-btn text color="primary" @click="saveSearch" :disabled="!saveSearchFormName"> Save </v-btn>
                   </v-card-actions>
                 </v-card>
               </v-dialog>
@@ -119,10 +136,8 @@ limitations under the License.
 
                   <v-card-actions>
                     <v-spacer></v-spacer>
-                    <v-btn color="primary" text @click="selectedFields = [{ field: 'message', type: 'text' }]">
-                      Reset
-                    </v-btn>
-                    <v-btn color="primary" text @click="columnDialog = false"> Close </v-btn>
+                    <v-btn text @click="selectedFields = [{ field: 'message', type: 'text' }]"> Reset </v-btn>
+                    <v-btn text color="primary" @click="columnDialog = false"> Set columns </v-btn>
                   </v-card-actions>
                 </v-card>
               </v-dialog>
@@ -311,11 +326,17 @@ limitations under the License.
             <span
               :class="{
                 'ts-event-field-ellipsis': field.text === 'message',
-                'ts-event-field-highlight': item._id === highlightEvent,
+                'ts-event-field-highlight': item._id === highlightEventId,
               }"
             >
               <!-- Tags -->
-              <span v-if="displayOptions.showTags && index === 3 && ('tag' in item._source ? (item._source.tag.length > 0) : false )">
+              <span
+                v-if="
+                  displayOptions.showTags &&
+                  index === 3 &&
+                  ('tag' in item._source ? item._source.tag.length > 0 : false)
+                "
+              >
                 <ts-event-tags :item="item" :tagConfig="tagConfig" :showDetails="item.showDetails"></ts-event-tags>
               </span>
               <!-- Emojis -->
@@ -391,7 +412,7 @@ export default {
     TsEventDetail,
     TsEventTagMenu,
     TsEventActionMenu,
-    TsEventTags
+    TsEventTags,
   },
   props: {
     queryRequest: {
@@ -423,8 +444,8 @@ export default {
       default: false,
     },
     highlightEvent: {
-      type: String,
-      default: '',
+      type: Object,
+      default: () => {},
     },
   },
   data() {
@@ -477,6 +498,12 @@ export default {
     },
     meta() {
       return this.$store.state.meta
+    },
+    highlightEventId() {
+      if (this.highlightEvent) {
+        return this.highlightEvent._id
+      }
+      return null
     },
     totalHits() {
       if (this.eventList.meta.es_total_count > 0 && this.eventList.meta.es_total_count_complete === 0) {
@@ -639,11 +666,29 @@ export default {
         'background-color': backgroundColor,
       }
     },
+    getAllIndices: function () {
+      let allIndices = []
+      this.sketch.active_timelines.forEach((timeline) => {
+        let isLegacy = this.meta.indices_metadata[timeline.searchindex.index_name].is_legacy
+        if (isLegacy) {
+          allIndices.push(timeline.searchindex.index_name)
+        } else {
+          allIndices.push(timeline.id)
+        }
+      })
+      return allIndices
+    },
     search: function (resetPagination = true, incognito = false, parent = false) {
       // Exit early if there are no indices selected.
       if (this.currentQueryFilter.indices && !this.currentQueryFilter.indices.length) {
         this.eventList = emptyEventList()
         return
+      }
+
+      // If all timelines are selected, make sure that the timeline filter is updated so that
+      // filters are applied properly.
+      if (this.currentQueryFilter.indices[0] === '_all' || this.currentQueryFilter.indices === '_all') {
+        this.currentQueryFilter.indices = this.getAllIndices()
       }
 
       // Exit early if there is no query string or DSL provided.

@@ -1,0 +1,24 @@
+display_name: Scheduled tasks from Windows Event Logs
+description:
+  summary:
+  details:
+  references:
+    -
+type: approach
+id: Q0004.01
+tags:
+ - windows
+view:
+  data:
+    - type: artifact
+      value: WindowsEventLogs
+  processors:
+    - name: plaso
+      options:
+        - type: parsers
+          value: winevtx
+      analysis:
+        timesketch:
+          - description: Scheduled tasks executions
+            type: opensearch-query
+            value: 'data_type:"windows:prefetch:execution" AND executable:("AT.EXE" OR "SCHTASKS.EXE")'

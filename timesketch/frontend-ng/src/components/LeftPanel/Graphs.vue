@@ -31,42 +31,46 @@ limitations under the License.
     </div>
 
     <v-expand-transition>
-      <div v-show="expanded" class="pb-2">
+      <div v-show="expanded">
         <!-- Saved graphs -->
-        <v-subheader>Saved Graphs</v-subheader>
-        <router-link
-          v-for="graph in savedGraphs"
-          :key="graph.id"
-          :to="{ name: 'Graph', query: { graph: graph.id } }"
-          style="cursor: pointer; font-size: 0.9em; text-decoration: none"
-        >
-          <v-row
-            no-gutters
-            @click="setSavedGraph(graph.id)"
-            class="pa-2 pl-5"
-            :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+        <div v-show="savedGraphs.length">
+          <v-subheader>Saved Graphs</v-subheader>
+          <router-link
+            v-for="graph in savedGraphs"
+            :key="graph.id"
+            :to="{ name: 'Graph', query: { graph: graph.id } }"
+            style="cursor: pointer; font-size: 0.9em; text-decoration: none"
           >
-            <span :class="$vuetify.theme.dark ? 'dark-font' : 'light-font'">{{ graph.name }}</span>
-          </v-row>
-        </router-link>
+            <v-row
+              no-gutters
+              @click="setSavedGraph(graph.id)"
+              class="pa-2 pl-5"
+              :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+            >
+              <span :class="$vuetify.theme.dark ? 'dark-font' : 'light-font'">{{ graph.name }}</span>
+            </v-row>
+          </router-link>
+        </div>
 
         <!-- Graph plugins -->
-        <v-subheader>Plugins</v-subheader>
-        <router-link
-          v-for="graph in graphs"
-          :key="graph.name"
-          :to="{ name: 'Graph', query: { plugin: graph.name } }"
-          style="cursor: pointer; font-size: 0.9em; text-decoration: none"
-        >
-          <v-row
-            no-gutters
-            @click="setGraphPlugin(graph.name)"
-            class="pa-2 pl-5"
-            :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+        <div v-show="graphs.length">
+          <v-subheader>Plugins</v-subheader>
+          <router-link
+            v-for="graph in graphs"
+            :key="graph.name"
+            :to="{ name: 'Graph', query: { plugin: graph.name } }"
+            style="cursor: pointer; font-size: 0.9em; text-decoration: none"
           >
-            <span :class="$vuetify.theme.dark ? 'dark-font' : 'light-font'">{{ graph.display_name }}</span>
-          </v-row>
-        </router-link>
+            <v-row
+              no-gutters
+              @click="setGraphPlugin(graph.name)"
+              class="pa-2 pl-5"
+              :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+            >
+              <span :class="$vuetify.theme.dark ? 'dark-font' : 'light-font'">{{ graph.display_name }}</span>
+            </v-row>
+          </router-link>
+        </div>
       </div>
     </v-expand-transition>
     <v-divider></v-divider>
