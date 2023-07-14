@@ -135,6 +135,78 @@ This example returns the field name `domain` and then do a simple sort and uniq.
 timesketch search -q "foobar" --return-fields domain | sort | uniq
 ```
 
+## Sketch
+
+### List all sketches
+
+To list all sketches you have access to:
+
+```bash
+timesketch sketch list
+```
+
+### Get description for one sketch
+
+Getting information about a sketch can be helpful in various situations.
+
+```bash
+timesketch --sketch 2 --output-format text sketch describe
+Name: asdasd
+Description: None
+Status: new
+```
+
+You can also get all stored information about a sketch with running:
+```bash
+timesketch --sketch 2 --output-format json sketch describe
+```
+
+This will give you something like:
+
+```json
+{'id': 2, 'api': <timesketch_api_client.client.TimesketchApi object at 0x7f72701461a0>, '_archived': None, '_sketch_name': 'asdasd', 'resource_uri': 'sketches/2', 'resource_data':
+```
+
+### Get attributes
+
+Attributes can be to long to show in `sketch describe` which is why there is a
+separate command for it:
+
+```timesketch sketch attributes```
+
+Will give back something like this:
+
+```bash
+timesketch --sketch 2 --output-format text sketch attributes
+{'intelligence': {'ontology': 'intelligence', 'value': {'data': [{'externalURI': 'google.com', 'ioc': '1.2.3.4', 'tags': ['foo'], 'type': 'ipv4'}, {'externalURI': 'fobar.com', 'ioc': '3.3.3.3', 'tags': ['aaaa'], 'type': 'ipv4'}]}}, 'ticket_id': {'ontology': '12345', 'value': 'text'}}
+```
+
+### Add a attribute
+
+To add an attribute to a sketch
+
+```bash
+timesketch sketch add_attribute
+```
+
+For example:
+
+```bash
+timesketch --sketch 2 sketch add_attribute --name ticket_id2 --ontology text --value 12345
+Attribute added: ticket_id2 text 12345
+```
+
+To verify, run `timesketch sketch attributes`.
+
+### Remove an attribute
+
+To remove an attribute from a sketch
+
+```bash
+timesketch sketch remove_attribute
+```
+
+
 ## Run analyzers
 
 List all available analyzers:
