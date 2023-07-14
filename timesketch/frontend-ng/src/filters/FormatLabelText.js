@@ -16,6 +16,8 @@ limitations under the License.
 export default {
   name: 'formatLabelText',
   filter: function (input) {
+    if (input === '__ts_star') return 'All starred events'
+    if (input === '__ts_comment') return 'All commented events'
     return input.replace('__ts_', '')
   },
 }
