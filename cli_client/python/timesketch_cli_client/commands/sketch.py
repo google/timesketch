@@ -69,8 +69,11 @@ def remove_attribute(ctx, name, ontology):
         ontology: Ontology of the attribute.
     """
     sketch = ctx.obj.sketch
-    sketch.remove_attribute(name, ontology)
-    click.echo(f"Attribute removed: {name} {ontology}")
+    if sketch.remove_attribute(name, ontology):
+        click.echo(f"Attribute removed: {name} {ontology}")
+    else:
+        click.echo(f"Attribute not found: {name} {ontology}")
+        ctx.exit(1)
 
 
 @sketch_group.command("add_attribute")
