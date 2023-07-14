@@ -65,7 +65,6 @@ limitations under the License.
             v-click-outside="onClickOutside"
             :selected-labels="selectedLabels"
             :query-string="currentQueryString"
-            :query-filter="currentQueryFilter"
             @setActiveView="searchView"
             @addChip="addChip"
             @updateLabelChips="updateLabelChips()"
