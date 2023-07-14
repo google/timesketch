@@ -14,7 +14,6 @@
 """Commands for sketches."""
 
 import click
-from tabulate import tabulate
 
 
 @click.group("sketch")
@@ -31,7 +30,9 @@ def list_sketches(ctx):
         click.echo(f"{sketch.id} {sketch.name}")
 
 
-@sketch_group.command("describe")
+@sketch_group.command(
+    "describe", help="Describe the active sketch. Attributes are not included."
+)
 @click.pass_context
 def describe_sketch(ctx):
     """Show info about the active sketch."""
@@ -44,14 +45,55 @@ def describe_sketch(ctx):
     click.echo(f"Name: {sketch.name}")
     click.echo(f"Description: {sketch.description}")
     click.echo(f"Status: {sketch.status}")
-    result = tabulate(
-        sketch.attributes_table,
-        headers="keys",
-        tablefmt="psql",
-        showindex=True,
-    )
-    click.echo("Sketch Attributes:")
-    click.echo(result)
+
+
+@sketch_group.command("attributes")
+@click.pass_context
+def list_attributes(ctx):
+    """List all attributes."""
+    sketch = ctx.obj.sketch
+
+    attributes = sketch.attributes
+    click.echo(attributes)
+
+
+@sketch_group.command("remove_attribute")
+@click.option("--name", required=True, help="Name of the attribute.")
+@click.option("--ontology", required=True, help="Ontology of the attribute.")
+@click.pass_context
+def remove_attribute(ctx, name, ontology):
+    """Remove an attribute from a sketch.
+
+    Args:
+        name: Name of the attribute.
+        ontology: Ontology of the attribute.
+    """
+    sketch = ctx.obj.sketch
+    sketch.remove_attribute(name, ontology)
+    click.echo(f"Attribute removed: {name} {ontology}")
+
+
+@sketch_group.command("add_attribute")
+@click.option("--name", required=True, help="Name of the attribute.")
+@click.option("--ontology", required=True, help="Ontology of the attribute.")
+@click.option("--value", required=True, help="Value of the attribute.")
+@click.pass_context
+def add_attribute(ctx, name, ontology, value):
+    """Add an attribute to a sketch.
+
+    Args:
+        name: Name of the attribute.
+        ontology: Ontology of the attribute.
+        value: Value of the attribute.
+
+    Example:
+        timesketch --sketch 2 sketch add_attribute
+            --name ticket_id --ontology text --value 12345
+
+    """
+    sketch = ctx.obj.sketch
+    sketch.add_attribute(name, ontology, value)
+    click.echo(f"Attribute added: {name} {ontology} {value}")
 
 
 @sketch_group.command("create")
