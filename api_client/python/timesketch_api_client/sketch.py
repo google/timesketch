@@ -87,7 +87,11 @@ class Sketch(resource.BaseResource):
 
     @property
     def attributes_table(self):
-        """Property that returns the sketch attributes as a data frame."""
+        """DEPRECATED: Property that returns the sketch attributes
+        as a data frame.
+
+        Given the fluid setup of attributes, this is not a good way to
+        represent the data. Use the attributes property instead."""
         data = self.lazyload_data(refresh_cache=True)
         meta = data.get("meta", {})
         attributes = meta.get("attributes", [])
