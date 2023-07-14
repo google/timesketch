@@ -164,7 +164,16 @@ timesketch --sketch 2 --output-format json sketch describe
 This will give you something like:
 
 ```json
-{'id': 2, 'api': <timesketch_api_client.client.TimesketchApi object at 0x7f72701461a0>, '_archived': None, '_sketch_name': 'asdasd', 'resource_uri': 'sketches/2', 'resource_data':
+timesketch --sketch 2 --output-format json sketch describe
+{
+    "_archived": null,
+    "_sketch_name": "asdasd",
+    "api": "<timesketch_api_client.client.TimesketchApi object at 0x7f3375d466e0>",
+    "id": 2,
+    "resource_data": {
+        "meta": {
+            "aggregators": {
+              ...
 ```
 
 ### Get attributes
@@ -192,8 +201,11 @@ timesketch sketch add_attribute
 For example:
 
 ```bash
-timesketch --sketch 2 sketch add_attribute --name ticket_id2 --ontology text --value 12345
-Attribute added: ticket_id2 text 12345
+timesketch --sketch 2 sketch add_attribute --name ticket_id3 --ontology text --value 12345
+Attribute added:
+Name: ticket_id3
+Ontology: text
+Value: 12345
 ```
 
 To verify, run `timesketch sketch attributes`.

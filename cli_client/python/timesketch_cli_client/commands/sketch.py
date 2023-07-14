@@ -14,6 +14,7 @@
 """Commands for sketches."""
 
 import click
+import json
 
 
 @click.group("sketch")
@@ -40,7 +41,7 @@ def describe_sketch(ctx):
     output = ctx.obj.output_format
 
     if output == "json":
-        click.echo(sketch.__dict__)
+        click.echo(json.dumps(sketch.__dict__, indent=4, sort_keys=True, default=str))
         return
     click.echo(f"Name: {sketch.name}")
     click.echo(f"Description: {sketch.description}")
@@ -70,9 +71,9 @@ def remove_attribute(ctx, name, ontology):
     """
     sketch = ctx.obj.sketch
     if sketch.remove_attribute(name, ontology):
-        click.echo(f"Attribute removed: {name} {ontology}")
+        click.echo(f"Attribute removed: Name: {name} Ontology: {ontology}")
     else:
-        click.echo(f"Attribute not found: {name} {ontology}")
+        click.echo(f"Attribute not found: Name: {name} Ontology: {ontology}")
         ctx.exit(1)
 
 
@@ -96,7 +97,10 @@ def add_attribute(ctx, name, ontology, value):
     """
     sketch = ctx.obj.sketch
     sketch.add_attribute(name, ontology, value)
-    click.echo(f"Attribute added: {name} {ontology} {value}")
+    click.echo("Attribute added:")
+    click.echo(f"Name: {name}")
+    click.echo(f"Ontology: {ontology}")
+    click.echo(f"Value: {value}")
 
 
 @sketch_group.command("create")
