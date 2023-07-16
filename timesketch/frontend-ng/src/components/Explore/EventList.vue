@@ -706,11 +706,29 @@ export default {
         'background-color': backgroundColor,
       }
     },
+    getAllIndices: function () {
+      let allIndices = []
+      this.sketch.active_timelines.forEach((timeline) => {
+        let isLegacy = this.meta.indices_metadata[timeline.searchindex.index_name].is_legacy
+        if (isLegacy) {
+          allIndices.push(timeline.searchindex.index_name)
+        } else {
+          allIndices.push(timeline.id)
+        }
+      })
+      return allIndices
+    },
     search: function (resetPagination = true, incognito = false, parent = false) {
       // Exit early if there are no indices selected.
       if (this.currentQueryFilter.indices && !this.currentQueryFilter.indices.length) {
         this.eventList = emptyEventList()
         return
+      }
+
+      // If all timelines are selected, make sure that the timeline filter is updated so that
+      // filters are applied properly.
+      if (this.currentQueryFilter.indices[0] === '_all' || this.currentQueryFilter.indices === '_all') {
+        this.currentQueryFilter.indices = this.getAllIndices()
       }
 
       // Exit early if there is no query string or DSL provided.
