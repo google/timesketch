@@ -271,7 +271,7 @@ limitations under the License.
           <td :colspan="headers.length">
             <!-- Details -->
             <v-container v-if="item.showDetails" fluid class="mt-4">
-              <ts-event-detail :event="item"></ts-event-detail>
+              <ts-event-detail :key="refreshComponent" :event="item"></ts-event-detail>
             </v-container>
 
             <!-- Time bubble -->
@@ -389,7 +389,7 @@ limitations under the License.
                 <v-btn
                   icon
                   small
-                  @click="toggleDetailedEvent(item)"
+                  @click="newComment(item)"
                   v-if="item['showDetails'] && !item._source.comment.length"
                 >
                   <v-icon> mdi-comment-plus-outline </v-icon>
@@ -519,6 +519,7 @@ export default {
       },
       showHistogram: false,
       branchParent: null,
+      refreshComponent: 0,
     }
   },
   computed: {
@@ -621,6 +622,7 @@ export default {
         if (row.showDetails) {
           row['showDetails'] = false
           this.expandedRows.splice(index, 1)
+          row['showComments'] = false
         } else {
           row['showDetails'] = true
           this.expandedRows.splice(index, 1)
@@ -635,6 +637,15 @@ export default {
       } else {
         row['showDetails'] = true
         this.expandedRows.push(row)
+      }
+    },
+    newComment: function (row) {
+      if (row.showDetails) {
+        row['showComments'] = true
+        this.refreshComponent += 1
+      } else {
+        row['showComments'] = true
+        this.toggleDetailedEvent(row)
       }
     },
     addTimeBubbles: function () {

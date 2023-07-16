@@ -16,7 +16,7 @@ limitations under the License.
 <template>
   <div>
     <v-row>
-      <v-col :cols="comments.length > 0 ? 8 : null ">
+      <v-col :cols="showComments ? 8 : 0">
         <v-card outlined height="100%">
           <v-simple-table dense>
             <template v-slot:default>
@@ -135,7 +135,7 @@ limitations under the License.
           </v-simple-table>
         </v-card>
       </v-col>
-      <v-col cols="4" v-if="comments.length > 0">
+      <v-col cols="4" v-show="showComments">
         <ts-comments :comments="comments" :event="event" :currentSearchNode="currentSearchNode"></ts-comments>
       </v-col>
     </v-row>
@@ -192,6 +192,7 @@ export default {
       contextUrl: '',
       contextValue: '',
       c_key: -1,
+      showComments: false,
     }
   },
   computed: {
@@ -230,6 +231,9 @@ export default {
           this.comments = response.data.meta.comments
           this.eventTimestamp = response.data.objects.timestamp
           this.eventTimestampDesc = response.data.objects.timestamp_desc
+          if (this.comments.length > 0 || this.event.showComments) {
+            this.showComments = true
+          }
         })
         .catch((e) => {})
     },
