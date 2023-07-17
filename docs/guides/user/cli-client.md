@@ -135,7 +135,9 @@ This example returns the field name `domain` and then do a simple sort and uniq.
 timesketch search -q "foobar" --return-fields domain | sort | uniq
 ```
 
-## Run analyzers
+## Analyzers
+
+### List
 
 List all available analyzers:
 
@@ -180,6 +182,8 @@ browser_search	Browser search terms	False
 windowsbruteforceanalyser	Windows Login Brute Force Analyzer	False
 ```
 
+### Run
+
 Run a specific analyzer. In this example the `domain` analyzer on timeline 1:
 
 ```
@@ -189,6 +193,84 @@ Running analyzer [domain] on [timeline 1]:
 Results
 [domain] = 217 domains discovered (150 TLDs) and 1 known CDN networks found.
 
+```
+
+### List analyzer results
+
+It might be useful to see the results of an analyzer for a specific timeline.
+That can be done with `timesketch analyzer results`.
+
+It can show only the analyzer results directly:
+
+```
+timesketch --sketch 2 --output-format text analyze results --analyzer account_finder --timeline 3
+Results for analyzer [account_finder] on [sigma_events]:
+SUCCESS - NOTE - Account finder was unable to extract any accounts.
+```
+
+Some analyzers might start dependent analyzers, to also show those results use
+the flag `--show-dependent`. This will look similar to:
+
+```bash
+timesketch --sketch 2 --output-format text analyze results --analyzer account_finder --timeline 3 --show-dependent
+Results for analyzer [account_finder] on [sigma_events]:
+Dependent: DONE - None - Feature extraction [gmail_accounts] extracted 0 features.
+Dependent: DONE - None - Feature extraction [github_accounts] extracted 0 features.
+Dependent: DONE - None - Feature extraction [linkedin_accounts] extracted 0 features.
+Dependent: DONE - None - Feature extraction [rdp_ts_ipv4_addresses] extracted 0 features.
+Dependent: DONE - None - Feature extraction [ssh_client_ipv4_addresses] extracted 0 features.
+Dependent: DONE - None - Feature extraction [ssh_client_ipv4_addresses_2] extracted 0 features.
+Dependent: DONE - None - Feature extraction [ssh_host_ipv4_addresses] extracted 0 features.
+Dependent: DONE - None - Feature extraction [ssh_client_password_ipv4_addresses] extracted 0 features.
+Dependent: DONE - None - Feature extraction [ssh_disconnected_username] extracted 0 features.
+Dependent: DONE - None - Feature extraction [ssh_disconnected_ip_address] extracted 0 features.
+Dependent: DONE - None - Feature extraction [ssh_disconnected_port] extracted 0 features.
+Dependent: DONE - None - Feature extraction [ssh_failed_ip_address] extracted 0 features.
+Dependent: DONE - None - Feature extraction [ssh_failed_port] extracted 0 features.
+Dependent: DONE - None - Feature extraction [ssh_failed_method] extracted 0 features.
+Dependent: DONE - None - Feature extraction [win_login_subject_username] extracted 0 features.
+Dependent: DONE - None - Feature extraction [email_addresses] extracted 0 features.
+Dependent: DONE - None - Feature extraction [win_login_domain] extracted 0 features.
+Dependent: DONE - None - Feature extraction [win_login_logon_id] extracted 0 features.
+Dependent: DONE - None - Feature extraction [win_login_logon_type] extracted 0 features.
+Dependent: DONE - None - Feature extraction [win_login_logon_process_name] extracted 0 features.
+Dependent: DONE - None - Feature extraction [win_login_workstation_name] extracted 0 features.
+Dependent: DONE - None - Feature extraction [win_login_process_id] extracted 0 features.
+Dependent: DONE - None - Feature extraction [win_login_process_name] extracted 0 features.
+Dependent: DONE - None - Feature extraction [win_login_ip_address] extracted 0 features.
+Dependent: DONE - None - Feature extraction [win_login_port] extracted 0 features.
+SUCCESS - NOTE - Account finder was unable to extract any accounts.
+Dependent: DONE - None - Feature extraction [rdp_rds_ipv4_addresses] extracted 0 features.
+Dependent: DONE - None - Feature extraction [ssh_failed_username] extracted 0 features.
+Dependent: DONE - None - Feature extraction [win_login_subject_domain] extracted 0 features.
+Dependent: DONE - None - Feature extraction [win_login_subject_logon_id] extracted 0 features.
+Dependent: DONE - None - Feature extraction [win_login_username] extracted 0 features.
+
+```
+
+To get a result in `json` that can be piped into other CLI tools run something
+like:
+
+```json
+timesketch --sketch 2 --output-format json analyze results --analyzer account_finder --timeline 3 --show-dependent
+[
+    {
+        "analyzer": "feature_extraction",
+        "index": "<timesketch_api_client.index.SearchIndex object at 0x7ff9079a7a60>",
+        "results": "Feature extraction [gmail_accounts] extracted 0 features.",
+        "session_id": 1,
+        "status": "DONE",
+        "timeline_id": 3
+    },
+    {
+        "analyzer": "feature_extraction",
+        "index": "<timesketch_api_client.index.SearchIndex object at 0x7ff9079a7910>",
+        "results": "Feature extraction [github_accounts] extracted 0 features.",
+        "session_id": 1,
+        "status": "DONE",
+        "timeline_id": 3
+    }
+]
 ```
 
 ## Events
