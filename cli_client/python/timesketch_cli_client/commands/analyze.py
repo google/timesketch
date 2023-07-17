@@ -157,7 +157,7 @@ def analyzer_results(ctx, analyzer_name, timeline_id, show_dependent):
     output = ctx.obj.output_format
 
     if output != "json" and output != "text":
-        click.echo(f"Unsupported output format: {output}")
+        click.echo(f"Unsupported output format: [{output}] use [json / text]")
         sys.exit(1)
 
     timelines = []
