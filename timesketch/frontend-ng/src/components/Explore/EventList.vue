@@ -369,9 +369,47 @@ limitations under the License.
 
         <!-- Comment field -->
         <template v-slot:item._source.comment="{ item }">
-          <v-badge :offset-y="10" bordered v-if="item._source.comment.length" :content="item._source.comment.length">
-            <v-icon small @click="toggleDetailedEvent(item)"> mdi-comment-text-multiple-outline </v-icon>
-          </v-badge>
+          <v-tooltip top open-delay="500">
+            <template v-slot:activator="{ on }">
+              <div v-on="on" class="d-inline-block">
+                <v-btn icon small @click="toggleDetailedEvent(item)" v-if="item._source.comment.length">
+                  <v-badge :offset-y="10" :offset-x="10" bordered :content="item._source.comment.length">
+                    <v-icon small> mdi-comment-text-multiple-outline </v-icon>
+                  </v-badge>
+                </v-btn>
+              </div>
+            </template>
+            <span v-if="!item['showDetails']">Open event &amp; comments</span>
+            <span v-if="item['showDetails']">Close event &amp; comments</span>
+          </v-tooltip>
+          <v-tooltip
+            v-if="item['showDetails'] && !item._source.comment.length && !item.showComments"
+            top
+            open-delay="500"
+          >
+            <template v-slot:activator="{ on }">
+              <div v-on="on" class="d-inline-block">
+                <v-btn icon small @click="newComment(item)">
+                  <v-icon> mdi-comment-plus-outline </v-icon>
+                </v-btn>
+              </div>
+            </template>
+            <span>Add a comment</span>
+          </v-tooltip>
+          <v-tooltip
+            v-if="item['showDetails'] && !item._source.comment.length && item.showComments"
+            top
+            open-delay="500"
+          >
+            <template v-slot:activator="{ on }">
+              <div v-on="on" class="d-inline-block">
+                <v-btn icon small @click="item.showComments = false">
+                  <v-icon> mdi-comment-remove-outline </v-icon>
+                </v-btn>
+              </div>
+            </template>
+            <span>Close comments</span>
+          </v-tooltip>
         </template>
       </v-data-table>
     </div>
@@ -610,6 +648,7 @@ export default {
         if (row.showDetails) {
           row['showDetails'] = false
           this.expandedRows.splice(index, 1)
+          this.$set(row, 'showComments', false)
         } else {
           row['showDetails'] = true
           this.expandedRows.splice(index, 1)
@@ -624,6 +663,14 @@ export default {
       } else {
         row['showDetails'] = true
         this.expandedRows.push(row)
+      }
+    },
+    newComment: function (row) {
+      if (row.showDetails) {
+        this.$set(row, 'showComments', true)
+      } else {
+        this.$set(row, 'showComments', true)
+        this.toggleDetailedEvent(row)
       }
     },
     addTimeBubbles: function () {
