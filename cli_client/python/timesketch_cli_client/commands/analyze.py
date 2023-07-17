@@ -15,8 +15,8 @@
 import sys
 import time
 
-import click
 import json
+import click
 
 from timesketch_api_client import error
 
@@ -156,7 +156,7 @@ def analyzer_results(ctx, analyzer_name, timeline_id, show_dependent):
     sketch = ctx.obj.sketch
     output = ctx.obj.output_format
 
-    if output != "json" and output != "text":
+    if output not in ("json", "text"):
         click.echo(f"Unsupported output format: [{output}] use [json / text]")
         sys.exit(1)
 
@@ -179,7 +179,6 @@ def analyzer_results(ctx, analyzer_name, timeline_id, show_dependent):
                         default=str,
                     )
                 )
-                return
             else:
                 click.echo(
                     f"Results for analyzer [{analyzer_name}] on [{timeline.name}]:"
@@ -208,10 +207,12 @@ def analyzer_results(ctx, analyzer_name, timeline_id, show_dependent):
                             # analyzer first
                             if show_dependent:
                                 click.echo(
-                                    f"Dependent: {status} - {result_priority} - {result_summary}"
+                                    f"Dependent: {status} - {result_priority} \
+                                          - {result_summary}"
                                 )
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             click.echo(
-                f"Unable to get results for analyzer [{analyzer_name}] on [{timeline.name}]: {e}"
+                f"Unable to get results for analyzer [{analyzer_name}]  \
+                    on [{timeline.name}]: {e}"
             )
             sys.exit(1)
