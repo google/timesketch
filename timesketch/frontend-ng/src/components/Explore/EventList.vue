@@ -668,7 +668,6 @@ export default {
     newComment: function (row) {
       if (row.showDetails) {
         this.$set(row, 'showComments', true)
-        this.refreshComponent += 1
       } else {
         this.$set(row, 'showComments', true)
         this.toggleDetailedEvent(row)
