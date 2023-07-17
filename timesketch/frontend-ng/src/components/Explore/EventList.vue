@@ -274,7 +274,7 @@ limitations under the License.
           <td :colspan="headers.length">
             <!-- Details -->
             <v-container v-if="item.showDetails" fluid class="mt-4">
-              <ts-event-detail :showCommentsTrigger="showCommentsTrigger" :event="item"></ts-event-detail>
+              <ts-event-detail :event="item"></ts-event-detail>
             </v-container>
 
             <!-- Time bubble -->
@@ -379,33 +379,31 @@ limitations under the License.
                 </v-btn>
               </div>
             </template>
-            <span v-if="!item['showDetails']">Open comments</span>
-            <span v-if="item['showDetails']">Close comments</span>
+            <span v-if="!item['showDetails']">Open event & comments</span>
+            <span v-if="item['showDetails']">Close event & comments</span>
           </v-tooltip>
-          <v-tooltip top open-delay="500">
+          <v-tooltip
+            v-if="item['showDetails'] && !item._source.comment.length && !item.showComments"
+            top
+            open-delay="500"
+          >
             <template v-slot:activator="{ on }">
               <div v-on="on" class="d-inline-block">
-                <v-btn
-                  v-if="item['showDetails'] && !item._source.comment.length && !showCommentsTrigger"
-                  icon
-                  small
-                  @click="newComment(item)"
-                >
+                <v-btn icon small @click="newComment(item)">
                   <v-icon> mdi-comment-plus-outline </v-icon>
                 </v-btn>
               </div>
             </template>
             <span>Add a comment</span>
           </v-tooltip>
-          <v-tooltip top open-delay="500">
+          <v-tooltip
+            v-if="item['showDetails'] && !item._source.comment.length && item.showComments"
+            top
+            open-delay="500"
+          >
             <template v-slot:activator="{ on }">
               <div v-on="on" class="d-inline-block">
-                <v-btn
-                  v-if="item['showDetails'] && !item._source.comment.length && showCommentsTrigger"
-                  icon
-                  small
-                  @click="showCommentsTrigger = false"
-                >
+                <v-btn icon small @click="item.showComments = false">
                   <v-icon> mdi-comment-remove-outline </v-icon>
                 </v-btn>
               </div>
@@ -534,7 +532,6 @@ export default {
       showHistogram: false,
       branchParent: null,
       sortOrderAsc: true,
-      showCommentsTrigger: false,
     }
   },
   computed: {
@@ -651,7 +648,7 @@ export default {
         if (row.showDetails) {
           row['showDetails'] = false
           this.expandedRows.splice(index, 1)
-          this.showCommentsTrigger = false
+          this.$set(row, 'showComments', false)
         } else {
           row['showDetails'] = true
           this.expandedRows.splice(index, 1)
@@ -670,10 +667,10 @@ export default {
     },
     newComment: function (row) {
       if (row.showDetails) {
-        this.showCommentsTrigger = true
+        this.$set(row, 'showComments', true)
         this.refreshComponent += 1
       } else {
-        this.showCommentsTrigger = true
+        this.$set(row, 'showComments', true)
         this.toggleDetailedEvent(row)
       }
     },
