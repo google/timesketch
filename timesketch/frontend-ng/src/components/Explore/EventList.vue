@@ -274,7 +274,9 @@ limitations under the License.
           <td :colspan="headers.length">
             <!-- Details -->
             <v-container v-if="item.showDetails" fluid class="mt-4">
-              <ts-event-detail :key="refreshComponent" :event="item"></ts-event-detail>
+              <v-slide-y-transition>
+                <ts-event-detail :key="refreshComponent" :event="item"></ts-event-detail>
+              </v-slide-y-transition>
             </v-container>
 
             <!-- Time bubble -->
