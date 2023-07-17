@@ -135,9 +135,11 @@ limitations under the License.
           </v-simple-table>
         </v-card>
       </v-col>
-      <v-col cols="4" v-show="showComments">
-        <ts-comments :comments="comments" :event="event" :currentSearchNode="currentSearchNode"></ts-comments>
-      </v-col>
+      <v-slide-x-reverse-transition>
+        <v-col cols="4" v-show="showComments">
+          <ts-comments :comments="comments" :event="event" :currentSearchNode="currentSearchNode"></ts-comments>
+        </v-col>
+      </v-slide-x-reverse-transition>
     </v-row>
     <v-dialog scrollable v-model="aggregatorDialog" @click:outside="($event) => (this.aggregatorDialog = false)">
       <ts-aggregate-dialog
@@ -168,7 +170,7 @@ export default {
     TsLinkRedirectWarning,
     TsComments,
   },
-  props: ['event'],
+  props: ['showCommentsTrigger', 'event'],
   data() {
     return {
       fullEvent: {},
@@ -192,7 +194,7 @@ export default {
       contextUrl: '',
       contextValue: '',
       c_key: -1,
-      showComments: false,
+      schowCommentBlock: false,
     }
   },
   computed: {
@@ -220,6 +222,13 @@ export default {
     contextLinkConf() {
       return this.$store.state.contextLinkConf
     },
+    showComments() {
+      if (this.schowCommentBlock || this.showCommentsTrigger) {
+        return true
+      } else {
+        return false
+      }
+    },
   },
   methods: {
     getEvent: function () {
@@ -232,7 +241,7 @@ export default {
           this.eventTimestamp = response.data.objects.timestamp
           this.eventTimestampDesc = response.data.objects.timestamp_desc
           if (this.comments.length > 0 || this.event.showComments) {
-            this.showComments = true
+            this.schowCommentBlock = true
           }
         })
         .catch((e) => {})

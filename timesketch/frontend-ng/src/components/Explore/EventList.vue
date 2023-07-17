@@ -274,9 +274,7 @@ limitations under the License.
           <td :colspan="headers.length">
             <!-- Details -->
             <v-container v-if="item.showDetails" fluid class="mt-4">
-              <v-slide-y-transition>
-                <ts-event-detail :key="refreshComponent" :event="item"></ts-event-detail>
-              </v-slide-y-transition>
+              <ts-event-detail :showCommentsTrigger="showCommentsTrigger" :event="item"></ts-event-detail>
             </v-container>
 
             <!-- Time bubble -->
@@ -387,12 +385,32 @@ limitations under the License.
           <v-tooltip top open-delay="300">
             <template v-slot:activator="{ on }">
               <div v-on="on" class="d-inline-block">
-                <v-btn icon small @click="newComment(item)" v-if="item['showDetails'] && !item._source.comment.length">
+                <v-btn
+                  v-if="item['showDetails'] && !item._source.comment.length && !showCommentsTrigger"
+                  icon
+                  small
+                  @click="newComment(item)"
+                >
                   <v-icon> mdi-comment-plus-outline </v-icon>
                 </v-btn>
               </div>
             </template>
             <span>Add a comment</span>
+          </v-tooltip>
+          <v-tooltip top open-delay="300">
+            <template v-slot:activator="{ on }">
+              <div v-on="on" class="d-inline-block">
+                <v-btn
+                  v-if="item['showDetails'] && !item._source.comment.length && showCommentsTrigger"
+                  icon
+                  small
+                  @click="showCommentsTrigger = false"
+                >
+                  <v-icon> mdi-comment-remove-outline </v-icon>
+                </v-btn>
+              </div>
+            </template>
+            <span>Close comments</span>
           </v-tooltip>
         </template>
       </v-data-table>
@@ -516,8 +534,7 @@ export default {
       showHistogram: false,
       branchParent: null,
       sortOrderAsc: true,
-      refreshComponent: 0,
-
+      showCommentsTrigger: false,
     }
   },
   computed: {
@@ -634,7 +651,7 @@ export default {
         if (row.showDetails) {
           row['showDetails'] = false
           this.expandedRows.splice(index, 1)
-          row['showComments'] = false
+          this.showCommentsTrigger = false
         } else {
           row['showDetails'] = true
           this.expandedRows.splice(index, 1)
@@ -653,10 +670,10 @@ export default {
     },
     newComment: function (row) {
       if (row.showDetails) {
-        row['showComments'] = true
+        this.showCommentsTrigger = true
         this.refreshComponent += 1
       } else {
-        row['showComments'] = true
+        this.showCommentsTrigger = true
         this.toggleDetailedEvent(row)
       }
     },
