@@ -379,8 +379,8 @@ limitations under the License.
                 </v-btn>
               </div>
             </template>
-            <span v-if="!item['showDetails']">Open event & comments</span>
-            <span v-if="item['showDetails']">Close event & comments</span>
+            <span v-if="!item['showDetails']">Open event &amp; comments</span>
+            <span v-if="item['showDetails']">Close event &amp; comments</span>
           </v-tooltip>
           <v-tooltip
             v-if="item['showDetails'] && !item._source.comment.length && !item.showComments"
