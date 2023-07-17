@@ -369,7 +369,7 @@ limitations under the License.
 
         <!-- Comment field -->
         <template v-slot:item._source.comment="{ item }">
-          <v-tooltip top open-delay="300">
+          <v-tooltip top open-delay="500">
             <template v-slot:activator="{ on }">
               <div v-on="on" class="d-inline-block">
                 <v-btn icon small @click="toggleDetailedEvent(item)" v-if="item._source.comment.length">
@@ -382,7 +382,7 @@ limitations under the License.
             <span v-if="!item['showDetails']">Open comments</span>
             <span v-if="item['showDetails']">Close comments</span>
           </v-tooltip>
-          <v-tooltip top open-delay="300">
+          <v-tooltip top open-delay="500">
             <template v-slot:activator="{ on }">
               <div v-on="on" class="d-inline-block">
                 <v-btn
@@ -397,7 +397,7 @@ limitations under the License.
             </template>
             <span>Add a comment</span>
           </v-tooltip>
-          <v-tooltip top open-delay="300">
+          <v-tooltip top open-delay="500">
             <template v-slot:activator="{ on }">
               <div v-on="on" class="d-inline-block">
                 <v-btn
