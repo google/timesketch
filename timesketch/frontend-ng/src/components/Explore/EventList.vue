@@ -369,29 +369,20 @@ limitations under the License.
           <v-tooltip top open-delay="300">
             <template v-slot:activator="{ on }">
               <div v-on="on" class="d-inline-block">
-                <v-btn
-                  icon
-                  small
-                  @click="toggleDetailedEvent(item)"
-                   v-if="item._source.comment.length"
-                >
+                <v-btn icon small @click="toggleDetailedEvent(item)" v-if="item._source.comment.length">
                   <v-badge :offset-y="10" :offset-x="10" bordered :content="item._source.comment.length">
                     <v-icon small> mdi-comment-text-multiple-outline </v-icon>
                   </v-badge>
                 </v-btn>
               </div>
             </template>
-            <span>Open comments</span>
+            <span v-if="!item['showDetails']">Open comments</span>
+            <span v-if="item['showDetails']">Close comments</span>
           </v-tooltip>
           <v-tooltip top open-delay="300">
             <template v-slot:activator="{ on }">
               <div v-on="on" class="d-inline-block">
-                <v-btn
-                  icon
-                  small
-                  @click="newComment(item)"
-                  v-if="item['showDetails'] && !item._source.comment.length"
-                >
+                <v-btn icon small @click="newComment(item)" v-if="item['showDetails'] && !item._source.comment.length">
                   <v-icon> mdi-comment-plus-outline </v-icon>
                 </v-btn>
               </div>

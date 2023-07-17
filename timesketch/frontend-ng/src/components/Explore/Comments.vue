@@ -45,9 +45,7 @@ limitations under the License.
 
             <v-card-actions v-if="comment.editable">
               <v-spacer></v-spacer>
-              <v-btn text color="primary" v-if="comment.editable" @click="editComment(index, false)">
-                Cancel
-              </v-btn>
+              <v-btn text color="primary" v-if="comment.editable" @click="editComment(index, false)"> Cancel </v-btn>
               <v-btn text color="primary" @click="updateComment(comment, index)"> Save </v-btn>
             </v-card-actions>
           </v-card>
@@ -116,6 +114,7 @@ export default {
       ApiClient.saveEventAnnotation(this.sketch.id, 'comment', this.comment, [this.event], this.currentSearchNode)
         .then((response) => {
           this.comments.push(response.data.objects[0][0])
+          this.event._source.comment.push(this.comment)
           this.comment = ''
         })
         .catch((e) => {})
@@ -135,6 +134,7 @@ export default {
         ApiClient.deleteEventAnnotation(this.sketch.id, 'comment', commentId, this.event, this.currentSearchNode)
           .then((response) => {
             this.comments.splice(commentIndex, 1)
+            this.event._source.comment.splice(commentIndex, 1)
           })
           .catch((e) => {
             console.error(e)
