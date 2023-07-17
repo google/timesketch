@@ -77,7 +77,7 @@ def list_attributes(ctx):
         click.echo("No attributes found.")
         ctx.exit(1)
     if ctx.obj.output_format == "json":
-        click.echo(json.dumps(attributes, sort_keys=True, default=str))
+        click.echo(json.dumps(attributes, indent=4, sort_keys=True, default=str))
         return
     elif ctx.obj.output_format == "text":
         for k, v in attributes.items():

@@ -142,7 +142,26 @@ timesketch search -q "foobar" --return-fields domain | sort | uniq
 To list all sketches you have access to:
 
 ```bash
-timesketch sketch list
+timesketch --sketch 2 --output-format text sketch list
+ id   name
+  2 asdasd
+  1   aaaa
+```
+
+You can also get a list as JSON if you like to:
+
+```
+timesketch --sketch 2 --output-format json sketch list
+[
+    {
+        "id":2,
+        "name":"asdasd"
+    },
+    {
+        "id":1,
+        "name":"aaaa"
+    }
+]
 ```
 
 ### Get description for one sketch
@@ -187,7 +206,53 @@ Will give back something like this:
 
 ```bash
 timesketch --sketch 2 --output-format text sketch attributes
-{'intelligence': {'ontology': 'intelligence', 'value': {'data': [{'externalURI': 'google.com', 'ioc': '1.2.3.4', 'tags': ['foo'], 'type': 'ipv4'}, {'externalURI': 'fobar.com', 'ioc': '3.3.3.3', 'tags': ['aaaa'], 'type': 'ipv4'}]}}, 'ticket_id': {'ontology': '12345', 'value': 'text'}}
+Name: intelligence: Ontology: intelligence Value: {'data': [{'externalURI': 'google.com', 'ioc': '1.2.3.4', 'tags': ['foo'], 'type': 'ipv4'}, {'externalURI': 'fobar.com', 'ioc': '3.3.3.3', 'tags': ['aaaa'], 'type': 'ipv4'}]}
+Name: ticket_id: Ontology: 12345 Value: text
+Name: ticket_id2: Ontology: 12345 Value: text
+Name: ticket_id3: Ontology: 12345 Value: text
+```
+
+Or as JSON
+
+```
+timesketch --sketch 2 --output-format json sketch attributes
+{
+    "intelligence": {
+        "ontology": "intelligence",
+        "value": {
+            "data": [
+                {
+                    "externalURI": "google.com",
+                    "ioc": "1.2.3.4",
+                    "tags": [
+                        "foo"
+                    ],
+                    "type": "ipv4"
+                },
+                {
+                    "externalURI": "fobar.com",
+                    "ioc": "3.3.3.3",
+                    "tags": [
+                        "aaaa"
+                    ],
+                    "type": "ipv4"
+                }
+            ]
+        }
+    },
+    "ticket_id": {
+        "ontology": "12345",
+        "value": "text"
+    },
+    "ticket_id2": {
+        "ontology": "12345",
+        "value": "text"
+    },
+    "ticket_id3": {
+        "ontology": "12345",
+        "value": "text"
+    }
+}
 ```
 
 ### Add a attribute
