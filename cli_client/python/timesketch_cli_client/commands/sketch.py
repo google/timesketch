@@ -46,11 +46,12 @@ def list_sketches(ctx):
 
 @sketch_group.command(
     "describe",
-    help="Describe the active sketch [text,json]. Attributes are only included in JSON output format.",
+    help="Describe the active sketch [text,json]",
 )
 @click.pass_context
 def describe_sketch(ctx):
-    """Show info about the active sketch."""
+    """Describe the active sketch [text,json].
+    Attributes only in JSON output format."""
     sketch = ctx.obj.sketch
     output = ctx.obj.output_format
 
@@ -71,21 +72,18 @@ def describe_sketch(ctx):
 def list_attributes(ctx):
     """List all attributes."""
     sketch = ctx.obj.sketch
-
+    output = ctx.obj.output_format
     attributes = sketch.attributes
     if not attributes:
         click.echo("No attributes found.")
         ctx.exit(1)
-    if ctx.obj.output_format == "json":
+    if output == "json":
         click.echo(json.dumps(attributes, indent=4, sort_keys=True, default=str))
-        return
-    elif ctx.obj.output_format == "text":
+    elif output == "text":
         for k, v in attributes.items():
             click.echo(f"Name: {k}: Ontology: {v['ontology']} Value: {v['value']}")
     else:  # format not implemented use json or text instead
-        click.echo(
-            f"Output format {ctx.obj.output_format} not implemented. Use json or text instead."
-        )
+        click.echo(f"Output format {output} not implemented. Use json or text instead.")
 
 
 @sketch_group.command(
