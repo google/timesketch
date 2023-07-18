@@ -17,13 +17,19 @@ import json
 import click
 import pandas as pd
 
+from timesketch_cli_client.commands import attribute as attribute_command
+
 
 @click.group("sketch")
 def sketch_group():
     """Manage sketch."""
 
 
-@sketch_group.command("list", help="List all sketches. [text,json]")
+# Add the attribute command group to the sketch command group.
+sketch_group.add_command(attribute_command.attribute_group)
+
+
+@sketch_group.command("list", help="List all sketches.")
 @click.pass_context
 def list_sketches(ctx):
     """List all sketches."""
@@ -46,11 +52,11 @@ def list_sketches(ctx):
 
 @sketch_group.command(
     "describe",
-    help="Describe the active sketch [text,json]",
+    help="Describe the active sketch",
 )
 @click.pass_context
 def describe_sketch(ctx):
-    """Describe the active sketch [text,json].
+    """Describe the active sketch.
     Attributes only in JSON output format."""
     sketch = ctx.obj.sketch
     output = ctx.obj.output_format
@@ -65,82 +71,6 @@ def describe_sketch(ctx):
     else:
         click.echo(f"Output format {output} not implemented.")
         ctx.exit(1)
-
-
-@sketch_group.command("attributes", help="List all attributes [text,json].")
-@click.pass_context
-def list_attributes(ctx):
-    """List all attributes."""
-    sketch = ctx.obj.sketch
-    output = ctx.obj.output_format
-    attributes = sketch.attributes
-    if not attributes:
-        click.echo("No attributes found.")
-        ctx.exit(1)
-    if output == "json":
-        click.echo(json.dumps(attributes, indent=4, sort_keys=True, default=str))
-    elif output == "text":
-        for k, v in attributes.items():
-            click.echo(f"Name: {k}: Ontology: {v['ontology']} Value: {v['value']}")
-    else:  # format not implemented use json or text instead
-        click.echo(f"Output format {output} not implemented. Use json or text instead.")
-
-
-@sketch_group.command(
-    "remove_attribute", help="Remove an attribute from a Sketch [text]."
-)
-@click.option("--name", required=True, help="Name of the attribute.")
-@click.option("--ontology", required=True, help="Ontology of the attribute.")
-@click.pass_context
-def remove_attribute(ctx, name, ontology):
-    """Remove an attribute from a sketch.
-
-    Args:
-        name: Name of the attribute.
-        ontology: Ontology of the attribute.
-    """
-    sketch = ctx.obj.sketch
-    if ctx.obj.output_format != "text":
-        click.echo(
-            f"Output format {ctx.obj.output_format} not implemented. Use text instead."
-        )
-        ctx.exit(1)
-    if sketch.remove_attribute(name, ontology):
-        click.echo(f"Attribute removed: Name: {name} Ontology: {ontology}")
-    else:
-        click.echo(f"Attribute not found: Name: {name} Ontology: {ontology}")
-        ctx.exit(1)
-
-
-@sketch_group.command("add_attribute", help="Add an attribute to a Sketch [text].")
-@click.option("--name", required=True, help="Name of the attribute.")
-@click.option("--ontology", required=True, help="Ontology of the attribute.")
-@click.option("--value", required=True, help="Value of the attribute.")
-@click.pass_context
-def add_attribute(ctx, name, ontology, value):
-    """Add an attribute to a sketch.
-
-    Args:
-        name: Name of the attribute.
-        ontology: Ontology of the attribute.
-        value: Value of the attribute.
-
-    Example:
-        timesketch --sketch 2 sketch add_attribute
-            --name ticket_id --ontology text --value 12345
-
-    """
-    sketch = ctx.obj.sketch
-    if ctx.obj.output_format != "text":
-        click.echo(
-            f"Output format {ctx.obj.output_format} not implemented. Use text instead."
-        )
-        ctx.exit(1)
-    sketch.add_attribute(name, ontology, value)
-    click.echo("Attribute added:")
-    click.echo(f"Name: {name}")
-    click.echo(f"Ontology: {ontology}")
-    click.echo(f"Value: {value}")
 
 
 @sketch_group.command("create", help="Create a new sketch [text].")
