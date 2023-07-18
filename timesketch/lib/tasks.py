@@ -525,7 +525,7 @@ def run_sketch_analyzer(
 def run_plaso(
         file_path, event_filter, timeline_name, index_name, source_type,
         timeline_id):
-        """Create a Celery task for processing Plaso storage file.
+    """Create a Celery task for processing Plaso storage file.
 
     Args:
         file_path: Path to the plaso file on disk.
