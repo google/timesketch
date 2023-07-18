@@ -35,12 +35,12 @@ def list_sketches(ctx):
     """List all sketches."""
     api_client = ctx.obj.api
     output = ctx.obj.output_format
-    d = []
+    sketches = []
 
     for sketch in api_client.list_sketches():
-        d.append({"id": sketch.id, "name": sketch.name})
+        sketches.append({"id": sketch.id, "name": sketch.name})
 
-    sketch_panda = pd.DataFrame(d, columns=["id", "name"])
+    sketch_panda = pd.DataFrame(sketches, columns=["id", "name"])
     if output == "json":
         click.echo(sketch_panda.to_json(orient="records", indent=4))
     elif output == "text":
