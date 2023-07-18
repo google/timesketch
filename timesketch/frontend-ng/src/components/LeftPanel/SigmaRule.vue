@@ -129,17 +129,6 @@ limitations under the License.
 import EventBus from '../../main'
 import ApiClient from '../../utils/RestApiClient'
 
-const defaultQueryFilter = () => {
-  return {
-    from: 0,
-    terminate_after: 40,
-    size: 40,
-    indices: '_all',
-    order: 'asc',
-    chips: [],
-  }
-}
-
 export default {
   components: {},
   props: ['sigmaRule'],
@@ -175,7 +164,6 @@ export default {
       let eventData = {}
       eventData.doSearch = true
       eventData.queryString = queryString
-      eventData.queryFilter = defaultQueryFilter()
       EventBus.$emit('setQueryAndFilter', eventData)
     },
     deleteRule(ruleUuid) {
