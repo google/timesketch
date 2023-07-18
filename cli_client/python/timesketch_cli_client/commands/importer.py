@@ -21,15 +21,19 @@ from timesketch_import_client import importer as import_client
 
 
 @click.command("import")
+@click.option(
+    '--event-filter', default=None,
+    help='Optional event filter to pass to psort.')
 @click.option("--name", help="Name of the timeline.")
 @click.option("--timeout", type=int, default=600, help="Seconds to wait for indexing.")
 @click.argument("file_path", type=click.Path(exists=True))
 @click.pass_context
-def importer(ctx, name, timeout, file_path):
+def importer(ctx, event_filter, name, timeout, file_path):
     """Import timeline.
 
     Args:
         ctx: Click CLI context object.
+        event_filter: Event filter to pass to psort.
         name: Name of the timeline to create.
         timeout: Seconds to wait for indexing.
         file_path: File path to the file to import.
@@ -47,6 +51,7 @@ def importer(ctx, name, timeout, file_path):
         # TODO: Consider using the whole command as upload context instead
         # of the file path.
         streamer.set_upload_context(file_path)
+        streamer.set_event_filter(event_filter)
         streamer.add_file(file_path)
         timeline = streamer.timeline
         if not timeline:

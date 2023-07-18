@@ -260,6 +260,8 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         db_session.add(timeline)
         db_session.commit()
 
+        event_filter = form.get('event_filter', None)
+
         sketch_id = sketch.id
         # Start Celery pipeline for indexing and analysis.
         # Import here to avoid circular imports.
@@ -267,17 +269,15 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         from timesketch.lib import tasks
 
         pipeline = tasks.build_index_pipeline(
-            file_path=file_path,
+            event_filter=event_filter,
             events=events,
-            timeline_name=timeline_name,
-            index_name=searchindex.index_name,
             file_extension=file_extension,
-            sketch_id=sketch_id,
+            file_path=file_path,
+            index_name=searchindex.index_name,
             only_index=enable_stream,
+            sketch_id=sketch_id,
             timeline_id=timeline.id,
-            headers_mapping=headers_mapping,
-            delimiter=delimiter,
-        )
+            timeline_name=timeline_name)
         task_id = uuid.uuid4().hex
         pipeline.apply_async(task_id=task_id)
 
