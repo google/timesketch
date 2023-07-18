@@ -17,7 +17,7 @@ import json
 import click
 
 
-@click.group("attribute", help="Manage attributes of a sketch.")
+@click.group("attributes", help="Manage attributes of a sketch.")
 def attribute_group():
     """Manage attributes of a sketch.
     This group is nested in the sketch group."""
