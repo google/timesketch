@@ -347,16 +347,55 @@ event data.
 
 ### Return message
 
-The `run()` method will return a string that will be visible in the background
-worker logs and also as the result message on the analyzer tab in Timesketch.
-We recommend including all information relevant to an analyst executing this
-analyser. E.g. a verdict by the analyzer or information about what tags,
-comments or stars have been added.
+The `BaseAnalyzer` class provides an `output` object that should be used to
+define what the analyzer will display as a result in the UI.
+The template provides an overview of output fields that are available.
+
+#### Required fields
+
+The following three fields need to be set by the analyzer author.
+
+* `self.output.result_status (str): [SUCCESS, ERROR]`
+    * Analyzer result status. Use `SUCCESS` when your analyzer ran without problems.
+    Use `ERROR` when there are problems that prevent the analyzer from running,
+    but not worth raising an exception. In the case of `ERROR` provide actionable
+    feedback in the `result_summary` attribute!
+* `self.output.result_priority (str): [NOTE, LOW, MEDIUM, HIGH]`
+    * Priority of the result based on your analysis findings. `NOTE` is the default
+    value and should be used for everything that is not actionable (e.g. enhancing
+    data). The priority will be used to sort the analyzer results in the UI to
+    highlight the most actionable (e.g. `HIGH`) at the top.
+* `self.output.result_summary (str)`
+    * A summary statement of the analyzer finding. A result summary must exist
+    even if there is no finding. Use this field to explain the user what your
+    analyzer found or did.
+* All other required fields are set by the Analyzer framework automatically.
+
+#### Optional fields
+
+There are also some optional fields that can be set to further enhance the results
+of your analyzer.
+
+* `self.output.result_markdown (str)`
+    * A detailed information about the analyzer results in a markdown format. Use
+    this field if the result is not enough for its own story, but too much for
+    the normal `result_summary`.
+* `self.output.references (List[str])`
+    * A list of references (URLs) about the analyzer or the issue the analyzer
+    attempts to address. Use this to tell users where they can read more about
+    how to interpret your analyzer results.
+* Other optional fields like `saved_views`, `saved_stories` or `created_tags` are
+set automatically when you use the BaseAnalyzer functions like `event.add_view()`
+or `event.add_tags()`.
+
+The analyzer `run()` method will then return `str(self.output)` which will verify
+the output format and if everything is fine it will store a json string in the
+database that will be interpreted by the new Timesketch UI.
 
 ## Multi Analyzer
 
 When you develop an analyzer that would benefit from creating smaller sub-jobs,
-you should use Multi Analyzer.
+you should use a Multi Analyzer.
 
 For example The Sigma analyzer is such a Multi Analyzer. That means, the Sigma
 analyzer is calling `get_kwargs()` from [sigma_tagger.py](https://github.com/google/timesketch/blob/master/timesketch/lib/analyzers/sigma_tagger.py).
