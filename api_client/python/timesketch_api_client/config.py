@@ -496,9 +496,10 @@ def configure_missing_parameters(
 
     if config_assistant.missing:
         if not sys.stdout.isatty() or not sys.stdin.isatty():
-            msg = ("You will be asked to provide config values, but the session"
-                   " doesn't have a tty. Please set up your config file, or "
-                   "rerun in a tty."
+            msg = (
+                "You will be asked to provide config values, but the session"
+                " doesn't have a tty. Please set up your config file, or "
+                "rerun in a tty."
             )
             raise RuntimeError(msg)
 
