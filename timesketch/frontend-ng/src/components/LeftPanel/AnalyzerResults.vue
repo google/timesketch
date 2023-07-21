@@ -17,13 +17,13 @@ limitations under the License.
   <div>
     <div
       class="pa-4"
-      :style="!analyzerResults.length ? '' : 'cursor: pointer'"
+      :style="!sortedAnalyzerResults.length ? '' : 'cursor: pointer'"
       @click="expanded = !expanded"
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
       <span> <v-icon left>mdi-auto-fix</v-icon> Analyzer Results </span>
       <v-btn
-        v-if="expanded || (analyzerResults && !analyzerResults.length && analyzerResultsReady)"
+        v-if="expanded || (sortedAnalyzerResults && !sortedAnalyzerResults.length && analyzerResultsReady)"
         icon
         text
         class="float-right mt-n1 mr-n1"
@@ -57,19 +57,19 @@ limitations under the License.
         </v-tooltip>
       </span>
       <span class="float-right" style="margin-right: 10px">
-        <small class="ml-3" v-if="!expanded && analyzerResults && analyzerResults.length && analyzerResultsReady"
+        <small class="ml-3" v-if="!expanded && sortedAnalyzerResults && sortedAnalyzerResults.length && analyzerResultsReady"
           ><strong>{{ resultCounter }}</strong></small
         >
       </span>
     </div>
     <v-expand-transition>
       <div v-show="expanded">
-        <div v-if="analyzerResults.length > 0">
+        <div v-if="sortedAnalyzerResults.length > 0">
           <!-- TODO: issue#2565 -->
           <!-- Add a severity and timeline filter here. -->
           <v-data-iterator
-            v-if="analyzerResults.length <= 10"
-            :items="analyzerResults"
+            v-if="sortedAnalyzerResults.length <= 10"
+            :items="sortedAnalyzerResults"
             hide-default-footer
             disable-pagination
           >
@@ -79,7 +79,7 @@ limitations under the License.
           </v-data-iterator>
           <v-data-iterator
             v-else
-            :items="analyzerResults"
+            :items="sortedAnalyzerResults"
             hide-default-footer
             disable-pagination
             :search="search"
@@ -126,7 +126,6 @@ export default {
       expanded: false,
       search: '',
       analyzerResultsReady: false,
-      analyzerResults: [],
       activeAnalyzerInterval: 15000, // milliseconds
       activeAnalyzerTimeout: 300000, // milliseconds
       activeAnalyzerTimeoutTriggered: false,
@@ -146,9 +145,21 @@ export default {
     activeAnalyses() {
       return this.$store.state.activeAnalyses
     },
+    analyzerResults() {
+      return this.$store.state.analyzerResults
+    },
+    sortedAnalyzerResults() {
+      const perAnalyzer = this.groupByAnalyzer(this.analyzerResults)
+      // for now sort the results in alphabetical order. In the future this will be sorted by verdict severity.
+      let sortedAnalyzerList = [...Object.entries(perAnalyzer).map(([analyzerName, data]) => ({ analyzerName, data }))]
+      sortedAnalyzerList.sort((a, b) =>
+        a.data.analyzerInfo.display_name.localeCompare(b.data.analyzerInfo.display_name)
+      )
+      return sortedAnalyzerList
+    },
     resultCounter() {
       let counter = 0
-      for (const analyzer of this.analyzerResults) {
+      for (const analyzer of this.sortedAnalyzerResults) {
         for (const timeline in analyzer.data.timelines) {
           if (
             analyzer.data.timelines[timeline].analysis_status === 'DONE' ||
@@ -176,77 +187,66 @@ export default {
         if (!analyses) continue
         allAnalyses = allAnalyses.concat(analyses)
       }
-      this.updateAnalyzerResults(allAnalyses)
+      this.$store.dispatch('updateAnalyzerResults', allAnalyses)
       updateActiveAnalyses(this.$store, allAnalyses)
     },
-    updateAnalyzerResults(analyses) {
+    groupByAnalyzer(analyses) {
       let perAnalyzer = {}
-      try {
-        for (const analysis of analyses) {
-          if (!perAnalyzer[analysis.analyzer_name]) {
-            // the analyzer is not yet in the results: create new entry
-            // There is an edge case where the analyzer is not in the analyzer list.
-            // If this happens, fall back to the analyzer short name. Tracked in issue#2738
-            if (this.analyzerList[analysis.analyzer_name]) {
-              perAnalyzer[analysis.analyzer_name] = {
-                timelines: {},
-                analyzerInfo: {
-                  name: analysis.analyzer_name,
-                  description: this.analyzerList[analysis.analyzer_name].description,
-                  is_multi: this.analyzerList[analysis.analyzer_name].is_multi,
-                  display_name: this.analyzerList[analysis.analyzer_name].display_name,
-                },
-              }
-            } else {
-              perAnalyzer[analysis.analyzer_name] = {
-                timelines: {},
-                analyzerInfo: {
-                  name: analysis.analyzer_name,
-                  description: 'No description available.',
-                  is_multi: false,
-                  display_name: analysis.analyzer_name,
-                },
-              }
+      for (const analysis of analyses) {
+        if (!perAnalyzer[analysis.analyzer_name]) {
+          // the analyzer is not yet in the results: create new entry
+          // There is an edge case where the analyzer is not in the analyzer list.
+          // If this happens, fall back to the analyzer short name. Tracked in issue#2738
+          if (this.analyzerList[analysis.analyzer_name]) {
+            perAnalyzer[analysis.analyzer_name] = {
+              timelines: {},
+              analyzerInfo: {
+                name: analysis.analyzer_name,
+                description: this.analyzerList[analysis.analyzer_name].description,
+                is_multi: this.analyzerList[analysis.analyzer_name].is_multi,
+                display_name: this.analyzerList[analysis.analyzer_name].display_name,
+              },
             }
-          }
-
-          if (!perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name]) {
-            // this timeline is not yet in the results for this analyzer: add it
-            perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name] = {
-              id: analysis.timeline.id,
-              name: analysis.timeline.name,
-              color: analysis.timeline.color,
-              verdict: analysis.result,
-              created_at: analysis.created_at,
-              last_analysissession_id: analysis.analysissession_id,
-              analysis_status: analysis.status[0].status,
+          } else {
+            perAnalyzer[analysis.analyzer_name] = {
+              timelines: {},
+              analyzerInfo: {
+                name: analysis.analyzer_name,
+                description: 'No description available.',
+                is_multi: false,
+                display_name: analysis.analyzer_name,
+              },
             }
-          }
-
-          if (
-            perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].last_analysissession_id <
-            analysis.analysissession_id
-          ) {
-            // this timeline is already in the results for this analyzer but check if the session is newer and update it
-            perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].created_at = analysis.created_at
-            perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].verdict = analysis.result
-            perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].last_analysissession_id =
-              analysis.analysissession_id
-            perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].analysis_status =
-              analysis.status[0].status
           }
         }
-      } catch (e) {
-        console.error(e)
-      }
 
-      // for now sort the results in alphabetical order. In the future this will be sorted by verdict severity.
-      let sortedAnalyzerList = [...Object.entries(perAnalyzer).map(([analyzerName, data]) => ({ analyzerName, data }))]
-      sortedAnalyzerList.sort((a, b) =>
-        a.data.analyzerInfo.display_name.localeCompare(b.data.analyzerInfo.display_name)
-      )
-      this.analyzerResults = sortedAnalyzerList
-      this.analyzerResultsReady = true
+        if (!perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name]) {
+          // this timeline is not yet in the results for this analyzer: add it
+          perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name] = {
+            id: analysis.timeline.id,
+            name: analysis.timeline.name,
+            color: analysis.timeline.color,
+            verdict: analysis.result,
+            created_at: analysis.created_at,
+            last_analysissession_id: analysis.analysissession_id,
+            analysis_status: analysis.status[0].status,
+          }
+        }
+
+        if (
+          perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].last_analysissession_id <
+          analysis.analysissession_id
+        ) {
+          // this timeline is already in the results for this analyzer but check if the session is newer and update it
+          perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].created_at = analysis.created_at
+          perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].verdict = analysis.result
+          perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].last_analysissession_id =
+            analysis.analysissession_id
+          perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].analysis_status =
+            analysis.status[0].status
+        }
+      }
+      return perAnalyzer
     },
     filterAnalyzers(items, search) {
       const searchStr = (search || '').toLowerCase()
@@ -301,6 +301,7 @@ export default {
   },
   mounted() {
     this.initializeAnalyzerResults()
+    this.analyzerResultsReady = true
     this.activeAnalyzerTimerStart = Date.now()
   },
   beforeDestroy() {

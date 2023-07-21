@@ -50,7 +50,12 @@ limitations under the License.
                     :disabled="(timelineSelection.length > 0) ? false : true"
                     @click="runAnalyzer(analyzer.analyzerName)"
                   >
-                    <v-icon>mdi-play-circle-outline</v-icon>
+                    <v-icon
+                      v-if="!analyzersAlreadyRun.has(analyzer.analyzerName)"
+                    >
+                      mdi-play-circle-outline
+                    </v-icon>
+                    <v-icon v-else>mdi-replay</v-icon>
                   </v-btn>
                 </div>
               </template>
@@ -68,8 +73,6 @@ limitations under the License.
 
 <script>
 import ApiClient from '../../utils/RestApiClient'
-import EventBus from '../../main'
-import { fetchAndUpdateActiveAnalyses, updateActiveAnalyses } from '../../services/analyzerService.js';
 
 export default {
   props: ['timelineSelection'],
@@ -83,6 +86,30 @@ export default {
     },
     analyzerList() {
         return this.$store.state.sketchAnalyzerList;
+    },
+    analyzerResults() {
+        return this.$store.state.analyzerResults;
+    },
+    analyzersAlreadyRun() {
+      // create a set for a faster lookup
+      const timelineSelectionSet = new Set(this.timelineSelection)
+      const analyzersOnSelectedTimelines = this.analyzerResults.filter(res => timelineSelectionSet.has(res.timeline.id))
+      const analyzerRanOnTimelines = new Map()
+      for (const res of analyzersOnSelectedTimelines) {
+        if (!analyzerRanOnTimelines.has(res.analyzer_name)) {
+          analyzerRanOnTimelines.set(res.analyzer_name, new Set())
+        }
+        analyzerRanOnTimelines.get(res.analyzer_name).add(res.timeline.id)
+      }
+
+      const analyzerSet = new Set()
+      for (const [analyzerName, timelineSet] of analyzerRanOnTimelines) {
+        if (timelineSet.size == timelineSelectionSet.size) {
+          analyzerSet.add(analyzerName)
+        }
+      }
+      return analyzerSet
+
     },
     activeAnalyzerTimelinesMap() {
         const byAnalyzerMap = new Map();
