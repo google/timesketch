@@ -1,7 +1,7 @@
 alembic==1.11.1
 altair==4.1.0
 celery==5.2.7
-cryptography==41.0.0
+cryptography==41.0.2
 datasketch==1.5.0
 opensearch-py==1.0.0
 Flask==2.3.2
@@ -19,7 +19,7 @@ oauthlib==3.1.0
 pandas==1.5.0
 PyJWT==2.4.0
 python_dateutil==2.8.1
-PyYAML==5.4.1
+PyYAML==6.0.1
 redis==4.4.4
 requests==2.31.0
 sigmatools==0.19.1 ; python_version > '3.4'
