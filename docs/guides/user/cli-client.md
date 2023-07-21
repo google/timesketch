@@ -169,7 +169,7 @@ timesketch --output-format json sketch list
 Getting information about a sketch can be helpful in various situations.
 
 ```bash
-timesketch --sketch 2 --output-format text sketch describe
+timesketch --output-format text sketch describe
 Name: asdasd
 Description: None
 Status: new
