@@ -183,7 +183,7 @@ timesketch --output-format json sketch describe
 This will give you something like:
 
 ```json
-timesketch --sketch 2 --output-format json sketch describe
+timesketch --output-format json sketch describe
 {
     "_archived": null,
     "_sketch_name": "asdasd",
