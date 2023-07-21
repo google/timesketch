@@ -266,7 +266,7 @@ timesketch sketch add_attribute
 For example:
 
 ```bash
-timesketch --sketch 2 sketch add_attribute --name ticket_id3 --ontology text --value 12345
+timesketch sketch add_attribute --name ticket_id3 --ontology text --value 12345
 Attribute added:
 Name: ticket_id3
 Ontology: text
