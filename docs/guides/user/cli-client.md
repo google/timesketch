@@ -205,7 +205,7 @@ separate command for it:
 Will give back something like this:
 
 ```bash
-timesketch --sketch 2 --output-format text sketch attributes
+timesketch --output-format text sketch attributes
 Name: intelligence: Ontology: intelligence Value: {'data': [{'externalURI': 'google.com', 'ioc': '1.2.3.4', 'tags': ['foo'], 'type': 'ipv4'}, {'externalURI': 'fobar.com', 'ioc': '3.3.3.3', 'tags': ['aaaa'], 'type': 'ipv4'}]}
 Name: ticket_id: Ontology: 12345 Value: text
 Name: ticket_id2: Ontology: 12345 Value: text
