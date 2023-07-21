@@ -428,3 +428,35 @@ detection:
 """
         )
         self.assertIsNotNone(rule)
+
+    def test_sigmarule_by_text_three_words(self):
+        """
+        Testing the different terms in a Sigma rule and how each is treated.
+        Reference: https://github.com/google/timesketch/issues/2550
+        """
+        rule = sigma_util.parse_sigma_rule_by_text(
+            r"""
+title: test terms
+id: 6d8ca9f2-79e2-44bd-957d-b4d810374972
+description: Rule to test combination of three words and how they are parsed
+author: Alexander Jaeger
+date: 2023/02/13
+modified: 2023/02/13
+falsepositives:
+    - Legitimate usage of the terms
+tags:
+    - testrule
+status: experimental
+level: medium
+detection:
+    keywords:
+        - '*onlyoneterm*'
+        - '*two words*'
+        - '*completely new term*'
+    condition: keywords"""
+        )
+        self.assertIsNotNone(rule)
+        self.assertEqual(
+            r'("onlyoneterm" OR "two words" OR "completely new term")',
+            rule.get("search_query"),
+        )

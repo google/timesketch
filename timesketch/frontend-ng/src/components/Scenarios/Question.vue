@@ -15,37 +15,78 @@ limitations under the License.
 -->
 <template>
   <div>
-    <div class="pl-6" @click="expanded = !expanded" style="cursor: pointer; font-size: 0.9em">
-      <div :class="[$vuetify.theme.dark ? 'dark-hover' : 'light-hover']" class="pa-2 mr-3" style="border-radius: 6px">
-        <strong v-if="!question.conclusions.length">{{ question.display_name }}</strong>
-        <span v-else>{{ question.display_name }}</span>
-      </div>
-    </div>
+    <v-row
+      no-gutters
+      class="pa-2 pl-5"
+      style="cursor: pointer; font-size: 0.9em"
+      @click="expanded = !expanded"
+      :class="
+        $vuetify.theme.dark
+          ? expanded
+            ? 'dark-highlight-selected'
+            : 'dark-hover'
+          : expanded
+          ? 'light-highlight-selected'
+          : 'light-hover'
+      "
+    >
+      <span v-if="expanded"
+        ><strong>{{ question.display_name }}</strong></span
+      >
+      <span v-else>{{ question.display_name }}</span>
+    </v-row>
 
     <v-expand-transition>
-      <div v-show="expanded">
+      <div
+        v-show="expanded"
+        :class="
+          $vuetify.theme.dark
+            ? expanded
+              ? 'dark-highlight'
+              : 'dark-hover'
+            : expanded
+            ? 'light-highlight'
+            : 'light-hover'
+        "
+        class="pb-1"
+      >
         <!-- Query suggestions -->
-        <div class="pa-2 pl-9">
-          <v-icon x-small class="mr-1">mdi-magnify</v-icon>
-          <strong><small>Query suggestions</small></strong>
-          <div v-for="searchtemplate in searchTemplates" :key="searchtemplate.id" class="pa-1 mt-1">
-            <ts-search-template :searchtemplate="searchtemplate"></ts-search-template>
+        <div class="pt-2 pl-5">
+          <div v-if="searchTemplates.length || opensearchQueries.length">
+            <small>Suggested queries</small>
+            <v-chip-group column active-class="primary">
+              <ts-search-chip
+                v-for="searchtemplate in searchTemplates"
+                :key="searchtemplate.id"
+                :searchchip="searchtemplate"
+              ></ts-search-chip>
+              <ts-search-chip
+                v-for="opensearchQuery in opensearchQueries"
+                :key="opensearchQuery.value"
+                :searchchip="opensearchQuery"
+              ></ts-search-chip>
+            </v-chip-group>
           </div>
+          <div v-else><small>No suggested queries available</small></div>
         </div>
 
         <!-- Conclusions -->
-        <div class="mb-3 pl-9">
-          <v-icon x-small class="mr-1">mdi-check-circle-outline</v-icon>
-          <strong><small>Conclusions</small></strong>
+        <div class="mb-3 pl-5">
           <v-sheet outlined rounded class="mt-2 mr-3" v-for="conclusion in question.conclusions" :key="conclusion.id">
             <ts-question-conclusion :question="question" :conclusion="conclusion"></ts-question-conclusion>
           </v-sheet>
         </div>
 
         <!-- Add new conclusion -->
-        <div v-if="!currentUserConclusion" style="font-size: 0.9em" class="pb-2 pl-9 mr-3">
+        <div v-if="!currentUserConclusion" style="font-size: 0.9em" class="pb-4 mr-3 pl-5">
+          <v-btn x-small text color="primary" @click="addConclusion = !addConclusion">
+            <v-icon x-small>mdi-plus</v-icon>
+            Add conclusion
+          </v-btn>
           <v-textarea
+            v-if="addConclusion"
             v-model="conclusionText"
+            class="mt-3"
             outlined
             flat
             hide-details
@@ -60,15 +101,21 @@ limitations under the License.
               </v-avatar>
             </template>
           </v-textarea>
-          <v-expand-transition>
-            <div v-if="conclusionText">
-              <v-card-actions class="pr-0">
-                <v-spacer></v-spacer>
-                <v-btn small text @click="conclusionText = ''"> Cancel </v-btn>
-                <v-btn small text color="primary" @click="createConclusion()"> Save </v-btn>
-              </v-card-actions>
-            </div>
-          </v-expand-transition>
+
+          <v-card-actions v-if="addConclusion" class="pr-0">
+            <v-spacer></v-spacer>
+            <v-btn
+              small
+              text
+              @click="
+                conclusionText = ''
+                addConclusion = false
+              "
+            >
+              Cancel
+            </v-btn>
+            <v-btn small text color="primary" @click="createConclusion()" :disabled="!conclusionText"> Save </v-btn>
+          </v-card-actions>
         </div>
       </div>
     </v-expand-transition>
@@ -77,13 +124,13 @@ limitations under the License.
 
 <script>
 import ApiClient from '../../utils/RestApiClient'
-import TsSearchTemplate from '../LeftPanel/SearchTemplateCompact'
+import TsSearchChip from './SearchChip'
 import TsQuestionConclusion from './QuestionConclusion'
 
 export default {
   props: ['question'],
   components: {
-    TsSearchTemplate,
+    TsSearchChip,
     TsQuestionConclusion,
   },
   data: function () {
@@ -91,6 +138,8 @@ export default {
       expanded: false,
       fullDescription: false,
       conclusionText: '',
+      addConclusion: false,
+      opensearchQueries: [],
     }
   },
   computed: {
@@ -108,7 +157,7 @@ export default {
     },
   },
   methods: {
-    createConclusion: function () {
+    createConclusion() {
       ApiClient.createQuestionConclusion(this.sketch.id, this.question.id, this.conclusionText)
         .then((response) => {
           this.conclusionText = ''
@@ -116,8 +165,22 @@ export default {
         })
         .catch((e) => {})
     },
+    getSuggestedQueries() {
+      let analyses = this.question.approaches
+        .map((approach) => JSON.parse(approach.spec_json))
+        .map((approach) => approach._view.processors)
+        .map((processor) => processor[0].analysis.timesketch)
+        .flat()
+      this.opensearchQueries = analyses.filter((analysis) => analysis.type === 'opensearch-query')
+    },
   },
-  created() {},
+  watch: {
+    expanded: function (isExpanded) {
+      if (!isExpanded) return
+      if (this.opensearchQueries.length) return
+      this.getSuggestedQueries()
+    },
+  },
 }
 </script>
 
@@ -127,5 +190,11 @@ export default {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.dark-bg {
+  background-color: #303030;
+}
+.light-bg {
+  background-color: #f6f6f6;
 }
 </style>

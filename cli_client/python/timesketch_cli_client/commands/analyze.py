@@ -15,6 +15,7 @@
 import sys
 import time
 
+import json
 import click
 
 from timesketch_api_client import error
@@ -91,7 +92,127 @@ def list_analyzers(ctx):
 
     Args:
         ctx: Click CLI context object.
+        output-format: Output format to use. Available values:
+            'json','text' or 'tabular'
     """
     sketch = ctx.obj.sketch
-    for analyzer in sketch.list_available_analyzers():
+    output = ctx.obj.output_format
+    # Show header row if output is tabular
+    if output == "tabular":
+        click.echo("Name\tDisplay Name\tIs Multi")
+
+    analyzers = sketch.list_available_analyzers()
+    if output == "json":
+        click.echo(f"{analyzers}")
+        return
+
+    for analyzer in analyzers:
+        if output == "tabular":
+            click.echo(
+                f"{analyzer.get('name')}\t"
+                f"{analyzer.get('display_name')}\t"
+                f"{analyzer.get('is_multi')}"
+            )
+            continue
         click.echo(analyzer.get("name"))
+
+
+@analysis_group.command(
+    "results",
+    help="Show the results of an analyzer run on a specific timeline.",
+)
+@click.option(
+    "--analyzer",
+    "analyzer_name",
+    required=True,
+    help="The name of the analyzer that was run.",
+)
+@click.option(
+    "--timeline",
+    "timeline_id",
+    required=True,
+    help="The id of the timeline that was analyzed.",
+)
+# boolean flag show_dependent
+@click.option(
+    "--show-dependent",
+    "show_dependent",
+    required=False,
+    default=False,
+    is_flag=True,
+    help="Show the results of an analyzer run dependent from the original one.",
+)
+@click.pass_context
+def analyzer_results(ctx, analyzer_name, timeline_id, show_dependent):
+    """Show the results of an analyzer run on one or more timelines.
+
+    Args:
+        ctx: Click CLI context object.
+        analyzer_name: Name of the analyzer that was run.
+        timeline_id: Timeline ID of the timeline to analyze.
+        show_dependent: Show dependent analyzers. (default: False)
+            using output_format json will always include the dependent analyzers
+    """
+    sketch = ctx.obj.sketch
+    output = ctx.obj.output_format
+
+    if output not in ("json", "text"):
+        click.echo(f"Unsupported output format: [{output}] use [json / text]")
+        sys.exit(1)
+
+    timelines = []
+    if timeline_id == "all":
+        timelines = sketch.list_timelines()
+    else:
+        timeline = sketch.get_timeline(timeline_id=int(timeline_id))
+        timelines.append(timeline)
+
+    for timeline in timelines:
+        try:
+            sketch_analyzer_results = sketch.get_analyzer_status()
+            if output == "json":
+                click.echo(
+                    json.dumps(
+                        sketch_analyzer_results,
+                        indent=4,
+                        sort_keys=True,
+                        default=str,
+                    )
+                )
+            else:
+                click.echo(
+                    f"Results for analyzer [{analyzer_name}] on [{timeline.name}]:"
+                )
+                for analyzer in sketch_analyzer_results:
+                    if analyzer.get("timeline_id") == int(timeline_id):
+                        # find analyzer results using the verbose schema
+                        try:
+                            # the following will only work for verbose schema
+                            analyzer_json = json.loads(analyzer.get("results"))
+                            status = analyzer_json.get("result_status")
+                            result_priority = analyzer_json.get("result_priority")
+                            result_summary = analyzer_json.get("result_summary")
+                        except json.decoder.JSONDecodeError:
+                            # set values for non verbose
+                            status = analyzer.get("status")
+                            result_priority = analyzer.get("result_priority")
+                            result_summary = analyzer.get("results")
+
+                        if analyzer.get("analyzer") == analyzer_name:
+                            click.echo(
+                                f"{status} - {result_priority} - {result_summary}"
+                            )
+                        else:
+                            # TODO(jaegeral) consider sorting to show the root
+                            # analyzer first
+                            if show_dependent:
+                                click.echo(
+                                    f"Dependent: {status} - {result_priority} \
+                                          - {result_summary}"
+                                )
+        except Exception as e:  # pylint: disable=broad-except
+            click.echo(
+                f"Unable to get results for analyzer [{analyzer_name}]  \
+                    on [{timeline.name}]: {e}"
+            )
+            sys.exit(1)

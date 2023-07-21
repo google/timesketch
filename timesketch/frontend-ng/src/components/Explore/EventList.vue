@@ -24,6 +24,23 @@ limitations under the License.
       <li>Try more general keywords.</li>
       <li>Try fewer keywords.</li>
     </div>
+
+    <div v-if="highlightEvent" class="mt-4">
+      <strong>Showing context for event:</strong>
+      <v-sheet class="d-flex flex-wrap mt-1 mb-5">
+        <v-sheet class="flex-1-0">
+          <span style="width: 200px" v-bind:style="getTimelineColor(highlightEvent)" class="datetime-table-cell pa-2">
+            {{ highlightEvent._source.timestamp | formatTimestamp | toISO8601 }}
+          </span>
+        </v-sheet>
+
+        <v-sheet class="">
+          <span class="datetime-table-cell pa-2">
+            {{ highlightEvent._source.message }}
+          </span>
+        </v-sheet>
+      </v-sheet>
+    </div>
     <div v-if="eventList.objects.length || searchInProgress">
       <v-data-table
         v-model="selectedEvents"
@@ -37,7 +54,10 @@ limitations under the License.
         loading-text="Searching... Please wait"
         show-select
         disable-filtering
-        disable-sort
+        must-sort
+        :sort-desc.sync="sortOrderAsc"
+        @update:sort-desc="sortEvents"
+        sort-by="_source.timestamp"
         :hide-default-footer="totalHits < 11 || disablePagination"
         :expanded="expandedRows"
         :dense="displayOptions.isCompact"
@@ -72,7 +92,7 @@ limitations under the License.
                   <v-card-actions>
                     <v-spacer></v-spacer>
                     <v-btn text @click="saveSearchMenu = false"> Cancel </v-btn>
-                    <v-btn color="primary" depressed @click="saveSearch" :disabled="!saveSearchFormName"> Save </v-btn>
+                    <v-btn text color="primary" @click="saveSearch" :disabled="!saveSearchFormName"> Save </v-btn>
                   </v-card-actions>
                 </v-card>
               </v-dialog>
@@ -119,10 +139,8 @@ limitations under the License.
 
                   <v-card-actions>
                     <v-spacer></v-spacer>
-                    <v-btn color="primary" text @click="selectedFields = [{ field: 'message', type: 'text' }]">
-                      Reset
-                    </v-btn>
-                    <v-btn color="primary" text @click="columnDialog = false"> Close </v-btn>
+                    <v-btn text @click="selectedFields = [{ field: 'message', type: 'text' }]"> Reset </v-btn>
+                    <v-btn text color="primary" @click="columnDialog = false"> Set columns </v-btn>
                   </v-card-actions>
                 </v-card>
               </v-dialog>
@@ -311,11 +329,17 @@ limitations under the License.
             <span
               :class="{
                 'ts-event-field-ellipsis': field.text === 'message',
-                'ts-event-field-highlight': item._id === highlightEvent,
+                'ts-event-field-highlight': item._id === highlightEventId,
               }"
             >
               <!-- Tags -->
-              <span v-if="displayOptions.showTags && index === 3 && ('tag' in item._source ? (item._source.tag.length > 0) : false )">
+              <span
+                v-if="
+                  displayOptions.showTags &&
+                  index === 3 &&
+                  ('tag' in item._source ? item._source.tag.length > 0 : false)
+                "
+              >
                 <ts-event-tags :item="item" :tagConfig="tagConfig" :showDetails="item.showDetails"></ts-event-tags>
               </span>
               <!-- Emojis -->
@@ -345,9 +369,47 @@ limitations under the License.
 
         <!-- Comment field -->
         <template v-slot:item._source.comment="{ item }">
-          <v-badge :offset-y="10" bordered v-if="item._source.comment.length" :content="item._source.comment.length">
-            <v-icon small @click="toggleDetailedEvent(item)"> mdi-comment-text-multiple-outline </v-icon>
-          </v-badge>
+          <v-tooltip top open-delay="500">
+            <template v-slot:activator="{ on }">
+              <div v-on="on" class="d-inline-block">
+                <v-btn icon small @click="toggleDetailedEvent(item)" v-if="item._source.comment.length">
+                  <v-badge :offset-y="10" :offset-x="10" bordered :content="item._source.comment.length">
+                    <v-icon small> mdi-comment-text-multiple-outline </v-icon>
+                  </v-badge>
+                </v-btn>
+              </div>
+            </template>
+            <span v-if="!item['showDetails']">Open event &amp; comments</span>
+            <span v-if="item['showDetails']">Close event &amp; comments</span>
+          </v-tooltip>
+          <v-tooltip
+            v-if="item['showDetails'] && !item._source.comment.length && !item.showComments"
+            top
+            open-delay="500"
+          >
+            <template v-slot:activator="{ on }">
+              <div v-on="on" class="d-inline-block">
+                <v-btn icon small @click="newComment(item)">
+                  <v-icon> mdi-comment-plus-outline </v-icon>
+                </v-btn>
+              </div>
+            </template>
+            <span>Add a comment</span>
+          </v-tooltip>
+          <v-tooltip
+            v-if="item['showDetails'] && !item._source.comment.length && item.showComments"
+            top
+            open-delay="500"
+          >
+            <template v-slot:activator="{ on }">
+              <div v-on="on" class="d-inline-block">
+                <v-btn icon small @click="item.showComments = false">
+                  <v-icon> mdi-comment-remove-outline </v-icon>
+                </v-btn>
+              </div>
+            </template>
+            <span>Close comments</span>
+          </v-tooltip>
         </template>
       </v-data-table>
     </div>
@@ -391,7 +453,7 @@ export default {
     TsEventDetail,
     TsEventTagMenu,
     TsEventActionMenu,
-    TsEventTags
+    TsEventTags,
   },
   props: {
     queryRequest: {
@@ -423,8 +485,8 @@ export default {
       default: false,
     },
     highlightEvent: {
-      type: String,
-      default: '',
+      type: Object,
+      default: () => {},
     },
   },
   data() {
@@ -469,6 +531,7 @@ export default {
       },
       showHistogram: false,
       branchParent: null,
+      sortOrderAsc: true,
     }
   },
   computed: {
@@ -477,6 +540,12 @@ export default {
     },
     meta() {
       return this.$store.state.meta
+    },
+    highlightEventId() {
+      if (this.highlightEvent) {
+        return this.highlightEvent._id
+      }
+      return null
     },
     totalHits() {
       if (this.eventList.meta.es_total_count > 0 && this.eventList.meta.es_total_count_complete === 0) {
@@ -511,20 +580,24 @@ export default {
         {
           text: '',
           value: 'data-table-select',
+          sortable: false,
         },
         {
           value: 'actions',
           width: '105',
+          sortable: false,
         },
         {
-          text: 'Datetime (UTC)',
+          text: 'Datetime (UTC) ',
           align: 'start',
           value: '_source.timestamp',
           width: '200',
+          sortable: true,
         },
         {
           value: '_source.comment',
           width: '40',
+          sortable: false,
         },
       ]
       let extraHeaders = []
@@ -533,6 +606,7 @@ export default {
           text: field.field,
           align: 'start',
           value: '_source.' + field.field,
+          sortable: false,
         }
         if (field.field === 'message') {
           header.width = '100%'
@@ -550,12 +624,21 @@ export default {
         baseHeaders.push({
           value: 'timeline_name',
           align: 'end',
+          sortable: false,
         })
       }
       return baseHeaders
     },
   },
   methods: {
+    sortEvents(sortAsc) {
+      if (sortAsc) {
+        this.currentQueryFilter.order = 'asc'
+      } else {
+        this.currentQueryFilter.order = 'desc'
+      }
+      this.search(true, true, false)
+    },
     getFieldName: function (field) {
       return 'item._source.' + field
     },
@@ -565,6 +648,7 @@ export default {
         if (row.showDetails) {
           row['showDetails'] = false
           this.expandedRows.splice(index, 1)
+          this.$set(row, 'showComments', false)
         } else {
           row['showDetails'] = true
           this.expandedRows.splice(index, 1)
@@ -579,6 +663,14 @@ export default {
       } else {
         row['showDetails'] = true
         this.expandedRows.push(row)
+      }
+    },
+    newComment: function (row) {
+      if (row.showDetails) {
+        this.$set(row, 'showComments', true)
+      } else {
+        this.$set(row, 'showComments', true)
+        this.toggleDetailedEvent(row)
       }
     },
     addTimeBubbles: function () {
@@ -639,11 +731,29 @@ export default {
         'background-color': backgroundColor,
       }
     },
+    getAllIndices: function () {
+      let allIndices = []
+      this.sketch.active_timelines.forEach((timeline) => {
+        let isLegacy = this.meta.indices_metadata[timeline.searchindex.index_name].is_legacy
+        if (isLegacy) {
+          allIndices.push(timeline.searchindex.index_name)
+        } else {
+          allIndices.push(timeline.id)
+        }
+      })
+      return allIndices
+    },
     search: function (resetPagination = true, incognito = false, parent = false) {
       // Exit early if there are no indices selected.
       if (this.currentQueryFilter.indices && !this.currentQueryFilter.indices.length) {
         this.eventList = emptyEventList()
         return
+      }
+
+      // If all timelines are selected, make sure that the timeline filter is updated so that
+      // filters are applied properly.
+      if (this.currentQueryFilter.indices[0] === '_all' || this.currentQueryFilter.indices === '_all') {
+        this.currentQueryFilter.indices = this.getAllIndices()
       }
 
       // Exit early if there is no query string or DSL provided.
@@ -842,7 +952,12 @@ export default {
   },
   watch: {
     tableOptions: {
-      handler() {
+      handler(newVal, oldVal) {
+        // Return early if the sort order changed.
+        // The search is done in the sortEvents method.
+        if (oldVal.sortDesc === undefined) return
+        if (newVal.sortDesc[0] !== oldVal.sortDesc[0]) return
+
         this.paginate()
       },
       deep: true,
@@ -862,6 +977,12 @@ export default {
         // Set additional fields. This is used when loading filter from a saved search.
         if (this.currentQueryFilter.fields) {
           this.selectedFields = this.currentQueryFilter.fields
+        }
+        // Preserve user defined sort order.
+        if (this.sortOrderAsc) {
+          this.currentQueryFilter.order = 'asc'
+        } else {
+          this.currentQueryFilter.order = 'desc'
         }
         this.search(resetPagination, incognito, parent)
       },

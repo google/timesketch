@@ -18,7 +18,7 @@ limitations under the License.
     <v-container class="px-8">
       <br />
       <v-row>
-        <v-col cols="6">
+        <v-col cols="12">
           <v-text-field
             :value="datetime"
             label="Datetime"
@@ -47,13 +47,13 @@ limitations under the License.
       </v-row>
 
       <v-row>
-        <v-col cols="6">
+        <v-col cols="12">
           <v-text-field :value="message" v-model="message" label="Message" outlined hide-details> </v-text-field>
         </v-col>
       </v-row>
 
       <v-row>
-        <v-col cols="6">
+        <v-col cols="12">
           <v-text-field
             :value="timestampDesc"
             label="Timestamp Description"
@@ -75,12 +75,13 @@ limitations under the License.
       </v-row>
 
       <v-card-actions>
-        <v-spacer></v-spacer>
         <v-btn text color="primary" @click="attributes.push({ name: '', value: '' })" :disabled="isDisabled">
+          <v-icon>mdi-plus</v-icon>
           Add Attribute
         </v-btn>
-        <v-btn text color="primary" @click="clearAndCancel"> Cancel </v-btn>
-        <v-btn text color="primary" @click="submit"> Add Event </v-btn>
+        <v-spacer></v-spacer>
+        <v-btn text @click="clearAndCancel()"> Cancel </v-btn>
+        <v-btn text color="primary" @click="submit"> Save </v-btn>
       </v-card-actions>
     </v-container>
   </v-card>

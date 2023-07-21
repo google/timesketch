@@ -17,28 +17,34 @@ limitations under the License.
   <div>
     <v-row
       no-gutters
-      class="pa-3 pl-1"
+      class="pa-3"
       style="cursor: pointer"
       @click="toggleFacet()"
-      :class="[$vuetify.theme.dark ? 'dark-hover' : 'light-hover']"
+      :class="
+        $vuetify.theme.dark
+          ? expanded
+            ? 'dark-highlight'
+            : 'dark-hover'
+          : expanded
+          ? 'light-highlight'
+          : 'light-hover'
+      "
     >
       <v-col cols="1" class="pl-1">
         <v-icon v-if="!expanded">mdi-chevron-right</v-icon>
         <v-icon v-else>mdi-chevron-down</v-icon>
       </v-col>
-      <v-col cols="10">
+
+      <v-col cols="10" class="pl-1">
         <span style="font-size: 0.9em">
-          <span v-if="notStarted || isActive"
-            ><strong>{{ facet.display_name }}</strong></span
-          >
-          <span v-else>{{ facet.display_name }}</span>
+          {{ facet.display_name }}
         </span>
       </v-col>
 
       <v-col cols="1">
-        <div class="ml-1">
-          <small>{{ questionsWithConclusion.length }}/{{ facet.questions.length }} </small>
-        </div>
+        <v-chip style="padding-left: 8px" x-small :color="isResolved ? 'success' : ''" :outlined="!isResolved">
+          {{ questionsWithConclusion.length }}/{{ facet.questions.length }}
+        </v-chip>
       </v-col>
     </v-row>
 
@@ -47,14 +53,15 @@ limitations under the License.
         <span
           @click="setActiveContext(question)"
           style="font-size: 0.9em"
-          v-for="question in facet.questions"
+          v-for="(question, index) in facet.questions"
           :key="question.id"
         >
           <ts-question :question="question"></ts-question>
+          <v-divider v-if="index != facet.questions.length - 1"></v-divider>
         </span>
       </div>
     </v-expand-transition>
-    <div v-show="expanded" class="mt-3"></div>
+    <div v-show="expanded"></div>
     <v-divider></v-divider>
   </div>
 </template>

@@ -23,7 +23,7 @@ limitations under the License.
       </template>
     </v-snackbar>
 
-    <v-main>
+    <v-main class="notransition">
       <!-- Main view -->
       <router-view></router-view>
     </v-main>

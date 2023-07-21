@@ -46,10 +46,9 @@ limitations under the License.
               placeholder="Search"
               single-line
               dense
-              filled
               flat
               solo
-              class="pa-1"
+              class="pa-2"
               append-icon="mdi-magnify"
               @click:append="search()"
               id="tsSearchInput"
@@ -128,11 +127,11 @@ limitations under the License.
           :count-per-timeline="countPerTimeline"
         ></ts-timeline-picker>
 
-        <span style="position: relative; top: -5px">
+        <span style="position: relative">
           <ts-upload-timeline-form btn-type="small"></ts-upload-timeline-form>
         </span>
 
-        <span style="position: relative; top: -5px">
+        <span style="position: relative">
           <v-dialog v-model="addManualEvent" width="600">
             <template v-slot:activator="{ on, attrs }">
               <v-btn small text rounded color="primary" v-bind="attrs" v-on="on">
@@ -220,7 +219,7 @@ limitations under the License.
           >
             <template v-slot:activator="{ on, attrs }">
               <v-btn small text rounded color="primary" v-bind="attrs" v-on="on">
-                <v-icon left small> mdi-plus </v-icon>
+                <v-icon left small> mdi-clock-plus-outline </v-icon>
                 Add timefilter
               </v-btn>
             </template>
@@ -231,10 +230,10 @@ limitations under the License.
       </div>
 
       <!-- Term filters -->
-      <div v-if="filterChips.length">
-        <v-chip-group>
+      <div v-if="filterChips.length" class="mt-1">
+        <v-chip-group column>
           <span v-for="(chip, index) in filterChips" :key="index + chip.value">
-            <v-chip small outlined close @click:close="removeChip(chip)">
+            <v-chip outlined close close-icon="mdi-close" @click:close="removeChip(chip)">
               <v-icon v-if="chip.value === '__ts_star'" left small color="amber">mdi-star</v-icon>
               <v-icon v-if="chip.value === '__ts_comment'" left small>mdi-comment-multiple-outline</v-icon>
               {{ chip.value | formatLabelText }}
@@ -246,20 +245,7 @@ limitations under the License.
     </v-card>
 
     <!-- DFIQ context -->
-    <div class="mt-3 mx-3">
-      <div :class="[$vuetify.theme.dark ? 'dark-info-card' : 'light-info-card']" v-if="activeContext.question">
-        <v-toolbar dense flat color="transparent">
-          <h4>{{ activeContext.question.display_name }}</h4>
-          <v-spacer></v-spacer>
-          <v-btn small icon @click="$store.dispatch('clearActiveContext')" class="mr-1">
-            <v-icon>mdi-close</v-icon>
-          </v-btn>
-        </v-toolbar>
-        <p class="mt-1 pb-4 px-4" style="font-size: 0.9em">
-          {{ activeContext.question.description }}
-        </p>
-      </div>
-    </div>
+    <ts-scenario-context-card v-if="activeContext.question"></ts-scenario-context-card>
 
     <!-- Eventlist -->
     <v-card flat class="mt-5 mx-3">
@@ -286,13 +272,14 @@ import TsFilterMenu from '../components/Explore/FilterMenu'
 import TsUploadTimelineForm from '../components/UploadForm'
 import TsAddManualEvent from '../components/Explore/AddManualEvent'
 import TsEventList from '../components/Explore/EventList'
+import TsScenarioContextCard from '../components/Scenarios/ContextCard'
 
 const defaultQueryFilter = () => {
   return {
     from: 0,
     terminate_after: 40,
     size: 40,
-    indices: [],
+    indices: '_all',
     order: 'asc',
     chips: [],
   }
@@ -311,6 +298,7 @@ export default {
     TsUploadTimelineForm,
     TsAddManualEvent,
     TsEventList,
+    TsScenarioContextCard,
   },
   props: ['sketchId'],
   data() {
@@ -380,7 +368,22 @@ export default {
         this.$router.push({ name: 'Explore', params: { sketchId: this.sketch.id } })
       }
       this.currentQueryString = searchEvent.queryString
+
+      // Preserve user defined filter instead of resetting, if it exist.
+      if (!searchEvent.queryFilter) {
+        searchEvent.queryFilter = this.currentQueryFilter
+      }
       this.currentQueryFilter = searchEvent.queryFilter
+
+      // Add any chips from the search event and make sure they are not in the
+      // current filter already. E.g. don't add a star filter twice.
+      if (searchEvent.chip) {
+        const chipExist = this.currentQueryFilter.chips.find((chip) => chip.value === searchEvent.chip.value)
+        if (!chipExist) {
+          this.currentQueryFilter.chips.push(searchEvent.chip)
+        }
+      }
+
       // Preserve user defined item count instead of resetting.
       this.currentQueryFilter.size = this.currentItemsPerPage
       this.currentQueryFilter.terminate_after = this.currentItemsPerPage
@@ -418,18 +421,6 @@ export default {
             this.currentQueryFilter.fields = [{ field: 'message', type: 'text' }]
           }
           this.selectedFields = this.currentQueryFilter.fields
-          if (this.currentQueryFilter.indices[0] === '_all' || this.currentQueryFilter.indices === '_all') {
-            let allIndices = []
-            this.sketch.active_timelines.forEach((timeline) => {
-              let isLegacy = this.meta.indices_metadata[timeline.searchindex.index_name].is_legacy
-              if (isLegacy) {
-                allIndices.push(timeline.searchindex.index_name)
-              } else {
-                allIndices.push(timeline.id)
-              }
-            })
-            this.currentQueryFilter.indices = allIndices
-          }
           let chips = this.currentQueryFilter.chips
           if (chips) {
             for (let i = 0; i < chips.length; i++) {

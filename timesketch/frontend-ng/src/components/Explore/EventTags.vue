@@ -13,20 +13,15 @@ limitations under the License.
 <template>
   <span>
     <span v-for="tag in sortedTags" :key="tag">
-      <v-hover v-slot="{ hover }">
-        <v-chip
-          :style="hover ? '' : 'padding-right: 32px'"
-          small
-          class="mr-1"
-          :close="hover ? true : false"
-          @click:close="removeTag(item, tag)"
-          :color="tagColor(tag).color"
-          :text-color="tagColor(tag).textColor"
-        >
-          <v-icon v-if="tag in tagConfig" left small>{{ tagConfig[tag].label }}</v-icon>
-          {{ tag }}
-        </v-chip>
-      </v-hover>
+      <v-chip
+        small
+        class="mr-1"
+        :color="tagColor(tag).color"
+        :text-color="tagColor(tag).textColor"
+      >
+        <v-icon v-if="tag in tagConfig" left small>{{ tagConfig[tag].label }}</v-icon>
+        {{ tag }}
+      </v-chip>
     </span>
     <span v-for="label in item._source.label" :key="label">
       <v-chip v-if="!label.startsWith('__ts')" small outlined class="mr-2">
@@ -37,7 +32,6 @@ limitations under the License.
 </template>
 
 <script>
-import ApiClient from '../../utils/RestApiClient'
 export default {
   props: ['item', 'tagConfig', 'showDetails'],
   computed: {
@@ -79,16 +73,6 @@ export default {
         return this.tagConfig[tag]
       }
       return 'lightgrey'
-    },
-    removeTag(item, tag) {
-      ApiClient.untagEvents(this.sketch.id, [item], [tag])
-        .then((response) => {
-          item._source.tag.splice(item._source.tag.indexOf(tag), 1)
-          this.$store.dispatch('updateTimelineTags', { sketchId: this.sketch.id, tag: tag, num: -1 })
-        })
-        .catch((e) => {
-          console.error(e)
-        })
     },
   },
 }

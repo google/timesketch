@@ -1,0 +1,16 @@
+display_name: What Scheduled Tasks has been executed?
+description: |
+  Scheduled tasks are a feature of Windows that allows you to run a program or script at
+  a specific time or date. This can be useful for tasks such as backing up files or running
+  updates.
+
+  Scheduled tasks can be used for lateral movement between computers in a few ways.
+  First, an attacker who has gained access to a computer on a network can create a
+  scheduled task that runs a malicious program on another computer on the network. This
+  can be done by using the Task Scheduler user interface.
+type: question
+id: Q0004
+tags:
+  - windows
+parent_ids:
+  - F0002

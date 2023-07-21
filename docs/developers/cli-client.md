@@ -9,6 +9,9 @@ care of setting up authentication, sending the API calls to the server, error ha
 
 This documentation will give an overview for the most common developer use cases of the CLI client.
 
+The main target audience for the CLI client is Timesketch user / analyst.
+While some methods might have verbose JSON output, the default should be as tailored to analyst needs as the WebUI.
+
 ## Basic Connections
 
 The CLI client defines a config library specifically intended to help with setting up all configuration for connecting to Timesketch, including
@@ -78,22 +81,10 @@ The common output formats are:
 * json
 * jsonl
 
-Most command should have the following option:
+In the code have the following to retrieve the output_format from the context:
 
 ```python
-@click.option(
-    "--output-format",
-    "output",
-    required=False,
-    help="Set output format [json, csv, text](overrides global setting).",
-)
-```
-
-And in the code have the following check so if no output format is given to the specific command it is taken from the congif file:
-
-```python
-if not output:
-        output = ctx.obj.output_format
+    output = ctx.obj.output_format
 ```
 
 And when data is about to be put out:
@@ -112,6 +103,8 @@ And when data is about to be put out:
     else:
         click.echo(sigma_rules.to_string(index=header, columns=columns))
 ```
+
+If a specific output format is not implemented, it is best practice to error out and tell the user which formats are implemented.
 
 Depending on the command, some output formats might not make sense.
 

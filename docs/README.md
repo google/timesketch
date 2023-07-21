@@ -18,7 +18,7 @@ cd /usr/local/src/timesketch/
 Install mkdocs in your container:
 
 ```
-pip3 install mkdocs mkdocs-material
+pip3 install mkdocs mkdocs-material mkdocs-redirects
 ```
 
 Start the preview webserver:

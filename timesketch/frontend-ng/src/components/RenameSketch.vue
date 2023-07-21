@@ -17,12 +17,14 @@ limitations under the License.
   <div>
     <h3>Rename sketch</h3>
     <br />
-    <v-text-field outlined dense autofocus v-model="newSketchName" @focus="$event.target.select()"> </v-text-field>
-    <v-card-actions>
-      <v-spacer></v-spacer>
-      <v-btn color="primary" text @click="closeDialog()"> Cancel </v-btn>
-      <v-btn color="primary" depressed @click="renameSketch()"> Save </v-btn>
-    </v-card-actions>
+    <v-form @submit.prevent="renameSketch()">
+      <v-text-field outlined dense autofocus v-model="newSketchName" @focus="$event.target.select()"> </v-text-field>
+      <v-card-actions>
+        <v-spacer></v-spacer>
+        <v-btn text @click="closeDialog()"> Cancel </v-btn>
+        <v-btn text color="primary" @click="renameSketch()"> Save </v-btn>
+      </v-card-actions>
+    </v-form>
   </div>
 </template>
 

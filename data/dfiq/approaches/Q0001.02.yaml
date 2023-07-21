@@ -1,0 +1,24 @@
+display_name: Remote Desktop Protocol (RDP) from the Registry
+description:
+  summary:
+  details:
+  references:
+    -
+type: approach
+id: Q0001.01
+tags:
+ - windows
+view:
+  data:
+    - type: artifact
+      value: WindowsRegistryFiles
+  processors:
+    - name: plaso
+      analysis:
+        timesketch:
+          - description: RDP destinations (registry)
+            type: opensearch-query
+            value: 'key_path:"HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Terminal Server Client\\Servers"'
+          - description: mstsc.exe in ShimCache
+            type: opensearch-query
+            value: 'data_type:"windows:registry:appcompatcache" AND path:mstsc.exe'
