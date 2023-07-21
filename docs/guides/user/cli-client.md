@@ -252,7 +252,7 @@ To get a result in `json` that can be piped into other CLI tools run something
 like:
 
 ```json
-timesketch --sketch 2 --output-format json analyze results --analyzer account_finder --timeline 3 --show-dependent
+timesketch --output-format json analyze results --analyzer account_finder --timeline 3 --show-dependent
 [
     {
         "analyzer": "feature_extraction",
