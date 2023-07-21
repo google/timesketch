@@ -27,6 +27,7 @@ nav:
           - Tagger analyzer: guides/analyzers/tagger.md
           - Feature extraction analyzer: guides/analyzers/feature_extraction.md
           - Sigma analyzer: guides/analyzers/sigma_analyzer.md
+          - HashR analyzer: guides/analyzers/hashR_lookup.md
   - Admin Guide:
       - Install: guides/admin/install.md
       - Upgrade: guides/admin/upgrade.md

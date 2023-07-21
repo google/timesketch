@@ -63,17 +63,6 @@ limitations under the License.
 import ApiClient from '../../utils/RestApiClient'
 import EventBus from '../../main'
 
-const defaultQueryFilter = () => {
-  return {
-    from: 0,
-    terminate_after: 40,
-    size: 40,
-    indices: '_all',
-    order: 'asc',
-    chips: [],
-  }
-}
-
 export default {
   props: ['searchtemplate'],
   data: function () {
@@ -101,7 +90,6 @@ export default {
       let eventData = {}
       eventData.doSearch = true
       eventData.queryString = queryString
-      eventData.queryFilter = defaultQueryFilter()
       EventBus.$emit('setQueryAndFilter', eventData)
     },
     parseQueryAndSearch() {

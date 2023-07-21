@@ -16,7 +16,7 @@ limitations under the License.
 <template>
   <div>
     <v-row>
-      <v-col cols="8">
+      <v-col :cols="event.showComments ? 8 : 0">
         <v-card outlined height="100%">
           <v-simple-table dense>
             <template v-slot:default>
@@ -135,79 +135,11 @@ limitations under the License.
           </v-simple-table>
         </v-card>
       </v-col>
-      <v-col cols="4">
-        <v-card outlined>
-          <v-toolbar dense flat>
-            <v-toolbar-title style="font-size: 1.2em">Comments</v-toolbar-title>
-          </v-toolbar>
-
-          <v-list three-line>
-            <v-list-item
-              v-for="(comment, index) in comments"
-              :key="comment.id"
-              @mouseover="selectComment(comment)"
-              @mouseleave="unSelectComment()"
-            >
-              <v-list-item-avatar>
-                <v-avatar color="grey lighten-1">
-                  <span class="white--text">{{ comment.user.username | initialLetter }}</span>
-                </v-avatar>
-              </v-list-item-avatar>
-
-              <v-list-item-content>
-                <v-list-item-title>
-                  {{ comment.user.username }}
-                </v-list-item-title>
-                <v-list-item-subtitle>
-                  {{ comment.created_at | shortDateTime }} ({{ comment.created_at | timeSince }})
-                </v-list-item-subtitle>
-
-                <v-card flat v-if="comment.editable" class="mt-5">
-                  <v-textarea v-model="comments[index].comment" hide-details auto-grow filled></v-textarea>
-
-                  <v-card-actions v-if="comment.editable">
-                    <v-spacer></v-spacer>
-                    <v-btn text color="primary" v-if="comment.editable" @click="editComment(index, false)">
-                      Cancel
-                    </v-btn>
-                    <v-btn text color="primary" @click="updateComment(comment, index)"> Save </v-btn>
-                  </v-card-actions>
-                </v-card>
-                <p v-else style="max-width: 90%" class="body-2">{{ comment.comment }}</p>
-              </v-list-item-content>
-
-              <v-list-item-action
-                v-if="comment === selectedComment && meta.permissions.write && currentUser == comment.user.username"
-                style="position: absolute; right: 0"
-              >
-                <v-chip outlined style="margin-right: 10px">
-                  <v-btn icon small @click="editComment(index)">
-                    <v-icon small>mdi-square-edit-outline</v-icon>
-                  </v-btn>
-                  <v-btn icon small @click="deleteComment(comment.id, index)">
-                    <v-icon small>mdi-trash-can-outline</v-icon>
-                  </v-btn>
-                </v-chip>
-              </v-list-item-action>
-            </v-list-item>
-          </v-list>
-
-          <v-card-actions v-if="meta.permissions.write">
-            <v-textarea
-              v-model="comment"
-              hide-details
-              auto-grow
-              filled
-              class="mx-2 mb-2"
-              label="Add comment"
-              rows="1"
-            ></v-textarea>
-            <v-btn icon @click="postComment">
-              <v-icon>mdi-send</v-icon>
-            </v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-col>
+      <v-slide-x-reverse-transition>
+        <v-col cols="4" v-show="event.showComments">
+          <ts-comments :comments="comments" :event="event" :currentSearchNode="currentSearchNode"></ts-comments>
+        </v-col>
+      </v-slide-x-reverse-transition>
     </v-row>
     <v-dialog scrollable v-model="aggregatorDialog" @click:outside="($event) => (this.aggregatorDialog = false)">
       <ts-aggregate-dialog
@@ -226,24 +158,23 @@ limitations under the License.
 
 <script>
 import ApiClient from '../../utils/RestApiClient'
-import EventBus from '../../main'
 import TsAggregateDialog from './AggregateDialog.vue'
 import TsFormatXmlString from './FormatXMLString.vue'
 import TsLinkRedirectWarning from './LinkRedirectWarning.vue'
+import TsComments from './Comments.vue'
 
 export default {
   components: {
     TsAggregateDialog,
     TsFormatXmlString,
     TsLinkRedirectWarning,
+    TsComments,
   },
   props: ['event'],
   data() {
     return {
       fullEvent: {},
-      comment: '',
       comments: [],
-      selectedComment: null,
       aggregatorDialog: false,
       ignoredAggregatorFields: new Set([
         'datetime',
@@ -301,50 +232,11 @@ export default {
           this.comments = response.data.meta.comments
           this.eventTimestamp = response.data.objects.timestamp
           this.eventTimestampDesc = response.data.objects.timestamp_desc
+          if (this.comments.length > 0) {
+            this.event.showComments = true
+          }
         })
         .catch((e) => {})
-    },
-    postComment: function () {
-      EventBus.$emit('eventAnnotated', { type: '__ts_comment', event: this.event, searchNode: this.currentSearchNode })
-      ApiClient.saveEventAnnotation(this.sketch.id, 'comment', this.comment, [this.event], this.currentSearchNode)
-        .then((response) => {
-          this.comments.push(response.data.objects[0][0])
-          this.comment = ''
-        })
-        .catch((e) => {})
-    },
-    updateComment: function (comment, commentIndex) {
-      ApiClient.updateEventAnnotation(this.sketch.id, 'comment', comment, [this.event], this.currentSearchNode)
-        .then((response) => {
-          this.comments.splice(commentIndex, 1, comment)
-          comment.editable = false
-        })
-        .catch((e) => {
-          console.error(e)
-        })
-    },
-    deleteComment: function (commentId, commentIndex) {
-      if (confirm('Are you sure?')) {
-        ApiClient.deleteEventAnnotation(this.sketch.id, 'comment', commentId, this.event, this.currentSearchNode)
-          .then((response) => {
-            this.comments.splice(commentIndex, 1)
-          })
-          .catch((e) => {
-            console.error(e)
-          })
-      }
-    },
-    editComment(commentIndex, enable = true) {
-      const changeComment = this.comments[commentIndex]
-      changeComment.editable = enable
-      this.comments.splice(commentIndex, 1, changeComment)
-    },
-
-    selectComment(comment) {
-      this.selectedComment = comment
-    },
-    unSelectComment() {
-      this.selectedComment = false
     },
     getContextLinkItems(key) {
       let fieldConfList = this.contextLinkConf[key.toLowerCase()] ? this.contextLinkConf[key.toLowerCase()] : []
