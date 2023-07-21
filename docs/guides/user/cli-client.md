@@ -215,7 +215,7 @@ Name: ticket_id3: Ontology: 12345 Value: text
 Or as JSON
 
 ```
-timesketch --sketch 2 --output-format json sketch attributes
+timesketch --output-format json sketch attributes
 {
     "intelligence": {
         "ontology": "intelligence",
