@@ -104,7 +104,7 @@ export default {
 
       const analyzerSet = new Set()
       for (const [analyzerName, timelineSet] of analyzerRanOnTimelines) {
-        if (timelineSet.size == timelineSelectionSet.size) {
+        if (timelineSet.size === timelineSelectionSet.size) {
           analyzerSet.add(analyzerName)
         }
       }
