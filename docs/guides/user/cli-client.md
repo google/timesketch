@@ -212,7 +212,7 @@ Some analyzers might start dependent analyzers, to also show those results use
 the flag `--show-dependent`. This will look similar to:
 
 ```bash
-timesketch --sketch 2 --output-format text analyze results --analyzer account_finder --timeline 3 --show-dependent
+timesketch --output-format text analyze results --analyzer account_finder --timeline 3 --show-dependent
 Results for analyzer [account_finder] on [sigma_events]:
 Dependent: DONE - None - Feature extraction [gmail_accounts] extracted 0 features.
 Dependent: DONE - None - Feature extraction [github_accounts] extracted 0 features.
