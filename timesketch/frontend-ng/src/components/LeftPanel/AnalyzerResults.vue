@@ -100,7 +100,7 @@ limitations under the License.
             </template>
 
             <template v-slot:default="props">
-              <ts-analyzer-result v-for="analyzer in props.items" :key="analyzer.analyzerName" :analyzer="analyzer" />
+              <ts-analyzer-result v-for="analyzer in props.items" :key="analyzer.analyzerName" :analyzer="analyzer" :isActive="activeAnalyzers.has(analyzer.analyzerName)" />
             </template>
           </v-data-iterator>
         </div>
@@ -172,6 +172,9 @@ export default {
         }
       }
       return counter
+    },
+    activeAnalyzers() {
+      return new Set(this.activeAnalyses.map(a => a.analyzer_name))
     },
     activeAnalyzerSessionIds() {
       return Array.from(new Set(this.activeAnalyses.map(a => a.analysissession_id)))
@@ -282,13 +285,13 @@ export default {
               this.activeAnalyzerTimeoutTriggered = true
               return
             }
+            const lastActiveCount = this.activeAnalyses.length
             const activeAnalyses = await fetchAndUpdateActiveAnalyses(this.$store, this.sketch.id)
 
             // Refetch analyzer results if some analyzer finished.
             if (lastActiveCount != activeAnalyses.length) {
               this.initializeAnalyzerResults()
             }
-            lastActiveCount = activeAnalyses.length
           }.bind(this),
           this.activeAnalyzerInterval
         )
