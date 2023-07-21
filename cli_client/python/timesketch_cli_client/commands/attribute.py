@@ -80,7 +80,7 @@ def add_attribute(ctx, name, ontology, value):
         value: Value of the attribute.
 
     Example:
-        timesketch --sketch 2 sketch add_attribute
+        timesketch sketch add_attribute
             --name ticket_id --ontology text --value 12345
 
     """
