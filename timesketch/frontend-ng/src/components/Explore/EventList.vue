@@ -54,7 +54,10 @@ limitations under the License.
         loading-text="Searching... Please wait"
         show-select
         disable-filtering
-        disable-sort
+        must-sort
+        :sort-desc.sync="sortOrderAsc"
+        @update:sort-desc="sortEvents"
+        sort-by="_source.timestamp"
         :hide-default-footer="totalHits < 11 || disablePagination"
         :expanded="expandedRows"
         :dense="displayOptions.isCompact"
@@ -366,9 +369,47 @@ limitations under the License.
 
         <!-- Comment field -->
         <template v-slot:item._source.comment="{ item }">
-          <v-badge :offset-y="10" bordered v-if="item._source.comment.length" :content="item._source.comment.length">
-            <v-icon small @click="toggleDetailedEvent(item)"> mdi-comment-text-multiple-outline </v-icon>
-          </v-badge>
+          <v-tooltip top open-delay="500">
+            <template v-slot:activator="{ on }">
+              <div v-on="on" class="d-inline-block">
+                <v-btn icon small @click="toggleDetailedEvent(item)" v-if="item._source.comment.length">
+                  <v-badge :offset-y="10" :offset-x="10" bordered :content="item._source.comment.length">
+                    <v-icon small> mdi-comment-text-multiple-outline </v-icon>
+                  </v-badge>
+                </v-btn>
+              </div>
+            </template>
+            <span v-if="!item['showDetails']">Open event &amp; comments</span>
+            <span v-if="item['showDetails']">Close event &amp; comments</span>
+          </v-tooltip>
+          <v-tooltip
+            v-if="item['showDetails'] && !item._source.comment.length && !item.showComments"
+            top
+            open-delay="500"
+          >
+            <template v-slot:activator="{ on }">
+              <div v-on="on" class="d-inline-block">
+                <v-btn icon small @click="newComment(item)">
+                  <v-icon> mdi-comment-plus-outline </v-icon>
+                </v-btn>
+              </div>
+            </template>
+            <span>Add a comment</span>
+          </v-tooltip>
+          <v-tooltip
+            v-if="item['showDetails'] && !item._source.comment.length && item.showComments"
+            top
+            open-delay="500"
+          >
+            <template v-slot:activator="{ on }">
+              <div v-on="on" class="d-inline-block">
+                <v-btn icon small @click="item.showComments = false">
+                  <v-icon> mdi-comment-remove-outline </v-icon>
+                </v-btn>
+              </div>
+            </template>
+            <span>Close comments</span>
+          </v-tooltip>
         </template>
       </v-data-table>
     </div>
@@ -490,6 +531,7 @@ export default {
       },
       showHistogram: false,
       branchParent: null,
+      sortOrderAsc: true,
     }
   },
   computed: {
@@ -538,20 +580,24 @@ export default {
         {
           text: '',
           value: 'data-table-select',
+          sortable: false,
         },
         {
           value: 'actions',
           width: '105',
+          sortable: false,
         },
         {
-          text: 'Datetime (UTC)',
+          text: 'Datetime (UTC) ',
           align: 'start',
           value: '_source.timestamp',
           width: '200',
+          sortable: true,
         },
         {
           value: '_source.comment',
           width: '40',
+          sortable: false,
         },
       ]
       let extraHeaders = []
@@ -560,6 +606,7 @@ export default {
           text: field.field,
           align: 'start',
           value: '_source.' + field.field,
+          sortable: false,
         }
         if (field.field === 'message') {
           header.width = '100%'
@@ -577,12 +624,21 @@ export default {
         baseHeaders.push({
           value: 'timeline_name',
           align: 'end',
+          sortable: false,
         })
       }
       return baseHeaders
     },
   },
   methods: {
+    sortEvents(sortAsc) {
+      if (sortAsc) {
+        this.currentQueryFilter.order = 'asc'
+      } else {
+        this.currentQueryFilter.order = 'desc'
+      }
+      this.search(true, true, false)
+    },
     getFieldName: function (field) {
       return 'item._source.' + field
     },
@@ -592,6 +648,7 @@ export default {
         if (row.showDetails) {
           row['showDetails'] = false
           this.expandedRows.splice(index, 1)
+          this.$set(row, 'showComments', false)
         } else {
           row['showDetails'] = true
           this.expandedRows.splice(index, 1)
@@ -606,6 +663,14 @@ export default {
       } else {
         row['showDetails'] = true
         this.expandedRows.push(row)
+      }
+    },
+    newComment: function (row) {
+      if (row.showDetails) {
+        this.$set(row, 'showComments', true)
+      } else {
+        this.$set(row, 'showComments', true)
+        this.toggleDetailedEvent(row)
       }
     },
     addTimeBubbles: function () {
@@ -887,7 +952,12 @@ export default {
   },
   watch: {
     tableOptions: {
-      handler() {
+      handler(newVal, oldVal) {
+        // Return early if the sort order changed.
+        // The search is done in the sortEvents method.
+        if (oldVal.sortDesc === undefined) return
+        if (newVal.sortDesc[0] !== oldVal.sortDesc[0]) return
+
         this.paginate()
       },
       deep: true,
@@ -907,6 +977,12 @@ export default {
         // Set additional fields. This is used when loading filter from a saved search.
         if (this.currentQueryFilter.fields) {
           this.selectedFields = this.currentQueryFilter.fields
+        }
+        // Preserve user defined sort order.
+        if (this.sortOrderAsc) {
+          this.currentQueryFilter.order = 'asc'
+        } else {
+          this.currentQueryFilter.order = 'desc'
         }
         this.search(resetPagination, incognito, parent)
       },
