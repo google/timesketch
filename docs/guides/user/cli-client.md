@@ -177,7 +177,7 @@ Status: new
 
 You can also get all stored information about a sketch with running:
 ```bash
-timesketch --sketch 2 --output-format json sketch describe
+timesketch --output-format json sketch describe
 ```
 
 This will give you something like:
