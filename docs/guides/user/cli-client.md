@@ -142,7 +142,7 @@ timesketch search -q "foobar" --return-fields domain | sort | uniq
 To list all sketches you have access to:
 
 ```bash
-timesketch --sketch 2 --output-format text sketch list
+timesketch --output-format text sketch list
  id   name
   2 asdasd
   1   aaaa
