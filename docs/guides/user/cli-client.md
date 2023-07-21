@@ -151,7 +151,7 @@ timesketch --output-format text sketch list
 You can also get a list as JSON if you like to:
 
 ```
-timesketch --sketch 2 --output-format json sketch list
+timesketch --output-format json sketch list
 [
     {
         "id":2,
