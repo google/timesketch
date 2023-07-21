@@ -203,7 +203,7 @@ That can be done with `timesketch analyzer results`.
 It can show only the analyzer results directly:
 
 ```
-timesketch --sketch 2 --output-format text analyze results --analyzer account_finder --timeline 3
+timesketch --output-format text analyze results --analyzer account_finder --timeline 3
 Results for analyzer [account_finder] on [sigma_events]:
 SUCCESS - NOTE - Account finder was unable to extract any accounts.
 ```
