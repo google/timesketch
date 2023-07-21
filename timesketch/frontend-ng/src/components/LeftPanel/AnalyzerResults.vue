@@ -268,7 +268,6 @@ export default {
     },
     startPolling() {
       if (this.activeAnalyzerSessionIds.length > 0 && !this.interval) {
-        let lastActiveCount = this.activeAnalyzerSessionIds.length;
         this.activeAnalyzerTimerStart = Date.now()
         this.interval = setInterval(
           async function () {
@@ -289,7 +288,7 @@ export default {
             const activeAnalyses = await fetchAndUpdateActiveAnalyses(this.$store, this.sketch.id)
 
             // Refetch analyzer results if some analyzer finished.
-            if (lastActiveCount != activeAnalyses.length) {
+            if (lastActiveCount !== activeAnalyses.length) {
               this.initializeAnalyzerResults()
             }
           }.bind(this),
