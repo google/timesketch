@@ -112,7 +112,6 @@ limitations under the License.
 
 <script>
 import ApiClient from '../../utils/RestApiClient'
-import EventBus from '../../main'
 import TsAnalyzerResult from './AnalyzerResult.vue'
 import { fetchAndUpdateActiveAnalyses, updateActiveAnalyses } from '../../services/analyzerService.js';
 
@@ -149,7 +148,10 @@ export default {
       return this.$store.state.analyzerResults
     },
     sortedAnalyzerResults() {
-      const perAnalyzer = this.groupByAnalyzer(this.analyzerResults)
+      const perAnalyzer = this.groupByAnalyzer([
+        ...this.analyzerResults,
+        ...this.activeAnalyses,
+      ])
       // for now sort the results in alphabetical order. In the future this will be sorted by verdict severity.
       let sortedAnalyzerList = [...Object.entries(perAnalyzer).map(([analyzerName, data]) => ({ analyzerName, data }))]
       sortedAnalyzerList.sort((a, b) =>
