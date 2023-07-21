@@ -135,6 +135,157 @@ This example returns the field name `domain` and then do a simple sort and uniq.
 timesketch search -q "foobar" --return-fields domain | sort | uniq
 ```
 
+## Sketch
+
+### List all sketches
+
+To list all sketches you have access to:
+
+```bash
+timesketch --output-format text sketch list
+ id   name
+  2 asdasd
+  1   aaaa
+```
+
+You can also get a list as JSON if you like to:
+
+```
+timesketch --output-format json sketch list
+[
+    {
+        "id":2,
+        "name":"asdasd"
+    },
+    {
+        "id":1,
+        "name":"aaaa"
+    }
+]
+```
+
+### Get description for one sketch
+
+Getting information about a sketch can be helpful in various situations.
+
+```bash
+timesketch --output-format text sketch describe
+Name: asdasd
+Description: None
+Status: new
+```
+
+You can also get all stored information about a sketch with running:
+```bash
+timesketch --output-format json sketch describe
+```
+
+This will give you something like:
+
+```json
+timesketch --output-format json sketch describe
+{
+    "_archived": null,
+    "_sketch_name": "asdasd",
+    "api": "<timesketch_api_client.client.TimesketchApi object at 0x7f3375d466e0>",
+    "id": 2,
+    "resource_data": {
+        "meta": {
+            "aggregators": {
+              ...
+```
+
+### Get attributes
+
+Attributes can be to long to show in `sketch describe` which is why there is a
+separate command for it:
+
+```timesketch sketch attributes```
+
+Will give back something like this:
+
+```bash
+timesketch --output-format text sketch attributes
+Name: intelligence: Ontology: intelligence Value: {'data': [{'externalURI': 'google.com', 'ioc': '1.2.3.4', 'tags': ['foo'], 'type': 'ipv4'}, {'externalURI': 'fobar.com', 'ioc': '3.3.3.3', 'tags': ['aaaa'], 'type': 'ipv4'}]}
+Name: ticket_id: Ontology: 12345 Value: text
+Name: ticket_id2: Ontology: 12345 Value: text
+Name: ticket_id3: Ontology: 12345 Value: text
+```
+
+Or as JSON
+
+```
+timesketch --output-format json sketch attributes
+{
+    "intelligence": {
+        "ontology": "intelligence",
+        "value": {
+            "data": [
+                {
+                    "externalURI": "google.com",
+                    "ioc": "1.2.3.4",
+                    "tags": [
+                        "foo"
+                    ],
+                    "type": "ipv4"
+                },
+                {
+                    "externalURI": "fobar.com",
+                    "ioc": "3.3.3.3",
+                    "tags": [
+                        "aaaa"
+                    ],
+                    "type": "ipv4"
+                }
+            ]
+        }
+    },
+    "ticket_id": {
+        "ontology": "12345",
+        "value": "text"
+    },
+    "ticket_id2": {
+        "ontology": "12345",
+        "value": "text"
+    },
+    "ticket_id3": {
+        "ontology": "12345",
+        "value": "text"
+    }
+}
+```
+
+### Add a attribute
+
+To add an attribute to a sketch
+
+```bash
+timesketch sketch add_attribute
+```
+
+For example:
+
+```bash
+timesketch sketch add_attribute --name ticket_id3 --ontology text --value 12345
+Attribute added:
+Name: ticket_id3
+Ontology: text
+Value: 12345
+```
+
+To verify, run `timesketch sketch attributes`.
+
+### Remove an attribute
+
+To remove an attribute from a sketch
+
+```bash
+timesketch sketch remove_attribute
+```
+
+
+## Run analyzers
+
 ## Analyzers
 
 ### List
