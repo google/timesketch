@@ -9,6 +9,9 @@ care of setting up authentication, sending the API calls to the server, error ha
 
 This documentation will give an overview for the most common developer use cases of the CLI client.
 
+The main target audience for the CLI client is Timesketch user / analyst.
+While some methods might have verbose JSON output, the default should be as tailored to analyst needs as the WebUI.
+
 ## Basic Connections
 
 The CLI client defines a config library specifically intended to help with setting up all configuration for connecting to Timesketch, including
@@ -100,6 +103,8 @@ And when data is about to be put out:
     else:
         click.echo(sigma_rules.to_string(index=header, columns=columns))
 ```
+
+If a specific output format is not implemented, it is best practice to error out and tell the user which formats are implemented.
 
 Depending on the command, some output formats might not make sense.
 

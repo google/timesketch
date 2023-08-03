@@ -135,7 +135,160 @@ This example returns the field name `domain` and then do a simple sort and uniq.
 timesketch search -q "foobar" --return-fields domain | sort | uniq
 ```
 
+## Sketch
+
+### List all sketches
+
+To list all sketches you have access to:
+
+```bash
+timesketch --output-format text sketch list
+ id   name
+  2 asdasd
+  1   aaaa
+```
+
+You can also get a list as JSON if you like to:
+
+```
+timesketch --output-format json sketch list
+[
+    {
+        "id":2,
+        "name":"asdasd"
+    },
+    {
+        "id":1,
+        "name":"aaaa"
+    }
+]
+```
+
+### Get description for one sketch
+
+Getting information about a sketch can be helpful in various situations.
+
+```bash
+timesketch --output-format text sketch describe
+Name: asdasd
+Description: None
+Status: new
+```
+
+You can also get all stored information about a sketch with running:
+```bash
+timesketch --output-format json sketch describe
+```
+
+This will give you something like:
+
+```json
+timesketch --output-format json sketch describe
+{
+    "_archived": null,
+    "_sketch_name": "asdasd",
+    "api": "<timesketch_api_client.client.TimesketchApi object at 0x7f3375d466e0>",
+    "id": 2,
+    "resource_data": {
+        "meta": {
+            "aggregators": {
+              ...
+```
+
+### Get attributes
+
+Attributes can be to long to show in `sketch describe` which is why there is a
+separate command for it:
+
+```timesketch sketch attributes```
+
+Will give back something like this:
+
+```bash
+timesketch --output-format text sketch attributes
+Name: intelligence: Ontology: intelligence Value: {'data': [{'externalURI': 'google.com', 'ioc': '1.2.3.4', 'tags': ['foo'], 'type': 'ipv4'}, {'externalURI': 'fobar.com', 'ioc': '3.3.3.3', 'tags': ['aaaa'], 'type': 'ipv4'}]}
+Name: ticket_id: Ontology: 12345 Value: text
+Name: ticket_id2: Ontology: 12345 Value: text
+Name: ticket_id3: Ontology: 12345 Value: text
+```
+
+Or as JSON
+
+```
+timesketch --output-format json sketch attributes
+{
+    "intelligence": {
+        "ontology": "intelligence",
+        "value": {
+            "data": [
+                {
+                    "externalURI": "google.com",
+                    "ioc": "1.2.3.4",
+                    "tags": [
+                        "foo"
+                    ],
+                    "type": "ipv4"
+                },
+                {
+                    "externalURI": "fobar.com",
+                    "ioc": "3.3.3.3",
+                    "tags": [
+                        "aaaa"
+                    ],
+                    "type": "ipv4"
+                }
+            ]
+        }
+    },
+    "ticket_id": {
+        "ontology": "12345",
+        "value": "text"
+    },
+    "ticket_id2": {
+        "ontology": "12345",
+        "value": "text"
+    },
+    "ticket_id3": {
+        "ontology": "12345",
+        "value": "text"
+    }
+}
+```
+
+### Add a attribute
+
+To add an attribute to a sketch
+
+```bash
+timesketch sketch add_attribute
+```
+
+For example:
+
+```bash
+timesketch sketch add_attribute --name ticket_id3 --ontology text --value 12345
+Attribute added:
+Name: ticket_id3
+Ontology: text
+Value: 12345
+```
+
+To verify, run `timesketch sketch attributes`.
+
+### Remove an attribute
+
+To remove an attribute from a sketch
+
+```bash
+timesketch sketch remove_attribute
+```
+
+
 ## Run analyzers
+
+## Analyzers
+
+### List
 
 List all available analyzers:
 
@@ -180,6 +333,8 @@ browser_search	Browser search terms	False
 windowsbruteforceanalyser	Windows Login Brute Force Analyzer	False
 ```
 
+### Run
+
 Run a specific analyzer. In this example the `domain` analyzer on timeline 1:
 
 ```
@@ -189,6 +344,84 @@ Running analyzer [domain] on [timeline 1]:
 Results
 [domain] = 217 domains discovered (150 TLDs) and 1 known CDN networks found.
 
+```
+
+### List analyzer results
+
+It might be useful to see the results of an analyzer for a specific timeline.
+That can be done with `timesketch analyzer results`.
+
+It can show only the analyzer results directly:
+
+```
+timesketch --output-format text analyze results --analyzer account_finder --timeline 3
+Results for analyzer [account_finder] on [sigma_events]:
+SUCCESS - NOTE - Account finder was unable to extract any accounts.
+```
+
+Some analyzers might start dependent analyzers, to also show those results use
+the flag `--show-dependent`. This will look similar to:
+
+```bash
+timesketch --output-format text analyze results --analyzer account_finder --timeline 3 --show-dependent
+Results for analyzer [account_finder] on [sigma_events]:
+Dependent: DONE - None - Feature extraction [gmail_accounts] extracted 0 features.
+Dependent: DONE - None - Feature extraction [github_accounts] extracted 0 features.
+Dependent: DONE - None - Feature extraction [linkedin_accounts] extracted 0 features.
+Dependent: DONE - None - Feature extraction [rdp_ts_ipv4_addresses] extracted 0 features.
+Dependent: DONE - None - Feature extraction [ssh_client_ipv4_addresses] extracted 0 features.
+Dependent: DONE - None - Feature extraction [ssh_client_ipv4_addresses_2] extracted 0 features.
+Dependent: DONE - None - Feature extraction [ssh_host_ipv4_addresses] extracted 0 features.
+Dependent: DONE - None - Feature extraction [ssh_client_password_ipv4_addresses] extracted 0 features.
+Dependent: DONE - None - Feature extraction [ssh_disconnected_username] extracted 0 features.
+Dependent: DONE - None - Feature extraction [ssh_disconnected_ip_address] extracted 0 features.
+Dependent: DONE - None - Feature extraction [ssh_disconnected_port] extracted 0 features.
+Dependent: DONE - None - Feature extraction [ssh_failed_ip_address] extracted 0 features.
+Dependent: DONE - None - Feature extraction [ssh_failed_port] extracted 0 features.
+Dependent: DONE - None - Feature extraction [ssh_failed_method] extracted 0 features.
+Dependent: DONE - None - Feature extraction [win_login_subject_username] extracted 0 features.
+Dependent: DONE - None - Feature extraction [email_addresses] extracted 0 features.
+Dependent: DONE - None - Feature extraction [win_login_domain] extracted 0 features.
+Dependent: DONE - None - Feature extraction [win_login_logon_id] extracted 0 features.
+Dependent: DONE - None - Feature extraction [win_login_logon_type] extracted 0 features.
+Dependent: DONE - None - Feature extraction [win_login_logon_process_name] extracted 0 features.
+Dependent: DONE - None - Feature extraction [win_login_workstation_name] extracted 0 features.
+Dependent: DONE - None - Feature extraction [win_login_process_id] extracted 0 features.
+Dependent: DONE - None - Feature extraction [win_login_process_name] extracted 0 features.
+Dependent: DONE - None - Feature extraction [win_login_ip_address] extracted 0 features.
+Dependent: DONE - None - Feature extraction [win_login_port] extracted 0 features.
+SUCCESS - NOTE - Account finder was unable to extract any accounts.
+Dependent: DONE - None - Feature extraction [rdp_rds_ipv4_addresses] extracted 0 features.
+Dependent: DONE - None - Feature extraction [ssh_failed_username] extracted 0 features.
+Dependent: DONE - None - Feature extraction [win_login_subject_domain] extracted 0 features.
+Dependent: DONE - None - Feature extraction [win_login_subject_logon_id] extracted 0 features.
+Dependent: DONE - None - Feature extraction [win_login_username] extracted 0 features.
+
+```
+
+To get a result in `json` that can be piped into other CLI tools run something
+like:
+
+```json
+timesketch --output-format json analyze results --analyzer account_finder --timeline 3 --show-dependent
+[
+    {
+        "analyzer": "feature_extraction",
+        "index": "<timesketch_api_client.index.SearchIndex object at 0x7ff9079a7a60>",
+        "results": "Feature extraction [gmail_accounts] extracted 0 features.",
+        "session_id": 1,
+        "status": "DONE",
+        "timeline_id": 3
+    },
+    {
+        "analyzer": "feature_extraction",
+        "index": "<timesketch_api_client.index.SearchIndex object at 0x7ff9079a7910>",
+        "results": "Feature extraction [github_accounts] extracted 0 features.",
+        "session_id": 1,
+        "status": "DONE",
+        "timeline_id": 3
+    }
+]
 ```
 
 ## Events
