@@ -332,7 +332,7 @@ class BrowserSearchSketchPlugin(interface.BaseAnalyzer):
 
             story.add_text(
                 "## Browser Search Analyzer.\n\nThe browser search "
-                "analyzer takes URLs usually resevered for browser "
+                "analyzer takes URLs usually reserved for browser "
                 "search queries and extracts the search string."
                 "In this timeline the analyzer discovered {0:d} "
                 "browser searches.\n\nThis is a summary of "

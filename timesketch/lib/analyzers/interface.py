@@ -1106,7 +1106,7 @@ class BaseAnalyzer:
                     yield Event(
                         event, self.datastore, sketch=self.sketch, analyzer=self
                     )
-                break  # Query was succesful
+                break  # Query was successful
             except opensearchpy.TransportError as e:
                 sleep_seconds = backoff_in_seconds * 2**x + random.uniform(3, 7)
                 logger.info(
@@ -1214,7 +1214,7 @@ class AnalyzerOutput:
     """A class to record timesketch analyzer output.
 
     Attributes:
-        platform (str): [Required] Analyzer platfrom.
+        platform (str): [Required] Analyzer platform.
         analyzer_identifier (str): [Required] Unique analyzer identifier.
         analyzer_name (str): [Required] Analyzer display name.
         result_status (str): [Required] Analyzer result status.
