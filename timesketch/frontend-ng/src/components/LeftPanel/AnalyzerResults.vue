@@ -123,7 +123,7 @@ limitations under the License.
 <script>
 import ApiClient from '../../utils/RestApiClient'
 import TsAnalyzerResult from './AnalyzerResult.vue'
-import { fetchAndUpdateActiveAnalyses, updateActiveAnalyses } from '../../services/analyzerService.js';
+import { fetchActiveAnalyses, updateActiveAnalyses } from '../../services/analyzerService.js';
 
 export default {
   props: [],
@@ -295,11 +295,13 @@ export default {
               return
             }
             const lastActiveCount = this.activeAnalyses.length
-            const activeAnalyses = await fetchAndUpdateActiveAnalyses(this.$store, this.sketch.id)
+            const activeAnalyses = await fetchActiveAnalyses(this.$store, this.sketch.id)
 
             // Refetch analyzer results if some analyzer finished.
             if (lastActiveCount !== activeAnalyses.length) {
               this.initializeAnalyzerResults()
+            } else {
+              updateActiveAnalyses(activeAnalyses)
             }
           }.bind(this),
           this.activeAnalyzerInterval

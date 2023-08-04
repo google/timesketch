@@ -15,17 +15,18 @@ limitations under the License.
 */
 import ApiClient from '../utils/RestApiClient'
 
-export async function fetchAndUpdateActiveAnalyses(store, sketchId) {
+export async function fetchActiveAnalyses(sketchId) {
   try {
-    const response = await ApiClient.getActiveAnalyzerSessions(sketchId)
-    const activeSessionsDetailed = response.data.objects[0].detailed_sessions
     const activeAnalyses = []
-    if (activeSessionsDetailed.length > 0) {
-      for (const session of activeSessionsDetailed) {
-        activeAnalyses.push(...session.objects[0]['analyses'])
+    const response = await ApiClient.getActiveAnalyzerSessions(sketchId)
+    if (response && response.data && response.data.objects && response.data.objects[0]) {
+      const activeSessionsDetailed = response.data.objects[0].detailed_sessions
+      if (activeSessionsDetailed.length > 0) {
+        for (const session of activeSessionsDetailed) {
+          activeAnalyses.push(...session.objects[0]['analyses'])
+        }
       }
     }
-    updateActiveAnalyses(store, activeAnalyses)
     return activeAnalyses;
   } catch (error) {
     console.error(error);
