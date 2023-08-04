@@ -125,7 +125,7 @@ limitations under the License.
               </td>
               <td style="border: none">
                 <span>
-                  {{ verboseAnalyzerOutput.result_summary ? verboseAnalyzerOutput.result_summary : 'loading...' }}
+                  {{ resultSummary || 'loading...' }}
                 </span>
               </td>
             </tr>
@@ -135,11 +135,11 @@ limitations under the License.
               </td>
               <td style="border: none">
                 <span>
-                  {{ verboseAnalyzerOutput.result_priority ? verboseAnalyzerOutput.result_priority : 'loading...' }}
+                  {{ resultPriority || 'loading...' }}
                 </span>
               </td>
             </tr>
-            <tr v-if="verboseAnalyzerOutput.references !== undefined">
+            <tr v-if="references !== undefined">
               <td colspan="2" style="border: none">
                 <strong>References:</strong>
                 <ul>
@@ -170,7 +170,7 @@ limitations under the License.
               </td>
               <td style="border: none">
                 <span>
-                  {{ verboseAnalyzerOutput.result_status ? verboseAnalyzerOutput.result_status : 'loading...' }}
+                  {{ resultStatus || 'loading...' }}
                 </span>
               </td>
             </tr>
@@ -316,9 +316,23 @@ export default {
     },
     verboseAnalyzerOutput: function () {
       if (this.checkAnalyzerOutput) {
-        return JSON.parse(this.timeline.verdict)
+        // this can return null
+        const parsed = JSON.parse(this.timeline.verdict)
+      // normalize null to undefined
+        return parsed == null ? undefined : parsed;
       }
-      return undefined
+    },
+    resultSummary: function() {
+      return this.verboseAnalyzerOutput && this.verboseAnalyzerOutput.result_summary
+    },
+    resultPriority: function() {
+      return this.verboseAnalyzerOutput && this.verboseAnalyzerOutput.result_priority
+    },
+    references: function() {
+      return this.verboseAnalyzerOutput && this.verboseAnalyzerOutput.references
+    },
+    resultStatus: function() {
+      return this.verboseAnalyzerOutput && this.verboseAnalyzerOutput.result_status
     },
     getAnalyzerOutputMetaData: function () {
       let metaData = {}
