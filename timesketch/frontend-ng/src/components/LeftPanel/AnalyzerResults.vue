@@ -74,7 +74,7 @@ limitations under the License.
             disable-pagination
           >
             <template v-slot:default="props">
-              <ts-analyzer-result v-for="analyzer in props.items" :key="analyzer.analyzerName" :analyzer="analyzer" />
+              <ts-analyzer-result v-for="analyzer in props.items" :key="analyzer.analyzerName" :analyzer="analyzer" :isActive="activeAnalyzers.has(analyzer.analyzerName)" />
             </template>
           </v-data-iterator>
           <v-data-iterator
