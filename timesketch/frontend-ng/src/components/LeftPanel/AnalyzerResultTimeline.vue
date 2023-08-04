@@ -321,6 +321,7 @@ export default {
       // normalize null to undefined
         return parsed == null ? undefined : parsed;
       }
+      return undefined
     },
     resultSummary: function() {
       return this.verboseAnalyzerOutput && this.verboseAnalyzerOutput.result_summary
