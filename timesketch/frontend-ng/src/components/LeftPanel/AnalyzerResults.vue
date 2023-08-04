@@ -74,7 +74,12 @@ limitations under the License.
             disable-pagination
           >
             <template v-slot:default="props">
-              <ts-analyzer-result v-for="analyzer in props.items" :key="analyzer.analyzerName" :analyzer="analyzer" :isActive="activeAnalyzers.has(analyzer.analyzerName)" />
+              <ts-analyzer-result
+                v-for="analyzer in props.items"
+                :key="analyzer.analyzerName"
+                :analyzer="analyzer"
+                :isActive="activeAnalyzers.has(analyzer.analyzerName)"
+              ></ts-analyzer-result>
             </template>
           </v-data-iterator>
           <v-data-iterator
@@ -100,7 +105,12 @@ limitations under the License.
             </template>
 
             <template v-slot:default="props">
-              <ts-analyzer-result v-for="analyzer in props.items" :key="analyzer.analyzerName" :analyzer="analyzer" :isActive="activeAnalyzers.has(analyzer.analyzerName)" />
+              <ts-analyzer-result
+                v-for="analyzer in props.items"
+                :key="analyzer.analyzerName"
+                :analyzer="analyzer"
+                :isActive="activeAnalyzers.has(analyzer.analyzerName)"
+              ></ts-analyzer-result>
             </template>
           </v-data-iterator>
         </div>
