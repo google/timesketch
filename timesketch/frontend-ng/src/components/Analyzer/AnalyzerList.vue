@@ -163,7 +163,7 @@ export default {
           this.$store.dispatch('addActiveAnalyses', analyses)
 
           // Call took at least LOADING_INDICATOR_DURATION_MS, so we can hide the loading indicator.
-          if (new Date().getTime() - analyzerTriggeredTime >= LOADING_INDICATOR_DURACTION_MS) {
+          if (new Date().getTime() - analyzerTriggeredTime >= LOADING_INDICATOR_DURATION_MS) {
             this.removeFromTriggered(analyzerName);
           }
         })
