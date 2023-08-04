@@ -34,17 +34,15 @@ limitations under the License.
               <template v-slot:activator="{ on }">
                 <div v-on="on" class="d-inline-block d-flex justify-center pr-4">
                   <v-progress-circular
-                    v-if="isActive(analyzer.analyzerName)"
+                    v-if="isTriggered(analyzer.analyzerName)"
                     :size="20"
                     :width="2"
-                    :value="activeTimelinesCount(analyzer.analyzerName)"
                     indeterminate
                     color="primary"
                   >
-                    {{ activeTimelinesCount(analyzer.analyzerName)}}
                   </v-progress-circular>
                   <v-btn
-                    v-if="!isActive(analyzer.analyzerName)"
+                    v-if="!isTriggered(analyzer.analyzerName)"
                     icon
                     color="primary"
                     :disabled="(timelineSelection.length > 0) ? false : true"
@@ -74,10 +72,14 @@ limitations under the License.
 <script>
 import ApiClient from '../../utils/RestApiClient'
 
+const LOADING_INDICATOR_DURATION_MS = 3000;
+
 export default {
   props: ['timelineSelection'],
   data() {
     return {
+      /** Currently triggered analyzers. Used for showing loading indicators. */
+      triggeredAnalyzers: []
     }
   },
   computed: {
@@ -126,17 +128,30 @@ export default {
       let sortedAnalyzerList = [...unsortedAnalyzerList]
       sortedAnalyzerList.sort((a, b) => a.info.display_name.localeCompare(b.info.display_name))
       return sortedAnalyzerList
+    },
+    triggered() {
+      return this.triggeredAnalyzers
     }
   },
   methods: {
-    isActive(analyzerName) {
-      return this.activeTimelinesCount(analyzerName) > 0
+    isTriggered(analyzerName) {
+      return this.triggered.includes(analyzerName);
     },
     activeTimelinesCount(analyzerName) {
       const timelinesSet = this.activeAnalyzerTimelinesMap.get(analyzerName)
       return timelinesSet ? timelinesSet.size : 0
     },
     runAnalyzer(analyzerName) {
+      this.triggeredAnalyzers = [...this.triggeredAnalyzers, analyzerName];
+
+      // Hide loading indicator after max LOADING_INDICATOR_DURATION_MS.
+      setTimeout(() => {
+        this.removeFromTriggered(analyzerName);
+      }, LOADING_INDICATOR_DURATION_MS)
+
+      // The loading indicator should stay at least LOADING_INDICATOR_DURATION_MS.
+      const analyzerTriggeredTime = new Date().getTime();
+
       ApiClient.runAnalyzers(this.sketch.id,  this.timelineSelection, [analyzerName])
         .then((response) => {
           let analyses = [];
@@ -146,11 +161,19 @@ export default {
             analyses = analyses.concat(session.analyses)
           }
           this.$store.dispatch('addActiveAnalyses', analyses)
+
+          // Call took at least LOADING_INDICATOR_DURATION_MS, so we can hide the loading indicator.
+          if (new Date().getTime() - analyzerTriggeredTime >= LOADING_INDICATOR_DURACTION_MS) {
+            this.removeFromTriggered(analyzerName);
+          }
         })
         .catch((error) => {
           console.log(error)
         })
     },
+    removeFromTriggered(analyzerName) {
+      this.triggeredAnalyzers = this.triggeredAnalyzers.filter(a => analyzerName !== a);
+    }
   },
 }
 </script>
