@@ -88,7 +88,7 @@ def add_attribute(ctx, name, ontology, value):
     if ctx.obj.output_format != "text":
         click.echo(f"Output format {ctx.obj.output_format} not implemented.")
         ctx.exit(1)
-    sketch.add_attribute(name, ontology, value)
+    sketch.add_attribute(name=name, value=value, ontology=ontology)
     click.echo("Attribute added:")
     click.echo(f"Name: {name}")
     click.echo(f"Ontology: {ontology}")
