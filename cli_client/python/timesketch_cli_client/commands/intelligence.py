@@ -44,7 +44,6 @@ def list_intelligence(ctx, header, columns):
         columns: Comma separated list of columns to show. (default: ioc,type)
                 Other options: externalURI, tags
     """
-    api_client = ctx.obj.api
 
     if not columns:
         columns = "ioc,type"
@@ -99,7 +98,7 @@ def list_intelligence(ctx, header, columns):
     help="IOC value.",
 )
 @click.option(
-    "--type",
+    "--inteltype",
     required=False,
     help="Type of the intelligence.",
 )
@@ -109,7 +108,7 @@ def list_intelligence(ctx, header, columns):
     help="Comma separated list of tags.",
 )
 @click.pass_context
-def add_intelligence(ctx, ioc, tags, type="other"):
+def add_intelligence(ctx, ioc, tags, inteltype="other"):
     """Add intelligence to a sketch.
 
     A sketch can have multiple intelligence entries. Each entry consists of
@@ -120,7 +119,7 @@ def add_intelligence(ctx, ioc, tags, type="other"):
     Args:
         ctx: Click context object.
         ioc: IOC value.
-        type: Type of the intelligence. This is defined in the ontology file.
+        inteltype: Type of the intelligence. This is defined in the ontology file.
             If a string doesn't match any of the aforementioned IOC types,
             the type will fall back to other.
         tags: Comma separated list of tags.
@@ -135,7 +134,7 @@ def add_intelligence(ctx, ioc, tags, type="other"):
         tags = []
 
     try:
-        ioc_dict = {"ioc": ioc, "type": type, "tags": tags}
+        ioc_dict = {"ioc": ioc, "type": inteltype, "tags": tags}
         # put the ioc in a nested object to match the format of the API
         data = {"data": [ioc_dict]}
         sketch.add_attribute(name="intelligence", ontology="intelligence", value=data)
