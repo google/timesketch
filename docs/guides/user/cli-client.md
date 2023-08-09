@@ -283,6 +283,50 @@ To remove an attribute from a sketch
 timesketch sketch remove_attribute
 ```
 
+## Intelligence
+
+Intelligence is always sketch specific. The same can be achieved using 
+`timesketch attributes` command, but then the ontology type and data needs 
+to be provided in the correct format.
+
+Running `timesketch intelligence list` will show the intelligence added to a 
+sketch (if sketch id is set in the config file)
+
+The putput format can also be changed as follows
+
+```bash
+timesketch --sketch 2 --output-format text intelligence list --columns ioc,externalURI,tags,type
+ioc	externalURI	tags	type
+1.2.3.4	google.com	foo	ipv4
+3.3.3.3	fobar.com	aaaa	ipv4
+```
+
+Or as CSV
+
+```bash
+timesketch --sketch 2 --output-format csv intelligence list --columns ioc,externalURI,tags,type
+ioc,externalURI,tags,type
+1.2.3.4,google.com,"foo",ipv4
+3.3.3.3,fobar.com,"aaaa",ipv4
+aaaa.com,foobar.de,"foo,aaaa",hostname
+```
+
+### Adding Intelligence
+
+Adding an indicator works as following
+
+```bash
+timesketch --sketch 2 intelligence add --ioc 8.8.4.4 --type ipv4 --tags foo,bar,ext
+```
+
+### Removing all of Intelligence
+
+To remove all intelligence indicators, run:
+
+```bash
+timesketch --sketch 2 --output-format text sketch attributes remove --name intelligence --ontology intelligence
+Attribute removed: Name: intelligence Ontology: intelligence
+```
 
 ## Run analyzers
 
@@ -343,7 +387,6 @@ Running analyzer [domain] on [timeline 1]:
 ..
 Results
 [domain] = 217 domains discovered (150 TLDs) and 1 known CDN networks found.
-
 ```
 
 ### List analyzer results
@@ -353,7 +396,7 @@ That can be done with `timesketch analyzer results`.
 
 It can show only the analyzer results directly:
 
-```
+```bash
 timesketch --output-format text analyze results --analyzer account_finder --timeline 3
 Results for analyzer [account_finder] on [sigma_events]:
 SUCCESS - NOTE - Account finder was unable to extract any accounts.
@@ -396,7 +439,6 @@ Dependent: DONE - None - Feature extraction [ssh_failed_username] extracted 0 fe
 Dependent: DONE - None - Feature extraction [win_login_subject_domain] extracted 0 features.
 Dependent: DONE - None - Feature extraction [win_login_subject_logon_id] extracted 0 features.
 Dependent: DONE - None - Feature extraction [win_login_username] extracted 0 features.
-
 ```
 
 To get a result in `json` that can be piped into other CLI tools run something
@@ -440,7 +482,8 @@ This new feature makes it easy to add events to Timesketch from the command line
 
 It can also be called with a output format `json` like following.
 
-```timesketch --output-format json events add --message "foobar-message" --date 2023-03-04T11:31:12 --timestamp-desc "test" 
+```bash
+timesketch --output-format json events add --message "foobar-message" --date 2023-03-04T11:31:12 --timestamp-desc "test" 
 {'meta': {}, 'objects': [{'color': 'F37991', 'created_at': '2023-03-08T12:46:24.472587', 'datasources': [], 'deleted': None, 'description': 'internal timeline for user-created events', 'id': 19, 'label_string': '', 'name': 'Manual events', 'searchindex': {'created_at': '2023-03-08T12:46:24.047640', 'deleted': None, 'description': 'internal timeline for user-created events', 'id': 9, 'index_name': '49a318b0ba17867fd71b50903774a0c8', 'label_string': '', 'name': 'Manual events', 'status': [{'created_at': '2023-03-17T09:35:03.202520', 'id': 87, 'status': 'ready', 'updated_at': '2023-03-17T09:35:03.202520'}], 'updated_at': '2023-03-08T12:46:24.047640', 'user': {'active': True, 'admin': True, 'groups': [], 'username': 'dev'}}, 'status': [{'created_at': '2023-03-17T09:35:03.233973', 'id': 79, 'status': 'ready', 'updated_at': '2023-03-17T09:35:03.233973'}], 'updated_at': '2023-03-08T12:46:24.472587', 'user': {'active': True, 'admin': True, 'groups': [], 'username': 'dev'}}]}
 Event added to sketch: timefocus test
 ```
