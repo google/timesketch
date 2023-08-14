@@ -41,7 +41,7 @@ class SSHEventData:
         source_ip (str): IP address in the authentication event.
         source_port (str): Source port in the authentication event.
         username (str): Username in the authentication event.
-        session_id (str): Pseduo session ID calulated from log line.
+        session_id (str): Pseudo session ID calculated from log line.
     """
 
     def __init__(self) -> None:
@@ -223,7 +223,7 @@ class SSHBruteForceAnalyzer(BaseAnalyzer):
             self.output = result
         else:
             self.output.result_summary = (
-                f"No verdict for {len(records)} SSH authenticaiton events."
+                f"No verdict for {len(records)} SSH authentication events."
             )
             self.output.result_priority = "NOTE"
             self.output.result_status = "SUCCESS"

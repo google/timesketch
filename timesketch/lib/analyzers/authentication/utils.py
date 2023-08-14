@@ -518,7 +518,7 @@ class BaseAuthenticationUtils:
                 domain (str): Authentication user domain.
 
         Raises:
-            ValueError: If error encountered access splitted value.
+            ValueError: If error encountered access split value.
         """
 
         if not useraccount:
@@ -864,7 +864,7 @@ class BruteForceUtils(BaseAuthenticationUtils):
         Returns:
             AnalyzerOutput: An AnalyzerOutput object containing brute for analyzer
                 output.
-            None: Returns None if authsummaries is emtpy.
+            None: Returns None if authsummaries is empty.
         """
 
         if not authsummaries and not isinstance(authsummaries, list):
