@@ -99,6 +99,7 @@ class DateIntervalChip(Chip):
     CHIP_VALUE = "interval"
 
     _DATE_FORMAT = "%Y-%m-%dT%H:%M:%S"
+    _DATE_FORMAT_MICROSECONDS = "%Y-%m-%dT%H:%M:%S.%f"
     _DATE_ONLY_FORMAT = "%Y-%m-%d"
 
     def __init__(self):
@@ -157,13 +158,15 @@ class DateIntervalChip(Chip):
         """Property that returns back the date."""
         if not self._date:
             return ""
-        return self._date.strftime(self._DATE_FORMAT)
+        if self._date.microsecond == 0:
+            return self._date.strftime(self._DATE_FORMAT)
+        return self._date.strftime(self._DATE_FORMAT_MICROSECONDS)[:-3]
 
     @date.setter
     def date(self, date):
         """Make changes to the date."""
         try:
-            dt = datetime.datetime.fromisoformat(date)
+            dt = datetime.datetime.strptime(date, self._DATE_FORMAT_MICROSECONDS)
         except ValueError:
             try:
                 dt = datetime.datetime.strptime(date, self._DATE_FORMAT)
@@ -228,7 +231,8 @@ class DateRangeChip(Chip):
     CHIP_VALUE = "date_range"
 
     _DATE_FORMAT = "%Y-%m-%dT%H:%M:%S"
-    
+    _DATE_FORMAT_MICROSECONDS = "%Y-%m-%dT%H:%M:%S.%f"
+
     _DATE_RE = r"^[0-9]{4}-[0-9]{1,2}-[0-9]{2}$"
 
     def __init__(self):
@@ -255,7 +259,7 @@ class DateRangeChip(Chip):
             end_time = f"{end_time}T23:59:59"
 
         try:
-            dt = datetime.datetime.fromisoformat(end_time)
+            dt = datetime.datetime.strptime(end_time, self._DATE_FORMAT_MICROSECONDS)
         except ValueError as exc:
             try:
                 dt = datetime.datetime.strptime(end_time, self._DATE_FORMAT)
@@ -283,7 +287,7 @@ class DateRangeChip(Chip):
             start_time = f"{start_time}T00:00:00"
 
         try:
-            dt = datetime.datetime.fromisoformat(start_time)
+            dt = datetime.datetime.strptime(start_time, self._DATE_FORMAT_MICROSECONDS)
         except ValueError as exc:
             try:
                 dt = datetime.datetime.strptime(start_time, self._DATE_FORMAT)
@@ -299,7 +303,9 @@ class DateRangeChip(Chip):
         """Property that returns the end time of a range."""
         if not self._end_date:
             return ""
-        return self._end_date.strftime(self._DATE_FORMAT)
+        if self._end_date.microsecond == 0:
+            return self._end_date.strftime(self._DATE_FORMAT)
+        return self._end_date.strftime(self._DATE_FORMAT_MICROSECONDS)[:-3]
 
     @end_time.setter
     def end_time(self, end_time):
@@ -332,7 +338,9 @@ class DateRangeChip(Chip):
         """Property that returns the start time of a range."""
         if not self._start_date:
             return ""
-        return self._start_date.strftime(self._DATE_FORMAT)
+        if self._start_date.microsecond == 0:
+            return self._start_date.strftime(self._DATE_FORMAT)
+        return self._start_date.strftime(self._DATE_FORMAT_MICROSECONDS)[:-3]
 
     @start_time.setter
     def start_time(self, start_time):
