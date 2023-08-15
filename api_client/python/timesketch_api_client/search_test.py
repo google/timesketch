@@ -196,7 +196,6 @@ class SearchTest(unittest.TestCase):
         self.assertEqual(chip_micro.start_time, "2020-12-12T12:12:12.001")
         self.assertEqual(chip_micro.end_time, "2020-12-12T12:12:12.002")
 
-
     def test_from_date_interval(self):
         """Test from_date method in DateIntervalChip."""
         date_string = "2021-11-30T12:12:12 -1m +1m"
