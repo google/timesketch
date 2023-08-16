@@ -47,6 +47,7 @@ const defaultState = (currentUser) => {
     },
     contextLinkConf: {},
     sketchAnalyzerList: {},
+    savedVisualizations: [],
   }
 }
 
@@ -124,6 +125,9 @@ export default new Vuex.Store({
     SET_ANALYZER_LIST(state, payload) {
       Vue.set(state, 'sketchAnalyzerList', payload)
     },
+    SET_SAVED_VISUALIZATIONS(state, payload) {
+      Vue.set(state, 'savedVisualizations', payload)
+    }
   },
   actions: {
     updateSketch(context, sketchId) {

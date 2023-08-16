@@ -72,6 +72,19 @@ const routes = [
         ]
       },
       {
+        path: 'visualization',
+        component: Canvas,
+        props: true,
+        children: [
+          {
+            path: 'new',
+            name: 'NewVisualization',
+            component: Canvas,
+            props: true,
+          }
+        ]
+      },
+      {
         path: 'sigma/edit',
         name: 'SigmaEdit',
         component: Canvas,

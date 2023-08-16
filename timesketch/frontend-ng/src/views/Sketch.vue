@@ -185,6 +185,7 @@ limitations under the License.
           <ts-search-templates></ts-search-templates>
           <ts-sigma-rules></ts-sigma-rules>
           <ts-analyzer-results></ts-analyzer-results>
+          <ts-visualizations></ts-visualizations>
         </v-tab-item>
         <v-tab-item :transition="false">
           <ts-scenario v-for="scenario in activeScenarios" :key="scenario.id" :scenario="scenario"></ts-scenario>
@@ -382,6 +383,7 @@ import TsShareCard from '../components/ShareCard'
 import TsRenameSketch from '../components/RenameSketch'
 import TsAnalyzerResults from '../components/LeftPanel/AnalyzerResults.vue'
 import TsEventList from '../components/Explore/EventList'
+import TsVisualizations from '../components/LeftPanel/Visualizations.vue'
 
 export default {
   props: ['sketchId'],
@@ -400,6 +402,7 @@ export default {
     TsStories,
     TsAnalyzerResults,
     TsEventList,
+    TsVisualizations,
   },
   data() {
     return {
