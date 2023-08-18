@@ -439,7 +439,7 @@ tsctl similarity_score
 
 #### sketch-info Get information about a sketch
 
-Displays verious information about a given sketch.
+Displays various information about a given sketch.
 
 ```shell
 tsctl sketch-info
@@ -469,6 +469,22 @@ id status created_at                 user_id
 1  new    2022-10-21 15:04:59.935504 None
 ```
 
+### Timeline info
+
+In some cases, logs present a OpenSearch Index id and it is not easy to find out
+which Sketch that index is related to.
+
+Therefore the following command can be used:
+
+```bash
+# tsctl searchindex-info --searchindex_id asd
+Searchindex: asd not found in database.
+# tsctl searchindex-info --searchindex_id 4c5afdf60c6e49499801368b7f238353
+Searchindex: 4c5afdf60c6e49499801368b7f238353 Name: sigma_events found in database.
+Corresponding Timeline id: 3 in Sketch Id: 2
+Corresponding Sketch id: 2 Sketch name: asdasd
+```
+
 ### Sigma
 
 #### List Sigma rules
@@ -491,7 +507,7 @@ tsctl list-sigma-rules --columns=rule_uuid,title,status | grep experimental | wc
 
 #### Add Sigma rules in a folder
 
-Will add all Sigma rules in a folder and its subfolders to the databse.
+Will add all Sigma rules in a folder and its subfolders to the database.
 
 ```shell
 tsctl import-sigma-rules sigma/rules/cloud/gcp/
@@ -513,7 +529,7 @@ tsctl export-sigma-rules ./test
 
 #### Remove a Sigma rule
 
-This will remove a single Sigma rule from the databse
+This will remove a single Sigma rule from the database
 
 ```shell
 tsctl remove-sigma-rule 13f81a90-a69c-4fab-8f07-b5bb55416a9f
