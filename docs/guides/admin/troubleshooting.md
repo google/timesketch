@@ -23,6 +23,7 @@ If you report a bug or ask for help in Slack, please provide as much information
 - Any errors in Timesketch / celery worker logs
 - Any errors in ES logs?
 - Any errors in postgres logs?
+- What versions is running (Timesketch, Plaso, ...) `cat /usr/local/src/timesketch/timesketch/version.py` in the Docker container to get the Timesketch version
 
 ## Frontend issues
 
@@ -75,7 +76,7 @@ See [docs/learn/server-admin](docs/learn/server-admin#troubleshooting-database-s
 
 ### Issues importing Plaso file
 
-- Which Plaso version is installed on the Timesketch server?
+- Which Plaso version is installed on the Timesketch server? (Run `psort.py --version` in the Timesketch docker instance
 - Which Plaso version was used to create the Plaso file?
 - Is the issue for both web upload and `import_client`?
 - If you open a Github Issue, please indicate the Plaso version used to generate the file.
