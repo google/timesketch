@@ -660,10 +660,11 @@ def validate_context_links_conf(path):
     help="Searchindex ID to search for e.g. 4c5afdf60c6e49499801368b7f238353.",
 )
 def searchindex_info(searchindex_id):
-    """Search for a searchindex and print information about it. Especially which sketch the searchindex belongs to.
+    """Search for a searchindex and print information about it.
+    Especially which sketch the searchindex belongs to.
 
     Args:
-        searchindex_id: Searchindex ID to search for e.g. 4c5afdf60c6e49499801368b7f238353.
+        searchindex_id: to search for e.g. 4c5afdf60c6e49499801368b7f238353.
     """
 
     index_to_search = SearchIndex.query.filter_by(index_name=searchindex_id).first()
