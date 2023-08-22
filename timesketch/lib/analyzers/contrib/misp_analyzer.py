@@ -60,7 +60,7 @@ class MispAnalyzer(interface.BaseAnalyzer):
             attr:  type of the value.
 
         Returns:
-            List of matching MISP attibutes.
+            List of matching MISP attributes.
         """
         results = requests.post(
             f"{self.misp_url}/attributes/restSearch/",
@@ -85,14 +85,14 @@ class MispAnalyzer(interface.BaseAnalyzer):
         return result_loc["response"]["Attribute"]
 
     def mark_event(self, event, result, attr):
-        """Anotate an event with data from MISP result.
+        """Annotate an event with data from MISP result.
 
         Add a comment to the event.
 
         Args:
             event:  The OpenSearch event object that contains type of value we search
                     for and needs to be tagged or to add an attribute.
-            result:  Dictionnary with results from MISP.
+            result:  Dictionary with results from MISP.
             attr:  type of the current value.
         """
 

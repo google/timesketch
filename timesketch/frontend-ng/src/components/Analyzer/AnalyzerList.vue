@@ -57,7 +57,8 @@ limitations under the License.
                   </v-btn>
                 </div>
               </template>
-              <span v-if="timelineSelection.length > 0">Run analyzer: {{ analyzer.info.display_name }}</span>
+              <span v-if="timelineSelection.length > 0 && !analyzersAlreadyRun.has(analyzer.analyzerName)">Run analyzer: "{{ analyzer.info.display_name }}"</span>
+              <span v-else-if="timelineSelection.length > 0 && analyzersAlreadyRun.has(analyzer.analyzerName)" >Re-run analyzer: "{{ analyzer.info.display_name }}"</span>
               <span v-else>Please select a timeline above first.</span>
             </v-tooltip>
           </td>

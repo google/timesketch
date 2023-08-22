@@ -423,7 +423,7 @@ class TestBruteForceAnalyzer(BaseTest):
         return output
 
     def _create_authsummary(self) -> AuthSummary:
-        """Creates and reutrns authsummaries.
+        """Creates and returns authsummaries.
 
         Returns:
             AuthSummary: Returns an object of AuthSummary.
