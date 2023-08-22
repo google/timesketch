@@ -123,7 +123,6 @@ limitations under the License.
 <script>
 import ApiClient from '../../utils/RestApiClient'
 import TsAnalyzerResult from './AnalyzerResult.vue'
-import { fetchActiveAnalyses, updateActiveAnalyses } from '../../services/analyzerService.js';
 
 export default {
   props: [],
@@ -203,7 +202,7 @@ export default {
         allAnalyses = allAnalyses.concat(analyses)
       }
       this.$store.dispatch('updateAnalyzerResults', allAnalyses)
-      updateActiveAnalyses(this.$store, allAnalyses)
+      this.updateActiveAnalyses(this.$store, allAnalyses)
     },
     groupByAnalyzer(analyses) {
       let perAnalyzer = {}
@@ -295,13 +294,13 @@ export default {
               return
             }
             const lastActiveCount = this.activeAnalyses.length
-            const activeAnalyses = await fetchActiveAnalyses(this.$store, this.sketch.id)
+            const activeAnalyses = await this.fetchActiveAnalyses(this.$store, this.sketch.id)
 
             // Refetch analyzer results if some analyzer finished.
             if (lastActiveCount !== activeAnalyses.length) {
               this.initializeAnalyzerResults()
             } else {
-              updateActiveAnalyses(activeAnalyses)
+              this.updateActiveAnalyses(activeAnalyses)
             }
           }.bind(this),
           this.activeAnalyzerInterval
@@ -312,8 +311,28 @@ export default {
       clearInterval(this.interval)
       this.activeAnalyzerTimerStart = null
       this.interval = false
+    },
+    async fetchActiveAnalyses(sketchId) {
+      try {
+        const activeAnalyses = []
+        const response = await ApiClient.getActiveAnalyzerSessions(sketchId)
+        if (response && response.data && response.data.objects && response.data.objects[0]) {
+          const activeSessionsDetailed = response.data.objects[0].detailed_sessions
+          if (activeSessionsDetailed.length > 0) {
+            for (const session of activeSessionsDetailed) {
+              activeAnalyses.push(...session.objects[0]['analyses'])
+            }
+          }
+        }
+        return activeAnalyses;
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    updateActiveAnalyses(store, analyses) {
+      const activeAnalyses = analyses.filter(a => a.status[0].status === 'PENDING' || a.status[0].status === 'STARTED');
+      store.dispatch("updateActiveAnalyses", activeAnalyses)
     }
-
   },
   mounted() {
     this.initializeAnalyzerResults()
