@@ -78,7 +78,7 @@ limitations under the License.
               <v-icon small :color="getPriorityColor">mdi-information-outline</v-icon>
             </v-btn>
           </template>
-          <span>Result Priority: {{ resultPriority() }}</span>
+          <span>Result Priority: {{ resultPriority }}</span>
         </v-tooltip>
       </div>
       <div v-else>
@@ -143,7 +143,7 @@ limitations under the License.
               <td colspan="2" style="border: none">
                 <strong>References:</strong>
                 <ul>
-                  <li v-for="(item, index) in references()" :key="index">
+                  <li v-for="(item, index) in references" :key="index">
                     <a @click="contextLinkRedirect(item)">{{ item }}</a>
                     <v-dialog v-model="redirectWarnDialog" max-width="515" :retain-focus="false">
                       <ts-link-redirect-warning
