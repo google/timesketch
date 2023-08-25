@@ -78,7 +78,7 @@ limitations under the License.
               <v-icon small :color="getPriorityColor">mdi-information-outline</v-icon>
             </v-btn>
           </template>
-          <span>Result Priority: {{ verboseAnalyzerOutput.result_priority }}</span>
+          <span>Result Priority: {{ resultPriority() }}</span>
         </v-tooltip>
       </div>
       <div v-else>
@@ -143,7 +143,7 @@ limitations under the License.
               <td colspan="2" style="border: none">
                 <strong>References:</strong>
                 <ul>
-                  <li v-for="(item, index) in verboseAnalyzerOutput.references" :key="index">
+                  <li v-for="(item, index) in references()" :key="index">
                     <a @click="contextLinkRedirect(item)">{{ item }}</a>
                     <v-dialog v-model="redirectWarnDialog" max-width="515" :retain-focus="false">
                       <ts-link-redirect-warning
@@ -318,7 +318,7 @@ export default {
       if (this.checkAnalyzerOutput) {
         // this can return null
         const parsed = JSON.parse(this.timeline.verdict)
-      // normalize null to undefined
+        // normalize null to undefined
         return parsed == null ? undefined : parsed;
       }
       return undefined
