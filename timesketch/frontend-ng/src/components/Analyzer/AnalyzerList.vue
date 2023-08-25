@@ -34,7 +34,7 @@ limitations under the License.
               <template v-slot:activator="{ on }">
                 <div v-on="on" class="d-inline-block d-flex justify-center pr-4">
                   <v-progress-circular
-                    v-if="isTriggered(analyzer.analyzerName)"
+                    v-if="isLoading(analyzer.analyzerName)"
                     :size="20"
                     :width="2"
                     indeterminate
@@ -42,24 +42,22 @@ limitations under the License.
                   >
                   </v-progress-circular>
                   <v-btn
-                    v-if="!isTriggered(analyzer.analyzerName)"
+                    v-if="!isLoading(analyzer.analyzerName)"
                     icon
                     color="primary"
                     :disabled="(timelineSelection.length > 0) ? false : true"
                     @click="runAnalyzer(analyzer.analyzerName)"
                   >
-                    <v-icon
-                      v-if="!analyzersAlreadyRun.has(analyzer.analyzerName)"
-                    >
+                    <v-icon v-if="!showRerunIcon(analyzer.analyzerName)">
                       mdi-play-circle-outline
                     </v-icon>
                     <v-icon v-else>mdi-replay</v-icon>
                   </v-btn>
                 </div>
               </template>
-              <span v-if="timelineSelection.length > 0 && !analyzersAlreadyRun.has(analyzer.analyzerName)">Run analyzer: "{{ analyzer.info.display_name }}"</span>
-              <span v-else-if="timelineSelection.length > 0 && analyzersAlreadyRun.has(analyzer.analyzerName)" >Re-run analyzer: "{{ analyzer.info.display_name }}"</span>
-              <span v-else>Please select a timeline above first.</span>
+              <span v-if="timelineSelection.length === 0">Please select a timeline above first.</span>
+              <span v-else-if="showRerunIcon(analyzer.analyzerName)" >Re-run analyzer: "{{ analyzer.info.display_name }}"</span>
+              <span v-else>Run analyzer: "{{ analyzer.info.display_name }}"</span>
             </v-tooltip>
           </td>
           <td>{{ analyzer.info.display_name}}</td>
@@ -79,8 +77,13 @@ export default {
   props: ['timelineSelection'],
   data() {
     return {
-      /** Currently triggered analyzers. Used for showing loading indicators. */
-      triggeredAnalyzers: []
+      /** Currently triggered analyzers. Used for showing run or re-run icons. */
+      triggeredAnalyzers: [],
+      /**
+       * Analyzers that should show loading indicators. Those are triggered
+       * analyzers for a duration of LOADING_INDICATOR_DURATION_MS.
+       */
+      loadingAnalyzers: []
     }
   },
   computed: {
@@ -132,11 +135,17 @@ export default {
     },
     triggered() {
       return this.triggeredAnalyzers
+    },
+    loading() {
+      return this.loadingAnalyzers
     }
   },
   methods: {
-    isTriggered(analyzerName) {
-      return this.triggered.includes(analyzerName);
+    isLoading(analyzerName) {
+      return this.loading.includes(analyzerName);
+    },
+    showRerunIcon(analyzerName) {
+      return this.analyzersAlreadyRun.has(analyzerName) || this.triggered.includes(analyzerName);
     },
     activeTimelinesCount(analyzerName) {
       const timelinesSet = this.activeAnalyzerTimelinesMap.get(analyzerName)
@@ -144,10 +153,11 @@ export default {
     },
     runAnalyzer(analyzerName) {
       this.triggeredAnalyzers = [...this.triggeredAnalyzers, analyzerName];
+      this.loadingAnalyzers = [...this.loadingAnalyzers, analyzerName];
 
       // Hide loading indicator after max LOADING_INDICATOR_DURATION_MS.
       setTimeout(() => {
-        this.removeFromTriggered(analyzerName);
+        this.removeFromLoading(analyzerName);
       }, LOADING_INDICATOR_DURATION_MS)
 
       // The loading indicator should stay at least LOADING_INDICATOR_DURATION_MS.
@@ -165,15 +175,15 @@ export default {
 
           // Call took at least LOADING_INDICATOR_DURATION_MS, so we can hide the loading indicator.
           if (new Date().getTime() - analyzerTriggeredTime >= LOADING_INDICATOR_DURATION_MS) {
-            this.removeFromTriggered(analyzerName);
+            this.removeFromLoading(analyzerName);
           }
         })
         .catch((error) => {
           console.log(error)
         })
     },
-    removeFromTriggered(analyzerName) {
-      this.triggeredAnalyzers = this.triggeredAnalyzers.filter(a => analyzerName !== a);
+    removeFromLoading(analyzerName) {
+      this.loadingAnalyzers = this.loadingAnalyzers.filter(a => analyzerName !== a);
     }
   },
 }
