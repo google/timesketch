@@ -264,3 +264,15 @@ win_login_port:
         attribute: 'xml_string'
         store_as: 'port'
         re: '.*"IpPort">(?P<port>[^<]+)</Data>'
+
+win_bits_client_ipv4_addresses:
+        query_string: 'data_type:"windows:evtx:record" AND source_name:Microsoft-Windows-Bits-Client'
+        attribute: 'strings'
+        store_as: 'ip_address'
+        re: '(?:[0-9]{1,3}\.){3}[0-9]{1,3}'
+
+win_bits_client_url:
+        query_string: 'data_type:"windows:evtx:record" AND source_name:Microsoft-Windows-Bits-Client'
+        attribute: 'strings'
+        store_as: 'url'
+        re: '(?<=")(?:(?:https?:\/\/)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+)(?:[\/\?#][^\s,"]*)?(?=")'
