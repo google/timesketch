@@ -88,13 +88,13 @@ export default {
   },
   computed: {
     sketch() {
-      return this.$store.state.sketch;
+      return this.$store.state.sketch
     },
     analyzerList() {
-        return this.$store.state.sketchAnalyzerList;
+        return this.$store.state.sketchAnalyzerList
     },
     analyzerResults() {
-        return this.$store.state.analyzerResults;
+        return this.$store.state.analyzerResults
     },
     analyzersAlreadyRun() {
       // create a set for a faster lookup
@@ -114,18 +114,22 @@ export default {
           analyzerSet.add(analyzerName)
         }
       }
+
+      this.triggered.forEach(analyzer => analyzerSet.has(analyzer) ? null : analyzerSet.add(analyzer))
+      this.triggeredAnalyzers = []
+      
       return analyzerSet
 
     },
     activeAnalyzerTimelinesMap() {
-        const byAnalyzerMap = new Map();
+        const byAnalyzerMap = new Map()
         for (const analysis of this.$store.state.activeAnalyses) {
           if (!byAnalyzerMap.has(analysis.analyzer_name)) {
-            byAnalyzerMap.set(analysis.analyzer_name, new Set());
+            byAnalyzerMap.set(analysis.analyzer_name, new Set())
           }
-          byAnalyzerMap.get(analysis.analyzer_name).add(analysis.timeline.id);
+          byAnalyzerMap.get(analysis.analyzer_name).add(analysis.timeline.id)
         }
-        return byAnalyzerMap;
+        return byAnalyzerMap
     },
     sortedAnalyzerList() {
       let unsortedAnalyzerList = Object.entries(this.analyzerList).map(([analyzerName, info]) => ({analyzerName, info}))
@@ -142,30 +146,30 @@ export default {
   },
   methods: {
     isLoading(analyzerName) {
-      return this.loading.includes(analyzerName);
+      return this.loading.includes(analyzerName)
     },
     showRerunIcon(analyzerName) {
-      return this.analyzersAlreadyRun.has(analyzerName) || this.triggered.includes(analyzerName);
+      return this.analyzersAlreadyRun.has(analyzerName)
     },
     activeTimelinesCount(analyzerName) {
       const timelinesSet = this.activeAnalyzerTimelinesMap.get(analyzerName)
       return timelinesSet ? timelinesSet.size : 0
     },
     runAnalyzer(analyzerName) {
-      this.triggeredAnalyzers = [...this.triggeredAnalyzers, analyzerName];
-      this.loadingAnalyzers = [...this.loadingAnalyzers, analyzerName];
+      this.triggeredAnalyzers = [...this.triggeredAnalyzers, analyzerName]
+      this.loadingAnalyzers = [...this.loadingAnalyzers, analyzerName]
 
       // Hide loading indicator after max LOADING_INDICATOR_DURATION_MS.
       setTimeout(() => {
-        this.removeFromLoading(analyzerName);
+        this.removeFromLoading(analyzerName)
       }, LOADING_INDICATOR_DURATION_MS)
 
       // The loading indicator should stay at least LOADING_INDICATOR_DURATION_MS.
-      const analyzerTriggeredTime = new Date().getTime();
+      const analyzerTriggeredTime = new Date().getTime()
 
       ApiClient.runAnalyzers(this.sketch.id,  this.timelineSelection, [analyzerName])
         .then((response) => {
-          let analyses = [];
+          let analyses = []
           let sessionIds = []
           for (let session of response.data.objects[0]) {
             sessionIds.push(session.id)
@@ -175,7 +179,7 @@ export default {
 
           // Call took at least LOADING_INDICATOR_DURATION_MS, so we can hide the loading indicator.
           if (new Date().getTime() - analyzerTriggeredTime >= LOADING_INDICATOR_DURATION_MS) {
-            this.removeFromLoading(analyzerName);
+            this.removeFromLoading(analyzerName)
           }
         })
         .catch((error) => {
@@ -183,7 +187,7 @@ export default {
         })
     },
     removeFromLoading(analyzerName) {
-      this.loadingAnalyzers = this.loadingAnalyzers.filter(a => analyzerName !== a);
+      this.loadingAnalyzers = this.loadingAnalyzers.filter(a => analyzerName !== a)
     }
   },
 }
