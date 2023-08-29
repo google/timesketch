@@ -45,6 +45,10 @@ if [ "$1" = 'timesketch' ]; then
     echo "Please pass values for the REDIS_ADDRESS and REDIS_PORT environment variables"
   fi
 
+  if [ $OPENSEARCH_TIMEOUT_VALUE ]; then
+    echo "TIMEOUT_FOR_EVENT_IMPORT = ${OPENSEARCH_TIMEOUT_VALUE}" >> /etc/timesketch/timesketch.conf
+  fi
+
   # Set up web credentials
   if [ -z ${TIMESKETCH_USER:+x} ]; then
     TIMESKETCH_USER="admin"
