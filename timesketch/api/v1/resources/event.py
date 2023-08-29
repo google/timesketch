@@ -338,7 +338,7 @@ class EventResource(resources.ResourceMixin, Resource):
 class EventAddAttributeResource(resources.ResourceMixin, Resource):
     """Resource to add attributes to events."""
 
-    EVENT_FIELDS = ["_id", "_type", "_index", "attributes"]
+    EVENT_FIELDS = ["_id", "_index", "attributes"]
     ATTRIBUTE_FIELDS = ["attr_name", "attr_value"]
     RESERVED_ATTRIBUTE_NAMES = [
         "datetime",
