@@ -46,7 +46,7 @@ if [ "$1" = 'timesketch' ]; then
   fi
 
   if [ $OPENSEARCH_TIMEOUT_VALUE ]; then
-    echo "TIMEOUT_FOR_EVENT_IMPORT = ${OPENSEARCH_TIMEOUT_VALUE}" >> /etc/timesketch/timesketch.conf
+    echo 'TIMEOUT_FOR_EVENT_IMPORT = ${OPENSEARCH_TIMEOUT_VALUE}' >> /etc/timesketch/timesketch.conf
   fi
 
   # Set up web credentials
