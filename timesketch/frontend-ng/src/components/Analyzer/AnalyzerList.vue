@@ -116,7 +116,7 @@ export default {
       }
 
       this.triggered.forEach(analyzer => analyzerSet.has(analyzer) ? null : analyzerSet.add(analyzer))
-      this.triggeredAnalyzers = []
+      this.resetTriggeredAnalyzers()
       
       return analyzerSet
 
@@ -188,6 +188,9 @@ export default {
     },
     removeFromLoading(analyzerName) {
       this.loadingAnalyzers = this.loadingAnalyzers.filter(a => analyzerName !== a)
+    },
+    resetTriggeredAnalyzers() {
+      this.triggeredAnalyzers = []
     }
   },
 }
