@@ -1,6 +1,9 @@
 name: unit-tests
 
 on:
+  push:
+    branches:
+      - master
   pull_request:
     types: [opened, synchronize, reopened]
 
