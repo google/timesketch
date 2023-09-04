@@ -20,35 +20,27 @@ import json
 import logging
 import math
 import time
-import six
 
 import dateutil
-from opensearchpy.exceptions import RequestError
 import numpy as np
 import pandas as pd
-
-from flask import jsonify
-from flask import request
-from flask import abort
-from flask_restful import Resource
-from flask_restful import reqparse
-from flask_login import login_required
-from flask_login import current_user
+import six
+from flask import abort, jsonify, request
+from flask_login import current_user, login_required
+from flask_restful import Resource, reqparse
+from opensearchpy.exceptions import RequestError
 
 from timesketch.api.v1 import resources
 from timesketch.lib import forms
-from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
-from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
-from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
-from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
-from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
+from timesketch.lib.definitions import (
+    HTTP_STATUS_CODE_BAD_REQUEST,
+    HTTP_STATUS_CODE_CREATED,
+    HTTP_STATUS_CODE_FORBIDDEN,
+    HTTP_STATUS_CODE_NOT_FOUND,
+    HTTP_STATUS_CODE_OK,
+)
 from timesketch.models import db_session
-from timesketch.models.sketch import Event
-from timesketch.models.sketch import SearchIndex
-from timesketch.models.sketch import Sketch
-from timesketch.models.sketch import Timeline
-from timesketch.models.sketch import SearchHistory
-
+from timesketch.models.sketch import Event, SearchHistory, SearchIndex, Sketch, Timeline
 
 logger = logging.getLogger("timesketch.event_api")
 
@@ -1219,24 +1211,46 @@ class MarkEventsWithTimelineIdentifier(resources.ResourceMixin, Resource):
                 "sketch ID ({1:d})".format(sketch.id, timeline.sketch.id),
             )
 
-        query_dsl = {
-            "script": {
-                "source": (
-                    f"ctx._source.__ts_timeline_id={timeline_id};"
-                    f"ctx._source.timesketch_label=[];"
-                ),
-                "lang": "painless",
-            },
-            "query": {
-                "bool": {
-                    "must_not": {
-                        "exists": {
-                            "field": "__ts_timeline_id",
+        # If a timeline is uploaded with a `timeline_filter_id` the adjusted
+        # query with the ID as filter is used.
+        timeline_filter_id = form.get("timeline_filter_id")
+        if timeline_filter_id is not None:
+            query_dsl = {
+                "script": {
+                    "source": (
+                        f"ctx._source.__ts_timeline_id={timeline_id};"
+                        f"ctx._source.timesketch_label=[];"
+                    ),
+                    "lang": "painless",
+                },
+                "query": {
+                    "bool": {
+                        "filter": {
+                            "term": {"__ts_timeline_filter_id": timeline_filter_id}
+                        },
+                        "must_not": {"exists": {"field": "__ts_timeline_id"}},
+                    }
+                },
+            }
+        else:
+            query_dsl = {
+                "script": {
+                    "source": (
+                        f"ctx._source.__ts_timeline_id={timeline_id};"
+                        f"ctx._source.timesketch_label=[];"
+                    ),
+                    "lang": "painless",
+                },
+                "query": {
+                    "bool": {
+                        "must_not": {
+                            "exists": {
+                                "field": "__ts_timeline_id",
+                            }
                         }
                     }
-                }
-            },
-        }
+                },
+            }
         # pylint: disable=unexpected-keyword-arg
         self.datastore.client.update_by_query(
             body=query_dsl,
