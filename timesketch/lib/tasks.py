@@ -35,6 +35,7 @@ from celery import chain
 from celery import group
 from celery import signals
 from sqlalchemy import create_engine
+from hashlib import sha1
 
 # To be able to determine plaso's version.
 try:
@@ -329,6 +330,7 @@ def build_sketch_analysis_pipeline(
     user_id,
     analyzer_names=None,
     analyzer_kwargs=None,
+    analyzer_force_run=False,
     timeline_id=None,
 ):
     """Build a pipeline for sketch analysis.
@@ -373,8 +375,10 @@ def build_sketch_analysis_pipeline(
     sketch = Sketch.query.get(sketch_id)
     analysis_session = AnalysisSession(user, sketch)
 
+    logger.info("TASKS: Building analysis pipeline for: {0}".format(analyzer_names))
     analyzers = manager.AnalysisManager.get_analyzers(analyzer_names)
     for analyzer_name, analyzer_class in analyzers:
+        logger.info("TASKS: running analyzer {0}".format(analyzer_name))
         base_kwargs = analyzer_kwargs.get(analyzer_name, {})
         searchindex = SearchIndex.query.get(searchindex_id)
 
@@ -399,6 +403,30 @@ def build_sketch_analysis_pipeline(
         if not kwargs_list:
             kwargs_list = [base_kwargs]
 
+        kwargs_list_hash = sha1(
+            json.dumps(kwargs_list, sort_keys=True).encode("utf-8")
+        ).hexdigest()
+        logger.info(
+            "TASKS: kwargs_hash: {0}".format("kwargs_hash:" + kwargs_list_hash)
+        )
+
+        if not analyzer_force_run:
+            skip_analysis = False
+            for past_analysis in timeline.analysis:
+                if (
+                    (past_analysis.analyzer_name == analyzer_name)
+                    and (past_analysis.get_status.status == "DONE")
+                    and (past_analysis.created_at > timeline.updated_at)
+                    and ("kwargs_hash:" + kwargs_list_hash in past_analysis.get_labels)
+                ):
+                    logger.info(
+                        "TASK: hash matched: {}".format(past_analysis.get_labels)
+                    )
+                    skip_analysis = True
+                    break
+            if skip_analysis:
+                continue
+
         for kwargs in kwargs_list:
             analysis = Analysis(
                 name=analyzer_name,
@@ -409,6 +437,9 @@ def build_sketch_analysis_pipeline(
                 sketch=sketch,
                 timeline=timeline,
             )
+            # TODO: Use an attribute mixin instead of the label.
+            # https://github.com/google/timesketch/blob/e8c7de17472331baaba78e74094d74585240f37c/timesketch/models/annotations.py#L379C7-L379C28
+            analysis.add_label("kwargs_hash:" + kwargs_list_hash)
             analysis.set_status("PENDING")
             analysis_session.analyses.append(analysis)
             db_session.add(analysis)
@@ -425,8 +456,9 @@ def build_sketch_analysis_pipeline(
             )
 
     # Commit the analysis session to the database.
-    db_session.add(analysis_session)
-    db_session.commit()
+    if len(analysis_session.analyses) > 0:
+        db_session.add(analysis_session)
+        db_session.commit()
 
     if current_app.config.get("ENABLE_EMAIL_NOTIFICATIONS"):
         tasks.append(run_email_result_task.s(sketch_id))

@@ -311,6 +311,7 @@ export default {
     let formData = {
       timeline_ids: timelineIds,
       analyzer_names: analyzers,
+      analyzer_force_run: false,
     }
     return RestApiClient.post('/sketches/' + sketchId + /analyzer/, formData)
   },
