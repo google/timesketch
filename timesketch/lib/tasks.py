@@ -347,6 +347,7 @@ def build_sketch_analysis_pipeline(
         user_id (int): The ID of the user who started the analyzer.
         analyzer_names (list): List of analyzers to run.
         analyzer_kwargs (dict): Arguments to the analyzers.
+        analyzer_force_run (bool): If true then force the analyzer to run.
         timeline_id (int): Optional int of the timeline to run the analyzer on.
 
     Returns:
@@ -407,7 +408,7 @@ def build_sketch_analysis_pipeline(
             json.dumps(kwargs_list, sort_keys=True).encode("utf-8")
         ).hexdigest()
         logger.info(
-            "TASKS: kwargs_hash: {0}".format("kwargs_hash:" + kwargs_list_hash)
+            "TASKS: kwargs_hash: {0}".format("kwargs_hash: " + kwargs_list_hash)
         )
 
         if not analyzer_force_run:
@@ -417,13 +418,17 @@ def build_sketch_analysis_pipeline(
                     (past_analysis.analyzer_name == analyzer_name)
                     and (past_analysis.get_status.status == "DONE")
                     and (past_analysis.created_at > timeline.updated_at)
-                    and ("kwargs_hash:" + kwargs_list_hash in past_analysis.get_labels)
                 ):
-                    logger.info(
-                        "TASK: hash matched: {}".format(past_analysis.get_labels)
-                    )
-                    skip_analysis = True
-                    break
+                    for attribute in past_analysis.get_attributes:
+                        if attribute.value == kwargs_list_hash:
+                            logger.info(
+                                "TASK: hash matched: {}".format(attribute.value)
+                            )
+                            skip_analysis = True
+                            break
+                    if skip_analysis:
+                        break
+
             if skip_analysis:
                 continue
 
@@ -437,9 +442,7 @@ def build_sketch_analysis_pipeline(
                 sketch=sketch,
                 timeline=timeline,
             )
-            # TODO: Use an attribute mixin instead of the label.
-            # https://github.com/google/timesketch/blob/e8c7de17472331baaba78e74094d74585240f37c/timesketch/models/annotations.py#L379C7-L379C28
-            analysis.add_label("kwargs_hash:" + kwargs_list_hash)
+            analysis.add_attribute(name='kwargs_hash', value=kwargs_list_hash)
             analysis.set_status("PENDING")
             analysis_session.analyses.append(analysis)
             db_session.add(analysis)
