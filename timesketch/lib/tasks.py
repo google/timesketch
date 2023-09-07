@@ -376,10 +376,8 @@ def build_sketch_analysis_pipeline(
     sketch = Sketch.query.get(sketch_id)
     analysis_session = AnalysisSession(user, sketch)
 
-    logger.info("TASKS: Building analysis pipeline for: {0}".format(analyzer_names))
     analyzers = manager.AnalysisManager.get_analyzers(analyzer_names)
     for analyzer_name, analyzer_class in analyzers:
-        logger.info("TASKS: running analyzer {0}".format(analyzer_name))
         base_kwargs = analyzer_kwargs.get(analyzer_name, {})
         searchindex = SearchIndex.query.get(searchindex_id)
 
@@ -407,9 +405,6 @@ def build_sketch_analysis_pipeline(
         kwargs_list_hash = sha1(
             json.dumps(kwargs_list, sort_keys=True).encode("utf-8")
         ).hexdigest()
-        logger.info(
-            "TASKS: kwargs_hash: {0}".format("kwargs_hash: " + kwargs_list_hash)
-        )
 
         if not analyzer_force_run:
             skip_analysis = False
@@ -421,9 +416,6 @@ def build_sketch_analysis_pipeline(
                 ):
                     for attribute in past_analysis.get_attributes:
                         if attribute.value == kwargs_list_hash:
-                            logger.info(
-                                "TASK: hash matched: {}".format(attribute.value)
-                            )
                             skip_analysis = True
                             break
                     if skip_analysis:
