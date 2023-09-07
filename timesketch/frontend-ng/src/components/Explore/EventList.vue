@@ -15,14 +15,10 @@ limitations under the License.
 -->
 <template>
   <div>
-    <v-dialog v-model="fullscreenLoading" width="700">
+    <v-dialog v-model="exportDialog" width="700">
       <v-card flat class="pa-5">
-        <v-toolbar flat>
-          <v-progress-circular indeterminate size="20" width="1"></v-progress-circular>
-          <span class="ml-5">Exporting {{ totalHits }} events</span>
-          <v-spacer></v-spacer>
-          <v-btn depressed @click="fullscreenLoading = false">cancel</v-btn>
-        </v-toolbar>
+        <v-progress-circular indeterminate size="20" width="1"></v-progress-circular>
+        <span class="ml-5">Exporting {{ totalHits }} events</span>
       </v-card>
     </v-dialog>
 
@@ -529,7 +525,7 @@ export default {
         suspicious: { color: 'orange', textColor: 'white', label: 'mdi-help-circle-outline' },
       },
       searchInProgress: false,
-      fullscreenLoading: false,
+      exportDialog: false,
       currentPage: 1,
       eventList: {
         meta: {},
@@ -842,29 +838,27 @@ export default {
         })
     },
     exportSearchResult: function () {
-      this.fullscreenLoading = true
+      this.exportDialog = true
+      const now = new Date()
+      const exportFileName = 'timesketch_export_' + now.toISOString() + '.zip'
       let formData = {
         query: this.currentQueryString,
         filter: this.currentQueryFilter,
-        file_name: 'export.zip',
+        file_name: exportFileName,
       }
       ApiClient.exportSearchResult(this.sketch.id, formData)
         .then((response) => {
           let fileURL = window.URL.createObjectURL(new Blob([response.data]))
           let fileLink = document.createElement('a')
-          let fileName = 'export.zip'
           fileLink.href = fileURL
-          fileLink.setAttribute('download', fileName)
+          fileLink.setAttribute('download', exportFileName)
           document.body.appendChild(fileLink)
-          // Only provide the file if the user hasn't cancelled the download.
-          if (this.fullscreenLoading) {
-            fileLink.click()
-          }
-          this.fullscreenLoading = false
+          fileLink.click()
+          this.exportDialog = false
         })
         .catch((e) => {
           console.error(e)
-          this.fullscreenLoading = false
+          this.exportDialog = false
         })
     },
     addChip: function (chip) {
