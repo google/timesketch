@@ -106,7 +106,7 @@ class OpenSearchDataStore(object):
     DEFAULT_STREAM_LIMIT = 5000  # Max events to return when streaming results
 
     DEFAULT_FLUSH_RETRY_LIMIT = 3  # Max retries for flushing the queue.
-    DEFAULT_EVENT_IMPORT_TIMEOUT = "3m"  # Timeout value for importing events.
+    DEFAULT_EVENT_IMPORT_TIMEOUT = 180  # Timeout value in seconds for importing events.
 
     def __init__(self, host="127.0.0.1", port=9200):
         """Create a OpenSearch client."""

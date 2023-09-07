@@ -110,6 +110,7 @@ class SearchTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             chip.date = "20 minutes"
 
+        chip = search.DateIntervalChip()
         date_string = "2020-11-30T12:12:12"
         chip.date = date_string
 
@@ -147,6 +148,7 @@ class SearchTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             chip.start_time = "20 minutes"
 
+        chip = search.DateRangeChip()
         date_string = "2020-12-12T12:12:12,2020-12-12T12:12:12"
         chip.from_dict({"value": date_string})
 
@@ -178,11 +180,21 @@ class SearchTest(unittest.TestCase):
         self.assertEqual(chip_micro.start_time, "2020-12-12T12:12:12")
         self.assertEqual(chip_micro.end_time, "2020-12-12T12:12:12")
 
-        chip = search.DateRangeChip()
-        with self.assertRaises(ValueError):
-            chip = search.DateRangeChip()
-            date_string = "2020-12-12T12:12:12.001,2020-12-12T12:12:12.001"
-            chip.from_dict({"value": date_string})
+        chip_micro = search.DateRangeChip()
+        date_string = "2020-12-12T12:12:12.001,2020-12-12T12:12:12.002"
+        chip_micro.from_dict({"value": date_string})
+
+        expected_chip = {
+            "active": True,
+            "field": "",
+            "type": "datetime_range",
+            "operator": "must",
+            "value": date_string,
+        }
+
+        self.assertEqual(chip_micro.chip, expected_chip)
+        self.assertEqual(chip_micro.start_time, "2020-12-12T12:12:12.001")
+        self.assertEqual(chip_micro.end_time, "2020-12-12T12:12:12.002")
 
     def test_from_date_interval(self):
         """Test from_date method in DateIntervalChip."""
@@ -251,6 +263,19 @@ class SearchTest(unittest.TestCase):
         self.assertEqual(chip.chip, expected_chip)
 
         date_string = "2021-11-30T12:12:12.001Z -1m +1m"
-        with self.assertRaises(ValueError):
-            chip = search.DateIntervalChip()
-            chip.from_dict({"value": date_string})
+        chip = search.DateIntervalChip()
+        chip.from_dict({"value": date_string})
+
+        expected_chip = {
+            "active": True,
+            "field": "",
+            "type": "datetime_interval",
+            "operator": "must",
+            "value": "2021-11-30T12:12:12.001 -1m +1m",
+        }
+
+        self.assertEqual(chip.date, "2021-11-30T12:12:12.001")
+        self.assertEqual(chip.before, 1)
+        self.assertEqual(chip.after, 1)
+        self.assertEqual(chip.unit, "m")
+        self.assertEqual(chip.chip, expected_chip)

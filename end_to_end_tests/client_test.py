@@ -199,7 +199,6 @@ level: high
             {
                 "_id": old_event["_id"],
                 "_index": old_event["_index"],
-                "_type": old_event["_type"],
                 "attributes": [{"attr_name": "foo", "attr_value": "bar"}],
             }
         ]
@@ -252,7 +251,6 @@ level: high
             {
                 "_id": old_event["_id"],
                 "_index": old_event["_index"],
-                "_type": old_event["_type"],
                 "attributes": [
                     {"attr_name": "existing_attr", "attr_value": "new_value"},
                     {"attr_name": "message", "attr_value": "new message"},

@@ -75,7 +75,7 @@ class YetiIndicators(interface.BaseAnalyzer):
             self.intel[item["id"]] = item
 
     def mark_event(self, indicator, event, neighbors):
-        """Anotate an event with data from indicators and neighbors.
+        """Annotate an event with data from indicators and neighbors.
 
         Tags with skull emoji, adds a comment to the event.
         """
