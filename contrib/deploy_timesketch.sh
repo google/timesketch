@@ -148,7 +148,7 @@ else
   echo "https://github.com/google/timesketch/blob/master/docs/Installation.md"
   echo
   echo
-  exit 1
+  exit
 fi
 
 read -p "Would you like to create a new timesketch user? [Y/n] (default:no)" CREATE_USER
