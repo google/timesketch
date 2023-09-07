@@ -68,7 +68,7 @@ class DomainSketchPlugin(interface.BaseAnalyzer):
         # Exit early if there are no domains in the data set to analyze.
         if not domain_counter:
             self.output.result_status = "SUCCESS"
-            self.output.result_priority = "HIGH"
+            self.output.result_priority = "NOTE"
             self.output.result_summary = "No domains to analyze."
             return str(self.output)
 
