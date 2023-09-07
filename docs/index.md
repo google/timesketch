@@ -12,7 +12,7 @@ hide:
 
 [Get Started](/guides/getting-started/){ .md-button .md-button--primary }
 
-<br> 
+<br>
 <img style="border-radius:12px;border:1px solid #555" width="1000" alt="Timesketch screenshot" src="https://user-images.githubusercontent.com/316362/207431107-0f5321fa-6170-47bd-9325-7d93d95dd857.png">
 
 [![Version](https://img.shields.io/pypi/v/timesketch?label=timesketch&style=plastic)](https://pypi.python.org/pypi/timesketch)
