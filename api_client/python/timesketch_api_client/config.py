@@ -21,8 +21,8 @@ from typing import Text
 import configparser
 import logging
 import os
-import requests
 import sys
+import requests
 
 from google.auth.transport import requests as auth_requests
 
