@@ -1313,7 +1313,7 @@ class AnalyzerOutput:
                                 {"type": "string"},
                             ],
                         },
-                        "created_tags": {
+                        "created_attributes": {
                             "type": "array",
                             "items": [
                                 {"type": "string"},
