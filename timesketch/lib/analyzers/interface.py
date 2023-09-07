@@ -1333,11 +1333,9 @@ class AnalyzerOutput:
 
     def add_reference(self, reference):
         """Adds a reference to the list of references."""
-        if type(reference) is not list:
+        if not isinstance(reference, list):
             reference = [reference]
-        self.references = list(
-            set().union(self.references, reference)
-        )
+        self.references = list(set().union(self.references, reference))
 
     def set_meta_timesketch_instance(self, timesketch_instance):
         """Sets the timesketch instance URL."""
@@ -1353,7 +1351,7 @@ class AnalyzerOutput:
 
     def add_meta_item(self, key, item):
         """Handles the addition of platform_meta_data items."""
-        if type(item) is not list:
+        if not isinstance(item, list):
             item = [item]
         if key in self.platform_meta_data:
             self.platform_meta_data[key] = list(
