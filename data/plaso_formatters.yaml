@@ -1,7 +1,6 @@
 # Plaso uses formatter definitions to format events into a human readable format.
 # The formatter definitions are defined in YAML and loaded by Plaso at runtime.
 # This file overrides or extend the default formatter definitions.
-# For more information about the formatter definitions see: https://plaso.readthedocs.io/en/latest/sources/user/Windows-Event-Log-Files.html#event-log-message-formatters
 
 # Windows Event Log (EVTX) formatter definition.
 type: 'conditional'
