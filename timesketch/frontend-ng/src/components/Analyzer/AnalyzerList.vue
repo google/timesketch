@@ -46,7 +46,7 @@ limitations under the License.
                     icon
                     color="primary"
                     :disabled="(timelineSelection.length > 0) ? false : true"
-                    @click="runAnalyzer(analyzer.analyzerName)"
+                    @click="!showRerunIcon(analyzer.analyzerName) ? runAnalyzer(analyzer.analyzerName) : handleReRunDialog(analyzer.analyzerName, analyzer.info.display_name)"
                   >
                     <v-icon v-if="!showRerunIcon(analyzer.analyzerName)">
                       mdi-play-circle-outline
@@ -64,6 +64,36 @@ limitations under the License.
           <td>{{ analyzer.info.description }}</td>
         </tr>
       </tbody>
+      <v-dialog v-model="reRunDialog" max-width="515" :retain-focus="false">
+        <v-card>
+          <v-card-title>
+            <v-icon large>mdi-replay</v-icon>
+            <span class="text-h6 ml-2">Run "{{ reRunDialogAnalyzerDisplayName }}" again?</span>
+          </v-card-title>
+          <v-card-text>
+            <div class="mb-2">
+              The "{{ reRunDialogAnalyzerDisplayName }}" analyzer was already run on the selected timelines. Do you really want to run it again?
+            </div>
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn
+              color="primary"
+              text
+              @click="reRunDialog = false"
+            >
+              cancel
+            </v-btn>
+            <v-btn
+              color="primary"
+              text
+              @click="runAnalyzer(reRunDialogAnalyzerName, true); reRunDialog = false"
+            >
+              continue
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
     </template>
   </v-simple-table>
 </template>
@@ -71,7 +101,7 @@ limitations under the License.
 <script>
 import ApiClient from '../../utils/RestApiClient'
 
-const LOADING_INDICATOR_DURATION_MS = 3000;
+const LOADING_INDICATOR_DURATION_MS = 3000
 
 export default {
   props: ['timelineSelection'],
@@ -83,7 +113,10 @@ export default {
        * Analyzers that should show loading indicators. Those are triggered
        * analyzers for a duration of LOADING_INDICATOR_DURATION_MS.
        */
-      loadingAnalyzers: []
+      loadingAnalyzers: [],
+      reRunDialog: false,
+      reRunDialogAnalyzerName: '',
+      reRunDialogAnalyzerDisplayName: '',
     }
   },
   computed: {
@@ -117,7 +150,7 @@ export default {
 
       this.triggered.forEach(analyzer => analyzerSet.has(analyzer) ? null : analyzerSet.add(analyzer))
       this.resetTriggeredAnalyzers()
-      
+
       return analyzerSet
 
     },
@@ -145,6 +178,11 @@ export default {
     }
   },
   methods: {
+    handleReRunDialog(analyzerName, analyzerDisplayName) {
+      this.reRunDialogAnalyzerName = analyzerName
+      this.reRunDialogAnalyzerDisplayName = analyzerDisplayName
+      this.reRunDialog = true
+    },
     isLoading(analyzerName) {
       return this.loading.includes(analyzerName)
     },
@@ -155,7 +193,7 @@ export default {
       const timelinesSet = this.activeAnalyzerTimelinesMap.get(analyzerName)
       return timelinesSet ? timelinesSet.size : 0
     },
-    runAnalyzer(analyzerName) {
+    runAnalyzer(analyzerName, force = false) {
       this.triggeredAnalyzers = [...this.triggeredAnalyzers, analyzerName]
       this.loadingAnalyzers = [...this.loadingAnalyzers, analyzerName]
 
@@ -167,7 +205,7 @@ export default {
       // The loading indicator should stay at least LOADING_INDICATOR_DURATION_MS.
       const analyzerTriggeredTime = new Date().getTime()
 
-      ApiClient.runAnalyzers(this.sketch.id,  this.timelineSelection, [analyzerName])
+      ApiClient.runAnalyzers(this.sketch.id,  this.timelineSelection, [analyzerName], force)
         .then((response) => {
           let analyses = []
           let sessionIds = []
