@@ -67,7 +67,10 @@ class DomainSketchPlugin(interface.BaseAnalyzer):
 
         # Exit early if there are no domains in the data set to analyze.
         if not domain_counter:
-            return "No domains to analyze."
+            self.output.result_status = "SUCCESS"
+            self.output.result_priority = "HIGH"
+            self.output.result_summary = "No domains to analyze."
+            return str(self.output)
 
         domain_count_array = numpy.array(list(domain_counter.values()))
         try:
@@ -118,10 +121,13 @@ class DomainSketchPlugin(interface.BaseAnalyzer):
                 # Commit the event to the datastore.
                 event.commit()
 
-        return (
-            "{0:d} domains discovered ({1:d} TLDs) and {2:d} known "
-            "CDN networks found."
-        ).format(len(domains), len(tld_counter), len(cdn_counter))
+        self.output.result_status = "SUCCESS"
+        self.output.result_priority = "NOTE"
+        self.output.result_summary = (
+                "{0:d} domains discovered ({1:d} TLDs) and {2:d} known "
+                "CDN networks found."
+            ).format(len(domains), len(tld_counter), len(cdn_counter))
+        return str(self.output)
 
 
 manager.AnalysisManager.register_analyzer(DomainSketchPlugin)

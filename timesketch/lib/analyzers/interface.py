@@ -253,15 +253,7 @@ class Event(object):
 
         # Add new tags to the analyzer output object
         if self._analyzer:
-            if "created_tags" in self._analyzer.output.platform_meta_data:
-                existing_created_tags = self._analyzer.output.platform_meta_data[
-                    "created_tags"
-                ]
-                self._analyzer.output.platform_meta_data["created_tags"] = list(
-                    set().union(existing_created_tags, tags)
-                )
-            else:
-                self._analyzer.output.platform_meta_data["created_tags"] = [tags]
+            self._analyzer.output.add_created_tags(new_tags)
 
     def add_emojis(self, emojis):
         """Add emojis to the Event.
@@ -527,15 +519,7 @@ class Sketch(object):
 
         # Add new view to the list of saved_views in the analyzer output object
         if self._analyzer:
-            if "saved_views" in self._analyzer.output.platform_meta_data:
-                existing_saved_views = self._analyzer.output.platform_meta_data[
-                    "saved_views"
-                ]
-                self._analyzer.output.platform_meta_data["saved_views"] = list(
-                    set().union(existing_saved_views, [view.id])
-                )
-            else:
-                self._analyzer.output.platform_meta_data["saved_views"] = [view.id]
+            self._analyzer.output.add_saved_view(view.id)
 
         return view
 
@@ -616,15 +600,7 @@ class Sketch(object):
 
         # Add new story to the analyzer output object.
         if self._analyzer:
-            if "saved_stories" in self._analyzer.output.platform_meta_data:
-                existing_saved_stories = self._analyzer.output.platform_meta_data[
-                    "saved_stories"
-                ]
-                self._analyzer.output.platform_meta_data["saved_stories"] = list(
-                    set().union(existing_saved_stories, [story.id])
-                )
-            else:
-                self._analyzer.output.platform_meta_data["saved_stories"] = [story.id]
+            self._analyzer.output.add_saved_story(story.id)
 
         return Story(story)
 
@@ -1354,6 +1330,57 @@ class AnalyzerOutput:
             return True
         except (ValidationError, SchemaError) as e:
             raise AnalyzerOutputException(f"json schema error: {e}") from e
+
+    def add_reference(self, reference):
+        """Adds a reference to the list of references."""
+        if type(reference) is not list:
+            reference = [reference]
+        self.references = list(
+            set().union(self.references, reference)
+        )
+
+    def set_meta_timesketch_instance(self, timesketch_instance):
+        """Sets the timesketch instance URL."""
+        self.platform_meta_data["timesketch_instance"] = timesketch_instance
+
+    def set_meta_sketch_id(self, sketch_id):
+        """Sets the sketch ID."""
+        self.platform_meta_data["sketch_id"] = sketch_id
+
+    def set_meta_timeline_id(self, timeline_id):
+        """Sets the timeline ID."""
+        self.platform_meta_data["timeline_id"] = timeline_id
+
+    def add_meta_item(self, key, item):
+        """Handles the addition of platform_meta_data items."""
+        if type(item) is not list:
+            item = [item]
+        if key in self.platform_meta_data:
+            self.platform_meta_data[key] = list(
+                set().union(self.platform_meta_data[key], item)
+            )
+        else:
+            self.platform_meta_data[key] = item
+
+    def add_saved_view(self, view_id):
+        """Adds a view ID to the list of saved_views."""
+        self.add_meta_item("saved_views", view_id)
+
+    def add_saved_story(self, story_id):
+        """Adds a story ID to the list of saved_stories."""
+        self.add_meta_item("saved_stories", story_id)
+
+    def add_saved_graph(self, graph_id):
+        """Adds a graph ID to the list of saved_graphs."""
+        self.add_meta_item("saved_graphs", graph_id)
+
+    def add_saved_aggregation(self, aggregation_id):
+        """Adds an aggregation ID to the list of saved_aggregations."""
+        self.add_meta_item("saved_aggregations", aggregation_id)
+
+    def add_created_tags(self, tags):
+        """Adds a tags to the list of created_tags."""
+        self.add_meta_item("created_tags", tags)
 
     def to_json(self) -> dict:
         """Returns JSON output of AnalyzerOutput. Filters out empty values."""
