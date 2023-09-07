@@ -24,6 +24,7 @@ import re
 import codecs
 import io
 import json
+from hashlib import sha1
 import six
 import yaml
 
@@ -35,7 +36,6 @@ from celery import chain
 from celery import group
 from celery import signals
 from sqlalchemy import create_engine
-from hashlib import sha1
 
 # To be able to determine plaso's version.
 try:
@@ -402,6 +402,8 @@ def build_sketch_analysis_pipeline(
         if not kwargs_list:
             kwargs_list = [base_kwargs]
 
+        # Create a hash of the analyzer arguments to compare with later analyzer
+        # executions if the analyzer arguments / config changed.
         kwargs_list_hash = sha1(
             json.dumps(kwargs_list, sort_keys=True).encode("utf-8")
         ).hexdigest()
@@ -434,7 +436,7 @@ def build_sketch_analysis_pipeline(
                 sketch=sketch,
                 timeline=timeline,
             )
-            analysis.add_attribute(name='kwargs_hash', value=kwargs_list_hash)
+            analysis.add_attribute(name="kwargs_hash", value=kwargs_list_hash)
             analysis.set_status("PENDING")
             analysis_session.analyses.append(analysis)
             db_session.add(analysis)
