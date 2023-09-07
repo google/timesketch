@@ -199,6 +199,10 @@ class Event(object):
         Args:
             attributes: Dictionary with new or updated values to add.
         """
+        # TODO: add attributes to the analyzer output object!
+        if self._analyzer:
+            self._analyzer.output.add_created_attributes(list(attributes.keys()))
+
         self._update(attributes)
 
     def add_label(self, label, toggle=False):
@@ -1216,6 +1220,8 @@ class AnalyzerOutput:
             saved_aggregations (List[int]): [Optional] Aggregations generated
                 by the analyzer.
             created_tags (List[str]): [Optional] Tags created by the analyzer.
+            created_attributes (List[str]): [Optional] Attributes created by
+                the analyzer.
     """
 
     def __init__(
@@ -1245,6 +1251,7 @@ class AnalyzerOutput:
             "saved_graphs": [],
             "saved_aggregations": [],
             "created_tags": [],
+            "created_attributes": [],
         }
 
     def validate(self):
@@ -1298,6 +1305,12 @@ class AnalyzerOutput:
                             "type": "array",
                             "items": [
                                 {"type": "integer"},
+                            ],
+                        },
+                        "created_tags": {
+                            "type": "array",
+                            "items": [
+                                {"type": "string"},
                             ],
                         },
                         "created_tags": {
@@ -1380,6 +1393,10 @@ class AnalyzerOutput:
         """Adds a tags to the list of created_tags."""
         self.add_meta_item("created_tags", tags)
 
+    def add_created_attributes(self, attributes):
+        """Adds a attributes to the list of created_attributes."""
+        self.add_meta_item("created_attributes", attributes)
+
     def to_json(self) -> dict:
         """Returns JSON output of AnalyzerOutput. Filters out empty values."""
         # add required fields
@@ -1431,6 +1448,11 @@ class AnalyzerOutput:
             output["platform_meta_data"]["created_tags"] = self.platform_meta_data[
                 "created_tags"
             ]
+
+        if self.platform_meta_data["created_attributes"]:
+            output["platform_meta_data"][
+                "created_attributes"
+            ] = self.platform_meta_data["created_attributes"]
 
         return output
 
