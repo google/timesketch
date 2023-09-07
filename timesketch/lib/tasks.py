@@ -744,6 +744,10 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
     if opensearch_flush_interval:
         cmd.extend(["--flush_interval", str(opensearch_flush_interval)])
 
+    plaso_formatters_file_path = current_app.config.get("PLASO_FORMATTERS", "")
+    if plaso_formatters_file_path:
+        cmd.extend(["--custom_formatter_definitions", plaso_formatters_file_path])
+
     # Run psort.py
     try:
         subprocess.check_output(cmd, stderr=subprocess.STDOUT, encoding="utf-8")
