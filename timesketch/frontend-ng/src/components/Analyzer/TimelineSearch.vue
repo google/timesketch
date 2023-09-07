@@ -75,7 +75,7 @@ export default {
     allTimelines() {
       // Sort alphabetically based on timeline name.
       const timelines = this.sketch.timelines.filter(
-        tl => tl.status[0].status !== 'fail'
+        tl => tl.status[0].status === 'ready'
       );
       timelines.sort((a, b) => a.name.localeCompare(b.name))
       return timelines;

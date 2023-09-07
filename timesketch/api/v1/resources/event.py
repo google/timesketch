@@ -338,7 +338,7 @@ class EventResource(resources.ResourceMixin, Resource):
 class EventAddAttributeResource(resources.ResourceMixin, Resource):
     """Resource to add attributes to events."""
 
-    EVENT_FIELDS = ["_id", "_type", "_index", "attributes"]
+    EVENT_FIELDS = ["_id", "_index", "attributes"]
     ATTRIBUTE_FIELDS = ["attr_name", "attr_value"]
     RESERVED_ATTRIBUTE_NAMES = [
         "datetime",
@@ -591,7 +591,7 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
         events = form.get("events", [])
         event_df = pd.DataFrame(events)
 
-        for field in ["_id", "_type", "_index"]:
+        for field in ["_id", "_index"]:
             if field not in event_df:
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
@@ -606,7 +606,10 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
                 )
 
         # Remove any potential extra fields from the events.
-        event_df = event_df[["_id", "_type", "_index"]]
+        if "_type" in event_df:
+            event_df = event_df[["_id", "_type", "_index"]]
+        else:
+            event_df = event_df[["_id", "_index"]]
 
         tag_df = pd.DataFrame()
 
