@@ -214,7 +214,6 @@ def query_results_to_dataframe(result, sketch):
         line = event["_source"]
         line.setdefault("label", [])
         line["_id"] = event["_id"]
-        line["_type"] = event["_type"]
         line["_index"] = event["_index"]
         if "tag" in line:
             if isinstance(line["tag"], (list, tuple)):
