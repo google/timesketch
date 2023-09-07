@@ -152,9 +152,14 @@ limitations under the License.
                 </v-card>
               </v-dialog>
 
-              <v-btn icon @click="exportSearchResult()">
+              <v-tooltip top open-delay="500">
+                <template v-slot:activator="{ on }">
+                  <v-btn v-on="on" icon @click="exportSearchResult()">
                 <v-icon>mdi-download</v-icon>
-              </v-btn>
+                  </v-btn>
+                </template>
+                <span>Download current view as csv</span>
+              </v-tooltip>
 
               <v-menu v-if="!disableSettings" offset-y :close-on-content-click="false">
                 <template v-slot:activator="{ on, attrs }">
