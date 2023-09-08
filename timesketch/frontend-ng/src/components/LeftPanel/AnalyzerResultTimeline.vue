@@ -225,9 +225,21 @@ limitations under the License.
                   color="lightgrey"
                   class="mr-1 mb-1"
                   small
-                  @click="searchForTag(tag)"
+                  @click="applyFilterChip(term=tag, termField='tag', termType='term', timelineId=timeline.id)"
                 >
                   {{ tag }}
+                </v-chip>
+              </td>
+              <td style="border: none" v-if="key === 'Attributes'">
+                <v-chip
+                  v-for="(attribute, index) in item"
+                  :key="index"
+                  color="lightgrey"
+                  class="mr-1 mb-1"
+                  small
+                  @click="applySearch(searchQuery=`_exists_:${attribute}`, timelineId=timeline.id)"
+                >
+                  {{ attribute }}
                 </v-chip>
               </td>
             </tr>
@@ -305,6 +317,9 @@ export default {
     }
   },
   computed: {
+    sketch() {
+      return this.$store.state.sketch
+    },
     meta() {
       return this.$store.state.meta
     },
@@ -380,6 +395,9 @@ export default {
         if (this.verboseAnalyzerOutput.platform_meta_data.created_tags !== undefined) {
           metaData['Tags'] = this.verboseAnalyzerOutput.platform_meta_data.created_tags
         }
+        if (this.verboseAnalyzerOutput.platform_meta_data.created_attributes !== undefined) {
+          metaData['Attributes'] = this.verboseAnalyzerOutput.platform_meta_data.created_attributes
+        }
         return metaData
       }
       return metaData
@@ -408,6 +426,9 @@ export default {
     },
   },
   methods: {
+    getTimelineById(timelineId) {
+      return this.sketch.timelines.find((timeline) => timeline.id === timelineId)
+    },
     setView: function (savedSearch) {
       EventBus.$emit('setActiveView', savedSearch)
     },
@@ -417,10 +438,10 @@ export default {
     setSavedGraph(graphId) {
       EventBus.$emit('setSavedGraph', graphId)
     },
-    searchForTag(tag) {
+    applySearch(searchQuery='', timelineId=undefined) {
       let eventData = {}
       eventData.doSearch = true
-      eventData.queryString = 'tag:' + '"' + tag + '"'
+      eventData.queryString = searchQuery
       eventData.queryFilter = {
         from: 0,
         terminate_after: 40,
@@ -429,6 +450,24 @@ export default {
         order: 'asc',
         chips: [],
       }
+      EventBus.$emit('setSelectedTimelines', [this.getTimelineById(timelineId)])
+      EventBus.$emit('setQueryAndFilter', eventData)
+    },
+    // TODO(jkppr): Do I want to append the filter or replace the filters?
+    // Sideeffect: This will currently append, so when click two tags by two different analyzers, it appends which does not work.
+    applyFilterChip(term, termField='', termType='label', timelineId=undefined) {
+      let eventData = {}
+      eventData.doSearch = true
+      eventData.queryString = '*'
+      let chip = {
+        field: termField,
+        value: term,
+        type: termType,
+        operator: 'must',
+        active: true,
+      }
+      eventData.chip = chip
+      EventBus.$emit('setSelectedTimelines', [this.getTimelineById(timelineId)])
       EventBus.$emit('setQueryAndFilter', eventData)
     },
     contextLinkRedirect(item) {
