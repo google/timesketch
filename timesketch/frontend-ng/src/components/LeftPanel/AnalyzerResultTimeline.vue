@@ -426,9 +426,6 @@ export default {
     },
   },
   methods: {
-    getTimelineById(timelineId) {
-      return this.sketch.timelines.find((timeline) => timeline.id === timelineId)
-    },
     setView: function (savedSearch) {
       EventBus.$emit('setActiveView', savedSearch)
     },
@@ -446,19 +443,24 @@ export default {
         from: 0,
         terminate_after: 40,
         size: 40,
-        indices: '_all',
+        indices: [timelineId],
         order: 'asc',
         chips: [],
       }
-      EventBus.$emit('setSelectedTimelines', [this.getTimelineById(timelineId)])
       EventBus.$emit('setQueryAndFilter', eventData)
     },
-    // TODO(jkppr): Do I want to append the filter or replace the filters?
-    // Sideeffect: This will currently append, so when click two tags by two different analyzers, it appends which does not work.
     applyFilterChip(term, termField='', termType='label', timelineId=undefined) {
       let eventData = {}
       eventData.doSearch = true
       eventData.queryString = '*'
+      eventData.queryFilter = {
+        from: 0,
+        terminate_after: 40,
+        size: 40,
+        indices: [timelineId],
+        order: 'asc',
+        chips: [],
+      }
       let chip = {
         field: termField,
         value: term,
@@ -467,7 +469,6 @@ export default {
         active: true,
       }
       eventData.chip = chip
-      EventBus.$emit('setSelectedTimelines', [this.getTimelineById(timelineId)])
       EventBus.$emit('setQueryAndFilter', eventData)
     },
     contextLinkRedirect(item) {

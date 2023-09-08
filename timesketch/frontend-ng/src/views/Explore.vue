@@ -641,12 +641,10 @@ export default {
     this.$refs.searchInput.focus()
     EventBus.$on('setQueryAndFilter', this.setQueryAndFilter)
     EventBus.$on('setActiveView', this.searchView)
-    EventBus.$on('setSelectedTimelines', this.updateSelectedTimelines)
   },
   beforeDestroy() {
     EventBus.$off('setQueryAndFilter')
     EventBus.$off('setActiveView')
-    EventBus.$off('setSelectedTimelines')
   },
   created: function () {
     let doSearch = false
