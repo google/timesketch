@@ -176,6 +176,7 @@ limitations under the License.
       <v-divider></v-divider>
       <v-tabs-items v-model="leftPanelTab">
         <v-tab-item :transition="false">
+          <ts-timelines-table></ts-timelines-table>
           <ts-saved-searches v-if="meta.views"></ts-saved-searches>
           <ts-data-types></ts-data-types>
           <ts-tags></ts-tags>
@@ -382,6 +383,7 @@ import TsShareCard from '../components/ShareCard'
 import TsRenameSketch from '../components/RenameSketch'
 import TsAnalyzerResults from '../components/LeftPanel/AnalyzerResults.vue'
 import TsEventList from '../components/Explore/EventList'
+import TsTimelinesTable from '../components/LeftPanel/TimelinesTable.vue'
 
 export default {
   props: ['sketchId'],
@@ -399,6 +401,7 @@ export default {
     TsGraphs,
     TsStories,
     TsAnalyzerResults,
+    TsTimelinesTable,
     TsEventList,
   },
   data() {
