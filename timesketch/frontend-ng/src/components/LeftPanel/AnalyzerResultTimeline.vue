@@ -225,7 +225,7 @@ limitations under the License.
                   color="lightgrey"
                   class="mr-1 mb-1"
                   small
-                  @click="applyFilterChip(term=tag, termField='tag', termType='term', timelineId=timeline.id)"
+                  @click="applyFilterChip(tag, 'tag', 'term', timeline.id)"
                 >
                   {{ tag }}
                 </v-chip>
@@ -237,7 +237,7 @@ limitations under the License.
                   color="lightgrey"
                   class="mr-1 mb-1"
                   small
-                  @click="applySearch(searchQuery=`_exists_:${attribute}`, timelineId=timeline.id)"
+                  @click="applySearch(`_exists_:${attribute}`, timeline.id)"
                 >
                   {{ attribute }}
                 </v-chip>
@@ -435,7 +435,7 @@ export default {
     setSavedGraph(graphId) {
       EventBus.$emit('setSavedGraph', graphId)
     },
-    applySearch(searchQuery='', timelineId=undefined) {
+    applySearch(searchQuery='', timelineId="_all") {
       let eventData = {}
       eventData.doSearch = true
       eventData.queryString = searchQuery
@@ -449,7 +449,7 @@ export default {
       }
       EventBus.$emit('setQueryAndFilter', eventData)
     },
-    applyFilterChip(term, termField='', termType='label', timelineId=undefined) {
+    applyFilterChip(term, termField='', termType='label', timelineId="_all") {
       let eventData = {}
       eventData.doSearch = true
       eventData.queryString = '*'
