@@ -643,6 +643,7 @@ class TestHashRLookup(BaseTest):
                     "sketch_id": 1,
                     "timeline_id": 1,
                     "created_tags": ["zerobyte-file", "known-hash"],
+                    "created_attributes": ["hashR_sample_sources"],
                 },
                 "result_markdown": "Found a total of 13 events that contain a sha256 hash value\n* 5 / 11 unique hashes known in hashR\n* 5 events tagged\n* 1 entries were tagged as zerobyte files\n* 2 events raised an error",
             }
@@ -661,6 +662,7 @@ class TestHashRLookup(BaseTest):
                     "sketch_id": 1,
                     "timeline_id": 1,
                     "created_tags": ["known-hash", "zerobyte-file"],
+                    "created_attributes": ["hashR_sample_sources"],
                 },
                 "result_markdown": "Found a total of 13 events that contain a sha256 hash value\n* 5 / 11 unique hashes known in hashR\n* 5 events tagged\n* 1 entries were tagged as zerobyte files\n* 2 events raised an error",
             }
