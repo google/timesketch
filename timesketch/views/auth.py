@@ -104,6 +104,9 @@ def login():
                 email = decoded_jwt.get("email")
                 if email:
                     user = User.get_or_create(username=email, name=email)
+                    group = Group.get_or_create(name="GOOGLE-IAP")
+                    user.groups.append(group)
+                    db_session.commit()
                     login_user(user)
 
             except (ImportError, NameError, UnboundLocalError):
