@@ -236,6 +236,7 @@ limitations under the License.
             <v-chip outlined close close-icon="mdi-close" @click:close="removeChip(chip)">
               <v-icon v-if="chip.value === '__ts_star'" left small color="amber">mdi-star</v-icon>
               <v-icon v-if="chip.value === '__ts_comment'" left small>mdi-comment-multiple-outline</v-icon>
+              <v-icon v-if="chip.field === 'tag'" left small>mdi-tag-outline</v-icon>
               {{ chip.value | formatLabelText }}
             </v-chip>
             <v-btn v-if="index + 1 < timeFilterChips.length" icon small style="margin-top: 2px" class="mr-2">AND</v-btn>
