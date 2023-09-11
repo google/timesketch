@@ -236,7 +236,9 @@ limitations under the License.
             <v-chip outlined close close-icon="mdi-close" @click:close="removeChip(chip)">
               <v-icon v-if="chip.value === '__ts_star'" left small color="amber">mdi-star</v-icon>
               <v-icon v-if="chip.value === '__ts_comment'" left small>mdi-comment-multiple-outline</v-icon>
-              {{ chip.value | formatLabelText }}
+              <v-icon v-if="chip.operator === 'must' && chip.type === 'term'" left small>mdi-plus-circle-outline</v-icon>
+              <v-icon v-if="chip.operator === 'must_not' && chip.type === 'term'" left small>mdi-minus-circle-outline</v-icon>
+              {{ (chip.field ? `${chip.field} : ${chip.value}` : chip.value) | formatLabelText }}
             </v-chip>
             <v-btn v-if="index + 1 < timeFilterChips.length" icon small style="margin-top: 2px" class="mr-2">AND</v-btn>
           </span>
@@ -367,7 +369,9 @@ export default {
       if (this.$route.name !== 'Explore') {
         this.$router.push({ name: 'Explore', params: { sketchId: this.sketch.id } })
       }
-      this.currentQueryString = searchEvent.queryString
+      if (searchEvent.queryString) {
+        this.currentQueryString = searchEvent.queryString
+      }
 
       // Preserve user defined filter instead of resetting, if it exist.
       if (!searchEvent.queryFilter) {
