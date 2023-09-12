@@ -236,7 +236,9 @@ limitations under the License.
             <v-chip outlined close close-icon="mdi-close" @click:close="removeChip(chip)">
               <v-icon v-if="chip.value === '__ts_star'" left small color="amber">mdi-star</v-icon>
               <v-icon v-if="chip.value === '__ts_comment'" left small>mdi-comment-multiple-outline</v-icon>
-              <v-icon v-if="chip.field === 'tag'" left small>mdi-tag-outline</v-icon>
+              <v-icon v-if="chip.field === 'tag' && !getQuickTag(chip.value)" left small>mdi-tag-outline</v-icon>
+              <v-icon v-if="getQuickTag(chip.value)" left small :color="getQuickTag(chip.value).color"
+                >{{ getQuickTag(chip.value).label }}</v-icon>
               {{ chip.value | formatLabelText }}
             </v-chip>
             <v-btn v-if="index + 1 < timeFilterChips.length" icon small style="margin-top: 2px" class="mr-2">AND</v-btn>
@@ -326,6 +328,12 @@ export default {
         x: 0,
         y: 0,
       },
+      // TODO: Refactor this into a configurable option
+      quickTags: [
+        { tag: 'bad', color: 'red', textColor: 'white', label: 'mdi-alert-circle-outline' },
+        { tag: 'suspicious', color: 'orange', textColor: 'white', label: 'mdi-help-circle-outline' },
+        { tag: 'good', color: 'green', textColor: 'white', label: 'mdi-check-circle-outline' },
+      ],
     }
   },
   computed: {
@@ -352,6 +360,9 @@ export default {
     },
   },
   methods: {
+    getQuickTag(tag) {
+      return this.quickTags.find((el) => el.tag === tag)
+    },
     updateCountPerIndex: function (count) {
       this.countPerIndex = count
     },
