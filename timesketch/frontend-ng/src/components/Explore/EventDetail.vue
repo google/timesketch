@@ -75,7 +75,7 @@ limitations under the License.
                           <v-icon>mdi-filter-minus-outline</v-icon>
                         </v-btn>
                       </template>
-                      <span>'exclude' filter</span>
+                      <span>Filter out value</span>
                     </v-tooltip>
 
                     <!-- Copy field name -->
