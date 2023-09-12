@@ -1345,25 +1345,46 @@ class AnalyzerOutput:
             raise AnalyzerOutputException(f"json schema error: {e}") from e
 
     def add_reference(self, reference):
-        """Adds a reference to the list of references."""
+        """Adds a reference to the list of references.
+
+        Args:
+            reference: A reference e.g. URL to add to the list of references.
+        """
         if not isinstance(reference, list):
             reference = [reference]
         self.references = list(set().union(self.references, reference))
 
     def set_meta_timesketch_instance(self, timesketch_instance):
-        """Sets the timesketch instance URL."""
+        """Sets the timesketch instance URL.
+
+        Args:
+            timesketch_instance: The timesketch instance URL.
+        """
         self.platform_meta_data["timesketch_instance"] = timesketch_instance
 
     def set_meta_sketch_id(self, sketch_id):
-        """Sets the sketch ID."""
+        """Sets the sketch ID.
+
+        Args:
+            sketch_id: The sketch ID.
+        """
         self.platform_meta_data["sketch_id"] = sketch_id
 
     def set_meta_timeline_id(self, timeline_id):
-        """Sets the timeline ID."""
+        """Sets the timeline ID.
+
+        Args:
+            timeline_id: The timeline ID.
+        """
         self.platform_meta_data["timeline_id"] = timeline_id
 
     def add_meta_item(self, key, item):
-        """Handles the addition of platform_meta_data items."""
+        """Handles the addition of platform_meta_data items.
+
+        Args:
+            key: The key to add to the platform_meta_data dict.
+            item: The value to add to the platform_meta_data dict.
+        """
         if not isinstance(item, list):
             item = [item]
         if key in self.platform_meta_data:
@@ -1374,27 +1395,51 @@ class AnalyzerOutput:
             self.platform_meta_data[key] = item
 
     def add_saved_view(self, view_id):
-        """Adds a view ID to the list of saved_views."""
+        """Adds a view ID to the list of saved_views.
+
+        Args:
+            view_id: The view ID to add to the list of saved_views.
+        """
         self.add_meta_item("saved_views", view_id)
 
     def add_saved_story(self, story_id):
-        """Adds a story ID to the list of saved_stories."""
+        """Adds a story ID to the list of saved_stories.
+
+        Args:
+            story_id: The story ID to add to the list of saved_stories.
+        """
         self.add_meta_item("saved_stories", story_id)
 
     def add_saved_graph(self, graph_id):
-        """Adds a graph ID to the list of saved_graphs."""
+        """Adds a graph ID to the list of saved_graphs.
+
+        Args:
+            graph_id: The graph ID to add to the list of saved_graphs.
+        """
         self.add_meta_item("saved_graphs", graph_id)
 
     def add_saved_aggregation(self, aggregation_id):
-        """Adds an aggregation ID to the list of saved_aggregations."""
+        """Adds an aggregation ID to the list of saved_aggregations.
+
+        Args:
+            aggregation_id: The aggregation ID to add to the list of saved_aggregations.
+        """
         self.add_meta_item("saved_aggregations", aggregation_id)
 
     def add_created_tags(self, tags):
-        """Adds a tags to the list of created_tags."""
+        """Adds a tags to the list of created_tags.
+
+        Args:
+            tags: The tags to add to the list of created_tags.
+        """
         self.add_meta_item("created_tags", tags)
 
     def add_created_attributes(self, attributes):
-        """Adds a attributes to the list of created_attributes."""
+        """Adds a attributes to the list of created_attributes.
+
+        Args:
+            attributes: The attributes to add to the list of created_attributes.
+        """
         self.add_meta_item("created_attributes", attributes)
 
     def to_json(self) -> dict:
