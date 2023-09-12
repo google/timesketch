@@ -56,7 +56,7 @@ limitations under the License.
                           class="mr-1"
                           v-on="on"
                         >
-                          <v-icon>mdi-plus</v-icon>
+                          <v-icon>mdi-filter-plus-outline</v-icon>
                         </v-btn>
                       </template>
                       <span>'include' filter</span>
@@ -72,7 +72,7 @@ limitations under the License.
                           class="mr-1"
                           v-on="on"
                         >
-                          <v-icon>mdi-minus</v-icon>
+                          <v-icon>mdi-filter-minus-outline</v-icon>
                         </v-btn>
                       </template>
                       <span>'exclude' filter</span>

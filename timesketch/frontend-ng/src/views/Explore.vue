@@ -233,16 +233,23 @@ limitations under the License.
       <div v-if="filterChips.length" class="mt-1">
         <v-chip-group column>
           <span v-for="(chip, index) in filterChips" :key="index + chip.value">
-            <v-chip outlined close close-icon="mdi-close" @click:close="removeChip(chip)">
-              <v-icon v-if="chip.value === '__ts_star'" left small color="amber">mdi-star</v-icon>
-              <v-icon v-if="chip.value === '__ts_comment'" left small>mdi-comment-multiple-outline</v-icon>
-              <v-icon v-if="chip.operator === 'must' && chip.type === 'term'" left small>mdi-plus-circle-outline</v-icon>
-              <v-icon v-if="chip.operator === 'must_not' && chip.type === 'term'" left small>mdi-minus-circle-outline</v-icon>
-              {{ (chip.field ? `${chip.field} : ${chip.value}` : chip.value) | formatLabelText }}
-              <v-icon v-if="getQuickTag(chip.value)" left small :color="getQuickTag(chip.value).color"
-                >{{ getQuickTag(chip.value).label }}</v-icon>
-              {{ chip.value | formatLabelText }}
-            </v-chip>
+            <v-tooltip top :disabled="chip.value.length < 33" open-delay="300">
+              <template v-slot:activator="{ on: onTooltip, attrs }">
+              <v-chip outlined close close-icon="mdi-close" @click:close="removeChip(chip)" v-bind="attrs" v-on="onTooltip">
+                <v-icon v-if="chip.value === '__ts_star'" left small color="amber">mdi-star</v-icon>
+                <v-icon v-if="chip.value === '__ts_comment'" left small>mdi-comment-multiple-outline</v-icon>
+                <v-icon v-if="getQuickTag(chip.value)" left small :color="getQuickTag(chip.value).color"
+                  >{{ getQuickTag(chip.value).label }}</v-icon>
+                <span v-if="chip.operator === 'must_not' && chip.type === 'term'">
+                  <span style="color: red;">NOT </span>{{ (chip.field ? `${chip.field} : ${getTruncatedString(chip.value)}` : getTruncatedString(chip.value)) | formatLabelText }}
+                </span>
+                <span v-else>
+                  {{ (chip.field ? `${chip.field} : ${getTruncatedString(chip.value)}` : getTruncatedString(chip.value)) | formatLabelText }}
+                </span>
+              </v-chip>
+              </template>
+              <span>{{ chip.value }}</span>
+            </v-tooltip>
             <v-btn v-if="index + 1 < timeFilterChips.length" icon small style="margin-top: 2px" class="mr-2">AND</v-btn>
           </span>
         </v-chip-group>
@@ -362,6 +369,12 @@ export default {
     },
   },
   methods: {
+    getTruncatedString(value) {
+      if (value.length > 33) {
+        return value.substring(0, 30) + '...'
+      }
+      return value
+    },
     getQuickTag(tag) {
       return this.quickTags.find((el) => el.tag === tag)
     },
