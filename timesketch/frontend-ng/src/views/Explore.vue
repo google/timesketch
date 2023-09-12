@@ -239,6 +239,9 @@ limitations under the License.
               <v-icon v-if="chip.operator === 'must' && chip.type === 'term'" left small>mdi-plus-circle-outline</v-icon>
               <v-icon v-if="chip.operator === 'must_not' && chip.type === 'term'" left small>mdi-minus-circle-outline</v-icon>
               {{ (chip.field ? `${chip.field} : ${chip.value}` : chip.value) | formatLabelText }}
+              <v-icon v-if="getQuickTag(chip.value)" left small :color="getQuickTag(chip.value).color"
+                >{{ getQuickTag(chip.value).label }}</v-icon>
+              {{ chip.value | formatLabelText }}
             </v-chip>
             <v-btn v-if="index + 1 < timeFilterChips.length" icon small style="margin-top: 2px" class="mr-2">AND</v-btn>
           </span>
@@ -327,6 +330,12 @@ export default {
         x: 0,
         y: 0,
       },
+      // TODO: Refactor this into a configurable option
+      quickTags: [
+        { tag: 'bad', color: 'red', textColor: 'white', label: 'mdi-alert-circle-outline' },
+        { tag: 'suspicious', color: 'orange', textColor: 'white', label: 'mdi-help-circle-outline' },
+        { tag: 'good', color: 'green', textColor: 'white', label: 'mdi-check-circle-outline' },
+      ],
     }
   },
   computed: {
@@ -353,6 +362,9 @@ export default {
     },
   },
   methods: {
+    getQuickTag(tag) {
+      return this.quickTags.find((el) => el.tag === tag)
+    },
     updateCountPerIndex: function (count) {
       this.countPerIndex = count
     },
