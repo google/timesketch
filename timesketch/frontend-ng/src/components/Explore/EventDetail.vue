@@ -59,7 +59,7 @@ limitations under the License.
                           <v-icon>mdi-filter-plus-outline</v-icon>
                         </v-btn>
                       </template>
-                      <span>'include' filter</span>
+                      <span>Filter for value</span>
                     </v-tooltip>
 
                     <!-- Exclude field:value as filter chip -->
