@@ -28,24 +28,76 @@ limitations under the License.
                   @mouseleave="c_key = -1"
                 >
                   <!-- Event field name actions -->
-                  <td v-if="key == c_key" class="text-right">
+                  <td v-if="key == c_key" class="text-right" style="min-width: 105px;">
+                    <!-- Open aggregation dialog for this field -->
+                    <v-tooltip top open-delay="500">
+                      <template v-slot:activator="{ on }">
+                        <v-btn
+                          v-if="!ignoredAggregatorFields.has(key)"
+                          @click.stop="loadAggregation(key, value)"
+                          icon
+                          x-small
+                          class="mr-1"
+                          v-on="on"
+                        >
+                          <v-icon>mdi-chart-bar</v-icon>
+                        </v-btn>
+                      </template>
+                      <span>Aggregation dialog</span>
+                    </v-tooltip>
+
+                    <!-- Include field:value as filter chip -->
+                    <v-tooltip top open-delay="500">
+                      <template v-slot:activator="{ on }">
+                        <v-btn
+                          @click.stop="applyFilterChip(key, value, 'must')"
+                          icon
+                          x-small
+                          class="mr-1"
+                          v-on="on"
+                        >
+                          <v-icon>mdi-filter-plus-outline</v-icon>
+                        </v-btn>
+                      </template>
+                      <span>Filter for value</span>
+                    </v-tooltip>
+
+                    <!-- Exclude field:value as filter chip -->
+                    <v-tooltip top open-delay="500">
+                      <template v-slot:activator="{ on }">
+                        <v-btn
+                          @click.stop="applyFilterChip(key, value, 'must_not')"
+                          icon
+                          x-small
+                          class="mr-1"
+                          v-on="on"
+                        >
+                          <v-icon>mdi-filter-minus-outline</v-icon>
+                        </v-btn>
+                      </template>
+                      <span>Filter out value</span>
+                    </v-tooltip>
+
                     <!-- Copy field name -->
-                    <v-btn
-                      v-if="key == c_key && key != '' && !ignoredAggregatorFields.has(key)"
-                      @click.stop="loadAggregation(key, value)"
-                      icon
-                      x-small
-                      class="mr-1"
-                    >
-                      <v-icon>mdi-chart-bar</v-icon>
-                    </v-btn>
-                    <v-btn icon x-small style="cursor: pointer" @click="copyToClipboard(key)" class="pr-1">
-                      <v-icon small>mdi-content-copy</v-icon>
-                    </v-btn>
+                    <v-tooltip top open-delay="500">
+                      <template v-slot:activator="{ on }">
+                        <v-btn
+                          icon
+                          x-small
+                          style="cursor: pointer"
+                          @click="copyToClipboard(key)"
+                          class="pr-1"
+                          v-on="on"
+                        >
+                          <v-icon small>mdi-content-copy</v-icon>
+                        </v-btn>
+                      </template>
+                      <span>copy field name</span>
+                    </v-tooltip>
                   </td>
 
                   <td v-else>
-                    <div class="px-6"></div>
+                    <div class="px-12"></div>
                   </td>
 
                   <!-- Event field name -->
@@ -157,6 +209,7 @@ limitations under the License.
 </template>
 
 <script>
+import EventBus from '../../main'
 import ApiClient from '../../utils/RestApiClient'
 import TsAggregateDialog from './AggregateDialog.vue'
 import TsFormatXmlString from './FormatXMLString.vue'
@@ -302,6 +355,19 @@ export default {
         this.errorSnackBar('Failed copying to the clipboard!')
         console.error(error)
       }
+    },
+    applyFilterChip(key, value, operator) {
+      let eventData = {}
+      eventData.doSearch = true
+      let chip = {
+        field: key,
+        value: value,
+        type: 'term',
+        operator: operator,
+        active: true,
+      }
+      eventData.chip = chip
+      EventBus.$emit('setQueryAndFilter', eventData)
     },
   },
   created: function () {
