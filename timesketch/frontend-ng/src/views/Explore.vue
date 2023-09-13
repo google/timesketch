@@ -240,8 +240,9 @@ limitations under the License.
                 <v-icon v-if="chip.value === '__ts_comment'" left small>mdi-comment-multiple-outline</v-icon>
                 <v-icon v-if="getQuickTag(chip.value)" left small :color="getQuickTag(chip.value).color"
                   >{{ getQuickTag(chip.value).label }}</v-icon>
-                <span v-if="chip.operator === 'must_not' && chip.type === 'term'">
-                  <span style="color: red;">NOT </span>{{ (chip.field ? `${chip.field} : ${getTruncatedString(chip.value)}` : getTruncatedString(chip.value)) | formatLabelText }}
+                <span v-if="chip.operator === 'must_not'">
+                  <span style="color: red;">NOT </span>
+                  {{ (chip.field ? `${chip.field} : ${getTruncatedString(chip.value)}` : getTruncatedString(chip.value)) | formatLabelText }}
                 </span>
                 <span v-else>
                   {{ (chip.field ? `${chip.field} : ${getTruncatedString(chip.value)}` : getTruncatedString(chip.value)) | formatLabelText }}

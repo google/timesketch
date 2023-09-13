@@ -49,7 +49,7 @@ limitations under the License.
     <div
       v-for="tag in customTags"
       :key="tag.tag"
-      @click="searchForTag(tag.tag)"
+      @click="applyFilterChip(term=tag.tag, termField='tag', termType='term')"
       style="cursor: pointer; font-size: 0.9em"
     >
       <v-row no-gutters class="pa-2 pl-5" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
@@ -98,12 +98,6 @@ export default {
   methods: {
     getQuickTag(tag) {
       return this.quickTags.find((el) => el.tag === tag)
-    },
-    searchForTag(tag) {
-      let eventData = {}
-      eventData.doSearch = true
-      eventData.queryString = 'tag:' + '"' + tag + '"'
-      EventBus.$emit('setQueryAndFilter', eventData)
     },
     applyFilterChip(term, termField='', termType='label') {
       let eventData = {}
