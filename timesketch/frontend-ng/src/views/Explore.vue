@@ -240,12 +240,12 @@ limitations under the License.
                 <v-icon v-if="chip.value === '__ts_comment'" left small>mdi-comment-multiple-outline</v-icon>
                 <v-icon v-if="getQuickTag(chip.value)" left small :color="getQuickTag(chip.value).color"
                   >{{ getQuickTag(chip.value).label }}</v-icon>
-                <span v-if="chip.operator === 'must_not'">
+                <span v-if="chip.operator === 'must_not'" class="filter-chip-truncate">
                   <span style="color: red;">NOT </span>
-                  {{ (chip.field ? `${chip.field} : ${getTruncatedString(chip.value)}` : getTruncatedString(chip.value)) | formatLabelText }}
+                  {{ (chip.field ? `${chip.field} : ${chip.value}` : chip.value) | formatLabelText }}
                 </span>
-                <span v-else>
-                  {{ (chip.field ? `${chip.field} : ${getTruncatedString(chip.value)}` : getTruncatedString(chip.value)) | formatLabelText }}
+                <span v-else class="filter-chip-truncate">
+                  {{ (chip.field ? `${chip.field} : ${chip.value}` : chip.value) | formatLabelText }}
                 </span>
               </v-chip>
               </template>
@@ -370,12 +370,6 @@ export default {
     },
   },
   methods: {
-    getTruncatedString(value) {
-      if (value.length > 33) {
-        return value.substring(0, 30) + '...'
-      }
-      return value
-    },
     getQuickTag(tag) {
       return this.quickTags.find((el) => el.tag === tag)
     },
@@ -747,5 +741,12 @@ export default {
 .no-scrollbars {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+.filter-chip-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 400px;
 }
 </style>
