@@ -15,6 +15,13 @@ limitations under the License.
 -->
 <template>
   <div>
+    <v-dialog v-model="exportDialog" width="700">
+      <v-card flat class="pa-5">
+        <v-progress-circular indeterminate size="20" width="1"></v-progress-circular>
+        <span class="ml-5">Exporting {{ totalHits }} events</span>
+      </v-card>
+    </v-dialog>
+
     <div v-if="!eventList.objects.length && !searchInProgress" class="ml-3">
       <p>
         Your search <span v-if="currentQueryString">"{{ currentQueryString }}"</span> did not match any events.
@@ -144,6 +151,15 @@ limitations under the License.
                   </v-card-actions>
                 </v-card>
               </v-dialog>
+
+              <v-tooltip top open-delay="500">
+                <template v-slot:activator="{ on }">
+                  <v-btn v-on="on" icon @click="exportSearchResult()">
+                <v-icon>mdi-download</v-icon>
+                  </v-btn>
+                </template>
+                <span>Download current view as csv</span>
+              </v-tooltip>
 
               <v-menu v-if="!disableSettings" offset-y :close-on-content-click="false">
                 <template v-slot:activator="{ on, attrs }">
@@ -514,6 +530,7 @@ export default {
         suspicious: { color: 'orange', textColor: 'white', label: 'mdi-help-circle-outline' },
       },
       searchInProgress: false,
+      exportDialog: false,
       currentPage: 1,
       eventList: {
         meta: {},
@@ -826,23 +843,27 @@ export default {
         })
     },
     exportSearchResult: function () {
+      this.exportDialog = true
+      const now = new Date()
+      const exportFileName = 'timesketch_export_' + now.toISOString() + '.zip'
       let formData = {
         query: this.currentQueryString,
         filter: this.currentQueryFilter,
-        file_name: 'export.zip',
+        file_name: exportFileName,
       }
       ApiClient.exportSearchResult(this.sketch.id, formData)
         .then((response) => {
           let fileURL = window.URL.createObjectURL(new Blob([response.data]))
           let fileLink = document.createElement('a')
-          let fileName = 'export.zip'
           fileLink.href = fileURL
-          fileLink.setAttribute('download', fileName)
+          fileLink.setAttribute('download', exportFileName)
           document.body.appendChild(fileLink)
           fileLink.click()
+          this.exportDialog = false
         })
         .catch((e) => {
           console.error(e)
+          this.exportDialog = false
         })
     },
     addChip: function (chip) {

@@ -44,6 +44,7 @@ RUN cp /tmp/timesketch/data/sigma_config.yaml /etc/timesketch/
 RUN cp /tmp/timesketch/data/sigma_rule_status.csv /etc/timesketch/
 RUN cp /tmp/timesketch/data/data_finder.yaml /etc/timesketch/
 RUN cp /tmp/timesketch/data/bigquery_matcher.yaml /etc/timesketch/
+RUN cp /tmp/timesketch/data/plaso_formatters.yaml /etc/timesketch/
 RUN chmod -R go+r /etc/timesketch
 
 # Copy the entrypoint script into the container

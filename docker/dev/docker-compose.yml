@@ -33,7 +33,7 @@ services:
 
   opensearch:
     container_name: opensearch
-    image: opensearchproject/opensearch:1.3.2
+    image: opensearchproject/opensearch:2.9.0
     restart: always
     environment:
       - discovery.type=single-node

@@ -78,7 +78,7 @@ limitations under the License.
               <v-icon small :color="getPriorityColor">mdi-information-outline</v-icon>
             </v-btn>
           </template>
-          <span>Result Priority: {{ verboseAnalyzerOutput.result_priority }}</span>
+          <span>Result Priority: {{ resultPriority }}</span>
         </v-tooltip>
       </div>
       <div v-else>
@@ -125,7 +125,7 @@ limitations under the License.
               </td>
               <td style="border: none">
                 <span>
-                  {{ verboseAnalyzerOutput.result_summary ? verboseAnalyzerOutput.result_summary : 'loading...' }}
+                  {{ resultSummary || 'loading...' }}
                 </span>
               </td>
             </tr>
@@ -135,15 +135,15 @@ limitations under the License.
               </td>
               <td style="border: none">
                 <span>
-                  {{ verboseAnalyzerOutput.result_priority ? verboseAnalyzerOutput.result_priority : 'loading...' }}
+                  {{ resultPriority || 'loading...' }}
                 </span>
               </td>
             </tr>
-            <tr v-if="verboseAnalyzerOutput.references !== undefined">
+            <tr v-if="references !== undefined">
               <td colspan="2" style="border: none">
                 <strong>References:</strong>
                 <ul>
-                  <li v-for="(item, index) in verboseAnalyzerOutput.references" :key="index">
+                  <li v-for="(item, index) in references" :key="index">
                     <a @click="contextLinkRedirect(item)">{{ item }}</a>
                     <v-dialog v-model="redirectWarnDialog" max-width="515" :retain-focus="false">
                       <ts-link-redirect-warning
@@ -170,7 +170,7 @@ limitations under the License.
               </td>
               <td style="border: none">
                 <span>
-                  {{ verboseAnalyzerOutput.result_status ? verboseAnalyzerOutput.result_status : 'loading...' }}
+                  {{ resultStatus || 'loading...' }}
                 </span>
               </td>
             </tr>
@@ -225,9 +225,21 @@ limitations under the License.
                   color="lightgrey"
                   class="mr-1 mb-1"
                   small
-                  @click="searchForTag(tag)"
+                  @click="applyFilterChip(tag, 'tag', 'term', timeline.id)"
                 >
                   {{ tag }}
+                </v-chip>
+              </td>
+              <td style="border: none" v-if="key === 'Attributes'">
+                <v-chip
+                  v-for="(attribute, index) in item"
+                  :key="index"
+                  color="lightgrey"
+                  class="mr-1 mb-1"
+                  small
+                  @click="applySearch(`_exists_:${attribute}`, timeline.id)"
+                >
+                  {{ attribute }}
                 </v-chip>
               </td>
             </tr>
@@ -305,6 +317,9 @@ export default {
     }
   },
   computed: {
+    sketch() {
+      return this.$store.state.sketch
+    },
     meta() {
       return this.$store.state.meta
     },
@@ -316,9 +331,24 @@ export default {
     },
     verboseAnalyzerOutput: function () {
       if (this.checkAnalyzerOutput) {
-        return JSON.parse(this.timeline.verdict)
+        // this can return null
+        const parsed = JSON.parse(this.timeline.verdict)
+        // normalize null to undefined
+        return parsed == null ? undefined : parsed;
       }
       return undefined
+    },
+    resultSummary: function() {
+      return this.verboseAnalyzerOutput && this.verboseAnalyzerOutput.result_summary
+    },
+    resultPriority: function() {
+      return this.verboseAnalyzerOutput && this.verboseAnalyzerOutput.result_priority
+    },
+    references: function() {
+      return this.verboseAnalyzerOutput && this.verboseAnalyzerOutput.references
+    },
+    resultStatus: function() {
+      return this.verboseAnalyzerOutput && this.verboseAnalyzerOutput.result_status
     },
     getAnalyzerOutputMetaData: function () {
       let metaData = {}
@@ -365,6 +395,9 @@ export default {
         if (this.verboseAnalyzerOutput.platform_meta_data.created_tags !== undefined) {
           metaData['Tags'] = this.verboseAnalyzerOutput.platform_meta_data.created_tags
         }
+        if (this.verboseAnalyzerOutput.platform_meta_data.created_attributes !== undefined) {
+          metaData['Attributes'] = this.verboseAnalyzerOutput.platform_meta_data.created_attributes
+        }
         return metaData
       }
       return metaData
@@ -402,18 +435,40 @@ export default {
     setSavedGraph(graphId) {
       EventBus.$emit('setSavedGraph', graphId)
     },
-    searchForTag(tag) {
+    applySearch(searchQuery='', timelineId="_all") {
       let eventData = {}
       eventData.doSearch = true
-      eventData.queryString = 'tag:' + '"' + tag + '"'
+      eventData.queryString = searchQuery
       eventData.queryFilter = {
         from: 0,
         terminate_after: 40,
         size: 40,
-        indices: '_all',
+        indices: [timelineId],
         order: 'asc',
         chips: [],
       }
+      EventBus.$emit('setQueryAndFilter', eventData)
+    },
+    applyFilterChip(term, termField='', termType='label', timelineId="_all") {
+      let eventData = {}
+      eventData.doSearch = true
+      eventData.queryString = '*'
+      eventData.queryFilter = {
+        from: 0,
+        terminate_after: 40,
+        size: 40,
+        indices: [timelineId],
+        order: 'asc',
+        chips: [],
+      }
+      let chip = {
+        field: termField,
+        value: term,
+        type: termType,
+        operator: 'must',
+        active: true,
+      }
+      eventData.chip = chip
       EventBus.$emit('setQueryAndFilter', eventData)
     },
     contextLinkRedirect(item) {

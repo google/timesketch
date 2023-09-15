@@ -86,18 +86,29 @@ limitations under the License.
                   </td>
                   <td>
                     <span v-if="key === 'references'">
-                      <div v-for="ref in value" :key="ref">
-                        <a :href="ref" target="new">{{ ref }}</a>
-                      </div>
+                      <ul v-for="ref in value" :key="ref">
+                        <li>
+                          <a :href="ref" target="new">{{ ref }}</a>
+                        </li>
+                      </ul>
                     </span>
                     <span v-else-if="key === 'falsepositives'">
-                      <v-chip v-for="falsepositive in value" :key="falsepositive" rounded x-small class="mr-2">{{
-                        falsepositive
-                      }}</v-chip>
+                      <ul v-for="falsepositive in value" :key="falsepositive">
+                        <li>{{ falsepositive }}</li>
+                      </ul>
                     </span>
 
                     <span v-else-if="key === 'tags' && value">
-                      <v-chip v-for="tag in value" :key="tag" rounded x-small class="mr-2">{{ tag }}</v-chip>
+                      <v-chip
+                        v-for="tag in value"
+                        :key="tag"
+                        rounded
+                        x-small
+                        class="mr-2"
+                        @click="applyFilterChip(tag)"
+                      >
+                        {{ tag }}
+                      </v-chip>
                     </span>
                     <span v-else>
                       {{ value }}
@@ -231,6 +242,20 @@ export default {
         .catch((e) => {
           console.error(e)
         })
+    },
+    applyFilterChip(value) {
+      let eventData = {}
+      eventData.doSearch = true
+      eventData.queryString = '*'
+      let chip = {
+        field: 'tag',
+        value: value,
+        type: 'term',
+        operator: 'must',
+        active: true,
+      }
+      eventData.chip = chip
+      EventBus.$emit('setQueryAndFilter', eventData)
     },
   },
 }
