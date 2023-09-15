@@ -68,11 +68,7 @@ limitations under the License.
     </div>
 
     <v-expand-transition>
-      <div
-        v-if="!isMultiAnalyzer"
-        v-show="expanded"
-        :class="getHoverTheme"
-      >
+      <div v-if="!isMultiAnalyzer" v-show="expanded" :class="getHoverTheme">
         <v-simple-table v-if="checkAnalyzerOutput" dense class="ml-2 borderless">
           <tbody :class="getHoverTheme">
             <tr class="pr-3">
@@ -275,13 +271,10 @@ limitations under the License.
         <v-data-iterator
           :items="timeline.results"
           :items-per-page="10"
-          :hide-default-footer="(timeline.results.length < 10 ? true : false)"
+          :hide-default-footer="timeline.results.length < 10 ? true : false"
         >
           <template v-slot:default="props">
-            <div
-              v-for="(analyzer, index) in props.items"
-              :key="index"
-            >
+            <div v-for="(analyzer, index) in props.items" :key="index">
               <v-divider></v-divider>
               <v-row no-gutters class="pa-1 pl-5">
                 <span>{{ analyzer.verdict }}</span>
@@ -328,20 +321,20 @@ export default {
         // this can return null
         const parsed = JSON.parse(this.timelineFirstResult.verdict)
         // normalize null to undefined
-        return parsed == null ? undefined : parsed;
+        return parsed == null ? undefined : parsed
       }
       return undefined
     },
-    resultSummary: function() {
+    resultSummary: function () {
       return this.verboseAnalyzerOutput && this.verboseAnalyzerOutput.result_summary
     },
-    resultPriority: function() {
+    resultPriority: function () {
       return this.verboseAnalyzerOutput && this.verboseAnalyzerOutput.result_priority
     },
-    references: function() {
+    references: function () {
       return this.verboseAnalyzerOutput && this.verboseAnalyzerOutput.references
     },
-    resultStatus: function() {
+    resultStatus: function () {
       return this.verboseAnalyzerOutput && this.verboseAnalyzerOutput.result_status
     },
     getAnalyzerOutputMetaData: function () {
@@ -419,16 +412,27 @@ export default {
       }
     },
     timelineFirstResult: function () {
-      return (this.timeline && this.timeline.results.length > 0 && this.timeline.results[0]) ? this.timeline.results[0] : '... no results found'
+      return this.timeline && this.timeline.results.length > 0 && this.timeline.results[0]
+        ? this.timeline.results[0]
+        : '... no results found'
     },
     timelineCreated: function () {
       const firstEntry = this.timelineFirstResult
       if (!firstEntry) return '... invalid date'
-      const createdAt = (firstEntry.created_at && firstEntry.created_at.split('.').length) > 0 ? firstEntry.created_at.split('.')[0] : false
-      return createdAt ? createdAt : '... invalid date'
+      const createdAt =
+        (firstEntry.created_at && firstEntry.created_at.split('.').length) > 0
+          ? firstEntry.created_at.split('.')[0]
+          : '... invalid date'
+      return createdAt
     },
     getHoverTheme: function () {
-      return this.$vuetify.theme.dark ? (this.expanded ? 'dark-hover dark-bg' : 'dark-hover') : (this.expanded ? 'light-hover light-bg' : 'light-hover')
+      return this.$vuetify.theme.dark
+        ? this.expanded
+          ? 'dark-hover dark-bg'
+          : 'dark-hover'
+        : this.expanded
+        ? 'light-hover light-bg'
+        : 'light-hover'
     },
   },
   methods: {
@@ -441,7 +445,7 @@ export default {
     setSavedGraph(graphId) {
       EventBus.$emit('setSavedGraph', graphId)
     },
-    applySearch(searchQuery='', timelineId="_all") {
+    applySearch(searchQuery = '', timelineId = '_all') {
       let eventData = {}
       eventData.doSearch = true
       eventData.queryString = searchQuery
@@ -455,7 +459,7 @@ export default {
       }
       EventBus.$emit('setQueryAndFilter', eventData)
     },
-    applyFilterChip(term, termField='', termType='label', timelineId="_all") {
+    applyFilterChip(term, termField = '', termType = 'label', timelineId = '_all') {
       let eventData = {}
       eventData.doSearch = true
       eventData.queryString = '*'
