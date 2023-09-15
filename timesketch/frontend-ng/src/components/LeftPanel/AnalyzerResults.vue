@@ -238,24 +238,25 @@ export default {
 
         if (!perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name]) {
           // this timeline is not yet in the results for this analyzer: add it
+          const analyzerTimelineInfo = {
+            id: analysis.timeline.id,
+            name: analysis.timeline.name,
+            color: analysis.timeline.color,
+            last_analysissession_id: analysis.analysissession_id,
+          }
+
           if (perAnalyzer[analysis.analyzer_name].analyzerInfo.is_multi) {
             // this analyzer is a multi analyzer, so add all results for this analysis session
             multiResults = this.getAnalyzerMultiResults(analyses, analysis.analyzer_name, analysis.analysissession_id, analysis.timeline.id)
             perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name] = {
-              id: analysis.timeline.id,
-              name: analysis.timeline.name,
-              color: analysis.timeline.color,
-              last_analysissession_id: analysis.analysissession_id,
+              ...analyzerTimelineInfo,
               analysis_status: multiResults.analysis_status,
               results: multiResults.results,
             }
           } else {
             // this is not a multi analyzer, so add the results for this timeline
             perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name] = {
-              id: analysis.timeline.id,
-              name: analysis.timeline.name,
-              color: analysis.timeline.color,
-              last_analysissession_id: analysis.analysissession_id,
+              ...analyzerTimelineInfo,
               analysis_status: analysis.status[0].status,
               results: [
                 {
@@ -272,21 +273,17 @@ export default {
           perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].last_analysissession_id <
           analysis.analysissession_id
         ) {
+          perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].last_analysissession_id = analysis.analysissession_id
           // there is a newer session for this analyzer on this timeline. Update the results.
           if (perAnalyzer[analysis.analyzer_name].analyzerInfo.is_multi) {
             multiResults = this.getAnalyzerMultiResults(analyses, analysis.analyzer_name, analysis.analysissession_id, analysis.timeline.id)
-            perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].last_analysissession_id =
-              analysis.analysissession_id
             perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].results[0].analysis_status = multiResults.analysis_status
             perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].results = multiResults.results
           } else {
             perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].results[0].created_at = analysis.created_at
             perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].results[0].verdict = analysis.result
-            perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].last_analysissession_id =
-              analysis.analysissession_id
             perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].analysis_status = analysis.status[0].status
-            perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].results[0].analysis_status =
-              analysis.status[0].status
+            perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].results[0].analysis_status = analysis.status[0].status
           }
         }
       }
@@ -305,21 +302,18 @@ export default {
           status.add(analysis.status[0].status)
         }
       }
+      return {
+        results,
+        analysis_status: this.getMultiStatus(status),
+      }
+    },
+    getMultiStatus(status) {
       if (status.size === 1 && (status.has('DONE') || status.has('ERROR'))) {
-        return {
-          results: results,
-          analysis_status: [...status][0],
-        }
+        return [...status][0]
       } else if (status.size === 2 && status.has('DONE') && status.has('ERROR')) {
-        return {
-          results: results,
-          analysis_status: 'ERROR',
-        }
+        return 'ERROR'
       } else {
-        return {
-          results: results,
-          analysis_status: 'PENDING',
-        }
+        return 'PENDING'
       }
     },
     filterAnalyzers(items, search) {

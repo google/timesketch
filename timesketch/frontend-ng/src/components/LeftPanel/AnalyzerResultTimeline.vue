@@ -14,31 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div
-    :class="
-      $vuetify.theme.dark
-        ? expanded
-          ? 'dark-hover dark-bg'
-          : 'dark-hover'
-        : expanded
-        ? 'light-hover light-bg'
-        : 'light-hover'
-    "
-  >
+  <div :class="getHoverTheme">
     <v-divider></v-divider>
     <div
       v-if="timeline.analysis_status === 'PENDING' || timeline.analysis_status === 'STARTED'"
       class="pa-2 pl-3"
       style="display: flex; align-items: center"
-      :class="
-        $vuetify.theme.dark
-          ? expanded
-            ? 'dark-hover dark-bg'
-            : 'dark-hover'
-          : expanded
-          ? 'light-hover light-bg'
-          : 'light-hover'
-      "
+      :class="getHoverTheme"
     >
       <v-icon class="mr-2" :color="'#' + timeline.color">mdi-circle</v-icon>
       <span class="mr-2" style="color: grey">{{ timeline.name }}</span>
@@ -49,15 +31,7 @@ limitations under the License.
       class="pa-2 pl-3"
       style="cursor: pointer; display: flex; align-items: center"
       @click="expanded = !expanded"
-      :class="
-        $vuetify.theme.dark
-          ? expanded
-            ? 'dark-hover dark-bg'
-            : 'dark-hover'
-          : expanded
-          ? 'light-hover light-bg'
-          : 'light-hover'
-      "
+      :class="getHoverTheme"
     >
       <v-icon class="mr-2" :color="'#' + timeline.color">mdi-circle</v-icon>
       <span>{{ timeline.name }}</span>
@@ -97,43 +71,25 @@ limitations under the License.
       <div
         v-if="!isMultiAnalyzer"
         v-show="expanded"
-        :class="
-          $vuetify.theme.dark
-            ? expanded
-              ? 'dark-hover dark-bg'
-              : 'dark-hover'
-            : expanded
-            ? 'light-hover light-bg'
-            : 'light-hover'
-        "
+        :class="getHoverTheme"
       >
-        <v-simple-table v-if="checkAnalyzerOutput" dense class="ml-2">
-          <tbody
-            :class="
-              $vuetify.theme.dark
-                ? expanded
-                  ? 'dark-hover dark-bg'
-                  : 'dark-hover'
-                : expanded
-                ? 'light-hover light-bg'
-                : 'light-hover'
-            "
-          >
+        <v-simple-table v-if="checkAnalyzerOutput" dense class="ml-2 borderless">
+          <tbody :class="getHoverTheme">
             <tr class="pr-3">
-              <td width="105" style="border: none">
+              <td width="105">
                 <strong>Summary:</strong>
               </td>
-              <td style="border: none">
+              <td>
                 <span>
                   {{ resultSummary || 'loading...' }}
                 </span>
               </td>
             </tr>
             <tr>
-              <td style="border: none">
+              <td>
                 <strong>Priority:</strong>
               </td>
-              <td style="border: none">
+              <td>
                 <span>
                   {{ resultPriority || 'loading...' }}
                 </span>
@@ -157,18 +113,18 @@ limitations under the License.
               </td>
             </tr>
             <tr>
-              <td style="border: none">
+              <td>
                 <strong>Last run:</strong>
               </td>
-              <td style="border: none">
-                <span> {{ timeline.results[0].created_at.split(".")[0] }} UTC </span>
+              <td>
+                <span> {{ timelineCreated }} UTC </span>
               </td>
             </tr>
             <tr>
               <td width="80" style="border: none">
                 <strong>Status:</strong>
               </td>
-              <td style="border: none">
+              <td>
                 <span>
                   {{ resultStatus || 'loading...' }}
                 </span>
@@ -180,7 +136,7 @@ limitations under the License.
               </td>
             </tr>
             <tr v-for="(item, key) in getAnalyzerOutputMetaData" :key="key">
-              <td style="border: none">
+              <td>
                 <strong>{{ key }}:</strong>
               </td>
               <td style="border: none" v-if="key === 'Searches'">
@@ -245,42 +201,32 @@ limitations under the License.
             </tr>
           </tbody>
         </v-simple-table>
-        <v-simple-table v-else dense class="ml-2">
-          <tbody
-            :class="
-              $vuetify.theme.dark
-                ? expanded
-                  ? 'dark-hover dark-bg'
-                  : 'dark-hover'
-                : expanded
-                ? 'light-hover light-bg'
-                : 'light-hover'
-            "
-          >
+        <v-simple-table v-else dense class="ml-2 borderless">
+          <tbody :class="getHoverTheme">
             <tr class="pr-3">
               <td width="80" style="border: none">
                 <strong v-if="timeline.analysis_status === 'ERROR'">Error:</strong>
                 <strong v-else>Summary:</strong>
               </td>
-              <td style="border: none">
+              <td>
                 <span>
-                  {{ timeline.results[0].verdict }}
+                  {{ timelineFirstResult.verdict }}
                 </span>
               </td>
             </tr>
             <tr>
-              <td style="border: none">
+              <td>
                 <strong>Last run:</strong>
               </td>
-              <td style="border: none">
-                <span> {{ timeline.results[0].created_at.split(".")[0] }} UTC </span>
+              <td>
+                <span> {{ timelineCreated }} UTC </span>
               </td>
             </tr>
             <tr>
               <td width="80" style="border: none">
                 <strong>Status:</strong>
               </td>
-              <td style="border: none">
+              <td>
                 <span>
                   {{ timeline.analysis_status }}
                 </span>
@@ -289,50 +235,31 @@ limitations under the License.
           </tbody>
         </v-simple-table>
       </div>
-      <div v-else v-show="expanded"
-        :class="
-          $vuetify.theme.dark
-            ? expanded
-              ? 'dark-hover dark-bg'
-              : 'dark-hover'
-            : expanded
-            ? 'light-hover light-bg'
-            : 'light-hover'
-        ">
+      <div v-else v-show="expanded" :class="getHoverTheme">
         <!-- TODO: iterate on multianalyzer timeline results -->
-        <v-simple-table dense class="ml-2">
-          <tbody
-            :class="
-              $vuetify.theme.dark
-                ? expanded
-                  ? 'dark-hover dark-bg'
-                  : 'dark-hover'
-                : expanded
-                ? 'light-hover light-bg'
-                : 'light-hover'
-            "
-          >
+        <v-simple-table dense class="ml-2 borderless">
+          <tbody :class="getHoverTheme">
             <tr>
-              <td style="border: none">
+              <td>
                 <strong>Type:</strong>
               </td>
-              <td style="border: none">
+              <td>
                 <span> Multi analyzer</span>
               </td>
             </tr>
             <tr>
-              <td style="border: none">
+              <td>
                 <strong>Last run:</strong>
               </td>
-              <td style="border: none">
-                <span> {{ timeline.results[0].created_at.split(".")[0] }} UTC </span>
+              <td>
+                <span> {{ timelineCreated }} UTC </span>
               </td>
             </tr>
             <tr>
               <td width="80" style="border: none">
                 <strong>Status:</strong>
               </td>
-              <td style="border: none">
+              <td>
                 <span>
                   {{ timeline.analysis_status }}
                 </span>
@@ -399,7 +326,7 @@ export default {
     verboseAnalyzerOutput: function () {
       if (this.checkAnalyzerOutput) {
         // this can return null
-        const parsed = JSON.parse(this.timeline.results[0].verdict)
+        const parsed = JSON.parse(this.timelineFirstResult.verdict)
         // normalize null to undefined
         return parsed == null ? undefined : parsed;
       }
@@ -485,11 +412,23 @@ export default {
     },
     checkAnalyzerOutput: function () {
       try {
-        JSON.parse(this.timeline.results[0].verdict)
+        JSON.parse(this.timelineFirstResult.verdict)
         return true
       } catch (e) {
         return false
       }
+    },
+    timelineFirstResult: function () {
+      return (this.timeline && this.timeline.results.length > 0 && this.timeline.results[0]) ? this.timeline.results[0] : '... no results found'
+    },
+    timelineCreated: function () {
+      const firstEntry = this.timelineFirstResult
+      if (!firstEntry) return '... invalid date'
+      const createdAt = (firstEntry.created_at && firstEntry.created_at.split('.').length) > 0 ? firstEntry.created_at.split('.')[0] : false
+      return createdAt ? createdAt : '... invalid date'
+    },
+    getHoverTheme: function () {
+      return this.$vuetify.theme.dark ? (this.expanded ? 'dark-hover dark-bg' : 'dark-hover') : (this.expanded ? 'light-hover light-bg' : 'light-hover')
     },
   },
   methods: {
@@ -552,5 +491,8 @@ export default {
 }
 .light-bg {
   background-color: #f6f6f6;
+}
+.borderless td {
+  border: none !important;
 }
 </style>
