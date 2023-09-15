@@ -206,7 +206,7 @@ limitations under the License.
               </td>
               <td>
                 <span>
-                  {{ timelineFirstResult.verdict }}
+                  {{ timelineResult.verdict }}
                 </span>
               </td>
             </tr>
@@ -319,7 +319,7 @@ export default {
     verboseAnalyzerOutput: function () {
       if (this.checkAnalyzerOutput) {
         // this can return null
-        const parsed = JSON.parse(this.timelineFirstResult.verdict)
+        const parsed = JSON.parse(this.timelineResult.verdict)
         // normalize null to undefined
         return parsed == null ? undefined : parsed
       }
@@ -405,7 +405,7 @@ export default {
     },
     checkAnalyzerOutput: function () {
       try {
-        JSON.parse(this.timelineFirstResult.verdict)
+        JSON.parse(this.timelineResult.verdict)
         return true
       } catch (e) {
         return false
@@ -414,7 +414,7 @@ export default {
     timelineFirstResult: function () {
       return this.timeline && this.timeline.results.length > 0 && this.timeline.results[0]
         ? this.timeline.results[0]
-        : '... no results found'
+        : undefined
     },
     timelineCreated: function () {
       const firstEntry = this.timelineFirstResult
@@ -424,6 +424,9 @@ export default {
           ? firstEntry.created_at.split('.')[0]
           : '... invalid date'
       return createdAt
+    },
+    timelineResult: function () {
+      return this.timelineFirstResult ? this.timelineFirstResult : '... no results found'
     },
     getHoverTheme: function () {
       return this.$vuetify.theme.dark
