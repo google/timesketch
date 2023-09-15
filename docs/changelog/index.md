@@ -7,6 +7,36 @@ hide:
 
 # Changelog
 
+## Version 20230913
+Released: 2023-09-13
+
+## What's Changed
+#### ✨ Features
+* Timeline info to the tsctl by @jaegeral in https://github.com/google/timesketch/pull/2870
+* Feature extraction for TI data in "Windows-Bits-Client" events by @jkppr in https://github.com/google/timesketch/pull/2873
+* OpenSearch 2.x support by @berggren in https://github.com/google/timesketch/pull/2876
+* Export query result to CSV by @berggren in https://github.com/google/timesketch/pull/2882
+* Support overriding/extending Plaso formatter definitions by @berggren in https://github.com/google/timesketch/pull/2881
+* Event attribute include / exclude filters by @jkppr in https://github.com/google/timesketch/pull/2888
+* Adding tag filter chips to sigma rules by @jkppr in https://github.com/google/timesketch/pull/2890
+
+#### 🐞 Fixes
+* correct paramters in cli attributes method by @jaegeral in https://github.com/google/timesketch/pull/2863
+* Update troubleshooting.md by @jaegeral in https://github.com/google/timesketch/pull/2866
+* Update Date chip to support milliseconds by @sydp in https://github.com/google/timesketch/pull/2867
+* Allow API port to listen on localhost by @tomchop in https://github.com/google/timesketch/pull/2875
+* Loading indicator active analyzers by @Annoraaq in https://github.com/google/timesketch/pull/2855
+* Bump cryptography from 41.0.2 to 41.0.3 by @dependabot in https://github.com/google/timesketch/pull/2858
+* Add TTY check for providing missing config values by @ramo-j in https://github.com/google/timesketch/pull/2850
+* Don't exit with error if user chooses not to start timesketch by @pemontto in https://github.com/google/timesketch/pull/2857
+* Run analyzers only once per timeline by @jkppr in https://github.com/google/timesketch/pull/2883
+* Tag list refactor & bug fixes by @jkppr in https://github.com/google/timesketch/pull/2886
+* refactor verbose analyzer output by @jkppr in https://github.com/google/timesketch/pull/2885
+* Analyzer Output UI update by @jkppr in https://github.com/google/timesketch/pull/2887
+* Search History graph cleanup by @berggren in https://github.com/google/timesketch/pull/2891
+
+---
+
 ## Version 20230721
 Released: 2023-07-21
 
@@ -42,7 +72,6 @@ Dependency updates
 
 * Upgrade to PyYAML 6.0.1 and NodeJS 18 by @berggren in https://github.com/google/timesketch/pull/2853
 * Bump cryptography from 41.0.0 to 41.0.2 by @dependabot in https://github.com/google/timesketch/pull/2844
-
 
 ---
 
