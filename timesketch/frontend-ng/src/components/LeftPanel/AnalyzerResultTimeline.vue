@@ -161,7 +161,7 @@ limitations under the License.
                 <strong>Last run:</strong>
               </td>
               <td style="border: none">
-                <span> {{ timeline.created_at }} UTC </span>
+                <span> {{ timeline.results[0].created_at.split(".")[0] }} UTC </span>
               </td>
             </tr>
             <tr>
@@ -264,7 +264,7 @@ limitations under the License.
               </td>
               <td style="border: none">
                 <span>
-                  {{ timeline.verdict }}
+                  {{ timeline.results[0].verdict }}
                 </span>
               </td>
             </tr>
@@ -273,7 +273,7 @@ limitations under the License.
                 <strong>Last run:</strong>
               </td>
               <td style="border: none">
-                <span> {{ timeline.created_at }} UTC </span>
+                <span> {{ timeline.results[0].created_at.split(".")[0] }} UTC </span>
               </td>
             </tr>
             <tr>
@@ -289,12 +289,79 @@ limitations under the License.
           </tbody>
         </v-simple-table>
       </div>
-      <div v-else v-show="expanded" class="ml-3 pb-1 mr-2">
-        <v-icon>mdi-alert-octagon-outline</v-icon>
-        <span class="ml-1">
-          Showing multi analyzer results is not supported in the new UI yet. Please visit the old UI to see these
-          results.
-        </span>
+      <div v-else v-show="expanded"
+        :class="
+          $vuetify.theme.dark
+            ? expanded
+              ? 'dark-hover dark-bg'
+              : 'dark-hover'
+            : expanded
+            ? 'light-hover light-bg'
+            : 'light-hover'
+        ">
+        <!-- TODO: iterate on multianalyzer timeline results -->
+        <v-simple-table dense class="ml-2">
+          <tbody
+            :class="
+              $vuetify.theme.dark
+                ? expanded
+                  ? 'dark-hover dark-bg'
+                  : 'dark-hover'
+                : expanded
+                ? 'light-hover light-bg'
+                : 'light-hover'
+            "
+          >
+            <tr>
+              <td style="border: none">
+                <strong>Type:</strong>
+              </td>
+              <td style="border: none">
+                <span> Multi analyzer</span>
+              </td>
+            </tr>
+            <tr>
+              <td style="border: none">
+                <strong>Last run:</strong>
+              </td>
+              <td style="border: none">
+                <span> {{ timeline.results[0].created_at.split(".")[0] }} UTC </span>
+              </td>
+            </tr>
+            <tr>
+              <td width="80" style="border: none">
+                <strong>Status:</strong>
+              </td>
+              <td style="border: none">
+                <span>
+                  {{ timeline.analysis_status }}
+                </span>
+              </td>
+            </tr>
+            <tr v-if="timeline.results.length !== 0">
+              <td colspan="2" style="border: none">
+                <strong>Results:</strong>
+              </td>
+            </tr>
+          </tbody>
+        </v-simple-table>
+        <v-data-iterator
+          :items="timeline.results"
+          :items-per-page="10"
+          :hide-default-footer="(timeline.results.length < 10 ? true : false)"
+        >
+          <template v-slot:default="props">
+            <div
+              v-for="(analyzer, index) in props.items"
+              :key="index"
+            >
+              <v-divider></v-divider>
+              <v-row no-gutters class="pa-1 pl-5">
+                <span>{{ analyzer.verdict }}</span>
+              </v-row>
+            </div>
+          </template>
+        </v-data-iterator>
       </div>
     </v-expand-transition>
   </div>
@@ -332,7 +399,7 @@ export default {
     verboseAnalyzerOutput: function () {
       if (this.checkAnalyzerOutput) {
         // this can return null
-        const parsed = JSON.parse(this.timeline.verdict)
+        const parsed = JSON.parse(this.timeline.results[0].verdict)
         // normalize null to undefined
         return parsed == null ? undefined : parsed;
       }
@@ -418,7 +485,7 @@ export default {
     },
     checkAnalyzerOutput: function () {
       try {
-        JSON.parse(this.timeline.verdict)
+        JSON.parse(this.timeline.results[0].verdict)
         return true
       } catch (e) {
         return false

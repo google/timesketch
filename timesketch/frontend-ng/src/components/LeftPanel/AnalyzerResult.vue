@@ -16,8 +16,6 @@ limitations under the License.
 
 <template>
   <div>
-    <!-- TODO: issue #2565 -->
-    <!-- https://github.com/google/timesketch/issues/2565 -->
     <v-row
       no-gutters
       class="pa-3 pl-1"

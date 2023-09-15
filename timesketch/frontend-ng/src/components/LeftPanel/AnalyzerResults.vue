@@ -203,14 +203,16 @@ export default {
       }
       this.$store.dispatch('updateAnalyzerResults', allAnalyses)
       this.updateActiveAnalyses(this.$store, allAnalyses)
+      this.analyzerResultsReady = true
     },
     groupByAnalyzer(analyses) {
       let perAnalyzer = {}
+      let multiResults = {}
       for (const analysis of analyses) {
         if (!perAnalyzer[analysis.analyzer_name]) {
           // the analyzer is not yet in the results: create new entry
           // There is an edge case where the analyzer is not in the analyzer list.
-          // If this happens, fall back to the analyzer short name. Tracked in issue#2738
+          // If this happens, fall back to the analyzer short name.
           if (this.analyzerList[analysis.analyzer_name]) {
             perAnalyzer[analysis.analyzer_name] = {
               timelines: {},
@@ -236,14 +238,33 @@ export default {
 
         if (!perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name]) {
           // this timeline is not yet in the results for this analyzer: add it
-          perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name] = {
-            id: analysis.timeline.id,
-            name: analysis.timeline.name,
-            color: analysis.timeline.color,
-            verdict: analysis.result,
-            created_at: analysis.created_at,
-            last_analysissession_id: analysis.analysissession_id,
-            analysis_status: analysis.status[0].status,
+          if (perAnalyzer[analysis.analyzer_name].analyzerInfo.is_multi) {
+            // this analyzer is a multi analyzer, so add all results for this analysis session
+            multiResults = this.getAnalyzerMultiResults(analyses, analysis.analyzer_name, analysis.analysissession_id, analysis.timeline.id)
+            perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name] = {
+              id: analysis.timeline.id,
+              name: analysis.timeline.name,
+              color: analysis.timeline.color,
+              last_analysissession_id: analysis.analysissession_id,
+              analysis_status: multiResults.analysis_status,
+              results: multiResults.results,
+            }
+          } else {
+            // this is not a multi analyzer, so add the results for this timeline
+            perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name] = {
+              id: analysis.timeline.id,
+              name: analysis.timeline.name,
+              color: analysis.timeline.color,
+              last_analysissession_id: analysis.analysissession_id,
+              analysis_status: analysis.status[0].status,
+              results: [
+                {
+                  verdict: analysis.result,
+                  created_at: analysis.created_at,
+                  analysis_status: analysis.status[0].status,
+                },
+              ]
+            }
           }
         }
 
@@ -251,16 +272,55 @@ export default {
           perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].last_analysissession_id <
           analysis.analysissession_id
         ) {
-          // this timeline is already in the results for this analyzer but check if the session is newer and update it
-          perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].created_at = analysis.created_at
-          perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].verdict = analysis.result
-          perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].last_analysissession_id =
-            analysis.analysissession_id
-          perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].analysis_status =
-            analysis.status[0].status
+          // there is a newer session for this analyzer on this timeline. Update the results.
+          if (perAnalyzer[analysis.analyzer_name].analyzerInfo.is_multi) {
+            multiResults = this.getAnalyzerMultiResults(analyses, analysis.analyzer_name, analysis.analysissession_id, analysis.timeline.id)
+            perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].last_analysissession_id =
+              analysis.analysissession_id
+            perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].results[0].analysis_status = multiResults.analysis_status
+            perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].results = multiResults.results
+          } else {
+            perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].results[0].created_at = analysis.created_at
+            perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].results[0].verdict = analysis.result
+            perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].last_analysissession_id =
+              analysis.analysissession_id
+            perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].analysis_status = analysis.status[0].status
+            perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].results[0].analysis_status =
+              analysis.status[0].status
+          }
         }
       }
       return perAnalyzer
+    },
+    getAnalyzerMultiResults(analyses, analyzerName, sessionId, timelineId) {
+      let results = []
+      let status = new Set()
+      for (const analysis of analyses) {
+        if (analysis.analyzer_name === analyzerName && analysis.analysissession_id === sessionId && analysis.timeline.id === timelineId) {
+          results.push({
+            verdict: analysis.result,
+            created_at: analysis.created_at,
+            analysis_status: analysis.status[0].status,
+          })
+          status.add(analysis.status[0].status)
+        }
+      }
+      if (status.size === 1 && (status.has('DONE') || status.has('ERROR'))) {
+        return {
+          results: results,
+          analysis_status: [...status][0],
+        }
+      } else if (status.size === 2 && status.has('DONE') && status.has('ERROR')) {
+        return {
+          results: results,
+          analysis_status: 'ERROR',
+        }
+      } else {
+        return {
+          results: results,
+          analysis_status: 'PENDING',
+        }
+      }
     },
     filterAnalyzers(items, search) {
       const searchStr = (search || '').toLowerCase()
@@ -336,7 +396,6 @@ export default {
   },
   mounted() {
     this.initializeAnalyzerResults()
-    this.analyzerResultsReady = true
     this.activeAnalyzerTimerStart = Date.now()
   },
   beforeDestroy() {
