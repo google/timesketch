@@ -2,7 +2,7 @@
 name: Support Request
 about: Create an issue for a support request.
 title: 'Support: '
-labels: 'Support, Needs triage'
+labels: 'Support'
 assignees: ''
 
 ---
