@@ -37,10 +37,20 @@
 #                                    pages.)
 #
 # ------------------------------------------------------------------------
-## Virustotal Example:
+## Modules
+### unfurl
+unfurl:
+  short_name: 'unfurl'
+  match_fields: ['url', 'uri']
+  validation_regex: '/((([A-Za-z]{3,9}:(?:\/\/)?)(?:[\-;:&=\+\$,\w]+@)?[A-Za-z0-9\.\-]+|(?:www\.|[\-;:&=\+\$,\w]+@)[A-Za-z0-9\.\-]+)((?:\/[\+~%\/\.\w\-_]*)?\??(?:[\-\+=&;%@\.\w_]*)#?(?:[\.\!\/\\\w]*))?)/i'
+  context_link: 'MODULE:dfir-unfurl'
+  redirect_warning: FALSE
+
+## External Services
+### Virustotal Example:
 # virustotal_hash_lookup:
 #   short_name: 'VirusTotal'
-#   match_fields: ['hash', 'sha256_hash', 'sha256', 'sha1_hash', 'sha1', 'md5_hash', 'md5']
+#   match_fields: ['hash', 'sha256_hash', 'sha256', 'sha1_hash', 'sha1', 'md5_hash', 'md5', 'url']
 #   validation_regex: '/^[0-9a-f]{64}$|^[0-9a-f]{40}$|^[0-9a-f]{32}$/i'
 #   context_link: 'https://www.virustotal.com/gui/search/<ATTR_VALUE>'
 #   redirect_warning: TRUE

@@ -169,6 +169,12 @@ limitations under the License.
                               :context-url="contextUrl"
                             ></ts-link-redirect-warning>
                           </v-dialog>
+                          <v-dialog v-model="dfirUnfurlDialog" max-width="1000" :retain-focus="false">
+                            <ts-unfurl-dialog
+                              @cancel="dfirUnfurlDialog = false"
+                              :url="contextValue"
+                            ></ts-unfurl-dialog>
+                          </v-dialog>
                         </v-list-item>
                       </v-list>
                     </v-menu>
@@ -215,6 +221,7 @@ import TsAggregateDialog from './AggregateDialog.vue'
 import TsFormatXmlString from './FormatXMLString.vue'
 import TsLinkRedirectWarning from './LinkRedirectWarning.vue'
 import TsComments from './Comments.vue'
+import TsUnfurlDialog from './UnfurlDialog.vue'
 
 export default {
   components: {
@@ -222,6 +229,7 @@ export default {
     TsFormatXmlString,
     TsLinkRedirectWarning,
     TsComments,
+    TsUnfurlDialog,
   },
   props: ['event'],
   data() {
@@ -244,6 +252,7 @@ export default {
       eventTimestampDesc: '',
       formatXMLString: false,
       redirectWarnDialog: false,
+      dfirUnfurlDialog: false,
       contextUrl: '',
       contextValue: '',
       c_key: -1,
@@ -322,12 +331,16 @@ export default {
       const fieldConfList = this.contextLinkConf[key.toLowerCase()] ? this.contextLinkConf[key.toLowerCase()] : []
       for (const confItem of fieldConfList) {
         if (confItem['short_name'] === item) {
+          if (confItem['context_link'] === 'MODULE:dfir-unfurl') {
+            this.dfirUnfurlDialog = true
+            this.contextValue = value
+            return
+          }
           if (confItem['redirect_warning']) {
             this.redirectWarnDialog = true
             this.contextValue = value
             this.contextUrl = confItem['context_link'].replace('<ATTR_VALUE>', encodeURIComponent(value))
           } else {
-            // TODO verify if encodeURIComponent is sufficient sanitization here?
             window.open(confItem['context_link'].replace('<ATTR_VALUE>', encodeURIComponent(value)), '_blank')
             this.redirectWarnDialog = false
           }
