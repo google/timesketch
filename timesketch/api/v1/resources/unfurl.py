@@ -27,6 +27,7 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR
 
 logger = logging.getLogger("timesketch.api_unfurl")
 
+
 class UnfurlResource(Resource):
     """Resource to get unfurl information."""
 
@@ -54,7 +55,7 @@ class UnfurlResource(Resource):
 
         try:
             unfurl_result = unfurl.run(url)
-        except Exception as e: # pylint: disable=broad-except
+        except Exception as e:  # pylint: disable=broad-except
             logger.error("Error unfurling URL: {}".format(e))
             abort(
                 HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
