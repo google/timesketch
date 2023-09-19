@@ -13,8 +13,8 @@
 # limitations under the License.
 """Unfurl API for version 1 of the Timesketch API."""
 
-import unfurl
 import logging
+import unfurl
 
 from flask import jsonify
 from flask import request
