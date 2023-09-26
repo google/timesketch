@@ -715,6 +715,8 @@ class ImportStreamer(object):
         except ValueError:
             return
 
+        # TODO(jaegeral): End of 11/2023 from now remove the code below
+        # if no new bugs occur
         # Commenting out because of https://github.com/google/timesketch/issues/2796
         # testing it didn't seem to cause any issues as if flush is called with
         # end_stream=True it will just return so there is no reason
