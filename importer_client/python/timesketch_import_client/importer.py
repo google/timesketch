@@ -201,7 +201,8 @@ class ImportStreamer(object):
                 data_frame["datetime"] = date.dt.strftime("%Y-%m-%dT%H:%M:%S%z")
             except Exception:  # pylint: disable=broad-except
                 logger.error(
-                    "Unable to change datetime, is it badly formed?", exc_info=True
+                    "Unable to change datetime, is it badly formed?",
+                    exc_info=True,
                 )
 
         # TODO: Support labels in uploads/imports.
@@ -245,7 +246,6 @@ class ImportStreamer(object):
         if not self._data_lines:
             return None
 
-        start_time = time.time()
         data = {
             "name": self._timeline_name,
             "sketch_id": self._sketch.id,
@@ -260,11 +260,6 @@ class ImportStreamer(object):
         if self._upload_context:
             data["context"] = self._upload_context
 
-        logger.debug(
-            "Data buffer ready for upload, took {0:.2f} seconds to "
-            "prepare.".format(time.time() - start_time)
-        )
-
         response = self._sketch.api.session.post(self._resource_url, data=data)
 
         # TODO: Investigate why the sleep is needed, fix the underlying issue
@@ -272,7 +267,6 @@ class ImportStreamer(object):
         # To prevent unexpected errors with connection refusal adding a quick
         # sleep.
         time.sleep(2)
-
         if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
             if retry_count >= self.DEFAULT_RETRY_LIMIT:
                 raise RuntimeError(
@@ -296,11 +290,6 @@ class ImportStreamer(object):
                 end_stream=end_stream, retry_count=retry_count + 1
             )
 
-        logger.debug(
-            "Data buffer nr. {0:d} uploaded, total time: {1:.2f}s".format(
-                self._chunk, time.time() - start_time
-            )
-        )
         self._chunk += 1
         response_dict = response.json()
         object_dict = response_dict.get("objects", [{}])[0]
@@ -449,7 +438,10 @@ class ImportStreamer(object):
                     logger.warning(
                         "Error uploading data chunk {0:d}/{1:d}, retry "
                         "attempt {2:d}/{3:d}".format(
-                            index, chunks, retry_count, self.DEFAULT_RETRY_LIMIT
+                            index,
+                            chunks,
+                            retry_count,
+                            self.DEFAULT_RETRY_LIMIT,
                         )
                     )
 
@@ -723,8 +715,12 @@ class ImportStreamer(object):
         except ValueError:
             return
 
-        if self._data_lines:
-            self.flush(end_stream=True)
+        # Commenting out because of https://github.com/google/timesketch/issues/2796
+        # testing it didn't seem to cause any issues as if flush is called with
+        # end_stream=True it will just return so there is no reason
+        # to call it here.
+        # if self._data_lines:
+        #    self.flush(end_stream=True)
 
         # Trigger auto analyzer pipeline to kick in.
         pipe_resource = "{0:s}/sketches/{1:d}/analyzer/".format(
