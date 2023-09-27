@@ -54,41 +54,42 @@ def list_intelligence(ctx, header, columns):
     sketch = ctx.obj.sketch
     try:
         intelligence = sketch.get_intelligence_attribute()
-        if not intelligence:
-            click.echo("No intelligence found.")
-            ctx.exit(1)
-        if output == "json":
-            click.echo(json.dumps(intelligence, indent=4, sort_keys=True))
-        elif output == "text":
-            if header:
-                click.echo("\t".join(columns))
-            for entry in intelligence:
-                row = []
-                for column in columns:
-                    if column == "tags":
-                        row.append(",".join(entry.get(column, [])))
-                    else:
-                        row.append(entry.get(column, ""))
-                click.echo("\t".join(row))
-        elif output == "csv":
-            if header:
-                click.echo(",".join(columns))
-            for entry in intelligence:
-                row = []
-                for column in columns:
-                    if column == "tags":
-                        # tags can be multiple values but they should only be
-                        # one value on the csv so we join them with a comma
-                        # surrounded the array by quotes
-                        row.append(f'"{",".join(entry.get(column, []))}"')
-                    else:
-                        row.append(entry.get(column, ""))
-                click.echo(",".join(row))
-        else:
-            click.echo(f"Output format {output} not implemented.")
     except ValueError as e:
         click.echo(e)
         sys.exit(1)
+
+    if not intelligence:
+        click.echo("No intelligence found.")
+        ctx.exit(1)
+    if output == "json":
+        click.echo(json.dumps(intelligence, indent=4, sort_keys=True))
+    elif output == "text":
+        if header:
+            click.echo("\t".join(columns))
+        for entry in intelligence:
+            row = []
+            for column in columns:
+                if column == "tags":
+                    row.append(",".join(entry.get(column, [])))
+                else:
+                    row.append(entry.get(column, ""))
+            click.echo("\t".join(row))
+    elif output == "csv":
+        if header:
+            click.echo(",".join(columns))
+        for entry in intelligence:
+            row = []
+            for column in columns:
+                if column == "tags":
+                    # tags can be multiple values but they should only be
+                    # one value on the csv so we join them with a comma
+                    # surrounded the array by quotes
+                    row.append(f'"{",".join(entry.get(column, []))}"')
+                else:
+                    row.append(entry.get(column, ""))
+            click.echo(",".join(row))
+    else:
+        click.echo(f"Output format {output} not implemented.")
 
 
 @intelligence_group.command("add")
@@ -100,7 +101,7 @@ def list_intelligence(ctx, header, columns):
 @click.option(
     "--type",
     required=False,
-    help="Type of the intelligence.",
+    help="Type of the intelligence (ipv4, hash_sha256, hash_sha1, hash_md5, other).",
 )
 @click.option(
     "--tags",
@@ -108,7 +109,7 @@ def list_intelligence(ctx, header, columns):
     help="Comma separated list of tags.",
 )
 @click.pass_context
-def add_intelligence(ctx, ioc, tags, inteltype="other"):
+def add_intelligence(ctx, ioc, tags, type="other"):
     """Add intelligence to a sketch.
 
     A sketch can have multiple intelligence entries. Each entry consists of
@@ -119,7 +120,7 @@ def add_intelligence(ctx, ioc, tags, inteltype="other"):
     Args:
         ctx: Click context object.
         ioc: IOC value.
-        inteltype: Type of the intelligence. This is defined in the ontology file.
+        type: Type of the intelligence. This is defined in the ontology file.
             If a string doesn't match any of the aforementioned IOC types,
             the type will fall back to other.
         tags: Comma separated list of tags.
@@ -133,12 +134,12 @@ def add_intelligence(ctx, ioc, tags, inteltype="other"):
     else:
         tags = []
 
+    ioc_dict = {"ioc": ioc, "type": type, "tags": tags}
+    # put the ioc in a nested object to match the format of the API
+    data = {"data": [ioc_dict]}
     try:
-        ioc_dict = {"ioc": ioc, "type": inteltype, "tags": tags}
-        # put the ioc in a nested object to match the format of the API
-        data = {"data": [ioc_dict]}
         sketch.add_attribute(name="intelligence", ontology="intelligence", value=data)
-        click.echo(f"Intelligence added: {ioc}")
     except ValueError as e:
         click.echo(e)
         sys.exit(1)
+    click.echo(f"Intelligence added: {ioc}")
