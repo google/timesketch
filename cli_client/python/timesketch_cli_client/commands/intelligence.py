@@ -84,7 +84,7 @@ def list_intelligence(ctx, header, columns):
                     else:
                         row.append(entry.get(column, ""))
                 click.echo(",".join(row))
-        else:  # format not implemented use json or text instead
+        else:
             click.echo(f"Output format {output} not implemented.")
     except ValueError as e:
         click.echo(e)
@@ -95,10 +95,10 @@ def list_intelligence(ctx, header, columns):
 @click.option(
     "--ioc",
     required=True,
-    help="IOC value.",
+    help="Indicator Of Compromise (IOC) value.",
 )
 @click.option(
-    "--inteltype",
+    "--type",
     required=False,
     help="Type of the intelligence.",
 )
