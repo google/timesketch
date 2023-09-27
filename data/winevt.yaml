@@ -1,0 +1,556 @@
+# Succcessful logon
+security_4624_v0:
+  source_name:
+    - Microsoft-Windows-Security-Auditing
+  event_identifier: 4624
+  event_version: 0
+  references:
+    - https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4624
+  mapping:
+    - name: subject_user_sid
+      string_index: 0
+    - name: subject_user_name
+      string_index: 1
+    - name: subject_domain_name
+      string_index: 2
+    - name: subject_logon_id
+      string_index: 3
+    - name: target_user_sid
+      string_index: 4
+    - name: target_user_name
+      string_index: 5
+      aliases:
+        - username
+    - name: target_domain_name
+      string_index: 6
+      aliases:
+        - domain
+    - name: target_logon_id
+      string_index: 7
+      aliases:
+        - logon_id
+    - name: logon_type
+      string_index: 8
+    - name: logon_process_name
+      string_index: 9
+    - name: authentication_package_name
+      string_index: 10
+    - name: workstation_name
+      string_index: 11
+    - name: logon_guid
+      string_index: 12
+    - name: transmitted_services
+      string_index: 13
+    - name: lm_package_name
+      string_index: 14
+    - name: key_length
+      string_index: 15
+    - name: process_id
+      string_index: 16
+    - name: process_name
+      string_index: 17
+    - name: ip_address
+      string_index: 18
+    - name: ip_port
+      string_index: 19
+      aliases:
+        - port
+
+security_4624_v1:
+  source_name:
+    - Microsoft-Windows-Security-Auditing
+  event_identifier: 4624
+  event_version: 1
+  references:
+    - https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4624
+  mapping:
+    - name: subject_user_sid
+      string_index: 0
+    - name: subject_user_name
+      string_index: 1
+    - name: subject_domain_name
+      string_index: 2
+    - name: subject_logon_id
+      string_index: 3
+    - name: target_user_sid
+      string_index: 4
+    - name: target_user_name
+      string_index: 5
+      aliases:
+        - username
+    - name: target_domain_name
+      string_index: 6
+      aliases:
+        - domain
+    - name: target_logon_id
+      string_index: 7
+      aliases:
+        - logon_id
+    - name: logon_type
+      string_index: 8
+    - name: logon_process_name
+      string_index: 9
+    - name: authentication_package_name
+      string_index: 10
+    - name: workstation_name
+      string_index: 11
+    - name: logon_guid
+      string_index: 12
+    - name: transmitted_services
+      string_index: 13
+    - name: lm_package_name
+      string_index: 14
+    - name: key_length
+      string_index: 15
+    - name: process_id
+      string_index: 16
+    - name: process_name
+      string_index: 17
+    - name: ip_address
+      string_index: 18
+    - name: ip_port
+      string_index: 19
+      aliases:
+        - port
+    - name: impersonation_level
+      string_index: 20
+
+security_4624_v2:
+  source_name:
+    - Microsoft-Windows-Security-Auditing
+  event_identifier: 4624
+  event_version: 2
+  references:
+    - https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4624
+  mapping:
+    - name: subject_user_sid
+      string_index: 0
+    - name: subject_user_name
+      string_index: 1
+    - name: subject_domain_name
+      string_index: 2
+    - name: subject_logon_id
+      string_index: 3
+    - name: target_user_sid
+      string_index: 4
+    - name: target_user_name
+      string_index: 5
+      aliases:
+        - username
+    - name: target_domain_name
+      string_index: 6
+      aliases:
+        - domain
+    - name: target_logon_id
+      string_index: 7
+      aliases:
+        - logon_id
+    - name: logon_type
+      string_index: 8
+    - name: logon_process_name
+      string_index: 9
+    - name: authentication_package_name
+      string_index: 10
+    - name: workstation_name
+      string_index: 11
+    - name: logon_guid
+      string_index: 12
+    - name: transmitted_services
+      string_index: 13
+    - name: lm_package_name
+      string_index: 14
+    - name: key_length
+      string_index: 15
+    - name: process_id
+      string_index: 16
+    - name: process_name
+      string_index: 17
+    - name: ip_address
+      string_index: 18
+    - name: ip_port
+      string_index: 19
+      aliases:
+        - port
+    - name: impersonation_level
+      string_index: 20
+    - name: restricted_admin_mode
+      string_index: 21
+    - name: target_outbound_user_name
+      string_index: 22
+    - name: target_outbound_domain_name
+      string_index: 23
+    - name: virtual_account
+      string_index: 24
+    - name: target_linked_logon_id
+      string_index: 25
+    - name: elevated_token
+      string_index: 26
+
+security_4625_v0:
+  source_name:
+    - Microsoft-Windows-Security-Auditing
+  event_identifier: 4625
+  event_version: 0
+  references:
+    - https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4624
+  mapping:
+    - name: subject_user_sid
+      string_index: 0
+    - name: subject_user_name
+      string_index: 1
+    - name: subject_domain_name
+      string_index: 2
+    - name: subject_logon_id
+      string_index: 3
+    - name: target_user_sid
+      string_index: 4
+    - name: target_user_name
+      string_index: 5
+      aliases:
+        - username
+    - name: target_domain_name
+      string_index: 6
+      aliases:
+        - domain
+    - name: status
+      string_index: 7
+    - name: failure_reason
+      string_index: 8
+    - name: sub_status
+      string_index: 9
+    - name: logon_type
+      string_index: 10
+    - name: logon_process_name
+      string_index: 11
+    - name: authentication_package_name
+      string_index: 12
+    - name: workstation_name
+      string_index: 13
+    - name: transmitted_services
+      string_index: 14
+    - name: lm_package_name
+      string_index: 15
+    - name: key_length
+      string_index: 16
+    - name: process_id
+      string_index: 17
+    - name: process_name
+      string_index: 18
+    - name: ip_address
+      string_index: 19
+    - name: ip_port
+      string_index: 20
+      aliases:
+        - port
+
+security_4634_v0:
+  source_name:
+    - Microsoft-Windows-Security-Auditing
+  event_identifier: 4634
+  event_version: 0
+  references:
+    - https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4634
+  mapping:
+    - name: target_user_sid
+      string_index: 0
+    - name: target_user_name
+      string_index: 1
+      aliases:
+        - username
+    - name: target_domain_name
+      string_index: 2
+      aliases:
+        - domain
+    - name: target_logon_id
+      string_index: 3
+      aliases:
+        - logon_id
+    - name: logon_type
+      string_index: 4
+
+# A logon attempt was made with explicit credentials
+security_4648_v0:
+  source_name:
+    - Microsoft-Windows-Security-Auditing
+  event_identifier: 4648
+  event_version: 0
+  references:
+    - https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4648
+  mapping:
+    - name: subject_user_sid
+      string_index: 0
+    - name: subject_user_name
+      string_index: 1
+    - name: subject_domain_name
+      string_index: 2
+    - name: subject_logon_id
+      string_index: 3
+    - name: logon_guid
+      string_index: 4
+    - name: target_user_name
+      string_index: 5
+      aliases:
+        - username
+    - name: target_domain_name
+      string_index: 6
+      aliases:
+        - domain
+    - name: target_logon_guid
+      string_index: 7
+    - name: target_server_name
+      string_index: 8
+    - name: target_info
+      string_index: 9
+    - name: process_id
+      string_index: 10
+    - name: process_name
+      string_index: 11
+    - name: ip_address
+      string_index: 12
+    - name: ip_port
+      string_index: 13
+      aliases:
+        - port
+
+# Process Creation
+security_4688_v2:
+  source_name:
+    - MIcrosoft-Windows-Security-Auditing
+  event_identifier: 4688
+  event_version: 0
+  references:
+    - https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4688
+  mapping:
+    - name: subject_user_sid
+      string_index: 0
+    - name: subject_user_name
+      string_index: 1
+    - name: subject_logon_id
+      string_index: 2
+    - name: new_process_id
+      string_index: 3
+    - name: new_process_name
+      string_index: 4
+    - name: token_elevation_type
+      string_index: 5
+    - name: process_id
+      string_index: 6
+
+security_4688_v2:
+  source_name:
+    - MIcrosoft-Windows-Security-Auditing
+  event_identifier: 4688
+  event_version: 1
+  references:
+    - https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4688
+  mapping:
+    - name: subject_user_sid
+      string_index: 0
+    - name: subject_user_name
+      string_index: 1
+    - name: subject_logon_id
+      string_index: 2
+    - name: new_process_id
+      string_index: 3
+    - name: new_process_name
+      string_index: 4
+    - name: token_elevation_type
+      string_index: 5
+    - name: process_id
+      string_index: 6
+    - name: command_line
+      string_index: 7
+
+security_4688_v2:
+  source_name:
+    - MIcrosoft-Windows-Security-Auditing
+  event_identifier: 4688
+  event_version: 2
+  references:
+    - https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4688
+  mapping:
+    - name: subject_user_sid
+      string_index: 0
+    - name: subject_user_name
+      string_index: 1
+    - name: subject_domain_name
+      string_index: 2
+    - name: subject_logon_id
+      string_index: 3
+    - name: new_process_id
+      string_index: 4
+    - name: new_process_name
+      string_index: 5
+    - name: token_elevation_type
+      string_index: 6
+    - name: process_id
+      string_index: 7
+    - name: command_line
+      string_index: 8
+    - name: target_user_sid
+      string_index: 9
+    - name: target_user_name
+      string_index: 10
+      aliases:
+        - username
+    - name: target_domain_name
+      string_index: 11
+      aliases:
+        - domain
+    - name: target_logon_id
+      string_index: 12
+      aliases:
+        - logon_id
+    - name: parent_process_name
+      string_index: 13
+    - name: mandatory_level
+      string_index: 14
+
+# Account Management - A user account was created
+security_4720_v0:
+  source_name:
+    - Microsoft-Windows-Security-Auditing
+  event_identifier: 4720
+  event_version: 0
+  references:
+    - https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4720
+  mapping:
+    - name: target_user_name
+      string_index: 0
+    - name: target_domain_name
+      string_index: 1
+    - name: subject_user_sid
+      string_index: 2
+    - name: subject_user_name
+      string_index: 3
+    - name: subject_domain_name
+      string_index: 4
+    - name: subject_logon_id
+      string_index: 5
+    - name: privilege_list
+      string_index: 6
+    - name: sam_account_name
+      string_index: 7
+      aliases:
+        - username
+    - name: display_name
+      string_index: 8
+    - name: user_principal_name
+      string_index: 9
+    - name: home_directory
+      string_index: 10
+    - name: home_path
+      string_index: 11
+    - name: script_path
+      string_index: 12
+    - name: profile_path
+      string_index: 13
+    - name: user_workstations
+      string_index: 14
+    - name: password_last_set
+      string_index: 15
+    - name: account_expires
+      string_index: 16
+    - name: primary_group_id
+      string_index: 17
+    - name: allowed_to_delegate_to
+      string_index: 18
+    - name: old_uac_value
+      string_index: 19
+    - name: new_uac_value
+      string_index: 20
+    - name: user_account_control
+      string_index: 21
+    - name: user_parameters
+      string_index: 22
+    - name: sid_history
+      string_index: 23
+    - name: logon_hours
+      string_index: 24
+
+# Account Management - Member added to security-enabled global group
+security_4728_v0:
+  source_name:
+    - Microsoft-Windows-Security-Auditing
+  event_identifier: 4728
+  event_version: 0
+  references:
+  mapping:
+    - name: member_name
+      string_index: 0
+    - name: member_sid
+      string_index: 1
+    - name: target_user_name
+      string_index: 2
+      aliases:
+        - username
+    - name: target_domain_name
+      string_index: 3
+      aliases:
+        - domain
+    - name: target_sid
+      string_index: 4
+    - name: subject_user_sid
+      string_index: 5
+    - name: subject_user_name
+      string_index: 6
+    - name: subject_domain_name
+      string_index: 7
+    - name: subject_logon_id
+      string_index: 8
+    - name: privilege_list
+      string_index: 9
+
+# Account Management - Member added to security-enabled local group
+security_4732_v0:
+  source_name:
+    - Microsoft-Windows-Security-Auditing
+  event_identifier: 4732
+  event_version: 0
+  references:
+  mapping:
+    - name: member_name
+      string_index: 0
+    - name: member_sid
+      string_index: 1
+    - name: target_user_name
+      string_index: 2
+      aliases:
+        - username
+    - name: target_domain_name
+      string_index: 3
+      aliases:
+        - domain
+    - name: target_sid
+      string_index: 4
+    - name: subject_user_sid
+      string_index: 5
+    - name: subject_user_name
+      string_index: 6
+    - name: subject_domain_name
+      string_index: 7
+    - name: subject_logon_id
+      string_index: 8
+    - name: privilege_list
+      string_index: 9
+
+
+# New service instalation
+system_7045_v0:
+  source_name:
+    - Service Control Manager
+  event_identifier: 7045
+  event_version: 0
+  references:
+  mapping:
+    - name: service_name
+      string_index: 0
+    - name: image_path
+      string_index: 1
+    - name: service_type
+      string_index: 2
+    - name: start_type
+      string_index: 3
+    - name: account_name
+      string_index: 4
+
