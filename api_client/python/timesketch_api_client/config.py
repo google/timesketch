@@ -21,6 +21,7 @@ from typing import Text
 import configparser
 import logging
 import os
+import sys
 import requests
 
 from google.auth.transport import requests as auth_requests
@@ -492,6 +493,15 @@ def configure_missing_parameters(
             file.
     """
     just_configured = []
+
+    if config_assistant.missing:
+        if not sys.stdout.isatty() or not sys.stdin.isatty():
+            msg = (
+                "You will be asked to provide config values, but the session"
+                " doesn't have a tty. Please set up your config file, or "
+                "rerun in a tty."
+            )
+            raise RuntimeError(msg)
 
     for field in config_assistant.missing:
         hint = config_assistant.CONFIG_HINTS.get(field, "")

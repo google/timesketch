@@ -580,7 +580,7 @@ class AggregationGroup(
         self.view = view
 
 
-class Analysis(LabelMixin, StatusMixin, CommentMixin, BaseModel):
+class Analysis(GenericAttributeMixin, LabelMixin, StatusMixin, CommentMixin, BaseModel):
     """Implements the analysis model."""
 
     name = Column(Unicode(255))

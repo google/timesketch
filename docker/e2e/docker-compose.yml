@@ -17,6 +17,8 @@ services:
       dockerfile: ./docker/e2e/Dockerfile
       args:
         - PLASO_PPA_TRACK=${PLASO_PPA_TRACK}
+    ports:
+      - "127.0.0.1:80:80"
     links:
       - opensearch
       - postgres
