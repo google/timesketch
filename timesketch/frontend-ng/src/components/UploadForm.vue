@@ -174,6 +174,7 @@ export default {
       mandatoryHeaders: [
         { name: 'datetime', columnsSelected: [] },
         { name: 'message', columnsSelected: [] },
+        { name: 'timestamp_desc', columnsSelected: [] },
       ],
       form: {
         name: '',
