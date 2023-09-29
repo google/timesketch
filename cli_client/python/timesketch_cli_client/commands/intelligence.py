@@ -127,7 +127,7 @@ def add_intelligence(ctx, ioc, tags, type="other"):
     """
     sketch = ctx.obj.sketch
 
-    # create a tags dict from the comma separated list
+    # Create a tags dict from the comma separated list
     if tags:
         tags = tags.split(",")
         tags = {tag: [] for tag in tags}
