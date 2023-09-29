@@ -235,19 +235,27 @@ limitations under the License.
           <span v-for="(chip, index) in filterChips" :key="index + chip.value">
             <v-tooltip top :disabled="chip.value.length < 33" open-delay="300">
               <template v-slot:activator="{ on: onTooltip, attrs }">
-              <v-chip outlined close close-icon="mdi-close" @click:close="removeChip(chip)" v-bind="attrs" v-on="onTooltip">
-                <v-icon v-if="chip.value === '__ts_star'" left small color="amber">mdi-star</v-icon>
-                <v-icon v-if="chip.value === '__ts_comment'" left small>mdi-comment-multiple-outline</v-icon>
-                <v-icon v-if="getQuickTag(chip.value)" left small :color="getQuickTag(chip.value).color"
-                  >{{ getQuickTag(chip.value).label }}</v-icon>
-                <span v-if="chip.operator === 'must_not'" class="filter-chip-truncate">
-                  <span style="color: red;">NOT </span>
-                  {{ (chip.field ? `${chip.field} : ${chip.value}` : chip.value) | formatLabelText }}
-                </span>
-                <span v-else class="filter-chip-truncate">
-                  {{ (chip.field ? `${chip.field} : ${chip.value}` : chip.value) | formatLabelText }}
-                </span>
-              </v-chip>
+                <v-chip
+                  outlined
+                  close
+                  close-icon="mdi-close"
+                  @click:close="removeChip(chip)"
+                  v-bind="attrs"
+                  v-on="onTooltip"
+                >
+                  <v-icon v-if="chip.value === '__ts_star'" left small color="amber">mdi-star</v-icon>
+                  <v-icon v-if="chip.value === '__ts_comment'" left small>mdi-comment-multiple-outline</v-icon>
+                  <v-icon v-if="getQuickTag(chip.value)" left small :color="getQuickTag(chip.value).color">{{
+                    getQuickTag(chip.value).label
+                  }}</v-icon>
+                  <span v-if="chip.operator === 'must_not'" class="filter-chip-truncate">
+                    <span style="color: red">NOT </span>
+                    {{ (chip.field ? `${chip.field} : ${chip.value}` : chip.value) | formatLabelText }}
+                  </span>
+                  <span v-else class="filter-chip-truncate">
+                    {{ (chip.field ? `${chip.field} : ${chip.value}` : chip.value) | formatLabelText }}
+                  </span>
+                </v-chip>
               </template>
               <span>{{ chip.value }}</span>
             </v-tooltip>
@@ -258,7 +266,7 @@ limitations under the License.
     </v-card>
 
     <!-- DFIQ context -->
-    <ts-scenario-context-card v-if="activeContext.question"></ts-scenario-context-card>
+    <ts-scenario-context-card v-if="activeContext.question.display_name"></ts-scenario-context-card>
 
     <!-- Eventlist -->
     <v-card flat class="mt-5 mx-3">

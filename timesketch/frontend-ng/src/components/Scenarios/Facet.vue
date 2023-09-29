@@ -50,13 +50,8 @@ limitations under the License.
 
     <v-expand-transition>
       <div v-show="expanded">
-        <span
-          @click="setActiveContext(question)"
-          style="font-size: 0.9em"
-          v-for="(question, index) in facet.questions"
-          :key="question.id"
-        >
-          <ts-question :question="question"></ts-question>
+        <span style="font-size: 0.9em" v-for="(question, index) in facet.questions" :key="question.id">
+          <ts-question :scenario="scenario" :facet="facet" :question="question"></ts-question>
           <v-divider v-if="index != facet.questions.length - 1"></v-divider>
         </span>
       </div>
@@ -98,27 +93,12 @@ export default {
   },
   methods: {
     toggleFacet: function () {
-      if (!this.expanded) {
-        this.setActiveContext()
-      } else {
-        if (this.$store.state.activeContext.facet != null) {
-          if (this.facet.id === this.$store.state.activeContext.facet.id) {
-            this.$store.dispatch('clearActiveContext')
-          }
+      if (this.$store.state.activeContext.facet != null) {
+        if (this.facet.id === this.$store.state.activeContext.facet.id) {
+          this.$store.dispatch('clearActiveContext')
         }
       }
       this.expanded = !this.expanded
-    },
-    setActiveContext: function (question) {
-      if (!question) {
-        question = {}
-      }
-      let payload = {
-        scenario: this.scenario,
-        facet: this.facet,
-        question: question,
-      }
-      this.$store.dispatch('setActiveContext', payload)
     },
   },
   created() {},
