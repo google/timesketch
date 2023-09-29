@@ -1789,6 +1789,82 @@ class Sketch(resource.BaseResource):
         with open(file_path, "wb") as fw:
             fw.write(response.content)
 
+    def create_timeline(self, searchindex_id, timeline_name):
+        """Creates a Timeline in this Sketch
+
+        Args:
+            searchindex_id (int): id of the SearchIndex that (will) hold the data
+                for this timeline
+            timeline_name (str): The name of the timeline
+
+        Raises:
+            ValueError: If the Timeline object fails to create
+
+        Returns:
+            Timeline object for the just created timeline
+        """
+        resource_url = f"{self.api.api_root}/sketches/{self.id}/timelines/"
+        form_data = {"timeline": searchindex_id, "timeline_name": timeline_name}
+        response = self.api.session.post(resource_url, json=form_data)
+
+        if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
+            error.error_message(
+                response,
+                message="Error creating a timeline object",
+                error=ValueError,
+            )
+
+        response_dict = error.get_response_json(response, logger)
+        objects = response_dict.get("objects")
+        if not objects:
+            raise ValueError(
+                "Unable to create a Timeline, try again or file an issue on GitHub."
+            )
+
+        timeline_dict = objects[0]
+
+        timeline_obj = timeline.Timeline(
+            timeline_id=timeline_dict["id"],
+            sketch_id=self.id,
+            api=self.api,
+            name=timeline_dict["name"],
+            searchindex=timeline_dict["searchindex"]["index_name"],
+        )
+        return timeline_obj
+
+    def create_datasource(self, timeline_id, provider, context, data_label):
+        """Creates a datasource
+
+        Args:
+            timeline_id (int): id of the Timeline that this datasource is part of.
+            provider (str): Name of the application that collected the data.
+            context (str): Context on how the data was collected.
+            data_label (str): Data label for the uploaded data.
+
+        Raises:
+            ValueError: If the datasource object fails to create
+
+        Returns:
+            Dictionary with the datasource object
+        """
+        resource_url = f"{self.api.api_root}/sketches/{self.id}/datasource/"
+        form_data = {
+            "timeline_id": timeline_id,
+            "provider": provider,
+            "context": context,
+            "data_label": data_label,
+        }
+        response = self.api.session.post(resource_url, json=form_data)
+        if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
+            error.error_message(
+                response,
+                message="Error creating a datasource object",
+                error=ValueError,
+            )
+
+        response_json = error.get_response_json(response, logger)
+        return response_json
+
     def generate_timeline_from_es_index(
         self,
         es_index_name,
@@ -1846,32 +1922,11 @@ class Sketch(resource.BaseResource):
                 raise ValueError("Unable to add the ES index, since it already exists.")
 
         # Step 2: Create a SearchIndex.
-        resource_url = f"{self.api.api_root}/searchindices/"
-        form_data = {
-            "searchindex_name": index_name or es_index_name,
-            "es_index_name": es_index_name,
-        }
-        response = self.api.session.post(resource_url, json=form_data)
-
-        if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
-            error.error_message(
-                response,
-                message="Error creating searchindex",
-                error=ValueError,
-            )
-
-        response_dict = error.get_response_json(response, logger)
-        objects = response_dict.get("objects")
-        if not objects:
-            raise ValueError(
-                "Unable to create a SearchIndex, try again or file an "
-                "issue on GitHub."
-            )
-
-        searchindex_id = objects[0].get("id")
+        searchindex_name = index_name or es_index_name
+        searchindex = self.api.create_searchindex(searchindex_name, es_index_name)
 
         # Step 3: Verify mappings to make sure data conforms.
-        index_obj = api_index.SearchIndex(searchindex_id, api=self.api)
+        index_obj = api_index.SearchIndex(searchindex.id, api=self.api)
         index_fields = set(index_obj.fields)
 
         if not self._NECESSARY_DATA_FIELDS.issubset(index_fields):
@@ -1889,39 +1944,13 @@ class Sketch(resource.BaseResource):
             index_obj.status = status
 
         # Step 4: Create the Timeline.
-        resource_url = f"{self.api.api_root}/sketches/{self.id}/timelines/"
-        form_data = {"timeline": searchindex_id, "timeline_name": name}
-        response = self.api.session.post(resource_url, json=form_data)
-
-        if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
-            error.error_message(
-                response,
-                message="Error creating a timeline object",
-                error=ValueError,
-            )
-
-        response_dict = error.get_response_json(response, logger)
-        objects = response_dict.get("objects")
-        if not objects:
-            raise ValueError(
-                "Unable to create a Timeline, try again or file an issue on GitHub."
-            )
-
-        timeline_dict = objects[0]
-
-        timeline_obj = timeline.Timeline(
-            timeline_id=timeline_dict["id"],
-            sketch_id=self.id,
-            api=self.api,
-            name=timeline_dict["name"],
-            searchindex=timeline_dict["searchindex"]["index_name"],
-        )
+        created_timeline = self.create_timeline(searchindex.id, name)
 
         # Step 5: Add the timeline ID into the dataset.
         resource_url = f"{self.api.api_root}/sketches/{self.id}/event/add_timeline_id/"
         form_data = {
-            "searchindex_id": searchindex_id,
-            "timeline_id": timeline_dict["id"],
+            "searchindex_id": searchindex.id,
+            "timeline_id": created_timeline.id,
         }
         response = self.api.session.post(resource_url, json=form_data)
 
@@ -1933,24 +1962,9 @@ class Sketch(resource.BaseResource):
             )
 
         # Step 6: Add a DataSource object.
-        resource_url = f"{self.api.api_root}/sketches/{self.id}/datasource/"
-        form_data = {
-            "timeline_id": timeline_dict["id"],
-            "provider": provider,
-            "context": context,
-            "data_label": data_label,
-        }
-        response = self.api.session.post(resource_url, json=form_data)
-        if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
-            error.error_message(
-                response,
-                message="Error creating a datasource object",
-                error=ValueError,
-            )
+        self.create_datasource(created_timeline.id, provider, context, data_label)
 
-        _ = error.get_response_json(response, logger)
-
-        return timeline_obj
+        return created_timeline
 
     def run_data_finder(self, start_date, end_date, rule_names, timelines=None):
         """Runs the data finder .
