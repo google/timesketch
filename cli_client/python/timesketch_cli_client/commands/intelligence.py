@@ -135,7 +135,7 @@ def add_intelligence(ctx, ioc, tags, type="other"):
         tags = []
 
     ioc_dict = {"ioc": ioc, "type": type, "tags": tags}
-    # put the ioc in a nested object to match the format of the API
+    # Put the ioc in a nested object to match the format of the API
     data = {"data": [ioc_dict]}
     try:
         sketch.add_attribute(name="intelligence", ontology="intelligence", value=data)
