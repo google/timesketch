@@ -372,7 +372,6 @@ export default {
   getSearchHistoryTree(sketchId) {
     return RestApiClient.get('/sketches/' + sketchId + /searchhistorytree/)
   },
-  // SigmaRule (new rules file based)
   getSigmaRuleList() {
     return RestApiClient.get('/sigmarules/')
   },
