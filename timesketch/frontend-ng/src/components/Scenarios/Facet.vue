@@ -110,6 +110,9 @@ export default {
       this.expanded = !this.expanded
     },
     setActiveContext: function (question) {
+      if (!question) {
+        question = {}
+      }
       let payload = {
         scenario: this.scenario,
         facet: this.facet,

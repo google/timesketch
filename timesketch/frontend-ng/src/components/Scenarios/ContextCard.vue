@@ -22,8 +22,14 @@ limitations under the License.
         <v-icon>mdi-close</v-icon>
       </v-btn>
     </v-toolbar>
-    <v-divider></v-divider>
-    <div class="pa-4 markdown-body" v-html="toHtml(activeContext.question.description)" style="font-size: 0.9em"></div>
+    <div v-if="activeContext.question.description">
+      <v-divider></v-divider>
+      <div
+        class="pa-4 markdown-body"
+        v-html="toHtml(activeContext.question.description)"
+        style="font-size: 0.9em"
+      ></div>
+    </div>
   </v-card>
 </template>
 

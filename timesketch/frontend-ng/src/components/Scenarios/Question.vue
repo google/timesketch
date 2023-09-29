@@ -177,7 +177,7 @@ export default {
   watch: {
     expanded: function (isExpanded) {
       if (!isExpanded) return
-      if (this.opensearchQueries.length) return
+      if (!this.opensearchQueries.length) return
       this.getSuggestedQueries()
     },
   },
