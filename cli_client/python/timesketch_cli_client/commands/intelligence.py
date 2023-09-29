@@ -81,7 +81,7 @@ def list_intelligence(ctx, header, columns):
             row = []
             for column in columns:
                 if column == "tags":
-                    # tags can be multiple values but they should only be
+                    # Tags can be multiple values but they should only be
                     # one value on the csv so we join them with a comma
                     # surrounded the array by quotes
                     row.append(f'"{",".join(entry.get(column, []))}"')
