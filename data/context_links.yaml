@@ -68,12 +68,14 @@ hardcoded_modules:
     short_name: 'Prettify XML'
     match_fields:
       - xml
+      - xml_string
 ### unfurl dialog
   unfurl_graph:
     short_name: 'Unfurl URL'
     match_fields:
-      - 'url'
-      - 'uri'
+      - url
+      - uri
+      - original_url
 
 ## External Services
 linked_services:
