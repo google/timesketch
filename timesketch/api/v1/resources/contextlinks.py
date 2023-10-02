@@ -47,11 +47,24 @@ class ContextLinkConfigResource(resources.ResourceMixin, Resource):
         if not context_link_yaml:
             return jsonify(response)
 
-        for entry in context_link_yaml:
-            entry_dict = context_link_yaml[entry]
-            context_link_config = deepcopy(entry_dict)
-            del context_link_config["match_fields"]
-            for field in entry_dict.get("match_fields"):
-                response.setdefault(field.lower(), []).append(context_link_config)
+        if context_link_yaml.get("hardcoded_modules"):
+            for entry in context_link_yaml.get("hardcoded_modules"):
+                context_link_config = {
+                    "type": "hardcoded_modules",
+                    "short_name": context_link_yaml["hardcoded_modules"][entry]["short_name"],
+                    "module": entry,
+                }
+                if context_link_yaml["hardcoded_modules"][entry].get("validation_regex"):
+                    context_link_config["validation_regex"] = context_link_yaml["hardcoded_modules"][entry]["validation_regex"]
+                for field in context_link_yaml["hardcoded_modules"][entry]["match_fields"]:
+                    response.setdefault(field.lower(), []).append(context_link_config)
+
+        if context_link_yaml.get("linked_services"):
+            for entry in context_link_yaml.get("linked_services"):
+                context_link_config = deepcopy(context_link_yaml["linked_services"][entry])
+                context_link_config["type"] = "linked_services"
+                del context_link_config["match_fields"]
+                for field in context_link_yaml["linked_services"][entry]["match_fields"]:
+                    response.setdefault(field.lower(), []).append(context_link_config)
 
         return jsonify(response)
