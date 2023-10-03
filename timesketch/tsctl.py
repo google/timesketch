@@ -602,25 +602,16 @@ def validate_context_links_conf(path):
         "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
-            "short_name": {
-              "type": "string"
-            },
+            "short_name": {"type": "string"},
             "match_fields": {
-              "type": "array",
-              "items": [
-                {
-                  "type": "string"
-                },
-              ]
+                "type": "array",
+                "items": [
+                    {"type": "string"},
+                ],
             },
-            "validation_regex": {
-              "type": "string"
-            },
+            "validation_regex": {"type": "string"},
         },
-        "required": [
-            "short_name",
-            "match_fields"
-        ],
+        "required": ["short_name", "match_fields"],
     }
 
     linked_services_schema = {
