@@ -180,23 +180,18 @@ level: high
 
     def test_delete_sigmarule(self):
         """Client Sigma delete tests."""
-        rule = self.api.get_sigmarule(
-            rule_uuid="5266a592-b793-11ea-b3de-eeeee"
-        )
+        rule = self.api.get_sigmarule(rule_uuid="5266a592-b793-11ea-b3de-eeeee")
         self.assertions.assertGreater(len(rule.attributes), 5)
         rule.delete()
 
         rules = self.api.list_sigmarules()
         self.assertions.assertGreaterEqual(len(rules), 1)
 
-        rule = self.api.get_sigmarule(
-            rule_uuid="5266a592-b793-11ea-b3de-bbbbbb"
-        )
+        rule = self.api.get_sigmarule(rule_uuid="5266a592-b793-11ea-b3de-bbbbbb")
         self.assertions.assertGreater(len(rule.attributes), 5)
         rule.delete()
         rules = self.api.list_sigmarules()
         self.assertions.assertGreaterEqual(len(rules), 0)
-
 
     def test_add_event_attributes(self):
         """Tests adding attributes to an event."""
