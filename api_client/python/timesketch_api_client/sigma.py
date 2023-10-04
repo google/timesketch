@@ -182,3 +182,19 @@ class SigmaRule(resource.BaseResource):
         rule_dict = objects[0]
         for key, value in rule_dict.items():
             self.set_value(key, value)
+
+    def delete(self):
+        """Deletes the Sigma rule from Timesketch."""
+        if not self.get_attribute("id"):
+            logger.warning(
+                "Unable to delete the Sigma rule, it does not appear to be "
+                "saved in the first place."
+            )
+            return False
+
+        resource_url = (
+            f"{self.api.api_root}/sigmarules/{self.get_attribute('id')}"
+        )
+
+        response = self.api.session.delete(resource_url)
+        return error.check_return_status(response, logger)
