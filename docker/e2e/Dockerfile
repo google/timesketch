@@ -41,7 +41,6 @@ RUN cp /tmp/timesketch/data/features.yaml /etc/timesketch/
 RUN cp /tmp/timesketch/data/plaso.mappings /etc/timesketch/
 RUN cp /tmp/timesketch/data/generic.mappings /etc/timesketch/
 RUN cp /tmp/timesketch/data/sigma_config.yaml /etc/timesketch/
-RUN cp /tmp/timesketch/data/sigma_rule_status.csv /etc/timesketch/
 RUN cp /tmp/timesketch/data/data_finder.yaml /etc/timesketch/
 RUN cp /tmp/timesketch/data/bigquery_matcher.yaml /etc/timesketch/
 RUN cp /tmp/timesketch/data/plaso_formatters.yaml /etc/timesketch/
