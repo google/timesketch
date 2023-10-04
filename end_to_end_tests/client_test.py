@@ -178,7 +178,7 @@ level: high
         count = len(data_frame)
         self.assertions.assertEqual(count, 1)
 
-    def test_delete_sigmarule(self):
+    def test_sigmarule_delete(self):
         """Client Sigma delete tests."""
         rule = self.api.get_sigmarule(rule_uuid="5266a592-b793-11ea-b3de-eeeee")
         self.assertions.assertGreater(len(rule.attributes), 5)
