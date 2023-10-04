@@ -99,7 +99,7 @@ def list_intelligence(ctx, header, columns):
     help="Indicator Of Compromise (IOC) value.",
 )
 @click.option(
-    "--type",
+    "--ioc-type",
     required=False,
     help="Type of the intelligence (ipv4, hash_sha256, hash_sha1, hash_md5, other).",
 )
@@ -109,7 +109,7 @@ def list_intelligence(ctx, header, columns):
     help="Comma separated list of tags.",
 )
 @click.pass_context
-def add_intelligence(ctx, ioc, tags, type="other"):
+def add_intelligence(ctx, ioc, tags, ioc_type="other"):
     """Add intelligence to a sketch.
 
     A sketch can have multiple intelligence entries. Each entry consists of
@@ -120,7 +120,7 @@ def add_intelligence(ctx, ioc, tags, type="other"):
     Args:
         ctx: Click context object.
         ioc: IOC value.
-        type: Type of the intelligence. This is defined in the ontology file.
+        ioc_type: Type of the intelligence. This is defined in the ontology file.
             If a string doesn't match any of the aforementioned IOC types,
             the type will fall back to other.
         tags: Comma separated list of tags.
@@ -134,7 +134,7 @@ def add_intelligence(ctx, ioc, tags, type="other"):
     else:
         tags = []
 
-    ioc_dict = {"ioc": ioc, "type": type, "tags": tags}
+    ioc_dict = {"ioc": ioc, "type": ioc_type, "tags": tags}
     # Put the ioc in a nested object to match the format of the API
     data = {"data": [ioc_dict]}
     try:
