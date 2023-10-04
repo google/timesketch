@@ -192,9 +192,7 @@ class SigmaRule(resource.BaseResource):
             )
             return False
 
-        resource_url = (
-            f"{self.api.api_root}/sigmarules/{self.get_attribute('id')}"
-        )
+        resource_url = (f"{self.api.api_root}/sigmarules/{self.get_attribute('id')}")
 
         response = self.api.session.delete(resource_url)
         return error.check_return_status(response, logger)
