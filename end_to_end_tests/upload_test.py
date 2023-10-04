@@ -12,11 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """End to end tests of Timesketch upload functionality."""
+import os
+import random
 
+from timesketch_api_client import search
 from . import interface
 from . import manager
-from timesketch_api_client import search
-import os
 
 
 class UploadTest(interface.BaseEndToEndTest):
@@ -37,8 +38,6 @@ class UploadTest(interface.BaseEndToEndTest):
         is correct."""
 
         # create a new sketch
-        import random
-
         randomnumber = random.randint(0, 10000)
         sketch = self.api.create_sketch(name=randomnumber)
         self.sketch = sketch
@@ -52,7 +51,8 @@ class UploadTest(interface.BaseEndToEndTest):
 
             for i in range(3251):
                 # write a line with random values for message
-                string = f'"CSV Count: {i} {randomnumber}","123456789","2015-07-24T19:01:01+00:00","Write time","foobarcsv"\n'
+                string = f'"CSV Count: {i} {randomnumber}","123456789",+ \
+                    "2015-07-24T19:01:01+00:00","Write time","foobarcsv"\n'
                 file_object.write(string)
 
         self.import_timeline("/tmp/large.csv", index_name=randomnumber, sketch=sketch)
@@ -81,8 +81,6 @@ class UploadTest(interface.BaseEndToEndTest):
         is correct."""
 
         # create a new sketch
-        import random
-
         randomnumber = random.randint(0, 10000)
         sketch = self.api.create_sketch(name=randomnumber)
         self.sketch = sketch
@@ -96,7 +94,8 @@ class UploadTest(interface.BaseEndToEndTest):
 
             for i in range(73251):
                 # write a line with random values for message
-                string = f'"CSV Count: {i} {randomnumber}","123456789","2015-07-24T19:01:01+00:00","Write time","73kcsv"\n'
+                string = f'"CSV Count: {i} {randomnumber}","123456789",+ \
+                    "2015-07-24T19:01:01+00:00","Write time","73kcsv"\n'
                 file_object.write(string)
 
         self.import_timeline(
