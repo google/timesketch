@@ -85,7 +85,7 @@ class ClientTest(interface.BaseEndToEndTest):
         data_source = data_sources[0]
         self.assertions.assertEqual(data_source.get("context", ""), context)
 
-    def test_create_sigma_rule(self):
+    def test_sigmarule_create(self):
         """Create a Sigma rule in database"""
         MOCK_SIGMA_RULE = """
 title: Suspicious Installation of bbbbbb
@@ -120,7 +120,7 @@ level: high
 
         self.assertions.assertIn("installation of bbbbbb", rule.description)
 
-    def test_get_sigmarule(self):
+    def test_sigmarule_create_get(self):
         """Client Sigma object tests."""
 
         rule = self.api.create_sigmarule(
@@ -178,8 +178,10 @@ level: high
         count = len(data_frame)
         self.assertions.assertEqual(count, 1)
 
-    def test_sigmarule_delete(self):
-        """Client Sigma delete tests."""
+    def test_sigmarule_remove(self):
+        """Client Sigma delete tests.
+        The test is called remove to avoid running it before the create test.
+        """
         rule = self.api.get_sigmarule(rule_uuid="5266a592-b793-11ea-b3de-eeeee")
         self.assertions.assertGreater(len(rule.attributes), 5)
         rule.delete()
