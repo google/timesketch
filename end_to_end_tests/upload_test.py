@@ -38,8 +38,8 @@ class UploadTest(interface.BaseEndToEndTest):
         is correct."""
 
         # create a new sketch
-        randomnumber = random.randint(0, 10000)
-        sketch = self.api.create_sketch(name=randomnumber)
+        rand = random.randint(0, 10000)
+        sketch = self.api.create_sketch(name=rand)
         self.sketch = sketch
 
         file_path = "/tmp/large.csv"
@@ -51,17 +51,19 @@ class UploadTest(interface.BaseEndToEndTest):
 
             for i in range(3251):
                 # write a line with random values for message
-                string = f'"CSV Count: {i} {randomnumber}","123456789",+ \
-                    "2015-07-24T19:01:01+00:00","Write time","foobarcsv"\n'
+                string = (
+                    f'"CSV Count: {i} {rand}","123456789",'
+                    '"2015-07-24T19:01:01+00:00","Write time","foobarcsv"\n'
+                )
                 file_object.write(string)
 
-        self.import_timeline("/tmp/large.csv", index_name=randomnumber, sketch=sketch)
+        self.import_timeline("/tmp/large.csv", index_name=rand, sketch=sketch)
         os.remove(file_path)
 
         timeline = sketch.list_timelines()[0]
         # check that timeline was uploaded correctly
         self.assertions.assertEqual(timeline.name, file_path)
-        self.assertions.assertEqual(timeline.index.name, str(randomnumber))
+        self.assertions.assertEqual(timeline.index.name, str(rand))
         self.assertions.assertEqual(timeline.index.status, "ready")
 
         search_obj = search.Search(sketch)
@@ -81,8 +83,8 @@ class UploadTest(interface.BaseEndToEndTest):
         is correct."""
 
         # create a new sketch
-        randomnumber = random.randint(0, 10000)
-        sketch = self.api.create_sketch(name=randomnumber)
+        rand = random.randint(0, 10000)
+        sketch = self.api.create_sketch(name=rand)
         self.sketch = sketch
 
         file_path = "/tmp/verylarge.csv"
@@ -94,19 +96,19 @@ class UploadTest(interface.BaseEndToEndTest):
 
             for i in range(73251):
                 # write a line with random values for message
-                string = f'"CSV Count: {i} {randomnumber}","123456789",+ \
-                    "2015-07-24T19:01:01+00:00","Write time","73kcsv"\n'
+                string = (
+                    f'"CSV Count: {i} {rand}","123456789",'
+                    '"2015-07-24T19:01:01+00:00","Write time","73kcsv"\n'
+                )
                 file_object.write(string)
 
-        self.import_timeline(
-            "/tmp/verylarge.csv", index_name=randomnumber, sketch=sketch
-        )
+        self.import_timeline("/tmp/verylarge.csv", index_name=rand, sketch=sketch)
         os.remove(file_path)
 
         timeline = sketch.list_timelines()[0]
         # check that timeline was uploaded correctly
         self.assertions.assertEqual(timeline.name, file_path)
-        self.assertions.assertEqual(timeline.index.name, str(randomnumber))
+        self.assertions.assertEqual(timeline.index.name, str(rand))
         self.assertions.assertEqual(timeline.index.status, "ready")
 
         search_obj = search.Search(sketch)
