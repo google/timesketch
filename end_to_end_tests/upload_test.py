@@ -15,6 +15,8 @@
 
 from . import interface
 from . import manager
+from timesketch_api_client import search
+import os
 
 
 class UploadTest(interface.BaseEndToEndTest):
@@ -26,6 +28,86 @@ class UploadTest(interface.BaseEndToEndTest):
         """Test uploading a timeline with an invalid index name."""
         with self.assertions.assertRaises(RuntimeError):
             self.import_timeline("evtx.plaso", index_name="/invalid/index/name")
+
+    def test_large_upload_csv(self):
+        """Test uploading a timeline with an a lot of events.
+        The test will create a temporary file with a large number of events
+        and then upload the file to Timesketch.
+        The test will then check that the number of events in the timeline
+        is correct."""
+
+        # create a new sketch
+        import random
+
+        randomnumber = random.randint(0, 10000)
+        sketch = self.api.create_sketch(name=randomnumber)
+        self.sketch = sketch
+
+        file_path = "/tmp/large.csv"
+
+        with open(file_path, "w") as file_object:
+            file_object.write(
+                '"message","timestamp","datetime","timestamp_desc","data_type"\n'
+            )
+
+            for i in range(3251):
+                # write a line with random values for message
+                string = f'"CSV Count: {i} {randomnumber}","123456789","2015-07-24T19:01:01+00:00","Write time","foobarcsv"\n'
+                file_object.write(string)
+
+        self.import_timeline("/tmp/large.csv", index_name=randomnumber, sketch=sketch)
+        os.remove(file_path)
+
+        timeline = sketch.list_timelines()[0]
+        # check that timeline was uploaded correctly
+        self.assertions.assertEqual(timeline.name, file_path)
+        self.assertions.assertEqual(timeline.index.name, str(randomnumber))
+        self.assertions.assertEqual(timeline.index.status, "ready")
+
+        search_obj = search.Search(sketch)
+        search_obj.query_string = "data_type:foobarcsv"
+        search_obj.commit()
+        self.assertions.assertEqual(len(search_obj.table), 3251)
+
+        # check that the number of events is correct with a different method
+        events = sketch.explore("data_type:foobarcsv", as_pandas=True)
+        self.assertions.assertEqual(len(events), 3251)
+
+    def test_large_upload_jsonl(self):
+        """Test uploaading a timeline with a lot of events as jsonl. The test
+        will create a temporary file with a large number of events and then
+        upload the file to Timesketch. The test will then check that the
+        number of events in the timeline is correct."""
+
+        file_path = "/tmp/large.jsonl"
+        # create a new sketch
+        import random
+
+        randomnumber = random.randint(0, 10000)
+        sketch = self.api.create_sketch(name=randomnumber)
+        self.sketch = sketch
+
+        with open(file_path, "w") as file_object:
+            for i in range(4123):
+                string = f'{{"message":"Count {i} {randomnumber}","timestamp":"123456789","datetime":"2015-07-24T19:01:01+00:00","timestamp_desc":"Write time","data_type":"foobarjson"}}\n'
+                file_object.write(string)
+
+        self.import_timeline("/tmp/large.jsonl", index_name=randomnumber, sketch=sketch)
+        os.remove(file_path)
+        timeline = sketch.list_timelines()[0]
+        # check that timeline was uploaded correctly
+        self.assertions.assertEqual(timeline.name, file_path)
+        self.assertions.assertEqual(timeline.index.name, str(randomnumber))
+        self.assertions.assertEqual(timeline.index.status, "ready")
+
+        search_obj = search.Search(sketch)
+        search_obj.query_string = "data_type:foobarjson"
+        search_obj.commit()
+        self.assertions.assertEqual(len(search_obj.table), 4123)
+
+        # check that the number of events is correct with a different method
+        events = sketch.explore("data_type:foobarjson", as_pandas=True)
+        self.assertions.assertEqual(len(events), 4123)
 
 
 manager.EndToEndTestManager.register_test(UploadTest)
