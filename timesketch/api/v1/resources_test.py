@@ -1003,50 +1003,88 @@ class IntelligenceResourceTest(BaseTest):
         data = json.loads(response.get_data(as_text=True))
         self.assertIsNotNone(response)
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
-        self.assertEqual(data, expected_tag_metadata)
+        self.assertDictEqual(data, expected_tag_metadata)
 
 
 class ContextLinksResourceTest(BaseTest):
     """Test Context Links resources."""
 
+    maxDiff = None
+
     def test_get_context_links_config(self):
         """Authenticated request to get the context links configuration."""
 
         expected_configuration = {
-            "hardcoded_modules": {
-                "module_one": {
-                    "short_name": "Module One",
-                    "validation_regex": "/^<\\?xml version='1.0' encoding='UTF-8'\\?>/",
-                    "match_fields": ["xml", "xml_string"],
-                },
-                "module_two": {
-                    "short_name": "Module Two",
-                    "match_fields": ["url", "uri", "original_url"],
-                },
-            },
-            "linked_services": {
-                "lookupone": {
-                    "short_name": "LookupOne",
-                    "match_fields": ["hash"],
-                    "validation_regex": "/^[0-9a-f]{40}$|^[0-9a-f]{32}$/i",
+            "hash": [
+                {
                     "context_link": "https://lookupone.local/q=<ATTR_VALUE>",
                     "redirect_warning": True,
+                    "short_name": "LookupOne",
+                    "type": "linked_services",
+                    "validation_regex": "/^[0-9a-f]{40}$|^[0-9a-f]{32}$/i",
                 },
-                "lookuptwo": {
-                    "short_name": "LookupTwo",
-                    "match_fields": ["sha256_hash", "hash"],
-                    "validation_regex": "/^[0-9a-f]{64}$/i",
+                {
                     "context_link": "https://lookuptwo.local/q=<ATTR_VALUE>",
                     "redirect_warning": False,
+                    "short_name": "LookupTwo",
+                    "type": "linked_services",
+                    "validation_regex": "/^[0-9a-f]{64}$/i",
                 },
-                "lookupthree": {
-                    "short_name": "LookupThree",
-                    "match_fields": ["url"],
+            ],
+            "original_url": [
+                {
+                    "module": "module_two",
+                    "short_name": "ModuleTwo",
+                    "type": "hardcoded_modules",
+                }
+            ],
+            "sha256_hash": [
+                {
+                    "context_link": "https://lookuptwo.local/q=<ATTR_VALUE>",
+                    "redirect_warning": False,
+                    "short_name": "LookupTwo",
+                    "type": "linked_services",
+                    "validation_regex": "/^[0-9a-f]{64}$/i",
+                }
+            ],
+            "uri": [
+                {
+                    "module": "module_two",
+                    "short_name": "ModuleTwo",
+                    "type": "hardcoded_modules",
+                }
+            ],
+            "url": [
+                {
+                    "module": "module_two",
+                    "short_name": "ModuleTwo",
+                    "type": "hardcoded_modules",
+                },
+                {
                     "context_link": "https://lookupthree.local/q=<ATTR_VALUE>",
                     "redirect_warning": True,
+                    "short_name": "LookupThree",
+                    "type": "linked_services",
                 },
-            },
+            ],
+            "xml": [
+                {
+                    "module": "module_one",
+                    "short_name": "ModuleOne",
+                    "type": "hardcoded_modules",
+                    "validation_regex": "/^[0-9a-f]{64}$/i",
+                }
+            ],
+            "xml_string": [
+                {
+                    "module": "module_one",
+                    "short_name": "ModuleOne",
+                    "type": "hardcoded_modules",
+                    "validation_regex": "/^[0-9a-f]{64}$/i",
+                }
+            ],
         }
+
         self.login()
         response = self.client.get("/api/v1/contextlinks/")
         data = json.loads(response.get_data(as_text=True))
