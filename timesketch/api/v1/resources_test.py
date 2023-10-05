@@ -1013,35 +1013,39 @@ class ContextLinksResourceTest(BaseTest):
         """Authenticated request to get the context links configuration."""
 
         expected_configuration = {
-            "hash": [
-                {
+            "hardcoded_modules": {
+                "module_one": {
+                    "short_name": "Module One",
+                    "validation_regex": "/^<\\?xml version='1.0' encoding='UTF-8'\\?>/",
+                    "match_fields": ["xml", "xml_string"],
+                },
+                "module_two": {
+                    "short_name": "Module Two",
+                    "match_fields": ["url", "uri", "original_url"],
+                },
+            },
+            "linked_services": {
+                "lookupone": {
                     "short_name": "LookupOne",
+                    "match_fields": ["hash"],
                     "validation_regex": "/^[0-9a-f]{40}$|^[0-9a-f]{32}$/i",
                     "context_link": "https://lookupone.local/q=<ATTR_VALUE>",
                     "redirect_warning": True,
                 },
-                {
+                "lookuptwo": {
                     "short_name": "LookupTwo",
+                    "match_fields": ["sha256_hash", "hash"],
                     "validation_regex": "/^[0-9a-f]{64}$/i",
                     "context_link": "https://lookuptwo.local/q=<ATTR_VALUE>",
                     "redirect_warning": False,
                 },
-            ],
-            "sha256_hash": [
-                {
-                    "short_name": "LookupTwo",
-                    "validation_regex": "/^[0-9a-f]{64}$/i",
-                    "context_link": "https://lookuptwo.local/q=<ATTR_VALUE>",
-                    "redirect_warning": False,
-                },
-            ],
-            "url": [
-                {
+                "lookupthree": {
                     "short_name": "LookupThree",
+                    "match_fields": ["url"],
                     "context_link": "https://lookupthree.local/q=<ATTR_VALUE>",
                     "redirect_warning": True,
                 },
-            ],
+            },
         }
         self.login()
         response = self.client.get("/api/v1/contextlinks/")
