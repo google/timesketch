@@ -36,9 +36,7 @@ limitations under the License.
       </v-col>
 
       <v-col cols="10" class="pl-1">
-        <span style="font-size: 0.9em">
-          {{ facet.display_name }}
-        </span>
+        <span style="font-size: 0.9em"> {{ facet.display_name }}</span>
       </v-col>
 
       <v-col cols="1">
@@ -76,13 +74,11 @@ export default {
     sketch() {
       return this.$store.state.sketch
     },
+    activeContext() {
+      return this.$store.state.activeContext
+    },
     questionsWithConclusion() {
       return this.facet.questions.filter((question) => question.conclusions.length)
-    },
-    isActive() {
-      return (
-        this.questionsWithConclusion.length > 0 && this.questionsWithConclusion.length < this.facet.questions.length
-      )
     },
     isResolved() {
       return this.questionsWithConclusion.length === this.facet.questions.length
@@ -93,14 +89,13 @@ export default {
   },
   methods: {
     toggleFacet: function () {
-      if (this.$store.state.activeContext.facet != null) {
-        if (this.facet.id === this.$store.state.activeContext.facet.id) {
+      if (this.activeContext.facet != null) {
+        if (this.facet.id === this.activeContext.facet.id) {
           this.$store.dispatch('clearActiveContext')
         }
       }
       this.expanded = !this.expanded
     },
   },
-  created() {},
 }
 </script>

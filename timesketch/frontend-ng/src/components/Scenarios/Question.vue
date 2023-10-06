@@ -60,11 +60,13 @@ limitations under the License.
                 v-for="searchtemplate in searchTemplates"
                 :key="searchtemplate.id"
                 :searchchip="searchtemplate"
+                type="chip"
               ></ts-search-chip>
               <ts-search-chip
                 v-for="opensearchQuery in opensearchQueries"
                 :key="opensearchQuery.value"
                 :searchchip="opensearchQuery"
+                type="chip"
               ></ts-search-chip>
             </v-chip-group>
           </div>
@@ -173,17 +175,25 @@ export default {
         .catch((e) => {})
     },
     getSuggestedQueries() {
-      let analyses = this.question.approaches
-        .map((approach) => JSON.parse(approach.spec_json))
-        .map((approach) => approach._view.processors)
-        .map((processor) => processor[0].analysis.timesketch)
-        .flat()
-      this.opensearchQueries = analyses.filter((analysis) => analysis.type === 'opensearch-query')
+      let approaches = this.question.approaches.map((approach) => JSON.parse(approach.spec_json))
+      approaches.forEach((approach) => {
+        approach._view.processors.forEach((processor) => {
+          processor.analysis.forEach((analysis) => {
+            if (analysis.name === 'OpenSearch') {
+              analysis.steps.forEach((step) => {
+                this.opensearchQueries.push(step)
+              })
+            }
+          })
+        })
+      })
     },
     toggleQuestion() {
       if (this.expanded && !this.isActive) {
         this.setActiveContext()
         return
+      } else {
+        this.$store.dispatch('clearActiveContext')
       }
       this.expanded = !this.expanded
     },
@@ -198,13 +208,16 @@ export default {
   },
   watch: {
     expanded: function (isExpanded) {
-      if (!isExpanded) {
-        this.$store.dispatch('clearActiveContext')
-      } else {
+      if (isExpanded) {
         this.setActiveContext()
       }
-      if (!this.opensearchQueries.length) return
+      if (this.opensearchQueries.length) return
       this.getSuggestedQueries()
+    },
+    isActive: function (newVal) {
+      if (!newVal) {
+        this.expanded = false
+      }
     },
   },
 }

@@ -30,6 +30,12 @@ limitations under the License.
       <v-container> TODO: Add content here </v-container>
     </v-navigation-drawer>
 
+    <!-- DFIQ context -->
+    <ts-scenario-context-card
+      class="pt-0 mt-n2 mb-7"
+      v-if="activeContext.question.display_name"
+    ></ts-scenario-context-card>
+
     <!-- Search and Filters -->
     <v-card flat class="pa-3 pt-0 mt-n3" color="transparent">
       <v-card class="d-flex align-start mb-1" outlined>
@@ -264,9 +270,6 @@ limitations under the License.
         </v-chip-group>
       </div>
     </v-card>
-
-    <!-- DFIQ context -->
-    <ts-scenario-context-card v-if="activeContext.question.display_name"></ts-scenario-context-card>
 
     <!-- Eventlist -->
     <v-card flat class="mt-5 mx-3">
