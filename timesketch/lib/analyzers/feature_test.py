@@ -30,7 +30,7 @@ class TestFeatureSketchPlugin(BaseTest):
     """A class to test FeatureSketchPlugin class methods."""
 
     EXPECTED_RESULT = textwrap.dedent(
-        """1 features extracted using feature security_4624_v2"""
+        """winevt feature extraction [security_4624_v2] extracted 1 features."""
     )
 
     def test_winevt_config(self):
