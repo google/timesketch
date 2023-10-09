@@ -42,53 +42,6 @@ limitations under the License.
       </v-row>
     </v-container>
 
-    <!-- Context search -->
-    <v-bottom-sheet
-      hide-overlay
-      persistent
-      no-click-animation
-      v-model="showTimelineView"
-      @click:outside="showTimelineView = false"
-      scrollable
-    >
-      <v-card>
-        <v-toolbar dense flat>
-          <strong>Context search</strong>
-          <v-btn-toggle v-model="contextTimeWindowSeconds" class="ml-10" rounded>
-            <v-btn
-              v-for="duration in [1, 5, 10, 60, 300, 600, 1800, 3600]"
-              :key="duration"
-              :value="duration"
-              small
-              outlined
-              @click="updateContextQuery(duration)"
-            >
-              {{ duration | formatSeconds }}
-            </v-btn>
-          </v-btn-toggle>
-          <v-btn small text class="ml-5" @click="contextToSearch()">Replace search</v-btn>
-
-          <v-spacer></v-spacer>
-
-          <v-btn icon :disabled="timelineViewHeight > 40" @click="increaseTimelineViewHeight()">
-            <v-icon>mdi-chevron-up</v-icon>
-          </v-btn>
-          <v-btn icon :disabled="timelineViewHeight === 0" @click="decreaseTimelineViewHeight()">
-            <v-icon>mdi-chevron-down</v-icon>
-          </v-btn>
-          <v-btn icon @click="showTimelineView = false">
-            <v-icon>mdi-close</v-icon>
-          </v-btn>
-        </v-toolbar>
-        <v-divider></v-divider>
-        <v-expand-transition>
-          <v-card-text :style="{ height: timelineViewHeight + 'vh' }" v-show="!minimizeTimelineView">
-            <ts-event-list :query-request="queryRequest" :highlight-event="currentContextEvent"></ts-event-list>
-          </v-card-text>
-        </v-expand-transition>
-      </v-card>
-    </v-bottom-sheet>
-
     <!-- Rename sketch dialog -->
     <v-dialog v-model="renameSketchDialog" width="600">
       <v-card class="pa-4">
@@ -96,157 +49,51 @@ limitations under the License.
       </v-card>
     </v-dialog>
 
-    <!-- Left panel -->
-    <v-navigation-drawer
-      v-if="showLeftPanel && hasTimelines && !isArchived"
-      app
-      permanent
-      :width="navigationDrawer.width"
-      hide-overlay
-      ref="drawer"
-    >
-      <v-toolbar flat>
-        <v-avatar class="ml-n3 mt-1">
-          <router-link :to="{ name: 'Home' }">
-            <v-img src="/dist/timesketch-color.png" max-height="25" max-width="25" contain></v-img>
-          </router-link>
-        </v-avatar>
-
-        <v-hover v-slot="{ hover }">
-          <div class="d-flex flex-wrap">
-            <div
-              class="flex-1-0"
-              @dblclick="renameSketchDialog = true"
-              style="
-                font-size: 1.1em;
-                cursor: pointer;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                max-width: 300px;
-              "
-              :title="sketch.name"
-            >
-              {{ sketch.name }}
-            </div>
-            <div>
-              <v-icon small class="ml-1" v-if="hover" @click="renameSketchDialog = true">mdi-pencil</v-icon>
-            </div>
-          </div>
-        </v-hover>
-
-        <v-spacer></v-spacer>
-        <v-icon @click="toggleLeftPanel">mdi-chevron-left</v-icon>
-      </v-toolbar>
-
-      <v-divider></v-divider>
-
-      <!-- Dialog for adding a scenario -->
-      <v-dialog v-model="scenarioDialog" max-width="500px">
-        <v-card>
-          <div class="pa-3">
-            <h3>Investigative Scenarios</h3>
-            <v-select
-              v-model="selectedScenario"
-              :items="scenarioTemplates"
-              item-text="name"
-              return-object
-              label="Select a scenario"
-              outlined
-              class="mt-3"
-            ></v-select>
-            <div v-if="selectedScenario">
-              {{ selectedScenario.description }}
-            </div>
-          </div>
-          <v-divider></v-divider>
-          <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn @click="scenarioDialog = false" text> Cancel </v-btn>
-            <v-btn text color="primary" :disabled="!selectedScenario" @click="addScenario(selectedScenario.id)">
-              Add
-            </v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
-
-      <v-tabs v-model="leftPanelTab" grow>
-        <v-tab v-for="item in leftPanelTabItems" :key="item"> {{ item }} </v-tab>
-      </v-tabs>
-      <v-divider></v-divider>
-      <v-tabs-items v-model="leftPanelTab">
-        <v-tab-item :transition="false">
-          <ts-saved-searches v-if="meta.views"></ts-saved-searches>
-          <ts-data-types></ts-data-types>
-          <ts-tags></ts-tags>
-          <ts-graphs></ts-graphs>
-          <ts-stories></ts-stories>
-          <ts-intelligence></ts-intelligence>
-          <ts-search-templates></ts-search-templates>
-          <ts-sigma-rules></ts-sigma-rules>
-          <ts-analyzer-results></ts-analyzer-results>
-        </v-tab-item>
-        <v-tab-item :transition="false">
-          <ts-scenario v-for="scenario in activeScenarios" :key="scenario.id" :scenario="scenario"></ts-scenario>
-          <v-row class="mt-0 px-2" flat>
-            <v-col cols="6">
-              <v-card v-if="!Object.keys(scenarioTemplates).length" flat class="pa-4"
-                >No scenarios available yet. Contact your server admin to add scenarios to this server.</v-card
-              >
-              <v-btn v-else text color="primary" @click="scenarioDialog = true" style="cursor: pointer"
-                ><v-icon left>mdi-plus</v-icon> Add Scenario</v-btn
-              >
-            </v-col>
-
-            <v-col cols="6">
-              <v-btn
-                small
-                text
-                color="primary"
-                v-if="hiddenScenarios.length"
-                @click="showHidden = !showHidden"
-                class="mt-1"
-              >
-                <small
-                  ><span v-if="showHidden">Hide</span><span v-else>Show</span> hidden scenarios ({{
-                    hiddenScenarios.length
-                  }})</small
-                >
-              </v-btn>
-            </v-col>
-          </v-row>
-
-          <div v-if="showHidden">
-            <ts-scenario v-for="scenario in hiddenScenarios" :key="scenario.id" :scenario="scenario"></ts-scenario>
-          </div>
-        </v-tab-item>
-      </v-tabs-items>
-    </v-navigation-drawer>
-
     <!-- Top horizontal toolbar -->
-    <v-app-bar v-if="!loadingSketch" app hide-on-scroll clipped flat :color="$vuetify.theme.dark ? '#121212' : 'white'">
-      <v-btn icon v-show="!showLeftPanel && !loadingSketch" @click="toggleLeftPanel" class="ml-n1">
+    <v-app-bar
+      v-if="!loadingSketch"
+      app
+      clipped-left
+      flat
+      :color="$vuetify.theme.dark ? '#121212' : 'white'"
+      :style="[
+        $vuetify.theme.dark
+          ? { 'border-bottom': '1px solid hsla(0,0%,100%,.12) !important' }
+          : { 'border-bottom': '1px solid rgba(0,0,0,.12) !important' },
+      ]"
+    >
+      <v-btn icon @click="toggleLeftPanel">
         <v-icon>mdi-menu</v-icon>
       </v-btn>
 
-      <v-avatar v-show="!showLeftPanel || !hasTimelines || isArchived" class="ml-n2 mt-1">
+      <v-avatar class="ml-n2 mt-1">
         <router-link to="/">
           <v-img src="/dist/timesketch-color.png" max-height="25" max-width="25" contain></v-img>
         </router-link>
       </v-avatar>
 
-      <span v-if="!showLeftPanel || !hasTimelines || isArchived" style="font-size: 1.1em">{{ sketch.name }} </span>
-
-      <v-btn
-        v-show="currentRouteName !== 'Explore'"
-        :to="{ name: 'Explore', params: { sketchId: sketchId } }"
-        small
-        depressed
-        class="ml-2"
-      >
-        <v-icon small left>mdi-arrow-left</v-icon>
-        back to explore
-      </v-btn>
+      <v-hover v-slot="{ hover }">
+        <div class="d-flex flex-wrap">
+          <div
+            class="flex-1-0"
+            @dblclick="renameSketchDialog = true"
+            style="
+              font-size: 1.1em;
+              cursor: pointer;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              max-width: 900px;
+            "
+            :title="sketch.name"
+          >
+            {{ sketch.name }}
+          </div>
+          <div>
+            <v-icon small class="ml-1" v-if="hover" @click="renameSketchDialog = true">mdi-pencil</v-icon>
+          </div>
+        </div>
+      </v-hover>
       <v-spacer></v-spacer>
       <v-btn small depressed v-on:click="switchUI"> Use the old UI </v-btn>
 
@@ -355,11 +202,163 @@ limitations under the License.
       </v-menu>
     </v-app-bar>
 
-    <!-- Canvas (main) view -->
-    <router-view
-      v-if="sketch.status && hasTimelines && !isArchived"
-      @setTitle="(title) => (this.title = title)"
-    ></router-view>
+    <!-- Left panel -->
+    <v-navigation-drawer
+      v-if="showLeftPanel && hasTimelines && !isArchived"
+      app
+      clipped
+      permanent
+      :width="navigationDrawer.width"
+      hide-overlay
+      ref="drawer"
+    >
+      <!-- Dialog for adding a scenario -->
+      <v-dialog v-model="scenarioDialog" max-width="500px">
+        <v-card>
+          <div class="pa-3">
+            <h3>Investigative Scenarios</h3>
+            <v-select
+              v-model="selectedScenario"
+              :items="scenarioTemplates"
+              item-text="name"
+              return-object
+              label="Select a scenario"
+              outlined
+              class="mt-3"
+            ></v-select>
+            <div v-if="selectedScenario">
+              {{ selectedScenario.description }}
+            </div>
+          </div>
+          <v-divider></v-divider>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn @click="scenarioDialog = false" text> Cancel </v-btn>
+            <v-btn text color="primary" :disabled="!selectedScenario" @click="addScenario(selectedScenario.id)">
+              Add
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
+      <v-tabs v-model="leftPanelTab" grow>
+        <v-tab v-for="item in leftPanelTabItems" :key="item"> {{ item }} </v-tab>
+      </v-tabs>
+      <v-divider></v-divider>
+      <v-tabs-items v-model="leftPanelTab">
+        <v-tab-item :transition="false">
+          <router-link
+            :to="{ name: 'Explore', params: { sketchId: sketchId } }"
+            tag="div"
+            class="pa-4"
+            style="cursor: pointer"
+            :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+          >
+            <span> <v-icon left>mdi-magnify</v-icon> Search </span>
+          </router-link>
+          <v-divider></v-divider>
+
+          <ts-saved-searches v-if="meta.views"></ts-saved-searches>
+          <ts-data-types></ts-data-types>
+          <ts-tags></ts-tags>
+          <ts-graphs></ts-graphs>
+          <ts-stories></ts-stories>
+          <ts-intelligence></ts-intelligence>
+          <ts-search-templates></ts-search-templates>
+          <ts-sigma-rules></ts-sigma-rules>
+          <ts-analyzer-results></ts-analyzer-results>
+        </v-tab-item>
+        <v-tab-item :transition="false">
+          <ts-scenario v-for="scenario in activeScenarios" :key="scenario.id" :scenario="scenario"></ts-scenario>
+          <v-row class="mt-0 px-2" flat>
+            <v-col cols="6">
+              <v-card v-if="!Object.keys(scenarioTemplates).length" flat class="pa-4"
+                >No scenarios available yet. Contact your server admin to add scenarios to this server.</v-card
+              >
+              <v-btn v-else text color="primary" @click="scenarioDialog = true" style="cursor: pointer"
+                ><v-icon left>mdi-plus</v-icon> Add Scenario</v-btn
+              >
+            </v-col>
+
+            <v-col cols="6">
+              <v-btn
+                small
+                text
+                color="primary"
+                v-if="hiddenScenarios.length"
+                @click="showHidden = !showHidden"
+                class="mt-1"
+              >
+                <small
+                  ><span v-if="showHidden">Hide</span><span v-else>Show</span> hidden scenarios ({{
+                    hiddenScenarios.length
+                  }})</small
+                >
+              </v-btn>
+            </v-col>
+          </v-row>
+
+          <div v-if="showHidden">
+            <ts-scenario v-for="scenario in hiddenScenarios" :key="scenario.id" :scenario="scenario"></ts-scenario>
+          </div>
+        </v-tab-item>
+      </v-tabs-items>
+    </v-navigation-drawer>
+
+    <!-- Main (canvas) view -->
+    <v-main class="notransition mt-5">
+      <router-view
+        v-if="sketch.status && hasTimelines && !isArchived"
+        @setTitle="(title) => (this.title = title)"
+      ></router-view>
+    </v-main>
+
+    <!-- Context search -->
+    <v-bottom-sheet
+      hide-overlay
+      persistent
+      no-click-animation
+      v-model="showTimelineView"
+      @click:outside="showTimelineView = false"
+      scrollable
+    >
+      <v-card>
+        <v-toolbar dense flat>
+          <strong>Context search</strong>
+          <v-btn-toggle v-model="contextTimeWindowSeconds" class="ml-10" rounded>
+            <v-btn
+              v-for="duration in [1, 5, 10, 60, 300, 600, 1800, 3600]"
+              :key="duration"
+              :value="duration"
+              small
+              outlined
+              @click="updateContextQuery(duration)"
+            >
+              {{ duration | formatSeconds }}
+            </v-btn>
+          </v-btn-toggle>
+          <v-btn small text class="ml-5" @click="contextToSearch()">Replace search</v-btn>
+
+          <v-spacer></v-spacer>
+
+          <v-btn icon :disabled="timelineViewHeight > 40" @click="increaseTimelineViewHeight()">
+            <v-icon>mdi-chevron-up</v-icon>
+          </v-btn>
+          <v-btn icon :disabled="timelineViewHeight === 0" @click="decreaseTimelineViewHeight()">
+            <v-icon>mdi-chevron-down</v-icon>
+          </v-btn>
+          <v-btn icon @click="showTimelineView = false">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </v-toolbar>
+        <v-divider></v-divider>
+        <v-expand-transition>
+          <v-card-text :style="{ height: timelineViewHeight + 'vh' }" v-show="!minimizeTimelineView">
+            <ts-event-list :query-request="queryRequest" :highlight-event="currentContextEvent"></ts-event-list>
+          </v-card-text>
+        </v-expand-transition>
+      </v-card>
+    </v-bottom-sheet>
   </div>
 </template>
 
