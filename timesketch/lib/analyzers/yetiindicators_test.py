@@ -12,20 +12,20 @@ from timesketch.lib.testlib import BaseTest
 from timesketch.lib.testlib import MockDataStore
 
 MOCK_YETI_INTEL = {
-    "x-regex--6ebc9344-1111-4d65-8bdd-b6dddf613068": {
-        "id": "x-regex--6ebc9344-1111-4d65-8bdd-b6dddf613068",
-        "name": "Secret Fancy Bear c2",
-        "pattern": "baddomain\\.com",
-        "compiled_regexp": re.compile("baddomain\\.com"),
-        "type": "x-regex",
+    "12345": {
+        "id": "12345",
+        "name": "Random regex",
+        "pattern": "[0-9a-f]",
+        "compiled_regexp": re.compile("[0-9a-f]"),
+        "type": "regex",
     }
 }
 
 MOCK_YETI_NEIGHBORS = [
     {
-        "id": "x-incident--6ebc9344-1111-4d65-8bdd-b6dddf613068",
-        "name": "Random incident",
-        "type": "x-incident",
+        "id": "98765",
+        "name": "Bad malware",
+        "type": "malware",
     }
 ]
 
@@ -33,8 +33,8 @@ MATCHING_DOMAIN_MESSAGE = {"message": "baddomain.com"}
 OK_DOMAIN_MESSAGE = {"message": "okdomain.com"}
 
 
-class TestThreatintelPlugin(BaseTest):
-    """Tests the functionality of the analyzer."""
+class TestYetiIndicators(BaseTest):
+    """Tests the functionality of the YetiIndicators analyzer."""
 
     def setUp(self):
         super().setUp()
@@ -83,10 +83,6 @@ class TestThreatintelPlugin(BaseTest):
         analyzer.intel = MOCK_YETI_INTEL
         mock_get_neighbors.return_value = MOCK_YETI_NEIGHBORS
 
-        # event = copy.deepcopy(MockDataStore.event_dict)
-        # event["_source"].update(OK_DOMAIN_MESSAGE)
-        # analyzer.datastore.import_event("test_index", event["_source"], "0")
-
         message = analyzer.run()
         self.assertEqual(message, "No indicators were found in the timeline.")
         mock_get_indicators.assert_called_once()
@@ -98,9 +94,9 @@ class TestThreatintelPlugin(BaseTest):
         mock_event = mock.Mock()
         mock_event.get_comments.return_value = []
         analyzer.mark_event(
-            MOCK_YETI_INTEL["x-regex--6ebc9344-1111-4d65-8bdd-b6dddf613068"],
+            MOCK_YETI_INTEL["12345"],
             mock_event,
             MOCK_YETI_NEIGHBORS,
         )
         # The name of the entity is "Random incident"
-        mock_event.add_tags.assert_called_once_with(["random-incident"])
+        mock_event.add_tags.assert_called_once_with(["Bad malware"])
