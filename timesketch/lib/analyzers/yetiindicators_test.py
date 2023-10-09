@@ -99,4 +99,4 @@ class TestYetiIndicators(BaseTest):
             MOCK_YETI_NEIGHBORS,
         )
         # The name of the entity is "Random incident"
-        mock_event.add_tags.assert_called_once_with(["Bad malware"])
+        mock_event.add_tags.assert_called_once_with(["bad-malware"])
