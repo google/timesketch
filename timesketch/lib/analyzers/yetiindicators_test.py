@@ -1,10 +1,7 @@
 """Tests for ThreatintelPlugin."""
-from __future__ import unicode_literals
-
-import copy
+import json
 import re
 import mock
-import json
 
 from flask import current_app
 
@@ -17,7 +14,7 @@ MOCK_YETI_INTEL = {
         "id": "12345",
         "name": "Random regex",
         "pattern": "[0-9a-f]",
-        "compiled_regexp": re.compile("[0-9a-f]+\.com"),
+        "compiled_regexp": re.compile(r"[0-9a-f]+\.com"),
         "type": "regex",
     }
 }
