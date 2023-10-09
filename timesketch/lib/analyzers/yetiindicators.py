@@ -5,6 +5,7 @@ import re
 
 from flask import current_app
 import requests
+from typing import Dict, List
 
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
@@ -37,11 +38,11 @@ class YetiIndicators(interface.BaseAnalyzer):
         self.yeti_web_root = root.replace("/api/v2", "")
         self.yeti_api_key = current_app.config.get("YETI_API_KEY")
 
-    def get_neighbors(self, yeti_object: dict) -> list[dict]:
+    def get_neighbors(self, yeti_object: Dict) -> List[Dict]:
         """Retrieves a list of neighbors associated to a given entity.
 
         Args:
-          yeti_object (str): The Yeti object to get neighbors from.
+          yeti_object: The Yeti object to get neighbors from.
 
         Returns:
           A list of JSON objects describing a Yeti entity.
@@ -85,9 +86,9 @@ class YetiIndicators(interface.BaseAnalyzer):
             self.intel[_id] = indicator
 
     def mark_event(self,
-                   indicator: dict,
+                   indicator: Dict,
                    event: interface.Event,
-                   neighbors: list[dict]):
+                   neighbors: List[Dict]):
         """Annotate an event with data from indicators and neighbors.
 
         Tags with skull emoji, adds a comment to the event.
@@ -171,7 +172,7 @@ class YetiIndicators(interface.BaseAnalyzer):
 
         if not total_matches:
             self.output.result_status = "SUCCESS"
-            self.output.result_priority = "NORMAL"
+            self.output.result_priority = "NOTE"
             note = "No indicators were found in the timeline."
             self.output.result_summary = note
             return str(self.output)
