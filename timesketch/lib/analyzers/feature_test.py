@@ -1,9 +1,21 @@
-"""Unit tests for FeatureSketchPlugin."""
+# Copyright 2023 Google Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""Unit tests for feature extraction."""
 
 import os
 import textwrap
-
-from typing import List
+from typing import List, Dict
 
 import yaml
 import mock
@@ -15,40 +27,29 @@ from timesketch.lib.testlib import MockDataStore
 
 
 class TestFeatureSketchPlugin(BaseTest):
-    """Class to test FeatureSketchPlugin class methods."""
+    """A class to test FeatureSketchPlugin class methods."""
 
     EXPECTED_RESULT = textwrap.dedent(
-        """1 events updated by security_4624_v0.
-1 events updated by security_4624_v1.
-1 events updated by security_4624_v2.
-1 events updated by security_4625_v0.
-1 events updated by security_4634_v0.
-1 events updated by security_4648_v0.
-1 events updated by security_4688_v2.
-1 events updated by security_4720_v0.
-1 events updated by security_4728_v0.
-1 events updated by security_4732_v0.
-1 events updated by system_7045_v0."""
+        """1 features extracted using feature security_4624_v2"""
     )
 
     def test_winevt_config(self):
         """Tests Windows event log feature extraction config."""
-
-        config_file = os.path.join("data", "winevt.yaml")
+        config_file = os.path.join("data", "winevt_features.yaml")
         self.assertTrue(os.path.isfile(config_file))
 
         with open(config_file, "r", encoding="utf-8") as fh:
             config = yaml.safe_load(fh)
+
         self.assertIsInstance(config, dict)
 
-        for key, value in iter(config.items()):
+        for key, value in config.items():
             self.assertIsInstance(key, str)
             self.assertIsInstance(value, dict)
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     def test_run(self) -> None:
         """Tests run method."""
-
         plugin_object = FeatureSketchPlugin(
             index_name="test", sketch_id=1, timeline_id=1
         )
@@ -58,13 +59,39 @@ class TestFeatureSketchPlugin(BaseTest):
 
         self._create_mock_events(datastore)
 
+        plugin_object.plugin_name = "winevt_feature_extraction"
+        plugin_object.feature_name = "security_4624_v2"
+        plugin_object.feature_config = self._get_feature_config(
+            "winevt_features.yaml", plugin_object.feature_name
+        )
+
         result = plugin_object.run()
         self.assertEqual(self.EXPECTED_RESULT, result)
 
+    def _get_feature_config(self, file_name: str, feature_name: str) -> Dict:
+        """Returns the feature configuration.
+
+        Args:
+            file_name (str): Feature configuration file name.
+            feature_name (str): Feature name in the configuration file.
+
+        Returns:
+            Dict: Configuration parameter for the feature.
+        """
+        path = os.path.join("data", file_name)
+
+        with open(path, "r", encoding="utf-8") as fh:
+            config = yaml.safe_load(fh)
+
+        for name, config in config.items():
+            if name == feature_name:
+                return config
+
+        return None  # Return None if no match.
+
     def _create_mock_events(self, datastore) -> None:
         """Creates mock events."""
-
-        events = []
+        events: List[Dict] = []
         events.extend(self._create_mock_winevt_events())
 
         # Adding new events
@@ -79,13 +106,12 @@ class TestFeatureSketchPlugin(BaseTest):
             event_id += 1
             timestamp += 1000000
 
-    def _create_mock_winevt_events(self) -> List[dict]:
+    def _create_mock_winevt_events(self) -> List[Dict]:
         """Creates mock Windows event log events.
 
         Returns:
-            List[dict]: A list of dictionary containing Windows event logs.
+            List[Dict]: A list of dictionary containing Windows event logs.
         """
-
         events = []
 
         security_4624_v2_event = {
