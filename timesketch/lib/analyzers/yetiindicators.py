@@ -33,7 +33,7 @@ class YetiIndicators(interface.BaseAnalyzer):
         super().__init__(index_name, sketch_id, timeline_id=timeline_id)
         self.intel = {}
         root = current_app.config.get("YETI_API_ROOT")
-        if root.endswith('/'):
+        if root.endswith("/"):
             root = root[:-1]
         self.yeti_api_root = root
         self.yeti_web_root = root.replace("/api/v2", "")
@@ -56,7 +56,7 @@ class YetiIndicators(interface.BaseAnalyzer):
                 "link_type": "",
                 "hops": 1,
                 "direction": "any",
-                "include_original": False
+                "include_original": False,
             },
             headers={"X-Yeti-API": self.yeti_api_key},
         )
@@ -81,15 +81,14 @@ class YetiIndicators(interface.BaseAnalyzer):
                 + response.json()
             )
         data = response.json()
-        self.intel = {item["id"]: item for item in data['indicators']}
+        self.intel = {item["id"]: item for item in data["indicators"]}
         for _id, indicator in self.intel.items():
             indicator["compiled_regexp"] = re.compile(indicator["pattern"])
             self.intel[_id] = indicator
 
-    def mark_event(self,
-                   indicator: Dict,
-                   event: interface.Event,
-                   neighbors: List[Dict]):
+    def mark_event(
+        self, indicator: Dict, event: interface.Event, neighbors: List[Dict]
+    ):
         """Annotate an event with data from indicators and neighbors.
 
         Tags with skull emoji, adds a comment to the event.
