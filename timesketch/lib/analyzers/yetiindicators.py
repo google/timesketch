@@ -3,9 +3,10 @@
 import json
 import re
 
+from typing import Dict, List
+
 from flask import current_app
 import requests
-from typing import Dict, List
 
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
