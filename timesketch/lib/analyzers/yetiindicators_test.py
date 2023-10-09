@@ -16,7 +16,7 @@ MOCK_YETI_INTEL = {
         "id": "12345",
         "name": "Random regex",
         "pattern": "[0-9a-f]",
-        "compiled_regexp": re.compile("[0-9a-f]"),
+        "compiled_regexp": re.compile("[0-9a-f]+\.com"),
         "type": "regex",
     }
 }
@@ -29,8 +29,18 @@ MOCK_YETI_NEIGHBORS = [
     }
 ]
 
-MATCHING_DOMAIN_MESSAGE = {"message": "baddomain.com"}
-OK_DOMAIN_MESSAGE = {"message": "okdomain.com"}
+MATCHING_DOMAIN_MESSAGE = {
+    "__ts_timeline_id": 1,
+    "es_index": "",
+    "es_id": "",
+    "label": "",
+    "timestamp": 1410895419859714,
+    "timestamp_desc": "",
+    "datetime": "2023-09-16T19:23:40+00:00",
+    "source_short": "",
+    "source_long": "",
+    "message": "c0ffeebabe.com",
+}
 
 
 class TestYetiIndicators(BaseTest):
@@ -67,6 +77,7 @@ class TestYetiIndicators(BaseTest):
         )
         mock_get_indicators.assert_called_once()
         mock_get_neighbors.assert_called_once()
+        self.assertEqual(analyzer.tagged_events["0"]["tags"], ["bad-malware"])
 
     # Mock the OpenSearch datastore.
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
