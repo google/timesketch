@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import copy
 import re
 import mock
+import json
 
 from flask import current_app
 
@@ -36,7 +37,7 @@ MATCHING_DOMAIN_MESSAGE = {
     "label": "",
     "timestamp": 1410895419859714,
     "timestamp_desc": "",
-    "datetime": "2023-09-16T19:23:40+00:00",
+    "datetime": "2014-09-16T19:23:40+00:00",
     "source_short": "",
     "source_long": "",
     "message": "c0ffeebabe.com",
@@ -61,19 +62,17 @@ class TestYetiIndicators(BaseTest):
     )
     def test_indicator_match(self, mock_get_indicators, mock_get_neighbors):
         """Test that ES queries for indicators are correctly built."""
-        analyzer = yetiindicators.YetiIndicators("test_index", 1)
+        analyzer = yetiindicators.YetiIndicators("test_index", 1, 123)
         analyzer.datastore.client = mock.Mock()
         analyzer.intel = MOCK_YETI_INTEL
         mock_get_neighbors.return_value = MOCK_YETI_NEIGHBORS
 
-        event = copy.deepcopy(MockDataStore.event_dict)
-        event["_source"].update(MATCHING_DOMAIN_MESSAGE)
-        analyzer.datastore.import_event("test_index", event["_source"], "0")
+        analyzer.datastore.import_event("test_index", MATCHING_DOMAIN_MESSAGE, "0")
 
-        message = analyzer.run()
+        message = json.loads(analyzer.run())
         self.assertEqual(
-            message,
-            ("1 events matched 1 new indicators. Found: Random incident:x-incident"),
+            message["result_summary"],
+            "1 events matched 1 new indicators. Found: Bad malware:malware",
         )
         mock_get_indicators.assert_called_once()
         mock_get_neighbors.assert_called_once()
@@ -89,19 +88,21 @@ class TestYetiIndicators(BaseTest):
     )
     def test_indicator_nomatch(self, mock_get_indicators, mock_get_neighbors):
         """Test that ES queries for indicators are correctly built."""
-        analyzer = yetiindicators.YetiIndicators("test_index", 1)
+        analyzer = yetiindicators.YetiIndicators("test_index", 1, 123)
         analyzer.datastore.client = mock.Mock()
         analyzer.intel = MOCK_YETI_INTEL
         mock_get_neighbors.return_value = MOCK_YETI_NEIGHBORS
 
-        message = analyzer.run()
-        self.assertEqual(message, "No indicators were found in the timeline.")
+        message = json.loads(analyzer.run())
+        self.assertEqual(
+            message["result_summary"],
+            "No indicators were found in the timeline.")
         mock_get_indicators.assert_called_once()
         mock_get_neighbors.asset_called_once()
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     def test_slug(self):
-        analyzer = yetiindicators.YetiIndicators("test_index", 1)
+        analyzer = yetiindicators.YetiIndicators("test_index", 1, 123)
         mock_event = mock.Mock()
         mock_event.get_comments.return_value = []
         analyzer.mark_event(
