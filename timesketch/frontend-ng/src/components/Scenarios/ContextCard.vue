@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-card class="mt-3 mx-3" v-if="activeContext.question">
+  <v-card outlined rounded class="mt-3 mx-3" v-if="activeContext.question">
     <v-toolbar flat dense style="background-color: transparent">
       <h3>{{ activeContext.question.display_name }}</h3>
       <v-spacer></v-spacer>
