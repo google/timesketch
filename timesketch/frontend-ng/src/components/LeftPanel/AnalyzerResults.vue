@@ -30,7 +30,7 @@ limitations under the License.
         :to="{ name: 'Analyze', params: { sketchId: sketch.id, analyzerTimelineId: undefined } }"
         @click.stop=""
       >
-        <v-icon>mdi-plus</v-icon>
+        <v-icon>mdi-plus</v-icon> <!--Add tooltip here? (Tooltip for the + icons in the left panel)-->
       </v-btn>
       <span class="float-right" style="margin-right: 3px">
         <v-progress-circular

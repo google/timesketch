@@ -112,7 +112,7 @@ limitations under the License.
                   >
                     <!-- Copy event value -->
                     <v-btn icon x-small style="cursor: pointer" @click="copyToClipboard(value)" v-show="key == c_key">
-                      <v-icon small>mdi-content-copy</v-icon>
+                      <v-icon small>mdi-content-copy</v-icon> <!--Add tooltip here (Copy icon in the event details)-->
                     </v-btn>
 
                     <!-- XML prettify dialog -->

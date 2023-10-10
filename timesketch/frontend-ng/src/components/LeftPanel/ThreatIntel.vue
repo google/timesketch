@@ -21,7 +21,8 @@ limitations under the License.
       @click="expanded = !expanded"
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
-      <span> <v-icon left>mdi-shield-search</v-icon> Threat Intelligence </span>
+      <!-- Add tooltip here? (Icons in the Threat Intelligence feature) -->
+      <span> <v-icon left>mdi-shield-search</v-icon> Threat Intelligence </span> 
       <v-btn
         icon
         class="float-right mt-n1 mr-n1"

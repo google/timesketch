@@ -19,7 +19,7 @@ limitations under the License.
         :color="tagColor(tag).color"
         :text-color="tagColor(tag).textColor"
       >
-        <v-icon v-if="tag in tagConfig" left small>{{ tagConfig[tag].label }}</v-icon>
+        <v-icon v-if="tag in tagConfig" left small>{{ tagConfig[tag].label }}</v-icon> <!--Add tooltip here? (star event)-->
         {{ tag }}
       </v-chip>
     </span>

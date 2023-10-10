@@ -80,7 +80,7 @@ limitations under the License.
               <v-dialog v-model="saveSearchMenu" v-if="!disableSaveSearch" width="500">
                 <template v-slot:activator="{ on, attrs }">
                   <v-btn icon v-bind="attrs" v-on="on">
-                    <v-icon>mdi-content-save-outline</v-icon>
+                    <v-icon>mdi-content-save-outline</v-icon> <!-- Add tooltip here (Save search action)-->
                   </v-btn>
                 </template>
                 <v-card class="pa-4">
@@ -111,7 +111,7 @@ limitations under the License.
               <v-dialog v-model="columnDialog" v-if="!disableColumns" max-width="500px" scrollable>
                 <template v-slot:activator="{ on, attrs }">
                   <v-btn icon v-bind="attrs" v-on="on">
-                    <v-icon>mdi-view-column-outline</v-icon>
+                    <v-icon>mdi-view-column-outline</v-icon> <!-- Add tooltip here? (select columns icon)-->
                   </v-btn>
                 </template>
 
@@ -248,7 +248,7 @@ limitations under the License.
             <div v-else>
               <small class="mr-2">Actions:</small>
               <v-btn x-small outlined @click="toggleMultipleStars()">
-                <v-icon left color="amber">mdi-star</v-icon>
+                <v-icon left color="amber">mdi-star</v-icon> <!--Add tooltip here? (star event)-->
                 Toggle star
               </v-btn>
             </div>
@@ -316,8 +316,8 @@ limitations under the License.
         <!-- Actions field -->
         <template v-slot:item.actions="{ item }">
           <v-btn small icon @click="toggleStar(item)">
-            <v-icon v-if="item._source.label.includes('__ts_star')" color="amber">mdi-star</v-icon>
-            <v-icon v-else>mdi-star-outline</v-icon>
+            <v-icon v-if="item._source.label.includes('__ts_star')" color="amber">mdi-star</v-icon> <!--Add tooltip here? (star event)-->
+            <v-icon v-else>mdi-star-outline</v-icon> 
           </v-btn>
 
           <!-- Tag menu -->

@@ -34,7 +34,7 @@ limitations under the License.
         </v-list-item>
         <v-list-item style="cursor: pointer" @click="showContextWindow()">
           <v-list-item-icon>
-            <v-icon small>mdi-magnify-plus-outline</v-icon>
+            <v-icon small>mdi-magnify-plus-outline</v-icon> <!--Add tooltip here? ()-->
           </v-list-item-icon>
           <v-list-item-title>Context search</v-list-item-title>
         </v-list-item>

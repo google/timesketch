@@ -21,7 +21,7 @@ limitations under the License.
       @click="expanded = !expanded"
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
-      <span> <v-icon left>mdi-content-save-outline</v-icon> Saved Searches </span>
+      <span> <v-icon left>mdi-content-save-outline</v-icon> Saved Searches </span> <!-- Add tooltip here? (Save search action)-->
       <span class="float-right" style="margin-right: 10px">
         <small
           ><strong>{{ meta.views.length }}</strong></small
