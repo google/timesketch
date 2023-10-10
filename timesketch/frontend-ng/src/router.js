@@ -72,13 +72,6 @@ const routes = [
         ]
       },
       {
-        path: 'sigma/edit',
-        name: 'SigmaEdit',
-        component: Canvas,
-        props: true,
-      },
-
-      {
         path: 'graph',
         name: 'Graph',
         component: Canvas,
