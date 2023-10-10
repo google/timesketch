@@ -247,17 +247,7 @@ limitations under the License.
       <v-divider></v-divider>
       <v-tabs-items v-model="leftPanelTab">
         <v-tab-item :transition="false">
-          <router-link
-            :to="{ name: 'Explore', params: { sketchId: sketchId } }"
-            tag="div"
-            class="pa-4"
-            style="cursor: pointer"
-            :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
-          >
-            <span> <v-icon left>mdi-magnify</v-icon> Search </span>
-          </router-link>
-          <v-divider></v-divider>
-
+          <ts-search></ts-search>
           <ts-saved-searches v-if="meta.views"></ts-saved-searches>
           <ts-data-types></ts-data-types>
           <ts-tags></ts-tags>
@@ -376,6 +366,7 @@ import TsSigmaRules from '../components/LeftPanel/SigmaRules'
 import TsIntelligence from '../components/LeftPanel/ThreatIntel'
 import TsGraphs from '../components/LeftPanel/Graphs'
 import TsStories from '../components/LeftPanel/Stories'
+import TsSearch from '../components/LeftPanel/Search'
 import TsUploadTimelineForm from '../components/UploadForm'
 import TsShareCard from '../components/ShareCard'
 import TsRenameSketch from '../components/RenameSketch'
@@ -397,6 +388,7 @@ export default {
     TsIntelligence,
     TsGraphs,
     TsStories,
+    TsSearch,
     TsAnalyzerResults,
     TsEventList,
   },
