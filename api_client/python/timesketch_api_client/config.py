@@ -200,6 +200,8 @@ class ConfigAssistant:
         auth_mode = self._config.get("auth_mode", "")
         if auth_mode.startswith("oauth"):
             needed_set = needed_set.union(self.OAUTH_CLIENT_NEEDED)
+        if auth_mode == "userpass":
+            needed_set = needed_set.union(self.USERPASS_AUTH_NEEDED)
         configured_set = set(self._config.keys())
         return sorted(
             list(needed_set.difference(configured_set)),
