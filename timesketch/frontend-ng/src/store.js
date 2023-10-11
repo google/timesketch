@@ -47,6 +47,8 @@ const defaultState = (currentUser) => {
     },
     contextLinkConf: {},
     sketchAnalyzerList: {},
+    activeAnalyses: [],
+    analyzerResults: [],
   }
 }
 
@@ -123,6 +125,19 @@ export default new Vuex.Store({
     },
     SET_ANALYZER_LIST(state, payload) {
       Vue.set(state, 'sketchAnalyzerList', payload)
+    },
+    SET_ACTIVE_ANALYSES(state, payload) {
+      Vue.set(state, 'activeAnalyses', payload)
+    },
+    ADD_ACTIVE_ANALYSES(state, payload) {
+      const freshActiveAnalyses = [
+        ...state.activeAnalyses,
+        ...payload,
+      ]
+      Vue.set(state, 'activeAnalyses', freshActiveAnalyses)
+    },
+    SET_ANALYZER_RESULTS(state, payload) {
+      Vue.set(state, 'analyzerResults', payload)
     },
   },
   actions: {
@@ -283,6 +298,15 @@ export default new Vuex.Store({
       }).catch((e) => {
         console.log(e)
       })
+    },
+    updateActiveAnalyses(context, activeAnalyses) {
+      context.commit('SET_ACTIVE_ANALYSES', activeAnalyses);
+    },
+    addActiveAnalyses(context, activeAnalyses) {
+      context.commit('ADD_ACTIVE_ANALYSES', activeAnalyses);
+    },
+    updateAnalyzerResults(context, analyzerResults) {
+      context.commit('SET_ANALYZER_RESULTS', analyzerResults);
     },
   }
 })

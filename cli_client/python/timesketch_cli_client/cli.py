@@ -28,6 +28,7 @@ from timesketch_api_client import config as timesketch_config
 from timesketch_cli_client.commands import analyze
 from timesketch_cli_client.commands import config
 from timesketch_cli_client.commands import upload
+from timesketch_cli_client.commands import intelligence
 from timesketch_cli_client.commands import search
 from timesketch_cli_client.commands import sketch as sketch_command
 from timesketch_cli_client.commands import timelines
@@ -202,6 +203,7 @@ cli.add_command(upload.upload)
 cli.add_command(version.version)
 cli.add_command(events.events_group)
 cli.add_command(sigma.sigma_group)
+cli.add_command(intelligence.intelligence_group)
 
 
 # pylint: disable=no-value-for-parameter

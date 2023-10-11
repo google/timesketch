@@ -97,6 +97,8 @@ curl -s $GITHUB_BASE_URL/data/intelligence_tag_metadata.yaml > timesketch/etc/ti
 curl -s $GITHUB_BASE_URL/data/sigma_config.yaml > timesketch/etc/timesketch/sigma_config.yaml
 curl -s $GITHUB_BASE_URL/data/sigma_rule_status.csv > timesketch/etc/timesketch/sigma_rule_status.csv
 curl -s $GITHUB_BASE_URL/data/sigma/rules/lnx_susp_zmap.yml > timesketch/etc/timesketch/sigma/rules/lnx_susp_zmap.yml
+curl -s $GITHUB_BASE_URL/data/plaso_formatters.yaml > timesketch/etc/timesketch/plaso_formatters.yaml
+curl -s $GITHUB_BASE_URL/data/context_links.yaml > timesketch/etc/timesketch/context_links.yaml
 curl -s $GITHUB_BASE_URL/contrib/nginx.conf > timesketch/etc/nginx.conf
 echo "OK"
 
@@ -147,7 +149,7 @@ else
   echo "https://github.com/google/timesketch/blob/master/docs/Installation.md"
   echo
   echo
-  exit 1
+  exit
 fi
 
 read -p "Would you like to create a new timesketch user? [Y/n] (default:no)" CREATE_USER

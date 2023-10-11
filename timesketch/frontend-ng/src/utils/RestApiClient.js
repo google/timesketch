@@ -307,10 +307,11 @@ export default {
   getAnalyzers(sketchId) {
     return RestApiClient.get('/sketches/' + sketchId + '/analyzer/')
   },
-  runAnalyzers(sketchId, timelineIds, analyzers) {
+  runAnalyzers(sketchId, timelineIds, analyzers, forceRun = false) {
     let formData = {
       timeline_ids: timelineIds,
       analyzer_names: analyzers,
+      analyzer_force_run: forceRun,
     }
     return RestApiClient.post('/sketches/' + sketchId + /analyzer/, formData)
   },
@@ -371,7 +372,6 @@ export default {
   getSearchHistoryTree(sketchId) {
     return RestApiClient.get('/sketches/' + sketchId + /searchhistorytree/)
   },
-  // SigmaRule (new rules file based)
   getSigmaRuleList() {
     return RestApiClient.get('/sigmarules/')
   },

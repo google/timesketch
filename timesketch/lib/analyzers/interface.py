@@ -199,6 +199,10 @@ class Event(object):
         Args:
             attributes: Dictionary with new or updated values to add.
         """
+        # TODO: add attributes to the analyzer output object!
+        if self._analyzer:
+            self._analyzer.output.add_created_attributes(list(attributes.keys()))
+
         self._update(attributes)
 
     def add_label(self, label, toggle=False):
@@ -253,15 +257,7 @@ class Event(object):
 
         # Add new tags to the analyzer output object
         if self._analyzer:
-            if "created_tags" in self._analyzer.output.platform_meta_data:
-                existing_created_tags = self._analyzer.output.platform_meta_data[
-                    "created_tags"
-                ]
-                self._analyzer.output.platform_meta_data["created_tags"] = list(
-                    set().union(existing_created_tags, tags)
-                )
-            else:
-                self._analyzer.output.platform_meta_data["created_tags"] = [tags]
+            self._analyzer.output.add_created_tags(new_tags)
 
     def add_emojis(self, emojis):
         """Add emojis to the Event.
@@ -527,15 +523,7 @@ class Sketch(object):
 
         # Add new view to the list of saved_views in the analyzer output object
         if self._analyzer:
-            if "saved_views" in self._analyzer.output.platform_meta_data:
-                existing_saved_views = self._analyzer.output.platform_meta_data[
-                    "saved_views"
-                ]
-                self._analyzer.output.platform_meta_data["saved_views"] = list(
-                    set().union(existing_saved_views, [view.id])
-                )
-            else:
-                self._analyzer.output.platform_meta_data["saved_views"] = [view.id]
+            self._analyzer.output.add_saved_view(view.id)
 
         return view
 
@@ -616,15 +604,7 @@ class Sketch(object):
 
         # Add new story to the analyzer output object.
         if self._analyzer:
-            if "saved_stories" in self._analyzer.output.platform_meta_data:
-                existing_saved_stories = self._analyzer.output.platform_meta_data[
-                    "saved_stories"
-                ]
-                self._analyzer.output.platform_meta_data["saved_stories"] = list(
-                    set().union(existing_saved_stories, [story.id])
-                )
-            else:
-                self._analyzer.output.platform_meta_data["saved_stories"] = [story.id]
+            self._analyzer.output.add_saved_story(story.id)
 
         return Story(story)
 
@@ -1106,7 +1086,7 @@ class BaseAnalyzer:
                     yield Event(
                         event, self.datastore, sketch=self.sketch, analyzer=self
                     )
-                break  # Query was succesful
+                break  # Query was successful
             except opensearchpy.TransportError as e:
                 sleep_seconds = backoff_in_seconds * 2**x + random.uniform(3, 7)
                 logger.info(
@@ -1214,7 +1194,7 @@ class AnalyzerOutput:
     """A class to record timesketch analyzer output.
 
     Attributes:
-        platform (str): [Required] Analyzer platfrom.
+        platform (str): [Required] Analyzer platform.
         analyzer_identifier (str): [Required] Unique analyzer identifier.
         analyzer_name (str): [Required] Analyzer display name.
         result_status (str): [Required] Analyzer result status.
@@ -1240,6 +1220,8 @@ class AnalyzerOutput:
             saved_aggregations (List[int]): [Optional] Aggregations generated
                 by the analyzer.
             created_tags (List[str]): [Optional] Tags created by the analyzer.
+            created_attributes (List[str]): [Optional] Attributes created by
+                the analyzer.
     """
 
     def __init__(
@@ -1269,6 +1251,7 @@ class AnalyzerOutput:
             "saved_graphs": [],
             "saved_aggregations": [],
             "created_tags": [],
+            "created_attributes": [],
         }
 
     def validate(self):
@@ -1330,6 +1313,12 @@ class AnalyzerOutput:
                                 {"type": "string"},
                             ],
                         },
+                        "created_attributes": {
+                            "type": "array",
+                            "items": [
+                                {"type": "string"},
+                            ],
+                        },
                     },
                     "required": [
                         "timesketch_instance",
@@ -1354,6 +1343,104 @@ class AnalyzerOutput:
             return True
         except (ValidationError, SchemaError) as e:
             raise AnalyzerOutputException(f"json schema error: {e}") from e
+
+    def add_reference(self, reference):
+        """Adds a reference to the list of references.
+
+        Args:
+            reference: A reference e.g. URL to add to the list of references.
+        """
+        if not isinstance(reference, list):
+            reference = [reference]
+        self.references = list(set().union(self.references, reference))
+
+    def set_meta_timesketch_instance(self, timesketch_instance):
+        """Sets the timesketch instance URL.
+
+        Args:
+            timesketch_instance: The timesketch instance URL.
+        """
+        self.platform_meta_data["timesketch_instance"] = timesketch_instance
+
+    def set_meta_sketch_id(self, sketch_id):
+        """Sets the sketch ID.
+
+        Args:
+            sketch_id: The sketch ID.
+        """
+        self.platform_meta_data["sketch_id"] = sketch_id
+
+    def set_meta_timeline_id(self, timeline_id):
+        """Sets the timeline ID.
+
+        Args:
+            timeline_id: The timeline ID.
+        """
+        self.platform_meta_data["timeline_id"] = timeline_id
+
+    def add_meta_item(self, key, item):
+        """Handles the addition of platform_meta_data items.
+
+        Args:
+            key: The key to add to the platform_meta_data dict.
+            item: The value to add to the platform_meta_data dict.
+        """
+        if not isinstance(item, list):
+            item = [item]
+        if key in self.platform_meta_data:
+            self.platform_meta_data[key] = list(
+                set().union(self.platform_meta_data[key], item)
+            )
+        else:
+            self.platform_meta_data[key] = item
+
+    def add_saved_view(self, view_id):
+        """Adds a view ID to the list of saved_views.
+
+        Args:
+            view_id: The view ID to add to the list of saved_views.
+        """
+        self.add_meta_item("saved_views", view_id)
+
+    def add_saved_story(self, story_id):
+        """Adds a story ID to the list of saved_stories.
+
+        Args:
+            story_id: The story ID to add to the list of saved_stories.
+        """
+        self.add_meta_item("saved_stories", story_id)
+
+    def add_saved_graph(self, graph_id):
+        """Adds a graph ID to the list of saved_graphs.
+
+        Args:
+            graph_id: The graph ID to add to the list of saved_graphs.
+        """
+        self.add_meta_item("saved_graphs", graph_id)
+
+    def add_saved_aggregation(self, aggregation_id):
+        """Adds an aggregation ID to the list of saved_aggregations.
+
+        Args:
+            aggregation_id: The aggregation ID to add to the list of saved_aggregations.
+        """
+        self.add_meta_item("saved_aggregations", aggregation_id)
+
+    def add_created_tags(self, tags):
+        """Adds a tags to the list of created_tags.
+
+        Args:
+            tags: The tags to add to the list of created_tags.
+        """
+        self.add_meta_item("created_tags", tags)
+
+    def add_created_attributes(self, attributes):
+        """Adds a attributes to the list of created_attributes.
+
+        Args:
+            attributes: The attributes to add to the list of created_attributes.
+        """
+        self.add_meta_item("created_attributes", attributes)
 
     def to_json(self) -> dict:
         """Returns JSON output of AnalyzerOutput. Filters out empty values."""
@@ -1406,6 +1493,11 @@ class AnalyzerOutput:
             output["platform_meta_data"]["created_tags"] = self.platform_meta_data[
                 "created_tags"
             ]
+
+        if self.platform_meta_data["created_attributes"]:
+            output["platform_meta_data"][
+                "created_attributes"
+            ] = self.platform_meta_data["created_attributes"]
 
         return output
 

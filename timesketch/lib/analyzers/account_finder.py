@@ -38,15 +38,7 @@ class AccountFinderSketchPlugin(interface.BaseAnalyzer):
                     continue
 
                 # Add the account tags to the output data
-                if "created_tags" in self.output.platform_meta_data:
-                    existing_created_tags = self.output.platform_meta_data[
-                        "created_tags"
-                    ]
-                    self.output.platform_meta_data["created_tags"] = list(
-                        set().union(existing_created_tags, [account_tag])
-                    )
-                else:
-                    self.output.platform_meta_data["created_tags"] = [account_tag]
+                self.output.add_created_tags([account_tag])
 
                 found_account = event.source.get("found_account")
 

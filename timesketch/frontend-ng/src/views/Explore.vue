@@ -233,11 +233,24 @@ limitations under the License.
       <div v-if="filterChips.length" class="mt-1">
         <v-chip-group column>
           <span v-for="(chip, index) in filterChips" :key="index + chip.value">
-            <v-chip outlined close close-icon="mdi-close" @click:close="removeChip(chip)">
-              <v-icon v-if="chip.value === '__ts_star'" left small color="amber">mdi-star</v-icon>
-              <v-icon v-if="chip.value === '__ts_comment'" left small>mdi-comment-multiple-outline</v-icon>
-              {{ chip.value | formatLabelText }}
-            </v-chip>
+            <v-tooltip top :disabled="chip.value.length < 33" open-delay="300">
+              <template v-slot:activator="{ on: onTooltip, attrs }">
+              <v-chip outlined close close-icon="mdi-close" @click:close="removeChip(chip)" v-bind="attrs" v-on="onTooltip">
+                <v-icon v-if="chip.value === '__ts_star'" left small color="amber">mdi-star</v-icon>
+                <v-icon v-if="chip.value === '__ts_comment'" left small>mdi-comment-multiple-outline</v-icon>
+                <v-icon v-if="getQuickTag(chip.value)" left small :color="getQuickTag(chip.value).color"
+                  >{{ getQuickTag(chip.value).label }}</v-icon>
+                <span v-if="chip.operator === 'must_not'" class="filter-chip-truncate">
+                  <span style="color: red;">NOT </span>
+                  {{ (chip.field ? `${chip.field} : ${chip.value}` : chip.value) | formatLabelText }}
+                </span>
+                <span v-else class="filter-chip-truncate">
+                  {{ (chip.field ? `${chip.field} : ${chip.value}` : chip.value) | formatLabelText }}
+                </span>
+              </v-chip>
+              </template>
+              <span>{{ chip.value }}</span>
+            </v-tooltip>
             <v-btn v-if="index + 1 < timeFilterChips.length" icon small style="margin-top: 2px" class="mr-2">AND</v-btn>
           </span>
         </v-chip-group>
@@ -325,6 +338,12 @@ export default {
         x: 0,
         y: 0,
       },
+      // TODO: Refactor this into a configurable option
+      quickTags: [
+        { tag: 'bad', color: 'red', textColor: 'white', label: 'mdi-alert-circle-outline' },
+        { tag: 'suspicious', color: 'orange', textColor: 'white', label: 'mdi-help-circle-outline' },
+        { tag: 'good', color: 'green', textColor: 'white', label: 'mdi-check-circle-outline' },
+      ],
     }
   },
   computed: {
@@ -351,6 +370,9 @@ export default {
     },
   },
   methods: {
+    getQuickTag(tag) {
+      return this.quickTags.find((el) => el.tag === tag)
+    },
     updateCountPerIndex: function (count) {
       this.countPerIndex = count
     },
@@ -367,7 +389,9 @@ export default {
       if (this.$route.name !== 'Explore') {
         this.$router.push({ name: 'Explore', params: { sketchId: this.sketch.id } })
       }
-      this.currentQueryString = searchEvent.queryString
+      if (searchEvent.queryString) {
+        this.currentQueryString = searchEvent.queryString
+      }
 
       // Preserve user defined filter instead of resetting, if it exist.
       if (!searchEvent.queryFilter) {
@@ -717,5 +741,12 @@ export default {
 .no-scrollbars {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+.filter-chip-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 400px;
 }
 </style>

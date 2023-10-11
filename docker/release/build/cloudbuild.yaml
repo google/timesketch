@@ -1,4 +1,4 @@
-# Google Cloud Build configuration for Turbinia server release
+# Google Cloud Build configuration for Timesketch server release
 steps:
   - name: gcr.io/cloud-builders/docker
     args:

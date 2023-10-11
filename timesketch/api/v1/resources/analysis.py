@@ -262,6 +262,10 @@ class AnalyzerRunResource(resources.ResourceMixin, Resource):
                     "Kwargs needs to be a dictionary of parameters.",
                 )
 
+        analyzer_force_run = False
+        if form.get("analyzer_force_run"):
+            analyzer_force_run = True
+
         analyzers = []
         all_analyzers = [x for x, _ in analyzer_manager.AnalysisManager.get_analyzers()]
         for analyzer in analyzer_names:
@@ -296,6 +300,7 @@ class AnalyzerRunResource(resources.ResourceMixin, Resource):
                     analyzer_names=analyzers,
                     analyzer_kwargs=analyzer_kwargs,
                     timeline_id=timeline_id,
+                    analyzer_force_run=analyzer_force_run,
                 )
             except KeyError as e:
                 logger.warning(
@@ -308,6 +313,7 @@ class AnalyzerRunResource(resources.ResourceMixin, Resource):
                 pipeline = tasks.run_sketch_init.s([searchindex_name]) | analyzer_group
                 pipeline.apply_async()
 
-            sessions.append(session)
+            if session:
+                sessions.append(session)
 
         return self.to_json(sessions)

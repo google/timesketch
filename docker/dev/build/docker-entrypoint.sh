@@ -18,11 +18,10 @@ if [ "$1" = 'timesketch' ]; then
   cp /usr/local/src/timesketch/data/data_finder.yaml /etc/timesketch/
   cp /usr/local/src/timesketch/data/bigquery_matcher.yaml /etc/timesketch/
   ln -s /usr/local/src/timesketch/data/sigma_config.yaml /etc/timesketch/sigma_config.yaml
-  ln -s /usr/local/src/timesketch/data/sigma_rule_status.csv /etc/timesketch/sigma_rule_status.csv
   ln -s /usr/local/src/timesketch/data/sigma /etc/timesketch/
   ln -s /usr/local/src/timesketch/data/scenarios /etc/timesketch/
   ln -s /usr/local/src/timesketch/data/context_links.yaml /etc/timesketch/context_links.yaml
-
+  ln -s /usr/local/src/timesketch/data/plaso_formatters.yaml /etc/timesketch/plaso_formatters.yaml
 
   # Set SECRET_KEY in /etc/timesketch/timesketch.conf if it isn't already set
   if grep -q "SECRET_KEY = '<KEY_GOES_HERE>'" /etc/timesketch/timesketch.conf; then

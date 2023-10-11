@@ -135,6 +135,201 @@ This example returns the field name `domain` and then do a simple sort and uniq.
 timesketch search -q "foobar" --return-fields domain | sort | uniq
 ```
 
+## Sketch
+
+### List all sketches
+
+To list all sketches you have access to:
+
+```bash
+timesketch --output-format text sketch list
+ id   name
+  2 asdasd
+  1   aaaa
+```
+
+You can also get a list as JSON if you like to:
+
+```
+timesketch --output-format json sketch list
+[
+    {
+        "id":2,
+        "name":"asdasd"
+    },
+    {
+        "id":1,
+        "name":"aaaa"
+    }
+]
+```
+
+### Get description for one sketch
+
+Getting information about a sketch can be helpful in various situations.
+
+```bash
+timesketch --output-format text sketch describe
+Name: asdasd
+Description: None
+Status: new
+```
+
+You can also get all stored information about a sketch with running:
+```bash
+timesketch --output-format json sketch describe
+```
+
+This will give you something like:
+
+```json
+timesketch --output-format json sketch describe
+{
+    "_archived": null,
+    "_sketch_name": "asdasd",
+    "api": "<timesketch_api_client.client.TimesketchApi object at 0x7f3375d466e0>",
+    "id": 2,
+    "resource_data": {
+        "meta": {
+            "aggregators": {
+              ...
+```
+
+### Get attributes
+
+Attributes can be to long to show in `sketch describe` which is why there is a
+separate command for it:
+
+```timesketch sketch attributes```
+
+Will give back something like this:
+
+```bash
+timesketch --output-format text sketch attributes
+Name: intelligence: Ontology: intelligence Value: {'data': [{'externalURI': 'google.com', 'ioc': '1.2.3.4', 'tags': ['foo'], 'type': 'ipv4'}, {'externalURI': 'fobar.com', 'ioc': '3.3.3.3', 'tags': ['aaaa'], 'type': 'ipv4'}]}
+Name: ticket_id: Ontology: 12345 Value: text
+Name: ticket_id2: Ontology: 12345 Value: text
+Name: ticket_id3: Ontology: 12345 Value: text
+```
+
+Or as JSON
+
+```bash
+timesketch --output-format json sketch attributes
+{
+    "intelligence": {
+        "ontology": "intelligence",
+        "value": {
+            "data": [
+                {
+                    "externalURI": "google.com",
+                    "ioc": "1.2.3.4",
+                    "tags": [
+                        "foo"
+                    ],
+                    "type": "ipv4"
+                },
+                {
+                    "externalURI": "fobar.com",
+                    "ioc": "3.3.3.3",
+                    "tags": [
+                        "aaaa"
+                    ],
+                    "type": "ipv4"
+                }
+            ]
+        }
+    },
+    "ticket_id": {
+        "ontology": "12345",
+        "value": "text"
+    },
+    "ticket_id2": {
+        "ontology": "12345",
+        "value": "text"
+    },
+    "ticket_id3": {
+        "ontology": "12345",
+        "value": "text"
+    }
+}
+```
+
+### Add a attribute
+
+To add an attribute to a sketch
+
+```bash
+timesketch sketch add_attribute
+```
+
+For example:
+
+```bash
+timesketch sketch add_attribute --name ticket_id3 --ontology text --value 12345
+Attribute added:
+Name: ticket_id3
+Ontology: text
+Value: 12345
+```
+
+To verify, run `timesketch sketch attributes`.
+
+### Remove an attribute
+
+To remove an attribute from a sketch
+
+```bash
+timesketch sketch remove_attribute
+```
+
+## Intelligence
+
+Intelligence is always sketch specific. The same can be achieved using 
+`timesketch attributes` command, but then the ontology type and data needs 
+to be provided in the correct format.
+
+Running `timesketch intelligence list` will show the intelligence added to a 
+sketch (if sketch id is set in the config file)
+
+The putput format can also be changed as follows
+
+```bash
+timesketch --sketch 2 --output-format text intelligence list --columns ioc,externalURI,tags,type
+ioc	externalURI	tags	type
+1.2.3.4	google.com	foo	ipv4
+3.3.3.3	fobar.com	aaaa	ipv4
+```
+
+Or as CSV
+
+```bash
+timesketch --sketch 2 --output-format csv intelligence list --columns ioc,externalURI,tags,type
+ioc,externalURI,tags,type
+1.2.3.4,google.com,"foo",ipv4
+3.3.3.3,fobar.com,"aaaa",ipv4
+aaaa.com,foobar.de,"foo,aaaa",hostname
+```
+
+### Adding Intelligence
+
+Adding an indicator works as following
+
+```bash
+timesketch --sketch 2 intelligence add --ioc 8.8.4.4 --type ipv4 --tags foo,bar,ext
+```
+
+### Removing all of Intelligence
+
+To remove all intelligence indicators, run:
+
+```bash
+timesketch --sketch 2 --output-format text sketch attributes remove --name intelligence --ontology intelligence
+Attribute removed: Name: intelligence Ontology: intelligence
+```
+
+## Run analyzers
+
 ## Analyzers
 
 ### List
@@ -192,7 +387,6 @@ Running analyzer [domain] on [timeline 1]:
 ..
 Results
 [domain] = 217 domains discovered (150 TLDs) and 1 known CDN networks found.
-
 ```
 
 ### List analyzer results
@@ -202,7 +396,7 @@ That can be done with `timesketch analyzer results`.
 
 It can show only the analyzer results directly:
 
-```
+```bash
 timesketch --output-format text analyze results --analyzer account_finder --timeline 3
 Results for analyzer [account_finder] on [sigma_events]:
 SUCCESS - NOTE - Account finder was unable to extract any accounts.
@@ -245,7 +439,6 @@ Dependent: DONE - None - Feature extraction [ssh_failed_username] extracted 0 fe
 Dependent: DONE - None - Feature extraction [win_login_subject_domain] extracted 0 features.
 Dependent: DONE - None - Feature extraction [win_login_subject_logon_id] extracted 0 features.
 Dependent: DONE - None - Feature extraction [win_login_username] extracted 0 features.
-
 ```
 
 To get a result in `json` that can be piped into other CLI tools run something
@@ -289,7 +482,8 @@ This new feature makes it easy to add events to Timesketch from the command line
 
 It can also be called with a output format `json` like following.
 
-```timesketch --output-format json events add --message "foobar-message" --date 2023-03-04T11:31:12 --timestamp-desc "test" 
+```bash
+timesketch --output-format json events add --message "foobar-message" --date 2023-03-04T11:31:12 --timestamp-desc "test" 
 {'meta': {}, 'objects': [{'color': 'F37991', 'created_at': '2023-03-08T12:46:24.472587', 'datasources': [], 'deleted': None, 'description': 'internal timeline for user-created events', 'id': 19, 'label_string': '', 'name': 'Manual events', 'searchindex': {'created_at': '2023-03-08T12:46:24.047640', 'deleted': None, 'description': 'internal timeline for user-created events', 'id': 9, 'index_name': '49a318b0ba17867fd71b50903774a0c8', 'label_string': '', 'name': 'Manual events', 'status': [{'created_at': '2023-03-17T09:35:03.202520', 'id': 87, 'status': 'ready', 'updated_at': '2023-03-17T09:35:03.202520'}], 'updated_at': '2023-03-08T12:46:24.047640', 'user': {'active': True, 'admin': True, 'groups': [], 'username': 'dev'}}, 'status': [{'created_at': '2023-03-17T09:35:03.233973', 'id': 79, 'status': 'ready', 'updated_at': '2023-03-17T09:35:03.233973'}], 'updated_at': '2023-03-08T12:46:24.472587', 'user': {'active': True, 'admin': True, 'groups': [], 'username': 'dev'}}]}
 Event added to sketch: timefocus test
 ```

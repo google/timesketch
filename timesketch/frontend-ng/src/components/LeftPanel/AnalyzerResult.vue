@@ -16,8 +16,6 @@ limitations under the License.
 
 <template>
   <div>
-    <!-- TODO: issue #2565 -->
-    <!-- https://github.com/google/timesketch/issues/2565 -->
     <v-row
       no-gutters
       class="pa-3 pl-1"
@@ -36,8 +34,17 @@ limitations under the License.
       </v-col>
 
       <v-col cols="1">
-        <div class="ml-3">
-          <small>{{ Object.keys(analyzer.data.timelines).length }} </small>
+        <div v-if="isActive" class="ml-1">
+          <v-progress-circular
+            :size="20"
+            :width="1"
+            indeterminate
+          >
+            <small>{{ Object.keys(analyzer.data.timelines).length }}</small>
+          </v-progress-circular>
+        </div>
+        <div v-else class="ml-3">
+          <small>{{ Object.keys(analyzer.data.timelines).length }}</small>
         </div>
       </v-col>
     </v-row>
@@ -61,7 +68,7 @@ limitations under the License.
 import TsAnalyzerResultTimeline from './AnalyzerResultTimeline.vue'
 
 export default {
-  props: ['analyzer'],
+  props: ['analyzer','isActive'],
   components: {
     TsAnalyzerResultTimeline,
   },

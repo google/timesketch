@@ -158,7 +158,9 @@ class DateIntervalChip(Chip):
         """Property that returns back the date."""
         if not self._date:
             return ""
-        return self._date.strftime(self._DATE_FORMAT)
+        if self._date.microsecond == 0:
+            return self._date.strftime(self._DATE_FORMAT)
+        return self._date.strftime(self._DATE_FORMAT_MICROSECONDS)[:-3]
 
     @date.setter
     def date(self, date):
@@ -176,8 +178,6 @@ class DateIntervalChip(Chip):
                         "Unable to add date chip, wrong date format", exc_info=True
                     )
                     raise ValueError("Wrong date format") from exc
-        if dt.microsecond > 0:
-            raise ValueError("Microsecond dates are not currently supported")
         self._date = dt
 
     def from_dict(self, chip_dict):
@@ -268,8 +268,6 @@ class DateRangeChip(Chip):
                     "Unable to add date chip, wrong date format", exc_info=True
                 )
                 raise ValueError("Wrong date format") from exc
-        if dt.microsecond > 0:
-            raise ValueError("Microsecond dates are not currently supported")
         self._end_date = dt
 
     def add_start_time(self, start_time):
@@ -298,8 +296,6 @@ class DateRangeChip(Chip):
                     "Unable to add date chip, wrong date format", exc_info=True
                 )
                 raise ValueError("Wrong date format") from exc
-        if dt.microsecond > 0:
-            raise ValueError("Microsecond dates are not currently supported")
         self._start_date = dt
 
     @property
@@ -307,7 +303,9 @@ class DateRangeChip(Chip):
         """Property that returns the end time of a range."""
         if not self._end_date:
             return ""
-        return self._end_date.strftime(self._DATE_FORMAT)
+        if self._end_date.microsecond == 0:
+            return self._end_date.strftime(self._DATE_FORMAT)
+        return self._end_date.strftime(self._DATE_FORMAT_MICROSECONDS)[:-3]
 
     @end_time.setter
     def end_time(self, end_time):
@@ -340,7 +338,9 @@ class DateRangeChip(Chip):
         """Property that returns the start time of a range."""
         if not self._start_date:
             return ""
-        return self._start_date.strftime(self._DATE_FORMAT)
+        if self._start_date.microsecond == 0:
+            return self._start_date.strftime(self._DATE_FORMAT)
+        return self._start_date.strftime(self._DATE_FORMAT_MICROSECONDS)[:-3]
 
     @start_time.setter
     def start_time(self, start_time):
