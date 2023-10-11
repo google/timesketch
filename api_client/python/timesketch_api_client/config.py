@@ -61,6 +61,7 @@ class ConfigAssistant:
             "client_secret",
         ]
     )
+    USERPASS_AUTH_NEEDED = frozenset(['password'])
 
     EXTRA_FIELDS = frozenset(
         [
@@ -302,6 +303,7 @@ class ConfigAssistant:
         """
         fields = list(self.CLIENT_NEEDED)
         fields.extend(list(self.OAUTH_CLIENT_NEEDED))
+        fields.extend(list(self.USERPASS_AUTH_NEEDED))
         fields.extend(list(self.EXTRA_FIELDS))
 
         for key, value in config_dict.items():
@@ -580,12 +582,14 @@ def configure_missing_parameters(
             username = value
             config_assistant.set_config("username", value)
 
-    password = cli_input.ask_question(
-        "Password for user {0:s}".format(username),
-        input_type=str,
-        hide_input=True,
-        default="***",
-    )
+    password = config_assistant.get_config("password")
+    if choice:
+        password = cli_input.ask_question(
+            "Password for user {0:s}".format(username),
+            input_type=str,
+            hide_input=True,
+            default="***",
+        )
     credentials = ts_credentials.TimesketchPwdCredentials()
     credentials.credential = {"username": username, "password": password}
     cred_storage = crypto.CredentialStorage(file_path=file_path)
