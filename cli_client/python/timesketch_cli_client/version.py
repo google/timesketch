@@ -13,7 +13,6 @@
 # limitations under the License.
 """Version information for the Timesketch CLI client."""
 
-
 __version__ = "20230721"
 
 
