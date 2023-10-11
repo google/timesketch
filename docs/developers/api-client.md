@@ -55,6 +55,8 @@ from timesketch_api_client import client as timesketch_client
 client = timesketch_client.TimesketchApi(host_uri='https://demo.timesketch.org', username='demo', password='demo')
 ```
 
+> Careful with storing credentials in code that you intend to publish or make available to others. 
+
 ## Client Config
 
 In order to make it simpler to connect to the API client a config file
