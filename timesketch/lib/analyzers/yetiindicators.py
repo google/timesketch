@@ -3,7 +3,7 @@
 import json
 import re
 
-from typing import Dict, List
+from typing import Dict, List, Any
 
 from flask import current_app
 import requests
@@ -68,8 +68,13 @@ class YetiIndicators(interface.BaseAnalyzer):
 
         return neighbors
 
-    def get_indicators(self, indicator_type: str) -> None:
-        """Populates the intel attribute with entities from Yeti."""
+    def get_indicators(self, indicator_type: str) -> dict[str, dict]:
+        """Populates the intel attribute with entities from Yeti.
+
+        Returns:
+            A dictionary of indicators obtained from yeti, keyed by indicator
+            ID.
+        """
         response = requests.post(
             self.yeti_api_root + "/indicators/search",
             json={"name": "", "type": indicator_type},
@@ -81,10 +86,11 @@ class YetiIndicators(interface.BaseAnalyzer):
                 + response.json()
             )
         data = response.json()
-        self.intel = {item["id"]: item for item in data["indicators"]}
-        for _id, indicator in self.intel.items():
+        indicators = {item["id"]: item for item in data["indicators"]}
+        for _id, indicator in indicators.items():
             indicator["compiled_regexp"] = re.compile(indicator["pattern"])
-            self.intel[_id] = indicator
+            indicators[_id] = indicator
+        return indicators
 
     def mark_event(
         self, indicator: Dict, event: interface.Event, neighbors: List[Dict]
@@ -122,7 +128,7 @@ class YetiIndicators(interface.BaseAnalyzer):
         if not self.yeti_api_root or not self.yeti_api_key:
             return "No Yeti configuration settings found, aborting."
 
-        self.get_indicators("regex")
+        indicators = self.get_indicators("regex")
 
         entities_found = set()
         total_matches = 0
@@ -141,7 +147,7 @@ class YetiIndicators(interface.BaseAnalyzer):
 
         intelligence_items = []
 
-        for _id, indicator in self.intel.items():
+        for _id, indicator in indicators:
             query_dsl = {
                 "query": {
                     "regexp": {"message.keyword": ".*" + indicator["pattern"] + ".*"}
