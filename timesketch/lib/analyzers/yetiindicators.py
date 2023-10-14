@@ -3,7 +3,7 @@
 import json
 import re
 
-from typing import Dict, List
+from typing import Dict, List, Any
 
 from flask import current_app
 import requests
@@ -68,7 +68,7 @@ class YetiIndicators(interface.BaseAnalyzer):
 
         return neighbors
 
-    def get_indicators(self, indicator_type: str) -> Dict[str, dict]:
+    def get_indicators(self, indicator_type: str) -> dict[str, dict]:
         """Populates the intel attribute with entities from Yeti.
 
         Returns:
@@ -104,7 +104,7 @@ class YetiIndicators(interface.BaseAnalyzer):
             neighbors: a list of Yeti entities related to the indicator.
         """
         event.add_emojis([emojis.get_emoji("SKULL")])
-        tags = indicator["relevant_tags"]
+        tags = []
         for n in neighbors:
             slug = re.sub(r"[^a-z0-9]", "-", n["name"].lower())
             slug = re.sub(r"-+", "-", slug)
@@ -140,7 +140,7 @@ class YetiIndicators(interface.BaseAnalyzer):
         try:
             intelligence_attribute = self.sketch.get_sketch_attributes("intelligence")
             existing_refs = {
-                ioc["externalURI"] for ioc in intelligence_attribute["data"]
+                (ioc["ioc"], ioc["externalURI"]) for ioc in intelligence_attribute["data"]
             }
         except ValueError:
             print("Intelligence not set on sketch, will create from scratch.")
@@ -157,30 +157,32 @@ class YetiIndicators(interface.BaseAnalyzer):
             events = self.event_stream(query_dsl=query_dsl, return_fields=["message"])
             neighbors = self.get_neighbors(indicator)
 
-            for event in events:
-                total_matches += 1
-                self.mark_event(indicator, event, neighbors)
-
-            match = regex.search(event.source.get("message"))
-            if match:
-                match_in_sketch = match.group()
-            else:
-                match_in_sketch = indicator["pattern"]
-
             for n in neighbors:
                 entities_found.add(f"{n['name']}:{n['type']}")
 
             uri = f"{self.yeti_web_root}/indicators/{indicator['id']}"
-            intel = {
-                "externalURI": uri,
-                "ioc": match_in_sketch,
-                "tags": [n["name"] for n in neighbors],
-                "type": "other",
-            }
-            if uri not in existing_refs:
-                intelligence_items.append(intel)
-                existing_refs.add(indicator["id"])
-            new_indicators.add(indicator["id"])
+
+            for event in events:
+                total_matches += 1
+                self.mark_event(indicator, event, neighbors)
+
+                regex = indicator["compiled_regex"]
+                match = regex.search(event.source.get("message"))
+                if match:
+                    match_in_sketch = match.group()
+                else:
+                    match_in_sketch = indicator["pattern"]
+
+                intel = {
+                    "externalURI": uri,
+                    "ioc": match_in_sketch,
+                    "tags": [n["name"] for n in neighbors],
+                    "type": "other",
+                }
+                if (match_in_sketch, uri) not in existing_refs:
+                    intelligence_items.append(intel)
+                    existing_refs.add((match_in_sketch, uri))
+                new_indicators.add(indicator["id"])
 
         if not total_matches:
             self.output.result_status = "SUCCESS"
