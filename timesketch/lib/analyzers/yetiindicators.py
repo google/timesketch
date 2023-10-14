@@ -3,7 +3,7 @@
 import json
 import re
 
-from typing import Dict, List, Any
+from typing import Dict, List
 
 from flask import current_app
 import requests
@@ -140,7 +140,8 @@ class YetiIndicators(interface.BaseAnalyzer):
         try:
             intelligence_attribute = self.sketch.get_sketch_attributes("intelligence")
             existing_refs = {
-                (ioc["ioc"], ioc["externalURI"]) for ioc in intelligence_attribute["data"]
+                (ioc["ioc"], ioc["externalURI"])
+                for ioc in intelligence_attribute["data"]
             }
         except ValueError:
             print("Intelligence not set on sketch, will create from scratch.")
