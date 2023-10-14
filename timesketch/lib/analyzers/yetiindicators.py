@@ -3,7 +3,7 @@
 import json
 import re
 
-from typing import Dict, List, Any
+from typing import Dict, List
 
 from flask import current_app
 import requests
@@ -104,7 +104,7 @@ class YetiIndicators(interface.BaseAnalyzer):
             neighbors: a list of Yeti entities related to the indicator.
         """
         event.add_emojis([emojis.get_emoji("SKULL")])
-        tags = indicator['relevant_tags']
+        tags = indicator["relevant_tags"]
         for n in neighbors:
             slug = re.sub(r"[^a-z0-9]", "-", n["name"].lower())
             slug = re.sub(r"-+", "-", slug)
@@ -161,10 +161,10 @@ class YetiIndicators(interface.BaseAnalyzer):
                 total_matches += 1
                 self.mark_event(indicator, event, neighbors)
 
-            try:
-                regex = indicator["compiled_regexp"]
-                match_in_sketch = regex.search(event.source.get("message")).group()
-            except:
+            match = regex.search(event.source.get("message"))
+            if match:
+                match_in_sketch = match.group()
+            else:
                 match_in_sketch = indicator["pattern"]
 
             for n in neighbors:
