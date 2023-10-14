@@ -167,7 +167,7 @@ class YetiIndicators(interface.BaseAnalyzer):
                 total_matches += 1
                 self.mark_event(indicator, event, neighbors)
 
-                regex = indicator["compiled_regex"]
+                regex = indicator["compiled_regexp"]
                 match = regex.search(event.source.get("message"))
                 if match:
                     match_in_sketch = match.group()
