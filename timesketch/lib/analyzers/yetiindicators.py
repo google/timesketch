@@ -53,7 +53,7 @@ class YetiIndicators(interface.BaseAnalyzer):
             f"{self.yeti_api_root}/graph/search",
             json={
                 "source": extended_id,
-                "link_type": "",
+                "graph": "links",
                 "hops": 1,
                 "direction": "any",
                 "include_original": False,
@@ -104,7 +104,7 @@ class YetiIndicators(interface.BaseAnalyzer):
             neighbors: a list of Yeti entities related to the indicator.
         """
         event.add_emojis([emojis.get_emoji("SKULL")])
-        tags = []
+        tags = indicator['relevant_tags']
         for n in neighbors:
             slug = re.sub(r"[^a-z0-9]", "-", n["name"].lower())
             slug = re.sub(r"-+", "-", slug)
@@ -147,7 +147,7 @@ class YetiIndicators(interface.BaseAnalyzer):
 
         intelligence_items = []
 
-        for _id, indicator in indicators:
+        for indicator in indicators.values():
             query_dsl = {
                 "query": {
                     "regexp": {"message.keyword": ".*" + indicator["pattern"] + ".*"}
@@ -161,13 +161,19 @@ class YetiIndicators(interface.BaseAnalyzer):
                 total_matches += 1
                 self.mark_event(indicator, event, neighbors)
 
+            try:
+                regex = indicator["compiled_regexp"]
+                match_in_sketch = regex.search(event.source.get("message")).group()
+            except:
+                match_in_sketch = indicator["pattern"]
+
             for n in neighbors:
                 entities_found.add(f"{n['name']}:{n['type']}")
 
             uri = f"{self.yeti_web_root}/indicators/{indicator['id']}"
             intel = {
                 "externalURI": uri,
-                "ioc": indicator["pattern"],
+                "ioc": match_in_sketch,
                 "tags": [n["name"] for n in neighbors],
                 "type": "other",
             }
