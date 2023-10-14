@@ -68,7 +68,7 @@ class YetiIndicators(interface.BaseAnalyzer):
 
         return neighbors
 
-    def get_indicators(self, indicator_type: str) -> dict[str, dict]:
+    def get_indicators(self, indicator_type: str) -> Dict[str, dict]:
         """Populates the intel attribute with entities from Yeti.
 
         Returns:
