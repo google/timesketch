@@ -196,6 +196,37 @@ class TestUtils(BaseTest):
             expected_output,
         )
 
+    def test_convertion_timestamp_csv(self):
+        """Test that timestamp values in CSV file is not altered"""
+
+        # Make sure timestamp is processed correctly, and the format is not altered
+        expected_outputs = [
+            {
+            "message": "Checking timestamp converting",
+            "timestamp": 1331698658000000,
+            "datetime": "2012-03-14T04:17:38+00:00",
+            "timestamp_desc": "Time Logged",
+            "data_type": "This event has timestamp",
+            },
+            {
+            "message": "Checking timestamp converting",
+            "timestamp": 1658689261000000,
+            "datetime": "2022-07-24T19:01:01+00:00",
+            "timestamp_desc": "Time Logged",
+            "data_type": "This event has timestamp",
+            # unix timestamp miliseconds since jan 1 1970
+            # unixtimestamp.com
+            },   
+        ]
+        self.assertDictEqual(
+            next(
+                read_and_validate_csv(
+                    "test_tools/test_events/validate_date_events_timestamp_manipulation.csv"
+                )
+            ),
+            next(iter(expected_outputs)),
+        )
+
     def test_invalid_JSONL_file(self):
         """Test for JSONL with missing keys in the dictionary wrt headers mapping"""
         linedict = {"DT": "2011-11-11", "MSG": "this is a test"}
