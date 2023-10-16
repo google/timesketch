@@ -61,7 +61,7 @@ class TestYetiIndicators(BaseTest):
         """Test that ES queries for indicators are correctly built."""
         analyzer = yetiindicators.YetiIndicators("test_index", 1, 123)
         analyzer.datastore.client = mock.Mock()
-        analyzer.intel = MOCK_YETI_INTEL
+        mock_get_indicators.return_value = MOCK_YETI_INTEL
         mock_get_neighbors.return_value = MOCK_YETI_NEIGHBORS
 
         analyzer.datastore.import_event("test_index", MATCHING_DOMAIN_MESSAGE, "0")
@@ -87,7 +87,7 @@ class TestYetiIndicators(BaseTest):
         """Test that ES queries for indicators are correctly built."""
         analyzer = yetiindicators.YetiIndicators("test_index", 1, 123)
         analyzer.datastore.client = mock.Mock()
-        analyzer.intel = MOCK_YETI_INTEL
+        mock_get_indicators.return_value = MOCK_YETI_INTEL
         mock_get_neighbors.return_value = MOCK_YETI_NEIGHBORS
 
         message = json.loads(analyzer.run())
