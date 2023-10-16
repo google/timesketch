@@ -216,7 +216,21 @@ class TestUtils(BaseTest):
             "data_type": "This event has timestamp",
             # unix timestamp miliseconds since jan 1 1970
             # unixtimestamp.com
-            },   
+            },
+            {
+            "message": "Make sure message is same",
+            "timestamp": 1437789661000000,
+            "datetime": "2015-07-25T19:01:01+00:00",
+            "timestamp_desc": "Logging",
+            "data_type": "This data_type should stay the same",
+            },
+            {
+            "message": "Checking message",
+            "timestamp": 1331698658000000,
+            "datetime": "2021-09-14T19:44:18+00:00",
+            "timestamp_desc": "Logged",
+            "data_type": "Data type should not change",
+            },
         ]
         self.assertDictEqual(
             next(
