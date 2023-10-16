@@ -196,7 +196,7 @@ class TestUtils(BaseTest):
             expected_output,
         )
 
-    def test_convertion_timestamp_csv(self):
+    def test_timestamp_is_ISOformat(self):
         """Test that timestamp values in CSV file is not altered"""
 
         # Make sure timestamp is processed correctly, and the format is not altered
@@ -211,35 +211,22 @@ class TestUtils(BaseTest):
             {
             "message": "Checking timestamp converting",
             "timestamp": 1658689261000000,
-            "datetime": "2022-07-24T19:01:01+00:00",
+            "datetime": "2021-09-15T02:44:18+00:00",
             "timestamp_desc": "Time Logged",
             "data_type": "This event has timestamp",
-            # unix timestamp miliseconds since jan 1 1970
-            # unixtimestamp.com
             },
             {
             "message": "Make sure message is same",
             "timestamp": 1437789661000000,
-            "datetime": "2015-07-25T19:01:01+00:00",
+            "datetime": "2015-07-25T02:01:01+00:00",
             "timestamp_desc": "Logging",
             "data_type": "This data_type should stay the same",
             },
-            {
-            "message": "Checking message",
-            "timestamp": 1331698658000000,
-            "datetime": "2021-09-14T19:44:18+00:00",
-            "timestamp_desc": "Logged",
-            "data_type": "Data type should not change",
-            },
+            
         ]
-        self.assertDictEqual(
-            next(
-                read_and_validate_csv(
-                    "test_tools/test_events/validate_date_events_timestamp_manipulation.csv"
-                )
-            ),
-            next(iter(expected_outputs)),
-        )
+        results = iter(read_and_validate_csv("test_tools/test_events/validate_date_events_timestamp_manipulation.csv"))
+        for output in expected_outputs:
+            self.assertDictEqual(next(results),output)
 
     def test_invalid_JSONL_file(self):
         """Test for JSONL with missing keys in the dictionary wrt headers mapping"""
@@ -305,3 +292,8 @@ class TestUtils(BaseTest):
         self.assertTrue(
             isinstance(rename_jsonl_headers(linedict, headers_mapping, lineno), dict)
         )
+
+
+
+
+
