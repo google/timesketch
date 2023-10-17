@@ -96,12 +96,12 @@ limitations under the License.
           </div>
         </v-hover>
         <v-spacer></v-spacer>
-        <v-btn small depressed v-on:click="switchUI"> Use the old UI </v-btn>
+        <v-btn small rounded depressed v-on:click="switchUI"> Use the old UI </v-btn>
 
         <!-- Sharing dialog -->
         <v-dialog v-model="shareDialog" width="500">
           <template v-slot:activator="{ on, attrs }">
-            <v-btn small depressed color="primary" class="ml-2" v-bind="attrs" v-on="on">
+            <v-btn small rounded depressed color="primary" class="ml-2" v-bind="attrs" v-on="on">
               <v-icon small left>mdi-account-multiple-plus</v-icon>
               Share
             </v-btn>

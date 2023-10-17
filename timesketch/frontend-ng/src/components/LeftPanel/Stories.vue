@@ -35,7 +35,7 @@ limitations under the License.
         <v-icon>mdi-plus</v-icon>
       </v-btn>
 
-      <span v-if="!expanded" class="float-right" style="margin-right: 10px">
+      <span v-if="!expanded && meta.stories && meta.stories.length" class="float-right" style="margin-right: 10px">
         <small v-if="meta.stories"
           ><strong>{{ meta.stories.length }}</strong></small
         >
