@@ -33,6 +33,7 @@ limitations under the License.
       <div v-show="expanded">
         <ts-timeline-chip v-for="timeline in allTimelines"
                           :key="timeline.id + timeline.name"
+                          :is-selected="isEnabled(timeline)"
                           :timeline="timeline"></ts-timeline-chip>
       </div>
     </v-expand-transition>
@@ -62,6 +63,11 @@ export default {
       return timelines
     },
 
+  },
+  methods: {
+    isEnabled(timeline) {
+      return this.$store.state.enabledTimelines.includes(timeline.id)
+    },
   },
   data: function () {
     return {

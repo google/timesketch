@@ -121,7 +121,6 @@ limitations under the License.
       <!-- Timeline picker -->
       <v-sheet class="mb-4 mt-4" color="transparent">
         <ts-timeline-picker
-          @updateSelectedTimelines="updateSelectedTimelines($event)"
           :current-query-filter="currentQueryFilter"
           :count-per-index="countPerIndex"
           :count-per-timeline="countPerTimeline"
@@ -350,6 +349,9 @@ export default {
     sketch() {
       return this.$store.state.sketch
     },
+    enabledTimelines() {
+      return this.$store.state.enabledTimelines
+    },
     meta() {
       return this.$store.state.meta
     },
@@ -367,6 +369,11 @@ export default {
     },
     activeContext() {
       return this.$store.state.activeContext
+    },
+  },
+  watch: {
+    enabledTimelines: function () {
+      this.updateEnabledTimelines(this.enabledTimelines)
     },
   },
   methods: {
@@ -508,17 +515,8 @@ export default {
       this.currentQueryFilter = JSON.parse(JSON.stringify(this.originalContext.queryFilter))
       this.search()
     },
-    updateSelectedTimelines: function (timelines) {
-      let selected = []
-      timelines.forEach((timeline) => {
-        let isLegacy = this.meta.indices_metadata[timeline.searchindex.index_name].is_legacy
-        if (isLegacy) {
-          selected.push(timeline.searchindex.index_name)
-        } else {
-          selected.push(timeline.id)
-        }
-      })
-      this.currentQueryFilter.indices = selected
+    updateEnabledTimelines: function (timelineIds) {
+      this.currentQueryFilter.indices = timelineIds
       this.search()
     },
     toggleChip: function (chip) {

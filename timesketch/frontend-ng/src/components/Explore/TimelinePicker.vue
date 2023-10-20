@@ -91,13 +91,12 @@ export default {
     return {
       isDarkTheme: false,
       isLoading: false,
-      selectedTimelines: [],
       showAll: false,
     }
   },
   methods: {
     isSelected(timeline) {
-      return this.selectedTimelines.map((x) => x.id).includes(timeline.id)
+      return this.$store.state.enabledTimelines.includes(timeline.id);
     },
     getCount(timeline) {
       let count = 0
@@ -151,34 +150,23 @@ export default {
         })
     },
     enableAllTimelines() {
-      this.selectedTimelines = this.activeTimelines
-      this.$emit('updateSelectedTimelines', this.selectedTimelines)
+      this.$store.dispatch('updateEnabledTimelines', this.activeTimelines.map(tl => tl.id))
     },
     disableAllTimelines() {
-      this.selectedTimelines = []
-      this.$emit('updateSelectedTimelines', this.selectedTimelines)
+      this.$store.dispatch('updateEnabledTimelines', [])
     },
     disableAllOtherTimelines(timeline) {
-      this.selectedTimelines = [timeline]
-      this.$emit('updateSelectedTimelines', this.selectedTimelines)
+      this.$store.dispatch('updateEnabledTimelines', [timeline.id])
     },
     toggleTimeline(timeline) {
-      let newArray = this.selectedTimelines.slice()
-      let timelineIdx = newArray.map((x) => x.id).indexOf(timeline.id)
-      if (timelineIdx === -1) {
-        newArray.push(timeline)
-      } else {
-        newArray.splice(timelineIdx, 1)
-      }
-      this.selectedTimelines = newArray
-      this.$emit('updateSelectedTimelines', this.selectedTimelines)
+      this.$store.dispatch('toggleEnabledTimeline', timeline.id)
     },
     toggleTheme() {
       this.isDarkTheme = !this.isDarkTheme
     },
     syncSelectedTimelines() {
       if (this.currentQueryFilter.indices.includes('_all')) {
-        this.selectedTimelines = this.activeTimelines
+        this.updateEnabledTimelinesIfChanged(this.activeTimelines.map(tl => tl.id))
         return
       }
       let newArray = []
@@ -195,14 +183,19 @@ export default {
           newArray.push(timeline)
         }
       })
-      this.selectedTimelines = newArray
+      this.updateEnabledTimelinesIfChanged(newArray.map(tl => tl.id))
     },
+   updateEnabledTimelinesIfChanged(newTimelineIds) {
+      if (!_.isEqual(newTimelineIds, this.$store.state.enabledTimelines)) {
+        this.$store.dispatch('updateEnabledTimelines', newTimelineIds)
+      }
+   }
   },
   created() {
     EventBus.$on('isDarkTheme', this.toggleTheme)
 
     if (this.currentQueryFilter.indices.includes('_all')) {
-      this.selectedTimelines = this.activeTimelines
+        this.$store.dispatch('updateEnabledTimelines', this.activeTimelines.map(tl => tl.id))
     } else {
       this.syncSelectedTimelines()
     }
