@@ -58,6 +58,14 @@ limitations under the License.
               v-bind="attrs"
               v-on="on"
             >
+            <template v-slot:append>
+             <v-tooltip bottom open-delay="500">
+              <template v-slot:activator="{ on: tooltip }">
+               <v-icon v-on="tooltip">mdi-magnify</v-icon>
+              </template>
+              <span>Search</span>
+             </v-tooltip>
+            </template>
             </v-text-field>
           </template>
 

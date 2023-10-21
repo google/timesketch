@@ -78,11 +78,17 @@ limitations under the License.
               </span>
 
               <v-dialog v-model="saveSearchMenu" v-if="!disableSaveSearch" width="500">
-                <template v-slot:activator="{ on, attrs }">
-                  <v-btn icon v-bind="attrs" v-on="on">
-                    <v-icon>mdi-content-save-outline</v-icon> <!-- Add tooltip here (Save search action)-->
-                  </v-btn>
+                <template v-slot:activator="{ on: dialog }">
+                  <v-tooltip top open-delay="500">
+                    <template v-slot:activator="{ on: tooltip }">
+                      <v-btn v-on="{ ...tooltip, ...dialog }" icon>
+                        <v-icon>mdi-content-save-outline</v-icon>
+                      </v-btn>
+                    </template>
+                    <span>Save search</span>
+                  </v-tooltip>
                 </template>
+
                 <v-card class="pa-4">
                   <h3>Save Search</h3>
                   <br />
@@ -104,16 +110,30 @@ limitations under the License.
                 </v-card>
               </v-dialog>
 
-              <v-btn icon @click="showHistogram = !showHistogram" v-if="!disableHistogram">
-                <v-icon>mdi-chart-bar</v-icon>
-              </v-btn>
+              <template>
+                <v-tooltip top open-delay="500">
+                  <template v-slot:activator="{ on, attrs }">
+                    <v-btn icon @click="showHistogram = !showHistogram" v-if="!disableHistogram" v-bind="attrs" v-on="on">
+                      <v-icon>mdi-chart-bar</v-icon>
+                    </v-btn>
+                  </template>
+                  <span>Show histogram</span>
+                </v-tooltip>
+              </template>
+
 
               <v-dialog v-model="columnDialog" v-if="!disableColumns" max-width="500px" scrollable>
-                <template v-slot:activator="{ on, attrs }">
-                  <v-btn icon v-bind="attrs" v-on="on">
-                    <v-icon>mdi-view-column-outline</v-icon> <!-- Add tooltip here? (select columns icon)-->
-                  </v-btn>
+                <template v-slot:activator="{ on: dialog }">
+                  <v-tooltip top open-delay="500">
+                    <template v-slot:activator="{ on: tooltip }">
+                      <v-btn icon v-bind="attrs" v-on="{ ...tooltip, ...dialog }">
+                        <v-icon>mdi-view-column-outline</v-icon>
+                      </v-btn>
+                    </template>
+                    <span>Select columns</span>
+                  </v-tooltip>
                 </template>
+
 
                 <v-card height="50vh">
                   <v-card-title>Select columns</v-card-title>
@@ -163,10 +183,16 @@ limitations under the License.
 
               <v-menu v-if="!disableSettings" offset-y :close-on-content-click="false">
                 <template v-slot:activator="{ on, attrs }">
-                  <v-btn icon v-bind="attrs" v-on="on">
-                    <v-icon>mdi-dots-horizontal</v-icon>
-                  </v-btn>
+                  <v-tooltip top open-delay="500">
+                    <template v-slot:activator="{ on: tooltip }">
+                      <v-btn icon v-bind="attrs" v-on="{ ...on, ...tooltip }">
+                        <v-icon>mdi-dots-horizontal</v-icon>
+                      </v-btn>
+                    </template>
+                    <span>More settings</span>
+                  </v-tooltip>
                 </template>
+
 
                 <v-card outlined max-width="475" class="mx-auto">
                   <v-list subheader two-line flat dense>
@@ -315,16 +341,34 @@ limitations under the License.
 
         <!-- Actions field -->
         <template v-slot:item.actions="{ item }">
-          <v-btn small icon @click="toggleStar(item)">
-            <v-icon v-if="item._source.label.includes('__ts_star')" color="amber">mdi-star</v-icon> <!--Add tooltip here? (star event)-->
-            <v-icon v-else>mdi-star-outline</v-icon> 
-          </v-btn>
+          <v-tooltip top open-delay="500">
+            <template v-slot:activator="{ on }">
+              <v-btn small icon @click="toggleStar(item)" v-on="on">
+                <v-icon v-if="item._source.label.includes('__ts_star')" color="amber">mdi-star</v-icon>
+                <v-icon v-else>mdi-star-outline</v-icon>
+              </v-btn>
+            </template>
+            <span>Toggle star status</span>
+          </v-tooltip>
+
 
           <!-- Tag menu -->
-          <ts-event-tag-menu :event="item"></ts-event-tag-menu>
+          <v-tooltip top open-delay="500">
+            <template v-slot:activator="{ on }">
+              <ts-event-tag-menu :event="item" v-on="on"></ts-event-tag-menu>
+            </template>
+            <span>Event tag menu</span>
+          </v-tooltip>
+
 
           <!-- Action sub-menu -->
-          <ts-event-action-menu :event="item" @showContextWindow="showContextWindow($event)"></ts-event-action-menu>
+          <v-tooltip top open-delay="500">
+            <template v-slot:activator="{ on }">
+              <ts-event-action-menu :event="item" @showContextWindow="showContextWindow($event)" v-on="on"></ts-event-action-menu>
+            </template>
+            <span>Action sub-menu</span>
+          </v-tooltip>
+
         </template>
 
         <!-- Datetime field with action buttons -->

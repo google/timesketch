@@ -40,11 +40,14 @@ limitations under the License.
           </span>
           <!-- Save graph dialog -->
           <v-dialog v-model="saveGraphDialog" width="500">
-            <template v-slot:activator="{ on, attrs }">
-              <v-btn icon :disabled="!edgeQuery" v-bind="attrs" v-on="on" title="Save selected graph">
-                <v-icon>mdi-content-save-outline</v-icon>
-              </v-btn>
-            </template>
+            <v-tooltip top open-delay="500">
+              <template v-slot:activator="{ on, attrs }">
+                <v-btn icon :disabled="!edgeQuery" v-bind="attrs" v-on="on">
+                  <v-icon>mdi-content-save-outline</v-icon>
+                </v-btn>
+              </template>
+              <span>Save selected graph</span>
+            </v-tooltip>
             <v-card class="pa-4">
               <h3>Save selected elements</h3>
               <br />
@@ -65,9 +68,15 @@ limitations under the License.
             </v-card>
           </v-dialog>
 
-          <v-btn icon v-on:click="resizeCanvas()" :disabled="!currentGraph" title="Fit to canvas">
-            <v-icon>mdi-fit-to-page-outline</v-icon>
-          </v-btn>
+          <v-tooltip bottom>
+            <template v-slot:activator="{ on }">
+              <v-btn icon v-on:click="resizeCanvas()" :disabled="!currentGraph" v-on="on" title="Fit to canvas">
+                <v-icon>mdi-fit-to-page-outline</v-icon>
+              </v-btn>
+            </template>
+            <span>Fit to Canvas</span>
+          </v-tooltip>
+
           <!-- Graph settings menu -->
           <v-menu
             v-model="graphSettingsMenu"
@@ -76,11 +85,15 @@ limitations under the License.
             :close-on-click="true"
             content-class="menu-with-gap"
           >
-            <template v-slot:activator="{ on, attrs }">
-              <v-btn icon v-bind="attrs" v-on="on" :disabled="!currentGraph || !graphPluginName" title="Graph settings">
-                <v-icon> mdi-cog-outline </v-icon>
-              </v-btn>
-            </template>
+            <v-tooltip top open-delay="500">
+              <template v-slot:activator="{ on, attrs }">
+                <v-btn icon :disabled="!currentGraph || !graphPluginName" v-bind="attrs" v-on="on">
+                  <v-icon>mdi-cog-outline</v-icon>
+                </v-btn>
+              </template>
+              <span>Graph Settings</span>
+            </v-tooltip>
+
 
             <v-card class="pa-4 pt-5" width="600">
               <h5>Layout type</h5>
@@ -117,15 +130,22 @@ limitations under the License.
           <i
             ><small>Generated {{ currentGraphCache.updated_at | timeSince }}</small></i
           >
-          <v-btn
-            icon
-            class="ml-1"
-            title="Refresh graph"
-            v-on:click="buildGraph({ name: currentGraph }, true)"
-            :disabled="!currentGraph"
-          >
-            <v-icon>mdi-refresh</v-icon>
-          </v-btn>
+          <v-tooltip top open-delay="500">
+            <template v-slot:activator="{ on }">
+              <v-btn
+                icon
+                class="ml-1"
+                title="Refresh graph"
+                v-on:click="buildGraph({ name: currentGraph }, true)"
+                :disabled="!currentGraph"
+                v-on="on"
+              >
+                <v-icon>mdi-refresh</v-icon>
+              </v-btn>
+            </template>
+            <span>Refresh graph</span>
+          </v-tooltip>
+
         </div>
       </v-toolbar>
     </v-card>

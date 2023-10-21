@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -->
+
 <template>
   <div v-if="sketch" style="height: 30%">
     <!-- Progress indicator when loading sketch data -->
@@ -63,7 +64,7 @@ limitations under the License.
       ]"
     >
       <v-btn icon @click="toggleLeftPanel">
-        <v-icon>mdi-menu</v-icon>
+        <v-icon title="Manage">mdi-menu</v-icon>
       </v-btn>
 
       <v-avatar class="ml-n2 mt-1">
@@ -72,141 +73,28 @@ limitations under the License.
         </router-link>
       </v-avatar>
 
-        <v-hover v-slot="{ hover }">
-          <div class="d-flex flex-wrap">
-            <div
-              class="flex-1-0"
-              @dblclick="renameSketchDialog = true"
-              style="
-                font-size: 1.1em;
-                cursor: pointer;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                max-width: 900px;
-              "
-              :title="sketch.name"
-            >
-              {{ sketch.name }}
-            </div>
-            <div>
-              <v-icon title="Rename Sketch" small class="ml-1" v-if="hover" @click="renameSketchDialog = true">mdi-pencil</v-icon>
-            </div>
+      <v-hover v-slot="{ hover }">
+        <div class="d-flex flex-wrap">
+          <div
+            class="flex-1-0"
+            @dblclick="renameSketchDialog = true"
+            style="
+              font-size: 1.1em;
+              cursor: pointer;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              max-width: 900px;
+            "
+            :title="sketch.name"
+          >
+            {{ sketch.name }}
           </div>
-        </v-hover>
-
-        <v-spacer></v-spacer>
-        <v-icon @click="toggleLeftPanel">mdi-chevron-left</v-icon>
-      </v-toolbar>
-
-      <v-divider></v-divider>
-
-      <!-- Dialog for adding a scenario -->
-      <v-dialog v-model="scenarioDialog" max-width="500px">
-        <v-card>
-          <div class="pa-3">
-            <h3>Investigative Scenarios</h3>
-            <v-select
-              v-model="selectedScenario"
-              :items="scenarioTemplates"
-              item-text="name"
-              return-object
-              label="Select a scenario"
-              outlined
-              class="mt-3"
-            ></v-select>
-            <div v-if="selectedScenario">
-              {{ selectedScenario.description }}
-            </div>
+          <div>
+            <v-icon small class="ml-1" v-if="hover" @click="renameSketchDialog = true">mdi-pencil</v-icon>
           </div>
-          <v-divider></v-divider>
-          <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn @click="scenarioDialog = false" text> Cancel </v-btn>
-            <v-btn text color="primary" :disabled="!selectedScenario" @click="addScenario(selectedScenario.id)">
-              Add
-            </v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
-
-      <v-tabs v-model="leftPanelTab" grow>
-        <v-tab v-for="item in leftPanelTabItems" :key="item"> {{ item }} </v-tab>
-      </v-tabs>
-      <v-divider></v-divider>
-      <v-tabs-items v-model="leftPanelTab">
-        <v-tab-item :transition="false">
-          <ts-saved-searches v-if="meta.views"></ts-saved-searches>
-          <ts-data-types></ts-data-types>
-          <ts-tags></ts-tags>
-          <ts-graphs></ts-graphs>
-          <ts-stories></ts-stories>
-          <ts-intelligence></ts-intelligence>
-          <ts-search-templates></ts-search-templates>
-          <ts-sigma-rules></ts-sigma-rules>
-          <ts-analyzer-results></ts-analyzer-results>
-        </v-tab-item>
-        <v-tab-item :transition="false">
-          <ts-scenario v-for="scenario in activeScenarios" :key="scenario.id" :scenario="scenario"></ts-scenario>
-          <v-row class="mt-0 px-2" flat>
-            <v-col cols="6">
-              <v-card v-if="!Object.keys(scenarioTemplates).length" flat class="pa-4"
-                >No scenarios available yet. Contact your server admin to add scenarios to this server.</v-card
-              >
-              <v-btn v-else text color="primary" @click="scenarioDialog = true" style="cursor: pointer"
-                ><v-icon left>mdi-plus</v-icon> Add Scenario</v-btn
-              >
-            </v-col>
-
-            <v-col cols="6">
-              <v-btn
-                small
-                text
-                color="primary"
-                v-if="hiddenScenarios.length"
-                @click="showHidden = !showHidden"
-                class="mt-1"
-              >
-                <small
-                  ><span v-if="showHidden">Hide</span><span v-else>Show</span> hidden scenarios ({{
-                    hiddenScenarios.length
-                  }})</small
-                >
-              </v-btn>
-            </v-col>
-          </v-row>
-
-          <div v-if="showHidden">
-            <ts-scenario v-for="scenario in hiddenScenarios" :key="scenario.id" :scenario="scenario"></ts-scenario>
-          </div>
-        </v-tab-item>
-      </v-tabs-items>
-    </v-navigation-drawer>
-
-    <!-- Top horizontal toolbar -->
-    <v-app-bar v-if="!loadingSketch" app hide-on-scroll clipped flat :color="$vuetify.theme.dark ? '#121212' : 'white'">
-      <v-btn icon v-show="!showLeftPanel && !loadingSketch" @click="toggleLeftPanel" class="ml-n1">
-        <v-icon title="Manage">mdi-menu</v-icon>
-      </v-btn>
-
-      <v-avatar v-show="!showLeftPanel || !hasTimelines || isArchived" class="ml-n2 mt-1">
-        <router-link to="/">
-          <v-img src="/dist/timesketch-color.png" max-height="25" max-width="25" contain></v-img>
-        </router-link>
-      </v-avatar>
-
-      <span v-if="!showLeftPanel || !hasTimelines || isArchived" style="font-size: 1.1em">{{ sketch.name }} </span>
-
-      <v-btn
-        v-show="currentRouteName !== 'Explore'"
-        :to="{ name: 'Explore', params: { sketchId: sketchId } }"
-        small
-        depressed
-        class="ml-2"
-      >
-        <v-icon small left>mdi-arrow-left</v-icon>
-        back to explore
-      </v-btn>
+        </div>
+      </v-hover>
       <v-spacer></v-spacer>
       <v-btn small depressed v-on:click="switchUI"> Use the old UI </v-btn>
 
