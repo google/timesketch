@@ -13,8 +13,7 @@ limitations under the License.
 <template>
   <v-card>
     <v-card-title>
-      <v-icon large color="green">mdi-graph-outline</v-icon>
-      <span class="text-h6 ml-2">Unfurl graph</span>
+      <v-img src="/unfurl-logo.png" max-height="50" max-width="200" contain class="mb-2"></v-img>
     </v-card-title>
     <v-card-subtitle class="pt-1">
       <span><b>Input:</b> {{ url }}</span>
@@ -28,6 +27,10 @@ limitations under the License.
       </div>
       <div v-show="unfurlReady">
         <!-- Cytoscape container -->
+        <div style="border: 1px; border: solid;">
+          <span style="font-weight: bold;">Selected node context: </span>
+          <span id="nodeContext" style="font-style: italic;">Select a node in the graph below to get more information.</span>
+        </div>
         <div ref="graphContainer">
           <div ref="cy" width="100%" style="min-height: 400px; border: 1px; border-style: solid;"></div>
         </div>
@@ -81,7 +84,14 @@ export default {
               color: '#000000',
             }
           },
-
+          {
+            selector: 'node.highlight',
+            // selector: 'node:selected',
+            style: {
+                'border-color': ' #000',
+                'border-width': '2px'
+            }
+          },
           {
             selector: 'edge',
             style: {
@@ -94,6 +104,14 @@ export default {
               'text-outline-width': 3,
               'text-outline-color': '#FFFFFF',
               label: 'data(label)',
+            }
+          },
+          {
+            selector: 'edge.highlight',
+            // selector: 'edge:selected',
+            style: {
+              'lineColor': 'grey',
+              'width': 3
             }
           }
         ],
@@ -120,7 +138,7 @@ export default {
         console.error('getting unfurl error: ', e)
       })
     },
-    buildUnfurlGraph: function (data = {}, refresh = false) {
+    buildUnfurlGraph: function (data = {}) {
       this.cy.elements().remove()
 
       let elements = []
@@ -148,15 +166,20 @@ export default {
           },
         })
       })
-      // console.log('elements', elements)
 
       this.cy.style(this.config.style)
-      this.cy.add(elements)
+      const eles = this.cy.add(elements)
       this.cy.layout(this.config.layout).run()
       // this.resizeGraphCanvas()
       // this.cy.resize()
-      this.cy.fit()
-      // console.log('cytoscape', this.cy)
+      this.cy.fit(eles)
+      // this.cy.center(eles)
+
+      this.cy.on('click', 'node', function(e){
+        eles.removeClass('highlight')
+        e.target.addClass('highlight').outgoers('edge').addClass('highlight')
+        document.getElementById('nodeContext').innerHTML = e.target.data().context ? e.target.data().context : 'No context available for this node.'
+      })
     },
   },
   mounted () {
@@ -166,7 +189,6 @@ export default {
       container: this.$refs.cy,
       ...this.config,
     })
-    // TODO: Consider adding a mouseover event wrapper like https://github.com/cytoscape/cytoscape.js-popper
   },
 }
 </script>

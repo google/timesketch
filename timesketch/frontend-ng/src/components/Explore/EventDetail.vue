@@ -147,7 +147,7 @@ limitations under the License.
                             ></ts-link-redirect-warning>
                           </v-dialog>
                           <!-- unfurl dialog -->
-                          <v-dialog v-model="dfirUnfurlDialog" max-width="1000" :retain-focus="false">
+                          <v-dialog v-model="dfirUnfurlDialog" max-width="80%" min-width="1000px" max-height="80%" min-height="600px" :retain-focus="false" class="asdf">
                             <ts-unfurl-dialog
                               @cancel="dfirUnfurlDialog = false"
                               :url="contextValue"
