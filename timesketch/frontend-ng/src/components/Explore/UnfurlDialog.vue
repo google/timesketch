@@ -13,8 +13,7 @@ limitations under the License.
 <template>
   <v-card>
     <v-card-title>
-      <v-img :src="getUnfurlLogo" max-height="32px" max-width="32px" contain class="mb-2"></v-img>
-      <span style="font-size: xx-large">nfurl</span>
+      <v-img :src="getUnfurlLogo" max-height="32" contain class="mb-2"></v-img>
     </v-card-title>
     <v-card-subtitle class="pt-1">
       <span><b>Input:</b> {{ url }}</span>
@@ -159,10 +158,9 @@ export default {
   computed: {
     getUnfurlLogo() {
       if (this.$vuetify.theme.dark) {
-        return '/unfurl-logo-dm.png'
+        return '/unfurl-logo-dark.png'
       } else {
-        return '/unfurl-logo.png'
-      }
+        return '/unfurl-logo.png'      }
     },
   },
   methods: {
@@ -245,8 +243,6 @@ export default {
       this.cy.style(this.config.style)
       this.cy.add(elements)
       this.cy.layout(this.config.layout).run()
-
-      // Why can't I use this.resizeCanvas() here and need a delay?
       this.resizeCanvasWithDelay()
     },
     nodeSelection: function (event) {
