@@ -50,6 +50,12 @@ limitations under the License.
                 </template>
 
                 <v-list dense class="mx-auto">
+                  <v-list-item style="cursor: pointer" @click="copySavedSearchIdToClipboard(savedSearch.id)">
+                    <v-list-item-icon>
+                      <v-icon small>mdi-identifier</v-icon>
+                    </v-list-item-icon>
+                    <v-list-item-title>Copy link to this search </v-list-item-title>
+                  </v-list-item>
                   <v-list-item style="cursor: pointer" @click="copySavedSearchUrlToClipboard(savedSearch.id)">
                     <v-list-item-icon>
                       <v-icon small>mdi-link-variant</v-icon>
@@ -89,13 +95,22 @@ export default {
     setView: function (savedSearch) {
       EventBus.$emit('setActiveView', savedSearch)
     },
+    copySavedSearchIdToClipboard(savedSearchId) {
+      try {
+        navigator.clipboard.writeText(savedSearchId)
+        this.infoSnackBar('Saved Search ID copied to clipboard')
+      } catch (error) {
+        this.errorSnackBar('Failed to load Saved Search ID into the clipboard!')
+        console.error(error)
+      }
+    },
     copySavedSearchUrlToClipboard(savedSearchId) {
       try {
         let searchUrl = window.location.origin + this.$route.path + '?view=' + savedSearchId
         navigator.clipboard.writeText(searchUrl)
-        this.infoSnackBar('Event URL copied to clipboard')
+        this.infoSnackBar('Saved Search URL copied to clipboard')
       } catch (error) {
-        this.errorSnackBar('Failed to load Event URL into the clipboard')
+        this.errorSnackBar('Failed to load Saved Search URL into the clipboard!')
         console.error(error)
       }
     },
