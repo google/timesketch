@@ -24,7 +24,7 @@ limitations under the License.
         <v-progress-linear color="primary" indeterminate> </v-progress-linear>
       </div>
       <v-divider></v-divider>
-      <div v-show="unfurlReady">
+      <v-container fluid v-show="unfurlReady">
         <!-- Cytoscape container -->
         <div style="font-size: medium" class="py-1 px-1">
           <span style="font-weight: bold">Selected node context: </span>
@@ -43,20 +43,35 @@ limitations under the License.
             </v-col>
             <v-col cols="auto">
               <div class="iconWrapper">
-                <v-btn icon v-on:click="resizeCanvas()" title="Fit to canvas">
-                  <v-icon>mdi-fit-to-page-outline</v-icon>
-                </v-btn>
-                <v-btn icon v-on:click="zoomGraph('plus')" title="zoom-in">
-                  <v-icon>mdi-plus</v-icon>
-                </v-btn>
-                <v-btn icon v-on:click="zoomGraph('minus')" title="zoom out">
-                  <v-icon>mdi-minus</v-icon>
-                </v-btn>
+                <v-tooltip top open-delay="500">
+                  <template v-slot:activator="{ on }">
+                    <v-btn icon v-on="on" @click="resizeCanvas()">
+                      <v-icon>mdi-fit-to-page-outline</v-icon>
+                    </v-btn>
+                  </template>
+                  <span>resize graph</span>
+                </v-tooltip>
+                <v-tooltip top open-delay="500">
+                  <template v-slot:activator="{ on }">
+                    <v-btn icon v-on="on" @click="zoomGraph('plus')">
+                      <v-icon>mdi-plus</v-icon>
+                    </v-btn>
+                  </template>
+                  <span>zoom in</span>
+                </v-tooltip>
+                <v-tooltip top open-delay="500">
+                  <template v-slot:activator="{ on }">
+                    <v-btn icon v-on="on" @click="zoomGraph('minus')">
+                      <v-icon>mdi-minus</v-icon>
+                    </v-btn>
+                  </template>
+                  <span>zoom out</span>
+                </v-tooltip>
               </div>
             </v-col>
           </v-row>
         </div>
-      </div>
+      </v-container>
       <span>Powered by <a href="https://github.com/obsidianforensics/unfurl" target="_blank">dfir-unfurl</a></span>
     </v-card-text>
     <v-card-actions>
@@ -267,5 +282,6 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: center;
+  position: absolute;
 }
 </style>
