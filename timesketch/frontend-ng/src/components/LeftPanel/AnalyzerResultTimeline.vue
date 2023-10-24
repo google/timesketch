@@ -23,7 +23,7 @@ limitations under the License.
       :class="getHoverTheme"
     >
       <v-icon class="mr-2" :color="'#' + timeline.color">mdi-circle</v-icon>
-      <span class="mr-2" style="color: grey">{{ timeline.name }}</span>
+      <span class="mr-2 timeline-name-ellipsis" style="color: grey; width:82% !important;">{{ timeline.name }}</span>
       <v-progress-circular :size="20" :width="1" indeterminate color="primary"></v-progress-circular>
     </div>
     <div
@@ -34,7 +34,7 @@ limitations under the License.
       :class="getHoverTheme"
     >
       <v-icon class="mr-2" :color="'#' + timeline.color">mdi-circle</v-icon>
-      <span>{{ timeline.name }}</span>
+      <span class="timeline-name-ellipsis" style="width:82% !important;">{{ timeline.name }}</span>
       <div v-if="timeline.analysis_status === 'ERROR'">
         <v-tooltip top>
           <template v-slot:activator="{ on }">
