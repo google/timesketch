@@ -13,7 +13,8 @@ limitations under the License.
 <template>
   <v-card>
     <v-card-title>
-      <v-img src="/unfurl-logo.png" max-height="50" max-width="200" contain class="mb-2"></v-img>
+      <v-img :src="getUnfurlLogo" max-height="32px" max-width="32px" contain class="mb-2"></v-img>
+      <span style="font-size: xx-large">nfurl</span>
     </v-card-title>
     <v-card-subtitle class="pt-1">
       <span><b>Input:</b> {{ url }}</span>
@@ -28,9 +29,7 @@ limitations under the License.
         <div style="font-size: medium" class="py-1 px-1">
           <span style="font-weight: bold">Selected node context: </span>
           <br />
-          <span id="nodeContext" style="font-style: italic"
-            >Select a node in the graph below to get more information.</span
-          >
+          <span ref="nodeContext" style="font-style: italic">{{ nodeContextDefault }}</span>
         </div>
         <div ref="graphContainer" :style="{ height: canvasHeight, width: '100%' }">
           <v-row no-gutters>
@@ -44,7 +43,7 @@ limitations under the License.
             </v-col>
             <v-col cols="auto">
               <div class="iconWrapper">
-                <v-btn id="resizeGraph" icon v-on:click="resizeCanvas()" title="Fit to canvas">
+                <v-btn icon v-on:click="resizeCanvas()" title="Fit to canvas">
                   <v-icon>mdi-fit-to-page-outline</v-icon>
                 </v-btn>
                 <v-btn icon v-on:click="zoomGraph('plus')" title="zoom-in">
@@ -81,6 +80,7 @@ export default {
       unfurlReady: false,
       unfurlData: {},
       canvasHeight: '400px',
+      nodeContextDefault: 'Select a node in the graph below to get more information.',
       config: {
         style: [
           {
@@ -103,8 +103,7 @@ export default {
             },
           },
           {
-            selector: 'node.highlight',
-            // selector: 'node:selected',
+            selector: 'node:selected',
             style: {
               'border-color': ' #000',
               'border-width': '2px',
@@ -126,7 +125,6 @@ export default {
           },
           {
             selector: 'edge.highlight',
-            // selector: 'edge:selected',
             style: {
               lineColor: 'grey',
               width: 3,
@@ -142,6 +140,15 @@ export default {
         },
       },
     }
+  },
+  computed: {
+    getUnfurlLogo() {
+      if (this.$vuetify.theme.dark) {
+        return '/unfurl-logo-dm.png'
+      } else {
+        return '/unfurl-logo.png'
+      }
+    },
   },
   methods: {
     clearAndCancel: function () {
@@ -221,22 +228,19 @@ export default {
       })
 
       this.cy.style(this.config.style)
-      const eles = this.cy.add(elements)
+      this.cy.add(elements)
       this.cy.layout(this.config.layout).run()
 
       // Why can't I use this.resizeCanvas() here and need a delay?
       this.resizeCanvasWithDelay()
-
-      this.cy.on('click', 'node', function (e) {
-        eles.removeClass('highlight')
-        e.target.addClass('highlight').outgoers('edge').addClass('highlight')
-        document.getElementById('nodeContext').innerHTML = e.target.data().context
-          ? e.target.data().context
-          : 'No context available for this node.'
-        // This is a very hacky way to resize the canvas. But how can I call the
-        // resizeCanvas function from this context? this.resizeCanvas() does not work!
-        document.getElementById('resizeGraph').click()
-      })
+    },
+    nodeSelection: function (event) {
+      this.cy.edges().removeClass('highlight')
+      event.target.outgoers('edge').addClass('highlight')
+      this.$refs.nodeContext.innerHTML = event.target.data().context
+        ? event.target.data().context
+        : 'No context available for this node.'
+      this.resizeCanvas()
     },
   },
   mounted() {
@@ -246,6 +250,13 @@ export default {
     this.cy = cytoscape({
       container: this.$refs.cy,
       ...this.config,
+    })
+    this.cy.on('select', 'node', (event) => {
+      this.nodeSelection(event)
+    })
+    this.cy.on('unselect', 'node', (event) => {
+      this.cy.elements().removeClass('highlight')
+      this.$refs.nodeContext.innerHTML = this.nodeContextDefault
     })
   },
 }
