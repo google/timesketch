@@ -1,4 +1,4 @@
-# Mock configuration file for testing the contrext links API endpoint!
+# Mock configuration file for testing the context links API endpoint!
 ## Hardcoded Modules
 hardcoded_modules:
   module_one:
