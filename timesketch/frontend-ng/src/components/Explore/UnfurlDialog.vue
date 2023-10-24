@@ -28,7 +28,7 @@ limitations under the License.
         <div style="font-size: medium" class="py-1 px-1">
           <span style="font-weight: bold">Selected node context: </span>
           <br />
-          <span ref="nodeContext" style="font-style: italic">{{ nodeContextDefault }}</span>
+          <span style="font-style: italic" v-html="nodeContext"></span>
         </div>
         <div ref="graphContainer" :style="{ height: canvasHeight, width: '100%' }">
           <v-row no-gutters>
@@ -94,6 +94,7 @@ export default {
       unfurlReady: false,
       unfurlData: {},
       canvasHeight: '400px',
+      nodeContext: '',
       nodeContextDefault: 'Select a node in the graph below to get more information.',
       config: {
         style: [
@@ -156,11 +157,15 @@ export default {
     }
   },
   computed: {
+    nodeContextValue() {
+      return this.nodeContext
+    },
     getUnfurlLogo() {
       if (this.$vuetify.theme.dark) {
         return '/unfurl-logo-dark.png'
       } else {
-        return '/unfurl-logo.png'      }
+        return '/unfurl-logo.png'
+      }
     },
   },
   methods: {
@@ -248,7 +253,7 @@ export default {
     nodeSelection: function (event) {
       this.cy.edges().removeClass('highlight')
       event.target.outgoers('edge').addClass('highlight')
-      this.$refs.nodeContext.innerHTML = event.target.data().context
+      this.nodeContext = event.target.data().context
         ? event.target.data().context
         : 'No context available for this node.'
       this.resizeCanvas()
@@ -267,7 +272,7 @@ export default {
     })
     this.cy.on('unselect', 'node', (event) => {
       this.cy.elements().removeClass('highlight')
-      this.$refs.nodeContext.innerHTML = this.nodeContextDefault
+      this.nodeContext = this.nodeContextDefault
     })
   },
 }
