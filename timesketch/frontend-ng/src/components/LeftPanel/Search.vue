@@ -46,6 +46,9 @@ export default {
     isExploreRoute() {
       return this.$route.name === 'Explore'
     },
+    sketchId() {
+      return this.$store.state.sketch.id
+    }
   },
 }
 </script>
