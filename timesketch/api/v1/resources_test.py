@@ -209,7 +209,7 @@ class ExploreResourceTest(BaseTest):
                 "query_filter": "{}",
                 "query_result_count": 0,
                 "query_string": "test",
-                "scenario_id": None
+                "scenario_id": None,
             },
         },
         "objects": [

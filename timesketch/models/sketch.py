@@ -1295,9 +1295,7 @@ class InvestigativeQuestion(
         lazy="select",
     )
     search_histories = relationship(
-        "SearchHistory",
-        backref="investigativequestion",
-        lazy="select"
+        "SearchHistory", backref="investigativequestion", lazy="select"
     )
 
     def __init__(
@@ -1368,9 +1366,7 @@ class InvestigativeQuestionApproach(
         "SigmaRule", secondary=approach_sigmarule_association_table
     )
     search_histories = relationship(
-        "SearchHistory",
-        backref="investigativequestionapproach",
-        lazy="select"
+        "SearchHistory", backref="investigativequestionapproach", lazy="select"
     )
 
     def __init__(
