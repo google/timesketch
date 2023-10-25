@@ -22,7 +22,7 @@ limitations under the License.
       <!-- Empty state -->
       <v-container v-if="!hasTimelines && !loadingSketch" fill-height fluid>
         <v-row align="center" justify="center">
-          <v-sheet class="pa-4">
+          <v-sheet class="pa-4 mt-15">
             <center>
               <div style="font-size: 2em" class="mb-3">It's empty around here</div>
               <ts-upload-timeline-form btn-size="normal" btn-type="outlined"></ts-upload-timeline-form>
