@@ -19,7 +19,7 @@ limitations under the License.
       no-gutters
       class="pa-2 pl-5"
       style="cursor: pointer; font-size: 0.9em"
-      @click="expanded = !expanded"
+      @click="toggleQuestion()"
       :class="
         $vuetify.theme.dark
           ? expanded
@@ -30,7 +30,7 @@ limitations under the License.
           : 'light-hover'
       "
     >
-      <span v-if="expanded"
+      <span v-if="expanded && isActive"
         ><strong>{{ question.display_name }}</strong></span
       >
       <span v-else>{{ question.display_name }}</span>
@@ -49,6 +49,7 @@ limitations under the License.
             : 'light-hover'
         "
         class="pb-1"
+        @click="setActiveContext()"
       >
         <!-- Query suggestions -->
         <div class="pt-2 pl-5">
@@ -59,11 +60,13 @@ limitations under the License.
                 v-for="searchtemplate in searchTemplates"
                 :key="searchtemplate.id"
                 :searchchip="searchtemplate"
+                type="chip"
               ></ts-search-chip>
               <ts-search-chip
                 v-for="opensearchQuery in opensearchQueries"
                 :key="opensearchQuery.value"
                 :searchchip="opensearchQuery"
+                type="chip"
               ></ts-search-chip>
             </v-chip-group>
           </div>
@@ -128,7 +131,7 @@ import TsSearchChip from './SearchChip'
 import TsQuestionConclusion from './QuestionConclusion'
 
 export default {
-  props: ['question'],
+  props: ['scenario', 'facet', 'question'],
   components: {
     TsSearchChip,
     TsQuestionConclusion,
@@ -155,6 +158,12 @@ export default {
     currentUserConclusion() {
       return this.question.conclusions.filter((conclusion) => conclusion.user.username === this.currentUser).length
     },
+    activeContext() {
+      return this.$store.state.activeContext
+    },
+    isActive() {
+      return this.activeContext.question.id === this.question.id
+    },
   },
   methods: {
     createConclusion() {
@@ -166,19 +175,49 @@ export default {
         .catch((e) => {})
     },
     getSuggestedQueries() {
-      let analyses = this.question.approaches
-        .map((approach) => JSON.parse(approach.spec_json))
-        .map((approach) => approach._view.processors)
-        .map((processor) => processor[0].analysis.timesketch)
-        .flat()
-      this.opensearchQueries = analyses.filter((analysis) => analysis.type === 'opensearch-query')
+      let approaches = this.question.approaches.map((approach) => JSON.parse(approach.spec_json))
+      approaches.forEach((approach) => {
+        approach._view.processors.forEach((processor) => {
+          processor.analysis.forEach((analysis) => {
+            if (analysis.name === 'OpenSearch') {
+              analysis.steps.forEach((step) => {
+                this.opensearchQueries.push(step)
+              })
+            }
+          })
+        })
+      })
+    },
+    toggleQuestion() {
+      if (this.expanded && !this.isActive) {
+        this.setActiveContext()
+        return
+      } else {
+        this.$store.dispatch('clearActiveContext')
+      }
+      this.expanded = !this.expanded
+    },
+    setActiveContext: function (question) {
+      let payload = {
+        scenario: this.scenario,
+        facet: this.facet,
+        question: this.question,
+      }
+      this.$store.dispatch('setActiveContext', payload)
     },
   },
   watch: {
     expanded: function (isExpanded) {
-      if (!isExpanded) return
+      if (isExpanded) {
+        this.setActiveContext()
+      }
       if (this.opensearchQueries.length) return
       this.getSuggestedQueries()
+    },
+    isActive: function (newVal) {
+      if (!newVal) {
+        this.expanded = false
+      }
     },
   },
 }
