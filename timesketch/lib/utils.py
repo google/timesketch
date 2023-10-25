@@ -639,7 +639,7 @@ def send_email(subject, body, to_username, use_html=False):
         smtp.quit()
         return
     
-    # `EMAIL_TLS` in `timesketch.conf` must be set to `True`
+    # EMAIL_TLS in timesketch.conf must be set to True
     if email_tls:
         smtp = smtplib.SMTP(email_smtp_server)
         smtp.ehlo()
