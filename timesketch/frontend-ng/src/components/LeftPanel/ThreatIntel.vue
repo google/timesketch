@@ -187,7 +187,7 @@ export default {
       return this.$store.state.meta
     },
     intelligenceAttribute() {
-      if (this.meta.attributes.intelligence === undefined) {
+      if (!this.meta.attributes || this.meta.attributes.intelligence === undefined) {
         return { ontology: 'intelligence', value: { data: [] }, name: 'intelligence' }
       }
       return this.meta.attributes.intelligence
