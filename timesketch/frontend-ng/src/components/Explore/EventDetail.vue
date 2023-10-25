@@ -28,7 +28,7 @@ limitations under the License.
                   @mouseleave="c_key = -1"
                 >
                   <!-- Event field name actions -->
-                  <td v-if="key == c_key" class="text-right" style="min-width: 105px;">
+                  <td v-if="key == c_key" class="text-right" style="min-width: 105px">
                     <!-- Open aggregation dialog for this field -->
                     <v-tooltip top open-delay="500">
                       <template v-slot:activator="{ on }">
@@ -49,13 +49,7 @@ limitations under the License.
                     <!-- Include field:value as filter chip -->
                     <v-tooltip top open-delay="500">
                       <template v-slot:activator="{ on }">
-                        <v-btn
-                          @click.stop="applyFilterChip(key, value, 'must')"
-                          icon
-                          x-small
-                          class="mr-1"
-                          v-on="on"
-                        >
+                        <v-btn @click.stop="applyFilterChip(key, value, 'must')" icon x-small class="mr-1" v-on="on">
                           <v-icon>mdi-filter-plus-outline</v-icon>
                         </v-btn>
                       </template>
@@ -106,15 +100,11 @@ limitations under the License.
                   </td>
 
                   <!-- Event field value action icons -->
-                  <td
-                    v-if="checkContextLinkDisplay(key, value) || key == c_key"
-                    class="text-right pr-1"
-                  >
+                  <td v-if="checkContextLinkDisplay(key, value) || key == c_key" class="text-right pr-1">
                     <!-- Copy event value -->
                     <v-btn icon x-small style="cursor: pointer" @click="copyToClipboard(value)" v-show="key == c_key">
                       <v-icon small>mdi-content-copy</v-icon>
                     </v-btn>
-
                     <!-- Context link submenu -->
                     <v-menu v-if="checkContextLinkDisplay(key, value)" offset-y transition="slide-y-transition">
                       <template v-slot:activator="{ on, attrs }">
@@ -128,6 +118,35 @@ limitations under the License.
                         </v-btn>
                       </template>
                       <v-list dense>
+                        <!-- redirect dialog -->
+                        <v-dialog v-model="redirectWarnDialog" max-width="515" :retain-focus="false">
+                          <ts-link-redirect-warning
+                            app
+                            @cancel="redirectWarnDialog = false"
+                            :context-value="contextValue"
+                            :context-url="contextUrl"
+                          ></ts-link-redirect-warning>
+                        </v-dialog>
+                        <!-- unfurl dialog -->
+                        <v-dialog
+                          v-model="dfirUnfurlDialog"
+                          max-width="80%"
+                          min-width="1000px"
+                          max-height="80%"
+                          min-height="600px"
+                          :retain-focus="false"
+                          class="asdf"
+                        >
+                          <ts-unfurl-dialog @cancel="dfirUnfurlDialog = false" :url="contextValue"></ts-unfurl-dialog>
+                        </v-dialog>
+                        <!-- XML prettify dialog -->
+                        <v-dialog v-model="formatXMLString">
+                          <ts-format-xml-string
+                            @close="formatXMLString = false"
+                            :xmlString="value"
+                          ></ts-format-xml-string>
+                        </v-dialog>
+
                         <v-list-item
                           v-for="(item, index) in getContextLinkItems(key)"
                           :key="index"
@@ -135,28 +154,9 @@ limitations under the License.
                           @click.stop="contextLinkRedirect(key, item, value)"
                         >
                           <v-list-item-title v-if="getContextLinkRedirectState(key, item)">
-                          {{ item }} (ext.)</v-list-item-title>
+                            {{ item }} (ext.)</v-list-item-title
+                          >
                           <v-list-item-title v-else>{{ item }}</v-list-item-title>
-                          <!-- redirect dialog -->
-                          <v-dialog v-model="redirectWarnDialog" max-width="515" :retain-focus="false">
-                            <ts-link-redirect-warning
-                              app
-                              @cancel="redirectWarnDialog = false"
-                              :context-value="contextValue"
-                              :context-url="contextUrl"
-                            ></ts-link-redirect-warning>
-                          </v-dialog>
-                          <!-- unfurl dialog -->
-                          <v-dialog v-model="dfirUnfurlDialog" max-width="80%" min-width="1000px" max-height="80%" min-height="600px" :retain-focus="false" class="asdf">
-                            <ts-unfurl-dialog
-                              @cancel="dfirUnfurlDialog = false"
-                              :url="contextValue"
-                            ></ts-unfurl-dialog>
-                          </v-dialog>
-                          <!-- XML prettify dialog -->
-                          <v-dialog v-model="formatXMLString">
-                            <ts-format-xml-string @close="formatXMLString = false" :xmlString="value"></ts-format-xml-string>
-                          </v-dialog>
                         </v-list-item>
                       </v-list>
                     </v-menu>
@@ -334,7 +334,6 @@ export default {
               this.redirectWarnDialog = false
             }
           }
-
         }
       }
     },
