@@ -630,7 +630,7 @@ def send_email(subject, body, to_username, use_html=False):
     msg.add_header("Content-Type", email_content_type)
     msg.set_payload(body)
 
-    # `EMAIL_SSL` in `timesketch.conf` must be set to `True`
+    # EMAIL_SSL in timesketch.conf must be set to True
     if email_ssl:
         smtp = smtplib.SMTP_SSL(email_smtp_server)
         if email_login_username and email_login_password:
