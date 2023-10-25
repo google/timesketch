@@ -204,7 +204,6 @@ import TsFormatXmlString from './FormatXMLString.vue'
 import TsLinkRedirectWarning from './LinkRedirectWarning.vue'
 import TsComments from './Comments.vue'
 import TsUnfurlDialog from './UnfurlDialog.vue'
-import DOMPurify from 'dompurify'
 
 export default {
   components: {
@@ -329,9 +328,9 @@ export default {
             if (confItem['redirect_warning']) {
               this.redirectWarnDialog = true
               this.contextValue = value
-              this.contextUrl = confItem['context_link'].replace('<ATTR_VALUE>', DOMPurify.sanitize(value))
+              this.contextUrl = confItem['context_link'].replace('<ATTR_VALUE>', encodeURIComponent(value))
             } else {
-              window.open(confItem['context_link'].replace('<ATTR_VALUE>', DOMPurify.sanitize(value)), '_blank')
+              window.open(confItem['context_link'].replace('<ATTR_VALUE>', encodeURIComponent(value)), '_blank')
               this.redirectWarnDialog = false
             }
           }
