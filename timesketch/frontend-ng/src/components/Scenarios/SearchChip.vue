@@ -19,9 +19,10 @@ limitations under the License.
       {{ displayName }}
     </v-chip>
     <div v-if="type === 'link'" @click="search(queryString)" style="cursor: pointer; font-size: 0.9em">
-      <v-row no-gutters class="pa-1 pl-5" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
-        <span
-          ><li>{{ displayName }}</li></span
+      <v-row no-gutters class="pa-1" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
+        <span>
+          <v-icon small>mdi-magnify</v-icon>
+          {{ displayName }}</span
         >
       </v-row>
     </div>
