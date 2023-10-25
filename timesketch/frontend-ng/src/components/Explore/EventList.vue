@@ -155,7 +155,7 @@ limitations under the License.
               <v-tooltip top open-delay="500">
                 <template v-slot:activator="{ on }">
                   <v-btn v-on="on" icon @click="exportSearchResult()">
-                <v-icon>mdi-download</v-icon>
+                    <v-icon>mdi-download</v-icon>
                   </v-btn>
                 </template>
                 <span>Download current view as csv</span>
@@ -646,6 +646,9 @@ export default {
       }
       return baseHeaders
     },
+    activeContext() {
+      return this.$store.state.activeContext
+    },
   },
   methods: {
     sortEvents(sortAsc) {
@@ -820,6 +823,11 @@ export default {
       if (this.branchParent) {
         formData['parent'] = this.branchParent
       }
+
+      // Get DFIQ context
+      formData['scenario'] = this.activeContext.scenario.id
+      formData['facet'] = this.activeContext.facet.id
+      formData['question'] = this.activeContext.question.id
 
       ApiClient.search(this.sketch.id, formData)
         .then((response) => {

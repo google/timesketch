@@ -14,9 +14,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-chip x-small @click="search(queryString)">
-    {{ displayName }}
-  </v-chip>
+  <div>
+    <v-chip v-if="type === 'chip'" x-small @click="search(queryString)">
+      {{ displayName }}
+    </v-chip>
+    <div v-if="type === 'link'" @click="search(queryString)" style="cursor: pointer; font-size: 0.9em">
+      <v-row no-gutters class="pa-1" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
+        <span>
+          <v-icon small>mdi-magnify</v-icon>
+          {{ displayName }}</span
+        >
+      </v-row>
+    </div>
+  </div>
 </template>
 
 <script>
@@ -34,7 +44,7 @@ const defaultQueryFilter = () => {
 }
 
 export default {
-  props: ['searchchip'],
+  props: ['searchchip', 'type'],
   computed: {
     displayName() {
       return this.searchchip.name || this.searchchip.description
