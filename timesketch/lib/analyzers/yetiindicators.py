@@ -53,7 +53,7 @@ class YetiIndicators(interface.BaseAnalyzer):
             f"{self.yeti_api_root}/graph/search",
             json={
                 "source": extended_id,
-                "link_type": "",
+                "graph": "links",
                 "hops": 1,
                 "direction": "any",
                 "include_original": False,
@@ -68,8 +68,13 @@ class YetiIndicators(interface.BaseAnalyzer):
 
         return neighbors
 
-    def get_indicators(self, indicator_type: str) -> None:
-        """Populates the intel attribute with entities from Yeti."""
+    def get_indicators(self, indicator_type: str) -> Dict[str, dict]:
+        """Populates the intel attribute with entities from Yeti.
+
+        Returns:
+            A dictionary of indicators obtained from yeti, keyed by indicator
+            ID.
+        """
         response = requests.post(
             self.yeti_api_root + "/indicators/search",
             json={"name": "", "type": indicator_type},
@@ -81,10 +86,11 @@ class YetiIndicators(interface.BaseAnalyzer):
                 + response.json()
             )
         data = response.json()
-        self.intel = {item["id"]: item for item in data["indicators"]}
-        for _id, indicator in self.intel.items():
+        indicators = {item["id"]: item for item in data["indicators"]}
+        for _id, indicator in indicators.items():
             indicator["compiled_regexp"] = re.compile(indicator["pattern"])
-            self.intel[_id] = indicator
+            indicators[_id] = indicator
+        return indicators
 
     def mark_event(
         self, indicator: Dict, event: interface.Event, neighbors: List[Dict]
@@ -122,7 +128,7 @@ class YetiIndicators(interface.BaseAnalyzer):
         if not self.yeti_api_root or not self.yeti_api_key:
             return "No Yeti configuration settings found, aborting."
 
-        self.get_indicators("regex")
+        indicators = self.get_indicators("regex")
 
         entities_found = set()
         total_matches = 0
@@ -134,14 +140,15 @@ class YetiIndicators(interface.BaseAnalyzer):
         try:
             intelligence_attribute = self.sketch.get_sketch_attributes("intelligence")
             existing_refs = {
-                ioc["externalURI"] for ioc in intelligence_attribute["data"]
+                (ioc["ioc"], ioc["externalURI"])
+                for ioc in intelligence_attribute["data"]
             }
         except ValueError:
             print("Intelligence not set on sketch, will create from scratch.")
 
         intelligence_items = []
 
-        for _id, indicator in self.intel.items():
+        for indicator in indicators.values():
             query_dsl = {
                 "query": {
                     "regexp": {"message.keyword": ".*" + indicator["pattern"] + ".*"}
@@ -151,24 +158,32 @@ class YetiIndicators(interface.BaseAnalyzer):
             events = self.event_stream(query_dsl=query_dsl, return_fields=["message"])
             neighbors = self.get_neighbors(indicator)
 
-            for event in events:
-                total_matches += 1
-                self.mark_event(indicator, event, neighbors)
-
             for n in neighbors:
                 entities_found.add(f"{n['name']}:{n['type']}")
 
             uri = f"{self.yeti_web_root}/indicators/{indicator['id']}"
-            intel = {
-                "externalURI": uri,
-                "ioc": indicator["pattern"],
-                "tags": [n["name"] for n in neighbors],
-                "type": "other",
-            }
-            if uri not in existing_refs:
-                intelligence_items.append(intel)
-                existing_refs.add(indicator["id"])
-            new_indicators.add(indicator["id"])
+
+            for event in events:
+                total_matches += 1
+                self.mark_event(indicator, event, neighbors)
+
+                regex = indicator["compiled_regexp"]
+                match = regex.search(event.source.get("message"))
+                if match:
+                    match_in_sketch = match.group()
+                else:
+                    match_in_sketch = indicator["pattern"]
+
+                intel = {
+                    "externalURI": uri,
+                    "ioc": match_in_sketch,
+                    "tags": [n["name"] for n in neighbors],
+                    "type": "other",
+                }
+                if (match_in_sketch, uri) not in existing_refs:
+                    intelligence_items.append(intel)
+                    existing_refs.add((match_in_sketch, uri))
+                new_indicators.add(indicator["id"])
 
         if not total_matches:
             self.output.result_status = "SUCCESS"
