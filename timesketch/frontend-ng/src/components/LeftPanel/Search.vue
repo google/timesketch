@@ -16,7 +16,7 @@ limitations under the License.
 <template>
   <div>
     <router-link
-      :to="{ name: 'Explore', params: { sketchId: sketchId } }"
+      :to="{ name: 'Explore', params: { sketchId: sketch.id } }"
       custom
       v-slot="{ navigate }"
       class="pa-4"
@@ -40,9 +40,15 @@ limitations under the License.
 <script>
 export default {
   computed: {
+    sketch() {
+      return this.$store.state.sketch
+    },
     isExploreRoute() {
       return this.$route.name === 'Explore'
     },
+    sketchId() {
+      return this.$store.state.sketch.id
+    }
   },
 }
 </script>

@@ -36,9 +36,7 @@ limitations under the License.
       </v-col>
 
       <v-col cols="10" class="pl-1">
-        <span style="font-size: 0.9em">
-          {{ facet.display_name }}
-        </span>
+        <span style="font-size: 0.9em"> {{ facet.display_name }}</span>
       </v-col>
 
       <v-col cols="1">
@@ -50,13 +48,8 @@ limitations under the License.
 
     <v-expand-transition>
       <div v-show="expanded">
-        <span
-          @click="setActiveContext(question)"
-          style="font-size: 0.9em"
-          v-for="(question, index) in facet.questions"
-          :key="question.id"
-        >
-          <ts-question :question="question"></ts-question>
+        <span style="font-size: 0.9em" v-for="(question, index) in facet.questions" :key="question.id">
+          <ts-question :scenario="scenario" :facet="facet" :question="question"></ts-question>
           <v-divider v-if="index != facet.questions.length - 1"></v-divider>
         </span>
       </div>
@@ -81,13 +74,11 @@ export default {
     sketch() {
       return this.$store.state.sketch
     },
+    activeContext() {
+      return this.$store.state.activeContext
+    },
     questionsWithConclusion() {
       return this.facet.questions.filter((question) => question.conclusions.length)
-    },
-    isActive() {
-      return (
-        this.questionsWithConclusion.length > 0 && this.questionsWithConclusion.length < this.facet.questions.length
-      )
     },
     isResolved() {
       return this.questionsWithConclusion.length === this.facet.questions.length
@@ -98,26 +89,13 @@ export default {
   },
   methods: {
     toggleFacet: function () {
-      if (!this.expanded) {
-        this.setActiveContext()
-      } else {
-        if (this.$store.state.activeContext.facet != null) {
-          if (this.facet.id === this.$store.state.activeContext.facet.id) {
-            this.$store.dispatch('clearActiveContext')
-          }
+      if (this.activeContext.facet != null) {
+        if (this.facet.id === this.activeContext.facet.id) {
+          this.$store.dispatch('clearActiveContext')
         }
       }
       this.expanded = !this.expanded
     },
-    setActiveContext: function (question) {
-      let payload = {
-        scenario: this.scenario,
-        facet: this.facet,
-        question: question,
-      }
-      this.$store.dispatch('setActiveContext', payload)
-    },
   },
-  created() {},
 }
 </script>
