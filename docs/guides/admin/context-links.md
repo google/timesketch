@@ -4,7 +4,8 @@ hide:
 ---
 # Context Links
 
-The context link feature allows for linking of specific event attributes and values to external lookup services for an easy analyst workflow.
+The context link feature allows for linking of specific event attributes and
+values to external lookup services for an easy analyst workflow.
 
 ## Demo
 
@@ -12,13 +13,46 @@ The context link feature allows for linking of specific event attributes and val
 
 ## How-To configure
 
-The context link feature is configured in a yaml file that needs to be added to the [timesketch.conf](https://github.com/google/timesketch/blob/master/data/timesketch.conf#L325) file. Add the path to the yaml config file in the `CONTEXT_LINKS_CONFIG_PATH` variable.
+The context link feature is configured in a yaml file that needs to be referenced
+in the [timesketch.conf](https://github.com/google/timesketch/blob/master/data/timesketch.conf#L343) file. Add your custom path to the yaml config file in the
+`CONTEXT_LINKS_CONFIG_PATH` variable.
 
-Per default the `CONTEXT_LINKS_CONFIG_PATH` entry in `timesketch.conf` points to the [context_links.yaml](https://github.com/google/timesketch/blob/master/data/context_links.yaml) file in the `data` folder. It contains a documentation of available fields and a commented example entry for setting up a hash-lookup with [virustotal](https://www.virustotal.com/).
+Per default the `CONTEXT_LINKS_CONFIG_PATH` entry in `timesketch.conf` points to
+the [context_links.yaml](https://github.com/google/timesketch/blob/master/data/context_links.yaml)
+file in the `data` folder. It contains a documentation of available fields and a
+commented example entry for setting up a hash-lookup with [virustotal](https://www.virustotal.com/).
 
-**Important: You can add a context link only for services that allow a lookup via URL GET parameter.**
+> **Note**
+You can add a context links only for services that allow a lookup via URL GET
+parameter.
 
 ### Configuration fields
+
+There are two types of context links `hardcoded_modules` and `linked_services`.
+
+#### `hardcoded_modules`
+
+Hardcoded modules are context links that are directly implemented into Timesketch.
+The configuration only allows to activate/deactivate them `
+
+# TODO!
+
+```
+#   module_name:
+#
+#       match_fields:       Type: list[str] | List of field keys where
+#                           this context link should be available. Will
+#                           be checked as case insensitive!
+#
+#       validation_regex:   Type: str | OPTIONAL
+#                           A regex pattern that needs to be
+#                           matched by the field value to to make the
+#                           context link available. This can be used to
+#                           validate the format of a value (e.g. a hash).
+```
+
+
+1. `linked_services`
 
 Each context link consists of the following fields:
 
