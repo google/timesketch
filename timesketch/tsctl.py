@@ -598,7 +598,23 @@ def sketch_info(sketch_id):
 def validate_context_links_conf(path):
     """Validates the provided context link yaml configuration file."""
 
-    schema = {
+    hardcoded_modules_schema = {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+            "short_name": {"type": "string"},
+            "match_fields": {
+                "type": "array",
+                "items": [
+                    {"type": "string"},
+                ],
+            },
+            "validation_regex": {"type": "string"},
+        },
+        "required": ["short_name", "match_fields"],
+    }
+
+    linked_services_schema = {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
@@ -645,12 +661,27 @@ def validate_context_links_conf(path):
         print("The provided config file is empty.")
         return
 
-    for entry in context_link_config:
-        try:
-            validate(instance=context_link_config[entry], schema=schema)
-            print(f'=> OK: "{entry}"')
-        except (ValidationError, SchemaError) as err:
-            print(f'=> ERROR: "{entry}" >> {err}\n')
+    if context_link_config["hardcoded_modules"]:
+        for entry in context_link_config["hardcoded_modules"]:
+            try:
+                validate(
+                    instance=context_link_config["hardcoded_modules"][entry],
+                    schema=hardcoded_modules_schema,
+                )
+                print(f'=> OK: "{entry}"')
+            except (ValidationError, SchemaError) as err:
+                print(f'=> ERROR: "{entry}" >> {err}\n')
+
+    if context_link_config["linked_services"]:
+        for entry in context_link_config["linked_services"]:
+            try:
+                validate(
+                    instance=context_link_config["linked_services"][entry],
+                    schema=linked_services_schema,
+                )
+                print(f'=> OK: "{entry}"')
+            except (ValidationError, SchemaError) as err:
+                print(f'=> ERROR: "{entry}" >> {err}\n')
 
 
 @cli.command(name="searchindex-info")
