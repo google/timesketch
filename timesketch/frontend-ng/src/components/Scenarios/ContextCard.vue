@@ -16,7 +16,14 @@ limitations under the License.
 <template>
   <v-card outlined rounded class="mt-3 mx-3" v-if="activeContext.question">
     <v-toolbar flat dense style="background-color: transparent">
-      <h3>{{ activeContext.question.display_name }}</h3>
+      <h3>
+        {{ activeContext.question.display_name }}
+        <small>
+          <a :href="getDfiqQuestionUrl(activeContext.question.dfiq_identifier)" target="_blank" rel="noreferrer"
+            >({{ activeContext.question.dfiq_identifier }})</a
+          >
+        </small>
+      </h3>
       <v-spacer></v-spacer>
       <v-btn v-if="activeContext.question.description" small icon @click="expanded = !expanded" class="mr-1">
         <v-icon v-if="expanded">mdi-chevron-up</v-icon>
@@ -122,6 +129,9 @@ export default {
   methods: {
     toHtml(markdown) {
       return DOMPurify.sanitize(marked(markdown))
+    },
+    getDfiqQuestionUrl(id) {
+      return 'https://dfiq.org/questions/' + id + '/'
     },
   },
 }
