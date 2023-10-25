@@ -30,7 +30,7 @@ limitations under the License.
         <v-progress-linear color="primary" indeterminate> </v-progress-linear>
       </div>
 
-      <v-toolbar dense flat color="transparent" class="mt-n8">
+      <v-toolbar v-show="unfurlReady" dense flat color="transparent" class="mt-n8">
         <v-spacer></v-spacer>
         <div>
           <v-tooltip top open-delay="500">
