@@ -113,7 +113,6 @@ class ExploreResource(resources.ResourceMixin, Resource):
                         HTTP_STATUS_CODE_BAD_REQUEST,
                         "Scenario is not part of this sketch.",
                     )
-                print("Scenario", scenario.display_name)
 
         if facet_id:
             facet = Facet.query.get(facet_id)
@@ -123,7 +122,6 @@ class ExploreResource(resources.ResourceMixin, Resource):
                         HTTP_STATUS_CODE_BAD_REQUEST,
                         "Facet is not part of this sketch.",
                     )
-                print("Facet", facet.display_name)
 
         if question_id:
             question = InvestigativeQuestion.query.get(question_id)
@@ -133,7 +131,6 @@ class ExploreResource(resources.ResourceMixin, Resource):
                         HTTP_STATUS_CODE_BAD_REQUEST,
                         "Question is not part of this sketch.",
                     )
-                print("Question", question.display_name)
 
         # TODO: Remove form and use json instead.
         query_dsl = form.dsl.data
