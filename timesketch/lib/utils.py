@@ -598,6 +598,10 @@ def send_email(subject, body, to_username, use_html=False):
     email_smtp_server = current_app.config.get("EMAIL_SMTP_SERVER")
     email_from_user = current_app.config.get("EMAIL_FROM_ADDRESS", "timesketch")
     email_user_whitelist = current_app.config.get("EMAIL_USER_WHITELIST", [])
+    email_login_username = current_app.config.get("EMAIL_AUTH_USERNAME")
+    email_login_password = current_app.config.get("EMAIL_AUTH_PASSWORD")
+    email_ssl = current_app.config.get("EMAIL_SSL")
+    email_tls = current_app.config.get("EMAIL_TLS")
 
     if not email_enabled:
         raise RuntimeError("Email notifications are not enabled, aborting.")
@@ -626,6 +630,28 @@ def send_email(subject, body, to_username, use_html=False):
     msg.add_header("Content-Type", email_content_type)
     msg.set_payload(body)
 
+    # EMAIL_SSL in timesketch.conf must be set to True
+    if email_ssl:
+        smtp = smtplib.SMTP_SSL(email_smtp_server)
+        if email_login_username and email_login_password:
+            smtp.login(email_login_username, email_login_password)
+        smtp.sendmail(msg["From"], [msg["To"]], msg.as_string())
+        smtp.quit()
+        return
+    # EMAIL_TLS in timesketch.conf must be set to True
+    if email_tls:
+        smtp = smtplib.SMTP(email_smtp_server)
+        smtp.ehlo()
+        smtp.starttls()
+        if email_login_username and email_login_password:
+            smtp.login(email_login_username, email_login_password)
+        smtp.sendmail(msg["From"], [msg["To"]], msg.as_string())
+        smtp.quit()
+        return
+
+    # default - no SSL/TLS configured
     smtp = smtplib.SMTP(email_smtp_server)
+    if email_login_username and email_login_password:
+        smtp.login(email_login_username, email_login_password)
     smtp.sendmail(msg["From"], [msg["To"]], msg.as_string())
     smtp.quit()

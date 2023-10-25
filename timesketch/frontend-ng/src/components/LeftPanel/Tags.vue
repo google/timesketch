@@ -16,7 +16,7 @@ limitations under the License.
 <template>
   <div>
     <div
-      :style="tags && tags.length || labels && labels.length ? 'cursor: pointer' : ''"
+      :style="(tags && tags.length) || (labels && labels.length) ? 'cursor: pointer' : ''"
       class="pa-4"
       @click="expanded = !expanded"
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
@@ -25,7 +25,7 @@ limitations under the License.
 
       <span class="float-right" style="margin-right: 10px">
         <small
-          ><strong>{{ tags.length + labels.length }}</strong></small
+          ><strong v-if="tags && labels">{{ tags.length + labels.length }}</strong></small
         >
       </span>
     </div>
