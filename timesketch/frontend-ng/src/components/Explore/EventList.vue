@@ -359,14 +359,14 @@ limitations under the License.
                 <ts-event-tags :item="item" :tagConfig="tagConfig" :showDetails="item.showDetails"></ts-event-tags>
               </span>
               <!-- Emojis -->
-              <span v-if="displayOptions.showEmojis && index === 0">
+              <span v-if="displayOptions.showEmojis && index === 3">
                 <span
                   class="mr-2"
                   v-for="emoji in item._source.__ts_emojis"
                   :key="emoji"
-                  v-html="emoji"
+                  v-html="emoji + ';'"
                   :title="meta.emojis[emoji]"
-                  >{{ emoji }}
+                  >
                 </span>
               </span>
               <span>{{ item._source[field.text] }}</span>
