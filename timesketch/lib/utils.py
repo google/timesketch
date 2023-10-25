@@ -638,7 +638,6 @@ def send_email(subject, body, to_username, use_html=False):
         smtp.sendmail(msg["From"], [msg["To"]], msg.as_string())
         smtp.quit()
         return
-    
     # EMAIL_TLS in timesketch.conf must be set to True
     if email_tls:
         smtp = smtplib.SMTP(email_smtp_server)
