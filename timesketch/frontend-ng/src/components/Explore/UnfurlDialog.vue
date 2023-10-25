@@ -12,66 +12,57 @@ limitations under the License.
 -->
 <template>
   <v-card>
-    <v-card-title>
-      <v-img :src="getUnfurlLogo" max-height="32" contain class="mb-2"></v-img>
-    </v-card-title>
+    <v-toolbar flat color="transparent">
+      <v-img position="left" :src="getUnfurlLogo" max-height="24" contain class="ml-2"></v-img>
+    </v-toolbar>
+
     <v-card-subtitle class="pt-1">
-      <span><b>Input:</b> {{ url }}</span>
+      <div class="mb-2"><b>Input:</b> {{ url }}</div>
+      <div v-if="nodeContext">
+        <b>Selected node info: </b>
+        <span v-html="sanitizeHtml(nodeContext)"></span>
+      </div>
     </v-card-subtitle>
+
     <v-card-text>
       <div v-show="!unfurlReady">
         <v-progress-linear color="primary" indeterminate> </v-progress-linear>
       </div>
-      <v-divider></v-divider>
-      <v-container fluid v-show="unfurlReady">
+
+      <v-card v-show="unfurlReady" outlined class="mt-n5">
+        <v-toolbar dense flat color="transparent">
+          <v-spacer></v-spacer>
+          <v-tooltip top open-delay="500">
+            <template v-slot:activator="{ on }">
+              <v-btn icon v-on="on" @click="resizeCanvas()">
+                <v-icon>mdi-fit-to-page-outline</v-icon>
+              </v-btn>
+            </template>
+            <span>resize graph</span>
+          </v-tooltip>
+          <v-tooltip top open-delay="500">
+            <template v-slot:activator="{ on }">
+              <v-btn icon v-on="on" @click="zoomGraph('plus')">
+                <v-icon>mdi-plus</v-icon>
+              </v-btn>
+            </template>
+            <span>zoom in</span>
+          </v-tooltip>
+          <v-tooltip top open-delay="500">
+            <template v-slot:activator="{ on }">
+              <v-btn icon v-on="on" @click="zoomGraph('minus')">
+                <v-icon>mdi-minus</v-icon>
+              </v-btn>
+            </template>
+            <span>zoom out</span>
+          </v-tooltip>
+        </v-toolbar>
         <!-- Cytoscape container -->
-        <div style="font-size: medium" class="py-1 px-1">
-          <span style="font-weight: bold">Selected node context: </span>
-          <br />
-          <span style="font-style: italic" v-html="nodeContext"></span>
-        </div>
         <div ref="graphContainer" :style="{ height: canvasHeight, width: '100%' }">
-          <v-row no-gutters>
-            <v-col>
-              <div
-                ref="cy"
-                width="100%"
-                class="pa-2"
-                :style="{ 'min-height': canvasHeight, border: '1px', 'border-style': 'solid' }"
-              ></div>
-            </v-col>
-            <v-col cols="auto">
-              <div class="iconWrapper">
-                <v-tooltip top open-delay="500">
-                  <template v-slot:activator="{ on }">
-                    <v-btn icon v-on="on" @click="resizeCanvas()">
-                      <v-icon>mdi-fit-to-page-outline</v-icon>
-                    </v-btn>
-                  </template>
-                  <span>resize graph</span>
-                </v-tooltip>
-                <v-tooltip top open-delay="500">
-                  <template v-slot:activator="{ on }">
-                    <v-btn icon v-on="on" @click="zoomGraph('plus')">
-                      <v-icon>mdi-plus</v-icon>
-                    </v-btn>
-                  </template>
-                  <span>zoom in</span>
-                </v-tooltip>
-                <v-tooltip top open-delay="500">
-                  <template v-slot:activator="{ on }">
-                    <v-btn icon v-on="on" @click="zoomGraph('minus')">
-                      <v-icon>mdi-minus</v-icon>
-                    </v-btn>
-                  </template>
-                  <span>zoom out</span>
-                </v-tooltip>
-              </div>
-            </v-col>
-          </v-row>
+          <div ref="cy" width="100%" class="pa-2" :style="{ 'min-height': canvasHeight }"></div>
         </div>
-      </v-container>
-      <span>Powered by <a href="https://github.com/obsidianforensics/unfurl" target="_blank">dfir-unfurl</a></span>
+      </v-card>
+      <small>Powered by <a href="https://github.com/obsidianforensics/unfurl" target="_blank">dfir-unfurl</a></small>
     </v-card-text>
     <v-card-actions>
       <v-spacer></v-spacer>
@@ -84,6 +75,9 @@ limitations under the License.
 import ApiClient from '../../utils/RestApiClient'
 import cytoscape from 'cytoscape'
 import dagre from 'cytoscape-dagre'
+
+import DOMPurify from 'dompurify'
+import { marked } from 'marked'
 
 cytoscape.use(dagre)
 
@@ -157,9 +151,6 @@ export default {
     }
   },
   computed: {
-    nodeContextValue() {
-      return this.nodeContext
-    },
     getUnfurlLogo() {
       if (this.$vuetify.theme.dark) {
         return '/unfurl-logo-dark.png'
@@ -169,6 +160,9 @@ export default {
     },
   },
   methods: {
+    sanitizeHtml(html) {
+      return DOMPurify.sanitize(marked(html))
+    },
     clearAndCancel: function () {
       this.$emit('cancel')
     },
