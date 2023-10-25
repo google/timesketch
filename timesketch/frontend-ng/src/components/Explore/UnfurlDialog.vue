@@ -22,6 +22,7 @@ limitations under the License.
         <b>Selected node info: </b>
         <span v-html="sanitizeHtml(nodeContext)"></span>
       </div>
+      <div v-else>Select a node in the graph below to get more information.</div>
     </v-card-subtitle>
 
     <v-card-text>
@@ -29,9 +30,9 @@ limitations under the License.
         <v-progress-linear color="primary" indeterminate> </v-progress-linear>
       </div>
 
-      <v-card v-show="unfurlReady" outlined class="mt-n5">
-        <v-toolbar dense flat color="transparent">
-          <v-spacer></v-spacer>
+      <v-toolbar dense flat color="transparent" class="mt-n8">
+        <v-spacer></v-spacer>
+        <div>
           <v-tooltip top open-delay="500">
             <template v-slot:activator="{ on }">
               <v-btn icon v-on="on" @click="resizeCanvas()">
@@ -56,7 +57,10 @@ limitations under the License.
             </template>
             <span>zoom out</span>
           </v-tooltip>
-        </v-toolbar>
+        </div>
+      </v-toolbar>
+
+      <v-card v-show="unfurlReady" outlined>
         <!-- Cytoscape container -->
         <div ref="graphContainer" :style="{ height: canvasHeight, width: '100%' }">
           <div ref="cy" width="100%" class="pa-2" :style="{ 'min-height': canvasHeight }"></div>
