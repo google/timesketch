@@ -79,7 +79,6 @@ limitations under the License.
 import ApiClient from '../../utils/RestApiClient'
 import cytoscape from 'cytoscape'
 import dagre from 'cytoscape-dagre'
-import DOMPurify from 'dompurify';
 
 import DOMPurify from 'dompurify'
 import { marked } from 'marked'
@@ -253,7 +252,7 @@ export default {
       this.cy.edges().removeClass('highlight')
       event.target.outgoers('edge').addClass('highlight')
       this.nodeContext = event.target.data().context
-        ? DOMPurify.sanitize(event.target.data().context)
+        ? event.target.data().context
         : 'No context available for this node.'
       this.resizeCanvas()
     },
