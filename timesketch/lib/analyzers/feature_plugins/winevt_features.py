@@ -156,8 +156,9 @@ class WindowsEventFeatureExtractionPlugin(interface.BaseFeatureExtractionPlugin)
 
             if not strings or not isinstance(strings, list):
                 logger.debug(
-                    "Missing or invalid strings field in the event. Skipping the"
+                    "[%s] Missing or invalid strings field in the event. Skipping the"
                     " event %s.",
+                    name,
                     event.event_id,
                 )
                 continue
