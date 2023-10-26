@@ -148,21 +148,7 @@ class WindowsEventFeatureExtractionPlugin(interface.BaseFeatureExtractionPlugin)
 
             for mapping in mappings:
                 attribute_name = mapping.get("name")
-                if not attribute_name:
-                    logger.debug(
-                        "Skipping event %s. Missing attribute name.", event.event_id
-                    )
-                    continue
-
-                try:
-                    string_index = int(mapping.get("string_index"))
-                except (TypeError, ValueError) as e:
-                    logger.debug(
-                        "Skipping event %s. Missing string_index or invalid value. %s",
-                        event.event_id,
-                        str(e),
-                    )
-                    continue
+                string_index = int(mapping.get("string_index"))
 
                 attribute_aliases = mapping.get("aliases", [])
 
