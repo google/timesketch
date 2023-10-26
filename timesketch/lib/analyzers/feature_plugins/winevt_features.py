@@ -20,7 +20,7 @@ from timesketch.lib.analyzers import interface as base_interface
 from timesketch.lib.analyzers.feature_plugins import interface
 from timesketch.lib.analyzers.feature_plugins import manager
 
-logger = logging.getLogger("timesketch.analyzers.feature")
+logger = logging.getLogger("timesketch.analyzers.winevt_features")
 
 
 class WindowsEventFeatureExtractionPlugin(interface.BaseFeatureExtractionPlugin):
