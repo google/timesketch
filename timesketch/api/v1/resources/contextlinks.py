@@ -48,7 +48,7 @@ class ContextLinkConfigResource(resources.ResourceMixin, Resource):
             return jsonify(response)
 
         # Support for earlier version format of context links without hardcoded modules:
-        if not context_link_yaml.get("linked_services"):
+        if not "linked_services" in context_link_yaml.keys():
             context_link_yaml = {
                 "linked_services": context_link_yaml,
             }
