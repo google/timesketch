@@ -84,7 +84,9 @@ class WindowsEventFeatureExtractionPlugin(interface.BaseFeatureExtractionPlugin)
             )```
 
         if not isinstance(config.get("event_version"), int):
-            raise ValueError("event_version is missing or has invalid value")
+            raise ValueError(
+                "[%s] Missing 'event_version' or it is not an integer!" % name
+            )```
 
     def extract_features(self, name: str, config: dict) -> str:
         """Extracts features from events.
