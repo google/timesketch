@@ -50,6 +50,10 @@ class WindowsEventFeatureExtractionPlugin(interface.BaseFeatureExtractionPlugin)
 
     def validate_feature_config(self, name: str, config: dict) -> None:
         """Validates the name and configuration.
+           If any of the required properties does not exist or is of the wrong
+           type, a ValueError is raised and the feature definition is not extracted.
+           This does not affect other feature extractions since each feature is
+           executed in their own celery task.
 
         Args:
             name (str): Name of the feature.
