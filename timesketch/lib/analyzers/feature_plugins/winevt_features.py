@@ -114,8 +114,6 @@ class WindowsEventFeatureExtractionPlugin(interface.BaseFeatureExtractionPlugin)
 
         mappings = config.get("mapping")
 
-        if not mappings:
-            raise ValueError(f"mapping value for {name} is empty")
 
         # Building search query - Use source_name or provider_identifier and not both.
         query = ""
