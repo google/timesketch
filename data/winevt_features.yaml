@@ -1,7 +1,62 @@
-# Succcessful logon
+# Config file for the windows event (winevt) plugin of the feature extraction
+# analyzer.
+# A winevt feature extraction definition looks like this:
+#
+# name:
+#
+#     source_name:            Type: list[str] | REQUIRED | case-insensitive
+#                             A list of source names to match against. Multiple
+#                             entries will be checked with OR.
+#
+#     provider_identifier:    Type: list[str] | OPTIONAL | case-insensitive
+#                             A list of provider identifiers to match against.
+#                             Multiple entries will be checked with OR.
+#
+#     event_version:          Type: int | REQUIRED
+#                             The event version to match against.
+#
+#     event_identifier:       Type: int | REQUIRED
+#                             The event identifier to match against.
+#
+#     references:             Type: list[str] | OPTIONAL
+#                             A list of references to provide as context and
+#                             source for the event mapping. E.g. a URL to the
+#                             official Microsoft documentation on the event.
+#
+#     mapping:                Type: list[dict] | REQUIRED
+#                             A list of dicts that define the new attribute name
+#                             and the string index of the event to extract the
+#                             value from. Additonally it can also contain an
+#                             alias list to add multiple attributes with
+#                             the same value but different names.
+#
+#         name:               Type: str | REQUIRED
+#                             The name of the new attribute to create.
+#
+#         string_index:       Type: int | REQUIRED | Starting at index 0
+#                             The string index of the event to extract the
+#                             value from. Based on the plaso extracted "strings"
+#                             attribute with Windows eventlog entries.
+#
+#         aliases:            Type: list[str] | OPTIONAL
+#                             A list of aliases to add additionally to the
+#                             offical name of the attribute. This can be used
+#                             to add different field names matching individual
+#                             field name ontologies. E.g. srcIP, domain, etc.
+#
+# For more details and examples of such an extraction check the Timesketch
+# documentation:
+#
+# TODO(Add documentation link)
+#
+# ------------------------------------------------------------------------
+# 4624: An account was successfully logged on.
+## Windows Server 2008, Windows Vista
 security_4624_v0:
   source_name:
     - Microsoft-Windows-Security-Auditing
+  provider_identifier:
+    - '{54849625-5478-4994-a5ba-3e3b0328c30d}'
   event_identifier: 4624
   event_version: 0
   references:
@@ -56,9 +111,12 @@ security_4624_v0:
       aliases:
         - port
 
+## Windows Server 2012, Windows 8
 security_4624_v1:
   source_name:
     - Microsoft-Windows-Security-Auditing
+  provider_identifier:
+    - '{54849625-5478-4994-a5ba-3e3b0328c30d}'
   event_identifier: 4624
   event_version: 1
   references:
@@ -115,9 +173,12 @@ security_4624_v1:
     - name: impersonation_level
       string_index: 20
 
+## Windows 10
 security_4624_v2:
   source_name:
     - Microsoft-Windows-Security-Auditing
+  provider_identifier:
+    - '{54849625-5478-4994-a5ba-3e3b0328c30d}'
   event_identifier: 4624
   event_version: 2
   references:
@@ -186,13 +247,16 @@ security_4624_v2:
     - name: elevated_token
       string_index: 26
 
+# 4625: An account failed to log on.
 security_4625_v0:
   source_name:
     - Microsoft-Windows-Security-Auditing
+  provider_identifier:
+    - '{54849625-5478-4994-a5ba-3e3b0328c30d}'
   event_identifier: 4625
   event_version: 0
   references:
-    - https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4624
+    - https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4625
   mapping:
     - name: subject_user_sid
       string_index: 0
@@ -243,9 +307,12 @@ security_4625_v0:
       aliases:
         - port
 
+# 4634: An account was logged off.
 security_4634_v0:
   source_name:
     - Microsoft-Windows-Security-Auditing
+  provider_identifier:
+    - '{54849625-5478-4994-A5BA-3E3B0328C30D}'
   event_identifier: 4634
   event_version: 0
   references:
@@ -268,10 +335,12 @@ security_4634_v0:
     - name: logon_type
       string_index: 4
 
-# A logon attempt was made with explicit credentials
+# 4648: A logon was attempted using explicit credentials.
 security_4648_v0:
   source_name:
     - Microsoft-Windows-Security-Auditing
+  provider_identifier:
+    - '{54849625-5478-4994-A5BA-3E3B0328C30D}'
   event_identifier: 4648
   event_version: 0
   references:
@@ -312,10 +381,13 @@ security_4648_v0:
       aliases:
         - port
 
-# Process Creation
+# 4688: A new process has been created.
+## Windows Server 2008, Windows Vista.
 security_4688_v0:
   source_name:
-    - MIcrosoft-Windows-Security-Auditing
+    - Microsoft-Windows-Security-Auditing
+  provider_identifier:
+    - '{54849625-5478-4994-A5BA-3E3B0328C30D}'
   event_identifier: 4688
   event_version: 0
   references:
@@ -336,9 +408,12 @@ security_4688_v0:
     - name: process_id
       string_index: 6
 
+## Windows Server 2012 R2, Windows 8.1.
 security_4688_v1:
   source_name:
-    - MIcrosoft-Windows-Security-Auditing
+    - Microsoft-Windows-Security-Auditing
+  provider_identifier:
+    - '{54849625-5478-4994-A5BA-3E3B0328C30D}'
   event_identifier: 4688
   event_version: 1
   references:
@@ -361,9 +436,12 @@ security_4688_v1:
     - name: command_line
       string_index: 7
 
+## Windows 10
 security_4688_v2:
   source_name:
-    - MIcrosoft-Windows-Security-Auditing
+    - Microsoft-Windows-Security-Auditing
+  provider_identifier:
+    - '{54849625-5478-4994-A5BA-3E3B0328C30D}'
   event_identifier: 4688
   event_version: 2
   references:
@@ -410,10 +488,12 @@ security_4688_v2:
     - name: mandatory_level
       string_index: 14
 
-# Account Management - A user account was created
+# 4720: A user account was created.
 security_4720_v0:
   source_name:
     - Microsoft-Windows-Security-Auditing
+  provider_identifier:
+    - '{54849625-5478-4994-A5BA-3E3B0328C30D}'
   event_identifier: 4720
   event_version: 0
   references:
@@ -472,13 +552,17 @@ security_4720_v0:
     - name: logon_hours
       string_index: 24
 
-# Account Management - Member added to security-enabled global group
+# 4728: A member was added to a security-enabled global group
 security_4728_v0:
   source_name:
     - Microsoft-Windows-Security-Auditing
+  provider_identifier:
+    - '{54849625-5478-4994-A5BA-3E3B0328C30D}'
   event_identifier: 4728
   event_version: 0
   references:
+    - https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/audit-security-group-management
+    - https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4732
   mapping:
     - name: member_name
       string_index: 0
@@ -505,13 +589,16 @@ security_4728_v0:
     - name: privilege_list
       string_index: 9
 
-# Account Management - Member added to security-enabled local group
+# 4732: A member was added to a security-enabled local group
 security_4732_v0:
   source_name:
     - Microsoft-Windows-Security-Auditing
+  provider_identifier:
+    - '{54849625-5478-4994-A5BA-3E3B0328C30D}'
   event_identifier: 4732
   event_version: 0
   references:
+    - https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4732
   mapping:
     - name: member_name
       string_index: 0
@@ -538,14 +625,17 @@ security_4732_v0:
     - name: privilege_list
       string_index: 9
 
-
-# New service instalation
+# 7045: A new service was installed in the system.
 system_7045_v0:
   source_name:
-    - Service Control Manager
+    - 'Service Control Manager'
+  provider_identifier:
+    - '{555908d1-a6d7-4695-8e1e-26931d2012f4}'
   event_identifier: 7045
   event_version: 0
   references:
+    - https://windows-event-explorer.app.elstc.co/publisher/Service%20Control%20Manager/event/7045/v0
+    - https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4697
   mapping:
     - name: service_name
       string_index: 0
