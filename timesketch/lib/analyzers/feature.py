@@ -30,8 +30,8 @@ class FeatureSketchPlugin(interface.BaseAnalyzer):
     """
 
     NAME = "feature_extraction_main"
-    DISPLAY_NAME = "Feature Extraction Sketch Analyzer"
-    DESCRIPTION = "This analyzer runs all the feature extractions plugins in the index."
+    DISPLAY_NAME = "Feature Extractions"  # find a better wording
+    DESCRIPTION = "This analyzer runs all the feature extraction plugins on the selected timelines and creates new event attributes for matching definitions"  # Find a better wording
 
     DEPENDENCIES = frozenset()
 
