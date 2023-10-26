@@ -88,6 +88,23 @@ class WindowsEventFeatureExtractionPlugin(interface.BaseFeatureExtractionPlugin)
                 "[%s] Missing 'event_version' or it is not an integer!" % name
             )```
 
+        if not isinstance(config.get("mapping"), list):
+            raise ValueError("[%s] Missing 'mapping' or it is not a list!" % name)
+
+        if not len(config.get("mapping")) > 0:
+            raise ValueError("[%s] 'mapping' list cannot be empty!" % name)
+
+        for entry in config.get("mapping"):
+            if not isinstance(entry.get("name"), str):
+                raise ValueError(
+                    "[%s] 'mapping.name' is required and must be a string!"
+                )
+
+            if not isinstance(entry.get("string_index"), int):
+                raise ValueError(
+                    "[%s] 'mapping.string_index' is required and must be an integer!"
+                )
+
     def extract_features(self, name: str, config: dict) -> str:
         """Extracts features from events.
 
