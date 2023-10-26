@@ -121,11 +121,6 @@ class WindowsEventFeatureExtractionPlugin(interface.BaseFeatureExtractionPlugin)
         source_name = config.get("source_name", [""])[0]
         provider_identifier = config.get("provider_identifier", [""])[0]
 
-        # If event_identifier and event_version does not exist or invalid value type,
-        # it will throw exception.
-        #
-        # Note: Each feature extraction is run as a new celery task so it only affects
-        # specific feature extraction.
         event_identifier = int(config.get("event_identifier"))
         event_version = int(config.get("event_version"))
 
