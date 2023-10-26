@@ -197,7 +197,7 @@ class WindowsEventFeatureExtractionPlugin(interface.BaseFeatureExtractionPlugin)
 
         features_config = base_interface.get_yaml_config(config_file)
         if not features_config:
-            logger.debug("No feature configuration data in %s", config_file)
+            logger.warning("No feature configuration data in %s", config_file)
             return []
 
         features_kwargs = [
