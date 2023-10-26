@@ -181,7 +181,9 @@ class WindowsEventFeatureExtractionPlugin(interface.BaseFeatureExtractionPlugin)
             event_counter += 1
 
         logger.debug("%d features extracted using feature %s", event_counter, name)
-        return f"winevt feature extraction [{name}] extracted {event_counter} features."
+        return (
+            f"winevt feature extraction: [{name}] extracted {event_counter} features."
+        )
 
     @staticmethod
     def get_kwargs() -> List[Dict]:
