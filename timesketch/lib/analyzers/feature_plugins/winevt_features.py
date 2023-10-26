@@ -59,7 +59,9 @@ class WindowsEventFeatureExtractionPlugin(interface.BaseFeatureExtractionPlugin)
             ValueError: Raises ValueError for value type errors.
         """
         if not name:
-            raise ValueError("Feature name is empty")
+            raise ValueError(
+                "Feature name is empty, please check your 'winevt_features.yaml' config!"
+            )
 
         if not config:
             raise ValueError("Feature configuration value is empty")
