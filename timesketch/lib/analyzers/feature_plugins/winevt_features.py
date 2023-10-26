@@ -79,7 +79,9 @@ class WindowsEventFeatureExtractionPlugin(interface.BaseFeatureExtractionPlugin)
             )```
 
         if not isinstance(config.get("event_identifier"), int):
-            raise ValueError("event_identifier is missing or has invalid value")
+            raise ValueError(
+                "[%s] Missing 'event_identifier' or it is not an integer!" % name
+            )```
 
         if not isinstance(config.get("event_version"), int):
             raise ValueError("event_version is missing or has invalid value")
