@@ -131,12 +131,14 @@ class WindowsEventFeatureExtractionPlugin(interface.BaseFeatureExtractionPlugin)
         mappings = config.get("mapping")
 
 
-        # Building search query - Use source_name or provider_identifier and not both.
+        # Building search query
         query = ""
-        if source_name:
-            query = f"source_name:{source_name}"
+        if source_name and provider_identifier:
+            query = f'source_name:"{source_name}" AND provider_identifier:"{provider_identifier}"'
+        elif source_name:
+            query = f'source_name:"{source_name}"'
         elif provider_identifier:
-            query = f"provider_identifier:{provider_identifier}"
+            query = f'provider_identifier:"{provider_identifier}"'
 
         query = (
             f"{query} AND event_identifier: {event_identifier}"
