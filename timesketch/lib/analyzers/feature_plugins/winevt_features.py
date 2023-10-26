@@ -64,7 +64,10 @@ class WindowsEventFeatureExtractionPlugin(interface.BaseFeatureExtractionPlugin)
             )
 
         if not config:
-            raise ValueError("Feature configuration value is empty")
+            raise ValueError(
+                "Feature configuration for [%s] value is empty, please check your 'winevt_features.yaml' config!"
+                % name
+            )```
 
         if not (
             isinstance(config.get("source_name"), list)
