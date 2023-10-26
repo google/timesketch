@@ -73,7 +73,10 @@ class WindowsEventFeatureExtractionPlugin(interface.BaseFeatureExtractionPlugin)
             isinstance(config.get("source_name"), list)
             or isinstance(config.get("provider_identifier"), list)
         ):
-            raise ValueError("Either source_name or provider_identifier must be a list")
+            raise ValueError(
+                "[%s] Either 'source_name' or 'provider_identifier' are required and have to be a list!"
+                % name
+            )```
 
         if not isinstance(config.get("event_identifier"), int):
             raise ValueError("event_identifier is missing or has invalid value")
