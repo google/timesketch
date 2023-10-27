@@ -34,7 +34,7 @@ limitations under the License.
       <!-- Archived state -->
       <v-container v-if="isArchived && !loadingSketch" fill-height fluid>
         <v-row align="center" justify="center">
-          <v-sheet class="pa-4">
+          <v-sheet class="pa-4 mt-15">
             <center>
               <div style="font-size: 2em" class="mb-3">This sketch is archived</div>
               <v-btn outlined color="primary" @click="unArchiveSketch()"> Bring it back </v-btn>
