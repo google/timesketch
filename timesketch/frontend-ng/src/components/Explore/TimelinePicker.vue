@@ -17,6 +17,7 @@ limitations under the License.
   <span>
     <ts-timeline-chip
       v-for="timeline in allTimelines"
+      class="mr-2 mb-3 timeline-chip"
       :key="timeline.id + timeline.name"
       :timeline="timeline"
       :is-selected="isSelected(timeline)"
@@ -208,3 +209,10 @@ export default {
   },
 }
 </script>
+
+<!-- CSS scoped to this component only -->
+<style scoped lang="scss">
+.timeline-chip {
+  display: inline-block;
+}
+</style>

@@ -17,7 +17,7 @@ limitations under the License.
   <span>
     <v-dialog v-if="timelineStatus === 'processing'" v-model="dialogStatus" width="600">
       <template v-slot:activator="{ on, attrs }">
-        <v-chip v-on="on" :style="getTimelineStyle(timeline)" class="mr-2 mb-3">
+        <v-chip v-on="on" :style="getTimelineStyle(timeline)">
           <span class="timeline-name-ellipsis">{{ timeline.name }}</span>
           <span class="ml-1">
             <v-progress-circular small indeterminate color="grey" :size="20" :width="1"></v-progress-circular>
@@ -107,7 +107,7 @@ limitations under the License.
         <v-chip
           @click="toggleTimeline()"
           :style="getTimelineStyle(timeline)"
-          class="mr-2 mb-3 pr-1 timeline-chip"
+          class="pr-1 timeline-chip"
           :class="[{ failed: timelineFailed }, $vuetify.theme.dark ? 'dark-highlight' : 'light-highlight']"
           :ripple="!timelineFailed"
         >
@@ -281,6 +281,8 @@ limitations under the License.
                     <strong>Number of events: </strong>
                     {{ allIndexedEvents | compactNumber }}
                   </li>
+                    <strong>Number of events: </strong>
+                    {{ allIndexedEvents | compactNumber }}
                   <li><strong>Created by: </strong>{{ timeline.user.username }}</li>
                   <li>
                     <strong>Created at: </strong>{{ timeline.created_at | shortDateTime }}

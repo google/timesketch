@@ -16,7 +16,7 @@ limitations under the License.
 -->
 
 <template>
-  <div>
+  <div class="content">
     <div class="pa-4"
          :style="'cursor: pointer'"
          @click="expanded = !expanded"
@@ -31,10 +31,34 @@ limitations under the License.
     </div>
     <v-expand-transition>
       <div v-show="expanded">
-        <ts-timeline-chip v-for="timeline in allTimelines"
-                          :key="timeline.id + timeline.name"
-                          :is-selected="isEnabled(timeline)"
-                          :timeline="timeline"></ts-timeline-chip>
+        <v-text-field
+          class="ma-3"
+          v-model="search"
+          append-icon="mdi-magnify"
+          label="Filter timelines"
+          single-line
+          hide-details
+        ></v-text-field>
+        <v-data-table
+          v-model="selected"
+          :items="allTimelines"
+          :headers="headers"
+          item-key="id"
+          show-select
+          dense
+          disable-sort
+          :search="search"
+        >
+          <template v-slot:item.name="{ item }">
+            <ts-timeline-chip
+              class="mb-1 mt-1 timeline-chip"
+              :key="item.id + item.name"
+              :is-selected="isEnabled(item)"
+              @toggle="toggleTimeline"
+              :timeline="item"
+            ></ts-timeline-chip>
+          </template>
+        </v-data-table>
       </div>
     </v-expand-transition>
     <v-divider></v-divider>
@@ -68,11 +92,44 @@ export default {
     isEnabled(timeline) {
       return this.$store.state.enabledTimelines.includes(timeline.id)
     },
+    toggleTimeline(timeline) {
+      this.$store.dispatch('toggleEnabledTimeline', timeline.id)
+    },
   },
   data: function () {
     return {
       expanded: false,
+      selected: [],
+      search: '',
+      headers: [{ value: 'name' }]
     }
   },
 }
 </script>
+
+<!-- CSS scoped to this component only -->
+<style scoped lang="scss">
+.content::v-deep {
+
+  .timeline-chip {
+    display: inline-block;
+  }
+  .v-data-table__selected {
+    background: none!important;
+  }
+  .v-data-table tr:hover{
+    background: none!important;
+  }
+  .v-data-table td{
+    border-bottom: 0!important;
+  }
+  .v-data-table th{
+    border-bottom: 0!important;
+  }
+
+  .v-data-footer {
+    border-top: 0!important;
+  }
+}
+</style>
+
