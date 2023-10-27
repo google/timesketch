@@ -28,13 +28,13 @@ limitations under the License.
         <div v-if="contextValue">
           <b>Value:</b><br/>
           <code class="code">
-            {{ contextValue }}
+            {{ getContextValue }}
           </code>
         </div>
         <div>
           <b>External website:</b><br/>
           <code class="code">
-            {{ contextUrl }}
+            {{ getContextUrl }}
           </code>
         </div>
 
@@ -62,6 +62,8 @@ limitations under the License.
   </template>
 
   <script>
+  import DOMPurify from 'dompurify';
+
   export default {
     props: ['contextValue', 'contextUrl' ],
     methods: {
@@ -69,6 +71,14 @@ limitations under the License.
         this.$emit('cancel')
       },
     },
+    computed: {
+      getContextValue() {
+        return DOMPurify.sanitize(this.contextValue)
+      },
+      getContextUrl() {
+        return DOMPurify.sanitize(this.contextUrl)
+      }
+    }
   }
   </script>
 

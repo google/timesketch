@@ -26,7 +26,7 @@ limitations under the License.
       <span> <v-icon left>mdi-book-open-outline</v-icon> Stories </span>
       <v-btn
         icon
-        v-if="expanded || !meta.stories.length"
+        v-if="expanded || !(meta.stories && meta.stories.length)"
         text
         class="float-right mt-n1 mr-n1"
         @click="createStory()"
@@ -35,8 +35,8 @@ limitations under the License.
         <v-icon>mdi-plus</v-icon>
       </v-btn>
 
-      <span v-if="!expanded" class="float-right" style="margin-right: 10px">
-        <small v-if="meta.stories.length"
+      <span v-if="!expanded && meta.stories && meta.stories.length" class="float-right" style="margin-right: 10px">
+        <small v-if="meta.stories"
           ><strong>{{ meta.stories.length }}</strong></small
         >
       </span>
