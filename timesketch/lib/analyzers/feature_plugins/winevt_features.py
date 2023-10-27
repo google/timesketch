@@ -173,11 +173,15 @@ class WindowsEventFeatureExtractionPlugin(interface.BaseFeatureExtractionPlugin)
                     attribute_value = strings[string_index]
                 except IndexError:
                     logger.warning(
-                        "The index %d for field %s does not exist in strings. "
-                        "Skipping the event %s",
+                        "[%s] The index '%d' for field '%s' does not exist in strings. "
+                        "Skipping the event '%s'",
+                        name,
                         string_index,
                         attribute_name,
                         event.event_id,
+                    )
+                    event.add_comment(
+                        f"Analyzer[{self.NAME}]: [{name}] The index '{string_index}' for field '{attribute_name}' does not exist in strings!"
                     )
                     continue
 
