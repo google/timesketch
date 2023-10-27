@@ -880,6 +880,10 @@ class SearchHistory(LabelMixin, BaseModel):
     parent_id = Column(Integer, ForeignKey(id))
     sketch_id = Column(Integer, ForeignKey("sketch.id"))
     user_id = Column(Integer, ForeignKey("user.id"))
+    scenario_id = Column(Integer, ForeignKey("scenario.id"))
+    facet_id = Column(Integer, ForeignKey("facet.id"))
+    question_id = Column(Integer, ForeignKey("investigativequestion.id"))
+    approach_id = Column(Integer, ForeignKey("investigativequestionapproach.id"))
     description = Column(UnicodeText())
     query_string = Column(UnicodeText())
     query_filter = Column(UnicodeText())
@@ -936,6 +940,7 @@ class SearchHistory(LabelMixin, BaseModel):
         node_dict["query_string"] = node.query_string
         node_dict["query_filter"] = node.query_filter
         node_dict["query_dsl"] = node.query_dsl
+        node_dict["scenario_id"] = node.scenario_id
         node_dict["children"] = []
         return node_dict
 
@@ -985,6 +990,7 @@ class Scenario(LabelMixin, StatusMixin, CommentMixin, GenericAttributeMixin, Bas
     sketch_id = Column(Integer, ForeignKey("sketch.id"))
     user_id = Column(Integer, ForeignKey("user.id"))
     facets = relationship("Facet", backref="scenario", lazy="select")
+    search_histories = relationship("SearchHistory", backref="scenario", lazy="select")
 
     def __init__(
         self,
@@ -1149,6 +1155,7 @@ class Facet(LabelMixin, StatusMixin, CommentMixin, GenericAttributeMixin, BaseMo
     timelines = relationship("Timeline", secondary=facet_timeline_association_table)
     questions = relationship("InvestigativeQuestion", backref="facet", lazy="select")
     conclusions = relationship("FacetConclusion", backref="facet", lazy="select")
+    search_histories = relationship("SearchHistory", backref="facet", lazy="select")
 
     def __init__(
         self, name, display_name, dfiq_identifier, user, spec_json, description=None
@@ -1287,6 +1294,9 @@ class InvestigativeQuestion(
         backref="investigativequestion",
         lazy="select",
     )
+    search_histories = relationship(
+        "SearchHistory", backref="investigativequestion", lazy="select"
+    )
 
     def __init__(
         self, name, display_name, dfiq_identifier, user, spec_json, description=None
@@ -1354,6 +1364,9 @@ class InvestigativeQuestionApproach(
     )
     sigma_rules = relationship(
         "SigmaRule", secondary=approach_sigmarule_association_table
+    )
+    search_histories = relationship(
+        "SearchHistory", backref="investigativequestionapproach", lazy="select"
     )
 
     def __init__(
