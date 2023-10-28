@@ -30,8 +30,11 @@ class FeatureSketchPlugin(interface.BaseAnalyzer):
     """
 
     NAME = "feature_extraction_main"
-    DISPLAY_NAME = "Feature Extractions"  # find a better wording
-    DESCRIPTION = "This analyzer runs all the feature extraction plugins on the selected timelines and creates new event attributes for matching definitions"  # Find a better wording
+    DISPLAY_NAME = "Feature Extractions Analyzer"
+    DESCRIPTION = (
+        "This analyzer runs all the feature extraction plugins on the selected "
+        "timelines and creates new event attributes for matching definitions"
+    )
 
     DEPENDENCIES = frozenset()
 
@@ -98,7 +101,9 @@ class FeatureSketchPlugin(interface.BaseAnalyzer):
             )
             if not plugin_class:
                 raise ValueError(
-                    f"Feature extraction plugin {self._plugin_name} is not registered. Check if the feature is registered in feature_plugins."
+                    f"Feature extraction plugin {self._plugin_name} is not "
+                    "registered. Check if the feature is registered in "
+                    "feature_plugins."
                 )
 
             return plugin_class.run_plugin(self._feature_name, self._feature_config)
