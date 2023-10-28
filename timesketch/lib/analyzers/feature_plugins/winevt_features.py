@@ -64,33 +64,34 @@ class WindowsEventFeatureExtractionPlugin(interface.BaseFeatureExtractionPlugin)
         """
         if not name:
             raise ValueError(
-                "Feature name is empty, please check your 'winevt_features.yaml' config!"
+                "Feature name is empty, please check your 'winevt_features.yaml' "
+                "config!"
             )
 
         if not config:
             raise ValueError(
-                "Feature configuration for [%s] value is empty, please check your 'winevt_features.yaml' config!"
-                % name
-            )```
+                f"Feature configuration for [{name}] value is empty, please check your "
+                "'winevt_features.yaml' config!"
+            )
 
         if not (
             isinstance(config.get("source_name"), list)
             or isinstance(config.get("provider_identifier"), list)
         ):
             raise ValueError(
-                "[%s] Either 'source_name' or 'provider_identifier' are required and have to be a list!"
-                % name
-            )```
+                f"[{name}] Either 'source_name' or 'provider_identifier' are required "
+                "and have to be a list!"
+            )
 
         if not isinstance(config.get("event_identifier"), int):
             raise ValueError(
                 "[%s] Missing 'event_identifier' or it is not an integer!" % name
-            )```
+            )
 
         if not isinstance(config.get("event_version"), int):
             raise ValueError(
                 "[%s] Missing 'event_version' or it is not an integer!" % name
-            )```
+            )
 
         if not isinstance(config.get("mapping"), list):
             raise ValueError("[%s] Missing 'mapping' or it is not a list!" % name)
@@ -130,11 +131,13 @@ class WindowsEventFeatureExtractionPlugin(interface.BaseFeatureExtractionPlugin)
 
         mappings = config.get("mapping")
 
-
         # Building search query
         query = ""
         if source_name and provider_identifier:
-            query = f'source_name:"{source_name}" AND provider_identifier:"{provider_identifier}"'
+            query = (
+                f'source_name:"{source_name}" AND provider_identifier:'
+                f'"{provider_identifier}"'
+            )
         elif source_name:
             query = f'source_name:"{source_name}"'
         elif provider_identifier:
@@ -181,7 +184,8 @@ class WindowsEventFeatureExtractionPlugin(interface.BaseFeatureExtractionPlugin)
                         event.event_id,
                     )
                     event.add_comment(
-                        f"Analyzer[{self.NAME}]: [{name}] The index '{string_index}' for field '{attribute_name}' does not exist in strings!"
+                        f"Analyzer[{self.NAME}]: [{name}] The index '{string_index}' "
+                        f"for field '{attribute_name}' does not exist in strings!"
                     )
                     continue
 

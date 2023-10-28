@@ -87,13 +87,18 @@ class FeatureSketchPlugin(interface.BaseAnalyzer):
         Returns:
             str: A summary of sketch analyzer result.
         """
+        # Handling unset self._plugin_name
+        if not self._plugin_name:
+            logger.debug("Feature extraction plugin name is empty")
+            return "Feature extraction plugin name is empty"
+
         try:
             plugin_class = feature_manager.PluginManager.get_plugin(
                 self._plugin_name, self
             )
             if not plugin_class:
                 raise ValueError(
-                    f"Plugin class for plugin name {self._plugin_name} does not exist"
+                    f"Feature extraction plugin {self._plugin_name} is not registered. Check if the feature is registered in feature_plugins."
                 )
 
             return plugin_class.run_plugin(self._feature_name, self._feature_config)
