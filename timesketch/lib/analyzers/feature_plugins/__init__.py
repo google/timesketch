@@ -14,5 +14,4 @@
 """Imports for the feature extraction plugins."""
 
 from timesketch.lib.analyzers.feature_plugins import winevt_features
-
-# from timesketch.lib.analyzers.feature_plugins import regex_features
+from timesketch.lib.analyzers.feature_plugins import regex_features

@@ -31,10 +31,7 @@ class FeatureSketchPlugin(interface.BaseAnalyzer):
 
     NAME = "feature_extraction_main"
     DISPLAY_NAME = "Feature Extractions Analyzer"
-    DESCRIPTION = (
-        "This analyzer runs all the feature extraction plugins on the selected "
-        "timelines and creates new event attributes for matching definitions"
-    )
+    DESCRIPTION = "Runs all feature extraction plugins on selected TimeSketch timeline."
 
     DEPENDENCIES = frozenset()
 
