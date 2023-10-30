@@ -17,12 +17,11 @@ limitations under the License.
     </v-toolbar>
 
     <v-card-subtitle class="pt-1">
-      <div class="mb-2"><b>Input:</b> {{ url }}</div>
-      <div v-if="nodeContext">
+      <div class="mb-2"><b>Input: </b><code class="code">{{ url }}</code></div>
+      <div v-if="unfurlReady">
         <b>Selected node info: </b>
-        <span v-html="sanitizeHtml(nodeContext)"></span>
+        <code class="code" v-html="sanitizeHtml(nodeContext)"></code>
       </div>
-      <div v-else>Select a node in the graph below to get more information.</div>
     </v-card-subtitle>
 
     <v-card-text>
@@ -260,6 +259,7 @@ export default {
   mounted() {
     window.addEventListener('resize', this.resizeCanvasWithDelay)
     this.unfurlReady = false
+    this.nodeContext = this.nodeContextDefault
     this.getUnfurlData(this.url)
     this.cy = cytoscape({
       container: this.$refs.cy,
