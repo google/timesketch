@@ -32,7 +32,7 @@ from timesketch.lib.testlib import MockDataStore
 
 
 class TestFeatureExtractionSketchPlugin(BaseTest):
-    """A class to test FeatureSketchPlugin class methods."""
+    """A class to test FeatureExtractionSketchPlugin class methods."""
 
     EXPECTED_RESULT = textwrap.dedent(
         """winevt feature extraction: [security_4624_v2] extracted 1 features."""
@@ -64,7 +64,7 @@ class TestFeatureExtractionSketchPlugin(BaseTest):
 
         self._create_mock_events(datastore)
 
-        plugin_object.plugin_name = "winevt_feature_extraction"
+        plugin_object.plugin_name = "winevt_extraction_plugin"
         plugin_object.feature_name = "security_4624_v2"
         plugin_object.feature_config = self._get_feature_config(
             "winevt_features.yaml", plugin_object.feature_name
