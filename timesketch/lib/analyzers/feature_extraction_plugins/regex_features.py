@@ -337,7 +337,10 @@ class RegexFeatureExtractionPlugin(interface.BaseFeatureExtractionPlugin):
             # Backwards compatibility with old config name:
             features_config = base_interface.get_yaml_config("features.yaml")
             if not features_config:
-                return "Unable to parse the 'regex_features.yaml' or 'features.yaml' config file!"
+                return (
+                    "Unable to parse the 'regex_features.yaml' or "
+                    "'features.yaml' config file!"
+                )
 
         features_kwargs = [
             {"feature_name": feature, "feature_config": config}
