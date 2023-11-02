@@ -18,7 +18,9 @@ from typing import List, Optional, Dict
 
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
-from timesketch.lib.analyzers.feature_plugins import manager as feature_manager
+from timesketch.lib.analyzers.feature_extraction_plugins import (
+    manager as feature_manager,
+)
 
 logger = logging.getLogger("timesketch.analyzers.feature")
 
@@ -29,9 +31,12 @@ class FeatureSketchPlugin(interface.BaseAnalyzer):
     This analyzer runs all the feature extractions within the feature_plugins directory.
     """
 
-    NAME = "feature_extraction_main"
-    DISPLAY_NAME = "Feature Extractions Analyzer"
-    DESCRIPTION = "Runs all feature extraction plugins on selected TimeSketch timeline."
+    NAME = "feature_extraction_plugin"
+    DISPLAY_NAME = "Feature Extractions"
+    DESCRIPTION = (
+        "Runs all feature extraction plugins on selected timelines. "
+        "Currently implemented extractions: * regex features * winevt features."
+    )
 
     DEPENDENCIES = frozenset()
 

@@ -20,7 +20,7 @@ from timesketch.lib.analyzers import browser_timeframe
 from timesketch.lib.analyzers import chain
 from timesketch.lib.analyzers import domain
 from timesketch.lib.analyzers import expert_sessionizers
-from timesketch.lib.analyzers import feature
+from timesketch.lib.analyzers import feature_extraction_plugin
 from timesketch.lib.analyzers import feature_extraction
 from timesketch.lib.analyzers import gcp_logging
 from timesketch.lib.analyzers import geoip
