@@ -31,7 +31,7 @@ class FeatureExtractionSketchPlugin(interface.BaseAnalyzer):
     This analyzer runs all the feature extractions within the feature_plugins directory.
     """
 
-    NAME = "feature_extraction_plugin"
+    NAME = "feature_extraction"
     DISPLAY_NAME = "Feature Extractions"
     DESCRIPTION = (
         "Runs all feature extraction plugins on selected timelines. "

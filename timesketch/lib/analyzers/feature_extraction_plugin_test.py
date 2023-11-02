@@ -157,7 +157,7 @@ class TestFeatureExtractionSketchPlugin(BaseTest):
 
         return events
 
-    # Copied from feature_extraction_test
+    # Test for regex_extraction_plugin (old feature extractor):
 
     def _config_validation(self, config):
         """Validate that all items of a config are valid."""
@@ -200,7 +200,7 @@ class TestFeatureExtractionSketchPlugin(BaseTest):
     # TODO: Add tests for the feature extraction.
     def test_config(self):
         """Tests that the config file is valid."""
-        config_file = os.path.join("data", "features.yaml")
+        config_file = os.path.join("data", "regex_features.yaml")
         self.assertTrue(os.path.isfile(config_file))
 
         with open(config_file) as fh:
