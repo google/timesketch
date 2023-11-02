@@ -3,7 +3,7 @@ hide:
   - footer
 ---
 The feature extraction analyzer creates attributes out of event data based on regular expressions. Different
-features can be specified in the `data/features.yaml` file.
+features can be specified in the `data/regex_features.yaml` file.
 
 Please be aware that this analyzer does *not* extract ipv4, email-addresses and similar from *all* events, but only those that match the query_string.
 
