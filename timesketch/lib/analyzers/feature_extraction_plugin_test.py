@@ -22,7 +22,9 @@ import yaml
 import mock
 
 from timesketch.lib import emojis
-from timesketch.lib.analyzers.feature_extraction_plugin import FeatureExtractionSketchPlugin
+from timesketch.lib.analyzers.feature_extraction_plugin import (
+    FeatureExtractionSketchPlugin,
+)
 from timesketch.lib.analyzers.feature_extraction_plugins import regex_features
 from timesketch.lib.analyzers.sequence_sessionizer_test import _create_eventObj
 from timesketch.lib.testlib import BaseTest
