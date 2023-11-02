@@ -22,14 +22,14 @@ import yaml
 import mock
 
 from timesketch.lib import emojis
-from timesketch.lib.analyzers.feature_extraction_plugin import FeatureSketchPlugin
+from timesketch.lib.analyzers.feature_extraction_plugin import FeatureExtractionSketchPlugin
 from timesketch.lib.analyzers.feature_extraction_plugins import regex_features
 from timesketch.lib.analyzers.sequence_sessionizer_test import _create_eventObj
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.testlib import MockDataStore
 
 
-class TestFeatureSketchPlugin(BaseTest):
+class TestFeatureExtractionSketchPlugin(BaseTest):
     """A class to test FeatureSketchPlugin class methods."""
 
     EXPECTED_RESULT = textwrap.dedent(
@@ -53,7 +53,7 @@ class TestFeatureSketchPlugin(BaseTest):
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     def test_run(self) -> None:
         """Tests run method."""
-        plugin_object = FeatureSketchPlugin(
+        plugin_object = FeatureExtractionSketchPlugin(
             index_name="test", sketch_id=1, timeline_id=1
         )
 
@@ -215,7 +215,7 @@ class TestFeatureSketchPlugin(BaseTest):
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     def test_get_attribute_value(self):
         """Test function _get_attribute_value()."""
-        analyzer = FeatureSketchPlugin(
+        analyzer = FeatureExtractionSketchPlugin(
             index_name="test_index", sketch_id=1, timeline_id=1
         )
         plugin = regex_features.RegexFeatureExtractionPlugin(analyzer)

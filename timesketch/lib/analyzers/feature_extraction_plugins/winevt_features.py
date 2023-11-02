@@ -20,17 +20,17 @@ from timesketch.lib.analyzers import interface as base_interface
 from timesketch.lib.analyzers.feature_extraction_plugins import interface
 from timesketch.lib.analyzers.feature_extraction_plugins import manager
 
-logger = logging.getLogger("timesketch.analyzers.winevt_features")
+logger = logging.getLogger("timesketch.analyzers.feature_extraction.winevt")
 
 
 class WindowsEventFeatureExtractionPlugin(interface.BaseFeatureExtractionPlugin):
     """A plugin for Windows event log feature extraction."""
 
-    NAME = "winevt_feature_extraction"
+    NAME = "winevt_extraction_plugin"
     DISPLAY_NAME = "Windows Event Log Feature Extraction"
     DESCRIPTION = (
-        "This plugin extracts Windows event logs attributes from plaso output"
-        " attribute `strings`"
+        "This plugin extracts Windows event logs attributes from the plaso "
+        "output attribute `strings` based on the 'winect_features.yaml' config."
     )
 
     EVENT_FIELDS = ["strings"]

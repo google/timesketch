@@ -12,7 +12,7 @@ from timesketch.lib.analyzers.feature_extraction_plugins import manager
 from timesketch.lib.analyzers import utils
 
 
-logger = logging.getLogger("timesketch.analyzers.feature_plugins")
+logger = logging.getLogger("timesketch.analyzers.feature_extraction.regex")
 RE_FLAGS = [
     "re.ASCII",
     "re.IGNORECASE",
@@ -26,9 +26,12 @@ RE_FLAGS = [
 class RegexFeatureExtractionPlugin(interface.BaseFeatureExtractionPlugin):
     """Analyzer for FeatureExtraction."""
 
-    NAME = "feature_extraction"
-    DISPLAY_NAME = "Feature extractor"
-    DESCRIPTION = "Extract features from event based on stored definitions"
+    NAME = "regex_extraction_plugin"
+    DISPLAY_NAME = "Regex feature extractor"
+    DESCRIPTION = (
+        "Extract features from event based on stored regex definitions in the "
+        "'regex_features.yaml' config."
+    )
 
     FORM_FIELDS = [
         {

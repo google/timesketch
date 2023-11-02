@@ -22,10 +22,10 @@ from timesketch.lib.analyzers.feature_extraction_plugins import (
     manager as feature_manager,
 )
 
-logger = logging.getLogger("timesketch.analyzers.feature")
+logger = logging.getLogger("timesketch.analyzers.feature_extraction")
 
 
-class FeatureSketchPlugin(interface.BaseAnalyzer):
+class FeatureExtractionSketchPlugin(interface.BaseAnalyzer):
     """Main sketch analyzer for feature extraction.
 
     This analyzer runs all the feature extractions within the feature_plugins directory.
@@ -137,4 +137,4 @@ class FeatureSketchPlugin(interface.BaseAnalyzer):
         return feature_kwargs_list
 
 
-manager.AnalysisManager.register_analyzer(FeatureSketchPlugin)
+manager.AnalysisManager.register_analyzer(FeatureExtractionSketchPlugin)
