@@ -184,10 +184,18 @@ class WindowsEventFeatureExtractionPlugin(interface.BaseFeatureExtractionPlugin)
                         attribute_name,
                         event.event_id,
                     )
-                    event.add_comment(
-                        f"Analyzer[{self.NAME}]: [{name}] The index '{string_index}' "
-                        f"for field '{attribute_name}' does not exist in strings!"
+                    comment_message = (
+                        f"Analyzer[{self.NAME}]: [{name}] The index '{string_index}'"
+                        f" for field '{attribute_name}' does not exist in strings!"
                     )
+                    add_comment = True
+                    if len(event.get_comments()) > 0:
+                        for comment in event.get_comments():
+                            if comment_message == comment.comment:
+                                add_comment = False
+                                break
+                    if add_comment:
+                        event.add_comment(comment_message)
                     continue
 
                 attributes[attribute_name] = attribute_value

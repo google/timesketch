@@ -9,7 +9,8 @@ if [ "$1" = 'timesketch' ]; then
   # Copy config files
   mkdir /etc/timesketch
   cp /usr/local/src/timesketch/data/timesketch.conf /etc/timesketch/
-  cp /usr/local/src/timesketch/data/features.yaml /etc/timesketch/
+  cp /usr/local/src/timesketch/data/regex_features.yaml /etc/timesketch/
+  cp /usr/local/src/timesketch/data/winevt_features.yaml /etc/timesketch/
   cp /usr/local/src/timesketch/data/tags.yaml /etc/timesketch/
   cp /usr/local/src/timesketch/data/intelligence_tag_metadata.yaml /etc/timesketch/
   cp /usr/local/src/timesketch/data/plaso.mappings /etc/timesketch/
