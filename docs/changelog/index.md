@@ -7,6 +7,52 @@ hide:
 
 # Changelog
 
+## Version 20231025
+Released: 2023-10-25
+
+### ⚠️ Note
+Upgrading to this Timesketch version requires a database upgrade!
+
+See https://timesketch.org/guides/admin/upgrade/ for more details.
+
+## What's Changed
+#### ✨ Features
+* Unfurl integration by @jkppr in https://github.com/google/timesketch/pull/2897
+* DFIQ context in SearchHistory by @berggren in https://github.com/google/timesketch/pull/2957
+* Multi analyzer result support by @jkppr in https://github.com/google/timesketch/pull/2894
+* Add intelligence command to the CLI client by @jaegeral in https://github.com/google/timesketch/pull/2864
+* Update yeti analyzer by @tomchop in https://github.com/google/timesketch/pull/2930
+* SSL/TLS support and authentication for SMTP by @fazledyn-or in https://github.com/google/timesketch/pull/2940
+  
+#### 🐞 Fixes
+
+* Filter chip fixes by @jkppr in https://github.com/google/timesketch/pull/2893
+* Fix CSV upload without timestamp_desc by @jkppr in https://github.com/google/timesketch/pull/2896
+* Bump cryptography from 41.0.3 to 41.0.4 by @dependabot in https://github.com/google/timesketch/pull/2904
+* Deprecate Sigma status CSV usage from code by @jaegeral in https://github.com/google/timesketch/pull/2913
+* Fix missing plaso_formatters by @jkppr in https://github.com/google/timesketch/pull/2933
+* Refactor base layout by @berggren in https://github.com/google/timesketch/pull/2929
+* Fix #2908 tagger bug by @jkppr in https://github.com/google/timesketch/pull/2935
+* Adjusting regular expressions for features extraction by @tomchop in https://github.com/google/timesketch/pull/2932
+* Documentation - timesketch_client.TimesketchApi in api client documentation by @jaegeral in https://github.com/google/timesketch/pull/2938
+* Improvements to the Yeti analyzer by @tomchop in https://github.com/google/timesketch/pull/2942
+* Truncate timeline names in analyzer results by @jkppr in https://github.com/google/timesketch/pull/2945
+* API client method to delete Sigma rule by @jaegeral in https://github.com/google/timesketch/pull/2924
+* Fix missing sketchId in Search.vue by @jkppr in https://github.com/google/timesketch/pull/2955
+* Copy saved search ID by @jkppr in https://github.com/google/timesketch/pull/2956
+* Support emojis in new UI by @NightAcrobat777 in https://github.com/google/timesketch/pull/2951
+* Instantiate side panel only once by @berggren in https://github.com/google/timesketch/pull/2949
+* Unit test to ensure invalid timestamp conversions do not occur by @bwhelan212 in https://github.com/google/timesketch/pull/2954
+* Sanitise HTML from Unfurl by @berggren in https://github.com/google/timesketch/pull/2959
+* Context link backwards compatibility & sanitation by @jkppr in https://github.com/google/timesketch/pull/2958
+
+## New Contributors
+* @NightAcrobat777 made their first contribution in https://github.com/google/timesketch/pull/2951
+* @fazledyn-or made their first contribution in https://github.com/google/timesketch/pull/2940
+* @bwhelan212 made their first contribution in https://github.com/google/timesketch/pull/2954
+
+**Full Changelog**: https://github.com/google/timesketch/compare/20230913...20231025
+
 ## Version 20230913
 Released: 2023-09-13
 

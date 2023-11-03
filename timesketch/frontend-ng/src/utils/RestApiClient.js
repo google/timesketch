@@ -114,7 +114,7 @@ export default {
       description: description,
       color: color,
     }
-    return RestApiClient.post('/sketches/' + sketchId + /timelines/ + timelineId + '/', formData)
+    return RestApiClient.post('/sketches/' + sketchId + '/timelines/' + timelineId + '/', formData)
   },
   saveSketchSummary(sketchId, name, description) {
     let formData = {
@@ -124,7 +124,7 @@ export default {
     return RestApiClient.post('/sketches/' + sketchId + '/', formData)
   },
   deleteSketchTimeline(sketchId, timelineId) {
-    return RestApiClient.delete('/sketches/' + sketchId + /timelines/ + timelineId + '/')
+    return RestApiClient.delete('/sketches/' + sketchId + '/timelines/' + timelineId + '/')
   },
   createEvent(sketchId, datetime, message, timestampDesc, attributes, config) {
     let formData = {
@@ -203,17 +203,17 @@ export default {
       title: title,
       content: content,
     }
-    return RestApiClient.post('/sketches/' + sketchId + /stories/, formData)
+    return RestApiClient.post('/sketches/' + sketchId + '/stories/', formData)
   },
   updateStory(title, content, sketchId, storyId) {
     let formData = {
       title: title,
       content: content,
     }
-    return RestApiClient.post('/sketches/' + sketchId + /stories/ + storyId + '/', formData)
+    return RestApiClient.post('/sketches/' + sketchId + '/stories/' + storyId + '/', formData)
   },
   deleteStory(sketchId, storyId) {
-    return RestApiClient.delete('/sketches/' + sketchId + /stories/ + storyId + '/')
+    return RestApiClient.delete('/sketches/' + sketchId + '/stories/' + storyId + '/')
   },
   // Saved views
   getView(sketchId, viewId) {
@@ -226,14 +226,14 @@ export default {
       filter: queryFilter,
       dsl: '',
     }
-    return RestApiClient.post('/sketches/' + sketchId + /views/, formData)
+    return RestApiClient.post('/sketches/' + sketchId + '/views/', formData)
   },
   updateView(sketchId, viewId, queryString, queryFilter) {
     let formData = {
       query: queryString,
       filter: queryFilter,
     }
-    return RestApiClient.post('/sketches/' + sketchId + /views/ + viewId + '/', formData)
+    return RestApiClient.post('/sketches/' + sketchId + '/views/' + viewId + '/', formData)
   },
   deleteView(sketchId, viewId) {
     return RestApiClient.delete('/sketches/' + sketchId + '/views/' + viewId + '/')
@@ -288,20 +288,20 @@ export default {
       users: usersToAdd,
       groups: groupsToAdd,
     }
-    return RestApiClient.post('/sketches/' + sketchId + /collaborators/, formData)
+    return RestApiClient.post('/sketches/' + sketchId + '/collaborators/', formData)
   },
   revokeSketchAccess(sketchId, usersToRemove, groupsToRemove) {
     let formData = {
       remove_users: usersToRemove,
       remove_groups: groupsToRemove,
     }
-    return RestApiClient.post('/sketches/' + sketchId + /collaborators/, formData)
+    return RestApiClient.post('/sketches/' + sketchId + '/collaborators/', formData)
   },
   setSketchPublicAccess(sketchId, isPublic) {
     let formData = {
       public: isPublic,
     }
-    return RestApiClient.post('/sketches/' + sketchId + /collaborators/, formData)
+    return RestApiClient.post('/sketches/' + sketchId + '/collaborators/', formData)
   },
 
   getAnalyzers(sketchId) {
@@ -313,7 +313,7 @@ export default {
       analyzer_names: analyzers,
       analyzer_force_run: forceRun,
     }
-    return RestApiClient.post('/sketches/' + sketchId + /analyzer/, formData)
+    return RestApiClient.post('/sketches/' + sketchId + '/analyzer/', formData)
   },
   getAnalyzerSession(sketchId, sessionId) {
     return RestApiClient.get('/sketches/' + sketchId + '/analyzer/sessions/' + sessionId + '/')
@@ -343,7 +343,7 @@ export default {
     if (timelineIds.length) {
       formData['timeline_ids'] = timelineIds
     }
-    return RestApiClient.post('/sketches/' + sketchId + /graph/, formData)
+    return RestApiClient.post('/sketches/' + sketchId + '/graph/', formData)
   },
   getGraphPluginList() {
     return RestApiClient.get('/graphs/')
@@ -353,10 +353,10 @@ export default {
       name: name,
       elements: elements,
     }
-    return RestApiClient.post('/sketches/' + sketchId + /graphs/, formData)
+    return RestApiClient.post('/sketches/' + sketchId + '/graphs/', formData)
   },
   getSavedGraphList(sketchId) {
-    return RestApiClient.get('/sketches/' + sketchId + /graphs/)
+    return RestApiClient.get('/sketches/' + sketchId + '/graphs/')
   },
   getSavedGraph(sketchId, graphId) {
     let params = {
@@ -364,15 +364,14 @@ export default {
         format: 'cytoscape',
       },
     }
-    return RestApiClient.get('/sketches/' + sketchId + /graphs/ + graphId + '/', params)
+    return RestApiClient.get('/sketches/' + sketchId + '/graphs/' + graphId + '/', params)
   },
   getSearchHistory(sketchId) {
-    return RestApiClient.get('/sketches/' + sketchId + /searchhistory/)
+    return RestApiClient.get('/sketches/' + sketchId + '/searchhistory/')
   },
   getSearchHistoryTree(sketchId) {
-    return RestApiClient.get('/sketches/' + sketchId + /searchhistorytree/)
+    return RestApiClient.get('/sketches/' + sketchId + '/searchhistorytree/')
   },
-  // SigmaRule (new rules file based)
   getSigmaRuleList() {
     return RestApiClient.get('/sigmarules/')
   },
@@ -410,6 +409,12 @@ export default {
   },
   getContextLinkConfig() {
     return RestApiClient.get('/contextlinks/')
+  },
+  getUnfurlGraph(url) {
+    let formData = {
+      url: url,
+    }
+    return RestApiClient.post('/unfurl/', formData)
   },
   getScenarioTemplates() {
     return RestApiClient.get('/scenarios/')

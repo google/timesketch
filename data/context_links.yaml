@@ -3,8 +3,32 @@
 # ------------------------------------------------------------------------
 #
 # This is a config file to define context links for event attributes.
+# Documentation: https://timesketch.org/guides/admin/context-links/
 #
-# Each context link consists of the following fields:
+# There are two types of context links:
+#
+# 1. Hardcoded modules: These are modules that are hardcoded into Timesketch.
+# The config is used to define the match fields for the module.
+#
+#   module_name:
+#
+#       match_fields:       Type: list[str] | List of field keys where
+#                           this context link should be available. Will
+#                           be checked as case insensitive!
+#
+#       validation_regex:   Type: str | OPTIONAL
+#                           A regex pattern that needs to be
+#                           matched by the field value to to make the
+#                           context link available. This can be used to
+#                           validate the format of a value (e.g. a hash).
+#
+# Currnetly supported modules are:
+#   - XML formatter: Displays a formatted XML in a pop-up dialog.
+#   - Unfurl graph: Displays a graph of an URL using unfurl results.
+#
+# 2. External services: These are context links that are defined by each admin.
+# Those links use external services to provide additional information about the
+# attribute value.
 #
 #   context_link_name:
 #
@@ -37,10 +61,27 @@
 #                                    pages.)
 #
 # ------------------------------------------------------------------------
-## Virustotal Example:
-# virustotal_hash_lookup:
-#   short_name: 'VirusTotal'
-#   match_fields: ['hash', 'sha256_hash', 'sha256', 'sha1_hash', 'sha1', 'md5_hash', 'md5']
-#   validation_regex: '/^[0-9a-f]{64}$|^[0-9a-f]{40}$|^[0-9a-f]{32}$/i'
-#   context_link: 'https://www.virustotal.com/gui/search/<ATTR_VALUE>'
-#   redirect_warning: TRUE
+## Hardcoded Modules
+hardcoded_modules:
+### format xml dialog
+  xml_formatter:
+    short_name: 'Prettify XML'
+    match_fields:
+      - xml
+      - xml_string
+### unfurl dialog
+  unfurl_graph:
+    short_name: 'Unfurl URL'
+    match_fields:
+      - url
+      - uri
+      - original_url
+
+## External Services
+linked_services:
+### Virustotal Example:
+  virustotal_hash_lookup:
+    short_name: 'VirusTotal'
+    match_fields: ['hash', 'sha256_hash', 'sha256', 'sha1_hash', 'sha1', 'md5_hash', 'md5']
+    context_link: 'https://www.virustotal.com/gui/search/<ATTR_VALUE>'
+    redirect_warning: TRUE

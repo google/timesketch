@@ -43,13 +43,7 @@ limitations under the License.
         >
         <v-tooltip v-if="activeAnalyzerTimeoutTriggered" top>
           <template v-slot:activator="{ on }">
-            <v-btn
-              v-on="on"
-              small
-              icon
-              @click.stop=""
-              @click="startPolling()"
-            >
+            <v-btn v-on="on" small icon @click.stop="" @click="startPolling()">
               <v-icon small>mdi-reload-alert</v-icon>
             </v-btn>
           </template>
@@ -57,7 +51,9 @@ limitations under the License.
         </v-tooltip>
       </span>
       <span class="float-right" style="margin-right: 10px">
-        <small class="ml-3" v-if="!expanded && sortedAnalyzerResults && sortedAnalyzerResults.length && analyzerResultsReady"
+        <small
+          class="ml-3"
+          v-if="!expanded && sortedAnalyzerResults && sortedAnalyzerResults.length && analyzerResultsReady"
           ><strong>{{ resultCounter }}</strong></small
         >
       </span>
@@ -157,10 +153,7 @@ export default {
       return this.$store.state.analyzerResults
     },
     sortedAnalyzerResults() {
-      const perAnalyzer = this.groupByAnalyzer([
-        ...this.analyzerResults,
-        ...this.activeAnalyses,
-      ])
+      const perAnalyzer = this.groupByAnalyzer([...this.analyzerResults, ...this.activeAnalyses])
       // for now sort the results in alphabetical order. In the future this will be sorted by verdict severity.
       let sortedAnalyzerList = [...Object.entries(perAnalyzer).map(([analyzerName, data]) => ({ analyzerName, data }))]
       sortedAnalyzerList.sort((a, b) =>
@@ -183,10 +176,10 @@ export default {
       return counter
     },
     activeAnalyzers() {
-      return new Set(this.activeAnalyses.map(a => a.analyzer_name))
+      return new Set(this.activeAnalyses.map((a) => a.analyzer_name))
     },
     activeAnalyzerSessionIds() {
-      return Array.from(new Set(this.activeAnalyses.map(a => a.analysissession_id)))
+      return Array.from(new Set(this.activeAnalyses.map((a) => a.analysissession_id)))
     },
     activeAnalyzerDisplayCount() {
       return this.activeAnalyzerSessionIds.length > 0 ? this.activeAnalyzerSessionIds.length : ''
@@ -203,14 +196,16 @@ export default {
       }
       this.$store.dispatch('updateAnalyzerResults', allAnalyses)
       this.updateActiveAnalyses(this.$store, allAnalyses)
+      this.analyzerResultsReady = true
     },
     groupByAnalyzer(analyses) {
       let perAnalyzer = {}
+      let multiResults = {}
       for (const analysis of analyses) {
         if (!perAnalyzer[analysis.analyzer_name]) {
           // the analyzer is not yet in the results: create new entry
           // There is an edge case where the analyzer is not in the analyzer list.
-          // If this happens, fall back to the analyzer short name. Tracked in issue#2738
+          // If this happens, fall back to the analyzer short name.
           if (this.analyzerList[analysis.analyzer_name]) {
             perAnalyzer[analysis.analyzer_name] = {
               timelines: {},
@@ -236,14 +231,39 @@ export default {
 
         if (!perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name]) {
           // this timeline is not yet in the results for this analyzer: add it
-          perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name] = {
+          const analyzerTimelineInfo = {
             id: analysis.timeline.id,
             name: analysis.timeline.name,
             color: analysis.timeline.color,
-            verdict: analysis.result,
-            created_at: analysis.created_at,
             last_analysissession_id: analysis.analysissession_id,
-            analysis_status: analysis.status[0].status,
+          }
+
+          if (perAnalyzer[analysis.analyzer_name].analyzerInfo.is_multi) {
+            // this analyzer is a multi analyzer, so add all results for this analysis session
+            multiResults = this.getAnalyzerMultiResults(
+              analyses,
+              analysis.analyzer_name,
+              analysis.analysissession_id,
+              analysis.timeline.id
+            )
+            perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name] = {
+              ...analyzerTimelineInfo,
+              analysis_status: multiResults.analysis_status,
+              results: multiResults.results,
+            }
+          } else {
+            // this is not a multi analyzer, so add the results for this timeline
+            perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name] = {
+              ...analyzerTimelineInfo,
+              analysis_status: analysis.status[0].status,
+              results: [
+                {
+                  verdict: analysis.result,
+                  created_at: analysis.created_at,
+                  analysis_status: analysis.status[0].status,
+                },
+              ],
+            }
           }
         }
 
@@ -251,16 +271,62 @@ export default {
           perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].last_analysissession_id <
           analysis.analysissession_id
         ) {
-          // this timeline is already in the results for this analyzer but check if the session is newer and update it
-          perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].created_at = analysis.created_at
-          perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].verdict = analysis.result
           perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].last_analysissession_id =
             analysis.analysissession_id
-          perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].analysis_status =
-            analysis.status[0].status
+          // there is a newer session for this analyzer on this timeline. Update the results.
+          if (perAnalyzer[analysis.analyzer_name].analyzerInfo.is_multi) {
+            multiResults = this.getAnalyzerMultiResults(
+              analyses,
+              analysis.analyzer_name,
+              analysis.analysissession_id,
+              analysis.timeline.id
+            )
+            perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].results[0].analysis_status =
+              multiResults.analysis_status
+            perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].results = multiResults.results
+          } else {
+            perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].results[0].created_at =
+              analysis.created_at
+            perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].results[0].verdict = analysis.result
+            perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].analysis_status =
+              analysis.status[0].status
+            perAnalyzer[analysis.analyzer_name].timelines[analysis.timeline.name].results[0].analysis_status =
+              analysis.status[0].status
+          }
         }
       }
       return perAnalyzer
+    },
+    getAnalyzerMultiResults(analyses, analyzerName, sessionId, timelineId) {
+      let results = []
+      let status = new Set()
+      for (const analysis of analyses) {
+        if (
+          analysis.analyzer_name === analyzerName &&
+          analysis.analysissession_id === sessionId &&
+          analysis.timeline.id === timelineId
+        ) {
+          results.push({
+            verdict: analysis.result,
+            created_at: analysis.created_at,
+            analysis_status: analysis.status[0].status,
+          })
+          status.add(analysis.status[0].status)
+        }
+      }
+      return {
+        results,
+        analysis_status: this.getMultiStatus(status),
+      }
+    },
+    getMultiStatus(status) {
+      if (status.size === 1 && (status.has('DONE') || status.has('ERROR'))) {
+        return [...status][0]
+      } else if (status.size === 2 && status.has('DONE') && status.has('ERROR')) {
+        return 'ERROR'
+      } else {
+        return 'PENDING'
+      }
     },
     filterAnalyzers(items, search) {
       const searchStr = (search || '').toLowerCase()
@@ -288,7 +354,10 @@ export default {
             }
             // check if the timeout of the interval has been reached.
             // This prevents the analyzer frontend from checking stuck anayzers indefinetly.
-            if (this.activeAnalyzerTimerStart !== null && (Date.now() - this.activeAnalyzerTimerStart > this.activeAnalyzerTimeout)) {
+            if (
+              this.activeAnalyzerTimerStart !== null &&
+              Date.now() - this.activeAnalyzerTimerStart > this.activeAnalyzerTimeout
+            ) {
               this.stopPolling()
               this.activeAnalyzerTimeoutTriggered = true
               return
@@ -324,19 +393,20 @@ export default {
             }
           }
         }
-        return activeAnalyses;
+        return activeAnalyses
       } catch (error) {
-        console.error(error);
+        console.error(error)
       }
     },
     updateActiveAnalyses(store, analyses) {
-      const activeAnalyses = analyses.filter(a => a.status[0].status === 'PENDING' || a.status[0].status === 'STARTED');
-      store.dispatch("updateActiveAnalyses", activeAnalyses)
-    }
+      const activeAnalyses = analyses.filter(
+        (a) => a.status[0].status === 'PENDING' || a.status[0].status === 'STARTED'
+      )
+      store.dispatch('updateActiveAnalyses', activeAnalyses)
+    },
   },
   mounted() {
     this.initializeAnalyzerResults()
-    this.analyzerResultsReady = true
     this.activeAnalyzerTimerStart = Date.now()
   },
   beforeDestroy() {
@@ -345,7 +415,7 @@ export default {
   },
   watch: {
     activeAnalyzerSessionIds: function () {
-      this.startPolling();
+      this.startPolling()
     },
   },
 }

@@ -35,9 +35,9 @@ const defaultState = (currentUser) => {
     currentSearchNode: null,
     currentUser: currentUser,
     activeContext: {
-      scenario: null,
-      facet: null,
-      question: null
+      scenario: {},
+      facet: {},
+      question: {}
     },
     snackbar: {
       active: false,
@@ -100,9 +100,9 @@ export default new Vuex.Store({
     },
     CLEAR_ACTIVE_CONTEXT(state) {
       let payload = {
-        scenario: null,
-        facet: null,
-        question: null
+        scenario: {},
+        facet: {},
+        question: {}
       }
       Vue.set(state, 'activeContext', payload)
     },
