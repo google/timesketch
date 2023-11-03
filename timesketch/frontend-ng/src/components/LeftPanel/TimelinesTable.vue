@@ -40,11 +40,11 @@ limitations under the License.
           hide-details
         ></v-text-field>
         <v-data-table
+        class="data-table"
           v-model="selected"
           :items="allTimelines"
           :headers="headers"
           item-key="id"
-          show-select
           dense
           disable-sort
           :search="search"
@@ -117,7 +117,10 @@ export default {
   .v-data-table__selected {
     background: none!important;
   }
-  .v-data-table tr:hover{
+  .v-data-table tbody tr:hover:not(.v-data-table__expanded__content) {
+    background: none !important;
+  }
+  .v-data-table tbody tr:hover{
     background: none!important;
   }
   .v-data-table td{
