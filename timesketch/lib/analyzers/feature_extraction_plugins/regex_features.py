@@ -210,7 +210,7 @@ class RegexFeatureExtractionPlugin(interface.BaseFeatureExtractionPlugin):
         Args:
             name: String with the name describing the feature to be extracted.
             config: A dict that contains the configuration for the feature
-                extraction. See data/features.yaml for fields and further
+                extraction. See data/regex_features.yaml for fields and further
                 documentation of what needs to be defined.
 
         Returns:

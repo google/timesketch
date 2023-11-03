@@ -1,353 +1,140 @@
-"""Sketch analyzer plugin for feature extraction."""
-from __future__ import unicode_literals
+# Copyright 2023 Google Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""Main sketch analyzer for feature extraction."""
 
 import logging
+from typing import List, Optional, Dict
 
-import six
-
-from timesketch.lib import emojis
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
-from timesketch.lib.analyzers import utils
+from timesketch.lib.analyzers.feature_extraction_plugins import (
+    manager as feature_manager,
+)
 
-
-logger = logging.getLogger("timesketch.analyzers.feature")
-RE_FLAGS = [
-    "re.ASCII",
-    "re.IGNORECASE",
-    "re.LOCALE",
-    "re.MULTILINE",
-    "re.DOTALL",
-    "re.VERBOSE",
-]
+logger = logging.getLogger("timesketch.analyzers.feature_extraction")
 
 
 class FeatureExtractionSketchPlugin(interface.BaseAnalyzer):
-    """Analyzer for FeatureExtraction."""
+    """Main sketch analyzer for feature extraction.
+
+    This analyzer runs all the feature extractions within the feature_plugins directory.
+    """
 
     NAME = "feature_extraction"
-    DISPLAY_NAME = "Feature extractor"
-    DESCRIPTION = "Extract features from event based on stored definitions"
+    DISPLAY_NAME = "Feature Extractions"
+    DESCRIPTION = (
+        "Runs all feature extraction plugins on selected timelines. "
+        "Currently implemented extractions: * regex features * winevt features."
+    )
 
-    FORM_FIELDS = [
-        {
-            "name": "query_string",
-            "type": "ts-dynamic-form-text-input",
-            "label": "The filter query to narrow down the result set",
-            "placeholder": "Query",
-            "default_value": "",
-        },
-        {
-            "name": "query_dsl",
-            "type": "ts-dynamic-form-text-input",
-            "label": "The filter query DSL to narrow down the result",
-            "placeholder": "Query DSL",
-            "default_value": "",
-        },
-        {
-            "name": "attribute",
-            "type": "ts-dynamic-form-text-input",
-            "label": "Name of the field to apply regular expression against",
-            "placeholder": "Field Name",
-            "default_value": "",
-        },
-        {
-            "name": "store_as",
-            "type": "ts-dynamic-form-text-input",
-            "label": "Name of the field to store the extracted results in",
-            "placeholder": "Store results as field name",
-            "default_value": "",
-        },
-        {
-            "name": "re",
-            "type": "ts-dynamic-form-text-input",
-            "label": "The regular expression to extract data from field",
-            "placeholder": "Regular Expression",
-            "default_value": "",
-        },
-        {
-            "name": "re_flags",
-            "type": "ts-dynamic-form-multi-select-input",
-            "label": "List of flags to pass to the regular expression",
-            "placeholder": "Regular Expression flags",
-            "default_value": [],
-            "options": RE_FLAGS,
-            "optional": True,
-        },
-        {
-            "name": "emojis",
-            "type": "ts-dynamic-form-multi-select-input",
-            "label": "List of emojis to add to events with matches",
-            "placeholder": "Emojis to add to events",
-            "default_value": [],
-            "options": [x.code for x in emojis.EMOJI_MAP.values()],
-            "options-label": [
-                "{0:s} - {1:s}".format(x, y.help) for x, y in emojis.EMOJI_MAP.items()
-            ],
-            "optional": True,
-        },
-        {
-            "name": "tags",
-            "type": "ts-dynamic-form-text-input",
-            "label": "Tag to add to events with matches",
-            "placeholder": "Tag to add to events",
-            "default_value": "",
-            "optional": True,
-        },
-        {
-            "name": "create_view",
-            "type": "ts-dynamic-form-boolean",
-            "label": "Should a view be created if there is a match",
-            "placeholder": "Create a view",
-            "default_value": False,
-            "optional": True,
-        },
-        {
-            "name": "store_type_list",
-            "type": "ts-dynamic-form-boolean",
-            "label": "Store extracted result in type List",
-            "placeholder": "Store results as field type list",
-            "default_value": False,
-            "optional": True,
-        },
-        {
-            "name": "overwrite_store_as",
-            "type": "ts-dynamic-form-boolean",
-            "label": "Overwrite the field to store if already exist",
-            "placeholder": "Overwrite the field to store",
-            "default_value": True,
-            "optional": True,
-        },
-        {
-            "name": "overwrite_and_merge_store_as",
-            "type": "ts-dynamic-form-boolean",
-            "label": "Overwrite the field to store and merge value if exist",
-            "placeholder": "Overwrite the field to store and merge value",
-            "default_value": False,
-            "optional": True,
-        },
-        {
-            "name": "keep_multimatch",
-            "type": "ts-dynamic-form-boolean",
-            "label": "Keep multi match datas",
-            "placeholder": "Keep multi match",
-            "default_value": False,
-            "optional": True,
-        },
-        {
-            "name": "aggregate",
-            "type": "ts-dynamic-form-boolean",
-            "label": "Should results be aggregated if there is a match",
-            "placeholder": "Aggregate results",
-            "default_value": False,
-            "optional": True,
-        },
-    ]
+    DEPENDENCIES = frozenset()
 
-    def __init__(self, index_name, sketch_id, timeline_id=None, **kwargs):
-        """Initialize The Sketch Analyzer.
+    def __init__(
+        self,
+        index_name: str,
+        sketch_id: int,
+        timeline_id: Optional[int] = None,
+        **kwargs,
+    ) -> None:
+        """Initializes the sketch analyzer.
 
         Args:
-            index_name: OpenSearch index name
-            sketch_id: Sketch ID
-            timeline_id: The ID of the timeline.
+            index_name (str): OpenSearch index name.
+            sketch_id (int): TimeSketch's sketch ID.
+            timeline_id (int): The ID of the timeline.
         """
-        self.index_name = index_name
-        self._feature_name = kwargs.get("feature")
-        self._feature_config = kwargs.get("feature_config")
-        super().__init__(index_name, sketch_id, timeline_id=timeline_id)
+        self._plugin_name: str = kwargs.get("plugin_name")
+        self._feature_name: str = kwargs.get("feature_name")
+        self._feature_config: Dict = kwargs.get("feature_config")
 
-    def run(self):
-        """Entry point for the analyzer.
-
-        Returns:
-            String with summary of the analyzer result.
-        """
-        return self.extract_feature(self._feature_name, self._feature_config)
-
-    @staticmethod
-    def _get_attribute_value(
-        current_val, extracted_value, keep_multi, merge_values, type_list
-    ):
-        """Returns the attribute value as it should be stored.
-
-        Args:
-            current_val: current value of store_as.
-            extracted_value: values matched from regexp (type list).
-            keep_multi: choice if you keep all match from regex (type boolean).
-            merge_values: choice if you merge value from extracted
-                 and current (type boolean).
-            type_list: choice if you store values in list type(type boolean).
-
-        Returns:
-            Value to store
-        """
-        if not current_val:
-            merge_values = False
-        if len(extracted_value) == 1:
-            keep_multi = False
-        if type_list:
-            if merge_values and keep_multi:
-                return sorted(list(set(current_val) | set(extracted_value)))
-            if merge_values:
-                if extracted_value[0] not in current_val:
-                    current_val.append(extracted_value[0])
-                return sorted(current_val)
-            if keep_multi:
-                return sorted(extracted_value)
-            return [extracted_value[0]]
-        if merge_values and keep_multi:
-            list_cur = current_val.split(",")
-            merge_list = sorted(list(set(list_cur) | set(extracted_value)))
-            return ",".join(merge_list)
-        if merge_values:
-            if extracted_value[0] in current_val:
-                return current_val
-            return f"{current_val},{extracted_value[0]}"
-        if keep_multi:
-            return ",".join(extracted_value)
-        return extracted_value[0]
-
-    def extract_feature(self, name, config):
-        """Extract features from events.
-
-        Args:
-            name: String with the name describing the feature to be extracted.
-            config: A dict that contains the configuration for the feature
-                extraction. See data/features.yaml for fields and further
-                documentation of what needs to be defined.
-
-        Returns:
-            String with summary of the analyzer result.
-        """
-        query = config.get("query_string")
-        query_dsl = config.get("query_dsl")
-        attribute = config.get("attribute")
-        store_type_list = config.get("store_type_list", False)
-        keep_multimatch = config.get("keep_multimatch", False)
-        overwrite_store_as = config.get("overwrite_store_as", True)
-        overwrite_and_merge_store_as = config.get("overwrite_and_merge_store_as", False)
-
-        if not attribute:
-            logger.warning("No attribute defined.")
-            return ""
-
-        store_as = config.get("store_as")
-        if not store_as:
-            logger.warning("No attribute defined to store results in.")
-            return ""
-
-        tags = config.get("tags", [])
-
-        expression_string = config.get("re")
-        if not expression_string:
-            logger.warning("No regular expression defined.")
-            return ""
-
-        expression = utils.compile_regular_expression(
-            expression_string=expression_string, expression_flags=config.get("re_flags")
+        super().__init__(
+            index_name=index_name, sketch_id=sketch_id, timeline_id=timeline_id
         )
 
-        emoji_names = config.get("emojis", [])
-        emojis_to_add = [emojis.get_emoji(x) for x in emoji_names]
+    @property
+    def plugin_name(self) -> str:
+        return self._plugin_name
 
-        return_fields = [attribute, store_as]
+    @plugin_name.setter
+    def plugin_name(self, value: str) -> None:
+        self._plugin_name = value
 
-        events = self.event_stream(
-            query_string=query, query_dsl=query_dsl, return_fields=return_fields
-        )
+    @property
+    def feature_name(self) -> str:
+        return self._feature_name
 
-        event_counter = 0
-        for event in events:
-            attribute_field = event.source.get(attribute)
-            if isinstance(attribute_field, six.text_type):
-                attribute_value = attribute_field
-            elif isinstance(attribute_field, (list, tuple)):
-                attribute_value = ",".join(attribute_field)
-            elif isinstance(attribute_field, (int, float)):
-                attribute_value = attribute_field
-            else:
-                attribute_value = None
+    @feature_name.setter
+    def feature_name(self, value: str) -> None:
+        self._feature_name = value
 
-            if not attribute_value:
-                continue
+    @property
+    def feature_config(self) -> Dict:
+        return self._feature_config
 
-            result = expression.findall(attribute_value)
-            if not result:
-                continue
-            result = list(set(result))
+    @feature_config.setter
+    def feature_config(self, value: Dict) -> None:
+        self._feature_config = value
 
-            event_counter += 1
-            store_as_current_val = event.source.get(store_as)
-            if store_as_current_val and not overwrite_store_as:
-                continue
-            if isinstance(store_as_current_val, six.text_type):
-                store_type_list = False
-            elif isinstance(store_as_current_val, (list, tuple)):
-                store_type_list = True
-            new_value = self._get_attribute_value(
-                store_as_current_val,
-                result,
-                keep_multimatch,
-                overwrite_and_merge_store_as,
-                store_type_list,
+    def run(self) -> str:
+        """Entry point for the sketch analyzer.
+
+        Returns:
+            str: A summary of sketch analyzer result.
+        """
+        # Handling unset self._plugin_name
+        if not self._plugin_name:
+            logger.debug("Feature extraction plugin name is empty")
+            return "Feature extraction plugin name is empty"
+
+        try:
+            plugin_class = feature_manager.PluginManager.get_plugin(
+                self._plugin_name, self
             )
-            if not new_value:
-                continue
-            event.add_attributes({store_as: new_value})
-            event.add_emojis(emojis_to_add)
-            event.add_tags(tags)
-
-            # Commit the event to the datastore.
-            event.commit()
-
-        aggregate_results = config.get("aggregate", False)
-        create_view = config.get("create_view", False)
-
-        # If aggregation is turned on, we automatically create an aggregation.
-        if aggregate_results:
-            create_view = True
-
-        if create_view and event_counter:
-            view = self.sketch.add_view(
-                name, self.NAME, query_string=query, query_dsl=query_dsl
-            )
-
-            if aggregate_results:
-                params = {
-                    "field": store_as,
-                    "limit": 20,
-                    "index": [self.timeline_id],
-                }
-                self.sketch.add_aggregation(
-                    name="Top 20 for: {0:s} [{1:s}]".format(store_as, name),
-                    agg_name="field_bucket",
-                    agg_params=params,
-                    description="Created by the feature extraction analyzer",
-                    view_id=view.id,
-                    chart_type="hbarchart",
+            if not plugin_class:
+                raise ValueError(
+                    f"Feature extraction plugin {self._plugin_name} is not "
+                    "registered. Check if the feature is registered in "
+                    "feature_plugins."
                 )
 
-        return "Feature extraction [{0:s}] extracted {1:d} features.".format(
-            name, event_counter
-        )
+            return plugin_class.run_plugin(self._feature_name, self._feature_config)
+        except ValueError as exception:
+            logger.error(str(exception))
+            return f"Error: {str(exception)}"
 
     @staticmethod
-    def get_kwargs():
+    def get_kwargs() -> List[Dict]:
         """Get kwargs for the analyzer.
 
         Returns:
-            List of features to search for.
+            List[dict]: A list of dict containing plugin name, feature name and feature
+                config.
         """
-        features_config = interface.get_yaml_config("features.yaml")
-        if not features_config:
-            return "Unable to parse the config features file."
+        feature_kwargs_list = []
 
-        features_kwargs = [
-            {"feature": feature, "feature_config": config}
-            for feature, config in features_config.items()
-        ]
-        return features_kwargs
+        plugin_classes = feature_manager.PluginManager.get_plugins(None)
+        for plugin in plugin_classes:
+            feature_list = plugin.get_kwargs()
+            if not feature_list:
+                logger.debug("No configuration for %s", plugin.NAME)
+                continue
+
+            for feature_config in feature_list:
+                feature_config["plugin_name"] = plugin.NAME.lower()
+                feature_kwargs_list.append(feature_config)
+
+        return feature_kwargs_list
 
 
 manager.AnalysisManager.register_analyzer(FeatureExtractionSketchPlugin)
