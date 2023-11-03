@@ -28,7 +28,7 @@ URL parameters for the lookup terms.
 
 There are two types of context links `hardcoded_modules` and `linked_services`.
 
-#### `hardcoded_modules`
+#### hardcoded_modules
 
 Hardcoded modules are context links that are directly implemented into
 Timesketch. For those hardcoded modules, the configuration only allows to
@@ -61,7 +61,7 @@ Currently supported and active by default are:
   * All parsing is done locally on the Timesketch server. No external lookups
   that unfurl provides are enabled.
 
-#### `linked_services`
+#### linked_services
 
 Each context link consists of the following fields:
 
