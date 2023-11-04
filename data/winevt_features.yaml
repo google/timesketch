@@ -66,8 +66,12 @@ security_4624_v0:
       string_index: 0
     - name: subject_user_name
       string_index: 1
+      aliases:
+        - subject_username
     - name: subject_domain_name
       string_index: 2
+      aliases:
+        - subject_domain
     - name: subject_logon_id
       string_index: 3
     - name: target_user_sid
@@ -126,8 +130,12 @@ security_4624_v1:
       string_index: 0
     - name: subject_user_name
       string_index: 1
+      aliases:
+        - subject_username
     - name: subject_domain_name
       string_index: 2
+      aliases:
+        - subject_domain
     - name: subject_logon_id
       string_index: 3
     - name: target_user_sid
@@ -188,8 +196,12 @@ security_4624_v2:
       string_index: 0
     - name: subject_user_name
       string_index: 1
+      aliases:
+        - subject_username
     - name: subject_domain_name
       string_index: 2
+      aliases:
+        - subject_domain
     - name: subject_logon_id
       string_index: 3
     - name: target_user_sid
@@ -262,8 +274,12 @@ security_4625_v0:
       string_index: 0
     - name: subject_user_name
       string_index: 1
+      aliases:
+        - subject_username
     - name: subject_domain_name
       string_index: 2
+      aliases:
+        - subject_domain
     - name: subject_logon_id
       string_index: 3
     - name: target_user_sid
@@ -350,8 +366,12 @@ security_4648_v0:
       string_index: 0
     - name: subject_user_name
       string_index: 1
+      aliases:
+        - subject_username
     - name: subject_domain_name
       string_index: 2
+      aliases:
+        - subject_domain
     - name: subject_logon_id
       string_index: 3
     - name: logon_guid
@@ -397,6 +417,8 @@ security_4688_v0:
       string_index: 0
     - name: subject_user_name
       string_index: 1
+      aliases:
+        - subject_username
     - name: subject_logon_id
       string_index: 2
     - name: new_process_id
@@ -423,6 +445,8 @@ security_4688_v1:
       string_index: 0
     - name: subject_user_name
       string_index: 1
+      aliases:
+        - subject_username
     - name: subject_logon_id
       string_index: 2
     - name: new_process_id
@@ -451,8 +475,12 @@ security_4688_v2:
       string_index: 0
     - name: subject_user_name
       string_index: 1
+      aliases:
+        - subject_username
     - name: subject_domain_name
       string_index: 2
+      aliases:
+        - subject_domain
     - name: subject_logon_id
       string_index: 3
     - name: new_process_id
@@ -507,8 +535,12 @@ security_4720_v0:
       string_index: 2
     - name: subject_user_name
       string_index: 3
+      aliases:
+        - subject_username
     - name: subject_domain_name
       string_index: 4
+      aliases:
+        - subject_domain
     - name: subject_logon_id
       string_index: 5
     - name: privilege_list
@@ -582,8 +614,12 @@ security_4728_v0:
       string_index: 5
     - name: subject_user_name
       string_index: 6
+      aliases:
+        - subject_username
     - name: subject_domain_name
       string_index: 7
+      aliases:
+        - subject_domain
     - name: subject_logon_id
       string_index: 8
     - name: privilege_list
@@ -618,8 +654,12 @@ security_4732_v0:
       string_index: 5
     - name: subject_user_name
       string_index: 6
+      aliases:
+        - subject_username
     - name: subject_domain_name
       string_index: 7
+      aliases:
+        - subject_domain
     - name: subject_logon_id
       string_index: 8
     - name: privilege_list
@@ -648,3 +688,186 @@ system_7045_v0:
     - name: account_name
       string_index: 4
 
+# Microsoft-Windows-Bits-Client Events
+# Event ID 3: The BITS service created a new job.
+# Event ID 4 version 0 is used in win2k8 and win2k12
+bits_client_3_v0:
+  source_name:
+    - Microsoft-Windows-Bits-Client
+  provider_identifier:
+    - '{EF1CC15B-46C1-414E-BB95-E76B077BD51E}'
+  event_identifier: 3
+  event_version: 0
+  references:
+  mapping:
+    - name: job_title
+      string_index: 0
+    - name: job_owner
+      string_index: 1
+    - name: string3
+      string_index: 2
+
+# Event ID 3 version 2 is used in win2k16
+bits_client_3_v2:
+  source_name:
+    - Microsoft-Windows-Bits-Client
+  provider_identifier:
+    - '{EF1CC15B-46C1-414E-BB95-E76B077BD51E}'
+  event_identifier: 3
+  event_version: 2
+  references:
+  mapping:
+    - name: job_title
+      string_index: 0
+    - name: job_id
+      string_index: 1
+    - name: job_owner
+      string_index: 2
+    - name: process_path
+      string_index: 3
+    - name: process_id
+      string_index: 4
+
+# Event ID 4 version 3 is used in win2k19 and win2k22.
+bits_client_3_v3:
+  source_name:
+    - Microsoft-Windows-Bits-Client
+  provider_identifier:
+    - '{ef1cc15b-46c1-414e-bb95-e76b077bd51e}'
+  event_identifier: 3
+  event_version: 3
+  references:
+  mapping:
+    - name: job_title
+      string_index: 0
+    - name: job_id
+      string_index: 1
+    - name: job_owner
+      string_index: 2
+    - name: process_path
+      string_index: 3
+    - name: process_id
+      string_index: 4
+    - name: client_process_start_key
+      string_index: 5
+
+# EventID 4: BITS transfer job is complete.
+# Event ID 4 version 1 is used by win2k8 to win2k22
+bits_client_4_v1:
+  source_name:
+    - Microsoft-Windows-Bits-Client
+  provider_identifier:
+    - '{ef1cc15b-46c1-414e-bb95-e76b077bd51e}'
+  event_identifier: 4
+  event_version: 1
+  references:
+  mapping:
+    - name: user
+      string_index: 0
+    - name: job_title
+      string_index: 1
+    - name: job_id
+      string_index: 2
+    - name: job_owner
+      string_index: 3
+    - name: file_count
+      string_index: 4
+    - name: bytes_transferred
+      string_index: 5
+      aliases:
+        - bytes_out
+    - name: bytes_transferred_from_peer
+      string_index: 6
+      aliases:
+        - bytes_in
+
+# 59: BITS started the transfer job.
+# Event ID 59 version 1 is used in win2k16, win2k19, and win2k22
+bits_client_59_v1:
+  source_name:
+    - Microsoft-Windows-Bits-Client
+  provider_identifier:
+    - '{ef1cc15b-46c1-414e-bb95-e76b077bd51e}'
+  event_identifier: 59
+  event_version: 1
+  references:
+    - https://www.mandiant.com/resources/blog/attacker-use-of-windows-background-intelligent-transfer-service
+  mapping:
+    - name: transfer_id
+      string_index: 0
+    - name: name
+      string_index: 1
+    - name: id
+      string_index: 2
+    - name: url
+      string_index: 3
+    - name: peer
+      string_index: 4
+    - name: file_time
+      string_index: 5
+    - name: file_length
+      string_index: 6
+    - name: bytes_total
+      string_index: 7
+    - name: bytes_transferred
+      string_index: 8
+      aliases:
+        - bytes_out
+    - name: bytes_transferred_from_peer
+      string_index: 9
+      aliases:
+        - bytes_in
+
+# 60: BITS stopped transferring the transfer job.
+bits_client_60_v1:
+  source_name:
+    - Microsoft-Windows-Bits-Client
+  provider_identifier:
+    - '{ef1cc15b-46c1-414e-bb95-e76b077bd51e}'
+  event_identifier: 60
+  event_version: 1
+  references:
+    - https://www.mandiant.com/resources/blog/attacker-use-of-windows-background-intelligent-transfer-service
+  mapping:
+    - name: transfer_id
+      string_index: 0
+    - name: name
+      string_index: 1
+    - name: id
+      string_index: 2
+    - name: url
+      string_index: 3
+    - name: peer
+      string_index: 4
+    - name: hr
+      string_index: 5
+    - name: file_time
+      string_index: 6
+      aliases:
+        - file_create_time
+    - name: file_length
+      string_index: 7
+      aliases:
+        - file_size
+    - name: bytes_total
+      string_index: 8
+    - name: bytes_transferred
+      string_index: 9
+      aliases:
+        - bytes_out
+    - name: proxy
+      string_index: 10
+    - name: peer_protocol_flag
+      string_index: 11
+    - name: bytes_transferred_from_peer
+      string_index: 12
+      aliases:
+        - bytes_in
+    - name: additional_info_hr
+      string_index: 13
+    - name: peer_context_info
+      string_index: 14
+    - name: bandwidth_limit
+      string_index: 15
+    - name: ignore_bandwidth_limits_on_lan
+      string_index: 16
