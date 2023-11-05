@@ -1,4 +1,4 @@
-# Config file for the windows event (winevt) plugin of the feature extraction
+# Config fi/e for the windows event (winevt) plugin of the feature extraction
 # analyzer.
 # A winevt feature extraction definition looks like this:
 #
@@ -688,6 +688,103 @@ system_7045_v0:
     - name: account_name
       string_index: 4
 
+# Microsoft-Windows-TerminalServices-LocalSessionManager/Operational
+# Event ID 21: Session logon succeeded
+terminal_services_21_v0:
+  source_name:
+    - Microsoft-Windows-TerminalServices-LocalSessionManager
+  provider_identifier:
+    - '{5d896912-022d-40aa-a3a8-4fa5515c76d7}'
+  event_identifier: 21
+  event_version: 0
+  references:
+  mapping:
+    - name: user
+      string_index: 0
+    - name: session_id
+      string_index: 1
+    - name: ip_address
+      string_index: 2
+
+# Event ID 23: Session logoff succeeded
+terminal_services_23_v0:
+  source_name:
+    - Microsoft-Windows-TerminalServices-LocalSessionManager
+  provider_identifier:
+    - '{5d896912-022d-40aa-a3a8-4fa5515c76d7}'
+  event_identifier: 23
+  event_version: 0
+  references:
+  mapping:
+    - name: user
+      string_index: 0
+    - name: session_id
+      string_index: 1
+
+# Event ID 24: Session has been disconnected
+terminal_services_24_v0:
+  source_name:
+    - Microsoft-Windows-TerminalServices-LocalSessionManager
+  provider_identifier:
+    - '{5d896912-022d-40aa-a3a8-4fa5515c76d7}'
+  event_identifier: 24
+  event_version: 0
+  references:
+  mapping:
+    - name: user
+      string_index: 0
+    - name: session_id
+      string_index: 1
+    - name: ip_address
+      string_index: 2
+
+# Event ID 25: Session reconnection succeeded
+terminal_services_25_v0:
+  source_name:
+    - Microsoft-Windows-TerminalServices-LocalSessionManager
+  provider_identifier:
+    - '{5d896912-022d-40aa-a3a8-4fa5515c76d7}'
+  event_identifier: 25
+  event_version: 0
+  references:
+  mapping:
+    - name: user
+      string_index: 0
+    - name: session_id
+      string_index: 1
+    - name: ip_address
+      string_index: 2
+
+# Event ID 39: Session has been disconnected by another session
+terminal_services_39_v0:
+  source_name:
+    - Microsoft-Windows-TerminalServices-LocalSessionManager
+  provider_identifier:
+    - '{5d896912-022d-40aa-a3a8-4fa5515c76d7}'
+  event_identifier: 39
+  event_version: 0
+  references:
+  mapping:
+    - name: target_session_id
+      string_index: 0
+    - name: source_session_id
+      string_index: 1
+
+# Event ID 40: Session disconnect with reason
+terminal_services_40_v0:
+  source_name:
+    - Microsoft-Windows-TerminalServices-LocalSessionManager
+  provider_identifier:
+    - '{5d896912-022d-40aa-a3a8-4fa5515c76d7}'
+  event_identifier: 40
+  event_version: 0
+  references:
+  mapping:
+    - name: session_id
+      string_index: 0
+    - name: reason
+      string_index: 1
+
 # Microsoft-Windows-Bits-Client Events
 # Event ID 3: The BITS service created a new job.
 # Event ID 4 version 0 is used in win2k8 and win2k12
@@ -871,3 +968,4 @@ bits_client_60_v1:
       string_index: 15
     - name: ignore_bandwidth_limits_on_lan
       string_index: 16
+
