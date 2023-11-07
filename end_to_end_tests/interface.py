@@ -61,15 +61,20 @@ class BaseEndToEndTest(object):
         self._counter = collections.Counter()
         self._imported_files = []
 
-    def import_timeline(self, filename, index_name=None):
+    def import_timeline(self, filename, index_name=None, sketch=None):
         """Import a Plaso, CSV or JSONL file.
 
         Args:
             filename (str): Filename of the file to be imported.
+            index_name (str): The OpenSearch index to store the documents in.
+            sketch (Sketch): Optional sketch object to add the timeline to.
+                        if no sketch is provided, the default sketch is used.
 
         Raises:
             TimeoutError if import takes too long.
         """
+        if not sketch:
+            sketch = self.sketch
         if filename in self._imported_files:
             return
         file_path = os.path.join(TEST_DATA_DIR, filename)
@@ -77,7 +82,7 @@ class BaseEndToEndTest(object):
             index_name = uuid.uuid4().hex
 
         with importer.ImportStreamer() as streamer:
-            streamer.set_sketch(self.sketch)
+            streamer.set_sketch(sketch)
             streamer.set_timeline_name(file_path)
             streamer.set_index_name(index_name)
             streamer.add_file(file_path)
@@ -133,7 +138,8 @@ class BaseEndToEndTest(object):
             raise ValueError("File [{0:s}] does not exist.".format(file_path))
 
         es = opensearchpy.OpenSearch(
-            [{"host": OPENSEARCH_HOST, "port": OPENSEARCH_PORT}], http_compress=True
+            [{"host": OPENSEARCH_HOST, "port": OPENSEARCH_PORT}],
+            http_compress=True,
         )
 
         df = pd.read_csv(file_path, on_bad_lines="warn")
@@ -143,7 +149,11 @@ class BaseEndToEndTest(object):
         def _pandas_to_opensearch(data_frame):
             for _, row in data_frame.iterrows():
                 row.dropna(inplace=True)
-                yield {"_index": index_name, "_type": "_doc", "_source": row.to_dict()}
+                yield {
+                    "_index": index_name,
+                    "_type": "_doc",
+                    "_source": row.to_dict(),
+                }
 
         if os.path.isfile(OPENSEARCH_MAPPINGS_FILE):
             mappings = {}
