@@ -85,8 +85,11 @@ class BaseEndToEndTest(object):
             streamer.set_sketch(sketch)
             streamer.set_timeline_name(file_path)
             streamer.set_index_name(index_name)
+            streamer.set_provider("e2e test interface")
             streamer.add_file(file_path)
             timeline = streamer.timeline
+            if not timeline:
+                print("Error creating timeline, please try again.")
 
         # Poll the timeline status and wait for the timeline to be ready
         max_time_seconds = 600  # Timeout after 10min
@@ -96,8 +99,18 @@ class BaseEndToEndTest(object):
         while True:
             if retry_count >= max_retries:
                 raise TimeoutError
-            _ = timeline.lazyload_data(refresh_cache=True)
-            status = timeline.status
+
+            try:
+                if not timeline:
+                    print("Error no timeline yet, trying to get the new one")
+                    timeline = streamer.timeline
+                _ = timeline.lazyload_data(refresh_cache=True)
+                status = timeline.status
+            except AttributeError:
+                # The timeline is not ready yet, so we need to wait
+                retry_count += 1
+                time.sleep(sleep_time_seconds)
+                continue
 
             if not timeline.index:
                 retry_count += 1
@@ -106,7 +119,9 @@ class BaseEndToEndTest(object):
 
             if status == "fail" or timeline.index.status == "fail":
                 if retry_count > 3:
-                    raise RuntimeError("Unable to import timeline.")
+                    raise RuntimeError(
+                        f"Unable to import timeline {timeline.index.id}."
+                    )
 
             if status == "ready" and timeline.index.status == "ready":
                 break
