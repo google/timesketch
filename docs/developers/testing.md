@@ -71,7 +71,7 @@ breakpoint()
 And then within the docker container execute
 
 ```shell
-! python3 -m pytest /usr/local/src/timesketchtimesketch/lib/emojis_test.py -s -pdb
+! python3 -m pytest /usr/local/src/timesketch/timesketch/lib/emojis_test.py -s -pdb
 ```
 
 ## end2end tests
