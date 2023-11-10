@@ -127,7 +127,7 @@ class AccessControlMixin(object):
             user: A user (Instance of timesketch.models.user.User)
 
         Returns:
-            An ACL base query (instance of timesketch.models.AclBaseQuery)
+            A SQLAlchemy query (instance of sqlalchemy.orm.query.Query)
         """
         # If no user, assume the user that made the request.
         if not user:

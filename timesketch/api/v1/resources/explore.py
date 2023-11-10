@@ -73,7 +73,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
         Returns:
             JSON with list of matched events
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
@@ -461,7 +461,7 @@ class QueryResource(resources.ResourceMixin, Resource):
         form = forms.ExploreForm.build(request)
         if not form.validate_on_submit():
             abort(HTTP_STATUS_CODE_BAD_REQUEST, "Unable to validate form data.")
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
         if not sketch.has_permission(current_user, "read"):
@@ -505,7 +505,7 @@ class SearchHistoryResource(resources.ResourceMixin, Resource):
         if not limit:
             limit = DEFAULT_LIMIT
 
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
@@ -544,7 +544,7 @@ class SearchHistoryTreeResource(resources.ResourceMixin, Resource):
         Returns:
             Search history in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 

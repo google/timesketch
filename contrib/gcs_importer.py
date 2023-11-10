@@ -85,7 +85,7 @@ def setup_sketch(timeline_name, index_name, username, sketch_id=None):
 
         if sketch_id:
             try:
-                sketch = Sketch.query.get_with_acl(sketch_id, user=user)
+                sketch = Sketch.get_with_acl(sketch_id, user=user)
                 logger.info(
                     "Using existing sketch: {} ({})".format(sketch.name, sketch.id)
                 )

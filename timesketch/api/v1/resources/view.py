@@ -131,7 +131,7 @@ class ViewListResource(resources.ResourceMixin, Resource):
         Returns:
             Views in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
         if not sketch.has_permission(current_user, "read"):
@@ -158,7 +158,7 @@ class ViewListResource(resources.ResourceMixin, Resource):
                 "Unable to save view, not able to validate form data.",
             )
 
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
@@ -190,7 +190,7 @@ class ViewResource(resources.ResourceMixin, Resource):
         Returns:
             A view in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
         view = View.query.get(view_id)
@@ -238,7 +238,7 @@ class ViewResource(resources.ResourceMixin, Resource):
             sketch_id: Integer primary key for a sketch database model
             view_id: Integer primary key for a view database model
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
@@ -289,7 +289,7 @@ class ViewResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 "Unable to update view, not able to validate form data",
             )
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
         if not sketch.has_permission(current_user, "write"):

@@ -61,7 +61,7 @@ class AnalysisResource(resources.ResourceMixin, Resource):
         Returns:
             An analysis in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
@@ -96,7 +96,7 @@ class AnalyzerSessionActiveListResource(resources.ResourceMixin, Resource):
         Returns:
             A analyzer session in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
 
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
@@ -152,7 +152,7 @@ class AnalyzerSessionResource(resources.ResourceMixin, Resource):
         Returns:
             A analyzer session in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
 
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
@@ -181,7 +181,7 @@ class AnalyzerRunResource(resources.ResourceMixin, Resource):
               * description: Description of the analyzer provided in the class
               * is_multi: Boolean indicating if the analyzer is a multi analyzer
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
         if not sketch.has_permission(current_user, "read"):
@@ -216,7 +216,7 @@ class AnalyzerRunResource(resources.ResourceMixin, Resource):
         Returns:
             A string with the response from running the analyzer.
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 

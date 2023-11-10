@@ -176,7 +176,7 @@ def create_app(config=None, legacy_ui=False):
         Returns:
             A user object (Instance of timesketch.models.user.User).
         """
-        return User.query.get(user_id)
+        return User.session.get(User, user_id)
 
     # Setup CSRF protection for the whole application
     CSRFProtect(app)

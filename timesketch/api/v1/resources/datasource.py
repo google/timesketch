@@ -49,7 +49,7 @@ class DataSourceListResource(resources.ResourceMixin, Resource):
         Returns:
             A list of JSON representations of the data sources.
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
@@ -85,7 +85,7 @@ class DataSourceListResource(resources.ResourceMixin, Resource):
         Returns:
             A datasource in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
@@ -150,7 +150,7 @@ class DataSourceResource(resources.ResourceMixin, Resource):
         This function aborts if the ACLs on the sketch are not sufficient and
         the data source does not belong to the sketch in question.
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 

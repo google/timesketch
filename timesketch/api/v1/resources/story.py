@@ -49,7 +49,7 @@ class StoryListResource(resources.ResourceMixin, Resource):
         Returns:
             Stories in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
         if not sketch.has_permission(current_user, "read"):
@@ -79,7 +79,7 @@ class StoryListResource(resources.ResourceMixin, Resource):
         if not form.validate_on_submit():
             abort(HTTP_STATUS_CODE_BAD_REQUEST, "Unable to validate form data.")
 
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
         if not sketch.has_permission(current_user, "write"):
@@ -148,7 +148,7 @@ class StoryResource(resources.ResourceMixin, Resource):
         Returns:
             A story in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         story = Story.query.get(story_id)
 
         if not story:
@@ -193,7 +193,7 @@ class StoryResource(resources.ResourceMixin, Resource):
         Returns:
             A view in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         story = Story.query.get(story_id)
 
         if not story:
@@ -247,7 +247,7 @@ class StoryResource(resources.ResourceMixin, Resource):
             sketch_id: Integer primary key for a sketch database model
             story_id: Integer primary key for a story database model
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         story = Story.query.get(story_id)
 
         if not story:

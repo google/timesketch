@@ -181,7 +181,7 @@ class SearchTemplateListResource(resources.ResourceMixin, Resource):
                 "This search has already been saved as a template.",
             )
 
-        sketch = Sketch.query.get_with_acl(search_obj.sketch.id)
+        sketch = Sketch.get_with_acl(search_obj.sketch.id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 

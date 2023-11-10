@@ -59,7 +59,7 @@ class AggregationResource(resources.ResourceMixin, Resource):
         Returns:
             JSON with aggregation results
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
         if not sketch.has_permission(current_user, "read"):
@@ -111,7 +111,7 @@ class AggregationResource(resources.ResourceMixin, Resource):
         if not form:
             abort(HTTP_STATUS_CODE_BAD_REQUEST, "Unable to validate form data.")
 
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
         if not sketch.has_permission(current_user, "write"):
@@ -169,7 +169,7 @@ class AggregationResource(resources.ResourceMixin, Resource):
             group_id: Integer primary key for an aggregation group database
                 model.
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
@@ -274,7 +274,7 @@ class AggregationGroupResource(resources.ResourceMixin, Resource):
             sketch_id: Integer primary key for a sketch database model.
             group_id: Integer primary key for an aggregation group database
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         group = AggregationGroup.query.get(group_id)
 
         if not group:
@@ -321,7 +321,7 @@ class AggregationGroupResource(resources.ResourceMixin, Resource):
             group_id: Integer primary key for an aggregation group database
                 model.
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         group = AggregationGroup.query.get(group_id)
         if not group:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No Group found with this ID.")
@@ -386,7 +386,7 @@ class AggregationGroupResource(resources.ResourceMixin, Resource):
             group_id: Integer primary key for an aggregation group database
                 model.
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         group = AggregationGroup.query.get(group_id)
 
         if not group:
@@ -442,7 +442,7 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
                 "Not able to run aggregation, unable to validate form data.",
             )
 
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
@@ -579,7 +579,7 @@ class AggregationListResource(resources.ResourceMixin, Resource):
         Returns:
             Views in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
@@ -656,7 +656,7 @@ class AggregationListResource(resources.ResourceMixin, Resource):
         if not form:
             abort(HTTP_STATUS_CODE_BAD_REQUEST, "Unable to validate form data.")
 
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
@@ -689,7 +689,7 @@ class AggregationGroupListResource(resources.ResourceMixin, Resource):
         Returns:
             Views in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
@@ -731,7 +731,7 @@ class AggregationGroupListResource(resources.ResourceMixin, Resource):
         Returns:
             An aggregation in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 

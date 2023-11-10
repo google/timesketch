@@ -228,7 +228,7 @@ class ApiDataFetcher(interface.DataFetcher):
         else:
             query_dsl = None
 
-        sketch = Sketch.query.get_with_acl(self._sketch_id)
+        sketch = Sketch.get_with_acl(self._sketch_id)
         sketch_indices = [t.searchindex.index_name for t in sketch.active_timelines]
 
         results = self._datastore.search_stream(
