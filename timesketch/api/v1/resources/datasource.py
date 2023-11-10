@@ -112,7 +112,7 @@ class DataSourceListResource(resources.ResourceMixin, Resource):
                 "Unable to create a data source without a timeline " "identifier.",
             )
 
-        timeline = Timeline.query.get(timeline_id)
+        timeline = Timeline.get_by_id(timeline_id)
         if not timeline:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No timeline found with this ID.")
 
@@ -160,7 +160,7 @@ class DataSourceResource(resources.ResourceMixin, Resource):
                 "Unable to fetch data sources from an archived sketch.",
             )
 
-        data_source = DataSource.query.get(datasource_id)
+        data_source = DataSource.get_by_id(datasource_id)
         if not data_source:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No DataSource found with this ID.")
 
@@ -182,7 +182,7 @@ class DataSourceResource(resources.ResourceMixin, Resource):
             A JSON representation of the data source.
         """
         self._verify_sketch_and_datasource(sketch_id, datasource_id)
-        data_source = DataSource.query.get(datasource_id)
+        data_source = DataSource.get_by_id(datasource_id)
         return self.to_json(data_source)
 
     @login_required
@@ -198,7 +198,7 @@ class DataSourceResource(resources.ResourceMixin, Resource):
         """
         self._verify_sketch_and_datasource(sketch_id, datasource_id)
 
-        data_source = DataSource.query.get(datasource_id)
+        data_source = DataSource.get_by_id(datasource_id)
         changed = False
 
         form = request.json

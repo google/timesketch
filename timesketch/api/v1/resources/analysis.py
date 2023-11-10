@@ -70,7 +70,7 @@ class AnalysisResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_FORBIDDEN, "User does not have read access to sketch"
             )
 
-        timeline = Timeline.query.get(timeline_id)
+        timeline = Timeline.get_by_id(timeline_id)
         if not timeline:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No timeline found with this ID.")
 
@@ -162,7 +162,7 @@ class AnalyzerSessionResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_FORBIDDEN, "User does not have read access to sketch"
             )
 
-        analysis_session = AnalysisSession.query.get(session_id)
+        analysis_session = AnalysisSession.get_by_id(session_id)
 
         return self.to_json(analysis_session)
 
@@ -284,7 +284,7 @@ class AnalyzerRunResource(resources.ResourceMixin, Resource):
         # TODO: Change to run on Timeline instead of Index
         sessions = []
         for timeline_id in timeline_ids:
-            timeline = Timeline.query.get(timeline_id)
+            timeline = Timeline.get_by_id(timeline_id)
             if not timeline:
                 continue
             if not timeline.status[0].status == "ready":

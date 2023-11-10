@@ -72,7 +72,7 @@ class ViewListResource(resources.ResourceMixin, Resource):
         if form.from_searchtemplate_id.data:
             # Get the template from the datastore
             template_id = form.from_searchtemplate_id.data
-            searchtemplate = SearchTemplate.query.get(template_id)
+            searchtemplate = SearchTemplate.get_by_id(template_id)
 
             # Copy values from the template
             view_name = searchtemplate.name
@@ -193,7 +193,7 @@ class ViewResource(resources.ResourceMixin, Resource):
         sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
-        view = View.query.get(view_id)
+        view = View.get_by_id(view_id)
 
         if not sketch.has_permission(current_user, "read"):
             abort(
@@ -247,7 +247,7 @@ class ViewResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_FORBIDDEN,
                 "User does not have write access controls on sketch.",
             )
-        view = View.query.get(view_id)
+        view = View.get_by_id(view_id)
         if not view:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No view found with this ID.")
 
@@ -298,7 +298,7 @@ class ViewResource(resources.ResourceMixin, Resource):
                 "User does not have write access controls on sketch.",
             )
 
-        view = View.query.get(view_id)
+        view = View.get_by_id(view_id)
         if not view:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No view found with this ID.")
 

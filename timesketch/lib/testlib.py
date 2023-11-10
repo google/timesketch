@@ -701,7 +701,7 @@ class ModelBaseTest(BaseTest):
 
     def _test_db_object(self, expected_result=None, model_cls=None):
         """Generic test that checks if the stored data is correct."""
-        db_obj = model_cls.query.get(1)
+        db_obj = model_cls.get_by_id(1)
         for x in expected_result:
             k, v = x[0], x[1]
             self.assertEqual(db_obj.__getattribute__(k), v)

@@ -301,7 +301,7 @@ class SketchResource(resources.ResourceMixin, Resource):
             A sketch in JSON (instance of flask.wrappers.Response)
         """
         if current_user.admin:
-            sketch = Sketch.query.get(sketch_id)
+            sketch = Sketch.get_by_id(sketch_id)
             if not sketch.has_permission(current_user, "read"):
                 return self._get_sketch_for_admin(sketch)
         else:

@@ -82,7 +82,7 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
             A sketch in JSON (instance of flask.wrappers.Response)
         """
         if current_user.admin:
-            sketch = Sketch.query.get(sketch_id)
+            sketch = Sketch.get_by_id(sketch_id)
         else:
             sketch = Sketch.get_with_acl(sketch_id)
 
@@ -121,7 +121,7 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
             A sketch in JSON (instance of flask.wrappers.Response)
         """
         if current_user.admin:
-            sketch = Sketch.query.get(sketch_id)
+            sketch = Sketch.get_by_id(sketch_id)
         else:
             sketch = Sketch.get_with_acl(sketch_id)
 

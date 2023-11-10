@@ -149,7 +149,7 @@ class StoryResource(resources.ResourceMixin, Resource):
             A story in JSON (instance of flask.wrappers.Response)
         """
         sketch = Sketch.get_with_acl(sketch_id)
-        story = Story.query.get(story_id)
+        story = Story.get_by_id(story_id)
 
         if not story:
             msg = "No Story found with this ID."
@@ -194,7 +194,7 @@ class StoryResource(resources.ResourceMixin, Resource):
             A view in JSON (instance of flask.wrappers.Response)
         """
         sketch = Sketch.get_with_acl(sketch_id)
-        story = Story.query.get(story_id)
+        story = Story.get_by_id(story_id)
 
         if not story:
             msg = "No Story found with this ID."
@@ -248,7 +248,7 @@ class StoryResource(resources.ResourceMixin, Resource):
             story_id: Integer primary key for a story database model
         """
         sketch = Sketch.get_with_acl(sketch_id)
-        story = Story.query.get(story_id)
+        story = Story.get_by_id(story_id)
 
         if not story:
             msg = "No Story found with this ID."

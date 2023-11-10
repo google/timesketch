@@ -791,7 +791,7 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
         Returns:
             Search history object representing the current search node
         """
-        current_search_node = SearchHistory.query.get(current_search_node_id)
+        current_search_node = SearchHistory.get_by_id(current_search_node_id)
         if not current_search_node:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
@@ -1183,7 +1183,7 @@ class MarkEventsWithTimelineIdentifier(resources.ResourceMixin, Resource):
                 index_name=searchindex_name
             ).first()
         elif searchindex_id:
-            searchindex = SearchIndex.query.get(searchindex_id)
+            searchindex = SearchIndex.get_by_id(searchindex_id)
 
         if not searchindex:
             abort(
@@ -1201,7 +1201,7 @@ class MarkEventsWithTimelineIdentifier(resources.ResourceMixin, Resource):
         if not timeline_id:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No timeline identifier supplied.")
 
-        timeline = Timeline.query.get(timeline_id)
+        timeline = Timeline.get_by_id(timeline_id)
         if not timeline:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No Timeline found with this ID.")
 
@@ -1359,7 +1359,7 @@ class EventUnTagResource(resources.ResourceMixin, Resource):
                     index_name=searchindex_name
                 ).first()
             elif searchindex_id:
-                searchindex = SearchIndex.query.get(searchindex_id)
+                searchindex = SearchIndex.get_by_id(searchindex_id)
 
             if not searchindex:
                 abort(

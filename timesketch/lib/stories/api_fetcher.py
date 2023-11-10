@@ -58,7 +58,7 @@ class ApiDataFetcher(interface.DataFetcher):
         if not aggregation_id:
             return {}
 
-        aggregation = Aggregation.query.get(aggregation_id)
+        aggregation = Aggregation.get_by_id(aggregation_id)
         if not aggregation:
             return {}
 
@@ -113,7 +113,7 @@ class ApiDataFetcher(interface.DataFetcher):
         if not group_id:
             return None
 
-        group = AggregationGroup.query.get(group_id)
+        group = AggregationGroup.get_by_id(group_id)
         if not group:
             return None
 
@@ -210,7 +210,7 @@ class ApiDataFetcher(interface.DataFetcher):
         if not view_id:
             return pd.DataFrame()
 
-        view = View.query.get(view_id)
+        view = View.get_by_id(view_id)
         if not view:
             return pd.DataFrame()
 

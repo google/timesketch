@@ -746,7 +746,7 @@ def analyzer_stats(analyzer_name, timeline_id, scope, result_text_search, limit)
     """Prints analyzer stats."""
 
     if timeline_id:
-        timeline = Timeline.query.get(timeline_id)
+        timeline = Timeline.get_by_id(timeline_id)
         if not timeline:
             print("No timeline found with this ID.")
             return

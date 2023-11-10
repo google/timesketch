@@ -128,7 +128,7 @@ class GraphResource(resources.ResourceMixin, Resource):
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
-        graph = Graph.query.get(graph_id)
+        graph = Graph.get_by_id(graph_id)
         if not graph:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No graph found with this ID.")
 
@@ -181,7 +181,7 @@ class GraphResource(resources.ResourceMixin, Resource):
                 "User does not have write access controls on sketch.",
             )
 
-        graph = Graph.query.get(graph_id)
+        graph = Graph.get_by_id(graph_id)
         if not graph:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No graph found with this ID.")
 
@@ -231,7 +231,7 @@ class GraphResource(resources.ResourceMixin, Resource):
             graph_id: Integer primary key for a graph database model
         """
         sketch = Sketch.get_with_acl(sketch_id)
-        graph = Graph.query.get(graph_id)
+        graph = Graph.get_by_id(graph_id)
 
         if not graph:
             msg = "No Graph found with this ID."

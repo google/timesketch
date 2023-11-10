@@ -170,7 +170,7 @@ def _set_timeline_status(timeline_id, status, error_msg=None):
     Args:
         timeline_id: Timeline ID.
     """
-    timeline = Timeline.query.get(timeline_id)
+    timeline = Timeline.get_by_id(timeline_id)
     if not timeline:
         logger.warning("Cannot set status: No such timeline")
         return
@@ -196,7 +196,7 @@ def _set_timeline_status(timeline_id, status, error_msg=None):
 
 
 def _set_datasource_status(timeline_id, file_path, status, error_message=None):
-    timeline = Timeline.query.get(timeline_id)
+    timeline = Timeline.get_by_id(timeline_id)
     for datasource in timeline.datasources:
         if datasource.get_file_on_disk == file_path:
             datasource.set_status(status)
@@ -211,7 +211,7 @@ def _set_datasource_status(timeline_id, file_path, status, error_message=None):
 
 
 def _set_datasource_total_events(timeline_id, file_path, total_file_events):
-    timeline = Timeline.query.get(timeline_id)
+    timeline = Timeline.get_by_id(timeline_id)
     for datasource in timeline.datasources:
         if datasource.get_file_on_disk == file_path:
             datasource.set_total_file_events(total_file_events)
@@ -369,21 +369,21 @@ def build_sketch_analysis_pipeline(
         analyzer_kwargs = current_app.config.get("ANALYZERS_DEFAULT_KWARGS", {})
 
     if user_id:
-        user = User.query.get(user_id)
+        user = User.get_by_id(user_id)
     else:
         user = None
 
-    sketch = Sketch.query.get(sketch_id)
+    sketch = Sketch.get_by_id(sketch_id)
     analysis_session = AnalysisSession(user, sketch)
 
     analyzers = manager.AnalysisManager.get_analyzers(analyzer_names)
     for analyzer_name, analyzer_class in analyzers:
         base_kwargs = analyzer_kwargs.get(analyzer_name, {})
-        searchindex = SearchIndex.query.get(searchindex_id)
+        searchindex = SearchIndex.get_by_id(searchindex_id)
 
         timeline = None
         if timeline_id:
-            timeline = Timeline.query.get(timeline_id)
+            timeline = Timeline.get_by_id(timeline_id)
 
         if not timeline:
             timeline = Timeline.query.filter_by(
@@ -511,7 +511,7 @@ def run_email_result_task(index_name, sketch_id=None):
             return ""
 
         if sketch_id:
-            sketch = Sketch.query.get(sketch_id)
+            sketch = Sketch.get_by_id(sketch_id)
 
         subject = "Timesketch: [{0:s}] is ready".format(searchindex.name)
 
@@ -969,7 +969,7 @@ def find_data_task(
     data_finder.set_rule(data_finder_dict.get(rule_name))
     data_finder.set_timeline_ids(timeline_ids)
 
-    sketch = Sketch.query.get(sketch_id)
+    sketch = Sketch.get_by_id(sketch_id)
     indices = set()
     for timeline in sketch.active_timelines:
         if timeline.id not in timeline_ids:

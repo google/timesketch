@@ -139,7 +139,7 @@ class TimelineListResource(resources.ResourceMixin, Resource):
         else:
             metadata["created"] = False
             return_code = HTTP_STATUS_CODE_OK
-            timeline = Timeline.query.get(timeline_id)
+            timeline = Timeline.get_by_id(timeline_id)
 
         # Run sketch analyzers when timeline is added. Import here to avoid
         # circular imports.
@@ -201,7 +201,7 @@ class TimelineResource(resources.ResourceMixin, Resource):
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
-        timeline = Timeline.query.get(timeline_id)
+        timeline = Timeline.get_by_id(timeline_id)
         if not timeline:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No Timeline found with this ID.")
 
@@ -258,7 +258,7 @@ class TimelineResource(resources.ResourceMixin, Resource):
         sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
-        timeline = Timeline.query.get(timeline_id)
+        timeline = Timeline.get_by_id(timeline_id)
         if not timeline:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No timeline found with this ID.")
 
@@ -357,7 +357,7 @@ class TimelineResource(resources.ResourceMixin, Resource):
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
-        timeline = Timeline.query.get(timeline_id)
+        timeline = Timeline.get_by_id(timeline_id)
         if not timeline:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No timeline found with this ID.")
 
