@@ -1,4 +1,4 @@
-# Config fi/e for the windows event (winevt) plugin of the feature extraction
+# Config file for the windows event (winevt) plugin of the feature extraction
 # analyzer.
 # A winevt feature extraction definition looks like this:
 #
@@ -787,7 +787,6 @@ terminal_services_40_v0:
 
 # Microsoft-Windows-Bits-Client Events
 # Event ID 3: The BITS service created a new job.
-# Event ID 4 version 0 is used in win2k8 and win2k12
 bits_client_3_v0:
   source_name:
     - Microsoft-Windows-Bits-Client
