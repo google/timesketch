@@ -844,10 +844,12 @@ class DataSource(LabelMixin, StatusMixin, CommentMixin, BaseModel):
 
     def set_total_file_events(self, total_file_events):
         self.total_file_events = total_file_events
+        db_session.add(self)
         db_session.commit()
 
     def set_error_message(self, error_message):
         self.error_message = error_message
+        db_session.add(self)
         db_session.commit()
 
     @property

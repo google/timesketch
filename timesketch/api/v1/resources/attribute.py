@@ -231,6 +231,7 @@ class AttributeResource(resources.ResourceMixin, Resource):
             for value in attribute.values:
                 attribute.values.remove(value)
             sketch.attributes.remove(attribute)
+            db_session.add(sketch)
             db_session.commit()
 
             return HTTP_STATUS_CODE_OK

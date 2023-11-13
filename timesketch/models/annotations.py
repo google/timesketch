@@ -180,6 +180,7 @@ class LabelMixin(object):
         if self.has_label(label):
             return
         self.labels.append(self.Label(user=user, label=label))
+        db_session.add(self)
         db_session.commit()
 
     def remove_label(self, label):
@@ -192,6 +193,7 @@ class LabelMixin(object):
             if label_obj.label.lower() != label.lower():
                 continue
             self.labels.remove(label_obj)
+        db_session.add(self)
         db_session.commit()
 
     def has_label(self, label):
@@ -280,6 +282,7 @@ class CommentMixin(object):
         for comment_obj in self.comments:
             if comment_obj.id == int(comment_id):
                 self.comments.remove(comment_obj)
+                db_session.add(self)
                 db_session.commit()
                 return True
 
@@ -308,6 +311,7 @@ class CommentMixin(object):
         for comment_obj in self.comments:
             if comment_obj.id == int(comment_id):
                 comment_obj.comment = comment
+                db_session.add(self)
                 db_session.commit()
                 return comment_obj
 
@@ -362,6 +366,7 @@ class StatusMixin(object):
         for _status in self.status:
             self.status.remove(_status)
         self.status.append(self.Status(user=None, status=status))
+        db_session.add(self)
         db_session.commit()
 
     @property
@@ -428,6 +433,7 @@ class GenericAttributeMixin(object):
                 description=description,
             )
         )
+        db_session.add(self)
         db_session.commit()
 
     @property

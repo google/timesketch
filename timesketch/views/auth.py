@@ -148,6 +148,8 @@ def login():
                     if group not in user.groups:
                         user.groups.append(group)
             # Commit the changes to the database.
+            db_session.add(user)
+            db_session.add(group)
             db_session.commit()
 
     # Login form POST
