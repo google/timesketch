@@ -78,19 +78,6 @@ class User(UserMixin, BaseModel):
         "Group", secondary=user_group, backref=backref("users", lazy="dynamic")
     )
 
-    def __init__(self, username, name=None):
-        """Initialize the User object.
-
-        Args:
-            username: Username for the user
-            name: Name of the user
-        """
-        super().__init__()
-        self.username = username
-        self.name = name
-        if not name:
-            self.name = username
-
     def set_password(self, plaintext, rounds=12):
         """Sets the password for the user. The password hash is created with the
         Bcrypt python library (http://www.mindrot.org/projects/py-bcrypt/).
@@ -124,18 +111,3 @@ class Group(LabelMixin, StatusMixin, BaseModel):
     display_name = Column(Unicode(255))
     description = Column(UnicodeText())
     user_id = Column(Integer, ForeignKey("user.id"))
-
-    def __init__(self, name, display_name=None, description=None, user=None):
-        """Initialize the Group object.
-
-        Args:
-            name: Name of the group
-            display_name: User friendly name of the group
-            description: Description of the group
-            user: Creator (instance of timesketch.models.user.User)
-        """
-        super().__init__()
-        self.name = name
-        self.display_name = display_name or name
-        self.description = description or name
-        self.user = user

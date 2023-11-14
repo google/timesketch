@@ -80,7 +80,7 @@ def setup_sketch(timeline_name, index_name, username, sketch_id=None):
         (tuple) sketch ID and timeline ID as integers
     """
     with app.app_context():
-        user = User.get_or_create(username=username)
+        user = User.get_or_create(username=username, name=username)
         sketch = None
 
         if sketch_id:

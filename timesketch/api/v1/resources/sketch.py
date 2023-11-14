@@ -207,11 +207,11 @@ class SketchListResource(resources.ResourceMixin, Resource):
         form = forms.NameDescriptionForm.build(request)
         if not form.validate_on_submit():
             abort(HTTP_STATUS_CODE_BAD_REQUEST, "Unable to validate form data.")
-        sketch = Sketch(
-            name=form.name.data, description=form.description.data, user=current_user
-        )
-        sketch.status.append(sketch.Status(user=None, status="new"))
+
+        sketch = Sketch(name=form.name.data, description=form.description.data)
         db_session.add(sketch)
+        sketch.user = current_user
+        sketch.status.append(sketch.Status(user=None, status="new"))
         db_session.commit()
 
         # Give the requesting user permissions on the new sketch.

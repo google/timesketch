@@ -374,7 +374,7 @@ def build_sketch_analysis_pipeline(
         user = None
 
     sketch = Sketch.get_by_id(sketch_id)
-    analysis_session = AnalysisSession(user, sketch)
+    analysis_session = AnalysisSession(user=user, sketch=sketch)
 
     analyzers = manager.AnalysisManager.get_analyzers(analyzer_names)
     for analyzer_name, analyzer_class in analyzers:

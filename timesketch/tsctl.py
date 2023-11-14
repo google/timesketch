@@ -78,11 +78,11 @@ def create_user(username, password=None):
 
     if not password:
         password = get_password_from_prompt()
-    user = User.get_or_create(username=username)
+    user = User.get_or_create(username=username, name=username)
     user.set_password(plaintext=password)
     db_session.add(user)
     db_session.commit()
-    print(f"User {username, password} created/updated")
+    print(f"User account for {username} created/updated")
 
 
 @cli.command(name="enable-user")
@@ -202,7 +202,7 @@ def list_groups():
 @click.argument("group_name")
 def create_group(group_name):
     """Create a group."""
-    group = Group.get_or_create(name=group_name)
+    group = Group.get_or_create(name=group_name, display_name=group_name)
     db_session.add(group)
     db_session.commit()
     print(f"Group created: {group_name}")

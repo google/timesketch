@@ -443,7 +443,7 @@ class BaseTest(TestCase):
         Returns:
             A user (instance of timesketch.models.user.User)
         """
-        user = User.get_or_create(username=username)
+        user = User.get_or_create(username=username, name=username)
         if set_password:
             user.set_password(plaintext="test", rounds=4)
         self._commit_to_database(user)
@@ -457,7 +457,7 @@ class BaseTest(TestCase):
         Returns:
             A group (instance of timesketch.models.user.Group)
         """
-        group = Group.get_or_create(name=name)
+        group = Group.get_or_create(name=name, display_name=name)
         user.groups.append(group)
         self._commit_to_database(group)
         return group

@@ -139,7 +139,7 @@ def login():
                     group_name = group_name.lstrip(not_member_sign)
 
                 # Get or create the group in the Timesketch database.
-                group = Group.get_or_create(name=group_name)
+                group = Group.get_or_create(name=group_name, display_name=group_name)
 
                 if remove_group:
                     if group in user.groups:
