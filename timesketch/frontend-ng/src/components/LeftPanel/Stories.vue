@@ -15,7 +15,7 @@ limitations under the License.
 -->
 <template>
   <div>
-    <v-row
+    <div
       no-gutters
       :style="!(meta.stories && meta.stories.length) ? '' : 'cursor: pointer'"
       class="pa-4"
@@ -25,24 +25,22 @@ limitations under the License.
     >
       <span> <v-icon left>mdi-book-open-outline</v-icon> Stories </span>
       <v-btn
-        v-if="expanded || !meta.stories.length"
-        small
-        color="primary"
+        icon
+        v-if="expanded || !(meta.stories && meta.stories.length)"
         text
-        class="ml-1"
+        class="float-right mt-n1 mr-n1"
         @click="createStory()"
         @click.stop=""
       >
-        <v-icon small left>mdi-plus</v-icon>New Story
+        <v-icon>mdi-plus</v-icon>
       </v-btn>
 
-      <v-spacer></v-spacer>
-      <span class="mr-2">
-        <small
+      <span v-if="!expanded && meta.stories && meta.stories.length" class="float-right" style="margin-right: 10px">
+        <small v-if="meta.stories"
           ><strong>{{ meta.stories.length }}</strong></small
         >
       </span>
-    </v-row>
+    </div>
 
     <v-expand-transition>
       <div v-show="expanded && meta.stories.length">

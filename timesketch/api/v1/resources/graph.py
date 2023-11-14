@@ -112,7 +112,7 @@ class GraphResource(resources.ResourceMixin, Resource):
     def __init__(self):
         super().__init__()
         self.parser = reqparse.RequestParser()
-        self.parser.add_argument("format", type=str, required=False)
+        self.parser.add_argument("format", type=str, required=False, location="args")
 
     @login_required
     def get(self, sketch_id, graph_id):

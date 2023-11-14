@@ -15,38 +15,29 @@ limitations under the License.
 -->
 <template>
   <div>
-    <div class="pa-4" flat :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
-      <span style="cursor: pointer" @click="expanded = !expanded">
-        <v-icon left>mdi-database-outline</v-icon> Data Types
-      </span>
-      <span class="float-right mr-2">
-        <small><strong>{{ dataTypes.length }}</strong></small>
+    <div
+      :style="dataTypes && dataTypes.length ? 'cursor: pointer' : ''"
+      class="pa-4"
+      @click="expanded = !expanded"
+      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+    >
+      <span> <v-icon left>mdi-database-outline</v-icon> Data Types </span>
+      <span class="float-right" style="margin-right: 10px">
+        <small
+          ><strong>{{ dataTypes.length }}</strong></small
+        >
       </span>
     </div>
 
     <v-expand-transition>
-      <div v-show="expanded">
-        <v-data-iterator v-if="dataTypes.length <= itemsPerPage" :items="dataTypes" hide-default-footer>
-          <template v-slot:default="props">
-            <v-row
-              no-gutters
-              v-for="dataType in props.items"
-              :key="dataType.data_type"
-              class="pa-2 pl-5"
-              :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
-            >
-              <div @click="setQueryAndFilter(dataType.data_type)" style="cursor: pointer; font-size: 0.9em">
-                <span
-                  >{{ dataType.data_type }} (<small
-                    ><strong>{{ dataType.count | compactNumber }}</strong></small
-                  >)</span
-                >
-              </div>
-            </v-row>
-          </template>
-        </v-data-iterator>
-        <v-data-iterator v-else :items="dataTypes" :items-per-page.sync="itemsPerPage" :search="search">
-          <template v-slot:header>
+      <div v-show="expanded && dataTypes.length">
+        <v-data-iterator
+          :items="dataTypes"
+          :items-per-page.sync="itemsPerPage"
+          :search="search"
+          :hide-default-footer="dataTypes.length <= itemsPerPage"
+        >
+          <template v-slot:header v-if="dataTypes.length > itemsPerPage">
             <v-toolbar flat>
               <v-text-field
                 v-model="search"
@@ -61,21 +52,20 @@ limitations under the License.
           </template>
 
           <template v-slot:default="props">
-            <v-row
-              no-gutters
+            <div
               v-for="dataType in props.items"
               :key="dataType.data_type"
-              class="pa-2 pl-5"
-              :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+              @click="setQueryAndFilter(dataType.data_type)"
+              style="cursor: pointer; font-size: 0.9em"
             >
-              <div @click="setQueryAndFilter(dataType.data_type)" style="cursor: pointer; font-size: 0.9em">
+              <v-row no-gutters class="pa-2 pl-5" :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
                 <span
                   >{{ dataType.data_type }} (<small
                     ><strong>{{ dataType.count | compactNumber }}</strong></small
                   >)</span
                 >
-              </div>
-            </v-row>
+              </v-row>
+            </div>
           </template>
         </v-data-iterator>
       </div>
@@ -86,17 +76,6 @@ limitations under the License.
 
 <script>
 import EventBus from '../../main'
-
-const defaultQueryFilter = () => {
-  return {
-    from: 0,
-    terminate_after: 40,
-    size: 40,
-    indices: '_all',
-    order: 'asc',
-    chips: [],
-  }
-}
 
 export default {
   props: [],
@@ -120,7 +99,6 @@ export default {
       let eventData = {}
       eventData.doSearch = true
       eventData.queryString = 'data_type:' + '"' + dataType + '"'
-      eventData.queryFilter = defaultQueryFilter()
       EventBus.$emit('setQueryAndFilter', eventData)
     },
   },

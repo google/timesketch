@@ -24,6 +24,7 @@ import requests
 
 # pylint: disable=redefined-builtin
 from requests.exceptions import ConnectionError
+from urllib3.exceptions import InsecureRequestWarning
 import webbrowser
 
 # pylint: disable-msg=import-error
@@ -346,6 +347,8 @@ class TimesketchApi:
         # SSL Cert verification is turned on by default.
         if not verify:
             session.verify = False
+            # disable warnings, since user actively decided to set verify to false
+            requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
         # Get and set CSRF token and authenticate the session if appropriate.
         self._set_csrf_token(session)
@@ -659,7 +662,7 @@ class TimesketchApi:
         return self.get_sigmarule(rule_uuid)
 
     def get_sigmarule(self, rule_uuid):
-        """Fetches a single Sigma rule from the databse.
+        """Fetches a single Sigma rule from the database.
         Fetches a single Sigma rule selected by the `UUID`
 
         Args:

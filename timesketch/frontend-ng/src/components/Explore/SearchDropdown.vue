@@ -57,55 +57,19 @@ limitations under the License.
 
       <v-col v-if="matches.labels.length || matches.tags.length" cols="4">
         <h5 class="mt-3 ml-5">Tags</h5>
-        <v-list dense style="height: 500px" class="overflow-y-auto" :class="scrollbarTheme">
-          <v-list-item
-            v-for="label in matches.labels"
-            :key="label.label"
-            v-on:click="searchForLabel(label.label)"
-            style="font-size: 0.9em"
-          >
-            <v-icon v-if="label.label === '__ts_star'" left small color="amber">mdi-star</v-icon>
-            <v-icon v-if="label.label === '__ts_comment'" left small>mdi-comment-multiple-outline</v-icon>
-
-            <v-list-item-content>
-              <span
-                >{{ label.label | formatLabelText }}
-                <span class="font-weight-bold" style="font-size: 0.8em">({{ label.count | compactNumber }})</span></span
-              >
-            </v-list-item-content>
-          </v-list-item>
-          <v-list-item
-            v-for="tag in matches.tags"
-            :key="tag.tag"
-            v-on:click="searchForTag(tag.tag)"
-            style="font-size: 0.9em"
-          >
-            <v-list-item-content>
-              <span
-                >{{ tag.tag }}
-                <span class="font-weight-bold" style="font-size: 0.8em">({{ tag.count | compactNumber }})</span></span
-              >
-            </v-list-item-content>
-          </v-list-item>
-        </v-list>
+        <ts-tags-list></ts-tags-list>
       </v-col>
     </v-row>
   </v-card>
 </template>
 
 <script>
-const defaultQueryFilter = () => {
-  return {
-    from: 0,
-    terminate_after: 40,
-    size: 40,
-    indices: '_all',
-    order: 'asc',
-    chips: [],
-  }
-}
+import TsTagsList from '../LeftPanel/TagsList.vue'
 
 export default {
+  components: {
+    TsTagsList,
+  },
   props: ['selectedLabels', 'queryString'],
   computed: {
     meta() {
@@ -161,33 +125,10 @@ export default {
     },
   },
   methods: {
-    searchForLabel(label) {
-      let eventData = {}
-      eventData.doSearch = true
-      eventData.queryString = '*'
-      eventData.queryFilter = defaultQueryFilter()
-      let chip = {
-        field: '',
-        value: label,
-        type: 'label',
-        operator: 'must',
-        active: true,
-      }
-      eventData.queryFilter.chips.push(chip)
-      this.$emit('setQueryAndFilter', eventData)
-    },
-    searchForTag(tag) {
-      let eventData = {}
-      eventData.doSearch = true
-      eventData.queryString = 'tag:' + tag
-      eventData.queryFilter = defaultQueryFilter()
-      this.$emit('setQueryAndFilter', eventData)
-    },
     searchForDataType(dataType) {
       let eventData = {}
       eventData.doSearch = true
       eventData.queryString = 'data_type:' + '"' + dataType + '"'
-      eventData.queryFilter = defaultQueryFilter()
       this.$emit('setQueryAndFilter', eventData)
     },
     searchForField(field) {
@@ -201,7 +142,6 @@ export default {
       }
       eventData.doSearch = false
       eventData.queryString = separator + field + ':'
-      eventData.queryFilter = defaultQueryFilter()
       this.$emit('setQueryAndFilter', eventData)
     },
   },

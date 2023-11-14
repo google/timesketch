@@ -4,28 +4,28 @@
       @click="handleClick(node)"
       :class="[{ active: isSelected }, { star: hasStar && !isSelected }, { dimmed: count === 0 && !isSelected }]"
       :id="node.id"
-      style="min-width: 205px"
+      style="min-width: 280px"
     >
-      <i
-        v-if="hasStar"
-        class="fas fa-star"
-        style="
-          float: left;
-          color: #ffd700;
-          -webkit-text-stroke-width: 1px;
-          -webkit-text-stroke-color: #777777;
-          margin-right: 10px;
-          margin-top: 3px;
-        "
-      ></i>
-      <v-icon v-if="hasStar" style="float: left; color: #333; margin-right: 10px"> mdi-star </v-icon>
-      <v-icon v-if="hasComment" style="float: left; margin-right: 10px">mdi-comment</v-icon>
-      <v-icon v-if="hasLabel" class="fas fa-tag" style="float: left; margin-right: 10px">mdi-label</v-icon>
-      <div class="query-string" :class="[{ 'query-string-active': isSelected }]" style="float: left">
-        {{ node.query_string }}
-      </div>
-      <div class="tag is-light" style="margin-left: 10px; margin-right: -5px; float: right">
-        {{ count | compactNumber }}
+      <v-icon v-if="hasStar" style="float: left" class="mr-1" color="amber darken-2">mdi-star</v-icon>
+      <v-icon v-if="hasComment" style="float: left" class="mr-1">mdi-comment-outline</v-icon>
+      <v-icon v-if="hasLabel" style="float: left; margin-right: 10px">mdi-label</v-icon>
+      <v-tooltip bottom>
+        <template v-slot:activator="{ on, attrs }">
+          <div
+            v-bind="attrs"
+            v-on="on"
+            class="query-string"
+            :class="[{ 'query-string-active': isSelected }]"
+            style="float: left"
+          >
+            {{ node.query_string }}
+          </div>
+        </template>
+        <span>{{ node.query_string }}</span>
+      </v-tooltip>
+
+      <div class="tag is-light" style="margin-left: 5px; float: right">
+        <small>{{ count | compactNumber }}</small>
       </div>
     </span>
 
@@ -75,7 +75,7 @@ export default {
   color: white;
 }
 .star {
-  background-color: #ffc107;
+  background-color: #fee9a8;
   color: #333333;
 }
 .dimmed {

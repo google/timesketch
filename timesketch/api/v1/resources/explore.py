@@ -44,6 +44,9 @@ from timesketch.models.sketch import Event
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import View
 from timesketch.models.sketch import SearchHistory
+from timesketch.models.sketch import Scenario
+from timesketch.models.sketch import Facet
+from timesketch.models.sketch import InvestigativeQuestion
 
 # Metrics definitions
 METRICS = {
@@ -92,6 +95,42 @@ class ExploreResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 "Unable to explore data, unable to validate form data",
             )
+
+        # DFIQ context
+        scenario = None
+        facet = None
+        question = None
+
+        scenario_id = request.json.get("scenario", None)
+        facet_id = request.json.get("facet", None)
+        question_id = request.json.get("question", None)
+
+        if scenario_id:
+            scenario = Scenario.query.get(scenario_id)
+            if scenario:
+                if scenario.sketch_id != sketch.id:
+                    abort(
+                        HTTP_STATUS_CODE_BAD_REQUEST,
+                        "Scenario is not part of this sketch.",
+                    )
+
+        if facet_id:
+            facet = Facet.query.get(facet_id)
+            if facet:
+                if facet.scenario.sketch_id != sketch.id:
+                    abort(
+                        HTTP_STATUS_CODE_BAD_REQUEST,
+                        "Facet is not part of this sketch.",
+                    )
+
+        if question_id:
+            question = InvestigativeQuestion.query.get(question_id)
+            if question:
+                if question.facet.scenario.sketch_id != sketch.id:
+                    abort(
+                        HTTP_STATUS_CODE_BAD_REQUEST,
+                        "Question is not part of this sketch.",
+                    )
 
         # TODO: Remove form and use json instead.
         query_dsl = form.dsl.data
@@ -221,7 +260,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
                 fh.seek(0)
                 zip_file.writestr("query_results.csv", fh.read())
             file_object.seek(0)
-            return send_file(file_object, mimetype="zip", attachment_filename=file_name)
+            return send_file(file_object, mimetype="zip", download_name=file_name)
 
         if scroll_id:
             # pylint: disable=unexpected-keyword-arg
@@ -340,6 +379,11 @@ class ExploreResource(resources.ResourceMixin, Resource):
             new_search.query_result_count = count_total_complete
             new_search.query_time = result["took"]
 
+            # Add DFIQ context
+            new_search.scenario = scenario
+            new_search.facet = facet
+            new_search.question = question
+
             if previous_search:
                 new_search.parent = previous_search
 
@@ -442,7 +486,7 @@ class SearchHistoryResource(resources.ResourceMixin, Resource):
     def __init__(self):
         super().__init__()
         self.parser = reqparse.RequestParser()
-        self.parser.add_argument("limit", type=int, required=False)
+        self.parser.add_argument("limit", type=int, required=False, location="args")
 
     @login_required
     def get(self, sketch_id):

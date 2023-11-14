@@ -1,0 +1,24 @@
+display_name: WMI activity from from Windows Event Logs
+description:
+  summary:
+  details:
+  references:
+    -
+type: approach
+id: Q0006.01
+tags:
+ - windows
+view:
+  data:
+    - type: artifact
+      value: WindowsEventLogs
+  processors:
+    - name: plaso
+      options:
+        - type: parsers
+          value: winevtx
+      analysis:
+        timesketch:
+          - description: Provided DLLs executed by wmiprvse
+            type: opensearch-query
+            value: 'data_type:"windows:evtx:record" AND event_identifier:7045 AND source_name:"Service Control Manager"'

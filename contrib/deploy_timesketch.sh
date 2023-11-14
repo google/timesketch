@@ -40,9 +40,9 @@ if ! command -v docker; then
   exit 1
 fi
 
-# Exit early if docker-compose is not installed.
-if ! command -v docker-compose; then
-  echo "ERROR: docker-compose is not installed."
+# Exit early if docker compose is not installed.
+if ! docker compose &>/dev/null; then
+  echo "ERROR: docker-compose-plugin is not installed."
   exit 1
 fi
 
@@ -89,7 +89,8 @@ curl -s $GITHUB_BASE_URL/data/timesketch.conf > timesketch/etc/timesketch/timesk
 curl -s $GITHUB_BASE_URL/data/tags.yaml > timesketch/etc/timesketch/tags.yaml
 curl -s $GITHUB_BASE_URL/data/plaso.mappings > timesketch/etc/timesketch/plaso.mappings
 curl -s $GITHUB_BASE_URL/data/generic.mappings > timesketch/etc/timesketch/generic.mappings
-curl -s $GITHUB_BASE_URL/data/features.yaml > timesketch/etc/timesketch/features.yaml
+curl -s $GITHUB_BASE_URL/data/regex_features.yaml > timesketch/etc/timesketch/regex_features.yaml
+curl -s $GITHUB_BASE_URL/data/winevt_features.yaml > timesketch/etc/timesketch/winevt_features.yaml
 curl -s $GITHUB_BASE_URL/data/ontology.yaml > timesketch/etc/timesketch/ontology.yaml
 curl -s $GITHUB_BASE_URL/data/sigma_rule_status.csv > timesketch/etc/timesketch/sigma_rule_status.csv
 curl -s $GITHUB_BASE_URL/data/tags.yaml > timesketch/etc/timesketch/tags.yaml
@@ -97,6 +98,8 @@ curl -s $GITHUB_BASE_URL/data/intelligence_tag_metadata.yaml > timesketch/etc/ti
 curl -s $GITHUB_BASE_URL/data/sigma_config.yaml > timesketch/etc/timesketch/sigma_config.yaml
 curl -s $GITHUB_BASE_URL/data/sigma_rule_status.csv > timesketch/etc/timesketch/sigma_rule_status.csv
 curl -s $GITHUB_BASE_URL/data/sigma/rules/lnx_susp_zmap.yml > timesketch/etc/timesketch/sigma/rules/lnx_susp_zmap.yml
+curl -s $GITHUB_BASE_URL/data/plaso_formatters.yaml > timesketch/etc/timesketch/plaso_formatters.yaml
+curl -s $GITHUB_BASE_URL/data/context_links.yaml > timesketch/etc/timesketch/context_links.yaml
 curl -s $GITHUB_BASE_URL/contrib/nginx.conf > timesketch/etc/nginx.conf
 echo "OK"
 
@@ -131,7 +134,7 @@ fi
 
 if [ "$START_CONTAINER" != "${START_CONTAINER#[Yy]}" ] ;then # this grammar (the #[] operator) means that the variable $start_cnt where any Y or y in 1st position will be dropped if they exist.
   cd timesketch
-  docker-compose up -d
+  docker compose up -d
 else
   echo
   echo "You have chosen not to start the containers,"
@@ -139,15 +142,15 @@ else
   echo
   echo "Start the system:"
   echo "1. cd timesketch"
-  echo "2. docker-compose up -d"
-  echo "3. docker-compose exec timesketch-web tsctl create-user <USERNAME>"
+  echo "2. docker compose up -d"
+  echo "3. docker compose exec timesketch-web tsctl create-user <USERNAME>"
   echo
   echo "WARNING: The server is running without encryption."
   echo "Follow the instructions to enable SSL to secure the communications:"
   echo "https://github.com/google/timesketch/blob/master/docs/Installation.md"
   echo
   echo
-  exit 1
+  exit
 fi
 
 read -p "Would you like to create a new timesketch user? [Y/n] (default:no)" CREATE_USER
@@ -160,6 +163,6 @@ if [ "$CREATE_USER" != "${CREATE_USER#[Yy]}" ] ;then
       sleep 1;
     done;
 
-    docker-compose exec timesketch-web tsctl create-user "$NEWUSERNAME" && echo "user created"
+    docker compose exec timesketch-web tsctl create-user "$NEWUSERNAME" && echo "user created"
   fi
 fi

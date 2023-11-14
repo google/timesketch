@@ -1,0 +1,16 @@
+display_name: Has there been any remote PowerShell executions?
+description: |
+  Remote PowerShell executions in Windows allow you to run PowerShell commands on a remote computer.
+  This can be useful for a variety of purposes, such as troubleshooting problems, deploying software,
+  or running administrative tasks.
+
+  Remote PowerShell executions can be used for lateral movement between computers in a few ways.
+  First, an attacker who has gained access to a computer on a network can use remote PowerShell
+  executions to run commands on other computers on the network. This can be done by using the
+  `Invoke-Command` cmdlet with the ComputerName parameter.
+type: question
+id: Q0007
+tags:
+  - windows
+parent_ids:
+  - F0002

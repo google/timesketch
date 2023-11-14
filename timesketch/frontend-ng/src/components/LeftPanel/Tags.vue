@@ -15,53 +15,24 @@ limitations under the License.
 -->
 <template>
   <div>
-    <div class="pa-4" flat :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
-      <span style="cursor: pointer" @click="expanded = !expanded">
-        <v-icon left>mdi-tag-multiple-outline</v-icon> Tags
-      </span>
-      <span class="float-right mr-2">
+    <div
+      :style="(tags && tags.length) || (labels && labels.length) ? 'cursor: pointer' : ''"
+      class="pa-4"
+      @click="expanded = !expanded"
+      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+    >
+      <span> <v-icon left>mdi-tag-multiple-outline</v-icon> Tags </span>
+
+      <span class="float-right" style="margin-right: 10px">
         <small
-          ><strong>{{ tags.length }}</strong></small
+          ><strong v-if="tags && labels">{{ tags.length + labels.length }}</strong></small
         >
       </span>
     </div>
 
     <v-expand-transition>
-      <div v-show="expanded && tags.length">
-        <v-row
-          no-gutters
-          v-for="label in labels"
-          :key="label.label"
-          class="pa-2 pl-5"
-          :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
-        >
-          <div @click="searchForLabel(label.label)" style="cursor: pointer; font-size: 0.9em">
-            <v-icon v-if="label.label === '__ts_star'" left small color="amber">mdi-star</v-icon>
-            <v-icon v-if="label.label === '__ts_comment'" left small>mdi-comment-multiple-outline</v-icon>
-
-            <span
-              >{{ label.label | formatLabelText }} (<small
-                ><strong>{{ label.count | compactNumber }}</strong></small
-              >)</span
-            >
-          </div>
-        </v-row>
-
-        <v-row
-          no-gutters
-          v-for="tag in tags"
-          :key="tag.tag"
-          class="pa-2 pl-5"
-          :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
-        >
-          <div @click="searchForTag(tag.tag)" style="cursor: pointer; font-size: 0.9em">
-            <span
-              >{{ tag.tag }} (<small
-                ><strong>{{ tag.count | compactNumber }}</strong></small
-              >)</span
-            >
-          </div>
-        </v-row>
+      <div v-show="expanded && (tags.length || labels.length)">
+        <ts-tags-list></ts-tags-list>
       </div>
     </v-expand-transition>
     <v-divider></v-divider>
@@ -69,20 +40,12 @@ limitations under the License.
 </template>
 
 <script>
-import EventBus from '../../main'
-
-const defaultQueryFilter = () => {
-  return {
-    from: 0,
-    terminate_after: 40,
-    size: 40,
-    indices: '_all',
-    order: 'asc',
-    chips: [],
-  }
-}
+import TsTagsList from './TagsList.vue'
 
 export default {
+  components: {
+    TsTagsList,
+  },
   props: [],
   data: function () {
     return {
@@ -101,30 +64,6 @@ export default {
     },
     labels() {
       return this.meta.filter_labels
-    },
-  },
-  methods: {
-    searchForTag(tag) {
-      let eventData = {}
-      eventData.doSearch = true
-      eventData.queryString = 'tag:' + '"' + tag + '"'
-      eventData.queryFilter = defaultQueryFilter()
-      EventBus.$emit('setQueryAndFilter', eventData)
-    },
-    searchForLabel(label) {
-      let eventData = {}
-      eventData.doSearch = true
-      eventData.queryString = '*'
-      eventData.queryFilter = defaultQueryFilter()
-      let chip = {
-        field: '',
-        value: label,
-        type: 'label',
-        operator: 'must',
-        active: true,
-      }
-      eventData.queryFilter.chips.push(chip)
-      EventBus.$emit('setQueryAndFilter', eventData)
     },
   },
 }

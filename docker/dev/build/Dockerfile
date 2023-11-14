@@ -20,6 +20,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-wheel \
     python3-setuptools \
     python3-psycopg2 \
+    tzdata \
   && rm -rf /var/lib/apt/lists/*
 
 # Install Plaso
@@ -29,7 +30,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   && rm -rf /var/lib/apt/lists/*
 
 # Install NodeJS for frontend development
-RUN curl -sL https://deb.nodesource.com/setup_14.x -o nodesource_setup.sh
+RUN curl -sL https://deb.nodesource.com/setup_18.x -o nodesource_setup.sh
 RUN bash nodesource_setup.sh
 RUN apt-get update && apt-get install -y --no-install-recommends \
     nodejs \

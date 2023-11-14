@@ -227,9 +227,16 @@ export default {
           console.error(e)
         })
     },
+    showIndicatorDialog() {
+      this.indicatorDialog = true
+    },
   },
   mounted() {
+    EventBus.$on('addIndicator', this.showIndicatorDialog)
     this.buildTagInfo()
+  },
+  beforeDestroy() {
+    EventBus.$off('addIndicator')
   },
 }
 </script>

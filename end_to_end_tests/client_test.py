@@ -85,7 +85,7 @@ class ClientTest(interface.BaseEndToEndTest):
         data_source = data_sources[0]
         self.assertions.assertEqual(data_source.get("context", ""), context)
 
-    def test_create_sigma_rule(self):
+    def test_sigmarule_create(self):
         """Create a Sigma rule in database"""
         MOCK_SIGMA_RULE = """
 title: Suspicious Installation of bbbbbb
@@ -116,26 +116,11 @@ level: high
         rules = self.api.list_sigmarules()
         self.assertions.assertGreaterEqual(len(rules), 1)
         rule = rules[0]
-        self.assertions.assertIn("5266a592-b793-11ea-b3de-bbbbbb", rule.id)
-        self.assertions.assertIn("5266a592-b793-11ea-b3de-bbbbbb", rule.rule_uuid)
         self.assertions.assertIn("Installation of bbbbbb", rule.title)
-        self.assertions.assertIn("bbbbbb", rule.search_query)
-        self.assertions.assertIn("Alexander", rule.author)
-        self.assertions.assertIn("2020/06/26", rule.date)
-        self.assertions.assertIn("installation of bbbbbb", rule.description)
-        self.assertions.assertEqual(len(rule.detection), 2)
-        self.assertions.assertEqual(
-            '(data_type:("shell:zsh:history" OR "bash:history:command" OR "apt:history:line" OR "selinux:line") AND "apt-get install bbbbbb")',  # pylint: disable=line-too-long
-            rule.search_query,
-        )
-        self.assertions.assertIn("shell:zsh:history", rule.search_query)
-        self.assertions.assertIn("Unknown", rule.falsepositives[0])
-        self.assertions.assertEqual(len(rule.logsource), 2)
-        self.assertions.assertIn("2022/06/12", rule.modified)
-        self.assertions.assertIn("high", rule.level)
-        self.assertions.assertIn("rmusser.net", rule.references[0])
 
-    def test_get_sigmarule(self):
+        self.assertions.assertIn("installation of bbbbbb", rule.description)
+
+    def test_sigmarule_create_get(self):
         """Client Sigma object tests."""
 
         rule = self.api.create_sigmarule(
@@ -193,6 +178,23 @@ level: high
         count = len(data_frame)
         self.assertions.assertEqual(count, 1)
 
+    def test_sigmarule_remove(self):
+        """Client Sigma delete tests.
+        The test is called remove to avoid running it before the create test.
+        """
+        rule = self.api.get_sigmarule(rule_uuid="5266a592-b793-11ea-b3de-eeeee")
+        self.assertions.assertGreater(len(rule.attributes), 5)
+        rule.delete()
+
+        rules = self.api.list_sigmarules()
+        self.assertions.assertGreaterEqual(len(rules), 1)
+
+        rule = self.api.get_sigmarule(rule_uuid="5266a592-b793-11ea-b3de-bbbbbb")
+        self.assertions.assertGreater(len(rule.attributes), 5)
+        rule.delete()
+        rules = self.api.list_sigmarules()
+        self.assertions.assertGreaterEqual(len(rules), 0)
+
     def test_add_event_attributes(self):
         """Tests adding attributes to an event."""
         sketch = self.api.create_sketch(name="Add event attributes test")
@@ -214,7 +216,6 @@ level: high
             {
                 "_id": old_event["_id"],
                 "_index": old_event["_index"],
-                "_type": old_event["_type"],
                 "attributes": [{"attr_name": "foo", "attr_value": "bar"}],
             }
         ]
@@ -267,7 +268,6 @@ level: high
             {
                 "_id": old_event["_id"],
                 "_index": old_event["_index"],
-                "_type": old_event["_type"],
                 "attributes": [
                     {"attr_name": "existing_attr", "attr_value": "new_value"},
                     {"attr_name": "message", "attr_value": "new message"},

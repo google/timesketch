@@ -40,6 +40,7 @@ from timesketch.models.sketch import Analysis
 from timesketch.models.sketch import SearchTemplate
 from timesketch.models.sigma import SigmaRule
 from timesketch.models.sketch import Timeline
+from timesketch.models.sketch import SearchIndex
 
 
 @click.group(cls=FlaskGroup, create_app=create_app)
@@ -289,8 +290,7 @@ def import_search_templates(path):
         if search_templates:
             for search_template_dict in search_templates:
                 print(f"Importing: {search_template_dict.get('short_name')}")
-                name = search_template_dict.get("display_name")
-                short_name = search_template_dict.get("short_name")
+                display_name = search_template_dict.get("display_name")
                 description = search_template_dict.get("description")
                 uuid = search_template_dict.get("id")
                 query_string = search_template_dict.get("query_string")
@@ -302,12 +302,13 @@ def import_search_templates(path):
                     template_uuid=uuid
                 ).first()
                 if not searchtemplate:
-                    searchtemplate = SearchTemplate(name=name, template_uuid=uuid)
+                    searchtemplate = SearchTemplate(
+                        name=display_name, template_uuid=uuid
+                    )
                     db_session.add(searchtemplate)
                     db_session.commit()
 
-                searchtemplate.name = name
-                searchtemplate.short_name = short_name
+                searchtemplate.name = display_name
                 searchtemplate.description = description
                 searchtemplate.template_json = json.dumps(search_template_dict)
                 searchtemplate.query_string = query_string
@@ -597,7 +598,23 @@ def sketch_info(sketch_id):
 def validate_context_links_conf(path):
     """Validates the provided context link yaml configuration file."""
 
-    schema = {
+    hardcoded_modules_schema = {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+            "short_name": {"type": "string"},
+            "match_fields": {
+                "type": "array",
+                "items": [
+                    {"type": "string"},
+                ],
+            },
+            "validation_regex": {"type": "string"},
+        },
+        "required": ["short_name", "match_fields"],
+    }
+
+    linked_services_schema = {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
@@ -644,12 +661,58 @@ def validate_context_links_conf(path):
         print("The provided config file is empty.")
         return
 
-    for entry in context_link_config:
-        try:
-            validate(instance=context_link_config[entry], schema=schema)
-            print(f'=> OK: "{entry}"')
-        except (ValidationError, SchemaError) as err:
-            print(f'=> ERROR: "{entry}" >> {err}\n')
+    if context_link_config["hardcoded_modules"]:
+        for entry in context_link_config["hardcoded_modules"]:
+            try:
+                validate(
+                    instance=context_link_config["hardcoded_modules"][entry],
+                    schema=hardcoded_modules_schema,
+                )
+                print(f'=> OK: "{entry}"')
+            except (ValidationError, SchemaError) as err:
+                print(f'=> ERROR: "{entry}" >> {err}\n')
+
+    if context_link_config["linked_services"]:
+        for entry in context_link_config["linked_services"]:
+            try:
+                validate(
+                    instance=context_link_config["linked_services"][entry],
+                    schema=linked_services_schema,
+                )
+                print(f'=> OK: "{entry}"')
+            except (ValidationError, SchemaError) as err:
+                print(f'=> ERROR: "{entry}" >> {err}\n')
+
+
+@cli.command(name="searchindex-info")
+@click.option(
+    "--searchindex_id",
+    required=True,
+    help="Searchindex ID to search for e.g. 4c5afdf60c6e49499801368b7f238353.",
+)
+def searchindex_info(searchindex_id):
+    """Search for a searchindex and print information about it.
+    Especially which sketch the searchindex belongs to.
+
+    Args:
+        searchindex_id: to search for e.g. 4c5afdf60c6e49499801368b7f238353.
+    """
+
+    index_to_search = SearchIndex.query.filter_by(index_name=searchindex_id).first()
+
+    if not index_to_search:
+        print(f"Searchindex: {searchindex_id} not found in database.")
+        return
+
+    print(
+        f"Searchindex: {searchindex_id} Name: {index_to_search.name} found in database."
+    )
+    timeline = Timeline.query.filter_by(id=index_to_search.id).first()
+    print(
+        f"Corresponding Timeline id: {timeline.id} in Sketch Id: {timeline.sketch_id}"
+    )
+    sketch = Sketch.query.filter_by(id=timeline.sketch_id).first()
+    print(f"Corresponding Sketch id: {sketch.id} Sketch name: {sketch.name}")
 
 
 # Analyzer stats cli command
@@ -732,7 +795,7 @@ def analyzer_stats(analyzer_name, timeline_id, scope, result_text_search, limit)
     if result_text_search:
         df = df[df.result.str.contains(result_text_search, na=False)]
 
-    # Sorting the dataframe depending on the paramters
+    # Sorting the dataframe depending on the parameters
 
     if scope in ["many_hits", "many-hits", "hits"]:
         if analyzer_name == "sigma":

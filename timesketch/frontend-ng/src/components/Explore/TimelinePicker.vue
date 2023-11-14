@@ -25,10 +25,11 @@ limitations under the License.
       @remove="remove"
       @save="save"
       @toggle="toggleTimeline"
+      @disableAllOtherTimelines="disableAllOtherTimelines"
     ></ts-timeline-chip>
     <v-btn
       small
-      outlined
+      text
       rounded
       color="primary"
       v-if="sketch.timelines.length > 20"
@@ -38,15 +39,16 @@ limitations under the License.
       <span v-if="showAll"> show less </span>
       <span v-else> {{ sketch.timelines.length - 20 }} more.. </span>
     </v-btn>
-    <span v-if="sketch.timelines.length > 5" style="position: relative; top: -5px">
-      <v-btn-toggle dense rounded>
-        <v-btn small outlined rounded color="primary" v-if="sketch.timelines.length > 5" @click="enableAllTimelines()">
-          Select all
-        </v-btn>
-        <v-btn small outlined rounded color="primary" v-if="sketch.timelines.length > 5" @click="disableAllTimelines()">
-          Unselect all
-        </v-btn>
-      </v-btn-toggle>
+    <br />
+    <span v-if="sketch.timelines.length > 5">
+      <v-btn small text rounded color="primary" @click="enableAllTimelines()">
+        <v-icon left small>mdi-checkbox-outline</v-icon>
+        <span>Select all</span>
+      </v-btn>
+      <v-btn small text rounded color="primary" @click="disableAllTimelines()">
+        <v-icon left small>mdi-minus-box-outline</v-icon>
+        <span>Unselect all</span>
+      </v-btn>
     </span>
   </span>
 </template>
@@ -154,6 +156,10 @@ export default {
     },
     disableAllTimelines() {
       this.selectedTimelines = []
+      this.$emit('updateSelectedTimelines', this.selectedTimelines)
+    },
+    disableAllOtherTimelines(timeline) {
+      this.selectedTimelines = [timeline]
       this.$emit('updateSelectedTimelines', this.selectedTimelines)
     },
     toggleTimeline(timeline) {

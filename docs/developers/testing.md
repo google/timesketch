@@ -41,13 +41,13 @@ Switch to:
 And execute the single test
 
 ```shell
-! nosetests timesketch/lib/emojis_test.py -v
+! python3 -m pytest timesketch/lib/emojis_test.py -v
 ```
 
 Or all in one:
 
 ```bash
-$ sudo docker exec -it $CONTAINER_ID nosetests /usr/local/src/timesketch/timesketch/lib/emojis_test.py -v
+$ sudo docker exec -it $CONTAINER_ID python3 -m pytest /usr/local/src/timesketch/timesketch/lib/emojis_test.py -v
 ```
 
 ## Writing unittests
@@ -71,7 +71,7 @@ breakpoint()
 And then within the docker container execute
 
 ```shell
-! nosetests /usr/local/src/timesketchtimesketch/lib/emojis_test.py -s -pdb
+! python3 -m pytest /usr/local/src/timesketch/timesketch/lib/emojis_test.py -s -pdb
 ```
 
 ## end2end tests
@@ -104,8 +104,8 @@ The following example is for changing / adding tests to `client_test.py`
 ```shell
 $ export CONTAINER_ID="$(sudo -E docker container list -f name=e2e_timesketch -q)"
 $ docker exec -it $CONTAINER_ID /bin/bash
-! rm /usr/local/lib/python3.8/dist-packages/end_to_end_tests/client_test.py
-! ln -s /usr/local/src/timesketch/end_to_end_tests/client_test.py /usr/local/lib/python3.8/dist-packages/end_to_end_tests/client_test.py
+! rm /usr/local/lib/python3.10/dist-packages/end_to_end_tests/client_test.py
+! ln -s /usr/local/src/timesketch/end_to_end_tests/client_test.py /usr/local/lib/python3.10/dist-packages/end_to_end_tests/client_test.py
 ```
 
 From now on you can edit the `client_test.py` file outside of the docker instance and run it again with

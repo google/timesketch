@@ -1,0 +1,57 @@
+display_name: Remote Desktop Protocol (RDP) from Windows Event Logs
+description:
+  summary:
+  details:
+  references:
+    -
+type: approach
+id: Q0001.01
+tags:
+ - windows
+view:
+  data:
+    - type: artifact
+      value: WindowsEventLogs
+  processors:
+    - name: plaso
+      options:
+        - type: parsers
+          value: winevtx
+      analysis:
+        timesketch:
+          - description: RDP authentication from client
+            type: opensearch-query
+            value: 'data_type:"windows:evtx:record" AND event_identifier:4624 AND logon_type:RemoteInteractive'
+          - description: Failed RDP authentication from client
+            type: opensearch-query
+            value: 'data_type:"windows:evtx:record" AND event_identifier:4625 AND logon_type:RemoteInteractive'
+          - description: Use of explicit credentials
+            type: opensearch-query
+            value: 'data_type:"windows:evtx:record" AND event_identifier:4648 AND source_name:"Microsoft-Windows-Security-Auditing"'
+          - description: ClientActiveXCore RDP client
+            type: opensearch-query
+            value: 'data_type:"windows:evtx:record" AND event_identifier:1024 AND source_name:"Microsoft-Windows-TerminalServices-ClientActiveXCore"'
+          - description: RDP client connection to server
+            type: opensearch-query
+            value: 'data_type:"windows:evtx:record" AND event_identifier:1102 AND source_name:"Microsoft-Windows-TerminalServices-ClientActiveXCore"'
+          - description: RDP successful logon
+            type: opensearch-query
+            value: 'data_type:"windows:evtx:record" AND event_identifier:1149 AND source_name:"Microsoft-Windows-TerminalServices-RemoteConnectionManager"'
+          - description: RDP successful TCP connection
+            type: opensearch-query
+            value: 'data_type:"windows:evtx:record" AND event_identifier:(98 OR 131) AND source_name:"Microsoft-Windows-RemoteDesktopServices-RdpCoreTS"'
+          - description: RDP session logon
+            type: opensearch-query
+            value: 'data_type:"windows:evtx:record" AND event_identifier:21 AND source_name:"Microsoft-Windows-TerminalServices-LocalSessionManager"'
+          - description: RDP session shell start
+            type: opensearch-query
+            value: 'data_type:"windows:evtx:record" AND event_identifier:22 AND source_name:"Microsoft-Windows-TerminalServices-LocalSessionManager"'
+          - description: RDP session logoff
+            type: opensearch-query
+            value: 'data_type:"windows:evtx:record" AND event_identifier:23 AND source_name:"Microsoft-Windows-TerminalServices-LocalSessionManager"'
+          - description: RDP session reconnection
+            type: opensearch-query
+            value: 'data_type:"windows:evtx:record" AND event_identifier:25 AND source_name:"Microsoft-Windows-TerminalServices-LocalSessionManager"'
+          - description: RDP session disconnect
+            type: opensearch-query
+            value: 'data_type:"windows:evtx:record" AND event_identifier:40 AND source_name:"Microsoft-Windows-TerminalServices-LocalSessionManager"'

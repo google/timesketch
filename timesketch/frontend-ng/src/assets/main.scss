@@ -148,8 +148,16 @@ html {
   background-color: #f5f5f5;
 }
 
+.light-highlight-selected {
+  background-color: #e6e6e6;
+}
+
 .dark-highlight {
   background-color: #303030;
+}
+
+.dark-highlight-selected {
+  background-color: #383838;
 }
 
 .light-info-card {
@@ -182,4 +190,11 @@ html {
 
 .v-card--link:before {
   background: none;
+}
+
+.notransition {
+  -webkit-transition: none !important;
+  -moz-transition: none !important;
+  -o-transition: none !important;
+  transition: none !important;
 }

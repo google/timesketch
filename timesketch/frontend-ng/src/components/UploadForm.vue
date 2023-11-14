@@ -38,8 +38,9 @@ limitations under the License.
         </v-btn>
       </template>
       <v-card>
-        <v-container class="px-8">
-          <v-card-title class="text-h5"> {{ title }} </v-card-title>
+        <v-container class="pa-4">
+          <h3>{{ title }}</h3>
+          <br />
 
           <div v-if="error.length > 0">
             <v-alert outlined type="error" v-for="(errorMessage, index) in error" :key="index">
@@ -129,7 +130,7 @@ limitations under the License.
 
           <div v-else>
             <v-file-input
-              label="Plaso/CSV/JSONL file"
+              label="Select file (Plaso/JSONL/CSV)"
               outlined
               dense
               clearable
@@ -145,17 +146,8 @@ limitations under the License.
         </v-container>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn
-            color="primary"
-            text
-            @click="
-              clearFormData()
-              dialog = false
-            "
-          >
-            Cancel
-          </v-btn>
-          <v-btn v-if="fileName" color="primary" text @click="clearFormData()"> Select another file </v-btn>
+          <v-btn text @click="dialog = false"> Cancel </v-btn>
+          <v-btn v-if="fileName" text @click="clearFormData()"> Select another file </v-btn>
           <v-btn color="primary" text @click="submitForm()" v-if="!(error.length > 0 || !fileName)"> Submit </v-btn>
         </v-card-actions>
       </v-card>
@@ -171,7 +163,7 @@ export default {
     return {
       headersString: '', // headers string not formatted (used when changing CSV separator)
       valuesString: [],
-      title: 'Upload your Plaso/CSV/JSONL file',
+      title: 'Upload Plaso/JSONL/CSV file',
       /**
        *  headersMapping: list of object containing the:
        * (i) target header to be modified [key=target],
@@ -182,6 +174,7 @@ export default {
       mandatoryHeaders: [
         { name: 'datetime', columnsSelected: [] },
         { name: 'message', columnsSelected: [] },
+        { name: 'timestamp_desc', columnsSelected: [] },
       ],
       form: {
         name: '',
@@ -426,7 +419,7 @@ export default {
       this.headersString = ''
       this.valuesString = []
       this.uploadedFiles = []
-      this.title = 'Upload your Plaso/JSONL/CSV file'
+      this.title = 'Upload Plaso/JSONL/CSV file'
       this.error = []
       this.percentCompleted = 0
 
@@ -490,7 +483,7 @@ export default {
         }
       }
       if (this.error.length === 0) {
-        this.title = 'Submit your file to Timesketch'
+        this.title = 'Select file to upload'
       } else {
         this.title = 'Almost there... Map the ' + this.missingHeaders.length + ' missing headers.'
       }
@@ -551,7 +544,7 @@ export default {
         if (e.target.readyState === FileReader.DONE) {
           /* 3a. Extract the headers from the CSV */
           let data = e.target.result
-          let rows = data.split('\n')
+          let rows = data.split('\n').filter((jsonlLine) => jsonlLine !== '')
           let i = Math.min(vueJS.staticNumberRows, rows.length)
           try {
             vueJS.headersString = JSON.parse(rows[0])

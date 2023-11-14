@@ -104,11 +104,6 @@ def describe_query(search_obj):
     help="Toggle header information (default is to show)",
 )
 @click.option(
-    "--output-format",
-    "output",
-    help="Set output format [csv,tabular,text,json] (overrides global setting).",
-)
-@click.option(
     "--return-fields",
     "return_fields",
     default="",
@@ -147,7 +142,6 @@ def search_group(
     time_ranges,
     labels,
     header,
-    output,
     return_fields,
     order,
     limit,
@@ -160,9 +154,6 @@ def search_group(
     output_format = ctx.obj.output_format
     search_obj = search.Search(sketch=sketch)
 
-    if output:
-        output_format = output
-
     new_line = True
     if output_format == "csv":
         new_line = False
@@ -170,6 +161,8 @@ def search_group(
     # Construct query from saved search and return early.
     if saved_search:
         search_obj.from_saved(saved_search)
+        if limit:
+            search_obj.max_entries = limit
         if describe:
             describe_query(search_obj)
             return

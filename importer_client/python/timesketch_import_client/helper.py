@@ -94,7 +94,7 @@ class ImportHelper:
 
         if not all([isinstance(x, dict) for x in config.values()]):
             raise ValueError(
-                "The config needs to a dict that contains other dict " "attributes."
+                "The config needs to a dict that contains other dict attributes."
             )
 
         self._data.update(config)

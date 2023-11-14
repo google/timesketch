@@ -1,0 +1,11 @@
+display_name: Who has used Remote Desktop (RDP) to login to the system?
+description: |
+  Remote Desktop Protocol (RDP) is a protocol developed by Microsoft which provides a user with a graphical
+  interface to connect to another computer over a network connection. The user employs RDP client software for this
+  purpose, while the other computer must run RDP server software. (based on: https://en.wikipedia.org/wiki/Remote_Desktop_Protocol)
+type: question
+id: Q0001
+tags:
+  - windows
+parent_ids:
+  - F0001

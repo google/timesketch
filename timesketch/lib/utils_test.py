@@ -25,7 +25,6 @@ from timesketch.lib.utils import read_and_validate_csv
 from timesketch.lib.utils import check_mapping_errors
 from timesketch.lib.utils import _validate_csv_fields
 from timesketch.lib.utils import rename_jsonl_headers
-from timesketch.lib.errors import DataIngestionError
 
 
 TEST_CSV = "test_tools/test_events/sigma_events.csv"
@@ -177,14 +176,61 @@ class TestUtils(BaseTest):
             # Call next to work around lazy generators.
             next(_validate_csv_fields(mandatory_fields, df_02))
 
-    def test_datetime_parsing_csv_file(self):
+    def test_missing_timestamp_csv_file(self):
         """Test for parsing datetime values in CSV file"""
 
-        with self.assertRaises(DataIngestionError):
-            # Call next to work around lazy generators.
+        # Test that a timestamp is generated if missing.
+
+        expected_output = {
+            "message": "No timestamp",
+            "datetime": "2022-07-24T19:01:01+00:00",
+            "timestamp_desc": "Time Logged",
+            "data_type": "This event has no timestamp",
+            "timestamp": 1658689261000000,
+        }
+        self.assertDictEqual(
             next(
-                read_and_validate_csv("test_tools/test_events/validate_date_events.csv")
+                read_and_validate_csv(
+                    "test_tools/test_events/validate_date_events_missing_timestamp.csv"
+                )
+            ),
+            expected_output,
+        )
+
+    def test_timestamp_is_ISOformat(self):
+        """Test that timestamp values in CSV file are not altered"""
+
+        # Make sure timestamp is processed correctly, and the format is not altered
+        expected_outputs = [
+            {
+                "message": "Checking timestamp conversion",
+                "timestamp": 1331698658000000,
+                "datetime": "2012-03-14T04:17:38+00:00",
+                "timestamp_desc": "Time Logged",
+                "data_type": "This event has timestamp",
+            },
+            {
+                "message": "Checking timestamp conversion",
+                "timestamp": 1658689261000000,
+                "datetime": "2022-07-24T19:01:01+00:00",
+                "timestamp_desc": "Time Logged",
+                "data_type": "This event has timestamp",
+            },
+            {
+                "message": "Make sure message is same",
+                "timestamp": 1437789661000000,
+                "datetime": "2015-07-25T02:01:01+00:00",
+                "timestamp_desc": "Logging",
+                "data_type": "This data_type should stay the same",
+            },
+        ]
+        results = iter(
+            read_and_validate_csv(
+                "test_tools/test_events/validate_timestamp_conversion.csv"
             )
+        )
+        for output in expected_outputs:
+            self.assertDictEqual(next(results), output)
 
     def test_invalid_JSONL_file(self):
         """Test for JSONL with missing keys in the dictionary wrt headers mapping"""

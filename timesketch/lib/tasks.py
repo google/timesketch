@@ -24,6 +24,7 @@ import re
 import codecs
 import io
 import json
+from hashlib import sha1
 import six
 import yaml
 
@@ -329,6 +330,7 @@ def build_sketch_analysis_pipeline(
     user_id,
     analyzer_names=None,
     analyzer_kwargs=None,
+    analyzer_force_run=False,
     timeline_id=None,
 ):
     """Build a pipeline for sketch analysis.
@@ -345,6 +347,7 @@ def build_sketch_analysis_pipeline(
         user_id (int): The ID of the user who started the analyzer.
         analyzer_names (list): List of analyzers to run.
         analyzer_kwargs (dict): Arguments to the analyzers.
+        analyzer_force_run (bool): If true then force the analyzer to run.
         timeline_id (int): Optional int of the timeline to run the analyzer on.
 
     Returns:
@@ -399,6 +402,30 @@ def build_sketch_analysis_pipeline(
         if not kwargs_list:
             kwargs_list = [base_kwargs]
 
+        # Create a hash of the analyzer arguments to compare with later analyzer
+        # executions if the analyzer arguments / config changed.
+        kwargs_list_hash = sha1(
+            json.dumps(kwargs_list, sort_keys=True).encode("utf-8")
+        ).hexdigest()
+
+        if not analyzer_force_run:
+            skip_analysis = False
+            for past_analysis in timeline.analysis:
+                if (
+                    (past_analysis.analyzer_name == analyzer_name)
+                    and (past_analysis.get_status.status == "DONE")
+                    and (past_analysis.created_at > timeline.updated_at)
+                ):
+                    for attribute in past_analysis.get_attributes:
+                        if attribute.value == kwargs_list_hash:
+                            skip_analysis = True
+                            break
+                    if skip_analysis:
+                        break
+
+            if skip_analysis:
+                continue
+
         for kwargs in kwargs_list:
             analysis = Analysis(
                 name=analyzer_name,
@@ -409,6 +436,7 @@ def build_sketch_analysis_pipeline(
                 sketch=sketch,
                 timeline=timeline,
             )
+            analysis.add_attribute(name="kwargs_hash", value=kwargs_list_hash)
             analysis.set_status("PENDING")
             analysis_session.analyses.append(analysis)
             db_session.add(analysis)
@@ -425,8 +453,9 @@ def build_sketch_analysis_pipeline(
             )
 
     # Commit the analysis session to the database.
-    db_session.add(analysis_session)
-    db_session.commit()
+    if len(analysis_session.analyses) > 0:
+        db_session.add(analysis_session)
+        db_session.commit()
 
     if current_app.config.get("ENABLE_EMAIL_NOTIFICATIONS"):
         tasks.append(run_email_result_task.s(sketch_id))
@@ -714,6 +743,10 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
     )
     if opensearch_flush_interval:
         cmd.extend(["--flush_interval", str(opensearch_flush_interval)])
+
+    plaso_formatters_file_path = current_app.config.get("PLASO_FORMATTERS", "")
+    if plaso_formatters_file_path:
+        cmd.extend(["--custom_formatter_definitions", plaso_formatters_file_path])
 
     # Run psort.py
     try:

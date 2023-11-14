@@ -11,7 +11,7 @@ It is possible to install Timesketch without docker but we strongly encourage us
 **You will need**
 
 - Machine with Ubuntu 20.04 installed.
-- At least 8GB RAM, but more the better.
+- At least 8GB RAM, but the more the better.
 - Optional: Domain name registered and configure for the machine if you want to setup SSL for the webserver.
 
 **This guide setup the following services**
@@ -29,10 +29,10 @@ It is possible to install Timesketch without docker but we strongly encourage us
 
 Follow the official installation instructions to [install Docker Engine on Ubuntu](https://docs.docker.com/engine/install/ubuntu/).
 
-Make sure you install docker-compose as well
+Make sure you install docker-compose-plugin as well
 
 ```shell
-sudo apt install docker-compose
+sudo apt install docker-compose-plugin
 ```
 
 ### 2. Start the installation
@@ -67,13 +67,13 @@ sudo ~/deploy_timesketch.sh
 
 ```shell
 cd timesketch
-sudo docker-compose up -d
+sudo docker compose up -d
 ```
 
 ### Create the first user
 
 ```shell
-sudo docker-compose exec timesketch-web tsctl create-user <USERNAME>
+sudo docker compose exec timesketch-web tsctl create-user <USERNAME>
 ```
 
 ### 4. Enable TLS (optional)
@@ -140,8 +140,8 @@ nginx:
 Restart the system:
 
 ```shell
-sudo docker-compose down
-sudo docker-compose up -d
+sudo docker compose down
+sudo docker compose up -d
 ```
 
 Congratulations, your Timesketch system is operational and ready to use.

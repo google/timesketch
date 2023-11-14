@@ -35,9 +35,9 @@ const defaultState = (currentUser) => {
     currentSearchNode: null,
     currentUser: currentUser,
     activeContext: {
-      scenario: null,
-      facet: null,
-      question: null
+      scenario: {},
+      facet: {},
+      question: {}
     },
     snackbar: {
       active: false,
@@ -46,6 +46,9 @@ const defaultState = (currentUser) => {
       timeout: -1
     },
     contextLinkConf: {},
+    sketchAnalyzerList: {},
+    activeAnalyses: [],
+    analyzerResults: [],
   }
 }
 
@@ -96,9 +99,9 @@ export default new Vuex.Store({
     },
     CLEAR_ACTIVE_CONTEXT(state) {
       let payload = {
-        scenario: null,
-        facet: null,
-        question: null
+        scenario: {},
+        facet: {},
+        question: {}
       }
       Vue.set(state, 'activeContext', payload)
     },
@@ -119,6 +122,22 @@ export default new Vuex.Store({
     },
     SET_CONTEXT_LINKS(state, payload) {
       Vue.set(state, 'contextLinkConf', payload)
+    },
+    SET_ANALYZER_LIST(state, payload) {
+      Vue.set(state, 'sketchAnalyzerList', payload)
+    },
+    SET_ACTIVE_ANALYSES(state, payload) {
+      Vue.set(state, 'activeAnalyses', payload)
+    },
+    ADD_ACTIVE_ANALYSES(state, payload) {
+      const freshActiveAnalyses = [
+        ...state.activeAnalyses,
+        ...payload,
+      ]
+      Vue.set(state, 'activeAnalyses', freshActiveAnalyses)
+    },
+    SET_ANALYZER_RESULTS(state, payload) {
+      Vue.set(state, 'analyzerResults', payload)
     },
   },
   actions: {
@@ -263,6 +282,31 @@ export default new Vuex.Store({
       .catch((e) => {
         console.error(e)
       })
+    },
+    updateAnalyzerList(context, sketchId) {
+      if (!sketchId) {
+        sketchId = context.state.sketch.id
+      }
+      ApiClient.getAnalyzers(sketchId).then((response) => {
+        let analyzerList = {}
+        if (response.data !== undefined) {
+          response.data.forEach((analyzer) => {
+            analyzerList[analyzer.name] = analyzer
+          })
+        }
+        context.commit('SET_ANALYZER_LIST', analyzerList)
+      }).catch((e) => {
+        console.log(e)
+      })
+    },
+    updateActiveAnalyses(context, activeAnalyses) {
+      context.commit('SET_ACTIVE_ANALYSES', activeAnalyses);
+    },
+    addActiveAnalyses(context, activeAnalyses) {
+      context.commit('ADD_ACTIVE_ANALYSES', activeAnalyses);
+    },
+    updateAnalyzerResults(context, analyzerResults) {
+      context.commit('SET_ANALYZER_RESULTS', analyzerResults);
     },
   }
 })

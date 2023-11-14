@@ -17,7 +17,7 @@ import axios from 'axios'
 import EventBus from '../main'
 
 const RestApiClient = axios.create({
-  baseURL: process.env.NODE_ENV === 'development' ? '/api/v1' : '/v2/api/v1',
+  baseURL: '/api/v1',
   headers: {
     common: {
       'X-CSRFToken': document.getElementsByTagName('meta')[0]['content'],
@@ -26,7 +26,7 @@ const RestApiClient = axios.create({
 })
 
 const RestApiBlobClient = axios.create({
-  baseURL: process.env.NODE_ENV === 'development' ? '/api/v1' : '/v2/api/v1',
+  baseURL: '/api/v1',
   responseType: 'blob',
   headers: {
     common: {
@@ -114,7 +114,7 @@ export default {
       description: description,
       color: color,
     }
-    return RestApiClient.post('/sketches/' + sketchId + /timelines/ + timelineId + '/', formData)
+    return RestApiClient.post('/sketches/' + sketchId + '/timelines/' + timelineId + '/', formData)
   },
   saveSketchSummary(sketchId, name, description) {
     let formData = {
@@ -124,7 +124,7 @@ export default {
     return RestApiClient.post('/sketches/' + sketchId + '/', formData)
   },
   deleteSketchTimeline(sketchId, timelineId) {
-    return RestApiClient.delete('/sketches/' + sketchId + /timelines/ + timelineId + '/')
+    return RestApiClient.delete('/sketches/' + sketchId + '/timelines/' + timelineId + '/')
   },
   createEvent(sketchId, datetime, message, timestampDesc, attributes, config) {
     let formData = {
@@ -163,6 +163,13 @@ export default {
     }
     return RestApiClient.post('/sketches/' + sketchId + '/event/tagging/', formData)
   },
+  untagEvents(sketchId, events, tags) {
+    let formData = {
+      tags_to_remove: tags,
+      events: events,
+    }
+    return RestApiClient.post('/sketches/' + sketchId + '/event/untag/', formData)
+  },
   updateEventAnnotation(sketchId, annotationType, annotation, events, currentSearchNode) {
     let formData = {
       annotation: annotation,
@@ -196,17 +203,17 @@ export default {
       title: title,
       content: content,
     }
-    return RestApiClient.post('/sketches/' + sketchId + /stories/, formData)
+    return RestApiClient.post('/sketches/' + sketchId + '/stories/', formData)
   },
   updateStory(title, content, sketchId, storyId) {
     let formData = {
       title: title,
       content: content,
     }
-    return RestApiClient.post('/sketches/' + sketchId + /stories/ + storyId + '/', formData)
+    return RestApiClient.post('/sketches/' + sketchId + '/stories/' + storyId + '/', formData)
   },
   deleteStory(sketchId, storyId) {
-    return RestApiClient.delete('/sketches/' + sketchId + /stories/ + storyId + '/')
+    return RestApiClient.delete('/sketches/' + sketchId + '/stories/' + storyId + '/')
   },
   // Saved views
   getView(sketchId, viewId) {
@@ -219,14 +226,14 @@ export default {
       filter: queryFilter,
       dsl: '',
     }
-    return RestApiClient.post('/sketches/' + sketchId + /views/, formData)
+    return RestApiClient.post('/sketches/' + sketchId + '/views/', formData)
   },
   updateView(sketchId, viewId, queryString, queryFilter) {
     let formData = {
       query: queryString,
       filter: queryFilter,
     }
-    return RestApiClient.post('/sketches/' + sketchId + /views/ + viewId + '/', formData)
+    return RestApiClient.post('/sketches/' + sketchId + '/views/' + viewId + '/', formData)
   },
   deleteView(sketchId, viewId) {
     return RestApiClient.delete('/sketches/' + sketchId + '/views/' + viewId + '/')
@@ -281,37 +288,43 @@ export default {
       users: usersToAdd,
       groups: groupsToAdd,
     }
-    return RestApiClient.post('/sketches/' + sketchId + /collaborators/, formData)
+    return RestApiClient.post('/sketches/' + sketchId + '/collaborators/', formData)
   },
   revokeSketchAccess(sketchId, usersToRemove, groupsToRemove) {
     let formData = {
       remove_users: usersToRemove,
       remove_groups: groupsToRemove,
     }
-    return RestApiClient.post('/sketches/' + sketchId + /collaborators/, formData)
+    return RestApiClient.post('/sketches/' + sketchId + '/collaborators/', formData)
   },
   setSketchPublicAccess(sketchId, isPublic) {
     let formData = {
       public: isPublic,
     }
-    return RestApiClient.post('/sketches/' + sketchId + /collaborators/, formData)
+    return RestApiClient.post('/sketches/' + sketchId + '/collaborators/', formData)
   },
 
   getAnalyzers(sketchId) {
     return RestApiClient.get('/sketches/' + sketchId + '/analyzer/')
   },
-  runAnalyzers(sketchId, timelineIds, analyzers) {
+  runAnalyzers(sketchId, timelineIds, analyzers, forceRun = false) {
     let formData = {
       timeline_ids: timelineIds,
       analyzer_names: analyzers,
+      analyzer_force_run: forceRun,
     }
-    return RestApiClient.post('/sketches/' + sketchId + /analyzer/, formData)
+    return RestApiClient.post('/sketches/' + sketchId + '/analyzer/', formData)
   },
   getAnalyzerSession(sketchId, sessionId) {
     return RestApiClient.get('/sketches/' + sketchId + '/analyzer/sessions/' + sessionId + '/')
   },
   getActiveAnalyzerSessions(sketchId) {
-    return RestApiClient.get('/sketches/' + sketchId + '/analyzer/sessions/active/')
+    let params = {
+      params: {
+        include_details: "true",
+      },
+    }
+    return RestApiClient.get('/sketches/' + sketchId + '/analyzer/sessions/active/', params)
   },
   getLoggedInUser() {
     return RestApiClient.get('/users/me/')
@@ -330,7 +343,7 @@ export default {
     if (timelineIds.length) {
       formData['timeline_ids'] = timelineIds
     }
-    return RestApiClient.post('/sketches/' + sketchId + /graph/, formData)
+    return RestApiClient.post('/sketches/' + sketchId + '/graph/', formData)
   },
   getGraphPluginList() {
     return RestApiClient.get('/graphs/')
@@ -340,10 +353,10 @@ export default {
       name: name,
       elements: elements,
     }
-    return RestApiClient.post('/sketches/' + sketchId + /graphs/, formData)
+    return RestApiClient.post('/sketches/' + sketchId + '/graphs/', formData)
   },
   getSavedGraphList(sketchId) {
-    return RestApiClient.get('/sketches/' + sketchId + /graphs/)
+    return RestApiClient.get('/sketches/' + sketchId + '/graphs/')
   },
   getSavedGraph(sketchId, graphId) {
     let params = {
@@ -351,15 +364,14 @@ export default {
         format: 'cytoscape',
       },
     }
-    return RestApiClient.get('/sketches/' + sketchId + /graphs/ + graphId + '/', params)
+    return RestApiClient.get('/sketches/' + sketchId + '/graphs/' + graphId + '/', params)
   },
   getSearchHistory(sketchId) {
-    return RestApiClient.get('/sketches/' + sketchId + /searchhistory/)
+    return RestApiClient.get('/sketches/' + sketchId + '/searchhistory/')
   },
   getSearchHistoryTree(sketchId) {
-    return RestApiClient.get('/sketches/' + sketchId + /searchhistorytree/)
+    return RestApiClient.get('/sketches/' + sketchId + '/searchhistorytree/')
   },
-  // SigmaRule (new rules file based)
   getSigmaRuleList() {
     return RestApiClient.get('/sigmarules/')
   },
@@ -398,6 +410,12 @@ export default {
   getContextLinkConfig() {
     return RestApiClient.get('/contextlinks/')
   },
+  getUnfurlGraph(url) {
+    let formData = {
+      url: url,
+    }
+    return RestApiClient.post('/unfurl/', formData)
+  },
   getScenarioTemplates() {
     return RestApiClient.get('/scenarios/')
   },
@@ -410,8 +428,8 @@ export default {
     }
     return RestApiClient.get('/sketches/' + sketchId + '/scenarios/', params)
   },
-  addScenario(sketchId, scenarioName, displayName) {
-    let formData = { scenario_name: scenarioName, display_name: displayName }
+  addScenario(sketchId, scenarioId, displayName) {
+    let formData = { scenario_id: scenarioId, display_name: displayName }
     return RestApiClient.post('/sketches/' + sketchId + '/scenarios/', formData)
   },
   renameScenario(sketchId, scenarioId, scenarioName) {

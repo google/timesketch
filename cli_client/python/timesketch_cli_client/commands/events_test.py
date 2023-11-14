@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Tests for timelines command."""
+"""Tests for events command."""
 
 import unittest
 import mock
@@ -19,6 +19,7 @@ import mock
 from click.testing import CliRunner
 
 from timesketch_api_client import test_lib as api_test_lib
+
 
 from .. import test_lib
 from .events import events_group
@@ -81,6 +82,8 @@ class EventsTest(unittest.TestCase):
         result = runner.invoke(
             events_group,
             [
+                "--output-format",
+                "json",
                 "annotate",
                 "--event-id",
                 "1",
@@ -88,8 +91,6 @@ class EventsTest(unittest.TestCase):
                 "1",
                 "--tag",
                 "test",
-                "--output-format",
-                "json",
             ],
             obj=self.ctx,
         )
@@ -125,6 +126,8 @@ class EventsTest(unittest.TestCase):
         result = runner.invoke(
             events_group,
             [
+                "--output-format",
+                "json",
                 "annotate",
                 "--event-id",
                 "1",
@@ -132,11 +135,53 @@ class EventsTest(unittest.TestCase):
                 "test1,test2",
                 "--timeline-id",
                 "1",
-                "--output-format",
-                "json",
             ],
             obj=self.ctx,
         )
 
         assert "No such event" in result.output
         assert 1 is result.exit_code
+
+    def test_failed_add_event(self):
+        """Test to add an event to a sketch with an error."""
+        runner = CliRunner()
+        result = runner.invoke(events_group, ["add"], obj=self.ctx)
+        assert "Error: Missing option '--message'" in result.output
+
+    def test_add_event(self):
+        """Test to add an event to a sketch."""
+        runner = CliRunner()
+        result = runner.invoke(
+            events_group,
+            [
+                "add",
+                "--message",
+                "test message",
+                "--date",
+                "2023-03-04T11:31:12",
+                "--timestamp-desc",
+                "test",
+            ],
+            obj=self.ctx,
+        )
+        assert "Event added to sketch: test" in result.output
+
+    def text_no_output_format_defined_in_config(self):
+        """Test to add an event to a sketch."""
+
+        self.ctx = test_lib.get_cli_context_no_output()
+        runner = CliRunner()
+        result = runner.invoke(
+            events_group,
+            [
+                "add",
+                "--message",
+                "test message",
+                "--date",
+                "2023-03-04T11:31:12",
+                "--timestamp-desc",
+                "test",
+            ],
+            obj=self.ctx,
+        )
+        assert "Event added to sketch: test" in result.output

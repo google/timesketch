@@ -15,6 +15,13 @@ limitations under the License.
 -->
 <template>
   <div>
+    <v-dialog v-model="exportDialog" width="700">
+      <v-card flat class="pa-5">
+        <v-progress-circular indeterminate size="20" width="1"></v-progress-circular>
+        <span class="ml-5">Exporting {{ totalHits }} events</span>
+      </v-card>
+    </v-dialog>
+
     <div v-if="!eventList.objects.length && !searchInProgress" class="ml-3">
       <p>
         Your search <span v-if="currentQueryString">"{{ currentQueryString }}"</span> did not match any events.
@@ -23,6 +30,23 @@ limitations under the License.
       <li>Try different keywords.</li>
       <li>Try more general keywords.</li>
       <li>Try fewer keywords.</li>
+    </div>
+
+    <div v-if="highlightEvent" class="mt-4">
+      <strong>Showing context for event:</strong>
+      <v-sheet class="d-flex flex-wrap mt-1 mb-5">
+        <v-sheet class="flex-1-0">
+          <span style="width: 200px" v-bind:style="getTimelineColor(highlightEvent)" class="datetime-table-cell pa-2">
+            {{ highlightEvent._source.timestamp | formatTimestamp | toISO8601 }}
+          </span>
+        </v-sheet>
+
+        <v-sheet class="">
+          <span class="datetime-table-cell pa-2">
+            {{ highlightEvent._source.message }}
+          </span>
+        </v-sheet>
+      </v-sheet>
     </div>
     <div v-if="eventList.objects.length || searchInProgress">
       <v-data-table
@@ -37,7 +61,10 @@ limitations under the License.
         loading-text="Searching... Please wait"
         show-select
         disable-filtering
-        disable-sort
+        must-sort
+        :sort-desc.sync="sortOrderAsc"
+        @update:sort-desc="sortEvents"
+        sort-by="_source.timestamp"
         :hide-default-footer="totalHits < 11 || disablePagination"
         :expanded="expandedRows"
         :dense="displayOptions.isCompact"
@@ -72,7 +99,7 @@ limitations under the License.
                   <v-card-actions>
                     <v-spacer></v-spacer>
                     <v-btn text @click="saveSearchMenu = false"> Cancel </v-btn>
-                    <v-btn color="primary" depressed @click="saveSearch" :disabled="!saveSearchFormName"> Save </v-btn>
+                    <v-btn text color="primary" @click="saveSearch" :disabled="!saveSearchFormName"> Save </v-btn>
                   </v-card-actions>
                 </v-card>
               </v-dialog>
@@ -119,13 +146,20 @@ limitations under the License.
 
                   <v-card-actions>
                     <v-spacer></v-spacer>
-                    <v-btn color="primary" text @click="selectedFields = [{ field: 'message', type: 'text' }]">
-                      Reset
-                    </v-btn>
-                    <v-btn color="primary" text @click="columnDialog = false"> Close </v-btn>
+                    <v-btn text @click="selectedFields = [{ field: 'message', type: 'text' }]"> Reset </v-btn>
+                    <v-btn text color="primary" @click="columnDialog = false"> Set columns </v-btn>
                   </v-card-actions>
                 </v-card>
               </v-dialog>
+
+              <v-tooltip top open-delay="500">
+                <template v-slot:activator="{ on }">
+                  <v-btn v-on="on" icon @click="exportSearchResult()">
+                    <v-icon>mdi-download</v-icon>
+                  </v-btn>
+                </template>
+                <span>Download current view as csv</span>
+              </v-tooltip>
 
               <v-menu v-if="!disableSettings" offset-y :close-on-content-click="false">
                 <template v-slot:activator="{ on, attrs }">
@@ -267,9 +301,9 @@ limitations under the License.
                 v-bind:style="getTimeBubbleColor(item)"
               ></div>
               <div class="ts-time-bubble ts-time-bubble-color" v-bind:style="getTimeBubbleColor(item)">
-                <h5>
+                <div class="ts-time-bubble-text">
                   <b>{{ item.deltaDays | compactNumber }}</b> days
-                </h5>
+                </div>
               </div>
               <div
                 class="ts-time-bubble-vertical-line ts-time-bubble-vertical-line-color"
@@ -290,7 +324,7 @@ limitations under the License.
           <ts-event-tag-menu :event="item"></ts-event-tag-menu>
 
           <!-- Action sub-menu -->
-          <ts-event-action-menu :event="item"></ts-event-action-menu>
+          <ts-event-action-menu :event="item" @showContextWindow="showContextWindow($event)"></ts-event-action-menu>
         </template>
 
         <!-- Datetime field with action buttons -->
@@ -302,46 +336,42 @@ limitations under the License.
 
         <!-- Generic slot for any field type. Adds tags and emojis to the first column. -->
         <template v-for="(field, index) in headers" v-slot:[getFieldName(field.text)]="{ item }">
-          <span
+          <div
             :key="field.text"
             class="ts-event-field-container"
             style="cursor: pointer"
             @click="toggleDetailedEvent(item)"
           >
-            <span :class="{ 'ts-event-field-ellipsis': field.text === 'message' }">
+            <span
+              :class="{
+                'ts-event-field-ellipsis': field.text === 'message',
+                'ts-event-field-highlight': item._id === highlightEventId,
+              }"
+            >
               <!-- Tags -->
-              <span v-if="displayOptions.showTags && index === 3">
-                <v-chip
-                  small
-                  class="mr-2"
-                  v-for="tag in item._source.tag"
-                  :key="tag"
-                  :color="tagColor(tag).color"
-                  :text-color="tagColor(tag).textColor"
-                >
-                  <v-icon v-if="tag in tagConfig" left small>{{ tagConfig[tag].label }}</v-icon>
-                  {{ tag }}</v-chip
-                >
-                <span v-for="label in item._source.label" :key="label">
-                  <v-chip v-if="!label.startsWith('__ts')" small outlined class="mr-2">
-                    {{ label }}
-                  </v-chip>
-                </span>
+              <span
+                v-if="
+                  displayOptions.showTags &&
+                  index === 3 &&
+                  ('tag' in item._source ? item._source.tag.length > 0 : false)
+                "
+              >
+                <ts-event-tags :item="item" :tagConfig="tagConfig" :showDetails="item.showDetails"></ts-event-tags>
               </span>
               <!-- Emojis -->
-              <span v-if="displayOptions.showEmojis && index === 0">
+              <span v-if="displayOptions.showEmojis && index === 3">
                 <span
                   class="mr-2"
                   v-for="emoji in item._source.__ts_emojis"
                   :key="emoji"
-                  v-html="emoji"
+                  v-html="emoji + ';'"
                   :title="meta.emojis[emoji]"
-                  >{{ emoji }}
+                  >
                 </span>
               </span>
               <span>{{ item._source[field.text] }}</span>
             </span>
-          </span>
+          </div>
         </template>
 
         <!-- Timeline name field -->
@@ -355,9 +385,47 @@ limitations under the License.
 
         <!-- Comment field -->
         <template v-slot:item._source.comment="{ item }">
-          <v-badge :offset-y="10" bordered v-if="item._source.comment.length" :content="item._source.comment.length">
-            <v-icon small @click="toggleDetailedEvent(item)"> mdi-comment-text-multiple-outline </v-icon>
-          </v-badge>
+          <v-tooltip top open-delay="500">
+            <template v-slot:activator="{ on }">
+              <div v-on="on" class="d-inline-block">
+                <v-btn icon small @click="toggleDetailedEvent(item)" v-if="item._source.comment.length">
+                  <v-badge :offset-y="10" :offset-x="10" bordered :content="item._source.comment.length">
+                    <v-icon small> mdi-comment-text-multiple-outline </v-icon>
+                  </v-badge>
+                </v-btn>
+              </div>
+            </template>
+            <span v-if="!item['showDetails']">Open event &amp; comments</span>
+            <span v-if="item['showDetails']">Close event &amp; comments</span>
+          </v-tooltip>
+          <v-tooltip
+            v-if="item['showDetails'] && !item._source.comment.length && !item.showComments"
+            top
+            open-delay="500"
+          >
+            <template v-slot:activator="{ on }">
+              <div v-on="on" class="d-inline-block">
+                <v-btn icon small @click="newComment(item)">
+                  <v-icon> mdi-comment-plus-outline </v-icon>
+                </v-btn>
+              </div>
+            </template>
+            <span>Add a comment</span>
+          </v-tooltip>
+          <v-tooltip
+            v-if="item['showDetails'] && !item._source.comment.length && item.showComments"
+            top
+            open-delay="500"
+          >
+            <template v-slot:activator="{ on }">
+              <div v-on="on" class="d-inline-block">
+                <v-btn icon small @click="item.showComments = false">
+                  <v-icon> mdi-comment-remove-outline </v-icon>
+                </v-btn>
+              </div>
+            </template>
+            <span>Close comments</span>
+          </v-tooltip>
         </template>
       </v-data-table>
     </div>
@@ -372,6 +440,7 @@ import TsBarChart from './BarChart'
 import TsEventDetail from './EventDetail'
 import TsEventTagMenu from './EventTagMenu.vue'
 import TsEventActionMenu from './EventActionMenu.vue'
+import TsEventTags from './EventTags.vue'
 
 const defaultQueryFilter = () => {
   return {
@@ -400,6 +469,7 @@ export default {
     TsEventDetail,
     TsEventTagMenu,
     TsEventActionMenu,
+    TsEventTags,
   },
   props: {
     queryRequest: {
@@ -430,6 +500,10 @@ export default {
       type: Boolean,
       default: false,
     },
+    highlightEvent: {
+      type: Object,
+      default: () => {},
+    },
   },
   data() {
     return {
@@ -456,6 +530,7 @@ export default {
         suspicious: { color: 'orange', textColor: 'white', label: 'mdi-help-circle-outline' },
       },
       searchInProgress: false,
+      exportDialog: false,
       currentPage: 1,
       eventList: {
         meta: {},
@@ -473,6 +548,7 @@ export default {
       },
       showHistogram: false,
       branchParent: null,
+      sortOrderAsc: true,
     }
   },
   computed: {
@@ -481,6 +557,12 @@ export default {
     },
     meta() {
       return this.$store.state.meta
+    },
+    highlightEventId() {
+      if (this.highlightEvent) {
+        return this.highlightEvent._id
+      }
+      return null
     },
     totalHits() {
       if (this.eventList.meta.es_total_count > 0 && this.eventList.meta.es_total_count_complete === 0) {
@@ -515,20 +597,24 @@ export default {
         {
           text: '',
           value: 'data-table-select',
+          sortable: false,
         },
         {
           value: 'actions',
           width: '105',
+          sortable: false,
         },
         {
-          text: 'Datetime (UTC)',
+          text: 'Datetime (UTC) ',
           align: 'start',
           value: '_source.timestamp',
           width: '200',
+          sortable: true,
         },
         {
           value: '_source.comment',
           width: '40',
+          sortable: false,
         },
       ]
       let extraHeaders = []
@@ -537,6 +623,7 @@ export default {
           text: field.field,
           align: 'start',
           value: '_source.' + field.field,
+          sortable: false,
         }
         if (field.field === 'message') {
           header.width = '100%'
@@ -554,17 +641,23 @@ export default {
         baseHeaders.push({
           value: 'timeline_name',
           align: 'end',
+          sortable: false,
         })
       }
       return baseHeaders
     },
+    activeContext() {
+      return this.$store.state.activeContext
+    },
   },
   methods: {
-    tagColor: function (tag) {
-      if (this.tagConfig[tag]) {
-        return this.tagConfig[tag]
+    sortEvents(sortAsc) {
+      if (sortAsc) {
+        this.currentQueryFilter.order = 'asc'
+      } else {
+        this.currentQueryFilter.order = 'desc'
       }
-      return 'lightgrey'
+      this.search(true, true, false)
     },
     getFieldName: function (field) {
       return 'item._source.' + field
@@ -575,6 +668,7 @@ export default {
         if (row.showDetails) {
           row['showDetails'] = false
           this.expandedRows.splice(index, 1)
+          this.$set(row, 'showComments', false)
         } else {
           row['showDetails'] = true
           this.expandedRows.splice(index, 1)
@@ -589,6 +683,14 @@ export default {
       } else {
         row['showDetails'] = true
         this.expandedRows.push(row)
+      }
+    },
+    newComment: function (row) {
+      if (row.showDetails) {
+        this.$set(row, 'showComments', true)
+      } else {
+        this.$set(row, 'showComments', true)
+        this.toggleDetailedEvent(row)
       }
     },
     addTimeBubbles: function () {
@@ -649,10 +751,36 @@ export default {
         'background-color': backgroundColor,
       }
     },
+    getAllIndices: function () {
+      let allIndices = []
+      this.sketch.active_timelines.forEach((timeline) => {
+        let isLegacy = this.meta.indices_metadata[timeline.searchindex.index_name].is_legacy
+        if (isLegacy) {
+          allIndices.push(timeline.searchindex.index_name)
+        } else {
+          allIndices.push(timeline.id)
+        }
+      })
+      return allIndices
+    },
     search: function (resetPagination = true, incognito = false, parent = false) {
+      // Exit early if there are no indices selected.
+      if (this.currentQueryFilter.indices && !this.currentQueryFilter.indices.length) {
+        this.eventList = emptyEventList()
+        return
+      }
+
+      // If all timelines are selected, make sure that the timeline filter is updated so that
+      // filters are applied properly.
+      if (this.currentQueryFilter.indices[0] === '_all' || this.currentQueryFilter.indices === '_all') {
+        this.currentQueryFilter.indices = this.getAllIndices()
+      }
+
+      // Exit early if there is no query string or DSL provided.
       if (!this.currentQueryString && !this.currentQueryDsl) {
         return
       }
+
       this.searchInProgress = true
       this.selectedEvents = []
       this.eventList = emptyEventList()
@@ -696,6 +824,11 @@ export default {
         formData['parent'] = this.branchParent
       }
 
+      // Get DFIQ context
+      formData['scenario'] = this.activeContext.scenario.id
+      formData['facet'] = this.activeContext.facet.id
+      formData['question'] = this.activeContext.question.id
+
       ApiClient.search(this.sketch.id, formData)
         .then((response) => {
           this.eventList.objects = response.data.objects
@@ -718,23 +851,27 @@ export default {
         })
     },
     exportSearchResult: function () {
+      this.exportDialog = true
+      const now = new Date()
+      const exportFileName = 'timesketch_export_' + now.toISOString() + '.zip'
       let formData = {
         query: this.currentQueryString,
         filter: this.currentQueryFilter,
-        file_name: 'export.zip',
+        file_name: exportFileName,
       }
       ApiClient.exportSearchResult(this.sketch.id, formData)
         .then((response) => {
           let fileURL = window.URL.createObjectURL(new Blob([response.data]))
           let fileLink = document.createElement('a')
-          let fileName = 'export.zip'
           fileLink.href = fileURL
-          fileLink.setAttribute('download', fileName)
+          fileLink.setAttribute('download', exportFileName)
           document.body.appendChild(fileLink)
           fileLink.click()
+          this.exportDialog = false
         })
         .catch((e) => {
           console.error(e)
+          this.exportDialog = false
         })
     },
     addChip: function (chip) {
@@ -838,37 +975,43 @@ export default {
           this.saveSearchMenu = false
           let newView = response.data.objects[0]
           this.$store.state.meta.views.push(newView)
-          this.$router.push({ name: 'Explore', query: { view: newView.id } })
         })
         .catch((e) => {})
     },
   },
   watch: {
     tableOptions: {
-      handler() {
+      handler(newVal, oldVal) {
+        // Return early if the sort order changed.
+        // The search is done in the sortEvents method.
+        if (oldVal.sortDesc === undefined) return
+        if (newVal.sortDesc[0] !== oldVal.sortDesc[0]) return
+
         this.paginate()
       },
       deep: true,
     },
     queryRequest: {
       handler(newQueryRequest, oldqueryRequest) {
-        // Return early if there is no change to the current request.
-        if (JSON.stringify(newQueryRequest) === JSON.stringify(oldqueryRequest)) {
-          return
-        }
         // Return early if this isn't a new request.
-        if (!newQueryRequest) {
+        if (newQueryRequest === oldqueryRequest || !newQueryRequest) {
           return
         }
         this.currentQueryString = newQueryRequest.queryString || ''
         this.currentQueryFilter = newQueryRequest.queryFilter || defaultQueryFilter()
         this.currentQueryDsl = newQueryRequest.queryDsl || null
-        let resetPagination = newQueryRequest['resetPagination'] || true
+        let resetPagination = newQueryRequest['resetPagination'] || false
         let incognito = newQueryRequest['incognito'] || false
         let parent = newQueryRequest['parent'] || false
         // Set additional fields. This is used when loading filter from a saved search.
         if (this.currentQueryFilter.fields) {
           this.selectedFields = this.currentQueryFilter.fields
+        }
+        // Preserve user defined sort order.
+        if (this.sortOrderAsc) {
+          this.currentQueryFilter.order = 'asc'
+        } else {
+          this.currentQueryFilter.order = 'desc'
         }
         this.search(resetPagination, incognito, parent)
       },
@@ -894,6 +1037,7 @@ export default {
 .ts-event-field-container {
   position: relative;
   max-width: 100%;
+  height: 100%;
   padding: 0 !important;
   display: -webkit-flex;
   display: -moz-flex;
@@ -912,9 +1056,14 @@ export default {
   max-width: 100%;
   min-width: 0;
   width: 100%;
-  top: 0;
+  top: 50%;
+  transform: translateY(-50%);
   left: 0;
-  margin-top: -10px;
+}
+
+.ts-event-field-highlight {
+  font-weight: bold;
+  color: red;
 }
 
 .v-data-table__expanded.v-data-table__expanded__content {
@@ -931,13 +1080,9 @@ export default {
   font-size: var(--font-size-small);
 }
 
-.ts-time-bubble h5 {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  margin: 0;
-  opacity: 70%;
+.ts-time-bubble-text {
+  font-size: 0.8em;
+  padding-top: 4px;
 }
 
 .ts-time-bubble-vertical-line {

@@ -66,7 +66,8 @@ Write-Host "* Fetching configuration files.."
 (Invoke-webrequest -URI $GITHUB_BASE_URL/data/tags.yaml).Content | out-file timesketch\etc\timesketch\tags.yaml -encoding UTF8NoBOM
 (Invoke-webrequest -URI $GITHUB_BASE_URL/data/plaso.mappings).Content | out-file timesketch\etc\timesketch\plaso.mappings -encoding UTF8NoBOM
 (Invoke-webrequest -URI $GITHUB_BASE_URL/data/generic.mappings).Content | out-file timesketch\etc\timesketch\generic.mappings -encoding UTF8NoBOM
-(Invoke-webrequest -URI $GITHUB_BASE_URL/data/features.yaml).Content | out-file timesketch\etc\timesketch\features.yaml -encoding UTF8NoBOM
+(Invoke-webrequest -URI $GITHUB_BASE_URL/data/regex_features.yaml).Content | out-file timesketch\etc\timesketch\regex_features.yaml -encoding UTF8NoBOM
+(Invoke-webrequest -URI $GITHUB_BASE_URL/data/winevt_features.yaml).Content | out-file timesketch\etc\timesketch\winevt_features.yaml -encoding UTF8NoBOM
 (Invoke-webrequest -URI $GITHUB_BASE_URL/data/ontology.yaml).Content | out-file timesketch\etc\timesketch\ontology.yaml -encoding UTF8NoBOM
 (Invoke-webrequest -URI $GITHUB_BASE_URL/data/intelligence_tag_metadata.yaml).Content | out-file timesketch\etc\timesketch\intelligence_tag_metadata.yaml -encoding UTF8NoBOM
 (Invoke-webrequest -URI $GITHUB_BASE_URL/data/sigma_config.yaml).Content | out-file timesketch\etc\timesketch\sigma_config.yaml -encoding UTF8NoBOM
@@ -107,8 +108,8 @@ Write-Host "--"
 Write-Host "--"
 Write-Host "Start the system:"
 Write-Host "1. cd timesketch"
-Write-Host "2. docker-compose up -d"
-Write-Host "3. docker-compose exec timesketch-web tsctl create-user <USERNAME>"
+Write-Host "2. docker compose up -d"
+Write-Host "3. docker compose exec timesketch-web tsctl create-user <USERNAME>"
 Write-Host "--"
 Write-Host "WARNING: The server is running without encryption."
 Write-Host "Follow the instructions to enable SSL to secure the communications:"

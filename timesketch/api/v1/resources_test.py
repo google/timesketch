@@ -209,6 +209,7 @@ class ExploreResourceTest(BaseTest):
                 "query_filter": "{}",
                 "query_result_count": 0,
                 "query_string": "test",
+                "scenario_id": None,
             },
         },
         "objects": [
@@ -527,7 +528,7 @@ class EventAddAttributeResourceTest(BaseTest):
 
     @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
     def test_add_existing_attributes(self):
-        """Tests existing attributes cannot be overidden."""
+        """Tests existing attributes cannot be overridden."""
         self.login()
 
         response = self.client.post(
@@ -748,7 +749,7 @@ level: high
             response.json["objects"][0]["rule_yaml"],
         )
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
-        # Now GET the ressources
+        # Now GET the resources
         response = self.client.get("/api/v1/sigmarules/5266a592-b793-11ea-b3de-bbbbbb/")
 
         self.assertIsNotNone(response)
@@ -897,7 +898,7 @@ class SigmaRuleByTextResourceTest(BaseTest):
         id: bb1e0d1d-cd13-4b65-bf7e-69b4e740266b
         description: Detects suspicious installation of foobar
         references:
-            - https://samle.com/foobar
+            - https://sample.com/foobar
         author: Alexander Jaeger
         date: 2020/12/10
         modified: 2020/12/10
@@ -923,7 +924,7 @@ class SigmaRuleByTextResourceTest(BaseTest):
                 "title": "Installation of foobar",
                 "id": "bb1e0d1d-cd13-4b65-bf7e-69b4e740266b",
                 "description": "Detects suspicious installation of foobar",
-                "references": ["https://samle.com/foobar"],
+                "references": ["https://sample.com/foobar"],
                 "author": "Alexander Jaeger",
                 "date": "2020/12/10",
                 "modified": "2020/12/10",
@@ -1003,11 +1004,13 @@ class IntelligenceResourceTest(BaseTest):
         data = json.loads(response.get_data(as_text=True))
         self.assertIsNotNone(response)
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
-        self.assertEqual(data, expected_tag_metadata)
+        self.assertDictEqual(data, expected_tag_metadata)
 
 
 class ContextLinksResourceTest(BaseTest):
     """Test Context Links resources."""
+
+    maxDiff = None
 
     def test_get_context_links_config(self):
         """Authenticated request to get the context links configuration."""
@@ -1015,34 +1018,74 @@ class ContextLinksResourceTest(BaseTest):
         expected_configuration = {
             "hash": [
                 {
-                    "short_name": "LookupOne",
-                    "validation_regex": "/^[0-9a-f]{40}$|^[0-9a-f]{32}$/i",
                     "context_link": "https://lookupone.local/q=<ATTR_VALUE>",
                     "redirect_warning": True,
+                    "short_name": "LookupOne",
+                    "type": "linked_services",
+                    "validation_regex": "/^[0-9a-f]{40}$|^[0-9a-f]{32}$/i",
                 },
                 {
-                    "short_name": "LookupTwo",
-                    "validation_regex": "/^[0-9a-f]{64}$/i",
                     "context_link": "https://lookuptwo.local/q=<ATTR_VALUE>",
                     "redirect_warning": False,
+                    "short_name": "LookupTwo",
+                    "type": "linked_services",
+                    "validation_regex": "/^[0-9a-f]{64}$/i",
                 },
+            ],
+            "original_url": [
+                {
+                    "module": "module_two",
+                    "short_name": "ModuleTwo",
+                    "type": "hardcoded_modules",
+                }
             ],
             "sha256_hash": [
                 {
-                    "short_name": "LookupTwo",
-                    "validation_regex": "/^[0-9a-f]{64}$/i",
                     "context_link": "https://lookuptwo.local/q=<ATTR_VALUE>",
                     "redirect_warning": False,
-                },
+                    "short_name": "LookupTwo",
+                    "type": "linked_services",
+                    "validation_regex": "/^[0-9a-f]{64}$/i",
+                }
+            ],
+            "uri": [
+                {
+                    "module": "module_two",
+                    "short_name": "ModuleTwo",
+                    "type": "hardcoded_modules",
+                }
             ],
             "url": [
                 {
-                    "short_name": "LookupThree",
+                    "module": "module_two",
+                    "short_name": "ModuleTwo",
+                    "type": "hardcoded_modules",
+                },
+                {
                     "context_link": "https://lookupthree.local/q=<ATTR_VALUE>",
                     "redirect_warning": True,
+                    "short_name": "LookupThree",
+                    "type": "linked_services",
                 },
             ],
+            "xml": [
+                {
+                    "module": "module_one",
+                    "short_name": "ModuleOne",
+                    "type": "hardcoded_modules",
+                    "validation_regex": "/^[0-9a-f]{64}$/i",
+                }
+            ],
+            "xml_string": [
+                {
+                    "module": "module_one",
+                    "short_name": "ModuleOne",
+                    "type": "hardcoded_modules",
+                    "validation_regex": "/^[0-9a-f]{64}$/i",
+                }
+            ],
         }
+
         self.login()
         response = self.client.get("/api/v1/contextlinks/")
         data = json.loads(response.get_data(as_text=True))
