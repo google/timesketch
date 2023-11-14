@@ -56,19 +56,33 @@ class User(UserMixin, BaseModel):
     email = Column(Unicode(255))
     active = Column(Boolean(), default=True)
     admin = Column(Boolean(), default=False)
+    # Relationships
     sketches = relationship("Sketch", backref="user", lazy="dynamic")
+    analyses = relationship("Analysis", backref="user", lazy="dynamic")
+    analysissessions = relationship("AnalysisSession", backref="user", lazy="dynamic")
     searchindices = relationship("SearchIndex", backref="user", lazy="dynamic")
     timelines = relationship("Timeline", backref="user", lazy="dynamic")
     views = relationship("View", backref="user", lazy="dynamic")
     searchhistories = relationship("SearchHistory", backref="user", lazy="dynamic")
+    searchtemplates = relationship("SearchTemplate", backref="user", lazy="dynamic")
     stories = relationship("Story", backref="user", lazy="dynamic")
     aggregations = relationship("Aggregation", backref="user", lazy="dynamic")
-    datasources = relationship("DataSource", backref="user", lazy="dynamic")
     aggregationgroups = relationship("AggregationGroup", backref="user", lazy="dynamic")
+    datasources = relationship("DataSource", backref="user", lazy="dynamic")
     my_groups = relationship("Group", backref="user", lazy="dynamic")
     sigmarules = relationship("SigmaRule", backref="user", lazy="dynamic")
+    attributes = relationship("Attribute", backref="user", lazy="dynamic")
+    attributevalues = relationship("AttributeValue", backref="user", lazy="dynamic")
+    graphs = relationship("Graph", backref="user", lazy="dynamic")
+    scenarios = relationship("Scenario", backref="user", lazy="dynamic")
+    facets = relationship("Facet", backref="user", lazy="dynamic")
+    facettimeframes = relationship("FacetTimeFrame", backref="user", lazy="dynamic")
+    facetconclusions = relationship("FacetConclusion", backref="user", lazy="dynamic")
     investigative_questions = relationship(
         "InvestigativeQuestion", backref="user", lazy="dynamic"
+    )
+    investigative_question_approaches = relationship(
+        "InvestigativeQuestionApproach", backref="user", lazy="dynamic"
     )
     investigative_question_conclusions = relationship(
         "InvestigativeQuestionConclusion", backref="user", lazy="dynamic"

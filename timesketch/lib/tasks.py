@@ -375,6 +375,7 @@ def build_sketch_analysis_pipeline(
 
     sketch = Sketch.get_by_id(sketch_id)
     analysis_session = AnalysisSession(user=user, sketch=sketch)
+    db_session.add(analysis_session)
 
     analyzers = manager.AnalysisManager.get_analyzers(analyzer_names)
     for analyzer_name, analyzer_class in analyzers:
@@ -438,8 +439,8 @@ def build_sketch_analysis_pipeline(
             )
             analysis.add_attribute(name="kwargs_hash", value=kwargs_list_hash)
             analysis.set_status("PENDING")
-            analysis_session.analyses.append(analysis)
             db_session.add(analysis)
+            analysis_session.analyses.append(analysis)
             db_session.commit()
 
             tasks.append(

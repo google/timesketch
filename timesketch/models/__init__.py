@@ -17,7 +17,6 @@ from __future__ import unicode_literals
 
 from flask import abort
 from flask_login import current_user
-from flask_sqlalchemy import BaseQuery
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker, as_declarative
 from sqlalchemy.ext.declarative import declared_attr
@@ -31,7 +30,7 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 
 # The database session
 engine = None
-session_maker = sessionmaker()
+session_maker = sessionmaker(future=True)
 db_session = scoped_session(session_maker)
 
 
@@ -126,6 +125,7 @@ class BaseModel(object):
         instance = cls.query.filter_by(**kwargs).first()
         if not instance:
             instance = cls(**kwargs)
+            print(f'Instance of {instance} with kwargs {kwargs}')
             db_session.add(instance)
             db_session.commit()
         return instance
