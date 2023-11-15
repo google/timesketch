@@ -688,8 +688,8 @@ system_7045_v0:
     - name: account_name
       string_index: 4
 
-# Microsoft-Windows-TerminalServices-LocalSessionManager/Operational
-# Event ID 21: Session logon succeeded
+# Microsoft-Windows-TerminalServices-LocalSessionManager/Operational Events
+## Event ID 21: Remote Desktop Services: Session logon succeeded
 terminal_services_21_v0:
   source_name:
     - Microsoft-Windows-TerminalServices-LocalSessionManager
@@ -698,15 +698,18 @@ terminal_services_21_v0:
   event_identifier: 21
   event_version: 0
   references:
+    - "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2008-r2-and-2008/ee891131(v=ws.10)"
   mapping:
     - name: user
       string_index: 0
     - name: session_id
       string_index: 1
-    - name: ip_address
+    - name: source_network_address
       string_index: 2
+      aliases:
+        - ip_address
 
-# Event ID 23: Session logoff succeeded
+## Event ID 23: Remote Desktop Services: Session logoff succeeded
 terminal_services_23_v0:
   source_name:
     - Microsoft-Windows-TerminalServices-LocalSessionManager
@@ -715,13 +718,14 @@ terminal_services_23_v0:
   event_identifier: 23
   event_version: 0
   references:
+    - "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2008-r2-and-2008/ee907364(v=ws.10)"
   mapping:
     - name: user
       string_index: 0
     - name: session_id
       string_index: 1
 
-# Event ID 24: Session has been disconnected
+## Event ID 24: Remote Desktop Services: Session has been disconnected
 terminal_services_24_v0:
   source_name:
     - Microsoft-Windows-TerminalServices-LocalSessionManager
@@ -730,15 +734,18 @@ terminal_services_24_v0:
   event_identifier: 24
   event_version: 0
   references:
+    - "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2008-r2-and-2008/ee907330(v=ws.10)"
   mapping:
     - name: user
       string_index: 0
     - name: session_id
       string_index: 1
-    - name: ip_address
+    - name: source_network_address
       string_index: 2
+      aliases:
+        - ip_address
 
-# Event ID 25: Session reconnection succeeded
+## Event ID 25: Remote Desktop Services: Session reconnection succeeded
 terminal_services_25_v0:
   source_name:
     - Microsoft-Windows-TerminalServices-LocalSessionManager
@@ -747,15 +754,18 @@ terminal_services_25_v0:
   event_identifier: 25
   event_version: 0
   references:
+    - "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2008-r2-and-2008/ee891126(v=ws.10)"
   mapping:
     - name: user
       string_index: 0
     - name: session_id
       string_index: 1
-    - name: ip_address
+    - name: source_network_address
       string_index: 2
+      aliases:
+        - ip_address
 
-# Event ID 39: Session has been disconnected by another session
+## Event ID 39: Session <X> has been disconnected by session <Y>
 terminal_services_39_v0:
   source_name:
     - Microsoft-Windows-TerminalServices-LocalSessionManager
@@ -764,13 +774,14 @@ terminal_services_39_v0:
   event_identifier: 39
   event_version: 0
   references:
+    - "https://ponderthebits.com/2018/02/windows-rdp-related-event-logs-identification-tracking-and-investigation/#:~:text=NOT%20%E2%80%9CLOCAL%E2%80%9D.-,Event%20ID%3A%2039,-Provider%20Name%3A"
   mapping:
     - name: target_session_id
       string_index: 0
     - name: source_session_id
       string_index: 1
 
-# Event ID 40: Session disconnect with reason
+## Event ID 40: Session <X> has been disconnected, reason code <Z>
 terminal_services_40_v0:
   source_name:
     - Microsoft-Windows-TerminalServices-LocalSessionManager
@@ -779,6 +790,7 @@ terminal_services_40_v0:
   event_identifier: 40
   event_version: 0
   references:
+    - "https://ponderthebits.com/2018/02/windows-rdp-related-event-logs-identification-tracking-and-investigation/#:~:text=the%20RDP%20session.-,Event%20ID%3A%2040,-Provider%20Name%3A"
   mapping:
     - name: session_id
       string_index: 0
@@ -786,7 +798,8 @@ terminal_services_40_v0:
       string_index: 1
 
 # Microsoft-Windows-Bits-Client Events
-# Event ID 3: The BITS service created a new job.
+## Event ID 3: The BITS service created a new job.
+### Version 0 is used in win2k08
 bits_client_3_v0:
   source_name:
     - Microsoft-Windows-Bits-Client
@@ -795,15 +808,14 @@ bits_client_3_v0:
   event_identifier: 3
   event_version: 0
   references:
+    - "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2008-r2-and-2008/cc734602(v=ws.10)"
   mapping:
     - name: job_title
       string_index: 0
     - name: job_owner
       string_index: 1
-    - name: string3
-      string_index: 2
 
-# Event ID 3 version 2 is used in win2k16
+### Version 2 is used in win2k16
 bits_client_3_v2:
   source_name:
     - Microsoft-Windows-Bits-Client
@@ -824,7 +836,7 @@ bits_client_3_v2:
     - name: process_id
       string_index: 4
 
-# Event ID 4 version 3 is used in win2k19 and win2k22.
+### Version 3 is used in win2k19 and win2k22.
 bits_client_3_v3:
   source_name:
     - Microsoft-Windows-Bits-Client
@@ -847,8 +859,8 @@ bits_client_3_v3:
     - name: client_process_start_key
       string_index: 5
 
-# EventID 4: BITS transfer job is complete.
-# Event ID 4 version 1 is used by win2k8 to win2k22
+## EventID 4: BITS transfer job is complete.
+### Version 1 is used by win2k8 to win2k22
 bits_client_4_v1:
   source_name:
     - Microsoft-Windows-Bits-Client
@@ -877,8 +889,8 @@ bits_client_4_v1:
       aliases:
         - bytes_in
 
-# 59: BITS started the transfer job.
-# Event ID 59 version 1 is used in win2k16, win2k19, and win2k22
+## Event ID 59: BITS started the transfer job.
+### Version 1 is used in win2k16, win2k19, and win2k22
 bits_client_59_v1:
   source_name:
     - Microsoft-Windows-Bits-Client
@@ -914,7 +926,7 @@ bits_client_59_v1:
       aliases:
         - bytes_in
 
-# 60: BITS stopped transferring the transfer job.
+## Event ID 60: BITS stopped transferring the transfer job.
 bits_client_60_v1:
   source_name:
     - Microsoft-Windows-Bits-Client
