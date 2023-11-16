@@ -77,6 +77,29 @@ hardcoded_modules:
       - uri
       - original_url
 
+### Add Threat Intel
+  threat_intel:
+    short_name: 'Add to Threat Intel'
+    match_fields:
+      - url
+      - uri
+      - original_url
+      - ip
+      - ip_address
+      - domain
+      - domain_name
+      - host
+      - hostname
+      - email
+      - email_address
+      - hash
+      - sha256_hash
+      - sha256
+      - sha1_hash
+      - sha1
+      - md5_hash
+      - md5
+
 ## External Services
 linked_services:
 ### Virustotal Example:
