@@ -53,7 +53,7 @@ const newIndicator = () => {
 }
 
 export default {
-  props: ['dialog', 'tagInfo', 'index'],
+  props: ['dialog', 'tagInfo', 'index', 'ioc'],
   data() {
     return {
       IOCTypes: IOCTypes,
@@ -85,6 +85,9 @@ export default {
   },
   methods: {
     closeDialog: function () {
+      if (this.index < 0) {
+        this.newIndicator.ioc = ''
+      }
       this.$emit('close-dialog')
     },
     autoSelectIndicatorType: function (value) {
@@ -109,6 +112,12 @@ export default {
         this.newIndicator = this.intelligenceAttribute.value.data[this.index]
       }
     },
+    ioc() {
+      if (this.ioc !== '') {
+        this.newIndicator.ioc = this.ioc
+        this.autoSelectIndicatorType(this.ioc)
+      }
+    }
   },
 }
 </script>

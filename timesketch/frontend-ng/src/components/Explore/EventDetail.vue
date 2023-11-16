@@ -324,6 +324,10 @@ export default {
               this.contextValue = value
               return
             }
+            if (confItem['module'] === 'threat_intel') {
+              EventBus.$emit('addIndicator', value)
+              return
+            }
           } else {
             if (confItem['redirect_warning']) {
               this.redirectWarnDialog = true
