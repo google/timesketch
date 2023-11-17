@@ -86,7 +86,7 @@ limitations under the License.
                     <v-menu v-if="checkContextLinkDisplay(key, value)" offset-y transition="slide-y-transition">
                       <template v-slot:activator="{ on, attrs }">
                         <v-btn icon color="primary" x-small style="cursor: pointer" v-bind="attrs" v-on="on">
-                          <v-icon title="Context Lookups" small> mdi-open-in-new </v-icon>
+                          <v-icon title="Context Lookup" small> mdi-open-in-new </v-icon>
                         </v-btn>
                       </template>
                       <v-list dense>
