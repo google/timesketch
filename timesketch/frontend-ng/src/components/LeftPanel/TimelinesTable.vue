@@ -50,13 +50,50 @@ limitations under the License.
           :search="search"
         >
           <template v-slot:item.name="{ item }">
-            <ts-timeline-chip
+            <ts-timeline-component
               class="mb-1 mt-1 timeline-chip"
               :key="item.id + item.name"
               :is-selected="isEnabled(item)"
               @toggle="toggleTimeline"
               :timeline="item"
-            ></ts-timeline-chip>
+            >
+            <template v-slot="slotProps">
+              <div class="chip-content" :style="slotProps.timelineStyle">
+                <v-icon v-if="slotProps.timelineFailed" @click="slotProps.events.openDialog" left color="red" size="x-large">
+                  mdi-alert-circle-outline
+                </v-icon>
+                <v-icon v-if="!slotProps.timelineFailed" left :color="slotProps.timelineChipColor" size="26" class="ml-n2"> mdi-circle </v-icon>
+
+                <v-tooltip bottom :disabled="item.name.length < 30" open-delay="300">
+                  <template v-slot:activator="{ on: onTooltip, attrs }">
+                    <span
+                      class="timeline-name"
+                      :class="{ disabled: !isEnabled(item) && slotProps.timelineStatus === 'ready' }"
+                      v-bind="attrs"
+                      v-on="onTooltip"
+                      >{{ item.name }}</span
+                    >
+                  </template>
+                  <span>test{{ item.name }}</span>
+                </v-tooltip>
+
+                <span class="right">
+                  <span v-if="slotProps.timelineStatus === 'processing'" class="ml-3">
+                    <v-progress-circular small indeterminate color="grey" :size="20" :width="2"></v-progress-circular>
+                  </span>
+
+                  <!--
+                    TODO
+                    <span v-if="!slotProps.timelineFailed" class="events-count" x-small>
+                    {{ eventsCount | compactNumber }}
+                  </span> -->
+                  <v-btn class="ma-1" x-small icon v-on="slotProps.events.menuOn">
+                    <v-icon> mdi-dots-vertical </v-icon>
+                  </v-btn>
+                </span>
+              </div>
+            </template>
+          </ts-timeline-component>
           </template>
         </v-data-table>
       </div>
@@ -67,12 +104,12 @@ limitations under the License.
 
 <script>
 import TsUploadTimelineForm from '../UploadForm'
-import TsTimelineChip from '../Explore/TimelineChip'
+import TsTimelineComponent from '../Explore/TimelineComponent'
 export default {
   props: [],
   components: {
     TsUploadTimelineForm,
-    TsTimelineChip,
+    TsTimelineComponent,
   },
   computed: {
     sketch() {
@@ -109,30 +146,20 @@ export default {
 
 <!-- CSS scoped to this component only -->
 <style scoped lang="scss">
-.content::v-deep {
-
-  .timeline-chip {
-    display: inline-block;
-  }
-  .v-data-table__selected {
-    background: none!important;
-  }
-  .v-data-table tbody tr:hover:not(.v-data-table__expanded__content) {
-    background: none !important;
-  }
-  .v-data-table tbody tr:hover{
-    background: none!important;
-  }
-  .v-data-table td{
-    border-bottom: 0!important;
-  }
-  .v-data-table th{
-    border-bottom: 0!important;
+  .chip-content {
+    flex: 1;
+    margin: 0;
+    padding: 0 10px;
+    display: flex;
+    align-items: center;
   }
 
-  .v-data-footer {
-    border-top: 0!important;
+  .timeline-name.disabled {
+  text-decoration: line-through;
+
   }
-}
+  .right {
+    margin-left: auto;
+  }
 </style>
 
