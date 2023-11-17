@@ -24,8 +24,8 @@ limitations under the License.
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
       <v-col cols="1" class="pl-1">
-        <v-icon v-if="!expanded">mdi-chevron-right</v-icon>
-        <v-icon v-else>mdi-chevron-down</v-icon>
+        <v-icon title="Open results" v-if="!expanded">mdi-chevron-right</v-icon>
+        <v-icon title="Close results" v-else>mdi-chevron-down</v-icon>
       </v-col>
       <v-col cols="10">
         <span style="font-size: 0.9em">

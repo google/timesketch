@@ -21,7 +21,7 @@ limitations under the License.
       @click="expanded = !expanded"
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
-      <span> <v-icon left>mdi-tag-multiple-outline</v-icon> Tags </span> <!--Add tooltip here? (tag event)-->
+      <span> <v-icon left>mdi-tag-multiple-outline</v-icon> Tags </span>
 
       <span class="float-right" style="margin-right: 10px">
         <small

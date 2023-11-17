@@ -21,7 +21,7 @@ limitations under the License.
       @click="expanded = !expanded"
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
-      <span> <v-icon left>mdi-content-save-outline</v-icon> Saved Searches </span> <!-- Add tooltip here? (Save search action)-->
+      <span> <v-icon left>mdi-content-save-outline</v-icon> Saved Searches </span>
       <span class="float-right" style="margin-right: 10px">
         <small
           ><strong>{{ meta.views.length }}</strong></small
@@ -43,24 +43,18 @@ limitations under the License.
               ><div class="mt-1">{{ savedSearch.name }}</div></v-col
             >
             <v-col cols="auto">
-              <v-tooltip top open-delay="500">
-                <template v-slot:activator="{ on }">
-                  <v-btn
-                    icon
-                    x-small
-                    style="cursor: pointer"
-                    @click="copySavedSearchUrlToClipboard(savedSearch.id)"
-                    v-on="on"
-                  >
-                    <v-icon small v-show="key == c_key">mdi-link-variant</v-icon>
-                  </v-btn>
-                </template>
-                <span>Copy link to this search</span>
-              </v-tooltip>
+              <v-btn
+                icon
+                x-small
+                style="cursor: pointer"
+                @click="copySavedSearchUrlToClipboard(savedSearch.id)"
+              >
+                <v-icon title="Copy link to this search" small v-show="key == c_key">mdi-link-variant</v-icon>
+              </v-btn>
               <v-menu offset-y>
                 <template v-slot:activator="{ on, attrs }">
                   <v-btn small icon v-bind="attrs" v-on="on" class="mr-1">
-                    <v-icon small>mdi-dots-vertical</v-icon>
+                    <v-icon title="More actions" small>mdi-dots-vertical</v-icon>
                   </v-btn>
                 </template>
                 <v-list dense class="mx-auto">

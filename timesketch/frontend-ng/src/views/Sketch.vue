@@ -65,7 +65,7 @@ limitations under the License.
         ]"
       >
         <v-btn icon @click="toggleLeftPanel">
-          <v-icon title="Manage">mdi-menu</v-icon>
+          <v-icon title="Toggle left panel">mdi-menu</v-icon>
         </v-btn>
 
         <v-avatar class="ml-n2 mt-1">
@@ -92,7 +92,7 @@ limitations under the License.
               {{ sketch.name }}
             </div>
             <div>
-              <v-icon small class="ml-1" v-if="hover" @click="renameSketchDialog = true">mdi-pencil</v-icon>
+              <v-icon title="Rename sketch" small class="ml-1" v-if="hover" @click="renameSketchDialog = true">mdi-pencil</v-icon>
             </div>
           </div>
         </v-hover>
@@ -117,7 +117,7 @@ limitations under the License.
           <template v-slot:activator="{ on, attrs }">
             <v-avatar>
               <v-btn small icon v-bind="attrs" v-on="on">
-                <v-icon title="Action Menu">mdi-dots-vertical</v-icon>
+                <v-icon title="Sketch Options">mdi-dots-vertical</v-icon>
               </v-btn>
             </v-avatar>
           </template>

@@ -21,15 +21,14 @@ limitations under the License.
       @click="expanded = !expanded"
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
-      <!-- Add tooltip here? (Icons in the Threat Intelligence feature) -->
-      <span> <v-icon left>mdi-shield-search</v-icon> Threat Intelligence </span> 
+      <span> <v-icon left>mdi-shield-search</v-icon> Threat Intelligence </span>
       <v-btn
         icon
         class="float-right mt-n1 mr-n1"
         v-if="intelligenceData && !intelligenceData.length"
         @click="addIndicator()"
       >
-        <v-icon title="Create New Indicator">mdi-plus</v-icon>
+        <v-icon title="Add new indicator">mdi-plus</v-icon>
       </v-btn>
       <v-btn
         icon
@@ -38,7 +37,7 @@ limitations under the License.
         @click="addIndicator()"
         @click.stop=""
       >
-        <v-icon title="Add Indicator">mdi-plus</v-icon>
+        <v-icon title="Add new indicator">mdi-plus</v-icon>
       </v-btn>
       <v-btn
         v-if="expanded && intelligenceData && intelligenceData.length"
@@ -47,7 +46,7 @@ limitations under the License.
         :to="{ name: 'Intelligence', params: { sketchId: sketch.id } }"
         @click.stop=""
       >
-        <v-icon small title="Edit Indicator">mdi-pencil</v-icon>
+        <v-icon small title="Manage indicators">mdi-pencil</v-icon>
       </v-btn>
 
       <span v-if="!expanded" class="float-right" style="margin-right: 10px">
@@ -93,7 +92,7 @@ limitations under the License.
 
                 <template v-slot:item.actions="{ item }">
                   <v-btn icon small @click="generateSearchQuery(item.ioc)">
-                    <v-icon small title="Search">mdi-magnify</v-icon>
+                    <v-icon small title="Search this indicator">mdi-magnify</v-icon>
                   </v-btn>
                 </template>
               </v-data-table>
@@ -112,7 +111,7 @@ limitations under the License.
 
                 <template v-slot:item.actions="{ item }">
                   <v-btn icon small @click="generateSearchQuery(item.ioc)">
-                    <v-icon small title="Search">mdi-magnify</v-icon>
+                    <v-icon small title="Search this indicator">mdi-magnify</v-icon>
                   </v-btn>
                 </template>
               </v-data-table>
@@ -130,7 +129,7 @@ limitations under the License.
                 </template>
                 <template v-slot:item.actions="{ item }">
                   <v-btn icon small @click="searchForIOC(item)">
-                    <v-icon small title="Search">mdi-magnify</v-icon>
+                    <v-icon small title="Search this indicator">mdi-magnify</v-icon>
                   </v-btn>
                 </template>
               </v-data-table>

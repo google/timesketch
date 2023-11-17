@@ -33,7 +33,7 @@ limitations under the License.
         <template v-slot:activator="{ on, attrs }">
           <v-avatar>
             <v-btn small icon v-bind="attrs" v-on="on">
-              <v-icon title="Action Menu">mdi-dots-vertical</v-icon>
+              <v-icon title="Timesketch Options">mdi-dots-vertical</v-icon>
             </v-btn>
           </v-avatar>
         </template>

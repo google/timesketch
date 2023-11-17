@@ -23,7 +23,7 @@ limitations under the License.
           <v-toolbar-title>Right Side Panel</v-toolbar-title>
           <v-spacer></v-spacer>
           <v-btn icon @click="showRightSidePanel = false">
-            <v-icon>mdi-close</v-icon>
+            <v-icon title="Close sidepanel">mdi-close</v-icon>
           </v-btn>
         </v-toolbar>
       </template>
@@ -65,12 +65,7 @@ limitations under the License.
               v-on="on"
             >
             <template v-slot:append>
-             <v-tooltip bottom open-delay="500">
-              <template v-slot:activator="{ on: tooltip }">
-               <v-icon v-on="tooltip">mdi-magnify</v-icon>
-              </template>
-              <span>Search</span>
-             </v-tooltip>
+               <v-icon title="Run search" @click="search()">mdi-magnify</v-icon>
             </template>
             </v-text-field>
           </template>
@@ -111,7 +106,7 @@ limitations under the License.
             </v-slider>
 
             <v-btn icon @click="showSearchHistory = false" class="ml-4">
-              <v-icon>mdi-close</v-icon>
+              <v-icon title="Close search history">mdi-close</v-icon>
             </v-btn>
           </v-toolbar>
 
