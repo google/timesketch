@@ -175,7 +175,7 @@ limitations under the License.
               <v-tooltip top open-delay="500">
                 <template v-slot:activator="{ on }">
                   <v-btn v-on="on" icon @click="exportSearchResult()">
-                <v-icon>mdi-download</v-icon>
+                    <v-icon>mdi-download</v-icon>
                   </v-btn>
                 </template>
                 <span>Download current view as csv</span>
@@ -403,14 +403,14 @@ limitations under the License.
                 <ts-event-tags :item="item" :tagConfig="tagConfig" :showDetails="item.showDetails"></ts-event-tags>
               </span>
               <!-- Emojis -->
-              <span v-if="displayOptions.showEmojis && index === 0">
+              <span v-if="displayOptions.showEmojis && index === 3">
                 <span
                   class="mr-2"
                   v-for="emoji in item._source.__ts_emojis"
                   :key="emoji"
-                  v-html="emoji"
+                  v-html="emoji + ';'"
                   :title="meta.emojis[emoji]"
-                  >{{ emoji }}
+                  >
                 </span>
               </span>
               <span>{{ item._source[field.text] }}</span>
@@ -690,6 +690,9 @@ export default {
       }
       return baseHeaders
     },
+    activeContext() {
+      return this.$store.state.activeContext
+    },
   },
   methods: {
     sortEvents(sortAsc) {
@@ -864,6 +867,11 @@ export default {
       if (this.branchParent) {
         formData['parent'] = this.branchParent
       }
+
+      // Get DFIQ context
+      formData['scenario'] = this.activeContext.scenario.id
+      formData['facet'] = this.activeContext.facet.id
+      formData['question'] = this.activeContext.question.id
 
       ApiClient.search(this.sketch.id, formData)
         .then((response) => {

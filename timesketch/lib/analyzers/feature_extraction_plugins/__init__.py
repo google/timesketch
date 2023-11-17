@@ -1,4 +1,4 @@
-# Copyright 2020 Google Inc. All rights reserved.
+# Copyright 2023 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,11 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Version information for Timesketch."""
+"""Imports for the feature extraction plugins."""
 
-__version__ = "20231025"
-
-
-def get_version():
-    """Returns the version information."""
-    return __version__
+from timesketch.lib.analyzers.feature_extraction_plugins import regex_features
+from timesketch.lib.analyzers.feature_extraction_plugins import winevt_features

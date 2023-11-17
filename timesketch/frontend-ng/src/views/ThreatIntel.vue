@@ -19,6 +19,7 @@ limitations under the License.
       :dialog.sync="indicatorDialog"
       :index="currentIndex"
       :tag-info="tagInfo"
+      :ioc="indicator"
       @open-dialog="indicatorDialog = true"
       @close-dialog="
         indicatorDialog = false
@@ -117,6 +118,7 @@ export default {
       tagInfo: {},
       indicatorDialog: false,
       currentIndex: -1,
+      indicator: '',
     }
   },
   computed: {
@@ -227,8 +229,9 @@ export default {
           console.error(e)
         })
     },
-    showIndicatorDialog() {
-      this.indicatorDialog = true
+    showIndicatorDialog(payload) {
+        this.indicator = payload
+        this.indicatorDialog = true
     },
   },
   mounted() {
