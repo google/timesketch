@@ -78,8 +78,8 @@ limitations under the License.
               </span>
 
               <v-dialog v-model="saveSearchMenu" v-if="!disableSaveSearch" width="500">
-                <template v-slot:activator="{ on: dialog }">
-                  <v-btn v-on="{ ...dialog }" icon>
+                <template v-slot:activator="{ on, attrs }">
+                  <v-btn icon v-bind="attrs" v-on="on">
                     <v-icon title="Save current search">mdi-content-save-outline</v-icon>
                   </v-btn>
                 </template>
@@ -112,8 +112,8 @@ limitations under the License.
               </template>
 
               <v-dialog v-model="columnDialog" v-if="!disableColumns" max-width="500px" scrollable>
-                <template v-slot:activator="{ on: dialog }">
-                  <v-btn icon v-on="{ ...dialog }">
+                <template v-slot:activator="{ on, attrs }">
+                  <v-btn icon v-bind="attrs" v-on="on">
                     <v-icon title="Modify columns">mdi-view-column-outline</v-icon>
                   </v-btn>
                 </template>
@@ -161,7 +161,7 @@ limitations under the License.
 
               <v-menu v-if="!disableSettings" offset-y :close-on-content-click="false">
                 <template v-slot:activator="{ on, attrs }">
-                  <v-btn icon v-bind="attrs" v-on="{ ...on }">
+                  <v-btn icon v-bind="attrs" v-on="on">
                     <v-icon title="View settings">mdi-dots-horizontal</v-icon>
                   </v-btn>
                 </template>
