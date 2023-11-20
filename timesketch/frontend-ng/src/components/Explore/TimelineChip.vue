@@ -16,7 +16,7 @@ limitations under the License.
 <template>
   <span>
     <v-dialog v-if="timelineStatus === 'processing'" v-model="dialogStatus" width="600">
-      <template v-slot:activator="{ on, attrs }">
+      <template v-slot:activator="{ on }">
         <v-chip v-on="on" :style="getTimelineStyle(timeline)" class="mr-2 mb-3">
           <span class="timeline-name-ellipsis">{{ timeline.name }}</span>
           <span class="ml-1">
@@ -112,10 +112,10 @@ limitations under the License.
           :ripple="!timelineFailed"
         >
           <div class="chip-content">
-            <v-icon v-if="timelineFailed" @click="dialogStatus = true" left color="red" size="x-large">
+            <v-icon v-if="timelineFailed" title="Import failed; click for details" @click="dialogStatus = true" left color="red" size="x-large">
               mdi-alert-circle-outline
             </v-icon>
-            <v-icon v-if="!timelineFailed" left :color="timelineChipColor" size="26" class="ml-n2"> mdi-circle </v-icon>
+            <v-icon v-if="!timelineFailed" title="Toggle visibility" left :color="timelineChipColor" size="26" class="ml-n2"> mdi-circle </v-icon>
 
             <v-tooltip bottom :disabled="timeline.name.length < 30" open-delay="300">
               <template v-slot:activator="{ on: onTooltip, attrs }">
@@ -139,7 +139,7 @@ limitations under the License.
                 {{ eventsCount | compactNumber }}
               </span>
               <v-btn class="ma-1" x-small icon v-on="on">
-                <v-icon> mdi-dots-vertical </v-icon>
+                <v-icon title="Manage Timeline"> mdi-dots-vertical </v-icon>
               </v-btn>
             </span>
           </div>

@@ -39,12 +39,10 @@ limitations under the License.
             <small>{{ nodes.length }} nodes and {{ edges.length }} edges</small>
           </span>
           <!-- Save graph dialog -->
+          <v-btn icon :disabled="!edgeQuery" @click="saveGraphDialog = true">
+              <v-icon title="Save selected graph">mdi-content-save-outline</v-icon>
+            </v-btn>
           <v-dialog v-model="saveGraphDialog" width="500">
-            <template v-slot:activator="{ on, attrs }">
-              <v-btn icon :disabled="!edgeQuery" v-bind="attrs" v-on="on" title="Save selected graph">
-                <v-icon>mdi-content-save-outline</v-icon>
-              </v-btn>
-            </template>
             <v-card class="pa-4">
               <h3>Save selected elements</h3>
               <br />
@@ -65,10 +63,14 @@ limitations under the License.
             </v-card>
           </v-dialog>
 
-          <v-btn icon v-on:click="resizeCanvas()" :disabled="!currentGraph" title="Fit to canvas">
-            <v-icon>mdi-fit-to-page-outline</v-icon>
+          <v-btn icon v-on:click="resizeCanvas()" :disabled="!currentGraph">
+            <v-icon title="Fit to canvas">mdi-fit-to-page-outline</v-icon>
           </v-btn>
+
           <!-- Graph settings menu -->
+          <v-btn icon :disabled="!currentGraph || !graphPluginName" @click="graphSettingsMenu = true">
+            <v-icon title="Graph settings">mdi-cog-outline</v-icon>
+          </v-btn>
           <v-menu
             v-model="graphSettingsMenu"
             offset-y
@@ -76,12 +78,6 @@ limitations under the License.
             :close-on-click="true"
             content-class="menu-with-gap"
           >
-            <template v-slot:activator="{ on, attrs }">
-              <v-btn icon v-bind="attrs" v-on="on" :disabled="!currentGraph || !graphPluginName" title="Graph settings">
-                <v-icon> mdi-cog-outline </v-icon>
-              </v-btn>
-            </template>
-
             <v-card class="pa-4 pt-5" width="600">
               <h5>Layout type</h5>
               <v-radio-group row v-model="layoutName">
@@ -124,7 +120,7 @@ limitations under the License.
             v-on:click="buildGraph({ name: currentGraph }, true)"
             :disabled="!currentGraph"
           >
-            <v-icon>mdi-refresh</v-icon>
+            <v-icon title="Refresh graph">mdi-refresh</v-icon>
           </v-btn>
         </div>
       </v-toolbar>
@@ -148,13 +144,13 @@ limitations under the License.
           <strong>Timeline for {{ selectedEdgesCount }} selected edge(s)</strong>
           <v-spacer></v-spacer>
           <v-btn icon :disabled="timelineViewHeight > 40" @click="increaseTimelineViewHeight()">
-            <v-icon>mdi-chevron-up</v-icon>
+            <v-icon title="enlarge">mdi-chevron-up</v-icon>
           </v-btn>
           <v-btn icon :disabled="timelineViewHeight === 0" @click="decreaseTimelineViewHeight()">
-            <v-icon>mdi-chevron-down</v-icon>
+            <v-icon title="condense">mdi-chevron-down</v-icon>
           </v-btn>
           <v-btn icon @click="showTimelineView = false">
-            <v-icon>mdi-close</v-icon>
+            <v-icon title="close">mdi-close</v-icon>
           </v-btn>
         </v-toolbar>
         <v-divider></v-divider>

@@ -30,64 +30,41 @@ limitations under the License.
                   <!-- Event field name actions -->
                   <td v-if="key == c_key" class="text-right" style="min-width: 105px">
                     <!-- Open aggregation dialog for this field -->
-                    <v-tooltip top open-delay="500">
-                      <template v-slot:activator="{ on }">
-                        <v-btn
-                          v-if="!ignoredAggregatorFields.has(key)"
-                          @click.stop="loadAggregation(key, value)"
-                          icon
-                          x-small
-                          class="mr-1"
-                          v-on="on"
-                        >
-                          <v-icon>mdi-chart-bar</v-icon>
-                        </v-btn>
-                      </template>
-                      <span>Aggregation dialog</span>
-                    </v-tooltip>
+                    <v-btn
+                      v-if="!ignoredAggregatorFields.has(key)"
+                      @click.stop="loadAggregation(key, value)"
+                      icon
+                      x-small
+                      class="mr-1"
+                    >
+                      <v-icon title="Aggregation dialog">mdi-chart-bar</v-icon>
+                    </v-btn>
 
                     <!-- Include field:value as filter chip -->
-                    <v-tooltip top open-delay="500">
-                      <template v-slot:activator="{ on }">
-                        <v-btn @click.stop="applyFilterChip(key, value, 'must')" icon x-small class="mr-1" v-on="on">
-                          <v-icon>mdi-filter-plus-outline</v-icon>
-                        </v-btn>
-                      </template>
-                      <span>Filter for value</span>
-                    </v-tooltip>
+                    <v-btn @click.stop="applyFilterChip(key, value, 'must')" icon x-small class="mr-1">
+                      <v-icon title="Filter for value">mdi-filter-plus-outline</v-icon>
+                    </v-btn>
 
                     <!-- Exclude field:value as filter chip -->
-                    <v-tooltip top open-delay="500">
-                      <template v-slot:activator="{ on }">
-                        <v-btn
-                          @click.stop="applyFilterChip(key, value, 'must_not')"
-                          icon
-                          x-small
-                          class="mr-1"
-                          v-on="on"
-                        >
-                          <v-icon>mdi-filter-minus-outline</v-icon>
-                        </v-btn>
-                      </template>
-                      <span>Filter out value</span>
-                    </v-tooltip>
+                    <v-btn
+                      @click.stop="applyFilterChip(key, value, 'must_not')"
+                      icon
+                      x-small
+                      class="mr-1"
+                    >
+                      <v-icon title="Filter out value">mdi-filter-minus-outline</v-icon>
+                    </v-btn>
 
                     <!-- Copy field name -->
-                    <v-tooltip top open-delay="500">
-                      <template v-slot:activator="{ on }">
-                        <v-btn
-                          icon
-                          x-small
-                          style="cursor: pointer"
-                          @click="copyToClipboard(key)"
-                          class="pr-1"
-                          v-on="on"
-                        >
-                          <v-icon small>mdi-content-copy</v-icon>
-                        </v-btn>
-                      </template>
-                      <span>copy field name</span>
-                    </v-tooltip>
+                    <v-btn
+                      icon
+                      x-small
+                      style="cursor: pointer"
+                      @click="copyToClipboard(key)"
+                      class="pr-1"
+                    >
+                      <v-icon title="Copy attribute name" small>mdi-content-copy</v-icon>
+                    </v-btn>
                   </td>
 
                   <td v-else>
@@ -103,18 +80,13 @@ limitations under the License.
                   <td v-if="checkContextLinkDisplay(key, value) || key == c_key" class="text-right pr-1">
                     <!-- Copy event value -->
                     <v-btn icon x-small style="cursor: pointer" @click="copyToClipboard(value)" v-show="key == c_key">
-                      <v-icon small>mdi-content-copy</v-icon>
+                      <v-icon small title="Copy attribute value">mdi-content-copy</v-icon>
                     </v-btn>
                     <!-- Context link submenu -->
                     <v-menu v-if="checkContextLinkDisplay(key, value)" offset-y transition="slide-y-transition">
                       <template v-slot:activator="{ on, attrs }">
                         <v-btn icon color="primary" x-small style="cursor: pointer" v-bind="attrs" v-on="on">
-                          <v-tooltip top close-delay="300" :open-on-click="false">
-                            <template v-slot:activator="{ on }">
-                              <v-icon v-on="on" small> mdi-open-in-new </v-icon>
-                            </template>
-                            <span>Context Lookup</span>
-                          </v-tooltip>
+                          <v-icon title="Context Lookup" small> mdi-open-in-new </v-icon>
                         </v-btn>
                       </template>
                       <v-list dense>
@@ -322,6 +294,10 @@ export default {
             if (confItem['module'] === 'unfurl_graph') {
               this.dfirUnfurlDialog = true
               this.contextValue = value
+              return
+            }
+            if (confItem['module'] === 'threat_intel') {
+              EventBus.$emit('addIndicator', value)
               return
             }
           } else {

@@ -16,13 +16,13 @@ limitations under the License.
 <template>
   <v-menu v-model="showMenu" offset-x :close-on-content-click="false">
     <template v-slot:activator="{ on, attrs }">
-      <v-icon v-if="assignedTags.length > 0" v-bind="attrs" v-on="on" class="ml-1">mdi-tag-plus</v-icon>
-      <v-icon v-else v-bind="attrs" v-on="on" class="ml-1">mdi-tag-plus-outline</v-icon>
+      <v-icon title="Modify tags" v-if="assignedTags.length > 0" v-bind="attrs" v-on="on" class="ml-1">mdi-tag-plus</v-icon>
+      <v-icon title="Modify tags" v-else v-bind="attrs" v-on="on" class="ml-1">mdi-tag-plus-outline</v-icon>
     </template>
 
     <v-card min-width="500px" class="mx-auto" max-width="500px" min-height="260px">
       <v-btn class="float-right mr-1 mt-1" icon @click="showMenu = false">
-        <v-icon>mdi-close</v-icon>
+        <v-icon title="Close dialog">mdi-close</v-icon>
       </v-btn>
       <v-card-text>
         <strong>Quick tags</strong>
@@ -37,6 +37,7 @@ limitations under the License.
             small
             @click="addTags(tag.tag)"
             @click.stop="showMenu = false"
+            title="Add quick tag"
           >
             <v-icon small left> {{ tag.label }} </v-icon>
             {{ tag.tag }}
@@ -53,6 +54,7 @@ limitations under the License.
             small
             close
             @click:close="removeTags(tag)"
+            title="Remove "
           >
             <v-icon v-if="getQuickTag(tag)" small left>{{ getQuickTag(tag).label }}</v-icon>
             {{ tag }}
