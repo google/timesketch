@@ -824,6 +824,7 @@ bits_client_3_v2:
   event_identifier: 3
   event_version: 2
   references:
+    - "https://community.microfocus.com/cfs-file/__key/communityserver-wikis-components-files/00-00-00-00-23/MSWinBITSClientEvtLogs.pdf"
   mapping:
     - name: job_title
       string_index: 0
@@ -845,6 +846,7 @@ bits_client_3_v3:
   event_identifier: 3
   event_version: 3
   references:
+    - "https://community.microfocus.com/cfs-file/__key/communityserver-wikis-components-files/00-00-00-00-23/MSWinBITSClientEvtLogs.pdf"
   mapping:
     - name: job_title
       string_index: 0
@@ -869,6 +871,7 @@ bits_client_4_v1:
   event_identifier: 4
   event_version: 1
   references:
+    - "https://community.microfocus.com/cfs-file/__key/communityserver-wikis-components-files/00-00-00-00-23/MSWinBITSClientEvtLogs.pdf"
   mapping:
     - name: user
       string_index: 0
@@ -899,7 +902,8 @@ bits_client_59_v1:
   event_identifier: 59
   event_version: 1
   references:
-    - https://www.mandiant.com/resources/blog/attacker-use-of-windows-background-intelligent-transfer-service
+    - "https://www.mandiant.com/resources/blog/attacker-use-of-windows-background-intelligent-transfer-service"
+    - "https://community.microfocus.com/cfs-file/__key/communityserver-wikis-components-files/00-00-00-00-23/MSWinBITSClientEvtLogs.pdf"
   mapping:
     - name: transfer_id
       string_index: 0
@@ -935,7 +939,8 @@ bits_client_60_v1:
   event_identifier: 60
   event_version: 1
   references:
-    - https://www.mandiant.com/resources/blog/attacker-use-of-windows-background-intelligent-transfer-service
+    - "https://www.mandiant.com/resources/blog/attacker-use-of-windows-background-intelligent-transfer-service"
+    - "https://community.microfocus.com/cfs-file/__key/communityserver-wikis-components-files/00-00-00-00-23/MSWinBITSClientEvtLogs.pdf"
   mapping:
     - name: transfer_id
       string_index: 0
