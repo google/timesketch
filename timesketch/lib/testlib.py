@@ -457,7 +457,7 @@ class BaseTest(TestCase):
         Returns:
             A group (instance of timesketch.models.user.Group)
         """
-        group = Group.get_or_create(name=name, display_name=name)
+        group = Group.get_or_create(name=name, display_name=name, description=name)
         user.groups.append(group)
         self._commit_to_database(group)
         return group
