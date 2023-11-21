@@ -208,6 +208,12 @@ limitations under the License.
                   </v-list-item-action>
                   <v-list-item-subtitle>Remove filter</v-list-item-subtitle>
                 </v-list-item>
+                <v-list-item @click="copyChipValue(chip)">
+                  <v-list-item-action>
+                    <v-icon>mdi-content-copy</v-icon>
+                  </v-list-item-action>
+                  <v-list-item-subtitle>Copy filter</v-list-item-subtitle>
+                </v-list-item>
               </v-list>
             </v-card>
           </v-menu>
@@ -246,21 +252,25 @@ limitations under the License.
                   close
                   close-icon="mdi-close"
                   @click:close="removeChip(chip)"
+                  @click="copyChipValue(chip)"
                   v-bind="attrs"
                   v-on="onTooltip"
                 >
-                  <v-icon v-if="chip.value === '__ts_star'" left small color="amber">mdi-star</v-icon>
-                  <v-icon v-if="chip.value === '__ts_comment'" left small>mdi-comment-multiple-outline</v-icon>
-                  <v-icon v-if="getQuickTag(chip.value)" left small :color="getQuickTag(chip.value).color">{{
-                    getQuickTag(chip.value).label
-                  }}</v-icon>
-                  <span v-if="chip.operator === 'must_not'" class="filter-chip-truncate">
-                    <span style="color: red">NOT </span>
-                    {{ (chip.field ? `${chip.field} : ${chip.value}` : chip.value) | formatLabelText }}
-                  </span>
-                  <span v-else class="filter-chip-truncate">
-                    {{ (chip.field ? `${chip.field} : ${chip.value}` : chip.value) | formatLabelText }}
-                  </span>
+                <span v-if="copiedChip === chip">Copied!</span>
+  		          <template v-else>
+                   <v-icon v-if="chip.value === '__ts_star'" left small color="amber">mdi-star</v-icon>
+                   <v-icon v-if="chip.value === '__ts_comment'" left small>mdi-comment-multiple-outline</v-icon>
+                   <v-icon v-if="getQuickTag(chip.value)" left small :color="getQuickTag(chip.value).color">{{
+                     getQuickTag(chip.value).label
+                   }}</v-icon>
+                   <span v-if="chip.operator === 'must_not'" class="filter-chip-truncate">
+                     <span style="color: red">NOT </span>
+                     {{ (chip.field ? `${chip.field} : ${chip.value}` : chip.value) | formatLabelText }}
+                   </span>
+                   <span v-else class="filter-chip-truncate">
+                     {{ (chip.field ? `${chip.field} : ${chip.value}` : chip.value) | formatLabelText }}
+                   </span>
+                  </template>
                 </v-chip>
               </template>
               <span>{{ chip.value }}</span>
@@ -327,6 +337,7 @@ export default {
   props: ['sketchId'],
   data() {
     return {
+      copiedChip: null,
       countPerIndex: {},
       countPerTimeline: {},
       currentItemsPerPage: 40,
@@ -539,6 +550,32 @@ export default {
       }
       chip.active = !chip.active
       this.search()
+    },
+    copyChipValue(chip) {
+      let textToCopy = '';
+
+      // Different handling based on chip type
+      if (chip.type.startsWith('datetime')) {
+        // For datetime chips, just copy the value
+        textToCopy = chip.value;
+      } else {
+        // For other chips, copy both field and value
+        if (chip.operator === 'must_not') {
+          textToCopy = `NOT ${chip.field ? `${chip.field} : ` : ''}${chip.value}`;
+          } else {
+          textToCopy = `${chip.field ? `${chip.field} : ` : ''}${chip.value}`;
+        }
+      }
+
+      // Copy to clipboard
+      navigator.clipboard.writeText(textToCopy)
+        .then(() => {
+          this.copiedChip = chip;
+          setTimeout(() => this.copiedChip = null, 2000); // Reset after 2 seconds
+        })
+        .catch(err => {
+        // Handle errors (e.g., clipboard access denied)
+        });
     },
     removeChip: function (chip, search = true) {
       let chipIndex = this.currentQueryFilter.chips.findIndex((c) => c.value === chip.value)
