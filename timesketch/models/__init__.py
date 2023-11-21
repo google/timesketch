@@ -17,6 +17,7 @@ from __future__ import unicode_literals
 
 from flask import abort
 from flask_login import current_user
+from flask_sqlalchemy import BaseQuery
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker, as_declarative
 from sqlalchemy.ext.declarative import declared_attr
@@ -42,7 +43,9 @@ def configure_engine(url):
     global engine, session_maker, db_session
     engine = create_engine(url)
     # Configure the session
-    session_maker.configure(autocommit=False, autoflush=False, bind=engine)
+    session_maker.configure(
+        autocommit=False, autoflush=False, bind=engine, query_cls=BaseQuery
+    )
 
 
 def init_db():
