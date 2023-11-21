@@ -416,7 +416,6 @@ class DataSource(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     error_message = Column(UnicodeText(), default="")
     total_file_events = Column(BigInteger(), default=0)
 
-
     def set_total_file_events(self, total_file_events):
         self.total_file_events = total_file_events
         db_session.add(self)
@@ -475,7 +474,6 @@ class SearchHistory(LabelMixin, BaseModel):
         backref=backref("parent", remote_side=id),
         collection_class=attribute_mapped_collection("id"),
     )
-
 
     @staticmethod
     def build_node_dict(node_dict, node):

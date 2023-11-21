@@ -128,7 +128,6 @@ class BaseModel(object):
         instance = cls.query.filter_by(**kwargs).first()
         if not instance:
             instance = cls(**kwargs)
-            print(f'Instance of {instance} with kwargs {kwargs}')
             db_session.add(instance)
             db_session.commit()
         return instance
