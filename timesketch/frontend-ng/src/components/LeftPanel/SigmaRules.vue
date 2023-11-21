@@ -31,7 +31,7 @@ limitations under the License.
         :to="{ name: 'SigmaNewRule', params: { sketchId: sketch.id } }"
         @click.stop=""
       >
-        <v-icon>mdi-plus</v-icon>
+        <v-icon title="Add Sigma rules">mdi-plus</v-icon>
       </v-btn>
       <span v-if="!expanded" class="float-right" style="margin-right: 3px">
         <v-progress-circular v-if="isLoading" :size="24" :width="1" indeterminate></v-progress-circular>

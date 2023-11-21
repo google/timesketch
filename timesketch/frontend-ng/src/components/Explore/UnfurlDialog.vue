@@ -32,30 +32,15 @@ limitations under the License.
       <v-toolbar v-show="unfurlReady" dense flat color="transparent" class="mt-n8">
         <v-spacer></v-spacer>
         <div>
-          <v-tooltip top open-delay="500">
-            <template v-slot:activator="{ on }">
-              <v-btn icon v-on="on" @click="resizeCanvas()">
-                <v-icon>mdi-fit-to-page-outline</v-icon>
-              </v-btn>
-            </template>
-            <span>resize graph</span>
-          </v-tooltip>
-          <v-tooltip top open-delay="500">
-            <template v-slot:activator="{ on }">
-              <v-btn icon v-on="on" @click="zoomGraph('plus')">
-                <v-icon>mdi-plus</v-icon>
-              </v-btn>
-            </template>
-            <span>zoom in</span>
-          </v-tooltip>
-          <v-tooltip top open-delay="500">
-            <template v-slot:activator="{ on }">
-              <v-btn icon v-on="on" @click="zoomGraph('minus')">
-                <v-icon>mdi-minus</v-icon>
-              </v-btn>
-            </template>
-            <span>zoom out</span>
-          </v-tooltip>
+          <v-btn icon @click="resizeCanvas()">
+            <v-icon title="fit graph to canvas">mdi-fit-to-page-outline</v-icon>
+          </v-btn>
+          <v-btn icon @click="zoomGraph('plus')">
+            <v-icon title="zoom-in">mdi-plus</v-icon>
+          </v-btn>
+          <v-btn icon @click="zoomGraph('minus')">
+            <v-icon title="zoom-out">mdi-minus</v-icon>
+          </v-btn>
         </div>
       </v-toolbar>
 

@@ -32,7 +32,7 @@ limitations under the License.
         @click="createStory()"
         @click.stop=""
       >
-        <v-icon>mdi-plus</v-icon>
+        <v-icon title="Create New Story">mdi-plus</v-icon>
       </v-btn>
 
       <span v-if="!expanded && meta.stories && meta.stories.length" class="float-right" style="margin-right: 10px">
