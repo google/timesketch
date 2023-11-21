@@ -41,7 +41,7 @@ def configure_engine(url):
     # pylint: disable=global-statement,global-variable-not-assigned
     # TODO: Can we wrap this in a class?
     global engine, session_maker, db_session
-    engine = create_engine(url)
+    engine = create_engine(url, future=True)
     # Configure the session
     session_maker.configure(
         autocommit=False, autoflush=False, bind=engine, query_cls=Query
