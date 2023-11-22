@@ -19,7 +19,7 @@ limitations under the License.
     <!-- Progress indicator when loading sketch data -->
     <v-progress-linear v-if="loadingSketch" indeterminate color="primary"></v-progress-linear>
 
-    <div v-if="sketch.id" style="height: 70vh">
+    <div v-if="sketch.id && !loadingSketch" style="height: 70vh">
       <!-- Empty state -->
       <v-container v-if="!hasTimelines && !loadingSketch" fill-height fluid>
         <v-row align="center" justify="center">
@@ -36,10 +36,11 @@ limitations under the License.
       <!-- Archived state -->
       <v-container v-if="isArchived && !loadingSketch" fill-height fluid>
         <v-row align="center" justify="center">
-          <v-sheet class="pa-4 mt-15">
+          <v-sheet class="pa-4">
             <center>
-              <div style="font-size: 2em" class="mb-3">This sketch is archived</div>
-              <v-btn outlined color="primary" @click="unArchiveSketch()"> Bring it back </v-btn>
+              <v-img src="/dist/empty-state.png" max-height="100" max-width="300"></v-img>
+              <div style="font-size: 2em" class="mb-3 mt-3">This sketch is archived</div>
+              <v-btn rounded depressed color="primary" @click="unArchiveSketch()"> Bring it back </v-btn>
             </center>
           </v-sheet>
         </v-row>
@@ -65,7 +66,7 @@ limitations under the License.
             : { 'border-bottom': '1px solid rgba(0,0,0,.12) !important' },
         ]"
       >
-        <v-btn v-if="hasTimelines && !loadingSketch" icon @click.stop="showLeftPanel = !showLeftPanel">
+        <v-btn v-if="hasTimelines && !loadingSketch && !isArchived" icon @click.stop="showLeftPanel = !showLeftPanel">
           <v-icon title="Toggle left panel">mdi-menu</v-icon>
         </v-btn>
 
@@ -174,7 +175,7 @@ limitations under the License.
                   </v-list-item-content>
                 </v-list-item>
 
-                <v-list-item @click="archiveSketch()">
+                <v-list-item @click="archiveSketch()" :disabled="isArchived">
                   <v-list-item-icon>
                     <v-icon>mdi-archive</v-icon>
                   </v-list-item-icon>
@@ -438,7 +439,7 @@ export default {
       this.$store.dispatch('updateContextLinks')
       this.$store.dispatch('updateAnalyzerList', this.sketchId)
       this.loadingSketch = false
-      if (this.hasTimelines) {
+      if (this.hasTimelines && !this.isArchived) {
         this.showLeftPanel = true
       }
     })
@@ -494,6 +495,7 @@ export default {
       ApiClient.archiveSketch(this.sketch.id)
         .then((response) => {
           this.$store.dispatch('updateSketch', this.sketch.id).then(() => {
+            this.showLeftPanel = false
             this.loadingSketch = false
           })
         })
@@ -507,6 +509,7 @@ export default {
         .then((response) => {
           this.$store.dispatch('updateSketch', this.sketch.id).then(() => {
             this.loadingSketch = false
+            this.showLeftPanel = true
           })
         })
         .catch((e) => {
