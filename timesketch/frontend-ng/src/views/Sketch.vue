@@ -438,7 +438,7 @@ export default {
       this.$store.dispatch('updateContextLinks')
       this.$store.dispatch('updateAnalyzerList', this.sketchId)
       this.loadingSketch = false
-      if (this.hasTimelines) {
+      if (this.hasTimelines && !this.isArchived) {
         this.showLeftPanel = true
       }
     })
