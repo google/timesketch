@@ -210,7 +210,15 @@ limitations under the License.
       </v-app-bar>
 
       <!-- Left panel -->
-      <v-navigation-drawer v-model="showLeftPanel" app disable-resize-watcher clipped hide-overlay width="410">
+      <v-navigation-drawer
+        v-model="showLeftPanel"
+        app
+        disable-resize-watcher
+        stateless
+        clipped
+        hide-overlay
+        width="410"
+      >
         <!-- Dialog for adding a scenario -->
         <v-dialog v-model="scenarioDialog" max-width="500px">
           <v-card>
