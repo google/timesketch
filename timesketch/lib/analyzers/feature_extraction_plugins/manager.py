@@ -38,7 +38,7 @@ class PluginManager(object):
         if plugin_name in cls._plugin_classes:
             raise KeyError(f"Plugin class {plugin_class.NAME} is already registered.")
 
-        cls.logger.info("Registering plugin class %s", plugin_class.NAME)
+        cls.logger.debug("Registering plugin class %s", plugin_class.NAME)
         cls._plugin_classes[plugin_name] = plugin_class
 
     @classmethod
@@ -74,7 +74,7 @@ class PluginManager(object):
         if plugin_name not in cls._plugin_classes:
             raise KeyError(f"Plugin class {plugin_class.NAME} is not registered.")
 
-        cls.logger.info("Deregistering plugin class: %s", plugin_class.NAME)
+        cls.logger.debug("Deregistering plugin class: %s", plugin_class.NAME)
         del cls._plugin_classes[plugin_name]
 
     @classmethod
