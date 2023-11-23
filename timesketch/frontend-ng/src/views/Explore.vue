@@ -191,7 +191,12 @@ limitations under the License.
                   </template>
                   <ts-filter-menu app :selected-chip="chip" @updateChip="updateChip($event, chip)"></ts-filter-menu>
                 </v-menu>
-
+                <v-list-item @click="copyChipValue(chip)">
+                  <v-list-item-action>
+                    <v-icon>mdi-content-copy</v-icon>
+                  </v-list-item-action>
+                  <v-list-item-subtitle>Copy filter</v-list-item-subtitle>
+                </v-list-item>
                 <v-list-item @click="toggleChip(chip)">
                   <v-list-item-action>
                     <v-icon v-if="chip.active">mdi-eye-off</v-icon>
@@ -207,12 +212,6 @@ limitations under the License.
                     <v-icon>mdi-delete</v-icon>
                   </v-list-item-action>
                   <v-list-item-subtitle>Remove filter</v-list-item-subtitle>
-                </v-list-item>
-                <v-list-item @click="copyChipValue(chip)">
-                  <v-list-item-action>
-                    <v-icon>mdi-content-copy</v-icon>
-                  </v-list-item-action>
-                  <v-list-item-subtitle>Copy filter</v-list-item-subtitle>
                 </v-list-item>
               </v-list>
             </v-card>
@@ -256,21 +255,18 @@ limitations under the License.
                   v-bind="attrs"
                   v-on="onTooltip"
                 >
-                <span v-if="copiedChip === chip">Copied!</span>
-  		          <template v-else>
-                   <v-icon v-if="chip.value === '__ts_star'" left small color="amber">mdi-star</v-icon>
-                   <v-icon v-if="chip.value === '__ts_comment'" left small>mdi-comment-multiple-outline</v-icon>
-                   <v-icon v-if="getQuickTag(chip.value)" left small :color="getQuickTag(chip.value).color">{{
-                     getQuickTag(chip.value).label
-                   }}</v-icon>
-                   <span v-if="chip.operator === 'must_not'" class="filter-chip-truncate">
-                     <span style="color: red">NOT </span>
-                     {{ (chip.field ? `${chip.field} : ${chip.value}` : chip.value) | formatLabelText }}
-                   </span>
-                   <span v-else class="filter-chip-truncate">
-                     {{ (chip.field ? `${chip.field} : ${chip.value}` : chip.value) | formatLabelText }}
-                   </span>
-                  </template>
+                  <v-icon v-if="chip.value === '__ts_star'" left small color="amber">mdi-star</v-icon>
+                  <v-icon v-if="chip.value === '__ts_comment'" left small>mdi-comment-multiple-outline</v-icon>
+                  <v-icon v-if="getQuickTag(chip.value)" left small :color="getQuickTag(chip.value).color">{{
+                    getQuickTag(chip.value).label
+                  }}</v-icon>
+                  <span v-if="chip.operator === 'must_not'" class="filter-chip-truncate">
+                    <span style="color: red">NOT </span>
+                    {{ (chip.field ? `${chip.field} : ${chip.value}` : chip.value) | formatLabelText }}
+                  </span>
+                  <span v-else class="filter-chip-truncate">
+                    {{ (chip.field ? `${chip.field} : ${chip.value}` : chip.value) | formatLabelText }}
+                  </span>
                 </v-chip>
               </template>
               <span>{{ chip.value }}</span>
@@ -337,7 +333,6 @@ export default {
   props: ['sketchId'],
   data() {
     return {
-      copiedChip: null,
       countPerIndex: {},
       countPerTimeline: {},
       currentItemsPerPage: 40,
@@ -553,28 +548,24 @@ export default {
     },
     copyChipValue(chip) {
       let textToCopy = '';
-
       // Different handling based on chip type
       if (chip.type.startsWith('datetime')) {
         // For datetime chips, just copy the value
         textToCopy = chip.value;
       } else {
         // For other chips, copy both field and value
-        if (chip.operator === 'must_not') {
-          textToCopy = `NOT ${chip.field ? `${chip.field} : ` : ''}${chip.value}`;
-          } else {
-          textToCopy = `${chip.field ? `${chip.field} : ` : ''}${chip.value}`;
-        }
+        textToCopy = chip.operator === 'must_not' 
+          ? `NOT ${chip.field ? `${chip.field} : ` : ''}${chip.value}` 
+          : `${chip.field ? `${chip.field} : ` : ''}${chip.value}`;
       }
-
       // Copy to clipboard
       navigator.clipboard.writeText(textToCopy)
         .then(() => {
-          this.copiedChip = chip;
-          setTimeout(() => this.copiedChip = null, 2000); // Reset after 2 seconds
+          this.infoSnackBar('Copied to clipboard!')
         })
-        .catch(err => {
-        // Handle errors (e.g., clipboard access denied)
+        .catch((e) => {
+          this.errorSnackBar('Failed to copy to clipboard.')
+          console.error(e)
         });
     },
     removeChip: function (chip, search = true) {
