@@ -89,7 +89,8 @@ curl -s $GITHUB_BASE_URL/data/timesketch.conf > timesketch/etc/timesketch/timesk
 curl -s $GITHUB_BASE_URL/data/tags.yaml > timesketch/etc/timesketch/tags.yaml
 curl -s $GITHUB_BASE_URL/data/plaso.mappings > timesketch/etc/timesketch/plaso.mappings
 curl -s $GITHUB_BASE_URL/data/generic.mappings > timesketch/etc/timesketch/generic.mappings
-curl -s $GITHUB_BASE_URL/data/features.yaml > timesketch/etc/timesketch/features.yaml
+curl -s $GITHUB_BASE_URL/data/regex_features.yaml > timesketch/etc/timesketch/regex_features.yaml
+curl -s $GITHUB_BASE_URL/data/winevt_features.yaml > timesketch/etc/timesketch/winevt_features.yaml
 curl -s $GITHUB_BASE_URL/data/ontology.yaml > timesketch/etc/timesketch/ontology.yaml
 curl -s $GITHUB_BASE_URL/data/sigma_rule_status.csv > timesketch/etc/timesketch/sigma_rule_status.csv
 curl -s $GITHUB_BASE_URL/data/tags.yaml > timesketch/etc/timesketch/tags.yaml

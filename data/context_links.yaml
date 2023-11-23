@@ -77,12 +77,34 @@ hardcoded_modules:
       - uri
       - original_url
 
+### Add Threat Intel
+  threat_intel:
+    short_name: 'Add to Threat Intel'
+    match_fields:
+      - url
+      - uri
+      - original_url
+      - ip
+      - ip_address
+      - domain
+      - domain_name
+      - host
+      - hostname
+      - email
+      - email_address
+      - hash
+      - sha256_hash
+      - sha256
+      - sha1_hash
+      - sha1
+      - md5_hash
+      - md5
+
 ## External Services
 linked_services:
 ### Virustotal Example:
-  # virustotal_hash_lookup:
-  #   short_name: 'VirusTotal'
-  #   match_fields: ['hash', 'sha256_hash', 'sha256', 'sha1_hash', 'sha1', 'md5_hash', 'md5', 'url']
-  #   validation_regex: '/^[0-9a-f]{64}$|^[0-9a-f]{40}$|^[0-9a-f]{32}$/i'
-  #   context_link: 'https://www.virustotal.com/gui/search/<ATTR_VALUE>'
-  #   redirect_warning: TRUE
+  virustotal_hash_lookup:
+    short_name: 'VirusTotal'
+    match_fields: ['hash', 'sha256_hash', 'sha256', 'sha1_hash', 'sha1', 'md5_hash', 'md5']
+    context_link: 'https://www.virustotal.com/gui/search/<ATTR_VALUE>'
+    redirect_warning: TRUE

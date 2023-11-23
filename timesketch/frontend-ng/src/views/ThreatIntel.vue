@@ -19,6 +19,7 @@ limitations under the License.
       :dialog.sync="indicatorDialog"
       :index="currentIndex"
       :tag-info="tagInfo"
+      :ioc="indicator"
       @open-dialog="indicatorDialog = true"
       @close-dialog="
         indicatorDialog = false
@@ -46,12 +47,12 @@ limitations under the License.
         >
           <template v-slot:item.search="{ item }">
             <v-btn icon small @click="generateSearchQuery(item.ioc)">
-              <v-icon small>mdi-magnify</v-icon>
+              <v-icon title="Search this indicator" small>mdi-magnify</v-icon>
             </v-btn>
           </template>
 
           <template v-slot:item.externalURI="{ item }">
-            <v-icon v-if="item.externalURI" x-small>mdi-open-in-new</v-icon>
+            <v-icon title="Open link" v-if="item.externalURI" x-small>mdi-open-in-new</v-icon>
             <a
               style="text-decoration: none"
               v-if="getValidUrl(item.externalURI)"
@@ -71,10 +72,10 @@ limitations under the License.
 
           <template v-slot:item.actions="{ item }">
             <v-btn small icon @click="editIndicator(item.index)">
-              <v-icon small>mdi-pencil</v-icon>
+              <v-icon small title="Edit indicator">mdi-pencil</v-icon>
             </v-btn>
             <v-btn small icon @click="deleteIndicator(item.index)">
-              <v-icon small>mdi-trash-can-outline</v-icon>
+              <v-icon small title="Delete indicator">mdi-trash-can-outline</v-icon>
             </v-btn>
           </template>
         </v-data-table>
@@ -117,6 +118,7 @@ export default {
       tagInfo: {},
       indicatorDialog: false,
       currentIndex: -1,
+      indicator: '',
     }
   },
   computed: {
@@ -227,8 +229,9 @@ export default {
           console.error(e)
         })
     },
-    showIndicatorDialog() {
-      this.indicatorDialog = true
+    showIndicatorDialog(payload) {
+        this.indicator = payload
+        this.indicatorDialog = true
     },
   },
   mounted() {

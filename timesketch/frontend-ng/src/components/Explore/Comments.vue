@@ -58,10 +58,10 @@ limitations under the License.
         >
           <v-chip outlined style="margin-right: 10px">
             <v-btn icon small @click="editComment(index)">
-              <v-icon small>mdi-square-edit-outline</v-icon>
+              <v-icon title="Edit comment" small>mdi-square-edit-outline</v-icon>
             </v-btn>
             <v-btn icon small @click="deleteComment(comment.id, index)">
-              <v-icon small>mdi-trash-can-outline</v-icon>
+              <v-icon title="Delete comment" small>mdi-trash-can-outline</v-icon>
             </v-btn>
           </v-chip>
         </v-list-item-action>
@@ -79,7 +79,7 @@ limitations under the License.
         rows="1"
       ></v-textarea>
       <v-btn icon @click="postComment">
-        <v-icon>mdi-send</v-icon>
+        <v-icon title="Submit comment">mdi-send</v-icon>
       </v-btn>
     </v-card-actions>
   </v-card>

@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -->
+
 <template>
   <div>
     <!-- Progress indicator when loading sketch data -->
@@ -34,7 +35,7 @@ limitations under the License.
       <!-- Archived state -->
       <v-container v-if="isArchived && !loadingSketch" fill-height fluid>
         <v-row align="center" justify="center">
-          <v-sheet class="pa-4">
+          <v-sheet class="pa-4 mt-15">
             <center>
               <div style="font-size: 2em" class="mb-3">This sketch is archived</div>
               <v-btn outlined color="primary" @click="unArchiveSketch()"> Bring it back </v-btn>
@@ -64,7 +65,7 @@ limitations under the License.
         ]"
       >
         <v-btn icon @click="toggleLeftPanel">
-          <v-icon>mdi-menu</v-icon>
+          <v-icon title="Toggle left panel">mdi-menu</v-icon>
         </v-btn>
 
         <v-avatar class="ml-n2 mt-1">
@@ -91,7 +92,7 @@ limitations under the License.
               {{ sketch.name }}
             </div>
             <div>
-              <v-icon small class="ml-1" v-if="hover" @click="renameSketchDialog = true">mdi-pencil</v-icon>
+              <v-icon title="Rename sketch" small class="ml-1" v-if="hover" @click="renameSketchDialog = true">mdi-pencil</v-icon>
             </div>
           </div>
         </v-hover>
@@ -116,7 +117,7 @@ limitations under the License.
           <template v-slot:activator="{ on, attrs }">
             <v-avatar>
               <v-btn small icon v-bind="attrs" v-on="on">
-                <v-icon>mdi-dots-vertical</v-icon>
+                <v-icon title="Sketch Options">mdi-dots-vertical</v-icon>
               </v-btn>
             </v-avatar>
           </template>
