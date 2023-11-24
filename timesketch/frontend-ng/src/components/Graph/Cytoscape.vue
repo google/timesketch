@@ -15,19 +15,18 @@ limitations under the License.
 -->
 <template>
   <v-container fluid>
-    <v-card flat class="pa-3 pt-0 mt-n3" color="transparent">
+    <v-card flat class="pt-0 mt-n6" color="transparent">
       <v-card class="d-flex align-start mb-1" outlined>
         <v-text-field
           v-model="filterString"
           @input="filterGraphByInput"
-          class="pa-1"
+          class="pa-2"
           placeholder="Filter nodes and edges"
           label="Filter nodes and edges"
           append-icon="mdi-magnify"
           hide-details
           single-line
           dense
-          filled
           flat
           solo
         >
@@ -40,8 +39,8 @@ limitations under the License.
           </span>
           <!-- Save graph dialog -->
           <v-btn icon :disabled="!edgeQuery" @click="saveGraphDialog = true">
-              <v-icon title="Save selected graph">mdi-content-save-outline</v-icon>
-            </v-btn>
+            <v-icon title="Save selected graph">mdi-content-save-outline</v-icon>
+          </v-btn>
           <v-dialog v-model="saveGraphDialog" width="500">
             <v-card class="pa-4">
               <h3>Save selected elements</h3>
@@ -68,16 +67,12 @@ limitations under the License.
           </v-btn>
 
           <!-- Graph settings menu -->
-          <v-btn icon :disabled="!currentGraph || !graphPluginName" @click="graphSettingsMenu = true">
-            <v-icon title="Graph settings">mdi-cog-outline</v-icon>
-          </v-btn>
-          <v-menu
-            v-model="graphSettingsMenu"
-            offset-y
-            :close-on-content-click="false"
-            :close-on-click="true"
-            content-class="menu-with-gap"
-          >
+          <v-menu offset-y :close-on-content-click="false" :close-on-click="true" content-class="menu-with-gap">
+            <template v-slot:activator="{ on, attrs }">
+              <v-btn icon :disabled="!currentGraph || !graphPluginName" v-bind="attrs" v-on="on">
+                <v-icon title="Graph settings">mdi-cog-outline</v-icon>
+              </v-btn>
+            </template>
             <v-card class="pa-4 pt-5" width="600">
               <h5>Layout type</h5>
               <v-radio-group row v-model="layoutName">
@@ -205,7 +200,6 @@ export default {
   data: function () {
     return {
       saveGraphDialog: false,
-      graphSettingsMenu: false,
       showTimelineView: false,
       timelineViewHeight: 40,
       minimizeTimelineView: false,
