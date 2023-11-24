@@ -33,10 +33,10 @@ limitations under the License.
         :ripple="!slotProps.timelineFailed"
       >
         <div class="chip-content">
-          <v-icon v-if="slotProps.timelineFailed" @click="slotProps.events.openDialog" left color="red" size="x-large">
+          <v-icon v-if="slotProps.timelineFailed" title="Import failed; click for details" @click="slotProps.events.openDialog" left color="red" size="x-large">
             mdi-alert-circle-outline
           </v-icon>
-          <v-icon v-if="!slotProps.timelineFailed" left :color="slotProps.timelineChipColor" size="26" class="ml-n2"> mdi-circle </v-icon>
+          <v-icon v-if="!slotProps.timelineFailed" title="Toggle visibility" left :color="slotProps.timelineChipColor" size="26" class="ml-n2"> mdi-circle </v-icon>
 
           <v-tooltip bottom :disabled="timeline.name.length < 30" open-delay="300">
             <template v-slot:activator="{ on: onTooltip, attrs }">
@@ -60,7 +60,7 @@ limitations under the License.
               {{ eventsCount | compactNumber }}
             </span>
             <v-btn class="ma-1" x-small icon v-on="slotProps.events.menuOn">
-              <v-icon> mdi-dots-vertical </v-icon>
+              <v-icon title="Manage Timeline"> mdi-dots-vertical </v-icon>
             </v-btn>
           </span>
         </div>

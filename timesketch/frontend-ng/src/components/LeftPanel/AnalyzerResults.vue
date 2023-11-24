@@ -30,7 +30,7 @@ limitations under the License.
         :to="{ name: 'Analyze', params: { sketchId: sketch.id, analyzerTimelineId: undefined } }"
         @click.stop=""
       >
-        <v-icon>mdi-plus</v-icon>
+        <v-icon title="Select analyzers for execution">mdi-plus</v-icon>
       </v-btn>
       <span class="float-right" style="margin-right: 3px">
         <v-progress-circular
@@ -47,7 +47,7 @@ limitations under the License.
               <v-icon small>mdi-reload-alert</v-icon>
             </v-btn>
           </template>
-          <span>analyzer status check timeout, click to reload</span>
+          <span>Analyzer status check timeout, click to reload</span>
         </v-tooltip>
       </span>
       <span class="float-right" style="margin-right: 10px">

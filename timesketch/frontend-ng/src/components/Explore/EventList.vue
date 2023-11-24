@@ -80,9 +80,10 @@ limitations under the License.
               <v-dialog v-model="saveSearchMenu" v-if="!disableSaveSearch" width="500">
                 <template v-slot:activator="{ on, attrs }">
                   <v-btn icon v-bind="attrs" v-on="on">
-                    <v-icon>mdi-content-save-outline</v-icon>
+                    <v-icon title="Save current search">mdi-content-save-outline</v-icon>
                   </v-btn>
                 </template>
+
                 <v-card class="pa-4">
                   <h3>Save Search</h3>
                   <br />
@@ -104,14 +105,16 @@ limitations under the License.
                 </v-card>
               </v-dialog>
 
-              <v-btn icon @click="showHistogram = !showHistogram" v-if="!disableHistogram">
-                <v-icon>mdi-chart-bar</v-icon>
-              </v-btn>
+              <template>
+                <v-btn icon @click="showHistogram = !showHistogram" v-if="!disableHistogram">
+                  <v-icon title="Toggle event histogram">mdi-chart-bar</v-icon>
+                </v-btn>
+              </template>
 
               <v-dialog v-model="columnDialog" v-if="!disableColumns" max-width="500px" scrollable>
                 <template v-slot:activator="{ on, attrs }">
                   <v-btn icon v-bind="attrs" v-on="on">
-                    <v-icon>mdi-view-column-outline</v-icon>
+                    <v-icon title="Modify columns">mdi-view-column-outline</v-icon>
                   </v-btn>
                 </template>
 
@@ -152,19 +155,14 @@ limitations under the License.
                 </v-card>
               </v-dialog>
 
-              <v-tooltip top open-delay="500">
-                <template v-slot:activator="{ on }">
-                  <v-btn v-on="on" icon @click="exportSearchResult()">
-                    <v-icon>mdi-download</v-icon>
-                  </v-btn>
-                </template>
-                <span>Download current view as csv</span>
-              </v-tooltip>
+              <v-btn icon @click="exportSearchResult()">
+                <v-icon title="Download current view as CSV">mdi-download</v-icon>
+              </v-btn>
 
               <v-menu v-if="!disableSettings" offset-y :close-on-content-click="false">
                 <template v-slot:activator="{ on, attrs }">
                   <v-btn icon v-bind="attrs" v-on="on">
-                    <v-icon>mdi-dots-horizontal</v-icon>
+                    <v-icon title="View settings">mdi-dots-horizontal</v-icon>
                   </v-btn>
                 </template>
 
@@ -275,7 +273,7 @@ limitations under the License.
                 reset
               </v-btn>
               <v-btn icon @click="showHistogram = false">
-                <v-icon>mdi-close</v-icon>
+                <v-icon title="Close histogram">mdi-close</v-icon>
               </v-btn>
             </v-toolbar>
             <ts-bar-chart
@@ -316,8 +314,10 @@ limitations under the License.
         <!-- Actions field -->
         <template v-slot:item.actions="{ item }">
           <v-btn small icon @click="toggleStar(item)">
-            <v-icon v-if="item._source.label.includes('__ts_star')" color="amber">mdi-star</v-icon>
-            <v-icon v-else>mdi-star-outline</v-icon>
+            <v-icon title="Toggle star status" v-if="item._source.label.includes('__ts_star')" color="amber"
+              >mdi-star</v-icon
+            >
+            <v-icon title="Toggle star status" v-else>mdi-star-outline</v-icon>
           </v-btn>
 
           <!-- Tag menu -->
@@ -366,7 +366,7 @@ limitations under the License.
                   :key="emoji"
                   v-html="emoji + ';'"
                   :title="meta.emojis[emoji]"
-                  >
+                >
                 </span>
               </span>
               <span>{{ item._source[field.text] }}</span>
@@ -385,47 +385,31 @@ limitations under the License.
 
         <!-- Comment field -->
         <template v-slot:item._source.comment="{ item }">
-          <v-tooltip top open-delay="500">
-            <template v-slot:activator="{ on }">
-              <div v-on="on" class="d-inline-block">
-                <v-btn icon small @click="toggleDetailedEvent(item)" v-if="item._source.comment.length">
-                  <v-badge :offset-y="10" :offset-x="10" bordered :content="item._source.comment.length">
-                    <v-icon small> mdi-comment-text-multiple-outline </v-icon>
-                  </v-badge>
-                </v-btn>
-              </div>
-            </template>
-            <span v-if="!item['showDetails']">Open event &amp; comments</span>
-            <span v-if="item['showDetails']">Close event &amp; comments</span>
-          </v-tooltip>
-          <v-tooltip
-            v-if="item['showDetails'] && !item._source.comment.length && !item.showComments"
-            top
-            open-delay="500"
-          >
-            <template v-slot:activator="{ on }">
-              <div v-on="on" class="d-inline-block">
-                <v-btn icon small @click="newComment(item)">
-                  <v-icon> mdi-comment-plus-outline </v-icon>
-                </v-btn>
-              </div>
-            </template>
-            <span>Add a comment</span>
-          </v-tooltip>
-          <v-tooltip
-            v-if="item['showDetails'] && !item._source.comment.length && item.showComments"
-            top
-            open-delay="500"
-          >
-            <template v-slot:activator="{ on }">
-              <div v-on="on" class="d-inline-block">
-                <v-btn icon small @click="item.showComments = false">
-                  <v-icon> mdi-comment-remove-outline </v-icon>
-                </v-btn>
-              </div>
-            </template>
-            <span>Close comments</span>
-          </v-tooltip>
+          <div class="d-inline-block">
+            <v-btn icon small @click="toggleDetailedEvent(item)" v-if="item._source.comment.length">
+              <v-badge :offset-y="10" :offset-x="10" bordered :content="item._source.comment.length">
+                <v-icon
+                  :title="item['showDetails'] ? 'Close event &amp; comments' : 'Open event &amp; comments'"
+                  small
+                >
+                  mdi-comment-text-multiple-outline
+                </v-icon>
+              </v-badge>
+            </v-btn>
+          </div>
+
+          <div v-if="item['showDetails'] && !item._source.comment.length && !item.showComments" class="d-inline-block">
+            <v-btn icon small @click="newComment(item)">
+              <v-icon title="Add a comment"> mdi-comment-plus-outline </v-icon>
+            </v-btn>
+          </div>
+
+          <div v-if="item['showDetails'] && !item._source.comment.length && item.showComments" class="d-inline-block">
+            <v-btn icon small @click="item.showComments = false">
+              <v-icon title="Close comments"> mdi-comment-remove-outline </v-icon>
+            </v-btn>
+          </div>
+
         </template>
       </v-data-table>
     </div>
