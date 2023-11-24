@@ -32,7 +32,7 @@ limitations under the License.
           <v-icon left small> mdi-plus </v-icon>
           Add Timeline
         </v-btn>
-        <v-btn v-else outlined color="primary" v-bind="attrs" v-on="on">
+        <v-btn v-else rounded depressed color="primary" v-bind="attrs" v-on="on">
           <v-icon left> mdi-plus </v-icon>
           Add Timeline
         </v-btn>
