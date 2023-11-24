@@ -64,9 +64,9 @@ limitations under the License.
               v-bind="attrs"
               v-on="on"
             >
-            <template v-slot:append>
-               <v-icon title="Run search" @click="search()">mdi-magnify</v-icon>
-            </template>
+              <template v-slot:append>
+                <v-icon title="Run search" @click="search()">mdi-magnify</v-icon>
+              </template>
             </v-text-field>
           </template>
 
@@ -281,7 +281,7 @@ limitations under the License.
     </v-card>
 
     <!-- Eventlist -->
-    <v-card flat class="mt-5 mx-3">
+    <v-card flat class="mt-5 mx-3" color="transparent">
       <ts-event-list
         :query-request="activeQueryRequest"
         @countPerIndex="updateCountPerIndex($event)"
