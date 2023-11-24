@@ -45,7 +45,6 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - name: Install dependencies
         run: |
-          sudo apt install yarn npm --no-install-recommends
           yarn install
 
       - name: Run unit tests with yarn
