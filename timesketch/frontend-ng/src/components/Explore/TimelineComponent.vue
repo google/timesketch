@@ -110,7 +110,6 @@ limitations under the License.
     <v-menu v-else offset-y :close-on-content-click="false" content-class="menu-with-gap" ref="timelineChipMenuRef">
       <template v-slot:activator="{ on }">
         <slot
-          :timelineStyle="timelineStyle"
           :timelineFailed="timelineFailed"
           :timelineChipColor="timelineChipColor"
           :timelineStatus="timelineStatus"
@@ -349,13 +348,6 @@ export default {
     }
   },
   computed: {
-    timelineStyle() {
-      const greyOut = this.timelineStatus === 'ready' && !this.isSelected
-      return {
-        opacity: greyOut ? '50%' : '100%',
-        backgroundColor: this.$vuetify.theme.dark ? '#303030' : '#f5f5f5',
-      }
-    },
     meta() {
       return this.$store.state.meta
     },

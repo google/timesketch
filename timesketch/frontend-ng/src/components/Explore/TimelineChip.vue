@@ -23,12 +23,11 @@ limitations under the License.
     @disableAllOtherTimelines="$emit('disableAllOtherTimelines', ...arguments)"
     @save="$emit('save', ...arguments)"
     @remove="$emit('remove', ...arguments)"
-    @toggleTimeline="teest"
   >
   <template v-slot="slotProps">
       <v-chip
         @click="slotProps.events.toggleTimeline"
-        :style="slotProps.timelineStyle"
+        :style="timelineStyle(slotProps.timelineStatus)"
         class="pr-1 timeline-chip"
         :class="[{ failed: slotProps.timelineFailed }, $vuetify.theme.dark ? 'dark-highlight' : 'light-highlight']"
         :ripple="!slotProps.timelineFailed"
@@ -80,9 +79,13 @@ export default {
     TsTimelineComponent,
   },
   methods: {
-    teest() {
-      console.log('teest');
-    }
+    timelineStyle(timelineStatus) {
+      const greyOut = timelineStatus === 'ready' && !this.isSelected
+      return {
+        opacity: greyOut ? '50%' : '100%',
+        backgroundColor: this.$vuetify.theme.dark ? '#303030' : '#f5f5f5',
+      }
+    },
   }
 }
 </script>

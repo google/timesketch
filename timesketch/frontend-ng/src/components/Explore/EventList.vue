@@ -834,6 +834,8 @@ export default {
           this.eventList.objects = response.data.objects
           this.eventList.meta = response.data.meta
           this.searchInProgress = false
+          // TODO move into store
+          EventBus.$emit('updateCountPerTimeline', response.data.meta.count_per_timeline)
           this.$emit('countPerTimeline', response.data.meta.count_per_timeline)
           this.$emit('countPerIndex', response.data.meta.count_per_index)
 

@@ -51,14 +51,15 @@ limitations under the License.
         >
           <template v-slot:item.name="{ item }">
             <ts-timeline-component
-              class="mb-1 mt-1 timeline-chip"
+              class="mb-1 mt-1 "
               :key="item.id + item.name"
               :is-selected="isEnabled(item)"
               @toggle="toggleTimeline"
+              @disableAllOtherTimelines="disableAllOtherTimelines"
               :timeline="item"
             >
             <template v-slot="slotProps">
-              <div class="chip-content" :style="slotProps.timelineStyle">
+              <div class="chip-content" :style="timelineStyle(slotProps.timelineStatus, isEnabled(item))">
                 <v-icon v-if="slotProps.timelineFailed" @click="slotProps.events.openDialog" left color="red" size="x-large">
                   mdi-alert-circle-outline
                 </v-icon>
@@ -82,11 +83,14 @@ limitations under the License.
                     <v-progress-circular small indeterminate color="grey" :size="20" :width="2"></v-progress-circular>
                   </span>
 
-                  <!--
-                    TODO
-                    <span v-if="!slotProps.timelineFailed" class="events-count" x-small>
-                    {{ eventsCount | compactNumber }}
-                  </span> -->
+
+                  <span v-if="!slotProps.timelineFailed" class="events-count" x-small>
+                    {{ getCount(item) | compactNumber }}
+                  </span>
+                  <v-btn class="ma-1" x-small icon @click="slotProps.events.toggleTimeline">
+                    <v-icon v-if="isEnabled(item)"> mdi-eye </v-icon>
+                    <v-icon v-else> mdi-eye-off </v-icon>
+                  </v-btn>
                   <v-btn class="ma-1" x-small icon v-on="slotProps.events.menuOn">
                     <v-icon> mdi-dots-vertical </v-icon>
                   </v-btn>
@@ -103,6 +107,8 @@ limitations under the License.
 </template>
 
 <script>
+import EventBus from '../../main'
+
 import TsUploadTimelineForm from '../UploadForm'
 import TsTimelineComponent from '../Explore/TimelineComponent'
 export default {
@@ -132,14 +138,43 @@ export default {
     toggleTimeline(timeline) {
       this.$store.dispatch('toggleEnabledTimeline', timeline.id)
     },
+    disableAllOtherTimelines(timeline) {
+      this.$store.dispatch('updateEnabledTimelines', [timeline.id])
+    },
+    timelineStyle(timelineStatus, isSelected) {
+      const greyOut = timelineStatus === 'ready' && !isSelected
+      return {
+        opacity: greyOut ? '50%' : '100%',
+      }
+    },
+    updateCountPerTimeline(countPerTimeline) {
+      this.countPerTimeline = countPerTimeline
+    },
+    getCount(timeline) {
+      let count = 0
+      if (this.countPerTimeline) {
+        count = this.countPerTimeline[timeline.id]
+        if (typeof count === 'number') {
+          return count
+        }
+      }
+      return count
+    },
   },
   data: function () {
     return {
+      countPerTimeline: {},
       expanded: false,
       selected: [],
       search: '',
       headers: [{ value: 'name' }]
     }
+  },
+  mounted() {
+    EventBus.$on('updateCountPerTimeline', this.updateCountPerTimeline)
+  },
+  beforeDestroy() {
+    EventBus.$off('updateCountPerTimeline')
   },
 }
 </script>
