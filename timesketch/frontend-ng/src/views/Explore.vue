@@ -64,9 +64,9 @@ limitations under the License.
               v-bind="attrs"
               v-on="on"
             >
-            <template v-slot:append>
-               <v-icon title="Run search" @click="search()">mdi-magnify</v-icon>
-            </template>
+              <template v-slot:append>
+                <v-icon title="Run search" @click="search()">mdi-magnify</v-icon>
+              </template>
             </v-text-field>
           </template>
 
@@ -194,7 +194,12 @@ limitations under the License.
                   </template>
                   <ts-filter-menu app :selected-chip="chip" @updateChip="updateChip($event, chip)"></ts-filter-menu>
                 </v-menu>
-
+                <v-list-item @click="copyFilterChip(chip)">
+                  <v-list-item-action>
+                    <v-icon>mdi-content-copy</v-icon>
+                  </v-list-item-action>
+                  <v-list-item-subtitle>Copy filter</v-list-item-subtitle>
+                </v-list-item>
                 <v-list-item @click="toggleChip(chip)">
                   <v-list-item-action>
                     <v-icon v-if="chip.active">mdi-eye-off</v-icon>
@@ -249,6 +254,7 @@ limitations under the License.
                   close
                   close-icon="mdi-close"
                   @click:close="removeChip(chip)"
+                  @click="copyFilterChip(chip)"
                   v-bind="attrs"
                   v-on="onTooltip"
                 >
@@ -275,7 +281,7 @@ limitations under the License.
     </v-card>
 
     <!-- Eventlist -->
-    <v-card flat class="mt-5 mx-3">
+    <v-card flat class="mt-5 mx-3" color="transparent">
       <ts-event-list
         :query-request="activeQueryRequest"
         @countPerIndex="updateCountPerIndex($event)"
@@ -542,6 +548,28 @@ export default {
       }
       chip.active = !chip.active
       this.search()
+    },
+    copyFilterChip(chip) {
+      let textToCopy = '';
+      // Different handling based on chip type
+      if (chip.type.startsWith('datetime')) {
+        // For datetime chips, just copy the value
+        textToCopy = chip.value;
+      } else {
+        // For other chips, copy both field and value
+        textToCopy = chip.operator === 'must_not' 
+          ? `NOT ${chip.field ? `${chip.field}:` : ''}"${chip.value}"` 
+          : `${chip.field ? `${chip.field}:` : ''}"${chip.value}"`;
+      }
+      // Copy to clipboard
+      navigator.clipboard.writeText(textToCopy)
+        .then(() => {
+          this.infoSnackBar('Copied to clipboard!')
+        })
+        .catch((e) => {
+          this.errorSnackBar('Failed to copy to clipboard.')
+          console.error(e)
+        });
     },
     removeChip: function (chip, search = true) {
       let chipIndex = this.currentQueryFilter.chips.findIndex((c) => c.value === chip.value)
