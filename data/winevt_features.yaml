@@ -809,11 +809,30 @@ bits_client_3_v0:
   event_version: 0
   references:
     - "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2008-r2-and-2008/cc734602(v=ws.10)"
+    - "https://github.com/nsacyber/Windows-Event-Log-Messages/blob/master/docs/Datasets.md"
   mapping:
     - name: job_title
       string_index: 0
     - name: job_owner
       string_index: 1
+
+### Version 1
+bits_client_3_v0:
+  source_name:
+    - Microsoft-Windows-Bits-Client
+  provider_identifier:
+    - '{EF1CC15B-46C1-414E-BB95-E76B077BD51E}'
+  event_identifier: 3
+  event_version: 1
+  references:
+    - "https://github.com/nsacyber/Windows-Event-Log-Messages/blob/master/docs/Datasets.md"
+  mapping:
+    - name: job_title
+      string_index: 0
+    - name: job_id
+      string_index: 1
+    - name: job_owner
+      string_index: 2
 
 ### Version 2 is used in win2k16
 bits_client_3_v2:
@@ -825,6 +844,7 @@ bits_client_3_v2:
   event_version: 2
   references:
     - "https://community.microfocus.com/cfs-file/__key/communityserver-wikis-components-files/00-00-00-00-23/MSWinBITSClientEvtLogs.pdf"
+    - "https://github.com/nsacyber/Windows-Event-Log-Messages/blob/master/docs/Datasets.md"
   mapping:
     - name: job_title
       string_index: 0
@@ -847,6 +867,7 @@ bits_client_3_v3:
   event_version: 3
   references:
     - "https://community.microfocus.com/cfs-file/__key/communityserver-wikis-components-files/00-00-00-00-23/MSWinBITSClientEvtLogs.pdf"
+    - "https://github.com/nsacyber/Windows-Event-Log-Messages/blob/master/docs/Datasets.md"
   mapping:
     - name: job_title
       string_index: 0
@@ -872,6 +893,7 @@ bits_client_4_v1:
   event_version: 1
   references:
     - "https://community.microfocus.com/cfs-file/__key/communityserver-wikis-components-files/00-00-00-00-23/MSWinBITSClientEvtLogs.pdf"
+    - "https://github.com/nsacyber/Windows-Event-Log-Messages/blob/master/docs/Datasets.md"
   mapping:
     - name: user
       string_index: 0
@@ -904,6 +926,7 @@ bits_client_59_v1:
   references:
     - "https://www.mandiant.com/resources/blog/attacker-use-of-windows-background-intelligent-transfer-service"
     - "https://community.microfocus.com/cfs-file/__key/communityserver-wikis-components-files/00-00-00-00-23/MSWinBITSClientEvtLogs.pdf"
+    - "https://github.com/nsacyber/Windows-Event-Log-Messages/blob/master/docs/Datasets.md"
   mapping:
     - name: transfer_id
       string_index: 0
@@ -941,6 +964,7 @@ bits_client_60_v1:
   references:
     - "https://www.mandiant.com/resources/blog/attacker-use-of-windows-background-intelligent-transfer-service"
     - "https://community.microfocus.com/cfs-file/__key/communityserver-wikis-components-files/00-00-00-00-23/MSWinBITSClientEvtLogs.pdf"
+    - "https://github.com/nsacyber/Windows-Event-Log-Messages/blob/master/docs/Datasets.md"
   mapping:
     - name: transfer_id
       string_index: 0
