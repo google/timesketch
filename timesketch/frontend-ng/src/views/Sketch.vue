@@ -26,7 +26,7 @@ limitations under the License.
           <v-sheet class="pa-4 mt-15">
             <center>
               <div style="font-size: 2em" class="mb-3">It's empty around here</div>
-              <ts-upload-timeline-form btn-size="normal" btn-type="outlined"></ts-upload-timeline-form>
+              <ts-upload-timeline-form-button btn-size="normal" btn-type="outlined"></ts-upload-timeline-form-button>
             </center>
           </v-sheet>
         </v-row>
@@ -373,7 +373,7 @@ import TsIntelligence from '../components/LeftPanel/ThreatIntel'
 import TsGraphs from '../components/LeftPanel/Graphs'
 import TsStories from '../components/LeftPanel/Stories'
 import TsSearch from '../components/LeftPanel/Search'
-import TsUploadTimelineForm from '../components/UploadForm'
+import TsUploadTimelineFormButton from '../components/UploadFormButton'
 import TsShareCard from '../components/ShareCard'
 import TsRenameSketch from '../components/RenameSketch'
 import TsAnalyzerResults from '../components/LeftPanel/AnalyzerResults.vue'
@@ -389,7 +389,7 @@ export default {
     TsTags,
     TsSearchTemplates,
     TsSigmaRules,
-    TsUploadTimelineForm,
+    TsUploadTimelineFormButton,
     TsShareCard,
     TsRenameSketch,
     TsIntelligence,

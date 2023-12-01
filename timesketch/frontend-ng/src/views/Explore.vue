@@ -128,33 +128,52 @@ limitations under the License.
       </div>
 
       <!-- Timeline picker -->
-      <v-sheet class="mb-4 mt-4" color="transparent">
+    <v-expansion-panels
+      class="mt-4"
+      multiple
+      flat
+    >
+      <v-expansion-panel active-class="expanded">
+      <v-expansion-panel-header hide-actions class="pl-0">
+        <span class="timeline-header">
+          <v-icon left class="open-indicator"> mdi-chevron-up </v-icon>
+          <v-icon left class="closed-indicator"> mdi-chevron-down </v-icon>
+          <span class="text-h6">Timelines</span>
+            <ts-upload-timeline-form-button btn-type="small"></ts-upload-timeline-form-button>
+            <v-dialog v-model="addManualEvent" width="600">
+              <template v-slot:activator="{ on, attrs }">
+                <v-btn small text rounded color="primary" v-bind="attrs" v-on="on">
+                  <v-icon left small> mdi-plus </v-icon>
+                  Add manual event
+                </v-btn>
+              </template>
+              <ts-add-manual-event
+                app
+                @cancel="addManualEvent = false"
+                :datetimeProp="datetimeManualEvent"
+              ></ts-add-manual-event>
+            </v-dialog>
+            <v-btn small text rounded color="primary" @click.stop="enableAllTimelines()">
+              <v-icon left small>mdi-eye</v-icon>
+              <span>Select all</span>
+            </v-btn>
+          <v-btn small text rounded color="primary" @click.stop="disableAllTimelines()">
+            <v-icon left small>mdi-eye-off</v-icon>
+            <span>Unselect all</span>
+          </v-btn>
+        </span>
+      </v-expansion-panel-header>
+      <v-expansion-panel-content>
         <ts-timeline-picker
           :current-query-filter="currentQueryFilter"
           :count-per-index="countPerIndex"
           :count-per-timeline="countPerTimeline"
         ></ts-timeline-picker>
 
-        <span style="position: relative">
-          <ts-upload-timeline-form btn-type="small"></ts-upload-timeline-form>
-        </span>
-
-        <span style="position: relative">
-          <v-dialog v-model="addManualEvent" width="600">
-            <template v-slot:activator="{ on, attrs }">
-              <v-btn small text rounded color="primary" v-bind="attrs" v-on="on">
-                <v-icon left small> mdi-plus </v-icon>
-                Add manual event
-              </v-btn>
-            </template>
-            <ts-add-manual-event
-              app
-              @cancel="addManualEvent = false"
-              :datetimeProp="datetimeManualEvent"
-            ></ts-add-manual-event>
-          </v-dialog>
-        </span>
-      </v-sheet>
+      </v-expansion-panel-content>
+    </v-expansion-panel>
+    </v-expansion-panels>
+    <v-divider class="mb-6"></v-divider>
 
       <!-- Time filter chips -->
       <div class="mt-n3">
@@ -295,7 +314,7 @@ import TsSearchHistoryButtons from '../components/Explore/SearchHistoryButtons'
 import TsSearchDropdown from '../components/Explore/SearchDropdown'
 import TsTimelinePicker from '../components/Explore/TimelinePicker'
 import TsFilterMenu from '../components/Explore/FilterMenu'
-import TsUploadTimelineForm from '../components/UploadForm'
+import TsUploadTimelineFormButton from '../components/UploadFormButton'
 import TsAddManualEvent from '../components/Explore/AddManualEvent'
 import TsEventList from '../components/Explore/EventList'
 import TsScenarioContextCard from '../components/Scenarios/ContextCard'
@@ -321,7 +340,7 @@ export default {
     TsSearchDropdown,
     TsTimelinePicker,
     TsFilterMenu,
-    TsUploadTimelineForm,
+    TsUploadTimelineFormButton,
     TsAddManualEvent,
     TsEventList,
     TsScenarioContextCard,
@@ -383,6 +402,13 @@ export default {
     },
     activeContext() {
       return this.$store.state.activeContext
+    },
+    activeTimelines() {
+      // Sort alphabetically based on timeline name.
+      let timelines = [...this.sketch.active_timelines]
+      return timelines.sort(function (a, b) {
+        return a.name.localeCompare(b.name)
+      })
     },
   },
   watch: {
@@ -672,6 +698,12 @@ export default {
         this.showSearchDropdown = false
       }
     },
+    enableAllTimelines() {
+      this.$store.dispatch('updateEnabledTimelines', this.activeTimelines.map(tl => tl.id))
+    },
+    disableAllTimelines() {
+      this.$store.dispatch('updateEnabledTimelines', [])
+    },
   },
   mounted() {
     this.$refs.searchInput.focus()
@@ -761,4 +793,25 @@ export default {
   white-space: nowrap;
   max-width: 400px;
 }
+
+  .expanded .timeline-header {
+    .v-icon.open-indicator {
+      display: inline;
+    }
+    .v-icon.closed-indicator {
+      display: none;
+    }
+
+  }
+.timeline-header {
+  display: flex;
+  align-items: center;
+
+  .v-icon.open-indicator {
+    display: none;
+  }
+
+}
+
+
 </style>

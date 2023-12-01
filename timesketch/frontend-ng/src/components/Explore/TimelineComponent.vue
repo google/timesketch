@@ -22,12 +22,11 @@ limitations under the License.
   <span>
     <v-dialog v-if="timelineStatus === 'processing'" v-model="dialogStatus" width="600">
       <template v-slot:activator="{ on, attrs }">
-        <v-chip v-on="on" :style="timelineStyle">
-          <span class="timeline-name-ellipsis">{{ timeline.name }}</span>
-          <span class="ml-1">
-            <v-progress-circular small indeterminate color="grey" :size="20" :width="1"></v-progress-circular>
-          </span>
-        </v-chip>
+        <slot
+          name="processing"
+          :timelineStatus="timelineStatus"
+        >
+        </slot>
       </template>
       <v-card>
         <v-app-bar flat dense>Importing events to timeline "{{ timeline.name }}"</v-app-bar>
@@ -107,9 +106,17 @@ limitations under the License.
       </v-card>
     </v-dialog>
 
-    <v-menu v-else offset-y :close-on-content-click="false" content-class="menu-with-gap" ref="timelineChipMenuRef">
+    <v-menu
+      v-else
+      offset-y
+      :close-on-content-click="false"
+      content-class="menu-with-gap"
+      ref="timelineChipMenuRef"
+      max-width="320"
+    >
       <template v-slot:activator="{ on }">
         <slot
+          name="processed"
           :timelineFailed="timelineFailed"
           :timelineChipColor="timelineChipColor"
           :timelineStatus="timelineStatus"
@@ -119,7 +126,7 @@ limitations under the License.
             menuOn: on,
           }"></slot>
       </template>
-      <v-sheet flat width="320">
+      <v-sheet flat>
         <v-list dense>
           <v-dialog v-model="dialogRename" width="600">
             <template v-slot:activator="{ on, attrs }">
@@ -423,7 +430,6 @@ export default {
       return eta
     },
     toggleTimeline() {
-      console.log('toggelo');
       if (!this.timelineFailed) {
         this.$emit('toggle', this.timeline)
       }
@@ -501,6 +507,7 @@ export default {
   created() {
     // TODO: Move to computed
     this.timelineStatus = this.timeline.status[0].status
+
     this.datasources = this.timeline.datasources
     let timelineStat = this.meta.stats_per_timeline[this.timeline.id]
 

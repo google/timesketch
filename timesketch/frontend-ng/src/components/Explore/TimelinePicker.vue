@@ -41,16 +41,6 @@ limitations under the License.
       <span v-else> {{ sketch.timelines.length - 20 }} more.. </span>
     </v-btn>
     <br />
-    <span v-if="sketch.timelines.length > 5">
-      <v-btn small text rounded color="primary" @click="enableAllTimelines()">
-        <v-icon left small>mdi-checkbox-outline</v-icon>
-        <span>Select all</span>
-      </v-btn>
-      <v-btn small text rounded color="primary" @click="disableAllTimelines()">
-        <v-icon left small>mdi-minus-box-outline</v-icon>
-        <span>Unselect all</span>
-      </v-btn>
-    </span>
   </span>
 </template>
 
@@ -149,12 +139,6 @@ export default {
           console.error(e)
           this.isLoading = false
         })
-    },
-    enableAllTimelines() {
-      this.$store.dispatch('updateEnabledTimelines', this.activeTimelines.map(tl => tl.id))
-    },
-    disableAllTimelines() {
-      this.$store.dispatch('updateEnabledTimelines', [])
     },
     disableAllOtherTimelines(timeline) {
       this.$store.dispatch('updateEnabledTimelines', [timeline.id])
