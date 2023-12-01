@@ -194,7 +194,7 @@ limitations under the License.
                   </template>
                   <ts-filter-menu app :selected-chip="chip" @updateChip="updateChip($event, chip)"></ts-filter-menu>
                 </v-menu>
-                <v-list-item @click="copyChipValue(chip)">
+                <v-list-item @click="copyFilterChip(chip)">
                   <v-list-item-action>
                     <v-icon>mdi-content-copy</v-icon>
                   </v-list-item-action>
@@ -254,7 +254,7 @@ limitations under the License.
                   close
                   close-icon="mdi-close"
                   @click:close="removeChip(chip)"
-                  @click="copyChipValue(chip)"
+                  @click="copyFilterChip(chip)"
                   v-bind="attrs"
                   v-on="onTooltip"
                 >
@@ -549,7 +549,7 @@ export default {
       chip.active = !chip.active
       this.search()
     },
-    copyChipValue(chip) {
+    copyFilterChip(chip) {
       let textToCopy = '';
       // Different handling based on chip type
       if (chip.type.startsWith('datetime')) {
@@ -558,8 +558,8 @@ export default {
       } else {
         // For other chips, copy both field and value
         textToCopy = chip.operator === 'must_not' 
-          ? `NOT ${chip.field ? `${chip.field} : ` : ''}${chip.value}` 
-          : `${chip.field ? `${chip.field} : ` : ''}${chip.value}`;
+          ? `NOT ${chip.field ? `${chip.field}:` : ''}"${chip.value}"` 
+          : `${chip.field ? `${chip.field}:` : ''}"${chip.value}"`;
       }
       // Copy to clipboard
       navigator.clipboard.writeText(textToCopy)
