@@ -49,6 +49,8 @@ import EventBus from '../../main'
 import TsTimelineChip from './TimelineChip'
 import ApiClient from '../../utils/RestApiClient'
 
+import _ from 'lodash'
+
 export default {
   components: { TsTimelineChip },
   props: ['currentQueryFilter', 'countPerIndex', 'countPerTimeline'],
@@ -87,7 +89,7 @@ export default {
   },
   methods: {
     isSelected(timeline) {
-      return this.$store.state.enabledTimelines.includes(timeline.id);
+      return this.$store.state.enabledTimelines.includes(timeline.id)
     },
     getCount(timeline) {
       let count = 0
@@ -151,7 +153,7 @@ export default {
     },
     syncSelectedTimelines() {
       if (this.currentQueryFilter.indices.includes('_all')) {
-        this.updateEnabledTimelinesIfChanged(this.activeTimelines.map(tl => tl.id))
+        this.updateEnabledTimelinesIfChanged(this.activeTimelines.map((tl) => tl.id))
         return
       }
       let newArray = []
@@ -168,22 +170,17 @@ export default {
           newArray.push(timeline)
         }
       })
-      this.updateEnabledTimelinesIfChanged(newArray.map(tl => tl.id))
+      console.log('new arr', newArray, this.activeTimelines, this.currentQueryFilter)
+      this.updateEnabledTimelinesIfChanged(newArray.map((tl) => tl.id))
     },
-   updateEnabledTimelinesIfChanged(newTimelineIds) {
+    updateEnabledTimelinesIfChanged(newTimelineIds) {
       if (!_.isEqual(newTimelineIds, this.$store.state.enabledTimelines)) {
         this.$store.dispatch('updateEnabledTimelines', newTimelineIds)
       }
-   }
+    },
   },
   created() {
     EventBus.$on('isDarkTheme', this.toggleTheme)
-
-    if (this.currentQueryFilter.indices.includes('_all')) {
-        this.$store.dispatch('updateEnabledTimelines', this.activeTimelines.map(tl => tl.id))
-    } else {
-      this.syncSelectedTimelines()
-    }
   },
   watch: {
     'currentQueryFilter.indices'(val) {

@@ -64,9 +64,9 @@ limitations under the License.
               v-bind="attrs"
               v-on="on"
             >
-            <template v-slot:append>
-               <v-icon title="Run search" @click="search()">mdi-magnify</v-icon>
-            </template>
+              <template v-slot:append>
+                <v-icon title="Run search" @click="search()">mdi-magnify</v-icon>
+              </template>
             </v-text-field>
           </template>
 
@@ -128,52 +128,47 @@ limitations under the License.
       </div>
 
       <!-- Timeline picker -->
-    <v-expansion-panels
-      class="mt-4"
-      multiple
-      flat
-    >
-      <v-expansion-panel active-class="expanded">
-      <v-expansion-panel-header hide-actions class="pl-0">
-        <span class="timeline-header">
-          <v-icon left class="open-indicator"> mdi-chevron-up </v-icon>
-          <v-icon left class="closed-indicator"> mdi-chevron-down </v-icon>
-          <span class="text-h6">Timelines</span>
-            <ts-upload-timeline-form-button btn-type="small"></ts-upload-timeline-form-button>
-            <v-dialog v-model="addManualEvent" width="600">
-              <template v-slot:activator="{ on, attrs }">
-                <v-btn small text rounded color="primary" v-bind="attrs" v-on="on">
-                  <v-icon left small> mdi-plus </v-icon>
-                  Add manual event
-                </v-btn>
-              </template>
-              <ts-add-manual-event
-                app
-                @cancel="addManualEvent = false"
-                :datetimeProp="datetimeManualEvent"
-              ></ts-add-manual-event>
-            </v-dialog>
-            <v-btn small text rounded color="primary" @click.stop="enableAllTimelines()">
-              <v-icon left small>mdi-eye</v-icon>
-              <span>Select all</span>
-            </v-btn>
-          <v-btn small text rounded color="primary" @click.stop="disableAllTimelines()">
-            <v-icon left small>mdi-eye-off</v-icon>
-            <span>Unselect all</span>
-          </v-btn>
-        </span>
-      </v-expansion-panel-header>
-      <v-expansion-panel-content>
-        <ts-timeline-picker
-          :current-query-filter="currentQueryFilter"
-          :count-per-index="countPerIndex"
-          :count-per-timeline="countPerTimeline"
-        ></ts-timeline-picker>
-
-      </v-expansion-panel-content>
-    </v-expansion-panel>
-    </v-expansion-panels>
-    <v-divider class="mb-6"></v-divider>
+      <v-expansion-panels class="mt-4" multiple flat>
+        <v-expansion-panel active-class="expanded">
+          <v-expansion-panel-header hide-actions class="pl-0">
+            <span class="timeline-header">
+              <v-icon left class="open-indicator"> mdi-chevron-up </v-icon>
+              <v-icon left class="closed-indicator"> mdi-chevron-down </v-icon>
+              <span class="text-h6">Timelines</span>
+              <ts-upload-timeline-form-button btn-type="small"></ts-upload-timeline-form-button>
+              <v-dialog v-model="addManualEvent" width="600">
+                <template v-slot:activator="{ on, attrs }">
+                  <v-btn small text rounded color="primary" v-bind="attrs" v-on="on">
+                    <v-icon left small> mdi-plus </v-icon>
+                    Add manual event
+                  </v-btn>
+                </template>
+                <ts-add-manual-event
+                  app
+                  @cancel="addManualEvent = false"
+                  :datetimeProp="datetimeManualEvent"
+                ></ts-add-manual-event>
+              </v-dialog>
+              <v-btn small text rounded color="primary" @click.stop="enableAllTimelines()">
+                <v-icon left small>mdi-eye</v-icon>
+                <span>Select all</span>
+              </v-btn>
+              <v-btn small text rounded color="primary" @click.stop="disableAllTimelines()">
+                <v-icon left small>mdi-eye-off</v-icon>
+                <span>Unselect all</span>
+              </v-btn>
+            </span>
+          </v-expansion-panel-header>
+          <v-expansion-panel-content>
+            <ts-timeline-picker
+              :current-query-filter="currentQueryFilter"
+              :count-per-index="countPerIndex"
+              :count-per-timeline="countPerTimeline"
+            ></ts-timeline-picker>
+          </v-expansion-panel-content>
+        </v-expansion-panel>
+      </v-expansion-panels>
+      <v-divider class="mb-6"></v-divider>
 
       <!-- Time filter chips -->
       <div class="mt-n3">
@@ -699,7 +694,10 @@ export default {
       }
     },
     enableAllTimelines() {
-      this.$store.dispatch('updateEnabledTimelines', this.activeTimelines.map(tl => tl.id))
+      this.$store.dispatch(
+        'updateEnabledTimelines',
+        this.activeTimelines.map((tl) => tl.id)
+      )
     },
     disableAllTimelines() {
       this.$store.dispatch('updateEnabledTimelines', [])
@@ -794,15 +792,14 @@ export default {
   max-width: 400px;
 }
 
-  .expanded .timeline-header {
-    .v-icon.open-indicator {
-      display: inline;
-    }
-    .v-icon.closed-indicator {
-      display: none;
-    }
-
+.expanded .timeline-header {
+  .v-icon.open-indicator {
+    display: inline;
   }
+  .v-icon.closed-indicator {
+    display: none;
+  }
+}
 .timeline-header {
   display: flex;
   align-items: center;
@@ -810,8 +807,5 @@ export default {
   .v-icon.open-indicator {
     display: none;
   }
-
 }
-
-
 </style>

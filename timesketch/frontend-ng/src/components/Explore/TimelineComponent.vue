@@ -22,11 +22,7 @@ limitations under the License.
   <span>
     <v-dialog v-if="timelineStatus === 'processing'" v-model="dialogStatus" width="600">
       <template v-slot:activator="{ on, attrs }">
-        <slot
-          name="processing"
-          :timelineStatus="timelineStatus"
-        >
-        </slot>
+        <slot name="processing" :timelineStatus="timelineStatus"> </slot>
       </template>
       <v-card>
         <v-app-bar flat dense>Importing events to timeline "{{ timeline.name }}"</v-app-bar>
@@ -124,7 +120,8 @@ limitations under the License.
             toggleTimeline,
             openDialog,
             menuOn: on,
-          }"></slot>
+          }"
+        ></slot>
       </template>
       <v-sheet flat>
         <v-list dense>
@@ -262,8 +259,10 @@ limitations under the License.
                     <strong>Number of events: </strong>
                     {{ allIndexedEvents | compactNumber }}
                   </li>
-                    <strong>Number of events: </strong>
-                    {{ allIndexedEvents | compactNumber }}
+                  <strong>Number of events: </strong>
+                  {{
+                    allIndexedEvents | compactNumber
+                  }}
                   <li><strong>Created by: </strong>{{ timeline.user.username }}</li>
                   <li>
                     <strong>Created at: </strong>{{ timeline.created_at | shortDateTime }}
@@ -399,7 +398,7 @@ export default {
   },
   methods: {
     openDialog() {
-      this.dialogStatus = true;
+      this.dialogStatus = true
     },
     rename() {
       this.dialogRename = false
