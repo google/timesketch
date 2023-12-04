@@ -93,6 +93,7 @@ limitations under the License.
                     left
                     color="red"
                     size="x-large"
+                    class="ml-n2"
                   >
                     mdi-alert-circle-outline
                   </v-icon>
@@ -106,7 +107,12 @@ limitations under the License.
                     mdi-circle
                   </v-icon>
 
-                  <span class="timeline-name-ellipsis">{{ item.name }}</span>
+                  <v-tooltip bottom :disabled="item.name.length < 40" open-delay="200">
+                    <template v-slot:activator="{ on: onTooltip }">
+                      <span v-on="onTooltip" class="timeline-name-ellipsis" style="cursor: default;">{{ item.name }}</span>
+                    </template>
+                    <span>{{ item.name }}</span>
+                  </v-tooltip>
 
                   <span class="right">
                     <span v-if="!slotProps.timelineFailed" class="events-count mr-1" x-small>
@@ -205,7 +211,7 @@ export default {
       selected: [],
       search: '',
       headers: [{ value: 'name' }],
-      paginationThreshold: 2,
+      paginationThreshold: 10,
     }
   },
   created() {

@@ -25,7 +25,7 @@ limitations under the License.
     @remove="$emit('remove', ...arguments)"
   >
     <template v-slot:processing="slotProps">
-      <v-chip v-on="on" :style="timelineStyle(slotProps.timelineStatus)">
+      <v-chip :style="timelineStyle(slotProps.timelineStatus)">
         <span class="timeline-name-ellipsis">{{ timeline.name }}</span>
         <span class="ml-1">
           <v-progress-circular small indeterminate color="grey" :size="20" :width="1"></v-progress-circular>
@@ -46,7 +46,7 @@ limitations under the License.
           </v-icon>
           <v-icon v-if="!slotProps.timelineFailed" title="Toggle visibility" left :color="slotProps.timelineChipColor" size="26" class="ml-n2"> mdi-circle </v-icon>
 
-          <v-tooltip bottom :disabled="timeline.name.length < 30" open-delay="300">
+          <v-tooltip bottom :disabled="timeline.name.length < 30" open-delay="200">
             <template v-slot:activator="{ on: onTooltip, attrs }">
               <span
                 class="timeline-name-ellipsis"

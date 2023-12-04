@@ -255,8 +255,8 @@ limitations under the License.
         <v-divider></v-divider>
         <v-tabs-items v-model="leftPanelTab">
           <v-tab-item :transition="false">
-            <ts-timelines-table></ts-timelines-table>
             <ts-search></ts-search>
+            <ts-timelines-table></ts-timelines-table>
             <ts-saved-searches v-if="meta.views"></ts-saved-searches>
             <ts-data-types></ts-data-types>
             <ts-tags></ts-tags>
