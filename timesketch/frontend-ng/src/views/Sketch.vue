@@ -19,14 +19,15 @@ limitations under the License.
     <!-- Progress indicator when loading sketch data -->
     <v-progress-linear v-if="loadingSketch" indeterminate color="primary"></v-progress-linear>
 
-    <div v-if="sketch.id" style="height: 30%">
+    <div v-if="sketch.id && !loadingSketch" style="height: 70vh">
       <!-- Empty state -->
       <v-container v-if="!hasTimelines && !loadingSketch" fill-height fluid>
         <v-row align="center" justify="center">
-          <v-sheet class="pa-4 mt-15">
+          <v-sheet class="pa-4" style="background: transparent">
             <center>
-              <div style="font-size: 2em" class="mb-3">It's empty around here</div>
-              <ts-upload-timeline-form-button btn-size="normal" btn-type="outlined"></ts-upload-timeline-form-button>
+              <v-img src="/dist/empty-state.png" max-height="100" max-width="300"></v-img>
+              <div style="font-size: 2em" class="mb-3 mt-3">It's empty around here</div>
+              <ts-upload-timeline-form-button btn-size="normal" btn-type="rounded"></ts-upload-timeline-form-button>
             </center>
           </v-sheet>
         </v-row>
@@ -35,10 +36,11 @@ limitations under the License.
       <!-- Archived state -->
       <v-container v-if="isArchived && !loadingSketch" fill-height fluid>
         <v-row align="center" justify="center">
-          <v-sheet class="pa-4 mt-15">
+          <v-sheet class="pa-4">
             <center>
-              <div style="font-size: 2em" class="mb-3">This sketch is archived</div>
-              <v-btn outlined color="primary" @click="unArchiveSketch()"> Bring it back </v-btn>
+              <v-img src="/dist/empty-state.png" max-height="100" max-width="300"></v-img>
+              <div style="font-size: 2em" class="mb-3 mt-3">This sketch is archived</div>
+              <v-btn rounded depressed color="primary" @click="unArchiveSketch()"> Bring it back </v-btn>
             </center>
           </v-sheet>
         </v-row>
@@ -64,7 +66,7 @@ limitations under the License.
             : { 'border-bottom': '1px solid rgba(0,0,0,.12) !important' },
         ]"
       >
-        <v-btn icon @click="toggleLeftPanel">
+        <v-btn v-if="hasTimelines && !loadingSketch && !isArchived" icon @click.stop="showLeftPanel = !showLeftPanel">
           <v-icon title="Toggle left panel">mdi-menu</v-icon>
         </v-btn>
 
@@ -92,7 +94,9 @@ limitations under the License.
               {{ sketch.name }}
             </div>
             <div>
-              <v-icon title="Rename sketch" small class="ml-1" v-if="hover" @click="renameSketchDialog = true">mdi-pencil</v-icon>
+              <v-icon title="Rename sketch" small class="ml-1" v-if="hover" @click="renameSketchDialog = true"
+                >mdi-pencil</v-icon
+              >
             </div>
           </div>
         </v-hover>
@@ -171,7 +175,7 @@ limitations under the License.
                   </v-list-item-content>
                 </v-list-item>
 
-                <v-list-item @click="archiveSketch()">
+                <v-list-item @click="archiveSketch()" :disabled="isArchived">
                   <v-list-item-icon>
                     <v-icon>mdi-archive</v-icon>
                   </v-list-item-icon>
@@ -208,13 +212,13 @@ limitations under the License.
 
       <!-- Left panel -->
       <v-navigation-drawer
-        v-show="showLeftPanel && hasTimelines && !isArchived"
+        v-model="showLeftPanel"
         app
+        disable-resize-watcher
+        stateless
         clipped
-        permanent
-        :width="navigationDrawer.width"
         hide-overlay
-        ref="drawer"
+        width="410"
       >
         <!-- Dialog for adding a scenario -->
         <v-dialog v-model="scenarioDialog" max-width="500px">
@@ -410,7 +414,7 @@ export default {
       scenarioDialog: false,
       showLeftPanel: false,
       leftPanelTab: 0,
-      leftPanelTabItems: ['Explore', 'Investigate'],
+      leftPanelTabItems: ['EXPLORE', 'INVESTIGATE'],
       renameSketchDialog: false,
       showHidden: false,
       shareDialog: false,
@@ -438,11 +442,9 @@ export default {
       this.$store.dispatch('updateContextLinks')
       this.$store.dispatch('updateAnalyzerList', this.sketchId)
       this.loadingSketch = false
-      this.showLeftPanel = true
-      this.$nextTick(function () {
-        this.setDrawerBorderStyle()
-        this.setDrawerResizeEvents()
-      })
+      if (this.hasTimelines && !this.isArchived) {
+        this.showLeftPanel = true
+      }
     })
     EventBus.$on('showContextWindow', this.showContextWindow)
   },
@@ -496,6 +498,7 @@ export default {
       ApiClient.archiveSketch(this.sketch.id)
         .then((response) => {
           this.$store.dispatch('updateSketch', this.sketch.id).then(() => {
+            this.showLeftPanel = false
             this.loadingSketch = false
           })
         })
@@ -509,6 +512,7 @@ export default {
         .then((response) => {
           this.$store.dispatch('updateSketch', this.sketch.id).then(() => {
             this.loadingSketch = false
+            this.showLeftPanel = true
           })
         })
         .catch((e) => {
@@ -601,55 +605,15 @@ export default {
         })
         .catch((e) => {})
     },
-    setDrawerBorderStyle() {
-      if (!this.$refs.drawer) {
-        return
+  },
+  watch: {
+    hasTimelines(newVal, oldVal) {
+      if (oldVal === 0 && newVal > 0) {
+        this.showLeftPanel = true
       }
-      let i = this.$refs.drawer.$el.querySelector('.v-navigation-drawer__border')
-      i.style.cursor = 'ew-resize'
-    },
-    setDrawerResizeEvents() {
-      if (!this.$refs.drawer) {
-        return
+      if (oldVal > 0 && newVal === 0) {
+        this.showLeftPanel = false
       }
-      const minSize = 1
-      const drawerElement = this.$refs.drawer.$el
-      const drawerBorder = drawerElement.querySelector('.v-navigation-drawer__border')
-      const direction = drawerElement.classList.contains('v-navigation-drawer--right') ? 'right' : 'left'
-      function resize(e) {
-        document.body.style.cursor = 'ew-resize'
-        let f = direction === 'right' ? document.body.scrollWidth - e.clientX : e.clientX
-        drawerElement.style.width = f + 'px'
-      }
-      drawerBorder.addEventListener(
-        'mousedown',
-        (e) => {
-          if (e.offsetX < minSize) {
-            drawerElement.style.transition = 'initial'
-            document.addEventListener('mousemove', resize, false)
-          }
-        },
-        false
-      )
-      document.addEventListener(
-        'mouseup',
-        () => {
-          drawerElement.style.transition = ''
-          this.navigationDrawer.width = drawerElement.style.width
-          document.body.style.cursor = ''
-          document.removeEventListener('mousemove', resize, false)
-        },
-        false
-      )
-    },
-    toggleLeftPanel() {
-      this.showLeftPanel = !this.showLeftPanel
-      if (this.showLeftPanel) {
-        this.navigationDrawer.width = 410
-      } else {
-        this.navigationDrawer.width = 0
-      }
-      EventBus.$emit('toggleLeftPanel')
     },
   },
 }

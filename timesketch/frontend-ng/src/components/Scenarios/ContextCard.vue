@@ -14,7 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-card outlined rounded class="mt-3 mx-3" v-if="activeContext.question">
+  <div
+    v-if="activeContext.question"
+    class="mt-3 mx-3 pb-1"
+    :class="$vuetify.theme.dark ? 'dark-info-card' : 'light-info-card'"
+  >
     <v-toolbar flat dense style="background-color: transparent">
       <h3>
         {{ activeContext.question.display_name }}
@@ -58,10 +62,10 @@ limitations under the License.
 
         <!--Approaches-->
         <div v-if="activeContext.question.approaches.length">
-          <div class="px-4 pb-3">
-            <v-btn depressed small @click="showApproaches = !showApproaches">
+          <div class="px-4 pb-4">
+            <v-btn depressed outlined small @click="showApproaches = !showApproaches">
               <span v-if="!showApproaches">Show {{ activeContext.question.approaches.length }} approaches</span>
-              <span v-else>Hide approaches</span>
+              <span v-else>Hide {{ activeContext.question.approaches.length }} approaches</span>
             </v-btn>
           </div>
           <v-expand-transition>
@@ -72,10 +76,14 @@ limitations under the License.
                   v-for="(approach, index) in activeContext.question.approaches"
                   :key="approach.display_name"
                 >
-                  <v-expansion-panel-header>
+                  <v-expansion-panel-header
+                    :class="$vuetify.theme.dark ? 'dark-info-accordion' : 'light-info-accordion'"
+                  >
                     <span>{{ approach.display_name }}</span>
                   </v-expansion-panel-header>
-                  <v-expansion-panel-content>
+                  <v-expansion-panel-content
+                    :class="$vuetify.theme.dark ? 'dark-info-accordian' : 'light-info-accordion'"
+                  >
                     <ts-context-card-approach :approachJSON="approach"></ts-context-card-approach>
                   </v-expansion-panel-content>
                   <v-divider v-if="index != activeContext.question.approaches.length - 1"></v-divider>
@@ -86,7 +94,7 @@ limitations under the License.
         </div>
       </div>
     </v-expand-transition>
-  </v-card>
+  </div>
 </template>
 
 <script>
