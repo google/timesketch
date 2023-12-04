@@ -170,7 +170,6 @@ export default {
           newArray.push(timeline)
         }
       })
-      console.log('new arr', newArray, this.activeTimelines, this.currentQueryFilter)
       this.updateEnabledTimelinesIfChanged(newArray.map((tl) => tl.id))
     },
     updateEnabledTimelinesIfChanged(newTimelineIds) {
