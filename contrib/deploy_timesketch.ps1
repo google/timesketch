@@ -38,13 +38,28 @@ wsl -d docker-desktop sysctl -w vm.max_map_count=262144
 [void](New-Item -ItemType Directory -Name timesketch\etc\timesketch\sigma\rules)
 [void](New-Item -ItemType Directory -Name timesketch\upload)
 
+# function to get Cryptographically random alphanumeric characters
+$CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+$rng = New-Object System.Security.Cryptography.RNGCryptoServiceProvider
+Function Get-RandomString {
+    Param($length)
+    $KEY = ""
+    for($i = 0; $i -lt [int]$length; $i++)
+    {
+        [byte[]] $byte = 1
+        $rng.GetBytes($byte)
+        $KEY = $KEY + $CHARS[[int]$byte[0]%62]
+    }
+    $KEY
+}
+
 # config parameters
 Write-Host "* Setting default config parameters.."
 $POSTGRES_USER="timesketch"
-$POSTGRES_PASSWORD= (-join(1..42 | ForEach {((65..90)+(97..122)+(".") | % {[char]$_})+(0..9)+(".") | Get-Random}))
+$POSTGRES_PASSWORD=Get-RandomString -length 42 
 $POSTGRES_ADDRESS="postgres"
 $POSTGRES_PORT="5432"
-$SECRET_KEY=(-join(1..42 | ForEach {((65..90)+(97..122)+(".") | % {[char]$_})+(0..9)+(".") | Get-Random}))
+$SECRET_KEY=Get-RandomString -length 42
 $OPENSEARCH_ADDRESS="opensearch"
 $OPENSEARCH_PORT="9200"
 # The command below will take half of the system memory. This can be changed to whatever suits you. More the merrier for the ES though.
@@ -83,8 +98,8 @@ $convfenv = 'timesketch\config.env'
 (Get-Content $timesketchconf).replace("SECRET_KEY = '<KEY_GOES_HERE>'", "SECRET_KEY = '$SECRET_KEY'") | Set-Content $timesketchconf
 
 # Set up the OpenSearch connection
-(Get-Content $timesketchconf).replace("ELASTIC_HOST = '127.0.0.1'", "ELASTIC_HOST = '$OPENSEARCH_ADDRESS'") | Set-Content $timesketchconf
-(Get-Content $timesketchconf).replace("ELASTIC_PORT = 9200", "ELASTIC_PORT = $OPENSEARCH_PORT") | Set-Content $timesketchconf
+(Get-Content $timesketchconf).replace("OPENSEARCH_HOST = '127.0.0.1'", "ELASTIC_HOST = '$OPENSEARCH_ADDRESS'") | Set-Content $timesketchconf
+(Get-Content $timesketchconf).replace("OPENSEARCH_PORT = 9200", "ELASTIC_PORT = $OPENSEARCH_PORT") | Set-Content $timesketchconf
 
 # Set up the Redis connection
 (Get-Content $timesketchconf).replace("UPLOAD_ENABLED = False", "UPLOAD_ENABLED = True") | Set-Content $timesketchconf
