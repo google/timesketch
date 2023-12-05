@@ -22,7 +22,13 @@ limitations under the License.
   <span>
     <v-dialog v-if="timelineStatus === 'processing'" v-model="dialogStatus" width="600">
       <template v-slot:activator="{ on, attrs }">
-        <slot name="processing" :timelineStatus="timelineStatus"> </slot>
+        <slot
+          name="processing"
+          :timelineStatus="timelineStatus"
+          :events="{
+            on,
+          }"
+        > </slot>
       </template>
       <v-card>
         <v-app-bar flat dense>Importing events to timeline "{{ timeline.name }}"</v-app-bar>

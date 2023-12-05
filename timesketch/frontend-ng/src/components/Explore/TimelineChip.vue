@@ -25,7 +25,7 @@ limitations under the License.
     @remove="$emit('remove', ...arguments)"
   >
     <template v-slot:processing="slotProps">
-      <v-chip v-on="on" :style="timelineStyle(slotProps.timelineStatus)">
+      <v-chip v-on="slotProps.events.on" :style="timelineStyle(slotProps.timelineStatus)">
         <span class="timeline-name-ellipsis">{{ timeline.name }}</span>
         <span class="ml-1">
           <v-progress-circular small indeterminate color="grey" :size="20" :width="1"></v-progress-circular>
