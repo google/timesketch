@@ -130,11 +130,8 @@ limitations under the License.
       <!-- Timeline picker -->
       <v-expansion-panels v-model="timelinePanel" class="mt-4" multiple flat>
         <v-expansion-panel active-class="expanded">
-          <v-expansion-panel-header hide-actions class="pl-0">
+          <v-expansion-panel-header class="pl-0">
             <span class="timeline-header">
-              <v-icon left class="open-indicator"> mdi-chevron-up </v-icon>
-              <v-icon left class="closed-indicator"> mdi-chevron-down </v-icon>
-              <span class="text-h6">Timelines</span>
               <ts-upload-timeline-form-button btn-type="small"></ts-upload-timeline-form-button>
               <v-dialog v-model="addManualEvent" width="600">
                 <template v-slot:activator="{ on, attrs }">
@@ -157,6 +154,11 @@ limitations under the License.
                 <v-icon left small>mdi-eye-off</v-icon>
                 <span>Unselect all</span>
               </v-btn>
+              <v-spacer></v-spacer>
+              <v-btn small text rounded color="secondary" :ripple="false">
+                <span v-if="0 in timelinePanel">Hide Timelines</span>
+                <span v-else>Show Timelines</span>
+              </v-btn>
             </span>
           </v-expansion-panel-header>
           <v-expansion-panel-content>
@@ -168,10 +170,9 @@ limitations under the License.
           </v-expansion-panel-content>
         </v-expansion-panel>
       </v-expansion-panels>
-      <v-divider class="mb-6"></v-divider>
 
       <!-- Time filter chips -->
-      <div class="mt-n3">
+      <div>
         <span v-for="(chip, index) in timeFilterChips" :key="index + chip.value">
           <v-menu offset-y content-class="menu-with-gap">
             <template v-slot:activator="{ on }">

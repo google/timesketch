@@ -47,16 +47,21 @@ limitations under the License.
     <v-expand-transition>
       <div v-show="expanded">
         <v-text-field
+          v-if="allTimelines.length >= paginationThreshold"
           class="ma-3"
           v-model="search"
-          append-icon="mdi-magnify"
           label="Filter timelines"
           single-line
+          clearable
           hide-details
+          outlined
+          dense
+          prepend-inner-icon="mdi-magnify"
         ></v-text-field>
         <v-data-table
           class="data-table"
           :hide-default-footer="allTimelines.length <= paginationThreshold"
+          :hide-default-header="true"
           v-model="selected"
           :items="allTimelines"
           :headers="headers"
