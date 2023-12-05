@@ -128,7 +128,7 @@ limitations under the License.
       </div>
 
       <!-- Timeline picker -->
-      <v-expansion-panels class="mt-4" multiple flat>
+      <v-expansion-panels v-model="timelinePanel" class="mt-4" multiple flat>
         <v-expansion-panel active-class="expanded">
           <v-expansion-panel-header hide-actions class="pl-0">
             <span class="timeline-header">
@@ -377,6 +377,7 @@ export default {
         { tag: 'suspicious', color: 'orange', textColor: 'white', label: 'mdi-help-circle-outline' },
         { tag: 'good', color: 'green', textColor: 'white', label: 'mdi-check-circle-outline' },
       ],
+      timelinePanel: [0],
     }
   },
   computed: {
@@ -576,8 +577,8 @@ export default {
         textToCopy = chip.value;
       } else {
         // For other chips, copy both field and value
-        textToCopy = chip.operator === 'must_not' 
-          ? `NOT ${chip.field ? `${chip.field}:` : ''}"${chip.value}"` 
+        textToCopy = chip.operator === 'must_not'
+          ? `NOT ${chip.field ? `${chip.field}:` : ''}"${chip.value}"`
           : `${chip.field ? `${chip.field}:` : ''}"${chip.value}"`;
       }
       // Copy to clipboard
