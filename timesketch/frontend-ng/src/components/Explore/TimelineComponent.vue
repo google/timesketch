@@ -111,10 +111,10 @@ limitations under the License.
     <v-menu
       v-else
       offset-y
+      max-width="385"
       :close-on-content-click="false"
       content-class="menu-with-gap"
       ref="timelineChipMenuRef"
-      max-width="320"
     >
       <template v-slot:activator="{ on }">
         <slot
