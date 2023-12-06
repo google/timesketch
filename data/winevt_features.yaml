@@ -66,8 +66,12 @@ security_4624_v0:
       string_index: 0
     - name: subject_user_name
       string_index: 1
+      aliases:
+        - subject_username
     - name: subject_domain_name
       string_index: 2
+      aliases:
+        - subject_domain
     - name: subject_logon_id
       string_index: 3
     - name: target_user_sid
@@ -126,8 +130,12 @@ security_4624_v1:
       string_index: 0
     - name: subject_user_name
       string_index: 1
+      aliases:
+        - subject_username
     - name: subject_domain_name
       string_index: 2
+      aliases:
+        - subject_domain
     - name: subject_logon_id
       string_index: 3
     - name: target_user_sid
@@ -188,8 +196,12 @@ security_4624_v2:
       string_index: 0
     - name: subject_user_name
       string_index: 1
+      aliases:
+        - subject_username
     - name: subject_domain_name
       string_index: 2
+      aliases:
+        - subject_domain
     - name: subject_logon_id
       string_index: 3
     - name: target_user_sid
@@ -262,8 +274,12 @@ security_4625_v0:
       string_index: 0
     - name: subject_user_name
       string_index: 1
+      aliases:
+        - subject_username
     - name: subject_domain_name
       string_index: 2
+      aliases:
+        - subject_domain
     - name: subject_logon_id
       string_index: 3
     - name: target_user_sid
@@ -350,8 +366,12 @@ security_4648_v0:
       string_index: 0
     - name: subject_user_name
       string_index: 1
+      aliases:
+        - subject_username
     - name: subject_domain_name
       string_index: 2
+      aliases:
+        - subject_domain
     - name: subject_logon_id
       string_index: 3
     - name: logon_guid
@@ -397,6 +417,8 @@ security_4688_v0:
       string_index: 0
     - name: subject_user_name
       string_index: 1
+      aliases:
+        - subject_username
     - name: subject_logon_id
       string_index: 2
     - name: new_process_id
@@ -423,6 +445,8 @@ security_4688_v1:
       string_index: 0
     - name: subject_user_name
       string_index: 1
+      aliases:
+        - subject_username
     - name: subject_logon_id
       string_index: 2
     - name: new_process_id
@@ -451,8 +475,12 @@ security_4688_v2:
       string_index: 0
     - name: subject_user_name
       string_index: 1
+      aliases:
+        - subject_username
     - name: subject_domain_name
       string_index: 2
+      aliases:
+        - subject_domain
     - name: subject_logon_id
       string_index: 3
     - name: new_process_id
@@ -507,8 +535,12 @@ security_4720_v0:
       string_index: 2
     - name: subject_user_name
       string_index: 3
+      aliases:
+        - subject_username
     - name: subject_domain_name
       string_index: 4
+      aliases:
+        - subject_domain
     - name: subject_logon_id
       string_index: 5
     - name: privilege_list
@@ -582,8 +614,12 @@ security_4728_v0:
       string_index: 5
     - name: subject_user_name
       string_index: 6
+      aliases:
+        - subject_username
     - name: subject_domain_name
       string_index: 7
+      aliases:
+        - subject_domain
     - name: subject_logon_id
       string_index: 8
     - name: privilege_list
@@ -618,8 +654,12 @@ security_4732_v0:
       string_index: 5
     - name: subject_user_name
       string_index: 6
+      aliases:
+        - subject_username
     - name: subject_domain_name
       string_index: 7
+      aliases:
+        - subject_domain
     - name: subject_logon_id
       string_index: 8
     - name: privilege_list
@@ -647,4 +687,325 @@ system_7045_v0:
       string_index: 3
     - name: account_name
       string_index: 4
+
+# Microsoft-Windows-TerminalServices-LocalSessionManager/Operational Events
+## Event ID 21: Remote Desktop Services: Session logon succeeded
+terminal_services_21_v0:
+  source_name:
+    - Microsoft-Windows-TerminalServices-LocalSessionManager
+  provider_identifier:
+    - '{5d896912-022d-40aa-a3a8-4fa5515c76d7}'
+  event_identifier: 21
+  event_version: 0
+  references:
+    - "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2008-r2-and-2008/ee891131(v=ws.10)"
+  mapping:
+    - name: user
+      string_index: 0
+    - name: session_id
+      string_index: 1
+    - name: source_network_address
+      string_index: 2
+      aliases:
+        - ip_address
+
+## Event ID 23: Remote Desktop Services: Session logoff succeeded
+terminal_services_23_v0:
+  source_name:
+    - Microsoft-Windows-TerminalServices-LocalSessionManager
+  provider_identifier:
+    - '{5d896912-022d-40aa-a3a8-4fa5515c76d7}'
+  event_identifier: 23
+  event_version: 0
+  references:
+    - "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2008-r2-and-2008/ee907364(v=ws.10)"
+  mapping:
+    - name: user
+      string_index: 0
+    - name: session_id
+      string_index: 1
+
+## Event ID 24: Remote Desktop Services: Session has been disconnected
+terminal_services_24_v0:
+  source_name:
+    - Microsoft-Windows-TerminalServices-LocalSessionManager
+  provider_identifier:
+    - '{5d896912-022d-40aa-a3a8-4fa5515c76d7}'
+  event_identifier: 24
+  event_version: 0
+  references:
+    - "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2008-r2-and-2008/ee907330(v=ws.10)"
+  mapping:
+    - name: user
+      string_index: 0
+    - name: session_id
+      string_index: 1
+    - name: source_network_address
+      string_index: 2
+      aliases:
+        - ip_address
+
+## Event ID 25: Remote Desktop Services: Session reconnection succeeded
+terminal_services_25_v0:
+  source_name:
+    - Microsoft-Windows-TerminalServices-LocalSessionManager
+  provider_identifier:
+    - '{5d896912-022d-40aa-a3a8-4fa5515c76d7}'
+  event_identifier: 25
+  event_version: 0
+  references:
+    - "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2008-r2-and-2008/ee891126(v=ws.10)"
+  mapping:
+    - name: user
+      string_index: 0
+    - name: session_id
+      string_index: 1
+    - name: source_network_address
+      string_index: 2
+      aliases:
+        - ip_address
+
+## Event ID 39: Session <X> has been disconnected by session <Y>
+terminal_services_39_v0:
+  source_name:
+    - Microsoft-Windows-TerminalServices-LocalSessionManager
+  provider_identifier:
+    - '{5d896912-022d-40aa-a3a8-4fa5515c76d7}'
+  event_identifier: 39
+  event_version: 0
+  references:
+    - "https://ponderthebits.com/2018/02/windows-rdp-related-event-logs-identification-tracking-and-investigation/#:~:text=NOT%20%E2%80%9CLOCAL%E2%80%9D.-,Event%20ID%3A%2039,-Provider%20Name%3A"
+  mapping:
+    - name: target_session_id
+      string_index: 0
+    - name: source_session_id
+      string_index: 1
+
+## Event ID 40: Session <X> has been disconnected, reason code <Z>
+terminal_services_40_v0:
+  source_name:
+    - Microsoft-Windows-TerminalServices-LocalSessionManager
+  provider_identifier:
+    - '{5d896912-022d-40aa-a3a8-4fa5515c76d7}'
+  event_identifier: 40
+  event_version: 0
+  references:
+    - "https://ponderthebits.com/2018/02/windows-rdp-related-event-logs-identification-tracking-and-investigation/#:~:text=the%20RDP%20session.-,Event%20ID%3A%2040,-Provider%20Name%3A"
+  mapping:
+    - name: session_id
+      string_index: 0
+    - name: reason
+      string_index: 1
+
+# Microsoft-Windows-Bits-Client Events
+## Event ID 3: The BITS service created a new job.
+### Version 0 is used in win2k08
+bits_client_3_v0:
+  source_name:
+    - Microsoft-Windows-Bits-Client
+  provider_identifier:
+    - '{EF1CC15B-46C1-414E-BB95-E76B077BD51E}'
+  event_identifier: 3
+  event_version: 0
+  references:
+    - "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2008-r2-and-2008/cc734602(v=ws.10)"
+    - "https://github.com/nsacyber/Windows-Event-Log-Messages/blob/master/docs/Datasets.md"
+  mapping:
+    - name: job_title
+      string_index: 0
+    - name: job_owner
+      string_index: 1
+
+### Version 1
+bits_client_3_v0:
+  source_name:
+    - Microsoft-Windows-Bits-Client
+  provider_identifier:
+    - '{EF1CC15B-46C1-414E-BB95-E76B077BD51E}'
+  event_identifier: 3
+  event_version: 1
+  references:
+    - "https://github.com/nsacyber/Windows-Event-Log-Messages/blob/master/docs/Datasets.md"
+  mapping:
+    - name: job_title
+      string_index: 0
+    - name: job_id
+      string_index: 1
+    - name: job_owner
+      string_index: 2
+
+### Version 2 is used in win2k16
+bits_client_3_v2:
+  source_name:
+    - Microsoft-Windows-Bits-Client
+  provider_identifier:
+    - '{EF1CC15B-46C1-414E-BB95-E76B077BD51E}'
+  event_identifier: 3
+  event_version: 2
+  references:
+    - "https://community.microfocus.com/cfs-file/__key/communityserver-wikis-components-files/00-00-00-00-23/MSWinBITSClientEvtLogs.pdf"
+    - "https://github.com/nsacyber/Windows-Event-Log-Messages/blob/master/docs/Datasets.md"
+  mapping:
+    - name: job_title
+      string_index: 0
+    - name: job_id
+      string_index: 1
+    - name: job_owner
+      string_index: 2
+    - name: process_path
+      string_index: 3
+    - name: process_id
+      string_index: 4
+
+### Version 3 is used in win2k19 and win2k22.
+bits_client_3_v3:
+  source_name:
+    - Microsoft-Windows-Bits-Client
+  provider_identifier:
+    - '{ef1cc15b-46c1-414e-bb95-e76b077bd51e}'
+  event_identifier: 3
+  event_version: 3
+  references:
+    - "https://community.microfocus.com/cfs-file/__key/communityserver-wikis-components-files/00-00-00-00-23/MSWinBITSClientEvtLogs.pdf"
+    - "https://github.com/nsacyber/Windows-Event-Log-Messages/blob/master/docs/Datasets.md"
+  mapping:
+    - name: job_title
+      string_index: 0
+    - name: job_id
+      string_index: 1
+    - name: job_owner
+      string_index: 2
+    - name: process_path
+      string_index: 3
+    - name: process_id
+      string_index: 4
+    - name: client_process_start_key
+      string_index: 5
+
+## EventID 4: BITS transfer job is complete.
+### Version 1 is used by win2k8 to win2k22
+bits_client_4_v1:
+  source_name:
+    - Microsoft-Windows-Bits-Client
+  provider_identifier:
+    - '{ef1cc15b-46c1-414e-bb95-e76b077bd51e}'
+  event_identifier: 4
+  event_version: 1
+  references:
+    - "https://community.microfocus.com/cfs-file/__key/communityserver-wikis-components-files/00-00-00-00-23/MSWinBITSClientEvtLogs.pdf"
+    - "https://github.com/nsacyber/Windows-Event-Log-Messages/blob/master/docs/Datasets.md"
+  mapping:
+    - name: user
+      string_index: 0
+    - name: job_title
+      string_index: 1
+    - name: job_id
+      string_index: 2
+    - name: job_owner
+      string_index: 3
+    - name: file_count
+      string_index: 4
+    - name: bytes_transferred
+      string_index: 5
+      aliases:
+        - bytes_out
+    - name: bytes_transferred_from_peer
+      string_index: 6
+      aliases:
+        - bytes_in
+
+## Event ID 59: BITS started the transfer job.
+### Version 1 is used in win2k16, win2k19, and win2k22
+bits_client_59_v1:
+  source_name:
+    - Microsoft-Windows-Bits-Client
+  provider_identifier:
+    - '{ef1cc15b-46c1-414e-bb95-e76b077bd51e}'
+  event_identifier: 59
+  event_version: 1
+  references:
+    - "https://www.mandiant.com/resources/blog/attacker-use-of-windows-background-intelligent-transfer-service"
+    - "https://community.microfocus.com/cfs-file/__key/communityserver-wikis-components-files/00-00-00-00-23/MSWinBITSClientEvtLogs.pdf"
+    - "https://github.com/nsacyber/Windows-Event-Log-Messages/blob/master/docs/Datasets.md"
+  mapping:
+    - name: transfer_id
+      string_index: 0
+    - name: name
+      string_index: 1
+    - name: id
+      string_index: 2
+    - name: url
+      string_index: 3
+    - name: peer
+      string_index: 4
+    - name: file_time
+      string_index: 5
+    - name: file_length
+      string_index: 6
+    - name: bytes_total
+      string_index: 7
+    - name: bytes_transferred
+      string_index: 8
+      aliases:
+        - bytes_out
+    - name: bytes_transferred_from_peer
+      string_index: 9
+      aliases:
+        - bytes_in
+
+## Event ID 60: BITS stopped transferring the transfer job.
+bits_client_60_v1:
+  source_name:
+    - Microsoft-Windows-Bits-Client
+  provider_identifier:
+    - '{ef1cc15b-46c1-414e-bb95-e76b077bd51e}'
+  event_identifier: 60
+  event_version: 1
+  references:
+    - "https://www.mandiant.com/resources/blog/attacker-use-of-windows-background-intelligent-transfer-service"
+    - "https://community.microfocus.com/cfs-file/__key/communityserver-wikis-components-files/00-00-00-00-23/MSWinBITSClientEvtLogs.pdf"
+    - "https://github.com/nsacyber/Windows-Event-Log-Messages/blob/master/docs/Datasets.md"
+  mapping:
+    - name: transfer_id
+      string_index: 0
+    - name: name
+      string_index: 1
+    - name: id
+      string_index: 2
+    - name: url
+      string_index: 3
+    - name: peer
+      string_index: 4
+    - name: hr
+      string_index: 5
+    - name: file_time
+      string_index: 6
+      aliases:
+        - file_create_time
+    - name: file_length
+      string_index: 7
+      aliases:
+        - file_size
+    - name: bytes_total
+      string_index: 8
+    - name: bytes_transferred
+      string_index: 9
+      aliases:
+        - bytes_out
+    - name: proxy
+      string_index: 10
+    - name: peer_protocol_flag
+      string_index: 11
+    - name: bytes_transferred_from_peer
+      string_index: 12
+      aliases:
+        - bytes_in
+    - name: additional_info_hr
+      string_index: 13
+    - name: peer_context_info
+      string_index: 14
+    - name: bandwidth_limit
+      string_index: 15
+    - name: ignore_bandwidth_limits_on_lan
+      string_index: 16
 
