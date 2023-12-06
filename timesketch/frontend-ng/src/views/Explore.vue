@@ -128,16 +128,13 @@ limitations under the License.
       </div>
 
       <!-- Timeline picker -->
-      <v-expansion-panels v-model="timelinePanel" class="mt-4" multiple flat>
-        <v-expansion-panel active-class="expanded">
-          <v-expansion-panel-header hide-actions class="pl-0">
-            <span class="timeline-header">
-              <v-btn small text rounded color="secondary" :ripple="false">
-                <v-icon left class="open-indicator"> mdi-chevron-up </v-icon>
-                <v-icon left class="closed-indicator"> mdi-chevron-down </v-icon>
-                <span v-if="0 in timelinePanel">Hide&nbsp;&nbsp; Timelines</span>
-                <span v-else>Show Timelines</span>
-              </v-btn>
+      <div>
+        <v-toolbar flat dense style="background-color: transparent">
+          <v-btn small icon @click="showTimelines = !showTimelines">
+            <v-icon v-if="showTimelines" title="Hide Timelines">mdi-chevron-up</v-icon>
+            <v-icon v-else title="Show Timelines">mdi-chevron-down</v-icon>
+          </v-btn>
+          <span class="timeline-header">
               <ts-upload-timeline-form-button btn-type="small"></ts-upload-timeline-form-button>
               <v-dialog v-model="addManualEvent" width="600">
                 <template v-slot:activator="{ on, attrs }">
@@ -161,16 +158,17 @@ limitations under the License.
                 <span>Unselect all</span>
               </v-btn>
             </span>
-          </v-expansion-panel-header>
-          <v-expansion-panel-content>
+        </v-toolbar>
+        <v-expand-transition>
+          <div v-show="showTimelines">
             <ts-timeline-picker
               :current-query-filter="currentQueryFilter"
               :count-per-index="countPerIndex"
               :count-per-timeline="countPerTimeline"
             ></ts-timeline-picker>
-          </v-expansion-panel-content>
-        </v-expansion-panel>
-      </v-expansion-panels>
+          </div>
+        </v-expand-transition>
+      </div>
 
       <!-- Time filter chips -->
       <div>
@@ -379,7 +377,7 @@ export default {
         { tag: 'suspicious', color: 'orange', textColor: 'white', label: 'mdi-help-circle-outline' },
         { tag: 'good', color: 'green', textColor: 'white', label: 'mdi-check-circle-outline' },
       ],
-      timelinePanel: [0],
+      showTimelines: true,
     }
   },
   computed: {
