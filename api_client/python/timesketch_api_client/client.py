@@ -368,23 +368,22 @@ class TimesketchApi:
             Dictionary with the response data.
 
         Raises:
-            RuntimeError: If response could not be JSON-decoded after
-                DEFAULT_RETRY_COUNT attempts.
+            RuntimeError: If response cannot be interpreted or is empty.
         """
         resource_url = "{0:s}/{1:s}".format(self.api_root, resource_uri)
         response = self.session.get(resource_url, params=params)
 
-        retry_count = 0
-        while True:
-            result = error.get_response_json(response, logger)
-            # Any dict with content is good enough for us to return.
-            if result:
-                return result
-            retry_count += 1
-            if retry_count >= self.DEFAULT_RETRY_COUNT:
-                raise RuntimeError(
-                    f"Unable to fetch JSON resource data. Response: {str(result)}"
-                )
+        result = error.get_response_json(response, logger, url=resource_url)
+        if result:
+            return result
+        else:
+            error.error_message(
+                response,
+                message="The response for the URL '{0:s}' returned by the "
+                "Timesketch API was empty or false. Result: '{1:s}'".format(
+                    resource_url, result
+                ),
+            )
 
     def create_sketch(self, name, description=None):
         """Create a new sketch.
