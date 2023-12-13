@@ -368,22 +368,53 @@ class TimesketchApi:
             Dictionary with the response data.
 
         Raises:
-            RuntimeError: If response cannot be interpreted or is empty.
+            ValueError: If response could not be JSON-decoded after
+                DEFAULT_RETRY_COUNT attempts.
+            RuntimeError: If the API server returns an error or empty.
         """
         resource_url = "{0:s}/{1:s}".format(self.api_root, resource_uri)
-        response = self.session.get(resource_url, params=params)
 
-        result = error.get_response_json(response, logger, url=resource_url)
-        if result:
-            return result
-        else:
-            error.error_message(
-                response,
-                message="The response for the URL '{0:s}' returned by the "
-                "Timesketch API was empty or false. Result: '{1:s}'".format(
-                    resource_url, result
-                ),
-            )
+        retry_count = 0
+        result = None
+        while True:
+            retry_count += 1
+            response = self.session.get(resource_url, params=params)
+            try:
+                result = error.get_response_json(response, logger)
+                if result:
+                    return result
+            except RuntimeError as e:
+                if retry_count >= self.DEFAULT_RETRY_COUNT:
+                    raise RuntimeError(
+                        "Error for request '{0:s}' - '{1!s}'".format(resource_url, e)
+                    ) from e
+
+                logger.warning(
+                    "[{0:d}/{1:d}] Parsing the repsonse for request '{2:s}'"
+                    "failed. Trying again...".format(
+                        retry_count, self.DEFAULT_RETRY_COUNT, resource_url
+                    )
+                )
+            except ValueError as e:
+                if retry_count >= self.DEFAULT_RETRY_COUNT:
+                    raise ValueError(
+                        "Error parsing response for request '{0:s}' - {1!s}".format(
+                            resource_url, e
+                        )
+                    ) from e
+
+                logger.warning(
+                    "[{0:d}/{1:d}] Parsing the JSON repsonse for request "
+                    "'{2:s}' failed. Trying again...".format(
+                        retry_count, self.DEFAULT_RETRY_COUNT, resource_url
+                    )
+                )
+
+            if retry_count >= self.DEFAULT_RETRY_COUNT:
+                raise RuntimeError(
+                    "Unable to fetch JSON resource data for request: '{0:s}'"
+                    " - Response: '{1!s}'".format(resource_url, result)
+                )
 
     def create_sketch(self, name, description=None):
         """Create a new sketch.

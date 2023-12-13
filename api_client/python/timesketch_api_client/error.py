@@ -70,36 +70,34 @@ def _get_reason(response):
     return reason
 
 
-def get_response_json(response, logger, url=None):
+def get_response_json(response, logger):
     """Return the JSON object from a response, logging any errors.
 
     Args:
-        response (requests.Response): a response object from a HTTP
-            request.
-        logger (logging.Logger): a logger object that can be used to
-            write log messages.
-        url (String): The url used for the request.
+        response (requests.Response): a response object from a HTTP request.
+        logger (logging.Logger): a logger object that can be used to write log
+          messages.
 
     Returns:
         dict: a dict with the decoded JSON object within the HTTP
             response object.
+
+    Raises:
+        RuntimeError: if the API returns an HTTP error.
+        ValueError: if the API response cannot be JSON decoded.
     """
     status = response.status_code in definitions.HTTP_STATUS_CODE_20X
     if not status:
         error_message(
             response,
-            message="Error response from the Timesketch API for request: "
-            "'{0:s}'".format(url),
+            message=("Failed to get a valid response json from Timesketch API"),
         )
 
     try:
         return response.json()
     except json.JSONDecodeError as e:
-        logger.error("Unable to decode response: {0!s}".format(e), exc_info=True)
-        raise RuntimeError(
-            "Unable to json decode the Timesketch API response for request "
-            "'{0:s}'! JSONDecodeError: {1!s}".format(url, e)
-        )
+        logger.warning("Unable to json decode the Timesketch API response!")
+        raise ValueError("Unable to json decode the Timesketch API response!") from e
 
 
 def error_message(response, message=None, error=RuntimeError):
