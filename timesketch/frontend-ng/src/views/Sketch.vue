@@ -66,7 +66,12 @@ limitations under the License.
             : { 'border-bottom': '1px solid rgba(0,0,0,.12) !important' },
         ]"
       >
+        <!--
         <v-btn v-if="hasTimelines && !loadingSketch && !isArchived" icon @click.stop="showLeftPanel = !showLeftPanel">
+          <v-icon title="Toggle left panel">mdi-menu</v-icon>
+        </v-btn>
+        -->
+        <v-btn v-if="hasTimelines && !loadingSketch && !isArchived" icon @click.stop="toggleDrawer()">
           <v-icon title="Toggle left panel">mdi-menu</v-icon>
         </v-btn>
 
@@ -214,11 +219,11 @@ limitations under the License.
       <v-navigation-drawer
         v-model="showLeftPanel"
         app
+        clipped
         disable-resize-watcher
         stateless
-        clipped
         hide-overlay
-        width="410"
+        :width="navigationDrawer.width"
       >
         <!-- Dialog for adding a scenario -->
         <v-dialog v-model="scenarioDialog" max-width="500px">
@@ -249,27 +254,37 @@ limitations under the License.
           </v-card>
         </v-dialog>
 
-        <v-tabs v-model="leftPanelTab" grow>
+        <v-tabs v-model="leftPanelTab" grow :next-icon="null" :prev-icon="null">
           <v-tab v-for="item in leftPanelTabItems" :key="item"> {{ item }} </v-tab>
         </v-tabs>
         <v-divider></v-divider>
         <v-tabs-items v-model="leftPanelTab">
           <v-tab-item :transition="false">
-            <ts-search></ts-search>
-            <ts-timelines-table></ts-timelines-table>
-            <ts-saved-searches v-if="meta.views"></ts-saved-searches>
-            <ts-data-types></ts-data-types>
-            <ts-tags></ts-tags>
-            <ts-graphs></ts-graphs>
-            <ts-stories></ts-stories>
-            <ts-intelligence></ts-intelligence>
-            <ts-search-templates></ts-search-templates>
-            <ts-sigma-rules></ts-sigma-rules>
-            <ts-analyzer-results></ts-analyzer-results>
+            <ts-search :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-search>
+            <ts-timelines-table :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-timelines-table>
+            <ts-saved-searches
+              v-if="meta.views"
+              :icon-only="isMiniDrawer"
+              @toggleDrawer="toggleDrawer()"
+            ></ts-saved-searches>
+            <ts-data-types :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-data-types>
+            <ts-tags :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-tags>
+            <ts-graphs :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-graphs>
+            <ts-stories :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-stories>
+            <ts-intelligence :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-intelligence>
+            <ts-search-templates :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-search-templates>
+            <ts-sigma-rules :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-sigma-rules>
+            <ts-analyzer-results :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-analyzer-results>
           </v-tab-item>
           <v-tab-item :transition="false">
-            <ts-scenario v-for="scenario in activeScenarios" :key="scenario.id" :scenario="scenario"></ts-scenario>
-            <v-row class="mt-0 px-2" flat>
+            <ts-scenario
+              v-for="scenario in activeScenarios"
+              :key="scenario.id"
+              :scenario="scenario"
+              :icon-only="isMiniDrawer"
+              @toggleDrawer="toggleDrawer()"
+            ></ts-scenario>
+            <v-row class="mt-0 px-2" flat v-show="!isMiniDrawer">
               <v-col cols="6">
                 <v-card v-if="!Object.keys(scenarioTemplates).length" flat class="pa-4"
                   >No scenarios available yet. Contact your server admin to add scenarios to this server.</v-card
@@ -298,7 +313,13 @@ limitations under the License.
             </v-row>
 
             <div v-if="showHidden">
-              <ts-scenario v-for="scenario in hiddenScenarios" :key="scenario.id" :scenario="scenario"></ts-scenario>
+              <ts-scenario
+                v-for="scenario in hiddenScenarios"
+                :key="scenario.id"
+                :scenario="scenario"
+                :icon-only="isMiniDrawer"
+                @toggleDrawer="toggleDrawer()"
+              ></ts-scenario>
             </div>
           </v-tab-item>
         </v-tabs-items>
@@ -410,6 +431,7 @@ export default {
       navigationDrawer: {
         width: 410,
       },
+      isMiniDrawer: false,
       selectedScenario: null,
       scenarioDialog: false,
       showLeftPanel: false,
@@ -604,6 +626,17 @@ export default {
           this.$store.dispatch('updateScenarios', this.sketch.id)
         })
         .catch((e) => {})
+    },
+    toggleDrawer: function () {
+      this.navigationDrawer.width = 410
+      if (this.isMiniDrawer) {
+        setTimeout(() => {
+          this.isMiniDrawer = false
+        }, 100)
+      } else {
+        this.navigationDrawer.width = 56
+        this.isMiniDrawer = true
+      }
     },
   },
   watch: {

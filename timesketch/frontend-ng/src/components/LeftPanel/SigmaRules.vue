@@ -14,7 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div>
+  <div v-if="iconOnly" class="pa-4" style="cursor: pointer" @click="$emit('toggleDrawer')">
+    <v-icon left>mdi-sigma-lower</v-icon>
+    <div style="height: 1px"></div>
+  </div>
+  <div v-else>
     <div
       :style="!(sigmaRules && sigmaRules.length) ? '' : 'cursor: pointer'"
       class="pa-4"
@@ -83,6 +87,7 @@ import TsSigmaRule from './SigmaRule.vue'
 export default {
   props: {
     startExpanded: Boolean,
+    iconOnly: Boolean,
   },
   components: {
     TsSigmaRule,

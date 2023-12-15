@@ -14,7 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div>
+  <div v-if="iconOnly" class="pa-4" style="cursor: pointer" @click="$emit('toggleDrawer')">
+    <v-icon left>mdi-text-box-search-outline</v-icon>
+    <div style="height: 1px"></div>
+  </div>
+  <div v-else>
     <div
       :style="searchtemplates && searchtemplates.length ? 'cursor: pointer' : ''"
       class="pa-4"
@@ -64,7 +68,9 @@ import ApiClient from '../../utils/RestApiClient'
 import TsSearchTemplate from './SearchTemplate.vue'
 
 export default {
-  props: [],
+  props: {
+    iconOnly: Boolean,
+  },
   components: {
     TsSearchTemplate,
   },

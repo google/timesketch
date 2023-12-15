@@ -129,35 +129,35 @@ limitations under the License.
 
       <!-- Timeline picker -->
       <div>
-        <v-toolbar flat dense style="background-color: transparent">
+        <v-toolbar flat dense style="background-color: transparent" class="mt-n3">
           <v-btn small icon @click="showTimelines = !showTimelines">
             <v-icon v-if="showTimelines" title="Hide Timelines">mdi-chevron-up</v-icon>
             <v-icon v-else title="Show Timelines">mdi-chevron-down</v-icon>
           </v-btn>
           <span class="timeline-header">
-              <ts-upload-timeline-form-button btn-type="small"></ts-upload-timeline-form-button>
-              <v-dialog v-model="addManualEvent" width="600">
-                <template v-slot:activator="{ on, attrs }">
-                  <v-btn small text rounded color="primary" v-bind="attrs" v-on="on">
-                    <v-icon left small> mdi-plus </v-icon>
-                    Add manual event
-                  </v-btn>
-                </template>
-                <ts-add-manual-event
-                  app
-                  @cancel="addManualEvent = false"
-                  :datetimeProp="datetimeManualEvent"
-                ></ts-add-manual-event>
-              </v-dialog>
-              <v-btn small text rounded color="primary" @click.stop="enableAllTimelines()">
-                <v-icon left small>mdi-eye</v-icon>
-                <span>Select all</span>
-              </v-btn>
-              <v-btn small text rounded color="primary" @click.stop="disableAllTimelines()">
-                <v-icon left small>mdi-eye-off</v-icon>
-                <span>Unselect all</span>
-              </v-btn>
-            </span>
+            <ts-upload-timeline-form-button btn-type="small"></ts-upload-timeline-form-button>
+            <v-dialog v-model="addManualEvent" width="600">
+              <template v-slot:activator="{ on, attrs }">
+                <v-btn small text rounded color="primary" v-bind="attrs" v-on="on">
+                  <v-icon left small> mdi-plus </v-icon>
+                  Add manual event
+                </v-btn>
+              </template>
+              <ts-add-manual-event
+                app
+                @cancel="addManualEvent = false"
+                :datetimeProp="datetimeManualEvent"
+              ></ts-add-manual-event>
+            </v-dialog>
+            <v-btn small text rounded color="primary" @click.stop="enableAllTimelines()">
+              <v-icon left small>mdi-eye</v-icon>
+              <span>Select all</span>
+            </v-btn>
+            <v-btn small text rounded color="primary" @click.stop="disableAllTimelines()">
+              <v-icon left small>mdi-eye-off</v-icon>
+              <span>Unselect all</span>
+            </v-btn>
+          </span>
         </v-toolbar>
         <v-expand-transition>
           <div v-show="showTimelines">
@@ -570,26 +570,28 @@ export default {
       this.search()
     },
     copyFilterChip(chip) {
-      let textToCopy = '';
+      let textToCopy = ''
       // Different handling based on chip type
       if (chip.type.startsWith('datetime')) {
         // For datetime chips, just copy the value
-        textToCopy = chip.value;
+        textToCopy = chip.value
       } else {
         // For other chips, copy both field and value
-        textToCopy = chip.operator === 'must_not'
-          ? `NOT ${chip.field ? `${chip.field}:` : ''}"${chip.value}"`
-          : `${chip.field ? `${chip.field}:` : ''}"${chip.value}"`;
+        textToCopy =
+          chip.operator === 'must_not'
+            ? `NOT ${chip.field ? `${chip.field}:` : ''}"${chip.value}"`
+            : `${chip.field ? `${chip.field}:` : ''}"${chip.value}"`
       }
       // Copy to clipboard
-      navigator.clipboard.writeText(textToCopy)
+      navigator.clipboard
+        .writeText(textToCopy)
         .then(() => {
           this.infoSnackBar('Copied to clipboard!')
         })
         .catch((e) => {
           this.errorSnackBar('Failed to copy to clipboard.')
           console.error(e)
-        });
+        })
     },
     removeChip: function (chip, search = true) {
       let chipIndex = this.currentQueryFilter.chips.findIndex((c) => c.value === chip.value)
