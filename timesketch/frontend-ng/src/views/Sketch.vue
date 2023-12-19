@@ -66,11 +66,6 @@ limitations under the License.
             : { 'border-bottom': '1px solid rgba(0,0,0,.12) !important' },
         ]"
       >
-        <!--
-        <v-btn v-if="hasTimelines && !loadingSketch && !isArchived" icon @click.stop="showLeftPanel = !showLeftPanel">
-          <v-icon title="Toggle left panel">mdi-menu</v-icon>
-        </v-btn>
-        -->
         <v-btn v-if="hasTimelines && !loadingSketch && !isArchived" icon @click.stop="toggleDrawer()">
           <v-icon title="Toggle left panel">mdi-menu</v-icon>
         </v-btn>
