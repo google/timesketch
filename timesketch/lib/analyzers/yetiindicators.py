@@ -77,15 +77,15 @@ class YetiIndicators(interface.BaseAnalyzer):
         """
         response = requests.post(
             self.yeti_api_root + "/indicators/search",
-            json={"name": "", "type": indicator_type},
+            json={"query": {"name": ""}, "type": indicator_type},
             headers={"X-Yeti-API": self.yeti_api_key},
         )
+        data = response.json()
         if response.status_code != 200:
             raise RuntimeError(
                 f"Error {response.status_code} retrieving indicators from Yeti:"
-                + response.json()
+                + str(data)
             )
-        data = response.json()
         indicators = {item["id"]: item for item in data["indicators"]}
         for _id, indicator in indicators.items():
             indicator["compiled_regexp"] = re.compile(indicator["pattern"])
