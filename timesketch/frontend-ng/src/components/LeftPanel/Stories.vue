@@ -14,7 +14,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div v-if="iconOnly" class="pa-4" style="cursor: pointer" @click="$emit('toggleDrawer')">
+  <div
+    v-if="iconOnly"
+    class="pa-4"
+    style="cursor: pointer"
+    @click="
+      $emit('toggleDrawer')
+      expanded = true
+    "
+  >
     <v-icon left>mdi-book-open-outline</v-icon>
     <div style="height: 1px"></div>
   </div>

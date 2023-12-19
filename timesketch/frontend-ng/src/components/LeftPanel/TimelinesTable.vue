@@ -15,7 +15,15 @@ limitations under the License.
 -->
 
 <template>
-  <div v-if="iconOnly" class="pa-4" style="cursor: pointer" @click="$emit('toggleDrawer')">
+  <div
+    v-if="iconOnly"
+    class="pa-4"
+    style="cursor: pointer"
+    @click="
+      $emit('toggleDrawer')
+      expanded = true
+    "
+  >
     <v-icon left>mdi-clock-outline</v-icon>
     <div style="height: 1px"></div>
   </div>
