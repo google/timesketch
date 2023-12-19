@@ -15,8 +15,10 @@ limitations under the License.
 -->
 <template>
   <div v-if="iconOnly" class="pa-4" style="cursor: pointer" @click="$emit('toggleDrawer')">
-    <v-icon left>mdi-magnify</v-icon>
-    <div style="height: 1px"></div>
+    <router-link :to="{ name: 'Explore', params: { sketchId: sketch.id } }">
+      <v-icon left>mdi-magnify</v-icon>
+      <div style="height: 1px"></div>
+    </router-link>
   </div>
 
   <div v-else>
