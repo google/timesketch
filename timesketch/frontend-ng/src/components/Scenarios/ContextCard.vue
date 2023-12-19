@@ -14,36 +14,34 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div
-    v-if="activeContext.question"
-    class="mt-3 mx-3 pb-1"
-    :class="$vuetify.theme.dark ? 'dark-info-card' : 'light-info-card'"
-  >
+  <v-card v-if="activeContext.question" class="mt-3 mx-3 pb-1" outlined>
     <v-toolbar flat dense style="background-color: transparent">
-      <h3>
+      <v-btn v-if="activeContext.question.description" small icon @click="expanded = !expanded" class="mr-1">
+        <v-icon v-if="expanded">mdi-chevron-up</v-icon>
+        <v-icon v-else>mdi-chevron-down</v-icon>
+      </v-btn>
+
+      <h4>
         {{ activeContext.question.display_name }}
         <small>
           <a :href="getDfiqQuestionUrl(activeContext.question.dfiq_identifier)" target="_blank" rel="noreferrer"
             >({{ activeContext.question.dfiq_identifier }})</a
           >
         </small>
-      </h3>
+      </h4>
       <v-spacer></v-spacer>
-      <v-btn v-if="activeContext.question.description" small icon @click="expanded = !expanded" class="mr-1">
-        <v-icon v-if="expanded">mdi-chevron-up</v-icon>
-        <v-icon v-else>mdi-chevron-down</v-icon>
-      </v-btn>
 
       <v-btn small icon @click="$store.dispatch('clearActiveContext')" class="mr-1">
         <v-icon>mdi-close</v-icon>
       </v-btn>
     </v-toolbar>
+    <v-divider v-show="expanded"></v-divider>
 
     <v-expand-transition>
       <div v-show="expanded">
         <div v-if="activeContext.question.description">
           <div
-            class="px-4 pb-4 markdown-body"
+            class="pa-4 markdown-body"
             style="background-color: transparent"
             v-html="toHtml(activeContext.question.description)"
           ></div>
@@ -63,7 +61,7 @@ limitations under the License.
         <!--Approaches-->
         <div v-if="activeContext.question.approaches.length">
           <div class="px-4 pb-4">
-            <v-btn depressed outlined small @click="showApproaches = !showApproaches">
+            <v-btn depressed rounded small @click="showApproaches = !showApproaches">
               <span v-if="!showApproaches">Show {{ activeContext.question.approaches.length }} approaches</span>
               <span v-else>Hide {{ activeContext.question.approaches.length }} approaches</span>
             </v-btn>
@@ -76,14 +74,10 @@ limitations under the License.
                   v-for="(approach, index) in activeContext.question.approaches"
                   :key="approach.display_name"
                 >
-                  <v-expansion-panel-header
-                    :class="$vuetify.theme.dark ? 'dark-info-accordion' : 'light-info-accordion'"
-                  >
+                  <v-expansion-panel-header>
                     <span>{{ approach.display_name }}</span>
                   </v-expansion-panel-header>
-                  <v-expansion-panel-content
-                    :class="$vuetify.theme.dark ? 'dark-info-accordian' : 'light-info-accordion'"
-                  >
+                  <v-expansion-panel-content>
                     <ts-context-card-approach :approachJSON="approach"></ts-context-card-approach>
                   </v-expansion-panel-content>
                   <v-divider v-if="index != activeContext.question.approaches.length - 1"></v-divider>
@@ -94,7 +88,7 @@ limitations under the License.
         </div>
       </div>
     </v-expand-transition>
-  </div>
+  </v-card>
 </template>
 
 <script>
