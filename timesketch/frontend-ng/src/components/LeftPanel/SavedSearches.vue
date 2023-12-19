@@ -14,7 +14,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div>
+  <div
+    v-if="iconOnly"
+    class="pa-4"
+    style="cursor: pointer"
+    @click="
+      $emit('toggleDrawer')
+      expanded = true
+    "
+  >
+    <v-icon left>mdi-content-save-outline</v-icon>
+    <div style="height: 1px"></div>
+  </div>
+  <div v-else>
     <div
       :style="meta.views && meta.views.length ? 'cursor: pointer' : ''"
       class="pa-4"
@@ -43,12 +55,7 @@ limitations under the License.
               ><div class="mt-1">{{ savedSearch.name }}</div></v-col
             >
             <v-col cols="auto">
-              <v-btn
-                icon
-                x-small
-                style="cursor: pointer"
-                @click="copySavedSearchUrlToClipboard(savedSearch.id)"
-              >
+              <v-btn icon x-small style="cursor: pointer" @click="copySavedSearchUrlToClipboard(savedSearch.id)">
                 <v-icon title="Copy link to this search" small v-show="key == c_key">mdi-link-variant</v-icon>
               </v-btn>
               <v-menu offset-y>
@@ -85,7 +92,9 @@ limitations under the License.
 import EventBus from '../../main'
 
 export default {
-  props: [],
+  props: {
+    iconOnly: Boolean,
+  },
   data: function () {
     return {
       expanded: false,

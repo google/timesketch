@@ -14,7 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div>
+  <div v-if="iconOnly" class="pa-4" style="cursor: pointer" @click="$emit('toggleDrawer')">
+    <v-icon left>mdi-clipboard-check-outline</v-icon>
+    <div style="height: 1px"></div>
+  </div>
+
+  <div v-else>
     <v-row
       no-gutters
       style="cursor: pointer"
@@ -118,7 +123,7 @@ import ApiClient from '../../utils/RestApiClient'
 import TsFacet from './Facet'
 
 export default {
-  props: ['scenario'],
+  props: ['scenario', 'iconOnly'],
   components: { TsFacet },
   data: function () {
     return {
