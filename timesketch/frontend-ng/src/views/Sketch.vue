@@ -27,7 +27,7 @@ limitations under the License.
             <center>
               <v-img src="/dist/empty-state.png" max-height="100" max-width="300"></v-img>
               <div style="font-size: 2em" class="mb-3 mt-3">It's empty around here</div>
-              <ts-upload-timeline-form btn-size="normal" btn-type="rounded"></ts-upload-timeline-form>
+              <ts-upload-timeline-form-button btn-size="normal" btn-type="rounded"></ts-upload-timeline-form-button>
             </center>
           </v-sheet>
         </v-row>
@@ -256,6 +256,7 @@ limitations under the License.
         <v-tabs-items v-model="leftPanelTab">
           <v-tab-item :transition="false">
             <ts-search></ts-search>
+            <ts-timelines-table></ts-timelines-table>
             <ts-saved-searches v-if="meta.views"></ts-saved-searches>
             <ts-data-types></ts-data-types>
             <ts-tags></ts-tags>
@@ -376,11 +377,12 @@ import TsIntelligence from '../components/LeftPanel/ThreatIntel'
 import TsGraphs from '../components/LeftPanel/Graphs'
 import TsStories from '../components/LeftPanel/Stories'
 import TsSearch from '../components/LeftPanel/Search'
-import TsUploadTimelineForm from '../components/UploadForm'
+import TsUploadTimelineFormButton from '../components/UploadFormButton'
 import TsShareCard from '../components/ShareCard'
 import TsRenameSketch from '../components/RenameSketch'
 import TsAnalyzerResults from '../components/LeftPanel/AnalyzerResults.vue'
 import TsEventList from '../components/Explore/EventList'
+import TsTimelinesTable from '../components/LeftPanel/TimelinesTable.vue'
 
 export default {
   props: ['sketchId'],
@@ -391,7 +393,7 @@ export default {
     TsTags,
     TsSearchTemplates,
     TsSigmaRules,
-    TsUploadTimelineForm,
+    TsUploadTimelineFormButton,
     TsShareCard,
     TsRenameSketch,
     TsIntelligence,
@@ -399,6 +401,7 @@ export default {
     TsStories,
     TsSearch,
     TsAnalyzerResults,
+    TsTimelinesTable,
     TsEventList,
   },
   data() {

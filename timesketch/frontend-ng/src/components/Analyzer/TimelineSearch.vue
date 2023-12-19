@@ -25,7 +25,7 @@ limitations under the License.
     </v-btn>
     <v-autocomplete
       v-model="selectedTimelines"
-      :items="allTimelines"
+      :items="allReadyTimelines"
       outlined
       label="Select timelines for analysis"
       item-text="name"
@@ -34,20 +34,21 @@ limitations under the License.
       class="center-label-height"
     >
       <template v-slot:selection="data">
-        <ts-timeline-chip
+        <ts-analyzer-timeline-chip
+          class="mr-1"
           :timeline="data.item"
           :close="true"
           @click:close="remove(data.item)"
-        ></ts-timeline-chip>
+        ></ts-analyzer-timeline-chip>
       </template>
       <template v-slot:item="data">
         <v-list-item-content>
           <div>
-              <ts-timeline-chip
+              <ts-analyzer-timeline-chip
                 :timeline="data.item"
                 :close="selectedTimelines.includes(data.item.id)"
                 @click:close="remove(data.item)"
-              ></ts-timeline-chip>
+              ></ts-analyzer-timeline-chip>
           </div>
         </v-list-item-content>
       </template>
@@ -56,11 +57,11 @@ limitations under the License.
 </template>
 
 <script>
-import TsTimelineChip from '../Analyzer/TimelineChip'
+import TsAnalyzerTimelineChip from '../Analyzer/TimelineChip'
 
 export default {
   components:{
-    TsTimelineChip,
+    TsAnalyzerTimelineChip,
   },
   props: ['analyzerTimelineId'],
   data() {
@@ -72,7 +73,7 @@ export default {
     sketch() {
       return this.$store.state.sketch
     },
-    allTimelines() {
+    allReadyTimelines() {
       // Sort alphabetically based on timeline name.
       const timelines = this.sketch.timelines.filter(
         tl => tl.status[0].status === 'ready'
@@ -101,7 +102,7 @@ export default {
       this.selectedTimelines = this.selectedTimelines.filter(tl => tl!== timeline.id);
     },
     selectAll () {
-      this.selectedTimelines = [...this.allTimelines.map(tl => tl.id)];
+      this.selectedTimelines = [...this.allReadyTimelines.map(tl => tl.id)];
     },
     unselectAll () {
       this.selectedTimelines = [];
@@ -111,7 +112,7 @@ export default {
 }
 </script>
 
-<style>
+<style scoped lang="scss">
   /*
     Enforce a centered positioning of the append-icon. We can remove this once
     Vuetify provides a clean way of centering it.

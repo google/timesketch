@@ -7,6 +7,46 @@ hide:
 
 # Changelog
 
+## Version 20231206
+Released: 2023-12-06
+
+### What's Changed
+#### ✨ Features
+
+* Left panel timeline management by @Annoraaq in [#2999](https://github.com/google/timesketch/pull/2999)
+* Extract Windows log event data message attributes by @roshanmaskey in [#2910](https://github.com/google/timesketch/pull/2910)
+* Highlight DFIQ context card by @berggren in [#2996](https://github.com/google/timesketch/pull/2996)
+* "Add to Threat Intelligence" via context links by @jkppr in [#2980](https://github.com/google/timesketch/pull/2980)
+* Adding a copy action to filter chips by @JohannesLks in [#2990](https://github.com/google/timesketch/pull/2990)
+
+#### 🐞 Fixes
+
+* API client: Return all field for analysis sessions by @tomchop in [#2504](https://github.com/google/timesketch/pull/2504)
+* Introduce (large) CSV import in e2e tests by @jaegeral in [#2912](https://github.com/google/timesketch/pull/2912)
+* Graph bug and layout fix by @berggren in [#2994](https://github.com/google/timesketch/pull/2994)
+* Feature extraction config for BITS and Terminal Services by @roshanmaskey in [#2974](https://github.com/google/timesketch/pull/2974)
+* Adjust default example text for yeti endpoint by @tomchop in [#2963](https://github.com/google/timesketch/pull/2963)
+* Update to the windows deployment script by @coloradosarge in [#3000](https://github.com/google/timesketch/pull/3000)
+* Adding and updating tooltips for icons by @jkppr in [#2983](https://github.com/google/timesketch/pull/2983)
+* Fix hidden text by @jkppr in [#2965](https://github.com/google/timesketch/pull/2965)
+* bug-fix for context links by @jkppr in [#2962](https://github.com/google/timesketch/pull/2962)
+* Update for upgrade documentation by @jkppr in [#2967](https://github.com/google/timesketch/pull/2967)
+* Removing old feature extractor analyzer by @jkppr in [#2969](https://github.com/google/timesketch/pull/2969)
+* Update for the context_links documentation by @jkppr in [#2970](https://github.com/google/timesketch/pull/2970)
+* Updating the feature extraction analyzer documentation by @jkppr in [#2973](https://github.com/google/timesketch/pull/2973)
+* [tests] Add jsonl e2e tests by @jaegeral in [#2976](https://github.com/google/timesketch/pull/2976)
+* Fix vue dependency issues with "v-calendar" by @jkppr in [#2989](https://github.com/google/timesketch/pull/2989)
+* Mute noisy info logging in the feature extraction analyzer by @jkppr in [#2993](https://github.com/google/timesketch/pull/2993)
+* New empty-state and left panel bugfix by @berggren in [#2991](https://github.com/google/timesketch/pull/2991)
+* Update the analyzer timeline picker by @jkppr in [#3001](https://github.com/google/timesketch/pull/3001)
+* UI build 20231206 by @jkppr in [#3002](https://github.com/google/timesketch/pull/3002)
+
+## New Contributors
+* @JohannesLks made their first contribution in [#2990](https://github.com/google/timesketch/pull/2990)
+* @coloradosarge made their first contribution in [#3000](https://github.com/google/timesketch/pull/3000)
+
+**Full Changelog**: [20231025...20231206](https://github.com/google/timesketch/compare/20231025...20231206)
+
 ## Version 20231025
 Released: 2023-10-25
 
@@ -15,7 +55,7 @@ Upgrading to this Timesketch version requires a database upgrade!
 
 See https://timesketch.org/guides/admin/upgrade/ for more details.
 
-## What's Changed
+### What's Changed
 #### ✨ Features
 * Unfurl integration by @jkppr in https://github.com/google/timesketch/pull/2897
 * DFIQ context in SearchHistory by @berggren in https://github.com/google/timesketch/pull/2957
@@ -23,7 +63,7 @@ See https://timesketch.org/guides/admin/upgrade/ for more details.
 * Add intelligence command to the CLI client by @jaegeral in https://github.com/google/timesketch/pull/2864
 * Update yeti analyzer by @tomchop in https://github.com/google/timesketch/pull/2930
 * SSL/TLS support and authentication for SMTP by @fazledyn-or in https://github.com/google/timesketch/pull/2940
-  
+
 #### 🐞 Fixes
 
 * Filter chip fixes by @jkppr in https://github.com/google/timesketch/pull/2893
@@ -56,7 +96,7 @@ See https://timesketch.org/guides/admin/upgrade/ for more details.
 ## Version 20230913
 Released: 2023-09-13
 
-## What's Changed
+### What's Changed
 #### ✨ Features
 * Timeline info to the tsctl by @jaegeral in https://github.com/google/timesketch/pull/2870
 * Feature extraction for TI data in "Windows-Bits-Client" events by @jkppr in https://github.com/google/timesketch/pull/2873
@@ -86,7 +126,7 @@ Released: 2023-09-13
 ## Version 20230721
 Released: 2023-07-21
 
-## What's Changed
+### What's Changed
 #### ✨ Features
 * Show selected event in context view by @berggren in https://github.com/google/timesketch/pull/2811
 * Delete sketch and list archived sketches by @berggren in https://github.com/google/timesketch/pull/2817
