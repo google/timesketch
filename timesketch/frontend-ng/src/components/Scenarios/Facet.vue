@@ -60,7 +60,7 @@ limitations under the License.
 </template>
 
 <script>
-import TsQuestion from './Question'
+import TsQuestion from './Question.vue'
 
 export default {
   props: ['scenario', 'facet'],

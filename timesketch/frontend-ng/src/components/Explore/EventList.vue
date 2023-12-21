@@ -417,11 +417,11 @@ limitations under the License.
 </template>
 
 <script>
-import ApiClient from '../../utils/RestApiClient'
-import EventBus from '../../main'
+import ApiClient from '../../utils/RestApiClient.js'
+import EventBus from '../../main.js'
 
-import TsBarChart from './BarChart'
-import TsEventDetail from './EventDetail'
+import TsBarChart from './BarChart.vue'
+import TsEventDetail from './EventDetail.vue'
 import TsEventTagMenu from './EventTagMenu.vue'
 import TsEventActionMenu from './EventActionMenu.vue'
 import TsEventTags from './EventTags.vue'

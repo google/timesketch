@@ -100,8 +100,8 @@ limitations under the License.
 <script>
 import DOMPurify from 'dompurify'
 import { marked } from 'marked'
-import TsContextCardApproach from './ContextCardApproach'
-import TsSearchChip from './SearchChip'
+import TsContextCardApproach from './ContextCardApproach.vue'
+import TsSearchChip from './SearchChip.vue'
 
 export default {
   components: { TsContextCardApproach, TsSearchChip },

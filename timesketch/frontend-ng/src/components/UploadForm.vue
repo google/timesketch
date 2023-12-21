@@ -148,7 +148,7 @@ limitations under the License.
   </span>
 </template>
 <script>
-import ApiClient from '../utils/RestApiClient'
+import ApiClient from '../utils/RestApiClient.js'
 
 export default {
   data() {

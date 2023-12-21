@@ -102,8 +102,8 @@ limitations under the License.
 </template>
 
 <script>
-import ApiClient from '../utils/RestApiClient'
-import TsSketchList from '../components/SketchList'
+import ApiClient from '../utils/RestApiClient.js'
+import TsSketchList from '../components/SketchList.vue'
 
 export default {
   components: { TsSketchList },

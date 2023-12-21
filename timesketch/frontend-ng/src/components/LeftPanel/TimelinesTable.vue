@@ -149,10 +149,10 @@ limitations under the License.
 </template>
 
 <script>
-import EventBus from '../../main'
+import EventBus from '../../main.js'
 
-import TsUploadTimelineForm from '../UploadForm'
-import TsTimelineComponent from '../Explore/TimelineComponent'
+import TsUploadTimelineForm from '../UploadForm.vue'
+import TsTimelineComponent from '../Explore/TimelineComponent.vue'
 export default {
   props: [],
   components: {

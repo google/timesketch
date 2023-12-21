@@ -305,20 +305,20 @@ limitations under the License.
 </template>
 
 <script>
-import ApiClient from '../utils/RestApiClient'
-import EventBus from '../main'
+import ApiClient from '../utils/RestApiClient.js'
+import EventBus from '../main.js'
 
 import { dragscroll } from 'vue-dragscroll'
 
-import TsSearchHistoryTree from '../components/Explore/SearchHistoryTree'
-import TsSearchHistoryButtons from '../components/Explore/SearchHistoryButtons'
-import TsSearchDropdown from '../components/Explore/SearchDropdown'
-import TsTimelinePicker from '../components/Explore/TimelinePicker'
-import TsFilterMenu from '../components/Explore/FilterMenu'
-import TsUploadTimelineFormButton from '../components/UploadFormButton'
-import TsAddManualEvent from '../components/Explore/AddManualEvent'
-import TsEventList from '../components/Explore/EventList'
-import TsScenarioContextCard from '../components/Scenarios/ContextCard'
+import TsSearchHistoryTree from '../components/Explore/SearchHistoryTree.vue'
+import TsSearchHistoryButtons from '../components/Explore/SearchHistoryButtons.vue'
+import TsSearchDropdown from '../components/Explore/SearchDropdown.vue'
+import TsTimelinePicker from '../components/Explore/TimelinePicker.vue'
+import TsFilterMenu from '../components/Explore/FilterMenu.vue'
+import TsUploadTimelineFormButton from '../components/UploadFormButton.vue'
+import TsAddManualEvent from '../components/Explore/AddManualEvent.vue'
+import TsEventList from '../components/Explore/EventList.vue'
+import TsScenarioContextCard from '../components/Scenarios/ContextCard.vue'
 
 const defaultQueryFilter = () => {
   return {

@@ -45,9 +45,9 @@ limitations under the License.
 </template>
 
 <script>
-import EventBus from '../../main'
-import TsTimelineChip from './TimelineChip'
-import ApiClient from '../../utils/RestApiClient'
+import EventBus from '../../main.js'
+import TsTimelineChip from './TimelineChip.vue'
+import ApiClient from '../../utils/RestApiClient.js'
 
 import _ from 'lodash'
 

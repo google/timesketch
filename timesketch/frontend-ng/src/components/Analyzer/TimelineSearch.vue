@@ -57,7 +57,7 @@ limitations under the License.
 </template>
 
 <script>
-import TsAnalyzerTimelineChip from '../Analyzer/TimelineChip'
+import TsAnalyzerTimelineChip from '../Analyzer/TimelineChip.vue'
 
 export default {
   components:{

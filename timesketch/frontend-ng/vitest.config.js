@@ -18,9 +18,13 @@ import {createVuePlugin} from 'vite-plugin-vue2'
 
 // https://vitejs.dev/config/
 export default defineConfig({
- plugins: [createVuePlugin()],
+ plugins: [ createVuePlugin() ],
  test:{
-   globals:true,
-   environment: 'happy-dom',
- }
+  alias: {
+    '@/': new URL('./src/', import.meta.url).pathname,
+  },
+  globals:true,
+  environment: 'happy-dom',
+  setupFiles: ['setup-tests.js']
+ },
 })

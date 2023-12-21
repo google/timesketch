@@ -45,7 +45,7 @@ limitations under the License.
 </template>
 
 <script>
-import TsTimelineComponent from '../Explore/TimelineComponent'
+import TsTimelineComponent from '../Explore/TimelineComponent.vue'
 
 export default {
   props: {

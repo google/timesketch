@@ -249,14 +249,14 @@ limitations under the License.
 </template>
 
 <script>
-import ApiClient from '../utils/RestApiClient'
-import EventBus from '../main'
+import ApiClient from '../utils/RestApiClient.js'
+import EventBus from '../main.js'
 import DOMPurify from 'dompurify'
 import { marked } from 'marked'
 import _ from 'lodash'
 
-import TsEventList from '../components/Explore/EventList'
-import TsCytoscape from '../components/Graph/Cytoscape'
+import TsEventList from '../components/Explore/EventList.vue'
+import TsCytoscape from '../components/Graph/Cytoscape.vue'
 
 const defaultBlock = () => {
   return {

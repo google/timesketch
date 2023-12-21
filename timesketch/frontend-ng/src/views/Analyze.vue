@@ -29,8 +29,8 @@ limitations under the License.
 </template>
 
 <script>
-import TsTimelineSearch from '../components/Analyzer/TimelineSearch'
-import TsAnalyzerList from '../components/Analyzer/AnalyzerList'
+import TsTimelineSearch from '../components/Analyzer/TimelineSearch.vue'
+import TsAnalyzerList from '../components/Analyzer/AnalyzerList.vue'
 
 export default {
   components: {
