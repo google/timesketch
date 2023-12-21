@@ -14,7 +14,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div>
+  <div
+    v-if="iconOnly"
+    class="pa-4"
+    style="cursor: pointer"
+    @click="
+      $emit('toggleDrawer')
+      expanded = true
+    "
+  >
+    <v-icon left>mdi-shield-search</v-icon>
+    <div style="height: 1px"></div>
+  </div>
+  <div v-else>
     <div
       :style="!(intelligenceData && intelligenceData.length) ? '' : 'cursor: pointer'"
       class="pa-4"
@@ -28,7 +40,7 @@ limitations under the License.
         v-if="intelligenceData && !intelligenceData.length"
         @click="addIndicator()"
       >
-        <v-icon>mdi-plus</v-icon>
+        <v-icon title="Add new indicator">mdi-plus</v-icon>
       </v-btn>
       <v-btn
         icon
@@ -37,7 +49,7 @@ limitations under the License.
         @click="addIndicator()"
         @click.stop=""
       >
-        <v-icon>mdi-plus</v-icon>
+        <v-icon title="Add new indicator">mdi-plus</v-icon>
       </v-btn>
       <v-btn
         v-if="expanded && intelligenceData && intelligenceData.length"
@@ -46,7 +58,7 @@ limitations under the License.
         :to="{ name: 'Intelligence', params: { sketchId: sketch.id } }"
         @click.stop=""
       >
-        <v-icon small>mdi-pencil</v-icon>
+        <v-icon small title="Manage indicators">mdi-pencil</v-icon>
       </v-btn>
 
       <span v-if="!expanded" class="float-right" style="margin-right: 10px">
@@ -92,7 +104,7 @@ limitations under the License.
 
                 <template v-slot:item.actions="{ item }">
                   <v-btn icon small @click="generateSearchQuery(item.ioc)">
-                    <v-icon small>mdi-magnify</v-icon>
+                    <v-icon small title="Search this indicator">mdi-magnify</v-icon>
                   </v-btn>
                 </template>
               </v-data-table>
@@ -111,7 +123,7 @@ limitations under the License.
 
                 <template v-slot:item.actions="{ item }">
                   <v-btn icon small @click="generateSearchQuery(item.ioc)">
-                    <v-icon small>mdi-magnify</v-icon>
+                    <v-icon small title="Search this indicator">mdi-magnify</v-icon>
                   </v-btn>
                 </template>
               </v-data-table>
@@ -129,7 +141,7 @@ limitations under the License.
                 </template>
                 <template v-slot:item.actions="{ item }">
                   <v-btn icon small @click="searchForIOC(item)">
-                    <v-icon small>mdi-magnify</v-icon>
+                    <v-icon small title="Search this indicator">mdi-magnify</v-icon>
                   </v-btn>
                 </template>
               </v-data-table>
@@ -159,7 +171,9 @@ const defaultQueryFilter = () => {
 }
 
 export default {
-  props: [],
+  props: {
+    iconOnly: Boolean,
+  },
   data: function () {
     return {
       expanded: false,
@@ -187,7 +201,7 @@ export default {
       return this.$store.state.meta
     },
     intelligenceAttribute() {
-      if (this.meta.attributes.intelligence === undefined) {
+      if (!this.meta.attributes || this.meta.attributes.intelligence === undefined) {
         return { ontology: 'intelligence', value: { data: [] }, name: 'intelligence' }
       }
       return this.meta.attributes.intelligence

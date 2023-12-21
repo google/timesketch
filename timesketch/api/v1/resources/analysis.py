@@ -61,7 +61,7 @@ class AnalysisResource(resources.ResourceMixin, Resource):
         Returns:
             An analysis in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
@@ -70,7 +70,7 @@ class AnalysisResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_FORBIDDEN, "User does not have read access to sketch"
             )
 
-        timeline = Timeline.query.get(timeline_id)
+        timeline = Timeline.get_by_id(timeline_id)
         if not timeline:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No timeline found with this ID.")
 
@@ -96,7 +96,7 @@ class AnalyzerSessionActiveListResource(resources.ResourceMixin, Resource):
         Returns:
             A analyzer session in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
 
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
@@ -152,7 +152,7 @@ class AnalyzerSessionResource(resources.ResourceMixin, Resource):
         Returns:
             A analyzer session in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
 
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
@@ -162,7 +162,7 @@ class AnalyzerSessionResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_FORBIDDEN, "User does not have read access to sketch"
             )
 
-        analysis_session = AnalysisSession.query.get(session_id)
+        analysis_session = AnalysisSession.get_by_id(session_id)
 
         return self.to_json(analysis_session)
 
@@ -181,7 +181,7 @@ class AnalyzerRunResource(resources.ResourceMixin, Resource):
               * description: Description of the analyzer provided in the class
               * is_multi: Boolean indicating if the analyzer is a multi analyzer
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
         if not sketch.has_permission(current_user, "read"):
@@ -216,7 +216,7 @@ class AnalyzerRunResource(resources.ResourceMixin, Resource):
         Returns:
             A string with the response from running the analyzer.
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
@@ -262,6 +262,10 @@ class AnalyzerRunResource(resources.ResourceMixin, Resource):
                     "Kwargs needs to be a dictionary of parameters.",
                 )
 
+        analyzer_force_run = False
+        if form.get("analyzer_force_run"):
+            analyzer_force_run = True
+
         analyzers = []
         all_analyzers = [x for x, _ in analyzer_manager.AnalysisManager.get_analyzers()]
         for analyzer in analyzer_names:
@@ -280,7 +284,7 @@ class AnalyzerRunResource(resources.ResourceMixin, Resource):
         # TODO: Change to run on Timeline instead of Index
         sessions = []
         for timeline_id in timeline_ids:
-            timeline = Timeline.query.get(timeline_id)
+            timeline = Timeline.get_by_id(timeline_id)
             if not timeline:
                 continue
             if not timeline.status[0].status == "ready":
@@ -296,6 +300,7 @@ class AnalyzerRunResource(resources.ResourceMixin, Resource):
                     analyzer_names=analyzers,
                     analyzer_kwargs=analyzer_kwargs,
                     timeline_id=timeline_id,
+                    analyzer_force_run=analyzer_force_run,
                 )
             except KeyError as e:
                 logger.warning(
@@ -308,6 +313,7 @@ class AnalyzerRunResource(resources.ResourceMixin, Resource):
                 pipeline = tasks.run_sketch_init.s([searchindex_name]) | analyzer_group
                 pipeline.apply_async()
 
-            sessions.append(session)
+            if session:
+                sessions.append(session)
 
         return self.to_json(sessions)

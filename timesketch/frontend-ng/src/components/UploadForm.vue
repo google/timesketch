@@ -28,14 +28,7 @@ limitations under the License.
 
     <v-dialog v-model="dialog" max-width="1000">
       <template v-slot:activator="{ on, attrs }">
-        <v-btn v-if="btnType === 'small'" small text rounded color="primary" v-bind="attrs" v-on="on">
-          <v-icon left small> mdi-plus </v-icon>
-          Add Timeline
-        </v-btn>
-        <v-btn v-else outlined color="primary" v-bind="attrs" v-on="on">
-          <v-icon left> mdi-plus </v-icon>
-          Add Timeline
-        </v-btn>
+        <slot :attrs="attrs" :on="on"></slot>
       </template>
       <v-card>
         <v-container class="pa-4">
@@ -158,7 +151,6 @@ limitations under the License.
 import ApiClient from '../utils/RestApiClient'
 
 export default {
-  props: ['btnType'],
   data() {
     return {
       headersString: '', // headers string not formatted (used when changing CSV separator)
@@ -174,6 +166,7 @@ export default {
       mandatoryHeaders: [
         { name: 'datetime', columnsSelected: [] },
         { name: 'message', columnsSelected: [] },
+        { name: 'timestamp_desc', columnsSelected: [] },
       ],
       form: {
         name: '',

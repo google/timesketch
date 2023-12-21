@@ -24,6 +24,7 @@ import re
 import codecs
 import io
 import json
+from hashlib import sha1
 import six
 import yaml
 
@@ -169,7 +170,7 @@ def _set_timeline_status(timeline_id, status, error_msg=None):
     Args:
         timeline_id: Timeline ID.
     """
-    timeline = Timeline.query.get(timeline_id)
+    timeline = Timeline.get_by_id(timeline_id)
     if not timeline:
         logger.warning("Cannot set status: No such timeline")
         return
@@ -195,7 +196,7 @@ def _set_timeline_status(timeline_id, status, error_msg=None):
 
 
 def _set_datasource_status(timeline_id, file_path, status, error_message=None):
-    timeline = Timeline.query.get(timeline_id)
+    timeline = Timeline.get_by_id(timeline_id)
     for datasource in timeline.datasources:
         if datasource.get_file_on_disk == file_path:
             datasource.set_status(status)
@@ -210,7 +211,7 @@ def _set_datasource_status(timeline_id, file_path, status, error_message=None):
 
 
 def _set_datasource_total_events(timeline_id, file_path, total_file_events):
-    timeline = Timeline.query.get(timeline_id)
+    timeline = Timeline.get_by_id(timeline_id)
     for datasource in timeline.datasources:
         if datasource.get_file_on_disk == file_path:
             datasource.set_total_file_events(total_file_events)
@@ -329,6 +330,7 @@ def build_sketch_analysis_pipeline(
     user_id,
     analyzer_names=None,
     analyzer_kwargs=None,
+    analyzer_force_run=False,
     timeline_id=None,
 ):
     """Build a pipeline for sketch analysis.
@@ -345,6 +347,7 @@ def build_sketch_analysis_pipeline(
         user_id (int): The ID of the user who started the analyzer.
         analyzer_names (list): List of analyzers to run.
         analyzer_kwargs (dict): Arguments to the analyzers.
+        analyzer_force_run (bool): If true then force the analyzer to run.
         timeline_id (int): Optional int of the timeline to run the analyzer on.
 
     Returns:
@@ -366,21 +369,22 @@ def build_sketch_analysis_pipeline(
         analyzer_kwargs = current_app.config.get("ANALYZERS_DEFAULT_KWARGS", {})
 
     if user_id:
-        user = User.query.get(user_id)
+        user = User.get_by_id(user_id)
     else:
         user = None
 
-    sketch = Sketch.query.get(sketch_id)
-    analysis_session = AnalysisSession(user, sketch)
+    sketch = Sketch.get_by_id(sketch_id)
+    analysis_session = AnalysisSession(user=user, sketch=sketch)
+    db_session.add(analysis_session)
 
     analyzers = manager.AnalysisManager.get_analyzers(analyzer_names)
     for analyzer_name, analyzer_class in analyzers:
         base_kwargs = analyzer_kwargs.get(analyzer_name, {})
-        searchindex = SearchIndex.query.get(searchindex_id)
+        searchindex = SearchIndex.get_by_id(searchindex_id)
 
         timeline = None
         if timeline_id:
-            timeline = Timeline.query.get(timeline_id)
+            timeline = Timeline.get_by_id(timeline_id)
 
         if not timeline:
             timeline = Timeline.query.filter_by(
@@ -399,6 +403,30 @@ def build_sketch_analysis_pipeline(
         if not kwargs_list:
             kwargs_list = [base_kwargs]
 
+        # Create a hash of the analyzer arguments to compare with later analyzer
+        # executions if the analyzer arguments / config changed.
+        kwargs_list_hash = sha1(
+            json.dumps(kwargs_list, sort_keys=True).encode("utf-8")
+        ).hexdigest()
+
+        if not analyzer_force_run:
+            skip_analysis = False
+            for past_analysis in timeline.analysis:
+                if (
+                    (past_analysis.analyzer_name == analyzer_name)
+                    and (past_analysis.get_status.status == "DONE")
+                    and (past_analysis.created_at > timeline.updated_at)
+                ):
+                    for attribute in past_analysis.get_attributes:
+                        if attribute.value == kwargs_list_hash:
+                            skip_analysis = True
+                            break
+                    if skip_analysis:
+                        break
+
+            if skip_analysis:
+                continue
+
         for kwargs in kwargs_list:
             analysis = Analysis(
                 name=analyzer_name,
@@ -409,9 +437,10 @@ def build_sketch_analysis_pipeline(
                 sketch=sketch,
                 timeline=timeline,
             )
+            analysis.add_attribute(name="kwargs_hash", value=kwargs_list_hash)
             analysis.set_status("PENDING")
-            analysis_session.analyses.append(analysis)
             db_session.add(analysis)
+            analysis_session.analyses.append(analysis)
             db_session.commit()
 
             tasks.append(
@@ -425,8 +454,9 @@ def build_sketch_analysis_pipeline(
             )
 
     # Commit the analysis session to the database.
-    db_session.add(analysis_session)
-    db_session.commit()
+    if len(analysis_session.analyses) > 0:
+        db_session.add(analysis_session)
+        db_session.commit()
 
     if current_app.config.get("ENABLE_EMAIL_NOTIFICATIONS"):
         tasks.append(run_email_result_task.s(sketch_id))
@@ -482,7 +512,7 @@ def run_email_result_task(index_name, sketch_id=None):
             return ""
 
         if sketch_id:
-            sketch = Sketch.query.get(sketch_id)
+            sketch = Sketch.get_by_id(sketch_id)
 
         subject = "Timesketch: [{0:s}] is ready".format(searchindex.name)
 
@@ -715,6 +745,10 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
     if opensearch_flush_interval:
         cmd.extend(["--flush_interval", str(opensearch_flush_interval)])
 
+    plaso_formatters_file_path = current_app.config.get("PLASO_FORMATTERS", "")
+    if plaso_formatters_file_path:
+        cmd.extend(["--custom_formatter_definitions", plaso_formatters_file_path])
+
     # Run psort.py
     try:
         subprocess.check_output(cmd, stderr=subprocess.STDOUT, encoding="utf-8")
@@ -936,7 +970,7 @@ def find_data_task(
     data_finder.set_rule(data_finder_dict.get(rule_name))
     data_finder.set_timeline_ids(timeline_ids)
 
-    sketch = Sketch.query.get(sketch_id)
+    sketch = Sketch.get_by_id(sketch_id)
     indices = set()
     for timeline in sketch.active_timelines:
         if timeline.id not in timeline_ids:

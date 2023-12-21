@@ -90,7 +90,7 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
         """
         args = self.parser.parse_args()
         filter_on_status = args.get("status")
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
         if not sketch.has_permission(current_user, "write"):
@@ -115,7 +115,7 @@ class ScenarioListResource(resources.ResourceMixin, Resource):
         Returns:
             A JSON representation of the scenario.
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
         if not sketch.has_permission(current_user, "write"):
@@ -232,8 +232,8 @@ class ScenarioResource(resources.ResourceMixin, Resource):
         Returns:
             A list of JSON representations of the scenarios.
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
-        scenario = Scenario.query.get(scenario_id)
+        sketch = Sketch.get_with_acl(sketch_id)
+        scenario = Scenario.get_by_id(scenario_id)
 
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
@@ -258,8 +258,8 @@ class ScenarioResource(resources.ResourceMixin, Resource):
         Returns:
             A JSON representation of the scenario.
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
-        scenario = Scenario.query.get(scenario_id)
+        sketch = Sketch.get_with_acl(sketch_id)
+        scenario = Scenario.get_by_id(scenario_id)
 
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
@@ -295,8 +295,8 @@ class ScenarioStatusResource(resources.ResourceMixin, Resource):
         Returns:
             A JSON representation of the updated scenario.
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
-        scenario = Scenario.query.get(scenario_id)
+        sketch = Sketch.get_with_acl(sketch_id)
+        scenario = Scenario.get_by_id(scenario_id)
 
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
@@ -333,11 +333,11 @@ class QuestionConclusionListResource(resources.ResourceMixin, Resource):
         Returns:
             A list of JSON representations of the conclusions.
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
 
-        question = InvestigativeQuestion.query.get(question_id)
+        question = InvestigativeQuestion.get_by_id(question_id)
         if not question:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No question found with this ID")
 
@@ -356,11 +356,11 @@ class QuestionConclusionListResource(resources.ResourceMixin, Resource):
         Returns:
             A JSON representation of the conclusion.
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
 
-        question = InvestigativeQuestion.query.get(question_id)
+        question = InvestigativeQuestion.get_by_id(question_id)
         if not question:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No question found with this ID")
 
@@ -393,15 +393,15 @@ class QuestionConclusionResource(resources.ResourceMixin, Resource):
         Returns:
             A JSON representation of the conclusion.
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
 
-        question = InvestigativeQuestion.query.get(question_id)
+        question = InvestigativeQuestion.get_by_id(question_id)
         if not question:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No question found with this ID")
 
-        conclusion = InvestigativeQuestionConclusion.query.get(conclusion_id)
+        conclusion = InvestigativeQuestionConclusion.get_by_id(conclusion_id)
         if not conclusion:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No conclusion found with this ID")
 
@@ -426,15 +426,15 @@ class QuestionConclusionResource(resources.ResourceMixin, Resource):
 
         Deletes a conclusion.
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID")
 
-        question = InvestigativeQuestion.query.get(question_id)
+        question = InvestigativeQuestion.get_by_id(question_id)
         if not question:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No question found with this ID")
 
-        conclusion = InvestigativeQuestionConclusion.query.get(conclusion_id)
+        conclusion = InvestigativeQuestionConclusion.get_by_id(conclusion_id)
         if not conclusion:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No conclusion found with this ID")
 

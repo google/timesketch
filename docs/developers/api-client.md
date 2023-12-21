@@ -46,6 +46,17 @@ ts_client = config.get_client(token_password='MY_SUPER_L337_PWD')
 
 If the token file does not exist, it will be generated and encrypted using the supplied password.
 
+### Directly passing username / password
+
+Another option to create a connection to the Timesketch server is by creating an `TimesketchApi` object and passing `
+
+```python
+from timesketch_api_client import client as timesketch_client
+client = timesketch_client.TimesketchApi(host_uri='https://demo.timesketch.org', username='demo', password='demo')
+```
+
+> Careful with storing credentials in code that you intend to publish or make available to others. 
+
 ## Client Config
 
 In order to make it simpler to connect to the API client a config file

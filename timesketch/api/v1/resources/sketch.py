@@ -207,11 +207,11 @@ class SketchListResource(resources.ResourceMixin, Resource):
         form = forms.NameDescriptionForm.build(request)
         if not form.validate_on_submit():
             abort(HTTP_STATUS_CODE_BAD_REQUEST, "Unable to validate form data.")
-        sketch = Sketch(
-            name=form.name.data, description=form.description.data, user=current_user
-        )
-        sketch.status.append(sketch.Status(user=None, status="new"))
+
+        sketch = Sketch(name=form.name.data, description=form.description.data)
         db_session.add(sketch)
+        sketch.user = current_user
+        sketch.status.append(sketch.Status(user=None, status="new"))
         db_session.commit()
 
         # Give the requesting user permissions on the new sketch.
@@ -301,11 +301,11 @@ class SketchResource(resources.ResourceMixin, Resource):
             A sketch in JSON (instance of flask.wrappers.Response)
         """
         if current_user.admin:
-            sketch = Sketch.query.get(sketch_id)
+            sketch = Sketch.get_by_id(sketch_id)
             if not sketch.has_permission(current_user, "read"):
                 return self._get_sketch_for_admin(sketch)
         else:
-            sketch = Sketch.query.get_with_acl(sketch_id)
+            sketch = Sketch.get_with_acl(sketch_id)
 
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
@@ -473,7 +473,7 @@ class SketchResource(resources.ResourceMixin, Resource):
     @login_required
     def delete(self, sketch_id):
         """Handles DELETE request to the resource."""
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
         if not sketch.has_permission(current_user, "delete"):
@@ -498,7 +498,7 @@ class SketchResource(resources.ResourceMixin, Resource):
         Returns:
             A sketch in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 

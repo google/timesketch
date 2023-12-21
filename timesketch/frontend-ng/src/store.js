@@ -35,9 +35,9 @@ const defaultState = (currentUser) => {
     currentSearchNode: null,
     currentUser: currentUser,
     activeContext: {
-      scenario: null,
-      facet: null,
-      question: null
+      scenario: {},
+      facet: {},
+      question: {}
     },
     snackbar: {
       active: false,
@@ -48,6 +48,9 @@ const defaultState = (currentUser) => {
     contextLinkConf: {},
     sketchAnalyzerList: {},
     savedVisualizations: [],
+    activeAnalyses: [],
+    analyzerResults: [],
+    enabledTimelines: [],
   }
 }
 
@@ -98,9 +101,9 @@ export default new Vuex.Store({
     },
     CLEAR_ACTIVE_CONTEXT(state) {
       let payload = {
-        scenario: null,
-        facet: null,
-        question: null
+        scenario: {},
+        facet: {},
+        question: {}
       }
       Vue.set(state, 'activeContext', payload)
     },
@@ -127,7 +130,44 @@ export default new Vuex.Store({
     },
     SET_SAVED_VISUALIZATIONS(state, payload) {
       Vue.set(state, 'savedVisualizations', payload)
-    }
+    },
+    SET_ACTIVE_ANALYSES(state, payload) {
+      Vue.set(state, 'activeAnalyses', payload)
+    },
+    ADD_ACTIVE_ANALYSES(state, payload) {
+      const freshActiveAnalyses = [
+        ...state.activeAnalyses,
+        ...payload,
+      ]
+      Vue.set(state, 'activeAnalyses', freshActiveAnalyses)
+    },
+    SET_ANALYZER_RESULTS(state, payload) {
+      Vue.set(state, 'analyzerResults', payload)
+    },
+    SET_ENABLED_TIMELINES(state, payload) {
+      Vue.set(state, 'enabledTimelines', payload)
+    },
+    ADD_ENABLED_TIMELINES(state, payload) {
+      const freshEnabledTimelines = [
+        ...state.enabledTimelines,
+        ...payload,
+      ]
+      Vue.set(state, 'enabledTimelines', freshEnabledTimelines)
+    },
+    REMOVE_ENABLED_TIMELINES(state, payload) {
+      Vue.set(state, 'enabledTimelines', state.enabledTimelines.filter(tl => !payload.includes(tl)))
+    },
+    TOGGLE_ENABLED_TIMELINE(state, payload) {
+      if (state.enabledTimelines.includes(payload)) {
+        Vue.set(state, 'enabledTimelines', state.enabledTimelines.filter(tl => payload !== tl))
+      } else {
+        const freshEnabledTimelines = [
+          ...state.enabledTimelines,
+          payload,
+        ]
+        Vue.set(state, 'enabledTimelines', freshEnabledTimelines)
+      }
+    },
   },
   actions: {
     updateSketch(context, sketchId) {
@@ -287,6 +327,27 @@ export default new Vuex.Store({
       }).catch((e) => {
         console.log(e)
       })
+    },
+    updateActiveAnalyses(context, activeAnalyses) {
+      context.commit('SET_ACTIVE_ANALYSES', activeAnalyses);
+    },
+    addActiveAnalyses(context, activeAnalyses) {
+      context.commit('ADD_ACTIVE_ANALYSES', activeAnalyses);
+    },
+    updateAnalyzerResults(context, analyzerResults) {
+      context.commit('SET_ANALYZER_RESULTS', analyzerResults);
+    },
+    enableTimeline(context, timeline) {
+        context.commit('ADD_ENABLED_TIMELINES', [timeline])
+    },
+    disableTimeline(context, timeline) {
+        context.commit('REMOVE_ENABLED_TIMELINES', [timeline])
+    },
+    updateEnabledTimelines(context, enabledTimelines) {
+        context.commit('SET_ENABLED_TIMELINES', enabledTimelines)
+    },
+    toggleEnabledTimeline(context, timelineId) {
+        context.commit('TOGGLE_ENABLED_TIMELINE', timelineId)
     },
   }
 })

@@ -14,7 +14,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div>
+  <div
+    v-if="iconOnly"
+    class="pa-4"
+    style="cursor: pointer"
+    @click="
+      $emit('toggleDrawer')
+      expanded = true
+    "
+  >
+    <v-icon left>mdi-book-open-outline</v-icon>
+    <div style="height: 1px"></div>
+  </div>
+  <div v-else>
     <div
       no-gutters
       :style="!(meta.stories && meta.stories.length) ? '' : 'cursor: pointer'"
@@ -26,17 +38,17 @@ limitations under the License.
       <span> <v-icon left>mdi-book-open-outline</v-icon> Stories </span>
       <v-btn
         icon
-        v-if="expanded || !meta.stories.length"
+        v-if="expanded || !(meta.stories && meta.stories.length)"
         text
         class="float-right mt-n1 mr-n1"
         @click="createStory()"
         @click.stop=""
       >
-        <v-icon>mdi-plus</v-icon>
+        <v-icon title="Create New Story">mdi-plus</v-icon>
       </v-btn>
 
-      <span v-if="!expanded" class="float-right" style="margin-right: 10px">
-        <small v-if="meta.stories.length"
+      <span v-if="!expanded && meta.stories && meta.stories.length" class="float-right" style="margin-right: 10px">
+        <small v-if="meta.stories"
           ><strong>{{ meta.stories.length }}</strong></small
         >
       </span>
@@ -64,7 +76,9 @@ limitations under the License.
 import ApiClient from '../../utils/RestApiClient'
 
 export default {
-  props: [],
+  props: {
+    iconOnly: Boolean,
+  },
   data: function () {
     return {
       expanded: false,

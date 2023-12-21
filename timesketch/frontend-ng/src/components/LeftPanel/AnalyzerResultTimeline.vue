@@ -14,34 +14,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div
-    :class="
-      $vuetify.theme.dark
-        ? expanded
-          ? 'dark-hover dark-bg'
-          : 'dark-hover'
-        : expanded
-        ? 'light-hover light-bg'
-        : 'light-hover'
-    "
-  >
+  <div :class="getHoverTheme">
     <v-divider></v-divider>
     <div
       v-if="timeline.analysis_status === 'PENDING' || timeline.analysis_status === 'STARTED'"
       class="pa-2 pl-3"
       style="display: flex; align-items: center"
-      :class="
-        $vuetify.theme.dark
-          ? expanded
-            ? 'dark-hover dark-bg'
-            : 'dark-hover'
-          : expanded
-          ? 'light-hover light-bg'
-          : 'light-hover'
-      "
+      :class="getHoverTheme"
     >
-      <v-icon class="mr-2" :color="'#' + timeline.color">mdi-circle</v-icon>
-      <span class="mr-2" style="color: grey">{{ timeline.name }}</span>
+      <v-icon title="Toggle results for this timeline" class="mr-2" :color="'#' + timeline.color">mdi-circle</v-icon>
+      <span class="mr-2 timeline-name-ellipsis" style="color: grey; width:82% !important;">{{ timeline.name }}</span>
       <v-progress-circular :size="20" :width="1" indeterminate color="primary"></v-progress-circular>
     </div>
     <div
@@ -49,42 +31,29 @@ limitations under the License.
       class="pa-2 pl-3"
       style="cursor: pointer; display: flex; align-items: center"
       @click="expanded = !expanded"
-      :class="
-        $vuetify.theme.dark
-          ? expanded
-            ? 'dark-hover dark-bg'
-            : 'dark-hover'
-          : expanded
-          ? 'light-hover light-bg'
-          : 'light-hover'
-      "
+      :class="getHoverTheme"
     >
-      <v-icon class="mr-2" :color="'#' + timeline.color">mdi-circle</v-icon>
-      <span>{{ timeline.name }}</span>
+      <v-icon title="Toggle results for this timeline" class="mr-2" :color="'#' + timeline.color">mdi-circle</v-icon>
+      <span class="timeline-name-ellipsis" style="width:82% !important;">{{ timeline.name }}</span>
       <div v-if="timeline.analysis_status === 'ERROR'">
-        <v-tooltip top>
-          <template v-slot:activator="{ on }">
-            <v-btn text x-small icon v-on="on" class="ml-1" :ripple="false">
-              <v-icon small class="ml-1">mdi-alert</v-icon>
-            </v-btn>
-          </template>
-          <span>Analyzer Error</span>
-        </v-tooltip>
+        <v-btn text x-small icon v-on="on" class="ml-1" :ripple="false" style="cursor: default">
+          <v-icon title="The analyzer ran into an error" small class="ml-1">mdi-alert</v-icon>
+        </v-btn>
       </div>
       <div v-else-if="checkAnalyzerOutput && !isMultiAnalyzer">
         <v-tooltip top>
           <template v-slot:activator="{ on }">
-            <v-btn v-show="!isMultiAnalyzer" text x-small icon v-on="on" class="ml-1" :ripple="false">
+            <v-btn v-show="!isMultiAnalyzer" text x-small icon v-on="on" class="ml-1" :ripple="false" style="cursor: default">
               <v-icon small :color="getPriorityColor">mdi-information-outline</v-icon>
             </v-btn>
           </template>
-          <span>Result Priority: {{ verboseAnalyzerOutput.result_priority }}</span>
+          <span>Result Priority: {{ resultPriority }}</span>
         </v-tooltip>
       </div>
       <div v-else>
         <v-tooltip v-if="!isMultiAnalyzer" top>
           <template v-slot:activator="{ on }">
-            <v-btn v-show="!isMultiAnalyzer" text x-small icon v-on="on" class="ml-1" :ripple="false">
+            <v-btn v-show="!isMultiAnalyzer" text x-small icon v-on="on" class="ml-1" :ripple="false" style="cursor: default">
               <v-icon small :color="getPriorityColor">mdi-information-outline</v-icon>
             </v-btn>
           </template>
@@ -94,56 +63,34 @@ limitations under the License.
     </div>
 
     <v-expand-transition>
-      <div
-        v-if="!isMultiAnalyzer"
-        v-show="expanded"
-        :class="
-          $vuetify.theme.dark
-            ? expanded
-              ? 'dark-hover dark-bg'
-              : 'dark-hover'
-            : expanded
-            ? 'light-hover light-bg'
-            : 'light-hover'
-        "
-      >
-        <v-simple-table v-if="checkAnalyzerOutput" dense class="ml-2">
-          <tbody
-            :class="
-              $vuetify.theme.dark
-                ? expanded
-                  ? 'dark-hover dark-bg'
-                  : 'dark-hover'
-                : expanded
-                ? 'light-hover light-bg'
-                : 'light-hover'
-            "
-          >
+      <div v-if="!isMultiAnalyzer" v-show="expanded" :class="getHoverTheme">
+        <v-simple-table v-if="checkAnalyzerOutput" dense class="ml-2 borderless">
+          <tbody :class="getHoverTheme">
             <tr class="pr-3">
-              <td width="105" style="border: none">
+              <td width="105">
                 <strong>Summary:</strong>
               </td>
-              <td style="border: none">
+              <td>
                 <span>
-                  {{ verboseAnalyzerOutput.result_summary ? verboseAnalyzerOutput.result_summary : 'loading...' }}
+                  {{ resultSummary || 'loading...' }}
                 </span>
               </td>
             </tr>
             <tr>
-              <td style="border: none">
+              <td>
                 <strong>Priority:</strong>
               </td>
-              <td style="border: none">
+              <td>
                 <span>
-                  {{ verboseAnalyzerOutput.result_priority ? verboseAnalyzerOutput.result_priority : 'loading...' }}
+                  {{ resultPriority || 'loading...' }}
                 </span>
               </td>
             </tr>
-            <tr v-if="verboseAnalyzerOutput.references !== undefined">
+            <tr v-if="references !== undefined">
               <td colspan="2" style="border: none">
                 <strong>References:</strong>
                 <ul>
-                  <li v-for="(item, index) in verboseAnalyzerOutput.references" :key="index">
+                  <li v-for="(item, index) in references" :key="index">
                     <a @click="contextLinkRedirect(item)">{{ item }}</a>
                     <v-dialog v-model="redirectWarnDialog" max-width="515" :retain-focus="false">
                       <ts-link-redirect-warning
@@ -157,20 +104,20 @@ limitations under the License.
               </td>
             </tr>
             <tr>
-              <td style="border: none">
+              <td>
                 <strong>Last run:</strong>
               </td>
-              <td style="border: none">
-                <span> {{ timeline.created_at }} UTC </span>
+              <td>
+                <span> {{ timelineCreated }} UTC </span>
               </td>
             </tr>
             <tr>
               <td width="80" style="border: none">
                 <strong>Status:</strong>
               </td>
-              <td style="border: none">
+              <td>
                 <span>
-                  {{ verboseAnalyzerOutput.result_status ? verboseAnalyzerOutput.result_status : 'loading...' }}
+                  {{ resultStatus || 'loading...' }}
                 </span>
               </td>
             </tr>
@@ -180,7 +127,7 @@ limitations under the License.
               </td>
             </tr>
             <tr v-for="(item, key) in getAnalyzerOutputMetaData" :key="key">
-              <td style="border: none">
+              <td>
                 <strong>{{ key }}:</strong>
               </td>
               <td style="border: none" v-if="key === 'Searches'">
@@ -225,50 +172,52 @@ limitations under the License.
                   color="lightgrey"
                   class="mr-1 mb-1"
                   small
-                  @click="searchForTag(tag)"
+                  @click="applyFilterChip(tag, 'tag', 'term', timeline.id)"
                 >
                   {{ tag }}
+                </v-chip>
+              </td>
+              <td style="border: none" v-if="key === 'Attributes'">
+                <v-chip
+                  v-for="(attribute, index) in item"
+                  :key="index"
+                  color="lightgrey"
+                  class="mr-1 mb-1"
+                  small
+                  @click="applySearch(`_exists_:${attribute}`, timeline.id)"
+                >
+                  {{ attribute }}
                 </v-chip>
               </td>
             </tr>
           </tbody>
         </v-simple-table>
-        <v-simple-table v-else dense class="ml-2">
-          <tbody
-            :class="
-              $vuetify.theme.dark
-                ? expanded
-                  ? 'dark-hover dark-bg'
-                  : 'dark-hover'
-                : expanded
-                ? 'light-hover light-bg'
-                : 'light-hover'
-            "
-          >
+        <v-simple-table v-else dense class="ml-2 borderless">
+          <tbody :class="getHoverTheme">
             <tr class="pr-3">
               <td width="80" style="border: none">
                 <strong v-if="timeline.analysis_status === 'ERROR'">Error:</strong>
                 <strong v-else>Summary:</strong>
               </td>
-              <td style="border: none">
+              <td>
                 <span>
-                  {{ timeline.verdict }}
+                  {{ timelineResult.verdict }}
                 </span>
               </td>
             </tr>
             <tr>
-              <td style="border: none">
+              <td>
                 <strong>Last run:</strong>
               </td>
-              <td style="border: none">
-                <span> {{ timeline.created_at }} UTC </span>
+              <td>
+                <span> {{ timelineCreated }} UTC </span>
               </td>
             </tr>
             <tr>
               <td width="80" style="border: none">
                 <strong>Status:</strong>
               </td>
-              <td style="border: none">
+              <td>
                 <span>
                   {{ timeline.analysis_status }}
                 </span>
@@ -277,12 +226,57 @@ limitations under the License.
           </tbody>
         </v-simple-table>
       </div>
-      <div v-else v-show="expanded" class="ml-3 pb-1 mr-2">
-        <v-icon>mdi-alert-octagon-outline</v-icon>
-        <span class="ml-1">
-          Showing multi analyzer results is not supported in the new UI yet. Please visit the old UI to see these
-          results.
-        </span>
+      <div v-else v-show="expanded" :class="getHoverTheme">
+        <!-- TODO: iterate on multianalyzer timeline results -->
+        <v-simple-table dense class="ml-2 borderless">
+          <tbody :class="getHoverTheme">
+            <tr>
+              <td>
+                <strong>Type:</strong>
+              </td>
+              <td>
+                <span> Multi analyzer</span>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <strong>Last run:</strong>
+              </td>
+              <td>
+                <span> {{ timelineCreated }} UTC </span>
+              </td>
+            </tr>
+            <tr>
+              <td width="80" style="border: none">
+                <strong>Status:</strong>
+              </td>
+              <td>
+                <span>
+                  {{ timeline.analysis_status }}
+                </span>
+              </td>
+            </tr>
+            <tr v-if="timeline.results.length !== 0">
+              <td colspan="2" style="border: none">
+                <strong>Results:</strong>
+              </td>
+            </tr>
+          </tbody>
+        </v-simple-table>
+        <v-data-iterator
+          :items="timeline.results"
+          :items-per-page="10"
+          :hide-default-footer="timeline.results.length < 10 ? true : false"
+        >
+          <template v-slot:default="props">
+            <div v-for="(analyzer, index) in props.items" :key="index">
+              <v-divider></v-divider>
+              <v-row no-gutters class="pa-1 pl-5">
+                <span>{{ analyzer.verdict }}</span>
+              </v-row>
+            </div>
+          </template>
+        </v-data-iterator>
       </div>
     </v-expand-transition>
   </div>
@@ -305,6 +299,9 @@ export default {
     }
   },
   computed: {
+    sketch() {
+      return this.$store.state.sketch
+    },
     meta() {
       return this.$store.state.meta
     },
@@ -316,9 +313,24 @@ export default {
     },
     verboseAnalyzerOutput: function () {
       if (this.checkAnalyzerOutput) {
-        return JSON.parse(this.timeline.verdict)
+        // this can return null
+        const parsed = JSON.parse(this.timelineResult.verdict)
+        // normalize null to undefined
+        return parsed == null ? undefined : parsed
       }
       return undefined
+    },
+    resultSummary: function () {
+      return this.verboseAnalyzerOutput && this.verboseAnalyzerOutput.result_summary
+    },
+    resultPriority: function () {
+      return this.verboseAnalyzerOutput && this.verboseAnalyzerOutput.result_priority
+    },
+    references: function () {
+      return this.verboseAnalyzerOutput && this.verboseAnalyzerOutput.references
+    },
+    resultStatus: function () {
+      return this.verboseAnalyzerOutput && this.verboseAnalyzerOutput.result_status
     },
     getAnalyzerOutputMetaData: function () {
       let metaData = {}
@@ -365,6 +377,9 @@ export default {
         if (this.verboseAnalyzerOutput.platform_meta_data.created_tags !== undefined) {
           metaData['Tags'] = this.verboseAnalyzerOutput.platform_meta_data.created_tags
         }
+        if (this.verboseAnalyzerOutput.platform_meta_data.created_attributes !== undefined) {
+          metaData['Attributes'] = this.verboseAnalyzerOutput.platform_meta_data.created_attributes
+        }
         return metaData
       }
       return metaData
@@ -385,11 +400,37 @@ export default {
     },
     checkAnalyzerOutput: function () {
       try {
-        JSON.parse(this.timeline.verdict)
+        JSON.parse(this.timelineResult.verdict)
         return true
       } catch (e) {
         return false
       }
+    },
+    timelineFirstResult: function () {
+      return this.timeline && this.timeline.results.length > 0 && this.timeline.results[0]
+        ? this.timeline.results[0]
+        : undefined
+    },
+    timelineCreated: function () {
+      const firstEntry = this.timelineFirstResult
+      if (!firstEntry) return '... invalid date'
+      const createdAt =
+        (firstEntry.created_at && firstEntry.created_at.split('.').length) > 0
+          ? firstEntry.created_at.split('.')[0]
+          : '... invalid date'
+      return createdAt
+    },
+    timelineResult: function () {
+      return this.timelineFirstResult ? this.timelineFirstResult : '... no results found'
+    },
+    getHoverTheme: function () {
+      return this.$vuetify.theme.dark
+        ? this.expanded
+          ? 'dark-hover dark-bg'
+          : 'dark-hover'
+        : this.expanded
+        ? 'light-hover light-bg'
+        : 'light-hover'
     },
   },
   methods: {
@@ -402,18 +443,40 @@ export default {
     setSavedGraph(graphId) {
       EventBus.$emit('setSavedGraph', graphId)
     },
-    searchForTag(tag) {
+    applySearch(searchQuery = '', timelineId = '_all') {
       let eventData = {}
       eventData.doSearch = true
-      eventData.queryString = 'tag:' + '"' + tag + '"'
+      eventData.queryString = searchQuery
       eventData.queryFilter = {
         from: 0,
         terminate_after: 40,
         size: 40,
-        indices: '_all',
+        indices: [timelineId],
         order: 'asc',
         chips: [],
       }
+      EventBus.$emit('setQueryAndFilter', eventData)
+    },
+    applyFilterChip(term, termField = '', termType = 'label', timelineId = '_all') {
+      let eventData = {}
+      eventData.doSearch = true
+      eventData.queryString = '*'
+      eventData.queryFilter = {
+        from: 0,
+        terminate_after: 40,
+        size: 40,
+        indices: [timelineId],
+        order: 'asc',
+        chips: [],
+      }
+      let chip = {
+        field: termField,
+        value: term,
+        type: termType,
+        operator: 'must',
+        active: true,
+      }
+      eventData.chip = chip
       EventBus.$emit('setQueryAndFilter', eventData)
     },
     contextLinkRedirect(item) {
@@ -430,5 +493,8 @@ export default {
 }
 .light-bg {
   background-color: #f6f6f6;
+}
+.borderless td {
+  border: none !important;
 }
 </style>

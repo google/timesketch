@@ -13,101 +13,65 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -->
+
 <template>
-  <div v-if="sketch" style="height: 30%">
+  <div>
     <!-- Progress indicator when loading sketch data -->
     <v-progress-linear v-if="loadingSketch" indeterminate color="primary"></v-progress-linear>
 
-    <!-- Empty state -->
-    <v-container v-if="!hasTimelines && !loadingSketch" fill-height fluid>
-      <v-row align="center" justify="center">
-        <v-sheet class="pa-4">
-          <center>
-            <div style="font-size: 2em" class="mb-3">It's empty around here</div>
-            <ts-upload-timeline-form btn-size="normal" btn-type="outlined"></ts-upload-timeline-form>
-          </center>
-        </v-sheet>
-      </v-row>
-    </v-container>
+    <div v-if="sketch.id && !loadingSketch" style="height: 70vh">
+      <!-- Empty state -->
+      <v-container v-if="!hasTimelines && !loadingSketch" fill-height fluid>
+        <v-row align="center" justify="center">
+          <v-sheet class="pa-4" style="background: transparent">
+            <center>
+              <v-img src="/dist/empty-state.png" max-height="100" max-width="300"></v-img>
+              <div style="font-size: 2em" class="mb-3 mt-3">It's empty around here</div>
+              <ts-upload-timeline-form-button btn-size="normal" btn-type="rounded"></ts-upload-timeline-form-button>
+            </center>
+          </v-sheet>
+        </v-row>
+      </v-container>
 
-    <!-- Archived state -->
-    <v-container v-if="isArchived && !loadingSketch" fill-height fluid>
-      <v-row align="center" justify="center">
-        <v-sheet class="pa-4">
-          <center>
-            <div style="font-size: 2em" class="mb-3">This sketch is archived</div>
-            <v-btn outlined color="primary" @click="unArchiveSketch()"> Bring it back </v-btn>
-          </center>
-        </v-sheet>
-      </v-row>
-    </v-container>
+      <!-- Archived state -->
+      <v-container v-if="isArchived && !loadingSketch" fill-height fluid>
+        <v-row align="center" justify="center">
+          <v-sheet class="pa-4">
+            <center>
+              <v-img src="/dist/empty-state.png" max-height="100" max-width="300"></v-img>
+              <div style="font-size: 2em" class="mb-3 mt-3">This sketch is archived</div>
+              <v-btn rounded depressed color="primary" @click="unArchiveSketch()"> Bring it back </v-btn>
+            </center>
+          </v-sheet>
+        </v-row>
+      </v-container>
 
-    <!-- Context search -->
-    <v-bottom-sheet
-      hide-overlay
-      persistent
-      no-click-animation
-      v-model="showTimelineView"
-      @click:outside="showTimelineView = false"
-      scrollable
-    >
-      <v-card>
-        <v-toolbar dense flat>
-          <strong>Context search</strong>
-          <v-btn-toggle v-model="contextTimeWindowSeconds" class="ml-10" rounded>
-            <v-btn
-              v-for="duration in [1, 5, 10, 60, 300, 600, 1800, 3600]"
-              :key="duration"
-              :value="duration"
-              small
-              outlined
-              @click="updateContextQuery(duration)"
-            >
-              {{ duration | formatSeconds }}
-            </v-btn>
-          </v-btn-toggle>
-          <v-btn small text class="ml-5" @click="contextToSearch()">Replace search</v-btn>
+      <!-- Rename sketch dialog -->
+      <v-dialog v-model="renameSketchDialog" width="600">
+        <v-card class="pa-4">
+          <ts-rename-sketch @close="renameSketchDialog = false"></ts-rename-sketch>
+        </v-card>
+      </v-dialog>
 
-          <v-spacer></v-spacer>
+      <!-- Top horizontal toolbar -->
+      <v-app-bar
+        v-if="!loadingSketch"
+        app
+        clipped-left
+        flat
+        :color="$vuetify.theme.dark ? '#121212' : 'white'"
+        :style="[
+          $vuetify.theme.dark
+            ? { 'border-bottom': '1px solid hsla(0,0%,100%,.12) !important' }
+            : { 'border-bottom': '1px solid rgba(0,0,0,.12) !important' },
+        ]"
+      >
+        <v-btn v-if="hasTimelines && !loadingSketch && !isArchived" icon @click.stop="toggleDrawer()">
+          <v-icon title="Toggle left panel">mdi-menu</v-icon>
+        </v-btn>
 
-          <v-btn icon :disabled="timelineViewHeight > 40" @click="increaseTimelineViewHeight()">
-            <v-icon>mdi-chevron-up</v-icon>
-          </v-btn>
-          <v-btn icon :disabled="timelineViewHeight === 0" @click="decreaseTimelineViewHeight()">
-            <v-icon>mdi-chevron-down</v-icon>
-          </v-btn>
-          <v-btn icon @click="showTimelineView = false">
-            <v-icon>mdi-close</v-icon>
-          </v-btn>
-        </v-toolbar>
-        <v-divider></v-divider>
-        <v-expand-transition>
-          <v-card-text :style="{ height: timelineViewHeight + 'vh' }" v-show="!minimizeTimelineView">
-            <ts-event-list :query-request="queryRequest" :highlight-event="currentContextEvent"></ts-event-list>
-          </v-card-text>
-        </v-expand-transition>
-      </v-card>
-    </v-bottom-sheet>
-
-    <!-- Rename sketch dialog -->
-    <v-dialog v-model="renameSketchDialog" width="600">
-      <v-card class="pa-4">
-        <ts-rename-sketch @close="renameSketchDialog = false"></ts-rename-sketch>
-      </v-card>
-    </v-dialog>
-
-    <!-- Left panel -->
-    <v-navigation-drawer
-      v-if="showLeftPanel && hasTimelines && !isArchived"
-      app
-      permanent
-      :width="navigationDrawer.width"
-      hide-overlay
-      ref="drawer"
-    >
-      <v-toolbar flat>
-        <v-avatar class="ml-n3 mt-1">
-          <router-link :to="{ name: 'Home' }">
+        <v-avatar class="ml-n2 mt-1">
+          <router-link to="/">
             <v-img src="/dist/timesketch-color.png" max-height="25" max-width="25" contain></v-img>
           </router-link>
         </v-avatar>
@@ -123,52 +87,32 @@ limitations under the License.
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
-                max-width: 300px;
+                max-width: 900px;
               "
               :title="sketch.name"
             >
               {{ sketch.name }}
             </div>
             <div>
-              <v-icon small class="ml-1" v-if="hover" @click="renameSketchDialog = true">mdi-pencil</v-icon>
+              <v-icon title="Rename sketch" small class="ml-1" v-if="hover" @click="renameSketchDialog = true"
+                >mdi-pencil</v-icon
+              >
             </div>
           </div>
         </v-hover>
-
         <v-spacer></v-spacer>
-        <v-icon @click="toggleLeftPanel">mdi-chevron-left</v-icon>
-      </v-toolbar>
+        <v-btn small rounded depressed v-on:click="switchUI"> Use the old UI </v-btn>
 
-      <v-divider></v-divider>
-
-      <!-- Dialog for adding a scenario -->
-      <v-dialog v-model="scenarioDialog" max-width="500px">
-        <v-card>
-          <div class="pa-3">
-            <h3>Investigative Scenarios</h3>
-            <v-select
-              v-model="selectedScenario"
-              :items="scenarioTemplates"
-              item-text="name"
-              return-object
-              label="Select a scenario"
-              outlined
-              class="mt-3"
-            ></v-select>
-            <div v-if="selectedScenario">
-              {{ selectedScenario.description }}
-            </div>
-          </div>
-          <v-divider></v-divider>
-          <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn @click="scenarioDialog = false" text> Cancel </v-btn>
-            <v-btn text color="primary" :disabled="!selectedScenario" @click="addScenario(selectedScenario.id)">
-              Add
+        <!-- Sharing dialog -->
+        <v-dialog v-model="shareDialog" width="500">
+          <template v-slot:activator="{ on, attrs }">
+            <v-btn small rounded depressed color="primary" class="ml-2" v-bind="attrs" v-on="on">
+              <v-icon small left>mdi-account-multiple-plus</v-icon>
+              Share
             </v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
+          </template>
+          <ts-share-card @close-dialog="shareDialog = false"></ts-share-card>
+        </v-dialog>
 
       <v-tabs v-model="leftPanelTab" grow>
         <v-tab v-for="item in leftPanelTabItems" :key="item"> {{ item }} </v-tab>
@@ -251,116 +195,278 @@ limitations under the License.
       <v-spacer></v-spacer>
       <v-btn small depressed v-on:click="switchUI"> Use the old UI </v-btn>
 
-      <!-- Sharing dialog -->
-      <v-dialog v-model="shareDialog" width="500">
-        <template v-slot:activator="{ on, attrs }">
-          <v-btn small depressed color="primary" class="ml-2" v-bind="attrs" v-on="on">
-            <v-icon small left>mdi-account-multiple-plus</v-icon>
-            Share
-          </v-btn>
-        </template>
-        <ts-share-card @close-dialog="shareDialog = false"></ts-share-card>
-      </v-dialog>
-
-      <v-avatar color="grey lighten-1" size="25" class="ml-3">
-        <span class="white--text">{{ currentUser | initialLetter }}</span>
-      </v-avatar>
-      <v-menu offset-y>
-        <template v-slot:activator="{ on, attrs }">
-          <v-avatar>
-            <v-btn small icon v-bind="attrs" v-on="on">
-              <v-icon>mdi-dots-vertical</v-icon>
+        <!-- Sharing dialog -->
+        <v-dialog v-model="shareDialog" width="500">
+          <template v-slot:activator="{ on, attrs }">
+            <v-btn small rounded depressed color="primary" class="ml-2" v-bind="attrs" v-on="on">
+              <v-icon small left>mdi-account-multiple-plus</v-icon>
+              Share
             </v-btn>
-          </v-avatar>
-        </template>
-        <v-card>
-          <v-list two-line>
-            <v-list-item v-if="sketch.user">
-              <v-list-item-content>
-                <v-list-item-title>
-                  <strong>Created:</strong> {{ sketch.created_at | shortDateTime }}
-                </v-list-item-title>
-                <v-list-item-subtitle>
-                  <small>{{ sketch.created_at | timeSince }} by {{ sketch.user.username }}</small>
-                </v-list-item-subtitle>
-              </v-list-item-content>
-            </v-list-item>
+          </template>
+          <ts-share-card @close-dialog="shareDialog = false"></ts-share-card>
+        </v-dialog>
 
-            <v-list-item>
-              <v-list-item-content>
-                <v-list-item-title>
-                  <strong>Access: </strong>
-                  <span v-if="meta.permissions && meta.permissions.public">Public</span>
-                  <span v-else>Restricted</span>
-                </v-list-item-title>
-                <v-list-item-subtitle>
-                  <small v-if="meta.permissions && meta.permissions.public">Visible to all users on this server</small>
-                  <small v-else>Only people with access can open</small>
-                </v-list-item-subtitle>
-              </v-list-item-content>
-            </v-list-item>
-          </v-list>
-
-          <v-list>
-            <v-list-item-group color="primary">
-              <v-list-item v-on:click="toggleTheme">
-                <v-list-item-icon>
-                  <v-icon>mdi-brightness-6</v-icon>
-                </v-list-item-icon>
+        <v-avatar color="grey lighten-1" size="25" class="ml-3">
+          <span class="white--text">{{ currentUser | initialLetter }}</span>
+        </v-avatar>
+        <v-menu offset-y>
+          <template v-slot:activator="{ on, attrs }">
+            <v-avatar>
+              <v-btn small icon v-bind="attrs" v-on="on">
+                <v-icon title="Sketch Options">mdi-dots-vertical</v-icon>
+              </v-btn>
+            </v-avatar>
+          </template>
+          <v-card>
+            <v-list two-line>
+              <v-list-item v-if="sketch.user">
                 <v-list-item-content>
-                  <v-list-item-title>Toggle theme</v-list-item-title>
+                  <v-list-item-title>
+                    <strong>Created:</strong> {{ sketch.created_at | shortDateTime }}
+                  </v-list-item-title>
+                  <v-list-item-subtitle>
+                    <small>{{ sketch.created_at | timeSince }} by {{ sketch.user.username }}</small>
+                  </v-list-item-subtitle>
                 </v-list-item-content>
               </v-list-item>
 
-              <v-list-item @click="renameSketchDialog = true">
-                <v-list-item-icon>
-                  <v-icon>mdi-pencil</v-icon>
-                </v-list-item-icon>
+              <v-list-item>
                 <v-list-item-content>
-                  <v-list-item-title>Rename sketch</v-list-item-title>
+                  <v-list-item-title>
+                    <strong>Access: </strong>
+                    <span v-if="meta.permissions && meta.permissions.public">Public</span>
+                    <span v-else>Restricted</span>
+                  </v-list-item-title>
+                  <v-list-item-subtitle>
+                    <small v-if="meta.permissions && meta.permissions.public"
+                      >Visible to all users on this server</small
+                    >
+                    <small v-else>Only people with access can open</small>
+                  </v-list-item-subtitle>
                 </v-list-item-content>
               </v-list-item>
+            </v-list>
 
-              <v-list-item @click="archiveSketch()">
-                <v-list-item-icon>
-                  <v-icon>mdi-archive</v-icon>
-                </v-list-item-icon>
-                <v-list-item-content>
-                  <v-list-item-title>Archive sketch</v-list-item-title>
-                </v-list-item-content>
-              </v-list-item>
-
-              <v-list-item v-if="meta.permissions && meta.permissions.delete" @click="deleteSketch()">
-                <v-list-item-icon>
-                  <v-icon>mdi-trash-can-outline</v-icon>
-                </v-list-item-icon>
-                <v-list-item-content>
-                  <v-list-item-title>Delete sketch</v-list-item-title>
-                </v-list-item-content>
-              </v-list-item>
-
-              <a href="/logout/" style="text-decoration: none; color: inherit">
-                <v-list-item>
+            <v-list>
+              <v-list-item-group color="primary">
+                <v-list-item v-on:click="toggleTheme">
                   <v-list-item-icon>
-                    <v-icon>mdi-logout</v-icon>
+                    <v-icon>mdi-brightness-6</v-icon>
                   </v-list-item-icon>
-
                   <v-list-item-content>
-                    <v-list-item-title>Logout</v-list-item-title>
+                    <v-list-item-title>Toggle theme</v-list-item-title>
                   </v-list-item-content>
                 </v-list-item>
-              </a>
-            </v-list-item-group>
-          </v-list>
-        </v-card>
-      </v-menu>
-    </v-app-bar>
 
-    <!-- Canvas (main) view -->
-    <router-view
-      v-if="sketch.status && hasTimelines && !isArchived"
-      @setTitle="(title) => (this.title = title)"
-    ></router-view>
+                <v-list-item @click="renameSketchDialog = true">
+                  <v-list-item-icon>
+                    <v-icon>mdi-pencil</v-icon>
+                  </v-list-item-icon>
+                  <v-list-item-content>
+                    <v-list-item-title>Rename sketch</v-list-item-title>
+                  </v-list-item-content>
+                </v-list-item>
+
+                <v-list-item @click="archiveSketch()" :disabled="isArchived">
+                  <v-list-item-icon>
+                    <v-icon>mdi-archive</v-icon>
+                  </v-list-item-icon>
+                  <v-list-item-content>
+                    <v-list-item-title>Archive sketch</v-list-item-title>
+                  </v-list-item-content>
+                </v-list-item>
+
+                <v-list-item v-if="meta.permissions && meta.permissions.delete" @click="deleteSketch()">
+                  <v-list-item-icon>
+                    <v-icon>mdi-trash-can-outline</v-icon>
+                  </v-list-item-icon>
+                  <v-list-item-content>
+                    <v-list-item-title>Delete sketch</v-list-item-title>
+                  </v-list-item-content>
+                </v-list-item>
+
+                <a href="/logout/" style="text-decoration: none; color: inherit">
+                  <v-list-item>
+                    <v-list-item-icon>
+                      <v-icon>mdi-logout</v-icon>
+                    </v-list-item-icon>
+
+                    <v-list-item-content>
+                      <v-list-item-title>Logout</v-list-item-title>
+                    </v-list-item-content>
+                  </v-list-item>
+                </a>
+              </v-list-item-group>
+            </v-list>
+          </v-card>
+        </v-menu>
+      </v-app-bar>
+
+      <!-- Left panel -->
+      <v-navigation-drawer
+        v-model="showLeftPanel"
+        app
+        clipped
+        disable-resize-watcher
+        stateless
+        hide-overlay
+        :width="navigationDrawer.width"
+      >
+        <!-- Dialog for adding a scenario -->
+        <v-dialog v-model="scenarioDialog" max-width="500px">
+          <v-card>
+            <div class="pa-3">
+              <h3>Investigative Scenarios</h3>
+              <v-select
+                v-model="selectedScenario"
+                :items="scenarioTemplates"
+                item-text="name"
+                return-object
+                label="Select a scenario"
+                outlined
+                class="mt-3"
+              ></v-select>
+              <div v-if="selectedScenario">
+                {{ selectedScenario.description }}
+              </div>
+            </div>
+            <v-divider></v-divider>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn @click="scenarioDialog = false" text> Cancel </v-btn>
+              <v-btn text color="primary" :disabled="!selectedScenario" @click="addScenario(selectedScenario.id)">
+                Add
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+
+        <v-tabs v-model="leftPanelTab" grow :next-icon="null" :prev-icon="null">
+          <v-tab v-for="item in leftPanelTabItems" :key="item"> {{ item }} </v-tab>
+        </v-tabs>
+        <v-divider></v-divider>
+        <v-tabs-items v-model="leftPanelTab">
+          <v-tab-item :transition="false">
+            <ts-search :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-search>
+            <ts-timelines-table :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-timelines-table>
+            <ts-saved-searches
+              v-if="meta.views"
+              :icon-only="isMiniDrawer"
+              @toggleDrawer="toggleDrawer()"
+            ></ts-saved-searches>
+            <ts-data-types :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-data-types>
+            <ts-tags :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-tags>
+            <ts-graphs :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-graphs>
+            <ts-stories :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-stories>
+            <ts-intelligence :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-intelligence>
+            <ts-search-templates :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-search-templates>
+            <ts-sigma-rules :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-sigma-rules>
+            <ts-analyzer-results :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-analyzer-results>
+          </v-tab-item>
+          <v-tab-item :transition="false">
+            <ts-scenario
+              v-for="scenario in activeScenarios"
+              :key="scenario.id"
+              :scenario="scenario"
+              :icon-only="isMiniDrawer"
+              @toggleDrawer="toggleDrawer()"
+            ></ts-scenario>
+            <v-row class="mt-0 px-2" flat v-show="!isMiniDrawer">
+              <v-col cols="6">
+                <v-card v-if="!Object.keys(scenarioTemplates).length" flat class="pa-4"
+                  >No scenarios available yet. Contact your server admin to add scenarios to this server.</v-card
+                >
+                <v-btn v-else text color="primary" @click="scenarioDialog = true" style="cursor: pointer"
+                  ><v-icon left>mdi-plus</v-icon> Add Scenario</v-btn
+                >
+              </v-col>
+
+              <v-col cols="6">
+                <v-btn
+                  small
+                  text
+                  color="primary"
+                  v-if="hiddenScenarios.length"
+                  @click="showHidden = !showHidden"
+                  class="mt-1"
+                >
+                  <small
+                    ><span v-if="showHidden">Hide</span><span v-else>Show</span> hidden scenarios ({{
+                      hiddenScenarios.length
+                    }})</small
+                  >
+                </v-btn>
+              </v-col>
+            </v-row>
+
+            <div v-if="showHidden">
+              <ts-scenario
+                v-for="scenario in hiddenScenarios"
+                :key="scenario.id"
+                :scenario="scenario"
+                :icon-only="isMiniDrawer"
+                @toggleDrawer="toggleDrawer()"
+              ></ts-scenario>
+            </div>
+          </v-tab-item>
+        </v-tabs-items>
+      </v-navigation-drawer>
+
+      <!-- Main (canvas) view -->
+      <v-main class="notransition mt-5">
+        <router-view
+          v-if="sketch.status && hasTimelines && !isArchived"
+          @setTitle="(title) => (this.title = title)"
+        ></router-view>
+      </v-main>
+
+      <!-- Context search -->
+      <v-bottom-sheet
+        hide-overlay
+        persistent
+        no-click-animation
+        v-model="showTimelineView"
+        @click:outside="showTimelineView = false"
+        scrollable
+      >
+        <v-card>
+          <v-toolbar dense flat>
+            <strong>Context search</strong>
+            <v-btn-toggle v-model="contextTimeWindowSeconds" class="ml-10" rounded>
+              <v-btn
+                v-for="duration in [1, 5, 10, 60, 300, 600, 1800, 3600]"
+                :key="duration"
+                :value="duration"
+                small
+                outlined
+                @click="updateContextQuery(duration)"
+              >
+                {{ duration | formatSeconds }}
+              </v-btn>
+            </v-btn-toggle>
+            <v-btn small text class="ml-5" @click="contextToSearch()">Replace search</v-btn>
+
+            <v-spacer></v-spacer>
+
+            <v-btn icon :disabled="timelineViewHeight > 40" @click="increaseTimelineViewHeight()">
+              <v-icon>mdi-chevron-up</v-icon>
+            </v-btn>
+            <v-btn icon :disabled="timelineViewHeight === 0" @click="decreaseTimelineViewHeight()">
+              <v-icon>mdi-chevron-down</v-icon>
+            </v-btn>
+            <v-btn icon @click="showTimelineView = false">
+              <v-icon>mdi-close</v-icon>
+            </v-btn>
+          </v-toolbar>
+          <v-divider></v-divider>
+          <v-expand-transition>
+            <v-card-text :style="{ height: timelineViewHeight + 'vh' }" v-show="!minimizeTimelineView">
+              <ts-event-list :query-request="queryRequest" :highlight-event="currentContextEvent"></ts-event-list>
+            </v-card-text>
+          </v-expand-transition>
+        </v-card>
+      </v-bottom-sheet>
+    </div>
   </div>
 </template>
 
@@ -378,12 +484,14 @@ import TsSigmaRules from '../components/LeftPanel/SigmaRules'
 import TsIntelligence from '../components/LeftPanel/ThreatIntel'
 import TsGraphs from '../components/LeftPanel/Graphs'
 import TsStories from '../components/LeftPanel/Stories'
-import TsUploadTimelineForm from '../components/UploadForm'
+import TsSearch from '../components/LeftPanel/Search'
+import TsUploadTimelineFormButton from '../components/UploadFormButton'
 import TsShareCard from '../components/ShareCard'
 import TsRenameSketch from '../components/RenameSketch'
 import TsAnalyzerResults from '../components/LeftPanel/AnalyzerResults.vue'
 import TsEventList from '../components/Explore/EventList'
 import TsVisualizations from '../components/LeftPanel/Visualizations.vue'
+import TsTimelinesTable from '../components/LeftPanel/TimelinesTable.vue'
 
 export default {
   props: ['sketchId'],
@@ -394,13 +502,15 @@ export default {
     TsTags,
     TsSearchTemplates,
     TsSigmaRules,
-    TsUploadTimelineForm,
+    TsUploadTimelineFormButton,
     TsShareCard,
     TsRenameSketch,
     TsIntelligence,
     TsGraphs,
     TsStories,
+    TsSearch,
     TsAnalyzerResults,
+    TsTimelinesTable,
     TsEventList,
     TsVisualizations,
   },
@@ -410,11 +520,12 @@ export default {
       navigationDrawer: {
         width: 410,
       },
+      isMiniDrawer: false,
       selectedScenario: null,
       scenarioDialog: false,
       showLeftPanel: false,
       leftPanelTab: 0,
-      leftPanelTabItems: ['Explore', 'Investigate'],
+      leftPanelTabItems: ['EXPLORE', 'INVESTIGATE'],
       renameSketchDialog: false,
       showHidden: false,
       shareDialog: false,
@@ -442,11 +553,9 @@ export default {
       this.$store.dispatch('updateContextLinks')
       this.$store.dispatch('updateAnalyzerList', this.sketchId)
       this.loadingSketch = false
-      this.showLeftPanel = true
-      this.$nextTick(function () {
-        this.setDrawerBorderStyle()
-        this.setDrawerResizeEvents()
-      })
+      if (this.hasTimelines && !this.isArchived) {
+        this.showLeftPanel = true
+      }
     })
     EventBus.$on('showContextWindow', this.showContextWindow)
   },
@@ -500,6 +609,7 @@ export default {
       ApiClient.archiveSketch(this.sketch.id)
         .then((response) => {
           this.$store.dispatch('updateSketch', this.sketch.id).then(() => {
+            this.showLeftPanel = false
             this.loadingSketch = false
           })
         })
@@ -513,6 +623,7 @@ export default {
         .then((response) => {
           this.$store.dispatch('updateSketch', this.sketch.id).then(() => {
             this.loadingSketch = false
+            this.showLeftPanel = true
           })
         })
         .catch((e) => {
@@ -605,55 +716,26 @@ export default {
         })
         .catch((e) => {})
     },
-    setDrawerBorderStyle() {
-      if (!this.$refs.drawer) {
-        return
-      }
-      let i = this.$refs.drawer.$el.querySelector('.v-navigation-drawer__border')
-      i.style.cursor = 'ew-resize'
-    },
-    setDrawerResizeEvents() {
-      if (!this.$refs.drawer) {
-        return
-      }
-      const minSize = 1
-      const drawerElement = this.$refs.drawer.$el
-      const drawerBorder = drawerElement.querySelector('.v-navigation-drawer__border')
-      const direction = drawerElement.classList.contains('v-navigation-drawer--right') ? 'right' : 'left'
-      function resize(e) {
-        document.body.style.cursor = 'ew-resize'
-        let f = direction === 'right' ? document.body.scrollWidth - e.clientX : e.clientX
-        drawerElement.style.width = f + 'px'
-      }
-      drawerBorder.addEventListener(
-        'mousedown',
-        (e) => {
-          if (e.offsetX < minSize) {
-            drawerElement.style.transition = 'initial'
-            document.addEventListener('mousemove', resize, false)
-          }
-        },
-        false
-      )
-      document.addEventListener(
-        'mouseup',
-        () => {
-          drawerElement.style.transition = ''
-          this.navigationDrawer.width = drawerElement.style.width
-          document.body.style.cursor = ''
-          document.removeEventListener('mousemove', resize, false)
-        },
-        false
-      )
-    },
-    toggleLeftPanel() {
-      this.showLeftPanel = !this.showLeftPanel
-      if (this.showLeftPanel) {
-        this.navigationDrawer.width = 410
+    toggleDrawer: function () {
+      this.navigationDrawer.width = 410
+      if (this.isMiniDrawer) {
+        setTimeout(() => {
+          this.isMiniDrawer = false
+        }, 100)
       } else {
-        this.navigationDrawer.width = 0
+        this.navigationDrawer.width = 56
+        this.isMiniDrawer = true
       }
-      EventBus.$emit('toggleLeftPanel')
+    },
+  },
+  watch: {
+    hasTimelines(newVal, oldVal) {
+      if (oldVal === 0 && newVal > 0) {
+        this.showLeftPanel = true
+      }
+      if (oldVal > 0 && newVal === 0) {
+        this.showLeftPanel = false
+      }
     },
   },
 }
