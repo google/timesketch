@@ -105,7 +105,9 @@ def login():
                 if email:
                     user = User.get_or_create(username=email, name=email)
                     group = Group.get_or_create(name="GOOGLE-IAP")
-                    user.groups.append(group)
+                    if group not in user.groups:
+                        user.groups.append(group)
+
                     db_session.commit()
                     login_user(user)
 
