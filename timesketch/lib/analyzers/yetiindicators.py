@@ -84,13 +84,13 @@ class YetiIndicators(interface.BaseAnalyzer):
                 "hops": 1,
                 "direction": "any",
                 "include_original": False,
-            }
+            },
         )
         if results.status_code != 200:
             return []
         neighbors = []
         for neighbor in results.json().get("vertices", {}).values():
-            if neighbor['root_type'] == 'entity':
+            if neighbor["root_type"] == "entity":
                 neighbors.append(neighbor)
         return neighbors
 
@@ -183,7 +183,7 @@ class YetiIndicators(interface.BaseAnalyzer):
             events = self.event_stream(query_dsl=query_dsl, return_fields=["message"])
             neighbors = self.get_neighbors(indicator)
             for n in neighbors:
-                if n['root_type'] == 'entity':
+                if n["root_type"] == "entity":
                     entities_found.add(f"{n['name']}:{n['type']}")
 
             uri = f"{self.yeti_web_root}/indicators/{indicator['id']}"
