@@ -16,6 +16,7 @@ MOCK_YETI_INTEL = {
         "pattern": "[0-9a-f]",
         "compiled_regexp": re.compile(r"[0-9a-f]+\.com"),
         "type": "regex",
+        "root_type": "indicator"
     }
 }
 
@@ -24,6 +25,7 @@ MOCK_YETI_NEIGHBORS = [
         "id": "98765",
         "name": "Bad malware",
         "type": "malware",
+        "root_type": "entity"
     }
 ]
 
