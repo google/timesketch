@@ -202,11 +202,9 @@ export default {
   methods: {
     async initializeAnalyzerResults() {
       let allAnalyses = []
-      for (const timeline of this.sketch.timelines) {
-        const response = await ApiClient.getSketchTimelineAnalysis(this.sketch.id, timeline.id)
-        let analyses = response.data.objects[0]
-        if (!analyses) continue
-        allAnalyses = allAnalyses.concat(analyses)
+      const response = await ApiClient.getSketchAnalyzerSessions(this.sketch.id)
+      if (response.data.objects[0]) {
+        allAnalyses = response.data.objects[0]
       }
       this.$store.dispatch('updateAnalyzerResults', allAnalyses)
       this.updateActiveAnalyses(this.$store, allAnalyses)

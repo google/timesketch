@@ -25,6 +25,7 @@ from .resources.analysis import AnalysisResource
 from .resources.analysis import AnalyzerRunResource
 from .resources.analysis import AnalyzerSessionActiveListResource
 from .resources.analysis import AnalyzerSessionResource
+from .resources.analysis import LatestAnalyzerSketchResource
 from .resources.attribute import AttributeResource
 from .resources.explore import ExploreResource
 from .resources.explore import SearchHistoryResource
@@ -101,6 +102,10 @@ API_ROUTES = [
     (
         AnalyzerSessionResource,
         "/sketches/<int:sketch_id>/analyzer/sessions/<int:session_id>/",
+    ),
+    (
+        LatestAnalyzerSketchResource,
+        "/sketches/<int:sketch_id>/analyzer/sessions/latest/",
     ),
     (AggregationListResource, "/sketches/<int:sketch_id>/aggregation/"),
     (

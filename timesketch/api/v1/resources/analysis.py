@@ -167,6 +167,50 @@ class AnalyzerSessionResource(resources.ResourceMixin, Resource):
         return self.to_json(analysis_session)
 
 
+class LatestAnalyzerSketchResource(resources.ResourceMixin, Resource):
+    """Resource to get analyzer session."""
+
+    @login_required
+    def get(self, sketch_id):
+        """Handles GET request to the resource.
+
+        Returns:
+            A a list of the latest analyzer sessions per timeline in JSON for a
+            given sketch ID (instance of flask.wrappers.Response)
+        """
+        sketch = Sketch.get_with_acl(sketch_id)
+
+        if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
+
+        if not sketch.has_permission(current_user, "read"):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN, "User does not have read access to sketch"
+            )
+
+        # Get analyzers that have been run on the sketch
+        sketch_analyzers = (
+            Analysis.query.filter_by(sketch_id=sketch_id).distinct(Analysis.name).all()
+        )
+        sketch_analyzer_names = set()
+        for analyzer_session in sketch_analyzers:
+            sketch_analyzer_names.add(analyzer_session.name)
+
+        # Get the latest session for each analyzer for each sketch timeline
+        analyzer_sessions = []
+        for timeline in sketch.timelines:
+            for analyzer_name in sketch_analyzer_names:
+                analysis_history = (
+                    Analysis.query.filter_by(timeline=timeline, name=analyzer_name)
+                    .order_by(Analysis.analysissession_id.desc())
+                    .first()
+                )
+                if analysis_history:
+                    analyzer_sessions.append(analysis_history)
+
+        return self.to_json(analyzer_sessions)
+
+
 class AnalyzerRunResource(resources.ResourceMixin, Resource):
     """Resource to list or run analyzers for sketch."""
 

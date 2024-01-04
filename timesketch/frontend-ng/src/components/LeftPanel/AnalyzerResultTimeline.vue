@@ -36,7 +36,7 @@ limitations under the License.
       <v-icon title="Toggle results for this timeline" class="mr-2" :color="'#' + timeline.color">mdi-circle</v-icon>
       <span class="timeline-name-ellipsis" style="width:82% !important;">{{ timeline.name }}</span>
       <div v-if="timeline.analysis_status === 'ERROR'">
-        <v-btn text x-small icon v-on="on" class="ml-1" :ripple="false" style="cursor: default">
+        <v-btn text x-small icon class="ml-1" :ripple="false" style="cursor: default">
           <v-icon title="The analyzer ran into an error" small class="ml-1">mdi-alert</v-icon>
         </v-btn>
       </div>
