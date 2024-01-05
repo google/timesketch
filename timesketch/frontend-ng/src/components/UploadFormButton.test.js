@@ -61,7 +61,7 @@ it("contains text", async () => {
   expect(wrapper.text()).toContain('Add Timeline')
 });
 
-it("renders a large button by default", async () => {
+it("renders a large button by default", () => {
   const button = wrapper.findComponent({ name: 'v-btn' })
   const icon = button.findComponent({ name: 'v-icon' })
   const buttonProps = button.props()
