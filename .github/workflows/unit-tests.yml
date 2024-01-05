@@ -48,4 +48,4 @@ jobs:
           yarn install
 
       - name: Run unit tests with yarn
-        run: yarn run test:unit
+        run: yarn run test
