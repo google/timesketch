@@ -364,7 +364,7 @@ limitations under the License.
 
 <script>
 import ApiClient from '../utils/RestApiClient.js'
-import EventBus from '../main.js'
+import EventBus from '../event-bus.js'
 import dayjs from '@/plugins/dayjs'
 
 import TsScenario from '../components/Scenarios/Scenario.vue'

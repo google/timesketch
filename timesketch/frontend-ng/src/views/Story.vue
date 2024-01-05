@@ -250,7 +250,7 @@ limitations under the License.
 
 <script>
 import ApiClient from '../utils/RestApiClient.js'
-import EventBus from '../main.js'
+import EventBus from '../event-bus.js'
 import DOMPurify from 'dompurify'
 import { marked } from 'marked'
 import _ from 'lodash'

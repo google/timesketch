@@ -7,7 +7,7 @@
 <script>
 import TreeNode from './SearchHistoryTreeNode.vue'
 import ApiClient from '../../utils/RestApiClient.js'
-import EventBus from '../../main.js'
+import EventBus from '../../event-bus.js'
 
 // Based on https://stackoverflow.com/a/54470906
 function findSearchNode(object, key, predicate) {

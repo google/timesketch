@@ -145,7 +145,7 @@ limitations under the License.
 <script>
 import _ from 'lodash'
 import ApiClient from '../../utils/RestApiClient'
-import EventBus from '../../main'
+import EventBus from '../../event-bus.js'
 
 const defaultQueryFilter = () => {
   return {

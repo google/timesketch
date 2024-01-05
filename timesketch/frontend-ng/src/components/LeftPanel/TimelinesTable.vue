@@ -149,7 +149,7 @@ limitations under the License.
 </template>
 
 <script>
-import EventBus from '../../main.js'
+import EventBus from '../../event-bus.js'
 
 import TsUploadTimelineForm from '../UploadForm.vue'
 import TsTimelineComponent from '../Explore/TimelineComponent.vue'

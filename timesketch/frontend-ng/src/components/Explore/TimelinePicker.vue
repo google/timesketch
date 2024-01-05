@@ -45,7 +45,7 @@ limitations under the License.
 </template>
 
 <script>
-import EventBus from '../../main.js'
+import EventBus from '../../event-bus.js'
 import TsTimelineChip from './TimelineChip.vue'
 import ApiClient from '../../utils/RestApiClient.js'
 

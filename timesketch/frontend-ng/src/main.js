@@ -18,7 +18,6 @@ import App from './App.vue'
 
 import router from './router.js'
 import store from './store.js'
-import EventBus from './event-bus.js'
 
 import '@/mixins/snackBar'
 
@@ -28,8 +27,6 @@ require('./assets/main.scss')
 require('./assets/markdown.scss')
 require('./utils/RegisterAppComponents')
 require('./utils/RegisterAppFilters')
-
-export default EventBus;
 
 // Third party
 Vue.use(require('vue-moment'))
