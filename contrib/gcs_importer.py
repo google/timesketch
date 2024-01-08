@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Google Cloud Storage importer."""
+# Unmaintained contrib. Skip linting this file.
+# pylint: skip-file
 
 import argparse
 import time
@@ -80,12 +82,12 @@ def setup_sketch(timeline_name, index_name, username, sketch_id=None):
         (tuple) sketch ID and timeline ID as integers
     """
     with app.app_context():
-        user = User.get_or_create(username=username)
+        user = User.get_or_create(username=username, name=username)
         sketch = None
 
         if sketch_id:
             try:
-                sketch = Sketch.query.get_with_acl(sketch_id, user=user)
+                sketch = Sketch.get_with_acl(sketch_id, user=user)
                 logger.info(
                     "Using existing sketch: {} ({})".format(sketch.name, sketch.id)
                 )

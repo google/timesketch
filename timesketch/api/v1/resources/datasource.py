@@ -49,7 +49,7 @@ class DataSourceListResource(resources.ResourceMixin, Resource):
         Returns:
             A list of JSON representations of the data sources.
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
@@ -85,7 +85,7 @@ class DataSourceListResource(resources.ResourceMixin, Resource):
         Returns:
             A datasource in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
@@ -112,7 +112,7 @@ class DataSourceListResource(resources.ResourceMixin, Resource):
                 "Unable to create a data source without a timeline " "identifier.",
             )
 
-        timeline = Timeline.query.get(timeline_id)
+        timeline = Timeline.get_by_id(timeline_id)
         if not timeline:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No timeline found with this ID.")
 
@@ -150,7 +150,7 @@ class DataSourceResource(resources.ResourceMixin, Resource):
         This function aborts if the ACLs on the sketch are not sufficient and
         the data source does not belong to the sketch in question.
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
@@ -160,7 +160,7 @@ class DataSourceResource(resources.ResourceMixin, Resource):
                 "Unable to fetch data sources from an archived sketch.",
             )
 
-        data_source = DataSource.query.get(datasource_id)
+        data_source = DataSource.get_by_id(datasource_id)
         if not data_source:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No DataSource found with this ID.")
 
@@ -182,7 +182,7 @@ class DataSourceResource(resources.ResourceMixin, Resource):
             A JSON representation of the data source.
         """
         self._verify_sketch_and_datasource(sketch_id, datasource_id)
-        data_source = DataSource.query.get(datasource_id)
+        data_source = DataSource.get_by_id(datasource_id)
         return self.to_json(data_source)
 
     @login_required
@@ -198,7 +198,7 @@ class DataSourceResource(resources.ResourceMixin, Resource):
         """
         self._verify_sketch_and_datasource(sketch_id, datasource_id)
 
-        data_source = DataSource.query.get(datasource_id)
+        data_source = DataSource.get_by_id(datasource_id)
         changed = False
 
         form = request.json

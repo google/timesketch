@@ -15,14 +15,27 @@ limitations under the License.
 -->
 
 <template>
-  <div class="content">
+  <div
+    v-if="iconOnly"
+    class="pa-4"
+    style="cursor: pointer"
+    @click="
+      $emit('toggleDrawer')
+      expanded = true
+    "
+  >
+    <v-icon left>mdi-clock-outline</v-icon>
+    <div style="height: 1px"></div>
+  </div>
+
+  <div v-else>
     <div
       class="pa-4"
-      :style="'cursor: pointer'"
+      style="cursor: pointer"
       @click="expanded = !expanded"
       :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
     >
-      <span> <v-icon left>mdi-timeline-clock-outline</v-icon> Timelines </span>
+      <span> <v-icon left>mdi-clock-outline</v-icon> Timelines </span>
       <ts-upload-timeline-form v-if="expanded">
         <template v-slot="slotProps">
           <v-btn
@@ -114,7 +127,9 @@ limitations under the License.
 
                   <v-tooltip bottom :disabled="item.name.length < 40" open-delay="200">
                     <template v-slot:activator="{ on: onTooltip }">
-                      <span v-on="onTooltip" class="timeline-name-ellipsis" style="cursor: default;">{{ item.name }}</span>
+                      <span v-on="onTooltip" class="timeline-name-ellipsis" style="cursor: default">{{
+                        item.name
+                      }}</span>
                     </template>
                     <span>{{ item.name }}</span>
                   </v-tooltip>
@@ -154,7 +169,9 @@ import EventBus from '../../event-bus.js'
 import TsUploadTimelineForm from '../UploadForm.vue'
 import TsTimelineComponent from '../Explore/TimelineComponent.vue'
 export default {
-  props: [],
+  props: {
+    iconOnly: Boolean,
+  },
   components: {
     TsUploadTimelineForm,
     TsTimelineComponent,

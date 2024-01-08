@@ -443,7 +443,7 @@ class BaseTest(TestCase):
         Returns:
             A user (instance of timesketch.models.user.User)
         """
-        user = User.get_or_create(username=username)
+        user = User.get_or_create(username=username, name=username)
         if set_password:
             user.set_password(plaintext="test", rounds=4)
         self._commit_to_database(user)
@@ -457,7 +457,7 @@ class BaseTest(TestCase):
         Returns:
             A group (instance of timesketch.models.user.Group)
         """
-        group = Group.get_or_create(name=name)
+        group = Group.get_or_create(name=name, display_name=name, description=name)
         user.groups.append(group)
         self._commit_to_database(group)
         return group
@@ -701,7 +701,7 @@ class ModelBaseTest(BaseTest):
 
     def _test_db_object(self, expected_result=None, model_cls=None):
         """Generic test that checks if the stored data is correct."""
-        db_obj = model_cls.query.get(1)
+        db_obj = model_cls.get_by_id(1)
         for x in expected_result:
             k, v = x[0], x[1]
             self.assertEqual(db_obj.__getattribute__(k), v)

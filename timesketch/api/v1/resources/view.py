@@ -72,7 +72,7 @@ class ViewListResource(resources.ResourceMixin, Resource):
         if form.from_searchtemplate_id.data:
             # Get the template from the datastore
             template_id = form.from_searchtemplate_id.data
-            searchtemplate = SearchTemplate.query.get(template_id)
+            searchtemplate = SearchTemplate.get_by_id(template_id)
 
             # Copy values from the template
             view_name = searchtemplate.name
@@ -131,7 +131,7 @@ class ViewListResource(resources.ResourceMixin, Resource):
         Returns:
             Views in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
         if not sketch.has_permission(current_user, "read"):
@@ -158,7 +158,7 @@ class ViewListResource(resources.ResourceMixin, Resource):
                 "Unable to save view, not able to validate form data.",
             )
 
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
@@ -190,10 +190,10 @@ class ViewResource(resources.ResourceMixin, Resource):
         Returns:
             A view in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
-        view = View.query.get(view_id)
+        view = View.get_by_id(view_id)
 
         if not sketch.has_permission(current_user, "read"):
             abort(
@@ -238,7 +238,7 @@ class ViewResource(resources.ResourceMixin, Resource):
             sketch_id: Integer primary key for a sketch database model
             view_id: Integer primary key for a view database model
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
@@ -247,7 +247,7 @@ class ViewResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_FORBIDDEN,
                 "User does not have write access controls on sketch.",
             )
-        view = View.query.get(view_id)
+        view = View.get_by_id(view_id)
         if not view:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No view found with this ID.")
 
@@ -289,7 +289,7 @@ class ViewResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 "Unable to update view, not able to validate form data",
             )
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
         if not sketch.has_permission(current_user, "write"):
@@ -298,7 +298,7 @@ class ViewResource(resources.ResourceMixin, Resource):
                 "User does not have write access controls on sketch.",
             )
 
-        view = View.query.get(view_id)
+        view = View.get_by_id(view_id)
         if not view:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No view found with this ID.")
 

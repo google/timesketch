@@ -186,7 +186,7 @@ class BaseAggregator(object):
         self._sketch_url = "/sketch/{0:d}/explore".format(sketch_id)
         self.field = ""
         self.indices = indices
-        self.sketch = SQLSketch.query.get(sketch_id)
+        self.sketch = SQLSketch.get_by_id(sketch_id)
         self.timeline_ids = None
 
         active_timelines = self.sketch.active_timelines
