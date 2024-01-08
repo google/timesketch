@@ -126,9 +126,9 @@ limitations under the License.
 </template>
 
 <script>
-import ApiClient from '../../utils/RestApiClient'
-import TsSearchChip from './SearchChip'
-import TsQuestionConclusion from './QuestionConclusion'
+import ApiClient from '../../utils/RestApiClient.js'
+import TsSearchChip from './SearchChip.vue'
+import TsQuestionConclusion from './QuestionConclusion.vue'
 
 export default {
   props: ['scenario', 'facet', 'question'],

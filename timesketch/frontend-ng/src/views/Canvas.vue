@@ -45,11 +45,11 @@ limitations under the License.
 </template>
 
 <script>
-import Explore from './Explore'
-import ThreatIntel from './ThreatIntel'
-import Sigma from './Sigma'
-import Graph from './Graph'
-import Story from './Story'
+import Explore from './Explore.vue'
+import ThreatIntel from './ThreatIntel.vue'
+import Sigma from './Sigma.vue'
+import Graph from './Graph.vue'
+import Story from './Story.vue'
 import Analyze from './Analyze.vue'
 
 export default {

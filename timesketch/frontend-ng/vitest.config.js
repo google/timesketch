@@ -1,5 +1,5 @@
-<!--
-Copyright 2023 Google Inc. All rights reserved.
+/*
+Copyright 2024 Google Inc. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -12,22 +12,20 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
--->
-<template>
-  <v-container fluid>
-    <v-card flat class="mx-3">
-      <ts-sigma-editor :rule-id="ruleId"></ts-sigma-editor>
-    </v-card>
-  </v-container>
-</template>
+*/
 
-<script>
-import TsSigmaEditor from '../components/Sigma/SigmaEditor.vue'
+import { defineConfig } from 'vite'
+import { createVuePlugin } from 'vite-plugin-vue2'
 
-export default {
-  props: ['ruleId'],
-  components: {
-    TsSigmaEditor,
+// https://vitejs.dev/config/
+export default defineConfig({
+ plugins: [ createVuePlugin() ],
+ test:{
+  alias: {
+    '@/': new URL('./src/', import.meta.url).pathname,
   },
-}
-</script>
+  globals:true,
+  environment: 'happy-dom',
+  setupFiles: ['setup-tests.js']
+ },
+})

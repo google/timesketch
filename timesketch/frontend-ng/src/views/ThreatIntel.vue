@@ -85,9 +85,9 @@ limitations under the License.
 </template>
 
 <script>
-import ApiClient from '../utils/RestApiClient'
-import EventBus from '../main'
-import TsIndicatorDialog from '../components/ThreatIntel/IndicatorDialog'
+import ApiClient from '../utils/RestApiClient.js'
+import EventBus from '../event-bus.js'
+import TsIndicatorDialog from '../components/ThreatIntel/IndicatorDialog.vue'
 
 const defaultQueryFilter = () => {
   return {

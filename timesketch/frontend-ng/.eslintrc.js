@@ -26,4 +26,14 @@ module.exports = {
   parserOptions: {
     parser: 'babel-eslint',
   },
+    "overrides": [
+      {
+        "files": [
+          "**/*.test.js",
+        ],
+        "env": {
+          "jest": true
+        }
+      }
+    ]
 }

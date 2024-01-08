@@ -21,7 +21,7 @@ limitations under the License.
 
 <script>
 import Apexchart from 'vue-apexcharts'
-import EventBus from '../../main'
+import EventBus from '../../event-bus.js'
 
 export default {
   props: ['chartData'],
