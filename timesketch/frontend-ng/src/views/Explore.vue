@@ -15,7 +15,7 @@ limitations under the License.
 -->
 <template>
   <v-container fluid>
-    <!-- Right side menu -->
+    <!-- Right side menu --add m>
     <!-- Placeholder at the moment. Keeping it here for quick developement later. -->
     <v-navigation-drawer v-if="showRightSidePanel" fixed right width="600" style="box-shadow: 0 10px 15px -3px #888">
       <template v-slot:prepend>

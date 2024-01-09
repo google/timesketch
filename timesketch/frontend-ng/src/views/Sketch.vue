@@ -114,98 +114,6 @@ limitations under the License.
           <ts-share-card @close-dialog="shareDialog = false"></ts-share-card>
         </v-dialog>
 
-      <v-tabs v-model="leftPanelTab" grow>
-        <v-tab v-for="item in leftPanelTabItems" :key="item"> {{ item }} </v-tab>
-      </v-tabs>
-      <v-divider></v-divider>
-      <v-tabs-items v-model="leftPanelTab">
-        <v-tab-item :transition="false">
-          <ts-saved-searches v-if="meta.views"></ts-saved-searches>
-          <ts-data-types></ts-data-types>
-          <ts-tags></ts-tags>
-          <ts-graphs></ts-graphs>
-          <ts-stories></ts-stories>
-          <ts-intelligence></ts-intelligence>
-          <ts-search-templates></ts-search-templates>
-          <ts-sigma-rules></ts-sigma-rules>
-          <ts-analyzer-results></ts-analyzer-results>
-          <ts-visualizations></ts-visualizations>
-        </v-tab-item>
-        <v-tab-item :transition="false">
-          <ts-scenario v-for="scenario in activeScenarios" :key="scenario.id" :scenario="scenario"></ts-scenario>
-          <v-row class="mt-0 px-2" flat>
-            <v-col cols="6">
-              <v-card v-if="!Object.keys(scenarioTemplates).length" flat class="pa-4"
-                >No scenarios available yet. Contact your server admin to add scenarios to this server.</v-card
-              >
-              <v-btn v-else text color="primary" @click="scenarioDialog = true" style="cursor: pointer"
-                ><v-icon left>mdi-plus</v-icon> Add Scenario</v-btn
-              >
-            </v-col>
-
-            <v-col cols="6">
-              <v-btn
-                small
-                text
-                color="primary"
-                v-if="hiddenScenarios.length"
-                @click="showHidden = !showHidden"
-                class="mt-1"
-              >
-                <small
-                  ><span v-if="showHidden">Hide</span><span v-else>Show</span> hidden scenarios ({{
-                    hiddenScenarios.length
-                  }})</small
-                >
-              </v-btn>
-            </v-col>
-          </v-row>
-
-          <div v-if="showHidden">
-            <ts-scenario v-for="scenario in hiddenScenarios" :key="scenario.id" :scenario="scenario"></ts-scenario>
-          </div>
-        </v-tab-item>
-      </v-tabs-items>
-    </v-navigation-drawer>
-
-    <!-- Top horizontal toolbar -->
-    <v-app-bar v-if="!loadingSketch" app hide-on-scroll clipped flat :color="$vuetify.theme.dark ? '#121212' : 'white'">
-      <v-btn icon v-show="!showLeftPanel && !loadingSketch" @click="toggleLeftPanel" class="ml-n1">
-        <v-icon>mdi-menu</v-icon>
-      </v-btn>
-
-      <v-avatar v-show="!showLeftPanel || !hasTimelines || isArchived" class="ml-n2 mt-1">
-        <router-link to="/">
-          <v-img src="/dist/timesketch-color.png" max-height="25" max-width="25" contain></v-img>
-        </router-link>
-      </v-avatar>
-
-      <span v-if="!showLeftPanel || !hasTimelines || isArchived" style="font-size: 1.1em">{{ sketch.name }} </span>
-
-      <v-btn
-        v-show="currentRouteName !== 'Explore'"
-        :to="{ name: 'Explore', params: { sketchId: sketchId } }"
-        small
-        depressed
-        class="ml-2"
-      >
-        <v-icon small left>mdi-arrow-left</v-icon>
-        back to explore
-      </v-btn>
-      <v-spacer></v-spacer>
-      <v-btn small depressed v-on:click="switchUI"> Use the old UI </v-btn>
-
-        <!-- Sharing dialog -->
-        <v-dialog v-model="shareDialog" width="500">
-          <template v-slot:activator="{ on, attrs }">
-            <v-btn small rounded depressed color="primary" class="ml-2" v-bind="attrs" v-on="on">
-              <v-icon small left>mdi-account-multiple-plus</v-icon>
-              Share
-            </v-btn>
-          </template>
-          <ts-share-card @close-dialog="shareDialog = false"></ts-share-card>
-        </v-dialog>
-
         <v-avatar color="grey lighten-1" size="25" class="ml-3">
           <span class="white--text">{{ currentUser | initialLetter }}</span>
         </v-avatar>
@@ -362,6 +270,7 @@ limitations under the License.
             <ts-search-templates :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-search-templates>
             <ts-sigma-rules :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-sigma-rules>
             <ts-analyzer-results :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-analyzer-results>
+            <ts-visualizations :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-visualizations>
           </v-tab-item>
           <v-tab-item :transition="false">
             <ts-scenario
@@ -512,7 +421,7 @@ export default {
     TsAnalyzerResults,
     TsTimelinesTable,
     TsEventList,
-    TsVisualizations,
+    TsVisualizations
   },
   data() {
     return {

@@ -22,7 +22,7 @@ limitations under the License.
       <v-divider></v-divider>
       <div>
         <ts-analyzer-list :timelineSelection="timelineSelection"></ts-analyzer-list>
-      </div>
+      </div>timesketch/frontend-ng/src/components/Analyzer/TimelineSearch.vue
       <v-divider></v-divider>
     </v-card>
   </v-container>

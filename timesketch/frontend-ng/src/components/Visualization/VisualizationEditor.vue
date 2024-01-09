@@ -14,30 +14,35 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-    <div>
-      nothing to see here
-    </div>
-  </template>
-  
-  <script>
-  import ApiClient from '../../utils/RestApiClient'
-  
-  export default {
-    props: {
-    },
-    data() {
-      return {
-      }
-    },
-    methods: {
-    },
-    mounted() {
-    },
-    watch: {
-    },
-  }
-  </script>
-  
-  <style scoped lang="scss">
-  </style>
-  
+  <div>
+    <TsCreateVisualizationCard>
+    </TsCreateVisualizationCard>
+  </div>
+</template>
+
+<script>
+import TsCreateVisualizationCard from './CreateVisualizationCard.vue'
+
+export default {
+  components: {
+    TsCreateVisualizationCard,
+  },
+  props: {
+  },
+  data() {
+    return {
+    }
+  },
+  computed: {
+  },
+  methods: {
+  },
+  mounted() {
+  },
+  watch: {
+  },
+}
+</script>
+
+<style scoped lang="scss">
+</style>
