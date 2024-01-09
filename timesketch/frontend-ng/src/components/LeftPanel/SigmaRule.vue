@@ -137,7 +137,7 @@ limitations under the License.
 </template>
 
 <script>
-import EventBus from '../../main'
+import EventBus from '../../event-bus.js'
 import ApiClient from '../../utils/RestApiClient'
 
 export default {

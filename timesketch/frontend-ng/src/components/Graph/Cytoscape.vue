@@ -164,13 +164,13 @@ limitations under the License.
 </template>
 
 <script>
-import ApiClient from '../../utils/RestApiClient'
-import EventBus from '../../main'
+import ApiClient from '../../utils/RestApiClient.js'
+import EventBus from '../../event-bus.js'
 import cytoscape from 'cytoscape'
 import spread from 'cytoscape-spread'
 import dagre from 'cytoscape-dagre'
 
-import TsEventList from '../Explore/EventList'
+import TsEventList from '../Explore/EventList.vue'
 
 cytoscape.use(spread)
 cytoscape.use(dagre)

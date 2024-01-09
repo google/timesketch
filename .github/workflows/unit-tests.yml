@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: timesketch/frontend
+        working-directory: timesketch/frontend-ng
     strategy:
       matrix:
         os: [ubuntu-20.04, ubuntu-22.04]
@@ -48,4 +48,4 @@ jobs:
           yarn install
 
       - name: Run unit tests with yarn
-        run: yarn run test:unit
+        run: yarn run test

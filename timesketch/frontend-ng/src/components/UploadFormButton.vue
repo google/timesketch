@@ -28,7 +28,8 @@ limitations under the License.
   </ts-upload-timeline-form>
 </template>
 <script>
-import TsUploadTimelineForm from './UploadForm'
+
+import TsUploadTimelineForm from './UploadForm.vue'
 
 export default {
   props: ['btnType'],
