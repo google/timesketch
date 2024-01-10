@@ -160,8 +160,8 @@ limitations under the License.
                 @updateShowXLabels="selectedShowXLabels = $event"
                 v-bind:yTitle="selectedYTitle"
                 @updateYTitle="selectedYTitle = $event"
-                v-bind:showYLabels="selectedYLabels"
-                @updateYLabels="selectedYLabels = $event"
+                v-bind:showYLabels="selectedYShowLabels"
+                @updateYLabels="selectedYShowLabels = $event"
                 v-bind:showDataLabels="selectedShowDataLabels"
                 @updateShowDataLabels="selectedShowDataLabels = $event"
               >
@@ -344,7 +344,7 @@ export default {
       selectedXTitle: this.xTitle,
       selectedShowXLabels: this.showXLabels,
       selectedYTitle: this.yTitle,
-      selectedYLabels: this.showYLabels,
+      selectedYShowLabels: this.showYLabels,
       selectedShowDataLabels: this.showDataLabels,
     }
   },
@@ -427,37 +427,35 @@ export default {
       this.clear()
       // :to="{ name: 'Explore' }"
     },
-    aggregatorFormData() {
-      return {
-        name: '',
-        description: '',
-        agg_type: this.selectedAggregator,
-        chart_type: this.selectedChartType,
-        parameters: {
-
-        }
-      }
-    },
     loadAggregationData() {
       let calendarInterval = `${this.selectedInterval.interval}${this.selectedIntervalQuantity}`
 
       let parameters = {
         aggregator_name: 'apex_chart',
         aggregator_parameters: {
-          field: this.selectedField,
+          fields: [this.selectedField],
           aggregator_type: this.selectedAggregator,
           aggregator_options: {
+            query_string: this.selectedQueryString,
+            query_is_dsl: false,
+            start_time:  this.selectedRange.start,
+            end_time:  this.selectedRange.end,
+            query_chips: this.selectedQueryChips,
+            timeline_ids: this.selectedTimelineIDs,
             metric: this.selectedMetric,
             most_common_limit: this.selectedMaxItems,
             calendar_interval: calendarInterval,
           },
           chart_type: this.selectedChartType,
-          filters: {
-            query_string: this.selectedQueryString,
-            start_datetime:  this.selectedRange.start,
-            end_datetime:  this.selectedRange.end,
-            query_chips: this.selectedQueryChips,
-            timeline_ids: this.selectedTimelineIDs,
+          chart_options: {
+            chartTitle: this.selectedChartTitle,
+            height: this.selectedHeight,
+            width: this.selectedWidth,
+            xTitle: this.selectedXTitle,
+            showXLabels: this.selectedShowXLabels,
+            yTitle: this.selectedYTitle,
+            showYLabels: this.selectedShowYLabels,
+            selectedShowDataLabels: this.showDataLabels,
           },
         }
       }
