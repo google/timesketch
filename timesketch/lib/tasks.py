@@ -661,12 +661,14 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
     # Run pinfo on storage file
     try:
         pinfo = pinfo_tool.PinfoTool()
-        storage_reader = pinfo._GetStorageReader(
+        storage_reader = pinfo._GetStorageReader(  # pylint: disable=protected-access
             file_path
-        )  # pylint: disable=protected-access
-        storage_counters = pinfo._CalculateStorageCounters(
-            storage_reader
-        )  # pylint: disable=protected-access
+        )
+        storage_counters = (
+            pinfo._CalculateStorageCounters(  # pylint: disable=protected-access
+                storage_reader
+            )
+        )
         total_file_events = storage_counters.get("parsers", {}).get("total")
         if not total_file_events:
             raise RuntimeError("Not able to get total event count from Plaso file.")
