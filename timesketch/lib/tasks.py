@@ -40,6 +40,7 @@ from sqlalchemy import create_engine
 # To be able to determine plaso's version.
 try:
     import plaso
+    from plaso.cli import pinfo_tool
 except ImportError:
     plaso = None
 
@@ -658,35 +659,14 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
     message = "Index timeline [{0:s}] to index [{1:s}] (source: {2:s})"
     logger.info(message.format(timeline_name, index_name, source_type))
 
+    # Run pinfo on storage file
     try:
-        pinfo_path = current_app.config["PINFO_PATH"]
-    except KeyError:
-        pinfo_path = "pinfo.py"
-
-    cmd = [
-        pinfo_path,
-        "--output-format",
-        "json",
-        "--sections",
-        "events",
-        file_path,
-    ]
-
-    # Run pinfo.py
-    try:
-        command = subprocess.run(cmd, capture_output=True, check=True)
-        storage_counters_json = command.stdout.decode("utf-8")
-        storage_counters = json.loads(re.sub(r"^{, ", r"{", storage_counters_json))
-        total_file_events = (
-            storage_counters.get("storage_counters", {}).get("parsers", {}).get("total")
-        )
+        pinfo = pinfo_tool.PinfoTool()
+        storage_reader = pinfo._GetStorageReader(file_path)
+        storage_counters = pinfo._CalculateStorageCounters(storage_reader)
+        total_file_events = storage_counters.get("parsers", {}).get("total")
         if not total_file_events:
             raise RuntimeError("Not able to get total event count from Plaso file.")
-    except subprocess.CalledProcessError as e:
-        error_msg = e.stderr.decode("utf-8")
-        _set_datasource_total_events(timeline_id, file_path, total_file_events=0)
-        _set_datasource_status(timeline_id, file_path, "fail", error_message=error_msg)
-        raise
     except Exception as e:  # pylint: disable=broad-except
         # Mark the searchindex and timelines as failed and exit the task
         error_msg = traceback.format_exc()
