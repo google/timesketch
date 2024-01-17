@@ -19,7 +19,6 @@ import os
 import logging
 import subprocess
 import traceback
-import re
 
 import codecs
 import io
