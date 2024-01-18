@@ -57,7 +57,7 @@ class YetiIndicators(interface.BaseAnalyzer):
     def authenticate_session(self) -> None:
         """Fetches an access token for Yeti."""
 
-        response = requests.post(
+        response = self._yeti_session.post(
             f"{self.yeti_api_root}/auth/api-token",
             headers={"x-yeti-apikey": self.yeti_api_key},
         )
