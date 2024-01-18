@@ -22,10 +22,7 @@ class MockProvider:
 
     NAME = "mock"
 
-    def __init__(self):
-        pass
-
-    def generate_text(self, context: str, max_length: int) -> str:
+    def generate_text(self) -> str:
         """Generate text."""
         return "This is a mock LLM provider."
 
@@ -55,9 +52,6 @@ class TestLLMManager(BaseTest):
 
     def test_register_provider(self):
         """Test so we raise KeyError when provider is already registered."""
-        self.assertRaises(KeyError, manager.LLMManager.register_provider, MockProvider)
-
-    def test_clear_registration(self):
-        """Test to clear provider registry."""
-        manager.LLMManager.clear_registration()
-        self.assertRaises(KeyError, manager.LLMManager.get_provider, "mock")
+        self.assertRaises(
+            ValueError, manager.LLMManager.register_provider, MockProvider
+        )

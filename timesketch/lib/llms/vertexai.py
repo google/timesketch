@@ -26,6 +26,8 @@ except ImportError:
 
 
 class VertexAI(interface.LLMProvider):
+    """Vertex AI LLM provider."""
+
     NAME = "vertexai"
 
     def generate(self, prompt: str) -> str:

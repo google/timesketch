@@ -41,8 +41,10 @@ class LLMManager:
         """
         try:
             provider_class = cls._class_registry[provider_name.lower()]
-        except KeyError:
-            raise KeyError(f"No such provider: {provider_name.lower()}")
+        except KeyError as no_such_provider:
+            raise KeyError(
+                f"No such provider: {provider_name.lower()}"
+            ) from no_such_provider
         return provider_class
 
     @classmethod

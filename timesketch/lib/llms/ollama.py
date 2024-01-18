@@ -12,12 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """A LLM provider for the ollama server."""
+import json
+import requests
 
 from timesketch.lib.llms import interface
 from timesketch.lib.llms import manager
-
-import requests
-import json
 
 
 class Ollama(interface.LLMProvider):
