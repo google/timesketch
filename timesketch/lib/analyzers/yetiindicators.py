@@ -39,6 +39,9 @@ class YetiIndicators(interface.BaseAnalyzer):
         self.yeti_web_root = root.replace("/api/v2", "")
         self.yeti_api_key = current_app.config.get("YETI_API_KEY")
         self._yeti_session = requests.Session()
+        tls_cert = current_app.config.get("YETI_TLS_CERTIFICATE")
+        if tls_cert and self.yeti_web_root.startswith("https://"):
+            self._yeti_session.verify = tls_cert
 
     @property
     def authenticated_session(self) -> requests.Session:
@@ -54,7 +57,7 @@ class YetiIndicators(interface.BaseAnalyzer):
     def authenticate_session(self) -> None:
         """Fetches an access token for Yeti."""
 
-        response = requests.post(
+        response = self._yeti_session.post(
             f"{self.yeti_api_root}/auth/api-token",
             headers={"x-yeti-apikey": self.yeti_api_key},
         )
