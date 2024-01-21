@@ -486,13 +486,28 @@ class TimesketchApi:
     def list_users(self):
         """Get a list of all users.
 
-        Returns:
-            User objects array.
+        Yields:
+            User object instances.
         """
         response = self.fetch_resource_data("users/")
 
-        return response.get("objects", [])
+        for user_dict in response.get("objects", []):
+                user_id = user_dict["id"]
+                user_obj = user.User(
+                    user_id=user_id, api=self
+                )
+                yield user_obj
 
+    def get_user(self, user_id):
+        """Get a sketch.
+
+        Args:
+            sketch_id: Primary key ID of the sketch.
+
+        Returns:
+            Instance of a Sketch object.
+        """
+        return user.User(user_id=user_id, api=self)
         
     def get_oauth_token_status(self):
         """Return a dict with OAuth token status, if one exists."""
