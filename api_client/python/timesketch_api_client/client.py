@@ -459,7 +459,7 @@ class TimesketchApi:
             password: Password of the user
 
         Returns:
-            Instance of a user object.
+            True if user created successfully.
 
         Raises:
             RuntimeError: If response does not contain an 'objects' key after
