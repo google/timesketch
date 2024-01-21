@@ -17,6 +17,7 @@ import logging
 
 from flask import abort
 from flask import request
+from flask import jsonify
 from flask_restful import Resource
 from flask_login import login_required
 from flask_login import current_user
@@ -92,7 +93,20 @@ class UserListResource(resources.ResourceMixin, Resource):
         db_session.add(user)
         db_session.commit()
 
-        return self.to_json(user, status_code=HTTP_STATUS_CODE_CREATED)
+        user = User.get_or_create(username=username)
+
+        return_user = {
+            "id": user.id,
+            "username": user.username,
+            "name": user.name,
+            "email": user.email,
+            "active": user.active,
+            "admin": user.admin
+        }
+
+        logger.info(return_user)
+
+        return jsonify({"objects": [return_user]})
 
 class GroupListResource(resources.ResourceMixin, Resource):
     """Resource to get list of groups."""
