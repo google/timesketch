@@ -104,7 +104,35 @@ class UserListResource(resources.ResourceMixin, Resource):
             "admin": user.admin
         }
 
-        logger.info(return_user)
+        return jsonify({"objects": [return_user]})
+
+class UserResource(resources.ResourceMixin, Resource):
+    """Resource to get list of users."""
+
+    @login_required
+    def get(self, user_id):
+        """Handles GET request to the resource.
+
+        Returns:
+            Details of user
+        """
+
+        if not current_user.admin:
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "The user has no permissions to access other users.",
+            )
+
+        user = User.get_by_id(user_id)
+
+        return_user = {
+            "id": user.id,
+            "username": user.username,
+            "name": user.name,
+            "email": user.email,
+            "active": user.active,
+            "admin": user.admin
+        }
 
         return jsonify({"objects": [return_user]})
 

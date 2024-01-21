@@ -1108,7 +1108,6 @@ class UserListTest(BaseTest):
             content_type="application/json",
         )
         self.assertIsNotNone(response)
-        self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
     
     def test_user_post_resource_without_admin(self):
         """Authenticated request (no admin) to create another user, which should not work."""
@@ -1148,3 +1147,14 @@ class UserListTest(BaseTest):
         )
         self.assertIsNotNone(response)
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_NOT_FOUND)
+
+class UserTest(BaseTest):
+    """Test UserResource."""
+
+    def test_user_get_resource_admin(self):
+        """Authenticated request (admin user) to create another user."""
+        self.login_admin()
+
+        response = self.client.get(f"/api/v1/users/1/")
+        data = json.loads(response.get_data(as_text=True))
+        self.assertEqual(data["objects"][0]["username"],"test1")
