@@ -132,12 +132,6 @@ class UserResource(resources.ResourceMixin, Resource):
             Details of user
         """
 
-        if not current_user.admin:
-            abort(
-                HTTP_STATUS_CODE_FORBIDDEN,
-                "The user has no permissions to access other users.",
-            )
-
         user = User.get_by_id(user_id)
 
         return_user = {

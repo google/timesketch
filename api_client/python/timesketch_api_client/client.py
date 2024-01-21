@@ -481,7 +481,7 @@ class TimesketchApi:
             if retry_count >= self.DEFAULT_RETRY_COUNT:
                 raise RuntimeError("Unable to create a new user.")
 
-        return objects[0]
+        return user.User(user_id=objects[0]["id"], api=self)
 
     def list_users(self):
         """Get a list of all users.
