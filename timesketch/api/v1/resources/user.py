@@ -25,6 +25,7 @@ from timesketch.api.v1 import resources
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
+from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.models import db_session
 from timesketch.models.sketch import Sketch
 from timesketch.models.user import User
@@ -45,7 +46,53 @@ class UserListResource(resources.ResourceMixin, Resource):
             List of usernames
         """
         return self.to_json(User.query.all())
+    
+    @login_required
+    def post(self):
+        """Handles POST request to the resource.
 
+        Returns:
+            User Object
+        """
+
+        if not current_user.admin:
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "The user has no permissions to create other users.",
+            )
+        
+        form = request.json
+        username = form.get("username", "")
+        password = form.get("password", "")
+
+        # Check provided username
+        if not username:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                "No username provided, unable to create the user.",
+            )
+
+        if not isinstance(username, str):
+            abort(HTTP_STATUS_CODE_FORBIDDEN, "Username needs to be a string.")
+
+        # Check provided password
+        if not password:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                "No password provided, unable to create the user.",
+            )
+
+        if not isinstance(password, str):
+            abort(HTTP_STATUS_CODE_FORBIDDEN, "Password needs to be a string.")
+        
+        user = User.get_or_create(username=username, name=username)
+        user.set_password(plaintext=password)
+        
+        # TODO: Take additional attributes of users into account
+        db_session.add(user)
+        db_session.commit()
+
+        return self.to_json(user, status_code=HTTP_STATUS_CODE_CREATED)
 
 class GroupListResource(resources.ResourceMixin, Resource):
     """Resource to get list of groups."""
