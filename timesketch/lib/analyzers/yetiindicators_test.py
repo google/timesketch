@@ -14,6 +14,7 @@ MOCK_YETI_INTEL = {
         "id": "12345",
         "name": "Random regex",
         "pattern": "[0-9a-f]",
+        "relevant_tags": ["relevant-tag-1"],
         "compiled_regexp": re.compile(r"[0-9a-f]+\.com"),
         "type": "regex",
         "root_type": "indicator",
