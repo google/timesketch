@@ -77,7 +77,8 @@ class TestYetiIndicators(BaseTest):
         mock_get_indicators.assert_called_once()
         mock_get_neighbors.assert_called_once()
         self.assertEqual(
-            analyzer.tagged_events["0"]["tags"], ["bad-malware", "relevant-tag-1"]
+            sorted(analyzer.tagged_events["0"]["tags"]),
+            sorted(["bad-malware", "relevant-tag-1"])
         )
 
     # Mock the OpenSearch datastore.
