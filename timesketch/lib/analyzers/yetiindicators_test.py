@@ -76,7 +76,9 @@ class TestYetiIndicators(BaseTest):
         )
         mock_get_indicators.assert_called_once()
         mock_get_neighbors.assert_called_once()
-        self.assertEqual(analyzer.tagged_events["0"]["tags"], ["bad-malware"])
+        self.assertEqual(
+            analyzer.tagged_events["0"]["tags"],
+            ["bad-malware", "relevant-tag-1"])
 
     # Mock the OpenSearch datastore.
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
@@ -111,4 +113,6 @@ class TestYetiIndicators(BaseTest):
             MOCK_YETI_NEIGHBORS,
         )
         # The name of the entity is "Random incident"
-        mock_event.add_tags.assert_called_once_with(["bad-malware"])
+        mock_event.add_tags.assert_called_once_with(
+            ["bad-malware", "relevant-tag-1"]
+        )
