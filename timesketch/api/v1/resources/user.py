@@ -57,12 +57,12 @@ class UserListResource(resources.ResourceMixin, Resource):
                     "name": user.name,
                     "email": user.email,
                     "active": user.active,
-                    "admin": user.admin
+                    "admin": user.admin,
                 }
             )
 
         return jsonify({"objects": return_users})
-    
+
     @login_required
     def post(self):
         """Handles POST request to the resource.
@@ -76,7 +76,6 @@ class UserListResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_FORBIDDEN,
                 "The user has no permissions to create other users.",
             )
-        
         form = request.json
         username = form.get("username", "")
         password = form.get("password", "")
@@ -87,20 +86,17 @@ class UserListResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_NOT_FOUND,
                 "No username provided, unable to create the user.",
             )
-
         if not isinstance(username, str):
             abort(HTTP_STATUS_CODE_FORBIDDEN, "Username needs to be a string.")
-
         # Check provided password
         if not password:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
                 "No password provided, unable to create the user.",
             )
-
         if not isinstance(password, str):
             abort(HTTP_STATUS_CODE_FORBIDDEN, "Password needs to be a string.")
-        
+
         user = User.get_or_create(username=username, name=username)
         user.set_password(plaintext=password)
         
@@ -116,7 +112,7 @@ class UserListResource(resources.ResourceMixin, Resource):
             "name": user.name,
             "email": user.email,
             "active": user.active,
-            "admin": user.admin
+            "admin": user.admin,
         }
 
         return jsonify({"objects": [return_user]})
@@ -140,7 +136,7 @@ class UserResource(resources.ResourceMixin, Resource):
             "name": user.name,
             "email": user.email,
             "active": user.active,
-            "admin": user.admin
+            "admin": user.admin,
         }
 
         return jsonify({"objects": [return_user]})

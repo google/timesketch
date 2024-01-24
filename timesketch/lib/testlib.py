@@ -619,7 +619,11 @@ class BaseTest(TestCase):
 
         self.user1 = self._create_user(username="test1", set_password=True)
         self.user2 = self._create_user(username="test2", set_password=False)
-        self.useradmin = self._create_user(username="testadmin", set_password=True, set_admin=True)
+        self.useradmin = self._create_user(
+            username="testadmin",
+            set_password=True,
+            set_admin=True
+        )
 
         self.group1 = self._create_group(name="test_group1", user=self.user1)
         self.group2 = self._create_group(name="test_group2", user=self.user1)
@@ -680,7 +684,7 @@ class BaseTest(TestCase):
             data=dict(username="test1", password="test"),
             follow_redirects=True,
         )
-    
+
     def login_admin(self):
         """Authenticate the test user with admin privileges."""
         self.client.post(

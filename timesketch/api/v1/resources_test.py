@@ -1094,6 +1094,7 @@ class ContextLinksResourceTest(BaseTest):
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
         self.assertDictEqual(data, expected_configuration)
 
+
 class UserListTest(BaseTest):
     """Test UserListResource."""
 
@@ -1108,7 +1109,7 @@ class UserListTest(BaseTest):
             content_type="application/json",
         )
         self.assertIsNotNone(response)
-    
+
     def test_user_post_resource_without_admin(self):
         """Authenticated request (no admin) to create another user, which should not work."""
         self.login()
@@ -1121,7 +1122,7 @@ class UserListTest(BaseTest):
         )
         self.assertIsNotNone(response)
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_FORBIDDEN)
-    
+
     def test_user_post_resource_missing_username(self):
         """Authenticated request (admin user) to create another user, but with missing username, which should not work."""
         self.login_admin()
@@ -1147,6 +1148,7 @@ class UserListTest(BaseTest):
         )
         self.assertIsNotNone(response)
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_NOT_FOUND)
+
 
 class UserTest(BaseTest):
     """Test UserResource."""

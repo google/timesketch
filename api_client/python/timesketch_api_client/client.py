@@ -492,11 +492,9 @@ class TimesketchApi:
         response = self.fetch_resource_data("users/")
 
         for user_dict in response.get("objects", []):
-                user_id = user_dict["id"]
-                user_obj = user.User(
-                    user_id=user_id, api=self
-                )
-                yield user_obj
+            user_id = user_dict["id"]
+            user_obj = user.User(user_id=user_id, api=self)
+            yield user_obj
 
     def get_user(self, user_id):
         """Get a sketch.
@@ -508,7 +506,7 @@ class TimesketchApi:
             Instance of a Sketch object.
         """
         return user.User(user_id=user_id, api=self)
-        
+
     def get_oauth_token_status(self):
         """Return a dict with OAuth token status, if one exists."""
         if not self.credentials:
