@@ -137,6 +137,10 @@ class YetiIndicators(interface.BaseAnalyzer):
             slug = re.sub(r"[^a-z0-9]", "-", n["name"].lower())
             slug = re.sub(r"-+", "-", slug)
             tags.append(slug)
+        for tag in indicator["relevant_tags"]:
+            slug = re.sub(r"[^a-z0-9]", "-", tag.lower())
+            slug = re.sub(r"-+", "-", slug)
+            tags.append(slug)
         event.add_tags(tags)
         event.commit()
 
