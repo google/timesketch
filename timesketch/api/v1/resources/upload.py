@@ -347,6 +347,16 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         _filename, _extension = os.path.splitext(file_storage.filename)
         file_extension = _extension.lstrip(".")
         timeline_name = form.get("name", _filename.rstrip("."))
+        if len(timeline_name) == 0 or timeline_name == "null":
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                "Timeline name cannot be empty.",
+            )
+        if len(timeline_name) > 255:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                "Timeline name needs to be less than 255 characters.",
+            )
 
         # We do not need a human readable filename or
         # datastore index name, so we use UUIDs here.

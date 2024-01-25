@@ -80,12 +80,27 @@ limitations under the License.
                 <h3>New sketch</h3>
                 <br />
                 <v-form @submit.prevent="createSketch()">
-                  <v-text-field v-model="sketchForm.name" outlined dense placeholder="Name your sketch" autofocus>
+                  <v-text-field
+                    v-model="sketchForm.name"
+                    outlined
+                    dense
+                    placeholder="Name your sketch"
+                    autofocus
+                    clearable
+                    :rules="sketchNameRules"
+                  >
                   </v-text-field>
                   <v-card-actions>
                     <v-spacer></v-spacer>
                     <v-btn text @click="createSketchDialog = false"> Cancel </v-btn>
-                    <v-btn :disabled="!sketchForm.name" @click="createSketch()" color="primary" text> Create </v-btn>
+                    <v-btn
+                      :disabled="!sketchForm.name || sketchForm.name.length > 255"
+                      @click="createSketch()"
+                      color="primary"
+                      text
+                    >
+                      Create
+                    </v-btn>
                   </v-card-actions>
                 </v-form>
               </v-card>
@@ -114,6 +129,10 @@ export default {
       },
       createSketchDialog: false,
       scenarioTemplates: [],
+      sketchNameRules: [
+        (v) => !!v || 'Sketch name is required.',
+        (v) => (v && v.length <= 255) || 'Sketch name is too long.',
+      ],
     }
   },
   computed: {
