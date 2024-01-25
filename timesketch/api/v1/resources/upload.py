@@ -346,7 +346,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         """
         _filename, _extension = os.path.splitext(file_storage.filename)
         file_extension = _extension.lstrip(".")
-        timeline_name = form.get("name", _filename.rstrip("."))
+        timeline_name = str(form.get("name", _filename.rstrip(".")))
         if len(timeline_name) == 0 or timeline_name == "null":
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
