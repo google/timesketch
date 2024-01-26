@@ -379,7 +379,7 @@ class QuestionConclusionListResource(resources.ResourceMixin, Resource):
             db_session.add(conclusion)
             db_session.commit()
 
-        return self.to_json(conclusion)
+        return self.to_json(question)
 
 
 class QuestionConclusionResource(resources.ResourceMixin, Resource):
@@ -418,7 +418,7 @@ class QuestionConclusionResource(resources.ResourceMixin, Resource):
             db_session.add(conclusion)
             db_session.commit()
 
-        return self.to_json(conclusion)
+        return self.to_json(question)
 
     @login_required
     def delete(self, sketch_id, question_id, conclusion_id):
@@ -450,3 +450,5 @@ class QuestionConclusionResource(resources.ResourceMixin, Resource):
 
         db_session.delete(conclusion)
         db_session.commit()
+
+        return self.to_json(question)

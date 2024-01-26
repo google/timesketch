@@ -14,21 +14,28 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-card v-if="activeContext.question" class="mt-3 mx-3 pb-1" outlined>
+  <v-card
+    v-if="activeContext.question"
+    class="mx-3 pb-1 mb-3 mt-1"
+    outlined
+    color="#FAFAFA"
+    style="border: 1px solid #d6d6d6"
+  >
     <v-toolbar flat dense style="background-color: transparent">
       <v-btn v-if="activeContext.question.description" small icon @click="expanded = !expanded" class="mr-1">
         <v-icon v-if="expanded">mdi-chevron-up</v-icon>
         <v-icon v-else>mdi-chevron-down</v-icon>
       </v-btn>
 
-      <h4>
+      <strong>
         {{ activeContext.question.display_name }}
         <small>
           <a :href="getDfiqQuestionUrl(activeContext.question.dfiq_identifier)" target="_blank" rel="noreferrer"
             >({{ activeContext.question.dfiq_identifier }})</a
           >
         </small>
-      </h4>
+      </strong>
+
       <v-spacer></v-spacer>
 
       <v-btn small icon @click="$store.dispatch('clearActiveContext')" class="mr-1">
@@ -61,7 +68,7 @@ limitations under the License.
         <!--Approaches-->
         <div v-if="activeContext.question.approaches.length">
           <div class="px-4 pb-4">
-            <v-btn depressed rounded small @click="showApproaches = !showApproaches">
+            <v-btn depressed rounded small color="#EDEDED" @click="showApproaches = !showApproaches">
               <span v-if="!showApproaches">Show {{ activeContext.question.approaches.length }} approaches</span>
               <span v-else>Hide {{ activeContext.question.approaches.length }} approaches</span>
             </v-btn>
@@ -86,28 +93,80 @@ limitations under the License.
             </div>
           </v-expand-transition>
         </div>
+        <v-divider></v-divider>
+
+        <!-- Conclusions -->
+        <div class="mb-3 pl-5 mt-3">
+          <strong style="font-size: 0.9em">Conclusion</strong>
+          <v-sheet
+            outlined
+            rounded
+            class="mr-3 pa-3 mt-2"
+            style="max-width: 500px"
+            v-for="conclusion in activeContext.question.conclusions"
+            :key="conclusion.id"
+          >
+            <ts-question-conclusion
+              :question="activeContext.question"
+              :conclusion="conclusion"
+            ></ts-question-conclusion>
+          </v-sheet>
+        </div>
+
+        <div v-if="!currentUserConclusion" style="font-size: 0.9em; max-width: 500px" class="pb-4 pl-5 mt-n1">
+          <v-textarea
+            v-model="conclusionText"
+            class="mt-3"
+            outlined
+            flat
+            hide-details
+            auto-grow
+            rows="2"
+            placeholder="Add your conclusion..."
+            style="font-size: 0.9em; background-color: white"
+          >
+          </v-textarea>
+          <v-card-actions v-if="conclusionText" class="pb-0">
+            <v-spacer></v-spacer>
+            <v-btn small text color="primary" @click="createConclusion()" :disabled="!conclusionText"> Save </v-btn>
+          </v-card-actions>
+        </div>
       </div>
     </v-expand-transition>
   </v-card>
 </template>
 
 <script>
+import ApiClient from '../../utils/RestApiClient.js'
 import DOMPurify from 'dompurify'
 import { marked } from 'marked'
 import TsContextCardApproach from './ContextCardApproach.vue'
 import TsSearchChip from './SearchChip.vue'
+import TsQuestionConclusion from './QuestionConclusion.vue'
 
 export default {
-  components: { TsContextCardApproach, TsSearchChip },
+  components: { TsContextCardApproach, TsSearchChip, TsQuestionConclusion },
   data: function () {
     return {
       showApproaches: false,
       expanded: true,
+      conclusionText: '',
     }
   },
   computed: {
+    sketch() {
+      return this.$store.state.sketch
+    },
+    currentUser() {
+      return this.$store.state.currentUser
+    },
     activeContext() {
       return this.$store.state.activeContext
+    },
+    currentUserConclusion() {
+      return this.activeContext.question.conclusions.filter(
+        (conclusion) => conclusion.user.username === this.currentUser
+      ).length
     },
     opensearchQueries() {
       let opensearchQueries = []
@@ -134,6 +193,24 @@ export default {
     },
     getDfiqQuestionUrl(id) {
       return 'https://dfiq.org/questions/' + id + '/'
+    },
+    setActiveQuestion(question) {
+      let payload = {
+        scenario: this.activeContext.scenario,
+        facet: this.activeContext.facet,
+        question: question,
+      }
+      this.$store.dispatch('setActiveContext', payload)
+    },
+    createConclusion() {
+      ApiClient.createQuestionConclusion(this.sketch.id, this.activeContext.question.id, this.conclusionText)
+        .then((response) => {
+          let newQuestion = response.data.objects[0]
+          this.conclusionText = ''
+          this.$store.dispatch('updateScenarios', this.sketch.id)
+          this.setActiveQuestion(newQuestion)
+        })
+        .catch((e) => {})
     },
   },
 }

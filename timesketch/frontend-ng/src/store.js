@@ -100,8 +100,8 @@ export default new Vuex.Store({
     },
     CLEAR_ACTIVE_CONTEXT(state) {
       let payload = {
-        scenario: {},
-        facet: {},
+        scenario: state.activeContext.scenario,
+        facet: state.activeContext.facet,
         question: {}
       }
       Vue.set(state, 'activeContext', payload)

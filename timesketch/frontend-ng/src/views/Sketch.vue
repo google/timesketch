@@ -220,111 +220,125 @@ limitations under the License.
         hide-overlay
         :width="navigationDrawer.width"
       >
-        <!-- Dialog for adding a scenario -->
-        <v-dialog v-model="scenarioDialog" max-width="500px">
-          <v-card>
-            <div class="pa-3">
-              <h3>Investigative Scenarios</h3>
-              <v-select
-                v-model="selectedScenario"
-                :items="scenarioTemplates"
-                item-text="name"
-                return-object
-                label="Select a scenario"
-                outlined
-                class="mt-3"
-              ></v-select>
-              <div v-if="selectedScenario">
-                {{ selectedScenario.description }}
-              </div>
-            </div>
-            <v-divider></v-divider>
-            <v-card-actions>
-              <v-spacer></v-spacer>
-              <v-btn @click="scenarioDialog = false" text> Cancel </v-btn>
-              <v-btn text color="primary" :disabled="!selectedScenario" @click="addScenario(selectedScenario.id)">
-                Add
-              </v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-dialog>
-
-        <v-tabs v-model="leftPanelTab" grow :next-icon="null" :prev-icon="null">
-          <v-tab v-for="item in leftPanelTabItems" :key="item"> {{ item }} </v-tab>
-        </v-tabs>
-        <v-divider></v-divider>
-        <v-tabs-items v-model="leftPanelTab">
-          <v-tab-item :transition="false">
-            <ts-search :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-search>
-            <ts-timelines-table :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-timelines-table>
-            <ts-saved-searches
-              v-if="meta.views"
-              :icon-only="isMiniDrawer"
-              @toggleDrawer="toggleDrawer()"
-            ></ts-saved-searches>
-            <ts-data-types :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-data-types>
-            <ts-tags :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-tags>
-            <ts-graphs :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-graphs>
-            <ts-stories :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-stories>
-            <ts-intelligence :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-intelligence>
-            <ts-search-templates :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-search-templates>
-            <ts-sigma-rules :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-sigma-rules>
-            <ts-analyzer-results :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-analyzer-results>
-          </v-tab-item>
-          <v-tab-item :transition="false">
-            <ts-scenario
-              v-for="scenario in activeScenarios"
-              :key="scenario.id"
-              :scenario="scenario"
-              :icon-only="isMiniDrawer"
-              @toggleDrawer="toggleDrawer()"
-            ></ts-scenario>
-            <v-row class="mt-0 px-2" flat v-show="!isMiniDrawer">
-              <v-col cols="6">
-                <v-card v-if="!Object.keys(scenarioTemplates).length" flat class="pa-4"
-                  >No scenarios available yet. Contact your server admin to add scenarios to this server.</v-card
-                >
-                <v-btn v-else text color="primary" @click="scenarioDialog = true" style="cursor: pointer"
-                  ><v-icon left>mdi-plus</v-icon> Add Scenario</v-btn
-                >
-              </v-col>
-
-              <v-col cols="6">
-                <v-btn
-                  small
-                  text
-                  color="primary"
-                  v-if="hiddenScenarios.length"
-                  @click="showHidden = !showHidden"
-                  class="mt-1"
-                >
-                  <small
-                    ><span v-if="showHidden">Hide</span><span v-else>Show</span> hidden scenarios ({{
-                      hiddenScenarios.length
-                    }})</small
-                  >
-                </v-btn>
-              </v-col>
-            </v-row>
-
-            <div v-if="showHidden">
-              <ts-scenario
-                v-for="scenario in hiddenScenarios"
-                :key="scenario.id"
-                :scenario="scenario"
-                :icon-only="isMiniDrawer"
-                @toggleDrawer="toggleDrawer()"
-              ></ts-scenario>
-            </div>
-          </v-tab-item>
-        </v-tabs-items>
+        <ts-search :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-search>
+        <ts-timelines-table :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-timelines-table>
+        <ts-saved-searches
+          v-if="meta.views"
+          :icon-only="isMiniDrawer"
+          @toggleDrawer="toggleDrawer()"
+        ></ts-saved-searches>
+        <ts-data-types :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-data-types>
+        <ts-tags :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-tags>
+        <ts-graphs :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-graphs>
+        <ts-stories :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-stories>
+        <ts-search-templates :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-search-templates>
+        <ts-sigma-rules :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-sigma-rules>
+        <ts-intelligence :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-intelligence>
+        <ts-analyzer-results :icon-only="isMiniDrawer" @toggleDrawer="toggleDrawer()"></ts-analyzer-results>
       </v-navigation-drawer>
 
       <!-- Main (canvas) view -->
-      <v-main class="notransition mt-5">
+      <v-main class="notransition">
+        <!-- DFIQ navigation -->
+        <v-container fluid class="mb-n2 mt-2">
+          <div class="d-flex flex-row ml-4" style="font-size: 0.9em">
+            <!-- Scenario -->
+            <v-menu offset-y>
+              <template v-slot:activator="{ on, attrs }">
+                <div v-bind="attrs" v-on="on" class="d-flex flex-row">
+                  <span
+                    v-if="activeContext.scenario.display_name"
+                    class="truncate-with-ellipsis"
+                    style="max-width: 250px"
+                  >
+                    {{ activeContext.scenario.display_name }}
+                  </span>
+                  <span v-else> Select a scenario </span>
+                  <v-icon small class="ml-1">mdi-chevron-down</v-icon>
+                </div>
+              </template>
+              <v-list>
+                <v-list-item-group>
+                  <v-list-item
+                    v-for="(scenario, index) in activeScenarios"
+                    :key="index"
+                    @click="setActiveScenario(scenario)"
+                  >
+                    <v-list-item-title>{{ scenario.name }}</v-list-item-title>
+                  </v-list-item>
+                </v-list-item-group>
+              </v-list>
+            </v-menu>
+            <!-- Facet -->
+            <v-menu offset-y :disabled="!activeContext.scenario.display_name" v-model="showFacetMenu">
+              <template v-slot:activator="{ on, attrs }">
+                <div v-bind="attrs" v-on="on" class="d-flex flex-row ml-5">
+                  <span v-if="activeContext.facet.display_name" class="truncate-with-ellipsis" style="max-width: 250px">
+                    {{ activeContext.facet.display_name }}
+                  </span>
+                  <span v-else :class="activeContext.scenario.display_name ? '' : 'disabled'"
+                    >Select an investigation</span
+                  >
+                  <v-icon small class="ml-1">mdi-chevron-down</v-icon>
+                </div>
+              </template>
+
+              <v-list style="max-width: 600px">
+                <v-list-item-group>
+                  <v-list-item
+                    v-for="(facet, index) in activeContext.scenario.facets"
+                    :key="index"
+                    @click="setActiveFacet(facet)"
+                  >
+                    <v-list-item-content>
+                      <v-list-item-title>{{ facet.display_name }}</v-list-item-title>
+                    </v-list-item-content>
+                  </v-list-item>
+                </v-list-item-group>
+              </v-list>
+            </v-menu>
+            <!-- Question -->
+            <v-menu offset-y :disabled="!activeContext.facet.display_name" v-model="showQuestionMenu">
+              <template v-slot:activator="{ on, attrs }">
+                <div v-bind="attrs" v-on="on" class="d-flex flex-row ml-5">
+                  <span
+                    v-if="activeContext.question.display_name"
+                    class="truncate-with-ellipsis"
+                    style="max-width: 350px"
+                  >
+                    {{ activeContext.question.display_name }}
+                  </span>
+
+                  <span v-else :class="activeContext.facet.display_name ? '' : 'disabled'">
+                    Select a question to answer
+                  </span>
+                  <v-icon small class="ml-1">mdi-chevron-down</v-icon>
+                </div>
+              </template>
+              <v-list style="max-width: 600px">
+                <v-list-item-group>
+                  <v-list-item
+                    v-for="(question, index) in activeContext.facet.questions"
+                    :key="index"
+                    @click="setActiveQuestion(question)"
+                  >
+                    <v-list-item-title>{{ question.display_name }}</v-list-item-title>
+                  </v-list-item>
+                </v-list-item-group>
+              </v-list>
+            </v-menu>
+          </div>
+        </v-container>
+
+        <!-- DFIQ context card -->
+        <v-container fluid>
+          <ts-scenario-context-card class="pt-0" v-if="activeContext.question.display_name"></ts-scenario-context-card>
+        </v-container>
+
         <router-view
           v-if="sketch.status && hasTimelines && !isArchived"
           @setTitle="(title) => (this.title = title)"
+          class="mt-n3"
         ></router-view>
       </v-main>
 
@@ -399,6 +413,7 @@ import TsRenameSketch from '../components/RenameSketch.vue'
 import TsAnalyzerResults from '../components/LeftPanel/AnalyzerResults.vue'
 import TsEventList from '../components/Explore/EventList.vue'
 import TsTimelinesTable from '../components/LeftPanel/TimelinesTable.vue'
+import TsScenarioContextCard from '../components/Scenarios/ContextCard.vue'
 
 export default {
   props: ['sketchId'],
@@ -419,6 +434,7 @@ export default {
     TsAnalyzerResults,
     TsTimelinesTable,
     TsEventList,
+    TsScenarioContextCard,
   },
   data() {
     return {
@@ -445,6 +461,8 @@ export default {
       contextStartTime: null,
       contextEndTime: null,
       contextTimeWindowSeconds: 300,
+      showFacetMenu: false,
+      showQuestionMenu: false,
     }
   },
   mounted() {
@@ -495,6 +513,9 @@ export default {
         return []
       }
       return this.scenarios.filter((scenario) => !scenario.status.length || scenario.status[0].status === 'active')
+    },
+    activeContext() {
+      return this.$store.state.activeContext
     },
     hiddenScenarios() {
       if (!this.scenarios) {
@@ -633,6 +654,32 @@ export default {
         this.isMiniDrawer = true
       }
     },
+    setActiveScenario: function (scenario) {
+      let payload = {
+        scenario: scenario,
+        facet: {},
+        question: {},
+      }
+      this.$store.dispatch('setActiveContext', payload)
+      this.showFacetMenu = true
+    },
+    setActiveFacet: function (facet) {
+      let payload = {
+        scenario: this.activeContext.scenario,
+        facet: facet,
+        question: {},
+      }
+      this.$store.dispatch('setActiveContext', payload)
+      this.showQuestionMenu = true
+    },
+    setActiveQuestion: function (question) {
+      let payload = {
+        scenario: this.activeContext.scenario,
+        facet: this.activeContext.facet,
+        question: question,
+      }
+      this.$store.dispatch('setActiveContext', payload)
+    },
   },
   watch: {
     hasTimelines(newVal, oldVal) {
@@ -646,3 +693,14 @@ export default {
   },
 }
 </script>
+
+<style lang="scss">
+.truncate-with-ellipsis {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.disabled {
+  opacity: 0.3;
+}
+</style>
