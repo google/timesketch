@@ -86,7 +86,13 @@ limitations under the License.
           </div>
 
           <div v-if="fileName">
-            <v-text-field label="Timeline Name" outlined v-model="form.name"></v-text-field>
+            <v-text-field
+              label="Timeline Name"
+              outlined
+              v-model="form.name"
+              clearable
+              :rules="timelineNameRules"
+            ></v-text-field>
             <v-radio-group v-if="extension === 'csv'" v-model="CSVDelimiter">
               <template v-slot:label>
                 <div>Choose <strong>CSV delimiter</strong></div>
@@ -141,7 +147,15 @@ limitations under the License.
           <v-spacer></v-spacer>
           <v-btn text @click="dialog = false"> Cancel </v-btn>
           <v-btn v-if="fileName" text @click="clearFormData()"> Select another file </v-btn>
-          <v-btn color="primary" text @click="submitForm()" v-if="!(error.length > 0 || !fileName)"> Submit </v-btn>
+          <v-btn
+            color="primary"
+            text
+            @click="submitForm()"
+            v-if="!(error.length > 0 || !fileName)"
+            :disabled="!form.name || form.name.length > 255"
+          >
+            Submit
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -173,6 +187,10 @@ export default {
         file: '',
       },
       fileName: '',
+      timelineNameRules: [
+        (v) => !!v || 'Timeline name is required.',
+        (v) => (v && v.length <= 255) || 'Timeline name is too long.',
+      ],
       fileMetaData: {},
       error: [],
       percentCompleted: 0,
