@@ -474,7 +474,7 @@ detection:
 title: Vim GTFOBin Abuse - Linux
 id: 7ab8f73a-fcff-428b-84aa-6a5ff7877dea
 status: test
-description: Detects usage of "vim" and it's siblings as a GTFOBin to execute and proxy command and binary execution
+description: Detects usage of "vim" and it's siblings as a GTFOBin to execute and proxy command and binary execution # pylint: disable=line-too-long
 references:
     - https://gtfobins.github.io/gtfobins/vim/
     - https://gtfobins.github.io/gtfobins/rvim/
