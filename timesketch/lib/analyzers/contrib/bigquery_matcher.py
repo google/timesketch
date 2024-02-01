@@ -1,4 +1,5 @@
 """Index analyzer plugin for matching against data in BigQuery tables."""
+
 import itertools
 import logging
 

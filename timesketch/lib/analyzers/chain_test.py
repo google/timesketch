@@ -1,4 +1,5 @@
 """Tests for Chain analyzer."""
+
 from __future__ import unicode_literals
 
 import uuid

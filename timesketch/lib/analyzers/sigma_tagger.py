@@ -1,4 +1,5 @@
 """Index analyzer plugin for sigma."""
+
 from __future__ import unicode_literals
 
 import logging
