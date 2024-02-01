@@ -383,11 +383,11 @@ level: medium
         self.assertIsNotNone(rule)
         self.assertEqual("5d2c62fe-3cbb-47c3-88e1-88ef73503a9f", rule.get("id"))
         self.assertIn(
-            'event_identifier:"10"',  # pylint: disable=line-too-long
+            'event_identifier:"10"',
             rule.get("search_query"),
         )
         self.assertIn(
-            'xml_string:"\\\\foobar.exe" AND xml_string:"10"',  # pylint: disable=line-too-long
+            'xml_string:"\\\\foobar.exe" AND xml_string:"10"',
             rule.get("search_query"),
         )
 
