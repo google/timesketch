@@ -816,10 +816,11 @@ class Search(resource.SketchResource):
                     new_indices.append(str(index))
                     continue
 
-            if index.isdigit():
-                if int(index) in valid_ids:
-                    new_indices.append(index)
-                    continue
+            if isinstance(index, str):
+                if index.isdigit():
+                    if int(index) in valid_ids:
+                        new_indices.append(index)
+                        continue
 
             # Is this a timeline name?
             if index in timeline_names:
