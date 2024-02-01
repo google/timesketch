@@ -1,4 +1,5 @@
 """Tests for OsshashdbLookupPlugin."""
+
 from __future__ import unicode_literals
 
 import copy

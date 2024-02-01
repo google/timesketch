@@ -1,4 +1,5 @@
 """Sketch analyzer plugin for detecting gaps in EVTX files."""
+
 from __future__ import unicode_literals
 
 import logging
