@@ -469,7 +469,8 @@ detection:
         """
         Testing rules, that contain special characters (like "'") in their description
         """
-        rule = sigma_util.parse_sigma_rule_by_text(r"""
+        rule = sigma_util.parse_sigma_rule_by_text(
+            r"""
 title: Vim GTFOBin Abuse - Linux
 id: 7ab8f73a-fcff-428b-84aa-6a5ff7877dea
 status: test
@@ -509,5 +510,6 @@ detection:
 falsepositives:
     - Unknown
 level: high
-""")
+"""
+        )
         self.assertIsNotNone(rule)
