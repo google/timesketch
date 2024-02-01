@@ -1,4 +1,5 @@
 """Sketch analyzer plugin for login and logoff events."""
+
 from __future__ import unicode_literals
 
 import logging

@@ -1,4 +1,5 @@
 """Tests for ThreatintelPlugin."""
+
 import json
 import re
 import mock
