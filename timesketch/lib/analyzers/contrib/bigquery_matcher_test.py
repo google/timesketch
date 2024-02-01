@@ -1,4 +1,5 @@
 """Tests for BigQueryMatcher Plugin."""
+
 import sys
 import copy
 import mock
