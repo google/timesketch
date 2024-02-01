@@ -1,4 +1,5 @@
 """The sketch analyzer for chained events."""
+
 from __future__ import unicode_literals
 
 import collections

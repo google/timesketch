@@ -1,4 +1,5 @@
 """Sketch analyzer plugin for feature extraction."""
+
 from __future__ import unicode_literals
 
 from timesketch.lib.analyzers import interface

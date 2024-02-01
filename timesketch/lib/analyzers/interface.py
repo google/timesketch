@@ -1485,9 +1485,9 @@ class AnalyzerOutput:
             ]
 
         if self.platform_meta_data["saved_aggregations"]:
-            output["platform_meta_data"][
-                "saved_aggregations"
-            ] = self.platform_meta_data["saved_aggregations"]
+            output["platform_meta_data"]["saved_aggregations"] = (
+                self.platform_meta_data["saved_aggregations"]
+            )
 
         if self.platform_meta_data["created_tags"]:
             output["platform_meta_data"]["created_tags"] = self.platform_meta_data[
@@ -1495,9 +1495,9 @@ class AnalyzerOutput:
             ]
 
         if self.platform_meta_data["created_attributes"]:
-            output["platform_meta_data"][
-                "created_attributes"
-            ] = self.platform_meta_data["created_attributes"]
+            output["platform_meta_data"]["created_attributes"] = (
+                self.platform_meta_data["created_attributes"]
+            )
 
         return output
 

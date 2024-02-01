@@ -153,10 +153,10 @@ class ViewListResource(resources.ResourceMixin, Resource):
         """
         form = forms.SaveViewForm.build(request)
         if not form.validate_on_submit():
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                "Unable to save view, not able to validate form data.",
-            )
+            error_message = "Unable to save view, not able to validate form data: "
+            for error in form.errors.values():
+                error_message += f"{error}, "
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, error_message[:-2])
 
         sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:

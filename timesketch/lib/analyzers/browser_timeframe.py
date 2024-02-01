@@ -1,4 +1,5 @@
 """Sketch analyzer plugin for browser timeframe."""
+
 from __future__ import unicode_literals
 
 import collections
@@ -155,7 +156,7 @@ class BrowserTimeframeSketchPlugin(interface.BaseAnalyzer):
     NAME = "browser_timeframe"
     DISPLAY_NAME = "Browser timeframe"
     DESCRIPTION = (
-        "Determine user activity hours by finding the frequency of" "browsing events"
+        "Determine user activity hours by finding the frequency of browsing events"
     )
 
     DEPENDENCIES = frozenset()
