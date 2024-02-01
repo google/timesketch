@@ -1,4 +1,5 @@
 """Sketch analyzer plugin for domains."""
+
 from __future__ import unicode_literals
 
 import collections

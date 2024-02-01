@@ -1,4 +1,5 @@
 """Sketch analyzer plugin for GCP Logging."""
+
 import re
 
 from timesketch.lib.analyzers import interface
@@ -11,7 +12,7 @@ class GCPLoggingSketchPlugin(interface.BaseAnalyzer):
     NAME = "gcp_logging"
     DISPLAY_NAME = "Google Cloud Logging Analyzer"
     DESCRIPTION = (
-        "Extract features and tag security relevant actions in " "Google Cloud Logging."
+        "Extract features and tag security relevant actions in Google Cloud Logging."
     )
 
     def _format_resource_name(self, resource_name):
