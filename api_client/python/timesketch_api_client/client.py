@@ -497,13 +497,13 @@ class TimesketchApi:
             yield user_obj
 
     def get_user(self, user_id):
-        """Get a sketch.
+        """Get a user.
 
         Args:
-            sketch_id: Primary key ID of the sketch.
+            user_id: Primary key ID of the user.
 
         Returns:
-            Instance of a Sketch object.
+            Instance of a User object.
         """
         return user.User(user_id=user_id, api=self)
 
