@@ -491,7 +491,7 @@ class TimesketchApi:
         """
         response = self.fetch_resource_data("users/")
 
-        for user_dict in response.get("objects", []):
+        for user_dict in response.get("objects",[])[0]:
             user_id = user_dict["id"]
             user_obj = user.User(user_id=user_id, api=self)
             yield user_obj

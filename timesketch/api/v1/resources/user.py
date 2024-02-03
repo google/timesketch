@@ -46,22 +46,7 @@ class UserListResource(resources.ResourceMixin, Resource):
         Returns:
             List of usernames
         """
-        users = User.query.all()
-        return_users = []
-
-        for user in users:
-            return_users.append(
-                {
-                    "id": user.id,
-                    "username": user.username,
-                    "name": user.name,
-                    "email": user.email,
-                    "active": user.active,
-                    "admin": user.admin,
-                }
-            )
-
-        return jsonify({"objects": return_users})
+        return self.to_json(User.query.all())
 
     @login_required
     def post(self):
