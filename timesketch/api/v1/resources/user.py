@@ -26,7 +26,6 @@ from timesketch.api.v1 import resources
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
-from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.models import db_session
 from timesketch.models.sketch import Sketch
 from timesketch.models.user import User
@@ -84,7 +83,6 @@ class UserListResource(resources.ResourceMixin, Resource):
 
         user = User.get_or_create(username=username, name=username)
         user.set_password(plaintext=password)
-        
         # TODO: Take additional attributes of users into account
         db_session.add(user)
         db_session.commit()
@@ -101,6 +99,7 @@ class UserListResource(resources.ResourceMixin, Resource):
         }
 
         return jsonify({"objects": [return_user]})
+
 
 class UserResource(resources.ResourceMixin, Resource):
     """Resource to get list of users."""
@@ -125,6 +124,7 @@ class UserResource(resources.ResourceMixin, Resource):
         }
 
         return jsonify({"objects": [return_user]})
+
 
 class GroupListResource(resources.ResourceMixin, Resource):
     """Resource to get list of groups."""

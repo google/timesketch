@@ -1135,7 +1135,7 @@ class UserListTest(BaseTest):
         )
         self.assertIsNotNone(response)
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_NOT_FOUND)
-    
+
     def test_user_post_resource_missing_password(self):
         """Authenticated request (admin user) to create another user, but with missing password, which should not work."""
         self.login_admin()
@@ -1159,4 +1159,4 @@ class UserTest(BaseTest):
 
         response = self.client.get(f"/api/v1/users/1/")
         data = json.loads(response.get_data(as_text=True))
-        self.assertEqual(data["objects"][0]["username"],"test1")
+        self.assertEqual(data["objects"][0]["username"], "test1")
