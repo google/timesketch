@@ -17,7 +17,6 @@ import logging
 
 from flask import abort
 from flask import request
-from flask import jsonify
 from flask_restful import Resource
 from flask_login import login_required
 from flask_login import current_user
