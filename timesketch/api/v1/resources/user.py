@@ -86,9 +86,7 @@ class UserListResource(resources.ResourceMixin, Resource):
         # TODO: Take additional attributes of users into account
         db_session.add(user)
         db_session.commit()
-
-
-return self.to_json(user)
+        return self.to_json(user)
 
 
 class UserResource(resources.ResourceMixin, Resource):
@@ -103,8 +101,7 @@ class UserResource(resources.ResourceMixin, Resource):
         """
 
         user = User.get_by_id(user_id)
-
-return self.to_json(user)
+        return self.to_json(user)
 
 
 class GroupListResource(resources.ResourceMixin, Resource):
