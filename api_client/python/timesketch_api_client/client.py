@@ -451,6 +451,62 @@ class TimesketchApi:
         sketch_id = objects[0]["id"]
         return self.get_sketch(sketch_id)
 
+    def create_user(self, username, password):
+        """Create a new user.
+
+        Args:
+            username: Name of the user
+            password: Password of the user
+
+        Returns:
+            True if user created successfully.
+
+        Raises:
+            RuntimeError: If response does not contain an 'objects' key after
+                DEFAULT_RETRY_COUNT attempts.
+        """
+
+        retry_count = 0
+        objects = None
+        while True:
+            resource_url = "{0:s}/users/".format(self.api_root)
+            form_data = {"username": username, "password": password}
+            response = self.session.post(resource_url, json=form_data)
+            response_dict = error.get_response_json(response, logger)
+            objects = response_dict.get("objects")
+            if objects:
+                break
+            retry_count += 1
+
+            if retry_count >= self.DEFAULT_RETRY_COUNT:
+                raise RuntimeError("Unable to create a new user.")
+
+        return user.User(user_id=objects[0]["id"], api=self)
+
+    def list_users(self):
+        """Get a list of all users.
+
+        Yields:
+            User object instances.
+        """
+        response = self.fetch_resource_data("users/")
+
+        for user_dict in response.get("objects", [])[0]:
+            user_id = user_dict["id"]
+            user_obj = user.User(user_id=user_id, api=self)
+            yield user_obj
+
+    def get_user(self, user_id):
+        """Get a user.
+
+        Args:
+            user_id: Primary key ID of the user.
+
+        Returns:
+            Instance of a User object.
+        """
+        return user.User(user_id=user_id, api=self)
+
     def get_oauth_token_status(self):
         """Return a dict with OAuth token status, if one exists."""
         if not self.credentials:
