@@ -87,18 +87,8 @@ class UserListResource(resources.ResourceMixin, Resource):
         db_session.add(user)
         db_session.commit()
 
-        user = User.get_or_create(username=username)
 
-        return_user = {
-            "id": user.id,
-            "username": user.username,
-            "name": user.name,
-            "email": user.email,
-            "active": user.active,
-            "admin": user.admin,
-        }
-
-        return jsonify({"objects": [return_user]})
+return self.to_json(user)
 
 
 class UserResource(resources.ResourceMixin, Resource):
@@ -114,16 +104,7 @@ class UserResource(resources.ResourceMixin, Resource):
 
         user = User.get_by_id(user_id)
 
-        return_user = {
-            "id": user.id,
-            "username": user.username,
-            "name": user.name,
-            "email": user.email,
-            "active": user.active,
-            "admin": user.admin,
-        }
-
-        return jsonify({"objects": [return_user]})
+return self.to_json(user)
 
 
 class GroupListResource(resources.ResourceMixin, Resource):
