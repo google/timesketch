@@ -18,11 +18,22 @@ limitations under the License.
     <h3>Rename sketch</h3>
     <br />
     <v-form @submit.prevent="renameSketch()">
-      <v-text-field outlined dense autofocus v-model="newSketchName" @focus="$event.target.select()"> </v-text-field>
+      <v-text-field
+        outlined
+        dense
+        autofocus
+        v-model="newSketchName"
+        @focus="$event.target.select()"
+        clearable
+        :rules="sketchNameRules"
+      >
+      </v-text-field>
       <v-card-actions>
         <v-spacer></v-spacer>
         <v-btn text @click="closeDialog()"> Cancel </v-btn>
-        <v-btn text color="primary" @click="renameSketch()"> Save </v-btn>
+        <v-btn :disabled="!newSketchName || newSketchName.length > 255" text color="primary" @click="renameSketch()">
+          Save
+        </v-btn>
       </v-card-actions>
     </v-form>
   </div>
@@ -35,6 +46,10 @@ export default {
   data() {
     return {
       newSketchName: '',
+      sketchNameRules: [
+        (v) => !!v || 'Sketch name is required.',
+        (v) => (v && v.length <= 255) || 'Sketch name is too long.',
+      ],
     }
   },
   computed: {

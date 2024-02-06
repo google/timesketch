@@ -657,14 +657,6 @@ class Sketch(resource.BaseResource):
                 continue
             for result in objects[0]:
                 session_id = result.get("analysissession_id")
-                stat = {
-                    "index": timeline_obj.index,
-                    "timeline_id": timeline_obj.id,
-                    "session_id": session_id,
-                    "analyzer": result.get("analyzer_name", "N/A"),
-                    "results": result.get("result", "N/A"),
-                    "status": "N/A",
-                }
                 if as_sessions and session_id:
                     sessions.append(
                         analyzer.AnalyzerResult(
@@ -676,8 +668,8 @@ class Sketch(resource.BaseResource):
                     )
                 status = result.get("status", [])
                 if len(status) == 1:
-                    stat["status"] = status[0].get("status", "N/A")
-                stats_list.append(stat)
+                    result["status"] = status[0].get("status", "N/A")
+                stats_list.append(result)
 
         if as_sessions:
             return sessions

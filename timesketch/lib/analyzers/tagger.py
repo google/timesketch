@@ -1,5 +1,6 @@
 """Analyzer plugin for tagging."""
-from collections.abc import Iterable
+
+from collections.abc import Iterable  # pylint: disable no-name-in-module
 import logging
 
 from timesketch.lib import emojis

@@ -31,7 +31,7 @@ limitations under the License.
       </ul>
     </div>
 
-    <v-sheet style="max-width: 80%" class="mb-3">
+    <v-sheet style="max-width: 80%; background-color: transparent" class="mb-3">
       <v-icon color="success" class="mr-2">mdi-check</v-icon>
       <strong>Covered</strong>
       <ul class="mt-2">
@@ -39,7 +39,7 @@ limitations under the License.
       </ul>
     </v-sheet>
 
-    <v-sheet style="max-width: 80%">
+    <v-sheet style="max-width: 80%; background-color: transparent">
       <v-icon color="error" class="mr-2">mdi-close</v-icon>
       <strong>Not covered</strong>
       <ul class="mt-2">

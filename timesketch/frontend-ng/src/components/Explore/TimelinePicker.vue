@@ -17,6 +17,7 @@ limitations under the License.
   <span>
     <ts-timeline-chip
       v-for="timeline in allTimelines"
+      class="mr-2 mb-3 timeline-chip"
       :key="timeline.id + timeline.name"
       :timeline="timeline"
       :is-selected="isSelected(timeline)"
@@ -40,23 +41,15 @@ limitations under the License.
       <span v-else> {{ sketch.timelines.length - 20 }} more.. </span>
     </v-btn>
     <br />
-    <span v-if="sketch.timelines.length > 5">
-      <v-btn small text rounded color="primary" @click="enableAllTimelines()">
-        <v-icon left small>mdi-checkbox-outline</v-icon>
-        <span>Select all</span>
-      </v-btn>
-      <v-btn small text rounded color="primary" @click="disableAllTimelines()">
-        <v-icon left small>mdi-minus-box-outline</v-icon>
-        <span>Unselect all</span>
-      </v-btn>
-    </span>
   </span>
 </template>
 
 <script>
-import EventBus from '../../main'
-import TsTimelineChip from './TimelineChip'
-import ApiClient from '../../utils/RestApiClient'
+import EventBus from '../../event-bus.js'
+import TsTimelineChip from './TimelineChip.vue'
+import ApiClient from '../../utils/RestApiClient.js'
+
+import _ from 'lodash'
 
 export default {
   components: { TsTimelineChip },
@@ -91,13 +84,12 @@ export default {
     return {
       isDarkTheme: false,
       isLoading: false,
-      selectedTimelines: [],
       showAll: false,
     }
   },
   methods: {
     isSelected(timeline) {
-      return this.selectedTimelines.map((x) => x.id).includes(timeline.id)
+      return this.$store.state.enabledTimelines.includes(timeline.id)
     },
     getCount(timeline) {
       let count = 0
@@ -150,35 +142,18 @@ export default {
           this.isLoading = false
         })
     },
-    enableAllTimelines() {
-      this.selectedTimelines = this.activeTimelines
-      this.$emit('updateSelectedTimelines', this.selectedTimelines)
-    },
-    disableAllTimelines() {
-      this.selectedTimelines = []
-      this.$emit('updateSelectedTimelines', this.selectedTimelines)
-    },
     disableAllOtherTimelines(timeline) {
-      this.selectedTimelines = [timeline]
-      this.$emit('updateSelectedTimelines', this.selectedTimelines)
+      this.$store.dispatch('updateEnabledTimelines', [timeline.id])
     },
     toggleTimeline(timeline) {
-      let newArray = this.selectedTimelines.slice()
-      let timelineIdx = newArray.map((x) => x.id).indexOf(timeline.id)
-      if (timelineIdx === -1) {
-        newArray.push(timeline)
-      } else {
-        newArray.splice(timelineIdx, 1)
-      }
-      this.selectedTimelines = newArray
-      this.$emit('updateSelectedTimelines', this.selectedTimelines)
+      this.$store.dispatch('toggleEnabledTimeline', timeline.id)
     },
     toggleTheme() {
       this.isDarkTheme = !this.isDarkTheme
     },
     syncSelectedTimelines() {
       if (this.currentQueryFilter.indices.includes('_all')) {
-        this.selectedTimelines = this.activeTimelines
+        this.updateEnabledTimelinesIfChanged(this.activeTimelines.map((tl) => tl.id))
         return
       }
       let newArray = []
@@ -195,17 +170,16 @@ export default {
           newArray.push(timeline)
         }
       })
-      this.selectedTimelines = newArray
+      this.updateEnabledTimelinesIfChanged(newArray.map((tl) => tl.id))
+    },
+    updateEnabledTimelinesIfChanged(newTimelineIds) {
+      if (!_.isEqual(newTimelineIds, this.$store.state.enabledTimelines)) {
+        this.$store.dispatch('updateEnabledTimelines', newTimelineIds)
+      }
     },
   },
   created() {
     EventBus.$on('isDarkTheme', this.toggleTheme)
-
-    if (this.currentQueryFilter.indices.includes('_all')) {
-      this.selectedTimelines = this.activeTimelines
-    } else {
-      this.syncSelectedTimelines()
-    }
   },
   watch: {
     'currentQueryFilter.indices'(val) {
@@ -215,3 +189,10 @@ export default {
   },
 }
 </script>
+
+<!-- CSS scoped to this component only -->
+<style scoped lang="scss">
+.timeline-chip {
+  display: inline-block;
+}
+</style>

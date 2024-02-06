@@ -1,4 +1,5 @@
 """Sketch analyzer plugin for browser search."""
+
 from __future__ import unicode_literals
 
 import logging

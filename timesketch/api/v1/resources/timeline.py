@@ -54,7 +54,7 @@ class TimelineListResource(resources.ResourceMixin, Resource):
         Returns:
             View in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
         if not sketch.has_permission(current_user, "read"):
@@ -71,7 +71,7 @@ class TimelineListResource(resources.ResourceMixin, Resource):
         Returns:
             A sketch in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
@@ -97,7 +97,7 @@ class TimelineListResource(resources.ResourceMixin, Resource):
                 "The timeline (searchindex id) needs to be an integer.",
             )
 
-        searchindex = SearchIndex.query.get_with_acl(searchindex_id)
+        searchindex = SearchIndex.get_with_acl(searchindex_id)
         if searchindex.get_status.status == "deleted":
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
@@ -139,7 +139,7 @@ class TimelineListResource(resources.ResourceMixin, Resource):
         else:
             metadata["created"] = False
             return_code = HTTP_STATUS_CODE_OK
-            timeline = Timeline.query.get(timeline_id)
+            timeline = Timeline.get_by_id(timeline_id)
 
         # Run sketch analyzers when timeline is added. Import here to avoid
         # circular imports.
@@ -197,11 +197,11 @@ class TimelineResource(resources.ResourceMixin, Resource):
             sketch_id: Integer primary key for a sketch database model
             timeline_id: Integer primary key for a timeline database model
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
-        timeline = Timeline.query.get(timeline_id)
+        timeline = Timeline.get_by_id(timeline_id)
         if not timeline:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No Timeline found with this ID.")
 
@@ -255,10 +255,10 @@ class TimelineResource(resources.ResourceMixin, Resource):
             sketch_id: Integer primary key for a sketch database model
             timeline_id: Integer primary key for a timeline database model
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
-        timeline = Timeline.query.get(timeline_id)
+        timeline = Timeline.get_by_id(timeline_id)
         if not timeline:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No timeline found with this ID.")
 
@@ -353,11 +353,11 @@ class TimelineResource(resources.ResourceMixin, Resource):
             sketch_id: Integer primary key for a sketch database model
             timeline_id: Integer primary key for a timeline database model
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
-        timeline = Timeline.query.get(timeline_id)
+        timeline = Timeline.get_by_id(timeline_id)
         if not timeline:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No timeline found with this ID.")
 
@@ -475,7 +475,7 @@ class TimelineCreateResource(resources.ResourceMixin, Resource):
 
         sketch = None
         if sketch_id:
-            sketch = Sketch.query.get_with_acl(sketch_id)
+            sketch = Sketch.get_with_acl(sketch_id)
             if not sketch:
                 abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 

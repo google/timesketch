@@ -251,7 +251,7 @@ def parse_sigma_rule_by_text(rule_text, sigma_config=None):
 
         for doc in rule_yaml_data:
             parser = sigma_collection.SigmaCollectionParser(
-                str(doc), sigma_conf_obj, None
+                str(rule_text), sigma_conf_obj, None
             )
             parsed_sigma_rules = parser.generate(sigma_backend)
             rule_return.update(doc)

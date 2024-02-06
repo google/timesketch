@@ -61,7 +61,7 @@ limitations under the License.
 
 <script>
 import ApiClient from '../../utils/RestApiClient'
-import EventBus from '../../main'
+import EventBus from '../../event-bus.js'
 
 export default {
   props: ['searchtemplate'],

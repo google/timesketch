@@ -14,32 +14,34 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <v-card outlined rounded class="mt-3 mx-3" v-if="activeContext.question">
+  <v-card v-if="activeContext.question" class="mt-3 mx-3 pb-1" outlined>
     <v-toolbar flat dense style="background-color: transparent">
-      <h3>
+      <v-btn v-if="activeContext.question.description" small icon @click="expanded = !expanded" class="mr-1">
+        <v-icon v-if="expanded">mdi-chevron-up</v-icon>
+        <v-icon v-else>mdi-chevron-down</v-icon>
+      </v-btn>
+
+      <h4>
         {{ activeContext.question.display_name }}
         <small>
           <a :href="getDfiqQuestionUrl(activeContext.question.dfiq_identifier)" target="_blank" rel="noreferrer"
             >({{ activeContext.question.dfiq_identifier }})</a
           >
         </small>
-      </h3>
+      </h4>
       <v-spacer></v-spacer>
-      <v-btn v-if="activeContext.question.description" small icon @click="expanded = !expanded" class="mr-1">
-        <v-icon v-if="expanded">mdi-chevron-up</v-icon>
-        <v-icon v-else>mdi-chevron-down</v-icon>
-      </v-btn>
 
       <v-btn small icon @click="$store.dispatch('clearActiveContext')" class="mr-1">
         <v-icon>mdi-close</v-icon>
       </v-btn>
     </v-toolbar>
+    <v-divider v-show="expanded"></v-divider>
 
     <v-expand-transition>
       <div v-show="expanded">
         <div v-if="activeContext.question.description">
           <div
-            class="px-4 pb-4 markdown-body"
+            class="pa-4 markdown-body"
             style="background-color: transparent"
             v-html="toHtml(activeContext.question.description)"
           ></div>
@@ -58,10 +60,10 @@ limitations under the License.
 
         <!--Approaches-->
         <div v-if="activeContext.question.approaches.length">
-          <div class="px-4 pb-3">
-            <v-btn depressed small @click="showApproaches = !showApproaches">
+          <div class="px-4 pb-4">
+            <v-btn depressed rounded small @click="showApproaches = !showApproaches">
               <span v-if="!showApproaches">Show {{ activeContext.question.approaches.length }} approaches</span>
-              <span v-else>Hide approaches</span>
+              <span v-else>Hide {{ activeContext.question.approaches.length }} approaches</span>
             </v-btn>
           </div>
           <v-expand-transition>
@@ -92,8 +94,8 @@ limitations under the License.
 <script>
 import DOMPurify from 'dompurify'
 import { marked } from 'marked'
-import TsContextCardApproach from './ContextCardApproach'
-import TsSearchChip from './SearchChip'
+import TsContextCardApproach from './ContextCardApproach.vue'
+import TsSearchChip from './SearchChip.vue'
 
 export default {
   components: { TsContextCardApproach, TsSearchChip },

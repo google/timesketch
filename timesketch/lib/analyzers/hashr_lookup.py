@@ -1,4 +1,5 @@
 """Sketch analyzer plugin for hashR lookup."""
+
 import logging
 import sys
 

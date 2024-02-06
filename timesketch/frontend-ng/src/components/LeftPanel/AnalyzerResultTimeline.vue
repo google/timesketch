@@ -22,7 +22,7 @@ limitations under the License.
       style="display: flex; align-items: center"
       :class="getHoverTheme"
     >
-      <v-icon class="mr-2" :color="'#' + timeline.color">mdi-circle</v-icon>
+      <v-icon title="Toggle results for this timeline" class="mr-2" :color="'#' + timeline.color">mdi-circle</v-icon>
       <span class="mr-2 timeline-name-ellipsis" style="color: grey; width:82% !important;">{{ timeline.name }}</span>
       <v-progress-circular :size="20" :width="1" indeterminate color="primary"></v-progress-circular>
     </div>
@@ -33,22 +33,17 @@ limitations under the License.
       @click="expanded = !expanded"
       :class="getHoverTheme"
     >
-      <v-icon class="mr-2" :color="'#' + timeline.color">mdi-circle</v-icon>
+      <v-icon title="Toggle results for this timeline" class="mr-2" :color="'#' + timeline.color">mdi-circle</v-icon>
       <span class="timeline-name-ellipsis" style="width:82% !important;">{{ timeline.name }}</span>
       <div v-if="timeline.analysis_status === 'ERROR'">
-        <v-tooltip top>
-          <template v-slot:activator="{ on }">
-            <v-btn text x-small icon v-on="on" class="ml-1" :ripple="false">
-              <v-icon small class="ml-1">mdi-alert</v-icon>
-            </v-btn>
-          </template>
-          <span>Analyzer Error</span>
-        </v-tooltip>
+        <v-btn text x-small icon v-on="on" class="ml-1" :ripple="false" style="cursor: default">
+          <v-icon title="The analyzer ran into an error" small class="ml-1">mdi-alert</v-icon>
+        </v-btn>
       </div>
       <div v-else-if="checkAnalyzerOutput && !isMultiAnalyzer">
         <v-tooltip top>
           <template v-slot:activator="{ on }">
-            <v-btn v-show="!isMultiAnalyzer" text x-small icon v-on="on" class="ml-1" :ripple="false">
+            <v-btn v-show="!isMultiAnalyzer" text x-small icon v-on="on" class="ml-1" :ripple="false" style="cursor: default">
               <v-icon small :color="getPriorityColor">mdi-information-outline</v-icon>
             </v-btn>
           </template>
@@ -58,7 +53,7 @@ limitations under the License.
       <div v-else>
         <v-tooltip v-if="!isMultiAnalyzer" top>
           <template v-slot:activator="{ on }">
-            <v-btn v-show="!isMultiAnalyzer" text x-small icon v-on="on" class="ml-1" :ripple="false">
+            <v-btn v-show="!isMultiAnalyzer" text x-small icon v-on="on" class="ml-1" :ripple="false" style="cursor: default">
               <v-icon small :color="getPriorityColor">mdi-information-outline</v-icon>
             </v-btn>
           </template>
@@ -288,7 +283,7 @@ limitations under the License.
 </template>
 
 <script>
-import EventBus from '../../main'
+import EventBus from '../../event-bus.js'
 import TsLinkRedirectWarning from '../Explore/LinkRedirectWarning.vue'
 
 export default {

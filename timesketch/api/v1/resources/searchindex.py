@@ -107,7 +107,7 @@ class SearchIndexResource(resources.ResourceMixin, Resource):
         Returns:
             Search index in JSON (instance of flask.wrappers.Response)
         """
-        searchindex = SearchIndex.query.get_with_acl(searchindex_id)
+        searchindex = SearchIndex.get_with_acl(searchindex_id)
 
         try:
             mapping = self.datastore.client.indices.get_mapping(searchindex.index_name)
@@ -144,7 +144,7 @@ class SearchIndexResource(resources.ResourceMixin, Resource):
         if not searchindex_id:
             abort(HTTP_STATUS_CODE_BAD_REQUEST, "Need to define a search index ID")
 
-        searchindex = SearchIndex.query.get_with_acl(searchindex_id)
+        searchindex = SearchIndex.get_with_acl(searchindex_id)
         if not searchindex:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No searchindex found with this ID.")
 
@@ -184,7 +184,7 @@ class SearchIndexResource(resources.ResourceMixin, Resource):
     @login_required
     def delete(self, searchindex_id):
         """Handles DELETE request to the resource."""
-        searchindex = SearchIndex.query.get_with_acl(searchindex_id)
+        searchindex = SearchIndex.get_with_acl(searchindex_id)
         if not searchindex:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No searchindex found with this ID.")
 

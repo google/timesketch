@@ -368,22 +368,52 @@ class TimesketchApi:
             Dictionary with the response data.
 
         Raises:
-            RuntimeError: If response could not be JSON-decoded after
+            ValueError: If response could not be JSON-decoded after
                 DEFAULT_RETRY_COUNT attempts.
+            RuntimeError: If the API server returns an error or empty.
         """
         resource_url = "{0:s}/{1:s}".format(self.api_root, resource_uri)
-        response = self.session.get(resource_url, params=params)
 
         retry_count = 0
+        result = None
         while True:
-            result = error.get_response_json(response, logger)
-            # Any dict with content is good enough for us to return.
-            if result:
-                return result
             retry_count += 1
+            response = self.session.get(resource_url, params=params)
+            try:
+                result = error.get_response_json(response, logger)
+                if result:
+                    return result
+            except RuntimeError as e:
+                if retry_count >= self.DEFAULT_RETRY_COUNT:
+                    raise RuntimeError(
+                        "Error for request '{0:s}' - '{1!s}'".format(resource_url, e)
+                    ) from e
+
+                logger.warning(
+                    "[{0:d}/{1:d}] Parsing the repsonse for request '{2:s}'"
+                    "failed. Trying again...".format(
+                        retry_count, self.DEFAULT_RETRY_COUNT, resource_url
+                    )
+                )
+            except ValueError as e:
+                if retry_count >= self.DEFAULT_RETRY_COUNT:
+                    raise ValueError(
+                        "Error parsing response for request '{0:s}' - {1!s}".format(
+                            resource_url, e
+                        )
+                    ) from e
+
+                logger.warning(
+                    "[{0:d}/{1:d}] Parsing the JSON repsonse for request "
+                    "'{2:s}' failed. Trying again...".format(
+                        retry_count, self.DEFAULT_RETRY_COUNT, resource_url
+                    )
+                )
+
             if retry_count >= self.DEFAULT_RETRY_COUNT:
                 raise RuntimeError(
-                    f"Unable to fetch JSON resource data. Response: {str(result)}"
+                    "Unable to fetch JSON resource data for request: '{0:s}'"
+                    " - Response: '{1!s}'".format(resource_url, result)
                 )
 
     def create_sketch(self, name, description=None):
@@ -481,9 +511,9 @@ class TimesketchApi:
                 line_dict["field_{0:d}_name".format(field_index + 1)] = field.get(
                     "name"
                 )
-                line_dict[
-                    "field_{0:d}_description".format(field_index + 1)
-                ] = field.get("description")
+                line_dict["field_{0:d}_description".format(field_index + 1)] = (
+                    field.get("description")
+                )
             lines.append(line_dict)
 
         return pandas.DataFrame(lines)

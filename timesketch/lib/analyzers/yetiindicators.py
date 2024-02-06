@@ -38,6 +38,36 @@ class YetiIndicators(interface.BaseAnalyzer):
         self.yeti_api_root = root
         self.yeti_web_root = root.replace("/api/v2", "")
         self.yeti_api_key = current_app.config.get("YETI_API_KEY")
+        self._yeti_session = requests.Session()
+        tls_cert = current_app.config.get("YETI_TLS_CERTIFICATE")
+        if tls_cert and self.yeti_web_root.startswith("https://"):
+            self._yeti_session.verify = tls_cert
+
+    @property
+    def authenticated_session(self) -> requests.Session:
+        """Returns a requests.Session object with an authenticated Yeti session.
+
+        Returns:
+          A requests.Session object with an authenticated Yeti session.
+        """
+        if not self._yeti_session.headers.get("authorization"):
+            self.authenticate_session()
+        return self._yeti_session
+
+    def authenticate_session(self) -> None:
+        """Fetches an access token for Yeti."""
+
+        response = self._yeti_session.post(
+            f"{self.yeti_api_root}/auth/api-token",
+            headers={"x-yeti-apikey": self.yeti_api_key},
+        )
+        if response.status_code != 200:
+            raise RuntimeError(
+                f"Error {response.status_code} authenticating with Yeti API"
+            )
+
+        access_token = response.json()["access_token"]
+        self._yeti_session.headers.update({"authorization": f"Bearer {access_token}"})
 
     def get_neighbors(self, yeti_object: Dict) -> List[Dict]:
         """Retrieves a list of neighbors associated to a given entity.
@@ -49,7 +79,7 @@ class YetiIndicators(interface.BaseAnalyzer):
           A list of JSON objects describing a Yeti entity.
         """
         extended_id = f"{yeti_object['root_type']}/{yeti_object['id']}"
-        results = requests.post(
+        results = self.authenticated_session.post(
             f"{self.yeti_api_root}/graph/search",
             json={
                 "source": extended_id,
@@ -58,14 +88,13 @@ class YetiIndicators(interface.BaseAnalyzer):
                 "direction": "any",
                 "include_original": False,
             },
-            headers={"X-Yeti-API": self.yeti_api_key},
         )
         if results.status_code != 200:
             return []
         neighbors = []
         for neighbor in results.json().get("vertices", {}).values():
-            neighbors.append(neighbor)
-
+            if neighbor["root_type"] == "entity":
+                neighbors.append(neighbor)
         return neighbors
 
     def get_indicators(self, indicator_type: str) -> Dict[str, dict]:
@@ -75,17 +104,16 @@ class YetiIndicators(interface.BaseAnalyzer):
             A dictionary of indicators obtained from yeti, keyed by indicator
             ID.
         """
-        response = requests.post(
+        response = self.authenticated_session.post(
             self.yeti_api_root + "/indicators/search",
-            json={"name": "", "type": indicator_type},
-            headers={"X-Yeti-API": self.yeti_api_key},
+            json={"query": {"name": ""}, "type": indicator_type},
         )
+        data = response.json()
         if response.status_code != 200:
             raise RuntimeError(
                 f"Error {response.status_code} retrieving indicators from Yeti:"
-                + response.json()
+                + str(data)
             )
-        data = response.json()
         indicators = {item["id"]: item for item in data["indicators"]}
         for _id, indicator in indicators.items():
             indicator["compiled_regexp"] = re.compile(indicator["pattern"])
@@ -107,6 +135,10 @@ class YetiIndicators(interface.BaseAnalyzer):
         tags = []
         for n in neighbors:
             slug = re.sub(r"[^a-z0-9]", "-", n["name"].lower())
+            slug = re.sub(r"-+", "-", slug)
+            tags.append(slug)
+        for tag in indicator["relevant_tags"]:
+            slug = re.sub(r"[^a-z0-9]", "-", tag.lower())
             slug = re.sub(r"-+", "-", slug)
             tags.append(slug)
         event.add_tags(tags)
@@ -157,9 +189,9 @@ class YetiIndicators(interface.BaseAnalyzer):
 
             events = self.event_stream(query_dsl=query_dsl, return_fields=["message"])
             neighbors = self.get_neighbors(indicator)
-
             for n in neighbors:
-                entities_found.add(f"{n['name']}:{n['type']}")
+                if n["root_type"] == "entity":
+                    entities_found.add(f"{n['name']}:{n['type']}")
 
             uri = f"{self.yeti_web_root}/indicators/{indicator['id']}"
 

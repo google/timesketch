@@ -73,7 +73,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
         Returns:
             JSON with list of matched events
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
@@ -106,7 +106,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
         question_id = request.json.get("question", None)
 
         if scenario_id:
-            scenario = Scenario.query.get(scenario_id)
+            scenario = Scenario.get_by_id(scenario_id)
             if scenario:
                 if scenario.sketch_id != sketch.id:
                     abort(
@@ -115,7 +115,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
                     )
 
         if facet_id:
-            facet = Facet.query.get(facet_id)
+            facet = Facet.get_by_id(facet_id)
             if facet:
                 if facet.scenario.sketch_id != sketch.id:
                     abort(
@@ -124,7 +124,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
                     )
 
         if question_id:
-            question = InvestigativeQuestion.query.get(question_id)
+            question = InvestigativeQuestion.get_by_id(question_id)
             if question:
                 if question.facet.scenario.sketch_id != sketch.id:
                     abort(
@@ -361,7 +361,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
         new_search = SearchHistory(user=current_user, sketch=sketch)
 
         if parent:
-            previous_search = SearchHistory.query.get(parent)
+            previous_search = SearchHistory.get_by_id(parent)
         else:
             previous_search = (
                 SearchHistory.query.filter_by(user=current_user, sketch=sketch)
@@ -461,7 +461,7 @@ class QueryResource(resources.ResourceMixin, Resource):
         form = forms.ExploreForm.build(request)
         if not form.validate_on_submit():
             abort(HTTP_STATUS_CODE_BAD_REQUEST, "Unable to validate form data.")
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
         if not sketch.has_permission(current_user, "read"):
@@ -505,7 +505,7 @@ class SearchHistoryResource(resources.ResourceMixin, Resource):
         if not limit:
             limit = DEFAULT_LIMIT
 
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
@@ -544,7 +544,7 @@ class SearchHistoryTreeResource(resources.ResourceMixin, Resource):
         Returns:
             Search history in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 

@@ -14,7 +14,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div>
+  <div
+    v-if="iconOnly"
+    class="pa-4"
+    style="cursor: pointer"
+    @click="
+      $emit('toggleDrawer')
+      expanded = true
+    "
+  >
+    <v-icon left>mdi-tag-multiple-outline</v-icon>
+    <div style="height: 1px"></div>
+  </div>
+  <div v-else>
     <div
       :style="(tags && tags.length) || (labels && labels.length) ? 'cursor: pointer' : ''"
       class="pa-4"
@@ -43,10 +55,12 @@ limitations under the License.
 import TsTagsList from './TagsList.vue'
 
 export default {
+  props: {
+    iconOnly: Boolean,
+  },
   components: {
     TsTagsList,
   },
-  props: [],
   data: function () {
     return {
       expanded: false,

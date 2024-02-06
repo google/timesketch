@@ -14,7 +14,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div>
+  <div
+    v-if="iconOnly"
+    class="pa-4"
+    style="cursor: pointer"
+    @click="
+      $emit('toggleDrawer')
+      expanded = true
+    "
+  >
+    <v-icon left>mdi-content-save-outline</v-icon>
+    <div style="height: 1px"></div>
+  </div>
+  <div v-else>
     <div
       :style="meta.views && meta.views.length ? 'cursor: pointer' : ''"
       class="pa-4"
@@ -43,24 +55,13 @@ limitations under the License.
               ><div class="mt-1">{{ savedSearch.name }}</div></v-col
             >
             <v-col cols="auto">
-              <v-tooltip top open-delay="500">
-                <template v-slot:activator="{ on }">
-                  <v-btn
-                    icon
-                    x-small
-                    style="cursor: pointer"
-                    @click="copySavedSearchUrlToClipboard(savedSearch.id)"
-                    v-on="on"
-                  >
-                    <v-icon small v-show="key == c_key">mdi-link-variant</v-icon>
-                  </v-btn>
-                </template>
-                <span>Copy link to this search</span>
-              </v-tooltip>
+              <v-btn icon x-small style="cursor: pointer" @click="copySavedSearchUrlToClipboard(savedSearch.id)">
+                <v-icon title="Copy link to this search" small v-show="key == c_key">mdi-link-variant</v-icon>
+              </v-btn>
               <v-menu offset-y>
                 <template v-slot:activator="{ on, attrs }">
                   <v-btn small icon v-bind="attrs" v-on="on" class="mr-1">
-                    <v-icon small>mdi-dots-vertical</v-icon>
+                    <v-icon title="More actions" small>mdi-dots-vertical</v-icon>
                   </v-btn>
                 </template>
                 <v-list dense class="mx-auto">
@@ -88,10 +89,12 @@ limitations under the License.
 </template>
 
 <script>
-import EventBus from '../../main'
+import EventBus from '../../event-bus.js'
 
 export default {
-  props: [],
+  props: {
+    iconOnly: Boolean,
+  },
   data: function () {
     return {
       expanded: false,

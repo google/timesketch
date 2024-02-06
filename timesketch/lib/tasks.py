@@ -19,7 +19,6 @@ import os
 import logging
 import subprocess
 import traceback
-import re
 
 import codecs
 import io
@@ -40,6 +39,7 @@ from sqlalchemy import create_engine
 # To be able to determine plaso's version.
 try:
     import plaso
+    from plaso.cli import pinfo_tool
 except ImportError:
     plaso = None
 
@@ -170,7 +170,7 @@ def _set_timeline_status(timeline_id, status, error_msg=None):
     Args:
         timeline_id: Timeline ID.
     """
-    timeline = Timeline.query.get(timeline_id)
+    timeline = Timeline.get_by_id(timeline_id)
     if not timeline:
         logger.warning("Cannot set status: No such timeline")
         return
@@ -196,7 +196,7 @@ def _set_timeline_status(timeline_id, status, error_msg=None):
 
 
 def _set_datasource_status(timeline_id, file_path, status, error_message=None):
-    timeline = Timeline.query.get(timeline_id)
+    timeline = Timeline.get_by_id(timeline_id)
     for datasource in timeline.datasources:
         if datasource.get_file_on_disk == file_path:
             datasource.set_status(status)
@@ -211,7 +211,7 @@ def _set_datasource_status(timeline_id, file_path, status, error_message=None):
 
 
 def _set_datasource_total_events(timeline_id, file_path, total_file_events):
-    timeline = Timeline.query.get(timeline_id)
+    timeline = Timeline.get_by_id(timeline_id)
     for datasource in timeline.datasources:
         if datasource.get_file_on_disk == file_path:
             datasource.set_total_file_events(total_file_events)
@@ -369,21 +369,22 @@ def build_sketch_analysis_pipeline(
         analyzer_kwargs = current_app.config.get("ANALYZERS_DEFAULT_KWARGS", {})
 
     if user_id:
-        user = User.query.get(user_id)
+        user = User.get_by_id(user_id)
     else:
         user = None
 
-    sketch = Sketch.query.get(sketch_id)
-    analysis_session = AnalysisSession(user, sketch)
+    sketch = Sketch.get_by_id(sketch_id)
+    analysis_session = AnalysisSession(user=user, sketch=sketch)
+    db_session.add(analysis_session)
 
     analyzers = manager.AnalysisManager.get_analyzers(analyzer_names)
     for analyzer_name, analyzer_class in analyzers:
         base_kwargs = analyzer_kwargs.get(analyzer_name, {})
-        searchindex = SearchIndex.query.get(searchindex_id)
+        searchindex = SearchIndex.get_by_id(searchindex_id)
 
         timeline = None
         if timeline_id:
-            timeline = Timeline.query.get(timeline_id)
+            timeline = Timeline.get_by_id(timeline_id)
 
         if not timeline:
             timeline = Timeline.query.filter_by(
@@ -438,8 +439,8 @@ def build_sketch_analysis_pipeline(
             )
             analysis.add_attribute(name="kwargs_hash", value=kwargs_list_hash)
             analysis.set_status("PENDING")
-            analysis_session.analyses.append(analysis)
             db_session.add(analysis)
+            analysis_session.analyses.append(analysis)
             db_session.commit()
 
             tasks.append(
@@ -511,7 +512,7 @@ def run_email_result_task(index_name, sketch_id=None):
             return ""
 
         if sketch_id:
-            sketch = Sketch.query.get(sketch_id)
+            sketch = Sketch.get_by_id(sketch_id)
 
         subject = "Timesketch: [{0:s}] is ready".format(searchindex.name)
 
@@ -657,35 +658,20 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type, timelin
     message = "Index timeline [{0:s}] to index [{1:s}] (source: {2:s})"
     logger.info(message.format(timeline_name, index_name, source_type))
 
+    # Run pinfo on storage file
     try:
-        pinfo_path = current_app.config["PINFO_PATH"]
-    except KeyError:
-        pinfo_path = "pinfo.py"
-
-    cmd = [
-        pinfo_path,
-        "--output-format",
-        "json",
-        "--sections",
-        "events",
-        file_path,
-    ]
-
-    # Run pinfo.py
-    try:
-        command = subprocess.run(cmd, capture_output=True, check=True)
-        storage_counters_json = command.stdout.decode("utf-8")
-        storage_counters = json.loads(re.sub(r"^{, ", r"{", storage_counters_json))
-        total_file_events = (
-            storage_counters.get("storage_counters", {}).get("parsers", {}).get("total")
+        pinfo = pinfo_tool.PinfoTool()
+        storage_reader = pinfo._GetStorageReader(  # pylint: disable=protected-access
+            file_path
         )
+        storage_counters = (
+            pinfo._CalculateStorageCounters(  # pylint: disable=protected-access
+                storage_reader
+            )
+        )
+        total_file_events = storage_counters.get("parsers", {}).get("total")
         if not total_file_events:
             raise RuntimeError("Not able to get total event count from Plaso file.")
-    except subprocess.CalledProcessError as e:
-        error_msg = e.stderr.decode("utf-8")
-        _set_datasource_total_events(timeline_id, file_path, total_file_events=0)
-        _set_datasource_status(timeline_id, file_path, "fail", error_message=error_msg)
-        raise
     except Exception as e:  # pylint: disable=broad-except
         # Mark the searchindex and timelines as failed and exit the task
         error_msg = traceback.format_exc()
@@ -969,7 +955,7 @@ def find_data_task(
     data_finder.set_rule(data_finder_dict.get(rule_name))
     data_finder.set_timeline_ids(timeline_ids)
 
-    sketch = Sketch.query.get(sketch_id)
+    sketch = Sketch.get_by_id(sketch_id)
     indices = set()
     for timeline in sketch.active_timelines:
         if timeline.id not in timeline_ids:

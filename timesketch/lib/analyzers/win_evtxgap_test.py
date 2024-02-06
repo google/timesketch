@@ -1,4 +1,5 @@
 """Tests for EvtxGapPlugin."""
+
 from __future__ import unicode_literals
 
 import unittest

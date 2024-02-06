@@ -15,19 +15,18 @@ limitations under the License.
 -->
 <template>
   <v-container fluid>
-    <v-card flat class="pa-3 pt-0 mt-n3" color="transparent">
+    <v-card flat class="pt-0 mt-n6" color="transparent">
       <v-card class="d-flex align-start mb-1" outlined>
         <v-text-field
           v-model="filterString"
           @input="filterGraphByInput"
-          class="pa-1"
+          class="pa-2"
           placeholder="Filter nodes and edges"
           label="Filter nodes and edges"
           append-icon="mdi-magnify"
           hide-details
           single-line
           dense
-          filled
           flat
           solo
         >
@@ -39,12 +38,10 @@ limitations under the License.
             <small>{{ nodes.length }} nodes and {{ edges.length }} edges</small>
           </span>
           <!-- Save graph dialog -->
+          <v-btn icon :disabled="!edgeQuery" @click="saveGraphDialog = true">
+            <v-icon title="Save selected graph">mdi-content-save-outline</v-icon>
+          </v-btn>
           <v-dialog v-model="saveGraphDialog" width="500">
-            <template v-slot:activator="{ on, attrs }">
-              <v-btn icon :disabled="!edgeQuery" v-bind="attrs" v-on="on" title="Save selected graph">
-                <v-icon>mdi-content-save-outline</v-icon>
-              </v-btn>
-            </template>
             <v-card class="pa-4">
               <h3>Save selected elements</h3>
               <br />
@@ -65,23 +62,17 @@ limitations under the License.
             </v-card>
           </v-dialog>
 
-          <v-btn icon v-on:click="resizeCanvas()" :disabled="!currentGraph" title="Fit to canvas">
-            <v-icon>mdi-fit-to-page-outline</v-icon>
+          <v-btn icon v-on:click="resizeCanvas()" :disabled="!currentGraph">
+            <v-icon title="Fit to canvas">mdi-fit-to-page-outline</v-icon>
           </v-btn>
+
           <!-- Graph settings menu -->
-          <v-menu
-            v-model="graphSettingsMenu"
-            offset-y
-            :close-on-content-click="false"
-            :close-on-click="true"
-            content-class="menu-with-gap"
-          >
+          <v-menu offset-y :close-on-content-click="false" :close-on-click="true" content-class="menu-with-gap">
             <template v-slot:activator="{ on, attrs }">
-              <v-btn icon v-bind="attrs" v-on="on" :disabled="!currentGraph || !graphPluginName" title="Graph settings">
-                <v-icon> mdi-cog-outline </v-icon>
+              <v-btn icon :disabled="!currentGraph || !graphPluginName" v-bind="attrs" v-on="on">
+                <v-icon title="Graph settings">mdi-cog-outline</v-icon>
               </v-btn>
             </template>
-
             <v-card class="pa-4 pt-5" width="600">
               <h5>Layout type</h5>
               <v-radio-group row v-model="layoutName">
@@ -124,7 +115,7 @@ limitations under the License.
             v-on:click="buildGraph({ name: currentGraph }, true)"
             :disabled="!currentGraph"
           >
-            <v-icon>mdi-refresh</v-icon>
+            <v-icon title="Refresh graph">mdi-refresh</v-icon>
           </v-btn>
         </div>
       </v-toolbar>
@@ -148,13 +139,13 @@ limitations under the License.
           <strong>Timeline for {{ selectedEdgesCount }} selected edge(s)</strong>
           <v-spacer></v-spacer>
           <v-btn icon :disabled="timelineViewHeight > 40" @click="increaseTimelineViewHeight()">
-            <v-icon>mdi-chevron-up</v-icon>
+            <v-icon title="enlarge">mdi-chevron-up</v-icon>
           </v-btn>
           <v-btn icon :disabled="timelineViewHeight === 0" @click="decreaseTimelineViewHeight()">
-            <v-icon>mdi-chevron-down</v-icon>
+            <v-icon title="condense">mdi-chevron-down</v-icon>
           </v-btn>
           <v-btn icon @click="showTimelineView = false">
-            <v-icon>mdi-close</v-icon>
+            <v-icon title="close">mdi-close</v-icon>
           </v-btn>
         </v-toolbar>
         <v-divider></v-divider>
@@ -173,13 +164,13 @@ limitations under the License.
 </template>
 
 <script>
-import ApiClient from '../../utils/RestApiClient'
-import EventBus from '../../main'
+import ApiClient from '../../utils/RestApiClient.js'
+import EventBus from '../../event-bus.js'
 import cytoscape from 'cytoscape'
 import spread from 'cytoscape-spread'
 import dagre from 'cytoscape-dagre'
 
-import TsEventList from '../Explore/EventList'
+import TsEventList from '../Explore/EventList.vue'
 
 cytoscape.use(spread)
 cytoscape.use(dagre)
@@ -209,7 +200,6 @@ export default {
   data: function () {
     return {
       saveGraphDialog: false,
-      graphSettingsMenu: false,
       showTimelineView: false,
       timelineViewHeight: 40,
       minimizeTimelineView: false,

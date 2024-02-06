@@ -28,8 +28,8 @@ limitations under the License.
 </template>
 
 <script>
-import EventBus from '../main'
-import TsCytoscape from '../components/Graph/Cytoscape'
+import EventBus from '../event-bus.js'
+import TsCytoscape from '../components/Graph/Cytoscape.vue'
 
 export default {
   props: [],

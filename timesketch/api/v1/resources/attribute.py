@@ -69,7 +69,7 @@ class AttributeResource(resources.ResourceMixin, Resource):
         Returns:
             An analysis in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
@@ -87,7 +87,7 @@ class AttributeResource(resources.ResourceMixin, Resource):
         Returns:
             A HTTP 200 if the attribute is successfully added or modified.
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
@@ -193,7 +193,7 @@ class AttributeResource(resources.ResourceMixin, Resource):
         Returns:
             A HTTP response code.
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
@@ -231,6 +231,7 @@ class AttributeResource(resources.ResourceMixin, Resource):
             for value in attribute.values:
                 attribute.values.remove(value)
             sketch.attributes.remove(attribute)
+            db_session.add(sketch)
             db_session.commit()
 
             return HTTP_STATUS_CODE_OK

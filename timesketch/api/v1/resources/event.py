@@ -108,7 +108,7 @@ class EventCreateResource(resources.ResourceMixin, Resource):
         Returns:
             An annotation in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
@@ -266,7 +266,7 @@ class EventResource(resources.ResourceMixin, Resource):
         """
 
         args = self.parser.parse_args()
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
         if not sketch.has_permission(current_user, "read"):
@@ -422,7 +422,7 @@ class EventAddAttributeResource(resources.ResourceMixin, Resource):
                 includes metrics on events modified, attributes added, chunks
                 per index, number of errors and the last 10 errors.
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
@@ -504,9 +504,9 @@ class EventAddAttributeResource(resources.ResourceMixin, Resource):
                                 f"exists for event_id '{request_event_id}'."
                             )
                         else:
-                            new_attributes[
-                                request_attribute_name
-                            ] = request_attribute_value
+                            new_attributes[request_attribute_name] = (
+                                request_attribute_value
+                            )
 
                     if new_attributes:
                         datastore.import_event(
@@ -549,7 +549,7 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
         Returns:
             An annotation in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             msg = "No sketch found with this ID."
             abort(HTTP_STATUS_CODE_NOT_FOUND, msg)
@@ -770,7 +770,7 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
         Returns:
             Sketch object
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
         if not sketch.has_permission(current_user, "write"):
@@ -791,7 +791,7 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
         Returns:
             Search history object representing the current search node
         """
-        current_search_node = SearchHistory.query.get(current_search_node_id)
+        current_search_node = SearchHistory.get_by_id(current_search_node_id)
         if not current_search_node:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
@@ -1121,7 +1121,7 @@ class CountEventsResource(resources.ResourceMixin, Resource):
         Returns:
             Number of events in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
         if not sketch.has_permission(current_user, "read"):
@@ -1154,7 +1154,7 @@ class MarkEventsWithTimelineIdentifier(resources.ResourceMixin, Resource):
         Returns:
             An annotation in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
@@ -1183,7 +1183,7 @@ class MarkEventsWithTimelineIdentifier(resources.ResourceMixin, Resource):
                 index_name=searchindex_name
             ).first()
         elif searchindex_id:
-            searchindex = SearchIndex.query.get(searchindex_id)
+            searchindex = SearchIndex.get_by_id(searchindex_id)
 
         if not searchindex:
             abort(
@@ -1201,7 +1201,7 @@ class MarkEventsWithTimelineIdentifier(resources.ResourceMixin, Resource):
         if not timeline_id:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No timeline identifier supplied.")
 
-        timeline = Timeline.query.get(timeline_id)
+        timeline = Timeline.get_by_id(timeline_id)
         if not timeline:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No Timeline found with this ID.")
 
@@ -1303,7 +1303,7 @@ class EventUnTagResource(resources.ResourceMixin, Resource):
                 to the sketch
         """
 
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
 
@@ -1359,7 +1359,7 @@ class EventUnTagResource(resources.ResourceMixin, Resource):
                     index_name=searchindex_name
                 ).first()
             elif searchindex_id:
-                searchindex = SearchIndex.query.get(searchindex_id)
+                searchindex = SearchIndex.get_by_id(searchindex_id)
 
             if not searchindex:
                 abort(

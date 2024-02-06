@@ -9,9 +9,18 @@ When upgrading Timesketch you might need to migrate the database to use the late
 ## Backup you database (!)
 First you should backup your current database in case something goes wrong in the upgrade process. For PostgreSQL you do the following (Ref: https://www.postgresql.org/docs/9.1/static/backup.html):
 
+### general postgres
+
 ```shell
 $ sudo -u postgres pg_dump timesketch > ~/timesketch-db.sql
 $ sudo -u postgres pg_dumpall > ~/timesketch-db-all.sql
+```
+
+### docker postgres
+
+```shell
+$ sudo docker exec -t postgres pg_dump -U timesketch timesketch > ~/timesketch-db.sql
+$ sudo docker exec -t postgres pg_dumpall -U timesketch > ~/timesketch-db-all.sql
 ```
 
 ## Change to your Timesketch installation directory

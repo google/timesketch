@@ -6,6 +6,7 @@ Create Date: 2016-09-30 11:42:03.009501
 
 Auto generated code by flask-migrate and Alembic.
 """
+
 # This code is auto generated. Ignore linter errors.
 # pylint: skip-file
 

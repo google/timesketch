@@ -382,7 +382,7 @@ class Sketch(object):
             sketch_id: The Sketch ID.
         """
         self.id = sketch_id
-        self.sql_sketch = SQLSketch.query.get(sketch_id)
+        self.sql_sketch = SQLSketch.get_by_id(sketch_id)
         self._analyzer = analyzer
 
         if not self.sql_sketch:
@@ -416,7 +416,7 @@ class Sketch(object):
             raise ValueError("Aggregator parameters have to be defined.")
 
         if view_id:
-            view = View.query.get(view_id)
+            view = View.get_by_id(view_id)
         else:
             view = None
 
@@ -454,7 +454,7 @@ class Sketch(object):
             raise ValueError("Aggregator group name needs to be defined.")
 
         if view_id:
-            view = View.query.get(view_id)
+            view = View.get_by_id(view_id)
         else:
             view = None
 
@@ -1115,7 +1115,7 @@ class BaseAnalyzer:
         Returns:
             Return value of the run method.
         """
-        analysis = Analysis.query.get(analysis_id)
+        analysis = Analysis.get_by_id(analysis_id)
         analysis.set_status("STARTED")
 
         timeline = analysis.timeline
@@ -1485,9 +1485,9 @@ class AnalyzerOutput:
             ]
 
         if self.platform_meta_data["saved_aggregations"]:
-            output["platform_meta_data"][
-                "saved_aggregations"
-            ] = self.platform_meta_data["saved_aggregations"]
+            output["platform_meta_data"]["saved_aggregations"] = (
+                self.platform_meta_data["saved_aggregations"]
+            )
 
         if self.platform_meta_data["created_tags"]:
             output["platform_meta_data"]["created_tags"] = self.platform_meta_data[
@@ -1495,9 +1495,9 @@ class AnalyzerOutput:
             ]
 
         if self.platform_meta_data["created_attributes"]:
-            output["platform_meta_data"][
-                "created_attributes"
-            ] = self.platform_meta_data["created_attributes"]
+            output["platform_meta_data"]["created_attributes"] = (
+                self.platform_meta_data["created_attributes"]
+            )
 
         return output
 
