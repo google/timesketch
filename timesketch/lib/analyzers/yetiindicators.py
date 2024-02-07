@@ -13,6 +13,26 @@ from timesketch.lib.analyzers import manager
 from timesketch.lib import emojis
 
 
+TYPE_TO_EMOJI = {
+    "malware": "SPIDER",
+    "threat-actor": "SKULL",
+    "intrusion-set": "SKULL",
+    "tool": "HAMMER",
+    "investigation": "FIRE",
+    "campaign": "BOMB",
+    "vulnerability": "SHIELD",
+}
+
+NEIGHBOR_CACHE = {}
+
+def slugify(text: str) -> str:
+    """Converts a string to a slug."""
+    text = text.lower()
+    text = re.sub(r"[^a-z0-9]", "-", text)
+    text = re.sub(r"-+", "-", text)
+    return text
+
+
 class YetiIndicators(interface.BaseAnalyzer):
     """Analyzer for Yeti threat intel indicators."""
 
@@ -78,6 +98,9 @@ class YetiIndicators(interface.BaseAnalyzer):
         Returns:
           A list of JSON objects describing a Yeti entity.
         """
+        if yeti_object["id"] in NEIGHBOR_CACHE:
+            return NEIGHBOR_CACHE[yeti_object["id"]]
+
         extended_id = f"{yeti_object['root_type']}/{yeti_object['id']}"
         results = self.authenticated_session.post(
             f"{self.yeti_api_root}/graph/search",
@@ -95,6 +118,7 @@ class YetiIndicators(interface.BaseAnalyzer):
         for neighbor in results.json().get("vertices", {}).values():
             if neighbor["root_type"] == "entity":
                 neighbors.append(neighbor)
+        NEIGHBOR_CACHE[yeti_object["id"]] = neighbors
         return neighbors
 
     def get_indicators(self, indicator_type: str) -> Dict[str, dict]:
@@ -106,7 +130,7 @@ class YetiIndicators(interface.BaseAnalyzer):
         """
         response = self.authenticated_session.post(
             self.yeti_api_root + "/indicators/search",
-            json={"query": {"name": ""}, "type": indicator_type},
+            json={"query": {"name": ""}, "type": indicator_type, "count": 0},
         )
         data = response.json()
         if response.status_code != 200:
@@ -131,25 +155,27 @@ class YetiIndicators(interface.BaseAnalyzer):
             event: a Timesketch sketch Event object.
             neighbors: a list of Yeti entities related to the indicator.
         """
-        event.add_emojis([emojis.get_emoji("SKULL")])
-        tags = []
+        tags = [slugify(tag) for tag in indicator["relevant_tags"]]
+        is_intel = False
         for n in neighbors:
-            slug = re.sub(r"[^a-z0-9]", "-", n["name"].lower())
-            slug = re.sub(r"-+", "-", slug)
-            tags.append(slug)
-        for tag in indicator["relevant_tags"]:
-            slug = re.sub(r"[^a-z0-9]", "-", tag.lower())
-            slug = re.sub(r"-+", "-", slug)
-            tags.append(slug)
+            tags.append(slugify(n["name"]))
+            emoji_name = TYPE_TO_EMOJI[n["type"]]
+            event.add_emojis([emojis.get_emoji(emoji_name)])
+
         event.add_tags(tags)
         event.commit()
 
-        msg = f'Indicator match: "{indicator["name"]}" ({indicator["id"]})\n'
-        msg += f'Related entities: {[n["name"] for n in neighbors]}'
+        msg = f'Indicator match: "{indicator["name"]}" (ID: {indicator["id"]})\n'
+        if neighbors:
+            msg += f'Related entities: {[n["name"] for n in neighbors]}'
+            is_intel = True
+
         comments = {c.comment for c in event.get_comments()}
         if msg not in comments:
             event.add_comment(msg)
             event.commit()
+
+        return is_intel
 
     def run(self):
         """Entry point for the analyzer.
@@ -179,25 +205,26 @@ class YetiIndicators(interface.BaseAnalyzer):
             print("Intelligence not set on sketch, will create from scratch.")
 
         intelligence_items = []
-
+        indicators_processed = 0
         for indicator in indicators.values():
             query_dsl = {
                 "query": {
                     "regexp": {"message.keyword": ".*" + indicator["pattern"] + ".*"}
                 }
             }
-
-            events = self.event_stream(query_dsl=query_dsl, return_fields=["message"])
-            neighbors = self.get_neighbors(indicator)
-            for n in neighbors:
-                if n["root_type"] == "entity":
-                    entities_found.add(f"{n['name']}:{n['type']}")
+            events = self.event_stream(
+                query_dsl=query_dsl,
+                return_fields=["message"],
+                scroll=False)
 
             uri = f"{self.yeti_web_root}/indicators/{indicator['id']}"
 
+            neighbors = None
             for event in events:
                 total_matches += 1
-                self.mark_event(indicator, event, neighbors)
+
+                neighbors = self.get_neighbors(indicator)
+                is_intel = self.mark_event(indicator, event, neighbors)
 
                 regex = indicator["compiled_regexp"]
                 match = regex.search(event.source.get("message"))
@@ -212,10 +239,16 @@ class YetiIndicators(interface.BaseAnalyzer):
                     "tags": [n["name"] for n in neighbors],
                     "type": "other",
                 }
-                if (match_in_sketch, uri) not in existing_refs:
+                if is_intel and (match_in_sketch, uri) not in existing_refs:
                     intelligence_items.append(intel)
                     existing_refs.add((match_in_sketch, uri))
                 new_indicators.add(indicator["id"])
+
+            if neighbors:
+                for n in [n for n in neighbors if n["root_type"] == "entity"]:
+                    entities_found.add(f"{n['name']}:{n['type']}")
+
+            indicators_processed += 1
 
         if not total_matches:
             self.output.result_status = "SUCCESS"
@@ -232,7 +265,8 @@ class YetiIndicators(interface.BaseAnalyzer):
                 query_string=f'tag:"{name}"',
             )
 
-        all_iocs = intelligence_attribute["data"] + intelligence_items
+        all_iocs = intelligence_attribute["data"]
+        all_iocs.extend(intelligence_items)
         self.sketch.add_sketch_attribute(
             "intelligence",
             [json.dumps({"data": all_iocs})],
@@ -242,10 +276,13 @@ class YetiIndicators(interface.BaseAnalyzer):
 
         success_note = (
             f"{total_matches} events matched {len(new_indicators)} "
-            f"new indicators. Found: {', '.join(entities_found)}"
+            f"new indicators (out of {indicators_processed} processed)."
         )
+        self.output.result_priority = "NOTE"
+        if entities_found:
+            success_note += f"\nEntities found: {', '.join(entities_found)}"
+            self.output.result_priority = "HIGH"
         self.output.result_status = "SUCCESS"
-        self.output.result_priority = "HIGH"
         self.output.result_summary = success_note
 
         return str(self.output)
