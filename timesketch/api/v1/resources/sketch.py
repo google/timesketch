@@ -206,7 +206,10 @@ class SketchListResource(resources.ResourceMixin, Resource):
         """
         form = forms.NameDescriptionForm.build(request)
         if not form.validate_on_submit():
-            abort(HTTP_STATUS_CODE_BAD_REQUEST, "Unable to validate form data.")
+            error_message = "Unable to validate form data: "
+            for error in form.errors.values():
+                error_message += f"{error}, "
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, error_message[:-2])
 
         sketch = Sketch(name=form.name.data, description=form.description.data)
         db_session.add(sketch)

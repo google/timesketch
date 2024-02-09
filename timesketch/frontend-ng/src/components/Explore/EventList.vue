@@ -88,6 +88,7 @@ limitations under the License.
                   <h3>Save Search</h3>
                   <br />
                   <v-text-field
+                    clearable
                     v-model="saveSearchFormName"
                     required
                     placeholder="Name your saved search"
@@ -95,12 +96,20 @@ limitations under the License.
                     dense
                     autofocus
                     @focus="$event.target.select()"
+                    :rules="saveSearchNameRules"
                   >
                   </v-text-field>
                   <v-card-actions>
                     <v-spacer></v-spacer>
                     <v-btn text @click="saveSearchMenu = false"> Cancel </v-btn>
-                    <v-btn text color="primary" @click="saveSearch" :disabled="!saveSearchFormName"> Save </v-btn>
+                    <v-btn
+                      text
+                      color="primary"
+                      @click="saveSearch"
+                      :disabled="!saveSearchFormName || saveSearchFormName.length > 255"
+                    >
+                      Save
+                    </v-btn>
                   </v-card-actions>
                 </v-card>
               </v-dialog>
@@ -388,10 +397,7 @@ limitations under the License.
           <div class="d-inline-block">
             <v-btn icon small @click="toggleDetailedEvent(item)" v-if="item._source.comment.length">
               <v-badge :offset-y="10" :offset-x="10" bordered :content="item._source.comment.length">
-                <v-icon
-                  :title="item['showDetails'] ? 'Close event &amp; comments' : 'Open event &amp; comments'"
-                  small
-                >
+                <v-icon :title="item['showDetails'] ? 'Close event &amp; comments' : 'Open event &amp; comments'" small>
                   mdi-comment-text-multiple-outline
                 </v-icon>
               </v-badge>
@@ -409,7 +415,6 @@ limitations under the License.
               <v-icon title="Close comments"> mdi-comment-remove-outline </v-icon>
             </v-btn>
           </div>
-
         </template>
       </v-data-table>
     </div>
@@ -507,6 +512,7 @@ export default {
       columnDialog: false,
       saveSearchMenu: false,
       saveSearchFormName: '',
+      saveSearchNameRules: [(v) => !!v || 'Name is required.', (v) => (v && v.length <= 255) || 'Name is too long.'],
       selectedEventTags: [],
       tagConfig: {
         good: { color: 'green', textColor: 'white', label: 'mdi-check-circle-outline' },

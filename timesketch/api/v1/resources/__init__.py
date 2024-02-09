@@ -42,7 +42,10 @@ class ResourceMixin(object):
     group_fields = {"name": fields.String}
 
     user_fields = {
+        "id": fields.Integer,
         "username": fields.String,
+        "name": fields.String,
+        "email": fields.String,
         "admin": fields.Boolean,
         "active": fields.Boolean,
         "groups": fields.Nested(group_fields),
