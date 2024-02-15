@@ -269,7 +269,8 @@ class Timeline(resource.BaseResource):
         if not objects:
             logger.info(
                 "Analyzers %s were already run on the timeline, use "
-                "'ignore_previous=True' to overwrite.", analyzer_names
+                "'ignore_previous=True' to overwrite.",
+                analyzer_names,
             )
             return None
 
