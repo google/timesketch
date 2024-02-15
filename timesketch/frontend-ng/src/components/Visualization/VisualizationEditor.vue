@@ -14,35 +14,496 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div>
-    <TsCreateVisualizationCard>
-    </TsCreateVisualizationCard>
-  </div>
+  <v-card outlined>
+    <v-card-title>
+      Create new visualization
+    </v-card-title>
+    <v-card-text>
+      <v-stepper v-model="currentStep" vertical flat>
+        <v-stepper-step step="1" editable>
+          Aggregation Type
+          <small>Select and configure event aggregation</small>
+        </v-stepper-step>
+        <v-stepper-content step="1">
+          <v-card outlined>
+            <v-card-text>
+              <TsAggregationConfig
+                :field="selectedField"
+                @updateField="selectedField = $event"
+                :aggregator="selectedAggregator"
+                @updateAggregator="selectedAggregator = $event"
+                :metric="selectedMetric"
+                @updateMetric="selectedMetric = $event"
+                :maxItems="selectedMaxItems"
+                @updateMaxItems="selectedMaxItems = $event"
+                :interval="selectedInterval"
+                @updateInterval="selectedInterval = $event"
+                :intervalQuantity="selectedIntervalQuantity"
+                @updateIntervalQuantity="selectedIntervalQuantity = $event"
+                :splitByTimeline="selectedSplitByTimeline"
+                @updateSplitByTimeline="selectedSplitByTimeline = $event"
+              ></TsAggregationConfig>
+            </v-card-text>
+          </v-card>
+        </v-stepper-content>
+        <v-stepper-step step="2" editable>
+          Apply existing/recent/saved search parameters
+          <small>
+            Loading search parameters will overwrite any existing event filters
+          </small>
+        </v-stepper-step>
+        <v-stepper-content step="2">
+          <v-card>
+            <v-card-text>
+              <v-container>
+                <v-row>
+                  <v-col md="6">
+                    <v-btn @click="loadSavedSearch">
+                      Load saved search
+                    </v-btn>
+                  </v-col>
+                  <v-col md="6">
+                    <TsSavedSearchSelect
+                      @updateSavedSearch="selectedSavedSearch = $event"
+                    ></TsSavedSearchSelect>
+                  </v-col>
+                </v-row>
+                <v-row>
+                  <v-col md="6">
+                    <v-btn @click="loadRecentSearch">
+                      Load from recent search history
+                    </v-btn>
+                  </v-col>
+                  <v-col md="6">
+                    <TsRecentSearchSelect
+                      @updateRecentSearch="selectedRecentSearch = $event"
+                    ></TsRecentSearchSelect>
+                  </v-col>
+                </v-row>
+                <v-row>
+                  <v-col md="6">
+                    <v-btn 
+                      @click="loadCurrentSearch"
+                      :disabled="selectedQueryString === undefined"
+                    >
+                      Load current search  
+                    </v-btn>
+                  </v-col>
+                  <v-col md="6">
+                    <v-text-field
+                      outlined
+                      label="Current query string"
+                      readonly
+                      v-model="selectedQueryString"
+                      ></v-text-field>
+                  </v-col>
+                </v-row>
+              </v-container>
+            </v-card-text>
+          </v-card>
+        </v-stepper-content>
+        <v-stepper-step step="3" editable>
+          Event filters
+          <small>
+            Select and configure filters to apply before aggregation
+          </small>
+        </v-stepper-step>
+        <v-stepper-content step="3">
+          <TsAggregationFiltersPanel
+            :queryString="selectedQueryString"
+            @updateFilterQueryString="selectedQueryString = $event"
+            :timelineIDs="selectedTimelineIDs"
+            @updateFilterTimelineIDs="selectedTimelineIDs = $event"
+            :startDate="selectedRange.start"
+            :endDate="selectedRange.end"
+            @updateFilterDateRange="selectedRange = $event"
+            :filterChips="selectedQueryChips"
+            @updateFilterChips="selectedQueryChips = $event"
+          ></TsAggregationFiltersPanel>
+        </v-stepper-content>
+
+        <v-stepper-step step="4" editable>
+          Chart type
+          <small>
+            Select and configure chart visualization
+          </small>
+        </v-stepper-step>
+        <v-stepper-content step="4">
+          <v-card outlined>
+            <v-card-text>
+              <TsChartConfig
+                :aggregatorType="selectedAggregator"
+                :chartType="selectedChartType"
+                @updateChartType="selectedChartType = $event"
+                :title="selectedChartTitle"
+                @updateTitle="selectedChartTitle = $event"
+                :height="selectedHeight"
+                @updateHeight="selectedHeight = $event"
+                :width="selectedWidth"
+                @updateWidth="selectedWidth = $event"
+                :xTitle="selectedXTitle"
+                @updateXTitle="selectedXTitle = $event"
+                :showXLabels="selectedShowXLabels"
+                @updateShowXLabels="selectedShowXLabels = $event"
+                :yTitle="selectedYTitle"
+                @updateYTitle="selectedYTitle = $event"
+                :showYLabels="selectedShowYLabels"
+                @updateShowYLabels="selectedShowYLabels = $event"
+                :showDataLabels="selectedShowDataLabels"
+                @updateShowDataLabels="selectedShowDataLabels = $event"
+              ></TsChartConfig>
+            </v-card-text>
+          </v-card>
+        </v-stepper-content>
+      </v-stepper>
+      <TsChartCard
+        v-if="chartSeries != undefined && selectedChartType != undefined"
+        :fieldName="selectedField.field"
+        :metricName="selectedMetric == undefined ? undefined : selectedMetric"
+        :is-time-series="selectedAggregator == undefined ? 
+          false : selectedAggregator.endsWith('date_histogram')"
+        :chartSeries="chartSeries" 
+        :chartLabels="chartLabels"
+        :chartTitle="selectedChartTitle"
+        :chartType="selectedChartType"
+        :height="selectedHeight"
+        :width="selectedWidth"
+        :xTitle="selectedXTitle"
+        :showXLabels="selectedShowXLabels"
+        :yTitle="selectedYTitle"
+        :showYLabels="selectedShowYLabels"
+        :showDataLabels="selectedShowDataLabels"
+      ></TsChartCard>
+    </v-card-text>
+    <v-card-actions>
+      <v-btn color="primary" 
+        @click="loadAggregationData"
+        :disabled="!(
+          selectedField !== undefined && 
+          selectedAggregator !== undefined && 
+          selectedChartType !== undefined
+        )"
+      >
+        Load/refresh data
+      </v-btn>
+      <v-btn 
+        color="primary"
+        :disabled="response == null"
+        @click="saveVisualization"
+      >
+        Save
+      </v-btn>
+      <v-btn 
+        color="primary" 
+        @click="clear"
+      >
+        Clear
+      </v-btn>
+      <v-btn 
+        color="primary" 
+        @click="clear" 
+        :to="{ name: 'Explore' }"
+      >
+        Cancel
+      </v-btn>
+    </v-card-actions>
+  </v-card>
 </template>
 
 <script>
-import TsCreateVisualizationCard from './CreateVisualizationCard.vue'
+import ApiClient from '../../utils/RestApiClient'
+import TsAggregationConfig from './AggregationConfig.vue'
+import TsSavedSearchSelect from './SavedSearchSelect.vue'
+import TsRecentSearchSelect from './RecentSearchSelect.vue'
+import TsChartConfig from './ChartConfig.vue'
+import TsAggregationFiltersPanel from './AggregationFiltersPanel.vue'
+import TsChartCard from './ChartCard.vue'
 
 export default {
   components: {
-    TsCreateVisualizationCard,
+    TsAggregationConfig,
+    TsAggregationFiltersPanel,
+    TsChartConfig,
+    TsChartCard,
+    TsRecentSearchSelect,
+    TsSavedSearchSelect,
   },
   props: {
+    aggregator: {
+      type: String,
+    },
+    bucket: {
+      type: Number,
+    },
+    chartTitle: {
+      type: String,
+    },
+    chartType: {
+      type: String,
+      default: 'bar',
+    },
+    field: {
+      type: String,
+    },
+    height: {
+      type: Number,
+      default: 600,
+    },
+    interval: {
+      type: Object,
+      default: function() {
+        return { 
+          interval: 'year', 
+          max: 10 
+        }
+      },
+    },
+    intervalQuantity: {
+      type: Number,
+    },
+    metric: {
+      type: String,
+    },
+    queryChips: {
+      type: Array,
+    },
+    queryString: {
+      type: String,
+    },
+    range: {
+      type: Object,
+      default: function() {
+        return { 
+          start: '', end: '' 
+        }
+      }
+    },
+    savedSearch: {
+      type: Boolean,
+      default: true,
+    },
+    searchHistory: {
+      type: Boolean,
+      default: true,
+    },
+    showDataLabels: {
+      type: Boolean,
+      default: true,
+    },
+    showXLabels: {
+      type: Boolean,
+      default: true,
+    },
+    showYLabels: {
+      type: Boolean,
+      default: true,
+    },
+    timelineIDs: {
+      type: Array,
+      default: function() {
+        return []
+      },
+    },
+    width: {
+      type: Number,
+      default: 800,
+    },
+    xTitle: {
+      type: String,
+    },
+    yTitle: {
+      type: String,
+    },
   },
   data() {
     return {
+      currentStep: 1,
+      responseMeta: null,
+      response: null,
+      selectedAggregator: this.aggregator,
+      selectedChartTitle: this.chartTitle,
+      selectedChartType: this.chartType,
+      selectedMaxItems: 10,
+      selectedField: this.field,
+      selectedHeight: this.height,
+      selectedInterval: this.interval,
+      selectedIntervalQuantity: this.intervalQuantity,
+      selectedMetric: this.metric,
+      selectedQueryString: this.queryString,
+      selectedQueryChips: this.queryChips,
+      selectedRange: this.range,
+      selectedSavedSearch: this.savedSearch,
+      selectedSearchHistory: this.searchHistory,
+      selectedShowDataLabels: this.showDataLabels,
+      selectedShowXLabels: this.showXLabels,
+      selectedShowYLabels: this.showYLabels,
+      selectedSplitByTimeline: this.splitByTimeline,
+      selectedTimelineIDs: this.timelineIDs,
+      selectedWidth: this.width,
+      selectedXTitle: this.xTitle,
+      selectedYTitle: this.yTitle,
     }
   },
   computed: {
+    sketch() {
+      return this.$store.state.sketch
+    },
+    meta() {
+      return this.$store.state.meta
+    },
+    chartSeries() {
+      if (this.response !== null && this.response.buckets !== null) {
+        return this.response.buckets
+      }
+      return undefined
+    },
+    chartLabels() {
+      if (this.response !== null && this.response.labels !== null) {
+        return this.response.labels
+      }
+      return undefined
+    },
+    currentQueryString() {
+      const currentSearchNode = this.$store.state.currentSearchNode
+      if (!currentSearchNode) {
+        return ""
+      }
+      return currentSearchNode.query_string
+    },
   },
   methods: {
-  },
-  mounted() {
-  },
-  watch: {
+    loadCurrentSearch() {
+      const currentSearchNode = this.$store.state.currentSearchNode
+      if (!currentSearchNode) {
+        console.log('no current search...')
+        return
+      }
+
+      const queryFilter = JSON.parse(currentSearchNode['query_filter'])
+      this.selectedQueryString = currentSearchNode['query_string']
+      this.selectedTimelineIDs = queryFilter.indices;
+      this.selectedQueryChips = queryFilter.chips.filter(
+        (chip) => chip.type === 'label' || chip.type === 'term' || chip.type === 'datetime_range'
+      );
+    },
+    loadRecentSearch() {
+      if (!this.selectedRecentSearch) {
+        console.log('no search history')
+        return
+      }
+
+      const queryFilter = JSON.parse(this.selectedRecentSearch['query_filter'])
+      this.selectedQueryString = this.selectedRecentSearch['query_string']
+      this.selectedTimelineIDs = queryFilter.indices;
+      this.selectedQueryChips = queryFilter.chips.filter(
+        (chip) => chip.type === 'label' || chip.type === 'term' || chip.type === 'datetime_range'
+      );
+    },
+    loadSavedSearch() {
+      if (!this.selectedSavedSearch) {
+        console.log('no saved search')
+        return
+      }
+
+      this.selectedQueryString = this.selectedSavedSearch.query;
+      const queryFilter = JSON.parse(this.selectedSavedSearch.filter);
+      this.selectedTimelineIDs = queryFilter.indices;
+      this.selectedQueryChips = queryFilter.chips.filter(
+        (chip) => chip.type === 'label' || chip.type === 'term' || chip.type === 'datetime_range'
+      );
+    },
+    clear() {
+      this.currentStep = 1
+      this.responseMeta = null
+      this.response = null
+      this.selectedAggregator = this.aggregator
+      this.selectedChartTitle = this.chartTitle
+      this.selectedChartType = this.chartType
+      this.selectedMaxItems = 10
+      this.selectedField = this.field
+      this.selectedHeight = this.height
+      this.selectedInterval = this.interval
+      this.selectedIntervalQuantity = this.intervalQuantity
+      this.selectedMetric = this.metric
+      this.selectedQueryString = this.queryString
+      this.selectedQueryChips = this.queryChips
+      this.selectedRange = this.range
+      this.selectedSavedSearch = this.savedSearch
+      this.selectedSearchHistory = this.searchHistory
+      this.selectedShowDataLabels = this.showDataLabels
+      this.selectedShowXLabels = this.showXLabels
+      this.selectedShowYLabels = this.showYLabels
+      this.selectedSplitByTimeline = this.splitByTimeline
+      this.selectedTimelineIDs = this.timelineIDs
+      this.selectedWidth = this.width
+      this.selectedXTitle = this.xTitle
+      this.selectedYTitle = this.yTitle
+    },
+    saveVisualization() {
+      if (this.response != null) {
+        
+        ApiClient.saveAggregation(
+          this.sketch.id,
+          this.responseMeta,
+          this.selectedChartTitle,
+          this.getAggregatorParameters(),
+        ).then(() => {
+          this.$store.dispatch('updateSavedVisualizationList', this.sketch.id)
+          this.successSnackBar('Visualization added: ' + this.selectedChartTitle)
+        }).cartch((e) => {
+          this.errorSnackBar('Error adding visualization: ' + this.selectedChartTitle)
+        })
+      }
+    },
+    getAggregatorParameters() {
+      return {
+        aggregator_name: this.selectedAggregator,
+        aggregator_parameters: {
+          fields: [this.selectedField],
+          aggregator_options: {
+            query_string: this.selectedQueryString,
+            start_time:  this.selectedRange.start,
+            end_time:  this.selectedRange.end,
+            query_chips: this.selectedQueryChips,
+            timeline_ids: this.selectedTimelineIDs,
+            metric: this.selectedMetric,
+            max_items: this.selectedMaxItems,
+            calendar_interval: this.selectedInterval.interval,
+          },
+          chart_type: this.selectedChartType,
+          chart_options: {
+            chartTitle: this.selectedChartTitle,
+            height: this.selectedHeight,
+            showDataLabels: this.selectedShowDataLabels,
+            showXLabels: this.selectedShowXLabels,
+            showYLabels: this.selectedShowYLabels,
+            width: this.selectedWidth,
+            xTitle: this.selectedXTitle,
+            yTitle: this.selectedYTitle,
+          },
+        }
+      }
+    },
+    loadAggregationData() {
+      let parameters = this.getAggregatorParameters()
+
+      ApiClient.runAggregator(
+        this.sketch.id, parameters
+      ).then(
+        (response) => {
+          this.responseMeta = response.data.meta
+          this.response = response.data.objects[0][this.selectedAggregator]
+        }
+      ).catch(
+        (e) => {
+          console.error('Error running aggregator: ' + e)
+        }
+      )
+    },
   },
 }
 </script>
 
+<!-- CSS scoped to this component only -->
 <style scoped lang="scss">
 </style>

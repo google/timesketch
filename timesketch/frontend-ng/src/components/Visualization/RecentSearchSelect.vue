@@ -29,9 +29,11 @@
 
 <script>
 export default {
-  props: [
-    'recentSearch'
-  ],
+  props: {
+    recentSearch: {
+      type: Object,
+    }
+  },
   data() {
     return {
         selectedRecentSearch: null,
@@ -52,8 +54,6 @@ export default {
         return recentSearches
       }
       return []
-
-
     },
   }
 }

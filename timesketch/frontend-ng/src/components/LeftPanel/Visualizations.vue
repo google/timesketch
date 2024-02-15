@@ -14,8 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-<div
+  <div
     v-if="iconOnly"
+    key="iconOnly"
     class="pa-4"
     style="cursor: pointer"
     @click="
@@ -23,73 +24,130 @@ limitations under the License.
       expanded = true
     "
   >
-    <v-icon left>mdi-chart-bar</v-icon>
-    <div style="height: 1px"></div>
-  </div>
-  <div v-else>
-      <div
-        :style="!(savedVisualizations && savedVisualizations.length) ? '' : 'cursor: pointer'"
-        class="pa-4"
-        @click="expanded = !expanded"
-        :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
-      >
-        <span> <v-icon left>mdi-chart-bar</v-icon> Visualizations </span>
-  
-        <v-btn
-          icon
-          text
-          class="float-right mt-n1 mr-n1"
-          :to="{ name: 'NewVisualization', params: { sketchId: sketch.id } }"
-          @click.stop=""
-        >
-          <v-icon>mdi-plus</v-icon>
-        </v-btn>
-        <span v-if="!expanded" class="float-right" style="margin-right: 10px">
-          <small v-if="savedVisualizations && savedVisualizations.length"
-            ><strong>{{ visualizationCount }}</strong></small
-          >
-      </span>
-      </div>
-      <v-divider></v-divider>
+    <v-icon left>
+      mdi-chart-bar
+    </v-icon>
+    <div style="height: 1px">
     </div>
-  </template>
+  </div>
+  <div 
+    v-else
+    key="iconOnly"
+  >
+    <div
+      :style="!(savedVisualizations && savedVisualizations.length) ? '' : 'cursor: pointer'"
+      class="pa-4"
+      @click="expanded = !expanded"
+      :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+    >
+      <span> 
+        <v-icon left>
+          mdi-chart-bar
+        </v-icon> 
+        Visualizations 
+      </span>
   
-  <script>
+      <v-btn
+        icon
+        text
+        class="float-right mt-n1 mr-n1"
+        :to="{ name: 'VisualizationNew' }"
+        @click.stop=""
+      >
+        <v-icon title="Create a new visualization">
+          mdi-plus
+        </v-icon>
+      </v-btn>
+      <span 
+        v-if="!expanded" 
+        class="float-right" 
+        style="margin-right: 10px"
+      >
+        <small 
+          v-if="savedVisualizations && savedVisualizations.length"
+        >
+          <strong>
+            {{ visualizationCount }}
+          </strong>
+        </small>
+      </span>
+    </div>
+    <v-expand-transition>
+      <div v-show="expanded && savedVisualizations.length">
+        <router-link
+          v-for="(savedVisualization, key) in savedVisualizations"
+          :key="key"
+          :to="{ 
+            name: 'VisualizationView', 
+            params: { aggregationId: savedVisualization.id } 
+          }"
+          style="cursor: pointer; font-size: 0.9em; text-decoration: none"
+          
+        >
+          <v-row no-gutters class="pa-2 pl-5" 
+          :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
+          <span :class="$vuetify.theme.dark ? 'dark-font' : 'light-font'">
+              {{ savedVisualization.name }}
+            </span>
+        </v-row>
+        </router-link>
+        <!-- <v-list 
+          v-if="savedVisualizations && savedVisualizations.length"
+        >
+          <v-list-item 
+            v-for="(savedVisualization, key) in savedVisualizations"
+            :key="key"
+            :to="{ 
+              name: 'VisualizationView', 
+              params: { aggregationId: savedVisualization.id } 
+            }"
+            style="cursor: pointer; font-size: 0.9em; text-decoration: none"
+            class="pa-2 pl-5" 
+            :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
+          >
+            <span :class="$vuetify.theme.dark ? 'dark-font' : 'light-font'">
+              {{ savedVisualization.name }}
+            </span>
+          </v-list-item>
+        </v-list> -->
+      </div>
+    </v-expand-transition>
+  </div>
+</template>
   
-  export default {
-    props: {
-      iconOnly: Boolean,
+<script>
+
+export default {
+  props: {
+    iconOnly: {
+      type: Boolean,
     },
-    components: {
+  },
+  data: function () {
+    return {
+      expanded: false,
+    }
+  },
+  methods: {},
+  computed: {
+    savedVisualizations() {
+      return this.$store.state.savedVisualizations
     },
-    data: function () {
-      return {
-        expanded: false,
+    visualizationCount() {
+      if (!this.$store.state.savedVisualizations) {
+        return 0
       }
+      return this.$store.state.savedVisualizations.length
+    }, 
+    sketch() {
+      return this.$store.state.sketch
     },
-    methods: {},
-    computed: {
-      savedVisualizations() {
-        return this.$store.state.savedVisualizations
-      },
-      visualizationCount() {
-        if (!this.$store.state.savedVisualizations) {
-          return 0
-        }
-        return this.$store.state.savedVisualizations.length
-      }, 
-      sketch() {
-        return this.$store.state.sketch
-      },
-      meta() {
-        return this.$store.state.meta
-      },
+    meta() {
+      return this.$store.state.meta
     },
-    mounted() {
-    },
-  }
-  </script>
-  
-  <style scoped lang="scss">
-  </style>
-  
+  },
+  mounted() {
+    this.$store.dispatch('updateSavedVisualizationList', this.sketch.id)
+  },
+}
+</script>

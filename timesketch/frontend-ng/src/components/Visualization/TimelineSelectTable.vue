@@ -15,11 +15,11 @@ limitations under the License.
 -->
 <template>
   <v-data-table
+    :dense="isDense"
     :headers="headers"
     :items="allReadyTimelines"
     :search="search"
     :value="selectedTimelines"
-    :dense="isDense"
     item-key="id"
     show-select
     @input="emitTimelineIDs"
@@ -35,21 +35,32 @@ limitations under the License.
 </template>
   
 <script>
-
 export default {
   props: {
     selectedTimelineIDs: {
       type: Array,
       default: function() { return [] },
     },
-    isDense: { type: Boolean, default: false },
+    isDense: { 
+      type: Boolean, 
+      default: false 
+    },
   },
   data() {
     return {
       headers: [
-        { value: 'name', text: 'Name'}, 
-        { value: 'description', text: 'Description'},
-        { value: 'id', text: 'ID'},
+        { 
+          value: 'name', 
+          text: 'Name'
+        }, 
+        { 
+          value: 'description', 
+          text: 'Description'
+        },
+        { 
+          value: 'id', 
+          text: 'ID'
+        },
       ],
       search: '',
       timelineIDs: this.selectedTimelineIDs
@@ -85,6 +96,3 @@ export default {
   }
 }
 </script>
-
-<style scoped lang="scss">
-</style>

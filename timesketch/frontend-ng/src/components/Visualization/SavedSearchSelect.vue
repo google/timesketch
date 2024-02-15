@@ -29,12 +29,14 @@
 
 <script>
 export default {
-  props: [
-    'savedSearch'
-  ],
+  props: {
+    savedSearch: {
+      type: Object,
+    }
+  },
   data() {
     return {
-      selectedSavedSearch: null,
+      selectedSavedSearch: undefined,
     }
   },
   computed: {

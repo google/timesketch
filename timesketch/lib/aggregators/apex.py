@@ -13,8 +13,11 @@
 # limitations under the License.
 """Aggregator for Apex-Chart visualizations."""
 
+import collections
 from datetime import datetime
 import json
+
+import pandas as pd
 
 from timesketch.lib.aggregators import interface
 from timesketch.lib.aggregators import manager
@@ -41,47 +44,55 @@ class AggregationQuerySpec:
         ]
     )
 
-    def __init__(self, sketch_id, query=True, aggs=True) -> None:
+    def __init__(self, sketch_id) -> None:
         """Initializes the AggregationQuerySpec object."""
         self.sketch_id = sketch_id
-        self.spec = {}
+        self.datetime_ranges = {
+            "must": [],
+            "must_not": [],
+            "should": [],
+            "filter": []
+        }
+        self.bool_queries = {
+            "must": [],
+            "must_not": [],
+            "should": [],
+            "filter": []
+        }
+        self.aggregation_query = {}
 
-        if query:
-            self.spec["query"] = {
-                "bool": {
-                    "must": [],
-                    "must_not": {
-                        "should": [],
-                        "minimum_should_match": 1
-                    },
-                    "filter": []
-                }
+    @property
+    def spec(self):
+        """Returns the aggregation spec as a dictionary."""
+        spec = {"query": {"bool": {}}}
+        for clause, queries in self.bool_queries.items():
+            if not queries:
+                continue
+            spec["query"]["bool"][clause] = queries
+
+        for clause, queries in self.datetime_ranges.items():
+            if not queries:
+                continue
+            spec["query"]["bool"][clause].append(
+                {"bool": {"should": queries, "minimum_should_match": 1}}
+            )
+        
+        if self.aggregation_query:
+            spec["aggs"] = {
+                "aggregation": self.aggregation_query
             }
 
-        if aggs:
-            self.spec["aggs"] = {}
+        return spec
 
-    def add_aggregation_dsl(self, name, spec):
-        """Updates the query specification with an aggregation DSL.
-
-        If the aggregation with `name` already exists, it will be replaced by the new
-        specification.
-
-        Args:
-            name (str): the aggregation name.
-            spec (dict[str, Any]): the aggregation specification to add.
-        """
-        self.spec["aggs"][name] = spec
-
-    def add_datetime_range_clause(
+    def add_datetime_value(
         self, datetime_value, operator="gte", clause="filter"
     ):
         """Adds a date range clause to the aggregation query specification.
 
         Args:
-            datetime_value (str): ISO formatted date time string.
+            datetime_value (str): the ISO formatted date time string.
             operator (str): one of `gte` or `lte`.
-            clause (str): boolean clause - one of `must`, `must_not`, `should`,
+            clause (str): the boolean clause - one of `must`, `must_not`, `should`,
                 `filter`.
 
         Raises:
@@ -97,85 +108,193 @@ class AggregationQuerySpec:
         if clause not in self._VALID_QUERY_CLAUSES:
             raise ValueError(f"Unknown boolean clause - {clause}.")
 
-        try:
-            _ = datetime.fromisoformat(datetime_value)
-        except ValueError as error:
-            raise ValueError(f"{datetime_value} is not ISO formatted.") from error
+        # try:
+        #     _ = datetime.fromisoformat(datetime_value)
+        # except ValueError as error:
+            # raise ValueError(f"{datetime_value} is not ISO formatted.") from error
 
-        existing_clauses = self.spec["query"]["bool"][clause]
-        for filter in existing_clauses:
-            if "range" in filter and "datetime" in filter["range"]:
-                filter["range"]["datetime"][operator] = datetime_value
+        for clause in self.bool_queries[clause]:
+            if "range" in clause and "datetime" in clause["range"]:
+                clause["range"]["datetime"][operator] = datetime_value
                 break
         else:
-            self.spec["query"]["bool"][clause].append(
+            self.bool_queries[clause].append(
                 {"range": {"datetime": {operator: datetime_value}}}
             )
 
     def add_query_string_filter(self, query_string, clause="filter"):
+        """Adds a query string filter to the agregation query specification.
+
+        Args:
+            query_string (str): the query string.
+            clause (str): the boolean clause to add the query string to.
+
+        Raises:
+            ValueError if the clause is not one of the valid query clause values.
+        """
         if not query_string:
             return
 
         if clause not in self._VALID_QUERY_CLAUSES:
             raise ValueError(f"Unknown boolean clause {clause}")
 
-        self.spec["query"]["bool"][clause].append(
+        self.bool_queries[clause].append(
             {"query_string": {"query": query_string, "default_operator": "AND"}}
         )
 
-    def add_bool_query_filter(self, field_name, field_value, clause="filter", term_type="term"):
-        if not field_name or not field_value:
+    def add_match_phrase_filter(self, field, value, clause="must"):
+        """Adds a match phrase filter to the aggregation query specification.
+        
+        Args:
+            field (str): the match phrase field
+            value (str): the match phrase value
+            clause (str): the boolean clause to add the query string to.
+
+        Raises:
+            ValueError if the clause is not one of the valid query clause values.
+        """
+        if not field or not value:
             return
 
         if clause not in self._VALID_QUERY_CLAUSES:
             raise ValueError(f"Unknown boolean clause {clause}")
 
-        self.spec["query"]["bool"][clause].append({term_type: {field_name: field_value}})
+        self.bool_queries[clause].append(
+            {"match_phrase": {field: {"query": value}}}
+        )
+
+    def add_term_filter(self, field, value, clause="filter", term_type="term"):
+        """Adds a term filter to the aggregation query specification.
+        
+        Args:
+            field (str): the term field.
+            value (str): the term value.
+            clause (str): the boolean clause to add the term filter to.
+            term_type (str): the term filter type.
+
+        Raises:
+            ValueError if the clause is not one of the valid query clause values.
+        """
+        if not field or not value:
+            return
+
+        if clause not in self._VALID_QUERY_CLAUSES:
+            raise ValueError(f"Unknown boolean clause {clause}")
+
+        self.bool_queries[clause].append({term_type: {field: value}})
 
     def add_timeline_filter(self, timeline_ids, clause="filter"):
-        self.add_bool_query_filter("__ts_timeline_id", timeline_ids, clause, term_type="terms")
+        """Adds a timeline filter to the aggregation query specification.
+        
+        Args: 
+            timeline_ids (list[int]): a list of timeline IDs to filter on.
+            clause (str): the boolean clause to add the timeline filter. 
+        """
+        self.add_term_filter("__ts_timeline_id", timeline_ids, clause, term_type="terms")
 
     def add_start_datetime_filter(self, datetime_value, clause="filter"):
-        self.add_datetime_range_clause(datetime_value, operator="gte", clause=clause)
+        """Adds a start datetime filter to the aggregation query specification.
+        
+        Args:
+            datetime_value (str): the start datetime as an ISO formatted string.
+            clause (str): the boolean clause to add the datetime filter.
+        """
+        self.add_datetime_value(datetime_value, operator="gte", clause=clause)
 
     def add_end_datetime_filter(self, datetime_value, clause="filter"):
-        self.add_datetime_range_clause(datetime_value, operator="lte", clause=clause)
+        """Adds a end datetime filter to the aggregation query specification.
+        
+        Args:
+            datetime_value (str): the end datetime as an ISO formatted string.
+            clause (str): the boolean clause to add the datetime filter.
+        """
+        self.add_datetime_value(datetime_value, operator="lte", clause=clause)
 
-    def _add_label_query():
+    def add_timesketch_label_filter(self, label, clause="must"):
+        """Adds a query for Timesketch labels.
 
-    def add_query_chips_filter(self, query_chips):
-        for chip in query_chips:
-            if not chip.get("active", True):
-                continue
+        Args:
+            label (str): the timesketch label to filter on.
+            clause (str): the boolean clause to add the datetime filter.
 
-            chip_type = chip.get("type", None)
+        Raises:
+            ValueError if the clause is not one of the valid query clause values.
+        """
+        if not label:
+            return
 
-            if not chip_type:
-                continue
+        if clause not in self._VALID_QUERY_CLAUSES:
+            raise ValueError(f"Unknown boolean clause {clause}")
 
-            if chip_type == "label":
+        nested_query = {
+            "nested": {
+                "query": {
+                    "bool": {
+                        "must": [
+                            {"term": {"timesketch_label.name.keyword": label}},
+                            {"term": {"timesketch_label.sketch_id": self.sketch_id}},
+                        ]
+                    }
+                },
+                "path": "timesketch_label",
+            }
+        }
+
+        self.bool_queries[clause].append(nested_query)
+
+    def add_datetime_range(self, datetime_range, clause="filter"):
+        """TODO: duplicate of the other datetime function.. why did I do this?"""
+        start, end = datetime_range.split(",")
+        self.datetime_ranges[clause].append({
+            "range": {"datetime": {"gte": start, "lte": end}}
+        })
 
 
 class ApexAggregationResult:
     """Result object for ApexChart aggregations.
 
     Attributes:
-        chart_type: the chart type to render, defaults to "table"
+        chart_options (str): the chart options
+        chart_type (str): the chart type to render
+        fields (list[str]): the fields to aggregate on.
+        labels (): the labels
+        values (): the values
     """
 
-    def __init__(self, chart_type, fields, sketch_url, values, chart_options):
+    def __init__(self, chart_type, fields, sketch_url, labels, values, chart_options, spec):
+        self.chart_options = chart_options
         self.chart_type = chart_type
         self.fields = fields
+        self.labels = labels
         self.sketch_url = sketch_url
+        self.spec = spec
         self.values = values
-        self.chart_options = chart_options
-
+        
     def to_dict(self):
         """Encode aggregation as an ApexChart dictionary."""
-        return {"values": self.values}
+        return {
+            "values": self.values, 
+            "labels": self.labels, 
+            "chart_options": self.chart_options,
+            "chart_type": self.chart_type,
+            "spec": self.spec
+        }
 
-    def to_chart(self):
+    def to_pandas(self):
+        """Encode aggregation result as a pandas dataframe.
+
+        Returns:
+            Pandas dataframe with aggregation results.
+        """
+        return pd.DataFrame(self.values)
+    
+    def to_chart(self, *args):
+        """Encode aggregation result as Vega-Lite chart.
+        
+        Since ApexChart does not support Vega charts, None is returned.
+        """
         return None
+
 
 
 class ApexAggregation(interface.BaseAggregator):
@@ -204,7 +323,7 @@ class ApexAggregation(interface.BaseAggregator):
     ])
 
     # No form fields since this is not meant to be used in the legacy UI.
-    FORM_FIELDS = frozenset([])
+    FORM_FIELDS = []
 
     def __init__(self, sketch_id=None, indices=None, timeline_ids=None):
         """Initialize the aggregator object.
@@ -221,12 +340,14 @@ class ApexAggregation(interface.BaseAggregator):
         self.chart_type = None
         self.chart_options = {}
         self.fields = []
+        self.metric = None
         self.aggregator_type = None
         self.start_time = None
         self.end_time = None
         self.query_string = None
         self.query_is_dsl = False
         self.query_chips = []
+        self.sketch_id = sketch_id
 
     @property
     def chart_title(self):
@@ -235,9 +356,9 @@ class ApexAggregation(interface.BaseAggregator):
             return f"{self.DISPLAY_NAME} for {' - '.join(self.fields)}"
         return self.DISPLAY_NAME
 
-    def _get_aggregation_dsl(self):
+    def _get_aggregation_dsl(self, aggregator_options):
         """Returns the aggregation specific DSL as a dictionary."""
-
+        raise NotImplementedError
 
     def _get_vega_encoding(self):
         """Returns the Vega encoding for rendering the aggregation chart as a dictionary."""
@@ -257,37 +378,56 @@ class ApexAggregation(interface.BaseAggregator):
 
     def _build_aggregation_query_spec(self, aggregator_options):
         """Builds an Aggregation Query specification."""
-        aggregation_query = AggregationQuerySpec()
-        aggregation_query.add_start_datetime_filter(self.start_time)
-        aggregation_query.add_end_datetime_filter(self.end_time)
-        aggregation_query.add_timeline_filter(self.timeline_ids)
+        start_time = aggregator_options.pop('start_time', '')
+        end_time = aggregator_options.pop('end_time', '')
+        query_string = aggregator_options.pop('query_string', '')
+        query_chips = aggregator_options.pop('query_chips', [])
+        timeline_ids = aggregator_options.pop('timeline_ids', self.timeline_ids)
 
-        if self.query_string:
-            if self.query_is_dsl:
-                try:
-                    query_dsl = json.loads(self.query_string)
-                except:
-                    raise ValueError("The query_filter is not valid JSON")
-                aggregation_query.spec["query"] = query_dsl
-            else:
-                aggregation_query.add_query_string_filter(self.query_string)
+        aggregation_query = AggregationQuerySpec(self.sketch_id)
+        aggregation_query.add_start_datetime_filter(start_time)
+        aggregation_query.add_end_datetime_filter(end_time)
+        aggregation_query.add_timeline_filter(timeline_ids)
+        aggregation_query.add_query_string_filter(query_string)
+        
+        for field in self.fields:
+            aggregation_query.add_term_filter(
+                field="field", value=field["field"], clause="must", term_type="exists"
+            )
 
-        for query_chip in self.query_chips:
-            print(query_chip)
+        if query_chips:
+            for query_chip in query_chips:
+                if not query_chip.get("active", True):
+                    continue
 
-        aggregation_query.add_aggregation_dsl(
-            "aggregation", self._get_aggregation_dsl()
-        )
+                chip_type = query_chip.get("type")
+                if not chip_type:
+                    continue
+
+                chip_field = query_chip.get("field")
+                chip_value = query_chip.get("value")
+                chip_operator = query_chip.get("operator")
+                if chip_type == "label":
+                    aggregation_query.add_timesketch_label_filter(chip_value)
+                elif chip_type == "datetime_range":
+                    aggregation_query.add_datetime_range(chip_value, chip_operator)
+                elif chip_type == "term":
+                    aggregation_query.add_term_filter(chip_field, chip_value, chip_operator)
+                else:
+                    raise ValueError("Unknown chip type")
+
+        aggregation_query.aggregation_query = self._get_aggregation_dsl(aggregator_options)
+
         return aggregation_query.spec
 
     def run(
         self,
         *,
         fields,
-        aggregator_type,
         aggregator_options,
         chart_type,
-        chart_options,):
+        chart_options
+    ):
         """Runs the aggregator.
 
         Returns:
@@ -305,37 +445,311 @@ class ApexAggregation(interface.BaseAggregator):
         elif isinstance(fields, list):
             self.fields = fields
         else:
-            raise ValueError("Fields is an invalid format.")
-
+            raise ValueError("Fields is in an invalid format.")
+        
         if chart_type not in self.SUPPORTED_CHARTS:
             raise ValueError(f"Chart type is not supported.")
         self.chart_type = chart_type
         self.chart_options = chart_options
 
-        self.start_time = aggregator_options.pop('start_time', '')
-        self.end_time = aggregator_options.pop('end_time', '')
-        self.query_string = aggregator_options.pop('query_string', '')
-        self.query_is_dsl = aggregator_options.pop('query_is_dsl', False)
-        self.query_chips = aggregator_options.pop('query_chips', [])
-        self.timeline_ids = aggregator_options.pop('timeline_ids', self.timeline_ids)
-
-        from pprint import pprint
-
-        aggregation_query_spec = self._build_aggregation_query_spec(aggregator_options)
-        pprint(aggregation_query_spec)
-
+        aggregation_query_spec = self._build_aggregation_query_spec(aggregator_options)      
         response = self.opensearch_aggregation(aggregation_query_spec)
-        pprint(response)
-
-        values = self._process_aggregation_response(response)
+        values, labels = self._process_aggregation_response(response)
 
         return ApexAggregationResult(
             chart_type=chart_type,
             fields=self.fields,
             sketch_url=self._sketch_url,
-            values=[],
-            chart_options=self.chart_options,
+            labels=labels,
+            values=values,
+            chart_options=chart_options,
+            spec=response,
         )
 
+
+class FixedDateHistogram(ApexAggregation):
+    """"""
+
+    NAME = "fixed_date_histogram"
+    DESCRIPTION = "Date Histogram Aggregation for an ApexChart visualization"
+
+    DEFAULT_CALENDAR_INTERVAL = 'year'
+
+    DEFAULT_METRIC = 'value_count'
+
+    def __init__(self, sketch_id=None, indices=None, timeline_ids=None):
+        """Initialize the aggregator object.
+
+        Args:
+            sketch_id: Sketch ID.
+            indices: Optional list of OpenSearch index names. If not provided
+                the default behavior is to include all the indices in a sketch.
+            timeline_ids: Optional list of timeline IDs, if not provided the
+                default behavior is to query all the data in the provided
+                search indices.
+        """
+        super().__init__(sketch_id=sketch_id, indices=indices, timeline_ids=timeline_ids)
+        self.calendar_interval = None
+
+    def _get_aggregation_dsl(self, aggregator_options):
+        """Returns the aggregation specific DSL as a dictionary."""
+        self.calendar_interval = aggregator_options.get(
+            'calendar_interval', self.DEFAULT_CALENDAR_INTERVAL
+        )
+        
+        self.metric = aggregator_options.get('metric', self.DEFAULT_METRIC)
+
+        dsl = {
+            "date_histogram": {
+                "field": "datetime",
+                "interval": self.calendar_interval
+            },
+            "aggs": {}
+        }
+        
+        for field in self.fields:
+            if field["type"] == "text":
+                field = f"{field['field']}.keyword"
+            else:
+                field = field["field"]
+
+            dsl["aggs"][self.metric] = {
+                self.metric: {
+                    "field": field
+                }
+            }
+        return dsl
+
+    def _process_aggregation_response(self, response):
+        """Processes the OpenSearch aggregation response extracting values for the
+        AggregationResult.
+
+        Args:
+            response (dict[str, Any]): the OpenSearch aggregation response.
+
+        Returns:
+            the aggregation values.
+        """
+        try:
+            buckets = response["aggregations"]["aggregation"]["buckets"]
+        except IndexError as err:
+            raise ValueError(f"Unexpected response in aggregation query: {err}")
+        
+        data = collections.defaultdict(list)
+        labels = []
+        for bucket in buckets:
+            key = int(bucket.pop('key'))
+            labels.append(bucket.pop('key_as_string'))
+            for k, v in bucket.items():
+                if k == 'doc_count':
+                    data[k].append(v)
+                else:
+                    data[k].append(v['value'])
+            
+        return data, labels
+
+
+
+class AutoDateHistogram(ApexAggregation):
+
+    NAME = "auto_date_histogram"
+    DESCRIPTION = "Auto Date Histogram Aggregation for an ApexChart visualization"
+    DEFAULT_METRIC = 'value_count'
+
+    def _get_aggregation_dsl(self, aggregator_options):
+        """Returns the aggregation specific DSL as a dictionary."""
+        max_items = aggregator_options.get('max_items', 10)
+        metric = aggregator_options.get('metric', self.DEFAULT_METRIC)
+
+        dsl = {
+            "auto_date_histogram": {
+                "field": "datetime",
+                "buckets": max_items
+            },
+            "aggs": {}
+        }
+        
+        for field in self.fields:
+            if field["type"] == "text":
+                field = f"{field['field']}.keyword"
+            else:
+                field = field["field"]
+
+            dsl["aggs"][metric] = {
+                metric: {
+                    "field": field
+                }
+            }
+        return dsl
+
+    def _process_aggregation_response(self, response):
+        """Processes the OpenSearch aggregation response extracting values for the
+        AggregationResult.
+
+        Args:
+            response (dict[str, Any]): the OpenSearch aggregation response.
+
+        Returns:
+            the aggregation values.
+        """
+        try:
+            buckets = response["aggregations"]["aggregation"]["buckets"]
+        except IndexError as err:
+            raise ValueError(f"Unexpected response in aggregation query: {err}")
+        data = collections.defaultdict(list)
+        labels = []
+        for bucket in buckets:
+            _ = bucket.pop('key')
+            labels.append(bucket.pop('key_as_string'))
+            for k, v in bucket.items():
+                if k == 'doc_count':
+                    data[k].append(v)
+                else:
+                    data[k].append(v['value'])
+            
+        return data, labels
+    
+
+
+class TopTerms(ApexAggregation):
+
+    NAME = "top_terms"
+    DESCRIPTION = "Top Terms Aggregation for an ApexChart visualization"
+    DEFAULT_MAX_ITEMS = 10
+
+    SUPPORTED_CHARTS = frozenset(
+        ["bar", "column", "donut", "line", "heatmap", "gantt", "number", "table"
+    ])
+
+    def _get_aggregation_dsl(self, aggregator_options):
+        """Returns the aggregation specific DSL as a dictionary."""
+        max_items = aggregator_options.get('max_items', self.DEFAULT_MAX_ITEMS)
+        field = self.fields[0]
+        if field["type"] == "text":
+            field = f"{field['field']}.keyword"
+        else:
+            field = field["field"]
+        dsl = {
+            "terms": {
+                "field": field,
+                "size": max_items
+            }
+        }
+        return dsl
+
+    def _process_aggregation_response(self, response):
+        """Processes the OpenSearch aggregation response extracting values for the
+        AggregationResult.
+
+        Args:
+            response (dict[str, Any]): the OpenSearch aggregation response.
+
+        Returns:
+            the aggregation values.
+        """
+        try:
+            buckets = response["aggregations"]["aggregation"]["buckets"]
+        except IndexError as err:
+            raise ValueError(f"Unexpected response in aggregation query: {err}")
+        data = {'value_count': []}
+        labels = []
+        for bucket in buckets:
+            data['value_count'].append(bucket['doc_count'])
+            labels.append(bucket['key'])
+        return data, labels
+
+
+
+class RareTerms(ApexAggregation):
+
+    NAME = "rare_terms"
+    DESCRIPTION = "Rare Terms Aggregation for an ApexChart visualization"
+    
+    DEFAULT_MAX_DOC_COUNT = 3
+
+    def _get_aggregation_dsl(self, aggregator_options):
+        """Returns the aggregation specific DSL as a dictionary."""
+        max_items = aggregator_options.get('max_items', self.DEFAULT_MAX_DOC_COUNT)
+        field = self.fields[0]
+        if field["type"] == "text":
+            field = f"{field['field']}.keyword"
+        else:
+            field = field["field"]
+        dsl = {
+            "rare_terms": {
+                "field": field,
+                "max_doc_count": max_items
+            }
+        }
+        return dsl
+
+    def _process_aggregation_response(self, response):
+        """Processes the OpenSearch aggregation response extracting values for the
+        AggregationResult.
+
+        Args:
+            response (dict[str, Any]): the OpenSearch aggregation response.
+
+        Returns:
+            the aggregation values.
+        """
+        try:
+            buckets = response["aggregations"]["aggregation"]["buckets"]
+        except IndexError as err:
+            raise ValueError(f"Unexpected response in aggregation query: {err}")
+        data = {'value_count': []}
+        labels = []
+        for bucket in buckets:
+            data['value_count'].append(bucket['doc_count'])
+            labels.append(bucket['key'])
+        return data, labels
+
+
+
+class SingleMetric(ApexAggregation):
+
+    NAME = "single_metric"
+    DESCRIPTION = "Single Metric Aggregation for an ApexChart visualization"
+    
+    DEFAULT_METRIC = "value_count"
+
+    def _get_aggregation_dsl(self, aggregator_options):
+        """Returns the aggregation specific DSL as a dictionary."""
+        self.metric = aggregator_options.get('metric', self.DEFAULT_METRIC)
+        field = self.fields[0]
+        if field["type"] == "text":
+            field = f"{field['field']}.keyword"
+        else:
+            field = field["field"]
+        dsl = {
+            self.metric: {
+                "field": field,
+            }
+        }
+        return dsl
+
+    def _process_aggregation_response(self, response):
+        """Processes the OpenSearch aggregation response extracting values for the
+        AggregationResult.
+
+        Args:
+            response (dict[str, Any]): the OpenSearch aggregation response.
+
+        Returns:
+            the aggregation values.
+        """
+        try:
+            result = response["aggregations"]["aggregation"]["value"]
+        except IndexError as err:
+            raise ValueError(f"Unexpected response in aggregation query: {err}")
+        
+        return { self.fields[0]["field"]: [result] }, [self.metric]
+    
+
+manager.AggregatorManager.register_aggregator(AutoDateHistogram)
+manager.AggregatorManager.register_aggregator(FixedDateHistogram)
+manager.AggregatorManager.register_aggregator(TopTerms)
+manager.AggregatorManager.register_aggregator(RareTerms)
+manager.AggregatorManager.register_aggregator(SingleMetric)
 
 manager.AggregatorManager.register_aggregator(ApexAggregation, exclude_from_list=True)

@@ -22,17 +22,24 @@ limitations under the License.
     @input="$emit('selectedChartType', $event)"
   >
     <template #item="{ item, on, attrs }">
-      <v-list-item v-on="on" v-bind="attrs">
+      <v-list-item 
+        v-on="on" 
+        v-bind="attrs"
+      >
         <v-list-item-avatar>
-        <v-icon> {{ item.icon }}</v-icon>
+          <v-icon> 
+            {{ item.icon }}
+          </v-icon>
         </v-list-item-avatar>
         <v-list-item-content>
-        {{ item.text }}
+          {{ item.text }}
         </v-list-item-content>
       </v-list-item>
     </template>
     <template #selection="{ item }">
-      <v-icon> {{ item.icon }} </v-icon>
+      <v-icon>
+        {{ item.icon }}
+      </v-icon>
       &nbsp; &nbsp; {{ item.text }}
     </template>
   </v-autocomplete>
@@ -40,51 +47,107 @@ limitations under the License.
 
 <script>
 export default {
-  props: [
-    'chart',
-    'aggregator',
-  ],
+  props: {
+    aggregator: {
+      type: String,
+    },
+    chart: {
+      type: String,
+    }
+  },
   data() {
     return {
       selectedChartType: this.chart,
-      allChartTypes: [
-        { text: 'bar', icon: 'mdi-poll mdi-rotate-90',},
-        { text: 'column', icon: 'mdi-chart-bar', },
-        { text: 'line', icon: 'mdi-chart-line', },
-        { text: 'number', icon: 'mdi-numeric' },
-        { text: 'table', icon: 'mdi-table'},
-        { text: 'gantt', icon: 'mdi-chart-gantt'},
-        { text: 'heatmap', icon: 'mdi-blur-linear'}
+      chartTypes: [
+        { 
+          text: 'bar', 
+          icon: 'mdi-poll mdi-rotate-90',
+        },
+        { 
+          text: 'column', 
+          icon: 'mdi-chart-bar', 
+        },
+        { 
+          text: 'line', 
+          icon: 'mdi-chart-line', 
+        },
+        { 
+          text: 'table', 
+          icon: 'mdi-table',
+        },
+        // { 
+        //   text: 'gantt', 
+        //   icon: 'mdi-chart-gantt',
+        // },
+        { 
+          text: 'heatmap', 
+          icon: 'mdi-blur-linear',
+        },
+        {
+          text: 'donut',
+          icon: 'mdi-chart-donut', 
+        }
       ],
       seriesChartTypes: [
-        { text: 'bar', icon: 'mdi-poll mdi-rotate-90',},
-        { text: 'column', icon: 'mdi-chart-bar', },
-        { text: 'line', icon: 'mdi-chart-line', },
-        { text: 'table', icon: 'mdi-table'},
-        { text: 'heatmap', icon: 'mdi-blur-linear'}
+        { 
+          text: 'bar', 
+          icon: 'mdi-poll mdi-rotate-90',
+        },
+        { 
+          text: 'column', 
+          icon: 'mdi-chart-bar', 
+        },
+        { 
+          text: 'line', 
+          icon: 'mdi-chart-line', 
+        },
+        { 
+          text: 'table', 
+          icon: 'mdi-table',
+        },
+        { 
+          text: 'heatmap', 
+          icon: 'mdi-blur-linear',
+        },
       ],
       singleMetricChartTypes: [
-        { text: 'number', icon: 'mdi-numeric' },
+        { 
+          text: 'number', 
+          icon: 'mdi-numeric'
+        },
+        // { 
+        //   text: 'table', 
+        //   icon: 'mdi-table',
+        // },
       ]
     }
   },
   computed: {
     chartByAggregator() {
-      console.log(this.aggregator)
-      if (this.aggregator === 'rare_terms' ||
-        this.aggregator === 'top_terms' ||
+      if (this.aggregator === 'top_terms') {
+        return this.chartTypes
+      } else if (
+        this.aggregator === 'rare_terms' ||
         this.aggregator === 'auto_date_histogram' ||
-        this.aggregator === 'date_histogram') {
+        this.aggregator === 'fixed_date_histogram'
+      ) {
         return this.seriesChartTypes
-      } else if (this.aggregator === 'single_metric') {
+      } 
+      else if (this.aggregator === 'single_metric') {
         return this.singleMetricChartTypes
       }
       return this.allChartTypes
     }
   },
   watch: {
+    aggregator() {
+      if (this.chartByAggregator) {
+        this.selectedChartType = this.chartByAggregator[0].text    
+        this.$emit('selectedChartType', this.selectedChartType) 
+      }
+    },
     chart() {
-        this.selectedChartType = this.chart
+      this.selectedChartType = this.chart
     }
   }
 }

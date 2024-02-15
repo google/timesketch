@@ -21,8 +21,13 @@ limitations under the License.
     label="Field name to aggregate"
     @input="$emit('selectedField', $event)"
   >
-    <template #item="{ item, on, attrs }">
-      <v-list-item v-on="on" v-bind="attrs">
+    <template 
+      #item="{ item, on, attrs }"
+    >
+      <v-list-item 
+        v-on="on" 
+        v-bind="attrs"
+      >
         <v-list-item-avatar>
           <v-icon> 
             {{ item.value.type === 'text' ? 'mdi-code-string' : 'mdi-pound-box' }}
@@ -33,7 +38,9 @@ limitations under the License.
         </v-list-item-content>
       </v-list-item>
     </template>
-    <template #selection="{ item }">
+    <template 
+      #selection="{ item }"
+    >
       <v-icon> 
         {{ item.value.type === 'text' ? 'mdi-code-string' : 'mdi-pound-box' }} 
       </v-icon>
@@ -45,9 +52,11 @@ limitations under the License.
 <script>
 
 export default {
-  props: [
-    'field',
-  ],
+  props: {
+    field: {
+      type: Object,
+    },
+  },
   data() {
     return {
       selectedField: this.field,
@@ -78,4 +87,3 @@ export default {
   }
 }
 </script>
-

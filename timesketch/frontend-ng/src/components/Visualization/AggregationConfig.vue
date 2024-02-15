@@ -1,0 +1,360 @@
+<!--
+Copyright 2024 Google Inc. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<template>
+  <v-container class="ma-0">
+    <v-row>
+      <v-col cols="12" md="12">
+        <TsEventFieldSelect
+          :field="selectedField"
+          @selectedField="selectedField = $event"
+          :rules="[rules.required]"
+        >
+        </TsEventFieldSelect>
+      </v-col>
+    </v-row>
+    <v-row>
+      <v-col>
+        <v-autocomplete
+          outlined
+          v-model="selectedAggregator"
+          :disabled="disableAggregator"
+          :items="aggregators"
+          label="Aggregate events by"
+          :rules="[rules.required]"
+        ></v-autocomplete>
+      </v-col>
+    </v-row>
+    <v-row>
+      <v-col cols="12" md="6">
+        <v-autocomplete
+          outlined
+          v-model="selectedMetric"
+          :disabled="disableMetric"
+          :items="metrics"
+          label="Aggregation Metric"
+        ></v-autocomplete>
+      </v-col>
+      <v-col cols="12" md="6">
+        <v-select
+          outlined
+          v-model="selectedMaxItems"
+          :disabled="disableMaxItems"
+          :items="[...Array(50).keys()].map((_, i) => i + 1)"
+          :label="labelMaxItems"
+        ></v-select>
+      </v-col>
+    </v-row>
+    <v-row>
+      <v-col cols="12" md="6">
+        <v-autocomplete
+          outlined
+          :disabled="disableInterval"
+          v-model="selectedInterval"
+          :items="allCalendarIntervals"
+          label="Calendar interval"
+        ></v-autocomplete>
+      </v-col>
+    </v-row>
+  </v-container>
+</template>
+
+<script>
+import TsEventFieldSelect from './EventFieldSelect.vue'
+
+export default {
+  components: {
+    TsEventFieldSelect,
+  },
+  props: {
+    aggregator: {
+      type: String,
+    },
+    field: {
+      type: Object,
+    },
+    interval: {
+      type: Object,
+    },
+    intervalQuantity: {
+      type: Number,
+    },
+    maxItems: {
+      type: Number,
+    },
+    metric: {
+      type: String,
+    },
+    splitByTimeline: {
+      type: Boolean,
+    },
+  },
+  data() {
+    return {
+      enableCalendarInterval: false,
+      selectedAggregator: this.aggregator,
+      selectedField: this.field,
+      selectedInterval: this.interval,
+      selectedIntervalQuantity: this.intervalQuantity,
+      selectedMaxItems: this.maxItems,
+      selectedMetric: this.metric,
+      selectedSplitByTimeline: this.splitByTimeline,
+      rules: {
+          required: value => !!value || 'Required.',
+      },
+      intMetrics: [
+        { 
+          text: 'Average', 
+          value: 'avg' 
+        },
+        { 
+          text: 'Count', 
+          value: 'value_count' 
+        },
+        { 
+          text: 'Minimum', 
+          value: 'min' 
+        },
+        { 
+          text: 'Maximum', 
+          value: 'max' 
+        },
+        { 
+          text: 'Sum', 
+          value: 'sum' 
+        },
+        { 
+          text: 'Unique', 
+          value: 'cardinality' 
+        },
+      ],
+      stringAggregators: [
+        { 
+          text: 'Auto Time Interval', 
+          value: 'auto_date_histogram' 
+        },
+        { 
+          text: 'Rare terms', 
+          value: 'rare_terms' 
+        },
+        // { text: 'Significant terms', value: 'significant_terms' }, // podium-gold
+        { 
+          text: 'Time interval', 
+          value: 'fixed_date_histogram' 
+        },
+        { 
+          text: 'Top K terms', 
+          value: 'top_terms' 
+        },
+      ],
+      allAggregators: [
+        { 
+          text: 'Auto Time Interval', 
+          value: 'auto_date_histogram' 
+        },
+        { 
+          text: 'Rare terms', 
+          value: 'rare_terms' 
+        },
+        // { text: 'Significant terms', value: 'significant_terms' }, // podium-gold
+        { 
+          text: 'Single Metric', 
+          value: 'single_metric' 
+        },
+        { 
+          text: 'Time interval', 
+          value: 'fixed_date_histogram' 
+        },
+        { 
+          text: 'Top K terms', 
+          value: 'top_terms' 
+        },
+      ],
+      stringMetrics: [
+        { 
+          text: 'Count', 
+          value: 'value_count' 
+        },
+        { 
+          text: 'Unique', value: 'cardinality' 
+        },
+      ],
+      allCalendarIntervals: [
+        { 
+          text: 'Year', 
+          value: { 
+            interval: 'year', 
+            max: 10,
+          } 
+        },
+        { 
+          text: 'Quarter', 
+          value: { 
+            interval: 'quarter', 
+            max: 4 
+          } 
+        },
+        { 
+          text: 'Month', 
+          value: { 
+            interval: 'month', 
+            max: 12 
+          } 
+        },
+        { 
+          text: 'Week',
+          value: { 
+            interval: 'week', 
+            max: 52 
+          } 
+        },
+        { 
+          text: 'Day', 
+          value: { 
+            interval: 'day', 
+            max: 31 
+          } 
+        },
+        { 
+          text: 'Hour', 
+          value: { 
+            interval: 'hour', 
+            max: 24 
+          } 
+        },
+        { 
+          text: 'Minute', 
+          value: { 
+            interval: 'minute', 
+            max: 60 
+          } 
+        },
+      ],
+    }
+  },
+  computed: {
+    labelMaxItems() {
+      if (this.selectedAggregator === "rare_terms") {
+        return "Maximum document count for rare items"
+      } else if (this.selectedAggregator === "auto_date_histogram") {
+        return "Maximum number of intervals"
+      }
+      return "Maximum number of items (K)"
+    },
+    aggregators() {
+      if (this.selectedField == null) {
+        return []
+      }
+
+      if (this.selectedField.type === 'text') {
+        return this.stringAggregators
+      }
+
+      return this.allAggregators
+    },
+    disableAggregator() {
+      return this.selectedField == null
+    },
+    disableInterval() {
+      return !(
+        this.selectedAggregator && 
+        this.selectedAggregator === 'fixed_date_histogram'
+      )
+    },
+    disableMaxItems() {
+      return !(
+        this.selectedAggregator && (
+          this.selectedAggregator === 'top_terms' ||
+          this.selectedAggregator === 'significant_terms' ||
+          this.selectedAggregator === 'auto_date_histogram' ||
+          this.selectedAggregator === 'rare_terms'
+        )
+      )
+    },
+    disableMetric() {
+      return !(
+        this.selectedAggregator && (
+          this.selectedAggregator === 'auto_date_histogram' ||
+          this.selectedAggregator === 'fixed_date_histogram' ||
+          this.selectedAggregator === 'single_metric'
+        )
+      )
+    },
+    metrics() {
+      if (this.selectedField == null)
+        return []
+
+      if (this.selectedField.type === 'text') {
+        return this.stringMetrics
+      }
+      else {
+        return this.intMetrics
+      }
+    },
+    intervalQuantities() {
+      if (this.selectedInterval == null) {
+        return []
+      }
+      return [...Array(this.selectedInterval.max - 1).keys()].map((_, i) => i + 1)
+    },
+  },
+  watch: {
+    aggregator() {
+      this.selectedAggregator = this.aggregator
+      if (this.selectedAggregator === 'top_terms' || this.selectedAggregator === 'rare_terms') {
+        this.selectedMetric = 'value_count'
+      } else if (this.selectedMetric == null) {
+        this.selectedMetric = 'value_count'
+      }
+    },
+    field() {
+      this.selectedField = this.field
+    },
+    interval() {
+      this.selectedInterval = this.interval
+    },
+    intervalQuantity() {
+      this.selectedIntervalQuantity = this.intervalQuantity
+    },
+    maxItems() {
+      this.selectedMaxItems = this.maxItems
+    },
+    metric() {
+      this.selectedMetric = this.metric
+    },
+    selectedAggregator() {
+      this.$emit('updateAggregator', this.selectedAggregator)
+    },
+    selectedField() {
+      this.$emit('updateField', this.selectedField)
+    },
+    selectedInterval() {
+      this.$emit('updateInterval', this.selectedInterval)
+    },
+    selectedIntervalQuantity() {
+      this.$emit('updateIntervalQuantity', this.selectedIntervalQuantity)
+    },
+    selectedMaxItems() {
+      this.$emit('updateMaxItems', this.selectedMaxItems)
+    },
+    selectedMetric() {
+      this.$emit('updateMetric', this.selectedMetric)
+    },
+    selectedSplitByTimeline() {
+      this.$emit('updateSplitByTimeline', this.splitByTimeline)
+    },
+  }
+}
+</script>

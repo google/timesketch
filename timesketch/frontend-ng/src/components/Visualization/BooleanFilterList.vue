@@ -15,7 +15,10 @@
  -->
 <template>
   <v-container>
-    <v-row v-for="(queryChip, index) in queryChips" :key="index">
+    <v-row 
+      v-for="(queryChip, index) in queryChips" 
+      :key="index"
+    >
       <v-col md="3">
         <v-text-field
           label="Type"
@@ -57,8 +60,11 @@
         ></v-text-field>
       </v-col>
       <v-col md="auto">
-        <v-btn :class="isDense ? 'mt-1' : 'mt-3'"
-          fab x-small color="primary"
+        <v-btn 
+          :class="isDense ? 'mt-1' : 'mt-3'"
+          fab 
+          x-small 
+          color="primary"
           @click="queryChips.splice(index, 1)"
         >
           <v-icon>
@@ -69,7 +75,12 @@
     </v-row>
     <v-row>
       <v-col>
-        <v-btn @click="showAddChipRow = !showAddChipRow" v-if="!showAddChipRow">Add New Filter</v-btn>
+        <v-btn 
+          @click="showAddChipRow = !showAddChipRow" 
+          v-if="!showAddChipRow"
+        >
+          Add New Filter
+        </v-btn>
       </v-col>
     </v-row>
     <v-row v-if="showAddChipRow">
@@ -135,13 +146,29 @@ export default {
 
   },
   props: {
-    selectedQueryChips: { type: Array, default: function() { return [] }},
-    isDense: { type: Boolean, default: false },
+    isDense: { 
+      type: Boolean, 
+      default: false 
+    },
+    selectedQueryChips: { 
+      type: Array, 
+      default: function() { 
+        return [] 
+      }
+    },
   },
   data() {
     return {
-      chipTypes: ["label", "term", "datetime_range"],
-      clauseTypes: ["must", "should", "must_not"],
+      chipTypes: [
+        "label", 
+        "term", 
+        "datetime_range"
+      ],
+      clauseTypes: [
+        "must", 
+        "should", 
+        "must_not"
+      ],
       newFilterTermType: "term",
       newFilterClauseType: "must",
       newFilterFieldName: null,
@@ -156,10 +183,9 @@ export default {
           this.newFilterTermType != null &&
           this.newFilterClauseType != null &&
           this.newFilterFieldName != null &&
-          //this.newFilterFieldName != "" &&
           this.newFilterFieldValue != null &&
           this.newFilterFieldValue != ""
-      ) // TODO: add more validation for datetime_range and
+      ) // TODO: add more validation for datetime_range
     },
     fieldItems() {
       if (this.newFilterTermType === 'label') {

@@ -68,7 +68,6 @@ const routes = [
             component: Canvas,
             props: true,
           },
-
         ]
       },
       {
@@ -78,10 +77,16 @@ const routes = [
         children: [
           {
             path: 'new',
-            name: 'NewVisualization',
+            name: 'VisualizationNew',
             component: Canvas,
             props: true,
-          }
+          },
+          {
+            path: 'view/:aggregationId',
+            name: 'VisualizationView',
+            component: Canvas,
+            props: true,
+          },
         ]
       },
       {

@@ -93,10 +93,16 @@ export default {
     range: {
       type: Object,
       default: function() {
-        return { start: '', end: ''}
+        return { 
+          start: '', 
+          end: ''
+        }
       },
     },
-    isDense: { type: Boolean, default: false },
+    isDense: { 
+      type: Boolean, 
+      default: false 
+    },
   },
   data() {
     return {
@@ -104,13 +110,15 @@ export default {
         start: this.range.start,
         end: this.range.end,
       },
-      showPicker: false,
-      
+      showPicker: false, 
     }
   },
   methods: {
     clearRange: function () {
-      this.selectedRange = { start: '', end: '' }
+      this.selectedRange = { 
+        start: '', 
+        end: '' 
+      }
     },
     getDateRange: function (num, resolution) {
       let now = dayjs.utc()
@@ -118,7 +126,8 @@ export default {
 
       this.selectedRange = { 
         start: then.millisecond(0).toISOString(), 
-        end: now.millisecond(0).toISOString() }
+        end: now.millisecond(0).toISOString() 
+      }
       this.$emit('change', this.selectedRange)
     },
     setStartTime: function (newDateTime) {
@@ -168,7 +177,9 @@ export default {
       return this.selectedRange.start
     },
     formatEndTime: function () {
-      if (this.selectedRange.start === this.selectedRange.end || !this.selectedRange.start) {
+      if (
+        this.selectedRange.start === this.selectedRange.end || 
+        !this.selectedRange.start) {
         return ''
       }
       return this.selectedRange.end
@@ -181,6 +192,3 @@ export default {
   }
 }
 </script>
-
-<style scoped lang="scss">
-</style>

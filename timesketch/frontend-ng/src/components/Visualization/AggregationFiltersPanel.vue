@@ -16,13 +16,27 @@ limitations under the License.
 <template>
   <v-expansion-panels accordion multiple v-model="panels">
     <v-expansion-panel key="0">
-      <v-expansion-panel-header v-slot="{ open }">
+      <v-expansion-panel-header 
+        v-slot="{ open }"
+      >
         <v-row no-gutters>
-          <v-col cols="4">Timelines</v-col>
+          <v-col cols="4">
+            Timelines
+          </v-col>
           <v-col cols="8" class="text--secondary">
             <v-fade-transition leave-absolute>
-              <span v-if="open">Select timelines by name.</span>
-              <v-row v-else no-gutters style="width: 100%">
+              <span 
+                v-if="open"
+                key="timeline-name"
+              >
+                Select timelines by name.
+              </span>
+              <v-row 
+                v-else 
+                key="timeline-name"
+                no-gutters 
+                style="width: 100%"
+              >
                 <v-col cols="12">
                   {{ selectedTimelineIDs.length }} timeline(s) selected
                 </v-col>
@@ -33,20 +47,37 @@ limitations under the License.
       </v-expansion-panel-header>
       <v-expansion-panel-content>
         <TsTimelineSelectTable
-          v-bind:selectedTimelineIDs="selectedTimelineIDs"
-          v-on:change="selectedTimelineIDs = $event"
+          :selectedTimelineIDs="selectedTimelineIDs"
+          @change="selectedTimelineIDs = $event"
         ></TsTimelineSelectTable>
       </v-expansion-panel-content>
     </v-expansion-panel>
     <v-expansion-panel key="1">
-      <v-expansion-panel-header v-slot="{ open }">
+      <v-expansion-panel-header 
+        v-slot="{ open }"
+      >
         <v-row no-gutters>
-          <v-col cols="4">Date/Time Range (optional)</v-col>
+          <v-col cols="4">
+            Date/Time Range (optional)
+          </v-col>
           <v-col cols="8" class="text--secondary">
             <v-fade-transition leave-absolute>
-              <span v-if="open">Select a date range.</span>
-              <v-row v-else no-gutters style="width: 100%">
-                <v-col v-if="selectedDateRange.start != ''" cols="12">
+              <span 
+                v-if="open"
+                key="date-range"
+              >
+                Select a date range.
+              </span>
+              <v-row 
+                v-else 
+                key="date-range"
+                no-gutters 
+                style="width: 100%"
+              >
+                <v-col 
+                  v-if="selectedDateRange.start != ''" 
+                  cols="12"
+                >
                   {{ selectedDateRange.start }} - {{ selectedDateRange.end }}
                 </v-col>
               </v-row>
@@ -56,20 +87,35 @@ limitations under the License.
         </v-expansion-panel-header>
       <v-expansion-panel-content>
         <TsDateRangeSelect
-          v-bind:range="selectedDateRange"
-          v-on:change="selectedDateRange = $event"
+          :range="selectedDateRange"
+          @change="selectedDateRange = $event"
         ></TsDateRangeSelect>
       </v-expansion-panel-content>
     </v-expansion-panel>
     <v-expansion-panel key="2">
-      <v-expansion-panel-header v-slot="{ open }">
+      <v-expansion-panel-header 
+        v-slot="{ open }"
+      >
         <v-row no-gutters>
-          <v-col cols="4">Query string (optional)</v-col>
+          <v-col cols="4">
+            Query string (optional)
+          </v-col>
           <v-col cols="8" class="text--secondary">
             <v-fade-transition leave-absolute>
-              <span v-if="open">Enter a query string.</span>
-              <v-row v-else no-gutters style="width: 100%">
-                <v-col v-if="selectedQueryString != ''" cols="12">
+              <span 
+                v-if="open"
+              >
+                Enter a query string.
+              </span>
+              <v-row 
+                v-else 
+                no-gutters 
+                style="width: 100%"
+              >
+                <v-col 
+                  v-if="selectedQueryString != ''" 
+                  cols="12"
+                >
                   {{ selectedQueryString }}
                 </v-col>
               </v-row>
@@ -89,13 +135,25 @@ limitations under the License.
       </v-expansion-panel-content>
     </v-expansion-panel>
     <v-expansion-panel key="3">
-      <v-expansion-panel-header v-slot="{ open }">
+      <v-expansion-panel-header 
+        v-slot="{ open }"
+      >
         <v-row no-gutters>
-          <v-col cols="4">Date/Term/Label Filters</v-col>
+          <v-col cols="4">
+            Date/Term/Label Filters
+          </v-col>
           <v-col cols="8" class="text--secondary">
             <v-fade-transition leave-absolute>
-              <span v-if="open">Add/remove filters.</span>
-              <v-row v-else no-gutters style="width: 100%">
+              <span 
+                v-if="open"
+              >
+                Add/remove filters.
+              </span>
+              <v-row 
+                v-else 
+                no-gutters 
+                style="width: 100%"
+              >
                 <v-col cols="12">
                   {{ selectedBooleanFilters.length }} filter(s)
                 </v-col>
@@ -106,8 +164,8 @@ limitations under the License.
       </v-expansion-panel-header>
       <v-expansion-panel-content>
         <TsBooleanFilterList
-          v-bind:selectedQueryChips="selectedBooleanFilters"
-          v-on:change="selectedBooleanFilters = $event"
+          :selectedQueryChips="selectedBooleanFilters"
+          @change="selectedBooleanFilters = $event"
         >
         </TsBooleanFilterList>
       </v-expansion-panel-content>
@@ -122,61 +180,77 @@ import TsBooleanFilterList from './BooleanFilterList.vue'
 
 export default {
   components: {
+    TsBooleanFilterList,
     TsDateRangeSelect,
     TsTimelineSelectTable,
-    TsBooleanFilterList,
   },
   props: {
-    queryString: { type: String, default: ''},
-    timelineIDs: { type: Array, default: function() { return [1] } },
-    startDate: { type: String, default: ''},
-    endDate: { type: String, default: ''},
-    filterChips: { type: Array, default: function() { return [] } },
-    expandAll: { type: Boolean, default: true },
-    isDense: { type: Boolean, default: false},
+    endDate: { 
+      type: String, 
+      default: '',
+    },
+    expandAll: { 
+      type: Boolean, 
+      default: true,
+    },
+    filterChips: { 
+      type: Array, 
+      default: function() { 
+        return [] 
+      },
+    },
+    isDense: { 
+      type: Boolean, 
+      default: false,
+    },
+    queryString: { 
+      type: String, 
+      default: '',
+    },
+    startDate: { 
+      type: String, 
+      default: '',
+    },
+    timelineIDs: { 
+      type: Array, 
+      default: function() { 
+        return [1] 
+      }, 
+    },
   },
   data() {
     return {
       panels: this.openPanels(),
-      selectedTimelineIDs: this.timelineIDs,
+      selectedBooleanFilters: this.filterChips,
       selectedDateRange: {
         start: this.startDate,
         end: this.endDate,
       },
       selectedQueryString: this.queryString,
-      selectedBooleanFilters: this.filterChips,
+      selectedTimelineIDs: this.timelineIDs,
     }
   },
   methods: {
-    updateAggregationTimelines(selectedTimelines) {
-      this.selectedTimelines = selectedTimelines
-    },
     openPanels() {
       if (this.expandAll) {
         return [...Array(4).keys()].map((k, i) => i)
       } else {
         return []
       }
-    }
+    },
   },
   watch: {
-    queryString() {
-      this.selectedQueryString = this.queryString
-    },
-    timelineIDs() {
-      this.selectedTimelineIDs = this.timelineIDs
-    },
-    startDate() {
-      this.selectedDateRange.start = this.startDate
-    },
     endDate() {
       this.selectedDateRange.end = this.endDate
     },
     filterChips() {
       this.selectedBooleanFilters = this.filterChips
     },
-    selectedTimelineIDs() {
-      this.$emit('updateFilterTimelineIDs', this.selectedTimelineIDs)
+    queryString() {
+      this.selectedQueryString = this.queryString
+    },
+    selectedBooleanFilters() {
+      this.$emit('updateFilterChips', this.selectedBooleanFilters)
     },
     selectedDateRange() {
       this.$emit('updateFilterDateRange', this.selectedDateRange)
@@ -184,12 +258,15 @@ export default {
     selectedQueryString() {
       this.$emit('updateFilterQueryString', this.selectedQueryString)
     },
-    selectedBooleanFilters() {
-      this.$emit('updateFilterChips', this.selectedBooleanFilters)
-    }
+    selectedTimelineIDs() {
+      this.$emit('updateFilterTimelineIDs', this.selectedTimelineIDs)
+    },
+    startDate() {
+      this.selectedDateRange.start = this.startDate
+    },
+    timelineIDs() {
+      this.selectedTimelineIDs = this.timelineIDs
+    },
   }
 }
 </script>
-
-<style scoped lang="scss">
-</style>
