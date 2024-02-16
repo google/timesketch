@@ -74,7 +74,7 @@ class YetiTriageIndicators(interface.BaseAnalyzer):
             self._yeti_session.verify = tls_cert
 
         self._intelligence_refs = set()
-        self._intelligence_attribute = None
+        self._intelligence_attribute = {'data': []}
 
     @property
     def authenticated_session(self) -> requests.Session:
@@ -198,6 +198,8 @@ class YetiTriageIndicators(interface.BaseAnalyzer):
     def add_intelligence_entry(self, indicator, event, entity):
         uri = f"{self.yeti_web_root}/indicators/{indicator['id']}"
 
+        if "compiled_regexp" not in indicator:
+            indicator["compiled_regexp"] = re.compile(indicator["pattern"])
         regexp = indicator["compiled_regexp"]
         match = regexp.search(event.source.get("message"))
         if match:
@@ -215,6 +217,7 @@ class YetiTriageIndicators(interface.BaseAnalyzer):
             "type": "other",
         }
 
+        self._intelligence_attribute['data'].append(intel)
         self._intelligence_refs.add((match_in_sketch, uri))
 
     def get_intelligence_attribute(self):
@@ -229,17 +232,13 @@ class YetiTriageIndicators(interface.BaseAnalyzer):
         except ValueError:
             print("Intelligence not set on sketch, will be created from scratch.")
 
-    def add_intelligence(self, items):
-        intelligence_items = self._intelligence_attribute.get("data", [])
-        intelligence_items.extend(items)
-
-        self.sketch.add_sketch_attributes(
+    def save_intelligence(self):
+        self.sketch.add_sketch_attribute(
             "intelligence",
-            [json.dumps({"data": intelligence_items})],
+            [json.dumps(self._intelligence_attribute)],
             ontology="intelligence",
             overwrite=True,
         )
-        self.sketch.commit()
 
     def run(self):
         """Entry point for the analyzer.
@@ -256,7 +255,9 @@ class YetiTriageIndicators(interface.BaseAnalyzer):
         matching_indicators = set()
         priority = "NOTE"
 
-        entities = self.get_entities(tags=["triage"])
+        self.get_intelligence_attribute()
+
+        entities = self.get_entities(tags=["malware"])
         for entity in entities.values():
             indicators = self.find_indicators(
                 entity, max_hops=5, indicator_types=["regex"]
@@ -300,6 +301,8 @@ class YetiTriageIndicators(interface.BaseAnalyzer):
                 self.NAME,
                 query_string=f'tag:"{name}"',
             )
+
+        self.save_intelligence()
 
         success_note = (
             f"{total_matches} events matched {len(matching_indicators)} "
