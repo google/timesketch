@@ -279,7 +279,7 @@ export default new Vuex.Store({
       ApiClient.getAggregations(sketchId)
         .then(
           (response) => {
-            context.commit('SET_VISUALIZATION_LIST', response.data.objects[0])
+            context.commit('SET_VISUALIZATION_LIST', response.data.objects[0] || [])
           }
         )
         .catch(

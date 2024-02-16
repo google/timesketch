@@ -169,10 +169,10 @@ export default {
           value: 'rare_terms' 
         },
         // { text: 'Significant terms', value: 'significant_terms' }, // podium-gold
-        { 
-          text: 'Single Metric', 
-          value: 'single_metric' 
-        },
+        // { 
+        //   text: 'Single Metric', 
+        //   value: 'single_metric' 
+        // },
         { 
           text: 'Time interval', 
           value: 'fixed_date_histogram' 

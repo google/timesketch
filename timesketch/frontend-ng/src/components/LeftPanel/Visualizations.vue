@@ -74,48 +74,81 @@ limitations under the License.
     </div>
     <v-expand-transition>
       <div v-show="expanded && savedVisualizations.length">
-        <router-link
+        <v-subheader>Saved Visualizations</v-subheader>
+        <div
           v-for="(savedVisualization, key) in savedVisualizations"
           :key="key"
-          :to="{ 
-            name: 'VisualizationView', 
-            params: { aggregationId: savedVisualization.id } 
-          }"
+          
           style="cursor: pointer; font-size: 0.9em; text-decoration: none"
           
         >
-          <v-row no-gutters class="pa-2 pl-5" 
-          :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'">
-          <span :class="$vuetify.theme.dark ? 'dark-font' : 'light-font'">
-              {{ savedVisualization.name }}
-            </span>
-        </v-row>
-        </router-link>
-        <!-- <v-list 
-          v-if="savedVisualizations && savedVisualizations.length"
-        >
-          <v-list-item 
-            v-for="(savedVisualization, key) in savedVisualizations"
-            :key="key"
-            :to="{ 
-              name: 'VisualizationView', 
-              params: { aggregationId: savedVisualization.id } 
-            }"
-            style="cursor: pointer; font-size: 0.9em; text-decoration: none"
+          <v-row 
+            no-gutters 
             class="pa-2 pl-5" 
             :class="$vuetify.theme.dark ? 'dark-hover' : 'light-hover'"
           >
-            <span :class="$vuetify.theme.dark ? 'dark-font' : 'light-font'">
-              {{ savedVisualization.name }}
-            </span>
-          </v-list-item>
-        </v-list> -->
+            <v-col
+              :class="$vuetify.theme.dark ? 'dark-font' : 'light-font'"
+              @click="
+                $router.push({
+                  name: 'VisualizationView', 
+                  params: { aggregationId: savedVisualization.id }
+                })
+              "
+            >
+              <v-icon>
+                <!-- {{ getIcon(savedVisualization.) }} -->
+              </v-icon>{{ savedVisualization.name }}                       
+            </v-col>
+            <v-col cols="auto">
+              <v-menu offset-y>
+                <template v-slot:activator="{ on, attrs }">
+                  <v-btn 
+                    small 
+                    icon 
+                    v-bind="attrs" 
+                    v-on="on" 
+                    class="mr-1"
+                  >
+                    <v-icon 
+                      title="Actions" 
+                      small
+                    >
+                      mdi-dots-vertical
+                    </v-icon>
+                  </v-btn>
+                </template>
+                <v-list dense class="mx-auto">
+                  <v-list-item style="cursor: pointer" @click="copyVisualizationIdToClipboard(savedVisualization.id)">
+                    <v-list-item-icon>
+                      <v-icon small>mdi-identifier</v-icon>
+                    </v-list-item-icon>
+                    <v-list-item-title>Copy visualization ID</v-list-item-title>
+                  </v-list-item>
+                  <v-list-item style="cursor: pointer" @click="copyVisualizationUrlToClipboard(savedVisualization.id)">
+                    <v-list-item-icon>
+                      <v-icon small>mdi-link-variant</v-icon>
+                    </v-list-item-icon>
+                    <v-list-item-title>Copy link to this visualization</v-list-item-title>
+                  </v-list-item>
+                  <v-list-item style="cursor: pointer" @click="deleteVisualization(savedVisualization.id)">
+                    <v-list-item-icon>
+                      <v-icon small>mdi-trash-can</v-icon>
+                    </v-list-item-icon>
+                    <v-list-item-title>Delete</v-list-item-title>
+                  </v-list-item>
+                </v-list>
+              </v-menu>
+            </v-col>
+          </v-row>
+        </div>
       </div>
     </v-expand-transition>
   </div>
 </template>
   
 <script>
+import ApiClient from '../../utils/RestApiClient'
 
 export default {
   props: {
@@ -128,7 +161,51 @@ export default {
       expanded: false,
     }
   },
-  methods: {},
+  methods: {
+    copyVisualizationIdToClipboard(savedVisualizationId) {
+      try {
+        navigator.clipboard.writeText(savedVisualizationId)
+        this.infoSnackBar('Saved Visualization ID copied to clipboard')
+      } catch (error) {
+        this.errorSnackBar('Failed to load Saved Visualization ID into the clipboard!')
+        console.error(error)
+      }
+    },
+    copyVisualizationUrlToClipboard(savedVisualizationId) {
+      try {
+        let url = window.location.origin + '/sketch/' + this.sketch.id + '/visualization/view/' + savedVisualizationId 
+        navigator.clipboard.writeText(url)
+        this.infoSnackBar('Saved Visualization URL copied to clipboard')
+      } catch (error) {
+        this.errorSnackBar('Failed to load Saved Visualization URL into the clipboard!')
+        console.error(error)
+      }
+    },
+    deleteVisualization(savedVisualizationId) {
+      if (confirm('Delete Saved Visualization?')) {
+        ApiClient.deleteAggregationById(this.sketch.id, savedVisualizationId)
+          .then((response) => {
+            this.$store.dispatch('updateSavedVisualizationList', this.sketch.id)
+            this.infoSnackBar('Saved Visualization has been deleted')
+            let params = { 
+              name: 'VisualizationView', 
+              params: { 
+                aggregationId: savedVisualizationId
+              }
+            }
+            let currentPath  = this.$route.fullPath
+            let deletedPath = this.$router.resolve(params).route.fullPath
+
+            if (currentPath === deletedPath) {
+              this.$router.push({ name: 'VisualizationNew', })
+            }
+          })
+          .catch((e) => {
+            console.error(e)
+          })
+      }
+    },
+  },
   computed: {
     savedVisualizations() {
       return this.$store.state.savedVisualizations
@@ -149,5 +226,6 @@ export default {
   mounted() {
     this.$store.dispatch('updateSavedVisualizationList', this.sketch.id)
   },
+
 }
 </script>

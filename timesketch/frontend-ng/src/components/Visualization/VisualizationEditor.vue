@@ -16,7 +16,7 @@ limitations under the License.
 <template>
   <v-card outlined>
     <v-card-title>
-      Create new visualization
+      Create new visualization using aggregated events
     </v-card-title>
     <v-card-text>
       <v-stepper v-model="currentStep" vertical flat>
@@ -121,7 +121,6 @@ limitations under the License.
             @updateFilterChips="selectedQueryChips = $event"
           ></TsAggregationFiltersPanel>
         </v-stepper-content>
-
         <v-stepper-step step="4" editable>
           Chart type
           <small>
@@ -157,11 +156,10 @@ limitations under the License.
         </v-stepper-content>
       </v-stepper>
       <TsChartCard
-        v-if="chartSeries != undefined && selectedChartType != undefined"
+        v-if="chartSeries && selectedChartType"
         :fieldName="selectedField.field"
-        :metricName="selectedMetric == undefined ? undefined : selectedMetric"
-        :is-time-series="selectedAggregator == undefined ? 
-          false : selectedAggregator.endsWith('date_histogram')"
+        :metricName="selectedMetric"
+        :is-time-series="selectedAggregator ? selectedAggregator.endsWith('date_histogram') : false"
         :chartSeries="chartSeries" 
         :chartLabels="chartLabels"
         :chartTitle="selectedChartTitle"
@@ -179,16 +177,16 @@ limitations under the License.
       <v-btn color="primary" 
         @click="loadAggregationData"
         :disabled="!(
-          selectedField !== undefined && 
-          selectedAggregator !== undefined && 
-          selectedChartType !== undefined
+          selectedField && 
+          selectedAggregator && 
+          selectedChartType
         )"
       >
         Load/refresh data
       </v-btn>
       <v-btn 
         color="primary"
-        :disabled="response == null"
+        :disabled="response == null || !selectedChartTitle"
         @click="saveVisualization"
       >
         Save
@@ -450,7 +448,7 @@ export default {
         ).then(() => {
           this.$store.dispatch('updateSavedVisualizationList', this.sketch.id)
           this.successSnackBar('Visualization added: ' + this.selectedChartTitle)
-        }).cartch((e) => {
+        }).catch((e) => {
           this.errorSnackBar('Error adding visualization: ' + this.selectedChartTitle)
         })
       }
