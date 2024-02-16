@@ -46,10 +46,6 @@ def slugify(text: str) -> str:
 class YetiBaseAnalyzer(interface.BaseAnalyzer):
     """Base class for Yeti indicator analyzers."""
 
-    # NAME = "yetitriageindicators"
-    # DISPLAY_NAME = "Yeti triage indicators"
-    # DESCRIPTION = "Mark triage events using forensics indicators from Yeti"
-
     DEPENDENCIES = frozenset(["domain"])
 
     # Entities with these tags will be fetched from Yeti
