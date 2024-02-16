@@ -41,7 +41,7 @@ limitations under the License.
   
   <script>
   import ApiClient from '../utils/RestApiClient'
-  import TsVisualizationEditor from '../components/Visualization/VisualizationEditor'
+  import TsVisualizationEditor from '../components/Visualization/VisualizationEditor.vue'
   import TsChartCard from '../components/Visualization/ChartCard.vue'
 
   export default {
