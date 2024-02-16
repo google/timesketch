@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 import axios from 'axios'
-import EventBus from '../main'
+import EventBus from '../event-bus.js'
 
 const RestApiClient = axios.create({
   baseURL: '/api/v1',

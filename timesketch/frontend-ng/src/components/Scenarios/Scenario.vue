@@ -119,8 +119,8 @@ limitations under the License.
 </template>
 
 <script>
-import ApiClient from '../../utils/RestApiClient'
-import TsFacet from './Facet'
+import ApiClient from '../../utils/RestApiClient.js'
+import TsFacet from './Facet.vue'
 
 export default {
   props: ['scenario', 'iconOnly'],

@@ -283,7 +283,7 @@ limitations under the License.
 </template>
 
 <script>
-import EventBus from '../../main'
+import EventBus from '../../event-bus.js'
 import TsLinkRedirectWarning from '../Explore/LinkRedirectWarning.vue'
 
 export default {

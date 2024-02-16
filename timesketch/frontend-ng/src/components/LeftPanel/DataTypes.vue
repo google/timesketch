@@ -87,7 +87,7 @@ limitations under the License.
 </template>
 
 <script>
-import EventBus from '../../main'
+import EventBus from '../../event-bus.js'
 
 export default {
   props: {
