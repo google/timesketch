@@ -109,6 +109,19 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
         access_token = response.json()["access_token"]
         self._yeti_session.headers.update({"authorization": f"Bearer {access_token}"})
 
+    def _get_neighbors_request(self, params):
+        """Simple wrapper around requests call to make testing easier."""
+        results = self.authenticated_session.post(
+            f"{self.yeti_api_root}/graph/search",
+            json=params,
+        )
+        if results.status_code != 200:
+            raise RuntimeError(
+                f"Error {results.status_code} retrieving neighbors for "
+                f"{params['source']} from Yeti:" + str(results.json())
+            )
+        return results.json()
+
     def get_neighbors(
         self, yeti_object: Dict, max_hops: int, neighbor_types: List[str]
     ) -> List[Dict]:
@@ -126,9 +139,8 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
             return NEIGHBOR_CACHE[yeti_object["id"]]
 
         extended_id = f"{yeti_object['root_type']}/{yeti_object['id']}"
-        results = self.authenticated_session.post(
-            f"{self.yeti_api_root}/graph/search",
-            json={
+        results = self._get_neighbors_request(
+            {
                 "count": 0,
                 "source": extended_id,
                 "graph": "links",
@@ -137,15 +149,10 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
                 "direction": "outbound",
                 "include_original": False,
                 "target_types": neighbor_types,
-            },
+            }
         )
-        if results.status_code != 200:
-            raise RuntimeError(
-                f"Error {results.status_code} retrieving neighbors for "
-                f"{extended_id} from Yeti:" + str(results.json())
-            )
         neighbors = {}
-        for neighbor in results.json().get("vertices", {}).values():
+        for neighbor in results.get("vertices", {}).values():
             # Yeti will return all vertices in the graph's path, not just
             # the ones that are fo type target_types. We still want these
             # in the cache.
@@ -153,6 +160,19 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
                 neighbors[neighbor["id"]] = neighbor
             NEIGHBOR_CACHE[yeti_object["id"]] = neighbors
         return neighbors
+
+    def _get_entities_request(self, params):
+        """Simple wrapper around requests call to make testing easier."""
+        results = self.authenticated_session.post(
+            f"{self.yeti_api_root}/entities/search",
+            json=params,
+        )
+        if results.status_code != 200:
+            raise RuntimeError(
+                f"Error {results.status_code} retrieving entities from Yeti:"
+                + str(results.json())
+            )
+        return results.json()
 
     def get_entities(self, _type: str, tags: list[str]) -> Dict[str, dict]:
         """Fetches Entities with a certain tag on Yeti.
@@ -167,16 +187,7 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
         query = {"name": "", "tags": tags}
         if _type:
             query["type"] = _type
-        response = self.authenticated_session.post(
-            self.yeti_api_root + "/entities/search",
-            json={"query": query, "count": 0},
-        )
-        data = response.json()
-        if response.status_code != 200:
-            raise RuntimeError(
-                f"Error {response.status_code} retrieving entities from Yeti:"
-                + str(data)
-            )
+        data = self._get_entities_request({"query": query, "count": 0})
         entities = {item["id"]: item for item in data["entities"]}
         return entities
 
@@ -191,13 +202,13 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
             event: a Timesketch sketch Event object.
             neighbors: a list of Yeti entities related to the indicator.
         """
-        tags = [slugify(tag) for tag in indicator["relevant_tags"]]
+        tags = {slugify(tag) for tag in indicator["relevant_tags"]}
         for n in neighbors:
-            tags.append(slugify(n["name"]))
+            tags.add(slugify(n["name"]))
             emoji_name = TYPE_TO_EMOJI[n["type"]]
             event.add_emojis([emojis.get_emoji(emoji_name)])
 
-        event.add_tags(tags)
+        event.add_tags(list(tags))
         event.commit()
 
         msg = f'Indicator match: "{indicator["name"]}" (ID: {indicator["id"]})\n'
