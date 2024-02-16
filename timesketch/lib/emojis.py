@@ -27,6 +27,7 @@ emoji = collections.namedtuple("emoji", "code help")
 EMOJI_MAP = {
     "BUCKET": emoji("&#x1FAA3", "Storage bucket"),
     "CAMERA": emoji("&#x1F4F7", "Screenshot activity"),
+    "HIGH_VOLTAGE": emoji("&#x26A1", "Attack pattern"),
     "FISHING_POLE": emoji("&#x1F3A3", "Phishing"),
     "GLOBE": emoji("&#x1F30F", "The world"),
     "ID_BUTTON": emoji("&#x1F194", "Account ID"),
