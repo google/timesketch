@@ -49,12 +49,12 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
     DEPENDENCIES = frozenset(["domain"])
 
     # Entities with these tags will be fetched from Yeti
-    _TAG_SELECTOR: list[str] = []
+    _TAG_SELECTOR: List[str] = []
     # Entities of this type will be fetched from Yeti
     _TYPE_SELECTOR: str | None = None
     # Graph will be traversed from the entities looking for these types
     # of neighbors
-    _TARGET_NEIGHBOR_TYPE: list[str] = []
+    _TARGET_NEIGHBOR_TYPE: List[str] = []
     # If True, will save intelligence to the sketch
     _SAVE_INTELLIGENCE: bool = False
 
