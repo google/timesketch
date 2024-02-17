@@ -89,12 +89,7 @@ limitations under the License.
           >
             <v-col
               :class="$vuetify.theme.dark ? 'dark-font' : 'light-font'"
-              @click="
-                $router.push({
-                  name: 'VisualizationView', 
-                  params: { aggregationId: savedVisualization.id }
-                })
-              "
+              @click="navigateToSavedVisualization(savedVisualization.id)"
             >
               <v-icon>
                 <!-- {{ getIcon(savedVisualization.) }} -->
@@ -205,6 +200,17 @@ export default {
           })
       }
     },
+    navigateToSavedVisualization(savedVisualizationId) {
+      let params = {
+        name: 'VisualizationView', 
+        params: { aggregationId: savedVisualizationId }
+      }
+      let nextPath = this.$router.resolve(params).route.fullPath
+      let currentPath  = this.$route.fullPath
+      if (nextPath !== currentPath) {
+        this.$router.push(params)
+      }
+    }
   },
   computed: {
     savedVisualizations() {

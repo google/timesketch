@@ -14,125 +14,29 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-    <v-container fluid>
-      <v-card flat class="mx-3">
-        <ts-visualization-editor v-if="!aggregationId"></ts-visualization-editor>
-      </v-card>
-      <ts-chart-card 
-        v-if="aggregationId"
-        :chartSeries="chartSeries" 
-        :chartLabels="chartLabels"
-        :chartTitle="chartTitle"
-        :chartType="chartType"
-        :fieldName="fieldName"
-        :height="height"
-        :isTimeSeries="isTimeSeries"
-        :metricName="metricName"
-        :showDataLabels="showDataLabels"
-        :showXLabels="showXLabels"
-        :showYLabels="showYLabels"
-        :width="width"
-        :xTitle="xTitle"
-        :yTitle="yTitle"
-      >
-      </ts-chart-card>
-    </v-container>
-  </template>
-  
-  <script>
-  import ApiClient from '../utils/RestApiClient'
-  import TsVisualizationEditor from '../components/Visualization/VisualizationEditor.vue'
-  import TsChartCard from '../components/Visualization/ChartCard.vue'
+  <v-container fluid>
+    <v-card flat class="mx-3">
+      <ts-visualization-editor v-if="!aggregationId"></ts-visualization-editor>
+    </v-card>
+    <ts-saved-visualization
+      v-if="aggregationId"
+      :aggregationId="aggregationId"
+    >
+    </ts-saved-visualization>
+  </v-container>
+</template>
 
-  export default {
-    props: [
-      'aggregationId'
-    ],
-    data() {
-      return {
-        response: null,
-        parameters: null,
-        aggregationType: "",
-        chartSeries: {},
-        chartLabels: [],
-        chartTitle: "",
-        chartType: "",
-        fieldName: "",
-        height: 0,
-        isTimeSeries: false,
-        metricName: "",
-        showDataLabels: false,
-        showXLabels: false,
-        showYLabels: false,
-        width: 0,
-        xTitle: "",
-        yTitle: "",
-      }
-    },
-    components: {
-        TsVisualizationEditor,
-        TsChartCard,
-    },
-    computed: {
-      sketch() {
-        return this.$store.state.sketch
-      },
-    },
-    methods: {
-      loadAggregationData(savedAggregationId) {
-        ApiClient.getAggregationById(
-          this.sketch.id, this.aggregationId
-        ).then(
-          (response) => {
-            const agg = response.data.objects[0]
-            this.aggregationType = agg.agg_type
-            this.parameters = JSON.parse(agg.parameters)
-            
-            ApiClient.runAggregator(
-              this.sketch.id, this.parameters
-            ).then(
-              (response) => {
-                const aggregationObj = response.data.objects[0][this.aggregationType]
-                this.chartSeries = aggregationObj.buckets
-                this.chartLabels = aggregationObj.labels
-                this.chartTitle = aggregationObj.chart_options.chartTitle
-                this.chartType = aggregationObj.chart_type
-                this.fieldName = this.parameters.aggregator_parameters.fields[0].field
-                this.height = aggregationObj.chart_options.height
-                this.isTimeSeries = aggregationObj.chart_options.isTimeSeries
-                this.metricName = this.parameters.aggregator_parameters.aggregator_options.metric
-                this.showDataLabels = aggregationObj.chart_options.showDataLabels
-                this.showXLabels = aggregationObj.chart_options.showXLabels
-                this.showYLabels = aggregationObj.chart_options.showYLabels
-                this.width = aggregationObj.chart_options.width
-                this.xTitle = aggregationObj.chart_options.xTitle
-                this.yTitle = aggregationObj.chart_options.yTitle
-              }
-            ).catch(
-              (e) => {
-                console.error('Error requesting aggregation data: ' + e)
-              }
-            )
-          }
-        ).catch(
-          (e) => {
-            console.error('Error requesting aggregation parameters: ' + e)
-          }
-        )
-      }, 
-    },
-    watch: {
-      aggregationId: function (newAggregationId) {
-        if (newAggregationId) {
-          this.loadAggregationData()
-        }
-      },
-    },
-    mounted() {
-      if (this.aggregationId) {
-        this.loadAggregationData()
-      }
-    },
-  }
-  </script>
-  
+<script>
+import TsVisualizationEditor from '../components/Visualization/VisualizationEditor.vue'
+import TsSavedVisualization from '../components/Visualization/SavedVisualization.vue'
+
+export default {
+  props: [
+    'aggregationId'
+  ],
+  components: {
+    TsVisualizationEditor,
+    TsSavedVisualization,
+  },
+}
+</script>
