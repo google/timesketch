@@ -111,10 +111,10 @@ export default {
         },
       ],
       singleMetricChartTypes: [
-        { 
-          text: 'number', 
-          icon: 'mdi-numeric'
-        },
+        // { 
+        //   text: 'number', 
+        //   icon: 'mdi-numeric'
+        // },
         // { 
         //   text: 'table', 
         //   icon: 'mdi-table',

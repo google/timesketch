@@ -105,17 +105,6 @@
         :showDataLabels="showDataLabels"
       >
       </TsLineChart>
-      <TsNumberChart
-        v-if="chartSeries != null && chartType === 'number'"
-        :fieldName="fieldName"
-        :metricName="metricName"
-        :chartSeries="chartSeries" 
-        :chartLabels="chartLabels"
-        :chartTitle="chartTitle"
-        :height="height"
-        :width="width"
-      >
-    </TsNumberChart>
       <TsTableChart
         v-if="chartSeries != null && chartType === 'table'"
         :fieldName="fieldName"
@@ -136,7 +125,6 @@
 import TsBarChart from './ChartBar.vue'
 import TsColumnChart from './ChartColumn.vue'
 import TsDonutChart from './ChartDonut.vue'
-import TsNumberChart from './ChartNumber.vue'
 import TsHeatmapChart from './ChartHeatmap.vue'
 import TsLineChart from './ChartLine.vue'
 import TsTableChart from './ChartTable.vue'
@@ -149,7 +137,6 @@ import TsTableChart from './ChartTable.vue'
     TsHeatmapChart,
     TsLineChart,
     TsTableChart,
-    TsNumberChart,
   },
   props: {
     chartLabels: {
