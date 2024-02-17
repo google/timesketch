@@ -174,7 +174,7 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
             )
         return results.json()
 
-    def get_entities(self, _type: str, tags: list[str]) -> Dict[str, dict]:
+    def get_entities(self, _type: str, tags: List[str]) -> Dict[str, dict]:
         """Fetches Entities with a certain tag on Yeti.
 
         Args:
