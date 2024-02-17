@@ -35,7 +35,7 @@ MOCK_YETI_NEIGHBORS_RESPONSE = {
         "indicators/2152802": {
             "name": "typo'd dhcpd",
             "type": "regex",
-            "description": "Name that xmrig was observed using to hide on the filesystem\n\n* `dhcpd` - Regular name\n* `dhpcd` - Typod name",
+            "description": "Random description",
             "created": "2024-02-16T12:12:14.564723Z",
             "modified": "2024-02-16T12:12:14.564729Z",
             "valid_from": "2024-02-16T12:12:14.564730Z",
@@ -89,7 +89,8 @@ class TestYetiIndicators(BaseTest):
         current_app.config["YETI_API_KEY"] = "blah"
 
     # Mock the OpenSearch datastore.
-    @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
+    @mock.patch(
+        "timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     @mock.patch(
         "timesketch.lib.analyzers.yetiindicators."
         "YetiBaseAnalyzer._get_neighbors_request"
@@ -105,12 +106,14 @@ class TestYetiIndicators(BaseTest):
         mock_get_entities.return_value = MOCK_YETI_ENTITY_REQUEST
         mock_get_neighbors.return_value = MOCK_YETI_NEIGHBORS_RESPONSE
 
-        analyzer.datastore.import_event("test_index", MATCHING_PATH_MESSAGE, "0")
+        analyzer.datastore.import_event(
+            "test_index", MATCHING_PATH_MESSAGE, "0")
 
         message = json.loads(analyzer.run())
         self.assertEqual(
             message["result_summary"],
-            "1 events matched 1 indicators (out of 1 processed).\n\nEntities found: xmrig:malware",
+            ("1 events matched 1 indicators (out of 1 processed).\n\n"
+            "Entities found: xmrig:malware"),
         )
         mock_get_entities.assert_called_once()
         mock_get_neighbors.assert_called_once()
@@ -120,7 +123,8 @@ class TestYetiIndicators(BaseTest):
         )
 
     # Mock the OpenSearch datastore.
-    @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
+    @mock.patch(
+        "timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     @mock.patch(
         "timesketch.lib.analyzers.yetiindicators."
         "YetiBaseAnalyzer._get_neighbors_request"
@@ -138,12 +142,14 @@ class TestYetiIndicators(BaseTest):
 
         message = json.loads(analyzer.run())
         self.assertEqual(
-            message["result_summary"], "No indicators were found in the timeline."
+            message["result_summary"],
+            "No indicators were found in the timeline."
         )
         mock_get_entities.assert_called_once()
         mock_get_neighbors.asset_called_once()
 
-    @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
+    @mock.patch(
+        "timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     def test_slug(self):
         analyzer = yetiindicators.YetiMalwareIndicators("test_index", 1, 123)
         mock_event = mock.Mock()
