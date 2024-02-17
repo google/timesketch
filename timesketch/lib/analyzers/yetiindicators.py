@@ -3,7 +3,7 @@
 import json
 import re
 
-from typing import Dict, List
+from typing import Dict, List, Union
 
 from flask import current_app
 import requests
@@ -51,7 +51,7 @@ class YetiBaseAnalyzer(interface.BaseAnalyzer):
     # Entities with these tags will be fetched from Yeti
     _TAG_SELECTOR: List[str] = []
     # Entities of this type will be fetched from Yeti
-    _TYPE_SELECTOR: str | None = None
+    _TYPE_SELECTOR: Union[str, None] = None
     # Graph will be traversed from the entities looking for these types
     # of neighbors
     _TARGET_NEIGHBOR_TYPE: List[str] = []
