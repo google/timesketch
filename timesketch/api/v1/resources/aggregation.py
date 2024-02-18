@@ -73,7 +73,7 @@ class AggregationResource(resources.ResourceMixin, Resource):
         if not aggregation:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                "The aggregation ID ({0:d}) does not exist.".format(aggregation_id)
+                "The aggregation ID ({0:d}) does not exist.".format(aggregation_id),
             )
         # Check that this aggregation belongs to the sketch
         if aggregation.sketch_id != sketch.id:
@@ -480,7 +480,7 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
             if not agg_class:
                 abort(
                     HTTP_STATUS_CODE_NOT_FOUND,
-                    f"Aggregator {aggregator_name} not found"
+                    f"Aggregator {aggregator_name} not found",
                 )
 
             if form.aggregator_parameters.data:
@@ -549,7 +549,6 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
                     if not chart_title:
                         chart_title = aggregator.chart_title
                     meta["vega_chart_title"] = chart_title
-
 
         elif aggregation_dsl:
             # pylint: disable=unexpected-keyword-arg
