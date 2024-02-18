@@ -217,23 +217,35 @@ export default {
       }
     },
     filterDataPoint(config) {
+      let eventData = {}
+      eventData.doSearch = true
+
+      let dataPointIndex = config.dataPointIndex
       if (this.isTimeSeries) {
-        // TODO: format timeseries labels so we can filter on it.
+        let start = this.chartLabels[dataPointIndex]
+        let end = (dataPointIndex + 1 < this.chartLabels.length) ? this.chartLabels[dataPointIndex + 1] : ''
+
+        if (end === "") {
+          // exit early on last bucket 
+          return
+        }
+        eventData.chip = {
+          field: '',
+          type: 'datetime_range',
+          value: start + ',' + end,
+          operator: 'must',
+          active: true,
+        }
       } else {
-        const dataPointIndex = config.dataPointIndex
-        
-        let eventData = {}
-        eventData.doSearch = true
-        let chip = {
+        eventData.chip = {
           field: this.fieldName,
           value: config.w.config.labels[dataPointIndex],
           type: 'term',
           operator: 'must',
           active: true,
         }
-        eventData.chip = chip
-        EventBus.$emit('setQueryAndFilter', eventData)
       }
+      EventBus.$emit('setQueryAndFilter', eventData)
     },
   },
   created() {

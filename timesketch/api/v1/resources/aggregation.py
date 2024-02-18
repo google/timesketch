@@ -69,6 +69,14 @@ class AggregationResource(resources.ResourceMixin, Resource):
             )
         aggregation = Aggregation.get_by_id(aggregation_id)
 
+        # Check that the aggregation exists
+        if not aggregation:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                "The aggregation ID ({0:d}) does not exist.".format(
+                    aggregation_id, sketch.id
+                ),
+            )
         # Check that this aggregation belongs to the sketch
         if aggregation.sketch_id != sketch.id:
             abort(

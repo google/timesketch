@@ -129,7 +129,7 @@ export default {
       } else if (
         this.aggregator === 'rare_terms' ||
         this.aggregator === 'auto_date_histogram' ||
-        this.aggregator === 'fixed_date_histogram'
+        this.aggregator === 'calendar_date_histogram'
       ) {
         return this.seriesChartTypes
       } 

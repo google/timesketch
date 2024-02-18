@@ -152,7 +152,7 @@ export default {
         // { text: 'Significant terms', value: 'significant_terms' }, // podium-gold
         { 
           text: 'Time interval', 
-          value: 'fixed_date_histogram' 
+          value: 'calendar_date_histogram' 
         },
         { 
           text: 'Top K terms', 
@@ -175,7 +175,7 @@ export default {
         // },
         { 
           text: 'Time interval', 
-          value: 'fixed_date_histogram' 
+          value: 'calendar_date_histogram' 
         },
         { 
           text: 'Top K terms', 
@@ -270,8 +270,13 @@ export default {
     disableInterval() {
       return !(
         this.selectedAggregator && 
-        this.selectedAggregator === 'fixed_date_histogram'
+        this.selectedAggregator === 'calendar_date_histogram'
       )
+    },
+    disableTimelineSplit() {
+      return !(
+        this.selectedAggregator && 
+        this.selectedAggregator.endsWith('date_histogram'))
     },
     disableMaxItems() {
       return !(
@@ -287,7 +292,7 @@ export default {
       return !(
         this.selectedAggregator && (
           this.selectedAggregator === 'auto_date_histogram' ||
-          this.selectedAggregator === 'fixed_date_histogram' ||
+          this.selectedAggregator === 'calendar_date_histogram' ||
           this.selectedAggregator === 'single_metric'
         )
       )

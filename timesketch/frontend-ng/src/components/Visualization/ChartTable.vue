@@ -190,6 +190,9 @@ export default {
       }
     },
     applyFilterChip(key, value, operator) {
+      if (this.isTimeSeries) {
+        return
+      }
       let eventData = {}
       eventData.doSearch = true
       let chip = {

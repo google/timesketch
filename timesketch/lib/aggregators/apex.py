@@ -229,8 +229,25 @@ class AggregationQuerySpec:
         self.bool_queries[clause].append(nested_query)
 
     def add_datetime_range(self, datetime_range, clause="filter"):
-        """TODO: duplicate of the other datetime function.. why did I do this?"""
+        """Adds a datetime range query used in a should (logical OR) query.
+
+        Args:
+            datetime_range (str): a comma separated datetime pair.
+            clause (str): the boolean clause to apply the datetime range query.
+
+        Raises:
+            ValueError if datetime_range is not in a valid form or clause is not
+                one of the valid query clause values.
+        """
+        if not datetime_range:
+            return
+
+        if clause not in self._VALID_QUERY_CLAUSES:
+            raise ValueError(f"Unknown boolean clause {clause}")
+
+        # Raises ValueError if datetime_range does not unpack to 2 values.
         start, end = datetime_range.split(",")
+
         self.datetime_ranges[clause].append(
             {"range": {"datetime": {"gte": start, "lte": end}}}
         )
@@ -288,23 +305,16 @@ class ApexAggregation(interface.BaseAggregator):
     """Base Aggregator for ApexChart visualizations for frontend-ng.
 
     Attributes:
-        chart_type: the chart type
-        fields (list[str]): the fields to aggregate
-        aggregator_type (str): the OpenSearch aggregation.
-        sketch (Sketch): the Sketch.
-        indices (list[str]): the OpenSearch index names.
-        timeline_ids (list[int]): the timeline IDs.
-        start_time (str): the ISO formatted start time bound.
-        end_time (str): the ISO formatted end time bound.
-        query_string (str): the query filter string.
-        query_is_dsl (bool): True if the query string is an OpenSearch DSL.
-        query_chips (list[dict[str, str]]): a list of query chips for filtering.
+        chart_type: the Apex chart type.
+        chart_options (dict[str, Any]): the Apedx chart options.
+        fields (list[str]): the event fields to aggregate.
+        metric (str): the aggregation metric.
+        sketch_id (int): the sketch ID.
     """
 
     NAME = "apex_chart"
     DISPLAY_NAME = "Apex Chart Aggregation"
     DESCRIPTION = "Aggregating values for an ApexChart visualization."
-
     SUPPORTED_CHARTS = frozenset(
         ["bar", "column", "line", "heatmap", "gantt", "number", "table"]
     )
@@ -330,12 +340,6 @@ class ApexAggregation(interface.BaseAggregator):
         self.chart_options = {}
         self.fields = []
         self.metric = None
-        self.aggregator_type = None
-        self.start_time = None
-        self.end_time = None
-        self.query_string = None
-        self.query_is_dsl = False
-        self.query_chips = []
         self.sketch_id = sketch_id
 
     @property
@@ -366,7 +370,18 @@ class ApexAggregation(interface.BaseAggregator):
         raise NotImplementedError
 
     def _build_aggregation_query_spec(self, aggregator_options):
-        """Builds an Aggregation Query specification."""
+        """Builds an Aggregation Query specification.
+
+        Args:
+            aggregator_options (dict[str, Any]): a mapping of options for
+                filtering/searching aggregations.
+
+        Returns:
+            an opensearch query DSL as a dict
+
+        Raises:
+            ValueError if an unknown chip type is provided in the aggregator_options.
+        """
         start_time = aggregator_options.pop("start_time", "")
         end_time = aggregator_options.pop("end_time", "")
         query_string = aggregator_options.pop("query_string", "")
@@ -417,7 +432,7 @@ class ApexAggregation(interface.BaseAggregator):
         """Runs the aggregator.
 
         Returns:
-            ApexChartResult
+            ApexChartResult object.
 
         Raises:
             ValueError when:
@@ -453,11 +468,11 @@ class ApexAggregation(interface.BaseAggregator):
         )
 
 
-class FixedDateHistogram(ApexAggregation):
-    """"""
+class CalendarDateHistogram(ApexAggregation):
+    """Aggregates events using the Date Histogram with calendar intervals bucket aggregator."""
 
-    NAME = "fixed_date_histogram"
-    DESCRIPTION = "Date Histogram Aggregation for an ApexChart visualization"
+    NAME = "calendar_date_histogram"
+    DESCRIPTION = "Calendar Date Histogram Aggregation for use with ApexCharts"
 
     DEFAULT_CALENDAR_INTERVAL = "year"
 
@@ -531,6 +546,7 @@ class FixedDateHistogram(ApexAggregation):
 
 
 class AutoDateHistogram(ApexAggregation):
+    """Aggregates events using the Auto Date Histogram bucket aggregator."""
 
     NAME = "auto_date_histogram"
     DESCRIPTION = "Auto Date Histogram Aggregation for an ApexChart visualization"
@@ -584,6 +600,7 @@ class AutoDateHistogram(ApexAggregation):
 
 
 class TopTerms(ApexAggregation):
+    """Aggregates events using the (Top) Terms bucket aggregator."""
 
     NAME = "top_terms"
     DESCRIPTION = "Top Terms Aggregation for an ApexChart visualization"
@@ -627,6 +644,7 @@ class TopTerms(ApexAggregation):
 
 
 class RareTerms(ApexAggregation):
+    """Aggregates events using the Rare Terms bucket aggregator."""
 
     NAME = "rare_terms"
     DESCRIPTION = "Rare Terms Aggregation for an ApexChart visualization"
@@ -667,9 +685,13 @@ class RareTerms(ApexAggregation):
 
 
 class SingleMetric(ApexAggregation):
+    """Aggregates events using a single metric aggregator."""
 
     NAME = "single_metric"
     DESCRIPTION = "Single Metric Aggregation for an ApexChart visualization"
+    SUPPORTED_METRICS = frozenset(
+        ["avg", "cardinality", "min", "max", "sum", "value_count"]
+    )
 
     DEFAULT_METRIC = "value_count"
 
@@ -706,10 +728,10 @@ class SingleMetric(ApexAggregation):
         return {self.fields[0]["field"]: [result]}, [self.metric]
 
 
-manager.AggregatorManager.register_aggregator(AutoDateHistogram)
-manager.AggregatorManager.register_aggregator(FixedDateHistogram)
-manager.AggregatorManager.register_aggregator(TopTerms)
-manager.AggregatorManager.register_aggregator(RareTerms)
-manager.AggregatorManager.register_aggregator(SingleMetric)
-
-manager.AggregatorManager.register_aggregator(ApexAggregation, exclude_from_list=True)
+manager.AggregatorManager.register_aggregator(AutoDateHistogram, exclude_from_list=True)
+manager.AggregatorManager.register_aggregator(
+    CalendarDateHistogram, exclude_from_list=True
+)
+manager.AggregatorManager.register_aggregator(RareTerms, exclude_from_list=True)
+manager.AggregatorManager.register_aggregator(SingleMetric, exclude_from_list=True)
+manager.AggregatorManager.register_aggregator(TopTerms, exclude_from_list=True)

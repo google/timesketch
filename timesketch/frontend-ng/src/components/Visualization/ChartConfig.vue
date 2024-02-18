@@ -31,7 +31,7 @@ limitations under the License.
       <v-col>
         <v-text-field
           outlined
-          label="Visualization title"
+          label="Visualization name / title"
           v-model="selectedChartTitle"
           required
           :rules="[rules.required]"

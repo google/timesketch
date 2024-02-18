@@ -472,6 +472,7 @@ export default {
           chart_options: {
             chartTitle: this.selectedChartTitle,
             height: this.selectedHeight,
+            isTimeSeries: this.selectedAggregator.endsWith('date_histogram'),
             showDataLabels: this.selectedShowDataLabels,
             showXLabels: this.selectedShowXLabels,
             showYLabels: this.selectedShowYLabels,

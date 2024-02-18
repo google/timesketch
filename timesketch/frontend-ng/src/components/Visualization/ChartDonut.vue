@@ -214,9 +214,7 @@ export default {
       }
     },
     filterDataPoint(config) {
-      if (this.isTimeSeries) {
-        // TODO: format timeseries labels so we can filter on it.
-      } else {
+      if (!this.isTimeSeries) {
         const dataPointIndex = config.dataPointIndex
         
         let eventData = {}
