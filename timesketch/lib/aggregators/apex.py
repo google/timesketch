@@ -14,8 +14,6 @@
 """Aggregator for Apex-Chart visualizations."""
 
 import collections
-from datetime import datetime
-import json
 
 import pandas as pd
 
@@ -99,9 +97,9 @@ class AggregationQuerySpec:
         # except ValueError as error:
         # raise ValueError(f"{datetime_value} is not ISO formatted.") from error
 
-        for clause in self.bool_queries[clause]:
-            if "range" in clause and "datetime" in clause["range"]:
-                clause["range"]["datetime"][operator] = datetime_value
+        for query_clause in self.bool_queries[clause]:
+            if "range" in query_clause and "datetime" in query_clause["range"]:
+                query_clause["range"]["datetime"][operator] = datetime_value
                 break
         else:
             self.bool_queries[clause].append(
@@ -293,7 +291,7 @@ class ApexAggregationResult:
         """
         return pd.DataFrame(self.values)
 
-    def to_chart(self, *args):
+    def to_chart(self, *_args):
         """Encode aggregation result as Vega-Lite chart.
 
         Since ApexChart does not support Vega charts, None is returned.
@@ -354,7 +352,7 @@ class ApexAggregation(interface.BaseAggregator):
         raise NotImplementedError
 
     def _get_vega_encoding(self):
-        """Returns the Vega encoding for rendering the aggregation chart as a dictionary."""
+        """Returns the Vega encoding for rendering the aggregation chart as a dict."""
         raise RuntimeError(f"{self.__name__} cannot be used for Vega encodings.")
 
     def _process_aggregation_response(self, response):
@@ -428,7 +426,9 @@ class ApexAggregation(interface.BaseAggregator):
 
         return aggregation_query.spec
 
-    def run(self, *, fields, aggregator_options, chart_type, chart_options):
+    def run(
+        self, *, fields, aggregator_options, chart_type, chart_options
+    ):  # pylint: disable=arguments-differ
         """Runs the aggregator.
 
         Returns:
@@ -441,7 +441,8 @@ class ApexAggregation(interface.BaseAggregator):
         """
         if not fields:
             raise ValueError("Fields cannot be empty")
-        elif isinstance(fields, str):
+
+        if isinstance(fields, str):
             self.fields = [fields]
         elif isinstance(fields, list):
             self.fields = fields
@@ -449,7 +450,7 @@ class ApexAggregation(interface.BaseAggregator):
             raise ValueError("Fields is in an invalid format.")
 
         if chart_type not in self.SUPPORTED_CHARTS:
-            raise ValueError(f"Chart type is not supported.")
+            raise ValueError(f"Chart type {chart_type} is not supported.")
         self.chart_type = chart_type
         self.chart_options = chart_options
 
@@ -469,7 +470,8 @@ class ApexAggregation(interface.BaseAggregator):
 
 
 class CalendarDateHistogram(ApexAggregation):
-    """Aggregates events using the Date Histogram with calendar intervals bucket aggregator."""
+    """Aggregates events using the Date Histogram (with calendar intervals)
+    bucket aggregator."""
 
     NAME = "calendar_date_histogram"
     DESCRIPTION = "Calendar Date Histogram Aggregation for use with ApexCharts"
@@ -529,12 +531,14 @@ class CalendarDateHistogram(ApexAggregation):
         try:
             buckets = response["aggregations"]["aggregation"]["buckets"]
         except IndexError as err:
-            raise ValueError(f"Unexpected response in aggregation query: {err}")
+            raise ValueError(
+                f"Unexpected response in aggregation query: {err}"
+            ) from err
 
         data = collections.defaultdict(list)
         labels = []
         for bucket in buckets:
-            key = int(bucket.pop("key"))
+            _ = int(bucket.pop("key"))
             labels.append(bucket.pop("key_as_string"))
             for k, v in bucket.items():
                 if k == "doc_count":
@@ -584,7 +588,9 @@ class AutoDateHistogram(ApexAggregation):
         try:
             buckets = response["aggregations"]["aggregation"]["buckets"]
         except IndexError as err:
-            raise ValueError(f"Unexpected response in aggregation query: {err}")
+            raise ValueError(
+                f"Unexpected response in aggregation query: {err}"
+            ) from err
         data = collections.defaultdict(list)
         labels = []
         for bucket in buckets:
@@ -634,7 +640,9 @@ class TopTerms(ApexAggregation):
         try:
             buckets = response["aggregations"]["aggregation"]["buckets"]
         except IndexError as err:
-            raise ValueError(f"Unexpected response in aggregation query: {err}")
+            raise ValueError(
+                f"Unexpected response in aggregation query: {err}"
+            ) from err
         data = {"value_count": []}
         labels = []
         for bucket in buckets:
@@ -675,7 +683,10 @@ class RareTerms(ApexAggregation):
         try:
             buckets = response["aggregations"]["aggregation"]["buckets"]
         except IndexError as err:
-            raise ValueError(f"Unexpected response in aggregation query: {err}")
+            raise ValueError(
+                f"Unexpected response in aggregation query: {err}"
+            ) from err
+
         data = {"value_count": []}
         labels = []
         for bucket in buckets:
@@ -723,7 +734,7 @@ class SingleMetric(ApexAggregation):
         try:
             result = response["aggregations"]["aggregation"]["value"]
         except IndexError as err:
-            raise ValueError(f"Unexpected response in aggregation query: {err}")
+            raise ValueError("Unexpected response in aggregation query: {err}") from err
 
         return {self.fields[0]["field"]: [result]}, [self.metric]
 
