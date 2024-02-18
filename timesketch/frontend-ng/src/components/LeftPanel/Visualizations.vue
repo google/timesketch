@@ -91,9 +91,9 @@ limitations under the License.
               :class="$vuetify.theme.dark ? 'dark-font' : 'light-font'"
               @click="navigateToSavedVisualization(savedVisualization.id)"
             >
-              <v-icon>
-                <!-- {{ getIcon(savedVisualization.) }} -->
-              </v-icon>{{ savedVisualization.name }}                       
+              <v-icon left small>
+                {{ getIcon(savedVisualization.chart_type) }}
+              </v-icon> {{ savedVisualization.name }}                       
             </v-col>
             <v-col cols="auto">
               <v-menu offset-y>
@@ -199,6 +199,17 @@ export default {
             console.error(e)
           })
       }
+    },
+    getIcon(chartType) {
+      return {
+        'bar': 'mdi-poll mdi-rotate-90',
+        'column': 'mdi-chart-bar',
+        'line': 'mdi-chart-line',
+        'table': 'mdi-table',
+        'heatmap': 'mdi-blur-linear',
+        'donut': 'mdi-chart-donut',
+
+      }[chartType]
     },
     navigateToSavedVisualization(savedVisualizationId) {
       let params = {
