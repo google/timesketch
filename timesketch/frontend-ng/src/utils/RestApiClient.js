@@ -268,7 +268,7 @@ export default {
       name: name,
       description: aggregation.description,
       agg_type: aggregation.name,
-      chart_type: formData['supported_charts'] || formData['chart_type'],
+      chart_type: formData['supported_charts'] || formData['aggregator_parameters']['chart_type'],
       parameters: formData,
     }
     return RestApiClient.post('/sketches/' + sketchId + '/aggregation/', newFormData)

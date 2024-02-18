@@ -142,7 +142,6 @@ export default {
         }
       }
       this.$refs.picker.focusDate(this.selectedRange.start)
-      console.log('start time', this.selectedRange.start)
       this.$emit('change', this.dateRange)
     },
     setEndTime: function (newDateTime) {
