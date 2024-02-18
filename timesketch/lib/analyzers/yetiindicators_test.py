@@ -158,4 +158,8 @@ class TestYetiIndicators(BaseTest):
             mock_event,
             MOCK_YETI_ENTITY_REQUEST["entities"],
         )
-        mock_event.add_tags.assert_called_once_with(["xmrig", "malware"])
+        mock_event.add_tags.assert_called_once()
+        self.assertIn(
+            sorted(["xmrig", "malware"]),
+            [sorted(x) for x in mock_event.add_tags.call_args[0]]
+        )
