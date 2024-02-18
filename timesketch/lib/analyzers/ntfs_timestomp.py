@@ -1,4 +1,5 @@
 """Sketch analyzer plugin for ntfs timestomping detection."""
+
 from __future__ import unicode_literals
 
 from flask import current_app

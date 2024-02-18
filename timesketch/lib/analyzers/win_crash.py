@@ -1,4 +1,5 @@
 """Sketch analyzer plugin for Windows crash artefacts."""
+
 from __future__ import unicode_literals
 
 import re

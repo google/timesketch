@@ -144,12 +144,12 @@ limitations under the License.
               <v-form @submit.prevent="rename()">
                 <h3>Rename timeline</h3>
                 <br />
-                <v-text-field outlined dense autofocus v-model="newTimelineName" @focus="$event.target.select()">
+                <v-text-field clearable outlined dense autofocus v-model="newTimelineName" @focus="$event.target.select()" :rules="timelineNameRules">
                 </v-text-field>
                 <v-card-actions>
                   <v-spacer></v-spacer>
                   <v-btn text @click="dialogRename = false"> Cancel </v-btn>
-                  <v-btn color="primary" text @click="rename()"> Save </v-btn>
+                  <v-btn :disabled="!newTimelineName || newTimelineName.length > 255" color="primary" text @click="rename()"> Save </v-btn>
                 </v-card-actions>
               </v-form>
             </v-card>
@@ -357,6 +357,10 @@ export default {
         ['#DEBBFF', '#9AB0FB', '#CFFBE2'],
       ],
       deleteConfirmation: false,
+      timelineNameRules: [
+        (v) => !!v || 'Timeline name is required.',
+        (v) => (v && v.length <= 255) || 'Timeline name is too long.',
+      ],
     }
   },
   computed: {

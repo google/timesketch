@@ -1,4 +1,5 @@
 """Tests for SigmaPlugin."""
+
 from __future__ import unicode_literals
 
 import mock

@@ -140,7 +140,7 @@ class UploadTest(interface.BaseEndToEndTest):
         is correct."""
 
         # create a new sketch
-        rand = random.randint(0, 10000)
+        rand = str(random.randint(0, 10000))
         sketch = self.api.create_sketch(name=rand)
         self.sketch = sketch
 
@@ -185,7 +185,7 @@ class UploadTest(interface.BaseEndToEndTest):
         is correct."""
 
         # create a new sketch
-        rand = random.randint(0, 10000)
+        rand = str(random.randint(0, 10000))
         sketch = self.api.create_sketch(name=rand)
         self.sketch = sketch
 

@@ -101,7 +101,6 @@ limitations under the License.
           </div>
         </v-hover>
         <v-spacer></v-spacer>
-        <v-btn small rounded depressed v-on:click="switchUI"> Use the old UI </v-btn>
 
         <!-- Sharing dialog -->
         <v-dialog v-model="shareDialog" width="500">
@@ -190,6 +189,15 @@ limitations under the License.
                   </v-list-item-icon>
                   <v-list-item-content>
                     <v-list-item-title>Delete sketch</v-list-item-title>
+                  </v-list-item-content>
+                </v-list-item>
+
+                <v-list-item v-on:click="switchUI">
+                  <v-list-item-icon>
+                    <v-icon>mdi-view-dashboard-outline</v-icon>
+                  </v-list-item-icon>
+                  <v-list-item-content>
+                    <v-list-item-title>Use the old UI</v-list-item-title>
                   </v-list-item-content>
                 </v-list-item>
 

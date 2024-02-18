@@ -1,4 +1,5 @@
 """Sketch analyzer plugin for the Safe Browsing API."""
+
 from __future__ import unicode_literals
 
 import fnmatch

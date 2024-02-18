@@ -383,7 +383,11 @@ level: medium
         self.assertIsNotNone(rule)
         self.assertEqual("5d2c62fe-3cbb-47c3-88e1-88ef73503a9f", rule.get("id"))
         self.assertIn(
-            'event_identifier:"10" AND (xml_string:"\\\\foobar.exe" AND xml_string:"10"',  # pylint: disable=line-too-long
+            'event_identifier:"10"',
+            rule.get("search_query"),
+        )
+        self.assertIn(
+            'xml_string:"\\\\foobar.exe" AND xml_string:"10"',
             rule.get("search_query"),
         )
 
@@ -460,3 +464,52 @@ detection:
             r'("onlyoneterm" OR "two words" OR "completely new term")',
             rule.get("search_query"),
         )
+
+    def test_get_rule_by_text_specialchar(self):
+        """
+        Testing rules, that contain special characters (like "'") in their description
+        """
+        rule = sigma_util.parse_sigma_rule_by_text(
+            r"""
+title: Vim GTFOBin Abuse - Linux
+id: 7ab8f73a-fcff-428b-84aa-6a5ff7877dea
+status: test
+description: Detects usage of "vim" and it's siblings as a GTFOBin to execute and proxy command and binary execution # pylint: disable=line-too-long
+references:
+    - https://gtfobins.github.io/gtfobins/vim/
+    - https://gtfobins.github.io/gtfobins/rvim/
+    - https://gtfobins.github.io/gtfobins/vimdiff/
+author: Nasreddine Bencherchali (Nextron Systems)
+date: 2022/12/28
+tags:
+    - attack.discovery
+    - attack.t1083
+logsource:
+    category: process_creation
+    product: linux
+detection:
+    selection_img:
+        Image|endswith:
+            - '/vim'
+            - '/rvim'
+            - '/vimdiff'
+        CommandLine|contains:
+            - ' -c '
+            - ' --cmd'
+    selection_cli:
+        CommandLine|contains:
+            - ':!/'
+            - ':py '
+            - ':lua '
+            - '/bin/sh'
+            - '/bin/bash'
+            - '/bin/dash'
+            - '/bin/zsh'
+            - '/bin/fish'
+    condition: all of selection_*
+falsepositives:
+    - Unknown
+level: high
+"""
+        )
+        self.assertIsNotNone(rule)

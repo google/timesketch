@@ -435,17 +435,20 @@ class BaseTest(TestCase):
         db_session.add(model)
         db_session.commit()
 
-    def _create_user(self, username, set_password=False):
+    def _create_user(self, username, set_password=False, set_admin=False):
         """Create a user in the database.
         Args:
             username: Username (string)
             set_password: Boolean value to decide if a password should be set
+            set_admin: Boolean value to decide if the user should be an admin
         Returns:
             A user (instance of timesketch.models.user.User)
         """
         user = User.get_or_create(username=username, name=username)
         if set_password:
             user.set_password(plaintext="test", rounds=4)
+        if set_admin:
+            user.admin = True
         self._commit_to_database(user)
         return user
 
@@ -616,6 +619,9 @@ class BaseTest(TestCase):
 
         self.user1 = self._create_user(username="test1", set_password=True)
         self.user2 = self._create_user(username="test2", set_password=False)
+        self.useradmin = self._create_user(
+            username="testadmin", set_password=True, set_admin=True
+        )
 
         self.group1 = self._create_group(name="test_group1", user=self.user1)
         self.group2 = self._create_group(name="test_group2", user=self.user1)
@@ -674,6 +680,14 @@ class BaseTest(TestCase):
         self.client.post(
             "/login/",
             data=dict(username="test1", password="test"),
+            follow_redirects=True,
+        )
+
+    def login_admin(self):
+        """Authenticate the test user with admin privileges."""
+        self.client.post(
+            "/login/",
+            data=dict(username="testadmin", password="test"),
             follow_redirects=True,
         )
 
