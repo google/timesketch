@@ -479,7 +479,7 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
             )
             if not agg_class:
                 abort(
-                    HTTP_STATUS_CODE_NOT_FOUND, 
+                    HTTP_STATUS_CODE_NOT_FOUND,
                     f"Aggregator {aggregator_name} not found"
                 )
 
