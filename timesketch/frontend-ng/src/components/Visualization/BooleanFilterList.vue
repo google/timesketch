@@ -184,7 +184,7 @@ export default {
           this.newFilterClauseType != null &&
           this.newFilterFieldName != null &&
           this.newFilterFieldValue != null &&
-          this.newFilterFieldValue != ""
+          this.newFilterFieldValue !== ""
       ) // TODO: add more validation for datetime_range
     },
     fieldItems() {

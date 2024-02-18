@@ -73,9 +73,7 @@ class AggregationResource(resources.ResourceMixin, Resource):
         if not aggregation:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                "The aggregation ID ({0:d}) does not exist.".format(
-                    aggregation_id, sketch.id
-                ),
+                "The aggregation ID ({0:d}) does not exist.".format(aggregation_id)
             )
         # Check that this aggregation belongs to the sketch
         if aggregation.sketch_id != sketch.id:
@@ -476,9 +474,14 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
         aggregator_name = form.aggregator_name.data
 
         if aggregator_name:
-            agg_class = aggregator_manager.AggregatorManager.get_aggregator(aggregator_name)
+            agg_class = aggregator_manager.AggregatorManager.get_aggregator(
+                aggregator_name
+            )
             if not agg_class:
-                abort(HTTP_STATUS_CODE_NOT_FOUND, f"Aggregator {aggregator_name} not found")
+                abort(
+                    HTTP_STATUS_CODE_NOT_FOUND, 
+                    f"Aggregator {aggregator_name} not found"
+                )
 
             if form.aggregator_parameters.data:
                 aggregator_parameters = form.aggregator_parameters.data
@@ -493,7 +496,9 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
             if not (indices or timeline_ids):
                 abort(HTTP_STATUS_CODE_BAD_REQUEST, "No indices to aggregate on")
 
-            aggregator = agg_class(sketch_id=sketch_id, indices=indices, timeline_ids=timeline_ids)
+            aggregator = agg_class(
+                sketch_id=sketch_id, indices=indices, timeline_ids=timeline_ids
+            )
             aggregator_description = aggregator.describe
 
             # legacy chart settings
@@ -542,7 +547,7 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
                 if chart_spec:
                     meta["vega_spec"] = chart_spec
                     if not chart_title:
-                      chart_title = aggregator.chart_title
+                        chart_title = aggregator.chart_title
                     meta["vega_chart_title"] = chart_title
 
 
